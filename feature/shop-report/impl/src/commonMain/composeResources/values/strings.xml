@@ -1,0 +1,21 @@
+<resources>
+    <string name="shop_report_title">Сообщить о неточности</string>
+    <string name="shop_report_back">Назад</string>
+    <string name="shop_report_shop_fallback">Кофейня</string>
+    <string name="shop_report_prompt">Какие данные нужно исправить?</string>
+    <string name="shop_report_outdated_menu">Меню больше не актуально</string>
+    <string name="shop_report_shop_closed">Кофейня закрылась</string>
+    <string name="shop_report_incorrect_address">Указан неверный адрес</string>
+    <string name="shop_report_wrong_hours">В расписании есть ошибка</string>
+    <string name="shop_report_incorrect_photos">Фотографии не соответствуют кофейне</string>
+    <string name="shop_report_other">Другая проблема</string>
+    <string name="shop_report_description_label">Что именно не так?</string>
+    <string name="shop_report_description_limit">До 500 символов</string>
+    <string name="shop_report_category_required">Выберите, какие данные нужно исправить</string>
+    <string name="shop_report_description_required">Опишите проблему</string>
+    <string name="shop_report_submission_failed">Не удалось отправить сообщение. Попробуйте ещё раз.</string>
+    <string name="shop_report_submit">Отправить</string>
+    <string name="shop_report_thanks">Спасибо за сообщение</string>
+    <string name="shop_report_will_review">Мы проверим данные о «%1$s».</string>
+    <string name="shop_report_done">Готово</string>
+</resources>

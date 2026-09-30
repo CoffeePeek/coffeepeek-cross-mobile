@@ -30,8 +30,8 @@ class KmpAndroidLibraryPlugin : Plugin<Project> {
         module.attach(android)
 
         project.afterEvaluate {
-            check(module.androidNamespace.isNotBlank()) {
-                "Set coffeepeekModule.androidNamespace for ${project.path}"
+            check(!android.namespace.isNullOrBlank()) {
+                "Set android.namespace for ${project.path}"
             }
         }
     }
@@ -56,11 +56,11 @@ class KmpAndroidComposeLibraryPlugin : Plugin<Project> {
         project.pluginManager.apply("org.jetbrains.kotlin.plugin.compose")
         project.extensions.getByType(LibraryExtension::class.java).compileSdk = 37
 
-        val module = project.extensions.getByType(CoffeePeekModuleExtension::class.java)
+        val android = project.extensions.getByType(LibraryExtension::class.java)
         val compose = project.extensions.getByType(ComposeExtension::class.java)
         val resources = compose.extensions.getByType(ResourcesExtension::class.java)
         project.afterEvaluate {
-            resources.packageOfResClass = "${module.androidNamespace}.resources"
+            resources.packageOfResClass = "${android.namespace}.resources"
             resources.publicResClass = false
         }
     }

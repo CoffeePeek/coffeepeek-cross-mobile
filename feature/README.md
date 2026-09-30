@@ -1,10 +1,13 @@
 # Feature migration: API / implementation
 
-This directory now contains independent favorites api/domain/data/impl modules.
+This directory now contains independent favorites and Shop Report
+api/domain/data/impl modules.
 Android application composition owns favorites Koin and its compatibility adapter; feed
 and detail observe favorites domain membership, and the Android favorites route
 renders the new screen. The shared root still uses Navigation 2, while iOS keeps
 the old favorites screen and binding. See favorites/README.md.
+Android Shop Report is also routed through its feature entry; the shared/iOS
+route intentionally keeps the legacy renderer. See shop-report/README.md.
 Actual registration remains in build-logic Modules.all. Android is the integration
 target; no native iOS implementation is part of these slices.
 

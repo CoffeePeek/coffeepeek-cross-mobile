@@ -9,6 +9,8 @@ import com.coffeepeek.admin.settings.ReviewDraftStore
 import com.coffeepeek.admin.utils.CustomUrlFetcher
 import com.coffeepeek.api.CoffeePeekClient
 import com.coffeepeek.admin.ui.NavigatorViewModel
+import com.coffeepeek.admin.ui.screen.shop.LegacyShopReportScreenRenderer
+import com.coffeepeek.admin.ui.screen.shop.ShopReportScreenRenderer
 import com.coffeepeek.admin.ui.screen.auth.AuthViewModel
 import com.coffeepeek.admin.ui.screen.auth.registr.RegisterViewModel
 import com.coffeepeek.admin.ui.screen.feed.FeedViewModel
@@ -43,6 +45,9 @@ import org.koin.dsl.module
 fun initKoin(
     registerLegacyFavorites: Boolean = true,
     platformModules: List<Module> = emptyList(),
+    shopReportRendererFactory: (CoffeePeekClient) -> ShopReportScreenRenderer = {
+        LegacyShopReportScreenRenderer
+    },
 ) {
     check(AppConfig.baseUrl.isNotBlank()) {
         "API_BASE_URL is not configured. Copy local.properties.example to local.properties."
@@ -60,13 +65,17 @@ fun initKoin(
             debug = AppConfig.isDebug,
             registerLegacyFavorites = registerLegacyFavorites,
         ),
-        appModule(database.settingRepository),
+        appModule(database.settingRepository, shopReportRendererFactory),
         imageModule(),
     )
     startKoin { modules(commonModules + platformModules) }
 }
 
-private fun appModule(settingRepository: com.coffeepeek.room.repository.SettingRepository) = module {
+private fun appModule(
+    settingRepository: com.coffeepeek.room.repository.SettingRepository,
+    shopReportRendererFactory: (CoffeePeekClient) -> ShopReportScreenRenderer,
+) = module {
+    single<ShopReportScreenRenderer> { shopReportRendererFactory(get()) }
     single<CustomUrlFetcher> { createImageUrlFetcher(get<CoffeePeekClient>().client) }
     single { CheckInDraftStore() }
     single { CityPreference(settingRepository) }

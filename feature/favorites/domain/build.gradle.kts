@@ -1,21 +1,15 @@
-import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
+import com.coffeepeek.buildlogic.api
+import com.coffeepeek.buildlogic.testImplementation
 
 plugins {
     id("com.coffeepeek.kmp.shared-library")
 }
 
-coffeepeekModule {
-    androidNamespace = "com.coffeepeek.feature.favorites.domain"
-}
+android.namespace = "com.coffeepeek.feature.favorites.domain"
 
-extensions.configure<KotlinMultiplatformExtension> {
-    sourceSets {
-        commonMain.dependencies {
-            api(libs.kotlinx.coroutines.core)
-        }
-        commonTest.dependencies {
-            implementation(libs.kotlin.test)
-            implementation(libs.kotlinx.coroutines.test)
-        }
-    }
+dependencies {
+    api(libs.kotlinx.coroutines.core)
+
+    testImplementation(libs.kotlin.test)
+    testImplementation(libs.kotlinx.coroutines.test)
 }

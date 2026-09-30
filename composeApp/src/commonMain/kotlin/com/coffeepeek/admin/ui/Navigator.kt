@@ -36,7 +36,7 @@ import com.coffeepeek.admin.ui.screen.review.CreateReviewScreen
 import com.coffeepeek.admin.ui.screen.review.EditReviewScreen
 import com.coffeepeek.admin.ui.screen.shop.ShopDetailScreen
 import com.coffeepeek.admin.ui.screen.shop.ShopMenuGalleryScreen
-import com.coffeepeek.admin.ui.screen.shop.ShopReportScreen
+import com.coffeepeek.admin.ui.screen.shop.ShopReportScreenRenderer
 import com.coffeepeek.admin.ui.screen.shopchange.ShopChangeEditorScreen
 import com.coffeepeek.admin.ui.screen.shopchange.ShopChangeRequestDetailScreen
 import com.coffeepeek.admin.ui.screen.shopchange.SuggestShopChangeScreen
@@ -54,6 +54,7 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.yield
 import kotlinx.serialization.Serializable
+import org.koin.compose.koinInject
 
 private const val ROOT_NAV_ANIMATION_DURATION_MS = 300
 
@@ -312,7 +313,7 @@ object Navigator {
                 }
                 composable<Screen.ReportShop> { backStack ->
                     val route = backStack.toRoute<Screen.ReportShop>()
-                    ShopReportScreen(shopId = route.shopId, shopTitle = route.shopTitle)
+                    koinInject<ShopReportScreenRenderer>().Content(route.shopId, route.shopTitle)
                 }
                 composable<Screen.SuggestShopChange> { backStack ->
                     val route = backStack.toRoute<Screen.SuggestShopChange>()

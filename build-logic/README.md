@@ -23,17 +23,28 @@ Its conventions are:
 - `com.coffeepeek.kmp.android-compose-library` configures Android Compose and
   its compiler with the API 37 compile SDK needed by Navigation 3.
 
-Feature build files declare which convention applies, set `androidNamespace`
-and (when the module owns Android resources) `resourcePrefix`, then list only
-their dependencies. The Compose convention derives the generated resource
-package from `androidNamespace`.
+Feature build files declare which convention applies, set `android.namespace`
+and (when the module owns Android resources) `android.resourcePrefix`, then list
+only their dependencies. The Compose convention derives the generated resource
+package from `android.namespace`. The former `coffeepeekModule` setters remain
+available for already migrated core scripts; new feature scripts use Android's
+native DSL.
 
-Project scripts import `com.coffeepeek.buildlogic.module` and declare dependencies:
+Project scripts import `com.coffeepeek.buildlogic.module` and the relevant
+`api`, `implementation`, and `testImplementation` helpers from buildSrc:
 
 ```kotlin
 implementation(project(module.core.network))
 implementation(project(module.legacy.domain))
 ```
+
+These helpers map to `commonMainApi`, `commonMainImplementation`, and
+`commonTestImplementation`. Plain Gradle `implementation` in a KMP Android
+module instead targets Android's `main` configuration and would silently leave
+shared/iOS source sets without the dependency. Android-only dependencies use
+`androidImplementation`; instrumented-test dependencies use
+`androidInstrumentedTestImplementation`. Standard `debugImplementation` and
+plugin-specific configurations such as `ksp` are not remapped.
 
 Core references are available but not automatically added to the application.
 Gradle's generated `projects` accessors also remain available. Do not create a
