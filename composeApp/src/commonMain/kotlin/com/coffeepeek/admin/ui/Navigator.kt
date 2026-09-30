@@ -35,7 +35,7 @@ import com.coffeepeek.admin.ui.screen.main.MainScreen
 import com.coffeepeek.admin.ui.screen.review.CreateReviewScreen
 import com.coffeepeek.admin.ui.screen.review.EditReviewScreen
 import com.coffeepeek.admin.ui.screen.shop.ShopDetailScreen
-import com.coffeepeek.admin.ui.screen.shop.ShopMenuGalleryScreen
+import com.coffeepeek.admin.ui.screen.shop.ShopMenuGalleryScreenRenderer
 import com.coffeepeek.admin.ui.screen.shop.ShopReportScreenRenderer
 import com.coffeepeek.admin.ui.screen.shopchange.ShopChangeEditorScreen
 import com.coffeepeek.admin.ui.screen.shopchange.ShopChangeRequestDetailScreen
@@ -309,7 +309,7 @@ object Navigator {
                 }
                 composable<Screen.ShopMenuGallery> { backStack ->
                     val route = backStack.toRoute<Screen.ShopMenuGallery>()
-                    ShopMenuGalleryScreen(shopId = route.shopId)
+                    koinInject<ShopMenuGalleryScreenRenderer>().Content(shopId = route.shopId)
                 }
                 composable<Screen.ReportShop> { backStack ->
                     val route = backStack.toRoute<Screen.ReportShop>()

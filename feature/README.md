@@ -1,7 +1,8 @@
 # Feature migration: API / implementation
 
-This directory now contains independent favorites and Shop Report
-api/domain/data/impl modules.
+This directory now contains independent favorites, Shop Report, and Shop
+api/domain/data/impl modules. Shop currently migrates only the Android menu
+gallery; see shop/README.md.
 Android application composition owns favorites Koin and its compatibility adapter; feed
 and detail observe favorites domain membership, and the Android favorites route
 renders the new screen. The shared root still uses Navigation 2, while iOS keeps

@@ -24,6 +24,14 @@ object Modules {
             const val data = ":feature:shop-report:data"
             const val impl = ":feature:shop-report:impl"
         }
+
+        val shop = Shop
+        object Shop {
+            const val api = ":feature:shop:api"
+            const val domain = ":feature:shop:domain"
+            const val data = ":feature:shop:data"
+            const val impl = ":feature:shop:impl"
+        }
     }
 
     object Legacy {
@@ -60,6 +68,10 @@ object Modules {
         feature.shopReport.domain,
         feature.shopReport.data,
         feature.shopReport.impl,
+        feature.shop.api,
+        feature.shop.domain,
+        feature.shop.data,
+        feature.shop.impl,
     )
 }
 

@@ -23,6 +23,8 @@ modules/data/                       repository implementations and mapping
 modules/room/                       Room persistence
 core/                               prepared infrastructure/design-system
 feature/favorites/                  api/domain/data/impl; Android screen active
+feature/shop-report/                api/domain/data/impl; Android report active
+feature/shop/                       api/domain/data/impl; Android menu gallery active
 ```
 
 Target ownership is feature-based:

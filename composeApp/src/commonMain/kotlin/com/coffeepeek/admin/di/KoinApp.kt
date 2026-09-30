@@ -11,6 +11,8 @@ import com.coffeepeek.api.CoffeePeekClient
 import com.coffeepeek.admin.ui.NavigatorViewModel
 import com.coffeepeek.admin.ui.screen.shop.LegacyShopReportScreenRenderer
 import com.coffeepeek.admin.ui.screen.shop.ShopReportScreenRenderer
+import com.coffeepeek.admin.ui.screen.shop.LegacyShopMenuGalleryScreenRenderer
+import com.coffeepeek.admin.ui.screen.shop.ShopMenuGalleryScreenRenderer
 import com.coffeepeek.admin.ui.screen.auth.AuthViewModel
 import com.coffeepeek.admin.ui.screen.auth.registr.RegisterViewModel
 import com.coffeepeek.admin.ui.screen.feed.FeedViewModel
@@ -48,6 +50,9 @@ fun initKoin(
     shopReportRendererFactory: (CoffeePeekClient) -> ShopReportScreenRenderer = {
         LegacyShopReportScreenRenderer
     },
+    shopGalleryRendererFactory: (CoffeePeekClient) -> ShopMenuGalleryScreenRenderer = {
+        LegacyShopMenuGalleryScreenRenderer
+    },
 ) {
     check(AppConfig.baseUrl.isNotBlank()) {
         "API_BASE_URL is not configured. Copy local.properties.example to local.properties."
@@ -65,7 +70,7 @@ fun initKoin(
             debug = AppConfig.isDebug,
             registerLegacyFavorites = registerLegacyFavorites,
         ),
-        appModule(database.settingRepository, shopReportRendererFactory),
+        appModule(database.settingRepository, shopReportRendererFactory, shopGalleryRendererFactory),
         imageModule(),
     )
     startKoin { modules(commonModules + platformModules) }
@@ -74,8 +79,10 @@ fun initKoin(
 private fun appModule(
     settingRepository: com.coffeepeek.room.repository.SettingRepository,
     shopReportRendererFactory: (CoffeePeekClient) -> ShopReportScreenRenderer,
+    shopGalleryRendererFactory: (CoffeePeekClient) -> ShopMenuGalleryScreenRenderer,
 ) = module {
     single<ShopReportScreenRenderer> { shopReportRendererFactory(get()) }
+    single<ShopMenuGalleryScreenRenderer> { shopGalleryRendererFactory(get()) }
     single<CustomUrlFetcher> { createImageUrlFetcher(get<CoffeePeekClient>().client) }
     single { CheckInDraftStore() }
     single { CityPreference(settingRepository) }
