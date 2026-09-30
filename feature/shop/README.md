@@ -3,7 +3,8 @@
 `feature/shop` owns shop browsing. The first Android slice migrates only the
 menu-photo gallery; the much larger shop-details screen stays in legacy code.
 The next preparation slice adds a read-only `ShopOverview` contract and mapper
-for the detail header, without switching that screen yet.
+for the detail header, plus stateless hero/stat components with colocated
+light/dark previews, without switching that screen yet.
 The existing shared/iOS route and ViewModel remain untouched.
 
 | Module | Responsibility | Allowed dependencies and consumers |

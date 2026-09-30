@@ -7,4 +7,11 @@
     <string name="shop_menu_gallery_photo_description">Фотография меню %1$d из %2$d</string>
     <string name="shop_menu_gallery_photo_counter">%1$d / %2$d</string>
     <string name="shop_menu_gallery_photo_unavailable">Фото недоступно</string>
+    <string name="shop_overview_photo_missing">Фото кофейни отсутствует</string>
+    <string name="shop_overview_photo_description">Фото кофейни «%1$s»</string>
+    <string name="shop_overview_photo_counter">%1$d / %2$d</string>
+    <string name="shop_overview_show_on_map">Показать на карте</string>
+    <string name="shop_overview_reviews">Отзывов: %1$d</string>
+    <string name="shop_overview_open">Открыто сейчас</string>
+    <string name="shop_overview_closed">Сейчас закрыто</string>
 </resources>
