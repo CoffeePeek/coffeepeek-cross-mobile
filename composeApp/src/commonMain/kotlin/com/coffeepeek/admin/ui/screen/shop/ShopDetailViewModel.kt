@@ -28,6 +28,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
 
 data class ShopDetailUiState(
     val details: CoffeeShopDetails? = null,
@@ -58,6 +59,7 @@ class ShopDetailViewModel(
     private val _uiState = MutableStateFlow(ShopDetailUiState())
     val uiState = _uiState.asStateFlow()
     private val favoriteIds = MutableStateFlow<Set<String>?>(null)
+    private val favoriteMutationMutex = Mutex()
 
     init {
         load()
@@ -126,38 +128,47 @@ class ShopDetailViewModel(
 
     fun toggleFavorite() {
         workScope.launch {
-            if (!sessionRepository.isLoggedIn()) {
-                Navigator.navigate(Navigator.Screen.Auth)
-                return@launch
-            }
-            val details = _uiState.value.details ?: return@launch
-            val isFavorite = details.shop.isFavorite
-            _uiState.update { it.copy(isFavoriteLoading = true) }
-            val result = if (isFavorite) {
-                favoriteRepository.removeFavorite(shopId)
-            } else {
-                favoriteRepository.addFavorite(
-                    shop = details.shop,
-                    address = details.location?.address ?: details.shop.address,
-                )
-            }
-            result
-                .onSuccess {
-                    val newFavoriteState = !isFavorite
-                    FavoriteSync.notifyChanged(shopId, newFavoriteState)
-                    _uiState.update { state ->
-                        val current = state.details ?: return@update state
-                        state.copy(
-                            details = current.copy(
-                                shop = current.shop.copy(isFavorite = newFavoriteState),
-                            ),
-                            isFavoriteLoading = false,
-                        )
+            if (!favoriteMutationMutex.tryLock()) return@launch
+            var loadingStarted = false
+            try {
+                if (!sessionRepository.isLoggedIn()) {
+                    Navigator.navigate(Navigator.Screen.Auth)
+                    return@launch
+                }
+                val details = _uiState.value.details ?: return@launch
+                val isFavorite = details.shop.isFavorite
+                _uiState.update { it.copy(isFavoriteLoading = true) }
+                loadingStarted = true
+                val result = if (isFavorite) {
+                    favoriteRepository.removeFavorite(shopId)
+                } else {
+                    favoriteRepository.addFavorite(
+                        shop = details.shop,
+                        address = details.location?.address ?: details.shop.address,
+                    )
+                }
+                result.exceptionOrNull()?.let { if (it is CancellationException) throw it }
+                result
+                    .onSuccess {
+                        val newFavoriteState = !isFavorite
+                        FavoriteSync.notifyChanged(shopId, newFavoriteState)
+                        _uiState.update { state ->
+                            val current = state.details ?: return@update state
+                            state.copy(
+                                details = current.copy(
+                                    shop = current.shop.copy(isFavorite = newFavoriteState),
+                                ),
+                                isFavoriteLoading = false,
+                            )
+                        }
                     }
-                }
-                .onFailure { e ->
-                    _uiState.update { it.copy(actionMessage = e.message, isFavoriteLoading = false) }
-                }
+                    .onFailure { e ->
+                        _uiState.update { it.copy(actionMessage = e.message, isFavoriteLoading = false) }
+                    }
+            } finally {
+                if (loadingStarted) _uiState.update { it.copy(isFavoriteLoading = false) }
+                favoriteMutationMutex.unlock()
+            }
         }
     }
 

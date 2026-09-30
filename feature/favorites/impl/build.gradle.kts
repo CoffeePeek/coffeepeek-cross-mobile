@@ -1,25 +1,24 @@
 import com.coffeepeek.buildlogic.module
-import com.coffeepeek.config.Config
-import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
 
 plugins {
-    alias(libs.plugins.kotlinMultiplatform)
-    alias(libs.plugins.androidLibrary)
-    alias(libs.plugins.composeMultiplatform)
-    alias(libs.plugins.composeCompiler)
+    id("com.coffeepeek.kmp.android-compose-library")
 }
 
-kotlin {
-    androidTarget { compilerOptions { jvmTarget.set(JvmTarget.fromTarget(Config.JVM_VERSION)) } }
+coffeepeekModule {
+    androidNamespace = "com.coffeepeek.feature.favorites.impl"
+    resourcePrefix = "favorites_"
+}
 
+extensions.configure<KotlinMultiplatformExtension> {
     sourceSets {
         commonMain.dependencies {
             api(project(module.feature.favorites.api))
             implementation(project(module.feature.favorites.domain))
             implementation(project(module.core.designSystem))
             implementation(project(module.core.presentation))
-            implementation(compose.components.resources)
-            implementation(compose.components.uiToolingPreview)
+            implementation(libs.compose.components.resources)
+            implementation(libs.compose.components.ui.tooling.preview)
             implementation(libs.androidx.lifecycle.viewmodelCompose)
             implementation(libs.androidx.lifecycle.runtimeCompose)
             implementation(libs.kamel)
@@ -29,7 +28,7 @@ kotlin {
             implementation(libs.kotlinx.coroutines.test)
         }
         androidMain.dependencies {
-            implementation("androidx.compose.ui:ui-tooling-preview:${libs.versions.androidx.composeUi.get()}")
+            implementation(libs.androidx.compose.ui.tooling.preview)
         }
         androidInstrumentedTest.dependencies {
             implementation(libs.androidx.compose.ui.test.junit4)
@@ -41,22 +40,7 @@ kotlin {
         }
     }
 }
-dependencies { add("debugImplementation", compose.uiTooling) }
 
-compose.resources {
-    packageOfResClass = "com.coffeepeek.feature.favorites.impl.resources"
-    publicResClass = false
-}
-
-android {
-    namespace = "com.coffeepeek.feature.favorites.impl"
-    compileSdk = 37
-    defaultConfig {
-        minSdk = Config.MIN_SDK
-        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-    }
-    compileOptions {
-        sourceCompatibility = Config.JAVA_VERSION
-        targetCompatibility = Config.JAVA_VERSION
-    }
+dependencies {
+    debugImplementation(libs.compose.ui.tooling)
 }

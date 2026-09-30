@@ -26,6 +26,8 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 
 private const val PAGE_SIZE = 20
 
@@ -66,6 +68,7 @@ data class FeedFiltersUi(
 
 data class FeedUiState(
     val shops: List<CoffeeShop> = emptyList(),
+    val favoriteUpdates: Set<String> = emptySet(),
     // The first shops request starts after catalogs/city resolution. Keep the
     // screen in a loading state during that preparation so the empty state
     // cannot flash before the initial request is dispatched.
@@ -112,6 +115,7 @@ class FeedViewModel(
 
     private val queryFlow = MutableStateFlow("")
     private val favoriteIds = MutableStateFlow<Set<String>?>(null)
+    private val favoriteMutationGuard = Mutex()
     private var shopsLoadJob: Job? = null
     private var isCityReady = false
 
@@ -306,7 +310,19 @@ class FeedViewModel(
                 Navigator.navigate(Navigator.Screen.Auth)
                 return@launch
             }
-            val nextFavorite = !shop.isFavorite
+            val started = favoriteMutationGuard.withLock {
+                if (shop.id in _uiState.value.favoriteUpdates) {
+                    false
+                } else {
+                    _uiState.update { it.copy(favoriteUpdates = it.favoriteUpdates + shop.id) }
+                    true
+                }
+            }
+            if (!started) return@launch
+
+            val previousFavorite = _uiState.value.shops
+                .firstOrNull { it.id == shop.id }?.isFavorite ?: shop.isFavorite
+            val nextFavorite = !previousFavorite
             _uiState.update { state ->
                 state.copy(
                     shops = state.shops.map { item ->
@@ -315,25 +331,48 @@ class FeedViewModel(
                 )
             }
 
-            val result = if (nextFavorite) {
-                favoriteRepository.addFavorite(shop, shop.address)
-            } else {
-                favoriteRepository.removeFavorite(shop.id)
-            }
-
-            result
-                .onSuccess {
+            try {
+                val result = if (nextFavorite) {
+                    favoriteRepository.addFavorite(shop, shop.address)
+                } else {
+                    favoriteRepository.removeFavorite(shop.id)
+                }
+                result.exceptionOrNull()?.let { if (it is CancellationException) throw it }
+                if (result.isSuccess) {
                     FavoriteSync.notifyChanged(shop.id, nextFavorite)
+                } else {
+                    restoreFavorite(shop.id, previousFavorite, nextFavorite)
                 }
-                .onFailure {
-                    _uiState.update { state ->
-                        state.copy(
-                            shops = state.shops.map { item ->
-                                if (item.id == shop.id) item.copy(isFavorite = shop.isFavorite) else item
-                            },
-                        )
-                    }
+            } catch (cancellation: CancellationException) {
+                restoreFavorite(shop.id, previousFavorite, nextFavorite)
+                throw cancellation
+            } catch (error: Exception) {
+                restoreFavorite(shop.id, previousFavorite, nextFavorite)
+                throw error
+            } finally {
+                favoriteMutationGuard.withLock {
+                    _uiState.update { it.copy(favoriteUpdates = it.favoriteUpdates - shop.id) }
                 }
+            }
+        }
+    }
+
+    private fun restoreFavorite(shopId: String, previousFavorite: Boolean, requestedFavorite: Boolean) {
+        val observedFavorite = favoriteIds.value?.contains(shopId)
+        _uiState.update { state ->
+            state.copy(
+                shops = state.shops.map { item ->
+                    if (item.id == shopId) {
+                        val latestFavorite = observedFavorite ?: item.isFavorite
+                        val restoredFavorite = if (latestFavorite == requestedFavorite) {
+                            previousFavorite
+                        } else {
+                            latestFavorite
+                        }
+                        item.copy(isFavorite = restoredFavorite)
+                    } else item
+                },
+            )
         }
     }
 

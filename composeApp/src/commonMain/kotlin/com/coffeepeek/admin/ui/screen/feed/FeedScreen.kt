@@ -62,6 +62,7 @@ import com.coffeepeek.admin.location.distanceToShopMeters
 import com.coffeepeek.admin.location.formatDistance
 import com.coffeepeek.admin.location.rememberPermittedUserLocation
 import com.coffeepeek.admin.theme.CpColor
+import com.coffeepeek.admin.theme.CoffeePeekTheme
 import com.coffeepeek.admin.theme.CpDimens
 import com.coffeepeek.admin.ui.Navigator
 import com.coffeepeek.admin.ui.component.CoffeeShopImage
@@ -77,6 +78,7 @@ import com.coffeepeek.admin.ui.model.COFFEE_FOCUS_OPTIONS
 import com.coffeepeek.admin.utils.formatOneDecimal
 import androidx.compose.foundation.lazy.LazyColumn
 import com.coffeepeek.domain.model.CoffeeShop
+import org.jetbrains.compose.ui.tooling.preview.Preview
 import coffeepeek.composeapp.generated.resources.Res
 import coffeepeek.composeapp.generated.resources.maskot_with_magnifying_glass
 import org.jetbrains.compose.resources.DrawableResource
@@ -303,6 +305,7 @@ fun FeedScreen(vm: FeedViewModel = platformViewModel()) {
                                 shop = shop,
                                 distance = formatDistance(distanceToShopMeters(userLocation, shop.location)),
                                 onClick = { Navigator.navigate(Navigator.Screen.ShopDetail(shop.id)) },
+                                isFavoriteUpdating = shop.id in state.favoriteUpdates,
                                 onToggleFavorite = { vm.toggleFavorite(shop) },
                             )
                         }
@@ -393,6 +396,7 @@ internal fun ShopCard(
     shop: CoffeeShop,
     distance: String? = null,
     onClick: () -> Unit,
+    isFavoriteUpdating: Boolean = false,
     onToggleFavorite: () -> Unit,
 ) {
     Card(
@@ -491,6 +495,7 @@ internal fun ShopCard(
                     }
                     FavoriteIconBadge(
                         isFavorite = shop.isFavorite,
+                        enabled = !isFavoriteUpdating,
                         onClick = onToggleFavorite,
                     )
                 }
@@ -653,6 +658,7 @@ internal fun ShopCard(
 @Composable
 private fun FavoriteIconBadge(
     isFavorite: Boolean,
+    enabled: Boolean = true,
     onClick: () -> Unit,
 ) {
     Box(
@@ -660,7 +666,7 @@ private fun FavoriteIconBadge(
             .size(36.dp)
             .clip(RoundedCornerShape(CpDimens.radiusLg))
             .background(Color.Black.copy(alpha = 0.68f))
-            .clickable(onClick = onClick),
+            .clickable(enabled = enabled, onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
         Icon(
@@ -871,4 +877,27 @@ private fun DesignFilterChip(
             )
         }
     }
+}
+
+private val previewCoffeeShop = CoffeeShop(
+    id = "feed-preview",
+    title = "Кофейня с длинным названием",
+    rating = 4.8,
+    reviewCount = 42,
+    cityName = "Минск",
+    priceRange = "\$\$",
+    photoUrl = null,
+    isFavorite = true,
+)
+
+@Preview
+@Composable
+private fun ShopCardLightPreview() = CoffeePeekTheme(darkTheme = false) {
+    ShopCard(previewCoffeeShop, "1 км", {}, isFavoriteUpdating = true, onToggleFavorite = {})
+}
+
+@Preview
+@Composable
+private fun ShopCardDarkPreview() = CoffeePeekTheme(darkTheme = true) {
+    ShopCard(previewCoffeeShop.copy(isFavorite = false), "1 км", {}, onToggleFavorite = {})
 }

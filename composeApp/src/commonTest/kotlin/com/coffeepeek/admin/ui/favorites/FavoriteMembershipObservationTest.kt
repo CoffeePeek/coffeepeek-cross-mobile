@@ -62,6 +62,26 @@ class FavoriteMembershipObservationTest {
         override suspend fun clearAll() = Unit
     }
 
+    private class FavoriteWriter : FavoriteRepository {
+        var addCalls = 0
+        var removeCalls = 0
+        var addResult: Result<Unit> = Result.success(Unit)
+        var removeResult: Result<Unit> = Result.success(Unit)
+
+        override suspend fun getFavoriteIds() = emptySet<String>()
+        override suspend fun isFavorite(shopId: String) = false
+        override suspend fun getFavorites() = Result.success(emptyList<CoffeeShopDetails>())
+        override suspend fun addFavorite(shop: CoffeeShop, address: String?): Result<Unit> {
+            addCalls++
+            return addResult
+        }
+        override suspend fun removeFavorite(shopId: String): Result<Unit> {
+            removeCalls++
+            return removeResult
+        }
+        override suspend fun clearAll() = Unit
+    }
+
     private object Sessions : SessionRepository {
         override fun peekSession(): Session? = null
         override fun applySession(session: Session?) = Unit
@@ -72,6 +92,18 @@ class FavoriteMembershipObservationTest {
         override suspend fun warmCache() = Unit
         override fun observeSession(): Flow<Session?> = emptyFlow()
         override suspend fun isLoggedIn() = false
+    }
+
+    private object SignedInSessions : SessionRepository {
+        override fun peekSession(): Session? = null
+        override fun applySession(session: Session?) = Unit
+        override fun isActiveSession(session: Session?) = true
+        override suspend fun getSession(): Session? = null
+        override suspend fun persistSession(session: Session?) = Unit
+        override suspend fun saveSession(session: Session?) = Unit
+        override suspend fun warmCache() = Unit
+        override fun observeSession(): Flow<Session?> = emptyFlow()
+        override suspend fun isLoggedIn() = true
     }
 
     private object Settings : SettingRepository {
@@ -90,7 +122,7 @@ class FavoriteMembershipObservationTest {
     }
 
     private object Reviews : ReviewRepository {
-        override suspend fun canCreateReview(shopId: String): Result<Pair<Boolean, String?>> = error("unused")
+        override suspend fun canCreateReview(shopId: String): Result<Pair<Boolean, String?>> = Result.success(true to null)
         override suspend fun createReview(input: CreateReviewInput): Result<Unit> = error("unused")
         override suspend fun updateReview(reviewId: String, input: UpdateReviewInput): Result<Unit> = error("unused")
         override suspend fun getUserReviews(userId: String, page: Int, pageSize: Int): Result<PagedResult<Review>> = error("unused")
@@ -126,6 +158,81 @@ class FavoriteMembershipObservationTest {
             membership.set()
             withTimeout(5_000) { vm.uiState.first { it.details?.shop?.isFavorite == false } }
             assertEquals("shop", vm.uiState.value.details?.shop?.id)
+        } finally { vm.close() }
+    }
+
+    @Test fun signedInDetailToggleAddsAndRemovesFavorite() = runBlocking {
+        val shops = Shops()
+        val writer = FavoriteWriter()
+        val vm = ShopDetailViewModel("shop", shops, writer, CheckIns, Reviews, SignedInSessions,
+            CheckInDraftStore { 0L })
+        try {
+            shops.details.complete(CoffeeShopDetails(shop))
+            withTimeout(5_000) { vm.uiState.first { it.details != null && !it.isLoading } }
+
+            vm.toggleFavorite()
+            withTimeout(5_000) { vm.uiState.first { it.details?.shop?.isFavorite == true } }
+            assertEquals(1, writer.addCalls)
+            assertEquals(0, writer.removeCalls)
+
+            vm.toggleFavorite()
+            withTimeout(5_000) { vm.uiState.first { it.details?.shop?.isFavorite == false && !it.isFavoriteLoading } }
+            assertEquals(1, writer.addCalls)
+            assertEquals(1, writer.removeCalls)
+        } finally { vm.close() }
+    }
+
+    @Test fun signedInFeedHeartAddsFavorite() = runBlocking {
+        val shops = Shops()
+        val writer = FavoriteWriter()
+        val vm = FeedViewModel(shops, writer, CityPreference(Settings), SignedInSessions)
+        try {
+            shops.search.complete(PagedResult(listOf(shop), 1, 1, 1))
+            withTimeout(5_000) { vm.uiState.first { it.shops.singleOrNull()?.id == shop.id && !it.isLoading } }
+
+            vm.toggleFavorite(shop)
+
+            withTimeout(5_000) { vm.uiState.first { it.shops.singleOrNull()?.isFavorite == true } }
+            assertEquals(1, writer.addCalls)
+            assertEquals(0, writer.removeCalls)
+        } finally { vm.close() }
+    }
+
+    @Test fun failedFeedFavoriteWriteRollsBackOptimisticHeart() = runBlocking {
+        val shops = Shops()
+        val writer = FavoriteWriter().apply {
+            addResult = Result.failure(IllegalStateException("storage unavailable"))
+        }
+        val vm = FeedViewModel(shops, writer, CityPreference(Settings), SignedInSessions)
+        try {
+            shops.search.complete(PagedResult(listOf(shop), 1, 1, 1))
+            withTimeout(5_000) { vm.uiState.first { it.shops.singleOrNull()?.id == shop.id && !it.isLoading } }
+
+            vm.toggleFavorite(shop)
+
+            withTimeout(5_000) { vm.uiState.first { it.shops.singleOrNull()?.isFavorite == false && writer.addCalls == 1 } }
+            assertEquals(1, writer.addCalls)
+            assertEquals(0, writer.removeCalls)
+        } finally { vm.close() }
+    }
+
+    @Test fun failedDetailFavoriteWriteDoesNotMarkShopAsFavorite() = runBlocking {
+        val shops = Shops()
+        val writer = FavoriteWriter().apply {
+            addResult = Result.failure(IllegalStateException("storage unavailable"))
+        }
+        val vm = ShopDetailViewModel("shop", shops, writer, CheckIns, Reviews, SignedInSessions,
+            CheckInDraftStore { 0L })
+        try {
+            shops.details.complete(CoffeeShopDetails(shop))
+            withTimeout(5_000) { vm.uiState.first { it.details != null && !it.isLoading } }
+
+            vm.toggleFavorite()
+
+            withTimeout(5_000) { vm.uiState.first { it.actionMessage == "storage unavailable" } }
+            assertFalse(vm.uiState.value.details!!.shop.isFavorite)
+            assertFalse(vm.uiState.value.isFavoriteLoading)
+            assertEquals(1, writer.addCalls)
         } finally { vm.close() }
     }
 

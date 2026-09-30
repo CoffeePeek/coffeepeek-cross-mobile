@@ -27,10 +27,13 @@ must be verified before moving on even when it does not get its own PR.
   fixtures both migrated to v3 on Pixel 10a / Android 17; saved favorites were
   readable through the new repository and legacy adapter, mutations persisted,
   and clear remained clear after reopening.
-- [ ] Verify the complete Android user journey in step 3. Existing unit tests
-  cover late membership updates in feed/detail and destination callbacks; the
-  complete signed-in round trips, logout, location-permission states, and
-  process recreation are not verified end-to-end.
+- [ ] Verify the complete Android user journey in step 3. Unit tests now cover
+  late membership updates in feed/detail, signed-in feed-heart writes and
+  optimistic rollback, shop-detail add/remove round trips and failed writes,
+  and destination callbacks. Feed and shop-detail ViewModels now suppress
+  overlapping heart writes per shop, and the feed disables that heart while a
+  write is pending. Logout, location-permission states, and process recreation
+  are not verified end-to-end.
 - [ ] Finish UI, accessibility and locale QA in step 4. The favorite-card
   removal target is now 48dp and only Russian favorites resources exist;
   visual/screen-reader QA and product locale confirmation remain open. The
@@ -153,6 +156,31 @@ unrelated foreground app was closed or altered.
 
 Exit: Android user journeys pass without a stale heart, duplicate write, lost
 saved row, crash, or navigation regression. Record the device/API used.
+
+Verification so far: `:composeApp:testDebugUnitTest` passes with the signed-in
+feed/detail write-path, add/remove round-trip, and failed-write tests. This
+proves the ViewModel contracts with fakes, not the full authenticated app
+journey.
+
+Code inspection confirms favorites only calls `rememberPermittedUserLocation`,
+which reads location after `PlatformLocation.hasPermission()` and never invokes
+the permission-request effect. The no-permission / already-granted behavior
+still needs a device smoke test.
+
+Device smoke checklist (use a designated QA account with disposable favorites):
+
+1. With location permission denied, open Favorites and confirm no permission
+   prompt appears and the saved list still loads.
+2. With location permission already granted and saved coordinates present,
+   confirm distance is shown; missing coordinates remain omitted.
+3. From feed, favorite a shop; open Favorites, open that shop, remove it there,
+   return to feed and confirm the heart and list agree.
+4. Recreate the activity/process and confirm the saved rows remain; remove a
+   row, sign out, and confirm session cleanup behavior without using a personal
+   account or personal saved data.
+5. Repeat with forced session expiry only if QA has a safe way to trigger it;
+   verify navigation continues and the cleanup warning is visible if cleanup
+   fails.
 
 ## 4. Finish Android UI and resource quality
 

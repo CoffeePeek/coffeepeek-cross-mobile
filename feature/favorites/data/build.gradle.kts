@@ -1,17 +1,16 @@
 import com.coffeepeek.buildlogic.module
-import com.coffeepeek.config.Config
-import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
 
 plugins {
-    alias(libs.plugins.kotlinMultiplatform)
-    alias(libs.plugins.androidLibrary)
+    id("com.coffeepeek.kmp.shared-library")
     alias(libs.plugins.kotlin.serialization)
 }
 
-kotlin {
-    androidTarget { compilerOptions { jvmTarget.set(JvmTarget.fromTarget(Config.JVM_VERSION)) } }
-    iosArm64()
-    iosSimulatorArm64()
+coffeepeekModule {
+    androidNamespace = "com.coffeepeek.feature.favorites.data"
+}
+
+extensions.configure<KotlinMultiplatformExtension> {
     sourceSets {
         commonMain.dependencies {
             api(project(module.feature.favorites.domain))
@@ -21,18 +20,5 @@ kotlin {
             implementation(libs.kotlin.test)
             implementation(libs.kotlinx.coroutines.test)
         }
-
-    }
-}
-
-android {
-    namespace = "com.coffeepeek.feature.favorites.data"
-    compileSdk = Config.COMPILE_SDK
-    defaultConfig {
-        minSdk = Config.MIN_SDK
-    }
-    compileOptions {
-        sourceCompatibility = Config.JAVA_VERSION
-        targetCompatibility = Config.JAVA_VERSION
     }
 }
