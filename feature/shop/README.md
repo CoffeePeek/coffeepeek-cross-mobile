@@ -62,6 +62,12 @@ silently drops those photos. Preserve the UI during migration, but do not claim
 edited photos were saved until server support exists.
 The nested photo-source modal may require Interactive/Run Preview in the IDE;
 compilation does not verify actual modal rendering or Android picker behavior.
+The write repository now prepares review creation through the existing
+`/api/Photos/shop` presigned upload flow and `POST /api/ModerationReviews`, and
+editing through `PUT /api/ModerationReviews/{reviewId}` with text/ratings only.
+The upload client is separate from the authenticated API client; public upload
+URLs are validated before any image bytes are sent. This repository is not yet
+wired into a review editor ViewModel or application route.
 Contact link formatting belongs to presentation; opening links and copying phone numbers remain caller
 callbacks, not feature-owned platform calls.
 
