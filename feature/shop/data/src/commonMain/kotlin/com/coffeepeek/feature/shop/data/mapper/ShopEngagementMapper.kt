@@ -54,6 +54,12 @@ internal fun ShopReviewDto.toDomain(files: ShopFileUrlResolver): ShopReview? {
 
 internal fun ShopCheckInDto.toDomain(files: ShopFileUrlResolver): ShopCheckIn? {
     if (id.isBlank()) return null
+    val resolvedPhotos = photos.mapNotNull { photo ->
+        val full = files.resolve(photo.storageKey, photo.urls?.fullscreen ?: photo.fullUrl)
+            ?: return@mapNotNull null
+        val thumbnail = files.resolve(photo.storageKey, photo.urls?.thumbnail ?: photo.fullUrl) ?: full
+        full to thumbnail
+    }
     return ShopCheckIn(
         id = id,
         userId = userId,
@@ -62,12 +68,8 @@ internal fun ShopCheckInDto.toDomain(files: ShopFileUrlResolver): ShopCheckIn? {
         createdAt = createdAt,
         visitedAt = visitedAt,
         reviewId = reviewId,
-        photoUrls = photos.mapNotNull { photo ->
-            files.resolve(photo.storageKey, photo.urls?.fullscreen ?: photo.fullUrl)
-        },
-        photoThumbnailUrls = photos.mapNotNull { photo ->
-            files.resolve(photo.storageKey, photo.urls?.thumbnail ?: photo.fullUrl)
-        },
+        photoUrls = resolvedPhotos.map { it.first },
+        photoThumbnailUrls = resolvedPhotos.map { it.second },
         rating = rating?.toDomain(),
     )
 }

@@ -46,4 +46,20 @@
     <string name="shop_features_show_all">Показать все: %1$d</string>
     <string name="shop_features_collapse">Свернуть</string>
     <string name="shop_description_title">Описание</string>
+    <string name="shop_reviews_title">Отзывы</string>
+    <string name="shop_reviews_empty">Станьте первым, кто оставит отзыв о кофейне «%1$s»</string>
+    <string name="shop_reviews_sign_in_prompt">Войдите, чтобы увидеть все отзывы</string>
+    <string name="shop_reviews_sign_in">Войти</string>
+    <string name="shop_reviews_register">Зарегистрироваться</string>
+    <string name="shop_reviews_rating">Оценка: %1$s</string>
+    <string name="shop_reviews_helpful">Полезно: %1$d</string>
+    <string name="shop_reviews_photo_description">Фото отзыва %1$d из %2$d</string>
+    <string name="shop_photo_unavailable">Фото недоступно</string>
+    <string name="shop_checkins_title">Мои чекины</string>
+    <string name="shop_checkins_visited">Посещение: %1$s</string>
+    <string name="shop_checkins_photo_description">Фото посещения %1$d из %2$d</string>
+    <string name="shop_detail_title">Кофейня</string>
+    <string name="shop_detail_back">Назад</string>
+    <string name="shop_detail_error">Не удалось загрузить кофейню</string>
+    <string name="shop_detail_retry">Повторить</string>
 </resources>

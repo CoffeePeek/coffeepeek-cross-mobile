@@ -6,6 +6,8 @@ Preparation slices add a read-only `ShopDetails` snapshot (overview, menu,
 locally displayed weekly schedule, coffee catalog, contacts, features, reviews
 and user check-ins), plus stateless components with colocated light/dark
 previews, without switching that screen yet.
+`ShopDetailScreenContent` now composes these read-only blocks and emits typed
+actions with fake-state previews; it has no runtime ViewModel/entry wiring yet.
 The existing shared/iOS route and ViewModel remain untouched.
 
 | Module | Responsibility | Allowed dependencies and consumers |
