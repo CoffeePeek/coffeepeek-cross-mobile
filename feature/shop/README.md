@@ -50,6 +50,13 @@ for `GET /api/CoffeeShopReviews/can-create`; it is not inferred from published
 reviews. The ViewModel routes the review action to create/edit events from this
 response and fails closed when eligibility is unavailable. The new forms and
 application event bridge are not wired yet.
+The review editor has a stateless text/rating body with paired previews and
+domain-owned length validation; it is not yet a usable submission sheet.
+Photo picking, draft restoration, write requests, and success/failure handling
+remain for the next slices. The current backend update command has no `photos`
+field, so the new edit form must not promise new-photo uploads until that API
+supports them. The legacy edit form displays that control but silently drops
+its selected photos.
 Contact link formatting belongs to presentation; opening links and copying phone numbers remain caller
 callbacks, not feature-owned platform calls.
 
