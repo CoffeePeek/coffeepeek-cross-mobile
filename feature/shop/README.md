@@ -67,7 +67,14 @@ The write repository now prepares review creation through the existing
 editing through `PUT /api/ModerationReviews/{reviewId}` with text/ratings only.
 The upload client is separate from the authenticated API client; public upload
 URLs are validated before any image bytes are sent. This repository is not yet
-wired into a review editor ViewModel or application route.
+wired into the application route. A new create-review MVI ViewModel now uses the
+write contract and a presentation-only draft-store port. Its runtime sheet
+adapter accepts application-owned Android gallery/camera callbacks. An Android
+adapter for the existing keyed draft store is prepared in `composeApp`
+(text/ratings persisted, photo bytes memory-only). Composition still needs to
+create the ViewModel, supply clients and callbacks, and handle success events;
+no active Android route uses this sheet yet. Edit-review loading and
+submission remain a separate follow-up.
 Contact link formatting belongs to presentation; opening links and copying phone numbers remain caller
 callbacks, not feature-owned platform calls.
 

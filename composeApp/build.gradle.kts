@@ -39,6 +39,7 @@ kotlin {
             implementation(project(module.feature.shopReport.data))
             implementation(project(module.feature.shopReport.impl))
             implementation(project(module.feature.shop.api))
+            implementation(project(module.feature.shop.domain))
             implementation(project(module.feature.shop.data))
             implementation(project(module.feature.shop.impl))
             implementation(project(module.core.coroutines))

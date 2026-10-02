@@ -36,6 +36,8 @@ import com.coffeepeek.feature.shop.impl.resources.shop_review_service
 import com.coffeepeek.feature.shop.impl.resources.shop_review_submit_create
 import com.coffeepeek.feature.shop.impl.resources.shop_review_submit_edit
 import com.coffeepeek.feature.shop.impl.resources.shop_review_edit_unavailable
+import com.coffeepeek.feature.shop.impl.resources.shop_review_draft_failed
+import com.coffeepeek.feature.shop.impl.resources.shop_review_submit_failed
 import com.coffeepeek.feature.shop.impl.ui.compose.component.ShopReviewRatingField
 import com.coffeepeek.feature.shop.impl.ui.compose.component.ShopReviewPhotoAttachments
 import com.coffeepeek.feature.shop.impl.ui.compose.component.ShopReviewExistingPhotos
@@ -120,8 +122,11 @@ internal fun ShopReviewEditorContent(
             )
             if (!state.canEdit) Text(stringResource(Res.string.shop_review_edit_unavailable),
                 color = MaterialTheme.colorScheme.error)
+            if (state.draftError) Text(stringResource(Res.string.shop_review_draft_failed),
+                color = MaterialTheme.colorScheme.error)
             state.submitError?.let {
-                Text(it, color = MaterialTheme.colorScheme.error)
+                Text(it.ifBlank { stringResource(Res.string.shop_review_submit_failed) },
+                    color = MaterialTheme.colorScheme.error)
             }
             if (state.isSubmitting) CircularProgressIndicator()
             else AppButton(

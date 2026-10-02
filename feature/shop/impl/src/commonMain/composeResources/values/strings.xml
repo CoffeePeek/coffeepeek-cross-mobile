@@ -104,4 +104,6 @@
     <string name="shop_review_draft_restored">Черновик восстановлен</string>
     <string name="shop_review_draft_discard">Удалить черновик</string>
     <string name="shop_review_sheet_dismiss">Закрыть форму отзыва</string>
+    <string name="shop_review_draft_failed">Не удалось обработать черновик</string>
+    <string name="shop_review_submit_failed">Не удалось отправить отзыв</string>
 </resources>

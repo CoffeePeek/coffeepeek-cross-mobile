@@ -22,4 +22,5 @@ internal data class ShopReviewFormState(
     val newPhotos: List<ShopReviewPhoto> = emptyList(),
     val draftRestored: Boolean = false,
     val isPhotoLoading: Boolean = false,
+    val draftError: Boolean = false,
 )
