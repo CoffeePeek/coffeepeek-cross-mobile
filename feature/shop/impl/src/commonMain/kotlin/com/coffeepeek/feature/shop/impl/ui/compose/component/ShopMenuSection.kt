@@ -19,12 +19,16 @@ import com.coffeepeek.feature.shop.domain.model.ShopMenuItem
 import com.coffeepeek.feature.shop.impl.resources.Res
 import com.coffeepeek.feature.shop.impl.resources.shop_menu_captured
 import com.coffeepeek.feature.shop.impl.resources.shop_menu_no_items
+import com.coffeepeek.feature.shop.impl.resources.shop_menu_espresso
+import com.coffeepeek.feature.shop.impl.resources.shop_menu_filter
+import com.coffeepeek.feature.shop.impl.resources.shop_menu_other
 import com.coffeepeek.feature.shop.impl.resources.shop_menu_photos
 import com.coffeepeek.feature.shop.impl.resources.shop_menu_title
 import com.coffeepeek.feature.shop.impl.resources.shop_menu_updated
 import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
-import kotlin.math.roundToInt
+import kotlin.math.abs
+import kotlin.math.roundToLong
 
 @Composable
 internal fun ShopMenuSection(
@@ -32,21 +36,28 @@ internal fun ShopMenuSection(
     onOpenPhotos: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val presentItems = menu.items.filter { it.availability.equals("Present", ignoreCase = true) }
+    val groups = groupedPresentItems(menu.items)
     Card(modifier.fillMaxWidth()) {
         Column(
             Modifier.padding(CpDimens.spacing4),
             verticalArrangement = Arrangement.spacedBy(CpDimens.spacing3),
         ) {
             Text(stringResource(Res.string.shop_menu_title), style = MaterialTheme.typography.titleMedium)
-            if (presentItems.isEmpty()) {
+            if (groups.isEmpty()) {
                 Text(
                     stringResource(Res.string.shop_menu_no_items),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             } else {
-                presentItems.forEach { item -> MenuItemRow(item) }
+                groups.forEach { (category, items) ->
+                    Text(
+                        menuCategoryTitle(category),
+                        style = MaterialTheme.typography.labelLarge,
+                        color = MaterialTheme.colorScheme.primary,
+                    )
+                    items.forEach { item -> MenuItemRow(item) }
+                }
             }
             if (menu.photos.isNotEmpty()) {
                 Button(onClick = onOpenPhotos) {
@@ -82,10 +93,27 @@ private fun MenuItemRow(item: ShopMenuItem) {
 }
 
 private fun formatAmount(amount: Double): String {
-    val cents = (amount * 100).roundToInt()
+    val cents = (amount * 100).roundToLong()
     val whole = cents / 100
-    val remainder = (cents % 100).toString().padStart(2, '0')
-    return if (cents % 100 == 0) whole.toString() else "$whole,$remainder"
+    val remainder = abs(cents % 100).toString().padStart(2, '0')
+    return "$whole,$remainder"
+}
+
+private fun groupedPresentItems(items: List<ShopMenuItem>): List<Pair<String, List<ShopMenuItem>>> {
+    val grouped = items.filter { it.availability.equals("Present", ignoreCase = true) }
+        .groupBy(ShopMenuItem::category)
+    val first = listOf("Espresso", "Filter").mapNotNull { category ->
+        grouped[category]?.let { category to it }
+    }
+    return first + grouped.filterKeys { it != "Espresso" && it != "Filter" }.toList()
+}
+
+@Composable
+private fun menuCategoryTitle(category: String): String = when (category) {
+    "Espresso" -> stringResource(Res.string.shop_menu_espresso)
+    "Filter" -> stringResource(Res.string.shop_menu_filter)
+    "" -> stringResource(Res.string.shop_menu_other)
+    else -> category
 }
 
 @Preview @Composable private fun ShopMenuSectionLightPreview() = CoffeePeekTheme(darkTheme = false) {

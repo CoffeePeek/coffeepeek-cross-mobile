@@ -19,6 +19,9 @@
     <string name="shop_menu_photos">Фото меню: %1$d</string>
     <string name="shop_menu_captured">Актуально на %1$s</string>
     <string name="shop_menu_updated">Обновлено %1$s</string>
+    <string name="shop_menu_espresso">Эспрессо</string>
+    <string name="shop_menu_filter">Фильтр</string>
+    <string name="shop_menu_other">Другое</string>
     <string name="shop_schedule_title">Часы работы</string>
     <string name="shop_schedule_expand">Показать часы работы</string>
     <string name="shop_schedule_collapse">Скрыть часы работы</string>
