@@ -4,6 +4,9 @@ import com.coffeepeek.feature.shop.data.backend.ShopDetailsBackend
 import com.coffeepeek.feature.shop.data.mapper.toDomain
 import com.coffeepeek.feature.shop.data.mapper.toLocalSchedules
 import com.coffeepeek.feature.shop.data.mapper.toOverview
+import com.coffeepeek.feature.shop.data.mapper.toCoffeeDetails
+import com.coffeepeek.feature.shop.data.mapper.toDomainOrNull
+import com.coffeepeek.feature.shop.data.mapper.toFeatures
 import com.coffeepeek.feature.shop.domain.model.ShopDetails
 import com.coffeepeek.feature.shop.domain.repository.ShopDetailsRepository
 import com.coffeepeek.core.network.requestResult
@@ -25,6 +28,9 @@ private class DefaultShopDetailsRepository(
             overview = data.toOverview(shopId),
             menu = (data.shop.menu ?: data.menu)?.toDomain(),
             schedules = data.shop.schedules.orEmpty().toLocalSchedules(utcOffsetMinutes()),
+            coffee = data.shop.toCoffeeDetails(),
+            contact = data.shop.contact?.toDomainOrNull(),
+            features = data.shop.toFeatures(),
         )
     }
 }

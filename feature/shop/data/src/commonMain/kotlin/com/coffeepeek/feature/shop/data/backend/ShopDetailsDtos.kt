@@ -31,6 +31,29 @@ internal data class ShopDetailsDto(
     @SerialName("photos") val photos: List<ShopPhotoDto> = emptyList(),
     @SerialName("menu") val menu: ShopMenuDto? = null,
     @SerialName("schedules") val schedules: List<ShopScheduleDto>? = null,
+    @SerialName("coffeeBeans") val coffeeBeans: List<ShopCatalogItemDto> = emptyList(),
+    @SerialName("roasters") val roasters: List<ShopCatalogItemDto> = emptyList(),
+    @SerialName("equipments") val equipments: List<ShopCatalogItemDto> = emptyList(),
+    @SerialName("shopContact") val contact: ShopContactDto? = null,
+    @SerialName("brewMethods") val brewMethods: List<ShopCatalogItemDto> = emptyList(),
+    @SerialName("tags") val tags: JsonElement? = null,
+    @SerialName("shopTags") val shopTags: JsonElement? = null,
+)
+
+@Serializable
+internal data class ShopCatalogItemDto(
+    @SerialName("id") val id: String = "",
+    @SerialName("name") val name: String? = null,
+    @SerialName("photoUrl") val photoUrl: String? = null,
+    @SerialName("slug") val slug: String = "",
+)
+
+@Serializable
+internal data class ShopContactDto(
+    @SerialName("phoneNumber") val phone: String? = null,
+    @SerialName("email") val email: String? = null,
+    @SerialName("siteLink") val website: String? = null,
+    @SerialName("instagramLink") val instagram: String? = null,
 )
 
 @Serializable

@@ -5,6 +5,9 @@ data class ShopDetails(
     val overview: ShopOverview,
     val menu: ShopMenu?,
     val schedules: List<ShopSchedule>,
+    val coffee: ShopCoffeeDetails,
+    val contact: ShopContact?,
+    val features: List<ShopFeature>,
 )
 
 data class ShopMenu(

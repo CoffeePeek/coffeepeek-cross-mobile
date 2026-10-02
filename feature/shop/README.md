@@ -2,8 +2,8 @@
 
 `feature/shop` owns shop browsing. The first Android slice migrates only the
 menu-photo gallery; the much larger shop-details screen stays in legacy code.
-Preparation slices add a read-only `ShopDetails` snapshot (overview, menu and
-locally displayed weekly schedule), plus stateless header, menu and schedule
+Preparation slices add a read-only `ShopDetails` snapshot (overview, menu,
+locally displayed weekly schedule, coffee catalog, contacts and features), plus stateless
 components with colocated light/dark previews, without switching that screen yet.
 The existing shared/iOS route and ViewModel remain untouched.
 
@@ -27,6 +27,9 @@ current-offset rule, but cannot be DST-stable without a shop IANA time-zone ID.
 The menu mapper keeps the legacy preference for
 `urls.fullscreen`/`urls.detail`, falls back to `fullUrl`, drops missing URLs and
 sorts by `sortIndex`. A top-level menu is used when `shopDto.menu` is absent.
+Coffee and contact fields come from that same snapshot. Contact link formatting
+belongs to presentation; opening links and copying phone numbers remain caller
+callbacks, not feature-owned platform calls.
 
 Android composition renders the new entry and adapts its photo-open callback
 to the existing full-screen viewer, preserving swipe/zoom behaviour without

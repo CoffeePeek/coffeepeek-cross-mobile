@@ -68,13 +68,21 @@ class ShopDetailsRepositoryTest {
                   {"id":"second","fullUrl":"https://photo/second"},
                   {"id":"missing"}
                 ],
+                "coffeeBeans":[{"id":"bean-1","name":"  Эфиопия  "},{"id":"empty","name":" "}],
+                "roasters":[{"id":"roaster-1","name":"  Roaster  ","photoUrl":" https://photo/roaster "}],
+                "equipments":[{"id":"equipment-1","name":" V60 "}],
+                "brewMethods":[{"id":"brew-1","name":" Эспрессо ","slug":"espresso"}],
+                "shopTags":[{"id":"tag-1","name":" Wi-Fi ","slug":"wifi"},"Эспрессо"],
+                "tags":["Ignored fallback"],
+                "shopContact":{"phoneNumber":" +375 29 123 45 67 ","email":" a@example.com ","siteLink":" https://example.com ","instagramLink":" @coffee "},
                 "menu":{"photos":[]},"otherField":"ignored"
               }}
             }""", headers = headersOf(HttpHeaders.ContentType, "application/json"))
         }
         val client = HttpClientFactory(engine).api("https://example.com")
         try {
-            val overview = createShopDetailsRepository(client) { 0 }.getDetails("shop-1").getOrThrow().overview
+            val details = createShopDetailsRepository(client) { 0 }.getDetails("shop-1").getOrThrow()
+            val overview = details.overview
             assertEquals("shop-1", overview.id)
             assertEquals("Coffee", overview.title)
             assertEquals("Fresh coffee", overview.description)
@@ -88,6 +96,17 @@ class ShopDetailsRepositoryTest {
             assertEquals("https://photo/hero", overview.photos.first().previewUrl)
             assertEquals("https://photo/full", overview.photos.first().fullUrl)
             assertEquals("https://photo/second", overview.photos.last().previewUrl)
+            assertEquals(listOf("Эфиопия"), details.coffee.beans)
+            assertEquals("Roaster", details.coffee.roasters.single().name)
+            assertEquals("https://photo/roaster", details.coffee.roasters.single().photoUrl)
+            assertEquals(listOf("V60"), details.coffee.equipment)
+            assertEquals("+375 29 123 45 67", details.contact?.phone)
+            assertEquals("a@example.com", details.contact?.email)
+            assertEquals("https://example.com", details.contact?.website)
+            assertEquals("@coffee", details.contact?.instagram)
+            assertEquals(listOf("Эспрессо", "Wi-Fi"), details.features.map { it.name })
+            assertEquals("wifi", details.features[1].slug)
+            assertEquals(true, details.features[0].isBrewMethod)
         } finally {
             client.close()
             engine.close()
@@ -115,6 +134,11 @@ class ShopDetailsRepositoryTest {
             assertTrue(overview.photos.isEmpty())
             assertNull(details.menu)
             assertTrue(details.schedules.isEmpty())
+            assertTrue(details.coffee.beans.isEmpty())
+            assertTrue(details.coffee.roasters.isEmpty())
+            assertTrue(details.coffee.equipment.isEmpty())
+            assertNull(details.contact)
+            assertTrue(details.features.isEmpty())
             assertTrue(repository.getDetails("shop-1").isFailure)
         } finally {
             client.close()

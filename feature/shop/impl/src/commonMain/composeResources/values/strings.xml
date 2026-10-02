@@ -34,4 +34,16 @@
     <string name="shop_schedule_friday">Пятница</string>
     <string name="shop_schedule_saturday">Суббота</string>
     <string name="shop_schedule_sunday">Воскресенье</string>
+    <string name="shop_contact_title">Контакты</string>
+    <string name="shop_contact_copy_phone">Скопировать номер</string>
+    <string name="shop_coffee_roasters">Обжарщики</string>
+    <string name="shop_coffee_beans">Кофе</string>
+    <string name="shop_coffee_equipment">Оборудование</string>
+    <string name="shop_coffee_roaster_photo">Фото обжарщика «%1$s»</string>
+    <string name="shop_coffee_roaster_photo_missing">Фото обжарщика отсутствует</string>
+    <string name="shop_coffee_open_roaster">Открыть обжарщика «%1$s»</string>
+    <string name="shop_features_title">Особенности</string>
+    <string name="shop_features_show_all">Показать все: %1$d</string>
+    <string name="shop_features_collapse">Свернуть</string>
+    <string name="shop_description_title">Описание</string>
 </resources>
