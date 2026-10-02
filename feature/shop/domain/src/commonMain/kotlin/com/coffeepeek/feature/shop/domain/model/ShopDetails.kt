@@ -8,6 +8,8 @@ data class ShopDetails(
     val coffee: ShopCoffeeDetails,
     val contact: ShopContact?,
     val features: List<ShopFeature>,
+    val reviews: List<ShopReview>,
+    val userCheckIns: List<ShopCheckIn>,
 )
 
 data class ShopMenu(

@@ -12,6 +12,52 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 class ShopDetailsRepositoryTest {
+    @Test fun mapsReviewsAndCheckInsWithFileKeysAndFlexibleRatings() = runBlocking {
+        val engine = MockEngine {
+            respond("""{
+              "isSuccess":true,
+              "data":{"shopDto":{
+                "id":"shop-1",
+                "reviews":[{
+                  "id":"review-1","moderationReviewId":"moderation-1","userId":"user-1",
+                  "coffeeShopId":"shop-1","username":"Alex","header":"Great","comment":"Coffee",
+                  "rating":{"place":"5","service":4,"coffee":4.9},
+                  "photos":[{"storageKey":"reviews/photo.jpg"},{"fullUrl":"https://cdn.example.com/second.jpg"}],
+                  "createdAtUtc":"2026-10-01T12:00:00Z","helpfulCount":3,"isHelpfulByCurrentUser":true
+                }],
+                "userCheckIns":[{
+                  "id":"checkin-1","userId":"user-1","shopId":"shop-1","note":"Visited",
+                  "createdAt":"2026-10-01","visitedAt":"2026-09-30","reviewId":"review-1",
+                  "photos":[{"storageKey":"checkins/photo.jpg","urls":{"thumbnail":"https://cdn.example.com/thumb.jpg"}}],
+                  "rating":{"place":"5","service":"4","coffee":"3"}
+                }]
+              }}
+            }""", headers = headersOf(HttpHeaders.ContentType, "application/json"))
+        }
+        val client = HttpClientFactory(engine).api("https://example.com")
+        try {
+            val details = createShopDetailsRepository(client, "https://files.example.com/") { 0 }
+                .getDetails("shop-1").getOrThrow()
+            val review = details.reviews.single()
+            assertEquals("moderation-1", review.moderationReviewId)
+            assertEquals(5, review.rating.place)
+            assertEquals(4, review.rating.coffee)
+            assertEquals(3, review.helpfulCount)
+            assertTrue(review.isHelpfulByCurrentUser)
+            assertEquals(listOf("https://files.example.com/api/file/reviews/photo.jpg",
+                "https://cdn.example.com/second.jpg"), review.photoUrls)
+            val checkIn = details.userCheckIns.single()
+            assertEquals("review-1", checkIn.reviewId)
+            assertEquals("Visited", checkIn.note)
+            assertEquals("https://files.example.com/api/file/checkins/photo.jpg", checkIn.photoUrls.single())
+            assertEquals("https://cdn.example.com/thumb.jpg", checkIn.photoThumbnailUrls.single())
+            assertEquals(3, checkIn.rating?.coffee)
+        } finally {
+            client.close()
+            engine.close()
+        }
+    }
+
     @Test fun mapsMenuAndShiftsUtcScheduleFromOneRequest() = runBlocking {
         var calls = 0
         val engine = MockEngine {
@@ -39,7 +85,8 @@ class ShopDetailsRepositoryTest {
         }
         val client = HttpClientFactory(engine).api("https://example.com")
         try {
-            val details = createShopDetailsRepository(client) { 180 }.getDetails("shop-1").getOrThrow()
+            val details = createShopDetailsRepository(client, "https://example.com") { 180 }
+                .getDetails("shop-1").getOrThrow()
             assertEquals(1, calls)
             assertEquals("BYN", details.menu?.currency)
             assertEquals(5.5, details.menu?.items?.first()?.price)
@@ -81,7 +128,8 @@ class ShopDetailsRepositoryTest {
         }
         val client = HttpClientFactory(engine).api("https://example.com")
         try {
-            val details = createShopDetailsRepository(client) { 0 }.getDetails("shop-1").getOrThrow()
+            val details = createShopDetailsRepository(client, "https://example.com") { 0 }
+                .getDetails("shop-1").getOrThrow()
             val overview = details.overview
             assertEquals("shop-1", overview.id)
             assertEquals("Coffee", overview.title)
@@ -125,7 +173,7 @@ class ShopDetailsRepositoryTest {
         }
         val client = HttpClientFactory(engine).api("https://example.com")
         try {
-            val repository = createShopDetailsRepository(client) { 0 }
+            val repository = createShopDetailsRepository(client, "https://example.com") { 0 }
             val details = repository.getDetails("shop-1").getOrThrow()
             val overview = details.overview
             assertEquals("shop-1", overview.id)
@@ -139,6 +187,8 @@ class ShopDetailsRepositoryTest {
             assertTrue(details.coffee.equipment.isEmpty())
             assertNull(details.contact)
             assertTrue(details.features.isEmpty())
+            assertTrue(details.reviews.isEmpty())
+            assertTrue(details.userCheckIns.isEmpty())
             assertTrue(repository.getDetails("shop-1").isFailure)
         } finally {
             client.close()

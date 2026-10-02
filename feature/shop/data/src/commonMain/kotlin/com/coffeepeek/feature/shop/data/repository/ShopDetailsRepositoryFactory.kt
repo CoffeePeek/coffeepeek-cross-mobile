@@ -7,6 +7,7 @@ import com.coffeepeek.feature.shop.data.mapper.toOverview
 import com.coffeepeek.feature.shop.data.mapper.toCoffeeDetails
 import com.coffeepeek.feature.shop.data.mapper.toDomainOrNull
 import com.coffeepeek.feature.shop.data.mapper.toFeatures
+import com.coffeepeek.feature.shop.data.mapper.ShopFileUrlResolver
 import com.coffeepeek.feature.shop.domain.model.ShopDetails
 import com.coffeepeek.feature.shop.domain.repository.ShopDetailsRepository
 import com.coffeepeek.core.network.requestResult
@@ -15,11 +16,15 @@ import io.ktor.client.HttpClient
 /** The composition root supplies the authenticated client and current device UTC offset. */
 fun createShopDetailsRepository(
     client: HttpClient,
+    fileBaseUrl: String,
     utcOffsetMinutes: () -> Int,
-): ShopDetailsRepository = DefaultShopDetailsRepository(ShopDetailsBackend(client), utcOffsetMinutes)
+): ShopDetailsRepository = DefaultShopDetailsRepository(
+    ShopDetailsBackend(client), ShopFileUrlResolver(fileBaseUrl), utcOffsetMinutes,
+)
 
 private class DefaultShopDetailsRepository(
     private val backend: ShopDetailsBackend,
+    private val files: ShopFileUrlResolver,
     private val utcOffsetMinutes: () -> Int,
 ) : ShopDetailsRepository {
     override suspend fun getDetails(shopId: String): Result<ShopDetails> = requestResult {
@@ -31,6 +36,8 @@ private class DefaultShopDetailsRepository(
             coffee = data.shop.toCoffeeDetails(),
             contact = data.shop.contact?.toDomainOrNull(),
             features = data.shop.toFeatures(),
+            reviews = data.shop.reviews.mapNotNull { it.toDomain(files) },
+            userCheckIns = data.shop.userCheckIns.mapNotNull { it.toDomain(files) },
         )
     }
 }

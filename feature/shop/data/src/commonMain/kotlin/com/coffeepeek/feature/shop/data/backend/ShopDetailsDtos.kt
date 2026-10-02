@@ -38,6 +38,8 @@ internal data class ShopDetailsDto(
     @SerialName("brewMethods") val brewMethods: List<ShopCatalogItemDto> = emptyList(),
     @SerialName("tags") val tags: JsonElement? = null,
     @SerialName("shopTags") val shopTags: JsonElement? = null,
+    @SerialName("reviews") val reviews: List<ShopReviewDto> = emptyList(),
+    @SerialName("userCheckIns") val userCheckIns: List<ShopCheckInDto> = emptyList(),
 )
 
 @Serializable
@@ -101,6 +103,7 @@ internal data class ShopScheduleIntervalDto(
 internal data class ShopPhotoDto(
     @SerialName("id") val id: String = "",
     @SerialName("fullUrl") val fullUrl: String? = null,
+    @SerialName("storageKey") val storageKey: String? = null,
     @SerialName("urls") val urls: ShopPhotoUrlsDto? = null,
     @SerialName("sortIndex") val sortIndex: Int = 0,
 )
@@ -109,4 +112,5 @@ internal data class ShopPhotoDto(
 internal data class ShopPhotoUrlsDto(
     @SerialName("detail") val detail: String? = null,
     @SerialName("fullscreen") val fullscreen: String? = null,
+    @SerialName("thumbnail") val thumbnail: String? = null,
 )

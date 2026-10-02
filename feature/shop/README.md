@@ -3,8 +3,9 @@
 `feature/shop` owns shop browsing. The first Android slice migrates only the
 menu-photo gallery; the much larger shop-details screen stays in legacy code.
 Preparation slices add a read-only `ShopDetails` snapshot (overview, menu,
-locally displayed weekly schedule, coffee catalog, contacts and features), plus stateless
-components with colocated light/dark previews, without switching that screen yet.
+locally displayed weekly schedule, coffee catalog, contacts, features, reviews
+and user check-ins), plus stateless components with colocated light/dark
+previews, without switching that screen yet.
 The existing shared/iOS route and ViewModel remain untouched.
 
 | Module | Responsibility | Allowed dependencies and consumers |
@@ -20,15 +21,18 @@ configured authenticated `HttpClient` to the data factory. No second client or
 feature Koin module is created. Gallery and details data are read from the
 same `GET /api/CoffeeShops/{id}` endpoint as legacy; DTOs decode only the
 fields these slices need. Both use one `ShopDetailsBackend`, not a parallel
-HTTP endpoint. The details repository returns overview, menu and schedule from
+HTTP endpoint. The details repository returns a complete read-only snapshot from
 one response; it accepts the current UTC offset from composition, so shared
 data does not depend on Android time APIs. This preserves the legacy
 current-offset rule, but cannot be DST-stable without a shop IANA time-zone ID.
 The menu mapper keeps the legacy preference for
 `urls.fullscreen`/`urls.detail`, falls back to `fullUrl`, drops missing URLs and
 sorts by `sortIndex`. A top-level menu is used when `shopDto.menu` is absent.
-Coffee and contact fields come from that same snapshot. Contact link formatting
-belongs to presentation; opening links and copying phone numbers remain caller
+Coffee, contact and engagement fields come from that same snapshot. The file
+origin is supplied by application composition so review/check-in storage keys
+can be resolved without depending on legacy data code. A separate narrow vote
+repository implements the existing idempotent helpful PUT/DELETE operation.
+Contact link formatting belongs to presentation; opening links and copying phone numbers remain caller
 callbacks, not feature-owned platform calls.
 
 Android composition renders the new entry and adapts its photo-open callback
