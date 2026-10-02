@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.CircularProgressIndicator
@@ -43,7 +44,8 @@ import com.coffeepeek.feature.shop.impl.ui.compose.component.ShopCoffeeDetailsSe
 import com.coffeepeek.feature.shop.impl.ui.compose.component.ShopContactSection
 import com.coffeepeek.feature.shop.impl.ui.compose.component.ShopDescriptionSection
 import com.coffeepeek.feature.shop.impl.ui.compose.component.ShopFeaturesSection
-import com.coffeepeek.feature.shop.impl.ui.compose.component.ShopFavoriteButton
+import com.coffeepeek.feature.shop.impl.ui.compose.component.ShopHeaderActions
+import com.coffeepeek.feature.shop.impl.ui.compose.component.ShopRouteButton
 import com.coffeepeek.feature.shop.impl.ui.compose.component.ShopMenuSection
 import com.coffeepeek.feature.shop.impl.ui.compose.component.ShopOverviewHero
 import com.coffeepeek.feature.shop.impl.ui.compose.component.ShopOverviewStats
@@ -85,12 +87,24 @@ internal fun ShopDetailScreenContent(
                 onBack = { onAction(ShopDetailAction.Back) },
                 actions = {
                     if (state.details != null) {
-                        ShopFavoriteButton(state.isFavorite, state.favoriteAvailable,
-                            state.isFavoriteLoading,
-                            onClick = { onAction(ShopDetailAction.ToggleFavorite) })
+                        ShopHeaderActions(
+                            state.isFavorite, state.favoriteAvailable, state.isFavoriteLoading,
+                            onSuggestChange = { onAction(ShopDetailAction.SuggestChange) },
+                            onToggleFavorite = { onAction(ShopDetailAction.ToggleFavorite) },
+                            onShare = { onAction(ShopDetailAction.Share) },
+                        )
                     }
                 },
             )
+        },
+        bottomBar = {
+            val overview = state.details?.overview
+            if (overview?.latitude != null && overview.longitude != null) {
+                ShopRouteButton(
+                    onClick = { onAction(ShopDetailAction.OpenRoute) },
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = CpDimens.spacing4),
+                )
+            }
         },
         containerColor = MaterialTheme.colorScheme.background,
     ) { insets ->

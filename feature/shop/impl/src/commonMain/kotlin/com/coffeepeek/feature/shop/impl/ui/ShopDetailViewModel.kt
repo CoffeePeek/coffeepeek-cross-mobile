@@ -45,6 +45,20 @@ internal class ShopDetailViewModel(
             ShopDetailAction.SignIn -> sendEvent(ShopDetailEvent.SignIn)
             ShopDetailAction.Register -> sendEvent(ShopDetailEvent.Register)
             ShopDetailAction.ToggleFavorite -> toggleFavorite()
+            ShopDetailAction.Share -> {
+                val title = currentState.details?.overview?.title ?: return
+                sendEvent(ShopDetailEvent.ShareShop(shopId, title))
+            }
+            ShopDetailAction.SuggestChange -> {
+                if (currentState.isLoggedIn) sendEvent(ShopDetailEvent.SuggestChange(shopId))
+                else sendEvent(ShopDetailEvent.SignIn)
+            }
+            ShopDetailAction.OpenRoute -> {
+                val overview = currentState.details?.overview ?: return
+                val latitude = overview.latitude ?: return
+                val longitude = overview.longitude ?: return
+                sendEvent(ShopDetailEvent.OpenRoute(latitude, longitude))
+            }
             is ShopDetailAction.OpenPhoto -> {
                 if (action.index in action.urls.indices) {
                     sendEvent(ShopDetailEvent.OpenPhoto(action.urls, action.index))
@@ -76,7 +90,9 @@ internal class ShopDetailViewModel(
         updateState { copy(isLoading = true, hasError = false) }
         try {
             val viewer = currentViewer().getOrThrow()
-            val details = detailsRepository.getDetails(shopId).getOrThrow()
+            val loadedDetails = detailsRepository.getDetails(shopId).getOrThrow()
+            val details = if (viewer.isLoggedIn) loadedDetails
+                else loadedDetails.copy(userCheckIns = emptyList())
             val favoritesResult = favoritesRepository.read()
             favoritesResult.exceptionOrNull()?.let { if (it is CancellationException) throw it }
             val favorites = favoritesResult.getOrNull()

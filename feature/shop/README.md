@@ -14,6 +14,11 @@ The ViewModel reads and mutates local favorites through the supported pure
 application bridge to notify remaining legacy consumers; that bridge is not
 wired yet. A failed membership read leaves the favorite control disabled rather
 than guessing from the server's `isFavorite` field.
+Sharing, suggest-change, and route controls now emit platform-agnostic events;
+the application must map them to its existing share helper, navigation and
+maps launcher when the Android detail route is switched. Suggest-change asks
+guests to sign in first. The temporary bottom bar exposes only route until
+review and check-in flows are ready; it is not the final detail UI.
 The existing shared/iOS route and ViewModel remain untouched.
 
 | Module | Responsibility | Allowed dependencies and consumers |
@@ -64,7 +69,8 @@ legacy repositories or Koin.
    DTOs, repositories and screen paths only after all platform consumers move.
 
 The Android detail route must not switch until the remaining legacy interactions
-are represented: sharing, suggest-change and route actions, review
+are represented: application bridges for sharing, suggest-change and route,
+review
 creation/editing with moderation eligibility, check-in draft and
 submission with uploads, and the associated bottom sheets. Viewer/session and
 device-time providers and favorite change notifications must be bridged from

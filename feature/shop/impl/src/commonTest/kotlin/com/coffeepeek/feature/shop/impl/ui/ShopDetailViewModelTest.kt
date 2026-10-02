@@ -223,6 +223,43 @@ class ShopDetailViewModelTest {
         runCurrent()
         assertEquals(1, favorites.saves)
     }
+
+    @Test fun shopActionsEmitPlatformAgnosticEvents() = runTest(dispatcher) {
+        val viewModel = viewModel()
+        runCurrent()
+
+        viewModel.onAction(ShopDetailAction.Share)
+        viewModel.onAction(ShopDetailAction.SuggestChange)
+        viewModel.onAction(ShopDetailAction.OpenRoute)
+        runCurrent()
+
+        assertEquals(ShopDetailEvent.ShareShop("shop-1", "Coffee"), viewModel.events.first())
+        assertEquals(ShopDetailEvent.SuggestChange("shop-1"), viewModel.events.first())
+        assertEquals(ShopDetailEvent.OpenRoute(53.9, 27.5), viewModel.events.first())
+    }
+
+    @Test fun guestSuggestChangeRequiresSignIn() = runTest(dispatcher) {
+        val viewModel = viewModel(viewer = ShopViewer(false, null))
+        runCurrent()
+
+        viewModel.onAction(ShopDetailAction.SuggestChange)
+        runCurrent()
+
+        assertEquals(ShopDetailEvent.SignIn, viewModel.events.first())
+    }
+
+    @Test fun guestDoesNotSeeAccountCheckInsFromDetailsResponse() = runTest(dispatcher) {
+        val repository = DetailsRepository().apply {
+            result = Result.success(details().copy(userCheckIns = listOf(
+                ShopCheckIn("check-in-1", "someone", "shop-1", "private", "2026-10-02",
+                    "2026-10-02", null, emptyList(), emptyList(), null),
+            )))
+        }
+        val viewModel = viewModel(details = repository, viewer = ShopViewer(false, null))
+        runCurrent()
+
+        assertTrue(viewModel.state.value.details?.userCheckIns.isNullOrEmpty())
+    }
 }
 
 private fun details() = ShopDetails(
