@@ -14,4 +14,21 @@
     <string name="shop_overview_reviews">Отзывов: %1$d</string>
     <string name="shop_overview_open">Открыто сейчас</string>
     <string name="shop_overview_closed">Сейчас закрыто</string>
+    <string name="shop_menu_title">Меню</string>
+    <string name="shop_menu_no_items">Позиций меню пока нет</string>
+    <string name="shop_menu_photos">Фото меню: %1$d</string>
+    <string name="shop_menu_captured">Актуально на %1$s</string>
+    <string name="shop_menu_updated">Обновлено %1$s</string>
+    <string name="shop_schedule_title">Часы работы</string>
+    <string name="shop_schedule_expand">Показать часы работы</string>
+    <string name="shop_schedule_collapse">Скрыть часы работы</string>
+    <string name="shop_schedule_closed">Выходной</string>
+    <string name="shop_schedule_unknown">—</string>
+    <string name="shop_schedule_monday">Понедельник</string>
+    <string name="shop_schedule_tuesday">Вторник</string>
+    <string name="shop_schedule_wednesday">Среда</string>
+    <string name="shop_schedule_thursday">Четверг</string>
+    <string name="shop_schedule_friday">Пятница</string>
+    <string name="shop_schedule_saturday">Суббота</string>
+    <string name="shop_schedule_sunday">Воскресенье</string>
 </resources>

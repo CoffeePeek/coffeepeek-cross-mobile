@@ -11,7 +11,50 @@ import kotlin.test.assertEquals
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
-class ShopOverviewRepositoryTest {
+class ShopDetailsRepositoryTest {
+    @Test fun mapsMenuAndShiftsUtcScheduleFromOneRequest() = runBlocking {
+        var calls = 0
+        val engine = MockEngine {
+            calls++
+            respond("""{
+              "isSuccess":true,
+              "data":{
+                "shopDto":{
+                  "id":"shop-1",
+                  "schedules":[
+                    {"dayOfWeek":"monday","intervals":[{"openTime":"22:30","closeTime":"23:30"}]},
+                    {"dayOfWeek":2,"isClosed":true,"intervals":[{"openTime":"09:00","closeTime":"10:00"}]}
+                  ]
+                },
+                "menu":{
+                  "currency":"",
+                  "items":[
+                    {"slug":"flat-white","nameRu":"Флэт уайт","category":"Coffee","availability":"Present","price":"5,50","volumeMl":"250","currency":""},
+                    {"slug":"filter","availability":"Absent","price":7}
+                  ],
+                  "photos":[{"id":"second","fullUrl":"https://photo/2","sortIndex":2},{"id":"first","fullUrl":"https://photo/1","sortIndex":1}]
+                }
+              }
+            }""", headers = headersOf(HttpHeaders.ContentType, "application/json"))
+        }
+        val client = HttpClientFactory(engine).api("https://example.com")
+        try {
+            val details = createShopDetailsRepository(client) { 180 }.getDetails("shop-1").getOrThrow()
+            assertEquals(1, calls)
+            assertEquals("BYN", details.menu?.currency)
+            assertEquals(5.5, details.menu?.items?.first()?.price)
+            assertEquals(250, details.menu?.items?.first()?.volumeMl)
+            assertEquals("BYN", details.menu?.items?.first()?.currency)
+            assertEquals(listOf("first", "second"), details.menu?.photos?.map { it.id })
+            assertEquals("01:30", details.schedules[2].intervals.single().openTime)
+            assertEquals("02:30", details.schedules[2].intervals.single().closeTime)
+            assertEquals(true, details.schedules[1].isClosed)
+        } finally {
+            client.close()
+            engine.close()
+        }
+    }
+
     @Test fun mapsHeaderFieldsAndPhotoVariantsWithoutLoadingLegacyModels() = runBlocking {
         val engine = MockEngine {
             respond("""{
@@ -31,7 +74,7 @@ class ShopOverviewRepositoryTest {
         }
         val client = HttpClientFactory(engine).api("https://example.com")
         try {
-            val overview = createShopOverviewRepository(client).getOverview("shop-1").getOrThrow()
+            val overview = createShopDetailsRepository(client) { 0 }.getDetails("shop-1").getOrThrow().overview
             assertEquals("shop-1", overview.id)
             assertEquals("Coffee", overview.title)
             assertEquals("Fresh coffee", overview.description)
@@ -63,13 +106,16 @@ class ShopOverviewRepositoryTest {
         }
         val client = HttpClientFactory(engine).api("https://example.com")
         try {
-            val repository = createShopOverviewRepository(client)
-            val overview = repository.getOverview("shop-1").getOrThrow()
+            val repository = createShopDetailsRepository(client) { 0 }
+            val details = repository.getDetails("shop-1").getOrThrow()
+            val overview = details.overview
             assertEquals("shop-1", overview.id)
             assertNull(overview.rating)
             assertNull(overview.address)
             assertTrue(overview.photos.isEmpty())
-            assertTrue(repository.getOverview("shop-1").isFailure)
+            assertNull(details.menu)
+            assertTrue(details.schedules.isEmpty())
+            assertTrue(repository.getDetails("shop-1").isFailure)
         } finally {
             client.close()
             engine.close()

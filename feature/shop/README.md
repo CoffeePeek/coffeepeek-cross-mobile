@@ -2,25 +2,29 @@
 
 `feature/shop` owns shop browsing. The first Android slice migrates only the
 menu-photo gallery; the much larger shop-details screen stays in legacy code.
-The next preparation slice adds a read-only `ShopOverview` contract and mapper
-for the detail header, plus stateless hero/stat components with colocated
-light/dark previews, without switching that screen yet.
+Preparation slices add a read-only `ShopDetails` snapshot (overview, menu and
+locally displayed weekly schedule), plus stateless header, menu and schedule
+components with colocated light/dark previews, without switching that screen yet.
 The existing shared/iOS route and ViewModel remain untouched.
 
 | Module | Responsibility | Allowed dependencies and consumers |
 |---|---|---|
 | `api` | Minimal composable gallery entry and caller callbacks | Compose runtime; application composition |
-| `domain` | `MenuGallery`, `MenuPhoto`, read-only `ShopOverview`, and repository contracts returning `Result` | Pure Kotlin; shop data/impl |
+| `domain` | Gallery and read-only details models with repository contracts returning `Result` | Pure Kotlin; shop data/impl |
 | `data` | Shared shop-details HTTP request, narrow DTOs, mappers and factories | Domain, core/network, Ktor, serialization; application composition |
 | `impl` | MVI gallery screen, resources, previews and API adapter | API/domain, core presentation/design-system; application composition |
 
 Packages alone cannot enforce the domain/transport/UI boundaries or keep HTTP
 types out of the public feature entry. The application passes its already
 configured authenticated `HttpClient` to the data factory. No second client or
-feature Koin module is created. Gallery and overview data are read from the
+feature Koin module is created. Gallery and details data are read from the
 same `GET /api/CoffeeShops/{id}` endpoint as legacy; DTOs decode only the
-fields those two slices need. Both use one `ShopDetailsBackend`, not a
-parallel HTTP endpoint. The menu mapper keeps the legacy preference for
+fields these slices need. Both use one `ShopDetailsBackend`, not a parallel
+HTTP endpoint. The details repository returns overview, menu and schedule from
+one response; it accepts the current UTC offset from composition, so shared
+data does not depend on Android time APIs. This preserves the legacy
+current-offset rule, but cannot be DST-stable without a shop IANA time-zone ID.
+The menu mapper keeps the legacy preference for
 `urls.fullscreen`/`urls.detail`, falls back to `fullUrl`, drops missing URLs and
 sorts by `sortIndex`. A top-level menu is used when `shopDto.menu` is absent.
 
