@@ -37,6 +37,9 @@ import com.coffeepeek.feature.shop.impl.resources.shop_review_submit_create
 import com.coffeepeek.feature.shop.impl.resources.shop_review_submit_edit
 import com.coffeepeek.feature.shop.impl.resources.shop_review_edit_unavailable
 import com.coffeepeek.feature.shop.impl.ui.compose.component.ShopReviewRatingField
+import com.coffeepeek.feature.shop.impl.ui.compose.component.ShopReviewPhotoAttachments
+import com.coffeepeek.feature.shop.impl.ui.compose.component.ShopReviewExistingPhotos
+import com.coffeepeek.feature.shop.impl.ui.compose.component.ShopReviewDraftNotice
 import com.coffeepeek.feature.shop.impl.ui.compose.model.ShopReviewFormAction
 import com.coffeepeek.feature.shop.impl.ui.compose.model.ShopReviewFormMode
 import com.coffeepeek.feature.shop.impl.ui.compose.model.ShopReviewFormState
@@ -44,11 +47,14 @@ import com.coffeepeek.feature.shop.impl.ui.compose.model.ShopReviewRatingKind
 import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
-/** Stateless editor body. Photo picker/attachments will be added before runtime integration. */
+/** Stateless editor body. The caller supplies platform photo-picking callbacks. */
 @Composable
 internal fun ShopReviewEditorContent(
     state: ShopReviewFormState,
     onAction: (ShopReviewFormAction) -> Unit,
+    onPickFromGallery: (Int) -> Unit,
+    onTakePhoto: () -> Unit,
+    onOpenExistingPhoto: (List<String>, Int) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val editable = !state.isLoading && !state.isSubmitting && state.canEdit
@@ -64,6 +70,9 @@ internal fun ShopReviewEditorContent(
         )
         state.shopName?.takeIf(String::isNotBlank)?.let {
             Text(it, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+        if (state.draftRestored && !state.isLoading) {
+            ShopReviewDraftNotice { onAction(ShopReviewFormAction.DiscardDraft) }
         }
         if (state.isLoading) {
             CircularProgressIndicator()
@@ -99,6 +108,16 @@ internal fun ShopReviewEditorContent(
                         style = MaterialTheme.typography.labelSmall)
                 }
             }
+            ShopReviewExistingPhotos(state.existingPhotoUrls, onOpenExistingPhoto)
+            ShopReviewPhotoAttachments(
+                photos = state.newPhotos,
+                isLoading = state.isPhotoLoading,
+                enabled = editable,
+                existingPhotos = state.existingPhotoUrls.isNotEmpty(),
+                onRemove = { onAction(ShopReviewFormAction.RemovePhoto(it)) },
+                onGallery = onPickFromGallery,
+                onCamera = onTakePhoto,
+            )
             if (!state.canEdit) Text(stringResource(Res.string.shop_review_edit_unavailable),
                 color = MaterialTheme.colorScheme.error)
             state.submitError?.let {
@@ -132,10 +151,11 @@ private fun commentError(error: ShopReviewFieldError?): String? = when (error) {
 }
 
 @Preview @Composable private fun ShopReviewEditorLightPreview() = CoffeePeekTheme(darkTheme = false) {
-    ShopReviewEditorContent(ShopReviewFormState(shopName = "Кофейня"), onAction = {})
+    ShopReviewEditorContent(ShopReviewFormState(shopName = "Кофейня"), {}, {}, {}, { _, _ -> })
 }
 
 @Preview @Composable private fun ShopReviewEditorDarkPreview() = CoffeePeekTheme(darkTheme = true) {
     ShopReviewEditorContent(ShopReviewFormState(mode = ShopReviewFormMode.Edit,
-        shopName = "Кофейня", header = "Хороший кофе", comment = "Очень понравился фильтр."), onAction = {})
+        shopName = "Кофейня", header = "Хороший кофе", comment = "Очень понравился фильтр.",
+        existingPhotoUrls = listOf(""), draftRestored = true), {}, {}, {}, { _, _ -> })
 }

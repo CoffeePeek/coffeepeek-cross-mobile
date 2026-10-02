@@ -1,6 +1,7 @@
 package com.coffeepeek.feature.shop.impl.ui.compose.model
 
 import com.coffeepeek.feature.shop.domain.model.ShopRating
+import com.coffeepeek.feature.shop.domain.model.ShopReviewPhoto
 import com.coffeepeek.feature.shop.domain.usecase.ShopReviewFieldError
 
 internal enum class ShopReviewFormMode { Create, Edit }
@@ -17,4 +18,8 @@ internal data class ShopReviewFormState(
     val isLoading: Boolean = false,
     val isSubmitting: Boolean = false,
     val canEdit: Boolean = true,
+    val existingPhotoUrls: List<String> = emptyList(),
+    val newPhotos: List<ShopReviewPhoto> = emptyList(),
+    val draftRestored: Boolean = false,
+    val isPhotoLoading: Boolean = false,
 )

@@ -88,4 +88,20 @@
     <string name="shop_review_edit_unavailable">Этот отзыв нельзя редактировать</string>
     <string name="shop_review_submit_create">Отправить на модерацию</string>
     <string name="shop_review_submit_edit">Сохранить изменения</string>
+    <string name="shop_review_photos">Фотографии</string>
+    <string name="shop_review_new_photos">Новые фото</string>
+    <string name="shop_review_photo_hint">Добавьте до %1$d фото (необязательно)</string>
+    <string name="shop_review_new_photo_hint">Добавьте новые фото (до %1$d). Существующие фото останутся без изменений.</string>
+    <string name="shop_review_photo_count">Добавлено: %1$d/%2$d</string>
+    <string name="shop_review_photo_add">Добавить фото</string>
+    <string name="shop_review_photo_remove">Удалить фото %1$d</string>
+    <string name="shop_review_existing_photos">Текущие фото</string>
+    <string name="shop_review_existing_photo_description">Фото отзыва %1$d из %2$d</string>
+    <string name="shop_review_photo_source_title">Добавить фото</string>
+    <string name="shop_review_photo_source_gallery">Выбрать из галереи</string>
+    <string name="shop_review_photo_source_camera">Сделать фото</string>
+    <string name="shop_review_photo_source_cancel">Отмена</string>
+    <string name="shop_review_draft_restored">Черновик восстановлен</string>
+    <string name="shop_review_draft_discard">Удалить черновик</string>
+    <string name="shop_review_sheet_dismiss">Закрыть форму отзыва</string>
 </resources>

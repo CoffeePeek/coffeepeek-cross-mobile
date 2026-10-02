@@ -50,13 +50,18 @@ for `GET /api/CoffeeShopReviews/can-create`; it is not inferred from published
 reviews. The ViewModel routes the review action to create/edit events from this
 response and fails closed when eligibility is unavailable. The new forms and
 application event bridge are not wired yet.
-The review editor has a stateless text/rating body with paired previews and
-domain-owned length validation; it is not yet a usable submission sheet.
-Photo picking, draft restoration, write requests, and success/failure handling
-remain for the next slices. The current backend update command has no `photos`
-field, so the new edit form must not promise new-photo uploads until that API
-supports them. The legacy edit form displays that control but silently drops
-its selected photos.
+The review editor has a stateless text/rating/photo body and modal shell with
+paired previews and domain-owned length validation; no route uses it yet.
+The photo source sheet, existing-photo strip, five-photo selection limit and
+restored-draft notice mirror the current UI. Application composition must
+provide Android gallery/camera picking and convert its selected images to the
+feature's pure photo model. Draft storage, write requests and success/failure
+handling remain for the next slices. The current backend update command has no
+`photos` field: the legacy edit UI shows new-photo selection but the repository
+silently drops those photos. Preserve the UI during migration, but do not claim
+edited photos were saved until server support exists.
+The nested photo-source modal may require Interactive/Run Preview in the IDE;
+compilation does not verify actual modal rendering or Android picker behavior.
 Contact link formatting belongs to presentation; opening links and copying phone numbers remain caller
 callbacks, not feature-owned platform calls.
 
