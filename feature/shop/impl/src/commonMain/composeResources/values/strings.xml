@@ -106,4 +106,8 @@
     <string name="shop_review_sheet_dismiss">Закрыть форму отзыва</string>
     <string name="shop_review_draft_failed">Не удалось обработать черновик</string>
     <string name="shop_review_submit_failed">Не удалось отправить отзыв</string>
+    <string name="shop_review_load_failed">Не удалось загрузить отзыв</string>
+    <string name="shop_review_retry">Повторить</string>
+    <string name="shop_review_edit_photos_unavailable">Добавление фото при редактировании пока не поддерживается</string>
+    <string name="shop_review_edit_draft_photos">Фото, выбранные в старом черновике, не будут отправлены</string>
 </resources>

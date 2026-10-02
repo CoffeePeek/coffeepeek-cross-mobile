@@ -67,7 +67,7 @@ class ShopReviewWriteRepositoryTest {
         }
     }
 
-    @Test fun updatePreservesCurrentTextOnlyServerCommandWithoutUploadingSelectedPhotos() = runBlocking {
+    @Test fun updateUsesTextOnlyServerCommandWithoutPhotoUpload() = runBlocking {
         var apiCalls = 0
         var uploadCalls = 0
         val apiEngine = MockEngine { request ->
@@ -86,7 +86,7 @@ class ShopReviewWriteRepositoryTest {
         try {
             val repository = createShopReviewWriteRepository(apiClient, uploadClient)
             assertTrue(repository.update(ShopReviewUpdateInput("moderation-1", "Coffee",
-                "Delicious coffee", rating, listOf(photo))).isSuccess)
+                "Delicious coffee", rating)).isSuccess)
             assertEquals(1, apiCalls)
             assertEquals(0, uploadCalls)
         } finally {

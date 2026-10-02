@@ -23,4 +23,6 @@ internal data class ShopReviewFormState(
     val draftRestored: Boolean = false,
     val isPhotoLoading: Boolean = false,
     val draftError: Boolean = false,
+    val loadError: Boolean = false,
+    val ignoredDraftPhotos: Boolean = false,
 )

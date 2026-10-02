@@ -10,6 +10,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import com.coffeepeek.core.designsystem.component.AppButton
@@ -38,6 +39,10 @@ import com.coffeepeek.feature.shop.impl.resources.shop_review_submit_edit
 import com.coffeepeek.feature.shop.impl.resources.shop_review_edit_unavailable
 import com.coffeepeek.feature.shop.impl.resources.shop_review_draft_failed
 import com.coffeepeek.feature.shop.impl.resources.shop_review_submit_failed
+import com.coffeepeek.feature.shop.impl.resources.shop_review_load_failed
+import com.coffeepeek.feature.shop.impl.resources.shop_review_retry
+import com.coffeepeek.feature.shop.impl.resources.shop_review_edit_photos_unavailable
+import com.coffeepeek.feature.shop.impl.resources.shop_review_edit_draft_photos
 import com.coffeepeek.feature.shop.impl.ui.compose.component.ShopReviewRatingField
 import com.coffeepeek.feature.shop.impl.ui.compose.component.ShopReviewPhotoAttachments
 import com.coffeepeek.feature.shop.impl.ui.compose.component.ShopReviewExistingPhotos
@@ -78,6 +83,12 @@ internal fun ShopReviewEditorContent(
         }
         if (state.isLoading) {
             CircularProgressIndicator()
+        } else if (state.loadError) {
+            Text(stringResource(Res.string.shop_review_load_failed),
+                color = MaterialTheme.colorScheme.error)
+            TextButton(onClick = { onAction(ShopReviewFormAction.Load) }) {
+                Text(stringResource(Res.string.shop_review_retry))
+            }
         } else {
             ShopReviewRatingField(stringResource(Res.string.shop_review_coffee), state.rating.coffee,
                 editable) { onAction(ShopReviewFormAction.RatingChanged(ShopReviewRatingKind.Coffee, it)) }
@@ -111,15 +122,24 @@ internal fun ShopReviewEditorContent(
                 }
             }
             ShopReviewExistingPhotos(state.existingPhotoUrls, onOpenExistingPhoto)
-            ShopReviewPhotoAttachments(
-                photos = state.newPhotos,
-                isLoading = state.isPhotoLoading,
-                enabled = editable,
-                existingPhotos = state.existingPhotoUrls.isNotEmpty(),
-                onRemove = { onAction(ShopReviewFormAction.RemovePhoto(it)) },
-                onGallery = onPickFromGallery,
-                onCamera = onTakePhoto,
-            )
+            if (state.mode == ShopReviewFormMode.Create) {
+                ShopReviewPhotoAttachments(
+                    photos = state.newPhotos,
+                    isLoading = state.isPhotoLoading,
+                    enabled = editable,
+                    existingPhotos = state.existingPhotoUrls.isNotEmpty(),
+                    onRemove = { onAction(ShopReviewFormAction.RemovePhoto(it)) },
+                    onGallery = onPickFromGallery,
+                    onCamera = onTakePhoto,
+                )
+            } else {
+                Text(stringResource(Res.string.shop_review_edit_photos_unavailable),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant)
+                if (state.ignoredDraftPhotos) {
+                    Text(stringResource(Res.string.shop_review_edit_draft_photos),
+                        color = MaterialTheme.colorScheme.error)
+                }
+            }
             if (!state.canEdit) Text(stringResource(Res.string.shop_review_edit_unavailable),
                 color = MaterialTheme.colorScheme.error)
             if (state.draftError) Text(stringResource(Res.string.shop_review_draft_failed),

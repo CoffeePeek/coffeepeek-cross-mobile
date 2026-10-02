@@ -8,11 +8,10 @@ data class ShopReviewCreateInput(
     val photos: List<ShopReviewPhoto> = emptyList(),
 )
 
-/** Current update API accepts text/rating only; selected new photos remain editor draft state. */
+/** Current update API accepts text/rating only; adding photos is not an edit capability. */
 data class ShopReviewUpdateInput(
     val reviewId: String,
     val header: String,
     val comment: String,
     val rating: ShopRating,
-    val newPhotos: List<ShopReviewPhoto> = emptyList(),
 )

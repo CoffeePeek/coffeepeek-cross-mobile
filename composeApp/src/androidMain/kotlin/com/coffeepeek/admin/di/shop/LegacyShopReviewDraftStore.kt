@@ -21,6 +21,16 @@ fun createLegacyShopReviewCreateDraftStore(
     defaultRating = 4,
 )
 
+/** Edits use the published review as baseline, so the legacy blank-draft sentinel is disabled. */
+fun createLegacyShopReviewEditDraftStore(
+    reviewId: String,
+    legacy: ReviewDraftStore,
+): ShopReviewDraftStore = LegacyShopReviewDraftStore(
+    legacy = legacy,
+    key = ReviewDraftStore.editReviewKey(reviewId),
+    defaultRating = -1,
+)
+
 private class LegacyShopReviewDraftStore(
     private val legacy: ReviewDraftStore,
     private val key: String,

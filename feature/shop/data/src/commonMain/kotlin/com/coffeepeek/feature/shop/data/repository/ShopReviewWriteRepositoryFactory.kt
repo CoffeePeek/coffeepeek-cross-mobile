@@ -34,8 +34,7 @@ private class DefaultShopReviewWriteRepository(
 
     override suspend fun update(input: ShopReviewUpdateInput): Result<Unit> = requestResult {
         validate(input.header, input.comment, input.rating)
-        // Current server command has no photos field. Match legacy: retain selected photos in
-        // the editor draft, but do not upload or pretend the update saved them.
+        // Current server command has no photos field; the domain edit input cannot carry them.
         writes.update(input.reviewId, input.header.trim(), input.comment.trim(), input.rating)
             .getOrThrow()
     }

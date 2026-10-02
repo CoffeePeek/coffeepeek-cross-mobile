@@ -55,11 +55,10 @@ paired previews and domain-owned length validation; no route uses it yet.
 The photo source sheet, existing-photo strip, five-photo selection limit and
 restored-draft notice mirror the current UI. Application composition must
 provide Android gallery/camera picking and convert its selected images to the
-feature's pure photo model. Draft storage, write requests and success/failure
-handling remain for the next slices. The current backend update command has no
-`photos` field: the legacy edit UI shows new-photo selection but the repository
-silently drops those photos. Preserve the UI during migration, but do not claim
-edited photos were saved until server support exists.
+feature's pure photo model for creation. The current backend update command has
+no `photos` field: the legacy edit UI shows new-photo selection but the repository
+silently drops those photos. The new edit form shows existing photos but disables
+adding new ones, with an explicit explanation, until server support exists.
 The nested photo-source modal may require Interactive/Run Preview in the IDE;
 compilation does not verify actual modal rendering or Android picker behavior.
 The write repository now prepares review creation through the existing
@@ -74,7 +73,14 @@ adapter for the existing keyed draft store is prepared in `composeApp`
 (text/ratings persisted, photo bytes memory-only). Composition still needs to
 create the ViewModel, supply clients and callbacks, and handle success events;
 no active Android route uses this sheet yet. Edit-review loading and
-submission remain a separate follow-up.
+submission now also have a prepared MVI ViewModel and runtime sheet. The new
+user-review repository searches the authenticated user's published reviews via
+the same paged endpoint as legacy, retaining the moderation ID for PUT. It may
+request later pages rather than silently treating reviews beyond the first 100
+as missing. The edit draft adapter uses the existing per-published-review key;
+the current app route and iOS implementation are unchanged. Application
+composition must still construct both form ViewModels, supply authenticated
+clients and Android callbacks, route success, and verify the flows on device.
 Contact link formatting belongs to presentation; opening links and copying phone numbers remain caller
 callbacks, not feature-owned platform calls.
 

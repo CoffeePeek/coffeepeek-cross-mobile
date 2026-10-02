@@ -47,4 +47,20 @@ class LegacyShopReviewDraftStoreTest {
         assertNull(adapter.load().getOrThrow())
         assertNull(settings.read(key))
     }
+
+    @Test fun editAdapterUsesPublishedReviewIdKeyWithoutTouchingCreateDraft() = runTest {
+        val settings = Settings()
+        val createKey = ReviewDraftStore.newReviewKey("shop-1")
+        val editKey = ReviewDraftStore.editReviewKey("published-1")
+        settings.save(Setting(createKey, JsonExt.json.encodeToString(ReviewDraft(
+            "Create", "Create comment", 4, 4, 4, System.currentTimeMillis()))))
+        settings.save(Setting(editKey, JsonExt.json.encodeToString(ReviewDraft(
+            "Edited", "Edited comment", 5, 4, 3, System.currentTimeMillis()))))
+        val adapter = createLegacyShopReviewEditDraftStore("published-1", ReviewDraftStore(settings))
+
+        assertEquals("Edited", adapter.load().getOrThrow()?.header)
+        assertTrue(adapter.clear().isSuccess)
+        assertNull(settings.read(editKey))
+        assertTrue(settings.read(createKey) != null)
+    }
 }
