@@ -4,19 +4,25 @@ import androidx.lifecycle.ViewModelStore
 import com.coffeepeek.feature.shop.domain.model.ShopCheckIn
 import com.coffeepeek.feature.shop.domain.model.ShopCoffeeDetails
 import com.coffeepeek.feature.shop.domain.model.ShopDetails
+import com.coffeepeek.feature.shop.domain.model.ShopFeature
 import com.coffeepeek.feature.shop.domain.model.ShopHelpfulVote
 import com.coffeepeek.feature.shop.domain.model.ShopOverview
 import com.coffeepeek.feature.shop.domain.model.ShopRating
 import com.coffeepeek.feature.shop.domain.model.ShopReview
+import com.coffeepeek.feature.shop.domain.model.ShopRoaster
 import com.coffeepeek.feature.shop.domain.model.ShopViewer
 import com.coffeepeek.feature.shop.domain.repository.ShopDetailsRepository
 import com.coffeepeek.feature.shop.domain.repository.ShopReviewVoteRepository
+import com.coffeepeek.feature.favorites.domain.model.FavoriteShop
+import com.coffeepeek.feature.favorites.domain.repository.FavoritesRepository
 import com.coffeepeek.feature.shop.impl.ui.compose.model.ShopDetailAction
 import com.coffeepeek.feature.shop.impl.ui.compose.model.ShopDetailEvent
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runCurrent
@@ -62,11 +68,39 @@ class ShopDetailViewModelTest {
         }
     }
 
+    private class Favorites : FavoritesRepository {
+        var stored = emptyList<FavoriteShop>()
+        var saves = 0
+        var removes = 0
+        var gate: CompletableDeferred<Unit>? = null
+        var mutationResult: Result<Unit> = Result.success(Unit)
+        var readResult: Result<List<FavoriteShop>>? = null
+        var saved: FavoriteShop? = null
+
+        override fun observe(): Flow<Result<List<FavoriteShop>>> = flowOf(Result.success(stored))
+        override suspend fun read(): Result<List<FavoriteShop>> = readResult ?: Result.success(stored)
+        override suspend fun save(shop: FavoriteShop): Result<Unit> {
+            assertEquals("shop-1", shop.id)
+            saved = shop
+            saves++
+            gate?.await()
+            return mutationResult
+        }
+        override suspend fun remove(shopId: String): Result<Unit> {
+            assertEquals("shop-1", shopId)
+            removes++
+            gate?.await()
+            return mutationResult
+        }
+        override suspend fun clear(): Result<Unit> = Result.success(Unit)
+    }
+
     private fun viewModel(
         details: DetailsRepository = DetailsRepository(),
         votes: VoteRepository = VoteRepository(),
+        favorites: Favorites = Favorites(),
         viewer: ShopViewer = ShopViewer(true, "viewer"),
-    ): ShopDetailViewModel = ShopDetailViewModel("shop-1", details, votes,
+    ): ShopDetailViewModel = ShopDetailViewModel("shop-1", details, votes, favorites,
         currentViewer = { Result.success(viewer) }, currentDayOfWeek = { 1 })
         .also { store.put("detail", it) }
 
@@ -146,16 +180,59 @@ class ShopDetailViewModelTest {
         assertEquals(0, votes.calls)
         assertEquals(0, viewModel.state.value.details?.reviews?.single()?.helpfulCount)
     }
+
+    @Test fun favoriteToggleUsesLocalRepositoryAndGuardsDuplicateMutation() = runTest(dispatcher) {
+        val favorites = Favorites().apply { gate = CompletableDeferred() }
+        val viewModel = viewModel(favorites = favorites)
+        runCurrent()
+        assertTrue(viewModel.state.value.favoriteAvailable)
+        assertFalse(viewModel.state.value.isFavorite)
+        viewModel.onAction(ShopDetailAction.ToggleFavorite)
+        viewModel.onAction(ShopDetailAction.ToggleFavorite)
+        runCurrent()
+        assertEquals(1, favorites.saves)
+        assertEquals("$$", favorites.saved?.priceRange)
+        assertEquals(listOf("Wi-Fi"), favorites.saved?.tags)
+        assertEquals(listOf("Эспрессо"), favorites.saved?.brewMethods)
+        assertEquals(listOf("https://photo/roaster"), favorites.saved?.roasterPhotoUrls)
+        assertTrue(viewModel.state.value.isFavoriteLoading)
+        favorites.gate!!.complete(Unit)
+        runCurrent()
+        assertTrue(viewModel.state.value.isFavorite)
+        assertFalse(viewModel.state.value.isFavoriteLoading)
+        assertEquals(ShopDetailEvent.FavoriteChanged("shop-1", true), viewModel.events.first())
+        viewModel.onAction(ShopDetailAction.ToggleFavorite)
+        runCurrent()
+        assertEquals(1, favorites.removes)
+        assertFalse(viewModel.state.value.isFavorite)
+    }
+
+    @Test fun favoriteFailureDoesNotChangeMembershipAndUnavailableStorageDisablesMutation() = runTest(dispatcher) {
+        val favorites = Favorites().apply { mutationResult = Result.failure(IllegalStateException("secret")) }
+        val viewModel = viewModel(favorites = favorites)
+        runCurrent()
+        viewModel.onAction(ShopDetailAction.ToggleFavorite)
+        runCurrent()
+        assertEquals(ShopDetailEvent.FavoriteFailed, viewModel.events.first())
+        assertFalse(viewModel.state.value.isFavorite)
+        favorites.readResult = Result.failure(IllegalStateException("unavailable"))
+        viewModel.onAction(ShopDetailAction.Retry)
+        runCurrent()
+        assertFalse(viewModel.state.value.favoriteAvailable)
+        viewModel.onAction(ShopDetailAction.ToggleFavorite)
+        runCurrent()
+        assertEquals(1, favorites.saves)
+    }
 }
 
 private fun details() = ShopDetails(
     overview = ShopOverview("shop-1", "Coffee", null, null, 53.9, 27.5,
-        null, 0, true, emptyList()),
+        null, 0, true, emptyList(), priceRange = "$$"),
     menu = null,
     schedules = emptyList(),
-    coffee = ShopCoffeeDetails(),
+    coffee = ShopCoffeeDetails(roasters = listOf(ShopRoaster("roaster-1", "Roaster", "https://photo/roaster"))),
     contact = null,
-    features = emptyList(),
+    features = listOf(ShopFeature("Wi-Fi", "wifi", false), ShopFeature("Эспрессо", "espresso", true)),
     reviews = listOf(ShopReview("review-1", null, "author", "shop-1", "Author", "", "",
         ShopRating(5, 5, 5), "", emptyList(), 0, false)),
     userCheckIns = emptyList<ShopCheckIn>(),

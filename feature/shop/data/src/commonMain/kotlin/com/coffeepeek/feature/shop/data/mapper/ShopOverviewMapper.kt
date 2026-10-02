@@ -3,6 +3,8 @@ package com.coffeepeek.feature.shop.data.mapper
 import com.coffeepeek.feature.shop.data.backend.ShopDetailsData
 import com.coffeepeek.feature.shop.domain.model.ShopOverview
 import com.coffeepeek.feature.shop.domain.model.ShopPhoto
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.contentOrNull
 
 internal fun ShopDetailsData.toOverview(requestedId: String): ShopOverview = ShopOverview(
     id = shop.id.ifBlank { requestedId },
@@ -22,4 +24,14 @@ internal fun ShopDetailsData.toOverview(requestedId: String): ShopOverview = Sho
             fullUrl = fullUrl,
         )
     },
+    priceRange = shop.priceRange.toPriceRangeLabel(),
 )
+
+private fun kotlinx.serialization.json.JsonElement?.toPriceRangeLabel(): String? =
+    when ((this as? JsonPrimitive)?.contentOrNull?.trim()?.lowercase()) {
+        "1", "cheap", "$" -> "$"
+        "2", "moderate", "$$" -> "$$"
+        "3", "expensive", "$$$" -> "$$$"
+        "4", "luxury", "$$$$" -> "$$$$"
+        else -> null
+    }

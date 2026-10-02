@@ -12,6 +12,7 @@ data class ShopOverview(
     val reviewCount: Int,
     val isOpen: Boolean,
     val photos: List<ShopPhoto>,
+    val priceRange: String? = null,
 )
 
 data class ShopPhoto(

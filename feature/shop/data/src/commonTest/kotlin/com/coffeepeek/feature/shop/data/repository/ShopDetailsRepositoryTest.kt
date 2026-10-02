@@ -109,7 +109,7 @@ class ShopDetailsRepositoryTest {
               "data":{"shopDto":{
                 "id":"shop-1","name":"Coffee","description":"  Fresh coffee  ",
                 "location":{"address":" Main street ","latitude":53.9,"longitude":27.5},
-                "rating":4.6,"reviewCount":12,"isOpen":true,
+                "rating":4.6,"reviewCount":12,"isOpen":true,"priceRange":2,
                 "photos":[
                   {"id":"first","fullUrl":"https://photo/original","urls":{"detail":"https://photo/hero","fullscreen":"https://photo/full"}},
                   {"id":"second","fullUrl":"https://photo/second"},
@@ -139,6 +139,7 @@ class ShopDetailsRepositoryTest {
             assertEquals(27.5, overview.longitude)
             assertEquals(4.6, overview.rating)
             assertEquals(12, overview.reviewCount)
+            assertEquals("$$", overview.priceRange)
             assertTrue(overview.isOpen)
             assertEquals(listOf("first", "second"), overview.photos.map { it.id })
             assertEquals("https://photo/hero", overview.photos.first().previewUrl)

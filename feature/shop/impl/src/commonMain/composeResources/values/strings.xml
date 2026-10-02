@@ -62,4 +62,7 @@
     <string name="shop_detail_back">Назад</string>
     <string name="shop_detail_error">Не удалось загрузить кофейню</string>
     <string name="shop_detail_retry">Повторить</string>
+    <string name="shop_favorite_add">Добавить в избранное</string>
+    <string name="shop_favorite_remove">Убрать из избранного</string>
+    <string name="shop_favorite_unavailable">Избранное недоступно</string>
 </resources>

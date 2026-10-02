@@ -6,6 +6,8 @@ internal sealed interface ShopDetailEvent {
     data object SignIn : ShopDetailEvent
     data object Register : ShopDetailEvent
     data object VoteFailed : ShopDetailEvent
+    data object FavoriteFailed : ShopDetailEvent
+    data class FavoriteChanged(val shopId: String, val isFavorite: Boolean) : ShopDetailEvent
     data class OpenMap(val latitude: Double, val longitude: Double) : ShopDetailEvent
     data class OpenPhoto(val urls: List<String>, val index: Int) : ShopDetailEvent
     data class OpenRoaster(val id: String) : ShopDetailEvent

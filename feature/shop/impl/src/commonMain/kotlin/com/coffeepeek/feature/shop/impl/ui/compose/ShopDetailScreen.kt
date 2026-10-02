@@ -43,6 +43,7 @@ import com.coffeepeek.feature.shop.impl.ui.compose.component.ShopCoffeeDetailsSe
 import com.coffeepeek.feature.shop.impl.ui.compose.component.ShopContactSection
 import com.coffeepeek.feature.shop.impl.ui.compose.component.ShopDescriptionSection
 import com.coffeepeek.feature.shop.impl.ui.compose.component.ShopFeaturesSection
+import com.coffeepeek.feature.shop.impl.ui.compose.component.ShopFavoriteButton
 import com.coffeepeek.feature.shop.impl.ui.compose.component.ShopMenuSection
 import com.coffeepeek.feature.shop.impl.ui.compose.component.ShopOverviewHero
 import com.coffeepeek.feature.shop.impl.ui.compose.component.ShopOverviewStats
@@ -82,6 +83,13 @@ internal fun ShopDetailScreenContent(
                 title = state.details?.overview?.title ?: stringResource(Res.string.shop_detail_title),
                 backDescription = stringResource(Res.string.shop_detail_back),
                 onBack = { onAction(ShopDetailAction.Back) },
+                actions = {
+                    if (state.details != null) {
+                        ShopFavoriteButton(state.isFavorite, state.favoriteAvailable,
+                            state.isFavoriteLoading,
+                            onClick = { onAction(ShopDetailAction.ToggleFavorite) })
+                    }
+                },
             )
         },
         containerColor = MaterialTheme.colorScheme.background,

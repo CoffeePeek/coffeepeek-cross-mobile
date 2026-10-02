@@ -9,6 +9,11 @@ previews, without switching that screen yet.
 `ShopDetailScreenContent` composes these blocks and emits typed actions with
 fake-state previews. Its runtime adapter and typed `MviViewModel` are prepared,
 but no application entry or Android detail route uses them yet.
+The ViewModel reads and mutates local favorites through the supported pure
+`feature/favorites/domain` contract. Its `FavoriteChanged` event is for the
+application bridge to notify remaining legacy consumers; that bridge is not
+wired yet. A failed membership read leaves the favorite control disabled rather
+than guessing from the server's `isFavorite` field.
 The existing shared/iOS route and ViewModel remain untouched.
 
 | Module | Responsibility | Allowed dependencies and consumers |
@@ -59,10 +64,11 @@ legacy repositories or Koin.
    DTOs, repositories and screen paths only after all platform consumers move.
 
 The Android detail route must not switch until the remaining legacy interactions
-are represented: favorite membership/toggle, sharing, suggest-change and route
-actions, review creation/editing with moderation eligibility, check-in draft and
+are represented: sharing, suggest-change and route actions, review
+creation/editing with moderation eligibility, check-in draft and
 submission with uploads, and the associated bottom sheets. Viewer/session and
-device-time providers must be bridged from application composition. Verify guest
+device-time providers and favorite change notifications must be bridged from
+application composition. Verify guest
 review visibility, own-review restrictions, photos, auth redirects and failures
 on device before removing the legacy Android renderer. iOS stays on its current
 path until a separate migration.

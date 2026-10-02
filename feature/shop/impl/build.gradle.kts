@@ -16,6 +16,7 @@ android {
 dependencies {
     api(project(module.feature.shop.api))
     implementation(project(module.feature.shop.domain))
+    implementation(project(module.feature.favorites.domain))
     implementation(project(module.core.designSystem))
     implementation(project(module.core.presentation))
     implementation(libs.compose.components.resources)

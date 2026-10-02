@@ -28,6 +28,7 @@ internal data class ShopDetailsDto(
     @SerialName("rating") val rating: Double = 0.0,
     @SerialName("reviewCount") val reviewCount: Int = 0,
     @SerialName("isOpen") val isOpen: Boolean = false,
+    @SerialName("priceRange") val priceRange: JsonElement? = null,
     @SerialName("photos") val photos: List<ShopPhotoDto> = emptyList(),
     @SerialName("menu") val menu: ShopMenuDto? = null,
     @SerialName("schedules") val schedules: List<ShopScheduleDto>? = null,

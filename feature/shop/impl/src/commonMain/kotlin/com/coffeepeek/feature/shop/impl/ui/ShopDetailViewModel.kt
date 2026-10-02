@@ -4,20 +4,24 @@ import com.coffeepeek.core.presentation.MviViewModel
 import com.coffeepeek.feature.shop.domain.model.ShopViewer
 import com.coffeepeek.feature.shop.domain.repository.ShopDetailsRepository
 import com.coffeepeek.feature.shop.domain.repository.ShopReviewVoteRepository
+import com.coffeepeek.feature.favorites.domain.repository.FavoritesRepository
 import com.coffeepeek.feature.shop.impl.ui.compose.model.ShopDetailAction
 import com.coffeepeek.feature.shop.impl.ui.compose.model.ShopDetailEvent
 import com.coffeepeek.feature.shop.impl.ui.compose.model.ShopDetailState
+import com.coffeepeek.feature.shop.impl.ui.data.toFavoriteSnapshot
 import kotlinx.coroutines.CancellationException
 
 internal class ShopDetailViewModel(
     private val shopId: String,
     private val detailsRepository: ShopDetailsRepository,
     private val voteRepository: ShopReviewVoteRepository,
+    private val favoritesRepository: FavoritesRepository,
     private val currentViewer: suspend () -> Result<ShopViewer>,
     private val currentDayOfWeek: () -> Int,
 ) : MviViewModel<ShopDetailState, ShopDetailAction, ShopDetailEvent>(ShopDetailState()) {
     private var loadInProgress = false
     private val votesInProgress = mutableSetOf<String>()
+    private var favoriteMutationInProgress = false
 
     init { onAction(ShopDetailAction.Retry) }
 
@@ -40,6 +44,7 @@ internal class ShopDetailViewModel(
             ShopDetailAction.ToggleFeatures -> updateState { copy(featuresExpanded = !featuresExpanded) }
             ShopDetailAction.SignIn -> sendEvent(ShopDetailEvent.SignIn)
             ShopDetailAction.Register -> sendEvent(ShopDetailEvent.Register)
+            ShopDetailAction.ToggleFavorite -> toggleFavorite()
             is ShopDetailAction.OpenPhoto -> {
                 if (action.index in action.urls.indices) {
                     sendEvent(ShopDetailEvent.OpenPhoto(action.urls, action.index))
@@ -72,11 +77,15 @@ internal class ShopDetailViewModel(
         try {
             val viewer = currentViewer().getOrThrow()
             val details = detailsRepository.getDetails(shopId).getOrThrow()
+            val favoritesResult = favoritesRepository.read()
+            favoritesResult.exceptionOrNull()?.let { if (it is CancellationException) throw it }
+            val favorites = favoritesResult.getOrNull()
             val dayOfWeek = currentDayOfWeek()
             updateState {
                 copy(details = details, isLoggedIn = viewer.isLoggedIn,
                     currentUserId = viewer.userId, todayDayOfWeek = dayOfWeek,
-                    hasError = false)
+                    isFavorite = favorites?.any { it.id == details.overview.id } == true,
+                    favoriteAvailable = favorites != null, hasError = false)
             }
         } catch (cancelled: CancellationException) {
             throw cancelled
@@ -85,6 +94,32 @@ internal class ShopDetailViewModel(
         } finally {
             loadInProgress = false
             updateState { copy(isLoading = false) }
+        }
+    }
+
+    private suspend fun toggleFavorite() {
+        if (!currentState.isLoggedIn) {
+            sendEvent(ShopDetailEvent.SignIn)
+            return
+        }
+        if (!currentState.favoriteAvailable || favoriteMutationInProgress) return
+        val details = currentState.details ?: return
+        favoriteMutationInProgress = true
+        updateState { copy(isFavoriteLoading = true) }
+        try {
+            val newValue = !currentState.isFavorite
+            val result = if (newValue) favoritesRepository.save(details.toFavoriteSnapshot())
+                else favoritesRepository.remove(details.overview.id)
+            result.getOrThrow()
+            updateState { copy(isFavorite = newValue) }
+            sendEvent(ShopDetailEvent.FavoriteChanged(details.overview.id, newValue))
+        } catch (cancelled: CancellationException) {
+            throw cancelled
+        } catch (_: Exception) {
+            sendEvent(ShopDetailEvent.FavoriteFailed)
+        } finally {
+            favoriteMutationInProgress = false
+            updateState { copy(isFavoriteLoading = false) }
         }
     }
 

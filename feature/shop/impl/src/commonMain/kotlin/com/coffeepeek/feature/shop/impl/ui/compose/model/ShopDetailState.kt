@@ -12,4 +12,7 @@ internal data class ShopDetailState(
     val scheduleExpanded: Boolean = false,
     val featuresExpanded: Boolean = false,
     val pendingVoteIds: Set<String> = emptySet(),
+    val isFavorite: Boolean = false,
+    val favoriteAvailable: Boolean = false,
+    val isFavoriteLoading: Boolean = false,
 )
