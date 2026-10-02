@@ -45,6 +45,9 @@ Coffee, contact and engagement fields come from that same snapshot. The file
 origin is supplied by application composition so review/check-in storage keys
 can be resolved without depending on legacy data code. A separate narrow vote
 repository implements the existing idempotent helpful PUT/DELETE operation.
+Review creation/edit eligibility has a separate authenticated read contract
+for `GET /api/CoffeeShopReviews/can-create`; it is not inferred from published
+reviews. The ViewModel and forms do not consume this new contract yet.
 Contact link formatting belongs to presentation; opening links and copying phone numbers remain caller
 callbacks, not feature-owned platform calls.
 
