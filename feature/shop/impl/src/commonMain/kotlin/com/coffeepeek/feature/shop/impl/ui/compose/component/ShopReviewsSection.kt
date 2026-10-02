@@ -35,6 +35,7 @@ internal fun ShopReviewsSection(
     shopTitle: String,
     isLoggedIn: Boolean,
     currentUserId: String?,
+    pendingVoteIds: Set<String>,
     onOpenPhoto: (List<String>, Int) -> Unit,
     onVote: (String) -> Unit,
     onSignIn: () -> Unit,
@@ -53,6 +54,7 @@ internal fun ShopReviewsSection(
                     ShopReviewCard(
                         review = review,
                         canVote = isLoggedIn && currentUserId != review.userId,
+                        isVoting = review.id in pendingVoteIds,
                         onVote = { if (!hidden) onVote(review.id) },
                         onOpenPhoto = { urls, photoIndex -> if (!hidden) onOpenPhoto(urls, photoIndex) },
                         modifier = Modifier.width(300.dp).then(
@@ -84,11 +86,12 @@ internal fun ShopReviewsSection(
 @Preview @Composable private fun ShopReviewsSectionLightPreview() = CoffeePeekTheme(darkTheme = false) {
     ShopReviewsSection(listOf(previewReview(), previewReview().copy(id = "review-2", username = "Мария")),
         shopTitle = "Кофейня", isLoggedIn = false, currentUserId = null,
+        pendingVoteIds = emptySet(),
         onOpenPhoto = { _, _ -> }, onVote = {}, onSignIn = {}, onRegister = {})
 }
 
 @Preview @Composable private fun ShopReviewsSectionDarkPreview() = CoffeePeekTheme(darkTheme = true) {
     ShopReviewsSection(listOf(previewReview()), shopTitle = "Кофейня", isLoggedIn = true,
-        currentUserId = "user-2", onOpenPhoto = { _, _ -> }, onVote = {},
+        currentUserId = "user-2", pendingVoteIds = emptySet(), onOpenPhoto = { _, _ -> }, onVote = {},
         onSignIn = {}, onRegister = {})
 }

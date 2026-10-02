@@ -12,6 +12,9 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import com.coffeepeek.core.designsystem.component.CpTopBar
@@ -46,11 +49,28 @@ import com.coffeepeek.feature.shop.impl.ui.compose.component.ShopOverviewStats
 import com.coffeepeek.feature.shop.impl.ui.compose.component.ShopReviewsSection
 import com.coffeepeek.feature.shop.impl.ui.compose.component.ShopScheduleSection
 import com.coffeepeek.feature.shop.impl.ui.compose.model.ShopDetailAction
+import com.coffeepeek.feature.shop.impl.ui.compose.model.ShopDetailEvent
 import com.coffeepeek.feature.shop.impl.ui.compose.model.ShopDetailState
+import com.coffeepeek.feature.shop.impl.ui.ShopDetailViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
-/** Previewable composition only; the Android route still uses the legacy detail screen. */
+/** Runtime adapter delegates every effect to the caller; root navigation stays in the app. */
+@Composable
+internal fun ShopDetailScreen(
+    viewModel: ShopDetailViewModel,
+    onEvent: (ShopDetailEvent) -> Unit,
+) {
+    val state by viewModel.state.collectAsStateWithLifecycle()
+    val currentOnEvent by rememberUpdatedState(onEvent)
+    LaunchedEffect(viewModel) {
+        viewModel.events.collect(currentOnEvent)
+    }
+    ShopDetailScreenContent(state, viewModel::onAction)
+}
+
+/** Previewable composition; the Android route still uses the legacy detail screen. */
 @Composable
 internal fun ShopDetailScreenContent(
     state: ShopDetailState,
@@ -118,7 +138,7 @@ internal fun ShopDetailScreenContent(
                             modifier = Modifier.padding(horizontal = CpDimens.spacing4)) }
                     }
                     item { ShopReviewsSection(details.reviews, details.overview.title,
-                        state.isLoggedIn, state.currentUserId,
+                        state.isLoggedIn, state.currentUserId, state.pendingVoteIds,
                         onOpenPhoto = { urls, index -> onAction(ShopDetailAction.OpenPhoto(urls, index)) },
                         onVote = { onAction(ShopDetailAction.VoteHelpful(it)) },
                         onSignIn = { onAction(ShopDetailAction.SignIn) },

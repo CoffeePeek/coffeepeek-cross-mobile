@@ -11,4 +11,5 @@ internal data class ShopDetailState(
     val todayDayOfWeek: Int = 0,
     val scheduleExpanded: Boolean = false,
     val featuresExpanded: Boolean = false,
+    val pendingVoteIds: Set<String> = emptySet(),
 )

@@ -6,8 +6,9 @@ Preparation slices add a read-only `ShopDetails` snapshot (overview, menu,
 locally displayed weekly schedule, coffee catalog, contacts, features, reviews
 and user check-ins), plus stateless components with colocated light/dark
 previews, without switching that screen yet.
-`ShopDetailScreenContent` now composes these read-only blocks and emits typed
-actions with fake-state previews; it has no runtime ViewModel/entry wiring yet.
+`ShopDetailScreenContent` composes these blocks and emits typed actions with
+fake-state previews. Its runtime adapter and typed `MviViewModel` are prepared,
+but no application entry or Android detail route uses them yet.
 The existing shared/iOS route and ViewModel remain untouched.
 
 | Module | Responsibility | Allowed dependencies and consumers |
@@ -56,6 +57,15 @@ legacy repositories or Koin.
    Android detail route. Do not show a reduced read-only replacement meanwhile.
 5. Later migrate the rest of shop browsing under this same owner. Retire legacy
    DTOs, repositories and screen paths only after all platform consumers move.
+
+The Android detail route must not switch until the remaining legacy interactions
+are represented: favorite membership/toggle, sharing, suggest-change and route
+actions, review creation/editing with moderation eligibility, check-in draft and
+submission with uploads, and the associated bottom sheets. Viewer/session and
+device-time providers must be bridged from application composition. Verify guest
+review visibility, own-review restrictions, photos, auth redirects and failures
+on device before removing the legacy Android renderer. iOS stays on its current
+path until a separate migration.
 
 Potential risks: backend DTO shape varies between nested and top-level menu;
 images may be missing or URLs may expire; iOS still relies on legacy source.

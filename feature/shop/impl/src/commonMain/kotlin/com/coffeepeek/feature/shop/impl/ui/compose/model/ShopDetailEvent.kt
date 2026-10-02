@@ -1,0 +1,14 @@
+package com.coffeepeek.feature.shop.impl.ui.compose.model
+
+internal sealed interface ShopDetailEvent {
+    data object Back : ShopDetailEvent
+    data object OpenMenuGallery : ShopDetailEvent
+    data object SignIn : ShopDetailEvent
+    data object Register : ShopDetailEvent
+    data object VoteFailed : ShopDetailEvent
+    data class OpenMap(val latitude: Double, val longitude: Double) : ShopDetailEvent
+    data class OpenPhoto(val urls: List<String>, val index: Int) : ShopDetailEvent
+    data class OpenRoaster(val id: String) : ShopDetailEvent
+    data class OpenLink(val target: String) : ShopDetailEvent
+    data class CopyPhone(val number: String) : ShopDetailEvent
+}

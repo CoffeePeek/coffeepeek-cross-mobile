@@ -29,6 +29,7 @@ import kotlin.math.roundToInt
 internal fun ShopReviewCard(
     review: ShopReview,
     canVote: Boolean,
+    isVoting: Boolean = false,
     onVote: () -> Unit,
     onOpenPhoto: (List<String>, Int) -> Unit,
     modifier: Modifier = Modifier,
@@ -56,7 +57,7 @@ internal fun ShopReviewCard(
                 }
             }
             if (canVote) {
-                TextButton(onClick = onVote) {
+                TextButton(onClick = onVote, enabled = !isVoting) {
                     Text(stringResource(Res.string.shop_reviews_helpful, review.helpfulCount))
                 }
             } else {
