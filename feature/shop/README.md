@@ -17,8 +17,8 @@ than guessing from the server's `isFavorite` field.
 Sharing, suggest-change, and route controls now emit platform-agnostic events;
 the application must map them to its existing share helper, navigation and
 maps launcher when the Android detail route is switched. Suggest-change asks
-guests to sign in first. The temporary bottom bar exposes only route until
-review and check-in flows are ready; it is not the final detail UI.
+guests to sign in first. The temporary bottom bar exposes route and review
+actions until the check-in flow is ready; it is not the final detail UI.
 The existing shared/iOS route and ViewModel remain untouched.
 
 | Module | Responsibility | Allowed dependencies and consumers |
@@ -47,7 +47,9 @@ can be resolved without depending on legacy data code. A separate narrow vote
 repository implements the existing idempotent helpful PUT/DELETE operation.
 Review creation/edit eligibility has a separate authenticated read contract
 for `GET /api/CoffeeShopReviews/can-create`; it is not inferred from published
-reviews. The ViewModel and forms do not consume this new contract yet.
+reviews. The ViewModel routes the review action to create/edit events from this
+response and fails closed when eligibility is unavailable. The new forms and
+application event bridge are not wired yet.
 Contact link formatting belongs to presentation; opening links and copying phone numbers remain caller
 callbacks, not feature-owned platform calls.
 

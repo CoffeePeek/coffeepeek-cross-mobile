@@ -13,6 +13,7 @@ internal sealed interface ShopDetailAction {
     data object Share : ShopDetailAction
     data object SuggestChange : ShopDetailAction
     data object OpenRoute : ShopDetailAction
+    data object OpenReview : ShopDetailAction
     data class OpenPhoto(val urls: List<String>, val index: Int) : ShopDetailAction
     data class OpenRoaster(val id: String) : ShopDetailAction
     data class OpenLink(val target: String) : ShopDetailAction

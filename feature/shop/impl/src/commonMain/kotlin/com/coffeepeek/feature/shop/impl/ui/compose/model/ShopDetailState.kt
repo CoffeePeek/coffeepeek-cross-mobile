@@ -1,6 +1,7 @@
 package com.coffeepeek.feature.shop.impl.ui.compose.model
 
 import com.coffeepeek.feature.shop.domain.model.ShopDetails
+import com.coffeepeek.feature.shop.domain.model.ShopReviewAccess
 
 internal data class ShopDetailState(
     val details: ShopDetails? = null,
@@ -15,4 +16,5 @@ internal data class ShopDetailState(
     val isFavorite: Boolean = false,
     val favoriteAvailable: Boolean = false,
     val isFavoriteLoading: Boolean = false,
+    val reviewAccess: ShopReviewAccess? = null,
 )

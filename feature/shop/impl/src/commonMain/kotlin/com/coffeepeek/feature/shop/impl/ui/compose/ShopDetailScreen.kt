@@ -3,6 +3,7 @@ package com.coffeepeek.feature.shop.impl.ui.compose
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -46,6 +47,7 @@ import com.coffeepeek.feature.shop.impl.ui.compose.component.ShopDescriptionSect
 import com.coffeepeek.feature.shop.impl.ui.compose.component.ShopFeaturesSection
 import com.coffeepeek.feature.shop.impl.ui.compose.component.ShopHeaderActions
 import com.coffeepeek.feature.shop.impl.ui.compose.component.ShopRouteButton
+import com.coffeepeek.feature.shop.impl.ui.compose.component.ShopReviewButton
 import com.coffeepeek.feature.shop.impl.ui.compose.component.ShopMenuSection
 import com.coffeepeek.feature.shop.impl.ui.compose.component.ShopOverviewHero
 import com.coffeepeek.feature.shop.impl.ui.compose.component.ShopOverviewStats
@@ -99,11 +101,18 @@ internal fun ShopDetailScreenContent(
         },
         bottomBar = {
             val overview = state.details?.overview
-            if (overview?.latitude != null && overview.longitude != null) {
-                ShopRouteButton(
-                    onClick = { onAction(ShopDetailAction.OpenRoute) },
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = CpDimens.spacing4),
-                )
+            if (overview != null) {
+                Row(Modifier.fillMaxWidth().padding(horizontal = CpDimens.spacing4),
+                    horizontalArrangement = Arrangement.spacedBy(CpDimens.spacing2)) {
+                    if (overview.latitude != null && overview.longitude != null) {
+                        ShopRouteButton(
+                            onClick = { onAction(ShopDetailAction.OpenRoute) },
+                            modifier = Modifier.weight(1f),
+                        )
+                    }
+                    ShopReviewButton(onClick = { onAction(ShopDetailAction.OpenReview) },
+                        modifier = Modifier.weight(1f))
+                }
             }
         },
         containerColor = MaterialTheme.colorScheme.background,

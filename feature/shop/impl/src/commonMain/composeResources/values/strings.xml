@@ -65,6 +65,7 @@
     <string name="shop_detail_share">Поделиться</string>
     <string name="shop_detail_suggest_change">Предложить правку</string>
     <string name="shop_detail_route">Маршрут</string>
+    <string name="shop_detail_review">Отзыв</string>
     <string name="shop_favorite_add">Добавить в избранное</string>
     <string name="shop_favorite_remove">Убрать из избранного</string>
     <string name="shop_favorite_unavailable">Избранное недоступно</string>

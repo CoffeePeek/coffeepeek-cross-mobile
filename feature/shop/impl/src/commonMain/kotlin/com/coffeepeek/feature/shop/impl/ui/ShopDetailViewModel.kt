@@ -4,6 +4,7 @@ import com.coffeepeek.core.presentation.MviViewModel
 import com.coffeepeek.feature.shop.domain.model.ShopViewer
 import com.coffeepeek.feature.shop.domain.repository.ShopDetailsRepository
 import com.coffeepeek.feature.shop.domain.repository.ShopReviewVoteRepository
+import com.coffeepeek.feature.shop.domain.repository.ShopReviewAccessRepository
 import com.coffeepeek.feature.favorites.domain.repository.FavoritesRepository
 import com.coffeepeek.feature.shop.impl.ui.compose.model.ShopDetailAction
 import com.coffeepeek.feature.shop.impl.ui.compose.model.ShopDetailEvent
@@ -15,6 +16,7 @@ internal class ShopDetailViewModel(
     private val shopId: String,
     private val detailsRepository: ShopDetailsRepository,
     private val voteRepository: ShopReviewVoteRepository,
+    private val reviewAccessRepository: ShopReviewAccessRepository,
     private val favoritesRepository: FavoritesRepository,
     private val currentViewer: suspend () -> Result<ShopViewer>,
     private val currentDayOfWeek: () -> Int,
@@ -59,6 +61,7 @@ internal class ShopDetailViewModel(
                 val longitude = overview.longitude ?: return
                 sendEvent(ShopDetailEvent.OpenRoute(latitude, longitude))
             }
+            ShopDetailAction.OpenReview -> openReview()
             is ShopDetailAction.OpenPhoto -> {
                 if (action.index in action.urls.indices) {
                     sendEvent(ShopDetailEvent.OpenPhoto(action.urls, action.index))
@@ -87,7 +90,7 @@ internal class ShopDetailViewModel(
     private suspend fun load() {
         if (loadInProgress) return
         loadInProgress = true
-        updateState { copy(isLoading = true, hasError = false) }
+        updateState { copy(isLoading = true, hasError = false, reviewAccess = null) }
         try {
             val viewer = currentViewer().getOrThrow()
             val loadedDetails = detailsRepository.getDetails(shopId).getOrThrow()
@@ -96,12 +99,15 @@ internal class ShopDetailViewModel(
             val favoritesResult = favoritesRepository.read()
             favoritesResult.exceptionOrNull()?.let { if (it is CancellationException) throw it }
             val favorites = favoritesResult.getOrNull()
+            val accessResult = if (viewer.isLoggedIn) reviewAccessRepository.getAccess(shopId) else null
+            accessResult?.exceptionOrNull()?.let { if (it is CancellationException) throw it }
             val dayOfWeek = currentDayOfWeek()
             updateState {
                 copy(details = details, isLoggedIn = viewer.isLoggedIn,
                     currentUserId = viewer.userId, todayDayOfWeek = dayOfWeek,
                     isFavorite = favorites?.any { it.id == details.overview.id } == true,
-                    favoriteAvailable = favorites != null, hasError = false)
+                    favoriteAvailable = favorites != null, reviewAccess = accessResult?.getOrNull(),
+                    hasError = false)
             }
         } catch (cancelled: CancellationException) {
             throw cancelled
@@ -110,6 +116,22 @@ internal class ShopDetailViewModel(
         } finally {
             loadInProgress = false
             updateState { copy(isLoading = false) }
+        }
+    }
+
+    private suspend fun openReview() {
+        if (!currentState.isLoggedIn) {
+            sendEvent(ShopDetailEvent.SignIn)
+            return
+        }
+        if (currentState.details == null) return
+        val access = currentState.reviewAccess
+        val existingReviewId = access?.existingReviewId
+        when {
+            access == null -> sendEvent(ShopDetailEvent.ReviewAccessUnavailable)
+            existingReviewId != null -> sendEvent(ShopDetailEvent.EditReview(existingReviewId))
+            access.canCreate -> sendEvent(ShopDetailEvent.CreateReview)
+            else -> sendEvent(ShopDetailEvent.ReviewUnavailable)
         }
     }
 

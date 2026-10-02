@@ -9,10 +9,12 @@ import com.coffeepeek.feature.shop.domain.model.ShopHelpfulVote
 import com.coffeepeek.feature.shop.domain.model.ShopOverview
 import com.coffeepeek.feature.shop.domain.model.ShopRating
 import com.coffeepeek.feature.shop.domain.model.ShopReview
+import com.coffeepeek.feature.shop.domain.model.ShopReviewAccess
 import com.coffeepeek.feature.shop.domain.model.ShopRoaster
 import com.coffeepeek.feature.shop.domain.model.ShopViewer
 import com.coffeepeek.feature.shop.domain.repository.ShopDetailsRepository
 import com.coffeepeek.feature.shop.domain.repository.ShopReviewVoteRepository
+import com.coffeepeek.feature.shop.domain.repository.ShopReviewAccessRepository
 import com.coffeepeek.feature.favorites.domain.model.FavoriteShop
 import com.coffeepeek.feature.favorites.domain.repository.FavoritesRepository
 import com.coffeepeek.feature.shop.impl.ui.compose.model.ShopDetailAction
@@ -68,6 +70,16 @@ class ShopDetailViewModelTest {
         }
     }
 
+    private class ReviewAccess : ShopReviewAccessRepository {
+        var calls = 0
+        var result: Result<ShopReviewAccess> = Result.success(ShopReviewAccess(true, null))
+        override suspend fun getAccess(shopId: String): Result<ShopReviewAccess> {
+            assertEquals("shop-1", shopId)
+            calls++
+            return result
+        }
+    }
+
     private class Favorites : FavoritesRepository {
         var stored = emptyList<FavoriteShop>()
         var saves = 0
@@ -98,9 +110,10 @@ class ShopDetailViewModelTest {
     private fun viewModel(
         details: DetailsRepository = DetailsRepository(),
         votes: VoteRepository = VoteRepository(),
+        reviewAccess: ReviewAccess = ReviewAccess(),
         favorites: Favorites = Favorites(),
         viewer: ShopViewer = ShopViewer(true, "viewer"),
-    ): ShopDetailViewModel = ShopDetailViewModel("shop-1", details, votes, favorites,
+    ): ShopDetailViewModel = ShopDetailViewModel("shop-1", details, votes, reviewAccess, favorites,
         currentViewer = { Result.success(viewer) }, currentDayOfWeek = { 1 })
         .also { store.put("detail", it) }
 
@@ -259,6 +272,49 @@ class ShopDetailViewModelTest {
         runCurrent()
 
         assertTrue(viewModel.state.value.details?.userCheckIns.isNullOrEmpty())
+    }
+
+    @Test fun reviewActionUsesServerEligibilityAndExistingReviewId() = runTest(dispatcher) {
+        val access = ReviewAccess()
+        val viewModel = viewModel(reviewAccess = access)
+        runCurrent()
+        assertEquals(1, access.calls)
+
+        viewModel.onAction(ShopDetailAction.OpenReview)
+        runCurrent()
+        assertEquals(ShopDetailEvent.CreateReview, viewModel.events.first())
+
+        access.result = Result.success(ShopReviewAccess(false, "existing-1"))
+        viewModel.onAction(ShopDetailAction.Retry)
+        runCurrent()
+        viewModel.onAction(ShopDetailAction.OpenReview)
+        runCurrent()
+        assertEquals(ShopDetailEvent.EditReview("existing-1"), viewModel.events.first())
+
+        access.result = Result.success(ShopReviewAccess(false, null))
+        viewModel.onAction(ShopDetailAction.Retry)
+        runCurrent()
+        viewModel.onAction(ShopDetailAction.OpenReview)
+        runCurrent()
+        assertEquals(ShopDetailEvent.ReviewUnavailable, viewModel.events.first())
+    }
+
+    @Test fun reviewActionFailsClosedWhenAccessRequestFailsAndGuestSkipsRequest() = runTest(dispatcher) {
+        val access = ReviewAccess().apply { result = Result.failure(IllegalStateException("unavailable")) }
+        val authenticated = viewModel(reviewAccess = access)
+        runCurrent()
+        assertEquals("Coffee", authenticated.state.value.details?.overview?.title)
+        authenticated.onAction(ShopDetailAction.OpenReview)
+        runCurrent()
+        assertEquals(ShopDetailEvent.ReviewAccessUnavailable, authenticated.events.first())
+
+        val guestAccess = ReviewAccess()
+        val guest = viewModel(reviewAccess = guestAccess, viewer = ShopViewer(false, null))
+        runCurrent()
+        assertEquals(0, guestAccess.calls)
+        guest.onAction(ShopDetailAction.OpenReview)
+        runCurrent()
+        assertEquals(ShopDetailEvent.SignIn, guest.events.first())
     }
 }
 
