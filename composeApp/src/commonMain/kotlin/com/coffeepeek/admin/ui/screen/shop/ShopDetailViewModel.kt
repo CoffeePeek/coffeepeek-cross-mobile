@@ -5,6 +5,8 @@ import com.coffeepeek.domain.model.validateConsumedDrink
 import com.coffeepeek.domain.model.ConsumedDrinkOption
 
 import com.coffeepeek.admin.base.BaseViewModel
+import com.coffeepeek.admin.feature.favorites.api.RoasterFavorites
+import com.coffeepeek.admin.feature.favorites.api.roasterFavoriteId
 import com.coffeepeek.admin.ui.Navigator
 import com.coffeepeek.admin.utils.ClipboardHelper
 import com.coffeepeek.admin.utils.FavoriteSync
@@ -16,6 +18,7 @@ import com.coffeepeek.admin.utils.datePickerMillisToUtcIsoInstant
 import com.coffeepeek.admin.utils.validatePublicCheckInDescription
 import com.coffeepeek.admin.utils.validatePublicCheckInHeader
 import com.coffeepeek.domain.model.CoffeeShopDetails
+import com.coffeepeek.domain.model.CatalogItem
 import com.coffeepeek.domain.model.CreateCheckInInput
 import com.coffeepeek.domain.model.PendingPhotoUpload
 import com.coffeepeek.domain.repository.CheckInRepository
@@ -27,6 +30,7 @@ import com.coffeepeek.domain.repository.UserRepository
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -46,6 +50,8 @@ data class ShopDetailUiState(
     val editingReviewId: String? = null,
     val actionMessage: String? = null,
     val error: String? = null,
+    val favoriteRoasterIds: Set<String> = emptySet(),
+    val savingRoasterFavoriteIds: Set<String> = emptySet(),
 )
 
 class ShopDetailViewModel(
@@ -57,12 +63,17 @@ class ShopDetailViewModel(
     private val sessionRepository: SessionRepository,
     private val checkInDraftStore: CheckInDraftStore,
     private val userRepository: UserRepository,
+    private val roasterFavorites: RoasterFavorites,
 ) : BaseViewModel() {
 
     private val _uiState = MutableStateFlow(ShopDetailUiState())
     val uiState = _uiState.asStateFlow()
 
     init {
+        roasterFavorites.observeFavorites()
+            .onEach { favorites -> _uiState.update { it.copy(favoriteRoasterIds = favorites.map { it.roasterFavoriteId }.toSet()) } }
+            .catch { _uiState.update { it.copy(actionMessage = "Не удалось загрузить избранное") } }
+            .launchIn(workScope)
         load()
         ReviewSync.changes
             .onEach { changedShopId ->
@@ -332,6 +343,34 @@ class ShopDetailViewModel(
             return
         }
         Navigator.navigate(Navigator.Screen.SuggestShopChange(shopId))
+    }
+
+    fun toggleRoasterFavorite(roaster: CatalogItem) {
+        val id = roaster.roasterFavoriteId
+        val current = _uiState.value
+        if (id in current.savingRoasterFavoriteIds) return
+        _uiState.update { it.copy(savingRoasterFavoriteIds = it.savingRoasterFavoriteIds + id) }
+        workScope.launch {
+            try {
+                if (!sessionRepository.isLoggedIn()) {
+                    Navigator.navigate(Navigator.Screen.Auth)
+                    return@launch
+                }
+                roasterFavorites.setFavorite(roaster, id !in current.favoriteRoasterIds)
+                    .onFailure { _uiState.update { it.copy(actionMessage = "Не удалось изменить избранное") } }
+            } finally {
+                _uiState.update { it.copy(savingRoasterFavoriteIds = it.savingRoasterFavoriteIds - id) }
+            }
+        }
+    }
+
+    fun openReportIssue() {
+        val details = _uiState.value.details ?: return
+        if (!_uiState.value.isLoggedIn) {
+            Navigator.navigate(Navigator.Screen.Auth)
+            return
+        }
+        Navigator.navigate(Navigator.Screen.ReportShop(shopId, details.shop.title))
     }
 
     fun openOnMap() {

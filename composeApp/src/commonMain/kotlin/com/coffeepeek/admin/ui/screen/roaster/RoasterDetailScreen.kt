@@ -33,7 +33,10 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -54,6 +57,7 @@ import com.coffeepeek.admin.ui.component.CoffeePeekLoader
 import com.coffeepeek.admin.ui.component.CoffeeShopImage
 import com.coffeepeek.admin.ui.component.CoffeeShopPlaceholderImage
 import com.coffeepeek.admin.ui.component.FullScreenImageDialog
+import com.coffeepeek.admin.ui.component.FavoriteButton
 import com.coffeepeek.admin.ui.icons.CpIcons
 import com.coffeepeek.admin.utils.OpenInBrowser
 import com.coffeepeek.domain.model.RoasterDetails
@@ -66,12 +70,20 @@ fun RoasterDetailScreen(roasterId: String) {
     val vm: RoasterDetailViewModel = platformViewModel(parameters = { parametersOf(roasterId) })
     val state by vm.state.collectAsState()
     var previewUrl by remember { mutableStateOf<String?>(null) }
+    val snackbarHostState = remember { SnackbarHostState() }
+    LaunchedEffect(state.actionMessage) {
+        state.actionMessage?.let {
+            snackbarHostState.showSnackbar(it)
+            vm.clearActionMessage()
+        }
+    }
 
     previewUrl?.let { url ->
         FullScreenImageDialog(imageUrl = url, onDismiss = { previewUrl = null })
     }
 
     Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         containerColor = MaterialTheme.colorScheme.background,
     ) { padding ->
         when {
@@ -107,6 +119,9 @@ fun RoasterDetailScreen(roasterId: String) {
 
             state.details != null -> RoasterContent(
                 details = state.details!!,
+                isFavorite = state.isFavorite,
+                isFavoriteLoading = state.isFavoriteLoading,
+                onToggleFavorite = vm::toggleFavorite,
                 onBack = Navigator::popBack,
                 onPhotoClick = { previewUrl = it },
                 onShopClick = { Navigator.navigate(Navigator.Screen.ShopDetail(it)) },
@@ -118,6 +133,9 @@ fun RoasterDetailScreen(roasterId: String) {
 @Composable
 private fun RoasterContent(
     details: RoasterDetails,
+    isFavorite: Boolean,
+    isFavoriteLoading: Boolean,
+    onToggleFavorite: () -> Unit,
     onBack: () -> Unit,
     onPhotoClick: (String) -> Unit,
     onShopClick: (String) -> Unit,
@@ -129,6 +147,9 @@ private fun RoasterContent(
         item {
             RoasterHero(
                 details = details,
+                isFavorite = isFavorite,
+                isFavoriteLoading = isFavoriteLoading,
+                onToggleFavorite = onToggleFavorite,
                 onBack = onBack,
                 onPhotoClick = onPhotoClick,
             )
@@ -286,6 +307,9 @@ private fun RoasterShopCard(
 @Composable
 private fun RoasterHero(
     details: RoasterDetails,
+    isFavorite: Boolean,
+    isFavoriteLoading: Boolean,
+    onToggleFavorite: () -> Unit,
     onBack: () -> Unit,
     onPhotoClick: (String) -> Unit,
 ) {
@@ -337,6 +361,13 @@ private fun RoasterHero(
                 .align(Alignment.TopStart)
                 .statusBarsPadding()
                 .padding(CpDimens.spacing2),
+        )
+        FavoriteButton(
+            isFavorite = isFavorite,
+            onClick = onToggleFavorite,
+            enabled = !isFavoriteLoading,
+            overImage = true,
+            modifier = Modifier.align(Alignment.TopEnd).statusBarsPadding().padding(CpDimens.spacing3),
         )
     }
 }

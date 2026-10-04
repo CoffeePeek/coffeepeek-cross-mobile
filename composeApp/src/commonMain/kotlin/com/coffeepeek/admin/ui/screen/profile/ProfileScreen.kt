@@ -58,6 +58,10 @@ import com.coffeepeek.admin.ui.component.SettingsSection
 import com.coffeepeek.admin.ui.screen.contributions.ContributionKind
 import com.coffeepeek.admin.utils.CpImage
 import org.koin.compose.koinInject
+import coffeepeek.composeapp.generated.resources.Res
+import coffeepeek.composeapp.generated.resources.favorites_profile_title
+import coffeepeek.composeapp.generated.resources.favorites_profile_description
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun ProfileScreen(vm: ProfileViewModel = koinInject()) {
@@ -165,8 +169,8 @@ fun ProfileScreen(vm: ProfileViewModel = koinInject()) {
             SettingsSection(title = "Избранное") {
                 SettingsRow(
                     icon = CpIcons.Favorite,
-                    label = "Избранные кофейни",
-                    description = "Кофейни, которые вы сохранили",
+                    label = stringResource(Res.string.favorites_profile_title),
+                    description = stringResource(Res.string.favorites_profile_description),
                     iconColors = SettingsIconPalette.Rose,
                     onClick = { Navigator.navigate(Navigator.Screen.Favorites) },
                 )

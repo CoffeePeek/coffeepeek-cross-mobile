@@ -1,6 +1,7 @@
 package com.coffeepeek.admin.ui.screen.feed
 
 import com.coffeepeek.admin.ui.icons.CpIcons
+import com.coffeepeek.admin.ui.component.FavoriteButton
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -434,9 +435,10 @@ internal fun ShopCard(
                             }
                         }
                     }
-                    FavoriteIconBadge(
+                    FavoriteButton(
                         isFavorite = shop.isFavorite,
                         onClick = onToggleFavorite,
+                        overImage = true,
                     )
                 }
 
@@ -592,28 +594,6 @@ internal fun ShopCard(
                 }
             }
         }
-    }
-}
-
-@Composable
-private fun FavoriteIconBadge(
-    isFavorite: Boolean,
-    onClick: () -> Unit,
-) {
-    Box(
-        modifier = Modifier
-            .size(36.dp)
-            .clip(RoundedCornerShape(CpDimens.radiusLg))
-            .background(Color.Black.copy(alpha = 0.68f))
-            .clickable(onClick = onClick),
-        contentAlignment = Alignment.Center,
-    ) {
-        Icon(
-            imageVector = if (isFavorite) CpIcons.FavoriteFilled else CpIcons.Favorite,
-            contentDescription = if (isFavorite) "Убрать из избранного" else "Добавить в избранное",
-            tint = if (isFavorite) CpColor.Error else Color.White,
-            modifier = Modifier.size(22.dp),
-        )
     }
 }
 

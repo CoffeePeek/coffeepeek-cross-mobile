@@ -42,6 +42,14 @@
     <string name="go_to_login">На страницу входа</string>
 
     <string name="profile_version">Версия</string>
+    <string name="favorite_add">Добавить в избранное</string>
+    <string name="favorite_remove">Убрать из избранного</string>
+    <string name="favorites_empty">Пока нет избранных кофеен и обжарщиков</string>
+    <string name="favorites_roasters">Обжарщики</string>
+    <string name="favorites_profile_title">Кофейни и обжарщики</string>
+    <string name="favorites_profile_description">Кофейни и обжарщики, которые вы сохранили</string>
+    <string name="shop_report_prompt">Something wrong with this shop?</string>
+    <string name="shop_report_issue">Report issue</string>
     <string name="retry">Попробовать снова</string>
     <string name="checkin_title">Отметить посещение</string>
     <string name="checkin_note_hint_private">Заметка</string>

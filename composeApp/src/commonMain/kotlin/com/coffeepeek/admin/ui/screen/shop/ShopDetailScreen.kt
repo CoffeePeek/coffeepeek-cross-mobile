@@ -48,6 +48,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -84,13 +85,17 @@ import com.coffeepeek.admin.utils.utcIsoToLocalDate
 import com.coffeepeek.admin.utils.formatOneDecimal
 import coffeepeek.composeapp.generated.resources.Res
 import coffeepeek.composeapp.generated.resources.maskot_with_book
+import coffeepeek.composeapp.generated.resources.shop_report_issue
+import coffeepeek.composeapp.generated.resources.shop_report_prompt
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.stringResource
 import com.coffeepeek.admin.location.distanceToShopMeters
 import com.coffeepeek.admin.location.formatDistance
 import com.coffeepeek.admin.location.rememberPermittedUserLocation
 import com.coffeepeek.admin.theme.CpColor
 import com.coffeepeek.admin.theme.CpDimens
+import com.coffeepeek.admin.feature.favorites.api.roasterFavoriteId
 import com.coffeepeek.admin.ui.Navigator
 import com.coffeepeek.admin.ui.component.brewMethodIcon
 import com.coffeepeek.admin.ui.component.CoffeeShopImage
@@ -106,6 +111,7 @@ import com.coffeepeek.admin.ui.component.priceRangeLevel
 import com.coffeepeek.admin.ui.component.shopTagIcon
 import com.coffeepeek.admin.ui.component.FullScreenImageDialog
 import com.coffeepeek.admin.ui.component.CoffeePeekLoader
+import com.coffeepeek.admin.ui.component.FavoriteButton
 import com.coffeepeek.admin.ui.screen.review.CreateReviewBottomSheet
 import com.coffeepeek.admin.ui.screen.review.EditReviewBottomSheet
 import com.coffeepeek.admin.utils.OpenInBrowser
@@ -238,6 +244,10 @@ fun ShopDetailScreen(shopId: String) {
                         modifier = Modifier.padding(padding),
                         bottomContentPadding = floatingActionsClearance,
                         onOpenOnMap = vm::openOnMap,
+                        onReportIssue = vm::openReportIssue,
+                        favoriteRoasterIds = state.favoriteRoasterIds,
+                        savingRoasterFavoriteIds = state.savingRoasterFavoriteIds,
+                        onToggleRoasterFavorite = vm::toggleRoasterFavorite,
                         onCopyPhone = vm::copyPhone,
                         onOpenPhotos = { urls, index -> preview = urls to index },
                         onReviewPhotoClick = { urls, index -> preview = urls to index },
@@ -284,6 +294,10 @@ private fun ShopDetailContent(
     modifier: Modifier = Modifier,
     bottomContentPadding: Dp = CpDimens.spacing4,
     onOpenOnMap: () -> Unit = {},
+    onReportIssue: () -> Unit = {},
+    favoriteRoasterIds: Set<String> = emptySet(),
+    savingRoasterFavoriteIds: Set<String> = emptySet(),
+    onToggleRoasterFavorite: (CatalogItem) -> Unit = {},
     onCopyPhone: (String) -> Unit = {},
     onOpenPhotos: (List<String>, Int) -> Unit = { _, _ -> },
     onReviewPhotoClick: (List<String>, Int) -> Unit = { _, _ -> },
@@ -345,23 +359,6 @@ private fun ShopDetailContent(
             }
         }
 
-        details.menu?.takeIf { menu ->
-            groupedPresentItems(menu.items).isNotEmpty() || menu.photos.isNotEmpty()
-        }?.let { menu ->
-            item {
-                MenuSection(
-                    menu = menu,
-                    onPhotoClick = { index -> onOpenPhotos(menu.photos.map { it.fullUrl }, index) },
-                )
-            }
-        }
-
-        if (details.schedules.isNotEmpty()) {
-            item {
-                CollapsibleScheduleSection(schedules = details.schedules)
-            }
-        }
-
         if (
             details.coffeeBeans.isNotEmpty() ||
             details.roasters.isNotEmpty() ||
@@ -372,9 +369,29 @@ private fun ShopDetailContent(
                     coffeeBeans = details.coffeeBeans,
                     roasters = details.roasters,
                     equipment = details.equipment,
+                    favoriteRoasterIds = favoriteRoasterIds,
+                    savingRoasterFavoriteIds = savingRoasterFavoriteIds,
+                    onToggleRoasterFavorite = onToggleRoasterFavorite,
                     onRoasterClick = {
                         Navigator.navigate(Navigator.Screen.RoasterDetail(it))
                     },
+                )
+            }
+        }
+
+        if (details.schedules.isNotEmpty()) {
+            item {
+                CollapsibleScheduleSection(schedules = details.schedules)
+            }
+        }
+
+        details.menu?.takeIf { menu ->
+            groupedPresentItems(menu.items).isNotEmpty() || menu.photos.isNotEmpty()
+        }?.let { menu ->
+            item {
+                MenuSection(
+                    menu = menu,
+                    onPhotoClick = { index -> onOpenPhotos(menu.photos.map { it.fullUrl }, index) },
                 )
             }
         }
@@ -399,6 +416,13 @@ private fun ShopDetailContent(
             }
         }
 
+        val features = shopFeatureItems(details)
+        if (features.isNotEmpty()) {
+            item {
+                ShopFeaturesSection(features = features)
+            }
+        }
+
         item {
             ReviewsSection(
                 reviews = details.reviews,
@@ -413,11 +437,8 @@ private fun ShopDetailContent(
             )
         }
 
-        val features = shopFeatureItems(details)
-        if (features.isNotEmpty()) {
-            item {
-                ShopFeaturesSection(features = features)
-            }
+        item {
+            ReportIssueSection(onReportIssue = onReportIssue)
         }
 
         item { Spacer(Modifier.height(CpDimens.spacing6)) }
@@ -622,6 +643,26 @@ private fun HeroShopDetails(
                     overflow = TextOverflow.Ellipsis,
                 )
             }
+        }
+    }
+}
+
+@Composable
+private fun ReportIssueSection(onReportIssue: () -> Unit) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = CpDimens.spacing4, vertical = CpDimens.spacing4),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Text(
+            text = stringResource(Res.string.shop_report_prompt),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center,
+        )
+        TextButton(onClick = onReportIssue) {
+            Text(stringResource(Res.string.shop_report_issue))
         }
     }
 }
@@ -1796,6 +1837,9 @@ private fun CoffeeDetailsSection(
     coffeeBeans: List<String>,
     roasters: List<CatalogItem>,
     equipment: List<String>,
+    favoriteRoasterIds: Set<String>,
+    savingRoasterFavoriteIds: Set<String>,
+    onToggleRoasterFavorite: (CatalogItem) -> Unit,
     onRoasterClick: (String) -> Unit,
 ) {
     Column(
@@ -1804,7 +1848,7 @@ private fun CoffeeDetailsSection(
             .padding(horizontal = CpDimens.spacing4, vertical = 6.dp),
         verticalArrangement = Arrangement.spacedBy(CpDimens.spacing3),
     ) {
-        RoasterDetailGroup(roasters, onRoasterClick)
+        RoasterDetailGroup(roasters, favoriteRoasterIds, savingRoasterFavoriteIds, onRoasterClick, onToggleRoasterFavorite)
         CatalogDetailGroup("Кофе", coffeeBeans)
         CatalogDetailGroup("Оборудование", equipment)
     }
@@ -1813,19 +1857,23 @@ private fun CoffeeDetailsSection(
 @Composable
 private fun RoasterDetailGroup(
     items: List<CatalogItem>,
+    favoriteIds: Set<String>,
+    savingFavoriteIds: Set<String>,
     onRoasterClick: (String) -> Unit,
+    onToggleFavorite: (CatalogItem) -> Unit,
 ) {
     if (items.isEmpty()) return
     Column(verticalArrangement = Arrangement.spacedBy(CpDimens.spacing3)) {
         SectionTitle("Обжарщики")
-        OutlinedContentCard {
-            Column(verticalArrangement = Arrangement.spacedBy(CpDimens.spacing3)) {
-                items.forEach { item ->
-                    RoasterLinkRow(
-                        item = item,
-                        onClick = { onRoasterClick(item.id) },
-                    )
-                }
+        Column(verticalArrangement = Arrangement.spacedBy(CpDimens.spacing3)) {
+            items.forEach { item ->
+                RoasterLinkRow(
+                    item = item,
+                    isFavorite = item.roasterFavoriteId in favoriteIds,
+                    isFavoriteLoading = item.roasterFavoriteId in savingFavoriteIds,
+                    onClick = { item.address?.slug?.let(onRoasterClick) },
+                    onToggleFavorite = { onToggleFavorite(item) },
+                )
             }
         }
     }
@@ -1834,13 +1882,16 @@ private fun RoasterDetailGroup(
 @Composable
 private fun RoasterLinkRow(
     item: CatalogItem,
+    isFavorite: Boolean,
+    isFavoriteLoading: Boolean,
     onClick: () -> Unit,
+    onToggleFavorite: () -> Unit,
 ) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(CpDimens.radiusLg))
-            .clickable(onClick = onClick)
+            .clickable(enabled = item.address != null, onClick = onClick)
             .padding(vertical = CpDimens.spacing1),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(CpDimens.spacing3),
@@ -1876,11 +1927,10 @@ private fun RoasterLinkRow(
             overflow = TextOverflow.Ellipsis,
             modifier = Modifier.weight(1f),
         )
-        Icon(
-            imageVector = CpIcons.ChevronRight,
-            contentDescription = "Открыть обжарщика ${item.name}",
-            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.size(18.dp),
+        FavoriteButton(
+            isFavorite = isFavorite,
+            onClick = onToggleFavorite,
+            enabled = !isFavoriteLoading,
         )
     }
 }

@@ -6,6 +6,8 @@ import com.coffeepeek.admin.locator.Locator
 import com.coffeepeek.admin.theme.ThemeManager
 import com.coffeepeek.admin.settings.CityPreference
 import com.coffeepeek.admin.settings.ReviewDraftStore
+import com.coffeepeek.admin.feature.favorites.api.RoasterFavorites
+import com.coffeepeek.admin.feature.favorites.data.LocalRoasterFavorites
 import com.coffeepeek.admin.utils.CustomUrlFetcher
 import com.coffeepeek.api.CoffeePeekClient
 import com.coffeepeek.admin.ui.NavigatorViewModel
@@ -64,6 +66,7 @@ fun initKoin() {
 }
 
 private fun appModule(settingRepository: com.coffeepeek.room.repository.SettingRepository) = module {
+    single<RoasterFavorites> { LocalRoasterFavorites(settingRepository, get()) }
     single<com.coffeepeek.admin.feature.appupdate.domain.AppUpdateRepository> {
         com.coffeepeek.admin.feature.appupdate.data.AppUpdateRepositoryImpl(get<CoffeePeekClient>().plainClient, settingRepository)
     }
@@ -76,9 +79,9 @@ private fun appModule(settingRepository: com.coffeepeek.room.repository.SettingR
     factory { RegisterViewModel(get()) }
     factory { NavigatorViewModel(get()) }
     factory { FeedViewModel(get(), get(), get(), get()) }
-    factory { com.coffeepeek.admin.ui.screen.roaster.RoasterListViewModel(get(), get()) }
+    factory { com.coffeepeek.admin.ui.screen.roaster.RoasterListViewModel(get(), get(), get(), get()) }
     factory { MapViewModel(get(), get()) }
-    factory { (shopId: String) -> ShopDetailViewModel(shopId, get(), get(), get(), get(), get(), get(), get()) }
+    factory { (shopId: String) -> ShopDetailViewModel(shopId, get(), get(), get(), get(), get(), get(), get(), get()) }
     factory { (shopId: String) -> ShopMenuGalleryViewModel(shopId, get()) }
     factory { (shopId: String) -> ShopReportViewModel(shopId, get()) }
     factory { (shopId: String) -> SuggestShopChangeViewModel(shopId, get()) }
@@ -90,11 +93,11 @@ private fun appModule(settingRepository: com.coffeepeek.room.repository.SettingR
     factory { DeleteAccountPendingViewModel(get(), get()) }
     factory { AddShopViewModel(get()) }
     factory { EditProfileViewModel(get()) }
-    factory { FavoritesViewModel(get()) }
+    factory { FavoritesViewModel(get(), get()) }
     factory { (kind: ContributionKind) -> MyContributionsViewModel(kind, get(), get(), get(), get(), get(), get()) }
     factory { VisitedPlacesViewModel(get(), get()) }
     factory { AddRoasterViewModel(get(), get()) }
-    factory { (roasterId: String) -> RoasterDetailViewModel(roasterId, get(), get()) }
+    factory { (roasterId: String) -> RoasterDetailViewModel(roasterId, get(), get(), get(), get()) }
     factory { (shopId: String) -> CreateReviewViewModel(shopId, get(), get(), get()) }
     factory { (reviewId: String) -> ReviewReportViewModel(reviewId, get(), get()) }
     factory { (reviewId: String) -> EditReviewViewModel(reviewId, get(), get(), get(), get(), get()) }
