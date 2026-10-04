@@ -144,6 +144,7 @@ class MapViewModel(
     }
 
     fun onShopSelected(shop: MapShop) {
+        onQueryChange("")
         if (_state.value.selectedShop?.id == shop.id) {
             _state.update { it.copy(selectedZone = null) }
             return
@@ -263,7 +264,7 @@ class MapViewModel(
         queryJob?.cancel()
         _state.update { current ->
             current.copy(
-                query = shop.title,
+                query = "",
                 searchResults = emptyList(),
                 isSearchLoading = false,
                 searchFailed = false,
@@ -305,6 +306,7 @@ class MapViewModel(
     }
 
     fun focusOnShop(focus: com.coffeepeek.admin.ui.Navigator.MapShopFocus) {
+        onQueryChange("")
         val shop = MapShop(
             id = focus.shopId,
             title = focus.title,

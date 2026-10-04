@@ -40,6 +40,8 @@ import androidx.compose.runtime.key
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
@@ -82,6 +84,12 @@ import kotlinx.coroutines.flow.drop
 @Composable
 fun MapScreen(vm: MapViewModel = platformViewModel()) {
     val state by vm.state.collectAsState()
+    val focusManager = LocalFocusManager.current
+    val keyboardController = LocalSoftwareKeyboardController.current
+    val dismissSearchInput = {
+        focusManager.clearFocus(force = true)
+        keyboardController?.hide()
+    }
     val userLocation = rememberPermittedUserLocation()
     LaunchedEffect(userLocation) {
         userLocation?.let { vm.onNearbyOriginChanged(it.latitude, it.longitude) }
@@ -108,6 +116,7 @@ fun MapScreen(vm: MapViewModel = platformViewModel()) {
 
     LaunchedEffect(pendingFocus) {
         pendingFocus?.let { focus ->
+            dismissSearchInput()
             vm.focusOnShop(focus)
             Navigator.consumeMapFocus()
         }
@@ -120,7 +129,10 @@ fun MapScreen(vm: MapViewModel = platformViewModel()) {
             zones = if (state.showZones) state.zones else emptyList(),
             selectedShopId = selectedShopId,
             onBoundsChanged = vm::onBoundsChanged,
-            onShopClick = vm::onShopSelected,
+            onShopClick = { shop ->
+                dismissSearchInput()
+                vm.onShopSelected(shop)
+            },
             onZoneClick = vm::onZoneSelected,
             modifier = Modifier.fillMaxSize(),
             cameraTarget = cameraTarget,
@@ -153,7 +165,10 @@ fun MapScreen(vm: MapViewModel = platformViewModel()) {
                     results = state.searchResults,
                     isLoading = state.isSearchLoading,
                     failed = state.searchFailed,
-                    onSelect = vm::onSearchResultSelected,
+                    onSelect = { shop ->
+                        dismissSearchInput()
+                        vm.onSearchResultSelected(shop)
+                    },
                 )
             }
         }
@@ -262,7 +277,10 @@ fun MapScreen(vm: MapViewModel = platformViewModel()) {
         if (state.selectedZone == null && hasShopCarousel) {
             MapShopCarousel(
                 state = state,
-                onSelect = vm::onCarouselShopSelected,
+                onSelect = { shop ->
+                    dismissSearchInput()
+                    vm.onCarouselShopSelected(shop)
+                },
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
                     .padding(bottom = navClearance + CpDimens.spacing4),
