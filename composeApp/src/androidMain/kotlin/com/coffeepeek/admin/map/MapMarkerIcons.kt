@@ -279,8 +279,8 @@ internal object MapMarkerIcons {
             textSize = 12f * density
             typeface = clusterTypeface(context)
         }
-        val horizontalPadding = 12f * density
-        val verticalPadding = 9f * density
+        val horizontalPadding = 8f * density
+        val verticalPadding = 4f * density
         val height = textPaint.fontMetrics.run { bottom - top } + verticalPadding * 2f
         val width = textPaint.measureText(label) + horizontalPadding * 2f
         val shadowPadding = 5f * density
