@@ -1,6 +1,13 @@
 package com.coffeepeek.admin.ui.screen.shop
 
 import com.coffeepeek.admin.ui.icons.CpIcons
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -26,7 +33,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -50,7 +56,6 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -61,7 +66,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.blur
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
@@ -97,7 +102,6 @@ import com.coffeepeek.admin.location.formatDistance
 import com.coffeepeek.admin.location.rememberPermittedUserLocation
 import com.coffeepeek.admin.theme.CpColor
 import com.coffeepeek.admin.theme.CpDimens
-import com.coffeepeek.admin.feature.favorites.api.roasterFavoriteId
 import com.coffeepeek.admin.ui.Navigator
 import com.coffeepeek.admin.ui.component.brewMethodIcon
 import com.coffeepeek.admin.ui.component.CoffeeShopImage
@@ -107,14 +111,10 @@ import com.coffeepeek.admin.ui.component.GuestAuthCard
 import com.coffeepeek.admin.ui.component.ReviewDisplayCard
 import com.coffeepeek.admin.utils.currentLocalDayOfWeek
 import com.coffeepeek.admin.utils.currentLocalMinuteOfDay
-import com.coffeepeek.admin.ui.component.PriceBynRow
 import com.coffeepeek.admin.ui.component.PriceBynIcon
-import com.coffeepeek.admin.ui.component.priceRangeLevel
-import com.coffeepeek.admin.ui.component.priceLevelValue
 import com.coffeepeek.admin.ui.component.shopTagIcon
 import com.coffeepeek.admin.ui.component.FullScreenImageDialog
 import com.coffeepeek.admin.ui.component.CoffeePeekLoader
-import com.coffeepeek.admin.ui.component.FavoriteButton
 import com.coffeepeek.admin.ui.screen.review.CreateReviewBottomSheet
 import com.coffeepeek.admin.ui.screen.review.EditReviewBottomSheet
 import com.coffeepeek.admin.utils.OpenInBrowser
@@ -248,9 +248,6 @@ fun ShopDetailScreen(shopId: String) {
                         bottomContentPadding = floatingActionsClearance,
                         onOpenOnMap = vm::openOnMap,
                         onReportIssue = vm::openReportIssue,
-                        favoriteRoasterIds = state.favoriteRoasterIds,
-                        savingRoasterFavoriteIds = state.savingRoasterFavoriteIds,
-                        onToggleRoasterFavorite = vm::toggleRoasterFavorite,
                         onCopyPhone = vm::copyPhone,
                         onOpenPhotos = { urls, index -> preview = urls to index },
                         onReviewPhotoClick = { urls, index -> preview = urls to index },
@@ -298,9 +295,6 @@ private fun ShopDetailContent(
     bottomContentPadding: Dp = CpDimens.spacing4,
     onOpenOnMap: () -> Unit = {},
     onReportIssue: () -> Unit = {},
-    favoriteRoasterIds: Set<String> = emptySet(),
-    savingRoasterFavoriteIds: Set<String> = emptySet(),
-    onToggleRoasterFavorite: (CatalogItem) -> Unit = {},
     onCopyPhone: (String) -> Unit = {},
     onOpenPhotos: (List<String>, Int) -> Unit = { _, _ -> },
     onReviewPhotoClick: (List<String>, Int) -> Unit = { _, _ -> },
@@ -329,29 +323,14 @@ private fun ShopDetailContent(
                     title = shop.title,
                     address = details.location?.address ?: shop.address,
                     distance = distance,
+                    rating = shop.rating,
+                    reviewCount = shop.reviewCount,
                     shopType = shop.type,
                     canOpenMap = details.location?.latitude != null &&
                         details.location?.longitude != null,
                     onOpenOnMap = onOpenOnMap,
+                    onOpenReviews = { Navigator.navigate(Navigator.Screen.ShopReviews(shop.id)) },
                     onPhotoClick = { url -> onOpenPhotos(fullscreenPhotos, photos.indexOf(url).coerceAtLeast(0)) },
-                )
-            }
-        }
-
-        item {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = CpDimens.spacing4)
-                    .padding(top = CpDimens.spacing5, bottom = CpDimens.spacing4),
-                verticalArrangement = Arrangement.spacedBy(CpDimens.spacing4),
-            ) {
-                ShopStatsRow(
-                    rating = shop.rating,
-                    reviewCount = shop.reviewCount,
-                    isOpen = shop.isOpen,
-                    priceRange = shop.priceRange,
-                    schedules = details.schedules,
                 )
             }
         }
@@ -372,9 +351,6 @@ private fun ShopDetailContent(
                     coffeeBeans = details.coffeeBeans,
                     roasters = details.roasters,
                     equipment = details.equipment,
-                    favoriteRoasterIds = favoriteRoasterIds,
-                    savingRoasterFavoriteIds = savingRoasterFavoriteIds,
-                    onToggleRoasterFavorite = onToggleRoasterFavorite,
                     onRoasterClick = {
                         Navigator.navigate(Navigator.Screen.RoasterDetail(it))
                     },
@@ -454,9 +430,12 @@ private fun ShopHeroImage(
     title: String,
     address: String?,
     distance: String?,
+    rating: Double?,
+    reviewCount: Int,
     shopType: String,
     canOpenMap: Boolean,
     onOpenOnMap: () -> Unit,
+    onOpenReviews: () -> Unit,
     onPhotoClick: (String) -> Unit,
 ) {
     var currentPhotoIndex by remember(photos) { mutableStateOf(0) }
@@ -512,8 +491,11 @@ private fun ShopHeroImage(
             title = title,
             address = address,
             distance = distance,
+            rating = rating,
+            reviewCount = reviewCount,
             canOpenMap = canOpenMap,
             onOpenOnMap = onOpenOnMap,
+            onOpenReviews = onOpenReviews,
             modifier = Modifier
                 .align(Alignment.BottomStart)
                 .padding(start = CpDimens.spacing4, end = 116.dp, bottom = CpDimens.spacing4),
@@ -585,8 +567,11 @@ private fun HeroShopDetails(
     title: String,
     address: String?,
     distance: String?,
+    rating: Double?,
+    reviewCount: Int,
     canOpenMap: Boolean,
     onOpenOnMap: () -> Unit,
+    onOpenReviews: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -628,6 +613,32 @@ private fun HeroShopDetails(
                     modifier = Modifier.weight(1f, fill = false),
                 )
             }
+        }
+        Row(
+            modifier = Modifier
+                .clickable(onClickLabel = "Открыть отзывы", onClick = onOpenReviews)
+                .heightIn(min = 44.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(CpDimens.spacing2),
+        ) {
+            Icon(
+                imageVector = CpIcons.StarFilled,
+                contentDescription = null,
+                tint = CpColor.Primary,
+                modifier = Modifier.size(18.dp),
+            )
+            Text(
+                text = rating?.takeIf { it > 0.0 }?.let(::formatOneDecimal) ?: "Нет оценок",
+                style = MaterialTheme.typography.titleMedium,
+                color = Color.White,
+            )
+            Text(
+                text = reviewCountLabel(reviewCount),
+                style = MaterialTheme.typography.bodyMedium,
+                color = Color.White.copy(alpha = 0.85f),
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
         }
         distance?.let { label ->
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -780,141 +791,6 @@ private fun HeaderActionButtons(
     }
 }
 
-@Composable
-private fun ShopStatsRow(
-    rating: Double?,
-    reviewCount: Int,
-    isOpen: Boolean,
-    priceRange: String?,
-    schedules: List<ShopSchedule>,
-) {
-    val currentDay = currentLocalDayOfWeek()
-    val todaySchedule = remember(schedules, currentDay) {
-        schedules.firstOrNull { it.dayOfWeek == currentDay }
-    }
-    val closingTime = todaySchedule
-        ?.takeUnless { it.isClosed }
-        ?.intervals
-        ?.lastOrNull()
-        ?.closeTime
-        ?.let(::formatTime)
-        ?.takeIf { it.isNotBlank() }
-    val priceLevel = priceRangeLevel(priceRange)
-
-    OutlinedContentCard(contentPadding = PaddingValues(vertical = CpDimens.spacing4)) {
-        Row(
-            modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Min),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            StatCard(
-                modifier = Modifier.weight(1.15f),
-            ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(6.dp),
-                ) {
-                    Icon(
-                        imageVector = CpIcons.StarFilled,
-                        contentDescription = null,
-                        tint = CpColor.Primary,
-                        modifier = Modifier.size(20.dp),
-                    )
-                    Text(
-                        text = rating?.takeIf { it > 0.0 }?.let(::formatOneDecimal) ?: "Нет оценок",
-                        style = if (rating != null && rating > 0.0) {
-                            MaterialTheme.typography.titleLarge
-                        } else {
-                            MaterialTheme.typography.bodyMedium
-                        },
-                        color = MaterialTheme.colorScheme.onSurface,
-                        maxLines = 2,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                }
-                Text(
-                    text = reviewCountLabel(reviewCount),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 1,
-                )
-            }
-
-            VerticalDivider(color = MaterialTheme.colorScheme.outline)
-            StatCard(modifier = Modifier.weight(1.1f)) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(6.dp),
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .size(8.dp)
-                            .clip(CircleShape)
-                            .background(if (isOpen) CpColor.Success else CpColor.Error),
-                    )
-                    Text(
-                        text = if (isOpen) "Открыто" else "Закрыто",
-                        style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
-                        color = if (isOpen) CpColor.Success else CpColor.Error,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                }
-                Text(
-                    text = when {
-                        isOpen && closingTime != null -> "до $closingTime"
-                        isOpen -> "Сегодня"
-                        else -> nextShopOpeningLabel(schedules, currentDay, currentLocalMinuteOfDay())
-                            ?: if (todaySchedule?.isClosed == true) "Сегодня выходной" else "Расписание не указано"
-                    },
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis,
-                )
-            }
-
-            VerticalDivider(color = MaterialTheme.colorScheme.outline)
-            StatCard(modifier = Modifier.weight(1f)) {
-                if (priceLevel != null) {
-                    PriceBynRow(level = priceLevel, iconSize = 18.dp)
-                    Text(
-                        text = priceLevelValue(priceLevel).orEmpty(),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurface,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                } else {
-                    Text(
-                        text = "—",
-                        style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
-                        color = MaterialTheme.colorScheme.onSurface,
-                    )
-                }
-                Text(
-                    text = "Средний чек",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun StatCard(
-    modifier: Modifier = Modifier,
-    content: @Composable ColumnScope.() -> Unit,
-) {
-    Column(
-        modifier = modifier.padding(horizontal = CpDimens.spacing3),
-        verticalArrangement = Arrangement.spacedBy(CpDimens.spacing1),
-        content = content,
-    )
-}
-
 private fun reviewCountLabel(count: Int): String {
     val mod10 = count % 10
     val mod100 = count % 100
@@ -991,7 +867,12 @@ private fun HeroIconButton(
 
 @Composable
 private fun CollapsibleScheduleSection(schedules: List<ShopSchedule>, isOpen: Boolean) {
-    var expanded by remember { mutableStateOf(true) }
+    var expanded by remember { mutableStateOf(false) }
+    val chevronRotation by animateFloatAsState(
+        targetValue = if (expanded) 90f else 0f,
+        animationSpec = tween(250),
+        label = "Schedule chevron",
+    )
     val currentDay = currentLocalDayOfWeek()
     val orderedSchedules = remember(schedules) {
         schedules.sortedBy { schedule ->
@@ -1037,33 +918,41 @@ private fun CollapsibleScheduleSection(schedules: List<ShopSchedule>, isOpen: Bo
                 Text(
                     text = status,
                     style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Medium),
-                    color = if (isOpen) CpColor.Success else MaterialTheme.colorScheme.onSurfaceVariant,
+                    color = MaterialTheme.colorScheme.onSurface,
                     modifier = Modifier.weight(1f),
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis,
                 )
                 Spacer(Modifier.width(CpDimens.spacing2))
                 Icon(
-                    imageVector = if (expanded) CpIcons.ChevronUp else CpIcons.ChevronRight,
+                    imageVector = CpIcons.ChevronRight,
                     contentDescription = if (expanded) "Скрыть часы работы" else "Показать часы работы",
                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.size(18.dp),
+                    modifier = Modifier.size(18.dp).rotate(chevronRotation),
                 )
             }
 
-            if (expanded) {
-                HorizontalDivider(
-                    modifier = Modifier.padding(vertical = CpDimens.spacing2),
-                    color = MaterialTheme.colorScheme.outline,
-                )
-                Column(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalArrangement = Arrangement.spacedBy(CpDimens.spacing2),
-                ) {
-                    orderedSchedules.forEach { schedule ->
-                        ScheduleRow(
-                            schedule = schedule,
-                        )
+            AnimatedVisibility(
+                visible = expanded,
+                enter = expandVertically(animationSpec = tween(250), expandFrom = Alignment.Top) +
+                    fadeIn(animationSpec = tween(180)),
+                exit = shrinkVertically(animationSpec = tween(250), shrinkTowards = Alignment.Top) +
+                    fadeOut(animationSpec = tween(150)),
+            ) {
+                Column {
+                    HorizontalDivider(
+                        modifier = Modifier.padding(vertical = CpDimens.spacing2),
+                        color = MaterialTheme.colorScheme.outline,
+                    )
+                    Column(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalArrangement = Arrangement.spacedBy(CpDimens.spacing2),
+                    ) {
+                        orderedSchedules.forEach { schedule ->
+                            ScheduleRow(
+                                schedule = schedule,
+                            )
+                        }
                     }
                 }
             }
@@ -1219,88 +1108,81 @@ private fun ReviewsSection(
         if (reviews.isNotEmpty()) {
             com.coffeepeek.admin.ui.component.ReviewRatingsOverview(reviews, overallRating, reviewCount)
         }
-        OutlinedContentCard(
-            contentPadding = PaddingValues(if (reviews.isEmpty()) CpDimens.spacing4 else 0.dp),
-        ) {
-            Column(verticalArrangement = Arrangement.spacedBy(CpDimens.spacing2)) {
-                if (reviews.isEmpty()) {
-                    EmptyMascotState(
-                        mascot = Res.drawable.maskot_with_book,
-                        message = "Станьте первым, кто оценит и оставит отзыв о своём посещении $shopTitle",
-                    )
-                } else if (!isLoggedIn) {
-                    BoxWithConstraints(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clipToBounds(),
-                    ) {
-                        val peekWidth = if (reviews.size > 1) GuestReviewPeekWidth else 0.dp
-                        val itemSpacing = if (reviews.size > 1) CpDimens.spacing3 else 0.dp
-                        val cardWidth = if (reviews.size > 1) {
-                            (maxWidth - itemSpacing - peekWidth).coerceAtMost(ReviewCardMaxWidth)
-                        } else {
-                            maxWidth
-                        }
+        if (reviews.isEmpty()) {
+            EmptyMascotState(
+                mascot = Res.drawable.maskot_with_book,
+                message = "Станьте первым, кто оценит и оставит отзыв о своём посещении $shopTitle",
+            )
+        } else if (!isLoggedIn) {
+            BoxWithConstraints(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clipToBounds(),
+            ) {
+                val peekWidth = if (reviews.size > 1) GuestReviewPeekWidth else 0.dp
+                val itemSpacing = if (reviews.size > 1) CpDimens.spacing3 else 0.dp
+                val cardWidth = if (reviews.size > 1) {
+                    (maxWidth - itemSpacing - peekWidth).coerceAtMost(ReviewCardMaxWidth)
+                } else {
+                    maxWidth
+                }
 
-                        LazyRow(horizontalArrangement = Arrangement.spacedBy(itemSpacing)) {
-                            items(
-                                count = reviews.take(3).size,
-                                key = { index -> reviews[index].id },
-                            ) { index ->
-                                val review = reviews[index]
-                                val isBlurred = index > 0
-                                Box(
-                                    modifier = Modifier
-                                        .width(cardWidth)
-                                        .then(if (isBlurred) Modifier.blur(5.dp) else Modifier),
-                                ) {
-                                    ReviewCard(
-                                        review = review,
-                                        modifier = Modifier.fillMaxWidth(),
-                                        onPhotoClick = if (isBlurred) ({ _, _ -> }) else onReviewPhotoClick,
-                                        onHelpfulClick = null,
-                                        showHelpfulButton = false,
-                                        equalizeHeight = false,
-                                    )
-                                }
-                            }
+                LazyRow(horizontalArrangement = Arrangement.spacedBy(itemSpacing)) {
+                    items(
+                        count = reviews.take(3).size,
+                        key = { index -> reviews[index].id },
+                    ) { index ->
+                        val review = reviews[index]
+                        val isBlurred = index > 0
+                        Box(
+                            modifier = Modifier.width(cardWidth),
+                        ) {
+                            ReviewCard(
+                                review = review,
+                                modifier = Modifier.fillMaxWidth(),
+                                onPhotoClick = if (isBlurred) ({ _, _ -> }) else onReviewPhotoClick,
+                                onHelpfulClick = null,
+                                blurContent = isBlurred,
+                                showHelpfulButton = false,
+                                equalizeHeight = false,
+                            )
                         }
                     }
-                    GuestAuthCard(
-                        onLogin = { Navigator.navigate(Navigator.Screen.Auth) },
-                        onRegister = { Navigator.navigate(Navigator.Screen.Register) },
-                    )
-                } else {
-                    BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
-                        val cardWidth = maxWidth.coerceAtMost(ReviewCardMaxWidth)
-                        LazyRow(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(CpDimens.spacing3),
+                }
+            }
+            GuestAuthCard(
+                onLogin = { Navigator.navigate(Navigator.Screen.Auth) },
+                onRegister = { Navigator.navigate(Navigator.Screen.Register) },
+            )
+        } else {
+            BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
+                val cardWidth = maxWidth.coerceAtMost(ReviewCardMaxWidth)
+                LazyRow(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(CpDimens.spacing3),
+                ) {
+                    items(
+                        count = reviews.take(3).size,
+                        key = { index -> reviews[index].id },
+                    ) { index ->
+                        val review = reviews[index]
+                        val isOwnReview = currentUserId != null && review.userId == currentUserId
+                        Box(
+                            modifier = if (reviews.size > 1) {
+                                Modifier.width(cardWidth)
+                            } else {
+                                Modifier.fillParentMaxWidth()
+                            },
                         ) {
-                            items(
-                                count = reviews.take(3).size,
-                                key = { index -> reviews[index].id },
-                            ) { index ->
-                                val review = reviews[index]
-                                val isOwnReview = currentUserId != null && review.userId == currentUserId
-                                Box(
-                                    modifier = if (reviews.size > 1) {
-                                        Modifier.width(cardWidth)
-                                    } else {
-                                        Modifier.fillParentMaxWidth()
-                                    },
-                                ) {
-                                    ReviewCard(
-                                        review = review,
-                                        modifier = Modifier.fillMaxWidth(),
-                                        onPhotoClick = onReviewPhotoClick,
-                                        // No "helpful" on your own review.
-                                        onHelpfulClick = if (isOwnReview) null else ({ onReviewHelpfulClick(review.id) }),
-                                        showHelpfulButton = false,
-                                        equalizeHeight = false,
-                                    )
-                                }
-                            }
+                            ReviewCard(
+                                review = review,
+                                modifier = Modifier.fillMaxWidth(),
+                                onPhotoClick = onReviewPhotoClick,
+                                // No "helpful" on your own review.
+                                onHelpfulClick = if (isOwnReview) null else ({ onReviewHelpfulClick(review.id) }),
+                                showHelpfulButton = false,
+                                equalizeHeight = false,
+                            )
                         }
                     }
                 }
@@ -1794,9 +1676,6 @@ private fun CoffeeDetailsSection(
     coffeeBeans: List<String>,
     roasters: List<CatalogItem>,
     equipment: List<String>,
-    favoriteRoasterIds: Set<String>,
-    savingRoasterFavoriteIds: Set<String>,
-    onToggleRoasterFavorite: (CatalogItem) -> Unit,
     onRoasterClick: (String) -> Unit,
 ) {
     Column(
@@ -1805,7 +1684,7 @@ private fun CoffeeDetailsSection(
             .padding(horizontal = CpDimens.spacing4, vertical = 6.dp),
         verticalArrangement = Arrangement.spacedBy(CpDimens.spacing3),
     ) {
-        RoasterDetailGroup(roasters, favoriteRoasterIds, savingRoasterFavoriteIds, onRoasterClick, onToggleRoasterFavorite)
+        RoasterDetailGroup(roasters, onRoasterClick)
         CatalogDetailGroup("Кофе", coffeeBeans)
         CatalogDetailGroup("Оборудование", equipment)
     }
@@ -1814,10 +1693,7 @@ private fun CoffeeDetailsSection(
 @Composable
 private fun RoasterDetailGroup(
     items: List<CatalogItem>,
-    favoriteIds: Set<String>,
-    savingFavoriteIds: Set<String>,
     onRoasterClick: (String) -> Unit,
-    onToggleFavorite: (CatalogItem) -> Unit,
 ) {
     if (items.isEmpty()) return
     Column(verticalArrangement = Arrangement.spacedBy(CpDimens.spacing3)) {
@@ -1832,10 +1708,7 @@ private fun RoasterDetailGroup(
                 }
                 RoasterLinkRow(
                     item = item,
-                    isFavorite = item.roasterFavoriteId in favoriteIds,
-                    isFavoriteLoading = item.roasterFavoriteId in savingFavoriteIds,
                     onClick = { item.address?.slug?.let(onRoasterClick) },
-                    onToggleFavorite = { onToggleFavorite(item) },
                 )
             }
         }
@@ -1845,10 +1718,7 @@ private fun RoasterDetailGroup(
 @Composable
 private fun RoasterLinkRow(
     item: CatalogItem,
-    isFavorite: Boolean,
-    isFavoriteLoading: Boolean,
     onClick: () -> Unit,
-    onToggleFavorite: () -> Unit,
 ) {
     Row(
         modifier = Modifier
@@ -1889,23 +1759,13 @@ private fun RoasterLinkRow(
             overflow = TextOverflow.Ellipsis,
             modifier = Modifier.weight(1f),
         )
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(CpDimens.spacing2),
-        ) {
-            FavoriteButton(
-                isFavorite = isFavorite,
-                onClick = onToggleFavorite,
-                enabled = !isFavoriteLoading,
+        if (item.address != null) {
+            Icon(
+                imageVector = CpIcons.ChevronRight,
+                contentDescription = "Открыть обжарщика ${item.name}",
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.size(18.dp),
             )
-            if (item.address != null) {
-                Icon(
-                    imageVector = CpIcons.ChevronRight,
-                    contentDescription = "Открыть обжарщика ${item.name}",
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.size(18.dp),
-                )
-            }
         }
     }
 }
@@ -2007,6 +1867,7 @@ private fun ReviewCard(
     onHelpfulClick: (() -> Unit)?,
     showHelpfulButton: Boolean = true,
     equalizeHeight: Boolean,
+    blurContent: Boolean = false,
 ) {
     ReviewDisplayCard(
         review = review,
@@ -2015,6 +1876,7 @@ private fun ReviewCard(
         onHelpfulClick = onHelpfulClick,
         showHelpfulButton = showHelpfulButton,
         equalizeHeight = equalizeHeight,
+        blurContent = blurContent,
     )
 }
 

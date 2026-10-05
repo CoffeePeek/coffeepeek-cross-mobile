@@ -46,6 +46,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.blur
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.layout.ContentScale
@@ -264,6 +265,7 @@ fun ReviewDisplayCard(
     fullVersion: Boolean = false,
     /** Side-by-side rows: pad short comments too, so neighbouring cards end up about the same height. */
     equalizeHeight: Boolean = false,
+    blurContent: Boolean = false,
 ) {
     Card(
         modifier = modifier.fillMaxWidth(),
@@ -272,11 +274,13 @@ fun ReviewDisplayCard(
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
         border = androidx.compose.foundation.BorderStroke(
             width = 1.dp,
-            color = MaterialTheme.colorScheme.outline.copy(alpha = 0.72f),
+            color = MaterialTheme.colorScheme.outline,
         ),
     ) {
         Column(
-            modifier = Modifier.padding(CpDimens.spacing3),
+            modifier = Modifier
+                .then(if (blurContent) Modifier.blur(5.dp) else Modifier)
+                .padding(CpDimens.spacing3),
             verticalArrangement = Arrangement.spacedBy(CpDimens.spacing2),
         ) {
             ReviewHeader(review = review, onEditClick = onEditClick, onReportClick = onReportClick)
