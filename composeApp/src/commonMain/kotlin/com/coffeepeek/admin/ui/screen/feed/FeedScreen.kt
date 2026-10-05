@@ -67,12 +67,11 @@ import com.coffeepeek.admin.ui.model.COFFEE_FOCUS_OPTIONS
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.togetherWith
+import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.updateTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.runtime.mutableStateOf
@@ -122,6 +121,11 @@ fun FeedScreen(
     val focusManager = LocalFocusManager.current
     val keyboard = LocalSoftwareKeyboardController.current
     val showDiscovery = mapPreview != null && state.showDiscovery
+    val discoveryTransition = updateTransition(showDiscovery, label = "discovery-shop-list")
+    val discoveryProgress = discoveryTransition.animateFloat(
+        transitionSpec = { tween(360) },
+        label = "discovery-map-slide",
+    ) { if (it) 1f else 0f }
     var mapExpanded by remember { mutableStateOf(false) }
     val expansion = animateFloatAsState(
         targetValue = if (mapExpanded) 1f else 0f,
@@ -131,6 +135,7 @@ fun FeedScreen(
     var mapAnchor by remember { mutableStateOf(Rect.Zero) }
     var rootOrigin by remember { mutableStateOf(Offset.Zero) }
     var viewportTop by remember { mutableStateOf(0f) }
+    var viewportHeight by remember { mutableStateOf(0f) }
     val density = LocalDensity.current
     val mapControlsExpanded by remember { derivedStateOf { mapExpanded && expansion.value == 1f } }
     val pendingMapFocus by Navigator.pendingMapFocus.collectAsState()
@@ -274,16 +279,17 @@ fun FeedScreen(
                 bottom = CpDimens.spacing4 + navClearance,
             )
 
-            AnimatedContent(
-                targetState = showDiscovery,
-                modifier = Modifier.fillMaxSize().padding(padding).onGloballyPositioned {
+            discoveryTransition.AnimatedContent(
+                modifier = Modifier.fillMaxSize().padding(padding).clipToBounds().onGloballyPositioned {
                     viewportTop = it.positionInRoot().y - rootOrigin.y
+                    viewportHeight = it.size.height.toFloat()
                 },
                 transitionSpec = {
-                    (fadeIn(tween(300)) + slideInVertically(tween(360)) { it / 5 }) togetherWith
-                        (fadeOut(tween(240)) + slideOutVertically(tween(360)) { -it / 5 })
+                    val direction = if (targetState) AnimatedContentTransitionScope.SlideDirection.Down
+                        else AnimatedContentTransitionScope.SlideDirection.Up
+                    slideIntoContainer(direction, tween(360)) togetherWith
+                        slideOutOfContainer(direction, tween(360))
                 },
-                label = "discovery-shop-list",
             ) { discoveryVisible ->
                 when {
                     discoveryVisible -> {
@@ -307,7 +313,7 @@ fun FeedScreen(
                             ) {
                                 item(key = "mini-map") {
                                     Box(Modifier.fillMaxWidth().height(240.dp).onGloballyPositioned {
-                                        if (showDiscovery && !mapExpanded && expansion.value == 0f) {
+                                        if (showDiscovery && discoveryProgress.value == 1f && !mapExpanded && expansion.value == 0f) {
                                             mapAnchor = Rect(it.positionInRoot() - rootOrigin, Size(it.size.width.toFloat(), it.size.height.toFloat()))
                                         }
                                     })
@@ -435,10 +441,10 @@ fun FeedScreen(
 
         if (mapPreview != null && mapAnchor.width > 0f) {
             val mapOpacity = animateFloatAsState(
-                if (showDiscovery && (mapExpanded || discoveryListState.firstVisibleItemIndex == 0)) 1f else 0f,
+                if (mapExpanded || discoveryListState.firstVisibleItemIndex == 0) 1f else 0f,
                 tween(360), label = "discovery-map-visibility",
             )
-            val mapVisible by remember { derivedStateOf { mapOpacity.value > 0f } }
+            val mapVisible by remember { derivedStateOf { mapOpacity.value > 0f && discoveryProgress.value > 0f } }
             val radiusPx = with(density) { CpDimens.radius2xl.toPx() }
             val outline = MaterialTheme.colorScheme.outline
             RetainedContent(visible = mapVisible) {
@@ -451,8 +457,9 @@ fun FeedScreen(
                     layout(constraints.maxWidth, constraints.maxHeight) { placeable.placeRelative(0, clipTop) }
                 }.clipToBounds()) {
                     Box(Modifier.fillMaxSize().graphicsLayer {
+                        clip = true
                         alpha = mapOpacity.value
-                        translationY = -size.height / 5f * (1f - mapOpacity.value)
+                        translationY = discoveryMapOffsetY(viewportHeight, discoveryProgress.value)
                     }) {
                         Box(Modifier.fillMaxSize()) {
                             mapPreview(
@@ -486,6 +493,9 @@ fun FeedScreen(
 
 internal fun expandedMapBounds(preview: Rect, screenSize: Size, expansion: Float): Rect =
     lerp(preview, Rect(Offset.Zero, screenSize), expansion.coerceIn(0f, 1f))
+
+internal fun discoveryMapOffsetY(viewportHeight: Float, progress: Float): Float =
+    viewportHeight * (progress.coerceIn(0f, 1f) - 1f)
 
 @Composable
 private fun DiscoverySectionTitle(title: String, onShowAll: () -> Unit) {
