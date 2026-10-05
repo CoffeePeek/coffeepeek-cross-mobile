@@ -47,8 +47,6 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -78,7 +76,12 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.Role
+import com.coffeepeek.admin.ui.component.GlassControlIcon
+import com.coffeepeek.admin.ui.component.PlatformGlassIconButton
 import com.coffeepeek.admin.ui.component.SwipeablePhotoStack
+import dev.chrisbanes.haze.HazeState
+import dev.chrisbanes.haze.hazeSource
+import dev.chrisbanes.haze.rememberHazeState
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
@@ -195,9 +198,11 @@ fun ShopDetailScreen(shopId: String) {
     val details = state.details
     val distance = formatDistance(distanceToShopMeters(userLocation, details?.location))
     val floatingActionsClearance = 72.dp
+    val hazeState = rememberHazeState()
 
     Box(modifier = Modifier.fillMaxSize()) {
         Scaffold(
+            modifier = Modifier.hazeSource(hazeState),
             snackbarHost = {
                 SnackbarHost(
                     hostState = snackbarHostState,
@@ -261,13 +266,13 @@ fun ShopDetailScreen(shopId: String) {
 
         if (details != null) {
             HeroTopActions(
+                hazeState = hazeState,
                 onBack = Navigator::popBack,
                 isFavorite = details.shop.isFavorite,
                 isFavoriteLoading = state.isFavoriteLoading,
                 onToggleFavorite = vm::toggleFavorite,
                 onShare = vm::shareShop,
                 onSuggestChange = vm::openSuggestChange,
-                onReportIssue = vm::openReportIssue,
                 modifier = Modifier
                     .align(Alignment.TopCenter)
                     .statusBarsPadding(),
@@ -518,13 +523,13 @@ private fun ShopHeroImage(
 
 @Composable
 private fun HeroTopActions(
+    hazeState: HazeState,
     onBack: () -> Unit,
     isFavorite: Boolean,
     isFavoriteLoading: Boolean,
     onToggleFavorite: () -> Unit,
     onShare: () -> Unit,
     onSuggestChange: () -> Unit,
-    onReportIssue: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Row(
@@ -535,25 +540,26 @@ private fun HeroTopActions(
         verticalAlignment = Alignment.Top,
     ) {
         HeroIconButton(
+            icon = GlassControlIcon.Back,
+            hazeState = hazeState,
             onClick = onBack,
             enabled = true,
             isLoading = false,
             contentDescription = "Назад",
         ) {
             Icon(
-                imageVector = CpIcons.ChevronLeft,
+                imageVector = CpIcons.Back,
                 contentDescription = null,
-                tint = Color.White,
-                modifier = Modifier.size(18.dp),
+                tint = MaterialTheme.colorScheme.onSurface,
             )
         }
         HeaderActionButtons(
+            hazeState = hazeState,
             isFavorite = isFavorite,
             isFavoriteLoading = isFavoriteLoading,
             onToggleFavorite = onToggleFavorite,
             onShare = onShare,
             onSuggestChange = onSuggestChange,
-            onReportIssue = onReportIssue,
         )
     }
 }
@@ -867,19 +873,34 @@ private fun PhotoCounter(current: Int, total: Int, modifier: Modifier = Modifier
 
 @Composable
 private fun HeaderActionButtons(
+    hazeState: HazeState,
     isFavorite: Boolean,
     isFavoriteLoading: Boolean,
     onToggleFavorite: () -> Unit,
     onShare: () -> Unit,
     onSuggestChange: () -> Unit,
-    onReportIssue: () -> Unit,
 ) {
-    var showMore by remember { mutableStateOf(false) }
     Row(
         horizontalArrangement = Arrangement.spacedBy(CpDimens.spacing2),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         HeroIconButton(
+            icon = GlassControlIcon.Edit,
+            hazeState = hazeState,
+            onClick = onSuggestChange,
+            enabled = true,
+            isLoading = false,
+            contentDescription = "Предложить правку",
+        ) {
+            Icon(
+                imageVector = CpIcons.NoteEdit,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurface,
+            )
+        }
+        HeroIconButton(
+            icon = if (isFavorite) GlassControlIcon.FavoriteFilled else GlassControlIcon.Favorite,
+            hazeState = hazeState,
             onClick = onToggleFavorite,
             enabled = !isFavoriteLoading,
             isLoading = isFavoriteLoading,
@@ -888,11 +909,12 @@ private fun HeaderActionButtons(
             Icon(
                 imageVector = if (isFavorite) CpIcons.FavoriteFilled else CpIcons.Favorite,
                 contentDescription = null,
-                tint = if (isFavorite) CpColor.Error else Color.White,
-                modifier = Modifier.size(18.dp),
+                tint = if (isFavorite) CpColor.Error else MaterialTheme.colorScheme.onSurface,
             )
         }
         HeroIconButton(
+            icon = GlassControlIcon.Share,
+            hazeState = hazeState,
             onClick = onShare,
             enabled = true,
             isLoading = false,
@@ -901,29 +923,8 @@ private fun HeaderActionButtons(
             Icon(
                 imageVector = CpIcons.Share,
                 contentDescription = null,
-                tint = Color.White,
-                modifier = Modifier.size(18.dp),
+                tint = MaterialTheme.colorScheme.onSurface,
             )
-        }
-        Box {
-            HeroIconButton(
-                onClick = { showMore = true },
-                enabled = true,
-                isLoading = false,
-                contentDescription = "Другие действия",
-            ) {
-                Icon(CpIcons.More, contentDescription = null, tint = Color.White, modifier = Modifier.size(20.dp))
-            }
-            DropdownMenu(expanded = showMore, onDismissRequest = { showMore = false }) {
-                DropdownMenuItem(
-                    text = { Text("Предложить правку") },
-                    onClick = { showMore = false; onSuggestChange() },
-                )
-                DropdownMenuItem(
-                    text = { Text(stringResource(Res.string.shop_report_issue)) },
-                    onClick = { showMore = false; onReportIssue() },
-                )
-            }
         }
     }
 }
@@ -974,30 +975,30 @@ private fun shopFeatureItems(details: CoffeeShopDetails): List<ShopFeatureItem> 
 
 @Composable
 private fun HeroIconButton(
+    icon: GlassControlIcon,
+    hazeState: HazeState,
     onClick: () -> Unit,
     enabled: Boolean,
     isLoading: Boolean,
     contentDescription: String,
     content: @Composable () -> Unit,
 ) {
-    IconButton(
+    PlatformGlassIconButton(
+        icon = icon,
         onClick = onClick,
         enabled = enabled,
-        modifier = Modifier.size(44.dp).semantics { this.contentDescription = contentDescription },
+        isLoading = isLoading,
+        contentDescription = contentDescription,
+        hazeState = hazeState,
     ) {
-        Surface(
-            modifier = Modifier.size(36.dp),
-            shape = CircleShape,
-            color = Color.Black.copy(alpha = 0.5f),
-            border = androidx.compose.foundation.BorderStroke(1.dp, Color.White.copy(alpha = 0.2f)),
-        ) {
-            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                if (isLoading) {
-                    CoffeePeekLoader(size = 18.dp, strokeWidth = 2.dp, color = Color.White)
-                } else {
-                    content()
-                }
-            }
+        if (isLoading) {
+            CoffeePeekLoader(
+                size = 18.dp,
+                strokeWidth = 2.dp,
+                color = MaterialTheme.colorScheme.primary,
+            )
+        } else {
+            content()
         }
     }
 }
