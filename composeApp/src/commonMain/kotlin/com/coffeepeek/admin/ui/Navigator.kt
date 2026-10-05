@@ -22,7 +22,15 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
+import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.Lifecycle
+import androidx.navigation.NavBackStackEntry
+import androidx.navigation.compose.LocalOwnersProvider
 import com.coffeepeek.admin.di.platformViewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -32,6 +40,7 @@ import com.coffeepeek.admin.ui.dialogs.ErrorDialog
 import com.coffeepeek.admin.ui.dialogs.LoadingDialog
 import com.coffeepeek.admin.ui.screen.auth.AuthScreen
 import com.coffeepeek.admin.ui.screen.main.MainScreen
+import com.coffeepeek.admin.ui.component.RetainedContent
 import com.coffeepeek.admin.ui.screen.review.CreateReviewScreen
 import com.coffeepeek.admin.ui.screen.review.EditReviewScreen
 import com.coffeepeek.admin.ui.screen.shop.ShopDetailScreen
@@ -250,6 +259,8 @@ object Navigator {
     private fun BaseNavigator() {
         val nav = rememberNavController()
         val appLink by pendingAppLink.collectAsState()
+        var mainEntry by remember { mutableStateOf<NavBackStackEntry?>(null) }
+        val mainStateHolder = rememberSaveableStateHolder()
 
         LaunchedEffect(appLink) {
             val screen = appLink ?: return@LaunchedEffect
@@ -275,110 +286,120 @@ object Navigator {
             }.launchIn(this)
         }
 
-        NavHost(
-            navController = nav,
-            startDestination = Screen.Main,
-            modifier = Modifier.fillMaxSize(),
-            enterTransition = {
-                slideIntoContainer(
-                    towards = AnimatedContentTransitionScope.SlideDirection.Left,
-                    animationSpec = tween(
-                        durationMillis = ROOT_NAV_ANIMATION_DURATION_MS,
-                        easing = FastOutSlowInEasing,
-                    ),
-                )
-            },
-            exitTransition = {
-                slideOutOfContainer(
-                    towards = AnimatedContentTransitionScope.SlideDirection.Left,
-                    animationSpec = tween(
-                        durationMillis = ROOT_NAV_ANIMATION_DURATION_MS,
-                        easing = FastOutSlowInEasing,
-                    ),
-                )
-            },
-            popEnterTransition = {
-                slideIntoContainer(
-                    towards = AnimatedContentTransitionScope.SlideDirection.Right,
-                    animationSpec = tween(
-                        durationMillis = ROOT_NAV_ANIMATION_DURATION_MS,
-                        easing = FastOutSlowInEasing,
-                    ),
-                )
-            },
-            popExitTransition = {
-                slideOutOfContainer(
-                    towards = AnimatedContentTransitionScope.SlideDirection.Right,
-                    animationSpec = tween(
-                        durationMillis = ROOT_NAV_ANIMATION_DURATION_MS,
-                        easing = FastOutSlowInEasing,
-                    ),
-                )
-            },
-        ) {
-                composable<Screen.Auth> { AuthScreen() }
-                composable<Screen.Register> { RegisterScreen() }
-                composable<Screen.Main> { MainScreen() }
-                composable<Screen.ShopDetail> { backStack ->
-                    val route = backStack.toRoute<Screen.ShopDetail>()
-                    ShopDetailScreen(shopId = route.shopId)
+        Box(Modifier.fillMaxSize()) {
+            mainEntry?.takeIf { it.lifecycle.currentState != Lifecycle.State.DESTROYED }?.let { entry ->
+                val lifecycleState by entry.lifecycle.currentStateFlow.collectAsState()
+                entry.LocalOwnersProvider(mainStateHolder) {
+                    RetainedContent(visible = lifecycleState.isAtLeast(Lifecycle.State.STARTED)) { MainScreen() }
                 }
-                composable<Screen.ShopReviews> { backStack ->
-                    val route = backStack.toRoute<Screen.ShopReviews>()
-                    com.coffeepeek.admin.ui.screen.shop.ShopReviewsScreen(shopId = route.shopId)
-                }
-                composable<Screen.ReportReview> { backStack ->
-                    val route = backStack.toRoute<Screen.ReportReview>()
-                    com.coffeepeek.admin.ui.screen.review.ReviewReportScreen(reviewId = route.reviewId)
-                }
-                composable<Screen.ShopMenuGallery> { backStack ->
-                    val route = backStack.toRoute<Screen.ShopMenuGallery>()
-                    ShopMenuGalleryScreen(shopId = route.shopId)
-                }
-                composable<Screen.ReportShop> { backStack ->
-                    val route = backStack.toRoute<Screen.ReportShop>()
-                    ShopReportScreen(shopId = route.shopId, shopTitle = route.shopTitle)
-                }
-                composable<Screen.SuggestShopChange> { backStack ->
-                    val route = backStack.toRoute<Screen.SuggestShopChange>()
-                    SuggestShopChangeScreen(shopId = route.shopId)
-                }
-                composable<Screen.ShopChangeEditor> { backStack ->
-                    val route = backStack.toRoute<Screen.ShopChangeEditor>()
-                    ShopChangeEditorScreen(
-                        shopId = route.shopId,
-                        sectionName = route.section,
-                        requestId = route.requestId,
+            }
+            NavHost(
+                navController = nav,
+                startDestination = Screen.Main,
+                modifier = Modifier.fillMaxSize(),
+                enterTransition = {
+                    slideIntoContainer(
+                        towards = AnimatedContentTransitionScope.SlideDirection.Left,
+                        animationSpec = tween(
+                            durationMillis = ROOT_NAV_ANIMATION_DURATION_MS,
+                            easing = FastOutSlowInEasing,
+                        ),
                     )
-                }
-                composable<Screen.MyContributions> { backStack ->
-                    val route = backStack.toRoute<Screen.MyContributions>()
-                    MyContributionsScreen(kind = ContributionKind.valueOf(route.kind))
-                }
-                composable<Screen.ShopChangeRequestDetail> { backStack ->
-                    val route = backStack.toRoute<Screen.ShopChangeRequestDetail>()
-                    ShopChangeRequestDetailScreen(requestId = route.requestId)
-                }
-                composable<Screen.AddShop> { AddShopScreen() }
-                composable<Screen.AddRoaster> { AddRoasterScreen() }
-                composable<Screen.RoasterDetail> { backStack ->
-                    val route = backStack.toRoute<Screen.RoasterDetail>()
-                    RoasterDetailScreen(roasterId = route.roasterId)
-                }
-                composable<Screen.EditProfile> { EditProfileScreen() }
-                composable<Screen.DeleteAccountPending> { DeleteAccountPendingScreen() }
-                composable<Screen.CreateReview> { backStack ->
-                    val route = backStack.toRoute<Screen.CreateReview>()
-                    CreateReviewScreen(shopId = route.shopId)
-                }
-                composable<Screen.ReviewEdit> { backStack ->
-                    val route = backStack.toRoute<Screen.ReviewEdit>()
-                    EditReviewScreen(reviewId = route.reviewId)
-                }
-                composable<Screen.Favorites> { FavoritesScreen() }
-                composable<Screen.VisitedPlaces> { VisitedPlacesScreen() }
-                composable<Screen.CitySettings> { CityScreen() }
-                composable<Screen.ThemeSettings> { ThemeScreen() }
+                },
+                exitTransition = {
+                    slideOutOfContainer(
+                        towards = AnimatedContentTransitionScope.SlideDirection.Left,
+                        animationSpec = tween(
+                            durationMillis = ROOT_NAV_ANIMATION_DURATION_MS,
+                            easing = FastOutSlowInEasing,
+                        ),
+                    )
+                },
+                popEnterTransition = {
+                    slideIntoContainer(
+                        towards = AnimatedContentTransitionScope.SlideDirection.Right,
+                        animationSpec = tween(
+                            durationMillis = ROOT_NAV_ANIMATION_DURATION_MS,
+                            easing = FastOutSlowInEasing,
+                        ),
+                    )
+                },
+                popExitTransition = {
+                    slideOutOfContainer(
+                        towards = AnimatedContentTransitionScope.SlideDirection.Right,
+                        animationSpec = tween(
+                            durationMillis = ROOT_NAV_ANIMATION_DURATION_MS,
+                            easing = FastOutSlowInEasing,
+                        ),
+                    )
+                },
+            ) {
+                    composable<Screen.Auth> { AuthScreen() }
+                    composable<Screen.Register> { RegisterScreen() }
+                    composable<Screen.Main> { entry ->
+                        SideEffect { mainEntry = entry }
+                    }
+                    composable<Screen.ShopDetail> { backStack ->
+                        val route = backStack.toRoute<Screen.ShopDetail>()
+                        ShopDetailScreen(shopId = route.shopId)
+                    }
+                    composable<Screen.ShopReviews> { backStack ->
+                        val route = backStack.toRoute<Screen.ShopReviews>()
+                        com.coffeepeek.admin.ui.screen.shop.ShopReviewsScreen(shopId = route.shopId)
+                    }
+                    composable<Screen.ReportReview> { backStack ->
+                        val route = backStack.toRoute<Screen.ReportReview>()
+                        com.coffeepeek.admin.ui.screen.review.ReviewReportScreen(reviewId = route.reviewId)
+                    }
+                    composable<Screen.ShopMenuGallery> { backStack ->
+                        val route = backStack.toRoute<Screen.ShopMenuGallery>()
+                        ShopMenuGalleryScreen(shopId = route.shopId)
+                    }
+                    composable<Screen.ReportShop> { backStack ->
+                        val route = backStack.toRoute<Screen.ReportShop>()
+                        ShopReportScreen(shopId = route.shopId, shopTitle = route.shopTitle)
+                    }
+                    composable<Screen.SuggestShopChange> { backStack ->
+                        val route = backStack.toRoute<Screen.SuggestShopChange>()
+                        SuggestShopChangeScreen(shopId = route.shopId)
+                    }
+                    composable<Screen.ShopChangeEditor> { backStack ->
+                        val route = backStack.toRoute<Screen.ShopChangeEditor>()
+                        ShopChangeEditorScreen(
+                            shopId = route.shopId,
+                            sectionName = route.section,
+                            requestId = route.requestId,
+                        )
+                    }
+                    composable<Screen.MyContributions> { backStack ->
+                        val route = backStack.toRoute<Screen.MyContributions>()
+                        MyContributionsScreen(kind = ContributionKind.valueOf(route.kind))
+                    }
+                    composable<Screen.ShopChangeRequestDetail> { backStack ->
+                        val route = backStack.toRoute<Screen.ShopChangeRequestDetail>()
+                        ShopChangeRequestDetailScreen(requestId = route.requestId)
+                    }
+                    composable<Screen.AddShop> { AddShopScreen() }
+                    composable<Screen.AddRoaster> { AddRoasterScreen() }
+                    composable<Screen.RoasterDetail> { backStack ->
+                        val route = backStack.toRoute<Screen.RoasterDetail>()
+                        RoasterDetailScreen(roasterId = route.roasterId)
+                    }
+                    composable<Screen.EditProfile> { EditProfileScreen() }
+                    composable<Screen.DeleteAccountPending> { DeleteAccountPendingScreen() }
+                    composable<Screen.CreateReview> { backStack ->
+                        val route = backStack.toRoute<Screen.CreateReview>()
+                        CreateReviewScreen(shopId = route.shopId)
+                    }
+                    composable<Screen.ReviewEdit> { backStack ->
+                        val route = backStack.toRoute<Screen.ReviewEdit>()
+                        EditReviewScreen(reviewId = route.reviewId)
+                    }
+                    composable<Screen.Favorites> { FavoritesScreen() }
+                    composable<Screen.VisitedPlaces> { VisitedPlacesScreen() }
+                    composable<Screen.CitySettings> { CityScreen() }
+                    composable<Screen.ThemeSettings> { ThemeScreen() }
+            }
         }
     }
 }

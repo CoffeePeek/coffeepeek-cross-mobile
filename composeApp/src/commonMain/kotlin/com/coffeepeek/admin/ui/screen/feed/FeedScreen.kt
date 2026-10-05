@@ -79,7 +79,6 @@ import com.coffeepeek.admin.utils.formatOneDecimal
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
@@ -111,6 +110,9 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.semantics.clearAndSetSemantics
+import com.coffeepeek.admin.ui.component.RetainedContent
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import kotlin.math.roundToInt
 import com.coffeepeek.domain.model.CoffeeShop
 import coffeepeek.composeapp.generated.resources.Res
@@ -160,7 +162,9 @@ fun FeedScreen(
         keyboard?.hide()
         vm.cancelSearch()
     }
-    BackHandler(enabled = mapExpanded || (mapPreview != null && !showDiscovery)) {
+    val lifecycleState by LocalLifecycleOwner.current.lifecycle.currentStateFlow.collectAsState()
+    BackHandler(enabled = lifecycleState.isAtLeast(Lifecycle.State.STARTED) &&
+        (mapExpanded || (mapPreview != null && !showDiscovery))) {
         cancelSearch()
         mapExpanded = false
     }
@@ -443,47 +447,50 @@ fun FeedScreen(
             }
         }
 
-        if (mapPreview != null && mapAnchor.width > 0f &&
-            (mapExpanded || discoveryListState.firstVisibleItemIndex == 0)
-        ) {
+        if (mapPreview != null && mapAnchor.width > 0f) {
+            val mapOpacity = animateFloatAsState(
+                if (showDiscovery && (mapExpanded || discoveryListState.firstVisibleItemIndex == 0)) 1f else 0f,
+                tween(360), label = "discovery-map-visibility",
+            )
+            val mapVisible by remember { derivedStateOf { mapOpacity.value > 0f } }
             val radiusPx = with(density) { CpDimens.radius2xl.toPx() }
             val outline = MaterialTheme.colorScheme.outline
-            // The viewport stays below the separator while its contents slide away.
-            Box(Modifier.fillMaxSize().layout { measurable, constraints ->
-                val clipTop = (viewportTop * (1f - expansion.value)).roundToInt()
-                    .coerceIn(0, constraints.maxHeight)
-                val height = constraints.maxHeight - clipTop
-                val placeable = measurable.measure(constraints.copy(minHeight = height, maxHeight = height))
-                layout(constraints.maxWidth, constraints.maxHeight) { placeable.placeRelative(0, clipTop) }
-            }.clipToBounds()) {
-                AnimatedVisibility(
-                    visible = showDiscovery,
-                    enter = fadeIn(tween(300)),
-                    exit = fadeOut(tween(240)) + slideOutVertically(tween(360)) { -it / 5 },
-                    modifier = Modifier.fillMaxSize(),
-                ) {
-                    Box(Modifier.fillMaxSize()) {
-                        mapPreview(
-                            mapControlsExpanded,
-                            { mapExpanded = !mapExpanded },
-                            canvasSize,
-                            Modifier.offset {
-                                val bounds = expandedMapBounds(mapAnchor, screenSize, expansion.value)
-                                val clipTop = (viewportTop * (1f - expansion.value)).roundToInt()
-                                    .coerceIn(0, screenSize.height.roundToInt())
-                                IntOffset(bounds.left.roundToInt(), bounds.top.roundToInt() - clipTop)
-                            }.layout { measurable, _ ->
-                                val bounds = expandedMapBounds(mapAnchor, screenSize, expansion.value)
-                                val placeable = measurable.measure(Constraints.fixed(bounds.width.roundToInt().coerceAtLeast(1), bounds.height.roundToInt().coerceAtLeast(1)))
-                                layout(placeable.width, placeable.height) { placeable.placeRelative(0, 0) }
-                            }.graphicsLayer {
-                                clip = true
-                                shape = RoundedCornerShape(radiusPx * (1f - expansion.value))
-                            }.drawWithContent {
-                                drawContent()
-                                drawRoundRect(outline, cornerRadius = CornerRadius(radiusPx * (1f - expansion.value)), style = Stroke(1.dp.toPx()))
-                            },
-                        )
+            RetainedContent(visible = mapVisible) {
+                // The viewport stays below the separator while its contents slide away.
+                Box(Modifier.fillMaxSize().layout { measurable, constraints ->
+                    val clipTop = (viewportTop * (1f - expansion.value)).roundToInt()
+                        .coerceIn(0, constraints.maxHeight)
+                    val height = constraints.maxHeight - clipTop
+                    val placeable = measurable.measure(constraints.copy(minHeight = height, maxHeight = height))
+                    layout(constraints.maxWidth, constraints.maxHeight) { placeable.placeRelative(0, clipTop) }
+                }.clipToBounds()) {
+                    Box(Modifier.fillMaxSize().graphicsLayer {
+                        alpha = mapOpacity.value
+                        translationY = -size.height / 5f * (1f - mapOpacity.value)
+                    }) {
+                        Box(Modifier.fillMaxSize()) {
+                            mapPreview(
+                                mapControlsExpanded,
+                                { mapExpanded = !mapExpanded },
+                                canvasSize,
+                                Modifier.offset {
+                                    val bounds = expandedMapBounds(mapAnchor, screenSize, expansion.value)
+                                    val clipTop = (viewportTop * (1f - expansion.value)).roundToInt()
+                                        .coerceIn(0, screenSize.height.roundToInt())
+                                    IntOffset(bounds.left.roundToInt(), bounds.top.roundToInt() - clipTop)
+                                }.layout { measurable, _ ->
+                                    val bounds = expandedMapBounds(mapAnchor, screenSize, expansion.value)
+                                    val placeable = measurable.measure(Constraints.fixed(bounds.width.roundToInt().coerceAtLeast(1), bounds.height.roundToInt().coerceAtLeast(1)))
+                                    layout(placeable.width, placeable.height) { placeable.placeRelative(0, 0) }
+                                }.graphicsLayer {
+                                    clip = true
+                                    shape = RoundedCornerShape(radiusPx * (1f - expansion.value))
+                                }.drawWithContent {
+                                    drawContent()
+                                    drawRoundRect(outline, cornerRadius = CornerRadius(radiusPx * (1f - expansion.value)), style = Stroke(1.dp.toPx()))
+                                },
+                            )
+                        }
                     }
                 }
             }

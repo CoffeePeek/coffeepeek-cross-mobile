@@ -28,6 +28,31 @@ class FeedFiltersUiTest {
     }
 
     @Test
+    fun everySelectedFilterOpensTheShopListWhileTheDefaultCityKeepsDiscovery() {
+        val initial = FeedUiState(filters = FeedFiltersUi(cityId = "minsk"))
+        assertTrue(initial.showDiscovery)
+        listOf(
+            FeedFiltersUi(coffeeFocus = "specialty"),
+            FeedFiltersUi(openOnly = true),
+            FeedFiltersUi(newOnly = true),
+            FeedFiltersUi(visitedOnly = true),
+            FeedFiltersUi(favoritesOnly = true),
+            FeedFiltersUi(nearbyOnly = true),
+            FeedFiltersUi(priceRange = 2),
+            FeedFiltersUi(minRating = 4.0),
+            FeedFiltersUi(roasterIds = setOf("roaster")),
+            FeedFiltersUi(beanIds = setOf("bean")),
+            FeedFiltersUi(equipmentIds = setOf("equipment")),
+            FeedFiltersUi(brewMethodIds = setOf("brew")),
+            FeedFiltersUi(tagIds = setOf("wifi")),
+        ).forEach { filters ->
+            val filtered = initial.copy(filters = filters.copy(cityId = "minsk"))
+            assertFalse(filtered.showDiscovery, filters.toString())
+            assertTrue(filtered.copy(filters = filtered.filters.clearSelections()).showDiscovery)
+        }
+    }
+
+    @Test
     fun activeFilterCountIncludesQuickAndAdvancedFilters() {
         val filters = FeedFiltersUi(
             cityId = "minsk",

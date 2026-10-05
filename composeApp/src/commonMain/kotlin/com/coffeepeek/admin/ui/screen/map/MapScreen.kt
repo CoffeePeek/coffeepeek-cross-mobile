@@ -286,15 +286,6 @@ fun MapScreen(
             }
         }
 
-        if (state.isLoading) {
-            CoffeePeekLoader(
-                modifier = Modifier
-                    .align(if (isPreview) Alignment.TopStart else Alignment.TopCenter)
-                    .padding(top = CpDimens.spacing4),
-                strokeWidth = 2.dp,
-            )
-        }
-
         if (!isPreview && state.showSearchArea) {
             Button(
                 onClick = vm::searchCurrentArea,
