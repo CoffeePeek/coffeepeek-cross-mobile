@@ -585,7 +585,7 @@ private fun HeroShopDetails(
 
     Column(
         modifier = modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(CpDimens.spacing2),
+        verticalArrangement = Arrangement.spacedBy(CpDimens.spacing1),
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -719,19 +719,11 @@ private fun HeroInfoPill(
             .semantics(mergeDescendants = true) { contentDescription = description }
             .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
             .heightIn(min = CpDimens.controlHeight)
-            .padding(horizontal = 10.dp, vertical = CpDimens.spacing2),
+            .padding(horizontal = 10.dp, vertical = CpDimens.spacing1),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(CpDimens.spacing1),
     ) {
         content()
-        if (onClick != null) {
-            Icon(
-                imageVector = CpIcons.ChevronRight,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.size(12.dp),
-            )
-        }
     }
 }
 
@@ -783,17 +775,21 @@ private fun ReportIssueSection(onReportIssue: () -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = CpDimens.spacing4, vertical = CpDimens.spacing4),
-        horizontalAlignment = Alignment.CenterHorizontally,
+            .padding(horizontal = CpDimens.spacing4, vertical = CpDimens.spacing2),
     ) {
-        Text(
-            text = stringResource(Res.string.shop_report_prompt),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            textAlign = TextAlign.Center,
-        )
-        TextButton(onClick = onReportIssue) {
-            Text(stringResource(Res.string.shop_report_issue))
+        OutlinedContentCard {
+            Text(
+                text = stringResource(Res.string.shop_report_prompt),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Start,
+            )
+            TextButton(
+                onClick = onReportIssue,
+                contentPadding = PaddingValues(vertical = CpDimens.spacing2),
+            ) {
+                Text(stringResource(Res.string.shop_report_issue))
+            }
         }
     }
 }
