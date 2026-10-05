@@ -93,7 +93,7 @@ private fun appModule(settingRepository: com.coffeepeek.room.repository.SettingR
     factory { DeleteAccountPendingViewModel(get(), get()) }
     factory { AddShopViewModel(get()) }
     factory { EditProfileViewModel(get()) }
-    factory { FavoritesViewModel(get(), get()) }
+    factory { FavoritesViewModel(get(), get(), get()) }
     factory { (kind: ContributionKind) -> MyContributionsViewModel(kind, get(), get(), get(), get(), get(), get()) }
     factory { VisitedPlacesViewModel(get(), get()) }
     factory { AddRoasterViewModel(get(), get()) }

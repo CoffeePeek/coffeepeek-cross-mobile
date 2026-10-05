@@ -7,20 +7,29 @@ import com.coffeepeek.admin.utils.FavoriteSync
 import com.coffeepeek.domain.model.CoffeeShop
 import com.coffeepeek.domain.model.CoffeeShopDetails
 import com.coffeepeek.domain.model.CatalogItem
+import com.coffeepeek.domain.model.RoasterDetails
 import com.coffeepeek.domain.repository.FavoriteRepository
+import com.coffeepeek.domain.repository.RoasterRepository
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Semaphore
+import kotlinx.coroutines.sync.withPermit
 
 data class FavoritesUiState(
     val shops: List<CoffeeShopDetails> = emptyList(),
     val isLoading: Boolean = false,
     val error: String? = null,
     val roasters: List<CatalogItem> = emptyList(),
+    val roasterDetails: Map<String, RoasterDetails> = emptyMap(),
     val areRoastersLoading: Boolean = true,
     val savingRoasterIds: Set<String> = emptySet(),
     val actionMessage: String? = null,
@@ -29,16 +38,38 @@ data class FavoritesUiState(
 class FavoritesViewModel(
     private val favoriteRepository: FavoriteRepository,
     private val roasterFavorites: RoasterFavorites,
+    private val roasterRepository: RoasterRepository,
 ) : BaseViewModel() {
 
     private val _state = MutableStateFlow(FavoritesUiState())
     val state = _state.asStateFlow()
 
     init {
-        roasterFavorites.observeFavorites()
-            .onEach { roasters -> _state.update { it.copy(roasters = roasters, areRoastersLoading = false) } }
-            .catch { _state.update { it.copy(areRoastersLoading = false, actionMessage = "Не удалось загрузить обжарщиков") } }
-            .launchIn(workScope)
+        workScope.launch {
+            roasterFavorites.observeFavorites()
+                .catch { _state.update { it.copy(areRoastersLoading = false, actionMessage = "Не удалось загрузить обжарщиков") } }
+                .collectLatest { roasters ->
+                    val ids = roasters.map { it.roasterFavoriteId }.toSet()
+                    _state.update { it.copy(
+                        roasters = roasters,
+                        areRoastersLoading = false,
+                        roasterDetails = it.roasterDetails.filterKeys { id -> id in ids },
+                    ) }
+                    val requests = Semaphore(4)
+                    coroutineScope {
+                        roasters.filter { it.roasterFavoriteId !in _state.value.roasterDetails }.forEach { roaster ->
+                            val slug = roaster.address?.slug ?: return@forEach
+                            launch {
+                                val details = requests.withPermit { roasterRepository.getRoaster(slug).getOrNull() }
+                                currentCoroutineContext().ensureActive()
+                                if (details != null) {
+                                    _state.update { it.copy(roasterDetails = it.roasterDetails + (roaster.roasterFavoriteId to details)) }
+                                }
+                            }
+                        }
+                    }
+                }
+        }
         load()
         FavoriteSync.changes
             .onEach { load(force = true) }

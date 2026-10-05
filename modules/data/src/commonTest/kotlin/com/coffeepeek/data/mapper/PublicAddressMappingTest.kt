@@ -5,6 +5,7 @@ import com.coffeepeek.api.model.response.shop.CoffeeShopDetailsDto
 import com.coffeepeek.data.local.LocalFavoriteShopDto
 import com.coffeepeek.data.mapper.ShopMapper.toDomain
 import com.coffeepeek.data.util.FileUrlResolver
+import com.coffeepeek.domain.model.CoffeeShopType
 import kotlinx.serialization.json.Json
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -55,15 +56,19 @@ class PublicAddressMappingTest {
         assertEquals("", details.reviews.single().userId)
         assertEquals("", details.reviews.single().shopId)
         assertEquals("", details.userCheckIns.single().shopId)
-        val saved = LocalFavoriteShopDto.from(details.shop)
+        val saved = LocalFavoriteShopDto.from(details.shop.copy(type = CoffeeShopType.SPECIALTY, isNew = true))
         val restored = Json.decodeFromString<LocalFavoriteShopDto>(Json.encodeToString(saved)).toDomain()
         assertEquals(details.shop.publicAddress, restored.shop.publicAddress)
+        assertEquals(CoffeeShopType.SPECIALTY, restored.shop.type)
+        assertEquals(true, restored.shop.isNew)
     }
 
     @Test
     fun oldFavoriteHasNoPublicAddressAndGuidCannotReplaceItInPublicDto() {
         val old = Json.decodeFromString<LocalFavoriteShopDto>("""{"id":"611c3b59-c086-44bb-a4c5-c350be4ee7d9","title":"Saved shop"}""")
         assertNull(old.toDomain().shop.publicAddress)
+        assertEquals(CoffeeShopType.COFFEE_BAR, old.toDomain().shop.type)
+        assertEquals(false, old.toDomain().shop.isNew)
         assertFailsWith<SerializationException> {
             Json { ignoreUnknownKeys = true }.decodeFromString<CoffeeShopDetailsDto>("""{"id":"611c3b59-c086-44bb-a4c5-c350be4ee7d9"}""")
         }

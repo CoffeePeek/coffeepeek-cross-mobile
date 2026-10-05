@@ -4,6 +4,7 @@ import com.coffeepeek.api.model.PublicAddressDto
 import com.coffeepeek.data.mapper.toDomain
 import com.coffeepeek.domain.model.CoffeeShop
 import com.coffeepeek.domain.model.CoffeeShopDetails
+import com.coffeepeek.domain.model.CoffeeShopType
 import com.coffeepeek.domain.model.ShopLocation
 import kotlinx.serialization.Serializable
 
@@ -21,6 +22,8 @@ data class LocalFavoriteShopDto(
     val latitude: Double? = null,
     val longitude: Double? = null,
     val isOpen: Boolean = false,
+    val isNew: Boolean = false,
+    val type: String = CoffeeShopType.COFFEE_BAR,
     val tags: List<String> = emptyList(),
     val brewMethods: List<String> = emptyList(),
     // Kept for compatibility with favorites saved before multiple roaster logos were supported.
@@ -39,6 +42,8 @@ data class LocalFavoriteShopDto(
             photoUrl = photoUrl,
             address = address,
             isOpen = isOpen,
+            isNew = isNew,
+            type = type,
             isFavorite = true,
             tags = tags,
             brewMethods = brewMethods,
@@ -64,6 +69,8 @@ data class LocalFavoriteShopDto(
             latitude = shop.location?.latitude,
             longitude = shop.location?.longitude,
             isOpen = shop.isOpen,
+            isNew = shop.isNew,
+            type = shop.type,
             tags = shop.tags,
             brewMethods = shop.brewMethods,
             roasterPhotoUrl = shop.roasterPhotoUrls.firstOrNull(),

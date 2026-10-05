@@ -1,5 +1,6 @@
 package com.coffeepeek.admin.ui.screen.roaster
 
+import com.coffeepeek.admin.feature.catalog.ui.roasterShopCountLabel
 import com.coffeepeek.domain.model.CatalogItem
 import com.coffeepeek.domain.model.RoasterDetails
 import com.coffeepeek.domain.model.RoasterLocation

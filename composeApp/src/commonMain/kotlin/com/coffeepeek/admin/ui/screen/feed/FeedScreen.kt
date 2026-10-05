@@ -1,12 +1,11 @@
 package com.coffeepeek.admin.ui.screen.feed
 
 import com.coffeepeek.admin.ui.icons.CpIcons
-import com.coffeepeek.admin.ui.component.FavoriteButton
+import com.coffeepeek.admin.feature.catalog.api.ShopCard
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -22,19 +21,15 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.TextButton
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -57,7 +52,6 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.coffeepeek.admin.location.NEARBY_RADIUS_METERS
 import com.coffeepeek.admin.location.distanceToShopMeters
 import com.coffeepeek.admin.location.formatDistance
@@ -65,17 +59,11 @@ import com.coffeepeek.admin.location.rememberPermittedUserLocation
 import com.coffeepeek.admin.theme.CpColor
 import com.coffeepeek.admin.theme.CpDimens
 import com.coffeepeek.admin.ui.Navigator
-import com.coffeepeek.admin.ui.component.CoffeeShopImage
-import com.coffeepeek.admin.ui.component.brewMethodIcon
-import com.coffeepeek.admin.ui.component.CoffeeShopPlaceholderImage
 import com.coffeepeek.admin.ui.component.CoffeePeekLoader
 import com.coffeepeek.admin.ui.component.CoffeePeekPullToRefresh
 import com.coffeepeek.admin.ui.component.SearchHeader
 import com.coffeepeek.admin.ui.component.LocalFloatingNavClearance
-import com.coffeepeek.admin.ui.component.PriceBynRow
-import com.coffeepeek.admin.ui.component.priceRangeLevel
 import com.coffeepeek.admin.ui.model.COFFEE_FOCUS_OPTIONS
-import com.coffeepeek.admin.utils.formatOneDecimal
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.animation.AnimatedContent
@@ -114,10 +102,8 @@ import com.coffeepeek.admin.ui.component.RetainedContent
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import kotlin.math.roundToInt
-import com.coffeepeek.domain.model.CoffeeShop
 import coffeepeek.composeapp.generated.resources.Res
 import coffeepeek.composeapp.generated.resources.maskot_with_magnifying_glass
-import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource
 import com.coffeepeek.admin.di.platformViewModel
 
@@ -566,344 +552,6 @@ private fun AddMissingShopCard(onAddShop: () -> Unit) {
             Text("Добавить кофейню")
         }
     }
-}
-
-@Composable
-internal fun ShopCard(
-    shop: CoffeeShop,
-    distance: String? = null,
-    onClick: () -> Unit,
-    onToggleFavorite: () -> Unit,
-    modifier: Modifier = Modifier,
-    showCatalogDetails: Boolean = true,
-) {
-    Card(
-        modifier = modifier.fillMaxWidth().clickable(enabled = shop.publicAddress != null, onClick = onClick),
-        shape = RoundedCornerShape(CpDimens.radiusXl),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
-    ) {
-        Column {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .aspectRatio(2f)
-                    .clip(RoundedCornerShape(topStart = CpDimens.radiusXl, topEnd = CpDimens.radiusXl))
-                    .background(MaterialTheme.colorScheme.surfaceVariant),
-            ) {
-                val photoUrl = shop.photoUrl
-                if (!photoUrl.isNullOrBlank()) {
-                    CoffeeShopImage(
-                        imageUrl = photoUrl,
-                        contentDescription = shop.title,
-                        contentScale = ContentScale.Crop,
-                        placeholderLabelSize = 18.sp,
-                        modifier = Modifier.fillMaxSize(),
-                    )
-                } else {
-                    CoffeeShopPlaceholderImage(
-                        labelSize = 18.sp,
-                        contentDescription = "Фото ${shop.title} отсутствует",
-                    )
-                }
-                if (shop.isNew) {
-                    Row(
-                        modifier = Modifier
-                            .align(Alignment.TopStart)
-                            .padding(CpDimens.spacing3)
-                            .clip(RoundedCornerShape(CpDimens.radiusLg))
-                            .background(CpColor.DarkSurface.copy(alpha = 0.92f))
-                            .padding(horizontal = CpDimens.spacing3, vertical = 7.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(CpDimens.spacing1),
-                    ) {
-                        Icon(
-                            imageVector = CpIcons.Sparkle,
-                            contentDescription = null,
-                            tint = CpColor.Primary,
-                            modifier = Modifier.size(14.dp),
-                        )
-                        Text(
-                            text = "Новое",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = Color.White,
-                            fontWeight = FontWeight.SemiBold,
-                        )
-                    }
-                }
-
-                Row(
-                    modifier = Modifier
-                        .align(Alignment.TopEnd)
-                        .padding(CpDimens.spacing3),
-                    horizontalArrangement = Arrangement.spacedBy(CpDimens.spacing2),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    val rating = shop.rating
-                    if (rating != null && rating > 0) {
-                        Row(
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(CpDimens.radiusLg))
-                                .background(Color.Black.copy(alpha = 0.68f))
-                                .padding(horizontal = CpDimens.spacing2, vertical = 6.dp),
-                            horizontalArrangement = Arrangement.spacedBy(CpDimens.spacing1),
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            Icon(
-                                imageVector = CpIcons.StarFilled,
-                                contentDescription = null,
-                                tint = CpColor.Primary,
-                                modifier = Modifier.size(16.dp),
-                            )
-                            Text(
-                                text = formatOneDecimal(rating),
-                                style = MaterialTheme.typography.labelMedium,
-                                color = Color.White,
-                                fontWeight = FontWeight.SemiBold,
-                            )
-                            if (shop.reviewCount > 0) {
-                                Text(
-                                    text = "(${shop.reviewCount})",
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = Color.White.copy(alpha = 0.82f),
-                                )
-                            }
-                        }
-                    }
-                    FavoriteButton(
-                        isFavorite = shop.isFavorite,
-                        onClick = onToggleFavorite,
-                        overImage = true,
-                    )
-                }
-
-                val visibleRoasterLogos = shop.roasterPhotoUrls
-                    .filter(String::isNotBlank)
-                    .distinct()
-                    .take(3)
-                if (showCatalogDetails && visibleRoasterLogos.isNotEmpty()) {
-                    Box(
-                        modifier = Modifier
-                            .align(Alignment.BottomEnd)
-                            .padding(CpDimens.spacing3)
-                            .width(36.dp + 22.dp * (visibleRoasterLogos.size - 1))
-                            .height(36.dp),
-                    ) {
-                        visibleRoasterLogos.forEachIndexed { index, logoUrl ->
-                            Box(
-                                modifier = Modifier
-                                    .offset(x = 22.dp * index)
-                                    .size(36.dp)
-                                    .clip(CircleShape)
-                                    .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.96f))
-                                    .border(
-                                        width = 1.dp,
-                                        color = MaterialTheme.colorScheme.outlineVariant,
-                                        shape = CircleShape,
-                                    ),
-                                contentAlignment = Alignment.Center,
-                            ) {
-                                CoffeeShopImage(
-                                    imageUrl = logoUrl,
-                                    contentDescription = "Логотип обжарщика ${index + 1}",
-                                    contentScale = ContentScale.Crop,
-                                    placeholderLabelSize = 5.sp,
-                                    modifier = Modifier.fillMaxSize(),
-                                )
-                            }
-                        }
-                    }
-                }
-            }
-
-            Column(
-                modifier = Modifier.padding(
-                    start = CpDimens.spacing4,
-                    top = CpDimens.spacing3,
-                    end = CpDimens.spacing4,
-                    bottom = CpDimens.spacing4,
-                ),
-                verticalArrangement = Arrangement.spacedBy(CpDimens.spacing2),
-            ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.End,
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Text(
-                        text = shop.title,
-                        style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
-                        color = MaterialTheme.colorScheme.onSurface,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.weight(1f),
-                    )
-                    OpenStatusBadge(
-                        isOpen = shop.isOpen,
-                        modifier = Modifier.padding(start = CpDimens.spacing2),
-                    )
-                }
-
-                if (showCatalogDetails && shop.brewMethods.isNotEmpty()) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(CpDimens.spacing1),
-                    ) {
-                        shop.brewMethods.take(2).forEach { method ->
-                            ShopInfoChip(text = method, brewIcon = brewMethodIcon(method))
-                        }
-                        if (shop.brewMethods.size > 2) {
-                            ShopInfoChip(text = "+${shop.brewMethods.size - 2}")
-                        }
-                    }
-                }
-
-                val locationSummary = listOfNotNull(
-                    shop.address?.takeIf { it.isNotBlank() },
-                    distance?.let { "$it от вас" },
-                ).joinToString(" • ")
-                if (locationSummary.isNotBlank()) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(
-                            CpIcons.Location,
-                            contentDescription = null,
-                            tint = CpColor.Primary,
-                            modifier = Modifier.size(14.dp),
-                        )
-                        Spacer(Modifier.width(2.dp))
-                        Text(
-                            text = locationSummary,
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                        )
-                    }
-                }
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Row(
-                        modifier = Modifier.weight(1f),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(6.dp),
-                    ) {
-                        Text(
-                            text = shopTypeLabel(shop.type),
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                        )
-                        priceRangeLevel(shop.priceRange)?.let { level ->
-                            DetailSeparator()
-                            PriceBynRow(
-                                level = level,
-                                iconSize = 8.dp,
-                                activeTint = MaterialTheme.colorScheme.onSurfaceVariant,
-                            )
-                        }
-                        shop.tags.takeIf { showCatalogDetails }.orEmpty()
-                            .filterNot { it in shop.brewMethods }
-                            .firstOrNull()
-                            ?.let { tag ->
-                                DetailSeparator()
-                                Text(
-                                    text = tag,
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis,
-                                    modifier = Modifier.weight(1f, fill = false),
-                                )
-                            }
-                    }
-                    Icon(
-                        imageVector = CpIcons.ChevronRight,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.size(18.dp),
-                    )
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun OpenStatusBadge(isOpen: Boolean, modifier: Modifier = Modifier) {
-    val color = if (isOpen) CpColor.Success else MaterialTheme.colorScheme.error
-    Row(
-        modifier = modifier
-            .clip(RoundedCornerShape(CpDimens.radiusSm))
-            .background(color.copy(alpha = 0.14f))
-            .padding(horizontal = CpDimens.spacing2, vertical = 6.dp),
-        horizontalArrangement = Arrangement.spacedBy(6.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Box(Modifier.size(8.dp).clip(RoundedCornerShape(50)).background(color))
-        Text(
-            text = if (isOpen) "ОТКРЫТО" else "ЗАКРЫТО",
-            style = MaterialTheme.typography.labelSmall,
-            color = color,
-            fontWeight = FontWeight.Bold,
-        )
-    }
-}
-
-@Composable
-private fun ShopInfoChip(
-    text: String,
-    brewIcon: DrawableResource? = null,
-) {
-    Row(
-        modifier = Modifier
-            .widthIn(max = 112.dp)
-            .clip(RoundedCornerShape(CpDimens.radiusLg))
-            .background(MaterialTheme.colorScheme.surfaceVariant)
-            .border(
-                width = 1.dp,
-                color = MaterialTheme.colorScheme.outlineVariant,
-                shape = RoundedCornerShape(CpDimens.radiusLg),
-            )
-            .padding(horizontal = CpDimens.spacing2, vertical = 5.dp),
-        horizontalArrangement = Arrangement.spacedBy(CpDimens.spacing1),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        brewIcon?.let {
-            Icon(
-                painter = painterResource(it),
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.size(13.dp),
-            )
-        }
-        Text(
-            text = text,
-            style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-        )
-    }
-}
-
-@Composable
-private fun DetailSeparator() {
-    Text(
-        text = "·",
-        style = MaterialTheme.typography.labelSmall,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-    )
-}
-
-private fun shopTypeLabel(type: String): String = when (type) {
-    com.coffeepeek.domain.model.CoffeeShopType.SPECIALTY -> "Specialty"
-    com.coffeepeek.domain.model.CoffeeShopType.CAFE -> "Кафе"
-    else -> "Кофейня"
 }
 
 @Composable
