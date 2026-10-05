@@ -21,12 +21,13 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -46,6 +47,8 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -58,7 +61,6 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -76,14 +78,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.Role
-import com.coffeepeek.admin.ui.component.liquidGlass
-import com.coffeepeek.admin.ui.component.LocalGlassHazeState
-import com.coffeepeek.admin.ui.component.GlassControlIcon
-import com.coffeepeek.admin.ui.component.PlatformGlassIconButton
 import com.coffeepeek.admin.ui.component.SwipeablePhotoStack
-import dev.chrisbanes.haze.HazeState
-import dev.chrisbanes.haze.hazeSource
-import dev.chrisbanes.haze.rememberHazeState
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
@@ -119,6 +114,7 @@ import com.coffeepeek.admin.utils.currentLocalMinuteOfDay
 import com.coffeepeek.admin.ui.component.PriceBynIcon
 import com.coffeepeek.admin.ui.component.PriceBynRow
 import com.coffeepeek.admin.ui.component.priceLevelHint
+import com.coffeepeek.admin.ui.component.priceLevelValue
 import com.coffeepeek.admin.ui.component.priceRangeLevel
 import com.coffeepeek.admin.ui.component.shopTagIcon
 import com.coffeepeek.admin.ui.component.FullScreenImageDialog
@@ -199,11 +195,9 @@ fun ShopDetailScreen(shopId: String) {
     val details = state.details
     val distance = formatDistance(distanceToShopMeters(userLocation, details?.location))
     val floatingActionsClearance = 72.dp
-    val hazeState = rememberHazeState()
 
     Box(modifier = Modifier.fillMaxSize()) {
         Scaffold(
-            modifier = Modifier.hazeSource(hazeState),
             snackbarHost = {
                 SnackbarHost(
                     hostState = snackbarHostState,
@@ -267,13 +261,13 @@ fun ShopDetailScreen(shopId: String) {
 
         if (details != null) {
             HeroTopActions(
-                hazeState = hazeState,
                 onBack = Navigator::popBack,
                 isFavorite = details.shop.isFavorite,
                 isFavoriteLoading = state.isFavoriteLoading,
                 onToggleFavorite = vm::toggleFavorite,
                 onShare = vm::shareShop,
                 onSuggestChange = vm::openSuggestChange,
+                onReportIssue = vm::openReportIssue,
                 modifier = Modifier
                     .align(Alignment.TopCenter)
                     .statusBarsPadding(),
@@ -449,19 +443,18 @@ private fun ShopHeroImage(
     onPhotoClick: (String) -> Unit,
 ) {
     var currentPhotoIndex by remember(photos) { mutableStateOf(0) }
-    val heroHazeState = rememberHazeState()
     val heroShape = RoundedCornerShape(
-        bottomStart = CpDimens.radius3xl,
-        bottomEnd = CpDimens.radius3xl,
+        bottomStart = CpDimens.radiusLg,
+        bottomEnd = CpDimens.radiusLg,
     )
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(300.dp)
-            .clip(heroShape)
-            .background(MaterialTheme.colorScheme.surfaceVariant),
-    ) {
-        Box(Modifier.fillMaxSize().hazeSource(heroHazeState)) {
+    Column(Modifier.fillMaxWidth()) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(300.dp)
+                .clip(heroShape)
+                .background(MaterialTheme.colorScheme.surfaceVariant),
+        ) {
             if (photos.size <= 1) {
                 val coverUrl = photos.firstOrNull()
                 if (!coverUrl.isNullOrBlank()) {
@@ -498,40 +491,40 @@ private fun ShopHeroImage(
                         )
                     )
             )
+            if (photos.isNotEmpty()) {
+                PhotoCounter(
+                    current = currentPhotoIndex + 1,
+                    total = photos.size,
+                    modifier = Modifier.align(Alignment.BottomEnd).padding(CpDimens.spacing3),
+                )
+            }
         }
 
-        CompositionLocalProvider(LocalGlassHazeState provides heroHazeState) {
-            HeroShopDetails(
-                title = title,
-                address = address,
-                distance = distance,
-                rating = rating,
-                reviewCount = reviewCount,
-                priceRange = priceRange,
-                shopType = shopType,
-                currentPhoto = currentPhotoIndex + 1,
-                totalPhotos = photos.size,
-                canOpenMap = canOpenMap,
-                onOpenOnMap = onOpenOnMap,
-                onOpenReviews = onOpenReviews,
-                modifier = Modifier
-                    .align(Alignment.BottomStart)
-                    .padding(horizontal = CpDimens.spacing4)
-                    .padding(bottom = CpDimens.spacing4),
-            )
-        }
+        HeroShopDetails(
+            title = title,
+            address = address,
+            distance = distance,
+            rating = rating,
+            reviewCount = reviewCount,
+            priceRange = priceRange,
+            shopType = shopType,
+            canOpenMap = canOpenMap,
+            onOpenOnMap = onOpenOnMap,
+            onOpenReviews = onOpenReviews,
+            modifier = Modifier.padding(horizontal = CpDimens.spacing4, vertical = CpDimens.spacing3),
+        )
     }
 }
 
 @Composable
 private fun HeroTopActions(
-    hazeState: HazeState,
     onBack: () -> Unit,
     isFavorite: Boolean,
     isFavoriteLoading: Boolean,
     onToggleFavorite: () -> Unit,
     onShare: () -> Unit,
     onSuggestChange: () -> Unit,
+    onReportIssue: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Row(
@@ -542,31 +535,29 @@ private fun HeroTopActions(
         verticalAlignment = Alignment.Top,
     ) {
         HeroIconButton(
-            icon = GlassControlIcon.Back,
-            hazeState = hazeState,
             onClick = onBack,
             enabled = true,
             isLoading = false,
             contentDescription = "Назад",
         ) {
             Icon(
-                imageVector = CpIcons.Back,
+                imageVector = CpIcons.ChevronLeft,
                 contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSurface,
+                tint = Color.White,
+                modifier = Modifier.size(18.dp),
             )
         }
         HeaderActionButtons(
-            hazeState = hazeState,
             isFavorite = isFavorite,
             isFavoriteLoading = isFavoriteLoading,
             onToggleFavorite = onToggleFavorite,
             onShare = onShare,
             onSuggestChange = onSuggestChange,
+            onReportIssue = onReportIssue,
         )
     }
 }
 
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun HeroShopDetails(
     title: String,
@@ -576,8 +567,6 @@ private fun HeroShopDetails(
     reviewCount: Int,
     priceRange: String?,
     shopType: String,
-    currentPhoto: Int,
-    totalPhotos: Int,
     canOpenMap: Boolean,
     onOpenOnMap: () -> Unit,
     onOpenReviews: () -> Unit,
@@ -593,145 +582,141 @@ private fun HeroShopDetails(
 
     Column(
         modifier = modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(CpDimens.spacing1),
+        verticalArrangement = Arrangement.spacedBy(CpDimens.spacing2),
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.Bottom,
+            verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(CpDimens.spacing2),
         ) {
-            Column(
+            Text(
+                text = title,
+                style = MaterialTheme.typography.headlineLarge.copy(
+                    fontSize = 28.sp,
+                    lineHeight = 32.sp,
+                    letterSpacing = (-0.5).sp,
+                    fontWeight = FontWeight.Bold,
+                ),
+                color = MaterialTheme.colorScheme.onSurface,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
                 modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(CpDimens.spacing1),
-            ) {
-                Text(
-                    text = title,
-                    style = MaterialTheme.typography.headlineLarge.copy(
-                        fontSize = 28.sp,
-                        lineHeight = 32.sp,
-                        letterSpacing = (-0.5).sp,
-                        fontWeight = FontWeight.Bold,
-                    ),
-                    color = Color.White,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis,
-                )
-                val addressLabel = address?.takeIf { it.isNotBlank() }
-                    ?: if (canOpenMap) "Показать на карте" else null
-                addressLabel?.let { label ->
-                    Row(
-                        modifier = Modifier.clickable(enabled = canOpenMap, onClick = onOpenOnMap),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Icon(
-                            imageVector = CpIcons.Location,
-                            contentDescription = null,
-                            tint = Color.White,
-                            modifier = Modifier.size(18.dp),
-                        )
-                        Spacer(Modifier.width(CpDimens.spacing1))
-                        Text(
-                            text = label,
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = Color.White,
-                            maxLines = 2,
-                            overflow = TextOverflow.Ellipsis,
-                            modifier = Modifier.weight(1f, fill = false),
-                        )
-                    }
-                }
-            }
+            )
             ShopTypeBadge(shopType = shopType)
         }
 
+        val addressLabel = address?.takeIf { it.isNotBlank() }
+            ?: if (canOpenMap) "Показать на карте" else null
+        addressLabel?.let { label ->
+            Row(
+                modifier = Modifier.clickable(enabled = canOpenMap, onClick = onOpenOnMap),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(CpDimens.spacing1),
+            ) {
+                Icon(
+                    imageVector = CpIcons.Location,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier.size(14.dp),
+                )
+                Text(
+                    text = label,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f, fill = false),
+                )
+            }
+        }
+
         Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.Bottom,
+            modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Min),
             horizontalArrangement = Arrangement.spacedBy(CpDimens.spacing2),
         ) {
-            FlowRow(
-                modifier = Modifier.weight(1f),
-                horizontalArrangement = Arrangement.spacedBy(6.dp),
-                verticalArrangement = Arrangement.spacedBy(6.dp),
-            ) {
-                HeroInfoPill(
-                    description = "${ratingLabel ?: "Нет оценок"}, ${reviewCountLabel(reviewCount)}",
-                    onClick = onOpenReviews,
-                ) {
-                    Icon(
-                        imageVector = CpIcons.StarFilled,
-                        contentDescription = null,
-                        tint = CpColor.Primary,
-                        modifier = Modifier.size(14.dp),
-                    )
-                    Text(
-                        text = ratingLabel ?: "Нет оценок",
-                        style = MaterialTheme.typography.bodyMedium.copy(fontSize = 13.sp),
-                        fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.onSurface,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                    if (ratingLabel != null) {
-                        Text(
-                            text = "($reviewCount)",
-                            style = MaterialTheme.typography.bodyMedium.copy(fontSize = 13.sp),
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            maxLines = 1,
-                        )
-                    }
-                }
-                distance?.let { label ->
-                    HeroInfoPill(description = "$label от вас") {
-                        Icon(
-                            imageVector = CpIcons.Distance,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.onSurface,
-                            modifier = Modifier.size(14.dp),
-                        )
-                        Text(
-                            text = label,
-                            style = MaterialTheme.typography.bodyMedium.copy(fontSize = 13.sp),
-                            fontWeight = FontWeight.SemiBold,
-                            color = MaterialTheme.colorScheme.onSurface,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                        )
-                    }
-                }
-                priceLevel?.let { level ->
-                    HeroInfoPill(
-                        description = "Средний чек: ${priceLevelHint(level)}",
-                        onClick = { showPriceInfo = true },
-                    ) {
-                        PriceBynRow(level = level, iconSize = 12.dp)
-                    }
-                }
+            HeroInfoCard(
+                title = ratingLabel ?: "Нет оценок",
+                subtitle = reviewCountLabel(reviewCount),
+                icon = CpIcons.StarFilled,
+                iconTint = CpColor.Primary,
+                modifier = Modifier.weight(1.3f).fillMaxHeight(),
+                onClick = onOpenReviews,
+                showChevron = true,
+            )
+            distance?.let { label ->
+                HeroInfoCard(
+                    title = label,
+                    subtitle = "От вас",
+                    icon = CpIcons.Distance,
+                    iconTint = MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier.weight(1f).fillMaxHeight(),
+                )
             }
-            if (totalPhotos > 0) {
-                PhotoCounter(current = currentPhoto, total = totalPhotos)
+            priceLevel?.let { level ->
+                HeroInfoCard(
+                    title = priceLevelValue(level).orEmpty(),
+                    subtitle = "Средний чек",
+                    icon = CpIcons.Coins,
+                    iconTint = CpColor.Primary,
+                    modifier = Modifier.weight(1.2f).fillMaxHeight(),
+                    onClick = { showPriceInfo = true },
+                )
             }
         }
     }
 }
 
 @Composable
-private fun HeroInfoPill(
-    description: String,
+private fun HeroInfoCard(
+    title: String,
+    subtitle: String,
+    icon: ImageVector,
+    iconTint: Color,
+    modifier: Modifier = Modifier,
     onClick: (() -> Unit)? = null,
-    content: @Composable RowScope.() -> Unit,
+    showChevron: Boolean = false,
 ) {
-    Row(
-        modifier = Modifier
-            .liquidGlass(shape = CircleShape, shadowElevation = 2.dp)
-            .semantics(mergeDescendants = true) { contentDescription = description }
-            .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
-            .heightIn(min = 32.dp)
-            .padding(horizontal = CpDimens.spacing2, vertical = 2.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(CpDimens.spacing1),
+    Surface(
+        modifier = modifier,
+        shape = RoundedCornerShape(CpDimens.radiusLg),
+        color = MaterialTheme.colorScheme.surface,
+        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
     ) {
-        content()
+        Row(
+            modifier = Modifier
+                .semantics(mergeDescendants = true) { contentDescription = "$title, $subtitle" }
+                .then(if (onClick != null) Modifier.clickable(role = Role.Button, onClick = onClick) else Modifier)
+                .heightIn(min = 48.dp)
+                .padding(CpDimens.spacing2),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
+        ) {
+            Icon(icon, contentDescription = null, tint = iconTint, modifier = Modifier.size(18.dp))
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.bodySmall.copy(fontSize = 11.sp, lineHeight = 14.sp),
+                    color = MaterialTheme.colorScheme.onSurface,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                Text(
+                    text = subtitle,
+                    style = MaterialTheme.typography.labelSmall.copy(fontSize = 11.sp, lineHeight = 14.sp),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
+            if (showChevron) {
+                Icon(
+                    imageVector = CpIcons.ChevronRight,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.size(12.dp),
+                )
+            }
+        }
     }
 }
 
@@ -836,68 +821,65 @@ private fun ReportIssueSection(onReportIssue: () -> Unit) {
 private fun ShopTypeBadge(shopType: String) {
     val label = when (shopType) {
         CoffeeShopType.SPECIALTY -> "SPECIALTY"
-        CoffeeShopType.CAFE -> "КАФЕ"
-        else -> "КОФЕЙНЯ"
+        CoffeeShopType.CAFE -> "Кафе"
+        else -> "Кофейня"
     }
-    HeroInfoPill(description = label) {
-        Icon(
-            imageVector = CpIcons.Coffee,
-            contentDescription = null,
-            tint = CpColor.Primary,
-            modifier = Modifier.size(14.dp),
-        )
-        Text(
-            text = label,
-            style = MaterialTheme.typography.labelSmall.copy(
-                fontWeight = FontWeight.Bold,
-                letterSpacing = 0.5.sp,
-            ),
-            color = MaterialTheme.colorScheme.onSurface,
-        )
+    Surface(
+        shape = CircleShape,
+        color = MaterialTheme.colorScheme.surface,
+        border = androidx.compose.foundation.BorderStroke(1.dp, CpColor.Primary.copy(alpha = 0.5f)),
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = CpDimens.spacing2, vertical = CpDimens.spacing1),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(CpDimens.spacing1),
+        ) {
+            Icon(
+                imageVector = CpIcons.Coffee,
+                contentDescription = null,
+                tint = CpColor.Primary,
+                modifier = Modifier.size(12.dp),
+            )
+            Text(
+                text = label,
+                style = MaterialTheme.typography.labelSmall.copy(fontSize = 11.sp),
+                color = MaterialTheme.colorScheme.onSurface,
+            )
+        }
     }
 }
 
 @Composable
-private fun PhotoCounter(current: Int, total: Int) {
-    HeroInfoPill(description = "Фото $current из $total") {
+private fun PhotoCounter(current: Int, total: Int, modifier: Modifier = Modifier) {
+    Surface(
+        modifier = modifier.semantics { contentDescription = "Фото $current из $total" },
+        shape = CircleShape,
+        color = Color.Black.copy(alpha = 0.6f),
+    ) {
         Text(
             text = "$current / $total",
-            style = MaterialTheme.typography.labelMedium.copy(fontSize = 13.sp, fontWeight = FontWeight.SemiBold),
-            color = MaterialTheme.colorScheme.onSurface,
+            style = MaterialTheme.typography.labelSmall,
+            color = Color.White,
+            modifier = Modifier.padding(horizontal = 10.dp, vertical = CpDimens.spacing1),
         )
     }
 }
 
 @Composable
 private fun HeaderActionButtons(
-    hazeState: HazeState,
     isFavorite: Boolean,
     isFavoriteLoading: Boolean,
     onToggleFavorite: () -> Unit,
     onShare: () -> Unit,
     onSuggestChange: () -> Unit,
+    onReportIssue: () -> Unit,
 ) {
+    var showMore by remember { mutableStateOf(false) }
     Row(
         horizontalArrangement = Arrangement.spacedBy(CpDimens.spacing2),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         HeroIconButton(
-            icon = GlassControlIcon.Edit,
-            hazeState = hazeState,
-            onClick = onSuggestChange,
-            enabled = true,
-            isLoading = false,
-            contentDescription = "Предложить правку",
-        ) {
-            Icon(
-                imageVector = CpIcons.NoteEdit,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSurface,
-            )
-        }
-        HeroIconButton(
-            icon = if (isFavorite) GlassControlIcon.FavoriteFilled else GlassControlIcon.Favorite,
-            hazeState = hazeState,
             onClick = onToggleFavorite,
             enabled = !isFavoriteLoading,
             isLoading = isFavoriteLoading,
@@ -906,12 +888,11 @@ private fun HeaderActionButtons(
             Icon(
                 imageVector = if (isFavorite) CpIcons.FavoriteFilled else CpIcons.Favorite,
                 contentDescription = null,
-                tint = if (isFavorite) CpColor.Error else MaterialTheme.colorScheme.onSurface,
+                tint = if (isFavorite) CpColor.Error else Color.White,
+                modifier = Modifier.size(18.dp),
             )
         }
         HeroIconButton(
-            icon = GlassControlIcon.Share,
-            hazeState = hazeState,
             onClick = onShare,
             enabled = true,
             isLoading = false,
@@ -920,8 +901,29 @@ private fun HeaderActionButtons(
             Icon(
                 imageVector = CpIcons.Share,
                 contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSurface,
+                tint = Color.White,
+                modifier = Modifier.size(18.dp),
             )
+        }
+        Box {
+            HeroIconButton(
+                onClick = { showMore = true },
+                enabled = true,
+                isLoading = false,
+                contentDescription = "Другие действия",
+            ) {
+                Icon(CpIcons.More, contentDescription = null, tint = Color.White, modifier = Modifier.size(20.dp))
+            }
+            DropdownMenu(expanded = showMore, onDismissRequest = { showMore = false }) {
+                DropdownMenuItem(
+                    text = { Text("Предложить правку") },
+                    onClick = { showMore = false; onSuggestChange() },
+                )
+                DropdownMenuItem(
+                    text = { Text(stringResource(Res.string.shop_report_issue)) },
+                    onClick = { showMore = false; onReportIssue() },
+                )
+            }
         }
     }
 }
@@ -972,30 +974,30 @@ private fun shopFeatureItems(details: CoffeeShopDetails): List<ShopFeatureItem> 
 
 @Composable
 private fun HeroIconButton(
-    icon: GlassControlIcon,
-    hazeState: HazeState,
     onClick: () -> Unit,
     enabled: Boolean,
     isLoading: Boolean,
     contentDescription: String,
     content: @Composable () -> Unit,
 ) {
-    PlatformGlassIconButton(
-        icon = icon,
+    IconButton(
         onClick = onClick,
         enabled = enabled,
-        isLoading = isLoading,
-        contentDescription = contentDescription,
-        hazeState = hazeState,
+        modifier = Modifier.size(44.dp).semantics { this.contentDescription = contentDescription },
     ) {
-        if (isLoading) {
-            CoffeePeekLoader(
-                size = 18.dp,
-                strokeWidth = 2.dp,
-                color = MaterialTheme.colorScheme.primary,
-            )
-        } else {
-            content()
+        Surface(
+            modifier = Modifier.size(36.dp),
+            shape = CircleShape,
+            color = Color.Black.copy(alpha = 0.5f),
+            border = androidx.compose.foundation.BorderStroke(1.dp, Color.White.copy(alpha = 0.2f)),
+        ) {
+            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                if (isLoading) {
+                    CoffeePeekLoader(size = 18.dp, strokeWidth = 2.dp, color = Color.White)
+                } else {
+                    content()
+                }
+            }
         }
     }
 }
