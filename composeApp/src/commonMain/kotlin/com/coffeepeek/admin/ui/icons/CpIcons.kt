@@ -7,6 +7,7 @@ import com.adamglin.phosphoricons.Regular
 import com.adamglin.phosphoricons.fill.Heart as FillHeart
 import com.adamglin.phosphoricons.fill.Star as FillStar
 import com.adamglin.phosphoricons.regular.ArrowLeft
+import com.adamglin.phosphoricons.regular.ArrowsOutSimple
 import com.adamglin.phosphoricons.regular.Avocado
 import com.adamglin.phosphoricons.regular.Bread
 import com.adamglin.phosphoricons.regular.CalendarBlank
@@ -75,6 +76,7 @@ object CpIcons {
     val Add: ImageVector get() = PhosphorIcons.Regular.Plus
     val Avocado: ImageVector get() = PhosphorIcons.Regular.Avocado
     val Back: ImageVector get() = PhosphorIcons.Regular.ArrowLeft
+    val Expand: ImageVector get() = PhosphorIcons.Regular.ArrowsOutSimple
     val Bread: ImageVector get() = PhosphorIcons.Regular.Bread
     val Calendar: ImageVector get() = PhosphorIcons.Regular.CalendarBlank
     val Camera: ImageVector get() = PhosphorIcons.Regular.Camera

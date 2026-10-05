@@ -76,6 +76,9 @@ import com.coffeepeek.admin.ui.component.priceRangeLevel
 import com.coffeepeek.admin.ui.model.COFFEE_FOCUS_OPTIONS
 import com.coffeepeek.admin.utils.formatOneDecimal
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import com.coffeepeek.domain.model.CoffeeShop
 import coffeepeek.composeapp.generated.resources.Res
 import coffeepeek.composeapp.generated.resources.maskot_with_magnifying_glass
@@ -85,9 +88,23 @@ import com.coffeepeek.admin.di.platformViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun FeedScreen(onSelectRoasters: () -> Unit, vm: FeedViewModel = platformViewModel()) {
+fun FeedScreen(
+    onSelectRoasters: () -> Unit,
+    vm: FeedViewModel = platformViewModel(),
+    mapPreview: (@Composable (Modifier) -> Unit)? = null,
+    roasterPreview: (@Composable () -> Unit)? = null,
+) {
     val state by vm.uiState.collectAsState()
     val listState = rememberLazyListState()
+    val discoveryListState = rememberLazyListState()
+    val focusManager = LocalFocusManager.current
+    val keyboard = LocalSoftwareKeyboardController.current
+    val showDiscovery = mapPreview != null && state.showDiscovery
+    val cancelSearch = {
+        focusManager.clearFocus(force = true)
+        keyboard?.hide()
+        vm.cancelSearch()
+    }
     val userLocation = rememberPermittedUserLocation()
     val displayedShops = if (state.filters.nearbyOnly && userLocation != null) {
         state.visibleShops
@@ -108,9 +125,9 @@ fun FeedScreen(onSelectRoasters: () -> Unit, vm: FeedViewModel = platformViewMod
         !state.isLoading &&
         !state.isRefreshing
 
-    val shouldLoadMore by remember {
+    val shouldLoadMore by remember(showDiscovery) {
         derivedStateOf {
-            if (state.shops.isEmpty()) return@derivedStateOf false
+            if (showDiscovery || state.shops.isEmpty()) return@derivedStateOf false
             val lastVisible = listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0
             lastVisible >= state.shops.size - 5 &&
                 state.hasMore &&
@@ -150,6 +167,9 @@ fun FeedScreen(onSelectRoasters: () -> Unit, vm: FeedViewModel = platformViewMod
                             onSelectRoasters = { if (it) onSelectRoasters() },
                             filterCount = state.activeFilterCount,
                             onFilters = vm::toggleFilters,
+                            showCategories = mapPreview == null,
+                            onSearchFocus = { if (mapPreview != null) vm.activateSearch() },
+                            onCancelSearch = cancelSearch.takeIf { mapPreview != null && !showDiscovery },
                         )
                         Spacer(modifier = Modifier.height(CpDimens.spacing2))
                         FeedQuickFilterBar(
@@ -198,6 +218,60 @@ fun FeedScreen(onSelectRoasters: () -> Unit, vm: FeedViewModel = platformViewMod
         )
 
         when {
+            showDiscovery -> {
+                CoffeePeekPullToRefresh(
+                    listState = discoveryListState,
+                    isRefreshing = state.isRefreshing,
+                    onRefresh = vm::refresh,
+                    modifier = contentModifier,
+                ) { scrollModifier ->
+                    LazyColumn(
+                        state = discoveryListState,
+                        modifier = scrollModifier.fillMaxSize(),
+                        contentPadding = listContentPadding,
+                        verticalArrangement = Arrangement.spacedBy(CpDimens.spacing4),
+                    ) {
+                        item(key = "mini-map") { mapPreview?.invoke(Modifier.fillMaxWidth()) }
+                        item(key = "shops-heading") {
+                            DiscoverySectionTitle("Кофейни", onShowAll = vm::activateSearch)
+                        }
+                        item(key = "shops-preview") {
+                            when {
+                                state.isLoading && state.shops.isEmpty() -> {
+                                    Box(Modifier.fillMaxWidth().padding(CpDimens.spacing4), contentAlignment = Alignment.Center) {
+                                        CoffeePeekLoader()
+                                    }
+                                }
+                                state.error != null && state.shops.isEmpty() -> {
+                                    Column {
+                                        Text(state.error.orEmpty(), color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                        TextButton(onClick = vm::refresh) { Text("Попробовать снова") }
+                                    }
+                                }
+                                displayedShops.isEmpty() -> Text("Кофейни не найдены", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                else -> LazyRow(horizontalArrangement = Arrangement.spacedBy(CpDimens.spacing3)) {
+                                    items(displayedShops.take(8), key = { it.id }) { shop ->
+                                        ShopCard(
+                                            shop = shop,
+                                            distance = formatDistance(distanceToShopMeters(userLocation, shop.location)),
+                                            onClick = { Navigator.navigate(Navigator.Screen.ShopDetail(shop.id)) },
+                                            onToggleFavorite = { vm.toggleFavorite(shop) },
+                                            modifier = Modifier.width(280.dp),
+                                            showCatalogDetails = false,
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                        if (roasterPreview != null) {
+                            item(key = "roasters-heading") {
+                                DiscoverySectionTitle("Обжарщики", onShowAll = onSelectRoasters)
+                            }
+                            item(key = "roasters-preview") { roasterPreview() }
+                        }
+                    }
+                }
+            }
             state.isLoading && state.shops.isEmpty() -> {
                 Box(contentModifier, contentAlignment = Alignment.Center) {
                     CoffeePeekLoader()
@@ -280,6 +354,23 @@ fun FeedScreen(onSelectRoasters: () -> Unit, vm: FeedViewModel = platformViewMod
 }
 
 @Composable
+private fun DiscoverySectionTitle(title: String, onShowAll: () -> Unit) {
+    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+        Text(
+            title,
+            style = MaterialTheme.typography.titleLarge,
+            color = MaterialTheme.colorScheme.onSurface,
+            modifier = Modifier.weight(1f),
+        )
+        TextButton(onClick = onShowAll) {
+            Text("Показать все")
+            Spacer(Modifier.width(CpDimens.spacing1))
+            Icon(CpIcons.ChevronRight, contentDescription = null, modifier = Modifier.size(16.dp))
+        }
+    }
+}
+
+@Composable
 private fun AddMissingShopCard(onAddShop: () -> Unit) {
     Column(
         modifier = Modifier
@@ -340,9 +431,11 @@ internal fun ShopCard(
     distance: String? = null,
     onClick: () -> Unit,
     onToggleFavorite: () -> Unit,
+    modifier: Modifier = Modifier,
+    showCatalogDetails: Boolean = true,
 ) {
     Card(
-        modifier = Modifier.fillMaxWidth().clickable(enabled = shop.publicAddress != null, onClick = onClick),
+        modifier = modifier.fillMaxWidth().clickable(enabled = shop.publicAddress != null, onClick = onClick),
         shape = RoundedCornerShape(CpDimens.radiusXl),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
@@ -446,7 +539,7 @@ internal fun ShopCard(
                     .filter(String::isNotBlank)
                     .distinct()
                     .take(3)
-                if (visibleRoasterLogos.isNotEmpty()) {
+                if (showCatalogDetails && visibleRoasterLogos.isNotEmpty()) {
                     Box(
                         modifier = Modifier
                             .align(Alignment.BottomEnd)
@@ -509,7 +602,7 @@ internal fun ShopCard(
                     )
                 }
 
-                if (shop.brewMethods.isNotEmpty()) {
+                if (showCatalogDetails && shop.brewMethods.isNotEmpty()) {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(CpDimens.spacing1),
@@ -570,7 +663,7 @@ internal fun ShopCard(
                                 activeTint = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
                         }
-                        shop.tags
+                        shop.tags.takeIf { showCatalogDetails }.orEmpty()
                             .filterNot { it in shop.brewMethods }
                             .firstOrNull()
                             ?.let { tag ->

@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
@@ -94,9 +95,10 @@ private fun RoasterCard(
     isFavorite: Boolean,
     isFavoriteLoading: Boolean,
     onToggleFavorite: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     Row(
-        modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(CpDimens.radiusXl))
+        modifier = modifier.fillMaxWidth().clip(RoundedCornerShape(CpDimens.radiusXl))
             .clickable(enabled = item.routeId != null) {
                 item.routeId?.let { Navigator.navigate(Navigator.Screen.RoasterDetail(it)) }
             }
@@ -129,6 +131,49 @@ private fun RoasterCard(
             onClick = onToggleFavorite,
             enabled = !isFavoriteLoading,
         )
+    }
+}
+
+@Composable
+internal fun RoasterPreview(vm: RoasterListViewModel = platformViewModel()) {
+    val state by vm.state.collectAsState()
+    val snackbar = remember { SnackbarHostState() }
+    LaunchedEffect(state.actionMessage) {
+        state.actionMessage?.let {
+            snackbar.showSnackbar(it)
+            vm.clearActionMessage()
+        }
+    }
+    Column(verticalArrangement = Arrangement.spacedBy(CpDimens.spacing2)) {
+        Box {
+            LazyRow(horizontalArrangement = Arrangement.spacedBy(CpDimens.spacing3)) {
+                items(state.items.take(8), key = { it.catalog.id }) { item ->
+                    Surface(
+                        modifier = Modifier.width(280.dp),
+                        shape = RoundedCornerShape(CpDimens.radiusXl),
+                        color = MaterialTheme.colorScheme.surface,
+                        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+                    ) {
+                        RoasterCard(
+                            item = item,
+                            isFavorite = item.catalog.roasterFavoriteId in state.favoriteIds,
+                            isFavoriteLoading = item.catalog.roasterFavoriteId in state.savingFavoriteIds,
+                            onToggleFavorite = { vm.toggleFavorite(item) },
+                            modifier = Modifier.padding(CpDimens.spacing3),
+                        )
+                    }
+                }
+            }
+            SnackbarHost(snackbar, modifier = Modifier.align(Alignment.BottomCenter))
+        }
+        if (state.items.isEmpty() && state.isLoading) {
+            Box(Modifier.fillMaxWidth().padding(CpDimens.spacing4), contentAlignment = Alignment.Center) { CoffeePeekLoader() }
+        } else if (state.error != null) {
+            Text(state.error.orEmpty(), color = MaterialTheme.colorScheme.onSurfaceVariant)
+            TextButton(onClick = vm::refresh) { Text("Попробовать снова") }
+        } else if (state.items.isEmpty()) {
+            Text("Обжарщики не найдены", color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
     }
 }
 

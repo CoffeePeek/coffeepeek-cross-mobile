@@ -161,6 +161,7 @@ actual fun CoffeeMap(
     myLocationRequestKey: Int,
     onMyLocationFound: (Double, Double) -> Unit,
     onLocationPermissionDenied: () -> Unit,
+    requestLocationPermissionOnLoad: Boolean,
 ) {
     val context = LocalContext.current
     val appContext = context.applicationContext
@@ -181,8 +182,8 @@ actual fun CoffeeMap(
         }
     }
 
-    LaunchedEffect(Unit) {
-        if (!context.hasLocationPermission()) {
+    LaunchedEffect(requestLocationPermissionOnLoad) {
+        if (requestLocationPermissionOnLoad && !context.hasLocationPermission()) {
             locationPermissionLauncher.launch(locationPermissions)
         }
     }

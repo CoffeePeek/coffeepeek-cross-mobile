@@ -462,7 +462,7 @@ private fun mapShopCountLabel(count: Int): String {
 }
 
 @Composable
-private fun MapControlButton(
+internal fun MapControlButton(
     icon: GlassControlIcon,
     onClick: () -> Unit,
     contentDescription: String,
@@ -483,7 +483,7 @@ private fun MapControlButton(
 }
 
 @Composable
-private fun MapZoomControl(
+internal fun MapZoomControl(
     onZoomIn: () -> Unit,
     onZoomOut: () -> Unit,
     modifier: Modifier = Modifier,

@@ -44,6 +44,8 @@ import com.coffeepeek.admin.ui.component.FloatingNavItem
 import com.coffeepeek.admin.ui.component.ProvideFloatingNavClearance
 import com.coffeepeek.admin.ui.screen.feed.FeedScreen
 import com.coffeepeek.admin.ui.screen.map.MapScreen
+import com.coffeepeek.admin.ui.screen.map.MiniMap
+import com.coffeepeek.admin.ui.screen.roaster.RoasterPreview
 import com.coffeepeek.admin.ui.screen.profile.ProfileScreen
 import com.coffeepeek.admin.ui.screen.profile.SettingsScreen
 import com.coffeepeek.admin.ui.icons.CpIcons
@@ -157,7 +159,16 @@ internal fun ComposeMainScreen() {
                         if (showRoasters) {
                             com.coffeepeek.admin.ui.screen.roaster.RoasterListScreen(onSelectShops = { showRoasters = false })
                         } else {
-                            FeedScreen(onSelectRoasters = { showRoasters = true })
+                            FeedScreen(
+                                onSelectRoasters = { showRoasters = true },
+                                mapPreview = { modifier ->
+                                    MiniMap(
+                                        onExpand = { Navigator.selectTab(Navigator.Screen.MapGraph) },
+                                        modifier = modifier,
+                                    )
+                                },
+                                roasterPreview = { RoasterPreview() },
+                            )
                         }
                     }
                 }

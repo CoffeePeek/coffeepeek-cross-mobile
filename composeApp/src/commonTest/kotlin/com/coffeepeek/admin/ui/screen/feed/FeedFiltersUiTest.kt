@@ -2,8 +2,19 @@ package com.coffeepeek.admin.ui.screen.feed
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertTrue
 
 class FeedFiltersUiTest {
+
+    @Test
+    fun discoveryStaysHiddenDuringEmptySearchAndAfterQueryLosesFocus() {
+        val initial = FeedUiState()
+        assertTrue(initial.showDiscovery)
+        assertFalse(initial.copy(isSearchActive = true).showDiscovery)
+        assertFalse(initial.copy(query = "Coffee", isSearchActive = false).showDiscovery)
+        assertTrue(initial.copy(query = "", isSearchActive = false).showDiscovery)
+    }
 
     @Test
     fun activeFilterCountIncludesQuickAndAdvancedFilters() {

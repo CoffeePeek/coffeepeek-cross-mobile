@@ -12,6 +12,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.admin.theme.CpDimens
@@ -25,13 +26,16 @@ internal fun SearchHeader(
     onSelectRoasters: (Boolean) -> Unit,
     filterCount: Int = 0,
     onFilters: (() -> Unit)? = null,
+    showCategories: Boolean = true,
+    onSearchFocus: () -> Unit = {},
+    onCancelSearch: (() -> Unit)? = null,
 ) {
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         CpSearchField(
             value = query,
             onValueChange = onQueryChange,
             placeholder = if (roastersSelected) "Поиск обжарщиков…" else "Поиск кофейни…",
-            modifier = Modifier.weight(1f),
+            modifier = Modifier.weight(1f).onFocusChanged { if (it.isFocused) onSearchFocus() },
             fieldHeight = CpDimens.buttonHeight,
         )
         if (onFilters != null) BadgedBox(badge = {
@@ -49,7 +53,11 @@ internal fun SearchHeader(
                 Icon(CpIcons.Filter, "Фильтры", tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(22.dp))
             }
         }
+        if (onCancelSearch != null) {
+            TextButton(onClick = onCancelSearch) { Text("Отмена") }
+        }
     }
+    if (!showCategories) return
     Spacer(Modifier.height(CpDimens.spacing2))
     Row(
         modifier = Modifier.fillMaxWidth().selectableGroup().clip(CircleShape)

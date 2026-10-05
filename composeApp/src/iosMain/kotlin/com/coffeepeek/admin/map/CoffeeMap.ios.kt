@@ -41,6 +41,7 @@ actual fun CoffeeMap(
     myLocationRequestKey: Int,
     onMyLocationFound: (Double, Double) -> Unit,
     onLocationPermissionDenied: () -> Unit,
+    requestLocationPermissionOnLoad: Boolean,
 ) {
     val boundsCallback = rememberUpdatedState(onBoundsChanged)
     val shopCallback = rememberUpdatedState(onShopClick)
