@@ -9,6 +9,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -77,8 +78,32 @@ import com.coffeepeek.admin.ui.model.COFFEE_FOCUS_OPTIONS
 import com.coffeepeek.admin.utils.formatOneDecimal
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.togetherWith
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.geometry.lerp
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInRoot
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import kotlin.math.roundToInt
 import com.coffeepeek.domain.model.CoffeeShop
 import coffeepeek.composeapp.generated.resources.Res
 import coffeepeek.composeapp.generated.resources.maskot_with_magnifying_glass
@@ -91,8 +116,9 @@ import com.coffeepeek.admin.di.platformViewModel
 fun FeedScreen(
     onSelectRoasters: () -> Unit,
     vm: FeedViewModel = platformViewModel(),
-    mapPreview: (@Composable (Modifier) -> Unit)? = null,
+    mapPreview: (@Composable (Boolean, () -> Unit, Modifier) -> Unit)? = null,
     roasterPreview: (@Composable () -> Unit)? = null,
+    onMapExpandedChange: (Boolean) -> Unit = {},
 ) {
     val state by vm.uiState.collectAsState()
     val listState = rememberLazyListState()
@@ -100,6 +126,19 @@ fun FeedScreen(
     val focusManager = LocalFocusManager.current
     val keyboard = LocalSoftwareKeyboardController.current
     val showDiscovery = mapPreview != null && state.showDiscovery
+    var mapExpanded by remember { mutableStateOf(false) }
+    val expansion by animateFloatAsState(
+        targetValue = if (mapExpanded) 1f else 0f,
+        animationSpec = tween(420, easing = FastOutSlowInEasing),
+        label = "discovery-map-expansion",
+    )
+    var mapAnchor by remember { mutableStateOf(Rect.Zero) }
+    var rootOrigin by remember { mutableStateOf(Offset.Zero) }
+    var viewportTop by remember { mutableStateOf(0f) }
+    val density = LocalDensity.current
+    LaunchedEffect(mapExpanded) { onMapExpandedChange(mapExpanded) }
+    DisposableEffect(Unit) { onDispose { onMapExpandedChange(false) } }
+    LaunchedEffect(showDiscovery) { if (!showDiscovery) mapExpanded = false }
     val cancelSearch = {
         focusManager.clearFocus(force = true)
         keyboard?.hide()
@@ -143,225 +182,280 @@ fun FeedScreen(
         if (fillingNearby && !state.isLoadingMore) vm.loadMore()
     }
 
-    Scaffold(
-        contentWindowInsets = WindowInsets(0, 0, 0, 0),
-        topBar = {
-            Box(
-                modifier = Modifier.fillMaxWidth(),
-            ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .statusBarsPadding(),
+    BoxWithConstraints(Modifier.fillMaxSize().onGloballyPositioned { rootOrigin = it.positionInRoot() }) {
+        val screenSize = with(density) { Size(maxWidth.toPx(), maxHeight.toPx()) }
+        Scaffold(
+            contentWindowInsets = WindowInsets(0, 0, 0, 0),
+            topBar = {
+                Box(
+                    modifier = Modifier.fillMaxWidth()
+                        .then(if (mapExpanded) Modifier.clearAndSetSemantics {} else Modifier)
+                        .graphicsLayer {
+                        alpha = 1f - expansion
+                        translationY = -size.height * expansion
+                    },
                 ) {
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = CpDimens.spacing4)
-                            .padding(top = CpDimens.spacing3, bottom = CpDimens.spacing2),
+                            .statusBarsPadding(),
                     ) {
-                        SearchHeader(
-                            query = state.query,
-                            onQueryChange = vm::onQueryChange,
-                            roastersSelected = false,
-                            onSelectRoasters = { if (it) onSelectRoasters() },
-                            filterCount = state.activeFilterCount,
-                            onFilters = vm::toggleFilters,
-                            showCategories = mapPreview == null,
-                            onSearchFocus = { if (mapPreview != null) vm.activateSearch() },
-                            onCancelSearch = cancelSearch.takeIf { mapPreview != null && !showDiscovery },
-                        )
-                        Spacer(modifier = Modifier.height(CpDimens.spacing2))
-                        FeedQuickFilterBar(
-                            nearbyOnly = state.filters.nearbyOnly,
-                            showNearby = userLocation != null,
-                            openOnly = state.filters.openOnly,
-                            newOnly = state.filters.newOnly,
-                            visitedOnly = state.filters.visitedOnly,
-                            favoritesOnly = state.filters.favoritesOnly,
-                            onToggleOpen = vm::toggleOpenOnly,
-                            onToggleNew = vm::toggleNewOnly,
-                            onToggleVisited = vm::toggleVisitedOnly,
-                            onToggleFavorites = vm::toggleFavoritesOnly,
-                            onToggleNearby = vm::toggleNearbyOnly,
-                            coffeeFocusId = state.filters.coffeeFocus,
-                            onCoffeeFocusChange = { id ->
-                                vm.setCoffeeFocus(
-                                    if (state.filters.coffeeFocus == id) null else id,
-                                )
-                            },
-                        )
-                    }
-                    HorizontalDivider(
-                        thickness = 1.dp,
-                        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.7f),
-                    )
-                }
-            }
-        },
-        containerColor = MaterialTheme.colorScheme.background,
-    ) { padding ->
-        if (state.showFilters) {
-            ShopFiltersScreen(
-                state = state,
-                onDismiss = vm::closeFilters,
-                onApply = vm::applyFilters,
-            )
-        }
-        val contentModifier = Modifier.fillMaxSize().padding(padding)
-        val navClearance = LocalFloatingNavClearance.current
-        val listContentPadding = PaddingValues(
-            start = CpDimens.spacing4,
-            top = CpDimens.spacing4,
-            end = CpDimens.spacing4,
-            bottom = CpDimens.spacing4 + navClearance,
-        )
-
-        when {
-            showDiscovery -> {
-                CoffeePeekPullToRefresh(
-                    listState = discoveryListState,
-                    isRefreshing = state.isRefreshing,
-                    onRefresh = vm::refresh,
-                    modifier = contentModifier,
-                ) { scrollModifier ->
-                    LazyColumn(
-                        state = discoveryListState,
-                        modifier = scrollModifier.fillMaxSize(),
-                        contentPadding = listContentPadding,
-                        verticalArrangement = Arrangement.spacedBy(CpDimens.spacing4),
-                    ) {
-                        item(key = "mini-map") { mapPreview?.invoke(Modifier.fillMaxWidth()) }
-                        item(key = "shops-heading") {
-                            DiscoverySectionTitle("Кофейни", onShowAll = vm::activateSearch)
-                        }
-                        item(key = "shops-preview") {
-                            when {
-                                state.isLoading && state.shops.isEmpty() -> {
-                                    Box(Modifier.fillMaxWidth().padding(CpDimens.spacing4), contentAlignment = Alignment.Center) {
-                                        CoffeePeekLoader()
-                                    }
-                                }
-                                state.error != null && state.shops.isEmpty() -> {
-                                    Column {
-                                        Text(state.error.orEmpty(), color = MaterialTheme.colorScheme.onSurfaceVariant)
-                                        TextButton(onClick = vm::refresh) { Text("Попробовать снова") }
-                                    }
-                                }
-                                displayedShops.isEmpty() -> Text("Кофейни не найдены", color = MaterialTheme.colorScheme.onSurfaceVariant)
-                                else -> LazyRow(horizontalArrangement = Arrangement.spacedBy(CpDimens.spacing3)) {
-                                    items(displayedShops.take(8), key = { it.id }) { shop ->
-                                        ShopCard(
-                                            shop = shop,
-                                            distance = formatDistance(distanceToShopMeters(userLocation, shop.location)),
-                                            onClick = { Navigator.navigate(Navigator.Screen.ShopDetail(shop.id)) },
-                                            onToggleFavorite = { vm.toggleFavorite(shop) },
-                                            modifier = Modifier.width(280.dp),
-                                            showCatalogDetails = false,
-                                        )
-                                    }
-                                }
-                            }
-                        }
-                        if (roasterPreview != null) {
-                            item(key = "roasters-heading") {
-                                DiscoverySectionTitle("Обжарщики", onShowAll = onSelectRoasters)
-                            }
-                            item(key = "roasters-preview") { roasterPreview() }
-                        }
-                    }
-                }
-            }
-            state.isLoading && state.shops.isEmpty() -> {
-                Box(contentModifier, contentAlignment = Alignment.Center) {
-                    CoffeePeekLoader()
-                }
-            }
-            state.error != null && state.shops.isEmpty() -> {
-                CoffeePeekPullToRefresh(
-                    listState = listState,
-                    isRefreshing = state.isRefreshing,
-                    onRefresh = vm::refresh,
-                    modifier = contentModifier,
-                ) { scrollModifier ->
-                    LazyColumn(
-                        state = listState,
-                        modifier = scrollModifier.fillMaxSize(),
-                        contentPadding = listContentPadding,
-                        verticalArrangement = Arrangement.Center,
-                    ) {
-                        item {
-                            Column(
-                                modifier = Modifier.fillParentMaxSize(),
-                                horizontalAlignment = Alignment.CenterHorizontally,
-                                verticalArrangement = Arrangement.Center,
-                            ) {
-                                Text(
-                                    state.error ?: "Ошибка загрузки",
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                )
-                                Spacer(Modifier.height(CpDimens.spacing3))
-                    Button(
-                        onClick = vm::refresh,
-                        modifier = Modifier.height(CpDimens.buttonHeight),
-                        shape = RoundedCornerShape(percent = 50),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.primary,
-                        ),
-                    ) { Text("Попробовать снова") }
-                            }
-                        }
-                    }
-                }
-            }
-            fillingNearby && displayedShops.isEmpty() -> {
-                Box(contentModifier)
-            }
-            else -> {
-                CoffeePeekPullToRefresh(
-                    listState = listState,
-                    isRefreshing = state.isRefreshing,
-                    onRefresh = vm::refresh,
-                    modifier = contentModifier,
-                ) { scrollModifier ->
-                    LazyColumn(
-                        state = listState,
-                        modifier = scrollModifier.fillMaxSize(),
-                        contentPadding = listContentPadding,
-                        verticalArrangement = Arrangement.spacedBy(CpDimens.spacing3),
-                    ) {
-                        items(displayedShops, key = { it.id }) { shop ->
-                            ShopCard(
-                                shop = shop,
-                                distance = formatDistance(distanceToShopMeters(userLocation, shop.location)),
-                                onClick = { Navigator.navigate(Navigator.Screen.ShopDetail(shop.id)) },
-                                onToggleFavorite = { vm.toggleFavorite(shop) },
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = CpDimens.spacing4)
+                                .padding(top = CpDimens.spacing3, bottom = CpDimens.spacing2),
+                        ) {
+                            SearchHeader(
+                                query = state.query,
+                                onQueryChange = vm::onQueryChange,
+                                roastersSelected = false,
+                                onSelectRoasters = { if (it) onSelectRoasters() },
+                                filterCount = state.activeFilterCount,
+                                onFilters = vm::toggleFilters,
+                                showCategories = mapPreview == null,
+                                onSearchFocus = { if (mapPreview != null) vm.activateSearch() },
+                                onCancelSearch = cancelSearch.takeIf { mapPreview != null && !showDiscovery },
                             )
-                        }
-                        item(key = "add-missing-shop") {
-                            AddMissingShopCard(
-                                onAddShop = {
-                                    Navigator.navigate(Navigator.Screen.AddShop)
+                            Spacer(modifier = Modifier.height(CpDimens.spacing2))
+                            FeedQuickFilterBar(
+                                nearbyOnly = state.filters.nearbyOnly,
+                                showNearby = userLocation != null,
+                                openOnly = state.filters.openOnly,
+                                newOnly = state.filters.newOnly,
+                                visitedOnly = state.filters.visitedOnly,
+                                favoritesOnly = state.filters.favoritesOnly,
+                                onToggleOpen = vm::toggleOpenOnly,
+                                onToggleNew = vm::toggleNewOnly,
+                                onToggleVisited = vm::toggleVisitedOnly,
+                                onToggleFavorites = vm::toggleFavoritesOnly,
+                                onToggleNearby = vm::toggleNearbyOnly,
+                                coffeeFocusId = state.filters.coffeeFocus,
+                                onCoffeeFocusChange = { id ->
+                                    vm.setCoffeeFocus(
+                                        if (state.filters.coffeeFocus == id) null else id,
+                                    )
                                 },
                             )
                         }
+                        HorizontalDivider(
+                            thickness = 1.dp,
+                            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.7f),
+                        )
                     }
+                }
+            },
+            containerColor = MaterialTheme.colorScheme.background,
+        ) { padding ->
+            if (state.showFilters) {
+                ShopFiltersScreen(
+                    state = state,
+                    onDismiss = vm::closeFilters,
+                    onApply = vm::applyFilters,
+                )
+            }
+            val contentModifier = Modifier.fillMaxSize()
+            val navClearance = LocalFloatingNavClearance.current
+            val listContentPadding = PaddingValues(
+                start = CpDimens.spacing4,
+                top = CpDimens.spacing4,
+                end = CpDimens.spacing4,
+                bottom = CpDimens.spacing4 + navClearance,
+            )
+
+            AnimatedContent(
+                targetState = showDiscovery,
+                modifier = Modifier.fillMaxSize().padding(padding).onGloballyPositioned {
+                    viewportTop = it.positionInRoot().y - rootOrigin.y
+                },
+                transitionSpec = {
+                    (fadeIn(tween(300)) + slideInVertically(tween(360)) { it / 5 }) togetherWith
+                        (fadeOut(tween(240)) + slideOutVertically(tween(360)) { -it / 5 })
+                },
+                label = "discovery-shop-list",
+            ) { discoveryVisible ->
+                when {
+                    discoveryVisible -> {
+                        CoffeePeekPullToRefresh(
+                            listState = discoveryListState,
+                            isRefreshing = state.isRefreshing,
+                            onRefresh = vm::refresh,
+                            modifier = contentModifier
+                                .then(if (mapExpanded) Modifier.clearAndSetSemantics {} else Modifier)
+                                .graphicsLayer {
+                                alpha = 1f - expansion
+                                translationY = screenSize.height * 0.3f * expansion
+                            },
+                        ) { scrollModifier ->
+                            LazyColumn(
+                                state = discoveryListState,
+                                userScrollEnabled = !mapExpanded,
+                                modifier = scrollModifier.fillMaxSize(),
+                                contentPadding = listContentPadding,
+                                verticalArrangement = Arrangement.spacedBy(CpDimens.spacing4),
+                            ) {
+                                item(key = "mini-map") {
+                                    Box(Modifier.fillMaxWidth().height(240.dp).onGloballyPositioned {
+                                        if (showDiscovery && !mapExpanded && expansion == 0f) {
+                                            mapAnchor = Rect(it.positionInRoot() - rootOrigin, Size(it.size.width.toFloat(), it.size.height.toFloat()))
+                                        }
+                                    })
+                                }
+                                item(key = "shops-heading") {
+                                    DiscoverySectionTitle("Кофейни", onShowAll = vm::activateSearch)
+                                }
+                                item(key = "shops-preview") {
+                                    when {
+                                        state.isLoading && state.shops.isEmpty() -> {
+                                            Box(Modifier.fillMaxWidth().padding(CpDimens.spacing4), contentAlignment = Alignment.Center) {
+                                                CoffeePeekLoader()
+                                            }
+                                        }
+                                        state.error != null && state.shops.isEmpty() -> {
+                                            Column {
+                                                Text(state.error.orEmpty(), color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                                TextButton(onClick = vm::refresh) { Text("Попробовать снова") }
+                                            }
+                                        }
+                                        displayedShops.isEmpty() -> Text("Кофейни не найдены", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                        else -> LazyRow(horizontalArrangement = Arrangement.spacedBy(CpDimens.spacing3)) {
+                                            items(displayedShops.take(8), key = { it.id }) { shop ->
+                                                ShopCard(
+                                                    shop = shop,
+                                                    distance = formatDistance(distanceToShopMeters(userLocation, shop.location)),
+                                                    onClick = { Navigator.navigate(Navigator.Screen.ShopDetail(shop.id)) },
+                                                    onToggleFavorite = { vm.toggleFavorite(shop) },
+                                                    modifier = Modifier.width(280.dp),
+                                                    showCatalogDetails = false,
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
+                                if (roasterPreview != null) {
+                                    item(key = "roasters-heading") {
+                                        DiscoverySectionTitle("Обжарщики", onShowAll = onSelectRoasters)
+                                    }
+                                    item(key = "roasters-preview") { roasterPreview() }
+                                }
+                            }
+                        }
+                    }
+                    state.isLoading && state.shops.isEmpty() -> {
+                        Box(contentModifier, contentAlignment = Alignment.Center) {
+                            CoffeePeekLoader()
+                        }
+                    }
+                    state.error != null && state.shops.isEmpty() -> {
+                        CoffeePeekPullToRefresh(
+                            listState = listState,
+                            isRefreshing = state.isRefreshing,
+                            onRefresh = vm::refresh,
+                            modifier = contentModifier,
+                        ) { scrollModifier ->
+                            LazyColumn(
+                                state = listState,
+                                modifier = scrollModifier.fillMaxSize(),
+                                contentPadding = listContentPadding,
+                                verticalArrangement = Arrangement.Center,
+                            ) {
+                                item {
+                                    Column(
+                                        modifier = Modifier.fillParentMaxSize(),
+                                        horizontalAlignment = Alignment.CenterHorizontally,
+                                        verticalArrangement = Arrangement.Center,
+                                    ) {
+                                        Text(
+                                            state.error ?: "Ошибка загрузки",
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        )
+                                        Spacer(Modifier.height(CpDimens.spacing3))
+                            Button(
+                                onClick = vm::refresh,
+                                modifier = Modifier.height(CpDimens.buttonHeight),
+                                shape = RoundedCornerShape(percent = 50),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = MaterialTheme.colorScheme.primary,
+                                ),
+                            ) { Text("Попробовать снова") }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    fillingNearby && displayedShops.isEmpty() -> {
+                        Box(contentModifier)
+                    }
+                    else -> {
+                        CoffeePeekPullToRefresh(
+                            listState = listState,
+                            isRefreshing = state.isRefreshing,
+                            onRefresh = vm::refresh,
+                            modifier = contentModifier,
+                        ) { scrollModifier ->
+                            LazyColumn(
+                                state = listState,
+                                modifier = scrollModifier.fillMaxSize(),
+                                contentPadding = listContentPadding,
+                                verticalArrangement = Arrangement.spacedBy(CpDimens.spacing3),
+                            ) {
+                                items(displayedShops, key = { it.id }) { shop ->
+                                    ShopCard(
+                                        shop = shop,
+                                        distance = formatDistance(distanceToShopMeters(userLocation, shop.location)),
+                                        onClick = { Navigator.navigate(Navigator.Screen.ShopDetail(shop.id)) },
+                                        onToggleFavorite = { vm.toggleFavorite(shop) },
+                                    )
+                                }
+                                item(key = "add-missing-shop") {
+                                    AddMissingShopCard(
+                                        onAddShop = {
+                                            Navigator.navigate(Navigator.Screen.AddShop)
+                                        },
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        if (mapPreview != null && mapAnchor.width > 0f &&
+            (mapExpanded || discoveryListState.firstVisibleItemIndex == 0)
+        ) {
+            val bounds = expandedMapBounds(mapAnchor, screenSize, expansion)
+            val clipTop = viewportTop * (1f - expansion)
+            AnimatedVisibility(
+                visible = showDiscovery,
+                enter = fadeIn(tween(300)) + slideInVertically(tween(360)) { -it / 5 },
+                exit = fadeOut(tween(240)) + slideOutVertically(tween(360)) { -it / 5 },
+                modifier = Modifier.fillMaxSize(),
+            ) {
+                Box(Modifier.offset { IntOffset(0, clipTop.roundToInt()) }
+                    .fillMaxWidth().height(with(density) { (screenSize.height - clipTop).toDp() }).clipToBounds()) {
+                    val shape = RoundedCornerShape(CpDimens.radius2xl * (1f - expansion))
+                    mapPreview(
+                        mapExpanded && expansion > 0.9f,
+                        { mapExpanded = !mapExpanded },
+                        Modifier.offset { IntOffset(bounds.left.roundToInt(), (bounds.top - clipTop).roundToInt()) }
+                            .size(with(density) { bounds.width.toDp() }, with(density) { bounds.height.toDp() })
+                            .clip(shape).border(1.dp, MaterialTheme.colorScheme.outline, shape),
+                    )
                 }
             }
         }
     }
 }
 
+internal fun expandedMapBounds(preview: Rect, screenSize: Size, expansion: Float): Rect =
+    lerp(preview, Rect(Offset.Zero, screenSize), expansion.coerceIn(0f, 1f))
+
 @Composable
 private fun DiscoverySectionTitle(title: String, onShowAll: () -> Unit) {
     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-        Text(
-            title,
-            style = MaterialTheme.typography.titleLarge,
-            color = MaterialTheme.colorScheme.onSurface,
-            modifier = Modifier.weight(1f),
-        )
+        Text(title, style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.onSurface, modifier = Modifier.weight(1f))
         TextButton(onClick = onShowAll) {
             Text("Показать все")
             Spacer(Modifier.width(CpDimens.spacing1))

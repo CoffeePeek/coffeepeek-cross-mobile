@@ -5,6 +5,9 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
@@ -65,6 +68,7 @@ import com.coffeepeek.admin.ui.component.CoffeePeekLoader
 import com.coffeepeek.admin.ui.component.CpSearchField
 import com.coffeepeek.admin.ui.component.LocalFloatingNavClearance
 import com.coffeepeek.admin.ui.component.GlassControlIcon
+import com.coffeepeek.admin.ui.component.GlassIconButton
 import com.coffeepeek.admin.ui.component.PlatformMapControlButton
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.runtime.CompositionLocalProvider
@@ -82,7 +86,12 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.drop
 
 @Composable
-fun MapScreen(vm: MapViewModel = platformViewModel()) {
+fun MapScreen(
+    vm: MapViewModel = platformViewModel(),
+    modifier: Modifier = Modifier,
+    isPreview: Boolean = false,
+    onToggleExpand: (() -> Unit)? = null,
+) {
     val state by vm.state.collectAsState()
     val focusManager = LocalFocusManager.current
     val keyboardController = LocalSoftwareKeyboardController.current
@@ -94,7 +103,8 @@ fun MapScreen(vm: MapViewModel = platformViewModel()) {
     LaunchedEffect(userLocation) {
         userLocation?.let { vm.onNearbyOriginChanged(it.latitude, it.longitude) }
     }
-    val pendingFocus by Navigator.pendingMapFocus.collectAsState()
+    val pendingMapFocus by Navigator.pendingMapFocus.collectAsState()
+    val pendingFocus = pendingMapFocus.takeIf { onToggleExpand == null }
     val pendingFocusShop = pendingFocus?.let { focus ->
         MapShop(
             id = focus.shopId,
@@ -111,7 +121,9 @@ fun MapScreen(vm: MapViewModel = platformViewModel()) {
         ?: pendingFocus?.let { it.latitude to it.longitude }
     val cameraZoom = state.cameraZoom ?: if (pendingFocus != null) 16f else null
     val isDarkTheme = MaterialTheme.colorScheme.background.luminance() < 0.5f
-    val navClearance = LocalFloatingNavClearance.current
+    val navClearance = if (onToggleExpand != null) {
+        WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
+    } else LocalFloatingNavClearance.current
     val hasShopCarousel = state.selectedShop != null || state.nearbyShops.isNotEmpty()
 
     LaunchedEffect(pendingFocus) {
@@ -122,16 +134,17 @@ fun MapScreen(vm: MapViewModel = platformViewModel()) {
         }
     }
 
-    Box(Modifier.fillMaxSize()) {
+    Box(modifier.fillMaxSize()) {
         CoffeeMap(
             shops = mapShops,
             clusters = state.clusters,
-            zones = if (state.showZones) state.zones else emptyList(),
+            zones = if (!isPreview && state.showZones) state.zones else emptyList(),
             selectedShopId = selectedShopId,
             onBoundsChanged = vm::onBoundsChanged,
             onShopClick = { shop ->
                 dismissSearchInput()
-                vm.onShopSelected(shop)
+                if (isPreview) Navigator.navigate(Navigator.Screen.ShopDetail(shop.id))
+                else vm.onShopSelected(shop)
             },
             onZoneClick = vm::onZoneSelected,
             modifier = Modifier.fillMaxSize(),
@@ -142,38 +155,59 @@ fun MapScreen(vm: MapViewModel = platformViewModel()) {
             myLocationRequestKey = state.myLocationRequest,
             onMyLocationFound = vm::onMyLocationApplied,
             onLocationPermissionDenied = {},
+            requestLocationPermissionOnLoad = !isPreview,
         )
 
-        Column(
-            modifier = Modifier
-                .align(Alignment.TopCenter)
-                .statusBarsPadding()
-                .fillMaxWidth()
-                .padding(horizontal = CpDimens.spacing4, vertical = CpDimens.spacing3)
-                .zIndex(2f),
-            verticalArrangement = Arrangement.spacedBy(CpDimens.spacing2),
-        ) {
-            CpSearchField(
-                value = state.query,
-                onValueChange = vm::onQueryChange,
-                placeholder = "Поиск кофейни…",
-                fieldHeight = CpDimens.buttonHeight,
-                modifier = Modifier.fillMaxWidth(),
-            )
-            if (state.showSearchSuggestions) {
-                MapSearchSuggestions(
-                    results = state.searchResults,
-                    isLoading = state.isSearchLoading,
-                    failed = state.searchFailed,
-                    onSelect = { shop ->
-                        dismissSearchInput()
-                        vm.onSearchResultSelected(shop)
-                    },
-                )
+        if (isPreview) {
+            GlassIconButton(
+                onClick = { onToggleExpand?.invoke() },
+                contentDescription = "Развернуть карту на весь экран",
+                modifier = Modifier.align(Alignment.TopEnd).padding(CpDimens.spacing2),
+                hazeState = null,
+            ) {
+                Icon(CpIcons.Expand, contentDescription = null, modifier = Modifier.size(22.dp))
+            }
+        } else {
+            Column(
+                modifier = Modifier
+                    .align(Alignment.TopCenter)
+                    .statusBarsPadding()
+                    .fillMaxWidth()
+                    .padding(horizontal = CpDimens.spacing4, vertical = CpDimens.spacing3)
+                    .zIndex(2f),
+                verticalArrangement = Arrangement.spacedBy(CpDimens.spacing2),
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(CpDimens.spacing2)) {
+                    if (onToggleExpand != null) {
+                        GlassIconButton(
+                            onClick = { dismissSearchInput(); onToggleExpand() },
+                            contentDescription = "Свернуть карту",
+                            hazeState = null,
+                        ) { Icon(CpIcons.Close, contentDescription = null, modifier = Modifier.size(22.dp)) }
+                    }
+                    CpSearchField(
+                        value = state.query,
+                        onValueChange = vm::onQueryChange,
+                        placeholder = "Поиск кофейни…",
+                        fieldHeight = CpDimens.buttonHeight,
+                        modifier = Modifier.weight(1f),
+                    )
+                }
+                if (state.showSearchSuggestions) {
+                    MapSearchSuggestions(
+                        results = state.searchResults,
+                        isLoading = state.isSearchLoading,
+                        failed = state.searchFailed,
+                        onSelect = { shop ->
+                            dismissSearchInput()
+                            vm.onSearchResultSelected(shop)
+                        },
+                    )
+                }
             }
         }
 
-        if (state.isTruncated) {
+        if (!isPreview && state.isTruncated) {
             Surface(
                 modifier = Modifier
                     .align(Alignment.TopCenter)
@@ -201,15 +235,15 @@ fun MapScreen(vm: MapViewModel = platformViewModel()) {
             onZoomOut = vm::zoomOut,
             modifier = Modifier
                 .align(Alignment.CenterEnd)
-                .padding(end = CpDimens.spacing4),
+                .padding(end = if (isPreview) CpDimens.spacing2 else CpDimens.spacing4),
         )
 
         Column(
             modifier = Modifier
                 .align(Alignment.BottomEnd)
                 .padding(
-                    end = CpDimens.spacing4,
-                    bottom = navClearance + when {
+                    end = if (isPreview) CpDimens.spacing2 else CpDimens.spacing4,
+                    bottom = if (isPreview) CpDimens.spacing2 else navClearance + when {
                         state.selectedZone != null -> 180.dp
                         hasShopCarousel -> 132.dp
                         else -> CpDimens.spacing4
@@ -218,7 +252,7 @@ fun MapScreen(vm: MapViewModel = platformViewModel()) {
             verticalArrangement = Arrangement.spacedBy(CpDimens.spacing2),
             horizontalAlignment = Alignment.End,
         ) {
-            MapControlButton(
+            if (!isPreview) MapControlButton(
                 icon = GlassControlIcon.Zones,
                 onClick = vm::toggleZones,
                 contentDescription = if (state.showZones) "Скрыть зоны" else "Показать зоны",
@@ -235,12 +269,12 @@ fun MapScreen(vm: MapViewModel = platformViewModel()) {
                 icon = GlassControlIcon.Location,
                 onClick = vm::requestMyLocation,
                 contentDescription = "Моё местоположение",
-                modifier = Modifier.size(CpDimens.buttonHeight + 4.dp),
+                modifier = Modifier.size(CpDimens.buttonHeight + if (isPreview) 0.dp else 4.dp),
             ) {
                 Icon(
                     CpIcons.Navigation,
                     contentDescription = "Моё местоположение",
-                    modifier = Modifier.size(32.dp),
+                    modifier = Modifier.size(if (isPreview) 24.dp else 32.dp),
                 )
             }
         }
@@ -248,13 +282,13 @@ fun MapScreen(vm: MapViewModel = platformViewModel()) {
         if (state.isLoading) {
             CoffeePeekLoader(
                 modifier = Modifier
-                    .align(Alignment.TopCenter)
+                    .align(if (isPreview) Alignment.TopStart else Alignment.TopCenter)
                     .padding(top = CpDimens.spacing4),
                 strokeWidth = 2.dp,
             )
         }
 
-        if (state.showSearchArea) {
+        if (!isPreview && state.showSearchArea) {
             Button(
                 onClick = vm::searchCurrentArea,
                 modifier = Modifier
@@ -274,7 +308,7 @@ fun MapScreen(vm: MapViewModel = platformViewModel()) {
             }
         }
 
-        if (state.selectedZone == null && hasShopCarousel) {
+        if (!isPreview && state.selectedZone == null && hasShopCarousel) {
             MapShopCarousel(
                 state = state,
                 onSelect = { shop ->
@@ -287,7 +321,7 @@ fun MapScreen(vm: MapViewModel = platformViewModel()) {
             )
         }
 
-        state.selectedZone?.let { zone ->
+        state.selectedZone?.takeUnless { isPreview }?.let { zone ->
             MapZoneCard(
                 zone = zone,
                 onShowShops = vm::showSelectedZoneShops,
@@ -462,7 +496,7 @@ private fun mapShopCountLabel(count: Int): String {
 }
 
 @Composable
-internal fun MapControlButton(
+private fun MapControlButton(
     icon: GlassControlIcon,
     onClick: () -> Unit,
     contentDescription: String,
@@ -483,7 +517,7 @@ internal fun MapControlButton(
 }
 
 @Composable
-internal fun MapZoomControl(
+private fun MapZoomControl(
     onZoomIn: () -> Unit,
     onZoomOut: () -> Unit,
     modifier: Modifier = Modifier,

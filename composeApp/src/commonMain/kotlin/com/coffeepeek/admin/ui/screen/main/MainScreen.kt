@@ -8,6 +8,14 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.togetherWith
+import androidx.compose.animation.core.tween
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -43,8 +51,9 @@ import com.coffeepeek.admin.ui.component.PlatformFloatingBottomNavBar
 import com.coffeepeek.admin.ui.component.FloatingNavItem
 import com.coffeepeek.admin.ui.component.ProvideFloatingNavClearance
 import com.coffeepeek.admin.ui.screen.feed.FeedScreen
+import com.coffeepeek.admin.ui.screen.feed.FeedViewModel
+import com.coffeepeek.admin.di.platformViewModel
 import com.coffeepeek.admin.ui.screen.map.MapScreen
-import com.coffeepeek.admin.ui.screen.map.MiniMap
 import com.coffeepeek.admin.ui.screen.roaster.RoasterPreview
 import com.coffeepeek.admin.ui.screen.profile.ProfileScreen
 import com.coffeepeek.admin.ui.screen.profile.SettingsScreen
@@ -63,6 +72,7 @@ expect fun MainScreen()
 @Composable
 internal fun ComposeMainScreen() {
     val bottomNavController = rememberNavController()
+    var isFeedMapExpanded by remember { mutableStateOf(false) }
     val pendingTabSelection by Navigator.pendingTabSelection.collectAsState()
 
     LaunchedEffect(Unit) {
@@ -156,19 +166,36 @@ internal fun ComposeMainScreen() {
                 navigation<Navigator.Screen.FeedGraph>(startDestination = Navigator.Screen.FeedTab) {
                     composable<Navigator.Screen.FeedTab> {
                         var showRoasters by rememberSaveable { mutableStateOf(false) }
-                        if (showRoasters) {
-                            com.coffeepeek.admin.ui.screen.roaster.RoasterListScreen(onSelectShops = { showRoasters = false })
-                        } else {
-                            FeedScreen(
-                                onSelectRoasters = { showRoasters = true },
-                                mapPreview = { modifier ->
-                                    MiniMap(
-                                        onExpand = { Navigator.selectTab(Navigator.Screen.MapGraph) },
-                                        modifier = modifier,
-                                    )
-                                },
-                                roasterPreview = { RoasterPreview() },
-                            )
+                        val feedVm: FeedViewModel = platformViewModel()
+                        AnimatedContent(
+                            targetState = showRoasters,
+                            modifier = Modifier.fillMaxSize(),
+                            transitionSpec = {
+                                (fadeIn(tween(300)) + slideInVertically(tween(360)) { it / 5 }) togetherWith
+                                    (fadeOut(tween(240)) + slideOutVertically(tween(360)) { -it / 5 })
+                            },
+                            label = "discovery-roaster-list",
+                        ) { roastersVisible ->
+                            if (roastersVisible) {
+                                com.coffeepeek.admin.ui.screen.roaster.RoasterListScreen(onCancel = {
+                                    feedVm.cancelSearch()
+                                    showRoasters = false
+                                })
+                            } else {
+                                FeedScreen(
+                                    vm = feedVm,
+                                    onSelectRoasters = { showRoasters = true },
+                                    mapPreview = { expanded, onToggleExpand, modifier ->
+                                        MapScreen(
+                                            modifier = modifier,
+                                            isPreview = !expanded,
+                                            onToggleExpand = onToggleExpand,
+                                        )
+                                    },
+                                    roasterPreview = { RoasterPreview() },
+                                    onMapExpandedChange = { isFeedMapExpanded = it },
+                                )
+                            }
                         }
                     }
                 }
@@ -223,31 +250,37 @@ internal fun ComposeMainScreen() {
                 }
             }
 
-            PlatformFloatingBottomNavBar(
-                items = items.map { item ->
-                    val isSelected = currentDestination?.hierarchy?.any { destination ->
-                        destination.hasRoute(item.graph::class)
-                    } == true
-                    FloatingNavItem(
-                        title = item.title,
-                        icon = item.icon,
-                        selected = isSelected,
-                        onClick = {
-                            if (isSelected) return@FloatingNavItem
-                            bottomNavController.navigate(item.graph) {
-                                popUpTo(bottomNavController.graph.findStartDestination().id) {
-                                    saveState = true
-                                }
-                                launchSingleTop = true
-                                restoreState = true
-                            }
-                        },
-                    )
-                },
-                // Android Compose glass uses a translucent tint over the native map.
-                hazeState = tabBarHaze.takeUnless { isMapVisible },
+            AnimatedVisibility(
+                visible = !isFeedMapExpanded,
+                enter = fadeIn(tween(250)) + slideInVertically(tween(360)) { it },
+                exit = fadeOut(tween(250)) + slideOutVertically(tween(360)) { it },
                 modifier = Modifier.align(Alignment.BottomCenter),
-            )
+            ) {
+                PlatformFloatingBottomNavBar(
+                    items = items.map { item ->
+                        val isSelected = currentDestination?.hierarchy?.any { destination ->
+                            destination.hasRoute(item.graph::class)
+                        } == true
+                        FloatingNavItem(
+                            title = item.title,
+                            icon = item.icon,
+                            selected = isSelected,
+                            onClick = {
+                                if (isSelected) return@FloatingNavItem
+                                bottomNavController.navigate(item.graph) {
+                                    popUpTo(bottomNavController.graph.findStartDestination().id) {
+                                        saveState = true
+                                    }
+                                    launchSingleTop = true
+                                    restoreState = true
+                                }
+                            },
+                        )
+                    },
+                    // Android Compose glass uses a translucent tint over the native map.
+                    hazeState = tabBarHaze.takeUnless { isMapVisible || isFeedMapExpanded },
+                )
+            }
         }
     }
 }
