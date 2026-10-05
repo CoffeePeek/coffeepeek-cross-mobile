@@ -23,6 +23,7 @@ import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.fillMaxSize
@@ -50,6 +51,7 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.SnackbarHost
@@ -112,6 +114,9 @@ import com.coffeepeek.admin.ui.component.ReviewDisplayCard
 import com.coffeepeek.admin.utils.currentLocalDayOfWeek
 import com.coffeepeek.admin.utils.currentLocalMinuteOfDay
 import com.coffeepeek.admin.ui.component.PriceBynIcon
+import com.coffeepeek.admin.ui.component.PriceBynRow
+import com.coffeepeek.admin.ui.component.priceLevelHint
+import com.coffeepeek.admin.ui.component.priceRangeLevel
 import com.coffeepeek.admin.ui.component.shopTagIcon
 import com.coffeepeek.admin.ui.component.FullScreenImageDialog
 import com.coffeepeek.admin.ui.component.CoffeePeekLoader
@@ -325,6 +330,7 @@ private fun ShopDetailContent(
                     distance = distance,
                     rating = shop.rating,
                     reviewCount = shop.reviewCount,
+                    priceRange = shop.priceRange,
                     shopType = shop.type,
                     canOpenMap = details.location?.latitude != null &&
                         details.location?.longitude != null,
@@ -432,6 +438,7 @@ private fun ShopHeroImage(
     distance: String?,
     rating: Double?,
     reviewCount: Int,
+    priceRange: String?,
     shopType: String,
     canOpenMap: Boolean,
     onOpenOnMap: () -> Unit,
@@ -493,29 +500,18 @@ private fun ShopHeroImage(
             distance = distance,
             rating = rating,
             reviewCount = reviewCount,
+            priceRange = priceRange,
+            shopType = shopType,
+            currentPhoto = currentPhotoIndex + 1,
+            totalPhotos = photos.size,
             canOpenMap = canOpenMap,
             onOpenOnMap = onOpenOnMap,
             onOpenReviews = onOpenReviews,
             modifier = Modifier
                 .align(Alignment.BottomStart)
-                .padding(start = CpDimens.spacing4, end = 116.dp, bottom = CpDimens.spacing4),
+                .padding(horizontal = CpDimens.spacing4)
+                .padding(bottom = CpDimens.spacing4),
         )
-
-        Column(
-            modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .padding(end = CpDimens.spacing4, bottom = CpDimens.spacing4),
-            horizontalAlignment = Alignment.End,
-            verticalArrangement = Arrangement.spacedBy(CpDimens.spacing2),
-        ) {
-            ShopTypeBadge(shopType = shopType)
-            if (photos.isNotEmpty()) {
-                PhotoCounter(
-                    current = currentPhotoIndex + 1,
-                    total = photos.size,
-                )
-            }
-        }
     }
 }
 
@@ -562,6 +558,7 @@ private fun HeroTopActions(
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun HeroShopDetails(
     title: String,
@@ -569,93 +566,213 @@ private fun HeroShopDetails(
     distance: String?,
     rating: Double?,
     reviewCount: Int,
+    priceRange: String?,
+    shopType: String,
+    currentPhoto: Int,
+    totalPhotos: Int,
     canOpenMap: Boolean,
     onOpenOnMap: () -> Unit,
     onOpenReviews: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val priceLevel = priceRange?.takeIf { it.isNotBlank() }?.let(::priceRangeLevel)
+    val ratingLabel = rating?.takeIf { it > 0.0 }?.let(::formatOneDecimal)
+    var showPriceInfo by remember { mutableStateOf(false) }
+
+    if (showPriceInfo && priceLevel != null) {
+        ShopPriceInfoSheet(selectedLevel = priceLevel, onDismiss = { showPriceInfo = false })
+    }
+
     Column(
-        modifier = modifier,
-        verticalArrangement = Arrangement.spacedBy(CpDimens.spacing1),
+        modifier = modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(CpDimens.spacing2),
     ) {
-        Text(
-            text = title,
-            style = MaterialTheme.typography.headlineLarge.copy(
-                fontSize = 28.sp,
-                lineHeight = 32.sp,
-                letterSpacing = (-0.5).sp,
-                fontWeight = FontWeight.Bold,
-            ),
-            color = Color.White,
-            maxLines = 2,
-            overflow = TextOverflow.Ellipsis,
-        )
-        val addressLabel = address?.takeIf { it.isNotBlank() }
-            ?: if (canOpenMap) "Показать на карте" else null
-        addressLabel?.let { label ->
-            Row(
-                modifier = Modifier.clickable(enabled = canOpenMap, onClick = onOpenOnMap),
-                verticalAlignment = Alignment.CenterVertically,
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.Bottom,
+            horizontalArrangement = Arrangement.spacedBy(CpDimens.spacing2),
+        ) {
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(CpDimens.spacing1),
             ) {
-                Icon(
-                    imageVector = CpIcons.Location,
-                    contentDescription = null,
-                    tint = Color.White,
-                    modifier = Modifier.size(18.dp),
-                )
-                Spacer(Modifier.width(CpDimens.spacing1))
                 Text(
-                    text = label,
-                    style = MaterialTheme.typography.bodyMedium,
+                    text = title,
+                    style = MaterialTheme.typography.headlineLarge.copy(
+                        fontSize = 28.sp,
+                        lineHeight = 32.sp,
+                        letterSpacing = (-0.5).sp,
+                        fontWeight = FontWeight.Bold,
+                    ),
                     color = Color.White,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.weight(1f, fill = false),
                 )
+                val addressLabel = address?.takeIf { it.isNotBlank() }
+                    ?: if (canOpenMap) "Показать на карте" else null
+                addressLabel?.let { label ->
+                    Row(
+                        modifier = Modifier.clickable(enabled = canOpenMap, onClick = onOpenOnMap),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Icon(
+                            imageVector = CpIcons.Location,
+                            contentDescription = null,
+                            tint = Color.White,
+                            modifier = Modifier.size(18.dp),
+                        )
+                        Spacer(Modifier.width(CpDimens.spacing1))
+                        Text(
+                            text = label,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = Color.White,
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.weight(1f, fill = false),
+                        )
+                    }
+                }
             }
+            ShopTypeBadge(shopType = shopType)
         }
+
         Row(
-            modifier = Modifier
-                .clickable(onClickLabel = "Открыть отзывы", onClick = onOpenReviews)
-                .heightIn(min = 44.dp),
-            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.Bottom,
             horizontalArrangement = Arrangement.spacedBy(CpDimens.spacing2),
         ) {
+            FlowRow(
+                modifier = Modifier.weight(1f),
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                verticalArrangement = Arrangement.spacedBy(6.dp),
+            ) {
+                HeroInfoPill(
+                    description = "${ratingLabel ?: "Нет оценок"}, ${reviewCountLabel(reviewCount)}",
+                    onClick = onOpenReviews,
+                ) {
+                    Icon(
+                        imageVector = CpIcons.StarFilled,
+                        contentDescription = null,
+                        tint = CpColor.Primary,
+                        modifier = Modifier.size(16.dp),
+                    )
+                    Text(
+                        text = ratingLabel ?: "Нет оценок",
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                    if (ratingLabel != null) {
+                        Text(
+                            text = "($reviewCount)",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            maxLines = 1,
+                        )
+                    }
+                }
+                distance?.let { label ->
+                    HeroInfoPill(description = "$label от вас") {
+                        Icon(
+                            imageVector = CpIcons.Distance,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onSurface,
+                            modifier = Modifier.size(16.dp),
+                        )
+                        Text(
+                            text = label,
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.SemiBold,
+                            color = MaterialTheme.colorScheme.onSurface,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                    }
+                }
+                priceLevel?.let { level ->
+                    HeroInfoPill(
+                        description = "Средний чек: ${priceLevelHint(level)}",
+                        onClick = { showPriceInfo = true },
+                    ) {
+                        PriceBynRow(level = level, iconSize = 14.dp)
+                    }
+                }
+            }
+            if (totalPhotos > 0) {
+                PhotoCounter(current = currentPhoto, total = totalPhotos)
+            }
+        }
+    }
+}
+
+@Composable
+private fun HeroInfoPill(
+    description: String,
+    onClick: (() -> Unit)? = null,
+    content: @Composable RowScope.() -> Unit,
+) {
+    Row(
+        modifier = Modifier
+            .liquidGlass(shape = CircleShape, hazeState = null, shadowElevation = 2.dp)
+            .semantics(mergeDescendants = true) { contentDescription = description }
+            .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
+            .heightIn(min = CpDimens.controlHeight)
+            .padding(horizontal = 10.dp, vertical = CpDimens.spacing2),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(CpDimens.spacing1),
+    ) {
+        content()
+        if (onClick != null) {
             Icon(
-                imageVector = CpIcons.StarFilled,
+                imageVector = CpIcons.ChevronRight,
                 contentDescription = null,
-                tint = CpColor.Primary,
-                modifier = Modifier.size(18.dp),
-            )
-            Text(
-                text = rating?.takeIf { it > 0.0 }?.let(::formatOneDecimal) ?: "Нет оценок",
-                style = MaterialTheme.typography.titleMedium,
-                color = Color.White,
-            )
-            Text(
-                text = reviewCountLabel(reviewCount),
-                style = MaterialTheme.typography.bodyMedium,
-                color = Color.White.copy(alpha = 0.85f),
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.size(12.dp),
             )
         }
-        distance?.let { label ->
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(
-                    imageVector = CpIcons.Distance,
-                    contentDescription = null,
-                    tint = Color.White,
-                    modifier = Modifier.size(18.dp),
-                )
-                Spacer(Modifier.width(CpDimens.spacing1))
-                Text(
-                    text = "$label от вас",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = Color.White,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun ShopPriceInfoSheet(selectedLevel: Int, onDismiss: () -> Unit) {
+    ModalBottomSheet(onDismissRequest = onDismiss) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = CpDimens.spacing4)
+                .padding(bottom = CpDimens.spacing6),
+            verticalArrangement = Arrangement.spacedBy(CpDimens.spacing3),
+        ) {
+            SectionTitle("Средний чек")
+            for (level in 1..3) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(CpDimens.radiusLg))
+                        .background(if (level == selectedLevel) CpColor.PrimaryTint10 else Color.Transparent)
+                        .padding(CpDimens.spacing3),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(CpDimens.spacing3),
+                ) {
+                    PriceBynRow(level = level, iconSize = 16.dp, modifier = Modifier.width(64.dp))
+                    Text(
+                        text = priceLevelHint(level).orEmpty(),
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        modifier = Modifier.weight(1f),
+                    )
+                    if (level == selectedLevel) {
+                        Icon(
+                            imageVector = CpIcons.Check,
+                            contentDescription = "Уровень стоимости этой кофейни",
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(20.dp),
+                        )
+                    }
+                }
             }
         }
     }
