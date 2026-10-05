@@ -57,7 +57,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
@@ -76,6 +75,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.Role
 import com.coffeepeek.admin.ui.component.liquidGlass
 import com.coffeepeek.admin.ui.component.LocalGlassHazeState
 import com.coffeepeek.admin.ui.component.GlassControlIcon
@@ -97,6 +97,7 @@ import com.coffeepeek.admin.utils.formatOneDecimal
 import coffeepeek.composeapp.generated.resources.Res
 import coffeepeek.composeapp.generated.resources.maskot_with_book
 import coffeepeek.composeapp.generated.resources.shop_report_issue
+import coffeepeek.composeapp.generated.resources.shop_report_hint
 import coffeepeek.composeapp.generated.resources.shop_report_prompt
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource
@@ -784,18 +785,48 @@ private fun ReportIssueSection(onReportIssue: () -> Unit) {
             .fillMaxWidth()
             .padding(horizontal = CpDimens.spacing4, vertical = CpDimens.spacing2),
     ) {
-        OutlinedContentCard {
-            Text(
-                text = stringResource(Res.string.shop_report_prompt),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                textAlign = TextAlign.Start,
-            )
-            TextButton(
-                onClick = onReportIssue,
-                contentPadding = PaddingValues(vertical = CpDimens.spacing2),
+        OutlinedContentCard(contentPadding = PaddingValues(0.dp)) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable(
+                        onClickLabel = stringResource(Res.string.shop_report_issue),
+                        role = Role.Button,
+                        onClick = onReportIssue,
+                    )
+                    .heightIn(min = 56.dp)
+                    .padding(CpDimens.spacing4),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(CpDimens.spacing3),
             ) {
-                Text(stringResource(Res.string.shop_report_issue))
+                Icon(
+                    imageVector = CpIcons.Info,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier.size(24.dp),
+                )
+                Column(
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(CpDimens.spacing1),
+                ) {
+                    Text(
+                        text = stringResource(Res.string.shop_report_prompt),
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.onSurface,
+                    )
+                    Text(
+                        text = stringResource(Res.string.shop_report_hint),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+                Icon(
+                    imageVector = CpIcons.ChevronRight,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.size(20.dp),
+                )
             }
         }
     }

@@ -48,8 +48,9 @@
     <string name="favorites_roasters">Обжарщики</string>
     <string name="favorites_profile_title">Кофейни и обжарщики</string>
     <string name="favorites_profile_description">Кофейни и обжарщики, которые вы сохранили</string>
-    <string name="shop_report_prompt">Something wrong with this shop?</string>
-    <string name="shop_report_issue">Report issue</string>
+    <string name="shop_report_prompt">Заметили ошибку в информации о кофейне?</string>
+    <string name="shop_report_hint">Помогите нам сделать CoffeePeek лучше</string>
+    <string name="shop_report_issue">Сообщить об ошибке</string>
     <string name="retry">Попробовать снова</string>
     <string name="checkin_title">Отметить посещение</string>
     <string name="checkin_note_hint_private">Заметка</string>
