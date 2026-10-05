@@ -91,17 +91,25 @@ import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.backhandler.BackHandler
+import androidx.compose.ui.ExperimentalComposeUiApi
+import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.geometry.lerp
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.layout.layout
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.Constraints
+import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import kotlin.math.roundToInt
 import com.coffeepeek.domain.model.CoffeeShop
@@ -111,12 +119,12 @@ import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource
 import com.coffeepeek.admin.di.platformViewModel
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalComposeUiApi::class)
 @Composable
 fun FeedScreen(
     onSelectRoasters: () -> Unit,
     vm: FeedViewModel = platformViewModel(),
-    mapPreview: (@Composable (Boolean, () -> Unit, Modifier) -> Unit)? = null,
+    mapPreview: (@Composable (Boolean, () -> Unit, DpSize, Modifier) -> Unit)? = null,
     roasterPreview: (@Composable () -> Unit)? = null,
     onMapExpandedChange: (Boolean) -> Unit = {},
 ) {
@@ -127,7 +135,7 @@ fun FeedScreen(
     val keyboard = LocalSoftwareKeyboardController.current
     val showDiscovery = mapPreview != null && state.showDiscovery
     var mapExpanded by remember { mutableStateOf(false) }
-    val expansion by animateFloatAsState(
+    val expansion = animateFloatAsState(
         targetValue = if (mapExpanded) 1f else 0f,
         animationSpec = tween(420, easing = FastOutSlowInEasing),
         label = "discovery-map-expansion",
@@ -136,6 +144,14 @@ fun FeedScreen(
     var rootOrigin by remember { mutableStateOf(Offset.Zero) }
     var viewportTop by remember { mutableStateOf(0f) }
     val density = LocalDensity.current
+    val mapControlsExpanded by remember { derivedStateOf { mapExpanded && expansion.value == 1f } }
+    val pendingMapFocus by Navigator.pendingMapFocus.collectAsState()
+    LaunchedEffect(pendingMapFocus, mapAnchor.width > 0f) {
+        if (mapPreview != null && pendingMapFocus != null) {
+            vm.cancelSearch()
+            if (mapAnchor.width > 0f) mapExpanded = true
+        }
+    }
     LaunchedEffect(mapExpanded) { onMapExpandedChange(mapExpanded) }
     DisposableEffect(Unit) { onDispose { onMapExpandedChange(false) } }
     LaunchedEffect(showDiscovery) { if (!showDiscovery) mapExpanded = false }
@@ -143,6 +159,10 @@ fun FeedScreen(
         focusManager.clearFocus(force = true)
         keyboard?.hide()
         vm.cancelSearch()
+    }
+    BackHandler(enabled = mapExpanded || (mapPreview != null && !showDiscovery)) {
+        cancelSearch()
+        mapExpanded = false
     }
     val userLocation = rememberPermittedUserLocation()
     val displayedShops = if (state.filters.nearbyOnly && userLocation != null) {
@@ -184,6 +204,7 @@ fun FeedScreen(
 
     BoxWithConstraints(Modifier.fillMaxSize().onGloballyPositioned { rootOrigin = it.positionInRoot() }) {
         val screenSize = with(density) { Size(maxWidth.toPx(), maxHeight.toPx()) }
+        val canvasSize = DpSize(maxWidth, maxHeight)
         Scaffold(
             contentWindowInsets = WindowInsets(0, 0, 0, 0),
             topBar = {
@@ -191,8 +212,8 @@ fun FeedScreen(
                     modifier = Modifier.fillMaxWidth()
                         .then(if (mapExpanded) Modifier.clearAndSetSemantics {} else Modifier)
                         .graphicsLayer {
-                        alpha = 1f - expansion
-                        translationY = -size.height * expansion
+                            alpha = 1f - expansion.value
+                            translationY = -size.height * expansion.value
                     },
                 ) {
                     Column(
@@ -283,8 +304,8 @@ fun FeedScreen(
                             modifier = contentModifier
                                 .then(if (mapExpanded) Modifier.clearAndSetSemantics {} else Modifier)
                                 .graphicsLayer {
-                                alpha = 1f - expansion
-                                translationY = screenSize.height * 0.3f * expansion
+                                    alpha = 1f - expansion.value
+                                    translationY = screenSize.height * 0.3f * expansion.value
                             },
                         ) { scrollModifier ->
                             LazyColumn(
@@ -296,7 +317,7 @@ fun FeedScreen(
                             ) {
                                 item(key = "mini-map") {
                                     Box(Modifier.fillMaxWidth().height(240.dp).onGloballyPositioned {
-                                        if (showDiscovery && !mapExpanded && expansion == 0f) {
+                                        if (showDiscovery && !mapExpanded && expansion.value == 0f) {
                                             mapAnchor = Rect(it.positionInRoot() - rootOrigin, Size(it.size.width.toFloat(), it.size.height.toFloat()))
                                         }
                                     })
@@ -425,24 +446,45 @@ fun FeedScreen(
         if (mapPreview != null && mapAnchor.width > 0f &&
             (mapExpanded || discoveryListState.firstVisibleItemIndex == 0)
         ) {
-            val bounds = expandedMapBounds(mapAnchor, screenSize, expansion)
-            val clipTop = viewportTop * (1f - expansion)
-            AnimatedVisibility(
-                visible = showDiscovery,
-                enter = fadeIn(tween(300)) + slideInVertically(tween(360)) { -it / 5 },
-                exit = fadeOut(tween(240)) + slideOutVertically(tween(360)) { -it / 5 },
-                modifier = Modifier.fillMaxSize(),
-            ) {
-                Box(Modifier.offset { IntOffset(0, clipTop.roundToInt()) }
-                    .fillMaxWidth().height(with(density) { (screenSize.height - clipTop).toDp() }).clipToBounds()) {
-                    val shape = RoundedCornerShape(CpDimens.radius2xl * (1f - expansion))
-                    mapPreview(
-                        mapExpanded && expansion > 0.9f,
-                        { mapExpanded = !mapExpanded },
-                        Modifier.offset { IntOffset(bounds.left.roundToInt(), (bounds.top - clipTop).roundToInt()) }
-                            .size(with(density) { bounds.width.toDp() }, with(density) { bounds.height.toDp() })
-                            .clip(shape).border(1.dp, MaterialTheme.colorScheme.outline, shape),
-                    )
+            val radiusPx = with(density) { CpDimens.radius2xl.toPx() }
+            val outline = MaterialTheme.colorScheme.outline
+            // The viewport stays below the separator while its contents slide away.
+            Box(Modifier.fillMaxSize().layout { measurable, constraints ->
+                val clipTop = (viewportTop * (1f - expansion.value)).roundToInt()
+                    .coerceIn(0, constraints.maxHeight)
+                val height = constraints.maxHeight - clipTop
+                val placeable = measurable.measure(constraints.copy(minHeight = height, maxHeight = height))
+                layout(constraints.maxWidth, constraints.maxHeight) { placeable.placeRelative(0, clipTop) }
+            }.clipToBounds()) {
+                AnimatedVisibility(
+                    visible = showDiscovery,
+                    enter = fadeIn(tween(300)),
+                    exit = fadeOut(tween(240)) + slideOutVertically(tween(360)) { -it / 5 },
+                    modifier = Modifier.fillMaxSize(),
+                ) {
+                    Box(Modifier.fillMaxSize()) {
+                        mapPreview(
+                            mapControlsExpanded,
+                            { mapExpanded = !mapExpanded },
+                            canvasSize,
+                            Modifier.offset {
+                                val bounds = expandedMapBounds(mapAnchor, screenSize, expansion.value)
+                                val clipTop = (viewportTop * (1f - expansion.value)).roundToInt()
+                                    .coerceIn(0, screenSize.height.roundToInt())
+                                IntOffset(bounds.left.roundToInt(), bounds.top.roundToInt() - clipTop)
+                            }.layout { measurable, _ ->
+                                val bounds = expandedMapBounds(mapAnchor, screenSize, expansion.value)
+                                val placeable = measurable.measure(Constraints.fixed(bounds.width.roundToInt().coerceAtLeast(1), bounds.height.roundToInt().coerceAtLeast(1)))
+                                layout(placeable.width, placeable.height) { placeable.placeRelative(0, 0) }
+                            }.graphicsLayer {
+                                clip = true
+                                shape = RoundedCornerShape(radiusPx * (1f - expansion.value))
+                            }.drawWithContent {
+                                drawContent()
+                                drawRoundRect(outline, cornerRadius = CornerRadius(radiusPx * (1f - expansion.value)), style = Stroke(1.dp.toPx()))
+                            },
+                        )
+                    }
                 }
             }
         }

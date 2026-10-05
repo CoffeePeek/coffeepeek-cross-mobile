@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
@@ -58,6 +59,7 @@ import androidx.compose.ui.semantics.collectionInfo
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.sp
 import com.coffeepeek.admin.map.CoffeeMap
 import com.coffeepeek.admin.theme.CpDimens
@@ -91,6 +93,7 @@ fun MapScreen(
     modifier: Modifier = Modifier,
     isPreview: Boolean = false,
     onToggleExpand: (() -> Unit)? = null,
+    canvasSize: DpSize? = null,
 ) {
     val state by vm.state.collectAsState()
     val focusManager = LocalFocusManager.current
@@ -104,7 +107,7 @@ fun MapScreen(
         userLocation?.let { vm.onNearbyOriginChanged(it.latitude, it.longitude) }
     }
     val pendingMapFocus by Navigator.pendingMapFocus.collectAsState()
-    val pendingFocus = pendingMapFocus.takeIf { onToggleExpand == null }
+    val pendingFocus = pendingMapFocus.takeUnless { isPreview }
     val pendingFocusShop = pendingFocus?.let { focus ->
         MapShop(
             id = focus.shopId,
@@ -147,7 +150,10 @@ fun MapScreen(
                 else vm.onShopSelected(shop)
             },
             onZoneClick = vm::onZoneSelected,
-            modifier = Modifier.fillMaxSize(),
+            // Keep the native renderer at one size; animate the surrounding viewport.
+            modifier = canvasSize?.let {
+                Modifier.align(Alignment.Center).requiredSize(it.width, it.height)
+            } ?: Modifier.fillMaxSize(),
             cameraTarget = cameraTarget,
             cameraZoom = cameraZoom,
             onCameraTargetApplied = vm::onCameraTargetApplied,
@@ -156,6 +162,7 @@ fun MapScreen(
             onMyLocationFound = vm::onMyLocationApplied,
             onLocationPermissionDenied = {},
             requestLocationPermissionOnLoad = !isPreview,
+            showAttribution = !isPreview,
         )
 
         if (isPreview) {

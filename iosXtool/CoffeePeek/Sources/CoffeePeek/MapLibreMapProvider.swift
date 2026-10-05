@@ -42,6 +42,7 @@ final class MapLibreMapProvider: NSObject, IosNativeMapProvider, MLNMapViewDeleg
         }
 
         callbacksByMap[ObjectIdentifier(map)] = callbacks
+        map.showsAttributionButton = state.showAttribution ?? true
         let desiredStyle = state.dark ? Self.darkStyle : Self.lightStyle
         if map.styleURL != desiredStyle {
             map.styleURL = desiredStyle
@@ -263,6 +264,7 @@ private final class CoffeeAnnotation: MLNPointAnnotation {
 
 private struct MapState: Decodable {
     let dark: Bool
+    let showAttribution: Bool?
     let shops: [ShopState]
     let clusters: [ClusterState]
     let zones: [ZoneState]

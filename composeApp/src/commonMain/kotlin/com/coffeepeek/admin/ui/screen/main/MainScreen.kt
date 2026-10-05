@@ -24,20 +24,12 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.layout.Layout
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleOwner
-import androidx.lifecycle.LifecycleRegistry
-import androidx.lifecycle.LifecycleEventObserver
-import androidx.lifecycle.compose.LocalLifecycleOwner
-import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavDestination.Companion.hierarchy
+import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -118,12 +110,6 @@ internal fun ComposeMainScreen() {
             startScreen = Navigator.Screen.FeedTab,
         ),
         BottomNavItem(
-            title = "Карта",
-            icon = CpIcons.Map,
-            graph = Navigator.Screen.MapGraph,
-            startScreen = Navigator.Screen.MapTab,
-        ),
-        BottomNavItem(
             title = "Профиль",
             icon = CpIcons.Profile,
             graph = Navigator.Screen.ProfileGraph,
@@ -139,11 +125,6 @@ internal fun ComposeMainScreen() {
 
     val navBackStackEntry by bottomNavController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
-    var mapOpened by remember { mutableStateOf(false) }
-    val isMapVisible = currentDestination?.hasRoute<Navigator.Screen.MapTab>() == true
-    LaunchedEffect(navBackStackEntry) {
-        if (isMapVisible) mapOpened = true
-    }
     val density = LocalDensity.current
     val systemNavBottom = with(density) {
         WindowInsets.navigationBars.getBottom(this).toDp()
@@ -167,6 +148,12 @@ internal fun ComposeMainScreen() {
                     composable<Navigator.Screen.FeedTab> {
                         var showRoasters by rememberSaveable { mutableStateOf(false) }
                         val feedVm: FeedViewModel = platformViewModel()
+                        val pendingMapFocus by Navigator.pendingMapFocus.collectAsState()
+                        LaunchedEffect(pendingMapFocus) {
+                            if (pendingMapFocus != null) {
+                                showRoasters = false
+                            }
+                        }
                         AnimatedContent(
                             targetState = showRoasters,
                             modifier = Modifier.fillMaxSize(),
@@ -185,11 +172,12 @@ internal fun ComposeMainScreen() {
                                 FeedScreen(
                                     vm = feedVm,
                                     onSelectRoasters = { showRoasters = true },
-                                    mapPreview = { expanded, onToggleExpand, modifier ->
+                                    mapPreview = { expanded, onToggleExpand, canvasSize, modifier ->
                                         MapScreen(
                                             modifier = modifier,
                                             isPreview = !expanded,
                                             onToggleExpand = onToggleExpand,
+                                            canvasSize = canvasSize,
                                         )
                                     },
                                     roasterPreview = { RoasterPreview() },
@@ -200,53 +188,12 @@ internal fun ComposeMainScreen() {
                     }
                 }
 
-                navigation<Navigator.Screen.MapGraph>(startDestination = Navigator.Screen.MapTab) {
-                    // The map is hosted below so switching tabs does not destroy its native view.
-                    composable<Navigator.Screen.MapTab> { }
-                }
-
                 navigation<Navigator.Screen.ProfileGraph>(startDestination = Navigator.Screen.ProfileTab) {
                     composable<Navigator.Screen.ProfileTab> { ProfileScreen() }
                 }
 
                 navigation<Navigator.Screen.SettingsGraph>(startDestination = Navigator.Screen.SettingsTab) {
                     composable<Navigator.Screen.SettingsTab> { SettingsScreen() }
-                }
-            }
-
-            if (mapOpened) {
-                val parentLifecycle = LocalLifecycleOwner.current.lifecycle
-                val mapOwner = remember {
-                    object : LifecycleOwner {
-                        override val lifecycle = LifecycleRegistry(this)
-                    }
-                }
-                DisposableEffect(parentLifecycle, isMapVisible) {
-                    fun syncLifecycle() {
-                        mapOwner.lifecycle.currentState = if (isMapVisible) {
-                            parentLifecycle.currentState
-                        } else {
-                            minOf(parentLifecycle.currentState, Lifecycle.State.CREATED)
-                        }
-                    }
-                    val observer = LifecycleEventObserver { _, _ -> syncLifecycle() }
-                    parentLifecycle.addObserver(observer)
-                    syncLifecycle()
-                    onDispose { parentLifecycle.removeObserver(observer) }
-                }
-                DisposableEffect(mapOwner) {
-                    onDispose { mapOwner.lifecycle.currentState = Lifecycle.State.DESTROYED }
-                }
-                Layout(
-                    content = {
-                        CompositionLocalProvider(LocalLifecycleOwner provides mapOwner) { MapScreen() }
-                    },
-                    modifier = Modifier.fillMaxSize(),
-                ) { measurables, constraints ->
-                    val placeables = measurables.map { it.measure(constraints) }
-                    layout(constraints.maxWidth, constraints.maxHeight) {
-                        if (isMapVisible) placeables.forEach { it.placeRelative(0, 0) }
-                    }
                 }
             }
 
@@ -278,7 +225,7 @@ internal fun ComposeMainScreen() {
                         )
                     },
                     // Android Compose glass uses a translucent tint over the native map.
-                    hazeState = tabBarHaze.takeUnless { isMapVisible || isFeedMapExpanded },
+                    hazeState = tabBarHaze.takeUnless { isFeedMapExpanded },
                 )
             }
         }

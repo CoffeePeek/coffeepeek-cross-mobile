@@ -117,6 +117,13 @@ private fun RoasterCard(
     ) {
         Column(Modifier.padding(CpDimens.spacing3), verticalArrangement = Arrangement.spacedBy(CpDimens.spacing3)) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(CpDimens.spacing3)) {
+                Box(Modifier.size(88.dp).clip(RoundedCornerShape(CpDimens.radiusMd)).background(MaterialTheme.colorScheme.surfaceVariant), contentAlignment = Alignment.Center) {
+                    val photo = item.catalog.photoUrl ?: item.details?.photos?.firstOrNull()?.fullUrl
+                    if (!photo.isNullOrBlank()) CoffeeShopImage(
+                        imageUrl = photo, contentDescription = item.catalog.name,
+                        contentScale = ContentScale.Fit, modifier = Modifier.fillMaxSize(),
+                    ) else Icon(CpIcons.Factory, null, Modifier.size(32.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
                 Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(CpDimens.spacing2)) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text(item.catalog.name, modifier = Modifier.weight(1f), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold, maxLines = 2, overflow = TextOverflow.Ellipsis)
@@ -130,13 +137,6 @@ private fun RoasterCard(
                             }
                         }
                     }
-                }
-                Box(Modifier.size(88.dp).clip(RoundedCornerShape(CpDimens.radiusMd)).background(MaterialTheme.colorScheme.surfaceVariant), contentAlignment = Alignment.Center) {
-                    val photo = item.catalog.photoUrl ?: item.details?.photos?.firstOrNull()?.fullUrl
-                    if (!photo.isNullOrBlank()) CoffeeShopImage(
-                        imageUrl = photo, contentDescription = item.catalog.name,
-                        contentScale = ContentScale.Fit, modifier = Modifier.fillMaxSize(),
-                    ) else Icon(CpIcons.Factory, null, Modifier.size(32.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)

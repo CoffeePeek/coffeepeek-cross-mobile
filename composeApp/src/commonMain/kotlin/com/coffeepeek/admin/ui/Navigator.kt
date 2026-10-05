@@ -80,13 +80,11 @@ object Navigator {
 
         // Graphs
         @Serializable data object FeedGraph : Screen
-        @Serializable data object MapGraph : Screen
         @Serializable data object ProfileGraph : Screen
         @Serializable data object SettingsGraph : Screen
 
         // Tabs
         @Serializable data object FeedTab : Screen
-        @Serializable data object MapTab : Screen
         @Serializable data object ProfileTab : Screen
         @Serializable data object SettingsTab : Screen
 
@@ -156,8 +154,8 @@ object Navigator {
         navigatorScope.launch {
             _pendingMapFocus.value = MapShopFocus(shopId, latitude, longitude, title)
             _navigationEvents.emit(NavEvent.PopBack)
-            _pendingTabSelection.value = Screen.MapTab
-            _navigationEvents.emit(NavEvent.SelectTab(Screen.MapTab))
+            _pendingTabSelection.value = Screen.FeedTab
+            _navigationEvents.emit(NavEvent.SelectTab(Screen.FeedTab))
         }
     }
 

@@ -162,6 +162,7 @@ actual fun CoffeeMap(
     onMyLocationFound: (Double, Double) -> Unit,
     onLocationPermissionDenied: () -> Unit,
     requestLocationPermissionOnLoad: Boolean,
+    showAttribution: Boolean,
 ) {
     val context = LocalContext.current
     val appContext = context.applicationContext
@@ -434,7 +435,7 @@ actual fun CoffeeMap(
                 }
             },
         )
-        Text(
+        if (showAttribution) Text(
             text = "OpenFreeMap · OpenMapTiles · © OSM",
             modifier = Modifier
                 .align(Alignment.BottomStart)

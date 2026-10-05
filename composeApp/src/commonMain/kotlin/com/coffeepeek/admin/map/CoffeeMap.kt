@@ -25,4 +25,5 @@ expect fun CoffeeMap(
     onMyLocationFound: (Double, Double) -> Unit = { _, _ -> },
     onLocationPermissionDenied: () -> Unit = {},
     requestLocationPermissionOnLoad: Boolean = true,
+    showAttribution: Boolean = true,
 )
