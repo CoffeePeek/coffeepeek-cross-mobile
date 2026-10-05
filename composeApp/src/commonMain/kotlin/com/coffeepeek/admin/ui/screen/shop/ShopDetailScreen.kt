@@ -59,6 +59,7 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -76,6 +77,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.contentDescription
 import com.coffeepeek.admin.ui.component.liquidGlass
+import com.coffeepeek.admin.ui.component.LocalGlassHazeState
 import com.coffeepeek.admin.ui.component.GlassControlIcon
 import com.coffeepeek.admin.ui.component.PlatformGlassIconButton
 import com.coffeepeek.admin.ui.component.SwipeablePhotoStack
@@ -446,6 +448,7 @@ private fun ShopHeroImage(
     onPhotoClick: (String) -> Unit,
 ) {
     var currentPhotoIndex by remember(photos) { mutableStateOf(0) }
+    val heroHazeState = rememberHazeState()
     val heroShape = RoundedCornerShape(
         bottomStart = CpDimens.radius3xl,
         bottomEnd = CpDimens.radius3xl,
@@ -457,61 +460,65 @@ private fun ShopHeroImage(
             .clip(heroShape)
             .background(MaterialTheme.colorScheme.surfaceVariant),
     ) {
-        if (photos.size <= 1) {
-            val coverUrl = photos.firstOrNull()
-            if (!coverUrl.isNullOrBlank()) {
-                CoffeeShopImage(
-                    imageUrl = coverUrl,
-                    contentDescription = title,
-                    contentScale = ContentScale.Crop,
-                    placeholderLabelSize = 24.sp,
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .clickable { onPhotoClick(coverUrl) },
-                )
+        Box(Modifier.fillMaxSize().hazeSource(heroHazeState)) {
+            if (photos.size <= 1) {
+                val coverUrl = photos.firstOrNull()
+                if (!coverUrl.isNullOrBlank()) {
+                    CoffeeShopImage(
+                        imageUrl = coverUrl,
+                        contentDescription = title,
+                        contentScale = ContentScale.Crop,
+                        placeholderLabelSize = 24.sp,
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .clickable { onPhotoClick(coverUrl) },
+                    )
+                } else {
+                    CoffeeShopPlaceholderImage(
+                        labelSize = 24.sp,
+                        contentDescription = "Фото $title отсутствует",
+                    )
+                }
             } else {
-                CoffeeShopPlaceholderImage(
-                    labelSize = 24.sp,
-                    contentDescription = "Фото $title отсутствует",
+                PhotoGallery(
+                    photos = photos,
+                    title = title,
+                    onPhotoClick = onPhotoClick,
+                    onPageChanged = { currentPhotoIndex = it },
                 )
             }
-        } else {
-            PhotoGallery(
-                photos = photos,
-                title = title,
-                onPhotoClick = onPhotoClick,
-                onPageChanged = { currentPhotoIndex = it },
+
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(
+                        Brush.verticalGradient(
+                            colors = listOf(Color.Black.copy(alpha = 0.2f), Color.Transparent, Color.Black.copy(alpha = 0.35f)),
+                        )
+                    )
             )
         }
 
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(
-                    Brush.verticalGradient(
-                        colors = listOf(Color.Black.copy(alpha = 0.2f), Color.Transparent, Color.Black.copy(alpha = 0.35f)),
-                    )
-                )
-        )
-
-        HeroShopDetails(
-            title = title,
-            address = address,
-            distance = distance,
-            rating = rating,
-            reviewCount = reviewCount,
-            priceRange = priceRange,
-            shopType = shopType,
-            currentPhoto = currentPhotoIndex + 1,
-            totalPhotos = photos.size,
-            canOpenMap = canOpenMap,
-            onOpenOnMap = onOpenOnMap,
-            onOpenReviews = onOpenReviews,
-            modifier = Modifier
-                .align(Alignment.BottomStart)
-                .padding(horizontal = CpDimens.spacing4)
-                .padding(bottom = CpDimens.spacing4),
-        )
+        CompositionLocalProvider(LocalGlassHazeState provides heroHazeState) {
+            HeroShopDetails(
+                title = title,
+                address = address,
+                distance = distance,
+                rating = rating,
+                reviewCount = reviewCount,
+                priceRange = priceRange,
+                shopType = shopType,
+                currentPhoto = currentPhotoIndex + 1,
+                totalPhotos = photos.size,
+                canOpenMap = canOpenMap,
+                onOpenOnMap = onOpenOnMap,
+                onOpenReviews = onOpenReviews,
+                modifier = Modifier
+                    .align(Alignment.BottomStart)
+                    .padding(horizontal = CpDimens.spacing4)
+                    .padding(bottom = CpDimens.spacing4),
+            )
+        }
     }
 }
 
@@ -654,11 +661,11 @@ private fun HeroShopDetails(
                         imageVector = CpIcons.StarFilled,
                         contentDescription = null,
                         tint = CpColor.Primary,
-                        modifier = Modifier.size(16.dp),
+                        modifier = Modifier.size(14.dp),
                     )
                     Text(
                         text = ratingLabel ?: "Нет оценок",
-                        style = MaterialTheme.typography.bodyMedium,
+                        style = MaterialTheme.typography.bodyMedium.copy(fontSize = 13.sp),
                         fontWeight = FontWeight.SemiBold,
                         color = MaterialTheme.colorScheme.onSurface,
                         maxLines = 1,
@@ -667,7 +674,7 @@ private fun HeroShopDetails(
                     if (ratingLabel != null) {
                         Text(
                             text = "($reviewCount)",
-                            style = MaterialTheme.typography.bodyMedium,
+                            style = MaterialTheme.typography.bodyMedium.copy(fontSize = 13.sp),
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             maxLines = 1,
                         )
@@ -679,11 +686,11 @@ private fun HeroShopDetails(
                             imageVector = CpIcons.Distance,
                             contentDescription = null,
                             tint = MaterialTheme.colorScheme.onSurface,
-                            modifier = Modifier.size(16.dp),
+                            modifier = Modifier.size(14.dp),
                         )
                         Text(
                             text = label,
-                            style = MaterialTheme.typography.bodyMedium,
+                            style = MaterialTheme.typography.bodyMedium.copy(fontSize = 13.sp),
                             fontWeight = FontWeight.SemiBold,
                             color = MaterialTheme.colorScheme.onSurface,
                             maxLines = 1,
@@ -696,7 +703,7 @@ private fun HeroShopDetails(
                         description = "Средний чек: ${priceLevelHint(level)}",
                         onClick = { showPriceInfo = true },
                     ) {
-                        PriceBynRow(level = level, iconSize = 14.dp)
+                        PriceBynRow(level = level, iconSize = 12.dp)
                     }
                 }
             }
@@ -715,11 +722,11 @@ private fun HeroInfoPill(
 ) {
     Row(
         modifier = Modifier
-            .liquidGlass(shape = CircleShape, hazeState = null, shadowElevation = 2.dp)
+            .liquidGlass(shape = CircleShape, shadowElevation = 2.dp)
             .semantics(mergeDescendants = true) { contentDescription = description }
             .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
-            .heightIn(min = CpDimens.controlHeight)
-            .padding(horizontal = 10.dp, vertical = CpDimens.spacing1),
+            .heightIn(min = 32.dp)
+            .padding(horizontal = CpDimens.spacing2, vertical = 2.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(CpDimens.spacing1),
     ) {
@@ -801,47 +808,31 @@ private fun ShopTypeBadge(shopType: String) {
         CoffeeShopType.CAFE -> "КАФЕ"
         else -> "КОФЕЙНЯ"
     }
-    Surface(
-        shape = RoundedCornerShape(999.dp),
-        color = Color.Black.copy(alpha = 0.48f),
-        border = androidx.compose.foundation.BorderStroke(1.dp, CpColor.Primary),
-        tonalElevation = 0.dp,
-    ) {
-        Row(
-            modifier = Modifier.padding(horizontal = CpDimens.spacing2, vertical = CpDimens.spacing1),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(CpDimens.spacing1),
-        ) {
-            Icon(
-                imageVector = CpIcons.Coffee,
-                contentDescription = null,
-                tint = CpColor.Primary,
-                modifier = Modifier.size(14.dp),
-            )
-            Text(
-                text = label,
-                style = MaterialTheme.typography.labelSmall.copy(
-                    fontWeight = FontWeight.Bold,
-                    letterSpacing = 0.5.sp,
-                ),
-                color = Color.White,
-            )
-        }
+    HeroInfoPill(description = label) {
+        Icon(
+            imageVector = CpIcons.Coffee,
+            contentDescription = null,
+            tint = CpColor.Primary,
+            modifier = Modifier.size(14.dp),
+        )
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelSmall.copy(
+                fontWeight = FontWeight.Bold,
+                letterSpacing = 0.5.sp,
+            ),
+            color = MaterialTheme.colorScheme.onSurface,
+        )
     }
 }
 
 @Composable
 private fun PhotoCounter(current: Int, total: Int) {
-    Surface(
-        shape = RoundedCornerShape(999.dp),
-        color = Color.Black.copy(alpha = 0.48f),
-        tonalElevation = 0.dp,
-    ) {
+    HeroInfoPill(description = "Фото $current из $total") {
         Text(
             text = "$current / $total",
-            style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold),
-            color = Color.White,
-            modifier = Modifier.padding(horizontal = CpDimens.spacing3, vertical = CpDimens.spacing1),
+            style = MaterialTheme.typography.labelMedium.copy(fontSize = 13.sp, fontWeight = FontWeight.SemiBold),
+            color = MaterialTheme.colorScheme.onSurface,
         )
     }
 }
