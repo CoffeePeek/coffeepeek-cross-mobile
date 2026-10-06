@@ -1,7 +1,11 @@
 package com.coffeepeek.admin.ui.component
 
+import com.coffeepeek.domain.model.savedDrinkName
+
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.remember
@@ -32,6 +36,9 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -43,6 +50,7 @@ import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.Dp
 import com.coffeepeek.admin.utils.utcIsoToLocalDate
 import com.coffeepeek.admin.utils.formatOneDecimal
 import coffeepeek.composeapp.generated.resources.Res
@@ -84,6 +92,7 @@ fun ReviewTextInput(
     placeholder: String,
     isError: Boolean = false,
     singleLine: Boolean = false,
+    maxLength: Int = Int.MAX_VALUE,
     modifier: Modifier = Modifier,
 ) {
     val shape = if (singleLine) {
@@ -91,9 +100,15 @@ fun ReviewTextInput(
     } else {
         RoundedCornerShape(CpDimens.buttonRadius)
     }
+    val fieldValue = rememberSyncedTextFieldValue(value)
     BasicTextField(
-        value = value,
-        onValueChange = onValueChange,
+        value = fieldValue.value,
+        onValueChange = { updated ->
+            val limited = updated.limitTextLength(maxLength)
+            fieldValue.value = limited
+            onValueChange(limited.text)
+        },
+        keyboardOptions = platformTextInputOptions(),
         singleLine = singleLine,
         textStyle = MaterialTheme.typography.bodyMedium.copy(color = MaterialTheme.colorScheme.onSurface),
         cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
@@ -242,8 +257,10 @@ fun ReviewDisplayCard(
     modifier: Modifier = Modifier,
     onPhotoClick: ((List<String>, Int) -> Unit)? = null,
     onEditClick: (() -> Unit)? = null,
+    onReportClick: (() -> Unit)? = null,
     onHelpfulClick: (() -> Unit)? = null,
-    showHelpfulButton: Boolean = true,
+    showHelpfulButton: Boolean = false,
+    fullVersion: Boolean = false,
     /** Side-by-side rows: pad short comments too, so neighbouring cards end up about the same height. */
     equalizeHeight: Boolean = false,
 ) {
@@ -258,17 +275,15 @@ fun ReviewDisplayCard(
         ),
     ) {
         Column(
-            modifier = Modifier.padding(CpDimens.spacing4),
-            verticalArrangement = Arrangement.spacedBy(CpDimens.spacing4),
+            modifier = Modifier.padding(CpDimens.spacing3),
+            verticalArrangement = Arrangement.spacedBy(CpDimens.spacing2),
         ) {
-            ReviewHeader(review = review, onEditClick = onEditClick)
-            ReviewMetricCards(review.rating)
-            ReviewScoreRow(review.rating.average)
+            ReviewHeader(review = review, onEditClick = onEditClick, onReportClick = onReportClick)
 
             if (review.header.isNotBlank()) {
                 Text(
                     text = review.header,
-                    style = MaterialTheme.typography.titleLarge,
+                    style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurface,
                     maxLines = 2,
@@ -276,13 +291,18 @@ fun ReviewDisplayCard(
                 )
             }
 
+            savedDrinkName(review.drinkNameRu, review.drinkNameEn, review.customDrinkName)?.let {
+                SavedDrinkBadge(it)
+            }
             if (review.comment.isNotBlank()) {
-                ReviewQuote(review.id, review.comment, padToCollapsedLines = equalizeHeight)
+                if (fullVersion) Text(review.comment, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                else ReviewQuote(review.id, review.comment, padToCollapsedLines = equalizeHeight)
             }
 
             ReviewPhotoStrip(
                 photoUrls = review.photoUrls,
                 onPhotoClick = onPhotoClick,
+                tileSize = 144.dp,
             )
 
             if (showHelpfulButton) {
@@ -306,7 +326,7 @@ fun CheckInDisplayCard(
 ) {
     val cardModifier = modifier
         .fillMaxWidth()
-        .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
+        .then(if (onClick != null && checkIn.shopId.isNotBlank()) Modifier.clickable(onClick = onClick) else Modifier)
 
     Card(
         modifier = cardModifier,
@@ -323,6 +343,9 @@ fun CheckInDisplayCard(
             verticalArrangement = Arrangement.spacedBy(CpDimens.spacing4),
         ) {
             CheckInHeader(checkIn = checkIn, showShopName = showShopName)
+            savedDrinkName(checkIn.drinkNameRu, checkIn.drinkNameEn, checkIn.customDrinkName)?.let {
+                SavedDrinkBadge(it)
+            }
             checkIn.rating?.let { rating ->
                 ReviewMetricCards(rating)
                 ReviewScoreRow(rating.average)
@@ -425,7 +448,8 @@ private fun HelpfulButton(
 }
 
 @Composable
-private fun ReviewHeader(review: Review, onEditClick: (() -> Unit)?) {
+private fun ReviewHeader(review: Review, onEditClick: (() -> Unit)?, onReportClick: (() -> Unit)?) {
+    var menuExpanded by remember { mutableStateOf(false) }
     Row(
         modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
@@ -442,21 +466,47 @@ private fun ReviewHeader(review: Review, onEditClick: (() -> Unit)?) {
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onSurface,
             )
-            if (review.createdAt.isNotBlank()) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                ReviewScoreRow(review.rating.average, compact = true)
+                if (review.createdAt.isNotBlank()) {
                 Text(
                     text = formatReviewDisplayDate(review.createdAt),
-                    style = MaterialTheme.typography.bodyMedium,
+                    style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
                 )
+                }
             }
         }
-        if (onEditClick != null) {
-            IconButton(onClick = onEditClick) {
+        if (onEditClick != null || onReportClick != null) Box {
+            IconButton(onClick = { menuExpanded = true }, modifier = Modifier.semantics { contentDescription = "Действия с отзывом" }) {
                 Text(
                     text = "•••",
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
+            }
+            DropdownMenu(
+                expanded = menuExpanded,
+                onDismissRequest = { menuExpanded = false },
+                shape = RoundedCornerShape(CpDimens.radiusLg),
+                containerColor = MaterialTheme.colorScheme.surface,
+                tonalElevation = 0.dp,
+                shadowElevation = 8.dp,
+                border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+            ) {
+                onEditClick?.let { edit -> DropdownMenuItem(
+                    text = { Text("Редактировать", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface) },
+                    trailingIcon = { Icon(CpIcons.Edit, null, Modifier.size(20.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant) },
+                    onClick = { menuExpanded = false; edit() },
+                ) }
+                if (onEditClick != null && onReportClick != null) HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                onReportClick?.let { report -> DropdownMenuItem(
+                    text = { Text("Пожаловаться", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface) },
+                    trailingIcon = { Icon(CpIcons.Error, null, Modifier.size(20.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant) },
+                    onClick = { menuExpanded = false; report() },
+                ) }
             }
         }
     }
@@ -464,7 +514,7 @@ private fun ReviewHeader(review: Review, onEditClick: (() -> Unit)?) {
 
 @Composable
 private fun ReviewAvatar(username: String) {
-    val avatarModifier = Modifier.size(52.dp).clip(CircleShape)
+    val avatarModifier = Modifier.size(44.dp).clip(CircleShape)
     Box(
         modifier = avatarModifier.border(
             width = 1.dp,
@@ -483,28 +533,33 @@ private fun ReviewAvatar(username: String) {
 }
 
 @Composable
-private fun ReviewMetricCards(rating: ReviewRating) {
+private fun ReviewMetricCards(rating: ReviewRating, compact: Boolean = false) {
     Row(
         modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(CpDimens.spacing2),
+        horizontalArrangement = Arrangement.spacedBy(if (compact) 4.dp else CpDimens.spacing2),
+        verticalAlignment = Alignment.CenterVertically,
     ) {
+        if (compact) ReviewScoreRow(rating.average, compact = true)
         ReviewMetricCard(
             image = Res.drawable.checkin_rating_atmosphere,
             label = "Аура",
             value = rating.place,
             modifier = Modifier.weight(1f),
+            compact = compact,
         )
         ReviewMetricCard(
             image = Res.drawable.checkin_rating_service,
             label = "Сервис",
             value = rating.service,
             modifier = Modifier.weight(1f),
+            compact = compact,
         )
         ReviewMetricCard(
             image = Res.drawable.checkin_rating_coffee,
             label = "Кофе",
             value = rating.coffee,
             modifier = Modifier.weight(1f),
+            compact = compact,
         )
     }
 }
@@ -515,13 +570,14 @@ private fun ReviewMetricCard(
     label: String,
     value: Int,
     modifier: Modifier = Modifier,
+    compact: Boolean = false,
 ) {
     Row(
         modifier = modifier
-            .height(76.dp)
+            .height(if (compact) 36.dp else 76.dp)
             .clip(RoundedCornerShape(CpDimens.radiusLg))
             .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.58f))
-            .padding(horizontal = CpDimens.spacing2, vertical = CpDimens.spacing2),
+            .padding(horizontal = if (compact) 4.dp else CpDimens.spacing2, vertical = if (compact) 4.dp else CpDimens.spacing2),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(CpDimens.spacing1),
     ) {
@@ -529,9 +585,19 @@ private fun ReviewMetricCard(
             painter = painterResource(image),
             contentDescription = null,
             contentScale = ContentScale.Fit,
-            modifier = Modifier.size(38.dp),
+            modifier = Modifier.size(if (compact) 18.dp else 38.dp),
         )
-        Column(modifier = Modifier.weight(1f)) {
+        if (compact) {
+            Text(
+                text = label,
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurface,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.weight(1f),
+            )
+            Text(value.toString(), style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
+        } else Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = label,
                 style = MaterialTheme.typography.labelSmall,
@@ -549,28 +615,28 @@ private fun ReviewMetricCard(
 }
 
 @Composable
-private fun ReviewScoreRow(average: Double) {
+private fun ReviewScoreRow(average: Double, compact: Boolean = false) {
     val filledStars = average.toInt().coerceIn(0, 5)
     Row(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = if (compact) Modifier else Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Row(horizontalArrangement = Arrangement.spacedBy(1.dp)) {
-            (1..5).forEach { star ->
+            (1..if (compact) 1 else 5).forEach { star ->
                 Icon(
-                    imageVector = if (star <= filledStars) CpIcons.StarFilled else CpIcons.StarOutline,
+                    imageVector = if (compact || star <= filledStars) CpIcons.StarFilled else CpIcons.StarOutline,
                     contentDescription = null,
                     tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(20.dp),
+                    modifier = Modifier.size(if (compact) 16.dp else 20.dp),
                 )
             }
         }
         Text(
             text = formatOneDecimal(average),
-            style = MaterialTheme.typography.titleLarge,
+            style = if (compact) MaterialTheme.typography.titleMedium else MaterialTheme.typography.titleLarge,
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.onSurface,
-            modifier = Modifier.padding(start = CpDimens.spacing2),
+            modifier = Modifier.padding(start = if (compact) 3.dp else CpDimens.spacing2),
         )
     }
 }
@@ -658,6 +724,7 @@ fun ReviewPhotoStrip(
     // Same order as photoUrls: tiles show these, a click still hands out the full photo.
     thumbnailUrls: List<String> = photoUrls,
     onPhotoClick: ((List<String>, Int) -> Unit)? = null,
+    tileSize: Dp = 72.dp,
 ) {
     if (photoUrls.isEmpty()) return
     LazyRow(
@@ -670,7 +737,7 @@ fun ReviewPhotoStrip(
                 contentDescription = "Фотография ${index + 1} из ${photoUrls.size}",
                 contentScale = ContentScale.Crop,
                 modifier = Modifier
-                    .size(72.dp)
+                    .size(tileSize)
                     .clip(RoundedCornerShape(CpDimens.radiusSm))
                     .then(
                         if (onPhotoClick != null) {
@@ -681,5 +748,22 @@ fun ReviewPhotoStrip(
                     ),
             )
         }
+    }
+}
+
+@Composable
+private fun SavedDrinkBadge(name: String) {
+    Row(
+        modifier = Modifier
+            .clip(RoundedCornerShape(CpDimens.radiusMd))
+            .background(MaterialTheme.colorScheme.primaryContainer)
+            .padding(horizontal = 12.dp, vertical = 8.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Icon(CpIcons.Coffee, contentDescription = null,
+            tint = MaterialTheme.colorScheme.onPrimaryContainer, modifier = Modifier.size(18.dp))
+        Text("Напиток: $name", style = MaterialTheme.typography.labelLarge,
+            color = MaterialTheme.colorScheme.onPrimaryContainer)
     }
 }

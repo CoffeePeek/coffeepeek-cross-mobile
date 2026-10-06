@@ -27,7 +27,8 @@ class RoasterRepositoryImpl(
     override suspend fun getRoaster(id: String): Result<RoasterDetails> =
         roasterApiService.getRoaster(id).map { dto ->
             RoasterDetails(
-                id = dto.id,
+                id = dto.address.slug,
+                publicAddress = dto.address.toDomain(),
                 name = dto.name,
                 about = dto.about,
                 location = dto.location
@@ -52,7 +53,7 @@ class RoasterRepositoryImpl(
                             sortIndex = photo.sortIndex,
                         )
                     },
-                shops = dto.shops.map { RoasterShop(it.id, it.name) },
+                shops = dto.shops.map { RoasterShop(it.address.slug, it.name, it.coverPhoto?.fullUrl, it.address.toDomain()) },
             )
         }
 
@@ -75,7 +76,7 @@ class RoasterRepositoryImpl(
             roasterId = result.data.roasterId,
             status = result.data.status,
             isAddressValidated = result.data.isAddressValidated,
-            message = result.message,
+            message = result.message.orEmpty(),
         )
     }
 

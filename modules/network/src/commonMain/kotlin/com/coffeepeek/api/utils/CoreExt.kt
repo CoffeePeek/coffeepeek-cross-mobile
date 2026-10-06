@@ -14,7 +14,9 @@ import io.ktor.client.statement.HttpResponse
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
 import io.ktor.http.isSuccess
-class ApiException(override val message: String) : Exception(message)
+class ApiException(message: String?) : Exception() {
+    override val message: String = message?.takeIf { it.isNotBlank() } ?: "Сервер вернул некорректный ответ"
+}
 
 suspend inline fun <reified T : DataResponse> HttpResponse.getResult(): Result<T> {
     return runCatching {

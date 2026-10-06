@@ -14,6 +14,7 @@ import com.coffeepeek.domain.repository.RoasterRepository
 import com.coffeepeek.domain.repository.SessionRepository
 import com.coffeepeek.domain.repository.ShopChangeRequestRepository
 import com.coffeepeek.domain.repository.ShopRepository
+import com.coffeepeek.domain.repository.UserRepository
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
@@ -72,6 +73,7 @@ class MyContributionsViewModel(
     private val roasterRepository: RoasterRepository,
     private val changeRepository: ShopChangeRequestRepository,
     private val sessionRepository: SessionRepository,
+    private val userRepository: UserRepository,
 ) : BaseViewModel() {
 
     private val _state = MutableStateFlow(MyContributionsUiState())
@@ -122,8 +124,11 @@ class MyContributionsViewModel(
         when (kind) {
             // Published reviews come from the public endpoint: that's what the edit flow and helpful counts key on.
             ContributionKind.Reviews -> if (status == ModerationStatus.Approved) {
-                val userId = requireAuthSession(sessionRepository)?.userId
+                requireAuthSession(sessionRepository)
                     ?: return Result.failure(IllegalStateException("Войдите, чтобы увидеть свои отзывы"))
+                val profile = userRepository.getMe().getOrElse { return Result.failure(it) }
+                val userId = profile.address?.slug
+                    ?: return Result.failure(IllegalStateException("Публичный адрес профиля пока недоступен"))
                 reviewRepository.getUserReviews(userId, page, PAGE_SIZE).mapItems {
                     ContributionItem(id = it.id, title = it.header, review = it, editable = true)
                 }

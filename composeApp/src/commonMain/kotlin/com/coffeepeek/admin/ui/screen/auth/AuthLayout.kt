@@ -1,11 +1,11 @@
 package com.coffeepeek.admin.ui.screen.auth
 
-import com.coffeepeek.admin.ui.component.GlassIconButton
-import com.coffeepeek.admin.ui.component.liquidGlass
+import com.coffeepeek.admin.ui.component.GlassControlIcon
+import com.coffeepeek.admin.ui.component.PlatformGlassIconButton
+import com.coffeepeek.admin.ui.component.PlatformGlassBackButton
 import dev.chrisbanes.haze.HazeState
 import dev.chrisbanes.haze.hazeSource
 import dev.chrisbanes.haze.rememberHazeState
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -171,7 +171,8 @@ private fun AuthCloseButton(
     hazeState: HazeState,
     modifier: Modifier = Modifier,
 ) {
-    GlassIconButton(
+    PlatformGlassIconButton(
+        icon = GlassControlIcon.Close,
         onClick = onClick,
         contentDescription = "Закрыть",
         hazeState = hazeState,
@@ -291,28 +292,7 @@ fun AuthFooterRow(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         if (onBack != null) {
-            // Glass capsule back button. No backdrop blur here: it sits inside the blur source.
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier
-                    .height(CpDimens.buttonHeight)
-                    .liquidGlass(RoundedCornerShape(percent = 50), hazeState = null, shadowElevation = 3.dp)
-                    .clickable(onClick = onBack)
-                    .padding(start = 12.dp, end = 16.dp),
-            ) {
-                Icon(
-                    imageVector = CpIcons.ChevronLeft,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onSurface,
-                    modifier = Modifier.size(18.dp),
-                )
-                Spacer(modifier = Modifier.size(4.dp))
-                Text(
-                    text = "Назад",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurface,
-                )
-            }
+            PlatformGlassBackButton(onClick = onBack)
         } else {
             Spacer(modifier = Modifier.size(1.dp))
         }

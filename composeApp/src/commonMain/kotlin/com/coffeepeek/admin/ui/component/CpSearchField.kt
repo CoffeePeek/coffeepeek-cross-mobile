@@ -46,10 +46,14 @@ fun CpSearchField(
 ) {
     val focusManager = LocalFocusManager.current
     val shape = RoundedCornerShape(percent = 50)
+    val fieldValue = rememberSyncedTextFieldValue(value)
 
     BasicTextField(
-        value = value,
-        onValueChange = onValueChange,
+        value = fieldValue.value,
+        onValueChange = { updated ->
+            fieldValue.value = updated
+            onValueChange(updated.text)
+        },
         modifier = modifier
             .height(fieldHeight)
             .shadow(
@@ -65,7 +69,7 @@ fun CpSearchField(
             color = MaterialTheme.colorScheme.onSurface,
         ),
         cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
-        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+        keyboardOptions = platformTextInputOptions(KeyboardOptions(imeAction = ImeAction.Search)),
         keyboardActions = KeyboardActions(
             onSearch = {
                 focusManager.clearFocus()

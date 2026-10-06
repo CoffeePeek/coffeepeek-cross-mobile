@@ -130,13 +130,15 @@ empty modules or remove the iOS legacy path before its replacement works.
 4. Completed: move design-system preview-only fixtures beside their components
    in scoped groups, with paired themes and commonMain UI ownership. IDE/modal
    visual rendering still requires manual inspection.
-5. Decide the iOS presentation boundary for favorites explicitly: shared Compose
-   UI in the current SwiftUI host or a native SwiftUI screen over shared domain/data.
-   Then prepare required native targets, platform storage/DI and tests before
-   switching the iOS route and retiring its legacy writer/events.
-6. Migrate root navigation separately after feature entry contracts work on both
+5. Deferred by current product scope: iOS favorites presentation. Keep its legacy
+   screen, binding and writer intact; do not infer that Android integration
+   completed the migration on iOS.
+6. Continue Android feature migration in small owner-based slices. Shop issue
+   reporting starts with isolated domain/data preparation; see
+   `shop-report/README.md`. Its app switch comes only after api/impl and tests.
+7. Migrate root navigation separately after feature entry contracts work on both
    platforms. Do not mix a Navigation 3 root swap with persistence or UI parity.
-7. Repeat the feature migration by business owner; remove legacy modules only
+8. Repeat the feature migration by business owner; remove legacy modules only
    after all consumers on Android and iOS have moved.
 
 ## Pilot audit: favorites (Android screen and DI integrated)

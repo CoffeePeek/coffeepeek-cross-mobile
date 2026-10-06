@@ -14,7 +14,7 @@ modules/network/            legacy HTTP infrastructure and feature API code
 modules/data/               legacy repository implementations
 modules/room/               legacy Room infrastructure and persistence
 core/                      prepared independent infrastructure/design-system
-feature/                   favorites api/domain/data/impl; Android screen integrated
+feature/                   favorites integrated on Android; shop-report domain/data prepared
 iosApp/                     native iOS application boundary, when present
 ```
 

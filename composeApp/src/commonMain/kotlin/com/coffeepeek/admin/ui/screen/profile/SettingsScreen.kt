@@ -29,6 +29,7 @@ import com.coffeepeek.admin.theme.CpDimens
 import com.coffeepeek.admin.theme.ThemeMode
 import com.coffeepeek.admin.ui.Navigator
 import com.coffeepeek.admin.ui.component.AppVersionFooter
+import com.coffeepeek.admin.ui.component.PlatformActivityIndicator
 import com.coffeepeek.admin.ui.component.GuestAuthCard
 import com.coffeepeek.admin.ui.component.LocalFloatingNavClearance
 import com.coffeepeek.admin.ui.component.SettingsDivider
@@ -47,6 +48,8 @@ fun SettingsScreen(vm: ProfileViewModel = koinInject()) {
     val themeMode by vm.themeMode.collectAsState()
     val cities by vm.cities.collectAsState()
     val selectedCityId by vm.selectedCityId.collectAsState()
+    val updates = koinInject<com.coffeepeek.admin.feature.appupdate.ui.AppUpdateState>()
+    val updateState by updates.state.collectAsState()
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
@@ -145,6 +148,19 @@ fun SettingsScreen(vm: ProfileViewModel = koinInject()) {
                 )
             }
 
+            Spacer(Modifier.height(CpDimens.settingsSectionSpacing))
+            SettingsSection(title = "Обновление приложения") {
+                SettingsRow(
+                    icon = CpIcons.Info,
+                    label = if (updateState.checking) "Проверяем обновления…" else "Проверить обновления",
+                    description = updateState.message ?: if (updateState.update != null) "Доступна новая версия CoffeePeek" else "Версия ${com.coffeepeek.admin.config.AppConfig.versionName}",
+                    onClick = { updates.check(manual = true) },
+                    enabled = !updateState.checking,
+                    trailing = if (updateState.checking) {
+                        { PlatformActivityIndicator(Modifier.size(CpDimens.settingsIconSize)) }
+                    } else null,
+                )
+            }
             AppVersionFooter()
             Spacer(Modifier.height(CpDimens.spacing8 + LocalFloatingNavClearance.current))
         }

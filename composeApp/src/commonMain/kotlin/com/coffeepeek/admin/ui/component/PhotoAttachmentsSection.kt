@@ -44,7 +44,7 @@ fun PhotoAttachmentsSection(
     onRemovePhoto: (Int) -> Unit,
     modifier: Modifier = Modifier,
     title: String = "Фотографии",
-    hint: String = "Добавьте до $maxPhotos фото (необязательно).",
+    hint: String = "Добавьте до $maxPhotos фото.",
 ) {
     var isPhotoLoading by remember { mutableStateOf(false) }
     var showPhotoSourceSheet by remember { mutableStateOf(false) }
