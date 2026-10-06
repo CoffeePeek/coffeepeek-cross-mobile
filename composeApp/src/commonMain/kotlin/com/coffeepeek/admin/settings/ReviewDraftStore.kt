@@ -38,6 +38,10 @@ data class ReviewDraft(
     val serviceRating: Int,
     val coffeeRating: Int,
     val savedAtEpochMs: Long = 0,
+    val drinkSlug: String? = null,
+    val customDrinkName: String? = null,
+    val drinkName: String? = null,
+    val drinkSelectionChanged: Boolean = false,
 )
 
 val DRAFT_TTL: Duration = 30.days
@@ -46,7 +50,7 @@ private const val SAVE_DEBOUNCE_MS = 400L
 
 /** Blank = the user typed nothing and left ratings at the form's defaults. */
 internal fun ReviewDraft.isBlank(defaultRating: Int): Boolean =
-    header.isBlank() && comment.isBlank() &&
+    drinkSlug == null && header.isBlank() && comment.isBlank() &&
         placeRating == defaultRating && serviceRating == defaultRating && coffeeRating == defaultRating
 
 internal fun ReviewDraft.isExpired(nowEpochMs: Long, ttl: Duration = DRAFT_TTL): Boolean =

@@ -56,6 +56,9 @@ import com.coffeepeek.admin.ui.Navigator
 import com.coffeepeek.admin.ui.component.CompactOutlinedTextField
 import com.coffeepeek.admin.ui.component.CoffeePeekLoader
 import com.coffeepeek.admin.ui.component.CpCircularBackButton
+import com.coffeepeek.admin.ui.component.platformTextInputOptions
+import com.coffeepeek.admin.ui.component.rememberSyncedTextFieldValue
+import com.coffeepeek.admin.ui.component.limitTextLength
 import com.coffeepeek.admin.ui.component.PhotoSourceBottomSheet
 import com.coffeepeek.admin.utils.CpImage
 import com.coffeepeek.admin.utils.rememberPhotoPicker
@@ -68,6 +71,7 @@ fun EditProfileScreen(vm: EditProfileViewModel = platformViewModel()) {
     var isPhotoLoading by remember { mutableStateOf(false) }
     var showAvatarSourceSheet by remember { mutableStateOf(false) }
     var showDeleteAccountDialog by remember { mutableStateOf(false) }
+    val aboutField = rememberSyncedTextFieldValue(state.about)
     val photoPicker = rememberPhotoPicker(
         maxSelection = 1,
         isLoading = { isPhotoLoading = it },
@@ -170,6 +174,7 @@ fun EditProfileScreen(vm: EditProfileViewModel = platformViewModel()) {
                     CompactOutlinedTextField(
                         value = state.username,
                         onValueChange = vm::onUsernameChange,
+                        maxLength = 64,
                         modifier = Modifier.fillMaxWidth().height(CpDimens.buttonHeight),
                         placeholder = {
                             Text(
@@ -201,8 +206,12 @@ fun EditProfileScreen(vm: EditProfileViewModel = platformViewModel()) {
             // ── О себе ───────────────────────────────────────────────────────
             FieldLabel("О себе")
             OutlinedTextField(
-                value = state.about,
-                onValueChange = vm::onAboutChange,
+                value = aboutField.value,
+                onValueChange = { updated ->
+                    val limited = updated.limitTextLength(600)
+                    aboutField.value = limited
+                    vm.onAboutChange(limited.text)
+                },
                 modifier = Modifier.fillMaxWidth(),
                 placeholder = {
                     Text(
@@ -215,10 +224,10 @@ fun EditProfileScreen(vm: EditProfileViewModel = platformViewModel()) {
                 isError = state.aboutError != null,
                 minLines = 4,
                 maxLines = 8,
-                keyboardOptions = KeyboardOptions(
+                keyboardOptions = platformTextInputOptions(KeyboardOptions(
                     capitalization = KeyboardCapitalization.Sentences,
                     imeAction = ImeAction.Default,
-                ),
+                )),
                 shape = RoundedCornerShape(CpDimens.buttonRadius),
                 colors = fieldColors(),
             )
