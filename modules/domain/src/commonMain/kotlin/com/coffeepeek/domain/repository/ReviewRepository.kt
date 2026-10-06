@@ -9,7 +9,7 @@ import com.coffeepeek.domain.model.ReviewSubmission
 import com.coffeepeek.domain.model.UpdateReviewInput
 
 interface ReviewRepository {
-    suspend fun canCreateReview(shopId: String): Result<Pair<Boolean, String?>>
+    suspend fun submitReviewReport(reviewId: String, text: String): Result<String>
     suspend fun createReview(input: CreateReviewInput): Result<Unit>
     suspend fun updateReview(reviewId: String, input: UpdateReviewInput): Result<Unit>
     suspend fun getUserReviews(userId: String, page: Int, pageSize: Int): Result<PagedResult<Review>>

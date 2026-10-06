@@ -11,13 +11,12 @@ class CoffeeShopDetailsDtoTest {
         val details = Json.decodeFromString<CoffeeShopDetailsDto>(
             """
                 {
-                  "id": "shop-1",
+                  "address": {"slug":"shop-1","canonicalPath":"/coffee-shops/shop-1","revision":1,"isAlias":false},
                   "name": "CoffeePeek",
                   "userCheckIns": [
                     {
                       "id": "check-in-1",
-                      "userId": "user-1",
-                      "shopId": "shop-1",
+                      "shop": {"slug":"shop-1","canonicalPath":"/coffee-shops/shop-1","revision":1,"isAlias":false},
                       "note": "Отличный фильтр",
                       "createdAt": "2026-09-08T10:00:00Z",
                       "visitedAt": "2026-09-08T09:30:00Z",

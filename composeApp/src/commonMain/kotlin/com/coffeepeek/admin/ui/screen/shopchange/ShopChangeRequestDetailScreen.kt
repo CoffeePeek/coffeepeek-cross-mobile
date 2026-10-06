@@ -117,6 +117,7 @@ fun ShopChangeRequestDetailScreen(requestId: String) {
                 ChangePayloadCard(section = request.section, payload = request.payload)
                 OutlinedButton(
                     onClick = { Navigator.navigate(Navigator.Screen.ShopDetail(request.shopId)) },
+                    enabled = request.shopId.isNotBlank(),
                     modifier = Modifier.fillMaxWidth().height(CpDimens.buttonHeight),
                     shape = RoundedCornerShape(percent = 50),
                 ) {

@@ -1,6 +1,7 @@
 package com.coffeepeek.api.model.request
 
 import com.coffeepeek.api.model.DataResponse
+import com.coffeepeek.api.model.PublicAddressDto
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -64,16 +65,16 @@ data class ShopChangePayloadDto(
     @SerialName("description") val description: String? = null,
     @SerialName("contacts") val contacts: ShopChangeContactsDto? = null,
     @SerialName("photos") val photos: ShopChangeGalleryDto? = null,
-    @SerialName("tagIds") val tagIds: List<String>? = null,
-    @SerialName("roasterIds") val roasterIds: List<String>? = null,
-    @SerialName("equipmentIds") val equipmentIds: List<String>? = null,
+    @SerialName("tags") val tagIds: List<String>? = null,
+    @SerialName("roasters") val roasterIds: List<String>? = null,
+    @SerialName("equipments") val equipmentIds: List<String>? = null,
     @SerialName("menu") val menu: ShopChangeMenuDto? = null,
-    @SerialName("brewMethodIds") val brewMethodIds: List<String>? = null,
+    @SerialName("brewMethods") val brewMethodIds: List<String>? = null,
 )
 
 @Serializable
 data class CreateShopChangeRequestBody(
-    @SerialName("shopId") val shopId: String,
+    @SerialName("shop") val shopId: String,
     @SerialName("section") val section: ShopChangeSectionDto,
     @SerialName("payload") val payload: ShopChangePayloadDto,
 )
@@ -87,12 +88,10 @@ data class UpdateShopChangeRequestBody(
 @Serializable
 data class ShopChangeRequestDto(
     @SerialName("id") val id: String,
-    @SerialName("shopId") val shopId: String,
-    @SerialName("submittedByUserId") val submittedByUserId: String,
+    @SerialName("shop") val shop: PublicAddressDto? = null,
     @SerialName("section") val section: ShopChangeSectionDto,
     @SerialName("payload") val payload: ShopChangePayloadDto,
     @SerialName("status") val status: ModerationStatusDto,
-    @SerialName("reviewedByUserId") val reviewedByUserId: String? = null,
     @SerialName("reviewedAtUtc") val reviewedAtUtc: String? = null,
     @SerialName("rejectionReason") val rejectionReason: String? = null,
     @SerialName("createdAtUtc") val createdAtUtc: String,

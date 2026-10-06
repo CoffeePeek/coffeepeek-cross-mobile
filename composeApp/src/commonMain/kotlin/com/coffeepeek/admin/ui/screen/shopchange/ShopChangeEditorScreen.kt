@@ -57,6 +57,9 @@ import com.coffeepeek.admin.ui.component.RowSeparator
 import com.coffeepeek.admin.ui.component.GroupSection
 import com.coffeepeek.admin.ui.component.brewMethodIcon
 import com.coffeepeek.admin.ui.component.shopTagIcon
+import com.coffeepeek.admin.ui.component.platformTextInputOptions
+import com.coffeepeek.admin.ui.component.rememberSyncedTextFieldValue
+import com.coffeepeek.admin.ui.component.limitTextLength
 import com.coffeepeek.admin.ui.icons.CpIcons
 import com.coffeepeek.admin.utils.CpImage
 import com.coffeepeek.admin.utils.MAX_MENU_PHOTOS
@@ -177,9 +180,15 @@ fun ShopChangeEditorScreen(shopId: String, sectionName: String, requestId: Strin
 
 @Composable
 private fun DescriptionEditor(state: ShopChangeEditorUiState, vm: ShopChangeEditorViewModel) {
+    val descriptionField = rememberSyncedTextFieldValue(state.description)
     OutlinedTextField(
-        value = state.description,
-        onValueChange = vm::onDescriptionChange,
+        value = descriptionField.value,
+        onValueChange = { updated ->
+            val limited = updated.limitTextLength(1000)
+            descriptionField.value = limited
+            vm.onDescriptionChange(limited.text)
+        },
+        keyboardOptions = platformTextInputOptions(),
         modifier = Modifier.fillMaxWidth().height(180.dp),
         placeholder = { Text("Расскажите о кофейне") },
         isError = state.descriptionError != null,
@@ -403,6 +412,7 @@ private fun MenuItemEditor(row: ShopChangeMenuRow, vm: ShopChangeEditorViewModel
             )
             CompactOutlinedTextField(
                 value = row.volumeText,
+                inputFilter = Char::isDigit,
                 onValueChange = { value ->
                     vm.updateMenuRow(row.slug) { it.copy(volumeText = value.filter(Char::isDigit)) }
                 },

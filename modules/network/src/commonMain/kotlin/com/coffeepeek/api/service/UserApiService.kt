@@ -9,6 +9,8 @@ import com.coffeepeek.api.utils.setJsonBody
 import com.coffeepeek.api.model.response.AccountDeletionRequestDto
 import com.coffeepeek.api.model.response.UserProfileDto
 import com.coffeepeek.api.model.response.PublicUserProfileDto
+import com.coffeepeek.api.model.response.PublicUserProfileResponseDto
+import com.coffeepeek.api.model.response.UsernameUpdateDto
 import com.coffeepeek.api.utils.ApiException
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
@@ -31,10 +33,9 @@ class UserApiService(private val client: HttpClient) {
     }
 
     suspend fun getUser(userId: String): Result<PublicUserProfileDto> = runCatching {
-        val response = client.get("/api/Users/$userId")
-        val apiResponse = response.body<ApiResponse<PublicUserProfileDto>>()
-        if (!apiResponse.isSuccess || apiResponse.data == null) throw ApiException(apiResponse.message)
-        apiResponse.data
+        val response = client.get("/api/Users/by-slug/$userId")
+        if (!response.status.isSuccess()) throw ApiException("Ошибка загрузки профиля (${response.status.value})")
+        response.body<PublicUserProfileResponseDto>().data
     }
 
     suspend fun requestAccountDeletion(): Result<AccountDeletionRequestDto> = runCatching {
@@ -53,12 +54,12 @@ class UserApiService(private val client: HttpClient) {
         when {
             apiResponse.isSuccess && apiResponse.data != null -> apiResponse.data
             response.status == HttpStatusCode.NotFound -> null
-            apiResponse.message.contains("not found", ignoreCase = true) -> null
+            apiResponse.message.orEmpty().contains("not found", ignoreCase = true) -> null
             else -> throw ApiException(apiResponse.message)
         }
     }
 
-    suspend fun updateUsername(username: String): Result<Unit> = runCatching {
+    suspend fun updateUsername(username: String): Result<UsernameUpdateDto> = runCatching {
         val response = client.patch("/api/Users/me/username") {
             contentType(ContentType.Application.Json)
             setBody(UpdateUsernameReq(username))
@@ -67,6 +68,9 @@ class UserApiService(private val client: HttpClient) {
             val err = runCatching { response.body<ApiResponse<Unit>>() }.getOrNull()
             throw ApiException(err?.message ?: "Ошибка обновления имени (${response.status.value})")
         }
+        val result = response.body<ApiResponse<UsernameUpdateDto>>()
+        if (!result.isSuccess || result.data == null) throw ApiException(result.message)
+        result.data
     }
 
     suspend fun updateAbout(about: String): Result<Unit> = runCatching {
