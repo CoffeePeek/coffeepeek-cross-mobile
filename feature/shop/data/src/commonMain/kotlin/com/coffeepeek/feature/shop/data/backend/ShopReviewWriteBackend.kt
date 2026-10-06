@@ -18,7 +18,7 @@ internal class ShopReviewWriteBackend(private val client: HttpClient) {
         header: String,
         comment: String,
         rating: ShopRating,
-        photos: List<UploadedReviewPhoto>,
+        photos: List<UploadedShopPhoto>,
     ): Result<Unit> = requestResult {
         val response = client.post("/api/ModerationReviews") {
             contentType(ContentType.Application.Json)
@@ -51,7 +51,7 @@ private data class CreateReviewRequest(
     @SerialName("header") val header: String,
     @SerialName("comment") val comment: String,
     @SerialName("rating") val rating: RatingRequest,
-    @SerialName("photos") val photos: List<UploadedReviewPhoto>?,
+    @SerialName("photos") val photos: List<UploadedShopPhoto>?,
 )
 
 @Serializable

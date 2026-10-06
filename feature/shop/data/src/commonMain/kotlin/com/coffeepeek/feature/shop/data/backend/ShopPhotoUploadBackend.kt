@@ -2,7 +2,6 @@ package com.coffeepeek.feature.shop.data.backend
 
 import com.coffeepeek.core.network.requestResult
 import com.coffeepeek.core.network.requirePublicUploadUrl
-import com.coffeepeek.feature.shop.domain.model.ShopReviewPhoto
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.headers
@@ -15,12 +14,12 @@ import io.ktor.http.contentType
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
-/** Preserves the current review-create pipeline, which requests shop-photo upload URLs. */
-internal class ShopReviewPhotoBackend(
+/** Shared shop-photo upload transport for reviews and check-ins. */
+internal class ShopPhotoUploadBackend(
     private val apiClient: HttpClient,
     private val uploadClient: HttpClient,
 ) {
-    suspend fun upload(photos: List<ShopReviewPhoto>): Result<List<UploadedReviewPhoto>> = requestResult {
+    suspend fun upload(photos: List<ShopPhotoUpload>): Result<List<UploadedShopPhoto>> = requestResult {
         if (photos.isEmpty()) return@requestResult emptyList()
         val response = apiClient.post("/api/Photos/shop") {
             contentType(ContentType.Application.Json)
@@ -28,7 +27,7 @@ internal class ShopReviewPhotoBackend(
         }.body<PhotoUploadResponse>()
         val urls = response.data
         if (!response.isSuccess || urls == null || urls.size != photos.size) {
-            throw ShopReviewPhotoUploadRejected()
+            throw ShopPhotoUploadRejected()
         }
         urls.forEach { requirePublicUploadUrl(it.uploadUrl) }
         urls.zip(photos).forEach { (target, photo) ->
@@ -42,7 +41,7 @@ internal class ShopReviewPhotoBackend(
             }
         }
         urls.zip(photos).map { (target, photo) ->
-            UploadedReviewPhoto(photo.fileName, photo.contentType, target.storageKey,
+            UploadedShopPhoto(photo.fileName, photo.contentType, target.storageKey,
                 photo.bytes.size.toLong())
         }
     }
@@ -68,11 +67,17 @@ private data class PhotoUploadUrl(
 )
 
 @Serializable
-internal data class UploadedReviewPhoto(
+internal data class UploadedShopPhoto(
     @SerialName("fileName") val fileName: String,
     @SerialName("contentType") val contentType: String,
     @SerialName("storageKey") val storageKey: String,
     @SerialName("size") val size: Long,
 )
 
-private class ShopReviewPhotoUploadRejected : Exception("Review photo upload request was rejected")
+internal data class ShopPhotoUpload(
+    val bytes: ByteArray,
+    val fileName: String,
+    val contentType: String,
+)
+
+private class ShopPhotoUploadRejected : Exception("Shop photo upload request was rejected")

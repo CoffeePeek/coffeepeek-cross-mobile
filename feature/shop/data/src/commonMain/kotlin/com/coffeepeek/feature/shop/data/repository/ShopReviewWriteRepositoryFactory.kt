@@ -1,7 +1,8 @@
 package com.coffeepeek.feature.shop.data.repository
 
 import com.coffeepeek.core.network.requestResult
-import com.coffeepeek.feature.shop.data.backend.ShopReviewPhotoBackend
+import com.coffeepeek.feature.shop.data.backend.ShopPhotoUpload
+import com.coffeepeek.feature.shop.data.backend.ShopPhotoUploadBackend
 import com.coffeepeek.feature.shop.data.backend.ShopReviewWriteBackend
 import com.coffeepeek.feature.shop.domain.model.MAX_SHOP_REVIEW_PHOTOS
 import com.coffeepeek.feature.shop.domain.model.ShopRating
@@ -16,18 +17,19 @@ fun createShopReviewWriteRepository(
     apiClient: HttpClient,
     uploadClient: HttpClient,
 ): ShopReviewWriteRepository = DefaultShopReviewWriteRepository(
-    ShopReviewPhotoBackend(apiClient, uploadClient), ShopReviewWriteBackend(apiClient),
+    ShopPhotoUploadBackend(apiClient, uploadClient), ShopReviewWriteBackend(apiClient),
 )
 
 private class DefaultShopReviewWriteRepository(
-    private val photos: ShopReviewPhotoBackend,
+    private val photos: ShopPhotoUploadBackend,
     private val writes: ShopReviewWriteBackend,
 ) : ShopReviewWriteRepository {
     override suspend fun create(input: ShopReviewCreateInput): Result<Unit> = requestResult {
         require(input.shopId.isNotBlank()) { "Invalid shop ID" }
         validate(input.header, input.comment, input.rating)
         require(input.photos.size <= MAX_SHOP_REVIEW_PHOTOS) { "Too many review photos" }
-        val uploaded = photos.upload(input.photos).getOrThrow()
+        val uploaded = photos.upload(input.photos.map { ShopPhotoUpload(it.bytes, it.fileName, it.contentType) })
+            .getOrThrow()
         writes.create(input.shopId, input.header.trim(), input.comment.trim(), input.rating,
             uploaded).getOrThrow()
     }

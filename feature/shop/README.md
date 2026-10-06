@@ -1,4 +1,4 @@
-# Shop feature — gallery and detail preparation
+# Shop feature — incremental migration
 
 `feature/shop` owns shop browsing. The first Android slice migrates only the
 menu-photo gallery; the much larger shop-details screen stays in legacy code.
@@ -24,8 +24,8 @@ The existing shared/iOS route and ViewModel remain untouched.
 | Module | Responsibility | Allowed dependencies and consumers |
 |---|---|---|
 | `api` | Minimal composable gallery entry and caller callbacks | Compose runtime; application composition |
-| `domain` | Gallery and read-only details models with repository contracts returning `Result` | Pure Kotlin; shop data/impl |
-| `data` | Shared shop-details HTTP request, narrow DTOs, mappers and factories | Domain, core/network, Ktor, serialization; application composition |
+| `domain` | Gallery/details, review and check-in models, validation and `Result` repository contracts | Pure Kotlin; shop data/impl |
+| `data` | Shop HTTP requests, narrow DTOs, mappers, photo uploads and repository factories | Domain, core/network, Ktor, serialization; application composition |
 | `impl` | MVI gallery screen, resources, previews and API adapter | API/domain, core presentation/design-system; application composition |
 
 Packages alone cannot enforce the domain/transport/UI boundaries or keep HTTP
@@ -81,6 +81,15 @@ as missing. The edit draft adapter uses the existing per-published-review key;
 the current app route and iOS implementation are unchanged. Application
 composition must still construct both form ViewModels, supply authenticated
 clients and Android callbacks, route success, and verify the flows on device.
+The next foundation slice adds a pure check-in input/validation contract and a
+`Result`-returning repository. It reads drink choices from the existing
+`GET /api/catalogs/drinks` endpoint and submits to `POST /api/CheckIns` with the
+current request field names. Reviews and check-ins now share the feature-data
+shop-photo upload transport, while keeping separate domain photo/input types.
+The repository validates before uploading, and uses the caller-supplied
+authenticated API client plus a separate public-upload client. This is not yet
+an active screen: date selection/conversion, draft persistence, photo picking,
+MVI state and the Android navigation bridge remain the next check-in slice.
 Contact link formatting belongs to presentation; opening links and copying phone numbers remain caller
 callbacks, not feature-owned platform calls.
 
