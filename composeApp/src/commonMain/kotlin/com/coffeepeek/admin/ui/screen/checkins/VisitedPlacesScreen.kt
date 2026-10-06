@@ -199,7 +199,7 @@ private fun CalendarCard(
 ) {
     val month = state.calendarMonth
     val total = state.calendarCheckIns.values.sumOf { it.size }
-    val shops = state.calendarCheckIns.values.flatten().map(CheckIn::shopId).distinct().size
+    val shops = state.calendarCheckIns.values.flatten().map(CheckIn::shopId).filter(String::isNotBlank).distinct().size
     val checkInDates = state.calendarCheckIns.filterValues { it.isNotEmpty() }.keys
 
     Card(
@@ -415,13 +415,6 @@ private fun CheckInListContent(
                     onClick = { Navigator.navigate(Navigator.Screen.ShopDetail(checkIn.shopId)) },
                     onPhotoClick = onPhotoClick,
                 )
-            }
-            if (state.isLoadingMore) {
-                item {
-                    Box(Modifier.fillMaxWidth().padding(CpDimens.spacing3), contentAlignment = Alignment.Center) {
-                        CoffeePeekLoader(size = CpDimens.loaderButton, strokeWidth = 2.dp)
-                    }
-                }
             }
         }
     }

@@ -30,7 +30,8 @@ import kotlinx.serialization.json.doubleOrNull
 internal object ShopMapper {
 
     fun ShortShopDto.toDomain() = CoffeeShop(
-        id = id,
+        id = address.slug,
+        publicAddress = address.toDomain(),
         title = name,
         rating = rating.takeIf { it > 0 },
         cityName = null,
@@ -53,7 +54,8 @@ internal object ShopMapper {
 
     fun CoffeeShopDetailsDto.toDomain(fileUrls: FileUrlResolver) = CoffeeShopDetails(
         shop = CoffeeShop(
-            id = id,
+            id = address.slug,
+            publicAddress = address.toDomain(),
             title = name.orEmpty(),
             rating = rating.takeIf { it > 0 },
             cityName = null,
@@ -76,7 +78,7 @@ internal object ShopMapper {
             type = parseShopType(type, coffeeFocus),
             location = location?.toDomain(),
         ),
-        cityId = cityId,
+        cityId = city?.slug.orEmpty(),
         description = description,
         location = location?.toDomain(),
         isVisited = isVisited,
@@ -98,8 +100,12 @@ internal object ShopMapper {
         reviews = reviews.map { it.toDomain(fileUrls) },
         userCheckIns = userCheckIns.map { checkIn ->
             CheckIn(
+                drinkSlug = checkIn.drinkSlug,
+                customDrinkName = checkIn.customDrinkName,
+                drinkNameRu = checkIn.drinkNameRu,
+                drinkNameEn = checkIn.drinkNameEn,
                 id = checkIn.id,
-                shopId = checkIn.shopId,
+                shopId = checkIn.shop?.slug.orEmpty(),
                 shopName = checkIn.shopName.orEmpty().ifBlank { name.orEmpty() },
                 note = checkIn.note.orEmpty(),
                 createdAt = checkIn.createdAt,
@@ -130,20 +136,21 @@ internal object ShopMapper {
         },
         brewMethods = brewMethods.mapNotNull { it.name?.takeIf(String::isNotBlank) },
         brewMethodItems = brewMethods.map {
-            CatalogItem(id = it.id, name = it.name.orEmpty(), slug = it.slug, photoUrl = it.photoUrl)
+            CatalogItem(id = it.key, name = it.name.orEmpty(), slug = it.key, photoUrl = it.photoUrl, address = it.address?.toDomain())
         },
         coffeeBeans = coffeeBeans.mapNotNull { it.name?.takeIf(String::isNotBlank) },
         roasters = roasters.map {
             CatalogItem(
-                id = it.id,
+                id = it.key,
                 name = it.name.orEmpty(),
-                slug = it.slug,
+                slug = it.key,
                 photoUrl = it.photoUrl,
+                address = it.address?.toDomain(),
             )
         },
         equipment = equipments.mapNotNull { it.name?.takeIf(String::isNotBlank) },
         equipmentItems = equipments.map {
-            CatalogItem(id = it.id, name = it.name.orEmpty(), slug = it.slug, photoUrl = it.photoUrl)
+            CatalogItem(id = it.key, name = it.name.orEmpty(), slug = it.key, photoUrl = it.photoUrl, address = it.address?.toDomain())
         },
         tagItems = parseTagItems(shopTags).ifEmpty { parseTagItems(tags) },
         schedules = utcSchedulesToLocal(schedules.orEmpty().map { schedule ->
@@ -169,10 +176,14 @@ internal object ShopMapper {
         )
 
     fun ReviewDto.toDomain(fileUrls: FileUrlResolver) = Review(
+        drinkSlug = drinkSlug,
+        customDrinkName = customDrinkName,
+        drinkNameRu = drinkNameRu,
+        drinkNameEn = drinkNameEn,
         id = id,
         moderationReviewId = moderationReviewId,
-        shopId = coffeeShopId,
-        userId = userId,
+        shopId = shop?.slug.orEmpty(),
+        userId = author?.slug.orEmpty(),
         username = username.orEmpty(),
         header = header.orEmpty(),
         comment = comment.orEmpty(),
@@ -269,7 +280,7 @@ internal object ShopMapper {
         val array = raw as? JsonArray ?: return emptyList()
         return array.mapNotNull { item ->
             val obj = item as? JsonObject ?: return@mapNotNull null
-            val id = obj.readString("id") ?: return@mapNotNull null
+            val id = obj.readString("slug") ?: return@mapNotNull null
             if (id.isBlank()) return@mapNotNull null
             CatalogItem(
                 id = id,

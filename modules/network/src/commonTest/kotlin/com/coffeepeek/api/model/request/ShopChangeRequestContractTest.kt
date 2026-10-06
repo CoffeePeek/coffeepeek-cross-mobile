@@ -14,12 +14,12 @@ class ShopChangeRequestContractTest {
         val encoded = json.encodeToString(
             CreateShopChangeRequestBody.serializer(),
             CreateShopChangeRequestBody(
-                shopId = "611c3b59-c086-44bb-a4c5-c350be4ee7d9",
+                shopId = "26-october-16",
                 section = ShopChangeSectionDto.Description,
                 payload = ShopChangePayloadDto(description = "Новое описание кофейни"),
             ),
         )
-        assertContains(encoded, "\"shopId\":\"611c3b59-c086-44bb-a4c5-c350be4ee7d9\"")
+        assertContains(encoded, "\"shop\":\"26-october-16\"")
         assertContains(encoded, "\"section\":\"Description\"")
         assertContains(encoded, "\"description\":\"Новое описание кофейни\"")
     }
@@ -49,12 +49,10 @@ class ShopChangeRequestContractTest {
             """
             {
               "id": "req-1",
-              "shopId": "shop-1",
-              "submittedByUserId": "user-1",
+              "shop": {"slug":"shop-1","canonicalPath":"/coffee-shops/shop-1","revision":1,"isAlias":false},
               "section": "Tags",
-              "payload": { "tagIds": ["tag-1"] },
+              "payload": { "tags": ["tag-1"] },
               "status": "Pending",
-              "reviewedByUserId": null,
               "reviewedAtUtc": null,
               "rejectionReason": null,
               "createdAtUtc": "2026-09-22T08:00:00Z",

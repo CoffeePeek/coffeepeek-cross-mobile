@@ -54,7 +54,8 @@ fun CpCircularBackButton(
     modifier: Modifier = Modifier,
     tint: Color = MaterialTheme.colorScheme.onSurface,
 ) {
-    GlassIconButton(
+    PlatformGlassIconButton(
+        icon = GlassControlIcon.Back,
         onClick = onClick,
         contentDescription = "Назад",
         modifier = modifier,

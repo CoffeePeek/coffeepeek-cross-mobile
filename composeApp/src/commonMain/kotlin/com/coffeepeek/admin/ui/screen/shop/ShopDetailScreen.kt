@@ -66,6 +66,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.contentDescription
 import com.coffeepeek.admin.ui.component.liquidGlass
+import com.coffeepeek.admin.ui.component.GlassControlIcon
+import com.coffeepeek.admin.ui.component.PlatformGlassIconButton
 import com.coffeepeek.admin.ui.component.SwipeablePhotoStack
 import dev.chrisbanes.haze.HazeState
 import dev.chrisbanes.haze.hazeSource
@@ -97,6 +99,7 @@ import com.coffeepeek.admin.ui.component.CheckInDisplayCard
 import com.coffeepeek.admin.ui.component.GuestAuthCard
 import com.coffeepeek.admin.ui.component.ReviewDisplayCard
 import com.coffeepeek.admin.utils.currentLocalDayOfWeek
+import com.coffeepeek.admin.utils.currentLocalMinuteOfDay
 import com.coffeepeek.admin.ui.component.PriceBynRow
 import com.coffeepeek.admin.ui.component.PriceBynIcon
 import com.coffeepeek.admin.ui.component.priceRangeLevel
@@ -146,6 +149,9 @@ fun ShopDetailScreen(shopId: String) {
     if (state.showCheckInSheet) {
         state.checkInDraft?.let { draft ->
             CheckInBottomSheet(
+                drinks = state.drinks,
+                drinksError = state.drinksError,
+                onRetryDrinks = vm::loadDrinks,
                 draft = draft,
                 isLoading = state.isCheckInLoading,
                 onDismiss = vm::dismissCheckInSheet,
@@ -396,6 +402,9 @@ private fun ShopDetailContent(
         item {
             ReviewsSection(
                 reviews = details.reviews,
+                overallRating = shop.rating,
+                reviewCount = shop.reviewCount,
+                shopId = shop.id,
                 shopTitle = shop.title,
                 isLoggedIn = isLoggedIn,
                 currentUserId = currentUserId,
@@ -523,6 +532,7 @@ private fun HeroTopActions(
         verticalAlignment = Alignment.Top,
     ) {
         HeroIconButton(
+            icon = GlassControlIcon.Back,
             hazeState = hazeState,
             onClick = onBack,
             enabled = true,
@@ -682,6 +692,7 @@ private fun HeaderActionButtons(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         HeroIconButton(
+            icon = GlassControlIcon.Edit,
             hazeState = hazeState,
             onClick = onSuggestChange,
             enabled = true,
@@ -695,6 +706,7 @@ private fun HeaderActionButtons(
             )
         }
         HeroIconButton(
+            icon = if (isFavorite) GlassControlIcon.FavoriteFilled else GlassControlIcon.Favorite,
             hazeState = hazeState,
             onClick = onToggleFavorite,
             enabled = !isFavoriteLoading,
@@ -708,6 +720,7 @@ private fun HeaderActionButtons(
             )
         }
         HeroIconButton(
+            icon = GlassControlIcon.Share,
             hazeState = hazeState,
             onClick = onShare,
             enabled = true,
@@ -731,7 +744,7 @@ private fun ShopStatsRow(
     priceRange: String?,
     schedules: List<ShopSchedule>,
 ) {
-    val currentDay = remember { currentLocalDayOfWeek() }
+    val currentDay = currentLocalDayOfWeek()
     val todaySchedule = remember(schedules, currentDay) {
         schedules.firstOrNull { it.dayOfWeek == currentDay }
     }
@@ -803,14 +816,14 @@ private fun ShopStatsRow(
             }
             Text(
                 text = when {
-                    todaySchedule?.isClosed == true -> "Сегодня выходной"
                     isOpen && closingTime != null -> "до $closingTime"
-                    closingTime != null -> "сегодня до $closingTime"
-                    else -> "Сегодня"
+                    isOpen -> "Сегодня"
+                    else -> nextShopOpeningLabel(schedules, currentDay, currentLocalMinuteOfDay())
+                        ?: if (todaySchedule?.isClosed == true) "Сегодня выходной" else "Расписание не указано"
                 },
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 1,
+                maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
             )
         }
@@ -914,6 +927,7 @@ private fun shopFeatureItems(details: CoffeeShopDetails): List<ShopFeatureItem> 
 
 @Composable
 private fun HeroIconButton(
+    icon: GlassControlIcon,
     hazeState: HazeState,
     onClick: () -> Unit,
     enabled: Boolean,
@@ -921,25 +935,22 @@ private fun HeroIconButton(
     contentDescription: String,
     content: @Composable () -> Unit,
 ) {
-    Box(
-        modifier = Modifier
-            .size(CpDimens.buttonHeight)
-            .liquidGlass(CircleShape, hazeState),
+    PlatformGlassIconButton(
+        icon = icon,
+        onClick = onClick,
+        enabled = enabled,
+        isLoading = isLoading,
+        contentDescription = contentDescription,
+        hazeState = hazeState,
     ) {
-        IconButton(
-            onClick = onClick,
-            enabled = enabled,
-            modifier = Modifier.semantics { this.contentDescription = contentDescription },
-        ) {
-            if (isLoading) {
-                CoffeePeekLoader(
-                    size = 18.dp,
-                    strokeWidth = 2.dp,
-                    color = MaterialTheme.colorScheme.primary,
-                )
-            } else {
-                content()
-            }
+        if (isLoading) {
+            CoffeePeekLoader(
+                size = 18.dp,
+                strokeWidth = 2.dp,
+                color = MaterialTheme.colorScheme.primary,
+            )
+        } else {
+            content()
         }
     }
 }
@@ -1136,6 +1147,9 @@ private fun PhoneContactPill(
 @Composable
 private fun ReviewsSection(
     reviews: List<Review>,
+    overallRating: Double?,
+    reviewCount: Int,
+    shopId: String,
     shopTitle: String,
     isLoggedIn: Boolean,
     currentUserId: String?,
@@ -1146,10 +1160,16 @@ private fun ReviewsSection(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = CpDimens.spacing4)
-            .padding(top = CpDimens.spacing6, bottom = CpDimens.spacing3),
-        verticalArrangement = Arrangement.spacedBy(CpDimens.spacing3),
+            .padding(top = CpDimens.spacing3, bottom = CpDimens.spacing2),
+        verticalArrangement = Arrangement.spacedBy(CpDimens.spacing2),
     ) {
-        SectionTitle("Отзывы")
+        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
+            Box(Modifier.weight(1f)) { SectionTitle("Отзывы") }
+            if (reviews.isNotEmpty()) IconButton(onClick = { Navigator.navigate(Navigator.Screen.ShopReviews(shopId)) }) {
+                Icon(CpIcons.ChevronRight, contentDescription = "Все отзывы")
+            }
+        }
+        if (reviews.isNotEmpty()) com.coffeepeek.admin.ui.component.ReviewRatingsOverview(reviews, overallRating, reviewCount)
         if (reviews.isEmpty()) {
             EmptyMascotState(
                 mascot = Res.drawable.maskot_with_book,
@@ -1171,7 +1191,7 @@ private fun ReviewsSection(
 
                 LazyRow(horizontalArrangement = Arrangement.spacedBy(itemSpacing)) {
                     items(
-                        count = reviews.size,
+                        count = reviews.take(3).size,
                         key = { index -> reviews[index].id },
                     ) { index ->
                         val review = reviews[index]
@@ -1186,7 +1206,8 @@ private fun ReviewsSection(
                                 modifier = Modifier.fillMaxWidth(),
                                 onPhotoClick = if (isBlurred) ({ _, _ -> }) else onReviewPhotoClick,
                                 onHelpfulClick = null,
-                                equalizeHeight = reviews.size > 1,
+                                showHelpfulButton = false,
+                                equalizeHeight = false,
                             )
                         }
                     }
@@ -1202,7 +1223,7 @@ private fun ReviewsSection(
                 horizontalArrangement = Arrangement.spacedBy(CpDimens.spacing3),
             ) {
                 items(
-                    count = reviews.size,
+                    count = reviews.take(3).size,
                     key = { index -> reviews[index].id },
                 ) { index ->
                     val review = reviews[index]
@@ -1220,8 +1241,8 @@ private fun ReviewsSection(
                             onPhotoClick = onReviewPhotoClick,
                             // No "helpful" on your own review.
                             onHelpfulClick = if (isOwnReview) null else ({ onReviewHelpfulClick(review.id) }),
-                            showHelpfulButton = !isOwnReview,
-                            equalizeHeight = reviews.size > 1,
+                            showHelpfulButton = false,
+                            equalizeHeight = false,
                         )
                     }
                 }

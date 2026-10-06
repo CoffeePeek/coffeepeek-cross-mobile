@@ -1,5 +1,9 @@
 package com.coffeepeek.admin.ui.screen.shop
 
+import com.coffeepeek.domain.model.validateConsumedDrink
+
+import com.coffeepeek.domain.model.ConsumedDrinkOption
+
 import com.coffeepeek.admin.base.BaseViewModel
 import com.coffeepeek.admin.ui.Navigator
 import com.coffeepeek.admin.utils.ClipboardHelper
@@ -19,6 +23,7 @@ import com.coffeepeek.domain.repository.FavoriteRepository
 import com.coffeepeek.domain.repository.ReviewRepository
 import com.coffeepeek.domain.repository.SessionRepository
 import com.coffeepeek.domain.repository.ShopRepository
+import com.coffeepeek.domain.repository.UserRepository
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -27,6 +32,8 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 data class ShopDetailUiState(
+    val drinks: List<ConsumedDrinkOption> = emptyList(),
+    val drinksError: String? = null,
     val details: CoffeeShopDetails? = null,
     val isLoggedIn: Boolean = false,
     val currentUserId: String? = null,
@@ -49,6 +56,7 @@ class ShopDetailViewModel(
     private val reviewRepository: ReviewRepository,
     private val sessionRepository: SessionRepository,
     private val checkInDraftStore: CheckInDraftStore,
+    private val userRepository: UserRepository,
 ) : BaseViewModel() {
 
     private val _uiState = MutableStateFlow(ShopDetailUiState())
@@ -75,7 +83,7 @@ class ShopDetailViewModel(
 
     private suspend fun refreshDetails(showLoading: Boolean) {
         val isLoggedIn = sessionRepository.isLoggedIn()
-        val currentUserId = if (isLoggedIn) sessionRepository.getSession()?.userId else null
+        val currentUserId = if (isLoggedIn) userRepository.getMe().getOrNull()?.address?.slug else null
         shopRepository.getShopDetails(shopId)
             .mapCatching { enrichWithReviewAccess(it) }
             .onSuccess { details ->
@@ -103,10 +111,7 @@ class ShopDetailViewModel(
             // userCheckIns are the signed-in user's own — never show them to a logged-out viewer.
             return details.copy(existingReviewId = null, userCheckIns = emptyList())
         }
-        return reviewRepository.canCreateReview(shopId).fold(
-            onSuccess = { (_, reviewId) -> details.copy(existingReviewId = reviewId) },
-            onFailure = { details },
-        )
+        return details
     }
 
     fun toggleFavorite() {
@@ -152,6 +157,7 @@ class ShopDetailViewModel(
                 Navigator.navigate(Navigator.Screen.Auth)
                 return@launch
             }
+            loadDrinks()
             val draft = checkInDraftStore.open(shopId)
             _uiState.update {
                 it.copy(
@@ -161,6 +167,14 @@ class ShopDetailViewModel(
                     editingReviewId = null,
                 )
             }
+        }
+    }
+
+    fun loadDrinks() {
+        workScope.launch {
+            shopRepository.getConsumedDrinks().onSuccess { drinks ->
+                _uiState.update { it.copy(drinks = drinks, drinksError = null) }
+            }.onFailure { e -> _uiState.update { it.copy(drinksError = e.message ?: "Не удалось загрузить напитки") } }
         }
     }
 
@@ -176,6 +190,8 @@ class ShopDetailViewModel(
 
     fun checkIn(draft: CheckInDraft) {
         if (draft.shopId != shopId) return
+        val drinkError = validateConsumedDrink(draft.drinkSlug, draft.customDrinkName)
+        if (drinkError != null) { _uiState.update { it.copy(actionMessage = drinkError) }; return }
         if (_uiState.value.isCheckInLoading) return
         if (draft.isPublic && (
                 validatePublicCheckInHeader(draft.header) != null ||
@@ -192,6 +208,8 @@ class ShopDetailViewModel(
             checkInRepository.createCheckIn(
                 CreateCheckInInput(
                     shopId = shopId,
+                    drinkSlug = draft.drinkSlug,
+                    customDrinkName = draft.customDrinkName?.trim(),
                     header = draft.header.trim().takeIf { draft.isPublic },
                     note = draft.note.trim().takeIf { it.isNotEmpty() },
                     visitedAtIso = datePickerMillisToUtcIsoInstant(draft.visitMillis),
@@ -345,7 +363,8 @@ class ShopDetailViewModel(
 
     fun shareShop() {
         val title = _uiState.value.details?.shop?.title?.takeIf { it.isNotBlank() }
-        val shareUrl = "https://coffeepeek.by/shops/$shopId"
+        val path = _uiState.value.details?.shop?.publicAddress?.canonicalPath ?: return
+        val shareUrl = "https://coffeepeek.by$path"
         val text = if (title != null) {
             "Нашёл кофейню «$title» в CoffeePeek — загляни: $shareUrl"
         } else {

@@ -1,5 +1,7 @@
 package com.coffeepeek.data.repository
 
+import com.coffeepeek.domain.model.validateConsumedDrink
+
 import com.coffeepeek.api.model.request.CreateCheckInReq
 import com.coffeepeek.api.model.response.CheckInDto
 import com.coffeepeek.api.model.response.shop.variantOr
@@ -20,6 +22,7 @@ class CheckInRepositoryImpl(
 ) : CheckInRepository {
 
     override suspend fun createCheckIn(input: CreateCheckInInput): Result<Unit> = runCatching {
+        validateConsumedDrink(input.drinkSlug, input.customDrinkName)?.let { error(it) }
         val placeRating = input.placeRating
         val serviceRating = input.serviceRating
         val coffeeRating = input.coffeeRating
@@ -43,6 +46,8 @@ class CheckInRepositoryImpl(
                 coffeeShopId = input.shopId,
                 isPublic = input.isPublic,
                 visitedAt = input.visitedAtIso,
+                drinkSlug = input.drinkSlug,
+                customDrinkName = input.customDrinkName?.trim(),
                 header = input.header?.takeIf { it.isNotBlank() },
                 note = input.note?.takeIf { it.isNotBlank() },
                 photos = uploadedPhotos,
@@ -69,8 +74,12 @@ class CheckInRepositoryImpl(
         }
 
     private fun CheckInDto.toDomain() = CheckIn(
+        drinkSlug = drinkSlug,
+        customDrinkName = customDrinkName,
+        drinkNameRu = drinkNameRu,
+        drinkNameEn = drinkNameEn,
         id = id,
-        shopId = shopId,
+        shopId = shop?.slug.orEmpty(),
         shopName = shopName.orEmpty(),
         note = note.orEmpty(),
         createdAt = createdAt,

@@ -29,7 +29,7 @@ import com.adamglin.phosphoricons.regular.Egg
 import com.adamglin.phosphoricons.regular.InstagramLogo
 import com.adamglin.phosphoricons.regular.Eye
 import com.adamglin.phosphoricons.regular.EyeSlash
-import com.adamglin.phosphoricons.regular.Funnel
+import com.adamglin.phosphoricons.regular.SlidersHorizontal
 import com.adamglin.phosphoricons.regular.Factory
 import com.adamglin.phosphoricons.regular.Footprints
 import com.adamglin.phosphoricons.regular.GearSix
@@ -96,7 +96,7 @@ object CpIcons {
     val Factory: ImageVector get() = PhosphorIcons.Regular.Factory
     val Favorite: ImageVector get() = PhosphorIcons.Regular.Heart
     val FavoriteFilled: ImageVector get() = PhosphorIcons.Fill.FillHeart
-    val Filter: ImageVector get() = PhosphorIcons.Regular.Funnel
+    val Filter: ImageVector get() = PhosphorIcons.Regular.SlidersHorizontal
     val Footprints: ImageVector get() = PhosphorIcons.Regular.Footprints
     val Gallery: ImageVector get() = PhosphorIcons.Regular.Images
     val Globe: ImageVector get() = PhosphorIcons.Regular.Globe

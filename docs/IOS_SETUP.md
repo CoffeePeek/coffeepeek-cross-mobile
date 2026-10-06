@@ -117,7 +117,7 @@ xcodebuild \
 - Ktor Darwin и тот же REST API;
 - Room/SQLite;
 - Keychain для access/refresh token;
-- MapKit: кофейни, кластеры, зоны и их радиусы;
+- MapLibre: кофейни, кластеры, зоны и их радиусы; провайдер регистрируется при запуске iOS-приложения;
 - CoreLocation и reverse geocoding;
 - системные камера и многовыбор фото через PhotosUI;
 - Google Sign-In через официальный Swift Package;
