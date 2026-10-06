@@ -75,11 +75,12 @@ fun SettingsRow(
     showArrow: Boolean = true,
     iconColors: SettingsIconColors = SettingsIconPalette.Cyan,
     trailing: @Composable (() -> Unit)? = null,
+    enabled: Boolean = true,
 ) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(onClick = onClick)
+            .clickable(enabled = enabled, onClick = onClick)
             .padding(
                 horizontal = CpDimens.settingsRowPaddingH,
                 vertical = CpDimens.settingsRowPaddingV,

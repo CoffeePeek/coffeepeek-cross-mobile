@@ -24,6 +24,7 @@ import com.coffeepeek.admin.ui.screen.deleteaccount.DeleteAccountPendingViewMode
 import com.coffeepeek.admin.ui.screen.checkins.VisitedPlacesViewModel
 import com.coffeepeek.admin.ui.screen.favorites.FavoritesViewModel
 import com.coffeepeek.admin.ui.screen.review.CreateReviewViewModel
+import com.coffeepeek.admin.ui.screen.review.ReviewReportViewModel
 import com.coffeepeek.admin.ui.screen.review.EditReviewViewModel
 import com.coffeepeek.admin.ui.screen.contributions.ContributionKind
 import com.coffeepeek.admin.ui.screen.contributions.MyContributionsViewModel
@@ -72,6 +73,7 @@ fun initKoin(
         ),
         appModule(database.settingRepository, shopReportRendererFactory, shopGalleryRendererFactory),
         imageModule(),
+        updateInstallerModule(),
     )
     startKoin { modules(commonModules + platformModules) }
 }
@@ -83,6 +85,10 @@ private fun appModule(
 ) = module {
     single<ShopReportScreenRenderer> { shopReportRendererFactory(get()) }
     single<ShopMenuGalleryScreenRenderer> { shopGalleryRendererFactory(get()) }
+    single<com.coffeepeek.admin.feature.appupdate.domain.AppUpdateRepository> {
+        com.coffeepeek.admin.feature.appupdate.data.AppUpdateRepositoryImpl(get<CoffeePeekClient>().plainClient, settingRepository)
+    }
+    single { com.coffeepeek.admin.feature.appupdate.ui.AppUpdateState(get()) }
     single<CustomUrlFetcher> { createImageUrlFetcher(get<CoffeePeekClient>().client) }
     single { CheckInDraftStore() }
     single { CityPreference(settingRepository) }
@@ -91,8 +97,10 @@ private fun appModule(
     factory { RegisterViewModel(get()) }
     factory { NavigatorViewModel(get()) }
     factory { FeedViewModel(get(), get(), get(), get(), getOrNull<ObserveFavoriteIdsUseCase>()) }
+    factory { com.coffeepeek.admin.ui.screen.roaster.RoasterListViewModel(get(), get()) }
     factory { MapViewModel(get(), get()) }
-    factory { (shopId: String) -> ShopDetailViewModel(shopId, get(), get(), get(), get(), get(), get(), getOrNull<ObserveFavoriteIdsUseCase>()) }
+    factory { (shopId: String) -> ShopDetailViewModel(shopId, get(), get(), get(), get(), get(), get(),
+        userRepository = get(), observeFavoriteIds = getOrNull<ObserveFavoriteIdsUseCase>()) }
     factory { (shopId: String) -> ShopMenuGalleryViewModel(shopId, get()) }
     factory { (shopId: String) -> ShopReportViewModel(shopId, get()) }
     factory { (shopId: String) -> SuggestShopChangeViewModel(shopId, get()) }
@@ -105,10 +113,11 @@ private fun appModule(
     factory { AddShopViewModel(get()) }
     factory { EditProfileViewModel(get()) }
     factory { FavoritesViewModel(get()) }
-    factory { (kind: ContributionKind) -> MyContributionsViewModel(kind, get(), get(), get(), get(), get()) }
+    factory { (kind: ContributionKind) -> MyContributionsViewModel(kind, get(), get(), get(), get(), get(), get()) }
     factory { VisitedPlacesViewModel(get(), get()) }
     factory { AddRoasterViewModel(get(), get()) }
     factory { (roasterId: String) -> RoasterDetailViewModel(roasterId, get(), get()) }
-    factory { (shopId: String) -> CreateReviewViewModel(shopId, get(), get()) }
-    factory { (reviewId: String) -> EditReviewViewModel(reviewId, get(), get(), get()) }
+    factory { (shopId: String) -> CreateReviewViewModel(shopId, get(), get(), get()) }
+    factory { (reviewId: String) -> ReviewReportViewModel(reviewId, get(), get()) }
+    factory { (reviewId: String) -> EditReviewViewModel(reviewId, get(), get(), get(), get(), get()) }
 }

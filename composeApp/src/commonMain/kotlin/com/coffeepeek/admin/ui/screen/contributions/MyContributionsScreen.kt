@@ -182,13 +182,6 @@ private fun ContributionList(
                 ContributionCard(item = item, kind = kind, status = status)
             }
         }
-        if (tab.isLoadingMore) {
-            item {
-                Box(Modifier.fillMaxWidth().padding(CpDimens.spacing3), contentAlignment = Alignment.Center) {
-                    CoffeePeekLoader(size = CpDimens.loaderButton, strokeWidth = 2.dp)
-                }
-            }
-        }
     }
 }
 
