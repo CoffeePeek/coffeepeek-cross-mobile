@@ -3,6 +3,7 @@
 package com.coffeepeek.api.model.response.shop
 
 import com.coffeepeek.api.model.DataResponse
+import com.coffeepeek.api.model.PublicAddressDto
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonElement
@@ -10,12 +11,12 @@ import kotlinx.serialization.json.JsonNames
 
 @Serializable
 data class MapShopDto(
-    @SerialName("id") @JsonNames("Id") val id: String,
+    @SerialName("address") val address: PublicAddressDto,
     @SerialName("latitude") @JsonNames("Latitude") val latitude: Double,
     @SerialName("longitude") @JsonNames("Longitude") val longitude: Double,
     @SerialName("title") @JsonNames("Title") val title: String? = null,
     @SerialName("type") @JsonNames("Type") val type: JsonElement? = null,
-    @SerialName("primaryZoneId") @JsonNames("PrimaryZoneId") val primaryZoneId: String? = null,
+    @SerialName("primaryZone") val primaryZone: PublicAddressDto? = null,
 )
 
 @Serializable
@@ -45,7 +46,7 @@ data class MapClusterBoundsDto(
 
 @Serializable
 data class MapCoffeeZoneDto(
-    @SerialName("id") @JsonNames("Id") val id: String,
+    @SerialName("address") val address: PublicAddressDto,
     @SerialName("name") @JsonNames("Name") val name: String = "",
     @SerialName("description") @JsonNames("Description") val description: String = "",
     @SerialName("latitude") @JsonNames("Latitude") val latitude: Double,

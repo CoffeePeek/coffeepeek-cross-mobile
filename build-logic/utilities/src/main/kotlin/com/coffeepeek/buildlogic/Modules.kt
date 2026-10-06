@@ -10,14 +10,13 @@ object Modules {
 
     object Feature {
         val favorites = Favorites
+        val shopReport = ShopReport
         object Favorites {
             const val api = ":feature:favorites:api"
             const val domain = ":feature:favorites:domain"
             const val data = ":feature:favorites:data"
             const val impl = ":feature:favorites:impl"
         }
-
-        val shopReport = ShopReport
         object ShopReport {
             const val api = ":feature:shop-report:api"
             const val domain = ":feature:shop-report:domain"

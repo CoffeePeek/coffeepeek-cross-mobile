@@ -13,6 +13,8 @@ internal actual fun currentEpochMillis(): Long = System.currentTimeMillis()
 
 internal actual fun currentLocalDayOfWeek(): Int = LocalDate.now().dayOfWeek.value % 7
 
+internal actual fun currentLocalMinuteOfDay(): Int = java.time.LocalTime.now().let { it.hour * 60 + it.minute }
+
 internal actual fun datePickerMillisToUtcIsoInstant(millis: Long): String =
     datePickerMillisToUtcIsoInstant(millis, ZoneId.systemDefault())
 

@@ -8,6 +8,8 @@ internal expect fun currentEpochMillis(): Long
 /** Current local day of week using the API convention: Sunday = 0, Monday = 1. */
 internal expect fun currentLocalDayOfWeek(): Int
 
+internal expect fun currentLocalMinuteOfDay(): Int
+
 /** Convert the calendar day selected in the local time zone to a UTC instant. */
 internal expect fun datePickerMillisToUtcIsoInstant(millis: Long): String
 

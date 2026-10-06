@@ -18,4 +18,6 @@ dependencies {
 
     testImplementation(libs.kotlin.test)
     testImplementation("io.ktor:ktor-client-mock:${libs.versions.ktor.get()}")
+    testImplementation(libs.ktor.client.content.negotiation)
+    testImplementation(libs.ktor.serialization.kotlinx.json)
 }
