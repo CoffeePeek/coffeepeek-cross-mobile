@@ -45,6 +45,7 @@ class FavoriteMembershipObservationTest {
         val details = CompletableDeferred<CoffeeShopDetails>()
 
         override suspend fun getCatalogs() = Result.success(ShopCatalogs())
+        override suspend fun getConsumedDrinks(): Result<List<ConsumedDrinkOption>> = error("unused")
         override suspend fun searchShops(filters: ShopFilters) = Result.success(search.await())
         override suspend fun getShopDetails(id: String) = Result.success(details.await())
         override suspend fun getMapContent(bounds: MapBounds, zoom: Float, filters: ShopFilters): Result<MapContent> = error("unused")
@@ -90,12 +91,24 @@ class FavoriteMembershipObservationTest {
     }
 
     private object Reviews : ReviewRepository {
-        override suspend fun canCreateReview(shopId: String): Result<Pair<Boolean, String?>> = error("unused")
+        override suspend fun submitReviewReport(reviewId: String, text: String): Result<String> = error("unused")
         override suspend fun createReview(input: CreateReviewInput): Result<Unit> = error("unused")
         override suspend fun updateReview(reviewId: String, input: UpdateReviewInput): Result<Unit> = error("unused")
         override suspend fun getUserReviews(userId: String, page: Int, pageSize: Int): Result<PagedResult<Review>> = error("unused")
         override suspend fun getMyReviewSubmissions(status: ModerationStatus, page: Int, pageSize: Int): Result<PagedResult<ReviewSubmission>> = error("unused")
         override suspend fun setReviewHelpful(reviewId: String, helpful: Boolean): Result<HelpfulVote> = error("unused")
+    }
+
+    private object Users : UserRepository {
+        override fun observeProfile() = MutableStateFlow<UserProfile?>(null)
+        override suspend fun refreshProfile(): Result<UserProfile> = error("unused")
+        override suspend fun getMe(): Result<UserProfile> = error("unused")
+        override suspend fun getPublicAvatarUrl(userId: String): Result<String?> = error("unused")
+        override suspend fun requestAccountDeletion(): Result<AccountDeletionRequest> = error("unused")
+        override suspend fun getAccountDeletionRequest(): Result<AccountDeletionRequest?> = error("unused")
+        override suspend fun updateUsername(username: String): Result<Unit> = error("unused")
+        override suspend fun updateAbout(about: String): Result<Unit> = error("unused")
+        override suspend fun updateAvatar(photo: PendingPhotoUpload): Result<Unit> = error("unused")
     }
 
     @Test fun feedAppliesMembershipEvenWhenCatalogResponseArrivesLater() = runBlocking {
@@ -118,7 +131,7 @@ class FavoriteMembershipObservationTest {
         val membership = Membership()
         val shops = Shops()
         val vm = ShopDetailViewModel("shop", shops, LegacyFavorites, CheckIns, Reviews, Sessions,
-            CheckInDraftStore { 0L }, ObserveFavoriteIdsUseCase(membership))
+            CheckInDraftStore { 0L }, Users, ObserveFavoriteIdsUseCase(membership))
         try {
             membership.set("shop")
             shops.details.complete(CoffeeShopDetails(shop))
