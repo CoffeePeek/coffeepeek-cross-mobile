@@ -44,7 +44,7 @@
     <string name="profile_version">Версия</string>
     <string name="retry">Попробовать снова</string>
     <string name="checkin_title">Отметить посещение</string>
-    <string name="checkin_note_hint_private">Заметка (необязательно)</string>
+    <string name="checkin_note_hint_private">Заметка</string>
     <string name="checkin_note_hint_public">Комментарий к отзыву</string>
     <string name="checkin_public_title">Публичный чек-ин</string>
     <string name="checkin_public_hint">Появится в ленте как отзыв — нужен комментарий</string>
@@ -55,9 +55,9 @@
     <string name="checkin_rating_service">Сервис</string>
     <string name="checkin_rating_atmosphere">Атмосф.</string>
     <string name="checkin_date_label">Дата посещения</string>
-    <string name="checkin_note_label">Заметка (необязательно)</string>
+    <string name="checkin_note_label">Заметка</string>
     <string name="checkin_note_placeholder">Расскажите о вашем визите…</string>
-    <string name="checkin_photos_label">Фото (необязательно)</string>
+    <string name="checkin_photos_label">Фото</string>
     <string name="checkin_public_switch_title">Сделать публичным</string>
     <string name="checkin_public_switch_hint">Ваш чекин станет отзывом — нужны заголовок и описание</string>
     <string name="checkin_header_label">Заголовок</string>

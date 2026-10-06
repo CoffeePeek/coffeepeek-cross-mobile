@@ -1,5 +1,7 @@
 package com.coffeepeek.admin.ui.screen.review
 
+import com.coffeepeek.admin.ui.component.ReviewFormStep
+
 import com.coffeepeek.admin.ui.component.CpTopBar
 
 import com.coffeepeek.admin.ui.icons.CpIcons
@@ -58,22 +60,37 @@ fun CreateReviewScreen(shopId: String) {
                 .padding(CpDimens.spacing4),
             verticalArrangement = Arrangement.spacedBy(CpDimens.spacing3),
         ) {
-            ReviewHeaderField(state.header, vm::onHeaderChange, error = state.headerError)
-            ReviewCommentField(state.comment, vm::onCommentChange, error = state.commentError)
-            ReviewRatingCards(
-                coffeeRating = state.coffeeRating,
-                serviceRating = state.serviceRating,
-                placeRating = state.placeRating,
-                onCoffeeRatingChange = vm::onCoffeeRating,
-                onServiceRatingChange = vm::onServiceRating,
-                onPlaceRatingChange = vm::onPlaceRating,
-            )
-            PhotoAttachmentsSection(
-                photos = state.photos,
-                maxPhotos = MAX_REVIEW_PHOTOS,
-                onPhotosAdded = vm::addPhotos,
-                onRemovePhoto = vm::removePhoto,
-            )
+            Column {
+                ReviewFormStep {
+                    ReviewHeaderField(state.header, vm::onHeaderChange, error = state.headerError)
+                }
+                ReviewFormStep {
+                    ReviewCommentField(state.comment, vm::onCommentChange, error = state.commentError)
+                }
+                ReviewFormStep {
+                    ReviewRatingCards(
+                        coffeeRating = state.coffeeRating,
+                        serviceRating = state.serviceRating,
+                        placeRating = state.placeRating,
+                        onCoffeeRatingChange = vm::onCoffeeRating,
+                        onServiceRatingChange = vm::onServiceRating,
+                        onPlaceRatingChange = vm::onPlaceRating,
+                    )
+                }
+                ReviewFormStep(optional = true) {
+                    PhotoAttachmentsSection(
+                        photos = state.photos,
+                        maxPhotos = MAX_REVIEW_PHOTOS,
+                        onPhotosAdded = vm::addPhotos,
+                        onRemovePhoto = vm::removePhoto,
+                    )
+                }
+
+                ReviewFormStep(optional = true, last = true) {
+                    ConsumedDrinkField(state.drinks, state.drinkSlug, state.customDrinkName, state.drinkName,
+                        state.drinksError, vm::loadDrinks, vm::onDrinkChange)
+                }
+            }
 
             state.error?.let { error ->
                 Text(error, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
@@ -131,25 +148,42 @@ fun EditReviewScreen(reviewId: String) {
                     .padding(CpDimens.spacing4),
                 verticalArrangement = Arrangement.spacedBy(CpDimens.spacing3),
             ) {
-                ReviewHeaderField(state.header, vm::onHeaderChange, error = state.headerError)
-                ReviewCommentField(state.comment, vm::onCommentChange, error = state.commentError)
-                ReviewRatingCards(
-                    coffeeRating = state.coffeeRating,
-                    serviceRating = state.serviceRating,
-                    placeRating = state.placeRating,
-                    onCoffeeRatingChange = vm::onCoffeeRating,
-                    onServiceRatingChange = vm::onServiceRating,
-                    onPlaceRatingChange = vm::onPlaceRating,
-                )
-                ExistingReviewPhotos(state.existingPhotoUrls, onPhotoClick = {})
-                PhotoAttachmentsSection(
-                    photos = state.newPhotos,
-                    maxPhotos = MAX_REVIEW_PHOTOS,
-                    onPhotosAdded = vm::addPhotos,
-                    onRemovePhoto = vm::removeNewPhoto,
-                    title = "Новые фото",
-                    hint = "Добавьте новые фото (до $MAX_REVIEW_PHOTOS). Существующие фото останутся без изменений.",
-                )
+                Column {
+                    ReviewFormStep {
+                        ReviewHeaderField(state.header, vm::onHeaderChange, error = state.headerError)
+                    }
+                    ReviewFormStep {
+                        ReviewCommentField(state.comment, vm::onCommentChange, error = state.commentError)
+                    }
+                    ReviewFormStep {
+                        ReviewRatingCards(
+                            coffeeRating = state.coffeeRating,
+                            serviceRating = state.serviceRating,
+                            placeRating = state.placeRating,
+                            onCoffeeRatingChange = vm::onCoffeeRating,
+                            onServiceRatingChange = vm::onServiceRating,
+                            onPlaceRatingChange = vm::onPlaceRating,
+                        )
+                    }
+                    ReviewFormStep(optional = true) {
+                        Column(verticalArrangement = Arrangement.spacedBy(CpDimens.spacing3)) {
+                            ExistingReviewPhotos(state.existingPhotoUrls, onPhotoClick = {})
+                            PhotoAttachmentsSection(
+                                photos = state.newPhotos,
+                                maxPhotos = MAX_REVIEW_PHOTOS,
+                                onPhotosAdded = vm::addPhotos,
+                                onRemovePhoto = vm::removeNewPhoto,
+                                title = "Новые фото",
+                                hint = "Добавьте новые фото (до $MAX_REVIEW_PHOTOS). Существующие фото останутся без изменений.",
+                            )
+                        }
+                    }
+
+                    ReviewFormStep(optional = true, last = true) {
+                        ConsumedDrinkField(state.drinks, state.drinkSlug, state.customDrinkName, state.drinkName,
+                            state.drinksError, vm::loadDrinks, vm::onDrinkChange)
+                    }
+                }
 
                 state.error?.let { error ->
                     Text(error, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)

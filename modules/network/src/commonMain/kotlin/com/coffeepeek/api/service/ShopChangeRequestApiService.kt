@@ -77,7 +77,7 @@ class ShopChangeRequestApiService(private val client: HttpClient) {
             parameter("page", page)
             parameter("pageSize", pageSize)
             status?.let { parameter("status", it.name) }
-            shopId?.let { parameter("shopId", it) }
+            shopId?.let { parameter("shop", it) }
             section?.let { parameter("section", it.name) }
         }.getOrThrow()
         val apiResponse = response.body<ApiResponse<ShopChangeRequestPageDto>>()

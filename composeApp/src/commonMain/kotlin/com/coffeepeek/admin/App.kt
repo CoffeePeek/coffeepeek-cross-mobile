@@ -31,6 +31,7 @@ fun App(onReady: () -> Unit = {}) {
         Box(Modifier.fillMaxSize()) {
             OrientationObserver.StartObserver()
             Navigator()
+            com.coffeepeek.admin.feature.appupdate.ui.AppUpdatePrompt()
         }
     }
 }

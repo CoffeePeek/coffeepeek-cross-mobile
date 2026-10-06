@@ -69,11 +69,9 @@ data class ShopChangePayload(
 data class ShopChangeRequest(
     val id: String,
     val shopId: String,
-    val submittedByUserId: String,
     val section: ShopChangeSection,
     val payload: ShopChangePayload,
     val status: ModerationStatus,
-    val reviewedByUserId: String? = null,
     val reviewedAtUtc: String? = null,
     val rejectionReason: String? = null,
     val createdAtUtc: String,

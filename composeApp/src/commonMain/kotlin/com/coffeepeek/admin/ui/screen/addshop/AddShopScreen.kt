@@ -312,6 +312,7 @@ private fun StepBasic(
         AppOutlinedField(
             value = state.name,
             onValueChange = vm::onNameChange,
+            maxLength = 55,
             placeholder = "Например, Surf Coffee",
             errorText = if (state.name.isNotEmpty()) state.nameError else null,
             counter = "${state.name.length}/55",
@@ -700,6 +701,7 @@ private fun AppOutlinedField(
     value: String,
     onValueChange: (String) -> Unit,
     placeholder: String,
+    maxLength: Int = Int.MAX_VALUE,
     modifier: Modifier = Modifier,
     errorText: String? = null,
     counter: String? = null,
@@ -714,6 +716,7 @@ private fun AppOutlinedField(
         CompactOutlinedTextField(
             value = value,
             onValueChange = onValueChange,
+            maxLength = maxLength,
             modifier = Modifier
                 .fillMaxWidth()
                 .then(if (singleLine) Modifier.height(CpDimens.buttonHeight) else Modifier),

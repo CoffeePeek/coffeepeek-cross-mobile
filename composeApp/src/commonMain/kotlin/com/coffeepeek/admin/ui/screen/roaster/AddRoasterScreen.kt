@@ -141,6 +141,7 @@ fun AddRoasterScreen(vm: AddRoasterViewModel = platformViewModel()) {
                 label = "Название",
                 value = state.name,
                 onValueChange = vm::onNameChange,
+                maxLength = 100,
                 placeholder = "Например, Coffee Circus",
                 error = if (state.name.isNotEmpty()) state.nameError else null,
             )
@@ -235,6 +236,7 @@ private fun RoasterField(
     label: String,
     value: String,
     onValueChange: (String) -> Unit,
+    maxLength: Int = Int.MAX_VALUE,
     placeholder: String,
     error: String? = null,
     leadingIcon: androidx.compose.ui.graphics.vector.ImageVector? = null,
@@ -252,6 +254,7 @@ private fun RoasterField(
         CompactOutlinedTextField(
             value = value,
             onValueChange = onValueChange,
+            maxLength = maxLength,
             modifier = Modifier
                 .fillMaxWidth()
                 .then(if (singleLine) Modifier.height(CpDimens.buttonHeight) else Modifier),

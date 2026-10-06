@@ -1,5 +1,7 @@
 package com.coffeepeek.data.repository
 
+import com.coffeepeek.domain.model.ConsumedDrinkOption
+
 import com.coffeepeek.api.model.request.CreateShopContactReq
 import com.coffeepeek.api.model.request.CreateShopReq
 import com.coffeepeek.api.model.request.ScheduleIntervalReq
@@ -72,14 +74,14 @@ class ShopRepositoryImpl(
             val brewMethods = async { shopApiService.getBrewMethods().getOrThrow() }
             val shopTags    = async { shopApiService.getShopTags().getOrThrow() }
             ShopCatalogs(
-                cities      = cities.await().map { City(it.id, it.name) },
-                beans       = beans.await().map { CatalogItem(it.id, it.name.orEmpty()) },
-                equipment   = equipment.await().map { CatalogItem(it.id, it.name.orEmpty()) },
+                cities      = cities.await().map { City(it.address.slug, it.name, it.address.toDomain()) },
+                beans       = beans.await().map { CatalogItem(it.key, it.name.orEmpty(), it.key) },
+                equipment   = equipment.await().map { CatalogItem(it.key, it.name.orEmpty(), it.key) },
                 roasters    = roasters.await().map {
-                    CatalogItem(it.id, it.name.orEmpty(), photoUrl = it.photoUrl)
+                    CatalogItem(it.key, it.name.orEmpty(), it.key, photoUrl = it.photoUrl, address = it.address?.toDomain())
                 },
-                brewMethods = brewMethods.await().map { CatalogItem(it.id, it.name.orEmpty()) },
-                shopTags    = shopTags.await().map { CatalogItem(it.id, it.name.orEmpty(), it.slug) },
+                brewMethods = brewMethods.await().map { CatalogItem(it.key, it.name.orEmpty(), it.key) },
+                shopTags    = shopTags.await().map { CatalogItem(it.key, it.name.orEmpty(), it.key) },
             ).also { cachedCatalogs = it }
         }
     }
@@ -102,13 +104,17 @@ class ShopRepositoryImpl(
             val favoriteIds = favoriteRepository.getFavoriteIds()
             PagedResult(
                 items = dto.coffeeShops.map { shop ->
-                    shop.toDomain().copy(isFavorite = shop.id in favoriteIds)
+                    shop.toDomain().copy(isFavorite = shop.address.slug in favoriteIds)
                 },
                 totalCount = dto.totalItems,
                 totalPages = dto.totalPages,
                 currentPage = dto.currentPage,
             )
         }
+
+    override suspend fun getConsumedDrinks() = shopApiService.getConsumedDrinks().map { options ->
+        options.map { ConsumedDrinkOption(it.slug, it.nameRu, it.nameEn) }
+    }
 
     override suspend fun getMenuDrinks(): Result<List<CoffeeDrinkDefinition>> {
         cachedMenuDrinks?.let { return Result.success(it) }
@@ -135,7 +141,7 @@ class ShopRepositoryImpl(
             val domain = detailsDeferred.await().toDomain(fileUrlResolver)
             val drinks = drinksDeferred.await()
             domain.copy(
-                shop = domain.shop.copy(isFavorite = favoriteRepository.isFavorite(id)),
+                shop = domain.shop.copy(isFavorite = favoriteRepository.isFavorite(domain.shop.id)),
                 menu = domain.menu?.alignedWithCatalog(drinks),
             )
         }
@@ -151,12 +157,13 @@ class ShopRepositoryImpl(
             shopsRequest.await().map { response ->
                 val mapped = response.shops.map { dto ->
                     MapShop(
-                        id = dto.id,
+                        id = dto.address.slug,
+                        publicAddress = dto.address.toDomain(),
                         title = dto.title?.takeIf { it.isNotBlank() } ?: "Кофейня",
                         latitude = dto.latitude,
                         longitude = dto.longitude,
                         type = parseShopType(dto.type),
-                        primaryZoneId = dto.primaryZoneId,
+                        primaryZoneId = dto.primaryZone?.slug,
                     )
                 }
                 val focus = filters.coffeeFocus
@@ -165,7 +172,8 @@ class ShopRepositoryImpl(
                     clusters = emptyList(),
                     zones = (zonesResponse ?: response).zones.map { zone ->
                         MapCoffeeZone(
-                            id = zone.id,
+                            id = zone.address.slug,
+                            publicAddress = zone.address.toDomain(),
                             name = zone.name,
                             description = zone.description,
                             latitude = zone.latitude,
@@ -212,7 +220,7 @@ class ShopRepositoryImpl(
                         address = it.address,
                         status = it.moderationStatus.toDomain(),
                         rejectedReason = it.rejectedReason,
-                        publishedShopId = it.publishedShopId,
+                        publishedShopId = it.publishedShop?.slug,
                     )
                 },
                 totalCount = response.totalItems,
