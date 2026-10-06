@@ -83,7 +83,7 @@ object CpDimens {
     val loaderButton  = 20.dp
 
     // ── Bottom navigation ─────────────────────────────────────────────────────
-    val floatingNavBarHeight = 64.dp
+    val floatingNavBarHeight = 56.dp
     /** Panel height; the caller adds the system navigation inset. */
     val floatingNavContentClearance = floatingNavBarHeight + 8.dp // + FloatingNavBottomMargin
 }

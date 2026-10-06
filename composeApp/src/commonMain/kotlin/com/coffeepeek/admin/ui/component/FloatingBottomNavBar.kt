@@ -57,7 +57,7 @@ data class FloatingNavItem(
     val onClick: () -> Unit,
 )
 
-/** iOS 26-style floating Liquid Glass tab bar. */
+/** Compose floating bar used on Android; iOS hosts a native tab bar. */
 @Composable
 fun FloatingBottomNavBar(
     items: List<FloatingNavItem>,

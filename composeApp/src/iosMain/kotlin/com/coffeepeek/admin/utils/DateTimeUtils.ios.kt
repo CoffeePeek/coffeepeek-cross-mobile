@@ -19,6 +19,11 @@ internal actual fun currentEpochMillis(): Long =
 internal actual fun currentLocalDayOfWeek(): Int =
     dateFormatter("e").stringFromDate(NSDate()).toIntOrNull()?.minus(1) ?: 0
 
+internal actual fun currentLocalMinuteOfDay(): Int {
+    val now = NSDate()
+    return dateFormatter("HH").stringFromDate(now).toInt() * 60 + dateFormatter("mm").stringFromDate(now).toInt()
+}
+
 internal actual fun datePickerMillisToUtcIsoInstant(millis: Long): String {
     val selectedUtcDate = dateFromEpochMillis(millis)
     val date = dateFormatter("yyyy-MM-dd", utc = true).stringFromDate(selectedUtcDate)

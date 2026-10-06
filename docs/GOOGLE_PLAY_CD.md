@@ -1,77 +1,42 @@
-# Google Play: подписанный AAB и внутреннее тестирование
+# Android release: Google Play, сайт и Firebase
 
-Workflow `.github/workflows/android-play.yml` выполняет две операции:
+Workflow `.github/workflows/android-apk.yml` (`Android Release`) запускается при push в `main` или вручную из `main`.
 
-- при каждом push в `main` собирает подписанный release AAB, проверяет подпись и сохраняет AAB вместе с R8 mapping в GitHub Actions;
-- при ручном запуске с `upload_to_play=true` загружает тот же подписанный AAB во внутренний трек Google Play.
+1. Запускает Android unit tests и lint.
+2. Собирает подписанные release APK и AAB одним вызовом Gradle.
+3. Сохраняет APK, AAB и R8 mapping в artifacts.
+4. Независимые jobs загружают AAB с mapping в Google Play internal testing, APK на сайт и тот же APK в Firebase App Distribution.
 
-Production этим workflow не публикуется. После проверки внутреннего релиза его можно продвинуть через Play Console.
+Production в Play выпускается продвижением проверенной сборки через Play Console. Сайт получает stable APK автоматически; запись в backend создаётся как черновик для ручной публикации в админке.
 
-## Первый релиз
+## Настройка Google Play
 
-Google Play Developer API не создаёт новое приложение и не подходит для самой первой загрузки пакета. Поэтому первый запуск выполняется так:
+- В Play Console создайте приложение `com.coffeepeek` и вручную загрузите первый AAB.
+- Настройте Play App Signing и убедитесь, что GitHub keystore соответствует upload key.
+- В Google Cloud включите Google Play Android Developer API.
+- Создайте service account, выдайте ему доступ к приложению и внутренним релизам в Play Console.
+- Сохраните JSON service account в GitHub secret `GOOGLE_PLAY_SERVICE_ACCOUNT_JSON`.
 
-1. Добавьте перечисленные ниже variables и secrets в GitHub.
-2. Запустите `Android App Bundle / Google Play` вручную с выключенным `upload_to_play`.
-3. Скачайте artifact `coffeepeek-aab-<versionCode>` из завершившегося workflow.
-4. Создайте первый internal release в Play Console и загрузите AAB вручную.
-5. Завершите настройку Play App Signing. AAB должен быть подписан тем же upload key, который хранится в GitHub secrets.
-6. Настройте сервисный аккаунт и после этого запускайте workflow с `upload_to_play=true`.
+## Конфигурация сборки
 
-## GitHub variable
+Repository variable: `API_BASE_URL_MAIN` — production backend для всех трёх каналов.
 
-| Variable | Назначение |
-|---|---|
-| `API_BASE_URL_MAIN` | Production backend URL, который попадёт в release-сборку |
+Secrets: `ANDROID_KEYSTORE_BASE64`, `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS`, `ANDROID_KEY_PASSWORD`, `GOOGLE_WEB_CLIENT_ID` (для Google Sign-In).
 
-## GitHub secrets
+Настройка сайта: [ANDROID_APK_CD.md](ANDROID_APK_CD.md). Настройка Firebase: [FIREBASE_CD.md](FIREBASE_CD.md).
 
-| Secret | Назначение |
-|---|---|
-| `ANDROID_KEYSTORE_BASE64` | Upload keystore целиком в base64 без переносов |
-| `ANDROID_KEYSTORE_PASSWORD` | Пароль keystore |
-| `ANDROID_KEY_ALIAS` | Alias upload key |
-| `ANDROID_KEY_PASSWORD` | Пароль upload key |
-| `GOOGLE_WEB_CLIENT_ID` | Web client ID для Google Sign-In; может быть пустым, если функция не используется |
-| `GOOGLE_PLAY_SERVICE_ACCOUNT_JSON` | Полное содержимое JSON-ключа сервисного аккаунта Google Cloud |
+Если environment `production` требует reviewers, доставка на сайт ожидает подтверждения. Для автоматической доставки этот environment должен разрешать `main` без required reviewers.
 
-Keystore для GitHub secret в Linux:
+## Версии и повторные запуски
 
-```bash
-base64 -w 0 coffeepeek-upload.jks
-```
+Сохраняется текущая версия `1.0.<git-commit-count>`. Следующий versionCode должен быть больше уже загруженного в Play. Не переписывайте историю main. Повторная загрузка того же versionCode в Play будет отклонена: при ошибке одного канала повторяйте только failed jobs.
 
-Не добавляйте `.jks` или JSON-ключ сервисного аккаунта в Git.
+APK с сайта/Firebase и APK из Play могут иметь разные сертификаты, если upload key отличается от app signing key. Зарегистрируйте нужные SHA-1 для Google Sign-In; обновление между такими установками поверх приложения невозможно.
 
-## Доступ Google Play API
+## Обновление внутри приложения
 
-1. В Google Cloud включите `Google Play Android Developer API`.
-2. Создайте сервисный аккаунт и JSON key.
-3. В Play Console выдайте email сервисного аккаунта доступ к CoffeePeek с правом выпускать релизы во внутренний трек.
-4. Сохраните содержимое JSON-файла в secret `GOOGLE_PLAY_SERVICE_ACCOUNT_JSON`.
-5. Создайте GitHub Environment `google-play`. Рекомендуется включить required reviewers, чтобы каждая загрузка требовала подтверждения.
+Сборка `play` обновляется через Play In-App Updates, без браузера. Сборка `direct` для сайта и Firebase скачивает APK через Android DownloadManager, показывает прогресс и вызывает системное подтверждение установки. Только `direct` содержит разрешение `REQUEST_INSTALL_PACKAGES`.
 
-Workflow проверяет, что secret содержит JSON сервисного аккаунта, но не выводит его в лог.
+Release tasks: `:composeApp:assembleDirectRelease :composeApp:bundlePlayRelease`. У обоих вариантов одинаковые application ID и versionCode; подписи установленных приложений должны быть совместимы с выбранным каналом.
 
-## Запуск
-
-В GitHub откройте `Actions` → `Android App Bundle / Google Play` → `Run workflow`.
-
-- `upload_to_play=false`: только собрать и сохранить подписанный AAB;
-- `upload_to_play=true`: собрать, проверить и отправить AAB во внутреннее тестирование.
-
-Результат сборки находится в artifacts запуска. Локально аналогичный bundle создаётся командой:
-
-```bash
-ANDROID_KEYSTORE_PATH=/absolute/path/coffeepeek-upload.jks \
-ANDROID_KEYSTORE_PASSWORD='…' \
-ANDROID_KEY_ALIAS='…' \
-ANDROID_KEY_PASSWORD='…' \
-./gradlew :composeApp:bundleRelease
-```
-
-Локальный файл появится в `composeApp/build/outputs/bundle/release/`.
-
-## Версии
-
-Сейчас `versionCode` равен количеству Git-коммитов, а `versionName` имеет вид `1.0.<versionCode>`. Google Play требует, чтобы каждый следующий загружаемый `versionCode` был больше предыдущего. Не переписывайте историю `main` перед релизами и не запускайте загрузку из старого коммита.
+Проверка APK отклоняет другой package name, неожиданный versionCode, старую версию и несовместимую подпись. При отмене загрузка удаляется; после перезапуска восстановление выполняется по сохранённому DownloadManager ID. Необязательную карточку можно скрыть свайпом вверх, загрузка продолжится.

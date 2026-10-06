@@ -188,7 +188,7 @@ object RegisterScreen {
                     )
 
                     AuthFooterRow(
-                        onBack = { vm.onBack() },
+                        onBack = null,
                         onSecondary = { vm.goToLogin() },
                         secondaryText = stringResource(Res.string.already_have_account),
                     )
@@ -273,7 +273,7 @@ object RegisterScreen {
                     )
 
                     AuthFooterRow(
-                        onBack = { vm.onBack() },
+                        onBack = null,
                         onSecondary = { vm.goToLogin() },
                         secondaryText = stringResource(Res.string.already_have_account),
                     )

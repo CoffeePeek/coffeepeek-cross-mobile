@@ -1,5 +1,13 @@
 package com.coffeepeek.admin.ui.screen.shop
 
+import com.coffeepeek.admin.ui.component.ReviewFormStep
+
+import com.coffeepeek.admin.ui.screen.review.ConsumedDrinkField
+
+import com.coffeepeek.domain.model.validateConsumedDrink
+
+import com.coffeepeek.domain.model.ConsumedDrinkOption
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -84,6 +92,9 @@ fun CheckInBottomSheet(
     onDraftChange: (CheckInDraft) -> Unit,
     onSubmit: (CheckInDraft) -> Unit,
     placeName: String? = null,
+    drinks: List<ConsumedDrinkOption> = emptyList(),
+    drinksError: String? = null,
+    onRetryDrinks: () -> Unit = {},
 ) {
     var headerError by remember { mutableStateOf<String?>(null) }
     var noteError by remember { mutableStateOf<String?>(null) }
@@ -214,131 +225,152 @@ fun CheckInBottomSheet(
                 onPlaceRatingChange = { onDraftChange(draft.copy(placeRating = it)) },
             )
 
-            // ── Visit date ────────────────────────────────────────────────────
-            LabeledField(label = stringResource(Res.string.checkin_date_label)) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(CpDimens.radiusMd))
-                        .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.04f))
-                        .border(
-                            width = 1.dp,
-                            color = MaterialTheme.colorScheme.outline,
-                            shape = RoundedCornerShape(CpDimens.radiusMd),
+            Column {
+                // ── Visit date ────────────────────────────────────────────────────
+                ReviewFormStep {
+                    LabeledField(label = stringResource(Res.string.checkin_date_label)) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(CpDimens.radiusMd))
+                                .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.04f))
+                                .border(
+                                    width = 1.dp,
+                                    color = MaterialTheme.colorScheme.outline,
+                                    shape = RoundedCornerShape(CpDimens.radiusMd),
+                                )
+                                .clickable { showDatePicker = true }
+                                .padding(horizontal = 14.dp, vertical = 14.dp),
+                            horizontalArrangement = Arrangement.spacedBy(CpDimens.spacing2),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Icon(
+                                imageVector = CpIcons.Calendar,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.size(18.dp),
+                            )
+                            Text(
+                                text = formatVisitDate(draft.visitMillis),
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurface,
+                                modifier = Modifier.weight(1f),
+                            )
+                            Icon(
+                                imageVector = CpIcons.ChevronDown,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.size(18.dp),
+                            )
+                        }
+                    }
+                }
+
+                // ── Public toggle ─────────────────────────────────────────────────
+                ReviewFormStep(optional = true) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Column(
+                            modifier = Modifier.weight(1f),
+                            verticalArrangement = Arrangement.spacedBy(2.dp),
+                        ) {
+                            Text(
+                                text = stringResource(Res.string.checkin_public_switch_title),
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onSurface,
+                            )
+                            Text(
+                                text = stringResource(Res.string.checkin_public_switch_hint),
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                        Spacer(Modifier.width(CpDimens.spacing3))
+                        Switch(
+                            checked = draft.isPublic,
+                            onCheckedChange = ::onPublicChange,
+                            colors = SwitchDefaults.colors(
+                                checkedThumbColor = MaterialTheme.colorScheme.onPrimary,
+                                checkedTrackColor = MaterialTheme.colorScheme.primary,
+                                checkedBorderColor = MaterialTheme.colorScheme.primary,
+                                uncheckedThumbColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                                uncheckedTrackColor = MaterialTheme.colorScheme.surfaceVariant,
+                                uncheckedBorderColor = MaterialTheme.colorScheme.outline,
+                            ),
                         )
-                        .clickable { showDatePicker = true }
-                        .padding(horizontal = 14.dp, vertical = 14.dp),
-                    horizontalArrangement = Arrangement.spacedBy(CpDimens.spacing2),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Icon(
-                        imageVector = CpIcons.Calendar,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.size(18.dp),
-                    )
-                    Text(
-                        text = formatVisitDate(draft.visitMillis),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurface,
-                        modifier = Modifier.weight(1f),
-                    )
-                    Icon(
-                        imageVector = CpIcons.ChevronDown,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.size(18.dp),
-                    )
-                }
-            }
-
-            // ── Public toggle ─────────────────────────────────────────────────
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Column(
-                    modifier = Modifier.weight(1f),
-                    verticalArrangement = Arrangement.spacedBy(2.dp),
-                ) {
-                    Text(
-                        text = stringResource(Res.string.checkin_public_switch_title),
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSurface,
-                    )
-                    Text(
-                        text = stringResource(Res.string.checkin_public_switch_hint),
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-                Spacer(Modifier.width(CpDimens.spacing3))
-                Switch(
-                    checked = draft.isPublic,
-                    onCheckedChange = ::onPublicChange,
-                    colors = SwitchDefaults.colors(
-                        checkedThumbColor = MaterialTheme.colorScheme.onPrimary,
-                        checkedTrackColor = MaterialTheme.colorScheme.primary,
-                        checkedBorderColor = MaterialTheme.colorScheme.primary,
-                        uncheckedThumbColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                        uncheckedTrackColor = MaterialTheme.colorScheme.surfaceVariant,
-                        uncheckedBorderColor = MaterialTheme.colorScheme.outline,
-                    ),
-                )
-            }
-
-            // ── Public review fields / private note ───────────────────────────
-            if (draft.isPublic) {
-                ReviewFormField(label = stringResource(Res.string.checkin_header_label), error = headerError) {
-                    ReviewTextInput(
-                        value = draft.header,
-                        onValueChange = ::onHeaderChange,
-                        placeholder = stringResource(Res.string.checkin_header_placeholder),
-                        isError = headerError != null,
-                        singleLine = true,
-                    )
-                }
-            }
-
-            ReviewFormField(
-                label = stringResource(
-                    if (draft.isPublic) {
-                        Res.string.checkin_description_label
-                    } else {
-                        Res.string.checkin_note_label
                     }
-                ),
-                error = noteError,
-            ) {
-                ReviewTextInput(
-                    value = draft.note,
-                    onValueChange = ::onNoteChange,
-                    placeholder = stringResource(Res.string.checkin_note_placeholder),
-                    isError = noteError != null,
-                    modifier = Modifier.heightIn(min = 80.dp),
-                )
-            }
+                }
 
-            // ── Photos (optional) ─────────────────────────────────────────────
-            PhotoAttachmentsSection(
-                photos = draft.photos,
-                maxPhotos = MAX_REVIEW_PHOTOS,
-                onPhotosAdded = { added ->
-                    val remaining = MAX_REVIEW_PHOTOS - draft.photos.size
-                    if (remaining > 0) {
-                        onDraftChange(draft.copy(photos = draft.photos + added.take(remaining)))
+                // ── Public review fields / private note ───────────────────────────
+                if (draft.isPublic) {
+                    ReviewFormStep {
+                        ReviewFormField(label = stringResource(Res.string.checkin_header_label), error = headerError) {
+                            ReviewTextInput(
+                                value = draft.header,
+                                onValueChange = ::onHeaderChange,
+                                placeholder = stringResource(Res.string.checkin_header_placeholder),
+                                isError = headerError != null,
+                                singleLine = true,
+                                maxLength = 120,
+                            )
+                        }
                     }
-                },
-                onRemovePhoto = { index ->
-                    onDraftChange(
-                        draft.copy(photos = draft.photos.filterIndexed { i, _ -> i != index })
+                }
+
+                ReviewFormStep(optional = !draft.isPublic) {
+                    ReviewFormField(
+                        label = stringResource(
+                            if (draft.isPublic) {
+                                Res.string.checkin_description_label
+                            } else {
+                                Res.string.checkin_note_label
+                            }
+                        ),
+                        error = noteError,
+                    ) {
+                        ReviewTextInput(
+                            value = draft.note,
+                            onValueChange = ::onNoteChange,
+                            placeholder = stringResource(Res.string.checkin_note_placeholder),
+                            isError = noteError != null,
+                            maxLength = 2000,
+                            modifier = Modifier.heightIn(min = 80.dp),
+                        )
+                    }
+                }
+
+                // ── Photos (optional) ─────────────────────────────────────────────
+                ReviewFormStep(optional = true) {
+                    PhotoAttachmentsSection(
+                        photos = draft.photos,
+                        maxPhotos = MAX_REVIEW_PHOTOS,
+                        onPhotosAdded = { added ->
+                            val remaining = MAX_REVIEW_PHOTOS - draft.photos.size
+                            if (remaining > 0) {
+                                onDraftChange(draft.copy(photos = draft.photos + added.take(remaining)))
+                            }
+                        },
+                        onRemovePhoto = { index ->
+                            onDraftChange(
+                                draft.copy(photos = draft.photos.filterIndexed { i, _ -> i != index })
+                            )
+                        },
+                        title = stringResource(Res.string.checkin_photos_label),
+                        hint = "Добавьте до $MAX_REVIEW_PHOTOS фото вашего визита.",
                     )
-                },
-                title = stringResource(Res.string.checkin_photos_label),
-                hint = "Добавьте до $MAX_REVIEW_PHOTOS фото вашего визита.",
-            )
+                }
+
+                ReviewFormStep(optional = true, last = true) {
+                    ConsumedDrinkField(
+                        drinks, draft.drinkSlug, draft.customDrinkName, draft.drinkName, drinksError, onRetryDrinks,
+                        { slug, name -> onDraftChange(draft.copy(drinkSlug = slug, customDrinkName = name)) },
+                    )
+                }
+            }
 
             // ── Submit ────────────────────────────────────────────────────────
             AppButton(
@@ -359,7 +391,7 @@ fun CheckInBottomSheet(
                     }
                     onSubmit(draft)
                 },
-                enabled = !isLoading,
+                enabled = !isLoading && validateConsumedDrink(draft.drinkSlug, draft.customDrinkName) == null,
             )
         }
     }

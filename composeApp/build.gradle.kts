@@ -43,6 +43,7 @@ kotlin {
             implementation("androidx.exifinterface:exifinterface:1.4.1")
             implementation(libs.maplibre.android)
             implementation("com.google.android.gms:play-services-auth:21.3.0")
+            implementation("com.google.android.play:app-update:2.1.0")
             implementation("com.microsoft.signalr:signalr:10.0.9")
             implementation("org.slf4j:slf4j-nop:2.0.16")
         }
@@ -165,6 +166,17 @@ android {
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
+        }
+    }
+    flavorDimensions += "delivery"
+    productFlavors {
+        create("play") {
+            dimension = "delivery"
+            buildConfigField("boolean", "APK_UPDATES_ENABLED", "false")
+        }
+        create("direct") {
+            dimension = "delivery"
+            buildConfigField("boolean", "APK_UPDATES_ENABLED", "true")
         }
     }
     signingConfigs {
