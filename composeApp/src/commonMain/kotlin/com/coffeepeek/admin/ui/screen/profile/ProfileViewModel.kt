@@ -72,7 +72,13 @@ class ProfileViewModel(
     }
 
     fun refreshProfile() {
+        val session = sessionRepository.peekSession()
+        if (!sessionRepository.isActiveSession(session)) {
+            resetProfileState()
+            return
+        }
         workScope.launch {
+            if (loadedForUserId != session?.userId || !sessionRepository.isActiveSession(sessionRepository.peekSession())) return@launch
             val current = _uiState.value
             val showFullScreenLoader = !current.hasContent && current.error == null
             _uiState.update {
@@ -85,6 +91,7 @@ class ProfileViewModel(
             }
             userRepository.refreshProfile()
                 .onFailure { err ->
+                    if (sessionRepository.peekSession()?.userId != session?.userId || loadedForUserId != session?.userId) return@onFailure
                     val message = err.message ?: "Ошибка загрузки профиля"
                     _uiState.update { state ->
                         if (state.hasContent) {
@@ -134,6 +141,11 @@ class ProfileViewModel(
             userRepository.observeProfile().collect { profile ->
                 if (profile != null) {
                     applyProfile(profile)
+                } else {
+                    _uiState.value = ProfileUiState(
+                        isLoggedIn = sessionRepository.isActiveSession(sessionRepository.peekSession()) && loadedForUserId != null,
+                        isLoading = sessionRepository.isActiveSession(sessionRepository.peekSession()) && loadedForUserId != null,
+                    )
                 }
             }
         }
@@ -173,8 +185,11 @@ class ProfileViewModel(
                             )
                         }
                         loadedForUserId = userId
-                        if (userRepository.observeProfile().value == null) {
+                        val profile = userRepository.observeProfile().value
+                        if (profile == null) {
                             refreshProfile()
+                        } else {
+                            applyProfile(profile)
                         }
                     }
                 }
@@ -183,6 +198,10 @@ class ProfileViewModel(
 
     private fun applyProfile(profile: UserProfile) {
         _uiState.update {
+            val session = sessionRepository.peekSession()
+            if (!sessionRepository.isActiveSession(session) || loadedForUserId == null || loadedForUserId != session?.userId) {
+                return@update ProfileUiState(isLoading = false)
+            }
             it.copy(
                 isLoggedIn = true,
                 email = profile.email,

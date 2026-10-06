@@ -1,5 +1,7 @@
 package com.coffeepeek.admin.ui.screen.review
 
+import com.coffeepeek.admin.ui.component.ReviewFormStep
+
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -56,6 +58,7 @@ fun CreateReviewBottomSheet(
     ReviewEditorBottomSheet(
         title = "Новый отзыв",
         placeName = placeName,
+        drinkField = { ConsumedDrinkField(state.drinks, state.drinkSlug, state.customDrinkName, state.drinkName, state.drinksError, vm::loadDrinks, vm::onDrinkChange) },
         header = state.header,
         comment = state.comment,
         coffeeRating = state.coffeeRating,
@@ -99,6 +102,7 @@ fun EditReviewBottomSheet(
     ReviewEditorBottomSheet(
         title = "Редактировать отзыв",
         placeName = placeName,
+        drinkField = { ConsumedDrinkField(state.drinks, state.drinkSlug, state.customDrinkName, state.drinkName, state.drinksError, vm::loadDrinks, vm::onDrinkChange) },
         header = state.header,
         comment = state.comment,
         coffeeRating = state.coffeeRating,
@@ -132,6 +136,7 @@ fun EditReviewBottomSheet(
 private fun ReviewEditorBottomSheet(
     title: String,
     placeName: String?,
+    drinkField: @Composable () -> Unit,
     header: String,
     comment: String,
     coffeeRating: Int,
@@ -238,24 +243,40 @@ private fun ReviewEditorBottomSheet(
                     AppButton(text = "Повторить", onClick = onRetry)
                 }
                 else -> {
-                    ReviewRatingCards(
-                        coffeeRating = coffeeRating,
-                        serviceRating = serviceRating,
-                        placeRating = placeRating,
-                        onCoffeeRatingChange = onCoffeeRatingChange,
-                        onServiceRatingChange = onServiceRatingChange,
-                        onPlaceRatingChange = onPlaceRatingChange,
-                    )
-                    ReviewHeaderField(header, onHeaderChange, error = headerError)
-                    ReviewCommentField(comment, onCommentChange, error = commentError)
-                    ExistingReviewPhotos(existingPhotoUrls, onPhotoClick = {})
-                    PhotoAttachmentsSection(
-                        photos = photos,
-                        maxPhotos = MAX_REVIEW_PHOTOS,
-                        onPhotosAdded = onPhotosAdded,
-                        onRemovePhoto = onRemovePhoto,
-                        title = if (existingPhotoUrls.isEmpty()) "Фотографии" else "Новые фото",
-                    )
+                    Column {
+                        ReviewFormStep {
+                            ReviewRatingCards(
+                                coffeeRating = coffeeRating,
+                                serviceRating = serviceRating,
+                                placeRating = placeRating,
+                                onCoffeeRatingChange = onCoffeeRatingChange,
+                                onServiceRatingChange = onServiceRatingChange,
+                                onPlaceRatingChange = onPlaceRatingChange,
+                            )
+                        }
+                        ReviewFormStep {
+                            ReviewHeaderField(header, onHeaderChange, error = headerError)
+                        }
+                        ReviewFormStep {
+                            ReviewCommentField(comment, onCommentChange, error = commentError)
+                        }
+                        ReviewFormStep(optional = true) {
+                            Column(verticalArrangement = Arrangement.spacedBy(CpDimens.spacing3)) {
+                                ExistingReviewPhotos(existingPhotoUrls, onPhotoClick = {})
+                                PhotoAttachmentsSection(
+                                    photos = photos,
+                                    maxPhotos = MAX_REVIEW_PHOTOS,
+                                    onPhotosAdded = onPhotosAdded,
+                                    onRemovePhoto = onRemovePhoto,
+                                    title = if (existingPhotoUrls.isEmpty()) "Фотографии" else "Новые фото",
+                                )
+                            }
+                        }
+                        ReviewFormStep(optional = true, last = true) {
+                            drinkField()
+                        }
+                    }
+
                     error?.let {
                         Text(
                             text = it,

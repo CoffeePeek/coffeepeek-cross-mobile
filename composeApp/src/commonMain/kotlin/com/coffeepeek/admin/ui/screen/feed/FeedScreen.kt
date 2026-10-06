@@ -23,8 +23,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.material3.Badge
-import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.TextButton
 import androidx.compose.foundation.lazy.items
@@ -46,6 +44,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -70,7 +69,7 @@ import com.coffeepeek.admin.ui.component.brewMethodIcon
 import com.coffeepeek.admin.ui.component.CoffeeShopPlaceholderImage
 import com.coffeepeek.admin.ui.component.CoffeePeekLoader
 import com.coffeepeek.admin.ui.component.CoffeePeekPullToRefresh
-import com.coffeepeek.admin.ui.component.CpSearchField
+import com.coffeepeek.admin.ui.component.SearchHeader
 import com.coffeepeek.admin.ui.component.LocalFloatingNavClearance
 import com.coffeepeek.admin.ui.component.PriceBynRow
 import com.coffeepeek.admin.ui.component.priceRangeLevel
@@ -87,7 +86,7 @@ import com.coffeepeek.admin.di.platformViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun FeedScreen(vm: FeedViewModel = platformViewModel()) {
+fun FeedScreen(onSelectRoasters: () -> Unit, vm: FeedViewModel = platformViewModel()) {
     val state by vm.uiState.collectAsState()
     val listState = rememberLazyListState()
     val userLocation = rememberPermittedUserLocation()
@@ -145,53 +144,14 @@ fun FeedScreen(vm: FeedViewModel = platformViewModel()) {
                             .padding(horizontal = CpDimens.spacing4)
                             .padding(top = CpDimens.spacing3, bottom = CpDimens.spacing2),
                     ) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(CpDimens.spacing2),
-                        ) {
-                            CpSearchField(
-                                value = state.query,
-                                onValueChange = vm::onQueryChange,
-                                placeholder = "Поиск кофейни…",
-                                modifier = Modifier.weight(1f),
-                                fieldHeight = CpDimens.buttonHeight,
-                            )
-                            BadgedBox(
-                                badge = {
-                                    if (state.activeFilterCount > 0) {
-                                        Badge(modifier = Modifier.size(20.dp)) {
-                                            Text(state.activeFilterCount.toString())
-                                        }
-                                    }
-                                },
-                            ) {
-                                Box(
-                                    modifier = Modifier
-                                        .size(CpDimens.buttonHeight)
-                                        .clip(CircleShape)
-                                        .background(MaterialTheme.colorScheme.surface)
-                                        .border(
-                                            width = 1.dp,
-                                            color = MaterialTheme.colorScheme.outline,
-                                            shape = CircleShape,
-                                        )
-                                        .clickable(onClick = vm::toggleFilters),
-                                    contentAlignment = Alignment.Center,
-                                ) {
-                                    Icon(
-                                        CpIcons.Filter,
-                                        contentDescription = "Фильтры",
-                                        tint = if (state.showFilters || state.activeFilterCount > 0) {
-                                            MaterialTheme.colorScheme.primary
-                                        } else {
-                                            MaterialTheme.colorScheme.onSurfaceVariant
-                                        },
-                                        modifier = Modifier.size(22.dp),
-                                    )
-                                }
-                            }
-                        }
+                        SearchHeader(
+                            query = state.query,
+                            onQueryChange = vm::onQueryChange,
+                            roastersSelected = false,
+                            onSelectRoasters = { if (it) onSelectRoasters() },
+                            filterCount = state.activeFilterCount,
+                            onFilters = vm::toggleFilters,
+                        )
                         Spacer(modifier = Modifier.height(CpDimens.spacing2))
                         FeedQuickFilterBar(
                             nearbyOnly = state.filters.nearbyOnly,
@@ -283,9 +243,7 @@ fun FeedScreen(vm: FeedViewModel = platformViewModel()) {
                 }
             }
             fillingNearby && displayedShops.isEmpty() -> {
-                Box(contentModifier, contentAlignment = Alignment.Center) {
-                    CoffeePeekLoader()
-                }
+                Box(contentModifier)
             }
             else -> {
                 CoffeePeekPullToRefresh(
@@ -308,19 +266,6 @@ fun FeedScreen(vm: FeedViewModel = platformViewModel()) {
                                 isFavoriteUpdating = shop.id in state.favoriteUpdates,
                                 onToggleFavorite = { vm.toggleFavorite(shop) },
                             )
-                        }
-                        if (state.isLoadingMore) {
-                            item(key = "loading-more") {
-                                Box(
-                                    modifier = Modifier.fillMaxWidth().padding(CpDimens.spacing4),
-                                    contentAlignment = Alignment.Center,
-                                ) {
-                                    CoffeePeekLoader(
-                                        size = CpDimens.loaderButton,
-                                        strokeWidth = 2.dp,
-                                    )
-                                }
-                            }
                         }
                         item(key = "add-missing-shop") {
                             AddMissingShopCard(
@@ -400,7 +345,7 @@ internal fun ShopCard(
     onToggleFavorite: () -> Unit,
 ) {
     Card(
-        modifier = Modifier.fillMaxWidth().clickable(onClick = onClick),
+        modifier = Modifier.fillMaxWidth().clickable(enabled = shop.publicAddress != null, onClick = onClick),
         shape = RoundedCornerShape(CpDimens.radiusXl),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),

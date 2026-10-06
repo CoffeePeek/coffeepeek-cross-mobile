@@ -36,6 +36,9 @@ import com.coffeepeek.admin.theme.CpDimens
 import com.coffeepeek.admin.ui.Navigator
 import com.coffeepeek.admin.ui.component.AppButton
 import com.coffeepeek.admin.ui.component.CoffeePeekLoader
+import com.coffeepeek.admin.ui.component.platformTextInputOptions
+import com.coffeepeek.admin.ui.component.rememberSyncedTextFieldValue
+import com.coffeepeek.admin.ui.component.limitTextLength
 import com.coffeepeek.admin.ui.icons.CpIcons
 import com.coffeepeek.admin.di.platformViewModel
 import org.koin.core.parameter.parametersOf
@@ -84,9 +87,15 @@ fun ShopReportScreen(shopId: String, shopTitle: String) {
             }
 
             if (state.selectedReason == ShopReportReason.OTHER) {
+                val commentField = rememberSyncedTextFieldValue(state.comment)
                 OutlinedTextField(
-                    value = state.comment,
-                    onValueChange = vm::updateComment,
+                    value = commentField.value,
+                    onValueChange = { updated ->
+                        val limited = updated.limitTextLength(500)
+                        commentField.value = limited
+                        vm.updateComment(limited.text)
+                    },
+                    keyboardOptions = platformTextInputOptions(),
                     modifier = Modifier.fillMaxWidth(),
                     label = { Text("Что именно не так?") },
                     supportingText = { Text("До 500 символов") },

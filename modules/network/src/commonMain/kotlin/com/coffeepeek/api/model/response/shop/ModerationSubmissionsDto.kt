@@ -2,6 +2,7 @@ package com.coffeepeek.api.model.response.shop
 
 import com.coffeepeek.api.model.DataResponse
 import com.coffeepeek.api.model.request.ModerationStatusDto
+import com.coffeepeek.api.model.PublicAddressDto
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -14,12 +15,12 @@ data class ModerationShopDto(
     @SerialName("address") val address: String? = null,
     @SerialName("moderationStatus") val moderationStatus: ModerationStatusDto,
     @SerialName("rejectedReason") val rejectedReason: String? = null,
-    @SerialName("publishedShopId") val publishedShopId: String? = null,
+    @SerialName("publishedShop") val publishedShop: PublicAddressDto? = null,
 )
 
 @Serializable
 data class MyModerationShopsPageDto(
-    @SerialName("moderationShops") val moderationShops: List<ModerationShopDto> = emptyList(),
+    @SerialName("items") val moderationShops: List<ModerationShopDto> = emptyList(),
     @SerialName("totalItems") val totalItems: Int = 0,
     @SerialName("totalPages") val totalPages: Int = 0,
     @SerialName("currentPage") val currentPage: Int = 1,

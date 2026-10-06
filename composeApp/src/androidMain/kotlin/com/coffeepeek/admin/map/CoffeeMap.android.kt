@@ -462,7 +462,9 @@ private fun Context.lastKnownLocation(): Location? {
     if (!hasLocationPermission()) return null
     return listOf(LocationManager.GPS_PROVIDER, LocationManager.NETWORK_PROVIDER)
         .mapNotNull { provider ->
-            runCatching { locationManager.getLastKnownLocation(provider) }.getOrNull()
+            try { locationManager.getLastKnownLocation(provider) }
+                catch (_: SecurityException) { null }
+                catch (_: IllegalArgumentException) { null }
         }
         .maxByOrNull { it.time }
 }

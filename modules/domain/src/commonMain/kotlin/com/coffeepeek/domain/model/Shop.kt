@@ -18,6 +18,7 @@ data class CoffeeShop(
     val roasterPhotoUrls: List<String> = emptyList(),
     val type: String = CoffeeShopType.COFFEE_BAR,
     val location: ShopLocation? = null,
+    val publicAddress: PublicAddress? = null,
 )
 
 data class CoffeeShopDetails(
@@ -112,6 +113,10 @@ data class Review(
     val photoUrls: List<String> = emptyList(),
     val helpfulCount: Int = 0,
     val isHelpfulByCurrentUser: Boolean = false,
+    val drinkSlug: String? = null,
+    val customDrinkName: String? = null,
+    val drinkNameRu: String? = null,
+    val drinkNameEn: String? = null,
 )
 
 data class HelpfulVote(
@@ -163,6 +168,7 @@ data class MapShop(
     val longitude: Double,
     val type: String = CoffeeShopType.COFFEE_BAR,
     val primaryZoneId: String? = null,
+    val publicAddress: PublicAddress? = null,
 )
 
 data class MapCluster(
@@ -183,6 +189,7 @@ data class MapCoffeeZone(
     val shopCount: Int,
     // (latitude, longitude); empty → draw a circle from radiusMeters
     val polygon: List<Pair<Double, Double>> = emptyList(),
+    val publicAddress: PublicAddress? = null,
 )
 
 data class MapContent(
