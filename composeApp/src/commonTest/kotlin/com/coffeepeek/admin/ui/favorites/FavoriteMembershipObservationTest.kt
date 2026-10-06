@@ -134,7 +134,7 @@ class FavoriteMembershipObservationTest {
     private object Users : UserRepository {
         override fun observeProfile() = MutableStateFlow<UserProfile?>(null)
         override suspend fun refreshProfile(): Result<UserProfile> = error("unused")
-        override suspend fun getMe(): Result<UserProfile> = error("unused")
+        override suspend fun getMe(): Result<UserProfile> = Result.failure(IllegalStateException("profile unavailable"))
         override suspend fun getPublicAvatarUrl(userId: String): Result<String?> = error("unused")
         override suspend fun requestAccountDeletion(): Result<AccountDeletionRequest> = error("unused")
         override suspend fun getAccountDeletionRequest(): Result<AccountDeletionRequest?> = error("unused")
