@@ -134,7 +134,7 @@ class FavoriteMembershipObservationTest {
     private object Users : UserRepository {
         override fun observeProfile() = MutableStateFlow<UserProfile?>(null)
         override suspend fun refreshProfile(): Result<UserProfile> = error("unused")
-        override suspend fun getMe(): Result<UserProfile> = error("unused")
+        override suspend fun getMe(): Result<UserProfile> = Result.failure(IllegalStateException("profile unavailable"))
         override suspend fun getPublicAvatarUrl(userId: String): Result<String?> = error("unused")
         override suspend fun requestAccountDeletion(): Result<AccountDeletionRequest> = error("unused")
         override suspend fun getAccountDeletionRequest(): Result<AccountDeletionRequest?> = error("unused")
@@ -178,7 +178,7 @@ class FavoriteMembershipObservationTest {
         val shops = Shops()
         val writer = FavoriteWriter()
         val vm = ShopDetailViewModel("shop", shops, writer, CheckIns, Reviews, SignedInSessions,
-            CheckInDraftStore { 0L })
+            CheckInDraftStore { 0L }, Users)
         try {
             shops.details.complete(CoffeeShopDetails(shop))
             withTimeout(5_000) { vm.uiState.first { it.details != null && !it.isLoading } }
@@ -235,7 +235,7 @@ class FavoriteMembershipObservationTest {
             addResult = Result.failure(IllegalStateException("storage unavailable"))
         }
         val vm = ShopDetailViewModel("shop", shops, writer, CheckIns, Reviews, SignedInSessions,
-            CheckInDraftStore { 0L })
+            CheckInDraftStore { 0L }, Users)
         try {
             shops.details.complete(CoffeeShopDetails(shop))
             withTimeout(5_000) { vm.uiState.first { it.details != null && !it.isLoading } }
