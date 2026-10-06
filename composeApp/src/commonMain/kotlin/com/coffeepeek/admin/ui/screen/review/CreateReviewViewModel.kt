@@ -1,5 +1,11 @@
 package com.coffeepeek.admin.ui.screen.review
 
+import com.coffeepeek.domain.repository.ShopRepository
+
+import com.coffeepeek.domain.model.validateConsumedDrink
+
+import com.coffeepeek.domain.model.ConsumedDrinkOption
+
 import com.coffeepeek.admin.base.BaseViewModel
 import com.coffeepeek.admin.settings.ReviewDraft
 import com.coffeepeek.admin.settings.ReviewDraftStore
@@ -20,6 +26,11 @@ import kotlinx.coroutines.launch
 private const val DEFAULT_RATING = 4
 
 data class CreateReviewUiState(
+    val drinkSlug: String? = null,
+    val customDrinkName: String? = null,
+    val drinkName: String? = null,
+    val drinks: List<ConsumedDrinkOption> = emptyList(),
+    val drinksError: String? = null,
     val header: String = "",
     val comment: String = "",
     val placeRating: Int = DEFAULT_RATING,
@@ -37,6 +48,7 @@ data class CreateReviewUiState(
 class CreateReviewViewModel(
     private val shopId: String,
     private val reviewRepository: ReviewRepository,
+    private val shopRepository: ShopRepository,
     private val drafts: ReviewDraftStore,
 ) : BaseViewModel() {
 
@@ -45,12 +57,16 @@ class CreateReviewViewModel(
     private val draftKey = ReviewDraftStore.newReviewKey(shopId)
 
     init {
+        loadDrinks()
         workScope.launch {
             val draft = drafts.load(draftKey)
             val photos = drafts.photos(draftKey)
             if (draft == null && photos.isEmpty()) return@launch
             _state.update {
                 it.copy(
+                    drinkSlug = draft?.drinkSlug,
+                    customDrinkName = draft?.customDrinkName,
+                    drinkName = draft?.drinkName,
                     header = draft?.header ?: it.header,
                     comment = draft?.comment ?: it.comment,
                     placeRating = draft?.placeRating ?: it.placeRating,
@@ -68,10 +84,22 @@ class CreateReviewViewModel(
         val s = _state.value
         drafts.save(
             key = draftKey,
-            draft = ReviewDraft(s.header, s.comment, s.placeRating, s.serviceRating, s.coffeeRating),
+            draft = ReviewDraft(s.header, s.comment, s.placeRating, s.serviceRating, s.coffeeRating, drinkSlug = s.drinkSlug, customDrinkName = s.customDrinkName, drinkName = s.drinkName),
             draftPhotos = s.photos,
             defaultRating = DEFAULT_RATING,
         )
+    }
+
+    fun loadDrinks() {
+        workScope.launch {
+            shopRepository.getConsumedDrinks().onSuccess { drinks ->
+                _state.update { it.copy(drinks = drinks, drinksError = null) }
+            }.onFailure { e -> _state.update { it.copy(drinksError = e.message ?: "Не удалось загрузить напитки") } }
+        }
+    }
+
+    fun onDrinkChange(slug: String?, name: String?) {
+        edit { it.copy(drinkSlug = slug, customDrinkName = name, drinkName = null) }
     }
 
     fun onHeaderChange(v: String) {
@@ -87,7 +115,7 @@ class CreateReviewViewModel(
 
     /** Explicit «Удалить черновик»: wipe the stored draft and reset the form. */
     fun discardDraft() {
-        _state.value = CreateReviewUiState()
+        _state.value = CreateReviewUiState(drinks = _state.value.drinks, drinksError = _state.value.drinksError)
         workScope.launch { drafts.clear(draftKey) }
     }
 
@@ -109,6 +137,8 @@ class CreateReviewViewModel(
     fun submit(onSuccess: () -> Unit = { Navigator.popBack() }) {
         val s = _state.value
         if (s.isSubmitting) return
+        val drinkError = validateConsumedDrink(s.drinkSlug, s.customDrinkName)
+        if (drinkError != null) { _state.update { it.copy(error = drinkError) }; return }
         val headerError = validateReviewHeader(s.header)
         val commentError = validateReviewComment(s.comment)
         if (headerError != null || commentError != null) {
@@ -127,6 +157,8 @@ class CreateReviewViewModel(
             reviewRepository.createReview(
                 CreateReviewInput(
                     shopId = shopId,
+                    drinkSlug = s.drinkSlug,
+                    customDrinkName = s.customDrinkName?.trim(),
                     header = s.header.trim(),
                     comment = s.comment.trim(),
                     placeRating = s.placeRating,
@@ -138,7 +170,7 @@ class CreateReviewViewModel(
                 // Sent: wipe everything (form, photos, stored draft) so the same review can't be sent twice.
                 // The ViewModel outlives the sheet (keyed per shop), so reopening must show an empty form.
                 drafts.clear(draftKey)
-                _state.value = CreateReviewUiState()
+                _state.value = CreateReviewUiState(drinks = _state.value.drinks, drinksError = _state.value.drinksError)
                 ReviewSync.notifyChanged(shopId)
                 onSuccess()
             }.onFailure { e ->

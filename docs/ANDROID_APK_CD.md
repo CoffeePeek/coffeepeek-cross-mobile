@@ -1,11 +1,10 @@
 # Публикация Android APK на VPS
 
-Workflow `.github/workflows/android-apk.yml` собирает подписанный release APK при push в `main` и `dev`.
+Workflow `.github/workflows/android-apk.yml` (`Android Release`) собирает подписанные release APK и AAB при push в `main`. Один APK доставляется на сайт и в Firebase; AAB — в Play internal testing.
 
 Публичные ссылки:
 
 - production: `https://coffeepeek.by/downloads/android/main/coffeepeek.apk`
-- dev: `https://coffeepeek.by/downloads/android/dev/coffeepeek.apk`
 - история: `https://coffeepeek.by/downloads/android/releases/<version>-<code>/coffeepeek.apk`
 
 Стабильный APK заменяется атомарно. Уже опубликованный versioned APK можно повторно использовать только при совпадении размера и SHA-256; заменить его другим файлом workflow не позволит.
@@ -64,17 +63,15 @@ handle {
 
 Создайте environments:
 
-- `production` — рекомендуется включить required reviewers и разрешить ветку `main`;
-- `development` — разрешить ветку `dev` без ручного подтверждения.
+- `production` — разрешить ветку `main` без required reviewers для автоматической доставки;
 
 ## GitHub Variables
 
 | Variable | Назначение |
 |---|---|
 | `API_BASE_URL_MAIN` | Production backend URL для APK из `main` |
-| `API_BASE_URL_DEV` | Dev backend URL для APK из `dev` |
 
-Оба URL обязательны. `GOOGLE_WEB_CLIENT_ID` остаётся опциональным secret.
+Production URL обязателен. `GOOGLE_WEB_CLIENT_ID` остаётся опциональным secret.
 
 ## GitHub Secrets
 
@@ -125,7 +122,7 @@ ssh-keygen -l -E sha256 -f /etc/ssh/ssh_host_ed25519_key.pub | awk '{print $2}'
 - UTC-время публикации;
 - stable и versioned URL.
 
-После загрузки APK из `main` workflow проверяет доступность immutable URL и автоматически создаёт черновик через `POST /api/admin/v1/app-downloads/android/releases`. Повторный запуск с тем же `VersionCode` пропускает регистрацию, если metadata совпадает, и завершается ошибкой при конфликте. Релизы из `dev` в админке не регистрируются.
+После загрузки APK из `main` workflow проверяет доступность immutable URL и автоматически создаёт черновик через `POST /api/admin/v1/app-downloads/android/releases`. Повторный запуск с тем же `VersionCode` пропускает регистрацию, если metadata совпадает, и завершается ошибкой при конфликте.
 
 Bearer token должен оставаться действительным на момент запуска workflow. Публикация черновика выполняется вручную из админки.
 

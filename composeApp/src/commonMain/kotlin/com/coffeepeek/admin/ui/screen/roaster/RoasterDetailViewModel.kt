@@ -59,6 +59,7 @@ class RoasterDetailViewModel(
     private suspend fun enrichShopPhotos(details: RoasterDetails): RoasterDetails = coroutineScope {
         val shops = details.shops.map { shop ->
             async {
+                if (!shop.photoUrl.isNullOrBlank()) return@async shop
                 val shopDetails = shopRepository.getShopDetails(shop.id).getOrNull()
                 val photoUrl = shopDetails
                     ?.photos

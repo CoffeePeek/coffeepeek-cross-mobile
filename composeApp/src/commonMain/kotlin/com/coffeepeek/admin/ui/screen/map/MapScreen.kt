@@ -6,6 +6,8 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -34,6 +36,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -43,6 +48,10 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.zIndex
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.semantics.CollectionInfo
+import androidx.compose.ui.semantics.collectionInfo
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.coffeepeek.admin.map.CoffeeMap
@@ -53,7 +62,8 @@ import com.coffeepeek.admin.ui.component.CoffeeShopPlaceholderImage
 import com.coffeepeek.admin.ui.component.CoffeePeekLoader
 import com.coffeepeek.admin.ui.component.CpSearchField
 import com.coffeepeek.admin.ui.component.LocalFloatingNavClearance
-import com.coffeepeek.admin.ui.component.liquidGlass
+import com.coffeepeek.admin.ui.component.GlassControlIcon
+import com.coffeepeek.admin.ui.component.PlatformMapControlButton
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.runtime.CompositionLocalProvider
 import com.coffeepeek.domain.model.CoffeeShop
@@ -62,10 +72,20 @@ import com.coffeepeek.domain.model.MapShop
 import com.coffeepeek.domain.model.MapCoffeeZone
 import com.coffeepeek.admin.di.platformViewModel
 import com.coffeepeek.admin.utils.formatOneDecimal
+import com.coffeepeek.admin.location.rememberPermittedUserLocation
+import com.coffeepeek.admin.location.distanceToShopMeters
+import com.coffeepeek.admin.location.formatDistance
+import com.coffeepeek.domain.model.ShopLocation
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.drop
 
 @Composable
 fun MapScreen(vm: MapViewModel = platformViewModel()) {
     val state by vm.state.collectAsState()
+    val userLocation = rememberPermittedUserLocation()
+    LaunchedEffect(userLocation) {
+        userLocation?.let { vm.onNearbyOriginChanged(it.latitude, it.longitude) }
+    }
     val pendingFocus by Navigator.pendingMapFocus.collectAsState()
     val pendingFocusShop = pendingFocus?.let { focus ->
         MapShop(
@@ -84,6 +104,7 @@ fun MapScreen(vm: MapViewModel = platformViewModel()) {
     val cameraZoom = state.cameraZoom ?: if (pendingFocus != null) 16f else null
     val isDarkTheme = MaterialTheme.colorScheme.background.luminance() < 0.5f
     val navClearance = LocalFloatingNavClearance.current
+    val hasShopCarousel = state.selectedShop != null || state.nearbyShops.isNotEmpty()
 
     LaunchedEffect(pendingFocus) {
         pendingFocus?.let { focus ->
@@ -174,7 +195,8 @@ fun MapScreen(vm: MapViewModel = platformViewModel()) {
                 .padding(
                     end = CpDimens.spacing4,
                     bottom = navClearance + when {
-                        state.selectedShop != null || state.selectedZone != null -> 180.dp
+                        state.selectedZone != null -> 180.dp
+                        hasShopCarousel -> 132.dp
                         else -> CpDimens.spacing4
                     },
                 ),
@@ -182,7 +204,10 @@ fun MapScreen(vm: MapViewModel = platformViewModel()) {
             horizontalAlignment = Alignment.End,
         ) {
             MapControlButton(
+                icon = GlassControlIcon.Zones,
                 onClick = vm::toggleZones,
+                contentDescription = if (state.showZones) "Скрыть зоны" else "Показать зоны",
+                selected = state.showZones,
                 contentColor = if (state.showZones) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
             ) {
                 Icon(
@@ -191,11 +216,16 @@ fun MapScreen(vm: MapViewModel = platformViewModel()) {
                     modifier = Modifier.size(26.dp),
                 )
             }
-            MapControlButton(onClick = vm::requestMyLocation) {
+            MapControlButton(
+                icon = GlassControlIcon.Location,
+                onClick = vm::requestMyLocation,
+                contentDescription = "Моё местоположение",
+                modifier = Modifier.size(CpDimens.buttonHeight + 4.dp),
+            ) {
                 Icon(
                     CpIcons.Navigation,
                     contentDescription = "Моё местоположение",
-                    modifier = Modifier.size(30.dp),
+                    modifier = Modifier.size(32.dp),
                 )
             }
         }
@@ -215,7 +245,7 @@ fun MapScreen(vm: MapViewModel = platformViewModel()) {
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
                     .padding(
-                        bottom = navClearance + if (state.selectedShop == null) 32.dp else 148.dp,
+                        bottom = navClearance + if (hasShopCarousel) 148.dp else 32.dp,
                     )
                     .height(CpDimens.buttonHeight),
                 shape = RoundedCornerShape(percent = 50),
@@ -229,20 +259,13 @@ fun MapScreen(vm: MapViewModel = platformViewModel()) {
             }
         }
 
-        state.selectedShop?.let { shop ->
-            MapShopBottomSheet(
-                shop = shop,
-                details = state.selectedShopDetails,
-                isLoadingDetails = state.isLoadingShopDetails,
-                onOpen = { Navigator.navigate(Navigator.Screen.ShopDetail(shop.id)) },
-                onDismiss = vm::clearSelection,
+        if (state.selectedZone == null && hasShopCarousel) {
+            MapShopCarousel(
+                state = state,
+                onSelect = vm::onCarouselShopSelected,
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
-                    .padding(
-                        start = CpDimens.spacing4,
-                        end = CpDimens.spacing4,
-                        bottom = navClearance + CpDimens.spacing4,
-                    ),
+                    .padding(bottom = navClearance + CpDimens.spacing4),
             )
         }
 
@@ -422,18 +445,20 @@ private fun mapShopCountLabel(count: Int): String {
 
 @Composable
 private fun MapControlButton(
+    icon: GlassControlIcon,
     onClick: () -> Unit,
+    contentDescription: String,
     modifier: Modifier = Modifier,
+    selected: Boolean = false,
     contentColor: Color = MaterialTheme.colorScheme.onSurface,
     content: @Composable () -> Unit,
 ) {
-    // Liquid Glass without backdrop blur: the native map view can't be sampled by Haze.
-    Box(
-        modifier = modifier
-            .size(CpDimens.buttonHeight)
-            .liquidGlass(CircleShape, hazeState = null)
-            .clickable(onClick = onClick),
-        contentAlignment = Alignment.Center,
+    PlatformMapControlButton(
+        icon = icon,
+        onClick = onClick,
+        contentDescription = contentDescription,
+        modifier = modifier,
+        selected = selected,
     ) {
         CompositionLocalProvider(LocalContentColor provides contentColor) { content() }
     }
@@ -469,6 +494,7 @@ private fun MapZoomControl(
             Icon(
                 imageVector = CpIcons.Add,
                 contentDescription = "Приблизить карту",
+                tint = MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier.size(22.dp),
             )
         }
@@ -492,7 +518,66 @@ private fun MapZoomControl(
             Icon(
                 imageVector = CpIcons.Minus,
                 contentDescription = "Отдалить карту",
+                tint = MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier.size(22.dp),
+            )
+        }
+    }
+}
+
+@Composable
+private fun MapShopCarousel(
+    state: MapUiState,
+    onSelect: (MapShop) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val selected = state.selectedShop
+    val selectedShopId by rememberUpdatedState(selected?.id)
+    val shops = if (selected == null || state.nearbyShops.any { it.id == selected.id }) state.nearbyShops else
+        listOf(selected) + state.nearbyShops.take(9)
+    if (shops.isEmpty()) return
+    key(shops.map { it.id }) {
+        val selectedIndex = shops.indexOfFirst { it.id == selected?.id }.coerceAtLeast(0)
+        val pager = rememberPagerState(
+            initialPage = carouselStartPage(shops.size, selectedIndex),
+            pageCount = { if (shops.size > 1) Int.MAX_VALUE else 1 },
+        )
+        LaunchedEffect(selected?.id) {
+            if (selected == null) return@LaunchedEffect
+            val currentIndex = pager.currentPage % shops.size
+            if (currentIndex != selectedIndex) {
+                val right = (selectedIndex - currentIndex + shops.size) % shops.size
+                val delta = if (right <= shops.size / 2) right else right - shops.size
+                pager.animateScrollToPage(pager.currentPage + delta)
+            }
+        }
+        LaunchedEffect(pager) {
+            snapshotFlow { pager.settledPage }.distinctUntilChanged().drop(1).collect { page ->
+                val shop = shops[page % shops.size]
+                if (shop.id != selectedShopId) onSelect(shop)
+            }
+        }
+        HorizontalPager(
+            state = pager,
+            modifier = modifier.fillMaxWidth().semantics {
+                collectionInfo = CollectionInfo(1, shops.size)
+                stateDescription = "Кофейня ${pager.currentPage % shops.size + 1} из ${shops.size}"
+            },
+            contentPadding = PaddingValues(horizontal = 36.dp),
+            pageSpacing = 12.dp,
+            userScrollEnabled = shops.size > 1,
+            beyondViewportPageCount = 1,
+        ) { page ->
+            val shop = shops[page % shops.size]
+            val isSelected = shop.id == selected?.id
+            MapShopBottomSheet(
+                shop = shop,
+                details = state.selectedShopDetails.takeIf { isSelected },
+                isLoadingDetails = isSelected && state.isLoadingShopDetails,
+                distance = formatDistance(distanceToShopMeters(state.nearbyOrigin, ShopLocation("", shop.latitude, shop.longitude))),
+                onOpen = {
+                    if (isSelected) Navigator.navigate(Navigator.Screen.ShopDetail(shop.id)) else onSelect(shop)
+                },
             )
         }
     }
@@ -504,7 +589,7 @@ private fun MapShopBottomSheet(
     details: CoffeeShopDetails?,
     isLoadingDetails: Boolean,
     onOpen: () -> Unit,
-    onDismiss: () -> Unit,
+    distance: String?,
     modifier: Modifier = Modifier,
 ) {
     val photoUrl = details?.shop?.photoUrl ?: details?.photos?.firstOrNull()
@@ -584,7 +669,7 @@ private fun MapShopBottomSheet(
                         }
                     } else {
                         Text(
-                            text = if (reviewCount > 0) "$reviewCount отзывов" else "Нет отзывов",
+                            text = if (details == null) "Кофейня рядом" else if (reviewCount > 0) "$reviewCount отзывов" else "Нет отзывов",
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
@@ -600,6 +685,9 @@ private fun MapShopBottomSheet(
                     overflow = TextOverflow.Ellipsis,
                     modifier = Modifier.padding(top = 2.dp),
                 )
+                distance?.let {
+                    Text(it, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
 
                 when {
                     hours != null -> {
@@ -625,13 +713,6 @@ private fun MapShopBottomSheet(
                 }
             }
 
-            IconButton(onClick = onDismiss) {
-                Icon(
-                    imageVector = CpIcons.Close,
-                    contentDescription = "Закрыть",
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
         }
     }
 }

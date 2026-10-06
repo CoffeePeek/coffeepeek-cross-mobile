@@ -29,7 +29,9 @@ actual object PlatformLocation {
         val providers = listOf(LocationManager.GPS_PROVIDER, LocationManager.NETWORK_PROVIDER)
         providers
             .mapNotNull { provider ->
-                runCatching { locationManager.getLastKnownLocation(provider) }.getOrNull()
+                try { locationManager.getLastKnownLocation(provider) }
+                catch (_: SecurityException) { null }
+                catch (_: IllegalArgumentException) { null }
             }
             .maxByOrNull { it.time }
             ?.let { GeoPoint(it.latitude, it.longitude) }
