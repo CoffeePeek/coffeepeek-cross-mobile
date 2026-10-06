@@ -1,11 +1,12 @@
 package com.coffeepeek.api.model.response.shop
 
+import com.coffeepeek.api.model.PublicAddressDto
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
 data class RoasterDetailsDto(
-    @SerialName("id") val id: String,
+    @SerialName("address") val address: PublicAddressDto,
     @SerialName("name") val name: String,
     @SerialName("about") val about: String? = null,
     @SerialName("location") val location: RoasterLocationDto? = null,
@@ -38,8 +39,9 @@ data class RoasterPhotoDto(
 
 @Serializable
 data class RoasterShopDto(
-    @SerialName("id") val id: String,
+    @SerialName("address") val address: PublicAddressDto,
     @SerialName("name") val name: String,
+    @SerialName("coverPhoto") val coverPhoto: ShortPhotoDto? = null,
 )
 
 @Serializable
@@ -51,5 +53,5 @@ data class RoasterSubmissionDto(
 
 data class RoasterSubmissionApiResult(
     val data: RoasterSubmissionDto,
-    val message: String,
+    val message: String?,
 )

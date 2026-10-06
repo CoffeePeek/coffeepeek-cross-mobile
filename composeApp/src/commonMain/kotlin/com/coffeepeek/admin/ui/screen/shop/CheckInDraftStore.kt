@@ -5,6 +5,9 @@ import com.coffeepeek.admin.utils.currentEpochMillis
 
 data class CheckInDraft(
     val shopId: String,
+    val drinkSlug: String? = null,
+    val customDrinkName: String? = null,
+    val drinkName: String? = null,
     val header: String = "",
     val note: String = "",
     val isPublic: Boolean = false,

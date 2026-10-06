@@ -106,7 +106,8 @@ fun FullScreenImageDialog(
                 )
             }
 
-            GlassIconButton(
+            PlatformGlassIconButton(
+                icon = GlassControlIcon.Close,
                 onClick = onDismiss,
                 contentDescription = "Закрыть",
                 modifier = Modifier

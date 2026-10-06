@@ -1,14 +1,15 @@
 package com.coffeepeek.api.model.response.shop
 
 import com.coffeepeek.api.model.DataResponse
+import com.coffeepeek.api.model.PublicAddressDto
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonElement
 
 @Serializable
 data class ShortShopDto(
-    @SerialName("id") val id: String,
-    @SerialName("cityId") val cityId: String = "",
+    @SerialName("address") val address: PublicAddressDto,
+    @SerialName("city") val city: PublicAddressDto? = null,
     @SerialName("name") val name: String,
     @SerialName("photos") val photos: List<ShortPhotoDto> = emptyList(),
     @SerialName("rating") val rating: Double = 0.0,

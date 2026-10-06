@@ -8,4 +8,5 @@ data class UserProfile(
     val reviewCount: Int,
     val checkInCount: Int,
     val addedShopsCount: Int,
+    val address: PublicAddress? = null,
 )

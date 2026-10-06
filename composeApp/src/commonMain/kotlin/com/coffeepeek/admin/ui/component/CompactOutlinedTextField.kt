@@ -40,6 +40,8 @@ fun CompactOutlinedTextField(
     trailingIcon: @Composable (() -> Unit)? = null,
     isError: Boolean = false,
     visualTransformation: VisualTransformation = VisualTransformation.None,
+    maxLength: Int = Int.MAX_VALUE,
+    inputFilter: ((Char) -> Boolean)? = null,
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
     keyboardActions: KeyboardActions = KeyboardActions.Default,
     singleLine: Boolean = true,
@@ -60,18 +62,24 @@ fun CompactOutlinedTextField(
         }
     }
     val cursorColor = if (isError) colors.errorCursorColor else colors.cursorColor
+    val fieldValue = rememberSyncedTextFieldValue(value)
 
     CompositionLocalProvider(LocalTextSelectionColors provides colors.textSelectionColors) {
         BasicTextField(
-            value = value,
-            onValueChange = onValueChange,
+            value = fieldValue.value,
+            onValueChange = { updated ->
+                val limited = (inputFilter?.let { updated.filterText(it) } ?: updated)
+                    .limitTextLength(maxLength)
+                fieldValue.value = limited
+                onValueChange(limited.text)
+            },
             modifier = modifier,
             enabled = enabled,
             readOnly = readOnly,
             textStyle = textStyle.merge(TextStyle(color = textColor)),
             cursorBrush = SolidColor(cursorColor),
             visualTransformation = visualTransformation,
-            keyboardOptions = keyboardOptions,
+            keyboardOptions = platformTextInputOptions(keyboardOptions),
             keyboardActions = keyboardActions,
             interactionSource = interactionSource,
             singleLine = singleLine,

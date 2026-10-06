@@ -13,7 +13,11 @@ class CreateShopRequestContractTest {
             CreateShopReq(
                 name = "Coffee Point",
                 address = "Lenina 1",
-                cityId = "city-1",
+                cityId = "minsk",
+                coffeeBeanIds = listOf("arabica"),
+                equipmentIds = listOf("la-marzocco-linea"),
+                roasterIds = listOf("coffee-roaster"),
+                brewMethodIds = listOf("v60"),
                 latitude = 53.9023,
                 longitude = 27.5619,
                 shopContact = CreateShopContactReq(phoneNumber = "+375291234567"),
@@ -27,6 +31,11 @@ class CreateShopRequestContractTest {
             ),
         )
 
+        assertContains(encoded, "\"city\":\"minsk\"")
+        assertContains(encoded, "\"beans\":[\"arabica\"]")
+        assertContains(encoded, "\"equipments\":[\"la-marzocco-linea\"]")
+        assertContains(encoded, "\"roasters\":[\"coffee-roaster\"]")
+        assertContains(encoded, "\"brewMethods\":[\"v60\"]")
         assertContains(encoded, "\"latitude\":53.9023")
         assertContains(encoded, "\"longitude\":27.5619")
         assertContains(encoded, "\"shopContact\":{\"phoneNumber\":\"+375291234567\"")

@@ -12,7 +12,7 @@ class CheckInRequestContractTest {
     fun publicCheckInSerializesHeaderFromApiContract() {
         val payload = Json.encodeToString(
             CreateCheckInReq(
-                coffeeShopId = "611c3b59-c086-44bb-a4c5-c350be4ee7d9",
+                coffeeShopId = "26-october-16",
                 isPublic = true,
                 visitedAt = "2026-09-06T10:00:00Z",
                 header = "Отличное место",
@@ -20,6 +20,8 @@ class CheckInRequestContractTest {
             )
         )
 
+        assertContains(payload, "\"shop\":\"26-october-16\"")
+        assertFalse("coffeeShopId" in payload)
         assertContains(payload, "\"header\":\"Отличное место\"")
         assertContains(payload, "\"note\":\"Описание публичного чекина\"")
     }
@@ -28,7 +30,7 @@ class CheckInRequestContractTest {
     fun absentHeaderIsNotSentForPrivateCheckIn() {
         val payload = Json.encodeToString(
             CreateCheckInReq(
-                coffeeShopId = "611c3b59-c086-44bb-a4c5-c350be4ee7d9",
+                coffeeShopId = "26-october-16",
                 isPublic = false,
                 visitedAt = "2026-09-06T10:00:00Z",
             )
