@@ -13,11 +13,10 @@ class CheckInResponseDtoTest {
         val response = Json.decodeFromString<GetUserCheckInsResponseDto>(
             """
                 {
-                  "checkIns": [
+                  "items": [
                     {
                       "id": "check-in-1",
-                      "userId": "user-1",
-                      "shopId": "shop-1",
+                      "shop": {"slug":"shop-1","canonicalPath":"/coffee-shops/shop-1","revision":1,"isAlias":false},
                       "note": null,
                       "createdAt": "2026-09-16T12:27:27.922Z",
                       "visitedAt": "2026-09-16T12:27:27.922Z",

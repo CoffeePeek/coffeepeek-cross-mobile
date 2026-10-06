@@ -1,5 +1,9 @@
 package com.coffeepeek.admin.ui.component
 
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.snap
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.lazy.LazyListState
@@ -27,6 +31,11 @@ import kotlin.time.Duration.Companion.seconds
 import kotlin.time.TimeMark
 import kotlin.time.TimeSource
 
+internal val PullRefreshSettleSpec = spring<Float>(
+    dampingRatio = Spring.DampingRatioNoBouncy,
+    stiffness = Spring.StiffnessLow,
+)
+
 @Composable
 fun CoffeePeekPullToRefresh(
     listState: LazyListState,
@@ -40,13 +49,14 @@ fun CoffeePeekPullToRefresh(
     val indicatorSize = CpDimens.loaderButton
     val indicatorSizePx = with(density) { indicatorSize.toPx() }
     var pullOffset by remember { mutableFloatStateOf(0f) }
+    var isDragging by remember { mutableStateOf(false) }
     var lastRefreshMark by remember { mutableStateOf<TimeMark?>(null) }
 
     val isRefreshingState by rememberUpdatedState(isRefreshing)
     val listStateState by rememberUpdatedState(listState)
     val onRefreshState by rememberUpdatedState(onRefresh)
 
-    val nestedScrollConnection = remember {
+    val nestedScrollConnection = remember(thresholdPx) {
         object : NestedScrollConnection {
             override fun onPostScroll(
                 consumed: Offset,
@@ -64,6 +74,7 @@ fun CoffeePeekPullToRefresh(
                     return Offset.Zero
                 }
                 if (available.y > 0f && !isRefreshingState) {
+                    isDragging = true
                     val damped = available.y * 0.5f
                     val next = (pullOffset + damped).coerceAtMost(thresholdPx * 1.4f)
                     val consumedY = (next - pullOffset) / 0.5f
@@ -74,7 +85,8 @@ fun CoffeePeekPullToRefresh(
             }
 
             override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
-                if (available.y < 0f && pullOffset > 0f) {
+                if (source == NestedScrollSource.UserInput && !isRefreshingState && available.y < 0f && pullOffset > 0f) {
+                    isDragging = true
                     val release = min(-available.y, pullOffset / 0.5f)
                     pullOffset = (pullOffset - release * 0.5f).coerceAtLeast(0f)
                     return Offset(0f, -release)
@@ -83,6 +95,8 @@ fun CoffeePeekPullToRefresh(
             }
 
             override suspend fun onPreFling(available: Velocity): Velocity {
+                val wasPulling = pullOffset > 0f
+                isDragging = false
                 val refreshAllowed = lastRefreshMark?.elapsedNow()?.let { it > 1.seconds } ?: true
                 if (
                     pullOffset >= thresholdPx &&
@@ -93,7 +107,7 @@ fun CoffeePeekPullToRefresh(
                     onRefreshState()
                 }
                 pullOffset = 0f
-                return Velocity.Zero
+                return if (wasPulling) Velocity(0f, available.y) else Velocity.Zero
             }
         }
     }
@@ -102,17 +116,21 @@ fun CoffeePeekPullToRefresh(
         if (!isRefreshing) pullOffset = 0f
     }
 
-    val contentOffsetPx = if (isRefreshing) thresholdPx else pullOffset
+    val contentOffsetPx by animateFloatAsState(
+        targetValue = if (isRefreshing) thresholdPx else pullOffset,
+        animationSpec = if (isDragging) snap() else PullRefreshSettleSpec,
+        label = "pull-refresh-offset",
+    )
     val scrollModifier = Modifier
         .nestedScroll(nestedScrollConnection)
         .graphicsLayer { translationY = contentOffsetPx }
-    val showIndicator = isRefreshing || pullOffset > 0f
+    val showIndicator = isRefreshing || contentOffsetPx > 0.5f
 
     Box(modifier = modifier) {
         content(scrollModifier)
 
         if (showIndicator) {
-            val progress = if (isRefreshing) 1f else (pullOffset / thresholdPx).coerceIn(0f, 1f)
+            val progress = (contentOffsetPx / thresholdPx).coerceIn(0f, 1f)
             Box(
                 modifier = Modifier
                     .fillMaxWidth()

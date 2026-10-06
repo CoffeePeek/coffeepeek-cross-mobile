@@ -7,7 +7,7 @@ import kotlinx.serialization.Serializable
 data class CreateShopReq(
     @SerialName("name")          val name: String,
     @SerialName("address")       val address: String,
-    @SerialName("cityId")        val cityId: String,
+    @SerialName("city")        val cityId: String,
     @SerialName("latitude")      val latitude: Double?       = null,
     @SerialName("longitude")     val longitude: Double?      = null,
     @SerialName("description")   val description: String?      = null,
@@ -16,10 +16,10 @@ data class CreateShopReq(
     @SerialName("schedules")     val schedules: List<ScheduleReq>? = null,
     @SerialName("shopPhotos")    val shopPhotos: List<UploadedPhotoReq>? = null,
     @SerialName("menuPhotos")    val menuPhotos: List<UploadedPhotoReq>? = null,
-    @SerialName("equipmentIds")  val equipmentIds: List<String>? = null,
-    @SerialName("coffeeBeanIds") val coffeeBeanIds: List<String>? = null,
-    @SerialName("roasterIds")    val roasterIds: List<String>? = null,
-    @SerialName("brewMethodIds") val brewMethodIds: List<String>? = null,
+    @SerialName("equipments")  val equipmentIds: List<String>? = null,
+    @SerialName("beans") val coffeeBeanIds: List<String>? = null,
+    @SerialName("roasters")    val roasterIds: List<String>? = null,
+    @SerialName("brewMethods") val brewMethodIds: List<String>? = null,
 )
 
 @Serializable

@@ -8,6 +8,7 @@ data class RoasterDetails(
     val contact: RoasterContact? = null,
     val photos: List<RoasterPhoto> = emptyList(),
     val shops: List<RoasterShop> = emptyList(),
+    val publicAddress: PublicAddress? = null,
 )
 
 data class RoasterLocation(
@@ -33,6 +34,7 @@ data class RoasterShop(
     val id: String,
     val name: String,
     val photoUrl: String? = null,
+    val publicAddress: PublicAddress? = null,
 )
 
 data class CreateRoasterInput(

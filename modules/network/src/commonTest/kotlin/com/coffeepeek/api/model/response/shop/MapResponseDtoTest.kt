@@ -18,12 +18,12 @@ class MapResponseDtoTest {
                   "Message": "Operation successful",
                   "Data": {
                     "Shops": [{
-                      "Id": "shop-1",
+                      "address": {"slug":"shop-1","canonicalPath":"/coffee-shops/shop-1","revision":1,"isAlias":false},
                       "Latitude": 53.9,
                       "Longitude": 27.56,
                       "Title": "Coffee Shop",
                       "Type": "Specialty",
-                      "PrimaryZoneId": "zone-1"
+                      "primaryZone": {"slug":"zone-1","canonicalPath":"/coffee-zones/zone-1","revision":1,"isAlias":false}
                     }],
                     "Clusters": [{
                       "Id": "10:590:331",
@@ -38,7 +38,7 @@ class MapResponseDtoTest {
                       }
                     }],
                     "Zones": [{
-                      "Id": "zone-1",
+                      "address": {"slug":"zone-1","canonicalPath":"/coffee-zones/zone-1","revision":1,"isAlias":false},
                       "Name": "Октябрьская",
                       "Description": "Кофейный район",
                       "Latitude": 53.89,
@@ -54,7 +54,7 @@ class MapResponseDtoTest {
 
         assertTrue(response.isSuccess)
         val data = requireNotNull(response.data)
-        assertEquals("zone-1", data.shops.single().primaryZoneId)
+        assertEquals("zone-1", data.shops.single().primaryZone?.slug)
         assertEquals(18, data.clusters.single().count)
         assertEquals(53.87, data.clusters.single().bounds.minLatitude)
         assertEquals("Октябрьская", data.zones.single().name)
@@ -71,13 +71,13 @@ class MapResponseDtoTest {
                   "message": "ok",
                   "statusCode": "200",
                   "data": {
-                    "shops": [{ "id": "s1", "latitude": "53.9", "longitude": "27.56", "title": null, "type": 1, "primaryZoneId": null }],
+                    "shops": [{ "address": {"slug":"shop-1","canonicalPath":"/coffee-shops/shop-1","revision":1,"isAlias":false}, "latitude": "53.9", "longitude": "27.56", "title": null, "type": 1, "primaryZone": null }],
                     "clusters": [{
                       "id": null, "latitude": "53.9", "longitude": "27.56", "count": "18",
                       "bounds": { "minLatitude": "53.87", "minLongitude": "27.51", "maxLatitude": "53.93", "maxLongitude": "27.62" }
                     }],
                     "zones": [{
-                      "id": "z1", "name": null, "description": null,
+                      "address": {"slug":"z1","canonicalPath":"/coffee-shops/z1","revision":1,"isAlias":false}, "name": null, "description": null,
                       "latitude": "53.89", "longitude": "27.57", "radiusMeters": "500", "shopCount": "7",
                       "polygon": [
                         { "latitude": "53.88", "longitude": "27.56" },

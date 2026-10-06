@@ -1,5 +1,7 @@
 package com.coffeepeek.data.local
 
+import com.coffeepeek.api.model.PublicAddressDto
+import com.coffeepeek.data.mapper.toDomain
 import com.coffeepeek.domain.model.CoffeeShop
 import com.coffeepeek.domain.model.CoffeeShopDetails
 import com.coffeepeek.domain.model.ShopLocation
@@ -8,6 +10,7 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class LocalFavoriteShopDto(
     val id: String,
+    val publicAddress: PublicAddressDto? = null,
     val title: String,
     val rating: Double? = null,
     val reviewCount: Int = 0,
@@ -27,6 +30,7 @@ data class LocalFavoriteShopDto(
     fun toDomain(): CoffeeShopDetails = CoffeeShopDetails(
         shop = CoffeeShop(
             id = id,
+            publicAddress = publicAddress?.toDomain(),
             title = title,
             rating = rating,
             reviewCount = reviewCount,
@@ -47,6 +51,9 @@ data class LocalFavoriteShopDto(
     companion object {
         fun from(shop: CoffeeShop, address: String? = null) = LocalFavoriteShopDto(
             id = shop.id,
+            publicAddress = shop.publicAddress?.let {
+                PublicAddressDto(it.slug, it.canonicalPath, it.revision, it.isAlias)
+            },
             title = shop.title,
             rating = shop.rating,
             reviewCount = shop.reviewCount,
