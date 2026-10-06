@@ -45,6 +45,7 @@ kotlin {
             implementation(project(module.core.coroutines))
             implementation(compose.preview)
             implementation(libs.androidx.activity.compose)
+            implementation(libs.androidx.concurrent.futures)
             implementation(libs.androidx.appcompat)
             implementation("androidx.core:core-splashscreen:1.0.1")
             implementation("androidx.exifinterface:exifinterface:1.4.1")
