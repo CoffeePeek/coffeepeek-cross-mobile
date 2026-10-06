@@ -33,6 +33,6 @@ class ApiResponseTest {
 
         // Then
         assertFalse(response.isSuccess)
-        assertEquals("Сервер вернул некорректный ответ", response.message)
+        assertEquals("Сервер вернул некорректный ответ", com.coffeepeek.api.utils.ApiException(response.message).message)
     }
 }

@@ -3,7 +3,6 @@ package com.coffeepeek.api.service
 import com.coffeepeek.api.model.ApiResponse
 import com.coffeepeek.api.model.request.SendReviewReq
 import com.coffeepeek.api.model.request.UpdateReviewReq
-import com.coffeepeek.api.model.response.CanCreateReviewResponseDto
 import com.coffeepeek.api.model.response.CreateEntityResponseDto
 import com.coffeepeek.api.model.response.GetReviewsByUserIdResponseDto
 import com.coffeepeek.api.model.response.MyModerationReviewsPageDto
@@ -18,18 +17,37 @@ import com.coffeepeek.api.utils.setJsonBody
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.parameter
+import io.ktor.client.plugins.expectSuccess
+import io.ktor.http.HttpStatusCode
+import kotlinx.serialization.Serializable
+
+@Serializable
+internal data class ReviewReportRequest(val text: String)
+
+@Serializable
+internal data class ReviewReportResponse(val id: String)
 
 class ReviewApiService(private val client: HttpClient) {
 
-    suspend fun canCreateReview(shopId: String): Result<CanCreateReviewResponseDto> = runCatching {
-        val response = client.getResult("/api/CoffeeShopReviews/can-create") {
-            parameter("shopId", shopId)
+    suspend fun submitReviewReport(reviewId: String, text: String): Result<String> = runCatching {
+        val trimmed = text.trim()
+        require(trimmed.length in 1..2000) { "Опишите проблему: от 1 до 2000 символов" }
+        val response = client.postResult("/api/CoffeeShopReviews/$reviewId/reports") {
+            expectSuccess = false
+            setJsonBody(ReviewReportRequest(trimmed))
         }.getOrThrow()
-        val apiResponse = response.body<ApiResponse<CanCreateReviewResponseDto>>()
-        if (!apiResponse.isSuccess || apiResponse.data == null) {
-            throw ApiException(apiResponse.message)
+        when (response.status) {
+            HttpStatusCode.Unauthorized -> throw ApiException("Войдите в аккаунт, чтобы отправить жалобу")
+            HttpStatusCode.NotFound -> throw ApiException("Отзыв удалён или больше недоступен")
+            HttpStatusCode.TooManyRequests -> throw ApiException("Слишком много отправок. Попробуйте позже")
         }
-        apiResponse.data
+        if (response.status != HttpStatusCode.Created) {
+            throw ApiException("Не удалось отправить жалобу. Попробуйте ещё раз")
+        }
+        val result = response.body<ApiResponse<ReviewReportResponse>>()
+        val id = result.data?.id
+        if (!result.isSuccess || id.isNullOrBlank()) throw ApiException(result.message)
+        id
     }
 
     suspend fun createReview(req: SendReviewReq): Result<Unit> = runCatching {

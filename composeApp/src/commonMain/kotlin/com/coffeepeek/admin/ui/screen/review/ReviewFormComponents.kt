@@ -47,6 +47,7 @@ fun ReviewHeaderField(
             placeholder = "Коротко о впечатлении",
             isError = error != null,
             singleLine = true,
+            maxLength = 120,
         )
     }
 }
@@ -64,6 +65,7 @@ fun ReviewCommentField(
             placeholder = "Расскажите о кофе, сервисе и атмосфере",
             isError = error != null,
             singleLine = false,
+            maxLength = 2000,
             modifier = Modifier.heightIn(min = 80.dp),
         )
     }

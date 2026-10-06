@@ -15,7 +15,7 @@ enum class ShopIssueCategory {
 
 @Serializable
 data class CreateShopIssueReportReq(
-    @SerialName("shopId") val shopId: String,
+    @SerialName("shop") val shopId: String,
     @SerialName("category") val category: ShopIssueCategory,
     @SerialName("description") val description: String? = null,
 )

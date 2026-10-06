@@ -2,12 +2,15 @@ package com.coffeepeek.admin
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import java.util.concurrent.atomic.AtomicBoolean
+import com.coffeepeek.admin.ui.Navigator
+import com.coffeepeek.admin.ui.appLinkScreen
 
 class MainActivity : ComponentActivity() {
 
@@ -26,6 +29,7 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
         _context = this
+        if (savedInstanceState == null) handleAppLink(intent)
         setContent {
             App(onReady = { isAppReady.set(true) })
         }
@@ -34,5 +38,16 @@ class MainActivity : ComponentActivity() {
     override fun onDestroy() {
         _context = null
         super.onDestroy()
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        handleAppLink(intent)
+    }
+
+    private fun handleAppLink(intent: Intent) {
+        if (intent.action != Intent.ACTION_VIEW) return
+        appLinkScreen(intent.dataString ?: return)?.let(Navigator::openAppLink)
     }
 }

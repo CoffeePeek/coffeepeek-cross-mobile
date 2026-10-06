@@ -2,6 +2,7 @@ package com.coffeepeek.admin.ui.screen.map
 
 import com.coffeepeek.admin.base.BaseViewModel
 import com.coffeepeek.admin.settings.CityPreference
+import com.coffeepeek.admin.location.GeoPoint
 import com.coffeepeek.domain.model.CatalogItem
 import com.coffeepeek.domain.model.City
 import com.coffeepeek.domain.model.CoffeeShop
@@ -44,6 +45,8 @@ data class MapFiltersUi(
 )
 
 data class MapUiState(
+    val nearbyShops: List<MapShop> = emptyList(),
+    val nearbyOrigin: GeoPoint? = null,
     val shops: List<MapShop> = emptyList(),
     val clusters: List<MapCluster> = emptyList(),
     val zones: List<MapCoffeeZone> = emptyList(),
@@ -87,6 +90,7 @@ class MapViewModel(
     val state: StateFlow<MapUiState> = _state.asStateFlow()
 
     private var boundsJob: Job? = null
+    private var nearbyJob: Job? = null
     private var queryJob: Job? = null
     private var detailsJob: Job? = null
     private var boundsPauseJob: Job? = null
@@ -107,12 +111,16 @@ class MapViewModel(
                     return@onEach
                 }
                 _state.update { it.copy(filters = it.filters.copy(cityId = cityId)) }
+                _state.value.nearbyOrigin?.let { loadNearbyShops(it) }
                 searchCurrentArea()
             }
             .launchIn(workScope)
     }
 
     fun onBoundsChanged(bounds: MapBounds, zoom: Float) {
+        if (_state.value.nearbyOrigin == null) {
+            onNearbyOriginChanged((bounds.minLat + bounds.maxLat) / 2, (bounds.minLon + bounds.maxLon) / 2)
+        }
         // Always remember the latest viewport — even while paused — so it can be loaded afterwards.
         _state.update {
             it.copy(
@@ -136,19 +144,46 @@ class MapViewModel(
     }
 
     fun onShopSelected(shop: MapShop) {
-        if (_state.value.selectedShop?.id == shop.id) return
+        if (_state.value.selectedShop?.id == shop.id) {
+            _state.update { it.copy(selectedZone = null) }
+            return
+        }
         _state.update { it.copy(selectedZone = null) }
         selectShop(shop)
     }
 
+    fun onCarouselShopSelected(shop: MapShop) {
+        onShopSelected(shop)
+        _state.update { it.copy(cameraTarget = shop.latitude to shop.longitude, cameraZoom = 16f) }
+        pauseBoundsUpdates(700)
+    }
+
+    fun onNearbyOriginChanged(latitude: Double, longitude: Double) {
+        if (!latitude.isFinite() || latitude !in -85.0..85.0 || !longitude.isFinite() || longitude !in -180.0..180.0) return
+        val origin = GeoPoint(latitude, longitude)
+        if (_state.value.nearbyOrigin == origin) return
+        _state.update { it.copy(nearbyOrigin = origin) }
+        loadNearbyShops(origin)
+    }
+
+    private fun loadNearbyShops(origin: GeoPoint) {
+        if (!isCityReady) return
+        nearbyJob?.cancel()
+        val filters = _state.value.filters
+        nearbyJob = workScope.launch {
+            val result = shopRepository.getMapContent(nearbyMapBounds(origin), 22f, ShopFilters(cityId = filters.cityId))
+            currentCoroutineContext().ensureActive()
+            result.onSuccess { content ->
+                val nearest = nearestMapShops(content.shops, origin)
+                _state.update { it.copy(nearbyShops = nearest, shops = (it.shops + nearest).distinctBy { shop -> shop.id }) }
+            }
+        }
+    }
+
     fun onZoneSelected(zone: MapCoffeeZone) {
-        detailsJob?.cancel()
         _state.update {
             it.copy(
                 selectedZone = zone,
-                selectedShop = null,
-                selectedShopDetails = null,
-                isLoadingShopDetails = false,
             )
         }
     }
@@ -171,20 +206,6 @@ class MapViewModel(
 
     fun clearZoneSelection() {
         _state.update { it.copy(selectedZone = null) }
-    }
-
-    fun clearSelection() {
-        detailsJob?.cancel()
-        boundsPauseJob?.cancel()
-        suppressBoundsUpdates = false
-        selectionVersion++
-        _state.update {
-            it.copy(
-                selectedShop = null,
-                selectedShopDetails = null,
-                isLoadingShopDetails = false,
-            )
-        }
     }
 
     fun onQueryChange(query: String) {
@@ -308,6 +329,11 @@ class MapViewModel(
     }
 
     fun onMyLocationApplied(latitude: Double, longitude: Double) {
+        if (_state.value.nearbyOrigin == GeoPoint(latitude, longitude)) {
+            _state.value.nearbyOrigin?.let { loadNearbyShops(it) }
+        } else {
+            onNearbyOriginChanged(latitude, longitude)
+        }
         _state.update {
             it.copy(
                 cameraTarget = latitude to longitude,
@@ -334,6 +360,7 @@ class MapViewModel(
                         )
                     }
                     isCityReady = true
+                    _state.value.nearbyOrigin?.let { loadNearbyShops(it) }
                     val current = _state.value
                     val bounds = current.pendingBounds
                     val zoom = current.pendingZoom
@@ -341,6 +368,7 @@ class MapViewModel(
                 }
                 .onFailure {
                     isCityReady = true
+                    _state.value.nearbyOrigin?.let { loadNearbyShops(it) }
                     val current = _state.value
                     val bounds = current.pendingBounds
                     val zoom = current.pendingZoom
@@ -390,7 +418,7 @@ class MapViewModel(
                     loadedArea = requestArea
                     loadedZoomLevel = zoom.toInt()
                     _state.update { current ->
-                        val merged = mergeShops(content.shops, current.selectedShop)
+                        val merged = mergeShops(content.shops + current.nearbyShops, current.selectedShop)
                         // The API only returns zones for the current viewport, so zooming in used to drop
                         // them. Keep every zone seen for this city; fresh data wins. Reset on city change.
                         val knownZones = if (zonesCityId == filters.cityId) current.zones else emptyList()

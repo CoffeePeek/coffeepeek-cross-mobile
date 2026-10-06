@@ -34,12 +34,10 @@ internal fun MenuItemAvailabilityDto.toDomain() = MenuItemAvailability.valueOf(n
 
 internal fun ShopChangeRequestDto.toDomain() = ShopChangeRequest(
     id = id,
-    shopId = shopId,
-    submittedByUserId = submittedByUserId,
+    shopId = shop?.slug.orEmpty(),
     section = section.toDomain(),
     payload = payload.toDomain(),
     status = status.toDomain(),
-    reviewedByUserId = reviewedByUserId,
     reviewedAtUtc = reviewedAtUtc,
     rejectionReason = rejectionReason,
     createdAtUtc = createdAtUtc,

@@ -27,7 +27,7 @@ class CheckInApiService(private val client: HttpClient) {
         when {
             apiResponse != null && !apiResponse.isSuccess -> {
                 throw ApiException(
-                    apiResponse.message.ifBlank { "Не удалось сохранить чек-ин" },
+                    apiResponse.message.orEmpty().ifBlank { "Не удалось сохранить чек-ин" },
                 )
             }
             !response.status.isSuccess() -> {
@@ -55,6 +55,7 @@ class CheckInApiService(private val client: HttpClient) {
         val response = client.getResult("/api/CheckIns") {
             parameter("from", from)
             parameter("to", to)
+            header("X-Page-Number", 1)
             header("X-Page-Size", pageSize)
         }.getOrThrow()
         val apiResponse = response.body<ApiResponse<GetUserCheckInsResponseDto>>()
