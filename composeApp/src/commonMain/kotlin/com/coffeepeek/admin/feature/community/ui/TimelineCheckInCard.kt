@@ -120,9 +120,10 @@ internal fun TimelineCheckInCard(
             ) {
                 if (isPublicTimeline && !isOwn) HelpfulButton(
                     helpfulCount = checkIn.helpfulCount, isHelpful = checkIn.isHelpfulByCurrentUser,
-                    onClick = onHelpful.takeIf { canAct },
-                ) else if (checkIn.helpfulCount > 0) Text("Полезно · ${checkIn.helpfulCount}",
-                    style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    onClick = onHelpful.takeIf { canAct }, showLabel = false,
+                ) else if (checkIn.helpfulCount > 0) HelpfulButton(
+                    helpfulCount = checkIn.helpfulCount, isHelpful = false, onClick = null, showLabel = false,
+                )
                 else Spacer(Modifier.weight(1f))
                 if (isOwn) TextButton(onClick = onVisibility, enabled = canAct) {
                     Text(when {

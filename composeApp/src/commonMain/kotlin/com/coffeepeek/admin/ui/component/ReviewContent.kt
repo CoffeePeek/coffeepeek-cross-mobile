@@ -421,6 +421,7 @@ internal fun HelpfulButton(
     helpfulCount: Int,
     isHelpful: Boolean,
     onClick: (() -> Unit)?,
+    showLabel: Boolean = true,
 ) {
     val tint = if (isHelpful) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
     Row(
@@ -435,12 +436,20 @@ internal fun HelpfulButton(
     ) {
         Icon(
             imageVector = CpIcons.Helpful,
-            contentDescription = if (isHelpful) "Убрать отметку «полезно»" else "Отметить как полезный",
+            contentDescription = when {
+                onClick == null -> "Отметки «полезно»: $helpfulCount"
+                isHelpful -> "Убрать отметку «полезно»"
+                else -> "Отметить как полезный"
+            },
             tint = tint,
             modifier = Modifier.size(18.dp),
         )
         Text(
-            text = if (helpfulCount > 0) "Полезно · $helpfulCount" else "Полезно",
+            text = when {
+                !showLabel -> helpfulCount.toString()
+                helpfulCount > 0 -> "Полезно · $helpfulCount"
+                else -> "Полезно"
+            },
             style = MaterialTheme.typography.labelLarge,
             fontWeight = FontWeight.SemiBold,
             color = tint,
