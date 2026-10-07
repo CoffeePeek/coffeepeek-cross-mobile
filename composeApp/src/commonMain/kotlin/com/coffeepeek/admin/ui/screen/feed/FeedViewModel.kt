@@ -365,7 +365,7 @@ class FeedViewModel(
             val filters = current.filters
             shopRepository.searchShops(
                 ShopFilters(
-                    query = current.query.takeIf { it.isNotBlank() },
+                    query = current.query.trim().takeIf { it.isNotBlank() },
                     cityId = filters.cityId,
                     coffeeFocus = filters.coffeeFocus,
                     roasterIds = filters.roasterIds.toList(),

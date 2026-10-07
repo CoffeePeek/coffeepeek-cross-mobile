@@ -5,6 +5,7 @@ import com.coffeepeek.api.model.request.CreateRoasterSubmissionReq
 import com.coffeepeek.api.model.request.ModerationStatusDto
 import com.coffeepeek.api.model.response.shop.MyModerationRoastersPageDto
 import com.coffeepeek.api.model.response.shop.RoasterDetailsDto
+import com.coffeepeek.api.model.response.shop.RoasterSummaryDto
 import com.coffeepeek.api.model.response.shop.RoasterSubmissionApiResult
 import com.coffeepeek.api.model.response.shop.RoasterSubmissionDto
 import com.coffeepeek.api.utils.ApiException
@@ -19,6 +20,15 @@ import io.ktor.http.contentType
 import io.ktor.http.isSuccess
 
 class RoasterApiService(private val client: HttpClient) {
+
+    suspend fun getRoasters(): Result<List<RoasterSummaryDto>> = runCatching {
+        val response = client.get("/api/roasters")
+        val apiResponse = response.body<ApiResponse<List<RoasterSummaryDto>>>()
+        if (!response.status.isSuccess() || !apiResponse.isSuccess || apiResponse.data == null) {
+            throw ApiException(apiResponse.message)
+        }
+        apiResponse.data
+    }
 
     suspend fun getRoaster(id: String): Result<RoasterDetailsDto> = runCatching {
         val response = client.get("/api/roasters/$id")

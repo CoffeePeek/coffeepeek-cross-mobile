@@ -32,6 +32,7 @@ class FavoritesViewModelTest {
         val requests = Channel<String>(Channel.UNLIMITED)
         val response = CompletableDeferred<RoasterDetails>()
         val roasters = object : RoasterRepository {
+            override suspend fun getRoasters(): Result<List<RoasterSummary>> = error("Unused")
             override suspend fun getRoaster(id: String): Result<RoasterDetails> {
                 requests.send(id)
                 return if (id == "roast") Result.success(response.await()) else Result.failure(IllegalStateException("Unavailable"))

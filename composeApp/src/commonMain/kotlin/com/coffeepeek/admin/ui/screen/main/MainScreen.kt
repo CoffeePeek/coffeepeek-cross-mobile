@@ -57,6 +57,7 @@ import com.coffeepeek.admin.ui.screen.feed.FeedViewModel
 import com.coffeepeek.admin.di.platformViewModel
 import com.coffeepeek.admin.ui.screen.map.MapScreen
 import com.coffeepeek.admin.ui.screen.roaster.RoasterPreview
+import com.coffeepeek.admin.ui.screen.roaster.RoasterListViewModel
 import com.coffeepeek.admin.ui.screen.profile.ProfileScreen
 import com.coffeepeek.admin.ui.screen.profile.SettingsScreen
 import com.coffeepeek.admin.ui.icons.CpIcons
@@ -166,6 +167,8 @@ internal fun ComposeMainScreen() {
                     RetainedContent(visible = lifecycleState.isAtLeast(Lifecycle.State.STARTED)) {
                         var showRoasters by rememberSaveable { mutableStateOf(false) }
                         val feedVm: FeedViewModel = platformViewModel()
+                        val feedState by feedVm.uiState.collectAsState()
+                        val roasterVm: RoasterListViewModel = platformViewModel()
                         val pendingMapFocus by Navigator.pendingMapFocus.collectAsState()
                         LaunchedEffect(pendingMapFocus) {
                             if (pendingMapFocus != null) showRoasters = false
@@ -189,7 +192,14 @@ internal fun ComposeMainScreen() {
                                                 canvasSize = canvasSize,
                                             )
                                         },
-                                        roasterPreview = { RoasterPreview() },
+                                        roasterPreview = {
+                                            RoasterPreview(
+                                                query = feedState.query,
+                                                selectedRoasterIds = feedState.filters.roasterIds,
+                                                favoritesOnly = feedState.filters.favoritesOnly,
+                                                vm = roasterVm,
+                                            )
+                                        },
                                         onMapExpandedChange = { isFeedMapExpanded = it },
                                     )
                                 }
@@ -200,10 +210,17 @@ internal fun ComposeMainScreen() {
                                 enter = fadeIn(tween(300)) + slideInVertically(tween(360)) { it / 5 },
                                 exit = fadeOut(tween(240)) + slideOutVertically(tween(360)) { -it / 5 },
                             ) {
-                                com.coffeepeek.admin.ui.screen.roaster.RoasterListScreen(onCancel = {
-                                    feedVm.cancelSearch()
-                                    showRoasters = false
-                                })
+                                com.coffeepeek.admin.ui.screen.roaster.RoasterListScreen(
+                                    onCancel = {
+                                        feedVm.cancelSearch()
+                                        showRoasters = false
+                                    },
+                                    query = feedState.query,
+                                    onQueryChange = feedVm::onQueryChange,
+                                    selectedRoasterIds = feedState.filters.roasterIds,
+                                    favoritesOnly = feedState.filters.favoritesOnly,
+                                    vm = roasterVm,
+                                )
                             }
                         }
                     }

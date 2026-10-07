@@ -29,7 +29,7 @@ internal fun SearchHeader(
     showCategories: Boolean = true,
     onSearchFocus: () -> Unit = {},
     onCancelSearch: (() -> Unit)? = null,
-    placeholder: String = if (roastersSelected) "Поиск обжарщиков…" else "Поиск кофейни…",
+    placeholder: String = "Поиск кофеен и обжарщиков…",
 ) {
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         CpSearchField(

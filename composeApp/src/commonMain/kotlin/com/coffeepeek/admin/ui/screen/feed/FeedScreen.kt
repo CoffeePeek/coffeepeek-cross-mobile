@@ -121,6 +121,7 @@ fun FeedScreen(
     val focusManager = LocalFocusManager.current
     val keyboard = LocalSoftwareKeyboardController.current
     val showDiscovery = mapPreview != null && state.showDiscovery
+    val showRoasterSearch = roasterPreview != null && state.query.isNotBlank()
     val discoveryTransition = updateTransition(showDiscovery, label = "discovery-shop-list")
     val discoveryProgress = discoveryTransition.animateFloat(
         transitionSpec = { tween(360) },
@@ -358,12 +359,12 @@ fun FeedScreen(
                             }
                         }
                     }
-                    state.isLoading && state.shops.isEmpty() -> {
+                    state.isLoading && state.shops.isEmpty() && !showRoasterSearch -> {
                         Box(contentModifier, contentAlignment = Alignment.Center) {
                             CoffeePeekLoader()
                         }
                     }
-                    state.error != null && state.shops.isEmpty() -> {
+                    state.error != null && state.shops.isEmpty() && !showRoasterSearch -> {
                         CoffeePeekPullToRefresh(
                             listState = listState,
                             isRefreshing = state.isRefreshing,
@@ -401,7 +402,7 @@ fun FeedScreen(
                             }
                         }
                     }
-                    fillingNearby && displayedShops.isEmpty() -> {
+                    fillingNearby && displayedShops.isEmpty() && !showRoasterSearch -> {
                         Box(contentModifier)
                     }
                     else -> {
@@ -417,6 +418,31 @@ fun FeedScreen(
                                 contentPadding = listContentPadding,
                                 verticalArrangement = Arrangement.spacedBy(CpDimens.spacing3),
                             ) {
+                                if (showRoasterSearch) {
+                                    item(key = "roaster-search-heading") {
+                                        DiscoverySectionTitle("Обжарщики", onShowAll = onSelectRoasters)
+                                    }
+                                    item(key = "roaster-search-results") { roasterPreview() }
+                                    item(key = "shop-search-heading") {
+                                        Text("Кофейни", style = MaterialTheme.typography.titleMedium)
+                                    }
+                                    when {
+                                        state.isLoading && state.shops.isEmpty() -> item(key = "shop-search-loading") {
+                                            Box(Modifier.fillMaxWidth().padding(CpDimens.spacing4), contentAlignment = Alignment.Center) {
+                                                CoffeePeekLoader()
+                                            }
+                                        }
+                                        state.error != null && state.shops.isEmpty() -> item(key = "shop-search-error") {
+                                            Column {
+                                                Text(state.error.orEmpty(), color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                                TextButton(onClick = vm::refresh) { Text("Попробовать снова") }
+                                            }
+                                        }
+                                        displayedShops.isEmpty() && !fillingNearby -> item(key = "shop-search-empty") {
+                                            Text("Кофейни не найдены", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                        }
+                                    }
+                                }
                                 items(displayedShops, key = { it.id }) { shop ->
                                     ShopCard(
                                         shop = shop,
@@ -425,7 +451,7 @@ fun FeedScreen(
                                         onToggleFavorite = { vm.toggleFavorite(shop) },
                                     )
                                 }
-                                item(key = "add-missing-shop") {
+                                if (!state.isLoading && state.error == null && !fillingNearby) item(key = "add-missing-shop") {
                                     AddMissingShopCard(
                                         onAddShop = {
                                             Navigator.navigate(Navigator.Screen.AddShop)

@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -24,10 +25,17 @@ import com.coffeepeek.admin.ui.component.SearchHeader
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-internal fun RoasterListScreen(onCancel: () -> Unit, vm: RoasterListViewModel = platformViewModel()) {
+internal fun RoasterListScreen(
+    onCancel: () -> Unit,
+    query: String,
+    onQueryChange: (String) -> Unit,
+    selectedRoasterIds: Set<String> = emptySet(),
+    favoritesOnly: Boolean = false,
+    vm: RoasterListViewModel = platformViewModel(),
+) {
     val state by vm.state.collectAsState()
     val listState = rememberLazyListState()
-    val visible = state.visibleItems
+    val visible = state.visibleItems(query, selectedRoasterIds, favoritesOnly)
     val clearance = LocalFloatingNavClearance.current
     val snackbarHostState = remember { SnackbarHostState() }
     val focusManager = LocalFocusManager.current
@@ -44,15 +52,15 @@ internal fun RoasterListScreen(onCancel: () -> Unit, vm: RoasterListViewModel = 
         topBar = {
             Column(Modifier.fillMaxWidth().statusBarsPadding().padding(horizontal = CpDimens.spacing4, vertical = CpDimens.spacing3)) {
                 SearchHeader(
-                    query = state.query, onQueryChange = vm::onQueryChange,
+                    query = query, onQueryChange = onQueryChange,
                     roastersSelected = true, onSelectRoasters = {}, showCategories = false,
                     onCancelSearch = {
                         focusManager.clearFocus(force = true)
                         keyboard?.hide()
-                        vm.onQueryChange("")
                         onCancel()
                     },
                 )
+                RoasterTagFilters(state, vm::toggleTag, vm::clearTags)
             }
         },
     ) { padding ->
@@ -92,8 +100,14 @@ internal fun RoasterListScreen(onCancel: () -> Unit, vm: RoasterListViewModel = 
 }
 
 @Composable
-internal fun RoasterPreview(vm: RoasterListViewModel = platformViewModel()) {
+internal fun RoasterPreview(
+    query: String = "",
+    selectedRoasterIds: Set<String> = emptySet(),
+    favoritesOnly: Boolean = false,
+    vm: RoasterListViewModel = platformViewModel(),
+) {
     val state by vm.state.collectAsState()
+    val visible = state.visibleItems(query, selectedRoasterIds, favoritesOnly)
     val snackbar = remember { SnackbarHostState() }
     LaunchedEffect(state.actionMessage) {
         state.actionMessage?.let {
@@ -102,9 +116,10 @@ internal fun RoasterPreview(vm: RoasterListViewModel = platformViewModel()) {
         }
     }
     Column(verticalArrangement = Arrangement.spacedBy(CpDimens.spacing2)) {
+        RoasterTagFilters(state, vm::toggleTag, vm::clearTags)
         Box {
             LazyRow(horizontalArrangement = Arrangement.spacedBy(CpDimens.spacing3)) {
-                itemsIndexed(state.items.take(8), key = { index, item -> item.catalog.id.ifBlank { "unaddressed-roaster:$index" } }) { _, item ->
+                itemsIndexed(visible.take(8), key = { index, item -> item.catalog.id.ifBlank { "unaddressed-roaster:$index" } }) { _, item ->
                     RoasterCard(
                         roaster = item.catalog,
                         details = item.details,
@@ -123,8 +138,21 @@ internal fun RoasterPreview(vm: RoasterListViewModel = platformViewModel()) {
         } else if (state.error != null) {
             Text(state.error.orEmpty(), color = MaterialTheme.colorScheme.onSurfaceVariant)
             TextButton(onClick = vm::refresh) { Text("Попробовать снова") }
-        } else if (state.items.isEmpty()) {
+        } else if (visible.isEmpty() && !state.isLoading) {
             Text("Обжарщики не найдены", color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+    }
+}
+
+@Composable
+private fun RoasterTagFilters(state: RoasterListUiState, onToggle: (String) -> Unit, onClear: () -> Unit) {
+    if (state.availableTags.isEmpty()) return
+    LazyRow(horizontalArrangement = Arrangement.spacedBy(CpDimens.spacing2)) {
+        item {
+            FilterChip(selected = state.selectedTagIds.isEmpty(), onClick = onClear, label = { Text("Все") })
+        }
+        items(state.availableTags, key = { it.slug }) { tag ->
+            FilterChip(selected = tag.slug in state.selectedTagIds, onClick = { onToggle(tag.slug) }, label = { Text(tag.name) })
         }
     }
 }

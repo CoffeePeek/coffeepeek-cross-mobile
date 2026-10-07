@@ -33,6 +33,7 @@ import com.coffeepeek.domain.model.ShopSubmission
 import com.coffeepeek.domain.repository.FavoriteRepository
 import com.coffeepeek.domain.repository.PhotoRepository
 import com.coffeepeek.domain.repository.ShopRepository
+import com.coffeepeek.domain.repository.RoasterRepository
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
@@ -44,6 +45,7 @@ class ShopRepositoryImpl(
     private val photoRepository: PhotoRepository,
     private val favoriteRepository: FavoriteRepository,
     private val fileUrlResolver: FileUrlResolver,
+    private val roasterRepository: RoasterRepository,
 ) : ShopRepository {
 
     private var cachedCatalogs: ShopCatalogs? = null
@@ -70,14 +72,14 @@ class ShopRepositoryImpl(
             val cities      = async { shopApiService.getCities().getOrThrow() }
             val beans       = async { shopApiService.getBeans().getOrThrow() }
             val equipment   = async { shopApiService.getEquipment().getOrThrow() }
-            val roasters    = async { shopApiService.getRoasters().getOrThrow() }
+            val roasters    = async { roasterRepository.getRoasters().getOrThrow() }
             val brewMethods = async { shopApiService.getBrewMethods().getOrThrow() }
             val shopTags    = async { shopApiService.getShopTags().getOrThrow() }
             ShopCatalogs(
                 cities      = cities.await().map { City(it.address.slug, it.name, it.address.toDomain()) },
                 beans       = beans.await().map { CatalogItem(it.key, it.name.orEmpty(), it.key) },
                 equipment   = equipment.await().map { CatalogItem(it.key, it.name.orEmpty(), it.key) },
-                roasters    = roasters.await().map { it.toDomain(fileUrlResolver) },
+                roasters    = roasters.await().filter { it.publicAddress != null }.map { it.toCatalogItem() },
                 brewMethods = brewMethods.await().map { CatalogItem(it.key, it.name.orEmpty(), it.key) },
                 shopTags    = shopTags.await().map { CatalogItem(it.key, it.name.orEmpty(), it.key) },
             ).also { cachedCatalogs = it }
