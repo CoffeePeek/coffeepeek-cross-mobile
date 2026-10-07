@@ -1,6 +1,9 @@
 package com.coffeepeek.admin.feature.community.ui
 
 import com.coffeepeek.domain.model.*
+import com.coffeepeek.domain.repository.CheckInHelpfulVote
+import com.coffeepeek.domain.repository.UserRepository
+import com.coffeepeek.domain.feature.feed.*
 import com.coffeepeek.domain.repository.CheckInRepository
 import com.coffeepeek.domain.repository.SessionRepository
 import com.coffeepeek.domain.repository.ShopRepository
@@ -27,11 +30,13 @@ class CommunityViewModelTest {
         var requests = 0
         val sessions = FeedSessions(null)
         val repo = FeedCheckIns().apply { list = { _, _ -> requests++; Result.success(page(listOf(own))) } }
-        val vm = CommunityViewModel(repo, sessions, FeedShops())
+        val vm = CommunityViewModel(repo, sessions, FeedShops(), TestPublicFeed(), FeedUsers())
         try {
             vm.await { it.isLoggedIn == false }
             assertEquals(0, requests)
             sessions.applySession(Session("token", userId = "one"))
+            vm.await { it.isLoggedIn == true }
+            vm.selectTimeline(CommunityTimeline.Mine)
             vm.await { it.items == listOf(own) && !it.isLoading }
             vm.edit("foreign-id")
             assertNull(vm.state.value.editing)
@@ -54,7 +59,7 @@ class CommunityViewModelTest {
             list = { _, _ -> Result.success(page(listOf(own))) }
             update = { id, input -> sent.send(id to input); result.await() }
         }
-        val vm = CommunityViewModel(repo, FeedSessions(Session("token", userId = "one")), FeedShops())
+        val vm = personalViewModel(repo, FeedSessions(Session("token", userId = "one")))
         try {
             vm.await { it.items.isNotEmpty() && !it.isLoading }
             vm.edit("own")
@@ -93,7 +98,7 @@ class CommunityViewModelTest {
                 Result.success(own.copy(visibility = value, moderationState = CheckInModerationState.NotSubmitted))
             }
         }
-        val vm = CommunityViewModel(repo, FeedSessions(Session("token", userId = "one")), FeedShops())
+        val vm = personalViewModel(repo, FeedSessions(Session("token", userId = "one")))
         try {
             vm.await { !it.isLoading && it.items.isNotEmpty() }
             vm.edit("own")
@@ -126,7 +131,7 @@ class CommunityViewModelTest {
                 else -> Result.success(page(listOf(own, second), number = 2, totalPages = 2))
             }
         } }
-        val vm = CommunityViewModel(repo, FeedSessions(Session("token", userId = "one")), FeedShops())
+        val vm = personalViewModel(repo, FeedSessions(Session("token", userId = "one")))
         try {
             vm.await { it.page == 1 && !it.isLoading }
             vm.loadMore()
@@ -154,7 +159,7 @@ class CommunityViewModelTest {
                 }
             } else Result.success(page(listOf(newVisit)))
         } }
-        val vm = CommunityViewModel(repo, sessions, FeedShops())
+        val vm = personalViewModel(repo, sessions)
         try {
             withTimeout(5_000) { started.await() }
             sessions.applySession(Session("new-token", userId = "two"))
@@ -170,9 +175,13 @@ class CommunityViewModelTest {
 
 private fun page(items: List<CheckIn>, number: Int = 1, totalPages: Int = 1) = PagedResult(items, items.size, totalPages, number)
 
-private class FeedCheckIns : CheckInRepository {
+internal class FeedCheckIns : CheckInRepository {
     var list: suspend (Int, Int) -> Result<PagedResult<CheckIn>> = { _, _ -> Result.success(page(emptyList())) }
     var update: suspend (String, UpdateCheckInInput) -> Result<CheckIn> = { _, _ -> error("Unused") }
+    var helpful: suspend (String, Boolean) -> Result<CheckInHelpfulVote> = { _, _ -> error("Unused") }
+    var report: suspend (String, String) -> Result<Unit> = { _, _ -> error("Unused") }
+    override suspend fun setHelpful(id: String, helpful: Boolean) = this.helpful(id, helpful)
+    override suspend fun report(id: String, text: String): Result<Unit> = this.report.invoke(id, text)
     var visibility: suspend (String, CheckInVisibility) -> Result<CheckIn> = { _, _ -> error("Unused") }
     override suspend fun getMyCheckIns(page: Int, pageSize: Int) = list(page, pageSize)
     override suspend fun updateCheckIn(id: String, input: UpdateCheckInInput) = update(id, input)
@@ -181,7 +190,7 @@ private class FeedCheckIns : CheckInRepository {
     override suspend fun getMyCheckIns(from: String, to: String, pageSize: Int): Result<List<CheckIn>> = error("Unused")
 }
 
-private class FeedSessions(initial: Session?) : SessionRepository {
+internal class FeedSessions(initial: Session?) : SessionRepository {
     private val session = MutableStateFlow(initial)
     override fun peekSession() = session.value
     override fun applySession(session: Session?) { this.session.value = session }
@@ -194,7 +203,7 @@ private class FeedSessions(initial: Session?) : SessionRepository {
     override suspend fun isLoggedIn() = isActiveSession(session.value)
 }
 
-private class FeedShops : ShopRepository {
+internal class FeedShops : ShopRepository {
     override suspend fun getConsumedDrinks() = Result.success(listOf(ConsumedDrinkOption("cappuccino", "Капучино", "Cappuccino")))
     override suspend fun searchShops(filters: ShopFilters): Result<PagedResult<CoffeeShop>> = error("Unused")
     override suspend fun getShopDetails(id: String): Result<CoffeeShopDetails> = error("Unused")
@@ -203,4 +212,29 @@ private class FeedShops : ShopRepository {
     override suspend fun getMenuDrinks(): Result<List<CoffeeDrinkDefinition>> = error("Unused")
     override suspend fun createShop(input: CreateShopInput): Result<Unit> = error("Unused")
     override suspend fun getMyShopSubmissions(status: ModerationStatus, page: Int, pageSize: Int): Result<PagedResult<ShopSubmission>> = error("Unused")
+}
+
+private suspend fun personalViewModel(repo: CheckInRepository, sessions: FeedSessions): CommunityViewModel {
+    val vm = CommunityViewModel(repo, sessions, FeedShops(), TestPublicFeed(), FeedUsers())
+    withTimeout(5_000) { vm.state.first { it.isLoggedIn == true } }
+    vm.selectTimeline(CommunityTimeline.Mine)
+    return vm
+}
+
+internal class TestPublicFeed : FeedRepository {
+    var load: suspend (Int, String?, FeedFilters) -> Result<FeedPage> = { _, _, _ -> Result.success(FeedPage(emptyList(), null)) }
+    override suspend fun getFeed(pageSize: Int, cursor: String?, filters: FeedFilters) = load(pageSize, cursor, filters)
+}
+
+internal class FeedUsers : UserRepository {
+    var load: suspend () -> Result<UserProfile> = { Result.success(UserProfile("Me", "", null, null, 0, 0, 0, PublicAddress("me", "/users/me", 1, false))) }
+    override suspend fun refreshProfile() = load()
+    override suspend fun getMe() = load()
+    override fun observeProfile() = MutableStateFlow<UserProfile?>(null)
+    override suspend fun getPublicAvatarUrl(userId: String): Result<String?> = error("Unused")
+    override suspend fun requestAccountDeletion(): Result<AccountDeletionRequest> = error("Unused")
+    override suspend fun getAccountDeletionRequest(): Result<AccountDeletionRequest?> = error("Unused")
+    override suspend fun updateUsername(username: String): Result<Unit> = error("Unused")
+    override suspend fun updateAbout(about: String): Result<Unit> = error("Unused")
+    override suspend fun updateAvatar(photo: PendingPhotoUpload): Result<Unit> = error("Unused")
 }

@@ -76,6 +76,35 @@ class CheckInApiContractTest {
     }
 
     @Test
+    fun helpfulAndReportsUseCanonicalCheckInRoutesWithNoVoteBodyAndTrimmedReport() = runBlocking {
+        var requests = 0
+        val client = client(MockEngine { request ->
+            when (requests++) {
+                0, 1 -> {
+                    assertEquals("/api/v1/check-ins/visit/helpful", request.url.encodedPath)
+                    assertEquals(if (requests == 1) HttpMethod.Put else HttpMethod.Delete, request.method)
+                    assertTrue(request.body is io.ktor.http.content.OutgoingContent.NoContent)
+                    respond("""{"isSuccess":true,"data":{"isHelpful":${requests == 1},"helpfulCount":8}}""", headers = headers)
+                }
+                else -> {
+                    assertEquals("/api/v1/check-ins/visit/reports", request.url.encodedPath)
+                    assertEquals(HttpMethod.Post, request.method)
+                    val body = Json.parseToJsonElement((request.body as TextContent).text).jsonObject
+                    assertEquals(JsonPrimitive("Reason"), body["text"])
+                    respond("""{"isSuccess":true,"data":{"id":"report","checkInId":"visit"}}""", HttpStatusCode.Created, headers)
+                }
+            }
+        })
+        try {
+            val api = CheckInApiService(client)
+            assertTrue(api.setHelpful("visit", true).getOrThrow().isHelpful)
+            assertFalse(api.setHelpful("visit", false).getOrThrow().isHelpful)
+            api.report("visit", " Reason ").getOrThrow()
+            assertEquals(3, requests)
+        } finally { client.close() }
+    }
+
+    @Test
     fun httpFailureEnvelopeFailureAndMissingDataCannotBecomeSuccess() = runBlocking {
         for ((status, success, data) in listOf(
             Triple(HttpStatusCode.Conflict, true, visit),

@@ -12,4 +12,8 @@ interface CheckInRepository {
     suspend fun getMyCheckIns(from: String, to: String, pageSize: Int): Result<List<CheckIn>>
     suspend fun updateCheckIn(id: String, input: UpdateCheckInInput): Result<CheckIn>
     suspend fun setVisibility(id: String, visibility: CheckInVisibility): Result<CheckIn>
+    suspend fun setHelpful(id: String, helpful: Boolean): Result<CheckInHelpfulVote>
+    suspend fun report(id: String, text: String): Result<Unit>
 }
+
+data class CheckInHelpfulVote(val isHelpful: Boolean, val helpfulCount: Int)

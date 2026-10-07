@@ -15,6 +15,7 @@ import com.coffeepeek.domain.model.ReviewRating
 import com.coffeepeek.domain.model.UpdateCheckInInput
 import com.coffeepeek.domain.model.validateCheckInContent
 import com.coffeepeek.domain.repository.CheckInRepository
+import com.coffeepeek.domain.repository.CheckInHelpfulVote
 import com.coffeepeek.domain.repository.PhotoRepository
 import kotlinx.coroutines.CancellationException
 
@@ -89,6 +90,11 @@ class CheckInRepositoryImpl(
 
     override suspend fun setVisibility(id: String, visibility: CheckInVisibility): Result<CheckIn> =
         checkInApiService.setVisibility(id, CheckInVisibilityReq(visibility.name)).map { it.toDomain(fileUrlResolver) }
+
+    override suspend fun setHelpful(id: String, helpful: Boolean): Result<CheckInHelpfulVote> =
+        checkInApiService.setHelpful(id, helpful).map { CheckInHelpfulVote(it.isHelpful, it.helpfulCount) }
+
+    override suspend fun report(id: String, text: String): Result<Unit> = checkInApiService.report(id, text)
 }
 
 private fun ReviewRating.toDto() = RatingDto(place = place, service = service, coffee = coffee)

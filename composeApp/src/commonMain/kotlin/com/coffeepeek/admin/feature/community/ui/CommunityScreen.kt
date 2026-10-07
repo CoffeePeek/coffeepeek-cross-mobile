@@ -20,6 +20,8 @@ import com.coffeepeek.admin.ui.component.CoffeePeekPullToRefresh
 import com.coffeepeek.admin.ui.component.FullScreenImageDialog
 import com.coffeepeek.admin.ui.component.LocalFloatingNavClearance
 import com.coffeepeek.admin.ui.component.ReviewDisplayCard
+import com.coffeepeek.admin.ui.component.ReviewTextInput
+import com.coffeepeek.admin.utils.utcIsoToLocalDate
 import com.coffeepeek.domain.model.CheckIn
 import com.coffeepeek.domain.model.CheckInModerationState
 import com.coffeepeek.domain.model.CheckInVisibility
@@ -40,18 +42,33 @@ fun CommunityScreen() {
     LaunchedEffect(state.actionMessage) {
         state.actionMessage?.let { snackbar.showSnackbar(it); vm.clearActionMessage() }
     }
-    val shouldLoadMore by remember(state.items.size, state.hasMore, state.isLoading, state.isLoadingMore, state.error, state.isSaving, state.changingVisibilityId) {
+    LaunchedEffect(state.needsLogin) {
+        if (state.needsLogin) { vm.loginHandled(); Navigator.navigate(Navigator.Screen.Auth) }
+    }
+    val shouldLoadMore by remember(state.items.size, state.hasMore, state.isLoading, state.isLoadingMore, state.error, state.isMutating) {
         derivedStateOf {
-            state.hasMore && !state.isLoading && !state.isLoadingMore && !state.isSaving && state.changingVisibilityId == null && state.error == null &&
+            state.hasMore && !state.isLoading && !state.isLoadingMore && !state.isMutating && state.error == null &&
                 (listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0) >= state.items.size - 3
         }
     }
     LaunchedEffect(shouldLoadMore) { if (shouldLoadMore) vm.loadMore() }
 
-    preview?.takeIf { state.isLoggedIn == true && it.generation == state.sessionGeneration }?.let {
+    preview?.takeIf { it.generation == state.sessionGeneration }?.let {
         FullScreenImageDialog(imageUrls = it.urls, initialIndex = it.index, onDismiss = { preview = null })
     }
     if (state.editing != null) key(state.sessionGeneration, state.editing?.source?.id) { EditCheckInSheet(state, vm) }
+    if (state.reportingId != null) AlertDialog(
+        onDismissRequest = vm::dismissReport,
+        title = { Text("Пожаловаться на чек-ин") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(CpDimens.spacing2)) {
+                ReviewTextInput(state.reportText, vm::updateReport, "Опишите проблему", maxLength = 2000, isError = state.reportError != null)
+                state.reportError?.let { Text(it, color = MaterialTheme.colorScheme.error) }
+            }
+        },
+        confirmButton = { TextButton(onClick = vm::submitReport, enabled = !state.isReporting) { Text(if (state.isReporting) "Отправляем…" else "Отправить") } },
+        dismissButton = { TextButton(onClick = vm::dismissReport, enabled = !state.isReporting) { Text("Отмена") } },
+    )
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
@@ -72,14 +89,19 @@ fun CommunityScreen() {
                 item(key = "heading") {
                     Column(verticalArrangement = Arrangement.spacedBy(CpDimens.spacing1)) {
                         Text("Лента", style = MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.Bold)
-                        Text("Ваши чек-ины", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Row(horizontalArrangement = Arrangement.spacedBy(CpDimens.spacing2)) {
+                            FilterChip(selected = state.timeline == CommunityTimeline.Public,
+                                onClick = { vm.selectTimeline(CommunityTimeline.Public) }, label = { Text("Все чек-ины") })
+                            FilterChip(selected = state.timeline == CommunityTimeline.Mine,
+                                onClick = { vm.selectTimeline(CommunityTimeline.Mine) }, label = { Text("Мои чек-ины") })
+                        }
                     }
                 }
                 when {
                     state.isLoggedIn == null || (state.isLoading && state.items.isEmpty()) -> item {
                         CoffeePeekLoader()
                     }
-                    state.isLoggedIn == false -> item {
+                    state.timeline == CommunityTimeline.Mine && state.isLoggedIn == false -> item {
                         Column(verticalArrangement = Arrangement.spacedBy(CpDimens.spacing3)) {
                             Text("Войдите, чтобы видеть и редактировать свои чек-ины.")
                             AppButton("Войти", onClick = { Navigator.navigate(Navigator.Screen.Auth) })
@@ -87,12 +109,17 @@ fun CommunityScreen() {
                     }
                     else -> {
                         items(state.items, key = CheckIn::id) { checkIn ->
-                            PersonalCheckInCard(
+                            TimelineCheckInCard(
                                 checkIn = checkIn,
-                                canEdit = !state.isSaving && state.changingVisibilityId == null,
+                                isOwn = state.owns(checkIn),
+                                isPublicTimeline = state.timeline == CommunityTimeline.Public,
+                                publishedAt = state.publishedAt[checkIn.id],
+                                canAct = !state.isMutating,
                                 changingVisibility = state.changingVisibilityId == checkIn.id,
                                 onEdit = { vm.edit(checkIn.id) },
                                 onVisibility = { vm.toggleVisibility(checkIn.id) },
+                                onHelpful = { vm.toggleHelpful(checkIn.id) },
+                                onReport = { vm.openReport(checkIn.id) },
                                 onPhotoClick = { urls, index ->
                                     preview = CheckInPhotoPreview(state.sessionGeneration, urls, index)
                                 },
@@ -102,11 +129,12 @@ fun CommunityScreen() {
                             state.error != null -> item(key = "error") {
                                 Column {
                                     Text(state.error.orEmpty(), color = MaterialTheme.colorScheme.error)
-                                    TextButton(onClick = vm::retry) { Text("Попробовать снова") }
+                                    TextButton(onClick = vm::retry) { Text(if (state.restartPagination) "Обновить ленту" else "Попробовать снова") }
                                 }
                             }
                             state.items.isEmpty() && !state.isLoading -> item(key = "empty") {
-                                Text("Пока нет чек-инов. Добавьте первый на странице кофейни.", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                Text(if (state.timeline == CommunityTimeline.Public) "Пока нет опубликованных чек-инов."
+                                    else "Пока нет чек-инов. Добавьте первый на странице кофейни.", color = MaterialTheme.colorScheme.onSurfaceVariant)
                             }
                         }
                         if (state.isLoadingMore) item(key = "loading-more") { CoffeePeekLoader() }
@@ -118,23 +146,33 @@ fun CommunityScreen() {
 }
 
 @Composable
-private fun PersonalCheckInCard(
+private fun TimelineCheckInCard(
     checkIn: CheckIn,
-    canEdit: Boolean,
+    isOwn: Boolean,
+    isPublicTimeline: Boolean,
+    publishedAt: String?,
+    canAct: Boolean,
     changingVisibility: Boolean,
     onEdit: () -> Unit,
     onVisibility: () -> Unit,
+    onHelpful: () -> Unit,
+    onReport: () -> Unit,
     onPhotoClick: (List<String>, Int) -> Unit,
 ) {
     ReviewDisplayCard(
         review = Review(
-            id = checkIn.id, username = checkIn.username.ifBlank { "Вы" }, header = "", comment = checkIn.note,
+            id = checkIn.id, username = checkIn.username.ifBlank { if (isOwn) "Вы" else "Пользователь" }, header = "", comment = checkIn.note,
             rating = checkIn.rating ?: ReviewRating(0, 0, 0), createdAt = checkIn.visitedAt.ifBlank { checkIn.createdAt },
             photoUrls = checkIn.photoUrls, drinkSlug = checkIn.drinkSlug, customDrinkName = checkIn.customDrinkName,
             drinkNameRu = checkIn.drinkNameRu, drinkNameEn = checkIn.drinkNameEn,
+            helpfulCount = checkIn.helpfulCount, isHelpfulByCurrentUser = checkIn.isHelpfulByCurrentUser,
         ),
         fullVersion = true,
-        onEditClick = onEdit.takeIf { canEdit },
+        dateLabel = publishedAt?.let { "Опубликован ${utcIsoToLocalDate(it)}" },
+        onEditClick = onEdit.takeIf { canAct && isOwn },
+        onReportClick = onReport.takeIf { canAct && isPublicTimeline && !isOwn },
+        showHelpfulButton = isPublicTimeline && !isOwn,
+        onHelpfulClick = onHelpful.takeIf { canAct },
         onPhotoClick = onPhotoClick,
         footer = {
             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
@@ -147,13 +185,15 @@ private fun PersonalCheckInCard(
                             Navigator.navigate(Navigator.Screen.ShopDetail(checkIn.shopId))
                         } else Modifier),
                     )
-                    Text(checkIn.publicationLabel(), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    if (checkIn.helpfulCount > 0) Text(
+                    if (!isPublicTimeline) Text(checkIn.publicationLabel(), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    if (isPublicTimeline && checkIn.visitedAt.isNotBlank()) Text("Визит ${utcIsoToLocalDate(checkIn.visitedAt)}",
+                        style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    if ((!isPublicTimeline || isOwn) && checkIn.helpfulCount > 0) Text(
                         "Полезно · " + checkIn.helpfulCount,
                         style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
-                TextButton(onClick = onVisibility, enabled = canEdit) {
+                if (isOwn) TextButton(onClick = onVisibility, enabled = canAct) {
                     Text(when {
                         changingVisibility -> "Сохраняем…"
                         checkIn.visibility == CheckInVisibility.Private -> "Опубликовать"
