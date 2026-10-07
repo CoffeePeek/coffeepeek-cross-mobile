@@ -87,14 +87,7 @@ internal fun TimelineCheckInCard(
                     style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold,
                     modifier = Modifier.then(if (checkIn.shopId.isNotBlank()) Modifier.clickable(onClick = onShopClick) else Modifier),
                 )
-                FlowRow(horizontalArrangement = Arrangement.spacedBy(CpDimens.spacing2), verticalArrangement = Arrangement.spacedBy(CpDimens.spacing1)) {
-                    checkIn.rating?.let { FeedCheckInRating(it) }
-                    val visited = checkIn.visitedAt.ifBlank { checkIn.createdAt }
-                    if (visited.isNotBlank()) Text(
-                        "·  ${formatReviewDisplayDate(visited)}", style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
+                checkIn.rating?.let { FeedCheckInRating(it) }
             }
             savedDrinkName(checkIn.drinkNameRu, checkIn.drinkNameEn, checkIn.customDrinkName, Locale.current.language)?.let { drink ->
                 Row(
