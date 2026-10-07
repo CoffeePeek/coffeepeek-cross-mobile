@@ -1,6 +1,7 @@
 package com.coffeepeek.data.mapper
 
 import com.coffeepeek.data.time.utcSchedulesToLocal
+import com.coffeepeek.api.model.response.shop.CatalogItemDto
 import com.coffeepeek.api.model.response.shop.CoffeeShopDetailsDto
 import com.coffeepeek.api.model.response.shop.ReviewDto
 import com.coffeepeek.api.model.response.shop.ShopMenuDto
@@ -28,6 +29,21 @@ import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.doubleOrNull
 
 internal object ShopMapper {
+
+    fun CatalogItemDto.toDomain(fileUrls: FileUrlResolver): CatalogItem = CatalogItem(
+        id = key,
+        name = name.orEmpty(),
+        slug = key,
+        photoUrl = coverPhoto?.let { fileUrls.resolve(it.storageKey, it.urls.variantOr(it.fullUrl) { urls -> urls.card }) }
+            ?: photoUrl?.takeIf(String::isNotBlank),
+        address = address?.toDomain(),
+        coffeeShopsCount = coffeeShopsCount,
+        coffeeProductsCount = coffeeProductsCount,
+        availableCoffeeProducts = availableCoffeeProducts,
+        tags = tags.sortedBy { it.sortOrder }.map { it.toDomain(fileUrls) },
+        description = description,
+        sortOrder = sortOrder,
+    )
 
     fun ShortShopDto.toDomain() = CoffeeShop(
         id = address.slug,
@@ -139,15 +155,7 @@ internal object ShopMapper {
             CatalogItem(id = it.key, name = it.name.orEmpty(), slug = it.key, photoUrl = it.photoUrl, address = it.address?.toDomain())
         },
         coffeeBeans = coffeeBeans.mapNotNull { it.name?.takeIf(String::isNotBlank) },
-        roasters = roasters.map {
-            CatalogItem(
-                id = it.key,
-                name = it.name.orEmpty(),
-                slug = it.key,
-                photoUrl = it.photoUrl,
-                address = it.address?.toDomain(),
-            )
-        },
+        roasters = roasters.map { it.toDomain(fileUrls) },
         equipment = equipments.mapNotNull { it.name?.takeIf(String::isNotBlank) },
         equipmentItems = equipments.map {
             CatalogItem(id = it.key, name = it.name.orEmpty(), slug = it.key, photoUrl = it.photoUrl, address = it.address?.toDomain())

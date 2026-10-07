@@ -3,7 +3,7 @@ package com.coffeepeek.admin.ui.screen.roaster
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -65,7 +65,7 @@ internal fun RoasterListScreen(onCancel: () -> Unit, vm: RoasterListViewModel = 
                 contentPadding = PaddingValues(start = CpDimens.spacing4, top = CpDimens.spacing2, end = CpDimens.spacing4, bottom = clearance + CpDimens.spacing4),
                 verticalArrangement = Arrangement.spacedBy(CpDimens.spacing3),
             ) {
-                items(visible, key = { it.catalog.id }) { item ->
+                itemsIndexed(visible, key = { index, item -> item.catalog.id.ifBlank { "unaddressed-roaster:$index" } }) { _, item ->
                     RoasterCard(
                         roaster = item.catalog,
                         details = item.details,
@@ -104,7 +104,7 @@ internal fun RoasterPreview(vm: RoasterListViewModel = platformViewModel()) {
     Column(verticalArrangement = Arrangement.spacedBy(CpDimens.spacing2)) {
         Box {
             LazyRow(horizontalArrangement = Arrangement.spacedBy(CpDimens.spacing3)) {
-                items(state.items.take(8), key = { it.catalog.id }) { item ->
+                itemsIndexed(state.items.take(8), key = { index, item -> item.catalog.id.ifBlank { "unaddressed-roaster:$index" } }) { _, item ->
                     RoasterCard(
                         roaster = item.catalog,
                         details = item.details,

@@ -77,9 +77,7 @@ class ShopRepositoryImpl(
                 cities      = cities.await().map { City(it.address.slug, it.name, it.address.toDomain()) },
                 beans       = beans.await().map { CatalogItem(it.key, it.name.orEmpty(), it.key) },
                 equipment   = equipment.await().map { CatalogItem(it.key, it.name.orEmpty(), it.key) },
-                roasters    = roasters.await().map {
-                    CatalogItem(it.key, it.name.orEmpty(), it.key, photoUrl = it.photoUrl, address = it.address?.toDomain())
-                },
+                roasters    = roasters.await().map { it.toDomain(fileUrlResolver) },
                 brewMethods = brewMethods.await().map { CatalogItem(it.key, it.name.orEmpty(), it.key) },
                 shopTags    = shopTags.await().map { CatalogItem(it.key, it.name.orEmpty(), it.key) },
             ).also { cachedCatalogs = it }

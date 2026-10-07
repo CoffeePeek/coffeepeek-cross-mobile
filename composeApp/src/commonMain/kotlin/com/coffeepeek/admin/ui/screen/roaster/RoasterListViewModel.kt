@@ -25,7 +25,7 @@ import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
 
 internal data class RoasterListItem(val catalog: CatalogItem, val details: RoasterDetails? = null) {
-    val routeId: String? get() = catalog.address?.slug
+    val routeId: String? get() = catalog.address?.slug?.takeIf(String::isNotBlank)
 }
 
 internal data class RoasterListUiState(
@@ -98,7 +98,7 @@ internal class RoasterListViewModel(
                 catalogs.roasters.map { catalog ->
                     async {
                         requests.withPermit {
-                            val routeId = catalog.address?.slug ?: return@withPermit
+                            val routeId = catalog.address?.slug?.takeIf(String::isNotBlank) ?: return@withPermit
                             val details = roasters.getRoaster(routeId).getOrNull()
                             currentCoroutineContext().ensureActive()
                             _state.update { state ->

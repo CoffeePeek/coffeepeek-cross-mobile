@@ -31,13 +31,21 @@ class LocalRoasterFavoritesTest {
         val settings = MemorySettings()
         val sessions = MemorySessions("alice")
         val favorites = LocalRoasterFavorites(settings, sessions)
-        val catalog = roaster("public-roaster").copy(id = "catalog-guid", photoUrl = "logo.png")
+        val catalog = roaster("public-roaster").copy(
+            id = "catalog-guid", photoUrl = "logo.png",
+            coffeeShopsCount = 7, coffeeProductsCount = 12, availableCoffeeProducts = 4,
+            tags = listOf(CatalogItem("specialty", "Specialty", slug = "specialty", description = "Спешелти кофе", sortOrder = 2)),
+        )
         favorites.setFavorite(catalog, true).getOrThrow()
 
         val restored = LocalRoasterFavorites(settings, sessions).observeFavorites().first().single()
         assertEquals("public-roaster", restored.id)
         assertEquals(catalog.address, restored.address)
         assertEquals("logo.png", restored.photoUrl)
+        assertEquals(7, restored.coffeeShopsCount)
+        assertEquals(12, restored.coffeeProductsCount)
+        assertEquals(4, restored.availableCoffeeProducts)
+        assertEquals(catalog.tags, restored.tags)
 
         favorites.setFavorite(catalog.copy(id = "public-roaster", name = "Updated name"), true).getOrThrow()
         assertEquals("Updated name", favorites.observeFavorites().first().single().name)

@@ -64,23 +64,41 @@ private data class SavedRoaster(
     val canonicalPath: String? = null,
     val revision: Int = 0,
     val isAlias: Boolean = false,
+    val coffeeShopsCount: Int = 0,
+    val coffeeProductsCount: Int = 0,
+    val availableCoffeeProducts: Int = 0,
+    val tags: List<SavedRoaster> = emptyList(),
+    val description: String? = null,
+    val sortOrder: Int = 0,
 ) {
-    fun toDomain() = CatalogItem(
+    fun toDomain(): CatalogItem = CatalogItem(
         id = id,
         name = name,
         slug = id,
         photoUrl = photoUrl,
         address = canonicalPath?.let { PublicAddress(id, it, revision, isAlias) },
+        coffeeShopsCount = coffeeShopsCount,
+        coffeeProductsCount = coffeeProductsCount,
+        availableCoffeeProducts = availableCoffeeProducts,
+        tags = tags.map(SavedRoaster::toDomain),
+        description = description,
+        sortOrder = sortOrder,
     )
 
     companion object {
-        fun from(roaster: CatalogItem) = SavedRoaster(
+        fun from(roaster: CatalogItem): SavedRoaster = SavedRoaster(
             id = roaster.roasterFavoriteId,
             name = roaster.name,
             photoUrl = roaster.photoUrl,
             canonicalPath = roaster.address?.canonicalPath,
             revision = roaster.address?.revision ?: 0,
             isAlias = roaster.address?.isAlias ?: false,
+            coffeeShopsCount = roaster.coffeeShopsCount,
+            coffeeProductsCount = roaster.coffeeProductsCount,
+            availableCoffeeProducts = roaster.availableCoffeeProducts,
+            tags = roaster.tags.map(::from),
+            description = roaster.description,
+            sortOrder = roaster.sortOrder,
         )
     }
 }

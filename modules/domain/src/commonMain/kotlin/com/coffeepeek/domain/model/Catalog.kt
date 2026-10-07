@@ -12,6 +12,12 @@ data class CatalogItem(
     val slug: String = "",
     val photoUrl: String? = null,
     val address: PublicAddress? = null,
+    val coffeeShopsCount: Int = 0,
+    val coffeeProductsCount: Int = 0,
+    val availableCoffeeProducts: Int = 0,
+    val tags: List<CatalogItem> = emptyList(),
+    val description: String? = null,
+    val sortOrder: Int = 0,
 )
 
 data class ShopCatalogs(
