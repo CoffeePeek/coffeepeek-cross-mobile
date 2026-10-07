@@ -117,7 +117,8 @@ internal fun RoasterPreview(
     }
     Column(verticalArrangement = Arrangement.spacedBy(CpDimens.spacing2)) {
         RoasterTagFilters(state, vm::toggleTag, vm::clearTags)
-        Box {
+        BoxWithConstraints(Modifier.fillMaxWidth()) {
+            val cardWidth = (maxWidth * 0.88f).coerceIn(280.dp, 360.dp)
             LazyRow(horizontalArrangement = Arrangement.spacedBy(CpDimens.spacing3)) {
                 itemsIndexed(visible.take(8), key = { index, item -> item.catalog.id.ifBlank { "unaddressed-roaster:$index" } }) { _, item ->
                     RoasterCard(
@@ -127,7 +128,7 @@ internal fun RoasterPreview(
                         isFavorite = item.catalog.roasterFavoriteId in state.favoriteIds,
                         isFavoriteLoading = item.catalog.roasterFavoriteId in state.savingFavoriteIds,
                         onToggleFavorite = { vm.toggleFavorite(item) },
-                        modifier = Modifier.width(320.dp),
+                        modifier = Modifier.width(cardWidth),
                     )
                 }
             }

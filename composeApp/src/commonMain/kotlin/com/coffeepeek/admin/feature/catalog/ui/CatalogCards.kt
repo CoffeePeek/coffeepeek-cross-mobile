@@ -12,9 +12,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -383,60 +383,53 @@ internal fun RoasterCardContent(
     onToggleFavorite: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val accent = if (MaterialTheme.colorScheme.surface.luminance() < 0.5f) CpColor.AccentTextDark else CpColor.AccentTextLight
     Card(
         modifier = modifier.fillMaxWidth()
             .clickable(enabled = roaster.address?.slug?.isNotBlank() == true, onClick = onClick),
-        shape = RoundedCornerShape(CpDimens.radius2xl),
+        shape = RoundedCornerShape(CpDimens.radiusXl),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
         border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
     ) {
-        Column(Modifier.padding(CpDimens.spacing4), verticalArrangement = Arrangement.spacedBy(CpDimens.spacing4)) {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(CpDimens.spacing4)) {
-                Box(Modifier.size(80.dp).clip(RoundedCornerShape(CpDimens.radiusLg)).background(MaterialTheme.colorScheme.surfaceVariant), contentAlignment = Alignment.Center) {
-                    val photo = roaster.photoUrl?.takeIf(String::isNotBlank) ?: details?.photos?.firstOrNull()?.fullUrl
-                    if (!photo.isNullOrBlank()) CoffeeShopImage(
-                        imageUrl = photo, contentDescription = roaster.name,
-                        contentScale = ContentScale.Fit, modifier = Modifier.fillMaxSize(),
-                    ) else Icon(CpIcons.Factory, null, Modifier.size(32.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
-                }
-                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(CpDimens.spacing2)) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(roaster.name, modifier = Modifier.weight(1f), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold, maxLines = 2, overflow = TextOverflow.Ellipsis)
-                        FavoriteButton(isFavorite = isFavorite, onClick = onToggleFavorite, enabled = !isFavoriteLoading && roaster.id.isNotBlank())
-                    }
-                    details?.location?.address?.takeIf(String::isNotBlank)?.let { address ->
-                        Row(horizontalArrangement = Arrangement.spacedBy(CpDimens.spacing1)) {
-                            Icon(CpIcons.Location, null, Modifier.size(16.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
-                            Text(address, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 2, overflow = TextOverflow.Ellipsis)
-                        }
-                    }
-                }
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(CpDimens.spacing3),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(CpDimens.spacing3),
+        ) {
+            val photo = roaster.photoUrl?.takeIf(String::isNotBlank)
+                ?: details?.photos?.firstOrNull()?.fullUrl?.takeIf(String::isNotBlank)
+            Box(
+                modifier = Modifier.size(64.dp).clip(RoundedCornerShape(CpDimens.radiusMd))
+                    .background(if (photo != null) Color.White else MaterialTheme.colorScheme.surfaceVariant),
+                contentAlignment = Alignment.Center,
+            ) {
+                if (photo != null) CoffeeShopImage(
+                    imageUrl = photo, contentDescription = "Логотип ${roaster.name}",
+                    contentScale = ContentScale.Fit, placeholderLabelSize = 6.sp,
+                    modifier = Modifier.fillMaxSize(),
+                ) else Icon(CpIcons.Factory, null, Modifier.size(28.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
             }
-            details?.about?.takeIf(String::isNotBlank)?.let { about ->
-                Text(about, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 3, overflow = TextOverflow.Ellipsis)
-            }
-            val tags = roaster.tags.filter { it.name.isNotBlank() }
-            if (tags.isNotEmpty()) {
-                FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                    tags.forEach { tag ->
-                        Surface(shape = RoundedCornerShape(percent = 50), color = MaterialTheme.colorScheme.surfaceVariant) {
-                            Text(tag.name, style = MaterialTheme.typography.labelSmall, modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp))
-                        }
-                    }
+            Column(Modifier.weight(1f)) {
+                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        roaster.name, modifier = Modifier.weight(1f),
+                        style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold,
+                        maxLines = 1, overflow = TextOverflow.Ellipsis,
+                    )
+                    FavoriteButton(
+                        isFavorite = isFavorite, onClick = onToggleFavorite,
+                        enabled = !isFavoriteLoading && roaster.id.isNotBlank(),
+                    )
                 }
-            }
-            Row(Modifier.height(IntrinsicSize.Min), horizontalArrangement = Arrangement.spacedBy(CpDimens.spacing2)) {
-                RoasterStat(CpIcons.Coffee, "Кофейни используют", roaster.coffeeShopsCount, Modifier.weight(1f).fillMaxHeight())
-                RoasterStat(CpIcons.CoffeeBean, "Кофе в каталоге", roaster.coffeeProductsCount, Modifier.weight(1f).fillMaxHeight())
-            }
-            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(CpDimens.spacing2)) {
-                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(CpDimens.spacing1)) {
-                    Text("Подробнее об обжарщике", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold, color = accent)
-                    Text("История, контакты и кофейни", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                ) {
+                    RoasterStat(CpIcons.Coffee, "Кофейни", roaster.coffeeShopsCount, Modifier.weight(1f))
+                    VerticalDivider(Modifier.height(20.dp), color = MaterialTheme.colorScheme.outlineVariant)
+                    RoasterStat(CpIcons.CoffeeBean, "Каталог", roaster.coffeeProductsCount, Modifier.weight(1f))
                 }
-                Icon(CpIcons.ChevronRight, null, Modifier.size(24.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }
     }
@@ -444,18 +437,16 @@ internal fun RoasterCardContent(
 
 @Composable
 private fun RoasterStat(icon: ImageVector, label: String, count: Int, modifier: Modifier) {
-    Surface(
-        modifier = modifier, shape = RoundedCornerShape(CpDimens.radiusLg),
-        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.035f),
-        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+    Row(
+        modifier = modifier.semantics(mergeDescendants = true) {},
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(CpDimens.spacing1),
     ) {
-        Row(Modifier.padding(CpDimens.spacing3), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(CpDimens.spacing2)) {
-            Icon(icon, null, Modifier.size(24.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
-            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(CpDimens.spacing1)) {
-                Text(label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                Text(roasterCountLabel(count), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-            }
-        }
+        Icon(icon, null, Modifier.size(20.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text(roasterCountLabel(count), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold,
+            maxLines = 1, overflow = TextOverflow.Ellipsis)
+        Text(label, modifier = Modifier.weight(1f), style = MaterialTheme.typography.labelSmall.copy(fontSize = 11.sp),
+            color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
     }
 }
 
