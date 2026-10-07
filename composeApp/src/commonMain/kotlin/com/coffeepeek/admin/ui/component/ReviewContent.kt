@@ -20,6 +20,8 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -225,7 +227,7 @@ private fun EditableRatingCard(
                     val icon: ImageVector = if (star <= rating) CpIcons.StarFilled else CpIcons.StarOutline
                     Box(
                         modifier = Modifier
-                            .size(40.dp)
+                            .size(44.dp)
                             .clickable { onRatingChange(star) },
                         contentAlignment = Alignment.Center,
                     ) {
@@ -252,7 +254,28 @@ fun ReviewRatingSummary(rating: ReviewRating, modifier: Modifier = Modifier) {
     }
 }
 
-/** Shared read-only review card used on the shop page and in the user's reviews. */
+/** Shared check-in presentation; legacy read models remain until the API migration. */
+@Composable
+private fun CheckInCard(
+    modifier: Modifier,
+    blurContent: Boolean = false,
+    content: @Composable ColumnScope.() -> Unit,
+) {
+    Card(
+        modifier = modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(CpDimens.radius2xl),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+    ) {
+        Column(
+            modifier = Modifier.then(if (blurContent) Modifier.blur(5.dp) else Modifier).padding(CpDimens.spacing3),
+            verticalArrangement = Arrangement.spacedBy(CpDimens.spacing2),
+            content = content,
+        )
+    }
+}
+
 @Composable
 fun ReviewDisplayCard(
     review: Review,
@@ -266,58 +289,47 @@ fun ReviewDisplayCard(
     /** Side-by-side rows: pad short comments too, so neighbouring cards end up about the same height. */
     equalizeHeight: Boolean = false,
     blurContent: Boolean = false,
+    authorPhotoUrl: String? = null,
+    dateLabel: String? = null,
+    footer: (@Composable () -> Unit)? = null,
+    showDrinkBadge: Boolean = true,
 ) {
-    Card(
-        modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(CpDimens.radius2xl),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-        border = androidx.compose.foundation.BorderStroke(
-            width = 1.dp,
-            color = MaterialTheme.colorScheme.outline,
-        ),
-    ) {
-        Column(
-            modifier = Modifier
-                .then(if (blurContent) Modifier.blur(5.dp) else Modifier)
-                .padding(CpDimens.spacing3),
-            verticalArrangement = Arrangement.spacedBy(CpDimens.spacing2),
-        ) {
-            ReviewHeader(review = review, onEditClick = onEditClick, onReportClick = onReportClick)
+    CheckInCard(modifier, blurContent) {
+        ReviewHeader(review = review, onEditClick = onEditClick, onReportClick = onReportClick, authorPhotoUrl = authorPhotoUrl, dateLabel = dateLabel)
 
-            if (review.header.isNotBlank()) {
-                Text(
-                    text = review.header,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis,
-                )
-            }
-
-            savedDrinkName(review.drinkNameRu, review.drinkNameEn, review.customDrinkName, Locale.current.language)?.let {
-                SavedDrinkBadge(it)
-            }
-            if (review.comment.isNotBlank()) {
-                if (fullVersion) Text(review.comment, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                else ReviewQuote(review.id, review.comment, padToCollapsedLines = equalizeHeight)
-            }
-
-            ReviewPhotoStrip(
-                photoUrls = review.photoUrls,
-                onPhotoClick = onPhotoClick,
-                tileSize = 144.dp,
+        if (review.header.isNotBlank()) {
+            Text(
+                text = review.header,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
             )
-
-            if (showHelpfulButton) {
-                HelpfulButton(
-                    helpfulCount = review.helpfulCount,
-                    isHelpful = review.isHelpfulByCurrentUser,
-                    onClick = onHelpfulClick,
-                )
-            }
         }
+
+        if (showDrinkBadge) savedDrinkName(review.drinkNameRu, review.drinkNameEn, review.customDrinkName, Locale.current.language)?.let {
+            SavedDrinkBadge(it)
+        }
+        if (review.comment.isNotBlank()) {
+            if (fullVersion) Text(review.comment, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            else ReviewQuote(review.id, review.comment, padToCollapsedLines = equalizeHeight)
+        }
+
+        ReviewPhotoStrip(
+            photoUrls = review.photoUrls,
+            onPhotoClick = onPhotoClick,
+            tileSize = 144.dp,
+        )
+
+        if (showHelpfulButton) {
+            HelpfulButton(
+                helpfulCount = review.helpfulCount,
+                isHelpful = review.isHelpfulByCurrentUser,
+                onClick = onHelpfulClick,
+            )
+        }
+        footer?.invoke()
     }
 }
 
@@ -333,37 +345,20 @@ fun CheckInDisplayCard(
         .fillMaxWidth()
         .then(if (onClick != null && checkIn.shopId.isNotBlank()) Modifier.clickable(onClick = onClick) else Modifier)
 
-    Card(
-        modifier = cardModifier,
-        shape = RoundedCornerShape(CpDimens.radius2xl),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-        border = androidx.compose.foundation.BorderStroke(
-            width = 1.dp,
-            color = MaterialTheme.colorScheme.outline.copy(alpha = 0.72f),
-        ),
-    ) {
-        Column(
-            modifier = Modifier.padding(CpDimens.spacing4),
-            verticalArrangement = Arrangement.spacedBy(CpDimens.spacing4),
-        ) {
-            CheckInHeader(checkIn = checkIn, showShopName = showShopName)
-            savedDrinkName(checkIn.drinkNameRu, checkIn.drinkNameEn, checkIn.customDrinkName, Locale.current.language)?.let {
-                SavedDrinkBadge(it)
-            }
-            checkIn.rating?.let { rating ->
-                ReviewMetricCards(rating)
-                ReviewScoreRow(rating.average)
-            }
-            if (checkIn.note.isNotBlank()) {
-                ReviewQuote(checkIn.id, checkIn.note, padToCollapsedLines = false)
-            }
-            ReviewPhotoStrip(
-                photoUrls = checkIn.photoUrls,
-                thumbnailUrls = checkIn.photoThumbnailUrls,
-                onPhotoClick = onPhotoClick,
-            )
+    CheckInCard(cardModifier) {
+        CheckInHeader(checkIn = checkIn, showShopName = showShopName)
+        savedDrinkName(checkIn.drinkNameRu, checkIn.drinkNameEn, checkIn.customDrinkName, Locale.current.language)?.let {
+            SavedDrinkBadge(it)
         }
+        if (checkIn.note.isNotBlank()) {
+            ReviewQuote(checkIn.id, checkIn.note, padToCollapsedLines = false)
+        }
+        ReviewPhotoStrip(
+            photoUrls = checkIn.photoUrls,
+            thumbnailUrls = checkIn.photoThumbnailUrls,
+            onPhotoClick = onPhotoClick,
+            tileSize = 144.dp,
+        )
     }
 }
 
@@ -376,7 +371,7 @@ private fun CheckInHeader(checkIn: CheckIn, showShopName: Boolean) {
     ) {
         Box(
             modifier = Modifier
-                .size(52.dp)
+                .size(44.dp)
                 .clip(CircleShape)
                 .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.12f))
                 .border(
@@ -409,10 +404,11 @@ private fun CheckInHeader(checkIn: CheckIn, showShopName: Boolean) {
                 color = MaterialTheme.colorScheme.onSurface,
                 maxLines = 2,
             )
-            if (date.isNotBlank()) {
-                Text(
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(CpDimens.spacing2), verticalArrangement = Arrangement.spacedBy(CpDimens.spacing1)) {
+                checkIn.rating?.let { ReviewScoreRow(it.average, compact = true) }
+                if (date.isNotBlank()) Text(
                     text = formatReviewDisplayDate(date),
-                    style = MaterialTheme.typography.bodyMedium,
+                    style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
@@ -453,13 +449,16 @@ private fun HelpfulButton(
 }
 
 @Composable
-private fun ReviewHeader(review: Review, onEditClick: (() -> Unit)?, onReportClick: (() -> Unit)?) {
+private fun ReviewHeader(
+    review: Review, onEditClick: (() -> Unit)?, onReportClick: (() -> Unit)?,
+    authorPhotoUrl: String?, dateLabel: String?,
+) {
     var menuExpanded by remember { mutableStateOf(false) }
     Row(
         modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        ReviewAvatar(username = review.username)
+        ReviewAvatar(username = review.username, photoUrl = authorPhotoUrl)
         Column(
             modifier = Modifier
                 .weight(1f)
@@ -471,21 +470,19 @@ private fun ReviewHeader(review: Review, onEditClick: (() -> Unit)?, onReportCli
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onSurface,
             )
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(CpDimens.spacing1)) {
                 ReviewScoreRow(review.rating.average, compact = true)
-                if (review.createdAt.isNotBlank()) {
-                Text(
-                    text = formatReviewDisplayDate(review.createdAt),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
+                if (dateLabel != null || review.createdAt.isNotBlank()) {
+                    Text(
+                        text = dateLabel ?: formatReviewDisplayDate(review.createdAt),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
                 }
             }
         }
         if (onEditClick != null || onReportClick != null) Box {
-            IconButton(onClick = { menuExpanded = true }, modifier = Modifier.semantics { contentDescription = "Действия с отзывом" }) {
+            IconButton(onClick = { menuExpanded = true }, modifier = Modifier.semantics { contentDescription = "Действия с чекином" }) {
                 Text(
                     text = "•••",
                     style = MaterialTheme.typography.titleMedium,
@@ -518,7 +515,7 @@ private fun ReviewHeader(review: Review, onEditClick: (() -> Unit)?, onReportCli
 }
 
 @Composable
-private fun ReviewAvatar(username: String) {
+private fun ReviewAvatar(username: String, photoUrl: String?) {
     val avatarModifier = Modifier.size(44.dp).clip(CircleShape)
     Box(
         modifier = avatarModifier.border(
@@ -534,88 +531,7 @@ private fun ReviewAvatar(username: String) {
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.onSurface,
         )
-    }
-}
-
-@Composable
-private fun ReviewMetricCards(rating: ReviewRating, compact: Boolean = false) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(if (compact) 4.dp else CpDimens.spacing2),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        if (compact) ReviewScoreRow(rating.average, compact = true)
-        ReviewMetricCard(
-            image = Res.drawable.checkin_rating_atmosphere,
-            label = "Аура",
-            value = rating.place,
-            modifier = Modifier.weight(1f),
-            compact = compact,
-        )
-        ReviewMetricCard(
-            image = Res.drawable.checkin_rating_service,
-            label = "Сервис",
-            value = rating.service,
-            modifier = Modifier.weight(1f),
-            compact = compact,
-        )
-        ReviewMetricCard(
-            image = Res.drawable.checkin_rating_coffee,
-            label = "Кофе",
-            value = rating.coffee,
-            modifier = Modifier.weight(1f),
-            compact = compact,
-        )
-    }
-}
-
-@Composable
-private fun ReviewMetricCard(
-    image: DrawableResource,
-    label: String,
-    value: Int,
-    modifier: Modifier = Modifier,
-    compact: Boolean = false,
-) {
-    Row(
-        modifier = modifier
-            .height(if (compact) 36.dp else 76.dp)
-            .clip(RoundedCornerShape(CpDimens.radiusLg))
-            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.58f))
-            .padding(horizontal = if (compact) 4.dp else CpDimens.spacing2, vertical = if (compact) 4.dp else CpDimens.spacing2),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(CpDimens.spacing1),
-    ) {
-        Image(
-            painter = painterResource(image),
-            contentDescription = null,
-            contentScale = ContentScale.Fit,
-            modifier = Modifier.size(if (compact) 18.dp else 38.dp),
-        )
-        if (compact) {
-            Text(
-                text = label,
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurface,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.weight(1f),
-            )
-            Text(value.toString(), style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
-        } else Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = label,
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 1,
-            )
-            Text(
-                text = value.toString(),
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface,
-            )
-        }
+        if (photoUrl != null) CpImage(data = photoUrl, modifier = avatarModifier.padding(2.dp))
     }
 }
 
@@ -757,7 +673,7 @@ fun ReviewPhotoStrip(
 }
 
 @Composable
-private fun SavedDrinkBadge(name: String) {
+internal fun SavedDrinkBadge(name: String, showLabel: Boolean = true) {
     Row(
         modifier = Modifier
             .clip(RoundedCornerShape(CpDimens.radiusMd))
@@ -768,7 +684,7 @@ private fun SavedDrinkBadge(name: String) {
     ) {
         Icon(CpIcons.Coffee, contentDescription = null,
             tint = MaterialTheme.colorScheme.onPrimaryContainer, modifier = Modifier.size(18.dp))
-        Text("Напиток: $name", style = MaterialTheme.typography.labelLarge,
+        Text(if (showLabel) "Напиток: $name" else name, style = MaterialTheme.typography.labelLarge,
             color = MaterialTheme.colorScheme.onPrimaryContainer)
     }
 }

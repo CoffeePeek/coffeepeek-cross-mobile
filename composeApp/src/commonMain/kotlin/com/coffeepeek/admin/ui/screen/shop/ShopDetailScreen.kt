@@ -109,7 +109,6 @@ import com.coffeepeek.admin.ui.Navigator
 import com.coffeepeek.admin.ui.component.brewMethodIcon
 import com.coffeepeek.admin.ui.component.CoffeeShopImage
 import com.coffeepeek.admin.ui.component.CoffeeShopPlaceholderImage
-import com.coffeepeek.admin.ui.component.CheckInDisplayCard
 import com.coffeepeek.admin.ui.component.GuestAuthCard
 import com.coffeepeek.admin.ui.component.ReviewDisplayCard
 import com.coffeepeek.admin.utils.currentLocalDayOfWeek
@@ -125,11 +124,8 @@ import com.coffeepeek.admin.ui.component.CoffeePeekLoader
 import com.coffeepeek.admin.ui.component.OutlinedContentCard
 import com.coffeepeek.admin.ui.component.RoasterLinkRow
 import com.coffeepeek.admin.ui.component.SectionTitle
-import com.coffeepeek.admin.ui.screen.review.CreateReviewBottomSheet
-import com.coffeepeek.admin.ui.screen.review.EditReviewBottomSheet
 import com.coffeepeek.admin.utils.OpenInBrowser
 import com.coffeepeek.domain.model.CatalogItem
-import com.coffeepeek.domain.model.CheckIn
 import com.coffeepeek.domain.model.CoffeeShopDetails
 import com.coffeepeek.domain.model.CoffeeShopType
 import com.coffeepeek.domain.model.Review
@@ -177,23 +173,6 @@ fun ShopDetailScreen(shopId: String) {
                 onDraftChange = vm::updateCheckInDraft,
                 onSubmit = vm::checkIn,
                 placeName = state.details?.shop?.title,
-            )
-        }
-    }
-
-    if (state.showReviewSheet) {
-        val reviewId = state.editingReviewId
-        if (reviewId == null) {
-            CreateReviewBottomSheet(
-                shopId = shopId,
-                placeName = state.details?.shop?.title,
-                onDismiss = vm::dismissReviewSheet,
-            )
-        } else {
-            EditReviewBottomSheet(
-                reviewId = reviewId,
-                placeName = state.details?.shop?.title,
-                onDismiss = vm::dismissReviewSheet,
             )
         }
     }
@@ -286,7 +265,6 @@ fun ShopDetailScreen(shopId: String) {
                 canOpenRoute = details.location?.latitude != null &&
                     details.location?.longitude != null,
                 onRoute = vm::openRoute,
-                onReview = vm::openReviewAction,
                 onCheckIn = vm::openCheckInSheet,
                 modifier = Modifier.align(Alignment.BottomCenter),
             )
@@ -394,15 +372,6 @@ private fun ShopDetailContent(
                         onCopyPhone = onCopyPhone,
                     )
                 }
-            }
-        }
-
-        if (details.userCheckIns.isNotEmpty()) {
-            item {
-                CheckInsSection(
-                    checkIns = details.userCheckIns,
-                    onPhotoClick = onReviewPhotoClick,
-                )
             }
         }
 
@@ -936,10 +905,10 @@ private fun reviewCountLabel(count: Int): String {
     val mod10 = count % 10
     val mod100 = count % 100
     val word = when {
-        mod100 in 11..14 -> "отзывов"
-        mod10 == 1 -> "отзыв"
-        mod10 in 2..4 -> "отзыва"
-        else -> "отзывов"
+        mod100 in 11..14 -> "чекинов"
+        mod10 == 1 -> "чекин"
+        mod10 in 2..4 -> "чекина"
+        else -> "чекинов"
     }
     return "$count $word"
 }
@@ -1239,10 +1208,10 @@ private fun ReviewsSection(
         verticalArrangement = Arrangement.spacedBy(CpDimens.spacing2),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
-            Box(Modifier.weight(1f)) { SectionTitle("Отзывы") }
+            Box(Modifier.weight(1f)) { SectionTitle("Чекины") }
             if (reviews.isNotEmpty()) {
                 IconButton(onClick = { Navigator.navigate(Navigator.Screen.ShopReviews(shopId)) }) {
-                    Icon(CpIcons.ChevronRight, contentDescription = "Все отзывы")
+                    Icon(CpIcons.ChevronRight, contentDescription = "Все чекины")
                 }
             }
         }
@@ -1252,7 +1221,7 @@ private fun ReviewsSection(
         if (reviews.isEmpty()) {
             EmptyMascotState(
                 mascot = Res.drawable.maskot_with_book,
-                message = "Станьте первым, кто оценит и оставит отзыв о своём посещении $shopTitle",
+                message = "Станьте первым, кто оценит и оставит чекин о своём посещении $shopTitle",
             )
         } else if (!isLoggedIn) {
             BoxWithConstraints(
@@ -1417,36 +1386,6 @@ private fun showAllFeaturesLabel(count: Int): String {
     }
     return "Показать все $count $word"
 }
-
-@Composable
-private fun CheckInsSection(
-    checkIns: List<CheckIn>,
-    onPhotoClick: (List<String>, Int) -> Unit,
-) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = CpDimens.spacing4)
-            .padding(top = CpDimens.spacing6, bottom = CpDimens.spacing3),
-        verticalArrangement = Arrangement.spacedBy(CpDimens.spacing3),
-    ) {
-        SectionTitle("Мои чекины")
-        LazyRow(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(CpDimens.spacing3),
-        ) {
-            items(checkIns, key = { it.id }) { checkIn ->
-                CheckInDisplayCard(
-                    checkIn = checkIn,
-                    showShopName = false,
-                    onPhotoClick = onPhotoClick,
-                    modifier = if (checkIns.size > 1) Modifier.width(320.dp) else Modifier.fillParentMaxWidth(),
-                )
-            }
-        }
-    }
-}
-
 
 @Composable
 private fun DescriptionSection(description: String) {
@@ -1631,7 +1570,6 @@ private fun ShopDetailBottomBar(
     isCheckInLoading: Boolean,
     canOpenRoute: Boolean,
     onRoute: () -> Unit,
-    onReview: () -> Unit,
     onCheckIn: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -1646,12 +1584,6 @@ private fun ShopDetailBottomBar(
         RouteIconButton(
             enabled = canOpenRoute,
             onClick = onRoute,
-        )
-        BottomBarAction(
-            icon = CpIcons.Review,
-            label = "Отзыв",
-            onClick = onReview,
-            modifier = Modifier.weight(1f),
         )
         BottomBarAction(
             icon = CpIcons.Check,

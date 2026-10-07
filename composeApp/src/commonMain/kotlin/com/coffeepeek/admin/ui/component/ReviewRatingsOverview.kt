@@ -52,12 +52,12 @@ internal fun ReviewRatingsOverview(reviews: List<Review>, overallRating: Double?
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Icon(CpIcons.StarFilled, null, Modifier.size(24.dp), tint = MaterialTheme.colorScheme.primary)
             Text(
-                "${formatOneDecimal(overallRating?.takeIf { it > 0 } ?: averages.overall)} · Отзывы: ${maxOf(reviewCount, reviews.size)}",
+                "${formatOneDecimal(overallRating?.takeIf { it > 0 } ?: averages.overall)} · Чекины: ${maxOf(reviewCount, reviews.size)}",
                 style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold,
             )
         }
         if (reviewCount > reviews.size) Text(
-            "Оценки по загруженным отзывам", style = MaterialTheme.typography.labelSmall,
+            "Оценки по загруженным чекинам", style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         listOf(

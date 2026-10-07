@@ -11,6 +11,7 @@ import kotlinx.coroutines.launch
 
 data class ReviewReportUiState(
     val text: String = "",
+    val isPreview: Boolean = false,
     val isSubmitting: Boolean = false,
     val isSubmitted: Boolean = false,
     val error: String? = null,
@@ -20,8 +21,9 @@ class ReviewReportViewModel(
     private val reviewId: String,
     private val reviews: ReviewRepository,
     private val sessions: SessionRepository,
+    private val isPreview: Boolean = false,
 ) : BaseViewModel() {
-    private val _state = MutableStateFlow(ReviewReportUiState())
+    private val _state = MutableStateFlow(ReviewReportUiState(isPreview = isPreview))
     val state = _state.asStateFlow()
 
     fun updateText(text: String) {
@@ -34,6 +36,10 @@ class ReviewReportViewModel(
         val text = current.text.trim()
         if (text.length !in 1..2000) {
             _state.update { it.copy(error = "Опишите проблему: от 1 до 2000 символов") }
+            return
+        }
+        if (isPreview) {
+            _state.update { it.copy(isSubmitted = true, text = "", error = null) }
             return
         }
         _state.update { it.copy(isSubmitting = true, error = null) }

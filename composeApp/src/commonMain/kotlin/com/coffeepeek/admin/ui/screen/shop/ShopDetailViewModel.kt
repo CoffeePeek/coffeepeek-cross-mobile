@@ -1,9 +1,6 @@
 package com.coffeepeek.admin.ui.screen.shop
 
-import com.coffeepeek.domain.model.validateConsumedDrink
-
 import com.coffeepeek.domain.model.ConsumedDrinkOption
-
 import com.coffeepeek.admin.base.BaseViewModel
 import com.coffeepeek.admin.feature.favorites.api.RoasterFavorites
 import com.coffeepeek.admin.feature.favorites.api.roasterFavoriteId
@@ -12,11 +9,8 @@ import com.coffeepeek.admin.utils.ClipboardHelper
 import com.coffeepeek.admin.utils.FavoriteSync
 import com.coffeepeek.admin.utils.OpenInBrowser
 import com.coffeepeek.admin.utils.PickedImage
-import com.coffeepeek.admin.utils.ReviewSync
 import com.coffeepeek.admin.utils.ShareHelper
 import com.coffeepeek.admin.utils.datePickerMillisToUtcIsoInstant
-import com.coffeepeek.admin.utils.validatePublicCheckInDescription
-import com.coffeepeek.admin.utils.validatePublicCheckInHeader
 import com.coffeepeek.domain.model.CoffeeShopDetails
 import com.coffeepeek.domain.model.CatalogItem
 import com.coffeepeek.domain.model.CreateCheckInInput
@@ -46,8 +40,6 @@ data class ShopDetailUiState(
     val isCheckInLoading: Boolean = false,
     val showCheckInSheet: Boolean = false,
     val checkInDraft: CheckInDraft? = null,
-    val showReviewSheet: Boolean = false,
-    val editingReviewId: String? = null,
     val actionMessage: String? = null,
     val error: String? = null,
     val favoriteRoasterIds: Set<String> = emptySet(),
@@ -75,14 +67,6 @@ class ShopDetailViewModel(
             .catch { _uiState.update { it.copy(actionMessage = "Не удалось загрузить избранное") } }
             .launchIn(workScope)
         load()
-        ReviewSync.changes
-            .onEach { changedShopId ->
-                if (changedShopId == shopId) {
-                    _uiState.update { it.copy(actionMessage = "Отзыв отправлен на модерацию") }
-                    refreshDetails(showLoading = false)
-                }
-            }
-            .launchIn(workScope)
     }
 
     fun load() {
@@ -174,8 +158,6 @@ class ShopDetailViewModel(
                 it.copy(
                     showCheckInSheet = true,
                     checkInDraft = draft,
-                    showReviewSheet = false,
-                    editingReviewId = null,
                 )
             }
         }
@@ -201,17 +183,9 @@ class ShopDetailViewModel(
 
     fun checkIn(draft: CheckInDraft) {
         if (draft.shopId != shopId) return
-        val drinkError = validateConsumedDrink(draft.drinkSlug, draft.customDrinkName)
-        if (drinkError != null) { _uiState.update { it.copy(actionMessage = drinkError) }; return }
         if (_uiState.value.isCheckInLoading) return
-        if (draft.isPublic && (
-                validatePublicCheckInHeader(draft.header) != null ||
-                    validatePublicCheckInDescription(draft.note) != null
-                )
-        ) {
-            _uiState.update {
-                it.copy(actionMessage = "Для публичного чек-ина нужны заголовок и описание")
-            }
+        draft.validationError()?.let { error ->
+            _uiState.update { it.copy(actionMessage = error) }
             return
         }
         workScope.launch {
@@ -221,8 +195,7 @@ class ShopDetailViewModel(
                     shopId = shopId,
                     drinkSlug = draft.drinkSlug,
                     customDrinkName = draft.customDrinkName?.trim(),
-                    header = draft.header.trim().takeIf { draft.isPublic },
-                    note = draft.note.trim().takeIf { it.isNotEmpty() },
+                    note = draft.note.trim(),
                     visitedAtIso = datePickerMillisToUtcIsoInstant(draft.visitMillis),
                     isPublic = draft.isPublic,
                     placeRating = draft.placeRating,
@@ -250,59 +223,6 @@ class ShopDetailViewModel(
                     )
                 }
             }
-        }
-    }
-
-    fun openCreateReview() {
-        workScope.launch {
-            if (!sessionRepository.isLoggedIn()) {
-                Navigator.navigate(Navigator.Screen.Auth)
-                return@launch
-            }
-            if (!_uiState.value.details?.existingReviewId.isNullOrBlank()) {
-                _uiState.update { it.copy(actionMessage = "Вы уже оставляли отзыв об этом месте") }
-                return@launch
-            }
-            _uiState.update {
-                it.copy(
-                    showReviewSheet = true,
-                    editingReviewId = null,
-                    showCheckInSheet = false,
-                )
-            }
-        }
-    }
-
-    fun openReviewAction() {
-        workScope.launch {
-            if (!sessionRepository.isLoggedIn()) {
-                Navigator.navigate(Navigator.Screen.Auth)
-                return@launch
-            }
-            val existingId = _uiState.value.details?.existingReviewId
-            _uiState.update {
-                it.copy(
-                    showReviewSheet = true,
-                    editingReviewId = existingId?.takeIf(String::isNotBlank),
-                    showCheckInSheet = false,
-                )
-            }
-        }
-    }
-
-    fun openEditReview(reviewId: String) {
-        _uiState.update {
-            it.copy(
-                showReviewSheet = true,
-                editingReviewId = reviewId,
-                showCheckInSheet = false,
-            )
-        }
-    }
-
-    fun dismissReviewSheet() {
-        _uiState.update {
-            it.copy(showReviewSheet = false, editingReviewId = null)
         }
     }
 

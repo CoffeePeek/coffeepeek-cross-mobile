@@ -46,6 +46,8 @@ import com.coffeepeek.admin.theme.CpDimens
 import com.coffeepeek.admin.ui.Navigator
 import com.coffeepeek.admin.ui.Navigator.isHandledByRootNav
 import com.coffeepeek.admin.ui.component.PlatformFloatingBottomNavBar
+import com.coffeepeek.admin.ui.component.floatingNavBarHeight
+import com.coffeepeek.admin.ui.component.FloatingNavBottomMargin
 import com.coffeepeek.admin.ui.component.FloatingNavItem
 import com.coffeepeek.admin.ui.component.RetainedContent
 import com.coffeepeek.admin.ui.component.ProvideFloatingNavClearance
@@ -124,6 +126,12 @@ internal fun ComposeMainScreen() {
             startScreen = Navigator.Screen.CoffeeTab,
         ),
         BottomNavItem(
+            title = "Лента",
+            icon = CpIcons.Community,
+            graph = Navigator.Screen.CommunityGraph,
+            startScreen = Navigator.Screen.CommunityTab,
+        ),
+        BottomNavItem(
             title = "Профиль",
             icon = CpIcons.Profile,
             graph = Navigator.Screen.ProfileGraph,
@@ -145,7 +153,7 @@ internal fun ComposeMainScreen() {
     val systemNavBottom = with(density) {
         WindowInsets.navigationBars.getBottom(this).toDp()
     }
-    val floatingClearance = systemNavBottom + CpDimens.floatingNavContentClearance
+    val floatingClearance = systemNavBottom + floatingNavBarHeight() + FloatingNavBottomMargin
     val tabBarHaze = rememberHazeState()
     var feedEntry by remember { mutableStateOf<NavBackStackEntry?>(null) }
     val feedStateHolder = rememberSaveableStateHolder()
@@ -219,6 +227,10 @@ internal fun ComposeMainScreen() {
 
                 navigation<Navigator.Screen.CoffeeGraph>(startDestination = Navigator.Screen.CoffeeTab) {
                     composable<Navigator.Screen.CoffeeTab> { CoffeeListScreen() }
+                }
+
+                navigation<Navigator.Screen.CommunityGraph>(startDestination = Navigator.Screen.CommunityTab) {
+                    composable<Navigator.Screen.CommunityTab> { com.coffeepeek.admin.feature.community.ui.CommunityScreen() }
                 }
 
                 navigation<Navigator.Screen.ProfileGraph>(startDestination = Navigator.Screen.ProfileTab) {

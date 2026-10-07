@@ -163,7 +163,7 @@ private fun CheckInCalendarContent(
             if (selectedCheckIns.isEmpty()) {
                 item {
                     Text(
-                        text = "В этот день чек-инов не было",
+                        text = "В этот день чекинов не было",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -180,7 +180,7 @@ private fun CheckInCalendarContent(
         } else {
             item {
                 Text(
-                    text = "В этом месяце пока нет чек-инов",
+                    text = "В этом месяце пока нет чекинов",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -301,7 +301,7 @@ private fun CalendarDay(
     } else {
         RoundedCornerShape(CpDimens.radiusLg)
     }
-    val description = "${selectedDateTitle(date)}, ${if (checkIns.isEmpty()) "нет чек-инов" else visitCount(checkIns.size)}"
+    val description = "${selectedDateTitle(date)}, ${if (checkIns.isEmpty()) "нет чекинов" else visitCount(checkIns.size)}"
     Box(
         modifier = modifier
             .height(52.dp)
@@ -401,7 +401,7 @@ private fun CheckInListContent(
         }
         state.error != null && state.checkIns.isEmpty() -> ErrorMessage(state.error, vm::refresh)
         state.checkIns.isEmpty() -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            Text("Пока нет чек-инов", color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text("Пока нет чекинов", color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
         else -> LazyColumn(
             modifier = Modifier.fillMaxSize(),
@@ -457,7 +457,7 @@ private fun selectedDateTitle(date: String): String {
     return "$day ${monthNamesGenitive[month - 1]} $year"
 }
 
-private fun visitCount(count: Int) = "$count ${plural(count, "чек-ин", "чек-ина", "чек-инов")}"
+private fun visitCount(count: Int) = "$count ${plural(count, "чекин", "чекина", "чекинов")}"
 private fun shopCount(count: Int) = "$count ${plural(count, "кофейня", "кофейни", "кофеен")}"
 
 private fun plural(value: Int, one: String, few: String, many: String): String {

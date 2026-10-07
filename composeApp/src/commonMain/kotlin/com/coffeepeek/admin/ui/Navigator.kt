@@ -36,13 +36,13 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
+import com.coffeepeek.admin.ui.screen.shop.CheckInDraftStore
+import org.koin.compose.koinInject
 import com.coffeepeek.admin.ui.dialogs.ErrorDialog
 import com.coffeepeek.admin.ui.dialogs.LoadingDialog
 import com.coffeepeek.admin.ui.screen.auth.AuthScreen
 import com.coffeepeek.admin.ui.screen.main.MainScreen
 import com.coffeepeek.admin.ui.component.RetainedContent
-import com.coffeepeek.admin.ui.screen.review.CreateReviewScreen
-import com.coffeepeek.admin.ui.screen.review.EditReviewScreen
 import com.coffeepeek.admin.ui.screen.shop.ShopDetailScreen
 import com.coffeepeek.admin.feature.coffee.ui.CoffeeDetailScreen
 import com.coffeepeek.admin.ui.screen.shop.ShopMenuGalleryScreen
@@ -91,12 +91,14 @@ object Navigator {
         // Graphs
         @Serializable data object FeedGraph : Screen
         @Serializable data object CoffeeGraph : Screen
+        @Serializable data object CommunityGraph : Screen
         @Serializable data object ProfileGraph : Screen
         @Serializable data object SettingsGraph : Screen
 
         // Tabs
         @Serializable data object FeedTab : Screen
         @Serializable data object CoffeeTab : Screen
+        @Serializable data object CommunityTab : Screen
         @Serializable data object ProfileTab : Screen
         @Serializable data object SettingsTab : Screen
 
@@ -125,10 +127,8 @@ object Navigator {
         @Serializable data object VisitedPlaces : Screen
         @Serializable data object CitySettings : Screen
         @Serializable data object ThemeSettings : Screen
-        @Serializable data class CreateReview(val shopId: String) : Screen
-        @Serializable data class ReviewEdit(val reviewId: String) : Screen
         @Serializable data class ShopReviews(val shopId: String) : Screen
-        @Serializable data class ReportReview(val reviewId: String) : Screen
+        @Serializable data class ReportReview(val reviewId: String, val isPreview: Boolean = false) : Screen
     }
 
     data class MapShopFocus(
@@ -189,8 +189,6 @@ object Navigator {
         is Screen.RoasterDetail,
         is Screen.EditProfile,
         is Screen.DeleteAccountPending,
-        is Screen.CreateReview,
-        is Screen.ReviewEdit,
         is Screen.ShopReviews,
         is Screen.ReportReview,
         is Screen.Favorites,
@@ -234,6 +232,7 @@ object Navigator {
         val errorMessage = ErrorHandler.errorMessage.collectAsState().value
         val loading = LoadingHandler.isLoading.collectAsState().value
         val isLoggedIn by vm.isLoggedIn.collectAsState()
+        val checkInDrafts: CheckInDraftStore = koinInject()
 
         ErrorDialog(
             show = errorMessage != null,
@@ -242,6 +241,7 @@ object Navigator {
         )
         LaunchedEffect(isLoggedIn) {
             if (!isLoggedIn) {
+                checkInDrafts.clearAll()
                 ErrorHandler.clearError()
                 LoadingHandler.clearLoading()
                 if (_openLoginAfterSessionEnd.value) {
@@ -358,7 +358,7 @@ object Navigator {
                     }
                     composable<Screen.ReportReview> { backStack ->
                         val route = backStack.toRoute<Screen.ReportReview>()
-                        com.coffeepeek.admin.ui.screen.review.ReviewReportScreen(reviewId = route.reviewId)
+                        com.coffeepeek.admin.ui.screen.review.ReviewReportScreen(reviewId = route.reviewId, isPreview = route.isPreview)
                     }
                     composable<Screen.ShopMenuGallery> { backStack ->
                         val route = backStack.toRoute<Screen.ShopMenuGallery>()
@@ -396,14 +396,6 @@ object Navigator {
                     }
                     composable<Screen.EditProfile> { EditProfileScreen() }
                     composable<Screen.DeleteAccountPending> { DeleteAccountPendingScreen() }
-                    composable<Screen.CreateReview> { backStack ->
-                        val route = backStack.toRoute<Screen.CreateReview>()
-                        CreateReviewScreen(shopId = route.shopId)
-                    }
-                    composable<Screen.ReviewEdit> { backStack ->
-                        val route = backStack.toRoute<Screen.ReviewEdit>()
-                        EditReviewScreen(reviewId = route.reviewId)
-                    }
                     composable<Screen.Favorites> { FavoritesScreen() }
                     composable<Screen.VisitedPlaces> { VisitedPlacesScreen() }
                     composable<Screen.CitySettings> { CityScreen() }

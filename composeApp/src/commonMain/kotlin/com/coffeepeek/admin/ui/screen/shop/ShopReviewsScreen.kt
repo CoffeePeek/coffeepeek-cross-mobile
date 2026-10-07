@@ -31,7 +31,6 @@ import com.coffeepeek.admin.ui.component.CpTopBar
 import com.coffeepeek.admin.ui.component.FullScreenImageDialog
 import com.coffeepeek.admin.ui.component.GuestAuthCard
 import com.coffeepeek.admin.ui.component.ReviewDisplayCard
-import com.coffeepeek.admin.ui.screen.review.EditReviewBottomSheet
 import org.koin.core.parameter.parametersOf
 
 @Composable
@@ -42,10 +41,7 @@ fun ShopReviewsScreen(shopId: String) {
     preview?.let { (urls, index) ->
         FullScreenImageDialog(imageUrls = urls, initialIndex = index, onDismiss = { preview = null })
     }
-    if (state.showReviewSheet) state.editingReviewId?.let { reviewId ->
-        EditReviewBottomSheet(reviewId = reviewId, placeName = state.details?.shop?.title, onDismiss = vm::dismissReviewSheet)
-    }
-    Scaffold(topBar = { CpTopBar(title = "Отзывы") }) { padding ->
+    Scaffold(topBar = { CpTopBar(title = "Чекины") }) { padding ->
         val details = state.details
         Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
             when {
@@ -66,7 +62,7 @@ fun ShopReviewsScreen(shopId: String) {
                         com.coffeepeek.admin.ui.component.ReviewRatingsOverview(details.reviews, details.shop.rating, details.shop.reviewCount)
                     }
                     state.actionMessage?.let { message -> item { Text(message) } }
-                    if (details.reviews.isEmpty()) item { Text("Отзывов пока нет") }
+                    if (details.reviews.isEmpty()) item { Text("Чекинов пока нет") }
                     itemsIndexed(details.reviews, key = { _, review -> review.id }) { index, review ->
                         val blurred = !state.isLoggedIn && index > 0
                         val own = state.currentUserId != null && review.userId == state.currentUserId
@@ -78,7 +74,6 @@ fun ShopReviewsScreen(shopId: String) {
                             showHelpfulButton = !own,
                             fullVersion = true,
                             onReportClick = if (blurred) null else ({ Navigator.navigate(Navigator.Screen.ReportReview(review.id)) }),
-                            onEditClick = if (own) ({ vm.openEditReview(review.id) }) else null,
                         )
                         if (!state.isLoggedIn && index == 0) GuestAuthCard(
                             onLogin = { Navigator.navigate(Navigator.Screen.Auth) },

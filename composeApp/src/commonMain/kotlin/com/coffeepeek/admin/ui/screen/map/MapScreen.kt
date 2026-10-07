@@ -719,7 +719,7 @@ private fun MapShopBottomSheet(
                         }
                     } else {
                         Text(
-                            text = if (details == null) "Кофейня рядом" else if (reviewCount > 0) "$reviewCount отзывов" else "Нет отзывов",
+                            text = if (details == null) "Кофейня рядом" else if (reviewCount > 0) "$reviewCount чекинов" else "Нет чекинов",
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )

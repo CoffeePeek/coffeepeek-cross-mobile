@@ -1,5 +1,6 @@
 package com.coffeepeek.admin.ui.screen.shop
 
+import com.coffeepeek.domain.model.validateConsumedDrink
 import com.coffeepeek.admin.utils.PickedImage
 import com.coffeepeek.admin.utils.currentEpochMillis
 
@@ -8,7 +9,6 @@ data class CheckInDraft(
     val drinkSlug: String? = null,
     val customDrinkName: String? = null,
     val drinkName: String? = null,
-    val header: String = "",
     val note: String = "",
     val isPublic: Boolean = false,
     val visitMillis: Long,
@@ -17,6 +17,15 @@ data class CheckInDraft(
     val coffeeRating: Int = 4,
     val photos: List<PickedImage> = emptyList(),
 )
+
+internal fun CheckInDraft.validationError(now: Long = currentEpochMillis()): String? = when {
+    visitMillis <= 0 || visitMillis > now -> "Выберите дату визита не позднее сегодняшней"
+    listOf(coffeeRating, serviceRating, placeRating).any { it !in 1..5 } -> "Оцените кофе, сервис и атмосферу"
+    note.trim().isEmpty() -> "Введите заметку"
+    note.trim().length > 1000 -> "Заметка должна быть не длиннее 1000 символов"
+    photos.size > 5 -> "Можно добавить до 5 фото"
+    else -> validateConsumedDrink(drinkSlug, customDrinkName)
+}
 
 /**
  * Keeps one check-in draft for the lifetime of the app process.
@@ -41,6 +50,8 @@ class CheckInDraftStore(
             draft = value
         }
     }
+
+    fun clearAll() { draft = null }
 
     fun clear(shopId: String) {
         if (draft?.shopId == shopId) {

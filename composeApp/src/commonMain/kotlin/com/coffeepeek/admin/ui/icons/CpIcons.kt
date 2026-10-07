@@ -70,11 +70,13 @@ import com.adamglin.phosphoricons.regular.Star
 import com.adamglin.phosphoricons.regular.Sun
 import com.adamglin.phosphoricons.regular.ThumbsUp
 import com.adamglin.phosphoricons.regular.Trash
+import com.adamglin.phosphoricons.regular.Users
 import com.adamglin.phosphoricons.regular.User
 import com.adamglin.phosphoricons.regular.WarningCircle
 import com.adamglin.phosphoricons.regular.X
 
 object CpIcons {
+    val Community: ImageVector get() = PhosphorIcons.Regular.Users
     val Add: ImageVector get() = PhosphorIcons.Regular.Plus
     val Avocado: ImageVector get() = PhosphorIcons.Regular.Avocado
     val Back: ImageVector get() = PhosphorIcons.Regular.ArrowLeft

@@ -25,9 +25,7 @@ import com.coffeepeek.admin.ui.screen.profile.ProfileViewModel
 import com.coffeepeek.admin.ui.screen.deleteaccount.DeleteAccountPendingViewModel
 import com.coffeepeek.admin.ui.screen.checkins.VisitedPlacesViewModel
 import com.coffeepeek.admin.ui.screen.favorites.FavoritesViewModel
-import com.coffeepeek.admin.ui.screen.review.CreateReviewViewModel
 import com.coffeepeek.admin.ui.screen.review.ReviewReportViewModel
-import com.coffeepeek.admin.ui.screen.review.EditReviewViewModel
 import com.coffeepeek.admin.ui.screen.contributions.ContributionKind
 import com.coffeepeek.admin.ui.screen.contributions.MyContributionsViewModel
 import com.coffeepeek.admin.ui.screen.roaster.AddRoasterViewModel
@@ -101,11 +99,9 @@ private fun appModule(settingRepository: com.coffeepeek.room.repository.SettingR
     factory { AddShopViewModel(get()) }
     factory { EditProfileViewModel(get()) }
     factory { FavoritesViewModel(get(), get(), get()) }
-    factory { (kind: ContributionKind) -> MyContributionsViewModel(kind, get(), get(), get(), get(), get(), get()) }
+    factory { (kind: ContributionKind) -> MyContributionsViewModel(kind, get(), get(), get()) }
     factory { VisitedPlacesViewModel(get(), get()) }
     factory { AddRoasterViewModel(get(), get()) }
     factory { (roasterId: String) -> RoasterDetailViewModel(roasterId, get(), get(), get(), get()) }
-    factory { (shopId: String) -> CreateReviewViewModel(shopId, get(), get(), get()) }
-    factory { (reviewId: String) -> ReviewReportViewModel(reviewId, get(), get()) }
-    factory { (reviewId: String) -> EditReviewViewModel(reviewId, get(), get(), get(), get(), get()) }
+    factory { (reviewId: String, isPreview: Boolean) -> ReviewReportViewModel(reviewId, get(), get(), isPreview) }
 }
