@@ -188,19 +188,24 @@ class ShopDetailViewModel(
             _uiState.update { it.copy(actionMessage = error) }
             return
         }
+        val shopSlug = _uiState.value.details?.shop?.publicAddress?.slug?.takeIf(String::isNotBlank)
+        if (shopSlug == null) {
+            _uiState.update { it.copy(actionMessage = "Не удалось определить адрес кофейни") }
+            return
+        }
         workScope.launch {
             _uiState.update { it.copy(isCheckInLoading = true) }
             checkInRepository.createCheckIn(
                 CreateCheckInInput(
-                    shopId = shopId,
+                    shopSlug = shopSlug,
                     drinkSlug = draft.drinkSlug,
                     customDrinkName = draft.customDrinkName?.trim(),
-                    note = draft.note.trim(),
+                    text = draft.note.trim(),
                     visitedAtIso = datePickerMillisToUtcIsoInstant(draft.visitMillis),
-                    isPublic = draft.isPublic,
-                    placeRating = draft.placeRating,
-                    serviceRating = draft.serviceRating,
-                    coffeeRating = draft.coffeeRating,
+                    visibility = if (draft.isPublic) com.coffeepeek.domain.model.CheckInVisibility.Public else com.coffeepeek.domain.model.CheckInVisibility.Private,
+                    rating = com.coffeepeek.domain.model.ReviewRating(
+                        place = draft.placeRating, service = draft.serviceRating, coffee = draft.coffeeRating,
+                    ),
                     photos = draft.photos.map { it.toPendingUpload() },
                 ),
             ).onSuccess {

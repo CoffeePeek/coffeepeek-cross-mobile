@@ -84,6 +84,7 @@ private fun appModule(settingRepository: com.coffeepeek.room.repository.SettingR
     factory { RegisterViewModel(get()) }
     factory { NavigatorViewModel(get()) }
     factory { FeedViewModel(get(), get(), get(), get()) }
+    factory { com.coffeepeek.admin.feature.community.ui.CommunityViewModel(get(), get(), get()) }
     factory { com.coffeepeek.admin.ui.screen.roaster.RoasterListViewModel(get(), get(), get()) }
     factory { MapViewModel(get(), get()) }
     factory { (shopId: String) -> ShopDetailViewModel(shopId, get(), get(), get(), get(), get(), get(), get(), get()) }

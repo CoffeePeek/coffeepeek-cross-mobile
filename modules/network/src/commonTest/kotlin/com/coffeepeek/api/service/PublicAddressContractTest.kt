@@ -87,9 +87,9 @@ class PublicAddressContractTest {
     fun reviewsCheckInsAndSubmissionsReadItemsAndNullableLinks() = runBlocking {
         val client = HttpClient(MockEngine { request ->
             val items = when (request.url.encodedPath) {
-                "/api/CheckIns" -> {
-                    assertEquals("2", request.headers["X-Page-Number"])
-                    assertEquals("20", request.headers["X-Page-Size"])
+                "/api/v1/check-ins/mine" -> {
+                    assertEquals("2", request.url.parameters["pageNumber"])
+                    assertEquals("20", request.url.parameters["pageSize"])
                     """[{"id":"check-in-guid","shop":null}]"""
                 }
                 "/api/users/petr/reviews" -> {
@@ -106,10 +106,10 @@ class PublicAddressContractTest {
                 }
                 else -> error("Unexpected path: ${request.url.encodedPath}")
             }
-            respond("""{"isSuccess":true,"message":null,"data":{"items":$items,"totalItems":1,"currentPage":2,"pageSize":20}}""", headers = headers)
+            respond("""{"isSuccess":true,"message":null,"data":{"items":$items,"totalCount":1,"totalItems":1,"currentPage":2,"pageSize":20}}""", headers = headers)
         }) { install(ContentNegotiation) { json(JsonExt.json) } }
         try {
-            assertNull(CheckInApiService(client).getMyCheckIns(2, 20).getOrThrow().checkIns.single().shop)
+            assertNull(CheckInApiService(client).getMyCheckIns(2, 20).getOrThrow().items.single().shop)
             assertNull(ReviewApiService(client).getUserReviews("petr", 2, 20).getOrThrow().reviewDtos.single().author)
             assertEquals("26-october-16", ShopApiService(client).getMyModerationShops(ModerationStatusDto.Approved, 2, 20).getOrThrow().moderationShops.single().publishedShop?.slug)
             assertEquals(1, ReviewApiService(client).getMyModerationReviews(ModerationStatusDto.Pending, 2, 20).getOrThrow().reviewDtos.size)

@@ -115,32 +115,7 @@ internal object ShopMapper {
         }.sortedBy { it.sortIndex },
         reviews = reviews.map { it.toDomain(fileUrls) },
         userCheckIns = userCheckIns.map { checkIn ->
-            CheckIn(
-                drinkSlug = checkIn.drinkSlug,
-                customDrinkName = checkIn.customDrinkName,
-                drinkNameRu = checkIn.drinkNameRu,
-                drinkNameEn = checkIn.drinkNameEn,
-                id = checkIn.id,
-                shopId = checkIn.shop?.slug.orEmpty(),
-                shopName = checkIn.shopName.orEmpty().ifBlank { name.orEmpty() },
-                note = checkIn.note.orEmpty(),
-                createdAt = checkIn.createdAt,
-                reviewId = checkIn.reviewId,
-                visitedAt = checkIn.visitedAt,
-                photoUrls = checkIn.photos.mapNotNull { photo ->
-                    fileUrls.resolve(photo.storageKey, photo.urls.variantOr(photo.fullUrl) { it.fullscreen })
-                },
-                photoThumbnailUrls = checkIn.photos.mapNotNull { photo ->
-                    fileUrls.resolve(photo.storageKey, photo.urls.variantOr(photo.fullUrl) { it.thumbnail })
-                },
-                rating = checkIn.rating?.let { rating ->
-                    ReviewRating(
-                        place = rating.place,
-                        service = rating.service,
-                        coffee = rating.coffee,
-                    )
-                },
-            )
+            checkIn.toDomain(fileUrls).let { it.copy(shopName = it.shopName.ifBlank { name.orEmpty() }) }
         },
         contact = shopContact?.let { c ->
             com.coffeepeek.domain.model.ShopContact(

@@ -32,10 +32,10 @@ class CoffeeShopDetailsDtoTest {
         assertEquals("2026-09-08T09:30:00Z", details.userCheckIns.single().visitedAt)
         assertEquals(
             "https://cdn.example/check-in.jpg",
-            details.userCheckIns.single().photos.single().fullUrl,
+            details.userCheckIns.single().photos.single().url,
         )
-        assertEquals(4, details.userCheckIns.single().rating?.place)
-        assertEquals(5, details.userCheckIns.single().rating?.service)
-        assertEquals(3, details.userCheckIns.single().rating?.coffee)
+        assertEquals(4, details.userCheckIns.single().rating.place)
+        assertEquals(5, details.userCheckIns.single().rating.service)
+        assertEquals(3, details.userCheckIns.single().rating.coffee)
     }
 }
