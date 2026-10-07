@@ -1,6 +1,5 @@
 package com.coffeepeek.admin.feature.community.ui
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -19,14 +18,10 @@ import com.coffeepeek.admin.ui.component.CoffeePeekLoader
 import com.coffeepeek.admin.ui.component.CoffeePeekPullToRefresh
 import com.coffeepeek.admin.ui.component.FullScreenImageDialog
 import com.coffeepeek.admin.ui.component.LocalFloatingNavClearance
-import com.coffeepeek.admin.ui.component.ReviewDisplayCard
 import com.coffeepeek.admin.ui.component.ReviewTextInput
-import com.coffeepeek.admin.utils.utcIsoToLocalDate
 import com.coffeepeek.domain.model.CheckIn
 import com.coffeepeek.domain.model.CheckInModerationState
 import com.coffeepeek.domain.model.CheckInVisibility
-import com.coffeepeek.domain.model.Review
-import com.coffeepeek.domain.model.ReviewRating
 
 @Composable
 fun CommunityScreen() {
@@ -116,6 +111,7 @@ fun CommunityScreen() {
                                 publishedAt = state.publishedAt[checkIn.id],
                                 canAct = !state.isMutating,
                                 changingVisibility = state.changingVisibilityId == checkIn.id,
+                                onShopClick = { Navigator.navigate(Navigator.Screen.ShopDetail(checkIn.shopId)) },
                                 onEdit = { vm.edit(checkIn.id) },
                                 onVisibility = { vm.toggleVisibility(checkIn.id) },
                                 onHelpful = { vm.toggleHelpful(checkIn.id) },
@@ -143,69 +139,6 @@ fun CommunityScreen() {
             }
         }
     }
-}
-
-@Composable
-private fun TimelineCheckInCard(
-    checkIn: CheckIn,
-    isOwn: Boolean,
-    isPublicTimeline: Boolean,
-    publishedAt: String?,
-    canAct: Boolean,
-    changingVisibility: Boolean,
-    onEdit: () -> Unit,
-    onVisibility: () -> Unit,
-    onHelpful: () -> Unit,
-    onReport: () -> Unit,
-    onPhotoClick: (List<String>, Int) -> Unit,
-) {
-    ReviewDisplayCard(
-        review = Review(
-            id = checkIn.id, username = checkIn.username.ifBlank { if (isOwn) "Вы" else "Пользователь" }, header = "", comment = checkIn.note,
-            rating = checkIn.rating ?: ReviewRating(0, 0, 0), createdAt = checkIn.visitedAt.ifBlank { checkIn.createdAt },
-            photoUrls = checkIn.photoUrls, drinkSlug = checkIn.drinkSlug, customDrinkName = checkIn.customDrinkName,
-            drinkNameRu = checkIn.drinkNameRu, drinkNameEn = checkIn.drinkNameEn,
-            helpfulCount = checkIn.helpfulCount, isHelpfulByCurrentUser = checkIn.isHelpfulByCurrentUser,
-        ),
-        fullVersion = true,
-        dateLabel = publishedAt?.let { "Опубликован ${utcIsoToLocalDate(it)}" },
-        onEditClick = onEdit.takeIf { canAct && isOwn },
-        onReportClick = onReport.takeIf { canAct && isPublicTimeline && !isOwn },
-        showHelpfulButton = isPublicTimeline && !isOwn,
-        onHelpfulClick = onHelpful.takeIf { canAct },
-        onPhotoClick = onPhotoClick,
-        footer = {
-            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(CpDimens.spacing1)) {
-                    Text(
-                        checkIn.shopName.ifBlank { "Кофейня" },
-                        style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold,
-                        modifier = Modifier.then(if (checkIn.shopId.isNotBlank()) Modifier.clickable {
-                            Navigator.navigate(Navigator.Screen.ShopDetail(checkIn.shopId))
-                        } else Modifier),
-                    )
-                    if (!isPublicTimeline) Text(checkIn.publicationLabel(), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    if (isPublicTimeline && checkIn.visitedAt.isNotBlank()) Text("Визит ${utcIsoToLocalDate(checkIn.visitedAt)}",
-                        style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    if ((!isPublicTimeline || isOwn) && checkIn.helpfulCount > 0) Text(
-                        "Полезно · " + checkIn.helpfulCount,
-                        style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-                if (isOwn) TextButton(onClick = onVisibility, enabled = canAct) {
-                    Text(when {
-                        changingVisibility -> "Сохраняем…"
-                        checkIn.visibility == CheckInVisibility.Private -> "Опубликовать"
-                        else -> "Скрыть"
-                    })
-                }
-            }
-            if (checkIn.moderationState == CheckInModerationState.Rejected) checkIn.rejectionReason?.takeIf(String::isNotBlank)?.let {
-                Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
-            }
-        },
-    )
 }
 
 internal fun CheckIn.publicationLabel(): String = if (visibility == CheckInVisibility.Private) "Приватный" else when (moderationState) {

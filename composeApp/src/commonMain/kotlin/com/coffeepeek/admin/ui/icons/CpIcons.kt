@@ -27,6 +27,7 @@ import com.adamglin.phosphoricons.regular.CoffeeBean
 import com.adamglin.phosphoricons.regular.Coins
 import com.adamglin.phosphoricons.regular.Copy
 import com.adamglin.phosphoricons.regular.Drop
+import com.adamglin.phosphoricons.regular.DotsThreeVertical
 import com.adamglin.phosphoricons.regular.Envelope
 import com.adamglin.phosphoricons.regular.Egg
 import com.adamglin.phosphoricons.regular.InstagramLogo
@@ -76,6 +77,7 @@ import com.adamglin.phosphoricons.regular.WarningCircle
 import com.adamglin.phosphoricons.regular.X
 
 object CpIcons {
+    val MoreVertical: ImageVector get() = PhosphorIcons.Regular.DotsThreeVertical
     val Community: ImageVector get() = PhosphorIcons.Regular.Users
     val Add: ImageVector get() = PhosphorIcons.Regular.Plus
     val Avocado: ImageVector get() = PhosphorIcons.Regular.Avocado

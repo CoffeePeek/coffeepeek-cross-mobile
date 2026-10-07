@@ -417,7 +417,7 @@ private fun CheckInHeader(checkIn: CheckIn, showShopName: Boolean) {
 }
 
 @Composable
-private fun HelpfulButton(
+internal fun HelpfulButton(
     helpfulCount: Int,
     isHelpful: Boolean,
     onClick: (() -> Unit)?,
@@ -600,7 +600,7 @@ private fun ReviewQuote(reviewId: String, comment: String, padToCollapsedLines: 
     }
 }
 
-private fun formatReviewDisplayDate(raw: String): String {
+internal fun formatReviewDisplayDate(raw: String): String {
     val datePart = utcIsoToLocalDate(raw)
     val parts = datePart.split('-')
     if (parts.size != 3) return datePart
