@@ -22,19 +22,20 @@ import com.coffeepeek.admin.ui.icons.CpIcons
 internal fun SearchHeader(
     query: String,
     onQueryChange: (String) -> Unit,
-    roastersSelected: Boolean,
-    onSelectRoasters: (Boolean) -> Unit,
+    roastersSelected: Boolean = false,
+    onSelectRoasters: (Boolean) -> Unit = {},
     filterCount: Int = 0,
     onFilters: (() -> Unit)? = null,
     showCategories: Boolean = true,
     onSearchFocus: () -> Unit = {},
     onCancelSearch: (() -> Unit)? = null,
+    placeholder: String = if (roastersSelected) "Поиск обжарщиков…" else "Поиск кофейни…",
 ) {
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         CpSearchField(
             value = query,
             onValueChange = onQueryChange,
-            placeholder = if (roastersSelected) "Поиск обжарщиков…" else "Поиск кофейни…",
+            placeholder = placeholder,
             modifier = Modifier.weight(1f).onFocusChanged { if (it.isFocused) onSearchFocus() },
             fieldHeight = CpDimens.buttonHeight,
         )

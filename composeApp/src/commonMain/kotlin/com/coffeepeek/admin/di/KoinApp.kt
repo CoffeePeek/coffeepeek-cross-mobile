@@ -7,6 +7,10 @@ import com.coffeepeek.admin.theme.ThemeManager
 import com.coffeepeek.admin.settings.CityPreference
 import com.coffeepeek.admin.settings.ReviewDraftStore
 import com.coffeepeek.admin.feature.favorites.api.RoasterFavorites
+import com.coffeepeek.admin.feature.coffee.data.CoffeeRepositoryImpl
+import com.coffeepeek.admin.feature.coffee.domain.CoffeeRepository
+import com.coffeepeek.admin.feature.coffee.ui.CoffeeListViewModel
+import com.coffeepeek.admin.feature.coffee.ui.CoffeeDetailViewModel
 import com.coffeepeek.admin.feature.favorites.data.LocalRoasterFavorites
 import com.coffeepeek.admin.utils.CustomUrlFetcher
 import com.coffeepeek.api.CoffeePeekClient
@@ -66,6 +70,9 @@ fun initKoin() {
 }
 
 private fun appModule(settingRepository: com.coffeepeek.room.repository.SettingRepository) = module {
+    single<CoffeeRepository> { CoffeeRepositoryImpl(get<CoffeePeekClient>().plainClient) }
+    factory { CoffeeListViewModel(get()) }
+    factory { (slug: String) -> CoffeeDetailViewModel(slug, get()) }
     single<RoasterFavorites> { LocalRoasterFavorites(settingRepository, get()) }
     single<com.coffeepeek.admin.feature.appupdate.domain.AppUpdateRepository> {
         com.coffeepeek.admin.feature.appupdate.data.AppUpdateRepositoryImpl(get<CoffeePeekClient>().plainClient, settingRepository)

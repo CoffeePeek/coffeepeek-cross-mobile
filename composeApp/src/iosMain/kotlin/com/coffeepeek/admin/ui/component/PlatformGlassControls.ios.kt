@@ -181,6 +181,7 @@ actual fun PlatformFloatingBottomNavBar(
 private val FloatingNavItem.iconSymbol: String
     get() = when (title) {
         "Поиск" -> "magnifyingglass"
+        "Кофе" -> "leaf"
         "Карта" -> "map.fill"
         "Профиль" -> "person.crop.circle.fill"
         "Настройки" -> "gearshape.fill"

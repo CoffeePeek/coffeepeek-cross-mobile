@@ -44,6 +44,7 @@ import com.coffeepeek.admin.ui.component.RetainedContent
 import com.coffeepeek.admin.ui.screen.review.CreateReviewScreen
 import com.coffeepeek.admin.ui.screen.review.EditReviewScreen
 import com.coffeepeek.admin.ui.screen.shop.ShopDetailScreen
+import com.coffeepeek.admin.feature.coffee.ui.CoffeeDetailScreen
 import com.coffeepeek.admin.ui.screen.shop.ShopMenuGalleryScreen
 import com.coffeepeek.admin.ui.screen.shop.ShopReportScreen
 import com.coffeepeek.admin.ui.screen.shopchange.ShopChangeEditorScreen
@@ -89,16 +90,19 @@ object Navigator {
 
         // Graphs
         @Serializable data object FeedGraph : Screen
+        @Serializable data object CoffeeGraph : Screen
         @Serializable data object ProfileGraph : Screen
         @Serializable data object SettingsGraph : Screen
 
         // Tabs
         @Serializable data object FeedTab : Screen
+        @Serializable data object CoffeeTab : Screen
         @Serializable data object ProfileTab : Screen
         @Serializable data object SettingsTab : Screen
 
         // Inner screens (add here + in the graph in MainScreen)
         @Serializable data class ShopDetail(val shopId: String) : Screen
+        @Serializable data class CoffeeDetail(val slug: String) : Screen
         @Serializable data class ShopMenuGallery(val shopId: String) : Screen
         @Serializable data class ReportShop(val shopId: String, val shopTitle: String) : Screen
         @Serializable data class SuggestShopChange(val shopId: String) : Screen
@@ -173,6 +177,7 @@ object Navigator {
         is Screen.Register,
         is Screen.Main,
         is Screen.ShopDetail,
+        is Screen.CoffeeDetail,
         is Screen.ShopMenuGallery,
         is Screen.ReportShop,
         is Screen.SuggestShopChange,
@@ -342,6 +347,10 @@ object Navigator {
                     composable<Screen.ShopDetail> { backStack ->
                         val route = backStack.toRoute<Screen.ShopDetail>()
                         ShopDetailScreen(shopId = route.shopId)
+                    }
+                    composable<Screen.CoffeeDetail> { backStack ->
+                        val route = backStack.toRoute<Screen.CoffeeDetail>()
+                        CoffeeDetailScreen(slug = route.slug)
                     }
                     composable<Screen.ShopReviews> { backStack ->
                         val route = backStack.toRoute<Screen.ShopReviews>()

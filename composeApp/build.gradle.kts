@@ -48,6 +48,7 @@ kotlin {
             implementation(project(module.legacy.data))
             implementation(project(module.legacy.network))
             implementation(project(module.legacy.room))
+            implementation(project(module.core.network))
             implementation(compose.runtime)
             implementation(compose.foundation)
             implementation(compose.material3)
@@ -72,6 +73,7 @@ kotlin {
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
+            implementation("io.ktor:ktor-client-mock:${libs.versions.ktor.get()}")
         }
     }
 }

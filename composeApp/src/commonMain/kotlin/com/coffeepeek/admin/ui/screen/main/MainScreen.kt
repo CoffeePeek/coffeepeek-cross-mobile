@@ -50,6 +50,7 @@ import com.coffeepeek.admin.ui.component.FloatingNavItem
 import com.coffeepeek.admin.ui.component.RetainedContent
 import com.coffeepeek.admin.ui.component.ProvideFloatingNavClearance
 import com.coffeepeek.admin.ui.screen.feed.FeedScreen
+import com.coffeepeek.admin.feature.coffee.ui.CoffeeListScreen
 import com.coffeepeek.admin.ui.screen.feed.FeedViewModel
 import com.coffeepeek.admin.di.platformViewModel
 import com.coffeepeek.admin.ui.screen.map.MapScreen
@@ -115,6 +116,12 @@ internal fun ComposeMainScreen() {
             icon = CpIcons.Search,
             graph = Navigator.Screen.FeedGraph,
             startScreen = Navigator.Screen.FeedTab,
+        ),
+        BottomNavItem(
+            title = "Кофе",
+            icon = CpIcons.CoffeeBean,
+            graph = Navigator.Screen.CoffeeGraph,
+            startScreen = Navigator.Screen.CoffeeTab,
         ),
         BottomNavItem(
             title = "Профиль",
@@ -208,6 +215,10 @@ internal fun ComposeMainScreen() {
                     composable<Navigator.Screen.FeedTab> {
                         SideEffect { feedEntry = it }
                     }
+                }
+
+                navigation<Navigator.Screen.CoffeeGraph>(startDestination = Navigator.Screen.CoffeeTab) {
+                    composable<Navigator.Screen.CoffeeTab> { CoffeeListScreen() }
                 }
 
                 navigation<Navigator.Screen.ProfileGraph>(startDestination = Navigator.Screen.ProfileTab) {

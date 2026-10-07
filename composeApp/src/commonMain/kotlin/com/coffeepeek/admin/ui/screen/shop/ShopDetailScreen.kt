@@ -122,6 +122,9 @@ import com.coffeepeek.admin.ui.component.priceRangeLevel
 import com.coffeepeek.admin.ui.component.shopTagIcon
 import com.coffeepeek.admin.ui.component.FullScreenImageDialog
 import com.coffeepeek.admin.ui.component.CoffeePeekLoader
+import com.coffeepeek.admin.ui.component.OutlinedContentCard
+import com.coffeepeek.admin.ui.component.RoasterLinkRow
+import com.coffeepeek.admin.ui.component.SectionTitle
 import com.coffeepeek.admin.ui.screen.review.CreateReviewBottomSheet
 import com.coffeepeek.admin.ui.screen.review.EditReviewBottomSheet
 import com.coffeepeek.admin.utils.OpenInBrowser
@@ -1446,25 +1449,6 @@ private fun CheckInsSection(
 
 
 @Composable
-private fun OutlinedContentCard(
-    contentPadding: PaddingValues = PaddingValues(CpDimens.spacing4),
-    content: @Composable ColumnScope.() -> Unit,
-) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(CpDimens.radius2xl),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
-    ) {
-        Column(
-            modifier = Modifier.fillMaxWidth().padding(contentPadding),
-            content = content,
-        )
-    }
-}
-
-@Composable
 private fun DescriptionSection(description: String) {
     "Описание".SectionCard({
         Text(
@@ -1845,65 +1829,11 @@ private fun RoasterDetailGroup(
                     )
                 }
                 RoasterLinkRow(
-                    item = item,
-                    onClick = { item.address?.slug?.let(onRoasterClick) },
+                    name = item.name,
+                    photoUrl = item.photoUrl,
+                    onClick = item.address?.slug?.let { slug -> { onRoasterClick(slug) } },
                 )
             }
-        }
-    }
-}
-
-@Composable
-private fun RoasterLinkRow(
-    item: CatalogItem,
-    onClick: () -> Unit,
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(enabled = item.address != null, onClick = onClick)
-            .padding(CpDimens.spacing4),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(CpDimens.spacing5),
-    ) {
-        Box(
-            modifier = Modifier
-                .size(64.dp)
-                .clip(CircleShape),
-        ) {
-            val photoUrl = item.photoUrl?.takeIf(String::isNotBlank)
-            if (photoUrl != null) {
-                CoffeeShopImage(
-                    imageUrl = photoUrl,
-                    contentDescription = "Фото обжарщика ${item.name}",
-                    contentScale = ContentScale.Crop,
-                    placeholderLabelSize = 7.sp,
-                    modifier = Modifier.fillMaxSize(),
-                )
-            } else {
-                CoffeeShopPlaceholderImage(
-                    labelSize = 7.sp,
-                    contentDescription = "Фото обжарщика ${item.name} отсутствует",
-                )
-            }
-        }
-        Text(
-            text = item.name,
-            style = MaterialTheme.typography.titleMedium.copy(
-                fontWeight = FontWeight.SemiBold,
-            ),
-            color = MaterialTheme.colorScheme.onSurface,
-            maxLines = 2,
-            overflow = TextOverflow.Ellipsis,
-            modifier = Modifier.weight(1f),
-        )
-        if (item.address != null) {
-            Icon(
-                imageVector = CpIcons.ChevronRight,
-                contentDescription = "Открыть обжарщика ${item.name}",
-                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.size(18.dp),
-            )
         }
     }
 }
@@ -1975,15 +1905,6 @@ private fun InfoChip(
             color = textColor,
         )
     }
-}
-
-@Composable
-private fun SectionTitle(title: String) {
-    Text(
-        text = title,
-        style = MaterialTheme.typography.headlineSmall,
-        color = MaterialTheme.colorScheme.onSurface,
-    )
 }
 
 private fun instagramLabel(link: ExternalLink): String {
