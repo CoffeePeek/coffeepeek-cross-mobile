@@ -27,7 +27,7 @@ class AuthService(
     suspend fun login(email: String, password: String): Result<AuthResp> =
         runCatching {
             val response = refreshClient.postResult("/api/Tokens") {
-                setJsonBody(LoginReq(email, password))
+                setJsonBody(LoginReq(email.trim().lowercase(), password))
             }.getOrThrow()
 
             val apiResponse = response.body<ApiResponse<AuthResp>>()
@@ -63,7 +63,7 @@ class AuthService(
     suspend fun register(userName: String, email: String, password: String): Result<Unit> =
         runCatching {
             val response = refreshClient.postResult("/api/Users") {
-                setJsonBody(RegistrationReq(email, password, userName))
+                setJsonBody(RegistrationReq(email.trim().lowercase(), password, userName))
             }.getOrThrow()
 
             val apiResponse = response.body<ApiResponse<Unit>>()
@@ -75,7 +75,7 @@ class AuthService(
     suspend fun isEmailTaken(email: String): Result<Boolean> =
         runCatching {
             val response = refreshClient.get("/api/Users/exists") {
-                parameter("email", email)
+                parameter("email", email.trim().lowercase())
             }
             when (response.status) {
                 HttpStatusCode.NotFound -> false
