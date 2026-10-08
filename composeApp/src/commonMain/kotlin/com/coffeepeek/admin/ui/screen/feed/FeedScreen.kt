@@ -4,7 +4,6 @@ import com.coffeepeek.admin.ui.icons.CpIcons
 import com.coffeepeek.admin.feature.catalog.api.ShopCard
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -46,8 +45,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -56,10 +53,10 @@ import com.coffeepeek.admin.location.NEARBY_RADIUS_METERS
 import com.coffeepeek.admin.location.distanceToShopMeters
 import com.coffeepeek.admin.location.formatDistance
 import com.coffeepeek.admin.location.rememberPermittedUserLocation
-import com.coffeepeek.admin.theme.CpColor
 import com.coffeepeek.admin.theme.CpDimens
 import com.coffeepeek.admin.ui.Navigator
 import com.coffeepeek.admin.ui.component.CoffeePeekLoader
+import com.coffeepeek.admin.ui.component.DesignFilterChip
 import com.coffeepeek.admin.ui.component.CoffeePeekPullToRefresh
 import com.coffeepeek.admin.ui.component.SearchHeader
 import com.coffeepeek.admin.ui.component.LocalFloatingNavClearance
@@ -660,67 +657,6 @@ private fun FeedQuickFilterBar(
                 label = option.label,
                 selected = coffeeFocusId == option.id,
                 onClick = { onCoffeeFocusChange(option.id) },
-            )
-        }
-    }
-}
-
-@Composable
-private fun DesignFilterChip(
-    label: String,
-    selected: Boolean,
-    onClick: () -> Unit,
-    leadingIcon: ImageVector? = null,
-    trailingIcon: ImageVector? = null,
-) {
-    val shape = RoundedCornerShape(999.dp)
-    val bg = if (selected) {
-        MaterialTheme.colorScheme.onSurface
-    } else {
-        MaterialTheme.colorScheme.surface
-    }
-    val fg = if (selected) {
-        MaterialTheme.colorScheme.surface
-    } else {
-        MaterialTheme.colorScheme.onSurface
-    }
-    val borderColor = if (selected) {
-        Color.Transparent
-    } else {
-        MaterialTheme.colorScheme.outline.copy(alpha = 0.55f)
-    }
-
-    Row(
-        modifier = Modifier
-            .height(CpDimens.buttonHeight)
-            .clip(shape)
-            .background(bg)
-            .border(width = 1.dp, color = borderColor, shape = shape)
-            .clickable(onClick = onClick)
-            .padding(horizontal = 12.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(6.dp),
-    ) {
-        if (leadingIcon != null) {
-            Icon(
-                imageVector = leadingIcon,
-                contentDescription = null,
-                tint = CpColor.Primary,
-                modifier = Modifier.size(16.dp),
-            )
-        }
-        Text(
-            text = label,
-            style = MaterialTheme.typography.labelMedium,
-            color = fg,
-            maxLines = 1,
-        )
-        if (trailingIcon != null) {
-            Icon(
-                imageVector = trailingIcon,
-                contentDescription = null,
-                tint = fg.copy(alpha = 0.7f),
-                modifier = Modifier.size(14.dp),
             )
         }
     }

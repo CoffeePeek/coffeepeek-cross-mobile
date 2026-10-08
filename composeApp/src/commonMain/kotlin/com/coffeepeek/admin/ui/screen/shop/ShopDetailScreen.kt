@@ -9,6 +9,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -53,6 +54,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.SnackbarHost
@@ -121,6 +123,7 @@ import com.coffeepeek.admin.ui.component.priceRangeLevel
 import com.coffeepeek.admin.ui.component.shopTagIcon
 import com.coffeepeek.admin.ui.component.FullScreenImageDialog
 import com.coffeepeek.admin.ui.component.CoffeePeekLoader
+import com.coffeepeek.admin.ui.component.AppButton
 import com.coffeepeek.admin.ui.component.OutlinedContentCard
 import com.coffeepeek.admin.ui.component.RoasterLinkRow
 import com.coffeepeek.admin.ui.component.SectionTitle
@@ -142,7 +145,7 @@ private const val FeaturePreviewCount = 5
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ShopDetailScreen(shopId: String) {
+fun ShopDetailScreen(shopId: String, forCheckIn: Boolean = false) {
     val vm: ShopDetailViewModel = platformViewModel(parameters = { parametersOf(shopId) })
     val state by vm.uiState.collectAsState()
     val userLocation = rememberPermittedUserLocation()
@@ -173,6 +176,16 @@ fun ShopDetailScreen(shopId: String) {
                 onDraftChange = vm::updateCheckInDraft,
                 onSubmit = vm::checkIn,
                 placeName = state.details?.shop?.title,
+                submittedVisibility = state.submittedCheckInVisibility,
+                submissionError = state.checkInError,
+                onGoToFeed = {
+                    vm.dismissCheckInSheet()
+                    Navigator.popThenSelectTab(Navigator.Screen.CommunityTab)
+                },
+                onViewCheckIns = {
+                    vm.dismissCheckInSheet()
+                    Navigator.popThenNavigate(Navigator.Screen.VisitedPlaces)
+                },
             )
         }
     }
@@ -266,6 +279,7 @@ fun ShopDetailScreen(shopId: String) {
                     details.location?.longitude != null,
                 onRoute = vm::openRoute,
                 onCheckIn = vm::openCheckInSheet,
+                forCheckIn = forCheckIn,
                 modifier = Modifier.align(Alignment.BottomCenter),
             )
         }
@@ -1572,27 +1586,47 @@ private fun ShopDetailBottomBar(
     onRoute: () -> Unit,
     onCheckIn: () -> Unit,
     modifier: Modifier = Modifier,
+    forCheckIn: Boolean = false,
 ) {
     Row(
         modifier = modifier
             .fillMaxWidth()
             .navigationBarsPadding()
-            .padding(horizontal = CpDimens.spacing3, vertical = CpDimens.spacing3),
+            .padding(horizontal = CpDimens.spacing3, vertical = CpDimens.spacing3)
+            .height(IntrinsicSize.Min),
         horizontalArrangement = Arrangement.spacedBy(CpDimens.spacing2),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        RouteIconButton(
-            enabled = canOpenRoute,
-            onClick = onRoute,
-        )
-        BottomBarAction(
-            icon = CpIcons.Check,
-            label = "Чекин",
-            enabled = !isCheckInLoading,
-            isLoading = isCheckInLoading,
-            onClick = onCheckIn,
-            modifier = Modifier.weight(1f),
-        )
+        if (forCheckIn) {
+            OutlinedButton(
+                onClick = { Navigator.popThenNavigate(Navigator.Screen.CreateCheckIn) },
+                modifier = Modifier.weight(1f).fillMaxHeight().heightIn(min = CpDimens.buttonHeight),
+                enabled = !isCheckInLoading,
+                shape = RoundedCornerShape(CpDimens.buttonRadius),
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+                colors = ButtonDefaults.outlinedButtonColors(
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    contentColor = MaterialTheme.colorScheme.onSurface,
+                ),
+                contentPadding = PaddingValues(horizontal = CpDimens.spacing2),
+            ) { Text("Выбрать другую", style = MaterialTheme.typography.labelLarge, textAlign = TextAlign.Center) }
+            AppButton(
+                text = if (isCheckInLoading) "Загрузка…" else "Продолжить",
+                onClick = onCheckIn,
+                enabled = !isCheckInLoading,
+                modifier = Modifier.weight(1f).fillMaxHeight(),
+            )
+        } else {
+            RouteIconButton(enabled = canOpenRoute, onClick = onRoute)
+            BottomBarAction(
+                icon = CpIcons.Check,
+                label = "Чекин",
+                enabled = !isCheckInLoading,
+                isLoading = isCheckInLoading,
+                onClick = onCheckIn,
+                modifier = Modifier.weight(1f),
+            )
+        }
     }
 }
 

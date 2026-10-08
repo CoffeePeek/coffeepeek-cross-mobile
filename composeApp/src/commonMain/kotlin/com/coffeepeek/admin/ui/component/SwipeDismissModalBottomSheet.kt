@@ -16,10 +16,12 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.material3.SheetValue
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -32,9 +34,14 @@ import androidx.compose.ui.unit.dp
 @Composable
 fun SwipeDismissModalBottomSheet(
     onDismissRequest: () -> Unit,
+    dismissEnabled: Boolean = true,
     content: @Composable ColumnScope.() -> Unit,
 ) {
-    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val canDismiss by rememberUpdatedState(dismissEnabled)
+    val sheetState = rememberModalBottomSheetState(
+        skipPartiallyExpanded = true,
+        confirmValueChange = { canDismiss || it != SheetValue.Hidden },
+    )
     val density = LocalDensity.current
     val dismissDistance = with(density) { 72.dp.toPx() }
     val dismissVelocity = with(density) { 900.dp.toPx() }
@@ -44,7 +51,7 @@ fun SwipeDismissModalBottomSheet(
     }
 
     ModalBottomSheet(
-        onDismissRequest = onDismissRequest,
+        onDismissRequest = { if (dismissEnabled) onDismissRequest() },
         modifier = Modifier.graphicsLayer { translationY = dragOffset },
         sheetState = sheetState,
         sheetGesturesEnabled = false,
@@ -56,6 +63,7 @@ fun SwipeDismissModalBottomSheet(
                     .draggable(
                         state = dragState,
                         orientation = Orientation.Vertical,
+                        enabled = dismissEnabled,
                         onDragStopped = { velocity ->
                             if (dragOffset >= dismissDistance || velocity >= dismissVelocity) {
                                 sheetState.hide()

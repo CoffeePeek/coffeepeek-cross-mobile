@@ -111,7 +111,8 @@ object Navigator {
         @Serializable data object SettingsTab : Screen
 
         // Inner screens (add here + in the graph in MainScreen)
-        @Serializable data class ShopDetail(val shopId: String) : Screen
+        @Serializable data class ShopDetail(val shopId: String, val forCheckIn: Boolean = false) : Screen
+        @Serializable data object CreateCheckIn : Screen
         @Serializable data class CoffeeDetail(val slug: String) : Screen
         @Serializable data class ShopMenuGallery(val shopId: String) : Screen
         @Serializable data class ReportShop(val shopId: String, val shopTitle: String) : Screen
@@ -186,6 +187,7 @@ object Navigator {
         is Screen.Register,
         is Screen.Main,
         is Screen.ShopDetail,
+        is Screen.CreateCheckIn,
         is Screen.CoffeeDetail,
         is Screen.ShopMenuGallery,
         is Screen.ReportShop,
@@ -232,6 +234,14 @@ object Navigator {
         navigatorScope.launch {
             _navigationEvents.emit(NavEvent.PopBack)
             _navigationEvents.emit(NavEvent.NavigateTo(screen))
+        }
+    }
+
+    fun popThenSelectTab(tab: Screen) {
+        navigatorScope.launch {
+            _navigationEvents.emit(NavEvent.PopBack)
+            _pendingTabSelection.value = tab
+            _navigationEvents.emit(NavEvent.SelectTab(tab))
         }
     }
 
@@ -367,7 +377,10 @@ object Navigator {
                     }
                     composable<Screen.ShopDetail> { backStack ->
                         val route = backStack.toRoute<Screen.ShopDetail>()
-                        ShopDetailScreen(shopId = route.shopId)
+                        ShopDetailScreen(shopId = route.shopId, forCheckIn = route.forCheckIn)
+                    }
+                    composable<Screen.CreateCheckIn> {
+                        com.coffeepeek.admin.ui.screen.shop.CheckInShopPickerScreen()
                     }
                     composable<Screen.CoffeeDetail> { backStack ->
                         val route = backStack.toRoute<Screen.CoffeeDetail>()

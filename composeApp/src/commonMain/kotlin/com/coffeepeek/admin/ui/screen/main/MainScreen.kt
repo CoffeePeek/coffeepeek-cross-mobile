@@ -248,7 +248,11 @@ internal fun ComposeMainScreen() {
                     }
 
                     navigation<Navigator.Screen.CommunityGraph>(startDestination = Navigator.Screen.CommunityTab) {
-                        composable<Navigator.Screen.CommunityTab> { com.coffeepeek.admin.feature.community.ui.CommunityScreen() }
+                        composable<Navigator.Screen.CommunityTab> {
+                            com.coffeepeek.admin.feature.community.ui.CommunityScreen(
+                                onCreateCheckIn = { Navigator.navigate(Navigator.Screen.CreateCheckIn) },
+                            )
+                        }
                     }
 
                     navigation<Navigator.Screen.ProfileGraph>(startDestination = Navigator.Screen.ProfileTab) {

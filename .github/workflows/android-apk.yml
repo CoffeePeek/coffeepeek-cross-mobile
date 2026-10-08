@@ -466,3 +466,46 @@ jobs:
             echo "- Stable: https://coffeepeek.by/downloads/android/${{ needs.build_apk.outputs.channel }}/coffeepeek.apk"
             echo "- Immutable: https://coffeepeek.by/downloads/android/releases/${{ needs.build_apk.outputs.release_dir }}/coffeepeek.apk"
           } >> "$GITHUB_STEP_SUMMARY"
+
+  update_android_version_policy:
+    needs: [build_apk, publish_play, publish_apk]
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Require Android 1.0.440 after publication
+        shell: bash
+        env:
+          ADMIN_API_URL: ${{ secrets.COFFEEPEEK_ADMIN_API_URL }}
+          ADMIN_TOKEN: ${{ secrets.COFFEEPEEK_ADMIN_TOKEN }}
+          VERSION_CODE: ${{ needs.build_apk.outputs.version_code }}
+        run: |
+          set -euo pipefail
+          [[ -n "$ADMIN_API_URL" && -n "$ADMIN_TOKEN" ]]
+          [[ "$VERSION_CODE" =~ ^[0-9]+$ && "$VERSION_CODE" -ge 440 ]]
+
+          API_URL="${ADMIN_API_URL%/}/api/admin/v1/app-downloads"
+          AUTH_HEADER="Authorization: Bearer $ADMIN_TOKEN"
+          CONFIG=$(curl --fail --silent --show-error \
+            --header "$AUTH_HEADER" --header "Accept: application/json" "$API_URL")
+          PAYLOAD=$(jq -e -c --argjson code "$VERSION_CODE" '
+            select((.isSuccess // .IsSuccess) == true)
+            | (.data // .Data) | (.androidVersion // .AndroidVersion)
+            | (.latestVersionCode // .LatestVersionCode) as $latest
+            | (.minVersionCode // .MinVersionCode) as $min
+            | select(($latest | type) == "number" and ($min | type) == "number")
+            | select($latest >= 0 and $min >= 0 and $min <= $latest)
+            | {latestVersionCode: ([$latest, $code] | max),
+               minVersionCode: ([$min, 440] | max)}' <<< "$CONFIG")
+
+          RESPONSE=$(curl --fail-with-body --silent --show-error \
+            --request PUT --header "$AUTH_HEADER" \
+            --header "Content-Type: application/json" --data "$PAYLOAD" \
+            "$API_URL/android/version")
+          jq -e --argjson expected "$PAYLOAD" '
+            select((.isSuccess // .IsSuccess) == true)
+            | (.data // .Data) | (.androidVersion // .AndroidVersion)
+            | (.latestVersionCode // .LatestVersionCode) == $expected.latestVersionCode
+              and (.minVersionCode // .MinVersionCode) == $expected.minVersionCode' \
+            <<< "$RESPONSE" >/dev/null
+          echo "Android version policy: $PAYLOAD" >> "$GITHUB_STEP_SUMMARY"

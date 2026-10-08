@@ -20,6 +20,8 @@ import io.ktor.client.statement.HttpResponse
 import io.ktor.http.isSuccess
 import io.ktor.http.HttpStatusCode
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.JsonElement
+import kotlinx.coroutines.CancellationException
 
 private const val CHECK_INS_PATH = "/api/v1/check-ins"
 
@@ -29,8 +31,29 @@ data class CheckInHelpfulDto(val isHelpful: Boolean, val helpfulCount: Int)
 private data class CheckInReportReq(val text: String)
 
 class CheckInApiService(private val client: HttpClient) {
-    suspend fun createCheckIn(req: CreateCheckInReq): Result<CheckInDto> = runCatching {
-        client.post(CHECK_INS_PATH) { setJsonBody(req) }.checkIn()
+    suspend fun createCheckIn(req: CreateCheckInReq): Result<CheckInDto> = try {
+        val response = client.post(CHECK_INS_PATH) { expectSuccess = false; setJsonBody(req) }
+        if (!response.status.isSuccess()) {
+            val message = try {
+                response.body<ApiResponse<JsonElement>>().message?.takeIf(String::isNotBlank)
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (_: Exception) { null }
+            throw ApiException(message ?: when (response.status) {
+                HttpStatusCode.Unauthorized -> "Войдите в аккаунт, чтобы создать чекин"
+                HttpStatusCode.Forbidden -> "Создание чекина недоступно для этого аккаунта"
+                HttpStatusCode.NotFound -> "Кофейня больше недоступна. Выберите другую"
+                HttpStatusCode.PayloadTooLarge -> "Фотографии слишком большие. Уменьшите их размер"
+                HttpStatusCode.TooManyRequests -> "Слишком много запросов. Попробуйте позже"
+                else -> "Не удалось создать чекин. Попробуйте позже"
+            })
+        }
+        Result.success(response.checkIn())
+    } catch (cancelled: CancellationException) {
+        throw cancelled
+    } catch (error: Exception) {
+        Result.failure(if (error is ApiException) error else
+            ApiException("Не удалось подтвердить создание чекина. Проверьте ваши чекины перед повторной отправкой"))
     }
 
     suspend fun getMyCheckIns(
@@ -93,8 +116,14 @@ class CheckInApiService(private val client: HttpClient) {
     }
 
     private suspend fun HttpResponse.checkIn(): CheckInDto {
-        val envelope = body<ApiResponse<CheckInDto>>()
-        if (!status.isSuccess() || !envelope.isSuccess || envelope.data == null) {
+        val envelope = try {
+            body<ApiResponse<CheckInDto>>()
+        } catch (cancelled: CancellationException) {
+            throw cancelled
+        } catch (_: Exception) {
+            throw ApiException("Не удалось прочитать ответ сервера. Проверьте ваши чекины перед повторной отправкой")
+        }
+        if (!status.isSuccess() || !envelope.isSuccess || envelope.data == null || envelope.data.id.isBlank()) {
             throw ApiException(envelope.message)
         }
         return envelope.data

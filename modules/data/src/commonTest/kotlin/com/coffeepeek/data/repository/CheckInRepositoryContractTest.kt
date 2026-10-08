@@ -13,6 +13,7 @@ import io.ktor.http.*
 import io.ktor.http.content.TextContent
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.CancellationException
 import kotlinx.serialization.json.*
 import kotlin.test.*
 
@@ -127,14 +128,83 @@ class CheckInRepositoryContractTest {
             val repo = repository(client)
             val valid = CreateCheckInInput("coffee", "Кофе", ReviewRating(4, 4, 5))
             for (invalid in listOf(
+                valid.copy(shopSlug = " "),
                 valid.copy(text = " \n "), valid.copy(text = "x".repeat(1001)),
-                valid.copy(rating = ReviewRating(0, 4, 5)),
+                valid.copy(rating = ReviewRating(0, 4, 5)), valid.copy(rating = ReviewRating(4, 6, 5)),
+                valid.copy(rating = ReviewRating(4, 4, 0)),
                 valid.copy(drinkSlug = "other", customDrinkName = " "),
+                valid.copy(drinkSlug = "other", customDrinkName = "a".repeat(101)),
+                valid.copy(drinkSlug = "cappuccino", customDrinkName = "Кофе"),
                 valid.copy(photos = List(6) { PendingPhotoUpload("p.jpg", "image/jpeg", byteArrayOf(1)) }),
             )) assertTrue(repo.createCheckIn(invalid).isFailure)
             assertTrue(repo.updateCheckIn("visit", UpdateCheckInInput(" ", valid.rating)).isFailure)
             assertEquals(0, requests)
         } finally { client.close() }
+    }
+
+    @Test
+    fun eachUploadAndCreationFailureStopsThePipelineAndAllowsRetry() = runBlocking {
+        val urls = "/api/Photos/check-in"
+        val create = "/api/v1/check-ins"
+        val targets = """{"isSuccess":true,"data":[
+            {"photoId":"one","uploadUrl":"https://uploads.example/one","storageKey":"one.jpg"},
+            {"photoId":"two","uploadUrl":"https://uploads.example/two","storageKey":"two.jpg"}]}"""
+        for ((stage, expectedPaths) in listOf(
+            "urls-http" to listOf(urls), "urls-rejected" to listOf(urls), "urls-count" to listOf(urls),
+            "urls-unsafe" to listOf(urls), "upload-one" to listOf(urls, "/one"),
+            "upload-two" to listOf(urls, "/one", "/two"), "create" to listOf(urls, "/one", "/two", create),
+        )) {
+            var fail = true
+            val paths = mutableListOf<String>()
+            val client = client(MockEngine { request ->
+                val path = request.url.encodedPath
+                paths += path
+                when (path) {
+                    urls -> when {
+                        fail && stage == "urls-http" -> respond("", HttpStatusCode.ServiceUnavailable, headers)
+                        fail && stage == "urls-rejected" -> respond("""{"isSuccess":false,"message":"Фото отклонены","data":null}""", headers = headers)
+                        fail && stage == "urls-count" -> respond("""{"isSuccess":true,"data":[]}""", headers = headers)
+                        fail && stage == "urls-unsafe" -> respond(targets.replace("https://uploads.example/one", "http://127.0.0.1/one"), headers = headers)
+                        else -> respond(targets, headers = headers)
+                    }
+                    "/one", "/two" -> respond("", if (fail && stage == "upload-${if (path == "/one") "one" else "two"}")
+                        HttpStatusCode.Forbidden else HttpStatusCode.OK)
+                    create -> if (fail && stage == "create")
+                        respond("""{"isSuccess":false,"message":"Лимит чекинов","data":null}""", HttpStatusCode.TooManyRequests, headers)
+                    else respond("""{"isSuccess":true,"data":$visit}""", headers = headers)
+                    else -> error("Unexpected path: $path")
+                }
+            })
+            try {
+                val repo = repository(client)
+                val input = CreateCheckInInput("coffee", "Кофе", ReviewRating(4, 4, 5), photos = listOf(
+                    PendingPhotoUpload("one.jpg", "image/jpeg", byteArrayOf(1)),
+                    PendingPhotoUpload("two.jpg", "image/jpeg", byteArrayOf(2)),
+                ))
+                assertTrue(repo.createCheckIn(input).isFailure, stage)
+                assertEquals(expectedPaths, paths, stage)
+                fail = false; paths.clear()
+                repo.createCheckIn(input).getOrThrow()
+                assertEquals(listOf(urls, "/one", "/two", create), paths, stage)
+            } finally { client.close() }
+        }
+    }
+
+    @Test
+    fun cancellationDuringPhotoUploadOrCreationIsNotReportedAsSuccess() = runBlocking {
+        for (withPhoto in listOf(false, true)) {
+            val paths = mutableListOf<String>()
+            val client = client(MockEngine { request ->
+                paths += request.url.encodedPath
+                throw CancellationException("Request cancelled")
+            })
+            try {
+                val input = CreateCheckInInput("coffee", "Кофе", ReviewRating(4, 4, 5),
+                    photos = if (withPhoto) listOf(PendingPhotoUpload("coffee.jpg", "image/jpeg", byteArrayOf(1))) else emptyList())
+                assertFailsWith<CancellationException> { repository(client).createCheckIn(input) }
+                assertEquals(listOf(if (withPhoto) "/api/Photos/check-in" else "/api/v1/check-ins"), paths)
+            } finally { client.close() }
+        }
     }
 
     private fun client(engine: MockEngine) = HttpClient(engine) {

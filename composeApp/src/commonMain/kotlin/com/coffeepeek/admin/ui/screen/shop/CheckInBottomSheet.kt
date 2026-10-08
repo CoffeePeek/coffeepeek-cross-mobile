@@ -7,6 +7,7 @@ import com.coffeepeek.admin.ui.screen.review.ConsumedDrinkField
 import com.coffeepeek.domain.model.validateConsumedDrink
 
 import com.coffeepeek.domain.model.ConsumedDrinkOption
+import com.coffeepeek.domain.model.CheckInVisibility
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -88,8 +89,11 @@ fun CheckInBottomSheet(
     drinks: List<ConsumedDrinkOption> = emptyList(),
     drinksError: String? = null,
     onRetryDrinks: () -> Unit = {},
+    submittedVisibility: CheckInVisibility? = null,
+    submissionError: String? = null,
+    onGoToFeed: () -> Unit,
+    onViewCheckIns: () -> Unit,
 ) {
-    var noteError by remember { mutableStateOf<String?>(null) }
     var showDatePicker by remember { mutableStateOf(false) }
 
     val scrollState = rememberScrollState()
@@ -134,12 +138,17 @@ fun CheckInBottomSheet(
     }
 
     SwipeDismissModalBottomSheet(
+        dismissEnabled = !isLoading,
         onDismissRequest = {
             keyboardController?.hide()
             focusManager.clearFocus()
             onDismiss()
         },
     ) {
+        if (isLoading || submittedVisibility != null) {
+            CheckInSubmissionContent(submittedVisibility, onGoToFeed, onViewCheckIns)
+            return@SwipeDismissModalBottomSheet
+        }
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -237,13 +246,11 @@ fun CheckInBottomSheet(
                 ReviewFormStep {
                     ReviewFormField(
                         label = stringResource(Res.string.checkin_note_label),
-                        error = noteError,
                     ) {
                         ReviewTextInput(
                             value = draft.note,
-                            onValueChange = { onDraftChange(draft.copy(note = it)); noteError = null },
+                            onValueChange = { onDraftChange(draft.copy(note = it)) },
                             placeholder = stringResource(Res.string.checkin_note_placeholder),
-                            isError = noteError != null,
                             maxLength = 1000,
                             modifier = Modifier.heightIn(min = 80.dp),
                         )
@@ -322,11 +329,14 @@ fun CheckInBottomSheet(
             }
 
             // ── Submit ────────────────────────────────────────────────────────
+            submissionError?.let {
+                Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodyMedium)
+            }
             AppButton(
                 text = stringResource(Res.string.checkin_action),
                 onClick = {
-                    noteError = draft.validationError()
-                    if (noteError != null) return@AppButton
+                    keyboardController?.hide()
+                    focusManager.clearFocus(force = true)
                     onSubmit(draft)
                 },
                 enabled = !isLoading && validateConsumedDrink(draft.drinkSlug, draft.customDrinkName) == null,

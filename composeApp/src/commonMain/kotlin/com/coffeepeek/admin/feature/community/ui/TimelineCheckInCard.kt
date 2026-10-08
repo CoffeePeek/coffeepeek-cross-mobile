@@ -1,24 +1,18 @@
 package com.coffeepeek.admin.feature.community.ui
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.intl.Locale
-import androidx.compose.ui.text.style.TextOverflow
-import com.coffeepeek.admin.theme.CpDimens
 import com.coffeepeek.admin.ui.component.CheckInActions
 import com.coffeepeek.admin.ui.component.CheckInCard
-import com.coffeepeek.admin.ui.component.CheckInRating
+import com.coffeepeek.admin.ui.component.CheckInHeader
+import com.coffeepeek.admin.ui.component.CheckInHeading
 import com.coffeepeek.admin.ui.component.HelpfulButton
-import com.coffeepeek.admin.ui.component.ReviewAvatar
 import com.coffeepeek.admin.ui.component.ReviewPhotoStrip
 import com.coffeepeek.admin.ui.component.SavedDrinkBadge
-import com.coffeepeek.admin.ui.component.rememberReviewDisplayDate
 import com.coffeepeek.domain.model.CheckIn
 import com.coffeepeek.domain.model.CheckInModerationState
 import com.coffeepeek.domain.model.CheckInVisibility
@@ -40,19 +34,7 @@ internal fun TimelineCheckInCard(
     modifier: Modifier = Modifier,
 ) {
     CheckInCard(modifier) {
-        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(CpDimens.spacing3)) {
-            val username = checkIn.username.ifBlank { if (isOwn) "Вы" else "Пользователь" }
-            ReviewAvatar(username, photoUrl = null)
-            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(CpDimens.spacing1)) {
-                Text(username, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold,
-                    maxLines = 1, overflow = TextOverflow.Ellipsis)
-                Text(
-                    rememberReviewDisplayDate(checkIn.createdAt),
-                    style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 1, overflow = TextOverflow.Ellipsis,
-                )
-            }
+        CheckInHeader(checkIn, isOwn) {
             CheckInActions(
                 onEditClick = onEdit.takeIf { isOwn },
                 onReportClick = onReport.takeIf { isPublicTimeline && !isOwn },
@@ -61,12 +43,11 @@ internal fun TimelineCheckInCard(
                 isHiding = changingVisibility,
             )
         }
-        Text(
-            checkIn.shopName.ifBlank { "Кофейня" },
-            style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold,
-            modifier = Modifier.then(if (checkIn.shopId.isNotBlank()) Modifier.clickable(role = Role.Button, onClick = onShopClick) else Modifier),
+        CheckInHeading(
+            shopName = checkIn.shopName.ifBlank { "Кофейня" },
+            rating = checkIn.rating,
+            onShopClick = onShopClick.takeIf { checkIn.shopId.isNotBlank() },
         )
-        checkIn.rating?.let { CheckInRating(it) }
         savedDrinkName(checkIn.drinkNameRu, checkIn.drinkNameEn, checkIn.customDrinkName, Locale.current.language)?.let { drink ->
             SavedDrinkBadge(drink, checkIn.drinkSlug)
         }
