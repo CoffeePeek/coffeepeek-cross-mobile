@@ -13,39 +13,7 @@ private const val MSG_PHONE_INVALID = "Некорректный формат т�
 private const val MSG_URL_INVALID = "Укажите домен, например coffeepeek.by"
 private const val MSG_INSTAGRAM_INVALID = "Некорректный Instagram"
 
-const val MIN_REVIEW_HEADER_LENGTH = 3
-const val MIN_REVIEW_COMMENT_LENGTH = 10
 const val MIN_REGISTRATION_PASSWORD_LENGTH = 8
-
-fun validateReviewHeader(header: String): String? {
-    val value = header.trim()
-    return when {
-        value.isBlank() -> "Введите заголовок"
-        value.length < MIN_REVIEW_HEADER_LENGTH -> "Минимум $MIN_REVIEW_HEADER_LENGTH символа в заголовке"
-        else -> null
-    }
-}
-
-fun validateReviewComment(comment: String): String? {
-    val value = comment.trim()
-    return when {
-        value.isBlank() -> "Введите текст отзыва"
-        value.length < MIN_REVIEW_COMMENT_LENGTH -> "Минимум $MIN_REVIEW_COMMENT_LENGTH символов в отзыве"
-        else -> null
-    }
-}
-
-fun validatePublicCheckInHeader(header: String): String? = validateReviewHeader(header)
-
-fun validatePublicCheckInDescription(description: String): String? {
-    val value = description.trim()
-    return when {
-        value.isBlank() -> "Введите описание"
-        value.length < MIN_REVIEW_COMMENT_LENGTH ->
-            "Минимум $MIN_REVIEW_COMMENT_LENGTH символов в описании"
-        else -> null
-    }
-}
 
 fun validateEmailRequired(email: String): String? = when {
     email.isBlank() -> MSG_EMAIL_REQUIRED

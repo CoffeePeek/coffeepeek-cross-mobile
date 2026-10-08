@@ -70,19 +70,18 @@ fun dataModule(
             debug = debug,
             getToken = { tokenProvider.current() },
             saveToken = { authResp ->
-                scope.launch {
-                    val sessionRepository = get<SessionRepository>()
-                    val current = sessionRepository.getSession()
-                    val session = authResp?.let {
-                        com.coffeepeek.domain.model.Session(
-                            accessToken = it.accessToken,
-                            refreshToken = it.refreshToken.takeIf { token -> token.isNotBlank() }
-                                ?: current?.refreshToken,
-                            userId = JwtUtils.extractUserId(it.accessToken) ?: current?.userId,
-                        )
-                    }
-                    sessionRepository.saveSession(session)
+                val sessionRepository = get<SessionRepository>()
+                val current = sessionRepository.peekSession()
+                val session = authResp?.let {
+                    com.coffeepeek.domain.model.Session(
+                        accessToken = it.accessToken,
+                        refreshToken = it.refreshToken.takeIf { token -> token.isNotBlank() }
+                            ?: current?.refreshToken,
+                        userId = JwtUtils.extractUserId(it.accessToken) ?: current?.userId,
+                    )
                 }
+                sessionRepository.applySession(session)
+                scope.launch { sessionRepository.persistSession(session) }
             },
         )
     }
@@ -94,6 +93,7 @@ fun dataModule(
     single { get<CoffeePeekRepo>().photoApiService }
     single { get<CoffeePeekRepo>().reviewApiService }
     single { get<CoffeePeekRepo>().checkInApiService }
+    single { get<CoffeePeekRepo>().feedApiService }
     single { get<CoffeePeekRepo>().shopIssueReportApiService }
     single { get<CoffeePeekRepo>().roasterApiService }
     single { get<CoffeePeekRepo>().shopChangeRequestApiService }
@@ -102,11 +102,12 @@ fun dataModule(
     if (registerLegacyFavorites) {
         single<FavoriteRepository> { FavoriteRepositoryImpl(database) }
     }
-    single<ShopRepository> { ShopRepositoryImpl(get(), get(), get(), get()) }
+    single<ShopRepository> { ShopRepositoryImpl(get(), get(), get(), get(), get()) }
     single<UserRepository> { UserRepositoryImpl(get(), get(), get(), get()) }
     single<ReviewRepository> { ReviewRepositoryImpl(get(), get(), get()) }
     single<CheckInRepository> { CheckInRepositoryImpl(get(), get(), get()) }
+    single<com.coffeepeek.domain.feature.feed.FeedRepository> { com.coffeepeek.data.feature.feed.FeedRepositoryImpl(get(), get()) }
     single<ShopIssueReportRepository> { ShopIssueReportRepositoryImpl(get()) }
-    single<RoasterRepository> { RoasterRepositoryImpl(get(), get(), get()) }
+    single<RoasterRepository> { RoasterRepositoryImpl(get(), get(), get(), database.settingRepository, baseUrl) }
     single<ShopChangeRequestRepository> { ShopChangeRequestRepositoryImpl(get(), get()) }
 }

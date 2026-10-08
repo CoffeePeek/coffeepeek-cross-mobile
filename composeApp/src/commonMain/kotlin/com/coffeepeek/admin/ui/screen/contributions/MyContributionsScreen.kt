@@ -52,13 +52,10 @@ import com.coffeepeek.admin.ui.Navigator
 import com.coffeepeek.admin.ui.component.CoffeePeekLoader
 import com.coffeepeek.admin.ui.component.CapsuleSegmentedControl
 import com.coffeepeek.admin.ui.component.CpTopBar
-import com.coffeepeek.admin.ui.component.FullScreenImageDialog
-import com.coffeepeek.admin.ui.component.ReviewDisplayCard
 import com.coffeepeek.admin.ui.component.SettingsIconBadge
 import com.coffeepeek.admin.ui.component.SettingsIconColors
 import com.coffeepeek.admin.ui.component.SettingsIconPalette
 import com.coffeepeek.admin.ui.icons.CpIcons
-import com.coffeepeek.admin.ui.screen.review.EditReviewBottomSheet
 import com.coffeepeek.domain.model.ModerationStatus
 import com.coffeepeek.domain.model.ShopChangeSection
 import org.koin.core.parameter.parametersOf
@@ -70,29 +67,7 @@ fun MyContributionsScreen(kind: ContributionKind) {
         parameters = { parametersOf(kind) },
     )
     val state by vm.state.collectAsState()
-    var editingReviewId by remember { mutableStateOf<String?>(null) }
     var selectedName by rememberSaveable { mutableStateOf<String?>(null) }
-    var photoPreview by remember { mutableStateOf<Pair<List<String>, Int>?>(null) }
-
-    photoPreview?.let { (urls, index) ->
-        FullScreenImageDialog(
-            imageUrls = urls,
-            initialIndex = index,
-            onDismiss = { photoPreview = null },
-        )
-    }
-
-    editingReviewId?.let { reviewId ->
-        EditReviewBottomSheet(
-            reviewId = reviewId,
-            placeName = null,
-            onDismiss = { editingReviewId = null },
-            onSaved = {
-                editingReviewId = null
-                vm.refresh()
-            },
-        )
-    }
 
     Scaffold(
         topBar = { CpTopBar(kind.title) },
@@ -132,8 +107,6 @@ fun MyContributionsScreen(kind: ContributionKind) {
                         status = selected,
                         tab = state.tabs[selected] ?: ContributionTab(),
                         onLoadMore = { vm.loadMore(selected) },
-                        onEditReview = { editingReviewId = it },
-                        onPhotoClick = { urls, index -> photoPreview = urls to index },
                     )
                 }
             }
@@ -147,8 +120,6 @@ private fun ContributionList(
     status: ModerationStatus,
     tab: ContributionTab,
     onLoadMore: () -> Unit,
-    onEditReview: (String) -> Unit,
-    onPhotoClick: (List<String>, Int) -> Unit,
 ) {
     val listState = rememberLazyListState()
     val shouldLoadMore by remember(tab) {
@@ -168,19 +139,7 @@ private fun ContributionList(
         verticalArrangement = Arrangement.spacedBy(CpDimens.spacing3),
     ) {
         items(tab.items, key = { it.id }) { item ->
-            if (item.review != null) {
-                Column {
-                    ReviewDisplayCard(
-                        review = item.review,
-                        onEditClick = if (item.editable) ({ onEditReview(item.review.id) }) else null,
-                        onPhotoClick = onPhotoClick,
-                        showHelpfulButton = false,
-                    )
-                    item.rejectedReason?.let { RejectedReason(it) }
-                }
-            } else {
-                ContributionCard(item = item, kind = kind, status = status)
-            }
+            ContributionCard(item = item, kind = kind, status = status)
         }
     }
 }
@@ -359,7 +318,6 @@ private fun contributionVisual(kind: ContributionKind, section: ShopChangeSectio
         ShopChangeSection.BrewMethods -> ContributionVisual(CpIcons.Coffee, SettingsIconPalette.Aqua)
         null -> ContributionVisual(CpIcons.Edit, SettingsIconPalette.Violet)
     }
-    ContributionKind.Reviews -> ContributionVisual(CpIcons.Review, SettingsIconPalette.Lavender)
 }
 
 private fun ModerationStatus.color(): Color = when (this) {

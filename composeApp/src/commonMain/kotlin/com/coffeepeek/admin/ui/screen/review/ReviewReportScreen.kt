@@ -25,29 +25,34 @@ import com.coffeepeek.admin.di.platformViewModel
 import org.koin.core.parameter.parametersOf
 
 @Composable
-fun ReviewReportScreen(reviewId: String) {
-    val vm: ReviewReportViewModel = platformViewModel(parameters = { parametersOf(reviewId) })
+fun ReviewReportScreen(reviewId: String, isPreview: Boolean = false, isCheckIn: Boolean = false) {
+    val vm: ReviewReportViewModel = platformViewModel(parameters = { parametersOf(reviewId, isPreview, isCheckIn) })
     val state by vm.state.collectAsState()
-    Scaffold(topBar = { CpTopBar("Пожаловаться на отзыв") }) { padding ->
+    Scaffold(topBar = { CpTopBar("Пожаловаться на чекин") }) { padding ->
         Column(
             Modifier.fillMaxSize().padding(padding).imePadding().verticalScroll(rememberScrollState()).padding(CpDimens.spacing4),
             verticalArrangement = Arrangement.spacedBy(CpDimens.spacing3),
         ) {
             if (state.isSubmitted) {
-                Text("Жалоба отправлена", style = MaterialTheme.typography.titleMedium)
-                Text("Спасибо. Мы проверим отзыв.")
+                Text(if (state.isPreview) "Превью жалобы" else "Жалоба отправлена", style = MaterialTheme.typography.titleMedium)
+                Text(if (state.isPreview) "Форма заполнена. Жалобы на примерные публикации не отправляются." else "Спасибо. Мы проверим чекин.")
                 Button(onClick = Navigator::popBack, modifier = Modifier.fillMaxWidth()) { Text("Готово") }
                 return@Column
             }
-            Text("Опишите проблему с отзывом", style = MaterialTheme.typography.titleMedium)
+            if (state.isPreview) Text(
+                "Это пример публикации. Жалоба не будет отправлена на сервер.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Text("Опишите проблему с чекином", style = MaterialTheme.typography.titleMedium)
             ReviewTextInput(
                 value = state.text, onValueChange = vm::updateText,
-                placeholder = "Что не так с этим отзывом?", maxLength = 2000,
+                placeholder = "Что не так с этим чекином?", maxLength = 2000,
                 modifier = Modifier.fillMaxWidth(),
             )
             state.error?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error) }
             Button(onClick = vm::submit, enabled = !state.isSubmitting && state.text.isNotBlank(), modifier = Modifier.fillMaxWidth()) {
-                if (state.isSubmitting) CoffeePeekLoader() else Text("Отправить")
+                if (state.isSubmitting) CoffeePeekLoader() else Text(if (state.isPreview) "Проверить форму" else "Отправить")
             }
         }
     }

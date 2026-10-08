@@ -14,6 +14,10 @@ class ConsumedDrinkTest {
         assertNull(validateConsumedDrink("other", "a".repeat(100)))
         assertNotNull(validateConsumedDrink("other", "a".repeat(101)))
         assertEquals("Старое название", savedDrinkName("Старое название", "Old name", null))
+        assertEquals("Old name", savedDrinkName("Старое название", "Old name", null, "en"))
+        assertEquals("Старое название", savedDrinkName("Старое название", null, null, "en"))
         assertEquals("Эспрессо-тоник", savedDrinkName("Другой", "Other", "Эспрессо-тоник"))
+        assertEquals("Эспрессо-тоник", savedDrinkName("Другой", "Other", "Эспрессо-тоник", "en"))
+        assertNull(savedDrinkName(null, null, null, "en"))
     }
 }

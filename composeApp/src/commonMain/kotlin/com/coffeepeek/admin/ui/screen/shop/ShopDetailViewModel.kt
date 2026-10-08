@@ -1,10 +1,9 @@
 package com.coffeepeek.admin.ui.screen.shop
 
-import com.coffeepeek.domain.model.validateConsumedDrink
-
 import com.coffeepeek.domain.model.ConsumedDrinkOption
-
 import com.coffeepeek.admin.base.BaseViewModel
+import com.coffeepeek.admin.feature.favorites.api.RoasterFavorites
+import com.coffeepeek.admin.feature.favorites.api.roasterFavoriteId
 import com.coffeepeek.admin.ui.Navigator
 import com.coffeepeek.admin.ui.favorites.withFavoriteMembership
 import com.coffeepeek.admin.utils.ClipboardHelper
@@ -14,14 +13,13 @@ import com.coffeepeek.admin.utils.PickedImage
 import com.coffeepeek.admin.utils.ReviewSync
 import com.coffeepeek.admin.utils.ShareHelper
 import com.coffeepeek.admin.utils.datePickerMillisToUtcIsoInstant
-import com.coffeepeek.admin.utils.validatePublicCheckInDescription
-import com.coffeepeek.admin.utils.validatePublicCheckInHeader
 import com.coffeepeek.domain.model.CoffeeShopDetails
+import com.coffeepeek.domain.model.CheckIn
+import com.coffeepeek.domain.model.CatalogItem
 import com.coffeepeek.domain.model.CreateCheckInInput
 import com.coffeepeek.domain.model.PendingPhotoUpload
 import com.coffeepeek.domain.repository.CheckInRepository
 import com.coffeepeek.domain.repository.FavoriteRepository
-import com.coffeepeek.domain.repository.ReviewRepository
 import com.coffeepeek.domain.repository.SessionRepository
 import com.coffeepeek.domain.repository.ShopRepository
 import com.coffeepeek.feature.favorites.domain.usecase.ObserveFavoriteIdsUseCase
@@ -30,6 +28,7 @@ import com.coffeepeek.domain.repository.UserRepository
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -44,12 +43,13 @@ data class ShopDetailUiState(
     val isLoading: Boolean = false,
     val isFavoriteLoading: Boolean = false,
     val isCheckInLoading: Boolean = false,
+    val helpfulId: String? = null,
     val showCheckInSheet: Boolean = false,
     val checkInDraft: CheckInDraft? = null,
-    val showReviewSheet: Boolean = false,
-    val editingReviewId: String? = null,
     val actionMessage: String? = null,
     val error: String? = null,
+    val favoriteRoasterIds: Set<String> = emptySet(),
+    val savingRoasterFavoriteIds: Set<String> = emptySet(),
 )
 
 class ShopDetailViewModel(
@@ -57,11 +57,11 @@ class ShopDetailViewModel(
     private val shopRepository: ShopRepository,
     private val favoriteRepository: FavoriteRepository,
     private val checkInRepository: CheckInRepository,
-    private val reviewRepository: ReviewRepository,
     private val sessionRepository: SessionRepository,
     private val checkInDraftStore: CheckInDraftStore,
     private val userRepository: UserRepository,
     private val observeFavoriteIds: ObserveFavoriteIdsUseCase? = null,
+    private val roasterFavorites: RoasterFavorites,
 ) : BaseViewModel() {
 
     private val _uiState = MutableStateFlow(ShopDetailUiState())
@@ -70,7 +70,6 @@ class ShopDetailViewModel(
     private val favoriteMutationMutex = Mutex()
 
     init {
-        load()
         observeFavoriteIds?.invoke()
             ?.onEach { result ->
                 result.exceptionOrNull()?.let { if (it is CancellationException) throw it }
@@ -89,6 +88,14 @@ class ShopDetailViewModel(
                 }
             }
             .launchIn(workScope)
+        roasterFavorites.observeFavorites()
+            .onEach { favorites -> _uiState.update { it.copy(favoriteRoasterIds = favorites.map { it.roasterFavoriteId }.toSet()) } }
+            .catch { error ->
+                if (error is CancellationException) throw error
+                _uiState.update { it.copy(actionMessage = "Не удалось загрузить избранное") }
+            }
+            .launchIn(workScope)
+        load()
     }
 
     fun load() {
@@ -189,8 +196,6 @@ class ShopDetailViewModel(
                 it.copy(
                     showCheckInSheet = true,
                     checkInDraft = draft,
-                    showReviewSheet = false,
-                    editingReviewId = null,
                 )
             }
         }
@@ -216,33 +221,29 @@ class ShopDetailViewModel(
 
     fun checkIn(draft: CheckInDraft) {
         if (draft.shopId != shopId) return
-        val drinkError = validateConsumedDrink(draft.drinkSlug, draft.customDrinkName)
-        if (drinkError != null) { _uiState.update { it.copy(actionMessage = drinkError) }; return }
         if (_uiState.value.isCheckInLoading) return
-        if (draft.isPublic && (
-                validatePublicCheckInHeader(draft.header) != null ||
-                    validatePublicCheckInDescription(draft.note) != null
-                )
-        ) {
-            _uiState.update {
-                it.copy(actionMessage = "Для публичного чек-ина нужны заголовок и описание")
-            }
+        draft.validationError()?.let { error ->
+            _uiState.update { it.copy(actionMessage = error) }
+            return
+        }
+        val shopSlug = _uiState.value.details?.shop?.publicAddress?.slug?.takeIf(String::isNotBlank)
+        if (shopSlug == null) {
+            _uiState.update { it.copy(actionMessage = "Не удалось определить адрес кофейни") }
             return
         }
         workScope.launch {
             _uiState.update { it.copy(isCheckInLoading = true) }
             checkInRepository.createCheckIn(
                 CreateCheckInInput(
-                    shopId = shopId,
+                    shopSlug = shopSlug,
                     drinkSlug = draft.drinkSlug,
                     customDrinkName = draft.customDrinkName?.trim(),
-                    header = draft.header.trim().takeIf { draft.isPublic },
-                    note = draft.note.trim().takeIf { it.isNotEmpty() },
+                    text = draft.note.trim(),
                     visitedAtIso = datePickerMillisToUtcIsoInstant(draft.visitMillis),
-                    isPublic = draft.isPublic,
-                    placeRating = draft.placeRating,
-                    serviceRating = draft.serviceRating,
-                    coffeeRating = draft.coffeeRating,
+                    visibility = if (draft.isPublic) com.coffeepeek.domain.model.CheckInVisibility.Public else com.coffeepeek.domain.model.CheckInVisibility.Private,
+                    rating = com.coffeepeek.domain.model.ReviewRating(
+                        place = draft.placeRating, service = draft.serviceRating, coffee = draft.coffeeRating,
+                    ),
                     photos = draft.photos.map { it.toPendingUpload() },
                 ),
             ).onSuccess {
@@ -268,87 +269,38 @@ class ShopDetailViewModel(
         }
     }
 
-    fun openCreateReview() {
+    fun toggleHelpful(checkInId: String) {
+        val current = _uiState.value
+        val details = current.details ?: return
+        val checkIn = details.checkIns.firstOrNull { it.id == checkInId } ?: return
+        if (current.helpfulId != null || details.ownsCheckIn(checkIn, current.currentUserId)) return
+        _uiState.update { it.copy(helpfulId = checkInId) }
         workScope.launch {
-            if (!sessionRepository.isLoggedIn()) {
-                Navigator.navigate(Navigator.Screen.Auth)
-                return@launch
-            }
-            if (!_uiState.value.details?.existingReviewId.isNullOrBlank()) {
-                _uiState.update { it.copy(actionMessage = "Вы уже оставляли отзыв об этом месте") }
-                return@launch
-            }
-            _uiState.update {
-                it.copy(
-                    showReviewSheet = true,
-                    editingReviewId = null,
-                    showCheckInSheet = false,
-                )
-            }
-        }
-    }
-
-    fun openReviewAction() {
-        workScope.launch {
-            if (!sessionRepository.isLoggedIn()) {
-                Navigator.navigate(Navigator.Screen.Auth)
-                return@launch
-            }
-            val existingId = _uiState.value.details?.existingReviewId
-            _uiState.update {
-                it.copy(
-                    showReviewSheet = true,
-                    editingReviewId = existingId?.takeIf(String::isNotBlank),
-                    showCheckInSheet = false,
-                )
-            }
-        }
-    }
-
-    fun openEditReview(reviewId: String) {
-        _uiState.update {
-            it.copy(
-                showReviewSheet = true,
-                editingReviewId = reviewId,
-                showCheckInSheet = false,
-            )
-        }
-    }
-
-    fun dismissReviewSheet() {
-        _uiState.update {
-            it.copy(showReviewSheet = false, editingReviewId = null)
-        }
-    }
-
-    fun toggleHelpful(reviewId: String) {
-        workScope.launch {
-            if (!sessionRepository.isLoggedIn()) {
-                Navigator.navigate(Navigator.Screen.Auth)
-                return@launch
-            }
-            val review = _uiState.value.details?.reviews?.firstOrNull { it.id == reviewId } ?: return@launch
-            reviewRepository.setReviewHelpful(reviewId, helpful = !review.isHelpfulByCurrentUser)
-                .onSuccess { vote ->
-                    _uiState.update { state ->
-                        val current = state.details ?: return@update state
-                        state.copy(
-                            details = current.copy(
-                                reviews = current.reviews.map { r ->
-                                    if (r.id == reviewId) {
-                                        r.copy(
+            try {
+                if (!sessionRepository.isLoggedIn()) {
+                    Navigator.navigate(Navigator.Screen.Auth)
+                    return@launch
+                }
+                checkInRepository.setHelpful(checkInId, helpful = !checkIn.isHelpfulByCurrentUser)
+                    .onSuccess { vote ->
+                        _uiState.update { state ->
+                            val currentDetails = state.details ?: return@update state
+                            state.copy(
+                                details = currentDetails.copy(
+                                    checkIns = currentDetails.checkIns.map { item ->
+                                        if (item.id == checkInId) item.copy(
                                             isHelpfulByCurrentUser = vote.isHelpful,
                                             helpfulCount = vote.helpfulCount,
-                                        )
-                                    } else {
-                                        r
-                                    }
-                                },
-                            ),
-                        )
+                                        ) else item
+                                    },
+                                ),
+                            )
+                        }
                     }
-                }
-                .onFailure { e -> _uiState.update { it.copy(actionMessage = e.message) } }
+                    .onFailure { e -> _uiState.update { it.copy(actionMessage = e.message) } }
+            } finally {
+                _uiState.update { it.copy(helpfulId = null) }
+            }
         }
     }
 
@@ -358,6 +310,34 @@ class ShopDetailViewModel(
             return
         }
         Navigator.navigate(Navigator.Screen.SuggestShopChange(shopId))
+    }
+
+    fun toggleRoasterFavorite(roaster: CatalogItem) {
+        val id = roaster.roasterFavoriteId
+        val current = _uiState.value
+        if (id in current.savingRoasterFavoriteIds) return
+        _uiState.update { it.copy(savingRoasterFavoriteIds = it.savingRoasterFavoriteIds + id) }
+        workScope.launch {
+            try {
+                if (!sessionRepository.isLoggedIn()) {
+                    Navigator.navigate(Navigator.Screen.Auth)
+                    return@launch
+                }
+                roasterFavorites.setFavorite(roaster, id !in current.favoriteRoasterIds)
+                    .onFailure { _uiState.update { it.copy(actionMessage = "Не удалось изменить избранное") } }
+            } finally {
+                _uiState.update { it.copy(savingRoasterFavoriteIds = it.savingRoasterFavoriteIds - id) }
+            }
+        }
+    }
+
+    fun openReportIssue() {
+        val details = _uiState.value.details ?: return
+        if (!_uiState.value.isLoggedIn) {
+            Navigator.navigate(Navigator.Screen.Auth)
+            return
+        }
+        Navigator.navigate(Navigator.Screen.ReportShop(shopId, details.shop.title))
     }
 
     fun openOnMap() {
@@ -408,6 +388,9 @@ class ShopDetailViewModel(
         _uiState.update { it.copy(actionMessage = null) }
     }
 }
+
+internal fun CoffeeShopDetails.ownsCheckIn(checkIn: CheckIn, currentUserId: String?): Boolean =
+    (currentUserId != null && checkIn.authorAddress?.slug == currentUserId) || userCheckIns.any { it.id == checkIn.id }
 
 internal fun buildYandexMapsRouteUrl(latitude: Double, longitude: Double): String =
     "https://yandex.ru/maps/?mode=routes&rtext=~$latitude,$longitude&rtt=auto"

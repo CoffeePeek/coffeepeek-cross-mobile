@@ -49,8 +49,16 @@ class PublicAddressContractTest {
     @Test
     fun allCatalogsReadArraysDirectly() = runBlocking {
         val client = HttpClient(MockEngine { request ->
+            assertTrue(request.url.parameters.isEmpty())
             val item = when (request.url.encodedPath.substringAfterLast('/')) {
-                "cities", "roasters" -> """{"address":$address,"name":"Catalog"}"""
+                "cities" -> """{"address":$address,"name":"Catalog"}"""
+                "roasters" -> """{
+                    "address":{"slug":"roast","canonicalPath":"/roasters/roast","revision":"2","isAlias":false},
+                    "name":null,"photoUrl":null,
+                    "coverPhoto":{"id":"photo","fullUrl":null,"sortIndex":"0","isPrimary":true,"urls":{"card":"https://m/card.jpg"}},
+                    "tags":[{"slug":"specialty","name":"Specialty","description":null,"sortOrder":"2"}],
+                    "coffeeShopsCount":"7","coffeeProductsCount":12,"availableCoffeeProducts":"4"
+                }"""
                 else -> """{"slug":"catalog-slug","name":"Catalog"}"""
             }
             respond("""{"isSuccess":true,"message":null,"data":[$item]}""", headers = headers)
@@ -58,7 +66,16 @@ class PublicAddressContractTest {
         try {
             val api = ShopApiService(client)
             assertEquals("26-october-16", api.getCities().getOrThrow().single().address.slug)
-            assertEquals("26-october-16", api.getRoasters().getOrThrow().single().key)
+            val roaster = RoasterApiService(client).getRoasters().getOrThrow().single()
+            assertEquals("roast", roaster.address?.slug)
+            assertEquals(2, roaster.address?.revision)
+            assertNull(roaster.name)
+            assertEquals("https://m/card.jpg", roaster.coverPhoto?.urls?.card)
+            assertEquals(7, roaster.coffeeShopsCount)
+            assertEquals(12, roaster.coffeeProductsCount)
+            assertEquals(4, roaster.availableCoffeeProducts)
+            assertEquals("specialty", roaster.tags?.single()?.slug)
+            assertEquals(2, roaster.tags?.single()?.sortOrder)
             assertEquals("catalog-slug", api.getBeans().getOrThrow().single().key)
             assertEquals("catalog-slug", api.getEquipment().getOrThrow().single().key)
             assertEquals("catalog-slug", api.getBrewMethods().getOrThrow().single().key)
@@ -70,9 +87,9 @@ class PublicAddressContractTest {
     fun reviewsCheckInsAndSubmissionsReadItemsAndNullableLinks() = runBlocking {
         val client = HttpClient(MockEngine { request ->
             val items = when (request.url.encodedPath) {
-                "/api/CheckIns" -> {
-                    assertEquals("2", request.headers["X-Page-Number"])
-                    assertEquals("20", request.headers["X-Page-Size"])
+                "/api/v1/check-ins/mine" -> {
+                    assertEquals("2", request.url.parameters["pageNumber"])
+                    assertEquals("20", request.url.parameters["pageSize"])
                     """[{"id":"check-in-guid","shop":null}]"""
                 }
                 "/api/users/petr/reviews" -> {
@@ -89,10 +106,10 @@ class PublicAddressContractTest {
                 }
                 else -> error("Unexpected path: ${request.url.encodedPath}")
             }
-            respond("""{"isSuccess":true,"message":null,"data":{"items":$items,"totalItems":1,"currentPage":2,"pageSize":20}}""", headers = headers)
+            respond("""{"isSuccess":true,"message":null,"data":{"items":$items,"totalCount":1,"totalItems":1,"currentPage":2,"pageSize":20}}""", headers = headers)
         }) { install(ContentNegotiation) { json(JsonExt.json) } }
         try {
-            assertNull(CheckInApiService(client).getMyCheckIns(2, 20).getOrThrow().checkIns.single().shop)
+            assertNull(CheckInApiService(client).getMyCheckIns(2, 20).getOrThrow().items.single().shop)
             assertNull(ReviewApiService(client).getUserReviews("petr", 2, 20).getOrThrow().reviewDtos.single().author)
             assertEquals("26-october-16", ShopApiService(client).getMyModerationShops(ModerationStatusDto.Approved, 2, 20).getOrThrow().moderationShops.single().publishedShop?.slug)
             assertEquals(1, ReviewApiService(client).getMyModerationReviews(ModerationStatusDto.Pending, 2, 20).getOrThrow().reviewDtos.size)

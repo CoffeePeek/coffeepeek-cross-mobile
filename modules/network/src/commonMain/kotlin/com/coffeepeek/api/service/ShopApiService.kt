@@ -135,13 +135,6 @@ class ShopApiService(private val client: HttpClient) {
         apiResponse.data
     }
 
-    suspend fun getRoasters(): Result<List<CatalogItemDto>> = runCatching {
-        val response = client.get("/api/Catalogs/roasters")
-        val apiResponse = response.body<ApiResponse<List<CatalogItemDto>>>()
-        if (!apiResponse.isSuccess || apiResponse.data == null) throw ApiException(apiResponse.message)
-        apiResponse.data
-    }
-
     suspend fun getBrewMethods(): Result<List<CatalogItemDto>> = runCatching {
         val response = client.get("/api/Catalogs/brew-methods")
         val apiResponse = response.body<ApiResponse<List<CatalogItemDto>>>()

@@ -82,12 +82,12 @@ internal object MapMarkerIcons {
         }
     }
 
-    fun zoneBitmap(context: Context, name: String, count: Int, isDarkTheme: Boolean): Bitmap {
+    fun zoneBitmap(context: Context, name: String, count: Int, isDarkTheme: Boolean, color: String): Bitmap {
         val shortName = if (name.length > 18) "${name.take(17)}…" else name
         val label = "$shortName · $count"
-        val key = "zone-$isDarkTheme-$label"
+        val key = "zone-$isDarkTheme-$color-$label"
         return cache.getOrPut(key) {
-            createZoneBitmap(context.applicationContext, label, isDarkTheme)
+            createZoneBitmap(context.applicationContext, label, isDarkTheme, color)
         }
     }
 
@@ -272,15 +272,15 @@ internal object MapMarkerIcons {
         return bitmap
     }
 
-    private fun createZoneBitmap(context: Context, label: String, isDarkTheme: Boolean): Bitmap {
+    private fun createZoneBitmap(context: Context, label: String, isDarkTheme: Boolean, zoneColor: String): Bitmap {
         val density = context.resources.displayMetrics.density
         val textPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
             color = if (isDarkTheme) 0xFFE6DDD3.toInt() else 0xFF4A4038.toInt()
             textSize = 12f * density
             typeface = clusterTypeface(context)
         }
-        val horizontalPadding = 12f * density
-        val verticalPadding = 9f * density
+        val horizontalPadding = 8f * density
+        val verticalPadding = 4f * density
         val height = textPaint.fontMetrics.run { bottom - top } + verticalPadding * 2f
         val width = textPaint.measureText(label) + horizontalPadding * 2f
         val shadowPadding = 5f * density
@@ -314,7 +314,7 @@ internal object MapMarkerIcons {
             Paint(Paint.ANTI_ALIAS_FLAG).apply {
                 style = Paint.Style.STROKE
                 strokeWidth = 1.5f * density
-                color = if (isDarkTheme) 0xCCD2A26E.toInt() else 0xCCB07A45.toInt()
+                color = ColorUtils.setAlphaComponent(Color.parseColor(zoneColor), 0xCC)
             },
         )
         val textY = rect.centerY() - (textPaint.descent() + textPaint.ascent()) / 2f

@@ -31,6 +31,9 @@ class PhotoRepositoryImpl(
     override suspend fun uploadMenuPhotos(photos: List<PendingPhotoUpload>): Result<List<UploadedPhotoMeta>> =
         uploadPhotos(photos) { photoApiService.requestMenuPhotoUploadUrls(it).getOrThrow() }
 
+    override suspend fun uploadCheckInPhotos(photos: List<PendingPhotoUpload>): Result<List<UploadedPhotoMeta>> =
+        uploadPhotos(photos) { photoApiService.requestCheckInPhotoUploadUrls(it).getOrThrow() }
+
     override suspend fun uploadRoasterPhotos(photos: List<PendingPhotoUpload>): Result<List<UploadedPhotoMeta>> =
         uploadPhotos(photos) { photoApiService.requestRoasterPhotoUploadUrls(it).getOrThrow() }
 

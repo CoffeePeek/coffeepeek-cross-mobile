@@ -49,6 +49,7 @@ data class MapCoffeeZoneDto(
     @SerialName("address") val address: PublicAddressDto,
     @SerialName("name") @JsonNames("Name") val name: String = "",
     @SerialName("description") @JsonNames("Description") val description: String = "",
+    @SerialName("color") @JsonNames("Color") val color: String? = null,
     @SerialName("latitude") @JsonNames("Latitude") val latitude: Double,
     @SerialName("longitude") @JsonNames("Longitude") val longitude: Double,
     @SerialName("radiusMeters") @JsonNames("RadiusMeters") val radiusMeters: Double,

@@ -41,6 +41,7 @@ data class ReviewDraft(
     val drinkSlug: String? = null,
     val customDrinkName: String? = null,
     val drinkName: String? = null,
+    val drinkNameEn: String? = null,
     val drinkSelectionChanged: Boolean = false,
 )
 

@@ -1,47 +1,66 @@
 package com.coffeepeek.admin.ui.screen.roaster
 
-import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.unit.dp
+import com.coffeepeek.admin.feature.catalog.api.RoasterCard
 import com.coffeepeek.admin.di.platformViewModel
+import com.coffeepeek.admin.feature.favorites.api.roasterFavoriteId
 import com.coffeepeek.admin.theme.CpDimens
 import com.coffeepeek.admin.ui.Navigator
 import com.coffeepeek.admin.ui.component.CoffeePeekLoader
 import com.coffeepeek.admin.ui.component.CoffeePeekPullToRefresh
-import com.coffeepeek.admin.ui.component.CoffeeShopImage
 import com.coffeepeek.admin.ui.component.LocalFloatingNavClearance
-import com.coffeepeek.admin.ui.icons.CpIcons
 import com.coffeepeek.admin.ui.component.SearchHeader
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-internal fun RoasterListScreen(onSelectShops: () -> Unit, vm: RoasterListViewModel = platformViewModel()) {
+internal fun RoasterListScreen(
+    onCancel: () -> Unit,
+    query: String,
+    onQueryChange: (String) -> Unit,
+    selectedRoasterIds: Set<String> = emptySet(),
+    favoritesOnly: Boolean = false,
+    vm: RoasterListViewModel = platformViewModel(),
+) {
     val state by vm.state.collectAsState()
     val listState = rememberLazyListState()
-    val visible = state.visibleItems
+    val visible = state.visibleItems(query, selectedRoasterIds, favoritesOnly)
     val clearance = LocalFloatingNavClearance.current
+    val snackbarHostState = remember { SnackbarHostState() }
+    val focusManager = LocalFocusManager.current
+    val keyboard = LocalSoftwareKeyboardController.current
+    LaunchedEffect(state.actionMessage) {
+        state.actionMessage?.let {
+            snackbarHostState.showSnackbar(it)
+            vm.clearActionMessage()
+        }
+    }
     Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
         topBar = {
             Column(Modifier.fillMaxWidth().statusBarsPadding().padding(horizontal = CpDimens.spacing4, vertical = CpDimens.spacing3)) {
                 SearchHeader(
-                    query = state.query, onQueryChange = vm::onQueryChange,
-                    roastersSelected = true, onSelectRoasters = { if (!it) onSelectShops() },
+                    query = query, onQueryChange = onQueryChange,
+                    roastersSelected = true, onSelectRoasters = {}, showCategories = false,
+                    onCancelSearch = {
+                        focusManager.clearFocus(force = true)
+                        keyboard?.hide()
+                        onCancel()
+                    },
                 )
+                RoasterTagFilters(state, vm::toggleTag, vm::clearTags)
             }
         },
     ) { padding ->
@@ -51,11 +70,18 @@ internal fun RoasterListScreen(onSelectShops: () -> Unit, vm: RoasterListViewMod
         ) { scrollModifier ->
             LazyColumn(
                 state = listState, modifier = scrollModifier.fillMaxSize(),
-                contentPadding = PaddingValues(start = CpDimens.spacing4, end = CpDimens.spacing4, bottom = clearance + CpDimens.spacing4),
+                contentPadding = PaddingValues(start = CpDimens.spacing4, top = CpDimens.spacing2, end = CpDimens.spacing4, bottom = clearance + CpDimens.spacing4),
                 verticalArrangement = Arrangement.spacedBy(CpDimens.spacing3),
             ) {
-                items(visible, key = { it.catalog.id }) { item ->
-                    RoasterCard(item)
+                itemsIndexed(visible, key = { index, item -> item.catalog.id.ifBlank { "unaddressed-roaster:$index" } }) { _, item ->
+                    RoasterCard(
+                        roaster = item.catalog,
+                        details = item.details,
+                        onClick = { item.routeId?.let { Navigator.navigate(Navigator.Screen.RoasterDetail(it)) } },
+                        isFavorite = item.catalog.roasterFavoriteId in state.favoriteIds,
+                        isFavoriteLoading = item.catalog.roasterFavoriteId in state.savingFavoriteIds,
+                        onToggleFavorite = { vm.toggleFavorite(item) },
+                    )
                 }
                 if (state.isLoading) item {
                     Box(Modifier.fillMaxWidth().padding(24.dp), contentAlignment = Alignment.Center) { CoffeePeekLoader() }
@@ -74,46 +100,60 @@ internal fun RoasterListScreen(onSelectShops: () -> Unit, vm: RoasterListViewMod
 }
 
 @Composable
-private fun RoasterCard(item: RoasterListItem) {
-    Card(
-        onClick = { item.routeId?.let { Navigator.navigate(Navigator.Screen.RoasterDetail(it)) } },
-        enabled = item.routeId != null,
-        modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(CpDimens.radiusXl),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
-    ) {
-        Row(Modifier.padding(CpDimens.spacing3), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            Box(Modifier.size(56.dp).clip(CircleShape).background(MaterialTheme.colorScheme.surfaceVariant), contentAlignment = Alignment.Center) {
-                val photo = item.catalog.photoUrl ?: item.details?.photos?.firstOrNull()?.fullUrl
-                if (!photo.isNullOrBlank()) CoffeeShopImage(
-                    imageUrl = photo, contentDescription = item.catalog.name,
-                    contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize(),
-                ) else Icon(CpIcons.Factory, null, Modifier.size(32.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
-            }
-            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                Text(item.catalog.name, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold, maxLines = 2, overflow = TextOverflow.Ellipsis)
-                item.details?.location?.address?.takeIf { it.isNotBlank() }?.let {
-                    Text(it, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                }
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                    Icon(CpIcons.Coffee, null, Modifier.size(14.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
-                    Text(
-                        item.details?.let { roasterShopCountLabel(it.shops.size) } ?: "Подробнее об обжарщике",
-                        style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
+internal fun RoasterPreview(
+    query: String = "",
+    selectedRoasterIds: Set<String> = emptySet(),
+    favoritesOnly: Boolean = false,
+    vm: RoasterListViewModel = platformViewModel(),
+) {
+    val state by vm.state.collectAsState()
+    val visible = state.visibleItems(query, selectedRoasterIds, favoritesOnly)
+    val snackbar = remember { SnackbarHostState() }
+    LaunchedEffect(state.actionMessage) {
+        state.actionMessage?.let {
+            snackbar.showSnackbar(it)
+            vm.clearActionMessage()
+        }
+    }
+    Column(verticalArrangement = Arrangement.spacedBy(CpDimens.spacing2)) {
+        RoasterTagFilters(state, vm::toggleTag, vm::clearTags)
+        BoxWithConstraints(Modifier.fillMaxWidth()) {
+            val cardWidth = (maxWidth * 0.88f).coerceIn(280.dp, 360.dp)
+            LazyRow(horizontalArrangement = Arrangement.spacedBy(CpDimens.spacing3)) {
+                itemsIndexed(visible.take(8), key = { index, item -> item.catalog.id.ifBlank { "unaddressed-roaster:$index" } }) { _, item ->
+                    RoasterCard(
+                        roaster = item.catalog,
+                        details = item.details,
+                        onClick = { item.routeId?.let { Navigator.navigate(Navigator.Screen.RoasterDetail(it)) } },
+                        isFavorite = item.catalog.roasterFavoriteId in state.favoriteIds,
+                        isFavoriteLoading = item.catalog.roasterFavoriteId in state.savingFavoriteIds,
+                        onToggleFavorite = { vm.toggleFavorite(item) },
+                        modifier = Modifier.width(cardWidth),
                     )
                 }
             }
-            Icon(CpIcons.ChevronRight, null, Modifier.size(18.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
+            SnackbarHost(snackbar, modifier = Modifier.align(Alignment.BottomCenter))
+        }
+        if (state.items.isEmpty() && state.isLoading) {
+            Box(Modifier.fillMaxWidth().padding(CpDimens.spacing4), contentAlignment = Alignment.Center) { CoffeePeekLoader() }
+        } else if (state.error != null) {
+            Text(state.error.orEmpty(), color = MaterialTheme.colorScheme.onSurfaceVariant)
+            TextButton(onClick = vm::refresh) { Text("Попробовать снова") }
+        } else if (visible.isEmpty() && !state.isLoading) {
+            Text("Обжарщики не найдены", color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
 }
 
-internal fun roasterShopCountLabel(count: Int): String {
-    val noun = when {
-        count % 100 in 11..14 -> "кофеен используют"
-        count % 10 == 1 -> "кофейня использует"
-        count % 10 in 2..4 -> "кофейни используют"
-        else -> "кофеен используют"
+@Composable
+private fun RoasterTagFilters(state: RoasterListUiState, onToggle: (String) -> Unit, onClear: () -> Unit) {
+    if (state.availableTags.isEmpty()) return
+    LazyRow(horizontalArrangement = Arrangement.spacedBy(CpDimens.spacing2)) {
+        item {
+            FilterChip(selected = state.selectedTagIds.isEmpty(), onClick = onClear, label = { Text("Все") })
+        }
+        items(state.availableTags, key = { it.slug }) { tag ->
+            FilterChip(selected = tag.slug in state.selectedTagIds, onClick = { onToggle(tag.slug) }, label = { Text(tag.name) })
+        }
     }
-    return "$count $noun это зерно"
 }

@@ -7,14 +7,10 @@ import com.coffeepeek.admin.ui.screen.shopchange.title
 import com.coffeepeek.admin.utils.utcIsoToLocalDateTime
 import com.coffeepeek.domain.model.ModerationStatus
 import com.coffeepeek.domain.model.PagedResult
-import com.coffeepeek.domain.model.Review
 import com.coffeepeek.domain.model.ShopChangeSection
-import com.coffeepeek.domain.repository.ReviewRepository
 import com.coffeepeek.domain.repository.RoasterRepository
-import com.coffeepeek.domain.repository.SessionRepository
 import com.coffeepeek.domain.repository.ShopChangeRequestRepository
 import com.coffeepeek.domain.repository.ShopRepository
-import com.coffeepeek.domain.repository.UserRepository
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
@@ -26,7 +22,6 @@ import kotlinx.coroutines.launch
 private const val PAGE_SIZE = 20
 
 enum class ContributionKind(val title: String, val emptyText: String) {
-    Reviews("Мои отзывы", "Вы ещё не оставляли отзывов"),
     Shops("Отправленные кофейни", "Вы ещё не добавляли кофейни"),
     Roasters("Отправленные обжарщики", "Вы ещё не добавляли обжарщиков"),
     Changes("Мои правки", "Вы ещё не отправляли правки"),
@@ -43,9 +38,6 @@ data class ContributionItem(
     val changeSection: ShopChangeSection? = null,
     val rejectedReason: String? = null,
     val target: Navigator.Screen? = null,
-    /** Reviews render as review cards instead of the generic row. */
-    val review: Review? = null,
-    val editable: Boolean = false,
 )
 
 data class ContributionTab(
@@ -68,12 +60,9 @@ data class MyContributionsUiState(
 
 class MyContributionsViewModel(
     private val kind: ContributionKind,
-    private val reviewRepository: ReviewRepository,
     private val shopRepository: ShopRepository,
     private val roasterRepository: RoasterRepository,
     private val changeRepository: ShopChangeRequestRepository,
-    private val sessionRepository: SessionRepository,
-    private val userRepository: UserRepository,
 ) : BaseViewModel() {
 
     private val _state = MutableStateFlow(MyContributionsUiState())
@@ -122,27 +111,6 @@ class MyContributionsViewModel(
 
     private suspend fun fetch(status: ModerationStatus, page: Int): Result<PagedResult<ContributionItem>> =
         when (kind) {
-            // Published reviews come from the public endpoint: that's what the edit flow and helpful counts key on.
-            ContributionKind.Reviews -> if (status == ModerationStatus.Approved) {
-                requireAuthSession(sessionRepository)
-                    ?: return Result.failure(IllegalStateException("Войдите, чтобы увидеть свои отзывы"))
-                val profile = userRepository.getMe().getOrElse { return Result.failure(it) }
-                val userId = profile.address?.slug
-                    ?: return Result.failure(IllegalStateException("Публичный адрес профиля пока недоступен"))
-                reviewRepository.getUserReviews(userId, page, PAGE_SIZE).mapItems {
-                    ContributionItem(id = it.id, title = it.header, review = it, editable = true)
-                }
-            } else {
-                reviewRepository.getMyReviewSubmissions(status, page, PAGE_SIZE).mapItems {
-                    ContributionItem(
-                        id = it.review.id,
-                        title = it.review.header,
-                        rejectedReason = it.rejectedReason,
-                        review = it.review,
-                    )
-                }
-            }
-
             ContributionKind.Shops -> shopRepository.getMyShopSubmissions(status, page, PAGE_SIZE).mapItems {
                 ContributionItem(
                     id = it.id,

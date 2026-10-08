@@ -41,6 +41,8 @@ actual fun CoffeeMap(
     myLocationRequestKey: Int,
     onMyLocationFound: (Double, Double) -> Unit,
     onLocationPermissionDenied: () -> Unit,
+    requestLocationPermissionOnLoad: Boolean,
+    showAttribution: Boolean,
 ) {
     val boundsCallback = rememberUpdatedState(onBoundsChanged)
     val shopCallback = rememberUpdatedState(onShopClick)
@@ -68,6 +70,7 @@ actual fun CoffeeMap(
         myLocationRequestKey = myLocationRequestKey,
         onMyLocationFound = onMyLocationFound,
         onLocationPermissionDenied = onLocationPermissionDenied,
+        showAttribution = showAttribution,
     )
 }
 
@@ -89,6 +92,7 @@ private fun NativeMapContent(
     myLocationRequestKey: Int,
     onMyLocationFound: (Double, Double) -> Unit,
     onLocationPermissionDenied: () -> Unit,
+    showAttribution: Boolean,
 ) {
     val boundsCallback = rememberUpdatedState(onBoundsChanged)
     val shopCallback = rememberUpdatedState(onShopClick)
@@ -139,7 +143,7 @@ private fun NativeMapContent(
             modifier = Modifier.matchParentSize(),
             update = { mapView ->
                 session.attach(mapView)
-                session.updateContent(shops, clusters, zones, selectedShopId, isDarkTheme)
+                session.updateContent(shops, clusters, zones, selectedShopId, isDarkTheme, showAttribution)
             },
         )
     }
@@ -167,11 +171,12 @@ private class NativeMapSession(
         zones: List<MapCoffeeZone>,
         selectedShopId: String?,
         isDarkTheme: Boolean,
+        showAttribution: Boolean,
     ) {
         mapView?.let { view ->
             provider.updateMapView(
                 mapView = view,
-                stateJson = nativeMapStateJson(shops, clusters, zones, selectedShopId, isDarkTheme),
+                stateJson = nativeMapStateJson(shops, clusters, zones, selectedShopId, isDarkTheme, showAttribution),
                 callbacks = this,
             )
         }
@@ -200,10 +205,12 @@ private fun nativeMapStateJson(
     zones: List<MapCoffeeZone>,
     selectedShopId: String?,
     isDarkTheme: Boolean,
+    showAttribution: Boolean,
 ): String = buildString {
     append('{')
     append("\"selectedShopId\":").append(selectedShopId.jsonValue()).append(',')
     append("\"dark\":").append(isDarkTheme).append(',')
+    append("\"showAttribution\":").append(showAttribution).append(',')
     append("\"shops\":[")
     shops.joinTo(this, separator = ",") { shop ->
         "{\"id\":${shop.id.jsonValue()},\"title\":${shop.title.jsonValue()}," +
@@ -218,6 +225,7 @@ private fun nativeMapStateJson(
     append("],\"zones\":[")
     zones.joinTo(this, separator = ",") { zone ->
         "{\"id\":${zone.id.jsonValue()},\"name\":${zone.name.jsonValue()}," +
+            "\"color\":${zoneColorForMap(zone.color, isDarkTheme).jsonValue()}," +
             "\"lat\":${zone.latitude},\"lon\":${zone.longitude}," +
             "\"radius\":${zone.radiusMeters},\"polygon\":[" +
             zone.polygon.joinToString(",") { (lat, lon) -> "[$lat,$lon]" } + "]}"

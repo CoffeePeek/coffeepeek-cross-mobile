@@ -2,6 +2,7 @@ package com.coffeepeek.admin.ui.component
 
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.foundation.background
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -26,6 +27,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -34,6 +36,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.compose.ui.unit.TextUnit
 import com.coffeepeek.admin.theme.CpDimens
 import dev.chrisbanes.haze.HazeState
 
@@ -71,7 +75,7 @@ fun FloatingBottomNavBar(
             .padding(horizontal = CpDimens.spacing4)
             .padding(bottom = FloatingNavBottomMargin)
             .fillMaxWidth()
-            .height(CpDimens.floatingNavBarHeight)
+            .height(floatingNavBarHeight())
             .liquidGlass(shape, hazeState, shadowElevation = 10.dp)
             .padding(4.dp),
         horizontalArrangement = Arrangement.spacedBy(2.dp),
@@ -81,6 +85,12 @@ fun FloatingBottomNavBar(
             FloatingNavBarItem(item = item)
         }
     }
+}
+
+@Composable
+internal fun floatingNavBarHeight(): Dp {
+    val captionSize = with(LocalDensity.current) { MaterialTheme.typography.labelSmall.fontSize.toDp() }
+    return maxOf(CpDimens.floatingNavBarHeight, 22.dp + 2.dp + captionSize * 1.5f + CpDimens.spacing3)
 }
 
 /** Gap between the floating bar and the system navigation area. */
@@ -119,7 +129,8 @@ private fun RowScope.FloatingNavBarItem(item: FloatingNavItem) {
                 interactionSource = remember { MutableInteractionSource() },
                 indication = null,
                 onClick = item.onClick,
-            ),
+            )
+            .padding(horizontal = 4.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(2.dp, Alignment.CenterVertically),
     ) {
@@ -133,9 +144,13 @@ private fun RowScope.FloatingNavBarItem(item: FloatingNavItem) {
             text = item.title,
             style = MaterialTheme.typography.labelSmall.copy(
                 fontWeight = if (item.selected) FontWeight.SemiBold else FontWeight.Medium,
+                lineHeight = TextUnit.Unspecified,
             ),
             color = contentColor,
             maxLines = 1,
+            autoSize = TextAutoSize.StepBased(
+                minFontSize = 6.sp, maxFontSize = MaterialTheme.typography.labelSmall.fontSize,
+            ),
             overflow = TextOverflow.Ellipsis,
         )
     }

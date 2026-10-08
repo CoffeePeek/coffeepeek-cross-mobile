@@ -61,10 +61,12 @@ kotlin {
             implementation(project(module.legacy.data))
             implementation(project(module.legacy.network))
             implementation(project(module.legacy.room))
+            implementation(project(module.core.network))
             implementation(compose.runtime)
             implementation(compose.foundation)
             implementation(compose.material3)
             implementation(compose.ui)
+            implementation(libs.compose.ui.backhandler)
             implementation(compose.components.resources)
             implementation(compose.components.uiToolingPreview)
             implementation(libs.phosphor.icon)
@@ -84,6 +86,7 @@ kotlin {
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
+            implementation("io.ktor:ktor-client-mock:${libs.versions.ktor.get()}")
         }
         androidUnitTest.dependencies {
             implementation(libs.kotlinx.coroutines.test)

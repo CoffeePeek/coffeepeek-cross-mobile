@@ -1,6 +1,7 @@
 package com.coffeepeek.data.mapper
 
 import com.coffeepeek.data.time.utcSchedulesToLocal
+import com.coffeepeek.api.model.response.shop.CatalogItemDto
 import com.coffeepeek.api.model.response.shop.CoffeeShopDetailsDto
 import com.coffeepeek.api.model.response.shop.ReviewDto
 import com.coffeepeek.api.model.response.shop.ShopMenuDto
@@ -29,6 +30,21 @@ import kotlinx.serialization.json.doubleOrNull
 
 internal object ShopMapper {
 
+    fun CatalogItemDto.toDomain(fileUrls: FileUrlResolver): CatalogItem = CatalogItem(
+        id = key,
+        name = name.orEmpty(),
+        slug = key,
+        photoUrl = coverPhoto?.let { fileUrls.resolve(it.storageKey, it.urls.variantOr(it.fullUrl) { urls -> urls.card }) }
+            ?: photoUrl?.takeIf(String::isNotBlank),
+        address = address?.toDomain(),
+        coffeeShopsCount = coffeeShopsCount,
+        coffeeProductsCount = coffeeProductsCount,
+        availableCoffeeProducts = availableCoffeeProducts,
+        tags = tags.sortedBy { it.sortOrder }.map { it.toDomain(fileUrls) },
+        description = description,
+        sortOrder = sortOrder,
+    )
+
     fun ShortShopDto.toDomain() = CoffeeShop(
         id = address.slug,
         publicAddress = address.toDomain(),
@@ -42,7 +58,7 @@ internal object ShopMapper {
         isOpen = isOpen,
         isNew = isNew,
         isVisited = isVisited,
-        reviewCount = reviewCount,
+        reviewCount = checkInCount,
         tags = extractBackendTags(tags, shopTags)
             .ifEmpty { (brewMethods + beans).mapNotNull { it.name?.takeIf(String::isNotBlank) } }
             .take(3),
@@ -66,7 +82,7 @@ internal object ShopMapper {
             isOpen = isOpen,
             isNew = isNew,
             isVisited = isVisited,
-            reviewCount = reviewCount,
+            reviewCount = checkInCount,
             tags = extractBackendTags(tags, shopTags)
                 .ifEmpty {
                     (brewMethods + coffeeBeans)
@@ -98,33 +114,11 @@ internal object ShopMapper {
             )
         }.sortedBy { it.sortIndex },
         reviews = reviews.map { it.toDomain(fileUrls) },
+        checkIns = checkIns.map { checkIn ->
+            checkIn.toDomain(fileUrls).let { it.copy(shopName = it.shopName.ifBlank { name.orEmpty() }) }
+        },
         userCheckIns = userCheckIns.map { checkIn ->
-            CheckIn(
-                drinkSlug = checkIn.drinkSlug,
-                customDrinkName = checkIn.customDrinkName,
-                drinkNameRu = checkIn.drinkNameRu,
-                drinkNameEn = checkIn.drinkNameEn,
-                id = checkIn.id,
-                shopId = checkIn.shop?.slug.orEmpty(),
-                shopName = checkIn.shopName.orEmpty().ifBlank { name.orEmpty() },
-                note = checkIn.note.orEmpty(),
-                createdAt = checkIn.createdAt,
-                reviewId = checkIn.reviewId,
-                visitedAt = checkIn.visitedAt,
-                photoUrls = checkIn.photos.mapNotNull { photo ->
-                    fileUrls.resolve(photo.storageKey, photo.urls.variantOr(photo.fullUrl) { it.fullscreen })
-                },
-                photoThumbnailUrls = checkIn.photos.mapNotNull { photo ->
-                    fileUrls.resolve(photo.storageKey, photo.urls.variantOr(photo.fullUrl) { it.thumbnail })
-                },
-                rating = checkIn.rating?.let { rating ->
-                    ReviewRating(
-                        place = rating.place,
-                        service = rating.service,
-                        coffee = rating.coffee,
-                    )
-                },
-            )
+            checkIn.toDomain(fileUrls).let { it.copy(shopName = it.shopName.ifBlank { name.orEmpty() }) }
         },
         contact = shopContact?.let { c ->
             com.coffeepeek.domain.model.ShopContact(
@@ -139,15 +133,7 @@ internal object ShopMapper {
             CatalogItem(id = it.key, name = it.name.orEmpty(), slug = it.key, photoUrl = it.photoUrl, address = it.address?.toDomain())
         },
         coffeeBeans = coffeeBeans.mapNotNull { it.name?.takeIf(String::isNotBlank) },
-        roasters = roasters.map {
-            CatalogItem(
-                id = it.key,
-                name = it.name.orEmpty(),
-                slug = it.key,
-                photoUrl = it.photoUrl,
-                address = it.address?.toDomain(),
-            )
-        },
+        roasters = roasters.map { it.toDomain(fileUrls) },
         equipment = equipments.mapNotNull { it.name?.takeIf(String::isNotBlank) },
         equipmentItems = equipments.map {
             CatalogItem(id = it.key, name = it.name.orEmpty(), slug = it.key, photoUrl = it.photoUrl, address = it.address?.toDomain())
