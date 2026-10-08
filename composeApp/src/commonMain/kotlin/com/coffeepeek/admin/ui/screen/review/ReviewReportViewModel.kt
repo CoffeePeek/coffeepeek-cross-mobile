@@ -3,6 +3,7 @@ package com.coffeepeek.admin.ui.screen.review
 import com.coffeepeek.admin.base.BaseViewModel
 import com.coffeepeek.admin.ui.Navigator
 import com.coffeepeek.domain.repository.ReviewRepository
+import com.coffeepeek.domain.repository.CheckInRepository
 import com.coffeepeek.domain.repository.SessionRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -11,6 +12,7 @@ import kotlinx.coroutines.launch
 
 data class ReviewReportUiState(
     val text: String = "",
+    val isPreview: Boolean = false,
     val isSubmitting: Boolean = false,
     val isSubmitted: Boolean = false,
     val error: String? = null,
@@ -20,8 +22,11 @@ class ReviewReportViewModel(
     private val reviewId: String,
     private val reviews: ReviewRepository,
     private val sessions: SessionRepository,
+    private val isPreview: Boolean = false,
+    private val checkIns: CheckInRepository,
+    private val isCheckIn: Boolean = false,
 ) : BaseViewModel() {
-    private val _state = MutableStateFlow(ReviewReportUiState())
+    private val _state = MutableStateFlow(ReviewReportUiState(isPreview = isPreview))
     val state = _state.asStateFlow()
 
     fun updateText(text: String) {
@@ -36,6 +41,10 @@ class ReviewReportViewModel(
             _state.update { it.copy(error = "Опишите проблему: от 1 до 2000 символов") }
             return
         }
+        if (isPreview) {
+            _state.update { it.copy(isSubmitted = true, text = "", error = null) }
+            return
+        }
         _state.update { it.copy(isSubmitting = true, error = null) }
         workScope.launch {
             if (requireAuthSession(sessions) == null) {
@@ -43,7 +52,8 @@ class ReviewReportViewModel(
                 Navigator.navigate(Navigator.Screen.Auth)
                 return@launch
             }
-            reviews.submitReviewReport(reviewId, text).onSuccess {
+            val result = if (isCheckIn) checkIns.report(reviewId, text) else reviews.submitReviewReport(reviewId, text)
+            result.onSuccess {
                 _state.update { it.copy(isSubmitting = false, isSubmitted = true, text = "") }
             }.onFailure { error ->
                 _state.update { it.copy(isSubmitting = false, error = error.message ?: "Не удалось отправить жалобу. Попробуйте ещё раз") }

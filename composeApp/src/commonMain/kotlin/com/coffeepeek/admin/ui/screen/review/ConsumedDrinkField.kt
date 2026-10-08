@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.stateDescription
@@ -22,6 +23,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import com.coffeepeek.admin.ui.component.ReviewTextInput
 import com.coffeepeek.domain.model.ConsumedDrinkOption
+import com.coffeepeek.domain.model.savedDrinkName
 import com.coffeepeek.domain.model.validateConsumedDrink
 
 @Composable
@@ -33,10 +35,21 @@ internal fun ConsumedDrinkField(
     error: String?,
     onRetry: () -> Unit,
     onChange: (String?, String?) -> Unit,
+    savedNameEn: String? = null,
 ) {
     var expanded by remember { mutableStateOf(false) }
+    val language = Locale.current.language
     val selected = drinks.find { it.slug == slug }
-    val label = savedName ?: selected?.nameRu?.ifBlank { selected.nameEn } ?: slug ?: "Не выбран"
+    val selectedName = selected?.let { drink ->
+        if (language == "en") drink.nameEn.ifBlank { drink.nameRu }
+        else drink.nameRu.ifBlank { drink.nameEn }
+    }
+    val label = when (slug) {
+        null -> "Не выбран"
+        "other" -> customName?.takeIf { it.isNotBlank() }
+            ?: selectedName ?: if (language == "en") "Other" else "Другое"
+        else -> savedDrinkName(savedName, savedNameEn, null, language) ?: selectedName ?: slug
+    }
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text("Напиток", style = MaterialTheme.typography.labelMedium)
         Box(Modifier.fillMaxWidth()) {
@@ -69,7 +82,9 @@ internal fun ConsumedDrinkField(
                     DrinkMenuItem(label, true) { expanded = false }
                 }
                 drinks.forEach { drink ->
-                    DrinkMenuItem(drink.nameRu.ifBlank { drink.nameEn }, drink.slug == slug) {
+                    val drinkName = if (language == "en") drink.nameEn.ifBlank { drink.nameRu }
+                        else drink.nameRu.ifBlank { drink.nameEn }
+                    DrinkMenuItem(drinkName, drink.slug == slug) {
                         if (drink.slug != slug) {
                             onChange(drink.slug, if (drink.slug == "other") "" else null)
                         }

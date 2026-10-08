@@ -9,9 +9,6 @@ import io.ktor.client.HttpClient
 import io.ktor.client.HttpClientConfig
 import io.ktor.client.plugins.HttpSend
 import io.ktor.client.plugins.HttpTimeout
-import io.ktor.client.plugins.auth.Auth
-import io.ktor.client.plugins.auth.providers.BearerTokens
-import io.ktor.client.plugins.auth.providers.bearer
 import io.ktor.client.plugins.cache.HttpCache
 import io.ktor.client.plugins.cache.storage.CacheStorage
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
@@ -59,33 +56,14 @@ class CoffeePeekClient(
         install(ContentNegotiation) { json(json = JsonExt.json) }
         defaultRequest { url(baseUrl) }
 
-        install(Auth) {
-            bearer {
-                loadTokens {
-                    resolveTokens()?.let { BearerTokens(it.accessToken, it.refreshToken) }
-                }
-                refreshTokens {
-                    val oldTokens = resolveTokens() ?: return@refreshTokens null
-                    if (oldTokens.refreshToken.isBlank()) {
-                        persistTokens(null)
-                        return@refreshTokens null
-                    }
-                    try {
-                        val newTokens = tokenRefreshService.refresh(oldTokens.refreshToken).getOrThrow()
-                        persistTokens(newTokens)
-                        BearerTokens(newTokens.accessToken, newTokens.refreshToken)
-                    } catch (_: Exception) {
-                        persistTokens(null)
-                        null
-                    }
-                }
-            }
+        configureSessionAuthentication(baseUrl, ::resolveTokens, ::persistTokens) {
+            tokenRefreshService.refresh(it).getOrThrow()
         }
 
         install(HttpCache) {
             createHttpCacheStorage(cacheFolderPath)?.let(::publicStorage)
         }
-    }.also { intercept(it) }
+    }.also { it.readCurrentSessionForRequests(); intercept(it) }
 
     val authService: AuthService by lazy { AuthService(client, plainClient) }
 

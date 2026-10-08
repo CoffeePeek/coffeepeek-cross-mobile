@@ -71,6 +71,7 @@ data class FeedUiState(
     val isLoadingMore: Boolean = false,
     val error: String? = null,
     val query: String = "",
+    val isSearchActive: Boolean = false,
     val filters: FeedFiltersUi = FeedFiltersUi(),
     val cities: List<City> = emptyList(),
     val beans: List<CatalogItem> = emptyList(),
@@ -83,6 +84,9 @@ data class FeedUiState(
     val totalPages: Int = 1,
     val hasMore: Boolean = false,
 ) {
+    val showDiscovery: Boolean
+        get() = !isSearchActive && query.isBlank() && activeFilterCount == 0
+
     val activeFilterCount: Int
         get() = filters.activeFilterCount
 
@@ -177,6 +181,15 @@ class FeedViewModel(
     fun onQueryChange(query: String) {
         _uiState.update { it.copy(query = query) }
         queryFlow.value = query
+    }
+
+    fun activateSearch() {
+        _uiState.update { it.copy(isSearchActive = true) }
+    }
+
+    fun cancelSearch() {
+        if (_uiState.value.activeFilterCount > 0) clearFilters() else onQueryChange("")
+        _uiState.update { it.copy(isSearchActive = false) }
     }
 
     fun toggleFilters() {
@@ -352,7 +365,7 @@ class FeedViewModel(
             val filters = current.filters
             shopRepository.searchShops(
                 ShopFilters(
-                    query = current.query.takeIf { it.isNotBlank() },
+                    query = current.query.trim().takeIf { it.isNotBlank() },
                     cityId = filters.cityId,
                     coffeeFocus = filters.coffeeFocus,
                     roasterIds = filters.roasterIds.toList(),

@@ -45,6 +45,10 @@ class PhotoApiService(
         requests: List<PhotoRequestDto>,
     ): Result<List<GenerateUploadUrlDto>> = requestPhotoUploadUrls("/api/Photos/review", requests)
 
+    suspend fun requestCheckInPhotoUploadUrls(
+        requests: List<PhotoRequestDto>,
+    ): Result<List<GenerateUploadUrlDto>> = requestPhotoUploadUrls("/api/Photos/check-in", requests)
+
     suspend fun requestMenuPhotoUploadUrls(
         requests: List<PhotoRequestDto>,
     ): Result<List<GenerateUploadUrlDto>> = requestPhotoUploadUrls("/api/Photos/menu", requests)

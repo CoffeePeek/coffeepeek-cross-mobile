@@ -7,6 +7,7 @@ import com.adamglin.phosphoricons.Regular
 import com.adamglin.phosphoricons.fill.Heart as FillHeart
 import com.adamglin.phosphoricons.fill.Star as FillStar
 import com.adamglin.phosphoricons.regular.ArrowLeft
+import com.adamglin.phosphoricons.regular.ArrowsOutSimple
 import com.adamglin.phosphoricons.regular.Avocado
 import com.adamglin.phosphoricons.regular.Bread
 import com.adamglin.phosphoricons.regular.CalendarBlank
@@ -23,7 +24,11 @@ import com.adamglin.phosphoricons.regular.CheckCircle
 import com.adamglin.phosphoricons.regular.Clock
 import com.adamglin.phosphoricons.regular.Coffee
 import com.adamglin.phosphoricons.regular.CoffeeBean
+import com.adamglin.phosphoricons.regular.Coins
 import com.adamglin.phosphoricons.regular.Copy
+import com.adamglin.phosphoricons.regular.Drop
+import com.adamglin.phosphoricons.regular.DotsThreeVertical
+import com.adamglin.phosphoricons.regular.DotsThree
 import com.adamglin.phosphoricons.regular.Envelope
 import com.adamglin.phosphoricons.regular.Egg
 import com.adamglin.phosphoricons.regular.InstagramLogo
@@ -31,6 +36,7 @@ import com.adamglin.phosphoricons.regular.Eye
 import com.adamglin.phosphoricons.regular.EyeSlash
 import com.adamglin.phosphoricons.regular.SlidersHorizontal
 import com.adamglin.phosphoricons.regular.Factory
+import com.adamglin.phosphoricons.regular.Fire
 import com.adamglin.phosphoricons.regular.Footprints
 import com.adamglin.phosphoricons.regular.GearSix
 import com.adamglin.phosphoricons.regular.GrainsSlash
@@ -66,14 +72,19 @@ import com.adamglin.phosphoricons.regular.Star
 import com.adamglin.phosphoricons.regular.Sun
 import com.adamglin.phosphoricons.regular.ThumbsUp
 import com.adamglin.phosphoricons.regular.Trash
+import com.adamglin.phosphoricons.regular.Users
 import com.adamglin.phosphoricons.regular.User
 import com.adamglin.phosphoricons.regular.WarningCircle
 import com.adamglin.phosphoricons.regular.X
 
 object CpIcons {
+    val MoreVertical: ImageVector get() = PhosphorIcons.Regular.DotsThreeVertical
+    val MoreHorizontal: ImageVector get() = PhosphorIcons.Regular.DotsThree
+    val Community: ImageVector get() = PhosphorIcons.Regular.Users
     val Add: ImageVector get() = PhosphorIcons.Regular.Plus
     val Avocado: ImageVector get() = PhosphorIcons.Regular.Avocado
     val Back: ImageVector get() = PhosphorIcons.Regular.ArrowLeft
+    val Expand: ImageVector get() = PhosphorIcons.Regular.ArrowsOutSimple
     val Bread: ImageVector get() = PhosphorIcons.Regular.Bread
     val Calendar: ImageVector get() = PhosphorIcons.Regular.CalendarBlank
     val Camera: ImageVector get() = PhosphorIcons.Regular.Camera
@@ -88,12 +99,15 @@ object CpIcons {
     val Close: ImageVector get() = PhosphorIcons.Regular.X
     val Coffee: ImageVector get() = PhosphorIcons.Regular.Coffee
     val CoffeeBean: ImageVector get() = PhosphorIcons.Regular.CoffeeBean
+    val Coins: ImageVector get() = PhosphorIcons.Regular.Coins
     val Copy: ImageVector get() = PhosphorIcons.Regular.Copy
+    val Drop: ImageVector get() = PhosphorIcons.Regular.Drop
     val Delete: ImageVector get() = PhosphorIcons.Regular.Trash
     val Email: ImageVector get() = PhosphorIcons.Regular.Envelope
     val Egg: ImageVector get() = PhosphorIcons.Regular.Egg
     val Error: ImageVector get() = PhosphorIcons.Regular.WarningCircle
     val Factory: ImageVector get() = PhosphorIcons.Regular.Factory
+    val Fire: ImageVector get() = PhosphorIcons.Regular.Fire
     val Favorite: ImageVector get() = PhosphorIcons.Regular.Heart
     val FavoriteFilled: ImageVector get() = PhosphorIcons.Fill.FillHeart
     val Filter: ImageVector get() = PhosphorIcons.Regular.SlidersHorizontal

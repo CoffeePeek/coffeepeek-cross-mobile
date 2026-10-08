@@ -42,14 +42,23 @@
     <string name="go_to_login">На страницу входа</string>
 
     <string name="profile_version">Версия</string>
+    <string name="favorite_add">Добавить в избранное</string>
+    <string name="favorite_remove">Убрать из избранного</string>
+    <string name="favorites_empty">Пока нет избранных кофеен и обжарщиков</string>
+    <string name="favorites_roasters">Обжарщики</string>
+    <string name="favorites_profile_title">Избранное</string>
+    <string name="favorites_profile_description">Кофейни и обжарщики, которые вы сохранили</string>
+    <string name="shop_report_prompt">Заметили ошибку в информации о кофейне?</string>
+    <string name="shop_report_hint">Помогите нам сделать CoffeePeek лучше</string>
+    <string name="shop_report_issue">Сообщить об ошибке</string>
     <string name="retry">Попробовать снова</string>
     <string name="checkin_title">Отметить посещение</string>
     <string name="checkin_note_hint_private">Заметка</string>
-    <string name="checkin_note_hint_public">Комментарий к отзыву</string>
-    <string name="checkin_public_title">Публичный чек-ин</string>
-    <string name="checkin_public_hint">Появится в ленте как отзыв — нужен комментарий</string>
-    <string name="checkin_error_note_required">Для публичного чек-ина добавьте комментарий</string>
-    <string name="checkin_submit">Сохранить чек-ин</string>
+    <string name="checkin_note_hint_public">Заметка</string>
+    <string name="checkin_public_title">Публичный чекин</string>
+    <string name="checkin_public_hint">Появится в ленте после модерации</string>
+    <string name="checkin_error_note_required">Добавьте заметку о визите</string>
+    <string name="checkin_submit">Сохранить чекин</string>
     <string name="checkin_sheet_title">Чекин</string>
     <string name="checkin_rating_coffee">Кофе</string>
     <string name="checkin_rating_service">Сервис</string>
@@ -59,7 +68,7 @@
     <string name="checkin_note_placeholder">Расскажите о вашем визите…</string>
     <string name="checkin_photos_label">Фото</string>
     <string name="checkin_public_switch_title">Сделать публичным</string>
-    <string name="checkin_public_switch_hint">Ваш чекин станет отзывом — нужны заголовок и описание</string>
+    <string name="checkin_public_switch_hint">Публичный чекин появится в ленте после модерации. Скрытый виден только вам.</string>
     <string name="checkin_header_label">Заголовок</string>
     <string name="checkin_header_placeholder">Кратко опишите впечатление</string>
     <string name="checkin_description_label">Описание</string>

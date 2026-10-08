@@ -1,6 +1,13 @@
 package com.coffeepeek.admin.ui.screen.shop
 
 import com.coffeepeek.admin.ui.icons.CpIcons
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -14,18 +21,20 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -43,6 +52,7 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.SnackbarHost
@@ -58,14 +68,14 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.blur
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.contentDescription
-import com.coffeepeek.admin.ui.component.liquidGlass
+import androidx.compose.ui.semantics.Role
 import com.coffeepeek.admin.ui.component.GlassControlIcon
 import com.coffeepeek.admin.ui.component.PlatformGlassIconButton
 import com.coffeepeek.admin.ui.component.SwipeablePhotoStack
@@ -84,8 +94,12 @@ import com.coffeepeek.admin.utils.utcIsoToLocalDate
 import com.coffeepeek.admin.utils.formatOneDecimal
 import coffeepeek.composeapp.generated.resources.Res
 import coffeepeek.composeapp.generated.resources.maskot_with_book
+import coffeepeek.composeapp.generated.resources.shop_report_issue
+import coffeepeek.composeapp.generated.resources.shop_report_hint
+import coffeepeek.composeapp.generated.resources.shop_report_prompt
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.stringResource
 import com.coffeepeek.admin.location.distanceToShopMeters
 import com.coffeepeek.admin.location.formatDistance
 import com.coffeepeek.admin.location.rememberPermittedUserLocation
@@ -95,25 +109,26 @@ import com.coffeepeek.admin.ui.Navigator
 import com.coffeepeek.admin.ui.component.brewMethodIcon
 import com.coffeepeek.admin.ui.component.CoffeeShopImage
 import com.coffeepeek.admin.ui.component.CoffeeShopPlaceholderImage
-import com.coffeepeek.admin.ui.component.CheckInDisplayCard
 import com.coffeepeek.admin.ui.component.GuestAuthCard
-import com.coffeepeek.admin.ui.component.ReviewDisplayCard
+import com.coffeepeek.admin.ui.component.CheckInDisplayCard
 import com.coffeepeek.admin.utils.currentLocalDayOfWeek
 import com.coffeepeek.admin.utils.currentLocalMinuteOfDay
-import com.coffeepeek.admin.ui.component.PriceBynRow
 import com.coffeepeek.admin.ui.component.PriceBynIcon
+import com.coffeepeek.admin.ui.component.PriceBynRow
+import com.coffeepeek.admin.ui.component.priceLevelHint
+import com.coffeepeek.admin.ui.component.priceLevelValue
 import com.coffeepeek.admin.ui.component.priceRangeLevel
 import com.coffeepeek.admin.ui.component.shopTagIcon
 import com.coffeepeek.admin.ui.component.FullScreenImageDialog
 import com.coffeepeek.admin.ui.component.CoffeePeekLoader
-import com.coffeepeek.admin.ui.screen.review.CreateReviewBottomSheet
-import com.coffeepeek.admin.ui.screen.review.EditReviewBottomSheet
+import com.coffeepeek.admin.ui.component.OutlinedContentCard
+import com.coffeepeek.admin.ui.component.RoasterLinkRow
+import com.coffeepeek.admin.ui.component.SectionTitle
 import com.coffeepeek.admin.utils.OpenInBrowser
 import com.coffeepeek.domain.model.CatalogItem
-import com.coffeepeek.domain.model.CheckIn
 import com.coffeepeek.domain.model.CoffeeShopDetails
 import com.coffeepeek.domain.model.CoffeeShopType
-import com.coffeepeek.domain.model.Review
+import com.coffeepeek.domain.model.CheckIn
 import com.coffeepeek.domain.model.ShopContact
 import com.coffeepeek.domain.model.ShopMenu
 import com.coffeepeek.domain.model.ShopMenuItem
@@ -158,23 +173,6 @@ fun ShopDetailScreen(shopId: String) {
                 onDraftChange = vm::updateCheckInDraft,
                 onSubmit = vm::checkIn,
                 placeName = state.details?.shop?.title,
-            )
-        }
-    }
-
-    if (state.showReviewSheet) {
-        val reviewId = state.editingReviewId
-        if (reviewId == null) {
-            CreateReviewBottomSheet(
-                shopId = shopId,
-                placeName = state.details?.shop?.title,
-                onDismiss = vm::dismissReviewSheet,
-            )
-        } else {
-            EditReviewBottomSheet(
-                reviewId = reviewId,
-                placeName = state.details?.shop?.title,
-                onDismiss = vm::dismissReviewSheet,
             )
         }
     }
@@ -238,6 +236,7 @@ fun ShopDetailScreen(shopId: String) {
                         modifier = Modifier.padding(padding),
                         bottomContentPadding = floatingActionsClearance,
                         onOpenOnMap = vm::openOnMap,
+                        onReportIssue = vm::openReportIssue,
                         onCopyPhone = vm::copyPhone,
                         onOpenPhotos = { urls, index -> preview = urls to index },
                         onReviewPhotoClick = { urls, index -> preview = urls to index },
@@ -266,7 +265,6 @@ fun ShopDetailScreen(shopId: String) {
                 canOpenRoute = details.location?.latitude != null &&
                     details.location?.longitude != null,
                 onRoute = vm::openRoute,
-                onReview = vm::openReviewAction,
                 onCheckIn = vm::openCheckInSheet,
                 modifier = Modifier.align(Alignment.BottomCenter),
             )
@@ -284,6 +282,7 @@ private fun ShopDetailContent(
     modifier: Modifier = Modifier,
     bottomContentPadding: Dp = CpDimens.spacing4,
     onOpenOnMap: () -> Unit = {},
+    onReportIssue: () -> Unit = {},
     onCopyPhone: (String) -> Unit = {},
     onOpenPhotos: (List<String>, Int) -> Unit = { _, _ -> },
     onReviewPhotoClick: (List<String>, Int) -> Unit = { _, _ -> },
@@ -312,29 +311,15 @@ private fun ShopDetailContent(
                     title = shop.title,
                     address = details.location?.address ?: shop.address,
                     distance = distance,
+                    rating = shop.rating,
+                    reviewCount = shop.reviewCount,
+                    priceRange = shop.priceRange,
                     shopType = shop.type,
                     canOpenMap = details.location?.latitude != null &&
                         details.location?.longitude != null,
                     onOpenOnMap = onOpenOnMap,
+                    onOpenReviews = { Navigator.navigate(Navigator.Screen.ShopReviews(shop.id)) },
                     onPhotoClick = { url -> onOpenPhotos(fullscreenPhotos, photos.indexOf(url).coerceAtLeast(0)) },
-                )
-            }
-        }
-
-        item {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = CpDimens.spacing4)
-                    .padding(top = CpDimens.spacing5, bottom = CpDimens.spacing4),
-                verticalArrangement = Arrangement.spacedBy(CpDimens.spacing4),
-            ) {
-                ShopStatsRow(
-                    rating = shop.rating,
-                    reviewCount = shop.reviewCount,
-                    isOpen = shop.isOpen,
-                    priceRange = shop.priceRange,
-                    schedules = details.schedules,
                 )
             }
         }
@@ -342,23 +327,6 @@ private fun ShopDetailContent(
         details.description?.trim()?.takeIf { it.isNotBlank() }?.let { description ->
             item {
                 DescriptionSection(description = description)
-            }
-        }
-
-        details.menu?.takeIf { menu ->
-            groupedPresentItems(menu.items).isNotEmpty() || menu.photos.isNotEmpty()
-        }?.let { menu ->
-            item {
-                MenuSection(
-                    menu = menu,
-                    onPhotoClick = { index -> onOpenPhotos(menu.photos.map { it.fullUrl }, index) },
-                )
-            }
-        }
-
-        if (details.schedules.isNotEmpty()) {
-            item {
-                CollapsibleScheduleSection(schedules = details.schedules)
             }
         }
 
@@ -379,6 +347,23 @@ private fun ShopDetailContent(
             }
         }
 
+        if (details.schedules.isNotEmpty()) {
+            item {
+                CollapsibleScheduleSection(schedules = details.schedules, isOpen = shop.isOpen)
+            }
+        }
+
+        details.menu?.takeIf { menu ->
+            groupedPresentItems(menu.items).isNotEmpty() || menu.photos.isNotEmpty()
+        }?.let { menu ->
+            item {
+                MenuSection(
+                    menu = menu,
+                    onPhotoClick = { index -> onOpenPhotos(menu.photos.map { it.fullUrl }, index) },
+                )
+            }
+        }
+
         details.contact?.let { contact ->
             if (contact.hasAny()) {
                 item {
@@ -390,34 +375,30 @@ private fun ShopDetailContent(
             }
         }
 
-        if (details.userCheckIns.isNotEmpty()) {
+        val features = shopFeatureItems(details)
+        if (features.isNotEmpty()) {
             item {
-                CheckInsSection(
-                    checkIns = details.userCheckIns,
-                    onPhotoClick = onReviewPhotoClick,
-                )
+                ShopFeaturesSection(features = features)
             }
         }
 
         item {
             ReviewsSection(
-                reviews = details.reviews,
+                checkIns = details.checkIns,
                 overallRating = shop.rating,
                 reviewCount = shop.reviewCount,
                 shopId = shop.id,
                 shopTitle = shop.title,
                 isLoggedIn = isLoggedIn,
                 currentUserId = currentUserId,
+                ownCheckInIds = details.userCheckIns.mapTo(mutableSetOf()) { it.id },
                 onReviewPhotoClick = onReviewPhotoClick,
                 onReviewHelpfulClick = onReviewHelpfulClick,
             )
         }
 
-        val features = shopFeatureItems(details)
-        if (features.isNotEmpty()) {
-            item {
-                ShopFeaturesSection(features = features)
-            }
+        item {
+            ReportIssueSection(onReportIssue = onReportIssue)
         }
 
         item { Spacer(Modifier.height(CpDimens.spacing6)) }
@@ -430,86 +411,86 @@ private fun ShopHeroImage(
     title: String,
     address: String?,
     distance: String?,
+    rating: Double?,
+    reviewCount: Int,
+    priceRange: String?,
     shopType: String,
     canOpenMap: Boolean,
     onOpenOnMap: () -> Unit,
+    onOpenReviews: () -> Unit,
     onPhotoClick: (String) -> Unit,
 ) {
     var currentPhotoIndex by remember(photos) { mutableStateOf(0) }
     val heroShape = RoundedCornerShape(
-        bottomStart = CpDimens.radius3xl,
-        bottomEnd = CpDimens.radius3xl,
+        bottomStart = CpDimens.radiusLg,
+        bottomEnd = CpDimens.radiusLg,
     )
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(300.dp)
-            .clip(heroShape)
-            .background(MaterialTheme.colorScheme.surfaceVariant),
-    ) {
-        if (photos.size <= 1) {
-            val coverUrl = photos.firstOrNull()
-            if (!coverUrl.isNullOrBlank()) {
-                CoffeeShopImage(
-                    imageUrl = coverUrl,
-                    contentDescription = title,
-                    contentScale = ContentScale.Crop,
-                    placeholderLabelSize = 24.sp,
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .clickable { onPhotoClick(coverUrl) },
-                )
-            } else {
-                CoffeeShopPlaceholderImage(
-                    labelSize = 24.sp,
-                    contentDescription = "Фото $title отсутствует",
-                )
-            }
-        } else {
-            PhotoGallery(
-                photos = photos,
-                title = title,
-                onPhotoClick = onPhotoClick,
-                onPageChanged = { currentPhotoIndex = it },
-            )
-        }
-
+    Column(Modifier.fillMaxWidth()) {
         Box(
             modifier = Modifier
-                .fillMaxSize()
-                .background(
-                    Brush.verticalGradient(
-                        colors = listOf(Color.Black.copy(alpha = 0.2f), Color.Transparent, Color.Black.copy(alpha = 0.35f)),
+                .fillMaxWidth()
+                .height(300.dp)
+                .clip(heroShape)
+                .background(MaterialTheme.colorScheme.surfaceVariant),
+        ) {
+            if (photos.size <= 1) {
+                val coverUrl = photos.firstOrNull()
+                if (!coverUrl.isNullOrBlank()) {
+                    CoffeeShopImage(
+                        imageUrl = coverUrl,
+                        contentDescription = title,
+                        contentScale = ContentScale.Crop,
+                        placeholderLabelSize = 24.sp,
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .clickable { onPhotoClick(coverUrl) },
                     )
+                } else {
+                    CoffeeShopPlaceholderImage(
+                        labelSize = 24.sp,
+                        contentDescription = "Фото $title отсутствует",
+                    )
+                }
+            } else {
+                PhotoGallery(
+                    photos = photos,
+                    title = title,
+                    onPhotoClick = onPhotoClick,
+                    onPageChanged = { currentPhotoIndex = it },
                 )
-        )
+            }
+
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(
+                        Brush.verticalGradient(
+                            colors = listOf(Color.Black.copy(alpha = 0.2f), Color.Transparent, Color.Black.copy(alpha = 0.35f)),
+                        )
+                    )
+            )
+            if (photos.isNotEmpty()) {
+                PhotoCounter(
+                    current = currentPhotoIndex + 1,
+                    total = photos.size,
+                    modifier = Modifier.align(Alignment.BottomEnd).padding(CpDimens.spacing3),
+                )
+            }
+        }
 
         HeroShopDetails(
             title = title,
             address = address,
             distance = distance,
+            rating = rating,
+            reviewCount = reviewCount,
+            priceRange = priceRange,
+            shopType = shopType,
             canOpenMap = canOpenMap,
             onOpenOnMap = onOpenOnMap,
-            modifier = Modifier
-                .align(Alignment.BottomStart)
-                .padding(start = CpDimens.spacing4, end = 116.dp, bottom = CpDimens.spacing4),
+            onOpenReviews = onOpenReviews,
+            modifier = Modifier.padding(horizontal = CpDimens.spacing4, vertical = CpDimens.spacing3),
         )
-
-        Column(
-            modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .padding(end = CpDimens.spacing4, bottom = CpDimens.spacing4),
-            horizontalAlignment = Alignment.End,
-            verticalArrangement = Arrangement.spacedBy(CpDimens.spacing2),
-        ) {
-            ShopTypeBadge(shopType = shopType)
-            if (photos.isNotEmpty()) {
-                PhotoCounter(
-                    current = currentPhotoIndex + 1,
-                    total = photos.size,
-                )
-            }
-        }
     }
 }
 
@@ -561,65 +542,254 @@ private fun HeroShopDetails(
     title: String,
     address: String?,
     distance: String?,
+    rating: Double?,
+    reviewCount: Int,
+    priceRange: String?,
+    shopType: String,
     canOpenMap: Boolean,
     onOpenOnMap: () -> Unit,
+    onOpenReviews: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val priceLevel = priceRange?.takeIf { it.isNotBlank() }?.let(::priceRangeLevel)
+    val ratingLabel = rating?.takeIf { it > 0.0 }?.let(::formatOneDecimal)
+    var showPriceInfo by remember { mutableStateOf(false) }
+
+    if (showPriceInfo && priceLevel != null) {
+        ShopPriceInfoSheet(selectedLevel = priceLevel, onDismiss = { showPriceInfo = false })
+    }
+
     Column(
-        modifier = modifier,
-        verticalArrangement = Arrangement.spacedBy(CpDimens.spacing1),
+        modifier = modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(CpDimens.spacing2),
     ) {
-        Text(
-            text = title,
-            style = MaterialTheme.typography.headlineLarge.copy(
-                fontSize = 28.sp,
-                lineHeight = 32.sp,
-                letterSpacing = (-0.5).sp,
-                fontWeight = FontWeight.Bold,
-            ),
-            color = Color.White,
-            maxLines = 2,
-            overflow = TextOverflow.Ellipsis,
-        )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(CpDimens.spacing2),
+        ) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.headlineLarge.copy(
+                    fontSize = 28.sp,
+                    lineHeight = 32.sp,
+                    letterSpacing = (-0.5).sp,
+                    fontWeight = FontWeight.Bold,
+                ),
+                color = MaterialTheme.colorScheme.onSurface,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.weight(1f),
+            )
+            ShopTypeBadge(shopType = shopType)
+        }
+
         val addressLabel = address?.takeIf { it.isNotBlank() }
             ?: if (canOpenMap) "Показать на карте" else null
         addressLabel?.let { label ->
             Row(
                 modifier = Modifier.clickable(enabled = canOpenMap, onClick = onOpenOnMap),
                 verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(CpDimens.spacing1),
             ) {
                 Icon(
                     imageVector = CpIcons.Location,
                     contentDescription = null,
-                    tint = Color.White,
-                    modifier = Modifier.size(18.dp),
+                    tint = MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier.size(14.dp),
                 )
-                Spacer(Modifier.width(CpDimens.spacing1))
                 Text(
                     text = label,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = Color.White,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis,
                     modifier = Modifier.weight(1f, fill = false),
                 )
             }
         }
-        distance?.let { label ->
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(
-                    imageVector = CpIcons.Distance,
-                    contentDescription = null,
-                    tint = Color.White,
-                    modifier = Modifier.size(18.dp),
+
+        Row(
+            modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Min),
+            horizontalArrangement = Arrangement.spacedBy(CpDimens.spacing2),
+        ) {
+            HeroInfoCard(
+                title = ratingLabel ?: "Нет оценок",
+                subtitle = reviewCountLabel(reviewCount),
+                icon = CpIcons.StarFilled,
+                iconTint = CpColor.Primary,
+                modifier = Modifier.weight(1.3f).fillMaxHeight(),
+                onClick = onOpenReviews,
+                showChevron = true,
+            )
+            distance?.let { label ->
+                HeroInfoCard(
+                    title = label,
+                    subtitle = "От вас",
+                    icon = CpIcons.Distance,
+                    iconTint = MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier.weight(1f).fillMaxHeight(),
                 )
-                Spacer(Modifier.width(CpDimens.spacing1))
+            }
+            priceLevel?.let { level ->
+                HeroInfoCard(
+                    title = priceLevelValue(level).orEmpty(),
+                    subtitle = "Средний чек",
+                    icon = CpIcons.Coins,
+                    iconTint = CpColor.Primary,
+                    modifier = Modifier.weight(1.2f).fillMaxHeight(),
+                    onClick = { showPriceInfo = true },
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun HeroInfoCard(
+    title: String,
+    subtitle: String,
+    icon: ImageVector,
+    iconTint: Color,
+    modifier: Modifier = Modifier,
+    onClick: (() -> Unit)? = null,
+    showChevron: Boolean = false,
+) {
+    Surface(
+        modifier = modifier,
+        shape = RoundedCornerShape(CpDimens.radiusLg),
+        color = MaterialTheme.colorScheme.surface,
+        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+    ) {
+        Row(
+            modifier = Modifier
+                .semantics(mergeDescendants = true) { contentDescription = "$title, $subtitle" }
+                .then(if (onClick != null) Modifier.clickable(role = Role.Button, onClick = onClick) else Modifier)
+                .heightIn(min = 48.dp)
+                .padding(CpDimens.spacing2),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
+        ) {
+            Icon(icon, contentDescription = null, tint = iconTint, modifier = Modifier.size(18.dp))
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 Text(
-                    text = "$label от вас",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = Color.White,
-                    maxLines = 1,
+                    text = title,
+                    style = MaterialTheme.typography.bodySmall.copy(fontSize = 11.sp, lineHeight = 14.sp),
+                    color = MaterialTheme.colorScheme.onSurface,
+                    maxLines = 2,
                     overflow = TextOverflow.Ellipsis,
+                )
+                Text(
+                    text = subtitle,
+                    style = MaterialTheme.typography.labelSmall.copy(fontSize = 11.sp, lineHeight = 14.sp),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
+            if (showChevron) {
+                Icon(
+                    imageVector = CpIcons.ChevronRight,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.size(12.dp),
+                )
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun ShopPriceInfoSheet(selectedLevel: Int, onDismiss: () -> Unit) {
+    ModalBottomSheet(onDismissRequest = onDismiss) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = CpDimens.spacing4)
+                .padding(bottom = CpDimens.spacing6),
+            verticalArrangement = Arrangement.spacedBy(CpDimens.spacing3),
+        ) {
+            SectionTitle("Средний чек")
+            for (level in 1..3) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(CpDimens.radiusLg))
+                        .background(if (level == selectedLevel) CpColor.PrimaryTint10 else Color.Transparent)
+                        .padding(CpDimens.spacing3),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(CpDimens.spacing3),
+                ) {
+                    PriceBynRow(level = level, iconSize = 16.dp, modifier = Modifier.width(64.dp))
+                    Text(
+                        text = priceLevelHint(level).orEmpty(),
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        modifier = Modifier.weight(1f),
+                    )
+                    if (level == selectedLevel) {
+                        Icon(
+                            imageVector = CpIcons.Check,
+                            contentDescription = "Уровень стоимости этой кофейни",
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(20.dp),
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ReportIssueSection(onReportIssue: () -> Unit) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = CpDimens.spacing4, vertical = CpDimens.spacing2),
+    ) {
+        OutlinedContentCard(contentPadding = PaddingValues(0.dp)) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable(
+                        onClickLabel = stringResource(Res.string.shop_report_issue),
+                        role = Role.Button,
+                        onClick = onReportIssue,
+                    )
+                    .heightIn(min = 56.dp)
+                    .padding(CpDimens.spacing4),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(CpDimens.spacing3),
+            ) {
+                Icon(
+                    imageVector = CpIcons.Info,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier.size(24.dp),
+                )
+                Column(
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(CpDimens.spacing1),
+                ) {
+                    Text(
+                        text = stringResource(Res.string.shop_report_prompt),
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.onSurface,
+                    )
+                    Text(
+                        text = stringResource(Res.string.shop_report_hint),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+                Icon(
+                    imageVector = CpIcons.ChevronRight,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.size(20.dp),
                 )
             }
         }
@@ -630,14 +800,13 @@ private fun HeroShopDetails(
 private fun ShopTypeBadge(shopType: String) {
     val label = when (shopType) {
         CoffeeShopType.SPECIALTY -> "SPECIALTY"
-        CoffeeShopType.CAFE -> "КАФЕ"
-        else -> "КОФЕЙНЯ"
+        CoffeeShopType.CAFE -> "Кафе"
+        else -> "Кофейня"
     }
     Surface(
-        shape = RoundedCornerShape(999.dp),
-        color = Color.Black.copy(alpha = 0.48f),
-        border = androidx.compose.foundation.BorderStroke(1.dp, CpColor.Primary),
-        tonalElevation = 0.dp,
+        shape = CircleShape,
+        color = MaterialTheme.colorScheme.surface,
+        border = androidx.compose.foundation.BorderStroke(1.dp, CpColor.Primary.copy(alpha = 0.5f)),
     ) {
         Row(
             modifier = Modifier.padding(horizontal = CpDimens.spacing2, vertical = CpDimens.spacing1),
@@ -648,32 +817,29 @@ private fun ShopTypeBadge(shopType: String) {
                 imageVector = CpIcons.Coffee,
                 contentDescription = null,
                 tint = CpColor.Primary,
-                modifier = Modifier.size(14.dp),
+                modifier = Modifier.size(12.dp),
             )
             Text(
                 text = label,
-                style = MaterialTheme.typography.labelSmall.copy(
-                    fontWeight = FontWeight.Bold,
-                    letterSpacing = 0.5.sp,
-                ),
-                color = Color.White,
+                style = MaterialTheme.typography.labelSmall.copy(fontSize = 11.sp),
+                color = MaterialTheme.colorScheme.onSurface,
             )
         }
     }
 }
 
 @Composable
-private fun PhotoCounter(current: Int, total: Int) {
+private fun PhotoCounter(current: Int, total: Int, modifier: Modifier = Modifier) {
     Surface(
-        shape = RoundedCornerShape(999.dp),
-        color = Color.Black.copy(alpha = 0.48f),
-        tonalElevation = 0.dp,
+        modifier = modifier.semantics { contentDescription = "Фото $current из $total" },
+        shape = CircleShape,
+        color = Color.Black.copy(alpha = 0.6f),
     ) {
         Text(
             text = "$current / $total",
-            style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold),
+            style = MaterialTheme.typography.labelSmall,
             color = Color.White,
-            modifier = Modifier.padding(horizontal = CpDimens.spacing3, vertical = CpDimens.spacing1),
+            modifier = Modifier.padding(horizontal = 10.dp, vertical = CpDimens.spacing1),
         )
     }
 }
@@ -736,159 +902,14 @@ private fun HeaderActionButtons(
     }
 }
 
-@Composable
-private fun ShopStatsRow(
-    rating: Double?,
-    reviewCount: Int,
-    isOpen: Boolean,
-    priceRange: String?,
-    schedules: List<ShopSchedule>,
-) {
-    val currentDay = currentLocalDayOfWeek()
-    val todaySchedule = remember(schedules, currentDay) {
-        schedules.firstOrNull { it.dayOfWeek == currentDay }
-    }
-    val closingTime = todaySchedule
-        ?.takeUnless { it.isClosed }
-        ?.intervals
-        ?.lastOrNull()
-        ?.closeTime
-        ?.let(::formatTime)
-        ?.takeIf { it.isNotBlank() }
-    val priceLevel = priceRangeLevel(priceRange)
-
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(CpDimens.spacing2),
-    ) {
-        StatCard(
-            modifier = Modifier.weight(1f),
-            containerColor = CpColor.PrimaryTint10,
-        ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(6.dp),
-            ) {
-                Icon(
-                    imageVector = CpIcons.StarFilled,
-                    contentDescription = null,
-                    tint = CpColor.Primary,
-                    modifier = Modifier.size(20.dp),
-                )
-                Text(
-                    text = formatOneDecimal(rating ?: 0.0),
-                    style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
-                    color = MaterialTheme.colorScheme.onSurface,
-                )
-            }
-            Text(
-                text = reviewCountLabel(reviewCount),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 1,
-            )
-        }
-
-        StatCard(
-            modifier = Modifier.weight(1f),
-            containerColor = if (isOpen) {
-                CpColor.Success.copy(alpha = 0.12f)
-            } else {
-                CpColor.Error.copy(alpha = 0.1f)
-            },
-        ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(6.dp),
-            ) {
-                Box(
-                    modifier = Modifier
-                        .size(8.dp)
-                        .clip(CircleShape)
-                        .background(if (isOpen) CpColor.Success else CpColor.Error),
-                )
-                Text(
-                    text = if (isOpen) "Открыта" else "Закрыта",
-                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
-                    color = if (isOpen) CpColor.Success else CpColor.Error,
-                    maxLines = 1,
-                )
-            }
-            Text(
-                text = when {
-                    isOpen && closingTime != null -> "до $closingTime"
-                    isOpen -> "Сегодня"
-                    else -> nextShopOpeningLabel(schedules, currentDay, currentLocalMinuteOfDay())
-                        ?: if (todaySchedule?.isClosed == true) "Сегодня выходной" else "Расписание не указано"
-                },
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis,
-            )
-        }
-
-        StatCard(
-            modifier = Modifier.weight(1f),
-            containerColor = MaterialTheme.colorScheme.surface,
-            showBorder = true,
-        ) {
-            if (priceLevel != null) {
-                PriceBynRow(level = priceLevel, iconSize = 18.dp)
-            } else {
-                Text(
-                    text = "—",
-                    style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
-                    color = MaterialTheme.colorScheme.onSurface,
-                )
-            }
-            Text(
-                text = "Средний чек",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 1,
-            )
-        }
-    }
-}
-
-@Composable
-private fun StatCard(
-    modifier: Modifier = Modifier,
-    containerColor: Color,
-    showBorder: Boolean = false,
-    content: @Composable ColumnScope.() -> Unit,
-) {
-    Surface(
-        modifier = modifier.height(76.dp),
-        shape = RoundedCornerShape(CpDimens.radiusLg),
-        color = containerColor,
-        border = if (showBorder) {
-            androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
-        } else {
-            null
-        },
-        tonalElevation = 0.dp,
-    ) {
-        Column(
-            modifier = Modifier.padding(
-                horizontal = CpDimens.spacing2,
-                vertical = CpDimens.spacing1,
-            ),
-            verticalArrangement = Arrangement.Center,
-            content = content,
-        )
-    }
-}
-
 private fun reviewCountLabel(count: Int): String {
     val mod10 = count % 10
     val mod100 = count % 100
     val word = when {
-        mod100 in 11..14 -> "отзывов"
-        mod10 == 1 -> "отзыв"
-        mod10 in 2..4 -> "отзыва"
-        else -> "отзывов"
+        mod100 in 11..14 -> "чекинов"
+        mod10 == 1 -> "чекин"
+        mod10 in 2..4 -> "чекина"
+        else -> "чекинов"
     }
     return "$count $word"
 }
@@ -956,91 +977,93 @@ private fun HeroIconButton(
 }
 
 @Composable
-private fun CollapsibleScheduleSection(schedules: List<ShopSchedule>) {
+private fun CollapsibleScheduleSection(schedules: List<ShopSchedule>, isOpen: Boolean) {
     var expanded by remember { mutableStateOf(false) }
-    val currentDay = remember { currentLocalDayOfWeek() }
+    val chevronRotation by animateFloatAsState(
+        targetValue = if (expanded) 90f else 0f,
+        animationSpec = tween(250),
+        label = "Schedule chevron",
+    )
+    val currentDay = currentLocalDayOfWeek()
     val orderedSchedules = remember(schedules) {
         schedules.sortedBy { schedule ->
             if (schedule.dayOfWeek == 0) 7 else schedule.dayOfWeek
         }
     }
-    val todayHours = remember(schedules, currentDay) {
-        schedules.firstOrNull { it.dayOfWeek == currentDay }
-            ?.let(::formatScheduleHours)
-            ?: "—"
+    val todaySchedule = schedules.firstOrNull { it.dayOfWeek == currentDay }
+    val closingTime = todaySchedule?.takeUnless { it.isClosed }
+        ?.intervals?.lastOrNull()?.closeTime?.let(::formatTime)
+        ?.takeIf { it.isNotBlank() }
+    val status = when {
+        isOpen && closingTime != null -> "Открыто до $closingTime"
+        isOpen -> "Открыто"
+        else -> nextShopOpeningLabel(schedules, currentDay, currentLocalMinuteOfDay())
+            ?: if (todaySchedule?.isClosed == true) "Сегодня выходной" else "Закрыто"
     }
 
-    Card(
+    Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = CpDimens.spacing4, vertical = 6.dp),
-        shape = RoundedCornerShape(CpDimens.radius2xl),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+            .padding(horizontal = CpDimens.spacing4, vertical = CpDimens.spacing3),
+        verticalArrangement = Arrangement.spacedBy(CpDimens.spacing3),
     ) {
-        Column(modifier = Modifier.padding(CpDimens.spacing4)) {
+        SectionTitle("Часы работы")
+        OutlinedContentCard {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .heightIn(min = 44.dp)
                     .clickable(
                         interactionSource = remember { MutableInteractionSource() },
                         indication = null,
                     ) { expanded = !expanded },
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Box(
-                    modifier = Modifier
-                        .size(44.dp)
-                        .clip(RoundedCornerShape(CpDimens.radiusMd))
-                        .background(CpColor.PrimaryTint10),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Icon(
-                        imageVector = CpIcons.Time,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.size(20.dp),
-                    )
-                }
-                Spacer(Modifier.width(CpDimens.spacing3))
+                Icon(
+                    imageVector = CpIcons.Time,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier.size(24.dp),
+                )
+                Spacer(Modifier.width(CpDimens.spacing4))
                 Text(
-                    text = "Часы работы",
-                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
+                    text = status,
+                    style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Medium),
                     color = MaterialTheme.colorScheme.onSurface,
                     modifier = Modifier.weight(1f),
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
                 )
-                if (!expanded) {
-                    Text(
-                        text = todayHours,
-                        style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Medium),
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.widthIn(max = 132.dp),
-                    )
-                    Spacer(Modifier.width(CpDimens.spacing2))
-                }
+                Spacer(Modifier.width(CpDimens.spacing2))
                 Icon(
-                    imageVector = if (expanded) CpIcons.ChevronUp else CpIcons.ChevronDown,
+                    imageVector = CpIcons.ChevronRight,
                     contentDescription = if (expanded) "Скрыть часы работы" else "Показать часы работы",
                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.size(18.dp),
+                    modifier = Modifier.size(18.dp).rotate(chevronRotation),
                 )
             }
 
-            if (expanded) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(start = 56.dp, top = CpDimens.spacing2),
-                    verticalArrangement = Arrangement.spacedBy(CpDimens.spacing2),
-                ) {
-                    orderedSchedules.forEach { schedule ->
-                        ScheduleRow(
-                            schedule = schedule,
-                            isCurrentDay = schedule.dayOfWeek == currentDay,
-                        )
+            AnimatedVisibility(
+                visible = expanded,
+                enter = expandVertically(animationSpec = tween(250), expandFrom = Alignment.Top) +
+                    fadeIn(animationSpec = tween(180)),
+                exit = shrinkVertically(animationSpec = tween(250), shrinkTowards = Alignment.Top) +
+                    fadeOut(animationSpec = tween(150)),
+            ) {
+                Column {
+                    HorizontalDivider(
+                        modifier = Modifier.padding(vertical = CpDimens.spacing2),
+                        color = MaterialTheme.colorScheme.outline,
+                    )
+                    Column(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalArrangement = Arrangement.spacedBy(CpDimens.spacing2),
+                    ) {
+                        orderedSchedules.forEach { schedule ->
+                            ScheduleRow(
+                                schedule = schedule,
+                            )
+                        }
                     }
                 }
             }
@@ -1053,6 +1076,39 @@ private fun ContactsSection(
     contact: ShopContact,
     onCopyPhone: (String) -> Unit,
 ) {
+    val contacts = buildList {
+        contact.phone?.takeIf { it.isNotBlank() }?.let { phone ->
+            add(ShopContactItem(
+                icon = CpIcons.Phone,
+                text = phone,
+                onClick = { OpenInBrowser.openInBrowser("tel:$phone") },
+                onCopy = { onCopyPhone(phone) },
+            ))
+        }
+        contact.instagram?.let(::formatInstagramLink)?.let { instagram ->
+            add(ShopContactItem(
+                icon = CpIcons.Instagram,
+                text = instagramLabel(instagram),
+                onClick = { OpenInBrowser.openInBrowser(instagram.targetUrl) },
+            ))
+        }
+        contact.website?.let(::formatWebsiteLink)?.let { website ->
+            add(ShopContactItem(
+                icon = CpIcons.Globe,
+                text = website.displayText,
+                onClick = { OpenInBrowser.openInBrowser(website.targetUrl) },
+            ))
+        }
+        contact.email?.takeIf { it.isNotBlank() }?.let { email ->
+            add(ShopContactItem(
+                icon = CpIcons.Email,
+                text = email,
+                onClick = { OpenInBrowser.openInBrowser("mailto:$email") },
+            ))
+        }
+    }
+    if (contacts.isEmpty()) return
+
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -1060,99 +1116,89 @@ private fun ContactsSection(
         verticalArrangement = Arrangement.spacedBy(CpDimens.spacing3),
     ) {
         SectionTitle("Контакты")
-        Column(verticalArrangement = Arrangement.spacedBy(11.dp)) {
-            contact.phone?.takeIf { it.isNotBlank() }?.let { phone ->
-                PhoneContactPill(
-                    phone = phone,
-                    onCall = { OpenInBrowser.openInBrowser("tel:$phone") },
-                    onCopy = { onCopyPhone(phone) },
-                )
-            }
-            contact.instagram?.let {
-                formatInstagramLink(it)?.let { instagram ->
-                    ContactPill(
-                        icon = CpIcons.Instagram,
-                        text = instagramLabel(instagram),
-                        onClick = { OpenInBrowser.openInBrowser(instagram.targetUrl) },
+        OutlinedContentCard(contentPadding = PaddingValues(0.dp)) {
+            contacts.forEachIndexed { index, item ->
+                if (index > 0) {
+                    HorizontalDivider(
+                        modifier = Modifier.padding(horizontal = CpDimens.spacing4),
+                        color = MaterialTheme.colorScheme.outline,
                     )
                 }
-            }
-            contact.website?.let {
-                formatWebsiteLink(it)?.let { website ->
-                    ContactPill(
-                        icon = CpIcons.Globe,
-                        text = website.displayText,
-                        onClick = { OpenInBrowser.openInBrowser(website.targetUrl) },
-                    )
-                }
-            }
-            contact.email?.takeIf { it.isNotBlank() }?.let { email ->
-                ContactPill(
-                    icon = CpIcons.Email,
-                    text = email,
-                    onClick = { OpenInBrowser.openInBrowser("mailto:$email") },
-                )
+                ShopContactRow(item)
             }
         }
     }
 }
 
+private data class ShopContactItem(
+    val icon: ImageVector,
+    val text: String,
+    val onClick: () -> Unit,
+    val onCopy: (() -> Unit)? = null,
+)
+
 @Composable
-private fun PhoneContactPill(
-    phone: String,
-    onCall: () -> Unit,
-    onCopy: () -> Unit,
-) {
+private fun ShopContactRow(item: ShopContactItem) {
     Row(
         modifier = Modifier
-            .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(999.dp))
-            .height(CpDimens.buttonHeight),
+            .fillMaxWidth()
+            .clickable(onClick = item.onClick)
+            .heightIn(min = 56.dp)
+            .padding(
+                start = CpDimens.spacing4,
+                end = CpDimens.spacing1,
+                top = CpDimens.spacing1,
+                bottom = CpDimens.spacing1,
+            ),
         verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(CpDimens.spacing4),
     ) {
-        Row(
-            modifier = Modifier
-                .weight(1f, fill = false)
-                .clickable(onClick = onCall)
-                .padding(start = CpDimens.spacing3, end = CpDimens.spacing2),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(CpDimens.spacing2),
-        ) {
-            Icon(
-                imageVector = CpIcons.Phone,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSurface,
-                modifier = Modifier.size(18.dp),
-            )
-            Text(
-                text = phone,
-                style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.SemiBold),
-                color = MaterialTheme.colorScheme.onSurface,
-                maxLines = 1,
-            )
-        }
-        IconButton(
-            onClick = onCopy,
-            modifier = Modifier.size(CpDimens.buttonHeight),
-        ) {
-            Icon(
-                imageVector = CpIcons.Copy,
-                contentDescription = "Скопировать номер",
-                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.size(16.dp),
-            )
+        Icon(
+            imageVector = item.icon,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.onSurface,
+            modifier = Modifier.size(24.dp),
+        )
+        Text(
+            text = item.text,
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onSurface,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.weight(1f),
+        )
+        if (item.onCopy != null) {
+            IconButton(onClick = item.onCopy, modifier = Modifier.size(44.dp)) {
+                Icon(
+                    imageVector = CpIcons.Copy,
+                    contentDescription = "Скопировать номер",
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.size(20.dp),
+                )
+            }
+        } else {
+            Box(modifier = Modifier.size(44.dp), contentAlignment = Alignment.Center) {
+                Icon(
+                    imageVector = CpIcons.ChevronRight,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.size(20.dp),
+                )
+            }
         }
     }
 }
 
 @Composable
 private fun ReviewsSection(
-    reviews: List<Review>,
+    checkIns: List<CheckIn>,
     overallRating: Double?,
     reviewCount: Int,
     shopId: String,
     shopTitle: String,
     isLoggedIn: Boolean,
     currentUserId: String?,
+    ownCheckInIds: Set<String>,
     onReviewPhotoClick: (List<String>, Int) -> Unit,
     onReviewHelpfulClick: (String) -> Unit,
 ) {
@@ -1164,16 +1210,20 @@ private fun ReviewsSection(
         verticalArrangement = Arrangement.spacedBy(CpDimens.spacing2),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
-            Box(Modifier.weight(1f)) { SectionTitle("Отзывы") }
-            if (reviews.isNotEmpty()) IconButton(onClick = { Navigator.navigate(Navigator.Screen.ShopReviews(shopId)) }) {
-                Icon(CpIcons.ChevronRight, contentDescription = "Все отзывы")
+            Box(Modifier.weight(1f)) { SectionTitle("Чекины") }
+            if (checkIns.isNotEmpty()) {
+                IconButton(onClick = { Navigator.navigate(Navigator.Screen.ShopReviews(shopId)) }) {
+                    Icon(CpIcons.ChevronRight, contentDescription = "Все чекины")
+                }
             }
         }
-        if (reviews.isNotEmpty()) com.coffeepeek.admin.ui.component.ReviewRatingsOverview(reviews, overallRating, reviewCount)
-        if (reviews.isEmpty()) {
+        if (checkIns.isNotEmpty()) {
+            com.coffeepeek.admin.ui.component.CheckInRatingsOverview(checkIns, overallRating, reviewCount)
+        }
+        if (checkIns.isEmpty()) {
             EmptyMascotState(
                 mascot = Res.drawable.maskot_with_book,
-                message = "Станьте первым, кто оценит и оставит отзыв о своём посещении $shopTitle",
+                message = "Станьте первым, кто оценит и оставит чекин о своём посещении $shopTitle",
             )
         } else if (!isLoggedIn) {
             BoxWithConstraints(
@@ -1181,9 +1231,9 @@ private fun ReviewsSection(
                     .fillMaxWidth()
                     .clipToBounds(),
             ) {
-                val peekWidth = if (reviews.size > 1) GuestReviewPeekWidth else 0.dp
-                val itemSpacing = if (reviews.size > 1) CpDimens.spacing3 else 0.dp
-                val cardWidth = if (reviews.size > 1) {
+                val peekWidth = if (checkIns.size > 1) GuestReviewPeekWidth else 0.dp
+                val itemSpacing = if (checkIns.size > 1) CpDimens.spacing3 else 0.dp
+                val cardWidth = if (checkIns.size > 1) {
                     (maxWidth - itemSpacing - peekWidth).coerceAtMost(ReviewCardMaxWidth)
                 } else {
                     maxWidth
@@ -1191,23 +1241,21 @@ private fun ReviewsSection(
 
                 LazyRow(horizontalArrangement = Arrangement.spacedBy(itemSpacing)) {
                     items(
-                        count = reviews.take(3).size,
-                        key = { index -> reviews[index].id },
+                        count = checkIns.take(3).size,
+                        key = { index -> checkIns[index].id },
                     ) { index ->
-                        val review = reviews[index]
+                        val checkIn = checkIns[index]
                         val isBlurred = index > 0
                         Box(
-                            modifier = Modifier
-                                .width(cardWidth)
-                                .then(if (isBlurred) Modifier.blur(5.dp) else Modifier),
+                            modifier = Modifier.width(cardWidth),
                         ) {
-                            ReviewCard(
-                                review = review,
+                            CheckInDisplayCard(
+                                checkIn = checkIn,
+                                isOwn = false,
                                 modifier = Modifier.fillMaxWidth(),
                                 onPhotoClick = if (isBlurred) ({ _, _ -> }) else onReviewPhotoClick,
                                 onHelpfulClick = null,
-                                showHelpfulButton = false,
-                                equalizeHeight = false,
+                                blurContent = isBlurred,
                             )
                         }
                     }
@@ -1218,32 +1266,34 @@ private fun ReviewsSection(
                 onRegister = { Navigator.navigate(Navigator.Screen.Register) },
             )
         } else {
-            LazyRow(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(CpDimens.spacing3),
-            ) {
-                items(
-                    count = reviews.take(3).size,
-                    key = { index -> reviews[index].id },
-                ) { index ->
-                    val review = reviews[index]
-                    val isOwnReview = currentUserId != null && review.userId == currentUserId
-                    Box(
-                        modifier = if (reviews.size > 1) {
-                            Modifier.width(ReviewCardMaxWidth)
-                        } else {
-                            Modifier.fillParentMaxWidth()
-                        },
-                    ) {
-                        ReviewCard(
-                            review = review,
-                            modifier = Modifier.fillMaxWidth(),
-                            onPhotoClick = onReviewPhotoClick,
-                            // No "helpful" on your own review.
-                            onHelpfulClick = if (isOwnReview) null else ({ onReviewHelpfulClick(review.id) }),
-                            showHelpfulButton = false,
-                            equalizeHeight = false,
-                        )
+            BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
+                val cardWidth = maxWidth.coerceAtMost(ReviewCardMaxWidth)
+                LazyRow(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(CpDimens.spacing3),
+                ) {
+                    items(
+                        count = checkIns.take(3).size,
+                        key = { index -> checkIns[index].id },
+                    ) { index ->
+                        val checkIn = checkIns[index]
+                        val isOwnCheckIn = checkIn.id in ownCheckInIds || (currentUserId != null && checkIn.authorAddress?.slug == currentUserId)
+                        Box(
+                            modifier = if (checkIns.size > 1) {
+                                Modifier.width(cardWidth)
+                            } else {
+                                Modifier.fillParentMaxWidth()
+                            },
+                        ) {
+                            CheckInDisplayCard(
+                                checkIn = checkIn,
+                                isOwn = isOwnCheckIn,
+                                modifier = Modifier.fillMaxWidth(),
+                                onPhotoClick = onReviewPhotoClick,
+                                onHelpfulClick = if (isOwnCheckIn) null else ({ onReviewHelpfulClick(checkIn.id) }),
+                                onReportClick = if (isOwnCheckIn) null else ({ Navigator.navigate(Navigator.Screen.ReportCheckIn(checkIn.id)) }),
+                            )
+                        }
                     }
                 }
             }
@@ -1264,27 +1314,29 @@ private fun ShopFeaturesSection(features: List<ShopFeatureItem>) {
         verticalArrangement = Arrangement.spacedBy(CpDimens.spacing3),
     ) {
         SectionTitle("Особенности")
-        Column(verticalArrangement = Arrangement.spacedBy(CpDimens.spacing1)) {
-            visibleFeatures.forEach { feature ->
-                ShopFeatureRow(feature = feature)
+        OutlinedContentCard {
+            Column(verticalArrangement = Arrangement.spacedBy(CpDimens.spacing1)) {
+                visibleFeatures.forEach { feature ->
+                    ShopFeatureRow(feature = feature)
+                }
             }
-        }
-        if (features.size > FeaturePreviewCount) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(52.dp)
-                    .clip(RoundedCornerShape(CpDimens.radiusLg))
-                    .background(MaterialTheme.colorScheme.surfaceVariant)
-                    .clickable { expanded = !expanded },
-                contentAlignment = Alignment.Center,
-            ) {
-                Text(
-                    text = if (expanded) "Свернуть" else showAllFeaturesLabel(features.size),
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.onSurface,
-                )
+            if (features.size > FeaturePreviewCount) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(52.dp)
+                        .clip(RoundedCornerShape(CpDimens.radiusLg))
+                        .background(MaterialTheme.colorScheme.surfaceVariant)
+                        .clickable { expanded = !expanded },
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Text(
+                        text = if (expanded) "Свернуть" else showAllFeaturesLabel(features.size),
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.onSurface,
+                    )
+                }
             }
         }
     }
@@ -1333,52 +1385,6 @@ private fun showAllFeaturesLabel(count: Int): String {
         else -> "особенностей"
     }
     return "Показать все $count $word"
-}
-
-@Composable
-private fun CheckInsSection(
-    checkIns: List<CheckIn>,
-    onPhotoClick: (List<String>, Int) -> Unit,
-) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = CpDimens.spacing4)
-            .padding(top = CpDimens.spacing6, bottom = CpDimens.spacing3),
-        verticalArrangement = Arrangement.spacedBy(CpDimens.spacing3),
-    ) {
-        SectionTitle("Мои чекины")
-        LazyRow(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(CpDimens.spacing3),
-        ) {
-            items(checkIns, key = { it.id }) { checkIn ->
-                CheckInDisplayCard(
-                    checkIn = checkIn,
-                    showShopName = false,
-                    onPhotoClick = onPhotoClick,
-                    modifier = if (checkIns.size > 1) Modifier.width(320.dp) else Modifier.fillParentMaxWidth(),
-                )
-            }
-        }
-    }
-}
-
-
-@Composable
-private fun OutlinedContentCard(content: @Composable ColumnScope.() -> Unit) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(CpDimens.radius2xl),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
-    ) {
-        Column(
-            modifier = Modifier.padding(CpDimens.spacing4),
-            content = content,
-        )
-    }
 }
 
 @Composable
@@ -1564,7 +1570,6 @@ private fun ShopDetailBottomBar(
     isCheckInLoading: Boolean,
     canOpenRoute: Boolean,
     onRoute: () -> Unit,
-    onReview: () -> Unit,
     onCheckIn: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -1579,12 +1584,6 @@ private fun ShopDetailBottomBar(
         RouteIconButton(
             enabled = canOpenRoute,
             onClick = onRoute,
-        )
-        BottomBarAction(
-            icon = CpIcons.Review,
-            label = "Отзыв",
-            onClick = onReview,
-            modifier = Modifier.weight(1f),
         )
         BottomBarAction(
             icon = CpIcons.Check,
@@ -1705,90 +1704,25 @@ private fun PhotoGallery(
 @Composable
 private fun ScheduleRow(
     schedule: ShopSchedule,
-    isCurrentDay: Boolean,
 ) {
-    val contentColor = if (isCurrentDay) {
-        MaterialTheme.colorScheme.primary
-    } else {
-        MaterialTheme.colorScheme.onSurfaceVariant
-    }
     Row(
         modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically,
+        verticalAlignment = Alignment.Top,
+        horizontalArrangement = Arrangement.spacedBy(CpDimens.spacing3),
     ) {
         Text(
-            text = shortDayOfWeekLabel(schedule.dayOfWeek),
-            style = MaterialTheme.typography.bodyMedium.copy(
-                fontWeight = if (isCurrentDay) FontWeight.SemiBold else FontWeight.Normal,
-            ),
-            color = contentColor,
-            modifier = Modifier.width(36.dp),
+            text = dayOfWeekLabel(schedule.dayOfWeek),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.weight(1f),
         )
-        when {
-            schedule.isClosed -> {
-                Text(
-                    text = "Выходной",
-                    style = MaterialTheme.typography.bodyMedium.copy(
-                        fontWeight = if (isCurrentDay) FontWeight.SemiBold else FontWeight.Normal,
-                    ),
-                    color = contentColor,
-                )
-            }
-            schedule.intervals.isEmpty() -> {
-                Text(
-                    text = "—",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = contentColor,
-                )
-            }
-            else -> {
-                Column(verticalArrangement = Arrangement.spacedBy(CpDimens.spacing1)) {
-                    schedule.intervals.forEach { interval ->
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            ScheduleTimeText(
-                                text = formatTime(interval.openTime),
-                                color = contentColor,
-                                emphasized = isCurrentDay,
-                                modifier = Modifier.width(58.dp),
-                            )
-                            ScheduleTimeText(
-                                text = "–",
-                                color = contentColor,
-                                emphasized = isCurrentDay,
-                                textAlign = TextAlign.Center,
-                                modifier = Modifier.width(20.dp),
-                            )
-                            ScheduleTimeText(
-                                text = formatTime(interval.closeTime),
-                                color = contentColor,
-                                emphasized = isCurrentDay,
-                                modifier = Modifier.width(58.dp),
-                            )
-                        }
-                    }
-                }
-            }
-        }
+        Text(
+            text = formatScheduleHours(schedule),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.End,
+        )
     }
-}
-
-@Composable
-private fun ScheduleTimeText(
-    text: String,
-    color: Color,
-    emphasized: Boolean,
-    modifier: Modifier = Modifier,
-    textAlign: TextAlign = TextAlign.Start,
-) {
-    Text(
-        text = text,
-        style = MaterialTheme.typography.bodyMedium.copy(
-            fontWeight = if (emphasized) FontWeight.SemiBold else FontWeight.Normal,
-        ),
-        color = color,
-        textAlign = textAlign,
-        modifier = modifier,
-    )
 }
 
 @Composable
@@ -1818,70 +1752,21 @@ private fun RoasterDetailGroup(
     if (items.isEmpty()) return
     Column(verticalArrangement = Arrangement.spacedBy(CpDimens.spacing3)) {
         SectionTitle("Обжарщики")
-        OutlinedContentCard {
-            Column(verticalArrangement = Arrangement.spacedBy(CpDimens.spacing3)) {
-                items.forEach { item ->
-                    RoasterLinkRow(
-                        item = item,
-                        onClick = { onRoasterClick(item.id) },
+        OutlinedContentCard(contentPadding = PaddingValues(0.dp)) {
+            items.forEachIndexed { index, item ->
+                if (index > 0) {
+                    HorizontalDivider(
+                        modifier = Modifier.padding(horizontal = CpDimens.spacing4),
+                        color = MaterialTheme.colorScheme.outline,
                     )
                 }
-            }
-        }
-    }
-}
-
-@Composable
-private fun RoasterLinkRow(
-    item: CatalogItem,
-    onClick: () -> Unit,
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(CpDimens.radiusLg))
-            .clickable(onClick = onClick)
-            .padding(vertical = CpDimens.spacing1),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(CpDimens.spacing3),
-    ) {
-        Box(
-            modifier = Modifier
-                .size(56.dp)
-                .clip(CircleShape),
-        ) {
-            val photoUrl = item.photoUrl?.takeIf(String::isNotBlank)
-            if (photoUrl != null) {
-                CoffeeShopImage(
-                    imageUrl = photoUrl,
-                    contentDescription = "Фото обжарщика ${item.name}",
-                    contentScale = ContentScale.Crop,
-                    placeholderLabelSize = 7.sp,
-                    modifier = Modifier.fillMaxSize(),
-                )
-            } else {
-                CoffeeShopPlaceholderImage(
-                    labelSize = 7.sp,
-                    contentDescription = "Фото обжарщика ${item.name} отсутствует",
+                RoasterLinkRow(
+                    name = item.name,
+                    photoUrl = item.photoUrl,
+                    onClick = item.address?.slug?.let { slug -> { onRoasterClick(slug) } },
                 )
             }
         }
-        Text(
-            text = item.name,
-            style = MaterialTheme.typography.titleMedium.copy(
-                fontWeight = FontWeight.SemiBold,
-            ),
-            color = MaterialTheme.colorScheme.onSurface,
-            maxLines = 2,
-            overflow = TextOverflow.Ellipsis,
-            modifier = Modifier.weight(1f),
-        )
-        Icon(
-            imageVector = CpIcons.ChevronRight,
-            contentDescription = "Открыть обжарщика ${item.name}",
-            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.size(18.dp),
-        )
     }
 }
 
@@ -1954,52 +1839,6 @@ private fun InfoChip(
     }
 }
 
-@Composable
-private fun SectionTitle(title: String) {
-    Text(
-        text = title,
-        style = MaterialTheme.typography.headlineSmall,
-        color = MaterialTheme.colorScheme.onSurface,
-    )
-}
-
-@Composable
-private fun ContactPill(
-    icon: ImageVector,
-    text: String?,
-    onClick: () -> Unit,
-) {
-    Surface(
-        onClick = onClick,
-        shape = RoundedCornerShape(999.dp),
-        color = Color.Transparent,
-        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
-        tonalElevation = 0.dp,
-    ) {
-        Row(
-            modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(CpDimens.spacing2),
-        ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSurface,
-                modifier = Modifier.size(18.dp),
-            )
-            text?.let {
-                Text(
-                    text = it,
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-            }
-        }
-    }
-}
-
 private fun instagramLabel(link: ExternalLink): String {
     val handle = link.targetUrl
         .substringAfter("instagram.com/", "")
@@ -2009,25 +1848,6 @@ private fun instagramLabel(link: ExternalLink): String {
         .trim()
     if (handle.isBlank()) return link.displayText
     return "@$handle"
-}
-
-@Composable
-private fun ReviewCard(
-    review: Review,
-    modifier: Modifier = Modifier,
-    onPhotoClick: (List<String>, Int) -> Unit,
-    onHelpfulClick: (() -> Unit)?,
-    showHelpfulButton: Boolean = true,
-    equalizeHeight: Boolean,
-) {
-    ReviewDisplayCard(
-        review = review,
-        modifier = modifier,
-        onPhotoClick = onPhotoClick,
-        onHelpfulClick = onHelpfulClick,
-        showHelpfulButton = showHelpfulButton,
-        equalizeHeight = equalizeHeight,
-    )
 }
 
 private fun ShopContact.hasAny(): Boolean =
@@ -2104,14 +1924,14 @@ private fun prettyLinkText(value: String): String {
         .ifBlank { value }
 }
 
-private fun shortDayOfWeekLabel(day: Int): String = when (day) {
-    0 -> "Вс"
-    1 -> "Пн"
-    2 -> "Вт"
-    3 -> "Ср"
-    4 -> "Чт"
-    5 -> "Пт"
-    6 -> "Сб"
+private fun dayOfWeekLabel(day: Int): String = when (day) {
+    0 -> "Воскресенье"
+    1 -> "Понедельник"
+    2 -> "Вторник"
+    3 -> "Среда"
+    4 -> "Четверг"
+    5 -> "Пятница"
+    6 -> "Суббота"
     else -> "—"
 }
 
@@ -2123,8 +1943,8 @@ private fun formatTime(raw: String): String {
 private fun formatScheduleHours(schedule: ShopSchedule): String = when {
     schedule.isClosed -> "Выходной"
     schedule.intervals.isEmpty() -> "—"
-    else -> schedule.intervals.joinToString(", ") { interval ->
-        "${formatTime(interval.openTime)}–${formatTime(interval.closeTime)}"
+    else -> schedule.intervals.joinToString("\n") { interval ->
+        "${formatTime(interval.openTime)} – ${formatTime(interval.closeTime)}"
     }
 }
 

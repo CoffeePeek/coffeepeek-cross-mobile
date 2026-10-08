@@ -13,6 +13,7 @@ final class MapLibreMapProvider: NSObject, IosNativeMapProvider, MLNMapViewDeleg
     private var callbacksByMap: [ObjectIdentifier: IosNativeMapCallbacks] = [:]
     private var annotationKinds: [ObjectIdentifier: String] = [:]
     private var annotationIds: [ObjectIdentifier: String] = [:]
+    private var annotationZoneColors: [ObjectIdentifier: (color: String, dark: Bool)] = [:]
     private var annotationImages: [String: UIImage] = [:]
 
     func createMapView() -> UIView {
@@ -41,6 +42,7 @@ final class MapLibreMapProvider: NSObject, IosNativeMapProvider, MLNMapViewDeleg
         }
 
         callbacksByMap[ObjectIdentifier(map)] = callbacks
+        map.showsAttributionButton = state.showAttribution ?? true
         let desiredStyle = state.dark ? Self.darkStyle : Self.lightStyle
         if map.styleURL != desiredStyle {
             map.styleURL = desiredStyle
@@ -52,6 +54,7 @@ final class MapLibreMapProvider: NSObject, IosNativeMapProvider, MLNMapViewDeleg
         }
         annotationKinds.removeAll()
         annotationIds.removeAll()
+        annotationZoneColors.removeAll()
 
         var annotations: [MLNPointAnnotation] = []
         for shop in state.shops {
@@ -86,6 +89,7 @@ final class MapLibreMapProvider: NSObject, IosNativeMapProvider, MLNMapViewDeleg
             annotations.append(annotation)
             annotationKinds[ObjectIdentifier(annotation)] = "zone"
             annotationIds[ObjectIdentifier(annotation)] = zone.id
+            annotationZoneColors[ObjectIdentifier(annotation)] = (zone.color, state.dark)
         }
         map.addAnnotations(annotations)
     }
@@ -119,9 +123,10 @@ final class MapLibreMapProvider: NSObject, IosNativeMapProvider, MLNMapViewDeleg
             )
         }
         if kind == "zone" {
+            let appearance = annotationZoneColors[key] ?? (color: "#B07A45", dark: false)
             return MLNAnnotationImage(
-                image: zoneImage(),
-                reuseIdentifier: "coffee-zone"
+                image: zoneImage(color: appearance.color, dark: appearance.dark),
+                reuseIdentifier: "coffee-zone-\(appearance.color)-\(appearance.dark)"
             )
         }
         let image = mascotImage(for: kind) ?? UIImage(systemName: "mappin.circle.fill")!
@@ -210,15 +215,26 @@ final class MapLibreMapProvider: NSObject, IosNativeMapProvider, MLNMapViewDeleg
         }
     }
 
-    private func zoneImage() -> UIImage {
+    private func zoneImage(color: String, dark: Bool) -> UIImage {
+        let cacheKey = "zone-\(color)-\(dark)"
+        if let cached = annotationImages[cacheKey] { return cached }
+        let rgb = Int(String(color.dropFirst()), radix: 16) ?? 0xB07A45
+        let tint = UIColor(
+            red: CGFloat((rgb >> 16) & 0xFF) / 255,
+            green: CGFloat((rgb >> 8) & 0xFF) / 255,
+            blue: CGFloat(rgb & 0xFF) / 255,
+            alpha: 1
+        )
         let renderer = UIGraphicsImageRenderer(size: CGSize(width: 34, height: 34))
-        return renderer.image { context in
-            UIColor.systemBlue.withAlphaComponent(0.9).setFill()
+        let image = renderer.image { context in
+            tint.withAlphaComponent(0.9).setFill()
             context.cgContext.fillEllipse(in: CGRect(x: 2, y: 2, width: 30, height: 30))
-            UIColor.white.setStroke()
+            (dark ? UIColor.white : UIColor.black.withAlphaComponent(0.65)).setStroke()
             context.cgContext.setLineWidth(2)
             context.cgContext.strokeEllipse(in: CGRect(x: 3, y: 3, width: 28, height: 28))
         }
+        annotationImages[cacheKey] = image
+        return image
     }
 
     private func centeredParagraphStyle() -> NSParagraphStyle {
@@ -248,6 +264,7 @@ private final class CoffeeAnnotation: MLNPointAnnotation {
 
 private struct MapState: Decodable {
     let dark: Bool
+    let showAttribution: Bool?
     let shops: [ShopState]
     let clusters: [ClusterState]
     let zones: [ZoneState]
@@ -272,6 +289,7 @@ private struct ClusterState: Decodable {
 private struct ZoneState: Decodable {
     let id: String
     let name: String
+    let color: String
     let lat: Double
     let lon: Double
     let radius: Double

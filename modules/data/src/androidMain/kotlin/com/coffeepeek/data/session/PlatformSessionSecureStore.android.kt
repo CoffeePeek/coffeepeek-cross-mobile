@@ -33,6 +33,11 @@ internal class AndroidEncryptedSessionStore(
 
     override suspend fun write(data: AuthResp?) {
         migrateFromRoomIfNeeded()
+        persist(data)
+        legacySettings.delete(RoomSessionSecureStore.SESSION_KEY)
+    }
+
+    private fun persist(data: AuthResp?) {
         val editor = prefs.edit()
         if (data == null) {
             editor.remove(PREFS_KEY)
@@ -41,7 +46,6 @@ internal class AndroidEncryptedSessionStore(
         }
         editor.apply()
         state.value = data
-        legacySettings.delete(RoomSessionSecureStore.SESSION_KEY)
     }
 
     override fun observe(): Flow<AuthResp?> = state.asStateFlow()
@@ -57,7 +61,7 @@ internal class AndroidEncryptedSessionStore(
         val legacy = legacySettings.readSerializable<AuthResp>(RoomSessionSecureStore.SESSION_KEY)
             ?: legacySettings.readSerializable<AuthResp>(LEGACY_SESSION_KEY)
             ?: return
-        write(legacy)
+        persist(legacy)
         legacySettings.delete(RoomSessionSecureStore.SESSION_KEY)
         legacySettings.delete(LEGACY_SESSION_KEY)
     }

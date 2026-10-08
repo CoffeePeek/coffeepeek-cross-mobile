@@ -24,7 +24,7 @@ class ConsumedDrinkContractTest {
     }
     @Test fun selectionsAreSentOnCreateAndHistoricalNamesDecode() {
         val checkIn = json.parseToJsonElement(json.encodeToString(CreateCheckInReq(
-            coffeeShopId = "shop", isPublic = false, visitedAt = "2026-10-02T10:00:00Z",
+            coffeeShopSlug = "shop", text = "Кофе", rating = RatingDto(4, 4, 5), visitedAt = "2026-10-02T10:00:00Z",
             drinkSlug = "other", customDrinkName = "Тоник",
         ))).jsonObject
         assertEquals(JsonPrimitive("other"), checkIn["drinkSlug"])

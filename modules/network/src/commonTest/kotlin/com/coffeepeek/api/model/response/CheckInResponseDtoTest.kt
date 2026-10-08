@@ -1,63 +1,36 @@
 package com.coffeepeek.api.model.response
 
 import kotlinx.serialization.json.Json
-import kotlin.test.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertNull
-import kotlin.test.assertTrue
+import kotlin.test.*
 
 class CheckInResponseDtoTest {
-
     @Test
-    fun decodesNullableFieldsAndStringNumbers() {
+    fun decodesPersonalHistoryWithNullableAddressesAndModerationState() {
         val response = Json.decodeFromString<GetUserCheckInsResponseDto>(
-            """
-                {
-                  "items": [
-                    {
-                      "id": "check-in-1",
-                      "shop": {"slug":"shop-1","canonicalPath":"/coffee-shops/shop-1","revision":1,"isAlias":false},
-                      "note": null,
-                      "createdAt": "2026-09-16T12:27:27.922Z",
-                      "visitedAt": "2026-09-16T12:27:27.922Z",
-                      "reviewId": null,
-                      "shopName": null,
-                      "rating": {
-                        "place": "4",
-                        "service": "5",
-                        "coffee": "3"
-                      },
-                      "photos": [
-                        {
-                          "id": "photo-1",
-                          "fileName": null,
-                          "storageKey": null,
-                          "fullUrl": "https://cdn.example/check-in.jpg",
-                          "sortIndex": "1",
-                          "isPrimary": true
-                        }
-                      ]
-                    }
-                  ],
-                  "totalItems": "1",
-                  "totalPages": "1",
-                  "currentPage": "1",
-                  "pageSize": "20"
-                }
-            """.trimIndent(),
+            """{"items":[{
+                "id":"check-in-1","shop":null,"author":null,"username":"Анна","shopName":"Кофейня",
+                "text":"Отличный фильтр","createdAtUtc":"2026-10-07T12:27:27.922Z","visitedAt":"2026-10-07T09:00:00+03:00",
+                "rating":{"place":"4","service":"5","coffee":"3"},"visibility":"Public",
+                "moderationState":"Rejected","contentRevision":"2","rejectionReason":"Уточните текст",
+                "drinkSlug":"other","customDrinkName":"Тоник","drinkNameRu":"Другое","drinkNameEn":"Other",
+                "helpfulCount":"7","isHelpfulByCurrentUser":false,
+                "photos":[{"id":"photo-1","fileName":"coffee.jpg","contentType":"image/jpeg","storageKey":"check-ins/key.jpg",
+                    "sizeBytes":1200,"sortIndex":"1","url":"/api/v1/check-ins/check-in-1/photos/photo-1"}]
+            }],"totalCount":"41"}"""
         )
-
-        val checkIn = response.checkIns.single()
-        assertNull(checkIn.note)
-        assertNull(checkIn.shopName)
-        assertEquals(4, checkIn.rating?.place)
-        assertEquals(5, checkIn.rating?.service)
-        assertEquals(3, checkIn.rating?.coffee)
-        assertEquals(1, checkIn.photos.single().sortIndex)
-        assertTrue(checkIn.photos.single().isPrimary)
-        assertEquals(1, response.totalItems)
-        assertEquals(1, response.totalPages)
-        assertEquals(1, response.currentPage)
-        assertEquals(20, response.pageSize)
+        val checkIn = response.items.single()
+        assertNull(checkIn.shop)
+        assertNull(checkIn.author)
+        assertEquals("Анна", checkIn.username)
+        assertEquals("Отличный фильтр", checkIn.text)
+        assertEquals("2026-10-07T12:27:27.922Z", checkIn.createdAtUtc)
+        assertEquals(4, checkIn.rating.place)
+        assertEquals("Rejected", checkIn.moderationState)
+        assertEquals(2, checkIn.contentRevision)
+        assertEquals("Уточните текст", checkIn.rejectionReason)
+        assertEquals("Тоник", checkIn.customDrinkName)
+        assertEquals(7, checkIn.helpfulCount)
+        assertEquals("/api/v1/check-ins/check-in-1/photos/photo-1", checkIn.photos.single().url)
+        assertEquals(41, response.totalCount)
     }
 }

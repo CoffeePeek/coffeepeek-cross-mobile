@@ -131,7 +131,7 @@ fun SettingsScreen(vm: ProfileViewModel = koinInject()) {
 
             SettingsSection(
                 title = "Другие настройки",
-                description = "Управление полезными дополнениями, отзывы в App Store и настройки конфиденциальности",
+                description = "Управление полезными дополнениями, оценки в App Store и настройки конфиденциальности",
             ) {
                 SettingsRow(
                     icon = CpIcons.Lock,

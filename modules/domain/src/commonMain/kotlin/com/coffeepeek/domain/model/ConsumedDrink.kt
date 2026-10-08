@@ -8,5 +8,10 @@ fun validateConsumedDrink(slug: String?, customName: String?): String? = when {
     else -> null
 }
 
-fun savedDrinkName(nameRu: String?, nameEn: String?, customName: String?): String? =
-    customName?.takeIf { it.isNotBlank() } ?: nameRu?.takeIf { it.isNotBlank() } ?: nameEn?.takeIf { it.isNotBlank() }
+fun savedDrinkName(nameRu: String?, nameEn: String?, customName: String?, language: String = "ru"): String? =
+    customName?.takeIf { it.isNotBlank() }
+        ?: if (language == "en") {
+            nameEn?.takeIf { it.isNotBlank() } ?: nameRu?.takeIf { it.isNotBlank() }
+        } else {
+            nameRu?.takeIf { it.isNotBlank() } ?: nameEn?.takeIf { it.isNotBlank() }
+        }

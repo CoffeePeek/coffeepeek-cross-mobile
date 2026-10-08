@@ -40,6 +40,7 @@ private val brandColor: UIColor
 private val GlassControlIcon.symbol: String
     get() = when (this) {
         GlassControlIcon.Back -> "chevron.left"
+        GlassControlIcon.Add -> "plus"
         GlassControlIcon.Edit -> "square.and.pencil"
         GlassControlIcon.Favorite -> "heart"
         GlassControlIcon.FavoriteFilled -> "heart.fill"
@@ -181,6 +182,8 @@ actual fun PlatformFloatingBottomNavBar(
 private val FloatingNavItem.iconSymbol: String
     get() = when (title) {
         "Поиск" -> "magnifyingglass"
+        "Кофе" -> "leaf"
+        "Лента" -> "person.2"
         "Карта" -> "map.fill"
         "Профиль" -> "person.crop.circle.fill"
         "Настройки" -> "gearshape.fill"

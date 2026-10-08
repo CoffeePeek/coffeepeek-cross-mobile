@@ -58,6 +58,10 @@ import com.coffeepeek.admin.ui.component.SettingsSection
 import com.coffeepeek.admin.ui.screen.contributions.ContributionKind
 import com.coffeepeek.admin.utils.CpImage
 import org.koin.compose.koinInject
+import coffeepeek.composeapp.generated.resources.Res
+import coffeepeek.composeapp.generated.resources.favorites_profile_title
+import coffeepeek.composeapp.generated.resources.favorites_profile_description
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun ProfileScreen(vm: ProfileViewModel = koinInject()) {
@@ -162,31 +166,19 @@ fun ProfileScreen(vm: ProfileViewModel = koinInject()) {
 
             Spacer(Modifier.height(CpDimens.settingsSectionSpacing))
 
-            SettingsSection(title = "Избранное") {
-                SettingsRow(
-                    icon = CpIcons.Favorite,
-                    label = "Избранные кофейни",
-                    description = "Кофейни, которые вы сохранили",
-                    iconColors = SettingsIconPalette.Rose,
-                    onClick = { Navigator.navigate(Navigator.Screen.Favorites) },
-                )
-            }
-
-            Spacer(Modifier.height(CpDimens.settingsSectionSpacing))
-
             SettingsSection(title = "Моя активность") {
                 SettingsRow(
-                    icon = CpIcons.Review,
-                    label = "Мои отзывы",
-                    description = "Ваши оценки и отзывы о кофейнях",
-                    iconColors = SettingsIconPalette.Lavender,
-                    onClick = { openContributions(ContributionKind.Reviews) },
+                    icon = CpIcons.Favorite,
+                    label = stringResource(Res.string.favorites_profile_title),
+                    description = stringResource(Res.string.favorites_profile_description),
+                    iconColors = SettingsIconPalette.Rose,
+                    onClick = { Navigator.navigate(Navigator.Screen.Favorites) },
                 )
                 SettingsDivider()
                 SettingsRow(
                     icon = CpIcons.Location,
                     label = "Чекины",
-                    description = "Места, которые вы уже посетили",
+                    description = "Публичные и скрытые записи о ваших визитах",
                     iconColors = SettingsIconPalette.Sky,
                     onClick = { Navigator.navigate(Navigator.Screen.VisitedPlaces) },
                 )
@@ -337,10 +329,7 @@ private fun ProfileHeader(state: ProfileUiState, onEdit: () -> Unit) {
 
                 Spacer(Modifier.height(CpDimens.spacing2))
                 Row(modifier = Modifier.fillMaxWidth()) {
-                    StatBadge(state.reviewCount, "Отзывы", Modifier.weight(1f)) {
-                        openContributions(ContributionKind.Reviews)
-                    }
-                    StatBadge(state.checkInCount, "Чек-ины", Modifier.weight(1f)) {
+                    StatBadge(state.checkInCount, "Чекины", Modifier.weight(1f)) {
                         Navigator.navigate(Navigator.Screen.VisitedPlaces)
                     }
                     StatBadge(state.addedShopsCount, "Кофейни", Modifier.weight(1f)) {

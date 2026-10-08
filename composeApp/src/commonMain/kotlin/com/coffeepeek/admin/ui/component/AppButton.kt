@@ -1,7 +1,7 @@
 package com.coffeepeek.admin.ui.component
 
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -22,7 +22,7 @@ fun AppButton(
         onClick = onClick,
         modifier = modifier
             .fillMaxWidth()
-            .height(CpDimens.buttonHeight),
+            .heightIn(min = CpDimens.buttonHeight),
         colors = ButtonDefaults.buttonColors(
             containerColor         = MaterialTheme.colorScheme.primary,
             contentColor           = MaterialTheme.colorScheme.onPrimary,

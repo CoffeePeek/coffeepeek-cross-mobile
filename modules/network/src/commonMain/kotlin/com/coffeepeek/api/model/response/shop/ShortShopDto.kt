@@ -2,6 +2,7 @@ package com.coffeepeek.api.model.response.shop
 
 import com.coffeepeek.api.model.DataResponse
 import com.coffeepeek.api.model.PublicAddressDto
+import com.coffeepeek.api.serialization.FlexibleIntSerializer
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonElement
@@ -13,7 +14,7 @@ data class ShortShopDto(
     @SerialName("name") val name: String,
     @SerialName("photos") val photos: List<ShortPhotoDto> = emptyList(),
     @SerialName("rating") val rating: Double = 0.0,
-    @SerialName("reviewCount") val reviewCount: Int = 0,
+    @Serializable(with = FlexibleIntSerializer::class) val checkInCount: Int = 0,
     @SerialName("isFavorite") val isFavorite: Boolean = false,
     @SerialName("isVisited") val isVisited: Boolean = false,
     @SerialName("isNew") val isNew: Boolean = false,

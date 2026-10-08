@@ -123,8 +123,10 @@ private const val PULSE_SOURCE = "cp-selected-pulse"
 private const val ZONE_FILL_LAYER = "cp-zones-fill"
 private const val ZONE_LINE_LAYER = "cp-zones-line"
 private const val ZONE_LABEL_LAYER = "cp-zone-labels"
+private const val ZONE_LABEL_MAX_ZOOM = 15f
 private const val PULSE_LAYER = "cp-selected-pulse"
 private const val PROP_ZONE_ID = "zoneId"
+private const val PROP_ZONE_COLOR = "zoneColor"
 private const val PROP_ICON = "icon"
 private const val PULSE_DURATION_MS = 1600L
 private const val PULSE_MIN_RADIUS = 20f
@@ -159,6 +161,8 @@ actual fun CoffeeMap(
     myLocationRequestKey: Int,
     onMyLocationFound: (Double, Double) -> Unit,
     onLocationPermissionDenied: () -> Unit,
+    requestLocationPermissionOnLoad: Boolean,
+    showAttribution: Boolean,
 ) {
     val context = LocalContext.current
     val appContext = context.applicationContext
@@ -179,8 +183,8 @@ actual fun CoffeeMap(
         }
     }
 
-    LaunchedEffect(Unit) {
-        if (!context.hasLocationPermission()) {
+    LaunchedEffect(requestLocationPermissionOnLoad) {
+        if (requestLocationPermissionOnLoad && !context.hasLocationPermission()) {
             locationPermissionLauncher.launch(locationPermissions)
         }
     }
@@ -431,7 +435,7 @@ actual fun CoffeeMap(
                 }
             },
         )
-        Text(
+        if (showAttribution) Text(
             text = "OpenFreeMap · OpenMapTiles · © OSM",
             modifier = Modifier
                 .align(Alignment.BottomStart)
@@ -619,13 +623,12 @@ private fun syncSelectionPulse(
     }
 }
 
-private data class ZonePalette(val color: String, val fillOpacity: Float, val lineOpacity: Float)
+private data class ZonePalette(val fillOpacity: Float, val lineOpacity: Float)
 
-// Muted caramel: clearly visible, but calmer than the brand-yellow pins (zones are context, shops are content).
 private fun zonePalette(isDarkTheme: Boolean) = if (isDarkTheme) {
-    ZonePalette(color = "#D2A26E", fillOpacity = 0.16f, lineOpacity = 0.75f)
+    ZonePalette(fillOpacity = 0.16f, lineOpacity = 0.75f)
 } else {
-    ZonePalette(color = "#B07A45", fillOpacity = 0.18f, lineOpacity = 0.80f)
+    ZonePalette(fillOpacity = 0.18f, lineOpacity = 0.80f)
 }
 
 /** Zone + pulse layers, inserted below MapLibre's marker layer so shop pins always draw on top. */
@@ -641,13 +644,13 @@ private fun addOverlayLayers(style: Style, isDarkTheme: Boolean) {
     }
     add(
         FillLayer(ZONE_FILL_LAYER, ZONE_SOURCE).withProperties(
-            fillColor(palette.color),
+            fillColor(get(PROP_ZONE_COLOR)),
             fillOpacity(palette.fillOpacity),
         ),
     )
     add(
         LineLayer(ZONE_LINE_LAYER, ZONE_SOURCE).withProperties(
-            lineColor(palette.color),
+            lineColor(get(PROP_ZONE_COLOR)),
             lineOpacity(palette.lineOpacity),
             lineWidth(2f),
         ),
@@ -655,10 +658,12 @@ private fun addOverlayLayers(style: Style, isDarkTheme: Boolean) {
     add(
         SymbolLayer(ZONE_LABEL_LAYER, ZONE_LABEL_SOURCE).withProperties(
             iconImage(get(PROP_ICON)),
-            // Always shown (never culled by collisions on zoom); sits under the markers, so pins keep priority.
+            // Keep overview labels readable without collisions; shop pins still draw above them.
             iconAllowOverlap(true),
             iconIgnorePlacement(true),
-        ),
+        ).apply {
+            maxZoom = ZONE_LABEL_MAX_ZOOM
+        },
     )
     add(
         CircleLayer(PULSE_LAYER, PULSE_SOURCE).withProperties(
@@ -680,14 +685,19 @@ private fun syncZoneLayers(
     isDarkTheme: Boolean,
 ) {
     val shapes = zones.map { zone ->
+        val color = zoneColorForMap(zone.color, isDarkTheme)
         Feature.fromGeometry(
             Polygon.fromLngLats(listOf(zoneOutline(zone).map { Point.fromLngLat(it.longitude, it.latitude) })),
-        ).apply { addStringProperty(PROP_ZONE_ID, zone.id) }
+        ).apply {
+            addStringProperty(PROP_ZONE_ID, zone.id)
+            addStringProperty(PROP_ZONE_COLOR, color)
+        }
     }
     val labels = zones.map { zone ->
-        val icon = "zone-label-$isDarkTheme-${zone.name}-${zone.shopCount}"
+        val color = zoneColorForMap(zone.color, isDarkTheme)
+        val icon = "zone-label-$isDarkTheme-$color-${zone.name}-${zone.shopCount}"
         if (style.getImage(icon) == null) {
-            style.addImage(icon, MapMarkerIcons.zoneBitmap(context, zone.name, zone.shopCount, isDarkTheme))
+            style.addImage(icon, MapMarkerIcons.zoneBitmap(context, zone.name, zone.shopCount, isDarkTheme, color))
         }
         Feature.fromGeometry(Point.fromLngLat(zone.longitude, zone.latitude)).apply {
             addStringProperty(PROP_ZONE_ID, zone.id)

@@ -12,6 +12,12 @@ data class CatalogItem(
     val slug: String = "",
     val photoUrl: String? = null,
     val address: PublicAddress? = null,
+    val coffeeShopsCount: Int = 0,
+    val coffeeProductsCount: Int = 0,
+    val availableCoffeeProducts: Int = 0,
+    val tags: List<CatalogItem> = emptyList(),
+    val description: String? = null,
+    val sortOrder: Int = 0,
 )
 
 data class ShopCatalogs(
@@ -104,14 +110,11 @@ enum class ShopIssueCategory {
 }
 
 data class CreateCheckInInput(
-    val shopId: String,
-    val header: String? = null,
-    val note: String? = null,
-    val isPublic: Boolean = true,
-    val visitedAtIso: String,
-    val placeRating: Int? = null,
-    val serviceRating: Int? = null,
-    val coffeeRating: Int? = null,
+    val shopSlug: String,
+    val text: String,
+    val rating: ReviewRating,
+    val visibility: CheckInVisibility = CheckInVisibility.Private,
+    val visitedAtIso: String? = null,
     val photos: List<PendingPhotoUpload> = emptyList(),
     val drinkSlug: String? = null,
     val customDrinkName: String? = null,
@@ -123,7 +126,7 @@ data class CheckIn(
     val shopName: String,
     val note: String,
     val createdAt: String,
-    val reviewId: String?,
+    val reviewId: String? = null,
     val visitedAt: String = "",
     // photoUrls open fullscreen; thumbnails are for small tiles.
     val photoUrls: List<String> = emptyList(),
@@ -133,4 +136,13 @@ data class CheckIn(
     val customDrinkName: String? = null,
     val drinkNameRu: String? = null,
     val drinkNameEn: String? = null,
+    val shopAddress: PublicAddress? = null,
+    val authorAddress: PublicAddress? = null,
+    val username: String = "",
+    val visibility: CheckInVisibility = CheckInVisibility.Private,
+    val moderationState: CheckInModerationState = CheckInModerationState.NotSubmitted,
+    val contentRevision: Int = 0,
+    val rejectionReason: String? = null,
+    val helpfulCount: Int = 0,
+    val isHelpfulByCurrentUser: Boolean = false,
 )

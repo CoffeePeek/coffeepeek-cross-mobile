@@ -10,9 +10,10 @@ import com.coffeepeek.domain.model.ConsumedDrinkOption
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.selection.toggleable
+import androidx.compose.ui.semantics.Role
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -56,17 +57,11 @@ import coffeepeek.composeapp.generated.resources.checkin_action
 import coffeepeek.composeapp.generated.resources.checkin_date_label
 import coffeepeek.composeapp.generated.resources.checkin_date_picker_confirm
 import coffeepeek.composeapp.generated.resources.checkin_date_picker_dismiss
-import coffeepeek.composeapp.generated.resources.checkin_description_label
-import coffeepeek.composeapp.generated.resources.checkin_header_label
-import coffeepeek.composeapp.generated.resources.checkin_header_placeholder
 import coffeepeek.composeapp.generated.resources.checkin_note_label
 import coffeepeek.composeapp.generated.resources.checkin_note_placeholder
 import coffeepeek.composeapp.generated.resources.checkin_photos_label
 import coffeepeek.composeapp.generated.resources.checkin_public_switch_hint
 import coffeepeek.composeapp.generated.resources.checkin_public_switch_title
-import coffeepeek.composeapp.generated.resources.checkin_rating_atmosphere
-import coffeepeek.composeapp.generated.resources.checkin_rating_coffee
-import coffeepeek.composeapp.generated.resources.checkin_rating_service
 import coffeepeek.composeapp.generated.resources.checkin_sheet_title
 import org.jetbrains.compose.resources.stringResource
 import com.coffeepeek.admin.theme.CpDimens
@@ -80,8 +75,6 @@ import com.coffeepeek.admin.ui.icons.CpIcons
 import com.coffeepeek.admin.utils.MAX_REVIEW_PHOTOS
 import com.coffeepeek.admin.utils.currentEpochMillis
 import com.coffeepeek.admin.utils.formatVisitDate
-import com.coffeepeek.admin.utils.validatePublicCheckInDescription
-import com.coffeepeek.admin.utils.validatePublicCheckInHeader
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -96,7 +89,6 @@ fun CheckInBottomSheet(
     drinksError: String? = null,
     onRetryDrinks: () -> Unit = {},
 ) {
-    var headerError by remember { mutableStateOf<String?>(null) }
     var noteError by remember { mutableStateOf<String?>(null) }
     var showDatePicker by remember { mutableStateOf(false) }
 
@@ -108,30 +100,6 @@ fun CheckInBottomSheet(
         if (scrollState.isScrollInProgress) {
             keyboardController?.hide()
             focusManager.clearFocus()
-        }
-    }
-
-    fun onPublicChange(value: Boolean) {
-        onDraftChange(draft.copy(isPublic = value))
-        if (!value) {
-            headerError = null
-            noteError = null
-        }
-    }
-
-    fun onHeaderChange(value: String) {
-        val updated = value.take(120)
-        onDraftChange(draft.copy(header = updated))
-        if (headerError != null && validatePublicCheckInHeader(updated) == null) {
-            headerError = null
-        }
-    }
-
-    fun onNoteChange(value: String) {
-        val updated = value.take(2000)
-        onDraftChange(draft.copy(note = updated))
-        if (noteError != null && (!draft.isPublic || validatePublicCheckInDescription(updated) == null)) {
-            noteError = null
         }
     }
 
@@ -228,7 +196,7 @@ fun CheckInBottomSheet(
             Column {
                 // ── Visit date ────────────────────────────────────────────────────
                 ReviewFormStep {
-                    LabeledField(label = stringResource(Res.string.checkin_date_label)) {
+                    ReviewFormField(label = stringResource(Res.string.checkin_date_label)) {
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -239,7 +207,7 @@ fun CheckInBottomSheet(
                                     color = MaterialTheme.colorScheme.outline,
                                     shape = RoundedCornerShape(CpDimens.radiusMd),
                                 )
-                                .clickable { showDatePicker = true }
+                                .clickable(enabled = !isLoading) { showDatePicker = true }
                                 .padding(horizontal = 14.dp, vertical = 14.dp),
                             horizontalArrangement = Arrangement.spacedBy(CpDimens.spacing2),
                             verticalAlignment = Alignment.CenterVertically,
@@ -266,78 +234,17 @@ fun CheckInBottomSheet(
                     }
                 }
 
-                // ── Public toggle ─────────────────────────────────────────────────
-                ReviewFormStep(optional = true) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Column(
-                            modifier = Modifier.weight(1f),
-                            verticalArrangement = Arrangement.spacedBy(2.dp),
-                        ) {
-                            Text(
-                                text = stringResource(Res.string.checkin_public_switch_title),
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.onSurface,
-                            )
-                            Text(
-                                text = stringResource(Res.string.checkin_public_switch_hint),
-                                style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            )
-                        }
-                        Spacer(Modifier.width(CpDimens.spacing3))
-                        Switch(
-                            checked = draft.isPublic,
-                            onCheckedChange = ::onPublicChange,
-                            colors = SwitchDefaults.colors(
-                                checkedThumbColor = MaterialTheme.colorScheme.onPrimary,
-                                checkedTrackColor = MaterialTheme.colorScheme.primary,
-                                checkedBorderColor = MaterialTheme.colorScheme.primary,
-                                uncheckedThumbColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                                uncheckedTrackColor = MaterialTheme.colorScheme.surfaceVariant,
-                                uncheckedBorderColor = MaterialTheme.colorScheme.outline,
-                            ),
-                        )
-                    }
-                }
-
-                // ── Public review fields / private note ───────────────────────────
-                if (draft.isPublic) {
-                    ReviewFormStep {
-                        ReviewFormField(label = stringResource(Res.string.checkin_header_label), error = headerError) {
-                            ReviewTextInput(
-                                value = draft.header,
-                                onValueChange = ::onHeaderChange,
-                                placeholder = stringResource(Res.string.checkin_header_placeholder),
-                                isError = headerError != null,
-                                singleLine = true,
-                                maxLength = 120,
-                            )
-                        }
-                    }
-                }
-
-                ReviewFormStep(optional = !draft.isPublic) {
+                ReviewFormStep {
                     ReviewFormField(
-                        label = stringResource(
-                            if (draft.isPublic) {
-                                Res.string.checkin_description_label
-                            } else {
-                                Res.string.checkin_note_label
-                            }
-                        ),
+                        label = stringResource(Res.string.checkin_note_label),
                         error = noteError,
                     ) {
                         ReviewTextInput(
                             value = draft.note,
-                            onValueChange = ::onNoteChange,
+                            onValueChange = { onDraftChange(draft.copy(note = it)); noteError = null },
                             placeholder = stringResource(Res.string.checkin_note_placeholder),
                             isError = noteError != null,
-                            maxLength = 2000,
+                            maxLength = 1000,
                             modifier = Modifier.heightIn(min = 80.dp),
                         )
                     }
@@ -364,11 +271,53 @@ fun CheckInBottomSheet(
                     )
                 }
 
-                ReviewFormStep(optional = true, last = true) {
+                ReviewFormStep(optional = true) {
                     ConsumedDrinkField(
                         drinks, draft.drinkSlug, draft.customDrinkName, draft.drinkName, drinksError, onRetryDrinks,
                         { slug, name -> onDraftChange(draft.copy(drinkSlug = slug, customDrinkName = name)) },
                     )
+                }
+                // ── Public toggle ─────────────────────────────────────────────────
+                ReviewFormStep(optional = true, last = true) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth().toggleable(
+                            value = draft.isPublic, enabled = !isLoading, role = Role.Switch,
+                            onValueChange = { onDraftChange(draft.copy(isPublic = it)) },
+                        ),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Column(
+                            modifier = Modifier.weight(1f),
+                            verticalArrangement = Arrangement.spacedBy(2.dp),
+                        ) {
+                            Text(
+                                text = stringResource(Res.string.checkin_public_switch_title),
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onSurface,
+                            )
+                            Text(
+                                text = stringResource(Res.string.checkin_public_switch_hint),
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                        Spacer(Modifier.width(CpDimens.spacing3))
+                        Switch(
+                            checked = draft.isPublic,
+                            onCheckedChange = null,
+                            enabled = !isLoading,
+                            colors = SwitchDefaults.colors(
+                                checkedThumbColor = MaterialTheme.colorScheme.onPrimary,
+                                checkedTrackColor = MaterialTheme.colorScheme.primary,
+                                checkedBorderColor = MaterialTheme.colorScheme.primary,
+                                uncheckedThumbColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                                uncheckedTrackColor = MaterialTheme.colorScheme.surfaceVariant,
+                                uncheckedBorderColor = MaterialTheme.colorScheme.outline,
+                            ),
+                        )
+                    }
                 }
             }
 
@@ -376,37 +325,12 @@ fun CheckInBottomSheet(
             AppButton(
                 text = stringResource(Res.string.checkin_action),
                 onClick = {
-                    headerError = if (draft.isPublic) {
-                        validatePublicCheckInHeader(draft.header)
-                    } else {
-                        null
-                    }
-                    noteError = if (draft.isPublic) {
-                        validatePublicCheckInDescription(draft.note)
-                    } else {
-                        null
-                    }
-                    if (headerError != null || noteError != null) {
-                        return@AppButton
-                    }
+                    noteError = draft.validationError()
+                    if (noteError != null) return@AppButton
                     onSubmit(draft)
                 },
                 enabled = !isLoading && validateConsumedDrink(draft.drinkSlug, draft.customDrinkName) == null,
             )
         }
-    }
-}
-@Composable
-private fun LabeledField(
-    label: String,
-    content: @Composable () -> Unit,
-) {
-    Column(verticalArrangement = Arrangement.spacedBy(CpDimens.spacing1)) {
-        Text(
-            text = label,
-            style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        content()
     }
 }
