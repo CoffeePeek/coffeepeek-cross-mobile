@@ -3,9 +3,16 @@ package com.coffeepeek.admin.feature.community.ui
 import com.coffeepeek.domain.feature.feed.*
 import com.coffeepeek.domain.model.*
 import com.coffeepeek.domain.repository.CheckInHelpfulVote
+import com.coffeepeek.domain.repository.SessionRepository
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.job
 import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.updateAndGet
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
@@ -80,14 +87,21 @@ class PublicCommunityViewModelTest {
 
     @Test
     fun changingFiltersResetsCursorAndLateOldResponseCannotReplaceNewScope() = runBlocking {
+        repeat(100) { checkFilterSwitch() }
+    }
+
+    private suspend fun checkFilterSwitch() {
         val started = CompletableDeferred<Unit>()
         val release = CompletableDeferred<Unit>()
-        val finished = CompletableDeferred<Unit>()
+        val oldRequest = CompletableDeferred<Job>()
         val target = FeedFilters(citySlug = "city", coffeeShopSlug = "shop", authorSlug = "author")
         val feed = TestPublicFeed().apply { load = { _, cursor, filters ->
-            if (filters == FeedFilters()) withContext(NonCancellable) {
-                started.complete(Unit); release.await(); finished.complete(Unit)
-                Result.success(FeedPage(listOf(item(visit)), "wrong-scope"))
+            if (filters == FeedFilters()) {
+                oldRequest.complete(currentCoroutineContext().job)
+                withContext(NonCancellable) {
+                    started.complete(Unit); release.await()
+                    Result.success(FeedPage(listOf(item(visit)), "wrong-scope"))
+                }
             } else {
                 assertEquals(target, filters); assertNull(cursor)
                 Result.success(FeedPage(listOf(item(visit.copy(id = "filtered"))), null))
@@ -98,10 +112,50 @@ class PublicCommunityViewModelTest {
             withTimeout(5_000) { started.await() }
             vm.setFilters(target)
             vm.await { it.items.singleOrNull()?.id == "filtered" && !it.isLoading }
-            release.complete(Unit); withTimeout(5_000) { finished.await() }
+            release.complete(Unit); withTimeout(5_000) { oldRequest.await().join() }
             assertEquals("filtered", vm.state.value.items.single().id)
             assertNull(vm.state.value.nextCursor)
         } finally { release.complete(Unit); vm.close() }
+    }
+
+    @Test
+    fun initialSessionLoadCannotRestartTimelineAlreadyChosenByTheUser() = runBlocking {
+        val initialLoadPaused = CompletableDeferred<Unit>()
+        val resumeInitialLoad = CompletableDeferred<Unit>()
+        val initialized = CompletableDeferred<Unit>()
+        val validations = MutableStateFlow(0)
+        val sessionStore = FeedSessions(Session("token", userId = "one"))
+        val sessions = object : SessionRepository by sessionStore {
+            override fun observeSession() = flow {
+                emit(sessionStore.peekSession())
+                initialized.complete(Unit)
+            }
+            override fun isActiveSession(session: Session?): Boolean {
+                if (validations.updateAndGet { it + 1 } == 2) {
+                    initialLoadPaused.complete(Unit)
+                    runBlocking { withTimeout(5_000) { resumeInitialLoad.await() } }
+                }
+                return sessionStore.isActiveSession(session)
+            }
+        }
+        val historyRequests = MutableStateFlow(0)
+        val repo = FeedCheckIns().apply { list = { _, _ ->
+            historyRequests.updateAndGet { it + 1 }
+            Result.success(PagedResult(listOf(visit), 1, 1, 1))
+        } }
+        val vm = CommunityViewModel(repo, sessions, FeedShops(), TestPublicFeed(), FeedUsers())
+        try {
+            withTimeout(5_000) { initialLoadPaused.await() }
+            vm.selectTimeline(CommunityTimeline.Mine)
+            vm.await { it.items == listOf(visit) && !it.isLoading }
+            resumeInitialLoad.complete(Unit)
+            withTimeout(5_000) { initialized.await() }
+            val state = vm.state.value
+            assertEquals(CommunityTimeline.Mine, state.timeline)
+            assertFalse(state.isLoading)
+            assertEquals(listOf(visit), state.items)
+            assertEquals(1, historyRequests.value)
+        } finally { resumeInitialLoad.complete(Unit); vm.close() }
     }
 
     @Test

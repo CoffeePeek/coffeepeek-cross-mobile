@@ -16,6 +16,7 @@ import com.coffeepeek.domain.model.CheckInModerationState
 import com.coffeepeek.domain.feature.feed.FeedFilters
 import com.coffeepeek.domain.feature.feed.FeedLoadException
 import com.coffeepeek.domain.feature.feed.FeedRepository
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
@@ -24,6 +25,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.flow.updateAndGet
 import kotlinx.coroutines.launch
 
 internal data class CheckInEditState(
@@ -99,14 +101,16 @@ internal class CommunityViewModel(
                 drinksJob?.cancel()
                 profileJob?.cancel()
                 accountKey = key
-                _state.value = CommunityUiState(
-                    isLoggedIn = key != null,
-                    isLoading = true,
-                    timeline = state.value.timeline.takeIf { key != null } ?: CommunityTimeline.Public,
-                    filters = state.value.filters,
-                    sessionGeneration = _state.value.sessionGeneration + 1,
-                )
-                load(reset = true)
+                val initial = _state.updateAndGet { current ->
+                    CommunityUiState(
+                        isLoggedIn = key != null,
+                        isLoading = true,
+                        timeline = current.timeline.takeIf { key != null } ?: CommunityTimeline.Public,
+                        filters = current.filters,
+                        sessionGeneration = current.sessionGeneration + 1,
+                    )
+                }
+                load(reset = true, expectedGeneration = initial.sessionGeneration)
                 if (key != null) profileJob = workScope.launch {
                     val result = users.refreshProfile()
                     currentCoroutineContext().ensureActive()
@@ -160,19 +164,27 @@ internal class CommunityViewModel(
         if (!state.value.restartPagination && (state.value.failedPage ?: 1) > 1) loadMore() else refresh()
     }
 
-    private fun load(reset: Boolean) {
+    private fun load(reset: Boolean, expectedGeneration: Long? = null) {
         val key = accountKey
+        val current = state.value
+        val generation = current.sessionGeneration
+        if (expectedGeneration != null && generation != expectedGeneration) return
         if (!isCurrent(key)) return
-        val timeline = state.value.timeline
+        val timeline = current.timeline
         if (timeline == CommunityTimeline.Mine && key == null) return
-        val page = if (reset) 1 else state.value.page + 1
-        val cursor = if (reset) null else state.value.nextCursor
-        val filters = state.value.filters
-        loadJob?.cancel()
-        _state.update { it.copy(isLoading = reset, isLoadingMore = !reset, error = null, failedPage = null, restartPagination = false,
-            nextCursor = if (reset) null else it.nextCursor, page = if (reset) 0 else it.page,
-            hasMore = if (reset) false else it.hasMore) }
-        loadJob = workScope.launch {
+        val page = if (reset) 1 else current.page + 1
+        val cursor = if (reset) null else current.nextCursor
+        val filters = current.filters
+        if (state.value.sessionGeneration != generation) return
+        _state.update {
+            if (it.sessionGeneration != generation) it else it.copy(
+                isLoading = reset, isLoadingMore = !reset, error = null, failedPage = null, restartPagination = false,
+                nextCursor = if (reset) null else it.nextCursor, page = if (reset) 0 else it.page,
+                hasMore = if (reset) false else it.hasMore,
+            )
+        }
+        val request = workScope.launch(start = CoroutineStart.LAZY) {
+            if (!isCurrent(key) || state.value.sessionGeneration != generation) return@launch
             val result = if (timeline == CommunityTimeline.Public) {
                 feed.getFeed(20, cursor, filters).map { feedPage ->
                     TimelinePage(feedPage.items.map { it.checkIn }, feedPage.nextCursor != null, feedPage.nextCursor,
@@ -183,7 +195,7 @@ internal class CommunityViewModel(
             if (!isCurrent(key)) return@launch
             result.onSuccess { resultPage ->
                 _state.update {
-                    it.copy(
+                    if (it.sessionGeneration != generation || !isCurrent(key)) it else it.copy(
                         items = if (reset) resultPage.items.distinctBy(CheckIn::id) else appendTimeline(it.items, resultPage.items),
                         page = page,
                         hasMore = resultPage.hasMore,
@@ -193,11 +205,18 @@ internal class CommunityViewModel(
                     )
                 }
             }.onFailure { error ->
-                _state.update { it.copy(isLoading = false, isLoadingMore = false, failedPage = page,
-                    restartPagination = (error as? FeedLoadException)?.restartPagination == true,
-                    error = error.message ?: "Не удалось загрузить чек-ины") }
+                _state.update {
+                    if (it.sessionGeneration != generation || !isCurrent(key)) it else it.copy(
+                        isLoading = false, isLoadingMore = false, failedPage = page,
+                        restartPagination = (error as? FeedLoadException)?.restartPagination == true,
+                        error = error.message ?: "Не удалось загрузить чек-ины",
+                    )
+                }
             }
         }
+        // Store the job before its response can trigger a filter/timeline change.
+        loadJob = request
+        request.start()
     }
 
     fun edit(id: String) {
