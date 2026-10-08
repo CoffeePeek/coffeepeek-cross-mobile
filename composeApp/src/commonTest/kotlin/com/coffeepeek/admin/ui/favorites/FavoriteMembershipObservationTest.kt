@@ -1,6 +1,7 @@
 package com.coffeepeek.admin.ui.favorites
 
 import com.coffeepeek.admin.settings.CityPreference
+import com.coffeepeek.admin.feature.favorites.api.RoasterFavorites
 import com.coffeepeek.admin.ui.screen.feed.FeedViewModel
 import com.coffeepeek.admin.ui.screen.shop.CheckInDraftStore
 import com.coffeepeek.admin.ui.screen.shop.ShopDetailViewModel
@@ -16,6 +17,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
 import kotlin.test.Test
@@ -120,15 +122,15 @@ class FavoriteMembershipObservationTest {
         override suspend fun createCheckIn(input: CreateCheckInInput): Result<Unit> = error("unused")
         override suspend fun getMyCheckIns(page: Int, pageSize: Int): Result<PagedResult<CheckIn>> = error("unused")
         override suspend fun getMyCheckIns(from: String, to: String, pageSize: Int): Result<List<CheckIn>> = error("unused")
+        override suspend fun updateCheckIn(id: String, input: UpdateCheckInInput): Result<CheckIn> = error("unused")
+        override suspend fun setVisibility(id: String, visibility: CheckInVisibility): Result<CheckIn> = error("unused")
+        override suspend fun setHelpful(id: String, helpful: Boolean): Result<CheckInHelpfulVote> = error("unused")
+        override suspend fun report(id: String, text: String): Result<Unit> = error("unused")
     }
 
-    private object Reviews : ReviewRepository {
-        override suspend fun submitReviewReport(reviewId: String, text: String): Result<String> = error("unused")
-        override suspend fun createReview(input: CreateReviewInput): Result<Unit> = error("unused")
-        override suspend fun updateReview(reviewId: String, input: UpdateReviewInput): Result<Unit> = error("unused")
-        override suspend fun getUserReviews(userId: String, page: Int, pageSize: Int): Result<PagedResult<Review>> = error("unused")
-        override suspend fun getMyReviewSubmissions(status: ModerationStatus, page: Int, pageSize: Int): Result<PagedResult<ReviewSubmission>> = error("unused")
-        override suspend fun setReviewHelpful(reviewId: String, helpful: Boolean): Result<HelpfulVote> = error("unused")
+    private object Roasters : RoasterFavorites {
+        override fun observeFavorites() = flowOf(emptyList<CatalogItem>())
+        override suspend fun setFavorite(roaster: CatalogItem, isFavorite: Boolean): Result<Unit> = error("unused")
     }
 
     private object Users : UserRepository {
@@ -162,8 +164,17 @@ class FavoriteMembershipObservationTest {
     @Test fun detailAppliesMembershipEvenWhenDetailsResponseArrivesLater() = runBlocking {
         val membership = Membership()
         val shops = Shops()
-        val vm = ShopDetailViewModel("shop", shops, LegacyFavorites, CheckIns, Reviews, Sessions,
-            CheckInDraftStore { 0L }, Users, ObserveFavoriteIdsUseCase(membership))
+        val vm = ShopDetailViewModel(
+            shopId = "shop",
+            shopRepository = shops,
+            favoriteRepository = LegacyFavorites,
+            checkInRepository = CheckIns,
+            sessionRepository = Sessions,
+            checkInDraftStore = CheckInDraftStore { 0L },
+            userRepository = Users,
+            observeFavoriteIds = ObserveFavoriteIdsUseCase(membership),
+            roasterFavorites = Roasters,
+        )
         try {
             membership.set("shop")
             shops.details.complete(CoffeeShopDetails(shop))
@@ -177,8 +188,16 @@ class FavoriteMembershipObservationTest {
     @Test fun signedInDetailToggleAddsAndRemovesFavorite() = runBlocking {
         val shops = Shops()
         val writer = FavoriteWriter()
-        val vm = ShopDetailViewModel("shop", shops, writer, CheckIns, Reviews, SignedInSessions,
-            CheckInDraftStore { 0L }, Users)
+        val vm = ShopDetailViewModel(
+            shopId = "shop",
+            shopRepository = shops,
+            favoriteRepository = writer,
+            checkInRepository = CheckIns,
+            sessionRepository = SignedInSessions,
+            checkInDraftStore = CheckInDraftStore { 0L },
+            userRepository = Users,
+            roasterFavorites = Roasters,
+        )
         try {
             shops.details.complete(CoffeeShopDetails(shop))
             withTimeout(5_000) { vm.uiState.first { it.details != null && !it.isLoading } }
@@ -234,8 +253,16 @@ class FavoriteMembershipObservationTest {
         val writer = FavoriteWriter().apply {
             addResult = Result.failure(IllegalStateException("storage unavailable"))
         }
-        val vm = ShopDetailViewModel("shop", shops, writer, CheckIns, Reviews, SignedInSessions,
-            CheckInDraftStore { 0L }, Users)
+        val vm = ShopDetailViewModel(
+            shopId = "shop",
+            shopRepository = shops,
+            favoriteRepository = writer,
+            checkInRepository = CheckIns,
+            sessionRepository = SignedInSessions,
+            checkInDraftStore = CheckInDraftStore { 0L },
+            userRepository = Users,
+            roasterFavorites = Roasters,
+        )
         try {
             shops.details.complete(CoffeeShopDetails(shop))
             withTimeout(5_000) { vm.uiState.first { it.details != null && !it.isLoading } }

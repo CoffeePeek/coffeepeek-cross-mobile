@@ -14,14 +14,17 @@ import io.ktor.http.contentType
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
-/** Shared shop-photo upload transport for reviews and check-ins. */
+/** Photo upload transport with purpose-specific presigned URL contracts. */
 internal class ShopPhotoUploadBackend(
     private val apiClient: HttpClient,
     private val uploadClient: HttpClient,
 ) {
-    suspend fun upload(photos: List<ShopPhotoUpload>): Result<List<UploadedShopPhoto>> = requestResult {
+    suspend fun upload(
+        photos: List<ShopPhotoUpload>,
+        purpose: ShopPhotoPurpose,
+    ): Result<List<UploadedShopPhoto>> = requestResult {
         if (photos.isEmpty()) return@requestResult emptyList()
-        val response = apiClient.post("/api/Photos/shop") {
+        val response = apiClient.post(purpose.endpoint) {
             contentType(ContentType.Application.Json)
             setBody(photos.map { PhotoUploadRequest(it.bytes.size, it.fileName, it.contentType) })
         }.body<PhotoUploadResponse>()
@@ -36,6 +39,8 @@ internal class ShopPhotoUploadBackend(
                     remove(HttpHeaders.Accept)
                     remove(HttpHeaders.AcceptCharset)
                     append(HttpHeaders.ContentType, photo.contentType)
+                    // The review tag is signed into the presigned URL and must be sent verbatim.
+                    purpose.tagging?.let { append("x-amz-tagging", it) }
                 }
                 setBody(photo.bytes)
             }
@@ -45,6 +50,11 @@ internal class ShopPhotoUploadBackend(
                 photo.bytes.size.toLong())
         }
     }
+}
+
+internal enum class ShopPhotoPurpose(val endpoint: String, val tagging: String? = null) {
+    Review("/api/Photos/review", "is_permanent=False"),
+    CheckIn("/api/Photos/check-in"),
 }
 
 @Serializable

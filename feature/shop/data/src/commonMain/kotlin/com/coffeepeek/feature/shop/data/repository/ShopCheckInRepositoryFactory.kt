@@ -4,6 +4,7 @@ import com.coffeepeek.core.network.requestResult
 import com.coffeepeek.feature.shop.data.backend.ShopCheckInBackend
 import com.coffeepeek.feature.shop.data.backend.ShopPhotoUpload
 import com.coffeepeek.feature.shop.data.backend.ShopPhotoUploadBackend
+import com.coffeepeek.feature.shop.data.backend.ShopPhotoPurpose
 import com.coffeepeek.feature.shop.domain.model.ShopCheckInCreateInput
 import com.coffeepeek.feature.shop.domain.model.ShopConsumedDrinkOption
 import com.coffeepeek.feature.shop.domain.repository.ShopCheckInRepository
@@ -29,7 +30,7 @@ private class DefaultShopCheckInRepository(
         require(error == null) { "Invalid check-in input: $error" }
         val uploaded = photos.upload(input.photos.map {
             ShopPhotoUpload(it.bytes, it.fileName, it.contentType)
-        }).getOrThrow()
+        }, purpose = ShopPhotoPurpose.CheckIn).getOrThrow()
         backend.create(
             shopId = input.shopId,
             visitedAtIso = input.visitedAtIso,

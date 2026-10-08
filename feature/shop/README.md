@@ -62,7 +62,8 @@ adding new ones, with an explicit explanation, until server support exists.
 The nested photo-source modal may require Interactive/Run Preview in the IDE;
 compilation does not verify actual modal rendering or Android picker behavior.
 The write repository now prepares review creation through the existing
-`/api/Photos/shop` presigned upload flow and `POST /api/ModerationReviews`, and
+`/api/Photos/review` presigned upload flow (including the signed
+`x-amz-tagging: is_permanent=False` upload header) and `POST /api/ModerationReviews`, and
 editing through `PUT /api/ModerationReviews/{reviewId}` with text/ratings only.
 The upload client is separate from the authenticated API client; public upload
 URLs are validated before any image bytes are sent. This repository is not yet
@@ -85,7 +86,8 @@ The next foundation slice adds a pure check-in input/validation contract and a
 `Result`-returning repository. It reads drink choices from the existing
 `GET /api/catalogs/drinks` endpoint and submits to `POST /api/CheckIns` with the
 current request field names. Reviews and check-ins now share the feature-data
-shop-photo upload transport, while keeping separate domain photo/input types.
+photo upload transport, while keeping separate domain photo/input types and
+requesting check-in URLs from `/api/Photos/check-in` without the review tag.
 The repository validates before uploading, and uses the caller-supplied
 authenticated API client plus a separate public-upload client. This is not yet
 an active screen: date selection/conversion, draft persistence, photo picking,

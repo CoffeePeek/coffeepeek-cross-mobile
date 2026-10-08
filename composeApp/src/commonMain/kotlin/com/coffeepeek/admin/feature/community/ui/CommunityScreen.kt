@@ -11,6 +11,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LifecycleEventEffect
 import com.coffeepeek.admin.di.platformViewModel
 import com.coffeepeek.admin.theme.CpDimens
 import com.coffeepeek.admin.ui.Navigator
@@ -34,6 +36,7 @@ fun CommunityScreen(onCreateCheckIn: () -> Unit) {
     var preview by remember { mutableStateOf<CheckInPhotoPreview?>(null) }
     var displayedGeneration by rememberSaveable { mutableStateOf(state.sessionGeneration) }
 
+    LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { vm.onScreenResumed() }
     LaunchedEffect(state.sessionGeneration) {
         if (displayedGeneration != state.sessionGeneration) {
             preview = null

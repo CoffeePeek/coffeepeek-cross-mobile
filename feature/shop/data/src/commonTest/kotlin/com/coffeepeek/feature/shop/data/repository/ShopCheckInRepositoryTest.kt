@@ -66,15 +66,15 @@ class ShopCheckInRepositoryTest {
         val steps = mutableListOf<String>()
         val apiEngine = MockEngine { request ->
             when (request.url.encodedPath) {
-                "/api/Photos/shop" -> {
+                "/api/Photos/check-in" -> {
                     steps += "url"
-                    respond("""{"isSuccess":true,"data":[{"uploadUrl":"https://uploads.example.com/photo","storageKey":"shop/photo"}]}""",
+                    respond("""{"isSuccess":true,"data":[{"uploadUrl":"https://uploads.example.com/photo","storageKey":"check-in/photo"}]}""",
                         headers = headersOf(HttpHeaders.ContentType, "application/json"))
                 }
                 "/api/CheckIns" -> {
                     steps += "check-in"
                     val body = (request.body as TextContent).text
-                    assertTrue(body.contains("\"storageKey\":\"shop/photo\""))
+                    assertTrue(body.contains("\"storageKey\":\"check-in/photo\""))
                     assertTrue(body.contains("\"drinkSlug\":\"other\""))
                     assertTrue(body.contains("\"customDrinkName\":\"Flat white\""))
                     assertTrue(body.contains("\"header\":\"Coffee\""))
@@ -88,7 +88,9 @@ class ShopCheckInRepositoryTest {
         val uploadEngine = MockEngine { request ->
             steps += "upload"
             assertEquals("uploads.example.com", request.url.host)
+            assertEquals("PUT", request.method.value)
             assertFalse(request.headers.contains(HttpHeaders.Authorization))
+            assertFalse(request.headers.contains("x-amz-tagging"))
             respond("")
         }
         val apiClient = HttpClientFactory(apiEngine).api("https://example.com")
@@ -127,7 +129,7 @@ class ShopCheckInRepositoryTest {
             assertTrue(paths.isEmpty())
             assertTrue(repository.create(ShopCheckInCreateInput("shop-1", "2026-10-06T12:00:00Z",
                 false, photos = listOf(ShopCheckInPhoto(byteArrayOf(1), "visit.jpg")))).isFailure)
-            assertEquals(listOf("/api/Photos/shop"), paths)
+            assertEquals(listOf("/api/Photos/check-in"), paths)
         } finally {
             apiClient.close()
             uploadClient.close()

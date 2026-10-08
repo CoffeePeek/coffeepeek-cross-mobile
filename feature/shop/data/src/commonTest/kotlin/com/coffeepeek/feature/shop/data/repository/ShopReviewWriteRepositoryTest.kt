@@ -20,22 +20,22 @@ class ShopReviewWriteRepositoryTest {
     private val rating = ShopRating(place = 5, service = 4, coffee = 5)
     private val photo = ShopReviewPhoto(byteArrayOf(1, 2, 3), "coffee.jpg")
 
-    @Test fun createUploadsShopPhotoBeforeSendingModerationReview() = runBlocking {
+    @Test fun createUploadsReviewPhotoBeforeSendingModerationReview() = runBlocking {
         val steps = mutableListOf<String>()
         val apiEngine = MockEngine { request ->
             val body = (request.body as TextContent).text
             when (request.url.encodedPath) {
-                "/api/Photos/shop" -> {
+                "/api/Photos/review" -> {
                     steps += "url"
                     assertEquals("POST", request.method.value)
                     assertTrue(body.contains("\"sizeBytes\":3"))
-                    respond("""{"isSuccess":true,"data":[{"uploadUrl":"https://uploads.example.com/coffee","storageKey":"shop/coffee"}]}""",
+                    respond("""{"isSuccess":true,"data":[{"uploadUrl":"https://uploads.example.com/coffee","storageKey":"review/coffee"}]}""",
                         headers = headersOf(HttpHeaders.ContentType, "application/json"))
                 }
                 "/api/ModerationReviews" -> {
                     steps += "review"
                     assertEquals("POST", request.method.value)
-                    assertTrue(body.contains("\"storageKey\":\"shop/coffee\""))
+                    assertTrue(body.contains("\"storageKey\":\"review/coffee\""))
                     assertTrue(body.contains("\"header\":\"Coffee\""))
                     respond("""{"isSuccess":true,"data":{"entityId":"new-1"}}""",
                         headers = headersOf(HttpHeaders.ContentType, "application/json"))
@@ -50,6 +50,7 @@ class ShopReviewWriteRepositoryTest {
             assertEquals("image/jpeg", request.headers[HttpHeaders.ContentType]
                 ?: request.body.contentType?.toString())
             assertFalse(request.headers.contains(HttpHeaders.Authorization))
+            assertEquals("is_permanent=False", request.headers["x-amz-tagging"])
             respond("")
         }
         val apiClient = HttpClientFactory(apiEngine).api("https://example.com")
@@ -115,7 +116,7 @@ class ShopReviewWriteRepositoryTest {
             assertTrue(paths.isEmpty())
             assertTrue(repository.create(ShopReviewCreateInput("shop-1", "Coffee",
                 "Delicious coffee", rating, listOf(photo))).isFailure)
-            assertEquals(listOf("/api/Photos/shop"), paths)
+            assertEquals(listOf("/api/Photos/review"), paths)
             assertEquals(0, uploadCalls)
         } finally {
             apiClient.close()

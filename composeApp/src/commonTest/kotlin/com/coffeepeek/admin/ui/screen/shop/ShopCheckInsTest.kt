@@ -262,7 +262,8 @@ class ShopCheckInsTest {
         shopDetails: CoffeeShopDetails = details, sessionActive: () -> Boolean = { loggedIn },
         drinks: suspend () -> Result<List<ConsumedDrinkOption>> = { Result.success(emptyList()) },
     ): ShopDetailViewModel = ShopDetailViewModel(
-        "coffee", object : ShopRepository {
+        shopId = "coffee",
+        shopRepository = object : ShopRepository {
             override suspend fun getShopDetails(id: String) = Result.success(shopDetails)
             override suspend fun searchShops(filters: ShopFilters): Result<PagedResult<CoffeeShop>> = error("unused")
             override suspend fun getMapContent(bounds: MapBounds, zoom: Float, filters: ShopFilters): Result<MapContent> = error("unused")
@@ -271,14 +272,15 @@ class ShopCheckInsTest {
             override suspend fun getMenuDrinks(): Result<List<CoffeeDrinkDefinition>> = error("unused")
             override suspend fun createShop(input: CreateShopInput): Result<Unit> = error("unused")
             override suspend fun getMyShopSubmissions(status: ModerationStatus, page: Int, pageSize: Int): Result<PagedResult<ShopSubmission>> = error("unused")
-        }, object : FavoriteRepository {
+        }, favoriteRepository = object : FavoriteRepository {
             override suspend fun getFavoriteIds(): Set<String> = error("unused")
             override suspend fun isFavorite(shopId: String): Boolean = error("unused")
             override suspend fun getFavorites(): Result<List<CoffeeShopDetails>> = error("unused")
             override suspend fun addFavorite(shop: CoffeeShop, address: String?): Result<Unit> = error("unused")
             override suspend fun removeFavorite(shopId: String): Result<Unit> = error("unused")
             override suspend fun clearAll() = Unit
-        }, checkIns, object : SessionRepository {
+        }, checkInRepository = checkIns,
+        sessionRepository = object : SessionRepository {
             private val session = if (loggedIn) Session("token") else null
             override fun peekSession() = session
             override fun applySession(session: Session?) = Unit
@@ -289,7 +291,8 @@ class ShopCheckInsTest {
             override suspend fun warmCache() = Unit
             override fun observeSession() = flowOf(session)
             override suspend fun isLoggedIn() = sessionActive()
-        }, draftStore, object : UserRepository {
+        }, checkInDraftStore = draftStore,
+        userRepository = object : UserRepository {
             override fun observeProfile() = MutableStateFlow<UserProfile?>(null)
             override suspend fun getMe(): Result<UserProfile> = Result.failure(IllegalStateException("No public author address"))
             override suspend fun refreshProfile(): Result<UserProfile> = error("unused")
@@ -299,7 +302,7 @@ class ShopCheckInsTest {
             override suspend fun updateUsername(username: String): Result<Unit> = error("unused")
             override suspend fun updateAbout(about: String): Result<Unit> = error("unused")
             override suspend fun updateAvatar(photo: PendingPhotoUpload): Result<Unit> = error("unused")
-        }, object : RoasterFavorites {
+        }, roasterFavorites = object : RoasterFavorites {
             override fun observeFavorites() = flowOf(emptyList<CatalogItem>())
             override suspend fun setFavorite(roaster: CatalogItem, isFavorite: Boolean): Result<Unit> = error("unused")
         },
