@@ -68,6 +68,9 @@ class FavoriteMembershipObservationTest {
     private class FavoriteWriter : FavoriteRepository {
         var addCalls = 0
         var removeCalls = 0
+        val addStarted = CompletableDeferred<Unit>()
+        val removeStarted = CompletableDeferred<Unit>()
+        var pendingAdd: CompletableDeferred<Result<Unit>>? = null
         var addResult: Result<Unit> = Result.success(Unit)
         var removeResult: Result<Unit> = Result.success(Unit)
 
@@ -76,10 +79,12 @@ class FavoriteMembershipObservationTest {
         override suspend fun getFavorites() = Result.success(emptyList<CoffeeShopDetails>())
         override suspend fun addFavorite(shop: CoffeeShop, address: String?): Result<Unit> {
             addCalls++
-            return addResult
+            addStarted.complete(Unit)
+            return pendingAdd?.await() ?: addResult
         }
         override suspend fun removeFavorite(shopId: String): Result<Unit> {
             removeCalls++
+            removeStarted.complete(Unit)
             return removeResult
         }
         override suspend fun clearAll() = Unit
@@ -203,12 +208,18 @@ class FavoriteMembershipObservationTest {
             withTimeout(5_000) { vm.uiState.first { it.details != null && !it.isLoading } }
 
             vm.toggleFavorite()
-            withTimeout(5_000) { vm.uiState.first { it.details?.shop?.isFavorite == true } }
+            withTimeout(5_000) {
+                writer.addStarted.await()
+                vm.uiState.first { it.details?.shop?.isFavorite == true && !it.isFavoriteLoading }
+            }
             assertEquals(1, writer.addCalls)
             assertEquals(0, writer.removeCalls)
 
             vm.toggleFavorite()
-            withTimeout(5_000) { vm.uiState.first { it.details?.shop?.isFavorite == false && !it.isFavoriteLoading } }
+            withTimeout(5_000) {
+                writer.removeStarted.await()
+                vm.uiState.first { it.details?.shop?.isFavorite == false && !it.isFavoriteLoading }
+            }
             assertEquals(1, writer.addCalls)
             assertEquals(1, writer.removeCalls)
         } finally { vm.close() }
@@ -224,7 +235,10 @@ class FavoriteMembershipObservationTest {
 
             vm.toggleFavorite(shop)
 
-            withTimeout(5_000) { vm.uiState.first { it.shops.singleOrNull()?.isFavorite == true } }
+            withTimeout(5_000) {
+                writer.addStarted.await()
+                vm.uiState.first { it.shops.singleOrNull()?.isFavorite == true && it.favoriteUpdates.isEmpty() }
+            }
             assertEquals(1, writer.addCalls)
             assertEquals(0, writer.removeCalls)
         } finally { vm.close() }
@@ -232,8 +246,9 @@ class FavoriteMembershipObservationTest {
 
     @Test fun failedFeedFavoriteWriteRollsBackOptimisticHeart() = runBlocking {
         val shops = Shops()
+        val pendingAdd = CompletableDeferred<Result<Unit>>()
         val writer = FavoriteWriter().apply {
-            addResult = Result.failure(IllegalStateException("storage unavailable"))
+            this.pendingAdd = pendingAdd
         }
         val vm = FeedViewModel(shops, writer, CityPreference(Settings), SignedInSessions)
         try {
@@ -242,7 +257,17 @@ class FavoriteMembershipObservationTest {
 
             vm.toggleFavorite(shop)
 
-            withTimeout(5_000) { vm.uiState.first { it.shops.singleOrNull()?.isFavorite == false && writer.addCalls == 1 } }
+            withTimeout(5_000) {
+                writer.addStarted.await()
+                vm.uiState.first { it.shops.singleOrNull()?.isFavorite == true && shop.id in it.favoriteUpdates }
+            }
+            // Hold the write until the optimistic state is observed. A fast
+            // failure can otherwise conflate the update and rollback into the
+            // initial StateFlow value without waking a state-only collector.
+            pendingAdd.complete(Result.failure(IllegalStateException("storage unavailable")))
+            withTimeout(5_000) {
+                vm.uiState.first { it.shops.singleOrNull()?.isFavorite == false && it.favoriteUpdates.isEmpty() }
+            }
             assertEquals(1, writer.addCalls)
             assertEquals(0, writer.removeCalls)
         } finally { vm.close() }
@@ -269,7 +294,10 @@ class FavoriteMembershipObservationTest {
 
             vm.toggleFavorite()
 
-            withTimeout(5_000) { vm.uiState.first { it.actionMessage == "storage unavailable" } }
+            withTimeout(5_000) {
+                writer.addStarted.await()
+                vm.uiState.first { it.actionMessage == "storage unavailable" && !it.isFavoriteLoading }
+            }
             assertFalse(vm.uiState.value.details!!.shop.isFavorite)
             assertFalse(vm.uiState.value.isFavoriteLoading)
             assertEquals(1, writer.addCalls)
