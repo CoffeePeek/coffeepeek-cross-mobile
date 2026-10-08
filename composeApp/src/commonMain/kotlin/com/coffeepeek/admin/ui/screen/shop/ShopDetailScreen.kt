@@ -142,7 +142,7 @@ private const val FeaturePreviewCount = 5
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ShopDetailScreen(shopId: String) {
+fun ShopDetailScreen(shopId: String, forCheckIn: Boolean = false) {
     val vm: ShopDetailViewModel = platformViewModel(parameters = { parametersOf(shopId) })
     val state by vm.uiState.collectAsState()
     val userLocation = rememberPermittedUserLocation()
@@ -173,13 +173,23 @@ fun ShopDetailScreen(shopId: String) {
                 onDraftChange = vm::updateCheckInDraft,
                 onSubmit = vm::checkIn,
                 placeName = state.details?.shop?.title,
+                submittedVisibility = state.submittedCheckInVisibility,
+                submissionError = state.checkInError,
+                onGoToFeed = {
+                    vm.dismissCheckInSheet()
+                    Navigator.popThenSelectTab(Navigator.Screen.CommunityTab)
+                },
+                onViewCheckIns = {
+                    vm.dismissCheckInSheet()
+                    Navigator.popThenNavigate(Navigator.Screen.VisitedPlaces)
+                },
             )
         }
     }
 
     val details = state.details
     val distance = formatDistance(distanceToShopMeters(userLocation, details?.location))
-    val floatingActionsClearance = 72.dp
+    val floatingActionsClearance = if (forCheckIn) 120.dp else 72.dp
     val hazeState = rememberHazeState()
 
     Box(modifier = Modifier.fillMaxSize()) {
@@ -260,14 +270,21 @@ fun ShopDetailScreen(shopId: String) {
                     .statusBarsPadding(),
             )
 
-            ShopDetailBottomBar(
-                isCheckInLoading = state.isCheckInLoading,
-                canOpenRoute = details.location?.latitude != null &&
-                    details.location?.longitude != null,
-                onRoute = vm::openRoute,
-                onCheckIn = vm::openCheckInSheet,
-                modifier = Modifier.align(Alignment.BottomCenter),
-            )
+            Column(Modifier.align(Alignment.BottomCenter)) {
+                ShopDetailBottomBar(
+                    isCheckInLoading = state.isCheckInLoading,
+                    canOpenRoute = details.location?.latitude != null &&
+                        details.location?.longitude != null,
+                    onRoute = vm::openRoute,
+                    onCheckIn = vm::openCheckInSheet,
+                    forCheckIn = forCheckIn,
+                )
+                if (forCheckIn) androidx.compose.material3.TextButton(
+                    onClick = { Navigator.popThenNavigate(Navigator.Screen.CreateCheckIn) },
+                    modifier = Modifier.fillMaxWidth().navigationBarsPadding(),
+                    enabled = !state.isCheckInLoading,
+                ) { Text("Выбрать другую кофейню") }
+            }
         }
     }
 }
@@ -1572,11 +1589,12 @@ private fun ShopDetailBottomBar(
     onRoute: () -> Unit,
     onCheckIn: () -> Unit,
     modifier: Modifier = Modifier,
+    forCheckIn: Boolean = false,
 ) {
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .navigationBarsPadding()
+            .then(if (forCheckIn) Modifier else Modifier.navigationBarsPadding())
             .padding(horizontal = CpDimens.spacing3, vertical = CpDimens.spacing3),
         horizontalArrangement = Arrangement.spacedBy(CpDimens.spacing2),
         verticalAlignment = Alignment.CenterVertically,
@@ -1587,7 +1605,7 @@ private fun ShopDetailBottomBar(
         )
         BottomBarAction(
             icon = CpIcons.Check,
-            label = "Чекин",
+            label = if (forCheckIn) "Продолжить" else "Чекин",
             enabled = !isCheckInLoading,
             isLoading = isCheckInLoading,
             onClick = onCheckIn,

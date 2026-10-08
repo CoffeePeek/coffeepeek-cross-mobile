@@ -6,10 +6,11 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.ui.text.font.FontWeight
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.compose.LifecycleEventEffect
+import androidx.compose.ui.unit.dp
 import com.coffeepeek.admin.di.platformViewModel
 import com.coffeepeek.admin.theme.CpDimens
 import com.coffeepeek.admin.ui.Navigator
@@ -18,21 +19,28 @@ import com.coffeepeek.admin.ui.component.CoffeePeekPullToRefresh
 import com.coffeepeek.admin.ui.component.FullScreenImageDialog
 import com.coffeepeek.admin.ui.component.LocalFloatingNavClearance
 import com.coffeepeek.admin.ui.component.ReviewTextInput
+import com.coffeepeek.admin.ui.icons.CpIcons
 import com.coffeepeek.domain.model.CheckIn
 import com.coffeepeek.domain.model.CheckInModerationState
 import com.coffeepeek.domain.model.CheckInVisibility
 
 @Composable
-fun CommunityScreen() {
+fun CommunityScreen(onCreateCheckIn: () -> Unit) {
     val vm: CommunityViewModel = platformViewModel()
     val state by vm.state.collectAsState()
     val listState = rememberLazyListState()
     val snackbar = remember { SnackbarHostState() }
     val clearance = LocalFloatingNavClearance.current
     var preview by remember { mutableStateOf<CheckInPhotoPreview?>(null) }
+    var displayedGeneration by rememberSaveable { mutableStateOf(state.sessionGeneration) }
 
-    LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { vm.refresh() }
-    LaunchedEffect(state.sessionGeneration) { preview = null; listState.scrollToItem(0) }
+    LaunchedEffect(state.sessionGeneration) {
+        if (displayedGeneration != state.sessionGeneration) {
+            preview = null
+            listState.scrollToItem(0)
+            displayedGeneration = state.sessionGeneration
+        }
+    }
     LaunchedEffect(state.actionMessage) {
         state.actionMessage?.let { snackbar.showSnackbar(it); vm.clearActionMessage() }
     }
@@ -67,6 +75,20 @@ fun CommunityScreen() {
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
         snackbarHost = { SnackbarHost(snackbar) },
+        floatingActionButton = {
+            FloatingActionButton(
+                onClick = {
+                    if (state.isLoggedIn == true) onCreateCheckIn()
+                    else Navigator.navigate(Navigator.Screen.Auth)
+                },
+                modifier = Modifier.padding(bottom = clearance),
+                shape = CircleShape,
+                containerColor = MaterialTheme.colorScheme.primary,
+                contentColor = MaterialTheme.colorScheme.onPrimary,
+            ) {
+                Icon(CpIcons.Add, contentDescription = "Создать чекин", modifier = Modifier.size(28.dp))
+            }
+        },
     ) { padding ->
         CoffeePeekPullToRefresh(
             listState, isRefreshing = state.isLoading && state.items.isNotEmpty(), onRefresh = vm::refresh,
@@ -76,7 +98,7 @@ fun CommunityScreen() {
                 state = listState, modifier = scrollModifier.fillMaxSize(),
                 contentPadding = PaddingValues(
                     start = CpDimens.spacing4, end = CpDimens.spacing4,
-                    top = CpDimens.spacing3, bottom = clearance + CpDimens.spacing4,
+                    top = CpDimens.spacing3, bottom = clearance + 88.dp,
                 ),
                 verticalArrangement = Arrangement.spacedBy(CpDimens.spacing3),
             ) {

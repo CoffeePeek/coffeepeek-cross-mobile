@@ -94,6 +94,7 @@ fun MapScreen(
     isPreview: Boolean = false,
     onToggleExpand: (() -> Unit)? = null,
     canvasSize: DpSize? = null,
+    onOpenShop: (String) -> Unit = { Navigator.navigate(Navigator.Screen.ShopDetail(it)) },
 ) {
     val state by vm.state.collectAsState()
     val focusManager = LocalFocusManager.current
@@ -146,7 +147,7 @@ fun MapScreen(
             onBoundsChanged = vm::onBoundsChanged,
             onShopClick = { shop ->
                 dismissSearchInput()
-                if (isPreview) Navigator.navigate(Navigator.Screen.ShopDetail(shop.id))
+                if (isPreview) onOpenShop(shop.id)
                 else vm.onShopSelected(shop)
             },
             onZoneClick = vm::onZoneSelected,
@@ -308,6 +309,7 @@ fun MapScreen(
 
         if (!isPreview && state.selectedZone == null && hasShopCarousel) {
             MapShopCarousel(
+                onOpenShop = onOpenShop,
                 state = state,
                 onSelect = { shop ->
                     dismissSearchInput()
@@ -577,6 +579,7 @@ private fun MapZoomControl(
 
 @Composable
 private fun MapShopCarousel(
+    onOpenShop: (String) -> Unit,
     state: MapUiState,
     onSelect: (MapShop) -> Unit,
     modifier: Modifier = Modifier,
@@ -626,7 +629,7 @@ private fun MapShopCarousel(
                 isLoadingDetails = isSelected && state.isLoadingShopDetails,
                 distance = formatDistance(distanceToShopMeters(state.nearbyOrigin, ShopLocation("", shop.latitude, shop.longitude))),
                 onOpen = {
-                    if (isSelected) Navigator.navigate(Navigator.Screen.ShopDetail(shop.id)) else onSelect(shop)
+                    if (isSelected) onOpenShop(shop.id) else onSelect(shop)
                 },
             )
         }

@@ -13,6 +13,7 @@ import com.coffeepeek.admin.utils.ShareHelper
 import com.coffeepeek.admin.utils.datePickerMillisToUtcIsoInstant
 import com.coffeepeek.domain.model.CoffeeShopDetails
 import com.coffeepeek.domain.model.CheckIn
+import com.coffeepeek.domain.model.CheckInVisibility
 import com.coffeepeek.domain.model.CatalogItem
 import com.coffeepeek.domain.model.CreateCheckInInput
 import com.coffeepeek.domain.model.PendingPhotoUpload
@@ -28,6 +29,7 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.CancellationException
 
 data class ShopDetailUiState(
     val drinks: List<ConsumedDrinkOption> = emptyList(),
@@ -41,6 +43,8 @@ data class ShopDetailUiState(
     val helpfulId: String? = null,
     val showCheckInSheet: Boolean = false,
     val checkInDraft: CheckInDraft? = null,
+    val submittedCheckInVisibility: CheckInVisibility? = null,
+    val checkInError: String? = null,
     val actionMessage: String? = null,
     val error: String? = null,
     val favoriteRoasterIds: Set<String> = emptySet(),
@@ -147,6 +151,7 @@ class ShopDetailViewModel(
     }
 
     fun openCheckInSheet() {
+        if (_uiState.value.isCheckInLoading || _uiState.value.showCheckInSheet) return
         workScope.launch {
             if (!sessionRepository.isLoggedIn()) {
                 Navigator.navigate(Navigator.Screen.Auth)
@@ -158,6 +163,8 @@ class ShopDetailViewModel(
                 it.copy(
                     showCheckInSheet = true,
                     checkInDraft = draft,
+                    submittedCheckInVisibility = null,
+                    checkInError = null,
                 )
             }
         }
@@ -172,58 +179,75 @@ class ShopDetailViewModel(
     }
 
     fun dismissCheckInSheet() {
-        _uiState.update { it.copy(showCheckInSheet = false) }
+        if (_uiState.value.isCheckInLoading) return
+        _uiState.update {
+            it.copy(showCheckInSheet = false, submittedCheckInVisibility = null, checkInError = null,
+                checkInDraft = if (it.submittedCheckInVisibility != null) null else it.checkInDraft)
+        }
     }
 
     fun updateCheckInDraft(draft: CheckInDraft) {
-        if (draft.shopId != shopId) return
+        if (draft.shopId != shopId || _uiState.value.isCheckInLoading || _uiState.value.submittedCheckInVisibility != null) return
         checkInDraftStore.save(draft)
-        _uiState.update { it.copy(checkInDraft = draft) }
+        _uiState.update { it.copy(checkInDraft = draft, checkInError = null) }
     }
 
     fun checkIn(draft: CheckInDraft) {
         if (draft.shopId != shopId) return
-        if (_uiState.value.isCheckInLoading) return
+        if (_uiState.value.isCheckInLoading || _uiState.value.submittedCheckInVisibility != null) return
         draft.validationError()?.let { error ->
-            _uiState.update { it.copy(actionMessage = error) }
+            _uiState.update { it.copy(checkInError = error) }
             return
         }
         val shopSlug = _uiState.value.details?.shop?.publicAddress?.slug?.takeIf(String::isNotBlank)
         if (shopSlug == null) {
-            _uiState.update { it.copy(actionMessage = "Не удалось определить адрес кофейни") }
+            _uiState.update { it.copy(checkInError = "Не удалось определить адрес кофейни") }
             return
         }
+        checkInDraftStore.save(draft)
+        _uiState.update { it.copy(isCheckInLoading = true, checkInDraft = draft, checkInError = null) }
+        val visibility = if (draft.isPublic) CheckInVisibility.Public else CheckInVisibility.Private
         workScope.launch {
-            _uiState.update { it.copy(isCheckInLoading = true) }
-            checkInRepository.createCheckIn(
-                CreateCheckInInput(
-                    shopSlug = shopSlug,
-                    drinkSlug = draft.drinkSlug,
-                    customDrinkName = draft.customDrinkName?.trim(),
-                    text = draft.note.trim(),
-                    visitedAtIso = datePickerMillisToUtcIsoInstant(draft.visitMillis),
-                    visibility = if (draft.isPublic) com.coffeepeek.domain.model.CheckInVisibility.Public else com.coffeepeek.domain.model.CheckInVisibility.Private,
-                    rating = com.coffeepeek.domain.model.ReviewRating(
-                        place = draft.placeRating, service = draft.serviceRating, coffee = draft.coffeeRating,
+            val result = try {
+                if (!sessionRepository.isLoggedIn()) {
+                    _uiState.update { it.copy(isCheckInLoading = false, checkInError = "Войдите в аккаунт, чтобы создать чекин") }
+                    Navigator.navigate(Navigator.Screen.Auth)
+                    return@launch
+                }
+                checkInRepository.createCheckIn(
+                    CreateCheckInInput(
+                        shopSlug = shopSlug,
+                        drinkSlug = draft.drinkSlug,
+                        customDrinkName = draft.customDrinkName?.trim(),
+                        text = draft.note.trim(),
+                        visitedAtIso = datePickerMillisToUtcIsoInstant(draft.visitMillis),
+                        visibility = visibility,
+                        rating = com.coffeepeek.domain.model.ReviewRating(
+                            place = draft.placeRating, service = draft.serviceRating, coffee = draft.coffeeRating,
+                        ),
+                        photos = draft.photos.map { it.toPendingUpload() },
                     ),
-                    photos = draft.photos.map { it.toPendingUpload() },
-                ),
-            ).onSuccess {
+                )
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (error: Exception) {
+                Result.failure(error)
+            }
+            result.onSuccess {
                 checkInDraftStore.clear(shopId)
                 _uiState.update { state ->
                     val current = state.details
                     state.copy(
                         details = current?.copy(isVisited = true),
                         isCheckInLoading = false,
-                        showCheckInSheet = false,
-                        checkInDraft = null,
+                        submittedCheckInVisibility = visibility,
                     )
                 }
                 refreshDetails(showLoading = false)
             }.onFailure { e ->
                 _uiState.update {
                     it.copy(
-                        actionMessage = e.message,
+                        checkInError = e.message?.takeIf(String::isNotBlank) ?: "Не удалось отправить чекин. Попробуйте ещё раз",
                         isCheckInLoading = false,
                     )
                 }
