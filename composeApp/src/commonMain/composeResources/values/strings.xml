@@ -1,5 +1,10 @@
 <resources>
     <string name="app_name">CoffeePeek</string>
+    <string name="search_shops_and_roasters_placeholder">Поиск кофеен и обжарщиков…</string>
+    <string name="search_roasters_placeholder">Поиск обжарщиков…</string>
+    <string name="update_downloaded_message">Обновление загружено. Перезапустите приложение для установки.</string>
+    <string name="update_restart_action">Перезапустить</string>
+    <string name="update_retry_action">Повторить</string>
     <string name="eco_system">Экосистема спешелти-кофе</string>
     <string name="entry">Вход</string>
     <string name="login_title">Вход в аккаунт</string>

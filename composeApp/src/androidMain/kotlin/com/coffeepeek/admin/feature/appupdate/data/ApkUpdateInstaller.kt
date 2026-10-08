@@ -187,7 +187,7 @@ internal class ApkUpdateInstaller(private val context: Context) : AndroidUpdateI
         } else mutableState.value = state.value.copy(stage = InstallationStage.Ready)
     }
 
-    override fun consentResult(accepted: Boolean) = Unit
+    override fun consentResult(resultCode: Int) = Unit
 
     override fun cancel() {
         monitor?.cancel()

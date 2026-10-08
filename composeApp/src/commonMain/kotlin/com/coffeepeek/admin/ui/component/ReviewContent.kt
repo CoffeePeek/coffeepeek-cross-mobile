@@ -309,18 +309,7 @@ fun ReviewDisplayCard(
         ReviewHeader(review = review, onEditClick = onEditClick, onReportClick = onReportClick, authorPhotoUrl = authorPhotoUrl, dateLabel = dateLabel)
 
         val heading = shopName?.takeIf(String::isNotBlank) ?: review.header
-        if (heading.isNotBlank()) {
-            Text(
-                text = heading,
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.onSurface,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis,
-            )
-        }
-
-        CheckInRating(review.rating)
+        CheckInHeading(heading.takeIf(String::isNotBlank), review.rating)
         if (showDrinkBadge) savedDrinkName(review.drinkNameRu, review.drinkNameEn, review.customDrinkName, Locale.current.language)?.let {
             SavedDrinkBadge(it, review.drinkSlug)
         }
@@ -366,10 +355,10 @@ fun CheckInDisplayCard(
         .then(if (onClick != null && checkIn.shopId.isNotBlank()) Modifier.clickable(onClick = onClick) else Modifier)
 
     CheckInCard(cardModifier, blurContent) {
-        CheckInHeader(checkIn = checkIn, isOwn = isOwn, onReportClick = onReportClick)
-        if (showShopName) Text(checkIn.shopName.ifBlank { "Кофейня" },
-            style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold)
-        checkIn.rating?.let { CheckInRating(it) }
+        CheckInHeader(checkIn = checkIn, isOwn = isOwn) {
+            CheckInActions(onEditClick = null, onReportClick = onReportClick)
+        }
+        CheckInHeading(checkIn.shopName.ifBlank { "Кофейня" }.takeIf { showShopName }, checkIn.rating)
         savedDrinkName(checkIn.drinkNameRu, checkIn.drinkNameEn, checkIn.customDrinkName, Locale.current.language)?.let {
             SavedDrinkBadge(it, checkIn.drinkSlug)
         }
@@ -389,7 +378,11 @@ fun CheckInDisplayCard(
 }
 
 @Composable
-private fun CheckInHeader(checkIn: CheckIn, isOwn: Boolean, onReportClick: (() -> Unit)?) {
+internal fun CheckInHeader(
+    checkIn: CheckIn,
+    isOwn: Boolean,
+    actions: @Composable () -> Unit,
+) {
     val date = checkIn.createdAt
     val username = checkIn.username.ifBlank { if (isOwn) "Вы" else "Пользователь" }
     Row(
@@ -398,24 +391,52 @@ private fun CheckInHeader(checkIn: CheckIn, isOwn: Boolean, onReportClick: (() -
     ) {
         ReviewAvatar(username = username, photoUrl = null)
         Column(
-            modifier = Modifier
-                .weight(1f)
-                .padding(start = CpDimens.spacing3),
+            modifier = Modifier.weight(1f).padding(start = CpDimens.spacing3),
+            verticalArrangement = Arrangement.spacedBy(2.dp),
         ) {
             Text(
                 text = username,
                 style = MaterialTheme.typography.bodyMedium,
                 fontWeight = FontWeight.SemiBold,
                 color = MaterialTheme.colorScheme.onSurface,
-                maxLines = 2,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
             )
             if (date.isNotBlank()) Text(
                 text = rememberReviewDisplayDate(date),
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
             )
         }
-        CheckInActions(onEditClick = null, onReportClick = onReportClick)
+        actions()
+    }
+}
+
+@Composable
+internal fun CheckInHeading(
+    shopName: String?,
+    rating: ReviewRating?,
+    onShopClick: (() -> Unit)? = null,
+) {
+    if (shopName == null && rating == null) return
+    Column(verticalArrangement = Arrangement.spacedBy(CpDimens.spacing2)) {
+        shopName?.let {
+            Text(
+                text = it,
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSurface,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.then(
+                    if (onShopClick != null) Modifier.clickable(role = Role.Button, onClick = onShopClick)
+                    else Modifier,
+                ),
+            )
+        }
+        rating?.let { CheckInRating(it) }
     }
 }
 
@@ -425,7 +446,6 @@ internal fun HelpfulButton(
     isHelpful: Boolean,
     onClick: (() -> Unit)?,
 ) {
-    val tint = if (isHelpful) CpColor.Error else MaterialTheme.colorScheme.onSurfaceVariant
     Row(
         modifier = Modifier
             .heightIn(min = 48.dp)
@@ -445,7 +465,7 @@ internal fun HelpfulButton(
         Icon(
             imageVector = if (isHelpful) CpIcons.FavoriteFilled else CpIcons.Favorite,
             contentDescription = null,
-            tint = tint,
+            tint = CpColor.Error,
             modifier = Modifier.size(24.dp),
         )
         Text(
@@ -489,7 +509,7 @@ private fun ReviewHeader(
 
 @Composable
 internal fun ReviewAvatar(username: String, photoUrl: String?) {
-    val avatarModifier = Modifier.size(40.dp).clip(CircleShape)
+    val avatarModifier = Modifier.size(44.dp).clip(CircleShape)
     Box(
         modifier = avatarModifier.background(CpColor.GoldWarmSoft),
         contentAlignment = Alignment.Center,
@@ -704,7 +724,7 @@ internal fun SavedDrinkBadge(name: String, slug: String? = null) {
         Image(
             painter = painterResource(mockDrinkPhoto(name, slug)), contentDescription = null,
             contentScale = ContentScale.Crop,
-            modifier = Modifier.size(40.dp).clip(RoundedCornerShape(CpDimens.radiusMd)),
+            modifier = Modifier.size(44.dp).clip(RoundedCornerShape(CpDimens.radiusMd)),
         )
         Text(name, style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurface, modifier = Modifier.weight(1f))
