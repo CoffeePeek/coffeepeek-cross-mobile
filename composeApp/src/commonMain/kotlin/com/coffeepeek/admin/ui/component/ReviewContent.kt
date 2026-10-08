@@ -5,8 +5,6 @@ import com.coffeepeek.domain.model.savedDrinkName
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.remember
@@ -38,10 +36,6 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -428,14 +422,14 @@ internal fun HelpfulButton(
         modifier = Modifier
             .height(CpDimens.buttonHeight)
             .clip(RoundedCornerShape(percent = 50))
-            .then(if (onClick != null) Modifier.clickable { onClick() } else Modifier)
+            .then(if (onClick != null) Modifier.clickable(role = Role.Button, onClick = onClick) else Modifier)
             .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.45f))
             .padding(horizontal = CpDimens.spacing3),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(CpDimens.spacing2),
     ) {
         Icon(
-            imageVector = CpIcons.Helpful,
+            imageVector = if (isHelpful) CpIcons.FavoriteFilled else CpIcons.Favorite,
             contentDescription = when {
                 onClick == null -> "Отметки «полезно»: $helpfulCount"
                 isHelpful -> "Убрать отметку «полезно»"
@@ -462,7 +456,6 @@ private fun ReviewHeader(
     review: Review, onEditClick: (() -> Unit)?, onReportClick: (() -> Unit)?,
     authorPhotoUrl: String?, dateLabel: String?,
 ) {
-    var menuExpanded by remember { mutableStateOf(false) }
     Row(
         modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
@@ -490,36 +483,7 @@ private fun ReviewHeader(
                 }
             }
         }
-        if (onEditClick != null || onReportClick != null) Box {
-            IconButton(onClick = { menuExpanded = true }, modifier = Modifier.semantics { contentDescription = "Действия с чекином" }) {
-                Text(
-                    text = "•••",
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-            DropdownMenu(
-                expanded = menuExpanded,
-                onDismissRequest = { menuExpanded = false },
-                shape = RoundedCornerShape(CpDimens.radiusLg),
-                containerColor = MaterialTheme.colorScheme.surface,
-                tonalElevation = 0.dp,
-                shadowElevation = 8.dp,
-                border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
-            ) {
-                onEditClick?.let { edit -> DropdownMenuItem(
-                    text = { Text("Редактировать", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface) },
-                    trailingIcon = { Icon(CpIcons.Edit, null, Modifier.size(20.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant) },
-                    onClick = { menuExpanded = false; edit() },
-                ) }
-                if (onEditClick != null && onReportClick != null) HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-                onReportClick?.let { report -> DropdownMenuItem(
-                    text = { Text("Пожаловаться", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface) },
-                    trailingIcon = { Icon(CpIcons.Error, null, Modifier.size(20.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant) },
-                    onClick = { menuExpanded = false; report() },
-                ) }
-            }
-        }
+        CheckInActions(onEditClick = onEditClick, onReportClick = onReportClick)
     }
 }
 

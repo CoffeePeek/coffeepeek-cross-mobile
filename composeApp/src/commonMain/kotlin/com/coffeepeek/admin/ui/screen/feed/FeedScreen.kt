@@ -341,7 +341,11 @@ fun FeedScreen(
                                                 ShopCard(
                                                     shop = shop,
                                                     distance = formatDistance(distanceToShopMeters(userLocation, shop.location)),
-                                                    onClick = { Navigator.navigate(Navigator.Screen.ShopDetail(shop.id)) },
+                                                    onClick = {
+                                                        focusManager.clearFocus(force = true)
+                                                        keyboard?.hide()
+                                                        Navigator.navigate(Navigator.Screen.ShopDetail(shop.id))
+                                                    },
                                                     onToggleFavorite = { vm.toggleFavorite(shop) },
                                                     modifier = Modifier.width(280.dp),
                                                     showCatalogDetails = false,
@@ -447,7 +451,11 @@ fun FeedScreen(
                                     ShopCard(
                                         shop = shop,
                                         distance = formatDistance(distanceToShopMeters(userLocation, shop.location)),
-                                        onClick = { Navigator.navigate(Navigator.Screen.ShopDetail(shop.id)) },
+                                        onClick = {
+                                            focusManager.clearFocus(force = true)
+                                            keyboard?.hide()
+                                            Navigator.navigate(Navigator.Screen.ShopDetail(shop.id))
+                                        },
                                         onToggleFavorite = { vm.toggleFavorite(shop) },
                                     )
                                 }

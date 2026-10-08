@@ -121,7 +121,7 @@ private fun RowScope.FloatingNavBarItem(item: FloatingNavItem) {
         modifier = Modifier
             .weight(1f)
             .fillMaxHeight()
-            .clip(RoundedCornerShape(CpDimens.radiusLg))
+            .clip(RoundedCornerShape(percent = 50))
             .background(pillColor)
             .selectable(
                 selected = item.selected,

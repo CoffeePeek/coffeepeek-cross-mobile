@@ -248,7 +248,7 @@ internal class CommunityViewModel(
             result.onSuccess { updated ->
                 _state.update {
                     it.withUpdated(updated).copy(editing = null, isSaving = false,
-                        actionMessage = if (it.timeline == CommunityTimeline.Public) "Чек-ин сохранён и отправлен на проверку. Он доступен в «Мои чек-ины»" else "Чек-ин сохранён")
+                        actionMessage = if (it.timeline == CommunityTimeline.Public) "Чек-ин сохранён и отправлен на проверку. Он доступен в профиле, в разделе «Чекины»" else "Чек-ин сохранён")
                 }
             }.onFailure { error ->
                 _state.update { it.copy(isSaving = false, editing = edit.copy(error = error.message ?: "Не удалось сохранить чек-ин")) }

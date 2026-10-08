@@ -161,101 +161,103 @@ internal fun ComposeMainScreen() {
 
     ProvideFloatingNavClearance(clearance = floatingClearance) {
         Box(modifier = Modifier.fillMaxSize()) {
-            feedEntry?.takeIf { it.lifecycle.currentState != Lifecycle.State.DESTROYED }?.let { entry ->
-                val lifecycleState by entry.lifecycle.currentStateFlow.collectAsState()
-                entry.LocalOwnersProvider(feedStateHolder) {
-                    RetainedContent(visible = lifecycleState.isAtLeast(Lifecycle.State.STARTED)) {
-                        var showRoasters by rememberSaveable { mutableStateOf(false) }
-                        val feedVm: FeedViewModel = platformViewModel()
-                        val feedState by feedVm.uiState.collectAsState()
-                        val roasterVm: RoasterListViewModel = platformViewModel()
-                        val pendingMapFocus by Navigator.pendingMapFocus.collectAsState()
-                        LaunchedEffect(pendingMapFocus) {
-                            if (pendingMapFocus != null) showRoasters = false
-                        }
-                        val searchOpacity = animateFloatAsState(if (showRoasters) 0f else 1f, tween(360), label = "discovery-roaster-list")
-                        val searchVisible by remember { derivedStateOf { searchOpacity.value > 0f } }
-                        Box(Modifier.fillMaxSize().hazeSource(tabBarHaze)) {
-                            RetainedContent(visible = searchVisible) {
-                                Box(Modifier.fillMaxSize().graphicsLayer {
-                                    alpha = searchOpacity.value
-                                    translationY = -size.height / 5f * (1f - searchOpacity.value)
-                                }) {
-                                    FeedScreen(
-                                        vm = feedVm,
-                                        onSelectRoasters = { showRoasters = true },
-                                        mapPreview = { expanded, onToggleExpand, canvasSize, modifier ->
-                                            MapScreen(
-                                                modifier = modifier,
-                                                isPreview = !expanded,
-                                                onToggleExpand = onToggleExpand,
-                                                canvasSize = canvasSize,
-                                            )
+            // Capture the visible tab once; retained search content must not keep a separate glass layer.
+            Box(Modifier.fillMaxSize().hazeSource(tabBarHaze)) {
+                feedEntry?.takeIf { it.lifecycle.currentState != Lifecycle.State.DESTROYED }?.let { entry ->
+                    val lifecycleState by entry.lifecycle.currentStateFlow.collectAsState()
+                    entry.LocalOwnersProvider(feedStateHolder) {
+                        RetainedContent(visible = lifecycleState.isAtLeast(Lifecycle.State.STARTED)) {
+                            var showRoasters by rememberSaveable { mutableStateOf(false) }
+                            val feedVm: FeedViewModel = platformViewModel()
+                            val feedState by feedVm.uiState.collectAsState()
+                            val roasterVm: RoasterListViewModel = platformViewModel()
+                            val pendingMapFocus by Navigator.pendingMapFocus.collectAsState()
+                            LaunchedEffect(pendingMapFocus) {
+                                if (pendingMapFocus != null) showRoasters = false
+                            }
+                            val searchOpacity = animateFloatAsState(if (showRoasters) 0f else 1f, tween(360), label = "discovery-roaster-list")
+                            val searchVisible by remember { derivedStateOf { searchOpacity.value > 0f } }
+                            Box(Modifier.fillMaxSize()) {
+                                RetainedContent(visible = searchVisible) {
+                                    Box(Modifier.fillMaxSize().graphicsLayer {
+                                        alpha = searchOpacity.value
+                                        translationY = -size.height / 5f * (1f - searchOpacity.value)
+                                    }) {
+                                        FeedScreen(
+                                            vm = feedVm,
+                                            onSelectRoasters = { showRoasters = true },
+                                            mapPreview = { expanded, onToggleExpand, canvasSize, modifier ->
+                                                MapScreen(
+                                                    modifier = modifier,
+                                                    isPreview = !expanded,
+                                                    onToggleExpand = onToggleExpand,
+                                                    canvasSize = canvasSize,
+                                                )
+                                            },
+                                            roasterPreview = {
+                                                RoasterPreview(
+                                                    query = feedState.query,
+                                                    selectedRoasterIds = feedState.filters.roasterIds,
+                                                    favoritesOnly = feedState.filters.favoritesOnly,
+                                                    vm = roasterVm,
+                                                )
+                                            },
+                                            onMapExpandedChange = { isFeedMapExpanded = it },
+                                        )
+                                    }
+                                }
+                                AnimatedVisibility(
+                                    visible = showRoasters,
+                                    modifier = Modifier.fillMaxSize(),
+                                    enter = fadeIn(tween(300)) + slideInVertically(tween(360)) { it / 5 },
+                                    exit = fadeOut(tween(240)) + slideOutVertically(tween(360)) { -it / 5 },
+                                ) {
+                                    com.coffeepeek.admin.ui.screen.roaster.RoasterListScreen(
+                                        onCancel = {
+                                            feedVm.cancelSearch()
+                                            showRoasters = false
                                         },
-                                        roasterPreview = {
-                                            RoasterPreview(
-                                                query = feedState.query,
-                                                selectedRoasterIds = feedState.filters.roasterIds,
-                                                favoritesOnly = feedState.filters.favoritesOnly,
-                                                vm = roasterVm,
-                                            )
-                                        },
-                                        onMapExpandedChange = { isFeedMapExpanded = it },
+                                        query = feedState.query,
+                                        onQueryChange = feedVm::onQueryChange,
+                                        selectedRoasterIds = feedState.filters.roasterIds,
+                                        favoritesOnly = feedState.filters.favoritesOnly,
+                                        vm = roasterVm,
                                     )
                                 }
                             }
-                            AnimatedVisibility(
-                                visible = showRoasters,
-                                modifier = Modifier.fillMaxSize(),
-                                enter = fadeIn(tween(300)) + slideInVertically(tween(360)) { it / 5 },
-                                exit = fadeOut(tween(240)) + slideOutVertically(tween(360)) { -it / 5 },
-                            ) {
-                                com.coffeepeek.admin.ui.screen.roaster.RoasterListScreen(
-                                    onCancel = {
-                                        feedVm.cancelSearch()
-                                        showRoasters = false
-                                    },
-                                    query = feedState.query,
-                                    onQueryChange = feedVm::onQueryChange,
-                                    selectedRoasterIds = feedState.filters.roasterIds,
-                                    favoritesOnly = feedState.filters.favoritesOnly,
-                                    vm = roasterVm,
-                                )
-                            }
                         }
                     }
                 }
-            }
-            NavHost(
-                navController = bottomNavController,
-                startDestination = Navigator.Screen.FeedGraph,
-                // Tab content scrolls under the glass tab bar and is blurred by it.
-                modifier = Modifier.fillMaxSize().hazeSource(tabBarHaze),
-                enterTransition = { EnterTransition.None },
-                exitTransition = { ExitTransition.None },
-                popEnterTransition = { EnterTransition.None },
-                popExitTransition = { ExitTransition.None },
-            ) {
-                navigation<Navigator.Screen.FeedGraph>(startDestination = Navigator.Screen.FeedTab) {
-                    composable<Navigator.Screen.FeedTab> {
-                        SideEffect { feedEntry = it }
+                NavHost(
+                    navController = bottomNavController,
+                    startDestination = Navigator.Screen.FeedGraph,
+                    modifier = Modifier.fillMaxSize(),
+                    enterTransition = { EnterTransition.None },
+                    exitTransition = { ExitTransition.None },
+                    popEnterTransition = { EnterTransition.None },
+                    popExitTransition = { ExitTransition.None },
+                ) {
+                    navigation<Navigator.Screen.FeedGraph>(startDestination = Navigator.Screen.FeedTab) {
+                        composable<Navigator.Screen.FeedTab> {
+                            SideEffect { feedEntry = it }
+                        }
                     }
-                }
 
-                navigation<Navigator.Screen.CoffeeGraph>(startDestination = Navigator.Screen.CoffeeTab) {
-                    composable<Navigator.Screen.CoffeeTab> { CoffeeListScreen() }
-                }
+                    navigation<Navigator.Screen.CoffeeGraph>(startDestination = Navigator.Screen.CoffeeTab) {
+                        composable<Navigator.Screen.CoffeeTab> { CoffeeListScreen() }
+                    }
 
-                navigation<Navigator.Screen.CommunityGraph>(startDestination = Navigator.Screen.CommunityTab) {
-                    composable<Navigator.Screen.CommunityTab> { com.coffeepeek.admin.feature.community.ui.CommunityScreen() }
-                }
+                    navigation<Navigator.Screen.CommunityGraph>(startDestination = Navigator.Screen.CommunityTab) {
+                        composable<Navigator.Screen.CommunityTab> { com.coffeepeek.admin.feature.community.ui.CommunityScreen() }
+                    }
 
-                navigation<Navigator.Screen.ProfileGraph>(startDestination = Navigator.Screen.ProfileTab) {
-                    composable<Navigator.Screen.ProfileTab> { ProfileScreen() }
-                }
+                    navigation<Navigator.Screen.ProfileGraph>(startDestination = Navigator.Screen.ProfileTab) {
+                        composable<Navigator.Screen.ProfileTab> { ProfileScreen() }
+                    }
 
-                navigation<Navigator.Screen.SettingsGraph>(startDestination = Navigator.Screen.SettingsTab) {
-                    composable<Navigator.Screen.SettingsTab> { SettingsScreen() }
+                    navigation<Navigator.Screen.SettingsGraph>(startDestination = Navigator.Screen.SettingsTab) {
+                        composable<Navigator.Screen.SettingsTab> { SettingsScreen() }
+                    }
                 }
             }
 

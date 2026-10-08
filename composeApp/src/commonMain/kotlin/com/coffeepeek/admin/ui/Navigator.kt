@@ -14,6 +14,7 @@ import com.coffeepeek.admin.ui.screen.profile.CityScreen
 import com.coffeepeek.admin.ui.screen.profile.ThemeScreen
 import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -28,12 +29,15 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.lifecycle.Lifecycle
 import androidx.navigation.NavBackStackEntry
+import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.compose.LocalOwnersProvider
 import com.coffeepeek.admin.di.platformViewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
 import com.coffeepeek.admin.ui.screen.shop.CheckInDraftStore
@@ -66,6 +70,10 @@ import kotlinx.coroutines.yield
 import kotlinx.serialization.Serializable
 
 private const val ROOT_NAV_ANIMATION_DURATION_MS = 300
+internal val RootMainSlideSpec = tween<Float>(
+    durationMillis = ROOT_NAV_ANIMATION_DURATION_MS,
+    easing = FastOutSlowInEasing,
+)
 
 object Navigator {
 
@@ -266,6 +274,13 @@ object Navigator {
         val appLink by pendingAppLink.collectAsState()
         var mainEntry by remember { mutableStateOf<NavBackStackEntry?>(null) }
         val mainStateHolder = rememberSaveableStateHolder()
+        val visibleEntries by nav.visibleEntries.collectAsState()
+        val currentEntry by nav.currentBackStackEntryAsState()
+        val mainSlide by animateFloatAsState(
+            targetValue = if (currentEntry?.destination?.hasRoute<Screen.Main>() != false) 0f else -1f,
+            animationSpec = RootMainSlideSpec,
+            label = "retained-main-slide",
+        )
 
         LaunchedEffect(appLink) {
             val screen = appLink ?: return@LaunchedEffect
@@ -293,9 +308,13 @@ object Navigator {
 
         Box(Modifier.fillMaxSize()) {
             mainEntry?.takeIf { it.lifecycle.currentState != Lifecycle.State.DESTROYED }?.let { entry ->
-                val lifecycleState by entry.lifecycle.currentStateFlow.collectAsState()
                 entry.LocalOwnersProvider(mainStateHolder) {
-                    RetainedContent(visible = lifecycleState.isAtLeast(Lifecycle.State.STARTED)) { MainScreen() }
+                    RetainedContent(visible = entry in visibleEntries) {
+                        // Main lives outside NavHost so its native map stays mounted during navigation.
+                        Box(Modifier.fillMaxSize().graphicsLayer { translationX = size.width * mainSlide }) {
+                            MainScreen()
+                        }
+                    }
                 }
             }
             NavHost(

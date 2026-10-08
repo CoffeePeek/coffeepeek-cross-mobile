@@ -13,7 +13,6 @@ import androidx.lifecycle.compose.LifecycleEventEffect
 import com.coffeepeek.admin.di.platformViewModel
 import com.coffeepeek.admin.theme.CpDimens
 import com.coffeepeek.admin.ui.Navigator
-import com.coffeepeek.admin.ui.component.AppButton
 import com.coffeepeek.admin.ui.component.CoffeePeekLoader
 import com.coffeepeek.admin.ui.component.CoffeePeekPullToRefresh
 import com.coffeepeek.admin.ui.component.FullScreenImageDialog
@@ -82,25 +81,11 @@ fun CommunityScreen() {
                 verticalArrangement = Arrangement.spacedBy(CpDimens.spacing3),
             ) {
                 item(key = "heading") {
-                    Column(verticalArrangement = Arrangement.spacedBy(CpDimens.spacing1)) {
-                        Text("Лента", style = MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.Bold)
-                        Row(horizontalArrangement = Arrangement.spacedBy(CpDimens.spacing2)) {
-                            FilterChip(selected = state.timeline == CommunityTimeline.Public,
-                                onClick = { vm.selectTimeline(CommunityTimeline.Public) }, label = { Text("Все чек-ины") })
-                            FilterChip(selected = state.timeline == CommunityTimeline.Mine,
-                                onClick = { vm.selectTimeline(CommunityTimeline.Mine) }, label = { Text("Мои чек-ины") })
-                        }
-                    }
+                    Text("Лента", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
                 }
                 when {
                     state.isLoggedIn == null || (state.isLoading && state.items.isEmpty()) -> item {
                         CoffeePeekLoader()
-                    }
-                    state.timeline == CommunityTimeline.Mine && state.isLoggedIn == false -> item {
-                        Column(verticalArrangement = Arrangement.spacedBy(CpDimens.spacing3)) {
-                            Text("Войдите, чтобы видеть и редактировать свои чек-ины.")
-                            AppButton("Войти", onClick = { Navigator.navigate(Navigator.Screen.Auth) })
-                        }
                     }
                     else -> {
                         items(state.items, key = CheckIn::id) { checkIn ->
@@ -129,8 +114,7 @@ fun CommunityScreen() {
                                 }
                             }
                             state.items.isEmpty() && !state.isLoading -> item(key = "empty") {
-                                Text(if (state.timeline == CommunityTimeline.Public) "Пока нет опубликованных чек-инов."
-                                    else "Пока нет чек-инов. Добавьте первый на странице кофейни.", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                Text("Пока нет опубликованных чек-инов.", color = MaterialTheme.colorScheme.onSurfaceVariant)
                             }
                         }
                         if (state.isLoadingMore) item(key = "loading-more") { CoffeePeekLoader() }

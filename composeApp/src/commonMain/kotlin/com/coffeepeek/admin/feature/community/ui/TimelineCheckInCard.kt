@@ -9,7 +9,7 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -22,6 +22,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.admin.theme.CpColor
 import com.coffeepeek.admin.theme.CpDimens
+import com.coffeepeek.admin.ui.component.CheckInActions
 import com.coffeepeek.admin.ui.component.HelpfulButton
 import com.coffeepeek.admin.ui.component.formatReviewDisplayDate
 import com.coffeepeek.admin.ui.icons.CpIcons
@@ -76,9 +77,12 @@ internal fun TimelineCheckInCard(
                         maxLines = 2, overflow = TextOverflow.Ellipsis,
                     )
                 }
-                FeedCheckInActions(
-                    onEdit = onEdit.takeIf { canAct && isOwn },
-                    onReport = onReport.takeIf { canAct && isPublicTimeline && !isOwn },
+                CheckInActions(
+                    onEditClick = onEdit.takeIf { isOwn },
+                    onReportClick = onReport.takeIf { isPublicTimeline && !isOwn },
+                    onHideClick = onVisibility.takeIf { isOwn && checkIn.visibility == CheckInVisibility.Public },
+                    enabled = canAct,
+                    isHiding = changingVisibility,
                 )
             }
             Column(verticalArrangement = Arrangement.spacedBy(CpDimens.spacing2)) {
@@ -115,7 +119,7 @@ internal fun TimelineCheckInCard(
             if (isOwn && checkIn.moderationState == CheckInModerationState.Rejected) checkIn.rejectionReason?.takeIf(String::isNotBlank)?.let {
                 Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
             }
-            if (isOwn || isPublicTimeline || checkIn.helpfulCount > 0) Row(
+            if ((isOwn && checkIn.visibility == CheckInVisibility.Private) || (isPublicTimeline && !isOwn) || checkIn.helpfulCount > 0) Row(
                 Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween,
             ) {
                 if (isPublicTimeline && !isOwn) HelpfulButton(
@@ -125,12 +129,8 @@ internal fun TimelineCheckInCard(
                     helpfulCount = checkIn.helpfulCount, isHelpful = false, onClick = null, showLabel = false,
                 )
                 else Spacer(Modifier.weight(1f))
-                if (isOwn) TextButton(onClick = onVisibility, enabled = canAct) {
-                    Text(when {
-                        changingVisibility -> "Сохраняем…"
-                        checkIn.visibility == CheckInVisibility.Private -> "Опубликовать"
-                        else -> "Скрыть"
-                    })
+                if (isOwn && checkIn.visibility == CheckInVisibility.Private) TextButton(onClick = onVisibility, enabled = canAct) {
+                    Text(if (changingVisibility) "Сохраняем…" else "Опубликовать")
                 }
             }
         }
@@ -148,20 +148,5 @@ private fun FeedCheckInRating(rating: ReviewRating) {
                 MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f))
         }
         Text(formatOneDecimal(rating.average), style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold)
-    }
-}
-
-@Composable
-private fun FeedCheckInActions(onEdit: (() -> Unit)?, onReport: (() -> Unit)?) {
-    if (onEdit == null && onReport == null) return
-    var expanded by remember { mutableStateOf(false) }
-    Box {
-        IconButton(onClick = { expanded = true }) {
-            Icon(CpIcons.MoreVertical, "Действия с чек-ином", tint = MaterialTheme.colorScheme.onSurfaceVariant)
-        }
-        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }, shape = RoundedCornerShape(CpDimens.radiusLg)) {
-            onEdit?.let { edit -> DropdownMenuItem(text = { Text("Редактировать") }, onClick = { expanded = false; edit() }) }
-            onReport?.let { report -> DropdownMenuItem(text = { Text("Пожаловаться") }, onClick = { expanded = false; report() }) }
-        }
     }
 }
