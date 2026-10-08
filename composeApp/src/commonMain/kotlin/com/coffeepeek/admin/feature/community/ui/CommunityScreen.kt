@@ -93,7 +93,6 @@ fun CommunityScreen() {
                                 checkIn = checkIn,
                                 isOwn = state.owns(checkIn),
                                 isPublicTimeline = state.timeline == CommunityTimeline.Public,
-                                publishedAt = state.publishedAt[checkIn.id],
                                 canAct = !state.isMutating,
                                 changingVisibility = state.changingVisibilityId == checkIn.id,
                                 onShopClick = { Navigator.navigate(Navigator.Screen.ShopDetail(checkIn.shopId)) },

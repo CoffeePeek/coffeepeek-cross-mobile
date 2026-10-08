@@ -3,6 +3,7 @@ package com.coffeepeek.admin.ui.screen.review
 import com.coffeepeek.admin.base.BaseViewModel
 import com.coffeepeek.admin.ui.Navigator
 import com.coffeepeek.domain.repository.ReviewRepository
+import com.coffeepeek.domain.repository.CheckInRepository
 import com.coffeepeek.domain.repository.SessionRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -22,6 +23,8 @@ class ReviewReportViewModel(
     private val reviews: ReviewRepository,
     private val sessions: SessionRepository,
     private val isPreview: Boolean = false,
+    private val checkIns: CheckInRepository,
+    private val isCheckIn: Boolean = false,
 ) : BaseViewModel() {
     private val _state = MutableStateFlow(ReviewReportUiState(isPreview = isPreview))
     val state = _state.asStateFlow()
@@ -49,7 +52,8 @@ class ReviewReportViewModel(
                 Navigator.navigate(Navigator.Screen.Auth)
                 return@launch
             }
-            reviews.submitReviewReport(reviewId, text).onSuccess {
+            val result = if (isCheckIn) checkIns.report(reviewId, text) else reviews.submitReviewReport(reviewId, text)
+            result.onSuccess {
                 _state.update { it.copy(isSubmitting = false, isSubmitted = true, text = "") }
             }.onFailure { error ->
                 _state.update { it.copy(isSubmitting = false, error = error.message ?: "Не удалось отправить жалобу. Попробуйте ещё раз") }

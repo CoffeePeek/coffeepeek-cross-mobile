@@ -110,7 +110,7 @@ import com.coffeepeek.admin.ui.component.brewMethodIcon
 import com.coffeepeek.admin.ui.component.CoffeeShopImage
 import com.coffeepeek.admin.ui.component.CoffeeShopPlaceholderImage
 import com.coffeepeek.admin.ui.component.GuestAuthCard
-import com.coffeepeek.admin.ui.component.ReviewDisplayCard
+import com.coffeepeek.admin.ui.component.CheckInDisplayCard
 import com.coffeepeek.admin.utils.currentLocalDayOfWeek
 import com.coffeepeek.admin.utils.currentLocalMinuteOfDay
 import com.coffeepeek.admin.ui.component.PriceBynIcon
@@ -128,7 +128,7 @@ import com.coffeepeek.admin.utils.OpenInBrowser
 import com.coffeepeek.domain.model.CatalogItem
 import com.coffeepeek.domain.model.CoffeeShopDetails
 import com.coffeepeek.domain.model.CoffeeShopType
-import com.coffeepeek.domain.model.Review
+import com.coffeepeek.domain.model.CheckIn
 import com.coffeepeek.domain.model.ShopContact
 import com.coffeepeek.domain.model.ShopMenu
 import com.coffeepeek.domain.model.ShopMenuItem
@@ -384,13 +384,14 @@ private fun ShopDetailContent(
 
         item {
             ReviewsSection(
-                reviews = details.reviews,
+                checkIns = details.checkIns,
                 overallRating = shop.rating,
                 reviewCount = shop.reviewCount,
                 shopId = shop.id,
                 shopTitle = shop.title,
                 isLoggedIn = isLoggedIn,
                 currentUserId = currentUserId,
+                ownCheckInIds = details.userCheckIns.mapTo(mutableSetOf()) { it.id },
                 onReviewPhotoClick = onReviewPhotoClick,
                 onReviewHelpfulClick = onReviewHelpfulClick,
             )
@@ -1190,13 +1191,14 @@ private fun ShopContactRow(item: ShopContactItem) {
 
 @Composable
 private fun ReviewsSection(
-    reviews: List<Review>,
+    checkIns: List<CheckIn>,
     overallRating: Double?,
     reviewCount: Int,
     shopId: String,
     shopTitle: String,
     isLoggedIn: Boolean,
     currentUserId: String?,
+    ownCheckInIds: Set<String>,
     onReviewPhotoClick: (List<String>, Int) -> Unit,
     onReviewHelpfulClick: (String) -> Unit,
 ) {
@@ -1209,16 +1211,16 @@ private fun ReviewsSection(
     ) {
         Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
             Box(Modifier.weight(1f)) { SectionTitle("Чекины") }
-            if (reviews.isNotEmpty()) {
+            if (checkIns.isNotEmpty()) {
                 IconButton(onClick = { Navigator.navigate(Navigator.Screen.ShopReviews(shopId)) }) {
                     Icon(CpIcons.ChevronRight, contentDescription = "Все чекины")
                 }
             }
         }
-        if (reviews.isNotEmpty()) {
-            com.coffeepeek.admin.ui.component.ReviewRatingsOverview(reviews, overallRating, reviewCount)
+        if (checkIns.isNotEmpty()) {
+            com.coffeepeek.admin.ui.component.CheckInRatingsOverview(checkIns, overallRating, reviewCount)
         }
-        if (reviews.isEmpty()) {
+        if (checkIns.isEmpty()) {
             EmptyMascotState(
                 mascot = Res.drawable.maskot_with_book,
                 message = "Станьте первым, кто оценит и оставит чекин о своём посещении $shopTitle",
@@ -1229,9 +1231,9 @@ private fun ReviewsSection(
                     .fillMaxWidth()
                     .clipToBounds(),
             ) {
-                val peekWidth = if (reviews.size > 1) GuestReviewPeekWidth else 0.dp
-                val itemSpacing = if (reviews.size > 1) CpDimens.spacing3 else 0.dp
-                val cardWidth = if (reviews.size > 1) {
+                val peekWidth = if (checkIns.size > 1) GuestReviewPeekWidth else 0.dp
+                val itemSpacing = if (checkIns.size > 1) CpDimens.spacing3 else 0.dp
+                val cardWidth = if (checkIns.size > 1) {
                     (maxWidth - itemSpacing - peekWidth).coerceAtMost(ReviewCardMaxWidth)
                 } else {
                     maxWidth
@@ -1239,22 +1241,21 @@ private fun ReviewsSection(
 
                 LazyRow(horizontalArrangement = Arrangement.spacedBy(itemSpacing)) {
                     items(
-                        count = reviews.take(3).size,
-                        key = { index -> reviews[index].id },
+                        count = checkIns.take(3).size,
+                        key = { index -> checkIns[index].id },
                     ) { index ->
-                        val review = reviews[index]
+                        val checkIn = checkIns[index]
                         val isBlurred = index > 0
                         Box(
                             modifier = Modifier.width(cardWidth),
                         ) {
-                            ReviewCard(
-                                review = review,
+                            CheckInDisplayCard(
+                                checkIn = checkIn,
+                                isOwn = false,
                                 modifier = Modifier.fillMaxWidth(),
                                 onPhotoClick = if (isBlurred) ({ _, _ -> }) else onReviewPhotoClick,
                                 onHelpfulClick = null,
                                 blurContent = isBlurred,
-                                showHelpfulButton = false,
-                                equalizeHeight = false,
                             )
                         }
                     }
@@ -1272,26 +1273,25 @@ private fun ReviewsSection(
                     horizontalArrangement = Arrangement.spacedBy(CpDimens.spacing3),
                 ) {
                     items(
-                        count = reviews.take(3).size,
-                        key = { index -> reviews[index].id },
+                        count = checkIns.take(3).size,
+                        key = { index -> checkIns[index].id },
                     ) { index ->
-                        val review = reviews[index]
-                        val isOwnReview = currentUserId != null && review.userId == currentUserId
+                        val checkIn = checkIns[index]
+                        val isOwnCheckIn = checkIn.id in ownCheckInIds || (currentUserId != null && checkIn.authorAddress?.slug == currentUserId)
                         Box(
-                            modifier = if (reviews.size > 1) {
+                            modifier = if (checkIns.size > 1) {
                                 Modifier.width(cardWidth)
                             } else {
                                 Modifier.fillParentMaxWidth()
                             },
                         ) {
-                            ReviewCard(
-                                review = review,
+                            CheckInDisplayCard(
+                                checkIn = checkIn,
+                                isOwn = isOwnCheckIn,
                                 modifier = Modifier.fillMaxWidth(),
                                 onPhotoClick = onReviewPhotoClick,
-                                // No "helpful" on your own review.
-                                onHelpfulClick = if (isOwnReview) null else ({ onReviewHelpfulClick(review.id) }),
-                                showHelpfulButton = false,
-                                equalizeHeight = false,
+                                onHelpfulClick = if (isOwnCheckIn) null else ({ onReviewHelpfulClick(checkIn.id) }),
+                                onReportClick = if (isOwnCheckIn) null else ({ Navigator.navigate(Navigator.Screen.ReportCheckIn(checkIn.id)) }),
                             )
                         }
                     }
@@ -1848,27 +1848,6 @@ private fun instagramLabel(link: ExternalLink): String {
         .trim()
     if (handle.isBlank()) return link.displayText
     return "@$handle"
-}
-
-@Composable
-private fun ReviewCard(
-    review: Review,
-    modifier: Modifier = Modifier,
-    onPhotoClick: (List<String>, Int) -> Unit,
-    onHelpfulClick: (() -> Unit)?,
-    showHelpfulButton: Boolean = true,
-    equalizeHeight: Boolean,
-    blurContent: Boolean = false,
-) {
-    ReviewDisplayCard(
-        review = review,
-        modifier = modifier,
-        onPhotoClick = onPhotoClick,
-        onHelpfulClick = onHelpfulClick,
-        showHelpfulButton = showHelpfulButton,
-        equalizeHeight = equalizeHeight,
-        blurContent = blurContent,
-    )
 }
 
 private fun ShopContact.hasAny(): Boolean =

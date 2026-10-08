@@ -137,6 +137,7 @@ object Navigator {
         @Serializable data object ThemeSettings : Screen
         @Serializable data class ShopReviews(val shopId: String) : Screen
         @Serializable data class ReportReview(val reviewId: String, val isPreview: Boolean = false) : Screen
+        @Serializable data class ReportCheckIn(val checkInId: String) : Screen
     }
 
     data class MapShopFocus(
@@ -199,6 +200,7 @@ object Navigator {
         is Screen.DeleteAccountPending,
         is Screen.ShopReviews,
         is Screen.ReportReview,
+        is Screen.ReportCheckIn,
         is Screen.Favorites,
         is Screen.VisitedPlaces,
         is Screen.CitySettings,
@@ -378,6 +380,10 @@ object Navigator {
                     composable<Screen.ReportReview> { backStack ->
                         val route = backStack.toRoute<Screen.ReportReview>()
                         com.coffeepeek.admin.ui.screen.review.ReviewReportScreen(reviewId = route.reviewId, isPreview = route.isPreview)
+                    }
+                    composable<Screen.ReportCheckIn> { backStack ->
+                        val route = backStack.toRoute<Screen.ReportCheckIn>()
+                        com.coffeepeek.admin.ui.screen.review.ReviewReportScreen(reviewId = route.checkInId, isCheckIn = true)
                     }
                     composable<Screen.ShopMenuGallery> { backStack ->
                         val route = backStack.toRoute<Screen.ShopMenuGallery>()

@@ -4,6 +4,7 @@ data class CoffeeShop(
     val id: String,
     val title: String,
     val rating: Double?,
+    // Legacy property name used by catalog/favorite presentation; counts public check-ins.
     val reviewCount: Int = 0,
     val cityName: String?,
     val priceRange: String?,
@@ -35,6 +36,7 @@ data class CoffeeShopDetails(
     val fullscreenPhotos: List<String> = photos,
     val shopPhotos: List<ShopPhoto> = emptyList(),
     val reviews: List<Review> = emptyList(),
+    val checkIns: List<CheckIn> = emptyList(),
     val userCheckIns: List<CheckIn> = emptyList(),
     val contact: ShopContact? = null,
     val brewMethods: List<String> = emptyList(),

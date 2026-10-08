@@ -25,8 +25,8 @@ import com.coffeepeek.admin.di.platformViewModel
 import org.koin.core.parameter.parametersOf
 
 @Composable
-fun ReviewReportScreen(reviewId: String, isPreview: Boolean = false) {
-    val vm: ReviewReportViewModel = platformViewModel(parameters = { parametersOf(reviewId, isPreview) })
+fun ReviewReportScreen(reviewId: String, isPreview: Boolean = false, isCheckIn: Boolean = false) {
+    val vm: ReviewReportViewModel = platformViewModel(parameters = { parametersOf(reviewId, isPreview, isCheckIn) })
     val state by vm.state.collectAsState()
     Scaffold(topBar = { CpTopBar("Пожаловаться на чекин") }) { padding ->
         Column(

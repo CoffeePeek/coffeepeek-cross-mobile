@@ -58,7 +58,7 @@ internal object ShopMapper {
         isOpen = isOpen,
         isNew = isNew,
         isVisited = isVisited,
-        reviewCount = reviewCount,
+        reviewCount = checkInCount,
         tags = extractBackendTags(tags, shopTags)
             .ifEmpty { (brewMethods + beans).mapNotNull { it.name?.takeIf(String::isNotBlank) } }
             .take(3),
@@ -82,7 +82,7 @@ internal object ShopMapper {
             isOpen = isOpen,
             isNew = isNew,
             isVisited = isVisited,
-            reviewCount = reviewCount,
+            reviewCount = checkInCount,
             tags = extractBackendTags(tags, shopTags)
                 .ifEmpty {
                     (brewMethods + coffeeBeans)
@@ -114,6 +114,9 @@ internal object ShopMapper {
             )
         }.sortedBy { it.sortIndex },
         reviews = reviews.map { it.toDomain(fileUrls) },
+        checkIns = checkIns.map { checkIn ->
+            checkIn.toDomain(fileUrls).let { it.copy(shopName = it.shopName.ifBlank { name.orEmpty() }) }
+        },
         userCheckIns = userCheckIns.map { checkIn ->
             checkIn.toDomain(fileUrls).let { it.copy(shopName = it.shopName.ifBlank { name.orEmpty() }) }
         },

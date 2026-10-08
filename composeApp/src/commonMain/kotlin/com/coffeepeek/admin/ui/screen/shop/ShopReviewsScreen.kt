@@ -30,7 +30,7 @@ import com.coffeepeek.admin.ui.component.CoffeePeekLoader
 import com.coffeepeek.admin.ui.component.CpTopBar
 import com.coffeepeek.admin.ui.component.FullScreenImageDialog
 import com.coffeepeek.admin.ui.component.GuestAuthCard
-import com.coffeepeek.admin.ui.component.ReviewDisplayCard
+import com.coffeepeek.admin.ui.component.CheckInDisplayCard
 import org.koin.core.parameter.parametersOf
 
 @Composable
@@ -58,22 +58,22 @@ fun ShopReviewsScreen(shopId: String) {
                     item {
                         Text(details.shop.title, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
-                    if (details.reviews.isNotEmpty()) item {
-                        com.coffeepeek.admin.ui.component.ReviewRatingsOverview(details.reviews, details.shop.rating, details.shop.reviewCount)
+                    if (details.checkIns.isNotEmpty()) item {
+                        com.coffeepeek.admin.ui.component.CheckInRatingsOverview(details.checkIns, details.shop.rating, details.shop.reviewCount)
                     }
                     state.actionMessage?.let { message -> item { Text(message) } }
-                    if (details.reviews.isEmpty()) item { Text("Чекинов пока нет") }
-                    itemsIndexed(details.reviews, key = { _, review -> review.id }) { index, review ->
+                    if (details.checkIns.isEmpty()) item { Text("Чекинов пока нет") }
+                    itemsIndexed(details.checkIns, key = { _, checkIn -> checkIn.id }) { index, checkIn ->
                         val blurred = !state.isLoggedIn && index > 0
-                        val own = state.currentUserId != null && review.userId == state.currentUserId
-                        ReviewDisplayCard(
-                            review = review,
+                        val own = details.ownsCheckIn(checkIn, state.currentUserId)
+                        CheckInDisplayCard(
+                            checkIn = checkIn,
+                            isOwn = own,
                             modifier = if (blurred) Modifier.fillMaxWidth().blur(5.dp) else Modifier.fillMaxWidth(),
                             onPhotoClick = if (blurred) null else { urls, photoIndex -> preview = urls to photoIndex },
-                            onHelpfulClick = if (blurred || own) null else ({ vm.toggleHelpful(review.id) }),
-                            showHelpfulButton = !own,
+                            onHelpfulClick = if (blurred || own || state.helpfulId != null) null else ({ vm.toggleHelpful(checkIn.id) }),
                             fullVersion = true,
-                            onReportClick = if (blurred) null else ({ Navigator.navigate(Navigator.Screen.ReportReview(review.id)) }),
+                            onReportClick = if (blurred || own) null else ({ Navigator.navigate(Navigator.Screen.ReportCheckIn(checkIn.id)) }),
                         )
                         if (!state.isLoggedIn && index == 0) GuestAuthCard(
                             onLogin = { Navigator.navigate(Navigator.Screen.Auth) },

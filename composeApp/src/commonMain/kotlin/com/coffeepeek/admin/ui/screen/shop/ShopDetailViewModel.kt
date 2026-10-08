@@ -12,12 +12,12 @@ import com.coffeepeek.admin.utils.PickedImage
 import com.coffeepeek.admin.utils.ShareHelper
 import com.coffeepeek.admin.utils.datePickerMillisToUtcIsoInstant
 import com.coffeepeek.domain.model.CoffeeShopDetails
+import com.coffeepeek.domain.model.CheckIn
 import com.coffeepeek.domain.model.CatalogItem
 import com.coffeepeek.domain.model.CreateCheckInInput
 import com.coffeepeek.domain.model.PendingPhotoUpload
 import com.coffeepeek.domain.repository.CheckInRepository
 import com.coffeepeek.domain.repository.FavoriteRepository
-import com.coffeepeek.domain.repository.ReviewRepository
 import com.coffeepeek.domain.repository.SessionRepository
 import com.coffeepeek.domain.repository.ShopRepository
 import com.coffeepeek.domain.repository.UserRepository
@@ -38,6 +38,7 @@ data class ShopDetailUiState(
     val isLoading: Boolean = false,
     val isFavoriteLoading: Boolean = false,
     val isCheckInLoading: Boolean = false,
+    val helpfulId: String? = null,
     val showCheckInSheet: Boolean = false,
     val checkInDraft: CheckInDraft? = null,
     val actionMessage: String? = null,
@@ -51,7 +52,6 @@ class ShopDetailViewModel(
     private val shopRepository: ShopRepository,
     private val favoriteRepository: FavoriteRepository,
     private val checkInRepository: CheckInRepository,
-    private val reviewRepository: ReviewRepository,
     private val sessionRepository: SessionRepository,
     private val checkInDraftStore: CheckInDraftStore,
     private val userRepository: UserRepository,
@@ -231,34 +231,38 @@ class ShopDetailViewModel(
         }
     }
 
-    fun toggleHelpful(reviewId: String) {
+    fun toggleHelpful(checkInId: String) {
+        val current = _uiState.value
+        val details = current.details ?: return
+        val checkIn = details.checkIns.firstOrNull { it.id == checkInId } ?: return
+        if (current.helpfulId != null || details.ownsCheckIn(checkIn, current.currentUserId)) return
+        _uiState.update { it.copy(helpfulId = checkInId) }
         workScope.launch {
-            if (!sessionRepository.isLoggedIn()) {
-                Navigator.navigate(Navigator.Screen.Auth)
-                return@launch
-            }
-            val review = _uiState.value.details?.reviews?.firstOrNull { it.id == reviewId } ?: return@launch
-            reviewRepository.setReviewHelpful(reviewId, helpful = !review.isHelpfulByCurrentUser)
-                .onSuccess { vote ->
-                    _uiState.update { state ->
-                        val current = state.details ?: return@update state
-                        state.copy(
-                            details = current.copy(
-                                reviews = current.reviews.map { r ->
-                                    if (r.id == reviewId) {
-                                        r.copy(
+            try {
+                if (!sessionRepository.isLoggedIn()) {
+                    Navigator.navigate(Navigator.Screen.Auth)
+                    return@launch
+                }
+                checkInRepository.setHelpful(checkInId, helpful = !checkIn.isHelpfulByCurrentUser)
+                    .onSuccess { vote ->
+                        _uiState.update { state ->
+                            val currentDetails = state.details ?: return@update state
+                            state.copy(
+                                details = currentDetails.copy(
+                                    checkIns = currentDetails.checkIns.map { item ->
+                                        if (item.id == checkInId) item.copy(
                                             isHelpfulByCurrentUser = vote.isHelpful,
                                             helpfulCount = vote.helpfulCount,
-                                        )
-                                    } else {
-                                        r
-                                    }
-                                },
-                            ),
-                        )
+                                        ) else item
+                                    },
+                                ),
+                            )
+                        }
                     }
-                }
-                .onFailure { e -> _uiState.update { it.copy(actionMessage = e.message) } }
+                    .onFailure { e -> _uiState.update { it.copy(actionMessage = e.message) } }
+            } finally {
+                _uiState.update { it.copy(helpfulId = null) }
+            }
         }
     }
 
@@ -346,6 +350,9 @@ class ShopDetailViewModel(
         _uiState.update { it.copy(actionMessage = null) }
     }
 }
+
+internal fun CoffeeShopDetails.ownsCheckIn(checkIn: CheckIn, currentUserId: String?): Boolean =
+    (currentUserId != null && checkIn.authorAddress?.slug == currentUserId) || userCheckIns.any { it.id == checkIn.id }
 
 internal fun buildYandexMapsRouteUrl(latitude: Double, longitude: Double): String =
     "https://yandex.ru/maps/?mode=routes&rtext=~$latitude,$longitude&rtt=auto"

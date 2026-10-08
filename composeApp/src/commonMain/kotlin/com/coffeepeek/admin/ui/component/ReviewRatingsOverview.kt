@@ -25,6 +25,7 @@ import com.coffeepeek.admin.theme.CpDimens
 import com.coffeepeek.admin.ui.icons.CpIcons
 import com.coffeepeek.admin.utils.formatOneDecimal
 import com.coffeepeek.domain.model.Review
+import com.coffeepeek.domain.model.CheckIn
 import coffeepeek.composeapp.generated.resources.Res
 import coffeepeek.composeapp.generated.resources.checkin_rating_coffee
 import coffeepeek.composeapp.generated.resources.checkin_rating_service
@@ -43,8 +44,8 @@ internal fun averageReviewRatings(reviews: List<Review>): ReviewAverages? =
     )
 
 @Composable
-internal fun ReviewRatingsOverview(reviews: List<Review>, overallRating: Double?, reviewCount: Int) {
-    val averages = averageReviewRatings(reviews) ?: return
+internal fun CheckInRatingsOverview(checkIns: List<CheckIn>, overallRating: Double?, checkInCount: Int) {
+    val averages = averageCheckInRatings(checkIns) ?: return
     Column(
         Modifier.fillMaxWidth().padding(vertical = CpDimens.spacing3),
         verticalArrangement = Arrangement.spacedBy(CpDimens.spacing3),
@@ -52,11 +53,11 @@ internal fun ReviewRatingsOverview(reviews: List<Review>, overallRating: Double?
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Icon(CpIcons.StarFilled, null, Modifier.size(24.dp), tint = MaterialTheme.colorScheme.primary)
             Text(
-                "${formatOneDecimal(overallRating?.takeIf { it > 0 } ?: averages.overall)} · Чекины: ${maxOf(reviewCount, reviews.size)}",
+                "${formatOneDecimal(overallRating?.takeIf { it > 0 } ?: averages.overall)} · Чекины: ${maxOf(checkInCount, checkIns.size)}",
                 style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold,
             )
         }
-        if (reviewCount > reviews.size) Text(
+        if (checkInCount > checkIns.size) Text(
             "Оценки по загруженным чекинам", style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
@@ -77,4 +78,14 @@ internal fun ReviewRatingsOverview(reviews: List<Review>, overallRating: Double?
             }
         }
     }
+}
+
+internal fun averageCheckInRatings(checkIns: List<CheckIn>): ReviewAverages? {
+    val ratings = checkIns.mapNotNull { it.rating }
+    if (ratings.isEmpty()) return null
+    return ReviewAverages(
+        coffee = ratings.map { it.coffee }.average(),
+        service = ratings.map { it.service }.average(),
+        place = ratings.map { it.place }.average(),
+    )
 }

@@ -30,7 +30,7 @@ internal fun CheckInActions(
     var expanded by remember { mutableStateOf(false) }
     Box {
         IconButton(onClick = { expanded = true }, enabled = enabled) {
-            Icon(CpIcons.MoreVertical, "Действия с чекином", tint = MaterialTheme.colorScheme.onSurfaceVariant)
+            Icon(CpIcons.MoreHorizontal, "Действия с чекином", tint = MaterialTheme.colorScheme.onSurfaceVariant)
         }
         DropdownMenu(
             expanded = expanded,

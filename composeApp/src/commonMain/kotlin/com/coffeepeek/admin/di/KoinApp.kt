@@ -87,7 +87,7 @@ private fun appModule(settingRepository: com.coffeepeek.room.repository.SettingR
     factory { com.coffeepeek.admin.feature.community.ui.CommunityViewModel(get(), get(), get(), get(), get()) }
     factory { com.coffeepeek.admin.ui.screen.roaster.RoasterListViewModel(get(), get(), get()) }
     factory { MapViewModel(get(), get()) }
-    factory { (shopId: String) -> ShopDetailViewModel(shopId, get(), get(), get(), get(), get(), get(), get(), get()) }
+    factory { (shopId: String) -> ShopDetailViewModel(shopId, get(), get(), get(), get(), get(), get(), get()) }
     factory { (shopId: String) -> ShopMenuGalleryViewModel(shopId, get()) }
     factory { (shopId: String) -> ShopReportViewModel(shopId, get()) }
     factory { (shopId: String) -> SuggestShopChangeViewModel(shopId, get()) }
@@ -104,5 +104,5 @@ private fun appModule(settingRepository: com.coffeepeek.room.repository.SettingR
     factory { VisitedPlacesViewModel(get(), get()) }
     factory { AddRoasterViewModel(get(), get()) }
     factory { (roasterId: String) -> RoasterDetailViewModel(roasterId, get(), get(), get(), get()) }
-    factory { (reviewId: String, isPreview: Boolean) -> ReviewReportViewModel(reviewId, get(), get(), isPreview) }
+    factory { (reviewId: String, isPreview: Boolean, isCheckIn: Boolean) -> ReviewReportViewModel(reviewId, get(), get(), isPreview, get(), isCheckIn) }
 }
