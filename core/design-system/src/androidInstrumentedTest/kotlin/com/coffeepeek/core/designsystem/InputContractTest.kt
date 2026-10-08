@@ -9,6 +9,7 @@ import androidx.compose.ui.test.junit4.createEmptyComposeRule
 import androidx.compose.ui.text.font.FontFamily
 import androidx.test.core.app.ActivityScenario
 import com.coffeepeek.core.designsystem.component.AppTextField
+import com.coffeepeek.core.designsystem.component.CompactOutlinedTextField
 import com.coffeepeek.core.designsystem.component.CpSearchField
 import com.coffeepeek.core.designsystem.component.CpTopBar
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
@@ -35,6 +36,20 @@ class InputContractTest {
                 .assert(SemanticsMatcher.expectValue(SemanticsProperties.Error, "Required"))
                 .performTextInput("Coffee")
             compose.runOnIdle { assertEquals("Coffee", value.value) }
+        }
+    }
+
+    @Test fun compactFieldExposesLocalizedErrorSemanticsDirectly() {
+        render {
+            CompactOutlinedTextField(
+                value = "",
+                onValueChange = {},
+                isError = true,
+                errorDescription = "Required",
+            )
+        }.use {
+            compose.onNode(hasSetTextAction())
+                .assert(SemanticsMatcher.expectValue(SemanticsProperties.Error, "Required"))
         }
     }
 

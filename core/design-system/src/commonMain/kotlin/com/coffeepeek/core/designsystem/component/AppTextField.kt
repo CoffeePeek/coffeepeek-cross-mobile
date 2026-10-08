@@ -12,7 +12,6 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.error
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -76,11 +75,11 @@ fun AppTextField(
                 .heightIn(min = CpDimens.inputMinHeight)
                 .semantics {
                     contentDescription = label
-                    errorText?.let { error(it) }
                 },
             shape = RoundedCornerShape(CpDimens.inputRadius),
             contentPadding = CpDimens.singleLineFieldContentPadding,
             isError = isError,
+            errorDescription = errorText,
             colors = OutlinedTextFieldDefaults.colors(
                 focusedContainerColor   = MaterialTheme.colorScheme.surface,
                 unfocusedContainerColor = MaterialTheme.colorScheme.surface,

@@ -20,6 +20,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.takeOrElse
+import androidx.compose.ui.semantics.error
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.VisualTransformation
 import com.coffeepeek.core.designsystem.theme.CpDimens
@@ -45,6 +47,7 @@ fun CompactOutlinedTextField(
     leadingIcon: @Composable (() -> Unit)? = null,
     trailingIcon: @Composable (() -> Unit)? = null,
     isError: Boolean = false,
+    errorDescription: String? = null,
     visualTransformation: VisualTransformation = VisualTransformation.None,
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
     keyboardActions: KeyboardActions = KeyboardActions.Default,
@@ -55,6 +58,9 @@ fun CompactOutlinedTextField(
     colors: TextFieldColors = OutlinedTextFieldDefaults.colors(),
     contentPadding: PaddingValues = CpDimens.singleLineFieldContentPadding,
 ) {
+    require(!isError || !errorDescription.isNullOrBlank()) {
+        "Error fields require a localized error description"
+    }
     val interactionSource = remember { MutableInteractionSource() }
     val focused = interactionSource.collectIsFocusedAsState().value
     val textColor = textStyle.color.takeOrElse {
@@ -71,7 +77,9 @@ fun CompactOutlinedTextField(
         BasicTextField(
             value = value,
             onValueChange = onValueChange,
-            modifier = modifier,
+            modifier = modifier.semantics {
+                errorDescription?.let { error(it) }
+            },
             enabled = enabled,
             readOnly = readOnly,
             textStyle = textStyle.merge(TextStyle(color = textColor)),
