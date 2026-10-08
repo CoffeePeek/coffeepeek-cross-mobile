@@ -65,11 +65,12 @@ internal fun AppUpdatePrompt(controller: AppUpdateState = koinInject()) {
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { controller.check() }
     val state by controller.state.collectAsState()
     val update = transfer.update ?: state.update ?: return
+    val required = (state.update ?: update).isRequired(AppConfig.versionCode ?: return)
+    if (AppConfig.updateChannel == "play" && !needsPlayFallback(required, transfer)) return
     var hidden by rememberSaveable(update.versionCode) { mutableStateOf(false) }
     LaunchedEffect(state.showPrompt) { if (state.showPrompt) hidden = false }
     LaunchedEffect(transfer.stage) { if (transfer.stage == InstallationStage.Ready) hidden = false }
     if (hidden || (!state.showPrompt && transfer.stage == InstallationStage.Available && transfer.error == null)) return
-    val required = (state.update ?: update).isRequired(AppConfig.versionCode ?: return)
     val dismiss = { hidden = true; controller.dismiss() }
     var dragOffset by remember { mutableFloatStateOf(0f) }
     val threshold = with(LocalDensity.current) { 64.dp.toPx() }

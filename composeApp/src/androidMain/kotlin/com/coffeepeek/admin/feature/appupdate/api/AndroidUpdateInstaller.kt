@@ -7,6 +7,6 @@ import com.coffeepeek.admin.feature.appupdate.domain.UpdateInstaller
 internal interface AndroidUpdateInstaller : UpdateInstaller {
     var requestConsent: ((IntentSender) -> Unit)?
     var requestInstallation: ((Intent) -> Unit)?
-    fun consentResult(accepted: Boolean)
+    fun consentResult(resultCode: Int)
     fun installationResult()
 }

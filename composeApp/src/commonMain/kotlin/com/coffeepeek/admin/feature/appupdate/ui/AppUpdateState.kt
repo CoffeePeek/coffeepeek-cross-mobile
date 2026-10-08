@@ -3,6 +3,8 @@ package com.coffeepeek.admin.feature.appupdate.ui
 import com.coffeepeek.admin.config.AppConfig
 import com.coffeepeek.admin.feature.appupdate.domain.AppUpdate
 import com.coffeepeek.admin.feature.appupdate.domain.AppUpdateRepository
+import com.coffeepeek.admin.feature.appupdate.domain.InstallationStage
+import com.coffeepeek.admin.feature.appupdate.domain.InstallationState
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -17,10 +19,17 @@ internal data class UpdateUiState(
     val showPrompt: Boolean = false,
     val checking: Boolean = false,
     val message: String? = null,
+    val manual: Boolean = false,
 )
 
-internal class AppUpdateState(private val repository: AppUpdateRepository) {
-    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
+internal fun needsPlayFallback(required: Boolean, transfer: InstallationState): Boolean = required &&
+    (transfer.error != null || (transfer.stage != InstallationStage.Available && transfer.stage != InstallationStage.Starting))
+
+internal class AppUpdateState(
+    private val repository: AppUpdateRepository,
+    private val scope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Main),
+    private val currentVersion: Long? = AppConfig.versionCode,
+) {
     private val mutableState = MutableStateFlow(UpdateUiState())
     val state = mutableState.asStateFlow()
     private var dismissed: Long? = null
@@ -30,13 +39,14 @@ internal class AppUpdateState(private val repository: AppUpdateRepository) {
         mutableState.value = mutableState.value.copy(checking = true, message = null)
         scope.launch {
             try {
-                val current = AppConfig.versionCode
+                val current = currentVersion
                 val policy = if (current != null) repository.fetch() else null
                 dismissed = dismissed ?: repository.dismissedVersion()
                 val available = policy?.takeIf { current != null && it.isAvailable(current) }
                 mutableState.value = UpdateUiState(
                     update = available,
                     showPrompt = available?.shouldPrompt(current!!, dismissed, manual) == true,
+                    manual = manual,
                     message = if (manual && available == null) {
                         if (policy == null) "Не удалось проверить обновления. Попробуйте позже." else "Установлена актуальная версия"
                     } else null,
@@ -48,9 +58,18 @@ internal class AppUpdateState(private val repository: AppUpdateRepository) {
         }
     }
 
+    fun takeNativePrompt(transfer: InstallationState): AppUpdate? {
+        val pending = mutableState.value
+        if (!pending.showPrompt) return null
+        mutableState.value = pending.copy(showPrompt = false)
+        return pending.update?.takeIf {
+            transfer.stage == InstallationStage.Available && (transfer.error == null || pending.manual)
+        }
+    }
+
     fun dismiss() {
         val update = mutableState.value.update ?: return
-        if (update.isRequired(AppConfig.versionCode ?: return)) return
+        if (update.isRequired(currentVersion ?: return)) return
         dismissed = update.versionCode
         mutableState.value = mutableState.value.copy(showPrompt = false)
         scope.launch {
