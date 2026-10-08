@@ -17,6 +17,10 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.admin.theme.CpDimens
 import com.coffeepeek.admin.ui.icons.CpIcons
+import coffeepeek.composeapp.generated.resources.Res
+import coffeepeek.composeapp.generated.resources.search_roasters_placeholder
+import coffeepeek.composeapp.generated.resources.search_shops_and_roasters_placeholder
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 internal fun SearchHeader(
@@ -29,7 +33,10 @@ internal fun SearchHeader(
     showCategories: Boolean = true,
     onSearchFocus: () -> Unit = {},
     onCancelSearch: (() -> Unit)? = null,
-    placeholder: String = "Поиск кофеен и обжарщиков…",
+    placeholder: String = stringResource(
+        if (roastersSelected) Res.string.search_roasters_placeholder
+        else Res.string.search_shops_and_roasters_placeholder,
+    ),
 ) {
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         CpSearchField(
