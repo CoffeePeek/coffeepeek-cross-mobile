@@ -39,6 +39,12 @@ internal fun SearchHeader(
     ),
 ) {
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        if (onCancelSearch != null) {
+            CpCircularBackButton(
+                onClick = onCancelSearch,
+                tint = MaterialTheme.colorScheme.primary,
+            )
+        }
         CpSearchField(
             value = query,
             onValueChange = onQueryChange,
@@ -60,9 +66,6 @@ internal fun SearchHeader(
             ) {
                 Icon(CpIcons.Filter, "Фильтры", tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(22.dp))
             }
-        }
-        if (onCancelSearch != null) {
-            TextButton(onClick = onCancelSearch) { Text("Отмена") }
         }
     }
     if (!showCategories) return
