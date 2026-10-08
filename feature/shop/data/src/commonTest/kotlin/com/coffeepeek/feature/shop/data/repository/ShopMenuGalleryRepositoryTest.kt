@@ -22,15 +22,14 @@ class ShopMenuGalleryRepositoryTest {
             respond("""{
                 "isSuccess":true,
                 "data":{
-                    "shopDto":{
+                        "address":{"slug":"shop-1","canonicalPath":"/coffee-shops/shop-1"},
                         "name":"Кофейня",
                         "unusedField":9,
                         "menu":{"photos":[
-                            {"id":"later","fullUrl":"https://photo/later","sortIndex":2},
+                            {"id":"later","fullUrl":"https://photo/later","sortIndex":"2"},
                             {"id":"first","fullUrl":"https://photo/original","urls":{"fullscreen":"https://photo/full","detail":"https://photo/detail"},"sortIndex":1},
                             {"id":"missing","sortIndex":3}
                         ]}
-                    }
                 }
             }""", headers = headersOf(HttpHeaders.ContentType, "application/json"))
         }
@@ -47,7 +46,21 @@ class ShopMenuGalleryRepositoryTest {
         }
     }
 
-    @Test fun fallsBackToTopLevelMenuAndRejectsFailedEnvelope() = runBlocking {
+    @Test fun successfulEnvelopeWithoutCanonicalShopSlugIsRejected() = runBlocking {
+        val engine = MockEngine {
+            respond("""{"isSuccess":true,"data":{"name":"Missing address","menu":{"photos":[]}}}""",
+                headers = headersOf(HttpHeaders.ContentType, "application/json"))
+        }
+        val client = HttpClientFactory(engine).api("https://example.com")
+        try {
+            assertTrue(createShopMenuGalleryRepository(client).getMenuGallery("shop-1").isFailure)
+        } finally {
+            client.close()
+            engine.close()
+        }
+    }
+
+    @Test fun readsCurrentMenuEnvelopeAndRejectsFailedResponses() = runBlocking {
         var requests = 0
         val engine = MockEngine {
             requests++
@@ -55,7 +68,7 @@ class ShopMenuGalleryRepositoryTest {
                 respond("""{"isSuccess":false}""",
                     headers = headersOf(HttpHeaders.ContentType, "application/json"))
             } else {
-                respond("""{"IsSuccess":true,"Data":{"shopDto":{"name":"A"},"menu":{"photos":[{"id":"a","fullUrl":"https://photo/a"}]}}}""",
+                respond("""{"IsSuccess":true,"Data":{"address":{"slug":"shop-1"},"name":"A","menu":{"photos":[{"id":"a","fullUrl":"https://photo/a"}]}}}""",
                     headers = headersOf(HttpHeaders.ContentType, "application/json"))
             }
         }

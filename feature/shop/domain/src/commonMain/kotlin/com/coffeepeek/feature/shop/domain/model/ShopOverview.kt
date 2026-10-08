@@ -13,6 +13,7 @@ data class ShopOverview(
     val isOpen: Boolean,
     val photos: List<ShopPhoto>,
     val priceRange: String? = null,
+    val canonicalPath: String? = null,
 )
 
 data class ShopPhoto(

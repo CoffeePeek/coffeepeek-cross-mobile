@@ -4,6 +4,8 @@ import com.coffeepeek.feature.shop.data.backend.ShopCheckInDto
 import com.coffeepeek.feature.shop.data.backend.ShopRatingDto
 import com.coffeepeek.feature.shop.data.backend.ShopReviewDto
 import com.coffeepeek.feature.shop.domain.model.ShopCheckIn
+import com.coffeepeek.feature.shop.domain.model.ShopCheckInVisibility
+import com.coffeepeek.feature.shop.domain.model.ShopCheckInModerationState
 import com.coffeepeek.feature.shop.domain.model.ShopRating
 import com.coffeepeek.feature.shop.domain.model.ShopReview
 import kotlinx.serialization.json.JsonElement
@@ -26,6 +28,15 @@ internal class ShopFileUrlResolver(baseUrl: String) {
         if (key.startsWith('/') || key.contains('?') || key.contains('#') ||
             key.split('/').any { it == ".." || it == "." }) return null
         return "$origin/api/file/$key"
+    }
+
+    /** Check-in URLs are server-issued API URLs, not public file storage keys. */
+    fun resolveApiUrl(url: String?): String? {
+        val value = url?.trim()?.takeIf(String::isNotEmpty) ?: return null
+        if (isWebUrl(value)) return value
+        if (value.contains(":") || value.startsWith("//") ||
+            value.split('/').any { it == ".." || it == "." }) return null
+        return "$origin/${value.trimStart('/')}"
     }
 
     private fun isWebUrl(value: String): Boolean =
@@ -54,23 +65,32 @@ internal fun ShopReviewDto.toDomain(files: ShopFileUrlResolver): ShopReview? {
 
 internal fun ShopCheckInDto.toDomain(files: ShopFileUrlResolver): ShopCheckIn? {
     if (id.isBlank()) return null
-    val resolvedPhotos = photos.mapNotNull { photo ->
-        val full = files.resolve(photo.storageKey, photo.urls?.fullscreen ?: photo.fullUrl)
-            ?: return@mapNotNull null
-        val thumbnail = files.resolve(photo.storageKey, photo.urls?.thumbnail ?: photo.fullUrl) ?: full
-        full to thumbnail
-    }
+    val resolvedPhotos = photos.sortedBy { it.sortIndex.toFlexibleInt() }
+        .mapNotNull { files.resolveApiUrl(it.url) }
     return ShopCheckIn(
         id = id,
-        userId = userId,
-        shopId = shopId,
-        note = note.orEmpty(),
+        userId = author?.slug.orEmpty(),
+        shopId = shop?.slug.orEmpty(),
+        note = note,
         createdAt = createdAt,
         visitedAt = visitedAt,
-        reviewId = reviewId,
-        photoUrls = resolvedPhotos.map { it.first },
-        photoThumbnailUrls = resolvedPhotos.map { it.second },
+        reviewId = null,
+        photoUrls = resolvedPhotos,
+        photoThumbnailUrls = resolvedPhotos,
         rating = rating?.toDomain(),
+        username = username,
+        drinkSlug = drinkSlug,
+        customDrinkName = customDrinkName,
+        drinkNameRu = drinkNameRu,
+        drinkNameEn = drinkNameEn,
+        visibility = ShopCheckInVisibility.entries.firstOrNull { it.name == visibility }
+            ?: ShopCheckInVisibility.Private,
+        moderationState = ShopCheckInModerationState.entries.firstOrNull { it.name == moderationState }
+            ?: ShopCheckInModerationState.Unknown,
+        contentRevision = contentRevision.toFlexibleInt(),
+        rejectionReason = rejectionReason,
+        helpfulCount = helpfulCount.toFlexibleInt(),
+        isHelpfulByCurrentUser = isHelpfulByCurrentUser,
     )
 }
 
@@ -80,7 +100,7 @@ private fun ShopRatingDto.toDomain(): ShopRating = ShopRating(
     coffee = coffee.toFlexibleInt(),
 )
 
-private fun JsonElement?.toFlexibleInt(): Int {
+internal fun JsonElement?.toFlexibleInt(): Int {
     val primitive = this as? JsonPrimitive ?: return 0
     return primitive.intOrNull ?: primitive.contentOrNull?.toIntOrNull()
         ?: primitive.doubleOrNull?.toInt() ?: 0

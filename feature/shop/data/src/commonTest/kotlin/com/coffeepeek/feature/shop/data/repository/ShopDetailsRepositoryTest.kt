@@ -10,14 +10,17 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
+import com.coffeepeek.feature.shop.domain.model.ShopCheckInVisibility
+import com.coffeepeek.feature.shop.domain.model.ShopCheckInModerationState
 
 class ShopDetailsRepositoryTest {
-    @Test fun mapsReviewsAndCheckInsWithFileKeysAndFlexibleRatings() = runBlocking {
+    @Test fun mapsCurrentPublicAndPersonalCheckInsWithoutInventingPhotoUrls() = runBlocking {
         val engine = MockEngine {
             respond("""{
               "isSuccess":true,
-              "data":{"shopDto":{
-                "id":"shop-1",
+              "data":{
+                "address":{"slug":"shop-1","canonicalPath":"/coffee-shops/shop-1"},
+                "checkInCount":"23",
                 "reviews":[{
                   "id":"review-1","moderationReviewId":"moderation-1","userId":"user-1",
                   "coffeeShopId":"shop-1","username":"Alex","header":"Great","comment":"Coffee",
@@ -25,13 +28,22 @@ class ShopDetailsRepositoryTest {
                   "photos":[{"storageKey":"reviews/photo.jpg"},{"fullUrl":"https://cdn.example.com/second.jpg"}],
                   "createdAtUtc":"2026-10-01T12:00:00Z","helpfulCount":3,"isHelpfulByCurrentUser":true
                 }],
+                "checkIns":[{
+                  "id":"checkin-1","author":{"slug":"user-1"},"shop":{"slug":"shop-1"},"username":"Alex","text":"Visited",
+                  "createdAtUtc":"2026-10-01","visitedAt":"2026-09-30",
+                  "photos":[{"sortIndex":"2","url":"/api/v1/check-ins/checkin-1/photos/second"},
+                    {"sortIndex":1,"url":"https://cdn.example.com/first.jpg"},
+                    {"sortIndex":3,"storageKey":"must-not-invent-url"}],
+                  "rating":{"place":"5","service":"4","coffee":"3"},
+                  "drinkSlug":"other","customDrinkName":"Espresso tonic","drinkNameRu":"Напиток","drinkNameEn":"Drink",
+                  "visibility":"Public","moderationState":"Approved","contentRevision":"2",
+                  "helpfulCount":"7","isHelpfulByCurrentUser":true
+                }],
                 "userCheckIns":[{
-                  "id":"checkin-1","userId":"user-1","shopId":"shop-1","note":"Visited",
-                  "createdAt":"2026-10-01","visitedAt":"2026-09-30","reviewId":"review-1",
-                  "photos":[{"storageKey":"checkins/photo.jpg","urls":{"thumbnail":"https://cdn.example.com/thumb.jpg"}}],
-                  "rating":{"place":"5","service":"4","coffee":"3"}
+                  "id":"private","text":"Private note","visibility":"Private","moderationState":"Rejected",
+                  "rejectionReason":"Needs editing"
                 }]
-              }}
+              }
             }""", headers = headersOf(HttpHeaders.ContentType, "application/json"))
         }
         val client = HttpClientFactory(engine).api("https://example.com")
@@ -46,12 +58,31 @@ class ShopDetailsRepositoryTest {
             assertTrue(review.isHelpfulByCurrentUser)
             assertEquals(listOf("https://files.example.com/api/file/reviews/photo.jpg",
                 "https://cdn.example.com/second.jpg"), review.photoUrls)
-            val checkIn = details.userCheckIns.single()
-            assertEquals("review-1", checkIn.reviewId)
+            assertEquals(23, details.overview.reviewCount)
+            val checkIn = details.checkIns.single()
+            assertEquals("user-1", checkIn.userId)
+            assertEquals("shop-1", checkIn.shopId)
+            assertEquals("Alex", checkIn.username)
+            assertNull(checkIn.reviewId)
             assertEquals("Visited", checkIn.note)
-            assertEquals("https://files.example.com/api/file/checkins/photo.jpg", checkIn.photoUrls.single())
-            assertEquals("https://cdn.example.com/thumb.jpg", checkIn.photoThumbnailUrls.single())
+            assertEquals(listOf("https://cdn.example.com/first.jpg",
+                "https://files.example.com/api/v1/check-ins/checkin-1/photos/second"), checkIn.photoUrls)
+            assertEquals(checkIn.photoUrls, checkIn.photoThumbnailUrls)
             assertEquals(3, checkIn.rating?.coffee)
+            assertEquals("other", checkIn.drinkSlug)
+            assertEquals("Espresso tonic", checkIn.customDrinkName)
+            assertEquals("Напиток", checkIn.drinkNameRu)
+            assertEquals("Drink", checkIn.drinkNameEn)
+            assertEquals(ShopCheckInVisibility.Public, checkIn.visibility)
+            assertEquals(ShopCheckInModerationState.Approved, checkIn.moderationState)
+            assertEquals(2, checkIn.contentRevision)
+            assertEquals(7, checkIn.helpfulCount)
+            assertTrue(checkIn.isHelpfulByCurrentUser)
+            val personal = details.userCheckIns.single()
+            assertEquals("Private note", personal.note)
+            assertEquals(ShopCheckInVisibility.Private, personal.visibility)
+            assertEquals(ShopCheckInModerationState.Rejected, personal.moderationState)
+            assertEquals("Needs editing", personal.rejectionReason)
         } finally {
             client.close()
             engine.close()
@@ -65,13 +96,11 @@ class ShopDetailsRepositoryTest {
             respond("""{
               "isSuccess":true,
               "data":{
-                "shopDto":{
-                  "id":"shop-1",
+                  "address":{"slug":"shop-1"},
                   "schedules":[
                     {"dayOfWeek":"monday","intervals":[{"openTime":"22:30","closeTime":"23:30"}]},
                     {"dayOfWeek":2,"isClosed":true,"intervals":[{"openTime":"09:00","closeTime":"10:00"}]}
-                  ]
-                },
+                  ],
                 "menu":{
                   "currency":"",
                   "items":[
@@ -106,24 +135,24 @@ class ShopDetailsRepositoryTest {
         val engine = MockEngine {
             respond("""{
               "isSuccess":true,
-              "data":{"shopDto":{
-                "id":"shop-1","name":"Coffee","description":"  Fresh coffee  ",
+              "data":{
+                "address":{"slug":"shop-1","canonicalPath":"/coffee-shops/shop-1"},"name":"Coffee","description":"  Fresh coffee  ",
                 "location":{"address":" Main street ","latitude":53.9,"longitude":27.5},
-                "rating":4.6,"reviewCount":12,"isOpen":true,"priceRange":2,
+                "rating":4.6,"checkInCount":12,"isOpen":true,"priceRange":2,
                 "photos":[
                   {"id":"first","fullUrl":"https://photo/original","urls":{"detail":"https://photo/hero","fullscreen":"https://photo/full"}},
                   {"id":"second","fullUrl":"https://photo/second"},
                   {"id":"missing"}
                 ],
-                "coffeeBeans":[{"id":"bean-1","name":"  Эфиопия  "},{"id":"empty","name":" "}],
-                "roasters":[{"id":"roaster-1","name":"  Roaster  ","photoUrl":" https://photo/roaster "}],
+                "beans":[{"slug":"bean-1","name":"  Эфиопия  "},{"slug":"empty","name":" "}],
+                "roasters":[{"id":"obsolete-id","slug":"old-slug","address":{"slug":"roaster-1","canonicalPath":"/roasters/roaster-1"},"name":"  Roaster  ","photoUrl":" https://photo/roaster "}],
                 "equipments":[{"id":"equipment-1","name":" V60 "}],
                 "brewMethods":[{"id":"brew-1","name":" Эспрессо ","slug":"espresso"}],
                 "shopTags":[{"id":"tag-1","name":" Wi-Fi ","slug":"wifi"},"Эспрессо"],
                 "tags":["Ignored fallback"],
                 "shopContact":{"phoneNumber":" +375 29 123 45 67 ","email":" a@example.com ","siteLink":" https://example.com ","instagramLink":" @coffee "},
                 "menu":{"photos":[]},"otherField":"ignored"
-              }}
+              }
             }""", headers = headersOf(HttpHeaders.ContentType, "application/json"))
         }
         val client = HttpClientFactory(engine).api("https://example.com")
@@ -132,6 +161,7 @@ class ShopDetailsRepositoryTest {
                 .getDetails("shop-1").getOrThrow()
             val overview = details.overview
             assertEquals("shop-1", overview.id)
+            assertEquals("/coffee-shops/shop-1", overview.canonicalPath)
             assertEquals("Coffee", overview.title)
             assertEquals("Fresh coffee", overview.description)
             assertEquals("Main street", overview.address)
@@ -147,6 +177,8 @@ class ShopDetailsRepositoryTest {
             assertEquals("https://photo/second", overview.photos.last().previewUrl)
             assertEquals(listOf("Эфиопия"), details.coffee.beans)
             assertEquals("Roaster", details.coffee.roasters.single().name)
+            assertEquals("roaster-1", details.coffee.roasters.single().id)
+            assertEquals("/roasters/roaster-1", details.coffee.roasters.single().canonicalPath)
             assertEquals("https://photo/roaster", details.coffee.roasters.single().photoUrl)
             assertEquals(listOf("V60"), details.coffee.equipment)
             assertEquals("+375 29 123 45 67", details.contact?.phone)
@@ -167,7 +199,7 @@ class ShopDetailsRepositoryTest {
         val engine = MockEngine {
             calls++
             respond(if (calls == 1) {
-                """{"isSuccess":true,"data":{"shopDto":{"name":"Unnamed rating"}}}"""
+                """{"isSuccess":true,"data":{"address":{"slug":"shop-1"},"name":"Unnamed rating"}}"""
             } else {
                 """{"isSuccess":false,"data":null}"""
             }, headers = headersOf(HttpHeaders.ContentType, "application/json"))

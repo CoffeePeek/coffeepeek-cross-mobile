@@ -30,14 +30,15 @@ private class DefaultShopDetailsRepository(
     override suspend fun getDetails(shopId: String): Result<ShopDetails> = requestResult {
         val data = backend.load(shopId).getOrThrow()
         ShopDetails(
-            overview = data.toOverview(shopId),
-            menu = (data.shop.menu ?: data.menu)?.toDomain(),
-            schedules = data.shop.schedules.orEmpty().toLocalSchedules(utcOffsetMinutes()),
-            coffee = data.shop.toCoffeeDetails(),
-            contact = data.shop.contact?.toDomainOrNull(),
-            features = data.shop.toFeatures(),
-            reviews = data.shop.reviews.mapNotNull { it.toDomain(files) },
-            userCheckIns = data.shop.userCheckIns.mapNotNull { it.toDomain(files) },
+            overview = data.toOverview(),
+            menu = data.menu?.toDomain(),
+            schedules = data.schedules.orEmpty().toLocalSchedules(utcOffsetMinutes()),
+            coffee = data.toCoffeeDetails(),
+            contact = data.contact?.toDomainOrNull(),
+            features = data.toFeatures(),
+            reviews = data.reviews.mapNotNull { it.toDomain(files) },
+            userCheckIns = data.userCheckIns.mapNotNull { it.toDomain(files) },
+            checkIns = data.checkIns.mapNotNull { it.toDomain(files) },
         )
     }
 }

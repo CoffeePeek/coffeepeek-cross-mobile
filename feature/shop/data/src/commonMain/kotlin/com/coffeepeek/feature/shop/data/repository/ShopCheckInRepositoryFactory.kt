@@ -32,13 +32,12 @@ private class DefaultShopCheckInRepository(
             ShopPhotoUpload(it.bytes, it.fileName, it.contentType)
         }, purpose = ShopPhotoPurpose.CheckIn).getOrThrow()
         backend.create(
-            shopId = input.shopId,
+            shopSlug = input.shopSlug,
             visitedAtIso = input.visitedAtIso,
-            isPublic = input.isPublic,
+            visibility = input.visibility.name,
             drinkSlug = input.drinkSlug,
             customDrinkName = input.customDrinkName?.trim(),
-            header = input.header?.trim()?.takeIf(String::isNotEmpty).takeIf { input.isPublic },
-            note = input.note?.trim()?.takeIf(String::isNotEmpty),
+            text = input.text.trim(),
             rating = input.rating,
             photos = uploaded,
         ).getOrThrow()

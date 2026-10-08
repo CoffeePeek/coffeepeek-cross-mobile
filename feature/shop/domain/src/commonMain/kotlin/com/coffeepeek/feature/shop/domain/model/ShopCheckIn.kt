@@ -11,4 +11,19 @@ data class ShopCheckIn(
     val photoUrls: List<String>,
     val photoThumbnailUrls: List<String>,
     val rating: ShopRating?,
+    val username: String = "",
+    val drinkSlug: String? = null,
+    val customDrinkName: String? = null,
+    val drinkNameRu: String? = null,
+    val drinkNameEn: String? = null,
+    val visibility: ShopCheckInVisibility = ShopCheckInVisibility.Private,
+    val moderationState: ShopCheckInModerationState = ShopCheckInModerationState.NotSubmitted,
+    val contentRevision: Int = 0,
+    val rejectionReason: String? = null,
+    val helpfulCount: Int = 0,
+    val isHelpfulByCurrentUser: Boolean = false,
 )
+
+enum class ShopCheckInVisibility { Private, Public }
+
+enum class ShopCheckInModerationState { NotSubmitted, Pending, Approved, Rejected, Unknown }

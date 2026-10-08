@@ -35,7 +35,7 @@ internal fun List<ShopPhotoDto>.toMenuPhotos(): List<MenuPhoto> = mapNotNull { p
         id = photo.id,
         fullUrl = fullUrl,
         previewUrl = photo.detailUrl(fullUrl),
-        sortIndex = photo.sortIndex,
+        sortIndex = photo.sortIndex.toFlexibleInt(),
     )
 }.sortedBy(MenuPhoto::sortIndex)
 

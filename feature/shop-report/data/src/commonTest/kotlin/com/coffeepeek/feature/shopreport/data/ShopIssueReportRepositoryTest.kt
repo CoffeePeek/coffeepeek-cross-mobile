@@ -54,7 +54,8 @@ class ShopIssueReportRepositoryTest {
         ShopIssueCategory.entries.forEach { category ->
             val encoded = json.encodeToString(CreateShopIssueReportRequest("shop-1", category.toBackend(), "Details"))
             val fields = json.parseToJsonElement(encoded).jsonObject
-            assertEquals("shop-1", fields.getValue("shopId").jsonPrimitive.content)
+            assertEquals("shop-1", fields.getValue("shop").jsonPrimitive.content)
+            assertTrue("shopId" !in fields)
             assertEquals(category.name, fields.getValue("category").jsonPrimitive.content)
             assertEquals("Details", fields.getValue("description").jsonPrimitive.content)
         }

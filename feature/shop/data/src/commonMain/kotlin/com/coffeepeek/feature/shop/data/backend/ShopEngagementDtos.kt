@@ -1,8 +1,11 @@
+@file:OptIn(kotlinx.serialization.ExperimentalSerializationApi::class)
+
 package com.coffeepeek.feature.shop.data.backend
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonNames
 
 @Serializable
 internal data class ShopReviewDto(
@@ -23,14 +26,30 @@ internal data class ShopReviewDto(
 @Serializable
 internal data class ShopCheckInDto(
     @SerialName("id") val id: String = "",
-    @SerialName("userId") val userId: String = "",
-    @SerialName("shopId") val shopId: String = "",
-    @SerialName("note") val note: String? = null,
-    @SerialName("createdAt") val createdAt: String = "",
+    @SerialName("author") val author: ShopAddressDto? = null,
+    @SerialName("shop") val shop: ShopAddressDto? = null,
+    @SerialName("username") val username: String = "",
+    @SerialName("text") @JsonNames("note") val note: String = "",
+    @SerialName("createdAtUtc") @JsonNames("createdAt") val createdAt: String = "",
     @SerialName("visitedAt") val visitedAt: String = "",
-    @SerialName("reviewId") val reviewId: String? = null,
-    @SerialName("photos") val photos: List<ShopPhotoDto> = emptyList(),
+    @SerialName("photos") val photos: List<ShopCheckInPhotoDto> = emptyList(),
     @SerialName("rating") val rating: ShopRatingDto? = null,
+    @SerialName("drinkSlug") val drinkSlug: String? = null,
+    @SerialName("customDrinkName") val customDrinkName: String? = null,
+    @SerialName("drinkNameRu") val drinkNameRu: String? = null,
+    @SerialName("drinkNameEn") val drinkNameEn: String? = null,
+    @SerialName("visibility") val visibility: String = "Private",
+    @SerialName("moderationState") val moderationState: String = "NotSubmitted",
+    @SerialName("contentRevision") val contentRevision: JsonElement? = null,
+    @SerialName("rejectionReason") val rejectionReason: String? = null,
+    @SerialName("helpfulCount") val helpfulCount: JsonElement? = null,
+    @SerialName("isHelpfulByCurrentUser") val isHelpfulByCurrentUser: Boolean = false,
+)
+
+@Serializable
+internal data class ShopCheckInPhotoDto(
+    @SerialName("url") @JsonNames("fullUrl") val url: String = "",
+    @SerialName("sortIndex") val sortIndex: JsonElement? = null,
 )
 
 @Serializable

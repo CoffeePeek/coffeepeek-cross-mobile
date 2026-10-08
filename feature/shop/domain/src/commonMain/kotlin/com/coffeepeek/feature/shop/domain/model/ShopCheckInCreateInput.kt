@@ -25,13 +25,12 @@ data class ShopCheckInPhoto(
 }
 
 data class ShopCheckInCreateInput(
-    val shopId: String,
+    val shopSlug: String,
+    val text: String,
+    val rating: ShopRating,
     val visitedAtIso: String,
-    val isPublic: Boolean,
+    val visibility: ShopCheckInVisibility = ShopCheckInVisibility.Private,
     val drinkSlug: String? = null,
     val customDrinkName: String? = null,
-    val header: String? = null,
-    val note: String? = null,
-    val rating: ShopRating? = null,
     val photos: List<ShopCheckInPhoto> = emptyList(),
 )

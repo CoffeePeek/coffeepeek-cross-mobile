@@ -11,7 +11,7 @@ import kotlin.test.assertTrue
 class ShopFeatureMapperTest {
     @Test fun fallsBackToTagsWhenShopTagsContainNoUsableNames() {
         val details = ShopDetailsDto(
-            brewMethods = listOf(ShopCatalogItemDto(id = "brew", name = "V60", slug = "v60")),
+            brewMethods = listOf(ShopCatalogItemDto(name = "V60", slug = "v60")),
             shopTags = Json.parseToJsonElement("""[{"id":"empty","name":" "}]"""),
             tags = Json.parseToJsonElement("""["Wi-Fi",{"title":"Можно с животными","slug":"pets"},"v60"]"""),
         )

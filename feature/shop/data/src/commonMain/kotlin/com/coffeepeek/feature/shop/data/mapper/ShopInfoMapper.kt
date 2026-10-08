@@ -10,7 +10,9 @@ internal fun ShopDetailsDto.toCoffeeDetails(): ShopCoffeeDetails = ShopCoffeeDet
     beans = coffeeBeans.mapNotNull { it.name?.trim()?.takeIf(String::isNotEmpty) },
     roasters = roasters.mapNotNull { item ->
         val name = item.name?.trim()?.takeIf(String::isNotEmpty) ?: return@mapNotNull null
-        ShopRoaster(item.id, name, item.photoUrl?.trim()?.takeIf(String::isNotEmpty))
+        val slug = item.address?.slug?.takeIf(String::isNotBlank) ?: item.slug
+        ShopRoaster(slug, name, item.photoUrl?.trim()?.takeIf(String::isNotEmpty),
+            item.address?.canonicalPath)
     },
     equipment = equipments.mapNotNull { it.name?.trim()?.takeIf(String::isNotEmpty) },
 )

@@ -10,6 +10,7 @@ data class ShopDetails(
     val features: List<ShopFeature>,
     val reviews: List<ShopReview>,
     val userCheckIns: List<ShopCheckIn>,
+    val checkIns: List<ShopCheckIn> = emptyList(),
 )
 
 data class ShopMenu(

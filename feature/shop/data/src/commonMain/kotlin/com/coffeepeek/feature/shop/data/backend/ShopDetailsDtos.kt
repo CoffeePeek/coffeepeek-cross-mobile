@@ -10,29 +10,23 @@ import kotlinx.serialization.json.JsonElement
 @Serializable
 internal data class ShopDetailsResponse(
     @SerialName("isSuccess") @JsonNames("IsSuccess") val isSuccess: Boolean = false,
-    @SerialName("data") @JsonNames("Data") val data: ShopDetailsData? = null,
-)
-
-@Serializable
-internal data class ShopDetailsData(
-    @SerialName("shopDto") val shop: ShopDetailsDto,
-    @SerialName("menu") val menu: ShopMenuDto? = null,
+    @SerialName("data") @JsonNames("Data") val data: ShopDetailsDto? = null,
 )
 
 @Serializable
 internal data class ShopDetailsDto(
-    @SerialName("id") val id: String = "",
+    @SerialName("address") val publicAddress: ShopAddressDto = ShopAddressDto(),
     @SerialName("name") val name: String? = null,
     @SerialName("description") val description: String? = null,
     @SerialName("location") val location: ShopLocationDto? = null,
     @SerialName("rating") val rating: Double = 0.0,
-    @SerialName("reviewCount") val reviewCount: Int = 0,
+    @SerialName("checkInCount") val checkInCount: JsonElement? = null,
     @SerialName("isOpen") val isOpen: Boolean = false,
     @SerialName("priceRange") val priceRange: JsonElement? = null,
     @SerialName("photos") val photos: List<ShopPhotoDto> = emptyList(),
     @SerialName("menu") val menu: ShopMenuDto? = null,
     @SerialName("schedules") val schedules: List<ShopScheduleDto>? = null,
-    @SerialName("coffeeBeans") val coffeeBeans: List<ShopCatalogItemDto> = emptyList(),
+    @SerialName("beans") val coffeeBeans: List<ShopCatalogItemDto> = emptyList(),
     @SerialName("roasters") val roasters: List<ShopCatalogItemDto> = emptyList(),
     @SerialName("equipments") val equipments: List<ShopCatalogItemDto> = emptyList(),
     @SerialName("shopContact") val contact: ShopContactDto? = null,
@@ -40,15 +34,22 @@ internal data class ShopDetailsDto(
     @SerialName("tags") val tags: JsonElement? = null,
     @SerialName("shopTags") val shopTags: JsonElement? = null,
     @SerialName("reviews") val reviews: List<ShopReviewDto> = emptyList(),
+    @SerialName("checkIns") val checkIns: List<ShopCheckInDto> = emptyList(),
     @SerialName("userCheckIns") val userCheckIns: List<ShopCheckInDto> = emptyList(),
 )
 
 @Serializable
 internal data class ShopCatalogItemDto(
-    @SerialName("id") val id: String = "",
     @SerialName("name") val name: String? = null,
     @SerialName("photoUrl") val photoUrl: String? = null,
     @SerialName("slug") val slug: String = "",
+    @SerialName("address") val address: ShopAddressDto? = null,
+)
+
+@Serializable
+internal data class ShopAddressDto(
+    @SerialName("slug") val slug: String = "",
+    @SerialName("canonicalPath") val canonicalPath: String? = null,
 )
 
 @Serializable
@@ -106,7 +107,7 @@ internal data class ShopPhotoDto(
     @SerialName("fullUrl") val fullUrl: String? = null,
     @SerialName("storageKey") val storageKey: String? = null,
     @SerialName("urls") val urls: ShopPhotoUrlsDto? = null,
-    @SerialName("sortIndex") val sortIndex: Int = 0,
+    @SerialName("sortIndex") val sortIndex: JsonElement? = null,
 )
 
 @Serializable

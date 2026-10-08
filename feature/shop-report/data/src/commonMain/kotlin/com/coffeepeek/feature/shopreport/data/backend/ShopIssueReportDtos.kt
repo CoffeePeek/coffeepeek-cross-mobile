@@ -18,7 +18,7 @@ internal enum class BackendShopIssueCategory {
 
 @Serializable
 internal data class CreateShopIssueReportRequest(
-    @SerialName("shopId") val shopId: String,
+    @SerialName("shop") val shopId: String,
     @SerialName("category") val category: BackendShopIssueCategory,
     @SerialName("description") val description: String? = null,
 )

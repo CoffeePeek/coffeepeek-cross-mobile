@@ -2,9 +2,12 @@
 
 `feature/shop` owns shop browsing. The first Android slice migrates only the
 menu-photo gallery; the much larger shop-details screen stays in legacy code.
+The current compatibility checklist is [ANDROID_PARITY_PLAN.md](ANDROID_PARITY_PLAN.md).
+It supersedes the earlier review-first integration order: the active Android
+shop UI now renders public check-ins and creates visits, not legacy reviews.
 Preparation slices add a read-only `ShopDetails` snapshot (overview, menu,
 locally displayed weekly schedule, coffee catalog, contacts, features, reviews
-and user check-ins), plus stateless components with colocated light/dark
+and public/personal check-ins), plus stateless components with colocated light/dark
 previews, without switching that screen yet.
 `ShopDetailScreenContent` composes these blocks and emits typed actions with
 fake-state previews. Its runtime adapter and typed `MviViewModel` are prepared,
@@ -32,19 +35,25 @@ Packages alone cannot enforce the domain/transport/UI boundaries or keep HTTP
 types out of the public feature entry. The application passes its already
 configured authenticated `HttpClient` to the data factory. No second client or
 feature Koin module is created. Gallery and details data are read from the
-same `GET /api/CoffeeShops/{id}` endpoint as legacy; DTOs decode only the
+same `GET /api/CoffeeShops/{slug}` endpoint as legacy; DTOs decode only the
 fields these slices need. Both use one `ShopDetailsBackend`, not a parallel
-HTTP endpoint. The details repository returns a complete read-only snapshot from
+HTTP endpoint. The response is flat inside `data`, with `address.slug` and
+`address.canonicalPath`, `beans`, `checkInCount`, `checkIns`, and `userCheckIns`.
+The obsolete `data.shopDto` envelope is no longer used. The details repository returns a read-only snapshot from
 one response; it accepts the current UTC offset from composition, so shared
 data does not depend on Android time APIs. This preserves the legacy
 current-offset rule, but cannot be DST-stable without a shop IANA time-zone ID.
 The menu mapper keeps the legacy preference for
 `urls.fullscreen`/`urls.detail`, falls back to `fullUrl`, drops missing URLs and
-sorts by `sortIndex`. A top-level menu is used when `shopDto.menu` is absent.
+sorts by `sortIndex`; the menu comes from `data.menu`.
 Coffee, contact and engagement fields come from that same snapshot. The file
-origin is supplied by application composition so review/check-in storage keys
-can be resolved without depending on legacy data code. A separate narrow vote
-repository implements the existing idempotent helpful PUT/DELETE operation.
+origin is supplied by application composition. Check-in photos use the
+server-issued `url` (including relative API paths) sorted by `sortIndex`, with
+no fabricated `/api/file` URL from a check-in storage key. Check-in models retain
+author/shop slugs, drink names, visibility, moderation, revision, and helpful votes.
+Legacy review file keys and review vote repositories remain prepared but are not
+a replacement for the active check-in flow. Menu catalog enrichment and the
+check-in helpful/report actions remain open in the parity checklist.
 Review creation/edit eligibility has a separate authenticated read contract
 for `GET /api/CoffeeShopReviews/can-create`; it is not inferred from published
 reviews. The ViewModel routes the review action to create/edit events from this
@@ -82,10 +91,19 @@ as missing. The edit draft adapter uses the existing per-published-review key;
 the current app route and iOS implementation are unchanged. Application
 composition must still construct both form ViewModels, supply authenticated
 clients and Android callbacks, route success, and verify the flows on device.
-The next foundation slice adds a pure check-in input/validation contract and a
+The check-in foundation provides a pure input/validation contract and a
 `Result`-returning repository. It reads drink choices from the existing
-`GET /api/catalogs/drinks` endpoint and submits to `POST /api/CheckIns` with the
-current request field names. Reviews and check-ins now share the feature-data
+`GET /api/catalogs/drinks` endpoint and submits to `POST /api/v1/check-ins` with
+`coffeeShopSlug`, `text`, `rating`, `visibility`, `visitedAt`, optional drink
+fields, and uploaded photos. Both visibility modes require text of 1–1000
+trimmed characters and all three ratings of 1–5. The parsed visit timestamp
+must be positive and not in the future; the clock is injectable for validation
+tests. No review title or public-only text rule is imposed on check-ins.
+Creation requires an HTTP-success envelope with a nonblank created visit ID;
+blank/malformed replies and connection loss never confirm creation.
+`ShopCheckInCreationUnconfirmed` tells future UI to check history before retrying
+a possibly accepted request. Coroutine cancellation is rethrown.
+Reviews and check-ins now share the feature-data
 photo upload transport, while keeping separate domain photo/input types and
 requesting check-in URLs from `/api/Photos/check-in` without the review tag.
 The repository validates before uploading, and uses the caller-supplied
@@ -115,17 +133,16 @@ legacy repositories or Koin.
 5. Later migrate the rest of shop browsing under this same owner. Retire legacy
    DTOs, repositories and screen paths only after all platform consumers move.
 
-The Android detail route must not switch until the remaining legacy interactions
-are represented: application bridges for sharing, suggest-change and route,
-review
-creation/editing with moderation eligibility, check-in draft and
-submission with uploads, and the associated bottom sheets. Viewer/session and
-device-time providers and favorite change notifications must be bridged from
-application composition. Verify guest
-review visibility, own-review restrictions, photos, auth redirects and failures
-on device before removing the legacy Android renderer. iOS stays on its current
-path until a separate migration.
+The Android detail route must not switch until the remaining current interactions
+are represented: check-in cards and full list, helpful/report ownership rules,
+guest visibility, check-in draft/submission/results, report/suggest/share/map
+bridges, distance/type/price information, and live favorite observation.
+Keep the existing picker route and its `forCheckIn` mode working. Do not connect
+legacy review forms merely because they were prepared before the backend/UI
+change. Viewer/session and device-time providers stay application-owned. Verify
+the active flows on device before replacing the legacy Android renderer. iOS
+stays on its current path until a separate migration.
 
-Potential risks: backend DTO shape varies between nested and top-level menu;
+Potential risks: future server contract changes must be reflected in shared fixtures;
 images may be missing or URLs may expire; iOS still relies on legacy source.
 The feature has only default-language resources until translations are audited.

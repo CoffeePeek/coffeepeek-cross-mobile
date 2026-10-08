@@ -11,13 +11,17 @@ import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpMethod
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.headersOf
+import io.ktor.http.content.TextContent
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.jsonObject
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 class ShopIssueReportRepositoryTest {
@@ -26,6 +30,9 @@ class ShopIssueReportRepositoryTest {
         val engine = MockEngine { request ->
             assertEquals(HttpMethod.Post, request.method)
             assertEquals("https://example.com/api/ShopIssueReports", request.url.toString())
+            val payload = Json.parseToJsonElement((request.body as TextContent).text).jsonObject
+            assertEquals(JsonPrimitive("shop-1"), payload["shop"])
+            assertFalse("shopId" in payload)
             requests += request.url.toString()
             respond("""{"isSuccess":true,"message":"ok"}""",
                 headers = headersOf(HttpHeaders.ContentType, "application/json"))
