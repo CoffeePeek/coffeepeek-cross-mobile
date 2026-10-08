@@ -9,6 +9,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -53,6 +54,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.SnackbarHost
@@ -121,6 +123,7 @@ import com.coffeepeek.admin.ui.component.priceRangeLevel
 import com.coffeepeek.admin.ui.component.shopTagIcon
 import com.coffeepeek.admin.ui.component.FullScreenImageDialog
 import com.coffeepeek.admin.ui.component.CoffeePeekLoader
+import com.coffeepeek.admin.ui.component.AppButton
 import com.coffeepeek.admin.ui.component.OutlinedContentCard
 import com.coffeepeek.admin.ui.component.RoasterLinkRow
 import com.coffeepeek.admin.ui.component.SectionTitle
@@ -189,7 +192,7 @@ fun ShopDetailScreen(shopId: String, forCheckIn: Boolean = false) {
 
     val details = state.details
     val distance = formatDistance(distanceToShopMeters(userLocation, details?.location))
-    val floatingActionsClearance = if (forCheckIn) 120.dp else 72.dp
+    val floatingActionsClearance = 72.dp
     val hazeState = rememberHazeState()
 
     Box(modifier = Modifier.fillMaxSize()) {
@@ -270,21 +273,15 @@ fun ShopDetailScreen(shopId: String, forCheckIn: Boolean = false) {
                     .statusBarsPadding(),
             )
 
-            Column(Modifier.align(Alignment.BottomCenter)) {
-                ShopDetailBottomBar(
-                    isCheckInLoading = state.isCheckInLoading,
-                    canOpenRoute = details.location?.latitude != null &&
-                        details.location?.longitude != null,
-                    onRoute = vm::openRoute,
-                    onCheckIn = vm::openCheckInSheet,
-                    forCheckIn = forCheckIn,
-                )
-                if (forCheckIn) androidx.compose.material3.TextButton(
-                    onClick = { Navigator.popThenNavigate(Navigator.Screen.CreateCheckIn) },
-                    modifier = Modifier.fillMaxWidth().navigationBarsPadding(),
-                    enabled = !state.isCheckInLoading,
-                ) { Text("Выбрать другую кофейню") }
-            }
+            ShopDetailBottomBar(
+                isCheckInLoading = state.isCheckInLoading,
+                canOpenRoute = details.location?.latitude != null &&
+                    details.location?.longitude != null,
+                onRoute = vm::openRoute,
+                onCheckIn = vm::openCheckInSheet,
+                forCheckIn = forCheckIn,
+                modifier = Modifier.align(Alignment.BottomCenter),
+            )
         }
     }
 }
@@ -1594,23 +1591,42 @@ private fun ShopDetailBottomBar(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .then(if (forCheckIn) Modifier else Modifier.navigationBarsPadding())
-            .padding(horizontal = CpDimens.spacing3, vertical = CpDimens.spacing3),
+            .navigationBarsPadding()
+            .padding(horizontal = CpDimens.spacing3, vertical = CpDimens.spacing3)
+            .height(IntrinsicSize.Min),
         horizontalArrangement = Arrangement.spacedBy(CpDimens.spacing2),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        RouteIconButton(
-            enabled = canOpenRoute,
-            onClick = onRoute,
-        )
-        BottomBarAction(
-            icon = CpIcons.Check,
-            label = if (forCheckIn) "Продолжить" else "Чекин",
-            enabled = !isCheckInLoading,
-            isLoading = isCheckInLoading,
-            onClick = onCheckIn,
-            modifier = Modifier.weight(1f),
-        )
+        if (forCheckIn) {
+            OutlinedButton(
+                onClick = { Navigator.popThenNavigate(Navigator.Screen.CreateCheckIn) },
+                modifier = Modifier.weight(1f).fillMaxHeight().heightIn(min = CpDimens.buttonHeight),
+                enabled = !isCheckInLoading,
+                shape = RoundedCornerShape(CpDimens.buttonRadius),
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+                colors = ButtonDefaults.outlinedButtonColors(
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    contentColor = MaterialTheme.colorScheme.onSurface,
+                ),
+                contentPadding = PaddingValues(horizontal = CpDimens.spacing2),
+            ) { Text("Выбрать другую", style = MaterialTheme.typography.labelLarge, textAlign = TextAlign.Center) }
+            AppButton(
+                text = if (isCheckInLoading) "Загрузка…" else "Продолжить",
+                onClick = onCheckIn,
+                enabled = !isCheckInLoading,
+                modifier = Modifier.weight(1f).fillMaxHeight(),
+            )
+        } else {
+            RouteIconButton(enabled = canOpenRoute, onClick = onRoute)
+            BottomBarAction(
+                icon = CpIcons.Check,
+                label = "Чекин",
+                enabled = !isCheckInLoading,
+                isLoading = isCheckInLoading,
+                onClick = onCheckIn,
+                modifier = Modifier.weight(1f),
+            )
+        }
     }
 }
 

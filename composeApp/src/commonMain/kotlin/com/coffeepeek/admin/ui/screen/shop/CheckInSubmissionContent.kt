@@ -8,6 +8,7 @@ import androidx.compose.animation.togetherWith
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.Icon
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
@@ -63,7 +64,11 @@ internal fun CheckInSubmissionContent(
             Spacer(Modifier.weight(1f))
             if (visibility != null) {
                 AppButton("К ленте", onClick = onGoToFeed)
-                OutlinedButton(onClick = onViewCheckIns, modifier = Modifier.fillMaxWidth().heightIn(min = CpDimens.buttonHeight)) {
+                OutlinedButton(
+                    onClick = onViewCheckIns,
+                    modifier = Modifier.fillMaxWidth().heightIn(min = CpDimens.buttonHeight),
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.onSurface),
+                ) {
                     Text("Мои чекины")
                 }
             }
