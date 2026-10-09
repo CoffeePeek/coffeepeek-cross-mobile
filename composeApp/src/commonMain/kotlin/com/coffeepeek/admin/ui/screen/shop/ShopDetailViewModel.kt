@@ -34,6 +34,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 
 data class ShopDetailUiState(
     val drinks: List<ConsumedDrinkOption> = emptyList(),
@@ -70,6 +71,7 @@ class ShopDetailViewModel(
     private val _uiState = MutableStateFlow(ShopDetailUiState())
     val uiState = _uiState.asStateFlow()
     private val favoriteIds = MutableStateFlow<Set<String>?>(null)
+    private val favoriteMembershipMutex = Mutex()
     private val favoriteMutationMutex = Mutex()
 
     init {
@@ -77,9 +79,11 @@ class ShopDetailViewModel(
             ?.onEach { result ->
                 result.exceptionOrNull()?.let { if (it is CancellationException) throw it }
                 val ids = result.getOrNull() ?: return@onEach
-                favoriteIds.value = ids
-                _uiState.update { state ->
-                    state.copy(details = state.details?.withFavoriteMembership(ids))
+                favoriteMembershipMutex.withLock {
+                    favoriteIds.value = ids
+                    _uiState.update { state ->
+                        state.copy(details = state.details?.withFavoriteMembership(ids))
+                    }
                 }
             }
             ?.launchIn(workScope)
@@ -114,13 +118,17 @@ class ShopDetailViewModel(
         shopRepository.getShopDetails(shopId)
             .mapCatching { enrichWithReviewAccess(it) }
             .onSuccess { details ->
-                _uiState.update {
-                    it.copy(
-                        details = favoriteIds.value?.let(details::withFavoriteMembership) ?: details,
-                        isLoggedIn = isLoggedIn,
-                        currentUserId = currentUserId,
-                        isLoading = false,
-                    )
+                // Membership and details must be committed together: an observer update
+                // before details exist can otherwise leave the state equal and evade CAS retries.
+                favoriteMembershipMutex.withLock {
+                    _uiState.update {
+                        it.copy(
+                            details = favoriteIds.value?.let(details::withFavoriteMembership) ?: details,
+                            isLoggedIn = isLoggedIn,
+                            currentUserId = currentUserId,
+                            isLoading = false,
+                        )
+                    }
                 }
             }
             .onFailure { e ->

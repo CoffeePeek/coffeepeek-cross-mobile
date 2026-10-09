@@ -119,6 +119,7 @@ class FeedViewModel(
 
     private val queryFlow = MutableStateFlow("")
     private val favoriteIds = MutableStateFlow<Set<String>?>(null)
+    private val favoriteMembershipMutex = Mutex()
     private val favoriteMutationGuard = Mutex()
     private var shopsLoadJob: Job? = null
     private var isCityReady = false
@@ -158,9 +159,11 @@ class FeedViewModel(
                 .onEach { result ->
                     result.exceptionOrNull()?.let { if (it is CancellationException) throw it }
                     val ids = result.getOrNull() ?: return@onEach
-                    favoriteIds.value = ids
-                    _uiState.update { state ->
-                        state.copy(shops = state.shops.map { it.withFavoriteMembership(ids) })
+                    favoriteMembershipMutex.withLock {
+                        favoriteIds.value = ids
+                        _uiState.update { state ->
+                            state.copy(shops = state.shops.map { it.withFavoriteMembership(ids) })
+                        }
                     }
                 }
                 .launchIn(workScope)
@@ -431,19 +434,21 @@ class FeedViewModel(
                 ),
             ).onSuccess { result ->
                 if (!isActive) return@onSuccess
-                _uiState.update { state ->
-                    state.copy(
-                        shops = (if (reset) result.items else state.shops + result.items).let { shops ->
-                            favoriteIds.value?.let { ids -> shops.map { it.withFavoriteMembership(ids) } } ?: shops
-                        },
-                        currentPage = result.currentPage,
-                        totalPages = result.totalPages,
-                        hasMore = result.currentPage < result.totalPages,
-                        isLoading = false,
-                        isRefreshing = false,
-                        isLoadingMore = false,
-                        error = null,
-                    )
+                favoriteMembershipMutex.withLock {
+                    _uiState.update { state ->
+                        state.copy(
+                            shops = (if (reset) result.items else state.shops + result.items).let { shops ->
+                                favoriteIds.value?.let { ids -> shops.map { it.withFavoriteMembership(ids) } } ?: shops
+                            },
+                            currentPage = result.currentPage,
+                            totalPages = result.totalPages,
+                            hasMore = result.currentPage < result.totalPages,
+                            isLoading = false,
+                            isRefreshing = false,
+                            isLoadingMore = false,
+                            error = null,
+                        )
+                    }
                 }
             }.onFailure { e ->
                 if (!isActive) return@onFailure

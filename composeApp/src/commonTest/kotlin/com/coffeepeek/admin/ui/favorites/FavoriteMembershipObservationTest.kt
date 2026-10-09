@@ -18,6 +18,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
 import kotlin.test.Test
@@ -31,7 +32,13 @@ class FavoriteMembershipObservationTest {
 
     private class Membership : FavoritesRepository {
         val values = MutableStateFlow<Result<List<FavoriteShop>>>(Result.success(emptyList()))
-        override fun observe(): Flow<Result<List<FavoriteShop>>> = values
+        val nonEmptyMembershipApplied = CompletableDeferred<Unit>()
+        override fun observe(): Flow<Result<List<FavoriteShop>>> = flow {
+            values.collect { value ->
+                emit(value)
+                if (value.getOrNull()?.isNotEmpty() == true) nonEmptyMembershipApplied.complete(Unit)
+            }
+        }
         override suspend fun read(): Result<List<FavoriteShop>> = error("unused")
         override suspend fun save(shop: FavoriteShop): Result<Unit> = error("unused")
         override suspend fun remove(shopId: String): Result<Unit> = error("unused")
@@ -157,6 +164,7 @@ class FavoriteMembershipObservationTest {
             ObserveFavoriteIdsUseCase(membership))
         try {
             membership.set("shop")
+            withTimeout(5_000) { membership.nonEmptyMembershipApplied.await() }
             shops.search.complete(PagedResult(listOf(shop), 1, 1, 1))
             withTimeout(5_000) { vm.uiState.first { !it.isLoading && it.shops.singleOrNull()?.isFavorite == true } }
             membership.set()
@@ -182,12 +190,58 @@ class FavoriteMembershipObservationTest {
         )
         try {
             membership.set("shop")
+            withTimeout(5_000) { membership.nonEmptyMembershipApplied.await() }
             shops.details.complete(CoffeeShopDetails(shop))
             withTimeout(5_000) { vm.uiState.first { it.details?.shop?.isFavorite == true } }
             membership.set()
             withTimeout(5_000) { vm.uiState.first { it.details?.shop?.isFavorite == false } }
             assertEquals("shop", vm.uiState.value.details?.shop?.id)
         } finally { vm.close() }
+    }
+
+    @Test fun feedKeepsMembershipWhenInitialCatalogAndObservationRace() = runBlocking {
+        repeat(50) {
+            val membership = Membership()
+            val shops = Shops()
+            val vm = FeedViewModel(shops, LegacyFavorites, CityPreference(Settings), Sessions,
+                ObserveFavoriteIdsUseCase(membership))
+            try {
+                membership.set("shop")
+                shops.search.complete(PagedResult(listOf(shop), 1, 1, 1))
+                withTimeout(5_000) {
+                    membership.nonEmptyMembershipApplied.await()
+                    vm.uiState.first { !it.isLoading && it.shops.singleOrNull() != null }
+                }
+                assertTrue(vm.uiState.value.shops.single().isFavorite)
+            } finally { vm.close() }
+        }
+    }
+
+    @Test fun detailKeepsMembershipWhenInitialDetailsAndObservationRace() = runBlocking {
+        repeat(50) {
+            val membership = Membership()
+            val shops = Shops()
+            val vm = ShopDetailViewModel(
+                shopId = "shop",
+                shopRepository = shops,
+                favoriteRepository = LegacyFavorites,
+                checkInRepository = CheckIns,
+                sessionRepository = Sessions,
+                checkInDraftStore = CheckInDraftStore { 0L },
+                userRepository = Users,
+                observeFavoriteIds = ObserveFavoriteIdsUseCase(membership),
+                roasterFavorites = Roasters,
+            )
+            try {
+                membership.set("shop")
+                shops.details.complete(CoffeeShopDetails(shop))
+                withTimeout(5_000) {
+                    membership.nonEmptyMembershipApplied.await()
+                    vm.uiState.first { !it.isLoading && it.details != null }
+                }
+                assertTrue(vm.uiState.value.details!!.shop.isFavorite)
+            } finally { vm.close() }
+        }
     }
 
     @Test fun signedInDetailToggleAddsAndRemovesFavorite() = runBlocking {
