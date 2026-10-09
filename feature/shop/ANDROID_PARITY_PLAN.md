@@ -45,38 +45,50 @@ Device/server verification remains separate from MockEngine coverage.
 - [x] Do not confirm creation from an empty or malformed reply, rejected HTTP
   status/envelope, or missing visit ID. Expose unconfirmed creation separately
   from a known rejection; preserve server rejection and cancellation.
-- [ ] Add creation MVI and UI handling for success, known rejection and
+- [x] Add creation MVI and UI handling for success, known rejection and
   unconfirmed delivery (check history before repeating the write).
 
 ## 3. Finish data and MVI interaction parity
 
-- [ ] Enrich menu labels/categories/order from `/api/menu/drinks`, preserving
+- [x] Enrich menu labels/categories/order from `/api/menu/drinks`, preserving
   usable details if the optional catalog request fails.
-- [ ] Observe favorites continuously, not only on initial detail read. Keep
+- [x] Observe favorites continuously, not only on initial detail read. Keep
   the single Android favorites writer and stored representation compatible.
-- [ ] Add check-in helpful PUT/DELETE contracts and owner/duplicate guards;
-  wire check-in reports to the existing app-owned destination.
-- [ ] Preserve full-list entry, guest preview/sign-in/register, own-check-in
-  restrictions and current-user identity fallback via personal visit IDs.
-- [ ] Handle return/session changes and refresh after completed mutations.
-  The detail screen must not depend on review eligibility to create a check-in.
+- [x] Add check-in helpful PUT/DELETE contracts and owner/duplicate guards.
+- [x] Prepare full-list/report events and public check-in cards with guest
+  preview/sign-in/register and owner fallback via personal visit IDs.
+- [ ] Connect full-list/report events to the app-owned destinations and verify
+  guest/owner behavior on device before replacing the current renderer.
+- [x] Handle return/session changes in detail MVI and its runtime adapter;
+  detail no longer requests legacy review eligibility.
+- [ ] Connect the app's session generation and refresh after completed writes.
 
 ## 4. Create the check-in form without changing behavior
 
-- [ ] Typed MviViewModel, State/Action/Event, one action entry point and
+- [x] Typed MviViewModel, State/Action/Event, one action entry point and
   conflicting-operation guards.
-- [ ] Stateless form content and separate components; paired light/dark
+- [x] Stateless form content and separate components; paired light/dark
   previews beside each component; text/accessibility in resources.
-- [ ] Three ratings (default 4), required note, visit date, optional drink or
+  Compiled and covered by MVI tests; device/IDE rendering is a separate gate.
+- [x] Three ratings (default 4), required note, visit date, optional drink or
   custom drink, five-photo limit and Public/Private toggle (default Private).
-- [ ] Drinks loading/error/retry; application-owned camera/gallery conversion
-  and date/time conversion with the same meaning as the current date picker.
+- [x] Prepare drinks loading/error/retry and the date field/Android formatter
+  with the same meaning as the current date picker.
+- [ ] Wire application-owned camera/gallery conversion and the date formatter
+  through the active form entry, and verify picker behavior on device.
 - [ ] Preserve existing draft lifetime: one shop draft for the app process,
   retain on dismiss/failure, replace on another shop, clear on success/logout.
   Do not silently add durable persistence or retain drafts across accounts.
-- [ ] Prevent dismissal/repeated submit during a write; retain input on errors.
-- [ ] Preserve submission/result UI and transitions to Community or Visited
-  Places, including distinct Public/Private confirmation.
+  Android adapter is prepared around the existing store; single-instance
+  composition/route wiring remain pending; adapter unit tests pass.
+- [x] Prepare the draft adapter contract and retain an uncertainty guard across
+  form recreation. Require explicit history-check acknowledgement before retry.
+- [x] Prepare dismissal/repeated-submit guards and retain input on errors.
+  MVI guards are tested; the modal is compiled, but device execution and active
+  route wiring remain pending.
+- [x] Prepare submission/result UI with distinct Public/Private confirmation
+  and caller-owned feed/history events; success does not auto-dismiss.
+- [ ] Connect those events to Community/Visited Places and verify return refresh.
 
 ## 5. Finish detail UI and app composition
 
@@ -123,3 +135,91 @@ payload, validation, HTTP/server rejection, unconfirmed delivery and cancellatio
 This verifies the first foundation slice, not the unchecked integration gates
 above. Device, authenticated live-server and preview verification remain pending;
 the active legacy detail/check-in screens are still the runtime implementation.
+
+## Verification record — interaction and form MVI preparation
+
+The interaction slice passed both Android debug builds, all debug unit tests,
+both application unit-test variants, library/application lint and shop
+domain/data iOS Simulator compilation. Additional form MVI tests also passed.
+
+Menu tests cover successful caching, parsed-field preservation, stable unknown
+item order, failure fallback/retry and cancellation. Detail tests cover live
+favorites, observation recovery/cleanup, vote/report ownership, duplicate votes,
+return refresh, session load replacement and stale-session vote replies. Guest
+cards beyond the first compose placeholders, not hidden real text/images.
+
+Form tests cover restoration, photo limits, catalog retry, validation, guarded
+writes, known rejection, uncertainty across recreation, explicit history checks,
+cleanup failures and cancellation. The draft store is an app-owned adapter
+contract, not a second durable store. Form UI, the Android draft/result bridge,
+device verification and final route replacement remain unfinished.
+
+The subsequent startup incident and APK-definition guard are documented in
+`build-logic/ANDROID_RUNTIME_PACKAGING.md`. Build success alone did not detect
+stale intermediate class-directory packaging; packaged runtime checks and a
+Pixel 7 startup smoke test now supplement compilation.
+
+2026-10-09: the full Android completion command passed again, including the
+packaged DEX checks, application tests/lint and shop domain/data iOS Simulator
+compilation. Build-logic DEX parser tests passed independently. A real race in
+legacy feed/detail favorite membership was fixed by committing membership and
+loaded content under one mutex; tests now cover both ordered and concurrent
+initialization. This retains the existing shared/iOS behavior rather than
+switching their feature entry points.
+
+Local setup now uses the existing public API address `https://api.coffeepeek.by/`
+instead of the retired Railway application. Public shop/city reads returned
+HTTP 200 with data; generated Android configuration and device GET request URLs
+were checked. No live writes or authenticated migration scenarios were exercised.
+The Android detail/form integration checklist above remains open.
+
+## Form UI and Android bridge — verified foundation, not connected
+
+The prepared `ShopCheckInCreateScreen` observes its injected lifecycle ViewModel
+and renders stateless `ShopCheckInCreateScreenContent` in the design-system sheet.
+Ratings, note, date, drink and visibility each have their own component file and
+paired light/dark previews. Review and check-in editors share visual rating/photo
+primitives; their business models and upload purposes remain separate.
+
+The form includes pending/success states, Public/Private messages, draft and
+validation errors, catalog retry, a five-photo limit, history acknowledgement
+before retrying an unconfirmed write and caller-owned feed/history events.
+Success does not dismiss the confirmation automatically. Camera/gallery remain
+caller callbacks, not platform code inside the feature.
+
+`AndroidShopCheckInDraftStore` wraps the existing process-only store. Keep one
+adapter instance in app composition across form recreation. Legacy clear/logout
+or draft replacement invalidates its delivery guard; stale writes/cleanup cannot
+overwrite a replacement draft. The Android date formatter delegates to the
+existing local-date/UTC conversion. No new persistent storage or iOS screen was
+introduced. These adapters are not yet registered or connected to live routes.
+
+Adapter tests cover field/photo preservation, defaults, timezone round trips,
+guard lifetime, stale saves/cleanup and cancellation. A design-system device
+test covers blocked handle/back/drag dismissal and unlocking. Form MVI tests
+cover the explicit success destinations. Form UI tests cover editing/catalog
+retry, localized note-error semantics, uncertainty acknowledgement, pending
+writes and Public/Private confirmation destinations using fake state only.
+
+2026-10-09: form MVI (8 tests), Android draft/date adapter (6 tests) and the
+complete Android build/unit/lint command passed, including the debug DEX guard
+and shop domain/data iOS Simulator compilation. DEX parser unit tests pass.
+Both isolated UI-test APKs compile; CI now compiles them too. The prior command
+approval `403` no longer prevents execution.
+
+Device execution is not yet confirmed: the connected Pixel 10a was asleep and
+locked, and the overlay run reported no visible Compose hierarchy (all 6 tests).
+Do not count this as a device pass or assume component failure from that run.
+Unlock the device and rerun overlay/form tests. IDE modal/paired-preview visual
+inspection and authenticated QA scenarios remain pending. CoffeePeek user data
+was not cleared, and no backend writes were made.
+
+Next: finish isolated UI verification, then connect Android date/photo/draft
+adapters through app-owned entry composition (one draft adapter instance).
+Pass the existing API/upload clients and map success/feed/history callbacks
+without replacing root navigation. Keep active legacy detail/form routes until
+the remaining behavior-parity and device gates pass.
+
+This checkpoint exceeds the usual 50-file PR guideline because it completes
+previously accumulated work inside the single consolidated PR #43 explicitly
+requested by the user. Do not recreate the superseded PR stack for these fixes.

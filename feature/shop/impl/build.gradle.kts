@@ -1,4 +1,5 @@
 import com.coffeepeek.buildlogic.androidImplementation
+import com.coffeepeek.buildlogic.androidInstrumentedTestImplementation
 import com.coffeepeek.buildlogic.api
 import com.coffeepeek.buildlogic.implementation
 import com.coffeepeek.buildlogic.module
@@ -28,5 +29,9 @@ dependencies {
     testImplementation(libs.kotlin.test)
     testImplementation(libs.kotlinx.coroutines.test)
     androidImplementation(libs.androidx.compose.ui.tooling.preview)
+    androidInstrumentedTestImplementation(libs.androidx.compose.ui.test.junit4)
+    androidInstrumentedTestImplementation(libs.androidx.activity.compose)
+    androidInstrumentedTestImplementation(libs.androidx.test.runner)
+    androidInstrumentedTestImplementation(libs.androidx.espresso.core)
     debugImplementation(libs.compose.ui.tooling)
 }

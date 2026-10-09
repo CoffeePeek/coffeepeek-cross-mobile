@@ -11,6 +11,7 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.test.core.app.ActivityScenario
 import androidx.activity.findViewTreeOnBackPressedDispatcherOwner
 import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.semantics.SemanticsActions
 import android.view.View
 import com.coffeepeek.core.designsystem.component.*
 import com.coffeepeek.core.designsystem.icons.CpIcons
@@ -99,6 +100,36 @@ class OverlayContractTest {
             }
             compose.onNodeWithText("Sheet content").assertIsDisplayed()
             compose.runOnIdle { assertEquals(0, dismissals) }
+        }
+    }
+
+    @Test fun lockedSheetBlocksAccessibleDismissBackAndDragThenCanBeUnlocked() {
+        val enabled = mutableStateOf(false)
+        val shown = mutableStateOf(true)
+        var dismissals = 0
+        var sheetView: View? = null
+        render {
+            if (shown.value) SwipeDismissModalBottomSheet(
+                { dismissals++; shown.value = false }, "Dismiss sheet", dismissEnabled = enabled.value,
+            ) {
+                sheetView = LocalView.current
+                Text("Pending submission")
+            }
+        }.use {
+            compose.onNodeWithContentDescription("Dismiss sheet")
+                .assert(SemanticsMatcher.keyNotDefined(SemanticsActions.OnClick))
+                .performTouchInput {
+                    swipe(Offset(center.x, 1f), Offset(center.x, height * 2.5f), durationMillis = 700)
+                }
+            compose.runOnIdle {
+                checkNotNull(sheetView?.findViewTreeOnBackPressedDispatcherOwner())
+                    .onBackPressedDispatcher.onBackPressed()
+            }
+            compose.onNodeWithText("Pending submission").assertIsDisplayed()
+            compose.runOnIdle { assertEquals(0, dismissals); enabled.value = true }
+            compose.onNodeWithContentDescription("Dismiss sheet").performClick()
+            compose.onNodeWithText("Pending submission").assertDoesNotExist()
+            compose.runOnIdle { assertEquals(1, dismissals) }
         }
     }
 }

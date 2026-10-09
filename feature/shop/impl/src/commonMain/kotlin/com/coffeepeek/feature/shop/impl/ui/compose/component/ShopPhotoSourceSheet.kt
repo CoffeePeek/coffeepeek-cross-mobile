@@ -25,7 +25,7 @@ import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
 @Composable
-internal fun ShopReviewPhotoSourceSheet(
+internal fun ShopPhotoSourceSheet(
     onDismiss: () -> Unit,
     onGallery: () -> Unit,
     onCamera: () -> Unit,
@@ -53,10 +53,10 @@ internal fun ShopReviewPhotoSourceSheet(
 }
 
 // Modal rendering may require Interactive/Run Preview in the IDE.
-@Composable private fun ShopReviewPhotoSourceSheetPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
+@Composable private fun ShopPhotoSourceSheetPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
     var shown by remember { mutableStateOf(true) }
-    if (shown) ShopReviewPhotoSourceSheet({ shown = false }, {}, {})
+    if (shown) ShopPhotoSourceSheet({ shown = false }, {}, {})
 }
 
-@Preview @Composable private fun ShopReviewPhotoSourceSheetLightPreview() = ShopReviewPhotoSourceSheetPreview(false)
-@Preview @Composable private fun ShopReviewPhotoSourceSheetDarkPreview() = ShopReviewPhotoSourceSheetPreview(true)
+@Preview @Composable private fun ShopPhotoSourceSheetLightPreview() = ShopPhotoSourceSheetPreview(false)
+@Preview @Composable private fun ShopPhotoSourceSheetDarkPreview() = ShopPhotoSourceSheetPreview(true)

@@ -17,6 +17,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import com.coffeepeek.core.designsystem.component.CpTopBar
@@ -47,17 +50,19 @@ import com.coffeepeek.feature.shop.impl.ui.compose.component.ShopDescriptionSect
 import com.coffeepeek.feature.shop.impl.ui.compose.component.ShopFeaturesSection
 import com.coffeepeek.feature.shop.impl.ui.compose.component.ShopHeaderActions
 import com.coffeepeek.feature.shop.impl.ui.compose.component.ShopRouteButton
-import com.coffeepeek.feature.shop.impl.ui.compose.component.ShopReviewButton
+import com.coffeepeek.feature.shop.impl.ui.compose.component.ShopCheckInButton
 import com.coffeepeek.feature.shop.impl.ui.compose.component.ShopMenuSection
 import com.coffeepeek.feature.shop.impl.ui.compose.component.ShopOverviewHero
 import com.coffeepeek.feature.shop.impl.ui.compose.component.ShopOverviewStats
-import com.coffeepeek.feature.shop.impl.ui.compose.component.ShopReviewsSection
+import com.coffeepeek.feature.shop.impl.ui.compose.component.ShopPublicCheckInsSection
 import com.coffeepeek.feature.shop.impl.ui.compose.component.ShopScheduleSection
 import com.coffeepeek.feature.shop.impl.ui.compose.model.ShopDetailAction
 import com.coffeepeek.feature.shop.impl.ui.compose.model.ShopDetailEvent
 import com.coffeepeek.feature.shop.impl.ui.compose.model.ShopDetailState
 import com.coffeepeek.feature.shop.impl.ui.ShopDetailViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.compose.LifecycleEventEffect
+import androidx.lifecycle.Lifecycle
 import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
@@ -66,12 +71,21 @@ import org.jetbrains.compose.ui.tooling.preview.Preview
 internal fun ShopDetailScreen(
     viewModel: ShopDetailViewModel,
     onEvent: (ShopDetailEvent) -> Unit,
+    sessionGeneration: Int,
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val currentOnEvent by rememberUpdatedState(onEvent)
     LaunchedEffect(viewModel) {
         viewModel.events.collect(currentOnEvent)
     }
+    var lastSession by remember(viewModel) { mutableStateOf(sessionGeneration) }
+    LaunchedEffect(viewModel, sessionGeneration) {
+        if (sessionGeneration != lastSession) {
+            lastSession = sessionGeneration
+            viewModel.onAction(ShopDetailAction.SessionChanged)
+        }
+    }
+    LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { viewModel.onAction(ShopDetailAction.Resume) }
     ShopDetailScreenContent(state, viewModel::onAction)
 }
 
@@ -110,7 +124,7 @@ internal fun ShopDetailScreenContent(
                             modifier = Modifier.weight(1f),
                         )
                     }
-                    ShopReviewButton(onClick = { onAction(ShopDetailAction.OpenReview) },
+                    ShopCheckInButton(onClick = { onAction(ShopDetailAction.OpenCheckIn) },
                         modifier = Modifier.weight(1f))
                 }
             }
@@ -168,10 +182,13 @@ internal fun ShopDetailScreenContent(
                             onOpenPhoto = { urls, index -> onAction(ShopDetailAction.OpenPhoto(urls, index)) },
                             modifier = Modifier.padding(horizontal = CpDimens.spacing4)) }
                     }
-                    item { ShopReviewsSection(details.reviews, details.overview.title,
-                        state.isLoggedIn, state.currentUserId, state.pendingVoteIds,
+                    item { ShopPublicCheckInsSection(details.checkIns, details.overview.title,
+                        state.isLoggedIn, state.currentUserId, details.userCheckIns.map { it.id }.toSet(),
+                        state.pendingCheckInVoteId,
                         onOpenPhoto = { urls, index -> onAction(ShopDetailAction.OpenPhoto(urls, index)) },
-                        onVote = { onAction(ShopDetailAction.VoteHelpful(it)) },
+                        onVote = { onAction(ShopDetailAction.VoteCheckInHelpful(it)) },
+                        onReport = { onAction(ShopDetailAction.ReportCheckIn(it)) },
+                        onOpenAll = { onAction(ShopDetailAction.OpenCheckIns) },
                         onSignIn = { onAction(ShopDetailAction.SignIn) },
                         onRegister = { onAction(ShopDetailAction.Register) },
                         modifier = Modifier.padding(horizontal = CpDimens.spacing4)) }
@@ -213,6 +230,9 @@ private fun previewState(): ShopDetailState {
                 "2026-10-01T12:00:00Z", emptyList(), 3, false)),
             userCheckIns = listOf(ShopCheckIn("check-in-1", "user-1", "shop-1", "Вкусный фильтр",
                 "2026-10-01", "2026-10-01", null, emptyList(), emptyList(), null)),
+            checkIns = listOf(ShopCheckIn("public-check-in", "user-1", "shop-1", "Хорошая атмосфера",
+                "2026-10-01", "2026-10-01", null, emptyList(), emptyList(), ShopRating(5, 4, 5),
+                username = "Алексей", helpfulCount = 3)),
         ),
         isLoading = false,
         isLoggedIn = true,

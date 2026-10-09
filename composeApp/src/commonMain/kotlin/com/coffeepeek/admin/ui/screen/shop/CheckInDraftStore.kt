@@ -38,6 +38,9 @@ class CheckInDraftStore(
 ) {
     private var draft: CheckInDraft? = null
 
+    /** Android migration bridge can inspect ownership without creating/replacing a draft. */
+    internal fun peek(): CheckInDraft? = draft
+
     fun open(shopId: String): CheckInDraft {
         val current = draft
         if (current?.shopId == shopId) return current

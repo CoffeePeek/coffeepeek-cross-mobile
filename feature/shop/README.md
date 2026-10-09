@@ -12,7 +12,7 @@ previews, without switching that screen yet.
 `ShopDetailScreenContent` composes these blocks and emits typed actions with
 fake-state previews. Its runtime adapter and typed `MviViewModel` are prepared,
 but no application entry or Android detail route uses them yet.
-The ViewModel reads and mutates local favorites through the supported pure
+The ViewModel observes and mutates local favorites through the supported pure
 `feature/favorites/domain` contract. Its `FavoriteChanged` event is for the
 application bridge to notify remaining legacy consumers; that bridge is not
 wired yet. A failed membership read leaves the favorite control disabled rather
@@ -20,8 +20,8 @@ than guessing from the server's `isFavorite` field.
 Sharing, suggest-change, and route controls now emit platform-agnostic events;
 the application must map them to its existing share helper, navigation and
 maps launcher when the Android detail route is switched. Suggest-change asks
-guests to sign in first. The temporary bottom bar exposes route and review
-actions until the check-in flow is ready; it is not the final detail UI.
+guests to sign in first. The prepared bottom bar exposes route and check-in
+actions; the form/result bridge is not yet connected.
 The existing shared/iOS route and ViewModel remain untouched.
 
 | Module | Responsibility | Allowed dependencies and consumers |
@@ -39,8 +39,11 @@ same `GET /api/CoffeeShops/{slug}` endpoint as legacy; DTOs decode only the
 fields these slices need. Both use one `ShopDetailsBackend`, not a parallel
 HTTP endpoint. The response is flat inside `data`, with `address.slug` and
 `address.canonicalPath`, `beans`, `checkInCount`, `checkIns`, and `userCheckIns`.
-The obsolete `data.shopDto` envelope is no longer used. The details repository returns a read-only snapshot from
-one response; it accepts the current UTC offset from composition, so shared
+The obsolete `data.shopDto` envelope is no longer used. Details optionally enrich
+menu labels/categories/order from `/api/menu/drinks`. Successful catalog reads
+are cached for the repository lifetime; failures retain parsed data and can
+retry on the next details read. Gallery loads do not request this catalog.
+The repository accepts the current UTC offset from composition, so shared
 data does not depend on Android time APIs. This preserves the legacy
 current-offset rule, but cannot be DST-stable without a shop IANA time-zone ID.
 The menu mapper keeps the legacy preference for
@@ -52,13 +55,14 @@ server-issued `url` (including relative API paths) sorted by `sortIndex`, with
 no fabricated `/api/file` URL from a check-in storage key. Check-in models retain
 author/shop slugs, drink names, visibility, moderation, revision, and helpful votes.
 Legacy review file keys and review vote repositories remain prepared but are not
-a replacement for the active check-in flow. Menu catalog enrichment and the
-check-in helpful/report actions remain open in the parity checklist.
-Review creation/edit eligibility has a separate authenticated read contract
-for `GET /api/CoffeeShopReviews/can-create`; it is not inferred from published
-reviews. The ViewModel routes the review action to create/edit events from this
-response and fails closed when eligibility is unavailable. The new forms and
-application event bridge are not wired yet.
+a replacement for the active check-in flow. Prepared detail MVI/content now use
+public check-in cards, the v1 helpful PUT/DELETE contract, full-list/report events
+and creation actions. Own visits are detected by author identity or personal
+visit IDs, with duplicate-vote guards. The app destination bridge remains pending.
+Detail no longer requests review eligibility; the independent prepared legacy
+review access/forms remain unused. The runtime adapter refreshes on return and
+accepts app-owned session generation. Session replacement hides private details,
+cancels stale loads and ignores vote replies from the previous session.
 The review editor has a stateless text/rating/photo body and modal shell with
 paired previews and domain-owned length validation; no route uses it yet.
 The photo source sheet, existing-photo strip, five-photo selection limit and
@@ -108,8 +112,29 @@ photo upload transport, while keeping separate domain photo/input types and
 requesting check-in URLs from `/api/Photos/check-in` without the review tag.
 The repository validates before uploading, and uses the caller-supplied
 authenticated API client plus a separate public-upload client. This is not yet
-an active screen: date selection/conversion, draft persistence, photo picking,
-MVI state and the Android navigation bridge remain the next check-in slice.
+an active screen: Android photo picking and the navigation/composition bridge
+remain pending. The date formatter and process-lifetime draft adapter are now
+prepared in Android app composition and unit-tested against the existing store.
+The new check-in MVI owns typed state/actions/events, catalog loading/retry,
+validation, guarded writes and visibility-specific success. Its draft port saves
+an uncertainty guard before writes so recreation cannot silently repeat a possibly
+accepted request. Known rejection restores retry eligibility; uncertain delivery
+requires explicit history checking. Cleanup failure never converts success into
+another submission. The prepared runtime sheet now renders stateless
+`ShopCheckInCreateScreenContent`, with separate rating/note/date/drink/visibility
+components, resource-owned messages and colocated paired light/dark previews.
+Photo/rating visual primitives are shared with the unused review editor without
+sharing its business models. Pending writes disable dismissal; successful writes
+retain their Public/Private confirmation until the caller receives a feed/history
+event. Device UI tests are provided separately from unit coverage.
+
+Keep a single `AndroidShopCheckInDraftStore` instance when wiring composition:
+it wraps the existing process-only draft and keeps the uncertainty guard across
+sheet recreation. Logout/clear/replacement invalidates that guard; stale form
+state cannot overwrite or clear a replacement draft. The date formatter retains
+the existing local-calendar-day to UTC conversion. Neither adapter is registered
+or connected to active routes yet. The feature's API remains gallery-only until
+detail/form behavior parity and device verification are complete.
 Contact link formatting belongs to presentation; opening links and copying phone numbers remain caller
 callbacks, not feature-owned platform calls.
 

@@ -1,6 +1,7 @@
 package com.coffeepeek.feature.shop.data.mapper
 
 import com.coffeepeek.feature.shop.data.backend.ShopMenuDto
+import com.coffeepeek.feature.shop.data.backend.ShopMenuDrinkDto
 import com.coffeepeek.feature.shop.data.backend.ShopPhotoDto
 import com.coffeepeek.feature.shop.domain.model.MenuPhoto
 import com.coffeepeek.feature.shop.domain.model.ShopMenu
@@ -28,6 +29,21 @@ internal fun ShopMenuDto.toDomain(): ShopMenu = ShopMenu(
     },
     photos = photos.toMenuPhotos(),
 )
+
+/** Keep parsed names and prices; fill absent labels and use the public catalog order. */
+internal fun ShopMenu.alignedWithCatalog(drinks: List<ShopMenuDrinkDto>?): ShopMenu {
+    if (drinks.isNullOrEmpty()) return this
+    val bySlug = drinks.associateBy { it.slug }
+    val order = drinks.mapIndexed { index, drink -> drink.slug to index }.toMap()
+    return copy(items = items.map { item ->
+        val definition = bySlug[item.slug] ?: return@map item
+        item.copy(
+            nameRu = item.nameRu.ifBlank { definition.nameRu },
+            nameEn = item.nameEn.ifBlank { definition.nameEn },
+            category = item.category.ifBlank { definition.category },
+        )
+    }.sortedBy { order[it.slug] ?: Int.MAX_VALUE })
+}
 
 internal fun List<ShopPhotoDto>.toMenuPhotos(): List<MenuPhoto> = mapNotNull { photo ->
     val fullUrl = photo.fullScreenUrl() ?: return@mapNotNull null

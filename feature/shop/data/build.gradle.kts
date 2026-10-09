@@ -15,6 +15,7 @@ dependencies {
     implementation(project(module.core.network))
     implementation(libs.ktor.client.core)
     implementation(libs.kotlinx.serialization.json)
+    implementation(libs.kotlinx.coroutines.core)
 
     testImplementation(libs.kotlin.test)
     testImplementation("io.ktor:ktor-client-mock:${libs.versions.ktor.get()}")

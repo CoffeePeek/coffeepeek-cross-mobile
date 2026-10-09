@@ -17,11 +17,14 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
+import androidx.compose.material3.SheetValue
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -30,7 +33,6 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.onClick
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import kotlinx.coroutines.launch
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.graphicsLayer
@@ -45,21 +47,28 @@ fun SwipeDismissModalBottomSheet(
     onDismissRequest: () -> Unit,
     dismissDescription: String,
     modifier: Modifier = Modifier,
+    dismissEnabled: Boolean = true,
     content: @Composable ColumnScope.() -> Unit,
 ) {
     val scope = rememberCoroutineScope()
-    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val currentDismissEnabled by rememberUpdatedState(dismissEnabled)
+    val currentOnDismiss by rememberUpdatedState(onDismissRequest)
+    val sheetState = rememberModalBottomSheetState(
+        skipPartiallyExpanded = true,
+        confirmValueChange = { it != SheetValue.Hidden || currentDismissEnabled },
+    )
     val density = LocalDensity.current
     val dismissDistance = with(density) { 72.dp.toPx() }
     val dismissVelocity = with(density) { 900.dp.toPx() }
     var dragOffset by remember { mutableFloatStateOf(0f) }
+    LaunchedEffect(dismissEnabled) { if (!dismissEnabled) dragOffset = 0f }
     val dragState = rememberDraggableState { delta ->
         dragOffset = (dragOffset + delta).coerceAtLeast(0f)
     }
 
     ModalBottomSheet(
-        onDismissRequest = onDismissRequest,
-        modifier = modifier.graphicsLayer { translationY = dragOffset },
+        onDismissRequest = { if (currentDismissEnabled) currentOnDismiss() },
+        modifier = modifier.graphicsLayer { translationY = if (dismissEnabled) dragOffset else 0f },
         sheetState = sheetState,
         sheetGesturesEnabled = false,
         dragHandle = {
@@ -69,10 +78,10 @@ fun SwipeDismissModalBottomSheet(
                     .height(48.dp)
                     .semantics {
                         contentDescription = dismissDescription
-                        onClick(label = dismissDescription) {
+                        if (dismissEnabled) onClick(label = dismissDescription) {
                             scope.launch {
                                 sheetState.hide()
-                                if (!sheetState.isVisible) onDismissRequest()
+                                if (!sheetState.isVisible && currentDismissEnabled) currentOnDismiss()
                             }
                             true
                         }
@@ -80,10 +89,11 @@ fun SwipeDismissModalBottomSheet(
                     .draggable(
                         state = dragState,
                         orientation = Orientation.Vertical,
+                        enabled = dismissEnabled,
                         onDragStopped = { velocity ->
-                            if (dragOffset >= dismissDistance || velocity >= dismissVelocity) {
+                            if (currentDismissEnabled && (dragOffset >= dismissDistance || velocity >= dismissVelocity)) {
                                 sheetState.hide()
-                                if (!sheetState.isVisible) onDismissRequest()
+                                if (!sheetState.isVisible && currentDismissEnabled) currentOnDismiss()
                             } else {
                                 animate(
                                     initialValue = dragOffset,
@@ -119,3 +129,15 @@ private fun SwipeDismissModalBottomSheetPreviewContent(darkTheme: Boolean) = Cof
 
 @Preview @Composable private fun SwipeDismissModalBottomSheetLightPreview() = SwipeDismissModalBottomSheetPreviewContent(false)
 @Preview @Composable private fun SwipeDismissModalBottomSheetDarkPreview() = SwipeDismissModalBottomSheetPreviewContent(true)
+
+@Preview @Composable private fun SwipeDismissModalBottomSheetLockedLightPreview() = CoffeePeekTheme(darkTheme = false) {
+    SwipeDismissModalBottomSheet({}, "Dismiss sheet", dismissEnabled = false) {
+        Text("Submission in progress", Modifier.padding(24.dp))
+    }
+}
+
+@Preview @Composable private fun SwipeDismissModalBottomSheetLockedDarkPreview() = CoffeePeekTheme(darkTheme = true) {
+    SwipeDismissModalBottomSheet({}, "Dismiss sheet", dismissEnabled = false) {
+        Text("Submission in progress", Modifier.padding(24.dp))
+    }
+}

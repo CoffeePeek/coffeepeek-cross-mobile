@@ -43,7 +43,7 @@ import com.coffeepeek.feature.shop.impl.resources.shop_review_load_failed
 import com.coffeepeek.feature.shop.impl.resources.shop_review_retry
 import com.coffeepeek.feature.shop.impl.resources.shop_review_edit_photos_unavailable
 import com.coffeepeek.feature.shop.impl.resources.shop_review_edit_draft_photos
-import com.coffeepeek.feature.shop.impl.ui.compose.component.ShopReviewRatingField
+import com.coffeepeek.feature.shop.impl.ui.compose.component.ShopRatingField
 import com.coffeepeek.feature.shop.impl.ui.compose.component.ShopReviewPhotoAttachments
 import com.coffeepeek.feature.shop.impl.ui.compose.component.ShopReviewExistingPhotos
 import com.coffeepeek.feature.shop.impl.ui.compose.component.ShopReviewDraftNotice
@@ -90,11 +90,11 @@ internal fun ShopReviewEditorContent(
                 Text(stringResource(Res.string.shop_review_retry))
             }
         } else {
-            ShopReviewRatingField(stringResource(Res.string.shop_review_coffee), state.rating.coffee,
+            ShopRatingField(stringResource(Res.string.shop_review_coffee), state.rating.coffee,
                 editable) { onAction(ShopReviewFormAction.RatingChanged(ShopReviewRatingKind.Coffee, it)) }
-            ShopReviewRatingField(stringResource(Res.string.shop_review_service), state.rating.service,
+            ShopRatingField(stringResource(Res.string.shop_review_service), state.rating.service,
                 editable) { onAction(ShopReviewFormAction.RatingChanged(ShopReviewRatingKind.Service, it)) }
-            ShopReviewRatingField(stringResource(Res.string.shop_review_place), state.rating.place,
+            ShopRatingField(stringResource(Res.string.shop_review_place), state.rating.place,
                 editable) { onAction(ShopReviewFormAction.RatingChanged(ShopReviewRatingKind.Place, it)) }
             AppTextField(
                 label = stringResource(Res.string.shop_review_header),

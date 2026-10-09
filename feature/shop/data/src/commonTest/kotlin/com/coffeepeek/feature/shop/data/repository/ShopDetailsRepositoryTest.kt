@@ -89,9 +89,13 @@ class ShopDetailsRepositoryTest {
         }
     }
 
-    @Test fun mapsMenuAndShiftsUtcScheduleFromOneRequest() = runBlocking {
+    @Test fun mapsMenuAndShiftsUtcScheduleWithOptionalCatalog() = runBlocking {
         var calls = 0
         val engine = MockEngine {
+            if (it.url.encodedPath == "/api/menu/drinks") return@MockEngine respond(
+                """{"isSuccess":true,"data":{"drinks":[]}}""",
+                headers = headersOf(HttpHeaders.ContentType, "application/json"),
+            )
             calls++
             respond("""{
               "isSuccess":true,

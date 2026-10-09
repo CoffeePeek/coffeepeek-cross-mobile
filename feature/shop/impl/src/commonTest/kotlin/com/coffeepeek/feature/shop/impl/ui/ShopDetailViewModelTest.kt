@@ -9,22 +9,21 @@ import com.coffeepeek.feature.shop.domain.model.ShopHelpfulVote
 import com.coffeepeek.feature.shop.domain.model.ShopOverview
 import com.coffeepeek.feature.shop.domain.model.ShopRating
 import com.coffeepeek.feature.shop.domain.model.ShopReview
-import com.coffeepeek.feature.shop.domain.model.ShopReviewAccess
 import com.coffeepeek.feature.shop.domain.model.ShopRoaster
 import com.coffeepeek.feature.shop.domain.model.ShopViewer
 import com.coffeepeek.feature.shop.domain.repository.ShopDetailsRepository
-import com.coffeepeek.feature.shop.domain.repository.ShopReviewVoteRepository
-import com.coffeepeek.feature.shop.domain.repository.ShopReviewAccessRepository
+import com.coffeepeek.feature.shop.domain.repository.ShopCheckInVoteRepository
 import com.coffeepeek.feature.favorites.domain.model.FavoriteShop
 import com.coffeepeek.feature.favorites.domain.repository.FavoritesRepository
 import com.coffeepeek.feature.shop.impl.ui.compose.model.ShopDetailAction
 import com.coffeepeek.feature.shop.impl.ui.compose.model.ShopDetailEvent
+import com.coffeepeek.feature.shop.impl.ui.data.toFavoriteSnapshot
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runCurrent
@@ -57,51 +56,44 @@ class ShopDetailViewModelTest {
         }
     }
 
-    private class VoteRepository : ShopReviewVoteRepository {
-        var calls = 0
+    private class CheckInVotes : ShopCheckInVoteRepository {
+        val calls = mutableListOf<Pair<String, Boolean>>()
         var gate: CompletableDeferred<Unit>? = null
-        var result: Result<ShopHelpfulVote> = Result.success(ShopHelpfulVote(true, 7))
-        override suspend fun setHelpful(reviewId: String, helpful: Boolean): Result<ShopHelpfulVote> {
-            assertEquals("review-1", reviewId)
-            assertTrue(helpful)
-            calls++
+        var result: Result<ShopHelpfulVote> = Result.success(ShopHelpfulVote(true, 8))
+        override suspend fun setHelpful(checkInId: String, helpful: Boolean): Result<ShopHelpfulVote> {
+            calls += checkInId to helpful
             gate?.await()
-            return result
-        }
-    }
-
-    private class ReviewAccess : ShopReviewAccessRepository {
-        var calls = 0
-        var result: Result<ShopReviewAccess> = Result.success(ShopReviewAccess(true, null))
-        override suspend fun getAccess(shopId: String): Result<ShopReviewAccess> {
-            assertEquals("shop-1", shopId)
-            calls++
             return result
         }
     }
 
     private class Favorites : FavoritesRepository {
-        var stored = emptyList<FavoriteShop>()
+        val snapshots = MutableStateFlow(Result.success(emptyList<FavoriteShop>()))
         var saves = 0
         var removes = 0
         var gate: CompletableDeferred<Unit>? = null
         var mutationResult: Result<Unit> = Result.success(Unit)
-        var readResult: Result<List<FavoriteShop>>? = null
         var saved: FavoriteShop? = null
 
-        override fun observe(): Flow<Result<List<FavoriteShop>>> = flowOf(Result.success(stored))
-        override suspend fun read(): Result<List<FavoriteShop>> = readResult ?: Result.success(stored)
+        override fun observe(): Flow<Result<List<FavoriteShop>>> = snapshots
+        override suspend fun read(): Result<List<FavoriteShop>> = error("Details must observe favorites")
         override suspend fun save(shop: FavoriteShop): Result<Unit> {
             assertEquals("shop-1", shop.id)
             saved = shop
             saves++
             gate?.await()
+            if (mutationResult.isSuccess) snapshots.value = Result.success(
+                snapshots.value.getOrThrow().filterNot { it.id == shop.id } + shop,
+            )
             return mutationResult
         }
         override suspend fun remove(shopId: String): Result<Unit> {
             assertEquals("shop-1", shopId)
             removes++
             gate?.await()
+            if (mutationResult.isSuccess) snapshots.value = Result.success(
+                snapshots.value.getOrThrow().filterNot { it.id == shopId },
+            )
             return mutationResult
         }
         override suspend fun clear(): Result<Unit> = Result.success(Unit)
@@ -109,12 +101,14 @@ class ShopDetailViewModelTest {
 
     private fun viewModel(
         details: DetailsRepository = DetailsRepository(),
-        votes: VoteRepository = VoteRepository(),
-        reviewAccess: ReviewAccess = ReviewAccess(),
         favorites: Favorites = Favorites(),
         viewer: ShopViewer = ShopViewer(true, "viewer"),
-    ): ShopDetailViewModel = ShopDetailViewModel("shop-1", details, votes, reviewAccess, favorites,
-        currentViewer = { Result.success(viewer) }, currentDayOfWeek = { 1 })
+        checkInVotes: CheckInVotes = CheckInVotes(),
+        viewerProvider: suspend () -> Result<ShopViewer> = { Result.success(viewer) },
+    ): ShopDetailViewModel = ShopDetailViewModel(
+        shopId = "shop-1", detailsRepository = details,
+        checkInVoteRepository = checkInVotes, favoritesRepository = favorites,
+        currentViewer = viewerProvider, currentDayOfWeek = { 1 })
         .also { store.put("detail", it) }
 
     @Test fun loadAndLocalExpansionAreIndependentOfNavigation() = runTest(dispatcher) {
@@ -135,31 +129,19 @@ class ShopDetailViewModelTest {
         assertEquals(ShopDetailEvent.OpenMap(53.9, 27.5), viewModel.events.first())
     }
 
-    @Test fun duplicateLoadsAndVotesAreGuardedWhilePending() = runTest(dispatcher) {
+    @Test fun duplicateLoadsAreGuardedWhilePending() = runTest(dispatcher) {
         val details = DetailsRepository().apply { gate = CompletableDeferred() }
-        val votes = VoteRepository().apply { gate = CompletableDeferred() }
-        val viewModel = viewModel(details, votes)
+        val viewModel = viewModel(details)
         viewModel.onAction(ShopDetailAction.Retry)
         runCurrent()
         assertEquals(1, details.calls)
         details.gate!!.complete(Unit)
         runCurrent()
-        viewModel.onAction(ShopDetailAction.VoteHelpful("review-1"))
-        viewModel.onAction(ShopDetailAction.VoteHelpful("review-1"))
-        runCurrent()
-        assertEquals(1, votes.calls)
-        assertEquals(setOf("review-1"), viewModel.state.value.pendingVoteIds)
-        votes.gate!!.complete(Unit)
-        runCurrent()
-        assertTrue(viewModel.state.value.pendingVoteIds.isEmpty())
-        assertEquals(7, viewModel.state.value.details?.reviews?.single()?.helpfulCount)
-        assertTrue(viewModel.state.value.details?.reviews?.single()?.isHelpfulByCurrentUser == true)
     }
 
-    @Test fun guestVotingRequestsSignInAndLoadFailureCanRetry() = runTest(dispatcher) {
+    @Test fun loadFailureCanRetry() = runTest(dispatcher) {
         val repository = DetailsRepository().apply { result = Result.failure(IllegalStateException("hidden")) }
-        val votes = VoteRepository()
-        val viewModel = viewModel(repository, votes, viewer = ShopViewer(false, null))
+        val viewModel = viewModel(repository, viewer = ShopViewer(false, null))
         runCurrent()
         assertTrue(viewModel.state.value.hasError)
         assertFalse(viewModel.state.value.isLoading)
@@ -167,31 +149,6 @@ class ShopDetailViewModelTest {
         viewModel.onAction(ShopDetailAction.Retry)
         runCurrent()
         assertFalse(viewModel.state.value.hasError)
-        viewModel.onAction(ShopDetailAction.VoteHelpful("review-1"))
-        runCurrent()
-        assertEquals(ShopDetailEvent.SignIn, viewModel.events.first())
-        assertEquals(0, votes.calls)
-    }
-
-    @Test fun voteFailureEmitsEffectWithoutOptimisticallyChangingReview() = runTest(dispatcher) {
-        val votes = VoteRepository().apply { result = Result.failure(IllegalStateException("hidden")) }
-        val viewModel = viewModel(votes = votes)
-        runCurrent()
-        viewModel.onAction(ShopDetailAction.VoteHelpful("review-1"))
-        runCurrent()
-        assertEquals(ShopDetailEvent.VoteFailed, viewModel.events.first())
-        assertEquals(0, viewModel.state.value.details?.reviews?.single()?.helpfulCount)
-        assertTrue(viewModel.state.value.pendingVoteIds.isEmpty())
-    }
-
-    @Test fun ownReviewCannotBeVotedFor() = runTest(dispatcher) {
-        val votes = VoteRepository()
-        val viewModel = viewModel(votes = votes, viewer = ShopViewer(true, "author"))
-        runCurrent()
-        viewModel.onAction(ShopDetailAction.VoteHelpful("review-1"))
-        runCurrent()
-        assertEquals(0, votes.calls)
-        assertEquals(0, viewModel.state.value.details?.reviews?.single()?.helpfulCount)
     }
 
     @Test fun favoriteToggleUsesLocalRepositoryAndGuardsDuplicateMutation() = runTest(dispatcher) {
@@ -228,13 +185,67 @@ class ShopDetailViewModelTest {
         runCurrent()
         assertEquals(ShopDetailEvent.FavoriteFailed, viewModel.events.first())
         assertFalse(viewModel.state.value.isFavorite)
-        favorites.readResult = Result.failure(IllegalStateException("unavailable"))
+        favorites.snapshots.value = Result.failure(IllegalStateException("unavailable"))
         viewModel.onAction(ShopDetailAction.Retry)
         runCurrent()
         assertFalse(viewModel.state.value.favoriteAvailable)
         viewModel.onAction(ShopDetailAction.ToggleFavorite)
         runCurrent()
         assertEquals(1, favorites.saves)
+    }
+
+    @Test fun externalFavoriteChangesAndLogoutClearAreObservedWithoutReloadingDetails() = runTest(dispatcher) {
+        val favorites = Favorites()
+        val repository = DetailsRepository()
+        val viewModel = viewModel(details = repository, favorites = favorites)
+        runCurrent()
+        favorites.snapshots.value = Result.success(listOf(details().toFavoriteSnapshot()))
+        runCurrent()
+        assertTrue(viewModel.state.value.isFavorite)
+        favorites.snapshots.value = Result.success(emptyList())
+        runCurrent()
+        assertFalse(viewModel.state.value.isFavorite)
+        assertEquals(1, repository.calls)
+        assertEquals(0, favorites.saves)
+        assertEquals(0, favorites.removes)
+        store.clear()
+        runCurrent()
+        assertEquals(0, favorites.snapshots.subscriptionCount.value)
+    }
+
+    @Test fun observationFailureDisablesWritesAndRecoveryRestoresAuthoritativeMembership() = runTest(dispatcher) {
+        val favorites = Favorites()
+        val viewModel = viewModel(favorites = favorites)
+        runCurrent()
+        favorites.snapshots.value = Result.success(listOf(details().toFavoriteSnapshot()))
+        runCurrent()
+        favorites.snapshots.value = Result.failure(IllegalStateException("read failure"))
+        runCurrent()
+        assertTrue(viewModel.state.value.isFavorite)
+        assertFalse(viewModel.state.value.favoriteAvailable)
+        viewModel.onAction(ShopDetailAction.ToggleFavorite)
+        runCurrent()
+        assertEquals(0, favorites.removes)
+        favorites.snapshots.value = Result.success(emptyList())
+        runCurrent()
+        assertFalse(viewModel.state.value.isFavorite)
+        assertTrue(viewModel.state.value.favoriteAvailable)
+    }
+
+    @Test fun detailResponseCannotOverwriteFavoriteChangesObservedDuringLoading() = runTest(dispatcher) {
+        val favorites = Favorites()
+        val repository = DetailsRepository().apply { gate = CompletableDeferred() }
+        val viewModel = viewModel(details = repository, favorites = favorites)
+        runCurrent()
+        favorites.snapshots.value = Result.success(listOf(details().toFavoriteSnapshot()))
+        runCurrent()
+        repository.gate!!.complete(Unit)
+        runCurrent()
+        assertTrue(viewModel.state.value.isFavorite)
+        assertEquals(1, favorites.snapshots.subscriptionCount.value)
+        viewModel.onAction(ShopDetailAction.Retry)
+        runCurrent()
+        assertEquals(1, favorites.snapshots.subscriptionCount.value)
     }
 
     @Test fun shopActionsEmitPlatformAgnosticEvents() = runTest(dispatcher) {
@@ -274,49 +285,148 @@ class ShopDetailViewModelTest {
         assertTrue(viewModel.state.value.details?.userCheckIns.isNullOrEmpty())
     }
 
-    @Test fun reviewActionUsesServerEligibilityAndExistingReviewId() = runTest(dispatcher) {
-        val access = ReviewAccess()
-        val viewModel = viewModel(reviewAccess = access)
+    @Test fun checkInVoteUsesVisitRepositoryAndGuardsAllVotesUntilCompletion() = runTest(dispatcher) {
+        val visits = CheckInVotes().apply { gate = CompletableDeferred() }
+        val repository = DetailsRepository().apply {
+            result = Result.success(details().copy(checkIns = listOf(checkIn(), checkIn().copy(id = "visit-2"))))
+        }
+        val viewModel = viewModel(details = repository, checkInVotes = visits)
         runCurrent()
-        assertEquals(1, access.calls)
-
-        viewModel.onAction(ShopDetailAction.OpenReview)
+        viewModel.onAction(ShopDetailAction.VoteCheckInHelpful("visit"))
+        viewModel.onAction(ShopDetailAction.VoteCheckInHelpful("visit"))
+        viewModel.onAction(ShopDetailAction.VoteCheckInHelpful("visit-2"))
         runCurrent()
-        assertEquals(ShopDetailEvent.CreateReview, viewModel.events.first())
-
-        access.result = Result.success(ShopReviewAccess(false, "existing-1"))
-        viewModel.onAction(ShopDetailAction.Retry)
+        assertEquals(listOf("visit" to true), visits.calls)
+        assertEquals("visit", viewModel.state.value.pendingCheckInVoteId)
+        visits.gate!!.complete(Unit)
         runCurrent()
-        viewModel.onAction(ShopDetailAction.OpenReview)
+        val voted = viewModel.state.value.details!!.checkIns.first()
+        assertTrue(voted.isHelpfulByCurrentUser)
+        assertEquals(8, voted.helpfulCount)
+        assertEquals(null, viewModel.state.value.pendingCheckInVoteId)
+        visits.result = Result.success(ShopHelpfulVote(false, 7))
+        viewModel.onAction(ShopDetailAction.VoteCheckInHelpful("visit"))
         runCurrent()
-        assertEquals(ShopDetailEvent.EditReview("existing-1"), viewModel.events.first())
-
-        access.result = Result.success(ShopReviewAccess(false, null))
-        viewModel.onAction(ShopDetailAction.Retry)
-        runCurrent()
-        viewModel.onAction(ShopDetailAction.OpenReview)
-        runCurrent()
-        assertEquals(ShopDetailEvent.ReviewUnavailable, viewModel.events.first())
+        assertEquals("visit" to false, visits.calls.last())
+        assertFalse(viewModel.state.value.details!!.checkIns.first().isHelpfulByCurrentUser)
     }
 
-    @Test fun reviewActionFailsClosedWhenAccessRequestFailsAndGuestSkipsRequest() = runTest(dispatcher) {
-        val access = ReviewAccess().apply { result = Result.failure(IllegalStateException("unavailable")) }
-        val authenticated = viewModel(reviewAccess = access)
+    @Test fun voteFailureKeepsCheckInAndResetsPendingState() = runTest(dispatcher) {
+        val visits = CheckInVotes().apply { result = Result.failure(IllegalStateException("rejected")) }
+        val repository = DetailsRepository().apply { result = Result.success(details().copy(checkIns = listOf(checkIn()))) }
+        val viewModel = viewModel(details = repository, checkInVotes = visits)
         runCurrent()
-        assertEquals("Coffee", authenticated.state.value.details?.overview?.title)
-        authenticated.onAction(ShopDetailAction.OpenReview)
+        viewModel.onAction(ShopDetailAction.VoteCheckInHelpful("visit"))
         runCurrent()
-        assertEquals(ShopDetailEvent.ReviewAccessUnavailable, authenticated.events.first())
+        assertEquals(ShopDetailEvent.VoteFailed, viewModel.events.first())
+        assertEquals(checkIn(), viewModel.state.value.details!!.checkIns.single())
+        assertEquals(null, viewModel.state.value.pendingCheckInVoteId)
+    }
 
-        val guestAccess = ReviewAccess()
-        val guest = viewModel(reviewAccess = guestAccess, viewer = ShopViewer(false, null))
+    @Test fun ownCheckInGuardsUseAuthorAndPersonalVisitIdsWhenIdentityIsMissing() = runTest(dispatcher) {
+        for (viewer in listOf(ShopViewer(true, "author"), ShopViewer(true, null))) {
+            val visits = CheckInVotes()
+            val repository = DetailsRepository().apply { result = Result.success(details().copy(
+                checkIns = listOf(checkIn()), userCheckIns = listOf(checkIn()),
+            )) }
+            val viewModel = viewModel(details = repository, checkInVotes = visits, viewer = viewer)
+            runCurrent()
+            viewModel.onAction(ShopDetailAction.VoteCheckInHelpful("visit"))
+            viewModel.onAction(ShopDetailAction.ReportCheckIn("visit"))
+            runCurrent()
+            assertTrue(visits.calls.isEmpty())
+            // Back must be the next event: owner report emitted nothing.
+            viewModel.onAction(ShopDetailAction.Back)
+            runCurrent()
+            assertEquals(ShopDetailEvent.Back, viewModel.events.first())
+        }
+    }
+
+    @Test fun checkInNavigationDoesNotDependOnReviewEligibility() = runTest(dispatcher) {
+        val repository = DetailsRepository().apply { result = Result.success(details().copy(checkIns = listOf(checkIn()))) }
+        val viewModel = viewModel(details = repository)
         runCurrent()
-        assertEquals(0, guestAccess.calls)
-        guest.onAction(ShopDetailAction.OpenReview)
+        viewModel.onAction(ShopDetailAction.OpenCheckIn)
+        viewModel.onAction(ShopDetailAction.OpenCheckIns)
+        viewModel.onAction(ShopDetailAction.ReportCheckIn("visit"))
         runCurrent()
-        assertEquals(ShopDetailEvent.SignIn, guest.events.first())
+        assertEquals(ShopDetailEvent.CreateCheckIn, viewModel.events.first())
+        assertEquals(ShopDetailEvent.OpenCheckIns("shop-1"), viewModel.events.first())
+        assertEquals(ShopDetailEvent.ReportCheckIn("visit"), viewModel.events.first())
+    }
+
+    @Test fun guestCheckInMutationsRequestSignInWithoutCallingRepository() = runTest(dispatcher) {
+        val visits = CheckInVotes()
+        val repository = DetailsRepository().apply { result = Result.success(details().copy(checkIns = listOf(checkIn()))) }
+        val viewModel = viewModel(details = repository, checkInVotes = visits, viewer = ShopViewer(false, null))
+        runCurrent()
+        viewModel.onAction(ShopDetailAction.OpenCheckIn)
+        viewModel.onAction(ShopDetailAction.ReportCheckIn("visit"))
+        viewModel.onAction(ShopDetailAction.VoteCheckInHelpful("visit"))
+        runCurrent()
+        repeat(3) { assertEquals(ShopDetailEvent.SignIn, viewModel.events.first()) }
+        assertTrue(visits.calls.isEmpty())
+    }
+
+    @Test fun resumeSkipsInitialDuplicateAndRefreshesWhenReturning() = runTest(dispatcher) {
+        val repository = DetailsRepository()
+        val viewModel = viewModel(details = repository)
+        viewModel.onAction(ShopDetailAction.Resume)
+        runCurrent()
+        assertEquals(1, repository.calls)
+        repository.result = Result.success(details().copy(overview = details().overview.copy(title = "Updated")))
+        viewModel.onAction(ShopDetailAction.Resume)
+        runCurrent()
+        assertEquals(2, repository.calls)
+        assertEquals("Updated", viewModel.state.value.details!!.overview.title)
+    }
+
+    @Test fun sessionChangeCancelsPreviousLoadAndClearsPrivateDetailsBeforeRefresh() = runTest(dispatcher) {
+        val repository = DetailsRepository().apply { result = Result.success(details().copy(userCheckIns = listOf(checkIn()))) }
+        var viewer = ShopViewer(true, "viewer")
+        val viewModel = viewModel(details = repository, viewerProvider = { Result.success(viewer) })
+        runCurrent()
+        assertEquals(1, viewModel.state.value.details!!.userCheckIns.size)
+        val oldGate = CompletableDeferred<Unit>()
+        repository.gate = oldGate
+        viewModel.onAction(ShopDetailAction.Retry)
+        runCurrent()
+        viewer = ShopViewer(false, null)
+        repository.gate = CompletableDeferred()
+        viewModel.onAction(ShopDetailAction.SessionChanged)
+        runCurrent()
+        assertEquals(null, viewModel.state.value.details)
+        assertFalse(viewModel.state.value.isLoggedIn)
+        assertTrue(viewModel.state.value.isLoading)
+        repository.gate!!.complete(Unit)
+        runCurrent()
+        assertTrue(viewModel.state.value.details!!.userCheckIns.isEmpty())
+        assertFalse(viewModel.state.value.isLoading)
+        oldGate.complete(Unit)
+        runCurrent()
+        assertTrue(viewModel.state.value.details!!.userCheckIns.isEmpty())
+    }
+
+    @Test fun voteReplyFromPreviousSessionCannotMutateNewSessionOrEmitFailure() = runTest(dispatcher) {
+        val visits = CheckInVotes().apply { gate = CompletableDeferred() }
+        val repository = DetailsRepository().apply { result = Result.success(details().copy(checkIns = listOf(checkIn()))) }
+        var viewer = ShopViewer(true, "viewer")
+        val viewModel = viewModel(details = repository, checkInVotes = visits, viewerProvider = { Result.success(viewer) })
+        runCurrent()
+        viewModel.onAction(ShopDetailAction.VoteCheckInHelpful("visit"))
+        runCurrent()
+        viewer = ShopViewer(false, null)
+        viewModel.onAction(ShopDetailAction.SessionChanged)
+        runCurrent()
+        visits.gate!!.complete(Unit)
+        runCurrent()
+        assertFalse(viewModel.state.value.details!!.checkIns.single().isHelpfulByCurrentUser)
+        assertEquals(null, viewModel.state.value.pendingCheckInVoteId)
     }
 }
+
+private fun checkIn() = ShopCheckIn("visit", "author", "shop-1", "Coffee", "2026-10-01", "2026-10-01",
+    null, emptyList(), emptyList(), ShopRating(4, 4, 4))
 
 private fun details() = ShopDetails(
     overview = ShopOverview("shop-1", "Coffee", null, null, 53.9, 27.5,

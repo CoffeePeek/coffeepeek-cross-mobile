@@ -15,7 +15,7 @@ import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
 @Composable
-internal fun ShopReviewRatingField(
+internal fun ShopRatingField(
     label: String,
     value: Int,
     enabled: Boolean,
@@ -38,10 +38,10 @@ internal fun ShopReviewRatingField(
     }
 }
 
-@Preview @Composable private fun ShopReviewRatingFieldLightPreview() = CoffeePeekTheme(darkTheme = false) {
-    ShopReviewRatingField("Кофе", 4, true, {})
+@Preview @Composable private fun ShopRatingFieldLightPreview() = CoffeePeekTheme(darkTheme = false) {
+    ShopRatingField("Кофе", 4, true, {})
 }
 
-@Preview @Composable private fun ShopReviewRatingFieldDarkPreview() = CoffeePeekTheme(darkTheme = true) {
-    ShopReviewRatingField("Кофе", 2, true, {})
+@Preview @Composable private fun ShopRatingFieldDarkPreview() = CoffeePeekTheme(darkTheme = true) {
+    ShopRatingField("Кофе", 2, true, {})
 }
