@@ -27,13 +27,14 @@ class CheckInRepositoryImpl(
 
     override suspend fun createCheckIn(input: CreateCheckInInput): Result<Unit> = try {
         require(input.shopSlug.isNotBlank()) { "Выберите кофейню" }
+        require(!input.visitedAtIso.isNullOrBlank()) { "Выберите дату визита" }
         validateCheckInContent(input.text, input.rating, input.drinkSlug, input.customDrinkName)?.let { error(it) }
         require(input.photos.size <= 5) { "Можно добавить до 5 фото" }
         val uploaded = photoRepository.uploadCheckInPhotos(input.photos).getOrThrow()
         checkInApiService.createCheckIn(CreateCheckInReq(
             coffeeShopSlug = input.shopSlug,
             text = input.text.trim(),
-            rating = input.rating.toDto(),
+            rating = input.rating?.toDto(),
             visibility = input.visibility.name,
             visitedAt = input.visitedAtIso,
             drinkSlug = input.drinkSlug,
@@ -82,7 +83,7 @@ class CheckInRepositoryImpl(
         }
         return checkInApiService.updateCheckIn(id, UpdateCheckInReq(
             text = input.text.trim(),
-            rating = input.rating.toDto(),
+            rating = input.rating?.toDto(),
             drinkSlug = input.drinkSlug,
             customDrinkName = input.customDrinkName?.trim(),
         )).map { it.toDomain(fileUrlResolver) }

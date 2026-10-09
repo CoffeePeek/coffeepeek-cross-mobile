@@ -88,11 +88,15 @@ class ShopCheckInsTest {
                 withTimeout(5_000) { vm.uiState.first { it.details != null && !it.isLoading } }
                 vm.openCheckInSheet()
                 val opened = withTimeout(5_000) { vm.uiState.first { it.showCheckInSheet } }
-                val draft = opened.checkInDraft!!.copy(note = "Кофейный момент", isPublic = visibility == CheckInVisibility.Public)
+                val draft = opened.checkInDraft!!.copy(isPublic = visibility == CheckInVisibility.Public)
                 vm.updateCheckInDraft(draft)
                 vm.checkIn(draft)
                 assertTrue(vm.uiState.value.isCheckInLoading)
-                assertEquals(visibility, withTimeout(5_000) { started.receive() }.visibility)
+                val input = withTimeout(5_000) { started.receive() }
+                assertEquals(visibility, input.visibility)
+                assertEquals("", input.text)
+                assertNull(input.rating)
+                assertNotNull(input.visitedAtIso)
                 vm.checkIn(draft)
                 vm.dismissCheckInSheet()
                 vm.updateCheckInDraft(draft.copy(note = "Changed during submission"))
@@ -151,9 +155,9 @@ class ShopCheckInsTest {
         val vm = viewModel(repo, loggedIn = true)
         try {
             withTimeout(5_000) { vm.uiState.first { it.details != null && !it.isLoading } }
-            val draft = CheckInDraft("coffee", visitMillis = 1000, note = "Кофе")
+            val draft = CheckInDraft("coffee", visitMillis = 1000, note = "Кофе", ratingsEnabled = true)
             for (invalid in listOf(
-                draft.copy(note = " "), draft.copy(note = "a".repeat(1001)), draft.copy(visitMillis = 0),
+                draft.copy(note = "a".repeat(1001)), draft.copy(visitMillis = 0),
                 draft.copy(visitMillis = Long.MAX_VALUE), draft.copy(coffeeRating = 0), draft.copy(serviceRating = 6),
                 draft.copy(placeRating = 0), draft.copy(drinkSlug = "other", customDrinkName = " "),
                 draft.copy(photos = List(6) { PickedImage(byteArrayOf(1), "coffee.jpg") }),

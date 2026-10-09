@@ -24,7 +24,7 @@ class CheckInResponseDtoTest {
         assertEquals("Анна", checkIn.username)
         assertEquals("Отличный фильтр", checkIn.text)
         assertEquals("2026-10-07T12:27:27.922Z", checkIn.createdAtUtc)
-        assertEquals(4, checkIn.rating.place)
+        assertEquals(4, checkIn.rating!!.place)
         assertEquals("Rejected", checkIn.moderationState)
         assertEquals(2, checkIn.contentRevision)
         assertEquals("Уточните текст", checkIn.rejectionReason)

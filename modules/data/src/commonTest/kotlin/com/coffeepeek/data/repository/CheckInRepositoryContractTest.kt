@@ -26,6 +26,24 @@ class CheckInRepositoryContractTest {
         "photos":[{"id":"photo","storageKey":"do-not-invent-url","sortIndex":0,"url":"/api/v1/check-ins/visit/photos/photo"}]}"""
 
     @Test
+    fun createsCheckInWithOnlyVisitDateAndReadsMissingRating() = runBlocking {
+        var requests = 0
+        val client = client(MockEngine { request ->
+            requests++
+            assertEquals("/api/v1/check-ins", request.url.encodedPath)
+            val body = Json.parseToJsonElement((request.body as TextContent).text).jsonObject
+            assertEquals(JsonPrimitive("2026-10-07T09:00:00Z"), body["visitedAt"])
+            assertTrue(body["rating"] == null || body["rating"] == JsonNull)
+            assertTrue(body["text"] == null || body["text"] == JsonPrimitive(""))
+            respond("""{"isSuccess":true,"data":{"id":"visit","rating":null}}""", headers = headers)
+        })
+        try {
+            repository(client).createCheckIn(CreateCheckInInput("coffee", visitedAtIso = "2026-10-07T09:00:00Z")).getOrThrow()
+            assertEquals(1, requests)
+        } finally { client.close() }
+    }
+
+    @Test
     fun createsVisitAfterCheckInPhotoUploadWithSizeBytesAndAttachmentSize() = runBlocking {
         val paths = mutableListOf<String>()
         val client = client(MockEngine { request ->
@@ -58,7 +76,7 @@ class CheckInRepositoryContractTest {
         })
         try {
             repository(client).createCheckIn(CreateCheckInInput(
-                "coffee-slug", "  Кофе  ", ReviewRating(4, 4, 5),
+                "coffee-slug", "  Кофе  ", ReviewRating(4, 4, 5), visitedAtIso = "2026-10-07T09:00:00Z",
                 photos = listOf(PendingPhotoUpload("coffee.jpg", "image/jpeg", byteArrayOf(1, 2, 3))),
             )).getOrThrow()
             assertEquals(listOf("/api/Photos/check-in", "/put-photo", "/api/v1/check-ins"), paths)
@@ -126,10 +144,10 @@ class CheckInRepositoryContractTest {
         val client = client(MockEngine { requests++; error("No request expected") })
         try {
             val repo = repository(client)
-            val valid = CreateCheckInInput("coffee", "Кофе", ReviewRating(4, 4, 5))
+            val valid = CreateCheckInInput("coffee", "Кофе", ReviewRating(4, 4, 5), visitedAtIso = "2026-10-07T09:00:00Z")
             for (invalid in listOf(
                 valid.copy(shopSlug = " "),
-                valid.copy(text = " \n "), valid.copy(text = "x".repeat(1001)),
+                valid.copy(visitedAtIso = null), valid.copy(text = "x".repeat(1001)),
                 valid.copy(rating = ReviewRating(0, 4, 5)), valid.copy(rating = ReviewRating(4, 6, 5)),
                 valid.copy(rating = ReviewRating(4, 4, 0)),
                 valid.copy(drinkSlug = "other", customDrinkName = " "),
@@ -137,7 +155,7 @@ class CheckInRepositoryContractTest {
                 valid.copy(drinkSlug = "cappuccino", customDrinkName = "Кофе"),
                 valid.copy(photos = List(6) { PendingPhotoUpload("p.jpg", "image/jpeg", byteArrayOf(1)) }),
             )) assertTrue(repo.createCheckIn(invalid).isFailure)
-            assertTrue(repo.updateCheckIn("visit", UpdateCheckInInput(" ", valid.rating)).isFailure)
+            assertTrue(repo.updateCheckIn("visit", UpdateCheckInInput("x".repeat(1001), valid.rating)).isFailure)
             assertEquals(0, requests)
         } finally { client.close() }
     }
@@ -177,7 +195,7 @@ class CheckInRepositoryContractTest {
             })
             try {
                 val repo = repository(client)
-                val input = CreateCheckInInput("coffee", "Кофе", ReviewRating(4, 4, 5), photos = listOf(
+                val input = CreateCheckInInput("coffee", "Кофе", ReviewRating(4, 4, 5), visitedAtIso = "2026-10-07T09:00:00Z", photos = listOf(
                     PendingPhotoUpload("one.jpg", "image/jpeg", byteArrayOf(1)),
                     PendingPhotoUpload("two.jpg", "image/jpeg", byteArrayOf(2)),
                 ))
@@ -199,7 +217,7 @@ class CheckInRepositoryContractTest {
                 throw CancellationException("Request cancelled")
             })
             try {
-                val input = CreateCheckInInput("coffee", "Кофе", ReviewRating(4, 4, 5),
+                val input = CreateCheckInInput("coffee", "Кофе", ReviewRating(4, 4, 5), visitedAtIso = "2026-10-07T09:00:00Z",
                     photos = if (withPhoto) listOf(PendingPhotoUpload("coffee.jpg", "image/jpeg", byteArrayOf(1))) else emptyList())
                 assertFailsWith<CancellationException> { repository(client).createCheckIn(input) }
                 assertEquals(listOf(if (withPhoto) "/api/Photos/check-in" else "/api/v1/check-ins"), paths)

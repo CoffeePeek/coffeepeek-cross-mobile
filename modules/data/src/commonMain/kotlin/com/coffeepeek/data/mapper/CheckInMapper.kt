@@ -17,7 +17,7 @@ internal fun CheckInDto.toDomain(fileUrls: FileUrlResolver): CheckIn = CheckIn(
     note = text,
     createdAt = createdAtUtc,
     visitedAt = visitedAt,
-    rating = ReviewRating(place = rating.place, service = rating.service, coffee = rating.coffee),
+    rating = rating?.let { ReviewRating(place = it.place, service = it.service, coffee = it.coffee) },
     photoUrls = photos.sortedBy { it.sortIndex }.mapNotNull { fileUrls.resolveApiUrl(it.url) },
     drinkSlug = drinkSlug,
     customDrinkName = customDrinkName,

@@ -111,8 +111,8 @@ enum class ShopIssueCategory {
 
 data class CreateCheckInInput(
     val shopSlug: String,
-    val text: String,
-    val rating: ReviewRating,
+    val text: String = "",
+    val rating: ReviewRating? = null,
     val visibility: CheckInVisibility = CheckInVisibility.Private,
     val visitedAtIso: String? = null,
     val photos: List<PendingPhotoUpload> = emptyList(),

@@ -193,7 +193,12 @@ fun CheckInBottomSheet(
             }
 
             // ── Ratings ───────────────────────────────────────────────────────
-            ReviewRatingCards(
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text("Добавить оценки", modifier = Modifier.weight(1f))
+                Switch(checked = draft.ratingsEnabled,
+                    onCheckedChange = { onDraftChange(draft.copy(ratingsEnabled = it)) }, enabled = !isLoading)
+            }
+            if (draft.ratingsEnabled) ReviewRatingCards(
                 coffeeRating = draft.coffeeRating,
                 serviceRating = draft.serviceRating,
                 placeRating = draft.placeRating,
@@ -243,7 +248,7 @@ fun CheckInBottomSheet(
                     }
                 }
 
-                ReviewFormStep {
+                ReviewFormStep(optional = true) {
                     ReviewFormField(
                         label = stringResource(Res.string.checkin_note_label),
                     ) {

@@ -6,8 +6,8 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class CreateCheckInReq(
     val coffeeShopSlug: String,
-    val text: String,
-    val rating: RatingDto,
+    val text: String = "",
+    val rating: RatingDto? = null,
     val visibility: String = "Private",
     val visitedAt: String? = null,
     val drinkSlug: String? = null,
@@ -17,8 +17,8 @@ data class CreateCheckInReq(
 
 @Serializable
 data class UpdateCheckInReq(
-    val text: String,
-    val rating: RatingDto,
+    val text: String = "",
+    val rating: RatingDto? = null,
     val drinkSlug: String? = null,
     val customDrinkName: String? = null,
 )
