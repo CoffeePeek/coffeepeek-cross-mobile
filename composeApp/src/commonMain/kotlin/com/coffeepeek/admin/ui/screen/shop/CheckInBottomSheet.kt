@@ -193,12 +193,7 @@ fun CheckInBottomSheet(
             }
 
             // ── Ratings ───────────────────────────────────────────────────────
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text("Добавить оценки", modifier = Modifier.weight(1f))
-                Switch(checked = draft.ratingsEnabled,
-                    onCheckedChange = { onDraftChange(draft.copy(ratingsEnabled = it)) }, enabled = !isLoading)
-            }
-            if (draft.ratingsEnabled) ReviewRatingCards(
+            ReviewRatingCards(
                 coffeeRating = draft.coffeeRating,
                 serviceRating = draft.serviceRating,
                 placeRating = draft.placeRating,

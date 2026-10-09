@@ -222,9 +222,9 @@ class ShopDetailViewModel(
                         text = draft.note.trim(),
                         visitedAtIso = datePickerMillisToUtcIsoInstant(draft.visitMillis),
                         visibility = visibility,
-                        rating = if (draft.ratingsEnabled) com.coffeepeek.domain.model.ReviewRating(
+                        rating = com.coffeepeek.domain.model.ReviewRating(
                             place = draft.placeRating, service = draft.serviceRating, coffee = draft.coffeeRating,
-                        ) else null,
+                        ),
                         photos = draft.photos.map { it.toPendingUpload() },
                     ),
                 )

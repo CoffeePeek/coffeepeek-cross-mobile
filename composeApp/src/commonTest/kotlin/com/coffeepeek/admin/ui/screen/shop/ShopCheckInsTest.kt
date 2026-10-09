@@ -95,7 +95,7 @@ class ShopCheckInsTest {
                 val input = withTimeout(5_000) { started.receive() }
                 assertEquals(visibility, input.visibility)
                 assertEquals("", input.text)
-                assertNull(input.rating)
+                assertEquals(ReviewRating(place = 4, service = 4, coffee = 4), input.rating)
                 assertNotNull(input.visitedAtIso)
                 vm.checkIn(draft)
                 vm.dismissCheckInSheet()
@@ -123,7 +123,8 @@ class ShopCheckInsTest {
     fun failedSubmissionKeepsDraftAndCanRetry() = runBlocking {
         val store = CheckInDraftStore()
         var attempts = 0
-        val repo = ShopTestCheckIns().apply { create = {
+        val repo = ShopTestCheckIns().apply { create = { input ->
+            assertEquals(ReviewRating(place = 5, service = 3, coffee = 2), input.rating)
             if (++attempts == 1) Result.failure(IllegalStateException("Нет сети")) else Result.success(Unit)
         } }
         val vm = viewModel(repo, loggedIn = true, draftStore = store)
@@ -132,6 +133,7 @@ class ShopCheckInsTest {
             vm.openCheckInSheet()
             val opened = withTimeout(5_000) { vm.uiState.first { it.showCheckInSheet } }
             val draft = opened.checkInDraft!!.copy(note = "Попробовать ещё раз",
+                placeRating = 5, serviceRating = 3, coffeeRating = 2,
                 photos = listOf(PickedImage(byteArrayOf(1, 2, 3), "coffee.jpg")))
             vm.updateCheckInDraft(draft)
             vm.checkIn(draft)
@@ -155,7 +157,7 @@ class ShopCheckInsTest {
         val vm = viewModel(repo, loggedIn = true)
         try {
             withTimeout(5_000) { vm.uiState.first { it.details != null && !it.isLoading } }
-            val draft = CheckInDraft("coffee", visitMillis = 1000, note = "Кофе", ratingsEnabled = true)
+            val draft = CheckInDraft("coffee", visitMillis = 1000, note = "Кофе")
             for (invalid in listOf(
                 draft.copy(note = "a".repeat(1001)), draft.copy(visitMillis = 0),
                 draft.copy(visitMillis = Long.MAX_VALUE), draft.copy(coffeeRating = 0), draft.copy(serviceRating = 6),
