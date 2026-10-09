@@ -2,6 +2,7 @@ package com.coffeepeek.feature.shop.impl
 
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assert
@@ -13,6 +14,7 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextReplacement
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontFamily
 import androidx.test.core.app.ActivityScenario
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
@@ -84,7 +86,10 @@ class ShopCheckInFormContractTest {
     @Test fun unconfirmedDeliveryDisablesWriteAndRequiresExplicitHistoryAcknowledgement() {
         val actions = mutableListOf<ShopCheckInFormAction>()
         render(initial.copy(deliveryUnconfirmed = true), onAction = actions::add).use {
-            compose.onNode(hasSetTextAction()).performScrollTo().assertIsNotEnabled()
+            compose.onNode(SemanticsMatcher.expectValue(
+                SemanticsProperties.EditableText, AnnotatedString(initial.input.text),
+            )).performScrollTo().assertIsNotEnabled()
+                .assert(SemanticsMatcher.keyNotDefined(SemanticsActions.SetText))
             compose.onNodeWithText("Оставить чекин").performScrollTo().assertIsNotEnabled().performClick()
             compose.onNodeWithText("Мои чекины").performScrollTo().performClick()
             compose.onNodeWithText("Проверил историю — чекин не создан").performScrollTo().performClick()

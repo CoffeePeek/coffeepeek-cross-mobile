@@ -137,6 +137,7 @@ import com.coffeepeek.domain.model.ShopMenu
 import com.coffeepeek.domain.model.ShopMenuItem
 import com.coffeepeek.domain.model.ShopSchedule
 import com.coffeepeek.admin.di.platformViewModel
+import org.koin.compose.koinInject
 import org.koin.core.parameter.parametersOf
 
 private val GuestReviewPeekWidth = 56.dp
@@ -147,6 +148,7 @@ private const val FeaturePreviewCount = 5
 @Composable
 fun ShopDetailScreen(shopId: String, forCheckIn: Boolean = false) {
     val vm: ShopDetailViewModel = platformViewModel(parameters = { parametersOf(shopId) })
+    val menuGalleryRenderer = koinInject<ShopMenuGalleryScreenRenderer>()
     val state by vm.uiState.collectAsState()
     val userLocation = rememberPermittedUserLocation()
     val snackbarHostState = remember { SnackbarHostState() }
@@ -254,6 +256,7 @@ fun ShopDetailScreen(shopId: String, forCheckIn: Boolean = false) {
                         onOpenPhotos = { urls, index -> preview = urls to index },
                         onReviewPhotoClick = { urls, index -> preview = urls to index },
                         onReviewHelpfulClick = vm::toggleHelpful,
+                        menuGalleryAction = { menuGalleryRenderer.MenuGalleryAction(shopId) },
                     )
                 }
             }
@@ -301,6 +304,7 @@ private fun ShopDetailContent(
     onOpenPhotos: (List<String>, Int) -> Unit = { _, _ -> },
     onReviewPhotoClick: (List<String>, Int) -> Unit = { _, _ -> },
     onReviewHelpfulClick: (String) -> Unit = {},
+    menuGalleryAction: @Composable () -> Unit = {},
 ) {
     val shop = details.shop
     val photos = details.photos.filter { it.isNotBlank() }.ifEmpty {
@@ -374,6 +378,7 @@ private fun ShopDetailContent(
                 MenuSection(
                     menu = menu,
                     onPhotoClick = { index -> onOpenPhotos(menu.photos.map { it.fullUrl }, index) },
+                    galleryAction = menuGalleryAction,
                 )
             }
         }
@@ -1416,6 +1421,7 @@ private fun DescriptionSection(description: String) {
 private fun MenuSection(
     menu: ShopMenu,
     onPhotoClick: (Int) -> Unit,
+    galleryAction: @Composable () -> Unit = {},
 ) {
     val capturedLabel = menu.capturedAtUtc?.let(::formatMenuDate)
     val updatedLabel = menu.updatedAtUtc?.let(::formatMenuDate)
@@ -1433,6 +1439,7 @@ private fun MenuSection(
             Box(modifier = Modifier.weight(1f)) {
                 SectionTitle("Меню")
             }
+            if (menu.photos.isNotEmpty()) galleryAction()
         }
         OutlinedContentCard {
             Row(

@@ -207,12 +207,31 @@ and shop domain/data iOS Simulator compilation. DEX parser unit tests pass.
 Both isolated UI-test APKs compile; CI now compiles them too. The prior command
 approval `403` no longer prevents execution.
 
-Device execution is not yet confirmed: the connected Pixel 10a was asleep and
-locked, and the overlay run reported no visible Compose hierarchy (all 6 tests).
-Do not count this as a device pass or assume component failure from that run.
-Unlock the device and rerun overlay/form tests. IDE modal/paired-preview visual
-inspection and authenticated QA scenarios remain pending. CoffeePeek user data
-was not cleared, and no backend writes were made.
+The initial Pixel 10a run was asleep/locked and found no visible Compose
+hierarchy. A later unlocked Pixel 7 run passed 5/6 overlay and 4/5 form tests:
+it exposed an unconditional Material handle click action on a locked sheet
+and an invalid test selector looking for SetText on an intentionally disabled
+field. Neither failure was dismissed as a connection problem.
+
+After correction, all 7 overlay and 5 form tests pass on the temporary
+Pixel_10_Pro emulator (read-only AVD, no snapshot saved). The additional overlay
+test verifies physical handle taps dismiss exactly once. Locked-sheet coverage
+checks disabled/no-click semantics, physical tap, long drag, outside tap, Back,
+then unlocking. Disabled-note coverage uses EditableText, asserts disabled and
+the absence of SetText, and verifies explicit history acknowledgement actions.
+The full Direct/Play build, DEX guard, debug unit tests and lint pass again.
+
+The Android menu-gallery route was registered but had no reachable caller.
+An Android-only app-composition button now opens it from the legacy detail
+menu without replacing the existing thumbnail-to-viewer action or iOS UI.
+The emulator loaded the real "1801 кофе" gallery image; opening the viewer and
+returning through gallery/detail were checked. This read-only check is not
+authenticated-write QA or final detail/form migration approval.
+
+The corrected tests are installed on Pixel 7, but that phone is currently
+locked; rerunning the fixes there remains pending. IDE modal/paired-preview
+inspection, authenticated QA and Android photo-picker integration are still
+open. CoffeePeek user data was not cleared, and no backend writes were made.
 
 Next: finish isolated UI verification, then connect Android date/photo/draft
 adapters through app-owned entry composition (one draft adapter instance).

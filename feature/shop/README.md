@@ -143,6 +143,10 @@ to the existing full-screen viewer, preserving swipe/zoom behaviour without
 adding a feature-to-app dependency or copying that shared component. The
 root back stack remains application-owned. Feature UI does not see DTOs, Ktor,
 legacy repositories or Koin.
+The Android detail menu now offers a separate resource-backed "Фотографии меню"
+button when photos exist. It opens the migrated gallery through the existing
+platform renderer. Tapping a menu thumbnail still opens the viewer directly;
+the default legacy/iOS renderer adds no button and retains its current behavior.
 
 ## Migration sequence and risks
 

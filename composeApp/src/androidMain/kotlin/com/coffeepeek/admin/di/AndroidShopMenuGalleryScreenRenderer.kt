@@ -8,11 +8,17 @@ import androidx.compose.runtime.setValue
 import com.coffeepeek.admin.ui.Navigator
 import com.coffeepeek.admin.ui.component.FullScreenImageDialog
 import com.coffeepeek.admin.ui.screen.shop.ShopMenuGalleryScreenRenderer
+import com.coffeepeek.admin.ui.screen.shop.component.ShopMenuGalleryLink
 import com.coffeepeek.feature.shop.api.ShopMenuGalleryEntry
 
 internal class AndroidShopMenuGalleryScreenRenderer(
     private val entry: ShopMenuGalleryEntry,
 ) : ShopMenuGalleryScreenRenderer {
+    @Composable
+    override fun MenuGalleryAction(shopId: String) {
+        ShopMenuGalleryLink(onOpen = { Navigator.navigate(Navigator.Screen.ShopMenuGallery(shopId)) })
+    }
+
     @Composable
     override fun Content(shopId: String) {
         var viewer by remember(shopId) { mutableStateOf<Pair<List<String>, Int>?>(null) }

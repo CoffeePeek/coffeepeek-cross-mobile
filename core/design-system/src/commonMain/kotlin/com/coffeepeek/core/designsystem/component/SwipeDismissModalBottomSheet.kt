@@ -3,6 +3,7 @@ package com.coffeepeek.core.designsystem.component
 import androidx.compose.animation.core.animate
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.draggable
 import androidx.compose.foundation.gestures.rememberDraggableState
@@ -10,35 +11,38 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.Text
+import androidx.compose.material3.ModalBottomSheetProperties
 import androidx.compose.material3.SheetValue
+import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.onClick
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.mutableStateOf
-import kotlinx.coroutines.launch
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.disabled
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
+import kotlinx.coroutines.launch
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -71,51 +75,57 @@ fun SwipeDismissModalBottomSheet(
         modifier = modifier.graphicsLayer { translationY = if (dismissEnabled) dragOffset else 0f },
         sheetState = sheetState,
         sheetGesturesEnabled = false,
-        dragHandle = {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(48.dp)
-                    .semantics {
-                        contentDescription = dismissDescription
-                        if (dismissEnabled) onClick(label = dismissDescription) {
-                            scope.launch {
+        // Material wraps a custom dragHandle in an unconditional clickable. Own the
+        // handle in content so locked sheets expose neither a click nor a dismiss action.
+        dragHandle = null,
+        properties = ModalBottomSheetProperties(shouldDismissOnClickOutside = dismissEnabled),
+        containerColor = MaterialTheme.colorScheme.surface,
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(48.dp)
+                .semantics { contentDescription = dismissDescription }
+                .then(if (dismissEnabled) {
+                    Modifier.clickable(role = Role.Button, onClickLabel = dismissDescription) {
+                        scope.launch {
+                            if (currentDismissEnabled) {
                                 sheetState.hide()
                                 if (!sheetState.isVisible && currentDismissEnabled) currentOnDismiss()
                             }
-                            true
                         }
                     }
-                    .draggable(
-                        state = dragState,
-                        orientation = Orientation.Vertical,
-                        enabled = dismissEnabled,
-                        onDragStopped = { velocity ->
-                            if (currentDismissEnabled && (dragOffset >= dismissDistance || velocity >= dismissVelocity)) {
-                                sheetState.hide()
-                                if (!sheetState.isVisible && currentDismissEnabled) currentOnDismiss()
-                            } else {
-                                animate(
-                                    initialValue = dragOffset,
-                                    targetValue = 0f,
-                                    animationSpec = tween(durationMillis = 160),
-                                ) { value, _ -> dragOffset = value }
-                            }
-                        },
-                    ),
-                contentAlignment = Alignment.Center,
-            ) {
-                Box(
-                    modifier = Modifier
-                        .size(width = 36.dp, height = 4.dp)
-                        .clip(RoundedCornerShape(999.dp))
-                        .background(MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.45f)),
-                )
-            }
-        },
-        containerColor = MaterialTheme.colorScheme.surface,
-        content = content,
-    )
+                } else {
+                    Modifier.semantics { disabled(); role = Role.Button }
+                })
+                .draggable(
+                    state = dragState,
+                    orientation = Orientation.Vertical,
+                    enabled = dismissEnabled,
+                    onDragStopped = { velocity ->
+                        if (currentDismissEnabled && (dragOffset >= dismissDistance || velocity >= dismissVelocity)) {
+                            sheetState.hide()
+                            if (!sheetState.isVisible && currentDismissEnabled) currentOnDismiss()
+                        } else {
+                            animate(
+                                initialValue = dragOffset,
+                                targetValue = 0f,
+                                animationSpec = tween(durationMillis = 160),
+                            ) { value, _ -> dragOffset = value }
+                        }
+                    },
+                ),
+            contentAlignment = Alignment.Center,
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(width = 36.dp, height = 4.dp)
+                    .clip(RoundedCornerShape(999.dp))
+                    .background(MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.45f)),
+            )
+        }
+        content()
+    }
 }
 
 // Modal rendering requires Interactive Preview or Run Preview in some IDE versions.

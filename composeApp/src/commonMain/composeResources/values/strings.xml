@@ -98,4 +98,5 @@
     <string name="delete_account_pending_resend">Отправить письмо ещё раз</string>
     <string name="delete_account_pending_resend_wait">Повторная отправка пока недоступна</string>
     <string name="local_data_cleanup_error">Локальные данные не удалось полностью очистить</string>
+    <string name="shop_menu_gallery_open">Фотографии меню</string>
 </resources>

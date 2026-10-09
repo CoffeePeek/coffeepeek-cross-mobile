@@ -6,6 +6,10 @@ import androidx.compose.runtime.Composable
 interface ShopMenuGalleryScreenRenderer {
     @Composable
     fun Content(shopId: String)
+
+    /** Android composition offers the migrated route; legacy platforms keep their UI. */
+    @Composable
+    fun MenuGalleryAction(shopId: String) {}
 }
 
 internal object LegacyShopMenuGalleryScreenRenderer : ShopMenuGalleryScreenRenderer {

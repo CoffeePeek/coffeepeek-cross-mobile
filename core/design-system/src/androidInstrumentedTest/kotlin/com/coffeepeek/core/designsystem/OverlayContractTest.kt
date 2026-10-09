@@ -77,6 +77,20 @@ class OverlayContractTest {
         }
     }
 
+    @Test fun handleTouchDismissesExactlyOnce() {
+        val shown = mutableStateOf(true)
+        var dismissals = 0
+        render {
+            if (shown.value) SwipeDismissModalBottomSheet(
+                { dismissals++; shown.value = false }, "Dismiss sheet",
+            ) { Text("Sheet content") }
+        }.use {
+            compose.onNodeWithContentDescription("Dismiss sheet").performTouchInput { click() }
+            compose.onNodeWithText("Sheet content").assertDoesNotExist()
+            compose.runOnIdle { assertEquals(1, dismissals) }
+        }
+    }
+
     @Test fun longHandleDragDismissesSheet() {
         val shown = mutableStateOf(true)
         render {
@@ -117,10 +131,15 @@ class OverlayContractTest {
             }
         }.use {
             compose.onNodeWithContentDescription("Dismiss sheet")
+                .assertIsNotEnabled()
                 .assert(SemanticsMatcher.keyNotDefined(SemanticsActions.OnClick))
                 .performTouchInput {
+                    click()
                     swipe(Offset(center.x, 1f), Offset(center.x, height * 2.5f), durationMillis = 700)
                 }
+            // The top of this tiny modal is outside its content: tapping the scrim
+            // must not dismiss a write in progress either.
+            compose.onNode(isDialog()).performTouchInput { click(Offset(center.x, 1f)) }
             compose.runOnIdle {
                 checkNotNull(sheetView?.findViewTreeOnBackPressedDispatcherOwner())
                     .onBackPressedDispatcher.onBackPressed()
