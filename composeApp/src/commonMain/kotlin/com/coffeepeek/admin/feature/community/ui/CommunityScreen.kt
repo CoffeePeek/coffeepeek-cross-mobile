@@ -7,6 +7,7 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.ui.text.font.FontWeight
@@ -106,8 +107,10 @@ fun CommunityScreen(onCreateCheckIn: () -> Unit) {
                     Text("Лента", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
                 }
                 when {
-                    state.isLoggedIn == null || (state.isLoading && state.items.isEmpty()) -> item {
-                        CoffeePeekLoader()
+                    state.isLoggedIn == null || (state.isLoading && state.items.isEmpty()) -> item(key = "loading") {
+                        Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.TopCenter) {
+                            CoffeePeekLoader()
+                        }
                     }
                     else -> {
                         items(state.items, key = CheckIn::id) { checkIn ->
@@ -138,7 +141,11 @@ fun CommunityScreen(onCreateCheckIn: () -> Unit) {
                                 Text("Пока нет опубликованных чек-инов.", color = MaterialTheme.colorScheme.onSurfaceVariant)
                             }
                         }
-                        if (state.isLoadingMore) item(key = "loading-more") { CoffeePeekLoader() }
+                        if (state.isLoadingMore) item(key = "loading-more") {
+                            Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.TopCenter) {
+                                CoffeePeekLoader()
+                            }
+                        }
                     }
                 }
             }
