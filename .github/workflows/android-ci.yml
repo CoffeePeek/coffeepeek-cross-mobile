@@ -50,5 +50,13 @@ jobs:
         shell: bash
         run: printf 'API_BASE_URL=https://example.com/\nGOOGLE_WEB_CLIENT_ID=\n' > local.properties
 
+      - name: Test APK runtime verification
+        run: ./gradlew -p build-logic --no-daemon :build-logic-utils:test
+
       - name: Build and check Android
-        run: ./gradlew --no-daemon :composeApp:assembleDirectDebug :composeApp:assemblePlayDebug testDebugUnitTest :composeApp:testDirectDebugUnitTest :composeApp:testPlayDebugUnitTest lintDebug :composeApp:lintDirectDebug :composeApp:lintPlayDebug
+        run: >-
+          ./gradlew --no-daemon
+          :composeApp:assembleDirectDebug :composeApp:assemblePlayDebug
+          testDebugUnitTest :composeApp:testDirectDebugUnitTest :composeApp:testPlayDebugUnitTest
+          lintDebug :composeApp:lintDirectDebug :composeApp:lintPlayDebug
+          :core:design-system:assembleDebugAndroidTest :feature:shop:impl:assembleDebugAndroidTest

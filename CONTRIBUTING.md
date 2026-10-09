@@ -35,6 +35,13 @@ cd CoffeePeek-Android
    - `API_BASE_URL` — URL backend (уточните у команды)
    - `GOOGLE_WEB_CLIENT_ID` — опционально, для Google Sign-In
 
+   В шаблоне указан публичный API `https://api.coffeepeek.by/`. Старый
+   Railway-адрес больше не обслуживает приложение (`404 Application not found`).
+   Для проверки операций записи используйте согласованное QA-окружение и
+   тестовый аккаунт. После изменения URL пересоберите и установите APK:
+   значение встраивается в Android `BuildConfig`, а не читается на устройстве
+   из `local.properties`.
+
 3. Получите у команды:
    - тестовый аккаунт на API
    - ключи, если dev-окружение отличается от дефолтного
@@ -44,8 +51,14 @@ cd CoffeePeek-Android
 ### Сборка
 
 ```bash
-./gradlew :composeApp:assembleDebug
+./gradlew :composeApp:assembleDirectDebug :composeApp:assemblePlayDebug
 ```
+
+Для локальной установки используйте
+`composeApp/build/outputs/apk/direct/debug/composeApp-direct-debug.apk`.
+`Direct` поддерживает обновление APK, `Play` — распространение через Google Play.
+Debug-сборки автоматически проверяют определения стартовых классов в DEX;
+подробнее: [диагностика упаковки APK](build-logic/ANDROID_RUNTIME_PACKAGING.md).
 
 ---
 
@@ -116,7 +129,7 @@ feat: публичный чек-ин с обязательным коммент�
 
 Перед отправкой:
 
-- [ ] `./gradlew :composeApp:assembleDebug` проходит
+- [ ] Direct/Play debug-сборки и проверки runtime-классов проходят
 - [ ] `xcodebuild` или Run схемы `iosApp` проходит для iOS-изменений
 - [ ] Проверен основной сценарий (логин → лента / карта / профиль)
 - [ ] Нет секретов и `local.properties` в коммите

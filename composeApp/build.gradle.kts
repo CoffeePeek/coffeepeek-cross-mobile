@@ -1,4 +1,6 @@
 import com.coffeepeek.buildlogic.module
+import com.coffeepeek.buildlogic.VerifyApkRuntimeClassesTask
+import com.android.build.api.artifact.SingleArtifact
 import com.coffeepeek.config.Config
 import com.coffeepeek.config.PrintValueTask
 import org.gradle.api.provider.Provider
@@ -219,4 +221,22 @@ android {
 
 dependencies {
     debugImplementation(compose.uiTooling)
+}
+
+// Debug variants are not minified: startup DI classes must exist as definitions in the APK.
+androidComponents {
+    onVariants(selector().withBuildType("debug")) { variant ->
+        val variantName = variant.name.replaceFirstChar { it.uppercaseChar() }
+        val verification = tasks.register<VerifyApkRuntimeClassesTask>("verify${variantName}RuntimeClasses") {
+            group = "verification"
+            description = "Checks startup class definitions inside the ${variant.name} APK."
+            apkDirectory.set(variant.artifacts.get(SingleArtifact.APK))
+            requiredClasses.set(listOf(
+                "com.coffeepeek.api.service.CheckInApiService",
+                "com.coffeepeek.api.CoffeePeekRepo",
+                "com.coffeepeek.data.di.DataModuleKt",
+            ))
+        }
+        tasks.matching { it.name == "assemble$variantName" }.configureEach { finalizedBy(verification) }
+    }
 }

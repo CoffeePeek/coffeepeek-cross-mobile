@@ -300,6 +300,8 @@ If any answer is unclear, keep a package boundary and revisit later.
 After an architectural change, verify:
 
 - affected modules compile and relevant tests pass;
+- Android debug APKs contain the required startup class definitions (the
+  assembly finalizers verify packaged DEX, not only compile/runtime JARs);
 - no new forbidden dependency or cycle exists;
 - DTOs/entities remain inside data;
 - domain is infrastructure- and platform-independent;

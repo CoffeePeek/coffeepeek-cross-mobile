@@ -183,6 +183,9 @@ implementation details.
 ## After coding
 
 - Compile affected modules and run relevant tests.
+- Android debug assembly must pass the packaged DEX runtime-class checks.
+  Compilation alone does not prove startup correctness; smoke-test startup on
+  a device when diagnosing packaging/DI crashes, without clearing user data.
 - Check Gradle dependencies, imports, source sets, and dependency cycles.
 - Verify DTO/entity containment; infrastructure independence of domain; and that
   UI does not access data implementations.
