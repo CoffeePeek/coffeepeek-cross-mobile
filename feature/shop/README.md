@@ -26,7 +26,7 @@ The existing shared/iOS route and ViewModel remain untouched.
 
 | Module | Responsibility | Allowed dependencies and consumers |
 |---|---|---|
-| `api` | Minimal composable gallery entry and caller callbacks | Compose runtime; application composition |
+| `api` | Minimal gallery and check-in modal entries, identifiers and caller callbacks | Compose runtime; application composition |
 | `domain` | Gallery/details, review and check-in models, validation and `Result` repository contracts | Pure Kotlin; shop data/impl |
 | `data` | Shop HTTP requests, narrow DTOs, mappers, photo uploads and repository factories | Domain, core/network, Ktor, serialization; application composition |
 | `impl` | MVI gallery screen, resources, previews and API adapter | API/domain, core presentation/design-system; application composition |
@@ -128,13 +128,28 @@ sharing its business models. Pending writes disable dismissal; successful writes
 retain their Public/Private confirmation until the caller receives a feed/history
 event. Device UI tests are provided separately from unit coverage.
 
-Keep a single `AndroidShopCheckInDraftStore` instance when wiring composition:
+Android `shopCheckInModule` now registers one repository, date formatter,
+photo-picker adapter, `AndroidShopCheckInDraftStore` and `ShopCheckInCreateEntry`.
+Resolving the graph does not open a draft or read credentials/send requests.
+The modal API takes the internal shop ID separately from the public address slug:
+`forShop(id, slug)` retains existing draft keys while domain/transport use the slug.
+Each binding holds its own draft lease; a stale form cannot overwrite a replacement
+even if a new form has already opened it. The entry owns a fresh ViewModelStore
+per modal lifetime and clears it on disposal. Closing/reopening restores input
+without reusing a completed ViewModel; cancelling a pending write retains the
+uncertainty guard. Feature UI still performs no Koin lookup.
+
+Keep a single `AndroidShopCheckInDraftStore` instance in composition:
 it wraps the existing process-only draft and keeps the uncertainty guard across
 sheet recreation. Logout/clear/replacement invalidates that guard; stale form
 state cannot overwrite or clear a replacement draft. The date formatter retains
-the existing local-calendar-day to UTC conversion. Neither adapter is registered
-or connected to active routes yet. The feature's API remains gallery-only until
-detail/form behavior parity and device verification are complete.
+the existing local-calendar-day to UTC conversion. The Android photo port reuses
+the existing URI/JPEG/camera-permission pipeline, caps delivered photos at the
+remaining five-photo allowance, and disables submission during processing.
+These dependencies are registered and the form entry is tested in isolation,
+but no active Android route invokes it yet. Caller-owned auth/session gating,
+submission refresh and destinations must be connected before switching the form.
+Real picker/camera and authenticated-write QA remain separate gates.
 Contact link formatting belongs to presentation; opening links and copying phone numbers remain caller
 callbacks, not feature-owned platform calls.
 

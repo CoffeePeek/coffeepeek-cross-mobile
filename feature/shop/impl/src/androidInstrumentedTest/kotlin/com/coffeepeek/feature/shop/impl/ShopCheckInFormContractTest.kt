@@ -44,6 +44,7 @@ class ShopCheckInFormContractTest {
     private fun render(
         value: ShopCheckInFormState,
         dark: Boolean = false,
+        photosPreparing: Boolean = false,
         onAction: (ShopCheckInFormAction) -> Unit = {},
     ): ActivityScenario<ShopFormTestActivity> = ActivityScenario.launch(ShopFormTestActivity::class.java).also { scenario ->
         scenario.onActivity { activity ->
@@ -53,6 +54,7 @@ class ShopCheckInFormContractTest {
                         state = value, shopName = "Тестовая кофейня", visitLabel = "9 октября 2026",
                         selectedVisitMillis = 1791504000000, nowMillis = 1791547200000,
                         onAction = onAction, onVisitDate = {}, onGallery = {}, onCamera = {},
+                        photosPreparing = photosPreparing,
                     )
                 }
             }
@@ -105,6 +107,14 @@ class ShopCheckInFormContractTest {
             compose.onNodeWithText("Оставить чекин").assertDoesNotExist()
             compose.onNodeWithText("К ленте").assertDoesNotExist()
             compose.onNodeWithText("Мои чекины").assertDoesNotExist()
+        }
+    }
+
+    @Test fun preparingPhotosDisablesSubmitWithoutEmittingWrite() {
+        val actions = mutableListOf<ShopCheckInFormAction>()
+        render(initial, photosPreparing = true, onAction = actions::add).use {
+            compose.onNodeWithText("Оставить чекин").performScrollTo().assertIsNotEnabled().performClick()
+            compose.runOnIdle { assertTrue(actions.isEmpty()) }
         }
     }
 

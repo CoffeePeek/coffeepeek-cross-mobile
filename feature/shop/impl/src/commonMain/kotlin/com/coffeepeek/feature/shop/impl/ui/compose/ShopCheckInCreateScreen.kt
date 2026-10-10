@@ -32,7 +32,6 @@ import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.core.designsystem.theme.CpDimens
 import com.coffeepeek.feature.shop.domain.model.MAX_SHOP_CHECK_IN_PHOTOS
 import com.coffeepeek.feature.shop.domain.model.ShopCheckInCreateInput
-import com.coffeepeek.feature.shop.domain.model.ShopCheckInPhoto
 import com.coffeepeek.feature.shop.domain.model.ShopRating
 import com.coffeepeek.feature.shop.domain.usecase.ShopCheckInValidationError
 import com.coffeepeek.feature.shop.impl.resources.Res
@@ -65,6 +64,7 @@ import com.coffeepeek.feature.shop.impl.ui.compose.model.ShopCheckInFormAction
 import com.coffeepeek.feature.shop.impl.ui.compose.model.ShopCheckInFormEvent
 import com.coffeepeek.feature.shop.impl.ui.compose.model.ShopCheckInFormState
 import com.coffeepeek.feature.shop.impl.ui.data.ShopCheckInDateFormatter
+import com.coffeepeek.feature.shop.impl.ui.data.ShopCheckInPhotoPicker
 import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
@@ -74,10 +74,10 @@ internal fun ShopCheckInCreateScreen(
     viewModel: ShopCheckInCreateViewModel,
     shopName: String,
     dates: ShopCheckInDateFormatter,
+    photos: ShopCheckInPhotoPicker,
     onEvent: (ShopCheckInFormEvent) -> Unit,
-    pickFromGallery: (Int, (List<ShopCheckInPhoto>) -> Unit) -> Unit,
-    takePhoto: ((List<ShopCheckInPhoto>) -> Unit) -> Unit,
 ) {
+    val picker = photos.rememberController()
     val state by viewModel.state.collectAsStateWithLifecycle()
     val currentOnEvent by rememberUpdatedState(onEvent)
     LaunchedEffect(viewModel) { viewModel.events.collect { currentOnEvent(it) } }
@@ -92,9 +92,10 @@ internal fun ShopCheckInCreateScreen(
             selectedVisitMillis = dates.pickerMillis(state.input.visitedAtIso), nowMillis = dates.nowMillis(),
             onAction = viewModel::onAction,
             onVisitDate = { viewModel.onAction(ShopCheckInFormAction.VisitDateChanged(dates.visitInstant(it))) },
-            onGallery = { remaining -> pickFromGallery(remaining) { viewModel.onAction(ShopCheckInFormAction.PhotosAdded(it)) } },
-            onCamera = { takePhoto { viewModel.onAction(ShopCheckInFormAction.PhotosAdded(it)) } },
+            onGallery = { remaining -> picker.pickFromGallery(remaining) { viewModel.onAction(ShopCheckInFormAction.PhotosAdded(it)) } },
+            onCamera = { picker.takePhoto { viewModel.onAction(ShopCheckInFormAction.PhotosAdded(it)) } },
             modifier = Modifier.fillMaxHeight(0.76f),
+            photosPreparing = picker.isPreparing,
         )
     }
 }
@@ -112,6 +113,7 @@ internal fun ShopCheckInCreateScreenContent(
     onGallery: (Int) -> Unit,
     onCamera: () -> Unit,
     modifier: Modifier = Modifier,
+    photosPreparing: Boolean = false,
 ) {
     val scroll = rememberScrollState()
     val focus = LocalFocusManager.current
@@ -119,7 +121,7 @@ internal fun ShopCheckInCreateScreenContent(
     LaunchedEffect(scroll.isScrollInProgress) {
         if (scroll.isScrollInProgress) { keyboard?.hide(); focus.clearFocus() }
     }
-    val editable = !state.isLoading && !state.isSubmitting && !state.submitted && !state.deliveryUnconfirmed
+    val editable = !state.isLoading && !state.isSubmitting && !state.submitted && !state.deliveryUnconfirmed && !photosPreparing
     Column(
         modifier.fillMaxWidth().testTag("shop-checkin-form").verticalScroll(scroll)
             .imePadding().navigationBarsPadding().padding(CpDimens.spacing4),
@@ -144,7 +146,7 @@ internal fun ShopCheckInCreateScreenContent(
                 onAction(ShopCheckInFormAction.TextChanged(it))
             }
             ShopPhotoAttachments(
-                photos = state.input.photos.map { it.bytes }, isLoading = false, enabled = editable,
+                photos = state.input.photos.map { it.bytes }, isLoading = photosPreparing, enabled = editable,
                 title = stringResource(Res.string.shop_checkin_form_photos),
                 hint = stringResource(Res.string.shop_checkin_form_photos_hint, MAX_SHOP_CHECK_IN_PHOTOS),
                 maxPhotos = MAX_SHOP_CHECK_IN_PHOTOS,
@@ -207,15 +209,17 @@ private fun validationMessage(error: ShopCheckInValidationError?): String? = err
 }
 
 @Composable
-private fun ShopCheckInFormPreview(dark: Boolean, uncertain: Boolean = false) = CoffeePeekTheme(darkTheme = dark) {
+private fun ShopCheckInFormPreview(dark: Boolean, uncertain: Boolean = false, photosPreparing: Boolean = false) = CoffeePeekTheme(darkTheme = dark) {
     val state = ShopCheckInFormState(
         input = ShopCheckInCreateInput("preview-shop", "Понравился фильтр", ShopRating(4, 4, 4), "2026-10-09T09:00:00Z"),
         isLoading = false, deliveryUnconfirmed = uncertain,
     )
-    ShopCheckInCreateScreenContent(state, "Кофейня", "9 октября 2026", 1791504000000, 1791547200000, {}, {}, {}, {})
+    ShopCheckInCreateScreenContent(state, "Кофейня", "9 октября 2026", 1791504000000, 1791547200000, {}, {}, {}, {}, photosPreparing = photosPreparing)
 }
 
 @Preview @Composable private fun ShopCheckInFormLightPreview() = ShopCheckInFormPreview(false)
 @Preview @Composable private fun ShopCheckInFormDarkPreview() = ShopCheckInFormPreview(true)
 @Preview @Composable private fun ShopCheckInUnconfirmedLightPreview() = ShopCheckInFormPreview(false, true)
 @Preview @Composable private fun ShopCheckInUnconfirmedDarkPreview() = ShopCheckInFormPreview(true, true)
+@Preview @Composable private fun ShopCheckInPhotosPreparingLightPreview() = ShopCheckInFormPreview(false, photosPreparing = true)
+@Preview @Composable private fun ShopCheckInPhotosPreparingDarkPreview() = ShopCheckInFormPreview(true, photosPreparing = true)

@@ -76,11 +76,14 @@ Device/server verification remains separate from MockEngine coverage.
   with the same meaning as the current date picker.
 - [ ] Wire application-owned camera/gallery conversion and the date formatter
   through the active form entry, and verify picker behavior on device.
+  The Android adapters and public modal entry are now assembled in app Koin;
+  active route connection and actual picker/camera QA remain pending.
 - [ ] Preserve existing draft lifetime: one shop draft for the app process,
   retain on dismiss/failure, replace on another shop, clear on success/logout.
   Do not silently add durable persistence or retain drafts across accounts.
-  Android adapter is prepared around the existing store; single-instance
-  composition/route wiring remain pending; adapter unit tests pass.
+  One Android adapter is registered around the existing store. Bound leases
+  preserve internal ID versus public slug and reject stale session writes;
+  active route wiring remains pending; adapter unit tests pass.
 - [x] Prepare the draft adapter contract and retain an uncertainty guard across
   form recreation. Require explicit history-check acknowledgement before retry.
 - [x] Prepare dismissal/repeated-submit guards and retain input on errors.
@@ -192,7 +195,7 @@ adapter instance in app composition across form recreation. Legacy clear/logout
 or draft replacement invalidates its delivery guard; stale writes/cleanup cannot
 overwrite a replacement draft. The Android date formatter delegates to the
 existing local-date/UTC conversion. No new persistent storage or iOS screen was
-introduced. These adapters are not yet registered or connected to live routes.
+introduced. Android DI now registers these adapters; live routes remain unchanged.
 
 Adapter tests cover field/photo preservation, defaults, timezone round trips,
 guard lifetime, stale saves/cleanup and cancellation. A design-system device
@@ -233,11 +236,43 @@ locked; rerunning the fixes there remains pending. IDE modal/paired-preview
 inspection, authenticated QA and Android photo-picker integration are still
 open. CoffeePeek user data was not cleared, and no backend writes were made.
 
-Next: finish isolated UI verification, then connect Android date/photo/draft
-adapters through app-owned entry composition (one draft adapter instance).
-Pass the existing API/upload clients and map success/feed/history callbacks
-without replacing root navigation. Keep active legacy detail/form routes until
-the remaining behavior-parity and device gates pass.
+## Android form composition — 2026-10-10
+
+`shopCheckInModule` registers the repository with existing authenticated API and
+separate upload clients, one date/draft adapter, the existing Android photo-picker
+pipeline and the new public `ShopCheckInCreateEntry`. There is no feature DI
+Gradle module and no Koin in feature UI/domain/data. API exposes only identifiers,
+shop name and caller callbacks, not ViewModels, transport or business models.
+
+Internal shop IDs and public address slugs are distinct. Bound draft ports preserve
+legacy ID keys but restore/save domain inputs with the public slug. Per-binding
+leases reject writes and clears from an old screen after account/draft replacement,
+including when a new screen has already opened the replacement. The single
+process store and delivery guard remain intact across modal recreation.
+
+The modal owns a fresh lifecycle ViewModel for each opening. Disposal cancels
+in-flight work; a possibly accepted write remains guarded on reopen. The Android
+photo port converts already-prepared images, limits delivery to remaining slots
+and disables submission while images are being prepared. Real picker permission,
+camera cancellation/result and recreation QA are not inferred from this coverage.
+
+Verified: all library debug unit tests, both Android APK variants, application
+unit tests and lint, plus 9 isolated form/entry UI tests on the temporary
+read-only Pixel_10_Pro AVD. Android adapter tests cover ID/slug separation, stale
+leases, date/draft behavior and photo conversion limits; DI resolution preserves
+the draft and does not read credentials. UI tests cover processing-disabled
+submission, successful callback delivery without auto-dismiss, fresh ViewModel
+on reopen, input retention and lifecycle cancellation without automatic retry.
+The application startup smoke check stayed alive without crashes. Packaged DEX
+checks now also require the new DI/API/domain and data/impl entry factories.
+No user data was cleared and no live writes were sent. No physical phone was
+connected for this run. iOS screen/binding paths were not switched.
+
+Next: connect the form entry to Android shop detail with explicit auth/session
+ownership, submitted refresh and feed/history callbacks; preserve the picker
+mode and current legacy/iOS renderer. Exercise actual Android picker/camera and
+safe authenticated scenarios before replacing the active form. Keep the full
+detail renderer disconnected until its remaining parity gates pass.
 
 This checkpoint exceeds the usual 50-file PR guideline because it completes
 previously accumulated work inside the single consolidated PR #43 explicitly

@@ -235,6 +235,11 @@ androidComponents {
                 "com.coffeepeek.api.service.CheckInApiService",
                 "com.coffeepeek.api.CoffeePeekRepo",
                 "com.coffeepeek.data.di.DataModuleKt",
+                "com.coffeepeek.admin.di.shop.ShopCheckInModuleKt",
+                "com.coffeepeek.feature.shop.api.ShopCheckInCreateEntry",
+                "com.coffeepeek.feature.shop.domain.repository.ShopCheckInRepository",
+                "com.coffeepeek.feature.shop.data.repository.ShopCheckInRepositoryFactoryKt",
+                "com.coffeepeek.feature.shop.impl.ShopCheckInCreateApiImplKt",
             ))
         }
         tasks.matching { it.name == "assemble$variantName" }.configureEach { finalizedBy(verification) }

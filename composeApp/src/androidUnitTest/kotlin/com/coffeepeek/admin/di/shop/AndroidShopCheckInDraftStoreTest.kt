@@ -98,4 +98,44 @@ class AndroidShopCheckInDraftStoreTest {
         val legacy = CheckInDraftStore { throw CancellationException("cancel") }
         assertFailsWith<CancellationException> { AndroidShopCheckInDraftStore(legacy, dates).open(initial()) }
     }
+
+    @Test fun bindingPreservesInternalDraftKeyAndUsesPublicSlugForTransport() {
+        val legacy = CheckInDraftStore { now }
+        legacy.save(legacy.open("internal-id").copy(note = "Existing draft"))
+        val adapter = AndroidShopCheckInDraftStore(legacy, dates)
+        val binding = adapter.forShop("internal-id", "public-address")
+        val snapshot = binding.open(initial("public-address")).getOrThrow()
+        assertEquals("Existing draft", snapshot.input.text)
+        assertEquals("public-address", snapshot.input.shopSlug)
+        binding.save(snapshot.copy(deliveryUnconfirmed = true)).getOrThrow()
+        assertEquals("internal-id", legacy.peek()!!.shopId)
+        val reopened = adapter.forShop("internal-id", "public-address")
+        assertTrue(reopened.open(initial("public-address")).getOrThrow().deliveryUnconfirmed)
+        reopened.clear("public-address").getOrThrow()
+        assertEquals(null, legacy.peek())
+    }
+
+    @Test fun oldBindingCannotOverwriteReplacementEvenAfterItWasOpenedByNewBinding() {
+        val legacy = CheckInDraftStore { now }
+        val adapter = AndroidShopCheckInDraftStore(legacy, dates)
+        val old = adapter.forShop("internal-id", "public-address")
+        val stale = old.open(initial("public-address")).getOrThrow()
+        legacy.clearAll()
+        val fresh = adapter.forShop("internal-id", "public-address")
+        val replacement = fresh.open(initial("public-address")).getOrThrow()
+        fresh.save(replacement.copy(input = replacement.input.copy(text = "New session"))).getOrThrow()
+        assertTrue(old.save(stale).isFailure)
+        assertTrue(old.clear("public-address").isFailure)
+        assertEquals("New session", legacy.peek()!!.note)
+    }
+
+    @Test fun bindingRejectsWrongSlugWithoutOpeningOrClearingDraft() {
+        val legacy = CheckInDraftStore { now }
+        val binding = AndroidShopCheckInDraftStore(legacy, dates).forShop("internal-id", "public-address")
+        assertTrue(binding.open(initial("wrong-address")).isFailure)
+        assertEquals(null, legacy.peek())
+        binding.open(initial("public-address")).getOrThrow()
+        assertTrue(binding.clear("wrong-address").isFailure)
+        assertEquals("internal-id", legacy.peek()!!.shopId)
+    }
 }
