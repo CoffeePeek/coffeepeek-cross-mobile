@@ -73,7 +73,7 @@ private val LightColorScheme: ColorScheme = lightColorScheme(
 
 @Composable
 fun CoffeePeekTheme(
-    fontFamily: FontFamily,
+    fontFamily: FontFamily = Manrope,
     darkTheme: Boolean = isSystemInDarkTheme(),
     content: @Composable () -> Unit,
 ) {

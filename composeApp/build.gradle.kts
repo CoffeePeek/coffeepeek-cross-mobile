@@ -1,4 +1,6 @@
 import com.coffeepeek.buildlogic.module
+import com.coffeepeek.buildlogic.VerifyApkRuntimeClassesTask
+import com.android.build.api.artifact.SingleArtifact
 import com.coffeepeek.config.Config
 import com.coffeepeek.config.PrintValueTask
 import org.gradle.api.provider.Provider
@@ -32,8 +34,20 @@ kotlin {
 
     sourceSets {
         androidMain.dependencies {
+            implementation(project(module.feature.favorites.api))
+            implementation(project(module.feature.favorites.data))
+            implementation(project(module.feature.favorites.impl))
+            implementation(project(module.feature.shopReport.api))
+            implementation(project(module.feature.shopReport.data))
+            implementation(project(module.feature.shopReport.impl))
+            implementation(project(module.feature.shop.api))
+            implementation(project(module.feature.shop.domain))
+            implementation(project(module.feature.shop.data))
+            implementation(project(module.feature.shop.impl))
+            implementation(project(module.core.coroutines))
             implementation(compose.preview)
             implementation(libs.androidx.activity.compose)
+            implementation(libs.androidx.concurrent.futures)
             implementation(libs.androidx.appcompat)
             implementation("androidx.core:core-splashscreen:1.0.1")
             implementation("androidx.exifinterface:exifinterface:1.4.1")
@@ -44,6 +58,7 @@ kotlin {
             implementation("org.slf4j:slf4j-nop:2.0.16")
         }
         commonMain.dependencies {
+            implementation(project(module.feature.favorites.domain))
             implementation(project(module.legacy.domain))
             implementation(project(module.legacy.data))
             implementation(project(module.legacy.network))
@@ -74,6 +89,18 @@ kotlin {
         commonTest.dependencies {
             implementation(libs.kotlin.test)
             implementation("io.ktor:ktor-client-mock:${libs.versions.ktor.get()}")
+        }
+        androidUnitTest.dependencies {
+            implementation(libs.kotlinx.coroutines.test)
+        }
+        androidInstrumentedTest.dependencies {
+            implementation(libs.kotlin.test)
+            implementation(libs.androidx.compose.ui.test.junit4)
+            implementation(libs.androidx.activity.compose)
+            implementation(libs.androidx.room.runtime)
+            implementation(libs.androidx.testExt.junit)
+            implementation(libs.androidx.test.runner)
+            implementation(libs.androidx.espresso.core)
         }
     }
 }
@@ -132,7 +159,8 @@ val apiBaseUrl: String = run {
 
 android {
     namespace = Config.APPLICATION_ID
-    compileSdk = Config.COMPILE_SDK
+    // Navigation 3 1.2.0 in the Android-only favorites feature requires API 37.
+    compileSdk = 37
 
     buildFeatures {
         buildConfig = true
@@ -140,6 +168,7 @@ android {
 
     defaultConfig {
         applicationId = Config.APPLICATION_ID
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         minSdk = Config.MIN_SDK
         targetSdk = Config.TARGET_SDK
         versionCode = appVersionCode.get()
@@ -192,4 +221,27 @@ android {
 
 dependencies {
     debugImplementation(compose.uiTooling)
+}
+
+// Debug variants are not minified: startup DI classes must exist as definitions in the APK.
+androidComponents {
+    onVariants(selector().withBuildType("debug")) { variant ->
+        val variantName = variant.name.replaceFirstChar { it.uppercaseChar() }
+        val verification = tasks.register<VerifyApkRuntimeClassesTask>("verify${variantName}RuntimeClasses") {
+            group = "verification"
+            description = "Checks startup class definitions inside the ${variant.name} APK."
+            apkDirectory.set(variant.artifacts.get(SingleArtifact.APK))
+            requiredClasses.set(listOf(
+                "com.coffeepeek.api.service.CheckInApiService",
+                "com.coffeepeek.api.CoffeePeekRepo",
+                "com.coffeepeek.data.di.DataModuleKt",
+                "com.coffeepeek.admin.di.shop.ShopCheckInModuleKt",
+                "com.coffeepeek.feature.shop.api.ShopCheckInCreateEntry",
+                "com.coffeepeek.feature.shop.domain.repository.ShopCheckInRepository",
+                "com.coffeepeek.feature.shop.data.repository.ShopCheckInRepositoryFactoryKt",
+                "com.coffeepeek.feature.shop.impl.ShopCheckInCreateApiImplKt",
+            ))
+        }
+        tasks.matching { it.name == "assemble$variantName" }.configureEach { finalizedBy(verification) }
+    }
 }

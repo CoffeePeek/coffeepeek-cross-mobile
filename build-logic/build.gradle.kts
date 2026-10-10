@@ -6,7 +6,12 @@ group = "com.coffeepeek"
 version = "1.0"
 
 repositories {
+    google()
     mavenCentral()
+}
+
+dependencies {
+    implementation(project(":build-logic-utils"))
 }
 
 gradlePlugin {

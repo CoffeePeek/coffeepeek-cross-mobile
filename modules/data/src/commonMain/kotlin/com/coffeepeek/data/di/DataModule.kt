@@ -44,6 +44,7 @@ fun dataModule(
     database: DatabaseCore,
     platformContext: Any? = null,
     debug: Boolean = false,
+    registerLegacyFavorites: Boolean = true,
 ): Module = module {
     single { CoroutineScope(Dispatchers.Default + SupervisorJob()) }
 
@@ -98,7 +99,9 @@ fun dataModule(
     single { get<CoffeePeekRepo>().shopChangeRequestApiService }
     single<PhotoRepository> { PhotoRepositoryImpl(get()) }
     single<AuthRepository> { AuthRepositoryImpl(get(), get(), get()) }
-    single<FavoriteRepository> { FavoriteRepositoryImpl(database) }
+    if (registerLegacyFavorites) {
+        single<FavoriteRepository> { FavoriteRepositoryImpl(database) }
+    }
     single<ShopRepository> { ShopRepositoryImpl(get(), get(), get(), get(), get()) }
     single<UserRepository> { UserRepositoryImpl(get(), get(), get(), get()) }
     single<ReviewRepository> { ReviewRepositoryImpl(get(), get(), get()) }

@@ -22,11 +22,11 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Set up JDK 17
+      - name: Set up JetBrains Runtime 21
         uses: actions/setup-java@v6
         with:
-          distribution: temurin
-          java-version: "17"
+          distribution: jetbrains
+          java-version: "21"
           cache: gradle
 
       - name: Install Android 37 SDK components
@@ -50,5 +50,13 @@ jobs:
         shell: bash
         run: printf 'API_BASE_URL=https://example.com/\nGOOGLE_WEB_CLIENT_ID=\n' > local.properties
 
+      - name: Test APK runtime verification
+        run: ./gradlew -p build-logic --no-daemon :build-logic-utils:test
+
       - name: Build and check Android
-        run: ./gradlew --no-daemon :composeApp:assembleDirectDebug :composeApp:assemblePlayDebug testDebugUnitTest :composeApp:testDirectDebugUnitTest :composeApp:testPlayDebugUnitTest lintDebug :composeApp:lintDirectDebug :composeApp:lintPlayDebug
+        run: >-
+          ./gradlew --no-daemon
+          :composeApp:assembleDirectDebug :composeApp:assemblePlayDebug
+          testDebugUnitTest :composeApp:testDirectDebugUnitTest :composeApp:testPlayDebugUnitTest
+          lintDebug :composeApp:lintDirectDebug :composeApp:lintPlayDebug
+          :core:design-system:assembleDebugAndroidTest :feature:shop:impl:assembleDebugAndroidTest

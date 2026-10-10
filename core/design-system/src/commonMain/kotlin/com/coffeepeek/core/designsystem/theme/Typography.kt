@@ -1,10 +1,20 @@
 package com.coffeepeek.core.designsystem.theme
 
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.material3.Typography
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import org.jetbrains.compose.ui.tooling.preview.Preview
 
 fun cpTypography(fontFamily: FontFamily): Typography {
     val manrope = fontFamily
@@ -92,3 +102,19 @@ fun cpTypography(fontFamily: FontFamily): Typography {
         ),
     )
 }
+
+@Composable
+private fun BrandTypographyPreviewContent(darkTheme: Boolean) = CoffeePeekTheme(darkTheme = darkTheme) {
+    Surface {
+        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            listOf(FontWeight.Light, FontWeight.Normal, FontWeight.Medium, FontWeight.SemiBold,
+                FontWeight.Bold, FontWeight.ExtraBold).forEach { weight ->
+                Text("Manrope ${weight.weight}: Кофе Coffee", fontWeight = weight,
+                    style = MaterialTheme.typography.bodyLarge)
+            }
+        }
+    }
+}
+
+@Preview @Composable private fun BrandTypographyLightPreview() = BrandTypographyPreviewContent(false)
+@Preview @Composable private fun BrandTypographyDarkPreview() = BrandTypographyPreviewContent(true)

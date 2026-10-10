@@ -55,6 +55,25 @@ class PublicCommunityViewModelTest {
     }
 
     @Test
+    fun returningToScreenRefreshesWithoutDuplicatingInitialLoad() = runBlocking {
+        val requests = MutableStateFlow(0)
+        val feed = TestPublicFeed().apply { load = { _, cursor, _ ->
+            assertNull(cursor)
+            val number = requests.updateAndGet { it + 1 }
+            Result.success(FeedPage(listOf(item(visit.copy(id = "load-$number"))), null))
+        } }
+        val vm = CommunityViewModel(FeedCheckIns(), FeedSessions(null), FeedShops(), feed, FeedUsers())
+        try {
+            vm.await { it.items.singleOrNull()?.id == "load-1" && !it.isLoading }
+            vm.onScreenResumed()
+            assertEquals(1, requests.value)
+            vm.onScreenResumed()
+            vm.await { it.items.singleOrNull()?.id == "load-2" && !it.isLoading }
+            assertEquals(2, requests.value)
+        } finally { vm.close() }
+    }
+
+    @Test
     fun cursorRetryAppendsWithoutDuplicatesAndRefreshReplacesFromFirstPage() = runBlocking {
         val cursors = mutableListOf<String?>()
         var fail = true

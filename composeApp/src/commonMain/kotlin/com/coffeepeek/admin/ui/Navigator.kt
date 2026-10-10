@@ -5,7 +5,7 @@ import com.coffeepeek.admin.ui.screen.auth.registr.RegisterScreen
 import com.coffeepeek.admin.ui.screen.checkins.VisitedPlacesScreen
 import com.coffeepeek.admin.ui.screen.deleteaccount.DeleteAccountPendingScreen
 import com.coffeepeek.admin.ui.screen.editprofile.EditProfileScreen
-import com.coffeepeek.admin.ui.screen.favorites.FavoritesScreen
+import com.coffeepeek.admin.ui.favorites.FavoritesDestination
 import com.coffeepeek.admin.ui.screen.contributions.ContributionKind
 import com.coffeepeek.admin.ui.screen.contributions.MyContributionsScreen
 import com.coffeepeek.admin.ui.screen.roaster.AddRoasterScreen
@@ -49,8 +49,8 @@ import com.coffeepeek.admin.ui.screen.main.MainScreen
 import com.coffeepeek.admin.ui.component.RetainedContent
 import com.coffeepeek.admin.ui.screen.shop.ShopDetailScreen
 import com.coffeepeek.admin.feature.coffee.ui.CoffeeDetailScreen
-import com.coffeepeek.admin.ui.screen.shop.ShopMenuGalleryScreen
-import com.coffeepeek.admin.ui.screen.shop.ShopReportScreen
+import com.coffeepeek.admin.ui.screen.shop.ShopMenuGalleryScreenRenderer
+import com.coffeepeek.admin.ui.screen.shop.ShopReportScreenRenderer
 import com.coffeepeek.admin.ui.screen.shopchange.ShopChangeEditorScreen
 import com.coffeepeek.admin.ui.screen.shopchange.ShopChangeRequestDetailScreen
 import com.coffeepeek.admin.ui.screen.shopchange.SuggestShopChangeScreen
@@ -400,11 +400,11 @@ object Navigator {
                     }
                     composable<Screen.ShopMenuGallery> { backStack ->
                         val route = backStack.toRoute<Screen.ShopMenuGallery>()
-                        ShopMenuGalleryScreen(shopId = route.shopId)
+                        koinInject<ShopMenuGalleryScreenRenderer>().Content(shopId = route.shopId)
                     }
                     composable<Screen.ReportShop> { backStack ->
                         val route = backStack.toRoute<Screen.ReportShop>()
-                        ShopReportScreen(shopId = route.shopId, shopTitle = route.shopTitle)
+                        koinInject<ShopReportScreenRenderer>().Content(route.shopId, route.shopTitle)
                     }
                     composable<Screen.SuggestShopChange> { backStack ->
                         val route = backStack.toRoute<Screen.SuggestShopChange>()
@@ -434,7 +434,7 @@ object Navigator {
                     }
                     composable<Screen.EditProfile> { EditProfileScreen() }
                     composable<Screen.DeleteAccountPending> { DeleteAccountPendingScreen() }
-                    composable<Screen.Favorites> { FavoritesScreen() }
+                    composable<Screen.Favorites> { FavoritesDestination() }
                     composable<Screen.VisitedPlaces> { VisitedPlacesScreen() }
                     composable<Screen.CitySettings> { CityScreen() }
                     composable<Screen.ThemeSettings> { ThemeScreen() }

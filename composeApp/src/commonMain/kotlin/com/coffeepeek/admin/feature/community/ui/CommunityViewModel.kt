@@ -92,6 +92,7 @@ internal class CommunityViewModel(
     private var mutationJob: Job? = null
     private var drinksJob: Job? = null
     private var profileJob: Job? = null
+    private var hasResumed: Boolean = false
 
     init {
         workScope.launch {
@@ -146,6 +147,11 @@ internal class CommunityViewModel(
         _state.update { it.copy(filters = filters, items = emptyList(), publishedAt = emptyMap(), page = 0,
             nextCursor = null, hasMore = false, error = null, sessionGeneration = it.sessionGeneration + 1) }
         load(reset = true)
+    }
+
+    fun onScreenResumed() {
+        // Session observation owns the initial load, even if it finishes before the first resume.
+        if (hasResumed) refresh() else hasResumed = true
     }
 
     fun refresh() {

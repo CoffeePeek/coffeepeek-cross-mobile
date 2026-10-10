@@ -8,14 +8,24 @@ class UserSessionCleaner(
     private val favoriteRepository: FavoriteRepository,
     private val httpCacheFolderPath: String,
     private val appCacheRootPath: String,
+    private val clearCaches: () -> Unit = {
+        clearPlatformCachesSafely(httpCacheFolderPath, appCacheRootPath)
+    },
 ) {
     suspend fun clearLocalUserData() {
-        sessionRepository.saveSession(null)
-        favoriteRepository.clearAll()
-        clearDiskCaches()
+        try {
+            sessionRepository.saveSession(null)
+            favoriteRepository.clearAll()
+        } finally {
+            clearCaches()
+        }
     }
 
     fun clearDiskCaches() {
-        runCatching { clearPlatformCaches(httpCacheFolderPath, appCacheRootPath) }
+        clearPlatformCachesSafely(httpCacheFolderPath, appCacheRootPath)
     }
+}
+
+private fun clearPlatformCachesSafely(httpCacheFolderPath: String, appCacheRootPath: String) {
+    runCatching { clearPlatformCaches(httpCacheFolderPath, appCacheRootPath) }
 }

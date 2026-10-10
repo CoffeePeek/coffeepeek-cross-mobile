@@ -3,6 +3,7 @@ package com.coffeepeek.admin.ui.screen.feed
 import com.coffeepeek.admin.base.BaseViewModel
 import com.coffeepeek.admin.settings.CityPreference
 import com.coffeepeek.admin.ui.Navigator
+import com.coffeepeek.admin.ui.favorites.withFavoriteMembership
 import com.coffeepeek.admin.utils.FavoriteSync
 import com.coffeepeek.domain.model.CatalogItem
 import com.coffeepeek.domain.model.City
@@ -11,6 +12,8 @@ import com.coffeepeek.domain.model.ShopFilters
 import com.coffeepeek.domain.repository.FavoriteRepository
 import com.coffeepeek.domain.repository.SessionRepository
 import com.coffeepeek.domain.repository.ShopRepository
+import com.coffeepeek.feature.favorites.domain.usecase.ObserveFavoriteIdsUseCase
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -23,6 +26,8 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 
 private const val PAGE_SIZE = 20
 
@@ -63,6 +68,7 @@ data class FeedFiltersUi(
 
 data class FeedUiState(
     val shops: List<CoffeeShop> = emptyList(),
+    val favoriteUpdates: Set<String> = emptySet(),
     // The first shops request starts after catalogs/city resolution. Keep the
     // screen in a loading state during that preparation so the empty state
     // cannot flash before the initial request is dispatched.
@@ -105,12 +111,16 @@ class FeedViewModel(
     private val favoriteRepository: FavoriteRepository,
     private val cityPreference: CityPreference,
     private val sessionRepository: SessionRepository,
+    private val observeFavoriteIds: ObserveFavoriteIdsUseCase? = null,
 ) : BaseViewModel() {
 
     private val _uiState = MutableStateFlow(FeedUiState())
     val uiState = _uiState.asStateFlow()
 
     private val queryFlow = MutableStateFlow("")
+    private val favoriteIds = MutableStateFlow<Set<String>?>(null)
+    private val favoriteMembershipMutex = Mutex()
+    private val favoriteMutationGuard = Mutex()
     private var shopsLoadJob: Job? = null
     private var isCityReady = false
 
@@ -134,21 +144,30 @@ class FeedViewModel(
             }
             .launchIn(workScope)
 
-        FavoriteSync.changes
-            .onEach { change ->
-                _uiState.update { state ->
-                    state.copy(
-                        shops = state.shops.map { shop ->
-                            if (shop.id == change.shopId) {
-                                shop.copy(isFavorite = change.isFavorite)
-                            } else {
-                                shop
-                            }
-                        },
-                    )
+        if (observeFavoriteIds == null) {
+            FavoriteSync.changes
+                .onEach { change ->
+                    _uiState.update { state ->
+                        state.copy(shops = state.shops.map { shop ->
+                            if (shop.id == change.shopId) shop.copy(isFavorite = change.isFavorite) else shop
+                        })
+                    }
                 }
-            }
-            .launchIn(workScope)
+                .launchIn(workScope)
+        } else {
+            observeFavoriteIds()
+                .onEach { result ->
+                    result.exceptionOrNull()?.let { if (it is CancellationException) throw it }
+                    val ids = result.getOrNull() ?: return@onEach
+                    favoriteMembershipMutex.withLock {
+                        favoriteIds.value = ids
+                        _uiState.update { state ->
+                            state.copy(shops = state.shops.map { it.withFavoriteMembership(ids) })
+                        }
+                    }
+                }
+                .launchIn(workScope)
+        }
     }
 
     private fun loadCatalogs() {
@@ -307,7 +326,19 @@ class FeedViewModel(
                 Navigator.navigate(Navigator.Screen.Auth)
                 return@launch
             }
-            val nextFavorite = !shop.isFavorite
+            val started = favoriteMutationGuard.withLock {
+                if (shop.id in _uiState.value.favoriteUpdates) {
+                    false
+                } else {
+                    _uiState.update { it.copy(favoriteUpdates = it.favoriteUpdates + shop.id) }
+                    true
+                }
+            }
+            if (!started) return@launch
+
+            val previousFavorite = _uiState.value.shops
+                .firstOrNull { it.id == shop.id }?.isFavorite ?: shop.isFavorite
+            val nextFavorite = !previousFavorite
             _uiState.update { state ->
                 state.copy(
                     shops = state.shops.map { item ->
@@ -316,25 +347,48 @@ class FeedViewModel(
                 )
             }
 
-            val result = if (nextFavorite) {
-                favoriteRepository.addFavorite(shop, shop.address)
-            } else {
-                favoriteRepository.removeFavorite(shop.id)
-            }
-
-            result
-                .onSuccess {
+            try {
+                val result = if (nextFavorite) {
+                    favoriteRepository.addFavorite(shop, shop.address)
+                } else {
+                    favoriteRepository.removeFavorite(shop.id)
+                }
+                result.exceptionOrNull()?.let { if (it is CancellationException) throw it }
+                if (result.isSuccess) {
                     FavoriteSync.notifyChanged(shop.id, nextFavorite)
+                } else {
+                    restoreFavorite(shop.id, previousFavorite, nextFavorite)
                 }
-                .onFailure {
-                    _uiState.update { state ->
-                        state.copy(
-                            shops = state.shops.map { item ->
-                                if (item.id == shop.id) item.copy(isFavorite = shop.isFavorite) else item
-                            },
-                        )
-                    }
+            } catch (cancellation: CancellationException) {
+                restoreFavorite(shop.id, previousFavorite, nextFavorite)
+                throw cancellation
+            } catch (error: Exception) {
+                restoreFavorite(shop.id, previousFavorite, nextFavorite)
+                throw error
+            } finally {
+                favoriteMutationGuard.withLock {
+                    _uiState.update { it.copy(favoriteUpdates = it.favoriteUpdates - shop.id) }
                 }
+            }
+        }
+    }
+
+    private fun restoreFavorite(shopId: String, previousFavorite: Boolean, requestedFavorite: Boolean) {
+        val observedFavorite = favoriteIds.value?.contains(shopId)
+        _uiState.update { state ->
+            state.copy(
+                shops = state.shops.map { item ->
+                    if (item.id == shopId) {
+                        val latestFavorite = observedFavorite ?: item.isFavorite
+                        val restoredFavorite = if (latestFavorite == requestedFavorite) {
+                            previousFavorite
+                        } else {
+                            latestFavorite
+                        }
+                        item.copy(isFavorite = restoredFavorite)
+                    } else item
+                },
+            )
         }
     }
 
@@ -380,17 +434,21 @@ class FeedViewModel(
                 ),
             ).onSuccess { result ->
                 if (!isActive) return@onSuccess
-                _uiState.update { state ->
-                    state.copy(
-                        shops = if (reset) result.items else state.shops + result.items,
-                        currentPage = result.currentPage,
-                        totalPages = result.totalPages,
-                        hasMore = result.currentPage < result.totalPages,
-                        isLoading = false,
-                        isRefreshing = false,
-                        isLoadingMore = false,
-                        error = null,
-                    )
+                favoriteMembershipMutex.withLock {
+                    _uiState.update { state ->
+                        state.copy(
+                            shops = (if (reset) result.items else state.shops + result.items).let { shops ->
+                                favoriteIds.value?.let { ids -> shops.map { it.withFavoriteMembership(ids) } } ?: shops
+                            },
+                            currentPage = result.currentPage,
+                            totalPages = result.totalPages,
+                            hasMore = result.currentPage < result.totalPages,
+                            isLoading = false,
+                            isRefreshing = false,
+                            isLoadingMore = false,
+                            error = null,
+                        )
+                    }
                 }
             }.onFailure { e ->
                 if (!isActive) return@onFailure

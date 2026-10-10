@@ -7,6 +7,7 @@ import com.coffeepeek.data.util.JwtUtils
 import com.coffeepeek.domain.model.Session
 import com.coffeepeek.domain.repository.AuthRepository
 import com.coffeepeek.domain.repository.SessionRepository
+import kotlinx.coroutines.CancellationException
 
 class AuthRepositoryImpl(
     private val authService: AuthService,
@@ -37,8 +38,23 @@ class AuthRepositoryImpl(
 
     override suspend fun logout(): Result<Unit> {
         val refreshToken = sessionRepository.getSession()?.refreshToken
-        userSessionCleaner.clearLocalUserData()
-        runCatching { authService.logout(refreshToken) }
-        return Result.success(Unit)
+        val cleanupFailure = try {
+            userSessionCleaner.clearLocalUserData()
+            null
+        } catch (cancellation: CancellationException) {
+            throw cancellation
+        } catch (error: Exception) {
+            error
+        }
+        try {
+            authService.logout(refreshToken).onFailure { error ->
+                if (error is CancellationException) throw error
+            }
+        } catch (cancellation: CancellationException) {
+            throw cancellation
+        } catch (_: Exception) {
+            // Remote logout is best-effort; local cleanup is authoritative.
+        }
+        return cleanupFailure?.let { Result.failure(it) } ?: Result.success(Unit)
     }
 }

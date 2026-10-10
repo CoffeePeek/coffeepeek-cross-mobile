@@ -5,7 +5,9 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.Surface
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.compositionLocalOf
@@ -22,10 +24,13 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.core.designsystem.theme.CpDimens
+import com.coffeepeek.core.designsystem.icons.CpIcons
+import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import dev.chrisbanes.haze.HazeState
 import dev.chrisbanes.haze.HazeStyle
 import dev.chrisbanes.haze.HazeTint
 import dev.chrisbanes.haze.hazeEffect
+import org.jetbrains.compose.ui.tooling.preview.Preview
 
 /**
  * Haze source for glass controls on the current screen. Null → glass falls back to a translucent
@@ -99,3 +104,15 @@ fun GlassIconButton(
         }
     }
 }
+
+@Composable
+private fun GlassIconButtonPreviewContent(darkTheme: Boolean) = CoffeePeekTheme(darkTheme = darkTheme) {
+    Surface {
+        GlassIconButton({}, contentDescription = "Close", hazeState = null) {
+            Icon(CpIcons.Close, contentDescription = null)
+        }
+    }
+}
+
+@Preview @Composable private fun GlassIconButtonLightPreview() = GlassIconButtonPreviewContent(false)
+@Preview @Composable private fun GlassIconButtonDarkPreview() = GlassIconButtonPreviewContent(true)
