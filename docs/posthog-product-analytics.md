@@ -35,7 +35,7 @@ Initial explicit events:
 
 `platform` is `android` or `ios`; `source` is currently `unspecified` until navigation origin is tracked. `coffee_slug` is the public slug at view time; the mobile model has no stable coffee ID. Automatic capture, lifecycle capture, replay, feature flag preloading, and error capture are disabled.
 
-The backend owns confirmed `favorite_added` and `check_in_published` events. Do not emit them from the app: a favorite retry is not a new save, and a submitted check-in is not yet published. `filter_applied` and `discovery_empty_results` remain future client events.
+The backend owns the event names `favorite_added` and `check_in_published`. Do not emit them from the app: a favorite retry is not a new save, and a submitted check-in is not yet published. Production backend capture remains disabled (`PostHog__Enabled=false`) until account-level analytics consent can be checked there, so these write events are not yet available for funnels. `filter_applied` and `discovery_empty_results` remain future client events.
 
 ## Verification
 
