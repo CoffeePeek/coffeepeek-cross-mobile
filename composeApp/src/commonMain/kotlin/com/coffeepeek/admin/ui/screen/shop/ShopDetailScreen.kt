@@ -102,6 +102,7 @@ import coffeepeek.composeapp.generated.resources.shop_report_prompt
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
+import com.coffeepeek.admin.analytics.ProductAnalytics
 import com.coffeepeek.admin.location.distanceToShopMeters
 import com.coffeepeek.admin.location.formatDistance
 import com.coffeepeek.admin.location.rememberPermittedUserLocation
@@ -191,6 +192,9 @@ fun ShopDetailScreen(shopId: String, forCheckIn: Boolean = false) {
     }
 
     val details = state.details
+    LaunchedEffect(details?.shop?.id) {
+        details?.shop?.id?.let(ProductAnalytics::shopOpened)
+    }
     val distance = formatDistance(distanceToShopMeters(userLocation, details?.location))
     val floatingActionsClearance = 72.dp
     val hazeState = rememberHazeState()

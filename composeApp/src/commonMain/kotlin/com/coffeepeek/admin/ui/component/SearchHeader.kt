@@ -26,6 +26,7 @@ import org.jetbrains.compose.resources.stringResource
 internal fun SearchHeader(
     query: String,
     onQueryChange: (String) -> Unit,
+    onSearch: () -> Unit = {},
     roastersSelected: Boolean = false,
     onSelectRoasters: (Boolean) -> Unit = {},
     filterCount: Int = 0,
@@ -48,6 +49,7 @@ internal fun SearchHeader(
         CpSearchField(
             value = query,
             onValueChange = onQueryChange,
+            onSearch = onSearch,
             placeholder = placeholder,
             modifier = Modifier.weight(1f).onFocusChanged { if (it.isFocused) onSearchFocus() },
             fieldHeight = CpDimens.buttonHeight,

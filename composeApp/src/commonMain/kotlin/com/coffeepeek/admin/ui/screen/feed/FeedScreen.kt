@@ -49,6 +49,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.coffeepeek.admin.analytics.ProductAnalytics
 import com.coffeepeek.admin.location.NEARBY_RADIUS_METERS
 import com.coffeepeek.admin.location.distanceToShopMeters
 import com.coffeepeek.admin.location.formatDistance
@@ -152,6 +153,9 @@ fun FeedScreen(
         vm.cancelSearch()
     }
     val lifecycleState by LocalLifecycleOwner.current.lifecycle.currentStateFlow.collectAsState()
+    LaunchedEffect(lifecycleState) {
+        if (lifecycleState.isAtLeast(Lifecycle.State.RESUMED)) ProductAnalytics.discoveryOpened("shops")
+    }
     BackHandler(enabled = lifecycleState.isAtLeast(Lifecycle.State.STARTED) &&
         (mapExpanded || (mapPreview != null && !showDiscovery))) {
         cancelSearch()
@@ -223,6 +227,13 @@ fun FeedScreen(
                             SearchHeader(
                                 query = state.query,
                                 onQueryChange = vm::onQueryChange,
+                                onSearch = {
+                                    ProductAnalytics.searchSubmitted(
+                                        "coffee_shop",
+                                        state.query.isNotBlank(),
+                                        state.filters.analyticsKeys(),
+                                    )
+                                },
                                 roastersSelected = false,
                                 onSelectRoasters = { if (it) onSelectRoasters() },
                                 filterCount = state.activeFilterCount,
@@ -660,4 +671,21 @@ private fun FeedQuickFilterBar(
             )
         }
     }
+}
+
+private fun FeedFiltersUi.analyticsKeys(): List<String> = buildList {
+    if (cityId != null) add("city")
+    if (coffeeFocus != null) add("coffee_focus")
+    if (openOnly) add("open_only")
+    if (newOnly) add("new_only")
+    if (visitedOnly) add("visited_only")
+    if (favoritesOnly) add("favorites_only")
+    if (nearbyOnly) add("nearby_only")
+    if (priceRange != null) add("price_range")
+    if (minRating != null) add("min_rating")
+    if (roasterIds.isNotEmpty()) add("roaster")
+    if (beanIds.isNotEmpty()) add("bean")
+    if (equipmentIds.isNotEmpty()) add("equipment")
+    if (brewMethodIds.isNotEmpty()) add("brew_method")
+    if (tagIds.isNotEmpty()) add("tag")
 }

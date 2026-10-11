@@ -22,6 +22,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.coffeepeek.admin.analytics.ProductAnalytics
 import com.coffeepeek.admin.feature.coffee.domain.CoffeeAvailability
 import com.coffeepeek.admin.feature.coffee.domain.CoffeeOffer
 import com.coffeepeek.admin.theme.CpColor
@@ -42,6 +43,9 @@ internal fun CoffeeDetailScreen(slug: String) {
     val vm: CoffeeDetailViewModel = koinViewModel(parameters = { parametersOf(slug) })
     val state by vm.state.collectAsState()
     val details = state.details
+    LaunchedEffect(details?.coffee?.slug) {
+        details?.coffee?.slug?.let(ProductAnalytics::coffeeOpened)
+    }
     val hazeState = rememberHazeState()
     var showPhotos by rememberSaveable(slug) { mutableStateOf(false) }
     var expandedDescription by rememberSaveable(slug) { mutableStateOf(false) }

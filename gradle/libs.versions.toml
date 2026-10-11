@@ -21,6 +21,7 @@ ktor = "3.3.1"
 kamel = "1.0.8"
 maplibre = "13.6.0"
 phosphor-icon = "1.0.0"
+posthog-kmp = "0.8.0"
 haze = "1.7.1"
 
 room = "2.8.3"
@@ -69,6 +70,7 @@ androidx-sqlite-ktx = { module = "androidx.sqlite:sqlite-ktx", version.ref = "sq
 kamel = { module = "media.kamel:kamel-image-default", version.ref = "kamel" }
 maplibre-android = { module = "org.maplibre.gl:android-sdk-opengl", version.ref = "maplibre" }
 phosphor-icon = { module = "com.adamglin:phosphor-icon", version.ref = "phosphor-icon" }
+posthog-kmp = { module = "com.posthog:posthog-kmp", version.ref = "posthog-kmp" }
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }

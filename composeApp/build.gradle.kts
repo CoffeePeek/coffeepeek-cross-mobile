@@ -57,6 +57,7 @@ kotlin {
             implementation(compose.components.resources)
             implementation(compose.components.uiToolingPreview)
             implementation(libs.phosphor.icon)
+            implementation(libs.posthog.kmp)
             implementation(libs.haze)
 
             implementation(libs.androidx.navigation)
@@ -119,6 +120,18 @@ val googleWebClientId: String = run {
     }
 }
 
+val postHogProjectToken: String = providers.environmentVariable("POSTHOG_PROJECT_TOKEN").orNull
+    ?: run {
+        val localPropertiesFile = rootProject.file("local.properties")
+        if (localPropertiesFile.exists()) {
+            val props = Properties()
+            localPropertiesFile.inputStream().use { props.load(it) }
+            props.getProperty("POSTHOG_PROJECT_TOKEN", "")
+        } else {
+            ""
+        }
+    }
+
 val apiBaseUrl: String = run {
     val localPropertiesFile = rootProject.file("local.properties")
     if (localPropertiesFile.exists()) {
@@ -146,6 +159,7 @@ android {
         versionName = appVersionName.get()
         buildConfigField("String", "GOOGLE_WEB_CLIENT_ID", "\"$googleWebClientId\"")
         buildConfigField("String", "API_BASE_URL", "\"$apiBaseUrl\"")
+        buildConfigField("String", "POSTHOG_PROJECT_TOKEN", "\"$postHogProjectToken\"")
     }
     packaging {
         resources {

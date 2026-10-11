@@ -4,6 +4,9 @@ import android.annotation.SuppressLint
 import android.app.Application
 import android.content.Context
 import com.coffeepeek.admin.theme.applyPersistedNightModeEarly
+import com.coffeepeek.admin.analytics.ProductAnalytics
+import com.coffeepeek.admin.locator.Locator
+import com.posthog.kmp.PostHogContext
 import com.coffeepeek.admin.auth.SessionRealtimeManager
 import com.coffeepeek.admin.config.AppConfig
 import com.coffeepeek.admin.di.initPlatformKoin
@@ -38,6 +41,7 @@ class CoffeePeekApplication : Application() {
 
         val koin = GlobalContext.get()
         val sessionRepository = koin.get<SessionRepository>()
+        ProductAnalytics.start(PostHogContext(this), Locator.database.settingRepository, sessionRepository)
         sessionRealtimeManager = SessionRealtimeManager(
             sessionRepository = sessionRepository,
             userSessionCleaner = koin.get(),

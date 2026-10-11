@@ -21,6 +21,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.coffeepeek.admin.analytics.ProductAnalytics
 import com.coffeepeek.admin.feature.coffee.domain.Coffee
 import com.coffeepeek.admin.feature.coffee.domain.CoffeeOffer
 import com.coffeepeek.admin.theme.CpDimens
@@ -33,6 +34,8 @@ import com.coffeepeek.admin.ui.component.CoffeeShopPlaceholderImage
 import com.coffeepeek.admin.ui.component.LocalFloatingNavClearance
 import com.coffeepeek.admin.ui.component.PriceBynIcon
 import com.coffeepeek.admin.ui.component.SearchHeader
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import kotlin.math.round
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -43,6 +46,10 @@ internal fun CoffeeListScreen(vm: CoffeeListViewModel = koinViewModel()) {
     var showFilters by rememberSaveable { mutableStateOf(false) }
     val clearance = LocalFloatingNavClearance.current
     val tasteNames = state.filterGroups.firstOrNull { it.code == "taste" }?.options.orEmpty().associate { it.code to it.name }
+    val lifecycleState by LocalLifecycleOwner.current.lifecycle.currentStateFlow.collectAsState()
+    LaunchedEffect(lifecycleState) {
+        if (lifecycleState.isAtLeast(Lifecycle.State.RESUMED)) ProductAnalytics.discoveryOpened("coffee")
+    }
 
     LaunchedEffect(state.query, state.filters) {
         if (state.isLoading) listState.scrollToItem(0)
@@ -73,6 +80,14 @@ internal fun CoffeeListScreen(vm: CoffeeListViewModel = koinViewModel()) {
                 SearchHeader(
                     query = state.query,
                     onQueryChange = vm::onQueryChange,
+                    onSearch = {
+                        ProductAnalytics.searchSubmitted(
+                            "coffee",
+                            state.query.isNotBlank(),
+                            state.filters.values.keys.sorted() +
+                                (if (state.filters.availableOnly) listOf("available_only") else emptyList()),
+                        )
+                    },
                     placeholder = "Название кофе",
                     showCategories = false,
                     filterCount = state.filters.activeCount,

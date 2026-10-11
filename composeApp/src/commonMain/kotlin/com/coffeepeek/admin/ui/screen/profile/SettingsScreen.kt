@@ -16,14 +16,17 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import com.coffeepeek.admin.analytics.ProductAnalytics
 import com.coffeepeek.admin.legal.LegalUrls
 import com.coffeepeek.admin.theme.CpDimens
 import com.coffeepeek.admin.theme.ThemeMode
@@ -40,6 +43,7 @@ import com.coffeepeek.admin.ui.icons.CpIcons
 import com.coffeepeek.admin.utils.COFFEEPEEK_SHARE_TEXT
 import com.coffeepeek.admin.utils.OpenInBrowser
 import com.coffeepeek.admin.utils.ShareHelper
+import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
 
 @Composable
@@ -50,6 +54,8 @@ fun SettingsScreen(vm: ProfileViewModel = koinInject()) {
     val selectedCityId by vm.selectedCityId.collectAsState()
     val updates = koinInject<com.coffeepeek.admin.feature.appupdate.ui.AppUpdateState>()
     val updateState by updates.state.collectAsState()
+    val analyticsConsent by ProductAnalytics.consentEnabled.collectAsState()
+    val analyticsScope = rememberCoroutineScope()
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
@@ -138,6 +144,28 @@ fun SettingsScreen(vm: ProfileViewModel = koinInject()) {
                     label = "Политика использования",
                     iconColors = SettingsIconPalette.Emerald,
                     onClick = { OpenInBrowser.openInBrowser(LegalUrls.TERMS) },
+                )
+                SettingsDivider()
+                SettingsRow(
+                    icon = CpIcons.Lock,
+                    label = "Помогать улучшать CoffeePeek",
+                    description = if (ProductAnalytics.isConfigured)
+                        "Анонимные действия в поиске и каталоге"
+                    else
+                        "Аналитика недоступна в этой сборке",
+                    iconColors = SettingsIconPalette.Emerald,
+                    showArrow = false,
+                    enabled = ProductAnalytics.isConfigured,
+                    onClick = { analyticsScope.launch { ProductAnalytics.setConsent(!analyticsConsent) } },
+                    trailing = {
+                        Switch(
+                            checked = analyticsConsent,
+                            enabled = ProductAnalytics.isConfigured,
+                            onCheckedChange = { checked ->
+                                analyticsScope.launch { ProductAnalytics.setConsent(checked) }
+                            },
+                        )
+                    },
                 )
                 SettingsDivider()
                 SettingsRow(

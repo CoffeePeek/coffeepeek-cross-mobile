@@ -6,5 +6,6 @@ expect object AppConfig {
     val updateChannel: String?
     val versionName: String
     val baseUrl: String
+    val postHogProjectToken: String
     val isDebug: Boolean
 }

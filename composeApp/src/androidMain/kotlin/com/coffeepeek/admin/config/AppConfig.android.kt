@@ -13,5 +13,6 @@ actual object AppConfig {
     actual val updateChannel: String? = if (BuildConfig.APK_UPDATES_ENABLED) "apk" else "play"
     actual val versionName: String = BuildConfig.VERSION_NAME
     actual val baseUrl: String = BuildConfig.API_BASE_URL
+    actual val postHogProjectToken: String = BuildConfig.POSTHOG_PROJECT_TOKEN
     actual val isDebug: Boolean = BuildConfig.DEBUG
 }
