@@ -150,7 +150,7 @@ fun SettingsScreen(vm: ProfileViewModel = koinInject()) {
                     icon = CpIcons.Lock,
                     label = "Помогать улучшать CoffeePeek",
                     description = if (ProductAnalytics.isConfigured)
-                        "Анонимные действия в поиске и каталоге"
+                        "Статистика поиска и каталога без текста запросов"
                     else
                         "Аналитика недоступна в этой сборке",
                     iconColors = SettingsIconPalette.Emerald,
