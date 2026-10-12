@@ -1,6 +1,7 @@
 package com.coffeepeek.admin.ui.screen.shop
 
 import com.coffeepeek.admin.feature.favorites.api.RoasterFavorites
+import com.coffeepeek.admin.feature.checkin.domain.DrinkPhotoExtractor
 import com.coffeepeek.admin.utils.PickedImage
 import com.coffeepeek.domain.model.*
 import com.coffeepeek.domain.repository.*
@@ -136,6 +137,7 @@ class ShopCheckInsTest {
                 placeRating = 5, serviceRating = 3, coffeeRating = 2,
                 photos = listOf(PickedImage(byteArrayOf(1, 2, 3), "coffee.jpg")))
             vm.updateCheckInDraft(draft)
+            withTimeout(5_000) { vm.uiState.first { !it.isDrinkPhotoProcessing } }
             vm.checkIn(draft)
             val failed = withTimeout(5_000) { vm.uiState.first { it.checkInError != null && !it.isCheckInLoading } }
             assertEquals("Нет сети", failed.checkInError)
@@ -193,7 +195,9 @@ class ShopCheckInsTest {
                     vm.openCheckInSheet()
                     val opened = withTimeout(5_000) { vm.uiState.first { it.showCheckInSheet } }
                     val draft = opened.checkInDraft!!.copy(note = "Сохранить", photos = listOf(PickedImage(byteArrayOf(1), "coffee.jpg")))
-                    vm.updateCheckInDraft(draft); vm.checkIn(draft)
+                    vm.updateCheckInDraft(draft)
+                    withTimeout(5_000) { vm.uiState.first { !it.isDrinkPhotoProcessing } }
+                    vm.checkIn(draft)
                     val failed = withTimeout(5_000) { vm.uiState.first { !it.isCheckInLoading && it.checkInError != null } }
                     assertTrue(failed.checkInError!!.isNotBlank())
                     assertEquals(draft, failed.checkInDraft)
@@ -263,10 +267,128 @@ class ShopCheckInsTest {
         } finally { vm.close() }
     }
 
+    @Test
+    fun extractsFirstPhotoAndSubmitsOriginalsAlongsideTransparentDrinkPhoto() = runBlocking {
+        val png = PendingPhotoUpload("cup.png", "image/png", byteArrayOf(9))
+        val original = PickedImage(byteArrayOf(1, 2, 3), "coffee.jpg")
+        val started = CompletableDeferred<Unit>()
+        val release = CompletableDeferred<Unit>()
+        val submitted = CompletableDeferred<CreateCheckInInput>()
+        val store = CheckInDraftStore()
+        var extractions = 0
+        val vm = viewModel(ShopTestCheckIns().apply { create = {
+            submitted.complete(it)
+            Result.success(Unit)
+        } }, loggedIn = true, draftStore = store, extractor = DrinkPhotoExtractor {
+            extractions++
+            assertContentEquals(original.bytes, it.bytes)
+            started.complete(Unit)
+            release.await()
+            listOf(png)
+        })
+        try {
+            withTimeout(5_000) { vm.uiState.first { it.details != null && !it.isLoading } }
+            vm.openCheckInSheet()
+            val draft = withTimeout(5_000) { vm.uiState.first { it.showCheckInSheet } }.checkInDraft!!
+            vm.updateCheckInDraft(draft.copy(photos = listOf(original)))
+            withTimeout(5_000) { started.await() }
+            vm.checkIn(vm.uiState.value.checkInDraft!!)
+            assertFalse(submitted.isCompleted)
+            vm.updateCheckInDraft(vm.uiState.value.checkInDraft!!.copy(note = "Сохранить заметку"))
+            release.complete(Unit)
+            val ready = withTimeout(5_000) { vm.uiState.first { !it.isDrinkPhotoProcessing && it.checkInDraft?.drinkPhoto != null } }
+            assertEquals("Сохранить заметку", ready.checkInDraft!!.note)
+            vm.updateCheckInDraft(ready.checkInDraft.copy(photos = listOf(original, original.copy(fileName = "second.jpg"))))
+            assertEquals(1, extractions)
+            vm.dismissCheckInSheet()
+            vm.openCheckInSheet()
+            val reopened = withTimeout(5_000) { vm.uiState.first { it.showCheckInSheet } }
+            assertEquals("cup.png", reopened.checkInDraft!!.drinkPhoto?.fileName)
+            vm.checkIn(reopened.checkInDraft)
+            val input = withTimeout(5_000) { submitted.await() }
+            assertEquals(listOf("coffee.jpg", "second.jpg"), input.photos.map { it.fileName })
+            assertContentEquals(original.bytes, input.photos.first().bytes)
+            assertEquals(png, input.drinkPhoto)
+        } finally { release.complete(Unit); vm.close() }
+    }
+
+    @Test
+    fun removingSourceCancelsExtractionAndNeverReattachesItsCutout() = runBlocking {
+        val started = CompletableDeferred<Unit>()
+        val cancelled = CompletableDeferred<Unit>()
+        val vm = viewModel(ShopTestCheckIns(), loggedIn = true, extractor = DrinkPhotoExtractor {
+            started.complete(Unit)
+            try { CompletableDeferred<Unit>().await(); emptyList() }
+            finally { cancelled.complete(Unit) }
+        })
+        try {
+            vm.openCheckInSheet()
+            val draft = withTimeout(5_000) { vm.uiState.first { it.showCheckInSheet } }.checkInDraft!!
+            vm.updateCheckInDraft(draft.copy(photos = listOf(PickedImage(byteArrayOf(1), "cup.jpg"))))
+            withTimeout(5_000) { started.await() }
+            vm.updateCheckInDraft(vm.uiState.value.checkInDraft!!.copy(photos = emptyList()))
+            withTimeout(5_000) { cancelled.await() }
+            assertFalse(vm.uiState.value.isDrinkPhotoProcessing)
+            assertNull(vm.uiState.value.checkInDraft!!.drinkPhoto)
+            assertTrue(vm.uiState.value.drinkPhotoCandidates.isEmpty())
+        } finally { vm.close() }
+    }
+
+    @Test
+    fun multipleObjectsRequireSelectionAndSkippingClearsTheSelection() = runBlocking {
+        val candidates = listOf(
+            PendingPhotoUpload("cup.png", "image/png", byteArrayOf(1)),
+            PendingPhotoUpload("plate.png", "image/png", byteArrayOf(2)),
+        )
+        val vm = viewModel(ShopTestCheckIns(), loggedIn = true, extractor = DrinkPhotoExtractor { candidates })
+        try {
+            vm.openCheckInSheet()
+            val draft = withTimeout(5_000) { vm.uiState.first { it.showCheckInSheet } }.checkInDraft!!
+            vm.updateCheckInDraft(draft.copy(photos = listOf(PickedImage(byteArrayOf(1), "cup.jpg"))))
+            val ready = withTimeout(5_000) { vm.uiState.first { it.drinkPhotoCandidates.size == 2 } }
+            assertNull(ready.checkInDraft!!.drinkPhoto)
+            vm.checkIn(ready.checkInDraft)
+            assertEquals("Выберите чашку или продолжите без вырезки", vm.uiState.value.checkInError)
+            vm.selectDrinkPhoto(ready.drinkPhotoCandidates.first())
+            assertEquals("cup.png", vm.uiState.value.checkInDraft!!.drinkPhoto?.fileName)
+            vm.skipDrinkPhoto()
+            assertNull(vm.uiState.value.checkInDraft!!.drinkPhoto)
+            assertTrue(vm.uiState.value.checkInDraft!!.skipDrinkPhoto)
+            vm.dismissCheckInSheet()
+            vm.openCheckInSheet()
+            val reopened = withTimeout(5_000) { vm.uiState.first { it.showCheckInSheet } }
+            assertTrue(reopened.checkInDraft!!.skipDrinkPhoto)
+            assertTrue(reopened.drinkPhotoCandidates.isEmpty())
+        } finally { vm.close() }
+    }
+
+    @Test
+    fun extractionFailurePreservesOriginalAndCanBeRetried() = runBlocking {
+        val original = PickedImage(byteArrayOf(1), "cup.jpg")
+        var attempts = 0
+        val vm = viewModel(ShopTestCheckIns(), loggedIn = true, extractor = DrinkPhotoExtractor {
+            if (++attempts == 1) error("Модель ещё загружается")
+            listOf(PendingPhotoUpload("cup.png", "image/png", byteArrayOf(9)))
+        })
+        try {
+            vm.openCheckInSheet()
+            val draft = withTimeout(5_000) { vm.uiState.first { it.showCheckInSheet } }.checkInDraft!!
+            vm.updateCheckInDraft(draft.copy(photos = listOf(original)))
+            val failed = withTimeout(5_000) { vm.uiState.first { it.drinkPhotoError != null } }
+            assertFalse(failed.isDrinkPhotoProcessing)
+            assertEquals(listOf(original), failed.checkInDraft!!.photos)
+            vm.retryDrinkPhoto()
+            val ready = withTimeout(5_000) { vm.uiState.first { it.checkInDraft?.drinkPhoto != null } }
+            assertNull(ready.drinkPhotoError)
+            assertEquals(listOf(original), ready.checkInDraft!!.photos)
+        } finally { vm.close() }
+    }
+
     private fun viewModel(
         checkIns: CheckInRepository, loggedIn: Boolean, draftStore: CheckInDraftStore = CheckInDraftStore(),
         shopDetails: CoffeeShopDetails = details, sessionActive: () -> Boolean = { loggedIn },
         drinks: suspend () -> Result<List<ConsumedDrinkOption>> = { Result.success(emptyList()) },
+        extractor: DrinkPhotoExtractor = DrinkPhotoExtractor { emptyList() },
     ): ShopDetailViewModel = ShopDetailViewModel(
         "coffee", object : ShopRepository {
             override suspend fun getShopDetails(id: String) = Result.success(shopDetails)
@@ -309,6 +431,7 @@ class ShopCheckInsTest {
             override fun observeFavorites() = flowOf(emptyList<CatalogItem>())
             override suspend fun setFavorite(roaster: CatalogItem, isFavorite: Boolean): Result<Unit> = error("unused")
         },
+        extractor,
     )
 }
 

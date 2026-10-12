@@ -359,8 +359,9 @@ fun CheckInDisplayCard(
             CheckInActions(onEditClick = null, onReportClick = onReportClick)
         }
         CheckInHeading(checkIn.shopName.ifBlank { "Кофейня" }.takeIf { showShopName }, checkIn.rating)
-        savedDrinkName(checkIn.drinkNameRu, checkIn.drinkNameEn, checkIn.customDrinkName, Locale.current.language)?.let {
-            SavedDrinkBadge(it, checkIn.drinkSlug)
+        (savedDrinkName(checkIn.drinkNameRu, checkIn.drinkNameEn, checkIn.customDrinkName, Locale.current.language)
+            ?: "Напиток".takeIf { checkIn.drinkPhotoUrl != null })?.let {
+            SavedDrinkBadge(it, checkIn.drinkSlug, photoUrl = checkIn.drinkPhotoUrl)
         }
         if (checkIn.note.isNotBlank()) {
             if (fullVersion) Text(checkIn.note, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurface)
@@ -712,7 +713,7 @@ fun ReviewPhotoStrip(
 }
 
 @Composable
-internal fun SavedDrinkBadge(name: String, slug: String? = null, compact: Boolean = false) {
+internal fun SavedDrinkBadge(name: String, slug: String? = null, compact: Boolean = false, photoUrl: String? = null) {
     Row(
         modifier = Modifier
             .then(if (compact) Modifier else Modifier.fillMaxWidth())
@@ -722,12 +723,20 @@ internal fun SavedDrinkBadge(name: String, slug: String? = null, compact: Boolea
         horizontalArrangement = Arrangement.spacedBy(if (compact) CpDimens.spacing2 else CpDimens.spacing3),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Image(
+        val imageModifier = Modifier
+            .size(if (compact) 32.dp else 44.dp)
+            .clip(RoundedCornerShape(if (compact) CpDimens.radiusSm else CpDimens.radiusMd))
+        if (photoUrl != null) CpImage(
+            data = photoUrl,
+            placeholder = mockDrinkPhoto(name, slug),
+            error = mockDrinkPhoto(name, slug),
+            contentDescription = null,
+            contentScale = ContentScale.Fit,
+            modifier = imageModifier,
+        ) else Image(
             painter = painterResource(mockDrinkPhoto(name, slug)), contentDescription = null,
             contentScale = ContentScale.Crop,
-            modifier = Modifier
-                .size(if (compact) 32.dp else 44.dp)
-                .clip(RoundedCornerShape(if (compact) CpDimens.radiusSm else CpDimens.radiusMd)),
+            modifier = imageModifier,
         )
         Text(name, style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurface, modifier = Modifier.weight(1f, fill = !compact))

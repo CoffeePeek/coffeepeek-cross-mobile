@@ -34,6 +34,7 @@ internal fun TimelineCheckInCard(
     modifier: Modifier = Modifier,
 ) {
     val drinkName = savedDrinkName(checkIn.drinkNameRu, checkIn.drinkNameEn, checkIn.customDrinkName, Locale.current.language)
+        ?: "Напиток".takeIf { checkIn.drinkPhotoUrl != null }
     Column(
         modifier = modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(CpDimens.spacing2),
@@ -75,7 +76,7 @@ internal fun TimelineCheckInCard(
             if (isOwn && checkIn.visibility == CheckInVisibility.Private) TextButton(onClick = onVisibility, enabled = canAct) {
                 Text(if (changingVisibility) "Сохраняем…" else "Опубликовать")
             }
-            drinkName?.let { SavedDrinkBadge(it, checkIn.drinkSlug, compact = true) }
+            drinkName?.let { SavedDrinkBadge(it, checkIn.drinkSlug, compact = true, photoUrl = checkIn.drinkPhotoUrl) }
         }
     }
 }

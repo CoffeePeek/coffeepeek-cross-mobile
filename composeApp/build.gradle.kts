@@ -39,6 +39,7 @@ kotlin {
             implementation("androidx.exifinterface:exifinterface:1.4.1")
             implementation(libs.maplibre.android)
             implementation("com.google.android.gms:play-services-auth:21.3.0")
+            implementation("com.google.android.gms:play-services-mlkit-subject-segmentation:16.0.0-beta1")
             implementation("com.google.android.play:app-update:2.1.0")
             implementation("com.microsoft.signalr:signalr:10.0.9")
             implementation("org.slf4j:slf4j-nop:2.0.16")
@@ -74,6 +75,10 @@ kotlin {
         commonTest.dependencies {
             implementation(libs.kotlin.test)
             implementation("io.ktor:ktor-client-mock:${libs.versions.ktor.get()}")
+        }
+        androidInstrumentedTest.dependencies {
+            implementation(libs.androidx.testExt.junit)
+            implementation(libs.androidx.test.runner)
         }
     }
 }
@@ -140,6 +145,7 @@ android {
 
     defaultConfig {
         applicationId = Config.APPLICATION_ID
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         minSdk = Config.MIN_SDK
         targetSdk = Config.TARGET_SDK
         versionCode = appVersionCode.get()

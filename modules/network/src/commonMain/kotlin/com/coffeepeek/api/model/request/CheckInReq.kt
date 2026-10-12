@@ -13,6 +13,7 @@ data class CreateCheckInReq(
     val drinkSlug: String? = null,
     val customDrinkName: String? = null,
     val photos: List<UploadedPhotoReq> = emptyList(),
+    val drinkPhoto: UploadedPhotoReq? = null,
 )
 
 @Serializable

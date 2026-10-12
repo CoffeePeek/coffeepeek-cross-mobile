@@ -12,6 +12,7 @@ import androidx.compose.ui.viewinterop.UIKitInteropProperties
 import androidx.compose.ui.viewinterop.UIKitView
 import platform.UIKit.UIActivityIndicatorView
 import platform.UIKit.UIColor
+import platform.UIKit.secondaryLabelColor
 
 @Composable
 internal actual fun PlatformActivityIndicator(modifier: Modifier) {

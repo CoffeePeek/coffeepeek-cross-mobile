@@ -5,6 +5,7 @@ import ComposeApp
 struct CoffeePeekApp: App {
     init() {
         IosNativeMapRegistry.shared.provider = MapLibreMapProvider()
+        IosDrinkPhotoRegistry.shared.provider = NativeDrinkPhotoProvider()
     }
 
     var body: some Scene {
