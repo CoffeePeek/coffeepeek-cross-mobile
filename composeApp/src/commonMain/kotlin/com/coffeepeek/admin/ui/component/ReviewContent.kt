@@ -359,8 +359,9 @@ fun CheckInDisplayCard(
             CheckInActions(onEditClick = null, onReportClick = onReportClick)
         }
         CheckInHeading(checkIn.shopName.ifBlank { "Кофейня" }.takeIf { showShopName }, checkIn.rating)
-        savedDrinkName(checkIn.drinkNameRu, checkIn.drinkNameEn, checkIn.customDrinkName, Locale.current.language)?.let {
-            SavedDrinkBadge(it, checkIn.drinkSlug)
+        (savedDrinkName(checkIn.drinkNameRu, checkIn.drinkNameEn, checkIn.customDrinkName, Locale.current.language)
+            ?: "Напиток".takeIf { checkIn.drinkPhotoUrl != null })?.let {
+            SavedDrinkBadge(it, checkIn.drinkSlug, photoUrl = checkIn.drinkPhotoUrl)
         }
         if (checkIn.note.isNotBlank()) {
             if (fullVersion) Text(checkIn.note, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurface)
@@ -668,6 +669,7 @@ fun ReviewPhotoStrip(
     modifier: Modifier = Modifier,
     // Same order as photoUrls: tiles show these, a click still hands out the full photo.
     thumbnailUrls: List<String> = photoUrls,
+    singlePhotoAspectRatio: Float = 4f / 3f,
     onPhotoClick: ((List<String>, Int) -> Unit)? = null,
 ) {
     if (photoUrls.isEmpty()) return
@@ -696,7 +698,7 @@ fun ReviewPhotoStrip(
         }
     }
     if (photoUrls.size == 1) {
-        Photo(0, modifier.fillMaxWidth().aspectRatio(4f / 3f))
+        Photo(0, modifier.fillMaxWidth().aspectRatio(singlePhotoAspectRatio))
     } else Row(
         modifier.fillMaxWidth().aspectRatio(4f / 3f),
         horizontalArrangement = Arrangement.spacedBy(CpDimens.spacing1),
@@ -711,25 +713,35 @@ fun ReviewPhotoStrip(
 }
 
 @Composable
-internal fun SavedDrinkBadge(name: String, slug: String? = null) {
+internal fun SavedDrinkBadge(name: String, slug: String? = null, compact: Boolean = false, photoUrl: String? = null) {
     Row(
         modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(CpDimens.radiusLg))
+            .then(if (compact) Modifier else Modifier.fillMaxWidth())
+            .clip(RoundedCornerShape(if (compact) CpDimens.radiusMd else CpDimens.radiusLg))
             .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.04f))
             .padding(CpDimens.spacing1),
-        horizontalArrangement = Arrangement.spacedBy(CpDimens.spacing3),
+        horizontalArrangement = Arrangement.spacedBy(if (compact) CpDimens.spacing2 else CpDimens.spacing3),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Image(
+        val imageModifier = Modifier
+            .size(if (compact) 32.dp else 44.dp)
+            .clip(RoundedCornerShape(if (compact) CpDimens.radiusSm else CpDimens.radiusMd))
+        if (photoUrl != null) CpImage(
+            data = photoUrl,
+            placeholder = mockDrinkPhoto(name, slug),
+            error = mockDrinkPhoto(name, slug),
+            contentDescription = null,
+            contentScale = ContentScale.Fit,
+            modifier = imageModifier,
+        ) else Image(
             painter = painterResource(mockDrinkPhoto(name, slug)), contentDescription = null,
             contentScale = ContentScale.Crop,
-            modifier = Modifier.size(44.dp).clip(RoundedCornerShape(CpDimens.radiusMd)),
+            modifier = imageModifier,
         )
         Text(name, style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurface, modifier = Modifier.weight(1f))
+            color = MaterialTheme.colorScheme.onSurface, modifier = Modifier.weight(1f, fill = !compact))
         // ponytail: the drink summary is static until a drink-detail route exists.
-        Icon(CpIcons.ChevronRight, contentDescription = null,
+        if (!compact) Icon(CpIcons.ChevronRight, contentDescription = null,
             modifier = Modifier.padding(end = CpDimens.spacing2).size(18.dp), tint = MaterialTheme.colorScheme.onSurface)
     }
 }

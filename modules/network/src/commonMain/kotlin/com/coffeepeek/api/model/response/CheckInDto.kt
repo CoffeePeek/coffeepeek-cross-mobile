@@ -18,7 +18,7 @@ data class CheckInDto(
     @JsonNames("note") val text: String = "",
     @JsonNames("createdAt") val createdAtUtc: String = "",
     val visitedAt: String = "",
-    val rating: RatingDto = RatingDto(),
+    val rating: RatingDto? = null,
     val visibility: String = "Private",
     val moderationState: String = "NotSubmitted",
     @Serializable(with = FlexibleIntSerializer::class) val contentRevision: Int = 0,
@@ -30,6 +30,7 @@ data class CheckInDto(
     val drinkNameEn: String? = null,
     @Serializable(with = FlexibleIntSerializer::class) val helpfulCount: Int = 0,
     val isHelpfulByCurrentUser: Boolean = false,
+    val drinkPhotoUrl: String? = null,
 )
 
 @Serializable

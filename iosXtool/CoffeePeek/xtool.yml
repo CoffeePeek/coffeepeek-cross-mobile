@@ -1,5 +1,5 @@
 version: 1
-bundleID: com.example.CoffeePeek
+bundleID: com.coffeepeek
 infoPath: Info.plist
 resources:
   - .build/compose-resources

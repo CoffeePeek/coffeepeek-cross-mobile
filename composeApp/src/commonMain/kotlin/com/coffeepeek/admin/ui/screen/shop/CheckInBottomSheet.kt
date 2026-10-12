@@ -76,6 +76,8 @@ import com.coffeepeek.admin.ui.icons.CpIcons
 import com.coffeepeek.admin.utils.MAX_REVIEW_PHOTOS
 import com.coffeepeek.admin.utils.currentEpochMillis
 import com.coffeepeek.admin.utils.formatVisitDate
+import com.coffeepeek.admin.utils.PickedImage
+import com.coffeepeek.admin.feature.checkin.ui.DrinkPhotoPreview
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -93,6 +95,12 @@ fun CheckInBottomSheet(
     submissionError: String? = null,
     onGoToFeed: () -> Unit,
     onViewCheckIns: () -> Unit,
+    isDrinkPhotoProcessing: Boolean,
+    drinkPhotoCandidates: List<PickedImage>,
+    drinkPhotoError: String?,
+    onSelectDrinkPhoto: (PickedImage) -> Unit,
+    onRetryDrinkPhoto: () -> Unit,
+    onSkipDrinkPhoto: () -> Unit,
 ) {
     var showDatePicker by remember { mutableStateOf(false) }
 
@@ -243,7 +251,7 @@ fun CheckInBottomSheet(
                     }
                 }
 
-                ReviewFormStep {
+                ReviewFormStep(optional = true) {
                     ReviewFormField(
                         label = stringResource(Res.string.checkin_note_label),
                     ) {
@@ -274,7 +282,17 @@ fun CheckInBottomSheet(
                             )
                         },
                         title = stringResource(Res.string.checkin_photos_label),
-                        hint = "Добавьте до $MAX_REVIEW_PHOTOS фото вашего визита.",
+                        hint = "Добавьте до $MAX_REVIEW_PHOTOS фото вашего визита. Первое фото используем для выделения чашки.",
+                    )
+                    if (draft.photos.isNotEmpty()) DrinkPhotoPreview(
+                        selected = draft.drinkPhoto,
+                        candidates = drinkPhotoCandidates,
+                        isProcessing = isDrinkPhotoProcessing,
+                        skipped = draft.skipDrinkPhoto,
+                        error = drinkPhotoError,
+                        onSelect = onSelectDrinkPhoto,
+                        onRetry = onRetryDrinkPhoto,
+                        onSkip = onSkipDrinkPhoto,
                     )
                 }
 
@@ -339,7 +357,9 @@ fun CheckInBottomSheet(
                     focusManager.clearFocus(force = true)
                     onSubmit(draft)
                 },
-                enabled = !isLoading && validateConsumedDrink(draft.drinkSlug, draft.customDrinkName) == null,
+                enabled = !isLoading && !isDrinkPhotoProcessing &&
+                    (drinkPhotoCandidates.size <= 1 || draft.drinkPhoto != null || draft.skipDrinkPhoto) &&
+                    validateConsumedDrink(draft.drinkSlug, draft.customDrinkName) == null,
             )
         }
     }

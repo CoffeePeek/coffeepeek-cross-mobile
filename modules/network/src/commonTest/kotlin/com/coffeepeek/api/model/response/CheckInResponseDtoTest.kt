@@ -24,7 +24,7 @@ class CheckInResponseDtoTest {
         assertEquals("Анна", checkIn.username)
         assertEquals("Отличный фильтр", checkIn.text)
         assertEquals("2026-10-07T12:27:27.922Z", checkIn.createdAtUtc)
-        assertEquals(4, checkIn.rating.place)
+        assertEquals(4, checkIn.rating!!.place)
         assertEquals("Rejected", checkIn.moderationState)
         assertEquals(2, checkIn.contentRevision)
         assertEquals("Уточните текст", checkIn.rejectionReason)
@@ -32,5 +32,15 @@ class CheckInResponseDtoTest {
         assertEquals(7, checkIn.helpfulCount)
         assertEquals("/api/v1/check-ins/check-in-1/photos/photo-1", checkIn.photos.single().url)
         assertEquals(41, response.totalCount)
+        assertNull(checkIn.drinkPhotoUrl)
+    }
+
+    @Test
+    fun decodesOptionalDrinkPhotoWithoutChangingOriginalPhotos() {
+        val checkIn = Json.decodeFromString<CheckInDto>(
+            """{"id":"visit","drinkPhotoUrl":"/api/v1/check-ins/visit/drink-photo","photos":[{"url":"/full.jpg"}]}""",
+        )
+        assertEquals("/api/v1/check-ins/visit/drink-photo", checkIn.drinkPhotoUrl)
+        assertEquals("/full.jpg", checkIn.photos.single().url)
     }
 }

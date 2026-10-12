@@ -20,6 +20,7 @@ data class CoffeeShop(
     val type: String = CoffeeShopType.COFFEE_BAR,
     val location: ShopLocation? = null,
     val publicAddress: PublicAddress? = null,
+    val distanceMeters: Double? = null,
 )
 
 data class CoffeeShopDetails(
@@ -154,6 +155,11 @@ data class ShopFilters(
     val minRating: Double? = null,
     val page: Int = 1,
     val pageSize: Int = 20,
+    val origin: ShopLocation? = null,
+    val openOnly: Boolean = false,
+    val newOnly: Boolean = false,
+    val visitedOnly: Boolean = false,
+    val favoritesOnly: Boolean = false,
 )
 
 data class MapBounds(

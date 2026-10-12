@@ -41,7 +41,18 @@ class FeedFiltersUiTest {
     }
 
     @Test
-    fun everySelectedFilterOpensTheShopListWhileTheDefaultCityKeepsDiscovery() {
+    fun nearbyFilterKeepsDiscoveryWithoutClosingAnActiveSearch() {
+        val nearby = FeedUiState(filters = FeedFiltersUi(cityId = "minsk", nearbyOnly = true))
+
+        assertTrue(nearby.showDiscovery)
+        assertEquals(1, nearby.activeFilterCount)
+        assertTrue(nearby.copy(filters = nearby.filters.copy(nearbyOnly = false)).showDiscovery)
+        assertFalse(nearby.copy(isSearchActive = true).showDiscovery)
+        assertFalse(nearby.copy(query = "Coffee").showDiscovery)
+    }
+
+    @Test
+    fun otherSelectedFiltersOpenTheShopListWhileTheDefaultCityKeepsDiscovery() {
         val initial = FeedUiState(filters = FeedFiltersUi(cityId = "minsk"))
         assertTrue(initial.showDiscovery)
         listOf(
@@ -50,7 +61,6 @@ class FeedFiltersUiTest {
             FeedFiltersUi(newOnly = true),
             FeedFiltersUi(visitedOnly = true),
             FeedFiltersUi(favoritesOnly = true),
-            FeedFiltersUi(nearbyOnly = true),
             FeedFiltersUi(priceRange = 2),
             FeedFiltersUi(minRating = 4.0),
             FeedFiltersUi(roasterIds = setOf("roaster")),
@@ -61,6 +71,7 @@ class FeedFiltersUiTest {
         ).forEach { filters ->
             val filtered = initial.copy(filters = filters.copy(cityId = "minsk"))
             assertFalse(filtered.showDiscovery, filters.toString())
+            assertFalse(filtered.copy(filters = filtered.filters.copy(nearbyOnly = true)).showDiscovery, filters.toString())
             assertTrue(filtered.copy(filters = filtered.filters.clearSelections()).showDiscovery)
         }
     }

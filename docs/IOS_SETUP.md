@@ -48,7 +48,7 @@ GOOGLE_REVERSED_CLIENT_ID = com.googleusercontent.apps.000000000000-xxxxxxxx
 
 Для Google Sign-In нужны два OAuth client ID из одного Google Cloud проекта:
 
-1. iOS client ID для bundle id `com.coffeepeek.ios`;
+1. iOS client ID для bundle id `com.coffeepeek`;
 2. Web client ID, который принимает backend (тот же audience, что используется Android-приложением);
 3. `GOOGLE_REVERSED_CLIENT_ID` — reversed client ID от iOS-клиента.
 

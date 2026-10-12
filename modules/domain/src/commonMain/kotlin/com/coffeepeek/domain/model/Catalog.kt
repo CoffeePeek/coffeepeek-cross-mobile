@@ -111,13 +111,14 @@ enum class ShopIssueCategory {
 
 data class CreateCheckInInput(
     val shopSlug: String,
-    val text: String,
-    val rating: ReviewRating,
+    val text: String = "",
+    val rating: ReviewRating? = null,
     val visibility: CheckInVisibility = CheckInVisibility.Private,
     val visitedAtIso: String? = null,
     val photos: List<PendingPhotoUpload> = emptyList(),
     val drinkSlug: String? = null,
     val customDrinkName: String? = null,
+    val drinkPhoto: PendingPhotoUpload? = null,
 )
 
 data class CheckIn(
@@ -145,4 +146,5 @@ data class CheckIn(
     val rejectionReason: String? = null,
     val helpfulCount: Int = 0,
     val isHelpfulByCurrentUser: Boolean = false,
+    val drinkPhotoUrl: String? = null,
 )

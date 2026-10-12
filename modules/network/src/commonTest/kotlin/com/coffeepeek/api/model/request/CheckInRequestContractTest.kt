@@ -14,6 +14,7 @@ class CheckInRequestContractTest {
             coffeeShopSlug = "example-coffee", text = "Хороший кофе",
             rating = RatingDto(4, 4, 5), visibility = "Public", visitedAt = "2026-10-07T09:00:00Z",
             photos = listOf(UploadedPhotoReq("coffee.jpg", "image/jpeg", "check-ins/key.jpg", 12)),
+            drinkPhoto = UploadedPhotoReq("cup.png", "image/png", "check-ins/cup.png", 8),
         ))).jsonObject
         assertEquals(JsonPrimitive("example-coffee"), payload["coffeeShopSlug"])
         assertEquals(JsonPrimitive("Хороший кофе"), payload["text"])
@@ -23,6 +24,11 @@ class CheckInRequestContractTest {
         assertEquals(JsonPrimitive(12), photo["size"])
         assertFalse("sizeBytes" in photo)
         assertFalse("photoId" in photo)
+        val cup = payload["drinkPhoto"]!!.jsonObject
+        assertEquals(JsonPrimitive("image/png"), cup["contentType"])
+        assertEquals(JsonPrimitive("check-ins/cup.png"), cup["storageKey"])
+        assertEquals(JsonPrimitive(8), cup["size"])
+        assertEquals(1, payload["photos"]!!.jsonArray.size)
         for (obsolete in listOf("shop", "coffeeShopId", "isPublic", "note", "header", "author")) assertFalse(obsolete in payload)
     }
 
