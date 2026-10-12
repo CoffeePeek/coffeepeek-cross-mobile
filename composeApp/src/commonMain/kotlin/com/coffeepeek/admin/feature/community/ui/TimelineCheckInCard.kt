@@ -6,8 +6,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.intl.Locale
+import com.coffeepeek.admin.theme.CpDimens
 import com.coffeepeek.admin.ui.component.CheckInActions
-import com.coffeepeek.admin.ui.component.CheckInCard
 import com.coffeepeek.admin.ui.component.CheckInHeader
 import com.coffeepeek.admin.ui.component.CheckInHeading
 import com.coffeepeek.admin.ui.component.HelpfulButton
@@ -33,7 +33,10 @@ internal fun TimelineCheckInCard(
     onPhotoClick: (List<String>, Int) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    CheckInCard(modifier) {
+    Column(
+        modifier = modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(CpDimens.spacing2),
+    ) {
         CheckInHeader(checkIn, isOwn) {
             CheckInActions(
                 onEditClick = onEdit.takeIf { isOwn },
@@ -49,10 +52,15 @@ internal fun TimelineCheckInCard(
             onShopClick = onShopClick.takeIf { checkIn.shopId.isNotBlank() },
         )
         savedDrinkName(checkIn.drinkNameRu, checkIn.drinkNameEn, checkIn.customDrinkName, Locale.current.language)?.let { drink ->
-            SavedDrinkBadge(drink, checkIn.drinkSlug)
+            SavedDrinkBadge(drink, checkIn.drinkSlug, compact = true)
         }
         if (checkIn.note.isNotBlank()) Text(checkIn.note, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurface)
-        ReviewPhotoStrip(checkIn.photoUrls, thumbnailUrls = checkIn.photoThumbnailUrls, onPhotoClick = onPhotoClick)
+        ReviewPhotoStrip(
+            photoUrls = checkIn.photoUrls,
+            thumbnailUrls = checkIn.photoThumbnailUrls,
+            singlePhotoAspectRatio = 2f,
+            onPhotoClick = onPhotoClick,
+        )
         if (!isPublicTimeline) Text(checkIn.publicationLabel(), style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant)
         if (isOwn && checkIn.moderationState == CheckInModerationState.Rejected) checkIn.rejectionReason?.takeIf(String::isNotBlank)?.let {

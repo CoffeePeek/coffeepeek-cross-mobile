@@ -2,7 +2,7 @@ package com.coffeepeek.admin.feature.community.ui
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -113,22 +113,25 @@ fun CommunityScreen(onCreateCheckIn: () -> Unit) {
                         }
                     }
                     else -> {
-                        items(state.items, key = CheckIn::id) { checkIn ->
-                            TimelineCheckInCard(
-                                checkIn = checkIn,
-                                isOwn = state.owns(checkIn),
-                                isPublicTimeline = state.timeline == CommunityTimeline.Public,
-                                canAct = !state.isMutating,
-                                changingVisibility = state.changingVisibilityId == checkIn.id,
-                                onShopClick = { Navigator.navigate(Navigator.Screen.ShopDetail(checkIn.shopId)) },
-                                onEdit = { vm.edit(checkIn.id) },
-                                onVisibility = { vm.toggleVisibility(checkIn.id) },
-                                onHelpful = { vm.toggleHelpful(checkIn.id) },
-                                onReport = { vm.openReport(checkIn.id) },
-                                onPhotoClick = { urls, index ->
-                                    preview = CheckInPhotoPreview(state.sessionGeneration, urls, index)
-                                },
-                            )
+                        itemsIndexed(state.items, key = { _, checkIn -> checkIn.id }) { index, checkIn ->
+                            Column(verticalArrangement = Arrangement.spacedBy(CpDimens.spacing3)) {
+                                if (index > 0) HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                                TimelineCheckInCard(
+                                    checkIn = checkIn,
+                                    isOwn = state.owns(checkIn),
+                                    isPublicTimeline = state.timeline == CommunityTimeline.Public,
+                                    canAct = !state.isMutating,
+                                    changingVisibility = state.changingVisibilityId == checkIn.id,
+                                    onShopClick = { Navigator.navigate(Navigator.Screen.ShopDetail(checkIn.shopId)) },
+                                    onEdit = { vm.edit(checkIn.id) },
+                                    onVisibility = { vm.toggleVisibility(checkIn.id) },
+                                    onHelpful = { vm.toggleHelpful(checkIn.id) },
+                                    onReport = { vm.openReport(checkIn.id) },
+                                    onPhotoClick = { urls, photoIndex ->
+                                        preview = CheckInPhotoPreview(state.sessionGeneration, urls, photoIndex)
+                                    },
+                                )
+                            }
                         }
                         when {
                             state.error != null -> item(key = "error") {

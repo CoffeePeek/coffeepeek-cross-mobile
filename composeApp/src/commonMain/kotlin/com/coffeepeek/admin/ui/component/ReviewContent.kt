@@ -668,6 +668,7 @@ fun ReviewPhotoStrip(
     modifier: Modifier = Modifier,
     // Same order as photoUrls: tiles show these, a click still hands out the full photo.
     thumbnailUrls: List<String> = photoUrls,
+    singlePhotoAspectRatio: Float = 4f / 3f,
     onPhotoClick: ((List<String>, Int) -> Unit)? = null,
 ) {
     if (photoUrls.isEmpty()) return
@@ -696,7 +697,7 @@ fun ReviewPhotoStrip(
         }
     }
     if (photoUrls.size == 1) {
-        Photo(0, modifier.fillMaxWidth().aspectRatio(4f / 3f))
+        Photo(0, modifier.fillMaxWidth().aspectRatio(singlePhotoAspectRatio))
     } else Row(
         modifier.fillMaxWidth().aspectRatio(4f / 3f),
         horizontalArrangement = Arrangement.spacedBy(CpDimens.spacing1),
@@ -711,20 +712,22 @@ fun ReviewPhotoStrip(
 }
 
 @Composable
-internal fun SavedDrinkBadge(name: String, slug: String? = null) {
+internal fun SavedDrinkBadge(name: String, slug: String? = null, compact: Boolean = false) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(CpDimens.radiusLg))
+            .clip(RoundedCornerShape(if (compact) CpDimens.radiusMd else CpDimens.radiusLg))
             .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.04f))
             .padding(CpDimens.spacing1),
-        horizontalArrangement = Arrangement.spacedBy(CpDimens.spacing3),
+        horizontalArrangement = Arrangement.spacedBy(if (compact) CpDimens.spacing2 else CpDimens.spacing3),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Image(
             painter = painterResource(mockDrinkPhoto(name, slug)), contentDescription = null,
             contentScale = ContentScale.Crop,
-            modifier = Modifier.size(44.dp).clip(RoundedCornerShape(CpDimens.radiusMd)),
+            modifier = Modifier
+                .size(if (compact) 32.dp else 44.dp)
+                .clip(RoundedCornerShape(if (compact) CpDimens.radiusSm else CpDimens.radiusMd)),
         )
         Text(name, style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurface, modifier = Modifier.weight(1f))
