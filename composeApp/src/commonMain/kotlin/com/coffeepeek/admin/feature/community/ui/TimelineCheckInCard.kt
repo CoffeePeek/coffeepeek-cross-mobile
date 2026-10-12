@@ -33,6 +33,7 @@ internal fun TimelineCheckInCard(
     onPhotoClick: (List<String>, Int) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val drinkName = savedDrinkName(checkIn.drinkNameRu, checkIn.drinkNameEn, checkIn.customDrinkName, Locale.current.language)
     Column(
         modifier = modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(CpDimens.spacing2),
@@ -51,9 +52,6 @@ internal fun TimelineCheckInCard(
             rating = checkIn.rating,
             onShopClick = onShopClick.takeIf { checkIn.shopId.isNotBlank() },
         )
-        savedDrinkName(checkIn.drinkNameRu, checkIn.drinkNameEn, checkIn.customDrinkName, Locale.current.language)?.let { drink ->
-            SavedDrinkBadge(drink, checkIn.drinkSlug, compact = true)
-        }
         if (checkIn.note.isNotBlank()) Text(checkIn.note, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurface)
         ReviewPhotoStrip(
             photoUrls = checkIn.photoUrls,
@@ -66,16 +64,18 @@ internal fun TimelineCheckInCard(
         if (isOwn && checkIn.moderationState == CheckInModerationState.Rejected) checkIn.rejectionReason?.takeIf(String::isNotBlank)?.let {
             Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
         }
-        if (isPublicTimeline || checkIn.helpfulCount > 0 || (isOwn && checkIn.visibility == CheckInVisibility.Private)) Row(
-            Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween,
+        if (isPublicTimeline || checkIn.helpfulCount > 0 || drinkName != null || (isOwn && checkIn.visibility == CheckInVisibility.Private)) Row(
+            Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(CpDimens.spacing2),
         ) {
             if (isPublicTimeline || checkIn.helpfulCount > 0) HelpfulButton(
                 helpfulCount = checkIn.helpfulCount, isHelpful = checkIn.isHelpfulByCurrentUser,
                 onClick = onHelpful.takeIf { canAct && isPublicTimeline && !isOwn },
-            ) else Spacer(Modifier.weight(1f))
+            )
+            Spacer(Modifier.weight(1f))
             if (isOwn && checkIn.visibility == CheckInVisibility.Private) TextButton(onClick = onVisibility, enabled = canAct) {
                 Text(if (changingVisibility) "Сохраняем…" else "Опубликовать")
             }
+            drinkName?.let { SavedDrinkBadge(it, checkIn.drinkSlug, compact = true) }
         }
     }
 }

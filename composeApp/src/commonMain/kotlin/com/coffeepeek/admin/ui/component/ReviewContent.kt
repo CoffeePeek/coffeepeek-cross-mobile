@@ -715,7 +715,7 @@ fun ReviewPhotoStrip(
 internal fun SavedDrinkBadge(name: String, slug: String? = null, compact: Boolean = false) {
     Row(
         modifier = Modifier
-            .fillMaxWidth()
+            .then(if (compact) Modifier else Modifier.fillMaxWidth())
             .clip(RoundedCornerShape(if (compact) CpDimens.radiusMd else CpDimens.radiusLg))
             .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.04f))
             .padding(CpDimens.spacing1),
@@ -730,9 +730,9 @@ internal fun SavedDrinkBadge(name: String, slug: String? = null, compact: Boolea
                 .clip(RoundedCornerShape(if (compact) CpDimens.radiusSm else CpDimens.radiusMd)),
         )
         Text(name, style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurface, modifier = Modifier.weight(1f))
+            color = MaterialTheme.colorScheme.onSurface, modifier = Modifier.weight(1f, fill = !compact))
         // ponytail: the drink summary is static until a drink-detail route exists.
-        Icon(CpIcons.ChevronRight, contentDescription = null,
+        if (!compact) Icon(CpIcons.ChevronRight, contentDescription = null,
             modifier = Modifier.padding(end = CpDimens.spacing2).size(18.dp), tint = MaterialTheme.colorScheme.onSurface)
     }
 }

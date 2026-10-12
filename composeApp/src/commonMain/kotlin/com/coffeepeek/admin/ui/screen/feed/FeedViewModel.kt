@@ -87,7 +87,7 @@ data class FeedUiState(
     val hasMore: Boolean = false,
 ) {
     val showDiscovery: Boolean
-        get() = !isSearchActive && query.isBlank() && activeFilterCount == 0
+        get() = !isSearchActive && query.isBlank() && filters.copy(nearbyOnly = false).activeFilterCount == 0
 
     val activeFilterCount: Int
         get() = filters.activeFilterCount
