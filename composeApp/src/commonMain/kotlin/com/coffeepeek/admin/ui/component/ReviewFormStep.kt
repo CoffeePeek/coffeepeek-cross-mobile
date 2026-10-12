@@ -1,6 +1,7 @@
 package com.coffeepeek.admin.ui.component
 
-import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
@@ -21,7 +22,7 @@ internal fun ReviewFormStep(
     content: @Composable () -> Unit,
 ) {
     val color = MaterialTheme.colorScheme.primary
-    Box(
+    Column(
         Modifier.fillMaxWidth()
             .semantics { if (optional) stateDescription = "Необязательный пункт" }
             .drawBehind {
@@ -34,5 +35,6 @@ internal fun ReviewFormStep(
                     style = if (optional) Stroke(stroke) else androidx.compose.ui.graphics.drawscope.Fill)
             }
             .padding(start = 22.dp, bottom = if (last) 0.dp else 24.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
     ) { content() }
 }
