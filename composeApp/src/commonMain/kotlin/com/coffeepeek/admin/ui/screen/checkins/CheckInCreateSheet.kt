@@ -1,0 +1,92 @@
+package com.coffeepeek.admin.ui.screen.checkins
+
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import com.coffeepeek.admin.theme.CpDimens
+import com.coffeepeek.admin.ui.component.SettingsIconBadge
+import com.coffeepeek.admin.ui.component.SettingsIconPalette
+import com.coffeepeek.admin.ui.component.SwipeDismissModalBottomSheet
+import com.coffeepeek.admin.ui.icons.CpIcons
+
+@Composable
+internal fun CheckInCreateButton(onClick: () -> Unit) {
+    FloatingActionButton(onClick = onClick, shape = CircleShape,
+        containerColor = MaterialTheme.colorScheme.primary,
+        contentColor = MaterialTheme.colorScheme.onPrimary) {
+        Icon(CpIcons.Add, "Добавить чекин", Modifier.size(28.dp))
+    }
+}
+
+@Composable
+internal fun CheckInCreateSheet(onDismiss: () -> Unit, onShop: () -> Unit, onHome: () -> Unit) {
+    SwipeDismissModalBottomSheet(onDismissRequest = onDismiss) {
+        Column(
+            Modifier.fillMaxWidth().padding(horizontal = CpDimens.spacing4).padding(bottom = CpDimens.spacing6),
+            verticalArrangement = Arrangement.spacedBy(CpDimens.spacing3),
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(CpDimens.spacing1)) {
+                    Text("Новый чекин", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+                    Text("Где вы пили кофе?", style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+                IconButton(onClick = onDismiss, modifier = Modifier.size(CpDimens.controlHeight)) {
+                    Icon(CpIcons.Close, "Закрыть выбор чекина", modifier = Modifier.size(20.dp))
+                }
+            }
+            CreateChoice("В кофейне", "Выбрать место и напиток", CpIcons.Location, false, onShop)
+            CreateChoice("Дома", "Записать приготовление", CpIcons.Coffee, true, onHome)
+            Row(verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(CpDimens.spacing2)) {
+                Icon(CpIcons.Community, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(14.dp))
+                Text("Вы выбираете, кому будет виден чекин", style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+        }
+    }
+}
+
+@Composable
+private fun CreateChoice(title: String, description: String, icon: ImageVector, isHome: Boolean, onClick: () -> Unit) {
+    val shape = RoundedCornerShape(CpDimens.cardRadius)
+    Row(
+        Modifier.fillMaxWidth().clip(shape)
+            .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.04f))
+            .border(1.dp, if (isHome) MaterialTheme.colorScheme.primary.copy(alpha = 0.65f)
+                else MaterialTheme.colorScheme.outline, shape)
+            .clickable(role = Role.Button, onClick = onClick)
+            .heightIn(min = 72.dp).padding(CpDimens.spacing3),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(CpDimens.spacing3),
+    ) {
+        SettingsIconBadge(icon, SettingsIconPalette.Gold)
+        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(CpDimens.spacing1)) {
+            Text(title, style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurface)
+            Text(description, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+        Icon(CpIcons.ChevronRight, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
+    }
+}

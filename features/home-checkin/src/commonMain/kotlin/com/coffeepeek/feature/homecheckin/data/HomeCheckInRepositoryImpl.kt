@@ -7,6 +7,8 @@ import com.coffeepeek.feature.homecheckin.domain.HomeBeanStats
 import com.coffeepeek.feature.homecheckin.domain.HomeCalendarDay
 import com.coffeepeek.feature.homecheckin.domain.HomeCheckIn
 import com.coffeepeek.feature.homecheckin.domain.HomeCheckInInput
+import com.coffeepeek.feature.homecheckin.domain.HomeCheckInVisibility
+import com.coffeepeek.feature.homecheckin.domain.HomeCheckInModeration
 import com.coffeepeek.feature.homecheckin.domain.HomeCheckInPage
 import com.coffeepeek.feature.homecheckin.domain.HomeCheckInPhoto
 import com.coffeepeek.feature.homecheckin.domain.HomeCheckInRepository
@@ -28,6 +30,7 @@ import io.ktor.http.HttpHeaders
 import io.ktor.http.contentType
 import io.ktor.http.isSuccess
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.EncodeDefault
 import kotlinx.serialization.json.JsonNames
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
@@ -150,6 +153,9 @@ class HomeCheckInRepositoryImpl(
         drinkSlug = drink.slug(), customDrinkName = drink.customName(),
         photos = photos.map { HomeCheckInPhoto(it.id, it.url.absoluteUrl()) },
         drinkPhotoUrl = drinkPhoto.urlOrNull()?.absoluteUrl(),
+        visibility = HomeCheckInVisibility.entries.firstOrNull { it.name.equals(visibility, ignoreCase = true) },
+        moderation = HomeCheckInModeration.entries.firstOrNull { it.name.equals(moderationState, ignoreCase = true) }
+            ?: HomeCheckInModeration.Unknown,
     )
 
     private fun String.absoluteUrl(): String = when {
@@ -174,12 +180,13 @@ private suspend fun HttpResponse.successEnvelope() {
 
 private fun HomeCheckInInput.toEditRequest() = HomeEditDto(preparedAt, preparedOn, brewMethodCode, coffeeProductSlug, coffeeProductId,
     customBeanName?.trim(), doseGrams?.toDouble(), brewDurationSeconds, tasteScore,
-    text?.trim(), drinkSlug, customDrinkName?.trim())
+    text?.trim(), drinkSlug, customDrinkName?.trim(), visibility?.name)
 
 private fun HomeCheckInInput.toCreateRequest(photos: List<UploadedPhotoDto>, drinkPhoto: UploadedPhotoDto?) =
     HomeCreateDto(preparedAt, preparedOn, brewMethodCode, coffeeProductSlug, coffeeProductId,
         customBeanName?.trim(), doseGrams?.toDouble(), brewDurationSeconds, tasteScore,
-        text?.trim(), drinkSlug, customDrinkName?.trim(), photos, drinkPhoto)
+        text?.trim(), drinkSlug, customDrinkName?.trim(), photos, drinkPhoto,
+        (visibility ?: HomeCheckInVisibility.Private).name)
 
 private fun JsonElement?.displayName(): String? = (this as? JsonObject)?.let {
     listOf("nameRu", "name", "customName", "customDrinkName").firstNotNullOfOrNull { key ->
@@ -221,6 +228,8 @@ private fun JsonElement?.urlOrNull(): String? = when (this) {
     val drink: JsonElement? = null,
     val photos: List<HomePhotoDto> = emptyList(),
     val drinkPhoto: JsonElement? = null,
+    val visibility: String? = null,
+    val moderationState: String? = null,
 )
 @Serializable private data class HomeEditDto(
     val preparedAt: String,
@@ -235,6 +244,7 @@ private fun JsonElement?.urlOrNull(): String? = when (this) {
     val text: String?,
     val drinkSlug: String?,
     val customDrinkName: String?,
+    @EncodeDefault(EncodeDefault.Mode.NEVER) val visibility: String? = null,
 )
 @Serializable private data class HomeCreateDto(
     val preparedAt: String,
@@ -251,6 +261,7 @@ private fun JsonElement?.urlOrNull(): String? = when (this) {
     val customDrinkName: String?,
     val photos: List<UploadedPhotoDto>,
     val drinkPhoto: UploadedPhotoDto?,
+    val visibility: String,
 )
 @Serializable private data class PhotoUploadRequestDto(val sizeBytes: Int, val fileName: String, val contentType: String)
 @Serializable private data class PhotoUploadUrlDto(val uploadUrl: String, val storageKey: String)

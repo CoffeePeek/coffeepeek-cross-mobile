@@ -4,8 +4,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.getValue
 import com.coffeepeek.admin.ui.screen.addshop.AddShopScreen
 import com.coffeepeek.admin.ui.screen.auth.registr.RegisterScreen
-import com.coffeepeek.admin.ui.screen.checkins.VisitedPlacesScreen
-import com.coffeepeek.admin.feature.homecheckin.ui.HomeCheckInScreen
+import com.coffeepeek.admin.ui.screen.checkins.ProfileCheckInsScreen
 import com.coffeepeek.admin.ui.screen.deleteaccount.DeleteAccountPendingScreen
 import com.coffeepeek.admin.ui.screen.editprofile.EditProfileScreen
 import com.coffeepeek.admin.ui.screen.favorites.FavoritesScreen
@@ -477,8 +476,8 @@ object Navigator {
                     composable<Screen.EditProfile> { EditProfileScreen() }
                     composable<Screen.DeleteAccountPending> { DeleteAccountPendingScreen() }
                     composable<Screen.Favorites> { FavoritesScreen() }
-                    composable<Screen.VisitedPlaces> { VisitedPlacesScreen() }
-                    composable<Screen.HomeCheckIns> { HomeCheckInScreen() }
+                    composable<Screen.VisitedPlaces> { ProfileCheckInsScreen() }
+                    composable<Screen.HomeCheckIns> { ProfileCheckInsScreen() }
                     composable<Screen.CitySettings> { CityScreen() }
                     composable<Screen.ThemeSettings> { ThemeScreen() }
             }
@@ -511,8 +510,8 @@ object Navigator {
             Screen.EditProfile -> EditProfileScreen()
             Screen.DeleteAccountPending -> DeleteAccountPendingScreen()
             Screen.Favorites -> FavoritesScreen()
-            Screen.VisitedPlaces -> VisitedPlacesScreen()
-            Screen.HomeCheckIns -> HomeCheckInScreen()
+            Screen.VisitedPlaces -> ProfileCheckInsScreen()
+            Screen.HomeCheckIns -> ProfileCheckInsScreen()
             Screen.CitySettings -> CityScreen()
             Screen.ThemeSettings -> ThemeScreen()
             else -> error("Tab route must be handled by MainScreen: $screen")

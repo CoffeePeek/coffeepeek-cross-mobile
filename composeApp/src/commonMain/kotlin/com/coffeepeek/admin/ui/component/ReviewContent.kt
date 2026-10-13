@@ -202,7 +202,7 @@ fun ReviewRatingCards(
 }
 
 @Composable
-private fun EditableRatingCard(
+internal fun EditableRatingCard(
     image: DrawableResource,
     label: String,
     rating: Int,

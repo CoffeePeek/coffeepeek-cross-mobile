@@ -1,5 +1,9 @@
 package com.coffeepeek.feature.homecheckin.domain
 
+enum class HomeCheckInVisibility { Private, Public }
+
+enum class HomeCheckInModeration { NotSubmitted, Pending, Approved, Rejected, Unknown }
+
 /** One preparation, including a batch that produces several servings. */
 data class HomeCheckIn(
     val id: String,
@@ -18,6 +22,9 @@ data class HomeCheckIn(
     val customDrinkName: String?,
     val photos: List<HomeCheckInPhoto>,
     val drinkPhotoUrl: String?,
+    /** Null means the server has not supplied visibility; never infer publication. */
+    val visibility: HomeCheckInVisibility? = null,
+    val moderation: HomeCheckInModeration = HomeCheckInModeration.Unknown,
 )
 
 data class HomeCheckInPhoto(val id: String, val url: String)
@@ -40,6 +47,8 @@ data class HomeCheckInInput(
     val customDrinkName: String? = null,
     val photos: List<HomePhotoUpload> = emptyList(),
     val drinkPhoto: HomePhotoUpload? = null,
+    /** Null on an edit preserves an unknown server value until the user chooses. */
+    val visibility: HomeCheckInVisibility? = HomeCheckInVisibility.Private,
 )
 
 data class HomeCheckInPage(val items: List<HomeCheckIn>, val totalCount: Int, val page: Int, val pageSize: Int) {

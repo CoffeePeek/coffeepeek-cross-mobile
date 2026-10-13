@@ -32,6 +32,33 @@ internal fun calendarCells(month: CalendarMonth): List<Int?> {
     return days + List((7 - days.size % 7) % 7) { null }
 }
 
+internal fun shiftCalendarDate(value: String, offset: Int): String {
+    var month = calendarMonthFromIsoDate(value) ?: return value
+    var day = value.substringAfterLast('-').toIntOrNull() ?: return value
+    if (day !in 1..daysInMonth(month.year, month.month)) return value
+    var remaining = offset
+    while (remaining > 0) {
+        day++
+        if (day > daysInMonth(month.year, month.month)) { month = month.plusMonths(1); day = 1 }
+        remaining--
+    }
+    while (remaining < 0) {
+        day--
+        if (day < 1) { month = month.plusMonths(-1); day = daysInMonth(month.year, month.month) }
+        remaining++
+    }
+    return month.isoDate(day)
+}
+
+internal fun calendarWeekDates(value: String): List<String> {
+    val month = calendarMonthFromIsoDate(value) ?: return emptyList()
+    val day = value.substringAfterLast('-').toIntOrNull() ?: return emptyList()
+    val index = calendarCells(month).indexOf(day)
+    if (index < 0) return emptyList()
+    val monday = shiftCalendarDate(value, -(index % 7))
+    return (0..6).map { shiftCalendarDate(monday, it) }
+}
+
 internal data class CheckInStreak(
     val hasPreviousDay: Boolean,
     val hasNextDay: Boolean,

@@ -5,6 +5,14 @@ import kotlin.test.assertEquals
 
 class CheckInCalendarTest {
     @Test
+    fun weekStripCrossesMonthAndLeapDay() {
+        assertEquals(listOf("2024-02-26", "2024-02-27", "2024-02-28", "2024-02-29",
+            "2024-03-01", "2024-03-02", "2024-03-03"), calendarWeekDates("2024-02-29"))
+        assertEquals("2024-03-01", shiftCalendarDate("2024-02-29", 1))
+        assertEquals("2023-12-31", shiftCalendarDate("2024-01-01", -1))
+    }
+
+    @Test
     fun octoberReferenceStartsOnThursday() {
         assertEquals(listOf(null, null, null, 1, 2, 3, 4), calendarCells(CalendarMonth(2026, 10)).take(7))
         assertEquals("Понедельник", calendarWeekday("2026-10-12"))

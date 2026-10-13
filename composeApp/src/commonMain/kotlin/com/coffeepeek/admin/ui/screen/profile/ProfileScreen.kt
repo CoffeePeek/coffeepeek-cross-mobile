@@ -177,20 +177,10 @@ fun ProfileScreen(vm: ProfileViewModel = koinInject()) {
                 SettingsRow(
                     icon = CpIcons.Location,
                     label = "Чекины",
-                    description = "Публичные и скрытые записи о ваших визитах",
+                    description = "В кофейнях и дома",
                     iconColors = SettingsIconPalette.Sky,
-                    onClick = { Navigator.navigate(Navigator.Screen.VisitedPlaces) },
+                    onClick = { Navigator.navigate(if (state.isLoggedIn) Navigator.Screen.VisitedPlaces else Navigator.Screen.Auth) },
                 )
-                if (state.isLoggedIn) {
-                    SettingsDivider()
-                    SettingsRow(
-                        icon = CpIcons.Coffee,
-                        label = "Кофе дома",
-                        description = "Личный дневник приготовлений",
-                        iconColors = SettingsIconPalette.Gold,
-                        onClick = { Navigator.navigate(Navigator.Screen.HomeCheckIns) },
-                    )
-                }
             }
 
             if (state.isLoggedIn) {
@@ -338,7 +328,7 @@ private fun ProfileHeader(state: ProfileUiState, onEdit: () -> Unit) {
 
                 Spacer(Modifier.height(CpDimens.spacing2))
                 Row(modifier = Modifier.fillMaxWidth()) {
-                    StatBadge(state.checkInCount, "Чекины", Modifier.weight(1f)) {
+                    StatBadge(state.checkInCount, "В кофейнях", Modifier.weight(1f)) {
                         Navigator.navigate(Navigator.Screen.VisitedPlaces)
                     }
                     StatBadge(state.addedShopsCount, "Кофейни", Modifier.weight(1f)) {
