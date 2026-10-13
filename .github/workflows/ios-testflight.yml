@@ -133,6 +133,10 @@ jobs:
           printf '%s' "$IOS_CERTIFICATE_BASE64" | base64 -D > "$RUNNER_TEMP/distribution.p12"
           printf '%s' "$IOS_PROVISIONING_PROFILE_BASE64" | base64 -D > "$RUNNER_TEMP/app-store.mobileprovision"
           printf '%s' "$APPSTORE_API_PRIVATE_KEY" > "$RUNNER_TEMP/AuthKey_${APPSTORE_API_KEY_ID}.p8"
+          if ! openssl pkey -in "$RUNNER_TEMP/AuthKey_${APPSTORE_API_KEY_ID}.p8" -noout >/dev/null 2>&1; then
+            echo '::error::APPSTORE_API_PRIVATE_KEY must contain the raw multiline AuthKey_*.p8 PEM text, not Base64 or literal \n characters.'
+            exit 1
+          fi
           if ! openssl pkcs12 -legacy -in "$RUNNER_TEMP/distribution.p12" -passin env:IOS_CERTIFICATE_PASSWORD -noout >/dev/null 2>&1; then
             echo '::error::IOS_CERTIFICATE_BASE64 must contain the Base64 bytes of a readable .p12 file, and IOS_CERTIFICATE_PASSWORD must match its export password.'
             exit 1

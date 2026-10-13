@@ -116,7 +116,7 @@ Workflow [`.github/workflows/ios-testflight.yml`](../.github/workflows/ios-testf
 | `IOS_PROVISIONING_PROFILE_BASE64` | Secret | Содержимое App Store `.mobileprovision` в Base64, одной строкой |
 | `APPSTORE_API_KEY_ID` | Secret | Key ID ключа App Store Connect API |
 | `APPSTORE_ISSUER_ID` | Secret | Issuer ID ключа App Store Connect API |
-| `APPSTORE_API_PRIVATE_KEY` | Secret | Полное содержимое файла `AuthKey_*.p8` |
+| `APPSTORE_API_PRIVATE_KEY` | Secret | Исходный многострочный текст файла `AuthKey_*.p8`, включая строки `BEGIN/END PRIVATE KEY`; не Base64 и не символы `\n` |
 | `GOOGLE_IOS_CLIENT_ID` | Secret (необязательный) | OAuth iOS client ID для `com.coffeepeek` |
 | `GOOGLE_WEB_CLIENT_ID` | Secret (необязательный) | OAuth Web client ID для backend (можно использовать существующий секрет) |
 | `GOOGLE_REVERSED_CLIENT_ID` | Secret (необязательный) | Reversed iOS client ID для URL scheme |
@@ -138,6 +138,12 @@ Workflow [`.github/workflows/ios-testflight.yml`](../.github/workflows/ios-testf
 На Windows PowerShell Base64 можно получить так:
 `[Convert]::ToBase64String([IO.File]::ReadAllBytes((Resolve-Path .\distribution.p12).Path))`.
 Не публикуйте полученную строку и пароль в чате или репозитории.
+
+Для `APPSTORE_API_PRIVATE_KEY` откройте скачанный **App Store Connect API**
+файл `AuthKey_*.p8` и сохраните в GitHub Secret его содержимое без изменений:
+с настоящими переносами строк и строками `-----BEGIN PRIVATE KEY-----` и
+`-----END PRIVATE KEY-----`. Если файл утрачен, Apple не позволяет скачать этот
+же ключ повторно; создайте новый API key и обновите также `APPSTORE_API_KEY_ID`.
 
 После успешного запуска дождитесь обработки сборки в App Store Connect →
 CoffeePeek → TestFlight. Чтобы новые сборки автоматически появлялись у
