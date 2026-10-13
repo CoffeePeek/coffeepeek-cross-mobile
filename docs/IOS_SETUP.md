@@ -130,6 +130,15 @@ Workflow [`.github/workflows/ios-testflight.yml`](../.github/workflows/ios-testf
 задайте все три OAuth ID вместе; если оставить их пустыми, кнопка Google
 будет скрыта, как при локальном запуске без OAuth.
 
+Если импорт сертификата завершается ошибкой `Unknown format in import`, заново
+экспортируйте из Keychain Access именно **Apple Distribution identity вместе с
+закрытым ключом** в файл `.p12`. Файл `.cer` или сертификат без закрытого ключа
+не подходит. При обновлении `IOS_CERTIFICATE_BASE64` кодируйте байты нового
+`.p12`, а в `IOS_CERTIFICATE_PASSWORD` задайте пароль, указанный при экспорте.
+На Windows PowerShell Base64 можно получить так:
+`[Convert]::ToBase64String([IO.File]::ReadAllBytes((Resolve-Path .\distribution.p12).Path))`.
+Не публикуйте полученную строку и пароль в чате или репозитории.
+
 После успешного запуска дождитесь обработки сборки в App Store Connect →
 CoffeePeek → TestFlight. Чтобы новые сборки автоматически появлялись у
 внутренних тестировщиков, создайте внутреннюю группу и включите
