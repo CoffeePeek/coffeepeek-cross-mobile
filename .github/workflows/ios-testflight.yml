@@ -1,0 +1,268 @@
+name: iOS TestFlight
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/ios-testflight.yml
+      - build-logic/**
+      - buildSrc/**
+      - composeApp/**
+      - core/**
+      - features/**
+      - gradle/**
+      - modules/**
+      - iosApp/**
+      - iosXtool/CoffeePeek/Sources/**
+      - build.gradle.kts
+      - settings.gradle.kts
+      - gradle.properties
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ios-testflight
+  cancel-in-progress: false
+
+jobs:
+  upload:
+    if: github.ref == 'refs/heads/main'
+    runs-on: xcode-27
+    timeout-minutes: 90
+    environment: testflight
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v6
+
+      - name: Check build environment
+        shell: bash
+        run: |
+          set -euo pipefail
+          xcodebuild -version
+          [[ "$(xcodebuild -version | head -n 1)" == Xcode\ 27* ]]
+          java -version
+          test -d "$ANDROID_HOME/platforms/android-37.0"
+
+      - name: Validate release configuration
+        shell: bash
+        env:
+          API_BASE_URL: ${{ vars.API_BASE_URL_MAIN }}
+          GOOGLE_IOS_CLIENT_ID: ${{ secrets.GOOGLE_IOS_CLIENT_ID }}
+          GOOGLE_WEB_CLIENT_ID: ${{ secrets.GOOGLE_WEB_CLIENT_ID }}
+          GOOGLE_REVERSED_CLIENT_ID: ${{ secrets.GOOGLE_REVERSED_CLIENT_ID }}
+          IOS_CERTIFICATE_BASE64: ${{ secrets.IOS_CERTIFICATE_BASE64 }}
+          IOS_CERTIFICATE_PASSWORD: ${{ secrets.IOS_CERTIFICATE_PASSWORD }}
+          IOS_PROVISIONING_PROFILE_BASE64: ${{ secrets.IOS_PROVISIONING_PROFILE_BASE64 }}
+          APPSTORE_API_KEY_ID: ${{ secrets.APPSTORE_API_KEY_ID }}
+          APPSTORE_ISSUER_ID: ${{ secrets.APPSTORE_ISSUER_ID }}
+          APPSTORE_API_PRIVATE_KEY: ${{ secrets.APPSTORE_API_PRIVATE_KEY }}
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import os
+          import re
+          from urllib.parse import urlsplit
+
+          required = (
+              'API_BASE_URL',
+              'IOS_CERTIFICATE_BASE64',
+              'IOS_CERTIFICATE_PASSWORD',
+              'IOS_PROVISIONING_PROFILE_BASE64', 'APPSTORE_API_KEY_ID',
+              'APPSTORE_ISSUER_ID', 'APPSTORE_API_PRIVATE_KEY',
+          )
+          missing = [name for name in required if not os.environ.get(name)]
+          if missing:
+              raise SystemExit('Missing TestFlight configuration: ' + ', '.join(missing))
+
+          if not re.fullmatch(r'[A-Z0-9]{10}', os.environ['APPSTORE_API_KEY_ID']):
+              raise SystemExit('APPSTORE_API_KEY_ID must be a 10-character key ID')
+          if not re.fullmatch(r'[0-9A-Fa-f-]{36}', os.environ['APPSTORE_ISSUER_ID']):
+              raise SystemExit('APPSTORE_ISSUER_ID must be a UUID')
+
+          url = os.environ['API_BASE_URL']
+          parsed = urlsplit(url)
+          if parsed.scheme != 'https' or not parsed.netloc or parsed.username or parsed.password or parsed.query or parsed.fragment or any(c.isspace() for c in url) or '//' in url[len('https://'):] or any(c in url for c in '#$\\'):
+              raise SystemExit('API_BASE_URL_MAIN must be a plain HTTPS URL')
+
+          oauth_values = (
+              'GOOGLE_IOS_CLIENT_ID', 'GOOGLE_WEB_CLIENT_ID',
+              'GOOGLE_REVERSED_CLIENT_ID',
+          )
+          ios_oauth = bool(os.environ.get('GOOGLE_IOS_CLIENT_ID'))
+          reversed_oauth = bool(os.environ.get('GOOGLE_REVERSED_CLIENT_ID'))
+          if ios_oauth != reversed_oauth or (ios_oauth and not os.environ.get('GOOGLE_WEB_CLIENT_ID')):
+              raise SystemExit('Configure all three Google OAuth IDs or leave all three empty')
+          configured = oauth_values if ios_oauth else ()
+          if any(not re.fullmatch(r'[A-Za-z0-9._-]+', os.environ[name]) for name in configured):
+              raise SystemExit('Google OAuth IDs contain invalid xcconfig characters')
+
+          # In xcconfig, // starts a comment. $() inserts an empty value.
+          with open('iosApp/Configuration/Local.xcconfig', 'w', encoding='utf-8') as config:
+              config.write('API_BASE_URL = https:/$()/' + url[len('https://'):] + '\n')
+              for name in configured:
+                  config.write(name + ' = ' + os.environ[name] + '\n')
+          with open(os.environ['GITHUB_ENV'], 'a', encoding='utf-8') as output:
+              output.write('IOS_API_BASE_URL=' + url + '\n')
+          PY
+
+      - name: Install Apple signing assets
+        shell: bash
+        env:
+          IOS_CERTIFICATE_BASE64: ${{ secrets.IOS_CERTIFICATE_BASE64 }}
+          IOS_CERTIFICATE_PASSWORD: ${{ secrets.IOS_CERTIFICATE_PASSWORD }}
+          IOS_PROVISIONING_PROFILE_BASE64: ${{ secrets.IOS_PROVISIONING_PROFILE_BASE64 }}
+          APPSTORE_API_KEY_ID: ${{ secrets.APPSTORE_API_KEY_ID }}
+          APPSTORE_API_PRIVATE_KEY: ${{ secrets.APPSTORE_API_PRIVATE_KEY }}
+        run: |
+          set -euo pipefail
+          umask 077
+          printf '%s' "$IOS_CERTIFICATE_BASE64" | base64 -D > "$RUNNER_TEMP/distribution.p12"
+          printf '%s' "$IOS_PROVISIONING_PROFILE_BASE64" | base64 -D > "$RUNNER_TEMP/app-store.mobileprovision"
+          printf '%s' "$APPSTORE_API_PRIVATE_KEY" > "$RUNNER_TEMP/AuthKey_${APPSTORE_API_KEY_ID}.p8"
+          security cms -D -i "$RUNNER_TEMP/app-store.mobileprovision" > "$RUNNER_TEMP/profile.plist"
+
+          python3 - <<'PY'
+          import datetime
+          import os
+          import plistlib
+          import re
+          from pathlib import Path
+
+          with open(Path(os.environ['RUNNER_TEMP']) / 'profile.plist', 'rb') as file:
+              profile = plistlib.load(file)
+          teams = profile.get('TeamIdentifier', [])
+          if len(teams) != 1 or not re.fullmatch(r'[A-Z0-9]{10}', teams[0]):
+              raise SystemExit('Provisioning profile has an invalid Apple team ID')
+          team = teams[0]
+          if profile.get('Entitlements', {}).get('application-identifier') != team + '.com.coffeepeek':
+              raise SystemExit('Provisioning profile does not match com.coffeepeek')
+          if profile.get('Entitlements', {}).get('get-task-allow') is not False or 'ProvisionedDevices' in profile or profile.get('ProvisionsAllDevices'):
+              raise SystemExit('An App Store distribution profile is required')
+          if profile['ExpirationDate'] <= datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None):
+              raise SystemExit('Provisioning profile has expired')
+          uuid = profile['UUID']
+          name = profile['Name']
+          if not re.fullmatch(r'[0-9A-Fa-f-]{36}', uuid) or '\n' in name or '\r' in name:
+              raise SystemExit('Invalid provisioning profile metadata')
+          destination = Path.home() / 'Library/MobileDevice/Provisioning Profiles' / (uuid + '.mobileprovision')
+          destination.parent.mkdir(parents=True, exist_ok=True)
+          destination.write_bytes((Path(os.environ['RUNNER_TEMP']) / 'app-store.mobileprovision').read_bytes())
+          with open(os.environ['GITHUB_ENV'], 'a', encoding='utf-8') as output:
+              output.write('APPLE_TEAM_ID=' + team + '\n')
+              output.write('IOS_PROFILE_NAME=' + name + '\n')
+              output.write('IOS_PROFILE_PATH=' + str(destination) + '\n')
+          PY
+
+          KEYCHAIN_PATH="$RUNNER_TEMP/coffeepeek.keychain-db"
+          KEYCHAIN_PASSWORD="$(openssl rand -hex 32)"
+          security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN_PATH"
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security import "$RUNNER_TEMP/distribution.p12" -k "$KEYCHAIN_PATH" -P "$IOS_CERTIFICATE_PASSWORD" -T /usr/bin/codesign
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH" >/dev/null
+          security list-keychains -d user -s "$KEYCHAIN_PATH"
+          security default-keychain -s "$KEYCHAIN_PATH"
+          security find-identity -v -p codesigning "$KEYCHAIN_PATH" | grep -q 'Apple Distribution:'
+
+      - name: Archive signed iOS app
+        shell: bash
+        env:
+          APPSTORE_API_KEY_ID: ${{ secrets.APPSTORE_API_KEY_ID }}
+          APPSTORE_ISSUER_ID: ${{ secrets.APPSTORE_ISSUER_ID }}
+        run: |
+          set -euo pipefail
+          BUILD_NUMBER="${GITHUB_RUN_NUMBER}.${GITHUB_RUN_ATTEMPT}"
+          xcodebuild archive \
+            -project iosApp/iosApp.xcodeproj \
+            -scheme iosApp \
+            -configuration Release \
+            -destination 'generic/platform=iOS' \
+            -archivePath "$RUNNER_TEMP/CoffeePeek.xcarchive" \
+            -derivedDataPath "$RUNNER_TEMP/DerivedData" \
+            -allowProvisioningUpdates \
+            -authenticationKeyPath "$RUNNER_TEMP/AuthKey_${APPSTORE_API_KEY_ID}.p8" \
+            -authenticationKeyID "$APPSTORE_API_KEY_ID" \
+            -authenticationKeyIssuerID "$APPSTORE_ISSUER_ID" \
+            DEVELOPMENT_TEAM="$APPLE_TEAM_ID" \
+            CODE_SIGN_STYLE=Manual \
+            CODE_SIGN_IDENTITY='Apple Distribution' \
+            PROVISIONING_PROFILE_SPECIFIER="$IOS_PROFILE_NAME" \
+            CURRENT_PROJECT_VERSION="$BUILD_NUMBER"
+
+      - name: Verify archive configuration
+        shell: bash
+        run: |
+          set -euo pipefail
+          INFO_PLIST="$RUNNER_TEMP/CoffeePeek.xcarchive/Products/Applications/CoffeePeek.app/Info.plist"
+          test -f "$INFO_PLIST"
+          [[ "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "$INFO_PLIST")" == 'com.coffeepeek' ]]
+          [[ "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleVersion' "$INFO_PLIST")" == "${GITHUB_RUN_NUMBER}.${GITHUB_RUN_ATTEMPT}" ]]
+          [[ "$(/usr/libexec/PlistBuddy -c 'Print :APIBaseURL' "$INFO_PLIST")" == "$IOS_API_BASE_URL" ]]
+          [[ "$(/usr/libexec/PlistBuddy -c 'Print :CoffeePeekDebug' "$INFO_PLIST")" == 'NO' ]]
+
+      - name: Upload to App Store Connect
+        shell: bash
+        env:
+          APPSTORE_API_KEY_ID: ${{ secrets.APPSTORE_API_KEY_ID }}
+          APPSTORE_ISSUER_ID: ${{ secrets.APPSTORE_ISSUER_ID }}
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import os
+          import plistlib
+          from pathlib import Path
+
+          options = {
+              'method': 'app-store-connect',
+              'destination': 'upload',
+              'signingStyle': 'manual',
+              'signingCertificate': 'Apple Distribution',
+              'teamID': os.environ['APPLE_TEAM_ID'],
+              'provisioningProfiles': {'com.coffeepeek': os.environ['IOS_PROFILE_NAME']},
+              'manageAppVersionAndBuildNumber': False,
+              'uploadSymbols': True,
+          }
+          with open(Path(os.environ['RUNNER_TEMP']) / 'ExportOptions.plist', 'wb') as file:
+              plistlib.dump(options, file)
+          PY
+          xcodebuild -exportArchive \
+            -archivePath "$RUNNER_TEMP/CoffeePeek.xcarchive" \
+            -exportPath "$RUNNER_TEMP/TestFlight" \
+            -exportOptionsPlist "$RUNNER_TEMP/ExportOptions.plist" \
+            -allowProvisioningUpdates \
+            -authenticationKeyPath "$RUNNER_TEMP/AuthKey_${APPSTORE_API_KEY_ID}.p8" \
+            -authenticationKeyID "$APPSTORE_API_KEY_ID" \
+            -authenticationKeyIssuerID "$APPSTORE_ISSUER_ID"
+
+          {
+            echo '### Uploaded to App Store Connect'
+            echo ''
+            echo "- Bundle ID: com.coffeepeek"
+            echo "- Build: ${GITHUB_RUN_NUMBER}.${GITHUB_RUN_ATTEMPT}"
+            echo '- Apple must process the build before it appears in TestFlight.'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Remove temporary signing assets
+        if: always()
+        shell: bash
+        run: |
+          if [[ -n "${IOS_PROFILE_PATH:-}" ]]; then
+            rm -f "$IOS_PROFILE_PATH"
+          fi
+          security delete-keychain "$RUNNER_TEMP/coffeepeek.keychain-db" 2>/dev/null || true
+          rm -f "$RUNNER_TEMP/distribution.p12" "$RUNNER_TEMP/app-store.mobileprovision" "$RUNNER_TEMP/profile.plist" "$RUNNER_TEMP"/AuthKey_*.p8
+          rm -f iosApp/Configuration/Local.xcconfig
