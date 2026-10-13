@@ -3,6 +3,7 @@ package com.coffeepeek.admin.ui
 import com.coffeepeek.admin.ui.screen.addshop.AddShopScreen
 import com.coffeepeek.admin.ui.screen.auth.registr.RegisterScreen
 import com.coffeepeek.admin.ui.screen.checkins.VisitedPlacesScreen
+import com.coffeepeek.admin.feature.homecheckin.ui.HomeCheckInScreen
 import com.coffeepeek.admin.ui.screen.deleteaccount.DeleteAccountPendingScreen
 import com.coffeepeek.admin.ui.screen.editprofile.EditProfileScreen
 import com.coffeepeek.admin.ui.screen.favorites.FavoritesScreen
@@ -134,6 +135,7 @@ object Navigator {
         @Serializable data object DeleteAccountPending : Screen
         @Serializable data object Favorites : Screen
         @Serializable data object VisitedPlaces : Screen
+        @Serializable data object HomeCheckIns : Screen
         @Serializable data object CitySettings : Screen
         @Serializable data object ThemeSettings : Screen
         @Serializable data class ShopReviews(val shopId: String) : Screen
@@ -205,6 +207,7 @@ object Navigator {
         is Screen.ReportCheckIn,
         is Screen.Favorites,
         is Screen.VisitedPlaces,
+        is Screen.HomeCheckIns,
         is Screen.CitySettings,
         is Screen.ThemeSettings -> true
         else -> false
@@ -436,6 +439,7 @@ object Navigator {
                     composable<Screen.DeleteAccountPending> { DeleteAccountPendingScreen() }
                     composable<Screen.Favorites> { FavoritesScreen() }
                     composable<Screen.VisitedPlaces> { VisitedPlacesScreen() }
+                    composable<Screen.HomeCheckIns> { HomeCheckInScreen() }
                     composable<Screen.CitySettings> { CityScreen() }
                     composable<Screen.ThemeSettings> { ThemeScreen() }
             }

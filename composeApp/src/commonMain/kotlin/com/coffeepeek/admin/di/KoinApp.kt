@@ -8,9 +8,14 @@ import com.coffeepeek.admin.settings.CityPreference
 import com.coffeepeek.admin.settings.ReviewDraftStore
 import com.coffeepeek.admin.feature.favorites.api.RoasterFavorites
 import com.coffeepeek.admin.feature.coffee.data.CoffeeRepositoryImpl
+import com.coffeepeek.admin.feature.coffee.data.CoffeePickerAdapter
+import com.coffeepeek.admin.feature.coffee.api.CoffeePicker
 import com.coffeepeek.admin.feature.coffee.domain.CoffeeRepository
 import com.coffeepeek.admin.feature.coffee.ui.CoffeeListViewModel
 import com.coffeepeek.admin.feature.coffee.ui.CoffeeDetailViewModel
+import com.coffeepeek.admin.feature.homecheckin.ui.HomeCheckInViewModel
+import com.coffeepeek.feature.homecheckin.data.HomeCheckInRepositoryImpl
+import com.coffeepeek.feature.homecheckin.domain.HomeCheckInRepository
 import com.coffeepeek.admin.feature.favorites.data.LocalRoasterFavorites
 import com.coffeepeek.admin.utils.CustomUrlFetcher
 import com.coffeepeek.api.CoffeePeekClient
@@ -69,6 +74,12 @@ fun initKoin() {
 
 private fun appModule(settingRepository: com.coffeepeek.room.repository.SettingRepository) = module {
     single<CoffeeRepository> { CoffeeRepositoryImpl(get<CoffeePeekClient>().plainClient) }
+    single<CoffeePicker> { CoffeePickerAdapter(get()) }
+    single<HomeCheckInRepository> {
+        val gateway = get<CoffeePeekClient>()
+        HomeCheckInRepositoryImpl(gateway.client, gateway.uploadClient, Constants.BASE_URL)
+    }
+    factory { HomeCheckInViewModel(get(), get()) }
     factory { CoffeeListViewModel(get()) }
     factory { (slug: String) -> CoffeeDetailViewModel(slug, get()) }
     single<RoasterFavorites> { LocalRoasterFavorites(settingRepository, get()) }

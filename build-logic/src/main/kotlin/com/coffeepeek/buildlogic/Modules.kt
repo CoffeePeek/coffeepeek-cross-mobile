@@ -6,6 +6,7 @@ object Modules {
 
     val legacy = Legacy
     val core = Core
+    val features = Features
 
     object Legacy {
         const val domain = ":modules:domain"
@@ -21,6 +22,10 @@ object Modules {
         const val designSystem = ":core:design-system"
     }
 
+    object Features {
+        const val homeCheckIn = ":features:home-checkin"
+    }
+
     val all: List<String> = listOf(
         composeApp,
         legacy.domain,
@@ -31,6 +36,7 @@ object Modules {
         core.network,
         core.database,
         core.designSystem,
+        features.homeCheckIn,
     )
 }
 
