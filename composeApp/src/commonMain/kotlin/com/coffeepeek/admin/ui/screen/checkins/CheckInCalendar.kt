@@ -64,3 +64,20 @@ private fun mondayFirstDayOfWeek(year: Int, month: Int, day: Int): Int {
 }
 
 private fun Int.twoDigits() = toString().padStart(2, '0')
+
+/** Refreshes must not override a day explicitly selected while the request was in flight. */
+internal fun calendarSelection(month: CalendarMonth, today: String, selected: String?, dates: Set<String>): String? = when {
+    selected != null && calendarMonthFromIsoDate(selected) == month && selected <= today -> selected
+    calendarMonthFromIsoDate(today) == month && today in dates -> today
+    dates.isNotEmpty() -> dates.filter { calendarMonthFromIsoDate(it) == month && it <= today }.maxOrNull()
+    calendarMonthFromIsoDate(today) == month -> today
+    else -> null
+}
+
+internal fun calendarWeekday(date: String): String {
+    val month = calendarMonthFromIsoDate(date) ?: return ""
+    val day = date.substringAfterLast('-').toIntOrNull()?.takeIf { it in 1..daysInMonth(month.year, month.month) } ?: return ""
+    return listOf("Понедельник", "Вторник", "Среда", "Четверг", "Пятница", "Суббота", "Воскресенье")[
+        mondayFirstDayOfWeek(month.year, month.month, day)
+    ]
+}

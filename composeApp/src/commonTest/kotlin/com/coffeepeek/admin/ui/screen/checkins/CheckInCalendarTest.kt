@@ -5,6 +5,37 @@ import kotlin.test.assertEquals
 
 class CheckInCalendarTest {
     @Test
+    fun octoberReferenceStartsOnThursday() {
+        assertEquals(listOf(null, null, null, 1, 2, 3, 4), calendarCells(CalendarMonth(2026, 10)).take(7))
+        assertEquals("Понедельник", calendarWeekday("2026-10-12"))
+    }
+
+    @Test
+    fun todaySelectionSurvivesLoadingEvenWithoutCheckInsToday() {
+        assertEquals("2026-10-13", calendarSelection(CalendarMonth(2026, 10), "2026-10-13",
+            "2026-10-13", setOf("2026-10-12")))
+        assertEquals("2026-10-07", calendarSelection(CalendarMonth(2026, 10), "2026-10-13",
+            "2026-10-07", setOf("2026-10-12")))
+    }
+
+    @Test
+    fun newMonthSelectsLatestVisitAndDoesNotCarryPreviousMonthSelection() {
+        assertEquals("2026-09-29", calendarSelection(CalendarMonth(2026, 9), "2026-10-13",
+            "2026-10-12", setOf("2026-09-04", "2026-09-29")))
+        assertEquals("2026-10-13", calendarSelection(CalendarMonth(2026, 10), "2026-10-13", null, emptySet()))
+        assertEquals(null, calendarSelection(CalendarMonth(2026, 9), "2026-10-13", null, emptySet()))
+    }
+
+    @Test
+    fun diaryUsesCutoutBeforeGalleryAndIgnoresBlankUrls() {
+        val visit = com.coffeepeek.domain.model.CheckIn("one", "shop", "Coffee", "", "2026-10-12T09:00:00Z",
+            drinkPhotoUrl = "drink.png", photoThumbnailUrls = listOf("", "thumb.jpg"), photoUrls = listOf("original.jpg"))
+        assertEquals("drink.png" to true, diaryPhoto(visit))
+        assertEquals("thumb.jpg" to false, diaryPhoto(visit.copy(drinkPhotoUrl = "")))
+        assertEquals("original.jpg" to false, diaryPhoto(visit.copy(drinkPhotoUrl = null, photoThumbnailUrls = emptyList())))
+        assertEquals(null, diaryPhoto(visit.copy(drinkPhotoUrl = null, photoThumbnailUrls = emptyList(), photoUrls = emptyList())))
+    }
+    @Test
     fun september2026StartsOnTuesdayAndHasThirtyDays() {
         val cells = calendarCells(CalendarMonth(2026, 9))
 
