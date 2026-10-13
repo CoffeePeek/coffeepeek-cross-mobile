@@ -49,7 +49,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.coffeepeek.admin.location.NEARBY_RADIUS_METERS
+import com.coffeepeek.admin.location.LocationPermissionEffect
 import com.coffeepeek.admin.location.distanceToShopMeters
 import com.coffeepeek.admin.location.formatDistance
 import com.coffeepeek.admin.location.rememberPermittedUserLocation
@@ -157,25 +157,11 @@ fun FeedScreen(
         cancelSearch()
         mapExpanded = false
     }
-    val userLocation = rememberPermittedUserLocation()
-    val displayedShops = if (state.filters.nearbyOnly && userLocation != null) {
-        state.visibleShops
-            .mapNotNull { shop ->
-                val meters = distanceToShopMeters(userLocation, shop.location) ?: return@mapNotNull null
-                if (meters > NEARBY_RADIUS_METERS) null else shop to meters
-            }
-            .sortedBy { it.second }
-            .map { it.first }
-    } else {
-        state.visibleShops
-    }
-    val fillingNearby = state.filters.nearbyOnly &&
-        userLocation != null &&
-        displayedShops.size < 8 &&
-        state.hasMore &&
-        state.shops.isNotEmpty() &&
-        !state.isLoading &&
-        !state.isRefreshing
+    var locationRefreshKey by remember { mutableStateOf(0) }
+    LocationPermissionEffect(requestKey = 1, onGranted = { locationRefreshKey++ })
+    val userLocation = rememberPermittedUserLocation(locationRefreshKey)
+    LaunchedEffect(userLocation) { userLocation?.let(vm::onUserLocationChanged) }
+    val displayedShops = state.visibleShops
 
     val shouldLoadMore by remember(showDiscovery) {
         derivedStateOf {
@@ -190,9 +176,6 @@ fun FeedScreen(
     }
     LaunchedEffect(shouldLoadMore) {
         if (shouldLoadMore) vm.loadMore()
-    }
-    LaunchedEffect(fillingNearby, state.currentPage, state.isLoadingMore) {
-        if (fillingNearby && !state.isLoadingMore) vm.loadMore()
     }
 
     BoxWithConstraints(Modifier.fillMaxSize().onGloballyPositioned { rootOrigin = it.positionInRoot() }) {
@@ -243,7 +226,11 @@ fun FeedScreen(
                                 onToggleNew = vm::toggleNewOnly,
                                 onToggleVisited = vm::toggleVisitedOnly,
                                 onToggleFavorites = vm::toggleFavoritesOnly,
-                                onToggleNearby = vm::toggleNearbyOnly,
+                                onToggleNearby = {
+                                    val enabling = !state.filters.nearbyOnly
+                                    vm.toggleNearbyOnly()
+                                    if (enabling) locationRefreshKey++
+                                },
                                 coffeeFocusId = state.filters.coffeeFocus,
                                 onCoffeeFocusChange = { id ->
                                     vm.setCoffeeFocus(
@@ -337,7 +324,7 @@ fun FeedScreen(
                                             items(displayedShops.take(8), key = { it.id }) { shop ->
                                                 ShopCard(
                                                     shop = shop,
-                                                    distance = formatDistance(distanceToShopMeters(userLocation, shop.location)),
+                                                    distance = formatDistance(shop.distanceMeters ?: distanceToShopMeters(userLocation, shop.location)),
                                                     onClick = {
                                                         focusManager.clearFocus(force = true)
                                                         keyboard?.hide()
@@ -403,9 +390,6 @@ fun FeedScreen(
                             }
                         }
                     }
-                    fillingNearby && displayedShops.isEmpty() && !showRoasterSearch -> {
-                        Box(contentModifier)
-                    }
                     else -> {
                         CoffeePeekPullToRefresh(
                             listState = listState,
@@ -439,7 +423,7 @@ fun FeedScreen(
                                                 TextButton(onClick = vm::refresh) { Text("Попробовать снова") }
                                             }
                                         }
-                                        displayedShops.isEmpty() && !fillingNearby -> item(key = "shop-search-empty") {
+                                        displayedShops.isEmpty() -> item(key = "shop-search-empty") {
                                             Text("Кофейни не найдены", color = MaterialTheme.colorScheme.onSurfaceVariant)
                                         }
                                     }
@@ -447,7 +431,7 @@ fun FeedScreen(
                                 items(displayedShops, key = { it.id }) { shop ->
                                     ShopCard(
                                         shop = shop,
-                                        distance = formatDistance(distanceToShopMeters(userLocation, shop.location)),
+                                        distance = formatDistance(shop.distanceMeters ?: distanceToShopMeters(userLocation, shop.location)),
                                         onClick = {
                                             focusManager.clearFocus(force = true)
                                             keyboard?.hide()
@@ -456,7 +440,7 @@ fun FeedScreen(
                                         onToggleFavorite = { vm.toggleFavorite(shop) },
                                     )
                                 }
-                                if (!state.isLoading && state.error == null && !fillingNearby) item(key = "add-missing-shop") {
+                                if (!state.isLoading && state.error == null) item(key = "add-missing-shop") {
                                     AddMissingShopCard(
                                         onAddShop = {
                                             Navigator.navigate(Navigator.Screen.AddShop)

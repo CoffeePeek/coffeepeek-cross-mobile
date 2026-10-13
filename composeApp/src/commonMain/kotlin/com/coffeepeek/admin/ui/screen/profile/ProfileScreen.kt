@@ -182,6 +182,16 @@ fun ProfileScreen(vm: ProfileViewModel = koinInject()) {
                     iconColors = SettingsIconPalette.Sky,
                     onClick = { Navigator.navigate(Navigator.Screen.VisitedPlaces) },
                 )
+                if (state.isLoggedIn) {
+                    SettingsDivider()
+                    SettingsRow(
+                        icon = CpIcons.Coffee,
+                        label = "Кофе дома",
+                        description = "Личный дневник приготовлений",
+                        iconColors = SettingsIconPalette.Gold,
+                        onClick = { Navigator.navigate(Navigator.Screen.HomeCheckIns) },
+                    )
+                }
             }
 
             if (state.isLoggedIn) {

@@ -36,8 +36,8 @@ internal data class CheckInEditState(
     val customDrinkName: String? = source.customDrinkName,
     val error: String? = null,
 ) {
-    fun input() = UpdateCheckInInput(text.trim(), rating, drinkSlug, customDrinkName?.trim())
-    fun validationError() = validateCheckInContent(text, rating, drinkSlug, customDrinkName)
+    fun input() = UpdateCheckInInput(text.trim(), rating.takeUnless { it == ReviewRating(0, 0, 0) }, drinkSlug, customDrinkName?.trim())
+    fun validationError() = validateCheckInContent(text, input().rating, drinkSlug, customDrinkName)
 }
 
 internal data class CommunityUiState(

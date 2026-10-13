@@ -64,7 +64,7 @@ class CommunityViewModelTest {
             vm.await { it.items.isNotEmpty() && !it.isLoading }
             vm.edit("own")
             val edit = vm.state.value.editing!!
-            vm.updateEdit(edit.copy(text = " \n "))
+            vm.updateEdit(edit.copy(text = "a".repeat(1001)))
             vm.saveEdit()
             assertNotNull(vm.state.value.editing?.error)
             assertTrue(sent.tryReceive().isFailure)

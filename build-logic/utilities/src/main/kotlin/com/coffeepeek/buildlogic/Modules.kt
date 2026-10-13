@@ -9,6 +9,8 @@ object Modules {
     val feature = Feature
 
     object Feature {
+        const val homeCheckIn = ":features:home-checkin"
+
         val favorites = Favorites
         val shopReport = ShopReport
         object Favorites {
@@ -71,6 +73,7 @@ object Modules {
         feature.shop.domain,
         feature.shop.data,
         feature.shop.impl,
+        feature.homeCheckIn,
     )
 }
 

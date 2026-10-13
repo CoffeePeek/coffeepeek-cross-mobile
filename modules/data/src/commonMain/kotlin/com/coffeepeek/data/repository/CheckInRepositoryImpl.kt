@@ -27,18 +27,27 @@ class CheckInRepositoryImpl(
 
     override suspend fun createCheckIn(input: CreateCheckInInput): Result<Unit> = try {
         require(input.shopSlug.isNotBlank()) { "Выберите кофейню" }
+        require(!input.visitedAtIso.isNullOrBlank()) { "Выберите дату визита" }
         validateCheckInContent(input.text, input.rating, input.drinkSlug, input.customDrinkName)?.let { error(it) }
         require(input.photos.size <= 5) { "Можно добавить до 5 фото" }
+        input.drinkPhoto?.let {
+            require(input.photos.isNotEmpty()) { "Для изображения напитка нужно полное фото" }
+            require(it.contentType == "image/png" && it.bytes.isNotEmpty()) { "Изображение напитка должно быть PNG" }
+        }
         val uploaded = photoRepository.uploadCheckInPhotos(input.photos).getOrThrow()
+        val drinkPhoto = input.drinkPhoto?.let {
+            photoRepository.uploadCheckInPhotos(listOf(it)).getOrThrow().toUploadedPhotoReqs().single()
+        }
         checkInApiService.createCheckIn(CreateCheckInReq(
             coffeeShopSlug = input.shopSlug,
             text = input.text.trim(),
-            rating = input.rating.toDto(),
+            rating = input.rating?.toDto(),
             visibility = input.visibility.name,
             visitedAt = input.visitedAtIso,
             drinkSlug = input.drinkSlug,
             customDrinkName = input.customDrinkName?.trim(),
             photos = uploaded.toUploadedPhotoReqs(),
+            drinkPhoto = drinkPhoto,
         )).getOrThrow()
         Result.success(Unit)
     } catch (cancelled: CancellationException) {
@@ -82,7 +91,7 @@ class CheckInRepositoryImpl(
         }
         return checkInApiService.updateCheckIn(id, UpdateCheckInReq(
             text = input.text.trim(),
-            rating = input.rating.toDto(),
+            rating = input.rating?.toDto(),
             drinkSlug = input.drinkSlug,
             customDrinkName = input.customDrinkName?.trim(),
         )).map { it.toDomain(fileUrlResolver) }

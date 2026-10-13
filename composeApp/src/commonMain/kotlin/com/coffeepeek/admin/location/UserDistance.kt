@@ -15,13 +15,13 @@ import kotlin.math.sin
 import kotlin.math.sqrt
 
 private const val EARTH_RADIUS_METERS = 6_371_000.0
-internal const val NEARBY_RADIUS_METERS = 1_500.0
 
 /** Reads location only when permission has already been granted; this never opens a permission dialog. */
 @Composable
-internal fun rememberPermittedUserLocation(): GeoPoint? {
+internal fun rememberPermittedUserLocation(refreshKey: Int = 0): GeoPoint? {
     var location by remember { mutableStateOf<GeoPoint?>(null) }
-    LaunchedEffect(Unit) {
+    LaunchedEffect(refreshKey) {
+        location = null
         if (PlatformLocation.hasPermission()) {
             location = PlatformLocation.getLastKnownLocation()
         }

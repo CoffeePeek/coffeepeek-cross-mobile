@@ -64,6 +64,7 @@ kotlin {
             implementation(project(module.legacy.network))
             implementation(project(module.legacy.room))
             implementation(project(module.core.network))
+            implementation(project(module.features.homeCheckIn))
             implementation(compose.runtime)
             implementation(compose.foundation)
             implementation(compose.material3)

@@ -243,7 +243,7 @@ fun CheckInBottomSheet(
                     }
                 }
 
-                ReviewFormStep {
+                ReviewFormStep(optional = true) {
                     ReviewFormField(
                         label = stringResource(Res.string.checkin_note_label),
                     ) {

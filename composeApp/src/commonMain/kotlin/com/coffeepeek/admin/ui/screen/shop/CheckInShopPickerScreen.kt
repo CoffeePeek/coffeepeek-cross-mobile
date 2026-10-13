@@ -15,7 +15,7 @@ import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.admin.di.platformViewModel
 import com.coffeepeek.admin.feature.catalog.api.ShopCard
-import com.coffeepeek.admin.location.NEARBY_RADIUS_METERS
+import com.coffeepeek.admin.location.LocationPermissionEffect
 import com.coffeepeek.admin.location.distanceToShopMeters
 import com.coffeepeek.admin.location.formatDistance
 import com.coffeepeek.admin.location.rememberPermittedUserLocation
@@ -36,7 +36,10 @@ internal fun CheckInShopPickerScreen() {
     val vm: FeedViewModel = platformViewModel()
     val state by vm.uiState.collectAsState()
     val listState = rememberLazyListState()
-    val location = rememberPermittedUserLocation()
+    var locationRefreshKey by remember { mutableStateOf(0) }
+    LocationPermissionEffect(requestKey = 1, onGranted = { locationRefreshKey++ })
+    val location = rememberPermittedUserLocation(locationRefreshKey)
+    LaunchedEffect(location) { location?.let(vm::onUserLocationChanged) }
     val focus = LocalFocusManager.current
     val keyboard = LocalSoftwareKeyboardController.current
     var showMap by rememberSaveable { mutableStateOf(false) }
@@ -45,12 +48,7 @@ internal fun CheckInShopPickerScreen() {
         keyboard?.hide()
         Navigator.popThenNavigate(Navigator.Screen.ShopDetail(id, forCheckIn = true))
     }
-    val shops = if (state.filters.nearbyOnly && location != null) {
-        state.visibleShops.mapNotNull { shop ->
-            distanceToShopMeters(location, shop.location)?.takeIf { it <= NEARBY_RADIUS_METERS }
-                ?.let { shop to it }
-        }.sortedBy { it.second }.map { it.first }
-    } else state.visibleShops
+    val shops = state.visibleShops
     val shouldLoadMore by remember(state, shops.size, showMap) {
         derivedStateOf {
             !showMap && state.hasMore && !state.isLoading && !state.isLoadingMore &&
@@ -81,7 +79,12 @@ internal fun CheckInShopPickerScreen() {
             ) {
                 if (location != null) DesignFilterChip(
                     selected = state.filters.nearbyOnly && !showMap,
-                    onClick = { showMap = false; vm.toggleNearbyOnly() },
+                    onClick = {
+                        showMap = false
+                        val enabling = !state.filters.nearbyOnly
+                        vm.toggleNearbyOnly()
+                        if (enabling) locationRefreshKey++
+                    },
                     label = "Рядом со мной",
                     leadingIcon = CpIcons.Location,
                 )
@@ -107,7 +110,7 @@ internal fun CheckInShopPickerScreen() {
                     if (state.isLoading && shops.isEmpty()) item { CoffeePeekLoader() }
                     items(shops, key = { it.id }) { shop ->
                         ShopCard(
-                            shop = shop, distance = formatDistance(distanceToShopMeters(location, shop.location)),
+                            shop = shop, distance = formatDistance(shop.distanceMeters ?: distanceToShopMeters(location, shop.location)),
                             onClick = { selectShop(shop.id) }, onToggleFavorite = { vm.toggleFavorite(shop) },
                             showCatalogDetails = false,
                         )

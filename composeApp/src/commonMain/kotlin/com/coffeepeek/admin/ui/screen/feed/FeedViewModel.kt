@@ -1,6 +1,7 @@
 package com.coffeepeek.admin.ui.screen.feed
 
 import com.coffeepeek.admin.base.BaseViewModel
+import com.coffeepeek.admin.location.GeoPoint
 import com.coffeepeek.admin.settings.CityPreference
 import com.coffeepeek.admin.ui.Navigator
 import com.coffeepeek.admin.ui.favorites.withFavoriteMembership
@@ -9,6 +10,7 @@ import com.coffeepeek.domain.model.CatalogItem
 import com.coffeepeek.domain.model.City
 import com.coffeepeek.domain.model.CoffeeShop
 import com.coffeepeek.domain.model.ShopFilters
+import com.coffeepeek.domain.model.ShopLocation
 import com.coffeepeek.domain.repository.FavoriteRepository
 import com.coffeepeek.domain.repository.SessionRepository
 import com.coffeepeek.domain.repository.ShopRepository
@@ -91,7 +93,7 @@ data class FeedUiState(
     val hasMore: Boolean = false,
 ) {
     val showDiscovery: Boolean
-        get() = !isSearchActive && query.isBlank() && activeFilterCount == 0
+        get() = !isSearchActive && query.isBlank() && filters.copy(nearbyOnly = false).activeFilterCount == 0
 
     val activeFilterCount: Int
         get() = filters.activeFilterCount
@@ -123,6 +125,7 @@ class FeedViewModel(
     private val favoriteMutationGuard = Mutex()
     private var shopsLoadJob: Job? = null
     private var isCityReady = false
+    private var nearbyOrigin: ShopLocation? = null
 
     init {
         loadCatalogs()
@@ -224,7 +227,9 @@ class FeedViewModel(
     }
 
     fun applyFilters(filters: FeedFiltersUi) {
-        _uiState.update { it.copy(filters = filters) }
+        _uiState.update {
+            it.copy(filters = filters, shops = if (it.filters.nearbyOnly != filters.nearbyOnly) emptyList() else it.shops)
+        }
         loadShops(reset = true)
     }
 
@@ -235,10 +240,12 @@ class FeedViewModel(
 
     fun toggleOpenOnly() {
         _uiState.update { it.copy(filters = it.filters.copy(openOnly = !it.filters.openOnly)) }
+        if (_uiState.value.filters.nearbyOnly) loadShops(reset = true)
     }
 
     fun toggleNewOnly() {
         _uiState.update { it.copy(filters = it.filters.copy(newOnly = !it.filters.newOnly)) }
+        if (_uiState.value.filters.nearbyOnly) loadShops(reset = true)
     }
 
     fun toggleVisitedOnly() {
@@ -248,6 +255,7 @@ class FeedViewModel(
                 return@launch
             }
             _uiState.update { it.copy(filters = it.filters.copy(visitedOnly = !it.filters.visitedOnly)) }
+            if (_uiState.value.filters.nearbyOnly) loadShops(reset = true)
         }
     }
 
@@ -258,11 +266,29 @@ class FeedViewModel(
                 return@launch
             }
             _uiState.update { it.copy(filters = it.filters.copy(favoritesOnly = !it.filters.favoritesOnly)) }
+            if (_uiState.value.filters.nearbyOnly) loadShops(reset = true)
         }
     }
 
     fun toggleNearbyOnly() {
-        _uiState.update { it.copy(filters = it.filters.copy(nearbyOnly = !it.filters.nearbyOnly)) }
+        if (nearbyOrigin == null) return
+        _uiState.update { it.copy(filters = it.filters.copy(nearbyOnly = !it.filters.nearbyOnly), shops = emptyList()) }
+        loadShops(reset = true)
+    }
+
+    fun onUserLocationChanged(location: GeoPoint) {
+        if (!location.latitude.isFinite() || location.latitude !in -90.0..90.0 ||
+            !location.longitude.isFinite() || location.longitude !in -180.0..180.0) return
+        val origin = ShopLocation(latitude = location.latitude, longitude = location.longitude)
+        if (origin == nearbyOrigin) return
+        val firstLocation = nearbyOrigin == null
+        nearbyOrigin = origin
+        if (firstLocation) {
+            _uiState.update { it.copy(filters = it.filters.copy(nearbyOnly = true), shops = emptyList()) }
+        } else if (_uiState.value.filters.nearbyOnly) {
+            _uiState.update { it.copy(shops = emptyList()) }
+        }
+        if (isCityReady && _uiState.value.filters.nearbyOnly) loadShops(reset = true)
     }
 
     fun setPriceRange(priceRange: Int?) {
@@ -306,7 +332,7 @@ class FeedViewModel(
     fun clearFilters() {
         queryFlow.value = ""
         _uiState.update {
-            it.copy(query = "", filters = it.filters.clearSelections())
+            it.copy(query = "", filters = it.filters.clearSelections(), shops = if (it.filters.nearbyOnly) emptyList() else it.shops)
         }
         loadShops(reset = true)
     }
@@ -420,7 +446,7 @@ class FeedViewModel(
             shopRepository.searchShops(
                 ShopFilters(
                     query = current.query.trim().takeIf { it.isNotBlank() },
-                    cityId = filters.cityId,
+                    cityId = if (filters.nearbyOnly) null else filters.cityId,
                     coffeeFocus = filters.coffeeFocus,
                     roasterIds = filters.roasterIds.toList(),
                     beanIds = filters.beanIds.toList(),
@@ -431,6 +457,11 @@ class FeedViewModel(
                     minRating = filters.minRating,
                     page = page,
                     pageSize = PAGE_SIZE,
+                    origin = nearbyOrigin.takeIf { filters.nearbyOnly },
+                    openOnly = filters.openOnly,
+                    newOnly = filters.newOnly,
+                    visitedOnly = filters.visitedOnly,
+                    favoritesOnly = filters.favoritesOnly,
                 ),
             ).onSuccess { result ->
                 if (!isActive) return@onSuccess

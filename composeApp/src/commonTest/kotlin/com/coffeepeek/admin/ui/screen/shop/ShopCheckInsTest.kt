@@ -88,11 +88,15 @@ class ShopCheckInsTest {
                 withTimeout(5_000) { vm.uiState.first { it.details != null && !it.isLoading } }
                 vm.openCheckInSheet()
                 val opened = withTimeout(5_000) { vm.uiState.first { it.showCheckInSheet } }
-                val draft = opened.checkInDraft!!.copy(note = "Кофейный момент", isPublic = visibility == CheckInVisibility.Public)
+                val draft = opened.checkInDraft!!.copy(isPublic = visibility == CheckInVisibility.Public)
                 vm.updateCheckInDraft(draft)
                 vm.checkIn(draft)
                 assertTrue(vm.uiState.value.isCheckInLoading)
-                assertEquals(visibility, withTimeout(5_000) { started.receive() }.visibility)
+                val input = withTimeout(5_000) { started.receive() }
+                assertEquals(visibility, input.visibility)
+                assertEquals("", input.text)
+                assertEquals(ReviewRating(place = 4, service = 4, coffee = 4), input.rating)
+                assertNotNull(input.visitedAtIso)
                 vm.checkIn(draft)
                 vm.dismissCheckInSheet()
                 vm.updateCheckInDraft(draft.copy(note = "Changed during submission"))
@@ -119,7 +123,8 @@ class ShopCheckInsTest {
     fun failedSubmissionKeepsDraftAndCanRetry() = runBlocking {
         val store = CheckInDraftStore()
         var attempts = 0
-        val repo = ShopTestCheckIns().apply { create = {
+        val repo = ShopTestCheckIns().apply { create = { input ->
+            assertEquals(ReviewRating(place = 5, service = 3, coffee = 2), input.rating)
             if (++attempts == 1) Result.failure(IllegalStateException("Нет сети")) else Result.success(Unit)
         } }
         val vm = viewModel(repo, loggedIn = true, draftStore = store)
@@ -128,6 +133,7 @@ class ShopCheckInsTest {
             vm.openCheckInSheet()
             val opened = withTimeout(5_000) { vm.uiState.first { it.showCheckInSheet } }
             val draft = opened.checkInDraft!!.copy(note = "Попробовать ещё раз",
+                placeRating = 5, serviceRating = 3, coffeeRating = 2,
                 photos = listOf(PickedImage(byteArrayOf(1, 2, 3), "coffee.jpg")))
             vm.updateCheckInDraft(draft)
             vm.checkIn(draft)
@@ -153,7 +159,7 @@ class ShopCheckInsTest {
             withTimeout(5_000) { vm.uiState.first { it.details != null && !it.isLoading } }
             val draft = CheckInDraft("coffee", visitMillis = 1000, note = "Кофе")
             for (invalid in listOf(
-                draft.copy(note = " "), draft.copy(note = "a".repeat(1001)), draft.copy(visitMillis = 0),
+                draft.copy(note = "a".repeat(1001)), draft.copy(visitMillis = 0),
                 draft.copy(visitMillis = Long.MAX_VALUE), draft.copy(coffeeRating = 0), draft.copy(serviceRating = 6),
                 draft.copy(placeRating = 0), draft.copy(drinkSlug = "other", customDrinkName = " "),
                 draft.copy(photos = List(6) { PickedImage(byteArrayOf(1), "coffee.jpg") }),
@@ -187,7 +193,8 @@ class ShopCheckInsTest {
                     vm.openCheckInSheet()
                     val opened = withTimeout(5_000) { vm.uiState.first { it.showCheckInSheet } }
                     val draft = opened.checkInDraft!!.copy(note = "Сохранить", photos = listOf(PickedImage(byteArrayOf(1), "coffee.jpg")))
-                    vm.updateCheckInDraft(draft); vm.checkIn(draft)
+                    vm.updateCheckInDraft(draft)
+                    vm.checkIn(draft)
                     val failed = withTimeout(5_000) { vm.uiState.first { !it.isCheckInLoading && it.checkInError != null } }
                     assertTrue(failed.checkInError!!.isNotBlank())
                     assertEquals(draft, failed.checkInDraft)
@@ -254,6 +261,32 @@ class ShopCheckInsTest {
             assertEquals(draft, failed.checkInDraft)
             assertTrue(failed.showCheckInSheet)
             assertNull(failed.submittedCheckInVisibility)
+        } finally { vm.close() }
+    }
+
+    @Test
+    fun submitsOriginalPhotosWithoutASeparateDrinkCutout() = runBlocking {
+        val original = PickedImage(byteArrayOf(1, 2, 3), "coffee.jpg")
+        val submitted = CompletableDeferred<CreateCheckInInput>()
+        val store = CheckInDraftStore()
+        val vm = viewModel(ShopTestCheckIns().apply { create = {
+            submitted.complete(it)
+            Result.success(Unit)
+        } }, loggedIn = true, draftStore = store)
+        try {
+            withTimeout(5_000) { vm.uiState.first { it.details != null && !it.isLoading } }
+            vm.openCheckInSheet()
+            val draft = withTimeout(5_000) { vm.uiState.first { it.showCheckInSheet } }.checkInDraft!!
+            vm.updateCheckInDraft(draft.copy(photos = listOf(original)))
+            vm.dismissCheckInSheet()
+            vm.openCheckInSheet()
+            val reopened = withTimeout(5_000) { vm.uiState.first { it.showCheckInSheet } }.checkInDraft!!
+            assertEquals(listOf(original), reopened.photos)
+            vm.checkIn(reopened)
+            val input = withTimeout(5_000) { submitted.await() }
+            assertEquals(listOf("coffee.jpg"), input.photos.map { it.fileName })
+            assertContentEquals(original.bytes, input.photos.single().bytes)
+            assertNull(input.drinkPhoto)
         } finally { vm.close() }
     }
 

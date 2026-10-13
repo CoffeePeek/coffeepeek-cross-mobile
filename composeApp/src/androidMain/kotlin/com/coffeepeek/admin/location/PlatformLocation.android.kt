@@ -7,10 +7,13 @@ import android.location.Geocoder
 import android.location.LocationManager
 import android.os.Build
 import androidx.core.content.ContextCompat
+import androidx.core.location.LocationManagerCompat
+import androidx.core.os.CancellationSignal
 import com.coffeepeek.admin.locator.Locator
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
 import java.util.Locale
 import kotlin.coroutines.resume
 
@@ -26,15 +29,37 @@ actual object PlatformLocation {
         if (!hasLocationPermission(context)) return@withContext null
         val locationManager = context.getSystemService(Context.LOCATION_SERVICE) as? LocationManager
             ?: return@withContext null
-        val providers = listOf(LocationManager.GPS_PROVIDER, LocationManager.NETWORK_PROVIDER)
-        providers
+        val providers = listOf(LocationManager.NETWORK_PROVIDER, LocationManager.GPS_PROVIDER)
+        val cached = providers
             .mapNotNull { provider ->
                 try { locationManager.getLastKnownLocation(provider) }
                 catch (_: SecurityException) { null }
                 catch (_: IllegalArgumentException) { null }
             }
             .maxByOrNull { it.time }
-            ?.let { GeoPoint(it.latitude, it.longitude) }
+        if (cached != null && System.currentTimeMillis() - cached.time in 0..120_000) {
+            return@withContext GeoPoint(cached.latitude, cached.longitude)
+        }
+        for (provider in providers) {
+            if (!runCatching { locationManager.isProviderEnabled(provider) }.getOrDefault(false)) continue
+            val current = withTimeoutOrNull(6_000) {
+                suspendCancellableCoroutine<android.location.Location?> { continuation ->
+                    val cancellation = CancellationSignal()
+                    continuation.invokeOnCancellation { cancellation.cancel() }
+                    try {
+                        LocationManagerCompat.getCurrentLocation(
+                            locationManager, provider, cancellation, ContextCompat.getMainExecutor(context),
+                        ) { location -> if (continuation.isActive) continuation.resume(location) }
+                    } catch (_: SecurityException) {
+                        if (continuation.isActive) continuation.resume(null)
+                    } catch (_: IllegalArgumentException) {
+                        if (continuation.isActive) continuation.resume(null)
+                    }
+                }
+            }
+            if (current != null) return@withContext GeoPoint(current.latitude, current.longitude)
+        }
+        null
     }
 
     actual suspend fun reverseGeocode(latitude: Double, longitude: Double): String? =

@@ -5,6 +5,7 @@ import com.coffeepeek.api.model.response.ConsumedDrinkOptionDto
 import com.coffeepeek.api.model.ApiResponse
 import com.coffeepeek.api.model.request.CreateShopReq
 import com.coffeepeek.api.model.request.ModerationStatusDto
+import com.coffeepeek.api.model.request.ShopSearchRequestDto
 import com.coffeepeek.api.model.response.shop.MyModerationShopsPageDto
 import com.coffeepeek.api.model.response.shop.CatalogItemDto
 import com.coffeepeek.api.model.response.shop.CityItemDto
@@ -13,6 +14,7 @@ import com.coffeepeek.api.model.response.shop.GetDrinksResponseDto
 import com.coffeepeek.api.model.response.shop.CoffeeDrinkDefinitionDto
 import com.coffeepeek.api.model.response.shop.GetShopsInBoundsResponseDto
 import com.coffeepeek.api.model.response.shop.GetShopsResponseDto
+import com.coffeepeek.api.model.response.shop.ShopSearchResponseDto
 import com.coffeepeek.api.utils.ApiException
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
@@ -58,6 +60,22 @@ class ShopApiService(private val client: HttpClient) {
         }
         val apiResponse = response.body<ApiResponse<GetShopsResponseDto>>()
         if (!apiResponse.isSuccess || apiResponse.data == null) throw ApiException(apiResponse.message)
+        apiResponse.data
+    }
+
+    suspend fun searchNearbyShops(request: ShopSearchRequestDto): Result<ShopSearchResponseDto> = runCatching {
+        val origin = request.filters.origin
+        require(origin.latitude.isFinite() && origin.latitude in -90.0..90.0)
+        require(origin.longitude.isFinite() && origin.longitude in -180.0..180.0)
+        require(request.filters.radiusKm > 0 && request.page > 0 && request.pageSize in 1..100)
+        val response = client.post("/api/v1/coffee-shops/search") {
+            contentType(ContentType.Application.Json)
+            setBody(request)
+        }
+        val apiResponse = response.body<ApiResponse<ShopSearchResponseDto>>()
+        if (!response.status.isSuccess() || !apiResponse.isSuccess || apiResponse.data == null) {
+            throw ApiException(apiResponse.message)
+        }
         apiResponse.data
     }
 

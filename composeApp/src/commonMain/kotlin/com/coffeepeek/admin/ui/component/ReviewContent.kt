@@ -23,6 +23,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -59,9 +60,6 @@ import coffeepeek.composeapp.generated.resources.Res
 import coffeepeek.composeapp.generated.resources.checkin_rating_atmosphere
 import coffeepeek.composeapp.generated.resources.checkin_rating_coffee
 import coffeepeek.composeapp.generated.resources.checkin_rating_service
-import coffeepeek.composeapp.generated.resources.drink_mock_cappuccino
-import coffeepeek.composeapp.generated.resources.drink_mock_espresso
-import coffeepeek.composeapp.generated.resources.drink_mock_matcha
 import com.coffeepeek.admin.theme.CpColor
 import com.coffeepeek.admin.theme.CpDimens
 import com.coffeepeek.admin.ui.icons.CpIcons
@@ -311,7 +309,7 @@ fun ReviewDisplayCard(
         val heading = shopName?.takeIf(String::isNotBlank) ?: review.header
         CheckInHeading(heading.takeIf(String::isNotBlank), review.rating)
         if (showDrinkBadge) savedDrinkName(review.drinkNameRu, review.drinkNameEn, review.customDrinkName, Locale.current.language)?.let {
-            SavedDrinkBadge(it, review.drinkSlug)
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) { SavedDrinkLabel(it) }
         }
         if (!shopName.isNullOrBlank() && review.header.isNotBlank() && review.header != heading) Text(
             review.header, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.SemiBold,
@@ -359,9 +357,7 @@ fun CheckInDisplayCard(
             CheckInActions(onEditClick = null, onReportClick = onReportClick)
         }
         CheckInHeading(checkIn.shopName.ifBlank { "Кофейня" }.takeIf { showShopName }, checkIn.rating)
-        savedDrinkName(checkIn.drinkNameRu, checkIn.drinkNameEn, checkIn.customDrinkName, Locale.current.language)?.let {
-            SavedDrinkBadge(it, checkIn.drinkSlug)
-        }
+        val drinkName = savedDrinkName(checkIn.drinkNameRu, checkIn.drinkNameEn, checkIn.customDrinkName, Locale.current.language)
         if (checkIn.note.isNotBlank()) {
             if (fullVersion) Text(checkIn.note, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurface)
             else ReviewQuote(checkIn.id, checkIn.note, padToCollapsedLines = false)
@@ -371,8 +367,14 @@ fun CheckInDisplayCard(
             thumbnailUrls = checkIn.photoThumbnailUrls,
             onPhotoClick = onPhotoClick,
         )
-        if (checkIn.visibility == CheckInVisibility.Public || checkIn.helpfulCount > 0) {
-            HelpfulButton(checkIn.helpfulCount, checkIn.isHelpfulByCurrentUser, onClick = onHelpfulClick)
+        if (checkIn.visibility == CheckInVisibility.Public || checkIn.helpfulCount > 0 || drinkName != null) {
+            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                if (checkIn.visibility == CheckInVisibility.Public || checkIn.helpfulCount > 0) {
+                    HelpfulButton(checkIn.helpfulCount, checkIn.isHelpfulByCurrentUser, onClick = onHelpfulClick)
+                }
+                Spacer(Modifier.weight(1f))
+                drinkName?.let { SavedDrinkLabel(it) }
+            }
         }
     }
 }
@@ -668,6 +670,7 @@ fun ReviewPhotoStrip(
     modifier: Modifier = Modifier,
     // Same order as photoUrls: tiles show these, a click still hands out the full photo.
     thumbnailUrls: List<String> = photoUrls,
+    singlePhotoAspectRatio: Float = 4f / 3f,
     onPhotoClick: ((List<String>, Int) -> Unit)? = null,
 ) {
     if (photoUrls.isEmpty()) return
@@ -696,7 +699,7 @@ fun ReviewPhotoStrip(
         }
     }
     if (photoUrls.size == 1) {
-        Photo(0, modifier.fillMaxWidth().aspectRatio(4f / 3f))
+        Photo(0, modifier.fillMaxWidth().aspectRatio(singlePhotoAspectRatio))
     } else Row(
         modifier.fillMaxWidth().aspectRatio(4f / 3f),
         horizontalArrangement = Arrangement.spacedBy(CpDimens.spacing1),
@@ -711,35 +714,14 @@ fun ReviewPhotoStrip(
 }
 
 @Composable
-internal fun SavedDrinkBadge(name: String, slug: String? = null) {
+internal fun SavedDrinkLabel(name: String) {
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(CpDimens.radiusLg))
-            .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.04f))
-            .padding(CpDimens.spacing1),
-        horizontalArrangement = Arrangement.spacedBy(CpDimens.spacing3),
+        horizontalArrangement = Arrangement.spacedBy(CpDimens.spacing1),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Image(
-            painter = painterResource(mockDrinkPhoto(name, slug)), contentDescription = null,
-            contentScale = ContentScale.Crop,
-            modifier = Modifier.size(44.dp).clip(RoundedCornerShape(CpDimens.radiusMd)),
-        )
-        Text(name, style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurface, modifier = Modifier.weight(1f))
-        // ponytail: the drink summary is static until a drink-detail route exists.
-        Icon(CpIcons.ChevronRight, contentDescription = null,
-            modifier = Modifier.padding(end = CpDimens.spacing2).size(18.dp), tint = MaterialTheme.colorScheme.onSurface)
-    }
-}
-
-// ponytail: generated drink photos are placeholders; replace when the drink API provides image URLs.
-internal fun mockDrinkPhoto(name: String, slug: String?): DrawableResource {
-    val drink = "${slug.orEmpty()} $name".lowercase()
-    return when {
-        "matcha" in drink || "матч" in drink -> Res.drawable.drink_mock_matcha
-        "espresso" in drink || "эспресс" in drink || "americano" in drink || "американо" in drink -> Res.drawable.drink_mock_espresso
-        else -> Res.drawable.drink_mock_cappuccino
+        Icon(CpIcons.Coffee, contentDescription = null,
+            tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(14.dp))
+        Text(name, style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }

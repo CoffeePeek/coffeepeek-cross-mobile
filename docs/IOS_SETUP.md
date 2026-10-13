@@ -48,7 +48,7 @@ GOOGLE_REVERSED_CLIENT_ID = com.googleusercontent.apps.000000000000-xxxxxxxx
 
 Для Google Sign-In нужны два OAuth client ID из одного Google Cloud проекта:
 
-1. iOS client ID для bundle id `com.coffeepeek.ios`;
+1. iOS client ID для bundle id `com.coffeepeek`;
 2. Web client ID, который принимает backend (тот же audience, что используется Android-приложением);
 3. `GOOGLE_REVERSED_CLIENT_ID` — reversed client ID от iOS-клиента.
 
@@ -82,6 +82,81 @@ Xcode сам вызывает Gradle task `:composeApp:embedAndSignAppleFramewor
 5. Выберите iPhone в списке устройств и нажмите `Run`.
 
 Для бесплатного Apple ID профиль разработки имеет ограничения по сроку действия. Для TestFlight/App Store нужен Apple Developer Program.
+
+## CI/CD: загрузка в TestFlight
+
+Workflow [`.github/workflows/ios-testflight.yml`](../.github/workflows/ios-testflight.yml)
+архивирует основное приложение `iosApp` на GitHub-hosted Mac с Xcode 27 и
+загружает архив в App Store Connect. Он запускается после изменений iOS/KMP-кода
+в `main` или вручную через **Actions → iOS TestFlight → Run workflow** на `main`.
+Для pull request ключи подписи не выдаются. Номер сборки формируется из номера
+запуска и попытки (`GITHUB_RUN_NUMBER.GITHUB_RUN_ATTEMPT`); версия приложения
+берётся из `iosApp/Configuration/Shared.xcconfig` (`MARKETING_VERSION`).
+
+Перед первым запуском:
+
+1. В Apple Developer Program зарегистрируйте App ID `com.coffeepeek`, а в
+   App Store Connect создайте запись iOS-приложения с тем же Bundle ID.
+2. Создайте сертификат **Apple Distribution** с экспортируемым закрытым ключом
+   (`.p12`) и provisioning profile типа **App Store Connect / App Store** для
+   `com.coffeepeek`, связанный с этим сертификатом. Запишите пароль от `.p12`.
+3. В App Store Connect создайте **Team API Key** с правом загрузки сборок
+   (например, роль App Manager), сохраните файл `AuthKey_*.p8`, Key ID и Issuer
+   ID. Ключ понадобится для неинтерактивной загрузки через `xcodebuild`.
+4. В настройках репозитория GitHub создайте Environment `testflight`. Секреты
+   из таблицы могут быть заданы на уровне репозитория или этого Environment.
+   Для Environment можно включить правила доступа к ветке `main` и требование
+   одобрения перед публикацией.
+
+| Имя | Тип | Значение |
+|---|---|---|
+| `API_BASE_URL_MAIN` | Variable | HTTPS URL production API; используется также в Android release |
+| `IOS_CERTIFICATE_BASE64` | Secret | Содержимое `.p12` в Base64, одной строкой |
+| `IOS_CERTIFICATE_PASSWORD` | Secret | Пароль от `.p12` |
+| `IOS_PROVISIONING_PROFILE_BASE64` | Secret | Содержимое App Store `.mobileprovision` в Base64, одной строкой |
+| `APPSTORE_API_KEY_ID` | Secret | Key ID ключа App Store Connect API |
+| `APPSTORE_ISSUER_ID` | Secret | Issuer ID ключа App Store Connect API |
+| `APPSTORE_API_PRIVATE_KEY` | Secret | Исходный многострочный текст файла `AuthKey_*.p8`, включая строки `BEGIN/END PRIVATE KEY`; не Base64 и не символы `\n` |
+| `GOOGLE_IOS_CLIENT_ID` | Secret (необязательный) | OAuth iOS client ID для `com.coffeepeek` |
+| `GOOGLE_WEB_CLIENT_ID` | Secret (необязательный) | OAuth Web client ID для backend (можно использовать существующий секрет) |
+| `GOOGLE_REVERSED_CLIENT_ID` | Secret (необязательный) | Reversed iOS client ID для URL scheme |
+
+На macOS Base64 для первых двух файлов можно получить командами
+`base64 -i distribution.p12 | tr -d '\n'` и
+`base64 -i profile.mobileprovision | tr -d '\n'`. Сертификат, профиль и `.p8`
+не добавляйте в Git. Workflow проверяет команду, Bundle ID, срок действия
+профиля и release-конфигурацию приложения до загрузки. Apple Team ID берётся
+непосредственно из provisioning profile. При архивировании профиль подписи
+задаётся только для `iosApp`; Swift Package targets его не используют. Для Google Sign-In
+задайте все три OAuth ID вместе; если оставить их пустыми, кнопка Google
+будет скрыта, как при локальном запуске без OAuth.
+
+Если импорт сертификата завершается ошибкой `Unknown format in import`, заново
+экспортируйте из Keychain Access именно **Apple Distribution identity вместе с
+закрытым ключом** в файл `.p12`. Файл `.cer` или сертификат без закрытого ключа
+не подходит. При обновлении `IOS_CERTIFICATE_BASE64` кодируйте байты нового
+`.p12`, а в `IOS_CERTIFICATE_PASSWORD` задайте пароль, указанный при экспорте.
+На Windows PowerShell Base64 можно получить так:
+`[Convert]::ToBase64String([IO.File]::ReadAllBytes((Resolve-Path .\distribution.p12).Path))`.
+Не публикуйте полученную строку и пароль в чате или репозитории.
+
+Для `APPSTORE_API_PRIVATE_KEY` откройте скачанный **App Store Connect API**
+файл `AuthKey_*.p8` и сохраните в GitHub Secret его содержимое без изменений:
+с настоящими переносами строк и строками `-----BEGIN PRIVATE KEY-----` и
+`-----END PRIVATE KEY-----`. Если файл утрачен, Apple не позволяет скачать этот
+же ключ повторно; создайте новый API key и обновите также `APPSTORE_API_KEY_ID`.
+Используйте **Team Key** из App Store Connect → Users and Access → Integrations
+→ App Store Connect API → Team Keys. `APPSTORE_ISSUER_ID` берите с той же страницы,
+а `APPSTORE_API_KEY_ID` и `.p8` — от одного активного ключа. Для загрузки сборок
+ключу нужна роль App Manager, Developer или Admin.
+Workflow проверяет доступ к `com.coffeepeek` через App Store Connect API до сборки.
+
+После успешного запуска дождитесь обработки сборки в App Store Connect →
+CoffeePeek → TestFlight. Чтобы новые сборки автоматически появлялись у
+внутренних тестировщиков, создайте внутреннюю группу и включите
+**Enable automatic distribution**. Для внешних тестировщиков Apple может
+потребовать информацию о тестировании, проверку сборки и ответы по экспортному
+контролю. Загрузка в TestFlight сама по себе не публикует приложение в App Store.
 
 ## Проверка из Terminal
 
@@ -125,6 +200,20 @@ xcodebuild \
 - системные буфер обмена, браузер, тема и форматирование дат.
 
 ## Частые проблемы
+
+### `linkReleaseFrameworkIosArm64`: `Java heap space`
+
+Это нехватка heap у отдельного JVM-процесса Kotlin/Native при линковке release framework. В TestFlight workflow для него задано `kotlin.native.jvmArgs=-Xmx5g`, Gradle запускает одну задачу за раз, а release binary caches уменьшают объём оптимизации при линковке. Кэширование release бинарника экспериментальное в Kotlin 2.4.20 и может повлиять на производительность приложения; проверяйте сборку в TestFlight перед выпуском. Локальные значения в `gradle.properties` при этом не меняются. Повторно запустите workflow из нового коммита в `main`; перезапуск старого run использует прежний workflow.
+
+### `exportArchive`: `No Accounts with App Store Connect Access`
+
+Если Xcode сообщает `Unable to authenticate with App Store Connect`, проверьте
+три GitHub Secret: `APPSTORE_API_KEY_ID`, `APPSTORE_ISSUER_ID` и
+`APPSTORE_API_PRIVATE_KEY`. Корректный PEM-файл может не соответствовать Key ID
+или Issuer ID, либо ключ мог быть отозван. Шаг `Verify App Store Connect access`
+проверяет эту связку до долгой сборки: HTTP 401 означает проблему аутентификации,
+HTTP 403 — недостаточный доступ, а успешный запрос без `com.coffeepeek` —
+другую команду Apple или отсутствие приложения в App Store Connect.
 
 ### Xcode не видит JDK
 

@@ -30,7 +30,7 @@ class CoffeeShopDetailsDtoTest {
         assertEquals("Хороший капучино", visit.text)
         assertEquals("2026-10-08T12:00:00Z", visit.createdAtUtc)
         assertEquals("2026-10-01T12:00:00Z", visit.visitedAt)
-        assertEquals(5, visit.rating.coffee)
+        assertEquals(5, visit.rating!!.coffee)
         assertEquals("Капучино", visit.drinkNameRu)
         assertEquals(3, visit.helpfulCount)
         assertTrue(visit.isHelpfulByCurrentUser)
@@ -78,8 +78,8 @@ class CoffeeShopDetailsDtoTest {
             "https://cdn.example/check-in.jpg",
             details.userCheckIns.single().photos.single().url,
         )
-        assertEquals(4, details.userCheckIns.single().rating.place)
-        assertEquals(5, details.userCheckIns.single().rating.service)
-        assertEquals(3, details.userCheckIns.single().rating.coffee)
+        assertEquals(4, details.userCheckIns.single().rating!!.place)
+        assertEquals(5, details.userCheckIns.single().rating!!.service)
+        assertEquals(3, details.userCheckIns.single().rating!!.coffee)
     }
 }
