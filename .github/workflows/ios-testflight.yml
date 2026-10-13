@@ -205,8 +205,9 @@ jobs:
         run: |
           set -euo pipefail
           # Kotlin/Native links the release framework in a separate JVM.
-          # Give that compiler more heap without changing local or Android builds.
-          printf '\nkotlin.native.jvmArgs=-Xmx5g\n' >> gradle.properties
+          # Release binary caches avoid optimizing every dependency in one LTO graph.
+          # Keep these settings scoped to TestFlight CI.
+          printf '\nkotlin.native.jvmArgs=-Xmx5g\nkotlin.native.binary.enableReleaseBinaryCache=true\nkotlin.internal.native.enableReleaseBinaryCache=true\n' >> gradle.properties
           xcodebuild archive \
             -project iosApp/iosApp.xcodeproj \
             -scheme iosApp \
