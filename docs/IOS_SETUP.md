@@ -126,7 +126,8 @@ Workflow [`.github/workflows/ios-testflight.yml`](../.github/workflows/ios-testf
 `base64 -i profile.mobileprovision | tr -d '\n'`. Сертификат, профиль и `.p8`
 не добавляйте в Git. Workflow проверяет команду, Bundle ID, срок действия
 профиля и release-конфигурацию приложения до загрузки. Apple Team ID берётся
-непосредственно из provisioning profile. Для Google Sign-In
+непосредственно из provisioning profile. При архивировании профиль подписи
+задаётся только для `iosApp`; Swift Package targets его не используют. Для Google Sign-In
 задайте все три OAuth ID вместе; если оставить их пустыми, кнопка Google
 будет скрыта, как при локальном запуске без OAuth.
 
