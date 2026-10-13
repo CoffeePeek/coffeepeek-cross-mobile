@@ -16,8 +16,6 @@ data class CheckInDraft(
     val serviceRating: Int = 4,
     val coffeeRating: Int = 4,
     val photos: List<PickedImage> = emptyList(),
-    val drinkPhoto: PickedImage? = null,
-    val skipDrinkPhoto: Boolean = false,
 )
 
 internal fun CheckInDraft.validationError(now: Long = currentEpochMillis()): String? = when {
@@ -25,7 +23,6 @@ internal fun CheckInDraft.validationError(now: Long = currentEpochMillis()): Str
     listOf(coffeeRating, serviceRating, placeRating).any { it !in 1..5 } -> "Оцените кофе, сервис и атмосферу"
     note.trim().length > 1000 -> "Заметка должна быть не длиннее 1000 символов"
     photos.size > 5 -> "Можно добавить до 5 фото"
-    drinkPhoto != null && photos.isEmpty() -> "Для изображения напитка нужно полное фото"
     else -> validateConsumedDrink(drinkSlug, customDrinkName)
 }
 

@@ -355,16 +355,15 @@ private fun CheckInThumbnail(checkIns: List<CheckIn>, modifier: Modifier = Modif
                 .align(Alignment.CenterStart)
                 .offset(x = stackStep * index)
                 .size(thumbnailSize)
-                .then(if (checkIn.drinkPhotoUrl != null) Modifier else Modifier
-                    .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.primaryContainer)
-                    .border(1.5.dp, MaterialTheme.colorScheme.surface, CircleShape))
-            val photo = checkIn.drinkPhotoUrl ?: checkIn.photoThumbnailUrls.firstOrNull()
+                .clip(CircleShape)
+                .background(MaterialTheme.colorScheme.primaryContainer)
+                .border(1.5.dp, MaterialTheme.colorScheme.surface, CircleShape)
+            val photo = checkIn.photoThumbnailUrls.firstOrNull() ?: checkIn.photoUrls.firstOrNull()
             if (photo != null) {
                 CpImage(
                     data = photo,
                     contentDescription = null,
-                    contentScale = if (checkIn.drinkPhotoUrl != null) ContentScale.Fit else ContentScale.Crop,
+                    contentScale = ContentScale.Crop,
                     placeholder = Res.drawable.maskot_with_photo,
                     error = Res.drawable.maskot_with_photo,
                     modifier = itemModifier,

@@ -68,9 +68,6 @@ fun initKoin() {
 }
 
 private fun appModule(settingRepository: com.coffeepeek.room.repository.SettingRepository) = module {
-    single<com.coffeepeek.admin.feature.checkin.domain.DrinkPhotoExtractor> {
-        com.coffeepeek.admin.feature.checkin.data.createDrinkPhotoExtractor()
-    }
     single<CoffeeRepository> { CoffeeRepositoryImpl(get<CoffeePeekClient>().plainClient) }
     factory { CoffeeListViewModel(get()) }
     factory { (slug: String) -> CoffeeDetailViewModel(slug, get()) }
@@ -90,7 +87,7 @@ private fun appModule(settingRepository: com.coffeepeek.room.repository.SettingR
     factory { com.coffeepeek.admin.feature.community.ui.CommunityViewModel(get(), get(), get(), get(), get()) }
     factory { com.coffeepeek.admin.ui.screen.roaster.RoasterListViewModel(get(), get(), get()) }
     factory { MapViewModel(get(), get()) }
-    factory { (shopId: String) -> ShopDetailViewModel(shopId, get(), get(), get(), get(), get(), get(), get(), get()) }
+    factory { (shopId: String) -> ShopDetailViewModel(shopId, get(), get(), get(), get(), get(), get(), get()) }
     factory { (shopId: String) -> ShopMenuGalleryViewModel(shopId, get()) }
     factory { (shopId: String) -> ShopReportViewModel(shopId, get()) }
     factory { (shopId: String) -> SuggestShopChangeViewModel(shopId, get()) }

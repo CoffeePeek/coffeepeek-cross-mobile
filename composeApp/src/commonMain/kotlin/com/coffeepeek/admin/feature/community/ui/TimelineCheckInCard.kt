@@ -12,7 +12,7 @@ import com.coffeepeek.admin.ui.component.CheckInHeader
 import com.coffeepeek.admin.ui.component.CheckInHeading
 import com.coffeepeek.admin.ui.component.HelpfulButton
 import com.coffeepeek.admin.ui.component.ReviewPhotoStrip
-import com.coffeepeek.admin.ui.component.SavedDrinkBadge
+import com.coffeepeek.admin.ui.component.SavedDrinkLabel
 import com.coffeepeek.domain.model.CheckIn
 import com.coffeepeek.domain.model.CheckInModerationState
 import com.coffeepeek.domain.model.CheckInVisibility
@@ -34,7 +34,6 @@ internal fun TimelineCheckInCard(
     modifier: Modifier = Modifier,
 ) {
     val drinkName = savedDrinkName(checkIn.drinkNameRu, checkIn.drinkNameEn, checkIn.customDrinkName, Locale.current.language)
-        ?: "Напиток".takeIf { checkIn.drinkPhotoUrl != null }
     Column(
         modifier = modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(CpDimens.spacing2),
@@ -76,7 +75,7 @@ internal fun TimelineCheckInCard(
             if (isOwn && checkIn.visibility == CheckInVisibility.Private) TextButton(onClick = onVisibility, enabled = canAct) {
                 Text(if (changingVisibility) "Сохраняем…" else "Опубликовать")
             }
-            drinkName?.let { SavedDrinkBadge(it, checkIn.drinkSlug, compact = true, photoUrl = checkIn.drinkPhotoUrl) }
+            drinkName?.let { SavedDrinkLabel(it) }
         }
     }
 }

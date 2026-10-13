@@ -3,7 +3,6 @@ package com.coffeepeek.admin.ui.screen.shop
 import com.coffeepeek.domain.model.ConsumedDrinkOption
 import com.coffeepeek.admin.base.BaseViewModel
 import com.coffeepeek.admin.feature.favorites.api.RoasterFavorites
-import com.coffeepeek.admin.feature.checkin.domain.DrinkPhotoExtractor
 import com.coffeepeek.admin.feature.favorites.api.roasterFavoriteId
 import com.coffeepeek.admin.ui.Navigator
 import com.coffeepeek.admin.utils.ClipboardHelper
@@ -31,9 +30,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.ensureActive
-import kotlinx.coroutines.withTimeoutOrNull
 
 data class ShopDetailUiState(
     val drinks: List<ConsumedDrinkOption> = emptyList(),
@@ -49,10 +45,6 @@ data class ShopDetailUiState(
     val checkInDraft: CheckInDraft? = null,
     val submittedCheckInVisibility: CheckInVisibility? = null,
     val checkInError: String? = null,
-    val isDrinkPhotoProcessing: Boolean = false,
-    val drinkPhotoCandidates: List<PickedImage> = emptyList(),
-    val drinkPhotoError: String? = null,
-    val drinkPhotoRequest: Int = 0,
     val actionMessage: String? = null,
     val error: String? = null,
     val favoriteRoasterIds: Set<String> = emptySet(),
@@ -68,12 +60,10 @@ class ShopDetailViewModel(
     private val checkInDraftStore: CheckInDraftStore,
     private val userRepository: UserRepository,
     private val roasterFavorites: RoasterFavorites,
-    private val drinkPhotoExtractor: DrinkPhotoExtractor,
 ) : BaseViewModel() {
 
     private val _uiState = MutableStateFlow(ShopDetailUiState())
     val uiState = _uiState.asStateFlow()
-    private var drinkPhotoJob: Job? = null
 
     init {
         roasterFavorites.observeFavorites()
@@ -177,9 +167,6 @@ class ShopDetailViewModel(
                     checkInError = null,
                 )
             }
-            if (draft.photos.isNotEmpty() && draft.drinkPhoto == null && !draft.skipDrinkPhoto &&
-                !_uiState.value.isDrinkPhotoProcessing && _uiState.value.drinkPhotoCandidates.isEmpty()
-            ) retryDrinkPhoto()
         }
     }
 
@@ -201,82 +188,12 @@ class ShopDetailViewModel(
 
     fun updateCheckInDraft(draft: CheckInDraft) {
         if (draft.shopId != shopId || _uiState.value.isCheckInLoading || _uiState.value.submittedCheckInVisibility != null) return
-        val sourceChanged = draft.photos.firstOrNull() != _uiState.value.checkInDraft?.photos?.firstOrNull()
-        val updated = if (sourceChanged) draft.copy(drinkPhoto = null, skipDrinkPhoto = false) else draft
-        checkInDraftStore.save(updated)
-        _uiState.update { it.copy(checkInDraft = updated, checkInError = null) }
-        if (sourceChanged) retryDrinkPhoto()
-    }
-
-    fun retryDrinkPhoto() {
-        if (_uiState.value.isCheckInLoading || _uiState.value.submittedCheckInVisibility != null) return
-        drinkPhotoJob?.cancel()
-        val source = _uiState.value.checkInDraft?.photos?.firstOrNull()
-        _uiState.update { state ->
-            state.copy(
-                checkInDraft = state.checkInDraft?.copy(drinkPhoto = null, skipDrinkPhoto = false),
-                isDrinkPhotoProcessing = source != null, drinkPhotoCandidates = emptyList(), drinkPhotoError = null,
-                checkInError = null,
-                drinkPhotoRequest = state.drinkPhotoRequest + 1,
-            )
-        }
-        _uiState.value.checkInDraft?.let(checkInDraftStore::save)
-        if (source == null) return
-        val request = _uiState.value.drinkPhotoRequest
-        drinkPhotoJob = workScope.launch {
-            try {
-                // shortcut: one drink cutout comes from the first photo; add source selection for multi-drink check-ins.
-                val candidates = withTimeoutOrNull(30_000) { drinkPhotoExtractor.extract(source.toPendingUpload()) }
-                    ?.map { PickedImage(it.bytes, it.fileName, it.contentType) }
-                    ?: error("Обработка заняла слишком много времени. Повторите попытку или продолжите без вырезки.")
-                ensureActive()
-                _uiState.update { state ->
-                    if (state.drinkPhotoRequest != request) state else state.copy(
-                        isDrinkPhotoProcessing = false,
-                        drinkPhotoCandidates = candidates,
-                        checkInDraft = state.checkInDraft?.copy(drinkPhoto = candidates.singleOrNull()),
-                        drinkPhotoError = if (candidates.isEmpty()) "Не удалось выделить чашку. Попробуйте другое фото или продолжите без вырезки." else null,
-                    )
-                }
-            } catch (cancelled: CancellationException) {
-                throw cancelled
-            } catch (error: Exception) {
-                _uiState.update { state ->
-                    if (state.drinkPhotoRequest != request) state else state.copy(
-                        isDrinkPhotoProcessing = false,
-                        drinkPhotoError = error.message ?: "Не удалось выделить чашку",
-                    )
-                }
-            }
-            _uiState.value.checkInDraft?.let(checkInDraftStore::save)
-        }
-    }
-
-    fun selectDrinkPhoto(photo: PickedImage) {
-        val state = _uiState.value
-        if (state.isDrinkPhotoProcessing || photo !in state.drinkPhotoCandidates) return
-        state.checkInDraft?.let { updateCheckInDraft(it.copy(drinkPhoto = photo, skipDrinkPhoto = false)) }
-    }
-
-    fun skipDrinkPhoto() {
-        if (_uiState.value.isCheckInLoading || _uiState.value.submittedCheckInVisibility != null) return
-        drinkPhotoJob?.cancel()
-        _uiState.update { state -> state.copy(
-            checkInDraft = state.checkInDraft?.copy(drinkPhoto = null, skipDrinkPhoto = true),
-            isDrinkPhotoProcessing = false, drinkPhotoCandidates = emptyList(), drinkPhotoError = null,
-            checkInError = null,
-            drinkPhotoRequest = state.drinkPhotoRequest + 1,
-        ) }
-        _uiState.value.checkInDraft?.let(checkInDraftStore::save)
+        checkInDraftStore.save(draft)
+        _uiState.update { it.copy(checkInDraft = draft, checkInError = null) }
     }
 
     fun checkIn(draft: CheckInDraft) {
         if (draft.shopId != shopId) return
-        if (_uiState.value.isDrinkPhotoProcessing) return
-        if (_uiState.value.drinkPhotoCandidates.size > 1 && draft.drinkPhoto == null && !draft.skipDrinkPhoto) {
-            _uiState.update { it.copy(checkInError = "Выберите чашку или продолжите без вырезки") }
-            return
-        }
         if (_uiState.value.isCheckInLoading || _uiState.value.submittedCheckInVisibility != null) return
         draft.validationError()?.let { error ->
             _uiState.update { it.copy(checkInError = error) }
@@ -309,7 +226,6 @@ class ShopDetailViewModel(
                             place = draft.placeRating, service = draft.serviceRating, coffee = draft.coffeeRating,
                         ),
                         photos = draft.photos.map { it.toPendingUpload() },
-                        drinkPhoto = draft.drinkPhoto?.toPendingUpload(),
                     ),
                 )
             } catch (cancelled: CancellationException) {
@@ -325,8 +241,6 @@ class ShopDetailViewModel(
                         details = current?.copy(isVisited = true),
                         isCheckInLoading = false,
                         submittedCheckInVisibility = visibility,
-                        drinkPhotoCandidates = emptyList(),
-                        drinkPhotoError = null,
                     )
                 }
                 refreshDetails(showLoading = false)
