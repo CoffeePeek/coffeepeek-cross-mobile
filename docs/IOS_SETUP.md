@@ -70,7 +70,8 @@ python3 iosApp/configure-auth.py --google-plist /path/GoogleService-Info.plist \
 Скрипт сохраняет ID в игнорируемый `Local.xcconfig` и готовит `.build/Info.plist`
 для xtool. `prepare-resources.sh` обновляет этот plist перед сборкой xtool.
 В GitHub задайте `GOOGLE_IOS_CLIENT_ID`, `GOOGLE_REVERSED_CLIENT_ID` и
-`GOOGLE_WEB_CLIENT_ID` для TestFlight.
+`GOOGLE_WEB_CLIENT_ID` для TestFlight. Release workflow требует все три значения,
+чтобы сборка не попала в TestFlight со скрытой Google-кнопкой.
 
 ### Sign in with Apple
 

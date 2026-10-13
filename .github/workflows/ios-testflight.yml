@@ -79,6 +79,7 @@ jobs:
 
           required = (
               'API_BASE_URL',
+              'GOOGLE_IOS_CLIENT_ID', 'GOOGLE_WEB_CLIENT_ID', 'GOOGLE_REVERSED_CLIENT_ID',
               'IOS_CERTIFICATE_BASE64',
               'IOS_CERTIFICATE_PASSWORD',
               'IOS_PROVISIONING_PROFILE_BASE64', 'APPSTORE_API_KEY_ID',
@@ -102,13 +103,13 @@ jobs:
               'GOOGLE_IOS_CLIENT_ID', 'GOOGLE_WEB_CLIENT_ID',
               'GOOGLE_REVERSED_CLIENT_ID',
           )
-          ios_oauth = bool(os.environ.get('GOOGLE_IOS_CLIENT_ID'))
-          reversed_oauth = bool(os.environ.get('GOOGLE_REVERSED_CLIENT_ID'))
-          if ios_oauth != reversed_oauth or (ios_oauth and not os.environ.get('GOOGLE_WEB_CLIENT_ID')):
-              raise SystemExit('Configure all three Google OAuth IDs or leave all three empty')
-          configured = oauth_values if ios_oauth else ()
+          configured = oauth_values
           if any(not re.fullmatch(r'[A-Za-z0-9._-]+', os.environ[name]) for name in configured):
               raise SystemExit('Google OAuth IDs contain invalid xcconfig characters')
+          if any(not os.environ[name].endswith('.apps.googleusercontent.com') for name in oauth_values[:2]):
+              raise SystemExit('Google iOS and Web Client IDs must be OAuth client IDs')
+          if os.environ['GOOGLE_REVERSED_CLIENT_ID'] != '.'.join(reversed(os.environ['GOOGLE_IOS_CLIENT_ID'].split('.'))):
+              raise SystemExit('GOOGLE_REVERSED_CLIENT_ID must correspond to GOOGLE_IOS_CLIENT_ID')
 
           # In xcconfig, // starts a comment. $() inserts an empty value.
           with open('iosApp/Configuration/Local.xcconfig', 'w', encoding='utf-8') as config:
