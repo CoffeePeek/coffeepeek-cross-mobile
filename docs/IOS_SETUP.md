@@ -198,7 +198,7 @@ xcodebuild \
 
 ### `linkReleaseFrameworkIosArm64`: `Java heap space`
 
-Это нехватка heap у отдельного JVM-процесса Kotlin/Native при линковке release framework. В TestFlight workflow для него задано `kotlin.native.jvmArgs=-Xmx5g`, а Gradle запускает одну задачу за раз. Локальные значения в `gradle.properties` при этом не меняются. Повторно запустите workflow из нового коммита в `main`; перезапуск старого run использует прежний workflow.
+Это нехватка heap у отдельного JVM-процесса Kotlin/Native при линковке release framework. В TestFlight workflow для него задано `kotlin.native.jvmArgs=-Xmx5g`, Gradle запускает одну задачу за раз, а release binary caches уменьшают объём оптимизации при линковке. Кэширование release бинарника экспериментальное в Kotlin 2.4.20 и может повлиять на производительность приложения; проверяйте сборку в TestFlight перед выпуском. Локальные значения в `gradle.properties` при этом не меняются. Повторно запустите workflow из нового коммита в `main`; перезапуск старого run использует прежний workflow.
 
 ### Xcode не видит JDK
 
