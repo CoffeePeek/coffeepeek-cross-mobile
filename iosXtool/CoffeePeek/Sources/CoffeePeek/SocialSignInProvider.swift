@@ -12,6 +12,9 @@ final class SocialSignInProvider: NSObject, IosAppleAuthProvider,
     private var appleWindow: UIWindow?
     private var expectedState: String?
     private var googleInProgress = false
+    // Public NSError contract: kGIDSignInErrorCodeCanceled = -5.
+    // SDK 10 imports its NS_ERROR_ENUM differently from earlier SDK versions.
+    private static let googleCancellationCode = -5
 
     func configure() {
         IosAppleAuthRegistry.shared.provider = self
@@ -121,7 +124,7 @@ final class SocialSignInProvider: NSObject, IosAppleAuthProvider,
         GIDSignIn.sharedInstance.signIn(withPresenting: presenter) { [weak self] result, error in
             self?.googleInProgress = false
             if let error = error as NSError? {
-                let cancelled = error.domain == kGIDSignInErrorDomain && error.code == GIDSignInErrorCode.canceled.rawValue
+                let cancelled = error.domain == kGIDSignInErrorDomain && error.code == Self.googleCancellationCode
                 _ = completion(nil, cancelled ? "Вход через Google отменён" : "Не удалось войти через Google. Попробуйте ещё раз.")
             } else {
                 _ = completion(result?.user.idToken?.tokenString, nil)
