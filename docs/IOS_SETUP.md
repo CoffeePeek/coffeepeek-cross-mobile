@@ -145,6 +145,11 @@ Workflow [`.github/workflows/ios-testflight.yml`](../.github/workflows/ios-testf
 с настоящими переносами строк и строками `-----BEGIN PRIVATE KEY-----` и
 `-----END PRIVATE KEY-----`. Если файл утрачен, Apple не позволяет скачать этот
 же ключ повторно; создайте новый API key и обновите также `APPSTORE_API_KEY_ID`.
+Используйте **Team Key** из App Store Connect → Users and Access → Integrations
+→ App Store Connect API → Team Keys. `APPSTORE_ISSUER_ID` берите с той же страницы,
+а `APPSTORE_API_KEY_ID` и `.p8` — от одного активного ключа. Для загрузки сборок
+ключу нужна роль App Manager, Developer или Admin.
+Workflow проверяет доступ к `com.coffeepeek` через App Store Connect API до сборки.
 
 После успешного запуска дождитесь обработки сборки в App Store Connect →
 CoffeePeek → TestFlight. Чтобы новые сборки автоматически появлялись у
@@ -199,6 +204,16 @@ xcodebuild \
 ### `linkReleaseFrameworkIosArm64`: `Java heap space`
 
 Это нехватка heap у отдельного JVM-процесса Kotlin/Native при линковке release framework. В TestFlight workflow для него задано `kotlin.native.jvmArgs=-Xmx5g`, Gradle запускает одну задачу за раз, а release binary caches уменьшают объём оптимизации при линковке. Кэширование release бинарника экспериментальное в Kotlin 2.4.20 и может повлиять на производительность приложения; проверяйте сборку в TestFlight перед выпуском. Локальные значения в `gradle.properties` при этом не меняются. Повторно запустите workflow из нового коммита в `main`; перезапуск старого run использует прежний workflow.
+
+### `exportArchive`: `No Accounts with App Store Connect Access`
+
+Если Xcode сообщает `Unable to authenticate with App Store Connect`, проверьте
+три GitHub Secret: `APPSTORE_API_KEY_ID`, `APPSTORE_ISSUER_ID` и
+`APPSTORE_API_PRIVATE_KEY`. Корректный PEM-файл может не соответствовать Key ID
+или Issuer ID, либо ключ мог быть отозван. Шаг `Verify App Store Connect access`
+проверяет эту связку до долгой сборки: HTTP 401 означает проблему аутентификации,
+HTTP 403 — недостаточный доступ, а успешный запрос без `com.coffeepeek` —
+другую команду Apple или отсутствие приложения в App Store Connect.
 
 ### Xcode не видит JDK
 
