@@ -133,6 +133,18 @@ jobs:
           printf '%s' "$IOS_CERTIFICATE_BASE64" | base64 -D > "$RUNNER_TEMP/distribution.p12"
           printf '%s' "$IOS_PROVISIONING_PROFILE_BASE64" | base64 -D > "$RUNNER_TEMP/app-store.mobileprovision"
           printf '%s' "$APPSTORE_API_PRIVATE_KEY" > "$RUNNER_TEMP/AuthKey_${APPSTORE_API_KEY_ID}.p8"
+          if ! openssl pkey -in "$RUNNER_TEMP/AuthKey_${APPSTORE_API_KEY_ID}.p8" -noout >/dev/null 2>&1; then
+            echo '::error::APPSTORE_API_PRIVATE_KEY must contain the raw multiline AuthKey_*.p8 PEM text, not Base64 or literal \n characters.'
+            exit 1
+          fi
+          if ! openssl pkcs12 -legacy -in "$RUNNER_TEMP/distribution.p12" -passin env:IOS_CERTIFICATE_PASSWORD -noout >/dev/null 2>&1; then
+            echo '::error::IOS_CERTIFICATE_BASE64 must contain the Base64 bytes of a readable .p12 file, and IOS_CERTIFICATE_PASSWORD must match its export password.'
+            exit 1
+          fi
+          if ! openssl pkcs12 -legacy -in "$RUNNER_TEMP/distribution.p12" -passin env:IOS_CERTIFICATE_PASSWORD -nocerts -nodes 2>/dev/null | openssl pkey -noout >/dev/null 2>&1; then
+            echo '::error::The .p12 file in IOS_CERTIFICATE_BASE64 must include the Apple Distribution private key.'
+            exit 1
+          fi
           security cms -D -i "$RUNNER_TEMP/app-store.mobileprovision" > "$RUNNER_TEMP/profile.plist"
 
           python3 - <<'PY'
@@ -172,7 +184,7 @@ jobs:
           security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
           security set-keychain-settings -lut 21600 "$KEYCHAIN_PATH"
           security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
-          security import "$RUNNER_TEMP/distribution.p12" -k "$KEYCHAIN_PATH" -P "$IOS_CERTIFICATE_PASSWORD" -T /usr/bin/codesign
+          security import "$RUNNER_TEMP/distribution.p12" -f pkcs12 -k "$KEYCHAIN_PATH" -P "$IOS_CERTIFICATE_PASSWORD" -T /usr/bin/codesign
           security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH" >/dev/null
           security list-keychains -d user -s "$KEYCHAIN_PATH"
           security default-keychain -s "$KEYCHAIN_PATH"
