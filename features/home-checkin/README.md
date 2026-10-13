@@ -11,13 +11,13 @@ own feature business rules or HTTP representations, and the legacy layer modules
 are not the destination for new features. The existing image picker and navigation
 remain in the application during this incremental migration.
 
-## User-controlled visibility: client integration and backend gap
+## User-controlled visibility
 
 Home check-ins can be private or public by the author's explicit choice. The form
 starts private and reuses the shop check-in's publication switch. The profile
 keeps the combined history and its type filters; no extra feed filters are needed.
 
-The client now targets this extension to the existing home endpoints:
+The client and backend share this contract:
 
 - `POST /api/v1/check-ins/home`: `visibility: "Private" | "Public"`, default Private.
 - `PUT /api/v1/check-ins/home/{id}`: the same field; omission must preserve visibility.
@@ -30,20 +30,18 @@ The client now targets this extension to the existing home endpoints:
 - Public feed items must identify `kind: "Home"`, support a missing shop and carry
   preparation fields. Home ratings must not contribute to coffee-shop ratings.
 
-**This extension is not implemented in the inspected backend branch.** In
-`C:/Users/goloo/VSCodeProjects/CoffeePeek-NET`, local `main` has no home endpoints;
-`codex/home-checkins` at `3af49e02` contains the private-only implementation:
+Backend migrations `PublicHomeCheckIns` (Shops) and `HomeCheckInModerationSnapshots`
+(Moderation) extend the earlier private-only implementation. Existing home entries
+remain private. Deploy the updated Moderation consumer/schema before the Shops
+publisher. Local contract tests do not establish that deployment has completed.
 
-- `CheckIn.Home.cs` always creates Private entries; domain visibility changes reject Home.
-- `CK_CanonicalCheckIns_KindShape` requires Home visibility/moderation to stay private.
-  Change it through a new migration, preserving existing entries as Private.
-- `CheckInEligibility`, feed projections, moderation snapshots and photo authorization
-  exclude home publication or assume a shop. Extend them together, with tests for
-  publish → moderate → read → hide, stale moderation decisions and photo access.
-- Home request/response DTOs have no visibility fields.
+The existing feed transport adds a read-only recipe summary under `home`, with
+`kind: "Home"`, `shop: null` and `rating: null`. Its legacy feed model remains the
+owner of that projection; creation/editing and validation stay in this feature.
+The shared timeline renders a home card and routes editing to the profile's home
+editor. No new module dependency or feed filter is introduced.
 
-These mobile contract tests describe the intended extension, not a verified deployed
-API. If a server omits or disagrees with a requested visibility, the client retains
+If an older server omits or disagrees with a requested visibility, the client retains
 the saved record ID and displays an explicit notice. It never reports publication
 or automatically repeats creation. When editing an entry whose visibility was not
 returned, the field stays omitted unless the user chooses a value.

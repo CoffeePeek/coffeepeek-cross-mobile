@@ -39,6 +39,45 @@ import org.junit.runner.RunWith
 @RunWith(AndroidJUnit4::class)
 class HomeCheckInFormInteractionTest {
     @Test
+    fun publicHomeCardShowsRecipeAndItsActionsWork() {
+        val edits = AtomicInteger()
+        val hides = AtomicInteger()
+        val entry = com.coffeepeek.domain.model.CheckIn(
+            id = "home-demo", shopId = "", shopName = "", note = "Ягодный и мягкий",
+            createdAt = "2026-10-13T08:30:00Z", username = "goloologo", isHome = true,
+            visibility = com.coffeepeek.domain.model.CheckInVisibility.Public,
+            moderationState = com.coffeepeek.domain.model.CheckInModerationState.Approved,
+            homePreparation = com.coffeepeek.domain.feature.feed.FeedHomePreparation(
+                "2026-10-13", "aeropress", "Эфиопия Иргачеффе", 18.0, 120, 5,
+            ),
+        )
+        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+            scenario.onActivity { activity -> activity.setContent {
+                CoffeePeekTheme(darkTheme = true) {
+                    Scaffold(topBar = { CpTopBar("Лента", onBack = {}) }) { padding ->
+                        com.coffeepeek.admin.feature.community.ui.TimelineCheckInCard(
+                            entry, isOwn = true, isPublicTimeline = true, canAct = true, changingVisibility = false,
+                            onShopClick = { error("A home check-in has no shop link") },
+                            onEdit = { edits.incrementAndGet() }, onVisibility = { hides.incrementAndGet() },
+                            onHelpful = {}, onReport = {}, onPhotoClick = { _, _ -> },
+                            modifier = Modifier.padding(padding).padding(16.dp),
+                        )
+                    }
+                }
+            } }
+            waitForText("Кофе дома")
+            waitForText("Эфиопия Иргачеффе")
+            screenshot("home-public-feed-card.png")
+            clickDescription("Действия с чекином")
+            clickText("Редактировать")
+            waitUntil { edits.get() == 1 }
+            clickDescription("Действия с чекином")
+            clickText("Скрыть")
+            waitUntil { hides.get() == 1 }
+        }
+    }
+
+    @Test
     fun creationChoicesAndHomeFieldsRemainInteractive() {
         val initial = HomeCheckInInput(preparedAt = "2026-10-13T08:30:00Z", preparedOn = "2026-10-13")
         val draft = AtomicReference(initial)

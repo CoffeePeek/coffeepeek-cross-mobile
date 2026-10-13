@@ -82,6 +82,7 @@ private sealed interface ActivityEntry {
 /** Profile-owned activity: both kinds share one timeline and one date selection. */
 @Composable
 internal fun ProfileCheckInsScreen(
+    initialHomeId: String? = null,
     shopVm: VisitedPlacesViewModel = platformViewModel(),
     homeVm: HomeCheckInViewModel = platformViewModel(),
 ) {
@@ -96,6 +97,7 @@ internal fun ProfileCheckInsScreen(
     var photoPreview by remember { mutableStateOf<Pair<List<String>, Int>?>(null) }
 
     LaunchedEffect(Unit) { shopVm.load(reset = true) }
+    LaunchedEffect(initialHomeId) { initialHomeId?.let { homeVm.open(it, editOnLoad = true) } }
 
     fun syncMonth(date: String) {
         val month = calendarMonthFromIsoDate(date) ?: return

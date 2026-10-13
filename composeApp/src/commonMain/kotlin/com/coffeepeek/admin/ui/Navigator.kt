@@ -140,6 +140,7 @@ object Navigator {
         @Serializable data object Favorites : Screen
         @Serializable data object VisitedPlaces : Screen
         @Serializable data object HomeCheckIns : Screen
+        @Serializable data class EditHomeCheckIn(val id: String) : Screen
         @Serializable data object CitySettings : Screen
         @Serializable data object ThemeSettings : Screen
         @Serializable data class ShopReviews(val shopId: String) : Screen
@@ -214,6 +215,7 @@ object Navigator {
         is Screen.Favorites,
         is Screen.VisitedPlaces,
         is Screen.HomeCheckIns,
+        is Screen.EditHomeCheckIn,
         is Screen.CitySettings,
         is Screen.ThemeSettings -> true
         else -> false
@@ -478,6 +480,9 @@ object Navigator {
                     composable<Screen.Favorites> { FavoritesScreen() }
                     composable<Screen.VisitedPlaces> { ProfileCheckInsScreen() }
                     composable<Screen.HomeCheckIns> { ProfileCheckInsScreen() }
+                    composable<Screen.EditHomeCheckIn> { entry ->
+                        ProfileCheckInsScreen(initialHomeId = entry.toRoute<Screen.EditHomeCheckIn>().id)
+                    }
                     composable<Screen.CitySettings> { CityScreen() }
                     composable<Screen.ThemeSettings> { ThemeScreen() }
             }
@@ -512,6 +517,7 @@ object Navigator {
             Screen.Favorites -> FavoritesScreen()
             Screen.VisitedPlaces -> ProfileCheckInsScreen()
             Screen.HomeCheckIns -> ProfileCheckInsScreen()
+            is Screen.EditHomeCheckIn -> ProfileCheckInsScreen(initialHomeId = screen.id)
             Screen.CitySettings -> CityScreen()
             Screen.ThemeSettings -> ThemeScreen()
             else -> error("Tab route must be handled by MainScreen: $screen")

@@ -17,6 +17,30 @@ import kotlin.test.*
 
 class FeedRepositoryContractTest {
     @Test
+    fun publicHomeEntryKeepsItsKindRecipeAndPhotoRouteWithoutAShopRating() = runBlocking {
+        val client = client(MockEngine {
+            respond("""{"isSuccess":true,"data":{"items":[{"publishedAtUtc":"2026-10-13T10:00:00Z",
+                "checkIn":{"id":"home-1","kind":"Home","shop":null,"rating":null,"visibility":"Public",
+                "moderationState":"Approved","home":{"preparedOn":"2026-10-13","brewMethodCode":"aeropress",
+                "beanName":"My beans","doseGrams":18.5,"brewDurationSeconds":120,"tasteScore":5},
+                "photos":[{"url":"/api/v1/check-ins/home-1/photos/photo-1"}]}}],"nextCursor":null}}""",
+                headers = headersOf(HttpHeaders.ContentType, "application/json"))
+        })
+        try {
+            val entry = FeedRepositoryImpl(FeedApiService(client), FileUrlResolver("https://api.example/"))
+                .getFeed(20, null, FeedFilters()).getOrThrow().items.single().checkIn
+            assertTrue(entry.isHome)
+            assertEquals("", entry.shopId)
+            assertNull(entry.shopAddress)
+            assertNull(entry.rating)
+            assertEquals("My beans", entry.homePreparation?.beanName)
+            assertEquals(18.5, entry.homePreparation?.doseGrams)
+            assertEquals(5, entry.homePreparation?.tasteScore)
+            assertEquals(listOf("https://api.example/api/v1/check-ins/home-1/photos/photo-1"), entry.photoUrls)
+        } finally { client.close() }
+    }
+
+    @Test
     fun mapsPublicationOrderSeparateVisitsAndProtectedUrlsWithoutStorageKeyFallback() = runBlocking {
         val client = client(MockEngine {
             respond("""{"isSuccess":true,"data":{"items":[

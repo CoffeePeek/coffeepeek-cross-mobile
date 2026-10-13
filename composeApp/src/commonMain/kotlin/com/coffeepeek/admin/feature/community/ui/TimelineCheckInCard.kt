@@ -1,11 +1,15 @@
 package com.coffeepeek.admin.feature.community.ui
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.intl.Locale
+import androidx.compose.ui.unit.dp
 import com.coffeepeek.admin.theme.CpDimens
 import com.coffeepeek.admin.ui.component.CheckInActions
 import com.coffeepeek.admin.ui.component.CheckInHeader
@@ -34,8 +38,12 @@ internal fun TimelineCheckInCard(
     modifier: Modifier = Modifier,
 ) {
     val drinkName = savedDrinkName(checkIn.drinkNameRu, checkIn.drinkNameEn, checkIn.customDrinkName, Locale.current.language)
+    val homeShape = RoundedCornerShape(topStart = 28.dp, topEnd = 18.dp, bottomEnd = 28.dp, bottomStart = 18.dp)
     Column(
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxWidth().then(if (checkIn.isHome) Modifier
+            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.62f), homeShape)
+            .border(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.72f), homeShape)
+            .padding(18.dp) else Modifier),
         verticalArrangement = Arrangement.spacedBy(CpDimens.spacing2),
     ) {
         CheckInHeader(checkIn, isOwn) {
@@ -47,7 +55,20 @@ internal fun TimelineCheckInCard(
                 isHiding = changingVisibility,
             )
         }
-        CheckInHeading(
+        if (checkIn.isHome) {
+            Text("Кофе дома", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
+            checkIn.homePreparation?.let { recipe ->
+                recipe.beanName?.takeIf(String::isNotBlank)?.let { Text(it, style = MaterialTheme.typography.titleMedium) }
+                val details = listOfNotNull(
+                    recipe.brewMethodCode?.let { code -> homeMethodTitle(code) },
+                    recipe.doseGrams?.let { "$it г" },
+                    recipe.brewDurationSeconds?.let { "$it с" },
+                    recipe.tasteScore?.let { "$it/5" },
+                ).joinToString(" · ")
+                if (details.isNotBlank()) Text(details, style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+        } else CheckInHeading(
             shopName = checkIn.shopName.ifBlank { "Кофейня" },
             rating = checkIn.rating,
             onShopClick = onShopClick.takeIf { checkIn.shopId.isNotBlank() },
@@ -78,4 +99,15 @@ internal fun TimelineCheckInCard(
             drinkName?.let { SavedDrinkLabel(it) }
         }
     }
+}
+
+private fun homeMethodTitle(code: String): String = when (code) {
+    "espresso" -> "Эспрессо"
+    "pour_over" -> "Пуровер"
+    "batch_drip" -> "Фильтр"
+    "moka_pot" -> "Гейзер"
+    "cezve" -> "Турка"
+    "aeropress" -> "Аэропресс"
+    "french_press" -> "Френч-пресс"
+    else -> "Другой способ"
 }

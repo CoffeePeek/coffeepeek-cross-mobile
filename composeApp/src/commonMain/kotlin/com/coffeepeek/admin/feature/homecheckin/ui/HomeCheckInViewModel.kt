@@ -150,11 +150,14 @@ internal class HomeCheckInViewModel(
         }
     }
 
-    fun open(id: String) {
+    fun open(id: String, editOnLoad: Boolean = false) {
         _state.update { it.copy(detailLoading = true, error = null, saveNotice = null) }
         workScope.launch {
             repository.detail(id)
-                .onSuccess { entry -> _state.update { it.copy(selected = entry, detailLoading = false) } }
+                .onSuccess { entry ->
+                    _state.update { it.copy(selected = entry, detailLoading = false) }
+                    if (editOnLoad) edit()
+                }
                 .onFailure { error -> _state.update { it.copy(detailLoading = false, error = error.message) } }
         }
     }

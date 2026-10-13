@@ -12,6 +12,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LifecycleEventEffect
 import com.coffeepeek.admin.di.platformViewModel
 import com.coffeepeek.admin.theme.CpDimens
 import com.coffeepeek.admin.ui.Navigator
@@ -35,6 +37,10 @@ fun CommunityScreen(onCreateCheckIn: () -> Unit) {
     val clearance = LocalFloatingNavClearance.current
     var preview by remember { mutableStateOf<CheckInPhotoPreview?>(null) }
     var displayedGeneration by rememberSaveable { mutableStateOf(state.sessionGeneration) }
+    var homeEditorOpened by rememberSaveable { mutableStateOf(false) }
+    LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
+        if (homeEditorOpened) { homeEditorOpened = false; vm.refresh() }
+    }
 
     LaunchedEffect(state.sessionGeneration) {
         if (displayedGeneration != state.sessionGeneration) {
@@ -123,7 +129,12 @@ fun CommunityScreen(onCreateCheckIn: () -> Unit) {
                                     canAct = !state.isMutating,
                                     changingVisibility = state.changingVisibilityId == checkIn.id,
                                     onShopClick = { Navigator.navigate(Navigator.Screen.ShopDetail(checkIn.shopId)) },
-                                    onEdit = { vm.edit(checkIn.id) },
+                                    onEdit = {
+                                        if (checkIn.isHome) {
+                                            homeEditorOpened = true
+                                            Navigator.navigate(Navigator.Screen.EditHomeCheckIn(checkIn.id))
+                                        } else vm.edit(checkIn.id)
+                                    },
                                     onVisibility = { vm.toggleVisibility(checkIn.id) },
                                     onHelpful = { vm.toggleHelpful(checkIn.id) },
                                     onReport = { vm.openReport(checkIn.id) },
