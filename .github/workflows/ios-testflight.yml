@@ -201,8 +201,12 @@ jobs:
         env:
           APPSTORE_API_KEY_ID: ${{ secrets.APPSTORE_API_KEY_ID }}
           APPSTORE_ISSUER_ID: ${{ secrets.APPSTORE_ISSUER_ID }}
+          GRADLE_MAX_WORKERS: '1'
         run: |
           set -euo pipefail
+          # Kotlin/Native links the release framework in a separate JVM.
+          # Give that compiler more heap without changing local or Android builds.
+          printf '\nkotlin.native.jvmArgs=-Xmx5g\n' >> gradle.properties
           xcodebuild archive \
             -project iosApp/iosApp.xcodeproj \
             -scheme iosApp \

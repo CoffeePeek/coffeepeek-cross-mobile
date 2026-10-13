@@ -196,6 +196,10 @@ xcodebuild \
 
 ## Частые проблемы
 
+### `linkReleaseFrameworkIosArm64`: `Java heap space`
+
+Это нехватка heap у отдельного JVM-процесса Kotlin/Native при линковке release framework. В TestFlight workflow для него задано `kotlin.native.jvmArgs=-Xmx5g`, а Gradle запускает одну задачу за раз. Локальные значения в `gradle.properties` при этом не меняются. Повторно запустите workflow из нового коммита в `main`; перезапуск старого run использует прежний workflow.
+
 ### Xcode не видит JDK
 
 Укажите JDK 17 в текущей shell-сессии или в настройках Gradle IDE:
