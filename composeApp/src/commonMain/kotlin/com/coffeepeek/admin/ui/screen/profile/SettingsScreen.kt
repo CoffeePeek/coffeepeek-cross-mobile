@@ -42,6 +42,7 @@ import org.koin.compose.koinInject
 
 @Composable
 fun SettingsScreen(vm: ProfileViewModel = koinInject()) {
+    val nativeHeader = com.coffeepeek.admin.ui.component.NativeNavigationBar("Настройки", null, false, null)
     val profile by vm.uiState.collectAsState()
     val themeMode by vm.themeMode.collectAsState()
     val cities by vm.cities.collectAsState()
@@ -59,7 +60,7 @@ fun SettingsScreen(vm: ProfileViewModel = koinInject()) {
                 .statusBarsPadding()
                 ,
         ) {
-            Text(
+            if (!nativeHeader) Text(
                 text = "Настройки",
                 style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.Bold,

@@ -27,6 +27,7 @@ import com.coffeepeek.domain.model.CheckInVisibility
 
 @Composable
 fun CommunityScreen(onCreateCheckIn: () -> Unit) {
+    val nativeHeader = com.coffeepeek.admin.ui.component.NativeNavigationBar("Лента", null, false, null)
     val vm: CommunityViewModel = platformViewModel()
     val state by vm.state.collectAsState()
     val listState = rememberLazyListState()
@@ -102,7 +103,7 @@ fun CommunityScreen(onCreateCheckIn: () -> Unit) {
                 ),
                 verticalArrangement = Arrangement.spacedBy(CpDimens.spacing3),
             ) {
-                item(key = "heading") {
+                if (!nativeHeader) item(key = "heading") {
                     Text("Лента", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
                 }
                 when {

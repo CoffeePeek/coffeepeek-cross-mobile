@@ -6,11 +6,11 @@ The current application remains `composeApp`; no modules or domain contracts
 were moved. Shared routes, feature UI, ViewModels, repositories and Android
 navigation remain in their existing locations.
 
-The app composition boundary now hosts iOS root routes in a
-`UINavigationController` (`PlatformRootNavigation`). Every route uses its own
-`ComposeUIViewController` and `AppContent` environment. The Main controller is
-retained in the native stack, preserving the map and the existing Compose tab
-graph. UIKit owns push/pop animations and cancellable edge back gestures.
+The app composition boundary hosts a `UITabBarController` with five retained
+`UINavigationController` stacks (`PlatformRootNavigation`). Each screen uses a
+`NativeScreenController` hosting Compose content and the `AppContent` environment.
+The discovery controller retains the map. UIKit owns tabs, push/pop animations,
+and cancellable edge back gestures; iOS no longer runs the Compose tab graph.
 Navigation events are serialized across transitions. Session changes recreate
 the navigator through the existing login-state key.
 
@@ -61,7 +61,7 @@ it does not take over list gestures or emulate interactive keyboard movement.
 Interactive keyboard tracking is provided by the native form scroll containers;
 other Compose surfaces retain pan-to-dismiss behavior.
 
-The bottom navigation is still UITabBar embedded in Compose. Automatic native
+The bottom navigation now uses UITabBarController. Automatic native
 tab minimization and a full UIKit table/collection-view migration are outside
 this implementation.
 

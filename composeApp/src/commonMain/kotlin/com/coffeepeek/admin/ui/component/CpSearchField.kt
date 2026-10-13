@@ -24,6 +24,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.input.ImeAction
@@ -44,7 +45,10 @@ fun CpSearchField(
     onSearch: () -> Unit = {},
     fieldHeight: Dp = SearchFieldHeight,
     shadowElevation: Dp = 0.dp,
+    onFocusChanged: (Boolean) -> Unit = {},
+    onCancelSearch: (() -> Unit)? = null,
 ) {
+    if (NativeSearchField(value, onValueChange, placeholder, onSearch, onFocusChanged, onCancelSearch, modifier.height(fieldHeight))) return
     val focusManager = LocalFocusManager.current
     val shape = RoundedCornerShape(percent = 50)
     val fieldValue = rememberSyncedTextFieldValue(value)
@@ -56,6 +60,7 @@ fun CpSearchField(
             onValueChange(updated.text)
         },
         modifier = modifier
+            .onFocusChanged { onFocusChanged(it.isFocused) }
             .height(fieldHeight)
             .shadow(
                 elevation = shadowElevation,

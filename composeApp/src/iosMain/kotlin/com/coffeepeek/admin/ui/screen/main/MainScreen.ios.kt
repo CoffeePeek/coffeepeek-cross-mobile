@@ -2,6 +2,6 @@ package com.coffeepeek.admin.ui.screen.main
 
 import androidx.compose.runtime.Composable
 
-/** iOS uses the same floating Compose Liquid Glass bar as Android. */
+/** Legacy renderer for the shared root entry; PlatformRootNavigation owns the live iOS tabs. */
 @Composable
 actual fun MainScreen() = ComposeMainScreen()

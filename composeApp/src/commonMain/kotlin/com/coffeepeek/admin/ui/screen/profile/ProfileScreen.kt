@@ -63,6 +63,7 @@ import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun ProfileScreen(vm: ProfileViewModel = koinInject()) {
+    val nativeHeader = com.coffeepeek.admin.ui.component.NativeNavigationBar("Профиль", null, false, null)
     val state by vm.uiState.collectAsState()
     var showLogoutDialog by remember { mutableStateOf(false) }
 
@@ -125,7 +126,7 @@ fun ProfileScreen(vm: ProfileViewModel = koinInject()) {
                 .statusBarsPadding()
                 .verticalScroll(rememberScrollState()),
         ) {
-            Text(
+            if (!nativeHeader) Text(
                 text = "Профиль",
                 style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.Bold,

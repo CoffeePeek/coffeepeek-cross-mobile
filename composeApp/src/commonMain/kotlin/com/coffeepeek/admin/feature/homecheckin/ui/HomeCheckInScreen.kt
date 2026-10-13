@@ -67,6 +67,7 @@ internal fun HomeCheckInScreen(vm: HomeCheckInViewModel = platformViewModel()) {
             title = if (state.editing) if (state.selected == null) "Новая чашка дома" else "Редактирование"
                 else "Кофе дома",
             onBack = if (state.editing) vm::closeEditor else if (state.selected != null) vm::closeDetail else Navigator::popBack,
+            customBack = state.editing || state.selected != null,
         )
     }) { padding ->
         when {

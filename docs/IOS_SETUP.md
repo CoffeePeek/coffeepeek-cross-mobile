@@ -88,7 +88,10 @@ Xcode сам вызывает Gradle task `:composeApp:embedAndSignAppleFramewor
 Workflow [`.github/workflows/ios-testflight.yml`](../.github/workflows/ios-testflight.yml)
 архивирует основное приложение `iosApp` на GitHub-hosted Mac с Xcode 27 и
 загружает архив в App Store Connect. Он запускается после изменений iOS/KMP-кода
-в `main` или вручную через **Actions → iOS TestFlight → Run workflow** на `main`.
+в `main` и `develop` или вручную через **Actions → iOS TestFlight → Run workflow**
+с выбором любой из этих двух веток. Сборки обеих веток загружаются в одно приложение
+TestFlight и используют текущий `API_BASE_URL_MAIN`. Изменения только документации
+не запускают автоматическую сборку: сохраняется фильтр путей iOS/KMP-кода.
 Для pull request ключи подписи не выдаются. Номер сборки формируется из номера
 запуска и попытки (`GITHUB_RUN_NUMBER.GITHUB_RUN_ATTEMPT`); версия приложения
 берётся из `iosApp/Configuration/Shared.xcconfig` (`MARKETING_VERSION`).
@@ -105,7 +108,8 @@ Workflow [`.github/workflows/ios-testflight.yml`](../.github/workflows/ios-testf
    ID. Ключ понадобится для неинтерактивной загрузки через `xcodebuild`.
 4. В настройках репозитория GitHub создайте Environment `testflight`. Секреты
    из таблицы могут быть заданы на уровне репозитория или этого Environment.
-   Для Environment можно включить правила доступа к ветке `main` и требование
+   Если для Environment включены ограничения веток, разрешите `main` и `develop`.
+   Также можно включить требование
    одобрения перед публикацией.
 
 | Имя | Тип | Значение |
