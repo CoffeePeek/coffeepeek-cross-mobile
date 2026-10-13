@@ -26,6 +26,8 @@ import coffeepeek.composeapp.generated.resources.login_subtitle
 import coffeepeek.composeapp.generated.resources.login_title
 import coffeepeek.composeapp.generated.resources.password
 import com.coffeepeek.admin.auth.GoogleSignInButton
+import com.coffeepeek.admin.auth.AppleAuth
+import com.coffeepeek.admin.auth.AppleSignInButton
 import com.coffeepeek.admin.auth.handleGoogleSignInResult
 import com.coffeepeek.admin.auth.isGoogleSignInConfigured
 import com.coffeepeek.admin.theme.CpColor
@@ -46,6 +48,7 @@ object AuthScreen {
         val emailError by vm.emailError.collectAsState()
         val passwordError by vm.passwordError.collectAsState()
         val loginError by vm.loginError.collectAsState()
+        val appleSigningIn by vm.appleSigningIn.collectAsState()
 
         AuthScreenScaffold(
             mascot = AuthMascot.Laptop,
@@ -75,6 +78,10 @@ object AuthScreen {
                     .padding(top = 4.dp, bottom = CpDimens.spacing5),
             )
 
+            if (AppleAuth.isSupported()) {
+                AppleSignInButton(onClick = vm::onAppleLogin, enabled = !appleSigningIn)
+                Spacer(Modifier.height(12.dp))
+            }
             if (isGoogleSignInConfigured()) {
                 GoogleSignInButton(
                     onResult = { result ->
@@ -86,6 +93,8 @@ object AuthScreen {
                     },
                 )
                 Spacer(modifier = Modifier.height(14.dp))
+            }
+            if (AppleAuth.isSupported() || isGoogleSignInConfigured()) {
                 AuthOrDivider()
                 Spacer(modifier = Modifier.height(14.dp))
             }

@@ -162,6 +162,8 @@ jobs:
           team = teams[0]
           if profile.get('Entitlements', {}).get('application-identifier') != team + '.com.coffeepeek':
               raise SystemExit('Provisioning profile does not match com.coffeepeek')
+          if 'Default' not in profile.get('Entitlements', {}).get('com.apple.developer.applesignin', []):
+              raise SystemExit('Regenerate the App Store profile with Sign in with Apple and update IOS_PROVISIONING_PROFILE_BASE64')
           if profile.get('Entitlements', {}).get('get-task-allow') is not False or 'ProvisionedDevices' in profile or profile.get('ProvisionsAllDevices'):
               raise SystemExit('An App Store distribution profile is required')
           if profile['ExpirationDate'] <= datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None):

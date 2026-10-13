@@ -16,6 +16,10 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -40,10 +44,20 @@ actual fun GoogleSignInButton(
     modifier: Modifier,
 ) {
     val scope = rememberCoroutineScope()
+    var signingIn by remember { mutableStateOf(false) }
     val isDark = MaterialTheme.colorScheme.background.luminance() < 0.5f
 
     OutlinedButton(
-        onClick = { scope.launch { onResult(GoogleAuth.signIn()) } },
+        onClick = {
+            if (!signingIn) {
+                signingIn = true
+                scope.launch {
+                    try { onResult(GoogleAuth.signIn()) }
+                    finally { signingIn = false }
+                }
+            }
+        },
+        enabled = !signingIn,
         modifier = modifier
             .fillMaxWidth()
             .height(CpDimens.authPrimaryBtnHeight),

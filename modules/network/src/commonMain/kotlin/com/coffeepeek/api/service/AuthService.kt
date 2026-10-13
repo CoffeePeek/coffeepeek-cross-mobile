@@ -5,6 +5,8 @@ import com.coffeepeek.api.model.request.GoogleLoginReq
 import com.coffeepeek.api.model.request.LoginReq
 import com.coffeepeek.api.model.request.RegistrationReq
 import com.coffeepeek.api.model.response.AuthResp
+import com.coffeepeek.api.model.response.AppleLoginChallengeResp
+import com.coffeepeek.api.model.request.AppleLoginReq
 import com.coffeepeek.api.utils.ApiException
 import com.coffeepeek.api.utils.deleteResult
 import com.coffeepeek.api.utils.extractRefreshToken
@@ -59,6 +61,24 @@ class AuthService(
                     ?: apiResponse.data.refreshToken,
             )
         }
+
+    suspend fun beginAppleLogin(): Result<AppleLoginChallengeResp> = runCatching {
+        val response = refreshClient.postResult("/api/Tokens/apple/challenge").getOrThrow()
+            .body<ApiResponse<AppleLoginChallengeResp>>()
+        if (!response.isSuccess || response.data == null) throw ApiException(response.message)
+        response.data
+    }
+
+    suspend fun appleLogin(challengeId: String, idToken: String): Result<AuthResp> = runCatching {
+        val response = refreshClient.postResult("/api/Tokens/apple/login") {
+            setJsonBody(AppleLoginReq(challengeId, idToken))
+        }.getOrThrow().body<ApiResponse<AuthResp>>()
+        if (!response.isSuccess || response.data == null) throw ApiException(response.message)
+        if (response.data.accessToken.isBlank() || response.data.refreshToken.isNullOrBlank()) {
+            throw ApiException("Сервер не вернул сессию Apple. Попробуйте ещё раз.")
+        }
+        response.data
+    }
 
     suspend fun register(userName: String, email: String, password: String): Result<Unit> =
         runCatching {

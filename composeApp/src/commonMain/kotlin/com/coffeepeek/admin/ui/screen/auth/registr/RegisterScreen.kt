@@ -59,6 +59,8 @@ import coffeepeek.composeapp.generated.resources.terms_accept_prefix
 import coffeepeek.composeapp.generated.resources.terms_and
 import coffeepeek.composeapp.generated.resources.terms_link
 import com.coffeepeek.admin.auth.GoogleSignInButton
+import com.coffeepeek.admin.auth.AppleAuth
+import com.coffeepeek.admin.auth.AppleSignInButton
 import com.coffeepeek.admin.auth.handleGoogleSignInResult
 import com.coffeepeek.admin.auth.isGoogleSignInConfigured
 import com.coffeepeek.admin.legal.LegalUrls
@@ -173,6 +175,11 @@ object RegisterScreen {
                     AuthOrDivider()
                     Spacer(modifier = Modifier.height(14.dp))
 
+                    if (AppleAuth.isSupported()) {
+                        val appleSigningIn by vm.appleSigningIn.collectAsState()
+                        AppleSignInButton(onClick = vm::onAppleLogin, enabled = !appleSigningIn)
+                        Spacer(Modifier.height(12.dp))
+                    }
                     if (isGoogleSignInConfigured()) {
                         GoogleSignInButton(
                             onResult = { result ->

@@ -25,6 +25,7 @@ let package = Package(
         ),
     ],
     dependencies: [
+        .package(url: "https://github.com/google/GoogleSignIn-iOS", from: "10.0.0"),
         .package(
             url: "https://github.com/maplibre/maplibre-gl-native-distribution",
             exact: "6.29.0"
@@ -34,6 +35,7 @@ let package = Package(
         .target(
             name: "CoffeePeek",
             dependencies: [
+                .product(name: "GoogleSignIn", package: "GoogleSignIn-iOS"),
                 .product(name: "MapLibre", package: "maplibre-gl-native-distribution"),
             ],
             swiftSettings: [

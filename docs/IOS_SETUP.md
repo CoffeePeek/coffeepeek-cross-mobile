@@ -54,6 +54,52 @@ GOOGLE_REVERSED_CLIENT_ID = com.googleusercontent.apps.000000000000-xxxxxxxx
 
 Секреты и `Local.xcconfig` коммитить нельзя.
 
+### Импорт Google из Firebase
+
+В Firebase зарегистрируйте iOS-приложение с Bundle ID `com.coffeepeek`, включите
+Authentication → Sign-in method → Google и заново скачайте `GoogleService-Info.plist`.
+Поля `CLIENT_ID` и `REVERSED_CLIENT_ID` относятся к iOS. Web Client ID должен
+совпадать с `OAuthGoogleOptions__ClientId` backend; Firebase Authentication SDK
+в приложение не добавляется — Google ID token проверяет CoffeePeek backend.
+
+```bash
+python3 iosApp/configure-auth.py --google-plist /path/GoogleService-Info.plist \
+  --web-client-id YOUR_WEB_CLIENT_ID.apps.googleusercontent.com
+```
+
+Скрипт сохраняет ID в игнорируемый `Local.xcconfig` и готовит `.build/Info.plist`
+для xtool. `prepare-resources.sh` обновляет этот plist перед сборкой xtool.
+В GitHub задайте `GOOGLE_IOS_CLIENT_ID`, `GOOGLE_REVERSED_CLIENT_ID` и
+`GOOGLE_WEB_CLIENT_ID` для TestFlight.
+
+### Sign in with Apple
+
+Системная кнопка Apple доступна на экранах входа и регистрации. Backend выдаёт
+одноразовый challenge на 5 минут (`POST /api/Tokens/apple/challenge`), iOS передаёт
+его nonce и state в Apple, затем отправляет `challengeId` и `idToken` на
+`POST /api/Tokens/apple/login`. Сервер проверяет подпись, issuer, audience, срок
+действия и nonce; возвращает access/refresh tokens CoffeePeek в JSON.
+Повторный вход определяется по Apple subject, поэтому отсутствие email в
+последующем ответе Apple допустимо. Скрытый relay email поддерживается.
+
+1. В Apple Developer включите Sign in with Apple у App ID `com.coffeepeek`.
+2. В Profiles пересоздайте App Store distribution profile для этого App ID.
+3. Замените GitHub secret `IOS_PROVISIONING_PROFILE_BASE64` содержимым нового
+   `.mobileprovision`, закодированного в Base64. Проверка CI требует entitlement
+   `com.apple.developer.applesignin = [Default]`.
+4. При автоматической подписи Xcode обновляет development profile; выберите
+   правильную Team. Capability требует платной Apple Developer Program.
+5. Backend: `OAuthAppleOptions__ClientId=com.coffeepeek` (значение по умолчанию),
+   доступ к Apple OIDC/JWKS по HTTPS и Redis для одноразовых challenge.
+
+Если меняется Bundle ID, одновременно обновите Apple App ID, provisioning profile,
+Google iOS client и audience Apple в backend. Настройте отправителя писем
+CoffeePeek в Apple Private Email Relay, чтобы письма доходили на скрытые адреса.
+
+`iOS build verification` отдельно компилирует Kotlin и Swift для симулятора без
+сертификата. Проверка реального входа требует устройства, актуального профиля
+и настроенных OAuth ID.
+
 ## Запуск в симуляторе
 
 Откройте проект:
