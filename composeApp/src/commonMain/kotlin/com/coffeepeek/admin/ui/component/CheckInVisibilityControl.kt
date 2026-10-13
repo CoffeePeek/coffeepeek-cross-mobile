@@ -38,11 +38,7 @@ internal fun CheckInVisibilityControl(isPublic: Boolean, enabled: Boolean, onCha
                 style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
         Spacer(Modifier.width(CpDimens.spacing3))
-        MaterialTheme(colorScheme = MaterialTheme.colorScheme.copy(
-            surfaceContainerHighest = MaterialTheme.colorScheme.surfaceVariant,
-        )) {
-            PlatformSwitch(checked = isPublic, onCheckedChange = onChange, enabled = enabled,
-                modifier = Modifier.clearAndSetSemantics { })
-        }
+        PlatformSwitch(checked = isPublic, onCheckedChange = onChange, enabled = enabled,
+            modifier = Modifier.clearAndSetSemantics { })
     }
 }

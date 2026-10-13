@@ -6,7 +6,10 @@ import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.Text
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -33,6 +36,59 @@ import org.junit.runner.RunWith
 /** Uses the production calendar composable with local fixtures, never a signed-in account. */
 @RunWith(AndroidJUnit4::class)
 class CheckInCalendarInteractionTest {
+    @Test
+    fun calendarCombinesHomeAndCafeCountsAndSupportsMonthNavigation() {
+        val selection = AtomicReference<String?>(null)
+        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+            scenario.onActivity { activity -> activity.setContent {
+                var date by remember { mutableStateOf<String?>(null) }
+                var month by remember { mutableStateOf(CalendarMonth(2026, 10)) }
+                var homesOnly by remember { mutableStateOf(false) }
+                CoffeePeekTheme(darkTheme = true) {
+                    Scaffold(topBar = { CpTopBar("Чекины", onBack = {}) }) { padding ->
+                        Column(Modifier.fillMaxSize().padding(padding).padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                            CapsuleSegmentedControl(listOf(false, true), homesOnly, { if (it) "Дома" else "Все" }, { homesOnly = it })
+                            CalendarCard(
+                                VisitedPlacesUiState(calendarMonth = month, selectedDate = date, canGoNextMonth = month.month < 10,
+                                    calendarCheckIns = if (homesOnly || month.month != 10) emptyMap() else mapOf(
+                                        "2026-10-12" to listOf(visit("one", "Территория кофе", "Капучино", "09:24")))),
+                                today = "2026-10-13",
+                                onPreviousMonth = { month = month.plusMonths(-1); date = null },
+                                onNextMonth = { month = month.plusMonths(1); date = null },
+                                onSelectDate = { date = it; selection.set(it) },
+                                onToday = { month = CalendarMonth(2026, 10); date = "2026-10-13"; selection.set(date) },
+                                homeCounts = if (month.month == 10) mapOf("2026-10-12" to 2, "2026-10-07" to 1) else emptyMap(),
+                            )
+                            if (date != null) TextButton(onClick = { date = null; selection.set(null) }) { Text("Показать все даты") }
+                        }
+                    }
+                }
+            } }
+            waitUntil { node { it.contentDescription?.contains("12 октября 2026, 3 чекина, 2 дома") == true } != null }
+            click(node { it.text?.toString() == "Дома" }!!)
+            waitUntil { node { it.contentDescription?.contains("12 октября 2026, 2 чекина, 2 дома") == true } != null }
+            click(node { it.contentDescription?.startsWith("7 октября 2026") == true }!!)
+            waitUntil { selection.get() == "2026-10-07" }
+            val instrumentation = InstrumentationRegistry.getInstrumentation()
+            instrumentation.waitForIdleSync()
+            instrumentation.uiAutomation.takeScreenshot()?.let { shot ->
+                File(instrumentation.targetContext.getExternalFilesDir(null), "checkins-home-calendar.png").outputStream().use {
+                    shot.compress(Bitmap.CompressFormat.PNG, 100, it)
+                }
+                shot.recycle()
+            }
+            click(node { it.contentDescription?.toString() == "Предыдущий месяц" }!!)
+            waitUntil { node { it.text?.toString() == "Сентябрь 2026" } != null }
+            click(node { it.contentDescription?.toString() == "Следующий месяц" }!!)
+            waitUntil { node { it.text?.toString() == "Октябрь 2026" } != null }
+            click(node { it.contentDescription?.startsWith("Сегодня,") == true }!!)
+            waitUntil { selection.get() == "2026-10-13" }
+            waitUntil { node { it.text?.toString() == "Показать все даты" } != null }
+            click(node { it.text?.toString() == "Показать все даты" }!!)
+            waitUntil { selection.get() == null }
+        }
+    }
+
     @Test
     fun datesRemainSelectableWithMultipleVisitsAndTodaySelectsAnEmptyDay() {
         val instrumentation = InstrumentationRegistry.getInstrumentation()
@@ -90,6 +146,8 @@ class CheckInCalendarInteractionTest {
 
     private fun node(predicate: (AccessibilityNodeInfo) -> Boolean): AccessibilityNodeInfo? {
         fun find(root: AccessibilityNodeInfo): AccessibilityNodeInfo? {
+            // Count descriptions change on the same day node after switching filters.
+            root.refresh()
             if (predicate(root)) return root
             for (i in 0 until root.childCount) root.getChild(i)?.let { find(it)?.let { found -> return found } }
             return null

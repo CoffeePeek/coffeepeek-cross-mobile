@@ -51,6 +51,8 @@ internal data class HomeCheckInUiState(
     val hasMore: Boolean = false,
     val month: HomeMonth,
     val calendar: List<HomeCalendarDay> = emptyList(),
+    val calendarLoading: Boolean = false,
+    val calendarError: String? = null,
     val selectedDate: String? = null,
     val beanStats: List<HomeBeanStats> = emptyList(),
     val methodStats: List<HomeMethodStats> = emptyList(),
@@ -82,6 +84,7 @@ internal class HomeCheckInViewModel(
     ))
     val state = _state.asStateFlow()
     private var historyJob: Job? = null
+    private var calendarJob: Job? = null
     private var statsRequested = false
 
     init { refresh() }
@@ -119,7 +122,7 @@ internal class HomeCheckInViewModel(
     fun changeMonth(offset: Int) {
         val next = _state.value.month.change(offset)
         if (next.year * 12 + next.month > todayMonth.year * 12 + todayMonth.month) return
-        _state.update { it.copy(month = next, selectedDate = null) }
+        _state.update { it.copy(month = next, selectedDate = null, calendar = emptyList()) }
         loadCalendar()
         loadHistory(reset = true)
     }
@@ -129,12 +132,14 @@ internal class HomeCheckInViewModel(
         loadHistory(reset = true)
     }
 
-    private fun loadCalendar() {
+    fun loadCalendar() {
         val month = _state.value.month
-        workScope.launch {
+        calendarJob?.cancel()
+        _state.update { it.copy(calendarLoading = true, calendarError = null) }
+        calendarJob = workScope.launch {
             repository.calendar(month.from, month.to)
-                .onSuccess { days -> _state.update { if (it.month == month) it.copy(calendar = days) else it } }
-                .onFailure { error -> _state.update { if (it.month == month) it.copy(error = error.message) else it } }
+                .onSuccess { days -> _state.update { if (it.month == month) it.copy(calendar = days, calendarLoading = false) else it } }
+                .onFailure { error -> _state.update { if (it.month == month) it.copy(calendarError = error.message ?: "Не удалось загрузить календарь", calendarLoading = false) else it } }
         }
     }
 

@@ -116,7 +116,8 @@ class HomeCheckInFormInteractionTest {
             }
             waitForText("Новый чекин")
             screenshot("home-create-visibility.png")
-            clickText("В кофейне")
+            // Cafe is selected immediately; no extra choice is required.
+            clickText("Продолжить")
             waitUntil { shops.get() == 1 }
             clickDescription("Добавить чекин")
             waitForText("Новый чекин")
@@ -124,6 +125,7 @@ class HomeCheckInFormInteractionTest {
             clickDescription("Добавить чекин")
             waitForText("Новый чекин")
             clickText("Дома")
+            clickText("Продолжить")
             waitForText("Кофе дома")
             screenshot("home-editor-private-visibility.png")
             assertEquals(HomeCheckInVisibility.Private, draft.get().visibility)

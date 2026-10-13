@@ -18,12 +18,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -89,7 +87,6 @@ internal fun ProfileCheckInsScreen(
     val shop by shopVm.state.collectAsState()
     val home by homeVm.state.collectAsState()
     val today = remember { utcIsoToLocalDate(currentUtcIsoDateTime()) }
-    var weekAnchor by remember { mutableStateOf(today) }
     var selectedDate by remember { mutableStateOf<String?>(null) }
     var kind by remember { mutableStateOf(ActivityKind.All) }
     var showCreate by remember { mutableStateOf(false) }
@@ -114,12 +111,11 @@ internal fun ProfileCheckInsScreen(
         if (home.selectedDate != next) homeVm.selectDate(next)
     }
 
-    fun moveWeek(offset: Int) {
-        val next = shiftCalendarDate(weekAnchor, offset * 7)
-        if (next > today) return
-        weekAnchor = next
+    fun moveMonth(offset: Int) {
+        val next = shop.calendarMonth.plusMonths(offset)
+        if (next.isoDate(1) > today) return
         if (selectedDate != null) chooseDate(null)
-        syncMonth(next)
+        syncMonth(next.isoDate(1))
     }
 
     val shopEntries = when {
@@ -165,7 +161,7 @@ internal fun ProfileCheckInsScreen(
             }
         }
     }
-    if (home.editing || home.selected != null) {
+    if (!showCreate && (home.editing || home.selected != null)) {
         SwipeDismissModalBottomSheet(
             onDismissRequest = { if (home.editing) homeVm.closeEditor() else homeVm.closeDetail() },
             dismissEnabled = !home.saving,
@@ -178,10 +174,10 @@ internal fun ProfileCheckInsScreen(
             }
         }
     }
-    if (showCreate) CheckInCreateSheet(
+    if (showCreate) CheckInCreateFlow(
         onDismiss = { showCreate = false },
         onShop = { showCreate = false; Navigator.navigate(Navigator.Screen.CreateCheckIn) },
-        onHome = { showCreate = false; homeVm.create() },
+        homeVm = homeVm,
     )
 
     Scaffold(
@@ -195,15 +191,30 @@ internal fun ProfileCheckInsScreen(
             CapsuleSegmentedControl(ActivityKind.entries, kind,
                 label = { when (it) { ActivityKind.All -> "Все"; ActivityKind.Shop -> "В кофейне"; ActivityKind.Home -> "Дома" } },
                 onSelected = { kind = it }, modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp))
-            WeekStrip(weekAnchor, selectedDate, today,
-                shop.calendarCheckIns, home.calendar.associate { it.preparedOn to it.brewCount },
-                onPrevious = { moveWeek(-1) }, onNext = { moveWeek(1) },
-                onSelect = { chooseDate(it) })
-            if (selectedDate != null) TextButton(onClick = { chooseDate(null) },
-                modifier = Modifier.padding(start = 16.dp)) { Text("Показать все даты") }
             LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(
                 start = 16.dp, end = 16.dp, top = 8.dp, bottom = 96.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                item(key = "calendar") {
+                    CalendarCard(
+                        state = shop.copy(
+                            selectedDate = selectedDate,
+                            calendarCheckIns = if (kind == ActivityKind.Home) emptyMap() else shop.calendarCheckIns,
+                            isCalendarLoading = (kind != ActivityKind.Home && shop.isCalendarLoading) ||
+                                (kind != ActivityKind.Shop && home.calendarLoading),
+                            calendarError = (if (kind != ActivityKind.Home) shop.calendarError else null) ?:
+                                (if (kind != ActivityKind.Shop) home.calendarError else null),
+                        ),
+                        today = today,
+                        onPreviousMonth = { moveMonth(-1) }, onNextMonth = { moveMonth(1) },
+                        onSelectDate = { chooseDate(it) },
+                        onToday = { syncMonth(today); if (selectedDate != today) chooseDate(today) },
+                        homeCounts = if (kind == ActivityKind.Shop) emptyMap()
+                            else home.calendar.associate { it.preparedOn to it.brewCount },
+                    )
+                }
+                if (selectedDate != null) item(key = "clear-date") {
+                    TextButton(onClick = { chooseDate(null) }) { Text("Показать все даты") }
+                }
                 if (isLoading && entries.isEmpty()) item { Box(Modifier.fillMaxWidth().height(90.dp),
                     contentAlignment = Alignment.Center) { CoffeePeekLoader() } }
                 if (!isLoading && entries.isEmpty()) item {
@@ -229,8 +240,11 @@ internal fun ProfileCheckInsScreen(
                 if (kind != ActivityKind.Home && shop.error != null) item {
                     RetryMessage(shop.error.orEmpty(), shopVm::refresh)
                 }
-                if (selectedDate != null && kind != ActivityKind.Home && shop.calendarError != null) item {
+                if (kind != ActivityKind.Home && shop.calendarError != null) item {
                     RetryMessage(shop.calendarError.orEmpty(), shopVm::refreshCalendar)
+                }
+                if (kind != ActivityKind.Shop && home.calendarError != null) item {
+                    RetryMessage(home.calendarError.orEmpty(), homeVm::loadCalendar)
                 }
                 if (kind != ActivityKind.Shop && home.error != null) item {
                     RetryMessage(home.error.orEmpty(), homeVm::refresh)
@@ -259,56 +273,6 @@ private fun TimelineRail(isHome: Boolean, content: @Composable () -> Unit) {
             drawCircle(color, radius = 6.dp.toPx(), center = androidx.compose.ui.geometry.Offset(x, 28.dp.toPx()))
         }
         Box(Modifier.fillMaxWidth().padding(start = 32.dp)) { content() }
-    }
-}
-
-@Composable
-private fun WeekStrip(
-    anchor: String, selectedDate: String?, today: String,
-    shops: Map<String, List<CheckIn>>, homes: Map<String, Int>,
-    onPrevious: () -> Unit, onNext: () -> Unit, onSelect: (String) -> Unit,
-) {
-    val days = remember(anchor) { calendarWeekDates(anchor) }
-    val month = calendarMonthFromIsoDate(anchor)
-    Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
-        verticalArrangement = Arrangement.spacedBy(7.dp)) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(month?.let(::monthTitle).orEmpty(), style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
-            IconButton(onClick = onPrevious, modifier = Modifier.size(44.dp)) {
-                Icon(CpIcons.ChevronLeft, contentDescription = "Предыдущая неделя")
-            }
-            IconButton(onClick = onNext, enabled = days.lastOrNull()?.let { shiftCalendarDate(it, 1) <= today } == true,
-                modifier = Modifier.size(44.dp)) {
-                Icon(CpIcons.ChevronRight, contentDescription = "Следующая неделя")
-            }
-        }
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-            days.forEachIndexed { index, date ->
-                val selected = selectedDate == date
-                val isFuture = date > today
-                val count = shops[date].orEmpty().size + (homes[date] ?: 0)
-                Card(
-                    modifier = Modifier.weight(1f).height(64.dp)
-                        .clickable(enabled = !isFuture) { onSelect(date) },
-                    shape = RoundedCornerShape(14.dp),
-                    colors = CardDefaults.cardColors(containerColor = if (selected) MaterialTheme.colorScheme.primary
-                        else MaterialTheme.colorScheme.surfaceVariant),
-                ) {
-                    Column(Modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.Center) {
-                        val color = if (selected) MaterialTheme.colorScheme.onPrimary
-                            else if (isFuture) MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.55f)
-                            else MaterialTheme.colorScheme.onSurface
-                        Text(listOf("Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс")[index],
-                            style = MaterialTheme.typography.labelSmall, color = color)
-                        Text(date.substringAfterLast('-').toIntOrNull()?.toString().orEmpty(),
-                            style = MaterialTheme.typography.titleMedium, color = color)
-                        if (count > 0) Text("•", style = MaterialTheme.typography.labelSmall, color = color)
-                    }
-                }
-            }
-        }
     }
 }
 

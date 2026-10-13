@@ -14,6 +14,7 @@ import androidx.compose.ui.viewinterop.UIKitInteropProperties
 import androidx.compose.ui.viewinterop.UIKitInteropInteractionMode
 import androidx.compose.ui.window.ComposeUIViewController
 import com.coffeepeek.admin.AppContent
+import com.coffeepeek.admin.theme.switchPalette
 import kotlinx.cinterop.ObjCAction
 import platform.Foundation.*
 import platform.UIKit.*
@@ -136,12 +137,23 @@ private class ControlTarget(var changed: (UIControl) -> Unit) : NSObject() {
 
 @Composable
 internal actual fun PlatformSwitch(checked: Boolean, onCheckedChange: ((Boolean) -> Unit)?, enabled: Boolean, modifier: Modifier) {
+    val dark = MaterialTheme.colorScheme.background.luminance() < .5f
+    val palette = switchPalette(dark)
     val callback = rememberUpdatedState(onCheckedChange)
     val target = remember { ControlTarget { control -> platformHaptic(HapticEvent.Selection); callback.value?.invoke((control as UISwitch).on) } }
     UIKitView(factory = { UISwitch().apply { addTarget(target, NSSelectorFromString("change:"), UIControlEventValueChanged) } },
         modifier = modifier.size(51.dp, 44.dp),
         properties = UIKitInteropProperties(isNativeAccessibilityEnabled = false, interactionMode = UIKitInteropInteractionMode.NonCooperative),
-        update = { it.setOn(checked, false); it.enabled = enabled; it.userInteractionEnabled = onCheckedChange != null },
+        update = {
+            it.overrideUserInterfaceStyle = if (dark) UIUserInterfaceStyle.UIUserInterfaceStyleDark else UIUserInterfaceStyle.UIUserInterfaceStyleLight
+            val thumb = if (checked) palette.checkedThumb else palette.uncheckedThumb
+            it.thumbTintColor = UIColor.colorWithRed(thumb.red.toDouble(), thumb.green.toDouble(), thumb.blue.toDouble(), 1.0)
+            val track = palette.checkedTrack
+            it.onTintColor = UIColor.colorWithRed(track.red.toDouble(), track.green.toDouble(), track.blue.toDouble(), 1.0)
+            it.setOn(checked, false)
+            it.enabled = enabled
+            it.userInteractionEnabled = onCheckedChange != null
+        },
         onRelease = { it.removeTarget(target, NSSelectorFromString("change:"), UIControlEventValueChanged) })
 }
 

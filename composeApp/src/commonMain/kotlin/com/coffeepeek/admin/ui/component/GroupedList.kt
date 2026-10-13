@@ -276,7 +276,7 @@ fun RoasterAvatar(item: CatalogItem) {
     }
 }
 
-/** Row with an iOS-style switch (white full-size thumb, no border); the whole row is the toggle target. */
+/** The whole row is the toggle target; PlatformSwitch owns thumb visibility in both themes. */
 @Composable
 fun SwitchRow(
     label: String,

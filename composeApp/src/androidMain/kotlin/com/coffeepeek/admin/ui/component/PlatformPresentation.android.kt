@@ -4,6 +4,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.material3.*
 import androidx.compose.ui.Modifier
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.size
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.luminance
+import androidx.compose.ui.unit.dp
+import com.coffeepeek.admin.theme.switchPalette
 
 @Composable
 internal actual fun PlatformAlert(title: String, message: String, confirmLabel: String, onConfirm: () -> Unit, onDismiss: () -> Unit, cancelLabel: String?, destructive: Boolean, enabled: Boolean) {
@@ -17,7 +23,20 @@ internal actual fun NativeActionSheet(title: String, actions: List<PlatformActio
 internal actual fun NativeModalSheet(onDismiss: () -> Unit, dismissEnabled: Boolean, content: @Composable ColumnScope.() -> Unit) = false
 @Composable
 internal actual fun PlatformSwitch(checked: Boolean, onCheckedChange: ((Boolean) -> Unit)?, enabled: Boolean, modifier: Modifier) {
-    Switch(checked = checked, onCheckedChange = onCheckedChange, enabled = enabled, modifier = modifier)
+    val palette = switchPalette(MaterialTheme.colorScheme.background.luminance() < .5f)
+    Switch(checked = checked, onCheckedChange = onCheckedChange, enabled = enabled, modifier = modifier,
+        // A non-null slot keeps the thumb full-size in both states.
+        thumbContent = { Box(Modifier.size(SwitchDefaults.IconSize)) },
+        colors = SwitchDefaults.colors(
+            checkedThumbColor = palette.checkedThumb, checkedTrackColor = palette.checkedTrack,
+            uncheckedThumbColor = palette.uncheckedThumb, uncheckedTrackColor = palette.uncheckedTrack,
+            checkedBorderColor = Color.Transparent, uncheckedBorderColor = Color.Transparent,
+            disabledCheckedThumbColor = palette.checkedThumb,
+            disabledCheckedTrackColor = palette.checkedTrack.copy(alpha = .5f),
+            disabledUncheckedThumbColor = palette.uncheckedThumb,
+            disabledUncheckedTrackColor = palette.uncheckedTrack.copy(alpha = .5f),
+            disabledCheckedBorderColor = Color.Transparent, disabledUncheckedBorderColor = Color.Transparent,
+        ))
 }
 @Composable
 internal actual fun NativeSegmentedControl(labels: List<String>, selectedIndex: Int, onSelected: (Int) -> Unit, modifier: Modifier) = false

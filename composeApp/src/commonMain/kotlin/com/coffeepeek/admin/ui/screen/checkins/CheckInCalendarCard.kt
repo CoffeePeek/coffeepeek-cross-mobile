@@ -2,6 +2,7 @@ package com.coffeepeek.admin.ui.screen.checkins
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
@@ -35,9 +36,11 @@ internal fun CalendarCard(
     onNextMonth: () -> Unit,
     onSelectDate: (String) -> Unit,
     onToday: () -> Unit,
+    homeCounts: Map<String, Int> = emptyMap(),
 ) {
     val month = state.calendarMonth
-    val total = state.calendarCheckIns.values.sumOf { it.size }
+    val homeTotal = homeCounts.values.sum()
+    val total = state.calendarCheckIns.values.sumOf { it.size } + homeTotal
     val shops = state.calendarCheckIns.values.flatten().map(CheckIn::shopId).filter(String::isNotBlank).distinct().size
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -53,14 +56,14 @@ internal fun CalendarCard(
                         Column(Modifier.weight(1f)) {
                             Text(monthTitle(month), style = MaterialTheme.typography.titleMedium,
                                 fontSize = 20.sp, fontWeight = FontWeight.Bold)
-                            if (!compactHeader) CalendarSummary(state, total, shops)
+                            if (!compactHeader) CalendarSummary(state, total, shops, homeTotal)
                         }
                         MonthArrow(false, true, onPreviousMonth)
                         MonthArrow(true, state.canGoNextMonth, onNextMonth)
                         if (!compactHeader) TodayButton(onToday)
                     }
                     if (compactHeader) Row(verticalAlignment = Alignment.CenterVertically) {
-                        Box(Modifier.weight(1f)) { CalendarSummary(state, total, shops) }
+                        Box(Modifier.weight(1f)) { CalendarSummary(state, total, shops, homeTotal) }
                         TodayButton(onToday)
                     }
                 }
@@ -82,6 +85,7 @@ internal fun CalendarCard(
                             val date = month.isoDate(day)
                             CalendarDay(
                                 day = day, date = date, checkIns = state.calendarCheckIns[date].orEmpty(),
+                                homeCount = homeCounts[date] ?: 0,
                                 isSelected = state.selectedDate == date, isToday = today == date,
                                 isFuture = date > today, modifier = Modifier.weight(1f),
                                 onClick = { platformHaptic(HapticEvent.Selection); onSelectDate(date) },
@@ -95,11 +99,12 @@ internal fun CalendarCard(
 }
 
 @Composable
-private fun CalendarSummary(state: VisitedPlacesUiState, total: Int, shops: Int) {
+private fun CalendarSummary(state: VisitedPlacesUiState, total: Int, shops: Int, homeTotal: Int) {
     Text(
         when {
             state.isCalendarLoading -> "Загрузка чекинов…"
             state.calendarError != null -> "Не удалось загрузить чекины"
+            homeTotal > 0 -> "${visitCount(total)} · $homeTotal дома"
             else -> "${visitCount(total)} · ${shopCount(shops)}"
         },
         style = MaterialTheme.typography.labelMedium,
@@ -134,13 +139,16 @@ private fun CalendarDay(
     day: Int,
     date: String,
     checkIns: List<CheckIn>,
+    homeCount: Int,
     isSelected: Boolean,
     isToday: Boolean,
     isFuture: Boolean,
     onClick: () -> Unit,
     modifier: Modifier,
 ) {
-    val description = "${selectedDateTitle(date)}${if (isToday) ", сегодня" else ""}, ${visitCount(checkIns.size)}"
+    val total = checkIns.size + homeCount
+    val description = "${selectedDateTitle(date)}${if (isToday) ", сегодня" else ""}, ${visitCount(total)}" +
+        if (homeCount > 0) ", $homeCount дома" else ""
     Column(
         modifier.padding(horizontal = 1.dp, vertical = 2.dp)
             .clip(RoundedCornerShape(12.dp))
@@ -164,10 +172,16 @@ private fun CalendarDay(
                 .background(MaterialTheme.colorScheme.primary, CircleShape))
         }
         Box(Modifier.fillMaxWidth().height(32.dp).clearAndSetSemantics {}, contentAlignment = Alignment.Center) {
-            if (checkIns.isNotEmpty()) {
-                CheckInDiaryThumbnail(checkIns.first(), Modifier.size(32.dp))
-                if (checkIns.size > 1) Text(
-                    "+${checkIns.size - 1}", fontSize = 10.sp, lineHeight = 12.sp,
+            if (total > 0) {
+                if (checkIns.isNotEmpty()) CheckInDiaryThumbnail(checkIns.first(), Modifier.size(32.dp))
+                else Box(Modifier.size(32.dp).background(MaterialTheme.colorScheme.primary.copy(alpha = .08f), RoundedCornerShape(10.dp))
+                    .border(1.dp, MaterialTheme.colorScheme.primary, RoundedCornerShape(10.dp)), contentAlignment = Alignment.Center) {
+                    Icon(CpIcons.Coffee, null, Modifier.size(18.dp), tint = MaterialTheme.colorScheme.primary)
+                }
+                if (homeCount > 0 && checkIns.isNotEmpty()) Box(Modifier.align(Alignment.TopEnd).size(8.dp)
+                    .background(MaterialTheme.colorScheme.primary, CircleShape))
+                if (total > 1) Text(
+                    "+${total - 1}", fontSize = 10.sp, lineHeight = 12.sp,
                     color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.SemiBold,
                     modifier = Modifier.align(Alignment.BottomEnd)
                         .background(MaterialTheme.colorScheme.surfaceVariant, CircleShape)

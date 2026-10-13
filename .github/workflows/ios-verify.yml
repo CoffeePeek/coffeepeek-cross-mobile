@@ -6,6 +6,8 @@ on:
     paths:
       - .github/workflows/ios-verify.yml
       - composeApp/src/**/auth/**
+      - composeApp/src/commonMain/**
+      - composeApp/src/iosMain/**
       - iosApp/**
       - iosXtool/CoffeePeek/Sources/**
   workflow_dispatch:

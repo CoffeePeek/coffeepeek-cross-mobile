@@ -9,7 +9,6 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
@@ -22,7 +21,8 @@ import com.coffeepeek.admin.ui.component.CoffeePeekPullToRefresh
 import com.coffeepeek.admin.ui.component.FullScreenImageDialog
 import com.coffeepeek.admin.ui.component.LocalFloatingNavClearance
 import com.coffeepeek.admin.ui.component.ReviewTextInput
-import com.coffeepeek.admin.ui.icons.CpIcons
+import com.coffeepeek.admin.ui.screen.checkins.CheckInCreateButton
+import com.coffeepeek.admin.ui.screen.checkins.CheckInCreateFlow
 import com.coffeepeek.domain.model.CheckIn
 import com.coffeepeek.domain.model.CheckInModerationState
 import com.coffeepeek.domain.model.CheckInVisibility
@@ -38,6 +38,7 @@ fun CommunityScreen(onCreateCheckIn: () -> Unit) {
     var preview by remember { mutableStateOf<CheckInPhotoPreview?>(null) }
     var displayedGeneration by rememberSaveable { mutableStateOf(state.sessionGeneration) }
     var homeEditorOpened by rememberSaveable { mutableStateOf(false) }
+    var showCreate by remember { mutableStateOf(false) }
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
         if (homeEditorOpened) { homeEditorOpened = false; vm.refresh() }
     }
@@ -45,6 +46,7 @@ fun CommunityScreen(onCreateCheckIn: () -> Unit) {
     LaunchedEffect(state.sessionGeneration) {
         if (displayedGeneration != state.sessionGeneration) {
             preview = null
+            showCreate = false
             listState.scrollToItem(0)
             displayedGeneration = state.sessionGeneration
         }
@@ -79,90 +81,90 @@ fun CommunityScreen(onCreateCheckIn: () -> Unit) {
         }
     }
 
-    Scaffold(
-        containerColor = MaterialTheme.colorScheme.background,
-        snackbarHost = { SnackbarHost(snackbar) },
-        floatingActionButton = {
-            FloatingActionButton(
-                onClick = {
-                    if (state.isLoggedIn == true) onCreateCheckIn()
-                    else Navigator.navigate(Navigator.Screen.Auth)
-                },
-                modifier = Modifier.padding(bottom = clearance),
-                shape = CircleShape,
-                containerColor = MaterialTheme.colorScheme.primary,
-                contentColor = MaterialTheme.colorScheme.onPrimary,
-            ) {
-                Icon(CpIcons.Add, contentDescription = "Создать чекин", modifier = Modifier.size(28.dp))
-            }
-        },
-    ) { padding ->
-        CoffeePeekPullToRefresh(
-            listState, isRefreshing = state.isLoading && state.items.isNotEmpty(), onRefresh = vm::refresh,
-            modifier = Modifier.fillMaxSize().padding(top = padding.calculateTopPadding()),
-        ) { scrollModifier ->
-            LazyColumn(
-                state = listState, modifier = scrollModifier.fillMaxSize(),
-                contentPadding = PaddingValues(
-                    start = CpDimens.spacing4, end = CpDimens.spacing4,
-                    top = CpDimens.spacing3, bottom = clearance + 88.dp,
-                ),
-                verticalArrangement = Arrangement.spacedBy(CpDimens.spacing3),
-            ) {
-                if (!nativeHeader) item(key = "heading") {
-                    Text("Лента", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
-                }
-                when {
-                    state.isLoggedIn == null || (state.isLoading && state.items.isEmpty()) -> item(key = "loading") {
-                        Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.TopCenter) {
-                            CoffeePeekLoader()
-                        }
+    if (showCreate) CheckInCreateFlow(
+        onDismiss = { showCreate = false },
+        onShop = { showCreate = false; onCreateCheckIn() },
+        onHomeSaved = vm::refresh,
+    )
+
+    Box(Modifier.fillMaxSize()) {
+        Scaffold(
+            containerColor = MaterialTheme.colorScheme.background,
+            snackbarHost = { SnackbarHost(snackbar) },
+        ) { padding ->
+            CoffeePeekPullToRefresh(
+                listState, isRefreshing = state.isLoading && state.items.isNotEmpty(), onRefresh = vm::refresh,
+                modifier = Modifier.fillMaxSize().padding(top = padding.calculateTopPadding()),
+            ) { scrollModifier ->
+                LazyColumn(
+                    state = listState, modifier = scrollModifier.fillMaxSize(),
+                    contentPadding = PaddingValues(
+                        start = CpDimens.spacing4, end = CpDimens.spacing4,
+                        top = CpDimens.spacing3, bottom = clearance + 88.dp,
+                    ),
+                    verticalArrangement = Arrangement.spacedBy(CpDimens.spacing3),
+                ) {
+                    if (!nativeHeader) item(key = "heading") {
+                        Text("Лента", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
                     }
-                    else -> {
-                        itemsIndexed(state.items, key = { _, checkIn -> checkIn.id }) { index, checkIn ->
-                            Column(verticalArrangement = Arrangement.spacedBy(CpDimens.spacing3)) {
-                                if (index > 0) HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-                                TimelineCheckInCard(
-                                    checkIn = checkIn,
-                                    isOwn = state.owns(checkIn),
-                                    isPublicTimeline = state.timeline == CommunityTimeline.Public,
-                                    canAct = !state.isMutating,
-                                    changingVisibility = state.changingVisibilityId == checkIn.id,
-                                    onShopClick = { Navigator.navigate(Navigator.Screen.ShopDetail(checkIn.shopId)) },
-                                    onEdit = {
-                                        if (checkIn.isHome) {
-                                            homeEditorOpened = true
-                                            Navigator.navigate(Navigator.Screen.EditHomeCheckIn(checkIn.id))
-                                        } else vm.edit(checkIn.id)
-                                    },
-                                    onVisibility = { vm.toggleVisibility(checkIn.id) },
-                                    onHelpful = { vm.toggleHelpful(checkIn.id) },
-                                    onReport = { vm.openReport(checkIn.id) },
-                                    onPhotoClick = { urls, photoIndex ->
-                                        preview = CheckInPhotoPreview(state.sessionGeneration, urls, photoIndex)
-                                    },
-                                )
-                            }
-                        }
-                        when {
-                            state.error != null -> item(key = "error") {
-                                Column {
-                                    Text(state.error.orEmpty(), color = MaterialTheme.colorScheme.error)
-                                    TextButton(onClick = vm::retry) { Text(if (state.restartPagination) "Обновить ленту" else "Попробовать снова") }
-                                }
-                            }
-                            state.items.isEmpty() && !state.isLoading -> item(key = "empty") {
-                                Text("Пока нет опубликованных чек-инов.", color = MaterialTheme.colorScheme.onSurfaceVariant)
-                            }
-                        }
-                        if (state.isLoadingMore) item(key = "loading-more") {
+                    when {
+                        state.isLoggedIn == null || (state.isLoading && state.items.isEmpty()) -> item(key = "loading") {
                             Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.TopCenter) {
                                 CoffeePeekLoader()
                             }
                         }
+                        else -> {
+                            itemsIndexed(state.items, key = { _, checkIn -> checkIn.id }) { index, checkIn ->
+                                Column(verticalArrangement = Arrangement.spacedBy(CpDimens.spacing3)) {
+                                    if (index > 0) HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                                    TimelineCheckInCard(
+                                        checkIn = checkIn,
+                                        isOwn = state.owns(checkIn),
+                                        isPublicTimeline = state.timeline == CommunityTimeline.Public,
+                                        canAct = !state.isMutating,
+                                        changingVisibility = state.changingVisibilityId == checkIn.id,
+                                        onShopClick = { Navigator.navigate(Navigator.Screen.ShopDetail(checkIn.shopId)) },
+                                        onEdit = {
+                                            if (checkIn.isHome) {
+                                                homeEditorOpened = true
+                                                Navigator.navigate(Navigator.Screen.EditHomeCheckIn(checkIn.id))
+                                            } else vm.edit(checkIn.id)
+                                        },
+                                        onVisibility = { vm.toggleVisibility(checkIn.id) },
+                                        onHelpful = { vm.toggleHelpful(checkIn.id) },
+                                        onReport = { vm.openReport(checkIn.id) },
+                                        onPhotoClick = { urls, photoIndex ->
+                                            preview = CheckInPhotoPreview(state.sessionGeneration, urls, photoIndex)
+                                        },
+                                    )
+                                }
+                            }
+                            when {
+                                state.error != null -> item(key = "error") {
+                                    Column {
+                                        Text(state.error.orEmpty(), color = MaterialTheme.colorScheme.error)
+                                        TextButton(onClick = vm::retry) { Text(if (state.restartPagination) "Обновить ленту" else "Попробовать снова") }
+                                    }
+                                }
+                                state.items.isEmpty() && !state.isLoading -> item(key = "empty") {
+                                    Text("Пока нет опубликованных чек-инов.", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                }
+                            }
+                            if (state.isLoadingMore) item(key = "loading-more") {
+                                Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.TopCenter) {
+                                    CoffeePeekLoader()
+                                }
+                            }
+                        }
                     }
                 }
             }
+        }
+        // Android supplies the panel's full clearance; UIKit already bounds this screen above its tab bar.
+        // Position explicitly: Scaffold's built-in FAB inset would add another 16 dp.
+        CheckInCreateButton(Modifier.align(Alignment.BottomEnd).padding(end = CpDimens.spacing4, bottom = clearance + 12.dp)) {
+            if (state.isLoggedIn == true) showCreate = true
+            else Navigator.navigate(Navigator.Screen.Auth)
         }
     }
 }
