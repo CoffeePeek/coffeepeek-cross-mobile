@@ -8,7 +8,7 @@ final class SocialSignInProvider: NSObject, IosAppleAuthProvider,
     ASAuthorizationControllerDelegate, ASAuthorizationControllerPresentationContextProviding {
     static let shared = SocialSignInProvider()
     private var appleController: ASAuthorizationController?
-    private var appleCompletion: ((String?, String?) -> KotlinUnit)?
+    private var appleCompletion: (@Sendable (String?, String?) -> Void)?
     private var appleWindow: UIWindow?
     private var expectedState: String?
     private var googleInProgress = false
@@ -38,20 +38,20 @@ final class SocialSignInProvider: NSObject, IosAppleAuthProvider,
         })
     }
 
-    func makeButton(dark: Bool, onClick: @escaping () -> KotlinUnit) -> UIControl {
+    func makeButton(dark: Bool, onClick: @escaping () -> Void) -> UIControl {
         let button = ASAuthorizationAppleIDButton(type: .signIn, style: dark ? .white : .black)
         button.cornerRadius = 14
-        button.addAction(UIAction { _ in _ = onClick() }, for: .touchUpInside)
+        button.addAction(UIAction { _ in onClick() }, for: .touchUpInside)
         return button
     }
 
-    func signIn(nonce: String, state: String, completion: @escaping (String?, String?) -> KotlinUnit) {
+    func signIn(nonce: String, state: String, completion: @escaping @Sendable (String?, String?) -> Void) {
         guard appleController == nil, !googleInProgress else {
-            _ = completion(nil, "Вход уже выполняется")
+            completion(nil, "Вход уже выполняется")
             return
         }
         guard let window = Self.presentationWindow else {
-            _ = completion(nil, "Не удалось открыть окно Apple")
+            completion(nil, "Не удалось открыть окно Apple")
             return
         }
         appleCompletion = completion
@@ -104,7 +104,7 @@ final class SocialSignInProvider: NSObject, IosAppleAuthProvider,
         appleController = nil
         appleWindow = nil
         expectedState = nil
-        _ = completion?(token, error)
+        completion?(token, error)
     }
 
     private func signInWithGoogle(_ completion: @escaping (String?, String?) -> KotlinUnit) {
