@@ -1,5 +1,6 @@
 package com.coffeepeek.admin.ui.screen.auth
 
+import com.coffeepeek.admin.ui.component.PlatformScrollableColumn
 import com.coffeepeek.admin.ui.component.GlassControlIcon
 import com.coffeepeek.admin.ui.component.PlatformGlassIconButton
 import com.coffeepeek.admin.ui.component.PlatformGlassBackButton
@@ -25,10 +26,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.wrapContentWidth
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -97,11 +96,11 @@ fun AuthScreenScaffold(
         Box(Modifier.fillMaxSize().hazeSource(glassHaze)) {
         AuthAmbientBackground(isDark = isDark)
 
-        Column(
+        PlatformScrollableColumn(
             modifier = Modifier
                 .fillMaxSize()
                 .statusBarsPadding()
-                .verticalScroll(rememberScrollState())
+
                 .padding(horizontal = CpDimens.spacing4, vertical = CpDimens.spacing5),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {

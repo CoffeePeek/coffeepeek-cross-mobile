@@ -1,5 +1,9 @@
 package com.coffeepeek.admin.ui.screen.roaster
 
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.getValue
+import com.coffeepeek.admin.ui.component.PlatformScrollableColumn
+import com.coffeepeek.admin.ui.component.PlatformAlert
 import com.coffeepeek.admin.ui.component.CpTopBar
 
 import androidx.compose.foundation.BorderStroke
@@ -15,17 +19,12 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -33,20 +32,15 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -96,16 +90,7 @@ fun AddRoasterScreen(vm: AddRoasterViewModel = platformViewModel()) {
     }
 
     state.error?.let { error ->
-        AlertDialog(
-            onDismissRequest = vm::clearError,
-            containerColor = MaterialTheme.colorScheme.surface,
-            title = { Text("Не удалось отправить") },
-            text = { Text(error, color = MaterialTheme.colorScheme.onSurfaceVariant) },
-            confirmButton = {
-                TextButton(onClick = vm::clearError) { Text("Понятно") }
-            },
-            shape = RoundedCornerShape(CpDimens.radius2xl),
-        )
+        PlatformAlert(title = "Не удалось отправить", message = error, onConfirm = vm::clearError, onDismiss = vm::clearError)
     }
 
     Scaffold(
@@ -122,11 +107,11 @@ fun AddRoasterScreen(vm: AddRoasterViewModel = platformViewModel()) {
             return@Scaffold
         }
 
-        Column(
+        PlatformScrollableColumn(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .verticalScroll(rememberScrollState())
+
                 .navigationBarsPadding()
                 .padding(CpDimens.spacing4),
             verticalArrangement = Arrangement.spacedBy(CpDimens.spacing4),
@@ -326,8 +311,9 @@ private fun RoasterCityPicker(
             )
             Icon(CpIcons.ChevronUpDown, contentDescription = null)
         }
+        val nativeMenu = expanded && com.coffeepeek.admin.ui.component.NativeActionSheet("Город", listOf(com.coffeepeek.admin.ui.component.PlatformAction("Не указывать город", onClick = { onSelect(null) })) + cities.map { city -> com.coffeepeek.admin.ui.component.PlatformAction(city.name, onClick = { onSelect(city) }) }) { expanded = false }
         DropdownMenu(
-            expanded = expanded,
+            expanded = expanded && !nativeMenu,
             onDismissRequest = { expanded = false },
             modifier = Modifier
                 .width(anchorWidth)
@@ -384,11 +370,11 @@ private fun RoasterSubmittedContent(
             }
         },
     ) { padding ->
-        Column(
+        PlatformScrollableColumn(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .verticalScroll(rememberScrollState())
+
                 .padding(horizontal = CpDimens.spacing4),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {

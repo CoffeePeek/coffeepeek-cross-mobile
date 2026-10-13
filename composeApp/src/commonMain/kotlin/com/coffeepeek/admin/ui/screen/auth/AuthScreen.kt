@@ -1,5 +1,6 @@
 package com.coffeepeek.admin.ui.screen.auth
 
+import androidx.compose.runtime.getValue
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
@@ -12,7 +13,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -21,7 +21,6 @@ import androidx.compose.ui.unit.sp
 import coffeepeek.composeapp.generated.resources.Res
 import coffeepeek.composeapp.generated.resources.create_account
 import coffeepeek.composeapp.generated.resources.forgot_password
-import coffeepeek.composeapp.generated.resources.forgot_password_soon
 import coffeepeek.composeapp.generated.resources.login
 import coffeepeek.composeapp.generated.resources.login_subtitle
 import coffeepeek.composeapp.generated.resources.login_title
@@ -33,7 +32,6 @@ import com.coffeepeek.admin.theme.CpColor
 import com.coffeepeek.admin.theme.CpDimens
 import com.coffeepeek.admin.ui.Navigator
 import com.coffeepeek.admin.ui.icons.CpIcons
-import com.coffeepeek.admin.utils.ErrorHandler
 import org.jetbrains.compose.resources.stringResource
 import com.coffeepeek.admin.di.platformViewModel
 
@@ -99,6 +97,7 @@ object AuthScreen {
                 placeholder = "name@example.com",
                 leadingIcon = CpIcons.Email,
                 errorText = emailError,
+                next = true,
             )
 
             Spacer(modifier = Modifier.height(14.dp))
@@ -124,7 +123,6 @@ object AuthScreen {
                 )
             }
 
-            val forgotSoon = stringResource(Res.string.forgot_password_soon)
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -140,7 +138,7 @@ object AuthScreen {
                     color = CpColor.Primary,
                     textAlign = TextAlign.End,
                     modifier = Modifier.clickable {
-                        ErrorHandler.showError(forgotSoon)
+                        Navigator.navigate(Navigator.Screen.ForgotPassword(email))
                     },
                 )
             }

@@ -13,6 +13,9 @@ import com.coffeepeek.admin.feature.coffee.api.CoffeePicker
 import com.coffeepeek.admin.feature.coffee.domain.CoffeeRepository
 import com.coffeepeek.admin.feature.coffee.ui.CoffeeListViewModel
 import com.coffeepeek.admin.feature.coffee.ui.CoffeeDetailViewModel
+import com.coffeepeek.admin.feature.passwordrecovery.data.PasswordRecoveryRepositoryImpl
+import com.coffeepeek.admin.feature.passwordrecovery.domain.PasswordRecoveryRepository
+import com.coffeepeek.admin.feature.passwordrecovery.ui.PasswordRecoveryViewModel
 import com.coffeepeek.admin.feature.homecheckin.ui.HomeCheckInViewModel
 import com.coffeepeek.feature.homecheckin.data.HomeCheckInRepositoryImpl
 import com.coffeepeek.feature.homecheckin.domain.HomeCheckInRepository
@@ -73,6 +76,8 @@ fun initKoin() {
 }
 
 private fun appModule(settingRepository: com.coffeepeek.room.repository.SettingRepository) = module {
+    single<PasswordRecoveryRepository> { PasswordRecoveryRepositoryImpl(get<CoffeePeekClient>().plainClient) }
+    factory { (email: String, token: String) -> PasswordRecoveryViewModel(email, token.takeIf(String::isNotBlank), get()) }
     single<CoffeeRepository> { CoffeeRepositoryImpl(get<CoffeePeekClient>().plainClient) }
     single<CoffeePicker> { CoffeePickerAdapter(get()) }
     single<HomeCheckInRepository> {

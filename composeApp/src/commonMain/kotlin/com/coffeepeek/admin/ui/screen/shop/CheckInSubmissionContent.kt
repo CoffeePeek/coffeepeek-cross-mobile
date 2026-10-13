@@ -32,10 +32,14 @@ internal fun CheckInSubmissionContent(
     onGoToFeed: () -> Unit,
     onViewCheckIns: () -> Unit,
 ) {
+    androidx.compose.runtime.LaunchedEffect(submittedVisibility) {
+        if (submittedVisibility != null) com.coffeepeek.admin.ui.component.platformHaptic(com.coffeepeek.admin.ui.component.HapticEvent.Success)
+    }
+    val reduceMotion = com.coffeepeek.admin.ui.component.platformReduceMotion()
     AnimatedContent(
         targetState = submittedVisibility,
         transitionSpec = {
-            (fadeIn(tween(250)) + scaleIn(tween(300), initialScale = 0.9f)) togetherWith fadeOut(tween(150))
+            (fadeIn(tween(if (reduceMotion) 0 else 250)) + scaleIn(tween(if (reduceMotion) 0 else 300), initialScale = 0.9f)) togetherWith fadeOut(tween(if (reduceMotion) 0 else 150))
         },
         label = "check-in-submission",
     ) { visibility ->

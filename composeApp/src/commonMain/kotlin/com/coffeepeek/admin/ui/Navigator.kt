@@ -1,5 +1,7 @@
 package com.coffeepeek.admin.ui
 
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.getValue
 import com.coffeepeek.admin.ui.screen.addshop.AddShopScreen
 import com.coffeepeek.admin.ui.screen.auth.registr.RegisterScreen
 import com.coffeepeek.admin.ui.screen.checkins.VisitedPlacesScreen
@@ -22,15 +24,15 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.lifecycle.Lifecycle
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavDestination.Companion.hasRoute
@@ -50,6 +52,7 @@ import com.coffeepeek.admin.ui.screen.main.MainScreen
 import com.coffeepeek.admin.ui.component.RetainedContent
 import com.coffeepeek.admin.ui.screen.shop.ShopDetailScreen
 import com.coffeepeek.admin.feature.coffee.ui.CoffeeDetailScreen
+import com.coffeepeek.admin.feature.passwordrecovery.ui.PasswordRecoveryScreen
 import com.coffeepeek.admin.ui.screen.shop.ShopMenuGalleryScreen
 import com.coffeepeek.admin.ui.screen.shop.ShopReportScreen
 import com.coffeepeek.admin.ui.screen.shopchange.ShopChangeEditorScreen
@@ -95,6 +98,8 @@ object Navigator {
         // Root screens (outside bottom nav)
         @Serializable data object Auth : Screen
         @Serializable data object Register : Screen
+        @Serializable data class ForgotPassword(val email: String = "") : Screen
+        @Serializable data class ResetPassword(val token: String) : Screen
         @Serializable data object Main : Screen
 
         // Graphs
@@ -187,6 +192,8 @@ object Navigator {
     fun Screen.isHandledByRootNav(): Boolean = when (this) {
         is Screen.Auth,
         is Screen.Register,
+        is Screen.ForgotPassword,
+        is Screen.ResetPassword,
         is Screen.Main,
         is Screen.ShopDetail,
         is Screen.CreateCheckIn,
@@ -285,12 +292,24 @@ object Navigator {
 
     @Composable
     private fun BaseNavigator() {
+        val nativeAppLink by pendingAppLink.collectAsState()
+        if (PlatformRootNavigation(navigationEvents, nativeAppLink,
+            { pendingAppLink.compareAndSet(nativeAppLink, null) },
+            { screen, login -> RootScreen(screen, login) },
+        )) return
+
         val nav = rememberNavController()
+        val focusManager = LocalFocusManager.current
+        val keyboard = LocalSoftwareKeyboardController.current
         val appLink by pendingAppLink.collectAsState()
         var mainEntry by remember { mutableStateOf<NavBackStackEntry?>(null) }
         val mainStateHolder = rememberSaveableStateHolder()
         val visibleEntries by nav.visibleEntries.collectAsState()
         val currentEntry by nav.currentBackStackEntryAsState()
+        LaunchedEffect(currentEntry) {
+            focusManager.clearFocus(force = true)
+            keyboard?.hide()
+        }
         val mainSlide by animateFloatAsState(
             targetValue = if (currentEntry?.destination?.hasRoute<Screen.Main>() != false) 0f else -1f,
             animationSpec = RootMainSlideSpec,
@@ -375,7 +394,27 @@ object Navigator {
             ) {
                     composable<Screen.Auth> { AuthScreen() }
                     composable<Screen.Register> { RegisterScreen() }
+                    composable<Screen.ForgotPassword> { backStack ->
+                        PasswordRecoveryScreen(
+                            initialEmail = backStack.toRoute<Screen.ForgotPassword>().email,
+                            onClose = { nav.popBackStack() },
+                            onLogin = {
+                                nav.navigate(Screen.Auth) { popUpTo<Screen.Main>(); launchSingleTop = true }
+                            },
+                        )
+                    }
+                    composable<Screen.ResetPassword> { backStack ->
+                        PasswordRecoveryScreen(
+                            initialToken = backStack.toRoute<Screen.ResetPassword>().token,
+                            onClose = { nav.popBackStack() },
+                            onLogin = {
+                                nav.navigate(Screen.Auth) { popUpTo<Screen.Main>(); launchSingleTop = true }
+                            },
+                        )
+                    }
                     composable<Screen.Main> { entry ->
+                        // The retained screen still needs a full-size transition target.
+                        Box(Modifier.fillMaxSize())
                         SideEffect { mainEntry = entry }
                     }
                     composable<Screen.ShopDetail> { backStack ->
@@ -443,6 +482,40 @@ object Navigator {
                     composable<Screen.CitySettings> { CityScreen() }
                     composable<Screen.ThemeSettings> { ThemeScreen() }
             }
+        }
+    }
+
+    @Composable
+    private fun RootScreen(screen: Screen, resetToLogin: () -> Unit) {
+        when (screen) {
+            Screen.Main -> MainScreen()
+            Screen.Auth -> AuthScreen()
+            Screen.Register -> RegisterScreen()
+            is Screen.ForgotPassword -> PasswordRecoveryScreen(initialEmail = screen.email, onClose = ::popBack, onLogin = resetToLogin)
+            is Screen.ResetPassword -> PasswordRecoveryScreen(initialToken = screen.token, onClose = ::popBack, onLogin = resetToLogin)
+            is Screen.ShopDetail -> ShopDetailScreen(screen.shopId, screen.forCheckIn)
+            Screen.CreateCheckIn -> com.coffeepeek.admin.ui.screen.shop.CheckInShopPickerScreen()
+            is Screen.CoffeeDetail -> CoffeeDetailScreen(screen.slug)
+            is Screen.ShopReviews -> com.coffeepeek.admin.ui.screen.shop.ShopReviewsScreen(screen.shopId)
+            is Screen.ReportReview -> com.coffeepeek.admin.ui.screen.review.ReviewReportScreen(reviewId = screen.reviewId, isPreview = screen.isPreview)
+            is Screen.ReportCheckIn -> com.coffeepeek.admin.ui.screen.review.ReviewReportScreen(reviewId = screen.checkInId, isCheckIn = true)
+            is Screen.ShopMenuGallery -> ShopMenuGalleryScreen(screen.shopId)
+            is Screen.ReportShop -> ShopReportScreen(screen.shopId, screen.shopTitle)
+            is Screen.SuggestShopChange -> SuggestShopChangeScreen(screen.shopId)
+            is Screen.ShopChangeEditor -> ShopChangeEditorScreen(screen.shopId, screen.section, screen.requestId)
+            is Screen.MyContributions -> MyContributionsScreen(ContributionKind.valueOf(screen.kind))
+            is Screen.ShopChangeRequestDetail -> ShopChangeRequestDetailScreen(screen.requestId)
+            Screen.AddShop -> AddShopScreen()
+            Screen.AddRoaster -> AddRoasterScreen()
+            is Screen.RoasterDetail -> RoasterDetailScreen(screen.roasterId)
+            Screen.EditProfile -> EditProfileScreen()
+            Screen.DeleteAccountPending -> DeleteAccountPendingScreen()
+            Screen.Favorites -> FavoritesScreen()
+            Screen.VisitedPlaces -> VisitedPlacesScreen()
+            Screen.HomeCheckIns -> HomeCheckInScreen()
+            Screen.CitySettings -> CityScreen()
+            Screen.ThemeSettings -> ThemeScreen()
+            else -> error("Tab route must be handled by MainScreen: $screen")
         }
     }
 }

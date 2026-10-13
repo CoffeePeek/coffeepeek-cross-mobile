@@ -14,6 +14,11 @@ actual object ShareHelper {
             activityItems = listOf(text),
             applicationActivities = null,
         )
+        controller.popoverPresentationController?.apply {
+            sourceView = presenter.view
+            sourceRect = presenter.view.bounds
+            permittedArrowDirections = 0u
+        }
         presenter.presentViewController(controller, animated = true, completion = null)
     }
 }

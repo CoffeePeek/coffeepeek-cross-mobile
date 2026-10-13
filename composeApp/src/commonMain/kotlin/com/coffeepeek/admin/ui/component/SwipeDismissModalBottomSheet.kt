@@ -1,5 +1,7 @@
 package com.coffeepeek.admin.ui.component
 
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.getValue
 import androidx.compose.animation.core.animate
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
@@ -18,11 +20,9 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.SheetValue
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -37,6 +37,7 @@ fun SwipeDismissModalBottomSheet(
     dismissEnabled: Boolean = true,
     content: @Composable ColumnScope.() -> Unit,
 ) {
+    if (NativeModalSheet(onDismissRequest, dismissEnabled, content)) return
     val canDismiss by rememberUpdatedState(dismissEnabled)
     val sheetState = rememberModalBottomSheetState(
         skipPartiallyExpanded = true,
@@ -52,7 +53,7 @@ fun SwipeDismissModalBottomSheet(
 
     ModalBottomSheet(
         onDismissRequest = { if (dismissEnabled) onDismissRequest() },
-        modifier = Modifier.graphicsLayer { translationY = dragOffset },
+        modifier = Modifier.graphicsLayer { translationY = dragOffset }.dismissKeyboardOnBackgroundGestures(),
         sheetState = sheetState,
         sheetGesturesEnabled = false,
         dragHandle = {

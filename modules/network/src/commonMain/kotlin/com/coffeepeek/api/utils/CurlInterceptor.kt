@@ -27,7 +27,7 @@ object CurlInterceptor {
     }
 
     private fun String.redactSensitiveFields(): String = replace(
-        Regex(""""(password|idToken|refreshToken|accessToken)"\s*:\s*"[^"]*"""", RegexOption.IGNORE_CASE),
+        Regex(""""(password|newPassword|currentPassword|token|idToken|refreshToken|accessToken)"\s*:\s*"(?:\\.|[^"\\])*"""", RegexOption.IGNORE_CASE),
     ) { match -> """"${match.groupValues[1]}": "<redacted>"""" }
 
     private fun String.redactHeaderValue(value: String): String {

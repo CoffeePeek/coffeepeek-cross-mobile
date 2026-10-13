@@ -68,8 +68,9 @@ internal fun ConsumedDrinkField(
                 Spacer(Modifier.width(8.dp))
                 Icon(CpIcons.ChevronUpDown, contentDescription = null, modifier = Modifier.size(18.dp))
             }
+            val nativeMenu = expanded && com.coffeepeek.admin.ui.component.NativeActionSheet("Напиток", listOf(com.coffeepeek.admin.ui.component.PlatformAction("Не выбран", onClick = { onChange(null, null) })) + drinks.map { drink -> com.coffeepeek.admin.ui.component.PlatformAction(if (language == "en") drink.nameEn.ifBlank { drink.nameRu } else drink.nameRu.ifBlank { drink.nameEn }, onClick = { if (drink.slug != slug) onChange(drink.slug, if (drink.slug == "other") "" else null) }) }) { expanded = false }
             DropdownMenu(
-                expanded = expanded,
+                expanded = expanded && !nativeMenu,
                 onDismissRequest = { expanded = false },
                 modifier = Modifier.widthIn(min = 220.dp, max = 320.dp).heightIn(max = 320.dp),
                 shape = RoundedCornerShape(14.dp),

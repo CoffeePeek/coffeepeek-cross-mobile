@@ -1,5 +1,6 @@
 package com.coffeepeek.admin
 
+import androidx.compose.runtime.getValue
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -7,13 +8,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import com.coffeepeek.admin.theme.CoffeePeekTheme
 import com.coffeepeek.admin.theme.PlatformSystemBars
 import com.coffeepeek.admin.theme.ThemeManager
 import com.coffeepeek.admin.theme.ThemeMode
 import com.coffeepeek.admin.ui.Navigator
+import com.coffeepeek.admin.ui.component.dismissKeyboardOnBackgroundGestures
 import com.coffeepeek.admin.utils.OrientationObserver
 import io.kamel.core.config.KamelConfig
 import io.kamel.image.config.LocalKamelConfig
@@ -28,7 +29,7 @@ fun App(onReady: () -> Unit = {}) {
     }
 
     AppContent {
-        Box(Modifier.fillMaxSize()) {
+        Box(Modifier.fillMaxSize().dismissKeyboardOnBackgroundGestures()) {
             OrientationObserver.StartObserver()
             Navigator()
             com.coffeepeek.admin.feature.appupdate.ui.AppUpdatePrompt()

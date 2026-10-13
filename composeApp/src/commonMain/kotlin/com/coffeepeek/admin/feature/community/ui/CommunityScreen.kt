@@ -60,18 +60,17 @@ fun CommunityScreen(onCreateCheckIn: () -> Unit) {
         FullScreenImageDialog(imageUrls = it.urls, initialIndex = it.index, onDismiss = { preview = null })
     }
     if (state.editing != null) key(state.sessionGeneration, state.editing?.source?.id) { EditCheckInSheet(state, vm) }
-    if (state.reportingId != null) AlertDialog(
-        onDismissRequest = vm::dismissReport,
-        title = { Text("Пожаловаться на чек-ин") },
-        text = {
-            Column(verticalArrangement = Arrangement.spacedBy(CpDimens.spacing2)) {
-                ReviewTextInput(state.reportText, vm::updateReport, "Опишите проблему", maxLength = 2000, isError = state.reportError != null)
-                state.reportError?.let { Text(it, color = MaterialTheme.colorScheme.error) }
-            }
-        },
-        confirmButton = { TextButton(onClick = vm::submitReport, enabled = !state.isReporting) { Text(if (state.isReporting) "Отправляем…" else "Отправить") } },
-        dismissButton = { TextButton(onClick = vm::dismissReport, enabled = !state.isReporting) { Text("Отмена") } },
-    )
+    if (state.reportingId != null) com.coffeepeek.admin.ui.component.SwipeDismissModalBottomSheet(
+        onDismissRequest = vm::dismissReport, dismissEnabled = !state.isReporting,
+    ) {
+        Column(Modifier.fillMaxWidth().padding(CpDimens.spacing4), verticalArrangement = Arrangement.spacedBy(CpDimens.spacing2)) {
+            Text("Пожаловаться на чекин", style = MaterialTheme.typography.titleLarge)
+            ReviewTextInput(state.reportText, vm::updateReport, "Опишите проблему", maxLength = 2000, isError = state.reportError != null)
+            state.reportError?.let { Text(it, color = MaterialTheme.colorScheme.error) }
+            TextButton(onClick = vm::submitReport, enabled = !state.isReporting) { Text(if (state.isReporting) "Отправляем…" else "Отправить") }
+            TextButton(onClick = vm::dismissReport, enabled = !state.isReporting) { Text("Отмена") }
+        }
+    }
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,

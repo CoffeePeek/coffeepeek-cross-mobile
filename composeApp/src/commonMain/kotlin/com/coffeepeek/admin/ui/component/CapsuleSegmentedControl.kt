@@ -22,7 +22,6 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.coffeepeek.admin.theme.CpDimens
 
 @Composable
 fun <T> CapsuleSegmentedControl(
@@ -32,6 +31,7 @@ fun <T> CapsuleSegmentedControl(
     onSelected: (T) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    if (NativeSegmentedControl(options.map(label), options.indexOf(selected), { onSelected(options[it]) }, modifier)) return
     Row(
         modifier = modifier
             .fillMaxWidth()

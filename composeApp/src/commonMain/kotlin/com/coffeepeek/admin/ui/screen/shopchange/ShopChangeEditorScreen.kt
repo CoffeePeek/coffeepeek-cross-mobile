@@ -1,5 +1,8 @@
 package com.coffeepeek.admin.ui.screen.shopchange
 
+import androidx.compose.runtime.getValue
+import com.coffeepeek.admin.ui.component.PlatformScrollableColumn
+import com.coffeepeek.admin.ui.component.PlatformAlert
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -16,12 +19,9 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
@@ -30,10 +30,8 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -82,14 +80,7 @@ fun ShopChangeEditorScreen(shopId: String, sectionName: String, requestId: Strin
     val state by vm.state.collectAsState()
 
     state.error?.let { err ->
-        AlertDialog(
-            onDismissRequest = vm::clearError,
-            title = { Text("Ошибка") },
-            text = { Text(err) },
-            confirmButton = {
-                TextButton(onClick = vm::clearError) { Text("Понятно") }
-            },
-        )
+        PlatformAlert(title = "Ошибка", message = err, onConfirm = vm::clearError, onDismiss = vm::clearError)
     }
 
     Scaffold(
@@ -108,10 +99,10 @@ fun ShopChangeEditorScreen(shopId: String, sectionName: String, requestId: Strin
                 .padding(padding)
                 .padding(horizontal = CpDimens.spacing4),
         ) {
-            Column(
+            PlatformScrollableColumn(
                 modifier = Modifier
                     .weight(1f)
-                    .verticalScroll(rememberScrollState()),
+                    ,
             ) {
                 if (state.shopTitle.isNotBlank()) {
                     Text(

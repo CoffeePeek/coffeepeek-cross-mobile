@@ -34,10 +34,10 @@ import com.coffeepeek.admin.ui.component.LocalFloatingNavClearance
 import com.coffeepeek.admin.ui.component.PriceBynIcon
 import com.coffeepeek.admin.ui.component.SearchHeader
 import kotlin.math.round
-import org.koin.compose.viewmodel.koinViewModel
+import com.coffeepeek.admin.di.platformViewModel
 
 @Composable
-internal fun CoffeeListScreen(vm: CoffeeListViewModel = koinViewModel()) {
+internal fun CoffeeListScreen(vm: CoffeeListViewModel = platformViewModel()) {
     val state by vm.state.collectAsState()
     val listState = rememberLazyListState()
     var showFilters by rememberSaveable { mutableStateOf(false) }

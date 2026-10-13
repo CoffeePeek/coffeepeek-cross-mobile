@@ -18,7 +18,14 @@ struct CoffeePeekApp: App {
                 .ignoresSafeArea(.container, edges: .all)
                 .ignoresSafeArea(.keyboard)
                 .onOpenURL { url in
-                    GIDSignIn.sharedInstance.handle(url)
+                    if !GIDSignIn.sharedInstance.handle(url) {
+                        _ = MainViewControllerKt.handleAppLink(link: url.absoluteString)
+                    }
+                }
+                .onContinueUserActivity(NSUserActivityTypeBrowsingWeb) { activity in
+                    if let url = activity.webpageURL {
+                        _ = MainViewControllerKt.handleAppLink(link: url.absoluteString)
+                    }
                 }
         }
     }

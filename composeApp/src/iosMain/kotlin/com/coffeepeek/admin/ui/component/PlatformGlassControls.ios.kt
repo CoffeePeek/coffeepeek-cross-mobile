@@ -67,7 +67,10 @@ actual fun PlatformGlassIconButton(
         factory = {
             UIButton.buttonWithConfiguration(
                 configuration = UIButtonConfiguration.grayButtonConfiguration(),
-                primaryAction = UIAction.actionWithHandler { currentOnClick.value() },
+                primaryAction = UIAction.actionWithHandler {
+                    if (icon == GlassControlIcon.Favorite || icon == GlassControlIcon.FavoriteFilled) platformHaptic(HapticEvent.Selection)
+                    currentOnClick.value()
+                },
             )
         },
         modifier = modifier.size(CpDimens.buttonHeight),

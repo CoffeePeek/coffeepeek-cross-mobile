@@ -1,5 +1,9 @@
 package com.coffeepeek.admin.ui.screen.shop
 
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.getValue
+import com.coffeepeek.admin.ui.component.NativeDatePicker
+import com.coffeepeek.admin.ui.component.PlatformSwitch
 import com.coffeepeek.admin.ui.component.ReviewFormStep
 
 import com.coffeepeek.admin.ui.screen.review.ConsumedDrinkField
@@ -21,14 +25,11 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -36,17 +37,14 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SelectableDates
 import androidx.compose.material3.Switch
-import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalFocusManager
@@ -96,18 +94,13 @@ fun CheckInBottomSheet(
 ) {
     var showDatePicker by remember { mutableStateOf(false) }
 
-    val scrollState = rememberScrollState()
     val focusManager = LocalFocusManager.current
     val keyboardController = LocalSoftwareKeyboardController.current
 
-    LaunchedEffect(scrollState.isScrollInProgress) {
-        if (scrollState.isScrollInProgress) {
-            keyboardController?.hide()
-            focusManager.clearFocus()
-        }
-    }
-
-    if (showDatePicker) {
+    if (showDatePicker && !NativeDatePicker(
+        title = "Дата посещения", initialMillis = draft.visitMillis, maximumMillis = currentEpochMillis(), timeOnly = false,
+        onConfirm = { onDraftChange(draft.copy(visitMillis = it)) }, onDismiss = { showDatePicker = false },
+    )) {
         val datePickerState = rememberDatePickerState(
             initialSelectedDateMillis = draft.visitMillis,
             selectableDates = object : SelectableDates {
@@ -149,13 +142,11 @@ fun CheckInBottomSheet(
             CheckInSubmissionContent(submittedVisibility, onGoToFeed, onViewCheckIns)
             return@SwipeDismissModalBottomSheet
         }
-        Column(
+        com.coffeepeek.admin.ui.component.PlatformScrollableColumn(
             modifier = Modifier
                 .fillMaxWidth()
                 // Keep the shop hero/title visible behind the modal.
                 .fillMaxHeight(0.76f)
-                .verticalScroll(scrollState)
-                .imePadding()
                 .navigationBarsPadding()
                 .padding(horizontal = CpDimens.spacing4)
                 .padding(bottom = CpDimens.spacing6),
@@ -311,19 +302,7 @@ fun CheckInBottomSheet(
                             )
                         }
                         Spacer(Modifier.width(CpDimens.spacing3))
-                        Switch(
-                            checked = draft.isPublic,
-                            onCheckedChange = null,
-                            enabled = !isLoading,
-                            colors = SwitchDefaults.colors(
-                                checkedThumbColor = MaterialTheme.colorScheme.onPrimary,
-                                checkedTrackColor = MaterialTheme.colorScheme.primary,
-                                checkedBorderColor = MaterialTheme.colorScheme.primary,
-                                uncheckedThumbColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                                uncheckedTrackColor = MaterialTheme.colorScheme.surfaceVariant,
-                                uncheckedBorderColor = MaterialTheme.colorScheme.outline,
-                            ),
-                        )
+                        PlatformSwitch(checked = draft.isPublic, onCheckedChange = { onDraftChange(draft.copy(isPublic = it)) }, enabled = !isLoading, modifier = Modifier.clearAndSetSemantics { })
                     }
                 }
             }

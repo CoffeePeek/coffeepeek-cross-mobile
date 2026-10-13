@@ -7,8 +7,10 @@ existing Compose `FloatingBottomNavBar`. iOS hosts a native `UITabBar` through
 `PlatformFloatingBottomNavBar`; on iOS 26 the system renders its Liquid Glass
 appearance. iOS glass icon buttons use `UIButtonConfiguration.glass()`.
 
-Detail transitions and sheets remain Compose UI. Business contracts,
-repositories, and navigation routes are shared.
+Detail transitions now use a native UINavigationController and sheets use
+UISheetPresentationController. Business contracts, repositories, and navigation
+routes are shared. See [IOS_NATIVE_EXPERIENCE.md](IOS_NATIVE_EXPERIENCE.md) for
+the migration, ownership, and device verification requirements.
 
 ## Integration
 
@@ -35,11 +37,12 @@ navigation graph.
 
 Automatic scroll-driven tab minimization is not implemented: Compose scroll
 containers do not expose a native UIScrollView to UIKit. This change does not
-claim to provide every scroll-edge effect or native detail navigation gesture.
+claim to provide every scroll-edge effect. Native detail navigation is now
+handled by the root UIKit navigation controller.
 
 ## Verification and deployment
 
-Local checks passed:
+Historical checks before the native interaction migration passed:
 
 ```bash
 ./gradlew :composeApp:compileKotlinIosArm64 :composeApp:compileDebugKotlinAndroid

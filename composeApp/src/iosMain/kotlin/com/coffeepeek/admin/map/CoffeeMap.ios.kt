@@ -11,8 +11,13 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.viewinterop.UIKitView
+import androidx.compose.ui.viewinterop.UIKitInteropProperties
+import androidx.compose.ui.viewinterop.UIKitInteropInteractionMode
 import com.coffeepeek.admin.location.LocationPermissionEffect
 import com.coffeepeek.admin.location.PlatformLocation
 import com.coffeepeek.domain.model.MapBounds
@@ -21,7 +26,7 @@ import com.coffeepeek.domain.model.MapCoffeeZone
 import com.coffeepeek.domain.model.MapShop
 import kotlinx.coroutines.launch
 
-private const val DEFAULT_ZOOM = 12f
+private const val TARGET_ZOOM = 16f
 private const val LOCATION_ZOOM = 15f
 
 @Composable
@@ -47,8 +52,6 @@ actual fun CoffeeMap(
     val boundsCallback = rememberUpdatedState(onBoundsChanged)
     val shopCallback = rememberUpdatedState(onShopClick)
     val targetAppliedCallback = rememberUpdatedState(onCameraTargetApplied)
-    val locationFoundCallback = rememberUpdatedState(onMyLocationFound)
-    val locationDeniedCallback = rememberUpdatedState(onLocationPermissionDenied)
     val zoneCallback = rememberUpdatedState(onZoneClick)
     val nativeProvider = checkNotNull(IosNativeMapRegistry.provider) {
         "MapLibre provider must be registered before CoffeeMap is displayed"
@@ -70,6 +73,7 @@ actual fun CoffeeMap(
         myLocationRequestKey = myLocationRequestKey,
         onMyLocationFound = onMyLocationFound,
         onLocationPermissionDenied = onLocationPermissionDenied,
+        requestLocationPermissionOnLoad = requestLocationPermissionOnLoad,
         showAttribution = showAttribution,
     )
 }
@@ -92,6 +96,7 @@ private fun NativeMapContent(
     myLocationRequestKey: Int,
     onMyLocationFound: (Double, Double) -> Unit,
     onLocationPermissionDenied: () -> Unit,
+    requestLocationPermissionOnLoad: Boolean,
     showAttribution: Boolean,
 ) {
     val boundsCallback = rememberUpdatedState(onBoundsChanged)
@@ -100,6 +105,9 @@ private fun NativeMapContent(
     val locationFoundCallback = rememberUpdatedState(onMyLocationFound)
     val locationDeniedCallback = rememberUpdatedState(onLocationPermissionDenied)
     val scope = rememberCoroutineScope()
+    val initiallyHasTarget = remember { cameraTarget != null }
+    var handledLocationRequestKey by remember { mutableStateOf<Int?>(null) }
+    val hasCameraTarget = rememberUpdatedState(cameraTarget != null)
     val session = remember {
         NativeMapSession(
             provider = provider,
@@ -115,32 +123,41 @@ private fun NativeMapContent(
 
     LaunchedEffect(cameraTarget, cameraZoom) {
         cameraTarget?.let { target ->
-            session.moveCamera(target.first, target.second, cameraZoom ?: DEFAULT_ZOOM, animated = true)
+            session.moveCamera(target.first, target.second, cameraZoom ?: TARGET_ZOOM, animated = true)
             onCameraTargetApplied()
         }
     }
 
     fun findAndShowLocation() {
+        val initial = myLocationRequestKey == 0
+        if ((initial && initiallyHasTarget) || handledLocationRequestKey == myLocationRequestKey) return
+        handledLocationRequestKey = myLocationRequestKey
+        val cameraRevision = session.cameraRevision
         scope.launch {
             val point = PlatformLocation.getLastKnownLocation()
             if (point == null) {
-                locationDeniedCallback.value()
-            } else {
+                if (!initial) locationDeniedCallback.value()
+            } else if (!initial || (!hasCameraTarget.value && session.cameraRevision == cameraRevision)) {
                 session.moveCamera(point.latitude, point.longitude, LOCATION_ZOOM, animated = true)
                 locationFoundCallback.value(point.latitude, point.longitude)
             }
         }
     }
 
+    LaunchedEffect(session) {
+        if (PlatformLocation.hasPermission()) findAndShowLocation()
+    }
+
     Box(modifier = modifier) {
-        LocationPermissionEffect(
-            requestKey = myLocationRequestKey,
+        if (requestLocationPermissionOnLoad || myLocationRequestKey > 0) LocationPermissionEffect(
+            requestKey = if (requestLocationPermissionOnLoad) myLocationRequestKey + 1 else myLocationRequestKey,
             onGranted = ::findAndShowLocation,
             onDenied = { locationDeniedCallback.value() },
         )
         UIKitView(
             factory = { provider.createMapView().also(session::attach) },
             modifier = Modifier.matchParentSize(),
+            properties = UIKitInteropProperties(interactionMode = UIKitInteropInteractionMode.NonCooperative),
             update = { mapView ->
                 session.attach(mapView)
                 session.updateContent(shops, clusters, zones, selectedShopId, isDarkTheme, showAttribution)
@@ -156,13 +173,18 @@ private class NativeMapSession(
     private val onZoneClick: (String) -> Unit,
 ) : IosNativeMapCallbacks {
     private var mapView: platform.UIKit.UIView? = null
+    private var pendingCamera: (() -> Unit)? = null
+    var cameraRevision: Int = 0
+        private set
 
     fun attach(view: platform.UIKit.UIView) {
         mapView = view
+        pendingCamera?.also { pendingCamera = null }?.invoke()
     }
 
     fun detach() {
         mapView = null
+        pendingCamera = null
     }
 
     fun updateContent(
@@ -183,7 +205,9 @@ private class NativeMapSession(
     }
 
     fun moveCamera(latitude: Double, longitude: Double, zoom: Float, animated: Boolean) {
-        mapView?.let { view -> provider.moveCamera(view, latitude, longitude, zoom, animated) }
+        cameraRevision++
+        val move = { mapView?.let { view -> provider.moveCamera(view, latitude, longitude, zoom, animated) }; Unit }
+        if (mapView == null) pendingCamera = move else move()
     }
 
     override fun onShopClick(shopId: String) = onShopClick.invoke(shopId)
@@ -197,57 +221,4 @@ private class NativeMapSession(
         maxLon: Double,
         zoom: Float,
     ) = onBoundsChanged(MapBounds(minLat, minLon, maxLat, maxLon), zoom)
-}
-
-private fun nativeMapStateJson(
-    shops: List<MapShop>,
-    clusters: List<MapCluster>,
-    zones: List<MapCoffeeZone>,
-    selectedShopId: String?,
-    isDarkTheme: Boolean,
-    showAttribution: Boolean,
-): String = buildString {
-    append('{')
-    append("\"selectedShopId\":").append(selectedShopId.jsonValue()).append(',')
-    append("\"dark\":").append(isDarkTheme).append(',')
-    append("\"showAttribution\":").append(showAttribution).append(',')
-    append("\"shops\":[")
-    shops.joinTo(this, separator = ",") { shop ->
-        "{\"id\":${shop.id.jsonValue()},\"title\":${shop.title.jsonValue()}," +
-            "\"lat\":${shop.latitude},\"lon\":${shop.longitude},\"type\":${shop.type.jsonValue()}," +
-            "\"selected\":${shop.id == selectedShopId}}"
-    }
-    append("],\"clusters\":[")
-    clusters.joinTo(this, separator = ",") { cluster ->
-        "{\"id\":${cluster.id.jsonValue()},\"lat\":${cluster.latitude}," +
-            "\"lon\":${cluster.longitude},\"count\":${cluster.count}}"
-    }
-    append("],\"zones\":[")
-    zones.joinTo(this, separator = ",") { zone ->
-        "{\"id\":${zone.id.jsonValue()},\"name\":${zone.name.jsonValue()}," +
-            "\"color\":${zoneColorForMap(zone.color, isDarkTheme).jsonValue()}," +
-            "\"lat\":${zone.latitude},\"lon\":${zone.longitude}," +
-            "\"radius\":${zone.radiusMeters},\"polygon\":[" +
-            zone.polygon.joinToString(",") { (lat, lon) -> "[$lat,$lon]" } + "]}"
-    }
-    append("]}")
-}
-
-private fun String?.jsonValue(): String = if (this == null) {
-    "null"
-} else {
-    buildString {
-        append('"')
-        for (character in this@jsonValue) {
-            when (character) {
-                '\\' -> append("\\\\")
-                '"' -> append("\\\"")
-                '\n' -> append("\\n")
-                '\r' -> append("\\r")
-                '\t' -> append("\\t")
-                else -> append(character)
-            }
-        }
-        append('"')
-    }
 }

@@ -1,5 +1,8 @@
 package com.coffeepeek.admin.feature.homecheckin.ui
 
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.getValue
+import com.coffeepeek.admin.ui.component.PlatformAlert
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -15,10 +18,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.FilterChip
@@ -30,10 +31,8 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.Modifier
@@ -49,7 +48,6 @@ import com.coffeepeek.admin.ui.component.PhotoAttachmentsSection
 import com.coffeepeek.admin.utils.CpImage
 import com.coffeepeek.admin.utils.PickedImage
 import com.coffeepeek.feature.homecheckin.domain.HomeCheckIn
-import com.coffeepeek.feature.homecheckin.domain.HomeCheckInInput
 import com.coffeepeek.feature.homecheckin.domain.HomePhotoUpload
 import com.coffeepeek.feature.homecheckin.domain.homeBrewMethods
 
@@ -62,13 +60,7 @@ internal fun HomeCheckInScreen(vm: HomeCheckInViewModel = platformViewModel()) {
     var photoPreview by remember { mutableStateOf<Pair<List<String>, Int>?>(null) }
     photoPreview?.let { (urls, index) -> FullScreenImageDialog(urls, index) { photoPreview = null } }
 
-    if (state.deleteConfirmation) AlertDialog(
-        onDismissRequest = vm::cancelDelete,
-        title = { Text("Удалить домашнюю запись?") },
-        text = { Text("Она исчезнет из истории, календаря и статистики.") },
-        confirmButton = { TextButton(onClick = vm::delete) { Text("Удалить") } },
-        dismissButton = { TextButton(onClick = vm::cancelDelete) { Text("Отмена") } },
-    )
+    if (state.deleteConfirmation) PlatformAlert(title = "Удалить домашнюю запись?", message = "Она исчезнет из истории, календаря и статистики.", confirmLabel = "Удалить", onConfirm = vm::delete, onDismiss = vm::cancelDelete, cancelLabel = "Отмена", destructive = true)
 
     Scaffold(topBar = {
         CpTopBar(

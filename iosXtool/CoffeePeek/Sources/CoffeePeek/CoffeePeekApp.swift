@@ -12,6 +12,14 @@ struct CoffeePeekApp: App {
             ComposeRootView()
                 .ignoresSafeArea(.container, edges: .all)
                 .ignoresSafeArea(.keyboard)
+                .onOpenURL { url in
+                    _ = MainViewControllerKt.handleAppLink(link: url.absoluteString)
+                }
+                .onContinueUserActivity(NSUserActivityTypeBrowsingWeb) { activity in
+                    if let url = activity.webpageURL {
+                        _ = MainViewControllerKt.handleAppLink(link: url.absoluteString)
+                    }
+                }
         }
     }
 }

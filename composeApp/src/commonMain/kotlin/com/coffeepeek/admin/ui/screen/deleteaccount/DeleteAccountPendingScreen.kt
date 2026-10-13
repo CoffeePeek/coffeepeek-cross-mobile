@@ -1,5 +1,7 @@
 package com.coffeepeek.admin.ui.screen.deleteaccount
 
+import androidx.compose.runtime.getValue
+import com.coffeepeek.admin.ui.component.PlatformAlert
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -9,17 +11,14 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -47,26 +46,7 @@ fun DeleteAccountPendingScreen(
     val state by vm.uiState.collectAsState()
 
     state.error?.let { err ->
-        AlertDialog(
-            onDismissRequest = vm::clearError,
-            containerColor = MaterialTheme.colorScheme.surface,
-            title = {
-                Text("Ошибка", style = MaterialTheme.typography.headlineSmall)
-            },
-            text = {
-                Text(
-                    text = err,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            },
-            confirmButton = {
-                TextButton(onClick = vm::clearError) {
-                    Text("Понятно", style = MaterialTheme.typography.labelLarge)
-                }
-            },
-            shape = RoundedCornerShape(CpDimens.radius2xl),
-        )
+        PlatformAlert(title = "Ошибка", message = err, onConfirm = vm::clearError, onDismiss = vm::clearError)
     }
 
     Scaffold(
