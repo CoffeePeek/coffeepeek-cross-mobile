@@ -1,5 +1,6 @@
 package com.coffeepeek.api.service
 
+import com.coffeepeek.api.utils.requestResult
 import com.coffeepeek.api.model.ApiResponse
 import com.coffeepeek.api.model.request.CheckInVisibilityReq
 import com.coffeepeek.api.model.request.CreateCheckInReq
@@ -61,7 +62,7 @@ class CheckInApiService(private val client: HttpClient) {
         pageSize: Int,
         from: String? = null,
         to: String? = null,
-    ): Result<GetUserCheckInsResponseDto> = runCatching {
+    ): Result<GetUserCheckInsResponseDto> = requestResult {
         val response = client.get("$CHECK_INS_PATH/mine") {
             parameter("pageNumber", page.coerceAtLeast(1))
             parameter("pageSize", pageSize.coerceIn(1, 100))
@@ -75,15 +76,15 @@ class CheckInApiService(private val client: HttpClient) {
         envelope.data
     }
 
-    suspend fun updateCheckIn(id: String, req: UpdateCheckInReq): Result<CheckInDto> = runCatching {
+    suspend fun updateCheckIn(id: String, req: UpdateCheckInReq): Result<CheckInDto> = requestResult {
         client.put("$CHECK_INS_PATH/$id") { setJsonBody(req) }.checkIn()
     }
 
-    suspend fun setVisibility(id: String, req: CheckInVisibilityReq): Result<CheckInDto> = runCatching {
+    suspend fun setVisibility(id: String, req: CheckInVisibilityReq): Result<CheckInDto> = requestResult {
         client.put("$CHECK_INS_PATH/$id/visibility") { setJsonBody(req) }.checkIn()
     }
 
-    suspend fun setHelpful(id: String, helpful: Boolean): Result<CheckInHelpfulDto> = runCatching {
+    suspend fun setHelpful(id: String, helpful: Boolean): Result<CheckInHelpfulDto> = requestResult {
         val path = "$CHECK_INS_PATH/$id/helpful"
         val response = if (helpful) client.put(path) { expectSuccess = false }
             else client.delete(path) { expectSuccess = false }
@@ -93,7 +94,7 @@ class CheckInApiService(private val client: HttpClient) {
         envelope.data
     }
 
-    suspend fun report(id: String, text: String): Result<Unit> = runCatching {
+    suspend fun report(id: String, text: String): Result<Unit> = requestResult {
         require(text.trim().length in 1..2000) { "Опишите проблему: от 1 до 2000 символов" }
         val response = client.post("$CHECK_INS_PATH/$id/reports") {
             expectSuccess = false

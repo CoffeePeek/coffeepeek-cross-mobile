@@ -23,7 +23,12 @@ class AuthRepositoryImpl(
     )
 
     private suspend fun Result<Session>.persistSession(): Result<Session> =
-        also { result -> result.onSuccess { sessionRepository.saveSession(it) } }
+        also { result -> result.onSuccess { next ->
+            if (sessionRepository.getSession()?.userId != next.userId) {
+                userSessionCleaner.clearLocalUserData()
+            }
+            sessionRepository.saveSession(next)
+        } }
 
     override suspend fun login(email: String, password: String): Result<Session> =
         authService.login(email, password).map { it.toSession() }.persistSession()

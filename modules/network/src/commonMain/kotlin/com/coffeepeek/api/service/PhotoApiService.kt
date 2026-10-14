@@ -1,5 +1,6 @@
 package com.coffeepeek.api.service
 
+import com.coffeepeek.api.utils.requestResult
 import com.coffeepeek.api.model.ApiResponse
 import com.coffeepeek.api.model.request.PhotoRequestDto
 import com.coffeepeek.api.model.response.GenerateUploadUrlDto
@@ -23,7 +24,7 @@ class PhotoApiService(
 
     suspend fun requestAvatarUploadUrl(
         request: PhotoRequestDto,
-    ): Result<GenerateUploadUrlDto> = runCatching {
+    ): Result<GenerateUploadUrlDto> = requestResult {
         val response = client.postResult("/api/Photos/avatar") {
             setJsonBody(request)
         }.getOrThrow()
@@ -60,7 +61,7 @@ class PhotoApiService(
     private suspend fun requestPhotoUploadUrls(
         path: String,
         requests: List<PhotoRequestDto>,
-    ): Result<List<GenerateUploadUrlDto>> = runCatching {
+    ): Result<List<GenerateUploadUrlDto>> = requestResult {
         val response = client.postResult(path) {
             setJsonBody(requests)
         }.getOrThrow()
@@ -80,7 +81,7 @@ class PhotoApiService(
         contentType: String,
         // Signed into /review presigned URLs; must be sent verbatim or MinIO returns 403.
         tagging: String? = null,
-    ): Result<Unit> = runCatching {
+    ): Result<Unit> = requestResult {
         UploadUrlValidator.requirePublicUploadUrl(uploadUrl)
         val response = uploadClient.put(uploadUrl) {
             headers {
@@ -92,7 +93,7 @@ class PhotoApiService(
             setBody(bytes)
         }
         if (!response.status.isSuccess()) {
-            val details = runCatching { response.bodyAsText().take(200) }.getOrDefault("")
+            val details = requestResult { response.bodyAsText().take(200) }.getOrDefault("")
             throw ApiException(
                 if (details.isNotBlank()) {
                     "Ошибка загрузки фото (${response.status.value}): $details"

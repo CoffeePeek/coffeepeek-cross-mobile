@@ -35,6 +35,11 @@ private class LegacyFavoritesRepositoryBridge(
 
     override suspend fun removeFavorite(shopId: String): Result<Unit> = repository.remove(shopId)
 
+    override suspend fun clearForUser(userId: String?) {
+        if (repository is AccountFavoritesRepository) repository.clearForUser(userId).getOrThrow()
+        else clearAll()
+    }
+
     override suspend fun clearAll() {
         repository.clear().getOrThrow()
     }

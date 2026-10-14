@@ -22,16 +22,19 @@ import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 
 /** Share one instance per storage/session: its mutex coordinates read-modify-write. */
-fun createFavoritesRepository(storage: FavoritesStorage, dispatcher: CoroutineDispatcher): FavoritesRepository =
-    StoredFavoritesRepository(storage, dispatcher)
+fun createFavoritesRepository(
+    storage: FavoritesStorage,
+    dispatcher: CoroutineDispatcher,
+    storageKey: String = "local_favorite_shops",
+): FavoritesRepository = StoredFavoritesRepository(storage, dispatcher, storageKey)
 
 private class StoredFavoritesRepository(
     private val storage: FavoritesStorage,
     private val dispatcher: CoroutineDispatcher,
+    private val key: String,
 ) : FavoritesRepository {
     private val mutex = Mutex()
     private val json = Json { ignoreUnknownKeys = true; encodeDefaults = true }
-    private val key = "local_favorite_shops"
 
     override fun observe(): Flow<Result<List<FavoriteShop>>> = flow {
         emitAll(storage.observe(key).map { raw -> result { decode(raw).map(StoredFavorite::toDomain) } })

@@ -12,11 +12,12 @@ import io.ktor.client.request.HttpRequestPipeline
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.Url
 import kotlinx.coroutines.CancellationException
+import com.coffeepeek.core.network.RefreshRejectedException
 
 internal fun HttpClientConfig<*>.configureSessionAuthentication(
     baseUrl: String,
     current: () -> AuthResp?,
-    save: (AuthResp?) -> Unit,
+    save: suspend (AuthResp, AuthResp?) -> Boolean,
     refresh: suspend (String) -> AuthResp,
 ) {
     val origin = Url(baseUrl)
@@ -30,17 +31,17 @@ internal fun HttpClientConfig<*>.configureSessionAuthentication(
             refreshTokens {
                 val old = current() ?: return@refreshTokens null
                 if (old.refreshToken.isBlank()) {
-                    save(null); return@refreshTokens null
+                    save(old, null); return@refreshTokens null
                 }
                 try {
                     val updated = refresh(old.refreshToken)
                     if (current()?.accessToken != old.accessToken) return@refreshTokens null
-                    save(updated)
+                    if (!save(old, updated)) return@refreshTokens null
                     BearerTokens(updated.accessToken, updated.refreshToken)
                 } catch (cancelled: CancellationException) {
                     throw cancelled
-                } catch (_: Exception) {
-                    if (current()?.accessToken == old.accessToken) save(null)
+                } catch (_: RefreshRejectedException) {
+                    save(old, null)
                     null
                 }
             }

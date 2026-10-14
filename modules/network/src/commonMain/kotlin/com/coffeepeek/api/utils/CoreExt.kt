@@ -19,7 +19,7 @@ class ApiException(message: String?) : Exception() {
 }
 
 suspend inline fun <reified T : DataResponse> HttpResponse.getResult(): Result<T> {
-    return runCatching {
+    return requestResult {
         val apiResponse = body<ApiResponse<T>>()
         if (apiResponse.isSuccess && apiResponse.data != null) {
             apiResponse.data
@@ -30,7 +30,7 @@ suspend inline fun <reified T : DataResponse> HttpResponse.getResult(): Result<T
 }
 
 suspend inline fun <reified T : DataResponse> Result<HttpResponse>.getResult(): Result<T> {
-    return runCatching {
+    return requestResult {
         val response = getOrThrow()
         val apiResponse = response.body<ApiResponse<T>>()
         if (apiResponse.isSuccess && apiResponse.data != null) {
@@ -42,7 +42,7 @@ suspend inline fun <reified T : DataResponse> Result<HttpResponse>.getResult(): 
 }
 
 suspend inline fun Result<HttpResponse>.getIsSuccessResult(): Result<Boolean> {
-    return runCatching {
+    return requestResult {
         val response = getOrThrow()
         val apiResponse = response.body<ApiResponse<Boolean>>()
         apiResponse.data == true
@@ -50,7 +50,7 @@ suspend inline fun Result<HttpResponse>.getIsSuccessResult(): Result<Boolean> {
 }
 
 suspend inline fun Result<HttpResponse>.getStringResult(): Result<String> {
-    return runCatching {
+    return requestResult {
         val response = getOrThrow()
         val apiResponse = response.body<ApiResponse<String>>()
         apiResponse.data as String
@@ -58,7 +58,7 @@ suspend inline fun Result<HttpResponse>.getStringResult(): Result<String> {
 }
 
 suspend inline fun <reified T : DataResponse> HttpResponse.getNullableResult(): Result<T?> {
-    return runCatching {
+    return requestResult {
         val apiResponse = body<ApiResponse<T>>()
         if (apiResponse.isSuccess) {
             apiResponse.data
@@ -69,7 +69,7 @@ suspend inline fun <reified T : DataResponse> HttpResponse.getNullableResult(): 
 }
 
 suspend inline fun <reified T : DataResponse> Result<HttpResponse>.getNullableResult(): Result<T?> {
-    return runCatching {
+    return requestResult {
         val response = getOrThrow()
         val apiResponse = response.body<ApiResponse<T>>()
         if (apiResponse.isSuccess) {
@@ -81,7 +81,7 @@ suspend inline fun <reified T : DataResponse> Result<HttpResponse>.getNullableRe
 }
 
 suspend fun HttpResponse.getByteArrayResult(): Result<ByteArray> {
-    return runCatching {
+    return requestResult {
         if (status.isSuccess()) {
             this.body<ByteArray>()
         } else {
@@ -92,7 +92,7 @@ suspend fun HttpResponse.getByteArrayResult(): Result<ByteArray> {
 }
 
 suspend fun Result<HttpResponse>.getByteArrayResult(): Result<ByteArray> {
-    return runCatching {
+    return requestResult {
         val response = getOrThrow()
         if (response.status.isSuccess()) {
             response.body<ByteArray>()
@@ -112,26 +112,26 @@ suspend fun HttpClient.postResult(
     urlString: String,
     block: HttpRequestBuilder.() -> Unit = {}
 ): Result<HttpResponse> {
-    return runCatching { post(urlString, block) }
+    return requestResult { post(urlString, block) }
 }
 
 suspend fun HttpClient.getResult(
     urlString: String,
     block: HttpRequestBuilder.() -> Unit = {}
 ): Result<HttpResponse> {
-    return runCatching { get(urlString, block) }
+    return requestResult { get(urlString, block) }
 }
 
 suspend fun HttpClient.putResult(
     urlString: String,
     block: HttpRequestBuilder.() -> Unit = {}
 ): Result<HttpResponse> {
-    return runCatching { put(urlString, block) }
+    return requestResult { put(urlString, block) }
 }
 
 suspend fun HttpClient.deleteResult(
     urlString: String,
     block: HttpRequestBuilder.() -> Unit = {}
 ): Result<HttpResponse> {
-    return runCatching { delete(urlString, block) }
+    return requestResult { delete(urlString, block) }
 }

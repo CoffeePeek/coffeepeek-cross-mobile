@@ -1,5 +1,6 @@
 package com.coffeepeek.api.service
 
+import com.coffeepeek.api.utils.requestResult
 import com.coffeepeek.api.model.ApiResponse
 import com.coffeepeek.api.model.request.CreateShopIssueReportReq
 import com.coffeepeek.api.utils.ApiException
@@ -10,7 +11,7 @@ import io.ktor.client.call.body
 
 class ShopIssueReportApiService(private val client: HttpClient) {
 
-    suspend fun submitReport(req: CreateShopIssueReportReq): Result<String?> = runCatching {
+    suspend fun submitReport(req: CreateShopIssueReportReq): Result<String?> = requestResult {
         val response = client.postResult("/api/ShopIssueReports") {
             setJsonBody(req)
         }.getOrThrow()
