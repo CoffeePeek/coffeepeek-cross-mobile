@@ -6,12 +6,14 @@ closed stack PRs are historical, not separate current workspaces.
 
 ## Scope and counting
 
-The current registered application layout has 23 Gradle modules: composeApp,
+The audited layout before history preparation had 23 Gradle modules: composeApp,
 four legacy modules, five core modules and twelve feature modules (four each
 for favorites, shop-report and shop), plus the existing main module
 features/home-checkin. Keep that transitional plural-directory module registered
 through module.feature.homeCheckIn; do not create a duplicate or rename it in
 the Shop slice. Build-logic is a separate included build.
+History preparation adds two populated domain/data modules (25 registered modules
+in total); api/impl are deferred until actual screen contracts/presentation exist.
 There is no new application module or generic DI module to create.
 
 Excluding five graph containers, the shared navigator declares 30 destinations:
@@ -39,8 +41,9 @@ source snapshot, not guaranteed runtime coverage or future product scope.
 | Shop issue report | New feature entry | Completion QA alongside Shop flows |
 | Shop menu gallery | New gallery entry, now reachable from the new detail adapter | Visual/navigation QA |
 | Shop check-in creation | New Android form and app-owned draft/session/photo adapters | Authenticated submission, camera/picker and recreation QA |
-| Shop detail | New Android platform renderer/feature entry wired locally | Integration source unbuilt; behavior/live QA pending |
-| Public shop check-in list | Existing ShopReviews route selects the new Android list entry | Integration source unbuilt; guest/owner/navigation QA pending |
+| Shop detail | New Android renderer/feature entry built and smoke-tested | Full behavior/live QA pending |
+| Public shop check-in list | New Android entry built; isolated presentation tests pass | Live guest/owner/navigation QA pending |
+| Personal check-in history | Legacy VisitedPlaces calendar/list stays active | Independent domain/data preparation; see check-in-history/README.md |
 | Home check-ins | Existing main module and HomeCheckIns route retained | Audit ownership with personal history before its later migration |
 | Core | Infrastructure, presentation and design-system available; selected consumers use them | Legacy HTTP/Room are not globally replaced |
 
@@ -222,6 +225,13 @@ Android wiring are ready, not between the current preparation steps:
 
 ## Candidate owners after Shop
 
+2026-10-14: check-in-history/domain and data now contain an independent read
+foundation. Its 13 tests, Android lint and Android/iOS Simulator compilation pass.
+VisitedPlaces remains on its legacy renderer; next prepare generation-safe typed
+MVI, then the screen API/UI and Android session/time-zone composition. Details and
+module-creation rationale are in check-in-history/README.md. Home check-ins remain
+their existing separate capability, not a duplicate migration target.
+
 These twelve areas are an ownership map, not instructions to create 48 empty
 modules. Complexity includes parity, session/platform integration and testing.
 
@@ -229,8 +239,8 @@ modules. Complexity includes parity, session/platform integration and testing.
 |---|---|---|
 | Favorites | Low remaining | Keep current Android bridge; finish completion QA |
 | Shop report | Low remaining | Verify integrated report alongside detail flows |
-| Shop | High, current | Complete the five stages above before another owner |
-| Personal check-ins/history | High | Recommended next: list/calendar/pagination; reuse actual shared check-in contracts, not Shop impl |
+| Shop | High, Android integrated | Finish remaining release QA; do not remove shared legacy consumers |
+| Personal check-ins/history | High, next owner | Independent shop-visit calendar/list read foundation; home preparations remain separate |
 | Community | High | Feed refresh/pagination, votes/privacy/owner guards; agree check-in ownership first |
 | Discovery/search/map | Very high | Filters, location, map/picker and list consistency; separate platform map from domain |
 | Coffee catalogue | Medium | Audit list/details/filter ownership before module creation |

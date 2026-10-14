@@ -18,6 +18,13 @@ route intentionally keeps the legacy renderer. See shop-report/README.md.
 Actual registration remains in build-logic Modules.all. Android is the integration
 target; no native iOS implementation is part of these slices.
 
+Personal shop-visit history is the next independent owner. Its populated
+check-in-history/domain and data modules prepare read-only pagination/calendar
+contracts; VisitedPlaces and home preparations remain on their existing paths.
+See [check-in-history/README.md](check-in-history/README.md) for the audited boundaries,
+ordered implementation and session/time-zone risks. No api/impl placeholders or
+application switch are part of the read-foundation slice.
+
 ## Target layout and graph
 
 For each migrated business capability (not each individual screen), normally:
