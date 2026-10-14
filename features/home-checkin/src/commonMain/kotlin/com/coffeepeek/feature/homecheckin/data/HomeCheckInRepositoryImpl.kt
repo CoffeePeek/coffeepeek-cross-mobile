@@ -2,17 +2,20 @@
 
 package com.coffeepeek.feature.homecheckin.data
 
-import com.coffeepeek.core.network.requestResult
 import com.coffeepeek.feature.homecheckin.domain.HomeBeanStats
 import com.coffeepeek.feature.homecheckin.domain.HomeCalendarDay
 import com.coffeepeek.feature.homecheckin.domain.HomeCheckIn
 import com.coffeepeek.feature.homecheckin.domain.HomeCheckInInput
+import com.coffeepeek.feature.homecheckin.domain.HomeCheckInVisibility
+import com.coffeepeek.feature.homecheckin.domain.HomeCheckInModeration
 import com.coffeepeek.feature.homecheckin.domain.HomeCheckInPage
 import com.coffeepeek.feature.homecheckin.domain.HomeCheckInPhoto
 import com.coffeepeek.feature.homecheckin.domain.HomeCheckInRepository
 import com.coffeepeek.feature.homecheckin.domain.HomeMethodStats
 import com.coffeepeek.feature.homecheckin.domain.HomePhotoUpload
-import com.coffeepeek.feature.homecheckin.domain.validateHomeCheckIn
+import com.coffeepeek.feature.homecheckin.domain.homeCheckInFieldErrors
+import com.coffeepeek.feature.homecheckin.domain.HomeCheckInFailure
+import com.coffeepeek.feature.homecheckin.domain.HomeCheckInField
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.delete
@@ -23,11 +26,15 @@ import io.ktor.client.request.post
 import io.ktor.client.request.put
 import io.ktor.client.request.setBody
 import io.ktor.client.statement.HttpResponse
+import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
 import io.ktor.http.contentType
 import io.ktor.http.isSuccess
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.EncodeDefault
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.booleanOrNull
 import kotlinx.serialization.json.JsonNames
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
@@ -42,15 +49,15 @@ class HomeCheckInRepositoryImpl(
     private val uploadClient: HttpClient,
     private val baseUrl: String,
 ) : HomeCheckInRepository {
-    override suspend fun create(input: HomeCheckInInput): Result<HomeCheckIn> = requestResult {
-        validateHomeCheckIn(input)?.let { throw IllegalArgumentException(it) }
+    override suspend fun create(input: HomeCheckInInput): Result<HomeCheckIn> = homeRequestResult {
+        validateInput(input, editing = false)
         val originals = upload(input.photos)
         val cutout = input.drinkPhoto?.let { upload(listOf(it)).single() }
         client.post(PATH) { contentType(ContentType.Application.Json); setBody(input.toCreateRequest(originals, cutout)) }
             .data<HomeDto>().toDomain()
     }
 
-    override suspend fun history(page: Int, pageSize: Int, from: String?, to: String?): Result<HomeCheckInPage> = requestResult {
+    override suspend fun history(page: Int, pageSize: Int, from: String?, to: String?): Result<HomeCheckInPage> = homeRequestResult {
         val number = page.coerceIn(1, 10000)
         val size = pageSize.coerceIn(1, 100)
         val result = client.get(PATH) {
@@ -62,41 +69,41 @@ class HomeCheckInRepositoryImpl(
         HomeCheckInPage(result.items.map { it.toDomain() }, result.totalCount, number, size)
     }
 
-    override suspend fun calendar(from: String, to: String): Result<List<HomeCalendarDay>> = requestResult {
+    override suspend fun calendar(from: String, to: String): Result<List<HomeCalendarDay>> = homeRequestResult {
         client.get("$PATH/calendar") { parameter("from", from); parameter("to", to) }
             .data<List<HomeCalendarDto>>().map { HomeCalendarDay(it.preparedOn, it.brewCount) }
     }
 
-    override suspend fun detail(id: String): Result<HomeCheckIn> = requestResult {
+    override suspend fun detail(id: String): Result<HomeCheckIn> = homeRequestResult {
         client.get(entryPath(id)).data<HomeDto>().toDomain()
     }
 
-    override suspend fun update(id: String, input: HomeCheckInInput): Result<HomeCheckIn> = requestResult {
-        validateHomeCheckIn(input, editing = true)?.let { throw IllegalArgumentException(it) }
+    override suspend fun update(id: String, input: HomeCheckInInput): Result<HomeCheckIn> = homeRequestResult {
+        validateInput(input, editing = true)
         client.put(entryPath(id)) { contentType(ContentType.Application.Json); setBody(input.toEditRequest()) }
             .data<HomeDto>().toDomain()
     }
 
-    override suspend fun delete(id: String): Result<Unit> = requestResult {
+    override suspend fun delete(id: String): Result<Unit> = homeRequestResult {
         val response = client.delete(entryPath(id))
         response.successEnvelope()
     }
 
-    override suspend fun beanStats(): Result<List<HomeBeanStats>> = requestResult {
+    override suspend fun beanStats(): Result<List<HomeBeanStats>> = homeRequestResult {
         client.get("$PATH/stats/beans").data<List<HomeBeanStatsDto>>().map {
             HomeBeanStats(it.coffeeProductId, it.beanName, it.brewCount, it.dosedBrewCount,
                 it.totalKnownDoseGrams.toString(), it.ratedBrewCount, it.averageTasteScore)
         }
     }
 
-    override suspend fun methodStats(): Result<List<HomeMethodStats>> = requestResult {
+    override suspend fun methodStats(): Result<List<HomeMethodStats>> = homeRequestResult {
         client.get("$PATH/stats/methods").data<List<HomeMethodStatsDto>>().map {
             HomeMethodStats(it.brewMethodCode, it.brewCount, it.dosedBrewCount,
                 it.totalKnownDoseGrams.toString(), it.ratedBrewCount, it.averageTasteScore)
         }
     }
 
-    override suspend fun photo(url: String): Result<ByteArray> = requestResult {
+    override suspend fun photo(url: String): Result<ByteArray> = homeRequestResult {
         require(url.startsWith("/api/v1/check-ins/") && "/photos/" in url && !url.contains("..")) {
             "Некорректная ссылка на фото"
         }
@@ -131,7 +138,10 @@ class HomeCheckInRepositoryImpl(
                 }
                 setBody(photo.bytes)
             }
-            check(response.status.isSuccess()) { "Не удалось загрузить фото" }
+            if (!response.status.isSuccess()) throw HomeCheckInFailure(
+                "Не удалось загрузить фото. Попробуйте ещё раз.",
+                mapOf(HomeCheckInField.Photos to "Не удалось загрузить фото. Попробуйте ещё раз."),
+            )
             UploadedPhotoDto(photo.fileName, photo.contentType, reservation.storageKey, photo.bytes.size.toLong())
         }
     }
@@ -150,6 +160,9 @@ class HomeCheckInRepositoryImpl(
         drinkSlug = drink.slug(), customDrinkName = drink.customName(),
         photos = photos.map { HomeCheckInPhoto(it.id, it.url.absoluteUrl()) },
         drinkPhotoUrl = drinkPhoto.urlOrNull()?.absoluteUrl(),
+        visibility = HomeCheckInVisibility.entries.firstOrNull { it.name.equals(visibility, ignoreCase = true) },
+        moderation = HomeCheckInModeration.entries.firstOrNull { it.name.equals(moderationState, ignoreCase = true) }
+            ?: HomeCheckInModeration.Unknown,
     )
 
     private fun String.absoluteUrl(): String = when {
@@ -159,27 +172,36 @@ class HomeCheckInRepositoryImpl(
     }
 }
 
-private suspend inline fun <reified T> HttpResponse.data(): T {
-    val envelope = body<HomeEnvelope<T>>()
-    if (!status.isSuccess() || !envelope.isSuccess || envelope.data == null)
-        throw IllegalStateException(envelope.message ?: "Не удалось выполнить запрос")
-    return envelope.data
+private fun validateInput(input: HomeCheckInInput, editing: Boolean) {
+    val errors = homeCheckInFieldErrors(input, editing)
+    if (errors.isNotEmpty()) throw HomeCheckInFailure("Проверьте отмеченные поля", errors)
 }
 
-private suspend fun HttpResponse.successEnvelope() {
-    val envelope = body<HomeEnvelope<JsonElement>>()
-    if (!status.isSuccess() || !envelope.isSuccess)
-        throw IllegalStateException(envelope.message ?: "Не удалось удалить запись")
+private val responseJson = Json { ignoreUnknownKeys = true }
+
+private suspend inline fun <reified T> HttpResponse.envelope(): HomeEnvelope<T> {
+    val raw = bodyAsText()
+    if (!status.isSuccess()) throw homeServerFailure(status.value, raw)
+    val json = responseJson.parseToJsonElement(raw) as? JsonObject
+    if ((json?.get("isSuccess") as? JsonPrimitive)?.booleanOrNull == false)
+        throw homeServerFailure(400, raw)
+    return responseJson.decodeFromString<HomeEnvelope<T>>(raw)
 }
+
+private suspend inline fun <reified T> HttpResponse.data(): T = envelope<T>().data
+    ?: throw HomeCheckInFailure("Сервер вернул неполный ответ. Попробуйте ещё раз.")
+
+private suspend fun HttpResponse.successEnvelope() { envelope<JsonElement>() }
 
 private fun HomeCheckInInput.toEditRequest() = HomeEditDto(preparedAt, preparedOn, brewMethodCode, coffeeProductSlug, coffeeProductId,
     customBeanName?.trim(), doseGrams?.toDouble(), brewDurationSeconds, tasteScore,
-    text?.trim(), drinkSlug, customDrinkName?.trim())
+    text?.trim(), drinkSlug, customDrinkName?.trim(), visibility?.name)
 
 private fun HomeCheckInInput.toCreateRequest(photos: List<UploadedPhotoDto>, drinkPhoto: UploadedPhotoDto?) =
     HomeCreateDto(preparedAt, preparedOn, brewMethodCode, coffeeProductSlug, coffeeProductId,
         customBeanName?.trim(), doseGrams?.toDouble(), brewDurationSeconds, tasteScore,
-        text?.trim(), drinkSlug, customDrinkName?.trim(), photos, drinkPhoto)
+        text?.trim(), drinkSlug, customDrinkName?.trim(), photos, drinkPhoto,
+        (visibility ?: HomeCheckInVisibility.Private).name)
 
 private fun JsonElement?.displayName(): String? = (this as? JsonObject)?.let {
     listOf("nameRu", "name", "customName", "customDrinkName").firstNotNullOfOrNull { key ->
@@ -221,6 +243,8 @@ private fun JsonElement?.urlOrNull(): String? = when (this) {
     val drink: JsonElement? = null,
     val photos: List<HomePhotoDto> = emptyList(),
     val drinkPhoto: JsonElement? = null,
+    val visibility: String? = null,
+    val moderationState: String? = null,
 )
 @Serializable private data class HomeEditDto(
     val preparedAt: String,
@@ -235,6 +259,7 @@ private fun JsonElement?.urlOrNull(): String? = when (this) {
     val text: String?,
     val drinkSlug: String?,
     val customDrinkName: String?,
+    @EncodeDefault(EncodeDefault.Mode.NEVER) val visibility: String? = null,
 )
 @Serializable private data class HomeCreateDto(
     val preparedAt: String,
@@ -251,6 +276,7 @@ private fun JsonElement?.urlOrNull(): String? = when (this) {
     val customDrinkName: String?,
     val photos: List<UploadedPhotoDto>,
     val drinkPhoto: UploadedPhotoDto?,
+    val visibility: String,
 )
 @Serializable private data class PhotoUploadRequestDto(val sizeBytes: Int, val fileName: String, val contentType: String)
 @Serializable private data class PhotoUploadUrlDto(val uploadUrl: String, val storageKey: String)

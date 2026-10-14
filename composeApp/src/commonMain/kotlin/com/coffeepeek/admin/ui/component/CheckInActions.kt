@@ -1,5 +1,7 @@
 package com.coffeepeek.admin.ui.component
 
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.getValue
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.widthIn
@@ -9,10 +11,8 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.admin.theme.CpDimens
@@ -28,6 +28,19 @@ internal fun CheckInActions(
 ) {
     if (onEditClick == null && onReportClick == null && onHideClick == null) return
     var expanded by remember { mutableStateOf(false) }
+    if (expanded) {
+        val actions = buildList {
+            onEditClick?.let { add(PlatformAction("Редактировать", enabled = enabled, onClick = it)) }
+            onHideClick?.let { add(PlatformAction("Скрыть", enabled = enabled && !isHiding, onClick = it)) }
+            onReportClick?.let { add(PlatformAction("Пожаловаться", enabled = enabled, onClick = it)) }
+        }
+        if (NativeActionSheet("Действия с чекином", actions) { expanded = false }) {
+            IconButton(onClick = {}, enabled = enabled) {
+                Icon(CpIcons.MoreHorizontal, "Действия с чекином")
+            }
+            return
+        }
+    }
     Box {
         IconButton(onClick = { expanded = true }, enabled = enabled) {
             Icon(CpIcons.MoreHorizontal, "Действия с чекином", tint = MaterialTheme.colorScheme.onSurfaceVariant)

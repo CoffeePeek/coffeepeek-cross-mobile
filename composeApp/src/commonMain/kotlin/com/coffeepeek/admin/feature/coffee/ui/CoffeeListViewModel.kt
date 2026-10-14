@@ -24,8 +24,10 @@ internal data class CoffeeListUiState(
     val page: Int = 0,
     val hasMore: Boolean = false,
     val isLoading: Boolean = true,
+    val isRefreshing: Boolean = false,
     val isLoadingMore: Boolean = false,
     val error: String? = null,
+    val isLoadMoreError: Boolean = false,
 )
 
 internal class CoffeeListViewModel(private val repository: CoffeeRepository) : ViewModel() {
@@ -58,24 +60,28 @@ internal class CoffeeListViewModel(private val repository: CoffeeRepository) : V
 
     fun applyFilters(filters: CoffeeFilters) {
         _state.update { it.copy(filters = filters) }
-        refresh()
+        search(reset = true)
     }
 
-    fun refresh() = search(reset = true)
+    fun refresh() = search(reset = true, preserveItems = true)
 
     fun loadMore() {
         val current = state.value
-        if (!current.isLoading && !current.isLoadingMore && current.hasMore) search(reset = false)
+        if (!current.isLoading && !current.isRefreshing && !current.isLoadingMore && current.hasMore) search(reset = false)
     }
 
-    private fun search(reset: Boolean, debounce: Boolean = false) {
+    private fun search(reset: Boolean, debounce: Boolean = false, preserveItems: Boolean = false) {
         searchJob?.cancel()
         _state.update {
             it.copy(
-                items = if (reset) emptyList() else it.items,
-                isLoading = reset,
+                items = if (reset && !preserveItems) emptyList() else it.items,
+                page = if (reset && !preserveItems) 0 else it.page,
+                hasMore = if (reset && !preserveItems) false else it.hasMore,
+                isLoading = reset && (!preserveItems || it.items.isEmpty()),
+                isRefreshing = reset && preserveItems && it.items.isNotEmpty(),
                 isLoadingMore = !reset,
                 error = null,
+                isLoadMoreError = false,
             )
         }
         searchJob = viewModelScope.launch {
@@ -91,12 +97,21 @@ internal class CoffeeListViewModel(private val repository: CoffeeRepository) : V
                         page = resultPage.currentPage,
                         hasMore = resultPage.currentPage < resultPage.totalPages,
                         isLoading = false,
+                        isRefreshing = false,
                         isLoadingMore = false,
                         error = null,
                     )
                 }
             }.onFailure {
-                _state.update { it.copy(isLoading = false, isLoadingMore = false, error = "Не удалось загрузить кофе") }
+                _state.update {
+                    it.copy(
+                        isLoading = false,
+                        isRefreshing = false,
+                        isLoadingMore = false,
+                        error = "Не удалось загрузить кофе",
+                        isLoadMoreError = !reset,
+                    )
+                }
             }
         }
     }

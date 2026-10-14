@@ -29,7 +29,7 @@ internal fun FavoriteButton(
     val containerColor = if (overImage) Color.Black else Color.Transparent
     IconToggleButton(
         checked = isFavorite,
-        onCheckedChange = { onClick() },
+        onCheckedChange = { platformHaptic(HapticEvent.Selection); onClick() },
         enabled = enabled,
         modifier = modifier.size(if (overImage) 40.dp else 48.dp).clip(CircleShape),
         colors = IconButtonDefaults.iconToggleButtonColors(

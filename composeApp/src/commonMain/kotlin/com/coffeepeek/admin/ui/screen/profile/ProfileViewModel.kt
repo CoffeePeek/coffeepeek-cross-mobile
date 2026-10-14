@@ -89,9 +89,9 @@ class ProfileViewModel(
                 )
             }
             userRepository.refreshProfile()
-                .onFailure { err ->
+                .onFailure {
                     if (sessionRepository.peekSession()?.userId != session?.userId || loadedForUserId != session?.userId) return@onFailure
-                    val message = err.message ?: "Ошибка загрузки профиля"
+                    val message = "Не удалось загрузить профиль"
                     _uiState.update { state ->
                         if (state.hasContent) {
                             state.copy(

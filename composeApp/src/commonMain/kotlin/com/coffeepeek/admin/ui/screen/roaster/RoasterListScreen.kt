@@ -21,6 +21,7 @@ import com.coffeepeek.admin.ui.Navigator
 import com.coffeepeek.admin.ui.component.CoffeePeekLoader
 import com.coffeepeek.admin.ui.component.CoffeePeekPullToRefresh
 import com.coffeepeek.admin.ui.component.LocalFloatingNavClearance
+import com.coffeepeek.admin.ui.component.LoadErrorContent
 import com.coffeepeek.admin.ui.component.SearchHeader
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -70,7 +71,7 @@ internal fun RoasterListScreen(
         ) { scrollModifier ->
             LazyColumn(
                 state = listState, modifier = scrollModifier.fillMaxSize(),
-                contentPadding = PaddingValues(start = CpDimens.spacing4, top = CpDimens.spacing2, end = CpDimens.spacing4, bottom = clearance + CpDimens.spacing4),
+                contentPadding = PaddingValues(start = CpDimens.spacing4, top = CpDimens.spacing2, end = CpDimens.spacing4, bottom = clearance + 88.dp),
                 verticalArrangement = Arrangement.spacedBy(CpDimens.spacing3),
             ) {
                 itemsIndexed(visible, key = { index, item -> item.catalog.id.ifBlank { "unaddressed-roaster:$index" } }) { _, item ->
@@ -87,10 +88,7 @@ internal fun RoasterListScreen(
                     Box(Modifier.fillMaxWidth().padding(24.dp), contentAlignment = Alignment.Center) { CoffeePeekLoader() }
                 }
                 if (state.error != null) item {
-                    Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text(state.error.orEmpty())
-                        TextButton(onClick = vm::refresh) { Text("Попробовать снова") }
-                    }
+                    LoadErrorContent(onRetry = vm::refresh)
                 } else if (visible.isEmpty() && !state.isLoading) item {
                     Text("Обжарщики не найдены", modifier = Modifier.padding(24.dp), color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
@@ -137,8 +135,7 @@ internal fun RoasterPreview(
         if (state.items.isEmpty() && state.isLoading) {
             Box(Modifier.fillMaxWidth().padding(CpDimens.spacing4), contentAlignment = Alignment.Center) { CoffeePeekLoader() }
         } else if (state.error != null) {
-            Text(state.error.orEmpty(), color = MaterialTheme.colorScheme.onSurfaceVariant)
-            TextButton(onClick = vm::refresh) { Text("Попробовать снова") }
+            LoadErrorContent(onRetry = vm::refresh)
         } else if (visible.isEmpty() && !state.isLoading) {
             Text("Обжарщики не найдены", color = MaterialTheme.colorScheme.onSurfaceVariant)
         }

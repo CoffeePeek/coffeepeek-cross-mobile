@@ -1,5 +1,8 @@
 package com.coffeepeek.admin.ui.screen.profile
 
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.getValue
+import com.coffeepeek.admin.ui.component.PlatformAlert
 import com.coffeepeek.admin.ui.component.GuestAuthCard
 import com.coffeepeek.admin.ui.icons.CpIcons
 import androidx.compose.foundation.background
@@ -21,26 +24,21 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.font.FontWeight
@@ -51,6 +49,7 @@ import com.coffeepeek.admin.theme.CpDimens
 import com.coffeepeek.admin.ui.Navigator
 import com.coffeepeek.admin.ui.component.CoffeePeekLoader
 import com.coffeepeek.admin.ui.component.LocalFloatingNavClearance
+import com.coffeepeek.admin.ui.component.LoadErrorContent
 import com.coffeepeek.admin.ui.component.SettingsDivider
 import com.coffeepeek.admin.ui.component.SettingsIconPalette
 import com.coffeepeek.admin.ui.component.SettingsRow
@@ -99,24 +98,7 @@ fun ProfileScreen(vm: ProfileViewModel = koinInject()) {
                     .padding(CpDimens.spacing4),
                 contentAlignment = Alignment.Center,
             ) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(
-                        text = state.error ?: "Ошибка загрузки профиля",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                    Spacer(Modifier.height(CpDimens.spacing3))
-                    Button(
-                        onClick = vm::refreshProfile,
-                        modifier = Modifier.height(CpDimens.buttonHeight),
-                        shape = RoundedCornerShape(percent = 50),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.primary,
-                        ),
-                    ) {
-                        Text("Попробовать снова")
-                    }
-                }
+                LoadErrorContent(onRetry = vm::refreshProfile)
             }
             return@Scaffold
         }
@@ -140,14 +122,10 @@ fun ProfileScreen(vm: ProfileViewModel = koinInject()) {
                     ),
             )
 
-            state.refreshError?.let { refreshError ->
-                Text(
-                    text = refreshError,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = CpDimens.spacing4, vertical = CpDimens.spacing2),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.error,
+            state.refreshError?.let {
+                LoadErrorContent(
+                    onRetry = vm::refreshProfile,
+                    modifier = Modifier.padding(horizontal = CpDimens.spacing4),
                 )
             }
 
@@ -178,20 +156,10 @@ fun ProfileScreen(vm: ProfileViewModel = koinInject()) {
                 SettingsRow(
                     icon = CpIcons.Location,
                     label = "Чекины",
-                    description = "Публичные и скрытые записи о ваших визитах",
+                    description = "В кофейнях и дома",
                     iconColors = SettingsIconPalette.Sky,
-                    onClick = { Navigator.navigate(Navigator.Screen.VisitedPlaces) },
+                    onClick = { Navigator.navigate(if (state.isLoggedIn) Navigator.Screen.VisitedPlaces else Navigator.Screen.Auth) },
                 )
-                if (state.isLoggedIn) {
-                    SettingsDivider()
-                    SettingsRow(
-                        icon = CpIcons.Coffee,
-                        label = "Кофе дома",
-                        description = "Личный дневник приготовлений",
-                        iconColors = SettingsIconPalette.Gold,
-                        onClick = { Navigator.navigate(Navigator.Screen.HomeCheckIns) },
-                    )
-                }
             }
 
             if (state.isLoggedIn) {
@@ -339,7 +307,7 @@ private fun ProfileHeader(state: ProfileUiState, onEdit: () -> Unit) {
 
                 Spacer(Modifier.height(CpDimens.spacing2))
                 Row(modifier = Modifier.fillMaxWidth()) {
-                    StatBadge(state.checkInCount, "Чекины", Modifier.weight(1f)) {
+                    StatBadge(state.checkInCount, "В кофейнях", Modifier.weight(1f)) {
                         Navigator.navigate(Navigator.Screen.VisitedPlaces)
                     }
                     StatBadge(state.addedShopsCount, "Кофейни", Modifier.weight(1f)) {
@@ -409,41 +377,5 @@ internal fun openContributions(kind: ContributionKind) =
 
 @Composable
 private fun LogoutDialog(onConfirm: () -> Unit, onDismiss: () -> Unit) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        containerColor = MaterialTheme.colorScheme.surface,
-        title = {
-            Text("Выйти из аккаунта?", style = MaterialTheme.typography.headlineSmall)
-        },
-        text = {
-            Text(
-                text = "Вы уверены? Потребуется повторный вход.",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        },
-        confirmButton = {
-            Button(
-                onClick = onConfirm,
-                modifier = Modifier.height(CpDimens.buttonHeight),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = CpColor.Error,
-                    contentColor   = Color.White,
-                ),
-                shape = RoundedCornerShape(percent = 50),
-            ) {
-                Text("Выйти", style = MaterialTheme.typography.labelLarge)
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text(
-                    text = "Отмена",
-                    style = MaterialTheme.typography.labelLarge,
-                    color = MaterialTheme.colorScheme.onSurface,
-                )
-            }
-        },
-        shape = RoundedCornerShape(CpDimens.radius2xl),
-    )
+    PlatformAlert(title = "Выйти из аккаунта?", message = "Вы уверены? Потребуется повторный вход.", confirmLabel = "Выйти", onConfirm = onConfirm, onDismiss = onDismiss, cancelLabel = "Отмена", destructive = true)
 }

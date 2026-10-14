@@ -5,6 +5,7 @@ import com.coffeepeek.api.service.AuthService
 import com.coffeepeek.data.session.UserSessionCleaner
 import com.coffeepeek.data.util.JwtUtils
 import com.coffeepeek.domain.model.Session
+import com.coffeepeek.domain.model.AppleLoginChallenge
 import com.coffeepeek.domain.repository.AuthRepository
 import com.coffeepeek.domain.repository.SessionRepository
 import kotlinx.coroutines.CancellationException
@@ -29,6 +30,12 @@ class AuthRepositoryImpl(
 
     override suspend fun googleLogin(idToken: String): Result<Session> =
         authService.googleLogin(idToken).map { it.toSession() }.persistSession()
+
+    override suspend fun beginAppleLogin(): Result<AppleLoginChallenge> =
+        authService.beginAppleLogin().map { AppleLoginChallenge(it.challengeId, it.nonce) }
+
+    override suspend fun appleLogin(challengeId: String, idToken: String): Result<Session> =
+        authService.appleLogin(challengeId, idToken).map { it.toSession() }.persistSession()
 
     override suspend fun register(userName: String, email: String, password: String): Result<Unit> =
         authService.register(userName, email, password)

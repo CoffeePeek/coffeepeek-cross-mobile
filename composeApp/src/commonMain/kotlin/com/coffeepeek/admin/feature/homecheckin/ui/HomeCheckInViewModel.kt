@@ -1,20 +1,28 @@
 package com.coffeepeek.admin.feature.homecheckin.ui
 
 import com.coffeepeek.admin.base.BaseViewModel
+import com.coffeepeek.admin.feature.catalog.api.BrewMethodCatalog
+import com.coffeepeek.admin.feature.catalog.api.BrewMethodOption
 import com.coffeepeek.admin.feature.coffee.api.CoffeePicker
 import com.coffeepeek.admin.feature.coffee.api.CoffeePickerItem
-import com.coffeepeek.admin.utils.currentUtcIsoDateTime
+import com.coffeepeek.admin.utils.currentEpochMillis
 import com.coffeepeek.admin.utils.utcIsoToLocalDate
 import com.coffeepeek.feature.homecheckin.domain.HomeBeanStats
 import com.coffeepeek.feature.homecheckin.domain.HomeCalendarDay
 import com.coffeepeek.feature.homecheckin.domain.HomeCheckIn
 import com.coffeepeek.feature.homecheckin.domain.HomeCheckInInput
+import com.coffeepeek.feature.homecheckin.domain.HomeCheckInVisibility
 import com.coffeepeek.feature.homecheckin.domain.HomeCheckInRepository
 import com.coffeepeek.feature.homecheckin.domain.HomeMethodStats
-import com.coffeepeek.feature.homecheckin.domain.validateHomeCheckIn
+import com.coffeepeek.feature.homecheckin.domain.homeCheckInFieldErrors
+import com.coffeepeek.feature.homecheckin.domain.HomeCheckInField
+import com.coffeepeek.feature.homecheckin.domain.HomeCheckInFailure
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.launch
 
 internal data class HomeMonth(val year: Int, val month: Int) {
@@ -49,6 +57,8 @@ internal data class HomeCheckInUiState(
     val hasMore: Boolean = false,
     val month: HomeMonth,
     val calendar: List<HomeCalendarDay> = emptyList(),
+    val calendarLoading: Boolean = false,
+    val calendarError: String? = null,
     val selectedDate: String? = null,
     val beanStats: List<HomeBeanStats> = emptyList(),
     val methodStats: List<HomeMethodStats> = emptyList(),
@@ -58,57 +68,74 @@ internal data class HomeCheckInUiState(
     val draft: HomeCheckInInput,
     val saving: Boolean = false,
     val formError: String? = null,
+    val fieldErrors: Map<HomeCheckInField, String> = emptyMap(),
+    val saveNotice: String? = null,
     val deleteConfirmation: Boolean = false,
     val catalogQuery: String = "",
+    val catalogSelectionName: String? = null,
     val catalogItems: List<CoffeePickerItem> = emptyList(),
     val catalogLoading: Boolean = false,
     val catalogError: String? = null,
+    val brewMethods: List<BrewMethodOption> = emptyList(),
+    val brewMethodsLoading: Boolean = false,
+    val brewMethodsError: Boolean = false,
 )
 
 internal class HomeCheckInViewModel(
     private val repository: HomeCheckInRepository,
     private val coffeePicker: CoffeePicker,
+    private val brewMethodCatalog: BrewMethodCatalog,
 ) : BaseViewModel() {
-    private val now = currentUtcIsoDateTime()
+    private val now = currentHomePreparedAt()
     private val today = utcIsoToLocalDate(now)
     private val todayMonth = HomeMonth(today.substring(0, 4).toInt(), today.substring(5, 7).toInt())
     private val _state = MutableStateFlow(HomeCheckInUiState(
         month = todayMonth,
-        draft = HomeCheckInInput(preparedAt = now, preparedOn = today),
+        draft = HomeCheckInInput(preparedAt = now, preparedOn = today, tasteScore = 5),
     ))
     val state = _state.asStateFlow()
+    private var historyJob: Job? = null
+    private var calendarJob: Job? = null
+    private var catalogJob: Job? = null
+    private var methodsJob: Job? = null
+    private var statsRequested = false
 
     init { refresh() }
 
     fun refresh() {
         loadHistory(reset = true)
         loadCalendar()
-        loadStats()
+        if (statsRequested) loadStats()
     }
 
     fun loadMore() = loadHistory(reset = false)
 
     private fun loadHistory(reset: Boolean) {
         if (!reset && (!_state.value.hasMore || _state.value.loadingMore)) return
+        if (reset) historyJob?.cancel()
         val page = if (reset) 1 else _state.value.page + 1
+        val selectedDate = _state.value.selectedDate
         _state.update { it.copy(loading = reset, loadingMore = !reset, error = null) }
-        workScope.launch {
-            repository.history(page = page, from = _state.value.selectedDate, to = _state.value.selectedDate)
+        historyJob = workScope.launch {
+            repository.history(page = page, from = selectedDate, to = selectedDate)
                 .onSuccess { result ->
-                    _state.update { old -> old.copy(
+                    _state.update { old -> if (old.selectedDate != selectedDate) old else old.copy(
                         loading = false, loadingMore = false, page = result.page,
                         hasMore = result.hasMore,
                         items = if (reset) result.items else (old.items + result.items).distinctBy { it.id },
                     ) }
                 }
-                .onFailure { error -> _state.update { it.copy(loading = false, loadingMore = false, error = error.message) } }
+                .onFailure { error -> _state.update {
+                    if (it.selectedDate != selectedDate) it
+                    else it.copy(loading = false, loadingMore = false, error = error.message)
+                } }
         }
     }
 
     fun changeMonth(offset: Int) {
         val next = _state.value.month.change(offset)
         if (next.year * 12 + next.month > todayMonth.year * 12 + todayMonth.month) return
-        _state.update { it.copy(month = next, selectedDate = null) }
+        _state.update { it.copy(month = next, selectedDate = null, calendar = emptyList()) }
         loadCalendar()
         loadHistory(reset = true)
     }
@@ -118,16 +145,19 @@ internal class HomeCheckInViewModel(
         loadHistory(reset = true)
     }
 
-    private fun loadCalendar() {
+    fun loadCalendar() {
         val month = _state.value.month
-        workScope.launch {
+        calendarJob?.cancel()
+        _state.update { it.copy(calendarLoading = true, calendarError = null) }
+        calendarJob = workScope.launch {
             repository.calendar(month.from, month.to)
-                .onSuccess { days -> _state.update { if (it.month == month) it.copy(calendar = days) else it } }
-                .onFailure { error -> _state.update { if (it.month == month) it.copy(error = error.message) else it } }
+                .onSuccess { days -> _state.update { if (it.month == month) it.copy(calendar = days, calendarLoading = false) else it } }
+                .onFailure { error -> _state.update { if (it.month == month) it.copy(calendarError = error.message ?: "Не удалось загрузить календарь", calendarLoading = false) else it } }
         }
     }
 
-    private fun loadStats() {
+    fun loadStats() {
+        statsRequested = true
         workScope.launch {
             repository.beanStats()
                 .onSuccess { stats -> _state.update { it.copy(beanStats = stats) } }
@@ -138,30 +168,39 @@ internal class HomeCheckInViewModel(
         }
     }
 
-    fun open(id: String) {
-        _state.update { it.copy(detailLoading = true, error = null) }
+    fun open(id: String, editOnLoad: Boolean = false) {
+        _state.update { it.copy(detailLoading = true, error = null, saveNotice = null) }
         workScope.launch {
             repository.detail(id)
-                .onSuccess { entry -> _state.update { it.copy(selected = entry, detailLoading = false) } }
+                .onSuccess { entry ->
+                    _state.update { it.copy(selected = entry, detailLoading = false) }
+                    if (editOnLoad) edit()
+                }
                 .onFailure { error -> _state.update { it.copy(detailLoading = false, error = error.message) } }
         }
     }
 
-    fun closeDetail() = _state.update { it.copy(selected = null, editing = false) }
+    fun closeDetail() = _state.update { it.copy(selected = null, editing = false, saveNotice = null) }
 
     fun create() {
+        catalogJob?.cancel()
+        val preparedAt = currentHomePreparedAt()
         _state.update { it.copy(
-            editing = true, selected = null, formError = null,
-            catalogQuery = "", catalogItems = emptyList(),
-            draft = HomeCheckInInput(preparedAt = currentUtcIsoDateTime(), preparedOn = utcIsoToLocalDate(currentUtcIsoDateTime())),
+            editing = true, selected = null, formError = null, fieldErrors = emptyMap(), saveNotice = null,
+            catalogQuery = "", catalogItems = emptyList(), catalogSelectionName = null,
+            catalogLoading = false, catalogError = null,
+            draft = HomeCheckInInput(preparedAt = preparedAt, preparedOn = utcIsoToLocalDate(preparedAt), tasteScore = 5),
         ) }
+        loadBrewMethods()
     }
 
     fun edit() {
         val entry = _state.value.selected ?: return
+        catalogJob?.cancel()
         _state.update { it.copy(
-            editing = true, formError = null,
-            catalogQuery = "", catalogItems = emptyList(),
+            editing = true, formError = null, fieldErrors = emptyMap(), saveNotice = null,
+            catalogQuery = "", catalogItems = emptyList(), catalogSelectionName = entry.beanName,
+            catalogLoading = false, catalogError = null,
             draft = HomeCheckInInput(
                 preparedAt = entry.preparedAtUtc, preparedOn = entry.preparedOn,
                 brewMethodCode = entry.brewMethodCode,
@@ -169,52 +208,86 @@ internal class HomeCheckInViewModel(
                 customBeanName = if (entry.coffeeProductId == null) entry.beanName else null,
                 doseGrams = entry.doseGrams, brewDurationSeconds = entry.brewDurationSeconds,
                 tasteScore = entry.tasteScore, text = entry.text,
-                drinkSlug = entry.drinkSlug,
+                drinkSlug = entry.drinkSlug ?: "other".takeIf { !entry.customDrinkName.isNullOrBlank() || !entry.drinkName.isNullOrBlank() },
                 customDrinkName = entry.customDrinkName ?: entry.drinkName.takeIf { entry.drinkSlug == null },
+                visibility = entry.visibility,
             ),
         ) }
+        loadBrewMethods()
     }
 
     fun updateDraft(change: (HomeCheckInInput) -> HomeCheckInInput) {
-        _state.update { it.copy(draft = change(it.draft), formError = null) }
+        if (_state.value.saving) return
+        _state.update { it.withDraft(change(it.draft)) }
     }
 
-    fun setCatalogQuery(query: String) = _state.update { it.copy(catalogQuery = query, catalogError = null) }
+    fun loadBrewMethods() {
+        if (_state.value.brewMethods.isNotEmpty()) return
+        methodsJob?.cancel()
+        _state.update { it.copy(brewMethodsLoading = true, brewMethodsError = false) }
+        methodsJob = workScope.launch {
+            val result = brewMethodCatalog.load()
+            coroutineContext.ensureActive()
+            result.onSuccess { methods -> _state.update { it.copy(brewMethods = methods, brewMethodsLoading = false) } }
+                .onFailure { _state.update { it.copy(brewMethodsLoading = false, brewMethodsError = true) } }
+        }
+    }
 
-    fun searchCatalog() {
+    fun setCatalogQuery(query: String) {
+        _state.update { it.copy(catalogQuery = query.take(100), catalogError = null) }
+        searchCatalog(debounce = true)
+    }
+
+    fun searchCatalog() = searchCatalog(debounce = false)
+
+    private fun searchCatalog(debounce: Boolean) {
+        catalogJob?.cancel()
         val query = _state.value.catalogQuery.trim()
-        if (query.isEmpty()) return
-        _state.update { it.copy(catalogLoading = true, catalogError = null) }
-        workScope.launch {
-            coffeePicker.search(query)
+        _state.update { it.copy(catalogLoading = true, catalogError = null, catalogItems = emptyList()) }
+        catalogJob = workScope.launch {
+            if (debounce) delay(300)
+            val result = coffeePicker.search(query)
+            coroutineContext.ensureActive()
+            result
                 .onSuccess { items -> _state.update { it.copy(catalogItems = items, catalogLoading = false) } }
                 .onFailure { error -> _state.update { it.copy(catalogError = error.message, catalogLoading = false) } }
         }
     }
 
     fun selectCatalogProduct(product: CoffeePickerItem) {
-        _state.update { it.copy(
-            draft = it.draft.copy(coffeeProductSlug = product.slug, coffeeProductId = null,
-                customBeanName = null),
-            catalogQuery = product.name, catalogItems = emptyList(), catalogError = null,
+        catalogJob?.cancel()
+        _state.update { it.withDraft(it.draft.copy(coffeeProductSlug = product.slug,
+            coffeeProductId = null, customBeanName = null)).copy(
+            catalogLoading = false, catalogError = null, catalogSelectionName = product.name,
         ) }
     }
 
-    fun closeEditor() = _state.update { it.copy(editing = false, formError = null) }
+    fun closeEditor() = _state.update { it.copy(editing = false, formError = null, fieldErrors = emptyMap()) }
 
     fun save() {
         val snapshot = _state.value
         if (snapshot.saving) return
-        val error = validateHomeCheckIn(snapshot.draft, editing = snapshot.selected != null)
-        if (error != null) { _state.update { it.copy(formError = error) }; return }
-        _state.update { it.copy(saving = true, formError = null) }
+        val errors = homeCheckInFieldErrors(snapshot.draft, editing = snapshot.selected != null)
+        if (errors.isNotEmpty()) {
+            _state.update { it.copy(formError = null, fieldErrors = errors) }
+            return
+        }
+        _state.update { it.copy(saving = true, formError = null, fieldErrors = emptyMap()) }
         workScope.launch {
             val result = snapshot.selected?.let { repository.update(it.id, snapshot.draft) }
                 ?: repository.create(snapshot.draft)
             result.onSuccess { entry ->
-                _state.update { it.copy(saving = false, editing = false, selected = entry) }
+                _state.update { it.copy(saving = false, editing = false, selected = entry,
+                    saveNotice = homeVisibilitySaveNotice(snapshot.draft.visibility, entry.visibility)) }
                 refresh()
-            }.onFailure { error -> _state.update { it.copy(saving = false, formError = error.message) } }
+            }.onFailure { error ->
+                val failure = error as? HomeCheckInFailure
+                _state.update { it.copy(saving = false,
+                    fieldErrors = failure?.fieldErrors.orEmpty(),
+                    formError = if (failure?.fieldErrors?.isNotEmpty() == true) null
+                        else failure?.message ?: "Не удалось сохранить чекин. Попробуйте ещё раз.",
+                ) }
+            }
         }
     }
 
@@ -231,3 +304,14 @@ internal class HomeCheckInViewModel(
         }
     }
 }
+
+/** Android's Instant.now() can emit 9 fractional digits; the server accepts at most 7. */
+@OptIn(kotlin.time.ExperimentalTime::class)
+private fun currentHomePreparedAt(): String = kotlin.time.Instant.fromEpochMilliseconds(currentEpochMillis()).toString()
+
+internal fun homeVisibilitySaveNotice(
+    requested: HomeCheckInVisibility?,
+    returned: HomeCheckInVisibility?,
+): String? = if (requested != null && requested != returned)
+    "Чекин сохранён, но сервер не подтвердил выбранную видимость. Её можно повторно изменить через редактирование этой записи."
+else null

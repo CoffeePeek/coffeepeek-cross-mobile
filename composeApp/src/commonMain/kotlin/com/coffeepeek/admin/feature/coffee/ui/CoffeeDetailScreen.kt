@@ -34,12 +34,12 @@ import com.coffeepeek.admin.utils.ShareHelper
 import com.coffeepeek.admin.utils.utcIsoToLocalDateTime
 import dev.chrisbanes.haze.hazeSource
 import dev.chrisbanes.haze.rememberHazeState
-import org.koin.compose.viewmodel.koinViewModel
+import com.coffeepeek.admin.di.platformViewModel
 import org.koin.core.parameter.parametersOf
 
 @Composable
 internal fun CoffeeDetailScreen(slug: String) {
-    val vm: CoffeeDetailViewModel = koinViewModel(parameters = { parametersOf(slug) })
+    val vm: CoffeeDetailViewModel = platformViewModel(key = slug, parameters = { parametersOf(slug) })
     val state by vm.state.collectAsState()
     val details = state.details
     val hazeState = rememberHazeState()

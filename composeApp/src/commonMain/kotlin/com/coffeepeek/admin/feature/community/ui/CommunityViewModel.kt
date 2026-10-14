@@ -215,7 +215,7 @@ internal class CommunityViewModel(
                     if (it.sessionGeneration != generation || !isCurrent(key)) it else it.copy(
                         isLoading = false, isLoadingMore = false, failedPage = page,
                         restartPagination = (error as? FeedLoadException)?.restartPagination == true,
-                        error = error.message ?: "Не удалось загрузить чек-ины",
+                        error = "Не удалось загрузить ленту",
                     )
                 }
             }

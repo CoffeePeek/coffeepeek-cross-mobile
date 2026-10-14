@@ -8,6 +8,12 @@ internal fun appLinkScreen(link: String): Navigator.Screen? {
         !url.host.equals("coffeepeek.by", ignoreCase = true)
     ) return null
 
+    if (url.protocol.name == "https" && url.encodedPath.trimEnd('/') == "/reset-password") {
+        return url.parameters["token"]?.takeIf(String::isNotBlank)
+            ?.let(Navigator.Screen::ResetPassword)
+            ?: Navigator.Screen.ForgotPassword()
+    }
+
     val match = Regex("^/coffee-shops/([1-9][0-9]*)(?:-[^/]+)?/?$")
         .matchEntire(url.encodedPath)
     return match?.let { Navigator.Screen.ShopDetail(it.groupValues[1]) }

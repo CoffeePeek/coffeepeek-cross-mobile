@@ -54,6 +54,53 @@ GOOGLE_REVERSED_CLIENT_ID = com.googleusercontent.apps.000000000000-xxxxxxxx
 
 Секреты и `Local.xcconfig` коммитить нельзя.
 
+### Импорт Google из Firebase
+
+В Firebase зарегистрируйте iOS-приложение с Bundle ID `com.coffeepeek`, включите
+Authentication → Sign-in method → Google и заново скачайте `GoogleService-Info.plist`.
+Поля `CLIENT_ID` и `REVERSED_CLIENT_ID` относятся к iOS. Web Client ID должен
+совпадать с `OAuthGoogleOptions__ClientId` backend; Firebase Authentication SDK
+в приложение не добавляется — Google ID token проверяет CoffeePeek backend.
+
+```bash
+python3 iosApp/configure-auth.py --google-plist /path/GoogleService-Info.plist \
+  --web-client-id YOUR_WEB_CLIENT_ID.apps.googleusercontent.com
+```
+
+Скрипт сохраняет ID в игнорируемый `Local.xcconfig` и готовит `.build/Info.plist`
+для xtool. `prepare-resources.sh` обновляет этот plist перед сборкой xtool.
+В GitHub задайте `GOOGLE_IOS_CLIENT_ID`, `GOOGLE_REVERSED_CLIENT_ID` и
+`GOOGLE_WEB_CLIENT_ID` для TestFlight. Release workflow требует все три значения,
+чтобы сборка не попала в TestFlight со скрытой Google-кнопкой.
+
+### Sign in with Apple
+
+Системная кнопка Apple доступна на экранах входа и регистрации. Backend выдаёт
+одноразовый challenge на 5 минут (`POST /api/Tokens/apple/challenge`), iOS передаёт
+его nonce и state в Apple, затем отправляет `challengeId` и `idToken` на
+`POST /api/Tokens/apple/login`. Сервер проверяет подпись, issuer, audience, срок
+действия и nonce; возвращает access/refresh tokens CoffeePeek в JSON.
+Повторный вход определяется по Apple subject, поэтому отсутствие email в
+последующем ответе Apple допустимо. Скрытый relay email поддерживается.
+
+1. В Apple Developer включите Sign in with Apple у App ID `com.coffeepeek`.
+2. В Profiles пересоздайте App Store distribution profile для этого App ID.
+3. Замените GitHub secret `IOS_PROVISIONING_PROFILE_BASE64` содержимым нового
+   `.mobileprovision`, закодированного в Base64. Проверка CI требует entitlement
+   `com.apple.developer.applesignin = [Default]`.
+4. При автоматической подписи Xcode обновляет development profile; выберите
+   правильную Team. Capability требует платной Apple Developer Program.
+5. Backend: `OAuthAppleOptions__ClientId=com.coffeepeek` (значение по умолчанию),
+   доступ к Apple OIDC/JWKS по HTTPS и Redis для одноразовых challenge.
+
+Если меняется Bundle ID, одновременно обновите Apple App ID, provisioning profile,
+Google iOS client и audience Apple в backend. Настройте отправителя писем
+CoffeePeek в Apple Private Email Relay, чтобы письма доходили на скрытые адреса.
+
+`iOS build verification` отдельно компилирует Kotlin и Swift для симулятора без
+сертификата. Проверка реального входа требует устройства, актуального профиля
+и настроенных OAuth ID.
+
 ## Запуск в симуляторе
 
 Откройте проект:
@@ -88,7 +135,10 @@ Xcode сам вызывает Gradle task `:composeApp:embedAndSignAppleFramewor
 Workflow [`.github/workflows/ios-testflight.yml`](../.github/workflows/ios-testflight.yml)
 архивирует основное приложение `iosApp` на GitHub-hosted Mac с Xcode 27 и
 загружает архив в App Store Connect. Он запускается после изменений iOS/KMP-кода
-в `main` или вручную через **Actions → iOS TestFlight → Run workflow** на `main`.
+в `main` и `develop` или вручную через **Actions → iOS TestFlight → Run workflow**
+с выбором любой из этих двух веток. Сборки обеих веток загружаются в одно приложение
+TestFlight и используют текущий `API_BASE_URL_MAIN`. Изменения только документации
+не запускают автоматическую сборку: сохраняется фильтр путей iOS/KMP-кода.
 Для pull request ключи подписи не выдаются. Номер сборки формируется из номера
 запуска и попытки (`GITHUB_RUN_NUMBER.GITHUB_RUN_ATTEMPT`); версия приложения
 берётся из `iosApp/Configuration/Shared.xcconfig` (`MARKETING_VERSION`).
@@ -105,7 +155,8 @@ Workflow [`.github/workflows/ios-testflight.yml`](../.github/workflows/ios-testf
    ID. Ключ понадобится для неинтерактивной загрузки через `xcodebuild`.
 4. В настройках репозитория GitHub создайте Environment `testflight`. Секреты
    из таблицы могут быть заданы на уровне репозитория или этого Environment.
-   Для Environment можно включить правила доступа к ветке `main` и требование
+   Если для Environment включены ограничения веток, разрешите `main` и `develop`.
+   Также можно включить требование
    одобрения перед публикацией.
 
 | Имя | Тип | Значение |

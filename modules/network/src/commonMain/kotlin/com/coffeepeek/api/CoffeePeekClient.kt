@@ -5,10 +5,12 @@ import com.coffeepeek.api.service.AuthService
 import com.coffeepeek.api.utils.CurlInterceptor.asCurlString
 import com.coffeepeek.api.utils.httpDebugLog
 import com.coffeepeek.api.utils.JsonExt
+import com.coffeepeek.api.utils.ApiException
 import io.ktor.client.HttpClient
 import io.ktor.client.HttpClientConfig
 import io.ktor.client.plugins.HttpSend
 import io.ktor.client.plugins.HttpTimeout
+import io.ktor.client.plugins.HttpResponseValidator
 import io.ktor.client.plugins.cache.HttpCache
 import io.ktor.client.plugins.cache.storage.CacheStorage
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
@@ -38,11 +40,13 @@ class CoffeePeekClient(
     }
 
     val plainClient: HttpClient = createClient {
+        installServerErrorValidation()
         install(ContentNegotiation) { json(json = JsonExt.json) }
         defaultRequest { url(baseUrl) }
     }.also { intercept(it) }
 
     val uploadClient: HttpClient = createUploadClient {
+        installServerErrorValidation()
         install(HttpTimeout) {
             requestTimeoutMillis = 120_000
             connectTimeoutMillis = 30_000
@@ -53,6 +57,7 @@ class CoffeePeekClient(
     private val tokenRefreshService = AuthService(plainClient, plainClient)
 
     val client: HttpClient = createClient {
+        installServerErrorValidation()
         install(ContentNegotiation) { json(json = JsonExt.json) }
         defaultRequest { url(baseUrl) }
 
@@ -81,3 +86,13 @@ class CoffeePeekClient(
 }
 
 internal fun normalizeBaseUrl(url: String): String = url.trim().trimEnd('/')
+
+internal fun HttpClientConfig<*>.installServerErrorValidation() {
+    HttpResponseValidator {
+        validateResponse { response ->
+            if (response.status.value in 500..599) {
+                throw ApiException("Сервис временно недоступен. Попробуйте чуть позже.")
+            }
+        }
+    }
+}

@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+        A10000000000000000000007 /* SocialSignInProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000011 /* SocialSignInProvider.swift */; };
 		A10000000000000000000001 /* CoffeePeekApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000001 /* CoffeePeekApp.swift */; };
 		A10000000000000000000004 /* MapLibreMapProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000009 /* MapLibreMapProvider.swift */; };
 		A10000000000000000000002 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000002 /* Assets.xcassets */; };
@@ -15,6 +16,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+        A20000000000000000000011 /* SocialSignInProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "../../iosXtool/CoffeePeek/Sources/CoffeePeek/SocialSignInProvider.swift"; sourceTree = "<group>"; };
 		A20000000000000000000001 /* CoffeePeekApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoffeePeekApp.swift; sourceTree = "<group>"; };
 		A20000000000000000000002 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		A20000000000000000000003 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
@@ -52,6 +54,7 @@
 			isa = PBXGroup;
 			children = (
 				A20000000000000000000001 /* CoffeePeekApp.swift */,
+                A20000000000000000000011 /* SocialSignInProvider.swift */,
 				A20000000000000000000009 /* MapLibreMapProvider.swift */,
 				A20000000000000000000002 /* Assets.xcassets */,
 				A20000000000000000000003 /* Info.plist */,
@@ -115,6 +118,7 @@
 				TargetAttributes = {
 					A50000000000000000000001 = {
 						CreatedOnToolsVersion = 27.0;
+                        SystemCapabilities = { com.apple.SignInWithApple = { enabled = 1; }; };
 					};
 				};
 			};
@@ -179,6 +183,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				A10000000000000000000001 /* CoffeePeekApp.swift in Sources */,
+                A10000000000000000000007 /* SocialSignInProvider.swift in Sources */,
 				A10000000000000000000004 /* MapLibreMapProvider.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

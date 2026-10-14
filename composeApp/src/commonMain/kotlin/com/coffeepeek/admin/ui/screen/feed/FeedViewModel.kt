@@ -481,14 +481,14 @@ class FeedViewModel(
                         )
                     }
                 }
-            }.onFailure { e ->
+            }.onFailure {
                 if (!isActive) return@onFailure
                 _uiState.update {
                     it.copy(
                         isLoading = false,
                         isRefreshing = false,
                         isLoadingMore = false,
-                        error = e.message,
+                        error = "Не удалось загрузить кофейни",
                     )
                 }
             }

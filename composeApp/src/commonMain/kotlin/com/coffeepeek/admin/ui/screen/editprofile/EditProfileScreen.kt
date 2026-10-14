@@ -1,5 +1,9 @@
 package com.coffeepeek.admin.ui.screen.editprofile
 
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.getValue
+import com.coffeepeek.admin.ui.component.PlatformScrollableColumn
+import com.coffeepeek.admin.ui.component.PlatformAlert
 import com.coffeepeek.admin.ui.icons.CpIcons
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -14,17 +18,13 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
@@ -35,16 +35,13 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.foundation.layout.width
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -95,21 +92,7 @@ fun EditProfileScreen(vm: EditProfileViewModel = platformViewModel()) {
 
     // Диалог ошибки
     state.error?.let { err ->
-        AlertDialog(
-            onDismissRequest = vm::clearError,
-            containerColor = MaterialTheme.colorScheme.surface,
-            title = { Text("Ошибка", style = MaterialTheme.typography.headlineSmall) },
-            text = {
-                Text(err, style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant)
-            },
-            confirmButton = {
-                TextButton(onClick = vm::clearError) {
-                    Text("Понятно", style = MaterialTheme.typography.labelLarge)
-                }
-            },
-            shape = RoundedCornerShape(CpDimens.radius2xl),
-        )
+        PlatformAlert(title = "Ошибка", message = err, onConfirm = vm::clearError, onDismiss = vm::clearError)
     }
 
     if (showDeleteAccountDialog) {
@@ -148,11 +131,11 @@ fun EditProfileScreen(vm: EditProfileViewModel = platformViewModel()) {
             return@Scaffold
         }
 
-        Column(
+        PlatformScrollableColumn(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .verticalScroll(rememberScrollState())
+
                 .padding(CpDimens.spacing4),
         ) {
             // ── Аватар ───────────────────────────────────────────────────────
@@ -371,7 +354,6 @@ private fun AvatarPickerSection(
     }
 }
 
-
 @Composable
 private fun FieldLabel(text: String) {
     Text(
@@ -419,41 +401,5 @@ private fun fieldColors() = OutlinedTextFieldDefaults.colors(
 
 @Composable
 private fun DeleteAccountDialog(onConfirm: () -> Unit, onDismiss: () -> Unit) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        containerColor = MaterialTheme.colorScheme.surface,
-        title = {
-            Text("Удалить аккаунт?", style = MaterialTheme.typography.headlineSmall)
-        },
-        text = {
-            Text(
-                text = "Мы отправим письмо со ссылкой для подтверждения. Аккаунт останется активным, пока вы не подтвердите удаление в браузере.",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        },
-        confirmButton = {
-            Button(
-                onClick = onConfirm,
-                modifier = Modifier.height(CpDimens.buttonHeight),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = CpColor.Error,
-                    contentColor = Color.White,
-                ),
-                shape = RoundedCornerShape(percent = 50),
-            ) {
-                Text("Удалить", style = MaterialTheme.typography.labelLarge)
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text(
-                    text = "Отмена",
-                    style = MaterialTheme.typography.labelLarge,
-                    color = MaterialTheme.colorScheme.onSurface,
-                )
-            }
-        },
-        shape = RoundedCornerShape(CpDimens.radius2xl),
-    )
+    PlatformAlert(title = "Удалить аккаунт?", message = "Мы отправим ссылку на почту для подтверждения. Аккаунт останется активным, пока вы не подтвердите удаление в письме.", confirmLabel = "Удалить", onConfirm = onConfirm, onDismiss = onDismiss, cancelLabel = "Отмена", destructive = true)
 }

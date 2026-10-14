@@ -2,6 +2,8 @@ package com.coffeepeek.feature.homecheckin
 
 import com.coffeepeek.feature.homecheckin.data.HomeCheckInRepositoryImpl
 import com.coffeepeek.feature.homecheckin.domain.HomeCheckInInput
+import com.coffeepeek.feature.homecheckin.domain.HomeCheckInVisibility
+import com.coffeepeek.feature.homecheckin.domain.HomeCheckInModeration
 import com.coffeepeek.feature.homecheckin.domain.HomePhotoUpload
 import com.coffeepeek.feature.homecheckin.domain.validateHomeCheckIn
 import io.ktor.client.HttpClient
@@ -30,6 +32,53 @@ class HomeCheckInContractTest {
     private val id = "11111111-1111-4111-8111-111111111111"
     private val jsonHeaders = headersOf(HttpHeaders.ContentType, "application/json")
     private val entry = """{"id":"$id","preparedAtUtc":"2026-09-20T22:15:00Z","preparedOn":"2026-09-21","createdAtUtc":"2026-10-01T08:00:00Z","beanName":"Honey Bloom","coffeeProductId":"22222222-2222-4222-8222-222222222222","doseGrams":75,"tasteScore":4,"photos":[{"id":"photo-1","url":"/api/v1/check-ins/$id/photos/photo-1"}]}"""
+
+    @Test
+    fun visibilityChoiceIsSentOnCreateAndEditAndServerStatusIsRead() = runBlocking {
+        var calls = 0
+        val gateway = gateway(MockEngine { request ->
+            val expected = if (calls++ == 0) "Public" else "Private"
+            assertEquals(if (calls == 1) HttpMethod.Post else HttpMethod.Put, request.method)
+            val body = Json.parseToJsonElement((request.body as TextContent).text).jsonObject
+            assertEquals(JsonPrimitive(expected), body["visibility"])
+            val status = if (expected == "Public") "Pending" else "NotSubmitted"
+            val result = entry.dropLast(1) + """, "visibility":"$expected", "moderationState":"$status"}"""
+            respond("""{"isSuccess":true,"data":$result}""", headers = jsonHeaders)
+        })
+        val uploader = HttpClient(MockEngine { error("No photo upload expected") })
+        try {
+            val repository = HomeCheckInRepositoryImpl(gateway, uploader, "https://gateway.example.com")
+            val input = HomeCheckInInput("2026-09-21T01:15:00+03:00", visibility = HomeCheckInVisibility.Public)
+            val published = repository.create(input).getOrThrow()
+            assertEquals(HomeCheckInVisibility.Public, published.visibility)
+            assertEquals(HomeCheckInModeration.Pending, published.moderation)
+            val hidden = repository.update(id, input.copy(visibility = HomeCheckInVisibility.Private)).getOrThrow()
+            assertEquals(HomeCheckInVisibility.Private, hidden.visibility)
+            assertEquals(HomeCheckInModeration.NotSubmitted, hidden.moderation)
+            assertEquals(2, calls)
+        } finally { gateway.close(); uploader.close() }
+    }
+
+    @Test
+    fun oldServerCannotSilentlyConfirmPublicationAndUnknownVisibilityIsPreservedOnEdit() = runBlocking {
+        var calls = 0
+        val gateway = gateway(MockEngine { request ->
+            val body = Json.parseToJsonElement((request.body as TextContent).text).jsonObject
+            if (calls++ == 0) assertEquals(JsonPrimitive("Public"), body["visibility"])
+            else assertFalse("visibility" in body, "An unknown value must not change server visibility")
+            respond("""{"isSuccess":true,"data":$entry}""", headers = jsonHeaders)
+        })
+        val uploader = HttpClient(MockEngine { error("No photo upload expected") })
+        try {
+            val repository = HomeCheckInRepositoryImpl(gateway, uploader, "https://gateway.example.com")
+            val input = HomeCheckInInput("2026-09-21T01:15:00+03:00", visibility = HomeCheckInVisibility.Public)
+            val result = repository.create(input).getOrThrow()
+            assertNull(result.visibility)
+            assertEquals(HomeCheckInModeration.Unknown, result.moderation)
+            repository.update(id, input.copy(visibility = result.visibility)).getOrThrow()
+            assertEquals(2, calls)
+        } finally { gateway.close(); uploader.close() }
+    }
 
     @Test
     fun createUploadsPrivatePhotosAndEditPreservesCatalogIdentityWithoutSendingPhotos() = runBlocking {
@@ -183,7 +232,35 @@ class HomeCheckInContractTest {
         assertTrue(validateHomeCheckIn(base.copy(doseGrams = "18.001")) != null)
         assertTrue(validateHomeCheckIn(base.copy(coffeeProductSlug = "bean", customBeanName = "Other")) != null)
         assertTrue(validateHomeCheckIn(base.copy(tasteScore = 6)) != null)
+        assertNull(validateHomeCheckIn(base.copy(drinkSlug = "other", customDrinkName = "Мой кофе")))
+        assertTrue(validateHomeCheckIn(base.copy(customDrinkName = "Мой кофе")) != null)
+        assertTrue(validateHomeCheckIn(base.copy(drinkSlug = "espresso", customDrinkName = "Мой кофе")) != null)
+        assertTrue(validateHomeCheckIn(base.copy(drinkSlug = "other", customDrinkName = " ")) != null)
+        assertTrue(validateHomeCheckIn(base.copy(drinkSlug = "other", customDrinkName = "а".repeat(101))) != null)
         assertTrue(validateHomeCheckIn(base.copy(photos = List(6) { HomePhotoUpload("x", "image/jpeg", byteArrayOf(1)) })) != null)
+    }
+
+    @Test
+    fun catalogMethodAndCustomDrinkAreSentOnCreateAndEdit() = runBlocking {
+        var requests = 0
+        val gateway = gateway(MockEngine { request ->
+            assertEquals(if (requests++ == 0) HttpMethod.Post else HttpMethod.Put, request.method)
+            val body = Json.parseToJsonElement((request.body as TextContent).text).jsonObject
+            assertEquals(JsonPrimitive("cezve-turkish-coffee"), body["brewMethodCode"])
+            assertEquals(JsonPrimitive("other"), body["drinkSlug"])
+            assertEquals(JsonPrimitive("Мой кофе"), body["customDrinkName"])
+            assertEquals(JsonPrimitive(195), body["brewDurationSeconds"])
+            respond("""{"isSuccess":true,"data":$entry}""", headers = jsonHeaders)
+        })
+        val uploader = HttpClient(MockEngine { error("No photo upload expected") })
+        try {
+            val repository = HomeCheckInRepositoryImpl(gateway, uploader, "https://gateway.example.com")
+            val input = HomeCheckInInput("2026-10-13T08:00:00Z", brewMethodCode = "cezve-turkish-coffee",
+                drinkSlug = "other", customDrinkName = "  Мой кофе  ", brewDurationSeconds = 195)
+            repository.create(input).getOrThrow()
+            repository.update(id, input).getOrThrow()
+            assertEquals(2, requests)
+        } finally { gateway.close(); uploader.close() }
     }
 
     @Test

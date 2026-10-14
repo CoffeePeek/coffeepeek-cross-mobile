@@ -14,6 +14,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.semantics.contentDescription
@@ -31,24 +32,27 @@ import com.coffeepeek.admin.ui.component.CoffeePeekPullToRefresh
 import com.coffeepeek.admin.ui.component.CoffeeShopImage
 import com.coffeepeek.admin.ui.component.CoffeeShopPlaceholderImage
 import com.coffeepeek.admin.ui.component.LocalFloatingNavClearance
+import com.coffeepeek.admin.ui.component.LoadErrorContent
 import com.coffeepeek.admin.ui.component.PriceBynIcon
 import com.coffeepeek.admin.ui.component.SearchHeader
 import kotlin.math.round
-import org.koin.compose.viewmodel.koinViewModel
+import com.coffeepeek.admin.di.platformViewModel
 
 @Composable
-internal fun CoffeeListScreen(vm: CoffeeListViewModel = koinViewModel()) {
+internal fun CoffeeListScreen(vm: CoffeeListViewModel = platformViewModel()) {
     val state by vm.state.collectAsState()
     val listState = rememberLazyListState()
     var showFilters by rememberSaveable { mutableStateOf(false) }
     val clearance = LocalFloatingNavClearance.current
-    val tasteNames = state.filterGroups.firstOrNull { it.code == "taste" }?.options.orEmpty().associate { it.code to it.name }
+    val tasteNames = remember(state.filterGroups) {
+        state.filterGroups.firstOrNull { it.code == "taste" }?.options.orEmpty().associate { it.code to it.name }
+    }
 
     LaunchedEffect(state.query, state.filters) {
-        if (state.isLoading) listState.scrollToItem(0)
+        listState.scrollToItem(0)
     }
-    LaunchedEffect(state.items.size, state.hasMore, state.isLoading, state.isLoadingMore, state.error) {
-        if (state.items.isNotEmpty() && state.hasMore && !state.isLoading && !state.isLoadingMore && state.error == null) {
+    LaunchedEffect(state.items.size, state.hasMore, state.isLoading, state.isRefreshing, state.isLoadingMore, state.error) {
+        if (state.items.isNotEmpty() && state.hasMore && !state.isLoading && !state.isRefreshing && !state.isLoadingMore && state.error == null) {
             snapshotFlow { listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: -1 }.collect { index ->
                 if (index >= state.items.size - 4) vm.loadMore()
             }
@@ -83,7 +87,7 @@ internal fun CoffeeListScreen(vm: CoffeeListViewModel = koinViewModel()) {
     ) { padding ->
         CoffeePeekPullToRefresh(
             listState = listState,
-            isRefreshing = state.isLoading,
+            isRefreshing = state.isRefreshing,
             onRefresh = vm::refresh,
             modifier = Modifier.fillMaxSize().padding(padding).imePadding(),
         ) { scrollModifier ->
@@ -92,10 +96,15 @@ internal fun CoffeeListScreen(vm: CoffeeListViewModel = koinViewModel()) {
                 modifier = scrollModifier.fillMaxSize(),
                 contentPadding = PaddingValues(
                     start = CpDimens.spacing4, top = CpDimens.spacing4,
-                    end = CpDimens.spacing4, bottom = clearance + CpDimens.spacing4,
+                    end = CpDimens.spacing4, bottom = clearance + 88.dp,
                 ),
                 verticalArrangement = Arrangement.spacedBy(CpDimens.spacing4),
             ) {
+                if (state.isLoading && state.items.isEmpty()) item(key = "coffee-list-loading") {
+                    Box(Modifier.fillMaxWidth().padding(CpDimens.spacing6), contentAlignment = Alignment.Center) {
+                        CoffeePeekLoader()
+                    }
+                }
                 items(state.items, key = { it.slug }) { coffee -> CoffeeCard(coffee, tasteNames) }
                 if (state.isLoadingMore) item {
                     Box(Modifier.fillMaxWidth().padding(CpDimens.spacing6), contentAlignment = Alignment.Center) {
@@ -103,12 +112,7 @@ internal fun CoffeeListScreen(vm: CoffeeListViewModel = koinViewModel()) {
                     }
                 }
                 if (state.error != null) item {
-                    Column(Modifier.fillMaxWidth().padding(CpDimens.spacing4), horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text(state.error.orEmpty(), color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        TextButton(onClick = { if (state.items.isEmpty()) vm.refresh() else vm.loadMore() }) {
-                            Text("Попробовать снова")
-                        }
-                    }
+                    LoadErrorContent(onRetry = { if (state.isLoadMoreError) vm.loadMore() else vm.refresh() })
                 } else if (state.items.isEmpty() && !state.isLoading) item {
                     Column(Modifier.fillMaxWidth().padding(CpDimens.spacing6), horizontalAlignment = Alignment.CenterHorizontally) {
                         Text("Кофе не найден", style = MaterialTheme.typography.titleMedium)
@@ -136,11 +140,11 @@ internal fun CoffeeCard(coffee: Coffee, tasteNames: Map<String, String>, modifie
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
     ) {
-        Box(Modifier.fillMaxWidth().height(216.dp).background(MaterialTheme.colorScheme.surfaceVariant)) {
+        Box(Modifier.fillMaxWidth().height(216.dp).clipToBounds().background(MaterialTheme.colorScheme.surfaceVariant)) {
             val photo = coffee.photoUrl
             if (!photo.isNullOrBlank()) CoffeeShopImage(
                 imageUrl = photo, contentDescription = coffee.name,
-                contentScale = ContentScale.Fit, modifier = Modifier.fillMaxSize(),
+                contentScale = ContentScale.Fit, modifier = Modifier.matchParentSize(),
             ) else CoffeeShopPlaceholderImage(contentDescription = "Фото ${coffee.name} отсутствует")
             Box(
                 Modifier.align(Alignment.BottomEnd).padding(CpDimens.spacing4).size(48.dp)
@@ -152,7 +156,7 @@ internal fun CoffeeCard(coffee: Coffee, tasteNames: Map<String, String>, modifie
                 if (!logo.isNullOrBlank()) CoffeeShopImage(
                     imageUrl = logo, contentDescription = coffee.roasterName,
                     contentScale = ContentScale.Fit, placeholderLabelSize = MaterialTheme.typography.labelSmall.fontSize,
-                    modifier = Modifier.fillMaxSize().padding(6.dp),
+                    modifier = Modifier.matchParentSize().padding(6.dp),
                 ) else Text(
                     coffee.roasterName.take(2).uppercase(), style = MaterialTheme.typography.labelMedium,
                     fontWeight = FontWeight.Bold,

@@ -3,6 +3,10 @@ package com.coffeepeek.admin.ui.component
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.ime
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -15,6 +19,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.takeOrElse
 import androidx.compose.ui.text.TextStyle
@@ -63,6 +70,27 @@ fun CompactOutlinedTextField(
     }
     val cursorColor = if (isError) colors.errorCursorColor else colors.cursorColor
     val fieldValue = rememberSyncedTextFieldValue(value)
+    val focusManager = LocalFocusManager.current
+    val keyboard = LocalSoftwareKeyboardController.current
+    NativeKeyboardDoneAccessory(
+        focused && WindowInsets.ime.getBottom(LocalDensity.current) > 0 &&
+            keyboardOptions.keyboardType in listOf(KeyboardType.Number, KeyboardType.Decimal, KeyboardType.NumberPassword, KeyboardType.Phone),
+    ) { focusManager.clearFocus(force = true); keyboard?.hide() }
+    val resolvedOptions = if (singleLine && keyboardOptions.imeAction == ImeAction.Default) {
+        keyboardOptions.copy(imeAction = ImeAction.Done)
+    } else keyboardOptions
+    val resolvedActions = KeyboardActions(
+        onDone = keyboardActions.onDone ?: {
+            focusManager.clearFocus(force = true)
+            keyboard?.hide()
+            Unit
+        },
+        onGo = keyboardActions.onGo,
+        onNext = keyboardActions.onNext,
+        onPrevious = keyboardActions.onPrevious,
+        onSearch = keyboardActions.onSearch,
+        onSend = keyboardActions.onSend,
+    )
 
     CompositionLocalProvider(LocalTextSelectionColors provides colors.textSelectionColors) {
         BasicTextField(
@@ -79,8 +107,8 @@ fun CompactOutlinedTextField(
             textStyle = textStyle.merge(TextStyle(color = textColor)),
             cursorBrush = SolidColor(cursorColor),
             visualTransformation = visualTransformation,
-            keyboardOptions = platformTextInputOptions(keyboardOptions),
-            keyboardActions = keyboardActions,
+            keyboardOptions = platformTextInputOptions(resolvedOptions),
+            keyboardActions = resolvedActions,
             interactionSource = interactionSource,
             singleLine = singleLine,
             maxLines = maxLines,

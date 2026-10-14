@@ -88,8 +88,6 @@ import org.maplibre.android.style.layers.PropertyFactory.textHaloColor
 import org.maplibre.android.style.layers.PropertyFactory.textHaloWidth
 import org.maplibre.android.style.layers.PropertyFactory.visibility
 import org.maplibre.android.style.layers.SymbolLayer
-import kotlin.math.cos
-import kotlin.math.sin
 
 private const val DEFAULT_LAT = 53.9045
 private const val DEFAULT_LON = 27.5615
@@ -744,21 +742,7 @@ private fun zoomToBounds(
 }
 
 private fun zoneOutline(zone: MapCoffeeZone): List<LatLng> =
-    if (zone.polygon.size >= 3) zone.polygon.map { (lat, lon) -> LatLng(lat, lon) }
-    else zoneCirclePoints(zone)
-
-private fun zoneCirclePoints(zone: MapCoffeeZone, pointCount: Int = 48): List<LatLng> {
-    val latitudeDegrees = zone.radiusMeters / 111_320.0
-    val longitudeScale = cos(Math.toRadians(zone.latitude)).coerceAtLeast(0.01)
-    val longitudeDegrees = zone.radiusMeters / (111_320.0 * longitudeScale)
-    return (0..pointCount).map { index ->
-        val angle = 2.0 * Math.PI * index / pointCount
-        LatLng(
-            zone.latitude + latitudeDegrees * sin(angle),
-            zone.longitude + longitudeDegrees * cos(angle),
-        )
-    }
-}
+    mapZoneOutline(zone).map { (lat, lon) -> LatLng(lat, lon) }
 
 private fun LatLngBounds.toMapBounds(): MapBounds = MapBounds(
     minLat = latitudeSouth,

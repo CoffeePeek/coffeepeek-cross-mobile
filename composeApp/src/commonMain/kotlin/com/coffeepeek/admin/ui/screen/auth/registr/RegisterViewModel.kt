@@ -11,11 +11,14 @@ import coffeepeek.composeapp.generated.resources.error_valid_email
 import coffeepeek.composeapp.generated.resources.maybe_later
 import com.coffeepeek.admin.base.BaseViewModel
 import com.coffeepeek.admin.ui.Navigator
-import com.coffeepeek.admin.utils.ErrorHandler
 import com.coffeepeek.admin.utils.MIN_REGISTRATION_PASSWORD_LENGTH
 import com.coffeepeek.admin.utils.validateEmailRequired
 import com.coffeepeek.admin.utils.validatePasswordRequired
 import com.coffeepeek.domain.repository.AuthRepository
+import com.coffeepeek.admin.auth.signInWithApple
+import com.coffeepeek.admin.auth.socialLoginError
+import com.coffeepeek.admin.utils.ErrorHandler
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import org.jetbrains.compose.resources.StringResource
@@ -160,9 +163,24 @@ class RegisterViewModel(
         }
     }
 
+    private val _appleSigningIn = MutableStateFlow(false)
+    val appleSigningIn = _appleSigningIn.asStateFlow()
+
+    fun onAppleLogin() {
+        if (!_appleSigningIn.compareAndSet(expect = false, update = true)) return
+        launchRequest(
+            onSuccess = { Navigator.navigate(Navigator.Screen.Main) },
+            onError = { if (it !is CancellationException) ErrorHandler.showError(socialLoginError("Apple", it.message)) },
+        ) {
+            try { authRepository.signInWithApple() }
+            finally { _appleSigningIn.value = false }
+        }
+    }
+
     fun onGoogleLogin(idToken: String) {
         launchRequest(
             errorMessage = Res.string.maybe_later,
+            onError = { if (it !is CancellationException) ErrorHandler.showError(socialLoginError("Google", it.message)) },
             onSuccess = { Navigator.navigate(Navigator.Screen.Main) },
         ) {
             authRepository.googleLogin(idToken).getOrThrow()

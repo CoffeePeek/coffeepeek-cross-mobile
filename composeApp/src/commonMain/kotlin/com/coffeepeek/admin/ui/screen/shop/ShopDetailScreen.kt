@@ -1,5 +1,8 @@
 package com.coffeepeek.admin.ui.screen.shop
 
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.getValue
+import com.coffeepeek.admin.ui.component.SwipeDismissModalBottomSheet
 import com.coffeepeek.admin.ui.icons.CpIcons
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
@@ -46,6 +49,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -53,17 +57,16 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -160,6 +163,7 @@ fun ShopDetailScreen(shopId: String, forCheckIn: Boolean = false) {
     val missingShopAddress = stringResource(Res.string.checkin_error_shop_address)
     // Photos open as a swipeable set: (urls, startIndex).
     var preview by remember { mutableStateOf<Pair<List<String>, Int>?>(null) }
+    var showRoutePicker by remember { mutableStateOf(false) }
 
     LaunchedEffect(state.actionMessage) {
         state.actionMessage?.let { message ->
@@ -170,6 +174,33 @@ fun ShopDetailScreen(shopId: String, forCheckIn: Boolean = false) {
 
     preview?.let { (urls, index) ->
         FullScreenImageDialog(imageUrls = urls, initialIndex = index, onDismiss = { preview = null })
+    }
+
+    if (showRoutePicker) {
+        val latitude = state.details?.location?.latitude
+        val longitude = state.details?.location?.longitude
+        if (latitude == null || longitude == null) {
+            showRoutePicker = false
+        } else {
+            AlertDialog(
+                onDismissRequest = { showRoutePicker = false },
+                title = { Text("Построить маршрут") },
+                text = {
+                    Column {
+                        shopRouteOptions(latitude, longitude).forEach { (label, url) ->
+                            TextButton(onClick = {
+                                showRoutePicker = false
+                                OpenInBrowser.openInBrowser(url)
+                            }) { Text(label) }
+                        }
+                    }
+                },
+                confirmButton = {},
+                dismissButton = {
+                    TextButton(onClick = { showRoutePicker = false }) { Text("Отмена") }
+                },
+            )
+        }
     }
 
     if (state.showCheckInSheet) {
@@ -302,7 +333,7 @@ fun ShopDetailScreen(shopId: String, forCheckIn: Boolean = false) {
                 isCheckInLoading = state.isCheckInLoading,
                 canOpenRoute = details.location?.latitude != null &&
                     details.location?.longitude != null,
-                onRoute = vm::openRoute,
+                onRoute = { showRoutePicker = true },
                 onCheckIn = {
                     if (!checkInRenderer.usesLegacyDraft && state.details?.shop?.publicAddress?.slug.isNullOrBlank()) {
                         screenScope.launch { snackbarHostState.showSnackbar(missingShopAddress) }
@@ -749,7 +780,7 @@ private fun HeroInfoCard(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun ShopPriceInfoSheet(selectedLevel: Int, onDismiss: () -> Unit) {
-    ModalBottomSheet(onDismissRequest = onDismiss) {
+    SwipeDismissModalBottomSheet(onDismissRequest = onDismiss) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -960,7 +991,6 @@ private fun reviewCountLabel(count: Int): String {
     }
     return "$count $word"
 }
-
 
 private data class ShopFeatureItem(
     val name: String,

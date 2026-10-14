@@ -1,6 +1,9 @@
 package com.coffeepeek.admin.ui.screen.auth
 
 import com.coffeepeek.admin.base.BaseViewModel
+import com.coffeepeek.admin.auth.signInWithApple
+import com.coffeepeek.admin.auth.socialLoginError
+import kotlinx.coroutines.CancellationException
 import com.coffeepeek.admin.ui.Navigator
 import com.coffeepeek.admin.utils.localizedLoginError
 import com.coffeepeek.admin.utils.validateEmailRequired
@@ -24,6 +27,20 @@ class AuthViewModel(
     val emailError = _emailError.asStateFlow()
     val passwordError = _passwordError.asStateFlow()
     val loginError = _loginError.asStateFlow()
+    private val _appleSigningIn = MutableStateFlow(false)
+    val appleSigningIn = _appleSigningIn.asStateFlow()
+
+    fun onAppleLogin() {
+        if (!_appleSigningIn.compareAndSet(expect = false, update = true)) return
+        _loginError.value = null
+        launchRequest(
+            onSuccess = { Navigator.navigate(Navigator.Screen.Main) },
+            onError = { if (it !is CancellationException) _loginError.value = socialLoginError("Apple", it.message) },
+        ) {
+            try { authRepository.signInWithApple() }
+            finally { _appleSigningIn.value = false }
+        }
+    }
 
     fun onEmailChange(newValue: String) {
         _email.value = newValue
@@ -63,7 +80,7 @@ class AuthViewModel(
         _loginError.value = null
         launchRequest(
             onSuccess = { Navigator.navigate(Navigator.Screen.Main) },
-            onError = { error -> _loginError.value = localizedLoginError(error.message) },
+            onError = { error -> _loginError.value = socialLoginError("Google", error.message) },
         ) {
             authRepository.googleLogin(idToken).getOrThrow()
         }
@@ -76,6 +93,6 @@ class AuthViewModel(
     }
 
     fun onGoogleLoginError(message: String) {
-        _loginError.value = localizedLoginError(message)
+        _loginError.value = socialLoginError("Google", message)
     }
 }
