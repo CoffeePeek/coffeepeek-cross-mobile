@@ -5,6 +5,7 @@ on:
     branches: [main, develop]
     paths:
       - .github/workflows/ios-testflight.yml
+      - .github/actions/setup-ios-caches/**
       - build-logic/**
       - buildSrc/**
       - composeApp/**
@@ -17,6 +18,11 @@ on:
       - build.gradle.kts
       - settings.gradle.kts
       - gradle.properties
+      - gradlew
+      - gradlew.bat
+      - '!**/src/android*/**'
+      - '!**/proguard-rules.pro'
+      - '!**/*.md'
   workflow_dispatch:
 
 permissions:
@@ -47,6 +53,8 @@ jobs:
 
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v6
+        with:
+          cache-read-only: ${{ github.ref != 'refs/heads/main' && github.ref != 'refs/heads/develop' }}
 
       - name: Check build environment
         shell: bash
@@ -266,6 +274,11 @@ jobs:
           end
           RUBY
 
+      - name: Restore iOS dependency caches
+        uses: ./.github/actions/setup-ios-caches
+        with:
+          target: device
+
       - name: Archive signed iOS app
         shell: bash
         env:
@@ -285,6 +298,7 @@ jobs:
             -destination 'generic/platform=iOS' \
             -archivePath "$RUNNER_TEMP/CoffeePeek.xcarchive" \
             -derivedDataPath "$RUNNER_TEMP/DerivedData" \
+            -clonedSourcePackagesDirPath "$RUNNER_TEMP/SourcePackages" \
             -allowProvisioningUpdates \
             -authenticationKeyPath "$RUNNER_TEMP/AuthKey_${APPSTORE_API_KEY_ID}.p8" \
             -authenticationKeyID "$APPSTORE_API_KEY_ID" \
