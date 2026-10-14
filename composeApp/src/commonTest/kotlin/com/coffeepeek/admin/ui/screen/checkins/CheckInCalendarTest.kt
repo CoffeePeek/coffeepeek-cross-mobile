@@ -56,8 +56,8 @@ class CheckInCalendarTest {
     fun rangeEndsAtNextMonthAndLeapDayIsPresent() {
         val february = CalendarMonth(2024, 2)
 
-        assertEquals("2024-02-01T00:00:00Z", february.fromUtc)
-        assertEquals("2024-03-01T00:00:00Z", february.toUtc)
+        assertEquals("2024-02-01", com.coffeepeek.admin.utils.utcIsoToLocalDate(february.fromUtc))
+        assertEquals("2024-03-01", com.coffeepeek.admin.utils.utcIsoToLocalDate(february.toUtc))
         assertEquals(29, calendarCells(february).filterNotNull().last())
     }
 

@@ -20,6 +20,7 @@ import com.coffeepeek.feature.homecheckin.domain.HomeCheckInFailure
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.flow.updateAndGet
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.ensureActive
@@ -94,6 +95,10 @@ internal class HomeCheckInViewModel(
         draft = HomeCheckInInput(preparedAt = now, preparedOn = today, tasteScore = 5),
     ))
     val state = _state.asStateFlow()
+    private val historyRevision = MutableStateFlow(0L)
+    private val calendarRevision = MutableStateFlow(0L)
+    private val detailRevision = MutableStateFlow(0L)
+    private var detailJob: Job? = null
     private var historyJob: Job? = null
     private var calendarJob: Job? = null
     private var catalogJob: Job? = null
@@ -111,22 +116,24 @@ internal class HomeCheckInViewModel(
     fun loadMore() = loadHistory(reset = false)
 
     private fun loadHistory(reset: Boolean) {
-        if (!reset && (!_state.value.hasMore || _state.value.loadingMore)) return
+        if (!reset && (!_state.value.hasMore || _state.value.loading || _state.value.loadingMore)) return
         if (reset) historyJob?.cancel()
+        val revision = historyRevision.updateAndGet { it + 1 }
         val page = if (reset) 1 else _state.value.page + 1
         val selectedDate = _state.value.selectedDate
         _state.update { it.copy(loading = reset, loadingMore = !reset, error = null) }
         historyJob = workScope.launch {
-            repository.history(page = page, from = selectedDate, to = selectedDate)
-                .onSuccess { result ->
-                    _state.update { old -> if (old.selectedDate != selectedDate) old else old.copy(
+            val response = repository.history(page = page, from = selectedDate, to = selectedDate)
+            coroutineContext.ensureActive()
+            response.onSuccess { result ->
+                    _state.update { old -> if (historyRevision.value != revision || old.selectedDate != selectedDate) old else old.copy(
                         loading = false, loadingMore = false, page = result.page,
                         hasMore = result.hasMore,
                         items = if (reset) result.items else (old.items + result.items).distinctBy { it.id },
                     ) }
                 }
                 .onFailure { error -> _state.update {
-                    if (it.selectedDate != selectedDate) it
+                    if (historyRevision.value != revision || it.selectedDate != selectedDate) it
                     else it.copy(loading = false, loadingMore = false, error = error.message)
                 } }
         }
@@ -148,11 +155,13 @@ internal class HomeCheckInViewModel(
     fun loadCalendar() {
         val month = _state.value.month
         calendarJob?.cancel()
+        val revision = calendarRevision.updateAndGet { it + 1 }
         _state.update { it.copy(calendarLoading = true, calendarError = null) }
         calendarJob = workScope.launch {
-            repository.calendar(month.from, month.to)
-                .onSuccess { days -> _state.update { if (it.month == month) it.copy(calendar = days, calendarLoading = false) else it } }
-                .onFailure { error -> _state.update { if (it.month == month) it.copy(calendarError = error.message ?: "Не удалось загрузить календарь", calendarLoading = false) else it } }
+            val response = repository.calendar(month.from, month.to)
+            coroutineContext.ensureActive()
+            response.onSuccess { days -> _state.update { if (calendarRevision.value == revision && it.month == month) it.copy(calendar = days, calendarLoading = false) else it } }
+                .onFailure { error -> _state.update { if (calendarRevision.value == revision && it.month == month) it.copy(calendarError = error.message ?: "Не удалось загрузить календарь", calendarLoading = false) else it } }
         }
     }
 
@@ -169,24 +178,37 @@ internal class HomeCheckInViewModel(
     }
 
     fun open(id: String, editOnLoad: Boolean = false) {
+        detailJob?.cancel()
+        val revision = detailRevision.updateAndGet { it + 1 }
         _state.update { it.copy(detailLoading = true, error = null, saveNotice = null) }
-        workScope.launch {
-            repository.detail(id)
-                .onSuccess { entry ->
-                    _state.update { it.copy(selected = entry, detailLoading = false) }
-                    if (editOnLoad) edit()
-                }
-                .onFailure { error -> _state.update { it.copy(detailLoading = false, error = error.message) } }
+        detailJob = workScope.launch {
+            val response = repository.detail(id)
+            coroutineContext.ensureActive()
+            response.onSuccess { entry ->
+                _state.update { if (detailRevision.value == revision) it.copy(selected = entry, detailLoading = false) else it }
+                if (editOnLoad && detailRevision.value == revision) edit()
+            }.onFailure { error -> _state.update {
+                if (detailRevision.value == revision) it.copy(detailLoading = false, error = error.message) else it
+            } }
         }
     }
 
-    fun closeDetail() = _state.update { it.copy(selected = null, editing = false, saveNotice = null) }
+    private fun cancelDetail() {
+        detailRevision.update { it + 1 }
+        detailJob?.cancel()
+    }
+
+    fun closeDetail() {
+        cancelDetail()
+        _state.update { it.copy(selected = null, editing = false, detailLoading = false, saveNotice = null) }
+    }
 
     fun create() {
+        cancelDetail()
         catalogJob?.cancel()
         val preparedAt = currentHomePreparedAt()
         _state.update { it.copy(
-            editing = true, selected = null, formError = null, fieldErrors = emptyMap(), saveNotice = null,
+            editing = true, selected = null, detailLoading = false, formError = null, fieldErrors = emptyMap(), saveNotice = null,
             catalogQuery = "", catalogItems = emptyList(), catalogSelectionName = null,
             catalogLoading = false, catalogError = null,
             draft = HomeCheckInInput(preparedAt = preparedAt, preparedOn = utcIsoToLocalDate(preparedAt), tasteScore = 5),

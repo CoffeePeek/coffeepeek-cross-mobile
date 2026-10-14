@@ -13,6 +13,21 @@ import org.junit.Test
 
 /** Native PNG encoding guards only, not a claim about ML Kit model availability or cup detection quality. */
 class AndroidShopDrinkPhotoProcessorTest {
+    @Test fun displayDecoderAndReencodingRetainTransparentDrinkPixels() {
+        val source = Bitmap.createBitmap(32, 32, Bitmap.Config.ARGB_8888).apply {
+            eraseColor(Color.TRANSPARENT)
+            setPixel(16, 16, Color.RED)
+        }
+        val encoded = java.io.ByteArrayOutputStream().also { source.compress(Bitmap.CompressFormat.PNG, 100, it) }.toByteArray()
+        val displayed = com.coffeepeek.admin.utils.BitmapUtil.load(encoded)
+        val bytes = with(com.coffeepeek.admin.utils.BitmapUtil) { displayed.toByteArray() }
+        val decoded = requireNotNull(BitmapFactory.decodeByteArray(bytes, 0, bytes.size))
+        try {
+            assertEquals(0, Color.alpha(decoded.getPixel(0, 0)))
+            assertEquals(Color.RED, decoded.getPixel(16, 16))
+        } finally { source.recycle(); displayed.recycle(); decoded.recycle() }
+    }
+
     @Test fun nativeEncoderKeepsVisiblePixelsTransparencyAndSizeWithoutChangingTheSource() {
         val source = Bitmap.createBitmap(1024, 512, Bitmap.Config.ARGB_8888).apply { eraseColor(Color.RED) }
         try {
