@@ -118,10 +118,14 @@ final class SocialSignInProvider: NSObject, IosAppleAuthProvider,
             self?.googleInProgress = false
             if let error = error as NSError? {
                 let cancelled = error.domain == kGIDSignInErrorDomain && error.code == Self.googleCancellationCode
-                if !cancelled {
-                    NSLog("Google Sign-In failed: domain=%@ code=%ld", error.domain, error.code)
+                if cancelled {
+                    _ = completion(nil, "Вход через Google отменён")
+                    return
                 }
-                _ = completion(nil, cancelled ? "Вход через Google отменён" : "Не удалось войти через Google. Попробуйте ещё раз. [GSI-E\(error.code)]")
+                let domain = Self.safeGoogleErrorDomain(error.domain)
+                NSLog("Google Sign-In failed: domain=%@ code=%ld", domain ?? "<invalid>", error.code)
+                let domainSuffix = domain.map { " D:\($0)" } ?? ""
+                _ = completion(nil, "Не удалось войти через Google. Попробуйте ещё раз. [GSI-E\(error.code)\(domainSuffix)]")
             } else if result == nil {
                 NSLog("Google Sign-In failed: missing result")
                 _ = completion(nil, "Не удалось войти через Google. Попробуйте ещё раз. [GSI-R]")
@@ -132,6 +136,13 @@ final class SocialSignInProvider: NSObject, IosAppleAuthProvider,
                 _ = completion(nil, "Не удалось войти через Google. Попробуйте ещё раз. [GSI-T]")
             }
         }
+    }
+
+    private static func safeGoogleErrorDomain(_ domain: String) -> String? {
+        let allowed = CharacterSet(charactersIn: "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789._-")
+        guard !domain.isEmpty, domain.count <= 80,
+              domain.unicodeScalars.allSatisfy({ allowed.contains($0) }) else { return nil }
+        return domain
     }
 
     private static var presentationWindow: UIWindow? {

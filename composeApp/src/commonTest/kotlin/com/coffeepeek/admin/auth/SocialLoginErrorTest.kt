@@ -13,10 +13,26 @@ class SocialLoginErrorTest {
     }
 
     @Test
+    fun googleSdkDiagnosticDomainSurvivesFriendlyErrorMapping() {
+        assertEquals(
+            "Не удалось войти через Google. Попробуйте ещё раз. (код GSI-E-61440; домен com.google.GIDSignIn)",
+            socialLoginError("Google", "private details [GSI-E-61440 D:com.google.GIDSignIn]"),
+        )
+    }
+
+    @Test
     fun googleErrorDoesNotExposeUnrecognizedDetails() {
         assertEquals(
             "Не удалось войти через Google. Попробуйте ещё раз.",
             socialLoginError("Google", "private details [GSI-E-12345678901]"),
+        )
+    }
+
+    @Test
+    fun googleErrorDoesNotExposeUntrustedDomain() {
+        assertEquals(
+            "Не удалось войти через Google. Попробуйте ещё раз.",
+            socialLoginError("Google", "private details [GSI-E-61440 D:com.google;token=private]"),
         )
     }
 
