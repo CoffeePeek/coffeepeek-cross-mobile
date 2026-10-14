@@ -6,6 +6,18 @@ import kotlin.test.assertNull
 
 class AppLinksTest {
     @Test
+    fun routesPasswordResetLinksAndDecodesTokenOnce() {
+        assertEquals(
+            Navigator.Screen.ResetPassword("a+b/c=="),
+            appLinkScreen("https://coffeepeek.by/reset-password?token=a%2Bb%2Fc%3D%3D"),
+        )
+        assertEquals(Navigator.Screen.ForgotPassword(), appLinkScreen("https://coffeepeek.by/reset-password?token="))
+        assertEquals(Navigator.Screen.ForgotPassword(), appLinkScreen("https://coffeepeek.by/reset-password"))
+        assertNull(appLinkScreen("https://coffeepeek.by.evil.com/reset-password?token=secret"))
+        assertEquals(Navigator.Screen.Main, appLinkScreen("http://coffeepeek.by/reset-password?token=secret"))
+    }
+
+    @Test
     fun routesOnlyCoffeePeekLinks() {
         val shop = Navigator.Screen.ShopDetail("26")
         assertEquals(shop, appLinkScreen("https://coffeepeek.by/coffee-shops/26-ulyanovskaya-ulitsa-30"))

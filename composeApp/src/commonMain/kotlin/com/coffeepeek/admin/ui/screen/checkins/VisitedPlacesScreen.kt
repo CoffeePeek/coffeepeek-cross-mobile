@@ -1,36 +1,24 @@
 package com.coffeepeek.admin.ui.screen.checkins
 
-import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -42,14 +30,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.admin.di.platformViewModel
 import com.coffeepeek.admin.theme.CpDimens
@@ -59,20 +40,39 @@ import com.coffeepeek.admin.ui.component.CheckInDisplayCard
 import com.coffeepeek.admin.ui.component.CoffeePeekLoader
 import com.coffeepeek.admin.ui.component.CpTopBar
 import com.coffeepeek.admin.ui.component.FullScreenImageDialog
-import com.coffeepeek.admin.ui.icons.CpIcons
-import com.coffeepeek.admin.utils.CpImage
+import com.coffeepeek.admin.ui.component.PlatformScrollableColumn
+import com.coffeepeek.admin.ui.component.SwipeDismissModalBottomSheet
 import com.coffeepeek.admin.utils.currentUtcIsoDateTime
 import com.coffeepeek.admin.utils.utcIsoToLocalDate
 import com.coffeepeek.domain.model.CheckIn
-import coffeepeek.composeapp.generated.resources.Res
-import coffeepeek.composeapp.generated.resources.maskot_with_photo
-import org.jetbrains.compose.resources.painterResource
 
 @Composable
 fun VisitedPlacesScreen(vm: VisitedPlacesViewModel = platformViewModel()) {
     val state by vm.state.collectAsState()
     var viewMode by rememberSaveable { mutableStateOf(CheckInViewMode.Calendar) }
     var photoPreview by remember { mutableStateOf<Pair<List<String>, Int>?>(null) }
+    var selectedCheckIn by remember { mutableStateOf<CheckIn?>(null) }
+
+    selectedCheckIn?.let { checkIn ->
+        SwipeDismissModalBottomSheet(onDismissRequest = { selectedCheckIn = null }) {
+            PlatformScrollableColumn(Modifier.fillMaxWidth().weight(1f)) {
+                Text("Чекин", style = MaterialTheme.typography.titleLarge,
+                    modifier = Modifier.padding(horizontal = 20.dp, vertical = 12.dp))
+                CheckInDisplayCard(
+                    checkIn = checkIn, fullVersion = true,
+                    modifier = Modifier.padding(horizontal = 16.dp),
+                    onPhotoClick = { urls, index -> photoPreview = urls to index },
+                )
+                if (checkIn.shopId.isNotBlank()) TextButton(
+                    onClick = {
+                        selectedCheckIn = null
+                        Navigator.navigate(Navigator.Screen.ShopDetail(checkIn.shopId))
+                    },
+                    modifier = Modifier.fillMaxWidth().padding(16.dp),
+                ) { Text("Открыть кофейню") }
+            }
+        }
+    }
 
     photoPreview?.let { (urls, index) ->
         FullScreenImageDialog(
@@ -103,8 +103,12 @@ fun VisitedPlacesScreen(vm: VisitedPlacesViewModel = platformViewModel()) {
             when (viewMode) {
                 CheckInViewMode.Calendar -> CheckInCalendarContent(
                     state = state,
-                    vm = vm,
-                    onPhotoClick = { urls, index -> photoPreview = urls to index },
+                    onPreviousMonth = { vm.changeMonth(-1) },
+                    onNextMonth = { vm.changeMonth(1) },
+                    onSelectDate = vm::selectDate,
+                    onToday = vm::showToday,
+                    onRetry = vm::refreshCalendar,
+                    onCheckInClick = { selectedCheckIn = it },
                 )
                 CheckInViewMode.List -> CheckInListContent(
                     state = state,
@@ -117,26 +121,34 @@ fun VisitedPlacesScreen(vm: VisitedPlacesViewModel = platformViewModel()) {
 }
 
 @Composable
-private fun CheckInCalendarContent(
+internal fun CheckInCalendarContent(
     state: VisitedPlacesUiState,
-    vm: VisitedPlacesViewModel,
-    onPhotoClick: (List<String>, Int) -> Unit,
+    onPreviousMonth: () -> Unit,
+    onNextMonth: () -> Unit,
+    onSelectDate: (String) -> Unit,
+    onToday: () -> Unit,
+    onRetry: () -> Unit,
+    onCheckInClick: (CheckIn) -> Unit,
+    today: String = utcIsoToLocalDate(currentUtcIsoDateTime()),
 ) {
-    val selectedCheckIns = state.selectedDate?.let(state.calendarCheckIns::get).orEmpty()
-    val today = remember { utcIsoToLocalDate(currentUtcIsoDateTime()) }
+    val selectedCheckIns = remember(state.calendarCheckIns, state.selectedDate) {
+        state.selectedDate?.let(state.calendarCheckIns::get).orEmpty()
+            .sortedBy { it.visitedAt.ifBlank { it.createdAt } }
+    }
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(CpDimens.spacing4),
-        verticalArrangement = Arrangement.spacedBy(CpDimens.spacing3),
+        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         item {
             CalendarCard(
                 state = state,
                 today = today,
-                onPreviousMonth = { vm.changeMonth(-1) },
-                onNextMonth = { vm.changeMonth(1) },
-                onSelectDate = vm::selectDate,
+                onPreviousMonth = onPreviousMonth,
+                onNextMonth = onNextMonth,
+                onSelectDate = onSelectDate,
+                onToday = onToday,
             )
         }
 
@@ -150,15 +162,20 @@ private fun CheckInCalendarContent(
                 }
             }
         } else if (state.calendarError != null) {
-            item { ErrorMessage(state.calendarError, vm::refreshCalendar) }
+            item { ErrorMessage(state.calendarError, onRetry) }
         } else if (state.selectedDate != null) {
             item {
-                Text(
-                    text = selectedDateTitle(state.selectedDate),
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onBackground,
-                )
+                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Text(
+                        text = selectedDateTitle(state.selectedDate, includeYear = state.calendarMonth.year != calendarMonthFromIsoDate(today)?.year),
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onBackground,
+                    )
+                    Text("${calendarWeekday(state.selectedDate)} · ${visitCount(selectedCheckIns.size)}",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
             }
             if (selectedCheckIns.isEmpty()) {
                 item {
@@ -169,12 +186,18 @@ private fun CheckInCalendarContent(
                     )
                 }
             } else {
-                items(selectedCheckIns, key = { it.id }) { checkIn ->
-                    CheckInDisplayCard(
-                        checkIn = checkIn,
-                        onClick = { Navigator.navigate(Navigator.Screen.ShopDetail(checkIn.shopId)) },
-                        onPhotoClick = onPhotoClick,
-                    )
+                item {
+                    Surface(shape = RoundedCornerShape(20.dp), color = MaterialTheme.colorScheme.surface) {
+                        Column {
+                            selectedCheckIns.forEachIndexed { index, checkIn ->
+                                CheckInDiaryRow(checkIn, onClick = { onCheckInClick(checkIn) })
+                                if (index < selectedCheckIns.lastIndex) HorizontalDivider(
+                                    modifier = Modifier.padding(start = 88.dp),
+                                    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
+                                )
+                            }
+                        }
+                    }
                 }
             }
         } else {
@@ -183,197 +206,6 @@ private fun CheckInCalendarContent(
                     text = "В этом месяце пока нет чекинов",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun CalendarCard(
-    state: VisitedPlacesUiState,
-    today: String,
-    onPreviousMonth: () -> Unit,
-    onNextMonth: () -> Unit,
-    onSelectDate: (String) -> Unit,
-) {
-    val month = state.calendarMonth
-    val total = state.calendarCheckIns.values.sumOf { it.size }
-    val shops = state.calendarCheckIns.values.flatten().map(CheckIn::shopId).filter(String::isNotBlank).distinct().size
-    val checkInDates = state.calendarCheckIns.filterValues { it.isNotEmpty() }.keys
-
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(CpDimens.radius2xl),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
-    ) {
-        Column(
-            modifier = Modifier.padding(horizontal = CpDimens.spacing2, vertical = CpDimens.spacing3),
-            verticalArrangement = Arrangement.spacedBy(CpDimens.spacing1),
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween,
-            ) {
-                IconButton(onClick = onPreviousMonth) {
-                    Icon(CpIcons.ChevronLeft, contentDescription = "Предыдущий месяц")
-                }
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(
-                        text = monthTitle(month),
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                    )
-                    Text(
-                        text = "${visitCount(total)} · ${shopCount(shops)}",
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-                IconButton(onClick = onNextMonth, enabled = state.canGoNextMonth) {
-                    Icon(CpIcons.ChevronRight, contentDescription = "Следующий месяц")
-                }
-            }
-
-            Row(Modifier.fillMaxWidth()) {
-                listOf("П", "В", "С", "Ч", "П", "С", "В").forEach { day ->
-                    Text(
-                        text = day,
-                        modifier = Modifier.weight(1f),
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        textAlign = TextAlign.Center,
-                    )
-                }
-            }
-
-            calendarCells(month).chunked(7).forEach { week ->
-                Row(Modifier.fillMaxWidth()) {
-                    week.forEachIndexed { dayOfWeek, day ->
-                        if (day == null) {
-                            Spacer(Modifier.weight(1f).height(52.dp))
-                        } else {
-                            val date = month.isoDate(day)
-                            val streak = checkInStreak(month, day, checkInDates)
-                            CalendarDay(
-                                day = day,
-                                date = date,
-                                checkIns = state.calendarCheckIns[date].orEmpty(),
-                                selected = state.selectedDate == date,
-                                today = today == date,
-                                inStreak = streak.isPartOfStreak,
-                                connectsPrevious = streak.hasPreviousDay && dayOfWeek > 0,
-                                connectsNext = streak.hasNextDay && dayOfWeek < 6,
-                                onClick = { onSelectDate(date) },
-                                modifier = Modifier.weight(1f),
-                            )
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun CalendarDay(
-    day: Int,
-    date: String,
-    checkIns: List<CheckIn>,
-    selected: Boolean,
-    today: Boolean,
-    inStreak: Boolean,
-    connectsPrevious: Boolean,
-    connectsNext: Boolean,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    val shape = if (inStreak) {
-        RoundedCornerShape(
-            topStart = if (connectsPrevious) 0.dp else CpDimens.radiusLg,
-            bottomStart = if (connectsPrevious) 0.dp else CpDimens.radiusLg,
-            topEnd = if (connectsNext) 0.dp else CpDimens.radiusLg,
-            bottomEnd = if (connectsNext) 0.dp else CpDimens.radiusLg,
-        )
-    } else {
-        RoundedCornerShape(CpDimens.radiusLg)
-    }
-    val description = "${selectedDateTitle(date)}, ${if (checkIns.isEmpty()) "нет чекинов" else visitCount(checkIns.size)}"
-    Box(
-        modifier = modifier
-            .height(52.dp)
-            .clip(shape)
-            .background(
-                when {
-                    selected -> MaterialTheme.colorScheme.primary.copy(alpha = 0.16f)
-                    inStreak -> MaterialTheme.colorScheme.primary.copy(alpha = 0.08f)
-                    else -> Color.Transparent
-                },
-            )
-            .then(
-                when {
-                    inStreak -> Modifier.border(1.5.dp, MaterialTheme.colorScheme.primary, shape)
-                    today -> Modifier.border(1.dp, MaterialTheme.colorScheme.primary, shape)
-                    else -> Modifier
-                },
-            )
-            .semantics { contentDescription = description }
-            .clickable(role = Role.Button, onClickLabel = "Выбрать дату", onClick = onClick),
-        contentAlignment = Alignment.Center,
-    ) {
-        if (checkIns.isEmpty()) {
-            Text(
-                text = day.toString(),
-                style = MaterialTheme.typography.bodyMedium,
-                fontWeight = if (selected || today) FontWeight.Bold else FontWeight.Medium,
-                color = MaterialTheme.colorScheme.onSurface,
-            )
-        } else {
-            CheckInThumbnail(
-                checkIns = checkIns,
-                modifier = Modifier.align(Alignment.Center),
-            )
-        }
-    }
-}
-
-@Composable
-private fun CheckInThumbnail(checkIns: List<CheckIn>, modifier: Modifier = Modifier) {
-    val visibleCheckIns = checkIns.take(3)
-    val thumbnailSize = 36.dp
-    val stackStep = 5.dp
-    Box(
-        modifier = modifier
-            .width(thumbnailSize + stackStep * (visibleCheckIns.size - 1))
-            .height(thumbnailSize),
-    ) {
-        visibleCheckIns.forEachIndexed { index, checkIn ->
-            val itemModifier = Modifier
-                .align(Alignment.CenterStart)
-                .offset(x = stackStep * index)
-                .size(thumbnailSize)
-                .clip(CircleShape)
-                .background(MaterialTheme.colorScheme.primaryContainer)
-                .border(1.5.dp, MaterialTheme.colorScheme.surface, CircleShape)
-            val photo = checkIn.photoThumbnailUrls.firstOrNull() ?: checkIn.photoUrls.firstOrNull()
-            if (photo != null) {
-                CpImage(
-                    data = photo,
-                    contentDescription = null,
-                    contentScale = ContentScale.Crop,
-                    placeholder = Res.drawable.maskot_with_photo,
-                    error = Res.drawable.maskot_with_photo,
-                    modifier = itemModifier,
-                )
-            } else {
-                Image(
-                    painter = painterResource(Res.drawable.maskot_with_photo),
-                    contentDescription = null,
-                    contentScale = ContentScale.Fit,
-                    modifier = itemModifier.padding(1.dp),
                 )
             }
         }
@@ -449,18 +281,18 @@ private val monthNamesGenitive = listOf(
     "июля", "августа", "сентября", "октября", "ноября", "декабря",
 )
 
-private fun monthTitle(month: CalendarMonth) = "${monthNames[month.month - 1]} ${month.year}"
+internal fun monthTitle(month: CalendarMonth) = "${monthNames[month.month - 1]} ${month.year}"
 
-private fun selectedDateTitle(date: String): String {
+internal fun selectedDateTitle(date: String, includeYear: Boolean = true): String {
     val parts = date.split('-')
     val year = parts.getOrNull(0)?.toIntOrNull() ?: return date
     val month = parts.getOrNull(1)?.toIntOrNull()?.takeIf { it in 1..12 } ?: return date
     val day = parts.getOrNull(2)?.toIntOrNull() ?: return date
-    return "$day ${monthNamesGenitive[month - 1]} $year"
+    return "$day ${monthNamesGenitive[month - 1]}" + if (includeYear) " $year" else ""
 }
 
-private fun visitCount(count: Int) = "$count ${plural(count, "чекин", "чекина", "чекинов")}"
-private fun shopCount(count: Int) = "$count ${plural(count, "кофейня", "кофейни", "кофеен")}"
+internal fun visitCount(count: Int) = "$count ${plural(count, "чекин", "чекина", "чекинов")}"
+internal fun shopCount(count: Int) = "$count ${plural(count, "кофейня", "кофейни", "кофеен")}"
 
 private fun plural(value: Int, one: String, few: String, many: String): String {
     val mod100 = value % 100

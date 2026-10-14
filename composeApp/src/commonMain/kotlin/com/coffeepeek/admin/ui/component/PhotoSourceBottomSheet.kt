@@ -33,6 +33,10 @@ fun PhotoSourceBottomSheet(
     onCamera: () -> Unit,
     title: String = "Добавить фото",
 ) {
+    if (NativeActionSheet(title, listOf(
+        PlatformAction("Выбрать из галереи", onClick = onGallery),
+        PlatformAction("Сделать фото", onClick = onCamera),
+    ), onDismiss)) return
     SwipeDismissModalBottomSheet(onDismissRequest = onDismiss) {
         Text(
             text = title,

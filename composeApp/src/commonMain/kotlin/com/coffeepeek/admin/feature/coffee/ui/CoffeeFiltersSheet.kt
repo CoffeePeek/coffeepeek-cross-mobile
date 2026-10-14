@@ -1,8 +1,8 @@
 package com.coffeepeek.admin.feature.coffee.ui
 
+import com.coffeepeek.admin.ui.component.PlatformScrollableColumn
+import com.coffeepeek.admin.ui.component.SwipeDismissModalBottomSheet
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -24,18 +24,16 @@ internal fun CoffeeFiltersSheet(
     onRetry: () -> Unit,
 ) {
     var draft by remember(state.filters) { mutableStateOf(state.filters) }
-    ModalBottomSheet(
+    SwipeDismissModalBottomSheet(
         onDismissRequest = onDismiss,
-        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
-        containerColor = MaterialTheme.colorScheme.background,
     ) {
         Row(Modifier.fillMaxWidth().padding(horizontal = CpDimens.spacing1), verticalAlignment = Alignment.CenterVertically) {
             TextButton(onClick = { draft = CoffeeFilters() }, enabled = draft.activeCount > 0) { Text("Сбросить") }
             Text("Фильтры", style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f), textAlign = androidx.compose.ui.text.style.TextAlign.Center)
             TextButton(onClick = { onApply(draft) }) { Text("Готово") }
         }
-        Column(
-            Modifier.weight(1f, fill = false).verticalScroll(rememberScrollState()).navigationBarsPadding()
+        PlatformScrollableColumn(
+            Modifier.weight(1f, fill = false).navigationBarsPadding()
                 .padding(horizontal = CpDimens.spacing4).padding(bottom = CpDimens.spacing6),
             verticalArrangement = Arrangement.spacedBy(CpDimens.spacing6),
         ) {

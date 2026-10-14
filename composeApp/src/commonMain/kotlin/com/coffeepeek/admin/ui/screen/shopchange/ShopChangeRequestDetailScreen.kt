@@ -1,5 +1,7 @@
 package com.coffeepeek.admin.ui.screen.shopchange
 
+import androidx.compose.runtime.getValue
+import com.coffeepeek.admin.ui.component.PlatformAlert
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -17,7 +19,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -27,10 +28,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -66,12 +65,7 @@ fun ShopChangeRequestDetailScreen(requestId: String) {
     val state by vm.state.collectAsState()
 
     state.error?.let { err ->
-        AlertDialog(
-            onDismissRequest = vm::clearError,
-            title = { Text("Ошибка") },
-            text = { Text(err) },
-            confirmButton = { TextButton(onClick = vm::clearError) { Text("Понятно") } },
-        )
+        PlatformAlert(title = "Ошибка", message = err, onConfirm = vm::clearError, onDismiss = vm::clearError)
     }
 
     Scaffold(

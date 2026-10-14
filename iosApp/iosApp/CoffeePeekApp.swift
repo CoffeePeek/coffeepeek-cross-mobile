@@ -6,7 +6,7 @@ import ComposeApp
 struct CoffeePeekApp: App {
     init() {
         IosNativeMapRegistry.shared.provider = MapLibreMapProvider()
-        configureGoogleSignIn()
+        SocialSignInProvider.shared.configure()
     }
 
     var body: some Scene {
@@ -18,49 +18,18 @@ struct CoffeePeekApp: App {
                 .ignoresSafeArea(.container, edges: .all)
                 .ignoresSafeArea(.keyboard)
                 .onOpenURL { url in
-                    GIDSignIn.sharedInstance.handle(url)
+                    if !GIDSignIn.sharedInstance.handle(url) {
+                        _ = MainViewControllerKt.handleAppLink(link: url.absoluteString)
+                    }
+                }
+                .onContinueUserActivity(NSUserActivityTypeBrowsingWeb) { activity in
+                    if let url = activity.webpageURL {
+                        _ = MainViewControllerKt.handleAppLink(link: url.absoluteString)
+                    }
                 }
         }
     }
 
-    private func configureGoogleSignIn() {
-        let info = Bundle.main.infoDictionary ?? [:]
-        let iosClientID = (info["GIDClientID"] as? String)?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-        let webClientID = (info["GIDServerClientID"] as? String)?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-        let reversedClientID = (info["CoffeePeekGoogleReversedClientID"] as? String)?
-            .trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-        let configured = !iosClientID.isEmpty
-            && !webClientID.isEmpty
-            && !reversedClientID.isEmpty
-            && reversedClientID != "coffeepeek-google-signin-disabled"
-
-        if configured {
-            GIDSignIn.sharedInstance.configuration = GIDConfiguration(
-                clientID: iosClientID,
-                serverClientID: webClientID
-            )
-        }
-
-        IosGoogleAuthBridge.shared.configure(
-            isConfigured: configured,
-            signIn: { completion in
-                let completionBox = KotlinCompletionBox(completion)
-                guard let presenter = UIApplication.shared.topViewController else {
-                    completionBox.call(idToken: nil, error: "Не удалось открыть Google Sign-In")
-                    return
-                }
-                GIDSignIn.sharedInstance.signIn(withPresenting: presenter) { result, error in
-                    completionBox.call(
-                        idToken: result?.user.idToken?.tokenString,
-                        error: error?.localizedDescription
-                    )
-                }
-            },
-            signOut: {
-                GIDSignIn.sharedInstance.signOut()
-            }
-        )
-    }
 }
 
 private struct ComposeRootView: UIViewControllerRepresentable {
@@ -69,32 +38,4 @@ private struct ComposeRootView: UIViewControllerRepresentable {
     }
 
     func updateUIViewController(_ uiViewController: UIViewController, context: Context) {}
-}
-
-private final class KotlinCompletionBox: @unchecked Sendable {
-    private let completion: (String?, String?) -> KotlinUnit
-
-    init(_ completion: @escaping (String?, String?) -> KotlinUnit) {
-        self.completion = completion
-    }
-
-    func call(idToken: String?, error: String?) {
-        _ = completion(idToken, error)
-    }
-}
-
-private extension UIApplication {
-    var topViewController: UIViewController? {
-        let root = connectedScenes
-            .compactMap { $0 as? UIWindowScene }
-            .flatMap(\.windows)
-            .first(where: \.isKeyWindow)?
-            .rootViewController
-
-        var current = root
-        while let presented = current?.presentedViewController {
-            current = presented
-        }
-        return current
-    }
 }

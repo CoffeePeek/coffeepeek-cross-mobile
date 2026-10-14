@@ -30,4 +30,10 @@ internal fun CheckInDto.toDomain(fileUrls: FileUrlResolver): CheckIn = CheckIn(
     rejectionReason = rejectionReason,
     helpfulCount = helpfulCount,
     isHelpfulByCurrentUser = isHelpfulByCurrentUser,
+    isHome = kind.equals("Home", ignoreCase = true),
+    homePreparation = home?.takeIf { kind.equals("Home", ignoreCase = true) }?.let {
+        com.coffeepeek.domain.feature.feed.FeedHomePreparation(
+            it.preparedOn, it.brewMethodCode, it.beanName, it.doseGrams, it.brewDurationSeconds, it.tasteScore,
+        )
+    },
 )

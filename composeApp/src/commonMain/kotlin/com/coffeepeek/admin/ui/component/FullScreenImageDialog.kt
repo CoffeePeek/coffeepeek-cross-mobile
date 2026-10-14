@@ -1,5 +1,11 @@
 package com.coffeepeek.admin.ui.component
 
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.getValue
+import androidx.compose.foundation.gestures.draggable
+import androidx.compose.foundation.gestures.rememberDraggableState
+import androidx.compose.foundation.gestures.Orientation
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.foundation.background
 import kotlinx.coroutines.launch
 import androidx.compose.ui.unit.IntSize
@@ -9,11 +15,9 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.geometry.isSpecified
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.runtime.setValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.calculateZoom
@@ -52,7 +56,7 @@ fun FullScreenImageDialog(
     onDismiss: () -> Unit,
 ) = FullScreenImageDialog(imageUrls = listOf(imageUrl), initialIndex = 0, onDismiss = onDismiss)
 
-/** Full-screen photo viewer; swipe horizontally between [imageUrls], tap anywhere to close. */
+/** Full-screen photo viewer; swipe horizontally between [imageUrls], tap to toggle controls, drag down to dismiss. */
 @Composable
 fun FullScreenImageDialog(
     imageUrls: List<String>,
@@ -66,6 +70,14 @@ fun FullScreenImageDialog(
     )
     // While the current photo is zoomed, drags pan the photo instead of switching pages.
     var isZoomed by remember { mutableStateOf(false) }
+    var controlsVisible by remember { mutableStateOf(true) }
+    var dismissOffset by remember { mutableFloatStateOf(0f) }
+    var viewportHeight by remember { mutableFloatStateOf(1f) }
+    val scope = rememberCoroutineScope()
+    val reduceMotion = platformReduceMotion()
+    val threshold = with(LocalDensity.current) { 120.dp.toPx() }
+    val flingThreshold = with(LocalDensity.current) { 900.dp.toPx() }
+    val dismissDrag = rememberDraggableState { dismissOffset = (dismissOffset + it).coerceAtLeast(0f) }
 
     Dialog(
         onDismissRequest = onDismiss,
@@ -74,25 +86,32 @@ fun FullScreenImageDialog(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color.Black),
+                .onSizeChanged { viewportHeight = it.height.toFloat().coerceAtLeast(1f) }
+                .background(Color.Black.copy(alpha = (1f - dismissOffset / viewportHeight).coerceIn(0f, 1f)))
+                .draggable(dismissDrag, Orientation.Vertical, enabled = !isZoomed,
+                    onDragStopped = { velocity ->
+                        val dismiss = dismissOffset >= threshold || velocity >= flingThreshold
+                        animate(dismissOffset, if (dismiss) viewportHeight else 0f, animationSpec = tween(if (reduceMotion) 0 else 180)) { value, _ -> dismissOffset = value }
+                        if (dismiss) onDismiss()
+                    }),
         ) {
             HorizontalPager(
                 state = pagerState,
                 beyondViewportPageCount = 1,
                 userScrollEnabled = !isZoomed,
-                modifier = Modifier.fillMaxSize(),
+                modifier = Modifier.fillMaxSize().graphicsLayer { translationY = dismissOffset },
             ) { page ->
                 val isCurrent = pagerState.currentPage == page
                 ZoomableImage(
                     imageUrl = imageUrls[page],
                     contentDescription = "Фото ${page + 1} из ${imageUrls.size}",
                     isCurrent = isCurrent,
-                    onTap = onDismiss,
+                    onTap = { controlsVisible = !controlsVisible },
                     onZoomChanged = { if (isCurrent) isZoomed = it },
                 )
             }
 
-            if (imageUrls.size > 1) {
+            if (controlsVisible && imageUrls.size > 1) {
                 Text(
                     text = "${pagerState.currentPage + 1} / ${imageUrls.size}",
                     style = MaterialTheme.typography.labelLarge,
@@ -106,7 +125,7 @@ fun FullScreenImageDialog(
                 )
             }
 
-            PlatformGlassIconButton(
+            if (controlsVisible) PlatformGlassIconButton(
                 icon = GlassControlIcon.Close,
                 onClick = onDismiss,
                 contentDescription = "Закрыть",

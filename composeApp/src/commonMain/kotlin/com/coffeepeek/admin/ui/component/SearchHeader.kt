@@ -12,7 +12,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.admin.theme.CpDimens
@@ -49,7 +48,9 @@ internal fun SearchHeader(
             value = query,
             onValueChange = onQueryChange,
             placeholder = placeholder,
-            modifier = Modifier.weight(1f).onFocusChanged { if (it.isFocused) onSearchFocus() },
+            modifier = Modifier.weight(1f),
+            onFocusChanged = { if (it) onSearchFocus() },
+            onCancelSearch = onCancelSearch,
             fieldHeight = CpDimens.buttonHeight,
         )
         if (onFilters != null) BadgedBox(badge = {

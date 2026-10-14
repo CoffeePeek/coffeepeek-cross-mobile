@@ -13,10 +13,10 @@
     <string name="no_account">Нет аккаунта? </string>
     <string name="login">Войти</string>
     <string name="sign_in_google">Войти через Google</string>
+    <string name="sign_in_apple">Войти через Apple</string>
     <string name="create_account">Создать аккаунт</string>
     <string name="create_account_title">Создайте аккаунт</string>
     <string name="forgot_password">Забыли пароль?</string>
-    <string name="forgot_password_soon">Восстановление пароля скоро будет доступно</string>
     <string name="registr">Зарегистрироваться</string>
     <string name="registration">Регистрация</string>
     <string name="email_no_exist">Этот Email уже занят</string>
@@ -26,6 +26,7 @@
     <string name="error_enter_email">Введите email</string>
     <string name="error_enter_password">Введите пароль</string>
     <string name="error_enter_password_length">Пароль должен содержать как минимум 8 символов</string>
+    <string name="registration_password_placeholder">От 8 символов</string>
     <string name="error_term_of_user">Для завершения регистрации необходимо принять условия соглашения и политику конфиденциальности!</string>
     <string name="error_email_name">Введите email</string>
     <string name="error_valid_email">Введите корректный email</string>

@@ -1,5 +1,9 @@
 package com.coffeepeek.admin.ui.screen.addshop
 
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.getValue
+import com.coffeepeek.admin.ui.component.PlatformScrollableColumn
+import com.coffeepeek.admin.ui.component.PlatformAlert
 import com.coffeepeek.admin.ui.icons.CpIcons
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.slideInHorizontally
@@ -11,7 +15,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -21,13 +24,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -36,18 +35,14 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.LocalMinimumInteractiveComponentSize
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -58,10 +53,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.coffeepeek.admin.theme.CpDimens
 import com.coffeepeek.admin.ui.component.CompactOutlinedTextField
-import com.coffeepeek.admin.theme.CpColor
 import com.coffeepeek.admin.ui.component.ActionRow
 import com.coffeepeek.admin.ui.component.CheckmarkRow
 import com.coffeepeek.admin.ui.component.CheckmarkSection
@@ -118,16 +111,7 @@ fun AddShopScreen(vm: AddShopViewModel = platformViewModel()) {
 
     // Диалог ошибки
     state.submitError?.let { err ->
-        AlertDialog(
-            onDismissRequest = vm::clearSubmitError,
-            containerColor = MaterialTheme.colorScheme.surface,
-            title = { Text("Ошибка", style = MaterialTheme.typography.headlineSmall) },
-            text = { Text(err, style = MaterialTheme.typography.bodyMedium) },
-            confirmButton = {
-                TextButton(onClick = vm::clearSubmitError) { Text("Понятно") }
-            },
-            shape = RoundedCornerShape(CpDimens.radius2xl),
-        )
+        PlatformAlert(title = "Ошибка", message = err, onConfirm = vm::clearSubmitError, onDismiss = vm::clearSubmitError)
     }
 
     Scaffold(
@@ -181,11 +165,11 @@ fun AddShopScreen(vm: AddShopViewModel = platformViewModel()) {
             },
             label = "step",
         ) { step ->
-            Column(
+            PlatformScrollableColumn(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(padding)
-                    .verticalScroll(rememberScrollState())
+
                     .padding(CpDimens.spacing4),
             ) {
                 when (step) {
@@ -523,6 +507,7 @@ private fun StepSchedule(state: AddShopUiState, vm: AddShopViewModel) {
 // ponytail: ±30 min stepper; swap for an iOS-style wheel time picker if 30-min granularity is too coarse.
 @Composable
 private fun TimeStepperRow(label: String, value: String, onAdjust: (Int) -> Unit) {
+    if (com.coffeepeek.admin.ui.component.NativeTimePickerRow(label, value, onAdjust)) return
     StepperRow(
         label = label,
         value = value,
@@ -860,8 +845,9 @@ private fun CityDropdown(
                 .matchParentSize()
                 .clickable { expanded = true }
         )
+        val nativeMenu = expanded && com.coffeepeek.admin.ui.component.NativeActionSheet("Город", cities.map { city -> com.coffeepeek.admin.ui.component.PlatformAction(city.name, onClick = { onSelect(city) }) }) { expanded = false }
         DropdownMenu(
-            expanded = expanded,
+            expanded = expanded && !nativeMenu,
             onDismissRequest = { expanded = false },
             modifier = Modifier
                 .clip(menuShape)

@@ -19,9 +19,10 @@ import androidx.compose.ui.unit.dp
 internal fun ReviewFormStep(
     optional: Boolean = false,
     last: Boolean = false,
+    isError: Boolean = false,
     content: @Composable () -> Unit,
 ) {
-    val color = MaterialTheme.colorScheme.primary
+    val color = if (isError) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary
     Column(
         Modifier.fillMaxWidth()
             .semantics { if (optional) stateDescription = "Необязательный пункт" }

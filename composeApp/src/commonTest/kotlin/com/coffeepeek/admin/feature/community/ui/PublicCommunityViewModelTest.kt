@@ -72,7 +72,7 @@ class PublicCommunityViewModelTest {
         val vm = CommunityViewModel(FeedCheckIns(), FeedSessions(null), FeedShops(), feed, FeedUsers())
         try {
             vm.await { it.page == 1 && !it.isLoading }
-            vm.loadMore(); vm.await { it.error == "Offline" }
+            vm.loadMore(); vm.await { it.failedPage == 2 && it.error != null && !it.isLoadingMore }
             assertEquals("next_-opaque", vm.state.value.nextCursor)
             vm.retry()
             val all = vm.await { it.page == 2 && !it.isLoadingMore }

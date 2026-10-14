@@ -31,13 +31,14 @@ import com.coffeepeek.admin.ui.component.CoffeePeekPullToRefresh
 import com.coffeepeek.admin.ui.component.CoffeeShopImage
 import com.coffeepeek.admin.ui.component.CoffeeShopPlaceholderImage
 import com.coffeepeek.admin.ui.component.LocalFloatingNavClearance
+import com.coffeepeek.admin.ui.component.LoadErrorContent
 import com.coffeepeek.admin.ui.component.PriceBynIcon
 import com.coffeepeek.admin.ui.component.SearchHeader
 import kotlin.math.round
-import org.koin.compose.viewmodel.koinViewModel
+import com.coffeepeek.admin.di.platformViewModel
 
 @Composable
-internal fun CoffeeListScreen(vm: CoffeeListViewModel = koinViewModel()) {
+internal fun CoffeeListScreen(vm: CoffeeListViewModel = platformViewModel()) {
     val state by vm.state.collectAsState()
     val listState = rememberLazyListState()
     var showFilters by rememberSaveable { mutableStateOf(false) }
@@ -92,7 +93,7 @@ internal fun CoffeeListScreen(vm: CoffeeListViewModel = koinViewModel()) {
                 modifier = scrollModifier.fillMaxSize(),
                 contentPadding = PaddingValues(
                     start = CpDimens.spacing4, top = CpDimens.spacing4,
-                    end = CpDimens.spacing4, bottom = clearance + CpDimens.spacing4,
+                    end = CpDimens.spacing4, bottom = clearance + 88.dp,
                 ),
                 verticalArrangement = Arrangement.spacedBy(CpDimens.spacing4),
             ) {
@@ -103,12 +104,7 @@ internal fun CoffeeListScreen(vm: CoffeeListViewModel = koinViewModel()) {
                     }
                 }
                 if (state.error != null) item {
-                    Column(Modifier.fillMaxWidth().padding(CpDimens.spacing4), horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text(state.error.orEmpty(), color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        TextButton(onClick = { if (state.items.isEmpty()) vm.refresh() else vm.loadMore() }) {
-                            Text("Попробовать снова")
-                        }
-                    }
+                    LoadErrorContent(onRetry = { if (state.items.isEmpty()) vm.refresh() else vm.loadMore() })
                 } else if (state.items.isEmpty() && !state.isLoading) item {
                     Column(Modifier.fillMaxWidth().padding(CpDimens.spacing6), horizontalAlignment = Alignment.CenterHorizontally) {
                         Text("Кофе не найден", style = MaterialTheme.typography.titleMedium)

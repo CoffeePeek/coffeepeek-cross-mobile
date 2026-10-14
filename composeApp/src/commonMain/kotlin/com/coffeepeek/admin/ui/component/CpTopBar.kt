@@ -26,8 +26,11 @@ fun CpTopBar(
     title: String,
     modifier: Modifier = Modifier,
     onBack: (() -> Unit)? = { Navigator.popBack() },
-    actions: @Composable RowScope.() -> Unit = {},
+    actions: (@Composable RowScope.() -> Unit)? = null,
+    customBack: Boolean = false,
+    nativeAction: NavigationBarAction? = null,
 ) {
+    if ((actions == null || nativeAction != null) && NativeNavigationBar(title, onBack, customBack, nativeAction)) return
     CenterAlignedTopAppBar(
         title = {
             Text(
@@ -39,7 +42,7 @@ fun CpTopBar(
             )
         },
         navigationIcon = { onBack?.let { CpCircularBackButton(onClick = it) } },
-        actions = actions,
+        actions = actions ?: {},
         colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
             containerColor = MaterialTheme.colorScheme.background,
         ),

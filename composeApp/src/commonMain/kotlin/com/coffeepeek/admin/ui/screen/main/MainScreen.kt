@@ -1,13 +1,15 @@
 package com.coffeepeek.admin.ui.screen.main
 
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.getValue
 import dev.chrisbanes.haze.hazeSource
 import dev.chrisbanes.haze.rememberHazeState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.navigationBars
-import androidx.compose.animation.EnterTransition
-import androidx.compose.animation.ExitTransition
+import androidx.compose.animation.AnimatedContentTransitionScope
+import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -18,19 +20,18 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.navigation.NavDestination
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavBackStackEntry
@@ -42,7 +43,6 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.navigation
 import androidx.navigation.compose.rememberNavController
-import com.coffeepeek.admin.theme.CpDimens
 import com.coffeepeek.admin.ui.Navigator
 import com.coffeepeek.admin.ui.Navigator.isHandledByRootNav
 import com.coffeepeek.admin.ui.component.PlatformFloatingBottomNavBar
@@ -51,13 +51,7 @@ import com.coffeepeek.admin.ui.component.FloatingNavBottomMargin
 import com.coffeepeek.admin.ui.component.FloatingNavItem
 import com.coffeepeek.admin.ui.component.RetainedContent
 import com.coffeepeek.admin.ui.component.ProvideFloatingNavClearance
-import com.coffeepeek.admin.ui.screen.feed.FeedScreen
 import com.coffeepeek.admin.feature.coffee.ui.CoffeeListScreen
-import com.coffeepeek.admin.ui.screen.feed.FeedViewModel
-import com.coffeepeek.admin.di.platformViewModel
-import com.coffeepeek.admin.ui.screen.map.MapScreen
-import com.coffeepeek.admin.ui.screen.roaster.RoasterPreview
-import com.coffeepeek.admin.ui.screen.roaster.RoasterListViewModel
 import com.coffeepeek.admin.ui.screen.profile.ProfileScreen
 import com.coffeepeek.admin.ui.screen.profile.SettingsScreen
 import com.coffeepeek.admin.ui.icons.CpIcons
@@ -74,7 +68,10 @@ expect fun MainScreen()
 
 @Composable
 internal fun ComposeMainScreen() {
+    val reduceMotion = com.coffeepeek.admin.ui.component.platformReduceMotion()
     val bottomNavController = rememberNavController()
+    val focusManager = LocalFocusManager.current
+    val keyboard = LocalSoftwareKeyboardController.current
     var isFeedMapExpanded by remember { mutableStateOf(false) }
     val pendingTabSelection by Navigator.pendingTabSelection.collectAsState()
 
@@ -148,6 +145,16 @@ internal fun ComposeMainScreen() {
 
     val navBackStackEntry by bottomNavController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
+    val visibleEntries by bottomNavController.visibleEntries.collectAsState()
+    val feedSlide by animateFloatAsState(
+        targetValue = if (currentDestination == null || currentDestination.hasRoute<Navigator.Screen.FeedTab>()) 0f else -1f,
+        animationSpec = tween(if (reduceMotion) 0 else 300, easing = FastOutSlowInEasing),
+        label = "retained-feed-slide",
+    )
+    LaunchedEffect(navBackStackEntry) {
+        focusManager.clearFocus(force = true)
+        keyboard?.hide()
+    }
     val isExpandedMapVisible = isFeedMapExpanded &&
         currentDestination?.hasRoute<Navigator.Screen.FeedTab>() == true
     val density = LocalDensity.current
@@ -164,66 +171,10 @@ internal fun ComposeMainScreen() {
             // Capture the visible tab once; retained search content must not keep a separate glass layer.
             Box(Modifier.fillMaxSize().hazeSource(tabBarHaze)) {
                 feedEntry?.takeIf { it.lifecycle.currentState != Lifecycle.State.DESTROYED }?.let { entry ->
-                    val lifecycleState by entry.lifecycle.currentStateFlow.collectAsState()
                     entry.LocalOwnersProvider(feedStateHolder) {
-                        RetainedContent(visible = lifecycleState.isAtLeast(Lifecycle.State.STARTED)) {
-                            var showRoasters by rememberSaveable { mutableStateOf(false) }
-                            val feedVm: FeedViewModel = platformViewModel()
-                            val feedState by feedVm.uiState.collectAsState()
-                            val roasterVm: RoasterListViewModel = platformViewModel()
-                            val pendingMapFocus by Navigator.pendingMapFocus.collectAsState()
-                            LaunchedEffect(pendingMapFocus) {
-                                if (pendingMapFocus != null) showRoasters = false
-                            }
-                            val searchOpacity = animateFloatAsState(if (showRoasters) 0f else 1f, tween(360), label = "discovery-roaster-list")
-                            val searchVisible by remember { derivedStateOf { searchOpacity.value > 0f } }
-                            Box(Modifier.fillMaxSize()) {
-                                RetainedContent(visible = searchVisible) {
-                                    Box(Modifier.fillMaxSize().graphicsLayer {
-                                        alpha = searchOpacity.value
-                                        translationY = -size.height / 5f * (1f - searchOpacity.value)
-                                    }) {
-                                        FeedScreen(
-                                            vm = feedVm,
-                                            onSelectRoasters = { showRoasters = true },
-                                            mapPreview = { expanded, onToggleExpand, canvasSize, modifier ->
-                                                MapScreen(
-                                                    modifier = modifier,
-                                                    isPreview = !expanded,
-                                                    onToggleExpand = onToggleExpand,
-                                                    canvasSize = canvasSize,
-                                                )
-                                            },
-                                            roasterPreview = {
-                                                RoasterPreview(
-                                                    query = feedState.query,
-                                                    selectedRoasterIds = feedState.filters.roasterIds,
-                                                    favoritesOnly = feedState.filters.favoritesOnly,
-                                                    vm = roasterVm,
-                                                )
-                                            },
-                                            onMapExpandedChange = { isFeedMapExpanded = it },
-                                        )
-                                    }
-                                }
-                                AnimatedVisibility(
-                                    visible = showRoasters,
-                                    modifier = Modifier.fillMaxSize(),
-                                    enter = fadeIn(tween(300)) + slideInVertically(tween(360)) { it / 5 },
-                                    exit = fadeOut(tween(240)) + slideOutVertically(tween(360)) { -it / 5 },
-                                ) {
-                                    com.coffeepeek.admin.ui.screen.roaster.RoasterListScreen(
-                                        onCancel = {
-                                            feedVm.cancelSearch()
-                                            showRoasters = false
-                                        },
-                                        query = feedState.query,
-                                        onQueryChange = feedVm::onQueryChange,
-                                        selectedRoasterIds = feedState.filters.roasterIds,
-                                        favoritesOnly = feedState.filters.favoritesOnly,
-                                        vm = roasterVm,
-                                    )
-                                }
+                        RetainedContent(visible = entry in visibleEntries) {
+                            Box(Modifier.fillMaxSize().graphicsLayer { translationX = size.width * feedSlide }) {
+                                DiscoveryTabContent(onMapExpandedChange = { isFeedMapExpanded = it })
                             }
                         }
                     }
@@ -232,19 +183,30 @@ internal fun ComposeMainScreen() {
                     navController = bottomNavController,
                     startDestination = Navigator.Screen.FeedGraph,
                     modifier = Modifier.fillMaxSize(),
-                    enterTransition = { EnterTransition.None },
-                    exitTransition = { ExitTransition.None },
-                    popEnterTransition = { EnterTransition.None },
-                    popExitTransition = { ExitTransition.None },
+                    enterTransition = {
+                        slideIntoContainer(tabDirection(), tween(if (reduceMotion) 0 else 300, easing = FastOutSlowInEasing))
+                    },
+                    exitTransition = {
+                        slideOutOfContainer(tabDirection(), tween(if (reduceMotion) 0 else 300, easing = FastOutSlowInEasing))
+                    },
+                    popEnterTransition = {
+                        slideIntoContainer(tabDirection(), tween(if (reduceMotion) 0 else 300, easing = FastOutSlowInEasing))
+                    },
+                    popExitTransition = {
+                        slideOutOfContainer(tabDirection(), tween(if (reduceMotion) 0 else 300, easing = FastOutSlowInEasing))
+                    },
                 ) {
                     navigation<Navigator.Screen.FeedGraph>(startDestination = Navigator.Screen.FeedTab) {
                         composable<Navigator.Screen.FeedTab> {
+                            Box(Modifier.fillMaxSize())
                             SideEffect { feedEntry = it }
                         }
                     }
 
                     navigation<Navigator.Screen.CoffeeGraph>(startDestination = Navigator.Screen.CoffeeTab) {
-                        composable<Navigator.Screen.CoffeeTab> { CoffeeListScreen() }
+                        composable<Navigator.Screen.CoffeeTab> {
+                            CheckInTabContent { CoffeeListScreen() }
+                        }
                     }
 
                     navigation<Navigator.Screen.CommunityGraph>(startDestination = Navigator.Screen.CommunityTab) {
@@ -267,8 +229,8 @@ internal fun ComposeMainScreen() {
 
             AnimatedVisibility(
                 visible = !isExpandedMapVisible,
-                enter = fadeIn(tween(250)) + slideInVertically(tween(360)) { it },
-                exit = fadeOut(tween(250)) + slideOutVertically(tween(360)) { it },
+                enter = fadeIn(tween(if (reduceMotion) 0 else 250)) + slideInVertically(tween(if (reduceMotion) 0 else 360)) { it },
+                exit = fadeOut(tween(if (reduceMotion) 0 else 250)) + slideOutVertically(tween(if (reduceMotion) 0 else 360)) { it },
                 modifier = Modifier.align(Alignment.BottomCenter),
             ) {
                 PlatformFloatingBottomNavBar(
@@ -298,4 +260,19 @@ internal fun ComposeMainScreen() {
             }
         }
     }
+}
+
+private fun AnimatedContentTransitionScope<NavBackStackEntry>.tabDirection() =
+    if (targetState.destination.tabIndex() >= initialState.destination.tabIndex()) {
+        AnimatedContentTransitionScope.SlideDirection.Left
+    } else {
+        AnimatedContentTransitionScope.SlideDirection.Right
+    }
+
+private fun NavDestination.tabIndex(): Int = when {
+    hasRoute<Navigator.Screen.FeedTab>() -> 0
+    hasRoute<Navigator.Screen.CoffeeTab>() -> 1
+    hasRoute<Navigator.Screen.CommunityTab>() -> 2
+    hasRoute<Navigator.Screen.ProfileTab>() -> 3
+    else -> 4
 }

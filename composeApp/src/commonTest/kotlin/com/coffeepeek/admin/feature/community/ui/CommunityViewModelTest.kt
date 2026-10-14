@@ -135,7 +135,7 @@ class CommunityViewModelTest {
         try {
             vm.await { it.page == 1 && !it.isLoading }
             vm.loadMore()
-            vm.await { it.error == "Offline" }
+            vm.await { it.failedPage == 2 && it.error != null && !it.isLoadingMore }
             vm.retry()
             val all = vm.await { it.page == 2 && !it.isLoadingMore }
             assertEquals(listOf("own", "second"), all.items.map { it.id })

@@ -1,5 +1,7 @@
 package com.coffeepeek.admin.ui.component
 
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.getValue
 import androidx.compose.animation.core.animate
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
@@ -9,6 +11,7 @@ import androidx.compose.foundation.gestures.rememberDraggableState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -18,11 +21,9 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.SheetValue
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -35,8 +36,10 @@ import androidx.compose.ui.unit.dp
 fun SwipeDismissModalBottomSheet(
     onDismissRequest: () -> Unit,
     dismissEnabled: Boolean = true,
+    maxSheetHeightFraction: Float? = null,
     content: @Composable ColumnScope.() -> Unit,
 ) {
+    if (NativeModalSheet(onDismissRequest, dismissEnabled, content)) return
     val canDismiss by rememberUpdatedState(dismissEnabled)
     val sheetState = rememberModalBottomSheetState(
         skipPartiallyExpanded = true,
@@ -52,7 +55,10 @@ fun SwipeDismissModalBottomSheet(
 
     ModalBottomSheet(
         onDismissRequest = { if (dismissEnabled) onDismissRequest() },
-        modifier = Modifier.graphicsLayer { translationY = dragOffset },
+        modifier = Modifier
+            .then(maxSheetHeightFraction?.let { Modifier.fillMaxHeight(it) } ?: Modifier)
+            .graphicsLayer { translationY = dragOffset }
+            .dismissKeyboardOnBackgroundGestures(),
         sheetState = sheetState,
         sheetGesturesEnabled = false,
         dragHandle = {
