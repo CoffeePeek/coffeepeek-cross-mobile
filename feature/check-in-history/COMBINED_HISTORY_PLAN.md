@@ -64,8 +64,8 @@ Create the boundary with actual consumers and tested models, not empty scaffoldi
 
 1. Finish the migrated core modal correction and Shop source/visual parity.
    Retain pending-write locks and independently run placement/overlay/form tests.
-   PR #92 remains the separate main-based production fix into develop; do not
-   cherry-pick it into the migration branch or duplicate legacy-file edits here.
+   PR #92 is the separate main-based production fix, now merged into develop and
+   received through merge 54d2acf. Do not cherry-pick it again when main is updated.
 2. Prepare Home's pure read foundation and app-owned compatibility adapter.
    Audit calendar/day/query semantics, nullable visibility/moderation, photos,
    page counts and missing fields. Preserve preparedOn versus preparedAtUtc.

@@ -4,6 +4,18 @@ Source audit: updated 2026-10-14 after merging main at e5722f9. Continue the exi
 PR #43 targeting develop. This plan supersedes the earlier checkpoint ordering;
 closed stack PRs are historical, not separate current workspaces.
 
+Develop synchronization: origin/develop 83137f4 (including merged PR #92) entered
+this branch through merge 54d2acf. The original 6ee3e2f fix commit is an ancestor,
+not a cherry-pick; a future main merge will not introduce a second copy. The single
+Gradle conflict was resolved by keeping one Compose-test/Espresso declaration
+and the catalog-backed debug test host. Existing upstream Coffee refresh/iOS dot
+changes are retained, not rewritten as part of this synchronization.
+Post-merge verification passes: Direct/Play APK/DEX, 217 app unit tests per variant,
+app lint and test APK assembly; three legacy placement, three core placement and
+four prepared-history composition UI tests on the owned read-only emulator.
+No user-phone updates/data clearing/backend writes; no new iOS implementation
+or iOS build certification is claimed by this Android synchronization check.
+
 ## Scope and counting
 
 The audited layout before history preparation had 23 Gradle modules: composeApp,
@@ -275,8 +287,9 @@ also compile in the publication build. Device execution and visual parity remain
 unverified; earlier fixture installation was rejected by command approval with 403.
 Command access recovered for the publication attempt. Publish accumulated work in
 the existing PR #43 targeting develop; do not merge it or claim release readiness.
-PR #92 is the independent main-based production modal fix into develop. Do not
-cherry-pick its legacy edits into this branch: they will arrive through main.
+PR #92 is the independent main-based production modal fix merged into develop.
+Its legacy edits have now arrived via the develop merge above, with original history;
+do not cherry-pick them again when main is updated.
 The migrated core correction bounds its inner handle/content instead of Material's
 anchor viewport; the Shop form and safe fixture use that API. Its three placement
 tests, seven overlay/lock tests and two theme tests pass on the owned emulator;
