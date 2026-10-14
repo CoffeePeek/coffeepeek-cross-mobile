@@ -2,6 +2,9 @@ package com.coffeepeek.admin
 
 import androidx.compose.runtime.getValue
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.background
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
@@ -29,7 +32,7 @@ fun App(onReady: () -> Unit = {}) {
     }
 
     AppContent {
-        Box(Modifier.fillMaxSize().dismissKeyboardOnBackgroundGestures()) {
+        Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).dismissKeyboardOnBackgroundGestures()) {
             OrientationObserver.StartObserver()
             Navigator()
             com.coffeepeek.admin.feature.appupdate.ui.AppUpdatePrompt()
@@ -52,7 +55,10 @@ internal fun AppContent(content: @Composable () -> Unit) {
     PlatformSystemBars(darkTheme)
 
     CoffeePeekTheme(darkTheme = darkTheme) {
-        CompositionLocalProvider(LocalKamelConfig provides kamelConfig) {
+        CompositionLocalProvider(
+            LocalKamelConfig provides kamelConfig,
+            LocalContentColor provides MaterialTheme.colorScheme.onBackground,
+        ) {
             content()
         }
     }

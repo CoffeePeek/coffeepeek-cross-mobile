@@ -27,9 +27,10 @@ Compose navigation between tabs. Top bars and search fields were Compose views.
   editor back actions are explicit and disable stack-pop gestures while active.
   Standalone sheets fall back to their own header instead of changing a screen
   underneath. Custom hero headers remain part of their screen for now.
-- `CpSearchField` uses UISearchBar on iOS, with native clear/cancel/search actions,
-  Dynamic Type, and explicit focus callbacks. Marked text is not overwritten
-  during IME composition. Android retains its existing field.
+- `CpSearchField` now uses the shared Compose field on both platforms. Its
+  background, clipping, search/clear actions and focus belong to one renderer;
+  `NativeSearchField` returns false. See the
+  [interop audit](IOS_COMPOSE_INTEROP_AUDIT.md) for the correction to this stage.
 - Discovery content is shared between the Android navigator and native iOS root;
   it is not copied into a second feature implementation.
 
@@ -44,7 +45,8 @@ There are no new data, domain, DI, Gradle, or Swift framework dependencies.
    repositories and DTOs behind the feature boundary. Move settings ownership
    incrementally before adding a SwiftUI consumer.
 2. Profile and forms: SwiftUI Form/List/TextEditor, focus management, validation,
-   and keyboard interaction. Reuse the existing native auth and photo pickers.
+   and keyboard interaction. Preserve credential content types and reuse the
+   existing native photo pickers.
 3. Search/feed/shop/check-in screen content, native refresh, and photo viewer.
    Preserve CoffeePeek branding, drink cutouts, and the existing MapLibre engine.
 

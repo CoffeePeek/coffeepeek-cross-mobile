@@ -27,25 +27,29 @@ No platform objects enter feature state, data, or domain contracts.
   menus; destructive actions use the system destructive style. Photo menus
   finish dismissing before invoking the next picker. iPad menus have a popover
   anchor. Rich report forms use sheets instead of a text-only alert.
-- `NativeAuthInput`: UITextField, secure-entry toggle preserving text/selection,
-  username/password/newPassword content types, Next/Done return keys and an
-  accessory Done button. Native fields expose accessibility labels and follow
-  the system text size. Website-specific credential suggestions also depend
+- Authentication fields use the shared `AuthTextField`/`CompactOutlinedTextField`
+  styling, including rounded borders and the password visibility button.
+  `NativeAuthInput` returns false. iOS keyboard options preserve
+  username/password/newPassword/name content types and Next/Done return keys.
+  Password editing stays Compose-owned to preserve the visibility toggle;
+  other fields can use Compose's native text input integration.
+  Website-specific credential suggestions also depend
   on Apple associated-domain provisioning; this change does not configure the
   website's apple-app-site-association or signing entitlements.
 - `NativeKeyboardDoneAccessory`: UIKit Done toolbar for numeric/phone Compose
   inputs, anchored to the keyboard layout guide, removed when focus/IME closes.
-- `PlatformScrollableColumn`: actual UIScrollView for finite forms/settings
-  and filter contents; content stays Compose. UIKit owns bounce, status-bar
-  scroll-to-top and interactive keyboard dismissal. Keyboard avoidance and
-  active native-field visibility are coordinated with keyboard frame updates.
+- `PlatformScrollableColumn`: shared Compose scrolling and IME padding for
+  finite forms/settings and filters. `NativeScrollColumn` returns false, so
+  these surfaces do not create a nested Compose controller inside UIScrollView.
   Do not use this eager form container for paginated lists or nest LazyColumn
   in its unbounded content.
 - `NativeDatePicker`: system date/time wheels. Calendar dates are represented
   as UTC days to match the existing Material date picker contract; future
   check-in dates remain disallowed. Time selection retains minute precision.
-- `PlatformSwitch` / `NativeSegmentedControl`: UIKit controls; whole-row switch
-  semantics stay in Compose to avoid duplicate VoiceOver announcements.
+- `PlatformSwitch`: Compose control using the shared switch palette. Whole-row
+  switch semantics stay in Compose to avoid duplicate VoiceOver announcements.
+  `NativeSegmentedControl` remains UIKit, with an explicit transparent overlay
+  and colors updated from the application theme.
 - Photo viewer: vertical drag dismissal/cancellation, horizontal paging,
   pinch/double-tap zoom and tap-to-toggle controls. This viewer remains Compose.
 - Selection/success haptics: favorite actions, native controls, refresh
@@ -58,8 +62,8 @@ Paginated feeds remain virtualized Compose LazyColumns. Their pull-to-refresh
 keeps the shared implementation and native loader, with threshold feedback.
 `PlatformScrollToTop` is a narrow UIKit status-bar-event bridge to LazyListState;
 it does not take over list gestures or emulate interactive keyboard movement.
-Interactive keyboard tracking is provided by the native form scroll containers;
-other Compose surfaces retain pan-to-dismiss behavior.
+Forms use Compose IME padding and the existing pan-to-dismiss behavior; they do
+not provide UIScrollView's interactive keyboard tracking.
 
 The bottom navigation now uses UITabBarController. Automatic native
 tab minimization and a full UIKit table/collection-view migration are outside
@@ -67,7 +71,10 @@ this implementation.
 
 ## Verification
 
-Windows checks passed:
+See [the interop audit](IOS_COMPOSE_INTEROP_AUDIT.md) for current rendering rules,
+the complete integration inventory, and verification of the visual fixes.
+
+Earlier migration checks on Windows passed:
 
 ```text
 :composeApp:compileKotlinIosArm64
@@ -92,7 +99,7 @@ Device acceptance checks:
    heights, keyboard interaction, busy-state dismissal and iPad popovers.
 3. Sign-in/register/reset fields: Next/Done, Passwords AutoFill, secure toggle
    while editing, selection retention and the first edit after toggling.
-4. Scroll forms with the keyboard open; reverse an interactive dismissal;
-   test numeric fields' Done toolbar and large accessibility text sizes.
+4. Scroll forms with the keyboard open; test pan-to-dismiss, numeric fields'
+   Done toolbar and large accessibility text sizes.
 5. Photo paging/pinch versus vertical dismissal, VoiceOver controls, Reduce
    Motion toggled while running, and status-bar taps on the active list.

@@ -29,7 +29,6 @@ import com.coffeepeek.domain.model.CheckInVisibility
 
 @Composable
 fun CommunityScreen(onCreateCheckIn: () -> Unit) {
-    val nativeHeader = com.coffeepeek.admin.ui.component.NativeNavigationBar("Лента", null, false, null)
     val vm: CommunityViewModel = platformViewModel()
     val state by vm.state.collectAsState()
     val listState = rememberLazyListState()
@@ -90,22 +89,28 @@ fun CommunityScreen(onCreateCheckIn: () -> Unit) {
     Box(Modifier.fillMaxSize()) {
         Scaffold(
             containerColor = MaterialTheme.colorScheme.background,
+            contentWindowInsets = WindowInsets(0, 0, 0, 0),
             snackbarHost = { SnackbarHost(snackbar) },
         ) { padding ->
             CoffeePeekPullToRefresh(
                 listState, isRefreshing = state.isLoading && state.items.isNotEmpty(), onRefresh = vm::refresh,
-                modifier = Modifier.fillMaxSize().padding(top = padding.calculateTopPadding()),
+                modifier = Modifier.fillMaxSize().statusBarsPadding().padding(top = padding.calculateTopPadding()),
             ) { scrollModifier ->
                 LazyColumn(
                     state = listState, modifier = scrollModifier.fillMaxSize(),
                     contentPadding = PaddingValues(
                         start = CpDimens.spacing4, end = CpDimens.spacing4,
-                        top = CpDimens.spacing3, bottom = clearance + 88.dp,
+                        top = CpDimens.spacing4, bottom = clearance + 88.dp,
                     ),
                     verticalArrangement = Arrangement.spacedBy(CpDimens.spacing3),
                 ) {
-                    if (!nativeHeader) item(key = "heading") {
-                        Text("Лента", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
+                    item(key = "heading") {
+                        Text(
+                            "Лента",
+                            style = MaterialTheme.typography.headlineMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onBackground,
+                        )
                     }
                     when {
                         state.isLoggedIn == null || (state.isLoading && state.items.isEmpty()) -> item(key = "loading") {

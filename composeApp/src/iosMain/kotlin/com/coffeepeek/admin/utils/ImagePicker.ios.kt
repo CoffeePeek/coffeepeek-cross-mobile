@@ -2,6 +2,9 @@
 
 package com.coffeepeek.admin.utils
 
+import com.coffeepeek.admin.theme.ThemeManager
+import com.coffeepeek.admin.theme.uiKitStyle
+
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
@@ -47,6 +50,7 @@ actual fun rememberPhotoPicker(
         val camera = UIImagePickerControllerSourceType.UIImagePickerControllerSourceTypeCamera
         if (!UIImagePickerController.isSourceTypeAvailable(camera)) return
         val picker = UIImagePickerController().apply {
+            overrideUserInterfaceStyle = ThemeManager.themeMode.value.uiKitStyle
             sourceType = camera
             allowsEditing = false
             this.delegate = delegate
@@ -61,6 +65,7 @@ actual fun rememberPhotoPicker(
             filter = PHPickerFilter.imagesFilter
         }
         val picker = PHPickerViewController(configuration).apply {
+            overrideUserInterfaceStyle = ThemeManager.themeMode.value.uiKitStyle
             this.delegate = delegate
         }
         presenter.presentViewController(picker, animated = true, completion = null)

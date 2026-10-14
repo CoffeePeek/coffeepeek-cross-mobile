@@ -1,4 +1,4 @@
-@file:OptIn(kotlinx.cinterop.ExperimentalForeignApi::class)
+@file:OptIn(kotlinx.cinterop.ExperimentalForeignApi::class, androidx.compose.ui.ExperimentalComposeUiApi::class)
 
 package com.coffeepeek.admin.ui
 
@@ -6,7 +6,9 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.*
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.luminance
+import com.coffeepeek.admin.theme.toUIColor
+import com.coffeepeek.admin.theme.uiKitStyle
+import com.coffeepeek.admin.theme.ThemeManager
 import androidx.compose.ui.viewinterop.UIKitInteropInteractionMode
 import androidx.compose.ui.viewinterop.UIKitInteropProperties
 import androidx.compose.ui.viewinterop.UIKitViewController
@@ -108,12 +110,21 @@ internal actual fun PlatformRootNavigation(
         tabs.customizableViewControllers = null
         tabs.delegate = tabDelegate
         tabs
-    }, modifier = Modifier.fillMaxSize(), properties = UIKitInteropProperties(interactionMode = UIKitInteropInteractionMode.NonCooperative))
+    }, modifier = Modifier.fillMaxSize(), properties = UIKitInteropProperties(
+        interactionMode = UIKitInteropInteractionMode.NonCooperative,
+        isNativeAccessibilityEnabled = true,
+        // This full-screen opaque host stays below the app's Compose overlays.
+        placedAsOverlay = false,
+    ))
 
     val colors = MaterialTheme.colorScheme
+    val themeMode by ThemeManager.themeMode.collectAsState()
     SideEffect {
-        tabs.overrideUserInterfaceStyle = if (colors.background.luminance() < .5f) UIUserInterfaceStyle.UIUserInterfaceStyleDark else UIUserInterfaceStyle.UIUserInterfaceStyleLight
-        tabs.tabBar.tintColor = UIColor.colorWithRed(colors.primary.red.toDouble(), colors.primary.green.toDouble(), colors.primary.blue.toDouble(), 1.0)
+        tabs.overrideUserInterfaceStyle = themeMode.uiKitStyle
+        tabs.view.backgroundColor = colors.background.toUIColor()
+        tabs.tabBar.tintColor = colors.primary.toUIColor()
+        tabs.tabBar.unselectedItemTintColor = colors.onSurfaceVariant.toUIColor()
+        navigations.forEach { it.view.backgroundColor = colors.background.toUIColor() }
     }
     LaunchedEffect(tabs) {
         events.collect { event -> navigate {

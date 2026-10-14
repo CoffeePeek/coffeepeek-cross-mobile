@@ -5,6 +5,7 @@
 package com.coffeepeek.admin.map
 
 import androidx.compose.foundation.layout.Box
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.DisposableEffect
@@ -20,6 +21,8 @@ import androidx.compose.ui.viewinterop.UIKitInteropProperties
 import androidx.compose.ui.viewinterop.UIKitInteropInteractionMode
 import com.coffeepeek.admin.location.LocationPermissionEffect
 import com.coffeepeek.admin.location.PlatformLocation
+import com.coffeepeek.admin.theme.toUIColor
+import com.coffeepeek.admin.theme.uiKitStyle
 import com.coffeepeek.domain.model.MapBounds
 import com.coffeepeek.domain.model.MapCluster
 import com.coffeepeek.domain.model.MapCoffeeZone
@@ -105,6 +108,7 @@ private fun NativeMapContent(
     val locationFoundCallback = rememberUpdatedState(onMyLocationFound)
     val locationDeniedCallback = rememberUpdatedState(onLocationPermissionDenied)
     val scope = rememberCoroutineScope()
+    val colors = MaterialTheme.colorScheme
     val initiallyHasTarget = remember { cameraTarget != null }
     var handledLocationRequestKey by remember { mutableStateOf<Int?>(null) }
     val hasCameraTarget = rememberUpdatedState(cameraTarget != null)
@@ -157,8 +161,11 @@ private fun NativeMapContent(
         UIKitView(
             factory = { provider.createMapView().also(session::attach) },
             modifier = Modifier.matchParentSize(),
-            properties = UIKitInteropProperties(interactionMode = UIKitInteropInteractionMode.NonCooperative),
+            // The map fills its rectangle; keep it below Compose markers, controls and sheets.
+            properties = UIKitInteropProperties(interactionMode = UIKitInteropInteractionMode.NonCooperative, placedAsOverlay = false),
             update = { mapView ->
+                mapView.backgroundColor = colors.background.toUIColor()
+                mapView.overrideUserInterfaceStyle = colors.uiKitStyle
                 session.attach(mapView)
                 session.updateContent(shops, clusters, zones, selectedShopId, isDarkTheme, showAttribution)
             },

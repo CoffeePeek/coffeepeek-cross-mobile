@@ -1,4 +1,4 @@
-@file:OptIn(kotlinx.cinterop.ExperimentalForeignApi::class)
+@file:OptIn(kotlinx.cinterop.ExperimentalForeignApi::class, androidx.compose.ui.ExperimentalComposeUiApi::class)
 
 package com.coffeepeek.admin.auth
 
@@ -7,17 +7,20 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.key
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.viewinterop.UIKitView
 import androidx.compose.ui.viewinterop.UIKitInteropProperties
 import com.coffeepeek.admin.theme.CpDimens
+import com.coffeepeek.admin.theme.uiKitStyle
 import com.coffeepeek.domain.model.AppleLoginChallenge
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 import platform.UIKit.UIControl
+import platform.AuthenticationServices.ASAuthorizationAppleIDButton
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 
@@ -55,12 +58,19 @@ actual object AppleAuth {
 actual fun AppleSignInButton(onClick: () -> Unit, modifier: Modifier, enabled: Boolean) {
     val provider = IosAppleAuthRegistry.provider ?: return
     val dark = MaterialTheme.colorScheme.background.luminance() < 0.5f
+    val style = MaterialTheme.colorScheme.uiKitStyle
+    val action = rememberUpdatedState(onClick)
     key(dark) {
         UIKitView(
-            factory = { provider.makeButton(dark, onClick) },
+            factory = { provider.makeButton(dark) { action.value() } },
             modifier = modifier.fillMaxWidth().height(CpDimens.authPrimaryBtnHeight),
-            update = { it.enabled = enabled; it.alpha = if (enabled) 1.0 else 0.5 },
-            properties = UIKitInteropProperties(isNativeAccessibilityEnabled = true),
+            update = {
+                it.enabled = enabled
+                it.alpha = if (enabled) 1.0 else 0.5
+                it.overrideUserInterfaceStyle = style
+                (it as? ASAuthorizationAppleIDButton)?.cornerRadius = CpDimens.authFieldRadius.value.toDouble()
+            },
+            properties = UIKitInteropProperties(isNativeAccessibilityEnabled = true, placedAsOverlay = true),
         )
     }
 }

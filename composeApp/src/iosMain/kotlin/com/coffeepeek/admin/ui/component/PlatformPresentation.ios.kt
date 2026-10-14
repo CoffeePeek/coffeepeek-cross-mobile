@@ -1,4 +1,4 @@
-@file:OptIn(kotlinx.cinterop.ExperimentalForeignApi::class, kotlinx.cinterop.BetaInteropApi::class)
+@file:OptIn(kotlinx.cinterop.ExperimentalForeignApi::class, kotlinx.cinterop.BetaInteropApi::class, androidx.compose.ui.ExperimentalComposeUiApi::class)
 
 package com.coffeepeek.admin.ui.component
 
@@ -7,14 +7,17 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.luminance
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.uikit.LocalUIViewController
 import androidx.compose.ui.viewinterop.UIKitView
 import androidx.compose.ui.viewinterop.UIKitInteropProperties
-import androidx.compose.ui.viewinterop.UIKitInteropInteractionMode
 import androidx.compose.ui.window.ComposeUIViewController
 import com.coffeepeek.admin.AppContent
 import com.coffeepeek.admin.theme.switchPalette
+import com.coffeepeek.admin.theme.toUIColor
+import com.coffeepeek.admin.theme.uiKitStyle
+import com.coffeepeek.admin.theme.ThemeManager
 import kotlinx.cinterop.ObjCAction
 import platform.Foundation.*
 import platform.UIKit.*
@@ -51,6 +54,7 @@ private fun PresentNativeController(controller: UIViewController, host: UIViewCo
 @Composable
 internal actual fun PlatformAlert(title: String, message: String, confirmLabel: String, onConfirm: () -> Unit, onDismiss: () -> Unit, cancelLabel: String?, destructive: Boolean, enabled: Boolean) {
     val host = LocalUIViewController.current
+    val colors = MaterialTheme.colorScheme
     val confirm = rememberUpdatedState(onConfirm)
     val dismiss = rememberUpdatedState(onDismiss)
     val alert = remember(title, message, confirmLabel, cancelLabel, destructive) {
@@ -62,12 +66,17 @@ internal actual fun PlatformAlert(title: String, message: String, confirmLabel: 
         onDispose { }
     }
     PresentNativeController(alert, host)
-    SideEffect { (alert.actions.firstOrNull() as? UIAlertAction)?.enabled = enabled }
+    SideEffect {
+        alert.overrideUserInterfaceStyle = colors.uiKitStyle
+        alert.view.tintColor = colors.primary.toUIColor()
+        (alert.actions.firstOrNull() as? UIAlertAction)?.enabled = enabled
+    }
 }
 
 @Composable
 internal actual fun NativeActionSheet(title: String, actions: List<PlatformAction>, onDismiss: () -> Unit): Boolean {
     val host = LocalUIViewController.current
+    val colors = MaterialTheme.colorScheme
     val latestActions = rememberUpdatedState(actions)
     val dismiss = rememberUpdatedState(onDismiss)
     val alert = remember(host, title) {
@@ -88,6 +97,10 @@ internal actual fun NativeActionSheet(title: String, actions: List<PlatformActio
         }
         alert
     }
+    SideEffect {
+        alert.overrideUserInterfaceStyle = colors.uiKitStyle
+        alert.view.tintColor = colors.primary.toUIColor()
+    }
     PresentNativeController(alert, host)
     return true
 }
@@ -101,7 +114,8 @@ internal actual fun NativeModalSheet(onDismiss: () -> Unit, dismissEnabled: Bool
     val host = LocalUIViewController.current
     val dismiss = rememberUpdatedState(onDismiss)
     val body = rememberUpdatedState(content)
-    val dark = MaterialTheme.colorScheme.background.luminance() < .5f
+    val colors = MaterialTheme.colorScheme
+    val themeMode by ThemeManager.themeMode.collectAsState()
     val controller = remember {
         ComposeUIViewController {
             AppContent {
@@ -114,7 +128,9 @@ internal actual fun NativeModalSheet(onDismiss: () -> Unit, dismissEnabled: Bool
     val delegate = remember { SheetDelegate { dismiss.value() } }
     SideEffect {
         controller.modalInPresentation = !dismissEnabled
-        controller.overrideUserInterfaceStyle = if (dark) UIUserInterfaceStyle.UIUserInterfaceStyleDark else UIUserInterfaceStyle.UIUserInterfaceStyleLight
+        controller.overrideUserInterfaceStyle = themeMode.uiKitStyle
+        controller.view.backgroundColor = colors.surface.toUIColor()
+        controller.view.tintColor = colors.primary.toUIColor()
     }
     DisposableEffect(controller, host) {
         controller.sheetPresentationController?.apply {
@@ -137,36 +153,50 @@ private class ControlTarget(var changed: (UIControl) -> Unit) : NSObject() {
 
 @Composable
 internal actual fun PlatformSwitch(checked: Boolean, onCheckedChange: ((Boolean) -> Unit)?, enabled: Boolean, modifier: Modifier) {
-    val dark = MaterialTheme.colorScheme.background.luminance() < .5f
-    val palette = switchPalette(dark)
-    val callback = rememberUpdatedState(onCheckedChange)
-    val target = remember { ControlTarget { control -> platformHaptic(HapticEvent.Selection); callback.value?.invoke((control as UISwitch).on) } }
-    UIKitView(factory = { UISwitch().apply { addTarget(target, NSSelectorFromString("change:"), UIControlEventValueChanged) } },
-        modifier = modifier.size(51.dp, 44.dp),
-        properties = UIKitInteropProperties(isNativeAccessibilityEnabled = false, interactionMode = UIKitInteropInteractionMode.NonCooperative),
-        update = {
-            it.overrideUserInterfaceStyle = if (dark) UIUserInterfaceStyle.UIUserInterfaceStyleDark else UIUserInterfaceStyle.UIUserInterfaceStyleLight
-            val thumb = if (checked) palette.checkedThumb else palette.uncheckedThumb
-            it.thumbTintColor = UIColor.colorWithRed(thumb.red.toDouble(), thumb.green.toDouble(), thumb.blue.toDouble(), 1.0)
-            val track = palette.checkedTrack
-            it.onTintColor = UIColor.colorWithRed(track.red.toDouble(), track.green.toDouble(), track.blue.toDouble(), 1.0)
-            it.setOn(checked, false)
-            it.enabled = enabled
-            it.userInteractionEnabled = onCheckedChange != null
+    val palette = switchPalette(MaterialTheme.colorScheme.background.luminance() < .5f)
+    Switch(
+        checked = checked,
+        onCheckedChange = onCheckedChange?.let { callback ->
+            { value -> platformHaptic(HapticEvent.Selection); callback(value) }
         },
-        onRelease = { it.removeTarget(target, NSSelectorFromString("change:"), UIControlEventValueChanged) })
+        enabled = enabled,
+        modifier = modifier,
+        thumbContent = { Box(Modifier.size(SwitchDefaults.IconSize)) },
+        colors = SwitchDefaults.colors(
+            checkedThumbColor = palette.checkedThumb,
+            checkedTrackColor = palette.checkedTrack,
+            uncheckedThumbColor = palette.uncheckedThumb,
+            uncheckedTrackColor = palette.uncheckedTrack,
+            checkedBorderColor = Color.Transparent,
+            uncheckedBorderColor = Color.Transparent,
+            disabledCheckedThumbColor = palette.checkedThumb,
+            disabledCheckedTrackColor = palette.checkedTrack.copy(alpha = .5f),
+            disabledUncheckedThumbColor = palette.uncheckedThumb,
+            disabledUncheckedTrackColor = palette.uncheckedTrack.copy(alpha = .5f),
+            disabledCheckedBorderColor = Color.Transparent,
+            disabledUncheckedBorderColor = Color.Transparent,
+        ),
+    )
 }
 
 @Composable
 internal actual fun NativeSegmentedControl(labels: List<String>, selectedIndex: Int, onSelected: (Int) -> Unit, modifier: Modifier): Boolean {
     if (labels.size !in 2..4) return false
+    val colors = MaterialTheme.colorScheme
     val callback = rememberUpdatedState(onSelected)
     val target = remember { ControlTarget { platformHaptic(HapticEvent.Selection); callback.value((it as UISegmentedControl).selectedSegmentIndex.toInt()) } }
     key(labels) {
         UIKitView(factory = { UISegmentedControl(items = labels).apply { addTarget(target, NSSelectorFromString("change:"), UIControlEventValueChanged) } },
             modifier = modifier.fillMaxWidth().height(44.dp),
-            properties = UIKitInteropProperties(isNativeAccessibilityEnabled = true),
-            update = { it.selectedSegmentIndex = selectedIndex.toLong() },
+            properties = UIKitInteropProperties(isNativeAccessibilityEnabled = true, placedAsOverlay = true),
+            update = {
+                it.selectedSegmentIndex = selectedIndex.toLong()
+                it.overrideUserInterfaceStyle = colors.uiKitStyle
+                it.backgroundColor = UIColor.clearColor
+                it.selectedSegmentTintColor = colors.surface.toUIColor()
+                it.setTitleTextAttributes(mapOf(NSForegroundColorAttributeName to colors.onSurfaceVariant.toUIColor()), UIControlStateNormal)
+                it.setTitleTextAttributes(mapOf(NSForegroundColorAttributeName to colors.onSurface.toUIColor()), UIControlStateSelected)
+            },
             onRelease = { it.removeTarget(target, NSSelectorFromString("change:"), UIControlEventValueChanged) })
     }
     return true
@@ -201,12 +231,24 @@ internal actual fun NativeDatePicker(title: String, initialMillis: Long, maximum
         maximumDate = maximumMillis?.let { NSDate.dateWithTimeIntervalSince1970(it / 1000.0) }
     } }
     NativeModalSheet(onDismiss, true) {
+        val colors = MaterialTheme.colorScheme
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
             TextButton(onClick = onDismiss) { Text("Отмена") }
             TextButton(onClick = { val millis = (picker.date.timeIntervalSince1970 * 1000).toLong(); onConfirm(if (timeOnly) millis else (millis / 86_400_000L) * 86_400_000L); onDismiss() }) { Text("Готово") }
         }
-        Text(title, style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(horizontal = 16.dp))
-        UIKitView(factory = { picker }, modifier = Modifier.fillMaxWidth().height(216.dp), properties = UIKitInteropProperties(isNativeAccessibilityEnabled = true))
+        PlatformScrollableColumn(Modifier.fillMaxWidth().weight(1f, fill = false)) {
+            Text(title, style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(horizontal = 16.dp))
+            UIKitView(
+                factory = { picker },
+                modifier = Modifier.fillMaxWidth().height(216.dp),
+                properties = UIKitInteropProperties(isNativeAccessibilityEnabled = true, placedAsOverlay = true),
+                update = {
+                    it.overrideUserInterfaceStyle = colors.uiKitStyle
+                    it.backgroundColor = UIColor.clearColor
+                    it.tintColor = colors.primary.toUIColor()
+                },
+            )
+        }
     }
     return true
 }

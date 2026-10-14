@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
@@ -17,6 +18,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.UIKitInteropProperties
 import androidx.compose.ui.viewinterop.UIKitView
 import com.coffeepeek.admin.theme.CpDimens
+import com.coffeepeek.admin.theme.toUIColor
+import com.coffeepeek.admin.theme.uiKitStyle
 import dev.chrisbanes.haze.HazeState
 import platform.UIKit.UIAction
 import platform.UIKit.UIButton
@@ -33,9 +36,6 @@ import platform.darwin.NSObject
 
 private val isLiquidGlassAvailable: Boolean
     get() = (UIDevice.currentDevice.systemVersion.substringBefore('.').toIntOrNull() ?: 0) >= 26
-
-private val brandColor: UIColor
-    get() = UIColor.colorWithRed(234.0 / 255.0, 179.0 / 255.0, 8.0 / 255.0, 1.0)
 
 private val GlassControlIcon.symbol: String
     get() = when (this) {
@@ -63,19 +63,23 @@ actual fun PlatformGlassIconButton(
     content: @Composable () -> Unit,
 ) {
     val currentOnClick = rememberUpdatedState(onClick)
+    val currentIcon = rememberUpdatedState(icon)
+    val colors = MaterialTheme.colorScheme
     UIKitView(
         factory = {
             UIButton.buttonWithConfiguration(
                 configuration = UIButtonConfiguration.grayButtonConfiguration(),
                 primaryAction = UIAction.actionWithHandler {
-                    if (icon == GlassControlIcon.Favorite || icon == GlassControlIcon.FavoriteFilled) platformHaptic(HapticEvent.Selection)
+                    if (currentIcon.value == GlassControlIcon.Favorite || currentIcon.value == GlassControlIcon.FavoriteFilled) platformHaptic(HapticEvent.Selection)
                     currentOnClick.value()
                 },
             )
         },
         modifier = modifier.size(CpDimens.buttonHeight),
-        properties = UIKitInteropProperties(placedAsOverlay = true),
+        properties = UIKitInteropProperties(isNativeAccessibilityEnabled = true, placedAsOverlay = true),
         update = { button ->
+            button.overrideUserInterfaceStyle = colors.uiKitStyle
+            button.backgroundColor = UIColor.clearColor
             val configuration = if (isLiquidGlassAvailable) {
                 UIButtonConfiguration.glassButtonConfiguration()
             } else {
@@ -84,8 +88,9 @@ actual fun PlatformGlassIconButton(
             configuration.cornerStyle = UIButtonConfigurationCornerStyleCapsule
             configuration.image = UIImage.systemImageNamed(icon.symbol)
             configuration.showsActivityIndicator = isLoading
+            configuration.baseForegroundColor = colors.onSurface.toUIColor()
             if (selected) {
-                configuration.baseForegroundColor = brandColor
+                configuration.baseForegroundColor = colors.primary.toUIColor()
             } else if (icon == GlassControlIcon.FavoriteFilled) {
                 configuration.baseForegroundColor = UIColor.colorWithRed(
                     239.0 / 255.0, 68.0 / 255.0, 68.0 / 255.0, 1.0,
@@ -101,6 +106,7 @@ actual fun PlatformGlassIconButton(
 @Composable
 actual fun PlatformGlassBackButton(onClick: () -> Unit, modifier: Modifier) {
     val currentOnClick = rememberUpdatedState(onClick)
+    val colors = MaterialTheme.colorScheme
     UIKitView(
         factory = {
             UIButton.buttonWithConfiguration(
@@ -109,14 +115,17 @@ actual fun PlatformGlassBackButton(onClick: () -> Unit, modifier: Modifier) {
             )
         },
         modifier = modifier.height(CpDimens.buttonHeight).width(104.dp),
-        properties = UIKitInteropProperties(placedAsOverlay = true),
+        properties = UIKitInteropProperties(isNativeAccessibilityEnabled = true, placedAsOverlay = true),
         update = { button ->
+            button.overrideUserInterfaceStyle = colors.uiKitStyle
+            button.backgroundColor = UIColor.clearColor
             val configuration = if (isLiquidGlassAvailable) {
                 UIButtonConfiguration.glassButtonConfiguration()
             } else {
                 UIButtonConfiguration.grayButtonConfiguration()
             }
             configuration.cornerStyle = UIButtonConfigurationCornerStyleCapsule
+            configuration.baseForegroundColor = colors.onSurface.toUIColor()
             configuration.image = UIImage.systemImageNamed(GlassControlIcon.Back.symbol)
             configuration.title = "Назад"
             button.configuration = configuration
@@ -152,6 +161,7 @@ actual fun PlatformFloatingBottomNavBar(
     hazeState: HazeState?,
 ) {
     val delegate = remember { CoffeeTabBarDelegate() }
+    val colors = MaterialTheme.colorScheme
     delegate.callbacks = items.map { it.onClick }
     val bottomInset = with(LocalDensity.current) {
         WindowInsets.navigationBars.getBottom(this).toDp()
@@ -160,14 +170,16 @@ actual fun PlatformFloatingBottomNavBar(
         factory = {
             UITabBar().apply {
                 this.delegate = delegate
-                tintColor = brandColor
             }
         },
         modifier = modifier
             .fillMaxWidth()
             .height(50.dp + bottomInset),
-        properties = UIKitInteropProperties(placedAsOverlay = true),
+        properties = UIKitInteropProperties(isNativeAccessibilityEnabled = true, placedAsOverlay = true),
         update = { bar ->
+            bar.overrideUserInterfaceStyle = colors.uiKitStyle
+            bar.tintColor = colors.primary.toUIColor()
+            bar.unselectedItemTintColor = colors.onSurfaceVariant.toUIColor()
             if (bar.items?.size != items.size) {
                 bar.items = items.mapIndexed { index, item ->
                     UITabBarItem(

@@ -1,4 +1,4 @@
-@file:OptIn(kotlinx.cinterop.ExperimentalForeignApi::class)
+@file:OptIn(kotlinx.cinterop.ExperimentalForeignApi::class, androidx.compose.ui.ExperimentalComposeUiApi::class)
 
 package com.coffeepeek.admin.ui.component
 
@@ -8,6 +8,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.UIKitView
+import androidx.compose.ui.viewinterop.UIKitInteropProperties
 import kotlinx.coroutines.launch
 import platform.CoreGraphics.CGPointMake
 import platform.CoreGraphics.CGSizeMake
@@ -30,6 +31,7 @@ internal actual fun PlatformScrollToTop(state: LazyListState) {
         }
     } }
     UIKitView(factory = { UIScrollView().apply {
+        backgroundColor = UIColor.clearColor
         scrollsToTop = true
         showsVerticalScrollIndicator = false
         showsHorizontalScrollIndicator = false
@@ -37,5 +39,7 @@ internal actual fun PlatformScrollToTop(state: LazyListState) {
         setContentOffset(CGPointMake(0.0, 1.0))
         this.delegate = delegate
         isAccessibilityElement = false
-    } }, modifier = Modifier.size(1.dp), onRelease = { it.delegate = null; it.scrollsToTop = false })
+    } }, modifier = Modifier.size(1.dp),
+        properties = UIKitInteropProperties(placedAsOverlay = true),
+        onRelease = { it.delegate = null; it.scrollsToTop = false })
 }

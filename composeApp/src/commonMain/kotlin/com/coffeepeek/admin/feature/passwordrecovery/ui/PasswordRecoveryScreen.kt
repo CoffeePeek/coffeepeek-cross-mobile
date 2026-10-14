@@ -34,16 +34,17 @@ internal fun PasswordRecoveryScreen(
         Text(
             if (state.step == RecoveryStep.Complete) "Пароль изменён" else "Восстановление пароля",
             style = MaterialTheme.typography.headlineSmall,
+            color = MaterialTheme.colorScheme.onSurface,
         )
         Spacer(Modifier.height(16.dp))
         when (state.step) {
             RecoveryStep.Email -> {
-                Text("Введите email аккаунта — мы отправим ссылку для восстановления пароля.")
+                Text("Введите email аккаунта — мы отправим ссылку для восстановления пароля.", color = MaterialTheme.colorScheme.onSurfaceVariant)
                 Spacer(Modifier.height(16.dp))
                 AuthTextField(state.email, vm::onEmailChange, "name@example.com", label = "Email")
             }
             RecoveryStep.EmailSent -> {
-                Text("Если аккаунт с этим email существует, на него отправлено письмо. Откройте ссылку из письма или вставьте её здесь. Проверьте также папку «Спам».")
+                Text("Если аккаунт с этим email существует, на него отправлено письмо. Откройте ссылку из письма или вставьте её здесь. Проверьте также папку «Спам».", color = MaterialTheme.colorScheme.onSurfaceVariant)
                 Spacer(Modifier.height(16.dp))
                 AuthPrimaryButton("У меня есть ссылка", vm::enterToken)
                 TextButton(onClick = vm::requestAnotherEmail) { Text("Указать другой email") }
@@ -58,7 +59,7 @@ internal fun PasswordRecoveryScreen(
                 AuthTextField(state.confirmation, vm::onConfirmationChange, "Повторите пароль", label = "Подтверждение пароля", isPassword = true, newPassword = true)
             }
             RecoveryStep.Complete -> {
-                Text("Теперь можно войти с новым паролем.")
+                Text("Теперь можно войти с новым паролем.", color = MaterialTheme.colorScheme.onSurfaceVariant)
                 Spacer(Modifier.height(16.dp))
                 AuthPrimaryButton("Войти", onLogin)
             }

@@ -23,17 +23,21 @@ the migration, ownership, and device verification requirements.
   image configuration. It does not create another root navigator or DI container.
 - Direct tab-bar selection preserves the destination stack. Programmatic tab
   entry (including "show on map") returns to that tab's root.
-- UIKit reserves bar/safe-area space; shared floating clearance is zero.
-- CpTopBar forwards headers/actions to the native navigation item. Custom hero
-  headers keep their existing layout. UISearchBar replaces CpSearchField on iOS.
+- UIKit reserves bar/safe-area space; shared floating clearance is zero. The
+  Compose host consumes the insets already reserved by UIKit.
+- CpTopBar forwards detail headers/actions to the native navigation item.
+  Feed, profile and settings use shared left-aligned root headings. Custom hero
+  headers keep their existing layout. CpSearchField uses the shared Compose field.
 
 ## Appearance and limits
 
 On Android, the bar keeps its Compose appearance from `LiquidGlass.kt`. On
 iOS, `UITabBar` and UIKit glass buttons use system materials. The iOS 26
 appearance therefore follows the OS, while older iOS versions use standard
-UIKit gray button configurations. UIKit views are placed above the Compose
-surface so their transparent glass backgrounds show the screen beneath them.
+UIKit gray button configurations. Transparent UIKit controls are placed above
+the Compose surface so their backgrounds show the screen beneath them. Opaque
+map and root controller hosts remain below Compose overlays. Theme and content
+color are propagated explicitly; see [the interop audit](IOS_COMPOSE_INTEROP_AUDIT.md).
 The tab controller owns the bottom safe area at its natural height. Detail
 pushes hide its bar. The discovery root keeps the bar while expanding the map.
 

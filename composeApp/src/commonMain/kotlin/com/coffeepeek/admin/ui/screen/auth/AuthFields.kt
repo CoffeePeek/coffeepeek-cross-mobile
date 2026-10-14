@@ -34,6 +34,7 @@ import androidx.compose.ui.unit.sp
 import com.coffeepeek.admin.theme.CpColor
 import com.coffeepeek.admin.theme.CpDimens
 import com.coffeepeek.admin.ui.component.CompactOutlinedTextField
+import com.coffeepeek.admin.ui.component.platformAuthKeyboardOptions
 import com.coffeepeek.admin.ui.icons.CpIcons
 
 @Composable
@@ -139,10 +140,13 @@ fun AuthTextField(
             } else {
                 VisualTransformation.None
             },
-            keyboardOptions = KeyboardOptions(
-                keyboardType = keyboardType,
-                autoCorrectEnabled = if (isPassword) false else null,
-                imeAction = if (next) androidx.compose.ui.text.input.ImeAction.Next else androidx.compose.ui.text.input.ImeAction.Done,
+            keyboardOptions = platformAuthKeyboardOptions(
+                options = KeyboardOptions(
+                    keyboardType = keyboardType,
+                    autoCorrectEnabled = false,
+                    imeAction = if (next) androidx.compose.ui.text.input.ImeAction.Next else androidx.compose.ui.text.input.ImeAction.Done,
+                ),
+                newPassword = newPassword,
             ),
         )
 
