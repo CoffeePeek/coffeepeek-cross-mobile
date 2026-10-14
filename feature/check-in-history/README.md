@@ -34,9 +34,10 @@ separate; neither is renamed or duplicated here.
 |---|---|---|---|
 | domain | Personal-history read models, calendar rules and repository contract; no DTOs/HTTP/UI | Kotlin only | Future history impl and data, app-owned adapters. Independent business rules must compile/test without the legacy layers, Compose or transport. |
 | data | Existing mine endpoint, private DTOs, mapping and complete range pagination | Own domain, core/network, Ktor/serialization/coroutines | App composition through one repository factory. A package in composeApp would let UI access HTTP/DTOs and retain feature transport in application composition. |
+| impl | Typed MVI state/actions, independent calendar/list loading and presentation date port; later stateless screen components | Own domain, core/presentation; no data/legacy/HTTP/Koin | Future app-owned entry factory only. Compiling presentation without data enforces its domain-only boundary and makes account/request races independently testable. The internal ViewModel is not a cross-feature API. |
 
-Only these two modules are created now with actual code. Future api owns a narrow
-screen entry/callback ABI; impl owns typed MVI and stateless calendar/list UI.
+Domain/data and the populated presentation impl are created incrementally. Future
+api owns a narrow screen entry/callback ABI; stateless calendar/list UI will join impl.
 There are no placeholder modules/packages, feature DI module, new root navigator,
 or history storage/cache. Data receives the existing authenticated HttpClient;
 the caller owns that client's lifetime. Domain/data use manual DI and Result,
@@ -90,5 +91,49 @@ malformed responses, missing later pages and cancellation propagation.
 
 This is isolated foundation validation, not screen/device/backend parity. No app
 dependency, DI registration, route switch or iOS UI implementation was added.
-The next slice is typed MVI with separate calendar/list state and generation-safe
-refresh/paging, before the screen API/UI and Android platform adapters.
+The later MVI slice is described below; screen API/UI and Android adapters remain
+the next implementation steps.
+
+## Shared presentation preparation — 2026-10-14
+
+Impl now contains an internal CheckInHistoryViewModel on core/presentation's
+typed MviViewModel, immutable action/state models, and an injected presentation
+calendar snapshot port. It depends only on own domain and core/presentation.
+The current intents reduce state only (`Nothing` events); navigation effects
+will be introduced with real screen callbacks, not speculative event classes.
+
+- Calendar and list have independent load/error state and guarded lifecycle jobs.
+  Mode switching reuses fresh content and loads an invalidated mode on demand.
+- Refresh cancels older list paging; late replies cannot append to a reset list.
+  Content-change generations coalesce one follow-up read; obsolete snapshots are
+  not published. Pagination failure preserves the current page and requires an
+  explicit retry instead of repeatedly fetching while the end of the list is visible.
+- Monotonic session replacement clears both modes before reloading. Duplicate or
+  older session/content notifications are ignored; canceled or non-cooperative
+  late replies cannot restore the previous account/month or clear newer flags.
+- Same-session refresh failure retains data. State exposes error flags, never
+  raw transport messages. Cancellation is rethrown without becoming a UI error
+  or executing a queued automatic retry.
+- Calendar groups deduplicated entries with the same immutable zone snapshot used
+  for request bounds, validates local dates and filters out-of-month entries.
+  Explicit date selection survives load/refresh; default selection follows the
+  existing today/latest/empty-month behavior. Nullable shop relations do not
+  invent navigation IDs or increase unique-shop counts.
+- Today/zone are rechecked on resume/refresh/retry. A changed zone invalidates
+  grouping; a moved-back clock clamps a now-future month. If the platform snapshot
+  fails, no query is issued with old-zone bounds. The initial injected snapshot
+  must contain a valid local date; there is no fabricated epoch fallback.
+- First Resume acknowledges startup without another request, including an already
+  failed startup read. Later returns invalidate and refresh the visible mode.
+
+Android compilation/lint and iOS Simulator Arm64 compilation pass for impl.
+All 24 fake-repository MVI tests pass, including non-cooperative responses and
+immediate coroutine completion. The 13 domain/data regression tests also pass
+(37 history tests total, no skips/failures); no production DI, device/account mutation or live
+HTTP is used. There is no Compose screen/component in this slice, so no preview
+is claimed. Paired previews will be added beside real screen/component code.
+
+Generation guards do not bind a repository to an account by themselves. Android
+composition must still provide a revocable account lease/lifecycle store and
+real zone-aware adapters before the active route is switched. iOS renderers,
+home preparations, and the legacy VisitedPlaces screen remain unchanged.

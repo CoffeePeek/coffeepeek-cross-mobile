@@ -38,6 +38,7 @@ object Modules {
         object CheckInHistory {
             const val domain = ":feature:check-in-history:domain"
             const val data = ":feature:check-in-history:data"
+            const val impl = ":feature:check-in-history:impl"
         }
     }
 
@@ -81,6 +82,7 @@ object Modules {
         feature.shop.impl,
         feature.checkInHistory.domain,
         feature.checkInHistory.data,
+        feature.checkInHistory.impl,
         feature.homeCheckIn,
     )
 }

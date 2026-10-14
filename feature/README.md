@@ -20,10 +20,11 @@ target; no native iOS implementation is part of these slices.
 
 Personal shop-visit history is the next independent owner. Its populated
 check-in-history/domain and data modules prepare read-only pagination/calendar
-contracts; VisitedPlaces and home preparations remain on their existing paths.
+contracts; impl prepares typed calendar/list MVI without data/HTTP dependencies.
+VisitedPlaces and home preparations remain on their existing paths.
 See [check-in-history/README.md](check-in-history/README.md) for the audited boundaries,
-ordered implementation and session/time-zone risks. No api/impl placeholders or
-application switch are part of the read-foundation slice.
+ordered implementation and session/time-zone risks. No empty API module or
+application switch is part of these preparation slices.
 
 ## Target layout and graph
 
