@@ -79,8 +79,14 @@ kotlin {
         androidInstrumentedTest.dependencies {
             implementation(libs.androidx.testExt.junit)
             implementation(libs.androidx.test.runner)
+            implementation(libs.androidx.compose.ui.test.junit4)
+            implementation(libs.androidx.espresso.core)
         }
     }
+}
+
+dependencies {
+    debugImplementation("androidx.compose.ui:ui-test-manifest:${libs.versions.androidx.composeUi.get()}")
 }
 
 val gitCommitCount: Provider<Int> = providers.exec {
