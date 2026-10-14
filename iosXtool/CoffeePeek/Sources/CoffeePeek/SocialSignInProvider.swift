@@ -118,9 +118,18 @@ final class SocialSignInProvider: NSObject, IosAppleAuthProvider,
             self?.googleInProgress = false
             if let error = error as NSError? {
                 let cancelled = error.domain == kGIDSignInErrorDomain && error.code == Self.googleCancellationCode
-                _ = completion(nil, cancelled ? "Вход через Google отменён" : "Не удалось войти через Google. Попробуйте ещё раз.")
+                if !cancelled {
+                    NSLog("Google Sign-In failed: domain=%@ code=%ld", error.domain, error.code)
+                }
+                _ = completion(nil, cancelled ? "Вход через Google отменён" : "Не удалось войти через Google. Попробуйте ещё раз. [GSI-E\(error.code)]")
+            } else if result == nil {
+                NSLog("Google Sign-In failed: missing result")
+                _ = completion(nil, "Не удалось войти через Google. Попробуйте ещё раз. [GSI-R]")
+            } else if let token = result?.user.idToken?.tokenString, !token.isEmpty {
+                _ = completion(token, nil)
             } else {
-                _ = completion(result?.user.idToken?.tokenString, nil)
+                NSLog("Google Sign-In failed: missing ID token")
+                _ = completion(nil, "Не удалось войти через Google. Попробуйте ещё раз. [GSI-T]")
             }
         }
     }
