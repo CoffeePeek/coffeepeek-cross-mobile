@@ -3,6 +3,7 @@ package com.coffeepeek.feature.shop.impl.ui.compose.component
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
@@ -30,13 +31,13 @@ internal fun ShopHeaderActions(
         verticalAlignment = Alignment.CenterVertically) {
         CoffeePeekGlassIconButton(onClick = onSuggestChange,
             contentDescription = stringResource(Res.string.shop_detail_suggest_change), hazeState = hazeState) {
-            Icon(CoffeePeekIcons.NoteEdit, contentDescription = null)
+            Icon(CoffeePeekIcons.NoteEdit, contentDescription = null, tint = MaterialTheme.colorScheme.onSurface)
         }
         ShopFavoriteButton(isFavorite, favoriteAvailable, isFavoriteLoading, onToggleFavorite,
             hazeState = hazeState)
         CoffeePeekGlassIconButton(onClick = onShare,
             contentDescription = stringResource(Res.string.shop_detail_share), hazeState = hazeState) {
-            Icon(CoffeePeekIcons.Share, contentDescription = null)
+            Icon(CoffeePeekIcons.Share, contentDescription = null, tint = MaterialTheme.colorScheme.onSurface)
         }
     }
 }

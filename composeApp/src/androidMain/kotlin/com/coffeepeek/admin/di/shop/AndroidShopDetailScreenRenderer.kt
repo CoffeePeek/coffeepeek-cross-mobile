@@ -26,6 +26,7 @@ import com.coffeepeek.admin.location.formatDistance
 import com.coffeepeek.admin.location.rememberPermittedUserLocation
 import com.coffeepeek.admin.ui.Navigator
 import com.coffeepeek.admin.ui.component.FullScreenImageDialog
+import com.coffeepeek.admin.ui.component.rememberCheckInDateLabel
 import com.coffeepeek.admin.ui.screen.shop.ShopCheckInFormRenderer
 import com.coffeepeek.admin.ui.screen.shop.ShopDetailScreenRenderer
 import com.coffeepeek.admin.ui.screen.shop.buildYandexMapsRouteUrl
@@ -67,7 +68,7 @@ internal class AndroidShopDetailScreenRenderer(
                     currentDayOfWeek = ::currentLocalDayOfWeek, currentMinuteOfDay = ::currentLocalMinuteOfDay)
             }
             val location = rememberPermittedUserLocation()
-            val formatCheckInDate = rememberShopCheckInDateLabel()
+            val formatCheckInDate = rememberCheckInDateLabel()
             var form by rememberSaveable(stateSaver = shopFormContextSaver) { mutableStateOf<ShopDetailContext?>(null) }
             var preview by remember { mutableStateOf<Pair<List<String>, Int>?>(null) }
             var refreshGeneration by rememberSaveable { mutableLongStateOf(0) }

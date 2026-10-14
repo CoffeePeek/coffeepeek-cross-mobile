@@ -228,6 +228,8 @@ android {
 
 dependencies {
     debugImplementation(compose.uiTooling)
+    // Plain Compose test host: no MainActivity startup/splash or real root navigation.
+    debugImplementation(libs.androidx.compose.ui.test.manifest)
 }
 
 // Debug variants are not minified: startup DI classes must exist as definitions in the APK.

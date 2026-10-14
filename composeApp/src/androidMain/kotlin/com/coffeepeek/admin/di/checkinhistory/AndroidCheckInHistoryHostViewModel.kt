@@ -41,15 +41,13 @@ internal class AndroidCheckInHistoryHostViewModel(private val sessions: SessionR
 
     private fun replace(value: Session?, observationFailed: Boolean = false) {
         val previous = mutableSession.value
-        previous.lease.revoke()
-        previous.viewModelStore.clear()
+        previous.clear()
         mutableSession.value = HistoryHostSession(previous.generation + 1,
             AndroidCheckInHistorySession(sessions, value), observationFailed)
     }
 
     override fun onCleared() {
-        mutableSession.value.lease.revoke()
-        mutableSession.value.viewModelStore.clear()
+        mutableSession.value.clear()
     }
 }
 
@@ -59,4 +57,20 @@ internal class HistoryHostSession(
     val observationFailed: Boolean = false,
 ) : ViewModelStoreOwner {
     override val viewModelStore = ViewModelStore()
+    private val mutablePhotoPreview = MutableStateFlow<HistoryPhotoPreview?>(null)
+    val photoPreview = mutablePhotoPreview.asStateFlow()
+
+    fun openPhoto(urls: List<String>, index: Int) {
+        if (lease.isCurrent() && lease.isLoggedIn && urls.getOrNull(index)?.isNotBlank() == true) {
+            mutablePhotoPreview.value = HistoryPhotoPreview(urls.toList(), index)
+        }
+    }
+
+    fun dismissPhoto() { mutablePhotoPreview.value = null }
+
+    fun clear() {
+        lease.revoke()
+        dismissPhoto()
+        viewModelStore.clear()
+    }
 }

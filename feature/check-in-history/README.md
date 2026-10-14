@@ -7,7 +7,7 @@ separate; neither is renamed or duplicated here.
 
 ## Current source and contract
 
-- `composeApp/.../ui/screen/checkins/VisitedPlacesScreen.kt`: one destination with
+- Legacy `composeApp/.../ui/screen/checkins/VisitedPlacesScreen.kt`: one destination with
   calendar/list modes, Monday-first calendar, selected-day cards, three stacked
   thumbnails, month visit/unique-shop counts, shop navigation and fullscreen photos.
 - `VisitedPlacesViewModel.kt`: legacy BaseViewModel, calendar requests and list
@@ -77,7 +77,9 @@ legacy domain/network/data, or any application module.
 - A repository instance has no user identity; account cancellation/revocable
   leases belong to Android composition, as in Shop. No global singleton cache
   may share private history across accounts.
-- Prepared modules do not switch the active screen or complete history migration.
+- The read/MVI/UI preparation checkpoints did not switch the active screen.
+  Android destination integration is recorded below; source integration alone
+  does not complete live-device/backend parity.
 - Real camera/ML Kit/authenticated submission QA remains a Shop release gate,
   independently of this next-owner preparation.
 
@@ -222,7 +224,7 @@ Application-owned code now lives in `composeApp/androidMain/di/checkinhistory`:
   does not read credentials, open leases or make HTTP requests. Shared/iOS DI
   and legacy screens remain unchanged; no new Gradle module is necessary.
 
-The current active VisitedPlaces route is deliberately unchanged. No local
+At this preparation checkpoint the active VisitedPlaces route was unchanged. No local
 OpenAPI/backend implementation establishes whether `from`/`to` mean instant
 bounds or local date boundaries, and whether `to` is exclusive. Mock transport
 tests prove serialization, not server filtering. Confirm that contract (or
@@ -239,3 +241,86 @@ unreachable fixture client without credential reads or requests. No APK was
 installed or live account/backend scenario exercised in this checkpoint; the
 11 physical/emulator UI tests above cover the prior isolated feature screen,
 not the new application composition or its future destination integration.
+
+## Android destination integration — 2026-10-14
+
+The local destination experiment initially selected the new Android entry; it
+was not committed or published. Incoming main e5722f9 subsequently replaced the
+old separate histories with ProfileCheckInsScreen, including home edits. The main
+merge at 29cff24 preserves that combined route on both platforms. The standalone
+shop entry, renderer and revocable viewer remain prepared but are not active.
+Do not reapply the old standalone root switch: audit the combined shop/home
+ownership and integrate without discarding home records or editing capability.
+
+The previous backend-contract gate was resolved by read-only source inspection
+of coffeepeek-backend commit `3216c3603636a019ec08d65b40b45e4f685e4a1b`:
+
+- [Mine controller](https://github.com/CoffeePeek/coffeepeek-backend/blob/3216c3603636a019ec08d65b40b45e4f685e4a1b/CoffeePeek.ShopsService/Controllers/UnifiedCheckInsController.cs)
+  accepts DateTimeOffset bounds, rejects `from >= to` and passes their UTC instants
+  to the query. The request is authorized and keeps pageNumber/pageSize.
+- [Persistence query](https://github.com/CoffeePeek/coffeepeek-backend/blob/3216c3603636a019ec08d65b40b45e4f685e4a1b/CoffeePeek.Shops.Persistance/Queries/CheckInQueries.cs)
+  filters owner shop visits by `VisitedAt >= from` and `VisitedAt < to`, excluding
+  deleted records. This matches the local-zone adapter's instant bounds. It is
+  source evidence, not certification of the live deployment or boundary fixtures.
+- The public Swagger probe returned 404; no token was extracted or account query
+  used to resolve this contract. The backend repository was not modified.
+
+Photo preview lives in the account-owned host session, not SavedState or a global
+store. Opening copies the full album and validates the selected index and current
+authenticated lease. Logout/replacement/disposal clears an already-open viewer;
+old callbacks cannot reopen it. Token renewal preserves it. The renderer reuses
+the existing app photo dialog and protected loader, with injectable render ports
+for fake-image composition tests.
+
+Back, sign-in and shop actions map to the existing root routes; no feature owns
+Navigator. Shop detail/list and history reuse one application date-label adapter,
+moved from the Shop-only package without changing formatting/minute refresh.
+History's existing lifecycle Resume and pull-to-refresh behavior handle return
+reads. Do not subscribe to the old ReviewSync bus: this source tree has no active
+producer, so it cannot establish post-write freshness while history is visible.
+
+Legacy shared screen/ViewModel/calendar and DI registration remain for iOS.
+Completion still requires safe live owner/guest, month boundaries, list paging,
+photos/shop/Back/return and account replacement parity. A fake fixture UI test
+does not prove authenticated backend behavior or render every IDE preview.
+
+### Destination verification status
+
+Before the final test-host correction, both Direct/Play APK assemblies and DEX
+checks, app lint, all 183 app unit tests in each variant, and full composeApp
+iOS Simulator Arm64 compilation passed. The latter is a shared-route regression
+check, not a new iOS screen implementation.
+
+Four application-composition UI tests were authored with fake sessions,
+repositories, thumbnail rendering and photo-viewer callbacks. They are **not
+verified as passing**: the first Pixel run preceded completion of the main APK
+update and used the old target; the later run showed a blank splash-gated host.
+Source inspection found that replacing MainActivity's App before its onReady
+effect runs leaves its isAppReady gate false. The temporary emulator additionally
+showed a System UI ANR and was stopped without a saved snapshot; it supplies no
+passing evidence for this slice. Pixel's main APK update completed without data
+clearing, but neither that installation nor the failed harness certifies startup
+or live history parity.
+
+The test now launches plain ComponentActivity through debug-only ui-test-manifest,
+following [Android Compose testing setup](https://developer.android.com/develop/ui/compose/testing).
+This avoids changing production MainActivity/splash behavior or starting its root
+UI in the fake scenario. CoffeePeekApplication still initializes normally in app
+instrumentation; do not describe the entire process as having no live background
+activity just because the tested renderer's dependencies are fake.
+
+The final manifest dependency/test-host source now passes both Android builds,
+unit regressions, app lint and application test APK assembly. The four UI tests
+still require device execution; compilation does not certify their behavior.
+Earlier command-approval usage-limit/403 failures prevented device execution;
+command access recovered for the requested publication into PR #43. Do not mark
+the migration finished or the Pixel/UI/real-account gate passed on build evidence.
+
+Main-sync/UI-parity follow-up: the current local root keeps ProfileCheckInsScreen
+for VisitedPlaces, HomeCheckIns and EditHomeCheckIn in both Android/shared route
+selection. The previous incomplete history work is retained and backed up in
+stash 40d3fe81295a6a95d05678eb206297fd0abed065, not discarded. Current builds and
+217 app unit tests per variant pass after main synchronization and Shop parity
+changes, but the pending history composition UI tests still lack a passing device
+result. A later command-approval 403 also prevented installing the Shop fixture;
+this is not a backend/GitHub authorization failure or new verification evidence.

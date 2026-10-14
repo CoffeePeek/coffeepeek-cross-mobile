@@ -27,6 +27,7 @@ import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.coffeepeek.core.designsystem.component.CoffeePeekButton
+import com.coffeepeek.core.designsystem.component.CoffeePeekFormStep
 import com.coffeepeek.core.designsystem.component.CoffeePeekSwipeDismissModalBottomSheet
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
@@ -38,6 +39,7 @@ import com.coffeepeek.feature.shop.domain.usecase.ShopCheckInValidationError
 import com.coffeepeek.feature.shop.impl.resources.Res
 import com.coffeepeek.feature.shop.impl.resources.shop_checkin_form_dismiss
 import com.coffeepeek.feature.shop.impl.resources.shop_checkin_form_title
+import com.coffeepeek.feature.shop.impl.resources.shop_checkin_form_optional
 import com.coffeepeek.feature.shop.impl.resources.shop_checkin_form_photos
 import com.coffeepeek.feature.shop.impl.resources.shop_checkin_form_photos_hint
 import com.coffeepeek.feature.shop.impl.resources.shop_checkin_form_submit
@@ -56,6 +58,7 @@ import com.coffeepeek.feature.shop.impl.resources.shop_checkin_form_invalid_phot
 import com.coffeepeek.feature.shop.impl.resources.shop_drink_photo_invalid
 import com.coffeepeek.feature.shop.impl.ui.ShopCheckInCreateViewModel
 import com.coffeepeek.feature.shop.impl.ui.compose.component.ShopCheckInDateField
+import com.coffeepeek.feature.shop.impl.ui.compose.component.ShopCheckInFormHeader
 import com.coffeepeek.feature.shop.impl.ui.compose.component.ShopCheckInDrinkField
 import com.coffeepeek.feature.shop.impl.ui.compose.component.ShopDrinkPhotoField
 import com.coffeepeek.feature.shop.impl.ui.compose.component.ShopCheckInNoteField
@@ -88,6 +91,7 @@ internal fun ShopCheckInCreateScreen(
         onDismissRequest = { viewModel.onAction(ShopCheckInFormAction.Dismiss) },
         dismissDescription = stringResource(Res.string.shop_checkin_form_dismiss),
         dismissEnabled = !state.isSubmitting,
+        modifier = Modifier.fillMaxHeight(0.76f),
     ) {
         ShopCheckInCreateScreenContent(
             state = state, shopName = shopName,
@@ -97,7 +101,7 @@ internal fun ShopCheckInCreateScreen(
             onVisitDate = { viewModel.onAction(ShopCheckInFormAction.VisitDateChanged(dates.visitInstant(it))) },
             onGallery = { remaining -> picker.pickFromGallery(remaining) { viewModel.onAction(ShopCheckInFormAction.PhotosAdded(it)) } },
             onCamera = { picker.takePhoto { viewModel.onAction(ShopCheckInFormAction.PhotosAdded(it)) } },
-            modifier = Modifier.fillMaxHeight(0.76f),
+            modifier = Modifier.fillMaxHeight(),
             photosPreparing = picker.isPreparing,
         )
     }
@@ -127,8 +131,9 @@ internal fun ShopCheckInCreateScreenContent(
     val editable = !state.isLoading && !state.isSubmitting && !state.submitted && !state.deliveryUnconfirmed && !photosPreparing
     Column(
         modifier.fillMaxWidth().testTag("shop-checkin-form").verticalScroll(scroll)
-            .imePadding().navigationBarsPadding().padding(CoffeePeekDimens.spacing4),
-        verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing4),
+            .imePadding().navigationBarsPadding().padding(horizontal = CoffeePeekDimens.spacing4)
+            .padding(bottom = CoffeePeekDimens.spacing6),
+        verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing6),
     ) {
         if (state.isSubmitting || state.submitted) {
             ShopCheckInSubmissionContent(
@@ -140,39 +145,56 @@ internal fun ShopCheckInCreateScreenContent(
         } else if (state.isLoading) {
             CircularProgressIndicator()
         } else {
-            Text(stringResource(Res.string.shop_checkin_form_title), style = MaterialTheme.typography.headlineSmall)
-            Text(shopName, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            ShopCheckInFormHeader(shopName)
             ShopCheckInRatings(state.input.rating, editable) { onAction(ShopCheckInFormAction.RatingChanged(it)) }
-            ShopCheckInDateField(visitLabel, selectedVisitMillis, nowMillis, editable, onVisitDate)
-            ShopCheckInNoteField(state.input.text, editable,
+            val optionalDescription = stringResource(Res.string.shop_checkin_form_optional)
+            Column {
+              CoffeePeekFormStep(isError = state.validationError == ShopCheckInValidationError.InvalidVisitDate) {
+                ShopCheckInDateField(visitLabel, selectedVisitMillis, nowMillis, editable, onVisitDate)
+              }
+              CoffeePeekFormStep(optional = true, optionalDescription = optionalDescription,
+                  isError = state.validationError == ShopCheckInValidationError.InvalidNote) {
+                ShopCheckInNoteField(state.input.text, editable,
                 state.validationError == ShopCheckInValidationError.InvalidNote) {
                 onAction(ShopCheckInFormAction.TextChanged(it))
-            }
-            ShopPhotoAttachments(
-                photos = state.input.photos.map { it.bytes }, isLoading = photosPreparing, enabled = editable,
-                title = stringResource(Res.string.shop_checkin_form_photos),
-                hint = stringResource(Res.string.shop_checkin_form_photos_hint, MAX_SHOP_CHECK_IN_PHOTOS),
-                maxPhotos = MAX_SHOP_CHECK_IN_PHOTOS,
-                onRemove = { onAction(ShopCheckInFormAction.RemovePhoto(it)) },
-                onGallery = onGallery, onCamera = onCamera,
-            )
-            if (state.input.photos.isNotEmpty()) ShopDrinkPhotoField(
-                state.drinkPhotoCandidates, state.input.drinkPhoto, state.drinkPhotoProcessing,
-                state.drinkPhotoFailed, state.drinkPhotoSkipped, editable,
-                onChoose = { onAction(ShopCheckInFormAction.ChooseDrinkPhoto(it)) },
-                onRetry = { onAction(ShopCheckInFormAction.RetryDrinkPhoto) },
-                onSkip = { onAction(ShopCheckInFormAction.SkipDrinkPhoto) },
-            )
-            ShopCheckInDrinkField(
-                state.drinks, state.input.drinkSlug, state.input.customDrinkName,
-                state.drinksLoading, state.drinksFailed, editable,
-                state.validationError == ShopCheckInValidationError.InvalidDrink,
-                { onAction(ShopCheckInFormAction.RetryDrinks) },
-                { onAction(ShopCheckInFormAction.DrinkChanged(it)) },
-                { onAction(ShopCheckInFormAction.CustomDrinkChanged(it)) },
-            )
-            ShopCheckInVisibilityField(state.input.visibility, editable) {
-                onAction(ShopCheckInFormAction.VisibilityChanged(it))
+                }
+              }
+              CoffeePeekFormStep(optional = true, optionalDescription = optionalDescription,
+                  isError = state.validationError in listOf(ShopCheckInValidationError.TooManyPhotos, ShopCheckInValidationError.InvalidPhoto)) {
+                ShopPhotoAttachments(
+                    photos = state.input.photos.map { it.bytes }, isLoading = photosPreparing, enabled = editable,
+                    title = stringResource(Res.string.shop_checkin_form_photos),
+                    hint = stringResource(Res.string.shop_checkin_form_photos_hint, MAX_SHOP_CHECK_IN_PHOTOS),
+                    maxPhotos = MAX_SHOP_CHECK_IN_PHOTOS,
+                    onRemove = { onAction(ShopCheckInFormAction.RemovePhoto(it)) },
+                    onGallery = onGallery, onCamera = onCamera,
+                )
+              }
+              if (state.input.photos.isNotEmpty()) CoffeePeekFormStep(optional = true, optionalDescription = optionalDescription) {
+                ShopDrinkPhotoField(
+                    state.drinkPhotoCandidates, state.input.drinkPhoto, state.drinkPhotoProcessing,
+                    state.drinkPhotoFailed, state.drinkPhotoSkipped, editable,
+                    onChoose = { onAction(ShopCheckInFormAction.ChooseDrinkPhoto(it)) },
+                    onRetry = { onAction(ShopCheckInFormAction.RetryDrinkPhoto) },
+                    onSkip = { onAction(ShopCheckInFormAction.SkipDrinkPhoto) },
+                )
+              }
+              CoffeePeekFormStep(optional = true, optionalDescription = optionalDescription,
+                  isError = state.validationError == ShopCheckInValidationError.InvalidDrink) {
+                ShopCheckInDrinkField(
+                    state.drinks, state.input.drinkSlug, state.input.customDrinkName,
+                    state.drinksLoading, state.drinksFailed, editable,
+                    state.validationError == ShopCheckInValidationError.InvalidDrink,
+                    { onAction(ShopCheckInFormAction.RetryDrinks) },
+                    { onAction(ShopCheckInFormAction.DrinkChanged(it)) },
+                    { onAction(ShopCheckInFormAction.CustomDrinkChanged(it)) },
+                )
+              }
+              CoffeePeekFormStep(optional = true, last = true, optionalDescription = optionalDescription) {
+                ShopCheckInVisibilityField(state.input.visibility, editable) {
+                    onAction(ShopCheckInFormAction.VisibilityChanged(it))
+                }
+              }
             }
             validationMessage(state.validationError)?.let { message ->
                 Text(message, color = MaterialTheme.colorScheme.error,

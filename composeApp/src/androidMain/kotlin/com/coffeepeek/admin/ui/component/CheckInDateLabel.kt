@@ -1,4 +1,4 @@
-package com.coffeepeek.admin.di.shop
+package com.coffeepeek.admin.ui.component
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -6,14 +6,13 @@ import androidx.compose.runtime.produceState
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.repeatOnLifecycle
-import com.coffeepeek.admin.ui.component.formatReviewDisplayDate
 import com.coffeepeek.admin.utils.currentEpochMillis
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 
-/** Reuse app date labels and their minute refresh without putting platform time into feature UI. */
+/** Shared app date-label policy for public Shop cards and personal history. */
 @Composable
-internal fun rememberShopCheckInDateLabel(): (String) -> String {
+internal fun rememberCheckInDateLabel(): (String) -> String {
     val lifecycle = LocalLifecycleOwner.current.lifecycle
     val now by produceState(currentEpochMillis(), lifecycle) {
         lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {

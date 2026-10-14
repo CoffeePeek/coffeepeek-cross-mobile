@@ -7,6 +7,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import com.coffeepeek.admin.ui.Navigator
 import com.coffeepeek.admin.ui.component.FullScreenImageDialog
+import com.coffeepeek.admin.ui.component.rememberCheckInDateLabel
 import com.coffeepeek.admin.ui.screen.shop.ShopCheckInListScreenRenderer
 import com.coffeepeek.domain.repository.SessionRepository
 import com.coffeepeek.domain.repository.UserRepository
@@ -28,7 +29,7 @@ internal class AndroidShopCheckInListScreenRenderer(
                     currentViewer = { session.lease.viewer(users) })
             }
             var preview by remember { mutableStateOf<Pair<List<String>, Int>?>(null) }
-            val formatCheckInDate = rememberShopCheckInDateLabel()
+            val formatCheckInDate = rememberCheckInDateLabel()
             entry.Content(shopId = shopId, sessionGeneration = session.generation,
                 formatCheckInDate = formatCheckInDate,
                 onBack = Navigator::popBack,

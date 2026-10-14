@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -43,6 +44,7 @@ internal fun ShopDetailTopActions(
         CoffeePeekGlassIconButton(onClick = onBack,
             contentDescription = stringResource(Res.string.shop_detail_back), hazeState = hazeState) {
             Icon(CoffeePeekIcons.Back, contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier.scale(scaleX = backScale, scaleY = 1f))
         }
         if (showShopActions) {

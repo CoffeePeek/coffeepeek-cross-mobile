@@ -1,6 +1,8 @@
 package com.coffeepeek.feature.shop.impl
 
 import androidx.activity.compose.setContent
+import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.hasClickAction
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.test.assertIsDisplayed
@@ -83,7 +85,7 @@ class ShopCheckInEntryContractTest {
                         onGoToFeed = { feed++ }, onOpenHistory = { history++ })
                 }
             } }
-            compose.onNodeWithText("Оставить чекин").performScrollTo().performClick()
+            compose.onNode(hasText("Чекин") and hasClickAction()).performScrollTo().performClick()
             compose.onNodeWithText("Чекин создан!").assertIsDisplayed()
             compose.onNodeWithText("К ленте").performClick()
             compose.onNodeWithText("Мои чекины").performClick()
@@ -96,7 +98,7 @@ class ShopCheckInEntryContractTest {
             }
             compose.onNodeWithText("Чекин создан!").assertDoesNotExist()
             compose.runOnIdle { shown.value = true }
-            compose.onNodeWithText("Оставить чекин").performScrollTo().performClick()
+            compose.onNode(hasText("Чекин") and hasClickAction()).performScrollTo().performClick()
             compose.onNodeWithText("Чекин создан!").assertIsDisplayed()
             compose.runOnIdle {
                 assertEquals(2, submitted)
@@ -123,7 +125,7 @@ class ShopCheckInEntryContractTest {
             } }
             compose.onNode(hasSetTextAction()).performScrollTo().performTextReplacement("Сохранённая заметка")
             compose.onNodeWithContentDescription("Закрыть форму чекина").performClick()
-            compose.onNodeWithText("Оставить чекин").assertDoesNotExist()
+            compose.onNode(hasText("Чекин") and hasClickAction()).assertDoesNotExist()
             compose.runOnIdle { assertEquals("Сохранённая заметка", drafts.snapshot!!.input.text); shown.value = true }
             compose.onNodeWithText("Сохранённая заметка").assertIsDisplayed()
         }
@@ -149,7 +151,7 @@ class ShopCheckInEntryContractTest {
                         onDismiss = { shown.value = false }, onSubmitted = {}, onGoToFeed = {}, onOpenHistory = {})
                 }
             } }
-            compose.onNodeWithText("Оставить чекин").performScrollTo().performClick()
+            compose.onNode(hasText("Чекин") and hasClickAction()).performScrollTo().performClick()
             compose.onNodeWithText("Отправляем чекин…").assertIsDisplayed()
             compose.runOnIdle { shown.value = false }
             compose.onNodeWithText("Отправляем чекин…").assertDoesNotExist()
@@ -158,7 +160,7 @@ class ShopCheckInEntryContractTest {
                 assertTrue(drafts.snapshot!!.deliveryUnconfirmed)
                 shown.value = true
             }
-            compose.onNodeWithText("Оставить чекин").performScrollTo().assertIsNotEnabled().performClick()
+            compose.onNode(hasText("Чекин") and hasClickAction()).performScrollTo().assertIsNotEnabled().performClick()
             compose.runOnIdle { assertEquals(1, writes) }
         }
     }

@@ -28,7 +28,7 @@ fun validateShopCheckIn(
         ShopCheckInValidationError.InvalidDrink
     input.drinkSlug != "other" && input.customDrinkName != null ->
         ShopCheckInValidationError.InvalidDrink
-    input.text.trim().length !in 1..1000 ->
+    input.text.trim().length > 1000 ->
         ShopCheckInValidationError.InvalidNote
     listOf(input.rating.place, input.rating.service, input.rating.coffee)
         .any { it !in 1..5 } -> ShopCheckInValidationError.InvalidRating
