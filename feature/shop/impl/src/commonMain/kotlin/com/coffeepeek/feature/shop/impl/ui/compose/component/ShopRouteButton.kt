@@ -6,9 +6,9 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import com.coffeepeek.core.designsystem.icons.CpIcons
+import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
-import com.coffeepeek.core.designsystem.theme.CpDimens
+import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.feature.shop.impl.resources.Res
 import com.coffeepeek.feature.shop.impl.resources.shop_detail_route
 import org.jetbrains.compose.resources.stringResource
@@ -20,8 +20,8 @@ internal fun ShopRouteButton(
     modifier: Modifier = Modifier,
 ) {
     Button(onClick = onClick, modifier = modifier) {
-        Icon(CpIcons.Navigation, contentDescription = null)
-        Text(stringResource(Res.string.shop_detail_route), Modifier.padding(start = CpDimens.spacing2))
+        Icon(CoffeePeekIcons.Navigation, contentDescription = null)
+        Text(stringResource(Res.string.shop_detail_route), Modifier.padding(start = CoffeePeekDimens.spacing2))
     }
 }
 

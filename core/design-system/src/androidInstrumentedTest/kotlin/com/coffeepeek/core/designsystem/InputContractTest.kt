@@ -8,10 +8,10 @@ import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createEmptyComposeRule
 import androidx.compose.ui.text.font.FontFamily
 import androidx.test.core.app.ActivityScenario
-import com.coffeepeek.core.designsystem.component.AppTextField
-import com.coffeepeek.core.designsystem.component.CompactOutlinedTextField
-import com.coffeepeek.core.designsystem.component.CpSearchField
-import com.coffeepeek.core.designsystem.component.CpTopBar
+import com.coffeepeek.core.designsystem.component.CoffeePeekTextField
+import com.coffeepeek.core.designsystem.component.CoffeePeekCompactOutlinedTextField
+import com.coffeepeek.core.designsystem.component.CoffeePeekSearchField
+import com.coffeepeek.core.designsystem.component.CoffeePeekTopBar
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import org.junit.Assert.assertEquals
 import org.junit.Rule
@@ -30,7 +30,7 @@ class InputContractTest {
     @Test fun fieldEditsHoistedValueAndExposesError() {
         val value = mutableStateOf("")
         render {
-            AppTextField("Name", value.value, { value.value = it }, "Enter name", errorText = "Required")
+            CoffeePeekTextField("Name", value.value, { value.value = it }, "Enter name", errorText = "Required")
         }.use {
             compose.onNodeWithContentDescription("Name")
                 .assert(SemanticsMatcher.expectValue(SemanticsProperties.Error, "Required"))
@@ -41,7 +41,7 @@ class InputContractTest {
 
     @Test fun compactFieldExposesLocalizedErrorSemanticsDirectly() {
         render {
-            CompactOutlinedTextField(
+            CoffeePeekCompactOutlinedTextField(
                 value = "",
                 onValueChange = {},
                 isError = true,
@@ -54,7 +54,7 @@ class InputContractTest {
     }
 
     @Test fun disabledFieldExposesDisabledState() {
-        render { AppTextField("Name", "", {}, "Enter name", enabled = false) }.use {
+        render { CoffeePeekTextField("Name", "", {}, "Enter name", enabled = false) }.use {
             compose.onNodeWithContentDescription("Name").assertIsNotEnabled()
         }
     }
@@ -62,7 +62,7 @@ class InputContractTest {
     @Test fun passwordToggleUsesCallerOwnedStateAndLabels() {
         val visible = mutableStateOf(false)
         render {
-            AppTextField("Password", "secret", {}, "Password", isPassword = true,
+            CoffeePeekTextField("Password", "secret", {}, "Password", isPassword = true,
                 passwordVisible = visible.value, onPasswordVisibilityChange = { visible.value = it },
                 passwordToggleDescription = if (visible.value) "Hide password" else "Show password")
         }.use {
@@ -76,7 +76,7 @@ class InputContractTest {
         val value = mutableStateOf("Coffee")
         var searches = 0
         render {
-            CpSearchField(value.value, { value.value = it }, "Search", "Clear search",
+            CoffeePeekSearchField(value.value, { value.value = it }, "Search", "Clear search",
                 onSearch = { searches++ })
         }.use {
             compose.onNode(hasSetTextAction()).performImeAction()
@@ -92,7 +92,7 @@ class InputContractTest {
     @Test fun readOnlySearchDoesNotClear() {
         var changes = 0
         render {
-            CpSearchField("Coffee", { changes++ }, "Search", "Clear search", readOnly = true)
+            CoffeePeekSearchField("Coffee", { changes++ }, "Search", "Clear search", readOnly = true)
         }.use {
             compose.onNodeWithContentDescription("Clear search").assertIsNotEnabled().performClick()
             compose.runOnIdle { assertEquals(0, changes) }
@@ -101,7 +101,7 @@ class InputContractTest {
 
     @Test fun topBarOnlyEmitsExplicitBackCallback() {
         var backs = 0
-        render { CpTopBar("Coffee", "Back", onBack = { backs++ }) }.use {
+        render { CoffeePeekTopBar("Coffee", "Back", onBack = { backs++ }) }.use {
             compose.onNodeWithText("Coffee").assertIsDisplayed()
             compose.onNodeWithContentDescription("Back").performClick()
             compose.runOnIdle { assertEquals(1, backs) }
@@ -109,7 +109,7 @@ class InputContractTest {
     }
 
     @Test fun topBarWithoutCallbackHasNoBackButton() {
-        render { CpTopBar("Coffee", "Back") }.use {
+        render { CoffeePeekTopBar("Coffee", "Back") }.use {
             compose.onNodeWithContentDescription("Back").assertDoesNotExist()
         }
     }

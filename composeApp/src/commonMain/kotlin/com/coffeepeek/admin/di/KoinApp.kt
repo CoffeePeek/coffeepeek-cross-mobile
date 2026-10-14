@@ -24,6 +24,12 @@ import com.coffeepeek.admin.ui.screen.shop.LegacyShopReportScreenRenderer
 import com.coffeepeek.admin.ui.screen.shop.ShopReportScreenRenderer
 import com.coffeepeek.admin.ui.screen.shop.LegacyShopMenuGalleryScreenRenderer
 import com.coffeepeek.admin.ui.screen.shop.ShopMenuGalleryScreenRenderer
+import com.coffeepeek.admin.ui.screen.shop.ShopCheckInFormRenderer
+import com.coffeepeek.admin.ui.screen.shop.LegacyShopCheckInFormRenderer
+import com.coffeepeek.admin.ui.screen.shop.ShopDetailScreenRenderer
+import com.coffeepeek.admin.ui.screen.shop.LegacyShopDetailScreenRenderer
+import com.coffeepeek.admin.ui.screen.shop.ShopCheckInListScreenRenderer
+import com.coffeepeek.admin.ui.screen.shop.LegacyShopCheckInListScreenRenderer
 import com.coffeepeek.admin.ui.screen.auth.AuthViewModel
 import com.coffeepeek.admin.ui.screen.auth.registr.RegisterViewModel
 import com.coffeepeek.admin.ui.screen.feed.FeedViewModel
@@ -52,6 +58,7 @@ import com.coffeepeek.data.di.dataModule
 import com.coffeepeek.feature.favorites.domain.usecase.ObserveFavoriteIdsUseCase
 import org.koin.core.context.startKoin
 import org.koin.core.module.Module
+import org.koin.core.scope.Scope
 import org.koin.dsl.module
 
 fun initKoin(
@@ -63,6 +70,9 @@ fun initKoin(
     shopGalleryRendererFactory: (CoffeePeekClient) -> ShopMenuGalleryScreenRenderer = {
         LegacyShopMenuGalleryScreenRenderer
     },
+    shopCheckInRendererFactory: Scope.() -> ShopCheckInFormRenderer = { LegacyShopCheckInFormRenderer },
+    shopDetailRendererFactory: Scope.() -> ShopDetailScreenRenderer = { LegacyShopDetailScreenRenderer },
+    shopCheckInListRendererFactory: Scope.() -> ShopCheckInListScreenRenderer = { LegacyShopCheckInListScreenRenderer },
 ) {
     check(AppConfig.baseUrl.isNotBlank()) {
         "API_BASE_URL is not configured. Copy local.properties.example to local.properties."
@@ -80,7 +90,8 @@ fun initKoin(
             debug = AppConfig.isDebug,
             registerLegacyFavorites = registerLegacyFavorites,
         ),
-        appModule(database.settingRepository, shopReportRendererFactory, shopGalleryRendererFactory),
+        appModule(database.settingRepository, shopReportRendererFactory, shopGalleryRendererFactory,
+            shopCheckInRendererFactory, shopDetailRendererFactory, shopCheckInListRendererFactory),
         imageModule(),
         updateInstallerModule(),
     )
@@ -91,7 +102,13 @@ private fun appModule(
     settingRepository: com.coffeepeek.room.repository.SettingRepository,
     shopReportRendererFactory: (CoffeePeekClient) -> ShopReportScreenRenderer,
     shopGalleryRendererFactory: (CoffeePeekClient) -> ShopMenuGalleryScreenRenderer,
+    shopCheckInRendererFactory: Scope.() -> ShopCheckInFormRenderer,
+    shopDetailRendererFactory: Scope.() -> ShopDetailScreenRenderer,
+    shopCheckInListRendererFactory: Scope.() -> ShopCheckInListScreenRenderer,
 ) = module {
+    single<ShopDetailScreenRenderer> { shopDetailRendererFactory() }
+    single<ShopCheckInListScreenRenderer> { shopCheckInListRendererFactory() }
+    single<ShopCheckInFormRenderer> { shopCheckInRendererFactory() }
     single<ShopReportScreenRenderer> { shopReportRendererFactory(get()) }
     single<ShopMenuGalleryScreenRenderer> { shopGalleryRendererFactory(get()) }
     single<CoffeeRepository> { CoffeeRepositoryImpl(get<CoffeePeekClient>().plainClient) }

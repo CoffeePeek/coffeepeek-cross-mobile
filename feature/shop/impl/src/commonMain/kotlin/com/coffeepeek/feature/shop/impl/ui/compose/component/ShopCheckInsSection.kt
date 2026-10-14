@@ -12,7 +12,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
-import com.coffeepeek.core.designsystem.theme.CpDimens
+import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.feature.shop.domain.model.ShopCheckIn
 import com.coffeepeek.feature.shop.impl.resources.Res
 import com.coffeepeek.feature.shop.impl.resources.shop_checkins_title
@@ -26,11 +26,11 @@ internal fun ShopCheckInsSection(
     modifier: Modifier = Modifier,
 ) {
     if (checkIns.isEmpty()) return
-    Column(modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(CpDimens.spacing3)) {
+    Column(modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing3)) {
         Text(stringResource(Res.string.shop_checkins_title), style = MaterialTheme.typography.titleMedium)
-        LazyRow(horizontalArrangement = Arrangement.spacedBy(CpDimens.spacing3)) {
+        LazyRow(horizontalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing3)) {
             items(checkIns, key = ShopCheckIn::id) { checkIn ->
-                ShopCheckInCard(checkIn, onOpenPhoto, Modifier.width(300.dp))
+                ShopCheckInCard(checkIn, onOpenPhoto, Modifier.width(300.dp), showAuthor = true, isOwn = true)
             }
         }
     }

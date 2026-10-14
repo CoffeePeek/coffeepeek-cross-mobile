@@ -11,7 +11,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.coffeepeek.core.designsystem.component.AppButton
+import com.coffeepeek.core.designsystem.component.CoffeePeekButton
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.feature.favorites.impl.resources.Res
 import com.coffeepeek.feature.favorites.impl.resources.favorites_retry
@@ -24,7 +24,7 @@ internal fun FavoritesMessage(text: String, onRetry: (() -> Unit)? = null) {
         Column(horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(16.dp)) {
             Text(text, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            onRetry?.let { AppButton(stringResource(Res.string.favorites_retry), it) }
+            onRetry?.let { CoffeePeekButton(stringResource(Res.string.favorites_retry), it) }
         }
     }
 }

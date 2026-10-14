@@ -14,7 +14,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
-import com.coffeepeek.core.designsystem.theme.CpDimens
+import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
 @Composable
@@ -26,15 +26,15 @@ internal fun ShopReportCategoryOption(
 ) {
     Surface(
         modifier = modifier.fillMaxWidth().clickable(onClick = onClick),
-        shape = RoundedCornerShape(CpDimens.radiusLg),
+        shape = RoundedCornerShape(CoffeePeekDimens.radiusLg),
         color = if (selected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface,
     ) {
         Row(
-            modifier = Modifier.padding(horizontal = CpDimens.spacing3, vertical = CpDimens.spacing2),
+            modifier = Modifier.padding(horizontal = CoffeePeekDimens.spacing3, vertical = CoffeePeekDimens.spacing2),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             RadioButton(selected = selected, onClick = onClick)
-            Text(label, Modifier.padding(start = CpDimens.spacing1), style = MaterialTheme.typography.bodyLarge)
+            Text(label, Modifier.padding(start = CoffeePeekDimens.spacing1), style = MaterialTheme.typography.bodyLarge)
         }
     }
 }

@@ -4,11 +4,14 @@ Prepared shared assets: six existing static Manrope TTFs, version 4.504, copied
 byte-for-byte from composeApp/src/commonMain/composeResources/font. No downloads,
 font upgrades, subsetting, renaming of internal font metadata or glyph edits.
 They total approximately 567 KiB. Legacy copies remain until app integration.
-During the independent phase, the app has no dependency on this library, so it
-does not package both copies through this change.
+During the original independent preparation phase, the app had no dependency
+on this library. Migrated consumers now use it, so both resource owners may
+temporarily be packaged until the remaining legacy consumers are replaced.
 
-Public UI surface: Manrope (Composable FontFamily), CoffeePeekTheme with packaged
-Manrope default and explicit override, cpTypography(FontFamily) unchanged.
+Public UI surface: CoffeePeekFontFamily (Composable FontFamily containing Manrope),
+CoffeePeekTheme with packaged Manrope default and explicit override, and
+coffeePeekTypography(FontFamily). Kotlin API names use the CoffeePeek prefix;
+font files, internal resource names and license text retain their original names.
 Compose resource runtime is an implementation dependency; generated Res and
 accessors are internal in com.coffeepeek.core.designsystem.resources. Consumers
 do not import application Res or depend on the library's generated resource paths.
@@ -43,11 +46,29 @@ Both debug/release AARs must include the font and license assets.
 | ic_app_icon_light/dark | No commonMain Kotlin call sites found; launcher/product identity stays in app pending actual shared need |
 | maskot_happy, with_photo/book/laptop/etc. | Used by feed/auth/review/contribution states; ownership must be decided with those features |
 | ic_google_g | Authentication provider branding, not a generic UI icon |
-| brew_* / checkin_rating_* / ic_byn_symbol | Feature presentation semantics, not core business content |
+| brew_* | Shared brewing artwork through CoffeePeekBrewIcons; business slug/name mapping stays in the feature |
+| checkin_rating_* | Feature presentation semantics, not generic core business content |
+| ic_byn_symbol | Shared decorative currency artwork through CoffeePeekBynPriceIndicators |
 
 No image-loader, resource repository or new umbrella core/resources module is
-introduced. Phosphor action icons remain behind CpIcons. Prepare neutral image
+introduced. Phosphor action icons remain behind CoffeePeekIcons. Prepare neutral image
 rendering only if actual cross-feature reuse warrants it.
+
+2026-10-11: shop-specific rating mascots and empty-state imagery have independent
+feature/shop/impl resource copies. They remain feature-owned; required legacy
+copies stay in the app. On 2026-10-13 the three prepared synthetic drink images
+were removed to match main: Shop now uses optional server-issued drinkPhotoUrl
+and a neutral icon, with no replacement stock artwork. The reusable BYN glyph is packaged separately in
+design-system and rendered through CoffeePeekBynPriceIndicators; price thresholds
+and explanatory text remain in the shop feature.
+
+2026-10-11: six existing brew_* vectors are copied unchanged into design-system
+for prepared Shop feature icons. The legacy assets serve detail/add-shop/edit
+consumers and remain in the app during migration. CoffeePeekBrewIcons exposes
+only drawable handles; it does not interpret feature names, tags or network
+models. Resource duplication is temporary, not a claim of a single packaged
+owner. These new resource usages and previews have not yet been built/rendered;
+the user deferred verification until Android Shop implementation is complete.
 
 ## Integration checklist
 

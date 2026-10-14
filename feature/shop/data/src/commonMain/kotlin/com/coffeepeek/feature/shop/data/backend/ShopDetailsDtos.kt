@@ -36,6 +36,8 @@ internal data class ShopDetailsDto(
     @SerialName("reviews") val reviews: List<ShopReviewDto> = emptyList(),
     @SerialName("checkIns") val checkIns: List<ShopCheckInDto> = emptyList(),
     @SerialName("userCheckIns") val userCheckIns: List<ShopCheckInDto> = emptyList(),
+    @SerialName("type") val type: JsonElement? = null,
+    @SerialName("coffeeFocus") val coffeeFocus: JsonElement? = null,
 )
 
 @Serializable

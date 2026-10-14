@@ -23,10 +23,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.coffeepeek.core.designsystem.component.AppButton
-import com.coffeepeek.core.designsystem.component.CpTopBar
+import com.coffeepeek.core.designsystem.component.CoffeePeekButton
+import com.coffeepeek.core.designsystem.component.CoffeePeekTopBar
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
-import com.coffeepeek.core.designsystem.theme.CpDimens
+import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.feature.shopreport.domain.model.ShopIssueCategory
 import com.coffeepeek.feature.shopreport.impl.resources.Res
 import com.coffeepeek.feature.shopreport.impl.resources.shop_report_back
@@ -83,15 +83,15 @@ internal fun ShopReportScreenContent(
 ) {
     Scaffold(
         topBar = {
-            CpTopBar(stringResource(Res.string.shop_report_title),
+            CoffeePeekTopBar(stringResource(Res.string.shop_report_title),
                 stringResource(Res.string.shop_report_back), onBack = { onAction(ShopReportAction.Back) })
         },
         containerColor = MaterialTheme.colorScheme.background,
     ) { insets ->
         Column(
             modifier = Modifier.fillMaxSize().padding(insets).verticalScroll(rememberScrollState())
-                .padding(CpDimens.spacing4),
-            verticalArrangement = Arrangement.spacedBy(CpDimens.spacing3),
+                .padding(CoffeePeekDimens.spacing4),
+            verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing3),
         ) {
             if (state.isSubmitted) {
                 Text(stringResource(Res.string.shop_report_thanks),
@@ -99,7 +99,7 @@ internal fun ShopReportScreenContent(
                 Text(stringResource(Res.string.shop_report_will_review, shopTitle.ifBlank {
                     stringResource(Res.string.shop_report_shop_fallback)
                 }), color = MaterialTheme.colorScheme.onSurfaceVariant)
-                AppButton(stringResource(Res.string.shop_report_done),
+                CoffeePeekButton(stringResource(Res.string.shop_report_done),
                     { onAction(ShopReportAction.Back) })
                 return@Column
             }
@@ -126,7 +126,7 @@ internal fun ShopReportScreenContent(
                     minLines = 3,
                     maxLines = 6,
                     isError = state.error == ShopReportError.DescriptionRequired,
-                    shape = RoundedCornerShape(CpDimens.buttonRadius),
+                    shape = RoundedCornerShape(CoffeePeekDimens.buttonRadius),
                 )
             }
 
@@ -135,11 +135,11 @@ internal fun ShopReportScreenContent(
                     color = MaterialTheme.colorScheme.error)
             }
 
-            Spacer(Modifier.height(CpDimens.spacing2))
+            Spacer(Modifier.height(CoffeePeekDimens.spacing2))
             if (state.isSubmitting) {
                 CircularProgressIndicator()
             } else {
-                AppButton(stringResource(Res.string.shop_report_submit),
+                CoffeePeekButton(stringResource(Res.string.shop_report_submit),
                     { onAction(ShopReportAction.Submit) }, enabled = state.selectedCategory != null)
             }
         }

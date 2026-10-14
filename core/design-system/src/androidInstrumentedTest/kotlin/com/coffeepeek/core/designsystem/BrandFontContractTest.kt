@@ -16,7 +16,7 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.test.core.app.ActivityScenario
 import com.coffeepeek.core.designsystem.resources.Res
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
-import com.coffeepeek.core.designsystem.theme.Manrope
+import com.coffeepeek.core.designsystem.theme.CoffeePeekFontFamily
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.junit.Assert.*
@@ -59,7 +59,7 @@ class BrandFontContractTest {
         val resolved = mutableMapOf<Int, Typeface>()
         render {
             CoffeePeekTheme {
-                val family = Manrope
+                val family = CoffeePeekFontFamily
                 val resolver = LocalFontFamilyResolver.current
                 Column {
                     weights.forEach { weight ->
@@ -85,7 +85,7 @@ class BrandFontContractTest {
             var brand: FontFamily? = null
             render {
                 CoffeePeekTheme(darkTheme = dark) {
-                    brand = Manrope
+                    brand = CoffeePeekFontFamily
                     family = MaterialTheme.typography.bodyLarge.fontFamily
                     Text(if (dark) "Dark typography" else "Light typography")
                 }

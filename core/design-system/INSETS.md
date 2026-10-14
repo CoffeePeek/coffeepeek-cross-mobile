@@ -92,7 +92,7 @@ System/predictive Back routing on API 37 remains unverified (see README).
 
 ## Verification and limits
 
-`CpTopBar.kt` supplies separate LTR/RTL paired previews with
+`CoffeePeekTopBar.kt` supplies separate LTR/RTL paired previews with
 asymmetrical synthetic dp insets, nested horizontal padding, logical side
 spacers and a synthetic keyboard. They work without platform bars, app DI or
 network and are not screenshots of an actual edge-to-edge screen.

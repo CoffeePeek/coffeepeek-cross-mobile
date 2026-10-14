@@ -11,6 +11,7 @@ import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
 import io.ktor.http.contentType
+import io.ktor.http.isSuccess
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -24,17 +25,19 @@ internal class ShopPhotoUploadBackend(
         purpose: ShopPhotoPurpose,
     ): Result<List<UploadedShopPhoto>> = requestResult {
         if (photos.isEmpty()) return@requestResult emptyList()
-        val response = apiClient.post(purpose.endpoint) {
+        val httpResponse = apiClient.post(purpose.endpoint) {
             contentType(ContentType.Application.Json)
             setBody(photos.map { PhotoUploadRequest(it.bytes.size, it.fileName, it.contentType) })
-        }.body<PhotoUploadResponse>()
+        }
+        if (!httpResponse.status.isSuccess()) throw ShopPhotoUploadRejected()
+        val response = httpResponse.body<PhotoUploadResponse>()
         val urls = response.data
-        if (!response.isSuccess || urls == null || urls.size != photos.size) {
+        if (!response.isSuccess || urls == null || urls.size != photos.size || urls.any { it.storageKey.isBlank() }) {
             throw ShopPhotoUploadRejected()
         }
         urls.forEach { requirePublicUploadUrl(it.uploadUrl) }
         urls.zip(photos).forEach { (target, photo) ->
-            uploadClient.put(target.uploadUrl) {
+            val uploadResponse = uploadClient.put(target.uploadUrl) {
                 headers {
                     remove(HttpHeaders.Accept)
                     remove(HttpHeaders.AcceptCharset)
@@ -44,6 +47,7 @@ internal class ShopPhotoUploadBackend(
                 }
                 setBody(photo.bytes)
             }
+            if (!uploadResponse.status.isSuccess()) throw ShopPhotoUploadRejected()
         }
         urls.zip(photos).map { (target, photo) ->
             UploadedShopPhoto(photo.fileName, photo.contentType, target.storageKey,

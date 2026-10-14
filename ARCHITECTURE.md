@@ -197,6 +197,14 @@ core/navigation       shared navigation infrastructure, if truly required
 core/design-system    theme, typography, dimensions, icons, UI primitives
 ```
 
+Design-system Kotlin components, UI types, tokens and source files use the
+`CoffeePeek` prefix: `CoffeePeekButton`, `CoffeePeekTextField`, `CoffeePeekIcons`
+and `CoffeePeekDimens`. Non-composable functions/Modifier extensions use lower
+camel case (`coffeePeekTypography`, `coffeePeekLiquidGlass`), and composition
+locals use `LocalCoffeePeek…`. Do not create parallel `App…`/`Cp…` compatibility
+aliases for the new API. Feature-owned UI keeps feature names; legacy components
+retain their existing names until migration. Font/resource provenance is unchanged.
+
 Feature-specific API services, DTOs, entities, and DAOs are not core code. Do
 not create broad `base`, `common`, `utils`, `helpers`, `misc`, or `shared`
 modules. Name cross-cutting code by its actual responsibility instead.

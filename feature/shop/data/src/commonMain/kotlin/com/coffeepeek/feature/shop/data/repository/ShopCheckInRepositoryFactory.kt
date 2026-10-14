@@ -31,6 +31,10 @@ private class DefaultShopCheckInRepository(
         val uploaded = photos.upload(input.photos.map {
             ShopPhotoUpload(it.bytes, it.fileName, it.contentType)
         }, purpose = ShopPhotoPurpose.CheckIn).getOrThrow()
+        val drinkPhoto = input.drinkPhoto?.let {
+            photos.upload(listOf(ShopPhotoUpload(it.bytes, it.fileName, it.contentType)),
+                purpose = ShopPhotoPurpose.CheckIn).getOrThrow().single()
+        }
         backend.create(
             shopSlug = input.shopSlug,
             visitedAtIso = input.visitedAtIso,
@@ -40,6 +44,7 @@ private class DefaultShopCheckInRepository(
             text = input.text.trim(),
             rating = input.rating,
             photos = uploaded,
+            drinkPhoto = drinkPhoto,
         ).getOrThrow()
     }
 }

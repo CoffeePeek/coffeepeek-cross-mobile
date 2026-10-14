@@ -12,10 +12,10 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import com.coffeepeek.core.designsystem.component.SwipeDismissModalBottomSheet
-import com.coffeepeek.core.designsystem.icons.CpIcons
+import com.coffeepeek.core.designsystem.component.CoffeePeekSwipeDismissModalBottomSheet
+import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
-import com.coffeepeek.core.designsystem.theme.CpDimens
+import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.feature.shop.impl.resources.Res
 import com.coffeepeek.feature.shop.impl.resources.shop_review_photo_source_camera
 import com.coffeepeek.feature.shop.impl.resources.shop_review_photo_source_cancel
@@ -30,19 +30,19 @@ internal fun ShopPhotoSourceSheet(
     onGallery: () -> Unit,
     onCamera: () -> Unit,
 ) {
-    SwipeDismissModalBottomSheet(
+    CoffeePeekSwipeDismissModalBottomSheet(
         onDismissRequest = onDismiss,
         dismissDescription = stringResource(Res.string.shop_review_photo_source_cancel),
     ) {
-        Column(Modifier.fillMaxWidth().padding(CpDimens.spacing4)) {
+        Column(Modifier.fillMaxWidth().padding(CoffeePeekDimens.spacing4)) {
             Text(stringResource(Res.string.shop_review_photo_source_title),
                 style = androidx.compose.material3.MaterialTheme.typography.titleLarge)
             TextButton(onClick = onGallery, modifier = Modifier.fillMaxWidth()) {
-                Icon(CpIcons.Gallery, contentDescription = null)
+                Icon(CoffeePeekIcons.Gallery, contentDescription = null)
                 Text(stringResource(Res.string.shop_review_photo_source_gallery))
             }
             TextButton(onClick = onCamera, modifier = Modifier.fillMaxWidth()) {
-                Icon(CpIcons.Camera, contentDescription = null)
+                Icon(CoffeePeekIcons.Camera, contentDescription = null)
                 Text(stringResource(Res.string.shop_review_photo_source_camera))
             }
             TextButton(onClick = onDismiss, modifier = Modifier.fillMaxWidth()) {

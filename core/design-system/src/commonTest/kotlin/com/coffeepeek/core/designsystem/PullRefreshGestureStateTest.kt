@@ -1,13 +1,13 @@
 package com.coffeepeek.core.designsystem
 
-import com.coffeepeek.core.designsystem.component.PullRefreshGestureState
+import com.coffeepeek.core.designsystem.component.CoffeePeekPullRefreshGestureState
 import kotlin.test.*
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
 class PullRefreshGestureStateTest {
     private var now = Duration.ZERO
-    private fun state() = PullRefreshGestureState(100f, 1.seconds) { now }
+    private fun state() = CoffeePeekPullRefreshGestureState(100f, 1.seconds) { now }
 
     @Test fun dampensAndCapsPull() {
         val state = state()
@@ -68,7 +68,7 @@ class PullRefreshGestureStateTest {
         assertFalse(state.request(true))
     }
     @Test fun zeroCooldownDelegatesDeduplicationToCaller() {
-        val state = PullRefreshGestureState(100f, Duration.ZERO) { now }
+        val state = CoffeePeekPullRefreshGestureState(100f, Duration.ZERO) { now }
         assertTrue(state.request(true))
         assertTrue(state.request(true))
     }
@@ -77,7 +77,7 @@ class PullRefreshGestureStateTest {
         assertEquals(0f, state.pull(Float.NaN, true, true))
         assertEquals(0f, state.pull(Float.POSITIVE_INFINITY, true, true))
         assertEquals(0f, state.retract(Float.NEGATIVE_INFINITY))
-        assertFailsWith<IllegalArgumentException> { PullRefreshGestureState(0f, 1.seconds) { now } }
-        assertFailsWith<IllegalArgumentException> { PullRefreshGestureState(100f, (-1).seconds) { now } }
+        assertFailsWith<IllegalArgumentException> { CoffeePeekPullRefreshGestureState(0f, 1.seconds) { now } }
+        assertFailsWith<IllegalArgumentException> { CoffeePeekPullRefreshGestureState(100f, (-1).seconds) { now } }
     }
 }

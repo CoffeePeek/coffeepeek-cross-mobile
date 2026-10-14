@@ -13,10 +13,10 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import com.coffeepeek.core.designsystem.component.AppButton
-import com.coffeepeek.core.designsystem.component.AppTextField
+import com.coffeepeek.core.designsystem.component.CoffeePeekButton
+import com.coffeepeek.core.designsystem.component.CoffeePeekTextField
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
-import com.coffeepeek.core.designsystem.theme.CpDimens
+import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.feature.shop.domain.usecase.ShopReviewFieldError
 import com.coffeepeek.feature.shop.impl.resources.Res
 import com.coffeepeek.feature.shop.impl.resources.shop_review_coffee
@@ -67,8 +67,8 @@ internal fun ShopReviewEditorContent(
     val editable = !state.isLoading && !state.isSubmitting && state.canEdit
     Column(
         modifier = modifier.fillMaxWidth().verticalScroll(rememberScrollState())
-            .padding(CpDimens.spacing4),
-        verticalArrangement = Arrangement.spacedBy(CpDimens.spacing4),
+            .padding(CoffeePeekDimens.spacing4),
+        verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing4),
     ) {
         Text(
             stringResource(if (state.mode == ShopReviewFormMode.Create) Res.string.shop_review_create_title
@@ -96,7 +96,7 @@ internal fun ShopReviewEditorContent(
                 editable) { onAction(ShopReviewFormAction.RatingChanged(ShopReviewRatingKind.Service, it)) }
             ShopRatingField(stringResource(Res.string.shop_review_place), state.rating.place,
                 editable) { onAction(ShopReviewFormAction.RatingChanged(ShopReviewRatingKind.Place, it)) }
-            AppTextField(
+            CoffeePeekTextField(
                 label = stringResource(Res.string.shop_review_header),
                 value = state.header,
                 onValueChange = { onAction(ShopReviewFormAction.HeaderChanged(it)) },
@@ -149,7 +149,7 @@ internal fun ShopReviewEditorContent(
                     color = MaterialTheme.colorScheme.error)
             }
             if (state.isSubmitting) CircularProgressIndicator()
-            else AppButton(
+            else CoffeePeekButton(
                 text = stringResource(if (state.mode == ShopReviewFormMode.Create)
                     Res.string.shop_review_submit_create else Res.string.shop_review_submit_edit),
                 onClick = { onAction(ShopReviewFormAction.Submit) },

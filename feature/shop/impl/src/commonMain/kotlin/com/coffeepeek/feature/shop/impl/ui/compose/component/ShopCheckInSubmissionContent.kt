@@ -12,9 +12,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
-import com.coffeepeek.core.designsystem.component.AppButton
+import com.coffeepeek.core.designsystem.component.CoffeePeekButton
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
-import com.coffeepeek.core.designsystem.theme.CpDimens
+import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.feature.shop.domain.model.ShopCheckInVisibility
 import com.coffeepeek.feature.shop.impl.resources.Res
 import com.coffeepeek.feature.shop.impl.resources.shop_checkin_form_sending
@@ -32,7 +32,7 @@ internal fun ShopCheckInSubmissionContent(
     submittedVisibility: ShopCheckInVisibility?, cleanupFailed: Boolean, onFeed: () -> Unit, onHistory: () -> Unit,
 ) {
     Column(Modifier.fillMaxWidth().semantics { liveRegion = LiveRegionMode.Polite },
-        verticalArrangement = Arrangement.spacedBy(CpDimens.spacing4)) {
+        verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing4)) {
         if (submittedVisibility == null) {
             CircularProgressIndicator()
             Text(stringResource(Res.string.shop_checkin_form_sending), style = MaterialTheme.typography.headlineSmall)
@@ -42,7 +42,7 @@ internal fun ShopCheckInSubmissionContent(
                 Res.string.shop_checkin_form_success_public else Res.string.shop_checkin_form_success_private))
             if (cleanupFailed) Text(stringResource(Res.string.shop_checkin_form_cleanup_error),
                 color = MaterialTheme.colorScheme.error)
-            AppButton(stringResource(Res.string.shop_checkin_form_feed), onFeed)
+            CoffeePeekButton(stringResource(Res.string.shop_checkin_form_feed), onFeed)
             TextButton(onClick = onHistory) { Text(stringResource(Res.string.shop_checkin_form_history)) }
         }
     }

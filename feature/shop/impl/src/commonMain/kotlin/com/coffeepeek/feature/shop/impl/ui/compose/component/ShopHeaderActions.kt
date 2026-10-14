@@ -1,11 +1,15 @@
 package com.coffeepeek.feature.shop.impl.ui.compose.component
 
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.runtime.Composable
-import com.coffeepeek.core.designsystem.icons.CpIcons
+import androidx.compose.ui.Alignment
+import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
+import com.coffeepeek.core.designsystem.modifier.CoffeePeekGlassIconButton
+import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
+import dev.chrisbanes.haze.HazeState
 import com.coffeepeek.feature.shop.impl.resources.Res
 import com.coffeepeek.feature.shop.impl.resources.shop_detail_share
 import com.coffeepeek.feature.shop.impl.resources.shop_detail_suggest_change
@@ -20,14 +24,19 @@ internal fun ShopHeaderActions(
     onSuggestChange: () -> Unit,
     onToggleFavorite: () -> Unit,
     onShare: () -> Unit,
+    hazeState: HazeState? = null,
 ) {
-    Row {
-        IconButton(onClick = onSuggestChange) {
-            Icon(CpIcons.NoteEdit, contentDescription = stringResource(Res.string.shop_detail_suggest_change))
+    Row(horizontalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing2),
+        verticalAlignment = Alignment.CenterVertically) {
+        CoffeePeekGlassIconButton(onClick = onSuggestChange,
+            contentDescription = stringResource(Res.string.shop_detail_suggest_change), hazeState = hazeState) {
+            Icon(CoffeePeekIcons.NoteEdit, contentDescription = null)
         }
-        ShopFavoriteButton(isFavorite, favoriteAvailable, isFavoriteLoading, onToggleFavorite)
-        IconButton(onClick = onShare) {
-            Icon(CpIcons.Share, contentDescription = stringResource(Res.string.shop_detail_share))
+        ShopFavoriteButton(isFavorite, favoriteAvailable, isFavoriteLoading, onToggleFavorite,
+            hazeState = hazeState)
+        CoffeePeekGlassIconButton(onClick = onShare,
+            contentDescription = stringResource(Res.string.shop_detail_share), hazeState = hazeState) {
+            Icon(CoffeePeekIcons.Share, contentDescription = null)
         }
     }
 }

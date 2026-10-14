@@ -14,7 +14,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
-import com.coffeepeek.core.designsystem.theme.CpDimens
+import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.feature.shop.domain.model.ShopRating
 import com.coffeepeek.feature.shop.domain.model.ShopReview
 import com.coffeepeek.feature.shop.impl.resources.Res
@@ -35,7 +35,7 @@ internal fun ShopReviewCard(
     modifier: Modifier = Modifier,
 ) {
     Card(modifier.fillMaxWidth()) {
-        Column(Modifier.padding(CpDimens.spacing4), verticalArrangement = Arrangement.spacedBy(CpDimens.spacing2)) {
+        Column(Modifier.padding(CoffeePeekDimens.spacing4), verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing2)) {
             Text(review.username, style = MaterialTheme.typography.titleMedium)
             if (review.header.isNotBlank()) Text(review.header, style = MaterialTheme.typography.titleSmall)
             Text(stringResource(Res.string.shop_reviews_rating, formatReviewRating(review.rating.average)),
@@ -48,7 +48,7 @@ internal fun ShopReviewCard(
             }
             if (review.photoUrls.isNotEmpty()) {
                 Row(Modifier.horizontalScroll(rememberScrollState()),
-                    horizontalArrangement = Arrangement.spacedBy(CpDimens.spacing2)) {
+                    horizontalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing2)) {
                     review.photoUrls.forEachIndexed { index, url ->
                         val description = stringResource(Res.string.shop_reviews_photo_description,
                             index + 1, review.photoUrls.size)

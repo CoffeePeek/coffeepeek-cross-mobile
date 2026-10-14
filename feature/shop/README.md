@@ -1,32 +1,55 @@
 # Shop feature — incremental migration
 
-`feature/shop` owns shop browsing. The first Android slice migrates only the
-menu-photo gallery; the much larger shop-details screen stays in legacy code.
+2026-10-14: detail's public entry and application-effect contracts are wired locally
+through createShopDetailEntry. Detail/list share session guards and explicit
+post-write refresh signals; caller-owned date/distance/local-clock inputs do not
+leak platform APIs. Android ShopDetail/ShopReviews routes select the new detail/list
+renderers; default shared/iOS composition retains legacy screens. A navigation-
+owned Android host retains feature VMs across configuration changes, clears them
+on account replacement and guards repository calls/effects with revocable leases.
+Both Android variants, lint, unit tests and isolated device UI scenarios now pass
+(2026-10-14). Live authenticated writes and individual IDE previews remain
+unverified; see the compatibility plan's latest record rather than earlier slices.
+
+Incoming main now supplies drinkPhotoUrl. Prepared Shop cards decode/render it
+separately from the gallery with Fit and a neutral fallback. The Android form
+now has foreground extraction via an app-owned ML Kit adapter, selection/retry/
+opt-out, draft retention and separate PNG upload/payload. It does not classify
+cups. Changed-first-photo work is cancelled and late replies are rejected;
+selected PNG upload failures stop creation. The incoming source had no extraction
+provider despite its documentation. Sources compile, regression tests and native
+PNG encoding checks pass. Actual cup segmentation/model availability, picker/
+camera and authenticated backend submission still require QA.
+See [ANDROID_PARITY_PLAN.md](ANDROID_PARITY_PLAN.md) for the next ordered work.
+
+`feature/shop` owns shop browsing. Android source wiring now selects its gallery,
+detail, public check-in list and creation entries. Legacy detail/list code remains
+for iOS until a separately agreed migration; it is not deleted by this switch.
 The current compatibility checklist is [ANDROID_PARITY_PLAN.md](ANDROID_PARITY_PLAN.md).
 It supersedes the earlier review-first integration order: the active Android
 shop UI now renders public check-ins and creates visits, not legacy reviews.
 Preparation slices add a read-only `ShopDetails` snapshot (overview, menu,
 locally displayed weekly schedule, coffee catalog, contacts, features, reviews
 and public/personal check-ins), plus stateless components with colocated light/dark
-previews, without switching that screen yet.
+previews, selected through app-owned Android platform renderers.
 `ShopDetailScreenContent` composes these blocks and emits typed actions with
-fake-state previews. Its runtime adapter and typed `MviViewModel` are prepared,
-but no application entry or Android detail route uses them yet.
+fake-state previews. Its runtime adapter and typed `MviViewModel` are wired through
+the public entry and Android detail renderer, not through feature Koin lookups.
 The ViewModel observes and mutates local favorites through the supported pure
 `feature/favorites/domain` contract. Its `FavoriteChanged` event is for the
-application bridge to notify remaining legacy consumers; that bridge is not
-wired yet. A failed membership read leaves the favorite control disabled rather
+application bridge to notify remaining legacy consumers through FavoriteSync;
+that bridge is wired. A failed membership read leaves the favorite control disabled rather
 than guessing from the server's `isFavorite` field.
-Sharing, suggest-change, and route controls now emit platform-agnostic events;
-the application must map them to its existing share helper, navigation and
-maps launcher when the Android detail route is switched. Suggest-change asks
+Sharing, suggest-change, and route controls emit platform-agnostic events;
+the application maps them to its existing share helper, navigation and
+maps launcher through the Android renderer. Suggest-change asks
 guests to sign in first. The prepared bottom bar exposes route and check-in
-actions; the form/result bridge is not yet connected.
+actions; the form/result bridge is connected and emits a post-write refresh signal.
 The existing shared/iOS route and ViewModel remain untouched.
 
 | Module | Responsibility | Allowed dependencies and consumers |
 |---|---|---|
-| `api` | Minimal gallery and check-in modal entries, identifiers and caller callbacks | Compose runtime; application composition |
+| `api` | Minimal gallery/detail/list/check-in modal entries, identifiers and caller effects | Compose runtime; application composition |
 | `domain` | Gallery/details, review and check-in models, validation and `Result` repository contracts | Pure Kotlin; shop data/impl |
 | `data` | Shop HTTP requests, narrow DTOs, mappers, photo uploads and repository factories | Domain, core/network, Ktor, serialization; application composition |
 | `impl` | MVI gallery screen, resources, previews and API adapter | API/domain, core presentation/design-system; application composition |
@@ -111,9 +134,10 @@ Reviews and check-ins now share the feature-data
 photo upload transport, while keeping separate domain photo/input types and
 requesting check-in URLs from `/api/Photos/check-in` without the review tag.
 The repository validates before uploading, and uses the caller-supplied
-authenticated API client plus a separate public-upload client. This is not yet
-an active screen: Android photo picking and the navigation/composition bridge
-remain pending. The date formatter and process-lifetime draft adapter are now
+authenticated API client plus a separate public-upload client. The Android
+detail/picker route now opens the new check-in entry through an app-owned
+platform renderer; the larger detail screen and the iOS form remain legacy.
+The date formatter and process-lifetime draft adapter are now
 prepared in Android app composition and unit-tested against the existing store.
 The new check-in MVI owns typed state/actions/events, catalog loading/retry,
 validation, guarded writes and visibility-specific success. Its draft port saves
@@ -146,10 +170,19 @@ state cannot overwrite or clear a replacement draft. The date formatter retains
 the existing local-calendar-day to UTC conversion. The Android photo port reuses
 the existing URI/JPEG/camera-permission pipeline, caps delivered photos at the
 remaining five-photo allowance, and disables submission during processing.
-These dependencies are registered and the form entry is tested in isolation,
-but no active Android route invokes it yet. Caller-owned auth/session gating,
-submission refresh and destinations must be connected before switching the form.
-Real picker/camera and authenticated-write QA remain separate gates.
+The Android form is active from both normal detail and `forCheckIn` mode.
+Guests retain the existing Auth route. Opening the new form does not load the
+legacy drink catalog or open a second legacy draft. Accepted submission refreshes
+detail without hiding confirmation; feed/history callbacks use the existing
+Community/Visited Places destinations. A per-modal session lease cancels pending
+requests on logout/account change and suppresses stale results, while same-user
+token renewal remains valid. Account-bound drafts cannot move to another user,
+including when a previous modal was already closed. Default iOS composition
+continues to render its old form and writer.
+Android host UI tests use fake transport/auth and verify the platform switch,
+single catalog/write, confirmation callbacks, cancellation and draft clearing.
+Real picker/camera, preview inspection and authenticated-write QA remain separate
+gates; this connection does not complete the full detail migration.
 Contact link formatting belongs to presentation; opening links and copying phone numbers remain caller
 callbacks, not feature-owned platform calls.
 
@@ -177,16 +210,48 @@ the default legacy/iOS renderer adds no button and retains its current behavior.
 5. Later migrate the rest of shop browsing under this same owner. Retire legacy
    DTOs, repositories and screen paths only after all platform consumers move.
 
-The Android detail route must not switch until the remaining current interactions
-are represented: check-in cards and full list, helpful/report ownership rules,
+The Android detail source switch represents the current interactions:
+check-in cards and full list, helpful/report ownership rules,
 guest visibility, check-in draft/submission/results, report/suggest/share/map
 bridges, distance/type/price information, and live favorite observation.
 Keep the existing picker route and its `forCheckIn` mode working. Do not connect
 legacy review forms merely because they were prepared before the backend/UI
 change. Viewer/session and device-time providers stay application-owned. Verify
-the active flows on device before replacing the legacy Android renderer. iOS
+the active flows on device before releasing this renderer switch. iOS
 stays on its current path until a separate migration.
 
 Potential risks: future server contract changes must be reflected in shared fixtures;
 images may be missing or URLs may expire; iOS still relies on legacy source.
 The feature has only default-language resources until translations are audited.
+
+## Android public check-in list (wired locally, not verified)
+
+`ShopCheckInListEntry` and its impl factory prepare the screen currently named
+`ShopReviewsScreen` in legacy code; this destination contains check-ins, not
+review editor data. The existing `ShopDetailsRepository.getDetails` supplies the
+whole available snapshot. There is no additional list endpoint, pagination or
+new Gradle module. Domain/data contracts and their manual DI remain unchanged.
+
+The caller supplies a navigation-owned ViewModelStoreOwner, shop ID, monotonically
+changing session generation, localized date formatter and back/auth/register/
+report/photo callbacks. The lifecycle-owned ViewModel is keyed by shop ID. Root
+navigation and the existing photo viewer remain application-owned. On first
+resume the initial load is reused; subsequent returns refresh the snapshot.
+Failed same-session refresh keeps the existing cards. Initial failure has retry.
+Votes and GET refreshes cannot overlap; queued refreshes are coalesced after the
+vote. Result cancellation is rethrown, not shown as a transport error.
+
+Guest rendering state contains only the first public card plus aggregate ratings
+and the hidden-card count, not hidden authors/notes/photos or personal visits.
+Owner detection uses current user ID and personal-history IDs. Owner votes and
+reports, unknown/hidden card actions and out-of-range photo indices are guarded
+in the ViewModel as well as the UI. Other guest actions request sign-in. Account
+changes clear content and cancel work; stale results and buffered photo/report
+effects cannot cross generations. Android composition additionally binds transports
+to a revocable account/session lease to prevent a write reaching a different
+account during a token switch; presentation guards are not backend authorization.
+
+This is local source wiring only. The existing Android full-list route now uses
+the feature entry and iOS retains its legacy renderer. Colocated previews, unit scenarios and Android UI scenarios are
+authored and now compiled/run on Pixel 7 (20 isolated Shop UI tests). Full backend
+write/session/picker parity and individual IDE preview inspection remain pending.

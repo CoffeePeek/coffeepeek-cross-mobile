@@ -5,6 +5,7 @@ import com.coffeepeek.feature.shop.domain.model.ShopCheckInPhoto
 import com.coffeepeek.feature.shop.domain.model.ShopRating
 import com.coffeepeek.feature.shop.domain.model.ShopCheckInVisibility
 import kotlin.time.Instant
+import kotlin.io.encoding.Base64
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
@@ -59,4 +60,32 @@ class ValidateShopCheckInTest {
                 validateShopCheckIn(privateInput.copy(shopSlug = slug), now))
         }
     }
+
+    @Test fun cutoutRequiresAnOriginalAndDoesNotConsumeTheFullPhotoLimit() {
+        val png = drinkPhoto()
+        assertEquals(ShopCheckInValidationError.InvalidDrinkPhoto,
+            validateShopCheckIn(privateInput.copy(drinkPhoto = png), now))
+        assertNull(validateShopCheckIn(privateInput.copy(
+            photos = List(5) { ShopCheckInPhoto(byteArrayOf(1), "visit.jpg") }, drinkPhoto = png), now))
+    }
+
+    @Test fun cutoutHeaderTypeAndSizeAreValidatedBeforeUpload() {
+        val png = drinkPhoto()
+        val invalid = listOf(
+            png.copy(contentType = "image/jpeg"), png.copy(fileName = " "),
+            png.copy(bytes = png.bytes.copyOf(32)),
+            png.copy(bytes = png.bytes.copyOf().apply { this[0] = 0 }),
+            png.copy(bytes = png.bytes.copyOf().apply { this[19] = 0 }),
+            png.copy(bytes = png.bytes.copyOf().apply { this[18] = 3; this[19] = 1 }),
+            png.copy(bytes = png.bytes.copyOf().apply { this[20] = -1 }),
+            png.copy(bytes = png.bytes.copyOf(4 * 1024 * 1024 + 1)),
+        )
+        for (photo in invalid) assertEquals(ShopCheckInValidationError.InvalidDrinkPhoto,
+            validateShopCheckIn(privateInput.copy(photos = listOf(ShopCheckInPhoto(byteArrayOf(1), "visit.jpg")),
+                drinkPhoto = photo), now))
+    }
+
+    private fun drinkPhoto() = ShopCheckInPhoto(Base64.decode(
+        "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/d1sAAAAASUVORK5CYII="),
+        "drink.png", "image/png")
 }

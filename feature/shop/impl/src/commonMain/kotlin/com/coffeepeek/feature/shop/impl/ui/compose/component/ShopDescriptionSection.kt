@@ -10,7 +10,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
-import com.coffeepeek.core.designsystem.theme.CpDimens
+import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.feature.shop.impl.resources.Res
 import com.coffeepeek.feature.shop.impl.resources.shop_description_title
 import org.jetbrains.compose.resources.stringResource
@@ -20,7 +20,7 @@ import org.jetbrains.compose.ui.tooling.preview.Preview
 internal fun ShopDescriptionSection(description: String, modifier: Modifier = Modifier) {
     val text = description.trim().takeIf(String::isNotEmpty) ?: return
     Card(modifier.fillMaxWidth()) {
-        Column(Modifier.padding(CpDimens.spacing4), verticalArrangement = Arrangement.spacedBy(CpDimens.spacing2)) {
+        Column(Modifier.padding(CoffeePeekDimens.spacing4), verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing2)) {
             Text(stringResource(Res.string.shop_description_title), style = MaterialTheme.typography.titleMedium)
             Text(text, style = MaterialTheme.typography.bodyMedium)
         }

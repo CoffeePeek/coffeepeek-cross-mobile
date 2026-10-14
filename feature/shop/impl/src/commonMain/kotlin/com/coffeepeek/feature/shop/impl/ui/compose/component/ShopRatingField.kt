@@ -7,7 +7,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import com.coffeepeek.core.designsystem.icons.CpIcons
+import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.feature.shop.impl.resources.Res
 import com.coffeepeek.feature.shop.impl.resources.shop_review_rating_value
@@ -27,7 +27,7 @@ internal fun ShopRatingField(
             (1..5).forEach { star ->
                 IconButton(onClick = { onChange(star) }, enabled = enabled) {
                     Icon(
-                        imageVector = if (star <= value) CpIcons.StarFilled else CpIcons.StarOutline,
+                        imageVector = if (star <= value) CoffeePeekIcons.StarFilled else CoffeePeekIcons.StarOutline,
                         contentDescription = stringResource(Res.string.shop_review_rating_value, label, star),
                         tint = if (star <= value) MaterialTheme.colorScheme.primary
                             else MaterialTheme.colorScheme.onSurfaceVariant,

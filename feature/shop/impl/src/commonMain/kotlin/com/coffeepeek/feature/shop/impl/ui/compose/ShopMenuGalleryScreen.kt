@@ -17,9 +17,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import com.coffeepeek.core.designsystem.component.CpTopBar
+import com.coffeepeek.core.designsystem.component.CoffeePeekTopBar
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
-import com.coffeepeek.core.designsystem.theme.CpDimens
+import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.feature.shop.domain.model.MenuPhoto
 import com.coffeepeek.feature.shop.impl.resources.Res
 import com.coffeepeek.feature.shop.impl.resources.shop_menu_gallery_back
@@ -61,7 +61,7 @@ internal fun ShopMenuGalleryScreenContent(
 ) {
     Scaffold(
         topBar = {
-            CpTopBar(
+            CoffeePeekTopBar(
                 title = stringResource(Res.string.shop_menu_gallery_title),
                 backDescription = stringResource(Res.string.shop_menu_gallery_back),
                 onBack = { onAction(ShopMenuGalleryAction.Back) },
@@ -77,12 +77,12 @@ internal fun ShopMenuGalleryScreenContent(
                 else -> LazyColumn(
                     modifier = Modifier.fillMaxSize(),
                     contentPadding = PaddingValues(
-                        start = CpDimens.spacing4,
-                        top = CpDimens.spacing2,
-                        end = CpDimens.spacing4,
-                        bottom = CpDimens.spacing6,
+                        start = CoffeePeekDimens.spacing4,
+                        top = CoffeePeekDimens.spacing2,
+                        end = CoffeePeekDimens.spacing4,
+                        bottom = CoffeePeekDimens.spacing6,
                     ),
-                    verticalArrangement = Arrangement.spacedBy(CpDimens.spacing4),
+                    verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing4),
                 ) {
                     if (state.shopTitle.isNotBlank()) {
                         item {

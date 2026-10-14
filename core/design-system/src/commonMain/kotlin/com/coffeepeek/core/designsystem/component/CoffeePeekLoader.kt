@@ -33,8 +33,8 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
-import com.coffeepeek.core.designsystem.theme.CpColor
-import com.coffeepeek.core.designsystem.theme.CpDimens
+import com.coffeepeek.core.designsystem.theme.CoffeePeekColors
+import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.sin
@@ -49,8 +49,8 @@ private const val MAX_FILL_FRACTION = 0.72f
 fun CoffeePeekLoader(
     contentDescription: String,
     modifier: Modifier = Modifier,
-    size: Dp = CpDimens.loaderDefault,
-    color: Color = CpColor.Primary,
+    size: Dp = CoffeePeekDimens.loaderDefault,
+    color: Color = CoffeePeekColors.Primary,
     strokeWidth: Dp = (size / 16f).coerceAtLeast(2.dp),
 ) {
     val transition = rememberInfiniteTransition(label = "coffeepeek-loader")

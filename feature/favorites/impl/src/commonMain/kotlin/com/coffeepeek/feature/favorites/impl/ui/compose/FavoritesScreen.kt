@@ -25,9 +25,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.coffeepeek.core.designsystem.component.AppButton
+import com.coffeepeek.core.designsystem.component.CoffeePeekButton
 import com.coffeepeek.core.designsystem.component.CoffeePeekLoader
-import com.coffeepeek.core.designsystem.component.CpTopBar
+import com.coffeepeek.core.designsystem.component.CoffeePeekTopBar
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.feature.favorites.domain.model.FavoriteShop
 import com.coffeepeek.feature.favorites.impl.ui.FavoritesViewModel
@@ -80,7 +80,7 @@ internal fun FavoritesScreenContent(
     onAction: (FavoritesAction) -> Unit,
     distanceForCoordinates: (Double, Double) -> String? = { _, _ -> null },
 ) {
-    Scaffold(topBar = { CpTopBar(stringResource(Res.string.favorites_title),
+    Scaffold(topBar = { CoffeePeekTopBar(stringResource(Res.string.favorites_title),
         stringResource(Res.string.favorites_back), onBack = { onAction(FavoritesAction.Back) }) }) { padding ->
         Column(Modifier.fillMaxSize().padding(padding).consumeWindowInsets(padding)) {
             when {
@@ -96,7 +96,7 @@ internal fun FavoritesScreenContent(
                     if (state.actionFailed || state.loadFailed) {
                         Text(stringResource(Res.string.favorites_update_error), Modifier.padding(16.dp),
                             color = MaterialTheme.colorScheme.error)
-                        AppButton(stringResource(Res.string.favorites_retry),
+                        CoffeePeekButton(stringResource(Res.string.favorites_retry),
                             { onAction(FavoritesAction.Retry) },
                             Modifier.padding(horizontal = 16.dp))
                     }

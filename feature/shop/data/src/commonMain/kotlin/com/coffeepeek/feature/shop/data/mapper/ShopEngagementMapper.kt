@@ -83,6 +83,7 @@ internal fun ShopCheckInDto.toDomain(files: ShopFileUrlResolver): ShopCheckIn? {
         customDrinkName = customDrinkName,
         drinkNameRu = drinkNameRu,
         drinkNameEn = drinkNameEn,
+        drinkPhotoUrl = files.resolveApiUrl(drinkPhotoUrl),
         visibility = ShopCheckInVisibility.entries.firstOrNull { it.name == visibility }
             ?: ShopCheckInVisibility.Private,
         moderationState = ShopCheckInModerationState.entries.firstOrNull { it.name == moderationState }

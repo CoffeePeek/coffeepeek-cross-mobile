@@ -13,4 +13,6 @@ data class ShopCheckInDraftSnapshot(
     val input: ShopCheckInCreateInput,
     /** Retained across sheet recreation; an uncertain write must not silently become retryable. */
     val deliveryUnconfirmed: Boolean = false,
+    /** Explicit opt-out belongs to the current first photo and survives modal recreation. */
+    val drinkPhotoSkipped: Boolean = false,
 )

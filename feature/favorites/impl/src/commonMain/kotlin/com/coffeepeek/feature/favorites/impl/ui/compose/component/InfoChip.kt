@@ -14,17 +14,17 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
-import com.coffeepeek.core.designsystem.theme.CpDimens
+import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
 @Composable
 internal fun InfoChip(text: String) {
     Box(
         modifier = Modifier.widthIn(max = 112.dp)
-            .clip(RoundedCornerShape(CpDimens.radiusLg))
+            .clip(RoundedCornerShape(CoffeePeekDimens.radiusLg))
             .background(MaterialTheme.colorScheme.surfaceVariant)
-            .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(CpDimens.radiusLg))
-            .padding(horizontal = CpDimens.spacing2, vertical = 5.dp),
+            .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(CoffeePeekDimens.radiusLg))
+            .padding(horizontal = CoffeePeekDimens.spacing2, vertical = 5.dp),
     ) {
         Text(text, style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,

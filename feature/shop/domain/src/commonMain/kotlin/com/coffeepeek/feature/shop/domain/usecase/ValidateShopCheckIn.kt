@@ -13,6 +13,7 @@ enum class ShopCheckInValidationError {
     InvalidRating,
     TooManyPhotos,
     InvalidPhoto,
+    InvalidDrinkPhoto,
 }
 
 /** Pure business validation; UI maps errors to localized resources. */
@@ -34,6 +35,8 @@ fun validateShopCheckIn(
     input.photos.size > MAX_SHOP_CHECK_IN_PHOTOS -> ShopCheckInValidationError.TooManyPhotos
     input.photos.any { it.bytes.isEmpty() || it.fileName.isBlank() || it.contentType.isBlank() } ->
         ShopCheckInValidationError.InvalidPhoto
+    input.drinkPhoto?.let { input.photos.isEmpty() || !isValidShopDrinkPhoto(it) } == true ->
+        ShopCheckInValidationError.InvalidDrinkPhoto
     else -> null
 }
 

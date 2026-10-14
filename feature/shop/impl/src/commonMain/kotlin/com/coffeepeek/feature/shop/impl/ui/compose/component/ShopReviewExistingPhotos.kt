@@ -10,7 +10,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
-import com.coffeepeek.core.designsystem.theme.CpDimens
+import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.feature.shop.impl.resources.Res
 import com.coffeepeek.feature.shop.impl.resources.shop_review_existing_photos
 import com.coffeepeek.feature.shop.impl.resources.shop_review_existing_photo_description
@@ -23,11 +23,11 @@ internal fun ShopReviewExistingPhotos(
     onOpenPhoto: (List<String>, Int) -> Unit,
 ) {
     if (photoUrls.isEmpty()) return
-    Column(verticalArrangement = Arrangement.spacedBy(CpDimens.spacing2)) {
+    Column(verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing2)) {
         Text(stringResource(Res.string.shop_review_existing_photos),
             style = MaterialTheme.typography.labelLarge)
         Row(Modifier.horizontalScroll(rememberScrollState()),
-            horizontalArrangement = Arrangement.spacedBy(CpDimens.spacing2)) {
+            horizontalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing2)) {
             photoUrls.forEachIndexed { index, url ->
                 ShopPhotoTile(url,
                     description = stringResource(Res.string.shop_review_existing_photo_description,

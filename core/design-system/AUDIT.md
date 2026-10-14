@@ -6,6 +6,13 @@ resources, Modifier extensions and call sites. Current UI is in composeApp
 network/room and existing core modules contain no Compose UI components.
 This is a code/dependency inventory, not a screen-by-screen visual parity audit.
 
+The current-source column below intentionally retains the legacy application
+names. Prepared design-system APIs now use the `CoffeePeek` prefix instead:
+`AppButton` → `CoffeePeekButton`, `AppTextField` → `CoffeePeekTextField`,
+`CpTopBar` → `CoffeePeekTopBar`, `CpIcons` → `CoffeePeekIcons`. All other prepared
+component families follow the same naming rule; see README.md. This rename does
+not move or rename legacy application components.
+
 The component directory has 30 files declaring composables. Shared style and icon
 imports extend into feature screens, so folder location alone is not ownership.
 

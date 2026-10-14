@@ -21,18 +21,35 @@ internal class AndroidShopCheckInDraftStore(
 ) : ShopCheckInDraftStore {
     private var guardedDraft: CheckInDraft? = null
     private var deliveryUnconfirmed = false
+    private var accountId: String? = null
+    private var drinkPhoto: ShopCheckInPhoto? = null
+    private var drinkPhotoSkipped = false
 
     /** Draft ownership uses the internal ID; transport always keeps the public slug.
      * Each modal binding retains its own lease so an older screen cannot write into
      * a replacement draft even after another binding has opened it.
      */
-    fun forShop(shopId: String, shopSlug: String): ShopCheckInDraftStore {
+    fun forShop(shopId: String, shopSlug: String, ownerAccountId: String? = null): ShopCheckInDraftStore {
         require(shopId.isNotBlank() && shopSlug.isNotBlank())
+        if (ownerAccountId != null) {
+            require(ownerAccountId.isNotBlank())
+            if (accountId != null && accountId != ownerAccountId) {
+                legacy.clearAll()
+                guardedDraft = null
+                deliveryUnconfirmed = false
+                drinkPhoto = null
+                drinkPhotoSkipped = false
+            }
+            accountId = ownerAccountId
+        }
         val boundSlug = shopSlug
         return object : ShopCheckInDraftStore {
             private var lease: CheckInDraft? = null
 
             override fun open(initial: ShopCheckInCreateInput): Result<ShopCheckInDraftSnapshot> {
+                if (ownerAccountId != null && accountId != ownerAccountId) {
+                    return Result.failure(IllegalStateException("Draft account was replaced"))
+                }
                 if (initial.shopSlug != shopSlug) return Result.failure(IllegalArgumentException("Mismatched shop slug"))
                 return this@AndroidShopCheckInDraftStore.open(initial.copy(shopSlug = shopId)).map {
                     lease = legacy.peek()
@@ -41,7 +58,8 @@ internal class AndroidShopCheckInDraftStore(
             }
 
             override fun save(snapshot: ShopCheckInDraftSnapshot): Result<Unit> {
-                if (snapshot.input.shopSlug != shopSlug || lease == null || legacy.peek() !== lease) {
+                if ((ownerAccountId != null && accountId != ownerAccountId) ||
+                    snapshot.input.shopSlug != shopSlug || lease == null || legacy.peek() !== lease) {
                     return Result.failure(IllegalStateException("Draft binding was replaced"))
                 }
                 return this@AndroidShopCheckInDraftStore.save(
@@ -50,7 +68,8 @@ internal class AndroidShopCheckInDraftStore(
             }
 
             override fun clear(shopSlug: String): Result<Unit> {
-                if (shopSlug != boundSlug || lease == null || legacy.peek() !== lease) {
+                if ((ownerAccountId != null && accountId != ownerAccountId) ||
+                    shopSlug != boundSlug || lease == null || legacy.peek() !== lease) {
                     return Result.failure(IllegalStateException("Draft binding was replaced"))
                 }
                 return this@AndroidShopCheckInDraftStore.clear(shopId).onSuccess { lease = null }
@@ -60,7 +79,11 @@ internal class AndroidShopCheckInDraftStore(
 
     override fun open(initial: ShopCheckInCreateInput): Result<ShopCheckInDraftSnapshot> = draftResult {
         val draft = legacy.open(initial.shopSlug)
-        if (guardedDraft !== draft) deliveryUnconfirmed = false
+        if (guardedDraft !== draft) {
+            deliveryUnconfirmed = false
+            drinkPhoto = null
+            drinkPhotoSkipped = false
+        }
         guardedDraft = draft
         ShopCheckInDraftSnapshot(
             input = initial.copy(
@@ -71,8 +94,10 @@ internal class AndroidShopCheckInDraftStore(
                 drinkSlug = draft.drinkSlug,
                 customDrinkName = draft.customDrinkName,
                 photos = draft.photos.map { ShopCheckInPhoto(it.bytes, it.fileName, it.contentType) },
+                drinkPhoto = drinkPhoto.takeIf { draft.photos.isNotEmpty() },
             ),
             deliveryUnconfirmed = deliveryUnconfirmed,
+            drinkPhotoSkipped = drinkPhotoSkipped,
         )
     }
 
@@ -95,6 +120,8 @@ internal class AndroidShopCheckInDraftStore(
         legacy.save(updated)
         guardedDraft = updated
         deliveryUnconfirmed = snapshot.deliveryUnconfirmed
+        drinkPhoto = input.drinkPhoto
+        drinkPhotoSkipped = snapshot.drinkPhotoSkipped
     }
 
     override fun clear(shopSlug: String): Result<Unit> = draftResult {
@@ -104,6 +131,8 @@ internal class AndroidShopCheckInDraftStore(
         if (guardedDraft?.shopId == shopSlug) {
             guardedDraft = null
             deliveryUnconfirmed = false
+            drinkPhoto = null
+            drinkPhotoSkipped = false
         }
     }
 }

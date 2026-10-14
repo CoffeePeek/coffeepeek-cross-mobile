@@ -20,7 +20,7 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.test.core.app.ActivityScenario
 import com.coffeepeek.core.designsystem.component.*
-import com.coffeepeek.core.designsystem.icons.CpIcons
+import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import org.junit.Assert.*
 import org.junit.Rule
@@ -71,8 +71,8 @@ class AdaptiveLayoutContractTest {
             val checked = mutableStateOf(false)
             var clicks = 0
             render(direction, 1f, dark = direction == LayoutDirection.Rtl) {
-                CheckmarkRow("Option", checked.value, { checked.value = !checked.value })
-                ActionRow("Action", { clicks++ })
+                CoffeePeekCheckmarkRow("Option", checked.value, { checked.value = !checked.value })
+                CoffeePeekActionRow("Action", { clicks++ })
             }.use {
                 compose.onNodeWithText("Option").assertHeightIsAtLeast(48.dp)
                     .assertIsOff().performClick().assertIsOn()
@@ -89,7 +89,7 @@ class AdaptiveLayoutContractTest {
                 var decreases = 0
                 var increases = 0
                 render(direction, scale, dark = direction == LayoutDirection.Rtl) {
-                    StepperRow("Количество порций", "12", { decreases++ }, { increases++ },
+                    CoffeePeekStepperRow("Количество порций", "12", { decreases++ }, { increases++ },
                         "Decrease", "Increase")
                 }.use {
                     val decrease = compose.onNodeWithContentDescription("Decrease")
@@ -116,7 +116,7 @@ class AdaptiveLayoutContractTest {
         LayoutDirection.entries.forEach { direction ->
             listOf(false, true).forEach { dark ->
                 var clicks = 0
-                render(direction, 2f, dark) { AppButton(label, { clicks++ }) }.use {
+                render(direction, 2f, dark) { CoffeePeekButton(label, { clicks++ }) }.use {
                     assertFullText(label)
                     assertTrue(textLayout(label).lineCount > 1)
                     compose.onNodeWithText(label).assertHeightIsAtLeast(48.dp).performClick()
@@ -131,7 +131,7 @@ class AdaptiveLayoutContractTest {
         LayoutDirection.entries.forEach { direction ->
             val checked = mutableStateOf(false)
             render(direction, 2f, dark = direction == LayoutDirection.Rtl) {
-                SwitchRow(label, checked.value, { checked.value = it })
+                CoffeePeekSwitchRow(label, checked.value, { checked.value = it })
             }.use {
                 assertFullText(label)
                 assertTrue(textLayout(label).lineCount > 1)
@@ -145,7 +145,7 @@ class AdaptiveLayoutContractTest {
         LayoutDirection.entries.forEach { direction ->
             var clicks = 0
             render(direction, 2f, dark = direction == LayoutDirection.Rtl) {
-                SettingsRow(CpIcons.Settings, label, description = "Системная тема", onClick = { clicks++ },
+                CoffeePeekSettingsRow(CoffeePeekIcons.Settings, label, description = "Системная тема", onClick = { clicks++ },
                     trailing = { androidx.compose.material3.Text("End", Modifier.testTag("trailing")) })
             }.use {
                 compose.onNodeWithText(label).assertIsDisplayed()
@@ -168,7 +168,7 @@ class AdaptiveLayoutContractTest {
         LayoutDirection.entries.forEach { direction ->
             val selected = mutableStateOf("First")
             render(direction, 2f, dark = direction == LayoutDirection.Rtl) {
-                CapsuleSegmentedControl(listOf("First", "Second"), selected.value, { it }, { selected.value = it })
+                CoffeePeekCapsuleSegmentedControl(listOf("First", "Second"), selected.value, { it }, { selected.value = it })
             }.use {
                 val first = compose.onNodeWithText("First")
                 val second = compose.onNodeWithText("Second")

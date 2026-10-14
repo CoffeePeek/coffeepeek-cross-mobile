@@ -12,7 +12,7 @@ import androidx.test.core.app.ActivityScenario
 import android.view.KeyEvent
 import androidx.test.platform.app.InstrumentationRegistry
 import com.coffeepeek.core.designsystem.component.*
-import com.coffeepeek.core.designsystem.icons.CpIcons
+import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import org.junit.Assert.assertEquals
 import org.junit.Rule
@@ -31,7 +31,7 @@ class PresentationContractTest {
     @Test fun segmentedControlEmitsSelectionWithoutOwningIt() {
         val selected = mutableStateOf("First")
         render {
-            CapsuleSegmentedControl(listOf("First", "Second"), selected.value, { it }, { selected.value = it })
+            CoffeePeekCapsuleSegmentedControl(listOf("First", "Second"), selected.value, { it }, { selected.value = it })
         }.use {
             compose.onNodeWithText("First").assertIsSelected()
             compose.onNodeWithText("Second").assertIsNotSelected().performClick().assertIsSelected()
@@ -42,7 +42,7 @@ class PresentationContractTest {
     @Test fun disabledSegmentsDoNotEmitSelection() {
         var changes = 0
         render {
-            CapsuleSegmentedControl(listOf("First", "Second"), "First", { it }, { changes++ }, enabled = false)
+            CoffeePeekCapsuleSegmentedControl(listOf("First", "Second"), "First", { it }, { changes++ }, enabled = false)
         }.use {
             compose.onNodeWithText("Second").assertIsNotEnabled().performClick()
             compose.runOnIdle { assertEquals(0, changes) }
@@ -51,7 +51,7 @@ class PresentationContractTest {
 
     @Test fun settingsRowEmitsClickAndBadgeIsDecorative() {
         var clicks = 0
-        render { SettingsRow(CpIcons.Settings, "Settings", onClick = { clicks++ }) }.use {
+        render { CoffeePeekSettingsRow(CoffeePeekIcons.Settings, "Settings", onClick = { clicks++ }) }.use {
             compose.onNodeWithText("Settings").performClick()
             compose.runOnIdle { assertEquals(1, clicks) }
         }
@@ -59,7 +59,7 @@ class PresentationContractTest {
 
     @Test fun disabledSettingsRowDoesNotEmitClick() {
         var clicks = 0
-        render { SettingsRow(CpIcons.Settings, "Settings", onClick = { clicks++ }, enabled = false) }.use {
+        render { CoffeePeekSettingsRow(CoffeePeekIcons.Settings, "Settings", onClick = { clicks++ }, enabled = false) }.use {
             compose.onNodeWithText("Settings").assertIsNotEnabled().performClick()
             compose.runOnIdle { assertEquals(0, clicks) }
         }
@@ -75,7 +75,7 @@ class PresentationContractTest {
 
     @Test fun errorDialogEmitsDismissAndCallerHidesIt() {
         val shown = mutableStateOf(true)
-        render { ErrorDialog(shown.value, "Try again", "Failed", "Dismiss", { shown.value = false }) }.use {
+        render { CoffeePeekErrorDialog(shown.value, "Try again", "Failed", "Dismiss", { shown.value = false }) }.use {
             compose.onNodeWithText("Try again").assertIsDisplayed()
             compose.onNodeWithText("Dismiss").performClick()
             compose.onNodeWithText("Failed").assertDoesNotExist()
@@ -84,7 +84,7 @@ class PresentationContractTest {
 
     @Test fun loadingDialogBlocksBackAndCallerControlsVisibility() {
         val shown = mutableStateOf(true)
-        render { LoadingDialog(shown.value, "Loading data", "Please wait") }.use {
+        render { CoffeePeekLoadingDialog(shown.value, "Loading data", "Please wait") }.use {
             compose.onNodeWithContentDescription("Loading data").assertIsDisplayed()
             InstrumentationRegistry.getInstrumentation().sendKeyDownUpSync(KeyEvent.KEYCODE_BACK)
             compose.onNodeWithText("Please wait").assertIsDisplayed()

@@ -14,6 +14,7 @@ data class ShopOverview(
     val photos: List<ShopPhoto>,
     val priceRange: String? = null,
     val canonicalPath: String? = null,
+    val type: ShopType = ShopType.CoffeeBar,
 )
 
 data class ShopPhoto(

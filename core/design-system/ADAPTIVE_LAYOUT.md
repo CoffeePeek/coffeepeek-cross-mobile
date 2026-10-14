@@ -5,7 +5,7 @@ navigation, platform configuration and dependency graph are unchanged.
 
 ## Corrected contract
 
-StepperRow previously constrained each action and its container to 32.dp height.
+CoffeePeekStepperRow previously constrained each action and its container to 32.dp height.
 The two custom click targets now have minimum 48.dp width/height and content
 padding; their height/width can grow with the symbol typography. The container
 has a minimum height, not a fixed height. Caller-owned value/actions and logical
@@ -24,7 +24,7 @@ and injected density/fontScale. It checks:
 
 - Stepper action bounds at scales 1.0 and 2.0, LTR/RTL ordering, unoverflowed
   label/value/symbol text and caller callbacks.
-- Long AppButton text wraps without visual overflow at scale 2.0 in both layout
+- Long CoffeePeekButton text wraps without visual overflow at scale 2.0 in both layout
   directions and both themes; the button remains clickable.
 - Long switch labels wrap at scale 2.0; selection and callbacks remain hoisted.
 - Ordinary-scale grouped action/checkbox rows have 48.dp minimum targets in both
@@ -50,7 +50,7 @@ This is test-side normalization, not a production text workaround.
 
 ## Preview and remaining QA
 
-`GroupedRows.kt` contains LTR and RTL paired previews at injected
+`CoffeePeekGroupedRows.kt` contains LTR and RTL paired previews at injected
 fontScale 2.0, with Manrope and Russian labels. It also includes top bar, fields,
 search and checkmark rows for manual inspection; these additional families are
 not all covered by new large-font geometry tests. Existing paired previews cover

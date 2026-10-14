@@ -13,6 +13,10 @@ import com.coffeepeek.feature.shop.impl.ui.compose.model.ShopCheckInFormAction
 import com.coffeepeek.feature.shop.impl.ui.compose.model.ShopCheckInFormEvent
 import com.coffeepeek.feature.shop.impl.ui.data.ShopCheckInDraftSnapshot
 import com.coffeepeek.feature.shop.impl.ui.data.ShopCheckInDraftStore
+import com.coffeepeek.feature.shop.impl.ui.data.ShopDrinkPhotoProcessor
+import kotlin.io.encoding.Base64
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
@@ -71,8 +75,102 @@ class ShopCheckInCreateViewModelTest {
         }
     }
 
-    private fun viewModel(repository: Repository = Repository(), drafts: Drafts = Drafts()) =
-        ShopCheckInCreateViewModel(initial, repository, drafts, now = { now }).also { store.put("create", it) }
+    private fun viewModel(repository: Repository = Repository(), drafts: Drafts = Drafts(),
+        processor: ShopDrinkPhotoProcessor? = null) =
+        ShopCheckInCreateViewModel(initial, repository, drafts, now = { now }, drinkPhotos = processor)
+            .also { store.put("create", it) }
+
+    private fun png(name: String) = ShopCheckInPhoto(Base64.decode(
+        "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQIHWP4z8DwHwAFgAI/ScLbtAAAAABJRU5ErkJggg=="), name, "image/png")
+
+    @Test fun replacingFirstPhotoDropsLateProcessingAndKeepsTheNote() = runTest(dispatcher) {
+        val oldGate = CompletableDeferred<Unit>()
+        val processor = ShopDrinkPhotoProcessor { source ->
+            if (source.fileName == "first.jpg") withContext(NonCancellable) { oldGate.await() }
+            Result.success(listOf(png("${source.fileName}.png")))
+        }
+        val repository = Repository()
+        val viewModel = viewModel(repository, processor = processor)
+        runCurrent()
+        viewModel.onAction(ShopCheckInFormAction.PhotosAdded(listOf(
+            ShopCheckInPhoto(byteArrayOf(1), "first.jpg"), ShopCheckInPhoto(byteArrayOf(2), "second.jpg"))))
+        viewModel.onAction(ShopCheckInFormAction.TextChanged("Saved note"))
+        runCurrent()
+        assertTrue(viewModel.state.value.drinkPhotoProcessing)
+        viewModel.onAction(ShopCheckInFormAction.Submit)
+        runCurrent()
+        assertTrue(repository.writes.isEmpty())
+        viewModel.onAction(ShopCheckInFormAction.RemovePhoto(0))
+        runCurrent()
+        oldGate.complete(Unit)
+        runCurrent()
+        assertEquals("second.jpg.png", viewModel.state.value.input.drinkPhoto?.fileName)
+        assertEquals("Saved note", viewModel.state.value.input.text)
+        assertFalse(viewModel.state.value.drinkPhotoProcessing)
+    }
+
+    @Test fun multipleObjectsRequireAChoiceBeforeWriting() = runTest(dispatcher) {
+        val choices = listOf(png("cup.png"), png("plate.png"))
+        val repository = Repository()
+        val viewModel = viewModel(repository, processor = ShopDrinkPhotoProcessor { Result.success(choices) })
+        runCurrent()
+        viewModel.onAction(ShopCheckInFormAction.TextChanged("Coffee"))
+        viewModel.onAction(ShopCheckInFormAction.PhotosAdded(listOf(ShopCheckInPhoto(byteArrayOf(1), "full.jpg"))))
+        runCurrent()
+        viewModel.onAction(ShopCheckInFormAction.Submit)
+        runCurrent()
+        assertTrue(repository.writes.isEmpty())
+        viewModel.onAction(ShopCheckInFormAction.ChooseDrinkPhoto(0))
+        runCurrent()
+        viewModel.onAction(ShopCheckInFormAction.Submit)
+        runCurrent()
+        assertEquals(choices.first(), repository.writes.single().drinkPhoto)
+        assertEquals(1, repository.writes.single().photos.size)
+    }
+
+    @Test fun skippingDuringProcessingIgnoresLateResultAndAllowsSubmittingTheOriginal() = runTest(dispatcher) {
+        val gate = CompletableDeferred<Unit>()
+        val repository = Repository()
+        val drafts = Drafts()
+        val viewModel = viewModel(repository, drafts, ShopDrinkPhotoProcessor {
+            withContext(NonCancellable) { gate.await() }
+            Result.success(listOf(png("late.png")))
+        })
+        runCurrent()
+        viewModel.onAction(ShopCheckInFormAction.TextChanged("Coffee"))
+        viewModel.onAction(ShopCheckInFormAction.PhotosAdded(listOf(ShopCheckInPhoto(byteArrayOf(1), "full.jpg"))))
+        runCurrent()
+        viewModel.onAction(ShopCheckInFormAction.SkipDrinkPhoto)
+        runCurrent()
+        assertTrue(viewModel.state.value.drinkPhotoSkipped)
+        assertFalse(viewModel.state.value.drinkPhotoProcessing)
+        gate.complete(Unit)
+        runCurrent()
+        assertEquals(null, viewModel.state.value.input.drinkPhoto)
+        assertTrue(drafts.snapshot!!.drinkPhotoSkipped)
+        viewModel.onAction(ShopCheckInFormAction.Submit)
+        runCurrent()
+        assertEquals(null, repository.writes.single().drinkPhoto)
+        assertEquals(1, repository.writes.single().photos.size)
+    }
+
+    @Test fun explicitOptOutSurvivesReopeningWithoutRestartingProcessing() = runTest(dispatcher) {
+        var calls = 0
+        val processor = ShopDrinkPhotoProcessor { calls++; Result.failure(IllegalStateException("no model")) }
+        val drafts = Drafts()
+        val first = viewModel(drafts = drafts, processor = processor)
+        runCurrent()
+        first.onAction(ShopCheckInFormAction.PhotosAdded(listOf(ShopCheckInPhoto(byteArrayOf(1), "full.jpg"))))
+        runCurrent()
+        first.onAction(ShopCheckInFormAction.SkipDrinkPhoto)
+        runCurrent()
+        val reopened = viewModel(drafts = drafts, processor = processor)
+        runCurrent()
+        assertEquals(1, calls)
+        assertTrue(reopened.state.value.drinkPhotoSkipped)
+        assertEquals(null, reopened.state.value.input.drinkPhoto)
+        assertEquals(1, reopened.state.value.input.photos.size)
+    }
 
     @Test fun restoresProcessDraftAndKeepsEditsOnDismissWhileGuardingPhotoLimit() = runTest(dispatcher) {
         val drafts = Drafts().apply { snapshot = ShopCheckInDraftSnapshot(initial.copy(text = "Restored")) }

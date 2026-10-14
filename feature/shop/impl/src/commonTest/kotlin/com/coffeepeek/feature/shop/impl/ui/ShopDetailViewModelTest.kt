@@ -1,6 +1,7 @@
 package com.coffeepeek.feature.shop.impl.ui
 
 import androidx.lifecycle.ViewModelStore
+import com.coffeepeek.feature.shop.api.ShopDetailContext
 import com.coffeepeek.feature.shop.domain.model.ShopCheckIn
 import com.coffeepeek.feature.shop.domain.model.ShopCoffeeDetails
 import com.coffeepeek.feature.shop.domain.model.ShopDetails
@@ -51,8 +52,9 @@ class ShopDetailViewModelTest {
         override suspend fun getDetails(shopId: String): Result<ShopDetails> {
             assertEquals("shop-1", shopId)
             calls++
+            val response = result
             gate?.await()
-            return result
+            return response
         }
     }
 
@@ -105,10 +107,12 @@ class ShopDetailViewModelTest {
         viewer: ShopViewer = ShopViewer(true, "viewer"),
         checkInVotes: CheckInVotes = CheckInVotes(),
         viewerProvider: suspend () -> Result<ShopViewer> = { Result.success(viewer) },
+        dayProvider: () -> Int = { 1 },
+        minuteProvider: () -> Int? = { null },
     ): ShopDetailViewModel = ShopDetailViewModel(
         shopId = "shop-1", detailsRepository = details,
         checkInVoteRepository = checkInVotes, favoritesRepository = favorites,
-        currentViewer = viewerProvider, currentDayOfWeek = { 1 })
+        currentViewer = viewerProvider, currentDayOfWeek = dayProvider, currentMinuteOfDay = minuteProvider)
         .also { store.put("detail", it) }
 
     @Test fun loadAndLocalExpansionAreIndependentOfNavigation() = runTest(dispatcher) {
@@ -126,7 +130,7 @@ class ShopDetailViewModelTest {
         assertTrue(viewModel.state.value.featuresExpanded)
         viewModel.onAction(ShopDetailAction.OpenMap)
         runCurrent()
-        assertEquals(ShopDetailEvent.OpenMap(53.9, 27.5), viewModel.events.first())
+        assertEquals(ShopDetailEvent.OpenMap(53.9, 27.5, "Coffee"), viewModel.events.first().event)
     }
 
     @Test fun duplicateLoadsAreGuardedWhilePending() = runTest(dispatcher) {
@@ -137,6 +141,43 @@ class ShopDetailViewModelTest {
         assertEquals(1, details.calls)
         details.gate!!.complete(Unit)
         runCurrent()
+    }
+
+    @Test fun localClockIsUpdatedOnReturnAndScheduleExpansionWithoutAnotherFirstLoad() = runTest(dispatcher) {
+        var day = 1
+        var minute = 600
+        val repository = DetailsRepository()
+        val viewModel = viewModel(repository, dayProvider = { day }, minuteProvider = { minute })
+        runCurrent()
+        assertEquals(600, viewModel.state.value.todayMinuteOfDay)
+        day = 2
+        minute = 540
+        viewModel.onAction(ShopDetailAction.Resume)
+        runCurrent()
+        assertEquals(1, repository.calls)
+        assertEquals(2, viewModel.state.value.todayDayOfWeek)
+        assertEquals(540, viewModel.state.value.todayMinuteOfDay)
+        minute = 720
+        viewModel.onAction(ShopDetailAction.ToggleSchedule)
+        runCurrent()
+        assertEquals(720, viewModel.state.value.todayMinuteOfDay)
+        assertTrue(viewModel.state.value.scheduleExpanded)
+    }
+
+    @Test fun featuresStayExpandedOnSameSnapshotButCollapseWhenTheListChanges() = runTest(dispatcher) {
+        val repository = DetailsRepository()
+        val viewModel = viewModel(repository)
+        runCurrent()
+        viewModel.onAction(ShopDetailAction.ToggleFeatures)
+        runCurrent()
+        viewModel.onAction(ShopDetailAction.Retry)
+        runCurrent()
+        assertTrue(viewModel.state.value.featuresExpanded)
+        repository.result = Result.success(repository.result.getOrThrow().copy(
+            features = listOf(ShopFeature("Выпечка", "bakery", false))))
+        viewModel.onAction(ShopDetailAction.Retry)
+        runCurrent()
+        assertFalse(viewModel.state.value.featuresExpanded)
     }
 
     @Test fun loadFailureCanRetry() = runTest(dispatcher) {
@@ -151,6 +192,37 @@ class ShopDetailViewModelTest {
         assertFalse(viewModel.state.value.hasError)
     }
 
+    @Test fun refreshFailureKeepsLoadedContentAndCanRetry() = runTest(dispatcher) {
+        val repository = DetailsRepository()
+        val viewModel = viewModel(details = repository)
+        runCurrent()
+        val loaded = viewModel.state.value.details
+        repository.result = Result.failure(IllegalStateException("refresh failed"))
+        viewModel.onAction(ShopDetailAction.Retry)
+        runCurrent()
+        assertEquals(loaded, viewModel.state.value.details)
+        assertTrue(viewModel.state.value.hasError)
+        assertFalse(viewModel.state.value.isLoading)
+        repository.result = Result.success(details())
+        viewModel.onAction(ShopDetailAction.Retry)
+        runCurrent()
+        assertFalse(viewModel.state.value.hasError)
+        assertEquals(3, repository.calls)
+    }
+
+    @Test fun sessionFailureDoesNotRestorePreviousAccountsPrivateDetails() = runTest(dispatcher) {
+        val repository = DetailsRepository().apply { result = Result.success(details().copy(userCheckIns = listOf(checkIn()))) }
+        val viewModel = viewModel(details = repository)
+        runCurrent()
+        assertTrue(viewModel.state.value.details!!.userCheckIns.isNotEmpty())
+        repository.result = Result.failure(IllegalStateException("session refresh failed"))
+        viewModel.onAction(ShopDetailAction.SessionChanged(1))
+        runCurrent()
+        assertEquals(null, viewModel.state.value.details)
+        assertTrue(viewModel.state.value.hasError)
+        assertFalse(viewModel.state.value.isLoggedIn)
+    }
+
     @Test fun favoriteToggleUsesLocalRepositoryAndGuardsDuplicateMutation() = runTest(dispatcher) {
         val favorites = Favorites().apply { gate = CompletableDeferred() }
         val viewModel = viewModel(favorites = favorites)
@@ -161,7 +233,7 @@ class ShopDetailViewModelTest {
         viewModel.onAction(ShopDetailAction.ToggleFavorite)
         runCurrent()
         assertEquals(1, favorites.saves)
-        assertEquals("$$", favorites.saved?.priceRange)
+        assertEquals("$", favorites.saved?.priceRange)
         assertEquals(listOf("Wi-Fi"), favorites.saved?.tags)
         assertEquals(listOf("Эспрессо"), favorites.saved?.brewMethods)
         assertEquals(listOf("https://photo/roaster"), favorites.saved?.roasterPhotoUrls)
@@ -170,7 +242,7 @@ class ShopDetailViewModelTest {
         runCurrent()
         assertTrue(viewModel.state.value.isFavorite)
         assertFalse(viewModel.state.value.isFavoriteLoading)
-        assertEquals(ShopDetailEvent.FavoriteChanged("shop-1", true), viewModel.events.first())
+        assertEquals(ShopDetailEvent.FavoriteChanged("shop-1", true), viewModel.events.first().event)
         viewModel.onAction(ShopDetailAction.ToggleFavorite)
         runCurrent()
         assertEquals(1, favorites.removes)
@@ -183,7 +255,7 @@ class ShopDetailViewModelTest {
         runCurrent()
         viewModel.onAction(ShopDetailAction.ToggleFavorite)
         runCurrent()
-        assertEquals(ShopDetailEvent.FavoriteFailed, viewModel.events.first())
+        assertEquals(ShopDetailEvent.FavoriteFailed, viewModel.events.first().event)
         assertFalse(viewModel.state.value.isFavorite)
         favorites.snapshots.value = Result.failure(IllegalStateException("unavailable"))
         viewModel.onAction(ShopDetailAction.Retry)
@@ -257,9 +329,9 @@ class ShopDetailViewModelTest {
         viewModel.onAction(ShopDetailAction.OpenRoute)
         runCurrent()
 
-        assertEquals(ShopDetailEvent.ShareShop("shop-1", "Coffee"), viewModel.events.first())
-        assertEquals(ShopDetailEvent.SuggestChange("shop-1"), viewModel.events.first())
-        assertEquals(ShopDetailEvent.OpenRoute(53.9, 27.5), viewModel.events.first())
+        assertEquals(ShopDetailEvent.ShareShop("/shops/coffee", "Coffee"), viewModel.events.first().event)
+        assertEquals(ShopDetailEvent.SuggestChange(ShopDetailContext("shop-1", "shop-1", "Coffee")), viewModel.events.first().event)
+        assertEquals(ShopDetailEvent.OpenRoute(53.9, 27.5), viewModel.events.first().event)
     }
 
     @Test fun guestSuggestChangeRequiresSignIn() = runTest(dispatcher) {
@@ -269,7 +341,7 @@ class ShopDetailViewModelTest {
         viewModel.onAction(ShopDetailAction.SuggestChange)
         runCurrent()
 
-        assertEquals(ShopDetailEvent.SignIn, viewModel.events.first())
+        assertEquals(ShopDetailEvent.SignIn, viewModel.events.first().event)
     }
 
     @Test fun guestDoesNotSeeAccountCheckInsFromDetailsResponse() = runTest(dispatcher) {
@@ -318,7 +390,7 @@ class ShopDetailViewModelTest {
         runCurrent()
         viewModel.onAction(ShopDetailAction.VoteCheckInHelpful("visit"))
         runCurrent()
-        assertEquals(ShopDetailEvent.VoteFailed, viewModel.events.first())
+        assertEquals(ShopDetailEvent.VoteFailed, viewModel.events.first().event)
         assertEquals(checkIn(), viewModel.state.value.details!!.checkIns.single())
         assertEquals(null, viewModel.state.value.pendingCheckInVoteId)
     }
@@ -338,7 +410,7 @@ class ShopDetailViewModelTest {
             // Back must be the next event: owner report emitted nothing.
             viewModel.onAction(ShopDetailAction.Back)
             runCurrent()
-            assertEquals(ShopDetailEvent.Back, viewModel.events.first())
+            assertEquals(ShopDetailEvent.Back, viewModel.events.first().event)
         }
     }
 
@@ -350,9 +422,9 @@ class ShopDetailViewModelTest {
         viewModel.onAction(ShopDetailAction.OpenCheckIns)
         viewModel.onAction(ShopDetailAction.ReportCheckIn("visit"))
         runCurrent()
-        assertEquals(ShopDetailEvent.CreateCheckIn, viewModel.events.first())
-        assertEquals(ShopDetailEvent.OpenCheckIns("shop-1"), viewModel.events.first())
-        assertEquals(ShopDetailEvent.ReportCheckIn("visit"), viewModel.events.first())
+        assertEquals(ShopDetailEvent.CreateCheckIn(ShopDetailContext("shop-1", "shop-1", "Coffee")), viewModel.events.first().event)
+        assertEquals(ShopDetailEvent.OpenCheckIns("shop-1"), viewModel.events.first().event)
+        assertEquals(ShopDetailEvent.ReportCheckIn("visit"), viewModel.events.first().event)
     }
 
     @Test fun guestCheckInMutationsRequestSignInWithoutCallingRepository() = runTest(dispatcher) {
@@ -364,7 +436,7 @@ class ShopDetailViewModelTest {
         viewModel.onAction(ShopDetailAction.ReportCheckIn("visit"))
         viewModel.onAction(ShopDetailAction.VoteCheckInHelpful("visit"))
         runCurrent()
-        repeat(3) { assertEquals(ShopDetailEvent.SignIn, viewModel.events.first()) }
+        repeat(3) { assertEquals(ShopDetailEvent.SignIn, viewModel.events.first().event) }
         assertTrue(visits.calls.isEmpty())
     }
 
@@ -393,7 +465,7 @@ class ShopDetailViewModelTest {
         runCurrent()
         viewer = ShopViewer(false, null)
         repository.gate = CompletableDeferred()
-        viewModel.onAction(ShopDetailAction.SessionChanged)
+        viewModel.onAction(ShopDetailAction.SessionChanged(1))
         runCurrent()
         assertEquals(null, viewModel.state.value.details)
         assertFalse(viewModel.state.value.isLoggedIn)
@@ -407,6 +479,82 @@ class ShopDetailViewModelTest {
         assertTrue(viewModel.state.value.details!!.userCheckIns.isEmpty())
     }
 
+    @Test fun refreshSignalsDuringVoteAreCoalescedAndPreserveTheServerVote() = runTest(dispatcher) {
+        val votes = CheckInVotes().apply { gate = CompletableDeferred() }
+        val repository = DetailsRepository().apply { result = Result.success(details().copy(checkIns = listOf(checkIn()))) }
+        val viewModel = viewModel(details = repository, checkInVotes = votes)
+        runCurrent()
+        viewModel.onAction(ShopDetailAction.VoteCheckInHelpful("visit"))
+        runCurrent()
+        viewModel.onAction(ShopDetailAction.Refresh(1))
+        viewModel.onAction(ShopDetailAction.Refresh(2))
+        runCurrent()
+        assertEquals(1, repository.calls)
+        repository.result = Result.success(details().copy(checkIns = listOf(
+            checkIn().copy(helpfulCount = 8, isHelpfulByCurrentUser = true))))
+        votes.gate!!.complete(Unit)
+        runCurrent()
+        assertEquals(2, repository.calls)
+        assertEquals(8, viewModel.state.value.details!!.checkIns.single().helpfulCount)
+        assertTrue(viewModel.state.value.details!!.checkIns.single().isHelpfulByCurrentUser)
+        viewModel.onAction(ShopDetailAction.Refresh(2))
+        runCurrent()
+        assertEquals(2, repository.calls)
+    }
+
+    @Test fun postWriteSignalDuringLoadRequestsANewerSnapshotAfterTheOldReply() = runTest(dispatcher) {
+        val repository = DetailsRepository().apply { gate = CompletableDeferred() }
+        val viewModel = viewModel(repository)
+        runCurrent()
+        repository.result = Result.success(details().copy(overview = details().overview.copy(title = "After write")))
+        viewModel.onAction(ShopDetailAction.Refresh(1))
+        viewModel.onAction(ShopDetailAction.Refresh(2))
+        runCurrent()
+        assertEquals(1, repository.calls)
+        repository.gate!!.complete(Unit)
+        runCurrent()
+        assertEquals(2, repository.calls)
+        assertEquals("After write", viewModel.state.value.details!!.overview.title)
+    }
+
+    @Test fun sessionGenerationIsIdempotentAndAnOlderSignalCannotRestoreTheAccount() = runTest(dispatcher) {
+        val repository = DetailsRepository()
+        val viewModel = viewModel(repository)
+        runCurrent()
+        viewModel.onAction(ShopDetailAction.SessionChanged(2))
+        runCurrent()
+        viewModel.onAction(ShopDetailAction.SessionChanged(2))
+        viewModel.onAction(ShopDetailAction.SessionChanged(1))
+        runCurrent()
+        assertEquals(2, repository.calls)
+        assertEquals(2, viewModel.state.value.sessionGeneration)
+    }
+
+    @Test fun formContextKeepsCallerIdentitySeparateFromTheLoadedPublicSlug() = runTest(dispatcher) {
+        val repository = DetailsRepository().apply {
+            result = Result.success(details().copy(overview = details().overview.copy(id = "public-coffee-slug")))
+        }
+        val viewModel = viewModel(repository)
+        runCurrent()
+        viewModel.onAction(ShopDetailAction.OpenCheckIn)
+        runCurrent()
+        val envelope = viewModel.events.first()
+        assertEquals(0, envelope.sessionGeneration)
+        assertEquals(ShopDetailEvent.CreateCheckIn(ShopDetailContext("shop-1", "public-coffee-slug", "Coffee")), envelope.event)
+    }
+
+    @Test fun missingCanonicalPathDoesNotInventAShareLinkFromTheId() = runTest(dispatcher) {
+        val repository = DetailsRepository().apply {
+            result = Result.success(details().copy(overview = details().overview.copy(canonicalPath = null)))
+        }
+        val viewModel = viewModel(repository)
+        runCurrent()
+        viewModel.onAction(ShopDetailAction.Share)
+        viewModel.onAction(ShopDetailAction.Back)
+        runCurrent()
+        assertEquals(ShopDetailEvent.Back, viewModel.events.first().event)
+    }
+
     @Test fun voteReplyFromPreviousSessionCannotMutateNewSessionOrEmitFailure() = runTest(dispatcher) {
         val visits = CheckInVotes().apply { gate = CompletableDeferred() }
         val repository = DetailsRepository().apply { result = Result.success(details().copy(checkIns = listOf(checkIn()))) }
@@ -416,7 +564,7 @@ class ShopDetailViewModelTest {
         viewModel.onAction(ShopDetailAction.VoteCheckInHelpful("visit"))
         runCurrent()
         viewer = ShopViewer(false, null)
-        viewModel.onAction(ShopDetailAction.SessionChanged)
+        viewModel.onAction(ShopDetailAction.SessionChanged(1))
         runCurrent()
         visits.gate!!.complete(Unit)
         runCurrent()
@@ -430,7 +578,7 @@ private fun checkIn() = ShopCheckIn("visit", "author", "shop-1", "Coffee", "2026
 
 private fun details() = ShopDetails(
     overview = ShopOverview("shop-1", "Coffee", null, null, 53.9, 27.5,
-        null, 0, true, emptyList(), priceRange = "$$"),
+        null, 0, true, emptyList(), priceRange = "$", canonicalPath = "/shops/coffee"),
     menu = null,
     schedules = emptyList(),
     coffee = ShopCoffeeDetails(roasters = listOf(ShopRoaster("roaster-1", "Roaster", "https://photo/roaster"))),

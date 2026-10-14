@@ -22,7 +22,7 @@ import androidx.compose.ui.semantics.*
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.unit.dp
-import com.coffeepeek.core.designsystem.theme.CpDimens
+import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
@@ -49,7 +49,7 @@ fun CoffeePeekPullToRefresh(
     val thresholdPx = with(LocalDensity.current) { threshold.toPx() }
     val gesture = remember(thresholdPx, cooldown) {
         val origin = TimeSource.Monotonic.markNow()
-        PullRefreshGestureState(thresholdPx, cooldown) { origin.elapsedNow() }
+        CoffeePeekPullRefreshGestureState(thresholdPx, cooldown) { origin.elapsedNow() }
     }
     val refreshingNow by rememberUpdatedState(isRefreshing)
     val enabledNow by rememberUpdatedState(enabled)
@@ -100,7 +100,7 @@ fun CoffeePeekPullToRefresh(
         if (isRefreshing || offset > 0f) {
             val progress = (offset / thresholdPx).coerceIn(0f, 1f)
             Box(
-                modifier = Modifier.fillMaxWidth().padding(top = CpDimens.spacing2)
+                modifier = Modifier.fillMaxWidth().padding(top = CoffeePeekDimens.spacing2)
                     .graphicsLayer { alpha = if (isRefreshing) 1f else progress }
                     .clearAndSetSemantics {
                         contentDescription = if (isRefreshing) loadingDescription else refreshDescription
@@ -109,7 +109,7 @@ fun CoffeePeekPullToRefresh(
                     },
                 contentAlignment = Alignment.TopCenter,
             ) {
-                CoffeePeekLoader(loadingDescription, size = CpDimens.loaderButton, strokeWidth = 2.dp)
+                CoffeePeekLoader(loadingDescription, size = CoffeePeekDimens.loaderButton, strokeWidth = 2.dp)
             }
         }
     }
@@ -127,7 +127,7 @@ private fun CoffeePeekPullToRefreshPreviewContent(darkTheme: Boolean) = CoffeePe
                     items(12) { Text("Example item ${it + 1}", Modifier.fillMaxWidth().padding(16.dp)) }
                 }
             }
-            AppButton("Finish sample refresh", { refreshing = false }, enabled = refreshing)
+            CoffeePeekButton("Finish sample refresh", { refreshing = false }, enabled = refreshing)
         }
     }
 }

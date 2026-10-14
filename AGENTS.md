@@ -99,6 +99,14 @@ still owns its root back stack and cross-feature routing.
 
 ## Presentation and resources
 
+- Prefix reusable design-system components, supporting UI types, tokens and their
+  Kotlin source files with `CoffeePeek` (for example `CoffeePeekButton.kt`,
+  `CoffeePeekTextField`, `CoffeePeekIcons`, `CoffeePeekDimens`). Ordinary functions
+  and Modifier extensions use lower camel case (`coffeePeekLiquidGlass`);
+  composition locals use `LocalCoffeePeek…`. Do not add new `App…` or `Cp…`
+  aliases. Feature components keep their feature-specific names; legacy names
+  remain until their consumers are migrated. Resource and font-license names
+  are not Kotlin component names and must retain their provenance.
 - Give each independent screen or component its own descriptively named Kotlin
   file. Keep small private implementation helpers with their owner; do not create
   a file solely to collect unrelated components or previews.

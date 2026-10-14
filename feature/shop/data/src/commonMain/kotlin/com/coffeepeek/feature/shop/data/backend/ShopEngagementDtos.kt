@@ -38,6 +38,7 @@ internal data class ShopCheckInDto(
     @SerialName("customDrinkName") val customDrinkName: String? = null,
     @SerialName("drinkNameRu") val drinkNameRu: String? = null,
     @SerialName("drinkNameEn") val drinkNameEn: String? = null,
+    @SerialName("drinkPhotoUrl") val drinkPhotoUrl: String? = null,
     @SerialName("visibility") val visibility: String = "Private",
     @SerialName("moderationState") val moderationState: String = "NotSubmitted",
     @SerialName("contentRevision") val contentRevision: JsonElement? = null,

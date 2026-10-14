@@ -1,8 +1,14 @@
 # Feature migration: API / implementation
 
+The active Android audit and execution order are in
+[ANDROID_REFACTORING_PLAN.md](ANDROID_REFACTORING_PLAN.md). Historical stack and
+completed-slice notes below are context, not the next-work checklist.
+
 This directory now contains independent favorites, Shop Report, and Shop
-api/domain/data/impl modules. Shop currently migrates only the Android menu
-gallery; see shop/README.md.
+api/domain/data/impl modules. Android Shop gallery, check-in form, detail and
+public check-in list are wired and have passed automated Android/device checks;
+live cup/picker/authenticated-write QA remains pending before release. See
+shop/README.md and shop/ANDROID_PARITY_PLAN.md for active versus prepared paths.
 Android application composition owns favorites Koin and its compatibility adapter; feed
 and detail observe favorites domain membership, and the Android favorites route
 renders the new screen. The shared root still uses Navigation 2, while iOS keeps
@@ -87,13 +93,18 @@ reason; a transport module does not need artificial business domain/data modules
 
 ## Branch and PR stack
 
+Current exception, explicitly requested by the user: the migration is consolidated
+in one open PR #43 (`feature/core-design-system-controls` → `develop`). Former
+checkpoint PRs are closed/superseded; do not recreate that stack for current work.
+The following checkpoint rule describes future stacks, not the current PR state.
+
 Every next work branch starts from the current migration tip, not main. Group
 related tested steps into a checkpoint PR; create the next stacked PR when its
 diff would grow beyond about 50 changed files, or earlier for a clear review or
 risk boundary. A cohesive change may exceed that guide if documented. Each PR
 targets the previous open checkpoint branch, not an individual closed slice.
-The favorites foundation and Android integration are collected in checkpoint
-PRs #53, #57 and #62; presentation follow-ups are collected in #67.
+Historically, favorites foundation/integration were collected in PRs #53, #57
+and #62, and presentation follow-ups in #67; they are now superseded by #43.
 After a parent merges to main, retarget its child to main before merging it.
 If a parent changes, update descendants explicitly and re-run affected checks;
 never rewrite published stack history or unrelated work without agreement.

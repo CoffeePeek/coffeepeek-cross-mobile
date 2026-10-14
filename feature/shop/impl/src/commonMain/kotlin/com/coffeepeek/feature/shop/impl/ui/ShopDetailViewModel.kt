@@ -1,6 +1,7 @@
 package com.coffeepeek.feature.shop.impl.ui
 
 import androidx.lifecycle.viewModelScope
+import com.coffeepeek.feature.shop.api.ShopDetailContext
 import com.coffeepeek.core.presentation.MviViewModel
 import com.coffeepeek.feature.shop.domain.model.ShopViewer
 import com.coffeepeek.feature.shop.domain.model.ShopCheckIn
@@ -10,11 +11,14 @@ import com.coffeepeek.feature.favorites.domain.repository.FavoritesRepository
 import com.coffeepeek.feature.favorites.domain.model.FavoriteShop
 import com.coffeepeek.feature.shop.impl.ui.compose.model.ShopDetailAction
 import com.coffeepeek.feature.shop.impl.ui.compose.model.ShopDetailEvent
+import com.coffeepeek.feature.shop.impl.ui.compose.model.ShopDetailEventEnvelope
 import com.coffeepeek.feature.shop.impl.ui.compose.model.ShopDetailState
+import com.coffeepeek.feature.shop.impl.ui.compose.model.ShopPriceLevel
 import com.coffeepeek.feature.shop.impl.ui.data.toFavoriteSnapshot
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
 
@@ -25,11 +29,19 @@ internal class ShopDetailViewModel(
     private val favoritesRepository: FavoritesRepository,
     private val currentViewer: suspend () -> Result<ShopViewer>,
     private val currentDayOfWeek: () -> Int,
-) : MviViewModel<ShopDetailState, ShopDetailAction, ShopDetailEvent>(ShopDetailState()) {
+    private val currentMinuteOfDay: () -> Int? = { null },
+    initialSessionGeneration: Int = 0,
+    initialRefreshGeneration: Long = 0,
+) : MviViewModel<ShopDetailState, ShopDetailAction, ShopDetailEventEnvelope>(
+    ShopDetailState(sessionGeneration = initialSessionGeneration),
+) {
     private var loadJob: Job? = null
-    private var sessionGeneration = 0
+    private var voteJob: Job? = null
+    private var refreshQueued = false
+    private var sessionGeneration = initialSessionGeneration
+    private var refreshGeneration = initialRefreshGeneration
     private var resumedOnce = false
-    private var favoriteMutationInProgress = false
+    private var favoriteMutationJob: Job? = null
     private var favoriteObservation: Job? = null
     private var favoriteGeneration = 0
     private var latestFavorites: List<FavoriteShop>? = null
@@ -43,112 +55,162 @@ internal class ShopDetailViewModel(
                 load()
             }
             ShopDetailAction.Resume -> {
+                updateClock()
                 if (resumedOnce) load() else resumedOnce = true
             }
-            ShopDetailAction.SessionChanged -> {
-                sessionGeneration++
-                updateState { copy(details = null, isLoggedIn = false, currentUserId = null,
-                    pendingCheckInVoteId = null, isFavoriteLoading = false) }
-                observeFavorites()
-                load(replace = true)
+            is ShopDetailAction.Refresh -> {
+                if (action.generation <= refreshGeneration) return
+                refreshGeneration = action.generation
+                if (loadJob != null || voteJob != null) refreshQueued = true else load()
             }
-            ShopDetailAction.Back -> sendEvent(ShopDetailEvent.Back)
+            is ShopDetailAction.SessionChanged -> {
+                if (action.generation <= sessionGeneration) return
+                val nextGeneration = action.generation
+                sessionGeneration = nextGeneration
+                loadJob?.cancel()
+                voteJob?.cancel()
+                favoriteMutationJob?.cancel()
+                favoriteObservation?.cancel()
+                loadJob = null
+                voteJob = null
+                favoriteMutationJob = null
+                latestFavorites = null
+                refreshQueued = false
+                updateState { ShopDetailState(sessionGeneration = nextGeneration) }
+                observeFavorites()
+                load()
+            }
+            ShopDetailAction.Back -> emitEvent(ShopDetailEvent.Back)
+            ShopDetailAction.ChooseAnotherShop -> emitEvent(ShopDetailEvent.ChooseAnotherShop)
+            ShopDetailAction.ReportShop -> {
+                val context = detailContext() ?: return
+                if (currentState.isLoggedIn) {
+                    emitEvent(ShopDetailEvent.ReportShop(context))
+                } else emitEvent(ShopDetailEvent.SignIn)
+            }
+            ShopDetailAction.OpenPriceInfo -> {
+                if (ShopPriceLevel.from(currentState.details?.overview?.priceRange) != null) {
+                    updateState { copy(priceInfoVisible = true) }
+                }
+            }
+            ShopDetailAction.DismissPriceInfo -> updateState { copy(priceInfoVisible = false) }
             ShopDetailAction.OpenMap -> {
                 val overview = currentState.details?.overview ?: return
                 val latitude = overview.latitude ?: return
                 val longitude = overview.longitude ?: return
-                sendEvent(ShopDetailEvent.OpenMap(latitude, longitude))
+                emitEvent(ShopDetailEvent.OpenMap(latitude, longitude, overview.title))
             }
             ShopDetailAction.OpenMenuGallery -> {
                 if (currentState.details?.menu?.photos?.isNotEmpty() == true) {
-                    sendEvent(ShopDetailEvent.OpenMenuGallery)
+                    emitEvent(ShopDetailEvent.OpenMenuGallery(shopId))
                 }
             }
-            ShopDetailAction.ToggleSchedule -> updateState { copy(scheduleExpanded = !scheduleExpanded) }
+            ShopDetailAction.ToggleSchedule -> {
+                updateClock()
+                updateState { copy(scheduleExpanded = !scheduleExpanded) }
+            }
             ShopDetailAction.ToggleFeatures -> updateState { copy(featuresExpanded = !featuresExpanded) }
-            ShopDetailAction.SignIn -> sendEvent(ShopDetailEvent.SignIn)
-            ShopDetailAction.Register -> sendEvent(ShopDetailEvent.Register)
+            ShopDetailAction.SignIn -> emitEvent(ShopDetailEvent.SignIn)
+            ShopDetailAction.Register -> emitEvent(ShopDetailEvent.Register)
             ShopDetailAction.ToggleFavorite -> toggleFavorite()
             ShopDetailAction.Share -> {
-                val title = currentState.details?.overview?.title ?: return
-                sendEvent(ShopDetailEvent.ShareShop(shopId, title))
+                val overview = currentState.details?.overview ?: return
+                val path = overview.canonicalPath?.takeIf { it.startsWith('/') && !it.startsWith("//") } ?: return
+                emitEvent(ShopDetailEvent.ShareShop(path, overview.title))
             }
             ShopDetailAction.SuggestChange -> {
-                if (currentState.isLoggedIn) sendEvent(ShopDetailEvent.SuggestChange(shopId))
-                else sendEvent(ShopDetailEvent.SignIn)
+                val context = detailContext() ?: return
+                if (currentState.isLoggedIn) emitEvent(ShopDetailEvent.SuggestChange(context))
+                else emitEvent(ShopDetailEvent.SignIn)
             }
             ShopDetailAction.OpenRoute -> {
                 val overview = currentState.details?.overview ?: return
                 val latitude = overview.latitude ?: return
                 val longitude = overview.longitude ?: return
-                sendEvent(ShopDetailEvent.OpenRoute(latitude, longitude))
+                emitEvent(ShopDetailEvent.OpenRoute(latitude, longitude))
             }
             ShopDetailAction.OpenCheckIn -> {
-                if (!currentState.isLoggedIn) sendEvent(ShopDetailEvent.SignIn)
-                else if (currentState.details != null) sendEvent(ShopDetailEvent.CreateCheckIn)
+                if (!currentState.isLoggedIn) emitEvent(ShopDetailEvent.SignIn)
+                else detailContext()?.let { emitEvent(ShopDetailEvent.CreateCheckIn(it)) }
             }
             ShopDetailAction.OpenCheckIns -> currentState.details?.let {
-                sendEvent(ShopDetailEvent.OpenCheckIns(it.overview.id))
+                emitEvent(ShopDetailEvent.OpenCheckIns(shopId))
             }
             is ShopDetailAction.VoteCheckInHelpful -> voteCheckIn(action.checkInId)
             is ShopDetailAction.ReportCheckIn -> {
                 val checkIn = currentState.details?.checkIns?.firstOrNull { it.id == action.checkInId } ?: return
-                if (!currentState.isLoggedIn) sendEvent(ShopDetailEvent.SignIn)
-                else if (!ownsCheckIn(checkIn)) sendEvent(ShopDetailEvent.ReportCheckIn(checkIn.id))
+                if (!currentState.isLoggedIn) emitEvent(ShopDetailEvent.SignIn)
+                else if (!ownsCheckIn(checkIn)) emitEvent(ShopDetailEvent.ReportCheckIn(checkIn.id))
             }
             is ShopDetailAction.OpenPhoto -> {
                 if (action.index in action.urls.indices) {
-                    sendEvent(ShopDetailEvent.OpenPhoto(action.urls, action.index))
+                    emitEvent(ShopDetailEvent.OpenPhoto(action.urls, action.index))
                 }
             }
             is ShopDetailAction.OpenRoaster -> {
                 if (currentState.details?.coffee?.roasters?.any { it.id == action.id } == true) {
-                    sendEvent(ShopDetailEvent.OpenRoaster(action.id))
+                    emitEvent(ShopDetailEvent.OpenRoaster(action.id))
                 }
             }
             is ShopDetailAction.OpenLink -> {
                 if (action.target.startsWith("https://") || action.target.startsWith("http://") ||
                     action.target.startsWith("mailto:") || action.target.startsWith("tel:")) {
-                    sendEvent(ShopDetailEvent.OpenLink(action.target))
+                    emitEvent(ShopDetailEvent.OpenLink(action.target))
                 }
             }
             is ShopDetailAction.CopyPhone -> {
-                if (action.number == currentState.details?.contact?.phone) {
-                    sendEvent(ShopDetailEvent.CopyPhone(action.number))
+                if (action.number == currentState.details?.contact?.phone?.trim()) {
+                    emitEvent(ShopDetailEvent.CopyPhone(action.number))
                 }
             }
         }
     }
 
-    private suspend fun load(replace: Boolean = false) {
-        if (loadJob?.isActive == true && !replace) return
-        if (replace) loadJob?.cancel()
+    private suspend fun load() {
+        // A details response must not roll back a vote that completed after its request began.
+        if (voteJob != null) { refreshQueued = true; return }
+        if (loadJob != null) return
         val job = currentCoroutineContext().job
+        val generation = sessionGeneration
         loadJob = job
+        var wasCancelled = false
         updateState { copy(isLoading = true, hasError = false) }
         try {
             val viewer = currentViewer().getOrThrow()
+            currentCoroutineContext().ensureActive()
+            if (loadJob !== job || generation != sessionGeneration) return
             val loadedDetails = detailsRepository.getDetails(shopId).getOrThrow()
             val details = if (viewer.isLoggedIn) loadedDetails
                 else loadedDetails.copy(userCheckIns = emptyList())
-            if (loadJob !== job) return
+            if (loadJob !== job || generation != sessionGeneration) return
             val dayOfWeek = currentDayOfWeek()
+            val minuteOfDay = currentMinuteOfDay()
             updateState {
                 copy(details = details, isLoggedIn = viewer.isLoggedIn,
-                    currentUserId = viewer.userId, todayDayOfWeek = dayOfWeek,
+                    currentUserId = viewer.userId.takeIf { viewer.isLoggedIn },
+                    todayDayOfWeek = dayOfWeek, todayMinuteOfDay = minuteOfDay,
+                    featuresExpanded = featuresExpanded && this.details?.features == details.features,
                     isFavorite = latestFavorites?.any { it.id == details.overview.id } == true,
                     hasError = false)
             }
         } catch (cancelled: CancellationException) {
+            wasCancelled = true
             throw cancelled
         } catch (_: Exception) {
-            if (loadJob === job) updateState { copy(details = null, hasError = true) }
+            if (loadJob === job) updateState { copy(hasError = true) }
         } finally {
             if (loadJob === job) {
                 loadJob = null
                 updateState { copy(isLoading = false) }
+                refreshIfQueued(generation, wasCancelled)
             }
         }
+    }
+
+    private fun updateClock() {
+        val day = currentDayOfWeek()
+        val minute = currentMinuteOfDay()
+        updateState { copy(todayDayOfWeek = day, todayMinuteOfDay = minute) }
     }
 
     private fun observeFavorites() {
@@ -179,12 +241,13 @@ internal class ShopDetailViewModel(
 
     private suspend fun toggleFavorite() {
         if (!currentState.isLoggedIn) {
-            sendEvent(ShopDetailEvent.SignIn)
+            emitEvent(ShopDetailEvent.SignIn)
             return
         }
-        if (!currentState.favoriteAvailable || favoriteMutationInProgress) return
+        if (!currentState.favoriteAvailable || favoriteMutationJob != null) return
         val details = currentState.details ?: return
-        favoriteMutationInProgress = true
+        val job = currentCoroutineContext().job
+        favoriteMutationJob = job
         val generation = sessionGeneration
         updateState { copy(isFavoriteLoading = true) }
         try {
@@ -193,14 +256,18 @@ internal class ShopDetailViewModel(
                 else favoritesRepository.remove(details.overview.id)
             result.getOrThrow()
             // Membership comes from observation, including writes from other screens and logout.
-            if (generation == sessionGeneration) sendEvent(ShopDetailEvent.FavoriteChanged(details.overview.id, newValue))
+            if (generation == sessionGeneration && favoriteMutationJob === job) {
+                emitEvent(ShopDetailEvent.FavoriteChanged(details.overview.id, newValue))
+            }
         } catch (cancelled: CancellationException) {
             throw cancelled
         } catch (_: Exception) {
-            if (generation == sessionGeneration) sendEvent(ShopDetailEvent.FavoriteFailed)
+            if (generation == sessionGeneration && favoriteMutationJob === job) emitEvent(ShopDetailEvent.FavoriteFailed)
         } finally {
-            favoriteMutationInProgress = false
-            updateState { copy(isFavoriteLoading = false) }
+            if (favoriteMutationJob === job) {
+                favoriteMutationJob = null
+                if (generation == sessionGeneration) updateState { copy(isFavoriteLoading = false) }
+            }
         }
     }
 
@@ -211,15 +278,19 @@ internal class ShopDetailViewModel(
     private suspend fun voteCheckIn(checkInId: String) {
         val checkIn = currentState.details?.checkIns?.firstOrNull { it.id == checkInId } ?: return
         if (!currentState.isLoggedIn) {
-            sendEvent(ShopDetailEvent.SignIn)
+            emitEvent(ShopDetailEvent.SignIn)
             return
         }
-        if (currentState.pendingCheckInVoteId != null || ownsCheckIn(checkIn)) return
-        updateState { copy(pendingCheckInVoteId = checkInId) }
+        if (currentState.pendingCheckInVoteId != null || voteJob != null || loadJob?.isActive == true ||
+            ownsCheckIn(checkIn)) return
+        val job = currentCoroutineContext().job
         val generation = sessionGeneration
+        voteJob = job
+        updateState { copy(pendingCheckInVoteId = checkInId) }
+        var wasCancelled = false
         try {
             val vote = checkInVoteRepository.setHelpful(checkInId, !checkIn.isHelpfulByCurrentUser).getOrThrow()
-            if (generation != sessionGeneration) return
+            if (generation != sessionGeneration || voteJob !== job) return
             updateState {
                 val current = details ?: return@updateState this
                 copy(details = current.copy(checkIns = current.checkIns.map { item ->
@@ -229,11 +300,34 @@ internal class ShopDetailViewModel(
                 }))
             }
         } catch (cancelled: CancellationException) {
+            wasCancelled = true
             throw cancelled
         } catch (_: Exception) {
-            if (generation == sessionGeneration) sendEvent(ShopDetailEvent.VoteFailed)
+            if (generation == sessionGeneration && voteJob === job) emitEvent(ShopDetailEvent.VoteFailed)
         } finally {
-            if (generation == sessionGeneration) updateState { copy(pendingCheckInVoteId = null) }
+            if (voteJob === job) {
+                voteJob = null
+                if (generation == sessionGeneration) updateState { copy(pendingCheckInVoteId = null) }
+                refreshIfQueued(generation, wasCancelled)
+            }
         }
+    }
+
+    private suspend fun refreshIfQueued(generation: Int, wasCancelled: Boolean) {
+        if (!refreshQueued) return
+        refreshQueued = false
+        if (!wasCancelled && currentCoroutineContext().job.isActive && generation == sessionGeneration) {
+            onAction(ShopDetailAction.Retry)
+        }
+    }
+
+    private suspend fun emitEvent(event: ShopDetailEvent) {
+        sendEvent(ShopDetailEventEnvelope(event, sessionGeneration))
+    }
+
+    private fun detailContext(): ShopDetailContext? {
+        val overview = currentState.details?.overview ?: return null
+        // The current details API maps address.slug to overview.id; it exposes no separate numeric/GUID ID.
+        return overview.id.takeIf(String::isNotBlank)?.let { ShopDetailContext(shopId, it, overview.title) }
     }
 }

@@ -24,9 +24,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
-import com.coffeepeek.core.designsystem.icons.CpIcons
+import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
-import com.coffeepeek.core.designsystem.theme.CpDimens
+import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.feature.shop.impl.resources.Res
 import com.coffeepeek.feature.shop.impl.resources.shop_photo_unavailable
 import com.coffeepeek.feature.shop.impl.resources.shop_review_photo_add
@@ -64,17 +64,17 @@ internal fun ShopPhotoAttachments(
         },
     )
 
-    Column(verticalArrangement = Arrangement.spacedBy(CpDimens.spacing2)) {
+    Column(verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing2)) {
         Text(title, style = MaterialTheme.typography.labelLarge)
         Text(hint,
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant)
         Text(stringResource(Res.string.shop_review_photo_count, photos.size, maxPhotos),
             style = MaterialTheme.typography.labelMedium)
-        FlowRow(horizontalArrangement = Arrangement.spacedBy(CpDimens.spacing2),
-            verticalArrangement = Arrangement.spacedBy(CpDimens.spacing2)) {
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing2),
+            verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing2)) {
             photos.take(maxPhotos).forEachIndexed { index, photo ->
-                Box(Modifier.size(96.dp).clip(RoundedCornerShape(CpDimens.radiusMd))
+                Box(Modifier.size(96.dp).clip(RoundedCornerShape(CoffeePeekDimens.radiusMd))
                     .background(MaterialTheme.colorScheme.surfaceVariant)) {
                     if (photo.isNotEmpty()) {
                         KamelImage(
@@ -88,19 +88,19 @@ internal fun ShopPhotoAttachments(
                     } else PhotoUnavailable()
                     IconButton(onClick = { onRemove(index) }, enabled = enabled,
                         modifier = Modifier.align(Alignment.TopEnd)) {
-                        Icon(CpIcons.Close,
+                        Icon(CoffeePeekIcons.Close,
                             contentDescription = stringResource(Res.string.shop_review_photo_remove, index + 1),
                             tint = MaterialTheme.colorScheme.error)
                     }
                 }
             }
             if (photos.size < maxPhotos) {
-                Box(Modifier.size(96.dp).clip(RoundedCornerShape(CpDimens.radiusMd))
+                Box(Modifier.size(96.dp).clip(RoundedCornerShape(CoffeePeekDimens.radiusMd))
                     .background(MaterialTheme.colorScheme.surfaceVariant)
                     .clickable(enabled = enabled && !isLoading) { sourceShown = true },
                     contentAlignment = Alignment.Center) {
                     if (isLoading) CircularProgressIndicator()
-                    else Icon(CpIcons.Camera,
+                    else Icon(CoffeePeekIcons.Camera,
                         contentDescription = stringResource(Res.string.shop_review_photo_add))
                 }
             }

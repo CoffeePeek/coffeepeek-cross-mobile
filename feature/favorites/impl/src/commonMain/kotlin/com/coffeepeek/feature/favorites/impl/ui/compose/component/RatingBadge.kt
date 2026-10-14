@@ -16,23 +16,23 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.coffeepeek.core.designsystem.icons.CpIcons
+import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
-import com.coffeepeek.core.designsystem.theme.CpColor
-import com.coffeepeek.core.designsystem.theme.CpDimens
+import com.coffeepeek.core.designsystem.theme.CoffeePeekColors
+import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import kotlin.math.round
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
 @Composable
 internal fun RatingBadge(rating: Double, reviewCount: Int) {
     Row(
-        modifier = Modifier.clip(RoundedCornerShape(CpDimens.radiusLg))
+        modifier = Modifier.clip(RoundedCornerShape(CoffeePeekDimens.radiusLg))
             .background(Color.Black.copy(alpha = 0.68f))
-            .padding(horizontal = CpDimens.spacing2, vertical = 6.dp),
-        horizontalArrangement = Arrangement.spacedBy(CpDimens.spacing1),
+            .padding(horizontal = CoffeePeekDimens.spacing2, vertical = 6.dp),
+        horizontalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing1),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Icon(CpIcons.StarFilled, null, tint = CpColor.Primary, modifier = Modifier.size(16.dp))
+        Icon(CoffeePeekIcons.StarFilled, null, tint = CoffeePeekColors.Primary, modifier = Modifier.size(16.dp))
         Text((round(rating * 10) / 10).toString(), color = Color.White,
             style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold)
         if (reviewCount > 0) {

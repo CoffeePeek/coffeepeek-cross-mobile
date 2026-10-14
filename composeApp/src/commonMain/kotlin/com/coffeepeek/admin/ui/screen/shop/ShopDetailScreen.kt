@@ -66,6 +66,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -99,6 +100,8 @@ import coffeepeek.composeapp.generated.resources.maskot_with_book
 import coffeepeek.composeapp.generated.resources.shop_report_issue
 import coffeepeek.composeapp.generated.resources.shop_report_hint
 import coffeepeek.composeapp.generated.resources.shop_report_prompt
+import coffeepeek.composeapp.generated.resources.checkin_error_shop_address
+import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
@@ -149,9 +152,12 @@ private const val FeaturePreviewCount = 5
 fun ShopDetailScreen(shopId: String, forCheckIn: Boolean = false) {
     val vm: ShopDetailViewModel = platformViewModel(parameters = { parametersOf(shopId) })
     val menuGalleryRenderer = koinInject<ShopMenuGalleryScreenRenderer>()
+    val checkInRenderer = koinInject<ShopCheckInFormRenderer>()
     val state by vm.uiState.collectAsState()
     val userLocation = rememberPermittedUserLocation()
     val snackbarHostState = remember { SnackbarHostState() }
+    val screenScope = rememberCoroutineScope()
+    val missingShopAddress = stringResource(Res.string.checkin_error_shop_address)
     // Photos open as a swipeable set: (urls, startIndex).
     var preview by remember { mutableStateOf<Pair<List<String>, Int>?>(null) }
 
@@ -167,28 +173,44 @@ fun ShopDetailScreen(shopId: String, forCheckIn: Boolean = false) {
     }
 
     if (state.showCheckInSheet) {
-        state.checkInDraft?.let { draft ->
-            CheckInBottomSheet(
-                drinks = state.drinks,
-                drinksError = state.drinksError,
-                onRetryDrinks = vm::loadDrinks,
-                draft = draft,
-                isLoading = state.isCheckInLoading,
-                onDismiss = vm::dismissCheckInSheet,
-                onDraftChange = vm::updateCheckInDraft,
-                onSubmit = vm::checkIn,
-                placeName = state.details?.shop?.title,
-                submittedVisibility = state.submittedCheckInVisibility,
-                submissionError = state.checkInError,
-                onGoToFeed = {
-                    vm.dismissCheckInSheet()
-                    Navigator.popThenSelectTab(Navigator.Screen.CommunityTab)
-                },
-                onViewCheckIns = {
-                    vm.dismissCheckInSheet()
-                    Navigator.popThenNavigate(Navigator.Screen.VisitedPlaces)
-                },
-            )
+        checkInRenderer.Content(
+            shopId = shopId,
+            shopSlug = state.details?.shop?.publicAddress?.slug,
+            shopName = state.details?.shop?.title.orEmpty(),
+            onDismiss = vm::dismissCheckInSheet,
+            onSubmitted = vm::refreshAfterCheckIn,
+            onGoToFeed = {
+                vm.dismissCheckInSheet()
+                Navigator.popThenSelectTab(Navigator.Screen.CommunityTab)
+            },
+            onOpenHistory = {
+                vm.dismissCheckInSheet()
+                Navigator.popThenNavigate(Navigator.Screen.VisitedPlaces)
+            },
+        ) {
+            state.checkInDraft?.let { draft ->
+                CheckInBottomSheet(
+                    drinks = state.drinks,
+                    drinksError = state.drinksError,
+                    onRetryDrinks = vm::loadDrinks,
+                    draft = draft,
+                    isLoading = state.isCheckInLoading,
+                    onDismiss = vm::dismissCheckInSheet,
+                    onDraftChange = vm::updateCheckInDraft,
+                    onSubmit = vm::checkIn,
+                    placeName = state.details?.shop?.title,
+                    submittedVisibility = state.submittedCheckInVisibility,
+                    submissionError = state.checkInError,
+                    onGoToFeed = {
+                        vm.dismissCheckInSheet()
+                        Navigator.popThenSelectTab(Navigator.Screen.CommunityTab)
+                    },
+                    onViewCheckIns = {
+                        vm.dismissCheckInSheet()
+                        Navigator.popThenNavigate(Navigator.Screen.VisitedPlaces)
+                    },
+                )
+            }
         }
     }
 
@@ -281,7 +303,13 @@ fun ShopDetailScreen(shopId: String, forCheckIn: Boolean = false) {
                 canOpenRoute = details.location?.latitude != null &&
                     details.location?.longitude != null,
                 onRoute = vm::openRoute,
-                onCheckIn = vm::openCheckInSheet,
+                onCheckIn = {
+                    if (!checkInRenderer.usesLegacyDraft && state.details?.shop?.publicAddress?.slug.isNullOrBlank()) {
+                        screenScope.launch { snackbarHostState.showSnackbar(missingShopAddress) }
+                    } else {
+                        vm.openCheckInSheet(prepareLegacyDraft = checkInRenderer.usesLegacyDraft)
+                    }
+                },
                 forCheckIn = forCheckIn,
                 modifier = Modifier.align(Alignment.BottomCenter),
             )

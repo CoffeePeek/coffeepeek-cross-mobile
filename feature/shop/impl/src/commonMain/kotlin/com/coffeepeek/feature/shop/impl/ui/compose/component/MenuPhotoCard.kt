@@ -18,7 +18,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
-import com.coffeepeek.core.designsystem.theme.CpDimens
+import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.feature.shop.domain.model.MenuPhoto
 import com.coffeepeek.feature.shop.impl.resources.Res
 import com.coffeepeek.feature.shop.impl.resources.shop_menu_gallery_photo_counter
@@ -40,7 +40,7 @@ internal fun MenuPhotoCard(
     val description = stringResource(Res.string.shop_menu_gallery_photo_description, index + 1, count)
     Box(
         modifier.fillMaxWidth().aspectRatio(0.72f)
-            .clip(RoundedCornerShape(CpDimens.radiusLg)).clickable(onClick = onClick),
+            .clip(RoundedCornerShape(CoffeePeekDimens.radiusLg)).clickable(onClick = onClick),
     ) {
         if (photo.previewUrl.isBlank()) {
             PhotoUnavailable(Modifier.fillMaxSize())
@@ -57,13 +57,13 @@ internal fun MenuPhotoCard(
         Surface(
             shape = RoundedCornerShape(999.dp),
             color = Color.Black.copy(alpha = 0.48f),
-            modifier = Modifier.align(Alignment.BottomEnd).padding(CpDimens.spacing3),
+            modifier = Modifier.align(Alignment.BottomEnd).padding(CoffeePeekDimens.spacing3),
         ) {
             Text(
                 stringResource(Res.string.shop_menu_gallery_photo_counter, index + 1, count),
                 style = MaterialTheme.typography.labelMedium,
                 color = Color.White,
-                modifier = Modifier.padding(horizontal = CpDimens.spacing3, vertical = CpDimens.spacing1),
+                modifier = Modifier.padding(horizontal = CoffeePeekDimens.spacing3, vertical = CoffeePeekDimens.spacing1),
             )
         }
     }

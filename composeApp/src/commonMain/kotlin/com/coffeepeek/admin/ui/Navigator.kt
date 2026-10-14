@@ -48,7 +48,8 @@ import com.coffeepeek.admin.ui.dialogs.LoadingDialog
 import com.coffeepeek.admin.ui.screen.auth.AuthScreen
 import com.coffeepeek.admin.ui.screen.main.MainScreen
 import com.coffeepeek.admin.ui.component.RetainedContent
-import com.coffeepeek.admin.ui.screen.shop.ShopDetailScreen
+import com.coffeepeek.admin.ui.screen.shop.ShopDetailScreenRenderer
+import com.coffeepeek.admin.ui.screen.shop.ShopCheckInListScreenRenderer
 import com.coffeepeek.admin.feature.coffee.ui.CoffeeDetailScreen
 import com.coffeepeek.admin.ui.screen.shop.ShopMenuGalleryScreenRenderer
 import com.coffeepeek.admin.ui.screen.shop.ShopReportScreenRenderer
@@ -380,7 +381,7 @@ object Navigator {
                     }
                     composable<Screen.ShopDetail> { backStack ->
                         val route = backStack.toRoute<Screen.ShopDetail>()
-                        ShopDetailScreen(shopId = route.shopId, forCheckIn = route.forCheckIn)
+                        koinInject<ShopDetailScreenRenderer>().Content(shopId = route.shopId, forCheckIn = route.forCheckIn)
                     }
                     composable<Screen.CreateCheckIn> {
                         com.coffeepeek.admin.ui.screen.shop.CheckInShopPickerScreen()
@@ -391,7 +392,7 @@ object Navigator {
                     }
                     composable<Screen.ShopReviews> { backStack ->
                         val route = backStack.toRoute<Screen.ShopReviews>()
-                        com.coffeepeek.admin.ui.screen.shop.ShopReviewsScreen(shopId = route.shopId)
+                        koinInject<ShopCheckInListScreenRenderer>().Content(shopId = route.shopId)
                     }
                     composable<Screen.ReportReview> { backStack ->
                         val route = backStack.toRoute<Screen.ReportReview>()

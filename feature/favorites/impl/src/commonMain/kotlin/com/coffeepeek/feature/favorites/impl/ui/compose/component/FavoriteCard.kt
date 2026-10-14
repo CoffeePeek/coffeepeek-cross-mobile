@@ -33,10 +33,10 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.coffeepeek.core.designsystem.icons.CpIcons
+import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
-import com.coffeepeek.core.designsystem.theme.CpColor
-import com.coffeepeek.core.designsystem.theme.CpDimens
+import com.coffeepeek.core.designsystem.theme.CoffeePeekColors
+import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.feature.favorites.domain.model.FavoriteShop
 import com.coffeepeek.feature.favorites.impl.resources.Res
 import com.coffeepeek.feature.favorites.impl.resources.favorites_distance_from_you
@@ -58,7 +58,7 @@ internal fun FavoriteCard(
 ) {
     Card(
         modifier = Modifier.fillMaxWidth().clickable(role = Role.Button, onClick = onOpen),
-        shape = RoundedCornerShape(CpDimens.radiusXl),
+        shape = RoundedCornerShape(CoffeePeekDimens.radiusXl),
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
     ) {
@@ -70,8 +70,8 @@ internal fun FavoriteCard(
                 FavoritePhoto(shop.photoUrl, shop.title, Modifier.fillMaxSize())
 
                 Row(
-                    modifier = Modifier.align(Alignment.TopEnd).padding(CpDimens.spacing3),
-                    horizontalArrangement = Arrangement.spacedBy(CpDimens.spacing2),
+                    modifier = Modifier.align(Alignment.TopEnd).padding(CoffeePeekDimens.spacing3),
+                    horizontalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing2),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     shop.rating?.takeIf { it.isFinite() && it > 0 }?.let { rating ->
@@ -81,17 +81,17 @@ internal fun FavoriteCard(
                         // Keep the full interactive target comfortably usable by touch and
                         // assistive technology; the icon itself remains visually compact.
                         modifier = Modifier.size(48.dp)
-                            .clip(RoundedCornerShape(CpDimens.radiusLg))
+                            .clip(RoundedCornerShape(CoffeePeekDimens.radiusLg))
                             .background(Color.Black.copy(alpha = 0.68f))
                             .clickable(enabled = !removing, role = Role.Button, onClick = onRemove),
                         contentAlignment = Alignment.Center,
                     ) {
                         Icon(
-                            CpIcons.FavoriteFilled,
+                            CoffeePeekIcons.FavoriteFilled,
                             contentDescription = stringResource(
                                 Res.string.favorites_remove_description, shop.title,
                             ),
-                            tint = CpColor.Error,
+                            tint = CoffeePeekColors.Error,
                             modifier = Modifier.size(22.dp),
                         )
                     }
@@ -100,7 +100,7 @@ internal fun FavoriteCard(
                 val logos = shop.roasterPhotoUrls.filter(String::isNotBlank).distinct().take(3)
                 if (logos.isNotEmpty()) {
                     Row(
-                        modifier = Modifier.align(Alignment.BottomEnd).padding(CpDimens.spacing3),
+                        modifier = Modifier.align(Alignment.BottomEnd).padding(CoffeePeekDimens.spacing3),
                         horizontalArrangement = Arrangement.spacedBy((-14).dp),
                     ) {
                         logos.forEachIndexed { index, url ->
@@ -117,8 +117,8 @@ internal fun FavoriteCard(
                                     ),
                                     modifier = Modifier.fillMaxSize().clip(CircleShape),
                                     contentScale = ContentScale.Crop,
-                                    onLoading = { Icon(CpIcons.Coffee, null, Modifier.size(18.dp)) },
-                                    onFailure = { Icon(CpIcons.Coffee, null, Modifier.size(18.dp)) },
+                                    onLoading = { Icon(CoffeePeekIcons.Coffee, null, Modifier.size(18.dp)) },
+                                    onFailure = { Icon(CoffeePeekIcons.Coffee, null, Modifier.size(18.dp)) },
                                 )
                             }
                         }
@@ -128,10 +128,10 @@ internal fun FavoriteCard(
 
             Column(
                 modifier = Modifier.padding(
-                    start = CpDimens.spacing4, top = CpDimens.spacing3,
-                    end = CpDimens.spacing4, bottom = CpDimens.spacing4,
+                    start = CoffeePeekDimens.spacing4, top = CoffeePeekDimens.spacing3,
+                    end = CoffeePeekDimens.spacing4, bottom = CoffeePeekDimens.spacing4,
                 ),
-                verticalArrangement = Arrangement.spacedBy(CpDimens.spacing2),
+                verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing2),
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
@@ -141,11 +141,11 @@ internal fun FavoriteCard(
                         maxLines = 2,
                         overflow = TextOverflow.Ellipsis,
                     )
-                    OpenStatusBadge(shop.isOpen, Modifier.padding(start = CpDimens.spacing2))
+                    OpenStatusBadge(shop.isOpen, Modifier.padding(start = CoffeePeekDimens.spacing2))
                 }
 
                 if (shop.brewMethods.isNotEmpty()) {
-                    Row(horizontalArrangement = Arrangement.spacedBy(CpDimens.spacing1)) {
+                    Row(horizontalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing1)) {
                         shop.brewMethods.take(2).forEach { method -> InfoChip(method) }
                         if (shop.brewMethods.size > 2) InfoChip("+${shop.brewMethods.size - 2}")
                     }
@@ -158,7 +158,7 @@ internal fun FavoriteCard(
                 ).joinToString(" • ")
                 if (location.isNotBlank()) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(CpIcons.Location, null, tint = CpColor.Primary, modifier = Modifier.size(14.dp))
+                        Icon(CoffeePeekIcons.Location, null, tint = CoffeePeekColors.Primary, modifier = Modifier.size(14.dp))
                         Spacer(Modifier.width(2.dp))
                         Text(
                             location,
@@ -188,7 +188,7 @@ internal fun FavoriteCard(
                                 maxLines = 1, overflow = TextOverflow.Ellipsis)
                         }
                     }
-                    Icon(CpIcons.ChevronRight, null, tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    Icon(CoffeePeekIcons.ChevronRight, null, tint = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.size(18.dp))
                 }
             }

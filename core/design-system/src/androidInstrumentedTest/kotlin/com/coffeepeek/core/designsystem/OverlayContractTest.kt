@@ -14,7 +14,7 @@ import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.semantics.SemanticsActions
 import android.view.View
 import com.coffeepeek.core.designsystem.component.*
-import com.coffeepeek.core.designsystem.icons.CpIcons
+import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import org.junit.Assert.assertEquals
 import org.junit.Rule
@@ -32,8 +32,8 @@ class OverlayContractTest {
     @Test fun fabActionsExposeLabelsAndEnabledCallbacks() {
         var clicks = 0
         render {
-            FabMenu(listOf(FabMenuAction(CpIcons.Settings, "Settings", { clicks++ }),
-                FabMenuAction(CpIcons.Close, "Unavailable", { clicks++ }, enabled = false)))
+            CoffeePeekFabMenu(listOf(CoffeePeekFabMenuAction(CoffeePeekIcons.Settings, "Settings", { clicks++ }),
+                CoffeePeekFabMenuAction(CoffeePeekIcons.Close, "Unavailable", { clicks++ }, enabled = false)))
         }.use {
             compose.onNodeWithContentDescription("Settings").performClick()
             compose.onNodeWithContentDescription("Unavailable").assertIsNotEnabled().performClick()
@@ -45,7 +45,7 @@ class OverlayContractTest {
         val shown = mutableStateOf(true)
         var dismissals = 0
         render {
-            if (shown.value) SwipeDismissModalBottomSheet(
+            if (shown.value) CoffeePeekSwipeDismissModalBottomSheet(
                 { dismissals++; shown.value = false }, "Dismiss sheet",
             ) { Text("Sheet content") }
         }.use {
@@ -60,7 +60,7 @@ class OverlayContractTest {
         val shown = mutableStateOf(true)
         var sheetView: View? = null
         render {
-            if (shown.value) SwipeDismissModalBottomSheet({ shown.value = false }, "Dismiss sheet") {
+            if (shown.value) CoffeePeekSwipeDismissModalBottomSheet({ shown.value = false }, "Dismiss sheet") {
                 sheetView = LocalView.current
                 Text("Sheet content")
             }
@@ -81,7 +81,7 @@ class OverlayContractTest {
         val shown = mutableStateOf(true)
         var dismissals = 0
         render {
-            if (shown.value) SwipeDismissModalBottomSheet(
+            if (shown.value) CoffeePeekSwipeDismissModalBottomSheet(
                 { dismissals++; shown.value = false }, "Dismiss sheet",
             ) { Text("Sheet content") }
         }.use {
@@ -94,7 +94,7 @@ class OverlayContractTest {
     @Test fun longHandleDragDismissesSheet() {
         val shown = mutableStateOf(true)
         render {
-            if (shown.value) SwipeDismissModalBottomSheet({ shown.value = false }, "Dismiss sheet") {
+            if (shown.value) CoffeePeekSwipeDismissModalBottomSheet({ shown.value = false }, "Dismiss sheet") {
                 Text("Sheet content")
             }
         }.use {
@@ -108,7 +108,7 @@ class OverlayContractTest {
 
     @Test fun shortSlowHandleDragRestoresSheet() {
         var dismissals = 0
-        render { SwipeDismissModalBottomSheet({ dismissals++ }, "Dismiss sheet") { Text("Sheet content") } }.use {
+        render { CoffeePeekSwipeDismissModalBottomSheet({ dismissals++ }, "Dismiss sheet") { Text("Sheet content") } }.use {
             compose.onNodeWithContentDescription("Dismiss sheet").performTouchInput {
                 swipe(center, center + Offset(0f, height * 0.2f), durationMillis = 700)
             }
@@ -123,7 +123,7 @@ class OverlayContractTest {
         var dismissals = 0
         var sheetView: View? = null
         render {
-            if (shown.value) SwipeDismissModalBottomSheet(
+            if (shown.value) CoffeePeekSwipeDismissModalBottomSheet(
                 { dismissals++; shown.value = false }, "Dismiss sheet", dismissEnabled = enabled.value,
             ) {
                 sheetView = LocalView.current

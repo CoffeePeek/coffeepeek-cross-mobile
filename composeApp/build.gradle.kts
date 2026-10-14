@@ -45,9 +45,11 @@ kotlin {
             implementation(project(module.feature.shop.data))
             implementation(project(module.feature.shop.impl))
             implementation(project(module.core.coroutines))
+            implementation(project(module.core.designSystem))
             implementation(compose.preview)
             implementation(libs.androidx.activity.compose)
             implementation(libs.androidx.concurrent.futures)
+            implementation(libs.mlkit.subject.segmentation)
             implementation(libs.androidx.appcompat)
             implementation("androidx.core:core-splashscreen:1.0.1")
             implementation("androidx.exifinterface:exifinterface:1.4.1")
@@ -64,7 +66,7 @@ kotlin {
             implementation(project(module.legacy.network))
             implementation(project(module.legacy.room))
             implementation(project(module.core.network))
-            implementation(project(module.features.homeCheckIn))
+            implementation(project(module.feature.homeCheckIn))
             implementation(compose.runtime)
             implementation(compose.foundation)
             implementation(compose.material3)
@@ -237,6 +239,9 @@ androidComponents {
                 "com.coffeepeek.api.CoffeePeekRepo",
                 "com.coffeepeek.data.di.DataModuleKt",
                 "com.coffeepeek.admin.di.shop.ShopCheckInModuleKt",
+                "com.coffeepeek.admin.di.shop.AndroidShopCheckInFormRenderer",
+                "com.coffeepeek.admin.di.shop.AndroidSessionShopCheckInEntry",
+                "com.coffeepeek.admin.di.shop.AndroidShopCheckInSession",
                 "com.coffeepeek.feature.shop.api.ShopCheckInCreateEntry",
                 "com.coffeepeek.feature.shop.domain.repository.ShopCheckInRepository",
                 "com.coffeepeek.feature.shop.data.repository.ShopCheckInRepositoryFactoryKt",

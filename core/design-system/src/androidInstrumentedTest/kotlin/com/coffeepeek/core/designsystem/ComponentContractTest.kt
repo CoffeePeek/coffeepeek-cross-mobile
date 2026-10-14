@@ -12,10 +12,10 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.performClick
 import androidx.test.core.app.ActivityScenario
-import com.coffeepeek.core.designsystem.component.AppButton
-import com.coffeepeek.core.designsystem.component.CheckmarkRow
-import com.coffeepeek.core.designsystem.icons.CpIcons
-import com.coffeepeek.core.designsystem.modifier.GlassIconButton
+import com.coffeepeek.core.designsystem.component.CoffeePeekButton
+import com.coffeepeek.core.designsystem.component.CoffeePeekCheckmarkRow
+import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
+import com.coffeepeek.core.designsystem.modifier.CoffeePeekGlassIconButton
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import org.junit.Rule
 import org.junit.Test
@@ -31,7 +31,7 @@ class ComponentContractTest {
         ActivityScenario.launch(DesignSystemTestActivity::class.java).use { scenario ->
             scenario.onActivity { activity -> activity.setContent {
                 CoffeePeekTheme(FontFamily.Default, darkTheme = false) {
-                    AppButton("Continue", onClick = { clicks++ })
+                    CoffeePeekButton("Continue", onClick = { clicks++ })
                 }
             } }
             compose.onNodeWithText("Continue").assertIsDisplayed().performClick()
@@ -44,7 +44,7 @@ class ComponentContractTest {
         ActivityScenario.launch(DesignSystemTestActivity::class.java).use { scenario ->
             scenario.onActivity { activity -> activity.setContent {
                 CoffeePeekTheme(FontFamily.Default, darkTheme = true) {
-                    AppButton("Disabled", onClick = { clicks++ }, enabled = false)
+                    CoffeePeekButton("Disabled", onClick = { clicks++ }, enabled = false)
                 }
             } }
             compose.onNodeWithText("Disabled").assertIsNotEnabled().performClick()
@@ -57,7 +57,7 @@ class ComponentContractTest {
         ActivityScenario.launch(DesignSystemTestActivity::class.java).use { scenario ->
             scenario.onActivity { activity -> activity.setContent {
                 CoffeePeekTheme(FontFamily.Default) {
-                    CheckmarkRow("Option", checked = false, onToggle = { toggles++ })
+                    CoffeePeekCheckmarkRow("Option", checked = false, onToggle = { toggles++ })
                 }
             } }
             compose.onNodeWithText("Option").assertIsOff().performClick()
@@ -70,8 +70,8 @@ class ComponentContractTest {
         ActivityScenario.launch(DesignSystemTestActivity::class.java).use { scenario ->
             scenario.onActivity { activity -> activity.setContent {
                 CoffeePeekTheme(FontFamily.Default) {
-                    GlassIconButton(onClick = { clicks++ }, contentDescription = "Close", hazeState = null) {
-                        Icon(CpIcons.Close, contentDescription = null)
+                    CoffeePeekGlassIconButton(onClick = { clicks++ }, contentDescription = "Close", hazeState = null) {
+                        Icon(CoffeePeekIcons.Close, contentDescription = null)
                     }
                 }
             } }

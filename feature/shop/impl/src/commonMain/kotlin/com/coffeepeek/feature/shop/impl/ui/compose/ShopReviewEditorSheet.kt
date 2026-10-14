@@ -7,7 +7,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import com.coffeepeek.core.designsystem.component.SwipeDismissModalBottomSheet
+import com.coffeepeek.core.designsystem.component.CoffeePeekSwipeDismissModalBottomSheet
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.feature.shop.impl.resources.Res
 import com.coffeepeek.feature.shop.impl.resources.shop_review_sheet_dismiss
@@ -26,7 +26,7 @@ internal fun ShopReviewEditorSheet(
     onTakePhoto: () -> Unit,
     onOpenExistingPhoto: (List<String>, Int) -> Unit,
 ) {
-    SwipeDismissModalBottomSheet(
+    CoffeePeekSwipeDismissModalBottomSheet(
         onDismissRequest = onDismiss,
         dismissDescription = stringResource(Res.string.shop_review_sheet_dismiss),
     ) {

@@ -57,11 +57,12 @@ Device/server verification remains separate from MockEngine coverage.
 - [x] Add check-in helpful PUT/DELETE contracts and owner/duplicate guards.
 - [x] Prepare full-list/report events and public check-in cards with guest
   preview/sign-in/register and owner fallback via personal visit IDs.
-- [ ] Connect full-list/report events to the app-owned destinations and verify
-  guest/owner behavior on device before replacing the current renderer.
+- [x] Connect full-list/report events to the app-owned destinations (2026-10-14 source wiring).
+- [ ] Verify guest/owner behavior and the new renderer on device before release.
 - [x] Handle return/session changes in detail MVI and its runtime adapter;
   detail no longer requests legacy review eligibility.
-- [ ] Connect the app's session generation and refresh after completed writes.
+- [x] Connect the app's session generation and refresh after completed writes.
+  Host/session scenarios are authored; execution and live QA remain below.
 
 ## 4. Create the check-in form without changing behavior
 
@@ -74,44 +75,53 @@ Device/server verification remains separate from MockEngine coverage.
   custom drink, five-photo limit and Public/Private toggle (default Private).
 - [x] Prepare drinks loading/error/retry and the date field/Android formatter
   with the same meaning as the current date picker.
-- [ ] Wire application-owned camera/gallery conversion and the date formatter
-  through the active form entry, and verify picker behavior on device.
-  The Android adapters and public modal entry are now assembled in app Koin;
-  active route connection and actual picker/camera QA remain pending.
-- [ ] Preserve existing draft lifetime: one shop draft for the app process,
+- [x] Wire application-owned camera/gallery conversion and the date formatter
+  through the active Android form entry.
+- [ ] Verify actual picker/camera behavior on device, including permission,
+  cancellation, results and recreation; adapter/host tests do not prove this.
+- [x] Preserve existing draft lifetime: one shop draft for the app process,
   retain on dismiss/failure, replace on another shop, clear on success/logout.
   Do not silently add durable persistence or retain drafts across accounts.
   One Android adapter is registered around the existing store. Bound leases
-  preserve internal ID versus public slug and reject stale session writes;
-  active route wiring remains pending; adapter unit tests pass.
+  preserve internal ID versus public slug and reject stale session/account writes;
+  active Android wiring and adapter/host tests are in place. Safe authenticated
+  end-to-end scenarios remain part of the completion gate.
 - [x] Prepare the draft adapter contract and retain an uncertainty guard across
   form recreation. Require explicit history-check acknowledgement before retry.
 - [x] Prepare dismissal/repeated-submit guards and retain input on errors.
-  MVI guards are tested; the modal is compiled, but device execution and active
-  route wiring remain pending.
+  MVI guards and isolated modal/Android host UI tests pass; real authenticated
+  submission and picker recreation remain pending.
 - [x] Prepare submission/result UI with distinct Public/Private confirmation
   and caller-owned feed/history events; success does not auto-dismiss.
-- [ ] Connect those events to Community/Visited Places and verify return refresh.
+- [x] Connect those callbacks to the existing Community/Visited Places routes.
+- [ ] Verify real navigation/return refresh after a safe authenticated write.
 
 ## 5. Finish detail UI and app composition
+
+The first UI slice below was prepared locally on 2026-10-10. Android platform
+wiring was added locally on 2026-10-14; it remains unbuilt/unverified. It restores title/type/address below the
+photo hero, rating/count/full-list intent, injected distance, the existing BYN
+price tiers and explanation sheet, section order, report intent, separate menu
+thumbnail/viewer and gallery actions, and the normal/picker bottom bars. Personal
+check-ins remain ownership input, not an extra section absent from the old screen.
 
 - [ ] Match current section order/actions and bottom-bar check-in behavior.
 - [ ] Restore distance without extra permission prompts, shop type, price
   explanation sheet, check-in count/full list, report action and photo viewer.
-- [ ] Assemble one set of repositories/ViewModels through existing app Koin;
+- [x] Assemble one set of repositories/ViewModels through existing app Koin;
   pass the existing authenticated client and separate upload client.
-- [ ] Adapt sharing using canonicalPath, suggest-change/report/auth, map,
+- [x] Adapt sharing using canonicalPath, suggest-change/report/auth, map,
   external route/contact/copy, gallery and roaster navigation in the app.
-- [ ] Preserve `CreateCheckIn` shop picker and `ShopDetail(forCheckIn=true)`.
+- [x] Preserve `CreateCheckIn` shop picker and `ShopDetail(forCheckIn=true)` in source wiring.
   Leave feed/map migration outside this slice; use existing destinations.
-- [ ] Add public detail entry only when the full behavior is ready. Switch
+- [x] Add public detail entry and source wiring in the isolated migration branch. Switch
   Android through a platform renderer; leave iOS on its current implementation.
 
 ## 6. Completion gate
 
-- [ ] Run affected domain/data/impl tests plus both Android app builds,
+- [x] Run affected domain/data/impl tests plus both Android app builds,
   application unit-test variants and lint after integration changes.
-- [ ] Compile changed KMP domain/data for iOS Simulator as a regression guard,
+- [x] Compile changed KMP domain/data for iOS Simulator as a regression guard,
   without implementing or switching an iOS screen.
 - [ ] Inspect previews and Android guest/signed-in flows on safe QA data:
   loading/retry, heart synchronization, photos, reports, submission outcomes,
@@ -121,7 +131,50 @@ Device/server verification remains separate from MockEngine coverage.
   shared paths still consumed by iOS.
 
 Do not mark UI parity or live-server correctness complete from compilation or
-unit tests alone. The new detail renderer stays disconnected until this gate.
+unit tests alone. Android source wiring is local in the isolated migration
+branch; do not merge/release the switch before this gate passes.
+
+## Current execution order — 2026-10-14
+
+Per the user's explicit request, defer builds, tests, device checks and preview
+rendering until the Android feature implementation is ready. Colocated light/dark
+previews are still authored with each component; their presence is not rendering
+verification. The existing verification records below apply only to earlier
+slices, not to these new detail UI edits.
+
+1. Finish detail component parity: schedule → features → menu → coffee/contact
+   → complete loading/guest/picker states. Schedule, five-row features with
+   icons, menu stack/BYN/date presentation and separated coffee/contact groups
+   are now prepared locally. They remain unbuilt/unrendered; Android wiring is present.
+2. Coordinate detail refresh/vote/session work and post-write refresh signals.
+   Prepared: exclusive load/vote operations, coalesced post-write refresh,
+   monotonic generations, account-state reset and session-tagged effects.
+   The full public-list entry/MVI/content is now wired through the Android renderer;
+   align its behavior with detail instead of preparing another duplicate list.
+3. ShopDetailEntry/ShopDetailEffect/ShopDetailContext and full-list refresh input
+   are wired. Android supplies session/refresh generations, local clock/date/
+   distance and application-owned actions; legacy iOS remains the default renderer.
+4. Drink-photo creation source is prepared: Android processor port/adapter,
+   selection/retry/opt-out, first-photo lifetime, separate PNG upload/payload
+   and draft guards. Reading drinkPhotoUrl and Fit rendering are prepared too.
+   The incoming main tree has no extraction implementation despite its document;
+   the new Android implementation and all related regression scenarios still
+   require compilation, model/device QA and backend deployment verification.
+5. Android detail/list renderer source wiring is present, preserving current
+   picker/forms and legacy iOS. Account leases and a navigation-owned feature
+   store guard session replacement even while a child route covers the screen.
+6. Run the complete verification gate above; fix regressions and record real QA
+   limits before treating Shop as finished or starting another business owner.
+
+The current cross-project audit, candidate owners and detailed ordered work are
+in [../ANDROID_REFACTORING_PLAN.md](../ANDROID_REFACTORING_PLAN.md). Existing
+verification records below apply only to the earlier slices identified there.
+
+The preparation was initially unbuilt; the 2026-10-14 verification record at the
+end now supersedes that status for compilation, automated tests and selected
+device rendering. Main is included locally through merge commit 6a0e49f;
+validated work is being published to consolidated PR #43. The pending live QA
+gates remain explicit even as independent next-owner preparation starts.
 
 ## Verification record — transport and creation foundation
 
@@ -268,12 +321,187 @@ checks now also require the new DI/API/domain and data/impl entry factories.
 No user data was cleared and no live writes were sent. No physical phone was
 connected for this run. iOS screen/binding paths were not switched.
 
-Next: connect the form entry to Android shop detail with explicit auth/session
-ownership, submitted refresh and feed/history callbacks; preserve the picker
-mode and current legacy/iOS renderer. Exercise actual Android picker/camera and
-safe authenticated scenarios before replacing the active form. Keep the full
-detail renderer disconnected until its remaining parity gates pass.
+This composition checkpoint is followed by the active Android connection below.
+Keep the full detail renderer disconnected until its remaining parity gates pass.
 
 This checkpoint exceeds the usual 50-file PR guideline because it completes
 previously accumulated work inside the single consolidated PR #43 explicitly
 requested by the user. Do not recreate the superseded PR stack for these fixes.
+
+## Active Android form connection — 2026-10-10
+
+The existing detail and `forCheckIn` shop-picker mode now select the new form
+through `ShopCheckInFormRenderer`. Its default remains the legacy/iOS form and
+writer. Android opening skips the legacy catalog/draft preparation; the feature
+entry owns the only form catalog request and write. Guest opening retains Auth;
+missing public slugs show a resource-owned error without opening a broken form.
+
+Successful creation refreshes the legacy detail via a temporary app-owned bridge,
+without hiding the confirmation or clearing the feature's draft a second time.
+The root still owns ordered feed/history navigation. The bridge rejects a late
+refresh response if its account has changed and rethrows coroutine cancellation.
+
+Android composition binds each modal and its requests to the active account.
+Logout/account replacement cancels outstanding requests, closes the modal and
+clears only that binding's draft; renewed tokens for the same account are allowed.
+Opening under a different account also drops a closed modal's old process draft.
+Old bindings cannot reopen, save into, or clear another account's replacement.
+There is no new token store, DI module, feature-to-legacy dependency or iOS switch.
+
+Host UI tests use fake auth and transport: the Android renderer does not execute
+legacy content, loads drinks once, sends the public slug once, retains confirmation
+and forwards callbacks. Account replacement cancels a suspended fake write and
+does not expose the old note on reopening. Default rendering still selects legacy.
+No production check-in was submitted during verification.
+
+Verification for this slice: both Direct/Play APK assemblies and packaged DEX
+checks, both application unit-test variants, all library debug unit tests and
+Direct/Play lint passed. The targeted suites include 13 legacy/detail bridge,
+11 Android draft-adapter and 6 session-lease tests. Three Android host UI tests
+passed on the temporary read-only emulator with fake auth/transport; they are
+not a substitute for authenticated backend or real picker/camera QA.
+
+### Next ordered refactoring slices
+
+1. Close Android form QA: real gallery/camera permission, cancellation and result,
+   recreation, keyboard/Back, light/dark previews, and known/uncertain write
+   outcomes on approved QA data. Do not infer these from fake-host coverage.
+2. Finish detail content parity in `feature/shop/impl`: section/action order,
+   distance/type/price explanation, photo viewer and bottom-bar picker mode.
+   Keep each component and its paired previews together.
+3. Prepare the public check-in full list currently named `ShopReviewsScreen`,
+   helpful/owner/guest/report behavior and its app-owned destinations. It is not
+   already migrated merely because detail events and vote transport exist.
+4. Publish a minimal detail entry, assemble its repositories/session/favorites
+   ports, wire platform sharing/map/contact/roaster callbacks, and switch only
+   Android after the preceding parity gates and integration tests pass.
+5. Audit and migrate personal visit history (`VisitedPlaces`): calendar/list,
+   month boundaries, paging, account invalidation, retry and return refresh.
+   Decide its feature boundary from actual consumers before creating modules.
+6. Next prioritize profile/account editing and auth/session, then browsing/feed,
+   coffee/roasters and community; map/contributions/edit submissions require
+   their own parity audit. Root navigation migration and native iOS are separate.
+
+The checklist's earlier unchecked device/QA items remain unchecked until the
+real scenarios pass. Gallery and Android check-in form are connected; complete
+detail/full-list migration and authenticated behavior are not claimed complete.
+
+## Prepared detail presentation continuation — 2026-10-11
+
+Local, unverified source changes only; the active Android detail route still
+uses its legacy renderer. No iOS entry, writer or shared legacy route is switched.
+Design-system APIs/files now use `CoffeePeek…` names and existing consumers have
+been updated without old-name forwarding aliases.
+
+Prepared detail now uses screen-owned Haze/glass controls over the photo hero,
+with persistent Back, edit/favorite/share actions and branded favorite progress.
+Horizontal safe-drawing and status/bottom inset ownership are explicit. Loading,
+initial error/retry and background refresh feedback have separate previewable
+components. A failed refresh retains the loaded details; session replacement
+still clears private content before any new request and never restores it on failure.
+
+Public check-in presentation now includes the loaded-sample rating breakdown,
+author/date header, report menu, stars, saved-drink summary, expandable note,
+one/two/three-tile photo collage with the complete album callback, and helpful
+selection/progress semantics. Cards use the current outlined surface style.
+Carousel widths adapt to their actual parent, retaining the guest next-card peek.
+Hidden guest cards remain neutral placeholders with no real hidden text/photos
+in the composed tree, rather than relying on platform-dependent blur. The empty
+state and sign-in/register card preserve the existing visual families.
+
+Seven existing app images were copied without transformation into feature-owned
+resources (rating mascots, empty-state mascot and current placeholder drink art).
+They are not exported through design-system or accessed through app Res. The
+legacy originals remain for their current consumers. Colocated light/dark source
+previews and regression fixtures are authored; none were built, rendered or run
+in this continuation, following the user's deferred-verification instruction.
+
+Next: prepare the full public check-in list; then publish narrow detail/list
+entries and Android composition/navigation/session wiring. Composition must
+supply the existing localized relative-date formatter (the disconnected content
+currently has an ISO-date fallback), along with platform photo/share/map actions.
+Real photo/viewer, permission, back/inset, large-type and authenticated backend QA
+remain completion gates. Do not mark the earlier integration/verification boxes
+complete based on these prepared components.
+
+## Prepared public check-in list — 2026-10-11
+
+The full-list MVI implementation and narrow `ShopCheckInListEntry` are prepared
+inside the existing shop api/impl modules. It reuses the details snapshot and
+existing check-in vote domain contracts rather than inventing pagination/API
+behavior. Cards show complete notes, ratings, author/date, photos, helpful marks
+and report actions. Guest prompt/neutral placeholders and ownership restrictions
+are preserved without composing hidden content. Guest state retains only the
+first card and aggregate/count information. Back remains usable during load.
+
+Initial error/retry, same-account refresh failure, return refresh without an
+extra first request, duplicate votes, refresh/vote serialization, cancellation,
+session invalidation and stale results have authored regression scenarios.
+The runtime suppresses old-session rendering before the asynchronous reset and
+drops photo/report effects from older generations. No builds, tests, device
+checks or previews have run for this slice; these are completion-gate inputs,
+not proof that Android integration is ready.
+
+Historical next step at the time of this preparation: publish the detail entry and assemble the Android detail/list composition
+ports, including account-bound transports, existing localized relative dates,
+photo viewer, auth, report, sharing, route/map/contact and roaster destinations.
+Preserve the existing check-in form/confirmation and picker mode, then verify the
+complete Android slice before switching/removing legacy paths. iOS stays legacy.
+
+## Android composition source wiring — 2026-10-14
+
+ShopDetail and ShopReviews now resolve platform screen renderers. Android selects
+the feature entries; default common/iOS composition keeps the existing screens.
+App-owned Koin creates one details repository and one check-in vote repository
+from the existing authenticated client. The same favorites repository/writer is
+reused. No new Gradle module, root navigation migration or legacy deletion.
+
+Android adapters route gallery/viewer, report/auth/register/suggest, maps/route,
+roasters, external contacts and canonical-path sharing to the current app.
+Map focus includes the shop title, not an empty placeholder. Check-in creation
+keeps its confirmation modal and signals detail refresh without another write;
+picker mode retains the existing choose-another navigation. Relative check-in
+dates reuse current app formatting and lifecycle-bound minute updates; menu
+dates retain the local dd.MM.yyyy format and device UTC-offset convention.
+
+A navigation-owned host retains the feature store through configuration changes,
+observes session replacement behind child routes, revokes old account leases and
+clears feature VMs before publishing a new generation. Token renewal for the same
+account preserves the store. Session observation errors hide data and offer an
+explicit retry. Guest favorite reads do not access account-owned storage. Date,
+viewer identity and distance/platform services stay in app composition, not domain.
+
+Host disposal/replacement, observation failure/retry, guest guards, token renewal,
+non-cooperative late votes and Result failure scenarios are authored. The existing
+DI graph test now also resolves the browsing repositories without requests or
+credential reads. No new build/test/device/preview execution is claimed here.
+The next completion gate is compilation, both Android variants, affected tests,
+DEX startup guards, preview rendering and real navigation/picker/session/backend
+QA on safe data. Keep this switch out of release/main until those gates pass.
+
+## Verification record — integrated Android source, 2026-10-14
+
+- Full Android CI-equivalent task set passes locally with two workers/4 GiB heap:
+  Direct/Play debug assembly and DEX guards, all debug library unit tests, both
+  application unit-test variants, library/application lint, design-system and
+  Shop UI-test APK assembly. 326 unit tests pass without skips or failures; three
+  build-logic verifier tests pass separately. No lint errors; existing warnings
+  are not silently removed by this migration.
+- Common Shop domain/data and shop-report data compile for iOS Simulator Arm64.
+  No iOS application implementation or navigation was changed.
+- Pixel 7 passes 20 isolated Shop UI tests and 50 design-system UI tests. Six
+  selected application tests cover native PNG encoding and fake-transport form
+  outcomes. No real-account storage tests, login/logout, helpful/favorite writes
+  or live check-in submissions were run on the user's device.
+- CoffeePeek 1.0.547 starts after update installation without clearing user data;
+  Happy Coffee detail renders actual backend address/distance/schedule/menu images.
+  No fresh AndroidRuntime crash observed. Native PNG checks verify transparency,
+  visible pixels, size bounds and unchanged source, not segmentation quality.
+- The generation-reset bug reproduced by tests is fixed in detail/list: capture
+  the new generation outside the State receiver. Coordinate smart casts and test
+  assumptions about Ktor's outgoing body/types were corrected and rerun.
+
+Still pending: real cup extraction/model availability, camera/gallery/recreation,
+authenticated backend writes and PNG access, live guest/owner/session/picker/return
+parity and individual IDE preview inspection. These limits prevent declaring the
+entire Shop feature release-ready or removing shared legacy/iOS consumers.

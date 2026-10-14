@@ -18,7 +18,7 @@ import androidx.compose.ui.draw.blur
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
-import com.coffeepeek.core.designsystem.theme.CpDimens
+import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.feature.shop.domain.model.ShopReview
 import com.coffeepeek.feature.shop.impl.resources.Res
 import com.coffeepeek.feature.shop.impl.resources.shop_reviews_empty
@@ -42,13 +42,13 @@ internal fun ShopReviewsSection(
     onRegister: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Column(modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(CpDimens.spacing3)) {
+    Column(modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing3)) {
         Text(stringResource(Res.string.shop_reviews_title), style = MaterialTheme.typography.titleMedium)
         if (reviews.isEmpty()) {
             Text(stringResource(Res.string.shop_reviews_empty, shopTitle),
                 style = MaterialTheme.typography.bodyMedium)
         } else {
-            LazyRow(horizontalArrangement = Arrangement.spacedBy(CpDimens.spacing3)) {
+            LazyRow(horizontalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing3)) {
                 itemsIndexed(reviews, key = { _, review -> review.id }) { index, review ->
                     val hidden = !isLoggedIn && index > 0
                     ShopReviewCard(
@@ -65,7 +65,7 @@ internal fun ShopReviewsSection(
             }
             if (!isLoggedIn) {
                 Card {
-                    Column(Modifier.padding(CpDimens.spacing4)) {
+                    Column(Modifier.padding(CoffeePeekDimens.spacing4)) {
                         Text(stringResource(Res.string.shop_reviews_sign_in_prompt),
                             style = MaterialTheme.typography.bodyMedium)
                         Row {

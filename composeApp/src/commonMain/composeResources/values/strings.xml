@@ -1,4 +1,8 @@
 <resources>
+    <string name="shop_session_unavailable">Не удалось проверить сессию. Данные аккаунта скрыты; попробуйте ещё раз.</string>
+    <string name="shop_session_retry">Повторить</string>
+    <string name="shop_share_named">Нашёл кофейню «%1$s» в CoffeePeek — загляни: %2$s</string>
+    <string name="shop_phone_copied">Номер скопирован</string>
     <string name="app_name">CoffeePeek</string>
     <string name="search_shops_and_roasters_placeholder">Поиск кофеен и обжарщиков…</string>
     <string name="search_roasters_placeholder">Поиск обжарщиков…</string>
@@ -63,6 +67,7 @@
     <string name="checkin_public_title">Публичный чекин</string>
     <string name="checkin_public_hint">Появится в ленте после модерации</string>
     <string name="checkin_error_note_required">Добавьте заметку о визите</string>
+    <string name="checkin_error_shop_address">Не удалось определить адрес кофейни</string>
     <string name="checkin_submit">Сохранить чекин</string>
     <string name="checkin_sheet_title">Чекин</string>
     <string name="checkin_rating_coffee">Кофе</string>

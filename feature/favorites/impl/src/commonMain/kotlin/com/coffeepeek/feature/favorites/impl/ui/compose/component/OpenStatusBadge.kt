@@ -17,8 +17,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
-import com.coffeepeek.core.designsystem.theme.CpColor
-import com.coffeepeek.core.designsystem.theme.CpDimens
+import com.coffeepeek.core.designsystem.theme.CoffeePeekColors
+import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.feature.favorites.impl.resources.Res
 import com.coffeepeek.feature.favorites.impl.resources.favorites_closed
 import com.coffeepeek.feature.favorites.impl.resources.favorites_open
@@ -27,11 +27,11 @@ import org.jetbrains.compose.resources.stringResource
 
 @Composable
 internal fun OpenStatusBadge(isOpen: Boolean, modifier: Modifier = Modifier) {
-    val color = if (isOpen) CpColor.Success else MaterialTheme.colorScheme.error
+    val color = if (isOpen) CoffeePeekColors.Success else MaterialTheme.colorScheme.error
     Row(
-        modifier = modifier.clip(RoundedCornerShape(CpDimens.radiusSm))
+        modifier = modifier.clip(RoundedCornerShape(CoffeePeekDimens.radiusSm))
             .background(color.copy(alpha = 0.14f))
-            .padding(horizontal = CpDimens.spacing2, vertical = 6.dp),
+            .padding(horizontal = CoffeePeekDimens.spacing2, vertical = 6.dp),
         horizontalArrangement = Arrangement.spacedBy(6.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
