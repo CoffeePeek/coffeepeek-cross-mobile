@@ -26,6 +26,7 @@ interface IosNativeMapProvider {
     fun updateMapView(
         mapView: UIView,
         stateJson: String,
+        showsUserLocation: Boolean,
         callbacks: IosNativeMapCallbacks,
     )
 
