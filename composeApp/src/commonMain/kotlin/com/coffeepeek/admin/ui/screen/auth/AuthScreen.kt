@@ -25,9 +25,7 @@ import coffeepeek.composeapp.generated.resources.login
 import coffeepeek.composeapp.generated.resources.login_subtitle
 import coffeepeek.composeapp.generated.resources.login_title
 import coffeepeek.composeapp.generated.resources.password
-import com.coffeepeek.admin.auth.GoogleSignInButton
 import com.coffeepeek.admin.auth.AppleAuth
-import com.coffeepeek.admin.auth.AppleSignInButton
 import com.coffeepeek.admin.auth.handleGoogleSignInResult
 import com.coffeepeek.admin.auth.isGoogleSignInConfigured
 import com.coffeepeek.admin.theme.CpColor
@@ -78,13 +76,11 @@ object AuthScreen {
                     .padding(top = 4.dp, bottom = CpDimens.spacing5),
             )
 
-            if (AppleAuth.isSupported()) {
-                AppleSignInButton(onClick = vm::onAppleLogin, enabled = !appleSigningIn)
-                Spacer(Modifier.height(12.dp))
-            }
-            if (isGoogleSignInConfigured()) {
-                GoogleSignInButton(
-                    onResult = { result ->
+            if (AppleAuth.isSupported() || isGoogleSignInConfigured()) {
+                AuthSocialSignInButtons(
+                    onAppleClick = vm::onAppleLogin,
+                    appleEnabled = !appleSigningIn,
+                    onGoogleResult = { result ->
                         handleGoogleSignInResult(
                             result = result,
                             onSuccess = vm::onGoogleLogin,
@@ -93,8 +89,6 @@ object AuthScreen {
                     },
                 )
                 Spacer(modifier = Modifier.height(14.dp))
-            }
-            if (AppleAuth.isSupported() || isGoogleSignInConfigured()) {
                 AuthOrDivider()
                 Spacer(modifier = Modifier.height(14.dp))
             }

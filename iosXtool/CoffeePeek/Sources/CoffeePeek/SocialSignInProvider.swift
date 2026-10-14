@@ -41,13 +41,6 @@ final class SocialSignInProvider: NSObject, IosAppleAuthProvider,
         })
     }
 
-    func makeButton(dark: Bool, onClick: @escaping () -> Void) -> UIControl {
-        let button = ASAuthorizationAppleIDButton(type: .signIn, style: dark ? .white : .black)
-        button.cornerRadius = 14
-        button.addAction(UIAction { _ in onClick() }, for: .touchUpInside)
-        return button
-    }
-
     func signIn(nonce: String, state: String, completion: @escaping @Sendable (String?, String?) -> Void) {
         guard appleController == nil, !googleInProgress else {
             completion(nil, "Вход уже выполняется")

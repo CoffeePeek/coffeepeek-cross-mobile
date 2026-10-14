@@ -58,9 +58,7 @@ import coffeepeek.composeapp.generated.resources.step_register
 import coffeepeek.composeapp.generated.resources.terms_accept_prefix
 import coffeepeek.composeapp.generated.resources.terms_and
 import coffeepeek.composeapp.generated.resources.terms_link
-import com.coffeepeek.admin.auth.GoogleSignInButton
 import com.coffeepeek.admin.auth.AppleAuth
-import com.coffeepeek.admin.auth.AppleSignInButton
 import com.coffeepeek.admin.auth.handleGoogleSignInResult
 import com.coffeepeek.admin.auth.isGoogleSignInConfigured
 import com.coffeepeek.admin.legal.LegalUrls
@@ -73,6 +71,7 @@ import com.coffeepeek.admin.ui.screen.auth.AuthMascot
 import com.coffeepeek.admin.ui.screen.auth.AuthOrDivider
 import com.coffeepeek.admin.ui.screen.auth.AuthPrimaryButton
 import com.coffeepeek.admin.ui.screen.auth.AuthScreenScaffold
+import com.coffeepeek.admin.ui.screen.auth.AuthSocialSignInButtons
 import com.coffeepeek.admin.ui.screen.auth.AuthStepper
 import com.coffeepeek.admin.ui.screen.auth.AuthTextField
 import com.coffeepeek.admin.utils.MIN_REGISTRATION_PASSWORD_LENGTH
@@ -175,14 +174,12 @@ object RegisterScreen {
                     AuthOrDivider()
                     Spacer(modifier = Modifier.height(14.dp))
 
-                    if (AppleAuth.isSupported()) {
+                    if (AppleAuth.isSupported() || isGoogleSignInConfigured()) {
                         val appleSigningIn by vm.appleSigningIn.collectAsState()
-                        AppleSignInButton(onClick = vm::onAppleLogin, enabled = !appleSigningIn)
-                        Spacer(Modifier.height(12.dp))
-                    }
-                    if (isGoogleSignInConfigured()) {
-                        GoogleSignInButton(
-                            onResult = { result ->
+                        AuthSocialSignInButtons(
+                            onAppleClick = vm::onAppleLogin,
+                            appleEnabled = !appleSigningIn,
+                            onGoogleResult = { result ->
                                 handleGoogleSignInResult(result, vm::onGoogleLogin)
                             },
                         )
