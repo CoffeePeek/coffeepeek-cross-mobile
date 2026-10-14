@@ -42,11 +42,15 @@ These helpers map to `commonMainApi`, `commonMainImplementation`, and
 `commonTestImplementation`. Plain Gradle `implementation` in a KMP Android
 module instead targets Android's `main` configuration and would silently leave
 shared/iOS source sets without the dependency. Android-only dependencies use
-`androidImplementation`; instrumented-test dependencies use
+`androidImplementation`; Android-only public entry dependencies use `androidApi`
+(without exporting them into shared Native source sets). Instrumented-test dependencies use
 `androidInstrumentedTestImplementation`. Standard `debugImplementation` and
 plugin-specific configurations such as `ksp` are not remapped.
 
 Core references are available but not automatically added to the application.
+Convention-based library test APKs use `testOptions.targetSdk = Config.TARGET_SDK`
+to exercise the current app's Android behaviour instead of AGP's minSdk default.
+This is test-only policy; it does not set or change any production application SDK.
 Gradle's generated `projects` accessors also remain available. Do not create a
 second manually maintained module catalog or a runtime umbrella core module.
 

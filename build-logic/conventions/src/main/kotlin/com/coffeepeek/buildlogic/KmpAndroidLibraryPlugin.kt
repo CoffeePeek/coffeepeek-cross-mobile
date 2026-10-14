@@ -25,6 +25,8 @@ class KmpAndroidLibraryPlugin : Plugin<Project> {
         android.compileSdk = Config.COMPILE_SDK
         android.defaultConfig.minSdk = Config.MIN_SDK
         android.defaultConfig.testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        // Library test APKs otherwise target minSdk, hiding modern UI/inset behaviour.
+        android.testOptions.targetSdk = Config.TARGET_SDK
         android.compileOptions.sourceCompatibility = Config.JAVA_VERSION
         android.compileOptions.targetCompatibility = Config.JAVA_VERSION
         module.attach(android)

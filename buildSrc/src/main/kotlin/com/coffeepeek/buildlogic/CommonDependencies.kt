@@ -19,5 +19,9 @@ fun DependencyHandlerScope.testImplementation(notation: Any): Dependency? =
 fun DependencyHandlerScope.androidImplementation(notation: Any): Dependency? =
     add("androidMainImplementation", notation)
 
+/** Android entry contracts must not become dependencies of shared Native presentation. */
+fun DependencyHandlerScope.androidApi(notation: Any): Dependency? =
+    add("androidMainApi", notation)
+
 fun DependencyHandlerScope.androidInstrumentedTestImplementation(notation: Any): Dependency? =
     add("androidInstrumentedTestImplementation", notation)

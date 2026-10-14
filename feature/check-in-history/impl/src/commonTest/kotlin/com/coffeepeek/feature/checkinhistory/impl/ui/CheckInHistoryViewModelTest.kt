@@ -10,6 +10,8 @@ import com.coffeepeek.feature.checkinhistory.domain.model.HistoryVisibility
 import com.coffeepeek.feature.checkinhistory.domain.model.PersonalCheckIn
 import com.coffeepeek.feature.checkinhistory.domain.repository.CheckInHistoryRepository
 import com.coffeepeek.feature.checkinhistory.impl.ui.compose.model.CheckInHistoryAction
+import com.coffeepeek.feature.checkinhistory.impl.ui.compose.model.CheckInHistoryEvent
+import com.coffeepeek.feature.checkinhistory.impl.ui.compose.model.CheckInHistoryEventEnvelope
 import com.coffeepeek.feature.checkinhistory.impl.ui.compose.model.CheckInHistoryMode
 import com.coffeepeek.feature.checkinhistory.impl.ui.data.HistoryCalendarContext
 import com.coffeepeek.feature.checkinhistory.impl.ui.data.HistoryCalendarProvider
@@ -18,6 +20,8 @@ import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
@@ -530,6 +534,89 @@ class CheckInHistoryViewModelTest {
         assertTrue(vm.state.value.calendar.hasError)
         assertTrue(vm.state.value.list.hasError)
         assertTrue(vm.state.value.list.checkIns.isEmpty())
+    }
+
+    @Test fun realNavigationIntentsEmitOnlyVisibleCanonicalRelationsAndOrderedPhotos() = runTest(dispatcher) {
+        val urls = listOf("https://example.test/one", "https://example.test/two")
+        val repository = Repository().apply { calendarResult = Result.success(listOf(entry("calendar").copy(photoUrls = urls))) }
+        val vm = viewModel(repository)
+        val events = mutableListOf<CheckInHistoryEvent>()
+        backgroundScope.launch { vm.events.collect { events += it.event } }
+        runCurrent()
+        vm.onAction(CheckInHistoryAction.OpenShop("calendar"))
+        vm.onAction(CheckInHistoryAction.OpenPhoto("calendar", 1))
+        vm.onAction(CheckInHistoryAction.OpenPhoto("calendar", -1))
+        vm.onAction(CheckInHistoryAction.OpenPhoto("calendar", 2))
+        vm.onAction(CheckInHistoryAction.OpenShop("first"))
+        runCurrent()
+        assertEquals(listOf<CheckInHistoryEvent>(CheckInHistoryEvent.OpenShop("shop"), CheckInHistoryEvent.OpenPhoto(urls, 1)), events)
+    }
+
+    @Test fun removedShopAndGuestCannotEmitPrivateActionsButBackAndSignInRemainAvailable() = runTest(dispatcher) {
+        val repository = Repository().apply { calendarResult = Result.success(listOf(entry("calendar").copy(shop = null))) }
+        val vm = viewModel(repository)
+        val events = mutableListOf<CheckInHistoryEvent>()
+        backgroundScope.launch { vm.events.collect { events += it.event } }
+        runCurrent()
+        vm.onAction(CheckInHistoryAction.OpenShop("calendar"))
+        vm.onAction(CheckInHistoryAction.SignIn)
+        runCurrent()
+        assertTrue(events.isEmpty())
+        vm.onAction(CheckInHistoryAction.SessionChanged(1, false))
+        vm.onAction(CheckInHistoryAction.OpenPhoto("calendar", 0))
+        vm.onAction(CheckInHistoryAction.OpenShop("calendar"))
+        vm.onAction(CheckInHistoryAction.SignIn)
+        vm.onAction(CheckInHistoryAction.Back)
+        runCurrent()
+        assertEquals(listOf<CheckInHistoryEvent>(CheckInHistoryEvent.SignIn, CheckInHistoryEvent.Back), events)
+    }
+
+    @Test fun bufferedNavigationRetainsTheSessionThatCreatedIt() = runTest(dispatcher) {
+        val vm = viewModel()
+        runCurrent()
+        vm.onAction(CheckInHistoryAction.OpenShop("calendar"))
+        runCurrent()
+        vm.onAction(CheckInHistoryAction.SessionChanged(1, false))
+        runCurrent()
+        val old = vm.events.first()
+        assertEquals(0, old.sessionGeneration)
+        assertEquals(1, vm.state.value.sessionGeneration)
+    }
+
+    @Test fun initialContentGenerationDoesNotRepeatStartupRead() = runTest(dispatcher) {
+        val repository = Repository()
+        val vm = CheckInHistoryViewModel(repository, Clock(), true, initialContentGeneration = 8).also { store.put("history", it) }
+        runCurrent()
+        vm.onAction(CheckInHistoryAction.ContentChanged(8))
+        runCurrent()
+        assertEquals(1, repository.periods.size)
+        vm.onAction(CheckInHistoryAction.ContentChanged(9))
+        runCurrent()
+        assertEquals(2, repository.periods.size)
+    }
+
+    @Test fun runtimeMaskHidesBothModesBeforeSessionActionIsProcessed() = runTest(dispatcher) {
+        val vm = viewModel()
+        vm.onAction(CheckInHistoryAction.SelectMode(CheckInHistoryMode.List))
+        runCurrent()
+        val old = vm.state.value
+        assertTrue(old.calendar.visitCount > 0)
+        assertTrue(old.list.checkIns.isNotEmpty())
+        for (loggedIn in listOf(false, true)) {
+            val masked = old.visibleTo(1, loggedIn)
+            assertTrue(masked.calendar.checkInsByDate.isEmpty())
+            assertTrue(masked.list.checkIns.isEmpty())
+            assertFalse(masked.calendar.hasLoaded)
+            assertFalse(masked.list.hasLoaded)
+        }
+    }
+
+    @Test fun runtimeDropsOldSessionEffectsAndAuthenticatedGuestMismatches() {
+        assertFalse(CheckInHistoryEventEnvelope(CheckInHistoryEvent.OpenShop("shop"), 0).isDeliverableTo(1, true))
+        assertFalse(CheckInHistoryEventEnvelope(CheckInHistoryEvent.OpenPhoto(listOf("secret"), 0), 1).isDeliverableTo(1, false))
+        assertFalse(CheckInHistoryEventEnvelope(CheckInHistoryEvent.SignIn, 1).isDeliverableTo(1, true))
+        assertTrue(CheckInHistoryEventEnvelope(CheckInHistoryEvent.SignIn, 1).isDeliverableTo(1, false))
+        assertTrue(CheckInHistoryEventEnvelope(CheckInHistoryEvent.Back, 1).isDeliverableTo(1, false))
     }
 
     companion object {

@@ -20,7 +20,8 @@ target; no native iOS implementation is part of these slices.
 
 Personal shop-visit history is the next independent owner. Its populated
 check-in-history/domain and data modules prepare read-only pagination/calendar
-contracts; impl prepares typed calendar/list MVI without data/HTTP dependencies.
+contracts; impl prepares shared typed MVI and Android calendar/list UI without
+data/HTTP dependencies. API now exposes the narrow screen and date-snapshot contracts.
 VisitedPlaces and home preparations remain on their existing paths.
 See [check-in-history/README.md](check-in-history/README.md) for the audited boundaries,
 ordered implementation and session/time-zone risks. No empty API module or

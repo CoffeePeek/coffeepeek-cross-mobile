@@ -34,10 +34,11 @@ separate; neither is renamed or duplicated here.
 |---|---|---|---|
 | domain | Personal-history read models, calendar rules and repository contract; no DTOs/HTTP/UI | Kotlin only | Future history impl and data, app-owned adapters. Independent business rules must compile/test without the legacy layers, Compose or transport. |
 | data | Existing mine endpoint, private DTOs, mapping and complete range pagination | Own domain, core/network, Ktor/serialization/coroutines | App composition through one repository factory. A package in composeApp would let UI access HTTP/DTOs and retain feature transport in application composition. |
-| impl | Typed MVI state/actions, independent calendar/list loading and presentation date port; later stateless screen components | Own domain, core/presentation; no data/legacy/HTTP/Koin | Future app-owned entry factory only. Compiling presentation without data enforces its domain-only boundary and makes account/request races independently testable. The internal ViewModel is not a cross-feature API. |
+| impl | Shared typed MVI plus Android stateless screen/components, runtime adapter and entry factory | Own domain, core/presentation, resources; Android-only own api/design-system/lifecycle Compose; no data/legacy/HTTP/Koin | App-owned entry factory only. Compiling presentation without data enforces its domain-only boundary and makes account/request races independently testable. The internal ViewModel is not a cross-feature API. |
+| api | Android screen entry and immutable presentation-calendar adapter contract; no models/repository/VM/DTO exports | Compose runtime only | Application routing/composition and deliberately supported cross-feature callers. Separates the screen ABI from internal MVI and Android UI implementation. |
 
-Domain/data and the populated presentation impl are created incrementally. Future
-api owns a narrow screen entry/callback ABI; stateless calendar/list UI will join impl.
+Domain/data and the populated presentation impl are created incrementally. The
+api owns a narrow screen entry/callback ABI; stateless calendar/list UI joins impl.
 There are no placeholder modules/packages, feature DI module, new root navigator,
 or history storage/cache. Data receives the existing authenticated HttpClient;
 the caller owns that client's lifetime. Domain/data use manual DI and Result,
@@ -99,8 +100,8 @@ the next implementation steps.
 Impl now contains an internal CheckInHistoryViewModel on core/presentation's
 typed MviViewModel, immutable action/state models, and an injected presentation
 calendar snapshot port. It depends only on own domain and core/presentation.
-The current intents reduce state only (`Nothing` events); navigation effects
-will be introduced with real screen callbacks, not speculative event classes.
+At that checkpoint intents reduced state only (`Nothing` events). The screen
+preparation below adds actual caller navigation effects, not speculative classes.
 
 - Calendar and list have independent load/error state and guarded lifecycle jobs.
   Mode switching reuses fresh content and loads an invalidated mode on demand.
@@ -137,3 +138,57 @@ Generation guards do not bind a repository to an account by themselves. Android
 composition must still provide a revocable account lease/lifecycle store and
 real zone-aware adapters before the active route is switched. iOS renderers,
 home preparations, and the legacy VisitedPlaces screen remain unchanged.
+
+## Android screen preparation boundaries
+
+The current design-system has an Android target only. Keep the existing shared
+ViewModel/state and their Native targets in impl/commonMain; prepare Android UI,
+entry factory and runtime adapter in androidMain. This is a real dependency/platform
+boundary, not moving UI just for previews. Android components use PreviewLightDark
+in their own files. Do not add iOS targets to the entire design-system or drop
+the existing shared presentation's Native compilation in this slice.
+
+API exposes only Content callbacks/session-refresh inputs and an immutable date
+snapshot port (local today/zone, month query instants and timestamp-to-local-date).
+The factory receives domain repository, date provider and image-rendering callback
+from composition. Protected image loading stays with the existing app-owned
+loader; the feature must not create its own unauthenticated image client. Previews
+and fake UI scenarios render local placeholders, never request private URLs.
+
+Resource audit: composeApp and migrated Shop currently have values/strings.xml
+only, with Russian default text, not two aligned localization directories. This
+slice owns Russian strings, count forms and month/weekday arrays explicitly; it does
+not invent or claim a second translation. The current Russian catalog uses its
+actual count forms even on an English device, preserving the legacy grammar.
+Thumbnail fallback artwork is copied unchanged from composeApp:
+`maskot_with_photo.png` → `history_maskot_with_photo.png`, identical SHA-256
+`b8b8062e57c14da276413120188c30d5f4e55c3f5a7d2004844558ef498b1feb`.
+
+## Android screen verification — 2026-10-14
+
+- Prepared calendar/list screen content, independent components, Russian resources
+  and colocated PreviewLightDark previews. Runtime entry uses lifecycle-owned
+  presentation and caller callbacks, without feature Koin or HTTP/image clients.
+- Navigation events validate visible entries and carry session generations. The
+  runtime immediately masks obsolete account state and drops stale effects.
+  Initial content-generation baselines avoid a duplicate first request.
+- All 48 history unit tests pass: 6 domain, 7 data and 35 presentation tests.
+  Android API/impl lint and shared impl iOS Simulator Arm64 compilation pass.
+- All 11 isolated UI tests pass on both Pixel 7 and the temporary read-only
+  emulator, using the final test APK targeting SDK 36. Coverage includes calendar
+  selection, guest privacy, retained-content and paging retries, photo/shop
+  routing, drink-photo Fit, large fonts and actual entry callback/load contracts.
+- Direct/Play debug assembly and both packaged DEX runtime-class checks pass.
+  Library conventions explicitly target the configured SDK for test APKs; AGP's
+  library-test default otherwise uses minSdk and obscures modern inset behavior.
+- Light calendar and dark list were visually inspected in the isolated host.
+  The test host and fake fixtures live only in the self-targeted test APK. The
+  temporary emulator was stopped without saving a snapshot. No CoffeePeek user
+  data, account or backend records were changed.
+
+This is prepared UI, not a completed active-screen migration. Individual IDE
+preview rendering and real-account/backend parity are not certified by the fake
+host. Next provide Android revocable account leases and lifecycle stores, real
+zone-aware calendar/date adapters and the existing protected-image renderer;
+assemble them in app composition before switching VisitedPlaces. Keep home
+preparations and iOS renderers/writers on their existing paths.

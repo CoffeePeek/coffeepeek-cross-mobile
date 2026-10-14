@@ -1,6 +1,10 @@
 package com.coffeepeek.feature.checkinhistory.impl.ui.compose.model
 
 internal sealed interface CheckInHistoryAction {
+    data object Back : CheckInHistoryAction
+    data object SignIn : CheckInHistoryAction
+    data class OpenShop(val checkInId: String) : CheckInHistoryAction
+    data class OpenPhoto(val checkInId: String, val index: Int) : CheckInHistoryAction
     data class SelectMode(val mode: CheckInHistoryMode) : CheckInHistoryAction
     data class ChangeMonth(val offset: Int) : CheckInHistoryAction
     data class SelectDate(val date: String) : CheckInHistoryAction

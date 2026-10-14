@@ -36,6 +36,7 @@ object Modules {
 
         val checkInHistory = CheckInHistory
         object CheckInHistory {
+            const val api = ":feature:check-in-history:api"
             const val domain = ":feature:check-in-history:domain"
             const val data = ":feature:check-in-history:data"
             const val impl = ":feature:check-in-history:impl"
@@ -81,6 +82,7 @@ object Modules {
         feature.shop.data,
         feature.shop.impl,
         feature.checkInHistory.domain,
+        feature.checkInHistory.api,
         feature.checkInHistory.data,
         feature.checkInHistory.impl,
         feature.homeCheckIn,

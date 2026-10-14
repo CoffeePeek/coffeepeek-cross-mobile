@@ -5,6 +5,8 @@ import com.coffeepeek.core.presentation.MviViewModel
 import com.coffeepeek.feature.checkinhistory.domain.model.HistoryMonth
 import com.coffeepeek.feature.checkinhistory.domain.repository.CheckInHistoryRepository
 import com.coffeepeek.feature.checkinhistory.impl.ui.compose.model.CheckInHistoryAction
+import com.coffeepeek.feature.checkinhistory.impl.ui.compose.model.CheckInHistoryEvent
+import com.coffeepeek.feature.checkinhistory.impl.ui.compose.model.CheckInHistoryEventEnvelope
 import com.coffeepeek.feature.checkinhistory.impl.ui.compose.model.CheckInHistoryMode
 import com.coffeepeek.feature.checkinhistory.impl.ui.compose.model.CheckInHistoryState
 import com.coffeepeek.feature.checkinhistory.impl.ui.compose.model.HistoryCalendarState
@@ -20,14 +22,15 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
 
-/** No navigation effects until the screen entry exists; all current intents reduce state. */
+/** Presentation coordination; application navigation is expressed only as caller effects. */
 internal class CheckInHistoryViewModel private constructor(
     private val repository: CheckInHistoryRepository,
     private val calendarProvider: HistoryCalendarProvider,
     initialIsLoggedIn: Boolean,
     initialSessionGeneration: Int,
+    initialContentGeneration: Int,
     private var calendarContext: HistoryCalendarContext,
-) : MviViewModel<CheckInHistoryState, CheckInHistoryAction, Nothing>(
+) : MviViewModel<CheckInHistoryState, CheckInHistoryAction, CheckInHistoryEventEnvelope>(
     initialState(calendarContext, initialIsLoggedIn, initialSessionGeneration),
 ) {
     constructor(
@@ -35,7 +38,8 @@ internal class CheckInHistoryViewModel private constructor(
         calendarProvider: HistoryCalendarProvider,
         initialIsLoggedIn: Boolean,
         initialSessionGeneration: Int = 0,
-    ) : this(repository, calendarProvider, initialIsLoggedIn, initialSessionGeneration, calendarProvider.snapshot())
+        initialContentGeneration: Int = 0,
+    ) : this(repository, calendarProvider, initialIsLoggedIn, initialSessionGeneration, initialContentGeneration, calendarProvider.snapshot())
 
     private var calendarJob: Job? = null
     private var listJob: Job? = null
@@ -47,13 +51,20 @@ internal class CheckInHistoryViewModel private constructor(
     private var listRefreshQueued = false
     private var dateSelectedExplicitly = false
     private var firstResume = true
-    private var contentGeneration = 0
+    private var contentGeneration = initialContentGeneration
     private var calendarAvailable = true
 
-    init { loadVisible() }
+    init { require(initialContentGeneration >= 0); loadVisible() }
 
     override suspend fun handleActionInternal(action: CheckInHistoryAction) {
         when (action) {
+            CheckInHistoryAction.Back -> emitEvent(CheckInHistoryEvent.Back)
+            CheckInHistoryAction.SignIn -> if (!currentState.isLoggedIn) emitEvent(CheckInHistoryEvent.SignIn)
+            is CheckInHistoryAction.OpenShop -> visibleEntry(action.checkInId)?.shop?.slug
+                ?.takeIf(String::isNotBlank)?.let { emitEvent(CheckInHistoryEvent.OpenShop(it)) }
+            is CheckInHistoryAction.OpenPhoto -> visibleEntry(action.checkInId)?.photoUrls?.let { urls ->
+                if (urls.getOrNull(action.index)?.isNotBlank() == true) emitEvent(CheckInHistoryEvent.OpenPhoto(urls.toList(), action.index))
+            }
             is CheckInHistoryAction.SelectMode -> {
                 updateState { copy(mode = action.mode) }
                 loadVisible()
@@ -95,6 +106,15 @@ internal class CheckInHistoryViewModel private constructor(
             }
             is CheckInHistoryAction.SessionChanged -> replaceSession(action)
         }
+    }
+
+    private fun visibleEntry(id: String) = if (!currentState.isLoggedIn) null else when (currentState.mode) {
+        CheckInHistoryMode.Calendar -> currentState.calendar.selectedCheckIns
+        CheckInHistoryMode.List -> currentState.list.checkIns
+    }.firstOrNull { it.id == id }
+
+    private suspend fun emitEvent(event: CheckInHistoryEvent) {
+        sendEvent(CheckInHistoryEventEnvelope(event, currentState.sessionGeneration))
     }
 
     private fun replaceSession(action: CheckInHistoryAction.SessionChanged) {

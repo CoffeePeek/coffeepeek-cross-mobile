@@ -12,9 +12,9 @@ for favorites, shop-report and shop), plus the existing main module
 features/home-checkin. Keep that transitional plural-directory module registered
 through module.feature.homeCheckIn; do not create a duplicate or rename it in
 the Shop slice. Build-logic is a separate included build.
-History preparation adds populated domain/data/impl modules (26 registered modules
-in total). Impl currently contains shared typed MVI only; the screen API/UI are
-deferred until their actual contracts/components are prepared.
+History preparation adds populated api/domain/data/impl modules (27 registered
+modules in total). Shared MVI stays in commonMain; Android screen/entry code uses
+androidMain because the current design-system has only an Android target.
 There is no new application module or generic DI module to create.
 
 Excluding five graph containers, the shared navigator declares 30 destinations:
@@ -44,7 +44,7 @@ source snapshot, not guaranteed runtime coverage or future product scope.
 | Shop check-in creation | New Android form and app-owned draft/session/photo adapters | Authenticated submission, camera/picker and recreation QA |
 | Shop detail | New Android renderer/feature entry built and smoke-tested | Full behavior/live QA pending |
 | Public shop check-in list | New Android entry built; isolated presentation tests pass | Live guest/owner/navigation QA pending |
-| Personal check-in history | Legacy VisitedPlaces calendar/list stays active | Independent domain/data and typed MVI; see check-in-history/README.md |
+| Personal check-in history | Legacy VisitedPlaces calendar/list stays active | Independent api/domain/data/impl and prepared Android UI; session/date/DI integration remains |
 | Home check-ins | Existing main module and HomeCheckIns route retained | Audit ownership with personal history before its later migration |
 | Core | Infrastructure, presentation and design-system available; selected consumers use them | Legacy HTTP/Room are not globally replaced |
 
@@ -228,8 +228,8 @@ Android wiring are ready, not between the current preparation steps:
 
 2026-10-14: check-in-history/domain and data now contain an independent read
 foundation. Its 13 tests, Android lint and Android/iOS Simulator compilation pass.
-VisitedPlaces remains on its legacy renderer. Typed MVI is now prepared in impl;
-next come the screen API/UI and Android session/time-zone composition. Details and
+VisitedPlaces remains on its legacy renderer. Typed MVI and the Android screen
+API/UI are prepared; next comes Android session/time-zone/image/DI composition. Details and
 module-creation rationale are in check-in-history/README.md. Home check-ins remain
 their existing separate capability, not a duplicate migration target.
 

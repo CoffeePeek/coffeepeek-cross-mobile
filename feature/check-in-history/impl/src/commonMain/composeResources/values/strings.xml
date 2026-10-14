@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="history_title">Чекины</string>
+    <string name="history_back">Назад</string>
+    <string name="history_calendar">Календарь</string>
+    <string name="history_list">Лента</string>
+    <string name="history_previous_month">Предыдущий месяц</string>
+    <string name="history_next_month">Следующий месяц</string>
+    <string name="history_month_title">%1$s %2$d</string>
+    <string name="history_date_title">%1$d %2$s %3$d</string>
+    <string name="history_day_description">%1$s, %2$s</string>
+    <string name="history_select_day">Выбрать дату</string>
+    <string name="history_day_empty">В этот день чекинов не было</string>
+    <string name="history_month_empty">В этом месяце пока нет чекинов</string>
+    <string name="history_list_empty">Пока нет чекинов</string>
+    <string name="history_no_visits">Нет чекинов</string>
+    <string name="history_load_error">Не удалось загрузить чекины</string>
+    <string name="history_refresh_error">Не удалось обновить чекины. Показаны ранее загруженные записи</string>
+    <string name="history_paging_error">Не удалось загрузить следующую страницу</string>
+    <string name="history_retry">Повторить</string>
+    <string name="history_loading">Загрузка чекинов</string>
+    <string name="history_refresh">Обновить чекины</string>
+    <string name="history_sign_in_prompt">Чтобы увидеть свои чекины, войдите в аккаунт</string>
+    <string name="history_sign_in">Войти</string>
+    <string name="history_you">Вы</string>
+    <string name="history_shop">Кофейня</string>
+    <string name="history_open_shop">Открыть кофейню %1$s</string>
+    <string name="history_expand_note">Читать полностью</string>
+    <string name="history_collapse_note">Свернуть</string>
+    <string name="history_photo_description">Фотография %1$d из %2$d</string>
+    <string name="history_more_photos">+%1$d</string>
+    <string name="history_helpful_count">Лайки: %1$d</string>
+    <string name="history_rating_description">Кофе: %1$s, сервис: %2$s, место: %3$s. Средняя оценка %4$s из 5</string>
+    <string name="history_rating_missing">—</string>
+    <string name="history_rating_decimal">%1$d,%2$d</string>
+    <string name="history_count_label">%1$d %2$s</string>
+    <string name="history_month_counts">%1$s · %2$s</string>
+    <string-array name="history_months">
+        <item>Январь</item><item>Февраль</item><item>Март</item><item>Апрель</item>
+        <item>Май</item><item>Июнь</item><item>Июль</item><item>Август</item>
+        <item>Сентябрь</item><item>Октябрь</item><item>Ноябрь</item><item>Декабрь</item>
+    </string-array>
+    <string-array name="history_months_genitive">
+        <item>января</item><item>февраля</item><item>марта</item><item>апреля</item>
+        <item>мая</item><item>июня</item><item>июля</item><item>августа</item>
+        <item>сентября</item><item>октября</item><item>ноября</item><item>декабря</item>
+    </string-array>
+    <string-array name="history_weekdays">
+        <item>П</item><item>В</item><item>С</item><item>Ч</item><item>П</item><item>С</item><item>В</item>
+    </string-array>
+    <string-array name="history_visit_forms"><item>чекин</item><item>чекина</item><item>чекинов</item></string-array>
+    <string-array name="history_shop_forms"><item>кофейня</item><item>кофейни</item><item>кофеен</item></string-array>
+</resources>
