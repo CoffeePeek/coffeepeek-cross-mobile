@@ -125,7 +125,8 @@ final class SocialSignInProvider: NSObject, IosAppleAuthProvider,
                 let domain = Self.safeGoogleErrorDomain(error.domain)
                 NSLog("Google Sign-In failed: domain=%@ code=%ld", domain ?? "<invalid>", error.code)
                 let domainSuffix = domain.map { " D:\($0)" } ?? ""
-                _ = completion(nil, "Не удалось войти через Google. Попробуйте ещё раз. [GSI-E\(error.code)\(domainSuffix)]")
+                let oauthErrorSuffix = Self.safeOAuthErrorIdentifier(error).map { " O:\($0)" } ?? ""
+                _ = completion(nil, "Не удалось войти через Google. Попробуйте ещё раз. [GSI-E\(error.code)\(domainSuffix)\(oauthErrorSuffix)]")
             } else if result == nil {
                 NSLog("Google Sign-In failed: missing result")
                 _ = completion(nil, "Не удалось войти через Google. Попробуйте ещё раз. [GSI-R]")
@@ -143,6 +144,18 @@ final class SocialSignInProvider: NSObject, IosAppleAuthProvider,
         guard !domain.isEmpty, domain.count <= 80,
               domain.unicodeScalars.allSatisfy({ allowed.contains($0) }) else { return nil }
         return domain
+    }
+
+    private static func safeOAuthErrorIdentifier(_ error: NSError) -> String? {
+        guard error.domain == "org.openid.appauth.oauth_token",
+              let response = error.userInfo["OIDOAuthErrorResponseErrorKey"] as? [String: Any],
+              let identifier = response["error"] as? String,
+              let first = identifier.unicodeScalars.first,
+              CharacterSet.letters.contains(first),
+              identifier.count <= 40 else { return nil }
+        let allowed = CharacterSet(charactersIn: "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_")
+        guard identifier.unicodeScalars.allSatisfy({ allowed.contains($0) }) else { return nil }
+        return identifier
     }
 
     private static var presentationWindow: UIWindow? {

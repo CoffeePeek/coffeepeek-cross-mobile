@@ -1,6 +1,6 @@
 package com.coffeepeek.admin.auth
 
-private val googleSignInDiagnosticCode = Regex("""\[(GSI-(?:E-?[0-9]{1,10}|R|T))(?: D:([A-Za-z0-9._-]{1,80}))?]""")
+private val googleSignInDiagnosticCode = Regex("""\[(GSI-(?:E-?[0-9]{1,10}|R|T))(?: D:([A-Za-z0-9._-]{1,80}))?(?: O:([A-Za-z][A-Za-z0-9_]{0,39}))?]""")
 
 internal fun socialLoginError(provider: String, message: String?): String {
     val normalized = message.orEmpty().lowercase()
@@ -21,5 +21,7 @@ internal fun socialLoginError(provider: String, message: String?): String {
     if (diagnostic == null) return userMessage
     val domain = diagnostic.groupValues[2].takeIf(String::isNotEmpty)
     val domainSuffix = domain?.let { "; домен $it" }.orEmpty()
-    return "$userMessage (код ${diagnostic.groupValues[1]}$domainSuffix)"
+    val oauthError = diagnostic.groupValues[3].takeIf(String::isNotEmpty)
+    val oauthErrorSuffix = oauthError?.let { "; OAuth $it" }.orEmpty()
+    return "$userMessage (код ${diagnostic.groupValues[1]}$domainSuffix$oauthErrorSuffix)"
 }

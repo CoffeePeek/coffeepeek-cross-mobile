@@ -21,6 +21,25 @@ class SocialLoginErrorTest {
     }
 
     @Test
+    fun googleOAuthIdentifierSurvivesWithoutResponseDetails() {
+        assertEquals(
+            "Не удалось войти через Google. Попробуйте ещё раз. (код GSI-E-61440; домен org.openid.appauth.oauth_token; OAuth invalid_rapt)",
+            socialLoginError(
+                "Google",
+                "private details [GSI-E-61440 D:org.openid.appauth.oauth_token O:invalid_rapt]",
+            ),
+        )
+    }
+
+    @Test
+    fun googleOAuthIdentifierRejectsResponseDescription() {
+        assertEquals(
+            "Не удалось войти через Google. Попробуйте ещё раз.",
+            socialLoginError("Google", "[GSI-E-61440 O:invalid_rapt;token=private]"),
+        )
+    }
+
+    @Test
     fun googleErrorDoesNotExposeUnrecognizedDetails() {
         assertEquals(
             "Не удалось войти через Google. Попробуйте ещё раз.",
