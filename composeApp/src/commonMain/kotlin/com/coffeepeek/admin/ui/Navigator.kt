@@ -24,6 +24,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -263,6 +264,8 @@ object Navigator {
         val errorMessage = ErrorHandler.errorMessage.collectAsState().value
         val loading = LoadingHandler.isLoading.collectAsState().value
         val isLoggedIn by vm.isLoggedIn.collectAsState()
+        var previousLoginState by remember { mutableStateOf<Boolean?>(null) }
+        var navigationGeneration by remember { mutableIntStateOf(0) }
         val checkInDrafts: CheckInDraftStore = koinInject()
 
         ErrorDialog(
@@ -271,7 +274,13 @@ object Navigator {
             onDismiss = { ErrorHandler.clearError() }
         )
         LaunchedEffect(isLoggedIn) {
-            if (!isLoggedIn) {
+            val loggedIn = isLoggedIn ?: return@LaunchedEffect
+            if (previousLoginState != null && previousLoginState != loggedIn) {
+                clearPlatformNavigationState()
+                navigationGeneration++
+            }
+            previousLoginState = loggedIn
+            if (!loggedIn) {
                 checkInDrafts.clearAll()
                 ErrorHandler.clearError()
                 LoadingHandler.clearLoading()
@@ -284,8 +293,10 @@ object Navigator {
         }
 
         Box(modifier = Modifier.fillMaxSize()) {
-            key(isLoggedIn) {
-                BaseNavigator()
+            if (isLoggedIn != null) {
+                key(navigationGeneration) {
+                    BaseNavigator()
+                }
             }
             LoadingDialog(show = loading)
         }

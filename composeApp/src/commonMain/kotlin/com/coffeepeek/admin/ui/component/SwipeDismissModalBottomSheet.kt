@@ -11,6 +11,7 @@ import androidx.compose.foundation.gestures.rememberDraggableState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -35,6 +36,7 @@ import androidx.compose.ui.unit.dp
 fun SwipeDismissModalBottomSheet(
     onDismissRequest: () -> Unit,
     dismissEnabled: Boolean = true,
+    maxSheetHeightFraction: Float? = null,
     content: @Composable ColumnScope.() -> Unit,
 ) {
     if (NativeModalSheet(onDismissRequest, dismissEnabled, content)) return
@@ -53,7 +55,10 @@ fun SwipeDismissModalBottomSheet(
 
     ModalBottomSheet(
         onDismissRequest = { if (dismissEnabled) onDismissRequest() },
-        modifier = Modifier.graphicsLayer { translationY = dragOffset }.dismissKeyboardOnBackgroundGestures(),
+        modifier = Modifier
+            .then(maxSheetHeightFraction?.let { Modifier.fillMaxHeight(it) } ?: Modifier)
+            .graphicsLayer { translationY = dragOffset }
+            .dismissKeyboardOnBackgroundGestures(),
         sheetState = sheetState,
         sheetGesturesEnabled = false,
         dragHandle = {

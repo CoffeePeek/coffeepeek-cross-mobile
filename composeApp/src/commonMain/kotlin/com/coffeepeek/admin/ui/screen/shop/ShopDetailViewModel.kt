@@ -7,7 +7,6 @@ import com.coffeepeek.admin.feature.favorites.api.roasterFavoriteId
 import com.coffeepeek.admin.ui.Navigator
 import com.coffeepeek.admin.utils.ClipboardHelper
 import com.coffeepeek.admin.utils.FavoriteSync
-import com.coffeepeek.admin.utils.OpenInBrowser
 import com.coffeepeek.admin.utils.PickedImage
 import com.coffeepeek.admin.utils.ShareHelper
 import com.coffeepeek.admin.utils.datePickerMillisToUtcIsoInstant
@@ -339,20 +338,6 @@ class ShopDetailViewModel(
         )
     }
 
-    fun openRoute() {
-        val details = _uiState.value.details ?: return
-        val location = details.location
-        val lat = location?.latitude
-        val lon = location?.longitude
-        if (lat == null || lon == null) {
-            _uiState.update { it.copy(actionMessage = "Координаты кофейни недоступны") }
-            return
-        }
-        OpenInBrowser.openInBrowser(
-            buildYandexMapsRouteUrl(latitude = lat, longitude = lon)
-        )
-    }
-
     fun shareShop() {
         val title = _uiState.value.details?.shop?.title?.takeIf { it.isNotBlank() }
         val path = _uiState.value.details?.shop?.publicAddress?.canonicalPath ?: return
@@ -377,9 +362,6 @@ class ShopDetailViewModel(
 
 internal fun CoffeeShopDetails.ownsCheckIn(checkIn: CheckIn, currentUserId: String?): Boolean =
     (currentUserId != null && checkIn.authorAddress?.slug == currentUserId) || userCheckIns.any { it.id == checkIn.id }
-
-internal fun buildYandexMapsRouteUrl(latitude: Double, longitude: Double): String =
-    "https://yandex.ru/maps/?mode=routes&rtext=~$latitude,$longitude&rtt=auto"
 
 private fun PickedImage.toPendingUpload() = PendingPhotoUpload(
     fileName = fileName,

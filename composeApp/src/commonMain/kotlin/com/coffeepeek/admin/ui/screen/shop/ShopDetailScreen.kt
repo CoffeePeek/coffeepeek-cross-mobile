@@ -49,6 +49,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -59,6 +60,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
@@ -152,6 +154,7 @@ fun ShopDetailScreen(shopId: String, forCheckIn: Boolean = false) {
     val snackbarHostState = remember { SnackbarHostState() }
     // Photos open as a swipeable set: (urls, startIndex).
     var preview by remember { mutableStateOf<Pair<List<String>, Int>?>(null) }
+    var showRoutePicker by remember { mutableStateOf(false) }
 
     LaunchedEffect(state.actionMessage) {
         state.actionMessage?.let { message ->
@@ -162,6 +165,33 @@ fun ShopDetailScreen(shopId: String, forCheckIn: Boolean = false) {
 
     preview?.let { (urls, index) ->
         FullScreenImageDialog(imageUrls = urls, initialIndex = index, onDismiss = { preview = null })
+    }
+
+    if (showRoutePicker) {
+        val latitude = state.details?.location?.latitude
+        val longitude = state.details?.location?.longitude
+        if (latitude == null || longitude == null) {
+            showRoutePicker = false
+        } else {
+            AlertDialog(
+                onDismissRequest = { showRoutePicker = false },
+                title = { Text("Построить маршрут") },
+                text = {
+                    Column {
+                        shopRouteOptions(latitude, longitude).forEach { (label, url) ->
+                            TextButton(onClick = {
+                                showRoutePicker = false
+                                OpenInBrowser.openInBrowser(url)
+                            }) { Text(label) }
+                        }
+                    }
+                },
+                confirmButton = {},
+                dismissButton = {
+                    TextButton(onClick = { showRoutePicker = false }) { Text("Отмена") }
+                },
+            )
+        }
     }
 
     if (state.showCheckInSheet) {
@@ -277,7 +307,7 @@ fun ShopDetailScreen(shopId: String, forCheckIn: Boolean = false) {
                 isCheckInLoading = state.isCheckInLoading,
                 canOpenRoute = details.location?.latitude != null &&
                     details.location?.longitude != null,
-                onRoute = vm::openRoute,
+                onRoute = { showRoutePicker = true },
                 onCheckIn = vm::openCheckInSheet,
                 forCheckIn = forCheckIn,
                 modifier = Modifier.align(Alignment.BottomCenter),

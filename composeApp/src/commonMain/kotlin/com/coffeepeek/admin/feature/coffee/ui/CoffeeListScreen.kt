@@ -31,6 +31,7 @@ import com.coffeepeek.admin.ui.component.CoffeePeekPullToRefresh
 import com.coffeepeek.admin.ui.component.CoffeeShopImage
 import com.coffeepeek.admin.ui.component.CoffeeShopPlaceholderImage
 import com.coffeepeek.admin.ui.component.LocalFloatingNavClearance
+import com.coffeepeek.admin.ui.component.LoadErrorContent
 import com.coffeepeek.admin.ui.component.PriceBynIcon
 import com.coffeepeek.admin.ui.component.SearchHeader
 import kotlin.math.round
@@ -103,12 +104,7 @@ internal fun CoffeeListScreen(vm: CoffeeListViewModel = platformViewModel()) {
                     }
                 }
                 if (state.error != null) item {
-                    Column(Modifier.fillMaxWidth().padding(CpDimens.spacing4), horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text(state.error.orEmpty(), color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        TextButton(onClick = { if (state.items.isEmpty()) vm.refresh() else vm.loadMore() }) {
-                            Text("Попробовать снова")
-                        }
-                    }
+                    LoadErrorContent(onRetry = { if (state.items.isEmpty()) vm.refresh() else vm.loadMore() })
                 } else if (state.items.isEmpty() && !state.isLoading) item {
                     Column(Modifier.fillMaxWidth().padding(CpDimens.spacing6), horizontalAlignment = Alignment.CenterHorizontally) {
                         Text("Кофе не найден", style = MaterialTheme.typography.titleMedium)

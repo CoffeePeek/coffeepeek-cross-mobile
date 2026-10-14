@@ -24,11 +24,14 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.cinterop.ObjCSignatureOverride
 import platform.UIKit.*
 import platform.darwin.NSObject
 
 private class NavigationDelegate : NSObject(), UINavigationControllerDelegateProtocol, UIGestureRecognizerDelegateProtocol {
     var navigation: UINavigationController? = null
+    var onStackChanged: (() -> Unit)? = null
+    @ObjCSignatureOverride
     override fun navigationController(navigationController: UINavigationController, willShowViewController: UIViewController, animated: Boolean) {
         val show = (willShowViewController as? NativeScreenController)?.usesNavigationBar == true
         navigationController.setNavigationBarHidden(!show, animated)
@@ -39,14 +42,48 @@ private class NavigationDelegate : NSObject(), UINavigationControllerDelegatePro
         return nav.viewControllers.size > 1 && nav.transitionCoordinator == null && nav.presentedViewController == null &&
             (nav.topViewController as? NativeScreenController)?.handlesBackLocally != true
     }
+
+    @ObjCSignatureOverride
+    override fun navigationController(navigationController: UINavigationController, didShowViewController: UIViewController, animated: Boolean) {
+        onStackChanged?.invoke()
+    }
 }
 
 private class TabDelegate : NSObject(), UITabBarControllerDelegateProtocol {
+    var onTabChanged: (() -> Unit)? = null
+    @ObjCSignatureOverride
     override fun tabBarController(tabBarController: UITabBarController, shouldSelectViewController: UIViewController): Boolean {
         tabBarController.view.endEditing(true)
         return true
     }
+
+    @ObjCSignatureOverride
+    override fun tabBarController(tabBarController: UITabBarController, didSelectViewController: UIViewController) {
+        onTabChanged?.invoke()
+    }
 }
+
+/** Keeps the visible UIKit stack when SwiftUI recreates the Compose host on foregrounding. */
+private object NavigationMemory {
+    var generation = 0
+    var selectedTab = 0
+    var stacks: List<List<Navigator.Screen>> = List(5) { emptyList() }
+
+    fun save(tabs: UITabBarController, navigations: List<UINavigationController>) {
+        selectedTab = tabs.selectedIndex.toInt().coerceIn(navigations.indices)
+        stacks = navigations.map { navigation ->
+            navigation.viewControllers.drop(1).mapNotNull { (it as? NativeScreenController)?.route }
+        }
+    }
+
+    fun clear() {
+        generation++
+        selectedTab = 0
+        stacks = List(5) { emptyList() }
+    }
+}
+
+internal actual fun clearPlatformNavigationState() = NavigationMemory.clear()
 
 @Composable
 internal actual fun PlatformRootNavigation(
@@ -60,7 +97,14 @@ internal actual fun PlatformRootNavigation(
     val tabDelegate = remember { TabDelegate() }
     val navigationDelegates = remember { List(5) { NavigationDelegate() } }
     val navigations = remember { List(5) { UINavigationController() } }
+    val restoredTab = remember { NavigationMemory.selectedTab }
+    val restoredStacks = remember { NavigationMemory.stacks }
+    val memoryGeneration = remember { NavigationMemory.generation }
     val pendingTab by Navigator.pendingTabSelection.collectAsState()
+
+    fun saveNavigation() {
+        if (NavigationMemory.generation == memoryGeneration) NavigationMemory.save(tabs, navigations)
+    }
 
     suspend fun navigate(block: () -> Unit) = transitions.withLock {
         while (navigations.any { it.transitionCoordinator != null }) delay(16)
@@ -76,13 +120,19 @@ internal actual fun PlatformRootNavigation(
             // Programmatic selection means opening a tab's entry point (e.g. shop -> map).
             // Direct tab-bar taps still retain that tab's current stack.
             navigations[index].popToRootViewControllerAnimated(false)
+            saveNavigation()
         }
     }
-    fun controller(screen: Navigator.Screen): UIViewController = NativeScreenController {
+    fun controller(screen: Navigator.Screen): UIViewController = NativeScreenController(
+        route = screen,
+        extendsUnderHomeIndicator = screen == Navigator.Screen.Auth || screen == Navigator.Screen.Register ||
+            screen is Navigator.Screen.ForgotPassword || screen is Navigator.Screen.ResetPassword,
+    ) {
         body.value(screen) {
             scope.launch { navigate {
                 val navigation = currentNavigation()
                 navigation.setViewControllers(listOf(navigation.viewControllers.first(), controller(Navigator.Screen.Auth).apply { hidesBottomBarWhenPushed = true }), !UIAccessibilityIsReduceMotionEnabled())
+                saveNavigation()
             } }
         }
     }
@@ -101,15 +151,23 @@ internal actual fun PlatformRootNavigation(
                 }
             }
             navigation.setNavigationBarHidden(true, false)
-            navigation.setViewControllers(listOf(root), false)
+            navigation.setViewControllers(
+                listOf(root) + restoredStacks[index].map { screen ->
+                    controller(screen).apply { hidesBottomBarWhenPushed = true }
+                },
+                false,
+            )
             navigation.tabBarItem = UITabBarItem(title = labels[index], image = UIImage.systemImageNamed(symbols[index]), tag = index.toLong())
             navigationDelegates[index].navigation = navigation
+            navigationDelegates[index].onStackChanged = { saveNavigation() }
             navigation.delegate = navigationDelegates[index]
             navigation.interactivePopGestureRecognizer?.delegate = navigationDelegates[index]
         }
         tabs.setViewControllers(navigations, false)
+        tabs.selectedIndex = restoredTab.toULong()
         tabs.customizableViewControllers = null
         tabs.delegate = tabDelegate
+        tabDelegate.onTabChanged = { saveNavigation() }
         tabs
     }, modifier = Modifier.fillMaxSize(), properties = UIKitInteropProperties(
         interactionMode = UIKitInteropInteractionMode.NonCooperative,
@@ -143,6 +201,7 @@ internal actual fun PlatformRootNavigation(
                     }
                 }
             }
+            saveNavigation()
         } }
     }
     LaunchedEffect(pendingTab) {
@@ -159,6 +218,7 @@ internal actual fun PlatformRootNavigation(
                     val navigation = currentNavigation()
                     navigation.setViewControllers(listOf(navigation.viewControllers.first(), controller(destination).apply { hidesBottomBarWhenPushed = true }), !UIAccessibilityIsReduceMotionEnabled())
                 }
+                saveNavigation()
             }
             consumeLink()
         }
@@ -166,8 +226,9 @@ internal actual fun PlatformRootNavigation(
     DisposableEffect(tabs) {
         onDispose {
             tabs.delegate = null
+            tabDelegate.onTabChanged = null
             navigations.forEach { it.delegate = null; it.interactivePopGestureRecognizer?.delegate = null }
-            navigationDelegates.forEach { it.navigation = null }
+            navigationDelegates.forEach { it.navigation = null; it.onStackChanged = null }
         }
     }
     return true

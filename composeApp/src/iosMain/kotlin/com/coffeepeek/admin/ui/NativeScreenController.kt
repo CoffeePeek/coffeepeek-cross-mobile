@@ -35,6 +35,8 @@ import platform.darwin.NSObject
 /** Owns UIKit chrome and one retained Compose screen during the UI migration. */
 internal class NativeScreenController(
     title: String? = null,
+    val route: Navigator.Screen? = null,
+    private val extendsUnderHomeIndicator: Boolean = false,
     private val content: @Composable () -> Unit,
 ) : UIViewController(nibName = null, bundle = null) {
     var usesNavigationBar by mutableStateOf(false)
@@ -76,7 +78,7 @@ internal class NativeScreenController(
                         else WindowInsetsSides.Bottom
                     Box(Modifier.fillMaxSize()
                         .background(colors.background)
-                        .consumeWindowInsets(WindowInsets.systemBars.only(reservedSides))
+                        .then(if (extendsUnderHomeIndicator) Modifier else Modifier.consumeWindowInsets(WindowInsets.systemBars.only(reservedSides)))
                         .dismissKeyboardOnBackgroundGestures()) { content() }
                 }
             }
@@ -88,7 +90,9 @@ internal class NativeScreenController(
             child.view.topAnchor.constraintEqualToAnchor(view.topAnchor),
             child.view.leadingAnchor.constraintEqualToAnchor(view.leadingAnchor),
             child.view.trailingAnchor.constraintEqualToAnchor(view.trailingAnchor),
-            child.view.bottomAnchor.constraintEqualToAnchor(view.safeAreaLayoutGuide.bottomAnchor),
+            child.view.bottomAnchor.constraintEqualToAnchor(
+                if (extendsUnderHomeIndicator) view.bottomAnchor else view.safeAreaLayoutGuide.bottomAnchor,
+            ),
         ))
         child.didMoveToParentViewController(this)
     }

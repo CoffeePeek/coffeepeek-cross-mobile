@@ -11,3 +11,6 @@ internal expect fun PlatformRootNavigation(
     consumeLink: () -> Unit,
     content: @Composable (Navigator.Screen, resetToLogin: () -> Unit) -> Unit,
 ): Boolean
+
+/** Called only when the authenticated account changes. */
+internal expect fun clearPlatformNavigationState()

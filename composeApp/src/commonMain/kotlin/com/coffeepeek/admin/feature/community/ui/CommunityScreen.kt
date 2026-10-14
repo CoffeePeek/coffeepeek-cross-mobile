@@ -20,6 +20,7 @@ import com.coffeepeek.admin.ui.component.CoffeePeekLoader
 import com.coffeepeek.admin.ui.component.CoffeePeekPullToRefresh
 import com.coffeepeek.admin.ui.component.FullScreenImageDialog
 import com.coffeepeek.admin.ui.component.LocalFloatingNavClearance
+import com.coffeepeek.admin.ui.component.LoadErrorContent
 import com.coffeepeek.admin.ui.component.ReviewTextInput
 import com.coffeepeek.admin.ui.screen.checkins.CheckInCreateButton
 import com.coffeepeek.admin.ui.screen.checkins.CheckInCreateFlow
@@ -146,10 +147,10 @@ fun CommunityScreen(onCreateCheckIn: () -> Unit) {
                             }
                             when {
                                 state.error != null -> item(key = "error") {
-                                    Column {
-                                        Text(state.error.orEmpty(), color = MaterialTheme.colorScheme.error)
-                                        TextButton(onClick = vm::retry) { Text(if (state.restartPagination) "Обновить ленту" else "Попробовать снова") }
-                                    }
+                                    LoadErrorContent(
+                                        onRetry = vm::retry,
+                                        retryLabel = if (state.restartPagination) "Обновить ленту" else "Попробовать снова",
+                                    )
                                 }
                                 state.items.isEmpty() && !state.isLoading -> item(key = "empty") {
                                     Text("Пока нет опубликованных чек-инов.", color = MaterialTheme.colorScheme.onSurfaceVariant)

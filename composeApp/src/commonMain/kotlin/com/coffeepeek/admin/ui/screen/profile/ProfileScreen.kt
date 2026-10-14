@@ -49,6 +49,7 @@ import com.coffeepeek.admin.theme.CpDimens
 import com.coffeepeek.admin.ui.Navigator
 import com.coffeepeek.admin.ui.component.CoffeePeekLoader
 import com.coffeepeek.admin.ui.component.LocalFloatingNavClearance
+import com.coffeepeek.admin.ui.component.LoadErrorContent
 import com.coffeepeek.admin.ui.component.SettingsDivider
 import com.coffeepeek.admin.ui.component.SettingsIconPalette
 import com.coffeepeek.admin.ui.component.SettingsRow
@@ -97,24 +98,7 @@ fun ProfileScreen(vm: ProfileViewModel = koinInject()) {
                     .padding(CpDimens.spacing4),
                 contentAlignment = Alignment.Center,
             ) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(
-                        text = state.error ?: "Ошибка загрузки профиля",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                    Spacer(Modifier.height(CpDimens.spacing3))
-                    Button(
-                        onClick = vm::refreshProfile,
-                        modifier = Modifier.height(CpDimens.buttonHeight),
-                        shape = RoundedCornerShape(percent = 50),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.primary,
-                        ),
-                    ) {
-                        Text("Попробовать снова")
-                    }
-                }
+                LoadErrorContent(onRetry = vm::refreshProfile)
             }
             return@Scaffold
         }
@@ -138,14 +122,10 @@ fun ProfileScreen(vm: ProfileViewModel = koinInject()) {
                     ),
             )
 
-            state.refreshError?.let { refreshError ->
-                Text(
-                    text = refreshError,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = CpDimens.spacing4, vertical = CpDimens.spacing2),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.error,
+            state.refreshError?.let {
+                LoadErrorContent(
+                    onRetry = vm::refreshProfile,
+                    modifier = Modifier.padding(horizontal = CpDimens.spacing4),
                 )
             }
 

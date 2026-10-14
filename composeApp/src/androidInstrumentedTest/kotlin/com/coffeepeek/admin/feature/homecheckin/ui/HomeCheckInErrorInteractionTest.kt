@@ -7,8 +7,10 @@ import android.os.SystemClock
 import android.view.MotionEvent
 import android.view.accessibility.AccessibilityNodeInfo
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -48,7 +50,9 @@ class HomeCheckInErrorInteractionTest {
                 var state by editorState
                 SideEffect { current.set(state) }
                 CoffeePeekTheme(darkTheme = dark) {
-                    Scaffold(topBar = { CpTopBar("Чекины", onBack = {}) }) { }
+                    Scaffold(topBar = { CpTopBar("Чекины", onBack = {}) }) { contentPadding ->
+                        Box(Modifier.padding(contentPadding))
+                    }
                     SwipeDismissModalBottomSheet(onDismissRequest = {}) {
                         HomeEditorContent(state,
                             onDraftChange = { next -> state = state.withDraft(next); current.set(state) }, onQueryChange = {}, onSearch = {},

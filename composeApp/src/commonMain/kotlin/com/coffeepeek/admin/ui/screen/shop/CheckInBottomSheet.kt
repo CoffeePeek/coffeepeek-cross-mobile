@@ -125,6 +125,7 @@ fun CheckInBottomSheet(
 
     SwipeDismissModalBottomSheet(
         dismissEnabled = !isLoading,
+        maxSheetHeightFraction = 0.76f,
         onDismissRequest = {
             keyboardController?.hide()
             focusManager.clearFocus()
@@ -138,8 +139,7 @@ fun CheckInBottomSheet(
         com.coffeepeek.admin.ui.component.PlatformScrollableColumn(
             modifier = Modifier
                 .fillMaxWidth()
-                // Keep the shop hero/title visible behind the modal.
-                .fillMaxHeight(0.76f)
+                .fillMaxHeight()
                 .navigationBarsPadding()
                 .padding(horizontal = CpDimens.spacing4)
                 .padding(bottom = CpDimens.spacing6),

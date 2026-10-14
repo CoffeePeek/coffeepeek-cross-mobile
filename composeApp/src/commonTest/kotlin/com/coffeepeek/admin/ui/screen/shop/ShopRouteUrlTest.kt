@@ -12,4 +12,16 @@ class ShopRouteUrlTest {
             buildYandexMapsRouteUrl(latitude = 53.902284, longitude = 27.561831),
         )
     }
+
+    @Test
+    fun buildsAppleAndGoogleDrivingRoutes() {
+        assertEquals(
+            "https://maps.apple.com/?daddr=53.902284,27.561831&dirflg=d",
+            buildAppleMapsRouteUrl(53.902284, 27.561831),
+        )
+        assertEquals(
+            "https://www.google.com/maps/dir/?api=1&destination=53.902284,27.561831&travelmode=driving",
+            buildGoogleMapsRouteUrl(53.902284, 27.561831),
+        )
+    }
 }
