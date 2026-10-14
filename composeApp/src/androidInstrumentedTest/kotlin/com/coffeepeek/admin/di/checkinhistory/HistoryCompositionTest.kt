@@ -8,11 +8,13 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.click
 import androidx.compose.ui.test.junit4.v2.createEmptyComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performTouchInput
 import androidx.test.core.app.ActivityScenario
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.domain.model.Session
@@ -76,9 +78,13 @@ class HistoryCompositionTest {
         val shops = mutableListOf<String>()
         val renderer = renderer(sessions, repository)
         render { renderer.Content({ "Fixture date" }, {}, {}, { shops += it }) }.use {
-            compose.onNodeWithText("Fixture shop").performScrollTo().performClick()
+            // The merged card also contains a photo button: tapping its center can
+            // open the photo instead of the shop. Exercise the visible title bounds.
+            compose.onNodeWithText("Fixture shop", useUnmergedTree = true)
+                .performScrollTo().performTouchInput { click() }
             compose.waitUntil(5_000) { shops.isNotEmpty() }
             assertEquals(listOf("public-slug"), shops)
+            compose.onNodeWithText("Fixture photo 1").assertDoesNotExist()
             val before = repository.reads.get()
             compose.runOnIdle { sessions.applySession(Session("renewed", userId = "owner")) }
             compose.waitForIdle()

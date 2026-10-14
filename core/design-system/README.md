@@ -48,6 +48,13 @@ Haze ownership belongs to the screen; no global renderer or platform abstraction
 is created. Shared UI lives in commonMain with Android as the initial build target.
 Native iOS integration is outside this stage.
 
+CoffeePeekSwitch owns the already-prepared production switch colors and a full-size
+thumb for enabled/disabled, checked/unchecked controls in both themes. Its palette
+matches the application's current PlatformSwitch; core does not import that
+application implementation. Shop visibility and CoffeePeekSwitchRow use this one
+primitive. State/callbacks and localized labels are caller-owned; rows clear the
+child switch's semantics so the whole row remains the only accessible toggle.
+
 ## Fields and top bars slice
 
 CoffeePeekCompactOutlinedTextField exposes the basic decoration contract. CoffeePeekTextField adds
@@ -73,6 +80,11 @@ Material sheet-body gestures are disabled; a 72.dp downward distance or
 scrim dismissal remain Material behaviour. The handle is now 48.dp and exposes
 a caller-localized accessible dismiss action. Visibility/removal is caller-owned.
 Content is a ColumnScope slot: review/check-in/photo-source models stay outside.
+Use maxSheetHeightFraction for a bounded sheet. It sizes the inner handle/content
+column, never the outer Material viewport: fractional height on the external
+modifier changes Material's anchor constraints and incorrectly pins the sheet to
+the top. Null keeps wrap-content behavior. Callers fill/scroll the remaining body;
+they must not put fillMaxHeight(fraction) on the sheet modifier.
 Material provides modal focus and default system/IME inset handling; validate
 keyboard/content scrolling and any custom consumer insets at integration.
 

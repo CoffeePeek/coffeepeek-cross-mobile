@@ -16,8 +16,6 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Switch
-import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.VerticalDivider
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.height
@@ -25,8 +23,8 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.material3.Text
@@ -166,7 +164,7 @@ fun CoffeePeekRowSeparator() {
     )
 }
 
-/** Row with an iOS-style switch (white full-size thumb, no border); the whole row is the toggle target. */
+/** Theme-owned full-size switch thumb; the whole row is the sole accessible toggle target. */
 @Composable
 fun CoffeePeekSwitchRow(
     label: String,
@@ -187,19 +185,10 @@ fun CoffeePeekSwitchRow(
             color = MaterialTheme.colorScheme.onSurface,
             modifier = Modifier.weight(1f),
         )
-        Switch(
+        CoffeePeekSwitch(
             checked = checked,
             onCheckedChange = null, // row handles the toggle
-            // Non-null thumbContent keeps the thumb full-size in both states, like UISwitch.
-            thumbContent = { Box(Modifier.size(0.dp)) },
-            colors = SwitchDefaults.colors(
-                checkedThumbColor = Color.White,
-                checkedTrackColor = CoffeePeekColors.Primary,
-                checkedBorderColor = Color.Transparent,
-                uncheckedThumbColor = Color.White,
-                uncheckedTrackColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.6f),
-                uncheckedBorderColor = Color.Transparent,
-            ),
+            modifier = Modifier.clearAndSetSemantics { },
         )
     }
 }

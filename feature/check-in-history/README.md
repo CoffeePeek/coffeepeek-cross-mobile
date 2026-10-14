@@ -1,11 +1,13 @@
 # Personal shop check-in history — Android-first migration
 
-Audited 2026-10-14 on the consolidated migration tip after `c8d9346`.
-This owner is **visits to coffee shops**, not home preparations or the community
-feed. The existing `features/home-checkin` module and its HomeCheckIns route stay
-separate; neither is renamed or duplicated here.
+Initial shop-only audit: 2026-10-14 after `c8d9346`. Main e5722f9 now has a combined
+shop/home history route. The prepared modules below still supply the shop-visit
+capability, not home preparation or community business logic. The active combined
+route is retained. Follow [COMBINED_HISTORY_PLAN.md](COMBINED_HISTORY_PLAN.md) for
+the current parity map and next Home read-contract/MVI/integration slices; do not
+activate this standalone entry over the combined screen.
 
-## Current source and contract
+## Initial shop-read source and contract
 
 - Legacy `composeApp/.../ui/screen/checkins/VisitedPlacesScreen.kt`: one destination with
   calendar/list modes, Monday-first calendar, selected-day cards, three stacked
@@ -60,8 +62,9 @@ legacy domain/network/data, or any application module.
 4. Android composition: lifecycle-owned feature store, account lease, guest state,
    local today/date grouping and **zone-aware month start/next-month start** from
    app platform code (including DST); do not assume a fixed offset all month.
-   Confirm the v1 backend boundary interpretation before switching. Wire only
-   Android VisitedPlaces; HomeCheckIns and shared/iOS consumers stay unchanged.
+   The original standalone VisitedPlaces switch is superseded by incoming main's
+   combined route. Confirm both backend boundary contracts and preserve its
+   HomeCheckIns/EditHomeCheckIn flows before Android integration; iOS stays unchanged.
 5. Complete-feature gate: Direct/Play build/unit/lint/DEX, paired UI tests and
    safe device parity for paging, calendar boundaries, photos/shop navigation,
    resume/return refresh and logout/account replacement. No live writes or user
@@ -324,3 +327,23 @@ stash 40d3fe81295a6a95d05678eb206297fd0abed065, not discarded. Current builds an
 changes, but the pending history composition UI tests still lack a passing device
 result. A later command-approval 403 also prevented installing the Shop fixture;
 this is not a backend/GitHub authorization failure or new verification evidence.
+
+## Prepared composition verification completed — 2026-10-14
+
+All four plain-host composition tests now pass on the owned read-only emulator:
+guest navigation without private reads; account replacement closing photos and
+removing prior private entries; public shop slug plus same-account token renewal;
+and logout cancellation while the route is hidden. Fake sessions, repositories,
+thumbnail rendering and photo callbacks isolate the renderer; the application
+process still initializes its normal Application, as documented above.
+
+The first run exposed a test-target problem, not a missing shop event: clicking
+the merged card's center could hit its nested photo control. The corrected test
+physically taps the visible unmerged shop-title bounds and verifies that the photo
+viewer did not open. App test APK assembly/lint passes after that change.
+
+This closes the authored adapter-test gate only. ProfileCheckInsScreen remains
+the active combined shop/home route, and no new Home domain/read adapter or unified
+MVI/UI has been implemented in this checkpoint. Proceed through the populated
+foundation and parity steps in COMBINED_HISTORY_PLAN.md; do not label combined
+history or real-account backend behavior complete on these four tests alone.

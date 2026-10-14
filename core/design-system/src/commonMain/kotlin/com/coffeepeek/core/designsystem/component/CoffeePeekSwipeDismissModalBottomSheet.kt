@@ -8,12 +8,16 @@ import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.draggable
 import androidx.compose.foundation.gestures.rememberDraggableState
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
@@ -45,6 +49,11 @@ import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
+/**
+ * Use [maxSheetHeightFraction] to bound the handle and content within the available
+ * modal content height. Do not put fractional height on [modifier]: Material's
+ * anchors must see the full dialog viewport to keep the sheet bottom-aligned.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CoffeePeekSwipeDismissModalBottomSheet(
@@ -52,8 +61,12 @@ fun CoffeePeekSwipeDismissModalBottomSheet(
     dismissDescription: String,
     modifier: Modifier = Modifier,
     dismissEnabled: Boolean = true,
+    maxSheetHeightFraction: Float? = null,
     content: @Composable ColumnScope.() -> Unit,
 ) {
+    require(maxSheetHeightFraction == null || maxSheetHeightFraction > 0f && maxSheetHeightFraction <= 1f) {
+        "maxSheetHeightFraction must be in (0, 1]"
+    }
     val scope = rememberCoroutineScope()
     val currentDismissEnabled by rememberUpdatedState(dismissEnabled)
     val currentOnDismiss by rememberUpdatedState(onDismissRequest)
@@ -81,50 +94,55 @@ fun CoffeePeekSwipeDismissModalBottomSheet(
         properties = ModalBottomSheetProperties(shouldDismissOnClickOutside = dismissEnabled),
         containerColor = MaterialTheme.colorScheme.surface,
     ) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(48.dp)
-                .semantics { contentDescription = dismissDescription }
-                .then(if (dismissEnabled) {
-                    Modifier.clickable(role = Role.Button, onClickLabel = dismissDescription) {
-                        scope.launch {
-                            if (currentDismissEnabled) {
-                                sheetState.hide()
-                                if (!sheetState.isVisible && currentDismissEnabled) currentOnDismiss()
-                            }
-                        }
-                    }
-                } else {
-                    Modifier.semantics { disabled(); role = Role.Button }
-                })
-                .draggable(
-                    state = dragState,
-                    orientation = Orientation.Vertical,
-                    enabled = dismissEnabled,
-                    onDragStopped = { velocity ->
-                        if (currentDismissEnabled && (dragOffset >= dismissDistance || velocity >= dismissVelocity)) {
-                            sheetState.hide()
-                            if (!sheetState.isVisible && currentDismissEnabled) currentOnDismiss()
-                        } else {
-                            animate(
-                                initialValue = dragOffset,
-                                targetValue = 0f,
-                                animationSpec = tween(durationMillis = 160),
-                            ) { value, _ -> dragOffset = value }
-                        }
-                    },
-                ),
-            contentAlignment = Alignment.Center,
-        ) {
+        // Fractional constraints belong below Material's anchor layout, not above it.
+        Column(Modifier.fillMaxWidth().then(
+            maxSheetHeightFraction?.let { Modifier.fillMaxHeight(it) } ?: Modifier,
+        )) {
             Box(
                 modifier = Modifier
-                    .size(width = 36.dp, height = 4.dp)
-                    .clip(RoundedCornerShape(999.dp))
-                    .background(MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.45f)),
-            )
+                    .fillMaxWidth()
+                    .height(48.dp)
+                    .semantics { contentDescription = dismissDescription }
+                    .then(if (dismissEnabled) {
+                        Modifier.clickable(role = Role.Button, onClickLabel = dismissDescription) {
+                            scope.launch {
+                                if (currentDismissEnabled) {
+                                    sheetState.hide()
+                                    if (!sheetState.isVisible && currentDismissEnabled) currentOnDismiss()
+                                }
+                            }
+                        }
+                    } else {
+                        Modifier.semantics { disabled(); role = Role.Button }
+                    })
+                    .draggable(
+                        state = dragState,
+                        orientation = Orientation.Vertical,
+                        enabled = dismissEnabled,
+                        onDragStopped = { velocity ->
+                            if (currentDismissEnabled && (dragOffset >= dismissDistance || velocity >= dismissVelocity)) {
+                                sheetState.hide()
+                                if (!sheetState.isVisible && currentDismissEnabled) currentOnDismiss()
+                            } else {
+                                animate(
+                                    initialValue = dragOffset,
+                                    targetValue = 0f,
+                                    animationSpec = tween(durationMillis = 160),
+                                ) { value, _ -> dragOffset = value }
+                            }
+                        },
+                    ),
+                contentAlignment = Alignment.Center,
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(width = 36.dp, height = 4.dp)
+                        .clip(RoundedCornerShape(999.dp))
+                        .background(MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.45f)),
+                )
+            }
+            content()
         }
-        content()
     }
 }
 
@@ -139,6 +157,18 @@ private fun CoffeePeekSwipeDismissModalBottomSheetPreviewContent(darkTheme: Bool
 
 @Preview @Composable private fun CoffeePeekSwipeDismissModalBottomSheetLightPreview() = CoffeePeekSwipeDismissModalBottomSheetPreviewContent(false)
 @Preview @Composable private fun CoffeePeekSwipeDismissModalBottomSheetDarkPreview() = CoffeePeekSwipeDismissModalBottomSheetPreviewContent(true)
+
+@Composable
+private fun CoffeePeekSwipeDismissModalBottomSheetBoundedPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
+    CoffeePeekSwipeDismissModalBottomSheet({}, "Dismiss sheet", maxSheetHeightFraction = 0.76f) {
+        Column(Modifier.fillMaxWidth().fillMaxHeight().verticalScroll(rememberScrollState())) {
+            repeat(40) { Text("Example row $it", Modifier.padding(8.dp)) }
+        }
+    }
+}
+
+@Preview @Composable private fun CoffeePeekSwipeDismissModalBottomSheetBoundedLightPreview() = CoffeePeekSwipeDismissModalBottomSheetBoundedPreview(false)
+@Preview @Composable private fun CoffeePeekSwipeDismissModalBottomSheetBoundedDarkPreview() = CoffeePeekSwipeDismissModalBottomSheetBoundedPreview(true)
 
 @Preview @Composable private fun CoffeePeekSwipeDismissModalBottomSheetLockedLightPreview() = CoffeePeekTheme(darkTheme = false) {
     CoffeePeekSwipeDismissModalBottomSheet({}, "Dismiss sheet", dismissEnabled = false) {

@@ -559,3 +559,31 @@ Use the test-only ShopFormTestActivity parity_preview/parity_dark fixture with
 Memories, empty note and 4/4/4 ratings; it makes no DI/HTTP/picker/write calls.
 Compare top and scrolled sections against the user's production references and
 rerun form/core/host UI scenarios before merging or declaring visual parity.
+
+## Migrated core modal and switch verification — 2026-10-14
+
+The migration now has its own equivalent positioning correction: the core sheet's
+fractional inner handle/content column leaves Material's anchor viewport intact.
+The Android check-in entry and no-network visual fixture use maxSheetHeightFraction,
+not an outer fillMaxHeight fraction. Null/wrap-content and pending-write handle,
+drag, Back and outside-tap behavior are preserved by the overlay tests.
+
+The legacy production file is deliberately unchanged here. PR #92 targets develop
+from main; its eventual main merge will bring that legacy fix through the normal
+history. No cherry-pick or duplicate legacy-file patch is part of this checkpoint.
+
+Visual fixture inspection additionally found default Material switch colors and
+thumb sizing. CoffeePeekSwitch reuses the current production tokens for both
+themes/states/disabled modes; the Shop visibility field and core settings row
+share the primitive. Row semantics remain the sole toggle action. Colocated
+paired previews and palette/actual-pixel/touch tests cover the reusable component.
+
+Final Direct/Play APKs and packaged DEX guards, app/core/Shop lint and 537 selected
+unit-test executions pass (16 core, 87 Shop impl, 217 app per variant). On the
+owned temporary emulator, all 56 design-system and 21 Shop UI tests pass. Final
+light/dark form and scrolled-bottom fixture screenshots were inspected: no gap
+below the sheet, both thumb colors visible, and the submit button reachable.
+These are fake Memories/rating/date fixtures, not a real backend form submission.
+The emulator ran read-only and stopped without a snapshot; Pixel 7/10a were not
+updated or cleared. Live picker/camera/ML Kit/writes, physical-device parity and
+actual IDE rendering remain separate gates.

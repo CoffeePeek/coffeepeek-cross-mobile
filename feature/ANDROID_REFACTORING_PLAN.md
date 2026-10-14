@@ -17,16 +17,20 @@ modules in total). Shared MVI stays in commonMain; Android screen/entry code use
 androidMain because the current design-system has only an Android target.
 There is no new application module or generic DI module to create.
 
-Excluding five graph containers, the shared navigator declares 30 destinations:
-25 root destinations including Main and the new HomeCheckIns, plus five tabs.
-Excluding Main and the dormant ReportReview route leaves 28 content destinations. This is not a count
+The refreshed navigator declares 38 serialized routes: five graph containers,
+five tabs and 28 other destinations. Excluding graph containers gives 33 routes;
+excluding Main and dormant ReportReview gives 31 content-route contracts. ForgotPassword,
+ResetPassword and EditHomeCheckIn were missing from the older 30-route audit.
+VisitedPlaces, HomeCheckIns and EditHomeCheckIn share one combined screen, so even
+these 31 routes are not 31 independent screens. This is not a count
 of independent business features: map and roaster-list content can be embedded
 without a separate route; sheets, form steps, tabs and success states do not
 each require four Gradle modules.
 
 - ShopReviews currently renders public check-ins, not the prepared review editor.
 - CreateCheckIn is the shop picker; the actual creation UI is a bottom sheet.
-- Visited Places calendar/list are modes of the same destination.
+- The active personal-history destination combines one calendar/timeline with
+  All/Shop/Home filters; the prepared shop-only Calendar/List selector is not active.
 - My Contributions has multiple content modes, not three mandatory features.
 - Registration steps and Add Shop success are internal states.
 - ReportReview is not a reason to activate an obsolete review creation flow.
@@ -271,10 +275,29 @@ also compile in the publication build. Device execution and visual parity remain
 unverified; earlier fixture installation was rejected by command approval with 403.
 Command access recovered for the publication attempt. Publish accumulated work in
 the existing PR #43 targeting develop; do not merge it or claim release readiness.
-The reported top-anchored fractional modal is a known release blocker. An independent
-fix is prepared from main for a separate PR into develop, as explicitly requested;
-the migrated core sheet must receive the equivalent correction before release.
-Inspect both themes against the production references and rerun device UI tests.
+PR #92 is the independent main-based production modal fix into develop. Do not
+cherry-pick its legacy edits into this branch: they will arrive through main.
+The migrated core correction bounds its inner handle/content instead of Material's
+anchor viewport; the Shop form and safe fixture use that API. Its three placement
+tests, seven overlay/lock tests and two theme tests pass on the owned emulator;
+all 21 isolated Shop tests also pass. Light/dark fixture inspection confirms bottom
+alignment and scrollable production-shaped fields, not real account/picker parity.
+That visual inspection also found the default Material switch mismatch; the shared
+CoffeePeekSwitch now uses the existing production palette/full-size thumb in the
+form and settings row. Final checks pass: 537 unit-test executions across the
+selected modules/two app variants; Direct/Play APK/DEX and app/core/Shop lint;
+56 design-system UI tests, 21 Shop UI tests and four history composition UI tests.
+The latter inject fake sessions/repositories/images and exercise the prepared
+adapter, not the active combined route. The navigation test now taps the actual
+title rather than a merged card's photo-containing center. Light/dark final fixture
+screenshots were inspected. No user-device APK replacement, live writes or iOS
+switch; the read-only emulator was stopped without saving state.
+
+Next implementation is the combined history, not a standalone shop-route switch.
+The audited parity map and Home read-contract / combined MVI / UI / Android
+integration order are in check-in-history/COMBINED_HISTORY_PLAN.md. The first
+foundation slice isolates real Home read contracts from its existing Ktor-bearing
+artifact; keep home creation/edit/delete callbacks delegated until their own migration.
 
 These twelve areas are an ownership map, not instructions to create 48 empty
 modules. Complexity includes parity, session/platform integration and testing.

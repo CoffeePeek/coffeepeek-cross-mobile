@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -19,6 +18,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
+import com.coffeepeek.core.designsystem.component.CoffeePeekSwitch
 import com.coffeepeek.feature.shop.domain.model.ShopCheckInVisibility
 import com.coffeepeek.feature.shop.impl.resources.Res
 import com.coffeepeek.feature.shop.impl.resources.shop_checkin_form_public
@@ -45,7 +45,7 @@ internal fun ShopCheckInVisibilityField(
                 style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
         Spacer(Modifier.width(CoffeePeekDimens.spacing3))
-        Switch(checked = public, onCheckedChange = null, enabled = enabled,
+        CoffeePeekSwitch(checked = public, onCheckedChange = null, enabled = enabled,
             modifier = Modifier.clearAndSetSemantics { })
     }
 }

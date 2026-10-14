@@ -43,7 +43,7 @@ class ThemeOwnershipContractTest {
                         }
                     }
                 } }
-                compose.runOnIdle { assertEquals(expected, actual) }
+                compose.runOnIdle { assertEquals(checkNotNull(expected), checkNotNull(actual)) }
             }
         }
     }

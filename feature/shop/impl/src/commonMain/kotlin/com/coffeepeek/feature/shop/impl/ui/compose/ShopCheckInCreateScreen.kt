@@ -91,7 +91,7 @@ internal fun ShopCheckInCreateScreen(
         onDismissRequest = { viewModel.onAction(ShopCheckInFormAction.Dismiss) },
         dismissDescription = stringResource(Res.string.shop_checkin_form_dismiss),
         dismissEnabled = !state.isSubmitting,
-        modifier = Modifier.fillMaxHeight(0.76f),
+        maxSheetHeightFraction = 0.76f,
     ) {
         ShopCheckInCreateScreenContent(
             state = state, shopName = shopName,

@@ -32,7 +32,7 @@ class ShopFormTestActivity : ComponentActivity() {
             var state by remember { mutableStateOf(ShopCheckInFormState(
                 ShopCheckInCreateInput("fixture", "", ShopRating(4, 4, 4), "2026-10-14T10:00:00Z"), isLoading = false)) }
             CoffeePeekTheme(darkTheme = dark) {
-                CoffeePeekSwipeDismissModalBottomSheet({ finish() }, "Закрыть форму", modifier = Modifier.fillMaxHeight(0.76f)) {
+                CoffeePeekSwipeDismissModalBottomSheet({ finish() }, "Закрыть форму", maxSheetHeightFraction = 0.76f) {
                     ShopCheckInCreateScreenContent(state, "Memories", "14 октября 2026", 1791936000000, 1791972000000,
                         onAction = { action ->
                             state = when (action) {
