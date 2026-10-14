@@ -28,7 +28,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -60,6 +59,7 @@ import com.coffeepeek.admin.ui.component.DesignFilterChip
 import com.coffeepeek.admin.ui.component.CoffeePeekPullToRefresh
 import com.coffeepeek.admin.ui.component.SearchHeader
 import com.coffeepeek.admin.ui.component.LocalFloatingNavClearance
+import com.coffeepeek.admin.ui.component.LoadErrorContent
 import com.coffeepeek.admin.ui.model.COFFEE_FOCUS_OPTIONS
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
@@ -261,7 +261,7 @@ fun FeedScreen(
                 start = CpDimens.spacing4,
                 top = CpDimens.spacing4,
                 end = CpDimens.spacing4,
-                bottom = CpDimens.spacing4 + navClearance,
+                bottom = navClearance + 88.dp,
             )
 
             discoveryTransition.AnimatedContent(
@@ -314,10 +314,7 @@ fun FeedScreen(
                                             }
                                         }
                                         state.error != null && state.shops.isEmpty() -> {
-                                            Column {
-                                                Text(state.error.orEmpty(), color = MaterialTheme.colorScheme.onSurfaceVariant)
-                                                TextButton(onClick = vm::refresh) { Text("Попробовать снова") }
-                                            }
+                                            LoadErrorContent(onRetry = vm::refresh)
                                         }
                                         displayedShops.isEmpty() -> Text("Кофейни не найдены", color = MaterialTheme.colorScheme.onSurfaceVariant)
                                         else -> LazyRow(horizontalArrangement = Arrangement.spacedBy(CpDimens.spacing3)) {
@@ -366,26 +363,10 @@ fun FeedScreen(
                                 verticalArrangement = Arrangement.Center,
                             ) {
                                 item {
-                                    Column(
+                                    LoadErrorContent(
+                                        onRetry = vm::refresh,
                                         modifier = Modifier.fillParentMaxSize(),
-                                        horizontalAlignment = Alignment.CenterHorizontally,
-                                        verticalArrangement = Arrangement.Center,
-                                    ) {
-                                        Text(
-                                            state.error ?: "Ошибка загрузки",
-                                            style = MaterialTheme.typography.bodyMedium,
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                        )
-                                        Spacer(Modifier.height(CpDimens.spacing3))
-                            Button(
-                                onClick = vm::refresh,
-                                modifier = Modifier.height(CpDimens.buttonHeight),
-                                shape = RoundedCornerShape(percent = 50),
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = MaterialTheme.colorScheme.primary,
-                                ),
-                            ) { Text("Попробовать снова") }
-                                    }
+                                    )
                                 }
                             }
                         }
@@ -418,10 +399,7 @@ fun FeedScreen(
                                             }
                                         }
                                         state.error != null && state.shops.isEmpty() -> item(key = "shop-search-error") {
-                                            Column {
-                                                Text(state.error.orEmpty(), color = MaterialTheme.colorScheme.onSurfaceVariant)
-                                                TextButton(onClick = vm::refresh) { Text("Попробовать снова") }
-                                            }
+                                            LoadErrorContent(onRetry = vm::refresh)
                                         }
                                         displayedShops.isEmpty() -> item(key = "shop-search-empty") {
                                             Text("Кофейни не найдены", color = MaterialTheme.colorScheme.onSurfaceVariant)

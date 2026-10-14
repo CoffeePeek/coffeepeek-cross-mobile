@@ -1,5 +1,6 @@
 version: 1
 bundleID: com.coffeepeek
-infoPath: Info.plist
+infoPath: .build/Info.plist
+entitlementsPath: ../../iosApp/iosApp/CoffeePeek.entitlements
 resources:
   - .build/compose-resources

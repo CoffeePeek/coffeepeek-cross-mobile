@@ -1,5 +1,7 @@
 package com.coffeepeek.admin.ui.component
 
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.getValue
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.snap
@@ -9,12 +11,10 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
@@ -44,6 +44,7 @@ fun CoffeePeekPullToRefresh(
     modifier: Modifier = Modifier,
     content: @Composable (scrollModifier: Modifier) -> Unit,
 ) {
+    val reduceMotion = platformReduceMotion()
     val density = LocalDensity.current
     val thresholdPx = with(density) { 72.dp.toPx() }
     val indicatorSize = CpDimens.loaderButton
@@ -78,6 +79,7 @@ fun CoffeePeekPullToRefresh(
                     val damped = available.y * 0.5f
                     val next = (pullOffset + damped).coerceAtMost(thresholdPx * 1.4f)
                     val consumedY = (next - pullOffset) / 0.5f
+                    if (pullOffset < thresholdPx && next >= thresholdPx) platformHaptic(HapticEvent.Selection)
                     pullOffset = next
                     return Offset(0f, consumedY)
                 }
@@ -118,7 +120,7 @@ fun CoffeePeekPullToRefresh(
 
     val contentOffsetPx by animateFloatAsState(
         targetValue = if (isRefreshing) thresholdPx else pullOffset,
-        animationSpec = if (isDragging) snap() else PullRefreshSettleSpec,
+        animationSpec = if (isDragging || reduceMotion) snap() else PullRefreshSettleSpec,
         label = "pull-refresh-offset",
     )
     val scrollModifier = Modifier
@@ -128,6 +130,7 @@ fun CoffeePeekPullToRefresh(
 
     Box(modifier = modifier) {
         content(scrollModifier)
+        PlatformScrollToTop(listState)
 
         if (showIndicator) {
             val progress = (contentOffsetPx / thresholdPx).coerceIn(0f, 1f)

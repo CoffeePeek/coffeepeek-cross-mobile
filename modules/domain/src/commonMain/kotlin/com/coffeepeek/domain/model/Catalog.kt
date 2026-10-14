@@ -147,4 +147,6 @@ data class CheckIn(
     val helpfulCount: Int = 0,
     val isHelpfulByCurrentUser: Boolean = false,
     val drinkPhotoUrl: String? = null,
+    val isHome: Boolean = false,
+    val homePreparation: com.coffeepeek.domain.feature.feed.FeedHomePreparation? = null,
 )

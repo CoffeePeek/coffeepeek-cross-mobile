@@ -1,11 +1,11 @@
 package com.coffeepeek.admin.ui.screen.auth.registr
 
+import androidx.compose.runtime.getValue
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -21,7 +21,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -42,7 +41,9 @@ import coffeepeek.composeapp.generated.resources.create_account
 import coffeepeek.composeapp.generated.resources.create_account_title
 import coffeepeek.composeapp.generated.resources.email_check_subtitle
 import coffeepeek.composeapp.generated.resources.email_step_title
-import coffeepeek.composeapp.generated.resources.error_enter_password_length
+import coffeepeek.composeapp.generated.resources.registration_password_placeholder
+import androidx.compose.material3.IconButton
+import androidx.compose.ui.text.style.TextOverflow
 import coffeepeek.composeapp.generated.resources.go_to_login
 import coffeepeek.composeapp.generated.resources.name
 import coffeepeek.composeapp.generated.resources.name_hint
@@ -57,7 +58,7 @@ import coffeepeek.composeapp.generated.resources.step_register
 import coffeepeek.composeapp.generated.resources.terms_accept_prefix
 import coffeepeek.composeapp.generated.resources.terms_and
 import coffeepeek.composeapp.generated.resources.terms_link
-import com.coffeepeek.admin.auth.GoogleSignInButton
+import com.coffeepeek.admin.auth.AppleAuth
 import com.coffeepeek.admin.auth.handleGoogleSignInResult
 import com.coffeepeek.admin.auth.isGoogleSignInConfigured
 import com.coffeepeek.admin.legal.LegalUrls
@@ -70,6 +71,7 @@ import com.coffeepeek.admin.ui.screen.auth.AuthMascot
 import com.coffeepeek.admin.ui.screen.auth.AuthOrDivider
 import com.coffeepeek.admin.ui.screen.auth.AuthPrimaryButton
 import com.coffeepeek.admin.ui.screen.auth.AuthScreenScaffold
+import com.coffeepeek.admin.ui.screen.auth.AuthSocialSignInButtons
 import com.coffeepeek.admin.ui.screen.auth.AuthStepper
 import com.coffeepeek.admin.ui.screen.auth.AuthTextField
 import com.coffeepeek.admin.utils.MIN_REGISTRATION_PASSWORD_LENGTH
@@ -172,9 +174,12 @@ object RegisterScreen {
                     AuthOrDivider()
                     Spacer(modifier = Modifier.height(14.dp))
 
-                    if (isGoogleSignInConfigured()) {
-                        GoogleSignInButton(
-                            onResult = { result ->
+                    if (AppleAuth.isSupported() || isGoogleSignInConfigured()) {
+                        val appleSigningIn by vm.appleSigningIn.collectAsState()
+                        AuthSocialSignInButtons(
+                            onAppleClick = vm::onAppleLogin,
+                            appleEnabled = !appleSigningIn,
+                            onGoogleResult = { result ->
                                 handleGoogleSignInResult(result, vm::onGoogleLogin)
                             },
                         )
@@ -227,6 +232,7 @@ object RegisterScreen {
                         placeholder = stringResource(Res.string.name_hint),
                         leadingIcon = CpIcons.User,
                         keyboardType = KeyboardType.Text,
+                        next = true,
                     )
 
                     Spacer(modifier = Modifier.height(14.dp))
@@ -235,9 +241,10 @@ object RegisterScreen {
                         label = stringResource(Res.string.password),
                         value = password,
                         onValueChange = vm::onPasswordChange,
-                        placeholder = stringResource(Res.string.error_enter_password_length),
+                        placeholder = stringResource(Res.string.registration_password_placeholder),
                         leadingIcon = CpIcons.Lock,
                         isPassword = true,
+                        newPassword = true,
                         errorText = passwordError,
                     )
 
@@ -319,7 +326,7 @@ private fun EmailChip(
                 RoundedCornerShape(12.dp),
             )
             .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(12.dp))
-            .padding(horizontal = 12.dp, vertical = 10.dp),
+            .padding(horizontal = 12.dp, vertical = 4.dp),
     ) {
         Icon(
             imageVector = CpIcons.Email,
@@ -331,19 +338,20 @@ private fun EmailChip(
             text = email,
             style = MaterialTheme.typography.bodySmall.copy(fontSize = 13.sp),
             color = MaterialTheme.colorScheme.onSurface,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
             modifier = Modifier
                 .weight(1f)
-                .padding(horizontal = 8.dp),
+                .padding(start = 8.dp, end = 4.dp),
         )
-        Text(
-            text = "Изменить",
-            style = MaterialTheme.typography.labelSmall.copy(
-                fontSize = 12.sp,
-                fontWeight = FontWeight.SemiBold,
-            ),
-            color = CpColor.Primary,
-            modifier = Modifier.clickable(onClick = onChange),
-        )
+        IconButton(onClick = onChange, modifier = Modifier.size(44.dp)) {
+            Icon(
+                imageVector = CpIcons.Edit,
+                contentDescription = "Изменить email",
+                tint = CpColor.Primary,
+                modifier = Modifier.size(20.dp),
+            )
+        }
     }
 }
 

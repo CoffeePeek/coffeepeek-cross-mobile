@@ -3,43 +3,53 @@
 ## Scope and ownership
 
 The application composition module owns the root navigation. Android uses the
-existing Compose `FloatingBottomNavBar`. iOS hosts a native `UITabBar` through
-`PlatformFloatingBottomNavBar`; on iOS 26 the system renders its Liquid Glass
+existing Compose `FloatingBottomNavBar`. iOS hosts a native `UITabBarController`
+with five UINavigationController stacks; the system owns tab selection and bar
 appearance. iOS glass icon buttons use `UIButtonConfiguration.glass()`.
 
-Detail transitions and sheets remain Compose UI. Business contracts,
-repositories, and navigation routes are shared.
+Detail transitions now use a native UINavigationController and sheets use
+UISheetPresentationController. Business contracts, repositories, and navigation
+routes are shared. See [IOS_NATIVE_EXPERIENCE.md](IOS_NATIVE_EXPERIENCE.md) for
+the migration, ownership, and device verification requirements.
 
 ## Integration
 
-- `Navigator` continues to own detail/authentication routes. Its Main route
-  uses the same Compose implementation on both platforms.
-- Each tab remains inside the Compose navigation graph, including the map.
+- `Navigator` publishes shared detail/authentication routes. UIKit dispatches
+  them into the active tab's stack; Android retains its Compose graph.
+- Each native tab retains its own root content, including the discovery map.
 - `Navigator.pendingTabSelection` selects tabs for actions such as
   showing a shop on the map; pending map focus remains owned by `Navigator`.
 - `AppContent` supplies each Compose controller with the shared theme and
   image configuration. It does not create another root navigator or DI container.
-- Tab selection is saved in the Compose navigation entry.
-- Tab content receives the existing Compose bottom clearance.
+- Direct tab-bar selection preserves the destination stack. Programmatic tab
+  entry (including "show on map") returns to that tab's root.
+- UIKit reserves bar/safe-area space; shared floating clearance is zero. The
+  Compose host consumes the insets already reserved by UIKit.
+- CpTopBar forwards detail headers/actions to the native navigation item.
+  Feed, profile and settings use shared left-aligned root headings. Custom hero
+  headers keep their existing layout. CpSearchField uses the shared Compose field.
 
 ## Appearance and limits
 
 On Android, the bar keeps its Compose appearance from `LiquidGlass.kt`. On
 iOS, `UITabBar` and UIKit glass buttons use system materials. The iOS 26
 appearance therefore follows the OS, while older iOS versions use standard
-UIKit gray button configurations. UIKit views are placed above the Compose
-surface so their transparent glass backgrounds show the screen beneath them.
-The tab bar extends through the bottom safe area at its natural height. The
-native tab bar is embedded in Compose; it does not replace the shared
-navigation graph.
+UIKit gray button configurations. Transparent UIKit controls are placed above
+the Compose surface so their backgrounds show the screen beneath them. Opaque
+map and root controller hosts remain below Compose overlays. Theme and content
+color are propagated explicitly; see [the interop audit](IOS_COMPOSE_INTEROP_AUDIT.md).
+The tab controller owns the bottom safe area at its natural height. Detail
+pushes hide its bar. The discovery root keeps the bar while expanding the map.
 
 Automatic scroll-driven tab minimization is not implemented: Compose scroll
 containers do not expose a native UIScrollView to UIKit. This change does not
-claim to provide every scroll-edge effect or native detail navigation gesture.
+claim to provide every scroll-edge effect. Native detail navigation is now
+handled by each tab's UIKit navigation controller. See
+[the staged migration plan](ios-native-ui-migration.md) for remaining work.
 
 ## Verification and deployment
 
-Local checks passed:
+Historical checks before the native interaction migration passed:
 
 ```bash
 ./gradlew :composeApp:compileKotlinIosArm64 :composeApp:compileDebugKotlinAndroid

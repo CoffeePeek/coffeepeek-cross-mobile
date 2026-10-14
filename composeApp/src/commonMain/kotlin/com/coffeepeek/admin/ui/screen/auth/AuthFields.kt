@@ -1,8 +1,11 @@
 package com.coffeepeek.admin.ui.screen.auth
 
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.getValue
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -16,10 +19,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
@@ -33,6 +34,7 @@ import androidx.compose.ui.unit.sp
 import com.coffeepeek.admin.theme.CpColor
 import com.coffeepeek.admin.theme.CpDimens
 import com.coffeepeek.admin.ui.component.CompactOutlinedTextField
+import com.coffeepeek.admin.ui.component.platformAuthKeyboardOptions
 import com.coffeepeek.admin.ui.icons.CpIcons
 
 @Composable
@@ -45,6 +47,8 @@ fun AuthTextField(
     leadingIcon: ImageVector? = null,
     isPassword: Boolean = false,
     errorText: String? = null,
+    newPassword: Boolean = false,
+    next: Boolean = false,
     keyboardType: KeyboardType = if (isPassword) KeyboardType.Password else KeyboardType.Email,
 ) {
     var isPasswordVisible by remember { mutableStateOf(false) }
@@ -66,7 +70,11 @@ fun AuthTextField(
             )
         }
 
-        CompactOutlinedTextField(
+        val nativeInput = com.coffeepeek.admin.ui.component.NativeAuthInput(
+            value, onValueChange, label ?: placeholder, placeholder, isPassword, newPassword, next, isError, keyboardType,
+            Modifier.fillMaxWidth().heightIn(min = CpDimens.authFieldHeight),
+        )
+        if (!nativeInput) CompactOutlinedTextField(
             value = value,
             onValueChange = onValueChange,
             modifier = Modifier
@@ -108,7 +116,7 @@ fun AuthTextField(
                     ) {
                         Icon(
                             imageVector = if (isPasswordVisible) CpIcons.VisibilityOff else CpIcons.Visibility,
-                            contentDescription = null,
+                            contentDescription = if (isPasswordVisible) "Скрыть пароль" else "Показать пароль",
                             modifier = Modifier.size(20.dp),
                             tint = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
@@ -118,6 +126,8 @@ fun AuthTextField(
             placeholder = {
                 Text(
                     text = placeholder,
+                    maxLines = 1,
+                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
                     style = MaterialTheme.typography.bodyLarge.copy(
                         fontSize = 15.sp,
                         lineHeight = 18.sp,
@@ -130,7 +140,14 @@ fun AuthTextField(
             } else {
                 VisualTransformation.None
             },
-            keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
+            keyboardOptions = platformAuthKeyboardOptions(
+                options = KeyboardOptions(
+                    keyboardType = keyboardType,
+                    autoCorrectEnabled = false,
+                    imeAction = if (next) androidx.compose.ui.text.input.ImeAction.Next else androidx.compose.ui.text.input.ImeAction.Done,
+                ),
+                newPassword = newPassword,
+            ),
         )
 
         AnimatedVisibility(visible = isError) {

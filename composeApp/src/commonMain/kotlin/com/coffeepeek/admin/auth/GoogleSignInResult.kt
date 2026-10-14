@@ -15,7 +15,11 @@ fun handleGoogleSignInResult(
             if (error.message == GOOGLE_SIGN_IN_CANCELLED) return
             val message = error.message?.takeIf { it.isNotBlank() }
                 ?: "Не удалось войти через Google"
-            onFailure?.invoke(message) ?: ErrorHandler.showError(message)
+            if (onFailure != null) {
+                onFailure(message)
+            } else {
+                ErrorHandler.showError(socialLoginError("Google", message))
+            }
         },
     )
 }

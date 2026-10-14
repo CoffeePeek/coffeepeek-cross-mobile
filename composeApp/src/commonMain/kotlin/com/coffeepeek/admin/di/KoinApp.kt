@@ -10,9 +10,14 @@ import com.coffeepeek.admin.feature.favorites.api.RoasterFavorites
 import com.coffeepeek.admin.feature.coffee.data.CoffeeRepositoryImpl
 import com.coffeepeek.admin.feature.coffee.data.CoffeePickerAdapter
 import com.coffeepeek.admin.feature.coffee.api.CoffeePicker
+import com.coffeepeek.admin.feature.catalog.api.BrewMethodCatalog
+import com.coffeepeek.admin.feature.catalog.data.BrewMethodCatalogAdapter
 import com.coffeepeek.admin.feature.coffee.domain.CoffeeRepository
 import com.coffeepeek.admin.feature.coffee.ui.CoffeeListViewModel
 import com.coffeepeek.admin.feature.coffee.ui.CoffeeDetailViewModel
+import com.coffeepeek.admin.feature.passwordrecovery.data.PasswordRecoveryRepositoryImpl
+import com.coffeepeek.admin.feature.passwordrecovery.domain.PasswordRecoveryRepository
+import com.coffeepeek.admin.feature.passwordrecovery.ui.PasswordRecoveryViewModel
 import com.coffeepeek.admin.feature.homecheckin.ui.HomeCheckInViewModel
 import com.coffeepeek.feature.homecheckin.data.HomeCheckInRepositoryImpl
 import com.coffeepeek.feature.homecheckin.domain.HomeCheckInRepository
@@ -111,13 +116,16 @@ private fun appModule(
     single<ShopCheckInFormRenderer> { shopCheckInRendererFactory() }
     single<ShopReportScreenRenderer> { shopReportRendererFactory(get()) }
     single<ShopMenuGalleryScreenRenderer> { shopGalleryRendererFactory(get()) }
+    single<PasswordRecoveryRepository> { PasswordRecoveryRepositoryImpl(get<CoffeePeekClient>().plainClient) }
+    factory { (email: String, token: String) -> PasswordRecoveryViewModel(email, token.takeIf(String::isNotBlank), get()) }
     single<CoffeeRepository> { CoffeeRepositoryImpl(get<CoffeePeekClient>().plainClient) }
     single<CoffeePicker> { CoffeePickerAdapter(get()) }
+    single<BrewMethodCatalog> { BrewMethodCatalogAdapter(get()) }
     single<HomeCheckInRepository> {
         val gateway = get<CoffeePeekClient>()
         HomeCheckInRepositoryImpl(gateway.client, gateway.uploadClient, Constants.BASE_URL)
     }
-    factory { HomeCheckInViewModel(get(), get()) }
+    factory { HomeCheckInViewModel(get(), get(), get()) }
     factory { CoffeeListViewModel(get()) }
     factory { (slug: String) -> CoffeeDetailViewModel(slug, get()) }
     single<RoasterFavorites> { LocalRoasterFavorites(settingRepository, get()) }

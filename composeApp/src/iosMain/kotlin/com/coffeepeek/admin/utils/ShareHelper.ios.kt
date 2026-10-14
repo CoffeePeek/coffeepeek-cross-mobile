@@ -2,6 +2,9 @@
 
 package com.coffeepeek.admin.utils
 
+import com.coffeepeek.admin.theme.ThemeManager
+import com.coffeepeek.admin.theme.uiKitStyle
+
 import platform.UIKit.UIActivityViewController
 import platform.UIKit.UIApplication
 import platform.UIKit.UIViewController
@@ -14,6 +17,12 @@ actual object ShareHelper {
             activityItems = listOf(text),
             applicationActivities = null,
         )
+        controller.overrideUserInterfaceStyle = ThemeManager.themeMode.value.uiKitStyle
+        controller.popoverPresentationController?.apply {
+            sourceView = presenter.view
+            sourceRect = presenter.view.bounds
+            permittedArrowDirections = 0u
+        }
         presenter.presentViewController(controller, animated = true, completion = null)
     }
 }

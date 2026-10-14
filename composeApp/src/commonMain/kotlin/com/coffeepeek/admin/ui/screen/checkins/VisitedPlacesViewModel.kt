@@ -37,10 +37,10 @@ class VisitedPlacesViewModel(
     private val sessionRepository: SessionRepository,
 ) : BaseViewModel() {
 
-    private val today = utcIsoToLocalDate(currentUtcIsoDateTime())
-    private val currentMonth = calendarMonthFromIsoDate(today) ?: CalendarMonth(1970, 1)
+    private val today get() = utcIsoToLocalDate(currentUtcIsoDateTime())
+    private val currentMonth get() = calendarMonthFromIsoDate(today) ?: CalendarMonth(1970, 1)
     private val _state = MutableStateFlow(
-        VisitedPlacesUiState(calendarMonth = currentMonth, selectedDate = today),
+        VisitedPlacesUiState(calendarMonth = currentMonth),
     )
     val state = _state.asStateFlow()
     private var calendarJob: Job? = null
@@ -62,7 +62,19 @@ class VisitedPlacesViewModel(
     }
 
     fun selectDate(date: String) {
+        if (calendarMonthFromIsoDate(date) != _state.value.calendarMonth || date > today) return
         _state.update { it.copy(selectedDate = date) }
+    }
+
+    fun showToday() {
+        val date = today
+        val month = calendarMonthFromIsoDate(date) ?: return
+        val changedMonth = _state.value.calendarMonth != month
+        _state.update {
+            it.copy(calendarMonth = month, selectedDate = date, canGoNextMonth = false,
+                calendarCheckIns = if (changedMonth) emptyMap() else it.calendarCheckIns)
+        }
+        if (changedMonth || _state.value.calendarError != null) loadCalendarMonth(month)
     }
 
     fun refreshCalendar() = loadCalendarMonth(_state.value.calendarMonth)
@@ -82,16 +94,10 @@ class VisitedPlacesViewModel(
                     val grouped = checkIns.groupBy { checkIn ->
                         utcIsoToLocalDate(checkIn.visitedAt.ifBlank { checkIn.createdAt })
                     }
-                    val selectedDate = when {
-                        month == currentMonth && grouped.containsKey(today) -> today
-                        grouped.isNotEmpty() -> grouped.keys.maxOrNull()
-                        month == currentMonth -> today
-                        else -> null
-                    }
                     _state.update { state ->
                         if (state.calendarMonth != month) state else state.copy(
                             calendarCheckIns = grouped,
-                            selectedDate = selectedDate,
+                            selectedDate = calendarSelection(month, today, state.selectedDate, grouped.keys),
                             isCalendarLoading = false,
                         )
                     }

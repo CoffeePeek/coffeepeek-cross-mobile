@@ -31,6 +31,18 @@ data class CheckInDto(
     @Serializable(with = FlexibleIntSerializer::class) val helpfulCount: Int = 0,
     val isHelpfulByCurrentUser: Boolean = false,
     val drinkPhotoUrl: String? = null,
+    val kind: String = "Shop",
+    val home: FeedHomePreparationDto? = null,
+)
+
+@Serializable
+data class FeedHomePreparationDto(
+    val preparedOn: String = "",
+    val brewMethodCode: String? = null,
+    val beanName: String? = null,
+    val doseGrams: Double? = null,
+    val brewDurationSeconds: Int? = null,
+    val tasteScore: Int? = null,
 )
 
 @Serializable

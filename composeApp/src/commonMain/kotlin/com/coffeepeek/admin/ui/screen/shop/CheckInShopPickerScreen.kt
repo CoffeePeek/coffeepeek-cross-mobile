@@ -65,7 +65,8 @@ internal fun CheckInShopPickerScreen() {
         contentColor = MaterialTheme.colorScheme.onBackground,
     ) {
         Column(Modifier.fillMaxSize().navigationBarsPadding()) {
-            CpTopBar(title = "Выберите кофейню", onBack = null, actions = {
+            CpTopBar(title = "Выберите кофейню", onBack = null,
+                nativeAction = com.coffeepeek.admin.ui.component.NavigationBarAction("Закрыть", Navigator::popBack), actions = {
                 PlatformGlassIconButton(
                     icon = GlassControlIcon.Close,
                     onClick = Navigator::popBack,
