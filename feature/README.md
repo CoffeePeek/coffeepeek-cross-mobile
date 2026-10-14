@@ -24,12 +24,15 @@ contracts; impl prepares shared typed MVI and Android calendar/list UI without
 data/HTTP dependencies. API now exposes the narrow screen and date-snapshot contracts.
 Android app composition prepares revocable account leases, a navigation-owned
 feature store, zone-aware calendar snapshots and lazy DI with the existing protected
-image loader. The backend owner-history query and its range test confirm an inclusive lower and
-exclusive upper instant bound. Destination integration remains a separate gate.
-VisitedPlaces and home preparations remain on their existing paths.
+image loader. Its prepared photo viewer is account-owned. The backend owner-history
+query and its range test confirm an inclusive lower and exclusive upper instant bound.
+Incoming main e5722f9 now combines shop/home history in ProfileCheckInsScreen; that
+route is preserved on both platforms. The earlier local standalone-history switch
+is not active or published. Audit integration with that combined screen before
+wiring the new shop-history entry, so home visits and edit routes are not lost.
 See [check-in-history/README.md](check-in-history/README.md) for the audited boundaries,
 ordered implementation and session/time-zone risks. No empty API module or
-application switch is part of these preparation slices.
+new application module is part of these migration slices.
 
 ## Target layout and graph
 

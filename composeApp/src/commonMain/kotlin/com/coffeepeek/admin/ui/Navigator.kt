@@ -5,6 +5,10 @@ import androidx.compose.runtime.getValue
 import com.coffeepeek.admin.ui.screen.addshop.AddShopScreen
 import com.coffeepeek.admin.ui.screen.auth.registr.RegisterScreen
 import com.coffeepeek.admin.ui.screen.checkins.ProfileCheckInsScreen
+import com.coffeepeek.admin.ui.screen.shop.ShopDetailScreen
+import com.coffeepeek.admin.ui.screen.shop.ShopMenuGalleryScreen
+import com.coffeepeek.admin.ui.screen.shop.ShopReportScreen
+import com.coffeepeek.admin.ui.screen.favorites.FavoritesScreen
 import com.coffeepeek.admin.ui.screen.deleteaccount.DeleteAccountPendingScreen
 import com.coffeepeek.admin.ui.screen.editprofile.EditProfileScreen
 import com.coffeepeek.admin.ui.favorites.FavoritesDestination

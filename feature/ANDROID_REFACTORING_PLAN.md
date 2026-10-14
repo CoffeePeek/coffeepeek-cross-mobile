@@ -1,6 +1,6 @@
 # Android feature refactoring — active execution plan
 
-Source audit: 2026-10-13, after merging main at 6f298e7. Continue the existing migration branch and consolidated
+Source audit: updated 2026-10-14 after merging main at e5722f9. Continue the existing migration branch and consolidated
 PR #43 targeting develop. This plan supersedes the earlier checkpoint ordering;
 closed stack PRs are historical, not separate current workspaces.
 
@@ -17,16 +17,20 @@ modules in total). Shared MVI stays in commonMain; Android screen/entry code use
 androidMain because the current design-system has only an Android target.
 There is no new application module or generic DI module to create.
 
-Excluding five graph containers, the shared navigator declares 30 destinations:
-25 root destinations including Main and the new HomeCheckIns, plus five tabs.
-Excluding Main and the dormant ReportReview route leaves 28 content destinations. This is not a count
+The refreshed navigator declares 38 serialized routes: five graph containers,
+five tabs and 28 other destinations. Excluding graph containers gives 33 routes;
+excluding Main and dormant ReportReview gives 31 content-route contracts. ForgotPassword,
+ResetPassword and EditHomeCheckIn were missing from the older 30-route audit.
+VisitedPlaces, HomeCheckIns and EditHomeCheckIn share one combined screen, so even
+these 31 routes are not 31 independent screens. This is not a count
 of independent business features: map and roaster-list content can be embedded
 without a separate route; sheets, form steps, tabs and success states do not
 each require four Gradle modules.
 
 - ShopReviews currently renders public check-ins, not the prepared review editor.
 - CreateCheckIn is the shop picker; the actual creation UI is a bottom sheet.
-- Visited Places calendar/list are modes of the same destination.
+- The active personal-history destination combines one calendar/timeline with
+  All/Shop/Home filters; the prepared shop-only Calendar/List selector is not active.
 - My Contributions has multiple content modes, not three mandatory features.
 - Registration steps and Add Shop success are internal states.
 - ReportReview is not a reason to activate an obsolete review creation flow.
@@ -44,7 +48,7 @@ source snapshot, not guaranteed runtime coverage or future product scope.
 | Shop check-in creation | New Android form and app-owned draft/session/photo adapters | Authenticated submission, camera/picker and recreation QA |
 | Shop detail | New Android renderer/feature entry built and smoke-tested | Full behavior/live QA pending |
 | Public shop check-in list | New Android entry built; isolated presentation tests pass | Live guest/owner/navigation QA pending |
-| Personal check-in history | Legacy VisitedPlaces calendar/list stays active | api/domain/data/impl, Android UI and account/date/DI renderer prepared; backend boundary confirmation and destination integration remain |
+| Personal check-in history | Incoming main's combined ProfileCheckInsScreen on VisitedPlaces/HomeCheckIns; home editing retained | New shop-history entry/account/photo/DI prepared, not active; audit combined shop/home ownership and parity before integration |
 | Home check-ins | Existing main module and HomeCheckIns route retained | Audit ownership with personal history before its later migration |
 | Core | Infrastructure, presentation and design-system available; selected consumers use them | Legacy HTTP/Room are not globally replaced |
 
@@ -228,9 +232,10 @@ Android wiring are ready, not between the current preparation steps:
 
 2026-10-14: check-in-history/domain and data now contain an independent read
 foundation. Its 13 tests, Android lint and Android/iOS Simulator compilation pass.
-VisitedPlaces remains on its legacy renderer. Typed MVI and the Android screen
-API/UI and Android session/time-zone/image/DI composition are prepared. Backend
-range confirmation and Android destination/overlay integration come next. Details and
+Typed MVI/API/UI and app-owned session/time-zone/image/DI composition are prepared,
+but the incoming main's combined ProfileCheckInsScreen is retained. The backend controller/query confirm
+UTC instant bounds with exclusive `to`. Destination/overlay behavior and live
+read-only parity are the remaining checks. Details and
 module-creation rationale are in check-in-history/README.md. Home check-ins remain
 their existing separate capability, not a duplicate migration target.
 
@@ -239,11 +244,60 @@ along with impl Android lint/compilation and shared iOS Simulator compilation.
 That validated fake-repository coordination only, not a device screen or real
 account-bound transport; no application route/DI or iOS UI was switched then.
 
-Current composition gate: 17 new Android calendar/lease/store/DI unit tests pass
+Earlier composition gate: 17 new Android calendar/lease/store/DI unit tests passed
 inside all 180 app tests in each Direct/Play variant; 48 history regression tests,
 both debug APK assemblies/DEX checks and app lint pass. The lazy Android DI graph
-is registered, but VisitedPlaces still selects the legacy screen. Prior 11
+was registered, but VisitedPlaces still selected the legacy screen then. Prior 11
 Pixel/emulator UI tests cover the isolated feature screen, not this new host.
+
+The earlier destination experiment is local/unpublished and superseded by incoming
+main's combined shop/home screen; the standalone entry and account-owned viewer
+stay prepared. Before
+the test-host fix, Direct/Play builds, DEX/lint, 183 app unit tests per variant and
+composeApp iOS Simulator compilation passed. Four composition UI tests have no
+passing result yet. MainActivity splash gating was found in the fake harness;
+the debug-only plain Compose host correction has now compiled; device rerun remains.
+Earlier command-approval usage-limit/403 errors prevented device verification.
+See check-in-history/README.md for exact evidence; do not leave history for the
+next business feature until the affected checks and live parity gates are settled.
+
+Immediate UI parity correction (2026-10-14): user supplied production references
+for the Shop check-in form and reported themed icon/text regressions. Main e5722f9
+was merged locally at 29cff24; pending history work was restored without replacing
+the incoming combined profile routes. The form now restores rating mascot cards,
+required/optional rails, header/labels/field shapes, photo tile and visibility copy.
+Empty notes match the current optional-note rule; the 1000-character cap remains.
+Shop header/glass controls own their theme tint; public check-ins reuse the prod
+headline section style and the check-in bottom action uses its surface treatment.
+Direct/Play APK and DEX checks, 217 app unit tests per variant, 96 Shop domain/impl
+unit tests and app/Shop lint pass. The final label/theme/form/history test sources
+also compile in the publication build. Device execution and visual parity remain
+unverified; earlier fixture installation was rejected by command approval with 403.
+Command access recovered for the publication attempt. Publish accumulated work in
+the existing PR #43 targeting develop; do not merge it or claim release readiness.
+PR #92 is the independent main-based production modal fix into develop. Do not
+cherry-pick its legacy edits into this branch: they will arrive through main.
+The migrated core correction bounds its inner handle/content instead of Material's
+anchor viewport; the Shop form and safe fixture use that API. Its three placement
+tests, seven overlay/lock tests and two theme tests pass on the owned emulator;
+all 21 isolated Shop tests also pass. Light/dark fixture inspection confirms bottom
+alignment and scrollable production-shaped fields, not real account/picker parity.
+That visual inspection also found the default Material switch mismatch; the shared
+CoffeePeekSwitch now uses the existing production palette/full-size thumb in the
+form and settings row. Final checks pass: 537 unit-test executions across the
+selected modules/two app variants; Direct/Play APK/DEX and app/core/Shop lint;
+56 design-system UI tests, 21 Shop UI tests and four history composition UI tests.
+The latter inject fake sessions/repositories/images and exercise the prepared
+adapter, not the active combined route. The navigation test now taps the actual
+title rather than a merged card's photo-containing center. Light/dark final fixture
+screenshots were inspected. No user-device APK replacement, live writes or iOS
+switch; the read-only emulator was stopped without saving state.
+
+Next implementation is the combined history, not a standalone shop-route switch.
+The audited parity map and Home read-contract / combined MVI / UI / Android
+integration order are in check-in-history/COMBINED_HISTORY_PLAN.md. The first
+foundation slice isolates real Home read contracts from its existing Ktor-bearing
+artifact; keep home creation/edit/delete callbacks delegated until their own migration.
 
 These twelve areas are an ownership map, not instructions to create 48 empty
 modules. Complexity includes parity, session/platform integration and testing.

@@ -1,6 +1,7 @@
 package com.coffeepeek.feature.shop.impl.ui.compose.component
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -8,6 +9,8 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
@@ -23,6 +26,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
@@ -65,43 +70,48 @@ internal fun ShopPhotoAttachments(
     )
 
     Column(verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing2)) {
-        Text(title, style = MaterialTheme.typography.labelLarge)
+        Text(title, style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurface)
         Text(hint,
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant)
         Text(stringResource(Res.string.shop_review_photo_count, photos.size, maxPhotos),
-            style = MaterialTheme.typography.labelMedium)
+            style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurface)
         FlowRow(horizontalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing2),
             verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing2)) {
             photos.take(maxPhotos).forEachIndexed { index, photo ->
-                Box(Modifier.size(96.dp).clip(RoundedCornerShape(CoffeePeekDimens.radiusMd))
-                    .background(MaterialTheme.colorScheme.surfaceVariant)) {
+                val shape = RoundedCornerShape(CoffeePeekDimens.radiusMd)
+                Box(Modifier.size(96.dp)) {
                     if (photo.isNotEmpty()) {
                         KamelImage(
                             resource = { asyncPainterResource(photo) },
                             contentDescription = stringResource(Res.string.shop_photo_attachment_description, index + 1),
                             contentScale = ContentScale.Crop,
-                            modifier = Modifier.size(96.dp),
+                            modifier = Modifier.fillMaxSize().clip(shape).border(1.dp, MaterialTheme.colorScheme.outline, shape),
                             onLoading = { PhotoUnavailable() },
                             onFailure = { PhotoUnavailable() },
                         )
                     } else PhotoUnavailable()
-                    IconButton(onClick = { onRemove(index) }, enabled = enabled,
-                        modifier = Modifier.align(Alignment.TopEnd)) {
+                    Box(Modifier.align(Alignment.TopEnd).offset(x = 6.dp, y = (-6).dp)
+                        .size(24.dp).clip(RoundedCornerShape(50)).background(Color.Black.copy(alpha = 0.75f))
+                        .border(1.5.dp, Color.White, RoundedCornerShape(50))
+                        .clickable(enabled = enabled, role = Role.Button) { onRemove(index) },
+                        contentAlignment = Alignment.Center) {
                         Icon(CoffeePeekIcons.Close,
                             contentDescription = stringResource(Res.string.shop_review_photo_remove, index + 1),
-                            tint = MaterialTheme.colorScheme.error)
+                            tint = Color.White, modifier = Modifier.size(14.dp))
                     }
                 }
             }
             if (photos.size < maxPhotos) {
                 Box(Modifier.size(96.dp).clip(RoundedCornerShape(CoffeePeekDimens.radiusMd))
-                    .background(MaterialTheme.colorScheme.surfaceVariant)
-                    .clickable(enabled = enabled && !isLoading) { sourceShown = true },
+                    .background(MaterialTheme.colorScheme.surface)
+                    .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(CoffeePeekDimens.radiusMd))
+                    .clickable(enabled = enabled && !isLoading, role = Role.Button) { sourceShown = true },
                     contentAlignment = Alignment.Center) {
                     if (isLoading) CircularProgressIndicator()
                     else Icon(CoffeePeekIcons.Camera,
-                        contentDescription = stringResource(Res.string.shop_review_photo_add))
+                        contentDescription = stringResource(Res.string.shop_review_photo_add),
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(28.dp))
                 }
             }
         }

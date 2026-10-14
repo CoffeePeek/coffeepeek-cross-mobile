@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -39,7 +40,8 @@ internal fun AndroidShopBrowsingHost(
         ShopSessionUnavailable(model::retry)
     } else if (session.lease.isCurrent()) {
         key(session.generation) {
-            CompositionLocalProvider(LocalViewModelStoreOwner provides session) { content(session) }
+            CompositionLocalProvider(LocalViewModelStoreOwner provides session,
+                LocalContentColor provides MaterialTheme.colorScheme.onSurface) { content(session) }
         }
     }
 }

@@ -49,10 +49,10 @@ internal fun ShopPublicCheckInsSection(
 ) {
     Column(modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing3)) {
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-            Text(stringResource(Res.string.shop_checkins_public_title), Modifier.weight(1f),
-                style = MaterialTheme.typography.titleMedium)
+            ShopSectionTitle(stringResource(Res.string.shop_checkins_public_title), Modifier.weight(1f))
             if (checkIns.isNotEmpty()) IconButton(onClick = onOpenAll) {
-                Icon(CoffeePeekIcons.ChevronRight, stringResource(Res.string.shop_checkins_show_all))
+                Icon(CoffeePeekIcons.ChevronRight, stringResource(Res.string.shop_checkins_show_all),
+                    tint = MaterialTheme.colorScheme.onSurface)
             }
         }
         if (checkIns.isEmpty()) ShopCheckInsEmptyState(shopTitle)

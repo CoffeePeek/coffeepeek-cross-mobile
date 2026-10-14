@@ -20,6 +20,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertSame
 import kotlin.test.assertTrue
+import kotlin.test.assertNull
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class AndroidCheckInHistoryHostViewModelTest {
@@ -55,9 +56,11 @@ class AndroidCheckInHistoryHostViewModelTest {
         val host = AndroidCheckInHistoryHostViewModel(CheckInTestSessions()).also { store.put("host", it) }
         val session = host.session.value
         val child = Probe().also { session.viewModelStore.put("history", it) }
+        session.openPhoto(listOf("https://fixture.invalid/private.jpg"), 0)
         store.clear()
         assertTrue(child.cleared)
         assertFalse(session.lease.isCurrent())
+        assertNull(session.photoPreview.value)
     }
 
     @Test fun observationFailureHidesDataUntilExplicitRetryWithFreshStore() = runTest(dispatcher) {
@@ -76,6 +79,59 @@ class AndroidCheckInHistoryHostViewModelTest {
         assertFalse(failed.lease.isCurrent())
         assertTrue(host.session.value.lease.isCurrent())
         assertEquals(failed.generation + 1, host.session.value.generation)
+    }
+
+    @Test fun accountReplacementClearsAnAlreadyOpenPhotoAndStaleCallbacksCannotReopenIt() = runTest(dispatcher) {
+        val sessions = CheckInTestSessions()
+        val host = AndroidCheckInHistoryHostViewModel(sessions).also { store.put("host", it) }
+        val previous = host.session.value
+        previous.openPhoto(listOf("https://fixture.invalid/first.jpg", "https://fixture.invalid/second.jpg"), 1)
+        assertEquals(1, previous.photoPreview.value?.initialIndex)
+        sessions.applySession(Session("other", userId = "other"))
+        runCurrent()
+        assertNull(previous.photoPreview.value)
+        assertNull(host.session.value.photoPreview.value)
+        previous.openPhoto(listOf("https://fixture.invalid/private.jpg"), 0)
+        assertNull(previous.photoPreview.value)
+        assertNull(host.session.value.photoPreview.value)
+    }
+
+    @Test fun photoViewerCopiesTheAlbumAndRejectsGuestOrInvalidIndices() = runTest(dispatcher) {
+        val sessions = CheckInTestSessions()
+        val host = AndroidCheckInHistoryHostViewModel(sessions).also { store.put("host", it) }
+        val current = host.session.value
+        val photos = mutableListOf("https://fixture.invalid/photo.jpg")
+        current.openPhoto(photos, 0)
+        photos.clear()
+        assertEquals(listOf("https://fixture.invalid/photo.jpg"), current.photoPreview.value?.urls)
+        current.dismissPhoto()
+        current.openPhoto(emptyList(), 0)
+        current.openPhoto(listOf(" "), 0)
+        current.openPhoto(listOf("url"), -1)
+        current.openPhoto(listOf("url"), 1)
+        assertNull(current.photoPreview.value)
+        sessions.applySession(null)
+        runCurrent()
+        host.session.value.openPhoto(listOf("url"), 0)
+        assertNull(host.session.value.photoPreview.value)
+    }
+
+    @Test fun tokenRenewalPreservesAnOpenPhotoWithoutPreservingItAcrossLogout() = runTest(dispatcher) {
+        val sessions = CheckInTestSessions()
+        val host = AndroidCheckInHistoryHostViewModel(sessions).also { store.put("host", it) }
+        val current = host.session.value
+        current.openPhoto(listOf("https://fixture.invalid/photo.jpg"), 0)
+        val photo = current.photoPreview.value
+        sessions.applySession(Session("renewed", userId = "owner"))
+        runCurrent()
+        assertSame(current, host.session.value)
+        assertSame(photo, current.photoPreview.value)
+        sessions.applySession(null)
+        runCurrent()
+        assertNull(current.photoPreview.value)
+        sessions.applySession(Session("next", userId = "other"))
+        runCurrent()
+        assertNull(host.session.value.photoPreview.value)
     }
 
     private class Probe : ViewModel() {

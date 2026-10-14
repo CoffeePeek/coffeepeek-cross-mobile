@@ -505,3 +505,85 @@ Still pending: real cup extraction/model availability, camera/gallery/recreation
 authenticated backend writes and PNG access, live guest/owner/session/picker/return
 parity and individual IDE preview inspection. These limits prevent declaring the
 entire Shop feature release-ready or removing shared legacy/iOS consumers.
+
+## Production visual-parity correction — 2026-10-14
+
+User reference images show a concrete regression in the migrated check-in form;
+the first implementation replaced production's branded rating cards and connected
+form sections with plain stars/default Material fields. Main e5722f9 was merged
+into the migration branch at 29cff24; merge conflicts and restored-WIP conflicts
+were resolved without deleting the new combined shop/home history or password
+recovery flows. Both main and the working branch contain the fetched main tip.
+
+Corrections in local source:
+
+- Check-in header/place-pin and original title/copy; ratings heading/hint, three
+  56dp mascot illustrations, bordered cards and 44dp star targets. Reuse the
+  existing feature PNGs; the original app assets remain unchanged.
+- Shared design-system CoffeePeekFormStep renders the production solid/dashed
+  rail and localized optional-field semantics; no feature models/policy in core.
+- Date leading calendar/trailing chevron, multiline note shape/placeholder,
+  outlined camera tile/overhanging remove badge, left-aligned drink selector and
+  visibility title/hint. Keep cancellation, draft, upload and delivery guards.
+- Optional notes now follow current main's rule (empty permitted, trimmed length
+  at most 1000); domain tests and the invalid-input MVI scenario are aligned.
+- Modal sizing reproduced production's outer fractional-height modifier. The user
+  subsequently reported that this produces a top-anchored sheet with a gap below;
+  it is a known blocker, not validated parity. Keep the anchor viewport unrestricted
+  and bound inner content instead. The independent main-based fix is a separate
+  PR into develop; its equivalent is still needed in the migrated core consumer.
+- Shop public check-in heading reuses headlineSmall SectionTitle, not titleMedium.
+  Base Manrope weights/sizes and palette match the legacy sources; they were not
+  replaced globally to compensate for incorrect component styles.
+- Glass/header controls explicitly use the themed onSurface tint, browsing
+  composition provides the correct baseline LocalContentColor, and the bottom
+  check-in action restores production's surface/outline rather than a yellow
+  primary action. Yellow route controls and photo-overlay white-on-black contrast
+  retain their intentional treatment.
+
+Current executed checks: Direct/Play debug assembly and expanded packaged DEX
+checks, 217 application unit tests per variant, 9 Shop domain and 87 Shop impl
+unit tests, app Direct lint and Shop impl lint all pass. The publication build also
+assembles the final Shop, design-system and application test APKs, including the
+newest label/rating, theme ownership and history composition sources. Compilation
+is not device execution; those new UI scenarios still need a passing run.
+
+Not verified: actual visual equality on Pixel 7, modal/IDE previews in both themes,
+the added theme/optional-rail tests and production-label/rating test. The fixture
+installation was rejected with 403 by the command-approval service (not GitHub
+or CoffeePeek API). No fixture was opened, new form screenshot captured, live
+chekin submitted, or main APK updated on the phone in this correction slice.
+Command access recovered for the requested publication into existing PR #43.
+The new independent modal fix is not included in this refactoring checkpoint.
+Use the test-only ShopFormTestActivity parity_preview/parity_dark fixture with
+Memories, empty note and 4/4/4 ratings; it makes no DI/HTTP/picker/write calls.
+Compare top and scrolled sections against the user's production references and
+rerun form/core/host UI scenarios before merging or declaring visual parity.
+
+## Migrated core modal and switch verification — 2026-10-14
+
+The migration now has its own equivalent positioning correction: the core sheet's
+fractional inner handle/content column leaves Material's anchor viewport intact.
+The Android check-in entry and no-network visual fixture use maxSheetHeightFraction,
+not an outer fillMaxHeight fraction. Null/wrap-content and pending-write handle,
+drag, Back and outside-tap behavior are preserved by the overlay tests.
+
+The legacy production file is deliberately unchanged here. PR #92 targets develop
+from main; its eventual main merge will bring that legacy fix through the normal
+history. No cherry-pick or duplicate legacy-file patch is part of this checkpoint.
+
+Visual fixture inspection additionally found default Material switch colors and
+thumb sizing. CoffeePeekSwitch reuses the current production tokens for both
+themes/states/disabled modes; the Shop visibility field and core settings row
+share the primitive. Row semantics remain the sole toggle action. Colocated
+paired previews and palette/actual-pixel/touch tests cover the reusable component.
+
+Final Direct/Play APKs and packaged DEX guards, app/core/Shop lint and 537 selected
+unit-test executions pass (16 core, 87 Shop impl, 217 app per variant). On the
+owned temporary emulator, all 56 design-system and 21 Shop UI tests pass. Final
+light/dark form and scrolled-bottom fixture screenshots were inspected: no gap
+below the sheet, both thumb colors visible, and the submit button reachable.
+These are fake Memories/rating/date fixtures, not a real backend form submission.
+The emulator ran read-only and stopped without a snapshot; Pixel 7/10a were not
+updated or cleared. Live picker/camera/ML Kit/writes, physical-device parity and
+actual IDE rendering remain separate gates.

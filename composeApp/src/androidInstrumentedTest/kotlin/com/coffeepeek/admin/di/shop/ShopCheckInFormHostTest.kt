@@ -1,6 +1,8 @@
 package com.coffeepeek.admin.di.shop
 
 import androidx.activity.compose.setContent
+import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.hasClickAction
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
@@ -69,7 +71,7 @@ class ShopCheckInFormHostTest {
                 }
             } }
             compose.onNodeWithText("Legacy form").assertDoesNotExist()
-            compose.onNodeWithText("Оставить чекин").performScrollTo().performClick()
+            compose.onNode(hasText("Чекин") and hasClickAction()).performScrollTo().performClick()
             compose.onNodeWithText("Чекин создан!").assertIsDisplayed()
             compose.onNodeWithText("К ленте").performClick()
             compose.onNodeWithText("Мои чекины").performClick()
@@ -112,7 +114,7 @@ class ShopCheckInFormHostTest {
                         onGoToFeed = {}, onOpenHistory = {}) { Text("Legacy form") }
                 }
             } }
-            compose.onNodeWithText("Оставить чекин").performScrollTo().performClick()
+            compose.onNode(hasText("Чекин") and hasClickAction()).performScrollTo().performClick()
             compose.waitUntil(5_000) { started.get() }
             compose.runOnIdle { sessions.applySession(Session("other-token", userId = "other")) }
             compose.waitUntil(5_000) { cancelled.get() && !shown.value }
@@ -122,7 +124,7 @@ class ShopCheckInFormHostTest {
                 shown.value = true
             }
             compose.onNodeWithText("First account private note").assertDoesNotExist()
-            compose.onNodeWithText("Оставить чекин").assertExists()
+            compose.onNode(hasText("Чекин") and hasClickAction()).assertExists()
         }
     }
 

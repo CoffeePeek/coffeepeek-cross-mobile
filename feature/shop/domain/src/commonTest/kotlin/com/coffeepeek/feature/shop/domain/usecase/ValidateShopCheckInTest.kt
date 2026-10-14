@@ -19,8 +19,8 @@ class ValidateShopCheckInTest {
         for (visibility in ShopCheckInVisibility.entries) {
             val input = privateInput.copy(visibility = visibility)
             assertNull(validateShopCheckIn(input, now))
-            assertEquals(ShopCheckInValidationError.InvalidNote,
-                validateShopCheckIn(input.copy(text = " "), now))
+            assertNull(validateShopCheckIn(input.copy(text = ""), now))
+            assertNull(validateShopCheckIn(input.copy(text = " "), now))
             assertNull(validateShopCheckIn(input.copy(text = "x".repeat(1000)), now))
             assertEquals(ShopCheckInValidationError.InvalidNote,
                 validateShopCheckIn(input.copy(text = "x".repeat(1001)), now))
