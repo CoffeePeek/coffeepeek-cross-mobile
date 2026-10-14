@@ -24,6 +24,7 @@ class HomeCheckInEditorTest {
         try {
             vm.create()
             assertEquals(5, vm.state.value.draft.tasteScore)
+            assertTrue(homeCheckInFieldErrors(vm.state.value.draft).isEmpty(), "Generated timestamps must satisfy the backend contract")
             withTimeout(2_000) { vm.state.first { it.brewMethods.isNotEmpty() } }
             assertEquals(listOf(method), vm.state.value.brewMethods)
             vm.open("entry", editOnLoad = true)
@@ -93,6 +94,70 @@ class HomeCheckInEditorTest {
         assertEquals(604800, homeBrewDurationSeconds("10080", "0"))
         assertNull(homeBrewDurationSeconds("", ""))
     }
+
+    @Test
+    fun saveCollectsErrorsBeforeRequestAndEditsOnlyRevalidateChangedFields() {
+        val repository = EditorRepository()
+        val vm = HomeCheckInViewModel(repository, EditorCoffeePicker(), catalog)
+        try {
+            vm.create()
+            vm.updateDraft { it.copy(doseGrams = "0", brewDurationSeconds = 0, brewMethodCode = "INVALID") }
+            vm.save()
+            assertEquals(setOf(HomeCheckInField.Dose, HomeCheckInField.Duration, HomeCheckInField.Method), vm.state.value.fieldErrors.keys)
+            assertEquals(0, repository.saves)
+            vm.updateDraft { it.copy(doseGrams = "18.001") }
+            assertEquals("Укажите не более двух знаков после запятой", vm.state.value.fieldErrors[HomeCheckInField.Dose])
+            vm.updateDraft { it.copy(doseGrams = "18") }
+            assertEquals(setOf(HomeCheckInField.Duration, HomeCheckInField.Method), vm.state.value.fieldErrors.keys)
+            vm.updateDraft { it.copy(text = "Заметка") }
+            assertEquals(2, vm.state.value.fieldErrors.size)
+        } finally { vm.close() }
+    }
+
+    @Test
+    fun serverFieldsSurviveUnrelatedEditsAndClearWhenAProductIsSelected() = runBlocking {
+        val serverError = HomeCheckInFailure("Проверьте поля", mapOf(
+            HomeCheckInField.Bean to "Выберите зерно заново",
+            HomeCheckInField.Method to "Выберите доступный способ заваривания из списка",
+        ))
+        val vm = HomeCheckInViewModel(EditorRepository(serverError), EditorCoffeePicker(), catalog)
+        try {
+            vm.create()
+            vm.save()
+            withTimeout(2_000) { vm.state.first { it.fieldErrors.isNotEmpty() } }
+            vm.updateDraft { it.copy(text = "Примечание") }
+            assertEquals(serverError.fieldErrors, vm.state.value.fieldErrors)
+            vm.selectCatalogProduct(CoffeePickerItem("bean", "Зерно", "Обжарщик"))
+            assertEquals(setOf(HomeCheckInField.Method), vm.state.value.fieldErrors.keys)
+            vm.updateDraft { it.copy(brewMethodCode = "hario-v60") }
+            assertTrue(vm.state.value.fieldErrors.isEmpty())
+            assertNull(vm.state.value.formError)
+        } finally { vm.close() }
+    }
+
+    @Test
+    fun unexpectedExceptionsNeverLeakIntoTheFormAndTheDraftIsRetained() = runBlocking {
+        val vm = HomeCheckInViewModel(EditorRepository(IllegalStateException("SQL internal exception")), EditorCoffeePicker(), catalog)
+        try {
+            vm.create()
+            vm.updateDraft { it.copy(doseGrams = "18", text = "Мой кофе") }
+            val draft = vm.state.value.draft
+            vm.save()
+            withTimeout(2_000) { vm.state.first { it.formError != null } }
+            assertEquals("Не удалось сохранить чекин. Попробуйте ещё раз.", vm.state.value.formError)
+            assertEquals(draft, vm.state.value.draft)
+            assertFalse(vm.state.value.saving)
+            assertTrue(vm.state.value.editing)
+        } finally { vm.close() }
+    }
+
+    @Test
+    fun summaryUsesRussianPluralForms() {
+        assertEquals("Проверьте заполненные поля (1 ошибка).", homeValidationSummary(1))
+        assertEquals("Проверьте заполненные поля (3 ошибки).", homeValidationSummary(3))
+        assertEquals("Проверьте заполненные поля (5 ошибок).", homeValidationSummary(5))
+        assertEquals("Проверьте заполненные поля (11 ошибок).", homeValidationSummary(11))
+    }
 }
 
 private class EditorCoffeePicker(
@@ -101,7 +166,8 @@ private class EditorCoffeePicker(
     override suspend fun search(query: String) = search.invoke(query)
 }
 
-private class EditorRepository : HomeCheckInRepository {
+private class EditorRepository(private val saveFailure: Throwable? = null) : HomeCheckInRepository {
+    var saves = 0
     private val entry = HomeCheckIn(
         id = "entry", preparedAtUtc = "2026-10-13T08:00:00Z", preparedOn = "2026-10-13", createdAtUtc = "2026-10-13T08:00:00Z",
         text = null, brewMethodCode = "hario-v60", coffeeProductId = null, beanName = null,
@@ -111,7 +177,10 @@ private class EditorRepository : HomeCheckInRepository {
     override suspend fun history(page: Int, pageSize: Int, from: String?, to: String?) = Result.success(HomeCheckInPage(emptyList(), 0, page, pageSize))
     override suspend fun calendar(from: String, to: String) = Result.success(emptyList<HomeCalendarDay>())
     override suspend fun detail(id: String) = Result.success(entry)
-    override suspend fun create(input: HomeCheckInInput) = Result.success(entry)
+    override suspend fun create(input: HomeCheckInInput): Result<HomeCheckIn> {
+        saves++
+        return saveFailure?.let { Result.failure(it) } ?: Result.success(entry)
+    }
     override suspend fun update(id: String, input: HomeCheckInInput) = Result.success(entry)
     override suspend fun delete(id: String) = Result.success(Unit)
     override suspend fun beanStats() = Result.success(emptyList<HomeBeanStats>())

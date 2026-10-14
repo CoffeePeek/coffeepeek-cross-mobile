@@ -5,7 +5,7 @@ import com.coffeepeek.admin.feature.catalog.api.BrewMethodCatalog
 import com.coffeepeek.admin.feature.catalog.api.BrewMethodOption
 import com.coffeepeek.admin.feature.coffee.api.CoffeePicker
 import com.coffeepeek.admin.feature.coffee.api.CoffeePickerItem
-import com.coffeepeek.admin.utils.currentUtcIsoDateTime
+import com.coffeepeek.admin.utils.currentEpochMillis
 import com.coffeepeek.admin.utils.utcIsoToLocalDate
 import com.coffeepeek.feature.homecheckin.domain.HomeBeanStats
 import com.coffeepeek.feature.homecheckin.domain.HomeCalendarDay
@@ -14,7 +14,9 @@ import com.coffeepeek.feature.homecheckin.domain.HomeCheckInInput
 import com.coffeepeek.feature.homecheckin.domain.HomeCheckInVisibility
 import com.coffeepeek.feature.homecheckin.domain.HomeCheckInRepository
 import com.coffeepeek.feature.homecheckin.domain.HomeMethodStats
-import com.coffeepeek.feature.homecheckin.domain.validateHomeCheckIn
+import com.coffeepeek.feature.homecheckin.domain.homeCheckInFieldErrors
+import com.coffeepeek.feature.homecheckin.domain.HomeCheckInField
+import com.coffeepeek.feature.homecheckin.domain.HomeCheckInFailure
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
@@ -66,6 +68,7 @@ internal data class HomeCheckInUiState(
     val draft: HomeCheckInInput,
     val saving: Boolean = false,
     val formError: String? = null,
+    val fieldErrors: Map<HomeCheckInField, String> = emptyMap(),
     val saveNotice: String? = null,
     val deleteConfirmation: Boolean = false,
     val catalogQuery: String = "",
@@ -83,7 +86,7 @@ internal class HomeCheckInViewModel(
     private val coffeePicker: CoffeePicker,
     private val brewMethodCatalog: BrewMethodCatalog,
 ) : BaseViewModel() {
-    private val now = currentUtcIsoDateTime()
+    private val now = currentHomePreparedAt()
     private val today = utcIsoToLocalDate(now)
     private val todayMonth = HomeMonth(today.substring(0, 4).toInt(), today.substring(5, 7).toInt())
     private val _state = MutableStateFlow(HomeCheckInUiState(
@@ -181,11 +184,12 @@ internal class HomeCheckInViewModel(
 
     fun create() {
         catalogJob?.cancel()
+        val preparedAt = currentHomePreparedAt()
         _state.update { it.copy(
-            editing = true, selected = null, formError = null, saveNotice = null,
+            editing = true, selected = null, formError = null, fieldErrors = emptyMap(), saveNotice = null,
             catalogQuery = "", catalogItems = emptyList(), catalogSelectionName = null,
             catalogLoading = false, catalogError = null,
-            draft = HomeCheckInInput(preparedAt = currentUtcIsoDateTime(), preparedOn = utcIsoToLocalDate(currentUtcIsoDateTime()), tasteScore = 5),
+            draft = HomeCheckInInput(preparedAt = preparedAt, preparedOn = utcIsoToLocalDate(preparedAt), tasteScore = 5),
         ) }
         loadBrewMethods()
     }
@@ -194,7 +198,7 @@ internal class HomeCheckInViewModel(
         val entry = _state.value.selected ?: return
         catalogJob?.cancel()
         _state.update { it.copy(
-            editing = true, formError = null, saveNotice = null,
+            editing = true, formError = null, fieldErrors = emptyMap(), saveNotice = null,
             catalogQuery = "", catalogItems = emptyList(), catalogSelectionName = entry.beanName,
             catalogLoading = false, catalogError = null,
             draft = HomeCheckInInput(
@@ -213,13 +217,8 @@ internal class HomeCheckInViewModel(
     }
 
     fun updateDraft(change: (HomeCheckInInput) -> HomeCheckInInput) {
-        _state.update {
-            val draft = change(it.draft)
-            it.copy(draft = draft, formError = null,
-                catalogSelectionName = it.catalogSelectionName.takeIf {
-                    draft.coffeeProductSlug != null || draft.coffeeProductId != null
-                })
-        }
+        if (_state.value.saving) return
+        _state.update { it.withDraft(change(it.draft)) }
     }
 
     fun loadBrewMethods() {
@@ -257,22 +256,23 @@ internal class HomeCheckInViewModel(
 
     fun selectCatalogProduct(product: CoffeePickerItem) {
         catalogJob?.cancel()
-        _state.update { it.copy(
-            draft = it.draft.copy(coffeeProductSlug = product.slug, coffeeProductId = null,
-                customBeanName = null),
-            catalogLoading = false, catalogError = null,
-            catalogSelectionName = product.name,
+        _state.update { it.withDraft(it.draft.copy(coffeeProductSlug = product.slug,
+            coffeeProductId = null, customBeanName = null)).copy(
+            catalogLoading = false, catalogError = null, catalogSelectionName = product.name,
         ) }
     }
 
-    fun closeEditor() = _state.update { it.copy(editing = false, formError = null) }
+    fun closeEditor() = _state.update { it.copy(editing = false, formError = null, fieldErrors = emptyMap()) }
 
     fun save() {
         val snapshot = _state.value
         if (snapshot.saving) return
-        val error = validateHomeCheckIn(snapshot.draft, editing = snapshot.selected != null)
-        if (error != null) { _state.update { it.copy(formError = error) }; return }
-        _state.update { it.copy(saving = true, formError = null) }
+        val errors = homeCheckInFieldErrors(snapshot.draft, editing = snapshot.selected != null)
+        if (errors.isNotEmpty()) {
+            _state.update { it.copy(formError = null, fieldErrors = errors) }
+            return
+        }
+        _state.update { it.copy(saving = true, formError = null, fieldErrors = emptyMap()) }
         workScope.launch {
             val result = snapshot.selected?.let { repository.update(it.id, snapshot.draft) }
                 ?: repository.create(snapshot.draft)
@@ -280,7 +280,14 @@ internal class HomeCheckInViewModel(
                 _state.update { it.copy(saving = false, editing = false, selected = entry,
                     saveNotice = homeVisibilitySaveNotice(snapshot.draft.visibility, entry.visibility)) }
                 refresh()
-            }.onFailure { error -> _state.update { it.copy(saving = false, formError = error.message) } }
+            }.onFailure { error ->
+                val failure = error as? HomeCheckInFailure
+                _state.update { it.copy(saving = false,
+                    fieldErrors = failure?.fieldErrors.orEmpty(),
+                    formError = if (failure?.fieldErrors?.isNotEmpty() == true) null
+                        else failure?.message ?: "Не удалось сохранить чекин. Попробуйте ещё раз.",
+                ) }
+            }
         }
     }
 
@@ -297,6 +304,10 @@ internal class HomeCheckInViewModel(
         }
     }
 }
+
+/** Android's Instant.now() can emit 9 fractional digits; the server accepts at most 7. */
+@OptIn(kotlin.time.ExperimentalTime::class)
+private fun currentHomePreparedAt(): String = kotlin.time.Instant.fromEpochMilliseconds(currentEpochMillis()).toString()
 
 internal fun homeVisibilitySaveNotice(
     requested: HomeCheckInVisibility?,

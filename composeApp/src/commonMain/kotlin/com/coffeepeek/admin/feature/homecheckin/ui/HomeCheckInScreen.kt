@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -38,7 +39,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.admin.di.platformViewModel
@@ -47,7 +48,6 @@ import com.coffeepeek.admin.ui.icons.CpIcons
 import com.coffeepeek.admin.ui.component.CoffeePeekLoader
 import com.coffeepeek.admin.ui.component.CpTopBar
 import com.coffeepeek.admin.ui.component.FullScreenImageDialog
-import com.coffeepeek.admin.utils.CpImage
 import com.coffeepeek.admin.utils.utcIsoToLocalDateTime
 import com.coffeepeek.feature.homecheckin.domain.HomeCheckIn
 import com.coffeepeek.feature.homecheckin.domain.HomeCheckInVisibility
@@ -212,75 +212,46 @@ private fun StatCard(name: String, count: Int, dosedCount: Int, dose: String, ra
 internal fun HomeTimelineCard(entry: HomeCheckIn, onClick: () -> Unit) {
     val accent = MaterialTheme.colorScheme.primary
     Card(
-        modifier = Modifier.fillMaxWidth().clickable(onClick = onClick),
-        shape = RoundedCornerShape(topStart = 28.dp, topEnd = 18.dp, bottomEnd = 28.dp, bottomStart = 18.dp),
-        border = BorderStroke(1.dp, accent.copy(alpha = 0.72f)),
+        onClick = onClick,
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(20.dp),
+        border = BorderStroke(0.5.dp, MaterialTheme.colorScheme.outlineVariant),
         colors = androidx.compose.material3.CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.62f),
+            containerColor = MaterialTheme.colorScheme.surface,
         ),
     ) {
         Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(9.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Icon(CpIcons.Coffee, contentDescription = null, tint = accent, modifier = Modifier.size(20.dp))
-                Text("Дома · ${utcIsoToLocalDateTime(entry.preparedAtUtc).substringAfterLast(' ', "")}",
-                    style = MaterialTheme.typography.labelLarge, color = accent,
-                    fontWeight = FontWeight.SemiBold)
-                Spacer(Modifier.weight(1f))
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp),
+                itemVerticalAlignment = Alignment.CenterVertically) {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Icon(CpIcons.Coffee, contentDescription = null, tint = accent, modifier = Modifier.size(18.dp))
+                    Text("Дома · ${utcIsoToLocalDateTime(entry.preparedAtUtc).substringAfterLast(' ', "")}",
+                        style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
                 entry.visibilityLabel()?.let { label ->
                     Text(label, style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
-            Text(entry.brewMethodCode?.methodLabel() ?: "Домашнее приготовление",
-                style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
-            entry.beanName?.let { Text(it, style = MaterialTheme.typography.titleMedium) }
+            Text(entry.beanName?.takeIf(String::isNotBlank) ?: "Домашнее приготовление",
+                style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold,
+                maxLines = 2, overflow = TextOverflow.Ellipsis)
             val details = listOfNotNull(
-                entry.doseGrams?.let { "$it г" },
-                entry.tasteScore?.let { "$it/5" },
+                entry.brewMethodCode?.methodLabel(),
+                entry.doseGrams?.let(::homeDoseLabel),
             ).joinToString(" · ")
-            if (details.isNotBlank()) Text(details, style = MaterialTheme.typography.bodyMedium,
+            if (details.isNotBlank()) Text(details, style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant)
-            entry.text?.takeIf(String::isNotBlank)?.let {
-                Text(it, style = MaterialTheme.typography.bodyMedium, maxLines = 2)
-            }
-        }
-    }
-}
-
-@Composable
-internal fun HomeDetail(entry: HomeCheckIn, vm: HomeCheckInViewModel, modifier: Modifier, notice: String? = null,
-    onPhotoClick: (List<String>, Int) -> Unit) {
-    LazyColumn(modifier.fillMaxSize(), contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        notice?.let { item { Text(it, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.primary) } }
-        entry.visibilityLabel()?.let { label ->
-            item { Text(label, style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant) }
-        }
-        item { Text(entry.preparedOn, style = MaterialTheme.typography.titleLarge) }
-        item { Text(entry.beanName ?: "Зерно не указано", style = MaterialTheme.typography.headlineSmall) }
-        item { Text("Время: ${utcIsoToLocalDateTime(entry.preparedAtUtc)}") }
-        item { Text("Способ: ${entry.brewMethodCode?.methodLabel() ?: "не указан"}") }
-        item { Text("Доза на всё приготовление: ${entry.doseGrams?.let { "$it г" } ?: "не указана"}") }
-        item { Text("Длительность: ${entry.brewDurationSeconds?.let { "$it с" } ?: "не указана"}") }
-        item { Text("Оценка: ${entry.tasteScore?.let { "$it/5" } ?: "не указана"}") }
-        if (entry.drinkName != null) item { Text("Напиток: ${entry.drinkName}") }
-        val note = entry.text
-        if (!note.isNullOrBlank()) item { Text(note) }
-        val drinkPhotoUrl = entry.drinkPhotoUrl
-        if (drinkPhotoUrl != null) item {
-            Text("Изображение напитка")
-            CpImage(drinkPhotoUrl, modifier = Modifier.size(120.dp), contentScale = ContentScale.Fit)
-        }
-        if (entry.photos.isNotEmpty()) item {
-            val urls = entry.photos.map { it.url }
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                urls.take(5).forEachIndexed { index, url ->
-                    CpImage(url, modifier = Modifier.size(60.dp).clickable { onPhotoClick(urls, index) },
-                        contentScale = ContentScale.Crop)
+            entry.tasteScore?.let { score ->
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Icon(CpIcons.StarFilled, null, tint = accent, modifier = Modifier.size(15.dp))
+                    Text("$score/5", style = MaterialTheme.typography.labelMedium)
                 }
             }
+            entry.text?.takeIf(String::isNotBlank)?.let {
+                Text(it, style = MaterialTheme.typography.bodyMedium, maxLines = 2, overflow = TextOverflow.Ellipsis)
+            }
         }
-        item { OutlinedButton(onClick = vm::edit, modifier = Modifier.fillMaxWidth()) { Text("Редактировать") } }
-        item { TextButton(onClick = vm::confirmDelete, modifier = Modifier.fillMaxWidth()) { Text("Удалить запись") } }
     }
 }
 

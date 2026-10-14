@@ -7,6 +7,7 @@ import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.error
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.remember
@@ -46,6 +47,8 @@ import androidx.compose.runtime.produceState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.lerp
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -84,16 +87,26 @@ fun ReviewFormField(
     error: String? = null,
     content: @Composable () -> Unit,
 ) {
-    Column(verticalArrangement = Arrangement.spacedBy(CpDimens.spacing1)) {
+    Column(Modifier.semantics { error?.let { error(it) } },
+        verticalArrangement = Arrangement.spacedBy(CpDimens.spacing1)) {
         Text(
             text = label,
             style = MaterialTheme.typography.labelMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         content()
-        error?.let {
-            Text(it, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.error)
-        }
+        error?.let { ReviewFieldError(it) }
+    }
+}
+
+@Composable
+internal fun ReviewFieldError(message: String) {
+    val color = if (MaterialTheme.colorScheme.surface.luminance() < 0.5f)
+        lerp(MaterialTheme.colorScheme.error, Color.White, 0.3f) else MaterialTheme.colorScheme.error
+    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp),
+        verticalAlignment = Alignment.Top) {
+        Icon(CpIcons.Error, null, Modifier.size(18.dp), tint = color)
+        Text(message, style = MaterialTheme.typography.bodySmall, color = color)
     }
 }
 

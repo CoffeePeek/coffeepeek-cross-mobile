@@ -8,6 +8,7 @@ import androidx.compose.material3.*
 import androidx.compose.ui.uikit.LocalUIViewController
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.unit.dp
 import kotlinx.cinterop.ObjCAction
 import platform.Foundation.*
 import platform.UIKit.*
@@ -54,7 +55,8 @@ internal actual fun NativeKeyboardDoneAccessory(visible: Boolean, onDone: () -> 
     if (!visible) return
     val controller = LocalUIViewController.current
     val action = rememberUpdatedState(onDone)
-    DisposableEffect(controller) {
+    val accessorySpace = LocalKeyboardAccessorySpace.current
+    DisposableEffect(controller, accessorySpace) {
         val host = controller.parentViewController?.view ?: controller.view
         val target = DoneTarget { host.endEditing(true); action.value() }
         val toolbar = UIToolbar().apply {
@@ -72,7 +74,9 @@ internal actual fun NativeKeyboardDoneAccessory(visible: Boolean, onDone: () -> 
             toolbar.heightAnchor.constraintEqualToConstant(44.0),
         )
         NSLayoutConstraint.activateConstraints(constraints)
+        accessorySpace?.set(target, 44.dp)
         onDispose {
+            accessorySpace?.remove(target)
             NSLayoutConstraint.deactivateConstraints(constraints)
             toolbar.removeFromSuperview()
             toolbar.items = null

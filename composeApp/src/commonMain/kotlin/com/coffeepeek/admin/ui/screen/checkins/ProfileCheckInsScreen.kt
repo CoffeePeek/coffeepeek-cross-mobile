@@ -192,8 +192,7 @@ internal fun ProfileCheckInsScreen(
                 label = { when (it) { ActivityKind.All -> "Все"; ActivityKind.Shop -> "В кофейне"; ActivityKind.Home -> "Дома" } },
                 onSelected = { kind = it }, modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp))
             LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(
-                start = 16.dp, end = 16.dp, top = 8.dp, bottom = 96.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                start = 16.dp, end = 16.dp, top = 8.dp, bottom = 96.dp)) {
                 item(key = "calendar") {
                     CalendarCard(
                         state = shop.copy(
@@ -223,12 +222,14 @@ internal fun ProfileCheckInsScreen(
                         color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
                 itemsIndexed(entries, key = { _, entry -> entry.key }) { index, entry ->
-                    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                        if (index == 0 || entries[index - 1].date != entry.date) Text(
+                    val firstInDay = index == 0 || entries[index - 1].date != entry.date
+                    val lastInDay = index == entries.lastIndex || entries[index + 1].date != entry.date
+                    Column {
+                        if (firstInDay) Text(
                             selectedDateTitle(entry.date, includeYear = entry.date.take(4) != today.take(4)),
-                            style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.SemiBold,
-                            modifier = Modifier.padding(top = 16.dp, bottom = 4.dp))
-                        TimelineRail(entry is ActivityEntry.Home) {
+                            style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold,
+                            modifier = Modifier.padding(top = 24.dp, bottom = 12.dp))
+                        TimelineRail(entry is ActivityEntry.Home, firstInDay, lastInDay) {
                             when (entry) {
                                 is ActivityEntry.Home -> HomeTimelineCard(entry.value) { homeVm.open(entry.value.id) }
                                 is ActivityEntry.Shop -> ShopTimelineCard(entry.value) { selectedShop = entry.value }
@@ -263,16 +264,24 @@ internal fun ProfileCheckInsScreen(
 }
 
 @Composable
-private fun TimelineRail(isHome: Boolean, content: @Composable () -> Unit) {
-    val color = if (isHome) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline
+internal fun TimelineRail(isHome: Boolean, firstInDay: Boolean, lastInDay: Boolean, content: @Composable () -> Unit) {
+    val lineColor = MaterialTheme.colorScheme.outlineVariant
+    val dotColor = if (isHome) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+    val background = MaterialTheme.colorScheme.background
     Box(Modifier.fillMaxWidth()) {
         Canvas(Modifier.matchParentSize()) {
-            val x = 12.dp.toPx()
-            drawLine(color.copy(alpha = 0.6f), start = androidx.compose.ui.geometry.Offset(x, 0f),
-                end = androidx.compose.ui.geometry.Offset(x, size.height), strokeWidth = 2.dp.toPx())
-            drawCircle(color, radius = 6.dp.toPx(), center = androidx.compose.ui.geometry.Offset(x, 28.dp.toPx()))
+            val x = size.width - 8.dp.toPx()
+            val dotY = 27.dp.toPx()
+            drawLine(lineColor,
+                start = androidx.compose.ui.geometry.Offset(x, if (firstInDay) dotY else 0f),
+                end = androidx.compose.ui.geometry.Offset(x, if (lastInDay) dotY else size.height),
+                strokeWidth = 2.dp.toPx())
+            val center = androidx.compose.ui.geometry.Offset(x, dotY)
+            drawCircle(background, radius = 7.dp.toPx(), center = center)
+            drawCircle(dotColor, radius = 4.dp.toPx(), center = center)
         }
-        Box(Modifier.fillMaxWidth().padding(start = 32.dp)) { content() }
+        // The gap belongs to this item so the rail also paints between adjacent cards.
+        Box(Modifier.fillMaxWidth().padding(end = 28.dp, bottom = if (lastInDay) 0.dp else 12.dp)) { content() }
     }
 }
 

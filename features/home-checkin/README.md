@@ -45,3 +45,25 @@ If an older server omits or disagrees with a requested visibility, the client re
 the saved record ID and displays an explicit notice. It never reports publication
 or automatically repeats creation. When editing an entry whose visibility was not
 returned, the field stays omitted unless the user chooses a value.
+
+## Form errors
+
+Validated against CoffeePeek-NET `origin/main` at `3216c360` (2026-10-14):
+`HomeCheckInInput`, `CheckIn.Home`, `DrinkSelection`, `ErrorResponse`, and the
+global exception handler. Method, bean, dose, duration, rating, note, drink and
+photos are optional. Supplied values still follow the server's bounds; timestamps
+need an explicit offset and at most seven fractional digits. New drafts use
+millisecond precision on both platforms.
+
+Domain validation returns all invalid fields. Data translates both `ErrorResponse`
+(`errorCode`, `message`, `errors`) and ASP.NET validation problem details. Older
+home endpoints still return message-only errors: their exact messages are mapped
+in data until the server supplies field keys. Raw exceptions, JSON conversion
+details and stack traces never reach the form. Unrecognized failures receive a
+safe general message; authentication and service failures are not field errors.
+
+The editor shows a summary above the scrollable fields and inline explanations.
+An edit revalidates only previously invalid fields that changed, preserving other
+server errors and the entered draft. Tests cover current backend messages, model
+binding paths, infrastructure failures, cancellation and correction of one field
+without hiding the remaining errors.

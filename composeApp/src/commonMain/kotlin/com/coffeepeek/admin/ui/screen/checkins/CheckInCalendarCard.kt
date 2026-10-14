@@ -13,7 +13,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
@@ -22,7 +21,6 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.coffeepeek.admin.ui.component.HapticEvent
 import com.coffeepeek.admin.ui.component.platformHaptic
 import com.coffeepeek.admin.ui.icons.CpIcons
@@ -48,34 +46,25 @@ internal fun CalendarCard(
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         border = BorderStroke(0.5.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.6f)),
     ) {
-        Column(Modifier.padding(horizontal = 8.dp, vertical = 12.dp)) {
-            BoxWithConstraints(Modifier.fillMaxWidth().padding(horizontal = 4.dp)) {
-                val compactHeader = maxWidth < 332.dp || LocalDensity.current.fontScale > 1.2f
-                Column {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Column(Modifier.weight(1f)) {
-                            Text(monthTitle(month), style = MaterialTheme.typography.titleMedium,
-                                fontSize = 20.sp, fontWeight = FontWeight.Bold)
-                            if (!compactHeader) CalendarSummary(state, total, shops, homeTotal)
-                        }
-                        MonthArrow(false, true, onPreviousMonth)
-                        MonthArrow(true, state.canGoNextMonth, onNextMonth)
-                        if (!compactHeader) TodayButton(onToday)
-                    }
-                    if (compactHeader) Row(verticalAlignment = Alignment.CenterVertically) {
-                        Box(Modifier.weight(1f)) { CalendarSummary(state, total, shops, homeTotal) }
-                        TodayButton(onToday)
-                    }
-                }
+        Column(Modifier.padding(12.dp)) {
+            Row(Modifier.fillMaxWidth().padding(start = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+                Text(monthTitle(month), modifier = Modifier.weight(1f),
+                    style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold)
+                MonthArrow(false, true, onPreviousMonth)
+                MonthArrow(true, state.canGoNextMonth, onNextMonth)
             }
-            Spacer(Modifier.height(12.dp))
+            Row(Modifier.fillMaxWidth().padding(start = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+                Box(Modifier.weight(1f)) { CalendarSummary(state, total, shops, homeTotal) }
+                TodayButton(onToday)
+            }
+            Spacer(Modifier.height(8.dp))
             Row(Modifier.fillMaxWidth()) {
                 listOf("Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс").forEach { day ->
                     Text(day, Modifier.weight(1f), style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center)
                 }
             }
-            HorizontalDivider(Modifier.padding(top = 8.dp, bottom = 4.dp),
+            HorizontalDivider(Modifier.padding(top = 10.dp, bottom = 6.dp),
                 color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
             calendarCells(month).chunked(7).forEach { week ->
                 Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.Top) {
@@ -150,43 +139,31 @@ private fun CalendarDay(
     val description = "${selectedDateTitle(date)}${if (isToday) ", сегодня" else ""}, ${visitCount(total)}" +
         if (homeCount > 0) ", $homeCount дома" else ""
     Column(
-        modifier.padding(horizontal = 1.dp, vertical = 2.dp)
+        modifier.padding(horizontal = 1.dp, vertical = 1.dp)
             .clip(RoundedCornerShape(12.dp))
             .background(if (isSelected) MaterialTheme.colorScheme.primary.copy(alpha = 0.10f) else Color.Transparent)
             .clickable(enabled = !isFuture, role = Role.Button, onClickLabel = "Выбрать дату", onClick = onClick)
             .semantics(mergeDescendants = true) { contentDescription = description; selected = isSelected }
-            .padding(top = 3.dp, bottom = 2.dp),
+            .heightIn(min = 50.dp).padding(vertical = 4.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {
-        Box(Modifier.defaultMinSize(minWidth = 28.dp, minHeight = 28.dp)
+        Box(Modifier.defaultMinSize(minWidth = 32.dp, minHeight = 32.dp)
             .background(if (isSelected) MaterialTheme.colorScheme.primary else Color.Transparent, CircleShape)
+            .then(if (isToday && !isSelected) Modifier.border(1.dp, MaterialTheme.colorScheme.primary, CircleShape) else Modifier)
             .clearAndSetSemantics {}, contentAlignment = Alignment.Center) {
             Text(day.toString(), style = MaterialTheme.typography.bodyMedium,
                 fontWeight = if (isSelected || isToday) FontWeight.SemiBold else FontWeight.Normal,
                 color = when {
                     isSelected -> MaterialTheme.colorScheme.onPrimary
-                    isFuture -> MaterialTheme.colorScheme.onSurfaceVariant
+                    isFuture -> MaterialTheme.colorScheme.onSurface.copy(alpha = 0.35f)
                     else -> MaterialTheme.colorScheme.onSurface
                 }, modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp))
-            if (isToday && !isSelected) Box(Modifier.align(Alignment.BottomCenter).size(14.dp, 2.dp)
-                .background(MaterialTheme.colorScheme.primary, CircleShape))
         }
-        Box(Modifier.fillMaxWidth().height(32.dp).clearAndSetSemantics {}, contentAlignment = Alignment.Center) {
-            if (total > 0) {
-                if (checkIns.isNotEmpty()) CheckInDiaryThumbnail(checkIns.first(), Modifier.size(32.dp))
-                else Box(Modifier.size(32.dp).background(MaterialTheme.colorScheme.primary.copy(alpha = .08f), RoundedCornerShape(10.dp))
-                    .border(1.dp, MaterialTheme.colorScheme.primary, RoundedCornerShape(10.dp)), contentAlignment = Alignment.Center) {
-                    Icon(CpIcons.Coffee, null, Modifier.size(18.dp), tint = MaterialTheme.colorScheme.primary)
-                }
-                if (homeCount > 0 && checkIns.isNotEmpty()) Box(Modifier.align(Alignment.TopEnd).size(8.dp)
-                    .background(MaterialTheme.colorScheme.primary, CircleShape))
-                if (total > 1) Text(
-                    "+${total - 1}", fontSize = 10.sp, lineHeight = 12.sp,
-                    color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.SemiBold,
-                    modifier = Modifier.align(Alignment.BottomEnd)
-                        .background(MaterialTheme.colorScheme.surfaceVariant, CircleShape)
-                        .padding(horizontal = 3.dp, vertical = 2.dp),
-                )
+        Row(Modifier.height(6.dp).clearAndSetSemantics {},
+            horizontalArrangement = Arrangement.spacedBy(3.dp), verticalAlignment = Alignment.CenterVertically) {
+            repeat(total.coerceIn(0, 3)) {
+                Box(Modifier.size(4.dp).background(MaterialTheme.colorScheme.primary, CircleShape))
             }
         }
     }
