@@ -110,6 +110,7 @@ private fun NativeMapContent(
     val scope = rememberCoroutineScope()
     val colors = MaterialTheme.colorScheme
     val initiallyHasTarget = remember { cameraTarget != null }
+    var hasLocationPermission by remember { mutableStateOf(PlatformLocation.hasPermission()) }
     var handledLocationRequestKey by remember { mutableStateOf<Int?>(null) }
     val hasCameraTarget = rememberUpdatedState(cameraTarget != null)
     val session = remember {
@@ -133,6 +134,7 @@ private fun NativeMapContent(
     }
 
     fun findAndShowLocation() {
+        hasLocationPermission = true
         val initial = myLocationRequestKey == 0
         if ((initial && initiallyHasTarget) || handledLocationRequestKey == myLocationRequestKey) return
         handledLocationRequestKey = myLocationRequestKey
@@ -152,11 +154,20 @@ private fun NativeMapContent(
         if (PlatformLocation.hasPermission()) findAndShowLocation()
     }
 
+    val showsUserLocation = hasLocationPermission
     Box(modifier = modifier) {
-        if (requestLocationPermissionOnLoad || myLocationRequestKey > 0) LocationPermissionEffect(
+        val locationRequestedByMap = requestLocationPermissionOnLoad || myLocationRequestKey > 0
+        // Keep the preview's location puck in sync when another screen grants permission.
+        // A zero request key observes authorization without presenting a prompt.
+        LocationPermissionEffect(
             requestKey = if (requestLocationPermissionOnLoad) myLocationRequestKey + 1 else myLocationRequestKey,
-            onGranted = ::findAndShowLocation,
-            onDenied = { locationDeniedCallback.value() },
+            onGranted = {
+                if (locationRequestedByMap) findAndShowLocation() else hasLocationPermission = true
+            },
+            onDenied = {
+                hasLocationPermission = false
+                if (locationRequestedByMap) locationDeniedCallback.value()
+            },
         )
         UIKitView(
             factory = { provider.createMapView().also(session::attach) },
@@ -167,7 +178,9 @@ private fun NativeMapContent(
                 mapView.backgroundColor = colors.background.toUIColor()
                 mapView.overrideUserInterfaceStyle = colors.uiKitStyle
                 session.attach(mapView)
-                session.updateContent(shops, clusters, zones, selectedShopId, isDarkTheme, showAttribution)
+                session.updateContent(
+                    shops, clusters, zones, selectedShopId, isDarkTheme, showAttribution, showsUserLocation,
+                )
             },
         )
     }
@@ -201,11 +214,13 @@ private class NativeMapSession(
         selectedShopId: String?,
         isDarkTheme: Boolean,
         showAttribution: Boolean,
+        showsUserLocation: Boolean,
     ) {
         mapView?.let { view ->
             provider.updateMapView(
                 mapView = view,
                 stateJson = nativeMapStateJson(shops, clusters, zones, selectedShopId, isDarkTheme, showAttribution),
+                showsUserLocation = showsUserLocation,
                 callbacks = this,
             )
         }
