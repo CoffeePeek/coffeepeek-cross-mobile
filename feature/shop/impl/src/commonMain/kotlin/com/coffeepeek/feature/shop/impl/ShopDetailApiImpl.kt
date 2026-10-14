@@ -2,7 +2,7 @@ package com.coffeepeek.feature.shop.impl
 
 import androidx.compose.runtime.Composable
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.coffeepeek.feature.favorites.domain.repository.FavoritesRepository
+import com.coffeepeek.feature.shop.domain.repository.ShopFavorites
 import com.coffeepeek.feature.shop.api.ShopDetailEffect
 import com.coffeepeek.feature.shop.api.ShopDetailEntry
 import com.coffeepeek.feature.shop.domain.model.ShopViewer
@@ -16,7 +16,7 @@ import com.coffeepeek.feature.shop.impl.ui.compose.model.ShopDetailEvent
 fun createShopDetailEntry(
     detailsRepository: ShopDetailsRepository,
     voteRepository: ShopCheckInVoteRepository,
-    favoritesRepository: FavoritesRepository,
+    favoritesRepository: ShopFavorites,
     currentViewer: suspend () -> Result<ShopViewer>,
     currentDayOfWeek: () -> Int,
     currentMinuteOfDay: () -> Int,
@@ -26,7 +26,7 @@ fun createShopDetailEntry(
 private class DefaultShopDetailEntry(
     private val detailsRepository: ShopDetailsRepository,
     private val voteRepository: ShopCheckInVoteRepository,
-    private val favoritesRepository: FavoritesRepository,
+    private val favoritesRepository: ShopFavorites,
     private val currentViewer: suspend () -> Result<ShopViewer>,
     private val currentDayOfWeek: () -> Int,
     private val currentMinuteOfDay: () -> Int,

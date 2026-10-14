@@ -14,11 +14,9 @@ import com.coffeepeek.feature.shop.domain.model.ShopRoaster
 import com.coffeepeek.feature.shop.domain.model.ShopViewer
 import com.coffeepeek.feature.shop.domain.repository.ShopDetailsRepository
 import com.coffeepeek.feature.shop.domain.repository.ShopCheckInVoteRepository
-import com.coffeepeek.feature.favorites.domain.model.FavoriteShop
-import com.coffeepeek.feature.favorites.domain.repository.FavoritesRepository
+import com.coffeepeek.feature.shop.domain.repository.ShopFavorites
 import com.coffeepeek.feature.shop.impl.ui.compose.model.ShopDetailAction
 import com.coffeepeek.feature.shop.impl.ui.compose.model.ShopDetailEvent
-import com.coffeepeek.feature.shop.impl.ui.data.toFavoriteSnapshot
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -69,23 +67,22 @@ class ShopDetailViewModelTest {
         }
     }
 
-    private class Favorites : FavoritesRepository {
-        val snapshots = MutableStateFlow(Result.success(emptyList<FavoriteShop>()))
+    private class Favorites : ShopFavorites {
+        val snapshots = MutableStateFlow(Result.success(emptySet<String>()))
         var saves = 0
         var removes = 0
         var gate: CompletableDeferred<Unit>? = null
         var mutationResult: Result<Unit> = Result.success(Unit)
-        var saved: FavoriteShop? = null
+        var saved: ShopDetails? = null
 
-        override fun observe(): Flow<Result<List<FavoriteShop>>> = snapshots
-        override suspend fun read(): Result<List<FavoriteShop>> = error("Details must observe favorites")
-        override suspend fun save(shop: FavoriteShop): Result<Unit> {
-            assertEquals("shop-1", shop.id)
+        override fun observeIds(): Flow<Result<Set<String>>> = snapshots
+        override suspend fun save(shop: ShopDetails): Result<Unit> {
+            assertEquals("shop-1", shop.overview.id)
             saved = shop
             saves++
             gate?.await()
             if (mutationResult.isSuccess) snapshots.value = Result.success(
-                snapshots.value.getOrThrow().filterNot { it.id == shop.id } + shop,
+                snapshots.value.getOrThrow() + shop.overview.id,
             )
             return mutationResult
         }
@@ -94,11 +91,10 @@ class ShopDetailViewModelTest {
             removes++
             gate?.await()
             if (mutationResult.isSuccess) snapshots.value = Result.success(
-                snapshots.value.getOrThrow().filterNot { it.id == shopId },
+                snapshots.value.getOrThrow() - shopId,
             )
             return mutationResult
         }
-        override suspend fun clear(): Result<Unit> = Result.success(Unit)
     }
 
     private fun viewModel(
@@ -233,10 +229,7 @@ class ShopDetailViewModelTest {
         viewModel.onAction(ShopDetailAction.ToggleFavorite)
         runCurrent()
         assertEquals(1, favorites.saves)
-        assertEquals("$", favorites.saved?.priceRange)
-        assertEquals(listOf("Wi-Fi"), favorites.saved?.tags)
-        assertEquals(listOf("Эспрессо"), favorites.saved?.brewMethods)
-        assertEquals(listOf("https://photo/roaster"), favorites.saved?.roasterPhotoUrls)
+        assertEquals(details(), favorites.saved)
         assertTrue(viewModel.state.value.isFavoriteLoading)
         favorites.gate!!.complete(Unit)
         runCurrent()
@@ -271,10 +264,10 @@ class ShopDetailViewModelTest {
         val repository = DetailsRepository()
         val viewModel = viewModel(details = repository, favorites = favorites)
         runCurrent()
-        favorites.snapshots.value = Result.success(listOf(details().toFavoriteSnapshot()))
+        favorites.snapshots.value = Result.success(setOf(details().overview.id))
         runCurrent()
         assertTrue(viewModel.state.value.isFavorite)
-        favorites.snapshots.value = Result.success(emptyList())
+        favorites.snapshots.value = Result.success(emptySet())
         runCurrent()
         assertFalse(viewModel.state.value.isFavorite)
         assertEquals(1, repository.calls)
@@ -289,7 +282,7 @@ class ShopDetailViewModelTest {
         val favorites = Favorites()
         val viewModel = viewModel(favorites = favorites)
         runCurrent()
-        favorites.snapshots.value = Result.success(listOf(details().toFavoriteSnapshot()))
+        favorites.snapshots.value = Result.success(setOf(details().overview.id))
         runCurrent()
         favorites.snapshots.value = Result.failure(IllegalStateException("read failure"))
         runCurrent()
@@ -298,7 +291,7 @@ class ShopDetailViewModelTest {
         viewModel.onAction(ShopDetailAction.ToggleFavorite)
         runCurrent()
         assertEquals(0, favorites.removes)
-        favorites.snapshots.value = Result.success(emptyList())
+        favorites.snapshots.value = Result.success(emptySet())
         runCurrent()
         assertFalse(viewModel.state.value.isFavorite)
         assertTrue(viewModel.state.value.favoriteAvailable)
@@ -309,7 +302,7 @@ class ShopDetailViewModelTest {
         val repository = DetailsRepository().apply { gate = CompletableDeferred() }
         val viewModel = viewModel(details = repository, favorites = favorites)
         runCurrent()
-        favorites.snapshots.value = Result.success(listOf(details().toFavoriteSnapshot()))
+        favorites.snapshots.value = Result.success(setOf(details().overview.id))
         runCurrent()
         repository.gate!!.complete(Unit)
         runCurrent()

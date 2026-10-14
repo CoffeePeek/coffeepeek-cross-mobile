@@ -10,7 +10,7 @@ public check-in list are wired and have passed automated Android/device checks;
 live cup/picker/authenticated-write QA remains pending before release. See
 shop/README.md and shop/ANDROID_PARITY_PLAN.md for active versus prepared paths.
 Android application composition owns favorites Koin and its compatibility adapter; feed
-and detail observe favorites domain membership, and the Android favorites route
+and detail receive membership through application-owned adapters, and the Android favorites route
 renders the new screen. The shared root still uses Navigation 2, while iOS keeps
 the old favorites screen and binding. See favorites/README.md.
 Android Shop Report is also routed through its feature entry; the shared/iOS
@@ -24,7 +24,8 @@ contracts; impl prepares shared typed MVI and Android calendar/list UI without
 data/HTTP dependencies. API now exposes the narrow screen and date-snapshot contracts.
 Android app composition prepares revocable account leases, a navigation-owned
 feature store, zone-aware calendar snapshots and lazy DI with the existing protected
-image loader. Backend range semantics and destination integration remain separate gates.
+image loader. The backend owner-history query and its range test confirm an inclusive lower and
+exclusive upper instant bound. Destination integration remains a separate gate.
 VisitedPlaces and home preparations remain on their existing paths.
 See [check-in-history/README.md](check-in-history/README.md) for the audited boundaries,
 ordered implementation and session/time-zone risks. No empty API module or
@@ -72,10 +73,9 @@ Keep data implementations internal and expose only the narrow construction
 surface required for feature composition. Enforce UI import boundaries as well
 as Gradle edges.
 
-Other features use api for navigation/screen entry and may directly consume
-intentionally supported pure domain contracts, as agreed for favorites. Never
-depend on another feature's data/impl/di from business/UI. Shared domain ABI
-must be deliberately supported, not moved to core/common.
+Other features use api for cross-feature contracts. Shop declares its own
+ShopFavorites capability; application composition maps favorites snapshots to it.
+Business/UI code never depends on another feature's domain/data/impl/di.
 Composition owns the root graph and assembles feature implementations.
 
 HTTP requests belong to feature data/backend, not screens. Room persistence belongs

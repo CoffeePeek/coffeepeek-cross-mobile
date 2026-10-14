@@ -32,8 +32,6 @@ dependencies {
     androidInstrumentedTestImplementation(libs.androidx.activity.compose)
     androidInstrumentedTestImplementation(libs.androidx.test.runner)
     androidInstrumentedTestImplementation(libs.androidx.espresso.core)
-    androidInstrumentedTestImplementation(libs.androidx.navigation3.ui)
-    androidInstrumentedTestImplementation(libs.androidx.lifecycle.viewmodelNavigation3)
 
     debugImplementation(libs.compose.ui.tooling)
 }

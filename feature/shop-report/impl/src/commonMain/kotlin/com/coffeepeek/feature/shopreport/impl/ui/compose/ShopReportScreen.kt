@@ -35,6 +35,7 @@ import com.coffeepeek.feature.shopreport.impl.resources.shop_report_description_
 import com.coffeepeek.feature.shopreport.impl.resources.shop_report_description_limit
 import com.coffeepeek.feature.shopreport.impl.resources.shop_report_description_required
 import com.coffeepeek.feature.shopreport.impl.resources.shop_report_done
+import com.coffeepeek.feature.shopreport.impl.resources.shop_report_unconfirmed
 import com.coffeepeek.feature.shopreport.impl.resources.shop_report_incorrect_address
 import com.coffeepeek.feature.shopreport.impl.resources.shop_report_incorrect_photos
 import com.coffeepeek.feature.shopreport.impl.resources.shop_report_other
@@ -93,6 +94,11 @@ internal fun ShopReportScreenContent(
                 .padding(CoffeePeekDimens.spacing4),
             verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing3),
         ) {
+            if (state.deliveryUnconfirmed) {
+                Text(stringResource(Res.string.shop_report_unconfirmed), color = MaterialTheme.colorScheme.onSurfaceVariant)
+                CoffeePeekButton(stringResource(Res.string.shop_report_back), { onAction(ShopReportAction.Back) })
+                return@Column
+            }
             if (state.isSubmitted) {
                 Text(stringResource(Res.string.shop_report_thanks),
                     style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.SemiBold))
@@ -161,6 +167,14 @@ private fun ShopReportError.label() = when (this) {
     ShopReportError.CategoryRequired -> Res.string.shop_report_category_required
     ShopReportError.DescriptionRequired -> Res.string.shop_report_description_required
     ShopReportError.SubmissionFailed -> Res.string.shop_report_submission_failed
+}
+
+@Preview @Composable private fun ShopReportUnconfirmedLightPreview() = CoffeePeekTheme(darkTheme = false) {
+    ShopReportScreenContent(ShopReportState(deliveryUnconfirmed = true), "Кофейня", {})
+}
+
+@Preview @Composable private fun ShopReportUnconfirmedDarkPreview() = CoffeePeekTheme(darkTheme = true) {
+    ShopReportScreenContent(ShopReportState(deliveryUnconfirmed = true), "Кофейня", {})
 }
 
 @Preview @Composable private fun ShopReportScreenLightPreview() = CoffeePeekTheme(darkTheme = false) {

@@ -1,6 +1,7 @@
 package com.coffeepeek.feature.shopreport.data.backend
 
 import com.coffeepeek.core.network.requestResult
+import com.coffeepeek.feature.shopreport.domain.model.ShopReportDeliveryUnconfirmed
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.post
@@ -15,11 +16,19 @@ internal class ShopIssueReportBackend(private val client: HttpClient) {
             contentType(ContentType.Application.Json)
             setBody(request)
         }
+        if (response.status.value in 400..499) throw ShopIssueReportRejected("Report rejected")
+        if (!response.status.isSuccess()) throw ShopReportDeliveryUnconfirmed()
         val body = response.body<ShopIssueReportResponse>()
         if (!response.status.isSuccess() || !body.isSuccess) {
             throw ShopIssueReportRejected(body.message)
         }
-    }
+    }.fold(
+        onSuccess = { Result.success(it) },
+        onFailure = { error -> Result.failure(
+            if (error is ShopIssueReportRejected || error is ShopReportDeliveryUnconfirmed) error
+            else ShopReportDeliveryUnconfirmed(error)
+        ) },
+    )
 }
 
 internal class ShopIssueReportRejected(message: String) : Exception(message)

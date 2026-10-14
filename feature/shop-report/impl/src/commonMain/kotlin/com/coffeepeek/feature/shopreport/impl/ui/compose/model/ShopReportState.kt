@@ -7,6 +7,7 @@ internal data class ShopReportState(
     val description: String = "",
     val isSubmitting: Boolean = false,
     val isSubmitted: Boolean = false,
+    val deliveryUnconfirmed: Boolean = false,
     val error: ShopReportError? = null,
 )
 
