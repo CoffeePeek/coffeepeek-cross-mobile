@@ -106,8 +106,19 @@ jobs:
           configured = oauth_values
           if any(not re.fullmatch(r'[A-Za-z0-9._-]+', os.environ[name]) for name in configured):
               raise SystemExit('Google OAuth IDs contain invalid xcconfig characters')
-          if any(not os.environ[name].endswith('.apps.googleusercontent.com') for name in oauth_values[:2]):
-              raise SystemExit('Google iOS and Web Client IDs must be OAuth client IDs')
+          client_id_pattern = re.compile(r'(?P<project>[0-9]+)-[A-Za-z0-9_-]+\.apps\.googleusercontent\.com')
+          project_numbers = {}
+          for name in oauth_values[:2]:
+              match = client_id_pattern.fullmatch(os.environ[name])
+              if not match:
+                  raise SystemExit(name + ' must be a Google OAuth client ID with a numeric project prefix')
+              project_numbers[name] = match.group('project')
+          print('Google OAuth project numbers: iOS=' + project_numbers['GOOGLE_IOS_CLIENT_ID'] +
+                ', Web=' + project_numbers['GOOGLE_WEB_CLIENT_ID'])
+          if os.environ['GOOGLE_IOS_CLIENT_ID'] == os.environ['GOOGLE_WEB_CLIENT_ID']:
+              raise SystemExit('GOOGLE_IOS_CLIENT_ID and GOOGLE_WEB_CLIENT_ID must be different OAuth clients')
+          if project_numbers['GOOGLE_IOS_CLIENT_ID'] != project_numbers['GOOGLE_WEB_CLIENT_ID']:
+              raise SystemExit('GOOGLE_IOS_CLIENT_ID and GOOGLE_WEB_CLIENT_ID must belong to the same Google Cloud project')
           if os.environ['GOOGLE_REVERSED_CLIENT_ID'] != '.'.join(reversed(os.environ['GOOGLE_IOS_CLIENT_ID'].split('.'))):
               raise SystemExit('GOOGLE_REVERSED_CLIENT_ID must correspond to GOOGLE_IOS_CLIENT_ID')
 
