@@ -1,9 +1,18 @@
-package com.coffeepeek.feature.shop.impl.ui.data
+package com.coffeepeek.admin.di.shop
 
 import com.coffeepeek.feature.favorites.domain.model.FavoriteShop
 import com.coffeepeek.feature.shop.domain.model.ShopDetails
+import com.coffeepeek.feature.shop.domain.repository.ShopFavorites
+import com.coffeepeek.feature.favorites.domain.repository.FavoritesRepository
+import kotlinx.coroutines.flow.map
 
-/** Adapter to the intentionally supported pure favorites/domain contract. */
+internal fun shopFavorites(repository: FavoritesRepository): ShopFavorites = object : ShopFavorites {
+    override fun observeIds() = repository.observe().map { result -> result.map { shops -> shops.mapTo(mutableSetOf()) { it.id } } }
+    override suspend fun save(shop: ShopDetails) = repository.save(shop.toFavoriteSnapshot())
+    override suspend fun remove(shopId: String) = repository.remove(shopId)
+}
+
+/** Application-owned conversion between independent feature contracts. */
 internal fun ShopDetails.toFavoriteSnapshot(): FavoriteShop = FavoriteShop(
     id = overview.id,
     title = overview.title,

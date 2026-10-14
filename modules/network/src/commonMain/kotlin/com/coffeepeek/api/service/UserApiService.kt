@@ -1,5 +1,6 @@
 package com.coffeepeek.api.service
 
+import com.coffeepeek.api.utils.requestResult
 import com.coffeepeek.api.model.ApiResponse
 import com.coffeepeek.api.model.request.UpdateAboutReq
 import com.coffeepeek.api.model.request.UpdateAvatarReq
@@ -25,20 +26,20 @@ import io.ktor.http.isSuccess
 
 class UserApiService(private val client: HttpClient) {
 
-    suspend fun getMe(): Result<UserProfileDto> = runCatching {
+    suspend fun getMe(): Result<UserProfileDto> = requestResult {
         val response = client.get("/api/Users/me")
         val apiResponse = response.body<ApiResponse<UserProfileDto>>()
         if (!apiResponse.isSuccess || apiResponse.data == null) throw ApiException(apiResponse.message)
         apiResponse.data
     }
 
-    suspend fun getUser(userId: String): Result<PublicUserProfileDto> = runCatching {
+    suspend fun getUser(userId: String): Result<PublicUserProfileDto> = requestResult {
         val response = client.get("/api/Users/by-slug/$userId")
         if (!response.status.isSuccess()) throw ApiException("Ошибка загрузки профиля (${response.status.value})")
         response.body<PublicUserProfileResponseDto>().data
     }
 
-    suspend fun requestAccountDeletion(): Result<AccountDeletionRequestDto> = runCatching {
+    suspend fun requestAccountDeletion(): Result<AccountDeletionRequestDto> = requestResult {
         val response = client.delete("/api/Users/me")
         val apiResponse = response.body<ApiResponse<AccountDeletionRequestDto>>()
         if (!apiResponse.isSuccess || apiResponse.data == null) {
@@ -47,9 +48,9 @@ class UserApiService(private val client: HttpClient) {
         apiResponse.data
     }
 
-    suspend fun getAccountDeletionRequest(): Result<AccountDeletionRequestDto?> = runCatching {
+    suspend fun getAccountDeletionRequest(): Result<AccountDeletionRequestDto?> = requestResult {
         val response = client.get("/api/Users/me/deletion-request")
-        if (response.status == HttpStatusCode.NotFound) return@runCatching null
+        if (response.status == HttpStatusCode.NotFound) return@requestResult null
         val apiResponse = response.body<ApiResponse<AccountDeletionRequestDto>>()
         when {
             apiResponse.isSuccess && apiResponse.data != null -> apiResponse.data
@@ -59,13 +60,13 @@ class UserApiService(private val client: HttpClient) {
         }
     }
 
-    suspend fun updateUsername(username: String): Result<UsernameUpdateDto> = runCatching {
+    suspend fun updateUsername(username: String): Result<UsernameUpdateDto> = requestResult {
         val response = client.patch("/api/Users/me/username") {
             contentType(ContentType.Application.Json)
             setBody(UpdateUsernameReq(username))
         }
         if (!response.status.isSuccess()) {
-            val err = runCatching { response.body<ApiResponse<Unit>>() }.getOrNull()
+            val err = requestResult { response.body<ApiResponse<Unit>>() }.getOrNull()
             throw ApiException(err?.message ?: "Ошибка обновления имени (${response.status.value})")
         }
         val result = response.body<ApiResponse<UsernameUpdateDto>>()
@@ -73,23 +74,23 @@ class UserApiService(private val client: HttpClient) {
         result.data
     }
 
-    suspend fun updateAbout(about: String): Result<Unit> = runCatching {
+    suspend fun updateAbout(about: String): Result<Unit> = requestResult {
         val response = client.patch("/api/Users/me/about") {
             contentType(ContentType.Application.Json)
             setBody(UpdateAboutReq(about))
         }
         if (!response.status.isSuccess()) {
-            val err = runCatching { response.body<ApiResponse<Unit>>() }.getOrNull()
+            val err = requestResult { response.body<ApiResponse<Unit>>() }.getOrNull()
             throw ApiException(err?.message ?: "Ошибка обновления описания (${response.status.value})")
         }
     }
 
-    suspend fun updateAvatar(uploadedPhoto: UploadedPhotoReq): Result<Unit> = runCatching {
+    suspend fun updateAvatar(uploadedPhoto: UploadedPhotoReq): Result<Unit> = requestResult {
         val response = client.patch("/api/Users/me/avatar") {
             setJsonBody(UpdateAvatarReq(uploadedPhoto))
         }
         if (!response.status.isSuccess()) {
-            val err = runCatching { response.body<ApiResponse<Unit>>() }.getOrNull()
+            val err = requestResult { response.body<ApiResponse<Unit>>() }.getOrNull()
             throw ApiException(err?.message ?: "Ошибка обновления аватара (${response.status.value})")
         }
     }

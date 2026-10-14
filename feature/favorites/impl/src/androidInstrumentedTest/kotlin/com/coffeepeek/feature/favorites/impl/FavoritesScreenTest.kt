@@ -4,21 +4,13 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createEmptyComposeRule
-import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
-import androidx.navigation3.runtime.NavKey
-import androidx.navigation3.runtime.entryProvider
-import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
-import androidx.navigation3.ui.NavDisplay
 import androidx.test.core.app.ActivityScenario
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
-import com.coffeepeek.feature.favorites.api.FavoritesRoute
 import com.coffeepeek.feature.favorites.domain.model.FavoriteShop
 import com.coffeepeek.feature.favorites.domain.repository.FavoritesRepository
-import com.coffeepeek.feature.favorites.impl.navigation.favoritesEntry
 import com.coffeepeek.feature.favorites.impl.ui.compose.FavoritesScreenContent
 import com.coffeepeek.feature.favorites.impl.ui.compose.model.FavoritesAction
 import com.coffeepeek.feature.favorites.impl.ui.compose.model.FavoritesUiState
@@ -133,9 +125,7 @@ class FavoritesScreenTest {
         }
     }
 
-    private data class ShopKey(val id: String) : NavKey
-
-    @Test fun navigation3EntryConstructsManualVmAndDelegatesShopRouteToHost() {
+    @Test fun entryConstructsLifecycleOwnedVmAndDelegatesShopRouteToHost() {
         val values = MutableStateFlow(Result.success(listOf(FavoriteShop("id", "Кофейня"))))
         val repo = object : FavoritesRepository {
             override fun observe() = values
@@ -145,20 +135,16 @@ class FavoritesScreenTest {
             override suspend fun remove(shopId: String) = Result.success(Unit)
         }
         val screen = createFavoritesEntry(repo)
-        val stack = mutableStateListOf<NavKey>(FavoritesRoute)
+        val selected = mutableStateOf<String?>(null)
         var backRequests = 0
         render {
-            NavDisplay(backStack = stack, onBack = { if (stack.size > 1) stack.removeLast() },
-                entryDecorators = listOf(rememberSaveableStateHolderNavEntryDecorator(), rememberViewModelStoreNavEntryDecorator()),
-                entryProvider = entryProvider {
-                    favoritesEntry(screen, { stack.add(ShopKey(it)) }, { backRequests++ })
-                    entry<ShopKey> { Text("Shop ${it.id}") }
-                })
+            if (selected.value == null) screen.Content({ selected.value = it }, { backRequests++ })
+            else Text("Shop ${selected.value}")
         }.use {
             compose.onNodeWithText("Кофейня").assertIsDisplayed().performClick()
             compose.onNodeWithText("Shop id").assertIsDisplayed()
-            compose.runOnIdle { assertEquals(ShopKey("id"), stack.last()) }
-            compose.runOnIdle { stack.removeLast() }
+            compose.runOnIdle { assertEquals("id", selected.value) }
+            compose.runOnIdle { selected.value = null }
             compose.onNodeWithText("Кофейня").assertIsDisplayed()
             compose.onNodeWithContentDescription("Назад").performClick()
             compose.runOnIdle { assertEquals(1, backRequests) }

@@ -28,18 +28,18 @@ internal fun HttpClientConfig<*>.configureBearerAuthentication(baseUrl: String, 
                 val current = session.load() ?: return@refreshTokens null
                 val refresh = current.refreshToken?.takeIf { it.isNotBlank() }
                 if (refresh == null) {
-                    session.save(null)
+                    session.replace(current, null)
                     return@refreshTokens null
                 }
                 val updated = try {
                     session.refresh(refresh).getOrThrow()
                 } catch (cancelled: CancellationException) {
                     throw cancelled
-                } catch (_: Exception) {
-                    session.save(null)
+                } catch (_: RefreshRejectedException) {
+                    session.replace(current, null)
                     return@refreshTokens null
                 }
-                session.save(updated)
+                if (!session.replace(current, updated)) return@refreshTokens null
                 updated.asBearerTokens()
             }
         }

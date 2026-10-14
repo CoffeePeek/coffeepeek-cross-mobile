@@ -1,5 +1,6 @@
 package com.coffeepeek.api.service
 
+import com.coffeepeek.api.utils.requestResult
 import com.coffeepeek.api.model.ApiResponse
 import com.coffeepeek.api.model.request.CreateShopChangeRequestBody
 import com.coffeepeek.api.model.request.ModerationStatusDto
@@ -19,7 +20,7 @@ import io.ktor.http.isSuccess
 
 class ShopChangeRequestApiService(private val client: HttpClient) {
 
-    suspend fun create(body: CreateShopChangeRequestBody): Result<ShopChangeRequestDto> = runCatching {
+    suspend fun create(body: CreateShopChangeRequestBody): Result<ShopChangeRequestDto> = requestResult {
         val response = client.postResult("/api/ShopChangeRequests") {
             setJsonBody(body)
         }.getOrThrow()
@@ -45,7 +46,7 @@ class ShopChangeRequestApiService(private val client: HttpClient) {
         section = section,
     )
 
-    suspend fun getById(id: String): Result<ShopChangeRequestDto> = runCatching {
+    suspend fun getById(id: String): Result<ShopChangeRequestDto> = requestResult {
         val response = client.getResult("/api/ShopChangeRequests/$id").getOrThrow()
         val apiResponse = response.body<ApiResponse<ShopChangeRequestDto>>()
         if (!apiResponse.isSuccess || apiResponse.data == null) {
@@ -54,7 +55,7 @@ class ShopChangeRequestApiService(private val client: HttpClient) {
         apiResponse.data
     }
 
-    suspend fun update(id: String, body: UpdateShopChangeRequestBody): Result<ShopChangeRequestDto> = runCatching {
+    suspend fun update(id: String, body: UpdateShopChangeRequestBody): Result<ShopChangeRequestDto> = requestResult {
         val response = client.putResult("/api/ShopChangeRequests/$id") {
             setJsonBody(body)
         }.getOrThrow()
@@ -72,7 +73,7 @@ class ShopChangeRequestApiService(private val client: HttpClient) {
         status: ModerationStatusDto?,
         shopId: String?,
         section: ShopChangeSectionDto?,
-    ): Result<ShopChangeRequestPageDto> = runCatching {
+    ): Result<ShopChangeRequestPageDto> = requestResult {
         val response = client.getResult(path) {
             parameter("page", page)
             parameter("pageSize", pageSize)

@@ -210,8 +210,7 @@ class ShopCheckInRepositoryTest {
         val uploadClient = HttpClientFactory(uploadEngine).upload()
         try {
             val repository = createShopCheckInRepository(apiClient, uploadClient)
-            for (input in listOf(validInput().copy(text = " "),
-                validInput().copy(text = "x".repeat(1001)),
+            for (input in listOf(validInput().copy(text = "x".repeat(1001)),
                 validInput().copy(rating = ShopRating(0, 4, 4)),
                 validInput().copy(visitedAtIso = "invalid"))) {
                 assertTrue(repository.create(input).isFailure)

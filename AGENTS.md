@@ -65,9 +65,9 @@ pair. See feature/README.md for the migration sequence and dependency graph.
 - The application composition module owns application startup, root DI, root
   navigation, and platform configuration; it does not own feature business logic.
 
-Features use another feature's `api` for navigation/screen contracts. Intentionally
-supported pure `domain` contracts may also be consumed directly, as agreed for
-favorites; never depend on another feature's data/impl/di from business or UI code.
+Features may depend on another feature only through its `api`. Application
+composition supplies adapters between independent domain contracts, including
+shop favorites; business and UI code never import another feature's domain/data/impl/di.
 Domain/data use constructor/manual DI. Koin modules are Kotlin definitions, not
 automatically separate Gradle modules. Application composition assembles them;
 no DI wiring belongs in domain/data or generic core DI. Keep feature UI independent

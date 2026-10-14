@@ -10,4 +10,5 @@ interface FavoriteRepository {
     suspend fun addFavorite(shop: CoffeeShop, address: String? = null): Result<Unit>
     suspend fun removeFavorite(shopId: String): Result<Unit>
     suspend fun clearAll()
+    suspend fun clearForUser(userId: String?) { clearAll() }
 }

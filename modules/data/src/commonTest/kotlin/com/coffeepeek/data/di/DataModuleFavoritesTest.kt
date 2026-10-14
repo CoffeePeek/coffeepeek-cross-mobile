@@ -1,6 +1,9 @@
 package com.coffeepeek.data.di
 
 import com.coffeepeek.data.repository.FavoriteRepositoryImpl
+import com.coffeepeek.data.session.RoomSessionSecureStore
+import com.coffeepeek.data.session.SessionSecureStore
+import org.koin.dsl.module
 import com.coffeepeek.domain.repository.FavoriteRepository
 import com.coffeepeek.room.DatabaseCore
 import com.coffeepeek.room.model.Setting
@@ -24,7 +27,13 @@ class DataModuleFavoritesTest {
     }
 
     @Test fun oldBindingRemainsDefaultForIosAndExistingCallers() {
-        val app = koinApplication { modules(dataModule("url", "cache", "root", database)) }
+        val app = koinApplication {
+            modules(dataModule("url", "cache", "root", database), module {
+                // The legacy favorite writer now resolves session identity as production does.
+                // This isolated JVM graph supplies a test store rather than an Android Context.
+                single<SessionSecureStore> { RoomSessionSecureStore(database.settingRepository) }
+            })
+        }
         try {
             assertIs<FavoriteRepositoryImpl>(app.koin.get<FavoriteRepository>())
         } finally { app.close() }

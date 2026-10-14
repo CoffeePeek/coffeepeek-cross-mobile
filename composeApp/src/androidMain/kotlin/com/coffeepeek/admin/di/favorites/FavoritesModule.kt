@@ -16,15 +16,25 @@ import org.koin.core.module.Module
 import org.koin.dsl.module
 
 /** One repo per session/storage. Application explicitly loads this module; no global Koin start. */
-internal fun favoritesModule(storage: FavoritesStorage, dispatcher: CoroutineDispatcher = DefaultDispatcherProvider.io): Module = module {
-    single<FavoritesRepository> { createFavoritesRepository(storage, dispatcher) }
+internal fun favoritesModule(
+    storage: FavoritesStorage,
+    dispatcher: CoroutineDispatcher = DefaultDispatcherProvider.io,
+    sessionScoped: Boolean = false,
+): Module = module {
+    single<FavoritesRepository> {
+        if (sessionScoped) AccountFavoritesRepository(storage, get(), dispatcher)
+        else createFavoritesRepository(storage, dispatcher)
+    }
     factory { ObserveFavoriteIdsUseCase(get()) }
     single<FavoritesEntry> { createFavoritesEntry(get()) }
 }
 
 /** Temporary composition bridge. Does not construct/open the old database or register old bindings. */
-internal fun favoritesRoomModule(settings: SettingRepository, dispatcher: CoroutineDispatcher = DefaultDispatcherProvider.io): Module =
-    favoritesModule(RoomFavoritesStorage(settings), dispatcher)
+internal fun favoritesRoomModule(
+    settings: SettingRepository,
+    dispatcher: CoroutineDispatcher = DefaultDispatcherProvider.io,
+    sessionScoped: Boolean = false,
+): Module = favoritesModule(RoomFavoritesStorage(settings), dispatcher, sessionScoped)
 
 /** Load only when the old application binding is omitted: both contracts then share one writer. */
 internal fun legacyFavoritesConsumersModule(): Module = module {

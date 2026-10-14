@@ -19,7 +19,7 @@ actual fun initPlatformKoin() {
     initKoin(
         registerLegacyFavorites = false,
         platformModules = listOf(
-            favoritesRoomModule(Locator.database.settingRepository),
+            favoritesRoomModule(Locator.database.settingRepository, sessionScoped = true),
             legacyFavoritesConsumersModule(),
             shopCheckInModule(),
             shopBrowsingModule(),

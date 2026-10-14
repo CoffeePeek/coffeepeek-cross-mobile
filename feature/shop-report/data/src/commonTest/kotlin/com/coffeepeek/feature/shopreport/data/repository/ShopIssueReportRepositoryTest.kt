@@ -25,6 +25,20 @@ import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 class ShopIssueReportRepositoryTest {
+    @Test fun responseLostAfterWriteIsUnconfirmedRatherThanSafeToRetry() = runBlocking {
+        var accepted = 0
+        val engine = MockEngine {
+            accepted++
+            throw IllegalStateException("Response connection lost")
+        }
+        val client = HttpClientFactory(engine).api("https://example.com")
+        try {
+            val result = createShopIssueReportRepository(client).submitReport("shop-1", ShopIssueCategory.ShopClosed, null)
+            assertEquals(1, accepted)
+            assertTrue(result.exceptionOrNull() is com.coffeepeek.feature.shopreport.domain.model.ShopReportDeliveryUnconfirmed)
+        } finally { client.close(); engine.close() }
+    }
+
     @Test fun submitsToExpectedEndpointAndMapsEveryCategory() = runBlocking {
         val requests = mutableListOf<String>()
         val engine = MockEngine { request ->

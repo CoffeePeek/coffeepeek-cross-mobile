@@ -64,7 +64,7 @@ internal class AndroidShopDetailScreenRenderer(
         AndroidShopBrowsingHost("android-shop-detail:$shopId", sessions) { session ->
             val entry = remember(session) {
                 createShopDetailEntry(session.lease.details(details), session.lease.votes(votes),
-                    session.lease.favorites(favorites), currentViewer = { session.lease.viewer(users) },
+                    shopFavorites(session.lease.favorites(favorites)), currentViewer = { session.lease.viewer(users) },
                     currentDayOfWeek = ::currentLocalDayOfWeek, currentMinuteOfDay = ::currentLocalMinuteOfDay)
             }
             val location = rememberPermittedUserLocation()

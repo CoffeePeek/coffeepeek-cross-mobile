@@ -1,5 +1,6 @@
 package com.coffeepeek.data.repository
 
+import com.coffeepeek.api.utils.requestResult
 import com.coffeepeek.domain.model.validateConsumedDrink
 
 import com.coffeepeek.api.model.request.SendReviewReq
@@ -30,7 +31,7 @@ class ReviewRepositoryImpl(
         reviewApiService.submitReviewReport(reviewId, text)
 
 
-    override suspend fun createReview(input: CreateReviewInput): Result<Unit> = runCatching {
+    override suspend fun createReview(input: CreateReviewInput): Result<Unit> = requestResult {
         validateConsumedDrink(input.drinkSlug, input.customDrinkName)?.let { error(it) }
         val photos = photoRepository.uploadShopPhotos(input.photos).getOrThrow()
         reviewApiService.createReview(
@@ -52,7 +53,7 @@ class ReviewRepositoryImpl(
 
     // ponytail: UpdateCoffeeShopReviewCommand has no photos field, so input.photos is ignored on
     // edit. Restore photo upload here + a photos field on the command if the backend adds support.
-    override suspend fun updateReview(reviewId: String, input: UpdateReviewInput): Result<Unit> = runCatching {
+    override suspend fun updateReview(reviewId: String, input: UpdateReviewInput): Result<Unit> = requestResult {
         require(!input.clearDrink || (input.drinkSlug == null && input.customDrinkName == null)) { "Удаление напитка нельзя совмещать с выбором" }
         validateConsumedDrink(input.drinkSlug, input.customDrinkName)?.let { error(it) }
         reviewApiService.updateReview(

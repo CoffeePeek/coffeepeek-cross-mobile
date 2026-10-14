@@ -6,6 +6,7 @@ import com.coffeepeek.domain.model.Session
 import com.coffeepeek.domain.repository.FavoriteRepository
 import com.coffeepeek.domain.repository.SessionRepository
 import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlin.test.Test
@@ -13,6 +14,19 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 
 class UserSessionCleanerTest {
+    @Test fun sessionObserverCancellationCannotInterruptCleanup() = runTest {
+        val operations = mutableListOf<String>()
+        lateinit var cleanup: kotlinx.coroutines.Job
+        val cleaner = UserSessionCleaner(
+            FakeSessionRepository { cleanup.cancel(); kotlinx.coroutines.yield(); operations += "session" },
+            FailingFavoriteRepository { kotlinx.coroutines.yield(); operations += "favorites" },
+            "unused", "unused", { operations += "caches" },
+        )
+        cleanup = launch(start = kotlinx.coroutines.CoroutineStart.LAZY) { cleaner.clearLocalUserData() }
+        cleanup.start(); cleanup.join()
+        assertEquals(listOf("session", "favorites", "caches"), operations)
+    }
+
     @Test
     fun cacheCleanupRunsAndFavoriteFailureIsPreserved() = runTest {
         val operations = mutableListOf<String>()

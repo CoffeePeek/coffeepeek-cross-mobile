@@ -35,8 +35,9 @@ previews, selected through app-owned Android platform renderers.
 `ShopDetailScreenContent` composes these blocks and emits typed actions with
 fake-state previews. Its runtime adapter and typed `MviViewModel` are wired through
 the public entry and Android detail renderer, not through feature Koin lookups.
-The ViewModel observes and mutates local favorites through the supported pure
-`feature/favorites/domain` contract. Its `FavoriteChanged` event is for the
+The ViewModel observes IDs and mutates local favorites through its own
+`ShopFavorites` domain capability. Application composition adapts the independent
+favorites contract to this port; shop has no Gradle or import dependency on favorites domain. Its `FavoriteChanged` event is for the
 application bridge to notify remaining legacy consumers through FavoriteSync;
 that bridge is wired. A failed membership read leaves the favorite control disabled rather
 than guessing from the server's `isFavorite` field.

@@ -16,10 +16,10 @@ existing screen, binding and runtime behaviour. These changes are stacked on
 
 | Module | Owns / public surface | Dependencies | Consumers / why a module |
 |---|---|---|---|
-| api | Serializable FavoritesRoute: NavKey and minimal Composable FavoritesEntry interface | Navigation 3 runtime, Compose runtime, serialization | Root/feature navigation; small screen-construction ABI without VM/data |
-| domain | FavoriteShop snapshot, FavoritesRepository Result/Flow contracts, ObserveFavoriteIdsUseCase | Kotlin + coroutines only | Own UI/data, explicitly supported cross-feature membership consumers; independent business ABI/tests |
+| api | Minimal Composable FavoritesEntry interface | Compose runtime | Root/feature navigation; small screen-construction ABI without VM/data |
+| domain | FavoriteShop snapshot, FavoritesRepository Result/Flow contracts, ObserveFavoriteIdsUseCase | Kotlin + coroutines only | Own UI/data and application composition adapters; independent business ABI/tests |
 | data | Internal StoredFavorite/mapping/repository; public storage construction port and factory | domain + serialization | Application composition only; UI cannot import DTOs or repository implementation |
-| impl | Internal MVI ViewModel/state/actions/events/screen/cards; API implementation and feature Navigation 3 registration | api/domain, design-system, core presentation contract, lifecycle, Kamel | Application composition; public API consumers do not acquire screen or VM implementation |
+| impl | Internal MVI ViewModel/state/actions/events/screen/cards; API implementation | api/domain, design-system, core presentation contract, lifecycle, Kamel | Application composition; public API consumers do not acquire screen or VM implementation |
 
 ```text
 Android composition → data → domain ← impl/ui
@@ -27,7 +27,7 @@ Android composition → data → domain ← impl/ui
                    bridge → existing SettingRepository
                    adapter → existing FavoriteRepository contract
 Android root Navigation 2 destination → FavoritesEntry.Content (active)
-future Navigation 3 root entryProvider → favoritesEntry (prepared)
+Root navigation framework remains owned by the application; no unused Nav3 adapter is shipped.
 ```
 
 Domain/data are manually constructed; no Koin annotations, contexts or service
@@ -37,8 +37,8 @@ favorites Koin bindings and starts Koin. The temporary Room and legacy bridges
 live in composeApp/androidMain under di/favorites, not in a separate Gradle
 module or generic core DI aggregator. Factories hide implementations.
 Feature UI depends on neither data nor application DI; Gradle enforces this restriction.
-Other business/UI features may consume favorites domain deliberately; api remains
-the route/entry boundary. No generic BaseViewModel or Navigator singleton.
+Other business/UI features use api only. Composition adapts favorites domain to
+shop-owned membership capabilities. No generic BaseViewModel or Navigator singleton.
 
 ## Current vs target and behaviour
 
@@ -60,7 +60,12 @@ state flow and event channel; favorites owns the actions, repository observation
 Result failures and cancellation handling. `updateState` performs atomic
 `MutableStateFlow.update` without duplicating that extension.
 
-The storage key remains local_favorite_shops. Internal JSON field names/defaults
+Production storage uses local_favorite_shops:<userId>, on Android and the legacy
+iOS writer. Guest reads are empty. Logout captures the owner before clearing the
+session and removes that owner's rows. Login clears unowned rows before switching
+accounts; existing signed-in users migrate the legacy local_favorite_shops row
+by copying it to their account key before deleting it. The storage factory retains
+the legacy default key for isolated callers and migration verification. Internal JSON field names/defaults
 match the existing saved format, including single roasterPhotoUrl fallback and
 plural roasterPhotoUrls. Duplicate saved IDs retain their first (newest) snapshot.
 A save replaces by ID and moves it to the front. Removing

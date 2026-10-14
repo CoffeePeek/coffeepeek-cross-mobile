@@ -1,5 +1,6 @@
 package com.coffeepeek.api.service
 
+import com.coffeepeek.api.utils.requestResult
 import com.coffeepeek.api.model.ApiResponse
 import com.coffeepeek.api.model.request.SendReviewReq
 import com.coffeepeek.api.model.request.UpdateReviewReq
@@ -29,7 +30,7 @@ internal data class ReviewReportResponse(val id: String)
 
 class ReviewApiService(private val client: HttpClient) {
 
-    suspend fun submitReviewReport(reviewId: String, text: String): Result<String> = runCatching {
+    suspend fun submitReviewReport(reviewId: String, text: String): Result<String> = requestResult {
         val trimmed = text.trim()
         require(trimmed.length in 1..2000) { "Опишите проблему: от 1 до 2000 символов" }
         val response = client.postResult("/api/CoffeeShopReviews/$reviewId/reports") {
@@ -50,7 +51,7 @@ class ReviewApiService(private val client: HttpClient) {
         id
     }
 
-    suspend fun createReview(req: SendReviewReq): Result<Unit> = runCatching {
+    suspend fun createReview(req: SendReviewReq): Result<Unit> = requestResult {
         val response = client.postResult("/api/ModerationReviews") {
             setJsonBody(req)
         }.getOrThrow()
@@ -60,7 +61,7 @@ class ReviewApiService(private val client: HttpClient) {
         }
     }
 
-    suspend fun updateReview(reviewId: String, req: UpdateReviewReq): Result<Unit> = runCatching {
+    suspend fun updateReview(reviewId: String, req: UpdateReviewReq): Result<Unit> = requestResult {
         val response = client.putResult("/api/ModerationReviews/$reviewId") {
             setJsonBody(req)
         }.getOrThrow()
@@ -71,7 +72,7 @@ class ReviewApiService(private val client: HttpClient) {
     }
 
     /** PUT to mark helpful, DELETE to remove the vote. Both idempotent; returns fresh count/state. */
-    suspend fun setReviewHelpful(reviewId: String, helpful: Boolean): Result<ReviewHelpfulResponseDto> = runCatching {
+    suspend fun setReviewHelpful(reviewId: String, helpful: Boolean): Result<ReviewHelpfulResponseDto> = requestResult {
         val path = "/api/CoffeeShopReviews/$reviewId/helpful"
         val response = (if (helpful) client.putResult(path) else client.deleteResult(path)).getOrThrow()
         val apiResponse = response.body<ApiResponse<ReviewHelpfulResponseDto>>()
@@ -82,7 +83,7 @@ class ReviewApiService(private val client: HttpClient) {
     }
 
     suspend fun getUserReviews(userId: String, page: Int, pageSize: Int): Result<GetReviewsByUserIdResponseDto> =
-        runCatching {
+        requestResult {
             val response = client.getResult("/api/users/$userId/reviews") {
                 parameter("pageNumber", page)
                 parameter("pageSize", pageSize)
@@ -98,7 +99,7 @@ class ReviewApiService(private val client: HttpClient) {
         status: ModerationStatusDto,
         page: Int,
         pageSize: Int,
-    ): Result<MyModerationReviewsPageDto> = runCatching {
+    ): Result<MyModerationReviewsPageDto> = requestResult {
         val response = client.getResult("/api/ModerationReviews/mine") {
             parameter("page", page)
             parameter("pageSize", pageSize)

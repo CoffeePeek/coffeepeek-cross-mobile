@@ -61,7 +61,7 @@ app / current composition module
           ▼               ▼                ▼
       feature A       feature B        core infrastructure
           │               │
-          └── other feature API / supported pure domain contracts ──┘
+          └── other feature API ──┘
 
 within one feature:
     impl → api
@@ -88,7 +88,7 @@ Allowed dependencies:
 Forbidden dependencies:
 
 - `core → feature`;
-- `feature A business/UI → feature B` implementation (`data`, `impl`, or `di`);
+- `feature A business/UI → feature B` domain or implementation (`data`, `impl`, or `di`);
 - `domain → data`, UI, Android, Compose, Ktor, Room, SQL, HTTP, or Koin;
 - `data → ui`;
 - UI → DTO, entity, DAO, Ktor service, or repository implementation;

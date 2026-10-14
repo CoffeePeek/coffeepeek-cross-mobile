@@ -7,14 +7,12 @@ import com.coffeepeek.feature.shop.domain.model.ShopViewer
 import com.coffeepeek.feature.shop.domain.model.ShopCheckIn
 import com.coffeepeek.feature.shop.domain.repository.ShopDetailsRepository
 import com.coffeepeek.feature.shop.domain.repository.ShopCheckInVoteRepository
-import com.coffeepeek.feature.favorites.domain.repository.FavoritesRepository
-import com.coffeepeek.feature.favorites.domain.model.FavoriteShop
+import com.coffeepeek.feature.shop.domain.repository.ShopFavorites
 import com.coffeepeek.feature.shop.impl.ui.compose.model.ShopDetailAction
 import com.coffeepeek.feature.shop.impl.ui.compose.model.ShopDetailEvent
 import com.coffeepeek.feature.shop.impl.ui.compose.model.ShopDetailEventEnvelope
 import com.coffeepeek.feature.shop.impl.ui.compose.model.ShopDetailState
 import com.coffeepeek.feature.shop.impl.ui.compose.model.ShopPriceLevel
-import com.coffeepeek.feature.shop.impl.ui.data.toFavoriteSnapshot
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.currentCoroutineContext
@@ -26,7 +24,7 @@ internal class ShopDetailViewModel(
     private val shopId: String,
     private val detailsRepository: ShopDetailsRepository,
     private val checkInVoteRepository: ShopCheckInVoteRepository,
-    private val favoritesRepository: FavoritesRepository,
+    private val favoritesRepository: ShopFavorites,
     private val currentViewer: suspend () -> Result<ShopViewer>,
     private val currentDayOfWeek: () -> Int,
     private val currentMinuteOfDay: () -> Int? = { null },
@@ -44,7 +42,7 @@ internal class ShopDetailViewModel(
     private var favoriteMutationJob: Job? = null
     private var favoriteObservation: Job? = null
     private var favoriteGeneration = 0
-    private var latestFavorites: List<FavoriteShop>? = null
+    private var latestFavorites: Set<String>? = null
 
     init { onAction(ShopDetailAction.Retry) }
 
@@ -190,7 +188,7 @@ internal class ShopDetailViewModel(
                     currentUserId = viewer.userId.takeIf { viewer.isLoggedIn },
                     todayDayOfWeek = dayOfWeek, todayMinuteOfDay = minuteOfDay,
                     featuresExpanded = featuresExpanded && this.details?.features == details.features,
-                    isFavorite = latestFavorites?.any { it.id == details.overview.id } == true,
+                    isFavorite = latestFavorites?.contains(details.overview.id) == true,
                     hasError = false)
             }
         } catch (cancelled: CancellationException) {
@@ -219,13 +217,13 @@ internal class ShopDetailViewModel(
         updateState { copy(favoriteAvailable = false) }
         favoriteObservation = viewModelScope.launch {
             try {
-                favoritesRepository.observe().collect { result ->
+                favoritesRepository.observeIds().collect { result ->
                     result.exceptionOrNull()?.let { if (it is CancellationException) throw it }
                     if (generation != favoriteGeneration) return@collect
                     result.getOrNull()?.let { latestFavorites = it }
                     updateState {
                         copy(
-                            isFavorite = latestFavorites?.any { it.id == (details?.overview?.id ?: shopId) }
+                            isFavorite = latestFavorites?.contains(details?.overview?.id ?: shopId)
                                 ?: isFavorite,
                             favoriteAvailable = result.isSuccess,
                         )
@@ -252,7 +250,7 @@ internal class ShopDetailViewModel(
         updateState { copy(isFavoriteLoading = true) }
         try {
             val newValue = !currentState.isFavorite
-            val result = if (newValue) favoritesRepository.save(details.toFavoriteSnapshot())
+            val result = if (newValue) favoritesRepository.save(details)
                 else favoritesRepository.remove(details.overview.id)
             result.getOrThrow()
             // Membership comes from observation, including writes from other screens and logout.

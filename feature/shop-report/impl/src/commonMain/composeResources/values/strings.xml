@@ -18,4 +18,5 @@
     <string name="shop_report_thanks">Спасибо за сообщение</string>
     <string name="shop_report_will_review">Мы проверим данные о «%1$s».</string>
     <string name="shop_report_done">Готово</string>
+    <string name="shop_report_unconfirmed">Ответ сервера не получен. Сообщение могло быть отправлено. Повторная отправка недоступна, чтобы избежать дубликата.</string>
 </resources>

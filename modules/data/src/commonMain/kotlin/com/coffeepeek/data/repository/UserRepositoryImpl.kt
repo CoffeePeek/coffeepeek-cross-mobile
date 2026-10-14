@@ -1,5 +1,6 @@
 package com.coffeepeek.data.repository
 
+import com.coffeepeek.api.utils.requestResult
 import com.coffeepeek.api.model.request.UploadedPhotoReq
 import com.coffeepeek.api.model.response.AccountDeletionRequestDto
 import com.coffeepeek.api.model.response.UserProfileDto
@@ -93,7 +94,7 @@ class UserRepositoryImpl(
             _profile.update { profile -> profile?.copy(about = about) }
         }
 
-    override suspend fun updateAvatar(photo: PendingPhotoUpload): Result<Unit> = runCatching {
+    override suspend fun updateAvatar(photo: PendingPhotoUpload): Result<Unit> = requestResult {
         val meta = photoRepository.uploadAvatar(photo)
             .getOrElse { error("Не удалось загрузить фото: ${it.message ?: "неизвестная ошибка"}") }
         userApiService.updateAvatar(

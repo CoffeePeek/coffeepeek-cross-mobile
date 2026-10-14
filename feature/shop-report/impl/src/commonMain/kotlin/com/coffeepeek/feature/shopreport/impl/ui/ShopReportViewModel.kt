@@ -2,6 +2,7 @@ package com.coffeepeek.feature.shopreport.impl.ui
 
 import com.coffeepeek.core.presentation.MviViewModel
 import com.coffeepeek.feature.shopreport.domain.model.ShopIssueCategory
+import com.coffeepeek.feature.shopreport.domain.model.ShopReportDeliveryUnconfirmed
 import com.coffeepeek.feature.shopreport.domain.repository.ShopIssueReportRepository
 import com.coffeepeek.feature.shopreport.impl.ui.compose.model.ShopReportAction
 import com.coffeepeek.feature.shopreport.impl.ui.compose.model.ShopReportError
@@ -15,6 +16,8 @@ internal class ShopReportViewModel(
 ) : MviViewModel<ShopReportState, ShopReportAction, ShopReportEvent>(ShopReportState()) {
 
     override suspend fun handleActionInternal(action: ShopReportAction) {
+        if (action != ShopReportAction.Back && (currentState.isSubmitted || currentState.deliveryUnconfirmed ||
+                currentState.isSubmitting && action != ShopReportAction.Submit)) return
         when (action) {
             is ShopReportAction.SelectCategory -> updateState {
                 copy(selectedCategory = action.category, error = null)
@@ -38,7 +41,7 @@ internal class ShopReportViewModel(
             updateState { copy(error = ShopReportError.DescriptionRequired) }
             return
         }
-        if (currentState.isSubmitting || currentState.isSubmitted) return
+        if (currentState.isSubmitting || currentState.isSubmitted || currentState.deliveryUnconfirmed) return
 
         updateState { copy(isSubmitting = true, error = null) }
         try {
@@ -48,10 +51,14 @@ internal class ShopReportViewModel(
                 description = description.takeIf(String::isNotEmpty),
             )
             result.exceptionOrNull()?.let { if (it is CancellationException) throw it }
+            val unconfirmed = result.exceptionOrNull() is ShopReportDeliveryUnconfirmed
             updateState {
-                copy(isSubmitting = false, isSubmitted = result.isSuccess,
-                    error = if (result.isFailure) ShopReportError.SubmissionFailed else null)
+                copy(isSubmitting = false, isSubmitted = result.isSuccess, deliveryUnconfirmed = unconfirmed,
+                    error = if (result.isFailure && !unconfirmed) ShopReportError.SubmissionFailed else null)
             }
+        } catch (cancelled: CancellationException) {
+            updateState { copy(deliveryUnconfirmed = true) }
+            throw cancelled
         } finally {
             updateState { if (isSubmitting) copy(isSubmitting = false) else this }
         }

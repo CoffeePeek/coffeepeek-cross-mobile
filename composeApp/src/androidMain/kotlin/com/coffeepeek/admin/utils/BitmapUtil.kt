@@ -189,6 +189,9 @@ object BitmapUtil {
     }
 
     fun Bitmap.compressToSize(sizeRange: IntRange): ByteArray {
+        // Display assets include transparent drink artwork. JPEG cannot retain alpha.
+        // Decoding/resizing already bounds bitmap memory; PNG quality does not affect size.
+        if (hasAlpha()) return toByteArray(Bitmap.CompressFormat.PNG)
         var minq = 0
         var maxq = 100
         var stream = ByteArrayOutputStream()
@@ -229,6 +232,7 @@ object BitmapUtil {
     ): ByteArray {
         val type = when {
             format != null -> format
+            hasAlpha() -> Bitmap.CompressFormat.PNG
             Build.VERSION.SDK_INT >= Build.VERSION_CODES.R -> Bitmap.CompressFormat.WEBP_LOSSLESS
             else -> Bitmap.CompressFormat.JPEG
         }

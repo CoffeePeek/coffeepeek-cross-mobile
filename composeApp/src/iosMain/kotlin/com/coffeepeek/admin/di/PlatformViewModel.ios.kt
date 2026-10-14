@@ -2,7 +2,7 @@ package com.coffeepeek.admin.di
 
 import androidx.compose.runtime.Composable
 import androidx.lifecycle.ViewModel
-import org.koin.compose.koinInject
+import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.ParametersDefinition
 import org.koin.core.qualifier.Qualifier
 
@@ -11,7 +11,8 @@ actual inline fun <reified T : ViewModel> platformViewModel(
     qualifier: Qualifier?,
     key: String?,
     noinline parameters: ParametersDefinition?,
-): T = koinInject(
+): T = koinViewModel(
     qualifier = qualifier,
+    key = key,
     parameters = parameters,
 )

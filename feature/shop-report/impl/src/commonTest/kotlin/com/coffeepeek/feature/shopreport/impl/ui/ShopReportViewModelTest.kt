@@ -24,6 +24,23 @@ import kotlin.test.assertTrue
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class ShopReportViewModelTest {
+    @Test fun unconfirmedDeliveryCannotBeRetriedOrChanged() = runTest(dispatcher) {
+        val repository = Repository().apply { result = Result.failure(
+            com.coffeepeek.feature.shopreport.domain.model.ShopReportDeliveryUnconfirmed()) }
+        val vm = viewModel(repository)
+        vm.onAction(ShopReportAction.SelectCategory(ShopIssueCategory.ShopClosed))
+        runCurrent()
+        vm.onAction(ShopReportAction.Submit)
+        runCurrent()
+        assertTrue(vm.state.value.deliveryUnconfirmed)
+        vm.onAction(ShopReportAction.Submit)
+        vm.onAction(ShopReportAction.ChangeDescription("Another attempt"))
+        runCurrent()
+        assertEquals(1, repository.submissions)
+        assertEquals("", vm.state.value.description)
+        assertFalse(vm.state.value.isSubmitted)
+    }
+
     private val dispatcher = StandardTestDispatcher()
     private val store = ViewModelStore()
 
