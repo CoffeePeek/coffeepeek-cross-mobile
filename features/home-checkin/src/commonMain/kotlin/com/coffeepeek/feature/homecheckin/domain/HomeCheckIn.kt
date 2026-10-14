@@ -81,8 +81,6 @@ interface HomeCheckInRepository {
     suspend fun photo(url: String): Result<ByteArray>
 }
 
-val homeBrewMethods = listOf("espresso", "pour_over", "batch_drip", "moka_pot", "cezve", "aeropress", "french_press", "other")
-
 fun validateHomeCheckIn(input: HomeCheckInInput, editing: Boolean = false): String? {
     if (!Regex("^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?(?:Z|[+-]\\d{2}:\\d{2})$").matches(input.preparedAt))
         return "Укажите дату и время с часовым поясом"
@@ -107,8 +105,9 @@ fun validateHomeCheckIn(input: HomeCheckInInput, editing: Boolean = false): Stri
     }
     if (input.preparedOn != null && input.preparedOn !in setOf(utcDate, shiftDate(utcDate, -1), shiftDate(utcDate, 1)))
         return "Дата в календаре должна быть рядом с датой приготовления"
-    if (input.brewMethodCode != null && input.brewMethodCode !in homeBrewMethods)
-        return "Неизвестный способ приготовления"
+    // Catalog membership is checked by the server; underscores preserve historical home codes.
+    if (input.brewMethodCode != null && !Regex("^[a-z0-9][a-z0-9_-]{0,99}$").matches(input.brewMethodCode))
+        return "Некорректный способ заваривания"
     val beanSelectors = listOf(input.coffeeProductSlug, input.coffeeProductId, input.customBeanName).count { !it.isNullOrBlank() }
     if (beanSelectors > 1 || (!editing && !input.coffeeProductId.isNullOrBlank()))
         return "Выберите один источник зерна"
@@ -122,8 +121,10 @@ fun validateHomeCheckIn(input: HomeCheckInInput, editing: Boolean = false): Stri
     if (input.brewDurationSeconds != null && input.brewDurationSeconds !in 1..604800)
         return "Время приготовления должно быть от 1 до 604800 секунд"
     if (input.tasteScore != null && input.tasteScore !in 1..5) return "Оценка должна быть от 1 до 5"
-    if (!input.drinkSlug.isNullOrBlank() && !input.customDrinkName.isNullOrBlank())
-        return "Выберите напиток или укажите своё название"
+    if (input.drinkSlug == "other" && input.customDrinkName.orEmpty().trim().length !in 1..100)
+        return "Укажите название напитка: от 1 до 100 символов"
+    if (input.drinkSlug != "other" && !input.customDrinkName.isNullOrBlank())
+        return "Название можно указать только для другого напитка"
     if (input.photos.size > 5) return "Можно добавить до пяти фотографий"
     if (input.photos.indices.any { index -> input.photos.drop(index + 1).any { next ->
             input.photos[index].bytes.contentEquals(next.bytes)

@@ -1,6 +1,7 @@
 package com.coffeepeek.admin.feature.homecheckin.ui
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -31,6 +32,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -46,9 +48,12 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import coffeepeek.composeapp.generated.resources.Res
 import coffeepeek.composeapp.generated.resources.checkin_rating_coffee
+import coffeepeek.composeapp.generated.resources.maskot_with_magnifying_glass
+import com.coffeepeek.admin.feature.catalog.api.BrewMethodOption
 import com.coffeepeek.admin.feature.coffee.api.CoffeePickerItem
 import com.coffeepeek.admin.theme.CpDimens
 import com.coffeepeek.admin.ui.component.AppButton
@@ -57,10 +62,9 @@ import com.coffeepeek.admin.ui.component.CoffeePeekLoader
 import com.coffeepeek.admin.ui.component.CompactOutlinedTextField
 import com.coffeepeek.admin.ui.component.CpSearchField
 import com.coffeepeek.admin.ui.component.EditableRatingCard
-import com.coffeepeek.admin.ui.component.NativeActionSheet
+import com.coffeepeek.admin.ui.component.brewMethodIcon
 import com.coffeepeek.admin.ui.component.NativeDatePicker
 import com.coffeepeek.admin.ui.component.PhotoAttachmentsSection
-import com.coffeepeek.admin.ui.component.PlatformAction
 import com.coffeepeek.admin.ui.component.PlatformScrollableColumn
 import com.coffeepeek.admin.ui.component.ReviewFormField
 import com.coffeepeek.admin.ui.component.ReviewFormStep
@@ -75,13 +79,14 @@ import com.coffeepeek.admin.utils.utcIsoToLocalDate
 import com.coffeepeek.feature.homecheckin.domain.HomeCheckInInput
 import com.coffeepeek.feature.homecheckin.domain.HomeCheckInVisibility
 import com.coffeepeek.feature.homecheckin.domain.HomePhotoUpload
-import com.coffeepeek.feature.homecheckin.domain.homeBrewMethods
+import org.jetbrains.compose.resources.painterResource
 import kotlin.time.Instant
 
 @Composable
 internal fun HomeEditor(state: HomeCheckInUiState, vm: HomeCheckInViewModel, modifier: Modifier) {
     HomeEditorContent(state, { draft -> vm.updateDraft { draft } }, vm::setCatalogQuery,
-        vm::searchCatalog, vm::selectCatalogProduct, vm::save, vm::closeEditor, modifier)
+        vm::searchCatalog, vm::selectCatalogProduct, vm::save, vm::closeEditor, modifier,
+        onRetryMethods = vm::loadBrewMethods)
 }
 
 /** Uses the same fields, rating card and step rhythm as the coffee-shop check-in form. */
@@ -96,6 +101,7 @@ internal fun HomeEditorContent(
     onSave: () -> Unit,
     onClose: () -> Unit,
     modifier: Modifier = Modifier,
+    onRetryMethods: () -> Unit = {},
 ) {
     val draft = state.draft
     var showDatePicker by remember { mutableStateOf(false) }
@@ -161,10 +167,12 @@ internal fun HomeEditorContent(
                     }
                 }
                 ReviewFormStep(optional = true) {
-                    ReviewFormField("Способ приготовления") {
-                        HomeMethodField(draft.brewMethodCode, !state.saving) {
+                    ReviewFormField("Способ заваривания") {
+                        HomeMethodField(draft.brewMethodCode, state.brewMethods, !state.saving && !state.brewMethodsLoading) {
                             onDraftChange(draft.copy(brewMethodCode = it))
                         }
+                        if (state.brewMethodsLoading) Text("Загружаем способы…", style = MaterialTheme.typography.bodySmall)
+                        if (state.brewMethodsError) TextButton(onClick = onRetryMethods) { Text("Не удалось загрузить. Повторить") }
                     }
                 }
                 ReviewFormStep(optional = true) {
@@ -175,23 +183,15 @@ internal fun HomeEditorContent(
                     }
                 }
                 ReviewFormStep(optional = true) {
-                    Row(horizontalArrangement = Arrangement.spacedBy(CpDimens.spacing3)) {
-                        Column(Modifier.weight(1f)) {
-                            ReviewFormField("Кофе, г") {
-                                HomeNumberField(draft.doseGrams.orEmpty(), "Например, 18", KeyboardType.Decimal, !state.saving) {
-                                    onDraftChange(draft.copy(doseGrams = it.replace(',', '.').ifBlank { null }))
-                                }
-                            }
+                    ReviewFormField("Кофе, г") {
+                        HomeNumberField(draft.doseGrams.orEmpty(), "Например, 18", KeyboardType.Decimal, !state.saving) {
+                            onDraftChange(draft.copy(doseGrams = it.replace(',', '.').ifBlank { null }))
                         }
-                        Column(Modifier.weight(1f)) {
-                            ReviewFormField("Время, с") {
-                                HomeNumberField(draft.brewDurationSeconds?.toString().orEmpty(), "Например, 180", KeyboardType.Number, !state.saving) {
-                                    if (it.isEmpty() || it.toIntOrNull() != null) {
-                                        onDraftChange(draft.copy(brewDurationSeconds = it.toIntOrNull()))
-                                    }
-                                }
-                            }
-                        }
+                    }
+                }
+                ReviewFormStep(optional = true) {
+                    HomeDurationField(draft.brewDurationSeconds, !state.saving) {
+                        onDraftChange(draft.copy(brewDurationSeconds = it))
                     }
                 }
                 ReviewFormStep(optional = true) {
@@ -203,7 +203,8 @@ internal fun HomeEditorContent(
                 ReviewFormStep(optional = true) {
                     ReviewFormField("Напиток") {
                         ReviewTextInput(draft.customDrinkName ?: state.selected?.drinkName.takeIf { draft.drinkSlug != null }.orEmpty(),
-                            { if (!state.saving) onDraftChange(draft.copy(drinkSlug = null, customDrinkName = it.ifBlank { null })) },
+                            { name -> if (!state.saving) onDraftChange(draft.copy(
+                                drinkSlug = "other".takeIf { name.isNotBlank() }, customDrinkName = name.ifBlank { null })) },
                             "Например, капучино", singleLine = true, maxLength = 100)
                     }
                 }
@@ -237,7 +238,8 @@ internal fun HomeEditorContent(
 }
 
 @Composable
-private fun HomeSelectField(value: String, icon: ImageVector, action: String, enabled: Boolean, onClick: () -> Unit) {
+private fun HomeSelectField(value: String, icon: ImageVector, action: String, enabled: Boolean,
+    methodName: String? = null, onClick: () -> Unit) {
     val shape = RoundedCornerShape(CpDimens.radiusMd)
     Row(
         Modifier.fillMaxWidth().clip(shape).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.04f))
@@ -246,7 +248,9 @@ private fun HomeSelectField(value: String, icon: ImageVector, action: String, en
             .heightIn(min = CpDimens.controlHeight).padding(horizontal = 14.dp, vertical = CpDimens.spacing3),
         verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(CpDimens.spacing2),
     ) {
-        Icon(icon, null, Modifier.size(18.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
+        if (methodName != null) Icon(painterResource(brewMethodIcon(methodName)), null, Modifier.size(24.dp),
+            tint = MaterialTheme.colorScheme.onSurfaceVariant)
+        else Icon(icon, null, Modifier.size(18.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
         Text(value, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface, modifier = Modifier.weight(1f))
         Icon(CpIcons.ChevronUpDown, null, Modifier.size(16.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
     }
@@ -267,21 +271,22 @@ private fun HomeNumberField(value: String, placeholder: String, type: KeyboardTy
 }
 
 @Composable
-private fun HomeMethodField(selected: String?, enabled: Boolean, onSelect: (String?) -> Unit) {
+private fun HomeMethodField(selected: String?, methods: List<BrewMethodOption>, enabled: Boolean, onSelect: (String?) -> Unit) {
     var expanded by remember { mutableStateOf(false) }
-    val options = listOf<String?>(null) + homeBrewMethods
-    val native = expanded && NativeActionSheet("Способ приготовления", options.map { code ->
-        PlatformAction(code?.methodLabel() ?: "Не указывать", onClick = { onSelect(code); expanded = false })
-    }) { expanded = false }
+    val selectedMethod = methods.firstOrNull { it.slug == selected?.catalogBrewMethodSlug() }
+    val selectedName = selectedMethod?.name ?: selected?.methodLabel()
     Box {
-        HomeSelectField(selected?.methodLabel() ?: "Выбрать способ", CpIcons.Coffee, "Выбрать способ приготовления", enabled) { expanded = true }
-        DropdownMenu(expanded && !native, onDismissRequest = { expanded = false },
+        HomeSelectField(selectedName ?: "Выбрать способ", CpIcons.Coffee, "Выбрать способ заваривания", enabled,
+            methodName = selectedName) { expanded = true }
+        DropdownMenu(expanded, onDismissRequest = { expanded = false },
             modifier = Modifier.widthIn(min = 240.dp, max = 320.dp).heightIn(max = 360.dp),
             shape = RoundedCornerShape(CpDimens.radiusMd), containerColor = MaterialTheme.colorScheme.surface, tonalElevation = 0.dp) {
-            options.forEach { code ->
-                DropdownMenuItem(text = { Text(code?.methodLabel() ?: "Не указывать", style = MaterialTheme.typography.bodyMedium) },
-                    onClick = { onSelect(code); expanded = false },
-                    leadingIcon = { if (code == selected) Icon(CpIcons.Check, null, Modifier.size(18.dp)) else Box(Modifier.size(18.dp)) })
+            DropdownMenuItem(text = { Text("Не указывать") }, onClick = { onSelect(null); expanded = false })
+            methods.forEach { method ->
+                DropdownMenuItem(text = { Text(method.name, style = MaterialTheme.typography.bodyMedium) },
+                    onClick = { onSelect(method.slug); expanded = false },
+                    leadingIcon = { Icon(painterResource(brewMethodIcon(method.name)), null, Modifier.size(24.dp)) },
+                    trailingIcon = { if (method == selectedMethod) Icon(CpIcons.Check, null, Modifier.size(18.dp)) })
             }
         }
     }
@@ -291,34 +296,42 @@ private fun HomeMethodField(selected: String?, enabled: Boolean, onSelect: (Stri
 private fun HomeBeanPicker(state: HomeCheckInUiState, onQueryChange: (String) -> Unit, onSearch: () -> Unit,
     onProductSelected: (CoffeePickerItem) -> Unit, onCustomName: (String?) -> Unit, onBack: () -> Unit, modifier: Modifier) {
     var customName by remember { mutableStateOf(state.draft.customBeanName.orEmpty()) }
+    LaunchedEffect(Unit) { onSearch() }
     Column(modifier.fillMaxSize().padding(horizontal = CpDimens.spacing4),
         verticalArrangement = Arrangement.spacedBy(CpDimens.spacing4)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             IconButton(onClick = onBack, modifier = Modifier.size(CpDimens.controlHeight)) { Icon(CpIcons.Back, "Назад к приготовлению") }
             Text("Зерно", style = MaterialTheme.typography.headlineSmall, modifier = Modifier.weight(1f))
-            TextButton(onClick = { onCustomName(null) }) { Text("Не указывать") }
         }
         CpSearchField(state.catalogQuery, onQueryChange, "Название или обжарщик", Modifier.fillMaxWidth(), onSearch = onSearch)
-        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-            Text("Из каталога", style = MaterialTheme.typography.titleSmall, modifier = Modifier.weight(1f))
-            TextButton(onClick = onSearch, enabled = state.catalogQuery.isNotBlank() && !state.catalogLoading) { Text("Найти") }
-        }
-        LazyColumn(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(CpDimens.spacing2)) {
-            if (state.catalogLoading) item { CoffeePeekLoader() }
-            if (state.catalogError != null) item {
-                Text("Не удалось найти зерно. Попробуйте ещё раз.", color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
-            }
-            items(state.catalogItems, key = { it.slug }) { product ->
-                Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(CpDimens.radiusMd))
-                    .clickable(role = Role.Button) { onProductSelected(product) }.padding(vertical = CpDimens.spacing3, horizontal = CpDimens.spacing2)) {
-                    Text(product.name, style = MaterialTheme.typography.bodyLarge)
-                    Text(product.roasterName, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Box(Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
+            when {
+                state.catalogLoading -> CoffeePeekLoader()
+                state.catalogError != null -> Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text("Не удалось загрузить зерно", color = MaterialTheme.colorScheme.error)
+                    TextButton(onClick = onSearch) { Text("Повторить") }
                 }
-                HorizontalDivider(color = MaterialTheme.colorScheme.outline)
-            }
-            if (!state.catalogLoading && state.catalogItems.isEmpty() && state.catalogError == null) item {
-                Text("Найдите зерно в каталоге или добавьте своё название ниже.",
-                    style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                state.catalogItems.isEmpty() -> Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(CpDimens.spacing3),
+                ) {
+                    Image(painterResource(Res.drawable.maskot_with_magnifying_glass), null, Modifier.size(120.dp))
+                    Text("Зерно не найдено", style = MaterialTheme.typography.titleMedium, textAlign = TextAlign.Center)
+                    Text("Попробуйте изменить поиск или добавьте своё зерно ниже.",
+                        style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        textAlign = TextAlign.Center)
+                }
+                else -> LazyColumn(Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(CpDimens.spacing2)) {
+                    items(state.catalogItems, key = { it.slug }) { product ->
+                        Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(CpDimens.radiusMd))
+                            .clickable(role = Role.Button) { onProductSelected(product) }
+                            .padding(vertical = CpDimens.spacing3, horizontal = CpDimens.spacing2)) {
+                            Text(product.name, style = MaterialTheme.typography.bodyLarge)
+                            Text(product.roasterName, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                        HorizontalDivider(color = MaterialTheme.colorScheme.outline)
+                    }
+                }
             }
         }
         Column(Modifier.padding(bottom = CpDimens.spacing4), verticalArrangement = Arrangement.spacedBy(CpDimens.spacing3)) {
@@ -330,6 +343,38 @@ private fun HomeBeanPicker(state: HomeCheckInUiState, onQueryChange: (String) ->
         }
     }
 }
+
+@Composable
+private fun HomeDurationField(duration: Int?, enabled: Boolean, onChange: (Int?) -> Unit) {
+    var minutes by remember { mutableStateOf(duration?.div(60)?.takeIf { it > 0 }?.toString().orEmpty()) }
+    var seconds by remember { mutableStateOf(duration?.rem(60)?.takeIf { it > 0 }?.toString().orEmpty()) }
+    ReviewFormField("Время заваривания") {
+        Row(horizontalArrangement = Arrangement.spacedBy(CpDimens.spacing3)) {
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(CpDimens.spacing1)) {
+                Text("Минуты", style = MaterialTheme.typography.bodySmall)
+                HomeNumberField(minutes, "0", KeyboardType.Number, enabled) { value ->
+                    if (value.isEmpty() || value.toIntOrNull() in 0..10080) {
+                        minutes = value
+                        onChange(homeBrewDurationSeconds(minutes, seconds))
+                    }
+                }
+            }
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(CpDimens.spacing1)) {
+                Text("Секунды", style = MaterialTheme.typography.bodySmall)
+                HomeNumberField(seconds, "00", KeyboardType.Number, enabled) { value ->
+                    if (value.isEmpty() || value.toIntOrNull() in 0..59) {
+                        seconds = value
+                        onChange(homeBrewDurationSeconds(minutes, seconds))
+                    }
+                }
+            }
+        }
+    }
+}
+
+internal fun homeBrewDurationSeconds(minutes: String, seconds: String): Int? =
+    if (minutes.isBlank() && seconds.isBlank()) null
+    else (minutes.toIntOrNull() ?: 0) * 60 + (seconds.toIntOrNull() ?: 0)
 
 @OptIn(kotlin.time.ExperimentalTime::class, androidx.compose.material3.ExperimentalMaterial3Api::class)
 @Composable

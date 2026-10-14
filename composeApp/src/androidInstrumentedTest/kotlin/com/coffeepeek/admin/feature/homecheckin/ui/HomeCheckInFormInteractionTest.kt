@@ -19,6 +19,7 @@ import androidx.test.core.app.ActivityScenario
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.coffeepeek.admin.MainActivity
+import com.coffeepeek.admin.feature.catalog.api.BrewMethodOption
 import com.coffeepeek.admin.theme.CoffeePeekTheme
 import com.coffeepeek.admin.theme.PlatformSystemBars
 import com.coffeepeek.admin.ui.component.CpTopBar
@@ -79,7 +80,7 @@ class HomeCheckInFormInteractionTest {
 
     @Test
     fun creationChoicesAndHomeFieldsRemainInteractive() {
-        val initial = HomeCheckInInput(preparedAt = "2026-10-13T08:30:00Z", preparedOn = "2026-10-13")
+        val initial = HomeCheckInInput(preparedAt = "2026-10-13T08:30:00Z", preparedOn = "2026-10-13", tasteScore = 5)
         val draft = AtomicReference(initial)
         val saved = AtomicReference<HomeCheckInInput>()
         val shops = AtomicInteger()
@@ -89,6 +90,7 @@ class HomeCheckInFormInteractionTest {
                     var stage by remember { mutableStateOf("choice") }
                     var state by remember { mutableStateOf(HomeCheckInUiState(
                         loading = false, month = HomeMonth(2026, 10), editing = true, draft = initial,
+                        brewMethods = listOf(BrewMethodOption("hario-v60", "Hario V60")),
                     )) }
                     CoffeePeekTheme(darkTheme = true) {
                         PlatformSystemBars(darkTheme = true)
@@ -121,7 +123,8 @@ class HomeCheckInFormInteractionTest {
             waitUntil { shops.get() == 1 }
             clickDescription("Добавить чекин")
             waitForText("Новый чекин")
-            clickDescription("Закрыть выбор чекина")
+            assertTrue(node { it.contentDescription?.toString() == "Закрыть выбор чекина" } == null)
+            InstrumentationRegistry.getInstrumentation().sendKeyDownUpSync(android.view.KeyEvent.KEYCODE_BACK)
             clickDescription("Добавить чекин")
             waitForText("Новый чекин")
             clickText("Дома")
@@ -140,12 +143,14 @@ class HomeCheckInFormInteractionTest {
             clickText("Готово")
             waitForText("Кофе дома")
             assertEquals("Selecting the same date preserves the original time", initial.preparedAt, draft.get().preparedAt)
-            clickDescription("Выбрать способ приготовления")
-            waitForText("Пуровер")
-            clickText("Пуровер")
-            waitUntil { draft.get().brewMethodCode == "pour_over" }
+            clickDescription("Выбрать способ заваривания")
+            waitForText("Hario V60")
+            clickText("Hario V60")
+            waitUntil { draft.get().brewMethodCode == "hario-v60" }
             clickDescription("Выбрать зерно")
             waitForText("Своё зерно")
+            waitForText("Зерно не найдено")
+            assertTrue(node { it.text?.toString() in listOf("Из каталога", "Найти", "Не указывать") } == null)
             screenshot("home-bean-picker-updated.png")
             val customLabel = requireNotNull(node { it.contentDescription?.toString() == "Название своего зерна" })
             val custom = find(customLabel) { control -> control.actionList.any { it.id == AccessibilityNodeInfo.ACTION_SET_TEXT } }
@@ -165,7 +170,7 @@ class HomeCheckInFormInteractionTest {
             screenshot("home-editor-public-visibility.png")
             clickText("Сохранить чекин")
             waitUntil { saved.get() != null }
-            assertEquals("pour_over", saved.get().brewMethodCode)
+            assertEquals("hario-v60", saved.get().brewMethodCode)
             assertEquals("Эфиопия Иргачеффе", saved.get().customBeanName)
             assertEquals(4, saved.get().tasteScore)
             assertEquals(HomeCheckInVisibility.Public, saved.get().visibility)

@@ -1,6 +1,8 @@
 package com.coffeepeek.admin.feature.homecheckin.ui
 
 import com.coffeepeek.admin.base.BaseViewModel
+import com.coffeepeek.admin.feature.catalog.api.BrewMethodCatalog
+import com.coffeepeek.admin.feature.catalog.api.BrewMethodOption
 import com.coffeepeek.admin.feature.coffee.api.CoffeePicker
 import com.coffeepeek.admin.feature.coffee.api.CoffeePickerItem
 import com.coffeepeek.admin.utils.currentUtcIsoDateTime
@@ -17,6 +19,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.launch
 
 internal data class HomeMonth(val year: Int, val month: Int) {
@@ -69,22 +73,28 @@ internal data class HomeCheckInUiState(
     val catalogItems: List<CoffeePickerItem> = emptyList(),
     val catalogLoading: Boolean = false,
     val catalogError: String? = null,
+    val brewMethods: List<BrewMethodOption> = emptyList(),
+    val brewMethodsLoading: Boolean = false,
+    val brewMethodsError: Boolean = false,
 )
 
 internal class HomeCheckInViewModel(
     private val repository: HomeCheckInRepository,
     private val coffeePicker: CoffeePicker,
+    private val brewMethodCatalog: BrewMethodCatalog,
 ) : BaseViewModel() {
     private val now = currentUtcIsoDateTime()
     private val today = utcIsoToLocalDate(now)
     private val todayMonth = HomeMonth(today.substring(0, 4).toInt(), today.substring(5, 7).toInt())
     private val _state = MutableStateFlow(HomeCheckInUiState(
         month = todayMonth,
-        draft = HomeCheckInInput(preparedAt = now, preparedOn = today),
+        draft = HomeCheckInInput(preparedAt = now, preparedOn = today, tasteScore = 5),
     ))
     val state = _state.asStateFlow()
     private var historyJob: Job? = null
     private var calendarJob: Job? = null
+    private var catalogJob: Job? = null
+    private var methodsJob: Job? = null
     private var statsRequested = false
 
     init { refresh() }
@@ -170,18 +180,23 @@ internal class HomeCheckInViewModel(
     fun closeDetail() = _state.update { it.copy(selected = null, editing = false, saveNotice = null) }
 
     fun create() {
+        catalogJob?.cancel()
         _state.update { it.copy(
             editing = true, selected = null, formError = null, saveNotice = null,
             catalogQuery = "", catalogItems = emptyList(), catalogSelectionName = null,
-            draft = HomeCheckInInput(preparedAt = currentUtcIsoDateTime(), preparedOn = utcIsoToLocalDate(currentUtcIsoDateTime())),
+            catalogLoading = false, catalogError = null,
+            draft = HomeCheckInInput(preparedAt = currentUtcIsoDateTime(), preparedOn = utcIsoToLocalDate(currentUtcIsoDateTime()), tasteScore = 5),
         ) }
+        loadBrewMethods()
     }
 
     fun edit() {
         val entry = _state.value.selected ?: return
+        catalogJob?.cancel()
         _state.update { it.copy(
             editing = true, formError = null, saveNotice = null,
             catalogQuery = "", catalogItems = emptyList(), catalogSelectionName = entry.beanName,
+            catalogLoading = false, catalogError = null,
             draft = HomeCheckInInput(
                 preparedAt = entry.preparedAtUtc, preparedOn = entry.preparedOn,
                 brewMethodCode = entry.brewMethodCode,
@@ -189,11 +204,12 @@ internal class HomeCheckInViewModel(
                 customBeanName = if (entry.coffeeProductId == null) entry.beanName else null,
                 doseGrams = entry.doseGrams, brewDurationSeconds = entry.brewDurationSeconds,
                 tasteScore = entry.tasteScore, text = entry.text,
-                drinkSlug = entry.drinkSlug,
+                drinkSlug = entry.drinkSlug ?: "other".takeIf { !entry.customDrinkName.isNullOrBlank() || !entry.drinkName.isNullOrBlank() },
                 customDrinkName = entry.customDrinkName ?: entry.drinkName.takeIf { entry.drinkSlug == null },
                 visibility = entry.visibility,
             ),
         ) }
+        loadBrewMethods()
     }
 
     fun updateDraft(change: (HomeCheckInInput) -> HomeCheckInInput) {
@@ -206,24 +222,45 @@ internal class HomeCheckInViewModel(
         }
     }
 
-    fun setCatalogQuery(query: String) = _state.update { it.copy(catalogQuery = query, catalogError = null) }
+    fun loadBrewMethods() {
+        if (_state.value.brewMethods.isNotEmpty()) return
+        methodsJob?.cancel()
+        _state.update { it.copy(brewMethodsLoading = true, brewMethodsError = false) }
+        methodsJob = workScope.launch {
+            val result = brewMethodCatalog.load()
+            coroutineContext.ensureActive()
+            result.onSuccess { methods -> _state.update { it.copy(brewMethods = methods, brewMethodsLoading = false) } }
+                .onFailure { _state.update { it.copy(brewMethodsLoading = false, brewMethodsError = true) } }
+        }
+    }
 
-    fun searchCatalog() {
+    fun setCatalogQuery(query: String) {
+        _state.update { it.copy(catalogQuery = query.take(100), catalogError = null) }
+        searchCatalog(debounce = true)
+    }
+
+    fun searchCatalog() = searchCatalog(debounce = false)
+
+    private fun searchCatalog(debounce: Boolean) {
+        catalogJob?.cancel()
         val query = _state.value.catalogQuery.trim()
-        if (query.isEmpty()) return
-        _state.update { it.copy(catalogLoading = true, catalogError = null) }
-        workScope.launch {
-            coffeePicker.search(query)
+        _state.update { it.copy(catalogLoading = true, catalogError = null, catalogItems = emptyList()) }
+        catalogJob = workScope.launch {
+            if (debounce) delay(300)
+            val result = coffeePicker.search(query)
+            coroutineContext.ensureActive()
+            result
                 .onSuccess { items -> _state.update { it.copy(catalogItems = items, catalogLoading = false) } }
                 .onFailure { error -> _state.update { it.copy(catalogError = error.message, catalogLoading = false) } }
         }
     }
 
     fun selectCatalogProduct(product: CoffeePickerItem) {
+        catalogJob?.cancel()
         _state.update { it.copy(
             draft = it.draft.copy(coffeeProductSlug = product.slug, coffeeProductId = null,
                 customBeanName = null),
-            catalogQuery = product.name, catalogItems = emptyList(), catalogError = null,
+            catalogLoading = false, catalogError = null,
             catalogSelectionName = product.name,
         ) }
     }

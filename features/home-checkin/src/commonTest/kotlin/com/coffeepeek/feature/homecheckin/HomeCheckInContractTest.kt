@@ -232,7 +232,35 @@ class HomeCheckInContractTest {
         assertTrue(validateHomeCheckIn(base.copy(doseGrams = "18.001")) != null)
         assertTrue(validateHomeCheckIn(base.copy(coffeeProductSlug = "bean", customBeanName = "Other")) != null)
         assertTrue(validateHomeCheckIn(base.copy(tasteScore = 6)) != null)
+        assertNull(validateHomeCheckIn(base.copy(drinkSlug = "other", customDrinkName = "Мой кофе")))
+        assertTrue(validateHomeCheckIn(base.copy(customDrinkName = "Мой кофе")) != null)
+        assertTrue(validateHomeCheckIn(base.copy(drinkSlug = "espresso", customDrinkName = "Мой кофе")) != null)
+        assertTrue(validateHomeCheckIn(base.copy(drinkSlug = "other", customDrinkName = " ")) != null)
+        assertTrue(validateHomeCheckIn(base.copy(drinkSlug = "other", customDrinkName = "а".repeat(101))) != null)
         assertTrue(validateHomeCheckIn(base.copy(photos = List(6) { HomePhotoUpload("x", "image/jpeg", byteArrayOf(1)) })) != null)
+    }
+
+    @Test
+    fun catalogMethodAndCustomDrinkAreSentOnCreateAndEdit() = runBlocking {
+        var requests = 0
+        val gateway = gateway(MockEngine { request ->
+            assertEquals(if (requests++ == 0) HttpMethod.Post else HttpMethod.Put, request.method)
+            val body = Json.parseToJsonElement((request.body as TextContent).text).jsonObject
+            assertEquals(JsonPrimitive("cezve-turkish-coffee"), body["brewMethodCode"])
+            assertEquals(JsonPrimitive("other"), body["drinkSlug"])
+            assertEquals(JsonPrimitive("Мой кофе"), body["customDrinkName"])
+            assertEquals(JsonPrimitive(195), body["brewDurationSeconds"])
+            respond("""{"isSuccess":true,"data":$entry}""", headers = jsonHeaders)
+        })
+        val uploader = HttpClient(MockEngine { error("No photo upload expected") })
+        try {
+            val repository = HomeCheckInRepositoryImpl(gateway, uploader, "https://gateway.example.com")
+            val input = HomeCheckInInput("2026-10-13T08:00:00Z", brewMethodCode = "cezve-turkish-coffee",
+                drinkSlug = "other", customDrinkName = "  Мой кофе  ", brewDurationSeconds = 195)
+            repository.create(input).getOrThrow()
+            repository.update(id, input).getOrThrow()
+            assertEquals(2, requests)
+        } finally { gateway.close(); uploader.close() }
     }
 
     @Test

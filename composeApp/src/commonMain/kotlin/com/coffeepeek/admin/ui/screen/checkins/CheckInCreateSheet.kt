@@ -15,7 +15,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
@@ -50,7 +49,7 @@ internal fun CheckInCreateButton(modifier: Modifier = Modifier, onClick: () -> U
 @Composable
 internal fun CheckInCreateSheet(onDismiss: () -> Unit, onShop: () -> Unit, onHome: () -> Unit) {
     SwipeDismissModalBottomSheet(onDismissRequest = onDismiss) {
-        CheckInCreateContent(onDismiss, onShop, onHome)
+        CheckInCreateContent(onShop, onHome)
     }
 }
 
@@ -75,12 +74,12 @@ internal fun CheckInCreateFlow(
         dismissEnabled = !home.saving,
     ) {
         if (creatingHome) HomeEditor(home, homeVm, Modifier.fillMaxWidth().heightIn(max = 680.dp))
-        else CheckInCreateContent(onDismiss, onShop, onHome = { homeVm.create(); creatingHome = true })
+        else CheckInCreateContent(onShop, onHome = { homeVm.create(); creatingHome = true })
     }
 }
 
 @Composable
-private fun CheckInCreateContent(onDismiss: () -> Unit, onShop: () -> Unit, onHome: () -> Unit) {
+private fun CheckInCreateContent(onShop: () -> Unit, onHome: () -> Unit) {
     var homeSelected by rememberSaveable { mutableStateOf(false) }
     Column(
         Modifier.fillMaxWidth().padding(horizontal = CpDimens.spacing4).padding(bottom = CpDimens.spacing6),
@@ -92,21 +91,12 @@ private fun CheckInCreateContent(onDismiss: () -> Unit, onShop: () -> Unit, onHo
                 Text("Где вы пили кофе?", style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
-            IconButton(onClick = onDismiss, modifier = Modifier.size(CpDimens.controlHeight)) {
-                Icon(CpIcons.Close, "Закрыть выбор чекина", modifier = Modifier.size(20.dp))
-            }
         }
         Column(Modifier.selectableGroup(), verticalArrangement = Arrangement.spacedBy(CpDimens.spacing2)) {
             CreateChoice("В кофейне", "Выбрать место и напиток", CpIcons.Location, !homeSelected) { homeSelected = false }
             CreateChoice("Дома", "Записать приготовление", CpIcons.Coffee, homeSelected) { homeSelected = true }
         }
         AppButton("Продолжить", onClick = { if (homeSelected) onHome() else onShop() })
-        Row(verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(CpDimens.spacing2)) {
-            Icon(CpIcons.Community, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(14.dp))
-            Text("Вы выбираете, кому будет виден чекин", style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant)
-        }
     }
 }
 
