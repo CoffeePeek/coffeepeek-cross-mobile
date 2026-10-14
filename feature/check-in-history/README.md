@@ -192,3 +192,50 @@ host. Next provide Android revocable account leases and lifecycle stores, real
 zone-aware calendar/date adapters and the existing protected-image renderer;
 assemble them in app composition before switching VisitedPlaces. Keep home
 preparations and iOS renderers/writers on their existing paths.
+
+## Android composition preparation — 2026-10-14
+
+Application-owned code now lives in `composeApp/androidMain/di/checkinhistory`:
+
+- A permanently revocable account lease binds the existing authenticated remote
+  repository. Guests/expired sessions/missing account IDs never issue owner
+  reads. Token renewal for the same account preserves pending work; logout,
+  replacement or failed observation cancels it. Non-cooperative late replies
+  cannot restore old history. Result failures remain failures and cancellation
+  is rethrown, including a mistakenly Result-wrapped cancellation.
+- A navigation-owned host observes account changes even while history is not
+  composed. It revokes the old lease and clears its child ViewModelStore on
+  replacement/disposal. Observation failure hides data behind localized retry
+  and Back actions; retry creates a new store rather than reusing old content.
+- The calendar captures today and ZoneId together. Each month boundary uses
+  `atStartOfDay` with that zone's rules independently, supporting DST and missing
+  local midnight. Response grouping uses the same immutable zone. New snapshots
+  see device-zone/clock changes. Parsing preserves the application's existing
+  UTC fallback for server timestamps without a suffix, without fabricating a
+  valid date on malformed input.
+- The prepared renderer assembles the feature entry with the bound repository,
+  date snapshot and existing `CpImage` protected-URL loader. It guards caller
+  callbacks again at the application boundary. The eventual destination must
+  scope any full-screen photo state to the account and clear it on replacement;
+  a callback guard does not revoke an already-open external viewer.
+- Android Koin registers one lazy repository/calendar/renderer graph. Resolution
+  does not read credentials, open leases or make HTTP requests. Shared/iOS DI
+  and legacy screens remain unchanged; no new Gradle module is necessary.
+
+The current active VisitedPlaces route is deliberately unchanged. No local
+OpenAPI/backend implementation establishes whether `from`/`to` mean instant
+bounds or local date boundaries, and whether `to` is exclusive. Mock transport
+tests prove serialization, not server filtering. Confirm that contract (or
+verify it with safe authenticated boundary fixtures) before routing users to
+the new calendar. Remaining destination work: account-scoped photo overlay,
+existing date-label/navigation adapters, route selection and live read-only
+calendar/list/return parity. Do not remove shared legacy paths used by iOS.
+
+Verification of this composition checkpoint: all 180 application unit tests pass
+in each of Direct and Play, including 17 new calendar/lease/host/DI tests; the
+48 history regression tests pass. Both debug APK assemblies, expanded packaged
+DEX checks and application lint pass. The DI test uses fake sessions and an
+unreachable fixture client without credential reads or requests. No APK was
+installed or live account/backend scenario exercised in this checkpoint; the
+11 physical/emulator UI tests above cover the prior isolated feature screen,
+not the new application composition or its future destination integration.

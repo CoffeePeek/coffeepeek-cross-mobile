@@ -22,6 +22,9 @@ Personal shop-visit history is the next independent owner. Its populated
 check-in-history/domain and data modules prepare read-only pagination/calendar
 contracts; impl prepares shared typed MVI and Android calendar/list UI without
 data/HTTP dependencies. API now exposes the narrow screen and date-snapshot contracts.
+Android app composition prepares revocable account leases, a navigation-owned
+feature store, zone-aware calendar snapshots and lazy DI with the existing protected
+image loader. Backend range semantics and destination integration remain separate gates.
 VisitedPlaces and home preparations remain on their existing paths.
 See [check-in-history/README.md](check-in-history/README.md) for the audited boundaries,
 ordered implementation and session/time-zone risks. No empty API module or

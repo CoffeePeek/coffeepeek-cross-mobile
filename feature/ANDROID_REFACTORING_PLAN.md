@@ -44,7 +44,7 @@ source snapshot, not guaranteed runtime coverage or future product scope.
 | Shop check-in creation | New Android form and app-owned draft/session/photo adapters | Authenticated submission, camera/picker and recreation QA |
 | Shop detail | New Android renderer/feature entry built and smoke-tested | Full behavior/live QA pending |
 | Public shop check-in list | New Android entry built; isolated presentation tests pass | Live guest/owner/navigation QA pending |
-| Personal check-in history | Legacy VisitedPlaces calendar/list stays active | Independent api/domain/data/impl and prepared Android UI; session/date/DI integration remains |
+| Personal check-in history | Legacy VisitedPlaces calendar/list stays active | api/domain/data/impl, Android UI and account/date/DI renderer prepared; backend boundary confirmation and destination integration remain |
 | Home check-ins | Existing main module and HomeCheckIns route retained | Audit ownership with personal history before its later migration |
 | Core | Infrastructure, presentation and design-system available; selected consumers use them | Legacy HTTP/Room are not globally replaced |
 
@@ -229,14 +229,21 @@ Android wiring are ready, not between the current preparation steps:
 2026-10-14: check-in-history/domain and data now contain an independent read
 foundation. Its 13 tests, Android lint and Android/iOS Simulator compilation pass.
 VisitedPlaces remains on its legacy renderer. Typed MVI and the Android screen
-API/UI are prepared; next comes Android session/time-zone/image/DI composition. Details and
+API/UI and Android session/time-zone/image/DI composition are prepared. Backend
+range confirmation and Android destination/overlay integration come next. Details and
 module-creation rationale are in check-in-history/README.md. Home check-ins remain
 their existing separate capability, not a duplicate migration target.
 
-Presentation gate: 24 MVI tests and 13 domain/data regressions pass (37 total),
+Earlier presentation gate: 24 MVI tests and 13 domain/data regressions passed (37 total),
 along with impl Android lint/compilation and shared iOS Simulator compilation.
-This validates fake-repository coordination only, not a device screen or real
-account-bound transport. No application route/DI or iOS UI has been switched.
+That validated fake-repository coordination only, not a device screen or real
+account-bound transport; no application route/DI or iOS UI was switched then.
+
+Current composition gate: 17 new Android calendar/lease/store/DI unit tests pass
+inside all 180 app tests in each Direct/Play variant; 48 history regression tests,
+both debug APK assemblies/DEX checks and app lint pass. The lazy Android DI graph
+is registered, but VisitedPlaces still selects the legacy screen. Prior 11
+Pixel/emulator UI tests cover the isolated feature screen, not this new host.
 
 These twelve areas are an ownership map, not instructions to create 48 empty
 modules. Complexity includes parity, session/platform integration and testing.
