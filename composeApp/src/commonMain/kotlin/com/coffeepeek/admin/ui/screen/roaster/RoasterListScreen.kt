@@ -70,7 +70,7 @@ internal fun RoasterListScreen(
         ) { scrollModifier ->
             LazyColumn(
                 state = listState, modifier = scrollModifier.fillMaxSize(),
-                contentPadding = PaddingValues(start = CpDimens.spacing4, top = CpDimens.spacing2, end = CpDimens.spacing4, bottom = clearance + CpDimens.spacing4),
+                contentPadding = PaddingValues(start = CpDimens.spacing4, top = CpDimens.spacing2, end = CpDimens.spacing4, bottom = clearance + 88.dp),
                 verticalArrangement = Arrangement.spacedBy(CpDimens.spacing3),
             ) {
                 itemsIndexed(visible, key = { index, item -> item.catalog.id.ifBlank { "unaddressed-roaster:$index" } }) { _, item ->

@@ -261,7 +261,7 @@ fun FeedScreen(
                 start = CpDimens.spacing4,
                 top = CpDimens.spacing4,
                 end = CpDimens.spacing4,
-                bottom = CpDimens.spacing4 + navClearance,
+                bottom = navClearance + 88.dp,
             )
 
             discoveryTransition.AnimatedContent(

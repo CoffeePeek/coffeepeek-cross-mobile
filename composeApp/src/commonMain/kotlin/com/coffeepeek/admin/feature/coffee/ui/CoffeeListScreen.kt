@@ -92,7 +92,7 @@ internal fun CoffeeListScreen(vm: CoffeeListViewModel = platformViewModel()) {
                 modifier = scrollModifier.fillMaxSize(),
                 contentPadding = PaddingValues(
                     start = CpDimens.spacing4, top = CpDimens.spacing4,
-                    end = CpDimens.spacing4, bottom = clearance + CpDimens.spacing4,
+                    end = CpDimens.spacing4, bottom = clearance + 88.dp,
                 ),
                 verticalArrangement = Arrangement.spacedBy(CpDimens.spacing4),
             ) {

@@ -16,6 +16,7 @@ import com.coffeepeek.admin.feature.coffee.ui.CoffeeListScreen
 import com.coffeepeek.admin.feature.community.ui.CommunityScreen
 import com.coffeepeek.admin.ui.Navigator.isHandledByRootNav
 import com.coffeepeek.admin.ui.screen.main.DiscoveryTabContent
+import com.coffeepeek.admin.ui.screen.main.CheckInTabContent
 import com.coffeepeek.admin.ui.screen.profile.ProfileScreen
 import com.coffeepeek.admin.ui.screen.profile.SettingsScreen
 import kotlinx.coroutines.delay
@@ -93,7 +94,7 @@ internal actual fun PlatformRootNavigation(
             val root = NativeScreenController(labels[index]) {
                 when (index) {
                     0 -> DiscoveryTabContent(onMapExpandedChange = {})
-                    1 -> CoffeeListScreen()
+                    1 -> CheckInTabContent { CoffeeListScreen() }
                     2 -> CommunityScreen(onCreateCheckIn = { Navigator.navigate(Navigator.Screen.CreateCheckIn) })
                     3 -> ProfileScreen()
                     4 -> SettingsScreen()

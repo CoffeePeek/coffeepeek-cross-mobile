@@ -34,6 +34,7 @@ import com.coffeepeek.admin.ui.screen.roaster.RoasterListViewModel
 internal fun DiscoveryTabContent(onMapExpandedChange: (Boolean) -> Unit) {
     val reduceMotion = com.coffeepeek.admin.ui.component.platformReduceMotion()
     var showRoasters by rememberSaveable { mutableStateOf(false) }
+    var isMapExpanded by remember { mutableStateOf(false) }
     val feedVm: FeedViewModel = platformViewModel()
     val feedState by feedVm.uiState.collectAsState()
     val roasterVm: RoasterListViewModel = platformViewModel()
@@ -43,7 +44,7 @@ internal fun DiscoveryTabContent(onMapExpandedChange: (Boolean) -> Unit) {
     }
     val searchOpacity = animateFloatAsState(if (showRoasters) 0f else 1f, tween(if (reduceMotion) 0 else 360), label = "discovery-roaster-list")
     val searchVisible by remember { derivedStateOf { searchOpacity.value > 0f } }
-    Box(Modifier.fillMaxSize()) {
+    CheckInTabContent(showCreateButton = !isMapExpanded) {
         RetainedContent(visible = searchVisible) {
             Box(Modifier.fillMaxSize().graphicsLayer {
                 alpha = searchOpacity.value
@@ -68,7 +69,10 @@ internal fun DiscoveryTabContent(onMapExpandedChange: (Boolean) -> Unit) {
                             vm = roasterVm,
                         )
                     },
-                    onMapExpandedChange = onMapExpandedChange,
+                    onMapExpandedChange = {
+                        isMapExpanded = it
+                        onMapExpandedChange(it)
+                    },
                 )
             }
         }

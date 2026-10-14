@@ -204,7 +204,9 @@ internal fun ComposeMainScreen() {
                     }
 
                     navigation<Navigator.Screen.CoffeeGraph>(startDestination = Navigator.Screen.CoffeeTab) {
-                        composable<Navigator.Screen.CoffeeTab> { CoffeeListScreen() }
+                        composable<Navigator.Screen.CoffeeTab> {
+                            CheckInTabContent { CoffeeListScreen() }
+                        }
                     }
 
                     navigation<Navigator.Screen.CommunityGraph>(startDestination = Navigator.Screen.CommunityTab) {
