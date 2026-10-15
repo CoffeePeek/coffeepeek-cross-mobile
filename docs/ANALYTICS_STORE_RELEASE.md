@@ -7,7 +7,8 @@
 ## Что меняется для релиза
 
 Новые ключи App Store Connect, Google Play, provisioning capabilities и разрешение
-на IDFA для PostHog не нужны. EU host и публичный project token уже в коде.
+на IDFA для PostHog не нужны. EU host задан в коде, project token поступает из
+конфигурации release-сборки (`POSTHOG_PROJECT_TOKEN`), см. [ANALYTICS.md](ANALYTICS.md).
 В Release сбор включается только после входа и явного согласия; Debug по умолчанию
 выключен. На втором шаге email-регистрации есть необязательная галочка без
 предустановленного согласия, после входа — переключатель на странице

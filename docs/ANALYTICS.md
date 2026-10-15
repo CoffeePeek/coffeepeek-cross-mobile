@@ -13,8 +13,15 @@ Android SDK `3.59.0`, JVM core `6.32.0`, iOS SDK `3.64.1`. Версия KMP за
 `gradle/libs.versions.toml`; iOS закреплена в сгенерированном SwiftPM-пакете.
 
 Проект — CoffeePeek EU 306763, ingest — `https://eu.i.posthog.com`. В клиенте
-используется только публичный project token из предоставленного контракта.
+используется только project ingestion token из конфигурации сборки.
 Management API keys и пользовательские токены в события не передаются.
+
+Токен не хранится в репозитории. Android читает `POSTHOG_PROJECT_TOKEN` из
+окружения сборки (приоритет) или игнорируемого `local.properties`. iOS читает
+`PostHogProjectToken` из Info.plist, подставленный из `POSTHOG_PROJECT_TOKEN`
+в игнорируемом `iosApp/Configuration/Local.xcconfig`. Release CI получает значение
+из GitHub Actions secret `POSTHOG_PROJECT_TOKEN`. Без токена сборка работает,
+аналитика выключена. Не добавлять токен в отслеживаемые файлы.
 
 * Android: `app=coffee-peek-android`; iOS: `app=coffee-peek-ios`.
 * `app_version` содержит версию и номер сборки; `environment` — `development`
@@ -170,10 +177,13 @@ remote config: после разрешённого setup возможны слу
    rotation и возвращение из photo picker на устройстве остаются непроверенными.
    Unit-тесты дополнительно проверяют application payload и lifecycle state.
 9. По продуктовому решению мобильная аналитика теперь собирается только после
-   входа. Гостевые exposure/attempt/auth-gate и password `sign_up_completed`
-   до первого входа не попадают в PostHog и не воспроизводятся позже. Для email
-   регистрация сама не создаёт сессию: согласие начнёт действовать при последующем
-   входе. Существующие аккаунты без согласия могут включить сбор на странице
+   входа. Гостевые exposure/attempt/auth-gate не попадают в PostHog. Для email
+   регистрация сама не создаёт сессию: при согласии успешная регистрация хранит
+   в памяти одно намерение на час. `sign_up_completed` отправляется один раз при
+   последующем password-входе с тем же email и backend user ID. Email используется
+   только для сопоставления в памяти, не сохраняется и не передаётся в свойствах.
+   Другой аккаунт, социальный вход, отзыв согласия или перезапуск удаляют намерение.
+   Существующие аккаунты без согласия могут включить сбор на странице
    Настройки → Политика использования.
 
 ## Проверки

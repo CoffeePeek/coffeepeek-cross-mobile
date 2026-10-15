@@ -6,8 +6,7 @@ import com.posthog.kmp.PostHogBeforeSend
 import com.posthog.kmp.PostHogConfig
 import com.posthog.kmp.PostHogContext
 
-// Public ingestion token supplied in the contract. No management/API credentials belong here.
-internal const val POSTHOG_PROJECT_TOKEN = "phc_ucb4dkookxkqiCgSkzz3MjDRCQa7HQxEWBroKJbdNjbK"
+internal expect val postHogProjectToken: String
 internal expect fun postHogContext(): PostHogContext
 internal expect fun setupPostHog(config: PostHogConfig, context: PostHogContext)
 internal expect fun erasePostHogQueue()
@@ -21,7 +20,7 @@ internal class PostHogTransport : AnalyticsTransport {
         erasePostHogQueue()
         setupPostHog(
             PostHogConfig(
-                apiKey = POSTHOG_PROJECT_TOKEN,
+                apiKey = postHogProjectToken,
                 host = PostHogConfig.HOST_EU,
                 captureApplicationLifecycleEvents = false,
                 captureScreenViews = false,

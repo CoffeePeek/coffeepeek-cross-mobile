@@ -14,7 +14,7 @@
 | --- | --- |
 | Проект | [CoffeePeek, EU, project 306763](https://eu.posthog.com/project/306763) |
 | Адрес приёма событий | `https://eu.i.posthog.com` |
-| Публичный Project token | `phc_ucb4dkookxkqiCgSkzz3MjDRCQa7HQxEWBroKJbdNjbK` |
+| Публичный Project token | `<POSTHOG_PROJECT_TOKEN from release configuration>` |
 | Web SDK | `posthog-js`; фактическую установленную версию фиксирует `coffee-peek/package-lock.json` |
 | Web-конфигурация | `VITE_POSTHOG_KEY`, `VITE_POSTHOG_HOST` в `.env.production`; образец в `.env.example` |
 | Локальный web-сбор | Выключен, кроме явного `VITE_POSTHOG_ENABLE_DEV=true` |

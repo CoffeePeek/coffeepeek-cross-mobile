@@ -19,7 +19,8 @@ class PostHogPayloadTest {
         val context = InstrumentationRegistry.getInstrumentation().targetContext
         val connectivity = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
         assumeTrue("This test requires an offline emulator and never sends test events", connectivity.activeNetwork == null)
-        val queue = File(context.cacheDir, "posthog-disk-queue/$POSTHOG_PROJECT_TOKEN")
+        assumeTrue("Configure POSTHOG_PROJECT_TOKEN for the offline SDK test", postHogProjectToken.isNotBlank())
+        val queue = File(context.cacheDir, "posthog-disk-queue/$postHogProjectToken")
         val transport = PostHogTransport()
         transport.erase()
         val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)

@@ -144,6 +144,18 @@ val apiBaseUrl: String = run {
     }
 }
 
+val postHogProjectToken = providers.environmentVariable("POSTHOG_PROJECT_TOKEN")
+    .orElse(providers.provider {
+        val props = Properties()
+        rootProject.file("local.properties").takeIf { it.exists() }?.inputStream()?.use { props.load(it) }
+        props.getProperty("POSTHOG_PROJECT_TOKEN", "")
+    })
+    .map { value ->
+        value.trim().also { require(it.isEmpty() || it.matches(Regex("phc_[A-Za-z0-9_-]+"))) {
+            "POSTHOG_PROJECT_TOKEN must be a PostHog project ingestion token"
+        } }
+    }
+
 android {
     namespace = Config.APPLICATION_ID
     compileSdk = Config.COMPILE_SDK
@@ -162,6 +174,7 @@ android {
         buildConfigField("String", "GOOGLE_WEB_CLIENT_ID", "\"$googleWebClientId\"")
         buildConfigField("String", "API_BASE_URL", "\"$apiBaseUrl\"")
         buildConfigField("boolean", "POSTHOG_ENABLE_DEV", providers.gradleProperty("posthogEnableDev").map { (it == "true").toString() }.getOrElse("false"))
+        buildConfigField("String", "POSTHOG_PROJECT_TOKEN", "\"${postHogProjectToken.get()}\"")
     }
     packaging {
         resources {

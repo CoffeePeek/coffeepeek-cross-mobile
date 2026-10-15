@@ -32,7 +32,7 @@ internal fun installAnalytics(settings: SettingRepository, sessions: SessionRepo
             }
         },
         PostHogTransport(), scope,
-        enabled = !AppConfig.isDebug || analyticsDebugEnabled,
+        enabled = postHogProjectToken.isNotBlank() && (!AppConfig.isDebug || analyticsDebugEnabled),
     )
     Analytics.install(service)
     gateway.requestObserver =

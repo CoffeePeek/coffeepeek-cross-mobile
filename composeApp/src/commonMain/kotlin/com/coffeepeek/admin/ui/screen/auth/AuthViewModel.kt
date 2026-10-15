@@ -74,7 +74,7 @@ class AuthViewModel(
             onSuccess = { Navigator.navigate(Navigator.Screen.Main) },
             onError = { error -> _loginError.value = localizedLoginError(error.message) },
         ) {
-            authRepository.login(emailValue, passwordValue).getOrThrow().also { signInAnalytics(it.userId, "password", "login") }
+            authRepository.login(emailValue, passwordValue).getOrThrow().also { signInAnalytics(it.userId, "password", "login", emailValue) }
         }
     }
 

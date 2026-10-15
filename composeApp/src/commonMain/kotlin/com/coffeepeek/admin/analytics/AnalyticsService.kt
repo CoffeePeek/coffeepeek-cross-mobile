@@ -5,6 +5,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.getAndUpdate
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.flow.updateAndGet
 import kotlinx.coroutines.launch
@@ -64,6 +65,9 @@ internal class AnalyticsService(
     private var sdkRevision = 0L
     private var lastScreen = ""
     private var queueAge = TimeSource.Monotonic.markNow()
+    // Correlation only: never persisted or included in event properties.
+    private data class PasswordSignUp(val email: String, val created: kotlin.time.TimeMark)
+    private val passwordSignUp = MutableStateFlow<PasswordSignUp?>(null)
 
     init {
         scope.launch {
@@ -112,6 +116,7 @@ internal class AnalyticsService(
 
     suspend fun setConsent(consent: AnalyticsConsent) {
         if (consent == AnalyticsConsent.Unknown) return
+        if (consent == AnalyticsConsent.Declined) passwordSignUp.value = null
         val snapshot = mutableState.updateAndGet { it.copy(consent = consent, restored = true, consentPersisted = false,
             consentRevision = it.consentRevision + 1, generation = it.generation + 1, ready = false) }
         if (consent == AnalyticsConsent.Declined) runCatching { transport.stopDelivery() }
@@ -159,6 +164,20 @@ internal class AnalyticsService(
     }
 
     fun operationScope(page: String = state.value.page) = AnalyticsScope(state.value.generation, page.takeIf { it in pageTypes } ?: "other")
+
+    fun rememberPasswordSignUp(email: String) {
+        passwordSignUp.value = if (enabled && state.value.consent == AnalyticsConsent.Accepted &&
+            state.value.consentPersisted && email.isNotBlank()) {
+            PasswordSignUp(email.trim().lowercase(), TimeSource.Monotonic.markNow())
+        } else null
+    }
+
+    fun completePasswordSignUp(email: String?) {
+        val pending = passwordSignUp.getAndUpdate { null } ?: return
+        if (pending.email == email?.trim()?.lowercase() && pending.created.elapsedNow().inWholeHours < 1) {
+            track(AnalyticsEvent.SIGN_UP_COMPLETED, mapOf("method" to "password"))
+        }
+    }
 
     fun track(event: AnalyticsEvent, properties: Map<String, Any>, operation: AnalyticsScope = operationScope()): Boolean {
         val current = state.value

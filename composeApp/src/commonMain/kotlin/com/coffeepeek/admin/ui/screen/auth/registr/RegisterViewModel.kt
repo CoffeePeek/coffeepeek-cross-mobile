@@ -175,7 +175,7 @@ class RegisterViewModel(
             // The optional choice is separate from terms. No SDK setup is allowed before login.
             saveAnalyticsConsent(analyticsAccepted)
             authRepository.register(currentName, currentEmail, currentPassword).getOrThrow()
-            Analytics.track(AnalyticsEvent.SIGN_UP_COMPLETED, "method" to "password")
+            Analytics.service?.rememberPasswordSignUp(currentEmail)
         }
     }
 

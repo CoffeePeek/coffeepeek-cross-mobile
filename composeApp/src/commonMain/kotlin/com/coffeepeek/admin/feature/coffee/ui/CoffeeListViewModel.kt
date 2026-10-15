@@ -66,7 +66,7 @@ internal class CoffeeListViewModel(private val repository: CoffeeRepository) : V
 
     fun applyFilters(filters: CoffeeFilters) {
         val old = state.value.filters
-        val keys = filters.values.filterValues { it.isNotEmpty() }.keys + "availableOnly"
+        val keys = filters.analyticsKeys()
         Analytics.track(AnalyticsEvent.FILTERS_APPLIED, "catalog" to "coffees", "filter_keys" to keys.sorted(),
             "changed_filter_keys" to ((old.values.keys + filters.values.keys).filter { old.values[it] != filters.values[it] } + if (old.availableOnly != filters.availableOnly) listOf("availableOnly") else emptyList()).sorted(),
             "action" to if (filters.activeCount == 0) "reset" else "apply")
@@ -100,7 +100,7 @@ internal class CoffeeListViewModel(private val repository: CoffeeRepository) : V
             val snapshot = state.value
             val page = if (reset) 1 else snapshot.page + 1
             if (reset) activeSearch = searchAnalytics.begin(snapshot.query.trim().replace(Regex("\\s+"), " ") to snapshot.filters, snapshot.query,
-                (snapshot.filters.values.filterValues { it.isNotEmpty() }.keys + "availableOnly").toList())
+                snapshot.filters.analyticsKeys())
             val search = activeSearch
             val result = repository.search(snapshot.query, snapshot.filters, page)
             coroutineContext.ensureActive()
@@ -133,3 +133,7 @@ internal class CoffeeListViewModel(private val repository: CoffeeRepository) : V
         }
     }
 }
+
+private fun CoffeeFilters.analyticsKeys(): List<String> =
+    values.filterValues { it.isNotEmpty() }.keys.toList() +
+        if (availableOnly) listOf("availableOnly") else emptyList()

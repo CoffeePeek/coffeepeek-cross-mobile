@@ -69,6 +69,7 @@ jobs:
         shell: bash
         env:
           API_BASE_URL: ${{ vars.API_BASE_URL_MAIN }}
+          POSTHOG_PROJECT_TOKEN: ${{ secrets.POSTHOG_PROJECT_TOKEN }}
           GOOGLE_IOS_CLIENT_ID: ${{ secrets.GOOGLE_IOS_CLIENT_ID }}
           GOOGLE_WEB_CLIENT_ID: ${{ secrets.GOOGLE_WEB_CLIENT_ID }}
           GOOGLE_REVERSED_CLIENT_ID: ${{ secrets.GOOGLE_REVERSED_CLIENT_ID }}
@@ -131,7 +132,11 @@ jobs:
               raise SystemExit('GOOGLE_REVERSED_CLIENT_ID must correspond to GOOGLE_IOS_CLIENT_ID')
 
           # In xcconfig, // starts a comment. $() inserts an empty value.
+          posthog_token = os.environ.get('POSTHOG_PROJECT_TOKEN', '').strip()
+          if posthog_token and not re.fullmatch(r'phc_[A-Za-z0-9_-]+', posthog_token):
+              raise SystemExit('POSTHOG_PROJECT_TOKEN must be a PostHog project ingestion token')
           with open('iosApp/Configuration/Local.xcconfig', 'w', encoding='utf-8') as config:
+              config.write('POSTHOG_PROJECT_TOKEN = ' + posthog_token + '\n')
               config.write('API_BASE_URL = https:/$()/' + url[len('https://'):] + '\n')
               for name in configured:
                   config.write(name + ' = ' + os.environ[name] + '\n')

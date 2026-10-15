@@ -10,7 +10,11 @@ import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.flow.catch
 import kotlin.time.TimeSource
 
-internal class TrackedFavoriteInteractions(private val sessions: SessionRepository, private val scope: CoroutineScope) : FavoriteInteractions {
+internal class TrackedFavoriteInteractions(
+    private val sessions: SessionRepository,
+    private val scope: CoroutineScope,
+    private val openAuthentication: () -> Unit = { Navigator.navigate(Navigator.Screen.Auth) },
+) : FavoriteInteractions {
     private val lock = Mutex()
     private val pending = mutableSetOf<String>()
     private val mutations = mutableMapOf<String, Pair<String?, Job>>()
@@ -25,7 +29,6 @@ internal class TrackedFavoriteInteractions(private val sessions: SessionReposito
                 if (sessions.isActiveSession(session)) {
                     val action = lock.withLock { deferred.also { deferred = null } }
                     if (deferredAt.elapsedNow().inWholeMinutes < 10) action?.invoke()
-                    else lock.withLock { pending.clear() }
                 }
             }
         }
@@ -66,10 +69,16 @@ internal class TrackedFavoriteInteractions(private val sessions: SessionReposito
             if (!runCatching { sessions.isLoggedIn() }.getOrDefault(false)) {
                 lock.withLock {
                     // One short-lived intent, attached to this login. No action/account data on disk.
-                    pending.clear()
-                    pending.add(pendingKey)
+                    // Waiting for auth is not an in-flight mutation. A new tap must be able
+                    // to replace this intent and reopen auth after the previous flow closed.
+                    pending.remove(pendingKey)
                     deferredAt = TimeSource.Monotonic.markNow()
-                    deferred = { scope.launch { perform(true) }; Unit }
+                    deferred = {
+                        scope.launch {
+                            if (lock.withLock { pending.add(pendingKey) }) perform(true)
+                        }
+                        Unit
+                    }
                 }
                 if (sessions.isActiveSession(sessions.peekSession())) {
                     val resumed = lock.withLock { deferred.also { deferred = null } }
@@ -77,7 +86,7 @@ internal class TrackedFavoriteInteractions(private val sessions: SessionReposito
                     return@launch
                 }
                 Analytics.gate("favorites")
-                Navigator.navigate(Navigator.Screen.Auth)
+                openAuthentication()
             } else perform(false)
         }
     }

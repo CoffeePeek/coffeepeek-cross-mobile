@@ -11,6 +11,47 @@ import kotlinx.coroutines.test.*
 import kotlin.test.*
 
 class FavoriteAnalyticsTest {
+    @Test fun guestCanRetryTheSameFavoriteAndOnlyLatestIntentResumes() = runTest {
+        val sessions = AnalyticsSessions()
+        val sdk = RecordingTransport()
+        val service = analytics(MemoryConsent(AnalyticsConsent.Accepted), sdk)
+        service.setForeground(true); service.restoreConsent(); service.syncIdentity(null); Analytics.install(service)
+        var authenticationRequests = 0
+        var mutations = 0
+        val interactions = TrackedFavoriteInteractions(sessions, backgroundScope) { authenticationRequests++ }
+        interactions.change("key", false, true, { error("Abandoned intent must be replaced") })
+        runCurrent()
+        assertEquals(1, authenticationRequests)
+        // Auth was dismissed: session remains null and no session emission is required.
+        interactions.change("key", false, false, { mutations++; Result.success(Unit) })
+        runCurrent()
+        assertEquals(2, authenticationRequests)
+        assertEquals(0, mutations)
+        sessions.value.value = Session("token", userId = "backend-id")
+        runCurrent()
+        assertEquals(1, mutations)
+        assertEquals(false, sdk.events.single { it.first == "favorite_changed" }.second["is_favorite"])
+    }
+
+    @Test fun repeatedTapDuringAnAuthenticatedMutationStillRunsOnce() = runTest {
+        val sessions = AnalyticsSessions().apply { value.value = Session("token", userId = "backend-id") }
+        val sdk = RecordingTransport()
+        val service = analytics(MemoryConsent(AnalyticsConsent.Accepted), sdk)
+        service.setForeground(true); service.restoreConsent(); service.syncIdentity("backend-id"); Analytics.install(service)
+        val interactions = TrackedFavoriteInteractions(sessions, backgroundScope)
+        val result = CompletableDeferred<Result<Unit>>()
+        var mutations = 0
+        val action: suspend () -> Result<Unit> = { mutations++; result.await() }
+        interactions.change("key", false, true, action)
+        runCurrent()
+        interactions.change("key", false, true, action)
+        runCurrent()
+        assertEquals(1, mutations)
+        result.complete(Result.success(Unit))
+        runCurrent()
+        assertEquals(1, sdk.events.count { it.first == "favorite_changed" })
+    }
+
     @Test fun analyticsSessionObserverFailureDoesNotEscapeIntoTheApplication() = runTest {
         val sdk = RecordingTransport()
         val service = analytics(MemoryConsent(AnalyticsConsent.Accepted), sdk)

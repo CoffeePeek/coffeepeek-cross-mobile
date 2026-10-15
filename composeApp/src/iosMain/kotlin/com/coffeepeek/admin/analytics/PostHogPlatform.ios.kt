@@ -62,11 +62,15 @@ internal actual fun setupPostHog(config: PostHogConfig, context: PostHogContext)
 }
 internal actual val analyticsDebugEnabled: Boolean get() =
     NSBundle.mainBundle.objectForInfoDictionaryKey("PostHogEnableDev").let { it == true || it == "YES" || it == "true" }
+internal actual val postHogProjectToken: String get() =
+    (NSBundle.mainBundle.objectForInfoDictionaryKey("PostHogProjectToken") as? String)
+        ?.trim()?.takeIf { it.matches(Regex("phc_[A-Za-z0-9_-]+")) }.orEmpty()
 
 internal actual fun erasePostHogQueue() {
+    val token = postHogProjectToken.takeIf { it.isNotEmpty() } ?: return
     val bundle = NSBundle.mainBundle.bundleIdentifier ?: return
     val support = NSFileManager.defaultManager.URLsForDirectory(NSApplicationSupportDirectory, NSUserDomainMask).firstOrNull() as? NSURL ?: return
-    val project = support.URLByAppendingPathComponent(bundle)?.URLByAppendingPathComponent(POSTHOG_PROJECT_TOKEN) ?: return
+    val project = support.URLByAppendingPathComponent(bundle)?.URLByAppendingPathComponent(token) ?: return
     // The pinned SDK uses Application Support/<bundle>/<project>/posthog.queue.
     listOf("posthog.queue", "posthog.replayQueue", "posthog.logsQueue").forEach { name ->
         val target = project.URLByAppendingPathComponent(name) ?: return@forEach
