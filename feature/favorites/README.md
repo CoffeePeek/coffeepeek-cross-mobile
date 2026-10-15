@@ -24,8 +24,10 @@ approved; iOS screen/binding/navigation remain unchanged.
 Fallback reads are capped at four. Account replacement clears visible rows before
 joining old reads, and canceled/non-cooperative photo responses cannot restore
 previous-account cards. Same-account token renewal does not restart reads.
+Revocation/clearing emissions are not conflated with a following error; a
+delayed consumer cannot retain old private cards after session observation fails.
 
-447 selected unit-test executions, both debug APK/DEX checks, app/feature lint,
+449 selected unit-test executions, both debug APK/DEX checks, app/feature lint,
 test APK assembly and shared iOS Simulator compilation pass. All 12 isolated
 favorites UI tests and three application route-adapter UI tests pass on the owned
 read-only emulator. These are fake data/session checks, not live authenticated QA.

@@ -114,7 +114,9 @@ internal class LegacyFavoriteRoastersRepository(
             activeOwner.value = null
             ownerJob?.cancel()
         }
-    }.buffer(Channel.CONFLATED)
+    // Owner revocation must reach the consumer before a following retained-content error.
+    // Conflation could drop the clearing emission while the UI collector is busy.
+    }.buffer(Channel.RENDEZVOUS)
 
     override suspend fun remove(roasterId: String): Result<Unit> {
         val captured = snapshot.value ?: return Result.failure(IllegalStateException("Favorites not loaded"))
