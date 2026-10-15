@@ -10,6 +10,7 @@ import com.coffeepeek.room.repository.readSerializable
 import com.coffeepeek.room.repository.readSerializableFlow
 import com.coffeepeek.room.repository.saveSerializable
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
@@ -38,11 +39,18 @@ internal class LocalRoasterFavorites(
             }
         }
 
-    override suspend fun setFavorite(roaster: CatalogItem, isFavorite: Boolean): Result<Unit> = runCatching {
+    override suspend fun setFavorite(roaster: CatalogItem, isFavorite: Boolean): Result<Unit> =
+        write(roaster, isFavorite, expectedUserId = null)
+
+    override suspend fun removeForAccount(roaster: CatalogItem, expectedUserId: String): Result<Unit> =
+        write(roaster, isFavorite = false, expectedUserId = expectedUserId)
+
+    private suspend fun write(roaster: CatalogItem, isFavorite: Boolean, expectedUserId: String?): Result<Unit> = try {
         mutex.withLock {
             val session = sessions.getSession()
             check(sessions.isActiveSession(session)) { "Войдите в аккаунт, чтобы сохранять обжарщиков" }
             val userId = requireNotNull(session?.userId)
+            check(expectedUserId == null || expectedUserId == userId) { "Favorites account changed" }
             val id = roaster.roasterFavoriteId
             require(id.isNotBlank())
             val key = key(userId)
@@ -51,6 +59,11 @@ internal class LocalRoasterFavorites(
             val updated = if (isFavorite) listOf(SavedRoaster.from(roaster)) + remaining else remaining
             settings.saveSerializable(key, updated.takeIf { it.isNotEmpty() })
         }
+        Result.success(Unit)
+    } catch (cancelled: CancellationException) {
+        throw cancelled
+    } catch (error: Exception) {
+        Result.failure(error)
     }
 
     private fun key(userId: String) = "local_favorite_roasters:$userId"

@@ -6,6 +6,8 @@ import com.coffeepeek.feature.favorites.api.FavoritesEntry
 import com.coffeepeek.feature.favorites.data.local.FavoritesStorage
 import com.coffeepeek.feature.favorites.data.repository.createFavoritesRepository
 import com.coffeepeek.feature.favorites.domain.repository.FavoritesRepository
+import com.coffeepeek.feature.favorites.domain.repository.FavoriteRoastersRepository
+import com.coffeepeek.domain.repository.RoasterRepository
 import com.coffeepeek.feature.favorites.domain.usecase.ObserveFavoriteIdsUseCase
 import com.coffeepeek.feature.favorites.impl.createFavoritesEntry
 import com.coffeepeek.room.model.Setting
@@ -26,7 +28,15 @@ internal fun favoritesModule(
         else createFavoritesRepository(storage, dispatcher)
     }
     factory { ObserveFavoriteIdsUseCase(get()) }
-    single<FavoritesEntry> { createFavoritesEntry(get()) }
+    if (sessionScoped) single<FavoriteRoastersRepository> {
+        val catalog = get<RoasterRepository>()
+        LegacyFavoriteRoastersRepository(get(), get()) { slug ->
+            catalog.getRoaster(slug).map { it.photos.firstOrNull()?.fullUrl }
+        }
+    }
+    single<FavoritesEntry> {
+        createFavoritesEntry(get(), if (sessionScoped) get<FavoriteRoastersRepository>() else null)
+    }
 }
 
 /** Temporary composition bridge. Does not construct/open the old database or register old bindings. */

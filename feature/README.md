@@ -108,15 +108,17 @@ reason; a transport module does not need artificial business domain/data modules
 
 ## Branch and PR stack
 
-Current exception, explicitly requested by the user: the migration is consolidated
-in one open PR #43 (`feature/core-design-system-controls` → `develop`). Former
-checkpoint PRs are closed/superseded; do not recreate that stack for current work.
-The following checkpoint rule describes future stacks, not the current PR state.
+Current stack: PR #43 (`feature/core-design-system-controls` → `develop`) owns
+core/favorites/Shop; #95 (`feature/check-in-history-refactoring` → #43's branch)
+owns the complete prepared history migration. Former checkpoint PRs remain
+closed/superseded. Parent fixes stay with their owner and flow into descendants.
 
 Every next work branch starts from the current migration tip, not main. Group
-related tested steps into a checkpoint PR; create the next stacked PR when its
-diff would grow beyond about 50 changed files, or earlier for a clear review or
-risk boundary. A cohesive change may exceed that guide if documented. Each PR
+related tested steps into a checkpoint PR, using roughly 100–150 changed files
+as the guide. One to three related features may share a reviewable checkpoint;
+do not split every small task or mix unrelated work to fill the count. A clear
+review/risk boundary may justify an earlier split; an indivisible change may
+exceed the guide with an explanation. Each PR
 targets the previous open checkpoint branch, not an individual closed slice.
 Historically, favorites foundation/integration were collected in PRs #53, #57
 and #62, and presentation follow-ups in #67; they are now superseded by #43.

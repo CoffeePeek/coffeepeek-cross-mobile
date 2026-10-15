@@ -8,6 +8,7 @@ import com.coffeepeek.domain.repository.SessionRepository
 import com.coffeepeek.room.model.Setting
 import com.coffeepeek.room.repository.SettingRepository
 import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.cancelAndJoin
@@ -24,6 +25,7 @@ import kotlinx.coroutines.yield
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
+import kotlin.test.assertFailsWith
 
 class LocalRoasterFavoritesTest {
     @Test
@@ -114,13 +116,38 @@ class LocalRoasterFavoritesTest {
         name = slug,
         address = PublicAddress(slug, "/roasters/$slug", 1, false),
     )
+
+    @Test fun accountBoundRemovalCannotModifyTheNewAccount() = runBlocking {
+        val sessions = MemorySessions("alice")
+        val favorites = LocalRoasterFavorites(MemorySettings(), sessions)
+        val saved = roaster("same-roaster")
+        favorites.setFavorite(saved, true).getOrThrow()
+        sessions.signIn("bob"); favorites.setFavorite(saved, true).getOrThrow()
+        assertTrue(favorites.removeForAccount(saved, "alice").isFailure)
+        assertEquals(listOf("same-roaster"), favorites.observeFavorites().first().map { it.id })
+        sessions.signIn("alice"); favorites.removeForAccount(saved, "alice").getOrThrow()
+        assertTrue(favorites.observeFavorites().first().isEmpty())
+        sessions.signIn("bob")
+        assertEquals(listOf("same-roaster"), favorites.observeFavorites().first().map { it.id })
+    }
+
+    @Test fun canceledStorageWritePropagatesCancellationAndKeepsRows() = runBlocking {
+        val settings = MemorySettings()
+        val favorites = LocalRoasterFavorites(settings, MemorySessions("alice"))
+        val saved = roaster("saved")
+        favorites.setFavorite(saved, true).getOrThrow(); settings.cancelWrites = true
+        assertFailsWith<CancellationException> { favorites.removeForAccount(saved, "alice") }
+        assertEquals(listOf("saved"), favorites.observeFavorites().first().map { it.id })
+    }
 }
 
 private class MemorySettings : SettingRepository {
     private val values = MutableStateFlow<Map<String, Setting>>(emptyMap())
     var failWrites = false
+    var cancelWrites = false
 
     override suspend fun save(model: Setting) {
+        if (cancelWrites) throw CancellationException("Canceled storage write")
         check(!failWrites) { "Persistence unavailable" }
         yield()
         values.value = values.value + (model.key to model)
@@ -132,6 +159,7 @@ private class MemorySettings : SettingRepository {
     override fun readAllFlow(): Flow<List<Setting>> = values.map { it.values.toList() }
 
     override suspend fun delete(key: String) {
+        if (cancelWrites) throw CancellationException("Canceled storage delete")
         check(!failWrites) { "Persistence unavailable" }
         yield()
         values.value = values.value - key
