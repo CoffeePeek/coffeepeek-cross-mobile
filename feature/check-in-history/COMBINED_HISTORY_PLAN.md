@@ -1,8 +1,35 @@
 # Combined personal history — current-main parity and next slice
 
-Source audit: 2026-10-14, main e5722f9, migration checkpoint b70b1b0.
+Source audit: 2026-10-15, main 4976e53, preserved implementation checkpoint 9e5a533.
 This supersedes the standalone-shop destination switch, not the validated shop
 history read/session foundation. Android first; preserve the shared/iOS paths.
+
+## Ownership and checked status
+
+All prepared history code is now in `feature/check-in-history-refactoring`, based
+on `feature/core-design-system-controls` (PR #43). The parent excludes the four
+new modules and their application adapters/tests; the child restores them as one
+cohesive capability. It intentionally exceeds 50 files rather than splitting the
+same feature again. Git ancestry is preserved; no force-push or route switch.
+
+- [x] Prepared Shop history domain/data, shared MVI, Android API/UI and revocable
+  account/calendar/image composition, with fake-data tests.
+- [x] Entire implementation preserved unchanged during branch extraction.
+- [x] Main's combined ProfileCheckInsScreen, Home editor and all three route
+  contracts remain active and unchanged. This is not the prepared entry.
+- [ ] Home read boundary/adapter: not started; no new Home module exists yet.
+- [ ] Combined filter/calendar/paging MVI: not started; prepared MVI is Shop-only.
+- [ ] Production-shaped combined UI: not started; prepared Calendar/List UI is
+  not an approved replacement for the current timeline.
+- [ ] Activate the combined Android route and finish parity/release checks.
+
+The authoritative whole-project status is ../ANDROID_REFACTORING_PLAN.md. It
+includes the source-confirmed missing saved-roasters section in the migrated
+Android favorites entry; don't label that unrelated base feature complete.
+Current main's newer commits add CI changes, not a new history product shape.
+Standalone HomeCheckInScreen/history-statistics and VisitedPlacesScreen have no
+call sites in the audited main source. Do not restore them as separate screens;
+preserve the active combined timeline and its Home editor/detail callbacks.
 
 ## Actual owner and incompatibility
 
@@ -98,3 +125,18 @@ Create the boundary with actual consumers and tested models, not empty scaffoldi
 After this route reaches parity, select the next owner from the current audit.
 Do not move to profile/auth/community as a substitute for finishing combined
 history, or rewrite the full home editor as a prerequisite for read integration.
+
+## Extraction verification — 2026-10-15
+
+- The implementation and binary asset match 9e5a533 exactly; only roadmap and
+  ownership/verification documentation changed. The move adds no product behavior.
+- The parent extraction 415a69b passes independent Direct/Play assembly and
+  packaged DEX checks, both app unit variants, Direct lint and app UI APK assembly.
+- The restored child passes Direct/Play assembly/DEX, 222 app tests per variant
+  and 48 history tests (6 domain, 7 data, 35 MVI): 492 executions, zero failures.
+  App/history lint and app/history instrumentation APK assembly pass as well.
+- ComposeApp and history data/shared MVI compile for iOS Simulator Arm64.
+  No iOS screen, native navigation or writer was migrated.
+- No device UI run is claimed for this extraction. Earlier UI results are dated
+  evidence; the interrupted design-system rerun is not a passing result. No phone
+  update, account clearing or backend write occurred in this organization step.

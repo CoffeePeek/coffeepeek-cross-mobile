@@ -1,5 +1,13 @@
 # Personal shop check-in history — Android-first migration
 
+2026-10-15: this entire prepared capability lives in
+`feature/check-in-history-refactoring`, targeting the core/Shop branch of PR #43.
+Its final diff is excluded from #43, not split across two feature implementations.
+The code/assets are unchanged from 9e5a533; the current status and main 4976e53
+parity gates are in [COMBINED_HISTORY_PLAN.md](COMBINED_HISTORY_PLAN.md).
+Older verification sections below describe dated checkpoints, not a fresh full
+device pass after extraction.
+
 Initial shop-only audit: 2026-10-14 after `c8d9346`. Main e5722f9 now has a combined
 shop/home history route. The prepared modules below still supply the shop-visit
 capability, not home preparation or community business logic. The active combined
