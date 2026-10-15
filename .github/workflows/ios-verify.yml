@@ -1,15 +1,8 @@
 name: iOS build verification
 
 on:
-  push:
-    branches: [develop]
-    paths:
-      - .github/workflows/ios-verify.yml
-      - composeApp/src/**/auth/**
-      - composeApp/src/commonMain/**
-      - composeApp/src/iosMain/**
-      - iosApp/**
-      - iosXtool/CoffeePeek/Sources/**
+  pull_request:
+    branches: [main, develop]
   workflow_dispatch:
 
 permissions:
@@ -20,7 +13,15 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  build:
+  changes:
+    uses: ./.github/workflows/mobile-changes.yml
+    permissions:
+      contents: read
+      pull-requests: read
+
+  compile_ios:
+    needs: changes
+    if: needs.changes.outputs.ios == 'true'
     runs-on: xcode-27
     timeout-minutes: 60
     steps:
@@ -30,6 +31,12 @@ jobs:
           distribution: temurin
           java-version: '17'
       - uses: gradle/actions/setup-gradle@v6
+        with:
+          cache-read-only: ${{ github.event_name == 'pull_request' || (github.ref != 'refs/heads/main' && github.ref != 'refs/heads/develop') }}
+      - name: Restore iOS dependency caches
+        uses: ./.github/actions/setup-ios-caches
+        with:
+          target: simulator
       - name: Compile Kotlin and native Swift for iOS Simulator
         shell: bash
         run: |
@@ -37,6 +44,7 @@ jobs:
           xcodebuild -project iosApp/iosApp.xcodeproj -scheme iosApp \
             -configuration Debug -destination 'generic/platform=iOS Simulator' \
             -derivedDataPath "$RUNNER_TEMP/ios-verify" \
+            -clonedSourcePackagesDirPath "$RUNNER_TEMP/SourcePackages" \
             CODE_SIGNING_ALLOWED=NO build > "$RUNNER_TEMP/ios-verify.log" 2>&1 || {
               tail -n 150 "$RUNNER_TEMP/ios-verify.log"
               exit 1
@@ -47,3 +55,25 @@ jobs:
           name: ios-build-log
           path: ${{ runner.temp }}/ios-verify.log
           retention-days: 7
+
+  # Keep a completed check even when the macOS build is unnecessary.
+  build:
+    needs: [changes, compile_ios]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify iOS check result
+        shell: bash
+        env:
+          CHANGES_RESULT: ${{ needs.changes.result }}
+          IOS_CHANGED: ${{ needs.changes.outputs.ios }}
+          BUILD_RESULT: ${{ needs.compile_ios.result }}
+        run: |
+          set -euo pipefail
+          [[ "$CHANGES_RESULT" == 'success' ]]
+          if [[ "$IOS_CHANGED" == 'true' ]]; then
+            [[ "$BUILD_RESULT" == 'success' ]]
+          else
+            [[ "$IOS_CHANGED" == 'false' && "$BUILD_RESULT" == 'skipped' ]]
+            echo 'No iOS changes; simulator build was skipped.'
+          fi

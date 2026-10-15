@@ -97,9 +97,12 @@ python3 iosApp/configure-auth.py --google-plist /path/GoogleService-Info.plist \
 Google iOS client и audience Apple в backend. Настройте отправителя писем
 CoffeePeek в Apple Private Email Relay, чтобы письма доходили на скрытые адреса.
 
-`iOS build verification` отдельно компилирует Kotlin и Swift для симулятора без
-сертификата. Проверка реального входа требует устройства, актуального профиля
-и настроенных OAuth ID.
+`iOS build verification` компилирует Kotlin и Swift для симулятора без
+сертификата в PR в `main` и `develop`, если изменён iOS или общий KMP-код.
+Проверку также можно запустить вручную. После push выполняется TestFlight
+release-сборка. Правила выбора платформ и кэширования описаны в
+`docs/release/ci-runbook.md`. Проверка реального входа требует устройства,
+актуального профиля и настроенных OAuth ID.
 
 ## Запуск в симуляторе
 

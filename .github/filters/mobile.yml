@@ -1,0 +1,33 @@
+# Positive patterns only: paths-filter combines these with OR.
+# Picomatch's !(*.md) excludes Markdown within otherwise relevant directories.
+# Keep release push filters in android-apk.yml and ios-testflight.yml in sync.
+shared: &shared
+  - .github/filters/mobile.yml
+  - .github/workflows/mobile-changes.yml
+  - 'build-logic/**/!(*.md)'
+  - 'buildSrc/**/!(*.md)'
+  - 'gradle/**/!(*.md)'
+  - gradlew
+  - gradlew.bat
+  - '**/*.gradle.kts'
+  - '**/gradle.properties'
+  - '**/src/common*/**/!(*.md)'
+  - '**/schemas/**/!(*.md)'
+
+android:
+  - *shared
+  - .github/workflows/android-ci.yml
+  - .github/workflows/android-apk.yml
+  - '**/src/android*/**/!(*.md)'
+  - '**/proguard-rules.pro'
+
+ios:
+  - *shared
+  - .github/workflows/ios-verify.yml
+  - .github/workflows/ios-testflight.yml
+  - .github/actions/setup-ios-caches/**
+  - '**/src/ios*/**/!(*.md)'
+  - '**/src/apple*/**/!(*.md)'
+  - '**/src/native*/**/!(*.md)'
+  - 'iosApp/**/!(*.md)'
+  - 'iosXtool/CoffeePeek/Sources/**/!(*.md)'
