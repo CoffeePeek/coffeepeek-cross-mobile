@@ -13,7 +13,7 @@ import com.coffeepeek.admin.utils.ClipboardHelper
 import com.coffeepeek.admin.utils.FavoriteSync
 import com.coffeepeek.admin.utils.PickedImage
 import com.coffeepeek.admin.utils.ShareHelper
-import com.coffeepeek.admin.utils.datePickerMillisToUtcIsoInstant
+import com.coffeepeek.admin.utils.epochMillisToUtcIsoInstant
 import com.coffeepeek.domain.model.CoffeeShopDetails
 import com.coffeepeek.domain.model.CheckIn
 import com.coffeepeek.domain.model.CheckInVisibility
@@ -259,7 +259,7 @@ class ShopDetailViewModel(
                         drinkSlug = draft.drinkSlug,
                         customDrinkName = draft.customDrinkName?.trim(),
                         text = draft.note.trim(),
-                        visitedAtIso = datePickerMillisToUtcIsoInstant(draft.visitMillis),
+                        visitedAtIso = epochMillisToUtcIsoInstant(draft.visitMillis),
                         visibility = visibility,
                         rating = com.coffeepeek.domain.model.ReviewRating(
                             place = draft.placeRating, service = draft.serviceRating, coffee = draft.coffeeRating,

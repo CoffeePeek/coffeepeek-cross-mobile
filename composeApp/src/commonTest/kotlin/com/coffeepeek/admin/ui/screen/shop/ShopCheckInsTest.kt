@@ -108,7 +108,8 @@ class ShopCheckInsTest {
         for (visibility in CheckInVisibility.entries) {
             val started = Channel<CreateCheckInInput>(Channel.UNLIMITED)
             val release = CompletableDeferred<Unit>()
-            val store = CheckInDraftStore()
+            val visitTime = kotlin.time.Instant.parse("2026-10-14T18:42:17.123Z")
+            val store = CheckInDraftStore { visitTime.toEpochMilliseconds() }
             val repo = ShopTestCheckIns().apply { create = { input ->
                 started.send(input)
                 release.await()
@@ -127,7 +128,8 @@ class ShopCheckInsTest {
                 assertEquals(visibility, input.visibility)
                 assertEquals("", input.text)
                 assertEquals(ReviewRating(place = 4, service = 4, coffee = 4), input.rating)
-                assertNotNull(input.visitedAtIso)
+                assertEquals("2026-10-14T18:42:17.123Z", input.visitedAtIso,
+                    "Both public and private shop check-ins must send the actual visit time, not midnight")
                 vm.checkIn(draft)
                 vm.dismissCheckInSheet()
                 vm.updateCheckInDraft(draft.copy(note = "Changed during submission"))

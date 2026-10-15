@@ -70,6 +70,7 @@ import com.coffeepeek.admin.ui.icons.CpIcons
 import com.coffeepeek.admin.utils.MAX_REVIEW_PHOTOS
 import com.coffeepeek.admin.utils.currentEpochMillis
 import com.coffeepeek.admin.utils.formatVisitDate
+import com.coffeepeek.admin.utils.instantToDatePickerMillis
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -93,19 +94,21 @@ fun CheckInBottomSheet(
     onSkipDrinkPhoto: () -> Unit = {},
 ) {
     var showDatePicker by remember { mutableStateOf(false) }
+    val visitDateMillis = remember(draft.visitMillis, showDatePicker) { instantToDatePickerMillis(draft.visitMillis) }
+    val todayMillis = remember(showDatePicker) { instantToDatePickerMillis(currentEpochMillis()) }
 
     val focusManager = LocalFocusManager.current
     val keyboardController = LocalSoftwareKeyboardController.current
 
     if (showDatePicker && !NativeDatePicker(
-        title = "Дата посещения", initialMillis = draft.visitMillis, maximumMillis = currentEpochMillis(), timeOnly = false,
-        onConfirm = { onDraftChange(draft.copy(visitMillis = it)) }, onDismiss = { showDatePicker = false },
+        title = "Дата посещения", initialMillis = visitDateMillis, maximumMillis = todayMillis, timeOnly = false,
+        onConfirm = { onDraftChange(draft.withVisitDate(it)) }, onDismiss = { showDatePicker = false },
     )) {
         val datePickerState = rememberDatePickerState(
-            initialSelectedDateMillis = draft.visitMillis,
+            initialSelectedDateMillis = visitDateMillis,
             selectableDates = object : SelectableDates {
                 override fun isSelectableDate(utcTimeMillis: Long): Boolean =
-                    utcTimeMillis <= currentEpochMillis()
+                    utcTimeMillis <= todayMillis
             },
         )
         DatePickerDialog(
@@ -113,7 +116,7 @@ fun CheckInBottomSheet(
             confirmButton = {
                 TextButton(onClick = {
                     datePickerState.selectedDateMillis?.let {
-                        onDraftChange(draft.copy(visitMillis = it))
+                        onDraftChange(draft.withVisitDate(it))
                     }
                     showDatePicker = false
                 }) {
@@ -219,7 +222,7 @@ fun CheckInBottomSheet(
                                 modifier = Modifier.size(18.dp),
                             )
                             Text(
-                                text = formatVisitDate(draft.visitMillis),
+                                text = formatVisitDate(visitDateMillis),
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.onSurface,
                                 modifier = Modifier.weight(1f),

@@ -18,6 +18,24 @@ internal actual fun currentLocalMinuteOfDay(): Int = java.time.LocalTime.now().l
 internal actual fun datePickerMillisToUtcIsoInstant(millis: Long): String =
     datePickerMillisToUtcIsoInstant(millis, ZoneId.systemDefault())
 
+internal actual fun instantToDatePickerMillis(millis: Long): Long =
+    instantToDatePickerMillis(millis, ZoneId.systemDefault())
+
+internal actual fun datePickerMillisWithLocalTime(dateMillis: Long, referenceMillis: Long): Long =
+    datePickerMillisWithLocalTime(dateMillis, referenceMillis, ZoneId.systemDefault())
+
+internal fun instantToDatePickerMillis(millis: Long, zoneId: ZoneId): Long =
+    Instant.ofEpochMilli(millis).atZone(zoneId).toLocalDate()
+        .atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli()
+
+internal fun datePickerMillisWithLocalTime(dateMillis: Long, referenceMillis: Long, zoneId: ZoneId): Long {
+    val selected = Instant.ofEpochMilli(dateMillis).atZone(ZoneOffset.UTC).toLocalDate()
+    val reference = Instant.ofEpochMilli(referenceMillis).atZone(zoneId)
+    // Retain the exact instant, including its offset during a repeated DST hour.
+    if (selected == reference.toLocalDate()) return referenceMillis
+    return selected.atTime(reference.toLocalTime()).atZone(zoneId).toInstant().toEpochMilli()
+}
+
 internal actual fun utcIsoToLocalDate(value: String): String =
     utcIsoToLocalDate(value, ZoneId.systemDefault())
 
