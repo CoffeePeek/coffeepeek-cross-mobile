@@ -6,6 +6,7 @@ import androidx.compose.runtime.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
@@ -19,10 +20,13 @@ import com.coffeepeek.admin.theme.toUIColor
 import com.coffeepeek.admin.theme.uiKitStyle
 import com.coffeepeek.admin.theme.ThemeManager
 import kotlinx.cinterop.ObjCAction
+import kotlinx.cinterop.useContents
 import platform.Foundation.*
 import platform.UIKit.*
 import platform.darwin.NSObject
 import kotlinx.coroutines.delay
+import kotlin.math.abs
+import kotlin.math.min
 
 internal fun UIViewController.presentationHost(): UIViewController {
     var host = this
@@ -111,16 +115,41 @@ private class SheetDelegate(val dismissed: () -> Unit) : NSObject(), UIAdaptiveP
 
 @Composable
 internal actual fun NativeModalSheet(onDismiss: () -> Unit, dismissEnabled: Boolean, content: @Composable ColumnScope.() -> Unit): Boolean {
+    // UIKit cannot fit a page sheet to arbitrary content before iOS 16. Use the
+    // existing content-sized shared sheet there rather than retaining the empty medium detent.
+    val supportsContentDetent = remember {
+        (UIDevice.currentDevice.systemVersion.substringBefore('.').toIntOrNull() ?: 0) >= 16
+    }
+    if (!supportsContentDetent) return false
     val host = LocalUIViewController.current
     val dismiss = rememberUpdatedState(onDismiss)
     val body = rememberUpdatedState(content)
     val colors = MaterialTheme.colorScheme
     val themeMode by ThemeManager.themeMode.collectAsState()
+    val heightFraction = rememberUpdatedState(LocalNativeSheetHeightFraction.current?.coerceIn(0.1f, 1f) ?: 1f)
+    val sizing = remember {
+        val window = host.view.window
+        val screenHeight = (window?.bounds ?: UIScreen.mainScreen.bounds).useContents { size.height }
+        val safeInsets = window?.safeAreaInsets?.useContents { top + bottom } ?: 0.0
+        NativeSheetSizing((screenHeight - safeInsets).coerceAtLeast(1.0))
+    }
     val controller = remember {
         ComposeUIViewController {
             AppContent {
+                val density = LocalDensity.current
                 Surface(Modifier.fillMaxSize()) {
-                    Column(Modifier.fillMaxSize().padding(top = 24.dp).dismissKeyboardOnBackgroundGestures()) { body.value(this) }
+                    // UIKit adds the bottom safe area to custom detent heights. Reserve it
+                    // once here and consume it for navigationBarsPadding/IME descendants.
+                    Box(Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.systemBars.only(WindowInsetsSides.Bottom))) {
+                        ContentSizedSheetLayout(
+                            maxContentHeight = (sizing.maximumHeight * heightFraction.value - NativeSheetTopPadding).coerceAtLeast(1.0).dp,
+                            onContentHeightChanged = { pixels ->
+                                val points = pixels / density.density + NativeSheetTopPadding
+                                if (abs(sizing.contentHeight - points) > 0.5) sizing.contentHeight = points
+                            },
+                            modifier = Modifier.fillMaxSize().padding(top = NativeSheetTopPadding.dp).dismissKeyboardOnBackgroundGestures(),
+                        ) { body.value(this) }
+                    }
                 }
             }
         }.apply { modalPresentationStyle = UIModalPresentationPageSheet }
@@ -134,17 +163,38 @@ internal actual fun NativeModalSheet(onDismiss: () -> Unit, dismissEnabled: Bool
     }
     DisposableEffect(controller, host) {
         controller.sheetPresentationController?.apply {
-            detents = listOf(UISheetPresentationControllerDetent.mediumDetent(), UISheetPresentationControllerDetent.largeDetent())
+            detents = listOf(UISheetPresentationControllerDetent.customDetentWithIdentifier("content") { context ->
+                val maximum = context?.maximumDetentValue ?: sizing.maximumHeight
+                if (maximum > 0 && abs(sizing.maximumHeight - maximum) > 0.5) sizing.maximumHeight = maximum
+                val limit = (maximum * heightFraction.value).coerceAtLeast(1.0)
+                min(sizing.contentHeight.takeIf { it > 0 } ?: limit / 2, limit)
+            })
             prefersGrabberVisible = true
             prefersScrollingExpandsWhenScrolledToEdge = false
+            prefersEdgeAttachedInCompactHeight = true
         }
         controller.presentationController?.delegate = delegate
         onDispose {
             controller.presentationController?.delegate = null
         }
     }
+    LaunchedEffect(controller, sizing.contentHeight, sizing.maximumHeight, heightFraction.value) {
+        if (sizing.contentHeight > 0) {
+            while (controller.presentingViewController == null || controller.transitionCoordinator != null) delay(16)
+            controller.sheetPresentationController?.let { sheet ->
+                sheet.animateChanges { sheet.invalidateDetents() }
+            }
+        }
+    }
     PresentNativeController(controller, host)
     return true
+}
+
+private const val NativeSheetTopPadding = 24.0
+
+private class NativeSheetSizing(maximumHeight: Double) {
+    var maximumHeight by mutableDoubleStateOf(maximumHeight)
+    var contentHeight by mutableDoubleStateOf(0.0)
 }
 
 private class ControlTarget(var changed: (UIControl) -> Unit) : NSObject() {
@@ -230,7 +280,9 @@ internal actual fun NativeDatePicker(title: String, initialMillis: Long, maximum
         date = NSDate.dateWithTimeIntervalSince1970(initialMillis / 1000.0)
         maximumDate = maximumMillis?.let { NSDate.dateWithTimeIntervalSince1970(it / 1000.0) }
     } }
-    NativeModalSheet(onDismiss, true) {
+    // Use the shared entry point so iOS 15 can also show the wheel in a fitted
+    // sheet. NativeTimePickerRow relies on this function handling presentation.
+    SwipeDismissModalBottomSheet(onDismissRequest = onDismiss) {
         val colors = MaterialTheme.colorScheme
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
             TextButton(onClick = onDismiss) { Text("Отмена") }

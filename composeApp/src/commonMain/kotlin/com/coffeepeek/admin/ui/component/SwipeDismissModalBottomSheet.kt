@@ -25,6 +25,7 @@ import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.SheetValue
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
@@ -49,7 +50,11 @@ fun SwipeDismissModalBottomSheet(
         val column = this
         com.coffeepeek.admin.analytics.AnalyticsOverlay { content(column) }
     }
-    if (NativeModalSheet(onDismissRequest, dismissEnabled, trackedContent)) return
+    var nativeSheetHandled = false
+    CompositionLocalProvider(LocalNativeSheetHeightFraction provides maxSheetHeightFraction) {
+        nativeSheetHandled = NativeModalSheet(onDismissRequest, dismissEnabled, trackedContent)
+    }
+    if (nativeSheetHandled) return
     val canDismiss by rememberUpdatedState(dismissEnabled)
     val sheetState = rememberModalBottomSheetState(
         skipPartiallyExpanded = true,
