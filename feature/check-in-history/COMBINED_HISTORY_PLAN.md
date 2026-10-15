@@ -1,5 +1,26 @@
 # Combined personal history — current-main parity and next slice
 
+## Latest parent controls checkpoint — 2026-10-15
+
+Parent `59e9c93` is inherited through a normal merge: grouped photo-source and
+Shop Report actions, selected drink checks/divider and form top clearance.
+No history implementation, route activation or Home writer changed. The child
+still contains the entire 71-file history checkpoint, rather than a second copy
+of the parent's UI fixes. Its next implementation step remains the account-bound
+Home read foundation described below, followed by combined MVI/UI/integration.
+
+Fresh fetch confirms main remains `4976e53`; local main and both migration tips
+already include it. No force-push or merge of either PR into develop/main occurs.
+The parent's 518 selected unit executions and 17 isolated controls UI tests pass;
+light/dark fake fixtures were inspected. Those tests do not certify a combined
+history entry, authenticated writes or an iOS screen migration.
+
+After the merge, Direct/Play APK/DEX, app/Shop/Shop Report/history lint and
+**606 selected unit-test cases** pass: 233 app cases per variant, 87 Shop MVI,
+five Shop Report MVI and 48 history (six domain, seven data, 35 MVI). Gradle
+reuses valid cached/up-to-date tasks where applicable. No new combined-history
+UI/device run or root route switch is claimed.
+
 Source audit: 2026-10-15, main 4976e53, preserved implementation checkpoint 9e5a533.
 This supersedes the standalone-shop destination switch, not the validated shop
 history read/session foundation. Android first; preserve the shared/iOS paths.

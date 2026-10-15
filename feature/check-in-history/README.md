@@ -1,5 +1,12 @@
 # Personal shop check-in history — Android-first migration
 
+Latest parent sync: `59e9c93` supplies the photo-source/drink/Shop Report controls
+correction and current roadmap. History code stays unchanged, with its combined
+Shop/Home replacement still inactive. Fresh main `4976e53` is already in both
+branches; the next implementation is Home reads, not another standalone screen.
+See the latest verification record in COMBINED_HISTORY_PLAN.md for exact results
+and the distinction between fake controls QA and real combined-history parity.
+
 2026-10-15: this entire prepared capability lives in
 `feature/check-in-history-refactoring`, targeting the core/Shop branch of PR #43.
 Its final diff is excluded from #43, not split across two feature implementations.
