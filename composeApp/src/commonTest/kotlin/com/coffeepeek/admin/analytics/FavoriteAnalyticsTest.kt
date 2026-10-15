@@ -24,7 +24,7 @@ class FavoriteAnalyticsTest {
         assertFalse(service.state.value.ready)
     }
 
-    @Test fun guestAttemptResumesOnceAfterLoginAndWaitsForServerSuccess() = runTest {
+    @Test fun guestIntentResumesOnceAfterLoginWithoutCollectingGuestEvents() = runTest {
         val sessions = AnalyticsSessions()
         val sdk = RecordingTransport()
         val service = analytics(MemoryConsent(AnalyticsConsent.Accepted), sdk)
@@ -37,8 +37,8 @@ class FavoriteAnalyticsTest {
         interactions.change("never-send-id", false, true, action)
         runCurrent()
         assertEquals(0, mutations)
-        assertEquals(1, sdk.events.count { it.first == "favorite_attempted" })
-        assertEquals(1, sdk.events.count { it.first == "auth_gate_shown" })
+        assertTrue(sdk.calls.isEmpty())
+        assertTrue(sdk.events.isEmpty())
         sessions.value.value = Session("token-not-for-analytics", userId = "backend-id")
         runCurrent()
         assertEquals(1, mutations)

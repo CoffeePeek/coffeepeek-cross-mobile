@@ -9,7 +9,7 @@ class AnalyticsTrackersTest {
     @Test fun searchesDedupeCriteriaExcludeStaleAndPreserveCorrelation() = runTest {
         val sdk = RecordingTransport()
         val service = analytics(MemoryConsent(AnalyticsConsent.Accepted), sdk)
-        service.setForeground(true); service.restoreConsent(); service.syncIdentity(null)
+        service.setForeground(true); service.restoreConsent(); service.syncIdentity("user")
         Analytics.install(service)
         val tracker = SearchTracker(Catalog.Shops)
         val old = tracker.begin("old", "secret query", listOf("city"))
@@ -32,7 +32,7 @@ class AnalyticsTrackersTest {
     @Test fun searchUsesDifferentFailureKeysAndDoesNotCaptureCancellation() = runTest {
         val sdk = RecordingTransport()
         val service = analytics(MemoryConsent(AnalyticsConsent.Accepted), sdk)
-        service.setForeground(true); service.restoreConsent(); service.syncIdentity(null); Analytics.install(service)
+        service.setForeground(true); service.restoreConsent(); service.syncIdentity("user"); Analytics.install(service)
         val tracker = SearchTracker(Catalog.Shops)
         val search = tracker.begin("1", "", emptyList())
         search?.failed(SafeAnalyticsError("cancelled"))

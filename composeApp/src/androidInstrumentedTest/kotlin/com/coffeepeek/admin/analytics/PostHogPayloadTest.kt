@@ -39,6 +39,9 @@ class PostHogPayloadTest {
             assertTrue(queue.listFiles().isNullOrEmpty())
 
             service.setConsent(AnalyticsConsent.Accepted)
+            assertFalse(service.track(AnalyticsEvent.AUTH_GATE_SHOWN, mapOf("feature" to "check_in")))
+            assertTrue("Guests must not initialize SDK or write events", queue.listFiles().isNullOrEmpty())
+            service.syncIdentity("sdk-smoke-user")
             assertTrue(service.track(AnalyticsEvent.CATALOG_SEARCH_STARTED, mapOf(
                 "catalog" to "shops", "search_id" to "search-smoke-1", "source" to "list",
                 "has_query" to true, "query_length" to 4, "filter_keys" to listOf("tags"),
@@ -48,7 +51,7 @@ class PostHogPayloadTest {
             transport.capture("feature_exposed", mapOf(
                 "feature" to "search", "placement" to "shops", "page_type" to "discovery",
                 "app" to "coffee-peek-android", "event_schema_version" to 1, "app_version" to "sdk-smoke+0",
-                "environment" to "development", "auth_state" to "guest",
+                "environment" to "development", "auth_state" to "signed_in",
                 "query" to "DO_NOT_SEND_RAW_TEXT", "latitude" to 12.34, "longitude" to 56.78,
                 "\$current_url" to "https://private.invalid/?token=DO_NOT_SEND_RAW_TEXT",
                 "\$device_name" to "DO_NOT_SEND_RAW_TEXT", "\$set" to mapOf("email" to "DO_NOT_SEND_RAW_TEXT"),

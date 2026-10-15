@@ -10,23 +10,12 @@ import kotlinx.coroutines.launch
 @Composable
 internal fun AnalyticsPrivacy() {
     val service = Analytics.service ?: return
-    val state by service.state.collectAsState()
-    val scope = rememberCoroutineScope()
     val lifecycle = LocalLifecycleOwner.current.lifecycle
     DisposableEffect(lifecycle) {
         val observer = LifecycleEventObserver { _, _ -> service.setForeground(lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED)) }
         lifecycle.addObserver(observer)
         service.setForeground(lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED))
         onDispose { lifecycle.removeObserver(observer) }
-    }
-    if (state.restored && state.consent == AnalyticsConsent.Unknown) {
-        AlertDialog(
-            onDismissRequest = {},
-            title = { Text("Аналитика CoffeePeek") },
-            text = { Text("Разрешить отправку событий использования в PostHog (ЕС), чтобы улучшать приложение? Мы не отправляем поисковые запросы, заметки, фотографии и координаты. Решение можно изменить в настройках.") },
-            confirmButton = { TextButton(onClick = { scope.launch { service.setConsent(AnalyticsConsent.Accepted) } }) { Text("Разрешить") } },
-            dismissButton = { TextButton(onClick = { scope.launch { service.setConsent(AnalyticsConsent.Declined) } }) { Text("Отказаться") } },
-        )
     }
 }
 

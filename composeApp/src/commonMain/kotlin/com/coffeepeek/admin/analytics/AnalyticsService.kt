@@ -175,7 +175,8 @@ internal class AnalyticsService(
     }
 
     private fun allowed() = enabled && state.value.let {
-        it.restored && it.consentPersisted && it.consent == AnalyticsConsent.Accepted && it.authReady && it.foreground
+        it.restored && it.consentPersisted && it.consent == AnalyticsConsent.Accepted &&
+            it.authReady && !it.userId.isNullOrBlank() && it.foreground
     }
 
     private fun envelope(current: AnalyticsState, page: String) = mapOf(
@@ -196,7 +197,7 @@ internal class AnalyticsService(
             if (active) erase(resetIdentity = current.consent != AnalyticsConsent.Accepted || !current.authReady)
             return
         }
-        // Guest -> account uses identify; an identified account must never be linked to another.
+        // Collection starts only after login; an identified account must never be linked to another.
         if (active && sdkUser != null && sdkUser != current.userId) erase()
         if (!active) {
             sdkGeneration = current.generation

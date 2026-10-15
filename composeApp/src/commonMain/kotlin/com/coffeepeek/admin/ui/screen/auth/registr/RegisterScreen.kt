@@ -4,8 +4,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -23,6 +25,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.text.LinkAnnotation
@@ -89,6 +92,7 @@ object RegisterScreen {
         val email by vm.email.collectAsState()
         val password by vm.password.collectAsState()
         val isTermsAccepted by vm.isTermsAccepted.collectAsState()
+        val isAnalyticsAccepted by vm.isAnalyticsAccepted.collectAsState()
         val passwordError by vm.passwordError.collectAsState()
         val emailError by vm.emailError.collectAsState()
 
@@ -170,6 +174,8 @@ object RegisterScreen {
                         errorText = emailError,
                     )
 
+                    Spacer(modifier = Modifier.height(14.dp))
+                    RegistrationAnalyticsConsent(isAnalyticsAccepted, vm::onAnalyticsCheckedChange)
                     Spacer(modifier = Modifier.height(14.dp))
                     AuthOrDivider()
                     Spacer(modifier = Modifier.height(14.dp))
@@ -269,6 +275,8 @@ object RegisterScreen {
                         TermsText()
                     }
 
+                    Spacer(modifier = Modifier.height(14.dp))
+                    RegistrationAnalyticsConsent(isAnalyticsAccepted, vm::onAnalyticsCheckedChange)
                     Spacer(modifier = Modifier.height(CpDimens.spacing5))
 
                     AuthPrimaryButton(
@@ -286,6 +294,31 @@ object RegisterScreen {
                     )
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun RegistrationAnalyticsConsent(checked: Boolean, onCheckedChange: (Boolean) -> Unit) {
+    Row(
+        modifier = Modifier.fillMaxWidth().toggleable(
+            value = checked, role = Role.Checkbox, onValueChange = onCheckedChange,
+        ).padding(vertical = 8.dp),
+        verticalAlignment = Alignment.Top,
+    ) {
+        Checkbox(
+            checked = checked, onCheckedChange = null,
+            colors = CheckboxDefaults.colors(checkedColor = CpColor.Primary, checkmarkColor = CpColor.DarkTextOnPrimary),
+            modifier = Modifier.size(24.dp),
+        )
+        Spacer(Modifier.width(CpDimens.spacing3))
+        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Text("Разрешить аналитику использования", style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurface)
+            Text("Необязательно. События использования отправляются в PostHog (ЕС), чтобы улучшать CoffeePeek. " +
+                "Без текстов поиска, заметок, фото и точных координат. Решение можно изменить в настройках.",
+                style = MaterialTheme.typography.bodySmall.copy(fontSize = 12.sp, lineHeight = 17.sp),
+                color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
 }

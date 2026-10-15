@@ -134,18 +134,20 @@ fun SettingsScreen(vm: ProfileViewModel = koinInject()) {
                 title = "Другие настройки",
                 description = "Управление полезными дополнениями, оценки в App Store и настройки конфиденциальности",
             ) {
-                SettingsRow(
-                    icon = CpIcons.Info,
-                    label = "Аналитика использования",
-                    onClick = { analyticsScope.launch {
-                        val service = com.coffeepeek.admin.analytics.Analytics.service ?: return@launch
-                        service.setConsent(if (service.state.value.consent == com.coffeepeek.admin.analytics.AnalyticsConsent.Accepted)
-                            com.coffeepeek.admin.analytics.AnalyticsConsent.Declined else com.coffeepeek.admin.analytics.AnalyticsConsent.Accepted)
-                    } },
-                    description = "Отправка событий в PostHog (ЕС). Можно отключить в любой момент.",
-                    trailing = { com.coffeepeek.admin.analytics.AnalyticsConsentSwitch() },
-                )
-                SettingsDivider()
+                if (profile.isLoggedIn) {
+                    SettingsRow(
+                        icon = CpIcons.Info,
+                        label = "Аналитика использования",
+                        onClick = { analyticsScope.launch {
+                            val service = com.coffeepeek.admin.analytics.Analytics.service ?: return@launch
+                            service.setConsent(if (service.state.value.consent == com.coffeepeek.admin.analytics.AnalyticsConsent.Accepted)
+                                com.coffeepeek.admin.analytics.AnalyticsConsent.Declined else com.coffeepeek.admin.analytics.AnalyticsConsent.Accepted)
+                        } },
+                        description = "Отправка событий в PostHog (ЕС). Можно отключить в любой момент.",
+                        trailing = { com.coffeepeek.admin.analytics.AnalyticsConsentSwitch() },
+                    )
+                    SettingsDivider()
+                }
                 SettingsRow(
                     icon = CpIcons.Lock,
                     label = "Политика использования",

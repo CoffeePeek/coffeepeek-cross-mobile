@@ -34,6 +34,9 @@ enum class RegisterStep {
 
 class RegisterViewModel(
     private val authRepository: AuthRepository,
+    private val saveAnalyticsConsent: suspend (Boolean) -> Unit = { accepted ->
+        Analytics.service?.setConsent(if (accepted) AnalyticsConsent.Accepted else AnalyticsConsent.Declined)
+    },
 ) : BaseViewModel() {
 
     private val _step = MutableStateFlow(RegisterStep.Email)
@@ -50,6 +53,9 @@ class RegisterViewModel(
 
     private val _isTermsAccepted = MutableStateFlow(false)
     val isTermsAccepted = _isTermsAccepted.asStateFlow()
+
+    private val _isAnalyticsAccepted = MutableStateFlow(false)
+    val isAnalyticsAccepted = _isAnalyticsAccepted.asStateFlow()
 
     private val _passwordError = MutableStateFlow<String?>(null)
     val passwordError = _passwordError.asStateFlow()
@@ -80,6 +86,10 @@ class RegisterViewModel(
 
     fun onTermsCheckedChange(checked: Boolean) {
         _isTermsAccepted.value = checked
+    }
+
+    fun onAnalyticsCheckedChange(checked: Boolean) {
+        _isAnalyticsAccepted.value = checked
     }
 
     fun onBack() {
@@ -114,6 +124,7 @@ class RegisterViewModel(
     }
 
     fun onRegisterClick() {
+        val analyticsAccepted = _isAnalyticsAccepted.value
         launchRequest(
             onSuccess = { _step.value = RegisterStep.Success },
             errorMessage = Res.string.error_registr,
@@ -161,6 +172,8 @@ class RegisterViewModel(
                 return@launchRequest
             }
 
+            // The optional choice is separate from terms. No SDK setup is allowed before login.
+            saveAnalyticsConsent(analyticsAccepted)
             authRepository.register(currentName, currentEmail, currentPassword).getOrThrow()
             Analytics.track(AnalyticsEvent.SIGN_UP_COMPLETED, "method" to "password")
         }
@@ -171,21 +184,28 @@ class RegisterViewModel(
 
     fun onAppleLogin() {
         if (!_appleSigningIn.compareAndSet(expect = false, update = true)) return
+        val analyticsAccepted = _isAnalyticsAccepted.value
         launchRequest(
             onSuccess = { Navigator.navigate(Navigator.Screen.Main) },
             onError = { if (it !is CancellationException) ErrorHandler.showError(socialLoginError("Apple", it.message)) },
         ) {
-            try { authRepository.signInWithApple().also { signInAnalytics(it.userId, "apple", "register") } }
+            try {
+                // Persist before the repository publishes a social-login session.
+                saveAnalyticsConsent(analyticsAccepted)
+                authRepository.signInWithApple().also { signInAnalytics(it.userId, "apple", "register") }
+            }
             finally { _appleSigningIn.value = false }
         }
     }
 
     fun onGoogleLogin(idToken: String) {
+        val analyticsAccepted = _isAnalyticsAccepted.value
         launchRequest(
             errorMessage = Res.string.maybe_later,
             onError = { if (it !is CancellationException) ErrorHandler.showError(socialLoginError("Google", it.message)) },
             onSuccess = { Navigator.navigate(Navigator.Screen.Main) },
         ) {
+            saveAnalyticsConsent(analyticsAccepted)
             authRepository.googleLogin(idToken).getOrThrow().also { signInAnalytics(it.userId, "google", "register") }
         }
     }

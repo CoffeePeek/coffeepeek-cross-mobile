@@ -38,7 +38,7 @@ internal fun TestScope.analytics(store: MemoryConsent = MemoryConsent(), sdk: Re
     AnalyticsService(AnalyticsContext("coffee-peek-android", "1.0+1", "development"), store, sdk, backgroundScope, enabled)
 
 class AnalyticsServiceTest {
-    @Test fun noSdkBeforeConsentAndAuthRestoration() = runTest {
+    @Test fun acceptedConsentDoesNotStartSdkOrQueueGuestEventsBeforeLogin() = runTest {
         val sdk = RecordingTransport()
         val service = analytics(sdk = sdk)
         service.setForeground(true)
@@ -47,7 +47,15 @@ class AnalyticsServiceTest {
         assertTrue(sdk.calls.isEmpty())
         assertFalse(service.track(AnalyticsEvent.AUTH_GATE_SHOWN, mapOf("feature" to "check_in")))
         service.syncIdentity(null)
-        assertEquals(listOf("start"), sdk.calls)
+        service.screenShown("discovery", "guest-visit"); runCurrent()
+        val guestOperation = service.operationScope()
+        assertFalse(service.track(AnalyticsEvent.AUTH_GATE_SHOWN, mapOf("feature" to "check_in")))
+        assertTrue(sdk.calls.isEmpty())
+        assertTrue(sdk.events.isEmpty())
+        service.syncIdentity("A")
+        assertEquals(listOf("start", "identify:A"), sdk.calls)
+        assertFalse(service.track(AnalyticsEvent.AUTH_GATE_SHOWN, mapOf("feature" to "check_in"), guestOperation))
+        assertTrue(sdk.events.none { it.first == "auth_gate_shown" })
     }
 
     @Test fun debugRequiresExplicitEnableEvenAfterConsent() = runTest {
@@ -58,23 +66,29 @@ class AnalyticsServiceTest {
         assertFalse(service.track(AnalyticsEvent.AUTH_GATE_SHOWN, mapOf("feature" to "check_in")))
     }
 
-    @Test fun guestIdentifyAccountSwitchLogoutNeverLinkAccounts() = runTest {
+    @Test fun accountSwitchAndLogoutNeverLinkAccountsOrRestartGuestCollection() = runTest {
         val sdk = RecordingTransport()
         val service = analytics(MemoryConsent(AnalyticsConsent.Accepted), sdk)
         service.setForeground(true); service.restoreConsent(); service.syncIdentity(null)
+        assertTrue(sdk.calls.isEmpty())
         service.syncIdentity("A")
         assertEquals(listOf("start", "identify:A"), sdk.calls)
         service.syncIdentity("B")
         assertEquals(listOf("start", "identify:A", "reset", "start", "identify:B"), sdk.calls)
         service.syncIdentity(null)
-        assertEquals("reset", sdk.calls[sdk.calls.lastIndex - 1])
+        assertEquals("reset", sdk.calls.last())
+        val afterLogout = sdk.calls.toList()
+        service.setForeground(false); service.setForeground(true); runCurrent()
+        assertEquals(afterLogout, sdk.calls)
+        assertFalse(service.state.value.ready)
+        assertFalse(service.track(AnalyticsEvent.AUTH_GATE_SHOWN, mapOf("feature" to "check_in")))
         assertTrue(sdk.events.none { it.first == "sign_in_completed" })
     }
 
     @Test fun screenDedupeAndEnvelopeCannotBeOverridden() = runTest {
         val sdk = RecordingTransport()
         val service = analytics(MemoryConsent(AnalyticsConsent.Accepted), sdk)
-        service.setForeground(true); service.restoreConsent(); service.syncIdentity(null)
+        service.setForeground(true); service.restoreConsent(); service.syncIdentity("A")
         service.screenShown("discovery", "visit-1"); runCurrent()
         service.screenShown("discovery", "visit-1"); runCurrent()
         assertEquals(1, sdk.events.count { it.first == "\$screen" })
@@ -82,7 +96,7 @@ class AnalyticsServiceTest {
         assertTrue(service.track(AnalyticsEvent.AUTH_GATE_SHOWN, mapOf("feature" to "check_in"))); runCurrent()
         val properties = sdk.events.last().second
         assertEquals("coffee-peek-android", properties["app"])
-        assertEquals("guest", properties["auth_state"])
+        assertEquals("signed_in", properties["auth_state"])
         assertEquals("discovery", properties["page_type"])
     }
 
@@ -120,7 +134,7 @@ class AnalyticsServiceTest {
         val sdk = RecordingTransport().apply { failStart = true }
         val store = MemoryConsent()
         val service = analytics(store, sdk)
-        service.setForeground(true); service.restoreConsent(); service.syncIdentity(null)
+        service.setForeground(true); service.restoreConsent(); service.syncIdentity("A")
         service.setConsent(AnalyticsConsent.Accepted)
         assertFalse(service.state.value.ready)
         sdk.failStart = false
@@ -144,7 +158,7 @@ class AnalyticsServiceTest {
     @Test fun navigationReturnIsANewVisitButRotationAndForegroundAreNot() = runTest {
         val sdk = RecordingTransport()
         val service = analytics(MemoryConsent(AnalyticsConsent.Accepted), sdk)
-        service.setForeground(true); service.restoreConsent(); service.syncIdentity(null)
+        service.setForeground(true); service.restoreConsent(); service.syncIdentity("A")
         service.screenShown("discovery", "route-A"); runCurrent()
         service.screenShown("discovery", "route-A"); runCurrent()
         service.setForeground(false); service.setForeground(true); runCurrent()
@@ -167,7 +181,7 @@ class AnalyticsServiceTest {
         }
         val sdk = RecordingTransport()
         val service = AnalyticsService(AnalyticsContext("coffee-peek-ios", "1+1", "development"), store, sdk, backgroundScope, true)
-        service.setForeground(true); service.restoreConsent(); service.syncIdentity(null)
+        service.setForeground(true); service.restoreConsent(); service.syncIdentity("A")
         val acceptance = launch { service.setConsent(AnalyticsConsent.Accepted) }
         writing.await()
         val revocation = launch { service.setConsent(AnalyticsConsent.Declined) }
