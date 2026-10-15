@@ -35,6 +35,7 @@ import com.coffeepeek.admin.ui.component.SettingsRow
 import com.coffeepeek.admin.ui.component.SettingsSection
 import com.coffeepeek.admin.ui.icons.CpIcons
 import com.coffeepeek.admin.utils.COFFEEPEEK_SHARE_TEXT
+import com.coffeepeek.admin.utils.OpenInBrowser
 import com.coffeepeek.admin.utils.ShareHelper
 import org.koin.compose.koinInject
 
@@ -129,6 +130,14 @@ fun SettingsScreen(vm: ProfileViewModel = koinInject()) {
                 title = "Другие настройки",
                 description = "Управление полезными дополнениями, оценки в App Store и настройки конфиденциальности",
             ) {
+                SettingsRow(
+                    icon = CpIcons.Review,
+                    label = "Связаться с поддержкой",
+                    description = "Поможем с вопросами и проблемами",
+                    iconColors = SettingsIconPalette.Gold,
+                    onClick = { OpenInBrowser.openInBrowser("https://coffeepeek.by/support") },
+                )
+                SettingsDivider()
                 SettingsRow(
                     icon = CpIcons.Lock,
                     label = "Политика использования",
