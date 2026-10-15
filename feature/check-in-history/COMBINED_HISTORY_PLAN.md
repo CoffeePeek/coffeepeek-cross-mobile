@@ -142,3 +142,21 @@ history, or rewrite the full home editor as a prerequisite for read integration.
 - No device UI run is claimed for this extraction. Earlier UI results are dated
   evidence; the interrupted design-system rerun is not a passing result. No phone
   update, account clearing or backend write occurred in this organization step.
+
+## Parent synchronization verification — 2026-10-15
+
+- Parent #43's saved-roaster correction (`ea61b19`, `621d81c`) is inherited by
+  normal merges. The history modules, application adapters, tests and assets
+  still match 9e5a533; the child's diff against its parent remains 71 files.
+- Both Android debug APKs and packaged DEX checks pass. Application tests run
+  233 cases per variant, plus 48 history tests: 514 executions, zero failures,
+  errors or skips. App/history lint and both instrumentation APK assemblies pass.
+- The parent independently passes 449 selected unit executions. Its 12 isolated
+  favorites UI tests and three app route tests pass on the temporary emulator;
+  light/dark fake roaster fixtures were inspected. These are not a fresh combined
+  history UI/device pass. No physical phone, live account or backend write was
+  involved. The temporary emulator was closed after verification.
+- Shared Native compilation is recorded in the earlier verified checkpoints;
+  this final sync adds no Native-specific code or iOS screen/binding changes.
+- Live parity/release gates remain open. Local success does not certify GitHub
+  CI, and publishing the branches does not merge either PR.

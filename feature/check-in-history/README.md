@@ -12,6 +12,9 @@ Parent synchronization: `ea61b19` restores saved roasters in Android favorites a
 adds the approved shared owner/cancellation guard without changing the stored
 JSON or iOS screen/binding. This child inherits that fix and the 100–150-file
 checkpoint guide through a normal merge; history implementation remains unchanged.
+Final synchronized Direct/Play APK/DEX, unit/lint and instrumentation APK builds
+pass (514 selected unit-test executions, zero failures). Detailed scope and limits
+are recorded in the combined-history plan; the combined route is still unchanged.
 
 Initial shop-only audit: 2026-10-14 after `c8d9346`. Main e5722f9 now has a combined
 shop/home history route. The prepared modules below still supply the shop-visit
