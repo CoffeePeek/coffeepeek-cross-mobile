@@ -175,8 +175,6 @@ object RegisterScreen {
                     )
 
                     Spacer(modifier = Modifier.height(14.dp))
-                    RegistrationAnalyticsConsent(isAnalyticsAccepted, vm::onAnalyticsCheckedChange)
-                    Spacer(modifier = Modifier.height(14.dp))
                     AuthOrDivider()
                     Spacer(modifier = Modifier.height(14.dp))
 

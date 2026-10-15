@@ -184,14 +184,11 @@ class RegisterViewModel(
 
     fun onAppleLogin() {
         if (!_appleSigningIn.compareAndSet(expect = false, update = true)) return
-        val analyticsAccepted = _isAnalyticsAccepted.value
         launchRequest(
             onSuccess = { Navigator.navigate(Navigator.Screen.Main) },
             onError = { if (it !is CancellationException) ErrorHandler.showError(socialLoginError("Apple", it.message)) },
         ) {
             try {
-                // Persist before the repository publishes a social-login session.
-                saveAnalyticsConsent(analyticsAccepted)
                 authRepository.signInWithApple().also { signInAnalytics(it.userId, "apple", "register") }
             }
             finally { _appleSigningIn.value = false }
@@ -199,13 +196,11 @@ class RegisterViewModel(
     }
 
     fun onGoogleLogin(idToken: String) {
-        val analyticsAccepted = _isAnalyticsAccepted.value
         launchRequest(
             errorMessage = Res.string.maybe_later,
             onError = { if (it !is CancellationException) ErrorHandler.showError(socialLoginError("Google", it.message)) },
             onSuccess = { Navigator.navigate(Navigator.Screen.Main) },
         ) {
-            saveAnalyticsConsent(analyticsAccepted)
             authRepository.googleLogin(idToken).getOrThrow().also { signInAnalytics(it.userId, "google", "register") }
         }
     }

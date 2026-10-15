@@ -14,6 +14,7 @@ import com.coffeepeek.admin.ui.screen.roaster.AddRoasterScreen
 import com.coffeepeek.admin.ui.screen.roaster.RoasterDetailScreen
 import com.coffeepeek.admin.ui.screen.profile.CityScreen
 import com.coffeepeek.admin.ui.screen.profile.ThemeScreen
+import com.coffeepeek.admin.ui.screen.profile.UsagePolicyScreen
 import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
@@ -144,6 +145,7 @@ object Navigator {
         @Serializable data class EditHomeCheckIn(val id: String) : Screen
         @Serializable data object CitySettings : Screen
         @Serializable data object ThemeSettings : Screen
+        @Serializable data object UsagePolicy : Screen
         @Serializable data class ShopReviews(val shopId: String) : Screen
         @Serializable data class ReportReview(val reviewId: String, val isPreview: Boolean = false) : Screen
         @Serializable data class ReportCheckIn(val checkInId: String) : Screen
@@ -218,7 +220,8 @@ object Navigator {
         is Screen.HomeCheckIns,
         is Screen.EditHomeCheckIn,
         is Screen.CitySettings,
-        is Screen.ThemeSettings -> true
+        is Screen.ThemeSettings,
+        is Screen.UsagePolicy -> true
         else -> false
     }
 
@@ -497,6 +500,7 @@ object Navigator {
                     }
                     composable<Screen.CitySettings> { CityScreen() }
                     composable<Screen.ThemeSettings> { ThemeScreen() }
+                    composable<Screen.UsagePolicy> { UsagePolicyScreen() }
             }
         }
     }
@@ -532,6 +536,7 @@ object Navigator {
             is Screen.EditHomeCheckIn -> ProfileCheckInsScreen(initialHomeId = screen.id)
             Screen.CitySettings -> CityScreen()
             Screen.ThemeSettings -> ThemeScreen()
+            Screen.UsagePolicy -> UsagePolicyScreen()
             else -> error("Tab route must be handled by MainScreen: $screen")
         }
     }
