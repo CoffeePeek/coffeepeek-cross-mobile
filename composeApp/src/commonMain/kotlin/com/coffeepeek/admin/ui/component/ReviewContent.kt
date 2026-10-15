@@ -404,7 +404,7 @@ internal fun CheckInHeader(
         modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        ReviewAvatar(username = username, photoUrl = null)
+        ReviewAvatar(username = username, photoUrl = checkIn.authorAvatarUrl)
         Column(
             modifier = Modifier.weight(1f).padding(start = CpDimens.spacing3),
             verticalArrangement = Arrangement.spacedBy(2.dp),
