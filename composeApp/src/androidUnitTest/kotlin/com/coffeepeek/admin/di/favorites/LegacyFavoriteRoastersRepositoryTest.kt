@@ -5,12 +5,14 @@ import com.coffeepeek.admin.feature.favorites.api.RoasterFavorites
 import com.coffeepeek.domain.model.CatalogItem
 import com.coffeepeek.domain.model.PublicAddress
 import com.coffeepeek.domain.model.Session
+import com.coffeepeek.domain.repository.SessionRepository
 import com.coffeepeek.feature.favorites.domain.model.FavoriteRoaster
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runCurrent
@@ -146,5 +148,32 @@ class LegacyFavoriteRoastersRepositoryTest {
         store.rows.value = listOf(roaster("b")); runCurrent()
         store.rows.value = listOf(roaster("b"), roaster("a")); runCurrent()
         assertEquals(listOf("a", "b", "a"), reads)
+    }
+
+    @Test fun sessionObservationFailureClearsPrivateRowsBeforeReportingError() = runTest {
+        val currentSession = CheckInTestSessions()
+        val failureGate = CompletableDeferred<Unit>()
+        val sessions = object : SessionRepository by currentSession {
+            override fun observeSession() = flow {
+                emit(currentSession.peekSession())
+                failureGate.await()
+                throw IllegalStateException("Session observation unavailable")
+            }
+        }
+        val store = Store().apply { rows.value = listOf(roaster("a").copy(photoUrl = "saved.png")) }
+        val source = LegacyFavoriteRoastersRepository(store, sessions) { error("not used") }
+        val emissions = mutableListOf<Result<List<FavoriteRoaster>>>()
+        val collectorGate = CompletableDeferred<Unit>()
+        backgroundScope.launch { source.observe().collect {
+            emissions += it
+            if (it.getOrNull()?.isNotEmpty() == true) collectorGate.await()
+        } }
+        runCurrent(); assertEquals(1, emissions.last().getOrThrow().size)
+        val beforeFailure = emissions.size
+        failureGate.complete(Unit); runCurrent()
+        collectorGate.complete(Unit); runCurrent()
+        val afterFailure = emissions.drop(beforeFailure)
+        assertTrue(afterFailure.first().getOrThrow().isEmpty())
+        assertTrue(afterFailure.last().isFailure)
     }
 }

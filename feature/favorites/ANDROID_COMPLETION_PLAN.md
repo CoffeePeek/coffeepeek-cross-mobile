@@ -37,7 +37,7 @@ preserving the existing JSON and callers. Do not delete shared legacy consumers.
   Same-account token renewal keeps current reads.
 - [x] Both Android debug APKs and packaged DEX guards, both app unit variants,
   favorites domain/data/impl tests, app/feature lint and instrumentation APKs pass.
-  This checkpoint has 447 selected unit-test executions, zero failures.
+  This checkpoint has 449 selected unit-test executions, zero failures.
 - [x] All 12 isolated favorites UI tests and three app route-adapter UI tests pass
   on the temporary read-only emulator. Fixtures use no account/backend writes.
 - [x] Shared code compiles for iOS Simulator Arm64; this is not iOS feature QA.
