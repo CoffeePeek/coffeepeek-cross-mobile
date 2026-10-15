@@ -76,6 +76,9 @@ internal class RoasterListViewModel(
 
 
     init {
+        favorites.observeErrors()
+            .onEach { error -> if (error != null) _state.update { it.copy(actionMessage = error) } }
+            .launchIn(workScope)
         favorites.observeFavorites()
             .onEach { favorites -> _state.update { it.copy(favoriteIds = favorites.map { it.roasterFavoriteId }.toSet()) } }
             .catch { _state.update { it.copy(actionMessage = "Не удалось загрузить избранное") } }

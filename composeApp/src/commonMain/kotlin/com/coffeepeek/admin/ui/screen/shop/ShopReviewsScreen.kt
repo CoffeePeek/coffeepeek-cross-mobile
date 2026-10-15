@@ -69,6 +69,9 @@ fun ShopReviewsScreen(shopId: String) {
                         CheckInDisplayCard(
                             checkIn = checkIn,
                             isOwn = own,
+                            onAuthorClick = if (blurred) null else checkIn.authorAddress?.slug?.takeIf(String::isNotBlank)?.let { slug ->
+                                { Navigator.navigate(Navigator.Screen.UserProfile(slug, checkIn.username, checkIn.authorAvatarUrl)) }
+                            },
                             modifier = if (blurred) Modifier.fillMaxWidth().blur(5.dp) else Modifier.fillMaxWidth(),
                             onPhotoClick = if (blurred) null else { urls, photoIndex -> preview = urls to photoIndex },
                             onHelpfulClick = if (blurred || own || state.helpfulId != null) null else ({ vm.toggleHelpful(checkIn.id) }),

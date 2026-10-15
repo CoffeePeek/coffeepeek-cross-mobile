@@ -34,13 +34,14 @@ internal fun TimelineCheckInCard(
     onReport: () -> Unit,
     onPhotoClick: (List<String>, Int) -> Unit,
     modifier: Modifier = Modifier,
+    onAuthorClick: (() -> Unit)? = null,
 ) {
     val drinkName = savedDrinkName(checkIn.drinkNameRu, checkIn.drinkNameEn, checkIn.customDrinkName, Locale.current.language)
     Column(
         modifier = modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(CpDimens.spacing2),
     ) {
-        CheckInHeader(checkIn, isOwn) {
+        CheckInHeader(checkIn, isOwn, onAuthorClick = onAuthorClick) {
             CheckInActions(
                 onEditClick = onEdit.takeIf { isOwn },
                 onReportClick = onReport.takeIf { isPublicTimeline && !isOwn },

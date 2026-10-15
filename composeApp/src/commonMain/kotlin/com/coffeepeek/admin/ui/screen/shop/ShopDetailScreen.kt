@@ -1326,6 +1326,9 @@ private fun ReviewsSection(
                             CheckInDisplayCard(
                                 checkIn = checkIn,
                                 isOwn = isOwnCheckIn,
+                                onAuthorClick = checkIn.authorAddress?.slug?.takeIf(String::isNotBlank)?.let { slug ->
+                                    { Navigator.navigate(Navigator.Screen.UserProfile(slug, checkIn.username, checkIn.authorAvatarUrl)) }
+                                },
                                 modifier = Modifier.fillMaxWidth(),
                                 onPhotoClick = onReviewPhotoClick,
                                 onHelpfulClick = if (isOwnCheckIn) null else ({ onReviewHelpfulClick(checkIn.id) }),

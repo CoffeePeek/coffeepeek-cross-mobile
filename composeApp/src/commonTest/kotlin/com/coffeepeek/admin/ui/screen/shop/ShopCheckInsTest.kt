@@ -5,9 +5,12 @@ import com.coffeepeek.admin.feature.checkin.api.DrinkPhotoPreparation
 import com.coffeepeek.admin.feature.checkin.ui.DrinkPhotoPreparationController
 import com.coffeepeek.admin.feature.checkin.domain.DrinkPhotoExtractor
 import com.coffeepeek.admin.utils.PickedImage
+import com.coffeepeek.admin.utils.FavoriteSync
 import com.coffeepeek.domain.model.*
 import com.coffeepeek.domain.repository.*
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
@@ -26,6 +29,31 @@ class ShopCheckInsTest {
             publicAddress = PublicAddress("coffee", "/shops/coffee", 1, false)),
         checkIns = listOf(publicVisit, ownVisit), userCheckIns = listOf(ownVisit, privateVisit),
     )
+
+    @Test
+    fun removesFavoriteByCanonicalPublicSlugWhenDetailWasOpenedThroughAnAlias() = runBlocking {
+        val removed = Channel<String>(Channel.UNLIMITED)
+        val vm = viewModel(
+            ShopTestCheckIns(), loggedIn = true, routeId = "old-coffee-alias",
+            shopDetails = details.copy(shop = details.shop.copy(id = "catalog-guid", isFavorite = true)),
+            onRemoveFavorite = { slug -> removed.send(slug); Result.success(Unit) },
+        )
+        val change = async(start = CoroutineStart.UNDISPATCHED) {
+            withTimeout(5_000) { FavoriteSync.changes.first() }
+        }
+        try {
+            withTimeout(5_000) { vm.uiState.first { it.details != null && !it.isLoading } }
+            vm.toggleFavorite()
+            assertEquals("coffee", withTimeout(5_000) { removed.receive() })
+            assertEquals(FavoriteSync.FavoriteChange("coffee", false), change.await())
+            val updated = withTimeout(5_000) { vm.uiState.first { it.details?.shop?.isFavorite == false } }
+            assertEquals("coffee", updated.details?.shop?.publicAddress?.slug)
+        } finally {
+            change.cancel()
+            removed.close()
+            vm.close()
+        }
+    }
 
     @Test
     fun loadsPublicCheckInsAndUsesCheckInHelpfulWhileKeepingCardsStable() = runBlocking {
@@ -328,8 +356,10 @@ class ShopCheckInsTest {
         shopDetails: CoffeeShopDetails = details, sessionActive: () -> Boolean = { loggedIn },
         drinks: suspend () -> Result<List<ConsumedDrinkOption>> = { Result.success(emptyList()) },
         extract: DrinkPhotoExtractor = DrinkPhotoExtractor { emptyList() },
+        routeId: String = "coffee",
+        onRemoveFavorite: suspend (String) -> Result<Unit> = { error("unused") },
     ): ShopDetailViewModel = ShopDetailViewModel(
-        "coffee", object : ShopRepository {
+        routeId, object : ShopRepository {
             override suspend fun getShopDetails(id: String) = Result.success(shopDetails)
             override suspend fun searchShops(filters: ShopFilters): Result<PagedResult<CoffeeShop>> = error("unused")
             override suspend fun getMapContent(bounds: MapBounds, zoom: Float, filters: ShopFilters): Result<MapContent> = error("unused")
@@ -343,7 +373,7 @@ class ShopCheckInsTest {
             override suspend fun isFavorite(shopId: String): Boolean = error("unused")
             override suspend fun getFavorites(): Result<List<CoffeeShopDetails>> = error("unused")
             override suspend fun addFavorite(shop: CoffeeShop, address: String?): Result<Unit> = error("unused")
-            override suspend fun removeFavorite(shopId: String): Result<Unit> = error("unused")
+            override suspend fun removeFavorite(shopId: String): Result<Unit> = onRemoveFavorite(shopId)
             override suspend fun clearAll() = Unit
         }, checkIns, object : SessionRepository {
             private val session = if (loggedIn) Session("token") else null

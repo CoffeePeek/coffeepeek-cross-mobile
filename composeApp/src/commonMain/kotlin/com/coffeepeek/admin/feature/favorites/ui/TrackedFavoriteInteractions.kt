@@ -55,10 +55,10 @@ internal class TrackedFavoriteInteractions(private val sessions: SessionReposito
                     if (accountKey() != account || !sessions.isActiveSession(sessions.peekSession())) return
                     val duration = started.elapsedNow().inWholeMilliseconds.coerceAtLeast(0)
                     if (operation != null) result.onSuccess {
-                        service.track(AnalyticsEvent.FAVORITE_CHANGED, mapOf("entity_type" to entity, "is_favorite" to desired, "duration_ms" to duration, "resumed_after_auth" to resumed, "favorite_storage" to "local"), operation)
+                        service.track(AnalyticsEvent.FAVORITE_CHANGED, mapOf("entity_type" to entity, "is_favorite" to desired, "duration_ms" to duration, "resumed_after_auth" to resumed, "favorite_storage" to "server"), operation)
                     }.onFailure {
                         val error = safeAnalyticsError(it)
-                        if (error.category != "cancelled") service.track(AnalyticsEvent.FAVORITE_FAILED, mapOf("entity_type" to entity, "duration_ms" to duration, "favorite_storage" to "local") + error.properties(), operation)
+                        if (error.category != "cancelled") service.track(AnalyticsEvent.FAVORITE_FAILED, mapOf("entity_type" to entity, "duration_ms" to duration, "favorite_storage" to "server") + error.properties(), operation)
                     }
                     completed(result)
                 } finally { lock.withLock { pending.remove(pendingKey); mutations.remove(pendingKey) } }

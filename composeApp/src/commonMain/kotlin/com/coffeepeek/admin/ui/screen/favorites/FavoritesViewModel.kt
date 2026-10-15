@@ -8,6 +8,9 @@ import com.coffeepeek.domain.model.CoffeeShop
 import com.coffeepeek.domain.model.CoffeeShopDetails
 import com.coffeepeek.domain.model.CatalogItem
 import com.coffeepeek.domain.model.RoasterDetails
+import com.coffeepeek.domain.feature.favorites.api.FavoriteEntry
+import com.coffeepeek.domain.feature.favorites.api.FavoriteKind
+import com.coffeepeek.domain.feature.favorites.api.FavoritesRepository
 import com.coffeepeek.domain.repository.FavoriteRepository
 import com.coffeepeek.domain.repository.RoasterRepository
 import kotlinx.coroutines.coroutineScope
@@ -33,18 +36,31 @@ data class FavoritesUiState(
     val areRoastersLoading: Boolean = true,
     val savingRoasterIds: Set<String> = emptySet(),
     val actionMessage: String? = null,
+    val roasterError: String? = null,
+    val drinks: List<FavoriteEntry> = emptyList(),
+    val removingDrinkIds: Set<String> = emptySet(),
 )
 
 class FavoritesViewModel(
     private val favoriteRepository: FavoriteRepository,
     private val roasterFavorites: RoasterFavorites,
     private val roasterRepository: RoasterRepository,
+    private val serverFavorites: FavoritesRepository? = null,
 ) : BaseViewModel() {
 
     private val _state = MutableStateFlow(FavoritesUiState())
     val state = _state.asStateFlow()
 
     init {
+        serverFavorites?.observeFavorites()
+            ?.onEach { result -> result.onSuccess { entries ->
+                _state.update { it.copy(drinks = entries.filter { entry -> entry.kind == FavoriteKind.Drink }) }
+            } }
+            ?.catch { _state.update { it.copy(error = "Не удалось загрузить избранное") } }
+            ?.launchIn(workScope)
+        roasterFavorites.observeErrors()
+            .onEach { error -> _state.update { it.copy(roasterError = error) } }
+            .launchIn(workScope)
         workScope.launch {
             roasterFavorites.observeFavorites()
                 .catch { _state.update { it.copy(areRoastersLoading = false, actionMessage = "Не удалось загрузить обжарщиков") } }
@@ -78,6 +94,23 @@ class FavoritesViewModel(
 
     fun clearActionMessage() { _state.update { it.copy(actionMessage = null) } }
 
+    fun removeDrink(drink: FavoriteEntry) {
+        val repository = serverFavorites ?: return
+        if (drink.kind != FavoriteKind.Drink || drink.id in _state.value.removingDrinkIds) return
+        _state.update { it.copy(removingDrinkIds = it.removingDrinkIds + drink.id) }
+        workScope.launch {
+            try {
+                repository.setFavorite(drink, false).onSuccess {
+                    _state.update { state -> state.copy(drinks = state.drinks.filterNot { it.id == drink.id }) }
+                }.onFailure {
+                    _state.update { it.copy(actionMessage = "Не удалось изменить избранное") }
+                }
+            } finally {
+                _state.update { it.copy(removingDrinkIds = it.removingDrinkIds - drink.id) }
+            }
+        }
+    }
+
     fun removeRoaster(roaster: CatalogItem) {
         com.coffeepeek.admin.feature.favorites.api.FavoriteInteractions.change(workScope, roaster.roasterFavoriteId, true, false,
             action = { roasterFavorites.setFavorite(roaster, false) },
@@ -99,7 +132,10 @@ class FavoritesViewModel(
     fun removeFavorite(shop: CoffeeShop) {
         com.coffeepeek.admin.feature.favorites.api.FavoriteInteractions.change(workScope, shop.id, false, false,
             action = { favoriteRepository.removeFavorite(shop.id) },
-            completed = { result -> result.onSuccess { FavoriteSync.notifyChanged(shop.id, false); load(force = true) } },
+            completed = { result -> result
+                .onSuccess { FavoriteSync.notifyChanged(shop.id, false); load(force = true) }
+                .onFailure { _state.update { it.copy(actionMessage = "Не удалось изменить избранное") } }
+            },
         )
     }
 }

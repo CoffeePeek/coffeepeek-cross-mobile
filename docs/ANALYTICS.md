@@ -132,7 +132,7 @@ remote config: после разрешённого setup возможны слу
 | Карточки | catalog item click → detail после успешной загрузки и реального показа; source/search ID для выдачи и map, related для связанных сущностей. |
 | Кофейня | Фото, меню, часы, выбор обжарщика, directions, share, phone copy/call, email, website, Instagram, edit/report/check-in. |
 | Кофе/обжарщик | Фото, описание, переход к обжарщику/похожему кофе/кофейне, share и существующие внешние контакты. |
-| Избранное | Одна попытка на pending элемент; гостевой intent хранится только в памяти до 10 минут, после входа возобновляется один раз. Success после результата repository, failure по безопасной категории, старый account result исключается. Оба существующих repository избранного сохраняют данные локально; success означает завершённую локальную запись, что явно отмечено `favorite_storage=local`. Серверное избранное этой задачей не добавляется. |
+| Избранное | Одна попытка на pending элемент; гостевой intent хранится только в памяти до 10 минут, после входа возобновляется один раз. Success после подтверждённого сервером изменения, failure по безопасной категории, старый account result исключается. Кофейни и обжарщики сохраняются по контракту `/api/v1/favorites`; новые события отмечены `favorite_storage=server`. |
 | Чекин | Общий flow между type picker, shop picker и visit/home editor; VM сохраняет tracker при rotation. Create/edit, первые изменения полей, attempt, client/server validation, upload/save/bean-search failure, retry, явная отмена, saved и отдельный created только для create. |
 | Лента | Viewed по первой успешно загруженной странице public feed; refresh, load more, retry, photo/shop/like/unlike. В собственном дневнике эти действия не выдаются за использование public feed. |
 | API | Один результат всей request pipeline, включая 401 → refresh → повтор; безопасная категория, HTTP method/status и monotonic latency. Refresh и внешние storage uploads не создают самостоятельные результаты; cancellation и старый аккаунт исключаются. |
@@ -151,9 +151,9 @@ remote config: после разрешённого setup возможны слу
    известных значений сохраняются `Private` / `Public`.
 4. `auth_gate_shown.feature=feed_like` и `report_issue`: причины соответствующих
    мобильных барьеров, без переиспользования несвязанного feature.
-   Для `favorite_changed/failed` добавлено необязательное `favorite_storage=local`:
-   существующие избранные кофейни и обжарщики хранятся локально. В совместных
-   отчётах это следует отличать от подтверждённого сервером web-избранного.
+   Для `favorite_changed/failed` необязательное `favorite_storage=server`
+   обозначает серверное хранение. Исторические события `favorite_storage=local`
+   сохраняют прежний смысл локальной записи и допустимы в схеме.
 5. В ответе каталога кофе исторически отсутствовал `totalCount`. Теперь он
    читается, когда предоставлен сервером. При одной странице допустима длина
    полной выдачи. При нескольких страницах без total событие results не

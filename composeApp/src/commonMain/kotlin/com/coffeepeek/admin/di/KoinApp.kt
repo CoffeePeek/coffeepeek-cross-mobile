@@ -18,10 +18,13 @@ import com.coffeepeek.admin.feature.coffee.ui.CoffeeDetailViewModel
 import com.coffeepeek.admin.feature.passwordrecovery.data.PasswordRecoveryRepositoryImpl
 import com.coffeepeek.admin.feature.passwordrecovery.domain.PasswordRecoveryRepository
 import com.coffeepeek.admin.feature.passwordrecovery.ui.PasswordRecoveryViewModel
+import com.coffeepeek.admin.feature.profile.data.PublicProfileRepositoryImpl
+import com.coffeepeek.admin.feature.profile.domain.PublicProfileRepository
+import com.coffeepeek.admin.feature.profile.ui.PublicProfileViewModel
 import com.coffeepeek.admin.feature.homecheckin.ui.HomeCheckInViewModel
 import com.coffeepeek.feature.homecheckin.data.HomeCheckInRepositoryImpl
 import com.coffeepeek.feature.homecheckin.domain.HomeCheckInRepository
-import com.coffeepeek.admin.feature.favorites.data.LocalRoasterFavorites
+import com.coffeepeek.admin.feature.favorites.data.ServerRoasterFavorites
 import com.coffeepeek.admin.utils.CustomUrlFetcher
 import com.coffeepeek.api.CoffeePeekClient
 import com.coffeepeek.admin.ui.NavigatorViewModel
@@ -100,7 +103,9 @@ private fun appModule(settingRepository: com.coffeepeek.room.repository.SettingR
     factory { HomeCheckInViewModel(get(), get(), get(), get()) }
     factory { CoffeeListViewModel(get()) }
     factory { (slug: String) -> CoffeeDetailViewModel(slug, get()) }
-    single<RoasterFavorites> { LocalRoasterFavorites(settingRepository, get()) }
+    single<PublicProfileRepository> { PublicProfileRepositoryImpl(get<CoffeePeekClient>().client, get(), get(), get()) }
+    factory { (slug: String) -> PublicProfileViewModel(slug, get(), get()) }
+    single<RoasterFavorites> { ServerRoasterFavorites(get(), get()) }
     single<com.coffeepeek.admin.feature.appupdate.domain.AppUpdateRepository> {
         com.coffeepeek.admin.feature.appupdate.data.AppUpdateRepositoryImpl(get<CoffeePeekClient>().plainClient, settingRepository)
     }
@@ -128,7 +133,7 @@ private fun appModule(settingRepository: com.coffeepeek.room.repository.SettingR
     factory { DeleteAccountPendingViewModel(get(), get()) }
     factory { AddShopViewModel(get()) }
     factory { EditProfileViewModel(get()) }
-    factory { FavoritesViewModel(get(), get(), get()) }
+    factory { FavoritesViewModel(get(), get(), get(), get()) }
     factory { (kind: ContributionKind) -> MyContributionsViewModel(kind, get(), get(), get()) }
     factory { VisitedPlacesViewModel(get(), get()) }
     factory { AddRoasterViewModel(get(), get()) }

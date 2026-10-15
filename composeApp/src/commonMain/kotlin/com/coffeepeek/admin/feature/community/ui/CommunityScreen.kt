@@ -133,6 +133,11 @@ fun CommunityScreen(onCreateCheckIn: () -> Unit) {
                                         isPublicTimeline = state.timeline == CommunityTimeline.Public,
                                         canAct = !state.isMutating,
                                         changingVisibility = state.changingVisibilityId == checkIn.id,
+                                        onAuthorClick = checkIn.authorAddress?.slug?.takeIf(String::isNotBlank)?.let { slug ->
+                                            {
+                                                Navigator.navigate(Navigator.Screen.UserProfile(slug, checkIn.username, checkIn.authorAvatarUrl))
+                                            }
+                                        },
                                         onShopClick = { vm.itemAction("shop", checkIn); Navigator.navigate(Navigator.Screen.ShopDetail(checkIn.shopId)) },
                                         onEdit = {
                                             if (checkIn.isHome) {

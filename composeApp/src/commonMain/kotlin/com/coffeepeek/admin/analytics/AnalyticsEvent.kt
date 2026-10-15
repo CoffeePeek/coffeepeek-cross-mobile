@@ -75,7 +75,7 @@ internal object AnalyticsSchema {
         "category" to setOf("authentication", "favorites", "check_ins", "photos", "coffees", "roasters", "shops", "feed", "catalog", "profile", "other"),
         "channel" to setOf("google-play", "app-store", "apk"),
         "field" to checkInFields, "reason" to setOf("close", "back", "map"),
-        "favorite_storage" to setOf("local"),
+        "favorite_storage" to setOf("local", "server"),
     )
     private val features = setOf("search", "filters", "shop_catalog", "roaster_catalog", "coffee_catalog", "map", "favorites", "favorites_filter", "visited_filter", "check_in", "home_check_in", "directions", "share", "shop_roasters", "shop_hours", "shop_contacts", "shop_photos", "shop_menu", "coffee_offers", "similar_coffees", "coffee_photos", "coffee_roaster", "roaster_assortment", "roaster_shops", "roaster_photos", "roaster_contacts", "feed", "feed_shop_check_in", "feed_home_check_in", "edit_shop", "unspecified", "feed_like", "report_issue")
     private val placements = pageTypes + setOf("catalog", "home", "coffee_shop_card", "roaster_card", "catalog_card", "global_create", "check_in_type_picker")

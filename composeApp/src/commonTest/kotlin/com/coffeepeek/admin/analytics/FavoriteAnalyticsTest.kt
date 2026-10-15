@@ -47,7 +47,7 @@ class FavoriteAnalyticsTest {
         val changed = sdk.events.single { it.first == "favorite_changed" }.second
         assertEquals(true, changed["resumed_after_auth"])
         assertEquals("signed_in", changed["auth_state"])
-        assertEquals("local", changed["favorite_storage"])
+        assertEquals("server", changed["favorite_storage"])
         assertTrue(sdk.events.none { "never-send-id" in it.second.toString() || "token-not-for-analytics" in it.second.toString() })
     }
 

@@ -53,6 +53,7 @@ import com.coffeepeek.admin.ui.screen.main.MainScreen
 import com.coffeepeek.admin.ui.component.RetainedContent
 import com.coffeepeek.admin.ui.screen.shop.ShopDetailScreen
 import com.coffeepeek.admin.feature.coffee.ui.CoffeeDetailScreen
+import com.coffeepeek.admin.feature.profile.ui.OtherUserProfileScreen
 import com.coffeepeek.admin.feature.passwordrecovery.ui.PasswordRecoveryScreen
 import com.coffeepeek.admin.ui.screen.shop.ShopMenuGalleryScreen
 import com.coffeepeek.admin.ui.screen.shop.ShopReportScreen
@@ -137,6 +138,11 @@ object Navigator {
         @Serializable data object AddShop : Screen
         @Serializable data object AddRoaster : Screen
         @Serializable data class RoasterDetail(val roasterId: String) : Screen
+        @Serializable data class UserProfile(
+            val slug: String,
+            val nickname: String? = null,
+            val avatarUrl: String? = null,
+        ) : Screen
         @Serializable data object EditProfile : Screen
         @Serializable data object DeleteAccountPending : Screen
         @Serializable data object Favorites : Screen
@@ -210,6 +216,7 @@ object Navigator {
         is Screen.AddShop,
         is Screen.AddRoaster,
         is Screen.RoasterDetail,
+        is Screen.UserProfile,
         is Screen.EditProfile,
         is Screen.DeleteAccountPending,
         is Screen.ShopReviews,
@@ -490,6 +497,9 @@ object Navigator {
                         val route = backStack.toRoute<Screen.RoasterDetail>()
                         RoasterDetailScreen(roasterId = route.roasterId)
                     }
+                    composable<Screen.UserProfile> { backStack ->
+                        PublicProfileRoute(backStack.toRoute<Screen.UserProfile>())
+                    }
                     composable<Screen.EditProfile> { EditProfileScreen() }
                     composable<Screen.DeleteAccountPending> { DeleteAccountPendingScreen() }
                     composable<Screen.Favorites> { FavoritesScreen() }
@@ -528,6 +538,7 @@ object Navigator {
             Screen.AddShop -> AddShopScreen()
             Screen.AddRoaster -> AddRoasterScreen()
             is Screen.RoasterDetail -> RoasterDetailScreen(screen.roasterId)
+            is Screen.UserProfile -> PublicProfileRoute(screen)
             Screen.EditProfile -> EditProfileScreen()
             Screen.DeleteAccountPending -> DeleteAccountPendingScreen()
             Screen.Favorites -> FavoritesScreen()
@@ -539,5 +550,19 @@ object Navigator {
             Screen.UsagePolicy -> UsagePolicyScreen()
             else -> error("Tab route must be handled by MainScreen: $screen")
         }
+    }
+
+    @Composable
+    private fun PublicProfileRoute(screen: Screen.UserProfile) {
+        OtherUserProfileScreen(
+            slug = screen.slug,
+            nickname = screen.nickname,
+            avatarUrl = screen.avatarUrl,
+            onBack = ::popBack,
+            onCoffeeShopClick = { navigate(Screen.ShopDetail(it)) },
+            onRoasterClick = { navigate(Screen.RoasterDetail(it)) },
+            onLogin = { navigate(Screen.Auth) },
+            onUserClick = { slug, nickname, avatar -> navigate(Screen.UserProfile(slug, nickname, avatar)) },
+        )
     }
 }

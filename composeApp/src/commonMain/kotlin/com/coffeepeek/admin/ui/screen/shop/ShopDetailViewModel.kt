@@ -86,6 +86,9 @@ class ShopDetailViewModel(
     private var checkInAnalytics: CheckInTracker? = null
 
     init {
+        roasterFavorites.observeErrors()
+            .onEach { error -> if (error != null) _uiState.update { it.copy(actionMessage = error) } }
+            .launchIn(workScope)
         roasterFavorites.observeFavorites()
             .onEach { favorites -> _uiState.update { it.copy(favoriteRoasterIds = favorites.map { it.roasterFavoriteId }.toSet()) } }
             .catch { _uiState.update { it.copy(actionMessage = "Не удалось загрузить избранное") } }
@@ -135,11 +138,12 @@ class ShopDetailViewModel(
 
     fun toggleFavorite() {
         val details = _uiState.value.details ?: return
+        val favoriteId = details.shop.publicAddress?.slug ?: details.shop.id
         val desired = !details.shop.isFavorite
-        com.coffeepeek.admin.feature.favorites.api.FavoriteInteractions.change(workScope, shopId, false, desired,
-            action = { if (desired) favoriteRepository.addFavorite(details.shop, details.location?.address ?: details.shop.address) else favoriteRepository.removeFavorite(shopId) },
+        com.coffeepeek.admin.feature.favorites.api.FavoriteInteractions.change(workScope, favoriteId, false, desired,
+            action = { if (desired) favoriteRepository.addFavorite(details.shop, details.location?.address ?: details.shop.address) else favoriteRepository.removeFavorite(favoriteId) },
             completed = { result -> result.onSuccess {
-                FavoriteSync.notifyChanged(shopId, desired)
+                FavoriteSync.notifyChanged(favoriteId, desired)
                 _uiState.update { state -> state.copy(details = state.details?.let { it.copy(shop = it.shop.copy(isFavorite = desired)) }) }
             }.onFailure { error -> _uiState.update { it.copy(actionMessage = error.message) } } },
         )

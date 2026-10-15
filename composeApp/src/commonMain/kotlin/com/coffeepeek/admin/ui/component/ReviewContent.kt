@@ -360,13 +360,14 @@ fun CheckInDisplayCard(
     isOwn: Boolean = true,
     fullVersion: Boolean = false,
     blurContent: Boolean = false,
+    onAuthorClick: (() -> Unit)? = null,
 ) {
     val cardModifier = modifier
         .fillMaxWidth()
         .then(if (onClick != null && checkIn.shopId.isNotBlank()) Modifier.clickable(onClick = onClick) else Modifier)
 
     CheckInCard(cardModifier, blurContent) {
-        CheckInHeader(checkIn = checkIn, isOwn = isOwn) {
+        CheckInHeader(checkIn = checkIn, isOwn = isOwn, onAuthorClick = onAuthorClick) {
             CheckInActions(onEditClick = null, onReportClick = onReportClick)
         }
         CheckInHeading(checkIn.shopName.ifBlank { "Кофейня" }.takeIf { showShopName }, checkIn.rating)
@@ -396,6 +397,7 @@ fun CheckInDisplayCard(
 internal fun CheckInHeader(
     checkIn: CheckIn,
     isOwn: Boolean,
+    onAuthorClick: (() -> Unit)? = null,
     actions: @Composable () -> Unit,
 ) {
     val date = checkIn.createdAt
@@ -404,26 +406,37 @@ internal fun CheckInHeader(
         modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        ReviewAvatar(username = username, photoUrl = checkIn.authorAvatarUrl)
-        Column(
-            modifier = Modifier.weight(1f).padding(start = CpDimens.spacing3),
-            verticalArrangement = Arrangement.spacedBy(2.dp),
+        Row(
+            modifier = Modifier.weight(1f)
+                .clip(RoundedCornerShape(CpDimens.radiusMd))
+                .then(if (onAuthorClick != null) Modifier.clickable(
+                    role = Role.Button,
+                    onClickLabel = "Открыть профиль $username",
+                    onClick = onAuthorClick,
+                ) else Modifier),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
-            Text(
-                text = username,
-                style = MaterialTheme.typography.bodyMedium,
-                fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.onSurface,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
-            if (date.isNotBlank()) Text(
-                text = rememberReviewDisplayDate(date),
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
+            ReviewAvatar(username = username, photoUrl = checkIn.authorAvatarUrl)
+            Column(
+                modifier = Modifier.weight(1f).padding(start = CpDimens.spacing3),
+                verticalArrangement = Arrangement.spacedBy(2.dp),
+            ) {
+                Text(
+                    text = username,
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                if (date.isNotBlank()) Text(
+                    text = rememberReviewDisplayDate(date),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
         }
         actions()
     }
