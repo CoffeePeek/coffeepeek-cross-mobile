@@ -10,7 +10,7 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.core.app.ActivityScenario
-import com.coffeepeek.admin.MainActivity
+import androidx.activity.ComponentActivity
 import com.coffeepeek.admin.ui.Navigator
 import com.coffeepeek.feature.favorites.api.FavoritesEntry
 import kotlinx.coroutines.CoroutineStart
@@ -43,7 +43,15 @@ class FavoritesDestinationTest {
         }
     }
 
-    private fun render() = ActivityScenario.launch(MainActivity::class.java).also { scenario ->
+    @Test fun openingRoasterUsesPublicSlugAndExistingRootRoute() {
+        render().use {
+            assertEvent(Navigator.NavEvent.NavigateTo(Navigator.Screen.RoasterDetail("public-roaster"))) {
+                composeRule.onNodeWithText("Open roaster").performClick()
+            }
+        }
+    }
+
+    private fun render() = ActivityScenario.launch(ComponentActivity::class.java).also { scenario ->
         scenario.onActivity { activity -> activity.setContent { FavoritesDestination(FakeEntry()) } }
     }
 
@@ -61,9 +69,11 @@ class FavoritesDestinationTest {
             onOpenShop: (String) -> Unit,
             onBack: () -> Unit,
             distanceForCoordinates: (Double, Double) -> String?,
+            onOpenRoaster: (String) -> Unit,
         ) {
             Column {
                 Button(onClick = { onOpenShop("shop-42") }) { Text("Open shop") }
+                Button(onClick = { onOpenRoaster("public-roaster") }) { Text("Open roaster") }
                 Button(onClick = onBack) { Text("Back") }
             }
         }

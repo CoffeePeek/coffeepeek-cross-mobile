@@ -1,5 +1,40 @@
 # Favorites: incremental Android integration
 
+## Current checkpoint — 2026-10-15
+
+PR #43 owns this Android migration; the complete history migration remains in its
+child #95. Checkpoints use the current 100–150-file guide, not the historical
+small-PR stack described below. Do not open a separate PR for this parent fix.
+
+The Android entry now includes saved roasters as main does: a section after shops,
+64dp Fit logos with catalogue fallback, factory placeholder, shop/catalog counts,
+canonical public-slug navigation, and independently guarded removal. Shop and
+roaster list keys are kind-prefixed. Roasters alone are not an empty shop screen;
+a failed source never hides the other source's saved content.
+
+The pure favorites domain owns FavoriteRoaster and its read/remove port. Android
+composition adapts the existing RoasterFavorites singleton and catalogue client;
+UI imports neither legacy models/data nor another feature's implementation. No
+second storage format, database, writer instance, endpoint or Gradle module is
+introduced. The existing account-owned JSON remains authoritative. The guarded
+removal overload checks the original owner under that writer's existing mutex;
+coroutine cancellation is rethrown. This small shared safety fix was explicitly
+approved; iOS screen/binding/navigation remain unchanged.
+
+Fallback reads are capped at four. Account replacement clears visible rows before
+joining old reads, and canceled/non-cooperative photo responses cannot restore
+previous-account cards. Same-account token renewal does not restart reads.
+
+447 selected unit-test executions, both debug APK/DEX checks, app/feature lint,
+test APK assembly and shared iOS Simulator compilation pass. All 12 isolated
+favorites UI tests and three application route-adapter UI tests pass on the owned
+read-only emulator. These are fake data/session checks, not live authenticated QA.
+Colocated light/dark previews cover roasters, mixed content and both new components.
+The fake roaster fixture was visually inspected in both themes; it configures its
+own test-window system-bar icons, not the application's production system UI.
+See ANDROID_COMPLETION_PLAN.md for open release gates; do not mark the whole
+feature done because this source-confirmed gap is fixed.
+
 For the remaining Android-only verification and cleanup, follow
 [ANDROID_COMPLETION_PLAN.md](ANDROID_COMPLETION_PLAN.md). iOS integration and the
 application-wide root Navigation 3 migration remain separate decisions.

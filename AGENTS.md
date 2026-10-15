@@ -160,11 +160,13 @@ module boundary.
 - Continue the branch stack from the current migration tip, not main. Each new
   PR targets the previous open checkpoint branch and describes only the changes
   since that branch. Work only in migration branches. Group related, independently
-  verifiable steps in one PR; use about 50 changed files in the PR diff as the
-  trigger for a new stacked checkpoint, not one PR per small task. A genuine
-  review/risk boundary may justify an earlier PR, and an indivisible change may
-  exceed 50 files with an explanation. Never mix unrelated work just to reach
-  the threshold. Before merging a child, retarget it to main after its parent
+  verifiable steps in one PR; use roughly 100–150 changed files in the PR diff
+  as the checkpoint guide, not one PR per small task. One checkpoint may contain
+  one to three related features when they can be reviewed and verified coherently.
+  A genuine review/risk boundary may justify an earlier PR; an indivisible change
+  may exceed the guide with an explanation. Never mix unrelated work to fill it.
+  Parent-scoped fixes may stay in that parent's PR; update its descendants after
+  publishing them. Before merging a child, retarget it to main after its parent
   has reached main; recheck its diff and tests. Do not merge children into an
   already merged parent and assume they reached main.
 - Branch isolation does not prove application correctness: every integration

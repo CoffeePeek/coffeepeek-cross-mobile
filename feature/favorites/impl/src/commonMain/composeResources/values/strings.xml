@@ -3,7 +3,12 @@
     <string name="favorites_back">Назад</string>
     <string name="favorites_loading">Загрузка избранного</string>
     <string name="favorites_load_error">Не удалось загрузить избранное</string>
-    <string name="favorites_empty">Пока нет избранных кофеен</string>
+    <string name="favorites_empty">Пока нет избранных кофеен и обжарщиков</string>
+    <string name="favorites_roasters">Обжарщики</string>
+    <string name="favorites_roaster_shops">Кофейни</string>
+    <string name="favorites_roaster_catalog">Каталог</string>
+    <string name="favorites_roaster_logo">Логотип %1$s</string>
+    <string name="favorites_roaster_remove">Убрать из избранного: %1$s</string>
     <string name="favorites_update_error">Не удалось обновить избранное</string>
     <string name="favorites_retry">Повторить</string>
     <string name="favorites_remove_description">Удалить из избранного: %1$s</string>

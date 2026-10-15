@@ -4,20 +4,28 @@ import androidx.compose.runtime.Composable
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.coffeepeek.feature.favorites.api.FavoritesEntry
 import com.coffeepeek.feature.favorites.domain.repository.FavoritesRepository
+import com.coffeepeek.feature.favorites.domain.repository.FavoriteRoastersRepository
 import com.coffeepeek.feature.favorites.impl.ui.compose.FavoritesScreen
 import com.coffeepeek.feature.favorites.impl.ui.FavoritesViewModel
 
 /** Manual construction: UI does not fetch anything from Koin or application globals. */
-fun createFavoritesEntry(repository: FavoritesRepository): FavoritesEntry = FavoritesApiImpl(repository)
+fun createFavoritesEntry(
+    repository: FavoritesRepository,
+    roasters: FavoriteRoastersRepository? = null,
+): FavoritesEntry = FavoritesApiImpl(repository, roasters)
 
-internal class FavoritesApiImpl(private val repository: FavoritesRepository) : FavoritesEntry {
+internal class FavoritesApiImpl(
+    private val repository: FavoritesRepository,
+    private val roasters: FavoriteRoastersRepository?,
+) : FavoritesEntry {
     @Composable
     override fun Content(
         onOpenShop: (String) -> Unit,
         onBack: () -> Unit,
         distanceForCoordinates: (Double, Double) -> String?,
+        onOpenRoaster: (String) -> Unit,
     ) {
-        val vm = viewModel { FavoritesViewModel(repository) }
-        FavoritesScreen(vm, onOpenShop, onBack, distanceForCoordinates)
+        val vm = viewModel { FavoritesViewModel(repository, roasters) }
+        FavoritesScreen(vm, onOpenShop, onBack, distanceForCoordinates, onOpenRoaster)
     }
 }

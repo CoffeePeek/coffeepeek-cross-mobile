@@ -266,10 +266,12 @@ platform difference.
 
 Use stacked PRs from the current migration branch tip. Group cohesive migration
 steps in a checkpoint PR instead of opening one for every small task. The
-working threshold for the next checkpoint is about 50 changed files in the PR
-diff against its base; a distinct review/risk boundary can justify an earlier
-split, while an indivisible change may exceed it with an explanation. Never
-combine unrelated work to fill a PR. A child PR targets the previous open
+working guide for the next checkpoint is roughly 100–150 changed files in the PR
+diff against its base. One to three related features may share a coherent,
+independently verified checkpoint. A distinct review/risk boundary can justify
+an earlier split; an indivisible change may exceed the guide with an explanation.
+Never combine unrelated work to fill a PR. Fixes to a parent capability may stay
+in its PR, followed by explicit descendant synchronization. A child PR targets the previous open
 checkpoint branch. After merging a parent to main, retarget its child to main
 and verify the diff before merging; do not merge into stale already-merged
 branches. Branches isolate unfinished work from main, not runtime behaviour

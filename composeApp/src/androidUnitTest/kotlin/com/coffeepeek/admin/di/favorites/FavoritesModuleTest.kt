@@ -3,6 +3,21 @@ package com.coffeepeek.admin.di.favorites
 import com.coffeepeek.feature.favorites.api.FavoritesEntry
 import com.coffeepeek.feature.favorites.domain.model.FavoriteShop
 import com.coffeepeek.feature.favorites.domain.repository.FavoritesRepository
+import com.coffeepeek.feature.favorites.domain.repository.FavoriteRoastersRepository
+import com.coffeepeek.admin.di.shop.CheckInTestSessions
+import com.coffeepeek.admin.feature.favorites.api.RoasterFavorites
+import com.coffeepeek.admin.feature.favorites.data.LocalRoasterFavorites
+import com.coffeepeek.domain.repository.SessionRepository
+import com.coffeepeek.domain.repository.RoasterRepository
+import com.coffeepeek.domain.model.CatalogItem
+import com.coffeepeek.domain.model.PublicAddress
+import com.coffeepeek.domain.model.RoasterSummary
+import com.coffeepeek.domain.model.RoasterDetails
+import com.coffeepeek.domain.model.CreateRoasterInput
+import com.coffeepeek.domain.model.RoasterSubmissionResult
+import com.coffeepeek.domain.model.RoasterSubmission
+import com.coffeepeek.domain.model.ModerationStatus
+import com.coffeepeek.domain.model.PagedResult
 import com.coffeepeek.feature.favorites.domain.usecase.ObserveFavoriteIdsUseCase
 import com.coffeepeek.domain.model.CoffeeShop
 import com.coffeepeek.domain.repository.FavoriteRepository as LegacyFavoriteRepository
@@ -13,10 +28,42 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.test.runTest
 import org.koin.dsl.koinApplication
+import org.koin.dsl.module
 import kotlin.test.*
 
 @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
 class FavoritesModuleTest {
+    @Test fun accountScopedGraphUsesTheExistingRoasterWriterAndLazyCatalogue() = runTest {
+        val settings = Settings()
+        val sessions = CheckInTestSessions()
+        val saved = LocalRoasterFavorites(settings, sessions)
+        saved.setFavorite(CatalogItem("raw-id", "Roaster", photoUrl = "saved.png",
+            address = PublicAddress("public", "/roasters/public", 1, false)), true).getOrThrow()
+        var catalogueReads = 0
+        val catalog = object : RoasterRepository {
+            override suspend fun getRoasters(): Result<List<RoasterSummary>> = error("unused")
+            override suspend fun getRoaster(id: String): Result<RoasterDetails> { catalogueReads++; return Result.failure(IllegalStateException("unused")) }
+            override suspend fun submitRoaster(input: CreateRoasterInput): Result<RoasterSubmissionResult> = error("unused")
+            override suspend fun getMyRoasterSubmissions(status: ModerationStatus, page: Int, pageSize: Int): Result<PagedResult<RoasterSubmission>> = error("unused")
+        }
+        val app = koinApplication {
+            modules(module {
+                single<SessionRepository> { sessions }
+                single<RoasterFavorites> { saved }
+                single<RoasterRepository> { catalog }
+            }, favoritesRoomModule(settings, sessionScoped = true))
+        }
+        try {
+            assertNotNull(app.koin.get<FavoritesEntry>())
+            assertEquals(0, catalogueReads)
+            val source = app.koin.get<FavoriteRoastersRepository>()
+            val rows = source.observe().first { it.getOrNull()?.isNotEmpty() == true }.getOrThrow()
+            assertEquals("public", rows.single().publicSlug)
+            source.remove(rows.single().id).getOrThrow()
+            assertTrue(saved.observeFavorites().first().isEmpty())
+            assertEquals(0, catalogueReads)
+        } finally { app.close() }
+    }
     private class Settings : SettingRepository {
         val values = MutableStateFlow(mapOf("other_key" to "preserved"))
         override suspend fun save(model: Setting) { values.value = values.value + (model.key to model.value) }

@@ -26,8 +26,9 @@ The legacy network client retains its own transport configuration. Application
 composition and favorites consume selected core boundaries; this is not a
 wholesale migration of legacy infrastructure.
 
-Each new module uses a dedicated `feature/...` branch and PR. Small related
-changes may remain in the current PR; split large migrations with many new files.
+Group related modules/features in stacked `feature/...` checkpoints using the
+100–150-file guide. Do not open a PR for every module or small task; parent fixes
+can remain in their owning PR and then be propagated to descendants.
 Application integration must be a separate, explicitly planned stage.
 
 ## Remaining preparation, in order

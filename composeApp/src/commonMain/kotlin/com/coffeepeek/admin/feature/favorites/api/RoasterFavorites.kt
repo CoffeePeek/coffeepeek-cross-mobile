@@ -7,6 +7,10 @@ import kotlinx.coroutines.flow.Flow
 interface RoasterFavorites {
     fun observeFavorites(): Flow<List<CatalogItem>>
     suspend fun setFavorite(roaster: CatalogItem, isFavorite: Boolean): Result<Unit>
+
+    /** Fail closed when a legacy implementation cannot bind a mutation to its original owner. */
+    suspend fun removeForAccount(roaster: CatalogItem, expectedUserId: String): Result<Unit> =
+        Result.failure(UnsupportedOperationException("Account-bound removal is not supported"))
 }
 
 // Catalog keys can be GUIDs; public slugs also identify roasters opened from their detail page.

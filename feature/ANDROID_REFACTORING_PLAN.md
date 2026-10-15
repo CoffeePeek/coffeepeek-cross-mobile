@@ -16,8 +16,10 @@ notes; they do not override this source audit or certify later changes.
 - The independent modal fix #92 reached develop and main and is already in the
   migration ancestry. Do not cherry-pick it again.
 - Preserve published history; no force-push or merging either PR to main/develop
-  is part of this organization step. The history extraction exceeds the usual
-  50-file guide because it keeps an existing capability coherent.
+  is part of this organization step. New checkpoints use the agreed 100–150-file
+  guide and may group one to three related features. Fixes to #43 stay there,
+  then update its history child. The existing 71-file history extraction stays
+  coherent; do not recreate the old small-PR stack.
 
 ## Status meanings
 
@@ -53,7 +55,7 @@ A compilation/test pass is not evidence of pixel parity or a live write.
 
 | Owner / current product | Migration state | What still blocks completion |
 |---|---|---|
-| Favorites: saved shops **and roasters** | In progress; new Android shop entry active | **Source-confirmed parity gap:** main's FavoritesScreen includes a roaster section, but FavoritesDestination.android/new FavoritesEntry renders shops only. Restore existing roaster behavior before calling this migration complete; no new product behavior. Verify old saved data, account transitions, photos and restoration. |
+| Favorites: saved shops **and roasters** | In progress; Android entry now renders both kinds | The missing roaster section is restored with main's counts/logo fallback/public route/removal behavior and account guards. Automated UI/DI/Result/cancellation checks pass. Real saved data/photos, account journey, process restoration, physical-device/accessibility/locale QA still block full completion. |
 | Shop Report: incorrect shop data | In progress; Android entry active | Real safe submit/error/uncertain-delivery flow and paired preview inspection; retain shared/iOS fallback. |
 | Shop: detail, menu, public check-ins and creation sheet | In progress; Android entries active | Physical-device visual/guest/owner/return parity; picker/camera permissions and recreation, ML Kit quality/model availability and safely authorized submissions. Prepared review editors are not a product requirement. |
 | Personal history: one combined Shop/Home calendar and timeline | In progress; all prepared migration code in history child, **not active** | The prepared Shop-only Calendar/List UI is not parity with main. Complete combined readers, MVI, production-shaped UI, home callbacks and Android integration first. |
@@ -112,9 +114,10 @@ These findings come from registered renderers and their call sites, not filename
 
 ## Remaining work — ordered gates
 
-1. [ ] Close source-confirmed regressions in the base before treating PR #43 as
-   ready: favorites' roaster section first, then the existing Shop/report live and
-   visual gates. Fixes must preserve main behavior, not introduce a new design.
+1. [ ] Finish the base's remaining release/visual gates before treating PR #43
+   as ready. Favorites' missing roaster section is fixed and automatically tested;
+   full account/device QA and the existing Shop/report gates remain. Preserve main
+   behavior, not a new design.
 2. [ ] In the history child, prepare account-bound Home reads and history-owned
    read models/ports. Confirm date-boundary/calendar/page semantics and preserve
    unknown visibility/moderation, protected photos and recipe data.
