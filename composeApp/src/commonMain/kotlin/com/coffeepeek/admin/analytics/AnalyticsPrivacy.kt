@@ -2,6 +2,7 @@ package com.coffeepeek.admin.analytics
 
 import androidx.compose.runtime.*
 import androidx.compose.material3.*
+import androidx.compose.ui.Modifier
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -20,10 +21,10 @@ internal fun AnalyticsPrivacy() {
 }
 
 @Composable
-internal fun AnalyticsConsentSwitch() {
+internal fun AnalyticsConsentSwitch(modifier: Modifier = Modifier) {
     val service = Analytics.service ?: return
     val state by service.state.collectAsState()
     val scope = rememberCoroutineScope()
-    Switch(checked = state.consent == AnalyticsConsent.Accepted,
+    Switch(modifier = modifier, checked = state.consent == AnalyticsConsent.Accepted,
         onCheckedChange = { checked -> scope.launch { service.setConsent(if (checked) AnalyticsConsent.Accepted else AnalyticsConsent.Declined) } })
 }
