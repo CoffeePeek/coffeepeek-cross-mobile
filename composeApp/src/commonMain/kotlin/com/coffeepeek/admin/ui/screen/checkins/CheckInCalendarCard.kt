@@ -12,7 +12,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
@@ -22,8 +24,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.admin.ui.component.HapticEvent
+import com.coffeepeek.admin.ui.component.DrinkCutoutImage
 import com.coffeepeek.admin.ui.component.platformHaptic
 import com.coffeepeek.admin.ui.icons.CpIcons
+import com.coffeepeek.admin.utils.CpImage
 import com.coffeepeek.domain.model.CheckIn
 
 @Composable
@@ -35,6 +39,7 @@ internal fun CalendarCard(
     onSelectDate: (String) -> Unit,
     onToday: () -> Unit,
     homeCounts: Map<String, Int> = emptyMap(),
+    homePhotos: Map<String, List<CalendarPhoto>> = emptyMap(),
 ) {
     val month = state.calendarMonth
     val homeTotal = homeCounts.values.sum()
@@ -75,6 +80,7 @@ internal fun CalendarCard(
                             CalendarDay(
                                 day = day, date = date, checkIns = state.calendarCheckIns[date].orEmpty(),
                                 homeCount = homeCounts[date] ?: 0,
+                                photos = calendarPhotos(state.calendarCheckIns[date].orEmpty(), homePhotos[date].orEmpty()),
                                 isSelected = state.selectedDate == date, isToday = today == date,
                                 isFuture = date > today, modifier = Modifier.weight(1f),
                                 onClick = { platformHaptic(HapticEvent.Selection); onSelectDate(date) },
@@ -129,6 +135,7 @@ private fun CalendarDay(
     date: String,
     checkIns: List<CheckIn>,
     homeCount: Int,
+    photos: List<CalendarPhoto>,
     isSelected: Boolean,
     isToday: Boolean,
     isFuture: Boolean,
@@ -144,7 +151,7 @@ private fun CalendarDay(
             .background(if (isSelected) MaterialTheme.colorScheme.primary.copy(alpha = 0.10f) else Color.Transparent)
             .clickable(enabled = !isFuture, role = Role.Button, onClickLabel = "Выбрать дату", onClick = onClick)
             .semantics(mergeDescendants = true) { contentDescription = description; selected = isSelected }
-            .heightIn(min = 50.dp).padding(vertical = 4.dp),
+            .heightIn(min = 76.dp).padding(vertical = 4.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {
@@ -160,10 +167,34 @@ private fun CalendarDay(
                     else -> MaterialTheme.colorScheme.onSurface
                 }, modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp))
         }
-        Row(Modifier.height(6.dp).clearAndSetSemantics {},
-            horizontalArrangement = Arrangement.spacedBy(3.dp), verticalAlignment = Alignment.CenterVertically) {
-            repeat(total.coerceIn(0, 3)) {
-                Box(Modifier.size(4.dp).background(MaterialTheme.colorScheme.primary, CircleShape))
+        CalendarDayPhotos(photos.take(total), total)
+    }
+}
+
+@Composable
+private fun CalendarDayPhotos(photos: List<CalendarPhoto>, total: Int) {
+    Box(Modifier.fillMaxWidth().height(32.dp).clearAndSetSemantics {}, contentAlignment = Alignment.Center) {
+        if (photos.isEmpty()) {
+            Row(horizontalArrangement = Arrangement.spacedBy(3.dp)) {
+                repeat(total.coerceIn(0, 3)) {
+                    Box(Modifier.size(4.dp).background(MaterialTheme.colorScheme.primary, CircleShape))
+                }
+            }
+        } else {
+            Box(Modifier.width(28.dp + 6.dp * (photos.size - 1)).height(32.dp)) {
+                photos.forEachIndexed { index, photo ->
+                    val modifier = Modifier.align(Alignment.CenterStart).offset(x = 6.dp * index)
+                        .size(28.dp).rotate(if (photos.size > 1) (index - (photos.size - 1) / 2f) * 12f else 0f)
+                    if (photo.isCutout) DrinkCutoutImage(data = photo.url, modifier = modifier, outlineWidth = 1.dp)
+                    else CpImage(data = photo.url, contentScale = ContentScale.Crop,
+                        modifier = modifier.clip(RoundedCornerShape(6.dp)))
+                }
+            }
+            if (total > photos.size) {
+                Text("+${total - photos.size}",
+                    modifier = Modifier.align(Alignment.BottomEnd)
+                        .background(MaterialTheme.colorScheme.surface, CircleShape).padding(horizontal = 2.dp),
+                    style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)
             }
         }
     }

@@ -21,6 +21,7 @@ import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.admin.ui.icons.CpIcons
+import com.coffeepeek.admin.ui.component.DrinkCutoutImage
 import com.coffeepeek.admin.utils.CpImage
 import com.coffeepeek.admin.utils.formatOneDecimal
 import com.coffeepeek.admin.utils.utcIsoToLocalDateTime
@@ -73,10 +74,12 @@ internal fun diaryPhoto(checkIn: CheckIn): Pair<String, Boolean>? {
 @Composable
 internal fun CheckInDiaryThumbnail(checkIn: CheckIn, modifier: Modifier = Modifier) {
     val photo = diaryPhoto(checkIn)
-    if (photo != null) {
+    if (photo?.second == true) {
+        DrinkCutoutImage(photo.first, modifier = modifier)
+    } else if (photo != null) {
         CpImage(data = photo.first, contentDescription = null,
-            contentScale = if (photo.second) ContentScale.Fit else ContentScale.Crop,
-            modifier = if (photo.second) modifier else modifier.clip(RoundedCornerShape(10.dp)))
+            contentScale = ContentScale.Crop,
+            modifier = modifier.clip(RoundedCornerShape(10.dp)))
     } else {
         Box(modifier.background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.45f), RoundedCornerShape(10.dp)),
             contentAlignment = Alignment.Center) {

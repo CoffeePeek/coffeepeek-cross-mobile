@@ -212,6 +212,7 @@ internal fun ProfileCheckInsScreen(
                         onToday = { syncMonth(today); if (selectedDate != today) chooseDate(today) },
                         homeCounts = if (kind == ActivityKind.Shop) emptyMap()
                             else home.calendar.associate { it.preparedOn to it.brewCount },
+                        homePhotos = if (kind == ActivityKind.Shop) emptyMap() else homeCalendarPhotos(home.calendarItems),
                     )
                 }
                 if (selectedDate != null) item(key = "clear-date") {

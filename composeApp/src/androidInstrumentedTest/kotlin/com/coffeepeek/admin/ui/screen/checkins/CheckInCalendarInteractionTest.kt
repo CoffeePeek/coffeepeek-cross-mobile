@@ -1,6 +1,10 @@
 package com.coffeepeek.admin.ui.screen.checkins
 
 import android.graphics.Bitmap
+import android.graphics.Canvas
+import android.graphics.Color
+import android.graphics.Paint
+import android.graphics.Rect
 import android.view.accessibility.AccessibilityNodeInfo
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.Column
@@ -11,6 +15,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -22,20 +27,112 @@ import androidx.test.platform.app.InstrumentationRegistry
 import com.coffeepeek.admin.MainActivity
 import com.coffeepeek.admin.theme.CoffeePeekTheme
 import com.coffeepeek.admin.theme.PlatformSystemBars
+import com.coffeepeek.admin.utils.CustomUrl
 import com.coffeepeek.admin.ui.component.CapsuleSegmentedControl
 import com.coffeepeek.admin.ui.component.CpTopBar
 import com.coffeepeek.domain.model.CheckIn
 import com.coffeepeek.domain.model.ReviewRating
 import java.io.File
+import java.io.ByteArrayOutputStream
+import io.kamel.core.DataSource
+import io.kamel.core.Resource
+import io.kamel.core.config.KamelConfig
+import io.kamel.core.config.ResourceConfig
+import io.kamel.core.config.takeFrom
+import io.kamel.core.fetcher.Fetcher
+import io.kamel.image.config.Default
+import io.kamel.image.config.LocalKamelConfig
+import io.ktor.utils.io.ByteReadChannel
+import kotlinx.coroutines.flow.flow
 import java.util.concurrent.atomic.AtomicReference
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
+import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 
 /** Uses the production calendar composable with local fixtures, never a signed-in account. */
 @RunWith(AndroidJUnit4::class)
 class CheckInCalendarInteractionTest {
+    @Before
+    fun grantStartupPermissions() = grantCheckInFixtureStartupPermissions()
+
+    @Test
+    fun calendarRendersTransparentDrinkPhotosWithOutlineAndRemainsSelectable() {
+        val selection = AtomicReference<String?>(null)
+        val pixels = Bitmap.createBitmap(64, 64, Bitmap.Config.ARGB_8888)
+        val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.MAGENTA }
+        Canvas(pixels).apply {
+            drawRoundRect(16f, 16f, 43f, 49f, 7f, 7f, paint)
+            paint.style = Paint.Style.STROKE
+            paint.strokeWidth = 5f
+            drawCircle(45f, 29f, 9f, paint)
+        }
+        val png = ByteArrayOutputStream().use { bytes ->
+            pixels.compress(Bitmap.CompressFormat.PNG, 100, bytes)
+            bytes.toByteArray()
+        }
+        pixels.recycle()
+        val fixtureUrl = "https://calendar-fixture.invalid/cutout.png"
+        val imageConfig = KamelConfig {
+            takeFrom(KamelConfig.Default)
+            fetcher(object : Fetcher<CustomUrl> {
+                override val inputDataKClass = CustomUrl::class
+                override val source = DataSource.Disk
+                override val CustomUrl.isSupported get() = url == fixtureUrl
+                override fun fetch(data: CustomUrl, resourceConfig: ResourceConfig) = flow {
+                    emit(Resource.Success(ByteReadChannel(png), source))
+                }
+            })
+        }
+        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+            scenario.onActivity { activity -> activity.setContent {
+                CompositionLocalProvider(LocalKamelConfig provides imageConfig) {
+                    CoffeePeekTheme(darkTheme = true) {
+                        Scaffold(topBar = { CpTopBar("Чекины", onBack = {}) }) { padding ->
+                            Column(Modifier.fillMaxSize().padding(padding).padding(16.dp)) {
+                                CalendarCard(
+                                    VisitedPlacesUiState(calendarMonth = CalendarMonth(2026, 10)),
+                                    today = "2026-10-13", onPreviousMonth = {}, onNextMonth = {},
+                                    onSelectDate = { selection.set(it) }, onToday = {},
+                                    homeCounts = mapOf("2026-10-12" to 1),
+                                    homePhotos = mapOf("2026-10-12" to listOf(CalendarPhoto(fixtureUrl, true))),
+                                )
+                            }
+                        }
+                    }
+                }
+            } }
+            val instrumentation = InstrumentationRegistry.getInstrumentation()
+            val density = instrumentation.targetContext.resources.displayMetrics.density
+            waitUntil {
+                val day = node { it.contentDescription?.startsWith("12 октября 2026, 1 чекин") == true }
+                    ?: return@waitUntil false
+                val bounds = Rect().also(day::getBoundsInScreen)
+                val shot = instrumentation.uiAutomation.takeScreenshot() ?: return@waitUntil false
+                // Only inspect the photo area below the date label, so date text cannot
+                // satisfy the white-edge assertion. The fixture's corners stay transparent.
+                val top = (bounds.bottom - 34 * density).toInt().coerceAtLeast(bounds.top)
+                var magenta = 0
+                var white = 0
+                for (y in top until bounds.bottom.coerceAtMost(shot.height)) {
+                    for (x in bounds.left.coerceAtLeast(0) until bounds.right.coerceAtMost(shot.width)) {
+                        val color = shot.getPixel(x, y)
+                        if (Color.red(color) > 180 && Color.green(color) < 80 && Color.blue(color) > 180) magenta++
+                        if (Color.red(color) > 235 && Color.green(color) > 235 && Color.blue(color) > 235) white++
+                    }
+                }
+                val rendered = magenta > 10 && white > 2
+                if (rendered) File(instrumentation.targetContext.getExternalFilesDir(null), "checkins-calendar-cutout.png")
+                    .outputStream().use { shot.compress(Bitmap.CompressFormat.PNG, 100, it) }
+                shot.recycle()
+                rendered
+            }
+            click(node { it.contentDescription?.startsWith("12 октября 2026,") == true }!!)
+            waitUntil { selection.get() == "2026-10-12" }
+        }
+    }
+
     @Test
     fun calendarCombinesHomeAndCafeCountsAndSupportsMonthNavigation() {
         val selection = AtomicReference<String?>(null)

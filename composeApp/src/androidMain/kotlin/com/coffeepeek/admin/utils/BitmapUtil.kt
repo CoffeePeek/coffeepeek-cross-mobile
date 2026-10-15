@@ -48,6 +48,19 @@ object BitmapUtil {
             .compress(maxByteSize)
     }
 
+    /** Display downloads must retain PNG transparency, including on Android before API 30. */
+    internal fun prepareForDisplay(byteArray: ByteArray): ByteArray {
+        val decoded = decodeOrientedBitmap(byteArray, decodeMaxSide = DISPLAY_MAX_SIDE * 2)
+        val sized = decoded.changeSize(DISPLAY_MAX_SIDE)
+        return try {
+            if (sized.hasAlpha()) sized.toByteArray(Bitmap.CompressFormat.PNG)
+            else sized.compressToSize(DISPLAY_BYTE_RANGE)
+        } finally {
+            if (sized !== decoded) sized.recycle()
+            decoded.recycle()
+        }
+    }
+
     /**
      * Prepares a gallery/camera photo for upload: keeps high resolution and quality,
      * only downscales/compresses when needed to stay under [UPLOAD_MAX_BYTES].

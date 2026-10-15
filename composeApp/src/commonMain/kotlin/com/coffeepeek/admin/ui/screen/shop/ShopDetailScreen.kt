@@ -211,6 +211,10 @@ fun ShopDetailScreen(shopId: String, forCheckIn: Boolean = false) {
                 placeName = state.details?.shop?.title,
                 submittedVisibility = state.submittedCheckInVisibility,
                 submissionError = state.checkInError,
+                drinkPhotoState = state.drinkPhotoState,
+                onSelectDrinkPhoto = vm::selectDrinkPhoto,
+                onRetryDrinkPhoto = vm::retryDrinkPhoto,
+                onSkipDrinkPhoto = vm::skipDrinkPhoto,
                 onGoToFeed = {
                     vm.dismissCheckInSheet()
                     Navigator.popThenSelectTab(Navigator.Screen.CommunityTab)

@@ -22,19 +22,21 @@ fun CpImage(
     modifier: Modifier = Modifier,
     contentDescription: String? = null,
 ) {
-    val resolvedData = when {
-        data is String -> when {
-            data.startsWith("https://") || data.startsWith("http://") -> CustomUrl(data)
-            else -> CustomUrl("${Constants.BASE_URL}api/file/$data")
-        }
-        else -> data
-    }
     Image(
-        painter = rememberCpImagePainter(resolvedData, placeholder, error),
+        painter = rememberCpImagePainter(cpImageData(data), placeholder, error),
         contentDescription = contentDescription,
         contentScale = contentScale,
         modifier = modifier,
     )
+}
+
+internal fun cpImageData(data: Any): Any = when (data) {
+    is String -> CustomUrl(when {
+        data.startsWith("https://") || data.startsWith("http://") -> data
+        data.startsWith("/") -> "${Constants.BASE_URL.trimEnd('/')}$data"
+        else -> "${Constants.BASE_URL}api/file/$data"
+    })
+    else -> data
 }
 
 @Composable

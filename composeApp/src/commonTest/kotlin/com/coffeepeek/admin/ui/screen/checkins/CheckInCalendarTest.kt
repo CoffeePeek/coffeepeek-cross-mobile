@@ -1,9 +1,40 @@
 package com.coffeepeek.admin.ui.screen.checkins
 
+import com.coffeepeek.domain.model.CheckIn
+import com.coffeepeek.feature.homecheckin.domain.HomeCheckIn
+import com.coffeepeek.feature.homecheckin.domain.HomeCheckInPhoto
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
 class CheckInCalendarTest {
+    @Test
+    fun calendarPrioritizesCutoutsAcrossHomeAndCafeVisitsAndLimitsTheStack() {
+        val visits = listOf(
+            CheckIn("original", "shop", "Coffee", "", "2026-10-12T09:00:00Z", photoUrls = listOf("original.jpg")),
+            CheckIn("cutout", "shop", "Coffee", "", "2026-10-12T10:00:00Z", drinkPhotoUrl = "cafe.png"),
+        )
+        assertEquals(listOf(CalendarPhoto("cafe.png", true), CalendarPhoto("home.png", true), CalendarPhoto("original.jpg", false)),
+            calendarPhotos(visits, listOf(CalendarPhoto("home.png", true), CalendarPhoto("fourth.jpg", false))))
+        assertEquals(listOf(CalendarPhoto("cafe.png", true)),
+            calendarPhotos(visits.takeLast(1), listOf(CalendarPhoto("cafe.png", true))))
+    }
+
+    @Test
+    fun homeCalendarKeepsPhotosGroupedByPreparedDayAndFallsBackToOriginal() {
+        fun entry(id: String, day: String, cutout: String?, photos: List<HomeCheckInPhoto>) = HomeCheckIn(
+            id, "${day}T09:00:00Z", day, "${day}T09:00:00Z", null, null, null, null,
+            null, null, null, null, null, null, photos, cutout,
+        )
+        assertEquals(mapOf(
+            "2026-10-12" to listOf(CalendarPhoto("home.png", true), CalendarPhoto("home.jpg", false)),
+            "2026-10-13" to emptyList(),
+        ), homeCalendarPhotos(listOf(
+            entry("cutout", "2026-10-12", "home.png", listOf(HomeCheckInPhoto("original", "unused.jpg"))),
+            entry("original", "2026-10-12", " ", listOf(HomeCheckInPhoto("blank", ""), HomeCheckInPhoto("photo", "home.jpg"))),
+            entry("empty", "2026-10-13", null, emptyList()),
+        )))
+    }
+
     @Test
     fun weekStripCrossesMonthAndLeapDay() {
         assertEquals(listOf("2024-02-26", "2024-02-27", "2024-02-28", "2024-02-29",

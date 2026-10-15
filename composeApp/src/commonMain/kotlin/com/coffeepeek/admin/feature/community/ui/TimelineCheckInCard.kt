@@ -10,6 +10,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.unit.dp
+import com.coffeepeek.admin.feature.catalog.api.methodLabel
 import com.coffeepeek.admin.theme.CpDimens
 import com.coffeepeek.admin.ui.component.CheckInActions
 import com.coffeepeek.admin.ui.component.CheckInHeader
@@ -17,6 +18,7 @@ import com.coffeepeek.admin.ui.component.CheckInHeading
 import com.coffeepeek.admin.ui.component.HelpfulButton
 import com.coffeepeek.admin.ui.component.ReviewPhotoStrip
 import com.coffeepeek.admin.ui.component.SavedDrinkLabel
+import com.coffeepeek.domain.feature.feed.FeedHomePreparation
 import com.coffeepeek.domain.model.CheckIn
 import com.coffeepeek.domain.model.CheckInModerationState
 import com.coffeepeek.domain.model.CheckInVisibility
@@ -59,12 +61,7 @@ internal fun TimelineCheckInCard(
             Text("Кофе дома", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
             checkIn.homePreparation?.let { recipe ->
                 recipe.beanName?.takeIf(String::isNotBlank)?.let { Text(it, style = MaterialTheme.typography.titleMedium) }
-                val details = listOfNotNull(
-                    recipe.brewMethodCode?.let { code -> homeMethodTitle(code) },
-                    recipe.doseGrams?.let { "$it г" },
-                    recipe.brewDurationSeconds?.let { "$it с" },
-                    recipe.tasteScore?.let { "$it/5" },
-                ).joinToString(" · ")
+                val details = recipe.timelineDetails()
                 if (details.isNotBlank()) Text(details, style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
@@ -101,13 +98,9 @@ internal fun TimelineCheckInCard(
     }
 }
 
-private fun homeMethodTitle(code: String): String = when (code) {
-    "espresso" -> "Эспрессо"
-    "pour_over" -> "Пуровер"
-    "batch_drip" -> "Фильтр"
-    "moka_pot" -> "Гейзер"
-    "cezve" -> "Турка"
-    "aeropress" -> "Аэропресс"
-    "french_press" -> "Френч-пресс"
-    else -> "Другой способ"
-}
+internal fun FeedHomePreparation.timelineDetails(): String = listOfNotNull(
+    brewMethodCode?.methodLabel(),
+    doseGrams?.let { "$it г" },
+    brewDurationSeconds?.let { "$it с" },
+    tasteScore?.let { "$it/5" },
+).joinToString(" · ")

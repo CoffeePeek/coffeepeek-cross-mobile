@@ -1,6 +1,10 @@
 package com.coffeepeek.admin.feature.homecheckin.ui
 
 import com.coffeepeek.admin.analytics.*
+import com.coffeepeek.admin.feature.checkin.api.DrinkPhotoPreparation
+import com.coffeepeek.admin.feature.checkin.api.DrinkPhotoState
+import com.coffeepeek.domain.model.PendingPhotoUpload
+import com.coffeepeek.feature.homecheckin.domain.HomePhotoUpload
 
 import com.coffeepeek.admin.base.BaseViewModel
 import com.coffeepeek.admin.feature.catalog.api.BrewMethodCatalog
@@ -59,6 +63,7 @@ internal data class HomeCheckInUiState(
     val hasMore: Boolean = false,
     val month: HomeMonth,
     val calendar: List<HomeCalendarDay> = emptyList(),
+    val calendarItems: List<HomeCheckIn> = emptyList(),
     val calendarLoading: Boolean = false,
     val calendarError: String? = null,
     val selectedDate: String? = null,
@@ -81,12 +86,14 @@ internal data class HomeCheckInUiState(
     val brewMethods: List<BrewMethodOption> = emptyList(),
     val brewMethodsLoading: Boolean = false,
     val brewMethodsError: Boolean = false,
+    val drinkPhotoState: DrinkPhotoState = DrinkPhotoState(),
 )
 
 internal class HomeCheckInViewModel(
     private val repository: HomeCheckInRepository,
     private val coffeePicker: CoffeePicker,
     private val brewMethodCatalog: BrewMethodCatalog,
+    private val drinkPhotoFactory: DrinkPhotoPreparation.Factory = DrinkPhotoPreparation.Factory.Unavailable,
 ) : BaseViewModel() {
     private val now = currentHomePreparedAt()
     private val today = utcIsoToLocalDate(now)
@@ -96,6 +103,16 @@ internal class HomeCheckInViewModel(
         draft = HomeCheckInInput(preparedAt = now, preparedOn = today, tasteScore = 5),
     ))
     val state = _state.asStateFlow()
+    private val drinkPhotos = drinkPhotoFactory.create(workScope, ::onDrinkPhotoChanged)
+
+    private fun onDrinkPhotoChanged(photoState: DrinkPhotoState) {
+        _state.update { current ->
+            if (photoState !== drinkPhotos.state || current.selected != null || current.draft.photos.firstOrNull()?.toPendingPhoto() != photoState.source) current
+            else current.withDraft(current.draft.copy(drinkPhoto = photoState.selected?.let {
+                HomePhotoUpload(it.fileName, it.contentType, it.bytes)
+            })).copy(drinkPhotoState = photoState)
+        }
+    }
     private var historyJob: Job? = null
     private var calendarJob: Job? = null
     private var catalogJob: Job? = null
@@ -142,7 +159,7 @@ internal class HomeCheckInViewModel(
     fun changeMonth(offset: Int) {
         val next = _state.value.month.change(offset)
         if (next.year * 12 + next.month > todayMonth.year * 12 + todayMonth.month) return
-        _state.update { it.copy(month = next, selectedDate = null, calendar = emptyList()) }
+        _state.update { it.copy(month = next, selectedDate = null, calendar = emptyList(), calendarItems = emptyList()) }
         loadCalendar()
         loadHistory(reset = true)
     }
@@ -157,9 +174,31 @@ internal class HomeCheckInViewModel(
         calendarJob?.cancel()
         _state.update { it.copy(calendarLoading = true, calendarError = null) }
         calendarJob = workScope.launch {
-            repository.calendar(month.from, month.to)
-                .onSuccess { days -> _state.update { if (it.month == month) it.copy(calendar = days, calendarLoading = false) else it } }
-                .onFailure { error -> _state.update { if (it.month == month) it.copy(calendarError = error.message ?: "Не удалось загрузить календарь", calendarLoading = false) else it } }
+            try {
+                val days = repository.calendar(month.from, month.to).getOrThrow()
+                ensureActive()
+                _state.update { if (it.month == month) it.copy(calendar = days) else it }
+                // The summary route returns counts only. Fetch month photos separately so a
+                // selected day or a partially loaded history cannot erase other day markers.
+                val entries = mutableListOf<HomeCheckIn>()
+                if (days.any { it.brewCount > 0 }) {
+                    var page = 1
+                    do {
+                        val result = repository.history(page, 100, month.from, month.to).getOrThrow()
+                        ensureActive()
+                        entries += result.items
+                        page++
+                    } while (result.hasMore && result.items.isNotEmpty() && page <= 10000)
+                }
+                _state.update { if (it.month == month) it.copy(
+                    calendarItems = entries.distinctBy(HomeCheckIn::id), calendarLoading = false,
+                ) else it }
+            } catch (error: Exception) {
+                ensureActive()
+                _state.update { if (it.month == month) it.copy(
+                    calendarError = error.message ?: "Не удалось загрузить календарь", calendarLoading = false,
+                ) else it }
+            }
         }
     }
 
@@ -190,6 +229,7 @@ internal class HomeCheckInViewModel(
     fun closeDetail() = _state.update { it.copy(selected = null, editing = false, saveNotice = null) }
 
     fun create(tracker: CheckInTracker? = null) {
+        drinkPhotos.reset()
         checkInAnalytics = (tracker ?: CheckInTracker(CheckInKind.Home, CheckInSource.Direct)).also { it.step(CheckInStep.Editor) }
         catalogJob?.cancel()
         val preparedAt = currentHomePreparedAt()
@@ -197,6 +237,7 @@ internal class HomeCheckInViewModel(
             editing = true, selected = null, formError = null, fieldErrors = emptyMap(), saveNotice = null,
             catalogQuery = "", catalogItems = emptyList(), catalogSelectionName = null,
             catalogLoading = false, catalogError = null,
+            drinkPhotoState = DrinkPhotoState(),
             draft = HomeCheckInInput(preparedAt = preparedAt, preparedOn = utcIsoToLocalDate(preparedAt), tasteScore = 5),
         ) }
         loadBrewMethods()
@@ -204,12 +245,14 @@ internal class HomeCheckInViewModel(
 
     fun edit() {
         val entry = _state.value.selected ?: return
+        drinkPhotos.reset()
         checkInAnalytics = CheckInTracker(CheckInKind.Home, CheckInSource.Diary, edit = true).also { it.step(CheckInStep.Editor) }
         catalogJob?.cancel()
         _state.update { it.copy(
             editing = true, formError = null, fieldErrors = emptyMap(), saveNotice = null,
             catalogQuery = "", catalogItems = emptyList(), catalogSelectionName = entry.beanName,
             catalogLoading = false, catalogError = null,
+            drinkPhotoState = DrinkPhotoState(),
             draft = HomeCheckInInput(
                 preparedAt = entry.preparedAtUtc, preparedOn = entry.preparedOn,
                 brewMethodCode = entry.brewMethodCode,
@@ -228,7 +271,10 @@ internal class HomeCheckInViewModel(
     fun updateDraft(change: (HomeCheckInInput) -> HomeCheckInInput) {
         if (_state.value.saving) return
         val before = _state.value.draft
-        val after = change(before)
+        val changed = change(before)
+        val sourceChanged = before.photos.firstOrNull() != changed.photos.firstOrNull()
+        val after = if (sourceChanged) changed.copy(drinkPhoto = null)
+        else changed.copy(drinkPhoto = drinkPhotos.state.selected?.let { HomePhotoUpload(it.fileName, it.contentType, it.bytes) })
         listOf("date" to (before.preparedAt != after.preparedAt || before.preparedOn != after.preparedOn),
             "brew_method" to (before.brewMethodCode != after.brewMethodCode), "bean" to (before.customBeanName != after.customBeanName || before.coffeeProductId != after.coffeeProductId || before.coffeeProductSlug != after.coffeeProductSlug),
             "dose" to (before.doseGrams != after.doseGrams), "brew_duration" to (before.brewDurationSeconds != after.brewDurationSeconds),
@@ -237,7 +283,12 @@ internal class HomeCheckInViewModel(
             "photos" to (before.photos != after.photos || before.drinkPhoto != after.drinkPhoto), "visibility" to (before.visibility != after.visibility))
             .filter { it.second }.forEach { checkInAnalytics?.field(it.first) }
         _state.update { it.withDraft(after) }
+        if (_state.value.selected == null) drinkPhotos.setSource(after.photos.firstOrNull()?.toPendingPhoto(), after.drinkPhoto?.toPendingPhoto())
     }
+
+    fun selectDrinkPhoto(photo: PendingPhotoUpload) { if (!_state.value.saving) drinkPhotos.select(photo) }
+    fun retryDrinkPhoto() { if (!_state.value.saving) drinkPhotos.retry() }
+    fun skipDrinkPhoto() { if (!_state.value.saving) drinkPhotos.skip() }
 
     fun loadBrewMethods() {
         if (_state.value.brewMethods.isNotEmpty()) return
@@ -286,8 +337,12 @@ internal class HomeCheckInViewModel(
     fun closeEditor() { checkInAnalytics?.cancel("close"); _state.update { it.copy(editing = false, formError = null, fieldErrors = emptyMap()) } }
 
     fun save() {
-        val snapshot = _state.value
-        if (snapshot.saving) return
+        val photoState = drinkPhotos.state
+        val current = _state.value
+        if (current.saving || !photoState.canSubmit) return
+        val snapshot = if (current.selected == null) current.copy(draft = current.draft.copy(
+            drinkPhoto = photoState.selected?.let { HomePhotoUpload(it.fileName, it.contentType, it.bytes) },
+        )) else current
         val tracker = checkInAnalytics
         tracker?.submit()
         val errors = homeCheckInFieldErrors(snapshot.draft, editing = snapshot.selected != null)
@@ -335,6 +390,8 @@ internal class HomeCheckInViewModel(
 /** Android's Instant.now() can emit 9 fractional digits; the server accepts at most 7. */
 @OptIn(kotlin.time.ExperimentalTime::class)
 private fun currentHomePreparedAt(): String = kotlin.time.Instant.fromEpochMilliseconds(currentEpochMillis()).toString()
+
+private fun HomePhotoUpload.toPendingPhoto() = PendingPhotoUpload(fileName, contentType, bytes)
 
 internal fun homeVisibilitySaveNotice(
     requested: HomeCheckInVisibility?,

@@ -19,6 +19,7 @@ import androidx.test.core.app.ActivityScenario
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.coffeepeek.admin.MainActivity
+import com.coffeepeek.admin.ui.screen.checkins.grantCheckInFixtureStartupPermissions
 import com.coffeepeek.admin.feature.catalog.api.BrewMethodOption
 import com.coffeepeek.admin.theme.CoffeePeekTheme
 import com.coffeepeek.admin.theme.PlatformSystemBars
@@ -34,11 +35,15 @@ import java.util.concurrent.atomic.AtomicReference
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import org.junit.Before
 import org.junit.runner.RunWith
 
 /** Actual production sheets, driven with local data without an authenticated account. */
 @RunWith(AndroidJUnit4::class)
 class HomeCheckInFormInteractionTest {
+    @Before
+    fun grantStartupPermissions() = grantCheckInFixtureStartupPermissions()
+
     @Test
     fun publicHomeCardShowsRecipeAndItsActionsWork() {
         val edits = AtomicInteger()

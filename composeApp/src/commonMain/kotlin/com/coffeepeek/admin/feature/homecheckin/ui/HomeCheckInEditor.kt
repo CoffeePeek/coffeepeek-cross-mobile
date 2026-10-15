@@ -1,5 +1,9 @@
 package com.coffeepeek.admin.feature.homecheckin.ui
 
+import com.coffeepeek.admin.feature.catalog.api.catalogBrewMethodSlug
+import com.coffeepeek.admin.feature.catalog.api.methodLabel
+import com.coffeepeek.admin.feature.checkin.api.DrinkPhotoPreview
+import com.coffeepeek.domain.model.PendingPhotoUpload
 import androidx.compose.foundation.background
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.border
@@ -90,7 +94,8 @@ import kotlin.time.Instant
 internal fun HomeEditor(state: HomeCheckInUiState, vm: HomeCheckInViewModel, modifier: Modifier) {
     HomeEditorContent(state, { draft -> vm.updateDraft { draft } }, vm::setCatalogQuery,
         vm::searchCatalog, vm::selectCatalogProduct, vm::save, vm::closeEditor, modifier,
-        onRetryMethods = vm::loadBrewMethods)
+        onRetryMethods = vm::loadBrewMethods, onSelectDrinkPhoto = vm::selectDrinkPhoto,
+        onRetryDrinkPhoto = vm::retryDrinkPhoto, onSkipDrinkPhoto = vm::skipDrinkPhoto)
 }
 
 /** Uses the same fields, rating card and step rhythm as the coffee-shop check-in form. */
@@ -106,6 +111,9 @@ internal fun HomeEditorContent(
     onClose: () -> Unit,
     modifier: Modifier = Modifier,
     onRetryMethods: () -> Unit = {},
+    onSelectDrinkPhoto: (PendingPhotoUpload) -> Unit = {},
+    onRetryDrinkPhoto: () -> Unit = {},
+    onSkipDrinkPhoto: () -> Unit = {},
 ) {
     val draft = state.draft
     val errors = state.fieldErrors
@@ -235,6 +243,8 @@ internal fun HomeEditorContent(
                                 } },
                                 hint = "Чашка, зерно или процесс приготовления — до 5 фото.",
                             )
+                            if (draft.photos.isNotEmpty()) DrinkPhotoPreview(state.drinkPhotoState,
+                                onSelectDrinkPhoto, onRetryDrinkPhoto, onSkipDrinkPhoto)
                         } else {
                             Text("Фотографии этой записи сохранятся без изменений", style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -246,7 +256,7 @@ internal fun HomeEditorContent(
                 verticalArrangement = Arrangement.spacedBy(CpDimens.spacing2)) {
                 AppButton(if (state.saving) "Сохраняем…" else "Сохранить чекин", onClick = {
                     keyboard?.hide(); focus.clearFocus(force = true); onSave()
-                }, enabled = !state.saving)
+                }, enabled = !state.saving && state.drinkPhotoState.canSubmit)
             }
         }
     }
