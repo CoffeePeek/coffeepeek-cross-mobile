@@ -1,15 +1,11 @@
 package com.coffeepeek.admin.feature.community.ui
 
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.intl.Locale
-import androidx.compose.ui.unit.dp
 import com.coffeepeek.admin.feature.catalog.api.methodLabel
 import com.coffeepeek.admin.theme.CpDimens
 import com.coffeepeek.admin.ui.component.CheckInActions
@@ -40,12 +36,8 @@ internal fun TimelineCheckInCard(
     modifier: Modifier = Modifier,
 ) {
     val drinkName = savedDrinkName(checkIn.drinkNameRu, checkIn.drinkNameEn, checkIn.customDrinkName, Locale.current.language)
-    val homeShape = RoundedCornerShape(topStart = 28.dp, topEnd = 18.dp, bottomEnd = 28.dp, bottomStart = 18.dp)
     Column(
-        modifier = modifier.fillMaxWidth().then(if (checkIn.isHome) Modifier
-            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.62f), homeShape)
-            .border(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.72f), homeShape)
-            .padding(18.dp) else Modifier),
+        modifier = modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(CpDimens.spacing2),
     ) {
         CheckInHeader(checkIn, isOwn) {
@@ -58,7 +50,6 @@ internal fun TimelineCheckInCard(
             )
         }
         if (checkIn.isHome) {
-            Text("Кофе дома", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
             checkIn.homePreparation?.let { recipe ->
                 recipe.beanName?.takeIf(String::isNotBlank)?.let { Text(it, style = MaterialTheme.typography.titleMedium) }
                 val details = recipe.timelineDetails()
