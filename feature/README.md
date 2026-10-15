@@ -18,21 +18,11 @@ route intentionally keeps the legacy renderer. See shop-report/README.md.
 Actual registration remains in build-logic Modules.all. Android is the integration
 target; no native iOS implementation is part of these slices.
 
-Personal shop-visit history is the next independent owner. Its populated
-check-in-history/domain and data modules prepare read-only pagination/calendar
-contracts; impl prepares shared typed MVI and Android calendar/list UI without
-data/HTTP dependencies. API now exposes the narrow screen and date-snapshot contracts.
-Android app composition prepares revocable account leases, a navigation-owned
-feature store, zone-aware calendar snapshots and lazy DI with the existing protected
-image loader. Its prepared photo viewer is account-owned. The backend owner-history
-query and its range test confirm an inclusive lower and exclusive upper instant bound.
-Incoming main e5722f9 now combines shop/home history in ProfileCheckInsScreen; that
-route is preserved on both platforms. The earlier local standalone-history switch
-is not active or published. Audit integration with that combined screen before
-wiring the new shop-history entry, so home visits and edit routes are not lost.
-See [check-in-history/README.md](check-in-history/README.md) for the audited boundaries,
-ordered implementation and session/time-zone risks. No empty API module or
-new application module is part of these migration slices.
+Personal history is extracted in full to `feature/check-in-history-refactoring`,
+a child of this migration branch. Its prepared api/domain/data/impl, app adapters,
+tests and detailed plan belong to that child, not the final diff of PR #43.
+The existing combined ProfileCheckInsScreen, Home editing and shared/iOS legacy
+paths remain unchanged here. No history Gradle modules are registered in this base.
 
 ## Target layout and graph
 
