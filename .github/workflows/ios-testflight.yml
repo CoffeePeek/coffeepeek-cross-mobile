@@ -2,7 +2,7 @@ name: iOS TestFlight
 
 on:
   push:
-    branches: [main, develop]
+    branches: [main]
     paths:
       - .github/workflows/ios-testflight.yml
       - .github/actions/setup-ios-caches/**
@@ -34,7 +34,7 @@ concurrency:
 
 jobs:
   upload:
-    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop'
+    if: github.ref == 'refs/heads/main'
     runs-on: xcode-27
     timeout-minutes: 90
     environment: testflight
