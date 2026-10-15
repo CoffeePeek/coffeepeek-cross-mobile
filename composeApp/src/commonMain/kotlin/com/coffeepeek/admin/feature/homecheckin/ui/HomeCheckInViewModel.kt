@@ -1,5 +1,7 @@
 package com.coffeepeek.admin.feature.homecheckin.ui
 
+import com.coffeepeek.admin.analytics.*
+
 import com.coffeepeek.admin.base.BaseViewModel
 import com.coffeepeek.admin.feature.catalog.api.BrewMethodCatalog
 import com.coffeepeek.admin.feature.catalog.api.BrewMethodOption
@@ -99,6 +101,11 @@ internal class HomeCheckInViewModel(
     private var catalogJob: Job? = null
     private var methodsJob: Job? = null
     private var statsRequested = false
+    private var checkInAnalytics: CheckInTracker? = null
+    private var creationAnalytics: CheckInTracker? = null
+    fun creationTracker(): CheckInTracker = creationAnalytics ?: CheckInTracker(CheckInKind.Undecided, CheckInSource.Global)
+        .also { it.step(CheckInStep.Type); creationAnalytics = it }
+    fun creationPickerFinished() { creationAnalytics = null }
 
     init { refresh() }
 
@@ -182,7 +189,8 @@ internal class HomeCheckInViewModel(
 
     fun closeDetail() = _state.update { it.copy(selected = null, editing = false, saveNotice = null) }
 
-    fun create() {
+    fun create(tracker: CheckInTracker? = null) {
+        checkInAnalytics = (tracker ?: CheckInTracker(CheckInKind.Home, CheckInSource.Direct)).also { it.step(CheckInStep.Editor) }
         catalogJob?.cancel()
         val preparedAt = currentHomePreparedAt()
         _state.update { it.copy(
@@ -196,6 +204,7 @@ internal class HomeCheckInViewModel(
 
     fun edit() {
         val entry = _state.value.selected ?: return
+        checkInAnalytics = CheckInTracker(CheckInKind.Home, CheckInSource.Diary, edit = true).also { it.step(CheckInStep.Editor) }
         catalogJob?.cancel()
         _state.update { it.copy(
             editing = true, formError = null, fieldErrors = emptyMap(), saveNotice = null,
@@ -218,7 +227,16 @@ internal class HomeCheckInViewModel(
 
     fun updateDraft(change: (HomeCheckInInput) -> HomeCheckInInput) {
         if (_state.value.saving) return
-        _state.update { it.withDraft(change(it.draft)) }
+        val before = _state.value.draft
+        val after = change(before)
+        listOf("date" to (before.preparedAt != after.preparedAt || before.preparedOn != after.preparedOn),
+            "brew_method" to (before.brewMethodCode != after.brewMethodCode), "bean" to (before.customBeanName != after.customBeanName || before.coffeeProductId != after.coffeeProductId || before.coffeeProductSlug != after.coffeeProductSlug),
+            "dose" to (before.doseGrams != after.doseGrams), "brew_duration" to (before.brewDurationSeconds != after.brewDurationSeconds),
+            "rating_taste" to (before.tasteScore != after.tasteScore), "note" to (before.text != after.text),
+            "drink" to (before.drinkSlug != after.drinkSlug || before.customDrinkName != after.customDrinkName),
+            "photos" to (before.photos != after.photos || before.drinkPhoto != after.drinkPhoto), "visibility" to (before.visibility != after.visibility))
+            .filter { it.second }.forEach { checkInAnalytics?.field(it.first) }
+        _state.update { it.withDraft(after) }
     }
 
     fun loadBrewMethods() {
@@ -234,11 +252,13 @@ internal class HomeCheckInViewModel(
     }
 
     fun setCatalogQuery(query: String) {
+        checkInAnalytics?.step(CheckInStep.Bean)
+        checkInAnalytics?.field("bean")
         _state.update { it.copy(catalogQuery = query.take(100), catalogError = null) }
         searchCatalog(debounce = true)
     }
 
-    fun searchCatalog() = searchCatalog(debounce = false)
+    fun searchCatalog() { checkInAnalytics?.retry(CheckInStage.Bean); searchCatalog(debounce = false) }
 
     private fun searchCatalog(debounce: Boolean) {
         catalogJob?.cancel()
@@ -250,11 +270,12 @@ internal class HomeCheckInViewModel(
             coroutineContext.ensureActive()
             result
                 .onSuccess { items -> _state.update { it.copy(catalogItems = items, catalogLoading = false) } }
-                .onFailure { error -> _state.update { it.copy(catalogError = error.message, catalogLoading = false) } }
+                .onFailure { error -> checkInAnalytics?.failed(CheckInStage.Bean, safeAnalyticsError(error)); _state.update { it.copy(catalogError = error.message, catalogLoading = false) } }
         }
     }
 
     fun selectCatalogProduct(product: CoffeePickerItem) {
+        checkInAnalytics?.field("bean")
         catalogJob?.cancel()
         _state.update { it.withDraft(it.draft.copy(coffeeProductSlug = product.slug,
             coffeeProductId = null, customBeanName = null)).copy(
@@ -262,13 +283,16 @@ internal class HomeCheckInViewModel(
         ) }
     }
 
-    fun closeEditor() = _state.update { it.copy(editing = false, formError = null, fieldErrors = emptyMap()) }
+    fun closeEditor() { checkInAnalytics?.cancel("close"); _state.update { it.copy(editing = false, formError = null, fieldErrors = emptyMap()) } }
 
     fun save() {
         val snapshot = _state.value
         if (snapshot.saving) return
+        val tracker = checkInAnalytics
+        tracker?.submit()
         val errors = homeCheckInFieldErrors(snapshot.draft, editing = snapshot.selected != null)
         if (errors.isNotEmpty()) {
+            tracker?.validation(errors.keys.map { it.analyticsField() })
             _state.update { it.copy(formError = null, fieldErrors = errors) }
             return
         }
@@ -277,11 +301,14 @@ internal class HomeCheckInViewModel(
             val result = snapshot.selected?.let { repository.update(it.id, snapshot.draft) }
                 ?: repository.create(snapshot.draft)
             result.onSuccess { entry ->
+                tracker?.saved(entry.visibility?.name ?: "unknown", entry.photos.isNotEmpty() || entry.drinkPhotoUrl != null)
                 _state.update { it.copy(saving = false, editing = false, selected = entry,
                     saveNotice = homeVisibilitySaveNotice(snapshot.draft.visibility, entry.visibility)) }
                 refresh()
             }.onFailure { error ->
                 val failure = error as? HomeCheckInFailure
+                if (failure?.fieldErrors?.isNotEmpty() == true) tracker?.validation(failure.fieldErrors.keys.map { it.analyticsField() }, server = true)
+                else tracker?.failed(if (failure?.operation == com.coffeepeek.feature.homecheckin.domain.HomeCheckInOperation.PhotoUpload) CheckInStage.Photo else CheckInStage.Save, safeAnalyticsError(error))
                 _state.update { it.copy(saving = false,
                     fieldErrors = failure?.fieldErrors.orEmpty(),
                     formError = if (failure?.fieldErrors?.isNotEmpty() == true) null
@@ -315,3 +342,9 @@ internal fun homeVisibilitySaveNotice(
 ): String? = if (requested != null && requested != returned)
     "Чекин сохранён, но сервер не подтвердил выбранную видимость. Её можно повторно изменить через редактирование этой записи."
 else null
+
+private fun HomeCheckInField.analyticsField() = when (this) {
+    HomeCheckInField.Date -> "date"; HomeCheckInField.Method -> "brew_method"; HomeCheckInField.Bean -> "bean"
+    HomeCheckInField.Dose -> "dose"; HomeCheckInField.Duration -> "brew_duration"; HomeCheckInField.Rating -> "rating_taste"
+    HomeCheckInField.Note -> "note"; HomeCheckInField.Drink -> "drink"; HomeCheckInField.Photos -> "photos"; HomeCheckInField.Visibility -> "visibility"
+}

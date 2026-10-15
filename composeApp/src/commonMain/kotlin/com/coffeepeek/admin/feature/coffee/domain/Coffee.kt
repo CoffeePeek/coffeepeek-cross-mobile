@@ -41,7 +41,7 @@ internal data class CoffeeDetails(
     val checkedAtUtc: String?,
 )
 
-internal data class CoffeePage(val items: List<Coffee>, val currentPage: Int, val totalPages: Int)
+internal data class CoffeePage(val items: List<Coffee>, val currentPage: Int, val totalPages: Int, val totalCount: Int? = null)
 
 internal data class CoffeeFilterOption(val code: String, val name: String)
 

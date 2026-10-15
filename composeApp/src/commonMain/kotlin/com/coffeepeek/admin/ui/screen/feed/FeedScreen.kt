@@ -1,5 +1,7 @@
 package com.coffeepeek.admin.ui.screen.feed
 
+import com.coffeepeek.admin.analytics.*
+
 import com.coffeepeek.admin.ui.icons.CpIcons
 import com.coffeepeek.admin.feature.catalog.api.ShopCard
 import androidx.compose.foundation.Image
@@ -158,9 +160,9 @@ fun FeedScreen(
         mapExpanded = false
     }
     var locationRefreshKey by remember { mutableStateOf(0) }
-    LocationPermissionEffect(requestKey = 1, onGranted = { locationRefreshKey++ })
+    LocationPermissionEffect(requestKey = 1, onGranted = { locationRefreshKey++ }, onDenied = { Analytics.track(AnalyticsEvent.GEOLOCATION_RESULT, "placement" to "discovery", "trigger" to "automatic", "outcome" to "unavailable") })
     val userLocation = rememberPermittedUserLocation(locationRefreshKey)
-    LaunchedEffect(userLocation) { userLocation?.let(vm::onUserLocationChanged) }
+    LaunchedEffect(userLocation) { userLocation?.let { vm.onUserLocationChanged(it); Analytics.track(AnalyticsEvent.GEOLOCATION_RESULT, "placement" to "discovery", "trigger" to "automatic", "outcome" to "available") } }
     val displayedShops = state.visibleShops
 
     val shouldLoadMore by remember(showDiscovery) {
@@ -304,7 +306,7 @@ fun FeedScreen(
                                     })
                                 }
                                 item(key = "shops-heading") {
-                                    DiscoverySectionTitle("Кофейни", onShowAll = vm::activateSearch)
+                                    Box(Modifier.analyticsExposure("shop_catalog", "discovery", "discovery")) { DiscoverySectionTitle("Кофейни", onShowAll = vm::activateSearch) }
                                 }
                                 item(key = "shops-preview") {
                                     when {
@@ -325,6 +327,7 @@ fun FeedScreen(
                                                     onClick = {
                                                         focusManager.clearFocus(force = true)
                                                         keyboard?.hide()
+                                                        vm.openedShop(shop)
                                                         Navigator.navigate(Navigator.Screen.ShopDetail(shop.id))
                                                     },
                                                     onToggleFavorite = { vm.toggleFavorite(shop) },
@@ -413,7 +416,8 @@ fun FeedScreen(
                                         onClick = {
                                             focusManager.clearFocus(force = true)
                                             keyboard?.hide()
-                                            Navigator.navigate(Navigator.Screen.ShopDetail(shop.id))
+                                            vm.openedShop(shop)
+                                                        Navigator.navigate(Navigator.Screen.ShopDetail(shop.id))
                                         },
                                         onToggleFavorite = { vm.toggleFavorite(shop) },
                                     )

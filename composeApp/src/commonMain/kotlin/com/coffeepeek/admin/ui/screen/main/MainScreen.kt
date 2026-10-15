@@ -70,6 +70,8 @@ expect fun MainScreen()
 internal fun ComposeMainScreen() {
     val reduceMotion = com.coffeepeek.admin.ui.component.platformReduceMotion()
     val bottomNavController = rememberNavController()
+    val analyticsEntry by bottomNavController.currentBackStackEntryAsState()
+    com.coffeepeek.admin.analytics.TrackNavigationScreen(analyticsEntry)
     val focusManager = LocalFocusManager.current
     val keyboard = LocalSoftwareKeyboardController.current
     var isFeedMapExpanded by remember { mutableStateOf(false) }

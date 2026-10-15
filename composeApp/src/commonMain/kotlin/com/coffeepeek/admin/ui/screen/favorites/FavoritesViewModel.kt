@@ -79,17 +79,10 @@ class FavoritesViewModel(
     fun clearActionMessage() { _state.update { it.copy(actionMessage = null) } }
 
     fun removeRoaster(roaster: CatalogItem) {
-        val id = roaster.roasterFavoriteId
-        if (id in _state.value.savingRoasterIds) return
-        _state.update { it.copy(savingRoasterIds = it.savingRoasterIds + id) }
-        workScope.launch {
-            try {
-                roasterFavorites.setFavorite(roaster, false)
-                    .onFailure { _state.update { it.copy(actionMessage = "Не удалось убрать обжарщика из избранного") } }
-            } finally {
-                _state.update { it.copy(savingRoasterIds = it.savingRoasterIds - id) }
-            }
-        }
+        com.coffeepeek.admin.feature.favorites.api.FavoriteInteractions.change(workScope, roaster.roasterFavoriteId, true, false,
+            action = { roasterFavorites.setFavorite(roaster, false) },
+            completed = { result -> result.onFailure { _state.update { it.copy(actionMessage = "Не удалось изменить избранное") } } },
+        )
     }
 
     fun load(force: Boolean = false) {
@@ -104,11 +97,9 @@ class FavoritesViewModel(
 
     /** Tapping the heart on a favorites card unfavorites it and drops it from the list. */
     fun removeFavorite(shop: CoffeeShop) {
-        workScope.launch {
-            _state.update { it.copy(shops = it.shops.filterNot { d -> d.shop.id == shop.id }) }
-            favoriteRepository.removeFavorite(shop.id)
-                .onSuccess { FavoriteSync.notifyChanged(shop.id, false) }
-                .onFailure { load(force = true) }
-        }
+        com.coffeepeek.admin.feature.favorites.api.FavoriteInteractions.change(workScope, shop.id, false, false,
+            action = { favoriteRepository.removeFavorite(shop.id) },
+            completed = { result -> result.onSuccess { FavoriteSync.notifyChanged(shop.id, false); load(force = true) } },
+        )
     }
 }

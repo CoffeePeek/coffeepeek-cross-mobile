@@ -60,7 +60,7 @@ fun initKoin() {
     val database = Locator.database
     ThemeManager.initialize(database.settingRepository)
 
-    startKoin {
+    val application = startKoin {
         modules(
             dataModule(
                 baseUrl = Constants.BASE_URL,
@@ -75,6 +75,7 @@ fun initKoin() {
             updateInstallerModule(),
         )
     }
+    com.coffeepeek.admin.analytics.installAnalytics(database.settingRepository, application.koin.get(), application.koin.get())
 }
 
 private fun appModule(settingRepository: com.coffeepeek.room.repository.SettingRepository) = module {

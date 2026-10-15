@@ -39,9 +39,12 @@ import com.coffeepeek.admin.utils.COFFEEPEEK_SHARE_TEXT
 import com.coffeepeek.admin.utils.OpenInBrowser
 import com.coffeepeek.admin.utils.ShareHelper
 import org.koin.compose.koinInject
+import androidx.compose.runtime.rememberCoroutineScope
+import kotlinx.coroutines.launch
 
 @Composable
 fun SettingsScreen(vm: ProfileViewModel = koinInject()) {
+    val analyticsScope = rememberCoroutineScope()
     val profile by vm.uiState.collectAsState()
     val themeMode by vm.themeMode.collectAsState()
     val cities by vm.cities.collectAsState()
@@ -131,6 +134,18 @@ fun SettingsScreen(vm: ProfileViewModel = koinInject()) {
                 title = "Другие настройки",
                 description = "Управление полезными дополнениями, оценки в App Store и настройки конфиденциальности",
             ) {
+                SettingsRow(
+                    icon = CpIcons.Info,
+                    label = "Аналитика использования",
+                    onClick = { analyticsScope.launch {
+                        val service = com.coffeepeek.admin.analytics.Analytics.service ?: return@launch
+                        service.setConsent(if (service.state.value.consent == com.coffeepeek.admin.analytics.AnalyticsConsent.Accepted)
+                            com.coffeepeek.admin.analytics.AnalyticsConsent.Declined else com.coffeepeek.admin.analytics.AnalyticsConsent.Accepted)
+                    } },
+                    description = "Отправка событий в PostHog (ЕС). Можно отключить в любой момент.",
+                    trailing = { com.coffeepeek.admin.analytics.AnalyticsConsentSwitch() },
+                )
+                SettingsDivider()
                 SettingsRow(
                     icon = CpIcons.Lock,
                     label = "Политика использования",

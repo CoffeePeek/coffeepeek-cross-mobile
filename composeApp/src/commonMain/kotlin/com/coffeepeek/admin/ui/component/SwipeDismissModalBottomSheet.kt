@@ -45,7 +45,11 @@ fun SwipeDismissModalBottomSheet(
     maxSheetHeightFraction: Float? = null,
     content: @Composable ColumnScope.() -> Unit,
 ) {
-    if (NativeModalSheet(onDismissRequest, dismissEnabled, content)) return
+    val trackedContent: @Composable ColumnScope.() -> Unit = {
+        val column = this
+        com.coffeepeek.admin.analytics.AnalyticsOverlay { content(column) }
+    }
+    if (NativeModalSheet(onDismissRequest, dismissEnabled, trackedContent)) return
     val canDismiss by rememberUpdatedState(dismissEnabled)
     val sheetState = rememberModalBottomSheetState(
         skipPartiallyExpanded = true,
@@ -101,13 +105,13 @@ fun SwipeDismissModalBottomSheet(
         containerColor = MaterialTheme.colorScheme.surface,
     ) {
         if (maxSheetHeightFraction == null) {
-            content()
+            trackedContent()
         } else {
             // Keep the sheet's anchor constraints equal to the dialog viewport.
             // Sizing the ModalBottomSheet itself makes Expanded resolve to y = 0,
             // because Material sees the reduced height as the entire viewport.
             Column(Modifier.fillMaxWidth().fillMaxHeight(maxSheetHeightFraction)) {
-                content()
+                trackedContent()
             }
         }
     }

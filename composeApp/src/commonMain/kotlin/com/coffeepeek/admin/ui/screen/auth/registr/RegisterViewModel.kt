@@ -1,5 +1,7 @@
 package com.coffeepeek.admin.ui.screen.auth.registr
 
+import com.coffeepeek.admin.analytics.*
+
 import coffeepeek.composeapp.generated.resources.Res
 import coffeepeek.composeapp.generated.resources.email_no_exist
 import coffeepeek.composeapp.generated.resources.error_email_name
@@ -160,6 +162,7 @@ class RegisterViewModel(
             }
 
             authRepository.register(currentName, currentEmail, currentPassword).getOrThrow()
+            Analytics.track(AnalyticsEvent.SIGN_UP_COMPLETED, "method" to "password")
         }
     }
 
@@ -172,7 +175,7 @@ class RegisterViewModel(
             onSuccess = { Navigator.navigate(Navigator.Screen.Main) },
             onError = { if (it !is CancellationException) ErrorHandler.showError(socialLoginError("Apple", it.message)) },
         ) {
-            try { authRepository.signInWithApple() }
+            try { authRepository.signInWithApple().also { signInAnalytics(it.userId, "apple", "register") } }
             finally { _appleSigningIn.value = false }
         }
     }
@@ -183,7 +186,7 @@ class RegisterViewModel(
             onError = { if (it !is CancellationException) ErrorHandler.showError(socialLoginError("Google", it.message)) },
             onSuccess = { Navigator.navigate(Navigator.Screen.Main) },
         ) {
-            authRepository.googleLogin(idToken).getOrThrow()
+            authRepository.googleLogin(idToken).getOrThrow().also { signInAnalytics(it.userId, "google", "register") }
         }
     }
 

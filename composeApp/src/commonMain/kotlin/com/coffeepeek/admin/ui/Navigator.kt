@@ -318,6 +318,7 @@ object Navigator {
         val mainStateHolder = rememberSaveableStateHolder()
         val visibleEntries by nav.visibleEntries.collectAsState()
         val currentEntry by nav.currentBackStackEntryAsState()
+        com.coffeepeek.admin.analytics.TrackNavigationScreen(currentEntry)
         LaunchedEffect(currentEntry) {
             focusManager.clearFocus(force = true)
             keyboard?.hide()

@@ -1,5 +1,7 @@
 package com.coffeepeek.admin.ui.component
 
+import com.coffeepeek.admin.analytics.*
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.*
@@ -28,6 +30,8 @@ internal fun SearchHeader(
     roastersSelected: Boolean = false,
     onSelectRoasters: (Boolean) -> Unit = {},
     filterCount: Int = 0,
+    analyticsCatalog: String = "shops",
+    analyticsScreen: String = "discovery",
     onFilters: (() -> Unit)? = null,
     showCategories: Boolean = true,
     onSearchFocus: () -> Unit = {},
@@ -48,7 +52,7 @@ internal fun SearchHeader(
             value = query,
             onValueChange = onQueryChange,
             placeholder = placeholder,
-            modifier = Modifier.weight(1f),
+            modifier = Modifier.weight(1f).analyticsExposure("search", analyticsCatalog, analyticsScreen),
             onFocusChanged = { if (it) onSearchFocus() },
             onCancelSearch = onCancelSearch,
             fieldHeight = CpDimens.buttonHeight,
@@ -62,7 +66,7 @@ internal fun SearchHeader(
             }
         }) {
             OutlinedIconButton(
-                onClick = onFilters, modifier = Modifier.size(CpDimens.buttonHeight), shape = CircleShape,
+                onClick = onFilters, modifier = Modifier.size(CpDimens.buttonHeight).analyticsExposure("filters", analyticsCatalog, analyticsScreen), shape = CircleShape,
                 border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
             ) {
                 Icon(CpIcons.Filter, "Фильтры", tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(22.dp))
