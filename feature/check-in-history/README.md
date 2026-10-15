@@ -8,6 +8,11 @@ parity gates are in [COMBINED_HISTORY_PLAN.md](COMBINED_HISTORY_PLAN.md).
 Older verification sections below describe dated checkpoints, not a fresh full
 device pass after extraction.
 
+Parent synchronization: `ea61b19` restores saved roasters in Android favorites and
+adds the approved shared owner/cancellation guard without changing the stored
+JSON or iOS screen/binding. This child inherits that fix and the 100–150-file
+checkpoint guide through a normal merge; history implementation remains unchanged.
+
 Initial shop-only audit: 2026-10-14 after `c8d9346`. Main e5722f9 now has a combined
 shop/home history route. The prepared modules below still supply the shop-visit
 capability, not home preparation or community business logic. The active combined

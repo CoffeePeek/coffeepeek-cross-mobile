@@ -9,8 +9,9 @@ history read/session foundation. Android first; preserve the shared/iOS paths.
 All prepared history code is now in `feature/check-in-history-refactoring`, based
 on `feature/core-design-system-controls` (PR #43). The parent excludes the four
 new modules and their application adapters/tests; the child restores them as one
-cohesive capability. It intentionally exceeds 50 files rather than splitting the
-same feature again. Git ancestry is preserved; no force-push or route switch.
+cohesive capability. Its 71-file checkpoint fits the current 100–150-file guide;
+do not split the same feature again just to create smaller PRs. Git ancestry is
+preserved; no force-push or route switch.
 
 - [x] Prepared Shop history domain/data, shared MVI, Android API/UI and revocable
   account/calendar/image composition, with fake-data tests.
@@ -24,8 +25,9 @@ same feature again. Git ancestry is preserved; no force-push or route switch.
 - [ ] Activate the combined Android route and finish parity/release checks.
 
 The authoritative whole-project status is ../ANDROID_REFACTORING_PLAN.md. It
-includes the source-confirmed missing saved-roasters section in the migrated
-Android favorites entry; don't label that unrelated base feature complete.
+records the saved-roasters parity fix in parent #43, inherited by this branch.
+Its guarded account-bound removal and fake-data checks pass; remaining live QA
+still prevents labelling that unrelated base feature production-complete.
 Current main's newer commits add CI changes, not a new history product shape.
 Standalone HomeCheckInScreen/history-statistics and VisitedPlacesScreen have no
 call sites in the audited main source. Do not restore them as separate screens;
