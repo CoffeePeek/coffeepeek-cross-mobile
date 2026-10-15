@@ -1,5 +1,43 @@
 # Combined personal history — current-main parity and next slice
 
+## Combined MVI preparation — 2026-10-16
+
+Implemented in this checkpoint: a commonMain coordinator for one
+All/Shop/Home filter, month/date selection, source-specific calendars and page
+cursors. It consumes only this feature's Shop repository and Home reader, plus
+the existing caller-supplied zone-aware calendar snapshot. No new Gradle module,
+cross-feature import, backend writer, iOS binding or root route switch is needed.
+
+Preserve main's read semantics: no selected date uses both paged timelines;
+selected Shop visits come from the complete month snapshot, while Home pages
+use the existing same-civil-day range. Failures/retries stay source-specific.
+Retain content on same-query refresh failure, clear mismatched date/month/account
+content, reject canceled/stale responses and guard overlapping pagination.
+
+The new combined coordinator temporarily coexists with the earlier prepared,
+inactive Shop-only Calendar/List entry/VM so its existing consumers still build.
+The next production-shaped UI/entry slice must replace that prepared path and
+remove its obsolete mode-specific coordinator, not activate two history screens.
+This read-only MVI slice uses Nothing events; navigation effects join when the
+actual combined entry/UI consume them. Source preparation is not UI parity.
+
+Verification: all 29 new combined-MVI scenarios pass (64 impl cases including
+the earlier prepared coordinator/calendar tests). They cover partial failures,
+source-only retry, date/filter/month replacement, independent pagination,
+deduplication, coalesced refresh, clock/time-zone changes, guest/account reset,
+same-generation renewal, cancellation, late responses and lifecycle cleanup.
+A regression test first reproduced an extra initial Resume request after account
+replacement; resetting that generation's first-resume flag makes it pass.
+
+Direct/Play APK assembly and packaged DEX checks, app/history lint and **668
+selected unit-test cases** pass: 247 app per variant, three Home domain, 79
+history (eight domain, seven data, 64 impl), 87 Shop MVI and five Shop Report MVI.
+Valid cached/up-to-date tasks are reused. Shared history impl compiles for iOS
+Simulator Arm64 without an iOS UI/binding change. No new device UI run, live read/
+write or active route switch is claimed. Fresh main remains 4976e53 and is already
+in the stack. The next checkpoint step is combined ScreenContent/entry replacement,
+then Android integration and live boundary/parity gates, not another feature.
+
 ## Home read foundation — 2026-10-16
 
 Prepared in this same history checkpoint, without activating a root destination:
@@ -72,7 +110,8 @@ preserved; no force-push or route switch.
   contracts remain active and unchanged. This is not the prepared entry.
 - [x] Home read boundary/adapter: implemented and automatically verified; live
   backend date-boundary verification remains a route-activation gate.
-- [ ] Combined filter/calendar/paging MVI: not started; prepared MVI is Shop-only.
+- [x] Combined filter/calendar/paging MVI prepared and automatically verified;
+  runtime entry remains inactive until combined UI replaces the old prepared path.
 - [ ] Production-shaped combined UI: not started; prepared Calendar/List UI is
   not an approved replacement for the current timeline.
 - [ ] Activate the combined Android route and finish parity/release checks.

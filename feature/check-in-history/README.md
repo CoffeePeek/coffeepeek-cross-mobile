@@ -1,5 +1,14 @@
 # Personal shop check-in history — Android-first migration
 
+2026-10-16 combined MVI preparation: one All/Shop/Home filter and month/date,
+source-owned calendars/page cursors, independent retries, retained-content
+refresh failures and guarded account/query/lifecycle cancellation. Only own
+domain ports and the existing calendar snapshot provider enter presentation;
+no Home/legacy/data dependency is added to impl. Nothing events are intentional
+until combined UI actually consumes navigation effects. The old inactive
+Calendar/List VM/entry must be removed when that UI replaces it, not enabled as
+a second history route. See COMBINED_HISTORY_PLAN.md for the current checkpoint.
+
 2026-10-16: a pure Home read domain and app-owned compatibility adapters now
 prepare Home page/calendar reads for this same checkpoint. History owns its
 own models/port and account lease; no Home dependency enters its domain/UI.
