@@ -160,3 +160,11 @@ history, or rewrite the full home editor as a prerequisite for read integration.
   this final sync adds no Native-specific code or iOS screen/binding changes.
 - Live parity/release gates remain open. Local success does not certify GitHub
   CI, and publishing the branches does not merge either PR.
+
+Subsequent parent visual synchronization (`f7e22a0`): Shop detail corrections are
+inherited without changing history implementation. Direct/Play app/DEX, app/Shop/
+core lint and 601 selected unit executions pass (233 app per variant, 87 Shop MVI,
+48 history). The parent's 13 isolated detail UI tests and inspected light/dark fake
+fixtures cover that Shop correction, not a combined-history route switch. User-
+approved yellow information icons and 14/12sp badge text are intentional prod
+exceptions. No physical phone, account data, backend writes or iOS screen changed.
