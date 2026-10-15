@@ -13,16 +13,6 @@ internal fun historyCalendarCells(month: HistoryMonth): List<Int?> {
     return cells + List((7 - cells.size % 7) % 7) { null }
 }
 
-internal data class HistoryDayStreak(val previous: Boolean, val next: Boolean) {
-    val isConnected: Boolean get() = previous || next
-}
-
-internal fun historyDayStreak(month: HistoryMonth, day: Int, dates: Set<String>): HistoryDayStreak {
-    if (month.date(day) !in dates) return HistoryDayStreak(false, false)
-    return HistoryDayStreak(day > 1 && month.date(day - 1) in dates,
-        day < month.daysInMonth && month.date(day + 1) in dates)
-}
-
 internal fun HistoryDrink?.displayName(language: String): String? = this?.let {
     it.customName?.takeIf(String::isNotBlank) ?: if (language == "en") {
         it.nameEn?.takeIf(String::isNotBlank) ?: it.nameRu?.takeIf(String::isNotBlank)

@@ -1,5 +1,49 @@
 # Combined personal history — current-main parity and next slice
 
+## Combined UI replacement — verified preparation, 2026-10-16
+
+Replaced the inactive Shop-only Calendar/List entry with the prepared combined
+coordinator. Preserved main's All/Shop/Home control, dot calendar, Today/date reset,
+day headings, compact cards and timeline rail. Shop details/photos stay modal;
+Home details and creation are required caller callbacks, not a second writer.
+Retired the obsolete prepared mode-specific VM/UI and updated its consumers.
+Keep the active root route and shared/iOS screens unchanged in this checkpoint.
+The Android prepared renderer overload requires all Home/create callbacks; its
+legacy no-argument interface continues the current combined screen until the
+application-owned Home bridge is ready. No no-op user actions are introduced.
+Verification of the final source: Direct/Play APK assembly and packaged DEX
+checks (now also requiring CombinedHistoryViewModel), app/history lint and **642
+selected unit cases** pass: 247 app per variant, three Home domain, eight history
+domain, seven history data, 38 history impl (34 combined MVI + four presentation),
+87 Shop and five Shop Report. Gradle reuses valid cached/up-to-date tasks. The
+obsolete prepared VM's tests are retired with it, not counted as current coverage.
+Shared history impl compiles for iOS Simulator Arm64; iOS UI remains unchanged.
+
+All **18 final isolated Android UI tests** pass on the owned read-only emulator:
+13 feature-content/entry cases and five app-boundary cases. They exercise guest
+privacy, mixed rows, filter/date semantics, independent retries without automatic
+paging loops, complete photo-album indices, Home/create callbacks, token renewal,
+account replacement clearing rows/photos and cancellation while the route is hidden.
+The first retry-test run failed because off-screen LazyColumn items were not yet
+composed; explicit scroll-to-node fixes the harness, and the final full run passes.
+Additional MVI regression coverage prevents a refreshed-away record's detail modal
+from reopening when that record later returns. Detail text is complete, as in
+main's fullVersion card; shop navigation uses its explicit button, not the whole
+detail card.
+
+Light/dark mixed fixtures and the bottom-aligned creation sheet were visually
+inspected. Each new/changed independent component owns paired previews; individual
+IDE renders are not certified, and modal previews show their content. App-boundary
+tests inject fake auth/readers/images; the app process still performs normal
+Application initialization. No physical phone, account clearing, backend write or
+active route switch is part of this preparation. Fresh main remains 4976e53 and
+is already included in both migration branches; no empty sync merge is needed.
+
+Next: app-owned Home detail/editor/delete/create bridge and return invalidation,
+initial EditHomeCheckIn(id), existing Shop picker, then all three Android route
+contracts and safe live owner/Home-date-boundary parity. Do not mark the business
+feature or backend semantics complete based on these fake-data checks.
+
 ## Combined MVI preparation — 2026-10-16
 
 Implemented in this checkpoint: a commonMain coordinator for one
@@ -112,8 +156,9 @@ preserved; no force-push or route switch.
   backend date-boundary verification remains a route-activation gate.
 - [x] Combined filter/calendar/paging MVI prepared and automatically verified;
   runtime entry remains inactive until combined UI replaces the old prepared path.
-- [ ] Production-shaped combined UI: not started; prepared Calendar/List UI is
-  not an approved replacement for the current timeline.
+- [x] Prepared production-shaped combined UI/entry: All/Shop/Home, one dot calendar,
+  compact cards/rail, Shop detail/photo modal and required Home/create callbacks.
+  The obsolete prepared Calendar/List code is retired, not active beside it.
 - [ ] Activate the combined Android route and finish parity/release checks.
 
 The authoritative whole-project status is ../ANDROID_REFACTORING_PLAN.md. It

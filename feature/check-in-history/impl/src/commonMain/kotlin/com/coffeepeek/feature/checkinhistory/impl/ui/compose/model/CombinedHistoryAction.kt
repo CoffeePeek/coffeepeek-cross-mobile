@@ -1,6 +1,15 @@
 package com.coffeepeek.feature.checkinhistory.impl.ui.compose.model
 
 internal sealed interface CombinedHistoryAction {
+    data object Back : CombinedHistoryAction
+    data object SignIn : CombinedHistoryAction
+    data class OpenEntry(val key: String) : CombinedHistoryAction
+    data object DismissShop : CombinedHistoryAction
+    data object OpenSelectedShop : CombinedHistoryAction
+    data class OpenPhoto(val index: Int) : CombinedHistoryAction
+    data object ShowCreate : CombinedHistoryAction
+    data object DismissCreate : CombinedHistoryAction
+    data class Create(val source: HistorySource) : CombinedHistoryAction
     data class SelectFilter(val filter: HistoryKindFilter) : CombinedHistoryAction
     data class SelectDate(val date: String?) : CombinedHistoryAction
     data class ChangeMonth(val offset: Int) : CombinedHistoryAction

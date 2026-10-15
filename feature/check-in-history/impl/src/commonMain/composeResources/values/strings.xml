@@ -2,13 +2,62 @@
 <resources>
     <string name="history_title">Чекины</string>
     <string name="history_back">Назад</string>
-    <string name="history_calendar">Календарь</string>
-    <string name="history_list">Лента</string>
+    <string name="history_all">Все</string>
+    <string name="history_at_shop">В кофейне</string>
+    <string name="history_at_home">Дома</string>
+    <string name="history_today">Сегодня</string>
+    <string name="history_today_description">Сегодня, показать чекины за текущую дату</string>
+    <string name="history_clear_date">Показать все даты</string>
+    <string name="history_date_without_year">%1$d %2$s</string>
+    <string name="history_home_count">%1$d дома</string>
+    <string name="history_source_time">%1$s · %2$s</string>
+    <string name="history_more">Показать ещё</string>
+    <string name="history_close">Закрыть</string>
+    <string name="history_open_shop_action">Открыть кофейню</string>
+    <string name="history_new">Новый чекин</string>
+    <string name="history_add">Добавить чекин</string>
+    <string name="history_where">Где вы пили кофе?</string>
+    <string name="history_create_shop_hint">Выбрать место и напиток</string>
+    <string name="history_create_home_hint">Записать приготовление</string>
+    <string name="history_continue">Продолжить</string>
+    <string name="history_home_title">Домашнее приготовление</string>
+    <string name="history_private">Только мне</string>
+    <string name="history_visible">Виден всем</string>
+    <string name="history_pending">На модерации</string>
+    <string name="history_rejected">Не опубликован</string>
+    <string name="history_waiting_publication">Ожидает публикации</string>
+    <string name="history_public">Публичный</string>
+    <string name="history_dose">%1$s г</string>
+    <string name="history_taste">%1$d/5</string>
+    <string name="history_details_separator">%1$s · %2$s</string>
+    <string name="history_shop_calendar_error">Не удалось загрузить календарь посещений кофеен</string>
+    <string name="history_home_calendar_error">Не удалось загрузить календарь домашних приготовлений</string>
+    <string name="history_shop_timeline_error">Не удалось загрузить посещения кофеен</string>
+    <string name="history_home_timeline_error">Не удалось загрузить домашние приготовления</string>
+    <string name="history_shop_paging_error">Не удалось загрузить следующие посещения кофеен</string>
+    <string name="history_home_paging_error">Не удалось загрузить следующие домашние приготовления</string>
+    <string name="history_clock_error">Не удалось определить текущую дату. Обновите историю</string>
+    <string name="history_retry_for">Повторить: %1$s</string>
+    <string name="history_method_espresso">Эспрессо</string>
+    <string name="history_method_pour_over">Пуровер</string>
+    <string name="history_method_batch">Фильтр batch</string>
+    <string name="history_method_moka">Гейзерная кофеварка</string>
+    <string name="history_method_cezve">Турка</string>
+    <string name="history_method_aeropress">Аэропресс</string>
+    <string name="history_method_french_press">Френч-пресс</string>
+    <string name="history_method_other">Другое</string>
+    <string name="history_method_hario">Hario V60</string>
+    <string name="history_method_chemex">Chemex</string>
+    <string name="history_method_cold_brew">Cold Brew</string>
+    <string name="history_method_batch_brew">Batch Brew</string>
+    <string name="history_method_moka_pot">Moka Pot</string>
+    <string name="history_method_cezve_turkish">Cezve (Turkish Coffee)</string>
     <string name="history_previous_month">Предыдущий месяц</string>
     <string name="history_next_month">Следующий месяц</string>
     <string name="history_month_title">%1$s %2$d</string>
     <string name="history_date_title">%1$d %2$s %3$d</string>
     <string name="history_day_description">%1$s, %2$s</string>
+    <string name="history_day_today">%1$s, сегодня</string>
     <string name="history_select_day">Выбрать дату</string>
     <string name="history_day_empty">В этот день чекинов не было</string>
     <string name="history_month_empty">В этом месяце пока нет чекинов</string>
@@ -46,7 +95,7 @@
         <item>сентября</item><item>октября</item><item>ноября</item><item>декабря</item>
     </string-array>
     <string-array name="history_weekdays">
-        <item>П</item><item>В</item><item>С</item><item>Ч</item><item>П</item><item>С</item><item>В</item>
+        <item>Пн</item><item>Вт</item><item>Ср</item><item>Чт</item><item>Пт</item><item>Сб</item><item>Вс</item>
     </string-array>
     <string-array name="history_visit_forms"><item>чекин</item><item>чекина</item><item>чекинов</item></string-array>
     <string-array name="history_shop_forms"><item>кофейня</item><item>кофейни</item><item>кофеен</item></string-array>

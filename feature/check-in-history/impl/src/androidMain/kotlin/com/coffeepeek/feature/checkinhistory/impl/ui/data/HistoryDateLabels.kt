@@ -12,21 +12,23 @@ import com.coffeepeek.feature.checkinhistory.impl.resources.history_visit_forms
 import com.coffeepeek.feature.checkinhistory.impl.resources.history_shop_forms
 import org.jetbrains.compose.resources.stringArrayResource
 import org.jetbrains.compose.resources.stringResource
+import com.coffeepeek.feature.checkinhistory.impl.resources.history_date_without_year
 
 @Composable
 internal fun historyMonthTitle(month: HistoryMonth): String = stringResource(Res.string.history_month_title,
     stringArrayResource(Res.array.history_months)[month.month - 1], month.year)
 
 @Composable
-internal fun historyDateTitle(date: String): String {
+internal fun historyDateTitle(date: String, includeYear: Boolean = true): String {
     val month = HistoryMonth.fromDate(date) ?: return date
-    return stringResource(Res.string.history_date_title, date.takeLast(2).toInt(),
-        stringArrayResource(Res.array.history_months_genitive)[month.month - 1], month.year)
+    val name = stringArrayResource(Res.array.history_months_genitive)[month.month - 1]
+    return if (includeYear) stringResource(Res.string.history_date_title, date.takeLast(2).toInt(), name, month.year)
+        else stringResource(Res.string.history_date_without_year, date.takeLast(2).toInt(), name)
 }
 
 @Composable
-internal fun historyVisitCountLabel(count: Int): String = stringResource(Res.string.history_count_label,
-    count, stringArrayResource(Res.array.history_visit_forms)[historyCountForm(count)])
+internal fun historyVisitCountLabel(count: Long): String = stringResource(Res.string.history_count_label,
+    count, stringArrayResource(Res.array.history_visit_forms)[historyCountForm((count % 100).toInt())])
 
 @Composable
 internal fun historyShopCountLabel(count: Int): String = stringResource(Res.string.history_count_label,

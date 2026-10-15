@@ -1,13 +1,29 @@
-# Personal shop check-in history — Android-first migration
+# Combined personal check-in history — Android-first migration
+
+2026-10-16 combined UI replacement: the prepared Android entry now uses
+CombinedHistoryViewModel and production-shaped All/Shop/Home content: one dot
+calendar, Today/date reset, compact timeline/rail, source-specific retries,
+Shop detail/photo modal and delegated Home/create actions. Navigation effects
+are consumed and generation-guarded. The obsolete prepared Calendar/List VM,
+mode models and containers are removed; their code remains recoverable in Git.
+There is no second prepared history screen or new backend writer.
+
+The Android prepared renderer binds both readers to the account lease. Its
+explicit callback overload is the isolated integration seam; the no-argument
+legacy interface continues ProfileCheckInsScreen until the Home editor/detail
+bridge and all three route contracts are ready. The active root, Home writers
+and shared/iOS UI are unchanged. New components own colocated paired previews;
+modal previews render content, while placement is checked in the fake host.
+The latest scope and verification are in COMBINED_HISTORY_PLAN.md. Older dated
+notes below describe superseded preparation checkpoints, not current UI behavior.
 
 2026-10-16 combined MVI preparation: one All/Shop/Home filter and month/date,
 source-owned calendars/page cursors, independent retries, retained-content
 refresh failures and guarded account/query/lifecycle cancellation. Only own
 domain ports and the existing calendar snapshot provider enter presentation;
-no Home/legacy/data dependency is added to impl. Nothing events are intentional
-until combined UI actually consumes navigation effects. The old inactive
-Calendar/List VM/entry must be removed when that UI replaces it, not enabled as
-a second history route. See COMBINED_HISTORY_PLAN.md for the current checkpoint.
+no Home/legacy/data dependency is added to impl. This earlier read-only checkpoint
+used Nothing events and temporarily kept the old prepared coordinator; both
+limitations are superseded by the combined UI replacement above.
 
 2026-10-16: a pure Home read domain and app-owned compatibility adapters now
 prepare Home page/calendar reads for this same checkpoint. History owns its

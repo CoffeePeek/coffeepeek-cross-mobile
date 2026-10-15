@@ -4,7 +4,6 @@ import com.coffeepeek.feature.checkinhistory.domain.model.HistoryDrink
 import com.coffeepeek.feature.checkinhistory.domain.model.HistoryMonth
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertFalse
 
 class HistoryCalendarPresentationTest {
     @Test fun septemberStartsOnTuesdayAndWeeksAreComplete() {
@@ -17,15 +16,6 @@ class HistoryCalendarPresentationTest {
     @Test fun leapFebruaryAndEarliestSupportedYearHaveValidMondayFirstGrids() {
         assertEquals(29, historyCalendarCells(HistoryMonth(2024, 2)).filterNotNull().last())
         assertEquals(1, historyCalendarCells(HistoryMonth(1, 1)).first())
-    }
-
-    @Test fun streaksNeverConnectEmptyDaysOrWrapOutsideMonth() {
-        val month = HistoryMonth(2026, 10)
-        val dates = setOf("2026-09-30", "2026-10-01", "2026-10-02", "2026-10-04")
-        assertEquals(HistoryDayStreak(false, true), historyDayStreak(month, 1, dates))
-        assertEquals(HistoryDayStreak(true, false), historyDayStreak(month, 2, dates))
-        assertFalse(historyDayStreak(month, 3, dates).isConnected)
-        assertFalse(historyDayStreak(month, 4, dates).isConnected)
     }
 
     @Test fun russianCountFormsRemainCorrectEvenWithAnEnglishDeviceLocale() {

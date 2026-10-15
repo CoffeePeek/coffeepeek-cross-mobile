@@ -23,6 +23,12 @@ import com.coffeepeek.feature.checkinhistory.domain.repository.CheckInHistoryRep
 import com.coffeepeek.feature.checkinhistory.api.CheckInHistoryCalendarSnapshot
 import com.coffeepeek.feature.checkinhistory.api.CheckInHistoryDateBounds
 import com.coffeepeek.feature.checkinhistory.impl.ui.compose.CheckInHistoryScreenContent
+import com.coffeepeek.feature.checkinhistory.impl.ui.compose.previewCombinedHistoryState
+import com.coffeepeek.feature.checkinhistory.impl.ui.compose.component.previewHomeHistoryEntry
+import com.coffeepeek.feature.checkinhistory.domain.model.HomeHistoryDateRange
+import com.coffeepeek.feature.checkinhistory.domain.model.HomeHistoryPage
+import com.coffeepeek.feature.checkinhistory.domain.model.HomeHistoryDay
+import com.coffeepeek.feature.checkinhistory.domain.repository.HomeHistoryReader
 import com.coffeepeek.feature.checkinhistory.impl.ui.compose.component.HistoryCheckInCard
 import com.coffeepeek.feature.checkinhistory.impl.ui.compose.component.previewHistoryCheckIn
 import com.coffeepeek.feature.checkinhistory.impl.ui.compose.model.*
@@ -42,89 +48,87 @@ class HistoryScreenContractTest {
             } }
         }
 
-    private fun state(mode: CheckInHistoryMode = CheckInHistoryMode.Calendar): CheckInHistoryState {
+    private fun state(): CombinedHistoryState {
+        val base = previewCombinedHistoryState()
         val entry = previewHistoryCheckIn().copy(note = "Owner private note", rating = null, drink = null)
-        return CheckInHistoryState("2026-10-14", true, 0,
-            HistoryCalendarState(HistoryMonth(2026, 10), mapOf("2026-10-14" to listOf(entry)), "2026-10-14", true),
-            HistoryListState(listOf(entry), page = 1, hasLoaded = true), mode)
+        val row = HistoryTimelineItem.Shop(entry, "2026-10-14")
+        return base.copy(shopCalendar = CombinedHistoryLoadState(mapOf(row.date to listOf(row)), hasLoaded = true),
+            shops = CombinedHistoryPageState(listOf(row), page = 1, hasLoaded = true))
     }
 
     @Test fun backWorksBeforeInitialLoadFinishes() {
-        val actions = mutableListOf<CheckInHistoryAction>()
-        render { CheckInHistoryScreenContent(state().copy(calendar = HistoryCalendarState(HistoryMonth(2026, 10), isLoading = true)), actions::add) }.use {
+        val actions = mutableListOf<CombinedHistoryAction>()
+        render { CheckInHistoryScreenContent(state().copy(shopCalendar = CombinedHistoryLoadState(emptyMap(), isLoading = true)), actions::add) }.use {
             compose.onNodeWithContentDescription("Назад").performClick()
-            assertEquals(listOf<CheckInHistoryAction>(CheckInHistoryAction.Back), actions)
+            assertEquals(listOf<CombinedHistoryAction>(CombinedHistoryAction.Back), actions)
         }
     }
 
     @Test fun guestNeverComposesPrivateNotesOrImagesEvenIfGivenOldState() {
-        val actions = mutableListOf<CheckInHistoryAction>()
+        val actions = mutableListOf<CombinedHistoryAction>()
         var images = 0
         render { CheckInHistoryScreenContent(state().copy(isLoggedIn = false), actions::add,
             imageContent = { _, _, _ -> images++ }) }.use {
             compose.onNodeWithText("Owner private note").assertDoesNotExist()
             compose.onNodeWithText("Войти").performClick()
-            assertEquals(listOf<CheckInHistoryAction>(CheckInHistoryAction.SignIn), actions)
+            assertEquals(listOf<CombinedHistoryAction>(CombinedHistoryAction.SignIn), actions)
             assertEquals(0, images)
         }
     }
 
-    @Test fun calendarDayHasSelectedLocalizedSemanticsAndModeActionsAreTyped() {
-        val actions = mutableListOf<CheckInHistoryAction>()
-        render { CheckInHistoryScreenContent(state(), actions::add) }.use {
-            compose.onNodeWithContentDescription("14 октября 2026, 1 чекин").assertIsSelected().performClick()
+    @Test fun calendarDayAndProductionTypeFilterEmitTypedActions() {
+        val actions = mutableListOf<CombinedHistoryAction>()
+        render { CheckInHistoryScreenContent(state().copy(selectedDate = "2026-10-14"), actions::add) }.use {
+            compose.onNodeWithContentDescription("14 октября 2026, сегодня, 2 чекина, 1 дома").assertIsSelected().performClick()
             compose.onNodeWithContentDescription("Следующий месяц").assertIsNotEnabled()
-            compose.onNodeWithText("Лента").performClick()
-            assertEquals(listOf<CheckInHistoryAction>(CheckInHistoryAction.SelectDate("2026-10-14"),
-                CheckInHistoryAction.SelectMode(CheckInHistoryMode.List)), actions)
+            compose.onNodeWithText("Дома").performClick()
+            assertEquals(listOf<CombinedHistoryAction>(CombinedHistoryAction.SelectDate("2026-10-14"),
+                CombinedHistoryAction.SelectFilter(HistoryKindFilter.Home)), actions)
         }
     }
 
     @Test fun refreshFailureKeepsLoadedListAndShowsAnExplicitRetry() {
-        val actions = mutableListOf<CheckInHistoryAction>()
-        val source = state(CheckInHistoryMode.List)
-        render(dark = true) { CheckInHistoryScreenContent(source.copy(list = source.list.copy(hasError = true)), actions::add) }.use {
-            compose.onNodeWithText("Owner private note").assertExists()
-            compose.onNodeWithText("Повторить").performClick()
-            assertEquals(listOf<CheckInHistoryAction>(CheckInHistoryAction.Retry), actions)
+        val actions = mutableListOf<CombinedHistoryAction>()
+        val source = state()
+        render(dark = true) { CheckInHistoryScreenContent(source.copy(shops = source.shops.copy(hasError = true)), actions::add) }.use {
+            compose.onNodeWithText("Owner private note").performScrollTo().assertExists()
+            clickRetry("Повторить: Не удалось загрузить посещения кофеен")
+            assertEquals(listOf<CombinedHistoryAction>(CombinedHistoryAction.RetryTimeline(HistorySource.Shop)), actions)
         }
     }
 
     @Test fun paginationErrorDoesNotTriggerAutomaticLoopAndRetriesExplicitly() {
-        val actions = mutableListOf<CheckInHistoryAction>()
-        val source = state(CheckInHistoryMode.List)
-        render { CheckInHistoryScreenContent(source.copy(list = source.list.copy(hasMore = true, hasLoadMoreError = true)), actions::add) }.use {
+        val actions = mutableListOf<CombinedHistoryAction>()
+        val source = state()
+        render { CheckInHistoryScreenContent(source.copy(shops = source.shops.copy(hasMore = true, hasLoadMoreError = true)), actions::add) }.use {
             compose.waitForIdle()
             assertTrue(actions.isEmpty())
-            compose.onNodeWithText("Повторить").performClick()
-            assertEquals(listOf<CheckInHistoryAction>(CheckInHistoryAction.RetryLoadMore), actions)
+            clickRetry("Повторить: Не удалось загрузить следующие посещения кофеен")
+            assertEquals(listOf<CombinedHistoryAction>(CombinedHistoryAction.RetryLoadMore(HistorySource.Shop)), actions)
         }
     }
 
     @Test fun photoActionDoesNotNavigateToShopAndUsesTheCompleteAlbumIndex() {
         val entry = previewHistoryCheckIn().copy(photoUrls = List(4) { "https://example.test/photo-$it" })
         var opened = -1
-        var shopCalls = 0
-        render { HistoryCheckInCard(entry, "14 октября 2026", { shopCalls++ }, { opened = it },
+        render { HistoryCheckInCard(entry, "14 октября 2026", { opened = it },
             imageContent = { _, modifier, _ -> Box(modifier) }) }.use {
             compose.onNodeWithContentDescription("Фотография 3 из 4").performClick()
             assertEquals(2, opened)
-            assertEquals(0, shopCalls)
+            compose.onNodeWithText(entry.shopName).assertHasNoClickAction()
         }
     }
 
     @Test fun removedShopKeepsTheHistoryCardWithoutAFalseNavigationAction() {
-        var shopCalls = 0
-        render { HistoryCheckInCard(previewHistoryCheckIn().copy(shop = null), "14 октября 2026", { shopCalls++ }, {}) }.use {
+        render { HistoryCheckInCard(previewHistoryCheckIn().copy(shop = null), "14 октября 2026", {}) }.use {
             compose.onNodeWithText("Кофейня").assertHasNoClickAction()
-            assertEquals(0, shopCalls)
         }
     }
 
     @Test fun drinkImageUsesFitThroughInjectedLoaderNotASeparateNetworkClient() {
         val scales = mutableListOf<androidx.compose.ui.layout.ContentScale>()
         val entry = previewHistoryCheckIn().copy(drinkPhotoUrl = "https://example.test/drink.png")
-        render { HistoryCheckInCard(entry, "14 октября 2026", {}, {}, imageContent = { _, modifier, scale ->
+        render { HistoryCheckInCard(entry, "14 октября 2026", {}, imageContent = { _, modifier, scale ->
             scales += scale
             Text("Fake protected image", modifier)
         }) }.use {
@@ -135,7 +139,7 @@ class HistoryScreenContractTest {
     }
 
     @Test fun narrowLargeFontGuestStillOffersSignInAndBack() {
-        val actions = mutableListOf<CheckInHistoryAction>()
+        val actions = mutableListOf<CombinedHistoryAction>()
         render(dark = true) {
             val density = LocalDensity.current
             CompositionLocalProvider(LocalDensity provides Density(density.density, 1.8f)) {
@@ -144,27 +148,86 @@ class HistoryScreenContractTest {
         }.use {
             compose.onNodeWithContentDescription("Назад").performClick()
             compose.onNodeWithText("Войти").performClick()
-            assertEquals(listOf<CheckInHistoryAction>(CheckInHistoryAction.Back, CheckInHistoryAction.SignIn), actions)
+            assertEquals(listOf<CombinedHistoryAction>(CombinedHistoryAction.Back, CombinedHistoryAction.SignIn), actions)
         }
     }
 
     @Test fun actualEntryUsesCallerCallbacksAndDoesNotReadForGuest() {
         val repository = FakeRepository()
+        val homes = Homes()
         var signedIn = 0
-        val entry = createCheckInHistoryEntry(repository, { FakeCalendar() }, { _, modifier, _ -> Box(modifier) })
-        render { entry.Content(5, false, { it }, {}, { signedIn++ }, {}, { _, _ -> }, 8) }.use {
+        val entry = createCheckInHistoryEntry(repository, homes, { FakeCalendar() }, { _, modifier, _ -> Box(modifier) })
+        render { entry.Content(5, false, { it }, {}, { signedIn++ }, {}, { _, _ -> }, { "10:00" }, {}, {}, {}, 8) }.use {
             compose.onNodeWithText("Войти").performClick()
             compose.waitUntil(5_000) { signedIn == 1 }
-            compose.runOnIdle { assertEquals(1, signedIn); assertEquals(0, repository.reads) }
+            compose.runOnIdle { assertEquals(1, signedIn); assertEquals(0, repository.reads); assertEquals(0, homes.reads) }
         }
     }
 
     @Test fun actualEntryDoesNotDuplicateStartupForNonzeroRefreshGeneration() {
         val repository = FakeRepository()
-        val entry = createCheckInHistoryEntry(repository, { FakeCalendar() }, { _, modifier, _ -> Box(modifier) })
-        render(dark = true) { entry.Content(5, true, { "14 октября 2026" }, {}, {}, {}, { _, _ -> }, 8) }.use {
-            compose.onNodeWithContentDescription("14 октября 2026, 1 чекин").assertExists()
-            compose.runOnIdle { assertEquals(1, repository.reads) }
+        val entry = createCheckInHistoryEntry(repository, Homes(), { FakeCalendar() }, { _, modifier, _ -> Box(modifier) })
+        render(dark = true) { entry.Content(5, true, { "14 октября 2026" }, {}, {}, {}, { _, _ -> }, { "10:00" }, {}, {}, {}, 8) }.use {
+            compose.onNodeWithContentDescription("14 октября 2026, сегодня, 2 чекина, 1 дома").assertExists()
+            compose.runOnIdle { assertEquals(2, repository.reads) }
+        }
+    }
+
+    @Test fun mixedTimelineUsesHomeAndShopIntentsAndPreservesHomePublication() {
+        val actions = mutableListOf<CombinedHistoryAction>()
+        val base = state()
+        val home = base.homes.items.single().let { it.copy(entry = it.entry.copy(
+            visibility = com.coffeepeek.feature.checkinhistory.domain.model.HistoryVisibility.Public,
+            moderation = com.coffeepeek.feature.checkinhistory.domain.model.HistoryModeration.Pending)) }
+        render { CheckInHistoryScreenContent(base.copy(homes = base.homes.copy(items = listOf(home))), actions::add) }.use {
+            compose.onNodeWithText("Кофейня", substring = false).performScrollTo().performClick()
+            compose.onNodeWithText("На модерации").performScrollTo().assertExists()
+            compose.onNodeWithText("Эфиопия").performScrollTo().performClick()
+            assertEquals(listOf<CombinedHistoryAction>(CombinedHistoryAction.OpenEntry("shop:preview"),
+                CombinedHistoryAction.OpenEntry("home:home")), actions)
+            compose.onNodeWithContentDescription("Добавить чекин").performClick()
+            assertEquals(CombinedHistoryAction.ShowCreate, actions.last())
+            compose.onNodeWithText("Календарь").assertDoesNotExist()
+            compose.onNodeWithText("Лента").assertDoesNotExist()
+        }
+    }
+
+    @Test fun actualEntryDelegatesHomeAndCreateAfterExplicitChoice() {
+        val homes = Homes()
+        val opened = mutableListOf<String>()
+        var created = 0
+        val entry = createCheckInHistoryEntry(FakeRepository(), homes, { FakeCalendar() }, { _, modifier, _ -> Box(modifier) })
+        render {
+            entry.Content(5, true, { it }, {}, {}, {}, { _, _ -> }, { "11:00" },
+                opened::add, {}, { created++ }, 8)
+        }.use {
+            compose.onNodeWithText("Эфиопия").performScrollTo().performClick()
+            compose.waitUntil(5_000) { opened.isNotEmpty() }
+            assertEquals(listOf("home"), opened)
+            compose.onNodeWithContentDescription("Добавить чекин").performClick()
+            compose.onNodeWithText("Записать приготовление").performClick()
+            compose.onNodeWithText("Продолжить").performClick()
+            compose.waitUntil(5_000) { created == 1 }
+            compose.onNodeWithText("Где вы пили кофе?").assertDoesNotExist()
+            assertEquals(2, homes.reads)
+        }
+    }
+
+    private fun clickRetry(description: String) {
+        // Lazy items below the viewport are not composed until the list scrolls to them.
+        compose.onNode(hasScrollToIndexAction()).performScrollToNode(hasContentDescription(description))
+        compose.onNodeWithContentDescription(description).performClick()
+    }
+
+    private class Homes : HomeHistoryReader {
+        var reads = 0
+        override suspend fun page(page: Int, pageSize: Int, range: HomeHistoryDateRange?): Result<HomeHistoryPage> {
+            reads++
+            return Result.success(HomeHistoryPage(listOf(previewHomeHistoryEntry()), 1, page, pageSize))
+        }
+        override suspend fun calendar(range: HomeHistoryDateRange): Result<List<HomeHistoryDay>> {
+            reads++
+            return Result.success(listOf(HomeHistoryDay("2026-10-14", 1)))
         }
     }
 

@@ -16,6 +16,8 @@ import com.coffeepeek.feature.checkinhistory.domain.model.PersonalCheckIn
 import com.coffeepeek.feature.checkinhistory.domain.repository.CheckInHistoryRepository
 import com.coffeepeek.feature.checkinhistory.domain.repository.HomeHistoryReader
 import com.coffeepeek.feature.checkinhistory.impl.ui.compose.model.CombinedHistoryAction
+import com.coffeepeek.feature.checkinhistory.impl.ui.compose.model.CheckInHistoryEvent
+import com.coffeepeek.feature.checkinhistory.impl.ui.compose.model.CheckInHistoryEventEnvelope
 import com.coffeepeek.feature.checkinhistory.impl.ui.compose.model.HistoryKindFilter
 import com.coffeepeek.feature.checkinhistory.impl.ui.compose.model.HistorySource
 import com.coffeepeek.feature.checkinhistory.impl.ui.data.HistoryCalendarContext
@@ -32,6 +34,8 @@ import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.flow.toList
+import kotlinx.coroutines.launch
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -662,6 +666,98 @@ class CombinedHistoryViewModelTest {
         vm.onAction(CombinedHistoryAction.LoadMore)
         assertEquals(2, vm.state.value.homes.page)
         assertFalse(vm.state.value.homes.isLoadingMore)
+    }
+
+    @Test fun visibleShopOpensDetailsBeforeCanonicalShopAndPhotosKeepAlbumIndex() = runTest(dispatcher) {
+        val entry = shop("entry").copy(photoUrls = listOf("https://fixture.test/1", "https://fixture.test/2"))
+        val shops = Shops().apply { pageResult = { Result.success(CheckInHistoryPage(listOf(entry), 1, it, 20)) } }
+        val vm = vm(shops)
+        val events = mutableListOf<CheckInHistoryEventEnvelope>()
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { vm.events.toList(events) }
+        runCurrent()
+        vm.onAction(CombinedHistoryAction.OpenEntry("shop:entry")); runCurrent()
+        assertEquals("entry", vm.state.value.selectedShop?.entry?.id)
+        assertTrue(events.isEmpty())
+        vm.onAction(CombinedHistoryAction.OpenPhoto(-1))
+        vm.onAction(CombinedHistoryAction.OpenPhoto(2))
+        vm.onAction(CombinedHistoryAction.OpenPhoto(1)); runCurrent()
+        assertEquals(CheckInHistoryEvent.OpenPhoto(entry.photoUrls, 1), events.single().event)
+        vm.onAction(CombinedHistoryAction.OpenSelectedShop); runCurrent()
+        assertEquals(CheckInHistoryEvent.OpenShop("shop"), events.last().event)
+        assertNull(vm.state.value.selectedShop)
+    }
+
+    @Test fun removedShopStillOpensDetailButHasNoFalseRouteAndFilterDismissesIt() = runTest(dispatcher) {
+        val shops = Shops().apply { pageResult = { Result.success(CheckInHistoryPage(listOf(shop("removed").copy(shop = null)), 1, it, 20)) } }
+        val vm = vm(shops)
+        val events = mutableListOf<CheckInHistoryEventEnvelope>()
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { vm.events.toList(events) }
+        runCurrent()
+        vm.onAction(CombinedHistoryAction.OpenEntry("shop:removed")); runCurrent()
+        vm.onAction(CombinedHistoryAction.OpenSelectedShop); runCurrent()
+        assertEquals("removed", vm.state.value.selectedShop?.entry?.id)
+        assertTrue(events.isEmpty())
+        vm.onAction(CombinedHistoryAction.SelectFilter(HistoryKindFilter.Home)); runCurrent()
+        assertNull(vm.state.value.selectedShop)
+        vm.onAction(CombinedHistoryAction.OpenEntry("shop:removed")); runCurrent()
+        assertNull(vm.state.value.selectedShop)
+    }
+
+    @Test fun homeAndCreateEffectsAreValidatedAndDeliveredOnlyToTheirAccount() = runTest(dispatcher) {
+        val vm = vm()
+        val events = mutableListOf<CheckInHistoryEventEnvelope>()
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { vm.events.toList(events) }
+        runCurrent()
+        vm.onAction(CombinedHistoryAction.OpenEntry("home:missing"))
+        vm.onAction(CombinedHistoryAction.Create(HistorySource.Home)); runCurrent()
+        assertTrue(events.isEmpty())
+        vm.onAction(CombinedHistoryAction.OpenEntry("home:home-1")); runCurrent()
+        assertEquals(CheckInHistoryEvent.OpenHome("home-1"), events.single().event)
+        vm.onAction(CombinedHistoryAction.ShowCreate); runCurrent()
+        assertTrue(vm.state.value.showCreate)
+        vm.onAction(CombinedHistoryAction.Create(HistorySource.Home)); runCurrent()
+        assertFalse(vm.state.value.showCreate)
+        assertEquals(CheckInHistoryEvent.Create(HistorySource.Home), events.last().event)
+        assertTrue(events.all { it.isDeliverableTo(0, true) })
+        assertTrue(events.none { it.isDeliverableTo(1, true) || it.isDeliverableTo(0, false) })
+        vm.onAction(CombinedHistoryAction.ShowCreate); runCurrent()
+        assertFalse(vm.state.value.visibleTo(1, true).showCreate)
+        vm.onAction(CombinedHistoryAction.SessionChanged(1, false)); runCurrent()
+        assertFalse(vm.state.value.showCreate)
+        vm.onAction(CombinedHistoryAction.ShowCreate); runCurrent()
+        assertEquals(CheckInHistoryEvent.SignIn, events.last().event)
+        assertEquals(1, events.last().sessionGeneration)
+    }
+
+    @Test fun dateChangeAndLogoutClearDetailsAndRejectFutureSelection() = runTest(dispatcher) {
+        val vm = vm()
+        runCurrent()
+        vm.onAction(CombinedHistoryAction.OpenEntry("shop:shop-1")); runCurrent()
+        assertNull(vm.state.value.visibleTo(1, false).selectedShop)
+        vm.onAction(CombinedHistoryAction.SelectDate("2026-10-17")); runCurrent()
+        assertNull(vm.state.value.selectedDate)
+        assertEquals("shop-1", vm.state.value.selectedShop?.entry?.id)
+        vm.onAction(CombinedHistoryAction.SelectDate("2026-10-15")); runCurrent()
+        assertNull(vm.state.value.selectedShop)
+        vm.onAction(CombinedHistoryAction.SessionChanged(1, false)); runCurrent()
+        vm.onAction(CombinedHistoryAction.OpenEntry("shop:shop-1")); runCurrent()
+        assertNull(vm.state.value.selectedShop)
+        assertTrue(vm.state.value.timeline.isEmpty())
+    }
+
+    @Test fun refreshedAwayShopDismissesDetailAndDoesNotReopenWhenRecordReturns() = runTest(dispatcher) {
+        val shops = Shops()
+        val vm = vm(shops)
+        runCurrent()
+        vm.onAction(CombinedHistoryAction.OpenEntry("shop:shop-1")); runCurrent()
+        assertEquals("shop-1", vm.state.value.selectedShop?.entry?.id)
+        shops.pageResult = { Result.success(CheckInHistoryPage(emptyList(), 0, it, 20)) }
+        vm.onAction(CombinedHistoryAction.Refresh); runCurrent()
+        assertNull(vm.state.value.selectedShopKey)
+        shops.pageResult = { Result.success(shopPage(it, "shop-1")) }
+        vm.onAction(CombinedHistoryAction.Refresh); runCurrent()
+        assertNull(vm.state.value.selectedShop)
+        assertEquals("shop-1", vm.state.value.shops.items.single().entry.id)
     }
 
     companion object {

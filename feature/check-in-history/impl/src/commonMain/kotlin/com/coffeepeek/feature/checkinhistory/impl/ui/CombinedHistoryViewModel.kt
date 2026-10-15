@@ -10,6 +10,8 @@ import com.coffeepeek.feature.checkinhistory.impl.ui.compose.model.CombinedHisto
 import com.coffeepeek.feature.checkinhistory.impl.ui.compose.model.CombinedHistoryLoadState
 import com.coffeepeek.feature.checkinhistory.impl.ui.compose.model.CombinedHistoryPageState
 import com.coffeepeek.feature.checkinhistory.impl.ui.compose.model.CombinedHistoryState
+import com.coffeepeek.feature.checkinhistory.impl.ui.compose.model.CheckInHistoryEvent
+import com.coffeepeek.feature.checkinhistory.impl.ui.compose.model.CheckInHistoryEventEnvelope
 import com.coffeepeek.feature.checkinhistory.impl.ui.compose.model.HistoryKindFilter
 import com.coffeepeek.feature.checkinhistory.impl.ui.compose.model.HistorySource
 import com.coffeepeek.feature.checkinhistory.impl.ui.compose.model.HistoryTimelineItem
@@ -24,7 +26,7 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
 
-/** Combined read coordination only; the active legacy screen is not switched by preparing this VM. */
+/** Combined presentation; writers and root routes remain caller-owned, not implemented here. */
 internal class CombinedHistoryViewModel private constructor(
     private val shopReader: CheckInHistoryRepository,
     private val homeReader: HomeHistoryReader,
@@ -33,7 +35,7 @@ internal class CombinedHistoryViewModel private constructor(
     generation: Int,
     initialContentGeneration: Int,
     private var context: HistoryCalendarContext,
-) : MviViewModel<CombinedHistoryState, CombinedHistoryAction, Nothing>(initialState(context, loggedIn, generation)) {
+) : MviViewModel<CombinedHistoryState, CombinedHistoryAction, CheckInHistoryEventEnvelope>(initialState(context, loggedIn, generation)) {
     constructor(shopReader: CheckInHistoryRepository, homeReader: HomeHistoryReader,
         calendarProvider: HistoryCalendarProvider, loggedIn: Boolean, generation: Int = 0,
         initialContentGeneration: Int = 0) : this(shopReader, homeReader, calendarProvider, loggedIn,
@@ -68,14 +70,40 @@ internal class CombinedHistoryViewModel private constructor(
 
     override suspend fun handleActionInternal(action: CombinedHistoryAction) {
         when (action) {
+            CombinedHistoryAction.Back -> emit(CheckInHistoryEvent.Back)
+            CombinedHistoryAction.SignIn -> if (!currentState.isLoggedIn) emit(CheckInHistoryEvent.SignIn)
+            is CombinedHistoryAction.OpenEntry -> when (val item = currentState.timeline.firstOrNull { it.key == action.key }) {
+                is HistoryTimelineItem.Shop -> updateState { copy(selectedShopKey = item.key, showCreate = false) }
+                is HistoryTimelineItem.Home -> if (item.entry.id.isNotBlank()) emit(CheckInHistoryEvent.OpenHome(item.entry.id))
+                null -> Unit
+            }
+            CombinedHistoryAction.DismissShop -> updateState { copy(selectedShopKey = null) }
+            CombinedHistoryAction.OpenSelectedShop -> currentState.selectedShop?.entry?.shop?.slug
+                ?.takeIf(String::isNotBlank)?.let { slug ->
+                    updateState { copy(selectedShopKey = null) }
+                    emit(CheckInHistoryEvent.OpenShop(slug))
+                }
+            is CombinedHistoryAction.OpenPhoto -> currentState.selectedShop?.entry?.photoUrls?.let { urls ->
+                if (action.index in urls.indices && urls.all(String::isNotBlank)) {
+                    emit(CheckInHistoryEvent.OpenPhoto(urls.toList(), action.index))
+                }
+            }
+            CombinedHistoryAction.ShowCreate -> if (currentState.isLoggedIn) {
+                updateState { copy(showCreate = true, selectedShopKey = null) }
+            } else emit(CheckInHistoryEvent.SignIn)
+            CombinedHistoryAction.DismissCreate -> updateState { copy(showCreate = false) }
+            is CombinedHistoryAction.Create -> if (currentState.isLoggedIn && currentState.showCreate) {
+                updateState { copy(showCreate = false) }
+                emit(CheckInHistoryEvent.Create(action.source))
+            }
             is CombinedHistoryAction.SelectFilter -> if (action.filter != currentState.filter) {
-                updateState { copy(filter = action.filter) }
+                updateState { copy(filter = action.filter, selectedShopKey = null, showCreate = false) }
                 suspendInvisibleReads()
                 loadVisible()
             }
             is CombinedHistoryAction.SelectDate -> {
                 val date = action.date
-                if (date == null || currentState.month.containsDate(date)) {
+                if (date == null || currentState.month.containsDate(date) && date <= currentState.today) {
                     select(currentState.month, date.takeUnless { it == currentState.selectedDate })
                 }
             }
@@ -116,6 +144,10 @@ internal class CombinedHistoryViewModel private constructor(
         }
     }
 
+    private suspend fun emit(event: CheckInHistoryEvent) {
+        sendEvent(CheckInHistoryEventEnvelope(event, currentState.sessionGeneration))
+    }
+
     private fun select(month: HistoryMonth, date: String?) {
         val previous = currentState
         if (previous.month == month && previous.selectedDate == date) return
@@ -127,7 +159,7 @@ internal class CombinedHistoryViewModel private constructor(
             homePage.cancel()
             updateState { copy(homes = CombinedHistoryPageState()) }
         }
-        updateState { copy(month = month, selectedDate = date) }
+        updateState { copy(month = month, selectedDate = date, selectedShopKey = null, showCreate = false) }
         suspendInvisibleReads()
         loadVisible()
     }
@@ -171,6 +203,7 @@ internal class CombinedHistoryViewModel private constructor(
             val clearDate = zoneChanged || clamped
             updateState { copy(today = next.today, isCalendarUnavailable = false,
                 month = if (clamped) latest else month, selectedDate = if (clearDate) null else selectedDate,
+                selectedShopKey = if (clearDate) null else selectedShopKey,
                 shopCalendar = if (zoneChanged || clamped) CombinedHistoryLoadState(emptyMap()) else shopCalendar,
                 homeCalendar = if (clamped) CombinedHistoryLoadState(emptyMap()) else homeCalendar,
                 shops = if (zoneChanged) CombinedHistoryPageState() else shops,
@@ -335,6 +368,10 @@ internal class CombinedHistoryViewModel private constructor(
                 if (slot.job === job && revision == slot.revision && generation == currentState.sessionGeneration) {
                     slot.stale = false
                     success(result)
+                    // A disappeared record must not reopen its old modal on a later refresh.
+                    if (currentState.selectedShopKey != null && currentState.selectedShop == null) {
+                        updateState { copy(selectedShopKey = null) }
+                    }
                 }
             } catch (cancellation: CancellationException) {
                 cancelled = true

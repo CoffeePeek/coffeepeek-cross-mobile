@@ -1,13 +1,11 @@
 package com.coffeepeek.feature.checkinhistory.impl.ui.compose.component
 
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
@@ -23,13 +21,10 @@ import com.coffeepeek.feature.checkinhistory.impl.ui.data.displayName
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
-internal fun HistoryCheckInCard(checkIn: PersonalCheckIn, dateLabel: String, onOpenShop: () -> Unit,
+internal fun HistoryCheckInCard(checkIn: PersonalCheckIn, dateLabel: String,
     onOpenPhoto: (Int) -> Unit, modifier: Modifier = Modifier, imageContent: HistoryImageContent? = null) {
     val shopTitle = checkIn.shopName.ifBlank { stringResource(Res.string.history_shop) }
-    val openShop = stringResource(Res.string.history_open_shop, shopTitle)
-    val cardModifier = modifier.fillMaxWidth().then(if (checkIn.shop?.slug?.isNotBlank() == true)
-        Modifier.clickable(role = Role.Button, onClickLabel = openShop, onClick = onOpenShop) else Modifier)
-    Card(cardModifier, shape = RoundedCornerShape(CoffeePeekDimens.radiusLg),
+    Card(modifier.fillMaxWidth(), shape = RoundedCornerShape(CoffeePeekDimens.radiusLg),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)) {
         Column(Modifier.padding(CoffeePeekDimens.spacing4), verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing3)) {
@@ -37,7 +32,7 @@ internal fun HistoryCheckInCard(checkIn: PersonalCheckIn, dateLabel: String, onO
             Text(shopTitle, Modifier.fillMaxWidth(),
                 style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold)
             checkIn.rating?.let { HistoryCheckInRating(it) }
-            HistoryCheckInNote(checkIn.id, checkIn.note)
+            HistoryCheckInNote(checkIn.note)
             HistoryCheckInPhotos(checkIn.photoUrls, onOpenPhoto, imageContent = imageContent)
             if (checkIn.visibility == HistoryVisibility.Public || checkIn.helpfulCount > 0) {
                 val likes = stringResource(Res.string.history_helpful_count, checkIn.helpfulCount)
@@ -63,5 +58,5 @@ internal fun previewHistoryCheckIn() = PersonalCheckIn(
 )
 
 @PreviewLightDark @Composable private fun HistoryCheckInCardPreview() = CoffeePeekTheme {
-    HistoryCheckInCard(previewHistoryCheckIn(), "14 октября 2026", {}, {})
+    HistoryCheckInCard(previewHistoryCheckIn(), "14 октября 2026", {})
 }

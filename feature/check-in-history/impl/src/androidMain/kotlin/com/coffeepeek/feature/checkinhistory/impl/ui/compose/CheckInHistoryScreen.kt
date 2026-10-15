@@ -1,29 +1,29 @@
 package com.coffeepeek.feature.checkinhistory.impl.ui.compose
 
 import androidx.compose.foundation.layout.*
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.PreviewLightDark
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.coffeepeek.core.designsystem.component.CoffeePeekCapsuleSegmentedControl
 import com.coffeepeek.core.designsystem.component.CoffeePeekTopBar
-import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
+import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.feature.checkinhistory.domain.model.HistoryMonth
 import com.coffeepeek.feature.checkinhistory.impl.resources.*
-import com.coffeepeek.feature.checkinhistory.impl.ui.CheckInHistoryViewModel
+import com.coffeepeek.feature.checkinhistory.impl.ui.CombinedHistoryViewModel
 import com.coffeepeek.feature.checkinhistory.impl.ui.compose.component.*
 import com.coffeepeek.feature.checkinhistory.impl.ui.compose.model.*
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
-internal fun CheckInHistoryScreen(viewModel: CheckInHistoryViewModel, sessionGeneration: Int,
+internal fun CheckInHistoryScreen(viewModel: CombinedHistoryViewModel, sessionGeneration: Int,
     isLoggedIn: Boolean, contentGeneration: Int, formatCheckInDate: (String) -> String,
-    imageContent: HistoryImageContent, onEvent: (CheckInHistoryEvent) -> Unit) {
+    formatCheckInTime: (String) -> String, imageContent: HistoryImageContent, onEvent: (CheckInHistoryEvent) -> Unit) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val currentEvent by rememberUpdatedState(onEvent)
     val generationNow by rememberUpdatedState(sessionGeneration)
@@ -34,61 +34,70 @@ internal fun CheckInHistoryScreen(viewModel: CheckInHistoryViewModel, sessionGen
         }
     }
     LaunchedEffect(viewModel, sessionGeneration, isLoggedIn) {
-        viewModel.onAction(CheckInHistoryAction.SessionChanged(sessionGeneration, isLoggedIn))
+        viewModel.onAction(CombinedHistoryAction.SessionChanged(sessionGeneration, isLoggedIn))
     }
-    LaunchedEffect(viewModel, contentGeneration) { viewModel.onAction(CheckInHistoryAction.ContentChanged(contentGeneration)) }
-    LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { viewModel.onAction(CheckInHistoryAction.Resume) }
-    // Hide old private data before the asynchronously processed session action.
-    val visible = state.visibleTo(sessionGeneration, isLoggedIn)
-    CheckInHistoryScreenContent(visible, viewModel::onAction, formatCheckInDate, imageContent)
+    LaunchedEffect(viewModel, contentGeneration) { viewModel.onAction(CombinedHistoryAction.ContentChanged(contentGeneration)) }
+    LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { viewModel.onAction(CombinedHistoryAction.Resume) }
+    CheckInHistoryScreenContent(state.visibleTo(sessionGeneration, isLoggedIn), viewModel::onAction,
+        formatCheckInDate, formatCheckInTime, imageContent)
 }
 
 @Composable
-internal fun CheckInHistoryScreenContent(state: CheckInHistoryState, onAction: (CheckInHistoryAction) -> Unit,
-    formatCheckInDate: (String) -> String = { it.substringBefore('T') }, imageContent: HistoryImageContent? = null) {
+internal fun CheckInHistoryScreenContent(state: CombinedHistoryState, onAction: (CombinedHistoryAction) -> Unit,
+    formatCheckInDate: (String) -> String = { it.substringBefore('T') },
+    formatCheckInTime: (String) -> String = { it.substringAfter('T').take(5) },
+    imageContent: HistoryImageContent? = null) {
     key(state.sessionGeneration) {
+        if (state.isLoggedIn) {
+            state.selectedShop?.entry?.let { entry ->
+                HistoryShopDetailSheet(entry, formatCheckInDate(entry.createdAt),
+                    { onAction(CombinedHistoryAction.DismissShop) }, { onAction(CombinedHistoryAction.OpenSelectedShop) },
+                    { onAction(CombinedHistoryAction.OpenPhoto(it)) }, imageContent)
+            }
+            if (state.showCreate) HistoryCreateSheet({ onAction(CombinedHistoryAction.DismissCreate) },
+                { onAction(CombinedHistoryAction.Create(it)) })
+        }
         Scaffold(modifier = Modifier.windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal)),
             topBar = { CoffeePeekTopBar(stringResource(Res.string.history_title), stringResource(Res.string.history_back),
-                onBack = { onAction(CheckInHistoryAction.Back) }) },
-            containerColor = MaterialTheme.colorScheme.background) { insets ->
-            Column(Modifier.fillMaxSize().padding(insets).consumeWindowInsets(insets)) {
-                val calendarLabel = stringResource(Res.string.history_calendar)
-                val listLabel = stringResource(Res.string.history_list)
-                CoffeePeekCapsuleSegmentedControl(CheckInHistoryMode.entries, state.mode,
-                    { if (it == CheckInHistoryMode.Calendar) calendarLabel else listLabel },
-                    { onAction(CheckInHistoryAction.SelectMode(it)) },
-                    Modifier.padding(horizontal = CoffeePeekDimens.spacing4, vertical = CoffeePeekDimens.spacing2))
-                if (!state.isLoggedIn) HistoryGuestPrompt({ onAction(CheckInHistoryAction.SignIn) })
-                else when (state.mode) {
-                    CheckInHistoryMode.Calendar -> HistoryCalendarContent(state.calendar, state.today, state.canGoNextMonth,
-                        onAction, formatCheckInDate, Modifier.weight(1f), imageContent)
-                    CheckInHistoryMode.List -> HistoryListContent(state.list, onAction, formatCheckInDate, Modifier.weight(1f), imageContent)
+                onBack = { onAction(CombinedHistoryAction.Back) }) },
+            floatingActionButton = {
+                if (state.isLoggedIn) FloatingActionButton({ onAction(CombinedHistoryAction.ShowCreate) }, shape = CircleShape,
+                    containerColor = MaterialTheme.colorScheme.primary, contentColor = MaterialTheme.colorScheme.onPrimary) {
+                    Icon(CoffeePeekIcons.Add, stringResource(Res.string.history_add), Modifier.size(28.dp))
                 }
+            }, containerColor = MaterialTheme.colorScheme.background) { insets ->
+            Column(Modifier.fillMaxSize().padding(insets).consumeWindowInsets(insets)) {
+                HistoryKindFilterControl(state.filter, { onAction(CombinedHistoryAction.SelectFilter(it)) },
+                    Modifier.padding(horizontal = 16.dp, vertical = 8.dp))
+                if (!state.isLoggedIn) HistoryGuestPrompt({ onAction(CombinedHistoryAction.SignIn) })
+                else HistoryTimelineContent(state, onAction, formatCheckInTime, Modifier.weight(1f))
             }
         }
     }
 }
 
-private fun previewHistoryState(mode: CheckInHistoryMode = CheckInHistoryMode.Calendar) = CheckInHistoryState(
-    "2026-10-14", true, 0,
-    HistoryCalendarState(HistoryMonth(2026, 10), mapOf("2026-10-14" to listOf(previewHistoryCheckIn())), "2026-10-14", true),
-    HistoryListState(listOf(previewHistoryCheckIn()), page = 1, hasLoaded = true), mode)
+internal fun previewCombinedHistoryState(): CombinedHistoryState {
+    val shop = HistoryTimelineItem.Shop(previewHistoryCheckIn(), "2026-10-14")
+    val home = HistoryTimelineItem.Home(previewHomeHistoryEntry())
+    return CombinedHistoryState("2026-10-14", HistoryMonth(2026, 10), true, 0,
+        shopCalendar = CombinedHistoryLoadState(mapOf(shop.date to listOf(shop)), hasLoaded = true),
+        homeCalendar = CombinedHistoryLoadState(mapOf(home.date to 1), hasLoaded = true),
+        shops = CombinedHistoryPageState(listOf(shop), page = 1, hasLoaded = true),
+        homes = CombinedHistoryPageState(listOf(home), page = 1, hasLoaded = true))
+}
 
-@PreviewLightDark @Composable private fun CheckInHistoryCalendarPreview() = CoffeePeekTheme {
-    CheckInHistoryScreenContent(previewHistoryState(), {}, { "14 октября 2026" })
+@PreviewLightDark @Composable private fun CombinedHistoryPreview() = CoffeePeekTheme {
+    CheckInHistoryScreenContent(previewCombinedHistoryState(), {}, formatCheckInTime = { "13:00" })
 }
-@PreviewLightDark @Composable private fun CheckInHistoryListPreview() = CoffeePeekTheme {
-    CheckInHistoryScreenContent(previewHistoryState(CheckInHistoryMode.List), {}, { "14 октября 2026" })
+@PreviewLightDark @Composable private fun HistoryGuestPreview() = CoffeePeekTheme {
+    CheckInHistoryScreenContent(previewCombinedHistoryState().copy(isLoggedIn = false), {})
 }
-@PreviewLightDark @Composable private fun CheckInHistoryGuestPreview() = CoffeePeekTheme {
-    CheckInHistoryScreenContent(previewHistoryState().copy(isLoggedIn = false), {})
+@PreviewLightDark @Composable private fun HistoryEmptyPreview() = CoffeePeekTheme {
+    CheckInHistoryScreenContent(CombinedHistoryState("2026-10-14", HistoryMonth(2026, 10), true, 0), {})
 }
-@PreviewLightDark @Composable private fun CheckInHistoryEmptyPreview() = CoffeePeekTheme {
-    CheckInHistoryScreenContent(previewHistoryState(CheckInHistoryMode.List).copy(list = HistoryListState(hasLoaded = true)), {})
+@PreviewLightDark @Composable private fun HistoryErrorPreview() = CoffeePeekTheme {
+    CheckInHistoryScreenContent(previewCombinedHistoryState().copy(homes = CombinedHistoryPageState(hasError = true)), {})
 }
-@PreviewLightDark @Composable private fun CheckInHistoryErrorPreview() = CoffeePeekTheme {
-    CheckInHistoryScreenContent(previewHistoryState(CheckInHistoryMode.List).copy(list = HistoryListState(hasError = true)), {})
-}
-@PreviewLightDark @Composable private fun CheckInHistoryLoadingPreview() = CoffeePeekTheme {
-    CheckInHistoryScreenContent(previewHistoryState(CheckInHistoryMode.List).copy(list = HistoryListState(isLoading = true)), {})
+@PreviewLightDark @Composable private fun HistoryLoadingPreview() = CoffeePeekTheme {
+    CheckInHistoryScreenContent(previewCombinedHistoryState().copy(shops = CombinedHistoryPageState(isLoading = true)), {})
 }

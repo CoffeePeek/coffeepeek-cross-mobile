@@ -24,18 +24,20 @@ it without a cross-feature domain dependency. No new Home writer or api/data/
 impl placeholder exists; the active combined route still uses the existing code.
 See home-check-in/README.md for the module gate and date-boundary limitations.
 
-Personal shop-visit history is the next independent owner. Its populated
+Combined personal history is the current owner. Its populated
 check-in-history/domain and data modules prepare read-only pagination/calendar
-contracts; impl prepares shared typed MVI and Android calendar/list UI without
-data/HTTP dependencies. API now exposes the narrow screen and date-snapshot contracts.
+contracts; impl now uses one shared typed MVI and production-shaped Android
+All/Shop/Home calendar/timeline without data/HTTP dependencies. The obsolete
+prepared Calendar/List screen/coordinator is retired, not activated alongside it.
+API exposes narrow screen/date ports and required Home/create callbacks.
 Android app composition prepares revocable account leases, a navigation-owned
 feature store, zone-aware calendar snapshots and lazy DI with the existing protected
 image loader. Its prepared photo viewer is account-owned. The backend owner-history
 query and its range test confirm an inclusive lower and exclusive upper instant bound.
 Incoming main e5722f9 now combines shop/home history in ProfileCheckInsScreen; that
 route is preserved on both platforms. The earlier local standalone-history switch
-is not active or published. Audit integration with that combined screen before
-wiring the new shop-history entry, so home visits and edit routes are not lost.
+is not active or published. Next supply the application-owned Home detail/editor
+bridge and preserve all three root routes before activating the combined entry.
 See [check-in-history/README.md](check-in-history/README.md) for the audited boundaries,
 ordered implementation and session/time-zone risks. No empty API module or
 new application module is part of these migration slices.

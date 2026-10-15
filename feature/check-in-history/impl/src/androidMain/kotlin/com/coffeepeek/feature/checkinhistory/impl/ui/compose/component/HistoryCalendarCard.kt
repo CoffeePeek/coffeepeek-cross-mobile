@@ -1,70 +1,86 @@
 package com.coffeepeek.feature.checkinhistory.impl.ui.compose.component
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
-import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.feature.checkinhistory.domain.model.HistoryMonth
 import com.coffeepeek.feature.checkinhistory.impl.resources.*
-import com.coffeepeek.feature.checkinhistory.impl.ui.compose.model.HistoryCalendarState
-import com.coffeepeek.feature.checkinhistory.impl.ui.data.historyCalendarCells
-import com.coffeepeek.feature.checkinhistory.impl.ui.data.historyDayStreak
-import com.coffeepeek.feature.checkinhistory.impl.ui.data.historyMonthTitle
-import com.coffeepeek.feature.checkinhistory.impl.ui.data.historyVisitCountLabel
-import com.coffeepeek.feature.checkinhistory.impl.ui.data.historyShopCountLabel
+import com.coffeepeek.feature.checkinhistory.impl.ui.compose.model.*
+import com.coffeepeek.feature.checkinhistory.impl.ui.data.*
 import org.jetbrains.compose.resources.stringArrayResource
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
-internal fun HistoryCalendarCard(state: HistoryCalendarState, today: String, canGoNext: Boolean,
-    onChangeMonth: (Int) -> Unit, onSelectDate: (String) -> Unit, modifier: Modifier = Modifier,
-    imageContent: HistoryImageContent? = null) {
-    Card(modifier.fillMaxWidth(), shape = RoundedCornerShape(CoffeePeekDimens.radius2xl),
+internal fun HistoryCalendarCard(state: CombinedHistoryState, onAction: (CombinedHistoryAction) -> Unit,
+    modifier: Modifier = Modifier) {
+    val haptics = LocalHapticFeedback.current
+    fun select(action: CombinedHistoryAction) {
+        haptics.performHapticFeedback(HapticFeedbackType.SegmentTick)
+        onAction(action)
+    }
+    val homes = if (state.filter.includes(HistorySource.Home)) state.homeCalendar.content.values.sumOf { it.toLong() } else 0L
+    val shops = if (state.filter.includes(HistorySource.Shop)) state.shopCalendar.content.values.flatten()
+        .mapNotNull { it.entry.shop?.slug?.takeIf(String::isNotBlank) }.distinct().size else 0
+    val counts = state.calendarCounts
+    Card(modifier.fillMaxWidth(), shape = RoundedCornerShape(20.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)) {
-        Column(Modifier.padding(horizontal = CoffeePeekDimens.spacing2, vertical = CoffeePeekDimens.spacing3),
-            verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing1)) {
-            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                IconButton(onClick = { onChangeMonth(-1) }, enabled = state.month != HistoryMonth(1, 1)) {
-                    Icon(CoffeePeekIcons.ChevronLeft, stringResource(Res.string.history_previous_month))
-                }
-                Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(historyMonthTitle(state.month), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                    val visits = historyVisitCountLabel(state.visitCount)
-                    val shops = historyShopCountLabel(state.shopCount)
-                    Text(stringResource(Res.string.history_month_counts, visits, shops), style = MaterialTheme.typography.labelMedium)
-                }
-                IconButton(onClick = { onChangeMonth(1) }, enabled = canGoNext) {
-                    Icon(CoffeePeekIcons.ChevronRight, stringResource(Res.string.history_next_month))
+        border = BorderStroke(0.5.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.6f))) {
+        Column(Modifier.padding(12.dp)) {
+            Row(Modifier.fillMaxWidth().padding(start = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+                Text(historyMonthTitle(state.month), Modifier.weight(1f),
+                    style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold)
+                MonthArrow(false, state.month != HistoryMonth(1, 1)) { select(CombinedHistoryAction.ChangeMonth(-1)) }
+                MonthArrow(true, state.canGoNextMonth) { select(CombinedHistoryAction.ChangeMonth(1)) }
+            }
+            Row(Modifier.fillMaxWidth().padding(start = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+                val loading = state.filter.includes(HistorySource.Shop) && state.shopCalendar.isLoading ||
+                    state.filter.includes(HistorySource.Home) && state.homeCalendar.isLoading
+                Text(if (loading) stringResource(Res.string.history_loading) else
+                    stringResource(Res.string.history_month_counts, historyVisitCountLabel(counts.values.sum()),
+                        if (homes > 0) stringResource(Res.string.history_home_count, homes) else historyShopCountLabel(shops)),
+                    Modifier.weight(1f), style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant)
+                val todayLabel = stringResource(Res.string.history_today_description)
+                TextButton(onClick = { select(CombinedHistoryAction.Today) }, contentPadding = PaddingValues(horizontal = 8.dp),
+                    modifier = Modifier.heightIn(min = 44.dp).semantics { contentDescription = todayLabel }) {
+                    Text(stringResource(Res.string.history_today), style = MaterialTheme.typography.labelMedium)
                 }
             }
+            Spacer(Modifier.height(8.dp))
             Row(Modifier.fillMaxWidth()) {
                 stringArrayResource(Res.array.history_weekdays).forEach { label ->
                     Text(label, Modifier.weight(1f), textAlign = TextAlign.Center,
                         style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
-            val dates = state.checkInsByDate.filterValues { it.isNotEmpty() }.keys
+            HorizontalDivider(Modifier.padding(top = 10.dp, bottom = 6.dp),
+                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
             historyCalendarCells(state.month).chunked(7).forEach { week ->
-                Row(Modifier.fillMaxWidth()) {
-                    week.forEachIndexed { weekday, day ->
-                        if (day == null) Spacer(Modifier.weight(1f).height(52.dp))
+                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.Top) {
+                    week.forEach { day ->
+                        if (day == null) Spacer(Modifier.weight(1f))
                         else {
                             val date = state.month.date(day)
-                            val streak = historyDayStreak(state.month, day, dates)
-                            HistoryCalendarDay(day, date, state.checkInsByDate[date].orEmpty(), state.selectedDate == date,
-                                today == date, streak.previous && weekday > 0, streak.next && weekday < 6,
-                                streak.isConnected, { onSelectDate(date) }, Modifier.weight(1f), imageContent)
+                            HistoryCalendarDay(day, date, counts[date] ?: 0L,
+                                if (state.filter.includes(HistorySource.Home)) state.homeCalendar.content[date] ?: 0 else 0,
+                                state.selectedDate == date, state.today == date, date > state.today,
+                                { select(CombinedHistoryAction.SelectDate(date)) }, Modifier.weight(1f))
                         }
                     }
                 }
@@ -73,9 +89,17 @@ internal fun HistoryCalendarCard(state: HistoryCalendarState, today: String, can
     }
 }
 
+@Composable private fun MonthArrow(next: Boolean, enabled: Boolean, onClick: () -> Unit) {
+    IconButton(onClick, enabled = enabled, modifier = Modifier.size(44.dp)) {
+        Box(Modifier.size(34.dp).background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.45f), CircleShape),
+            contentAlignment = Alignment.Center) {
+            Icon(if (next) CoffeePeekIcons.ChevronRight else CoffeePeekIcons.ChevronLeft,
+                stringResource(if (next) Res.string.history_next_month else Res.string.history_previous_month), Modifier.size(18.dp))
+        }
+    }
+}
+
 @PreviewLightDark @Composable private fun HistoryCalendarCardPreview() = CoffeePeekTheme {
-    val checkIn = previewHistoryCheckIn()
-    HistoryCalendarCard(HistoryCalendarState(HistoryMonth(2026, 10),
-        mapOf("2026-10-13" to listOf(checkIn), "2026-10-14" to listOf(checkIn)), "2026-10-14", true),
-        "2026-10-14", false, {}, {})
+    HistoryCalendarCard(CombinedHistoryState("2026-10-14", HistoryMonth(2026, 10), true, 0,
+        selectedDate = "2026-10-14", homeCalendar = CombinedHistoryLoadState(mapOf("2026-10-14" to 2), hasLoaded = true)), {})
 }

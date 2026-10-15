@@ -259,6 +259,7 @@ androidComponents {
                 "com.coffeepeek.feature.checkinhistory.api.CheckInHistoryEntry",
                 "com.coffeepeek.feature.checkinhistory.data.repository.CheckInHistoryRepositoryFactoryKt",
                 "com.coffeepeek.feature.checkinhistory.impl.CheckInHistoryApiImplKt",
+                "com.coffeepeek.feature.checkinhistory.impl.ui.CombinedHistoryViewModel",
                 "com.coffeepeek.admin.di.homecheckin.LegacyHomePreparationReader",
                 "com.coffeepeek.admin.di.checkinhistory.HomeHistoryReaderAdapter",
                 "com.coffeepeek.feature.homecheckin.domain.repository.HomePreparationReader",
