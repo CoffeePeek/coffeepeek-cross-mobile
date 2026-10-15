@@ -1,341 +1,149 @@
-# Android feature refactoring — active execution plan
+# Android refactoring — current roadmap
 
-Source audit: updated 2026-10-14 after merging main at e5722f9. Continue the existing migration branch and consolidated
-PR #43 targeting develop. This plan supersedes the earlier checkpoint ordering;
-closed stack PRs are historical, not separate current workspaces.
+Audit date: 2026-10-15. Product baseline: `origin/main` **4976e53**.
+This is the current checklist. Older feature READMEs contain historical checkpoint
+notes; they do not override this source audit or certify later changes.
 
-Develop synchronization: origin/develop 83137f4 (including merged PR #92) entered
-this branch through merge 54d2acf. The original 6ee3e2f fix commit is an ancestor,
-not a cherry-pick; a future main merge will not introduce a second copy. The single
-Gradle conflict was resolved by keeping one Compose-test/Espresso declaration
-and the catalog-backed debug test host. Existing upstream Coffee refresh/iOS dot
-changes are retained, not rewritten as part of this synchronization.
-Post-merge verification passes: Direct/Play APK/DEX, 217 app unit tests per variant,
-app lint and test APK assembly; three legacy placement, three core placement and
-four prepared-history composition UI tests on the owned read-only emulator.
-No user-phone updates/data clearing/backend writes; no new iOS implementation
-or iOS build certification is claimed by this Android synchronization check.
+## Branch ownership
 
-## Scope and counting
+- `feature/core-design-system-controls`, PR #43 → develop: core, favorites,
+  Shop Report and Shop migration. New history code is excluded from its final diff.
+- `feature/check-in-history-refactoring` → the branch above: the **entire**
+  prepared history migration, including four modules, resources, app wiring and
+  tests. Continue that capability only there; do not split it into a third PR.
+- The base registers 23 modules; the history child registers 27. Existing
+  `features/home-checkin` remains registered in both. No new Home module exists.
+- The independent modal fix #92 reached develop and main and is already in the
+  migration ancestry. Do not cherry-pick it again.
+- Preserve published history; no force-push or merging either PR to main/develop
+  is part of this organization step. The history extraction exceeds the usual
+  50-file guide because it keeps an existing capability coherent.
 
-The audited layout before history preparation had 23 Gradle modules: composeApp,
-four legacy modules, five core modules and twelve feature modules (four each
-for favorites, shop-report and shop), plus the existing main module
-features/home-checkin. Keep that transitional plural-directory module registered
-through module.feature.homeCheckIn; do not create a duplicate or rename it in
-the Shop slice. Build-logic is a separate included build.
-History preparation adds populated api/domain/data/impl modules (27 registered
-modules in total). Shared MVI stays in commonMain; Android screen/entry code uses
-androidMain because the current design-system has only an Android target.
-There is no new application module or generic DI module to create.
+## Status meanings
 
-The refreshed navigator declares 38 serialized routes: five graph containers,
-five tabs and 28 other destinations. Excluding graph containers gives 33 routes;
-excluding Main and dormant ReportReview gives 31 content-route contracts. ForgotPassword,
-ResetPassword and EditHomeCheckIn were missing from the older 30-route audit.
-VisitedPlaces, HomeCheckIns and EditHomeCheckIn share one combined screen, so even
-these 31 routes are not 31 independent screens. This is not a count
-of independent business features: map and roaster-list content can be embedded
-without a separate route; sheets, form steps, tabs and success states do not
-each require four Gradle modules.
+**Done** below means the named engineering task is implemented and verified,
+not that every consuming feature is production-ready.
+**In progress** includes prepared-but-inactive code and integrated code with parity
+or release gates outstanding. **Not started** means the new migration has not
+started; the corresponding product capability may already work in main.
+A compilation/test pass is not evidence of pixel parity or a live write.
 
-- ShopReviews currently renders public check-ins, not the prepared review editor.
-- CreateCheckIn is the shop picker; the actual creation UI is a bottom sheet.
-- The active personal-history destination combines one calendar/timeline with
-  All/Shop/Home filters; the prepared shop-only Calendar/List selector is not active.
-- My Contributions has multiple content modes, not three mandatory features.
-- Registration steps and Add Shop success are internal states.
-- ReportReview is not a reason to activate an obsolete review creation flow.
+## Completed engineering tasks
 
-Recount navigation before choosing each later owner. The figures describe this
-source snapshot, not guaranteed runtime coverage or future product scope.
+- [x] Named Modules catalog and Gradle conventions; concise feature build files.
+- [x] Independent core coroutines, network, database, presentation and design-system
+  boundaries; no core-to-feature dependency.
+- [x] Typed lifecycle-owned MVI state/actions/events with atomic updates and
+  explicit feature-owned Result/cancellation/conflicting-action handling.
+- [x] CoffeePeek-prefixed reusable components, brand font/assets/tokens and
+  colocated paired previews; rendering every IDE preview is a separate QA gate.
+- [x] Android api/domain/data/impl entries and app-owned DI/legacy bridges for
+  favorites, Shop Report, Shop detail/menu/public check-ins/check-in creation.
+  These are implementation milestones, not completion of those whole features.
+- [x] Core and legacy fractional-sheet anchor correction; themed switch primitive.
+- [x] Source fixes/tests for cache credentials, field error semantics, upload
+  purpose, session/cancellation races and account-scoped favorites.
+- [x] Fresh main merged at 9e5a533; CI conflict preserves incoming caching/change
+  filters and the migration's Java 21/extra Android test APK checks.
+- [x] The PR #43 base builds independently without new history modules:
+  Direct/Play debug APKs and DEX checks, both app unit variants, Direct lint and
+  the application instrumentation APK pass at extraction checkpoint 415a69b.
 
-## Current integration status
+## Current feature inventory versus main
 
-| Area | Android active path | Prepared, not yet a completed migration |
+| Owner / current product | Migration state | What still blocks completion |
 |---|---|---|
-| Favorites | New feature entry and app-owned storage bridge | Remaining visual/live QA; iOS stays legacy |
-| Shop issue report | New feature entry | Completion QA alongside Shop flows |
-| Shop menu gallery | New gallery entry, now reachable from the new detail adapter | Visual/navigation QA |
-| Shop check-in creation | New Android form and app-owned draft/session/photo adapters | Authenticated submission, camera/picker and recreation QA |
-| Shop detail | New Android renderer/feature entry built and smoke-tested | Full behavior/live QA pending |
-| Public shop check-in list | New Android entry built; isolated presentation tests pass | Live guest/owner/navigation QA pending |
-| Personal check-in history | Incoming main's combined ProfileCheckInsScreen on VisitedPlaces/HomeCheckIns; home editing retained | New shop-history entry/account/photo/DI prepared, not active; audit combined shop/home ownership and parity before integration |
-| Home check-ins | Existing main module and HomeCheckIns route retained | Audit ownership with personal history before its later migration |
-| Core | Infrastructure, presentation and design-system available; selected consumers use them | Legacy HTTP/Room are not globally replaced |
+| Favorites: saved shops **and roasters** | In progress; new Android shop entry active | **Source-confirmed parity gap:** main's FavoritesScreen includes a roaster section, but FavoritesDestination.android/new FavoritesEntry renders shops only. Restore existing roaster behavior before calling this migration complete; no new product behavior. Verify old saved data, account transitions, photos and restoration. |
+| Shop Report: incorrect shop data | In progress; Android entry active | Real safe submit/error/uncertain-delivery flow and paired preview inspection; retain shared/iOS fallback. |
+| Shop: detail, menu, public check-ins and creation sheet | In progress; Android entries active | Physical-device visual/guest/owner/return parity; picker/camera permissions and recreation, ML Kit quality/model availability and safely authorized submissions. Prepared review editors are not a product requirement. |
+| Personal history: one combined Shop/Home calendar and timeline | In progress; all prepared migration code in history child, **not active** | The prepared Shop-only Calendar/List UI is not parity with main. Complete combined readers, MVI, production-shaped UI, home callbacks and Android integration first. |
+| Home preparations: create/detail/edit/delete, recipes, photos, statistics | Not started as a new feature migration | Existing main implementation stays active. Extract only the read boundary needed for combined history first; do not rewrite the editor/writer as a prerequisite. |
+| Discovery: shop list/search/filter/map and embedded roasters | Not started | Audit actual list/map/filter ownership and current platform map; no independent module for every mode. |
+| Coffee catalogue: Coffee tab/list/detail | Not started | Preserve current catalogue/search/detail and links to roasters; catalog pickers are existing shared app boundaries, not invented screens. |
+| Roasters: list/detail and saved membership | Not started | Preserve current entry points, contacts, catalogue links and favorites. Favorites parity is an earlier gate, not permission for a wholesale roaster rewrite. |
+| Profile/account: statistics, edit, pending deletion | Not started | Preserve current routes and delegates to history/favorites/auth; don't duplicate their business ownership. |
+| Auth: sign-in, registration, forgot/reset password | Not started as feature extraction | Existing session fixes are not a completed auth migration. Keep recovery/deep-link and Google/platform behavior. |
+| Community: current feed/check-in actions | Not started | Current refresh/filter/paging/votes/privacy and owner guards; no resurrection of legacy reviews. |
+| Settings: city/theme/legal/share/version/update actions | Not started | Audit preferences and existing app-update integration; no speculative settings/storage/update module split. |
+| Contributions: add shop/roaster, suggest/edit changes, own submissions/detail | Not started | Preserve Changes/Shops/Roasters modes and moderation states; don't count each tab/form step as a new business feature. |
 
-Prepared source, authored tests and authored previews are different from verified
-behavior. Earlier successful builds do not certify subsequent unbuilt UI edits.
-No new iOS screen, binding, writer or native navigation is in this execution plan.
+No migrated business feature is marked fully closed while its production parity
+or release gates above remain open. iOS feature migrations are deferred, not done;
+shared Native compilation is only a compatibility check.
 
-## Ordered work before leaving Shop
+## Verified product shape — do not redesign during extraction
 
-### 1. Finish detail presentation parity
+Audit anchors are main's `ui/Navigator.kt`, `ui/screen/main/MainScreen.kt`,
+`ui/screen/checkins/ProfileCheckInsScreen.kt`, `ui/screen/profile/ProfileScreen.kt`,
+`ui/screen/profile/SettingsScreen.kt`, `ui/screen/favorites/FavoritesScreen.kt`,
+`ui/screen/shop/ShopReviewsScreen.kt` and contributions' ViewModel.
+These findings come from registered renderers and their call sites, not filenames.
 
-Compare against the current connected detail screen, preserving its meaning:
+- Main has **38 serialized route declarations**: five graph containers, five tabs
+  and 28 other destinations. There are 33 routes without graphs, not 33 unique
+  screens. Excluding Main and the legacy ReportReview contract leaves 31 content
+  route contracts; aliases/modal flows still share screens.
+- Tabs are discovery/Feed, Coffee, Community, Profile and Settings.
+- VisitedPlaces, HomeCheckIns and EditHomeCheckIn(id) all render the same
+  ProfileCheckInsScreen; the last passes an initial home ID for editing.
+- History has All/Shop/Home filters, one calendar/date selection, a combined
+  compact timeline, per-source pagination, details/photos and creation choice.
+  Home uses preparedOn (a civil date), not the Shop UTC query boundaries.
+- CreateCheckIn opens the shop picker; shop creation is a modal, not a new
+  standalone form route. Home creation/edit/delete stays delegated for now.
+- ShopReviews actually displays **check-ins**. ReportCheckIn opens the report
+  screen in check-in mode. ReportReview remains registered but has no
+  shared Kotlin navigation call site in this audit: preserve compatibility until
+  all entry points are audited; do not revive a review editor or delete the route
+  just because it looks old.
+- Main favorites includes shops and a separate roaster section. Roaster logos
+  attached to a shop card do **not** replace saved-roaster functionality.
+- ForgotPassword/ResetPassword, account deletion and app-update actions already
+  exist. They are not new product features to invent.
+- Do not migrate old journal/bean-bag screens merely because unused classes or
+  database tables remain. Require a current renderer/entry point first.
+- Keep the existing root navigation and native/shared platform fallbacks. A root
+  Navigation 3 swap or new iOS UI is not part of completing history.
 
-- Schedule: closing time, next opening including split intervals/week rollover,
-  day off, expansion and Monday-first display. Inject the application's local
-  weekday and minute; never invent midnight when the clock is unavailable.
-- Features: first five rows, expansion count, existing tag/brew artwork and
-  collapse when the feature list changes. Business icon selection stays in Shop.
-- Menu: present items only, Espresso/Filter ordering and stable other categories,
-  decimal comma/two-decimal prices, BYN artwork, photo stack, separate full-viewer
-  and gallery actions, captured/updated dates. Inject the existing local date
-  formatter; the preview fallback does not convert UTC to the local date.
-- Coffee: separate roasters/beans/equipment groups, full-row roaster action and
-  no action for an absent slug. Contacts: existing icon/order, external targets,
-  copy-phone action, and empty-data omission.
-- Recheck hero/header/stats, description, public check-in cards, loading/retry,
-  retained-content error, guest and picker-mode states. Preserve normal/picker
-  bottom actions and avoid adding a personal-history section to this screen.
-- Keep every independent component in its own file, reusable section semantics
-  in the feature, resources explicit and light/dark previews colocated.
+## Remaining work — ordered gates
 
-2026-10-11: schedule/features/menu/coffee/contact source parity is prepared locally.
-Pure formatter/clock/expansion tests and UI contract scenarios are authored.
-This is not a checked completion gate: compilation, preview rendering and device
-comparison are deferred. Android wiring was subsequently added on 2026-10-14;
-the shared/iOS renderer still selects the legacy implementation.
+1. [ ] Close source-confirmed regressions in the base before treating PR #43 as
+   ready: favorites' roaster section first, then the existing Shop/report live and
+   visual gates. Fixes must preserve main behavior, not introduce a new design.
+2. [ ] In the history child, prepare account-bound Home reads and history-owned
+   read models/ports. Confirm date-boundary/calendar/page semantics and preserve
+   unknown visibility/moderation, protected photos and recipe data.
+   Application composition adapts contracts; no cross-feature domain/data/impl
+   import. Create Home domain only when the module gate has real consumers;
+   no empty api/impl/DI modules or forwarding-only use cases.
+3. [ ] Combined typed MVI: one filter/month/date, two source cursors, retained
+   content/partial failures, duplicate/conflicting-action guards, cancellation,
+   stale-response rejection and account replacement versus token renewal.
+4. [ ] Production-shaped stateless history content: compact Shop/Home rows,
+   one calendar/filter, loading/empty/retry, photos/details and creation callbacks.
+   Each independent component owns its file and paired fake-state previews.
+   No second global Calendar/List mode or full-card redesign.
+5. [ ] Extend the entry and Android renderer without losing any of the three
+   existing history route contracts. Delegate Home edit/create/delete and the
+   existing Shop picker; keep active legacy history until parity is verified.
+6. [ ] Verify both source cursors, filters/date reset/month limits, partial-source
+   failures/retry, guest/account/token changes, back/photos/editor return and
+   initial edit ID. Build Direct/Play/DEX/unit/lint and isolated UI tests; then
+   safely verify physical-device/live-read parity. Live writes require a safe
+   environment/account and separate authorization.
+7. [ ] Select the next owner only after these gates, repeating the audit against
+   the latest main before coding. Later ordering is provisional, not authority
+   to restore removed behavior or scaffold all future modules.
 
-### 2. Coordinate MVI refresh, writes and sessions
+## Verification limits
 
-- Prevent a detail refresh snapshot overwriting a concurrently completed helpful
-  vote; coalesce deferred refreshes and guard duplicate/conflicting actions.
-- Preserve first-load versus resume behavior without duplicate initial requests.
-  Refresh after relevant writes and return from forms/list/report destinations.
-- Cancel old-session work and reject its late replies/events; clear account-owned
-  state on session changes without clearing another account's draft or favorites.
-- Verify owner detection using both current user and personal check-in IDs;
-  guests must not compose private/hidden card text or photos.
-- Preserve Result failures, cancellation, retained-content errors and uncertainty
-  after an unconfirmed write. Do not retry writes automatically.
-
-### 3. Finalize narrow feature entry contracts
-
-- Expose only the detail entry and required context/callbacks; keep repositories,
-  DTOs, upload transport and feature ViewModels out of the public screen API.
-- Keep internal shop ID versus public slug/canonicalPath distinct for forms,
-  sharing, reporting, gallery, list and edit actions.
-- Supply session generation, refresh signals, distance/local clock/date formatting
-  and existing form context from Android composition.
-- Use the prepared full-list entry. Do not create a second personal history or
-  wire unused review editors as check-in forms.
-
-2026-10-13: these entry contracts and shared presentation coordination are
-prepared locally. ShopDetailEntry delegates application actions through
-ShopDetailEffect; forms/report/edit receive caller identity and public slug
-separately in ShopDetailContext. The current details wire response exposes
-address.slug, not a separate numeric/GUID shop ID. Sharing requires canonicalPath.
-The caller supplies local clock, distance and menu/check-in date formatting.
-
-Detail and full-list accept monotonic sessionGeneration and refreshGeneration.
-Initial generations avoid duplicate first-composition loads. Post-write signals
-during GET/vote coalesce into one later GET. Repeated/older signals are ignored.
-Session replacement cancels pending work, resets account state, immediately
-hides previous rendering state and drops buffered old-session effects. Favorite
-cleanup is tied to its operation identity. Localized favorite/vote snackbar
-errors stay with the feature. Regression scenarios are authored, not executed.
-
-### 3a. Preserve incoming main's drink-photo behavior
-
-- Reading is prepared: optional server-issued drinkPhotoUrl is separate from
-  the full gallery; drink badges use Fit and a neutral icon for old/missing/
-  failed images. Synthetic drink pictures are removed to match main.
-- 2026-10-13: the new Android form has a narrow processor port and app-owned
-  ML Kit subject-segmentation adapter. Despite the incoming documentation, the
-  source tree at main 6f298e7 has no extraction provider to reuse. This detects
-  foreground objects, not the cup class; inappropriate results can be skipped.
-- First-photo replacement/removal cancels processing and rejects late replies.
-  One object is selected automatically; multiple objects require selection.
-  Retry and opt-out preserve other fields; submission waits for processing or
-  selection. The same-account process-lifetime draft retains selection/opt-out.
-- Feature input, header/size validation and transport now support separate PNG
-  drinkPhoto, outside the five full-photo limit. PNG bytes are not recompressed;
-  reservation/upload HTTP failures stop creation. These sources are unverified.
-- Keep iOS providers/writers unchanged. See docs/CHECK_IN_DRINK_PHOTO.md for the
-  server contract and deployment prerequisites. Regression tests and paired
-  previews are authored, not run/rendered. Model availability, object quality,
-  transparency, Android picker/reopen and real backend acceptance remain QA
-  gates, not completed parity claims.
-
-### 4. Wire Android only
-
-- Assemble repositories/ViewModels through current app Koin and narrow factories,
-  using existing authenticated transport plus the separate upload client.
-- Delegate photo viewer/gallery, form, auth/report/edit, map/route, share/copy,
-  contacts and roaster navigation to existing application destinations/adapters.
-- Preserve the CreateCheckIn picker and ShopDetail(forCheckIn=true) behavior.
-- Replace only the Android renderer; shared/iOS consumers keep their legacy path.
-  No root Navigation 3 migration, global transport/database replacement or legacy
-  deletion is bundled into this switch.
-
-2026-10-14: source wiring is now present. Existing ShopDetail/ShopReviews routes
-resolve platform renderers; default composition keeps legacy iOS screens, while
-Android builds narrow entries from the existing authenticated client, the same
-favorites writer and app-owned viewer/time/distance adapters. Gallery, photos,
-report/auth/edit, share/copy, contacts, roasters, map/route and picker actions are
-mapped to their existing application destinations/services. The check-in modal
-retains its success screen and signals explicit detail refresh after submission.
-
-A navigation-owned Android host observes session changes even behind child
-routes. It revokes old leases and clears its feature ViewModel store on account
-replacement, not same-account token renewal; configuration changes retain the
-host/store. Account observation failure hides content and allows explicit retry.
-Repository wrappers check the account before/after work and cancel on replacement;
-guests cannot read the previous account's favorites or mutate votes/favorites.
-Photos/forms and buffered effects are bounded by that lease. Form context and
-refresh generation are saveable; a recreated in-flight form still uses the
-existing uncertainty guard, never automatic write retry. These new host/session
-test scenarios and the Android-only error preview are authored, not run/rendered.
-Source wiring is not a verified release gate; no changes have reached main.
-
-### 5. Verify the complete Android feature
-
-2026-10-14 completion-gate progress: both Direct/Play debug APKs and packaged
-DEX startup checks pass, with all library unit tests and both application unit
-test variants (326 tests, no skips/failures). Lint passes with no error entries;
-existing framework/deprecation warnings remain. Build-logic verifier's three
-tests pass. Shop domain/data and shop-report data compile for iOS Simulator Arm64
-as a regression check only; iOS screens/bindings/writers are unchanged.
-
-On Pixel 7, 20 isolated Shop UI tests, 50 design-system UI tests, and six selected
-application tests pass. The latter cover native PNG encoding/invalid input and
-the form using fake sessions/transport; no test submits to the live backend or
-changes the real account/database. APK 1.0.547 was installed as an update without
-clearing data. Startup and Happy Coffee's new detail were visually inspected:
-address, distance, opening hours and menu images render from the existing backend;
-no fresh AndroidRuntime crash was observed. This is not authenticated-write QA.
-
-The first run reproduced a public-property smart-cast compilation error and
-an actual detail/list state-generation bug: the State receiver shadowed the
-ViewModel's generation during reset. Immutable coordinate locals and an explicit
-next-generation value fix these. Tests were corrected to inspect Ktor's actual
-OutgoingContent and current fixture types; all reruns passed. Concurrent DEX
-packaging exhausted the default local heap; the passing complete run used
-`--max-workers=2 -Dorg.gradle.jvmargs="-Xmx4096M -Dfile.encoding=UTF-8"` without
-changing project-wide Gradle settings.
-
-Remaining gates: real camera/gallery and recreation, ML Kit model download and
-foreground quality on actual cup photographs, server deployment/transparent PNG
-access, a safe authenticated submission, and live guest/owner/session/picker
-navigation parity. Automated light/dark content tests are not an IDE rendering
-record for every preview. Keep these explicitly pending before release;
-do not infer completion from successful builds alone. On 2026-10-14 the user
-authorized publishing the validated checkpoint and proceeding to the next owner.
-Next-owner preparation may proceed independently; it does not waive these Shop
-release gates or authorize live test writes/removal of shared legacy consumers.
-
-Per the user's explicit instruction, execute this gate once implementation and
-Android wiring are ready, not between the current preparation steps:
-
-- Affected domain/data/impl tests, Android app Direct/Play unit-test variants,
-  debug assemblies, lint and packaged DEX runtime-definition guards.
-- Render paired previews including narrow width, large font and empty/error states.
-- Smoke-test startup without clearing user data; compare guest/signed-in detail,
-  list, heart synchronization, owner actions, photos, drafts, form outcomes,
-  session changes, back/picker and return refresh on safe QA data.
-- Regression-compile changed shared domain/data for iOS if relevant, without
-  implementing or switching any native iOS feature.
-- Review dependencies/public API, record real QA limits, then remove only proven
-  unused Android glue. Compilation alone does not complete this gate.
-
-## Candidate owners after Shop
-
-2026-10-14: check-in-history/domain and data now contain an independent read
-foundation. Its 13 tests, Android lint and Android/iOS Simulator compilation pass.
-Typed MVI/API/UI and app-owned session/time-zone/image/DI composition are prepared,
-but the incoming main's combined ProfileCheckInsScreen is retained. The backend controller/query confirm
-UTC instant bounds with exclusive `to`. Destination/overlay behavior and live
-read-only parity are the remaining checks. Details and
-module-creation rationale are in check-in-history/README.md. Home check-ins remain
-their existing separate capability, not a duplicate migration target.
-
-Earlier presentation gate: 24 MVI tests and 13 domain/data regressions passed (37 total),
-along with impl Android lint/compilation and shared iOS Simulator compilation.
-That validated fake-repository coordination only, not a device screen or real
-account-bound transport; no application route/DI or iOS UI was switched then.
-
-Earlier composition gate: 17 new Android calendar/lease/store/DI unit tests passed
-inside all 180 app tests in each Direct/Play variant; 48 history regression tests,
-both debug APK assemblies/DEX checks and app lint pass. The lazy Android DI graph
-was registered, but VisitedPlaces still selected the legacy screen then. Prior 11
-Pixel/emulator UI tests cover the isolated feature screen, not this new host.
-
-The earlier destination experiment is local/unpublished and superseded by incoming
-main's combined shop/home screen; the standalone entry and account-owned viewer
-stay prepared. Before
-the test-host fix, Direct/Play builds, DEX/lint, 183 app unit tests per variant and
-composeApp iOS Simulator compilation passed. Four composition UI tests have no
-passing result yet. MainActivity splash gating was found in the fake harness;
-the debug-only plain Compose host correction has now compiled; device rerun remains.
-Earlier command-approval usage-limit/403 errors prevented device verification.
-See check-in-history/README.md for exact evidence; do not leave history for the
-next business feature until the affected checks and live parity gates are settled.
-
-Immediate UI parity correction (2026-10-14): user supplied production references
-for the Shop check-in form and reported themed icon/text regressions. Main e5722f9
-was merged locally at 29cff24; pending history work was restored without replacing
-the incoming combined profile routes. The form now restores rating mascot cards,
-required/optional rails, header/labels/field shapes, photo tile and visibility copy.
-Empty notes match the current optional-note rule; the 1000-character cap remains.
-Shop header/glass controls own their theme tint; public check-ins reuse the prod
-headline section style and the check-in bottom action uses its surface treatment.
-Direct/Play APK and DEX checks, 217 app unit tests per variant, 96 Shop domain/impl
-unit tests and app/Shop lint pass. The final label/theme/form/history test sources
-also compile in the publication build. Device execution and visual parity remain
-unverified; earlier fixture installation was rejected by command approval with 403.
-Command access recovered for the publication attempt. Publish accumulated work in
-the existing PR #43 targeting develop; do not merge it or claim release readiness.
-PR #92 is the independent main-based production modal fix merged into develop.
-Its legacy edits have now arrived via the develop merge above, with original history;
-do not cherry-pick them again when main is updated.
-The migrated core correction bounds its inner handle/content instead of Material's
-anchor viewport; the Shop form and safe fixture use that API. Its three placement
-tests, seven overlay/lock tests and two theme tests pass on the owned emulator;
-all 21 isolated Shop tests also pass. Light/dark fixture inspection confirms bottom
-alignment and scrollable production-shaped fields, not real account/picker parity.
-That visual inspection also found the default Material switch mismatch; the shared
-CoffeePeekSwitch now uses the existing production palette/full-size thumb in the
-form and settings row. Final checks pass: 537 unit-test executions across the
-selected modules/two app variants; Direct/Play APK/DEX and app/core/Shop lint;
-56 design-system UI tests, 21 Shop UI tests and four history composition UI tests.
-The latter inject fake sessions/repositories/images and exercise the prepared
-adapter, not the active combined route. The navigation test now taps the actual
-title rather than a merged card's photo-containing center. Light/dark final fixture
-screenshots were inspected. No user-device APK replacement, live writes or iOS
-switch; the read-only emulator was stopped without saving state.
-
-Next implementation is the combined history, not a standalone shop-route switch.
-The audited parity map and Home read-contract / combined MVI / UI / Android
-integration order are in check-in-history/COMBINED_HISTORY_PLAN.md. The first
-foundation slice isolates real Home read contracts from its existing Ktor-bearing
-artifact; keep home creation/edit/delete callbacks delegated until their own migration.
-
-These twelve areas are an ownership map, not instructions to create 48 empty
-modules. Complexity includes parity, session/platform integration and testing.
-
-| Candidate | Complexity | Next action / dependencies |
-|---|---|---|
-| Favorites | Low remaining | Keep current Android bridge; finish completion QA |
-| Shop report | Low remaining | Verify integrated report alongside detail flows |
-| Shop | High, Android integrated | Finish remaining release QA; do not remove shared legacy consumers |
-| Personal check-ins/history | High, next owner | Independent shop-visit calendar/list read foundation; home preparations remain separate |
-| Community | High | Feed refresh/pagination, votes/privacy/owner guards; agree check-in ownership first |
-| Discovery/search/map | Very high | Filters, location, map/picker and list consistency; separate platform map from domain |
-| Coffee catalogue | Medium | Audit list/details/filter ownership before module creation |
-| Roasters | Medium–high | Catalogue/detail navigation, contacts and favorites consumers |
-| Profile | High | Session, statistics/history and editing; avoid importing another feature's implementation |
-| Auth/registration | High | Session lifecycle, registration steps and Google platform integration |
-| Settings | Medium | Preferences/session/logout, legal/external actions and platform settings |
-| Contributions/add-shop/edit | Very high | Multiple contribution kinds, media, validation and moderation; split only by actual ownership |
-
-Suggested later sequence: personal history (including auditing the incoming home
-check-in capability) → profile/auth session boundaries →
-catalogue/roasters → community/discovery → contributions. Reassess against current
-product changes before each capability; do not treat this sequence as permission
-to switch incomplete features or remove legacy iOS paths.
-
-See shop/ANDROID_PARITY_PLAN.md for transport/form verification records and the
-Shop-specific compatibility checklist. This document owns the current execution
-order; those historical records do not mark new presentation work verified.
+The pre-extraction combined code passed 794 selected unit-test executions across
+libraries and both app variants, Android APK/DEX/lint, 13 selected app-device
+tests on a temporary read-only emulator, and shared iOS Simulator compilation.
+Those are dated checkpoint results, not certification of every future edit.
+A later full design-system run was interrupted; it is **not** a fresh passing
+56-test result. No new physical-phone update, authenticated write, data clearing
+or native iOS feature switch is claimed for this organization/audit step.
+The child must be checked again after restoring the complete feature. Record its
+actual result in the history plan; never infer a passing device run from a
+successfully assembled instrumentation APK.
