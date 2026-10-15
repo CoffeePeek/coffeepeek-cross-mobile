@@ -2,6 +2,7 @@ package com.coffeepeek.feature.shop.impl.ui.compose
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
@@ -11,6 +12,7 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -24,6 +26,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.key
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.feature.shop.domain.model.ShopCheckIn
@@ -137,23 +140,12 @@ internal fun ShopDetailScreenContent(
         ShopPriceInfoSheet(priceLevel, onDismiss = { onAction(ShopDetailAction.DismissPriceInfo) })
     }
     val hazeState = rememberHazeState()
+    val floatingActionsClearance = 72.dp
     Box(Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal))) {
       Scaffold(
         modifier = Modifier.hazeSource(hazeState),
-        contentWindowInsets = WindowInsets(0, 0, 0, 0),
-        snackbarHost = { SnackbarHost(snackbarHostState) },
-        bottomBar = {
-            val overview = state.details?.overview
-            if (overview != null) {
-                ShopDetailBottomBar(
-                    canOpenRoute = overview.latitude != null && overview.longitude != null,
-                    forCheckIn = forCheckIn,
-                    onRoute = { onAction(ShopDetailAction.OpenRoute) },
-                    onCheckIn = { onAction(ShopDetailAction.OpenCheckIn) },
-                    onChooseAnotherShop = { onAction(ShopDetailAction.ChooseAnotherShop) },
-                )
-            }
-        },
+        snackbarHost = { SnackbarHost(snackbarHostState,
+            Modifier.navigationBarsPadding().padding(bottom = floatingActionsClearance)) },
         containerColor = MaterialTheme.colorScheme.background,
     ) { insets ->
         Box(Modifier.fillMaxSize().padding(insets).consumeWindowInsets(insets), contentAlignment = Alignment.Center) {
@@ -163,39 +155,46 @@ internal fun ShopDetailScreenContent(
                     onRetry = { onAction(ShopDetailAction.Retry) })
                 else -> LazyColumn(
                     modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(bottom = CoffeePeekDimens.spacing6),
-                    verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing4),
+                    contentPadding = PaddingValues(bottom = floatingActionsClearance +
+                        CoffeePeekDimens.spacing4 + CoffeePeekDimens.spacing6),
                 ) {
                     item {
-                        ShopOverviewHero(details.overview,
-                            onOpenPhoto = { urls, index -> onAction(ShopDetailAction.OpenPhoto(urls, index)) })
+                        Column {
+                            ShopOverviewHero(details.overview,
+                                onOpenPhoto = { urls, index -> onAction(ShopDetailAction.OpenPhoto(urls, index)) })
+                            Column(Modifier.padding(horizontal = CoffeePeekDimens.spacing4,
+                                vertical = CoffeePeekDimens.spacing3),
+                                verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing2)) {
+                                ShopOverviewHeader(details.overview,
+                                    onOpenMap = { onAction(ShopDetailAction.OpenMap) })
+                                ShopOverviewStats(details.overview,
+                                    onOpenCheckIns = { onAction(ShopDetailAction.OpenCheckIns) },
+                                    onOpenPriceInfo = { onAction(ShopDetailAction.OpenPriceInfo) },
+                                    distanceLabel = distanceLabel)
+                            }
+                        }
                     }
-                    item { ShopOverviewHeader(details.overview,
-                        onOpenMap = { onAction(ShopDetailAction.OpenMap) },
-                        modifier = Modifier.padding(horizontal = CoffeePeekDimens.spacing4)) }
-                    item { ShopOverviewStats(details.overview,
-                        onOpenCheckIns = { onAction(ShopDetailAction.OpenCheckIns) },
-                        onOpenPriceInfo = { onAction(ShopDetailAction.OpenPriceInfo) },
-                        modifier = Modifier.padding(horizontal = CoffeePeekDimens.spacing4),
-                        distanceLabel = distanceLabel) }
                     if (state.isLoading || state.hasError) {
                         item { ShopDetailRefreshStatus(state.isLoading,
                             onRetry = { onAction(ShopDetailAction.Retry) },
-                            modifier = Modifier.padding(horizontal = CoffeePeekDimens.spacing4)) }
+                            modifier = Modifier.padding(horizontal = CoffeePeekDimens.spacing4,
+                                vertical = CoffeePeekDimens.spacing3)) }
                     }
                     details.overview.description?.let { description ->
-                        item { ShopDescriptionSection(description, Modifier.padding(horizontal = CoffeePeekDimens.spacing4)) }
+                        item { ShopDescriptionSection(description, Modifier.padding(horizontal = CoffeePeekDimens.spacing4,
+                            vertical = CoffeePeekDimens.spacing2)) }
                     }
                     item { ShopCoffeeDetailsSection(details.coffee,
                         onOpenRoaster = { onAction(ShopDetailAction.OpenRoaster(it)) },
-                        modifier = Modifier.padding(horizontal = CoffeePeekDimens.spacing4)) }
+                        modifier = Modifier.padding(horizontal = CoffeePeekDimens.spacing4, vertical = 6.dp)) }
                     if (details.schedules.isNotEmpty()) {
                         item { ShopScheduleSection(details.schedules, state.todayDayOfWeek,
                             state.scheduleExpanded,
                             onToggle = { onAction(ShopDetailAction.ToggleSchedule) },
                             isOpen = details.overview.isOpen,
                             minuteOfDay = state.todayMinuteOfDay,
-                            modifier = Modifier.padding(horizontal = CoffeePeekDimens.spacing4)) }
+                            modifier = Modifier.padding(horizontal = CoffeePeekDimens.spacing4,
+                                vertical = CoffeePeekDimens.spacing3)) }
                     }
                     details.menu?.takeIf { menu ->
                         menu.photos.isNotEmpty() || menu.items.any { it.availability.equals("Present", true) }
@@ -204,19 +203,21 @@ internal fun ShopDetailScreenContent(
                             onAction(ShopDetailAction.OpenMenuGallery)
                         }, onOpenPhoto = { index ->
                             onAction(ShopDetailAction.OpenPhoto(menu.photos.map { it.fullUrl }, index))
-                        }, modifier = Modifier.padding(horizontal = CoffeePeekDimens.spacing4),
+                        }, modifier = Modifier.padding(horizontal = CoffeePeekDimens.spacing4, vertical = 6.dp),
                             formatDate = formatMenuDate) }
                     }
                     details.contact?.let { contact ->
                         item { ShopContactSection(contact,
                             onOpenLink = { onAction(ShopDetailAction.OpenLink(it)) },
                             onCopyPhone = { onAction(ShopDetailAction.CopyPhone(it)) },
-                            modifier = Modifier.padding(horizontal = CoffeePeekDimens.spacing4)) }
+                            modifier = Modifier.padding(horizontal = CoffeePeekDimens.spacing4,
+                                vertical = CoffeePeekDimens.spacing4)) }
                     }
                     if (details.features.isNotEmpty()) {
                         item { ShopFeaturesSection(details.features, state.featuresExpanded,
                             onToggle = { onAction(ShopDetailAction.ToggleFeatures) },
-                            modifier = Modifier.padding(horizontal = CoffeePeekDimens.spacing4)) }
+                            modifier = Modifier.padding(horizontal = CoffeePeekDimens.spacing4)
+                                .padding(top = CoffeePeekDimens.spacing6, bottom = CoffeePeekDimens.spacing3)) }
                     }
                     item { ShopPublicCheckInsSection(details.checkIns, details.overview.title,
                         state.isLoggedIn, state.currentUserId, details.userCheckIns.map { it.id }.toSet(),
@@ -231,9 +232,11 @@ internal fun ShopDetailScreenContent(
                         checkInCount = details.overview.reviewCount,
                         formatDate = formatCheckInDate,
                         isRefreshing = state.isLoading,
-                        modifier = Modifier.padding(horizontal = CoffeePeekDimens.spacing4)) }
+                        modifier = Modifier.padding(horizontal = CoffeePeekDimens.spacing4)
+                            .padding(top = CoffeePeekDimens.spacing3, bottom = CoffeePeekDimens.spacing2)) }
                     item { ShopReportIssueSection(onReport = { onAction(ShopDetailAction.ReportShop) },
-                        modifier = Modifier.padding(horizontal = CoffeePeekDimens.spacing4)) }
+                        modifier = Modifier.padding(horizontal = CoffeePeekDimens.spacing4,
+                            vertical = CoffeePeekDimens.spacing2)) }
                 }
             }
         }
@@ -249,6 +252,16 @@ internal fun ShopDetailScreenContent(
           onShare = { onAction(ShopDetailAction.Share) },
           hazeState = hazeState,
       )
+      state.details?.overview?.let { overview ->
+          ShopDetailBottomBar(
+              canOpenRoute = overview.latitude != null && overview.longitude != null,
+              forCheckIn = forCheckIn,
+              onRoute = { onAction(ShopDetailAction.OpenRoute) },
+              onCheckIn = { onAction(ShopDetailAction.OpenCheckIn) },
+              onChooseAnotherShop = { onAction(ShopDetailAction.ChooseAnotherShop) },
+              modifier = Modifier.align(Alignment.BottomCenter),
+          )
+      }
     }
 }
 

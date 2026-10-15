@@ -1,5 +1,40 @@
 # Shop feature — incremental migration
 
+## Detail visual correction — 2026-10-15
+
+The supplied production screenshots and main's detail source define layout parity,
+not an instruction to undo approved readability improvements. The agreed result:
+
+- Route/check-in actions overlay the scrolling content, with no reserved bottom
+  strip. Keep navigation-bar clearance and enough final scroll padding; snackbars
+  remain above the actions. Picker callbacks remain separate.
+- Restore the branded, theme-inverting image fallback for absent/loading/failed
+  images via core's CoffeePeekImagePlaceholder. The hero stays 300dp **below** the
+  status inset, not partly underneath it. Menu thumbnails keep their 124x248dp
+  source size; no arbitrary image enlargement or new image URLs.
+- Shop title uses the source's 28sp/32sp/-0.5sp metrics. Remove the forced 48dp
+  address row and generic 16dp gaps between all lazy items; use source-owned
+  overview/section padding. Weekly-hours row returns to its 44dp source minimum.
+- Restore 16dp information-card corners, explicit themed outlines, and the type
+  badge's gold outline/icon. The shared palette and six Manrope font binaries
+  already match the existing application; do not globally recolor or replace them.
+- Explicit user decisions: **all information-card icons stay brand yellow** in
+  both themes, including distance; retain the new, larger **14sp value / 12sp
+  caption** typography instead of the legacy 11sp. The type badge also retains
+  its readable 12sp label. These are intentional exceptions to literal prod parity.
+
+The parent PR #43 owns this correction; history child #95 inherits it. No native
+iOS screen, legacy shared consumer, business contract or transport is changed.
+Colocated paired previews remain beside the modified components and screen.
+
+Validation: both Android debug assemblies/packaged DEX checks, app/Shop/core lint
+and 513 selected unit-test executions pass. All 13 isolated detail presentation
+and geometry/color/typography UI tests pass on the temporary emulator, including
+both themes and separate normal/picker actions. Final light/dark fixtures were
+visually inspected with real Manrope fonts, fake shop/menu data and no HTTP, DI
+or writes. Physical phones and accounts were not changed. This is not a new live
+authenticated, real-photo/picker/camera or individual IDE-preview certification.
+
 2026-10-14: detail's public entry and application-effect contracts are wired locally
 through createShopDetailEntry. Detail/list share session guards and explicit
 post-write refresh signals; caller-owned date/distance/local-clock inputs do not

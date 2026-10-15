@@ -1,5 +1,16 @@
 # Android shop migration — compatibility plan
 
+## Current visual scope — 2026-10-15
+
+The screenshot-reported detail regressions are corrected in parent #43 and
+inherited by history child #95. Root main/develop are not changed by publishing
+this work. See README.md's current visual correction for exact geometry and the
+user-approved exceptions: yellow information-card icons and larger 14/12sp badge
+text are retained, not replaced with legacy white icons or 11sp labels.
+This does not close live authenticated, picker/camera or individual IDE gates.
+The dated source/preparation sections below are historical evidence, not current
+claims that the Android renderer remains unbuilt.
+
 Audit baseline: 2026-10-08, consolidated PR #43, branch
 `feature/core-design-system-controls`, target `develop`.
 Continue this single PR as requested; do not recreate the former PR stack.

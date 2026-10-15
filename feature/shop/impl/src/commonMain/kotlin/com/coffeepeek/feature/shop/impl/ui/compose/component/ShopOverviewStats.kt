@@ -15,6 +15,8 @@ import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.feature.shop.domain.model.ShopOverview
 import com.coffeepeek.feature.shop.impl.resources.Res
 import com.coffeepeek.feature.shop.impl.resources.shop_overview_reviews
+import com.coffeepeek.feature.shop.impl.resources.shop_overview_reviews_one
+import com.coffeepeek.feature.shop.impl.resources.shop_overview_reviews_few
 import com.coffeepeek.feature.shop.impl.resources.shop_overview_no_rating
 import com.coffeepeek.feature.shop.impl.resources.shop_overview_distance
 import com.coffeepeek.feature.shop.impl.resources.shop_price_title
@@ -41,7 +43,12 @@ internal fun ShopOverviewStats(
             horizontalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing2)) {
             ShopOverviewInfoCard(
                 title = overview.rating?.let(::formatRating) ?: stringResource(Res.string.shop_overview_no_rating),
-                subtitle = stringResource(Res.string.shop_overview_reviews, overview.reviewCount),
+                subtitle = stringResource(when {
+                    overview.reviewCount % 100 in 11..14 -> Res.string.shop_overview_reviews
+                    overview.reviewCount % 10 == 1 -> Res.string.shop_overview_reviews_one
+                    overview.reviewCount % 10 in 2..4 -> Res.string.shop_overview_reviews_few
+                    else -> Res.string.shop_overview_reviews
+                }, overview.reviewCount),
                 icon = CoffeePeekIcons.StarFilled,
                 modifier = Modifier.weight(1.3f).fillMaxHeight(),
                 onClick = onOpenCheckIns, showChevron = true,

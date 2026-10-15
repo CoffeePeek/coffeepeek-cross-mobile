@@ -16,6 +16,15 @@ import com.coffeepeek.core.designsystem.component.CoffeePeekSwipeDismissModalBot
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.feature.shop.domain.model.ShopCheckInCreateInput
 import com.coffeepeek.feature.shop.domain.model.ShopRating
+import com.coffeepeek.feature.shop.domain.model.MenuPhoto
+import com.coffeepeek.feature.shop.domain.model.ScheduleInterval
+import com.coffeepeek.feature.shop.domain.model.ShopCoffeeDetails
+import com.coffeepeek.feature.shop.domain.model.ShopDetails
+import com.coffeepeek.feature.shop.domain.model.ShopMenu
+import com.coffeepeek.feature.shop.domain.model.ShopOverview
+import com.coffeepeek.feature.shop.domain.model.ShopSchedule
+import com.coffeepeek.feature.shop.impl.ui.compose.ShopDetailScreenContent
+import com.coffeepeek.feature.shop.impl.ui.compose.model.ShopDetailState
 import com.coffeepeek.feature.shop.impl.ui.compose.ShopCheckInCreateScreenContent
 import com.coffeepeek.feature.shop.impl.ui.compose.model.ShopCheckInFormAction
 import com.coffeepeek.feature.shop.impl.ui.compose.model.ShopCheckInFormState
@@ -24,10 +33,21 @@ import com.coffeepeek.feature.shop.impl.ui.compose.model.ShopCheckInFormState
 class ShopFormTestActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        if (!intent.getBooleanExtra("parity_preview", false)) return
+        val detailPreview = intent.getBooleanExtra("detail_parity_preview", false)
+        if (!detailPreview && !intent.getBooleanExtra("parity_preview", false)) return
         val dark = intent.getBooleanExtra("parity_dark", true)
         enableEdgeToEdge(statusBarStyle = if (dark) SystemBarStyle.dark(Color.TRANSPARENT)
-            else SystemBarStyle.light(Color.TRANSPARENT, Color.TRANSPARENT))
+            else SystemBarStyle.light(Color.TRANSPARENT, Color.TRANSPARENT),
+            navigationBarStyle = if (dark) SystemBarStyle.dark(Color.TRANSPARENT)
+                else SystemBarStyle.light(Color.TRANSPARENT, Color.TRANSPARENT))
+        if (detailPreview) {
+            setContent {
+                CoffeePeekTheme(darkTheme = dark) {
+                    ShopDetailScreenContent(shopDetailParityState(), onAction = {}, distanceLabel = "248 м")
+                }
+            }
+            return
+        }
         setContent {
             var state by remember { mutableStateOf(ShopCheckInFormState(
                 ShopCheckInCreateInput("fixture", "", ShopRating(4, 4, 4), "2026-10-14T10:00:00Z"), isLoading = false)) }
@@ -47,3 +67,16 @@ class ShopFormTestActivity : ComponentActivity() {
         }
     }
 }
+
+/** Exact supplied screenshot shape, with intentionally empty image URLs and no live callbacks. */
+internal fun shopDetailParityState() = ShopDetailState(
+    details = ShopDetails(
+        overview = ShopOverview("fixture", "Happy Coffee", null, "просп. Машерова 12",
+            53.9, 27.5, null, 0, true, emptyList(), priceRange = "$$"),
+        menu = ShopMenu(photos = listOf(MenuPhoto("one", "", ""), MenuPhoto("two", "", ""))),
+        schedules = listOf(ShopSchedule(4, false, listOf(ScheduleInterval("09:00", "22:00")))),
+        coffee = ShopCoffeeDetails(), contact = null, features = emptyList(), reviews = emptyList(),
+        userCheckIns = emptyList(),
+    ),
+    isLoading = false, todayDayOfWeek = 4, todayMinuteOfDay = 12 * 60,
+)

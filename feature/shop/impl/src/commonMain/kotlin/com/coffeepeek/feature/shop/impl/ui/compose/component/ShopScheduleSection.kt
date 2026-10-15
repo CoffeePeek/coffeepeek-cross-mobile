@@ -96,7 +96,7 @@ internal fun ShopScheduleSection(
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
             border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline)) {
             Column(Modifier.padding(CoffeePeekDimens.spacing4)) {
-                Row(Modifier.fillMaxWidth().heightIn(min = 48.dp)
+                Row(Modifier.fillMaxWidth().heightIn(min = 44.dp)
                     .semantics { stateDescription = expansionState }
                     .clickable(role = Role.Button, onClickLabel = toggleLabel, onClick = onToggle),
                     horizontalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing4),

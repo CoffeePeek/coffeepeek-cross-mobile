@@ -5,7 +5,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -17,6 +16,7 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
@@ -32,7 +32,8 @@ internal fun ShopOverviewHeader(overview: ShopOverview, onOpenMap: () -> Unit,
     Column(modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing2)) {
         Row(verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing2)) {
-            Text(overview.title, Modifier.weight(1f), style = MaterialTheme.typography.headlineLarge,
+            Text(overview.title, Modifier.weight(1f), style = MaterialTheme.typography.headlineLarge.copy(
+                fontSize = 28.sp, lineHeight = 32.sp, letterSpacing = (-0.5).sp),
                 fontWeight = FontWeight.Bold, maxLines = 2, overflow = TextOverflow.Ellipsis)
             ShopTypeBadge(overview.type)
         }
@@ -40,12 +41,11 @@ internal fun ShopOverviewHeader(overview: ShopOverview, onOpenMap: () -> Unit,
         val address = overview.address?.takeIf(String::isNotBlank)
             ?: if (canOpenMap) stringResource(Res.string.shop_overview_show_on_map) else null
         address?.let { label ->
-            Row(Modifier.heightIn(min = 48.dp)
-                .clickable(enabled = canOpenMap, role = Role.Button, onClick = onOpenMap),
+            Row(Modifier.clickable(enabled = canOpenMap, role = Role.Button, onClick = onOpenMap),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing1)) {
                 Icon(CoffeePeekIcons.Location, null, Modifier.size(14.dp))
-                Text(label, style = MaterialTheme.typography.bodySmall,
+                Text(label, modifier = Modifier.weight(1f, fill = false), style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 2,
                     overflow = TextOverflow.Ellipsis)
             }
