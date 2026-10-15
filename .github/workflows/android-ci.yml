@@ -13,7 +13,15 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  build-apk:
+  changes:
+    uses: ./.github/workflows/mobile-changes.yml
+    permissions:
+      contents: read
+      pull-requests: read
+
+  compile_android:
+    needs: changes
+    if: needs.changes.outputs.android == 'true'
     runs-on: ubuntu-latest
 
     steps:
@@ -27,7 +35,11 @@ jobs:
         with:
           distribution: temurin
           java-version: "17"
-          cache: gradle
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v6
+        with:
+          cache-read-only: ${{ github.event_name == 'pull_request' || (github.ref != 'refs/heads/main' && github.ref != 'refs/heads/develop') }}
 
       - name: Install Android 37 SDK components
         shell: bash
@@ -52,3 +64,25 @@ jobs:
 
       - name: Build and check Android
         run: ./gradlew --no-daemon :composeApp:assembleDirectDebug :composeApp:assemblePlayDebug testDebugUnitTest :composeApp:testDirectDebugUnitTest :composeApp:testPlayDebugUnitTest lintDebug :composeApp:lintDirectDebug :composeApp:lintPlayDebug
+
+  # Keep the existing check name and report success for unrelated PRs.
+  build-apk:
+    needs: [changes, compile_android]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify Android check result
+        shell: bash
+        env:
+          CHANGES_RESULT: ${{ needs.changes.result }}
+          ANDROID_CHANGED: ${{ needs.changes.outputs.android }}
+          BUILD_RESULT: ${{ needs.compile_android.result }}
+        run: |
+          set -euo pipefail
+          [[ "$CHANGES_RESULT" == 'success' ]]
+          if [[ "$ANDROID_CHANGED" == 'true' ]]; then
+            [[ "$BUILD_RESULT" == 'success' ]]
+          else
+            [[ "$ANDROID_CHANGED" == 'false' && "$BUILD_RESULT" == 'skipped' ]]
+            echo 'No Android changes; build and checks were skipped.'
+          fi

@@ -35,13 +35,16 @@ final class MapLibreMapProvider: NSObject, IosNativeMapProvider, MLNMapViewDeleg
         return map
     }
 
-    func updateMapView(mapView: UIView, stateJson: String, callbacks: IosNativeMapCallbacks) {
+    func updateMapView(mapView: UIView, stateJson: String, showsUserLocation: Bool, callbacks: IosNativeMapCallbacks) {
         guard let map = mapView as? CoffeeMapView,
               let data = stateJson.data(using: .utf8),
               let state = try? JSONDecoder().decode(MapState.self, from: data) else { return }
         let previous = map.content
         map.callbacks = callbacks
         map.content = state
+        if map.showsUserLocation != showsUserLocation {
+            map.showsUserLocation = showsUserLocation
+        }
         map.showsAttributionButton = state.showAttribution
         let desiredStyle = state.dark ? Self.darkStyle : Self.lightStyle
         if map.styleURL != desiredStyle {

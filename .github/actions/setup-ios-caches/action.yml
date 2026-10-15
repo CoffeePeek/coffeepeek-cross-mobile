@@ -1,0 +1,39 @@
+name: Set up iOS dependency caches
+description: Cache Kotlin/Native and SwiftPM downloads without signing or build outputs
+
+inputs:
+  target:
+    description: Kotlin/Native target cache scope (simulator or device)
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: Identify iOS toolchains
+      id: toolchains
+      shell: bash
+      run: |
+        set -euo pipefail
+        XCODE_HASH=$(xcodebuild -version | shasum -a 256 | awk '{print $1}')
+        KOTLIN_VERSION=$(awk -F '"' '/^kotlin = / {print $2; exit}' gradle/libs.versions.toml)
+        [[ -n "$KOTLIN_VERSION" ]]
+        {
+          echo "xcode=$XCODE_HASH"
+          echo "kotlin=$KOTLIN_VERSION"
+        } >> "$GITHUB_OUTPUT"
+
+    - name: Cache Kotlin/Native toolchain and dependencies
+      uses: actions/cache@v4
+      with:
+        path: ~/.konan
+        key: konan-v1-${{ runner.os }}-${{ runner.arch }}-${{ steps.toolchains.outputs.xcode }}-${{ steps.toolchains.outputs.kotlin }}-${{ inputs.target }}-${{ hashFiles('**/*.gradle.kts', 'gradle/libs.versions.toml', 'gradle/wrapper/gradle-wrapper.properties', 'gradle.properties') }}
+        restore-keys: |
+          konan-v1-${{ runner.os }}-${{ runner.arch }}-${{ steps.toolchains.outputs.xcode }}-${{ steps.toolchains.outputs.kotlin }}-${{ inputs.target }}-
+
+    - name: Cache SwiftPM source packages
+      uses: actions/cache@v4
+      with:
+        path: ${{ runner.temp }}/SourcePackages
+        key: swiftpm-v1-${{ runner.os }}-${{ runner.arch }}-${{ steps.toolchains.outputs.xcode }}-${{ hashFiles('iosApp/**/Package.resolved') }}
+        restore-keys: |
+          swiftpm-v1-${{ runner.os }}-${{ runner.arch }}-${{ steps.toolchains.outputs.xcode }}-
