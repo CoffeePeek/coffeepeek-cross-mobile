@@ -40,7 +40,9 @@
     <string name="shop_overview_photo_description">Фото кофейни «%1$s»</string>
     <string name="shop_overview_photo_counter">%1$d / %2$d</string>
     <string name="shop_overview_show_on_map">Показать на карте</string>
-    <string name="shop_overview_reviews">Чекинов: %1$d</string>
+    <string name="shop_overview_reviews">%1$d чекинов</string>
+    <string name="shop_overview_reviews_one">%1$d чекин</string>
+    <string name="shop_overview_reviews_few">%1$d чекина</string>
     <string name="shop_overview_open">Открыто сейчас</string>
     <string name="shop_overview_closed">Сейчас закрыто</string>
     <string name="shop_menu_title">Меню</string>

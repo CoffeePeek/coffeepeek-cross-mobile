@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -34,23 +35,25 @@ internal fun ShopOverviewInfoCard(
     onClick: (() -> Unit)? = null,
     showChevron: Boolean = false,
 ) {
-    Surface(modifier, shape = MaterialTheme.shapes.medium,
+    Surface(modifier, shape = RoundedCornerShape(CoffeePeekDimens.radiusLg),
         color = MaterialTheme.colorScheme.surface,
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline)) {
         Row(Modifier.semantics(mergeDescendants = true) {}
             .then(if (onClick != null) Modifier.clickable(role = Role.Button, onClick = onClick)
                 else Modifier)
             .heightIn(min = 48.dp).padding(CoffeePeekDimens.spacing2),
-            horizontalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing1),
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
             verticalAlignment = Alignment.CenterVertically) {
+            // Product decision: all three information-card icons keep the brand accent.
             Icon(icon, null, Modifier.size(18.dp), tint = MaterialTheme.colorScheme.primary)
-            Column(Modifier.weight(1f)) {
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 Text(title, style = MaterialTheme.typography.labelMedium, maxLines = 2,
                     overflow = TextOverflow.Ellipsis)
                 Text(subtitle, style = MaterialTheme.typography.labelSmall, maxLines = 2,
                     overflow = TextOverflow.Ellipsis, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
-            if (showChevron) Icon(CoffeePeekIcons.ChevronRight, null, Modifier.size(12.dp))
+            if (showChevron) Icon(CoffeePeekIcons.ChevronRight, null, Modifier.size(12.dp),
+                tint = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
 }

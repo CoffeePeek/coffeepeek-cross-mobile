@@ -2,6 +2,7 @@ package com.coffeepeek.feature.shop.impl.ui.compose.component
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.height
@@ -53,13 +54,18 @@ internal fun ShopDetailBottomBar(
         if (forCheckIn) {
             OutlinedButton(onClick = onChooseAnotherShop,
                 modifier = Modifier.weight(1f).heightIn(min = CoffeePeekDimens.buttonHeight),
-                shape = RoundedCornerShape(CoffeePeekDimens.buttonRadius)) {
+                shape = RoundedCornerShape(CoffeePeekDimens.buttonRadius),
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+                colors = ButtonDefaults.outlinedButtonColors(containerColor = MaterialTheme.colorScheme.surface,
+                    contentColor = MaterialTheme.colorScheme.onSurface),
+                contentPadding = PaddingValues(horizontal = CoffeePeekDimens.spacing2)) {
                 Text(stringResource(Res.string.shop_detail_choose_another),
                     style = MaterialTheme.typography.labelLarge, textAlign = TextAlign.Center)
             }
         } else {
             FilledIconButton(onClick = onRoute, enabled = canOpenRoute,
-                modifier = Modifier.size(CoffeePeekDimens.buttonHeight),
+                modifier = Modifier.size(CoffeePeekDimens.buttonHeight)
+                    .shadow(8.dp, RoundedCornerShape(CoffeePeekDimens.buttonRadius)),
                 colors = IconButtonDefaults.filledIconButtonColors(containerColor = MaterialTheme.colorScheme.primary,
                     contentColor = MaterialTheme.colorScheme.onPrimary)) {
                 Icon(CoffeePeekIcons.Navigation, stringResource(Res.string.shop_detail_route), Modifier.size(20.dp))

@@ -21,6 +21,8 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.coffeepeek.core.designsystem.component.CoffeePeekImagePlaceholder
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.feature.shop.domain.model.ShopOverview
@@ -49,7 +51,8 @@ internal fun ShopOverviewHero(
             .background(MaterialTheme.colorScheme.surfaceVariant),
     ) {
         if (photos.isEmpty()) {
-            PhotoPlaceholder(Modifier.fillMaxSize())
+            CoffeePeekImagePlaceholder(labelSize = 24.sp,
+                contentDescription = stringResource(Res.string.shop_overview_photo_missing))
         } else {
             HorizontalPager(state = pagerState, modifier = Modifier.fillMaxSize()) { index ->
                 KamelImage(
@@ -59,8 +62,8 @@ internal fun ShopOverviewHero(
                     modifier = Modifier.fillMaxSize().clickable {
                         onOpenPhoto(photos.map { it.fullUrl }, index)
                     },
-                    onLoading = { PhotoPlaceholder(Modifier.fillMaxSize()) },
-                    onFailure = { PhotoPlaceholder(Modifier.fillMaxSize()) },
+                    onLoading = { CoffeePeekImagePlaceholder(labelSize = 24.sp) },
+                    onFailure = { CoffeePeekImagePlaceholder(labelSize = 24.sp) },
                 )
             }
         }
@@ -71,26 +74,18 @@ internal fun ShopOverviewHero(
 
         if (photos.isNotEmpty()) {
             Surface(
-                modifier = Modifier.align(Alignment.BottomEnd).padding(CoffeePeekDimens.spacing4),
+                modifier = Modifier.align(Alignment.BottomEnd).padding(CoffeePeekDimens.spacing3),
                 shape = RoundedCornerShape(999.dp),
-                color = Color.Black.copy(alpha = 0.48f),
+                color = Color.Black.copy(alpha = 0.6f),
             ) {
                 Text(stringResource(Res.string.shop_overview_photo_counter,
                     pagerState.currentPage + 1, photos.size),
-                    modifier = Modifier.padding(horizontal = CoffeePeekDimens.spacing2,
+                    modifier = Modifier.padding(horizontal = 10.dp,
                         vertical = CoffeePeekDimens.spacing1),
                     color = Color.White,
-                    style = MaterialTheme.typography.labelMedium)
+                    style = MaterialTheme.typography.labelSmall)
             }
         }
-    }
-}
-
-@Composable
-private fun PhotoPlaceholder(modifier: Modifier) {
-    Box(modifier, contentAlignment = Alignment.Center) {
-        Text(stringResource(Res.string.shop_overview_photo_missing),
-            color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }
 
