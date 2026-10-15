@@ -11,6 +11,7 @@ import com.coffeepeek.domain.model.RoasterSubmissionResult
 import com.coffeepeek.domain.repository.RoasterRepository
 import com.coffeepeek.domain.repository.ShopRepository
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -29,6 +30,7 @@ data class AddRoasterUiState(
     val isLoadingCatalogs: Boolean = true,
     val isSubmitting: Boolean = false,
     val error: String? = null,
+    val submissionError: String? = null,
     val result: RoasterSubmissionResult? = null,
 ) {
     val nameError: String?
@@ -56,7 +58,7 @@ data class AddRoasterUiState(
 
     val canSubmit: Boolean
         get() = nameError == null && locationError == null &&
-            instagramError == null && websiteError == null && !isSubmitting
+            instagramError == null && websiteError == null && !isLoadingCatalogs && !isSubmitting && result == null
 }
 
 class AddRoasterViewModel(
@@ -96,6 +98,7 @@ class AddRoasterViewModel(
     fun onInstagramChange(value: String) = _state.update { it.copy(instagram = value) }
     fun onWebsiteChange(value: String) = _state.update { it.copy(website = value) }
     fun clearError() = _state.update { it.copy(error = null) }
+    fun clearSubmissionError() = _state.update { it.copy(submissionError = null) }
 
     fun addPhotos(images: List<PickedImage>) {
         _state.update { state ->
@@ -112,9 +115,9 @@ class AddRoasterViewModel(
     fun submit() {
         val snapshot = _state.value
         if (!snapshot.canSubmit) return
+        if (!_state.compareAndSet(snapshot, snapshot.copy(isSubmitting = true, submissionError = null))) return
         workScope.launch {
-            _state.update { it.copy(isSubmitting = true, error = null) }
-            roasterRepository.submitRoaster(
+            val result = try { roasterRepository.submitRoaster(
                 CreateRoasterInput(
                     name = snapshot.name,
                     about = snapshot.about.takeIf { it.isNotBlank() },
@@ -126,13 +129,19 @@ class AddRoasterViewModel(
                         PendingPhotoUpload(it.fileName, it.contentType, it.bytes)
                     },
                 ),
-            ).onSuccess { result ->
+            ) } catch (cancelled: CancellationException) {
+                _state.update { it.copy(isSubmitting = false) }
+                throw cancelled
+            } catch (error: Exception) {
+                Result.failure(error)
+            }
+            result.onSuccess { result ->
                 _state.update { it.copy(isSubmitting = false, result = result) }
             }.onFailure { error ->
                 _state.update {
                     it.copy(
                         isSubmitting = false,
-                        error = error.message ?: "Не удалось отправить обжарщика на модерацию",
+                        submissionError = error.message?.takeIf { it.isNotBlank() } ?: "Не удалось отправить обжарщика на модерацию",
                     )
                 }
             }

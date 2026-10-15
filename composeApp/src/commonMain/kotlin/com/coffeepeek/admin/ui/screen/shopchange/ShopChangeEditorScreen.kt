@@ -3,6 +3,12 @@ package com.coffeepeek.admin.ui.screen.shopchange
 import androidx.compose.runtime.getValue
 import com.coffeepeek.admin.ui.component.PlatformScrollableColumn
 import com.coffeepeek.admin.ui.component.PlatformAlert
+import com.coffeepeek.admin.ui.component.SubmissionStatus
+import com.coffeepeek.admin.ui.component.SubmissionStatusScreen
+import com.coffeepeek.admin.ui.component.SubmissionErrorActions
+import com.coffeepeek.admin.ui.Navigator
+import androidx.compose.material3.OutlinedButton
+import com.coffeepeek.domain.model.ModerationStatus
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -79,6 +85,40 @@ fun ShopChangeEditorScreen(shopId: String, sectionName: String, requestId: Strin
         parameters = { parametersOf(shopId, section, requestId) },
     )
     val state by vm.state.collectAsState()
+
+    val submitted = state.submittedRequest
+    if (state.isSubmitting || state.submissionError != null || submitted != null) {
+        val failed = state.submissionError != null
+        SubmissionStatusScreen(
+            screenTitle = section.title(),
+            status = when {
+                failed -> SubmissionStatus.Error
+                submitted != null -> SubmissionStatus.Success
+                else -> SubmissionStatus.Sending
+            },
+            title = when {
+                failed -> "Правка не отправлена"
+                submitted != null -> if (requestId.isBlank()) "Правка отправлена!" else "Заявка сохранена!"
+                else -> if (requestId.isBlank()) "Отправляем правку…" else "Сохраняем заявку…"
+            },
+            description = state.submissionError?.let { "$it\n\nВведённые данные остались в форме." } ?: when (submitted?.status) {
+                ModerationStatus.Approved -> "Изменения приняты и появятся в карточке кофейни."
+                ModerationStatus.Rejected -> "Заявка сохранена. Подробности проверки доступны в заявке."
+                ModerationStatus.Pending -> "Спасибо за помощь! После проверки изменения появятся в карточке кофейни."
+                null -> "Отправляем ваши изменения на проверку"
+            },
+            onBack = if (failed) vm::clearSubmissionError else Navigator::popBack,
+        ) {
+            if (failed) SubmissionErrorActions(vm::submit, vm::clearSubmissionError)
+            if (submitted != null) {
+                AppButton("Посмотреть заявку", onClick = {
+                    Navigator.popThenNavigate(Navigator.Screen.ShopChangeRequestDetail(submitted.id))
+                })
+                OutlinedButton(onClick = Navigator::popBack, modifier = Modifier.fillMaxWidth()) { Text("Готово") }
+            }
+        }
+        return
+    }
 
     state.error?.let { err ->
         PlatformAlert(title = "Ошибка", message = err, onConfirm = vm::clearError, onDismiss = vm::clearError)
