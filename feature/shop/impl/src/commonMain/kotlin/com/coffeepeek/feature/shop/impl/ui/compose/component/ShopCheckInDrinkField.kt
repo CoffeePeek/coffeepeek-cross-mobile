@@ -2,7 +2,6 @@ package com.coffeepeek.feature.shop.impl.ui.compose.component
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
@@ -15,7 +14,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ButtonDefaults
@@ -23,6 +22,7 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -30,7 +30,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.error
-import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.intl.Locale
@@ -84,16 +83,18 @@ internal fun ShopCheckInDrinkField(
             DropdownMenu(expanded = expanded && enabled && !loading, onDismissRequest = { expanded = false },
                 modifier = Modifier.widthIn(min = 220.dp, max = 320.dp).heightIn(max = 320.dp),
                 shape = RoundedCornerShape(14.dp), containerColor = MaterialTheme.colorScheme.surface, tonalElevation = 0.dp) {
-                DropdownMenuItem(text = { Text(stringResource(Res.string.shop_checkin_form_drink_none)) },
-                    onClick = { onSelect(null); expanded = false }, modifier = Modifier.semantics { selected = slug == null })
+                ShopDrinkMenuItem(stringResource(Res.string.shop_checkin_form_drink_none), slug == null) {
+                    onSelect(null); expanded = false
+                }
+                if (drinks.isNotEmpty() || slug != null) HorizontalDivider(color = MaterialTheme.colorScheme.outline)
                 if (slug != null && selectedDrink == null) {
-                    DropdownMenuItem(text = { Text(label) }, onClick = { expanded = false },
-                        modifier = Modifier.semantics { selected = true })
+                    ShopDrinkMenuItem(label, true) { expanded = false }
                 }
                 drinks.forEach { drink ->
-                    DropdownMenuItem(text = { Text(drink.displayName(language)) },
-                        onClick = { onSelect(drink.slug); expanded = false },
-                        modifier = Modifier.semantics { selected = drink.slug == slug })
+                    ShopDrinkMenuItem(drink.displayName(language), drink.slug == slug) {
+                        if (drink.slug != slug) onSelect(drink.slug)
+                        expanded = false
+                    }
                 }
             }
         }
@@ -117,9 +118,9 @@ private fun ShopConsumedDrinkOption.displayName(language: String): String =
     (if (language == "en") nameEn.ifBlank { nameRu } else nameRu.ifBlank { nameEn }).ifBlank { slug }
 
 @Preview @Composable private fun ShopCheckInDrinkFieldLightPreview() = CoffeePeekTheme(darkTheme = false) {
-    ShopCheckInDrinkField(listOf(ShopConsumedDrinkOption("filter", "Фильтр", "Filter")), "filter", null,
-        false, false, true, false, {}, {}, {})
+    Surface { ShopCheckInDrinkField(listOf(ShopConsumedDrinkOption("filter", "Фильтр", "Filter")), "filter", null,
+        false, false, true, false, {}, {}, {}) }
 }
 @Preview @Composable private fun ShopCheckInDrinkFieldDarkPreview() = CoffeePeekTheme(darkTheme = true) {
-    ShopCheckInDrinkField(emptyList(), "other", "", false, true, true, true, {}, {}, {})
+    Surface { ShopCheckInDrinkField(emptyList(), "other", "", false, true, true, true, {}, {}, {}) }
 }

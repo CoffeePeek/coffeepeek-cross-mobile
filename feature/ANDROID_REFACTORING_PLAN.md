@@ -50,6 +50,38 @@ A compilation/test pass is not evidence of pixel parity or a live write.
 - [x] The PR #43 base builds independently without new history modules:
   Direct/Play debug APKs and DEX checks, both app unit variants, Direct lint and
   the application instrumentation APK pass at extraction checkpoint 415a69b.
+- [x] Restore the saved-roaster section in Android favorites, including account
+  replacement, owner-checked removal and cancellation guards. This closes the
+  missing implementation, not the real-account release checks below.
+- [x] Correct Shop detail geometry, branded image fallbacks and floating actions.
+  Preserve the explicit approved exceptions: all information-card icons yellow,
+  14sp values / 12sp captions and readable 12sp type labels.
+- [x] Replace photo-source text actions with grouped outlined rows and a separate
+  cancel action; add check-in top clearance. Drink selection shows a check and a
+  divider after None without replacing an existing saved/custom choice.
+- [x] Group Shop Report reasons inside one outlined block with dividers and a
+  selected check. Keep accessible single-choice semantics, no initial reason,
+  existing validation and typed MVI actions; disable changes while submitting.
+
+## Current synchronization and next checkpoint — 2026-10-15
+
+Fresh fetch confirms `origin/main` is still **4976e53**. Local main is identical;
+both #43 and #95 already contain that commit. Do not create an empty merge or
+merge someone else's develop-to-main PR to manufacture an update. Publish
+parent-owned UI fixes in #43, then merge that parent normally into #95. The
+independent, already merged modal-fix worktree is not an active migration tip.
+
+Next work is ordered, not parallel feature scaffolding:
+
+1. Finish the current visual controls checkpoint and its isolated Android tests.
+2. Keep the remaining parent release gates explicit: real saved data/account
+   transitions, image loading, guest/owner/return flows, OS picker/camera and safe
+   submissions. Fake fixtures do not close these gates.
+3. Continue **combined Shop/Home history** in #95: account-bound Home reads first,
+   then combined MVI, production-shaped content, route integration and verification.
+   Keep legacy combined history active until the replacement reaches parity.
+4. Choose another business feature only after that checkpoint and a fresh main
+   audit. iOS UI/integration remains deliberately deferred.
 
 ## Current feature inventory versus main
 
@@ -144,6 +176,18 @@ These findings come from registered renderers and their call sites, not filename
    to restore removed behavior or scaffold all future modules.
 
 ## Verification limits
+
+Latest controls checkpoint (2026-10-15), parent #43: both Direct/Play debug APKs
+and packaged DEX guards, app Direct/Shop/Shop Report lint, and **518 selected
+unit-test executions** pass (213 app per variant, 87 Shop MVI, five Shop Report
+MVI). **17 isolated UI tests** pass on an owned read-only emulator: 13 form/drink/
+photo-source scenarios and four grouped-report scenarios, with both-theme cases.
+The earlier detail checkpoint additionally passed 13 detail UI tests; it is not
+a claim that all device suites were rerun for this controls-only change.
+No physical phone, account data, backend write or iOS renderer was changed.
+Light/dark photo-source, selected-drink and report-list fixtures were visually
+inspected with the real theme/fonts. These are local fake screens, not live
+account parity or confirmation that every IDE modal preview renders.
 
 The pre-extraction combined code passed 794 selected unit-test executions across
 libraries and both app variants, Android APK/DEX/lint, 13 selected app-device

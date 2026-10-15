@@ -1,17 +1,28 @@
 package com.coffeepeek.feature.shop.impl.ui.compose.component
 
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Icon
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.compositeOver
+import androidx.compose.ui.unit.dp
+import com.coffeepeek.core.designsystem.component.CoffeePeekIconBadgePalette
+import com.coffeepeek.core.designsystem.component.CoffeePeekSettingsRow
+import com.coffeepeek.core.designsystem.component.CoffeePeekSettingsDivider
 import com.coffeepeek.core.designsystem.component.CoffeePeekSwipeDismissModalBottomSheet
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
@@ -34,20 +45,35 @@ internal fun ShopPhotoSourceSheet(
         onDismissRequest = onDismiss,
         dismissDescription = stringResource(Res.string.shop_review_photo_source_cancel),
     ) {
-        Column(Modifier.fillMaxWidth().padding(CoffeePeekDimens.spacing4)) {
-            Text(stringResource(Res.string.shop_review_photo_source_title),
-                style = androidx.compose.material3.MaterialTheme.typography.titleLarge)
-            TextButton(onClick = onGallery, modifier = Modifier.fillMaxWidth()) {
-                Icon(CoffeePeekIcons.Gallery, contentDescription = null)
-                Text(stringResource(Res.string.shop_review_photo_source_gallery))
+        ShopPhotoSourceSheetContent(onDismiss, onGallery, onCamera)
+    }
+}
+
+@Composable
+internal fun ShopPhotoSourceSheetContent(onDismiss: () -> Unit, onGallery: () -> Unit, onCamera: () -> Unit) {
+    Column(Modifier.fillMaxWidth().padding(horizontal = CoffeePeekDimens.spacing4)
+        .padding(top = CoffeePeekDimens.spacing6, bottom = CoffeePeekDimens.spacing6),
+        verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing4)) {
+        Text(stringResource(Res.string.shop_review_photo_source_title), style = MaterialTheme.typography.titleLarge)
+        Surface(shape = RoundedCornerShape(CoffeePeekDimens.radiusXl),
+            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.04f)
+                .compositeOver(MaterialTheme.colorScheme.surface),
+            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline)) {
+            Column {
+                CoffeePeekSettingsRow(CoffeePeekIcons.Gallery,
+                    stringResource(Res.string.shop_review_photo_source_gallery), onClick = onGallery,
+                    iconColors = CoffeePeekIconBadgePalette.Gold)
+                CoffeePeekSettingsDivider()
+                CoffeePeekSettingsRow(CoffeePeekIcons.Camera,
+                    stringResource(Res.string.shop_review_photo_source_camera), onClick = onCamera,
+                    iconColors = CoffeePeekIconBadgePalette.Gold)
             }
-            TextButton(onClick = onCamera, modifier = Modifier.fillMaxWidth()) {
-                Icon(CoffeePeekIcons.Camera, contentDescription = null)
-                Text(stringResource(Res.string.shop_review_photo_source_camera))
-            }
-            TextButton(onClick = onDismiss, modifier = Modifier.fillMaxWidth()) {
-                Text(stringResource(Res.string.shop_review_photo_source_cancel))
-            }
+        }
+        OutlinedButton(onClick = onDismiss, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
+            shape = RoundedCornerShape(CoffeePeekDimens.buttonRadius),
+            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+            colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.onSurface)) {
+            Text(stringResource(Res.string.shop_review_photo_source_cancel), style = MaterialTheme.typography.labelLarge)
         }
     }
 }
@@ -60,3 +86,10 @@ internal fun ShopPhotoSourceSheet(
 
 @Preview @Composable private fun ShopPhotoSourceSheetLightPreview() = ShopPhotoSourceSheetPreview(false)
 @Preview @Composable private fun ShopPhotoSourceSheetDarkPreview() = ShopPhotoSourceSheetPreview(true)
+
+@Preview @Composable private fun ShopPhotoSourceContentLightPreview() = CoffeePeekTheme(darkTheme = false) {
+    Surface { ShopPhotoSourceSheetContent({}, {}, {}) }
+}
+@Preview @Composable private fun ShopPhotoSourceContentDarkPreview() = CoffeePeekTheme(darkTheme = true) {
+    Surface { ShopPhotoSourceSheetContent({}, {}, {}) }
+}

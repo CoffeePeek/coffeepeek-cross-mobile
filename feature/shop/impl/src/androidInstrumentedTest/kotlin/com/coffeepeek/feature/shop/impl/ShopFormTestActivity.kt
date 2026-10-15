@@ -7,11 +7,15 @@ import androidx.activity.SystemBarStyle
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Surface
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import com.coffeepeek.core.designsystem.component.CoffeePeekSwipeDismissModalBottomSheet
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.feature.shop.domain.model.ShopCheckInCreateInput
@@ -23,6 +27,9 @@ import com.coffeepeek.feature.shop.domain.model.ShopDetails
 import com.coffeepeek.feature.shop.domain.model.ShopMenu
 import com.coffeepeek.feature.shop.domain.model.ShopOverview
 import com.coffeepeek.feature.shop.domain.model.ShopSchedule
+import com.coffeepeek.feature.shop.domain.model.ShopConsumedDrinkOption
+import com.coffeepeek.feature.shop.impl.ui.compose.component.ShopPhotoSourceSheet
+import com.coffeepeek.feature.shop.impl.ui.compose.component.ShopCheckInDrinkField
 import com.coffeepeek.feature.shop.impl.ui.compose.ShopDetailScreenContent
 import com.coffeepeek.feature.shop.impl.ui.compose.model.ShopDetailState
 import com.coffeepeek.feature.shop.impl.ui.compose.ShopCheckInCreateScreenContent
@@ -34,12 +41,32 @@ class ShopFormTestActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val detailPreview = intent.getBooleanExtra("detail_parity_preview", false)
-        if (!detailPreview && !intent.getBooleanExtra("parity_preview", false)) return
+        val photoSourcePreview = intent.getBooleanExtra("photo_source_preview", false)
+        val drinkPreview = intent.getBooleanExtra("drink_controls_preview", false)
+        if (!detailPreview && !photoSourcePreview && !drinkPreview && !intent.getBooleanExtra("parity_preview", false)) return
         val dark = intent.getBooleanExtra("parity_dark", true)
         enableEdgeToEdge(statusBarStyle = if (dark) SystemBarStyle.dark(Color.TRANSPARENT)
             else SystemBarStyle.light(Color.TRANSPARENT, Color.TRANSPARENT),
             navigationBarStyle = if (dark) SystemBarStyle.dark(Color.TRANSPARENT)
                 else SystemBarStyle.light(Color.TRANSPARENT, Color.TRANSPARENT))
+        if (photoSourcePreview || drinkPreview) {
+            setContent {
+                CoffeePeekTheme(darkTheme = dark) {
+                    if (photoSourcePreview) ShopPhotoSourceSheet({ finish() }, { finish() }, { finish() })
+                    else Surface {
+                        Column(Modifier.padding(horizontal = 24.dp, vertical = 80.dp)) {
+                            var slug by remember { mutableStateOf<String?>(null) }
+                            var custom by remember { mutableStateOf("") }
+                            ShopCheckInDrinkField(listOf(ShopConsumedDrinkOption("espresso", "Эспрессо", "Эспрессо"),
+                                ShopConsumedDrinkOption("cappuccino", "Капучино", "Капучино"),
+                                ShopConsumedDrinkOption("other", "Другое", "Другое")),
+                                slug, custom, false, false, true, false, {}, { slug = it }, { custom = it })
+                        }
+                    }
+                }
+            }
+            return
+        }
         if (detailPreview) {
             setContent {
                 CoffeePeekTheme(darkTheme = dark) {
