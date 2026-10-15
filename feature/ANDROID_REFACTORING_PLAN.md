@@ -57,7 +57,7 @@ A compilation/test pass is not evidence of pixel parity or a live write.
 | Shop Report: incorrect shop data | In progress; Android entry active | Real safe submit/error/uncertain-delivery flow and paired preview inspection; retain shared/iOS fallback. |
 | Shop: detail, menu, public check-ins and creation sheet | In progress; Android entries active | Physical-device visual/guest/owner/return parity; picker/camera permissions and recreation, ML Kit quality/model availability and safely authorized submissions. Prepared review editors are not a product requirement. |
 | Personal history: one combined Shop/Home calendar and timeline | In progress; all prepared migration code in history child, **not active** | The prepared Shop-only Calendar/List UI is not parity with main. Complete combined readers, MVI, production-shaped UI, home callbacks and Android integration first. |
-| Home preparations: create/detail/edit/delete, recipes, photos, statistics | Not started as a new feature migration | Existing main implementation stays active. Extract only the read boundary needed for combined history first; do not rewrite the editor/writer as a prerequisite. |
+| Home preparations: create/detail/edit/delete, recipes and photos | Not started as a new feature migration | Existing main editor/detail remain active through combined history. Extract only the needed read boundary first; do not recreate unused history/statistics tabs from the standalone Home screen. |
 | Discovery: shop list/search/filter/map and embedded roasters | Not started | Audit actual list/map/filter ownership and current platform map; no independent module for every mode. |
 | Coffee catalogue: Coffee tab/list/detail | Not started | Preserve current catalogue/search/detail and links to roasters; catalog pickers are existing shared app boundaries, not invented screens. |
 | Roasters: list/detail and saved membership | Not started | Preserve current entry points, contacts, catalogue links and favorites. Favorites parity is an earlier gate, not permission for a wholesale roaster rewrite. |
@@ -91,6 +91,11 @@ These findings come from registered renderers and their call sites, not filename
   Home uses preparedOn (a civil date), not the Shop UTC query boundaries.
 - CreateCheckIn opens the shop picker; shop creation is a modal, not a new
   standalone form route. Home creation/edit/delete stays delegated for now.
+- Standalone VisitedPlacesScreen and HomeCheckInScreen (including the latter's
+  history/statistics tabs) have declarations but no call sites in main's audited
+  composeApp/iosApp/iosXtool source. The root renders ProfileCheckInsScreen instead.
+  Do not rebuild those old screens as separate product features; keep compatibility
+  code until platform consumers are checked, without inventing new entry points.
 - ShopReviews actually displays **check-ins**. ReportCheckIn opens the report
   screen in check-in mode. ReportReview remains registered but has no
   shared Kotlin navigation call site in this audit: preserve compatibility until
