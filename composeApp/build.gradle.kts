@@ -39,7 +39,7 @@ kotlin {
             implementation("androidx.exifinterface:exifinterface:1.4.1")
             implementation(libs.maplibre.android)
             implementation("com.google.android.gms:play-services-auth:21.3.0")
-            implementation("com.google.android.gms:play-services-mlkit-subject-segmentation:16.0.0-beta1")
+            implementation("com.google.mediapipe:tasks-vision:0.10.35")
             implementation("com.google.android.play:app-update:2.1.0")
             implementation("com.microsoft.signalr:signalr:10.0.9")
             implementation("org.slf4j:slf4j-nop:2.0.16")
@@ -162,6 +162,9 @@ android {
 
     buildFeatures {
         buildConfig = true
+    }
+    androidResources {
+        noCompress += "tflite"
     }
 
     defaultConfig {

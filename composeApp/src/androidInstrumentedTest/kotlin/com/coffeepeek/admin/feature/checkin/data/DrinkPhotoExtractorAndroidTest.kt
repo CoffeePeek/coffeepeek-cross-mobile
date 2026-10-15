@@ -5,103 +5,98 @@ import android.graphics.BitmapFactory
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
-import android.util.Log
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
-import coffeepeek.composeapp.generated.resources.Res
 import com.coffeepeek.domain.model.PendingPhotoUpload
-import com.google.android.gms.common.moduleinstall.InstallStatusListener
-import com.google.android.gms.common.moduleinstall.ModuleInstall
-import com.google.android.gms.common.moduleinstall.ModuleInstallRequest
-import com.google.android.gms.common.moduleinstall.ModuleInstallStatusUpdate.InstallState
-import com.google.android.gms.tasks.Task
-import com.google.mlkit.vision.segmentation.subject.SubjectSegmentation
-import com.google.mlkit.vision.segmentation.subject.SubjectSegmenterOptions
-import kotlinx.coroutines.TimeoutCancellationException
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withTimeout
 import org.junit.Assert.*
 import org.junit.Test
 import org.junit.runner.RunWith
 import java.io.ByteArrayOutputStream
-import java.util.concurrent.atomic.AtomicReference
-import kotlin.coroutines.resume
-import kotlin.coroutines.resumeWithException
+import java.io.File
 
 @RunWith(AndroidJUnit4::class)
 class DrinkPhotoExtractorAndroidTest {
     @Test
-    fun realSegmenterProducesTransparentPngAndPreservesOriginal() = runBlocking {
-        // Reuse the existing coffee mascot on an opaque background: no large photo fixture in the APK.
-        val asset = Res.readBytes("drawable/checkin_rating_coffee.png")
-        val subject = requireNotNull(BitmapFactory.decodeByteArray(asset, 0, asset.size))
-        val image = Bitmap.createBitmap(512, 512, Bitmap.Config.ARGB_8888)
-        val original = try {
-            Canvas(image).apply {
-                drawColor(Color.WHITE)
-                drawBitmap(subject, (width - subject.width) / 2f, (height - subject.height) / 2f, null)
-            }
-            image.pngBytes()
-        } finally {
-            subject.recycle()
-            image.recycle()
-        }
+    fun bundledModelsProduceTransparentCupPngWithoutDownloadingAndPreserveOriginal() = runBlocking {
+        val instrumentation = InstrumentationRegistry.getInstrumentation()
+        val original = instrumentation.context.assets.open("checkin/coffee.jpg").use { it.readBytes() }
         val snapshot = original.copyOf()
-        ensureSubjectModelAvailable()
         val extractor = createDrinkPhotoExtractor()
-        val input = PendingPhotoUpload("coffee.png", "image/png", original)
+        val input = PendingPhotoUpload("coffee.jpg", "image/jpeg", original)
         val cutouts = withTimeout(60_000) { extractor.extract(input) }
-        assertTrue("Installed ML Kit model produced no foreground candidates for the fixture", cutouts.isNotEmpty())
+        assertEquals("Find the cup rather than offering the whole foreground", 1, cutouts.size)
         assertArrayEquals(snapshot, original)
         cutouts.forEach(::assertValidCutout)
-    }
-
-    /** Sideloaded test APKs must not rely on Play Store's deferred, install-time model download. */
-    private suspend fun ensureSubjectModelAvailable() {
-        val context = InstrumentationRegistry.getInstrumentation().targetContext
-        val modules = ModuleInstall.getClient(context)
-        val subjectApi = SubjectSegmentation.getClient(SubjectSegmenterOptions.Builder().build())
-        val lastStatus = AtomicReference("Checking model availability")
-        val failure = AtomicReference<String?>(null)
-        val listener = InstallStatusListener { update ->
-            val message = "state=${update.installState}, error=${update.errorCode}, " +
-                "downloaded=${update.progressInfo?.bytesDownloaded}/${update.progressInfo?.totalBytesToDownload}"
-            lastStatus.set(message)
-            Log.i("DrinkPhotoModelTest", message)
-            if (update.installState == InstallState.STATE_FAILED || update.installState == InstallState.STATE_CANCELED) {
-                failure.set(message)
-            }
-        }
+        val cup = requireNotNull(BitmapFactory.decodeByteArray(cutouts.single().bytes, 0, cutouts.single().bytes.size))
         try {
-            withTimeout(180_000) {
-                if (modules.areModulesAvailable(subjectApi).awaitTestTask().areModulesAvailable()) return@withTimeout
-                val response = modules.installModules(ModuleInstallRequest.newBuilder()
-                    .addApi(subjectApi).setListener(listener).build()).awaitTestTask()
-                Log.i("DrinkPhotoModelTest", "Install requested: session=${response.sessionId}, " +
-                    "alreadyInstalled=${response.areModulesAlreadyInstalled()}")
-                while (!modules.areModulesAvailable(subjectApi).awaitTestTask().areModulesAvailable()) {
-                    failure.get()?.let { error("ML Kit model installation failed: $it") }
-                    delay(1_000)
-                }
-                Log.i("DrinkPhotoModelTest", "Subject segmentation model is available")
+            val pixels = IntArray(cup.width * cup.height)
+            cup.getPixels(pixels, 0, cup.width, 0, 0, cup.width, cup.height)
+            val porcelainPixels = pixels.count {
+                Color.alpha(it) > 240 && Color.red(it) > 190 && Color.green(it) > 190 &&
+                    Color.blue(it) > 170 && kotlin.math.abs(Color.red(it) - Color.blue(it)) < 45
             }
-        } catch (timeout: TimeoutCancellationException) {
-            throw AssertionError("ML Kit model installation timed out: ${lastStatus.get()}", timeout)
-        } finally {
-            modules.unregisterListener(listener)
-            subjectApi.close()
-        }
+            // A transparent crop of the wooden background is not a successful cup extraction.
+            assertTrue("The cutout must contain the fixture's pale ceramic cup", porcelainPixels > 100)
+            assertTrue("The whole cup must be retained", cup.width >= 180 && cup.height >= 180)
+        } finally { cup.recycle() }
     }
 
-    private suspend fun <T> Task<T>.awaitTestTask(): T = suspendCancellableCoroutine { continuation ->
-        addOnCompleteListener { task ->
-            if (continuation.isActive) {
-                if (task.isSuccessful) continuation.resume(task.result)
-                else continuation.resumeWithException(task.exception ?: IllegalStateException("Google Play services task failed"))
-            }
-        }
+    @Test
+    fun noCupIsOfferedForAnEmptyBackground() = runBlocking {
+        val image = Bitmap.createBitmap(320, 320, Bitmap.Config.ARGB_8888)
+        val bytes = try { image.eraseColor(Color.WHITE); image.pngBytes() } finally { image.recycle() }
+        assertTrue(createDrinkPhotoExtractor().extract(PendingPhotoUpload("blank.png", "image/png", bytes)).isEmpty())
+    }
+
+    @Test
+    fun objectMaskRemovesHandPixelsKeepsCupColorAndCropsWithTransparentPadding() {
+        val image = Bitmap.createBitmap(12, 10, Bitmap.Config.ARGB_8888)
+        image.eraseColor(Color.rgb(210, 160, 150)) // Hand and a pink cup may have the same colour.
+        val original = image.pngBytes()
+        val mask = FloatArray(120)
+        for (y in 2..7) for (x in 4..8) mask[y * 12 + x] = 1f
+        mask[2 * 12 + 4] = 0.5f
+        mask[0] = Float.NaN
+        val output = requireNotNull(maskDrinkSubject(image, mask))
+        try {
+            assertEquals(9, output.width)
+            assertEquals(10, output.height)
+            assertEquals(0, Color.alpha(output.getPixel(0, 0)))
+            assertEquals(Color.rgb(210, 160, 150), output.getPixel(4, 4))
+            assertTrue(Color.alpha(output.getPixel(2, 2)) in 126..129)
+            assertArrayEquals(original, image.pngBytes())
+            assertValidCutout(requireNotNull(encodeDrinkSubject(output, 0)))
+        } finally { output.recycle(); image.recycle() }
+    }
+
+    @Test
+    fun emptyObjectMaskDoesNotCreateAnInvalidPng() {
+        val image = Bitmap.createBitmap(12, 10, Bitmap.Config.ARGB_8888)
+        try { assertNull(maskDrinkSubject(image, FloatArray(120))) } finally { image.recycle() }
+    }
+
+    /** Optional private regression photo, passed at run time rather than committed to Git. */
+    @Test
+    fun suppliedCupInHandKeepsTheCupAndRemovesTheHand() = runBlocking {
+        val path = InstrumentationRegistry.getArguments().getString("cupInHandFixture")
+        org.junit.Assume.assumeTrue("Pass -e cupInHandFixture <device path> to check the private photo", path != null)
+        val source = File(requireNotNull(path)).readBytes()
+        val photo = createDrinkPhotoExtractor().extract(PendingPhotoUpload("cup-in-hand.png", "image/png", source)).single()
+        assertValidCutout(photo)
+        val folder = File(InstrumentationRegistry.getInstrumentation().targetContext.getExternalFilesDir(null), "cup-result")
+        folder.mkdirs()
+        File(folder, "cup-without-hand.png").writeBytes(photo.bytes)
+        val output = requireNotNull(BitmapFactory.decodeByteArray(photo.bytes, 0, photo.bytes.size))
+        try {
+            // The visible cup is almost square; retaining the arm would make a tall cutout.
+            assertTrue("Hand/arm must not extend the cup bounds", output.height.toFloat() / output.width in 0.8f..1.4f)
+            val x = (output.width * 0.58f).toInt()
+            val y = (output.height * 0.94f).toInt()
+            assertEquals("Thumb below the printed cup must be transparent", 0, Color.alpha(output.getPixel(x, y)))
+            assertEquals("Cup body must remain visible", 255, Color.alpha(output.getPixel(output.width / 2, output.height / 2)))
+        } finally { output.recycle() }
     }
 
     @Test
