@@ -159,10 +159,12 @@ module boundary.
 
 - Continue the branch stack from the current migration tip, not main. Each new
   PR targets the previous open checkpoint branch and describes only the changes
-  since that branch. Work only in migration branches. Group related, independently
-  verifiable steps in one PR; use roughly 100–150 changed files in the PR diff
-  as the checkpoint guide, not one PR per small task. One checkpoint may contain
-  one to three related features when they can be reviewed and verified coherently.
+  since that branch. Work only in migration branches. Once the current business
+  feature checkpoint is complete, start the next feature in a new child branch
+  and PR; do not keep adding new features to a completed checkpoint. Supporting
+  slices required to finish the same feature stay together (including Home reads
+  required by combined history). Use roughly 100–150 changed files as a review
+  guide, not one PR per small task or a target to fill with unrelated work.
   A genuine review/risk boundary may justify an earlier PR; an indivisible change
   may exceed the guide with an explanation. Never mix unrelated work to fill it.
   Parent-scoped fixes may stay in that parent's PR; update its descendants after

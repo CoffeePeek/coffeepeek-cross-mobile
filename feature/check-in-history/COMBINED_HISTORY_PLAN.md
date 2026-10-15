@@ -1,5 +1,35 @@
 # Combined personal history — current-main parity and next slice
 
+## Home read foundation — 2026-10-16
+
+Prepared in this same history checkpoint, without activating a root destination:
+
+- Populated pure `feature/home-check-in/domain` read models, civil-date range,
+  page/calendar contract. The module gate and legacy compatibility path are in
+  `../home-check-in/README.md`. No new Home api/data/impl or writer exists.
+- History owns distinct Home read models/port, with no dependency on the Home
+  module. Android app composition maps legacy reads into Home domain, then the
+  history port; manual constructor DI and existing HTTP transport are retained.
+- The existing revocable history session binds Home page/calendar reads, rejects
+  guests, cancels account replacements and preserves same-account token renewal.
+- Preserve recipe values, IDs/issued photo URLs, unknown visibility/moderation
+  and preparedOn separately from timestamps. Equal day bounds and calendar
+  first/last dates follow the existing client verbatim; backend inclusivity is
+  still not independently verified, so no route-switch parity is claimed.
+
+Combined MVI, compact timeline, delegated editor actions and route activation
+remain the next steps. Source preparation is not a completed Home feature.
+
+Verification: Direct/Play APK assembly with expanded packaged DEX guards, app
+Direct/Home-domain/history lint and **639 selected unit-test cases** pass: 247
+app cases per variant, three Home domain, 50 history (eight domain, seven data,
+35 MVI), 87 Shop MVI and five Shop Report MVI. This includes 14 new app scenarios
+per variant and five new domain scenarios. Gradle reuses valid cached tasks.
+Both changed domain modules compile for iOS Simulator Arm64; no iOS UI/binding
+or writer is changed. Mock HTTP tests preserve the current Home request shape,
+not independently verified live date-boundary semantics. No new physical-device
+UI run, account modification, photo download or backend write is claimed.
+
 ## Latest parent controls checkpoint — 2026-10-15
 
 Parent `59e9c93` is inherited through a normal merge: grouped photo-source and
@@ -30,8 +60,9 @@ history read/session foundation. Android first; preserve the shared/iOS paths.
 All prepared history code is now in `feature/check-in-history-refactoring`, based
 on `feature/core-design-system-controls` (PR #43). The parent excludes the four
 new modules and their application adapters/tests; the child restores them as one
-cohesive capability. Its 71-file checkpoint fits the current 100–150-file guide;
-do not split the same feature again just to create smaller PRs. Git ancestry is
+cohesive capability. Its initial 71-file extraction is extended here by the Home
+read foundation, still under the current 100–150-file review guide. Do not split
+the same feature again just to create smaller PRs. Git ancestry is
 preserved; no force-push or route switch.
 
 - [x] Prepared Shop history domain/data, shared MVI, Android API/UI and revocable
@@ -39,7 +70,8 @@ preserved; no force-push or route switch.
 - [x] Entire implementation preserved unchanged during branch extraction.
 - [x] Main's combined ProfileCheckInsScreen, Home editor and all three route
   contracts remain active and unchanged. This is not the prepared entry.
-- [ ] Home read boundary/adapter: not started; no new Home module exists yet.
+- [x] Home read boundary/adapter: implemented and automatically verified; live
+  backend date-boundary verification remains a route-activation gate.
 - [ ] Combined filter/calendar/paging MVI: not started; prepared MVI is Shop-only.
 - [ ] Production-shaped combined UI: not started; prepared Calendar/List UI is
   not an approved replacement for the current timeline.
@@ -86,7 +118,7 @@ confirm that backend's date-boundary contract before replacing the adapter.
 - Home owns its preparation models, business rules and read/write contracts.
   Its existing `features/home-checkin` artifact mixes domain and Ktor data, so
   do not add it as a dependency of the new pure history domain.
-- The next independent foundation is a populated `feature/home-check-in/domain`
+- The newly prepared independent foundation is a populated `feature/home-check-in/domain`
   boundary: real preparation/read models, calendar summaries and narrow reader
   contracts required by combined history. Keep legacy models/writers available
   to existing consumers until their migration; no placeholder api/impl modules.

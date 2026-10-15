@@ -18,6 +18,12 @@ route intentionally keeps the legacy renderer. See shop-report/README.md.
 Actual registration remains in build-logic Modules.all. Android is the integration
 target; no native iOS implementation is part of these slices.
 
+2026-10-16: `home-check-in/domain` adds a populated, pure preparation reader
+boundary for combined history. App-owned legacy/Home/history adapters connect
+it without a cross-feature domain dependency. No new Home writer or api/data/
+impl placeholder exists; the active combined route still uses the existing code.
+See home-check-in/README.md for the module gate and date-boundary limitations.
+
 Personal shop-visit history is the next independent owner. Its populated
 check-in-history/domain and data modules prepare read-only pagination/calendar
 contracts; impl prepares shared typed MVI and Android calendar/list UI without
@@ -115,7 +121,8 @@ closed/superseded. Parent fixes stay with their owner and flow into descendants.
 
 Every next work branch starts from the current migration tip, not main. Group
 related tested steps into a checkpoint PR, using roughly 100–150 changed files
-as the guide. One to three related features may share a reviewable checkpoint;
+as the guide. Finish the current business feature, then start the next in a new
+child branch and PR. Supporting slices needed by the same feature stay together;
 do not split every small task or mix unrelated work to fill the count. A clear
 review/risk boundary may justify an earlier split; an indivisible change may
 exceed the guide with an explanation. Each PR

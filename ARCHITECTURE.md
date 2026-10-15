@@ -267,8 +267,10 @@ platform difference.
 Use stacked PRs from the current migration branch tip. Group cohesive migration
 steps in a checkpoint PR instead of opening one for every small task. The
 working guide for the next checkpoint is roughly 100–150 changed files in the PR
-diff against its base. One to three related features may share a coherent,
-independently verified checkpoint. A distinct review/risk boundary can justify
+diff against its base. Once a business feature checkpoint is complete, begin
+the next feature in a new child branch and PR. Keep supporting slices needed to
+finish that same feature together; do not append new features to an already
+completed checkpoint. A distinct review/risk boundary can justify
 an earlier split; an indivisible change may exceed the guide with an explanation.
 Never combine unrelated work to fill a PR. Fixes to a parent capability may stay
 in its PR, followed by explicit descendant synchronization. A child PR targets the previous open

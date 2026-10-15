@@ -1,5 +1,12 @@
 # Personal shop check-in history — Android-first migration
 
+2026-10-16: a pure Home read domain and app-owned compatibility adapters now
+prepare Home page/calendar reads for this same checkpoint. History owns its
+own models/port and account lease; no Home dependency enters its domain/UI.
+Combined MVI/UI and route activation remain pending. The active legacy combined
+history, Home editor/writer and iOS consumers are unchanged. The latest scope
+and verification supersede the older unchanged-code extraction notes below.
+
 Latest parent sync: `59e9c93` supplies the photo-source/drink/Shop Report controls
 correction and current roadmap. History code stays unchanged, with its combined
 Shop/Home replacement still inactive. Fresh main `4976e53` is already in both

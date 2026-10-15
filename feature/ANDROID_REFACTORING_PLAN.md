@@ -1,6 +1,6 @@
 # Android refactoring — current roadmap
 
-Audit date: 2026-10-15. Product baseline: `origin/main` **4976e53**.
+Audit date: 2026-10-16. Product baseline: `origin/main` **4976e53**.
 This is the current checklist. Older feature READMEs contain historical checkpoint
 notes; they do not override this source audit or certify later changes.
 
@@ -11,13 +11,16 @@ notes; they do not override this source audit or certify later changes.
 - `feature/check-in-history-refactoring` → the branch above: the **entire**
   prepared history migration, including four modules, resources, app wiring and
   tests. Continue that capability only there; do not split it into a third PR.
-- The base registers 23 modules; the history child registers 27. Existing
-  `features/home-checkin` remains registered in both. No new Home module exists.
+- The base registers 23 modules; the history child now registers 28, including
+  the populated pure `feature/home-check-in/domain` read boundary. Existing
+  `features/home-checkin` remains registered in both for legacy/editor/writer
+  consumers. No empty Home api/data/impl modules are created.
 - The independent modal fix #92 reached develop and main and is already in the
   migration ancestry. Do not cherry-pick it again.
 - Preserve published history; no force-push or merging either PR to main/develop
-  is part of this organization step. New checkpoints use the agreed 100–150-file
-  guide and may group one to three related features. Fixes to #43 stay there,
+  is part of this organization step. New checkpoints use the 100–150-file review
+  guide; after completing a feature, start the next in a new child branch/PR.
+  Supporting steps needed by the same feature stay together. Fixes to #43 stay there,
   then update its history child. The existing 71-file history extraction stays
   coherent; do not recreate the old small-PR stack.
 
@@ -73,7 +76,8 @@ independent, already merged modal-fix worktree is not an active migration tip.
 
 Next work is ordered, not parallel feature scaffolding:
 
-1. Finish the current visual controls checkpoint and its isolated Android tests.
+1. Done: visual controls checkpoint and its isolated Android tests, published in
+   parent `59e9c93` and inherited by the history child.
 2. Keep the remaining parent release gates explicit: real saved data/account
    transitions, image loading, guest/owner/return flows, OS picker/camera and safe
    submissions. Fake fixtures do not close these gates.
@@ -91,7 +95,7 @@ Next work is ordered, not parallel feature scaffolding:
 | Shop Report: incorrect shop data | In progress; Android entry active | Real safe submit/error/uncertain-delivery flow and paired preview inspection; retain shared/iOS fallback. |
 | Shop: detail, menu, public check-ins and creation sheet | In progress; Android entries active | Physical-device visual/guest/owner/return parity; picker/camera permissions and recreation, ML Kit quality/model availability and safely authorized submissions. Prepared review editors are not a product requirement. |
 | Personal history: one combined Shop/Home calendar and timeline | In progress; all prepared migration code in history child, **not active** | The prepared Shop-only Calendar/List UI is not parity with main. Complete combined readers, MVI, production-shaped UI, home callbacks and Android integration first. |
-| Home preparations: create/detail/edit/delete, recipes and photos | Not started as a new feature migration | Existing main editor/detail remain active through combined history. Extract only the needed read boundary first; do not recreate unused history/statistics tabs from the standalone Home screen. |
+| Home preparations: create/detail/edit/delete, recipes and photos | Read foundation prepared; full editor/data migration not started | Pure read domain, app compatibility adapters and account-bound history port are prepared in #95. Existing main editor/detail/writers remain active; no history/statistics tabs from the unused standalone Home screen are recreated. |
 | Discovery: shop list/search/filter/map and embedded roasters | Not started | Audit actual list/map/filter ownership and current platform map; no independent module for every mode. |
 | Coffee catalogue: Coffee tab/list/detail | Not started | Preserve current catalogue/search/detail and links to roasters; catalog pickers are existing shared app boundaries, not invented screens. |
 | Roasters: list/detail and saved membership | Not started | Preserve current entry points, contacts, catalogue links and favorites. Favorites parity is an earlier gate, not permission for a wholesale roaster rewrite. |
@@ -150,12 +154,12 @@ These findings come from registered renderers and their call sites, not filename
    as ready. Favorites' missing roaster section is fixed and automatically tested;
    full account/device QA and the existing Shop/report gates remain. Preserve main
    behavior, not a new design.
-2. [ ] In the history child, prepare account-bound Home reads and history-owned
-   read models/ports. Confirm date-boundary/calendar/page semantics and preserve
-   unknown visibility/moderation, protected photos and recipe data.
-   Application composition adapts contracts; no cross-feature domain/data/impl
-   import. Create Home domain only when the module gate has real consumers;
-   no empty api/impl/DI modules or forwarding-only use cases.
+2. [x] In the history child, prepare account-bound Home reads and history-owned
+   read models/ports, with unknown visibility/moderation, issued photo URLs and
+   recipe data retained. Application composition adapts contracts; no cross-feature
+   domain/data/impl import. Only the populated Home domain is created. Civil-day
+   queries preserve the existing client convention; independently checking backend
+   inclusivity remains necessary before route activation, not a claimed live result.
 3. [ ] Combined typed MVI: one filter/month/date, two source cursors, retained
    content/partial failures, duplicate/conflicting-action guards, cancellation,
    stale-response rejection and account replacement versus token renewal.
@@ -176,6 +180,12 @@ These findings come from registered renderers and their call sites, not filename
    to restore removed behavior or scaffold all future modules.
 
 ## Verification limits
+
+Home read foundation (2026-10-16), child #95: Direct/Play APK/expanded DEX guards,
+app/Home-domain/history lint and 639 selected unit cases pass (247 app per variant,
+three Home domain, 50 history, 87 Shop MVI, five Shop Report MVI), with cached tasks
+where valid. Both changed domain modules compile for iOS Simulator Arm64. There
+is no new screen switch, device UI result, live read/write or iOS migration claim.
 
 Latest controls checkpoint (2026-10-15), parent #43: both Direct/Play debug APKs
 and packaged DEX guards, app Direct/Shop/Shop Report lint, and **518 selected

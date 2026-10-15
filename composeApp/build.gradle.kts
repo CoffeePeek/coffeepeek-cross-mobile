@@ -48,6 +48,7 @@ kotlin {
             implementation(project(module.feature.checkInHistory.domain))
             implementation(project(module.feature.checkInHistory.data))
             implementation(project(module.feature.checkInHistory.impl))
+            implementation(project(module.feature.homePreparation.domain))
             implementation(project(module.core.coroutines))
             implementation(project(module.core.designSystem))
             implementation(compose.preview)
@@ -258,6 +259,11 @@ androidComponents {
                 "com.coffeepeek.feature.checkinhistory.api.CheckInHistoryEntry",
                 "com.coffeepeek.feature.checkinhistory.data.repository.CheckInHistoryRepositoryFactoryKt",
                 "com.coffeepeek.feature.checkinhistory.impl.CheckInHistoryApiImplKt",
+                "com.coffeepeek.admin.di.homecheckin.LegacyHomePreparationReader",
+                "com.coffeepeek.admin.di.checkinhistory.HomeHistoryReaderAdapter",
+                "com.coffeepeek.feature.homecheckin.domain.repository.HomePreparationReader",
+                "com.coffeepeek.feature.homecheckin.domain.model.HomePreparation",
+                "com.coffeepeek.feature.checkinhistory.domain.repository.HomeHistoryReader",
             ))
         }
         tasks.matching { it.name == "assemble$variantName" }.configureEach { finalizedBy(verification) }

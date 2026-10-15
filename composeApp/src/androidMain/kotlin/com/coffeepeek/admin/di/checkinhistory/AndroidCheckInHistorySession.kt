@@ -2,7 +2,10 @@ package com.coffeepeek.admin.di.checkinhistory
 
 import com.coffeepeek.domain.model.Session
 import com.coffeepeek.domain.repository.SessionRepository
+import com.coffeepeek.feature.checkinhistory.domain.model.HistoryPeriod
+import com.coffeepeek.feature.checkinhistory.domain.model.HomeHistoryDateRange
 import com.coffeepeek.feature.checkinhistory.domain.repository.CheckInHistoryRepository
+import com.coffeepeek.feature.checkinhistory.domain.repository.HomeHistoryReader
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.async
@@ -29,8 +32,16 @@ internal class AndroidCheckInHistorySession(
 
     fun bind(repository: CheckInHistoryRepository): CheckInHistoryRepository = object : CheckInHistoryRepository {
         override suspend fun page(page: Int, pageSize: Int) = read { repository.page(page, pageSize) }
-        override suspend fun period(period: com.coffeepeek.feature.checkinhistory.domain.model.HistoryPeriod) =
+        override suspend fun period(period: HistoryPeriod) =
             read { repository.period(period) }
+    }
+
+    fun bind(reader: HomeHistoryReader): HomeHistoryReader = object : HomeHistoryReader {
+        override suspend fun page(page: Int, pageSize: Int,
+            range: HomeHistoryDateRange?) =
+            read { reader.page(page, pageSize, range) }
+        override suspend fun calendar(range: HomeHistoryDateRange) =
+            read { reader.calendar(range) }
     }
 
     private suspend fun <T> read(block: suspend () -> Result<T>): Result<T> = coroutineScope {
