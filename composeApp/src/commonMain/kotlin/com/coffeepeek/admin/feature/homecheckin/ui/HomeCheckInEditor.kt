@@ -284,7 +284,7 @@ private fun HomeSelectField(value: String, icon: ImageVector, action: String, en
 
 @Composable
 private fun HomeNumberField(value: String, placeholder: String, type: KeyboardType, enabled: Boolean,
-    error: String? = null, label: String = placeholder, onChange: (String) -> Unit) {
+    error: String? = null, label: String = placeholder, maximum: Int? = null, onChange: (String) -> Unit) {
     CompactOutlinedTextField(value, onChange, enabled = enabled, isError = error != null,
         modifier = Modifier.fillMaxWidth().heightIn(min = CpDimens.controlHeight)
             .semantics { contentDescription = label; error?.let { error(it) } },
@@ -292,6 +292,7 @@ private fun HomeNumberField(value: String, placeholder: String, type: KeyboardTy
         placeholder = { Text(placeholder, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant) },
         keyboardOptions = KeyboardOptions(keyboardType = type), maxLength = 8,
         inputFilter = { it.isDigit() || type == KeyboardType.Decimal && (it == '.' || it == ',') },
+        inputValidator = { maximum == null || it.isEmpty() || it.toIntOrNull() in 0..maximum },
         colors = OutlinedTextFieldDefaults.colors(
             errorContainerColor = MaterialTheme.colorScheme.error.copy(alpha = 0.05f),
             errorBorderColor = MaterialTheme.colorScheme.error,
@@ -383,7 +384,7 @@ private fun HomeDurationField(duration: Int?, enabled: Boolean, error: String?, 
         Row(horizontalArrangement = Arrangement.spacedBy(CpDimens.spacing3)) {
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(CpDimens.spacing1)) {
                 Text("Минуты", style = MaterialTheme.typography.bodySmall)
-                HomeNumberField(minutes, "0", KeyboardType.Number, enabled, error, "Минуты заваривания") { value ->
+                HomeNumberField(minutes, "0", KeyboardType.Number, enabled, error, "Минуты заваривания", maximum = 10080) { value ->
                     if (value.isEmpty() || value.toIntOrNull() in 0..10080) {
                         minutes = value
                         onChange(homeBrewDurationSeconds(minutes, seconds))
@@ -392,7 +393,7 @@ private fun HomeDurationField(duration: Int?, enabled: Boolean, error: String?, 
             }
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(CpDimens.spacing1)) {
                 Text("Секунды", style = MaterialTheme.typography.bodySmall)
-                HomeNumberField(seconds, "00", KeyboardType.Number, enabled, error, "Секунды заваривания") { value ->
+                HomeNumberField(seconds, "00", KeyboardType.Number, enabled, error, "Секунды заваривания", maximum = 59) { value ->
                     if (value.isEmpty() || value.toIntOrNull() in 0..59) {
                         seconds = value
                         onChange(homeBrewDurationSeconds(minutes, seconds))

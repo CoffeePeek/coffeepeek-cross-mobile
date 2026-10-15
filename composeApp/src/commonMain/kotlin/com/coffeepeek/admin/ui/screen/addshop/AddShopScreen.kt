@@ -564,6 +564,7 @@ private fun StepContacts(state: AddShopUiState, vm: AddShopViewModel) {
     FormField(label = "Instagram профиль", optional = true) {
         AppOutlinedField(
             value = state.instagram,
+            keyboardType = KeyboardType.Uri,
             onValueChange = vm::onInstagramChange,
             placeholder = "@",
             errorText = if (state.instagram.isNotEmpty()) state.instagramError else null,

@@ -58,6 +58,7 @@ import com.coffeepeek.admin.ui.component.shopTagIcon
 import com.coffeepeek.admin.ui.component.platformTextInputOptions
 import com.coffeepeek.admin.ui.component.rememberSyncedTextFieldValue
 import com.coffeepeek.admin.ui.component.limitTextLength
+import com.coffeepeek.admin.ui.component.updateFromInput
 import com.coffeepeek.admin.ui.icons.CpIcons
 import com.coffeepeek.admin.utils.CpImage
 import com.coffeepeek.admin.utils.MAX_MENU_PHOTOS
@@ -176,8 +177,7 @@ private fun DescriptionEditor(state: ShopChangeEditorUiState, vm: ShopChangeEdit
         value = descriptionField.value,
         onValueChange = { updated ->
             val limited = updated.limitTextLength(1000)
-            descriptionField.value = limited
-            vm.onDescriptionChange(limited.text)
+            descriptionField.updateFromInput(limited, vm::onDescriptionChange)
         },
         keyboardOptions = platformTextInputOptions(),
         modifier = Modifier.fillMaxWidth().height(180.dp),
@@ -193,7 +193,7 @@ private fun DescriptionEditor(state: ShopChangeEditorUiState, vm: ShopChangeEdit
 private fun ContactsEditor(state: ShopChangeEditorUiState, vm: ShopChangeEditorViewModel) {
     ContactField("Телефон", state.phone, vm::onPhoneChange, state.phoneError, KeyboardType.Phone)
     Spacer(Modifier.height(CpDimens.spacing3))
-    ContactField("Instagram", state.instagram, vm::onInstagramChange, state.instagramError)
+    ContactField("Instagram", state.instagram, vm::onInstagramChange, state.instagramError, KeyboardType.Uri)
     Spacer(Modifier.height(CpDimens.spacing3))
     ContactField("Сайт", state.website, vm::onWebsiteChange, state.websiteError, KeyboardType.Uri)
     Spacer(Modifier.height(CpDimens.spacing3))

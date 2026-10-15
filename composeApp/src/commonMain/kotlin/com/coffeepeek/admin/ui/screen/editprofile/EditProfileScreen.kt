@@ -56,6 +56,7 @@ import com.coffeepeek.admin.ui.component.CpCircularBackButton
 import com.coffeepeek.admin.ui.component.platformTextInputOptions
 import com.coffeepeek.admin.ui.component.rememberSyncedTextFieldValue
 import com.coffeepeek.admin.ui.component.limitTextLength
+import com.coffeepeek.admin.ui.component.updateFromInput
 import com.coffeepeek.admin.ui.component.PhotoSourceBottomSheet
 import com.coffeepeek.admin.utils.CpImage
 import com.coffeepeek.admin.utils.rememberPhotoPicker
@@ -192,8 +193,7 @@ fun EditProfileScreen(vm: EditProfileViewModel = platformViewModel()) {
                 value = aboutField.value,
                 onValueChange = { updated ->
                     val limited = updated.limitTextLength(600)
-                    aboutField.value = limited
-                    vm.onAboutChange(limited.text)
+                    aboutField.updateFromInput(limited, vm::onAboutChange)
                 },
                 modifier = Modifier.fillMaxWidth(),
                 placeholder = {
