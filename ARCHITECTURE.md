@@ -237,8 +237,9 @@ class. Dagger/Hilt is not part of the current KMP composition strategy.
 
 For favorites, domain/data use manual constructor/factory injection. Android
 application composition owns Koin assembly and the temporary Room settings
-bridge; impl UI sees domain only and does not perform Koin lookups. Supported pure domain
-contracts may be reused directly by other features, as agreed for this migration.
+bridge; impl UI sees its own domain only and does not perform Koin lookups.
+Other features define their own domain ports; application composition adapts them
+to favorites contracts. Cross-feature dependencies use only intentionally public API.
 API remains the navigation/screen-entry ABI, not a re-export of business models.
 Composable entry interfaces are allowed there; screen/VM implementations are not.
 

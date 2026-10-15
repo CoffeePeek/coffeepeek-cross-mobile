@@ -40,9 +40,11 @@ confirm that backend's date-boundary contract before replacing the adapter.
   boundary: real preparation/read models, calendar summaries and narrow reader
   contracts required by combined history. Keep legacy models/writers available
   to existing consumers until their migration; no placeholder api/impl modules.
-- Only deliberately supported pure Home domain contracts may be consumed by
-  history. No history UI/domain dependency on home data/impl, the legacy module,
-  Koin, HTTP, or application classes.
+- History owns its own home-history read models and reader port. Application
+  composition adapts Home contracts to that port; history does not import Home
+  domain/data/impl or the legacy module. Cross-feature dependencies use only
+  intentionally public API; history UI/domain stays free of Koin, HTTP and
+  application classes.
 - Application composition supplies account-bound readers and temporary legacy
   adapters, image/date ports and callbacks to existing home actions. Data and
   domain retain manual constructor DI and cancellation-safe Kotlin Result.
@@ -53,8 +55,8 @@ confirm that backend's date-boundary contract before replacing the adapter.
 
 Responsibility: independent preparation/read models and reader contracts, with
 meaningful domain rules added only when required. Dependencies: Kotlin only.
-Consumers: Home data/presentation, combined-history domain/presentation through
-supported contracts, and application adapters. Hidden details: DTOs, transport,
+Consumers: Home data/presentation and application adapters, not other features'
+domain/presentation. Hidden details: DTOs, transport,
 photo reservations/uploads and repository implementations remain outside domain.
 A package in the existing monolithic artifact does not enforce this independent
 dependency boundary: consuming it also brings the feature's infrastructure.
@@ -66,7 +68,9 @@ Create the boundary with actual consumers and tested models, not empty scaffoldi
    Retain pending-write locks and independently run placement/overlay/form tests.
    PR #92 is the separate main-based production fix, now merged into develop and
    received through merge 54d2acf. Do not cherry-pick it again when main is updated.
-2. Prepare Home's pure read foundation and app-owned compatibility adapter.
+2. Prepare Home's pure read foundation, history-owned reader port and app-owned
+   compatibility adapter between them. Do not introduce a history-to-Home-domain
+   dependency or publish business models in API just to share them.
    Audit calendar/day/query semantics, nullable visibility/moderation, photos,
    page counts and missing fields. Preserve preparedOn versus preparedAtUtc.
    Test mappings, Result failures/cancellation and account replacement with fake
