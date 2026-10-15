@@ -1,5 +1,24 @@
 # Shop feature — incremental migration
 
+## Selection controls correction — 2026-10-15
+
+- Photo source uses existing CoffeePeek settings rows with yellow icon badges,
+  one outlined group/divider, 24dp top clearance and a separate outlined cancel
+  action. Picker/camera callbacks and the fixed modal anchors are unchanged.
+- The drink menu marks the actual selected option, separates None with a divider,
+  and starts with None only when the draft has no selection. Saved options absent
+  from a refreshed catalogue stay visible; reselecting a custom option preserves
+  its name. Existing default-language resources and locale-based catalogue names
+  are unchanged.
+- Check-in content adds 12dp clearance below the handle. No global font/palette,
+  submission contract, DI or iOS screen changes belong to this correction.
+
+Verification: Direct/Play APK assembly and packaged DEX guards, app/Shop/Shop
+Report lint, and 518 selected unit-test executions pass in the parent branch.
+All 13 selected form/selection UI tests pass on an owned read-only emulator,
+including both themes, draft preservation and real modal-to-picker callbacks.
+Callbacks are fakes: no OS picker/camera or authenticated submission is claimed.
+
 ## Detail visual correction — 2026-10-15
 
 The supplied production screenshots and main's detail source define layout parity,

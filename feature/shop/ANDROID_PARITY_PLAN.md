@@ -2,6 +2,15 @@
 
 ## Current visual scope — 2026-10-15
 
+The latest controls checkpoint additionally groups photo-source actions, adds
+form top clearance and restores selected drink checks plus the None divider.
+It preserves saved/custom draft choices, callback capacities and modal anchors.
+Shop Report's separate README records its grouped single-choice reason list.
+Current parent checks: Direct/Play APK/DEX, app/Shop/Shop Report lint, 518 selected
+unit executions and 17 isolated UI tests pass. Light/dark fake photo-source,
+drink-menu and report-list fixtures were visually inspected; no phone/account,
+OS camera/picker, live submission or iOS integration is certified by these checks.
+
 The screenshot-reported detail regressions are corrected in parent #43 and
 inherited by history child #95. Root main/develop are not changed by publishing
 this work. See README.md's current visual correction for exact geometry and the

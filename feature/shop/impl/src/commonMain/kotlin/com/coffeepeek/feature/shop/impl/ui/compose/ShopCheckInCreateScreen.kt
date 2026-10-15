@@ -132,7 +132,7 @@ internal fun ShopCheckInCreateScreenContent(
     Column(
         modifier.fillMaxWidth().testTag("shop-checkin-form").verticalScroll(scroll)
             .imePadding().navigationBarsPadding().padding(horizontal = CoffeePeekDimens.spacing4)
-            .padding(bottom = CoffeePeekDimens.spacing6),
+            .padding(top = CoffeePeekDimens.spacing3, bottom = CoffeePeekDimens.spacing6),
         verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing6),
     ) {
         if (state.isSubmitting || state.submitted) {

@@ -36,21 +36,15 @@ import com.coffeepeek.feature.shopreport.impl.resources.shop_report_description_
 import com.coffeepeek.feature.shopreport.impl.resources.shop_report_description_required
 import com.coffeepeek.feature.shopreport.impl.resources.shop_report_done
 import com.coffeepeek.feature.shopreport.impl.resources.shop_report_unconfirmed
-import com.coffeepeek.feature.shopreport.impl.resources.shop_report_incorrect_address
-import com.coffeepeek.feature.shopreport.impl.resources.shop_report_incorrect_photos
-import com.coffeepeek.feature.shopreport.impl.resources.shop_report_other
-import com.coffeepeek.feature.shopreport.impl.resources.shop_report_outdated_menu
 import com.coffeepeek.feature.shopreport.impl.resources.shop_report_prompt
-import com.coffeepeek.feature.shopreport.impl.resources.shop_report_shop_closed
 import com.coffeepeek.feature.shopreport.impl.resources.shop_report_shop_fallback
 import com.coffeepeek.feature.shopreport.impl.resources.shop_report_submission_failed
 import com.coffeepeek.feature.shopreport.impl.resources.shop_report_submit
 import com.coffeepeek.feature.shopreport.impl.resources.shop_report_thanks
 import com.coffeepeek.feature.shopreport.impl.resources.shop_report_title
 import com.coffeepeek.feature.shopreport.impl.resources.shop_report_will_review
-import com.coffeepeek.feature.shopreport.impl.resources.shop_report_wrong_hours
 import com.coffeepeek.feature.shopreport.impl.ui.ShopReportViewModel
-import com.coffeepeek.feature.shopreport.impl.ui.compose.component.ShopReportCategoryOption
+import com.coffeepeek.feature.shopreport.impl.ui.compose.component.ShopReportCategoryList
 import com.coffeepeek.feature.shopreport.impl.ui.compose.model.ShopReportAction
 import com.coffeepeek.feature.shopreport.impl.ui.compose.model.ShopReportError
 import com.coffeepeek.feature.shopreport.impl.ui.compose.model.ShopReportEvent
@@ -114,13 +108,8 @@ internal fun ShopReportScreenContent(
                 style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.SemiBold))
             Text(stringResource(Res.string.shop_report_prompt), color = MaterialTheme.colorScheme.onSurfaceVariant)
 
-            ShopIssueCategory.entries.forEach { category ->
-                ShopReportCategoryOption(
-                    label = stringResource(category.label()),
-                    selected = state.selectedCategory == category,
-                    onClick = { onAction(ShopReportAction.SelectCategory(category)) },
-                )
-            }
+            ShopReportCategoryList(state.selectedCategory,
+                onSelect = { onAction(ShopReportAction.SelectCategory(it)) }, enabled = !state.isSubmitting)
 
             if (state.selectedCategory == ShopIssueCategory.Other) {
                 OutlinedTextField(
@@ -150,16 +139,6 @@ internal fun ShopReportScreenContent(
             }
         }
     }
-}
-
-@Composable
-private fun ShopIssueCategory.label() = when (this) {
-    ShopIssueCategory.OutdatedMenu -> Res.string.shop_report_outdated_menu
-    ShopIssueCategory.ShopClosed -> Res.string.shop_report_shop_closed
-    ShopIssueCategory.IncorrectAddress -> Res.string.shop_report_incorrect_address
-    ShopIssueCategory.WrongOpeningHours -> Res.string.shop_report_wrong_hours
-    ShopIssueCategory.IncorrectPhotos -> Res.string.shop_report_incorrect_photos
-    ShopIssueCategory.Other -> Res.string.shop_report_other
 }
 
 @Composable

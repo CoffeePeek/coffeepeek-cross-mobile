@@ -1,5 +1,24 @@
 # Shop report feature
 
+## Grouped reasons correction — 2026-10-15
+
+All six existing reasons now share one outlined rounded group with dividers.
+A yellow check replaces the visible radio control, but selectable-group and
+single-choice accessibility semantics remain. Nothing is selected initially;
+the existing Other/500-character rule and submit intents are unchanged. Reason
+changes are disabled during submission. Component/screen previews remain
+colocated in paired themes; no domain, transport, root DI or iOS change is needed.
+
+Self-targeted Android tests and a fake visual activity exercise these controls
+without application DI, session storage, network or report submission. The
+activity exists only in the instrumentation APK, not the shipped app.
+
+All four isolated reason-list UI tests pass on the temporary emulator: both
+themes/single selection, divider-only row gaps, Other/typed submit intent and
+pending-state protection. Both app variants assemble; feature/app lint and the
+five Shop Report MVI unit tests also pass. Real server submission/error handling
+and individual IDE preview rendering remain release gates, not inferred results.
+
 Android-first migration of the “report incorrect coffee shop data” capability.
 Android composition now supplies the feature entry with the application's
 configured authenticated HTTP client. The existing shared/iOS route and legacy
