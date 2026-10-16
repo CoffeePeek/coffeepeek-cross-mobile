@@ -16,8 +16,9 @@ import androidx.compose.ui.unit.constrainHeight
 import androidx.compose.ui.unit.constrainWidth
 
 /**
- * Measures a native sheet against its available maximum, not its current detent.
- * Otherwise a weighted/scrolling child can shrink itself again on every resize.
+ * Measures against at least the resting maximum to avoid repeated detent shrinkage.
+ * UIKit may expand the viewport for the keyboard; the body fills that extra space,
+ * while its reported height stays capped so keyboard animation does not change the detent.
  * Constraints stay finite so lazy lists and scroll containers remain supported.
  */
 @Composable
@@ -32,14 +33,17 @@ internal fun ContentSizedSheetLayout(
     Layout(
         modifier = modifier.clipToBounds(),
         content = {
-            Column(Modifier.fillMaxWidth().onSizeChanged { onHeightChanged.value(it.height) }) {
+            Column(Modifier.fillMaxWidth().onSizeChanged { onHeightChanged.value(it.height.coerceAtMost(maximumHeight)) }) {
                 val fittingScope = remember(this) { ContentSizedColumnScope(this) }
                 content(fittingScope)
             }
         },
     ) { measurables, constraints ->
+        val measurementHeight = if (constraints.hasBoundedHeight) {
+            maxOf(maximumHeight, constraints.maxHeight)
+        } else maximumHeight
         val body = measurables.single().measure(
-            constraints.copy(minHeight = 0, maxHeight = maximumHeight),
+            constraints.copy(minHeight = 0, maxHeight = measurementHeight),
         )
         layout(constraints.constrainWidth(body.width), constraints.constrainHeight(body.height)) {
             body.placeRelative(0, 0)
