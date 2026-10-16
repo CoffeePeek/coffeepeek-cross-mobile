@@ -56,7 +56,10 @@ bindings; compilation of the isolated graph alone cannot prove correct selection
 Shop data now retains server-issued authorAvatarUrl and a separate nullable
 authorSlug. Public detail-carousel and full-list headers show the avatar with an
 initial fallback. Their typed MVI effects pass slug/nickname/avatar to the existing
-application UserProfile route. Neither user IDs nor guessed paths become profile
+application UserProfile route. Avatar drawing is supplied by application factories
+through a private feature UI local, using the same configured CpImage loader as
+main (including authenticated URLs/cache); the header creates no parallel client.
+Neither user IDs nor guessed paths become profile
 addresses. Guest-hidden carousel/list rows cannot issue author effects, and
 session-generation envelopes plus application account leases retain revocation.
 Domain/data remain independent of navigation, Koin and profile implementation.

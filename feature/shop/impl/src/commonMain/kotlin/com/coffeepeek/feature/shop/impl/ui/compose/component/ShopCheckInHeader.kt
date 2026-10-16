@@ -15,10 +15,10 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
@@ -32,24 +32,24 @@ import org.jetbrains.compose.ui.tooling.preview.Preview
 import com.coffeepeek.feature.shop.impl.resources.Res
 import com.coffeepeek.feature.shop.impl.resources.shop_checkins_open_author
 import org.jetbrains.compose.resources.stringResource
-import io.kamel.image.KamelImage
-import io.kamel.image.asyncPainterResource
+
+internal typealias ShopAuthorImage = @Composable (url: String, modifier: Modifier) -> Unit
+internal val LocalShopAuthorImage = staticCompositionLocalOf<ShopAuthorImage?> { null }
 
 @Composable
 internal fun ShopCheckInHeader(author: String, dateLabel: String, onReport: (() -> Unit)?, modifier: Modifier = Modifier,
     avatarUrl: String? = null, onOpenAuthor: (() -> Unit)? = null) {
     val openLabel = stringResource(Res.string.shop_checkins_open_author, author)
+    val imageContent = LocalShopAuthorImage.current
     Row(modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
         Row(Modifier.weight(1f).clip(RoundedCornerShape(CoffeePeekDimens.radiusMd))
             .then(if (onOpenAuthor == null) Modifier else Modifier.clickable(role = Role.Button,
                 onClickLabel = openLabel, onClick = onOpenAuthor)), verticalAlignment = Alignment.CenterVertically) {
             Box(Modifier.size(44.dp).clip(CircleShape).background(CoffeePeekColors.GoldWarmSoft)
                 .clearAndSetSemantics {}, contentAlignment = Alignment.Center) {
-                if (!avatarUrl.isNullOrBlank() && !LocalInspectionMode.current) {
-                    KamelImage(resource = { asyncPainterResource(avatarUrl) }, contentDescription = null,
-                        modifier = Modifier.fillMaxSize(), contentScale = ContentScale.Crop,
-                        onLoading = { AuthorInitial(author) }, onFailure = { AuthorInitial(author) })
-                } else AuthorInitial(author)
+                AuthorInitial(author)
+                if (!avatarUrl.isNullOrBlank() && imageContent != null && !LocalInspectionMode.current)
+                    imageContent(avatarUrl, Modifier.fillMaxSize())
             }
             Column(Modifier.weight(1f).padding(start = CoffeePeekDimens.spacing3),
                 verticalArrangement = Arrangement.spacedBy(2.dp)) {
