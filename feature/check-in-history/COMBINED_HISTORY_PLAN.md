@@ -1,5 +1,35 @@
 # Combined personal history — current-main parity and next slice
 
+## Physical-device smoke / new-main gate — 2026-10-16
+
+Installed Direct debug **1.0.617**, source **ef41fd8**, over the existing debug
+CoffeePeek on the agreed Pixel 7 using an in-place update. No app-data clearing,
+logout/account replacement or check-in create/update/delete was performed; the
+other connected phone was untouched. Fresh Direct assembly and packaged DEX
+checks pass. The normal app cold start and Profile → Check-ins route work.
+
+The real session's Shop mine page/month and Home page/calendar reads returned
+HTTP 200; the displayed history is empty. Checked All/Shop/Home filter rendering,
+previous month, Today restoring the current month/date, date reset, creation
+choice, the actual Home form and populated brew-method dropdown. The form stays
+bottom-aligned, its Save action is visible, and closing it without saving returns
+to history. The Shop choice opens the existing shop picker; no submission occurs.
+This is a real-device empty-history/read/navigation smoke check, not populated
+timeline/photo/date-edge, persisted edit/delete or account-switch certification.
+The earlier fake-data tests remain the evidence for those authored scenarios.
+Screenshots and UI dumps stay local; no account identity, credentials or photos
+are added to Git. iOS and the user's app settings remain unchanged.
+
+A fresh fetch during this check discovered **origin/main f2b184b**, PR #96,
+after the previously integrated 4976e53. Its 240-file change includes public
+profiles, server-backed favorites, analytics, calendar photo previews, Home UI
+and check-in time/cutout behavior. It is **not yet integrated** into #43/#95;
+ef41fd8's smoke result must not certify parity with this newer main.
+Next: sync the parent and history child, audit the changed product contracts
+(especially favorites ownership/server semantics and history photos/time), then
+rebuild and repeat affected tests before a new feature or release. Do not bring
+the deleted local-favorites implementation back merely to resolve a merge.
+
 ## Current status: Android route activated — 2026-10-16
 
 User authorized switching the three existing Android history routes. VisitedPlaces,

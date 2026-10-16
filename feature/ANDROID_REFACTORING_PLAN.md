@@ -4,6 +4,15 @@ Audit date: 2026-10-16. Product baseline: `origin/main` **4976e53**.
 This is the current checklist. Older feature READMEs contain historical checkpoint
 notes; they do not override this source audit or certify later changes.
 
+**Fresh-main gate (2026-10-16):** a fetch during Pixel 7 verification discovered
+`origin/main` **f2b184b** (PR #96), 240 changed files since the integrated baseline
+above. It includes public profiles, server-backed favorites, analytics, Home UI,
+calendar photo previews and check-in time/cutout changes. This newer main is not
+yet merged into #43/#95; the inventory below is an audit of 4976e53, not f2b184b.
+Before another feature, sync both active stack branches and re-audit those changed
+contracts. In particular, the old local-only favorites description is no longer
+the newest production contract. Physical smoke of ef41fd8 does not close this gate.
+
 ## Branch ownership
 
 - `feature/core-design-system-controls`, PR #43 → develop: core, favorites,
