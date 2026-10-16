@@ -15,7 +15,9 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
@@ -310,6 +312,138 @@ class PublicProfilePresentationTest {
     }
 
     @Test
+    fun connectionSheetFitsEmptyContentAndKeepsTabsVisibleWhileLongListScrolls() {
+        val state = mutableStateOf(PublicProfileUiState(
+            isLoading = false,
+            connectionKind = PublicProfileConnectionKind.Followers,
+        ))
+        val following = List(60) { index ->
+            val name = "connection${index.toString().padStart(2, '0')}"
+            PublicProfileConnection(name, null, name, "/users/$name")
+        }
+        fun visibleConnectionTab(label: String): AccessibilityNodeInfo? {
+            val header = node { it.contentDescription?.toString() == "Закрыть" && it.isVisibleToUser } ?: return null
+            val headerBottom = bounds(header).bottom
+            return node { it.text?.toString() == label && it.isVisibleToUser && bounds(it).top > headerBottom }
+        }
+        fun selectConnectionTab(label: String) {
+            var dispatched = false
+            waitUntil {
+                if (dispatched) return@waitUntil true
+                val tab = visibleConnectionTab(label) ?: return@waitUntil false
+                val control = generateSequence(tab) { it.parent }.firstOrNull { it.isClickable && it.isVisibleToUser }
+                (control?.performAction(AccessibilityNodeInfo.ACTION_CLICK) == true).also { dispatched = it }
+            }
+        }
+        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+            scenario.onActivity { activity -> activity.setContent {
+                CoffeePeekTheme(darkTheme = true) {
+                    PublicProfileConnectionsSheet(
+                        state = state.value,
+                        onDismiss = {},
+                        onSelectKind = { kind ->
+                            state.value = state.value.copy(
+                                connectionKind = kind,
+                                connections = if (kind == PublicProfileConnectionKind.Following) following else emptyList(),
+                            )
+                        },
+                        onLoadMore = {},
+                        onRetry = {},
+                        onUserClick = {},
+                    )
+                }
+            } }
+            waitUntil { text("Пока нет подписчиков")?.isVisibleToUser == true }
+            val emptyHeader = settledBounds { node { it.contentDescription?.toString() == "Закрыть" } }
+            val windowBounds = activeWindowBounds()
+            val density = InstrumentationRegistry.getInstrumentation().targetContext.resources.displayMetrics.density
+            assertTrue("An empty connections sheet must leave the profile visible above it", emptyHeader.top > windowBounds.centerY())
+            assertTrue("The empty sheet must stay anchored near the bottom", windowBounds.bottom - bounds(checkNotNull(text("Пока нет подписчиков"))).bottom < 96 * density)
+            screenshot("profile-connections-fitted-empty.png")
+
+            selectConnectionTab("Подписки")
+            waitUntil { text("@connection00")?.isVisibleToUser == true }
+            val longHeader = settledBounds { node { it.contentDescription?.toString() == "Закрыть" } }
+            assertTrue("A long list should expand beyond the empty sheet", emptyHeader.top - longHeader.top > 48 * density)
+            assertTrue("The expanded connections sheet must retain its top margin", longHeader.top > windowBounds.top + windowBounds.height() * 0.06f)
+            scrollTo { text("@connection59") }
+            val lastConnection = bounds(checkNotNull(text("@connection59")))
+            val scrolledHeader = bounds(checkNotNull(node { it.contentDescription?.toString() == "Закрыть" }))
+            assertTrue("The close control must remain fixed above a scrolled list", kotlin.math.abs(longHeader.top - scrolledHeader.top) <= 2)
+            assertTrue("Both connection tabs must remain visible", visibleConnectionTab("Подписчики") != null && visibleConnectionTab("Подписки") != null)
+            assertTrue("The final connection must be reachable beneath the tabs", lastConnection.top > scrolledHeader.bottom && lastConnection.bottom <= windowBounds.bottom)
+            screenshot("profile-connections-fitted-long.png")
+
+            selectConnectionTab("Подписчики")
+            waitUntil { text("Пока нет подписчиков")?.isVisibleToUser == true }
+            val restoredHeader = settledBounds { node { it.contentDescription?.toString() == "Закрыть" } }
+            assertTrue("Returning to an empty tab must shrink the sheet again", kotlin.math.abs(emptyHeader.top - restoredHeader.top) <= 2)
+            assertTrue("The previous tab's rows must be removed", text("@connection59") == null)
+        }
+    }
+
+    @Test
+    fun profileActivitySheetFitsCalendarWithoutUnusedSpaceBelowIt() {
+        val vm = PublicProfileViewModel("glasha", ProfileFixtureRepository(), ProfileFixtureSessions())
+        try {
+            ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+                scenario.onActivity { activity -> activity.setContent {
+                    CoffeePeekTheme(darkTheme = true) {
+                        OtherUserProfileScreen(
+                            "glasha", onBack = {}, onCoffeeShopClick = {}, onRoasterClick = {},
+                            onLogin = {}, onUserClick = { _, _, _ -> }, vm = vm,
+                        )
+                    }
+                } }
+                waitUntil { text("@glasha") != null && !vm.state.value.isLoadingActivity }
+                scrollTo { node { it.contentDescription?.toString() == "Все: Активность" } }
+                click(checkNotNull(node { it.contentDescription?.toString() == "Все: Активность" }))
+                waitUntil { text("По времени Минска")?.isVisibleToUser == true }
+                settledBounds { node { it.contentDescription?.toString() == "Закрыть" } }
+                val calendarBottom = bounds(checkNotNull(text("По времени Минска"))).bottom
+                val windowBounds = activeWindowBounds()
+                val density = InstrumentationRegistry.getInstrumentation().targetContext.resources.displayMetrics.density
+                assertTrue("The activity sheet must end just below its calendar", windowBounds.bottom - calendarBottom < 96 * density)
+                assertTrue("The close control must stay visible above the calendar", node { it.contentDescription?.toString() == "Закрыть" }?.isVisibleToUser == true)
+                screenshot("profile-activity-fitted.png")
+            }
+        } finally { vm.close() }
+    }
+
+    @Test
+    fun personalActivityCalendarSlotIsRestrictedToOwnProfile() {
+        for (ownProfile in listOf(true, false)) {
+            val vm = PublicProfileViewModel("glasha", ProfileFixtureRepository(), ProfileFixtureSessions())
+            try {
+                ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+                    scenario.onActivity { activity -> activity.setContent {
+                        CoffeePeekTheme(darkTheme = false) {
+                            UserProfileScreen(
+                                slug = "glasha",
+                                isOwnProfile = ownProfile,
+                                onCoffeeShopClick = {}, onRoasterClick = {}, onLogin = {},
+                                onUserClick = { _, _, _ -> },
+                                activityCalendar = { Text("Личный календарь с фотографиями") },
+                                vm = vm,
+                            )
+                        }
+                    } }
+                    waitUntil { vm.state.value.profile?.activity != null }
+                    scrollTo { node { it.contentDescription?.toString() == "Все: Активность" } }
+                    click(checkNotNull(node { it.contentDescription?.toString() == "Все: Активность" }))
+                    if (ownProfile) {
+                        waitUntil { text("Личный календарь с фотографиями")?.isVisibleToUser == true }
+                        assertTrue("The supplied personal calendar must replace the public calendar", text("Дни с чекинами") == null)
+                    } else {
+                        waitUntil { text("Дни с чекинами")?.isVisibleToUser == true }
+                        assertTrue("Another user's profile must never compose the personal calendar", text("Личный календарь с фотографиями") == null)
+                    }
+                }
+            } finally { vm.close() }
+        }
+    }
+
+    @Test
     fun ownProfileUsesSharedSectionsWithoutFollowAndOpensPersonalDestinations() {
         val vm = PublicProfileViewModel("glasha", ProfileFixtureRepository(), ProfileFixtureSessions())
         val openedDestination = AtomicReference<String>()
@@ -435,6 +569,22 @@ class PublicProfilePresentationTest {
     }
 
     private fun text(value: String) = node { it.text?.toString() == value }
+
+    private fun bounds(node: AccessibilityNodeInfo) = Rect().also(node::getBoundsInScreen)
+
+    private fun activeWindowBounds() = bounds(checkNotNull(InstrumentationRegistry.getInstrumentation().uiAutomation.rootInActiveWindow))
+
+    private fun settledBounds(find: () -> AccessibilityNodeInfo?): Rect {
+        var previous = Rect()
+        var settledSamples = 0
+        waitUntil {
+            val current = find()?.takeIf { it.isVisibleToUser }?.let(::bounds)
+            settledSamples = if (current != null && current == previous && !current.isEmpty) settledSamples + 1 else 0
+            if (current != null) previous = current
+            settledSamples >= 3
+        }
+        return previous
+    }
 
     private fun assertRoasterDetailsVisible(card: AccessibilityNodeInfo, name: String, description: String) {
         val cardBounds = Rect().also(card::getBoundsInScreen)

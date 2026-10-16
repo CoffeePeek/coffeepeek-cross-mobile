@@ -77,6 +77,7 @@ internal fun UserProfileScreen(
     onCheckInsClick: (() -> Unit)? = null,
     topBarActions: (@Composable () -> Unit)? = null,
     favoritesPreview: (@Composable () -> Unit)? = null,
+    activityCalendar: (@Composable () -> Unit)? = null,
     bottomContentPadding: Dp = 20.dp,
     vm: PublicProfileViewModel = platformViewModel(key = slug, parameters = { parametersOf(slug) }),
 ) {
@@ -268,6 +269,7 @@ internal fun UserProfileScreen(
         }
         when (selectedSection) {
             ProfileSection.Favorites -> LazyColumn(
+                modifier = Modifier.fillMaxWidth().weight(1f, fill = false),
                 contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 32.dp),
                 verticalArrangement = Arrangement.spacedBy(10.dp),
             ) {
@@ -279,6 +281,7 @@ internal fun UserProfileScreen(
                 else if (profile.favorites.isEmpty()) item { ProfileEmptyCard("Пока ничего нет в избранном", CpIcons.Favorite) }
             }
             ProfileSection.CheckIns -> LazyColumn(
+                modifier = Modifier.fillMaxWidth().weight(1f, fill = false),
                 contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 32.dp),
                 verticalArrangement = Arrangement.spacedBy(10.dp),
             ) {
@@ -302,9 +305,10 @@ internal fun UserProfileScreen(
                 }
             }
             ProfileSection.Activity -> Column(
-                Modifier.verticalScroll(rememberScrollState()).padding(16.dp).navigationBarsPadding(),
+                Modifier.fillMaxWidth().weight(1f, fill = false)
+                    .verticalScroll(rememberScrollState()).padding(16.dp).navigationBarsPadding(),
             ) {
-                PublicProfileActivityCalendar(
+                if (viewingOwnProfile && activityCalendar != null) activityCalendar() else PublicProfileActivityCalendar(
                     activity = profile.activity,
                     selectedMonth = state.activityMonth,
                     isLoading = state.isLoadingActivity,

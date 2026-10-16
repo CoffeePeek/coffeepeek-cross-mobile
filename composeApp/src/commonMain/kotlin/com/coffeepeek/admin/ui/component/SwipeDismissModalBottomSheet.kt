@@ -9,10 +9,13 @@ import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.draggable
 import androidx.compose.foundation.gestures.rememberDraggableState
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -30,7 +33,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.unit.dp
+
+private val SheetDragHandleHeight = 44.dp
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -55,6 +61,11 @@ fun SwipeDismissModalBottomSheet(
         confirmValueChange = { canDismiss || it != SheetValue.Hidden },
     )
     val density = LocalDensity.current
+    val windowHeight = with(density) { LocalWindowInfo.current.containerSize.height.toDp() }
+    val bottomInset = with(density) { WindowInsets.navigationBars.getBottom(this).toDp() }
+    val maxContentHeight = maxSheetHeightFraction?.let { fraction ->
+        (windowHeight * fraction.coerceIn(0.1f, 1f) - SheetDragHandleHeight - bottomInset).coerceAtLeast(1.dp)
+    }
     val dismissDistance = with(density) { 72.dp.toPx() }
     val dismissVelocity = with(density) { 900.dp.toPx() }
     var dragOffset by remember { mutableFloatStateOf(0f) }
@@ -65,7 +76,6 @@ fun SwipeDismissModalBottomSheet(
     ModalBottomSheet(
         onDismissRequest = { if (dismissEnabled) onDismissRequest() },
         modifier = Modifier
-            .then(maxSheetHeightFraction?.let { Modifier.fillMaxHeight(it) } ?: Modifier)
             .graphicsLayer { translationY = dragOffset }
             .dismissKeyboardOnBackgroundGestures(),
         sheetState = sheetState,
@@ -74,7 +84,7 @@ fun SwipeDismissModalBottomSheet(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(44.dp)
+                    .height(SheetDragHandleHeight)
                     .draggable(
                         state = dragState,
                         orientation = Orientation.Vertical,
@@ -103,6 +113,16 @@ fun SwipeDismissModalBottomSheet(
             }
         },
         containerColor = MaterialTheme.colorScheme.surface,
-        content = trackedContent,
+        content = {
+            if (maxContentHeight != null) {
+                // Keep the outer viewport intact: Material uses it to anchor the sheet
+                // to the window bottom. Only the body has a maximum height.
+                Column(Modifier.fillMaxWidth().heightIn(max = maxContentHeight)) {
+                    trackedContent()
+                }
+            } else {
+                trackedContent()
+            }
+        },
     )
 }

@@ -4,4 +4,4 @@ import androidx.compose.runtime.Composable
 
 /** Legacy renderer for the shared root entry; PlatformRootNavigation owns the live iOS tabs. */
 @Composable
-actual fun MainScreen() = ComposeMainScreen()
+actual fun MainScreen(isLoggedIn: Boolean) = ComposeMainScreen(isLoggedIn)

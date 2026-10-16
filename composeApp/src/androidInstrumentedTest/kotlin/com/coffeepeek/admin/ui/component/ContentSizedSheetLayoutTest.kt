@@ -10,6 +10,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
@@ -158,6 +161,70 @@ class ContentSizedSheetLayoutTest {
             waitUntil("Replacing a fill-height form must also shrink the requested detent") {
                 near(reportedHeight.get(), 136 * density) && scroll.get()?.maxValue == 0
             }
+        }
+    }
+
+    @Test
+    fun lazyListGrowsFromEmptyAndShrinksAgainWithoutLosingItsFixedHeaderOrFooter() {
+        val rowCount = mutableStateOf(0)
+        val reportedHeight = AtomicInteger()
+        val headerHeight = AtomicInteger()
+        val footerHeight = AtomicInteger()
+        val footerTop = AtomicInteger()
+        val lastRowBottom = AtomicInteger()
+        val lazyList = AtomicReference<LazyListState>()
+        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+            scenario.onActivity { activity -> activity.setContent {
+                CoffeePeekTheme {
+                    Box(Modifier.size(width = 240.dp, height = 320.dp)) {
+                        ContentSizedSheetLayout(
+                            maxContentHeight = 320.dp,
+                            onContentHeightChanged = reportedHeight::set,
+                            modifier = Modifier.fillMaxSize(),
+                        ) {
+                            Box(Modifier.fillMaxWidth().height(32.dp).onGloballyPositioned {
+                                headerHeight.set(it.size.height)
+                            }) { Text("Connections") }
+                            val listState = rememberLazyListState()
+                            lazyList.set(listState)
+                            LazyColumn(Modifier.weight(1f).fillMaxWidth(), state = listState) {
+                                items(rowCount.value) { index ->
+                                    Box(Modifier.fillMaxWidth().height(28.dp).onGloballyPositioned {
+                                        if (index == rowCount.value - 1) {
+                                            lastRowBottom.set((it.positionInRoot().y + it.size.height).roundToInt())
+                                        }
+                                    }) { Text("Connection ${index + 1}") }
+                                }
+                            }
+                            Box(Modifier.fillMaxWidth().height(48.dp).onGloballyPositioned {
+                                footerHeight.set(it.size.height)
+                                footerTop.set(it.positionInRoot().y.roundToInt())
+                            }) { Text("Close") }
+                        }
+                    }
+                }
+            } }
+
+            waitUntil("An empty lazy list must not reserve a full-height detent") {
+                near(reportedHeight.get(), 80 * density) && lazyList.get()?.layoutInfo?.totalItemsCount == 0
+            }
+            scenario.onActivity { rowCount.value = 40 }
+            waitUntil("Loaded connections must receive a finite scroll viewport") {
+                near(reportedHeight.get(), 320 * density) && lazyList.get()?.layoutInfo?.totalItemsCount == 40
+            }
+            scenario.onActivity { lazyList.get().requestScrollToItem(39) }
+            waitUntil("The final lazy item must remain reachable above the fixed footer") {
+                lazyList.get().layoutInfo.visibleItemsInfo.lastOrNull()?.index == 39 &&
+                    abs(lastRowBottom.get() - footerTop.get()) <= 2
+            }
+            assertTrue("Lazy content must preserve the header", near(headerHeight.get(), 32 * density))
+            assertTrue("Lazy content must preserve the footer", near(footerHeight.get(), 48 * density))
+
+            scenario.onActivity { rowCount.value = 0 }
+            waitUntil("Clearing loaded connections must shrink the requested native detent") {
+                near(reportedHeight.get(), 80 * density) && lazyList.get().layoutInfo.totalItemsCount == 0
+            }
+            assertTrue("The empty footer must still retain its height", near(footerHeight.get(), 48 * density))
         }
     }
 

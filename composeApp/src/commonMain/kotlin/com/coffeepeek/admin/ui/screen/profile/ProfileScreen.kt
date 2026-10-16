@@ -79,6 +79,7 @@ fun ProfileScreen(vm: ProfileViewModel = koinInject()) {
                 onCheckInsClick = { Navigator.navigate(Navigator.Screen.VisitedPlaces) },
                 topBarActions = actions,
                 favoritesPreview = { FavoritesProfilePreview(openShop, openRoaster) },
+                activityCalendar = { PersonalProfileActivityCalendar() },
                 bottomContentPadding = bottomPadding,
                 vm = publicVm,
             )

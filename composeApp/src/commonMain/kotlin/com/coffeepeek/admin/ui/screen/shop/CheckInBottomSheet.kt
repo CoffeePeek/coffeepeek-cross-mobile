@@ -22,7 +22,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBarsPadding
@@ -149,7 +148,6 @@ fun CheckInBottomSheet(
         com.coffeepeek.admin.ui.component.PlatformScrollableColumn(
             modifier = Modifier
                 .fillMaxWidth()
-                .fillMaxHeight()
                 .navigationBarsPadding()
                 .padding(horizontal = CpDimens.spacing4)
                 .padding(bottom = CpDimens.spacing6),

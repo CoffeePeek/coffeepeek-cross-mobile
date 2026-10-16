@@ -27,7 +27,8 @@ internal fun CheckInSubmissionContent(
             CheckInVisibility.Public -> "Спасибо, что делитесь кофейными моментами! Чекин появится в ленте после проверки. Сейчас он доступен в ваших чекинах."
             else -> "Кофейный момент сохранён в ваших чекинах и виден только вам."
         },
-        modifier = Modifier.fillMaxWidth().fillMaxHeight(0.76f).navigationBarsPadding().padding(CpDimens.spacing6),
+        modifier = Modifier.fillMaxWidth().navigationBarsPadding().padding(CpDimens.spacing6),
+        fillAvailableHeight = false,
     ) {
         AppButton("К ленте", onClick = onGoToFeed)
         OutlinedButton(

@@ -154,6 +154,80 @@ class CheckInPresentationTest {
         }
     }
 
+    @Test
+    fun homeDetailFitsShortRecordsAndLongNotesKeepActionsReachable() {
+        val entry = mutableStateOf(fixture.copy(
+            beanName = null, text = null, brewMethodCode = null, doseGrams = null,
+            brewDurationSeconds = null, tasteScore = null, drinkName = null,
+        ))
+        val viewport = AtomicReference<Rect>()
+        val detail = AtomicReference<Rect>()
+        val density = AtomicReference(1f)
+        val edits = AtomicInteger()
+        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+            scenario.onActivity { activity -> activity.setContent {
+                CoffeePeekTheme(darkTheme = true) {
+                    density.set(LocalDensity.current.density)
+                    Surface(Modifier.fillMaxSize()) {
+                        Box(Modifier.fillMaxSize().systemBarsPadding().onGloballyPositioned {
+                            viewport.set(it.boundsInWindow())
+                        }) {
+                            HomeDetailContent(
+                                entry.value,
+                                Modifier.fillMaxWidth().heightIn(max = 680.dp).onGloballyPositioned {
+                                    detail.set(it.boundsInWindow())
+                                },
+                                onEdit = { edits.incrementAndGet() }, onDelete = {}, onPhotoClick = { _, _ -> },
+                            )
+                        }
+                    }
+                }
+            } }
+            waitUntil { detail.get() != null && viewport.get() != null &&
+                node { it.text?.toString() == "Удалить запись" && it.isVisibleToUser } != null }
+            val shortHeight = detail.get().height
+            val maximum = minOf(viewport.get().height, 680 * density.get())
+            assertTrue("Short details must fit the record without an unused tall viewport",
+                shortHeight < maximum - 16 * density.get())
+            click(node { it.text?.toString() == "Редактировать" }!!)
+            waitUntil { edits.get() == 1 }
+
+            scenario.onActivity { entry.value = entry.value.copy(text = "Впечатления от чашки кофе. ".repeat(60)) }
+            waitUntil { detail.get().height > shortHeight + 16 * density.get() }
+            assertTrue("Long details must stay within the bounded viewport", detail.get().height <= maximum + 2)
+            scrollToText("Удалить запись")
+            click(node { it.text?.toString() == "Редактировать" }!!)
+            waitUntil { edits.get() == 2 }
+            screenshot("checkins-home-detail-long-note.png").recycle()
+        }
+    }
+
+    @Test
+    fun createChoiceRemainsScrollableWithLargeTextAndShortViewport() {
+        val homes = AtomicInteger()
+        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+            scenario.onActivity { activity -> activity.setContent {
+                val density = LocalDensity.current
+                CompositionLocalProvider(LocalDensity provides Density(density.density, 1.6f)) {
+                    CoffeePeekTheme(darkTheme = true) {
+                        Surface(Modifier.fillMaxSize()) {
+                            Box(Modifier.fillMaxWidth().statusBarsPadding().height(260.dp)) {
+                                CheckInCreateContent(onShop = {}, onHome = { homes.incrementAndGet() })
+                            }
+                        }
+                    }
+                }
+            } }
+            waitUntil { node { it.text?.toString() == "Новый чекин" } != null }
+            scrollToText("Дома")
+            click(node { it.text?.toString() == "Дома" }!!)
+            scrollToText("Продолжить")
+            click(node { it.text?.toString() == "Продолжить" }!!)
+            waitUntil { homes.get() == 1 }
+            screenshot("checkins-create-short-large-text.png").recycle()
+        }
+    }
+
     private fun scrollToText(text: String) {
         repeat(8) {
             if (node { it.text?.toString() == text && it.isVisibleToUser } != null) return
