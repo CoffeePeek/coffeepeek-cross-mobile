@@ -304,8 +304,8 @@ object Navigator {
 
         Box(modifier = Modifier.fillMaxSize()) {
             if (isLoggedIn != null) {
-                key(navigationGeneration) {
-                    BaseNavigator()
+                key(navigationGeneration, isLoggedIn) {
+                    BaseNavigator(isLoggedIn = isLoggedIn == true)
                 }
             }
             LoadingDialog(show = loading)
@@ -313,11 +313,11 @@ object Navigator {
     }
 
     @Composable
-    private fun BaseNavigator() {
+    private fun BaseNavigator(isLoggedIn: Boolean) {
         val nativeAppLink by pendingAppLink.collectAsState()
-        if (PlatformRootNavigation(navigationEvents, nativeAppLink,
+        if (PlatformRootNavigation(isLoggedIn, navigationEvents, nativeAppLink,
             { pendingAppLink.compareAndSet(nativeAppLink, null) },
-            { screen, login -> RootScreen(screen, login) },
+            { screen, login -> RootScreen(screen, login, isLoggedIn) },
         )) return
 
         val nav = rememberNavController()
@@ -369,7 +369,7 @@ object Navigator {
                     RetainedContent(visible = entry in visibleEntries) {
                         // Main lives outside NavHost so its native map stays mounted during navigation.
                         Box(Modifier.fillMaxSize().graphicsLayer { translationX = size.width * mainSlide }) {
-                            MainScreen()
+                            MainScreen(isLoggedIn)
                         }
                     }
                 }
@@ -516,9 +516,9 @@ object Navigator {
     }
 
     @Composable
-    private fun RootScreen(screen: Screen, resetToLogin: () -> Unit) {
+    private fun RootScreen(screen: Screen, resetToLogin: () -> Unit, isLoggedIn: Boolean) {
         when (screen) {
-            Screen.Main -> MainScreen()
+            Screen.Main -> MainScreen(isLoggedIn)
             Screen.Auth -> AuthScreen()
             Screen.Register -> RegisterScreen()
             is Screen.ForgotPassword -> PasswordRecoveryScreen(initialEmail = screen.email, onClose = ::popBack, onLogin = resetToLogin)

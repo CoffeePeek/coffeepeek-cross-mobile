@@ -71,7 +71,6 @@ class HomeCheckInFormInteractionTest {
                     }
                 }
             } }
-            waitForText("Кофе дома")
             waitForText("Эфиопия Иргачеффе")
             screenshot("home-public-feed-card.png")
             clickDescription("Действия с чекином")

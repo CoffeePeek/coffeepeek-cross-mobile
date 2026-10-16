@@ -66,6 +66,10 @@ internal actual fun PlatformMenuButton(
                             PlatformMenuIcon.Edit -> "square.and.pencil"
                             PlatformMenuIcon.Hide -> "eye.slash"
                             PlatformMenuIcon.Report -> "flag"
+                            PlatformMenuIcon.NoteEdit -> "note.text"
+                            PlatformMenuIcon.Add -> "plus"
+                            PlatformMenuIcon.CoffeeBean -> "leaf"
+                            PlatformMenuIcon.Logout -> "rectangle.portrait.and.arrow.right"
                             null -> null
                         }
                         UIAction.actionWithTitle(item.title, symbol?.let { UIImage.systemImageNamed(it) }, item.id) {

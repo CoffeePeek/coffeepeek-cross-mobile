@@ -8,7 +8,11 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
@@ -156,6 +160,182 @@ class ContentSizedSheetLayoutTest {
             scenario.onActivity { mode.value = ContentMode.Short }
             waitUntil("Replacing a fill-height form must also shrink the requested detent") {
                 near(reportedHeight.get(), 136 * density) && scroll.get()?.maxValue == 0
+            }
+        }
+    }
+
+    @Test
+    fun lazyListGrowsFromEmptyAndShrinksAgainWithoutLosingItsFixedHeaderOrFooter() {
+        val rowCount = mutableStateOf(0)
+        val reportedHeight = AtomicInteger()
+        val headerHeight = AtomicInteger()
+        val footerHeight = AtomicInteger()
+        val footerTop = AtomicInteger()
+        val lastRowBottom = AtomicInteger()
+        val lazyList = AtomicReference<LazyListState>()
+        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+            scenario.onActivity { activity -> activity.setContent {
+                CoffeePeekTheme {
+                    Box(Modifier.size(width = 240.dp, height = 320.dp)) {
+                        ContentSizedSheetLayout(
+                            maxContentHeight = 320.dp,
+                            onContentHeightChanged = reportedHeight::set,
+                            modifier = Modifier.fillMaxSize(),
+                        ) {
+                            Box(Modifier.fillMaxWidth().height(32.dp).onGloballyPositioned {
+                                headerHeight.set(it.size.height)
+                            }) { Text("Connections") }
+                            val listState = rememberLazyListState()
+                            lazyList.set(listState)
+                            LazyColumn(Modifier.weight(1f).fillMaxWidth(), state = listState) {
+                                items(rowCount.value) { index ->
+                                    Box(Modifier.fillMaxWidth().height(28.dp).onGloballyPositioned {
+                                        if (index == rowCount.value - 1) {
+                                            lastRowBottom.set((it.positionInRoot().y + it.size.height).roundToInt())
+                                        }
+                                    }) { Text("Connection ${index + 1}") }
+                                }
+                            }
+                            Box(Modifier.fillMaxWidth().height(48.dp).onGloballyPositioned {
+                                footerHeight.set(it.size.height)
+                                footerTop.set(it.positionInRoot().y.roundToInt())
+                            }) { Text("Close") }
+                        }
+                    }
+                }
+            } }
+
+            waitUntil("An empty lazy list must not reserve a full-height detent") {
+                near(reportedHeight.get(), 80 * density) && lazyList.get()?.layoutInfo?.totalItemsCount == 0
+            }
+            scenario.onActivity { rowCount.value = 40 }
+            waitUntil("Loaded connections must receive a finite scroll viewport") {
+                near(reportedHeight.get(), 320 * density) && lazyList.get()?.layoutInfo?.totalItemsCount == 40
+            }
+            scenario.onActivity { lazyList.get().requestScrollToItem(39) }
+            waitUntil("The final lazy item must remain reachable above the fixed footer") {
+                lazyList.get().layoutInfo.visibleItemsInfo.lastOrNull()?.index == 39 &&
+                    abs(lastRowBottom.get() - footerTop.get()) <= 2
+            }
+            assertTrue("Lazy content must preserve the header", near(headerHeight.get(), 32 * density))
+            assertTrue("Lazy content must preserve the footer", near(footerHeight.get(), 48 * density))
+
+            scenario.onActivity { rowCount.value = 0 }
+            waitUntil("Clearing loaded connections must shrink the requested native detent") {
+                near(reportedHeight.get(), 80 * density) && lazyList.get().layoutInfo.totalItemsCount == 0
+            }
+            assertTrue("The empty footer must still retain its height", near(footerHeight.get(), 48 * density))
+        }
+    }
+
+    @Test
+    fun fillHeightFormUsesExpandedNativeViewportWithKeyboardPaddingAndRestores() {
+        val viewport = mutableStateOf(320.dp)
+        val preferredMaximum = mutableStateOf(320.dp)
+        val keyboardHeight = mutableStateOf(0.dp)
+        val reportedHeight = AtomicInteger()
+        val containerHeight = AtomicInteger()
+        val containerBottom = AtomicInteger()
+        val formHeight = AtomicInteger()
+        val formBottom = AtomicInteger()
+        val scrollHeight = AtomicInteger()
+        val scrollBottom = AtomicInteger()
+        val lastRowBottom = AtomicInteger()
+        val scroll = AtomicReference<ScrollState>()
+        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+            scenario.onActivity { activity -> activity.setContent {
+                CoffeePeekTheme {
+                    Box(Modifier.size(width = 240.dp, height = viewport.value)) {
+                        ContentSizedSheetLayout(
+                            maxContentHeight = preferredMaximum.value,
+                            onContentHeightChanged = reportedHeight::set,
+                            modifier = Modifier.fillMaxSize().onGloballyPositioned {
+                                containerHeight.set(it.size.height)
+                                containerBottom.set((it.positionInRoot().y + it.size.height).roundToInt())
+                            },
+                        ) {
+                            Box(Modifier.fillMaxSize().onGloballyPositioned {
+                                formHeight.set(it.size.height)
+                                formBottom.set((it.positionInRoot().y + it.size.height).roundToInt())
+                            }) {
+                                Column(Modifier.fillMaxSize().padding(bottom = keyboardHeight.value)) {
+                                    Box(Modifier.fillMaxWidth().height(32.dp)) { Text("Check-in note") }
+                                    val scrollState = rememberScrollState()
+                                    scroll.set(scrollState)
+                                    Column(
+                                        Modifier.weight(1f).onGloballyPositioned {
+                                            scrollHeight.set(it.size.height)
+                                            scrollBottom.set((it.positionInRoot().y + it.size.height).roundToInt())
+                                        }.verticalScroll(scrollState),
+                                    ) {
+                                        repeat(20) { index ->
+                                            Box(Modifier.fillMaxWidth().height(28.dp).onGloballyPositioned {
+                                                if (index == 19) {
+                                                    lastRowBottom.set((it.positionInRoot().y + it.size.height).roundToInt())
+                                                }
+                                            }) { Text("Form row ${index + 1}") }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            } }
+
+            waitUntil("The initial form must fill a bounded native viewport") {
+                near(reportedHeight.get(), 320 * density) &&
+                    near(containerHeight.get(), 320 * density) &&
+                    near(formHeight.get(), 320 * density) &&
+                    near(scrollHeight.get(), 288 * density) &&
+                    (scroll.get()?.maxValue ?: 0) > 0
+            }
+
+            scenario.onActivity {
+                viewport.value = 480.dp
+                keyboardHeight.value = 160.dp
+            }
+            waitUntil("Keyboard expansion must fill the actual viewport without an unused region above the keyboard") {
+                near(reportedHeight.get(), 320 * density) &&
+                    near(containerHeight.get(), 480 * density) &&
+                    near(formHeight.get(), 480 * density) &&
+                    abs(formBottom.get() - containerBottom.get()) <= 2 &&
+                    near(containerBottom.get() - scrollBottom.get(), 160 * density) &&
+                    near(scrollHeight.get(), 288 * density) &&
+                    (scroll.get()?.maxValue ?: 0) > 0
+            }
+            scenario.onActivity { scroll.get().dispatchRawDelta(scroll.get().maxValue.toFloat()) }
+            waitUntil("The final form row must remain reachable above the simulated keyboard") {
+                scroll.get().value == scroll.get().maxValue &&
+                    abs(lastRowBottom.get() - scrollBottom.get()) <= 2
+            }
+
+            scenario.onActivity { preferredMaximum.value = 280.dp }
+            waitUntil("Updating the preferred detent must refresh its reported height while keeping the expanded form filled") {
+                near(reportedHeight.get(), 280 * density) &&
+                    near(formHeight.get(), 480 * density) &&
+                    abs(formBottom.get() - containerBottom.get()) <= 2 &&
+                    near(containerBottom.get() - scrollBottom.get(), 160 * density)
+            }
+
+            scenario.onActivity {
+                viewport.value = 320.dp
+                preferredMaximum.value = 320.dp
+                keyboardHeight.value = 0.dp
+            }
+            waitUntil("Dismissing the keyboard must restore the bounded form viewport") {
+                near(reportedHeight.get(), 320 * density) &&
+                    near(containerHeight.get(), 320 * density) &&
+                    near(formHeight.get(), 320 * density) &&
+                    near(scrollHeight.get(), 288 * density) &&
+                    abs(formBottom.get() - containerBottom.get()) <= 2 &&
+                    abs(scrollBottom.get() - containerBottom.get()) <= 2 &&
+                    (scroll.get()?.maxValue ?: 0) > 0
+            }
+            scenario.onActivity { scroll.get().dispatchRawDelta(scroll.get().maxValue.toFloat()) }
+            waitUntil("The final form row must remain reachable after the keyboard closes") {
+                scroll.get().value == scroll.get().maxValue &&
+                    abs(lastRowBottom.get() - scrollBottom.get()) <= 2
             }
         }
     }

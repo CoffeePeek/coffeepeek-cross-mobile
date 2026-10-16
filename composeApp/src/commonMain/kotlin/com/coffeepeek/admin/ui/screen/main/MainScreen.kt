@@ -45,6 +45,7 @@ import androidx.navigation.compose.navigation
 import androidx.navigation.compose.rememberNavController
 import com.coffeepeek.admin.ui.Navigator
 import com.coffeepeek.admin.ui.Navigator.isHandledByRootNav
+import com.coffeepeek.admin.ui.mainTabScreens
 import com.coffeepeek.admin.ui.component.PlatformFloatingBottomNavBar
 import com.coffeepeek.admin.ui.component.floatingNavBarHeight
 import com.coffeepeek.admin.ui.component.FloatingNavBottomMargin
@@ -64,10 +65,10 @@ data class BottomNavItem(
 )
 
 @Composable
-expect fun MainScreen()
+expect fun MainScreen(isLoggedIn: Boolean)
 
 @Composable
-internal fun ComposeMainScreen() {
+internal fun ComposeMainScreen(isLoggedIn: Boolean) {
     val reduceMotion = com.coffeepeek.admin.ui.component.platformReduceMotion()
     val bottomNavController = rememberNavController()
     val analyticsEntry by bottomNavController.currentBackStackEntryAsState()
@@ -77,41 +78,7 @@ internal fun ComposeMainScreen() {
     var isFeedMapExpanded by remember { mutableStateOf(false) }
     val pendingTabSelection by Navigator.pendingTabSelection.collectAsState()
 
-    LaunchedEffect(Unit) {
-        Navigator.navigationEvents.collect { event ->
-            when (event) {
-                is Navigator.NavEvent.SelectTab -> {
-                    bottomNavController.navigate(event.tab) {
-                        popUpTo(bottomNavController.graph.findStartDestination().id) {
-                            saveState = true
-                        }
-                        launchSingleTop = true
-                        restoreState = true
-                    }
-                }
-                is Navigator.NavEvent.NavigateTo -> {
-                    if (!event.screen.isHandledByRootNav()) {
-                        bottomNavController.navigate(event.screen)
-                    }
-                }
-                else -> Unit
-            }
-        }
-    }
-
-    LaunchedEffect(pendingTabSelection) {
-        pendingTabSelection?.let { tab ->
-            bottomNavController.navigate(tab) {
-                popUpTo(bottomNavController.graph.findStartDestination().id) {
-                    saveState = true
-                }
-                launchSingleTop = true
-                restoreState = true
-            }
-            Navigator.consumeTabSelection()
-        }
-    }
-
+    val availableTabs = mainTabScreens(isLoggedIn)
     val items = listOf(
         BottomNavItem(
             title = "Поиск",
@@ -143,10 +110,57 @@ internal fun ComposeMainScreen() {
             graph = Navigator.Screen.SettingsGraph,
             startScreen = Navigator.Screen.SettingsTab,
         ),
-    )
+    ).filter { it.startScreen in availableTabs }
+    val availableRoutes = items.flatMap { listOf(it.graph, it.startScreen) }
+
+    LaunchedEffect(availableRoutes) {
+        Navigator.navigationEvents.collect { event ->
+            when (event) {
+                is Navigator.NavEvent.SelectTab -> {
+                    if (event.tab !in availableRoutes) return@collect
+                    bottomNavController.navigate(event.tab) {
+                        popUpTo(bottomNavController.graph.findStartDestination().id) {
+                            saveState = true
+                        }
+                        launchSingleTop = true
+                        restoreState = true
+                    }
+                }
+                is Navigator.NavEvent.NavigateTo -> {
+                    if (!event.screen.isHandledByRootNav() && event.screen in availableRoutes) {
+                        bottomNavController.navigate(event.screen)
+                    }
+                }
+                else -> Unit
+            }
+        }
+    }
+
+    LaunchedEffect(pendingTabSelection, availableRoutes) {
+        pendingTabSelection?.let { tab ->
+            if (tab in availableRoutes) {
+                bottomNavController.navigate(tab) {
+                    popUpTo(bottomNavController.graph.findStartDestination().id) {
+                        saveState = true
+                    }
+                    launchSingleTop = true
+                    restoreState = true
+                }
+            }
+            Navigator.consumeTabSelection()
+        }
+    }
 
     val navBackStackEntry by bottomNavController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
+    LaunchedEffect(currentDestination, isLoggedIn) {
+        if (!isLoggedIn && currentDestination?.hasRoute<Navigator.Screen.ProfileTab>() == true) {
+            bottomNavController.navigate(Navigator.Screen.FeedGraph) {
+                popUpTo(bottomNavController.graph.findStartDestination().id)
+                launchSingleTop = true
+            }
+        }
+    }
     val visibleEntries by bottomNavController.visibleEntries.collectAsState()
     val feedSlide by animateFloatAsState(
         targetValue = if (currentDestination == null || currentDestination.hasRoute<Navigator.Screen.FeedTab>()) 0f else -1f,
@@ -220,7 +234,7 @@ internal fun ComposeMainScreen() {
                     }
 
                     navigation<Navigator.Screen.ProfileGraph>(startDestination = Navigator.Screen.ProfileTab) {
-                        composable<Navigator.Screen.ProfileTab> { ProfileScreen() }
+                        composable<Navigator.Screen.ProfileTab> { if (isLoggedIn) ProfileScreen() }
                     }
 
                     navigation<Navigator.Screen.SettingsGraph>(startDestination = Navigator.Screen.SettingsTab) {

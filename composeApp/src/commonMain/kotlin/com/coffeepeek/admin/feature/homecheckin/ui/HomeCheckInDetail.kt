@@ -44,7 +44,7 @@ internal fun HomeDetailContent(
 ) {
     val photos = entry.photos.map { it.url }.filter(String::isNotBlank)
     LazyColumn(
-        modifier.fillMaxSize(), contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 4.dp, bottom = 24.dp),
+        modifier.fillMaxWidth(), contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 4.dp, bottom = 24.dp),
         verticalArrangement = Arrangement.spacedBy(20.dp),
     ) {
         item(key = "heading") {

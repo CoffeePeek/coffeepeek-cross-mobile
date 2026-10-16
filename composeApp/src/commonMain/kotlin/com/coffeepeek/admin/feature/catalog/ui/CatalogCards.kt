@@ -14,11 +14,14 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.unit.Constraints
+import androidx.compose.ui.unit.constrainHeight
 import com.coffeepeek.admin.theme.CpColor
 import com.coffeepeek.admin.theme.CpDimens
 import com.coffeepeek.admin.ui.component.CoffeeShopImage
@@ -467,154 +470,89 @@ internal fun RoasterCardContent(
     isFavoriteLoading: Boolean,
     onToggleFavorite: (() -> Unit)?,
     modifier: Modifier = Modifier,
-    expanded: Boolean = false,
-    compact: Boolean = false,
-) {
-    Card(
-        modifier = modifier.fillMaxWidth()
-            .clickable(enabled = roaster.address?.slug?.isNotBlank() == true, onClick = onClick),
-        shape = RoundedCornerShape(CpDimens.radiusXl),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
-    ) {
-        if (expanded || compact) {
-            ExpandedRoasterCardContent(roaster, details, isFavorite, isFavoriteLoading, onToggleFavorite, compact)
-            return@Card
-        }
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(CpDimens.spacing3),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(CpDimens.spacing3),
-        ) {
-            val photo = roaster.photoUrl?.takeIf(String::isNotBlank)
-                ?: details?.photos?.firstOrNull()?.fullUrl?.takeIf(String::isNotBlank)
-            Box(
-                modifier = Modifier.size(64.dp).clip(RoundedCornerShape(CpDimens.radiusMd))
-                    .background(if (photo != null) Color.White else MaterialTheme.colorScheme.surfaceVariant),
-                contentAlignment = Alignment.Center,
-            ) {
-                if (photo != null) CoffeeShopImage(
-                    imageUrl = photo, contentDescription = "Логотип ${roaster.name}",
-                    contentScale = ContentScale.Fit, placeholderLabelSize = 6.sp,
-                    modifier = Modifier.fillMaxSize(),
-                ) else Icon(CpIcons.Factory, null, Modifier.size(28.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
-            }
-            Column(Modifier.weight(1f)) {
-                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        roaster.name, modifier = Modifier.weight(1f),
-                        style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold,
-                        maxLines = 1, overflow = TextOverflow.Ellipsis,
-                    )
-                    CatalogFavoriteControl(
-                        isFavorite = isFavorite, onClick = onToggleFavorite,
-                        enabled = !isFavoriteLoading && roaster.id.isNotBlank(),
-                    )
-                }
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(6.dp),
-                ) {
-                    RoasterStat(CpIcons.Coffee, "Кофейни", roaster.coffeeShopsCount, Modifier.weight(1f))
-                    VerticalDivider(Modifier.height(20.dp), color = MaterialTheme.colorScheme.outlineVariant)
-                    RoasterStat(CpIcons.CoffeeBean, "Каталог", roaster.coffeeProductsCount, Modifier.weight(1f))
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun ExpandedRoasterCardContent(
-    roaster: CatalogItem,
-    details: RoasterDetails?,
-    isFavorite: Boolean,
-    isFavoriteLoading: Boolean,
-    onToggleFavorite: (() -> Unit)?,
-    compact: Boolean,
 ) {
     val photo = roaster.photoUrl?.takeIf(String::isNotBlank)
         ?: details?.photos?.firstOrNull()?.fullUrl?.takeIf(String::isNotBlank)
-    val padding = if (compact) 8.dp else CpDimens.spacing4
-    Column(Modifier.fillMaxWidth()) {
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(padding),
-            verticalAlignment = Alignment.Top,
-            horizontalArrangement = Arrangement.spacedBy(if (compact) 8.dp else CpDimens.spacing3),
+    val description = roaster.description?.takeIf(String::isNotBlank)
+        ?: details?.about?.takeIf(String::isNotBlank)
+    BoxWithConstraints(modifier.fillMaxWidth()) {
+        val exactHeight = if (constraints.hasBoundedHeight && constraints.minHeight == constraints.maxHeight) maxHeight else null
+        Card(
+            modifier = Modifier.fillMaxWidth()
+                .clickable(enabled = roaster.address?.slug?.isNotBlank() == true, onClick = onClick),
+            shape = RoundedCornerShape(CpDimens.radiusXl),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+            border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
         ) {
-            Box(
-                modifier = Modifier.width(if (compact) 48.dp else 80.dp).height(if (compact) 80.dp else 112.dp).clip(RoundedCornerShape(CpDimens.radiusMd))
-                    .background(if (photo != null) Color.White else MaterialTheme.colorScheme.surfaceVariant),
-                contentAlignment = Alignment.Center,
-            ) {
-                if (photo != null) CoffeeShopImage(
-                    imageUrl = photo, contentDescription = "Логотип ${roaster.name}",
-                    contentScale = ContentScale.Fit, modifier = Modifier.fillMaxSize().padding(if (compact) 4.dp else 8.dp),
-                    placeholderLabelSize = 6.sp,
-                ) else Icon(
-                    CpIcons.Factory, contentDescription = null,
-                    modifier = Modifier.size(if (compact) 24.dp else 36.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
+            Layout(
+                modifier = Modifier.fillMaxWidth()
+                    .then(if (exactHeight != null) Modifier.height(exactHeight) else Modifier)
+                    .padding(CpDimens.spacing3),
+                content = {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.Top,
+                        horizontalArrangement = Arrangement.spacedBy(CpDimens.spacing3),
+                    ) {
+                        Box(
+                            modifier = Modifier.size(64.dp).clip(RoundedCornerShape(CpDimens.radiusMd))
+                                .background(if (photo != null) Color.White else MaterialTheme.colorScheme.surfaceVariant),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            if (photo != null) CoffeeShopImage(
+                                imageUrl = photo, contentDescription = "Логотип ${roaster.name}",
+                                contentScale = ContentScale.Fit, placeholderLabelSize = 6.sp,
+                                modifier = Modifier.fillMaxSize(),
+                            ) else Icon(CpIcons.Factory, null, Modifier.size(28.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                        Box(Modifier.weight(1f)) {
+                            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                                Text(
+                                    roaster.name, modifier = Modifier.fillMaxWidth().padding(end = 36.dp),
+                                    style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold,
+                                    maxLines = 1, overflow = TextOverflow.Ellipsis,
+                                )
+                                if (description != null) Text(
+                                    description,
+                                    style = MaterialTheme.typography.bodySmall.copy(fontSize = 11.sp, lineHeight = 13.sp),
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    maxLines = 3, overflow = TextOverflow.Ellipsis,
+                                )
+                            }
+                            Box(Modifier.align(Alignment.TopEnd).offset(x = 8.dp, y = (-12).dp)) {
+                                CatalogFavoriteControl(
+                                    isFavorite = isFavorite, onClick = onToggleFavorite,
+                                    enabled = !isFavoriteLoading && roaster.id.isNotBlank(),
+                                )
+                            }
+                        }
+                    }
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    ) {
+                        RoasterStat(CpIcons.Coffee, "Кофейни", roaster.coffeeShopsCount, Modifier.weight(1f))
+                        VerticalDivider(Modifier.height(20.dp), color = MaterialTheme.colorScheme.outlineVariant)
+                        RoasterStat(CpIcons.CoffeeBean, "Каталог", roaster.coffeeProductsCount, Modifier.weight(1f))
+                    }
+                },
+            ) { measurables, constraints ->
+                // Reserve the footer before measuring the flexible summary. It remains
+                // visible when the carousel supplies exactly half a café card's height.
+                val footer = measurables[1].measure(constraints.copy(minHeight = 0, maxHeight = Constraints.Infinity))
+                val gap = CpDimens.spacing2.roundToPx()
+                val summaryHeight = if (constraints.hasBoundedHeight) {
+                    (constraints.maxHeight - footer.height - gap).coerceAtLeast(0)
+                } else Constraints.Infinity
+                val summary = measurables[0].measure(constraints.copy(minHeight = 0, maxHeight = summaryHeight))
+                val height = constraints.constrainHeight(summary.height + gap + footer.height)
+                layout(constraints.maxWidth, height) {
+                    summary.placeRelative(0, 0)
+                    footer.placeRelative(0, height - footer.height)
+                }
             }
-            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(if (compact) 4.dp else CpDimens.spacing2)) {
-                Text(
-                    roaster.name, style = MaterialTheme.typography.titleMedium,
-                    fontSize = if (compact) 14.sp else MaterialTheme.typography.titleMedium.fontSize,
-                    lineHeight = if (compact) 18.sp else MaterialTheme.typography.titleMedium.lineHeight,
-                    fontWeight = FontWeight.Bold,
-                    maxLines = 2, overflow = TextOverflow.Ellipsis,
-                )
-            }
-        }
-        (roaster.description?.takeIf(String::isNotBlank) ?: details?.about?.takeIf(String::isNotBlank))?.let { description ->
-            Text(
-                description,
-                modifier = Modifier.fillMaxWidth().padding(start = padding, end = padding, bottom = padding),
-                style = MaterialTheme.typography.bodySmall,
-                fontSize = if (compact) 10.sp else MaterialTheme.typography.bodySmall.fontSize,
-                lineHeight = if (compact) 14.sp else MaterialTheme.typography.bodySmall.lineHeight,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = if (compact) 6 else 8,
-                overflow = TextOverflow.Ellipsis,
-            )
-        }
-        Spacer(Modifier.weight(1f))
-        HorizontalDivider(Modifier.padding(horizontal = padding), color = MaterialTheme.colorScheme.outlineVariant)
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = if (compact) 8.dp else CpDimens.spacing3, vertical = CpDimens.spacing2),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(if (compact) 4.dp else CpDimens.spacing2),
-        ) {
-            ExpandedRoasterStat(CpIcons.Coffee, "Кофейни", roaster.coffeeShopsCount, Modifier.weight(1f), compact)
-            ExpandedRoasterStat(CpIcons.CoffeeBean, "Каталог", roaster.coffeeProductsCount, Modifier.weight(1f), compact)
-            CatalogFavoriteControl(
-                isFavorite = isFavorite, onClick = onToggleFavorite,
-                enabled = !isFavoriteLoading && roaster.id.isNotBlank(),
-                compact = compact,
-            )
-        }
-    }
-}
-
-@Composable
-private fun ExpandedRoasterStat(icon: ImageVector, label: String, count: Int, modifier: Modifier, compact: Boolean) {
-    Row(
-        modifier = modifier.semantics(mergeDescendants = true) {},
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(CpDimens.spacing1),
-    ) {
-        Icon(icon, null, Modifier.size(if (compact) 12.dp else 18.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
-        Column(Modifier.weight(1f)) {
-            Text(roasterCountLabel(count), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold,
-                fontSize = if (compact) 11.sp else MaterialTheme.typography.titleSmall.fontSize,
-                lineHeight = if (compact) 14.sp else MaterialTheme.typography.titleSmall.lineHeight)
-            Text(
-                label, style = MaterialTheme.typography.labelSmall.copy(fontSize = if (compact) 9.sp else 10.sp),
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 1, overflow = TextOverflow.Ellipsis,
-            )
         }
     }
 }
