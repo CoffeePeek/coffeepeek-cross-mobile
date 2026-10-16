@@ -2,47 +2,29 @@ package com.coffeepeek.admin.base
 
 import androidx.lifecycle.ViewModel
 import coffeepeek.composeapp.generated.resources.Res
-import coffeepeek.composeapp.generated.resources.email_no_exist
 import coffeepeek.composeapp.generated.resources.maybe_later
-import com.coffeepeek.admin.ui.Navigator
 import com.coffeepeek.api.utils.ApiException
 import com.coffeepeek.admin.utils.ErrorHandler
 import com.coffeepeek.admin.utils.LoadingHandler
-import com.coffeepeek.admin.utils.handleError
 import com.coffeepeek.domain.model.Session
 import com.coffeepeek.domain.repository.SessionRepository
 import io.ktor.utils.io.core.Closeable
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.getString
 
+/** Legacy app ViewModel base; migrated features use their own lifecycle-owned state. */
 abstract class BaseViewModel : ViewModel(), Closeable {
-
-
     protected val workScope = CoroutineScope(Dispatchers.Default + SupervisorJob())
 
     init {
         addCloseable(this)
     }
-
-    override fun onCleared() {
-        workScope.cancel()
-        super.onCleared()
-    }
-
-    fun <T> Flow<T>.stateHere(
-        initialValue: T,
-        started: SharingStarted = SharingStarted.Eagerly,
-    ) = this.stateIn(workScope, started, initialValue)
-
-    protected fun <T> Result<T>.handleError(): Result<T> = handleError()
 
     /** Возвращает сессию или сбрасывает её и закрывает доступ к защищённым экранам. */
     protected suspend fun requireAuthSession(sessionRepository: SessionRepository): Session? {
@@ -55,7 +37,8 @@ abstract class BaseViewModel : ViewModel(), Closeable {
     }
 
     /**
-     * Универсальный метод для выполнения сетевых запросов.
+     * Временный обработчик запросов старых экранов входа и регистрации.
+     * Отмена корутины не является ошибкой для UI и не показывается пользователю.
      * @param errorMessage Текст ошибки. Если null — выведется дефолтная ошибка
      * @param onSuccess Лямбда, которая выполнится при успехе
      * @param onError Локальный обработчик ошибки. Если задан, глобальное окно не показывается
@@ -70,15 +53,12 @@ abstract class BaseViewModel : ViewModel(), Closeable {
         workScope.launch {
             try {
                 LoadingHandler.showLoading()
-
                 val result = request()
-
                 LoadingHandler.clearLoading()
                 onSuccess(result)
-
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
-                LoadingHandler.clearLoading()
-
                 if (onError != null) {
                     onError(e)
                     return@launch
@@ -90,6 +70,8 @@ abstract class BaseViewModel : ViewModel(), Closeable {
                 } ?: getString(errorMessage ?: Res.string.maybe_later)
 
                 ErrorHandler.showError(messageToShow)
+            } finally {
+                LoadingHandler.clearLoading()
             }
         }
     }
@@ -97,5 +79,4 @@ abstract class BaseViewModel : ViewModel(), Closeable {
     override fun close() {
         workScope.cancel()
     }
-
 }

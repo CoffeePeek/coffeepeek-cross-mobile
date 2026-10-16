@@ -19,6 +19,32 @@ import kotlinx.coroutines.withTimeout
 import kotlin.test.*
 
 class HomeCheckInEditorTest {
+    @Test fun lateDetailAfterCloseCannotReopenTheCardOrEditor() = runBlocking {
+        val started = CompletableDeferred<Unit>()
+        val gate = CompletableDeferred<Unit>()
+        val finished = CompletableDeferred<Unit>()
+        val delegate = EditorRepository()
+        val repository = object : HomeCheckInRepository by delegate {
+            override suspend fun detail(id: String) = withContext(NonCancellable) {
+                started.complete(Unit)
+                gate.await()
+                delegate.detail(id).also { finished.complete(Unit) }
+            }
+        }
+        val vm = HomeCheckInViewModel(repository, EditorCoffeePicker(), BrewMethodCatalog { Result.success(emptyList()) })
+        try {
+            vm.open("entry", editOnLoad = true)
+            withTimeout(2_000) { started.await() }
+            vm.closeDetail()
+            gate.complete(Unit)
+            withTimeout(2_000) { finished.await() }
+            kotlinx.coroutines.delay(50)
+            assertNull(vm.state.value.selected)
+            assertFalse(vm.state.value.editing)
+            assertFalse(vm.state.value.detailLoading)
+        } finally { gate.complete(Unit); vm.close() }
+    }
+
     private val method = BrewMethodOption("hario-v60", "Hario V60")
     private val catalog = BrewMethodCatalog { Result.success(listOf(method)) }
 

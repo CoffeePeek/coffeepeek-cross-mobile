@@ -29,15 +29,19 @@ class CoffeePeekClient(
     cacheFolderPath: String,
     private val debug: Boolean,
     private val getToken: () -> AuthResp?,
-    private val saveToken: (AuthResp?) -> Unit,
+    private val saveToken: suspend (AuthResp?) -> Unit,
+    private val replaceToken: (suspend (AuthResp, AuthResp?) -> Boolean)? = null,
 ) {
     var requestObserver: RequestObserver? = null
     private val baseUrl = normalizeBaseUrl(url)
 
     private fun resolveTokens(): AuthResp? = getToken()
 
-    private fun persistTokens(tokens: AuthResp?) {
+    private suspend fun persistTokens(expected: AuthResp, tokens: AuthResp?): Boolean {
+        replaceToken?.let { return it(expected, tokens) }
+        if (resolveTokens() != expected) return false
         saveToken(tokens)
+        return true
     }
 
     val plainClient: HttpClient = createClient {

@@ -8,6 +8,8 @@ import com.coffeepeek.api.model.response.AuthResp
 import com.coffeepeek.api.model.response.AppleLoginChallengeResp
 import com.coffeepeek.api.model.request.AppleLoginReq
 import com.coffeepeek.api.utils.ApiException
+import com.coffeepeek.api.utils.requestResult
+import com.coffeepeek.core.network.RefreshRejectedException
 import com.coffeepeek.api.utils.deleteResult
 import com.coffeepeek.api.utils.extractRefreshToken
 import com.coffeepeek.api.utils.postResult
@@ -27,7 +29,7 @@ class AuthService(
 ) {
 
     suspend fun login(email: String, password: String): Result<AuthResp> =
-        runCatching {
+        requestResult {
             val response = refreshClient.postResult("/api/Tokens") {
                 setJsonBody(LoginReq(email.trim().lowercase(), password))
             }.getOrThrow()
@@ -45,7 +47,7 @@ class AuthService(
         }
 
     suspend fun googleLogin(idToken: String): Result<AuthResp> =
-        runCatching {
+        requestResult {
             val response = refreshClient.postResult("/api/Tokens/google/login") {
                 setJsonBody(GoogleLoginReq(idToken))
             }.getOrThrow()
@@ -62,14 +64,14 @@ class AuthService(
             )
         }
 
-    suspend fun beginAppleLogin(): Result<AppleLoginChallengeResp> = runCatching {
+    suspend fun beginAppleLogin(): Result<AppleLoginChallengeResp> = requestResult {
         val response = refreshClient.postResult("/api/Tokens/apple/challenge").getOrThrow()
             .body<ApiResponse<AppleLoginChallengeResp>>()
         if (!response.isSuccess || response.data == null) throw ApiException(response.message)
         response.data
     }
 
-    suspend fun appleLogin(challengeId: String, idToken: String): Result<AuthResp> = runCatching {
+    suspend fun appleLogin(challengeId: String, idToken: String): Result<AuthResp> = requestResult {
         val response = refreshClient.postResult("/api/Tokens/apple/login") {
             setJsonBody(AppleLoginReq(challengeId, idToken))
         }.getOrThrow().body<ApiResponse<AuthResp>>()
@@ -81,7 +83,7 @@ class AuthService(
     }
 
     suspend fun register(userName: String, email: String, password: String): Result<Unit> =
-        runCatching {
+        requestResult {
             val response = refreshClient.postResult("/api/Users") {
                 setJsonBody(RegistrationReq(email.trim().lowercase(), password, userName))
             }.getOrThrow()
@@ -93,7 +95,7 @@ class AuthService(
         }
 
     suspend fun isEmailTaken(email: String): Result<Boolean> =
-        runCatching {
+        requestResult {
             val response = refreshClient.get("/api/Users/exists") {
                 parameter("email", email.trim().lowercase())
             }
@@ -107,7 +109,7 @@ class AuthService(
         }
 
     suspend fun refresh(refreshToken: String?) =
-        runCatching {
+        requestResult {
             val token = refreshToken?.takeIf { it.isNotBlank() }
                 ?: throw ApiException("Refresh token отсутствует")
 
@@ -116,7 +118,8 @@ class AuthService(
             }.getOrThrow()
 
             if (!response.status.isSuccess()) {
-                throw ApiException("Refresh failed (${response.status.value})")
+                if (response.status.value in setOf(400, 401, 403)) throw RefreshRejectedException()
+                throw ApiException("Refresh temporarily failed (${response.status.value})")
             }
 
             val apiResponse = response.body<ApiResponse<AuthResp>>()
@@ -136,7 +139,7 @@ class AuthService(
         }
 
     suspend fun logout(refreshToken: String?) =
-        runCatching {
+        requestResult {
             val response = client.deleteResult("/api/Tokens") {
                 refreshToken?.takeIf { it.isNotBlank() }?.let { cookie("refreshToken", it) }
             }.getOrThrow()

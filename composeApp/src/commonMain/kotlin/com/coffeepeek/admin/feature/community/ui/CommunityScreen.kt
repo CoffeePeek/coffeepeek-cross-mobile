@@ -47,6 +47,7 @@ fun CommunityScreen(onCreateCheckIn: () -> Unit) {
         if (homeEditorOpened) { homeEditorOpened = false; vm.refresh() }
     }
 
+    LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { vm.onScreenResumed() }
     LaunchedEffect(state.sessionGeneration) {
         if (displayedGeneration != state.sessionGeneration) {
             preview = null

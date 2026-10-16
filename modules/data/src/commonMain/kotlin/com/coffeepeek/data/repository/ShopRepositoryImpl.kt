@@ -1,5 +1,6 @@
 package com.coffeepeek.data.repository
 
+import com.coffeepeek.api.utils.requestResult
 import com.coffeepeek.domain.model.ConsumedDrinkOption
 
 import com.coffeepeek.api.model.request.CreateShopContactReq
@@ -71,7 +72,7 @@ class ShopRepositoryImpl(
         }
     }
 
-    private suspend fun fetchCatalogsFromApi(): Result<ShopCatalogs> = runCatching {
+    private suspend fun fetchCatalogsFromApi(): Result<ShopCatalogs> = requestResult {
         coroutineScope {
             val cities      = async { shopApiService.getCities().getOrThrow() }
             val beans       = async { shopApiService.getBeans().getOrThrow() }
@@ -194,7 +195,7 @@ class ShopRepositoryImpl(
         }
     }
 
-    override suspend fun getShopDetails(id: String): Result<CoffeeShopDetails> = runCatching {
+    override suspend fun getShopDetails(id: String): Result<CoffeeShopDetails> = requestResult {
         coroutineScope {
             val detailsDeferred = async { shopApiService.getShopDetails(id).getOrThrow() }
             val drinksDeferred = async { getMenuDrinks().getOrNull() }
@@ -290,7 +291,7 @@ class ShopRepositoryImpl(
             )
         }
 
-    override suspend fun createShop(input: CreateShopInput): Result<Unit> = runCatching {
+    override suspend fun createShop(input: CreateShopInput): Result<Unit> = requestResult {
         val (uploadedPhotos, uploadedMenuPhotos) = coroutineScope {
             val shopPhotos = async { photoRepository.uploadShopPhotos(input.photos).getOrThrow() }
             val menuPhotos = async { photoRepository.uploadMenuPhotos(input.menuPhotos.take(4)).getOrThrow() }

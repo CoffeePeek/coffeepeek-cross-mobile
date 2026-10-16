@@ -1,5 +1,6 @@
 package com.coffeepeek.data.repository
 
+import com.coffeepeek.api.utils.requestResult
 import com.coffeepeek.api.model.request.CreateRoasterSubmissionReq
 import com.coffeepeek.api.service.RoasterApiService
 import com.coffeepeek.api.model.response.shop.RoasterSummaryDto
@@ -119,7 +120,7 @@ class RoasterRepositoryImpl(
 
     override suspend fun submitRoaster(
         input: CreateRoasterInput,
-    ): Result<RoasterSubmissionResult> = runCatching {
+    ): Result<RoasterSubmissionResult> = requestResult {
         val uploadedPhotos = photoRepository.uploadRoasterPhotos(input.photos).getOrThrow()
         val result = roasterApiService.submitRoaster(
             CreateRoasterSubmissionReq(

@@ -1,5 +1,13 @@
 package com.coffeepeek.admin.ui.screen.checkins
 
+import com.coffeepeek.admin.utils.datePickerMillisToUtcIsoInstant
+import kotlin.time.Instant
+import kotlin.time.ExperimentalTime
+
+@OptIn(ExperimentalTime::class)
+private fun localCalendarBoundary(date: String): String =
+    datePickerMillisToUtcIsoInstant(Instant.parse("${date}T00:00:00Z").toEpochMilliseconds())
+
 data class CalendarMonth(val year: Int, val month: Int) {
     init {
         require(month in 1..12)
@@ -15,8 +23,8 @@ data class CalendarMonth(val year: Int, val month: Int) {
 
     fun isoDate(day: Int): String = "$year-${month.twoDigits()}-${day.twoDigits()}"
 
-    val fromUtc: String get() = "${isoDate(1)}T00:00:00Z"
-    val toUtc: String get() = "${plusMonths(1).isoDate(1)}T00:00:00Z"
+    val fromUtc: String get() = localCalendarBoundary(isoDate(1))
+    val toUtc: String get() = localCalendarBoundary(plusMonths(1).isoDate(1))
 }
 
 internal fun calendarMonthFromIsoDate(value: String): CalendarMonth? {

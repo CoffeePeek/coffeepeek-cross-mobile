@@ -1,10 +1,13 @@
 package com.coffeepeek.admin.ui.screen.profile
 
+import coffeepeek.composeapp.generated.resources.Res
+import coffeepeek.composeapp.generated.resources.local_data_cleanup_error
 import com.coffeepeek.admin.auth.GoogleAuth
 import com.coffeepeek.admin.settings.CityPreference
 import com.coffeepeek.admin.settings.ReviewDraftStore
 import com.coffeepeek.admin.theme.ThemeManager
 import com.coffeepeek.admin.theme.ThemeMode
+import com.coffeepeek.admin.utils.ErrorHandler
 import com.coffeepeek.domain.model.City
 import com.coffeepeek.domain.model.UserProfile
 import com.coffeepeek.domain.repository.AuthRepository
@@ -21,6 +24,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.getString
 
 data class ProfileUiState(
     val isLoggedIn: Boolean = false,
@@ -119,7 +123,12 @@ class ProfileViewModel(
     fun logout() {
         resetProfileState()
         workScope.launch {
-            authRepository.logout()
+            authRepository.logout().onFailure { error ->
+                ErrorHandler.showError(
+                    error.message?.takeIf(String::isNotBlank)
+                        ?: getString(Res.string.local_data_cleanup_error),
+                )
+            }
             GoogleAuth.signOut()
             // Drafts belong to the signed-in user; don't leak them into the next account.
             reviewDrafts.clearAll()

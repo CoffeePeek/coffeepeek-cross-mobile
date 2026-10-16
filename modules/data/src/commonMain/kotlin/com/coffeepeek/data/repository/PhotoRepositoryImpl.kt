@@ -1,5 +1,6 @@
 package com.coffeepeek.data.repository
 
+import com.coffeepeek.api.utils.requestResult
 import com.coffeepeek.api.model.request.PhotoRequestDto
 import com.coffeepeek.api.model.request.UploadedPhotoReq
 import com.coffeepeek.api.model.response.GenerateUploadUrlDto
@@ -41,8 +42,8 @@ class PhotoRepositoryImpl(
         photos: List<PendingPhotoUpload>,
         tagging: String? = null,
         requestUrls: suspend (List<PhotoRequestDto>) -> List<GenerateUploadUrlDto>,
-    ): Result<List<UploadedPhotoMeta>> = runCatching {
-        if (photos.isEmpty()) return@runCatching emptyList()
+    ): Result<List<UploadedPhotoMeta>> = requestResult {
+        if (photos.isEmpty()) return@requestResult emptyList()
 
         val requests = photos.map { photo ->
             PhotoRequestDto(
@@ -79,7 +80,7 @@ class PhotoRepositoryImpl(
     private suspend fun uploadSinglePhoto(
         requestUploadUrl: suspend (PhotoRequestDto) -> com.coffeepeek.api.model.response.GenerateUploadUrlDto,
         photo: PendingPhotoUpload,
-    ): Result<UploadedPhotoMeta> = runCatching {
+    ): Result<UploadedPhotoMeta> = requestResult {
         val request = PhotoRequestDto(
             sizeBytes = photo.bytes.size,
             fileName = photo.fileName,

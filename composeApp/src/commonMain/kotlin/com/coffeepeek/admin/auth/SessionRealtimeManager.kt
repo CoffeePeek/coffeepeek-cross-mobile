@@ -1,5 +1,7 @@
 package com.coffeepeek.admin.auth
 
+import coffeepeek.composeapp.generated.resources.Res
+import coffeepeek.composeapp.generated.resources.local_data_cleanup_error
 import com.coffeepeek.admin.utils.ErrorHandler
 import com.coffeepeek.admin.ui.Navigator
 import com.coffeepeek.data.session.UserSessionCleaner
@@ -40,6 +42,7 @@ import kotlinx.serialization.json.intOrNull
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
+import org.jetbrains.compose.resources.getString
 
 private const val DEFAULT_REALTIME_SESSION_URL = "https://api.coffeepeek.by/realtime/session"
 private const val FORCE_LOGOUT_METHOD = "ForceLogout"
@@ -148,12 +151,23 @@ class SessionRealtimeManager(
             ?.let { runCatching { json.decodeFromJsonElement<ForceLogoutPayload>(it) }.getOrNull() }
         val reason = payload?.reason?.trim()
         activeAccessToken = null
-        userSessionCleaner.clearLocalUserData()
+        val cleanupFailure = try {
+            userSessionCleaner.clearLocalUserData()
+            null
+        } catch (cancellation: kotlinx.coroutines.CancellationException) {
+            throw cancellation
+        } catch (error: Exception) {
+            error
+        }
         if (reason == "user_deleted") {
             GoogleAuth.signOut()
             Navigator.openLoginAfterSessionEnd()
         }
-        ErrorHandler.showError(forceLogoutMessage(reason))
+        val message = forceLogoutMessage(reason)
+        ErrorHandler.showError(
+            if (cleanupFailure == null) message
+            else "$message ${getString(Res.string.local_data_cleanup_error)}.",
+        )
     }
 
     fun close() {

@@ -9,5 +9,7 @@ class SessionTokens(val accessToken: String, val refreshToken: String?) {
 interface BearerSession {
     suspend fun load(): SessionTokens?
     suspend fun save(tokens: SessionTokens?)
+    /** Atomically compare and replace the current credential snapshot. */
+    suspend fun replace(expected: SessionTokens, tokens: SessionTokens?): Boolean
     suspend fun refresh(refreshToken: String): Result<SessionTokens>
 }

@@ -1,4 +1,11 @@
 <resources>
+    <string name="history_session_unavailable">Не удалось проверить сессию. История аккаунта скрыта; попробуйте ещё раз.</string>
+    <string name="history_session_retry">Повторить</string>
+    <string name="history_session_back">Назад</string>
+    <string name="shop_session_unavailable">Не удалось проверить сессию. Данные аккаунта скрыты; попробуйте ещё раз.</string>
+    <string name="shop_session_retry">Повторить</string>
+    <string name="shop_share_named">Нашёл кофейню «%1$s» в CoffeePeek — загляни: %2$s</string>
+    <string name="shop_phone_copied">Номер скопирован</string>
     <string name="app_name">CoffeePeek</string>
     <string name="search_shops_and_roasters_placeholder">Поиск кофеен и обжарщиков…</string>
     <string name="search_roasters_placeholder">Поиск обжарщиков…</string>
@@ -64,6 +71,7 @@
     <string name="checkin_public_title">Публичный чекин</string>
     <string name="checkin_public_hint">Появится в ленте после модерации</string>
     <string name="checkin_error_note_required">Добавьте заметку о визите</string>
+    <string name="checkin_error_shop_address">Не удалось определить адрес кофейни</string>
     <string name="checkin_submit">Сохранить чекин</string>
     <string name="checkin_sheet_title">Чекин</string>
     <string name="checkin_rating_coffee">Кофе</string>
@@ -98,4 +106,6 @@
     <string name="delete_account_pending_wait_hint">После подтверждения вы автоматически выйдете из приложения.</string>
     <string name="delete_account_pending_resend">Отправить письмо ещё раз</string>
     <string name="delete_account_pending_resend_wait">Повторная отправка пока недоступна</string>
+    <string name="local_data_cleanup_error">Локальные данные не удалось полностью очистить</string>
+    <string name="shop_menu_gallery_open">Фотографии меню</string>
 </resources>

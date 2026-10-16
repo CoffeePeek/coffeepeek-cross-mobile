@@ -1,4 +1,6 @@
 import com.coffeepeek.buildlogic.module
+import com.coffeepeek.buildlogic.VerifyApkRuntimeClassesTask
+import com.android.build.api.artifact.SingleArtifact
 import com.coffeepeek.config.Config
 import com.coffeepeek.config.PrintValueTask
 import org.gradle.api.provider.Provider
@@ -32,26 +34,42 @@ kotlin {
 
     sourceSets {
         androidMain.dependencies {
+            implementation(project(module.feature.favorites.api))
+            implementation(project(module.feature.favorites.data))
+            implementation(project(module.feature.favorites.impl))
+            implementation(project(module.feature.shopReport.api))
+            implementation(project(module.feature.shopReport.data))
+            implementation(project(module.feature.shopReport.impl))
+            implementation(project(module.feature.shop.api))
+            implementation(project(module.feature.shop.domain))
+            implementation(project(module.feature.shop.data))
+            implementation(project(module.feature.shop.impl))
+            implementation(project(module.core.coroutines))
+            implementation(project(module.core.designSystem))
             implementation(compose.preview)
             implementation(libs.androidx.activity.compose)
+            implementation(libs.androidx.concurrent.futures)
             implementation(libs.androidx.appcompat)
             implementation("androidx.core:core-splashscreen:1.0.1")
             implementation("androidx.exifinterface:exifinterface:1.4.1")
             implementation(libs.maplibre.android)
             implementation("com.google.android.gms:play-services-auth:21.3.0")
             implementation("com.google.mediapipe:tasks-vision:0.10.35")
+            // Match Espresso's annotations under Android's consistent runtime/test resolution.
+            implementation(libs.errorprone.annotations)
             implementation("com.google.android.play:app-update:2.1.0")
             implementation("com.microsoft.signalr:signalr:10.0.9")
             implementation("org.slf4j:slf4j-nop:2.0.16")
         }
         commonMain.dependencies {
+            implementation(project(module.feature.favorites.domain))
             implementation(libs.posthog.kmp)
             implementation(project(module.legacy.domain))
             implementation(project(module.legacy.data))
             implementation(project(module.legacy.network))
             implementation(project(module.legacy.room))
             implementation(project(module.core.network))
-            implementation(project(module.features.homeCheckIn))
+            implementation(project(module.feature.homeCheckIn))
             implementation(compose.runtime)
             implementation(compose.foundation)
             implementation(compose.material3)
@@ -79,17 +97,19 @@ kotlin {
             implementation(libs.kotlinx.coroutines.test)
             implementation("io.ktor:ktor-client-mock:${libs.versions.ktor.get()}")
         }
+        androidUnitTest.dependencies {
+            implementation(libs.kotlinx.coroutines.test)
+        }
         androidInstrumentedTest.dependencies {
+            implementation(libs.kotlin.test)
+            implementation(libs.androidx.compose.ui.test.junit4)
+            implementation(libs.androidx.activity.compose)
+            implementation(libs.androidx.room.runtime)
             implementation(libs.androidx.testExt.junit)
             implementation(libs.androidx.test.runner)
-            implementation(libs.androidx.compose.ui.test.junit4)
             implementation(libs.androidx.espresso.core)
         }
     }
-}
-
-dependencies {
-    debugImplementation("androidx.compose.ui:ui-test-manifest:${libs.versions.androidx.composeUi.get()}")
 }
 
 val gitCommitCount: Provider<Int> = providers.exec {
@@ -158,7 +178,8 @@ val postHogProjectToken = providers.environmentVariable("POSTHOG_PROJECT_TOKEN")
 
 android {
     namespace = Config.APPLICATION_ID
-    compileSdk = Config.COMPILE_SDK
+    // Navigation 3 1.2.0 in the Android-only favorites feature requires API 37.
+    compileSdk = 37
 
     buildFeatures {
         buildConfig = true
@@ -224,4 +245,36 @@ android {
 
 dependencies {
     debugImplementation(compose.uiTooling)
+    // Plain Compose test host: no MainActivity startup/splash or real root navigation.
+    debugImplementation(libs.androidx.compose.ui.test.manifest)
+}
+
+// Debug variants are not minified: startup DI classes must exist as definitions in the APK.
+androidComponents {
+    onVariants(selector().withBuildType("debug")) { variant ->
+        val variantName = variant.name.replaceFirstChar { it.uppercaseChar() }
+        val verification = tasks.register<VerifyApkRuntimeClassesTask>("verify${variantName}RuntimeClasses") {
+            group = "verification"
+            description = "Checks startup class definitions inside the ${variant.name} APK."
+            apkDirectory.set(variant.artifacts.get(SingleArtifact.APK))
+            requiredClasses.set(listOf(
+                "com.coffeepeek.api.service.CheckInApiService",
+                "com.coffeepeek.api.CoffeePeekRepo",
+                "com.coffeepeek.data.di.DataModuleKt",
+                "com.coffeepeek.data.feature.favorites.ServerFavoritesRepository",
+                "com.coffeepeek.admin.di.favorites.ServerFavoriteShopsRepository",
+                "com.coffeepeek.admin.di.favorites.ServerFavoriteDrinksRepository",
+                "com.coffeepeek.admin.di.shop.AndroidShopDrinkPhotoProcessor",
+                "com.coffeepeek.admin.di.shop.ShopCheckInModuleKt",
+                "com.coffeepeek.admin.di.shop.AndroidShopCheckInFormRenderer",
+                "com.coffeepeek.admin.di.shop.AndroidSessionShopCheckInEntry",
+                "com.coffeepeek.admin.di.shop.AndroidShopCheckInSession",
+                "com.coffeepeek.feature.shop.api.ShopCheckInCreateEntry",
+                "com.coffeepeek.feature.shop.domain.repository.ShopCheckInRepository",
+                "com.coffeepeek.feature.shop.data.repository.ShopCheckInRepositoryFactoryKt",
+                "com.coffeepeek.feature.shop.impl.ShopCheckInCreateApiImplKt",
+            ))
+        }
+        tasks.matching { it.name == "assemble$variantName" }.configureEach { finalizedBy(verification) }
+    }
 }
