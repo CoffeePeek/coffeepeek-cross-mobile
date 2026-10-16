@@ -5,6 +5,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.admin.ui.component.DrinkCutoutImage
+import com.coffeepeek.admin.analytics.Analytics
+import com.coffeepeek.admin.analytics.AnalyticsOverlay
+import com.coffeepeek.admin.analytics.analyticsExposure
+import com.coffeepeek.admin.feature.checkin.api.CheckInFlowHandoff
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -49,6 +53,10 @@ internal class AndroidCheckInHistoryScreenRenderer(
         onOpenShop: (String) -> Unit, onCreateShop: () -> Unit) {
         val dateLabel = rememberCheckInDateLabel()
         Host(onBack) { host, session ->
+            val creation = remember(session) { HistoryCreationAnalytics {
+                session.lease.isCurrent() && session.lease.isLoggedIn
+            } }
+            DisposableEffect(creation) { onDispose { creation.cancelled() } }
             val home = if (session.lease.isLoggedIn) viewModel(key = "history-home-bridge") {
                 AndroidHistoryHomeBridge(session, homeEditors)
             } else null
@@ -60,7 +68,10 @@ internal class AndroidCheckInHistoryScreenRenderer(
             val generation by session.contentGeneration.collectAsStateWithLifecycle()
             Entry(session, dateLabel, onBack, onSignIn, onOpenShop,
                 { utcIsoToLocalDateTime(it).substringAfterLast(' ', "") },
-                { home?.open(it) }, onCreateShop, { home?.create() }, generation)
+                { home?.open(it) }, {
+                    creation.shop()?.let { CheckInFlowHandoff.tracker = it }
+                    onCreateShop()
+                }, { home?.create(creation.home()) }, generation, creation)
             home?.let { HistoryHomeOverlay(it, session::openPhoto) }
         }
     }
@@ -92,9 +103,17 @@ internal class AndroidCheckInHistoryScreenRenderer(
 
     @Composable private fun Entry(session: HistoryHostSession, formatDate: (String) -> String,
         onBack: () -> Unit, onSignIn: () -> Unit, onOpenShop: (String) -> Unit, formatTime: (String) -> String,
-        onOpenHome: (String) -> Unit, onCreateShop: () -> Unit, onCreateHome: () -> Unit, contentGeneration: Int) {
+        onOpenHome: (String) -> Unit, onCreateShop: () -> Unit, onCreateHome: () -> Unit, contentGeneration: Int,
+        creation: HistoryCreationAnalytics? = null) {
         val entry = remember(session) {
-            createCheckInHistoryEntry(session.lease.bind(repository), session.lease.bind(homeReader), calendar::snapshot, imageContent)
+            createCheckInHistoryEntry(session.lease.bind(repository), session.lease.bind(homeReader), calendar::snapshot, imageContent,
+                createButtonModifier = {
+                    val page = Analytics.service?.state?.collectAsState()?.value?.page ?: "other"
+                    Modifier.analyticsExposure("check_in", "global_create", page)
+                }, createPickerModifier = {
+                    val page = Analytics.service?.state?.collectAsState()?.value?.page ?: "other"
+                    Modifier.analyticsExposure("home_check_in", "check_in_type_picker", page)
+                }, modalContent = { content -> AnalyticsOverlay(content) })
         }
         entry.Content(sessionGeneration = session.generation, isLoggedIn = session.lease.isLoggedIn,
             formatCheckInDate = formatDate, formatCheckInTime = formatTime, contentGeneration = contentGeneration,
@@ -104,6 +123,8 @@ internal class AndroidCheckInHistoryScreenRenderer(
             onOpenPhoto = session::openPhoto,
             onOpenHome = { if (session.lease.isCurrent() && session.lease.isLoggedIn) onOpenHome(it) },
             onCreateShop = { if (session.lease.isCurrent() && session.lease.isLoggedIn) onCreateShop() },
-            onCreateHome = { if (session.lease.isCurrent() && session.lease.isLoggedIn) onCreateHome() })
+            onCreateHome = { if (session.lease.isCurrent() && session.lease.isLoggedIn) onCreateHome() },
+            onCreatePickerOpened = { if (session.lease.isCurrent()) creation?.opened() },
+            onCreatePickerCancelled = { if (session.lease.isCurrent()) creation?.cancelled() })
     }
 }

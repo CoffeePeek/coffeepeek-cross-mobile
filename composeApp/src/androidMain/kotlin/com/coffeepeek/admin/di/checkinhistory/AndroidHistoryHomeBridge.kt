@@ -7,6 +7,7 @@ import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import androidx.lifecycle.viewModelScope
 import com.coffeepeek.admin.feature.homecheckin.ui.HomeCheckInViewModel
+import com.coffeepeek.admin.analytics.CheckInTracker
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
@@ -29,9 +30,9 @@ internal class AndroidHistoryHomeBridge(
         editor.open(id, editOnLoad)
     }
 
-    fun create() {
+    fun create(tracker: CheckInTracker? = null) {
         if (!canReplace()) return
-        replaceEditor().create()
+        replaceEditor().create(tracker)
     }
 
     fun retry() { lastRequest?.let { open(it.first, it.second) } }
@@ -45,7 +46,9 @@ internal class AndroidHistoryHomeBridge(
     fun dismiss() {
         val editor = mutableEditor.value ?: return
         withEditor(editor) {
-            if (it.state.value.editing && it.state.value.selected != null) it.closeEditor() else clearEditor()
+            val wasEditing = it.state.value.editing
+            if (wasEditing) it.closeEditor()
+            if (!wasEditing || it.state.value.selected == null) clearEditor()
         }
     }
 

@@ -64,6 +64,24 @@ class HistoryScreenContractTest {
         }
     }
 
+    @Test fun personalAuthorAvatarUsesInjectedLoaderWithoutInventingProfileNavigation() {
+        for (dark in listOf(false, true)) {
+            val requested = java.util.concurrent.CopyOnWriteArraySet<String>()
+            render(dark) {
+                HistoryCheckInCard(previewHistoryCheckIn().copy(authorAvatarUrl = "issued-avatar"), "14 октября", {},
+                    imageContent = { url, modifier, scale ->
+                        assertEquals(androidx.compose.ui.layout.ContentScale.Crop, scale)
+                        requested += url
+                        Box(modifier)
+                    })
+            }.use {
+                compose.waitForIdle()
+                assertEquals(setOf("issued-avatar"), requested.toSet())
+                compose.onNodeWithText("Анна").assertHasNoClickAction()
+            }
+        }
+    }
+
     @Test fun guestNeverComposesPrivateNotesOrImagesEvenIfGivenOldState() {
         val actions = mutableListOf<CombinedHistoryAction>()
         var images = 0
@@ -226,10 +244,13 @@ class HistoryScreenContractTest {
         val homes = Homes()
         val opened = mutableListOf<String>()
         var created = 0
+        var pickerOpened = 0
+        var pickerCancelled = 0
         val entry = createCheckInHistoryEntry(FakeRepository(), homes, { FakeCalendar() }, { _, modifier, _ -> Box(modifier) })
         render {
             entry.Content(5, true, { it }, {}, {}, {}, { _, _ -> }, { "11:00" },
-                opened::add, {}, { created++ }, 8)
+                opened::add, {}, { created++ }, 8,
+                onCreatePickerOpened = { pickerOpened++ }, onCreatePickerCancelled = { pickerCancelled++ })
         }.use {
             scrollToText("Эфиопия")
             compose.onNodeWithText("Эфиопия").performClick()
@@ -239,6 +260,8 @@ class HistoryScreenContractTest {
             compose.onNodeWithText("Записать приготовление").performClick()
             compose.onNodeWithText("Продолжить").performClick()
             compose.waitUntil(5_000) { created == 1 }
+            assertEquals(1, pickerOpened)
+            assertEquals(0, pickerCancelled)
             compose.onNodeWithText("Где вы пили кофе?").assertDoesNotExist()
             assertEquals(2, homes.reads)
         }

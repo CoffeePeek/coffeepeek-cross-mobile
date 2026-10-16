@@ -15,6 +15,7 @@ import com.coffeepeek.admin.feature.homecheckin.ui.HomeDetailContent
 import com.coffeepeek.admin.feature.homecheckin.ui.HomeEditorContent
 import com.coffeepeek.admin.feature.homecheckin.ui.HomeMonth
 import com.coffeepeek.admin.ui.component.PlatformAlert
+import com.coffeepeek.admin.analytics.AnalyticsOverlay
 import com.coffeepeek.core.designsystem.component.CoffeePeekButton
 import com.coffeepeek.core.designsystem.component.CoffeePeekLoader
 import com.coffeepeek.core.designsystem.component.CoffeePeekSwipeDismissModalBottomSheet
@@ -29,22 +30,24 @@ internal fun HistoryHomeOverlay(bridge: AndroidHistoryHomeBridge, onPhoto: (List
     editor?.let { current ->
         key(current) {
             val state by current.state.collectAsStateWithLifecycle()
-            HistoryHomeOverlayContent(state, bridge::dismiss, bridge::retry,
-                onEdit = { bridge.withEditor(current) { it.edit() } },
-                onRequestDelete = { bridge.withEditor(current) { it.confirmDelete() } },
-                onCancelDelete = { bridge.withEditor(current) { it.cancelDelete() } },
-                onConfirmDelete = { bridge.withEditor(current) { it.delete() } },
-                onPhoto = { urls, index -> bridge.withEditor(current) { onPhoto(urls, index) } }) { modifier ->
-                HomeEditorContent(state,
-                    { draft -> bridge.withEditor(current) { it.updateDraft { draft } } },
-                    { query -> bridge.withEditor(current) { it.setCatalogQuery(query) } },
-                    { bridge.withEditor(current) { it.searchCatalog() } },
-                    { product -> bridge.withEditor(current) { it.selectCatalogProduct(product) } },
-                    { bridge.withEditor(current) { it.save() } }, bridge::dismiss, modifier,
-                    onRetryMethods = { bridge.withEditor(current) { it.loadBrewMethods() } },
-                    onSelectDrinkPhoto = { photo -> bridge.withEditor(current) { it.selectDrinkPhoto(photo) } },
-                    onRetryDrinkPhoto = { bridge.withEditor(current) { it.retryDrinkPhoto() } },
-                    onSkipDrinkPhoto = { bridge.withEditor(current) { it.skipDrinkPhoto() } })
+            AnalyticsOverlay {
+                HistoryHomeOverlayContent(state, bridge::dismiss, bridge::retry,
+                    onEdit = { bridge.withEditor(current) { it.edit() } },
+                    onRequestDelete = { bridge.withEditor(current) { it.confirmDelete() } },
+                    onCancelDelete = { bridge.withEditor(current) { it.cancelDelete() } },
+                    onConfirmDelete = { bridge.withEditor(current) { it.delete() } },
+                    onPhoto = { urls, index -> bridge.withEditor(current) { onPhoto(urls, index) } }) { modifier ->
+                    HomeEditorContent(state,
+                        { draft -> bridge.withEditor(current) { it.updateDraft { draft } } },
+                        { query -> bridge.withEditor(current) { it.setCatalogQuery(query) } },
+                        { bridge.withEditor(current) { it.searchCatalog() } },
+                        { product -> bridge.withEditor(current) { it.selectCatalogProduct(product) } },
+                        { bridge.withEditor(current) { it.save() } }, bridge::dismiss, modifier,
+                        onRetryMethods = { bridge.withEditor(current) { it.loadBrewMethods() } },
+                        onSelectDrinkPhoto = { photo -> bridge.withEditor(current) { it.selectDrinkPhoto(photo) } },
+                        onRetryDrinkPhoto = { bridge.withEditor(current) { it.retryDrinkPhoto() } },
+                        onSkipDrinkPhoto = { bridge.withEditor(current) { it.skipDrinkPhoto() } })
+                }
             }
         }
     }

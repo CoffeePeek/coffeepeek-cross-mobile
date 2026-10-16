@@ -32,6 +32,7 @@ class CheckInHistoryRepositoryTest {
             respond("""{"isSuccess":true,"data":{"totalCount":"41","items":[{
                 "id":"visit","shop":{"slug":"coffee","canonicalPath":"/coffee-shop/coffee"},
                 "author":null,"shopName":"Кофейня","username":"Анна","note":"Личная заметка",
+                "authorAvatarUrl":"/api/Users/owner/avatar?signature=issued",
                 "createdAt":"2026-10-07T10:00:00Z","visitedAt":"2026-10-07T09:00:00Z",
                 "rating":{"place":"4","service":5,"coffee":null},
                 "visibility":"Private","moderationState":"Rejected","contentRevision":"2",
@@ -50,6 +51,7 @@ class CheckInHistoryRepositoryTest {
             assertEquals(3, result.totalPages)
             assertTrue(result.hasMore)
             val entry = result.items.single()
+            assertEquals("https://api.example/api/Users/owner/avatar?signature=issued", entry.authorAvatarUrl)
             assertEquals("coffee", entry.shop?.slug)
             assertEquals("/coffee-shop/coffee", entry.shop?.canonicalPath)
             assertNull(entry.author)

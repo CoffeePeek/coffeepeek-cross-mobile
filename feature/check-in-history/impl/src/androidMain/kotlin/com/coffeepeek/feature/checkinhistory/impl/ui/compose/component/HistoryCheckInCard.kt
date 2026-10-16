@@ -28,7 +28,7 @@ internal fun HistoryCheckInCard(checkIn: PersonalCheckIn, dateLabel: String,
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)) {
         Column(Modifier.padding(CoffeePeekDimens.spacing4), verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing3)) {
-            HistoryCheckInHeader(checkIn.username, dateLabel)
+            HistoryCheckInHeader(checkIn.username, dateLabel, avatarUrl = checkIn.authorAvatarUrl, imageContent = imageContent)
             Text(shopTitle, Modifier.fillMaxWidth(),
                 style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold)
             checkIn.rating?.let { HistoryCheckInRating(it) }

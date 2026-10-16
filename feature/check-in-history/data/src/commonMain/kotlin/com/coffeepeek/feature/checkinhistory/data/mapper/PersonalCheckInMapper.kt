@@ -22,6 +22,7 @@ internal fun HistoryCheckInDto.toDomain(apiBaseUrl: String): PersonalCheckIn {
         shopName = shopName,
         author = author?.toDomain(),
         username = username,
+        authorAvatarUrl = authorAvatarUrl.resolveHistoryUrl(apiBaseUrl),
         note = text,
         createdAt = createdAtUtc,
         visitedAt = visitedAt,

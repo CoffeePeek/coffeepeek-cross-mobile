@@ -1,5 +1,45 @@
 # Combined personal history — current-main parity and next slice
 
+## Author and creation-flow code checkpoint — 2026-10-16
+
+Shop parent fixes retain server author avatars and navigate public headers only
+through canonical author.slug. The history child retains the avatar through its
+own DTO/domain/image slot. Personal history in main does not wire author-profile
+clicks; this screen intentionally does not invent one. The profile implementation
+itself remains main's implementation, not a new extracted feature.
+
+Creation-picker open/cancel notifications are account-scoped, deduplicated one-off
+events. Application composition owns the existing CheckInTracker and hands the
+same flow to the Shop picker or existing Home editor. No analytics SDK or account/
+record metadata enters the feature. Injected modifiers and modal wrappers retain
+main's visible-exposure, overlay, lifecycle and consent policy without copying
+that infrastructure into feature/core. Home dismissal reports cancellation while
+retaining edit → detail → close behavior and the pending-write dismissal guard.
+
+New regression coverage includes canonical/hidden authors, avatar URL retention,
+picker notifications, single-flow handoff, revocation, consent rejection and
+Home-field/cancel behavior without writes. New UI contracts are prepared in both
+themes; they must be run on the agreed Pixel 7 after code validation, not reported
+as executed based on compilation alone. The former 14-test emulator run below is
+dated evidence for the earlier checkpoint.
+
+### Pixel 7 acceptance sequence (not run at this checkpoint)
+
+1. Update Direct debug in place without clearing data; smoke-test startup and the
+   new profile → history route. Keep the current account and consent unchanged.
+2. Public Shop carousel/list: actual avatar, missing/failed-avatar fallback,
+   canonical profile/back, no route without author address, guest-hidden rows.
+3. Populated history: All/Shop/Home, month/day/reset, both cursors, retained errors,
+   cutouts/originals, personal avatars, detail/photo/back and light/dark appearance.
+4. Creation choice → Home fields/photo preparation → cancel; choice → Shop picker
+   → back. Confirm the same flow identity with sanitized diagnostics only.
+5. Real create/edit/delete and logout/account replacement need a safe test account
+   and explicit coordination. Do not manufacture real records to fill an empty
+   history or change analytics consent merely to make a test pass.
+
+Next feature selection remains blocked on these acceptance gates, not on creating
+more modules. iOS UI migration and broader parent analytics parity are separate.
+
 ## Latest main synchronization — 2026-10-16
 
 Main **0137ee7** is inherited through parent #43, including #96's server-backed
@@ -37,8 +77,8 @@ asserting the same destination callback. Tests use fake data, no production DI,
 backend requests, account changes or writes. Individual IDE preview rendering
 and populated physical-device visual parity remain unchecked.
 
-Remaining follow-up includes author-avatar/public-profile callback parity,
-migrated-feature analytics, populated-device/photo/date-edge journeys, safe
+The author and history-creation follow-up is implemented in the code checkpoint
+above. Remaining follow-up includes populated-device/photo/date-edge journeys, safe
 mutations and account/accessibility checks. Do not start a new feature checkpoint
 or call this migration release-complete while these gates remain.
 

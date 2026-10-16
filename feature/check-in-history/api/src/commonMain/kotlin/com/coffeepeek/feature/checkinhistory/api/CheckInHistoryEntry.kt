@@ -8,6 +8,8 @@ import androidx.compose.runtime.Composable
  * Content generation is a monotonic return/write signal; its initial value is a baseline.
  * Time formatting uses the caller's local-zone policy. Home/detail/create callbacks
  * delegate to the existing editor and shop picker; this read entry owns no writers.
+ * Picker callbacks are one-off lifecycle notifications for application-owned flow
+ * coordination; no analytics SDK, record or account data crosses this contract.
  */
 interface CheckInHistoryEntry {
     @Composable
@@ -24,5 +26,7 @@ interface CheckInHistoryEntry {
         onCreateShop: () -> Unit,
         onCreateHome: () -> Unit,
         contentGeneration: Int = 0,
+        onCreatePickerOpened: () -> Unit = {},
+        onCreatePickerCancelled: () -> Unit = {},
     )
 }

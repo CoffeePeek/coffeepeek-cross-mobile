@@ -751,6 +751,23 @@ class CombinedHistoryViewModelTest {
         assertEquals(1, events.last().sessionGeneration)
     }
 
+    @Test fun creationPickerNotificationsAreDeduplicatedAndAccountScoped() = runTest(dispatcher) {
+        val vm = vm()
+        val events = mutableListOf<CheckInHistoryEventEnvelope>()
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { vm.events.toList(events) }
+        runCurrent()
+        vm.onAction(CombinedHistoryAction.DismissCreate)
+        repeat(2) { vm.onAction(CombinedHistoryAction.ShowCreate) }; runCurrent()
+        repeat(2) { vm.onAction(CombinedHistoryAction.DismissCreate) }; runCurrent()
+        assertEquals(listOf<CheckInHistoryEvent>(CheckInHistoryEvent.CreatePickerOpened,
+            CheckInHistoryEvent.CreatePickerCancelled), events.map { it.event })
+        assertTrue(events.none { it.isDeliverableTo(1, true) || it.isDeliverableTo(0, false) })
+        vm.onAction(CombinedHistoryAction.ShowCreate); runCurrent()
+        vm.onAction(CombinedHistoryAction.Create(HistorySource.Shop)); runCurrent()
+        assertEquals(CheckInHistoryEvent.Create(HistorySource.Shop), events.last().event)
+        assertEquals(1, events.count { it.event == CheckInHistoryEvent.CreatePickerCancelled })
+    }
+
     @Test fun dateChangeAndLogoutClearDetailsAndRejectFutureSelection() = runTest(dispatcher) {
         val vm = vm()
         runCurrent()

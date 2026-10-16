@@ -89,9 +89,15 @@ internal class CombinedHistoryViewModel private constructor(
                 }
             }
             CombinedHistoryAction.ShowCreate -> if (currentState.isLoggedIn) {
-                updateState { copy(showCreate = true, selectedShopKey = null) }
+                if (!currentState.showCreate) {
+                    updateState { copy(showCreate = true, selectedShopKey = null) }
+                    emit(CheckInHistoryEvent.CreatePickerOpened)
+                }
             } else emit(CheckInHistoryEvent.SignIn)
-            CombinedHistoryAction.DismissCreate -> updateState { copy(showCreate = false) }
+            CombinedHistoryAction.DismissCreate -> if (currentState.showCreate) {
+                updateState { copy(showCreate = false) }
+                emit(CheckInHistoryEvent.CreatePickerCancelled)
+            }
             is CombinedHistoryAction.Create -> if (currentState.isLoggedIn && currentState.showCreate) {
                 updateState { copy(showCreate = false) }
                 emit(CheckInHistoryEvent.Create(action.source))

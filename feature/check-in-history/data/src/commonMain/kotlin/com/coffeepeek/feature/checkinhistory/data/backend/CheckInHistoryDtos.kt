@@ -25,6 +25,7 @@ internal data class HistoryCheckInDto(
     val author: HistoryAddressDto? = null,
     val shopName: String = "",
     val username: String = "",
+    val authorAvatarUrl: String? = null,
     @JsonNames("note") val text: String = "",
     @JsonNames("createdAt") val createdAtUtc: String = "",
     val visitedAt: String = "",

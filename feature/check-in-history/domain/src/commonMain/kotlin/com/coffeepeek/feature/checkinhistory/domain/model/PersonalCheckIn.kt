@@ -20,6 +20,7 @@ data class PersonalCheckIn(
     val rejectionReason: String?,
     val helpfulCount: Int,
     val isHelpfulByCurrentUser: Boolean,
+    val authorAvatarUrl: String? = null,
 ) {
     val effectiveVisitedAt: String get() = visitedAt.ifBlank { createdAt }
 }

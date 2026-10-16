@@ -23,13 +23,20 @@ fun createCheckInHistoryEntry(
     homeReader: HomeHistoryReader,
     calendarSnapshot: () -> CheckInHistoryCalendarSnapshot,
     imageContent: @Composable (url: String, modifier: Modifier, scale: ContentScale) -> Unit,
-): CheckInHistoryEntry = DefaultCheckInHistoryEntry(repository, homeReader, calendarSnapshot, imageContent)
+    createButtonModifier: @Composable () -> Modifier = { Modifier },
+    createPickerModifier: @Composable () -> Modifier = { Modifier },
+    modalContent: @Composable (content: @Composable () -> Unit) -> Unit = { it() },
+): CheckInHistoryEntry = DefaultCheckInHistoryEntry(repository, homeReader, calendarSnapshot, imageContent,
+    createButtonModifier, createPickerModifier, modalContent)
 
 private class DefaultCheckInHistoryEntry(
     private val repository: CheckInHistoryRepository,
     private val homeReader: HomeHistoryReader,
     private val calendarSnapshot: () -> CheckInHistoryCalendarSnapshot,
     private val imageContent: @Composable (String, Modifier, ContentScale) -> Unit,
+    private val createButtonModifier: @Composable () -> Modifier,
+    private val createPickerModifier: @Composable () -> Modifier,
+    private val modalContent: @Composable (@Composable () -> Unit) -> Unit,
 ) : CheckInHistoryEntry {
     @Composable
     override fun Content(
@@ -45,6 +52,8 @@ private class DefaultCheckInHistoryEntry(
         onCreateShop: () -> Unit,
         onCreateHome: () -> Unit,
         contentGeneration: Int,
+        onCreatePickerOpened: () -> Unit,
+        onCreatePickerCancelled: () -> Unit,
     ) {
         val provider = HistoryCalendarProvider {
             val snapshot = calendarSnapshot()
@@ -59,7 +68,8 @@ private class DefaultCheckInHistoryEntry(
         val viewModel = viewModel(key = "check-in-history") {
             CombinedHistoryViewModel(repository, homeReader, provider, isLoggedIn, sessionGeneration, contentGeneration)
         }
-        CheckInHistoryScreen(viewModel, sessionGeneration, isLoggedIn, contentGeneration, formatCheckInDate, formatCheckInTime, imageContent) { event ->
+        CheckInHistoryScreen(viewModel, sessionGeneration, isLoggedIn, contentGeneration, formatCheckInDate, formatCheckInTime,
+            imageContent, createButtonModifier(), createPickerModifier(), modalContent) { event ->
             when (event) {
                 CheckInHistoryEvent.Back -> onBack()
                 CheckInHistoryEvent.SignIn -> onSignIn()
@@ -67,6 +77,8 @@ private class DefaultCheckInHistoryEntry(
                 is CheckInHistoryEvent.OpenPhoto -> onOpenPhoto(event.urls, event.index)
                 is CheckInHistoryEvent.OpenHome -> onOpenHome(event.id)
                 is CheckInHistoryEvent.Create -> if (event.source == HistorySource.Shop) onCreateShop() else onCreateHome()
+                CheckInHistoryEvent.CreatePickerOpened -> onCreatePickerOpened()
+                CheckInHistoryEvent.CreatePickerCancelled -> onCreatePickerCancelled()
             }
         }
     }

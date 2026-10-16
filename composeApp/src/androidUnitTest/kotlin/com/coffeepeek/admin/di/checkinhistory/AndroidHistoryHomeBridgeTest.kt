@@ -8,6 +8,9 @@ import com.coffeepeek.admin.feature.catalog.api.BrewMethodOption
 import com.coffeepeek.admin.feature.coffee.api.CoffeePicker
 import com.coffeepeek.admin.feature.coffee.api.CoffeePickerItem
 import com.coffeepeek.domain.model.Session
+import com.coffeepeek.admin.analytics.analytics
+import com.coffeepeek.admin.analytics.MemoryConsent
+import com.coffeepeek.admin.analytics.AnalyticsConsent
 import com.coffeepeek.feature.homecheckin.domain.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.first
@@ -79,6 +82,32 @@ class AndroidHistoryHomeBridgeTest {
         assertEquals(0, repository.saves)
         bridge.dismiss()
         assertNull(bridge.editor.value)
+    }
+
+    @Test fun suppliedCreationTrackerSurvivesIntoHomeFieldsAndCancelsOnUserDismissWithoutAWrite() = runTest(dispatcher) {
+        val sdk = com.coffeepeek.admin.analytics.RecordingTransport()
+        val service = analytics(MemoryConsent(AnalyticsConsent.Accepted), sdk)
+        service.setForeground(true); service.restoreConsent(); service.syncIdentity("fixture-owner")
+        com.coffeepeek.admin.analytics.Analytics.install(service)
+        try {
+            val repository = Repository()
+            val (_, bridge) = bridge(repository)
+            val flow = HistoryCreationAnalytics { true }
+            flow.opened()
+            bridge.create(flow.home())
+            val editor = assertNotNull(bridge.editor.value)
+            editor.updateDraft { it.copy(text = "private fixture note") }
+            bridge.dismiss(); runCurrent()
+            assertNull(bridge.editor.value)
+            assertEquals(0, repository.saves)
+            assertEquals(1, sdk.events.count { it.first == "check_in_flow_started" })
+            assertEquals(1, sdk.events.count { it.first == "check_in_cancelled" })
+            val field = sdk.events.single { it.first == "check_in_field_interacted" }.second
+            assertEquals("global_create", field["source"])
+            assertEquals("home", field["kind"])
+            assertEquals("note", field["field"])
+            assertTrue(sdk.events.none { "private fixture note" in it.second.values })
+        } finally { service.setConsent(com.coffeepeek.admin.analytics.AnalyticsConsent.Declined) }
     }
 
     @Test fun existingHomePhotoPreparationIsInjectedAndCanBeSkippedWithoutAWrite() = runTest(dispatcher) {

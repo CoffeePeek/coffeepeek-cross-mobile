@@ -23,7 +23,9 @@ import org.jetbrains.compose.resources.stringResource
 @Composable
 internal fun CheckInHistoryScreen(viewModel: CombinedHistoryViewModel, sessionGeneration: Int,
     isLoggedIn: Boolean, contentGeneration: Int, formatCheckInDate: (String) -> String,
-    formatCheckInTime: (String) -> String, imageContent: HistoryImageContent, onEvent: (CheckInHistoryEvent) -> Unit) {
+    formatCheckInTime: (String) -> String, imageContent: HistoryImageContent,
+    createButtonModifier: Modifier, createPickerModifier: Modifier,
+    modalContent: @Composable (@Composable () -> Unit) -> Unit, onEvent: (CheckInHistoryEvent) -> Unit) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val currentEvent by rememberUpdatedState(onEvent)
     val generationNow by rememberUpdatedState(sessionGeneration)
@@ -39,29 +41,36 @@ internal fun CheckInHistoryScreen(viewModel: CombinedHistoryViewModel, sessionGe
     LaunchedEffect(viewModel, contentGeneration) { viewModel.onAction(CombinedHistoryAction.ContentChanged(contentGeneration)) }
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { viewModel.onAction(CombinedHistoryAction.Resume) }
     CheckInHistoryScreenContent(state.visibleTo(sessionGeneration, isLoggedIn), viewModel::onAction,
-        formatCheckInDate, formatCheckInTime, imageContent)
+        formatCheckInDate, formatCheckInTime, imageContent, createButtonModifier, createPickerModifier, modalContent)
 }
 
 @Composable
 internal fun CheckInHistoryScreenContent(state: CombinedHistoryState, onAction: (CombinedHistoryAction) -> Unit,
     formatCheckInDate: (String) -> String = { it.substringBefore('T') },
     formatCheckInTime: (String) -> String = { it.substringAfter('T').take(5) },
-    imageContent: HistoryImageContent? = null) {
+    imageContent: HistoryImageContent? = null, createButtonModifier: Modifier = Modifier,
+    createPickerModifier: Modifier = Modifier,
+    modalContent: @Composable (@Composable () -> Unit) -> Unit = { it() }) {
     key(state.sessionGeneration) {
         if (state.isLoggedIn) {
             state.selectedShop?.entry?.let { entry ->
-                HistoryShopDetailSheet(entry, formatCheckInDate(entry.createdAt),
-                    { onAction(CombinedHistoryAction.DismissShop) }, { onAction(CombinedHistoryAction.OpenSelectedShop) },
-                    { onAction(CombinedHistoryAction.OpenPhoto(it)) }, imageContent)
+                modalContent {
+                    HistoryShopDetailSheet(entry, formatCheckInDate(entry.createdAt),
+                        { onAction(CombinedHistoryAction.DismissShop) }, { onAction(CombinedHistoryAction.OpenSelectedShop) },
+                        { onAction(CombinedHistoryAction.OpenPhoto(it)) }, imageContent)
+                }
             }
-            if (state.showCreate) HistoryCreateSheet({ onAction(CombinedHistoryAction.DismissCreate) },
-                { onAction(CombinedHistoryAction.Create(it)) })
+            if (state.showCreate) modalContent {
+                HistoryCreateSheet({ onAction(CombinedHistoryAction.DismissCreate) },
+                    { onAction(CombinedHistoryAction.Create(it)) }, createPickerModifier)
+            }
         }
         Scaffold(modifier = Modifier.windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal)),
             topBar = { CoffeePeekTopBar(stringResource(Res.string.history_title), stringResource(Res.string.history_back),
                 onBack = { onAction(CombinedHistoryAction.Back) }) },
             floatingActionButton = {
                 if (state.isLoggedIn) FloatingActionButton({ onAction(CombinedHistoryAction.ShowCreate) }, shape = CircleShape,
+                    modifier = createButtonModifier,
                     containerColor = MaterialTheme.colorScheme.primary, contentColor = MaterialTheme.colorScheme.onPrimary) {
                     Icon(CoffeePeekIcons.Add, stringResource(Res.string.history_add), Modifier.size(28.dp))
                 }

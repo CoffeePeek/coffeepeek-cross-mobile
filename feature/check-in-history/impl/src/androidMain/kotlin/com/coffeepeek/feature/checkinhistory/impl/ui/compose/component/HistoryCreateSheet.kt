@@ -28,15 +28,15 @@ import com.coffeepeek.feature.checkinhistory.impl.ui.compose.model.HistorySource
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
-internal fun HistoryCreateSheet(onDismiss: () -> Unit, onCreate: (HistorySource) -> Unit) {
+internal fun HistoryCreateSheet(onDismiss: () -> Unit, onCreate: (HistorySource) -> Unit, modifier: Modifier = Modifier) {
     CoffeePeekSwipeDismissModalBottomSheet(onDismiss, stringResource(Res.string.history_close)) {
-        HistoryCreateContent(onCreate)
+        HistoryCreateContent(onCreate, modifier)
     }
 }
 
-@Composable private fun HistoryCreateContent(onCreate: (HistorySource) -> Unit) {
+@Composable private fun HistoryCreateContent(onCreate: (HistorySource) -> Unit, modifier: Modifier = Modifier) {
     var source by rememberSaveable { mutableStateOf(HistorySource.Shop) }
-    Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp).padding(bottom = 24.dp),
+    Column(modifier.fillMaxWidth().padding(horizontal = 16.dp).padding(bottom = 24.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Text(stringResource(Res.string.history_new), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
         Text(stringResource(Res.string.history_where), style = MaterialTheme.typography.bodyMedium,
