@@ -36,6 +36,7 @@ import com.coffeepeek.admin.feature.homecheckin.ui.HomeEditor
 import com.coffeepeek.admin.ui.component.AppButton
 import com.coffeepeek.admin.ui.component.SettingsIconBadge
 import com.coffeepeek.admin.ui.component.SettingsIconPalette
+import com.coffeepeek.admin.ui.component.PlatformScrollableColumn
 import com.coffeepeek.admin.ui.component.SwipeDismissModalBottomSheet
 import com.coffeepeek.admin.ui.icons.CpIcons
 
@@ -86,10 +87,10 @@ internal fun CheckInCreateFlow(
 }
 
 @Composable
-private fun CheckInCreateContent(onShop: () -> Unit, onHome: () -> Unit) {
+internal fun CheckInCreateContent(onShop: () -> Unit, onHome: () -> Unit) {
     val analyticsPage = Analytics.service?.state?.collectAsState()?.value?.page ?: "other"
     var homeSelected by rememberSaveable { mutableStateOf(false) }
-    Column(
+    PlatformScrollableColumn(
         Modifier.fillMaxWidth().analyticsExposure("home_check_in", "check_in_type_picker", analyticsPage).padding(horizontal = CpDimens.spacing4).padding(bottom = CpDimens.spacing6),
         verticalArrangement = Arrangement.spacedBy(CpDimens.spacing3),
     ) {

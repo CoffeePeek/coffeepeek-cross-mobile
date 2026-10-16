@@ -76,8 +76,39 @@ class HomeHistoryReaderAdapterTest {
         val month = HomeHistoryDateRange.month(HistoryMonth(2024, 2))
         assertEquals(2, reader.calendar(month).getOrThrow().single().brewCount)
         assertEquals(listOf(HomeReadTestRepository.Query(2, 100, null, null),
-            HomeReadTestRepository.Query(1, 20, day.from, day.to)), source.queries)
+            HomeReadTestRepository.Query(1, 20, day.from, day.to),
+            HomeReadTestRepository.Query(1, 100, month.from, month.to),
+            HomeReadTestRepository.Query(2, 100, month.from, month.to)), source.queries)
         assertEquals(listOf("2024-02-01" to "2024-02-29"), source.ranges)
+    }
+
+    @Test fun calendarPhotosReadAllMonthPagesPreferCutoutsAndDeduplicateRecords() = runTest {
+        val source = HomeReadTestRepository().apply {
+            days = { _, _ -> Result.success(listOf(com.coffeepeek.feature.homecheckin.domain.HomeCalendarDay("2026-10-16", 3))) }
+            history = { query -> Result.success(HomeCheckInPage(
+                if (query.page == 1) listOf(homeReadFixture()) else listOf(
+                    homeReadFixture(), homeReadFixture().copy(id = "second", drinkPhotoUrl = null),
+                    homeReadFixture().copy(id = "outside", preparedOn = "2026-09-30"),
+                ), 101, query.page, query.size,
+            )) }
+        }
+        val range = HomeHistoryDateRange("2026-10-01", "2026-10-31")
+        val photos = HomeHistoryReaderAdapter(LegacyHomePreparationReader(source)).calendar(range).getOrThrow().single().photos
+        assertEquals(listOf(homeReadFixture().drinkPhotoUrl, homeReadFixture().photos.single().url), photos.map { it.url })
+        assertEquals(listOf(true, false), photos.map { it.isCutout })
+        assertEquals(listOf(1, 2), source.queries.map { it.page })
+        assertTrue(source.queries.all { it.size == 100 && it.from == range.from && it.to == range.to })
+    }
+
+    @Test fun failedMonthPhotoPageDoesNotPublishPartialCalendarAndCancellationEscapes() = runTest {
+        val failure = IllegalStateException("Month photos unavailable")
+        val source = HomeReadTestRepository().apply { history = { Result.failure(failure) } }
+        val reader = HomeHistoryReaderAdapter(LegacyHomePreparationReader(source))
+        val range = HomeHistoryDateRange("2026-10-01", "2026-10-31")
+        assertSame(failure, reader.calendar(range).exceptionOrNull())
+        val cancellation = CancellationException("Canceled photo page")
+        source.history = { Result.failure(cancellation) }
+        assertSame(cancellation, assertFailsWith<CancellationException> { reader.calendar(range) })
     }
 
     @Test fun missingRecipeAndPhotosStayMissingRatherThanInventingDefaults() = runTest {

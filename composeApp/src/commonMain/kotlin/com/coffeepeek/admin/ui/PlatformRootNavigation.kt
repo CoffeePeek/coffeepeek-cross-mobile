@@ -6,6 +6,7 @@ import kotlinx.coroutines.flow.Flow
 /** The app boundary owns platform navigation; feature UI and routes remain shared. */
 @Composable
 internal expect fun PlatformRootNavigation(
+    isLoggedIn: Boolean,
     events: Flow<Navigator.NavEvent>,
     appLink: Navigator.Screen?,
     consumeLink: () -> Unit,

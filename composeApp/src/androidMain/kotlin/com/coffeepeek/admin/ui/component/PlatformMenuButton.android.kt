@@ -65,6 +65,10 @@ internal actual fun PlatformMenuButton(
                                 item.icon == PlatformMenuIcon.Edit -> CpIcons.Edit
                                 item.icon == PlatformMenuIcon.Hide -> CpIcons.VisibilityOff
                                 item.icon == PlatformMenuIcon.Report -> CpIcons.Error
+                                item.icon == PlatformMenuIcon.NoteEdit -> CpIcons.NoteEdit
+                                item.icon == PlatformMenuIcon.Add -> CpIcons.Add
+                                item.icon == PlatformMenuIcon.CoffeeBean -> CpIcons.CoffeeBean
+                                item.icon == PlatformMenuIcon.Logout -> CpIcons.Logout
                                 else -> null
                             }
                             if (icon != null) Icon(icon, null, Modifier.size(20.dp))

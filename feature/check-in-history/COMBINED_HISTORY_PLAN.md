@@ -1,6 +1,48 @@
 # Combined personal history — current-main parity and next slice
 
-## Physical-device smoke / new-main gate — 2026-10-16
+## Latest main synchronization — 2026-10-16
+
+Main **0137ee7** is inherited through parent #43, including #96's server-backed
+favorites/photo contracts and #97–98's personal/public profile redesign. Profile
+UI is preserved from main; its feature extraction has not started. All three
+migrated Android history routes remain connected, and shared/iOS fallback remains.
+
+History calendar photos now come from month snapshots rather than the selected
+timeline day/page. The app-owned Home reader fetches the month pages, preserves
+issued photo URLs, prefers transparent drink cutouts, deduplicates entries and
+propagates failures/cancellation. Photo rendering uses the existing injected image
+boundary and main's cutout outline. Main's Home photo-preparation factory and
+select/retry/skip actions pass through the existing editor bridge, without a new
+writer or cross-feature implementation dependency. Direct/Play APKs and packaged
+DEX guards, app/history lint, both instrumentation APKs and **859 selected unit
+cases** pass with zero failures/errors/skips. Shared application Kotlin also
+compiles for iOS Simulator Arm64; this is not an iOS screen/device certification.
+The first run caught a missing mandatory timestamp in a newly added mock response;
+the corrected contract fixture passes without weakening production parsing.
+No live write or new phone verification is implied.
+
+The app's incoming profile UI-automation scenarios have not been certified here:
+two emulator attempts timed out while a visible System UI ANR dialog obscured the
+fixture. Profile code is unchanged from main; no product workaround is introduced
+for this test-host failure. The source/build/unit checks above do not replace that
+visual/device gate. History's self-targeted Compose checks are recorded separately.
+
+All **14 self-targeted history UI checks** pass on the isolated offline emulator,
+including both-theme month-photo injection with an empty selected timeline,
+guest privacy, typed navigation/creation and large-font guest controls. Calendar
+cutouts keep transparent backgrounds; ordinary photos/placeholders retain their
+surface. The taller month calendar exposed a test that attempted to click an
+uncomposed lazy-list row; it now scrolls through the list's semantics before
+asserting the same destination callback. Tests use fake data, no production DI,
+backend requests, account changes or writes. Individual IDE preview rendering
+and populated physical-device visual parity remain unchecked.
+
+Remaining follow-up includes author-avatar/public-profile callback parity,
+migrated-feature analytics, populated-device/photo/date-edge journeys, safe
+mutations and account/accessibility checks. Do not start a new feature checkpoint
+or call this migration release-complete while these gates remain.
+
+## Historical physical-device smoke / then-new-main gate — 2026-10-16
 
 Installed Direct debug **1.0.617**, source **ef41fd8**, over the existing debug
 CoffeePeek on the agreed Pixel 7 using an in-place update. No app-data clearing,
@@ -23,7 +65,7 @@ are added to Git. iOS and the user's app settings remain unchanged.
 A fresh fetch during this check discovered **origin/main f2b184b**, PR #96,
 after the previously integrated 4976e53. Its 240-file change includes public
 profiles, server-backed favorites, analytics, calendar photo previews, Home UI
-and check-in time/cutout behavior. It is **not yet integrated** into #43/#95;
+and check-in time/cutout behavior. It was **not yet integrated at that smoke checkpoint** into #43/#95;
 ef41fd8's smoke result must not certify parity with this newer main.
 Next: sync the parent and history child, audit the changed product contracts
 (especially favorites ownership/server semantics and history photos/time), then

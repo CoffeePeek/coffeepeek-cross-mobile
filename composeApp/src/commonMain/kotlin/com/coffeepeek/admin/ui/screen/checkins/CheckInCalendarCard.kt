@@ -12,7 +12,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.semantics.Role
@@ -23,6 +22,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.coffeepeek.admin.ui.component.HapticEvent
 import com.coffeepeek.admin.ui.component.DrinkCutoutImage
 import com.coffeepeek.admin.ui.component.platformHaptic
@@ -40,6 +40,7 @@ internal fun CalendarCard(
     onToday: () -> Unit,
     homeCounts: Map<String, Int> = emptyMap(),
     homePhotos: Map<String, List<CalendarPhoto>> = emptyMap(),
+    framed: Boolean = true,
 ) {
     val month = state.calendarMonth
     val homeTotal = homeCounts.values.sum()
@@ -47,11 +48,13 @@ internal fun CalendarCard(
     val shops = state.calendarCheckIns.values.flatten().map(CheckIn::shopId).filter(String::isNotBlank).distinct().size
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        border = BorderStroke(0.5.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.6f)),
+        shape = RoundedCornerShape(if (framed) 20.dp else 0.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = if (framed) MaterialTheme.colorScheme.surface else Color.Transparent,
+        ),
+        border = if (framed) BorderStroke(0.5.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.6f)) else null,
     ) {
-        Column(Modifier.padding(12.dp)) {
+        Column(Modifier.padding(if (framed) 12.dp else 0.dp)) {
             Row(Modifier.fillMaxWidth().padding(start = 4.dp), verticalAlignment = Alignment.CenterVertically) {
                 Text(monthTitle(month), modifier = Modifier.weight(1f),
                     style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold)
@@ -74,7 +77,7 @@ internal fun CalendarCard(
             calendarCells(month).chunked(7).forEach { week ->
                 Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.Top) {
                     week.forEach { day ->
-                        if (day == null) Spacer(Modifier.weight(1f))
+                        if (day == null) Spacer(Modifier.weight(1f).aspectRatio(1f))
                         else {
                             val date = month.isoDate(day)
                             CalendarDay(
@@ -145,56 +148,47 @@ private fun CalendarDay(
     val total = checkIns.size + homeCount
     val description = "${selectedDateTitle(date)}${if (isToday) ", сегодня" else ""}, ${visitCount(total)}" +
         if (homeCount > 0) ", $homeCount дома" else ""
-    Column(
-        modifier.padding(horizontal = 1.dp, vertical = 1.dp)
-            .clip(RoundedCornerShape(12.dp))
-            .background(if (isSelected) MaterialTheme.colorScheme.primary.copy(alpha = 0.10f) else Color.Transparent)
+    val photo = photos.firstOrNull()
+    val shape = RoundedCornerShape(12.dp)
+    Box(
+        modifier.aspectRatio(1f).padding(1.dp)
+            .clip(shape)
+            .background(when {
+                isSelected && photo == null -> MaterialTheme.colorScheme.primary
+                isSelected -> MaterialTheme.colorScheme.primary.copy(alpha = 0.10f)
+                else -> Color.Transparent
+            })
+            .then(if ((isToday && !isSelected) || (isSelected && photo != null)) {
+                Modifier.border(1.dp, MaterialTheme.colorScheme.primary, shape)
+            } else Modifier)
             .clickable(enabled = !isFuture, role = Role.Button, onClickLabel = "Выбрать дату", onClick = onClick)
-            .semantics(mergeDescendants = true) { contentDescription = description; selected = isSelected }
-            .heightIn(min = 76.dp).padding(vertical = 4.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(4.dp),
+            .semantics(mergeDescendants = true) { contentDescription = description; selected = isSelected },
+        contentAlignment = Alignment.Center,
     ) {
-        Box(Modifier.defaultMinSize(minWidth = 32.dp, minHeight = 32.dp)
-            .background(if (isSelected) MaterialTheme.colorScheme.primary else Color.Transparent, CircleShape)
-            .then(if (isToday && !isSelected) Modifier.border(1.dp, MaterialTheme.colorScheme.primary, CircleShape) else Modifier)
-            .clearAndSetSemantics {}, contentAlignment = Alignment.Center) {
+        if (photo == null) {
             Text(day.toString(), style = MaterialTheme.typography.bodyMedium,
                 fontWeight = if (isSelected || isToday) FontWeight.SemiBold else FontWeight.Normal,
                 color = when {
                     isSelected -> MaterialTheme.colorScheme.onPrimary
                     isFuture -> MaterialTheme.colorScheme.onSurface.copy(alpha = 0.35f)
                     else -> MaterialTheme.colorScheme.onSurface
-                }, modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp))
-        }
-        CalendarDayPhotos(photos.take(total), total)
-    }
-}
-
-@Composable
-private fun CalendarDayPhotos(photos: List<CalendarPhoto>, total: Int) {
-    Box(Modifier.fillMaxWidth().height(32.dp).clearAndSetSemantics {}, contentAlignment = Alignment.Center) {
-        if (photos.isEmpty()) {
-            Row(horizontalArrangement = Arrangement.spacedBy(3.dp)) {
-                repeat(total.coerceIn(0, 3)) {
-                    Box(Modifier.size(4.dp).background(MaterialTheme.colorScheme.primary, CircleShape))
-                }
-            }
+                }, modifier = Modifier.padding(4.dp))
         } else {
-            Box(Modifier.width(28.dp + 6.dp * (photos.size - 1)).height(32.dp)) {
-                photos.forEachIndexed { index, photo ->
-                    val modifier = Modifier.align(Alignment.CenterStart).offset(x = 6.dp * index)
-                        .size(28.dp).rotate(if (photos.size > 1) (index - (photos.size - 1) / 2f) * 12f else 0f)
-                    if (photo.isCutout) DrinkCutoutImage(data = photo.url, modifier = modifier, outlineWidth = 1.dp)
+            Column(
+                Modifier.fillMaxSize().padding(3.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                Box(Modifier.fillMaxWidth().weight(1f), contentAlignment = Alignment.Center) {
+                    val imageModifier = Modifier.aspectRatio(1f, matchHeightConstraintsFirst = true).clearAndSetSemantics {}
+                    if (photo.isCutout) DrinkCutoutImage(data = photo.url, modifier = imageModifier, outlineWidth = 1.dp)
                     else CpImage(data = photo.url, contentScale = ContentScale.Crop,
-                        modifier = modifier.clip(RoundedCornerShape(6.dp)))
+                        modifier = imageModifier.clip(RoundedCornerShape(6.dp)))
                 }
-            }
-            if (total > photos.size) {
-                Text("+${total - photos.size}",
-                    modifier = Modifier.align(Alignment.BottomEnd)
-                        .background(MaterialTheme.colorScheme.surface, CircleShape).padding(horizontal = 2.dp),
-                    style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)
+                if (photos.size > 1) {
+                    Text("+${photos.size - 1}", style = MaterialTheme.typography.labelSmall,
+                        fontSize = 10.sp, lineHeight = 12.sp,
+                        color = MaterialTheme.colorScheme.primary, maxLines = 1)
+                }
             }
         }
     }

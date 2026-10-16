@@ -9,6 +9,7 @@ import com.coffeepeek.admin.theme.ThemeManager
 import com.coffeepeek.admin.theme.ThemeMode
 import com.coffeepeek.admin.utils.ErrorHandler
 import com.coffeepeek.domain.model.City
+import com.coffeepeek.domain.model.PublicAddress
 import com.coffeepeek.domain.model.UserProfile
 import com.coffeepeek.domain.repository.AuthRepository
 import com.coffeepeek.domain.repository.SessionRepository
@@ -35,11 +36,17 @@ data class ProfileUiState(
     val initials: String = "",
     val checkInCount: Int = 0,
     val addedShopsCount: Int = 0,
+    val addedRoastersCount: Int = 0,
+    val followersCount: Int = 0,
+    val publicAddress: PublicAddress? = null,
     val isLoading: Boolean = true,
     val isRefreshing: Boolean = false,
     val error: String? = null,
     val refreshError: String? = null,
 ) {
+    val publicSlug: String?
+        get() = publicAddress?.slug?.takeIf(String::isNotBlank)
+
     val hasContent: Boolean
         get() = displayName.isNotBlank() || !avatarUrl.isNullOrBlank()
 }
@@ -210,6 +217,9 @@ class ProfileViewModel(
                 initials = buildInitials(profile.userName),
                 checkInCount = profile.checkInCount,
                 addedShopsCount = profile.addedShopsCount,
+                addedRoastersCount = profile.addedRoastersCount,
+                followersCount = profile.followersCount,
+                publicAddress = profile.address,
                 isLoading = false,
                 isRefreshing = false,
                 error = null,

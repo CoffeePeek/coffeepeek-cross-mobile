@@ -74,7 +74,6 @@ fun FullScreenImageDialog(
     var controlsVisible by remember { mutableStateOf(true) }
     var dismissOffset by remember { mutableFloatStateOf(0f) }
     var viewportHeight by remember { mutableFloatStateOf(1f) }
-    val scope = rememberCoroutineScope()
     val reduceMotion = platformReduceMotion()
     val threshold = with(LocalDensity.current) { 120.dp.toPx() }
     val flingThreshold = with(LocalDensity.current) { 900.dp.toPx() }
@@ -98,7 +97,8 @@ fun FullScreenImageDialog(
         ) {
             HorizontalPager(
                 state = pagerState,
-                beyondViewportPageCount = 1,
+                // The pager may prefetch while swiping; don't eagerly decode offscreen originals.
+                beyondViewportPageCount = 0,
                 userScrollEnabled = !isZoomed,
                 modifier = Modifier.fillMaxSize().graphicsLayer { translationY = dismissOffset },
             ) { page ->

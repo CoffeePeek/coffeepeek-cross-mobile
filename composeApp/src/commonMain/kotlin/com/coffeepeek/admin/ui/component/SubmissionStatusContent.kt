@@ -57,7 +57,7 @@ internal fun SubmissionStatusScreen(
         SubmissionStatusContent(
             status, title, description,
             Modifier.fillMaxSize().padding(padding).navigationBarsPadding().padding(CpDimens.spacing6),
-            actions,
+            actions = actions,
         )
     }
 }
@@ -69,6 +69,7 @@ internal fun SubmissionStatusContent(
     title: String,
     description: String,
     modifier: Modifier = Modifier,
+    fillAvailableHeight: Boolean = true,
     actions: @Composable ColumnScope.() -> Unit = {},
 ) {
     val focus = LocalFocusManager.current
@@ -93,9 +94,13 @@ internal fun SubmissionStatusContent(
         },
         label = "submission-status",
     ) { (current, heading, message) ->
-        Column(Modifier.fillMaxSize().semantics { liveRegion = LiveRegionMode.Polite }) {
+        Column(
+            (if (fillAvailableHeight) Modifier.fillMaxSize() else Modifier.fillMaxWidth())
+                .semantics { liveRegion = LiveRegionMode.Polite },
+        ) {
             PlatformScrollableColumn(
-                modifier = Modifier.weight(1f).fillMaxWidth().padding(bottom = CpDimens.spacing4).clipToBounds(),
+                modifier = Modifier.weight(1f, fill = fillAvailableHeight).fillMaxWidth()
+                    .padding(bottom = CpDimens.spacing4).clipToBounds(),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center,
             ) {

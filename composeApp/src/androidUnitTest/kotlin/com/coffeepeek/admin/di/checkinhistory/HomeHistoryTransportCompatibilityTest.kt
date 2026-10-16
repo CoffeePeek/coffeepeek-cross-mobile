@@ -37,11 +37,23 @@ class HomeHistoryTransportCompatibilityTest {
                         "photos":[{"id":"p","url":"$protectedUrl"}],"drinkPhoto":{"url":"$protectedUrl"}}],
                         "totalCount":101}}""", headers = headersOf("Content-Type", "application/json"))
                 }
-                else -> {
+                1 -> {
                     assertEquals("/api/v1/check-ins/home/calendar", request.url.encodedPath)
                     assertEquals("2024-02-01", request.url.parameters["from"])
                     assertEquals("2024-02-29", request.url.parameters["to"])
                     respond("""{"isSuccess":true,"data":[{"preparedOn":"2024-02-29","brewCount":2}]}""",
+                        headers = headersOf("Content-Type", "application/json"))
+                }
+                else -> {
+                    assertEquals(3, calls)
+                    assertEquals("/api/v1/check-ins/home", request.url.encodedPath)
+                    assertEquals("1", request.url.parameters["pageNumber"])
+                    assertEquals("100", request.url.parameters["pageSize"])
+                    assertEquals("2024-02-01", request.url.parameters["from"])
+                    assertEquals("2024-02-29", request.url.parameters["to"])
+                    respond("""{"isSuccess":true,"data":{"items":[{"id":"month-home",
+                        "preparedOn":"2024-02-29","preparedAtUtc":"2024-02-29T08:00:00Z",
+                        "drinkPhoto":{"url":"$protectedUrl"}}],"totalCount":1}}""",
                         headers = headersOf("Content-Type", "application/json"))
                 }
             }
@@ -60,9 +72,11 @@ class HomeHistoryTransportCompatibilityTest {
             assertNull(item.visibility)
             assertEquals("Unknown", item.moderation.name)
             assertFalse(page.hasMore)
-            assertEquals("2024-02-29", reader.calendar(HomeHistoryDateRange("2024-02-01", "2024-02-29"))
-                .getOrThrow().single().preparedOn)
-            assertEquals(2, calls)
+            val calendarDay = reader.calendar(HomeHistoryDateRange("2024-02-01", "2024-02-29")).getOrThrow().single()
+            assertEquals("2024-02-29", calendarDay.preparedOn)
+            assertEquals(protectedUrl, calendarDay.photos.single().url)
+            assertTrue(calendarDay.photos.single().isCutout)
+            assertEquals(3, calls)
         } finally { client.close(); uploader.close() }
     }
 

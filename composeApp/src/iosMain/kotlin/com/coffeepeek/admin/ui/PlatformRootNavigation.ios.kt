@@ -75,8 +75,8 @@ private object NavigationMemory {
     var selectedTab = 0
     var stacks: List<List<Navigator.Screen>> = List(5) { emptyList() }
 
-    fun save(tabs: UITabBarController, navigations: List<UINavigationController>) {
-        selectedTab = tabs.selectedIndex.toInt().coerceIn(navigations.indices)
+    fun save(tabs: UITabBarController, navigations: List<UINavigationController>, visibleTabIndices: List<Int>) {
+        selectedTab = visibleTabIndices[tabs.selectedIndex.toInt().coerceIn(visibleTabIndices.indices)]
         stacks = navigations.map { navigation ->
             navigation.viewControllers.drop(1).mapNotNull { (it as? NativeScreenController)?.route }
         }
@@ -93,6 +93,7 @@ internal actual fun clearPlatformNavigationState() = NavigationMemory.clear()
 
 @Composable
 internal actual fun PlatformRootNavigation(
+    isLoggedIn: Boolean,
     events: Flow<Navigator.NavEvent>, appLink: Navigator.Screen?, consumeLink: () -> Unit,
     content: @Composable (Navigator.Screen, resetToLogin: () -> Unit) -> Unit,
 ): Boolean {
@@ -103,13 +104,14 @@ internal actual fun PlatformRootNavigation(
     val tabDelegate = remember { TabDelegate() }
     val navigationDelegates = remember { List(5) { NavigationDelegate() } }
     val navigations = remember { List(5) { UINavigationController() } }
+    val visibleTabIndices = remember(isLoggedIn) { mainTabScreens(isLoggedIn).map { requireNotNull(nativeTabIndex(it)) } }
     val restoredTab = remember { NavigationMemory.selectedTab }
     val restoredStacks = remember { NavigationMemory.stacks }
     val memoryGeneration = remember { NavigationMemory.generation }
     val pendingTab by Navigator.pendingTabSelection.collectAsState()
 
     fun saveNavigation() {
-        if (NavigationMemory.generation == memoryGeneration) NavigationMemory.save(tabs, navigations)
+        if (NavigationMemory.generation == memoryGeneration) NavigationMemory.save(tabs, navigations, visibleTabIndices)
     }
 
     suspend fun navigate(block: () -> Unit) = transitions.withLock {
@@ -119,10 +121,11 @@ internal actual fun PlatformRootNavigation(
         delay(16)
     }
 
-    fun currentNavigation() = navigations[tabs.selectedIndex.toInt().coerceIn(navigations.indices)]
+    fun currentNavigation() = navigations[visibleTabIndices[tabs.selectedIndex.toInt().coerceIn(visibleTabIndices.indices)]]
     fun selectTabRoot(destination: Navigator.Screen) {
         nativeTabIndex(destination)?.let { index ->
-            tabs.selectedIndex = index.toULong()
+            val visibleIndex = visibleTabIndices.indexOf(index).takeIf { it >= 0 } ?: return
+            tabs.selectedIndex = visibleIndex.toULong()
             // Programmatic selection means opening a tab's entry point (e.g. shop -> map).
             // Direct tab-bar taps still retain that tab's current stack.
             navigations[index].popToRootViewControllerAnimated(false)
@@ -146,7 +149,8 @@ internal actual fun PlatformRootNavigation(
     UIKitViewController(factory = {
         val labels = listOf("Поиск", "Кофе", "Лента", "Профиль", "Настройки")
         val symbols = listOf("magnifyingglass", "cup.and.saucer", "person.2", "person.crop.circle", "gearshape")
-        navigations.forEachIndexed { index, navigation ->
+        visibleTabIndices.forEach { index ->
+            val navigation = navigations[index]
             val root = NativeScreenController(labels[index], analyticsPage = listOf("discovery", "coffees", "feed", "profile", "settings")[index]) {
                 when (index) {
                     0 -> DiscoveryTabContent(onMapExpandedChange = {})
@@ -169,8 +173,8 @@ internal actual fun PlatformRootNavigation(
             navigation.delegate = navigationDelegates[index]
             navigation.interactivePopGestureRecognizer?.delegate = navigationDelegates[index]
         }
-        tabs.setViewControllers(navigations, false)
-        tabs.selectedIndex = restoredTab.toULong()
+        tabs.setViewControllers(visibleTabIndices.map(navigations::get), false)
+        tabs.selectedIndex = visibleTabIndices.indexOf(restoredTab).coerceAtLeast(0).toULong()
         tabs.customizableViewControllers = null
         tabs.delegate = tabDelegate
         tabDelegate.onTabChanged = { saveNavigation() }
@@ -202,7 +206,7 @@ internal actual fun PlatformRootNavigation(
                     val tabIndex = nativeTabIndex(event.screen)
                     when {
                         event.screen == Navigator.Screen.Main -> navigation.popToRootViewControllerAnimated(animated)
-                        tabIndex != null -> tabs.selectedIndex = tabIndex.toULong()
+                        tabIndex != null -> visibleTabIndices.indexOf(tabIndex).takeIf { it >= 0 }?.let { tabs.selectedIndex = it.toULong() }
                         event.screen.isHandledByRootNav() -> navigation.pushViewController(controller(event.screen).apply { hidesBottomBarWhenPushed = true }, animated)
                     }
                 }

@@ -4,6 +4,10 @@
 <dict>
     <key>CFBundleDisplayName</key>
     <string>CoffeePeek</string>
+    <key>UIDeviceFamily</key>
+    <array>
+        <integer>1</integer>
+    </array>
     <key>APIBaseURL</key>
     <string>https://api.coffeepeek.by/</string>
     <key>CoffeePeekDebug</key>

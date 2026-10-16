@@ -13,15 +13,8 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  changes:
-    uses: ./.github/workflows/mobile-changes.yml
-    permissions:
-      contents: read
-      pull-requests: read
-
   compile_ios:
-    needs: changes
-    if: github.ref == 'refs/heads/main' && needs.changes.outputs.ios == 'true'
+    if: github.ref == 'refs/heads/main'
     runs-on: xcode-27
     timeout-minutes: 60
     steps:
@@ -33,10 +26,6 @@ jobs:
       - uses: gradle/actions/setup-gradle@v6
         with:
           cache-read-only: ${{ github.event_name == 'pull_request' || (github.ref != 'refs/heads/main' && github.ref != 'refs/heads/develop') }}
-      - name: Restore iOS dependency caches
-        uses: ./.github/actions/setup-ios-caches
-        with:
-          target: simulator
       - name: Compile Kotlin and native Swift for iOS Simulator
         shell: bash
         run: |
@@ -58,7 +47,7 @@ jobs:
 
   # Keep a completed check even when the macOS build is unnecessary.
   build:
-    needs: [changes, compile_ios]
+    needs: compile_ios
     if: always()
     runs-on: ubuntu-latest
     steps:
@@ -66,18 +55,12 @@ jobs:
         shell: bash
         env:
           BUILD_REF: ${{ github.ref }}
-          CHANGES_RESULT: ${{ needs.changes.result }}
-          IOS_CHANGED: ${{ needs.changes.outputs.ios }}
           BUILD_RESULT: ${{ needs.compile_ios.result }}
         run: |
           set -euo pipefail
-          [[ "$CHANGES_RESULT" == 'success' ]]
           if [[ "$BUILD_REF" != 'refs/heads/main' ]]; then
             [[ "$BUILD_RESULT" == 'skipped' ]]
             echo 'iOS builds run only from main; simulator build was skipped.'
-          elif [[ "$IOS_CHANGED" == 'true' ]]; then
-            [[ "$BUILD_RESULT" == 'success' ]]
           else
-            [[ "$IOS_CHANGED" == 'false' && "$BUILD_RESULT" == 'skipped' ]]
-            echo 'No iOS changes; simulator build was skipped.'
+            [[ "$BUILD_RESULT" == 'success' ]]
           fi

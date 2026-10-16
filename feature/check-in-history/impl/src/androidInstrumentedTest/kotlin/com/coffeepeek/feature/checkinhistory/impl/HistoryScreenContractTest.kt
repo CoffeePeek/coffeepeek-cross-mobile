@@ -76,6 +76,32 @@ class HistoryScreenContractTest {
         }
     }
 
+    @Test fun calendarUsesInjectedMonthPhotosEvenWhenSelectedTimelineIsEmpty() {
+        for (dark in listOf(false, true)) {
+            val requested = java.util.concurrent.CopyOnWriteArraySet<String>()
+            val base = state()
+            val shop = base.shopCalendar.content.getValue("2026-10-14").single()
+            val source = base.copy(
+                selectedDate = "2026-10-01",
+                shops = CombinedHistoryPageState(), homes = CombinedHistoryPageState(),
+                shopCalendar = CombinedHistoryLoadState(mapOf(shop.date to listOf(shop.copy(
+                    entry = shop.entry.copy(drinkPhotoUrl = "fixture-shop-cutout"),
+                ))), hasLoaded = true),
+                homeCalendarPhotos = mapOf(shop.date to listOf(
+                    com.coffeepeek.feature.checkinhistory.domain.model.HistoryCalendarPhoto("fixture-home-cutout", true),
+                )),
+            )
+            render(dark) { CheckInHistoryScreenContent(source, {}, imageContent = { url, modifier, _ ->
+                requested += url
+                Box(modifier)
+            }) }.use {
+                compose.waitForIdle()
+                assertTrue(requested.containsAll(listOf("fixture-shop-cutout", "fixture-home-cutout")))
+                compose.onNodeWithText("Owner private note").assertDoesNotExist()
+            }
+        }
+    }
+
     @Test fun calendarDayAndProductionTypeFilterEmitTypedActions() {
         val actions = mutableListOf<CombinedHistoryAction>()
         render { CheckInHistoryScreenContent(state().copy(selectedDate = "2026-10-14"), actions::add) }.use {
@@ -91,7 +117,8 @@ class HistoryScreenContractTest {
         val actions = mutableListOf<CombinedHistoryAction>()
         val source = state()
         render(dark = true) { CheckInHistoryScreenContent(source.copy(shops = source.shops.copy(hasError = true)), actions::add) }.use {
-            compose.onNodeWithText("Owner private note").performScrollTo().assertExists()
+            scrollToText("Owner private note")
+            compose.onNodeWithText("Owner private note").assertExists()
             clickRetry("Повторить: Не удалось загрузить посещения кофеен")
             assertEquals(listOf<CombinedHistoryAction>(CombinedHistoryAction.RetryTimeline(HistorySource.Shop)), actions)
         }
@@ -180,9 +207,12 @@ class HistoryScreenContractTest {
             visibility = com.coffeepeek.feature.checkinhistory.domain.model.HistoryVisibility.Public,
             moderation = com.coffeepeek.feature.checkinhistory.domain.model.HistoryModeration.Pending)) }
         render { CheckInHistoryScreenContent(base.copy(homes = base.homes.copy(items = listOf(home))), actions::add) }.use {
-            compose.onNodeWithText("Кофейня", substring = false).performScrollTo().performClick()
-            compose.onNodeWithText("На модерации").performScrollTo().assertExists()
-            compose.onNodeWithText("Эфиопия").performScrollTo().performClick()
+            scrollToText("Кофейня")
+            compose.onNodeWithText("Кофейня", substring = false).performClick()
+            scrollToText("На модерации")
+            compose.onNodeWithText("На модерации").assertExists()
+            scrollToText("Эфиопия")
+            compose.onNodeWithText("Эфиопия").performClick()
             assertEquals(listOf<CombinedHistoryAction>(CombinedHistoryAction.OpenEntry("shop:preview"),
                 CombinedHistoryAction.OpenEntry("home:home")), actions)
             compose.onNodeWithContentDescription("Добавить чекин").performClick()
@@ -201,7 +231,8 @@ class HistoryScreenContractTest {
             entry.Content(5, true, { it }, {}, {}, {}, { _, _ -> }, { "11:00" },
                 opened::add, {}, { created++ }, 8)
         }.use {
-            compose.onNodeWithText("Эфиопия").performScrollTo().performClick()
+            scrollToText("Эфиопия")
+            compose.onNodeWithText("Эфиопия").performClick()
             compose.waitUntil(5_000) { opened.isNotEmpty() }
             assertEquals(listOf("home"), opened)
             compose.onNodeWithContentDescription("Добавить чекин").performClick()
@@ -217,6 +248,10 @@ class HistoryScreenContractTest {
         // Lazy items below the viewport are not composed until the list scrolls to them.
         compose.onNode(hasScrollToIndexAction()).performScrollToNode(hasContentDescription(description))
         compose.onNodeWithContentDescription(description).performClick()
+    }
+
+    private fun scrollToText(text: String) {
+        compose.onNode(hasScrollToIndexAction()).performScrollToNode(hasText(text))
     }
 
     private class Homes : HomeHistoryReader {

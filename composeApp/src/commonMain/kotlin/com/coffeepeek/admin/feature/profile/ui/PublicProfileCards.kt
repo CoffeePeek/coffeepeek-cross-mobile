@@ -14,6 +14,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -22,14 +23,14 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.coffeepeek.admin.feature.catalog.api.methodLabel
+import com.coffeepeek.admin.feature.checkin.api.CheckInTimelineContent
 import com.coffeepeek.admin.feature.profile.domain.PublicProfileCheckIn
 import com.coffeepeek.admin.feature.profile.domain.PublicProfileStats
 import com.coffeepeek.admin.theme.CpColor
-import com.coffeepeek.admin.ui.component.rememberReviewDisplayDate
 import com.coffeepeek.admin.ui.icons.CpIcons
 import com.coffeepeek.admin.utils.CpImage
-import kotlin.math.roundToInt
+import com.coffeepeek.domain.feature.feed.FeedHomePreparation
+import com.coffeepeek.domain.model.CheckIn
 
 @Composable
 internal fun PublicProfileHeader(
@@ -39,6 +40,7 @@ internal fun PublicProfileHeader(
     isFollowing: Boolean = false,
     followEnabled: Boolean = true,
     onFollow: (() -> Unit)? = null,
+    onEditProfile: (() -> Unit)? = null,
     onAvatarClick: () -> Unit,
 ) {
     Row(
@@ -46,22 +48,34 @@ internal fun PublicProfileHeader(
         horizontalArrangement = Arrangement.spacedBy(16.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Box(
-            Modifier.size(92.dp).clip(CircleShape)
-                .background(Brush.linearGradient(listOf(CpColor.GoldWarm, CpColor.Primary)))
-                .then(if (!avatarUrl.isNullOrBlank()) Modifier.clickable(role = Role.Button, onClickLabel = "Открыть аватар", onClick = onAvatarClick) else Modifier),
-            contentAlignment = Alignment.Center,
-        ) {
-            Text(
-                nickname.trimStart('@').take(1).uppercase().ifBlank { "?" },
-                style = MaterialTheme.typography.headlineLarge,
-                color = CpColor.DarkTextOnPrimary,
-                fontWeight = FontWeight.SemiBold,
-            )
-            if (!avatarUrl.isNullOrBlank()) CpImage(
-                data = avatarUrl, modifier = Modifier.fillMaxSize(),
-                contentScale = ContentScale.Crop, contentDescription = "Аватар @$nickname".replace("@@", "@"),
-            )
+        Box(Modifier.size(92.dp)) {
+            Box(
+                Modifier.fillMaxSize().clip(CircleShape)
+                    .background(Brush.linearGradient(listOf(CpColor.GoldWarm, CpColor.Primary)))
+                    .then(if (!avatarUrl.isNullOrBlank()) Modifier.clickable(role = Role.Button, onClickLabel = "Открыть аватар", onClick = onAvatarClick) else Modifier),
+                contentAlignment = Alignment.Center,
+            ) {
+                Text(
+                    nickname.trimStart('@').take(1).uppercase().ifBlank { "?" },
+                    style = MaterialTheme.typography.headlineLarge,
+                    color = CpColor.DarkTextOnPrimary,
+                    fontWeight = FontWeight.SemiBold,
+                )
+                if (!avatarUrl.isNullOrBlank()) CpImage(
+                    data = avatarUrl, modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.Crop, contentDescription = "Аватар @$nickname".replace("@@", "@"),
+                )
+            }
+            if (onEditProfile != null) FilledIconButton(
+                onClick = onEditProfile,
+                modifier = Modifier.align(Alignment.BottomEnd).size(32.dp),
+                colors = IconButtonDefaults.filledIconButtonColors(
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    contentColor = MaterialTheme.colorScheme.onSurface,
+                ),
+            ) {
+                Icon(CpIcons.Edit, contentDescription = "Редактировать профиль", modifier = Modifier.size(16.dp))
+            }
         }
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
             FlowRow(
@@ -133,59 +147,39 @@ internal fun PublicProfileCheckInCard(
     checkIn: PublicProfileCheckIn,
     onShopClick: () -> Unit,
     onPhotoClick: (List<String>, Int) -> Unit,
-    compact: Boolean = true,
+    authorName: String = "",
+    authorAvatarUrl: String? = null,
+    isOwnProfile: Boolean = false,
 ) {
-    ProfileCard {
-        Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(9.dp)) {
-            Row(verticalAlignment = Alignment.Top, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(7.dp)) {
-                    Row(
-                        Modifier.then(if (!checkIn.coffeeShopSlug.isNullOrBlank()) Modifier.clickable(role = Role.Button, onClickLabel = "Открыть кофейню", onClick = onShopClick) else Modifier),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(6.dp),
-                    ) {
-                        Icon(CpIcons.Coffee, contentDescription = null, tint = MaterialTheme.colorScheme.secondary, modifier = Modifier.size(17.dp))
-                        Text(
-                            checkIn.venue, style = MaterialTheme.typography.labelMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 2, overflow = TextOverflow.Ellipsis,
-                        )
-                    }
-                    if (checkIn.occurredAt.isNotBlank()) Text(
-                        rememberReviewDisplayDate(checkIn.occurredAt), style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                    Text(checkIn.title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
-                    checkIn.details?.takeIf(String::isNotBlank)?.let {
-                        val parts = it.split(" · ")
-                        val details = (listOf(parts.first().methodLabel()) + parts.drop(1)).joinToString(" · ")
-                        Text(details, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    }
-                    checkIn.rating?.let { rating ->
-                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                            Icon(CpIcons.StarFilled, contentDescription = "Оценка", tint = CpColor.Primary, modifier = Modifier.size(17.dp))
-                            Text(((rating * 10).roundToInt() / 10.0).toString(), style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium)
-                        }
-                    }
-                }
-                checkIn.photoUrls.firstOrNull()?.let { url ->
-                    Box(Modifier.size(92.dp).clip(RoundedCornerShape(14.dp))
-                        .clickable(role = Role.Button, onClickLabel = "Открыть фото", onClick = { onPhotoClick(checkIn.photoUrls, 0) })) {
-                        CpImage(data = url, modifier = Modifier.fillMaxSize(), contentDescription = "Фото чекина: ${checkIn.title}")
-                        if (checkIn.photoUrls.size > 1) Surface(
-                            Modifier.align(Alignment.BottomEnd).padding(5.dp),
-                            color = MaterialTheme.colorScheme.surface.copy(alpha = 0.9f), shape = RoundedCornerShape(8.dp),
-                        ) {
-                            Text("+${checkIn.photoUrls.size - 1}", Modifier.padding(horizontal = 6.dp, vertical = 2.dp), style = MaterialTheme.typography.labelSmall)
-                        }
-                    }
-                }
-            }
-            if (checkIn.note.isNotBlank()) Text(
-                checkIn.note, style = MaterialTheme.typography.bodyMedium,
-                maxLines = if (compact) 3 else Int.MAX_VALUE, overflow = TextOverflow.Ellipsis,
-            )
-        }
-    }
+    val source = checkIn.source ?: checkIn.legacyPresentation()
+    CheckInTimelineContent(
+        checkIn = source.copy(
+            username = source.username.ifBlank { authorName },
+            authorAvatarUrl = source.authorAvatarUrl ?: authorAvatarUrl,
+        ),
+        isOwn = isOwnProfile,
+        onShopClick = onShopClick.takeIf { !checkIn.coffeeShopSlug.isNullOrBlank() },
+        onPhotoClick = onPhotoClick,
+        modifier = Modifier.testTag("profile-check-in:${checkIn.id}"),
+    )
+}
+
+private fun PublicProfileCheckIn.legacyPresentation(): CheckIn {
+    val isHome = venue == "Дома"
+    return CheckIn(
+        id = id,
+        shopId = coffeeShopSlug.orEmpty(),
+        shopName = venue,
+        note = note,
+        createdAt = occurredAt,
+        photoUrls = photoUrls,
+        customDrinkName = details.takeUnless { isHome },
+        isHome = isHome,
+        homePreparation = if (isHome) FeedHomePreparation(
+            preparedOn = occurredAt.take(10), brewMethodCode = null, beanName = title,
+            doseGrams = null, brewDurationSeconds = null, tasteScore = rating?.toInt(),
+        ) else null,
+    )
 }
 
 @Composable

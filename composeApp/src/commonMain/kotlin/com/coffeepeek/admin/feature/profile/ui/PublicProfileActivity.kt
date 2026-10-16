@@ -70,31 +70,29 @@ internal fun PublicProfileActivityCalendar(
     onRetry: () -> Unit = {},
 ) {
     val displayedActivity = activity?.takeIf { it.month == selectedMonth }
-    ProfileCard {
-        Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(18.dp)) {
-            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                Text(profileMonthTitle(selectedMonth), Modifier.weight(1f), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold)
-                if (onMonthChange != null) {
-                    val previous = shiftProfileMonth(selectedMonth, -1)
-                    val next = shiftProfileMonth(selectedMonth, 1)
-                    IconButton(onClick = { previous?.let(onMonthChange) }, enabled = previous != null) {
-                        Icon(CpIcons.ChevronLeft, contentDescription = "Предыдущий месяц", modifier = Modifier.size(20.dp))
-                    }
-                    IconButton(onClick = { next?.let(onMonthChange) }, enabled = next != null) {
-                        Icon(CpIcons.ChevronRight, contentDescription = "Следующий месяц", modifier = Modifier.size(20.dp))
-                    }
+    Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(18.dp)) {
+        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+            Text(profileMonthTitle(selectedMonth), Modifier.weight(1f), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold)
+            if (onMonthChange != null) {
+                val previous = shiftProfileMonth(selectedMonth, -1)
+                val next = shiftProfileMonth(selectedMonth, 1)
+                IconButton(onClick = { previous?.let(onMonthChange) }, enabled = previous != null) {
+                    Icon(CpIcons.ChevronLeft, contentDescription = "Предыдущий месяц", modifier = Modifier.size(20.dp))
+                }
+                IconButton(onClick = { next?.let(onMonthChange) }, enabled = next != null) {
+                    Icon(CpIcons.ChevronRight, contentDescription = "Следующий месяц", modifier = Modifier.size(20.dp))
                 }
             }
-            when {
-                isLoading -> Box(Modifier.fillMaxWidth().height(180.dp), contentAlignment = Alignment.Center) { CoffeePeekLoader() }
-                error != null || displayedActivity == null -> Column(
-                    Modifier.fillMaxWidth().padding(vertical = 20.dp), horizontalAlignment = Alignment.CenterHorizontally,
-                ) {
-                    Text("Не удалось загрузить активность", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    TextButton(onClick = onRetry) { Text("Повторить") }
-                }
-                else -> ProfileActivityMonthGrid(displayedActivity)
+        }
+        when {
+            isLoading -> Box(Modifier.fillMaxWidth().height(180.dp), contentAlignment = Alignment.Center) { CoffeePeekLoader() }
+            error != null || displayedActivity == null -> Column(
+                Modifier.fillMaxWidth().padding(vertical = 20.dp), horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                Text("Не удалось загрузить активность", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                TextButton(onClick = onRetry) { Text("Повторить") }
             }
+            else -> ProfileActivityMonthGrid(displayedActivity)
         }
     }
 }
@@ -105,32 +103,27 @@ private fun ProfileActivityMonthGrid(activity: PublicProfileActivity) {
     val activeDays = activity.activeDays.filter { it in 1..month.days }.toSet()
     Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
         Text(activeDaysLabel(activeDays.size), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        Row(Modifier.fillMaxWidth()) {
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
             weekdayLabels.forEach { label ->
                 Text(label, Modifier.weight(1f), style = MaterialTheme.typography.labelSmall, textAlign = TextAlign.Center, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }
         val cells: List<Int?> = List(month.firstWeekday) { null } + (1..month.days).map { it }
         cells.chunked(7).forEach { week ->
-            Row(Modifier.fillMaxWidth()) {
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 (0..6).forEach { column ->
                     val day = week.getOrNull(column)
-                    if (day == null) Spacer(Modifier.weight(1f).height(42.dp))
+                    if (day == null) Spacer(Modifier.weight(1f).aspectRatio(1f))
                     else {
                         val active = day in activeDays
-                        Column(
-                            Modifier.weight(1f).height(42.dp).padding(horizontal = 3.dp)
+                        Box(
+                            Modifier.weight(1f).aspectRatio(1f)
                                 .clip(RoundedCornerShape(10.dp))
                                 .background(if (active) MaterialTheme.colorScheme.primary.copy(alpha = 0.12f) else MaterialTheme.colorScheme.surface)
                                 .clearAndSetSemantics { contentDescription = "$day, ${if (active) "есть чекины" else "нет чекинов"}" },
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.Center,
+                            contentAlignment = Alignment.Center,
                         ) {
                             Text(day.toString(), style = MaterialTheme.typography.bodyMedium, fontWeight = if (active) FontWeight.SemiBold else FontWeight.Normal)
-                            Spacer(Modifier.height(4.dp))
-                            Box(Modifier.size(4.dp).background(
-                                if (active) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.15f), CircleShape,
-                            ))
                         }
                     }
                 }

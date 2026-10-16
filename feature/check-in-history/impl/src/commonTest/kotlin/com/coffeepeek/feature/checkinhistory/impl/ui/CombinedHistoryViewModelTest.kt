@@ -216,6 +216,28 @@ class CombinedHistoryViewModelTest {
         assertEquals(2, vm.state.value.homes.page)
     }
 
+    @Test fun monthPhotosSurviveDaySelectionAndFailedRefreshButNotMonthOrAccountReplacement() = runTest(dispatcher) {
+        val photos = listOf(com.coffeepeek.feature.checkinhistory.domain.model.HistoryCalendarPhoto("issued-cutout", true))
+        val homes = Homes().apply { calendarResult = Result.success(listOf(HomeHistoryDay("2026-10-16", 2, photos))) }
+        val vm = vm(homes = homes)
+        runCurrent()
+        assertEquals(photos, vm.state.value.homeCalendarPhotos["2026-10-16"])
+        vm.onAction(CombinedHistoryAction.SelectDate("2026-10-10")); runCurrent()
+        assertEquals(photos, vm.state.value.homeCalendarPhotos["2026-10-16"])
+        assertEquals(1, homes.ranges.size)
+        homes.calendarResult = Result.failure(IllegalStateException("Unavailable month"))
+        vm.onAction(CombinedHistoryAction.Refresh); runCurrent()
+        assertTrue(vm.state.value.homeCalendar.hasError)
+        assertEquals(photos, vm.state.value.homeCalendarPhotos["2026-10-16"])
+        homes.calendarGate = gate()
+        vm.onAction(CombinedHistoryAction.ChangeMonth(-1)); runCurrent()
+        assertTrue(vm.state.value.homeCalendarPhotos.isEmpty())
+        assertTrue(vm.state.value.homeCalendar.isLoading)
+        vm.onAction(CombinedHistoryAction.SessionChanged(1, false)); runCurrent()
+        assertTrue(vm.state.value.homeCalendarPhotos.isEmpty())
+        assertTrue(vm.state.value.calendarCounts.isEmpty())
+    }
+
     @Test fun clearingDateRestoresUnfilteredShopPagesAndResetsOnlyHomeQuery() = runTest(dispatcher) {
         val shops = Shops()
         val homes = Homes()

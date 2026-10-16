@@ -27,7 +27,10 @@ internal fun HistoryPhoto(
     scale: ContentScale = ContentScale.Crop,
     imageContent: HistoryImageContent? = null,
 ) {
-    Box(modifier.background(MaterialTheme.colorScheme.surfaceVariant)) {
+    val showPlaceholder = url.isNullOrBlank() || LocalInspectionMode.current || imageContent == null
+    val photoModifier = if (scale == ContentScale.Fit && !showPlaceholder) modifier
+        else modifier.background(MaterialTheme.colorScheme.surfaceVariant)
+    Box(photoModifier) {
         if (url.isNullOrBlank() || LocalInspectionMode.current || imageContent == null) {
             Image(painterResource(Res.drawable.history_maskot_with_photo), null,
                 modifier = Modifier.fillMaxSize(), contentScale = ContentScale.Fit)

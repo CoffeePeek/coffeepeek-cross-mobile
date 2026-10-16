@@ -8,12 +8,12 @@ import io.kamel.image.config.Default
 import org.koin.dsl.module
 
 fun imageModule() = module {
-    single {
+    single<KamelConfig> {
         val urlFetcher = get<CustomUrlFetcher>()
-        KamelConfig {
+        platformImageConfig(KamelConfig {
             takeFrom(KamelConfig.Default)
             fetcher(ByteArrayFetcher)
             fetcher(urlFetcher)
-        }
+        })
     }
 }

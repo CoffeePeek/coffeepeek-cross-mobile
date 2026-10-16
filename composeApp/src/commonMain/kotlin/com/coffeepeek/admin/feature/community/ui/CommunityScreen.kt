@@ -110,7 +110,7 @@ fun CommunityScreen(onCreateCheckIn: () -> Unit) {
                     ),
                     verticalArrangement = Arrangement.spacedBy(CpDimens.spacing3),
                 ) {
-                    item(key = "heading") {
+                    item(key = "heading", contentType = "heading") {
                         Text(
                             "Лента",
                             style = MaterialTheme.typography.headlineMedium,
@@ -119,13 +119,17 @@ fun CommunityScreen(onCreateCheckIn: () -> Unit) {
                         )
                     }
                     when {
-                        state.isLoggedIn == null || (state.isLoading && state.items.isEmpty()) -> item(key = "loading") {
+                        state.isLoggedIn == null || (state.isLoading && state.items.isEmpty()) -> item(key = "loading", contentType = "loading") {
                             Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.TopCenter) {
                                 CoffeePeekLoader()
                             }
                         }
                         else -> {
-                            itemsIndexed(state.items, key = { _, checkIn -> checkIn.id }) { index, checkIn ->
+                            itemsIndexed(
+                                state.items,
+                                key = { _, checkIn -> checkIn.id },
+                                contentType = { _, checkIn -> if (checkIn.isHome) "home-check-in" else "shop-check-in" },
+                            ) { index, checkIn ->
                                 Column(Modifier.analyticsExposure(if (checkIn.isHome) "feed_home_check_in" else "feed_shop_check_in", "feed", "feed"), verticalArrangement = Arrangement.spacedBy(CpDimens.spacing3)) {
                                     if (index > 0) HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
                                     TimelineCheckInCard(
@@ -157,17 +161,17 @@ fun CommunityScreen(onCreateCheckIn: () -> Unit) {
                                 }
                             }
                             when {
-                                state.error != null -> item(key = "error") {
+                                state.error != null -> item(key = "error", contentType = "error") {
                                     LoadErrorContent(
                                         onRetry = vm::retry,
                                         retryLabel = if (state.restartPagination) "Обновить ленту" else "Попробовать снова",
                                     )
                                 }
-                                state.items.isEmpty() && !state.isLoading -> item(key = "empty") {
+                                state.items.isEmpty() && !state.isLoading -> item(key = "empty", contentType = "empty") {
                                     Text("Пока нет опубликованных чек-инов.", color = MaterialTheme.colorScheme.onSurfaceVariant)
                                 }
                             }
-                            if (state.isLoadingMore) item(key = "loading-more") {
+                            if (state.isLoadingMore) item(key = "loading-more", contentType = "loading") {
                                 Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.TopCenter) {
                                     CoffeePeekLoader()
                                 }
