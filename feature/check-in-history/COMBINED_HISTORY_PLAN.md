@@ -1,5 +1,60 @@
 # Combined personal history — current-main parity and next slice
 
+## Current status: Android route activated — 2026-10-16
+
+User authorized switching the three existing Android history routes. VisitedPlaces,
+HomeCheckIns and EditHomeCheckIn(id) now render the migrated combined entry, keeping
+the same route IDs and initial edit-by-ID. Platform renderer selection preserves
+the shared/iOS ProfileCheckInsScreen. Application composition binds the existing
+Home editor/detail/delete workflow to the history account lease and child store,
+without migrating its writer or adding feature-to-feature implementation imports.
+Only successful writes invalidate the combined reader; editor construction does
+not issue duplicate legacy history/calendar loads. Account replacement closes
+editor/photos and rejects late callbacks; token renewal retains the account.
+Pending writes lock dismissal/replacement, failures keep the draft without retries.
+The destination consumes initial edit IDs once, not once per account. Typed
+Result/cancellation contracts are preserved. This is a compatibility bridge,
+not a complete migration of the Home editor/data/writer.
+
+Read-only backend source audit at 6144903272381e7dd4cc2b48790860bc34480682:
+HomeCheckInsController and CheckInQueries.Home use inclusive PreparedOn civil dates
+for both page and calendar; equal day bounds are valid. UnifiedCheckInsController
+mine uses GetUnifiedByUserAsync, which explicitly filters Kind.Shop and uses
+VisitedAt >= from and < to. The two readers therefore do not duplicate Home rows.
+This establishes source compatibility, not the deployed backend's live behavior.
+
+Source anchors: [Home controller](https://github.com/CoffeePeek/coffeepeek-backend/blob/6144903272381e7dd4cc2b48790860bc34480682/CoffeePeek.ShopsService/Controllers/HomeCheckInsController.cs),
+[Home queries](https://github.com/CoffeePeek/coffeepeek-backend/blob/6144903272381e7dd4cc2b48790860bc34480682/CoffeePeek.Shops.Persistance/Queries/CheckInQueries.Home.cs),
+[Shop queries](https://github.com/CoffeePeek/coffeepeek-backend/blob/6144903272381e7dd4cc2b48790860bc34480682/CoffeePeek.Shops.Persistance/Queries/CheckInQueries.cs).
+
+Direct/Play APK assembly and packaged DEX checks, app/history lint and **662 selected
+unit cases** pass: 257 app per variant, three Home domain, eight history domain,
+seven history data, 38 history impl, 87 Shop and five Shop Report. Valid cached/
+up-to-date tasks may be reused. The complete composeApp shared graph compiles for
+iOS Simulator Arm64; its selected legacy screen/writer is not migrated.
+
+All **26 isolated Android UI cases** pass on the owned read-only emulator: eight
+actual destination/DI/Home workflow cases, five existing app-boundary cases and
+13 feature-content/entry cases. These include initial edit-by-ID, default
+Back/Auth/Shop-picker events, create/edit/delete confirmation and cancellation,
+successful-write refresh without duplicate legacy history reads, pending-write
+locking and logout without replaying an old initial ID into a new account.
+The first harness run incorrectly tried scrolling a fixed Save button; it now
+asserts/clicks the displayed action. A later fixture had a future preparation
+time correctly rejected by existing validation; the fixture now uses a past
+time. Production validation was not weakened. The final full suites pass.
+Production editor ownership uses ViewModelProvider after lint rejected direct
+ViewModelStore.put; the corrected source passes lint without suppression.
+
+Light/dark fake Home forms, detail and delete confirmation were visually inspected:
+bottom-aligned bounded sheet, themed content and reachable fixed Save action.
+Modal IDE previews render their content; individual IDE preview renders are not
+certified. Application instrumentation injects fake auth/repositories/catalogs/
+images at the tested boundary while normal Application initialization remains.
+No physical phone update, user-data clearing or live write is part of this change.
+Live deployed-backend/date-edge, owner/device and accessibility QA remain release
+gates. Earlier dated sections below are historical and do not override this status.
+
 ## Combined UI replacement — verified preparation, 2026-10-16
 
 Replaced the inactive Shop-only Calendar/List entry with the prepared combined
@@ -145,21 +200,24 @@ new modules and their application adapters/tests; the child restores them as one
 cohesive capability. Its initial 71-file extraction is extended here by the Home
 read foundation, still under the current 100–150-file review guide. Do not split
 the same feature again just to create smaller PRs. Git ancestry is
-preserved; no force-push or route switch.
+preserved without force-push. Android activation is recorded above.
 
 - [x] Prepared Shop history domain/data, shared MVI, Android API/UI and revocable
   account/calendar/image composition, with fake-data tests.
 - [x] Entire implementation preserved unchanged during branch extraction.
-- [x] Main's combined ProfileCheckInsScreen, Home editor and all three route
-  contracts remain active and unchanged. This is not the prepared entry.
+- [x] All three root route contracts are preserved. Android now selects the
+  combined feature entry; shared/iOS still selects ProfileCheckInsScreen.
+  Existing Home editor/writer is reused through the account-bound app bridge.
 - [x] Home read boundary/adapter: implemented and automatically verified; live
-  backend date-boundary verification remains a route-activation gate.
+  backend source confirms date bounds; deployed-backend verification remains open.
 - [x] Combined filter/calendar/paging MVI prepared and automatically verified;
-  runtime entry remains inactive until combined UI replaces the old prepared path.
+  runtime entry is now active on Android only.
 - [x] Prepared production-shaped combined UI/entry: All/Shop/Home, one dot calendar,
   compact cards/rail, Shop detail/photo modal and required Home/create callbacks.
   The obsolete prepared Calendar/List code is retired, not active beside it.
-- [ ] Activate the combined Android route and finish parity/release checks.
+- [x] Activate the combined Android route, retain initial edit-by-ID and delegate
+  Home creation/detail/edit/delete and the existing Shop picker.
+- [ ] Finish deployed-backend/physical-device/owner and accessibility release checks.
 
 The authoritative whole-project status is ../ANDROID_REFACTORING_PLAN.md. It
 records the saved-roasters parity fix in parent #43, inherited by this branch.
@@ -170,7 +228,7 @@ Standalone HomeCheckInScreen/history-statistics and VisitedPlacesScreen have no
 call sites in the audited main source. Do not restore them as separate screens;
 preserve the active combined timeline and its Home editor/detail callbacks.
 
-## Actual owner and incompatibility
+## Original main audit / incompatibility (before the replacement above)
 
 `composeApp/.../ui/screen/checkins/ProfileCheckInsScreen.kt` is the active owner
 for VisitedPlaces, HomeCheckIns and EditHomeCheckIn(id). It combines shop visits

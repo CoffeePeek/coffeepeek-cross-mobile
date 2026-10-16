@@ -21,7 +21,8 @@ target; no native iOS implementation is part of these slices.
 2026-10-16: `home-check-in/domain` adds a populated, pure preparation reader
 boundary for combined history. App-owned legacy/Home/history adapters connect
 it without a cross-feature domain dependency. No new Home writer or api/data/
-impl placeholder exists; the active combined route still uses the existing code.
+impl placeholder exists. The combined Android route now consumes these reads;
+the existing Home editor/writer is delegated through an account-owned app bridge.
 See home-check-in/README.md for the module gate and date-boundary limitations.
 
 Combined personal history is the current owner. Its populated
@@ -30,14 +31,16 @@ contracts; impl now uses one shared typed MVI and production-shaped Android
 All/Shop/Home calendar/timeline without data/HTTP dependencies. The obsolete
 prepared Calendar/List screen/coordinator is retired, not activated alongside it.
 API exposes narrow screen/date ports and required Home/create callbacks.
-Android app composition prepares revocable account leases, a navigation-owned
+Android app composition supplies revocable account leases, a navigation-owned
 feature store, zone-aware calendar snapshots and lazy DI with the existing protected
-image loader. Its prepared photo viewer is account-owned. The backend owner-history
-query and its range test confirm an inclusive lower and exclusive upper instant bound.
-Incoming main e5722f9 now combines shop/home history in ProfileCheckInsScreen; that
-route is preserved on both platforms. The earlier local standalone-history switch
-is not active or published. Next supply the application-owned Home detail/editor
-bridge and preserve all three root routes before activating the combined entry.
+image loader and account-owned photo viewer. All three Android history routes
+now render this combined entry, including initial Home edit-by-ID. Application
+composition delegates the existing Home detail/create/edit/delete workflow and
+Shop creation picker; successful Home writes refresh the combined reader.
+Shared/iOS selection retains ProfileCheckInsScreen and the existing writer.
+Backend source confirms inclusive Home civil dates and Shop lower-inclusive,
+upper-exclusive instant bounds. Physical-device/deployed-backend parity remains
+open; automated fake-data checks do not certify live behavior.
 See [check-in-history/README.md](check-in-history/README.md) for the audited boundaries,
 ordered implementation and session/time-zone risks. No empty API module or
 new application module is part of these migration slices.

@@ -1,0 +1,12 @@
+<resources>
+    <string name="history_home_close">Закрыть</string>
+    <string name="history_home_loading">Загрузка домашней записи</string>
+    <string name="history_home_saving">Сохранение домашней записи</string>
+    <string name="history_home_load_error">Не удалось загрузить домашнюю запись</string>
+    <string name="history_home_action_error">Не удалось выполнить действие. Запись сохранена на экране</string>
+    <string name="history_home_retry">Повторить</string>
+    <string name="history_home_delete_title">Удалить домашнюю запись?</string>
+    <string name="history_home_delete_message">Она исчезнет из истории чекинов.</string>
+    <string name="history_home_delete_confirm">Удалить</string>
+    <string name="history_home_delete_cancel">Отмена</string>
+</resources>

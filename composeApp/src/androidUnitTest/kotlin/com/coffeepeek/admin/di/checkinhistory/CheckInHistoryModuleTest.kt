@@ -4,6 +4,8 @@ import com.coffeepeek.admin.di.shop.CheckInTestSessions
 import com.coffeepeek.admin.di.homecheckin.HomeReadTestRepository
 import com.coffeepeek.api.CoffeePeekClient
 import com.coffeepeek.domain.repository.SessionRepository
+import com.coffeepeek.admin.feature.catalog.api.BrewMethodCatalog
+import com.coffeepeek.admin.feature.coffee.api.CoffeePicker
 import com.coffeepeek.feature.checkinhistory.domain.repository.CheckInHistoryRepository
 import com.coffeepeek.feature.checkinhistory.domain.repository.HomeHistoryReader
 import com.coffeepeek.feature.homecheckin.domain.HomeCheckInRepository
@@ -34,6 +36,12 @@ class CheckInHistoryModuleTest {
         val app = koinApplication {
             modules(module { single { client }; single<SessionRepository> { sessions }
                 single<HomeCheckInRepository> { HomeReadTestRepository() } },
+                module {
+                    single<CoffeePicker> { object : CoffeePicker {
+                        override suspend fun search(query: String) = error("Unexpected catalog read")
+                    } }
+                    single<BrewMethodCatalog> { BrewMethodCatalog { error("Unexpected methods read") } }
+                },
                 checkInHistoryModule("https://fixture.invalid"))
         }
         try {

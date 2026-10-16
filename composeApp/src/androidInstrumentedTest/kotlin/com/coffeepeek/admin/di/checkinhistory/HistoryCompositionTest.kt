@@ -154,7 +154,7 @@ class HistoryCompositionTest {
     }
 
     private fun renderer(sessions: Sessions, repository: Repository, homes: HomeHistoryReader = Homes()) = AndroidCheckInHistoryScreenRenderer(
-        sessions, repository, homes, calendar,
+        sessions, repository, homes, calendar, HistoryHomeEditorFactory { _, _, _ -> error("Callback seam must not construct editor") },
         imageContent = { _, modifier, _ -> Box(modifier) },
         photoContent = { _, index, dismiss ->
             Button(onClick = dismiss) { Text("Fixture photo ${index + 1}") }

@@ -12,6 +12,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 /** Account observation outlives visible composition, including when another route covers history. */
@@ -19,6 +20,10 @@ internal class AndroidCheckInHistoryHostViewModel(private val sessions: SessionR
     private val mutableSession = MutableStateFlow(HistoryHostSession(0, AndroidCheckInHistorySession(sessions)))
     val session = mutableSession.asStateFlow()
     private var observation: Job? = null
+    private val consumedInitialHomeIds = mutableSetOf<String>()
+
+    /** Destination-owned, not account-owned: logout must not replay an old edit route. */
+    fun consumeInitialHomeId(id: String?): String? = id?.takeIf { it.isNotBlank() && consumedInitialHomeIds.add(it) }
 
     init { observe() }
 
@@ -59,6 +64,14 @@ internal class HistoryHostSession(
     override val viewModelStore = ViewModelStore()
     private val mutablePhotoPreview = MutableStateFlow<HistoryPhotoPreview?>(null)
     val photoPreview = mutablePhotoPreview.asStateFlow()
+    private val mutableContentGeneration = MutableStateFlow(0)
+    val contentGeneration = mutableContentGeneration.asStateFlow()
+
+    fun invalidateContent() {
+        if (lease.isCurrent() && lease.isLoggedIn) {
+            mutableContentGeneration.update { if (it < Int.MAX_VALUE) it + 1 else it }
+        }
+    }
 
     fun openPhoto(urls: List<String>, index: Int) {
         if (lease.isCurrent() && lease.isLoggedIn && urls.getOrNull(index)?.isNotBlank() == true) {

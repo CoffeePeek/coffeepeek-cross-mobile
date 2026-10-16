@@ -256,6 +256,8 @@ androidComponents {
                 "com.coffeepeek.admin.di.checkinhistory.CheckInHistoryModuleKt",
                 "com.coffeepeek.admin.di.checkinhistory.AndroidCheckInHistoryScreenRenderer",
                 "com.coffeepeek.admin.di.checkinhistory.AndroidCheckInHistorySession",
+                "com.coffeepeek.admin.di.checkinhistory.AndroidHistoryHomeBridge",
+                "com.coffeepeek.admin.di.checkinhistory.HistoryHomeEditorFactoryKt",
                 "com.coffeepeek.feature.checkinhistory.api.CheckInHistoryEntry",
                 "com.coffeepeek.feature.checkinhistory.data.repository.CheckInHistoryRepositoryFactoryKt",
                 "com.coffeepeek.feature.checkinhistory.impl.CheckInHistoryApiImplKt",

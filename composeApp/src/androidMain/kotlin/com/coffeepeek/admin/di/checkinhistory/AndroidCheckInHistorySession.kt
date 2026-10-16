@@ -12,6 +12,8 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
 import kotlin.concurrent.Volatile
 
 /** Private reads are permanently revoked on replacement; same-account token renewal is not replacement. */
@@ -44,12 +46,17 @@ internal class AndroidCheckInHistorySession(
             read { reader.calendar(range) }
     }
 
-    private suspend fun <T> read(block: suspend () -> Result<T>): Result<T> = coroutineScope {
+    private suspend fun <T> read(block: suspend () -> Result<T>): Result<T> = withCurrentAccount(block)
+
+    /** Also bounds the temporary editor's operations; never retries an uncertain write. */
+    suspend fun <T> withCurrentAccount(block: suspend () -> Result<T>): Result<T> = coroutineScope {
+        currentCoroutineContext().ensureActive()
         ensureCurrent()
         if (!isLoggedIn) return@coroutineScope Result.failure(IllegalStateException("Sign in before reading history"))
         val operation = async(start = CoroutineStart.LAZY) {
             ensureCurrent()
             block().also {
+                currentCoroutineContext().ensureActive()
                 ensureCurrent()
                 it.exceptionOrNull()?.let { error -> if (error is CancellationException) throw error }
             }

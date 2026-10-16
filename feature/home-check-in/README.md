@@ -1,7 +1,9 @@
 # Home preparations — incremental read foundation
 
-2026-10-16: prepare a pure domain boundary for the combined Android history in
-PR #95. This does not migrate or replace the existing Home editor/writer.
+2026-10-16: the pure read domain is integrated into combined Android history in
+PR #95. All three Android history routes use the migrated combined entry; an
+account-owned application bridge reuses the existing Home editor/detail/writer.
+This does not migrate or replace that editor/writer. Shared/iOS remains legacy.
 
 ## Module gate and migration boundary
 
@@ -24,15 +26,17 @@ DI does not open a lease or make a request. There is no new client or endpoint.
 `preparedOn` stays a civil date distinct from `preparedAtUtc`/`createdAtUtc`.
 The compatibility reader forwards the existing `from`/`to` date strings unchanged,
 including equal day bounds and first/last calendar days; it does not substitute
-Shop UTC-exclusive bounds. This preserves the audited client's convention, not
-independently verified backend inclusivity. Verify the server boundary before
-activating the combined renderer. Unknown visibility stays null and unknown
+Shop UTC-exclusive bounds. This preserves the audited client's convention. The
+backend source audit pinned in check-in-history/COMBINED_HISTORY_PLAN.md confirms
+inclusive civil bounds; the deployed server still needs safe date-edge QA.
+Unknown visibility stays null and unknown
 moderation stays Unknown. Recipe fields and issued photo URLs are retained;
 no URL is synthesized from an ID/storage key.
 
-Next: combined history MVI/UI, delegated Home actions and Android route checks.
-Full Home data/editor migration is a later feature checkpoint, not a prerequisite
-for this compatibility read foundation. No root route is switched here.
+Combined history MVI/UI, delegated Home actions and Android route activation
+are now implemented. Full Home data/editor migration remains a later feature
+checkpoint, not a prerequisite for this compatibility read foundation. Physical-
+device/live-read release checks remain open; see the combined-history plan.
 
 Verification: three pure Home model tests, two new history model tests and 14
 app read/adapter/session/transport scenarios per Android unit variant pass.

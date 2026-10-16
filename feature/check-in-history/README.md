@@ -1,5 +1,29 @@
 # Combined personal check-in history — Android-first migration
 
+## Current status — Android route activated, 2026-10-16
+
+All three existing Android routes now resolve the migrated combined entry:
+VisitedPlaces, HomeCheckIns and EditHomeCheckIn(id). The application owns the
+platform destination/renderer; shared/iOS selection still renders the existing
+ProfileCheckInsScreen with the same initial edit ID. No route IDs were changed.
+
+The temporary Android Home bridge reuses the current Home detail/editor/writer
+inside an account-owned child ViewModelStore. It suppresses that editor VM's
+unused legacy timeline/calendar requests, binds detail/catalog/write operations
+to the revocable account lease, invalidates the new history only after successful
+writes and closes drafts/photos on account replacement. Pending saves prevent
+dismissal/replacement; failed writes retain the draft without automatic retries.
+Initial edit IDs are consumed once by the destination, not replayed into a new
+account. The existing Shop creation picker remains caller-owned navigation.
+
+This is Android history integration, not a full Home editor/data migration or
+an iOS screen migration. The backend source audit confirms Home inclusive civil
+dates and Shop exclusive upper instant bounds; deployed backend/real-account
+parity and physical-device QA remain release gates. Exact verification is in
+[COMBINED_HISTORY_PLAN.md](COMBINED_HISTORY_PLAN.md).
+
+## Historical preparation checkpoints
+
 2026-10-16 combined UI replacement: the prepared Android entry now uses
 CombinedHistoryViewModel and production-shaped All/Shop/Home content: one dot
 calendar, Today/date reset, compact timeline/rail, source-specific retries,

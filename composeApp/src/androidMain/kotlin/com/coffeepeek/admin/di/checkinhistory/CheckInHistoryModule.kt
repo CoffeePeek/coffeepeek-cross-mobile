@@ -15,5 +15,6 @@ internal fun checkInHistoryModule(apiBaseUrl: String = Constants.BASE_URL) = mod
     single<HomePreparationReader> { LegacyHomePreparationReader(get()) }
     single<HomeHistoryReader> { HomeHistoryReaderAdapter(get()) }
     single { AndroidCheckInHistoryCalendar() }
-    single { AndroidCheckInHistoryScreenRenderer(get(), get(), get(), get()) }
+    single<HistoryHomeEditorFactory> { historyHomeEditorFactory(get(), get(), get()) }
+    single { AndroidCheckInHistoryScreenRenderer(get(), get(), get(), get(), get()) }
 }

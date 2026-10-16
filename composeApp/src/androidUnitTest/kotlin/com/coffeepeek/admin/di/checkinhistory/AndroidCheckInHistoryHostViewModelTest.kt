@@ -29,6 +29,19 @@ class AndroidCheckInHistoryHostViewModelTest {
     @BeforeTest fun setUp() { Dispatchers.setMain(dispatcher) }
     @AfterTest fun tearDown() { store.clear(); Dispatchers.resetMain() }
 
+    @Test fun editRouteIsConsumedOnceAndIsNotReplayedForAReplacementAccount() = runTest(dispatcher) {
+        val sessions = CheckInTestSessions()
+        val host = AndroidCheckInHistoryHostViewModel(sessions).also { store.put("host", it) }
+        assertNull(host.consumeInitialHomeId(null))
+        assertNull(host.consumeInitialHomeId(""))
+        assertEquals("entry", host.consumeInitialHomeId("entry"))
+        assertNull(host.consumeInitialHomeId("entry"))
+        sessions.applySession(Session("other", userId = "other"))
+        runCurrent()
+        assertNull(host.consumeInitialHomeId("entry"))
+        assertEquals("another", host.consumeInitialHomeId("another"))
+    }
+
     @Test fun hiddenRouteAccountReplacementClearsChildrenButTokenRenewalDoesNot() = runTest(dispatcher) {
         val sessions = CheckInTestSessions()
         val host = AndroidCheckInHistoryHostViewModel(sessions).also { store.put("host", it) }

@@ -4,7 +4,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.getValue
 import com.coffeepeek.admin.ui.screen.addshop.AddShopScreen
 import com.coffeepeek.admin.ui.screen.auth.registr.RegisterScreen
-import com.coffeepeek.admin.ui.screen.checkins.ProfileCheckInsScreen
+import com.coffeepeek.admin.ui.screen.checkins.CheckInHistoryDestination
 import com.coffeepeek.admin.ui.screen.shop.ShopDetailScreen
 import com.coffeepeek.admin.ui.screen.shop.ShopMenuGalleryScreen
 import com.coffeepeek.admin.ui.screen.shop.ShopReportScreen
@@ -494,10 +494,10 @@ object Navigator {
                     composable<Screen.EditProfile> { EditProfileScreen() }
                     composable<Screen.DeleteAccountPending> { DeleteAccountPendingScreen() }
                     composable<Screen.Favorites> { FavoritesDestination() }
-                    composable<Screen.VisitedPlaces> { ProfileCheckInsScreen() }
-                    composable<Screen.HomeCheckIns> { ProfileCheckInsScreen() }
+                    composable<Screen.VisitedPlaces> { CheckInHistoryDestination() }
+                    composable<Screen.HomeCheckIns> { CheckInHistoryDestination() }
                     composable<Screen.EditHomeCheckIn> { entry ->
-                        ProfileCheckInsScreen(initialHomeId = entry.toRoute<Screen.EditHomeCheckIn>().id)
+                        CheckInHistoryDestination(initialHomeId = entry.toRoute<Screen.EditHomeCheckIn>().id)
                     }
                     composable<Screen.CitySettings> { CityScreen() }
                     composable<Screen.ThemeSettings> { ThemeScreen() }
@@ -531,9 +531,9 @@ object Navigator {
             Screen.EditProfile -> EditProfileScreen()
             Screen.DeleteAccountPending -> DeleteAccountPendingScreen()
             Screen.Favorites -> FavoritesDestination()
-            Screen.VisitedPlaces -> ProfileCheckInsScreen()
-            Screen.HomeCheckIns -> ProfileCheckInsScreen()
-            is Screen.EditHomeCheckIn -> ProfileCheckInsScreen(initialHomeId = screen.id)
+            Screen.VisitedPlaces -> CheckInHistoryDestination()
+            Screen.HomeCheckIns -> CheckInHistoryDestination()
+            is Screen.EditHomeCheckIn -> CheckInHistoryDestination(initialHomeId = screen.id)
             Screen.CitySettings -> CityScreen()
             Screen.ThemeSettings -> ThemeScreen()
             else -> error("Tab route must be handled by MainScreen: $screen")

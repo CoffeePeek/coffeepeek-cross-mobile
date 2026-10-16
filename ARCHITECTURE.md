@@ -25,6 +25,8 @@ core/                               prepared infrastructure/design-system
 feature/favorites/                  api/domain/data/impl; Android screen active
 feature/shop-report/                api/domain/data/impl; Android report active
 feature/shop/                       api/domain/data/impl; Android menu gallery active
+feature/check-in-history/           api/domain/data/impl; Android combined history active
+feature/home-check-in/domain/       pure reads; legacy editor/writer reused by app bridge
 ```
 
 Target ownership is feature-based:
