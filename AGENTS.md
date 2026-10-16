@@ -166,10 +166,12 @@ module boundary.
 
 - Continue the branch stack from the current migration tip, not main. Each new
   PR targets the previous open checkpoint branch and describes only the changes
-  since that branch. Work only in migration branches. Group related, independently
-  verifiable steps in one PR; use roughly 100–150 changed files in the PR diff
-  as the checkpoint guide, not one PR per small task. One checkpoint may contain
-  one to three related features when they can be reviewed and verified coherently.
+  since that branch. Work only in migration branches. Once the current business
+  feature checkpoint is complete, start the next feature in a new child branch
+  and PR; do not keep adding new features to a completed checkpoint. Supporting
+  slices required to finish the same feature stay together (including Home reads
+  required by combined history). Use roughly 100–150 changed files as a review
+  guide, not one PR per small task or a target to fill with unrelated work.
   A genuine review/risk boundary may justify an earlier PR; an indivisible change
   may exceed the guide with an explanation. Never mix unrelated work to fill it.
   Parent-scoped fixes may stay in that parent's PR; update its descendants after
@@ -178,6 +180,10 @@ module boundary.
   already merged parent and assume they reached main.
 - Branch isolation does not prove application correctness: every integration
   slice must compile the Android app and test the affected behaviour.
+- Before migrating a screen, trace its actual entry points in fresh main and the
+  running app. Distinguish full-screen destinations from profile previews and
+  modal variants of similar content. A new modal does not prove an old route is
+  retired; a passing full-screen test does not certify the modal's migration.
 - Current favorites completion is Android-first. Do not change the iOS screen,
   binding or writer, or remove shared legacy paths still used by iOS. A root
   Navigation 3 migration is an application-wide decision, not a prerequisite
@@ -196,6 +202,61 @@ do not wrap one repository call without value. Prefer composition over generic
 `Base*`, `Manager`, `Helper`, or `Utils` abstractions unless an existing base
 demonstrably removes a shared, correct pattern. Prefer `internal` for
 implementation details.
+
+## IDE and testing workflow
+
+- Define a short verification plan before changing code: the behavior to preserve,
+  affected layers, relevant tests and remaining device/release gates. State
+  assumptions; keep each changed line tied to the task. Do not mix speculative
+  abstractions, adjacent cleanup or product redesign into a migration.
+- Check `<module-root>/AGENTS.md` when first entering a module, including included
+  builds, and read it if present. Load module rules lazily, not repository-wide.
+- Prefer the configured Android Studio `studio` MCP for project navigation,
+  source inspection, semantic refactoring and file diagnostics when available.
+  Discover its tools/capabilities first and always specify this project's path.
+  Respect the host agent's file-editing constraints. Keep Git and device/system
+  operations in their appropriate tools; IDE access does not broaden permission.
+  If IDE access fails, report it and use standard tools. Never claim IDE checks
+  ran merely because the server is configured. Keep local MCP endpoints, session
+  identifiers and permissions out of repository documentation and commits.
+- Inspect existing IDE run configurations or file run points before executing
+  them. Prefer relevant test configurations; do not blindly launch the application
+  configuration or another platform. Apply temporary overrides only when supported.
+  For shell Gradle runs use `--max-workers=6`; apply the same limit in IDE Gradle
+  arguments when supported. Do not run concurrent Gradle builds.
+- Before device tests, resolve the current device serial/model, connection and
+  lock state. Explicitly target the agreed device for every ADB operation. Never
+  use the default device when multiple phones are connected, or change a phone's
+  security/settings to make a test run. Ask for unlocking when needed.
+- Verify the built variant, application/test package, instrumentation target and
+  installed version before deployment. Prefer a non-destructive in-place update;
+  never silently downgrade, uninstall, clear data or replace the user's newer APK.
+  Record source revision/variant when verified; an installed version alone does
+  not establish its exact source revision.
+- Separate verification layers: unit tests, self-targeted feature UI tests with
+  fake state/ports, application-composition tests with injected dependencies, and
+  read-only checks in the real app. A self-targeted APK must not initialize the
+  production Application, DI or network. App-targeted instrumentation may still
+  initialize real background services/analytics; inspect this before running it.
+- Real-account create/edit/delete, logout/account replacement, favorite changes,
+  consent changes and destructive recovery require explicit authorization and a
+  safe test setup. Empty live history is not permission to manufacture records.
+  Opening/cancelling a form is not evidence that persistence or analytics passed.
+- UI tests must synchronize with actual state, scroll lazy containers to semantic
+  targets rather than assuming item indices, and inject image/picker ports. Cover
+  light/dark themes, relevant font/window sizes, accessibility semantics, modal
+  placement, privacy and back/cancel behavior without real camera/network writes.
+  Classify failures as product, test harness or environment only from evidence;
+  rerun affected tests and the complete relevant suite after a harness fix. Never
+  hide a flaky failure or weaken an assertion merely to obtain a green run.
+- Keep screenshots/UI dumps and sanitized diagnostics local, outside tracked
+  sources. Do not publish account identity, private photos, full logcat, credentials
+  or authorization headers. Inspect IDE warnings on changed files when possible;
+  report pre-existing warnings without expanding scope to unrelated migrations.
+- Record test date, source/build identity, device, suite counts/failures/retries,
+  visual checks and untested gates in the feature plan. Distinguish compiled tests
+  from executed tests and fake scenarios from live backend acceptance. An IDE
+  inspection, preview, passing retry or APK assembly alone is not feature completion.
 
 ## After coding
 

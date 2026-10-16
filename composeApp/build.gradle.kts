@@ -44,6 +44,11 @@ kotlin {
             implementation(project(module.feature.shop.domain))
             implementation(project(module.feature.shop.data))
             implementation(project(module.feature.shop.impl))
+            implementation(project(module.feature.checkInHistory.api))
+            implementation(project(module.feature.checkInHistory.domain))
+            implementation(project(module.feature.checkInHistory.data))
+            implementation(project(module.feature.checkInHistory.impl))
+            implementation(project(module.feature.homePreparation.domain))
             implementation(project(module.core.coroutines))
             implementation(project(module.core.designSystem))
             implementation(compose.preview)
@@ -273,6 +278,20 @@ androidComponents {
                 "com.coffeepeek.feature.shop.domain.repository.ShopCheckInRepository",
                 "com.coffeepeek.feature.shop.data.repository.ShopCheckInRepositoryFactoryKt",
                 "com.coffeepeek.feature.shop.impl.ShopCheckInCreateApiImplKt",
+                "com.coffeepeek.admin.di.checkinhistory.CheckInHistoryModuleKt",
+                "com.coffeepeek.admin.di.checkinhistory.AndroidCheckInHistoryScreenRenderer",
+                "com.coffeepeek.admin.di.checkinhistory.AndroidCheckInHistorySession",
+                "com.coffeepeek.admin.di.checkinhistory.AndroidHistoryHomeBridge",
+                "com.coffeepeek.admin.di.checkinhistory.HistoryHomeEditorFactoryKt",
+                "com.coffeepeek.feature.checkinhistory.api.CheckInHistoryEntry",
+                "com.coffeepeek.feature.checkinhistory.data.repository.CheckInHistoryRepositoryFactoryKt",
+                "com.coffeepeek.feature.checkinhistory.impl.CheckInHistoryApiImplKt",
+                "com.coffeepeek.feature.checkinhistory.impl.ui.CombinedHistoryViewModel",
+                "com.coffeepeek.admin.di.homecheckin.LegacyHomePreparationReader",
+                "com.coffeepeek.admin.di.checkinhistory.HomeHistoryReaderAdapter",
+                "com.coffeepeek.feature.homecheckin.domain.repository.HomePreparationReader",
+                "com.coffeepeek.feature.homecheckin.domain.model.HomePreparation",
+                "com.coffeepeek.feature.checkinhistory.domain.repository.HomeHistoryReader",
             ))
         }
         tasks.matching { it.name == "assemble$variantName" }.configureEach { finalizedBy(verification) }

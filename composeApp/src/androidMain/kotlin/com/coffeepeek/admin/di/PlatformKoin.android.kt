@@ -6,6 +6,8 @@ import com.coffeepeek.admin.di.shop.AndroidShopCheckInFormRenderer
 import com.coffeepeek.admin.di.shop.AndroidShopDetailScreenRenderer
 import com.coffeepeek.admin.di.shop.AndroidShopCheckInListScreenRenderer
 import com.coffeepeek.admin.di.shop.shopBrowsingModule
+import com.coffeepeek.admin.di.checkinhistory.checkInHistoryModule
+import com.coffeepeek.admin.di.checkinhistory.AndroidCheckInHistoryScreenRenderer
 import com.coffeepeek.admin.locator.Locator
 import com.coffeepeek.feature.shopreport.data.repository.createShopIssueReportRepository
 import com.coffeepeek.feature.shopreport.impl.createShopReportEntry
@@ -19,6 +21,7 @@ actual fun initPlatformKoin() {
             serverFavoritesModule(),
             shopCheckInModule(),
             shopBrowsingModule(),
+            checkInHistoryModule(),
         ),
         shopReportRendererFactory = { client ->
             AndroidShopReportScreenRenderer(
@@ -38,5 +41,6 @@ actual fun initPlatformKoin() {
         shopCheckInListRendererFactory = {
             AndroidShopCheckInListScreenRenderer(sessions = get(), users = get(), details = get(), votes = get())
         },
+        checkInHistoryRendererFactory = { get<AndroidCheckInHistoryScreenRenderer>() },
     )
 }

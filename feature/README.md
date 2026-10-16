@@ -18,11 +18,32 @@ route intentionally keeps the legacy renderer. See shop-report/README.md.
 Actual registration remains in build-logic Modules.all. Android is the integration
 target; no native iOS implementation is part of these slices.
 
-Personal history is extracted in full to `feature/check-in-history-refactoring`,
-a child of this migration branch. Its prepared api/domain/data/impl, app adapters,
-tests and detailed plan belong to that child, not the final diff of PR #43.
-The existing combined ProfileCheckInsScreen, Home editing and shared/iOS legacy
-paths remain unchanged here. No history Gradle modules are registered in this base.
+2026-10-16: `home-check-in/domain` adds a populated, pure preparation reader
+boundary for combined history. App-owned legacy/Home/history adapters connect
+it without a cross-feature domain dependency. No new Home writer or api/data/
+impl placeholder exists. The combined Android route now consumes these reads;
+the existing Home editor/writer is delegated through an account-owned app bridge.
+See home-check-in/README.md for the module gate and date-boundary limitations.
+
+Combined personal history is the current owner. Its populated
+check-in-history/domain and data modules prepare read-only pagination/calendar
+contracts; impl now uses one shared typed MVI and production-shaped Android
+All/Shop/Home calendar/timeline without data/HTTP dependencies. The obsolete
+prepared Calendar/List screen/coordinator is retired, not activated alongside it.
+API exposes narrow screen/date ports and required Home/create callbacks.
+Android app composition supplies revocable account leases, a navigation-owned
+feature store, zone-aware calendar snapshots and lazy DI with the existing protected
+image loader and account-owned photo viewer. All three Android history routes
+now render this combined entry, including initial Home edit-by-ID. Application
+composition delegates the existing Home detail/create/edit/delete workflow and
+Shop creation picker; successful Home writes refresh the combined reader.
+Shared/iOS selection retains ProfileCheckInsScreen and the existing writer.
+Backend source confirms inclusive Home civil dates and Shop lower-inclusive,
+upper-exclusive instant bounds. Physical-device/deployed-backend parity remains
+open; automated fake-data checks do not certify live behavior.
+See [check-in-history/README.md](check-in-history/README.md) for the audited boundaries,
+ordered implementation and session/time-zone risks. No empty API module or
+new application module is part of these migration slices.
 
 ## Target layout and graph
 
@@ -105,7 +126,8 @@ closed/superseded. Parent fixes stay with their owner and flow into descendants.
 
 Every next work branch starts from the current migration tip, not main. Group
 related tested steps into a checkpoint PR, using roughly 100–150 changed files
-as the guide. One to three related features may share a reviewable checkpoint;
+as the guide. Finish the current business feature, then start the next in a new
+child branch and PR. Supporting slices needed by the same feature stay together;
 do not split every small task or mix unrelated work to fill the count. A clear
 review/risk boundary may justify an earlier split; an indivisible change may
 exceed the guide with an explanation. Each PR

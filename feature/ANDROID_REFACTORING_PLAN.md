@@ -98,7 +98,7 @@ Next work is ordered, not parallel feature scaffolding:
 | Favorites: server-backed shops, roasters **and drinks** | In progress; Android entry adapts the existing server source | Preserve main's three kinds, canonical addresses, explicit read/write errors, account replacement and cache-only logout. New drink cards have no invented detail route. Real saved data/photos, login-retry/account journey, process restoration, physical-device/accessibility/locale QA and migrated-feature analytics parity remain release gates. |
 | Shop Report: incorrect shop data | In progress; Android entry active | Real safe submit/error/uncertain-delivery flow and paired preview inspection; retain shared/iOS fallback. |
 | Shop: detail, menu, public check-ins and creation sheet | In progress; Android entries active | Physical-device visual/guest/owner/return parity; picker/camera permissions and recreation, bundled extraction quality and safely authorized submissions. Prepared review editors are not a product requirement. |
-| Personal history: one combined Shop/Home calendar and timeline | In progress; all prepared migration code in history child, **not active** | The prepared Shop-only Calendar/List UI is not parity with main. Complete combined readers, MVI, production-shaped UI, home callbacks and Android integration first. |
+| Personal history: one combined Shop/Home calendar and timeline | In progress; Android code checkpoint prepared in #95 | Combined reads/MVI/content, month photos, Home photo preparation and creation-flow analytics are integrated. Personal author avatars match main; public author navigation belongs to Shop. Pixel 7 populated-history/photo/date/account/accessibility and safely authorized mutation checks remain. |
 | Home preparations: create/detail/edit/delete, recipes and photos | Not started as a new feature migration | Existing main editor/detail remain active through combined history. Extract only the needed read boundary first; do not recreate unused history/statistics tabs from the standalone Home screen. |
 | Discovery: shop list/search/filter/map and embedded roasters | Not started | Audit actual list/map/filter ownership and current platform map; no independent module for every mode. |
 | Coffee catalogue: Coffee tab/list/detail | Not started | Preserve current catalogue/search/detail and links to roasters; catalog pickers are existing shared app boundaries, not invented screens. |
@@ -144,11 +144,8 @@ These findings come from registered renderers and their call sites, not filename
   shared Kotlin navigation call site in this audit: preserve compatibility until
   all entry points are audited; do not revive a review editor or delete the route
   just because it looks old.
-- Main favorites includes server-backed shops, roasters and drinks. Roaster logos
+- Main favorites includes shops and a separate roaster section. Roaster logos
   attached to a shop card do **not** replace saved-roaster functionality.
-- Main also has a public UserProfile destination and UsagePolicy screen. They
-  belong to Profile and Settings respectively, not two automatically new module
-  families. Preserve existing consent/privacy and canonical-address behavior.
 - ForgotPassword/ResetPassword, account deletion and app-update actions already
   exist. They are not new product features to invent.
 - Do not migrate old journal/bean-bag screens merely because unused classes or
@@ -162,28 +159,32 @@ These findings come from registered renderers and their call sites, not filename
    as ready. Favorites' missing roaster section is fixed and automatically tested;
    full account/device QA and the existing Shop/report gates remain. Preserve main
    behavior, not a new design.
-2. [ ] In the history child, prepare account-bound Home reads and history-owned
+2. [x] In the history child, prepare account-bound Home reads and history-owned
    read models/ports. Confirm date-boundary/calendar/page semantics and preserve
    unknown visibility/moderation, protected photos and recipe data.
    Application composition adapts contracts; no cross-feature domain/data/impl
    import. Create Home domain only when the module gate has real consumers;
    no empty api/impl/DI modules or forwarding-only use cases.
-3. [ ] Combined typed MVI: one filter/month/date, two source cursors, retained
+3. [x] Combined typed MVI: one filter/month/date, two source cursors, retained
    content/partial failures, duplicate/conflicting-action guards, cancellation,
    stale-response rejection and account replacement versus token renewal.
-4. [ ] Production-shaped stateless history content: compact Shop/Home rows,
+4. [x] Production-shaped stateless history content: compact Shop/Home rows,
    one calendar/filter, loading/empty/retry, photos/details and creation callbacks.
    Each independent component owns its file and paired fake-state previews.
    No second global Calendar/List mode or full-card redesign.
-5. [ ] Extend the entry and Android renderer without losing any of the three
+5. [x] Extend the entry and Android renderer without losing any of the three
    existing history route contracts. Delegate Home edit/create/delete and the
-   existing Shop picker; keep active legacy history until parity is verified.
+   existing Shop picker. Android uses the new entry; shared/iOS fallback remains.
 6. [ ] Verify both source cursors, filters/date reset/month limits, partial-source
    failures/retry, guest/account/token changes, back/photos/editor return and
    initial edit ID. Build Direct/Play/DEX/unit/lint and isolated UI tests; then
    safely verify physical-device/live-read parity. Live writes require a safe
    environment/account and separate authorization.
-7. [ ] Select the next owner only after these gates, repeating the audit against
+7. [x] Reconcile main's author avatar and canonical public-author links in Shop,
+   and preserve personal-history headers without inventing a new profile link.
+   Restore the existing creation flow/exposure policy in app-owned composition,
+   with no analytics SDK in feature modules and no user text/URLs in payloads.
+8. [ ] Select the next owner only after these gates, repeating the audit against
    the latest main before coding. Later ordering is provisional, not authority
    to restore removed behavior or scaffold all future modules.
 

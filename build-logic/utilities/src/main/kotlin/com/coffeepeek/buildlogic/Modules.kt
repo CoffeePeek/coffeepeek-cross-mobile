@@ -34,6 +34,18 @@ object Modules {
             const val impl = ":feature:shop:impl"
         }
 
+        val checkInHistory = CheckInHistory
+        val homePreparation = HomePreparation
+        object HomePreparation {
+            const val domain = ":feature:home-check-in:domain"
+        }
+
+        object CheckInHistory {
+            const val api = ":feature:check-in-history:api"
+            const val domain = ":feature:check-in-history:domain"
+            const val data = ":feature:check-in-history:data"
+            const val impl = ":feature:check-in-history:impl"
+        }
     }
 
     object Legacy {
@@ -74,6 +86,11 @@ object Modules {
         feature.shop.domain,
         feature.shop.data,
         feature.shop.impl,
+        feature.checkInHistory.domain,
+        feature.checkInHistory.api,
+        feature.checkInHistory.data,
+        feature.checkInHistory.impl,
+        feature.homePreparation.domain,
         feature.homeCheckIn,
     )
 }

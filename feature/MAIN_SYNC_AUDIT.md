@@ -81,6 +81,31 @@ ready, as requested; compilation of that UI test is not an executed device test.
 - Rebuild and rerun affected unit/UI/DEX checks after the child merge. Previous
   ef41fd8/Pixel 7 smoke is dated evidence, not verification of this new baseline.
 
+Child #95 now inherits 0137ee7 through the parent. Month-wide photos and Home
+photo-preparation callbacks are implemented and covered by regression tests.
+Direct/Play APKs/DEX, app/history lint, instrumentation APK assembly and 859
+selected unit cases pass; shared Kotlin compiles for iOS Simulator Arm64.
+The subsequent code checkpoint restores public Shop author callbacks and personal
+history avatars, using the configured application image loaders. History creation
+now hands off the existing single analytics flow and preserves consent, exposure
+and overlay policy via app-owned integration. Broader parent-feature analytics
+and physical-device acceptance remain open; see the current child plan.
+The combined author/creation checkpoint passes 995 selected unit executions,
+Direct/Play APK/DEX checks, app/Shop/history lint and instrumentation APK assembly.
+The subsequent Pixel 7 run passes 15 self-targeted history and 33 self-targeted
+Shop UI cases after a semantic-scroll harness correction and a full-suite retry.
+Read-only app navigation on the user's installed 1.0.637 reaches an empty history
+and opens/cancels Home/Shop creation without submission. Its exact source revision
+is not independently established; populated and write acceptance remain open.
+See the child's COMBINED_HISTORY_PLAN.md for current status and UI-check evidence.
+
+Entry-point audit against re-fetched main 0137ee7: own-profile `Чекины → Все`
+still opens the full history destination; `Активность` separately opens a calendar
+modal. Our new Android history route does not replace that modal, which still
+uses PersonalProfileActivityCalendar with the legacy Shop/Home ViewModels. Treat
+profile activity as an explicit remaining integration/parity check, not proof
+that the full-screen history was retired or that profile migration is complete.
+
 Physical-device populated history/photos/date-edge, safe authenticated writes,
 account journeys and accessibility remain release checks. The stack remains draft
 until those gates are explicitly checked; a merge alone is not product parity.
