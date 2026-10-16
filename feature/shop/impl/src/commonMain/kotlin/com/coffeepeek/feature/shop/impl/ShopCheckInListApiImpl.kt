@@ -32,6 +32,7 @@ private class DefaultShopCheckInListEntry(
         onRegister: () -> Unit,
         onReportCheckIn: (String) -> Unit,
         onOpenPhoto: (List<String>, Int) -> Unit,
+        onOpenAuthor: (String, String, String?) -> Unit,
         refreshGeneration: Long,
     ) {
         val viewModel = viewModel(key = "shop-check-in-list:$shopId") {
@@ -45,6 +46,7 @@ private class DefaultShopCheckInListEntry(
                 ShopCheckInListEvent.Register -> onRegister()
                 is ShopCheckInListEvent.Report -> onReportCheckIn(event.checkInId)
                 is ShopCheckInListEvent.OpenPhoto -> onOpenPhoto(event.urls, event.index)
+                is ShopCheckInListEvent.OpenAuthor -> onOpenAuthor(event.slug, event.nickname, event.avatarUrl)
             }
         }
     }

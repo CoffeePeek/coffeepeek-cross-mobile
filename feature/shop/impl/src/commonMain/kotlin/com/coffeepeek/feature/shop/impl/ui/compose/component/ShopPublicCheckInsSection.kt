@@ -46,6 +46,7 @@ internal fun ShopPublicCheckInsSection(
     checkInCount: Int = checkIns.size,
     formatDate: (String) -> String = { it.take(10) },
     isRefreshing: Boolean = false,
+    onOpenAuthor: (String) -> Unit = {},
 ) {
     Column(modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing3)) {
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
@@ -82,6 +83,7 @@ internal fun ShopPublicCheckInsSection(
                         onVote = if (isLoggedIn && !own && pendingVoteId == null && !isRefreshing)
                             ({ onVote(checkIn.id) }) else null,
                         onReport = if (isLoggedIn && !own) ({ onReport(checkIn.id) }) else null,
+                        onOpenAuthor = checkIn.authorSlug?.takeIf(String::isNotBlank)?.let { { onOpenAuthor(checkIn.id) } },
                     )
                 }
             }

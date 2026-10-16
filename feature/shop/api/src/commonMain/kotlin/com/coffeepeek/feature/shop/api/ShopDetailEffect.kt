@@ -11,6 +11,7 @@ sealed interface ShopDetailEffect {
     data class ReportShop(val shop: ShopDetailContext) : ShopDetailEffect
     data class OpenCheckIns(val shopId: String) : ShopDetailEffect
     data class ReportCheckIn(val checkInId: String) : ShopDetailEffect
+    data class OpenAuthor(val slug: String, val nickname: String, val avatarUrl: String?) : ShopDetailEffect
     data class FavoriteChanged(val shopId: String, val isFavorite: Boolean) : ShopDetailEffect
     data class OpenMap(val latitude: Double, val longitude: Double, val title: String) : ShopDetailEffect
     data class OpenRoute(val latitude: Double, val longitude: Double) : ShopDetailEffect

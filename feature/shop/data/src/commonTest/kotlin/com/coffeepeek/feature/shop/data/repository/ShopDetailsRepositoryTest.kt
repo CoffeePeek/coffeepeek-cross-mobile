@@ -30,6 +30,7 @@ class ShopDetailsRepositoryTest {
                 }],
                 "checkIns":[{
                   "id":"checkin-1","author":{"slug":"user-1"},"shop":{"slug":"shop-1"},"username":"Alex","text":"Visited",
+                  "authorAvatarUrl":"/api/Users/user-1/avatar?signature=issued",
                   "createdAtUtc":"2026-10-01","visitedAt":"2026-09-30",
                   "photos":[{"sortIndex":"2","url":"/api/v1/check-ins/checkin-1/photos/second"},
                     {"sortIndex":1,"url":"https://cdn.example.com/first.jpg"},
@@ -62,6 +63,8 @@ class ShopDetailsRepositoryTest {
             assertEquals(23, details.overview.reviewCount)
             val checkIn = details.checkIns.single()
             assertEquals("user-1", checkIn.userId)
+            assertEquals("user-1", checkIn.authorSlug)
+            assertEquals("https://files.example.com/api/Users/user-1/avatar?signature=issued", checkIn.authorAvatarUrl)
             assertEquals("shop-1", checkIn.shopId)
             assertEquals("Alex", checkIn.username)
             assertNull(checkIn.reviewId)

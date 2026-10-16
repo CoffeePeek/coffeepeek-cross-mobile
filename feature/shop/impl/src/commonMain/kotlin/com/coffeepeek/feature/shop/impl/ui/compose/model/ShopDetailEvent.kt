@@ -16,6 +16,7 @@ internal sealed interface ShopDetailEvent {
     data class ReportShop(val shop: ShopDetailContext) : ShopDetailEvent
     data class OpenCheckIns(val shopId: String) : ShopDetailEvent
     data class ReportCheckIn(val checkInId: String) : ShopDetailEvent
+    data class OpenAuthor(val slug: String, val nickname: String, val avatarUrl: String?) : ShopDetailEvent
     data class FavoriteChanged(val shopId: String, val isFavorite: Boolean) : ShopDetailEvent
     data class OpenMap(val latitude: Double, val longitude: Double, val title: String) : ShopDetailEvent
     data class OpenRoute(val latitude: Double, val longitude: Double) : ShopDetailEvent

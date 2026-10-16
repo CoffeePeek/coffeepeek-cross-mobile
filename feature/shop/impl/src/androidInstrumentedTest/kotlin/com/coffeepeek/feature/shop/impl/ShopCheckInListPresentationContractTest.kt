@@ -63,4 +63,18 @@ class ShopCheckInListPresentationContractTest {
             assertEquals(listOf(ShopCheckInListAction.SignIn, ShopCheckInListAction.Register), actions)
         }
     }
+
+    @Test fun visibleAuthorDispatchesRowIdentityInBothThemesWithoutOpeningPhotos() {
+        for (dark in listOf(false, true)) {
+            val actions = mutableListOf<ShopCheckInListAction>()
+            val row = previewCheckIn().copy(username = "Visible author", authorSlug = "public-author", rating = null)
+            val state = ShopCheckInListState(isLoading = false, hasLoaded = true, shopTitle = "Coffee",
+                checkIns = listOf(row), isLoggedIn = true)
+            render(dark) { ShopCheckInListScreenContent(state, actions::add) }.use {
+                compose.onAllNodes(hasScrollToIndexAction())[0].performScrollToIndex(3)
+                compose.onNodeWithText("Visible author").performClick()
+                assertEquals(listOf(ShopCheckInListAction.OpenAuthor(row.id)), actions)
+            }
+        }
+    }
 }

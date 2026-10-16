@@ -1,4 +1,5 @@
 <resources>
+    <string name="shop_checkins_open_author">Открыть профиль %1$s</string>
     <string name="shop_drink_photo_title">Изображение напитка</string>
     <string name="shop_drink_photo_help">Из первого фото выделяются объекты переднего плана. Проверьте результат и выберите чашку; неподходящую вырезку можно не использовать.</string>
     <string name="shop_drink_photo_processing">Обрабатываем первое фото…</string>

@@ -90,6 +90,24 @@ class ShopCheckInListViewModelTest {
         assertTrue(state.hasLoaded)
     }
 
+    @Test fun authorNavigationUsesOnlyVisibleCanonicalAddressNotUserIdOrHiddenGuestRows() = runTest(dispatcher) {
+        val repository = Details().apply { result = Result.success(details().let { it.copy(checkIns = it.checkIns.map { row ->
+            row.copy(authorSlug = "public-${row.id}", username = "Author", authorAvatarUrl = "issued-avatar")
+        }) }) }
+        val model = viewModel(details = repository, viewer = { Result.success(ShopViewer(false, null)) })
+        val events = mutableListOf<ShopCheckInListEvent>()
+        backgroundScope.launch { model.events.collect { events += it.event } }
+        runCurrent()
+        model.onAction(ShopCheckInListAction.OpenAuthor("second"))
+        model.onAction(ShopCheckInListAction.OpenAuthor("missing"))
+        model.onAction(ShopCheckInListAction.OpenAuthor("first")); runCurrent()
+        assertEquals(listOf<ShopCheckInListEvent>(ShopCheckInListEvent.OpenAuthor("public-first", "Author", "issued-avatar")), events)
+        repository.result = Result.success(details()) // user IDs without public addresses are not routes.
+        model.onAction(ShopCheckInListAction.Retry); runCurrent()
+        model.onAction(ShopCheckInListAction.OpenAuthor("first")); runCurrent()
+        assertEquals(1, events.size)
+    }
+
     @Test fun hiddenGuestActionsDoNotEmitEffectsOrMutate() = runTest(dispatcher) {
         val votes = Votes()
         val viewModel = viewModel(votes = votes, viewer = { Result.success(ShopViewer(false, null)) })
