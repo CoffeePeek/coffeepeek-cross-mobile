@@ -1,6 +1,9 @@
 package com.coffeepeek.feature.shop.impl
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.Modifier
+import com.coffeepeek.feature.shop.impl.ui.compose.component.LocalShopAuthorImage
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.coffeepeek.feature.shop.domain.repository.ShopFavorites
 import com.coffeepeek.feature.shop.api.ShopDetailEffect
@@ -20,8 +23,9 @@ fun createShopDetailEntry(
     currentViewer: suspend () -> Result<ShopViewer>,
     currentDayOfWeek: () -> Int,
     currentMinuteOfDay: () -> Int,
+    authorImage: (@Composable (String, Modifier) -> Unit)? = null,
 ): ShopDetailEntry = DefaultShopDetailEntry(detailsRepository, voteRepository, favoritesRepository,
-    currentViewer, currentDayOfWeek, currentMinuteOfDay)
+    currentViewer, currentDayOfWeek, currentMinuteOfDay, authorImage)
 
 private class DefaultShopDetailEntry(
     private val detailsRepository: ShopDetailsRepository,
@@ -30,6 +34,7 @@ private class DefaultShopDetailEntry(
     private val currentViewer: suspend () -> Result<ShopViewer>,
     private val currentDayOfWeek: () -> Int,
     private val currentMinuteOfDay: () -> Int,
+    private val authorImage: (@Composable (String, Modifier) -> Unit)?,
 ) : ShopDetailEntry {
     @Composable
     override fun Content(
@@ -49,12 +54,14 @@ private class DefaultShopDetailEntry(
                 currentMinuteOfDay = currentMinuteOfDay, initialSessionGeneration = sessionGeneration,
                 initialRefreshGeneration = refreshGeneration)
         }
-        ShopDetailScreen(viewModel = model, sessionGeneration = sessionGeneration,
-            formatDistance = formatDistance, forCheckIn = forCheckIn,
-            formatCheckInDate = formatCheckInDate, formatMenuDate = formatMenuDate,
-            refreshGeneration = refreshGeneration, onEvent = { event ->
-                event.toPublicEffect()?.let(onEffect)
-            })
+        CompositionLocalProvider(LocalShopAuthorImage provides authorImage) {
+            ShopDetailScreen(viewModel = model, sessionGeneration = sessionGeneration,
+                formatDistance = formatDistance, forCheckIn = forCheckIn,
+                formatCheckInDate = formatCheckInDate, formatMenuDate = formatMenuDate,
+                refreshGeneration = refreshGeneration, onEvent = { event ->
+                    event.toPublicEffect()?.let(onEffect)
+                })
+        }
     }
 }
 

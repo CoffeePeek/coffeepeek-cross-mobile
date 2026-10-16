@@ -65,7 +65,8 @@ internal class AndroidShopDetailScreenRenderer(
             val entry = remember(session) {
                 createShopDetailEntry(session.lease.details(details), session.lease.votes(votes),
                     shopFavorites(session.lease.favorites(favorites)), currentViewer = { session.lease.viewer(users) },
-                    currentDayOfWeek = ::currentLocalDayOfWeek, currentMinuteOfDay = ::currentLocalMinuteOfDay)
+                    currentDayOfWeek = ::currentLocalDayOfWeek, currentMinuteOfDay = ::currentLocalMinuteOfDay,
+                    authorImage = { url, modifier -> com.coffeepeek.admin.utils.CpImage(data = url, modifier = modifier) })
             }
             val location = rememberPermittedUserLocation()
             val formatCheckInDate = rememberCheckInDateLabel()

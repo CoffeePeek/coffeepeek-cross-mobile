@@ -26,7 +26,8 @@ internal class AndroidShopCheckInListScreenRenderer(
         AndroidShopBrowsingHost("android-shop-list:$shopId", sessions) { session ->
             val entry = remember(session) {
                 createShopCheckInListEntry(session.lease.details(details), session.lease.votes(votes),
-                    currentViewer = { session.lease.viewer(users) })
+                    currentViewer = { session.lease.viewer(users) },
+                    authorImage = { url, modifier -> com.coffeepeek.admin.utils.CpImage(data = url, modifier = modifier) })
             }
             var preview by remember { mutableStateOf<Pair<List<String>, Int>?>(null) }
             val formatCheckInDate = rememberCheckInDateLabel()

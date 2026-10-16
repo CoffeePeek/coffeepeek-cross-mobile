@@ -1,6 +1,9 @@
 package com.coffeepeek.feature.shop.impl
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.Modifier
+import com.coffeepeek.feature.shop.impl.ui.compose.component.LocalShopAuthorImage
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.coffeepeek.feature.shop.api.ShopCheckInListEntry
 import com.coffeepeek.feature.shop.domain.model.ShopViewer
@@ -15,12 +18,14 @@ fun createShopCheckInListEntry(
     detailsRepository: ShopDetailsRepository,
     voteRepository: ShopCheckInVoteRepository,
     currentViewer: suspend () -> Result<ShopViewer>,
-): ShopCheckInListEntry = DefaultShopCheckInListEntry(detailsRepository, voteRepository, currentViewer)
+    authorImage: (@Composable (String, Modifier) -> Unit)? = null,
+): ShopCheckInListEntry = DefaultShopCheckInListEntry(detailsRepository, voteRepository, currentViewer, authorImage)
 
 private class DefaultShopCheckInListEntry(
     private val detailsRepository: ShopDetailsRepository,
     private val voteRepository: ShopCheckInVoteRepository,
     private val currentViewer: suspend () -> Result<ShopViewer>,
+    private val authorImage: (@Composable (String, Modifier) -> Unit)?,
 ) : ShopCheckInListEntry {
     @Composable
     override fun Content(
@@ -39,14 +44,16 @@ private class DefaultShopCheckInListEntry(
             ShopCheckInListViewModel(shopId, detailsRepository, voteRepository, currentViewer,
                 sessionGeneration, refreshGeneration)
         }
-        ShopCheckInListScreen(viewModel, sessionGeneration, formatCheckInDate, refreshGeneration) { event ->
-            when (event) {
-                ShopCheckInListEvent.Back -> onBack()
-                ShopCheckInListEvent.SignIn -> onSignIn()
-                ShopCheckInListEvent.Register -> onRegister()
-                is ShopCheckInListEvent.Report -> onReportCheckIn(event.checkInId)
-                is ShopCheckInListEvent.OpenPhoto -> onOpenPhoto(event.urls, event.index)
-                is ShopCheckInListEvent.OpenAuthor -> onOpenAuthor(event.slug, event.nickname, event.avatarUrl)
+        CompositionLocalProvider(LocalShopAuthorImage provides authorImage) {
+            ShopCheckInListScreen(viewModel, sessionGeneration, formatCheckInDate, refreshGeneration) { event ->
+                when (event) {
+                    ShopCheckInListEvent.Back -> onBack()
+                    ShopCheckInListEvent.SignIn -> onSignIn()
+                    ShopCheckInListEvent.Register -> onRegister()
+                    is ShopCheckInListEvent.Report -> onReportCheckIn(event.checkInId)
+                    is ShopCheckInListEvent.OpenPhoto -> onOpenPhoto(event.urls, event.index)
+                    is ShopCheckInListEvent.OpenAuthor -> onOpenAuthor(event.slug, event.nickname, event.avatarUrl)
+                }
             }
         }
     }
