@@ -40,6 +40,14 @@ dated evidence for the earlier checkpoint.
 Next feature selection remains blocked on these acceptance gates, not on creating
 more modules. iOS UI migration and broader parent analytics parity are separate.
 
+Final combined validation: **995 selected unit-test executions**, zero failures,
+errors or skips; both Direct/Play APKs and packaged DEX checks; app/Shop/history
+lint; app and both feature instrumentation APK assemblies pass. The shared Native
+compilation check is valid/up-to-date. New UI cases are compiled, not executed on
+a device in this checkpoint. The phone/account/consent were not touched. Keep
+#95 draft until Pixel 7 acceptance; no release completeness is inferred from this
+engineering checkpoint.
+
 ## Latest main synchronization — 2026-10-16
 
 Main **0137ee7** is inherited through parent #43, including #96's server-backed

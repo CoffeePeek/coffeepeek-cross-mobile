@@ -85,7 +85,15 @@ Child #95 now inherits 0137ee7 through the parent. Month-wide photos and Home
 photo-preparation callbacks are implemented and covered by regression tests.
 Direct/Play APKs/DEX, app/history lint, instrumentation APK assembly and 859
 selected unit cases pass; shared Kotlin compiles for iOS Simulator Arm64.
-Author-avatar/public-profile callback and migrated analytics audits remain open.
+The subsequent code checkpoint restores public Shop author callbacks and personal
+history avatars, using the configured application image loaders. History creation
+now hands off the existing single analytics flow and preserves consent, exposure
+and overlay policy via app-owned integration. Broader parent-feature analytics
+and physical-device acceptance remain open; see the current child plan.
+The combined author/creation checkpoint passes 995 selected unit executions,
+Direct/Play APK/DEX checks, app/Shop/history lint and instrumentation APK assembly.
+New paired-theme author/flow UI cases await the agreed Pixel 7 run; they were not
+executed during this code-preparation step.
 See the child's COMBINED_HISTORY_PLAN.md for current status and UI-check evidence.
 
 Physical-device populated history/photos/date-edge, safe authenticated writes,
