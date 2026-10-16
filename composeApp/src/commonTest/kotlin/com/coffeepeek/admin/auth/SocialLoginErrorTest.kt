@@ -73,7 +73,7 @@ class SocialLoginErrorTest {
 
     @Test
     fun appleCallbackFailureStagesRemainDistinguishable() {
-        for (code in listOf("W", "C", "S", "T", "B", "CH", "X")) {
+        for (code in listOf("W", "C", "S", "T", "B", "CH", "X", "R", "A", "I", "P")) {
             assertEquals(
                 "Не удалось войти через Apple. Попробуйте ещё раз. (код ASI-$code)",
                 socialLoginError("Apple", "[ASI-$code]"),
@@ -115,5 +115,35 @@ class SocialLoginErrorTest {
             "Не удалось подключиться. Проверьте интернет-соединение (код ASI-X)",
             socialLoginError("Apple", "network unavailable [ASI-X]"),
         )
+    }
+
+    @Test
+    fun appleHttpFailureIsVisibleThroughTheOuterExchangeStage() {
+        for (status in listOf(400, 401, 403, 429, 500, 503)) {
+            assertEquals(
+                "Не удалось войти через Apple. Попробуйте ещё раз. (код ASI-H$status)",
+                socialLoginError("Apple", "Apple login rejected [ASI-H$status] [ASI-X]"),
+            )
+        }
+    }
+
+    @Test
+    fun appleResponseAndStorageFailuresRemainSpecificInsideTheExchangeStage() {
+        for (code in listOf("R", "A", "I", "P")) {
+            assertEquals(
+                "Не удалось войти через Apple. Попробуйте ещё раз. (код ASI-$code)",
+                socialLoginError("Apple", "[ASI-$code] [ASI-X]"),
+            )
+        }
+    }
+
+    @Test
+    fun invalidHttpDiagnosticsCannotExposeArbitraryDetails() {
+        for (code in listOf("H099", "H600", "H4010", "H-401", "H401 token=private")) {
+            assertEquals(
+                "Не удалось войти через Apple. Попробуйте ещё раз.",
+                socialLoginError("Apple", "[ASI-$code]"),
+            )
+        }
     }
 }

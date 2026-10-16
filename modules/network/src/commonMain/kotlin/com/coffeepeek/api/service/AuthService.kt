@@ -14,12 +14,19 @@ import com.coffeepeek.api.utils.postResult
 import com.coffeepeek.api.utils.putResult
 import com.coffeepeek.api.utils.setJsonBody
 import io.ktor.client.HttpClient
+import io.ktor.client.call.NoTransformationFoundException
 import io.ktor.client.call.body
+import io.ktor.client.plugins.expectSuccess
 import io.ktor.client.request.cookie
 import io.ktor.client.request.get
 import io.ktor.client.request.parameter
+import io.ktor.client.statement.HttpResponse
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.isSuccess
+import io.ktor.serialization.ContentConvertException
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.JsonNames
 
 class AuthService(
     private val client: HttpClient,
@@ -70,14 +77,37 @@ class AuthService(
     }
 
     suspend fun appleLogin(challengeId: String, idToken: String): Result<AuthResp> = runCatching {
-        val response = refreshClient.postResult("/api/Tokens/apple/login") {
-            setJsonBody(AppleLoginReq(challengeId, idToken))
-        }.getOrThrow().body<ApiResponse<AuthResp>>()
-        if (!response.isSuccess || response.data == null) throw ApiException(response.message)
-        if (response.data.accessToken.isBlank() || response.data.refreshToken.isNullOrBlank()) {
-            throw ApiException("Сервер не вернул сессию Apple. Попробуйте ещё раз.")
+        val response = try {
+            refreshClient.postResult("/api/Tokens/apple/login") {
+                expectSuccess = false
+                setJsonBody(AppleLoginReq(challengeId, idToken))
+            }.getOrThrow()
+        } catch (error: ApiException) {
+            // The shared 5xx validator can reject the request before a response is returned here.
+            val status = error.statusCode?.takeIf { it in 400..599 } ?: throw error
+            throw ApiException("${error.message} [ASI-H$status]", status)
         }
-        response.data
+        val apiResponse = response.readAppleLoginResponseOrNull()
+        if (response.status.value in 400..599) {
+            val message = apiResponse?.message?.takeIf(String::isNotBlank)
+                ?: "Сервер отклонил вход через Apple. Попробуйте ещё раз."
+            throw ApiException("$message [ASI-H${response.status.value}]", response.status.value)
+        }
+        if (!response.status.isSuccess() || apiResponse == null) {
+            throw ApiException("Сервер вернул некорректный ответ при входе через Apple. [ASI-R]")
+        }
+        if (!apiResponse.isSuccess) {
+            val message = apiResponse.message?.takeIf(String::isNotBlank)
+                ?: "Сервер отклонил вход через Apple. Попробуйте ещё раз."
+            throw ApiException("$message [ASI-A]")
+        }
+        val session = apiResponse.data
+        val accessToken = session?.accessToken?.takeIf(String::isNotBlank)
+        val refreshToken = session?.refreshToken?.takeIf(String::isNotBlank)
+        if (accessToken == null || refreshToken == null) {
+            throw ApiException("Сервер не вернул сессию Apple. Попробуйте ещё раз. [ASI-I]")
+        }
+        AuthResp(accessToken, refreshToken)
     }
 
     suspend fun register(userName: String, email: String, password: String): Result<Unit> =
@@ -144,4 +174,26 @@ class AuthService(
                 throw ApiException("Logout failed")
             }
         }
+}
+
+@OptIn(kotlinx.serialization.ExperimentalSerializationApi::class)
+@Serializable
+private data class AppleLoginResponse(
+    @SerialName("isSuccess") @JsonNames("IsSuccess") val isSuccess: Boolean,
+    @SerialName("message") @JsonNames("Message") val message: String? = null,
+    @SerialName("data") @JsonNames("Data") val data: AppleLoginSession? = null,
+)
+
+@Serializable
+private data class AppleLoginSession(
+    val accessToken: String? = null,
+    val refreshToken: String? = null,
+)
+
+private suspend fun HttpResponse.readAppleLoginResponseOrNull(): AppleLoginResponse? = try {
+    body<AppleLoginResponse?>()
+} catch (_: ContentConvertException) {
+    null
+} catch (_: NoTransformationFoundException) {
+    null
 }
