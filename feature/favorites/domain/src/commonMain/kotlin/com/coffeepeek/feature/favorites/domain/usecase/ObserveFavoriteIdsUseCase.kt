@@ -7,7 +7,6 @@ import kotlinx.coroutines.flow.map
 
 /** Membership projection for catalog/detail/session consumers, without UI snapshots or event buses. */
 class ObserveFavoriteIdsUseCase(private val repository: FavoritesRepository) {
-    operator fun invoke(): Flow<Result<Set<String>>> = repository.observe()
-        .map { result -> result.map { shops -> shops.mapTo(linkedSetOf()) { it.id }.toSet() } }
+    operator fun invoke(): Flow<Result<Set<String>>> = repository.observeIds()
         .distinctUntilChanged()
 }

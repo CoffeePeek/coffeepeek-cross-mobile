@@ -33,6 +33,9 @@ import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.feature.favorites.domain.model.FavoriteShop
 import com.coffeepeek.feature.favorites.domain.model.FavoriteRoaster
 import com.coffeepeek.feature.favorites.impl.ui.FavoritesViewModel
+import com.coffeepeek.feature.favorites.impl.ui.compose.component.FavoriteDrinkCard
+import com.coffeepeek.feature.favorites.impl.resources.favorites_drinks
+import com.coffeepeek.feature.favorites.domain.model.FavoriteDrink
 import com.coffeepeek.feature.favorites.impl.ui.compose.component.FavoriteCard
 import com.coffeepeek.feature.favorites.impl.ui.compose.component.FavoriteRoasterCard
 import com.coffeepeek.feature.favorites.impl.ui.compose.component.FavoritesMessage
@@ -91,16 +94,16 @@ internal fun FavoritesScreenContent(
         stringResource(Res.string.favorites_back), onBack = { onAction(FavoritesAction.Back) }) }) { padding ->
         Column(Modifier.fillMaxSize().padding(padding).consumeWindowInsets(padding)) {
             when {
-                (state.isLoading || state.areRoastersLoading) && state.shops.isEmpty() && state.roasters.isEmpty() -> Box(
+                (state.isLoading || state.areRoastersLoading || state.areDrinksLoading) && state.shops.isEmpty() && state.roasters.isEmpty() && state.drinks.isEmpty() -> Box(
                     Modifier.fillMaxSize(), contentAlignment = Alignment.Center,
                 ) { CoffeePeekLoader(stringResource(Res.string.favorites_loading)) }
-                (state.loadFailed || state.roastersLoadFailed) && state.shops.isEmpty() && state.roasters.isEmpty() ->
+                (state.loadFailed || state.roastersLoadFailed || state.drinksLoadFailed) && state.shops.isEmpty() && state.roasters.isEmpty() && state.drinks.isEmpty() ->
                     FavoritesMessage(stringResource(Res.string.favorites_load_error)) {
                         onAction(FavoritesAction.Retry)
                     }
-                state.shops.isEmpty() && state.roasters.isEmpty() -> FavoritesMessage(stringResource(Res.string.favorites_empty))
+                state.shops.isEmpty() && state.roasters.isEmpty() && state.drinks.isEmpty() -> FavoritesMessage(stringResource(Res.string.favorites_empty))
                 else -> {
-                    if (state.actionFailed || state.loadFailed || state.roastersLoadFailed) {
+                    if (state.actionFailed || state.loadFailed || state.roastersLoadFailed || state.drinksLoadFailed) {
                         Text(stringResource(Res.string.favorites_update_error), Modifier.padding(16.dp),
                             color = MaterialTheme.colorScheme.error)
                         CoffeePeekButton(stringResource(Res.string.favorites_retry),
@@ -137,6 +140,13 @@ internal fun FavoritesScreenContent(
                             FavoriteRoasterCard(roaster, roaster.id in state.removingRoasters,
                                 onOpen = { onAction(FavoritesAction.OpenRoaster(roaster.id)) },
                                 onRemove = { onAction(FavoritesAction.RemoveRoaster(roaster.id)) })
+                        }
+                        if (state.drinks.isNotEmpty()) item(key = "drinks_heading") {
+                            Text(stringResource(Res.string.favorites_drinks), style = MaterialTheme.typography.headlineSmall,
+                                fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(top = 12.dp))
+                        }
+                        items(state.drinks, key = { "drink:${it.id}" }) { drink ->
+                            FavoriteDrinkCard(drink, drink.id in state.removingDrinks) { onAction(FavoritesAction.RemoveDrink(drink.id)) }
                         }
                     }
                 }
@@ -193,3 +203,8 @@ private val previewShop = FavoriteShop(
 @Preview @Composable private fun FavoritesMixedDarkPreview() = PreviewFavorites(FavoritesUiState(
     shops = listOf(previewShop), isLoading = false,
     roasters = listOf(FavoriteRoaster("roaster", "Любимый обжарщик", "roaster"))), true)
+
+@Preview @Composable private fun FavoritesDrinksLightPreview() = PreviewFavorites(FavoritesUiState(
+    isLoading = false, drinks = listOf(FavoriteDrink("sample", "Капучино", null, true))), false)
+@Preview @Composable private fun FavoritesDrinksDarkPreview() = PreviewFavorites(FavoritesUiState(
+    isLoading = false, drinks = listOf(FavoriteDrink("sample", "Капучино", null, true))), true)

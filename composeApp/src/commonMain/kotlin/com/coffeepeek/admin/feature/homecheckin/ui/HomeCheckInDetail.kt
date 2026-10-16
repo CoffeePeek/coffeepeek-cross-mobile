@@ -1,5 +1,6 @@
 package com.coffeepeek.admin.feature.homecheckin.ui
 
+import com.coffeepeek.admin.feature.catalog.api.methodLabel
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -10,16 +11,15 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.admin.ui.component.AppButton
+import com.coffeepeek.admin.ui.component.DrinkCutoutImage
 import com.coffeepeek.admin.ui.component.ReviewPhotoStrip
 import com.coffeepeek.admin.ui.icons.CpIcons
-import com.coffeepeek.admin.utils.CpImage
 import com.coffeepeek.admin.utils.utcIsoToLocalDateTime
 import com.coffeepeek.feature.homecheckin.domain.HomeCheckIn
 import com.coffeepeek.feature.homecheckin.domain.HomeCheckInVisibility
@@ -131,7 +131,7 @@ internal fun HomeDetailContent(
                 .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f))
                 .clickable(role = Role.Button, onClickLabel = "Открыть фото напитка") { onPhotoClick(listOf(url), 0) },
                 contentAlignment = Alignment.Center) {
-                CpImage(url, contentDescription = "Фото напитка", modifier = Modifier.fillMaxSize().padding(12.dp), contentScale = ContentScale.Fit)
+                DrinkCutoutImage(url, contentDescription = "Фото напитка", modifier = Modifier.fillMaxSize().padding(12.dp), outlineWidth = 3.dp)
             }
         } }
         entry.text?.takeIf(String::isNotBlank)?.let { note -> item(key = "note") {

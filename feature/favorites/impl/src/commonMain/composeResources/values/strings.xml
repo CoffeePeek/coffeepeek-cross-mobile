@@ -3,7 +3,9 @@
     <string name="favorites_back">Назад</string>
     <string name="favorites_loading">Загрузка избранного</string>
     <string name="favorites_load_error">Не удалось загрузить избранное</string>
-    <string name="favorites_empty">Пока нет избранных кофеен и обжарщиков</string>
+    <string name="favorites_empty">Пока нет избранного</string>
+    <string name="favorites_drinks">Напитки</string>
+    <string name="favorites_drink">Напиток</string>
     <string name="favorites_roasters">Обжарщики</string>
     <string name="favorites_roaster_shops">Кофейни</string>
     <string name="favorites_roaster_catalog">Каталог</string>

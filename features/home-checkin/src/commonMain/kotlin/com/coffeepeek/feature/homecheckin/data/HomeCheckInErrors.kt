@@ -36,6 +36,11 @@ internal suspend fun <T> homeRequestResult(block: suspend () -> T): Result<T> = 
     }
 }
 
+internal suspend fun <T> homePhotoUpload(block: suspend () -> T): T = homeRequestResult(block).getOrElse { failure ->
+    val safe = failure as HomeCheckInFailure
+    throw HomeCheckInFailure(safe.message, safe.fieldErrors, com.coffeepeek.feature.homecheckin.domain.HomeCheckInOperation.PhotoUpload)
+}
+
 /** ErrorResponse and ASP.NET ValidationProblemDetails, as returned by the Shops service. */
 internal fun homeServerFailure(status: Int, body: String): HomeCheckInFailure {
     val payload = runCatching { Json.parseToJsonElement(body) as? JsonObject }.getOrNull()

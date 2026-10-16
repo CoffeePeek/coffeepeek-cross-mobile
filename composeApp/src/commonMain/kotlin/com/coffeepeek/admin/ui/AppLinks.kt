@@ -14,6 +14,14 @@ internal fun appLinkScreen(link: String): Navigator.Screen? {
             ?: Navigator.Screen.ForgotPassword()
     }
 
+    val userPath = url.segments
+    if (userPath.size == 2 && userPath[0] == "users") {
+        val slug = userPath[1]
+        if (slug.isNotBlank() && slug.none { it == '/' || it == '\\' || it.isISOControl() } && slug !in listOf(".", "..")) {
+            return Navigator.Screen.UserProfile(slug)
+        }
+    }
+
     val match = Regex("^/coffee-shops/([1-9][0-9]*)(?:-[^/]+)?/?$")
         .matchEntire(url.encodedPath)
     return match?.let { Navigator.Screen.ShopDetail(it.groupValues[1]) }

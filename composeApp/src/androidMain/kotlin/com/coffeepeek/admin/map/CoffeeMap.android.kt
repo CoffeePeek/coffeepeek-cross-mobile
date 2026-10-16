@@ -161,12 +161,14 @@ actual fun CoffeeMap(
     onLocationPermissionDenied: () -> Unit,
     requestLocationPermissionOnLoad: Boolean,
     showAttribution: Boolean,
+    onCameraCenterChanged: (Double, Double) -> Unit,
 ) {
     val context = LocalContext.current
     val appContext = context.applicationContext
     val lifecycleOwner = LocalLifecycleOwner.current
     val uriHandler = LocalUriHandler.current
     val onBoundsChangedState = rememberUpdatedState(onBoundsChanged)
+    val onCameraCenterChangedState = rememberUpdatedState(onCameraCenterChanged)
     val onShopClickState = rememberUpdatedState(onShopClick)
     val onZoneClickState = rememberUpdatedState(onZoneClick)
     val onCameraTargetAppliedState = rememberUpdatedState(onCameraTargetApplied)
@@ -269,6 +271,9 @@ actual fun CoffeeMap(
                 activeMap.projection.visibleRegion.latLngBounds.toMapBounds(),
                 activeMap.cameraPosition.zoom.toFloat(),
             )
+            activeMap.cameraPosition.target?.let { center ->
+                onCameraCenterChangedState.value(center.latitude, center.longitude)
+            }
         }
 
         activeMap.addOnCameraIdleListener(idleListener)
@@ -335,6 +340,9 @@ actual fun CoffeeMap(
                     activeMap.projection.visibleRegion.latLngBounds.toMapBounds(),
                     activeMap.cameraPosition.zoom.toFloat(),
                 )
+                activeMap.cameraPosition.target?.let { center ->
+                    onCameraCenterChangedState.value(center.latitude, center.longitude)
+                }
                 location?.takeIf { cameraTarget == null }?.let {
                     onMyLocationFoundState.value(it.latitude, it.longitude)
                 }

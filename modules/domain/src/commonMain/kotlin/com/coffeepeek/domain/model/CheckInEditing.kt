@@ -2,6 +2,11 @@ package com.coffeepeek.domain.model
 
 enum class CheckInVisibility { Private, Public }
 
+enum class CheckInFailureStage { PhotoUpload, Save }
+
+/** Lets presentation offer the correct retry without knowing storage or HTTP APIs. */
+class CheckInOperationFailure(val stage: CheckInFailureStage, cause: Exception) : Exception(cause.message, cause)
+
 enum class CheckInModerationState { NotSubmitted, Pending, Approved, Rejected, Unknown }
 
 data class UpdateCheckInInput(

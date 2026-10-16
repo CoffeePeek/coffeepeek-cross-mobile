@@ -129,6 +129,7 @@ jobs:
 
       - name: Build signed release artifacts
         env:
+          POSTHOG_PROJECT_TOKEN: ${{ secrets.POSTHOG_PROJECT_TOKEN }}
           ANDROID_KEYSTORE_PATH: ${{ runner.temp }}/coffeepeek-release.jks
           ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
           ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}

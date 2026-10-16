@@ -16,4 +16,5 @@ data class FavoriteShop(
     val tags: List<String> = emptyList(),
     val brewMethods: List<String> = emptyList(),
     val roasterPhotoUrls: List<String> = emptyList(),
+    val publicSlug: String? = id,
 )

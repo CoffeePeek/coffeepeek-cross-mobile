@@ -6,7 +6,6 @@ import com.coffeepeek.feature.favorites.domain.repository.FavoritesRepository
 import com.coffeepeek.feature.favorites.domain.repository.FavoriteRoastersRepository
 import com.coffeepeek.admin.di.shop.CheckInTestSessions
 import com.coffeepeek.admin.feature.favorites.api.RoasterFavorites
-import com.coffeepeek.admin.feature.favorites.data.LocalRoasterFavorites
 import com.coffeepeek.domain.repository.SessionRepository
 import com.coffeepeek.domain.repository.RoasterRepository
 import com.coffeepeek.domain.model.CatalogItem
@@ -36,7 +35,18 @@ class FavoritesModuleTest {
     @Test fun accountScopedGraphUsesTheExistingRoasterWriterAndLazyCatalogue() = runTest {
         val settings = Settings()
         val sessions = CheckInTestSessions()
-        val saved = LocalRoasterFavorites(settings, sessions)
+        val saved = object : RoasterFavorites {
+            val rows = MutableStateFlow(emptyList<CatalogItem>())
+            override fun observeFavorites() = rows
+            override suspend fun setFavorite(roaster: CatalogItem, isFavorite: Boolean): Result<Unit> {
+                rows.value = if (isFavorite) listOf(roaster) else emptyList()
+                return Result.success(Unit)
+            }
+            override suspend fun removeForAccount(roaster: CatalogItem, expectedUserId: String): Result<Unit> {
+                check(sessions.peekSession()?.userId == expectedUserId)
+                return setFavorite(roaster, false)
+            }
+        }
         saved.setFavorite(CatalogItem("raw-id", "Roaster", photoUrl = "saved.png",
             address = PublicAddress("public", "/roasters/public", 1, false)), true).getOrThrow()
         var catalogueReads = 0

@@ -114,7 +114,7 @@ class AndroidShopCheckInDraftStoreTest {
             val adapter = AndroidShopCheckInDraftStore(legacy, formatter)
             val first = adapter.open(initial()).getOrThrow()
             adapter.save(first.copy(input = first.input.copy(visitedAtIso = formatter.visitInstant(selected)))).getOrThrow()
-            assertEquals(selected, legacy.peek()!!.visitMillis)
+            assertEquals(Instant.parse(formatter.visitInstant(selected)).toEpochMilli(), legacy.peek()!!.visitMillis)
             assertEquals(first.input.shopSlug, adapter.open(initial()).getOrThrow().input.shopSlug)
         }
         assertEquals("2026-06-14T21:00:00Z", dates.visitInstant(selected))
@@ -124,6 +124,26 @@ class AndroidShopCheckInDraftStoreTest {
     @Test fun cancellationIsNotConvertedIntoStorageFailure() {
         val legacy = CheckInDraftStore { throw CancellationException("cancel") }
         assertFailsWith<CancellationException> { AndroidShopCheckInDraftStore(legacy, dates).open(initial()) }
+    }
+
+    @Test fun dateChangeKeepsLocalVisitTimeAndRoundTripKeepsTheExactInstant() {
+        val reference = "2026-10-09T12:34:56.789Z"
+        val selected = Instant.parse("2026-06-15T00:00:00Z").toEpochMilli()
+        assertEquals("2026-06-15T12:34:56.789Z", dates.visitInstant(selected, reference))
+        val legacy = CheckInDraftStore { now }
+        val adapter = AndroidShopCheckInDraftStore(legacy, dates)
+        val first = adapter.open(initial()).getOrThrow()
+        val input = first.input.copy(visitedAtIso = reference)
+        adapter.save(first.copy(input = input)).getOrThrow()
+        assertEquals(reference, adapter.open(initial()).getOrThrow().input.visitedAtIso)
+    }
+
+    @Test fun repeatedDstHourKeepsTheExactOriginalOffset() {
+        val reference = "2026-10-25T01:30:00Z"
+        val formatter = AndroidShopCheckInDateFormatter({ ZoneId.of("Europe/Berlin") },
+            { Instant.parse("2026-10-26T00:00:00Z").toEpochMilli() })
+        val day = Instant.parse("2026-10-25T00:00:00Z").toEpochMilli()
+        assertEquals(reference, formatter.visitInstant(day, reference))
     }
 
     @Test fun bindingPreservesInternalDraftKeyAndUsesPublicSlugForTransport() {

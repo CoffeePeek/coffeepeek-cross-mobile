@@ -2,6 +2,7 @@ package com.coffeepeek.admin.di.shop
 
 import com.coffeepeek.admin.utils.datePickerMillisToUtcIsoInstant
 import com.coffeepeek.admin.utils.formatVisitDate
+import com.coffeepeek.admin.utils.datePickerMillisWithLocalTime
 import com.coffeepeek.feature.shop.impl.ui.data.ShopCheckInDateFormatter
 import java.time.Instant
 import java.time.ZoneId
@@ -20,5 +21,8 @@ internal class AndroidShopCheckInDateFormatter(
       catch (_: java.time.DateTimeException) { null }
 
     override fun visitInstant(pickerMillis: Long): String = datePickerMillisToUtcIsoInstant(pickerMillis, zone())
+    override fun visitInstant(pickerMillis: Long, referenceIso: String): String =
+        Instant.ofEpochMilli(datePickerMillisWithLocalTime(pickerMillis,
+            Instant.parse(referenceIso).toEpochMilli(), zone()).coerceAtMost(now())).toString()
     override fun nowMillis(): Long = now()
 }

@@ -1,8 +1,14 @@
 # Android refactoring — current roadmap
 
-Audit date: 2026-10-15. Product baseline: `origin/main` **4976e53**.
+Audit date: 2026-10-16. Product baseline: `origin/main` **f2b184b**.
 This is the current checklist. Older feature READMEs contain historical checkpoint
 notes; they do not override this source audit or certify later changes.
+
+Latest parent synchronization: main #96 is reconciled with #43, including actual
+server-backed shop/roaster/drink favorites, offline photo extraction and exact
+visit times. See [MAIN_SYNC_AUDIT.md](MAIN_SYNC_AUDIT.md) for changed contracts,
+verification and history-child follow-up. Older dated 4976e53 notes below are
+historical; they do not override the current server contract or latest route audit.
 
 ## Branch ownership
 
@@ -87,7 +93,7 @@ Next work is ordered, not parallel feature scaffolding:
 
 | Owner / current product | Migration state | What still blocks completion |
 |---|---|---|
-| Favorites: saved shops **and roasters** | In progress; Android entry now renders both kinds | The missing roaster section is restored with main's counts/logo fallback/public route/removal behavior and account guards. Automated UI/DI/Result/cancellation checks pass. Real saved data/photos, account journey, process restoration, physical-device/accessibility/locale QA still block full completion. |
+| Favorites: server-backed shops, roasters **and drinks** | In progress; Android entry adapts the existing server source | Preserve main's three kinds, canonical addresses, explicit read/write errors, account replacement and cache-only logout. New drink cards have no invented detail route. Real saved data/photos, login-retry/account journey, process restoration, physical-device/accessibility/locale QA and migrated-feature analytics parity remain release gates. |
 | Shop Report: incorrect shop data | In progress; Android entry active | Real safe submit/error/uncertain-delivery flow and paired preview inspection; retain shared/iOS fallback. |
 | Shop: detail, menu, public check-ins and creation sheet | In progress; Android entries active | Physical-device visual/guest/owner/return parity; picker/camera permissions and recreation, ML Kit quality/model availability and safely authorized submissions. Prepared review editors are not a product requirement. |
 | Personal history: one combined Shop/Home calendar and timeline | In progress; all prepared migration code in history child, **not active** | The prepared Shop-only Calendar/List UI is not parity with main. Complete combined readers, MVI, production-shaped UI, home callbacks and Android integration first. |
@@ -113,9 +119,9 @@ Audit anchors are main's `ui/Navigator.kt`, `ui/screen/main/MainScreen.kt`,
 `ui/screen/shop/ShopReviewsScreen.kt` and contributions' ViewModel.
 These findings come from registered renderers and their call sites, not filenames.
 
-- Main has **38 serialized route declarations**: five graph containers, five tabs
-  and 28 other destinations. There are 33 routes without graphs, not 33 unique
-  screens. Excluding Main and the legacy ReportReview contract leaves 31 content
+- Main has **40 serialized route declarations**: five graph containers, five tabs
+  and 30 other destinations. There are 35 routes without graphs, not 35 unique
+  screens. Excluding Main and the legacy ReportReview contract leaves 33 content
   route contracts; aliases/modal flows still share screens.
 - Tabs are discovery/Feed, Coffee, Community, Profile and Settings.
 - VisitedPlaces, HomeCheckIns and EditHomeCheckIn(id) all render the same
@@ -135,8 +141,11 @@ These findings come from registered renderers and their call sites, not filename
   shared Kotlin navigation call site in this audit: preserve compatibility until
   all entry points are audited; do not revive a review editor or delete the route
   just because it looks old.
-- Main favorites includes shops and a separate roaster section. Roaster logos
+- Main favorites includes server-backed shops, roasters and drinks. Roaster logos
   attached to a shop card do **not** replace saved-roaster functionality.
+- Main also has a public UserProfile destination and UsagePolicy screen. They
+  belong to Profile and Settings respectively, not two automatically new module
+  families. Preserve existing consent/privacy and canonical-address behavior.
 - ForgotPassword/ResetPassword, account deletion and app-update actions already
   exist. They are not new product features to invent.
 - Do not migrate old journal/bean-bag screens merely because unused classes or

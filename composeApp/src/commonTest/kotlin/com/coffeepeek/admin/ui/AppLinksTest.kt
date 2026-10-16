@@ -6,6 +6,15 @@ import kotlin.test.assertNull
 
 class AppLinksTest {
     @Test
+    fun routesPublicProfilesWithoutTreatingNicknameAsAnId() {
+        assertEquals(Navigator.Screen.UserProfile("glasha"), appLinkScreen("https://coffeepeek.by/users/glasha"))
+        assertEquals(Navigator.Screen.UserProfile("old-slug"), appLinkScreen("https://coffeepeek.by/users/old-slug/?from=share"))
+        assertEquals(Navigator.Screen.Main, appLinkScreen("https://coffeepeek.by/users/glasha/extra"))
+        assertEquals(Navigator.Screen.Main, appLinkScreen("https://coffeepeek.by/users/a%2Fb"))
+        assertNull(appLinkScreen("https://coffeepeek.by.evil.com/users/glasha"))
+    }
+
+    @Test
     fun routesPasswordResetLinksAndDecodesTokenOnce() {
         assertEquals(
             Navigator.Screen.ResetPassword("a+b/c=="),

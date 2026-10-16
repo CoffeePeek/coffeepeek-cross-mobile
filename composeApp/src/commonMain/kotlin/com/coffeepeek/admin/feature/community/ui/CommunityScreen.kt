@@ -1,5 +1,8 @@
 package com.coffeepeek.admin.feature.community.ui
 
+import com.coffeepeek.admin.analytics.*
+import com.coffeepeek.admin.feature.checkin.api.CheckInFlowHandoff
+
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -32,13 +35,14 @@ import com.coffeepeek.domain.model.CheckInVisibility
 fun CommunityScreen(onCreateCheckIn: () -> Unit) {
     val vm: CommunityViewModel = platformViewModel()
     val state by vm.state.collectAsState()
+    TrackFeedViewed(state.firstPageCount, state.timeline == CommunityTimeline.Public)
     val listState = rememberLazyListState()
     val snackbar = remember { SnackbarHostState() }
     val clearance = LocalFloatingNavClearance.current
     var preview by remember { mutableStateOf<CheckInPhotoPreview?>(null) }
     var displayedGeneration by rememberSaveable { mutableStateOf(state.sessionGeneration) }
     var homeEditorOpened by rememberSaveable { mutableStateOf(false) }
-    var showCreate by remember { mutableStateOf(false) }
+    var showCreate by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(false) }
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
         if (homeEditorOpened) { homeEditorOpened = false; vm.refresh() }
     }
@@ -95,11 +99,11 @@ fun CommunityScreen(onCreateCheckIn: () -> Unit) {
             snackbarHost = { SnackbarHost(snackbar) },
         ) { padding ->
             CoffeePeekPullToRefresh(
-                listState, isRefreshing = state.isLoading && state.items.isNotEmpty(), onRefresh = vm::refresh,
+                listState, isRefreshing = state.isLoading && state.items.isNotEmpty(), onRefresh = { vm.refresh("gesture") },
                 modifier = Modifier.fillMaxSize().statusBarsPadding().padding(top = padding.calculateTopPadding()),
             ) { scrollModifier ->
                 LazyColumn(
-                    state = listState, modifier = scrollModifier.fillMaxSize(),
+                    state = listState, modifier = scrollModifier.fillMaxSize().analyticsExposure("feed", "feed", "feed"),
                     contentPadding = PaddingValues(
                         start = CpDimens.spacing4, end = CpDimens.spacing4,
                         top = CpDimens.spacing4, bottom = clearance + 88.dp,
@@ -122,7 +126,7 @@ fun CommunityScreen(onCreateCheckIn: () -> Unit) {
                         }
                         else -> {
                             itemsIndexed(state.items, key = { _, checkIn -> checkIn.id }) { index, checkIn ->
-                                Column(verticalArrangement = Arrangement.spacedBy(CpDimens.spacing3)) {
+                                Column(Modifier.analyticsExposure(if (checkIn.isHome) "feed_home_check_in" else "feed_shop_check_in", "feed", "feed"), verticalArrangement = Arrangement.spacedBy(CpDimens.spacing3)) {
                                     if (index > 0) HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
                                     TimelineCheckInCard(
                                         checkIn = checkIn,
@@ -130,7 +134,12 @@ fun CommunityScreen(onCreateCheckIn: () -> Unit) {
                                         isPublicTimeline = state.timeline == CommunityTimeline.Public,
                                         canAct = !state.isMutating,
                                         changingVisibility = state.changingVisibilityId == checkIn.id,
-                                        onShopClick = { Navigator.navigate(Navigator.Screen.ShopDetail(checkIn.shopId)) },
+                                        onAuthorClick = checkIn.authorAddress?.slug?.takeIf(String::isNotBlank)?.let { slug ->
+                                            {
+                                                Navigator.navigate(Navigator.Screen.UserProfile(slug, checkIn.username, checkIn.authorAvatarUrl))
+                                            }
+                                        },
+                                        onShopClick = { vm.itemAction("shop", checkIn); Navigator.navigate(Navigator.Screen.ShopDetail(checkIn.shopId)) },
                                         onEdit = {
                                             if (checkIn.isHome) {
                                                 homeEditorOpened = true
@@ -141,6 +150,7 @@ fun CommunityScreen(onCreateCheckIn: () -> Unit) {
                                         onHelpful = { vm.toggleHelpful(checkIn.id) },
                                         onReport = { vm.openReport(checkIn.id) },
                                         onPhotoClick = { urls, photoIndex ->
+                                            vm.itemAction("photo", checkIn)
                                             preview = CheckInPhotoPreview(state.sessionGeneration, urls, photoIndex)
                                         },
                                     )
@@ -170,8 +180,9 @@ fun CommunityScreen(onCreateCheckIn: () -> Unit) {
         // Android supplies the panel's full clearance; UIKit already bounds this screen above its tab bar.
         // Position explicitly: Scaffold's built-in FAB inset would add another 16 dp.
         CheckInCreateButton(Modifier.align(Alignment.BottomEnd).padding(end = CpDimens.spacing4, bottom = clearance + 12.dp)) {
+            Analytics.track(AnalyticsEvent.CHECK_IN_START_ATTEMPTED, "source" to "global_create")
             if (state.isLoggedIn == true) showCreate = true
-            else Navigator.navigate(Navigator.Screen.Auth)
+            else { Analytics.gate("check_in"); Navigator.navigate(Navigator.Screen.Auth) }
         }
     }
 }

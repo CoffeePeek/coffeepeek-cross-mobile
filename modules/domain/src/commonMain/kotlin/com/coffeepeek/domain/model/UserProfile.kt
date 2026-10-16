@@ -9,4 +9,6 @@ data class UserProfile(
     val checkInCount: Int,
     val addedShopsCount: Int,
     val address: PublicAddress? = null,
+    val addedRoastersCount: Int = 0,
+    val followersCount: Int = 0,
 )

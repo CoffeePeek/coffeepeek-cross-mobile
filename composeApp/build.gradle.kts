@@ -49,18 +49,21 @@ kotlin {
             implementation(compose.preview)
             implementation(libs.androidx.activity.compose)
             implementation(libs.androidx.concurrent.futures)
-            implementation(libs.mlkit.subject.segmentation)
             implementation(libs.androidx.appcompat)
             implementation("androidx.core:core-splashscreen:1.0.1")
             implementation("androidx.exifinterface:exifinterface:1.4.1")
             implementation(libs.maplibre.android)
             implementation("com.google.android.gms:play-services-auth:21.3.0")
+            implementation("com.google.mediapipe:tasks-vision:0.10.35")
+            // Match Espresso's annotations under Android's consistent runtime/test resolution.
+            implementation(libs.errorprone.annotations)
             implementation("com.google.android.play:app-update:2.1.0")
             implementation("com.microsoft.signalr:signalr:10.0.9")
             implementation("org.slf4j:slf4j-nop:2.0.16")
         }
         commonMain.dependencies {
             implementation(project(module.feature.favorites.domain))
+            implementation(libs.posthog.kmp)
             implementation(project(module.legacy.domain))
             implementation(project(module.legacy.data))
             implementation(project(module.legacy.network))
@@ -91,6 +94,7 @@ kotlin {
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
+            implementation(libs.kotlinx.coroutines.test)
             implementation("io.ktor:ktor-client-mock:${libs.versions.ktor.get()}")
         }
         androidUnitTest.dependencies {
@@ -160,6 +164,18 @@ val apiBaseUrl: String = run {
     }
 }
 
+val postHogProjectToken = providers.environmentVariable("POSTHOG_PROJECT_TOKEN")
+    .orElse(providers.provider {
+        val props = Properties()
+        rootProject.file("local.properties").takeIf { it.exists() }?.inputStream()?.use { props.load(it) }
+        props.getProperty("POSTHOG_PROJECT_TOKEN", "")
+    })
+    .map { value ->
+        value.trim().also { require(it.isEmpty() || it.matches(Regex("phc_[A-Za-z0-9_-]+"))) {
+            "POSTHOG_PROJECT_TOKEN must be a PostHog project ingestion token"
+        } }
+    }
+
 android {
     namespace = Config.APPLICATION_ID
     // Navigation 3 1.2.0 in the Android-only favorites feature requires API 37.
@@ -167,6 +183,9 @@ android {
 
     buildFeatures {
         buildConfig = true
+    }
+    androidResources {
+        noCompress += "tflite"
     }
 
     defaultConfig {
@@ -178,6 +197,8 @@ android {
         versionName = appVersionName.get()
         buildConfigField("String", "GOOGLE_WEB_CLIENT_ID", "\"$googleWebClientId\"")
         buildConfigField("String", "API_BASE_URL", "\"$apiBaseUrl\"")
+        buildConfigField("boolean", "POSTHOG_ENABLE_DEV", providers.gradleProperty("posthogEnableDev").map { (it == "true").toString() }.getOrElse("false"))
+        buildConfigField("String", "POSTHOG_PROJECT_TOKEN", "\"${postHogProjectToken.get()}\"")
     }
     packaging {
         resources {
@@ -240,6 +261,10 @@ androidComponents {
                 "com.coffeepeek.api.service.CheckInApiService",
                 "com.coffeepeek.api.CoffeePeekRepo",
                 "com.coffeepeek.data.di.DataModuleKt",
+                "com.coffeepeek.data.feature.favorites.ServerFavoritesRepository",
+                "com.coffeepeek.admin.di.favorites.ServerFavoriteShopsRepository",
+                "com.coffeepeek.admin.di.favorites.ServerFavoriteDrinksRepository",
+                "com.coffeepeek.admin.di.shop.AndroidShopDrinkPhotoProcessor",
                 "com.coffeepeek.admin.di.shop.ShopCheckInModuleKt",
                 "com.coffeepeek.admin.di.shop.AndroidShopCheckInFormRenderer",
                 "com.coffeepeek.admin.di.shop.AndroidSessionShopCheckInEntry",

@@ -33,6 +33,7 @@ data class CheckInDto(
     val drinkPhotoUrl: String? = null,
     val kind: String = "Shop",
     val home: FeedHomePreparationDto? = null,
+    val authorAvatarUrl: String? = null,
 )
 
 @Serializable

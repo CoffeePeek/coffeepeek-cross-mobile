@@ -3,7 +3,9 @@ package com.coffeepeek.admin.ui.screen.addshop
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.getValue
 import com.coffeepeek.admin.ui.component.PlatformScrollableColumn
-import com.coffeepeek.admin.ui.component.PlatformAlert
+import com.coffeepeek.admin.ui.component.SubmissionStatus
+import com.coffeepeek.admin.ui.component.SubmissionStatusScreen
+import com.coffeepeek.admin.ui.component.SubmissionErrorActions
 import com.coffeepeek.admin.ui.icons.CpIcons
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.slideInHorizontally
@@ -95,6 +97,21 @@ fun AddShopScreen(vm: AddShopViewModel = platformViewModel()) {
         return
     }
 
+    if (state.isSubmitting || state.submitError != null) {
+        val failed = state.submitError != null
+        SubmissionStatusScreen(
+            screenTitle = "Добавить кофейню",
+            status = if (failed) SubmissionStatus.Error else SubmissionStatus.Sending,
+            title = if (failed) "Кофейня не отправлена" else "Отправляем кофейню…",
+            description = state.submitError?.let { "$it\n\nВведённые данные остались в форме." }
+                ?: "Отправляем информацию и фотографии на проверку",
+            onBack = if (failed) vm::clearSubmitError else Navigator::popBack,
+        ) {
+            if (failed) SubmissionErrorActions(vm::nextStep, vm::clearSubmitError)
+        }
+        return
+    }
+
     LocationPermissionEffect(
         requestKey = 1,
         onGranted = { vm.fillAddressFromCurrentLocation(force = false) },
@@ -107,11 +124,6 @@ fun AddShopScreen(vm: AddShopViewModel = platformViewModel()) {
             onConfirm = vm::onLocationPicked,
             onDismiss = vm::dismissLocationPicker,
         )
-    }
-
-    // Диалог ошибки
-    state.submitError?.let { err ->
-        PlatformAlert(title = "Ошибка", message = err, onConfirm = vm::clearSubmitError, onDismiss = vm::clearSubmitError)
     }
 
     Scaffold(
@@ -194,16 +206,6 @@ fun AddShopScreen(vm: AddShopViewModel = platformViewModel()) {
                         else -> true
                     },
                 )
-
-                if (state.isSubmitting) {
-                    Spacer(Modifier.height(CpDimens.spacing3))
-                    Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-                        CoffeePeekLoader(
-                            size = CpDimens.loaderButton,
-                            strokeWidth = 2.dp,
-                        )
-                    }
-                }
 
                 Spacer(Modifier.height(CpDimens.spacing8))
             }
@@ -564,6 +566,7 @@ private fun StepContacts(state: AddShopUiState, vm: AddShopViewModel) {
     FormField(label = "Instagram профиль", optional = true) {
         AppOutlinedField(
             value = state.instagram,
+            keyboardType = KeyboardType.Uri,
             onValueChange = vm::onInstagramChange,
             placeholder = "@",
             errorText = if (state.instagram.isNotEmpty()) state.instagramError else null,

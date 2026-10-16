@@ -32,6 +32,7 @@ class CoffeePeekClient(
     private val saveToken: suspend (AuthResp?) -> Unit,
     private val replaceToken: (suspend (AuthResp, AuthResp?) -> Boolean)? = null,
 ) {
+    var requestObserver: RequestObserver? = null
     private val baseUrl = normalizeBaseUrl(url)
 
     private fun resolveTokens(): AuthResp? = getToken()
@@ -86,6 +87,7 @@ class CoffeePeekClient(
                 }
             }
         }
+        httpClient.observeRequests(baseUrl) { requestObserver }
     }
 }
 
@@ -95,7 +97,7 @@ internal fun HttpClientConfig<*>.installServerErrorValidation() {
     HttpResponseValidator {
         validateResponse { response ->
             if (response.status.value in 500..599) {
-                throw ApiException("Сервис временно недоступен. Попробуйте чуть позже.")
+                throw ApiException("Сервис временно недоступен. Попробуйте чуть позже.", response.status.value)
             }
         }
     }

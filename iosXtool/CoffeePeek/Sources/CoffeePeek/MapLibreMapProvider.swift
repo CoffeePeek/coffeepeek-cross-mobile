@@ -421,6 +421,8 @@ private final class CoffeeMapView: MLNMapView {
         let visible = visibleCoordinateBounds
         callbacks?.onBoundsChanged(minLat: visible.sw.latitude, minLon: visible.sw.longitude,
                                    maxLat: visible.ne.latitude, maxLon: visible.ne.longitude, zoom: Float(zoomLevel))
+        let center = centerCoordinate
+        callbacks?.onCameraCenterChanged(latitude: center.latitude, longitude: center.longitude)
     }
 
     func applyPendingCamera() {

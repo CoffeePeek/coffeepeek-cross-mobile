@@ -1,5 +1,7 @@
 package com.coffeepeek.admin.ui.screen.auth
 
+import com.coffeepeek.admin.analytics.*
+
 import com.coffeepeek.admin.base.BaseViewModel
 import com.coffeepeek.admin.auth.signInWithApple
 import com.coffeepeek.admin.auth.socialLoginError
@@ -37,7 +39,7 @@ class AuthViewModel(
             onSuccess = { Navigator.navigate(Navigator.Screen.Main) },
             onError = { if (it !is CancellationException) _loginError.value = socialLoginError("Apple", it.message) },
         ) {
-            try { authRepository.signInWithApple() }
+            try { authRepository.signInWithApple().also { signInAnalytics(it.userId, "apple", "login") } }
             finally { _appleSigningIn.value = false }
         }
     }
@@ -72,7 +74,7 @@ class AuthViewModel(
             onSuccess = { Navigator.navigate(Navigator.Screen.Main) },
             onError = { error -> _loginError.value = localizedLoginError(error.message) },
         ) {
-            authRepository.login(emailValue, passwordValue).getOrThrow()
+            authRepository.login(emailValue, passwordValue).getOrThrow().also { signInAnalytics(it.userId, "password", "login", emailValue) }
         }
     }
 
@@ -82,7 +84,7 @@ class AuthViewModel(
             onSuccess = { Navigator.navigate(Navigator.Screen.Main) },
             onError = { error -> _loginError.value = socialLoginError("Google", error.message) },
         ) {
-            authRepository.googleLogin(idToken).getOrThrow()
+            authRepository.googleLogin(idToken).getOrThrow().also { signInAnalytics(it.userId, "google", "login") }
         }
     }
 

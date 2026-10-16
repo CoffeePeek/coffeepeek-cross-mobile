@@ -6,6 +6,7 @@ import GoogleSignIn
 struct CoffeePeekApp: App {
     init() {
         IosNativeMapRegistry.shared.provider = MapLibreMapProvider()
+        IosDrinkPhotoRegistry.shared.provider = NativeDrinkPhotoProvider()
         SocialSignInProvider.shared.configure()
     }
 

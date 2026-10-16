@@ -32,6 +32,7 @@ import com.coffeepeek.admin.feature.catalog.api.RoasterCard
 import com.coffeepeek.admin.feature.catalog.api.ShopCard
 import com.coffeepeek.admin.di.platformViewModel
 import com.coffeepeek.admin.feature.favorites.api.roasterFavoriteId
+import com.coffeepeek.admin.feature.favorites.ui.SavedDrinkCard
 import com.coffeepeek.admin.location.distanceToShopMeters
 import com.coffeepeek.admin.location.formatDistance
 import com.coffeepeek.admin.location.rememberPermittedUserLocation
@@ -44,6 +45,7 @@ import org.jetbrains.compose.resources.stringResource
 @Composable
 fun FavoritesScreen(vm: FavoritesViewModel = platformViewModel()) {
     val state by vm.state.collectAsState()
+    val error = state.error ?: state.roasterError
     val userLocation = rememberPermittedUserLocation()
     val snackbarHostState = remember { SnackbarHostState() }
     LaunchedEffect(state.actionMessage) {
@@ -59,22 +61,22 @@ fun FavoritesScreen(vm: FavoritesViewModel = platformViewModel()) {
         containerColor = MaterialTheme.colorScheme.background,
     ) { padding ->
         when {
-            state.areRoastersLoading || (state.isLoading && state.shops.isEmpty() && state.roasters.isEmpty()) -> {
+            state.areRoastersLoading || (state.isLoading && state.shops.isEmpty() && state.roasters.isEmpty() && state.drinks.isEmpty()) -> {
                 Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
                     CoffeePeekLoader()
                 }
             }
-            state.shops.isEmpty() && state.roasters.isEmpty() -> {
+            state.shops.isEmpty() && state.roasters.isEmpty() && state.drinks.isEmpty() -> {
                 Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
                     Column(
                         modifier = Modifier.padding(CpDimens.spacing4),
                         horizontalAlignment = Alignment.CenterHorizontally,
                     ) {
                         Text(
-                            state.error ?: stringResource(Res.string.favorites_empty),
+                            error ?: stringResource(Res.string.favorites_empty),
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
-                        if (state.error != null) {
+                        if (error != null) {
                             Spacer(Modifier.height(CpDimens.spacing3))
                             Button(onClick = { vm.load(force = true) }) { Text("Повторить") }
                         }
@@ -86,7 +88,7 @@ fun FavoritesScreen(vm: FavoritesViewModel = platformViewModel()) {
                 contentPadding = PaddingValues(CpDimens.spacing4),
                 verticalArrangement = Arrangement.spacedBy(CpDimens.spacing3),
             ) {
-                state.error?.let { error ->
+                error?.let { error ->
                     item(key = "error") {
                         Text(error, color = MaterialTheme.colorScheme.error)
                         TextButton(onClick = { vm.load(force = true) }) { Text("Повторить") }
@@ -121,6 +123,15 @@ fun FavoritesScreen(vm: FavoritesViewModel = platformViewModel()) {
                             onClick = { roaster.address?.slug?.let { Navigator.navigate(Navigator.Screen.RoasterDetail(it)) } },
                             onToggleFavorite = { vm.removeRoaster(roaster) },
                         )
+                    }
+                }
+                if (state.drinks.isNotEmpty()) {
+                    item(key = "drinks_heading") {
+                        Text("Напитки", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.SemiBold,
+                            modifier = Modifier.padding(top = CpDimens.spacing3))
+                    }
+                    items(state.drinks, key = { "drink:${it.id}" }) { drink ->
+                        SavedDrinkCard(drink, drink.id in state.removingDrinkIds, onRemove = { vm.removeDrink(drink) })
                     }
                 }
             }

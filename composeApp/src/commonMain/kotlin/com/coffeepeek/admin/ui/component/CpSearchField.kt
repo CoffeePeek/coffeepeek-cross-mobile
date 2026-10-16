@@ -56,8 +56,7 @@ fun CpSearchField(
     BasicTextField(
         value = fieldValue.value,
         onValueChange = { updated ->
-            fieldValue.value = updated
-            onValueChange(updated.text)
+            fieldValue.updateFromInput(updated, onValueChange)
         },
         modifier = modifier
             .onFocusChanged { onFocusChanged(it.isFocused) }
@@ -100,7 +99,7 @@ fun CpSearchField(
                     modifier = Modifier.weight(1f),
                     contentAlignment = Alignment.CenterStart,
                 ) {
-                    if (value.isEmpty()) {
+                    if (fieldValue.value.text.isEmpty()) {
                         Text(
                             text = placeholder,
                             style = MaterialTheme.typography.bodyLarge,

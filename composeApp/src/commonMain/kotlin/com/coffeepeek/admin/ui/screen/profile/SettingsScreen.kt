@@ -22,7 +22,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
-import com.coffeepeek.admin.legal.LegalUrls
 import com.coffeepeek.admin.theme.CpDimens
 import com.coffeepeek.admin.theme.ThemeMode
 import com.coffeepeek.admin.ui.Navigator
@@ -132,10 +131,18 @@ fun SettingsScreen(vm: ProfileViewModel = koinInject()) {
                 description = "Управление полезными дополнениями, оценки в App Store и настройки конфиденциальности",
             ) {
                 SettingsRow(
+                    icon = CpIcons.Review,
+                    label = "Связаться с поддержкой",
+                    description = "Поможем с вопросами и проблемами",
+                    iconColors = SettingsIconPalette.Gold,
+                    onClick = { OpenInBrowser.openInBrowser("https://coffeepeek.by/support") },
+                )
+                SettingsDivider()
+                SettingsRow(
                     icon = CpIcons.Lock,
                     label = "Политика использования",
                     iconColors = SettingsIconPalette.Emerald,
-                    onClick = { OpenInBrowser.openInBrowser(LegalUrls.TERMS) },
+                    onClick = { Navigator.navigate(Navigator.Screen.UsagePolicy) },
                 )
                 SettingsDivider()
                 SettingsRow(

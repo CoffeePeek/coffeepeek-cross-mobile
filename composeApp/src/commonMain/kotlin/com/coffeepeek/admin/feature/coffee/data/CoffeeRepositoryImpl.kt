@@ -46,7 +46,7 @@ internal class CoffeeRepositoryImpl(private val client: HttpClient) : CoffeeRepo
         }
         check(response.status.isSuccess()) { "Coffee search failed: ${response.status.value}" }
         val data = response.body<CoffeeResponseDto<CoffeePageDto>>().requireData()
-        CoffeePage(data.items.map { it.toDomain() }, data.currentPage, data.totalPages)
+        CoffeePage(data.items.map { it.toDomain() }, data.currentPage, data.totalPages, data.totalCount)
     }
 
     override suspend fun getFilterGroups(): Result<List<CoffeeFilterGroup>> = requestResult {
@@ -82,7 +82,7 @@ private data class CoffeeResponseDto<T>(val isSuccess: Boolean, val data: T? = n
 }
 
 @Serializable
-private data class CoffeePageDto(val items: List<CoffeeDto>, val currentPage: Int, val totalPages: Int)
+private data class CoffeePageDto(val items: List<CoffeeDto>, val currentPage: Int, val totalPages: Int, val totalCount: Int? = null)
 
 @Serializable
 private data class CoffeeDto(

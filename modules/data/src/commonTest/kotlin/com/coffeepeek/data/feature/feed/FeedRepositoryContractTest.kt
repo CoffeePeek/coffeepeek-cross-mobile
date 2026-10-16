@@ -21,7 +21,8 @@ class FeedRepositoryContractTest {
         val client = client(MockEngine {
             respond("""{"isSuccess":true,"data":{"items":[{"publishedAtUtc":"2026-10-13T10:00:00Z",
                 "checkIn":{"id":"home-1","kind":"Home","shop":null,"rating":null,"visibility":"Public",
-                "moderationState":"Approved","home":{"preparedOn":"2026-10-13","brewMethodCode":"aeropress",
+                "authorAvatarUrl":"/api/Photos/avatar/author.jpg",
+                "moderationState":"Approved","home":{"preparedOn":"2026-10-13","brewMethodCode":"hario-v60",
                 "beanName":"My beans","doseGrams":18.5,"brewDurationSeconds":120,"tasteScore":5},
                 "photos":[{"url":"/api/v1/check-ins/home-1/photos/photo-1"}]}}],"nextCursor":null}}""",
                 headers = headersOf(HttpHeaders.ContentType, "application/json"))
@@ -33,10 +34,12 @@ class FeedRepositoryContractTest {
             assertEquals("", entry.shopId)
             assertNull(entry.shopAddress)
             assertNull(entry.rating)
+            assertEquals("hario-v60", entry.homePreparation?.brewMethodCode)
             assertEquals("My beans", entry.homePreparation?.beanName)
             assertEquals(18.5, entry.homePreparation?.doseGrams)
             assertEquals(5, entry.homePreparation?.tasteScore)
             assertEquals(listOf("https://api.example/api/v1/check-ins/home-1/photos/photo-1"), entry.photoUrls)
+            assertEquals("https://api.example/api/Photos/avatar/author.jpg", entry.authorAvatarUrl)
         } finally { client.close() }
     }
 
@@ -57,6 +60,7 @@ class FeedRepositoryContractTest {
             assertNull(page.items.first().checkIn.authorAddress)
             assertNull(page.items.first().checkIn.shopAddress)
             assertEquals("feed-cursor", page.nextCursor)
+            assertTrue(page.items.all { it.checkIn.authorAvatarUrl == null })
         } finally { client.close() }
     }
 

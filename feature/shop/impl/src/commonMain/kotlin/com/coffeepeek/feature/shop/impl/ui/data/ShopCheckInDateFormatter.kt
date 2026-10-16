@@ -5,5 +5,6 @@ interface ShopCheckInDateFormatter {
     fun label(visitedAtIso: String): String
     fun pickerMillis(visitedAtIso: String): Long?
     fun visitInstant(pickerMillis: Long): String
+    fun visitInstant(pickerMillis: Long, referenceIso: String): String = visitInstant(pickerMillis)
     fun nowMillis(): Long
 }

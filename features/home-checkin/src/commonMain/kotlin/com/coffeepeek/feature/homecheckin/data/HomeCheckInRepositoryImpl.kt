@@ -51,8 +51,8 @@ class HomeCheckInRepositoryImpl(
 ) : HomeCheckInRepository {
     override suspend fun create(input: HomeCheckInInput): Result<HomeCheckIn> = homeRequestResult {
         validateInput(input, editing = false)
-        val originals = upload(input.photos)
-        val cutout = input.drinkPhoto?.let { upload(listOf(it)).single() }
+        val originals = homePhotoUpload { upload(input.photos) }
+        val cutout = input.drinkPhoto?.let { homePhotoUpload { upload(listOf(it)).single() } }
         client.post(PATH) { contentType(ContentType.Application.Json); setBody(input.toCreateRequest(originals, cutout)) }
             .data<HomeDto>().toDomain()
     }

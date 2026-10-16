@@ -1,5 +1,7 @@
 package com.coffeepeek.admin.feature.community.ui
 
+import com.coffeepeek.admin.analytics.*
+
 import com.coffeepeek.admin.base.BaseViewModel
 import com.coffeepeek.domain.model.CheckIn
 import com.coffeepeek.domain.model.CheckInVisibility
@@ -44,6 +46,7 @@ internal data class CommunityUiState(
     val isLoggedIn: Boolean? = null,
     val sessionGeneration: Long = 0,
     val items: List<CheckIn> = emptyList(),
+    val firstPageCount: Int? = null,
     val timeline: CommunityTimeline = CommunityTimeline.Public,
     val filters: FeedFilters = FeedFilters(),
     val nextCursor: String? = null,
@@ -88,6 +91,11 @@ internal class CommunityViewModel(
     private val _state = MutableStateFlow(CommunityUiState())
     val state = _state.asStateFlow()
     private var accountKey: String? = null
+    private var editAnalytics: CheckInTracker? = null
+
+    fun itemAction(action: String, item: CheckIn) {
+        if (state.value.timeline == CommunityTimeline.Public) Analytics.track(AnalyticsEvent.FEED_ITEM_INTERACTED, "action" to action, "check_in_kind" to if (item.isHome) "home" else "shop")
+    }
     private var loadJob: Job? = null
     private var mutationJob: Job? = null
     private var drinksJob: Job? = null
@@ -154,20 +162,23 @@ internal class CommunityViewModel(
         if (hasResumed) refresh() else hasResumed = true
     }
 
-    fun refresh() {
+    fun refresh(trigger: String? = null) {
+        if (trigger != null && state.value.timeline == CommunityTimeline.Public) Analytics.track(AnalyticsEvent.FEED_ACTION_CLICKED, "action" to "refresh", "trigger" to trigger)
         val current = state.value
         if (!current.isLoading && !current.isMutating) load(reset = true)
     }
 
-    fun loadMore() {
+    fun loadMore(trackAction: Boolean = true) {
         val current = state.value
         if (current.hasMore && !current.isLoading && !current.isLoadingMore && !current.isMutating) {
+            if (trackAction && current.timeline == CommunityTimeline.Public) Analytics.track(AnalyticsEvent.FEED_ACTION_CLICKED, "action" to "load_more", "trigger" to "scroll")
             load(reset = false)
         }
     }
 
     fun retry() {
-        if (!state.value.restartPagination && (state.value.failedPage ?: 1) > 1) loadMore() else refresh()
+        if (state.value.timeline == CommunityTimeline.Public) Analytics.track(AnalyticsEvent.FEED_ACTION_CLICKED, "action" to "retry", "trigger" to "button")
+        if (!state.value.restartPagination && (state.value.failedPage ?: 1) > 1) loadMore(trackAction = false) else refresh()
     }
 
     private fun load(reset: Boolean, expectedGeneration: Long? = null) {
@@ -203,6 +214,7 @@ internal class CommunityViewModel(
                 _state.update {
                     if (it.sessionGeneration != generation || !isCurrent(key)) it else it.copy(
                         items = if (reset) resultPage.items.distinctBy(CheckIn::id) else appendTimeline(it.items, resultPage.items),
+                        firstPageCount = if (reset) resultPage.items.size else it.firstPageCount,
                         page = page,
                         hasMore = resultPage.hasMore,
                         nextCursor = resultPage.cursor,
@@ -230,18 +242,23 @@ internal class CommunityViewModel(
         val key = accountKey ?: return
         if (!isCurrent(key)) return
         val own = state.value.items.firstOrNull { it.id == id && state.value.owns(it) } ?: return
+        editAnalytics = CheckInTracker(CheckInKind.Visit, CheckInSource.Diary, edit = true).also { it.step(CheckInStep.Editor) }
         _state.update { it.copy(editing = CheckInEditState(own)) }
         loadDrinks()
     }
 
     fun updateEdit(value: CheckInEditState) {
         if (!state.value.isSaving && state.value.editing?.source?.id == value.source.id) {
+            val before = state.value.editing
+            if (before != null) listOf("note" to (before.text != value.text), "rating" to (before.rating != value.rating),
+                "drink" to (before.drinkSlug != value.drinkSlug || before.customDrinkName != value.customDrinkName))
+                .filter { it.second }.forEach { editAnalytics?.field(it.first) }
             _state.update { it.copy(editing = value.copy(error = null)) }
         }
     }
 
     fun dismissEdit() {
-        if (!state.value.isSaving) _state.update { it.copy(editing = null) }
+        if (!state.value.isSaving) { editAnalytics?.cancel("close"); _state.update { it.copy(editing = null) } }
     }
 
     fun loadDrinks() {
@@ -260,7 +277,10 @@ internal class CommunityViewModel(
         val edit = state.value.editing ?: return
         val key = accountKey ?: return
         if (!isCurrent(key) || state.value.isMutating) return
+        val tracker = editAnalytics
+        tracker?.submit()
         edit.validationError()?.let { error ->
+            tracker?.validation(listOf("form"))
             _state.update { it.copy(editing = edit.copy(error = error)) }
             return
         }
@@ -271,11 +291,13 @@ internal class CommunityViewModel(
             currentCoroutineContext().ensureActive()
             if (!isCurrent(key)) return@launch
             result.onSuccess { updated ->
+                tracker?.saved(updated.visibility.name, updated.photoUrls.isNotEmpty())
                 _state.update {
                     it.withUpdated(updated).copy(editing = null, isSaving = false,
                         actionMessage = if (it.timeline == CommunityTimeline.Public) "Чек-ин сохранён и отправлен на проверку. Он доступен в профиле, в разделе «Чекины»" else "Чек-ин сохранён")
                 }
             }.onFailure { error ->
+                tracker?.failed(CheckInStage.Save, safeAnalyticsError(error))
                 _state.update { it.copy(isSaving = false, editing = edit.copy(error = error.message ?: "Не удалось сохранить чек-ин")) }
             }
         }
@@ -310,7 +332,8 @@ internal class CommunityViewModel(
         val current = state.value
         val item = current.items.firstOrNull { it.id == id } ?: return
         if (current.timeline != CommunityTimeline.Public || current.isMutating || current.editing != null || current.reportingId != null || current.owns(item)) return
-        val key = accountKey ?: run { requestLogin(); return }
+        itemAction(if (item.isHelpfulByCurrentUser) "unlike" else "like", item)
+        val key = accountKey ?: run { Analytics.gate("feed_like"); requestLogin(); return }
         if (!isCurrent(key)) return
         loadJob?.cancel()
         _state.update { it.copy(helpfulId = id, isLoading = false, isLoadingMore = false) }

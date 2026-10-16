@@ -24,13 +24,12 @@ kamel = "1.0.8"
 maplibre = "13.6.0"
 phosphor-icon = "1.0.0"
 haze = "1.7.1"
-mlkit-subject-segmentation = "16.0.0-beta1"
+posthog = "0.5.1"
 
 room = "2.8.3"
 sqlite = "2.6.1"
 
 [libraries]
-mlkit-subject-segmentation = { module = "com.google.android.gms:play-services-mlkit-subject-segmentation", version.ref = "mlkit-subject-segmentation" }
 android-gradle-plugin = { module = "com.android.tools.build:gradle", version.ref = "agp" }
 compose-gradle-plugin = { module = "org.jetbrains.compose:compose-gradle-plugin", version.ref = "composeMultiplatform" }
 compose-runtime = { module = "org.jetbrains.compose.runtime:runtime", version.ref = "composeMultiplatform" }
@@ -40,6 +39,8 @@ compose-ui-tooling = { module = "androidx.compose.ui:ui-tooling", version.ref = 
 androidx-compose-ui-tooling-preview = { module = "androidx.compose.ui:ui-tooling-preview", version.ref = "androidx-composeUi" }
 kotlin-gradle-plugin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin" }
 kotlin-compose-gradle-plugin = { module = "org.jetbrains.kotlin:compose-compiler-gradle-plugin", version.ref = "kotlin" }
+posthog-kmp = { module = "com.posthog:posthog-kmp", version.ref = "posthog" }
+errorprone-annotations = { module = "com.google.errorprone:error_prone_annotations", version = "2.30.0" }
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
 haze = { module = "dev.chrisbanes.haze:haze", version.ref = "haze" }
 kotlin-testJunit = { module = "org.jetbrains.kotlin:kotlin-test-junit", version.ref = "kotlin" }
