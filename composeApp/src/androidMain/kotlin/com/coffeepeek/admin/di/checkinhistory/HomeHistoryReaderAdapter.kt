@@ -30,7 +30,7 @@ internal class HomeHistoryReaderAdapter(private val reader: HomePreparationReade
     override suspend fun calendar(range: HomeHistoryDateRange): Result<List<HomeHistoryDay>> = read {
         reader.calendar(HomePreparationDateRange(range.from, range.to)).getOrThrow()
             .map { day -> HomeHistoryDay(day.preparedOn, day.brewCount,
-                day.photos.map { com.coffeepeek.feature.checkinhistory.domain.model.HistoryCalendarPhoto(it.url, it.isCutout) }) }
+                day.photos.map { com.coffeepeek.feature.checkinhistory.domain.model.HistoryCalendarPhoto(it.url, it.isCutout, it.preparedAtUtc) }) }
     }
 
     private suspend fun <T> read(block: suspend () -> T): Result<T> = try {

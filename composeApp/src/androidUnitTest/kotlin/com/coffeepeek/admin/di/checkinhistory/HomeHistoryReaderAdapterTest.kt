@@ -96,6 +96,7 @@ class HomeHistoryReaderAdapterTest {
         val photos = HomeHistoryReaderAdapter(LegacyHomePreparationReader(source)).calendar(range).getOrThrow().single().photos
         assertEquals(listOf(homeReadFixture().drinkPhotoUrl, homeReadFixture().photos.single().url), photos.map { it.url })
         assertEquals(listOf(true, false), photos.map { it.isCutout })
+        assertEquals(List(2) { homeReadFixture().preparedAtUtc }, photos.map { it.occurredAt })
         assertEquals(listOf(1, 2), source.queries.map { it.page })
         assertTrue(source.queries.all { it.size == 100 && it.from == range.from && it.to == range.to })
     }

@@ -4,7 +4,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -13,6 +12,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.semantics.*
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.PreviewLightDark
@@ -31,29 +31,57 @@ internal fun HistoryCalendarDay(day: Int, date: String, total: Long, homeCount: 
     val dateLabel = if (isToday) stringResource(Res.string.history_day_today, historyDateTitle(date)) else historyDateTitle(date)
     val description = stringResource(Res.string.history_day_description, dateLabel, historyVisitCountLabel(total)) +
         if (homeCount > 0) ", " + stringResource(Res.string.history_home_count, homeCount) else ""
-    Column(modifier.padding(1.dp).clip(RoundedCornerShape(12.dp))
-        .background(if (isSelected) MaterialTheme.colorScheme.primary.copy(alpha = 0.10f) else Color.Transparent)
+    val photo = photos.firstOrNull()
+    val shape = RoundedCornerShape(12.dp)
+    Box(modifier.aspectRatio(1f).padding(1.dp).clip(shape)
+        .background(when {
+            isSelected && photo == null -> MaterialTheme.colorScheme.primary
+            isSelected -> MaterialTheme.colorScheme.primary.copy(alpha = 0.10f)
+            else -> Color.Transparent
+        })
+        .then(if ((isToday && !isSelected) || (isSelected && photo != null)) {
+            Modifier.border(1.dp, MaterialTheme.colorScheme.primary, shape)
+        } else Modifier)
         .clickable(enabled = !isFuture, role = Role.Button,
             onClickLabel = stringResource(Res.string.history_select_day), onClick = onSelect)
-        .semantics(mergeDescendants = true) { contentDescription = description; selected = isSelected }
-        .heightIn(min = 76.dp).padding(vertical = 4.dp),
-        horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        Box(Modifier.defaultMinSize(minWidth = 32.dp, minHeight = 32.dp)
-            .background(if (isSelected) MaterialTheme.colorScheme.primary else Color.Transparent, CircleShape)
-            .then(if (isToday && !isSelected) Modifier.border(1.dp, MaterialTheme.colorScheme.primary, CircleShape) else Modifier)
-            .clearAndSetSemantics {}, contentAlignment = Alignment.Center) {
+        .semantics(mergeDescendants = true) { contentDescription = description; selected = isSelected },
+        contentAlignment = Alignment.Center) {
+        if (photo == null) {
             Text(day.toString(), style = MaterialTheme.typography.bodyMedium,
                 fontWeight = if (isSelected || isToday) FontWeight.SemiBold else FontWeight.Normal,
                 color = when {
                     isSelected -> MaterialTheme.colorScheme.onPrimary
                     isFuture -> MaterialTheme.colorScheme.onSurface.copy(alpha = 0.35f)
                     else -> MaterialTheme.colorScheme.onSurface
-                }, modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp))
+                }, modifier = Modifier.padding(bottom = if (total > 0) 6.dp else 0.dp)
+                    .padding(4.dp).clearAndSetSemantics {})
+        } else {
+            Box(Modifier.fillMaxSize().padding(start = 3.dp, top = 3.dp, end = 3.dp,
+                bottom = if (total > 3) 17.dp else if (total > 0) 11.dp else 3.dp)
+                .clearAndSetSemantics {}, contentAlignment = Alignment.Center) {
+                val imageModifier = Modifier.aspectRatio(1f, matchHeightConstraintsFirst = true)
+                HistoryPhoto(photo.url,
+                    if (photo.isCutout) imageModifier else imageModifier.clip(RoundedCornerShape(6.dp)),
+                    if (photo.isCutout) ContentScale.Fit else ContentScale.Crop, imageContent)
+            }
         }
-        HistoryCalendarPhotoStack(photos.take(total.coerceAtMost(3).toInt()), total, imageContent)
+        HistoryCalendarVisitMarkers(total, isSelected && photo == null,
+            Modifier.align(Alignment.BottomCenter).padding(bottom = 3.dp))
     }
 }
 
 @PreviewLightDark @Composable private fun HistoryCalendarDayPreview() = CoffeePeekTheme {
-    HistoryCalendarDay(14, "2026-10-14", 2, 1, true, true, false, {}, Modifier.width(56.dp))
+    HistoryCalendarDay(14, "2026-10-14", 2, 1, isSelected = true, isToday = true, isFuture = false,
+        onSelect = {}, modifier = Modifier.width(56.dp))
+}
+
+@PreviewLightDark @Composable private fun HistoryCalendarDayTodayPreview() = CoffeePeekTheme {
+    HistoryCalendarDay(14, "2026-10-14", 0, 0, isSelected = false, isToday = true, isFuture = false,
+        onSelect = {}, modifier = Modifier.width(56.dp))
+}
+
+@PreviewLightDark @Composable private fun HistoryCalendarDayPhotoPreview() = CoffeePeekTheme {
+    HistoryCalendarDay(14, "2026-10-14", 2, 1, isSelected = true, isToday = true, isFuture = false,
+        onSelect = {}, modifier = Modifier.width(56.dp),
+        photos = listOf(HistoryCalendarPhoto("fixture", true), HistoryCalendarPhoto("fixture-2", false)))
 }

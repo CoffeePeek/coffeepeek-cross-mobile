@@ -3,11 +3,13 @@ package com.coffeepeek.feature.shop.impl
 import androidx.activity.compose.setContent
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.test.hasScrollToIndexAction
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createEmptyComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollToIndex
+import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.text.font.FontFamily
 import androidx.test.core.app.ActivityScenario
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
@@ -80,7 +82,7 @@ class ShopCheckInListPresentationContractTest {
                     },
                 ) { ShopCheckInListScreenContent(state, actions::add) }
             }.use {
-                compose.onAllNodes(hasScrollToIndexAction())[0].performScrollToIndex(3)
+                compose.onAllNodes(hasScrollToIndexAction())[0].performScrollToNode(hasText("Visible author"))
                 compose.onNodeWithText("Visible author").performClick()
                 assertEquals(listOf(ShopCheckInListAction.OpenAuthor(row.id)), actions)
                 assertEquals(setOf("issued-avatar"), requested.toSet())

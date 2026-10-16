@@ -46,8 +46,8 @@ internal class LegacyHomePreparationReader(private val repository: HomeCheckInRe
         }
         val photos = entries.distinctBy(HomeCheckIn::id).filter { it.preparedOn in range.from..range.to }
             .groupBy(HomeCheckIn::preparedOn).mapValues { (_, rows) -> rows.mapNotNull { row ->
-                row.drinkPhotoUrl?.takeIf(String::isNotBlank)?.let { HomePreparationCalendarPhoto(it, true) }
-                    ?: row.photos.firstOrNull { it.url.isNotBlank() }?.let { HomePreparationCalendarPhoto(it.url, false) }
+                row.drinkPhotoUrl?.takeIf(String::isNotBlank)?.let { HomePreparationCalendarPhoto(it, true, row.preparedAtUtc) }
+                    ?: row.photos.firstOrNull { it.url.isNotBlank() }?.let { HomePreparationCalendarPhoto(it.url, false, row.preparedAtUtc) }
             } }
         days.map { it.copy(photos = photos[it.preparedOn].orEmpty()) }
     }

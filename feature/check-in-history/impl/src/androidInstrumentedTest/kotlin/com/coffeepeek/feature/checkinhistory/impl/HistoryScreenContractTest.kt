@@ -105,16 +105,22 @@ class HistoryScreenContractTest {
                 shopCalendar = CombinedHistoryLoadState(mapOf(shop.date to listOf(shop.copy(
                     entry = shop.entry.copy(drinkPhotoUrl = "fixture-shop-cutout"),
                 ))), hasLoaded = true),
-                homeCalendarPhotos = mapOf(shop.date to listOf(
-                    com.coffeepeek.feature.checkinhistory.domain.model.HistoryCalendarPhoto("fixture-home-cutout", true),
-                )),
+                homeCalendar = CombinedHistoryLoadState(mapOf("2026-10-13" to 1, shop.date to 1), hasLoaded = true),
+                homeCalendarPhotos = mapOf(
+                    "2026-10-13" to listOf(
+                        com.coffeepeek.feature.checkinhistory.domain.model.HistoryCalendarPhoto("fixture-home-cutout", true)),
+                    shop.date to listOf(
+                        com.coffeepeek.feature.checkinhistory.domain.model.HistoryCalendarPhoto("fixture-second-cutout", true)),
+                ),
             )
             render(dark) { CheckInHistoryScreenContent(source, {}, imageContent = { url, modifier, _ ->
                 requested += url
                 Box(modifier)
             }) }.use {
                 compose.waitForIdle()
-                assertTrue(requested.containsAll(listOf("fixture-shop-cutout", "fixture-home-cutout")))
+                assertEquals(setOf("fixture-shop-cutout", "fixture-home-cutout"), requested.toSet())
+                // Two visits use two dots, not a counter of the remaining photographs.
+                compose.onNodeWithText("+1", useUnmergedTree = true).assertDoesNotExist()
                 compose.onNodeWithText("Owner private note").assertDoesNotExist()
             }
         }

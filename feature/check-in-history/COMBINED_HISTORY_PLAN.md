@@ -1,5 +1,113 @@
 # Combined personal history — current-main parity and next slice
 
+## Compact visit markers and latest available photo — 2026-10-16
+
+Days now show one dot per check-in up to three, then a compact `+N` for the
+remaining visits. Dots remain visible with or without a photograph and use the
+selected-background contrast color. They stay inside the existing square cell;
+no extra row height is reserved. Accessibility still announces the exact visit
+count once on the date, not once per decorative dot. Markers count visits, not
+photographs, and follow the existing All/Shop/Home filter.
+
+The displayed photograph belongs to the latest visit/preparation with an image
+in that day's month snapshot. Later visits without images do not erase the last
+available photo. Cutouts take priority over originals within the same visit,
+not over newer photographed visits. Shop visit/creation and Home preparation
+instants are compared as actual instants, including UTC offsets. Optional time
+metadata passes through existing read models/adapters; no new HTTP request,
+writer, public navigation API or iOS screen behavior was introduced. Unknown or
+malformed times sort after known times without hiding the available image.
+
+Verification: **867 selected unit executions** (both app variants and affected
+domains/impl), zero failures/errors/skips; feature lint, test APK and Direct/Play
+APK assemblies with packaged DEX guards pass. Shared history impl and Home read
+domain compile for iOS Simulator Arm64 as a source-compatibility check only.
+All **20 self-targeted history UI tests** pass on the temporary read-only emulator,
+including 0/1/2/3/5 visit states in both themes, with/without images, unchanged cell
+dimensions and ripple clipping. No real phone/account, backend write or consent
+change was involved. Pixel 7/populated-account release gates remain separate.
+The two-visit/no-photo fake calendar was visually inspected in light and dark
+themes; screenshots remain local. The temporary emulator was closed without a
+saved snapshot after verification.
+
+## Calendar production-geometry correction — 2026-10-16
+
+Restored the current-main `CheckInCalendarCard` day layout in Android history:
+square slots, 1 dp gutters, 12 dp rounded selection/today borders and clipped
+bounded ripple on the same cell. Removed the 76 dp minimum height, circular
+number selection and the always-reserved 32 dp photo/dot row. A day photo now
+occupies the square cell with the existing Fit/Crop loader contract and a small
+remaining-photo count, as in main. The unused photo-stack component is retired;
+previews remain beside the day component. Date/filter/MVI/account logic, the
+profile Activity modal and shared/iOS paths are unchanged.
+
+Verification: Studio MCP build and targeted file inspections pass; **43 feature
+unit tests**, feature lint, Direct/Play APK assembly and both packaged DEX guards
+pass. On the temporary read-only Pixel_10_Pro emulator, **four calendar UI tests
+and all 15 history UI tests pass** in their final Studio runs. Pixel 7 was not
+connected; these are fake-data emulator checks, not renewed real-account/device
+acceptance. No real app update, account mutation or backend request was needed.
+The selected-date fake screen was visually inspected in both themes after the
+final run; screenshots remain local. The temporary emulator was then closed
+without saving a snapshot.
+
+Retry evidence: the first two size assertions forgot the production 1 dp gutter
+on each side (54 dp visible cell within a 56 dp slot); expectations now include
+that gutter. An intermediate full run passed 18/19: the decorative `+1` assertion
+needed the unmerged tree because accessibility intentionally exposes one date/
+count node. After correcting that finder, the complete 15-case history class
+passes again; all four calendar cases had already passed. The initial manual
+runner attempt found no instrumentation after IDE cleanup and executed no tests.
+
+## Scope clarification and Pixel 7 checks — 2026-10-16
+
+Re-fetched main: **0137ee7** remains current. Develop **82bc04c** differs in Apple
+sign-in handling, not in these profile/history entry points. Main has both:
+
+- Own profile `Чекины → Все`: `ProfileScreen` supplies `onCheckInsClick`, navigating
+  to `VisitedPlaces` and the full `ProfileCheckInsScreen`. Android migration
+  replaces this destination with the combined entry; it is not a retired route.
+- Profile `Активность`: `UserProfileScreen` opens its Activity modal. For the own
+  profile, it invokes `PersonalProfileActivityCalendar`, still using the legacy
+  Shop/Home ViewModels and `CalendarCard`. Public profiles use the public activity
+  calendar. Neither modal is replaced by the new full-screen history entry.
+
+Do not describe the new history calendar as a completed migration of profile
+activity. Next scope review must account for both entry points, preserve main's
+presentation and assess reuse of the prepared readers/calendar without embedding
+the entire history screen in the modal or creating duplicate business modules.
+Do not remove the active full-screen route or change public/iOS profile behavior
+based on the assumption that Activity replaced all personal history.
+
+On the agreed Pixel 7, **15 self-targeted history UI tests and 33 self-targeted
+Shop UI tests pass** in their final runs. Their fake ports do not initialize the
+production Application or perform real writes. The initial Shop run had three
+failures: the new avatar test used an invalid fixed lazy-list index, corrected to
+semantic scroll-to-author; two selection cases temporarily lost the Compose root.
+All six selection cases passed independently, then all 33 Shop cases passed
+together. Preserve this retry evidence; the transient failures are not proven
+production bugs or permanently resolved test-host flakiness.
+
+Inspected the fake history in both themes on the phone. In the user's already
+installed **1.0.637**, opening the app, Profile → Check-ins, All/Shop/Home, previous
+month, Today and clearing the date were exercised. Real history is empty; no
+populated timeline/photo/backend-write acceptance is inferred. The Home form and
+creation choice stay bottom-aligned; Home cancel returns to history, and the Shop
+choice opens the picker and returns without submission. No real writes, logout,
+consent changes, data clearing, downgrade or main-app installation occurred. The
+exact source revision of that user-installed APK was not independently established.
+The other connected phone was untouched. No fatal AndroidRuntime message was
+observed in the inspected log window; this was a foreground-open/navigation check,
+not a newly verified cold-process startup.
+
+Studio MCP discovery and inspection of the changed avatar UI test succeeded:
+zero IDE errors; one existing deprecated Compose test-rule warning. A unit-test
+run requested through Studio created a run configuration, but its MCP request
+ended with HTTP 404 and no completion result. Do not count it as a passing run.
+The earlier 995 unit executions below remain separate, dated evidence. App-targeted
+instrumentation, real populated Activity/modal parity, accessibility and safely
+authorized mutation/account checks remain open. Keep #95 draft.
+
 ## Author and creation-flow code checkpoint — 2026-10-16
 
 Shop parent fixes retain server author avatars and navigate public headers only

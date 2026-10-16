@@ -74,7 +74,7 @@ internal fun HistoryCalendarCard(state: CombinedHistoryState, onAction: (Combine
             historyCalendarCells(state.month).chunked(7).forEach { week ->
                 Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.Top) {
                     week.forEach { day ->
-                        if (day == null) Spacer(Modifier.weight(1f))
+                        if (day == null) Spacer(Modifier.weight(1f).aspectRatio(1f))
                         else {
                             val date = state.month.date(day)
                             HistoryCalendarDay(day, date, counts[date] ?: 0L,
