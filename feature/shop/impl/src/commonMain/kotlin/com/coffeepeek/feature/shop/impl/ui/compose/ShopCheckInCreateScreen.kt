@@ -98,7 +98,7 @@ internal fun ShopCheckInCreateScreen(
             visitLabel = dates.label(state.input.visitedAtIso),
             selectedVisitMillis = dates.pickerMillis(state.input.visitedAtIso), nowMillis = dates.nowMillis(),
             onAction = viewModel::onAction,
-            onVisitDate = { viewModel.onAction(ShopCheckInFormAction.VisitDateChanged(dates.visitInstant(it))) },
+            onVisitDate = { viewModel.onAction(ShopCheckInFormAction.VisitDateChanged(dates.visitInstant(it, state.input.visitedAtIso))) },
             onGallery = { remaining -> picker.pickFromGallery(remaining) { viewModel.onAction(ShopCheckInFormAction.PhotosAdded(it)) } },
             onCamera = { picker.takePhoto { viewModel.onAction(ShopCheckInFormAction.PhotosAdded(it)) } },
             modifier = Modifier.fillMaxHeight(),

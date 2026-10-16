@@ -50,6 +50,13 @@ by feature; only extract a separate integration module for a demonstrated need.
 This does not require every core infrastructure module to have a domain/data
 pair. See feature/README.md for the migration sequence and dependency graph.
 
+Current main uses server-backed favorites (shops, roasters and drinks). Android
+composition adapts that same server source into the migrated feature. Never
+restore the retired local writer, upload old local rows automatically, or interpret
+logout/clear-cache as deleting server favorites. Older local-foundation tests are
+not evidence of active production wiring. Check feature/MAIN_SYNC_AUDIT.md before
+using older roadmap/product assumptions.
+
 - `api` is public by necessity, not by default. Keep routes, entry points, and
   minimal cross-feature contracts there.
 - `domain` must not depend on Android, Compose, SwiftUI, Ktor, Room, SQL, HTTP,

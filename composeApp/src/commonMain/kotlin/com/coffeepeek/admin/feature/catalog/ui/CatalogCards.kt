@@ -40,9 +40,11 @@ internal fun ShopCardContent(
     shop: CoffeeShop,
     distance: String? = null,
     onClick: () -> Unit,
-    onToggleFavorite: () -> Unit,
+    onToggleFavorite: (() -> Unit)?,
     modifier: Modifier = Modifier,
     showCatalogDetails: Boolean = true,
+    showOpenStatus: Boolean = true,
+    compact: Boolean = false,
 ) {
     Card(
         modifier = modifier.fillMaxWidth().clickable(enabled = shop.publicAddress != null, onClick = onClick),
@@ -51,6 +53,10 @@ internal fun ShopCardContent(
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
         border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
     ) {
+        if (compact) {
+            CompactShopCardContent(shop, distance, onToggleFavorite, showOpenStatus)
+            return@Card
+        }
         Column {
             Box(
                 modifier = Modifier
@@ -138,7 +144,7 @@ internal fun ShopCardContent(
                             }
                         }
                     }
-                    FavoriteButton(
+                    CatalogFavoriteControl(
                         isFavorite = shop.isFavorite,
                         onClick = onToggleFavorite,
                         overImage = true,
@@ -206,7 +212,7 @@ internal fun ShopCardContent(
                         overflow = TextOverflow.Ellipsis,
                         modifier = Modifier.weight(1f),
                     )
-                    OpenStatusBadge(
+                    if (showOpenStatus) OpenStatusBadge(
                         isOpen = shop.isOpen,
                         modifier = Modifier.padding(start = CpDimens.spacing2),
                     )
@@ -300,6 +306,85 @@ internal fun ShopCardContent(
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun CompactShopCardContent(
+    shop: CoffeeShop,
+    distance: String?,
+    onToggleFavorite: (() -> Unit)?,
+    showOpenStatus: Boolean,
+) {
+    Column(Modifier.fillMaxWidth()) {
+        Box(
+            modifier = Modifier.fillMaxWidth().aspectRatio(1.6f)
+                .background(MaterialTheme.colorScheme.surfaceVariant),
+        ) {
+            val photo = shop.photoUrl
+            if (!photo.isNullOrBlank()) CoffeeShopImage(
+                photo, contentDescription = shop.title,
+                modifier = Modifier.fillMaxSize(), placeholderLabelSize = 10.sp,
+            ) else CoffeeShopPlaceholderImage(labelSize = 10.sp, contentDescription = "Фото ${shop.title} отсутствует")
+            Box(Modifier.align(Alignment.TopEnd).padding(6.dp)) {
+                CatalogFavoriteControl(shop.isFavorite, onToggleFavorite, overImage = true, compact = true)
+            }
+            shop.rating?.takeIf { it > 0 }?.let { rating ->
+                Row(
+                    modifier = Modifier.align(Alignment.BottomStart).padding(6.dp)
+                        .clip(RoundedCornerShape(6.dp)).background(Color.Black.copy(alpha = 0.72f))
+                        .padding(horizontal = 5.dp, vertical = 3.dp),
+                    horizontalArrangement = Arrangement.spacedBy(3.dp), verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Icon(CpIcons.StarFilled, null, Modifier.size(11.dp), tint = CpColor.Primary)
+                    Text(formatOneDecimal(rating), color = Color.White, fontSize = 10.sp, lineHeight = 12.sp)
+                    if (shop.reviewCount > 0) Text("(${shop.reviewCount})", color = Color.White.copy(alpha = 0.8f), fontSize = 9.sp, lineHeight = 12.sp)
+                }
+            }
+        }
+        Column(Modifier.padding(8.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text(
+                    shop.title, modifier = Modifier.weight(1f), fontSize = 14.sp, lineHeight = 18.sp,
+                    fontWeight = FontWeight.Bold, maxLines = 2, overflow = TextOverflow.Ellipsis,
+                )
+                if (showOpenStatus) {
+                    val color = if (shop.isOpen) CpColor.Success else MaterialTheme.colorScheme.error
+                    Row(
+                        modifier = Modifier.clip(RoundedCornerShape(5.dp)).background(color.copy(alpha = 0.14f))
+                            .padding(horizontal = 4.dp, vertical = 3.dp),
+                        verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(3.dp),
+                    ) {
+                        Box(Modifier.size(4.dp).clip(CircleShape).background(color))
+                        Text(if (shop.isOpen) "ОТКРЫТО" else "ЗАКРЫТО", color = color, fontSize = 8.sp, lineHeight = 10.sp, fontWeight = FontWeight.Bold)
+                    }
+                }
+            }
+            val location = listOfNotNull(shop.address?.takeIf(String::isNotBlank), distance?.let { "$it от вас" }).joinToString(" · ")
+            if (location.isNotBlank()) Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(2.dp)) {
+                Icon(CpIcons.Location, null, Modifier.size(10.dp), tint = CpColor.Primary)
+                Text(location, fontSize = 10.sp, lineHeight = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 2, overflow = TextOverflow.Ellipsis)
+            }
+            if (shop.tags.isNotEmpty()) FlowRow(
+                horizontalArrangement = Arrangement.spacedBy(4.dp), verticalArrangement = Arrangement.spacedBy(4.dp),
+            ) {
+                shop.tags.take(2).forEach { tag ->
+                    Text(
+                        tag, modifier = Modifier.clip(RoundedCornerShape(5.dp))
+                            .background(MaterialTheme.colorScheme.surfaceVariant).padding(horizontal = 5.dp, vertical = 3.dp),
+                        fontSize = 9.sp, lineHeight = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 1, overflow = TextOverflow.Ellipsis,
+                    )
+                }
+            }
+            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                Text(shopTypeLabel(shop.type), modifier = Modifier.weight(1f), fontSize = 10.sp, lineHeight = 13.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Icon(CpIcons.ChevronRight, null, Modifier.size(13.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+        }
+    }
+}
+
 @Composable
 private fun OpenStatusBadge(isOpen: Boolean, modifier: Modifier = Modifier) {
     val color = if (isOpen) CpColor.Success else MaterialTheme.colorScheme.error
@@ -380,8 +465,10 @@ internal fun RoasterCardContent(
     onClick: () -> Unit,
     isFavorite: Boolean,
     isFavoriteLoading: Boolean,
-    onToggleFavorite: () -> Unit,
+    onToggleFavorite: (() -> Unit)?,
     modifier: Modifier = Modifier,
+    expanded: Boolean = false,
+    compact: Boolean = false,
 ) {
     Card(
         modifier = modifier.fillMaxWidth()
@@ -391,6 +478,10 @@ internal fun RoasterCardContent(
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
         border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
     ) {
+        if (expanded || compact) {
+            ExpandedRoasterCardContent(roaster, details, isFavorite, isFavoriteLoading, onToggleFavorite, compact)
+            return@Card
+        }
         Row(
             modifier = Modifier.fillMaxWidth().padding(CpDimens.spacing3),
             verticalAlignment = Alignment.CenterVertically,
@@ -416,7 +507,7 @@ internal fun RoasterCardContent(
                         style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold,
                         maxLines = 1, overflow = TextOverflow.Ellipsis,
                     )
-                    FavoriteButton(
+                    CatalogFavoriteControl(
                         isFavorite = isFavorite, onClick = onToggleFavorite,
                         enabled = !isFavoriteLoading && roaster.id.isNotBlank(),
                     )
@@ -431,6 +522,126 @@ internal fun RoasterCardContent(
                     RoasterStat(CpIcons.CoffeeBean, "Каталог", roaster.coffeeProductsCount, Modifier.weight(1f))
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun ExpandedRoasterCardContent(
+    roaster: CatalogItem,
+    details: RoasterDetails?,
+    isFavorite: Boolean,
+    isFavoriteLoading: Boolean,
+    onToggleFavorite: (() -> Unit)?,
+    compact: Boolean,
+) {
+    val photo = roaster.photoUrl?.takeIf(String::isNotBlank)
+        ?: details?.photos?.firstOrNull()?.fullUrl?.takeIf(String::isNotBlank)
+    val padding = if (compact) 8.dp else CpDimens.spacing4
+    Column(Modifier.fillMaxWidth()) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(padding),
+            verticalAlignment = Alignment.Top,
+            horizontalArrangement = Arrangement.spacedBy(if (compact) 8.dp else CpDimens.spacing3),
+        ) {
+            Box(
+                modifier = Modifier.width(if (compact) 48.dp else 80.dp).height(if (compact) 80.dp else 112.dp).clip(RoundedCornerShape(CpDimens.radiusMd))
+                    .background(if (photo != null) Color.White else MaterialTheme.colorScheme.surfaceVariant),
+                contentAlignment = Alignment.Center,
+            ) {
+                if (photo != null) CoffeeShopImage(
+                    imageUrl = photo, contentDescription = "Логотип ${roaster.name}",
+                    contentScale = ContentScale.Fit, modifier = Modifier.fillMaxSize().padding(if (compact) 4.dp else 8.dp),
+                    placeholderLabelSize = 6.sp,
+                ) else Icon(
+                    CpIcons.Factory, contentDescription = null,
+                    modifier = Modifier.size(if (compact) 24.dp else 36.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(if (compact) 4.dp else CpDimens.spacing2)) {
+                Text(
+                    roaster.name, style = MaterialTheme.typography.titleMedium,
+                    fontSize = if (compact) 14.sp else MaterialTheme.typography.titleMedium.fontSize,
+                    lineHeight = if (compact) 18.sp else MaterialTheme.typography.titleMedium.lineHeight,
+                    fontWeight = FontWeight.Bold,
+                    maxLines = 2, overflow = TextOverflow.Ellipsis,
+                )
+            }
+        }
+        (roaster.description?.takeIf(String::isNotBlank) ?: details?.about?.takeIf(String::isNotBlank))?.let { description ->
+            Text(
+                description,
+                modifier = Modifier.fillMaxWidth().padding(start = padding, end = padding, bottom = padding),
+                style = MaterialTheme.typography.bodySmall,
+                fontSize = if (compact) 10.sp else MaterialTheme.typography.bodySmall.fontSize,
+                lineHeight = if (compact) 14.sp else MaterialTheme.typography.bodySmall.lineHeight,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = if (compact) 6 else 8,
+                overflow = TextOverflow.Ellipsis,
+            )
+        }
+        Spacer(Modifier.weight(1f))
+        HorizontalDivider(Modifier.padding(horizontal = padding), color = MaterialTheme.colorScheme.outlineVariant)
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(horizontal = if (compact) 8.dp else CpDimens.spacing3, vertical = CpDimens.spacing2),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(if (compact) 4.dp else CpDimens.spacing2),
+        ) {
+            ExpandedRoasterStat(CpIcons.Coffee, "Кофейни", roaster.coffeeShopsCount, Modifier.weight(1f), compact)
+            ExpandedRoasterStat(CpIcons.CoffeeBean, "Каталог", roaster.coffeeProductsCount, Modifier.weight(1f), compact)
+            CatalogFavoriteControl(
+                isFavorite = isFavorite, onClick = onToggleFavorite,
+                enabled = !isFavoriteLoading && roaster.id.isNotBlank(),
+                compact = compact,
+            )
+        }
+    }
+}
+
+@Composable
+private fun ExpandedRoasterStat(icon: ImageVector, label: String, count: Int, modifier: Modifier, compact: Boolean) {
+    Row(
+        modifier = modifier.semantics(mergeDescendants = true) {},
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(CpDimens.spacing1),
+    ) {
+        Icon(icon, null, Modifier.size(if (compact) 12.dp else 18.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
+        Column(Modifier.weight(1f)) {
+            Text(roasterCountLabel(count), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold,
+                fontSize = if (compact) 11.sp else MaterialTheme.typography.titleSmall.fontSize,
+                lineHeight = if (compact) 14.sp else MaterialTheme.typography.titleSmall.lineHeight)
+            Text(
+                label, style = MaterialTheme.typography.labelSmall.copy(fontSize = if (compact) 9.sp else 10.sp),
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 1, overflow = TextOverflow.Ellipsis,
+            )
+        }
+    }
+}
+
+/** A null action displays state without exposing an inactive favorite button. */
+@Composable
+private fun CatalogFavoriteControl(
+    isFavorite: Boolean,
+    onClick: (() -> Unit)?,
+    enabled: Boolean = true,
+    overImage: Boolean = false,
+    compact: Boolean = false,
+) {
+    if (onClick != null) {
+        FavoriteButton(isFavorite = isFavorite, onClick = onClick, enabled = enabled, overImage = overImage)
+    } else {
+        Box(
+            modifier = Modifier.size(if (compact) { if (overImage) 32.dp else 24.dp } else { if (overImage) 40.dp else 48.dp }).clip(CircleShape)
+                .background(if (overImage) Color.Black else Color.Transparent),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(
+                imageVector = if (isFavorite) CpIcons.FavoriteFilled else CpIcons.Favorite,
+                contentDescription = if (isFavorite) "В избранном" else "Не в избранном",
+                tint = if (isFavorite) CpColor.Primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.size(24.dp),
+            )
         }
     }
 }

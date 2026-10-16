@@ -13,7 +13,8 @@ data class HomeHistoryPage(
     val hasMore: Boolean get() = page.toLong() * pageSize < totalCount
 }
 
-data class HomeHistoryDay(val preparedOn: String, val brewCount: Int) {
+data class HomeHistoryDay(val preparedOn: String, val brewCount: Int,
+    val photos: List<HistoryCalendarPhoto> = emptyList()) {
     init {
         require(HistoryMonth.fromDate(preparedOn) != null && brewCount >= 0)
     }

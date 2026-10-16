@@ -1,6 +1,7 @@
 package com.coffeepeek.feature.checkinhistory.impl.ui.compose.model
 
 import com.coffeepeek.feature.checkinhistory.domain.model.HistoryMonth
+import com.coffeepeek.feature.checkinhistory.domain.model.HistoryCalendarPhoto
 
 internal data class CombinedHistoryState(
     val today: String,
@@ -16,6 +17,7 @@ internal data class CombinedHistoryState(
     val isCalendarUnavailable: Boolean = false,
     val selectedShopKey: String? = null,
     val showCreate: Boolean = false,
+    val homeCalendarPhotos: Map<String, List<HistoryCalendarPhoto>> = emptyMap(),
 ) {
     val selectedShop: HistoryTimelineItem.Shop? get() = selectedShopKey?.let { key ->
         timeline.firstOrNull { it.key == key } as? HistoryTimelineItem.Shop
@@ -55,5 +57,6 @@ internal data class CombinedHistoryState(
             shops = CombinedHistoryPageState(isLoading = loggedIn),
             homes = CombinedHistoryPageState(isLoading = loggedIn),
             selectedShopKey = null, showCreate = false,
+            homeCalendarPhotos = emptyMap(),
         )
 }

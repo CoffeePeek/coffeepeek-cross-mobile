@@ -1,0 +1,60 @@
+# Migration stack versus main f2b184b — 2026-10-16
+
+This audit supersedes the 4976e53 inventory where incoming product behavior changed.
+Keep parent #43 → develop and history #95 → #43; do not create a second history PR.
+Main added 240 files/changes through #96. Synchronization preserves its public
+profiles, analytics consent/privacy, submission feedback and iOS implementation.
+No root Navigation migration, dependency upgrade or extra feature scaffolding is
+part of this synchronization. Shared Native compilation is not an iOS device test.
+
+## Parent integration
+
+| Incoming contract | Migration reconciliation |
+|---|---|
+| Server favorites for shops, roasters and drinks | Android composition now uses the same server repository as existing consumers. Own feature ports expose shop/drink snapshots; app adapters hide the legacy/server representations. The existing local storage implementation is not the production writer. No local rows are automatically uploaded or erased. Logout clears memory only, not server favorites. |
+| Server membership and failed requests | Membership observation reads public shop slugs without hydrating every card. Errors remain Result failures; addressless rows stay visible without invented navigation. Account replacement clears old rows and rejects late detail/write results. Roaster errors are no longer dropped at the bridge. |
+| Saved drinks | The migrated screen renders a separate section with remove/pending/error behavior. Drinks with no contracted slug cannot be removed; no drink-detail route is invented. UI owns no HTTP or legacy model. |
+| Offline vessel extraction | The migrated Android processor now adapts main's bundled EfficientDet/MagicTouch extractor, replacing its separate Play-services ML Kit pipeline. Original bytes, candidate order and cancellation survive mapping. Main's models/assets/licenses and original/iOS provider remain intact. |
+| Preserve visit time | Legacy draft visitMillis is an instant, not UTC picker midnight. The new bridge round-trips that instant; changing the calendar date preserves local time, including an unchanged repeated DST hour, and caps future choices like main. |
+| Analytics / profiles / navigation | Main's root analytics installation, consent, public profile routes and common platform definitions are retained. Existing feed/legacy-detail favorite interactions delegate to the tracked action boundary while retaining mutation guards. Analytics coverage of every migrated feature callback remains a separate audit, not implied by a clean merge. |
+| Build/runtime safety | MediaPipe's older transitive error-prone annotations conflicted with Espresso under Android consistent resolution. Both resolve 2.30.0 through the catalog. Debug DEX guards also require the server adapters and migrated photo processor. No secrets or actual account fixtures belong in Git. |
+
+The removed LocalRoasterFavorites implementation and its tests are not restored:
+main removed that writer. Their former code remains recoverable in Git. Isolated
+Room-foundation tests may remain, but they must not be mistaken for active Android
+server wiring. A dedicated instrumentation check resolves the actual production
+bindings; compilation of the isolated graph alone cannot prove correct selection.
+
+## History-child follow-up
+
+- Inherit this checked parent normally, preserving all three migrated history routes.
+- Audit main's month-wide calendar photo previews (not just selected-day/page photos)
+  and transparent drink-photo display. Preserve Home civil dates versus Shop instants.
+- Pass main's Home photo-preparation factory/actions through the existing app-owned
+  editor bridge; do not fall back to an unavailable processor in the new route.
+- Recheck author-avatar/public-profile contracts in migrated Shop/history cards;
+  never construct a public user path from a GUID.
+- Rebuild and rerun affected unit/UI/DEX checks after the child merge. Previous
+  ef41fd8/Pixel 7 smoke is dated evidence, not verification of this new baseline.
+
+Physical-device populated history/photos/date-edge, safe authenticated writes,
+account journeys and accessibility remain release checks. The stack remains draft
+until those gates are explicitly checked; a merge alone is not product parity.
+
+## Parent verification
+
+Both Android APKs and expanded DEX guards, Direct lint and instrumentation APK
+assembly pass. **851 selected unit cases** pass with zero failures/errors/skips:
+both app variants plus favorites domain/impl, Shop impl and legacy network/data
+contract suites (valid cached tasks may be reused). Complete composeApp Kotlin
+compiles for iOS Simulator Arm64; Swift/native-device behavior is not certified.
+
+All **14 isolated favorites UI tests** pass, including drink-only content and
+addressless shop navigation. The app instrumentation run reports **13 cases**:
+real server DI wiring, three processor-adapter cases and nine main extractor
+cases. One private cup-in-hand fixture is intentionally skipped without an
+externally supplied image; the other 12 pass with the emulator offline. No private
+image/account is used. The first adapter run exposed a non-void expression-body
+JUnit signature; explicit Unit fixes the harness, not production cancellation.
+Existing fake-data test hosts use no production DI/network for their UI; app
+instrumentation still performs normal Application initialization. Phones unchanged.

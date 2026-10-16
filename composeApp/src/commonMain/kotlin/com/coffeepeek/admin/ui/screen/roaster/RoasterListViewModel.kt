@@ -1,5 +1,7 @@
 package com.coffeepeek.admin.ui.screen.roaster
 
+import com.coffeepeek.admin.analytics.*
+
 import com.coffeepeek.admin.base.BaseViewModel
 import com.coffeepeek.admin.feature.favorites.api.RoasterFavorites
 import com.coffeepeek.admin.feature.favorites.api.roasterFavoriteId
@@ -60,9 +62,23 @@ internal class RoasterListViewModel(
 ) : BaseViewModel() {
     private val _state = MutableStateFlow(RoasterListUiState())
     val state = _state.asStateFlow()
+    private val searchAnalytics = SearchTracker(Catalog.Roasters)
     private var loadJob: Job? = null
+    fun resultsShown(query: String, selected: Set<String>, favoritesOnly: Boolean) {
+        val current = state.value
+        if (current.isLoading) return
+        val keys = buildList { if (selected.isNotEmpty()) add("roasters"); if (current.selectedTagIds.isNotEmpty()) add("tags"); if (favoritesOnly) add("favoritesOnly") }
+        val search = searchAnalytics.begin(listOf(query.trim().lowercase(), selected, favoritesOnly, current.selectedTagIds), query, keys)
+        if (current.error != null) search?.failed(SafeAnalyticsError("unknown"))
+        else search?.results(current.visibleItems(query, selected, favoritesOnly).size)
+    }
+    fun openedRoaster(index: Int) = searchAnalytics.open(Entity.Roaster, index + 1)
+
 
     init {
+        favorites.observeErrors()
+            .onEach { error -> if (error != null) _state.update { it.copy(actionMessage = error) } }
+            .launchIn(workScope)
         favorites.observeFavorites()
             .onEach { favorites -> _state.update { it.copy(favoriteIds = favorites.map { it.roasterFavoriteId }.toSet()) } }
             .catch { _state.update { it.copy(actionMessage = "Не удалось загрузить избранное") } }
@@ -82,24 +98,11 @@ internal class RoasterListViewModel(
 
     fun toggleFavorite(item: RoasterListItem) {
         val id = item.catalog.roasterFavoriteId
-        val current = _state.value
-        if (id in current.savingFavoriteIds) return
-        _state.update { it.copy(savingFavoriteIds = it.savingFavoriteIds + id) }
-        workScope.launch {
-            try {
-                if (!sessions.isLoggedIn()) {
-                    Navigator.navigate(Navigator.Screen.Auth)
-                    return@launch
-                }
-                val snapshot = item.catalog.copy(
-                    photoUrl = item.catalog.photoUrl ?: item.details?.photos?.firstOrNull()?.fullUrl,
-                )
-                favorites.setFavorite(snapshot, id !in current.favoriteIds)
-                    .onFailure { _state.update { it.copy(actionMessage = "Не удалось изменить избранное") } }
-            } finally {
-                _state.update { it.copy(savingFavoriteIds = it.savingFavoriteIds - id) }
-            }
-        }
+        val desired = id !in _state.value.favoriteIds
+        com.coffeepeek.admin.feature.favorites.api.FavoriteInteractions.change(workScope, id, true, desired,
+            action = { favorites.setFavorite(item.catalog.copy(photoUrl = item.catalog.photoUrl ?: item.details?.photos?.firstOrNull()?.fullUrl), desired) },
+            completed = { result -> result.onFailure { _state.update { it.copy(actionMessage = "Не удалось изменить избранное") } } },
+        )
     }
 
     fun refresh() {

@@ -42,6 +42,7 @@ import com.coffeepeek.admin.ui.component.CoffeePeekLoader
 import com.coffeepeek.admin.ui.component.platformTextInputOptions
 import com.coffeepeek.admin.ui.component.rememberSyncedTextFieldValue
 import com.coffeepeek.admin.ui.component.limitTextLength
+import com.coffeepeek.admin.ui.component.updateFromInput
 import com.coffeepeek.admin.ui.icons.CpIcons
 import com.coffeepeek.admin.di.platformViewModel
 import org.koin.core.parameter.parametersOf
@@ -110,8 +111,7 @@ fun ShopReportScreen(shopId: String, shopTitle: String) {
                     value = commentField.value,
                     onValueChange = { updated ->
                         val limited = updated.limitTextLength(500)
-                        commentField.value = limited
-                        vm.updateComment(limited.text)
+                        commentField.updateFromInput(limited, vm::updateComment)
                     },
                     keyboardOptions = platformTextInputOptions(),
                     modifier = Modifier.fillMaxWidth(),

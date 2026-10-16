@@ -1,5 +1,7 @@
 package com.coffeepeek.admin.ui.screen.feed
 
+import com.coffeepeek.admin.analytics.*
+
 import com.coffeepeek.admin.base.BaseViewModel
 import com.coffeepeek.admin.location.GeoPoint
 import com.coffeepeek.admin.settings.CityPreference
@@ -123,7 +125,10 @@ class FeedViewModel(
     private val favoriteIds = MutableStateFlow<Set<String>?>(null)
     private val favoriteMembershipMutex = Mutex()
     private val favoriteMutationGuard = Mutex()
+    private val searchAnalytics = SearchTracker(Catalog.Shops)
     private var shopsLoadJob: Job? = null
+
+    fun openedShop(shop: CoffeeShop) = searchAnalytics.open(Entity.Shop, _uiState.value.visibleShops.indexOfFirst { it.id == shop.id }.takeIf { it >= 0 }?.plus(1))
     private var isCityReady = false
     private var nearbyOrigin: ShopLocation? = null
 
@@ -216,6 +221,7 @@ class FeedViewModel(
 
     fun toggleFilters() {
         val willShow = !_uiState.value.showFilters
+        if (willShow) Analytics.track(AnalyticsEvent.FILTERS_OPENED, "catalog" to "shops", "placement" to "mobile")
         _uiState.update { it.copy(showFilters = willShow) }
         if (willShow && _uiState.value.cities.isEmpty() && _uiState.value.beans.isEmpty()) {
             loadCatalogs()
@@ -227,6 +233,10 @@ class FeedViewModel(
     }
 
     fun applyFilters(filters: FeedFiltersUi) {
+        val before = _uiState.value.filters.analyticsValues()
+        val after = filters.analyticsValues()
+        Analytics.track(AnalyticsEvent.FILTERS_APPLIED, "catalog" to "shops", "filter_keys" to after.keys.sorted(),
+            "changed_filter_keys" to (before.keys + after.keys).filter { before[it] != after[it] }.sorted(), "action" to "apply")
         _uiState.update {
             it.copy(filters = filters, shops = if (it.filters.nearbyOnly != filters.nearbyOnly) emptyList() else it.shops)
         }
@@ -234,27 +244,36 @@ class FeedViewModel(
     }
 
     fun setCoffeeFocus(coffeeFocus: String?) {
+        val previousFilters = _uiState.value.filters
         _uiState.update { it.copy(filters = it.filters.copy(coffeeFocus = coffeeFocus)) }
+        trackQuickFilters(previousFilters)
         loadShops(reset = true)
     }
 
     fun toggleOpenOnly() {
+        val previousFilters = _uiState.value.filters
         _uiState.update { it.copy(filters = it.filters.copy(openOnly = !it.filters.openOnly)) }
+        trackQuickFilters(previousFilters)
         if (_uiState.value.filters.nearbyOnly) loadShops(reset = true)
     }
 
     fun toggleNewOnly() {
+        val previousFilters = _uiState.value.filters
         _uiState.update { it.copy(filters = it.filters.copy(newOnly = !it.filters.newOnly)) }
+        trackQuickFilters(previousFilters)
         if (_uiState.value.filters.nearbyOnly) loadShops(reset = true)
     }
 
     fun toggleVisitedOnly() {
         workScope.launch {
             if (!sessionRepository.isLoggedIn()) {
+                Analytics.gate("visited_filter")
                 Navigator.navigate(Navigator.Screen.Auth)
                 return@launch
             }
+            val previousFilters = _uiState.value.filters
             _uiState.update { it.copy(filters = it.filters.copy(visitedOnly = !it.filters.visitedOnly)) }
+            trackQuickFilters(previousFilters)
             if (_uiState.value.filters.nearbyOnly) loadShops(reset = true)
         }
     }
@@ -262,17 +281,22 @@ class FeedViewModel(
     fun toggleFavoritesOnly() {
         workScope.launch {
             if (!sessionRepository.isLoggedIn()) {
+                Analytics.gate("favorites_filter")
                 Navigator.navigate(Navigator.Screen.Auth)
                 return@launch
             }
+            val previousFilters = _uiState.value.filters
             _uiState.update { it.copy(filters = it.filters.copy(favoritesOnly = !it.filters.favoritesOnly)) }
+            trackQuickFilters(previousFilters)
             if (_uiState.value.filters.nearbyOnly) loadShops(reset = true)
         }
     }
 
     fun toggleNearbyOnly() {
+        val previousFilters = _uiState.value.filters
         if (nearbyOrigin == null) return
         _uiState.update { it.copy(filters = it.filters.copy(nearbyOnly = !it.filters.nearbyOnly), shops = emptyList()) }
+        trackQuickFilters(previousFilters)
         loadShops(reset = true)
     }
 
@@ -292,12 +316,16 @@ class FeedViewModel(
     }
 
     fun setPriceRange(priceRange: Int?) {
+        val previousFilters = _uiState.value.filters
         _uiState.update { it.copy(filters = it.filters.copy(priceRange = priceRange)) }
+        trackQuickFilters(previousFilters)
         loadShops(reset = true)
     }
 
     fun setMinRating(rating: Double?) {
+        val previousFilters = _uiState.value.filters
         _uiState.update { it.copy(filters = it.filters.copy(minRating = rating)) }
+        trackQuickFilters(previousFilters)
         loadShops(reset = true)
     }
 
@@ -305,6 +333,7 @@ class FeedViewModel(
         type: String,
         id: String,
     ) {
+        val previousFilters = _uiState.value.filters
         _uiState.update { state ->
             val filters = when (type) {
                 "roaster" -> state.filters.copy(
@@ -326,10 +355,15 @@ class FeedViewModel(
             }
             state.copy(filters = filters)
         }
+        trackQuickFilters(previousFilters)
         loadShops(reset = true)
     }
 
     fun clearFilters() {
+        val before = _uiState.value.filters.analyticsValues()
+        val after = _uiState.value.filters.clearSelections().analyticsValues()
+        Analytics.track(AnalyticsEvent.FILTERS_APPLIED, "catalog" to "shops", "filter_keys" to after.keys.sorted(),
+            "changed_filter_keys" to (before.keys + after.keys).filter { before[it] != after[it] }.sorted(), "action" to "reset")
         queryFlow.value = ""
         _uiState.update {
             it.copy(query = "", filters = it.filters.clearSelections(), shops = if (it.filters.nearbyOnly) emptyList() else it.shops)
@@ -347,54 +381,60 @@ class FeedViewModel(
     }
 
     fun toggleFavorite(shop: CoffeeShop) {
-        workScope.launch {
-            if (!sessionRepository.isLoggedIn()) {
-                Navigator.navigate(Navigator.Screen.Auth)
-                return@launch
-            }
-            val started = favoriteMutationGuard.withLock {
-                if (shop.id in _uiState.value.favoriteUpdates) {
-                    false
-                } else {
-                    _uiState.update { it.copy(favoriteUpdates = it.favoriteUpdates + shop.id) }
-                    true
-                }
-            }
-            if (!started) return@launch
+        val current = _uiState.value.shops.firstOrNull { it.id == shop.id } ?: shop
+        com.coffeepeek.admin.feature.favorites.api.FavoriteInteractions.change(workScope,
+            current.publicAddress?.slug ?: current.id, false, !current.isFavorite,
+            action = { mutateFavorite(current) })
+    }
 
-            val previousFavorite = _uiState.value.shops
-                .firstOrNull { it.id == shop.id }?.isFavorite ?: shop.isFavorite
-            val nextFavorite = !previousFavorite
-            _uiState.update { state ->
-                state.copy(
-                    shops = state.shops.map { item ->
-                        if (item.id == shop.id) item.copy(isFavorite = nextFavorite) else item
-                    },
-                )
+    private suspend fun mutateFavorite(shop: CoffeeShop): Result<Unit> {
+        if (!sessionRepository.isLoggedIn()) {
+            Navigator.navigate(Navigator.Screen.Auth)
+            return Result.failure(IllegalStateException("Favorite action is unavailable"))
+        }
+        val started = favoriteMutationGuard.withLock {
+            if (shop.id in _uiState.value.favoriteUpdates) {
+                false
+            } else {
+                _uiState.update { it.copy(favoriteUpdates = it.favoriteUpdates + shop.id) }
+                true
             }
+        }
+        if (!started) return Result.failure(IllegalStateException("Favorite action is unavailable"))
 
-            try {
-                val result = if (nextFavorite) {
-                    favoriteRepository.addFavorite(shop, shop.address)
-                } else {
-                    favoriteRepository.removeFavorite(shop.id)
-                }
-                result.exceptionOrNull()?.let { if (it is CancellationException) throw it }
-                if (result.isSuccess) {
-                    FavoriteSync.notifyChanged(shop.id, nextFavorite)
-                } else {
-                    restoreFavorite(shop.id, previousFavorite, nextFavorite)
-                }
-            } catch (cancellation: CancellationException) {
+        val previousFavorite = _uiState.value.shops
+            .firstOrNull { it.id == shop.id }?.isFavorite ?: shop.isFavorite
+        val nextFavorite = !previousFavorite
+        _uiState.update { state ->
+            state.copy(
+                shops = state.shops.map { item ->
+                    if (item.id == shop.id) item.copy(isFavorite = nextFavorite) else item
+                },
+            )
+        }
+
+        return try {
+            val result = if (nextFavorite) {
+                favoriteRepository.addFavorite(shop, shop.address)
+            } else {
+                favoriteRepository.removeFavorite(shop.id)
+            }
+            result.exceptionOrNull()?.let { if (it is CancellationException) throw it }
+            if (result.isSuccess) {
+                FavoriteSync.notifyChanged(shop.id, nextFavorite)
+            } else {
                 restoreFavorite(shop.id, previousFavorite, nextFavorite)
-                throw cancellation
-            } catch (error: Exception) {
-                restoreFavorite(shop.id, previousFavorite, nextFavorite)
-                throw error
-            } finally {
-                favoriteMutationGuard.withLock {
-                    _uiState.update { it.copy(favoriteUpdates = it.favoriteUpdates - shop.id) }
-                }
+            }
+            result
+        } catch (cancellation: CancellationException) {
+            restoreFavorite(shop.id, previousFavorite, nextFavorite)
+            throw cancellation
+        } catch (error: Exception) {
+            restoreFavorite(shop.id, previousFavorite, nextFavorite)
+            throw error
+        } finally {
+            favoriteMutationGuard.withLock {
+                _uiState.update { it.copy(favoriteUpdates = it.favoriteUpdates - shop.id) }
             }
         }
     }
@@ -416,6 +456,14 @@ class FeedViewModel(
                 },
             )
         }
+    }
+
+    private fun trackQuickFilters(previous: FeedFiltersUi) {
+        val before = previous.analyticsValues()
+        val after = _uiState.value.filters.analyticsValues()
+        val changed = (before.keys + after.keys).filter { before[it] != after[it] }.sorted()
+        if (changed.isNotEmpty()) Analytics.track(AnalyticsEvent.FILTERS_APPLIED, "catalog" to "shops",
+            "filter_keys" to after.keys.sorted(), "changed_filter_keys" to changed, "action" to "apply")
     }
 
     private fun loadShops(reset: Boolean) {
@@ -443,6 +491,8 @@ class FeedViewModel(
 
             val current = _uiState.value
             val filters = current.filters
+            val search = if (reset) searchAnalytics.begin(current.query.trim().replace(Regex("\\s+"), " ") to filters, current.query, filters.analyticsValues().keys.toList(), filters.nearbyOnly,
+                citySlug = current.cities.firstOrNull { it.id == filters.cityId }?.address?.slug) else null
             shopRepository.searchShops(
                 ShopFilters(
                     query = current.query.trim().takeIf { it.isNotBlank() },
@@ -465,6 +515,7 @@ class FeedViewModel(
                 ),
             ).onSuccess { result ->
                 if (!isActive) return@onSuccess
+                search?.results(result.totalCount)
                 favoriteMembershipMutex.withLock {
                     _uiState.update { state ->
                         state.copy(
@@ -483,6 +534,7 @@ class FeedViewModel(
                 }
             }.onFailure {
                 if (!isActive) return@onFailure
+                search?.failed(safeAnalyticsError(it))
                 _uiState.update {
                     it.copy(
                         isLoading = false,
@@ -497,4 +549,14 @@ class FeedViewModel(
 
     private fun Set<String>.toggle(id: String): Set<String> =
         if (contains(id)) this - id else this + id
+}
+
+internal fun FeedFiltersUi.analyticsValues(): Map<String, Any> = buildMap {
+    if (!nearbyOnly) cityId?.let { put("city", it) }
+    coffeeFocus?.let { put("type", it) }
+    put("isOpen", openOnly); put("isNew", newOnly); put("visitedOnly", visitedOnly); put("favoritesOnly", favoritesOnly)
+    if (nearbyOnly) put("nearby", true)
+    priceRange?.let { put("priceRange", it) }; minRating?.let { put("minRating", it) }
+    listOf("roasters" to roasterIds, "beans" to beanIds, "equipments" to equipmentIds, "brewMethods" to brewMethodIds, "tags" to tagIds)
+        .forEach { (key, values) -> if (values.isNotEmpty()) put(key, values) }
 }

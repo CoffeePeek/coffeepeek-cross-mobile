@@ -1,7 +1,6 @@
 package com.coffeepeek.admin.di
 
-import com.coffeepeek.admin.di.favorites.favoritesRoomModule
-import com.coffeepeek.admin.di.favorites.legacyFavoritesConsumersModule
+import com.coffeepeek.admin.di.favorites.serverFavoritesModule
 import com.coffeepeek.admin.di.shop.shopCheckInModule
 import com.coffeepeek.admin.di.shop.AndroidShopCheckInFormRenderer
 import com.coffeepeek.admin.di.shop.AndroidShopDetailScreenRenderer
@@ -17,10 +16,9 @@ import com.coffeepeek.feature.shop.impl.createShopMenuGalleryEntry
 
 actual fun initPlatformKoin() {
     initKoin(
-        registerLegacyFavorites = false,
+        registerLegacyFavorites = true,
         platformModules = listOf(
-            favoritesRoomModule(Locator.database.settingRepository, sessionScoped = true),
-            legacyFavoritesConsumersModule(),
+            serverFavoritesModule(),
             shopCheckInModule(),
             shopBrowsingModule(),
             checkInHistoryModule(),

@@ -41,7 +41,10 @@ internal fun HistoryHomeOverlay(bridge: AndroidHistoryHomeBridge, onPhoto: (List
                     { bridge.withEditor(current) { it.searchCatalog() } },
                     { product -> bridge.withEditor(current) { it.selectCatalogProduct(product) } },
                     { bridge.withEditor(current) { it.save() } }, bridge::dismiss, modifier,
-                    onRetryMethods = { bridge.withEditor(current) { it.loadBrewMethods() } })
+                    onRetryMethods = { bridge.withEditor(current) { it.loadBrewMethods() } },
+                    onSelectDrinkPhoto = { photo -> bridge.withEditor(current) { it.selectDrinkPhoto(photo) } },
+                    onRetryDrinkPhoto = { bridge.withEditor(current) { it.retryDrinkPhoto() } },
+                    onSkipDrinkPhoto = { bridge.withEditor(current) { it.skipDrinkPhoto() } })
             }
         }
     }

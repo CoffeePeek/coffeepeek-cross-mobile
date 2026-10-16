@@ -23,6 +23,7 @@ import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
 import io.ktor.http.isSuccess
+import io.ktor.http.appendPathSegments
 
 class UserApiService(private val client: HttpClient) {
 
@@ -34,7 +35,7 @@ class UserApiService(private val client: HttpClient) {
     }
 
     suspend fun getUser(userId: String): Result<PublicUserProfileDto> = requestResult {
-        val response = client.get("/api/Users/by-slug/$userId")
+        val response = client.get("/api/Users") { url { appendPathSegments(userId, encodeSlash = true) } }
         if (!response.status.isSuccess()) throw ApiException("Ошибка загрузки профиля (${response.status.value})")
         response.body<PublicUserProfileResponseDto>().data
     }

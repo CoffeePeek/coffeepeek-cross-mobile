@@ -29,6 +29,7 @@ class ShopCheckInsContractTest {
                 "name":"Кофейня","checkInCount":23,
                 "checkIns":[{
                     "id":"visit-1","shop":null,"author":null,"username":"Анна","shopName":"",
+                    "authorAvatarUrl":"https://cdn.example/avatars/anna.jpg",
                     "text":"Отличный кофе","createdAtUtc":"2026-10-08T12:00:00Z","visitedAt":"2026-10-01T09:00:00Z",
                     "rating":{"place":4,"service":5,"coffee":5},"visibility":"Public","moderationState":"Approved",
                     "contentRevision":2,"drinkSlug":"cappuccino","drinkNameRu":"Капучино","drinkNameEn":"Cappuccino",
@@ -40,7 +41,8 @@ class ShopCheckInsContractTest {
                     ]
                 },{
                     "id":"visit-2","username":"Анна","text":"Повторное посещение","visibility":"Public",
-                    "moderationState":"Approved","drinkSlug":"other","customDrinkName":"Эспрессо-тоник"
+                    "moderationState":"Approved","drinkSlug":"other","customDrinkName":"Эспрессо-тоник",
+                    "authorAvatarUrl":"   "
                 }],
                 "userCheckIns":[{"id":"private","text":"Личная заметка","visibility":"Private"}]
             }}""", headers = headersOf(HttpHeaders.ContentType, "application/json"))
@@ -55,6 +57,7 @@ class ShopCheckInsContractTest {
             assertNull(visit.shopAddress)
             assertNull(visit.authorAddress)
             assertEquals("Анна", visit.username)
+            assertEquals("https://cdn.example/avatars/anna.jpg", visit.authorAvatarUrl)
             assertEquals("Кофейня", visit.shopName)
             assertEquals("Отличный кофе", visit.note)
             assertEquals("2026-10-08T12:00:00Z", visit.createdAt)
@@ -70,6 +73,8 @@ class ShopCheckInsContractTest {
             assertEquals(listOf("https://cdn.example/first.jpg", "https://api.example/api/v1/check-ins/visit-1/photos/later"), visit.photoUrls)
             assertEquals(visit.photoUrls, visit.photoThumbnailUrls)
             assertEquals("Эспрессо-тоник", details.checkIns[1].customDrinkName)
+            assertNull(details.checkIns[1].authorAvatarUrl)
+            assertNull(details.userCheckIns.single().authorAvatarUrl)
             assertEquals(CheckInVisibility.Private, details.userCheckIns.single().visibility)
         } finally { client.close() }
     }

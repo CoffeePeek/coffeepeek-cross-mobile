@@ -1,5 +1,7 @@
 package com.coffeepeek.admin.ui.screen.map
 
+import com.coffeepeek.admin.analytics.*
+
 import com.coffeepeek.admin.base.BaseViewModel
 import com.coffeepeek.admin.settings.CityPreference
 import com.coffeepeek.admin.location.GeoPoint
@@ -89,6 +91,9 @@ class MapViewModel(
     private val _state = MutableStateFlow(MapUiState())
     val state: StateFlow<MapUiState> = _state.asStateFlow()
 
+    private val searchAnalytics = SearchTracker(Catalog.Shops, ResultSource.Map)
+    private var selectionFromSearch = false
+    fun openedShop() = searchAnalytics.open(Entity.Shop, includeSearch = selectionFromSearch)
     private var boundsJob: Job? = null
     private var nearbyJob: Job? = null
     private var queryJob: Job? = null
@@ -144,6 +149,8 @@ class MapViewModel(
     }
 
     fun onShopSelected(shop: MapShop) {
+        selectionFromSearch = false
+        Analytics.track(AnalyticsEvent.MAP_INTERACTION, "action" to "marker_selected")
         onQueryChange("")
         if (_state.value.selectedShop?.id == shop.id) {
             _state.update { it.copy(selectedZone = null) }
@@ -172,12 +179,14 @@ class MapViewModel(
         nearbyJob?.cancel()
         val filters = _state.value.filters
         nearbyJob = workScope.launch {
+            val operation = Analytics.service?.operationScope()
             val result = shopRepository.getMapContent(nearbyMapBounds(origin), 22f, ShopFilters(cityId = filters.cityId))
             currentCoroutineContext().ensureActive()
             result.onSuccess { content ->
+                if (operation != null) Analytics.service?.track(AnalyticsEvent.MAP_INTERACTION, mapOf("action" to "nearby_loaded", "result_count" to content.shops.size), operation)
                 val nearest = nearestMapShops(content.shops, origin)
                 _state.update { it.copy(nearbyShops = nearest, shops = (it.shops + nearest).distinctBy { shop -> shop.id }) }
-            }
+            }.onFailure { if (operation != null) Analytics.service?.track(AnalyticsEvent.MAP_INTERACTION, mapOf("action" to "nearby_failed"), operation) }
         }
     }
 
@@ -202,6 +211,7 @@ class MapViewModel(
     }
 
     fun toggleZones() {
+        Analytics.track(AnalyticsEvent.MAP_INTERACTION, "action" to "zones_toggled", "enabled" to !_state.value.showZones)
         _state.update { it.copy(showZones = !it.showZones, selectedZone = null) }
     }
 
@@ -226,6 +236,11 @@ class MapViewModel(
             delay(350)
             val state = _state.value
             val filters = state.filters
+            val keys = buildList { if (filters.cityId != null) add("city"); if (filters.coffeeFocus != null) add("type");
+                if (filters.roasterIds.isNotEmpty()) add("roasters"); if (filters.beanIds.isNotEmpty()) add("beans");
+                if (filters.equipmentIds.isNotEmpty()) add("equipments"); if (filters.brewMethodIds.isNotEmpty()) add("brewMethods");
+                if (filters.tagIds.isNotEmpty()) add("tags"); if (filters.priceRange != null) add("priceRange"); if (filters.minRating != null) add("minRating") }
+            val search = searchAnalytics.begin(query.trim() to filters, query, keys)
             shopRepository.searchShops(
                 ShopFilters(
                     query = query.trim(),
@@ -242,6 +257,9 @@ class MapViewModel(
                     pageSize = 3,
                 ),
             ).onSuccess { page ->
+                currentCoroutineContext().ensureActive()
+                if (_state.value.query != query) return@onSuccess
+                search?.results(page.totalCount)
                 _state.update { current ->
                     if (current.query != query) current else current.copy(
                         searchResults = page.items.filter { it.toMapShopOrNull() != null },
@@ -249,6 +267,9 @@ class MapViewModel(
                     )
                 }
             }.onFailure {
+                currentCoroutineContext().ensureActive()
+                if (_state.value.query != query) return@onFailure
+                search?.failed(safeAnalyticsError(it))
                 _state.update { current ->
                     if (current.query != query) current else current.copy(
                         isSearchLoading = false,
@@ -260,6 +281,8 @@ class MapViewModel(
     }
 
     fun onSearchResultSelected(shop: CoffeeShop) {
+        selectionFromSearch = true
+        Analytics.track(AnalyticsEvent.MAP_INTERACTION, "action" to "search_selected")
         val mapShop = shop.toMapShopOrNull() ?: return
         queryJob?.cancel()
         _state.update { current ->
@@ -292,6 +315,7 @@ class MapViewModel(
         val zoom = current.pendingZoom ?: current.activeZoom ?: return
         val nextZoom = (zoom + delta).coerceIn(MIN_MAP_ZOOM, MAX_MAP_ZOOM)
         if (nextZoom == zoom) return
+        Analytics.track(AnalyticsEvent.MAP_INTERACTION, "action" to "zoomed")
 
         _state.update {
             it.copy(
@@ -400,6 +424,8 @@ class MapViewModel(
             val filters = state.filters
             // Request a wider area than visible, so panning a few km shows already-loaded shops.
             val requestArea = bounds.expandedForPrefetch()
+            val operation = Analytics.service?.operationScope()
+            val started = kotlin.time.TimeSource.Monotonic.markNow()
             val result = shopRepository.getMapContent(
                 bounds = requestArea,
                 zoom = zoom,
@@ -417,6 +443,7 @@ class MapViewModel(
             )
             currentCoroutineContext().ensureActive()
             result.onSuccess { content ->
+                    if (operation != null) Analytics.service?.track(AnalyticsEvent.MAP_INTERACTION, mapOf("action" to "loaded", "result_count" to content.shops.size, "duration_ms" to started.elapsedNow().inWholeMilliseconds), operation)
                     loadedArea = requestArea
                     loadedZoomLevel = zoom.toInt()
                     _state.update { current ->
@@ -442,6 +469,7 @@ class MapViewModel(
                     }
                 }
                 .onFailure {
+                    if (operation != null) Analytics.service?.track(AnalyticsEvent.MAP_INTERACTION, mapOf("action" to "load_failed", "duration_ms" to started.elapsedNow().inWholeMilliseconds), operation)
                     _state.update {
                         it.copy(
                             isLoading = false,

@@ -3,6 +3,8 @@ package com.coffeepeek.admin.di.checkinhistory
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.unit.dp
+import com.coffeepeek.admin.ui.component.DrinkCutoutImage
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -25,7 +27,9 @@ internal class AndroidCheckInHistoryScreenRenderer(
     private val calendar: AndroidCheckInHistoryCalendar,
     private val homeEditors: HistoryHomeEditorFactory,
     private val imageContent: @Composable (String, Modifier, ContentScale) -> Unit = { url, modifier, scale ->
-        CpImage(data = url, modifier = modifier, contentScale = scale)
+        // History uses Fit for transparent drink cutouts and Crop for ordinary photo previews.
+        if (scale == ContentScale.Fit) DrinkCutoutImage(data = url, modifier = modifier, outlineWidth = 1.dp)
+        else CpImage(data = url, modifier = modifier, contentScale = scale)
     },
     private val photoContent: @Composable (List<String>, Int, () -> Unit) -> Unit = { urls, index, dismiss ->
         FullScreenImageDialog(imageUrls = urls, initialIndex = index, onDismiss = dismiss)

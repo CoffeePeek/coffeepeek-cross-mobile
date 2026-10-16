@@ -146,6 +146,8 @@ private fun UserProfileDto.toUserProfile() = UserProfile(
     reviewCount = reviewCount,
     checkInCount = checkInCount,
     addedShopsCount = addedShopsCount,
+    addedRoastersCount = addedRoastersCount,
+    followersCount = followersCount,
 )
 
 private fun AccountDeletionRequestDto.toDomain() = AccountDeletionRequest(

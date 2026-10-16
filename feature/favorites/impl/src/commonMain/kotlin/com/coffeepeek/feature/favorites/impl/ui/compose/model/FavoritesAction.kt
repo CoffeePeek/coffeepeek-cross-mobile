@@ -7,5 +7,6 @@ internal sealed interface FavoritesAction {
     data class OpenShop(val shopId: String) : FavoritesAction
     data class RemoveRoaster(val roasterId: String) : FavoritesAction
     data class OpenRoaster(val roasterId: String) : FavoritesAction
+    data class RemoveDrink(val id: String) : FavoritesAction
     data object Back : FavoritesAction
 }

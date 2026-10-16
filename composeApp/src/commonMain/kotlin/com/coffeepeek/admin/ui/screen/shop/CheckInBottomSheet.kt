@@ -5,6 +5,9 @@ import androidx.compose.runtime.getValue
 import com.coffeepeek.admin.ui.component.NativeDatePicker
 import com.coffeepeek.admin.ui.component.ReviewFormStep
 import com.coffeepeek.admin.ui.component.CheckInVisibilityControl
+import com.coffeepeek.admin.feature.checkin.api.DrinkPhotoPreview
+import com.coffeepeek.admin.feature.checkin.api.DrinkPhotoState
+import com.coffeepeek.domain.model.PendingPhotoUpload
 
 import com.coffeepeek.admin.ui.screen.review.ConsumedDrinkField
 
@@ -67,6 +70,7 @@ import com.coffeepeek.admin.ui.icons.CpIcons
 import com.coffeepeek.admin.utils.MAX_REVIEW_PHOTOS
 import com.coffeepeek.admin.utils.currentEpochMillis
 import com.coffeepeek.admin.utils.formatVisitDate
+import com.coffeepeek.admin.utils.instantToDatePickerMillis
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -84,21 +88,27 @@ fun CheckInBottomSheet(
     submissionError: String? = null,
     onGoToFeed: () -> Unit,
     onViewCheckIns: () -> Unit,
+    drinkPhotoState: DrinkPhotoState = DrinkPhotoState(),
+    onSelectDrinkPhoto: (PendingPhotoUpload) -> Unit = {},
+    onRetryDrinkPhoto: () -> Unit = {},
+    onSkipDrinkPhoto: () -> Unit = {},
 ) {
     var showDatePicker by remember { mutableStateOf(false) }
+    val visitDateMillis = remember(draft.visitMillis, showDatePicker) { instantToDatePickerMillis(draft.visitMillis) }
+    val todayMillis = remember(showDatePicker) { instantToDatePickerMillis(currentEpochMillis()) }
 
     val focusManager = LocalFocusManager.current
     val keyboardController = LocalSoftwareKeyboardController.current
 
     if (showDatePicker && !NativeDatePicker(
-        title = "Дата посещения", initialMillis = draft.visitMillis, maximumMillis = currentEpochMillis(), timeOnly = false,
-        onConfirm = { onDraftChange(draft.copy(visitMillis = it)) }, onDismiss = { showDatePicker = false },
+        title = "Дата посещения", initialMillis = visitDateMillis, maximumMillis = todayMillis, timeOnly = false,
+        onConfirm = { onDraftChange(draft.withVisitDate(it)) }, onDismiss = { showDatePicker = false },
     )) {
         val datePickerState = rememberDatePickerState(
-            initialSelectedDateMillis = draft.visitMillis,
+            initialSelectedDateMillis = visitDateMillis,
             selectableDates = object : SelectableDates {
                 override fun isSelectableDate(utcTimeMillis: Long): Boolean =
-                    utcTimeMillis <= currentEpochMillis()
+                    utcTimeMillis <= todayMillis
             },
         )
         DatePickerDialog(
@@ -106,7 +116,7 @@ fun CheckInBottomSheet(
             confirmButton = {
                 TextButton(onClick = {
                     datePickerState.selectedDateMillis?.let {
-                        onDraftChange(draft.copy(visitMillis = it))
+                        onDraftChange(draft.withVisitDate(it))
                     }
                     showDatePicker = false
                 }) {
@@ -212,7 +222,7 @@ fun CheckInBottomSheet(
                                 modifier = Modifier.size(18.dp),
                             )
                             Text(
-                                text = formatVisitDate(draft.visitMillis),
+                                text = formatVisitDate(visitDateMillis),
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.onSurface,
                                 modifier = Modifier.weight(1f),
@@ -260,6 +270,8 @@ fun CheckInBottomSheet(
                         title = stringResource(Res.string.checkin_photos_label),
                         hint = "Добавьте до $MAX_REVIEW_PHOTOS фото вашего визита.",
                     )
+                    if (draft.photos.isNotEmpty()) DrinkPhotoPreview(drinkPhotoState,
+                        onSelectDrinkPhoto, onRetryDrinkPhoto, onSkipDrinkPhoto)
                 }
 
                 ReviewFormStep(optional = true) {
@@ -287,7 +299,7 @@ fun CheckInBottomSheet(
                     focusManager.clearFocus(force = true)
                     onSubmit(draft)
                 },
-                enabled = !isLoading && validateConsumedDrink(draft.drinkSlug, draft.customDrinkName) == null,
+                enabled = !isLoading && drinkPhotoState.canSubmit && validateConsumedDrink(draft.drinkSlug, draft.customDrinkName) == null,
             )
         }
     }

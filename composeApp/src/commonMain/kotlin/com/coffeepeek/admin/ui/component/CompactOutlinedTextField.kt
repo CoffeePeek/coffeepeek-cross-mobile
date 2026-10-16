@@ -49,6 +49,7 @@ fun CompactOutlinedTextField(
     visualTransformation: VisualTransformation = VisualTransformation.None,
     maxLength: Int = Int.MAX_VALUE,
     inputFilter: ((Char) -> Boolean)? = null,
+    inputValidator: ((String) -> Boolean)? = null,
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
     keyboardActions: KeyboardActions = KeyboardActions.Default,
     singleLine: Boolean = true,
@@ -98,8 +99,7 @@ fun CompactOutlinedTextField(
             onValueChange = { updated ->
                 val limited = (inputFilter?.let { updated.filterText(it) } ?: updated)
                     .limitTextLength(maxLength)
-                fieldValue.value = limited
-                onValueChange(limited.text)
+                fieldValue.updateFromInput(limited, onValueChange, inputValidator)
             },
             modifier = modifier,
             enabled = enabled,
@@ -115,7 +115,7 @@ fun CompactOutlinedTextField(
             minLines = minLines,
             decorationBox = { innerTextField ->
                 OutlinedTextFieldDefaults.DecorationBox(
-                    value = value,
+                    value = fieldValue.value.text,
                     visualTransformation = visualTransformation,
                     innerTextField = innerTextField,
                     placeholder = placeholder,

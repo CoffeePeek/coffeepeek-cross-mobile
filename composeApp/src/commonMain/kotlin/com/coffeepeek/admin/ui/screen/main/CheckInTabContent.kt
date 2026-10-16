@@ -1,5 +1,8 @@
 package com.coffeepeek.admin.ui.screen.main
 
+import com.coffeepeek.admin.analytics.*
+import com.coffeepeek.admin.feature.checkin.api.CheckInFlowHandoff
+
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.fillMaxSize
@@ -31,7 +34,7 @@ internal fun CheckInTabContent(
 ) {
     val sessions: SessionRepository = koinInject()
     val session by remember(sessions) { sessions.observeSession() }.collectAsState(sessions.peekSession())
-    var showCreate by remember(session?.userId ?: session?.accessToken) { mutableStateOf(false) }
+    var showCreate by androidx.compose.runtime.saveable.rememberSaveable(session?.userId ?: session?.accessToken) { mutableStateOf(false) }
     val clearance = LocalFloatingNavClearance.current
     val focusManager = LocalFocusManager.current
     val keyboard = LocalSoftwareKeyboardController.current
@@ -45,8 +48,9 @@ internal fun CheckInTabContent(
             ) {
                 focusManager.clearFocus(force = true)
                 keyboard?.hide()
+                Analytics.track(AnalyticsEvent.CHECK_IN_START_ATTEMPTED, "source" to "global_create")
                 if (sessions.isActiveSession(sessions.peekSession())) showCreate = true
-                else Navigator.navigate(Navigator.Screen.Auth)
+                else { Analytics.gate("check_in"); Navigator.navigate(Navigator.Screen.Auth) }
             }
         }
     }

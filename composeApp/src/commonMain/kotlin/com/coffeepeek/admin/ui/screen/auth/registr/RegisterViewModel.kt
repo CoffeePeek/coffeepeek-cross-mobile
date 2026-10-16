@@ -1,5 +1,7 @@
 package com.coffeepeek.admin.ui.screen.auth.registr
 
+import com.coffeepeek.admin.analytics.*
+
 import coffeepeek.composeapp.generated.resources.Res
 import coffeepeek.composeapp.generated.resources.email_no_exist
 import coffeepeek.composeapp.generated.resources.error_email_name
@@ -32,6 +34,9 @@ enum class RegisterStep {
 
 class RegisterViewModel(
     private val authRepository: AuthRepository,
+    private val saveAnalyticsConsent: suspend (Boolean) -> Unit = { accepted ->
+        Analytics.service?.setConsent(if (accepted) AnalyticsConsent.Accepted else AnalyticsConsent.Declined)
+    },
 ) : BaseViewModel() {
 
     private val _step = MutableStateFlow(RegisterStep.Email)
@@ -48,6 +53,9 @@ class RegisterViewModel(
 
     private val _isTermsAccepted = MutableStateFlow(false)
     val isTermsAccepted = _isTermsAccepted.asStateFlow()
+
+    private val _isAnalyticsAccepted = MutableStateFlow(false)
+    val isAnalyticsAccepted = _isAnalyticsAccepted.asStateFlow()
 
     private val _passwordError = MutableStateFlow<String?>(null)
     val passwordError = _passwordError.asStateFlow()
@@ -78,6 +86,10 @@ class RegisterViewModel(
 
     fun onTermsCheckedChange(checked: Boolean) {
         _isTermsAccepted.value = checked
+    }
+
+    fun onAnalyticsCheckedChange(checked: Boolean) {
+        _isAnalyticsAccepted.value = checked
     }
 
     fun onBack() {
@@ -112,6 +124,7 @@ class RegisterViewModel(
     }
 
     fun onRegisterClick() {
+        val analyticsAccepted = _isAnalyticsAccepted.value
         launchRequest(
             onSuccess = { _step.value = RegisterStep.Success },
             errorMessage = Res.string.error_registr,
@@ -159,7 +172,10 @@ class RegisterViewModel(
                 return@launchRequest
             }
 
+            // The optional choice is separate from terms. No SDK setup is allowed before login.
+            saveAnalyticsConsent(analyticsAccepted)
             authRepository.register(currentName, currentEmail, currentPassword).getOrThrow()
+            Analytics.service?.rememberPasswordSignUp(currentEmail)
         }
     }
 
@@ -172,7 +188,9 @@ class RegisterViewModel(
             onSuccess = { Navigator.navigate(Navigator.Screen.Main) },
             onError = { if (it !is CancellationException) ErrorHandler.showError(socialLoginError("Apple", it.message)) },
         ) {
-            try { authRepository.signInWithApple() }
+            try {
+                authRepository.signInWithApple().also { signInAnalytics(it.userId, "apple", "register") }
+            }
             finally { _appleSigningIn.value = false }
         }
     }
@@ -183,7 +201,7 @@ class RegisterViewModel(
             onError = { if (it !is CancellationException) ErrorHandler.showError(socialLoginError("Google", it.message)) },
             onSuccess = { Navigator.navigate(Navigator.Screen.Main) },
         ) {
-            authRepository.googleLogin(idToken).getOrThrow()
+            authRepository.googleLogin(idToken).getOrThrow().also { signInAnalytics(it.userId, "google", "register") }
         }
     }
 

@@ -11,7 +11,10 @@ internal fun interface HistoryHomeEditorFactory {
 }
 
 internal fun historyHomeEditorFactory(repository: HomeCheckInRepository, picker: CoffeePicker,
-    methods: BrewMethodCatalog) = HistoryHomeEditorFactory { lease, onMutation, onDeleted ->
+    methods: BrewMethodCatalog,
+    drinkPhotos: com.coffeepeek.admin.feature.checkin.api.DrinkPhotoPreparation.Factory =
+        com.coffeepeek.admin.feature.checkin.api.DrinkPhotoPreparation.Factory.Unavailable,
+) = HistoryHomeEditorFactory { lease, onMutation, onDeleted ->
     val editorRepository = object : HomeCheckInRepository {
         // This VM is used ONLY for its editor/detail. The new MVI owns the actual timeline.
         override suspend fun history(page: Int, pageSize: Int, from: String?, to: String?) =
@@ -34,5 +37,5 @@ internal fun historyHomeEditorFactory(repository: HomeCheckInRepository, picker:
     }
     HomeCheckInViewModel(editorRepository, object : CoffeePicker {
         override suspend fun search(query: String) = lease.withCurrentAccount { picker.search(query) }
-    }, BrewMethodCatalog { lease.withCurrentAccount { methods.load() } })
+    }, BrewMethodCatalog { lease.withCurrentAccount { methods.load() } }, drinkPhotos)
 }

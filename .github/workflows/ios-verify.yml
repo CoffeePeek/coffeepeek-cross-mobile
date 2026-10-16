@@ -21,7 +21,7 @@ jobs:
 
   compile_ios:
     needs: changes
-    if: needs.changes.outputs.ios == 'true'
+    if: github.ref == 'refs/heads/main' && needs.changes.outputs.ios == 'true'
     runs-on: xcode-27
     timeout-minutes: 60
     steps:
@@ -65,13 +65,17 @@ jobs:
       - name: Verify iOS check result
         shell: bash
         env:
+          BUILD_REF: ${{ github.ref }}
           CHANGES_RESULT: ${{ needs.changes.result }}
           IOS_CHANGED: ${{ needs.changes.outputs.ios }}
           BUILD_RESULT: ${{ needs.compile_ios.result }}
         run: |
           set -euo pipefail
           [[ "$CHANGES_RESULT" == 'success' ]]
-          if [[ "$IOS_CHANGED" == 'true' ]]; then
+          if [[ "$BUILD_REF" != 'refs/heads/main' ]]; then
+            [[ "$BUILD_RESULT" == 'skipped' ]]
+            echo 'iOS builds run only from main; simulator build was skipped.'
+          elif [[ "$IOS_CHANGED" == 'true' ]]; then
             [[ "$BUILD_RESULT" == 'success' ]]
           else
             [[ "$IOS_CHANGED" == 'false' && "$BUILD_RESULT" == 'skipped' ]]

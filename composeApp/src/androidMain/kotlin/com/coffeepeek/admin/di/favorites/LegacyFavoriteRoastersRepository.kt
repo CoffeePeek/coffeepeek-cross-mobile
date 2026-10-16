@@ -15,6 +15,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.buffer
 import kotlinx.coroutines.flow.channelFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
@@ -55,9 +56,14 @@ internal class LegacyFavoriteRoastersRepository(
                         val photoCache = MutableStateFlow<Map<String, String?>>(emptyMap())
                         val rowsLock = Mutex()
                         try {
-                            favorites.observeFavorites().distinctUntilChanged().collect roasters@{ items ->
+                            favorites.observeFavorites().combine(favorites.observeErrors()) { items, error -> items to error }
+                                .distinctUntilChanged().collect roasters@{ (items, error) ->
                                 if (activeOwner.value !== lease) return@roasters
                                 ensureOwner(owner)
+                                if (error != null) {
+                                    send(Result.failure(IllegalStateException(error)))
+                                    return@roasters
+                                }
                                 photos?.cancel()
                                 val visibleSlugs = items.mapNotNull { it.address?.slug }.toSet()
                                 photoCache.value = photoCache.value.filterKeys { it in visibleSlugs }

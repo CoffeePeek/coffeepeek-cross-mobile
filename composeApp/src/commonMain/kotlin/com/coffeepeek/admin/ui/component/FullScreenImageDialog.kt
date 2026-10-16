@@ -64,6 +64,7 @@ fun FullScreenImageDialog(
     onDismiss: () -> Unit,
 ) {
     if (imageUrls.isEmpty()) return
+    com.coffeepeek.admin.analytics.AnalyticsOcclusion()
     val pagerState = rememberPagerState(
         initialPage = initialIndex.coerceIn(0, imageUrls.lastIndex),
         pageCount = { imageUrls.size },

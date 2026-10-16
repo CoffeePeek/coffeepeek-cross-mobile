@@ -89,7 +89,7 @@ internal class AndroidShopCheckInDraftStore(
             input = initial.copy(
                 text = draft.note,
                 rating = ShopRating(coffee = draft.coffeeRating, service = draft.serviceRating, place = draft.placeRating),
-                visitedAtIso = dates.visitInstant(draft.visitMillis),
+                visitedAtIso = java.time.Instant.ofEpochMilli(draft.visitMillis).toString(),
                 visibility = if (draft.isPublic) ShopCheckInVisibility.Public else ShopCheckInVisibility.Private,
                 drinkSlug = draft.drinkSlug,
                 customDrinkName = draft.customDrinkName,
@@ -107,8 +107,7 @@ internal class AndroidShopCheckInDraftStore(
         check(current != null && current.shopId == input.shopSlug && guardedDraft === current) {
             "Draft was cleared or replaced; do not save stale screen state"
         }
-        val millis = if (dates.visitInstant(current.visitMillis) == input.visitedAtIso) current.visitMillis
-            else requireNotNull(dates.pickerMillis(input.visitedAtIso)) { "Invalid visit date" }
+        val millis = java.time.Instant.parse(input.visitedAtIso).toEpochMilli()
         val updated = current.copy(
             note = input.text, coffeeRating = input.rating.coffee,
             serviceRating = input.rating.service, placeRating = input.rating.place,

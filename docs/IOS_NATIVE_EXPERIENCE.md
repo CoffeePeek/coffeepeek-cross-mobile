@@ -20,13 +20,23 @@ No platform objects enter feature state, data, or domain contracts.
 
 ## Components
 
-- `NativeModalSheet`: UIKit page sheet with medium/large detents and a system
-  grabber. Busy forms disable interactive dismissal. Presentation waits until
-  the presenting screen is attached and its navigation transition is finished.
+- `NativeModalSheet`: UIKit page sheet with one content-sized custom detent and
+  a system grabber on iOS 16+. Short bodies wrap; long forms stay bounded by the
+  available height and the caller's height cap. Measurement is independent of
+  the current detent, so replacing a short picker with a form (and back) updates
+  the same controller without a resize loop. The host reserves the bottom safe
+  area once and consumes that inset for descendants. Busy forms disable
+  interactive dismissal. Presentation waits until the presenting screen is
+  attached and its navigation transition is finished. iOS 15 uses the existing
+  content-sized Compose sheet; date/time wheels use the same entry point.
 - `PlatformAlert` / `NativeActionSheet`: system confirmation dialogs and action
-  menus; destructive actions use the system destructive style. Photo menus
+  sheets for photo sources and external map applications; destructive actions
+  use the system destructive style. Photo menus
   finish dismissing before invoking the next picker. iPad menus have a popover
   anchor. Rich report forms use sheets instead of a text-only alert.
+- `PlatformMenuButton`: check-in commands and drink selection use a native
+  `UIButton` / `UIMenu` anchored to the visible trigger. Android uses a bounded,
+  scrollable Compose dropdown. Single-choice lists retain a selection checkmark.
 - Authentication fields use the shared `AuthTextField`/`CompactOutlinedTextField`
   styling, including rounded borders and the password visibility button.
   `NativeAuthInput` returns false. iOS keyboard options preserve

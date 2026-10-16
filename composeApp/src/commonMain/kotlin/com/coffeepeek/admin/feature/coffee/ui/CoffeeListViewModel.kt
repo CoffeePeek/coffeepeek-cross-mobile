@@ -1,5 +1,7 @@
 package com.coffeepeek.admin.feature.coffee.ui
 
+import com.coffeepeek.admin.analytics.*
+
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.coffeepeek.admin.feature.coffee.domain.Coffee
@@ -33,7 +35,11 @@ internal data class CoffeeListUiState(
 internal class CoffeeListViewModel(private val repository: CoffeeRepository) : ViewModel() {
     private val _state = MutableStateFlow(CoffeeListUiState())
     val state = _state.asStateFlow()
+    private val searchAnalytics = SearchTracker(Catalog.Coffees)
+    private var activeSearch: SearchAttempt? = null
     private var searchJob: Job? = null
+
+    fun openedCoffee(index: Int) = searchAnalytics.open(Entity.Coffee, index + 1)
     private var filterJob: Job? = null
 
     init {
@@ -59,6 +65,11 @@ internal class CoffeeListViewModel(private val repository: CoffeeRepository) : V
     }
 
     fun applyFilters(filters: CoffeeFilters) {
+        val old = state.value.filters
+        val keys = filters.analyticsKeys()
+        Analytics.track(AnalyticsEvent.FILTERS_APPLIED, "catalog" to "coffees", "filter_keys" to keys.sorted(),
+            "changed_filter_keys" to ((old.values.keys + filters.values.keys).filter { old.values[it] != filters.values[it] } + if (old.availableOnly != filters.availableOnly) listOf("availableOnly") else emptyList()).sorted(),
+            "action" to if (filters.activeCount == 0) "reset" else "apply")
         _state.update { it.copy(filters = filters) }
         search(reset = true)
     }
@@ -88,6 +99,9 @@ internal class CoffeeListViewModel(private val repository: CoffeeRepository) : V
             if (debounce) delay(300)
             val snapshot = state.value
             val page = if (reset) 1 else snapshot.page + 1
+            if (reset) activeSearch = searchAnalytics.begin(snapshot.query.trim().replace(Regex("\\s+"), " ") to snapshot.filters, snapshot.query,
+                snapshot.filters.analyticsKeys())
+            val search = activeSearch
             val result = repository.search(snapshot.query, snapshot.filters, page)
             coroutineContext.ensureActive()
             result.onSuccess { resultPage ->
@@ -102,7 +116,10 @@ internal class CoffeeListViewModel(private val repository: CoffeeRepository) : V
                         error = null,
                     )
                 }
+                val count = resultPage.totalCount ?: if (resultPage.totalPages <= 1) resultPage.items.size else null
+                count?.let { search?.results(it) }
             }.onFailure {
+                if (reset) search?.failed(safeAnalyticsError(it))
                 _state.update {
                     it.copy(
                         isLoading = false,
@@ -116,3 +133,7 @@ internal class CoffeeListViewModel(private val repository: CoffeeRepository) : V
         }
     }
 }
+
+private fun CoffeeFilters.analyticsKeys(): List<String> =
+    values.filterValues { it.isNotEmpty() }.keys.toList() +
+        if (availableOnly) listOf("availableOnly") else emptyList()

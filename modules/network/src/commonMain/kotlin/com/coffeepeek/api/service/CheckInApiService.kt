@@ -47,7 +47,7 @@ class CheckInApiService(private val client: HttpClient) {
                 HttpStatusCode.PayloadTooLarge -> "Фотографии слишком большие. Уменьшите их размер"
                 HttpStatusCode.TooManyRequests -> "Слишком много запросов. Попробуйте позже"
                 else -> "Не удалось создать чекин. Попробуйте позже"
-            })
+            }, response.status.value)
         }
         Result.success(response.checkIn())
     } catch (cancelled: CancellationException) {

@@ -24,6 +24,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -38,6 +39,8 @@ import coffeepeek.composeapp.generated.resources.maskot_happy
 import com.coffeepeek.admin.theme.CpDimens
 import com.coffeepeek.admin.ui.component.AppButton
 import com.coffeepeek.admin.ui.component.CoffeeShopPlaceholderImage
+import com.coffeepeek.admin.ui.component.HapticEvent
+import com.coffeepeek.admin.ui.component.platformHaptic
 import com.coffeepeek.admin.ui.icons.CpIcons
 import com.coffeepeek.admin.utils.CpImage
 import org.jetbrains.compose.resources.painterResource
@@ -50,6 +53,7 @@ internal fun AddShopSuccessScreen(
     coverPhoto: ByteArray?,
     onGoHome: () -> Unit,
 ) {
+    LaunchedEffect(Unit) { platformHaptic(HapticEvent.Success) }
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
         bottomBar = {
@@ -97,7 +101,7 @@ internal fun AddShopSuccessScreen(
             }
             Spacer(Modifier.height(CpDimens.spacing4))
             Text(
-                text = "Кофейня добавлена!",
+                text = "Кофейня отправлена!",
                 style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold),
                 color = MaterialTheme.colorScheme.onSurface,
                 textAlign = TextAlign.Center,

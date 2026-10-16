@@ -10,6 +10,7 @@ import com.coffeepeek.feature.homecheckin.domain.model.HomePreparationDay
 import com.coffeepeek.feature.homecheckin.domain.model.HomePreparationModeration
 import com.coffeepeek.feature.homecheckin.domain.model.HomePreparationPage
 import com.coffeepeek.feature.homecheckin.domain.model.HomePreparationPhoto
+import com.coffeepeek.feature.homecheckin.domain.model.HomePreparationCalendarPhoto
 import com.coffeepeek.feature.homecheckin.domain.model.HomePreparationVisibility
 import com.coffeepeek.feature.homecheckin.domain.repository.HomePreparationReader
 import kotlinx.coroutines.CancellationException
@@ -26,7 +27,29 @@ internal class LegacyHomePreparationReader(private val repository: HomeCheckInRe
     }
 
     override suspend fun calendar(range: HomePreparationDateRange): Result<List<HomePreparationDay>> = read {
-        repository.calendar(range.from, range.to).getOrThrow().map { HomePreparationDay(it.preparedOn, it.brewCount) }
+        val days = repository.calendar(range.from, range.to).getOrThrow()
+            .map { HomePreparationDay(it.preparedOn, it.brewCount) }
+        currentCoroutineContext().ensureActive()
+        val entries = mutableListOf<HomeCheckIn>()
+        if (days.any { it.brewCount > 0 }) {
+            var page = 1
+            do {
+                currentCoroutineContext().ensureActive()
+                check(page <= 10000) { "Home month exceeds page limit" }
+                val result = repository.history(page, 100, range.from, range.to).getOrThrow()
+                currentCoroutineContext().ensureActive()
+                check(result.page == page && result.pageSize == 100) { "Unexpected Home month page metadata" }
+                check(result.items.isNotEmpty() || result.totalCount <= (page - 1).toLong() * 100) { "Missing Home month page" }
+                entries += result.items
+                page++
+            } while (result.hasMore)
+        }
+        val photos = entries.distinctBy(HomeCheckIn::id).filter { it.preparedOn in range.from..range.to }
+            .groupBy(HomeCheckIn::preparedOn).mapValues { (_, rows) -> rows.mapNotNull { row ->
+                row.drinkPhotoUrl?.takeIf(String::isNotBlank)?.let { HomePreparationCalendarPhoto(it, true) }
+                    ?: row.photos.firstOrNull { it.url.isNotBlank() }?.let { HomePreparationCalendarPhoto(it.url, false) }
+            } }
+        days.map { it.copy(photos = photos[it.preparedOn].orEmpty()) }
     }
 
     private suspend fun <T> read(block: suspend () -> T): Result<T> = try {

@@ -18,6 +18,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
+import com.coffeepeek.feature.checkinhistory.domain.model.HistoryCalendarPhoto
 import com.coffeepeek.feature.checkinhistory.impl.resources.*
 import com.coffeepeek.feature.checkinhistory.impl.ui.data.historyDateTitle
 import com.coffeepeek.feature.checkinhistory.impl.ui.data.historyVisitCountLabel
@@ -26,7 +27,7 @@ import org.jetbrains.compose.resources.stringResource
 @Composable
 internal fun HistoryCalendarDay(day: Int, date: String, total: Long, homeCount: Int,
     isSelected: Boolean, isToday: Boolean, isFuture: Boolean, onSelect: () -> Unit,
-    modifier: Modifier = Modifier) {
+    modifier: Modifier = Modifier, photos: List<HistoryCalendarPhoto> = emptyList(), imageContent: HistoryImageContent? = null) {
     val dateLabel = if (isToday) stringResource(Res.string.history_day_today, historyDateTitle(date)) else historyDateTitle(date)
     val description = stringResource(Res.string.history_day_description, dateLabel, historyVisitCountLabel(total)) +
         if (homeCount > 0) ", " + stringResource(Res.string.history_home_count, homeCount) else ""
@@ -35,7 +36,7 @@ internal fun HistoryCalendarDay(day: Int, date: String, total: Long, homeCount: 
         .clickable(enabled = !isFuture, role = Role.Button,
             onClickLabel = stringResource(Res.string.history_select_day), onClick = onSelect)
         .semantics(mergeDescendants = true) { contentDescription = description; selected = isSelected }
-        .heightIn(min = 50.dp).padding(vertical = 4.dp),
+        .heightIn(min = 76.dp).padding(vertical = 4.dp),
         horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(4.dp)) {
         Box(Modifier.defaultMinSize(minWidth = 32.dp, minHeight = 32.dp)
             .background(if (isSelected) MaterialTheme.colorScheme.primary else Color.Transparent, CircleShape)
@@ -49,12 +50,7 @@ internal fun HistoryCalendarDay(day: Int, date: String, total: Long, homeCount: 
                     else -> MaterialTheme.colorScheme.onSurface
                 }, modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp))
         }
-        Row(Modifier.height(6.dp).clearAndSetSemantics {},
-            horizontalArrangement = Arrangement.spacedBy(3.dp), verticalAlignment = Alignment.CenterVertically) {
-            repeat(total.coerceIn(0, 3).toInt()) {
-                Box(Modifier.size(4.dp).background(MaterialTheme.colorScheme.primary, CircleShape))
-            }
-        }
+        HistoryCalendarPhotoStack(photos.take(total.coerceAtMost(3).toInt()), total, imageContent)
     }
 }
 

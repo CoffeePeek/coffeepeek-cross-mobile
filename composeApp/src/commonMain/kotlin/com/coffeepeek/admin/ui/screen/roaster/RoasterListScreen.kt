@@ -10,6 +10,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import com.coffeepeek.admin.analytics.analyticsExposure
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.unit.dp
@@ -37,6 +38,10 @@ internal fun RoasterListScreen(
     val state by vm.state.collectAsState()
     val listState = rememberLazyListState()
     val visible = state.visibleItems(query, selectedRoasterIds, favoritesOnly)
+    LaunchedEffect(query, selectedRoasterIds, favoritesOnly, state.selectedTagIds, state.isLoading, state.error) {
+        kotlinx.coroutines.delay(350)
+        vm.resultsShown(query, selectedRoasterIds, favoritesOnly)
+    }
     val clearance = LocalFloatingNavClearance.current
     val snackbarHostState = remember { SnackbarHostState() }
     val focusManager = LocalFocusManager.current
@@ -54,6 +59,7 @@ internal fun RoasterListScreen(
             Column(Modifier.fillMaxWidth().statusBarsPadding().padding(horizontal = CpDimens.spacing4, vertical = CpDimens.spacing3)) {
                 SearchHeader(
                     query = query, onQueryChange = onQueryChange,
+                    analyticsCatalog = "roasters", analyticsScreen = "roasters",
                     roastersSelected = true, onSelectRoasters = {}, showCategories = false,
                     onCancelSearch = {
                         focusManager.clearFocus(force = true)
@@ -70,15 +76,15 @@ internal fun RoasterListScreen(
             onRefresh = vm::refresh, modifier = Modifier.fillMaxSize().padding(padding).imePadding(),
         ) { scrollModifier ->
             LazyColumn(
-                state = listState, modifier = scrollModifier.fillMaxSize(),
+                state = listState, modifier = scrollModifier.fillMaxSize().analyticsExposure("roaster_catalog", "catalog", "roasters"),
                 contentPadding = PaddingValues(start = CpDimens.spacing4, top = CpDimens.spacing2, end = CpDimens.spacing4, bottom = clearance + 88.dp),
                 verticalArrangement = Arrangement.spacedBy(CpDimens.spacing3),
             ) {
-                itemsIndexed(visible, key = { index, item -> item.catalog.id.ifBlank { "unaddressed-roaster:$index" } }) { _, item ->
+                itemsIndexed(visible, key = { index, item -> item.catalog.id.ifBlank { "unaddressed-roaster:$index" } }) { index, item ->
                     RoasterCard(
                         roaster = item.catalog,
                         details = item.details,
-                        onClick = { item.routeId?.let { Navigator.navigate(Navigator.Screen.RoasterDetail(it)) } },
+                        onClick = { item.routeId?.let { vm.openedRoaster(index); Navigator.navigate(Navigator.Screen.RoasterDetail(it)) } },
                         isFavorite = item.catalog.roasterFavoriteId in state.favoriteIds,
                         isFavoriteLoading = item.catalog.roasterFavoriteId in state.savingFavoriteIds,
                         onToggleFavorite = { vm.toggleFavorite(item) },
@@ -106,6 +112,10 @@ internal fun RoasterPreview(
 ) {
     val state by vm.state.collectAsState()
     val visible = state.visibleItems(query, selectedRoasterIds, favoritesOnly)
+    LaunchedEffect(query, selectedRoasterIds, favoritesOnly, state.selectedTagIds, state.isLoading, state.error) {
+        kotlinx.coroutines.delay(350)
+        vm.resultsShown(query, selectedRoasterIds, favoritesOnly)
+    }
     val snackbar = remember { SnackbarHostState() }
     LaunchedEffect(state.actionMessage) {
         state.actionMessage?.let {
@@ -115,14 +125,14 @@ internal fun RoasterPreview(
     }
     Column(verticalArrangement = Arrangement.spacedBy(CpDimens.spacing2)) {
         RoasterTagFilters(state, vm::toggleTag, vm::clearTags)
-        BoxWithConstraints(Modifier.fillMaxWidth()) {
+        BoxWithConstraints(Modifier.fillMaxWidth().analyticsExposure("roaster_catalog", "discovery", "discovery")) {
             val cardWidth = (maxWidth * 0.88f).coerceIn(280.dp, 360.dp)
             LazyRow(horizontalArrangement = Arrangement.spacedBy(CpDimens.spacing3)) {
-                itemsIndexed(visible.take(8), key = { index, item -> item.catalog.id.ifBlank { "unaddressed-roaster:$index" } }) { _, item ->
+                itemsIndexed(visible.take(8), key = { index, item -> item.catalog.id.ifBlank { "unaddressed-roaster:$index" } }) { index, item ->
                     RoasterCard(
                         roaster = item.catalog,
                         details = item.details,
-                        onClick = { item.routeId?.let { Navigator.navigate(Navigator.Screen.RoasterDetail(it)) } },
+                        onClick = { item.routeId?.let { vm.openedRoaster(index); Navigator.navigate(Navigator.Screen.RoasterDetail(it)) } },
                         isFavorite = item.catalog.roasterFavoriteId in state.favoriteIds,
                         isFavoriteLoading = item.catalog.roasterFavoriteId in state.savingFavoriteIds,
                         onToggleFavorite = { vm.toggleFavorite(item) },

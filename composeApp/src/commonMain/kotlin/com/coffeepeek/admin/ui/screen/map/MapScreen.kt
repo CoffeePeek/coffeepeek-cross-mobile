@@ -1,5 +1,7 @@
 package com.coffeepeek.admin.ui.screen.map
 
+import com.coffeepeek.admin.analytics.*
+
 import com.coffeepeek.admin.ui.icons.CpIcons
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -138,7 +140,7 @@ fun MapScreen(
         }
     }
 
-    Box(modifier.fillMaxSize()) {
+    Box(modifier.fillMaxSize().analyticsExposure("map", if (isPreview) "home" else "discovery", if (isPreview) "discovery" else "map")) {
         CoffeeMap(
             shops = mapShops,
             clusters = state.clusters,
@@ -147,7 +149,7 @@ fun MapScreen(
             onBoundsChanged = vm::onBoundsChanged,
             onShopClick = { shop ->
                 dismissSearchInput()
-                if (isPreview) onOpenShop(shop.id)
+                if (isPreview) { vm.openedShop(); onOpenShop(shop.id) }
                 else vm.onShopSelected(shop)
             },
             onZoneClick = vm::onZoneSelected,
@@ -160,15 +162,15 @@ fun MapScreen(
             onCameraTargetApplied = vm::onCameraTargetApplied,
             isDarkTheme = isDarkTheme,
             myLocationRequestKey = state.myLocationRequest,
-            onMyLocationFound = vm::onMyLocationApplied,
-            onLocationPermissionDenied = {},
+            onMyLocationFound = { lat, lon -> Analytics.track(AnalyticsEvent.GEOLOCATION_RESULT, "placement" to "map", "trigger" to if (state.myLocationRequest > 0) "user" else "automatic", "outcome" to "available"); vm.onMyLocationApplied(lat, lon) },
+            onLocationPermissionDenied = { Analytics.track(AnalyticsEvent.GEOLOCATION_RESULT, "placement" to "map", "trigger" to if (state.myLocationRequest > 0) "user" else "automatic", "outcome" to "unavailable") },
             requestLocationPermissionOnLoad = !isPreview,
             showAttribution = !isPreview,
         )
 
         if (isPreview) {
             GlassIconButton(
-                onClick = { onToggleExpand?.invoke() },
+                onClick = { Analytics.track(AnalyticsEvent.MAP_INTERACTION, "action" to "expanded"); onToggleExpand?.invoke() },
                 contentDescription = "Развернуть карту на весь экран",
                 modifier = Modifier.align(Alignment.TopEnd).padding(CpDimens.spacing2),
                 hazeState = null,
@@ -188,7 +190,7 @@ fun MapScreen(
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(CpDimens.spacing2)) {
                     if (onToggleExpand != null) {
                         GlassIconButton(
-                            onClick = { dismissSearchInput(); onToggleExpand() },
+                            onClick = { Analytics.track(AnalyticsEvent.MAP_INTERACTION, "action" to "collapsed"); dismissSearchInput(); onToggleExpand() },
                             contentDescription = "Свернуть карту",
                             hazeState = null,
                         ) { Icon(CpIcons.Close, contentDescription = null, modifier = Modifier.size(22.dp)) }
@@ -309,7 +311,7 @@ fun MapScreen(
 
         if (!isPreview && state.selectedZone == null && hasShopCarousel) {
             MapShopCarousel(
-                onOpenShop = onOpenShop,
+                onOpenShop = { vm.openedShop(); onOpenShop(it) },
                 state = state,
                 onSelect = { shop ->
                     dismissSearchInput()

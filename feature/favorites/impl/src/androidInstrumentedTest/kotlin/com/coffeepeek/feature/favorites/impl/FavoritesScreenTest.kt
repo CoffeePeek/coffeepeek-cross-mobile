@@ -11,6 +11,7 @@ import androidx.test.core.app.ActivityScenario
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.feature.favorites.domain.model.FavoriteShop
 import com.coffeepeek.feature.favorites.domain.model.FavoriteRoaster
+import com.coffeepeek.feature.favorites.domain.model.FavoriteDrink
 import com.coffeepeek.feature.favorites.domain.repository.FavoritesRepository
 import com.coffeepeek.feature.favorites.domain.repository.FavoriteRoastersRepository
 import com.coffeepeek.feature.favorites.impl.ui.compose.FavoritesScreenContent
@@ -48,12 +49,38 @@ class FavoritesScreenTest {
             scenario.onActivity { activity -> activity.setContent { CoffeePeekTheme { content() } } }
         }
 
+    @Test fun drinkOnlyFavoritesShowTheirOwnCardAndRemovalActionWithoutNavigation() {
+        val actions = mutableListOf<FavoritesAction>()
+        val state = mutableStateOf(FavoritesUiState(isLoading = false,
+            drinks = listOf(FavoriteDrink("drink", "Латте", null, true))))
+        render { FavoritesScreenContent(state.value, actions::add) }.use {
+            compose.onNodeWithText("Напитки").assertIsDisplayed()
+            compose.onNodeWithText("Латте").assertIsDisplayed()
+            compose.onNodeWithText("Пока нет избранного").assertDoesNotExist()
+            compose.onNodeWithContentDescription("Удалить из избранного: Латте").performClick()
+            compose.runOnIdle {
+                assertEquals(listOf(FavoritesAction.RemoveDrink("drink")), actions)
+                state.value = state.value.copy(removingDrinks = setOf("drink"))
+            }
+            compose.onNodeWithContentDescription("Удалить из избранного: Латте").assertIsNotEnabled()
+        }
+    }
+
+    @Test fun addresslessServerShopIsVisibleButCannotInventNavigation() {
+        val actions = mutableListOf<FavoritesAction>()
+        render { FavoritesScreenContent(FavoritesUiState(isLoading = false,
+            shops = listOf(FavoriteShop("display-only", "Без публичного адреса", publicSlug = null))), actions::add) }.use {
+            compose.onNodeWithText("Без публичного адреса").assertIsNotEnabled()
+            compose.runOnIdle { assertEquals(emptyList<FavoritesAction>(), actions) }
+        }
+    }
+
     @Test fun loadingAndEmptyAreDistinctAndHaveNoNetworkDependencies() {
         val state = mutableStateOf(FavoritesUiState())
         render { FavoritesScreenContent(state.value, {}) }.use {
             compose.onNodeWithContentDescription("Загрузка избранного").assertIsDisplayed()
             compose.runOnIdle { state.value = FavoritesUiState(isLoading = false) }
-            compose.onNodeWithText("Пока нет избранных кофеен и обжарщиков").assertIsDisplayed()
+            compose.onNodeWithText("Пока нет избранного").assertIsDisplayed()
             compose.onNodeWithContentDescription("Загрузка избранного").assertDoesNotExist()
         }
     }
@@ -183,7 +210,7 @@ class FavoritesScreenTest {
             compose.onNodeWithText("Любимый обжарщик").assertIsDisplayed()
             compose.onNodeWithText("7", substring = true).assertIsDisplayed()
             compose.onNodeWithText("12", substring = true).assertIsDisplayed()
-            compose.onNodeWithText("Пока нет избранных кофеен и обжарщиков").assertDoesNotExist()
+            compose.onNodeWithText("Пока нет избранного").assertDoesNotExist()
         }
     }
 

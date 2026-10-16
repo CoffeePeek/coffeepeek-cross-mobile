@@ -123,7 +123,7 @@ class PublicAddressContractTest {
     fun publicProfileAndUsernameResponseKeepServerAddress() = runBlocking {
         val client = HttpClient(MockEngine { request ->
             when (request.url.encodedPath) {
-                "/api/Users/by-slug/petr" -> respond("""{"data":{"userName":"Petr"},"address":$address}""", headers = headers)
+                "/api/Users/petr" -> respond("""{"data":{"userName":"Petr","addedRoastersCount":6,"followersCount":18,"isFollowing":true},"address":$address}""", headers = headers)
                 "/api/Users/me/username" -> respond("""{"isSuccess":true,"message":null,"data":{"username":"Petr","address":null}}""", HttpStatusCode.Accepted, headers)
                 else -> error("Unexpected path: ${request.url.encodedPath}")
             }
@@ -131,6 +131,9 @@ class PublicAddressContractTest {
         try {
             val api = UserApiService(client)
             assertEquals("Petr", api.getUser("petr").getOrThrow().userName)
+            assertEquals(6, api.getUser("petr").getOrThrow().addedRoastersCount)
+            assertEquals(18, api.getUser("petr").getOrThrow().followersCount)
+            assertEquals(true, api.getUser("petr").getOrThrow().isFollowing)
             assertNull(api.updateUsername("Petr").getOrThrow().address)
         } finally { client.close() }
     }

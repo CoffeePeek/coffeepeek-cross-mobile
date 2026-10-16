@@ -29,6 +29,7 @@ import platform.UIKit.*
 import platform.darwin.NSObject
 
 private class NavigationDelegate : NSObject(), UINavigationControllerDelegateProtocol, UIGestureRecognizerDelegateProtocol {
+    private var previousTop: UIViewController? = null
     var navigation: UINavigationController? = null
     var onStackChanged: (() -> Unit)? = null
     @ObjCSignatureOverride
@@ -45,6 +46,11 @@ private class NavigationDelegate : NSObject(), UINavigationControllerDelegatePro
 
     @ObjCSignatureOverride
     override fun navigationController(navigationController: UINavigationController, didShowViewController: UIViewController, animated: Boolean) {
+        val previous = previousTop as? NativeScreenController
+        if (previous?.route == Navigator.Screen.CreateCheckIn && navigationController.viewControllers.none { it == previous }) {
+            com.coffeepeek.admin.feature.checkin.api.CheckInFlowHandoff.cancelFromBack()
+        }
+        previousTop = didShowViewController
         onStackChanged?.invoke()
     }
 }
@@ -141,7 +147,7 @@ internal actual fun PlatformRootNavigation(
         val labels = listOf("Поиск", "Кофе", "Лента", "Профиль", "Настройки")
         val symbols = listOf("magnifyingglass", "cup.and.saucer", "person.2", "person.crop.circle", "gearshape")
         navigations.forEachIndexed { index, navigation ->
-            val root = NativeScreenController(labels[index]) {
+            val root = NativeScreenController(labels[index], analyticsPage = listOf("discovery", "coffees", "feed", "profile", "settings")[index]) {
                 when (index) {
                     0 -> DiscoveryTabContent(onMapExpandedChange = {})
                     1 -> CheckInTabContent { CoffeeListScreen() }

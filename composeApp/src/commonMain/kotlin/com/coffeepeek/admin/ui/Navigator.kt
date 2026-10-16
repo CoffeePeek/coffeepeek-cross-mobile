@@ -18,6 +18,7 @@ import com.coffeepeek.admin.ui.screen.roaster.AddRoasterScreen
 import com.coffeepeek.admin.ui.screen.roaster.RoasterDetailScreen
 import com.coffeepeek.admin.ui.screen.profile.CityScreen
 import com.coffeepeek.admin.ui.screen.profile.ThemeScreen
+import com.coffeepeek.admin.ui.screen.profile.UsagePolicyScreen
 import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
@@ -59,6 +60,7 @@ import com.coffeepeek.admin.ui.screen.shop.ShopCheckInListScreenRenderer
 import com.coffeepeek.admin.feature.coffee.ui.CoffeeDetailScreen
 import com.coffeepeek.admin.ui.screen.shop.ShopMenuGalleryScreenRenderer
 import com.coffeepeek.admin.ui.screen.shop.ShopReportScreenRenderer
+import com.coffeepeek.admin.feature.profile.ui.OtherUserProfileScreen
 import com.coffeepeek.admin.feature.passwordrecovery.ui.PasswordRecoveryScreen
 import com.coffeepeek.admin.ui.screen.shopchange.ShopChangeEditorScreen
 import com.coffeepeek.admin.ui.screen.shopchange.ShopChangeRequestDetailScreen
@@ -141,6 +143,11 @@ object Navigator {
         @Serializable data object AddShop : Screen
         @Serializable data object AddRoaster : Screen
         @Serializable data class RoasterDetail(val roasterId: String) : Screen
+        @Serializable data class UserProfile(
+            val slug: String,
+            val nickname: String? = null,
+            val avatarUrl: String? = null,
+        ) : Screen
         @Serializable data object EditProfile : Screen
         @Serializable data object DeleteAccountPending : Screen
         @Serializable data object Favorites : Screen
@@ -149,6 +156,7 @@ object Navigator {
         @Serializable data class EditHomeCheckIn(val id: String) : Screen
         @Serializable data object CitySettings : Screen
         @Serializable data object ThemeSettings : Screen
+        @Serializable data object UsagePolicy : Screen
         @Serializable data class ShopReviews(val shopId: String) : Screen
         @Serializable data class ReportReview(val reviewId: String, val isPreview: Boolean = false) : Screen
         @Serializable data class ReportCheckIn(val checkInId: String) : Screen
@@ -213,6 +221,7 @@ object Navigator {
         is Screen.AddShop,
         is Screen.AddRoaster,
         is Screen.RoasterDetail,
+        is Screen.UserProfile,
         is Screen.EditProfile,
         is Screen.DeleteAccountPending,
         is Screen.ShopReviews,
@@ -223,7 +232,8 @@ object Navigator {
         is Screen.HomeCheckIns,
         is Screen.EditHomeCheckIn,
         is Screen.CitySettings,
-        is Screen.ThemeSettings -> true
+        is Screen.ThemeSettings,
+        is Screen.UsagePolicy -> true
         else -> false
     }
 
@@ -323,6 +333,7 @@ object Navigator {
         val mainStateHolder = rememberSaveableStateHolder()
         val visibleEntries by nav.visibleEntries.collectAsState()
         val currentEntry by nav.currentBackStackEntryAsState()
+        com.coffeepeek.admin.analytics.TrackNavigationScreen(currentEntry)
         LaunchedEffect(currentEntry) {
             focusManager.clearFocus(force = true)
             keyboard?.hide()
@@ -491,6 +502,9 @@ object Navigator {
                         val route = backStack.toRoute<Screen.RoasterDetail>()
                         RoasterDetailScreen(roasterId = route.roasterId)
                     }
+                    composable<Screen.UserProfile> { backStack ->
+                        PublicProfileRoute(backStack.toRoute<Screen.UserProfile>())
+                    }
                     composable<Screen.EditProfile> { EditProfileScreen() }
                     composable<Screen.DeleteAccountPending> { DeleteAccountPendingScreen() }
                     composable<Screen.Favorites> { FavoritesDestination() }
@@ -501,6 +515,7 @@ object Navigator {
                     }
                     composable<Screen.CitySettings> { CityScreen() }
                     composable<Screen.ThemeSettings> { ThemeScreen() }
+                    composable<Screen.UsagePolicy> { UsagePolicyScreen() }
             }
         }
     }
@@ -528,6 +543,7 @@ object Navigator {
             Screen.AddShop -> AddShopScreen()
             Screen.AddRoaster -> AddRoasterScreen()
             is Screen.RoasterDetail -> RoasterDetailScreen(screen.roasterId)
+            is Screen.UserProfile -> PublicProfileRoute(screen)
             Screen.EditProfile -> EditProfileScreen()
             Screen.DeleteAccountPending -> DeleteAccountPendingScreen()
             Screen.Favorites -> FavoritesDestination()
@@ -536,7 +552,22 @@ object Navigator {
             is Screen.EditHomeCheckIn -> CheckInHistoryDestination(initialHomeId = screen.id)
             Screen.CitySettings -> CityScreen()
             Screen.ThemeSettings -> ThemeScreen()
+            Screen.UsagePolicy -> UsagePolicyScreen()
             else -> error("Tab route must be handled by MainScreen: $screen")
         }
+    }
+
+    @Composable
+    private fun PublicProfileRoute(screen: Screen.UserProfile) {
+        OtherUserProfileScreen(
+            slug = screen.slug,
+            nickname = screen.nickname,
+            avatarUrl = screen.avatarUrl,
+            onBack = ::popBack,
+            onCoffeeShopClick = { navigate(Screen.ShopDetail(it)) },
+            onRoasterClick = { navigate(Screen.RoasterDetail(it)) },
+            onLogin = { navigate(Screen.Auth) },
+            onUserClick = { slug, nickname, avatar -> navigate(Screen.UserProfile(slug, nickname, avatar)) },
+        )
     }
 }

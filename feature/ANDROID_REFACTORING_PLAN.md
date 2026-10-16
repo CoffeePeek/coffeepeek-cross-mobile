@@ -1,17 +1,8 @@
 # Android refactoring — current roadmap
 
-Audit date: 2026-10-16. Product baseline: `origin/main` **4976e53**.
+Audit date: 2026-10-15. Product baseline: `origin/main` **4976e53**.
 This is the current checklist. Older feature READMEs contain historical checkpoint
 notes; they do not override this source audit or certify later changes.
-
-**Fresh-main gate (2026-10-16):** a fetch during Pixel 7 verification discovered
-`origin/main` **f2b184b** (PR #96), 240 changed files since the integrated baseline
-above. It includes public profiles, server-backed favorites, analytics, Home UI,
-calendar photo previews and check-in time/cutout changes. This newer main is not
-yet merged into #43/#95; the inventory below is an audit of 4976e53, not f2b184b.
-Before another feature, sync both active stack branches and re-audit those changed
-contracts. In particular, the old local-only favorites description is no longer
-the newest production contract. Physical smoke of ef41fd8 does not close this gate.
 
 ## Branch ownership
 
@@ -20,16 +11,13 @@ the newest production contract. Physical smoke of ef41fd8 does not close this ga
 - `feature/check-in-history-refactoring` → the branch above: the **entire**
   prepared history migration, including four modules, resources, app wiring and
   tests. Continue that capability only there; do not split it into a third PR.
-- The base registers 23 modules; the history child now registers 28, including
-  the populated pure `feature/home-check-in/domain` read boundary. Existing
-  `features/home-checkin` remains registered in both for legacy/editor/writer
-  consumers. No empty Home api/data/impl modules are created.
+- The base registers 23 modules; the history child registers 27. Existing
+  `features/home-checkin` remains registered in both. No new Home module exists.
 - The independent modal fix #92 reached develop and main and is already in the
   migration ancestry. Do not cherry-pick it again.
 - Preserve published history; no force-push or merging either PR to main/develop
-  is part of this organization step. New checkpoints use the 100–150-file review
-  guide; after completing a feature, start the next in a new child branch/PR.
-  Supporting steps needed by the same feature stay together. Fixes to #43 stay there,
+  is part of this organization step. New checkpoints use the agreed 100–150-file
+  guide and may group one to three related features. Fixes to #43 stay there,
   then update its history child. The existing 71-file history extraction stays
   coherent; do not recreate the old small-PR stack.
 
@@ -85,16 +73,13 @@ independent, already merged modal-fix worktree is not an active migration tip.
 
 Next work is ordered, not parallel feature scaffolding:
 
-1. Done: visual controls checkpoint and its isolated Android tests, published in
-   parent `59e9c93` and inherited by the history child.
+1. Finish the current visual controls checkpoint and its isolated Android tests.
 2. Keep the remaining parent release gates explicit: real saved data/account
    transitions, image loading, guest/owner/return flows, OS picker/camera and safe
    submissions. Fake fixtures do not close these gates.
-3. Continue **combined Shop/Home history** in #95: Home reads, combined MVI and
-   production-shaped content/entry now serve all three Android routes. The app-owned
-   Home bridge delegates the existing detail/editor/writer and refreshes history
-   after successful mutations. Finish physical-device/live-read parity before
-   calling the feature release-ready; shared/iOS history remains legacy.
+3. Continue **combined Shop/Home history** in #95: account-bound Home reads first,
+   then combined MVI, production-shaped content, route integration and verification.
+   Keep legacy combined history active until the replacement reaches parity.
 4. Choose another business feature only after that checkpoint and a fresh main
    audit. iOS UI/integration remains deliberately deferred.
 
@@ -105,8 +90,8 @@ Next work is ordered, not parallel feature scaffolding:
 | Favorites: saved shops **and roasters** | In progress; Android entry now renders both kinds | The missing roaster section is restored with main's counts/logo fallback/public route/removal behavior and account guards. Automated UI/DI/Result/cancellation checks pass. Real saved data/photos, account journey, process restoration, physical-device/accessibility/locale QA still block full completion. |
 | Shop Report: incorrect shop data | In progress; Android entry active | Real safe submit/error/uncertain-delivery flow and paired preview inspection; retain shared/iOS fallback. |
 | Shop: detail, menu, public check-ins and creation sheet | In progress; Android entries active | Physical-device visual/guest/owner/return parity; picker/camera permissions and recreation, ML Kit quality/model availability and safely authorized submissions. Prepared review editors are not a product requirement. |
-| Personal history: one combined Shop/Home calendar and timeline | In progress; migrated Android entry **active** | All three routes retain their IDs, initial Home edit and Shop picker. App-owned account-bound Home bridge delegates the existing writer. Automated route/UI checks and backend source audit cover integration; deployed Home date-boundary and owner/physical-device parity remain open. |
-| Home preparations: create/detail/edit/delete, recipes and photos | Read domain integrated; full editor/data migration not started | Pure read domain, compatibility adapters and account-bound history port are in #95. Existing Home editor/detail/writer are reused, not migrated; no history/statistics tabs from the unused standalone Home screen are recreated. |
+| Personal history: one combined Shop/Home calendar and timeline | In progress; all prepared migration code in history child, **not active** | The prepared Shop-only Calendar/List UI is not parity with main. Complete combined readers, MVI, production-shaped UI, home callbacks and Android integration first. |
+| Home preparations: create/detail/edit/delete, recipes and photos | Not started as a new feature migration | Existing main editor/detail remain active through combined history. Extract only the needed read boundary first; do not recreate unused history/statistics tabs from the standalone Home screen. |
 | Discovery: shop list/search/filter/map and embedded roasters | Not started | Audit actual list/map/filter ownership and current platform map; no independent module for every mode. |
 | Coffee catalogue: Coffee tab/list/detail | Not started | Preserve current catalogue/search/detail and links to roasters; catalog pickers are existing shared app boundaries, not invented screens. |
 | Roasters: list/detail and saved membership | Not started | Preserve current entry points, contacts, catalogue links and favorites. Favorites parity is an earlier gate, not permission for a wholesale roaster rewrite. |
@@ -165,26 +150,22 @@ These findings come from registered renderers and their call sites, not filename
    as ready. Favorites' missing roaster section is fixed and automatically tested;
    full account/device QA and the existing Shop/report gates remain. Preserve main
    behavior, not a new design.
-2. [x] In the history child, prepare account-bound Home reads and history-owned
-   read models/ports, with unknown visibility/moderation, issued photo URLs and
-   recipe data retained. Application composition adapts contracts; no cross-feature
-   domain/data/impl import. Only the populated Home domain is created. Civil-day
-   queries preserve the existing client convention. Backend source audit confirms
-   inclusivity; deployed-backend verification remains a release gate.
-3. [x] Combined typed MVI verified: one filter/month/date, two source cursors, retained
+2. [ ] In the history child, prepare account-bound Home reads and history-owned
+   read models/ports. Confirm date-boundary/calendar/page semantics and preserve
+   unknown visibility/moderation, protected photos and recipe data.
+   Application composition adapts contracts; no cross-feature domain/data/impl
+   import. Create Home domain only when the module gate has real consumers;
+   no empty api/impl/DI modules or forwarding-only use cases.
+3. [ ] Combined typed MVI: one filter/month/date, two source cursors, retained
    content/partial failures, duplicate/conflicting-action guards, cancellation,
    stale-response rejection and account replacement versus token renewal.
-   The obsolete inactive Calendar/List coordinator and its consumers are retired.
-4. [x] Prepared production-shaped stateless history content: compact Shop/Home rows,
+4. [ ] Production-shaped stateless history content: compact Shop/Home rows,
    one calendar/filter, loading/empty/retry, photos/details and creation callbacks.
    Each independent component owns its file and paired fake-state previews.
    No second global Calendar/List mode or full-card redesign.
-5. [x] Activate the combined Android entry without losing any of the three
-   history route contracts. The application delegates Home detail/edit/create/delete
-   to the existing account-bound editor/writer and retains the Shop picker.
-   Initial edit IDs are consumed once, successful writes invalidate the new reader,
-   and account replacement clears the child editor/photo lifetime. Shared/iOS
-   renderer stays on ProfileCheckInsScreen; full Home migration is separate.
+5. [ ] Extend the entry and Android renderer without losing any of the three
+   existing history route contracts. Delegate Home edit/create/delete and the
+   existing Shop picker; keep active legacy history until parity is verified.
 6. [ ] Verify both source cursors, filters/date reset/month limits, partial-source
    failures/retry, guest/account/token changes, back/photos/editor return and
    initial edit ID. Build Direct/Play/DEX/unit/lint and isolated UI tests; then
@@ -195,45 +176,6 @@ These findings come from registered renderers and their call sites, not filename
    to restore removed behavior or scaffold all future modules.
 
 ## Verification limits
-
-Android history activation (2026-10-16), child #95: Direct/Play APK/DEX checks,
-app/history lint and **662 selected unit cases** pass (257 app per variant, three
-Home domain, 53 history, 87 Shop and five Shop Report), reusing valid cached tasks.
-The complete shared composeApp graph compiles for iOS Simulator Arm64 without
-changing its legacy screen selection. All **26 isolated Android UI cases** pass:
-eight destination/DI/Home workflow, five app-boundary and 13 feature/entry tests.
-Light/dark fake Home forms/detail/delete confirmation were inspected, with the
-sheet bottom-aligned and fixed Save accessible. The actual Android routes now
-select the migrated entry. Source audit confirms both backend date conventions;
-deployed-backend/live-read, physical-device/account and accessibility QA remain
-open. No phone update, data clearing, live write or iOS feature migration occurred.
-Details and corrected test-fixture/harness notes are in COMBINED_HISTORY_PLAN.md.
-The earlier checkpoints below are dated preparation evidence, not current status.
-
-Combined UI preparation (2026-10-16), child #95: Direct/Play APK/expanded DEX
-guards, app/history lint and **642 selected unit cases** pass (247 app per variant,
-three Home domain, 53 history: eight domain + seven data + 38 impl, 87 Shop and
-five Shop Report). Valid cached tasks may be reused. The obsolete prepared VM
-and its mode-specific tests are retired, not counted as current test coverage.
-Shared history impl compiles for iOS Simulator Arm64. All **18 isolated UI tests**
-pass on the owned read-only emulator: 13 feature/entry and five app-boundary cases.
-Light/dark mixed fixtures and creation-sheet placement were inspected. This does
-not certify the unactivated root routes, Home editor bridge, live backend bounds,
-physical-device behavior or individual IDE previews. Phones and iOS UI are unchanged.
-See COMBINED_HISTORY_PLAN.md for exact limits, the corrected scroll-test harness
-and the next integration steps. The older dated results below are historical.
-
-Combined MVI (2026-10-16), child #95: Direct/Play APK/DEX, app/history lint and
-668 selected unit cases pass, including 29 new combined-MVI cases (64 impl total).
-Shared history impl compiles for iOS Simulator Arm64. There is no new device UI
-result, backend interaction or root route switch; the old prepared Calendar/List
-entry/coordinator is scheduled for removal during combined UI replacement.
-
-Home read foundation (2026-10-16), child #95: Direct/Play APK/expanded DEX guards,
-app/Home-domain/history lint and 639 selected unit cases pass (247 app per variant,
-three Home domain, 50 history, 87 Shop MVI, five Shop Report MVI), with cached tasks
-where valid. Both changed domain modules compile for iOS Simulator Arm64. There
-is no new screen switch, device UI result, live read/write or iOS migration claim.
 
 Latest controls checkpoint (2026-10-15), parent #43: both Direct/Play debug APKs
 and packaged DEX guards, app Direct/Shop/Shop Report lint, and **518 selected

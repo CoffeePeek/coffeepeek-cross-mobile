@@ -3,6 +3,7 @@
 package com.coffeepeek.admin.ui
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
@@ -37,8 +38,23 @@ internal class NativeScreenController(
     title: String? = null,
     val route: Navigator.Screen? = null,
     private val extendsUnderHomeIndicator: Boolean = false,
+    private val analyticsPage: String? = null,
     private val content: @Composable () -> Unit,
 ) : UIViewController(nibName = null, bundle = null) {
+    private val analyticsVisit = com.coffeepeek.admin.analytics.correlationId("screen")
+    private var analyticsVisible by mutableStateOf(false)
+
+    override fun viewDidAppear(animated: Boolean) {
+        super.viewDidAppear(animated)
+        analyticsVisible = true
+        val page = analyticsPage ?: com.coffeepeek.admin.analytics.analyticsPage(route?.let { it::class.simpleName })
+        com.coffeepeek.admin.analytics.Analytics.service?.screenShown(page, analyticsVisit)
+    }
+
+    override fun viewWillDisappear(animated: Boolean) {
+        analyticsVisible = false
+        super.viewWillDisappear(animated)
+    }
     var usesNavigationBar by mutableStateOf(false)
         private set
     var handlesBackLocally = false
@@ -79,7 +95,9 @@ internal class NativeScreenController(
                     Box(Modifier.fillMaxSize()
                         .background(colors.background)
                         .then(if (extendsUnderHomeIndicator) Modifier else Modifier.consumeWindowInsets(WindowInsets.systemBars.only(reservedSides)))
-                        .dismissKeyboardOnBackgroundGestures()) { content() }
+                        .dismissKeyboardOnBackgroundGestures()) {
+                        CompositionLocalProvider(com.coffeepeek.admin.analytics.LocalAnalyticsVisible provides analyticsVisible) { content() }
+                    }
                 }
             }
         }

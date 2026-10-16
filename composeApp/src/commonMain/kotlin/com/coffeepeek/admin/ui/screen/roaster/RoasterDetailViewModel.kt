@@ -43,6 +43,9 @@ class RoasterDetailViewModel(
     val state = _state.asStateFlow()
 
     init {
+        favorites.observeErrors()
+            .onEach { error -> if (error != null) _state.update { it.copy(actionMessage = error) } }
+            .launchIn(workScope)
         favorites.observeFavorites()
             .onEach { favorites -> _state.update { it.copy(favoriteIds = favorites.map { it.roasterFavoriteId }.toSet()) } }
             .catch { _state.update { it.copy(actionMessage = "Не удалось загрузить избранное") } }
@@ -55,26 +58,11 @@ class RoasterDetailViewModel(
     fun toggleFavorite() {
         val current = _state.value
         val details = current.details ?: return
-        if (current.isFavoriteLoading) return
-        _state.update { it.copy(isFavoriteLoading = true) }
-        workScope.launch {
-            try {
-                if (!sessions.isLoggedIn()) {
-                    Navigator.navigate(Navigator.Screen.Auth)
-                    return@launch
-                }
-                val roaster = CatalogItem(
-                    id = details.id,
-                    name = details.name,
-                    photoUrl = details.photos.firstOrNull()?.fullUrl,
-                    address = details.publicAddress,
-                )
-                favorites.setFavorite(roaster, !current.isFavorite)
-                    .onFailure { _state.update { it.copy(actionMessage = "Не удалось изменить избранное") } }
-            } finally {
-                _state.update { it.copy(isFavoriteLoading = false) }
-            }
-        }
+        val item = CatalogItem(id = details.id, name = details.name, photoUrl = details.photos.firstOrNull()?.fullUrl, address = details.publicAddress)
+        com.coffeepeek.admin.feature.favorites.api.FavoriteInteractions.change(workScope, item.roasterFavoriteId, true, !current.isFavorite,
+            action = { favorites.setFavorite(item, !current.isFavorite) },
+            completed = { result -> result.onFailure { _state.update { it.copy(actionMessage = "Не удалось изменить избранное") } } },
+        )
     }
 
     fun load() {

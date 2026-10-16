@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="history_calendar_more_photos">+%1$d</string>
     <string name="history_title">Чекины</string>
     <string name="history_back">Назад</string>
     <string name="history_all">Все</string>

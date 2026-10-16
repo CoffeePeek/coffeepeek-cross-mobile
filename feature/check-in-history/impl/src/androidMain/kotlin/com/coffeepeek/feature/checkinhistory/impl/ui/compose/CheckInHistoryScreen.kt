@@ -70,7 +70,7 @@ internal fun CheckInHistoryScreenContent(state: CombinedHistoryState, onAction: 
                 HistoryKindFilterControl(state.filter, { onAction(CombinedHistoryAction.SelectFilter(it)) },
                     Modifier.padding(horizontal = 16.dp, vertical = 8.dp))
                 if (!state.isLoggedIn) HistoryGuestPrompt({ onAction(CombinedHistoryAction.SignIn) })
-                else HistoryTimelineContent(state, onAction, formatCheckInTime, Modifier.weight(1f))
+                else HistoryTimelineContent(state, onAction, formatCheckInTime, Modifier.weight(1f), imageContent)
             }
         }
     }

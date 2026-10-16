@@ -14,7 +14,8 @@ data class HomePreparationPage(
     val hasMore: Boolean get() = page.toLong() * pageSize < totalCount
 }
 
-data class HomePreparationDay(val preparedOn: String, val brewCount: Int) {
+data class HomePreparationDay(val preparedOn: String, val brewCount: Int,
+    val photos: List<HomePreparationCalendarPhoto> = emptyList()) {
     init {
         HomePreparationDateRange(preparedOn, preparedOn)
         require(brewCount >= 0)

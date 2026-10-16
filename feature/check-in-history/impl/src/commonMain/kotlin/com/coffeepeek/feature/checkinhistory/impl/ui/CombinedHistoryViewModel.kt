@@ -153,7 +153,8 @@ internal class CombinedHistoryViewModel private constructor(
         if (previous.month == month && previous.selectedDate == date) return
         if (previous.month != month) {
             shopCalendar.cancel(); homeCalendar.cancel()
-            updateState { copy(shopCalendar = CombinedHistoryLoadState(emptyMap()), homeCalendar = CombinedHistoryLoadState(emptyMap())) }
+            updateState { copy(shopCalendar = CombinedHistoryLoadState(emptyMap()), homeCalendar = CombinedHistoryLoadState(emptyMap()),
+                homeCalendarPhotos = emptyMap()) }
         }
         if (previous.selectedDate != date) {
             homePage.cancel()
@@ -206,6 +207,7 @@ internal class CombinedHistoryViewModel private constructor(
                 selectedShopKey = if (clearDate) null else selectedShopKey,
                 shopCalendar = if (zoneChanged || clamped) CombinedHistoryLoadState(emptyMap()) else shopCalendar,
                 homeCalendar = if (clamped) CombinedHistoryLoadState(emptyMap()) else homeCalendar,
+                homeCalendarPhotos = if (clamped) emptyMap() else homeCalendarPhotos,
                 shops = if (zoneChanged) CombinedHistoryPageState() else shops,
                 homes = if (clearDate && selectedDate != null) CombinedHistoryPageState() else homes) }
         }
@@ -284,9 +286,11 @@ internal class CombinedHistoryViewModel private constructor(
             load = {
                 val days = homeReader.calendar(HomeHistoryDateRange.month(month)).getOrThrow()
                 check(days.distinctBy { it.preparedOn }.size == days.size) { "Duplicate Home calendar dates" }
-                days.filter { month.containsDate(it.preparedOn) }.associate { it.preparedOn to it.brewCount }
+                val visible = days.filter { month.containsDate(it.preparedOn) }
+                visible.associate { it.preparedOn to it.brewCount } to visible.associate { it.preparedOn to it.photos }
             },
-            success = { days -> updateState { copy(homeCalendar = homeCalendar.copy(content = days, hasLoaded = true)) } },
+            success = { (counts, photos) -> updateState { copy(homeCalendar = homeCalendar.copy(content = counts, hasLoaded = true),
+                homeCalendarPhotos = photos) } },
             failure = { updateState { copy(homeCalendar = homeCalendar.copy(hasError = true)) } },
             finish = { updateState { copy(homeCalendar = homeCalendar.copy(isLoading = false)) } },
             followUp = ::loadHomeCalendar)

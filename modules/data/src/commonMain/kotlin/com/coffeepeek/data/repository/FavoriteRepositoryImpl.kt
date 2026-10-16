@@ -1,84 +1,80 @@
 package com.coffeepeek.data.repository
 
-import com.coffeepeek.api.utils.requestResult
-import com.coffeepeek.data.local.LocalFavoriteShopDto
+import com.coffeepeek.api.service.ShopApiService
+import com.coffeepeek.data.mapper.ShopMapper.toDomain
+import com.coffeepeek.data.util.FileUrlResolver
+import com.coffeepeek.domain.feature.favorites.api.FavoriteKind
+import com.coffeepeek.domain.feature.favorites.api.FavoriteEntry
+import com.coffeepeek.domain.feature.favorites.api.FavoritesRepository
 import com.coffeepeek.domain.model.CoffeeShop
 import com.coffeepeek.domain.model.CoffeeShopDetails
 import com.coffeepeek.domain.repository.FavoriteRepository
 import com.coffeepeek.domain.repository.SessionRepository
-import kotlinx.coroutines.NonCancellable
-import kotlinx.coroutines.withContext
-import com.coffeepeek.room.DatabaseCore
-import com.coffeepeek.room.repository.readSerializable
-import com.coffeepeek.room.repository.saveSerializable
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.sync.Semaphore
+import kotlinx.coroutines.sync.withPermit
 
+/** Compatibility adapter for the existing shop presentation contract. */
 class FavoriteRepositoryImpl(
-    private val database: DatabaseCore,
-    private val sessions: SessionRepository? = null,
+    private val favorites: FavoritesRepository,
+    private val shops: ShopApiService,
+    private val fileUrls: FileUrlResolver,
+    private val sessions: SessionRepository,
 ) : FavoriteRepository {
+    override suspend fun getFavoriteIds(): Set<String> = favorites.getFavorites().getOrDefault(emptyList())
+        .filter { it.kind == FavoriteKind.CoffeeShop }.mapNotNull { it.address?.slug }.toSet()
 
-    private val settings = database.settingRepository
-    private val mutex = Mutex()
+    override suspend fun isFavorite(shopId: String): Boolean = shopId in getFavoriteIds()
 
-    override suspend fun getFavoriteIds(): Set<String> =
-        mutex.withLock { readAll().map { it.id }.toSet() }
-
-    override suspend fun isFavorite(shopId: String): Boolean =
-        mutex.withLock { readAll().any { it.id == shopId } }
-
-    override suspend fun getFavorites(): Result<List<CoffeeShopDetails>> = requestResult {
-        mutex.withLock { readAll().map { it.toDomain() } }
-    }
-
-    override suspend fun addFavorite(shop: CoffeeShop, address: String?): Result<Unit> = requestResult {
-        mutex.withLock {
-            val key = currentKey() ?: error("Sign in to save favorites")
-            val current = readAt(key).filterNot { it.id == shop.id }
-            writeAt(key, listOf(LocalFavoriteShopDto.from(shop, address)) + current)
+    override suspend fun getFavorites(): Result<List<CoffeeShopDetails>> = try {
+        val session = sessions.peekSession() ?: sessions.getSession()
+        val account = session?.let { it.userId ?: it.accessToken }
+        val entries = favorites.getFavorites(refresh = true).getOrThrow().filter { it.kind == FavoriteKind.CoffeeShop }
+        val requests = Semaphore(4)
+        val details = coroutineScope {
+            entries.map { entry -> async {
+                val slug = entry.address?.slug
+                val loaded = slug?.let { requests.withPermit { shops.getShopDetails(it).getOrNull() } }
+                currentCoroutineContext().ensureActive()
+                val details = loaded?.toDomain(fileUrls) ?: CoffeeShopDetails(
+                    CoffeeShop(slug ?: entry.id, entry.name.ifBlank { slug ?: "Кофейня" }, null,
+                        cityName = null, priceRange = null, photoUrl = entry.coverPhotoUrl),
+                )
+                details.copy(shop = details.shop.copy(
+                    id = slug ?: entry.id, publicAddress = entry.address, isFavorite = true,
+                    title = entry.name.ifBlank { details.shop.title },
+                    photoUrl = entry.coverPhotoUrl ?: details.shop.photoUrl,
+                ))
+            } }.awaitAll()
         }
-    }
-
-    override suspend fun removeFavorite(shopId: String): Result<Unit> = requestResult {
-        mutex.withLock {
-            val key = currentKey() ?: error("Sign in to change favorites")
-            writeAt(key, readAt(key).filterNot { it.id == shopId })
+        if (sessions.peekSession()?.let { it.userId ?: it.accessToken } != account) {
+            throw CancellationException("Favorites account changed")
         }
+        Result.success(details)
+    } catch (cancelled: CancellationException) {
+        throw cancelled
+    } catch (error: Exception) {
+        Result.failure(error)
     }
 
-    override suspend fun clearAll() = clearForUser(sessions?.getSession()?.userId)
-
-    override suspend fun clearForUser(userId: String?) {
-        mutex.withLock {
-            if (sessions != null && !userId.isNullOrBlank()) writeAt("$KEY:$userId", emptyList())
-            writeAt(KEY, emptyList())
-        }
+    override suspend fun addFavorite(shop: CoffeeShop, address: String?): Result<Unit> {
+        val publicAddress = shop.publicAddress
+            ?: return Result.failure(IllegalArgumentException("У кофейни нет публичного адреса"))
+        return favorites.setFavorite(FavoriteEntry(FavoriteKind.CoffeeShop, publicAddress,
+            name = shop.title, coverPhotoUrl = shop.photoUrl), true)
     }
 
-    private suspend fun currentKey(): String? {
-        if (sessions == null) return KEY
-        val owner = sessions.getSession()?.userId?.takeIf(String::isNotBlank) ?: return null
-        val key = "$KEY:$owner"
-        withContext(NonCancellable) {
-            val old = settings.read(KEY)
-            if (old != null) {
-                if (settings.read(key) == null) settings.save(old.copy(key = key))
-                settings.delete(KEY)
-            }
-        }
-        return key
+    override suspend fun removeFavorite(shopId: String): Result<Unit> {
+        val entries = favorites.getFavorites().getOrElse { return Result.failure(it) }
+        val entry = entries.firstOrNull { it.kind == FavoriteKind.CoffeeShop && (it.address?.slug == shopId || it.id == shopId) }
+            ?: return Result.success(Unit)
+        return favorites.setFavorite(entry, false)
     }
 
-    private suspend fun readAll(): List<LocalFavoriteShopDto> = currentKey()?.let { readAt(it) }.orEmpty()
-    private suspend fun readAt(key: String): List<LocalFavoriteShopDto> =
-        settings.readSerializable<List<LocalFavoriteShopDto>>(key).orEmpty()
-
-    private suspend fun writeAt(key: String, items: List<LocalFavoriteShopDto>) {
-        settings.saveSerializable(key, items.takeIf { it.isNotEmpty() })
-    }
-
-    private companion object {
-        const val KEY = "local_favorite_shops"
-    }
+    override suspend fun clearAll() { favorites.clearCache() }
 }

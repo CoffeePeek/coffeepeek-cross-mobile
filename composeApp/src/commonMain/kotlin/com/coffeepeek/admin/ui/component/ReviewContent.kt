@@ -37,6 +37,8 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -46,6 +48,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.produceState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.luminance
@@ -126,14 +131,21 @@ fun ReviewTextInput(
         RoundedCornerShape(CpDimens.buttonRadius)
     }
     val fieldValue = rememberSyncedTextFieldValue(value)
+    val focusManager = LocalFocusManager.current
+    val keyboard = LocalSoftwareKeyboardController.current
     BasicTextField(
         value = fieldValue.value,
         onValueChange = { updated ->
             val limited = updated.limitTextLength(maxLength)
-            fieldValue.value = limited
-            onValueChange(limited.text)
+            fieldValue.updateFromInput(limited, onValueChange)
         },
-        keyboardOptions = platformTextInputOptions(),
+        keyboardOptions = platformTextInputOptions(KeyboardOptions(
+            imeAction = if (singleLine) ImeAction.Done else ImeAction.Default,
+        )),
+        keyboardActions = KeyboardActions(onDone = {
+            focusManager.clearFocus(force = true)
+            keyboard?.hide()
+        }),
         singleLine = singleLine,
         textStyle = MaterialTheme.typography.bodyMedium.copy(color = MaterialTheme.colorScheme.onSurface),
         cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
@@ -153,7 +165,7 @@ fun ReviewTextInput(
                 modifier = if (singleLine) Modifier.fillMaxSize() else Modifier,
                 contentAlignment = Alignment.CenterStart,
             ) {
-                if (value.isEmpty()) {
+                if (fieldValue.value.text.isEmpty()) {
                     Text(
                         text = placeholder,
                         style = MaterialTheme.typography.bodyMedium,
@@ -360,13 +372,14 @@ fun CheckInDisplayCard(
     isOwn: Boolean = true,
     fullVersion: Boolean = false,
     blurContent: Boolean = false,
+    onAuthorClick: (() -> Unit)? = null,
 ) {
     val cardModifier = modifier
         .fillMaxWidth()
         .then(if (onClick != null && checkIn.shopId.isNotBlank()) Modifier.clickable(onClick = onClick) else Modifier)
 
     CheckInCard(cardModifier, blurContent) {
-        CheckInHeader(checkIn = checkIn, isOwn = isOwn) {
+        CheckInHeader(checkIn = checkIn, isOwn = isOwn, onAuthorClick = onAuthorClick) {
             CheckInActions(onEditClick = null, onReportClick = onReportClick)
         }
         CheckInHeading(checkIn.shopName.ifBlank { "Кофейня" }.takeIf { showShopName }, checkIn.rating)
@@ -396,6 +409,7 @@ fun CheckInDisplayCard(
 internal fun CheckInHeader(
     checkIn: CheckIn,
     isOwn: Boolean,
+    onAuthorClick: (() -> Unit)? = null,
     actions: @Composable () -> Unit,
 ) {
     val date = checkIn.createdAt
@@ -404,26 +418,37 @@ internal fun CheckInHeader(
         modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        ReviewAvatar(username = username, photoUrl = null)
-        Column(
-            modifier = Modifier.weight(1f).padding(start = CpDimens.spacing3),
-            verticalArrangement = Arrangement.spacedBy(2.dp),
+        Row(
+            modifier = Modifier.weight(1f)
+                .clip(RoundedCornerShape(CpDimens.radiusMd))
+                .then(if (onAuthorClick != null) Modifier.clickable(
+                    role = Role.Button,
+                    onClickLabel = "Открыть профиль $username",
+                    onClick = onAuthorClick,
+                ) else Modifier),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
-            Text(
-                text = username,
-                style = MaterialTheme.typography.bodyMedium,
-                fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.onSurface,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
-            if (date.isNotBlank()) Text(
-                text = rememberReviewDisplayDate(date),
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
+            ReviewAvatar(username = username, photoUrl = checkIn.authorAvatarUrl)
+            Column(
+                modifier = Modifier.weight(1f).padding(start = CpDimens.spacing3),
+                verticalArrangement = Arrangement.spacedBy(2.dp),
+            ) {
+                Text(
+                    text = username,
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                if (date.isNotBlank()) Text(
+                    text = rememberReviewDisplayDate(date),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
         }
         actions()
     }

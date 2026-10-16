@@ -13,3 +13,7 @@ API_BASE_URL=https://api.coffeepeek.by/
 # Google Sign-In (Web Client ID из Google Cloud Console).
 # Если пусто — кнопка «Войти через Google» скрыта.
 GOOGLE_WEB_CLIENT_ID=
+
+# PostHog project ingestion token. If empty, analytics collection is disabled.
+# CI reads the POSTHOG_PROJECT_TOKEN environment variable instead.
+POSTHOG_PROJECT_TOKEN=

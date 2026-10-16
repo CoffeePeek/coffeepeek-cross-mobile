@@ -51,6 +51,7 @@ actual fun CoffeeMap(
     onLocationPermissionDenied: () -> Unit,
     requestLocationPermissionOnLoad: Boolean,
     showAttribution: Boolean,
+    onCameraCenterChanged: (Double, Double) -> Unit,
 ) {
     val boundsCallback = rememberUpdatedState(onBoundsChanged)
     val shopCallback = rememberUpdatedState(onShopClick)
@@ -78,6 +79,7 @@ actual fun CoffeeMap(
         onLocationPermissionDenied = onLocationPermissionDenied,
         requestLocationPermissionOnLoad = requestLocationPermissionOnLoad,
         showAttribution = showAttribution,
+        onCameraCenterChanged = onCameraCenterChanged,
     )
 }
 
@@ -101,8 +103,10 @@ private fun NativeMapContent(
     onLocationPermissionDenied: () -> Unit,
     requestLocationPermissionOnLoad: Boolean,
     showAttribution: Boolean,
+    onCameraCenterChanged: (Double, Double) -> Unit,
 ) {
     val boundsCallback = rememberUpdatedState(onBoundsChanged)
+    val centerCallback = rememberUpdatedState(onCameraCenterChanged)
     val shopCallback = rememberUpdatedState(onShopClick)
     val zoneCallback = rememberUpdatedState(onZoneClick)
     val locationFoundCallback = rememberUpdatedState(onMyLocationFound)
@@ -119,6 +123,7 @@ private fun NativeMapContent(
             onBoundsChanged = { bounds, zoom -> boundsCallback.value(bounds to zoom) },
             onShopClick = { shopCallback.value(it) },
             onZoneClick = { zoneCallback.value(it) },
+            onCameraCenterChanged = { latitude, longitude -> centerCallback.value(latitude, longitude) },
         )
     }
 
@@ -191,6 +196,7 @@ private class NativeMapSession(
     private val onBoundsChanged: (MapBounds, Float) -> Unit,
     private val onShopClick: (String) -> Unit,
     private val onZoneClick: (String) -> Unit,
+    private val onCameraCenterChanged: (Double, Double) -> Unit,
 ) : IosNativeMapCallbacks {
     private var mapView: platform.UIKit.UIView? = null
     private var pendingCamera: (() -> Unit)? = null
@@ -235,6 +241,9 @@ private class NativeMapSession(
     override fun onShopClick(shopId: String) = onShopClick.invoke(shopId)
 
     override fun onZoneClick(zoneId: String) = onZoneClick.invoke(zoneId)
+
+    override fun onCameraCenterChanged(latitude: Double, longitude: Double) =
+        onCameraCenterChanged.invoke(latitude, longitude)
 
     override fun onBoundsChanged(
         minLat: Double,

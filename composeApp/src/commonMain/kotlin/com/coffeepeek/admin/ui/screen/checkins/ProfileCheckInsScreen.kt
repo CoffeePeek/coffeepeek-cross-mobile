@@ -1,5 +1,8 @@
 package com.coffeepeek.admin.ui.screen.checkins
 
+import com.coffeepeek.admin.analytics.*
+import com.coffeepeek.admin.feature.checkin.api.CheckInFlowHandoff
+
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.foundation.BorderStroke
@@ -89,7 +92,7 @@ internal fun ProfileCheckInsScreen(
     val today = remember { utcIsoToLocalDate(currentUtcIsoDateTime()) }
     var selectedDate by remember { mutableStateOf<String?>(null) }
     var kind by remember { mutableStateOf(ActivityKind.All) }
-    var showCreate by remember { mutableStateOf(false) }
+    var showCreate by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(false) }
     var selectedShop by remember { mutableStateOf<CheckIn?>(null) }
     var photoPreview by remember { mutableStateOf<Pair<List<String>, Int>?>(null) }
 
@@ -184,7 +187,7 @@ internal fun ProfileCheckInsScreen(
         topBar = { CpTopBar("Чекины") },
         containerColor = MaterialTheme.colorScheme.background,
         floatingActionButton = {
-            CheckInCreateButton(onClick = { showCreate = true })
+            CheckInCreateButton(onClick = { Analytics.track(AnalyticsEvent.CHECK_IN_START_ATTEMPTED, "source" to "global_create"); showCreate = true })
         },
     ) { padding ->
         Column(Modifier.fillMaxSize().padding(padding)) {
@@ -209,6 +212,7 @@ internal fun ProfileCheckInsScreen(
                         onToday = { syncMonth(today); if (selectedDate != today) chooseDate(today) },
                         homeCounts = if (kind == ActivityKind.Shop) emptyMap()
                             else home.calendar.associate { it.preparedOn to it.brewCount },
+                        homePhotos = if (kind == ActivityKind.Shop) emptyMap() else homeCalendarPhotos(home.calendarItems),
                     )
                 }
                 if (selectedDate != null) item(key = "clear-date") {

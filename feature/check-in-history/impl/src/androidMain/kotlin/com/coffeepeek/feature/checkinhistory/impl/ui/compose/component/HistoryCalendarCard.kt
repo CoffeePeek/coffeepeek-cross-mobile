@@ -28,7 +28,7 @@ import org.jetbrains.compose.resources.stringResource
 
 @Composable
 internal fun HistoryCalendarCard(state: CombinedHistoryState, onAction: (CombinedHistoryAction) -> Unit,
-    modifier: Modifier = Modifier) {
+    modifier: Modifier = Modifier, imageContent: HistoryImageContent? = null) {
     val haptics = LocalHapticFeedback.current
     fun select(action: CombinedHistoryAction) {
         haptics.performHapticFeedback(HapticFeedbackType.SegmentTick)
@@ -80,7 +80,8 @@ internal fun HistoryCalendarCard(state: CombinedHistoryState, onAction: (Combine
                             HistoryCalendarDay(day, date, counts[date] ?: 0L,
                                 if (state.filter.includes(HistorySource.Home)) state.homeCalendar.content[date] ?: 0 else 0,
                                 state.selectedDate == date, state.today == date, date > state.today,
-                                { select(CombinedHistoryAction.SelectDate(date)) }, Modifier.weight(1f))
+                                { select(CombinedHistoryAction.SelectDate(date)) }, Modifier.weight(1f),
+                                historyCalendarPhotos(state, date), imageContent)
                         }
                     }
                 }

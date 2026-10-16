@@ -22,7 +22,7 @@ import org.jetbrains.compose.resources.stringResource
 
 @Composable
 internal fun HistoryTimelineContent(state: CombinedHistoryState, onAction: (CombinedHistoryAction) -> Unit,
-    formatTime: (String) -> String, modifier: Modifier = Modifier) {
+    formatTime: (String) -> String, modifier: Modifier = Modifier, imageContent: HistoryImageContent? = null) {
     val listState = rememberLazyListState()
     val entries = state.timeline
     val refreshing = state.isTimelineLoading || state.filter.includes(HistorySource.Shop) && state.shopCalendar.isLoading ||
@@ -31,7 +31,7 @@ internal fun HistoryTimelineContent(state: CombinedHistoryState, onAction: (Comb
         stringResource(Res.string.history_refresh), stringResource(Res.string.history_loading), modifier.fillMaxSize()) { scroll ->
         LazyColumn(state = listState, modifier = scroll.fillMaxSize(),
             contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 96.dp)) {
-            item("calendar") { HistoryCalendarCard(state, onAction) }
+            item("calendar") { HistoryCalendarCard(state, onAction, imageContent = imageContent) }
             if (state.isTimelineLoading && entries.isEmpty()) item("initial-loading") {
                 Box(Modifier.fillMaxWidth().height(90.dp), contentAlignment = Alignment.Center) {
                     CoffeePeekLoader(stringResource(Res.string.history_loading))

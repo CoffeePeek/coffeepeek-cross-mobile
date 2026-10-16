@@ -1,6 +1,7 @@
 package com.coffeepeek.admin.ui.component
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.ui.Modifier
 
@@ -26,6 +27,9 @@ internal expect fun PlatformAlert(
 
 @Composable
 internal expect fun NativeActionSheet(title: String, actions: List<PlatformAction>, onDismiss: () -> Unit): Boolean
+
+/** Read only by the native iOS sheet; Android keeps its existing Material height policy. */
+internal val LocalNativeSheetHeightFraction = staticCompositionLocalOf<Float?> { null }
 
 @Composable
 internal expect fun NativeModalSheet(

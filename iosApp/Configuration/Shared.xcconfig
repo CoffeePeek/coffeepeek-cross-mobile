@@ -12,4 +12,8 @@ GOOGLE_IOS_CLIENT_ID =
 GOOGLE_WEB_CLIENT_ID =
 GOOGLE_REVERSED_CLIENT_ID = coffeepeek-google-signin-disabled
 
+// Explicit local opt-in for analytics in Debug builds.
+POSTHOG_ENABLE_DEV = NO
+POSTHOG_PROJECT_TOKEN =
+
 #include? "Local.xcconfig"
