@@ -62,4 +62,58 @@ class SocialLoginErrorTest {
             socialLoginError("Apple", "[GSI-T]"),
         )
     }
+
+    @Test
+    fun appleSdkCodeAndDomainSurviveWithoutPrivateErrorDetails() {
+        assertEquals(
+            "Не удалось войти через Apple. Попробуйте ещё раз. (код ASI-E1000; домен com.apple.AuthenticationServices.AuthorizationError)",
+            socialLoginError("Apple", "private-token=secret [ASI-E1000 D:com.apple.AuthenticationServices.AuthorizationError]"),
+        )
+    }
+
+    @Test
+    fun appleCallbackFailureStagesRemainDistinguishable() {
+        for (code in listOf("W", "C", "S", "T", "B", "CH", "X")) {
+            assertEquals(
+                "Не удалось войти через Apple. Попробуйте ещё раз. (код ASI-$code)",
+                socialLoginError("Apple", "[ASI-$code]"),
+            )
+        }
+    }
+
+    @Test
+    fun appleSdkCodesCanBeNegativeWithoutAPlatformDomain() {
+        assertEquals(
+            "Не удалось войти через Apple. Попробуйте ещё раз. (код ASI-E-1000)",
+            socialLoginError("Apple", "[ASI-E-1000]"),
+        )
+    }
+
+    @Test
+    fun appleErrorRejectsUnboundedCodesAndUntrustedDomainDetails() {
+        for (message in listOf(
+            "[ASI-E12345678901]",
+            "[ASI-E1000 D:com.apple;token=secret]",
+            "[ASI-E1000 D:${"a".repeat(81)}]",
+            "[ASI-E1000 O:private]",
+        )) {
+            assertEquals("Не удалось войти через Apple. Попробуйте ещё раз.", socialLoginError("Apple", message))
+        }
+    }
+
+    @Test
+    fun googleErrorIgnoresAppleDiagnosticCodes() {
+        assertEquals(
+            "Не удалось войти через Google. Попробуйте ещё раз.",
+            socialLoginError("Google", "[ASI-E1000]"),
+        )
+    }
+
+    @Test
+    fun appleStageDiagnosticsKeepExistingFriendlyNetworkErrors() {
+        assertEquals(
+            "Не удалось подключиться. Проверьте интернет-соединение (код ASI-X)",
+            socialLoginError("Apple", "network unavailable [ASI-X]"),
+        )
+    }
 }
