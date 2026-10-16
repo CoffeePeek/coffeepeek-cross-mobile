@@ -124,8 +124,25 @@ URL может быть абсолютным или относительным �
 
 ## Проверка на устройствах перед выпуском
 
+В Android release воспроизведены два сбоя после R8: встраивание
+`FluentLogger.forEnclosingClass` и `StackBasedCallerFinder.findLoggingClass`
+ломало поиск вызывающего класса (`no caller found on the stack` в
+`Graph.<clinit>`), а удаление полей Protobuf Lite ломало чтение настроек
+моделей (`Field platform_ ... not found`). Debug-проверка эти сбои не выявляла,
+поскольку в ней R8 отключён. Release-правила сохраняют оба стековых кадра,
+поля используемых Protobuf-сообщений и необходимые JNI-точки входа
+закреплённой версии MediaPipe. Оптимизация остальных частей приложения включена.
+
+Проверка от 16.10.2026: в `directRelease` и `playRelease` прошли по два
+smoke-теста на эмуляторе API 37 с включёнными R8 и удалением неиспользуемых
+ресурсов. Настоящие модели
+обработали открытое фото и присланное приватное фото чашки в руке. Для
+приватного фото получен прозрачный PNG 268 × 316 px: чашка и крышка сохранены,
+рука исключена. Все 9 debug-тестов выделения также прошли, включая это фото.
+
 Проверка Android от 15.10.2026: 230 unit-тестов приложения и 9 тестов
-`DrinkPhotoExtractorAndroidTest` на API 37 прошли. Включён авиарежим, Wi-Fi и
+`DrinkPhotoExtractorAndroidTest` на API 37 прошли в **debug-сборке**. Это не
+проверка release-сборки после R8. Включён авиарежим, Wi-Fi и
 мобильная сеть отключены; исходное приватное фото с чашкой в руке проверено
 настоящими моделями Android. Итоговый PNG — 268 × 316 px, чашка и крышка
 сохранены, рука исключена. `lintPlayDebug` завершился без ошибок.
@@ -136,12 +153,40 @@ URL может быть абсолютным или относительным �
 цвету кожи, PNG-кодирование, предел 768 px, alpha и неизменность исходника.
 Интернет и доставка модулей Google Play для этих проверок больше не нужны.
 
-Повторный запуск:
+Повторный запуск debug-проверки:
 
 ```shell
 ./gradlew :composeApp:connectedPlayDebugAndroidTest \
   -Pandroid.testInstrumentationRunnerArguments.class=com.coffeepeek.admin.feature.checkin.data.DrinkPhotoExtractorAndroidTest
 ```
+
+Для регрессии опубликованного приложения отдельно запускайте обе release-сборки
+с настоящими моделями и включёнными R8 и удалением неиспользуемых ресурсов.
+Опциональный init-скрипт `gradle/android-release-tests.init.gradle` выбирает
+release как тестируемый build type и только для текущего локального запуска
+подписывает APK debug-ключом. **Такие APK нельзя публиковать.** Запускайте на
+тестовом устройстве: установленная версия с release-подписью несовместима с
+debug-подписью, а её удаление стирает локальные данные приложения.
+Release-проверка использует отдельный Java-runner на платформенном
+`Instrumentation`, без запуска AndroidX/JUnit/Kotlin-кода тестового runner.
+Он вызывает добавленный только этим init-скриптом Kotlin-probe в приложении:
+сохраняются только класс probe и его метод `extract(byte[])`. Внутренние классы
+выделения и MediaPipe проходят обычную release-оптимизацию. Так удаление общих
+зависимостей тестов из приложения не мешает проверить настоящую обработку фото.
+Выполняется один smoke-тест открытого фото, а при передаче приватной фикстуры —
+второй тест чашки в руке; девять JUnit-тестов выше остаются debug-проверкой.
+
+Команды из корня репозитория (PowerShell):
+
+```powershell
+.\gradlew.bat --no-configuration-cache --init-script gradle/android-release-tests.init.gradle :composeApp:connectedDirectReleaseAndroidTest
+.\gradlew.bat --no-configuration-cache --init-script gradle/android-release-tests.init.gradle :composeApp:connectedPlayReleaseAndroidTest
+```
+
+Этот init-скрипт подключается вручную; обычные release-сборки продолжают
+использовать настройку подписи из `composeApp/build.gradle.kts`. Не передавайте
+его командам публикации или сборки дистрибутива. XML-отчёты instrumentation
+находятся в `composeApp/build/outputs/androidTest-results/connected/`.
 
 Приватное фото с чашкой в руке не хранится в Git. Для отдельной регрессии передайте
 его путь на устройстве аргументом `cupInHandFixture`. Тест проверяет сохранение
@@ -160,7 +205,21 @@ adb shell am instrument -w \
 ```
 
 Без этого аргумента только приватная регрессия пропускается; открытая фикстура
-и остальные проверки запускаются всегда. Kotlin-код iOS ранее проверен через
+и остальные проверки запускаются всегда.
+
+Для release-проверки приватного фото используйте путь `/data/local/tmp`,
+доступный тесту на устройстве (без `run-as`, который требует debug-приложение):
+
+```powershell
+adb push "C:\private\cup-in-hand.png" /data/local/tmp/cup-fixture.png
+adb shell chmod 644 /data/local/tmp/cup-fixture.png
+.\gradlew.bat --no-configuration-cache --init-script gradle/android-release-tests.init.gradle :composeApp:connectedDirectReleaseAndroidTest "-Pandroid.testInstrumentationRunnerArguments.cupInHandFixture=/data/local/tmp/cup-fixture.png"
+.\gradlew.bat --no-configuration-cache --init-script gradle/android-release-tests.init.gradle :composeApp:connectedPlayReleaseAndroidTest "-Pandroid.testInstrumentationRunnerArguments.cupInHandFixture=/data/local/tmp/cup-fixture.png"
+adb shell rm /data/local/tmp/cup-fixture.png
+```
+
+Путь `C:\private\cup-in-hand.png` замените на локальное приватное фото; не
+добавляйте его в репозиторий. Kotlin-код iOS ранее проверен через
 `compileKotlinIosArm64`; Swift и Vision требуют проверки на macOS/iPhone.
 
 Проверить чашку с ручкой, прозрачный стакан, чашку в руке, несколько чашек, фото
