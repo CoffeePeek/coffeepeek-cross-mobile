@@ -34,7 +34,7 @@ import com.coffeepeek.domain.model.CoffeeShop
 @Composable
 internal fun PublicProfileFavoriteCard(
     favorite: PublicProfileFavorite,
-    modifier: Modifier = Modifier.width(260.dp),
+    modifier: Modifier = Modifier.width(300.dp),
     onClick: () -> Unit,
 ) {
     val address = favorite.publicAddress
@@ -59,7 +59,6 @@ internal fun PublicProfileFavoriteCard(
             modifier = modifier,
             showCatalogDetails = false,
             showOpenStatus = favorite.isOpen != null,
-            compact = true,
         )
         PublicFavoriteKind.Roaster -> RoasterCard(
             roaster = CatalogItem(
@@ -78,8 +77,6 @@ internal fun PublicProfileFavoriteCard(
             isFavoriteLoading = false,
             onToggleFavorite = null,
             modifier = modifier,
-            expanded = true,
-            compact = true,
         )
         PublicFavoriteKind.Drink -> PublicDrinkFavoriteCard(favorite, modifier)
     }

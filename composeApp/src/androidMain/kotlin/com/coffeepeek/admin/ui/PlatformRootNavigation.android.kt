@@ -4,6 +4,6 @@ import androidx.compose.runtime.Composable
 import kotlinx.coroutines.flow.Flow
 
 @Composable
-internal actual fun PlatformRootNavigation(events: Flow<Navigator.NavEvent>, appLink: Navigator.Screen?, consumeLink: () -> Unit, content: @Composable (Navigator.Screen, () -> Unit) -> Unit) = false
+internal actual fun PlatformRootNavigation(isLoggedIn: Boolean, events: Flow<Navigator.NavEvent>, appLink: Navigator.Screen?, consumeLink: () -> Unit, content: @Composable (Navigator.Screen, () -> Unit) -> Unit) = false
 
 internal actual fun clearPlatformNavigationState() = Unit

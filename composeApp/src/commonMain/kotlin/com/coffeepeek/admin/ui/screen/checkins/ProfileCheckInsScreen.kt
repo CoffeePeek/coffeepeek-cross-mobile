@@ -153,7 +153,7 @@ internal fun ProfileCheckInsScreen(
     }
     selectedShop?.let { checkIn ->
         SwipeDismissModalBottomSheet(onDismissRequest = { selectedShop = null }) {
-            PlatformScrollableColumn(Modifier.fillMaxWidth().weight(1f)) {
+            PlatformScrollableColumn(Modifier.fillMaxWidth().weight(1f, fill = false)) {
                 CheckInDisplayCard(checkIn, fullVersion = true,
                     modifier = Modifier.padding(horizontal = 16.dp),
                     onPhotoClick = { urls, index -> photoPreview = urls to index })

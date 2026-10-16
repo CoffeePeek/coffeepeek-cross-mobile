@@ -12,18 +12,17 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.SheetValue
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.mutableFloatStateOf
@@ -34,9 +33,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.unit.dp
-import com.coffeepeek.admin.theme.CoffeePeekTheme
-import org.jetbrains.compose.ui.tooling.preview.Preview
+
+private val SheetDragHandleHeight = 44.dp
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -61,6 +61,11 @@ fun SwipeDismissModalBottomSheet(
         confirmValueChange = { canDismiss || it != SheetValue.Hidden },
     )
     val density = LocalDensity.current
+    val windowHeight = with(density) { LocalWindowInfo.current.containerSize.height.toDp() }
+    val bottomInset = with(density) { WindowInsets.navigationBars.getBottom(this).toDp() }
+    val maxContentHeight = maxSheetHeightFraction?.let { fraction ->
+        (windowHeight * fraction.coerceIn(0.1f, 1f) - SheetDragHandleHeight - bottomInset).coerceAtLeast(1.dp)
+    }
     val dismissDistance = with(density) { 72.dp.toPx() }
     val dismissVelocity = with(density) { 900.dp.toPx() }
     var dragOffset by remember { mutableFloatStateOf(0f) }
@@ -79,7 +84,7 @@ fun SwipeDismissModalBottomSheet(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(44.dp)
+                    .height(SheetDragHandleHeight)
                     .draggable(
                         state = dragState,
                         orientation = Orientation.Vertical,
@@ -108,36 +113,16 @@ fun SwipeDismissModalBottomSheet(
             }
         },
         containerColor = MaterialTheme.colorScheme.surface,
-    ) {
-        if (maxSheetHeightFraction == null) {
-            trackedContent()
-        } else {
-            // Keep the sheet's anchor constraints equal to the dialog viewport.
-            // Sizing the ModalBottomSheet itself makes Expanded resolve to y = 0,
-            // because Material sees the reduced height as the entire viewport.
-            Column(Modifier.fillMaxWidth().fillMaxHeight(maxSheetHeightFraction)) {
+        content = {
+            if (maxContentHeight != null) {
+                // Keep the outer viewport intact: Material uses it to anchor the sheet
+                // to the window bottom. Only the body has a maximum height.
+                Column(Modifier.fillMaxWidth().heightIn(max = maxContentHeight)) {
+                    trackedContent()
+                }
+            } else {
                 trackedContent()
             }
-        }
-    }
+        },
+    )
 }
-
-// A modal has its own window: use Interactive Preview / Run Preview to inspect its placement.
-@Composable
-private fun SwipeDismissModalBottomSheetPlacementPreview(darkTheme: Boolean) {
-    CoffeePeekTheme(darkTheme = darkTheme) {
-        SwipeDismissModalBottomSheet({}, maxSheetHeightFraction = 0.76f) {
-            Column(Modifier.fillMaxWidth().fillMaxHeight().verticalScroll(rememberScrollState())) {
-                repeat(40) { Text("Example row $it") }
-            }
-        }
-    }
-}
-
-@Preview
-@Composable
-private fun SwipeDismissModalBottomSheetLightPreview() = SwipeDismissModalBottomSheetPlacementPreview(false)
-
-@Preview
-@Composable
-private fun SwipeDismissModalBottomSheetDarkPreview() = SwipeDismissModalBottomSheetPlacementPreview(true)

@@ -43,11 +43,11 @@ final class SocialSignInProvider: NSObject, IosAppleAuthProvider,
 
     func signIn(nonce: String, state: String, completion: @escaping @Sendable (String?, String?) -> Void) {
         guard appleController == nil, !googleInProgress else {
-            completion(nil, "Вход уже выполняется")
+            completion(nil, "Вход уже выполняется [ASI-B]")
             return
         }
         guard let window = Self.presentationWindow else {
-            completion(nil, "Не удалось открыть окно Apple")
+            completion(nil, "Не удалось открыть окно Apple [ASI-W]")
             return
         }
         appleCompletion = completion
@@ -78,11 +78,17 @@ final class SocialSignInProvider: NSObject, IosAppleAuthProvider,
 
     func authorizationController(controller: ASAuthorizationController, didCompleteWithAuthorization authorization: ASAuthorization) {
         guard controller === appleController else { return }
-        guard let credential = authorization.credential as? ASAuthorizationAppleIDCredential,
-              credential.state == expectedState,
-              let data = credential.identityToken,
+        guard let credential = authorization.credential as? ASAuthorizationAppleIDCredential else {
+            finishApple(token: nil, error: "Apple не вернул данные для входа. Попробуйте ещё раз. [ASI-C]")
+            return
+        }
+        guard credential.state == expectedState else {
+            finishApple(token: nil, error: "Не удалось проверить ответ Apple. Попробуйте ещё раз. [ASI-S]")
+            return
+        }
+        guard let data = credential.identityToken,
               let token = String(data: data, encoding: .utf8), !token.isEmpty else {
-            finishApple(token: nil, error: "Apple не вернул данные для входа. Попробуйте ещё раз.")
+            finishApple(token: nil, error: "Apple не вернул данные для входа. Попробуйте ещё раз. [ASI-T]")
             return
         }
         finishApple(token: token, error: nil)
@@ -91,7 +97,15 @@ final class SocialSignInProvider: NSObject, IosAppleAuthProvider,
     func authorizationController(controller: ASAuthorizationController, didCompleteWithError error: Error) {
         guard controller === appleController else { return }
         let cancelled = (error as? ASAuthorizationError)?.code == .canceled
-        finishApple(token: nil, error: cancelled ? "APPLE_SIGN_IN_CANCELLED" : "Не удалось войти через Apple. Попробуйте ещё раз.")
+        if cancelled {
+            finishApple(token: nil, error: "APPLE_SIGN_IN_CANCELLED")
+            return
+        }
+        let nativeError = error as NSError
+        let domain = Self.safeErrorDomain(nativeError.domain)
+        NSLog("Apple Sign-In failed: domain=%@ code=%ld", domain ?? "<invalid>", nativeError.code)
+        let domainSuffix = domain.map { " D:\($0)" } ?? ""
+        finishApple(token: nil, error: "Не удалось войти через Apple. Попробуйте ещё раз. [ASI-E\(nativeError.code)\(domainSuffix)]")
     }
 
     private func finishApple(token: String?, error: String?) {
@@ -122,7 +136,7 @@ final class SocialSignInProvider: NSObject, IosAppleAuthProvider,
                     _ = completion(nil, "Вход через Google отменён")
                     return
                 }
-                let domain = Self.safeGoogleErrorDomain(error.domain)
+                let domain = Self.safeErrorDomain(error.domain)
                 NSLog("Google Sign-In failed: domain=%@ code=%ld", domain ?? "<invalid>", error.code)
                 let domainSuffix = domain.map { " D:\($0)" } ?? ""
                 let oauthErrorSuffix = Self.safeOAuthErrorIdentifier(error).map { " O:\($0)" } ?? ""
@@ -139,7 +153,7 @@ final class SocialSignInProvider: NSObject, IosAppleAuthProvider,
         }
     }
 
-    private static func safeGoogleErrorDomain(_ domain: String) -> String? {
+    private static func safeErrorDomain(_ domain: String) -> String? {
         let allowed = CharacterSet(charactersIn: "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789._-")
         guard !domain.isEmpty, domain.count <= 80,
               domain.unicodeScalars.allSatisfy({ allowed.contains($0) }) else { return nil }

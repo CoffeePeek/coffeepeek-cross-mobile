@@ -1,8 +1,32 @@
-# Migration stack versus main f2b184b — 2026-10-16
+# Migration stack versus main 0137ee7 — 2026-10-16
+
+## Latest profile update (#97–98)
+
+Main advanced again from f2b184b to 0137ee7. The new personal/public profile,
+profile activity calendar and favorites previews are retained from main, not
+rewritten in feature modules. The personal ProfileScreen and public-profile
+implementation match main; the existing logout cleanup error handling remains
+in ProfileViewModel. Root session arguments and public-profile user dependencies
+are carried through without replacing migrated screen entries.
+
+Main removed mobile change-filter jobs. Android CI now keeps its unconditional
+single build job, with migration-required Java 21 and extra runtime/test-APK
+checks; no stale filter-dependent gate or duplicate job remains. Main's shared
+sheet, photo-memory and Apple-login updates are incoming changes, not new iOS
+refactoring in this stack. Verification below describes the earlier baseline;
+fresh 0137ee7 validation is recorded separately below.
+
+### Fresh parent verification at 0137ee7
+
+Direct/Play debug APKs, both packaged DEX guards, both app unit-test variants,
+Direct lint and the app instrumentation APK pass. Added regression cases preserve
+the new guest/authenticated profile-tab selection and stable Settings identity.
+ProfileScreen and the public-profile implementation have no diff against main.
+No physical phone, production account or backend write is part of these checks.
 
 This audit supersedes the 4976e53 inventory where incoming product behavior changed.
 Keep parent #43 → develop and history #95 → #43; do not create a second history PR.
-Main added 240 files/changes through #96. Synchronization preserves its public
+Main added 240 files/changes through #96. That synchronization preserves its public
 profiles, analytics consent/privacy, submission feedback and iOS implementation.
 No root Navigation migration, dependency upgrade or extra feature scaffolding is
 part of this synchronization. Shared Native compilation is not an iOS device test.

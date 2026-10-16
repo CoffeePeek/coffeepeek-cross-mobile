@@ -18,4 +18,3 @@ internal fun calendarPhotos(checkIns: List<CheckIn>, homePhotos: List<CalendarPh
     (checkIns.mapNotNull { diaryPhoto(it)?.let { (url, cutout) -> CalendarPhoto(url, cutout) } } + homePhotos)
         .sortedByDescending(CalendarPhoto::isCutout)
         .distinctBy(CalendarPhoto::url)
-        .take(3)

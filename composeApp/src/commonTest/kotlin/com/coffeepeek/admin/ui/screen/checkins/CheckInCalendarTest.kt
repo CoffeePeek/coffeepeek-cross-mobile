@@ -8,13 +8,18 @@ import kotlin.test.assertEquals
 
 class CheckInCalendarTest {
     @Test
-    fun calendarPrioritizesCutoutsAcrossHomeAndCafeVisitsAndLimitsTheStack() {
+    fun calendarPrioritizesCutoutsAcrossHomeAndCafeVisitsAndKeepsAllUniquePhotos() {
         val visits = listOf(
             CheckIn("original", "shop", "Coffee", "", "2026-10-12T09:00:00Z", photoUrls = listOf("original.jpg")),
             CheckIn("cutout", "shop", "Coffee", "", "2026-10-12T10:00:00Z", drinkPhotoUrl = "cafe.png"),
         )
-        assertEquals(listOf(CalendarPhoto("cafe.png", true), CalendarPhoto("home.png", true), CalendarPhoto("original.jpg", false)),
-            calendarPhotos(visits, listOf(CalendarPhoto("home.png", true), CalendarPhoto("fourth.jpg", false))))
+        val photos = calendarPhotos(visits, listOf(
+            CalendarPhoto("home.png", true), CalendarPhoto("fourth.jpg", false), CalendarPhoto("fifth.jpg", false),
+        ))
+        assertEquals(listOf(
+            CalendarPhoto("cafe.png", true), CalendarPhoto("home.png", true), CalendarPhoto("original.jpg", false),
+            CalendarPhoto("fourth.jpg", false), CalendarPhoto("fifth.jpg", false),
+        ), photos)
         assertEquals(listOf(CalendarPhoto("cafe.png", true)),
             calendarPhotos(visits.takeLast(1), listOf(CalendarPhoto("cafe.png", true))))
     }

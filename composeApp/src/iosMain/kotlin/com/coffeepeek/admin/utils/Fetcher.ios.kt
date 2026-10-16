@@ -5,11 +5,11 @@ import io.kamel.core.Resource
 import io.kamel.core.config.ResourceConfig
 import io.kamel.core.fetcher.Fetcher
 import io.ktor.client.HttpClient
-import io.ktor.client.call.body
-import io.ktor.client.request.get
+import io.ktor.client.request.prepareGet
+import io.ktor.client.statement.bodyAsChannel
 import io.ktor.utils.io.ByteReadChannel
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.channelFlow
+import kotlinx.coroutines.flow.flow
 import kotlin.reflect.KClass
 
 actual class CustomUrlFetcher(
@@ -22,8 +22,11 @@ actual class CustomUrlFetcher(
     override fun fetch(
         data: CustomUrl,
         resourceConfig: ResourceConfig,
-    ): Flow<Resource<ByteReadChannel>> = channelFlow {
-        val bytes = client.get(data.url).body<ByteArray>()
-        send(Resource.Success(ByteReadChannel(bytes), source))
+    ): Flow<Resource<ByteReadChannel>> = flow {
+        client.prepareGet(data.url).execute { response ->
+            // Kamel decodes inside its sequential map collector. Keep emit synchronous:
+            // buffering the raw channel would outlive execute and close the response early.
+            emit(Resource.Success(response.bodyAsChannel(), source))
+        }
     }
 }

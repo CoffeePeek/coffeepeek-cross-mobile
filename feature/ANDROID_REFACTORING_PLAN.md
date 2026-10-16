@@ -1,10 +1,12 @@
 # Android refactoring — current roadmap
 
-Audit date: 2026-10-16. Product baseline: `origin/main` **f2b184b**.
+Audit date: 2026-10-16. Product baseline: `origin/main` **0137ee7**.
 This is the current checklist. Older feature READMEs contain historical checkpoint
 notes; they do not override this source audit or certify later changes.
 
-Latest parent synchronization: main #96 is reconciled with #43, including actual
+Latest parent synchronization includes main #97–98's personal/public profile
+redesign unchanged. Profile migration remains **not started**. Main #96 is
+reconciled with #43, including actual
 server-backed shop/roaster/drink favorites, offline photo extraction and exact
 visit times. See [MAIN_SYNC_AUDIT.md](MAIN_SYNC_AUDIT.md) for changed contracts,
 verification and history-child follow-up. Older dated 4976e53 notes below are
@@ -69,9 +71,9 @@ A compilation/test pass is not evidence of pixel parity or a live write.
   selected check. Keep accessible single-choice semantics, no initial reason,
   existing validation and typed MVI actions; disable changes while submitting.
 
-## Current synchronization and next checkpoint — 2026-10-15
+## Historical synchronization checkpoint — 2026-10-15
 
-Fresh fetch confirms `origin/main` is still **4976e53**. Local main is identical;
+At that checkpoint `origin/main` was **4976e53**. Local main was identical;
 both #43 and #95 already contain that commit. Do not create an empty merge or
 merge someone else's develop-to-main PR to manufacture an update. Publish
 parent-owned UI fixes in #43, then merge that parent normally into #95. The
@@ -95,13 +97,13 @@ Next work is ordered, not parallel feature scaffolding:
 |---|---|---|
 | Favorites: server-backed shops, roasters **and drinks** | In progress; Android entry adapts the existing server source | Preserve main's three kinds, canonical addresses, explicit read/write errors, account replacement and cache-only logout. New drink cards have no invented detail route. Real saved data/photos, login-retry/account journey, process restoration, physical-device/accessibility/locale QA and migrated-feature analytics parity remain release gates. |
 | Shop Report: incorrect shop data | In progress; Android entry active | Real safe submit/error/uncertain-delivery flow and paired preview inspection; retain shared/iOS fallback. |
-| Shop: detail, menu, public check-ins and creation sheet | In progress; Android entries active | Physical-device visual/guest/owner/return parity; picker/camera permissions and recreation, ML Kit quality/model availability and safely authorized submissions. Prepared review editors are not a product requirement. |
+| Shop: detail, menu, public check-ins and creation sheet | In progress; Android entries active | Physical-device visual/guest/owner/return parity; picker/camera permissions and recreation, bundled extraction quality and safely authorized submissions. Prepared review editors are not a product requirement. |
 | Personal history: one combined Shop/Home calendar and timeline | In progress; all prepared migration code in history child, **not active** | The prepared Shop-only Calendar/List UI is not parity with main. Complete combined readers, MVI, production-shaped UI, home callbacks and Android integration first. |
 | Home preparations: create/detail/edit/delete, recipes and photos | Not started as a new feature migration | Existing main editor/detail remain active through combined history. Extract only the needed read boundary first; do not recreate unused history/statistics tabs from the standalone Home screen. |
 | Discovery: shop list/search/filter/map and embedded roasters | Not started | Audit actual list/map/filter ownership and current platform map; no independent module for every mode. |
 | Coffee catalogue: Coffee tab/list/detail | Not started | Preserve current catalogue/search/detail and links to roasters; catalog pickers are existing shared app boundaries, not invented screens. |
 | Roasters: list/detail and saved membership | Not started | Preserve current entry points, contacts, catalogue links and favorites. Favorites parity is an earlier gate, not permission for a wholesale roaster rewrite. |
-| Profile/account: statistics, edit, pending deletion | Not started | Preserve current routes and delegates to history/favorites/auth; don't duplicate their business ownership. |
+| Profile/account: personal/public profile, activity calendar, favorites preview, connections, edit, pending deletion | Not started | Main #97–98 redesign is retained, not extracted. Preserve its public-profile dependency, session-aware tabs, existing history/favorites/auth delegates and cached-account fallback; don't duplicate their business ownership. |
 | Auth: sign-in, registration, forgot/reset password | Not started as feature extraction | Existing session fixes are not a completed auth migration. Keep recovery/deep-link and Google/platform behavior. |
 | Community: current feed/check-in actions | Not started | Current refresh/filter/paging/votes/privacy and owner guards; no resurrection of legacy reviews. |
 | Settings: city/theme/legal/share/version/update actions | Not started | Audit preferences and existing app-update integration; no speculative settings/storage/update module split. |
@@ -123,7 +125,8 @@ These findings come from registered renderers and their call sites, not filename
   and 30 other destinations. There are 35 routes without graphs, not 35 unique
   screens. Excluding Main and the legacy ReportReview contract leaves 33 content
   route contracts; aliases/modal flows still share screens.
-- Tabs are discovery/Feed, Coffee, Community, Profile and Settings.
+- Authenticated tabs are discovery/Feed, Coffee, Community, Profile and Settings.
+  Preserve main's session-aware guest tab selection rather than hard-coding all five.
 - VisitedPlaces, HomeCheckIns and EditHomeCheckIn(id) all render the same
   ProfileCheckInsScreen; the last passes an initial home ID for editing.
 - History has All/Shop/Home filters, one calendar/date selection, a combined

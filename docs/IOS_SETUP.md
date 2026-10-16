@@ -75,7 +75,7 @@ python3 iosApp/configure-auth.py --google-plist /path/GoogleService-Info.plist \
 
 ### Sign in with Apple
 
-Системная кнопка Apple доступна на экранах входа и регистрации. Backend выдаёт
+Кнопка входа через Apple доступна на экранах входа и регистрации. Backend выдаёт
 одноразовый challenge на 5 минут (`POST /api/Tokens/apple/challenge`), iOS передаёт
 его nonce и state в Apple, затем отправляет `challengeId` и `idToken` на
 `POST /api/Tokens/apple/login`. Сервер проверяет подпись, issuer, audience, срок
@@ -97,12 +97,27 @@ python3 iosApp/configure-auth.py --google-plist /path/GoogleService-Info.plist \
 Google iOS client и audience Apple в backend. Настройте отправителя писем
 CoffeePeek в Apple Private Email Relay, чтобы письма доходили на скрытые адреса.
 
-`iOS build verification` компилирует Kotlin и Swift для симулятора без
-сертификата в PR в `main` и `develop`, если изменён iOS или общий KMP-код.
-Проверку также можно запустить вручную. После push выполняется TestFlight
-release-сборка. Правила выбора платформ и кэширования описаны в
-`docs/release/ci-runbook.md`. Проверка реального входа требует устройства,
-актуального профиля и настроенных OAuth ID.
+`iOS build verification` отдельно компилирует Kotlin и Swift для симулятора без
+сертификата. Проверка реального входа требует устройства, актуального профиля
+и настроенных OAuth ID.
+
+При ошибке нативного входа приложение сохраняет короткий диагностический код:
+
+| Код | Этап сбоя |
+| --- | --- |
+| `ASI-CH` | Не удалось получить challenge от CoffeePeek. |
+| `ASI-B` | Другой социальный вход ещё выполняется. |
+| `ASI-W` | Не найдено активное окно для показа авторизации. |
+| `ASI-C` | Apple вернул неподдерживаемый тип credential. |
+| `ASI-S` | State ответа не совпал с запросом. Повторить вход с новым challenge. |
+| `ASI-T` | В ответе отсутствует пригодный identity token. |
+| `ASI-E<число>` | Ошибка SDK Apple; рядом отображается допустимый NSError domain. |
+| `ASI-X` | Apple вернул токен, но обмен на сессию CoffeePeek или её сохранение завершились ошибкой. |
+
+Для диагностики нужен точный текст ошибки и этап, на котором остановился вход.
+Код и домен не содержат токен, nonce, state, email или произвольный `userInfo`.
+Успешный ответ `/challenge` проверяет только начало цепочки; для подтверждения
+исправности входа нужен реальный Apple callback и обмен токена на сессию.
 
 ## Запуск в симуляторе
 

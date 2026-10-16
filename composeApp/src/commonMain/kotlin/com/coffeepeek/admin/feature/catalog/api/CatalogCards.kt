@@ -30,7 +30,4 @@ internal fun RoasterCard(
     isFavoriteLoading: Boolean,
     onToggleFavorite: (() -> Unit)?,
     modifier: Modifier = Modifier,
-    // A larger summary card with logo, description and a footer; lists keep the compact default.
-    expanded: Boolean = false,
-    compact: Boolean = false,
-) = RoasterCardContent(roaster, details, onClick, isFavorite, isFavoriteLoading, onToggleFavorite, modifier, expanded, compact)
+) = RoasterCardContent(roaster, details, onClick, isFavorite, isFavoriteLoading, onToggleFavorite, modifier)

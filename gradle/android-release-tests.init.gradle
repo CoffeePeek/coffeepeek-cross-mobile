@@ -1,0 +1,44 @@
+// Opt in with --init-script only for local release instrumentation.
+// APKs built by this invocation use the debug key and MUST NOT be published.
+// R8 and resource shrinking retain the application's normal release settings.
+if (gradle.parent == null) {
+    gradle.settingsEvaluated { settings ->
+        if (settings.findProject(':composeApp') == null) {
+            throw new GradleException('Release instrumentation requires the :composeApp module.')
+        }
+    }
+
+    gradle.beforeProject { project ->
+        if (project.path == ':composeApp') {
+            project.pluginManager.withPlugin('com.android.application') {
+                project.extensions.getByName('androidComponents').finalizeDsl { android ->
+                    android.testBuildType = 'release'
+                    android.defaultConfig.testInstrumentationRunner = 'com.coffeepeek.admin.releasecheck.DrinkPhotoReleaseInstrumentation'
+                    def release = android.buildTypes.getByName('release')
+                    release.signingConfig = android.signingConfigs.getByName('debug')
+
+                    // The platform-only Java runner avoids AndroidX/Kotlin test dependencies
+                    // that the application is free to remove. Keep only its app-side probe.
+                    project.extensions.getByName('kotlin').sourceSets.getByName('androidMain').kotlin.srcDir(
+                        project.rootProject.file('gradle/release-tests/probe')
+                    )
+                    android.sourceSets.getByName('androidTest').java.srcDir(
+                        project.rootProject.file('gradle/release-tests/runner')
+                    )
+                    def runnerRules = project.layout.buildDirectory.file('validation/android-release-tests.pro').get().asFile
+                    runnerRules.parentFile.mkdirs()
+                    runnerRules.setText(
+                        '-keep class com.coffeepeek.admin.feature.checkin.data.ReleaseDrinkPhotoProbe { public static byte[][] extract(byte[]); }\n',
+                        'UTF-8'
+                    )
+                    release.proguardFile(runnerRules)
+                }
+            }
+            project.afterEvaluate {
+                if (!project.plugins.hasPlugin('com.android.application')) {
+                    throw new GradleException('Release instrumentation requires :composeApp to be an Android application.')
+                }
+            }
+        }
+    }
+}

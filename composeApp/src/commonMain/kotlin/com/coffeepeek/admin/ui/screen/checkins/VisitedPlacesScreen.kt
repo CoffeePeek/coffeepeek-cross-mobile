@@ -55,7 +55,7 @@ fun VisitedPlacesScreen(vm: VisitedPlacesViewModel = platformViewModel()) {
 
     selectedCheckIn?.let { checkIn ->
         SwipeDismissModalBottomSheet(onDismissRequest = { selectedCheckIn = null }) {
-            PlatformScrollableColumn(Modifier.fillMaxWidth().weight(1f)) {
+            PlatformScrollableColumn(Modifier.fillMaxWidth().weight(1f, fill = false)) {
                 Text("Чекин", style = MaterialTheme.typography.titleLarge,
                     modifier = Modifier.padding(horizontal = 20.dp, vertical = 12.dp))
                 CheckInDisplayCard(

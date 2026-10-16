@@ -194,13 +194,22 @@ class PublicProfileRepositoryTest {
 
     @Test
     fun checkInsStayFilteredByAuthorVisibilityAndModerationAndRetainHomeRecipe(): Unit = runBlocking {
+        val shop = CheckIn(
+            "shop", "coffee-shop", "Кофейня", "Заметка", "2026-10-14",
+            authorAddress = address("glasha"), shopAddress = address("coffee-shop"),
+            visibility = CheckInVisibility.Public, moderationState = CheckInModerationState.Approved,
+            username = "glasha", authorAvatarUrl = "https://images.test/avatar.jpg",
+            rating = ReviewRating(5, 4, 3), drinkNameRu = "Флэт уайт", drinkNameEn = "Flat white",
+            photoUrls = listOf("https://images.test/full.jpg"), photoThumbnailUrls = listOf("https://images.test/thumb.jpg"),
+            drinkPhotoUrl = "https://images.test/drink-cutout.png", helpfulCount = 3, isHelpfulByCurrentUser = true,
+        )
+        val home = shop.copy(id = "home", isHome = true,
+            homePreparation = FeedHomePreparation("2026-10-12", "hario-v60", "Колумбия", 15.0, 120, 5))
         val feed = object : FeedRepository {
             override suspend fun getFeed(pageSize: Int, cursor: String?, filters: FeedFilters): Result<FeedPage> {
                 assertEquals(FeedFilters(authorSlug = "glasha"), filters)
                 assertEquals("cursor", cursor)
-                val base = CheckIn("shop", "coffee-shop", "Кофейня", "Заметка", "2026-10-14", authorAddress = address("glasha"), shopAddress = address("coffee-shop"), visibility = CheckInVisibility.Public, moderationState = CheckInModerationState.Approved)
-                val home = base.copy(id = "home", isHome = true, homePreparation = FeedHomePreparation("2026-10-12", "hario-v60", "Колумбия", 15.0, 120, 5))
-                return Result.success(FeedPage(listOf(base, base.copy(id = "private", visibility = CheckInVisibility.Private), base.copy(id = "other", authorAddress = address("other")), base.copy(id = "pending", moderationState = CheckInModerationState.Pending), home).map { FeedItem("2026-10-15", it) }, "next"))
+                return Result.success(FeedPage(listOf(shop, shop.copy(id = "private", visibility = CheckInVisibility.Private), shop.copy(id = "other", authorAddress = address("other")), shop.copy(id = "pending", moderationState = CheckInModerationState.Pending), home).map { FeedItem("2026-10-15", it) }, "next"))
             }
         }
         val client = HttpClientFactory(MockEngine { error("No private/profile endpoint expected") }).api("https://api.coffeepeek.by")
@@ -211,6 +220,8 @@ class PublicProfileRepositoryTest {
             assertEquals("Колумбия", page.items.last().title)
             assertEquals(5.0, page.items.last().rating)
             assertNull(page.items.last().coffeeShopSlug)
+            assertSame(shop, page.items.first().source)
+            assertSame(home, page.items.last().source)
         } finally { client.close() }
     }
 
