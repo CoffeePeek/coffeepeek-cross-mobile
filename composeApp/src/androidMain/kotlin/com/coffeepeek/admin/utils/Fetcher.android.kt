@@ -1,6 +1,5 @@
 package com.coffeepeek.admin.utils
 
-import com.coffeepeek.admin.utils.BitmapUtil.toByteArray
 import io.kamel.core.DataSource
 import io.kamel.core.Resource
 import io.kamel.core.config.ResourceConfig
@@ -27,12 +26,8 @@ actual class CustomUrlFetcher(
     override fun fetch(
         data: CustomUrl, resourceConfig: ResourceConfig
     ): Flow<Resource<ByteReadChannel>> = channelFlow {
-        val data = client.get(data.url).body<ByteArray>()
-        val resized = BitmapUtil.load(
-            byteArray = data,
-            maxHeightWidth = BitmapUtil.DISPLAY_MAX_SIDE,
-            maxByteSize = BitmapUtil.DISPLAY_BYTE_RANGE,
-        ).toByteArray()
+        val bytes = client.get(data.url).body<ByteArray>()
+        val resized = BitmapUtil.prepareForDisplay(bytes)
         send(Resource.Success(ByteReadChannel(resized), source))
     }
 

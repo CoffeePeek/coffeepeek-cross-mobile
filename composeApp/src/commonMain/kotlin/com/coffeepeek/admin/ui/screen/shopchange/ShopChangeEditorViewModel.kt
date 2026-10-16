@@ -1,7 +1,6 @@
 package com.coffeepeek.admin.ui.screen.shopchange
 
 import com.coffeepeek.admin.base.BaseViewModel
-import com.coffeepeek.admin.ui.Navigator
 import com.coffeepeek.admin.utils.MAX_MENU_PHOTOS
 import com.coffeepeek.admin.utils.MAX_SHOP_PHOTOS
 import com.coffeepeek.admin.utils.PickedImage
@@ -18,11 +17,13 @@ import com.coffeepeek.domain.model.ShopChangeContacts
 import com.coffeepeek.domain.model.ShopChangeDraft
 import com.coffeepeek.domain.model.ShopChangeMenuItem
 import com.coffeepeek.domain.model.ShopChangeSection
+import com.coffeepeek.domain.model.ShopChangeRequest
 import com.coffeepeek.domain.model.ShopPhoto
 import com.coffeepeek.domain.model.UploadedPhotoMeta
 import com.coffeepeek.domain.repository.ShopChangeRequestRepository
 import com.coffeepeek.domain.repository.ShopRepository
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -40,6 +41,8 @@ data class ShopChangeEditorUiState(
     val shopTitle: String = "",
     val isLoading: Boolean = true,
     val isSubmitting: Boolean = false,
+    val submissionError: String? = null,
+    val submittedRequest: ShopChangeRequest? = null,
     val requestStatus: ModerationStatus? = null,
     val error: String? = null,
     val description: String = "",
@@ -72,7 +75,7 @@ data class ShopChangeEditorUiState(
         phoneError == null && emailError == null && websiteError == null && instagramError == null
     val photoCount: Int get() = retainedPhotos.size + newPhotos.size + alreadyUploadedPhotos.size
     val menuPhotoCount: Int get() = retainedMenuPhotos.size + newMenuPhotos.size + alreadyUploadedMenuPhotos.size
-    val canSubmit: Boolean get() = when (section) {
+    val canSubmit: Boolean get() = !isLoading && !isSubmitting && submittedRequest == null && when (section) {
         ShopChangeSection.Description -> descriptionError == null
         ShopChangeSection.Contacts -> contactsValid
         ShopChangeSection.Photos -> photoCount <= MAX_SHOP_PHOTOS
@@ -204,25 +207,30 @@ class ShopChangeEditorViewModel(
     }
 
     fun clearError() = _state.update { it.copy(error = null) }
+    fun clearSubmissionError() = _state.update { it.copy(submissionError = null) }
 
     fun submit() {
         val snapshot = _state.value
         if (!snapshot.canSubmit || snapshot.isSubmitting) return
+        if (!_state.compareAndSet(snapshot, snapshot.copy(isSubmitting = true, submissionError = null))) return
         workScope.launch {
-            _state.update { it.copy(isSubmitting = true, error = null) }
             val draft = snapshot.toDraft(shopId, section)
-            val result = if (requestId.isNullOrBlank()) {
+            val result = try { if (requestId.isNullOrBlank()) {
                 changeRepository.create(draft)
             } else {
                 changeRepository.update(requestId, draft)
+            } } catch (cancelled: CancellationException) {
+                _state.update { it.copy(isSubmitting = false) }
+                throw cancelled
+            } catch (error: Exception) {
+                Result.failure(error)
             }
             result
-                .onSuccess {
-                    _state.update { it.copy(isSubmitting = false) }
-                    Navigator.popBack()
+                .onSuccess { request ->
+                    _state.update { it.copy(isSubmitting = false, submittedRequest = request) }
                 }
                 .onFailure { e ->
-                    _state.update { it.copy(isSubmitting = false, error = e.message ?: "Не удалось отправить заявку") }
+                    _state.update { it.copy(isSubmitting = false, submissionError = e.message?.takeIf { it.isNotBlank() } ?: "Не удалось отправить заявку") }
                 }
         }
     }

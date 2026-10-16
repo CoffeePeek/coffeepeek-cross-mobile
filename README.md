@@ -110,6 +110,7 @@ CoffeePeek-Android/
 
 ## Полезные ссылки
 
+- [docs/ANALYTICS.md](./docs/ANALYTICS.md) — PostHog, согласие, события и проверки Android/iOS
 - [CONTRIBUTING.md](./CONTRIBUTING.md) — онбординг, стиль кода, PR
 - [docs/FIREBASE_CD.md](./docs/FIREBASE_CD.md) — настройка CD через Firebase App Distribution (без Play Console)
 - [docs/ANDROID_APK_CD.md](./docs/ANDROID_APK_CD.md) — публикация stable и versioned APK на VPS

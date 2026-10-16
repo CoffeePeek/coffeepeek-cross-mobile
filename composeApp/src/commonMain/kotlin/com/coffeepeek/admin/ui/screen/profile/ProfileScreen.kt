@@ -1,5 +1,7 @@
 package com.coffeepeek.admin.ui.screen.profile
 
+import com.coffeepeek.admin.analytics.*
+
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.getValue
 import com.coffeepeek.admin.ui.component.PlatformAlert
@@ -150,7 +152,7 @@ fun ProfileScreen(vm: ProfileViewModel = koinInject()) {
                     label = stringResource(Res.string.favorites_profile_title),
                     description = stringResource(Res.string.favorites_profile_description),
                     iconColors = SettingsIconPalette.Rose,
-                    onClick = { Navigator.navigate(Navigator.Screen.Favorites) },
+                    onClick = { run { Analytics.track(AnalyticsEvent.FAVORITES_OPENED, "entry_point" to "profile"); Navigator.navigate(Navigator.Screen.Favorites) } },
                 )
                 SettingsDivider()
                 SettingsRow(

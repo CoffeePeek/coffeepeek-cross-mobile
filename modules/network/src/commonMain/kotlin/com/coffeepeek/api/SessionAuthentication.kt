@@ -22,12 +22,17 @@ internal fun HttpClientConfig<*>.configureSessionAuthentication(
     val origin = Url(baseUrl)
     fun isApi(url: Url) = url.protocol == origin.protocol && url.host == origin.host && url.port == origin.port
     install(Auth) {
-        reAuthorizeOnResponse { it.status == HttpStatusCode.Unauthorized && isApi(it.call.request.url) }
+        reAuthorizeOnResponse {
+            (it.status == HttpStatusCode.Unauthorized && isApi(it.call.request.url)).also { retry ->
+                if (retry) it.call.request.attributes.getOrNull(logicalRequestKey)?.authRetried = true
+            }
+        }
         bearer {
             // Anonymous public endpoints never challenge, so send an available token proactively.
             sendWithoutRequest { isApi(it.url.build()) && current() != null }
             loadTokens { current()?.let { BearerTokens(it.accessToken, it.refreshToken) } }
             refreshTokens {
+                response.call.request.attributes.getOrNull(logicalRequestKey)?.authRetried = true
                 val old = current() ?: return@refreshTokens null
                 if (old.refreshToken.isBlank()) {
                     save(null); return@refreshTokens null

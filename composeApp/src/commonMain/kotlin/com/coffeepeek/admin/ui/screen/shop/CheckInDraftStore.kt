@@ -3,6 +3,7 @@ package com.coffeepeek.admin.ui.screen.shop
 import com.coffeepeek.domain.model.validateConsumedDrink
 import com.coffeepeek.admin.utils.PickedImage
 import com.coffeepeek.admin.utils.currentEpochMillis
+import com.coffeepeek.admin.utils.datePickerMillisWithLocalTime
 
 data class CheckInDraft(
     val shopId: String,
@@ -11,12 +12,18 @@ data class CheckInDraft(
     val drinkName: String? = null,
     val note: String = "",
     val isPublic: Boolean = false,
+    /** Actual visit instant, never a date picker's UTC-midnight day token. */
     val visitMillis: Long,
     val placeRating: Int = 4,
     val serviceRating: Int = 4,
     val coffeeRating: Int = 4,
     val photos: List<PickedImage> = emptyList(),
+    val drinkPhoto: PickedImage? = null,
+    val drinkPhotoSkipped: Boolean = false,
 )
+
+internal fun CheckInDraft.withVisitDate(dateMillis: Long, now: Long = currentEpochMillis()): CheckInDraft =
+    copy(visitMillis = datePickerMillisWithLocalTime(dateMillis, visitMillis).coerceAtMost(now))
 
 internal fun CheckInDraft.validationError(now: Long = currentEpochMillis()): String? = when {
     visitMillis <= 0 || visitMillis > now -> "Выберите дату визита не позднее сегодняшней"

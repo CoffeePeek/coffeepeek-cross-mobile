@@ -8,16 +8,18 @@ import com.coffeepeek.domain.model.CatalogItem
 import com.coffeepeek.domain.model.CoffeeShop
 import com.coffeepeek.domain.model.RoasterDetails
 
-/** Catalog presentation entry points shared by discovery and favorites. */
+/** Catalog card entry points; a null favorite action displays a read-only marker. */
 @Composable
 internal fun ShopCard(
     shop: CoffeeShop,
     distance: String? = null,
     onClick: () -> Unit,
-    onToggleFavorite: () -> Unit,
+    onToggleFavorite: (() -> Unit)?,
     modifier: Modifier = Modifier,
     showCatalogDetails: Boolean = true,
-) = ShopCardContent(shop, distance, onClick, onToggleFavorite, modifier, showCatalogDetails)
+    showOpenStatus: Boolean = true,
+    compact: Boolean = false,
+) = ShopCardContent(shop, distance, onClick, onToggleFavorite, modifier, showCatalogDetails, showOpenStatus, compact)
 
 @Composable
 internal fun RoasterCard(
@@ -26,6 +28,9 @@ internal fun RoasterCard(
     onClick: () -> Unit,
     isFavorite: Boolean,
     isFavoriteLoading: Boolean,
-    onToggleFavorite: () -> Unit,
+    onToggleFavorite: (() -> Unit)?,
     modifier: Modifier = Modifier,
-) = RoasterCardContent(roaster, details, onClick, isFavorite, isFavoriteLoading, onToggleFavorite, modifier)
+    // A larger summary card with logo, description and a footer; lists keep the compact default.
+    expanded: Boolean = false,
+    compact: Boolean = false,
+) = RoasterCardContent(roaster, details, onClick, isFavorite, isFavoriteLoading, onToggleFavorite, modifier, expanded, compact)

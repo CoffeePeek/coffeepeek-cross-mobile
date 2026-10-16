@@ -1,5 +1,7 @@
 package com.coffeepeek.admin.ui.screen.shop
 
+import com.coffeepeek.admin.analytics.*
+
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.getValue
 import com.coffeepeek.admin.ui.component.SwipeDismissModalBottomSheet
@@ -49,7 +51,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -150,6 +151,7 @@ private const val FeaturePreviewCount = 5
 fun ShopDetailScreen(shopId: String, forCheckIn: Boolean = false) {
     val vm: ShopDetailViewModel = platformViewModel(parameters = { parametersOf(shopId) })
     val state by vm.uiState.collectAsState()
+    com.coffeepeek.admin.analytics.TrackEntityDetail(com.coffeepeek.admin.analytics.Entity.Shop, state.details != null)
     val userLocation = rememberPermittedUserLocation()
     val snackbarHostState = remember { SnackbarHostState() }
     // Photos open as a swipeable set: (urls, startIndex).
@@ -173,24 +175,7 @@ fun ShopDetailScreen(shopId: String, forCheckIn: Boolean = false) {
         if (latitude == null || longitude == null) {
             showRoutePicker = false
         } else {
-            AlertDialog(
-                onDismissRequest = { showRoutePicker = false },
-                title = { Text("Построить маршрут") },
-                text = {
-                    Column {
-                        shopRouteOptions(latitude, longitude).forEach { (label, url) ->
-                            TextButton(onClick = {
-                                showRoutePicker = false
-                                OpenInBrowser.openInBrowser(url)
-                            }) { Text(label) }
-                        }
-                    }
-                },
-                confirmButton = {},
-                dismissButton = {
-                    TextButton(onClick = { showRoutePicker = false }) { Text("Отмена") }
-                },
-            )
+            ShopRoutePicker(latitude, longitude, onDismiss = { showRoutePicker = false })
         }
     }
 
@@ -208,6 +193,10 @@ fun ShopDetailScreen(shopId: String, forCheckIn: Boolean = false) {
                 placeName = state.details?.shop?.title,
                 submittedVisibility = state.submittedCheckInVisibility,
                 submissionError = state.checkInError,
+                drinkPhotoState = state.drinkPhotoState,
+                onSelectDrinkPhoto = vm::selectDrinkPhoto,
+                onRetryDrinkPhoto = vm::retryDrinkPhoto,
+                onSkipDrinkPhoto = vm::skipDrinkPhoto,
                 onGoToFeed = {
                     vm.dismissCheckInSheet()
                     Navigator.popThenSelectTab(Navigator.Screen.CommunityTab)
@@ -307,7 +296,7 @@ fun ShopDetailScreen(shopId: String, forCheckIn: Boolean = false) {
                 isCheckInLoading = state.isCheckInLoading,
                 canOpenRoute = details.location?.latitude != null &&
                     details.location?.longitude != null,
-                onRoute = { showRoutePicker = true },
+                onRoute = { Analytics.shopAction("directions", "mobile_actions"); showRoutePicker = true },
                 onCheckIn = vm::openCheckInSheet,
                 forCheckIn = forCheckIn,
                 modifier = Modifier.align(Alignment.BottomCenter),
@@ -363,7 +352,7 @@ private fun ShopDetailContent(
                         details.location?.longitude != null,
                     onOpenOnMap = onOpenOnMap,
                     onOpenReviews = { Navigator.navigate(Navigator.Screen.ShopReviews(shop.id)) },
-                    onPhotoClick = { url -> onOpenPhotos(fullscreenPhotos, photos.indexOf(url).coerceAtLeast(0)) },
+                    onPhotoClick = { url -> Analytics.track(AnalyticsEvent.SHOP_CONTENT_INTERACTED, "section" to "photos", "action" to "open"); onOpenPhotos(fullscreenPhotos, photos.indexOf(url).coerceAtLeast(0)) },
                 )
             }
         }
@@ -385,6 +374,8 @@ private fun ShopDetailContent(
                     roasters = details.roasters,
                     equipment = details.equipment,
                     onRoasterClick = {
+                        Analytics.track(AnalyticsEvent.SHOP_CONTENT_INTERACTED, "section" to "roasters", "action" to "select")
+                        DetailEntryMemory.record(Entity.Roaster, ResultSource.Related, null)
                         Navigator.navigate(Navigator.Screen.RoasterDetail(it))
                     },
                 )
@@ -403,7 +394,7 @@ private fun ShopDetailContent(
             item {
                 MenuSection(
                     menu = menu,
-                    onPhotoClick = { index -> onOpenPhotos(menu.photos.map { it.fullUrl }, index) },
+                    onPhotoClick = { index -> Analytics.track(AnalyticsEvent.SHOP_CONTENT_INTERACTED, "section" to "menu", "action" to "open"); onOpenPhotos(menu.photos.map { it.fullUrl }, index) },
                 )
             }
         }
@@ -469,7 +460,7 @@ private fun ShopHeroImage(
         bottomStart = CpDimens.radiusLg,
         bottomEnd = CpDimens.radiusLg,
     )
-    Column(Modifier.fillMaxWidth()) {
+    Column(Modifier.fillMaxWidth().then(if (photos.isNotEmpty()) Modifier.analyticsExposure("shop_photos", "shop_detail", "shop_detail") else Modifier)) {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -919,6 +910,7 @@ private fun HeaderActionButtons(
             icon = if (isFavorite) GlassControlIcon.FavoriteFilled else GlassControlIcon.Favorite,
             hazeState = hazeState,
             onClick = onToggleFavorite,
+            modifier = Modifier.analyticsExposure("favorites", "shop_detail", "shop_detail"),
             enabled = !isFavoriteLoading,
             isLoading = isFavoriteLoading,
             contentDescription = if (isFavorite) "Убрать из избранного" else "Добавить в избранное",
@@ -933,6 +925,7 @@ private fun HeaderActionButtons(
             icon = GlassControlIcon.Share,
             hazeState = hazeState,
             onClick = onShare,
+            modifier = Modifier.analyticsExposure("share", "shop_detail", "shop_detail"),
             enabled = true,
             isLoading = false,
             contentDescription = "Поделиться",
@@ -997,6 +990,7 @@ private fun HeroIconButton(
     enabled: Boolean,
     isLoading: Boolean,
     contentDescription: String,
+    modifier: Modifier = Modifier,
     content: @Composable () -> Unit,
 ) {
     PlatformGlassIconButton(
@@ -1005,6 +999,7 @@ private fun HeroIconButton(
         enabled = enabled,
         isLoading = isLoading,
         contentDescription = contentDescription,
+        modifier = modifier,
         hazeState = hazeState,
     ) {
         if (isLoading) {
@@ -1046,7 +1041,7 @@ private fun CollapsibleScheduleSection(schedules: List<ShopSchedule>, isOpen: Bo
 
     Column(
         modifier = Modifier
-            .fillMaxWidth()
+            .fillMaxWidth().analyticsExposure("shop_hours", "shop_detail", "shop_detail")
             .padding(horizontal = CpDimens.spacing4, vertical = CpDimens.spacing3),
         verticalArrangement = Arrangement.spacedBy(CpDimens.spacing3),
     ) {
@@ -1059,7 +1054,7 @@ private fun CollapsibleScheduleSection(schedules: List<ShopSchedule>, isOpen: Bo
                     .clickable(
                         interactionSource = remember { MutableInteractionSource() },
                         indication = null,
-                    ) { expanded = !expanded },
+                    ) { expanded = !expanded; Analytics.track(AnalyticsEvent.SHOP_CONTENT_INTERACTED, "section" to "hours", "action" to if (expanded) "open" else "close") },
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Icon(
@@ -1124,7 +1119,7 @@ private fun ContactsSection(
             add(ShopContactItem(
                 icon = CpIcons.Phone,
                 text = phone,
-                onClick = { OpenInBrowser.openInBrowser("tel:$phone") },
+                onClick = { Analytics.shopAction("phone_call", "shop_contacts"); OpenInBrowser.openInBrowser("tel:$phone") },
                 onCopy = { onCopyPhone(phone) },
             ))
         }
@@ -1132,21 +1127,21 @@ private fun ContactsSection(
             add(ShopContactItem(
                 icon = CpIcons.Instagram,
                 text = instagramLabel(instagram),
-                onClick = { OpenInBrowser.openInBrowser(instagram.targetUrl) },
+                onClick = { Analytics.shopAction("instagram", "shop_contacts"); OpenInBrowser.openInBrowser(instagram.targetUrl) },
             ))
         }
         contact.website?.let(::formatWebsiteLink)?.let { website ->
             add(ShopContactItem(
                 icon = CpIcons.Globe,
                 text = website.displayText,
-                onClick = { OpenInBrowser.openInBrowser(website.targetUrl) },
+                onClick = { Analytics.shopAction("website", "shop_contacts"); OpenInBrowser.openInBrowser(website.targetUrl) },
             ))
         }
         contact.email?.takeIf { it.isNotBlank() }?.let { email ->
             add(ShopContactItem(
                 icon = CpIcons.Email,
                 text = email,
-                onClick = { OpenInBrowser.openInBrowser("mailto:$email") },
+                onClick = { Analytics.shopAction("email", "shop_contacts"); OpenInBrowser.openInBrowser("mailto:$email") },
             ))
         }
     }
@@ -1154,7 +1149,7 @@ private fun ContactsSection(
 
     Column(
         modifier = Modifier
-            .fillMaxWidth()
+            .fillMaxWidth().analyticsExposure("shop_contacts", "shop_detail", "shop_detail")
             .padding(horizontal = CpDimens.spacing4, vertical = CpDimens.spacing4),
         verticalArrangement = Arrangement.spacedBy(CpDimens.spacing3),
     ) {
@@ -1331,6 +1326,9 @@ private fun ReviewsSection(
                             CheckInDisplayCard(
                                 checkIn = checkIn,
                                 isOwn = isOwnCheckIn,
+                                onAuthorClick = checkIn.authorAddress?.slug?.takeIf(String::isNotBlank)?.let { slug ->
+                                    { Navigator.navigate(Navigator.Screen.UserProfile(slug, checkIn.username, checkIn.authorAvatarUrl)) }
+                                },
                                 modifier = Modifier.fillMaxWidth(),
                                 onPhotoClick = onReviewPhotoClick,
                                 onHelpfulClick = if (isOwnCheckIn) null else ({ onReviewHelpfulClick(checkIn.id) }),
@@ -1451,7 +1449,7 @@ private fun MenuSection(
     val groups = groupedPresentItems(menu.items)
     Column(
         modifier = Modifier
-            .fillMaxWidth()
+            .fillMaxWidth().analyticsExposure("shop_menu", "shop_detail", "shop_detail")
             .padding(horizontal = CpDimens.spacing4, vertical = 6.dp),
         verticalArrangement = Arrangement.spacedBy(CpDimens.spacing3),
     ) {
@@ -1653,7 +1651,7 @@ private fun ShopDetailBottomBar(
                 enabled = !isCheckInLoading,
                 isLoading = isCheckInLoading,
                 onClick = onCheckIn,
-                modifier = Modifier.weight(1f),
+                modifier = Modifier.weight(1f).analyticsExposure("check_in", "shop_detail", "shop_detail"),
             )
         }
     }
@@ -1668,6 +1666,7 @@ private fun RouteIconButton(
     Box(
         modifier = Modifier
             .size(CpDimens.buttonHeight)
+            .then(if (enabled) Modifier.analyticsExposure("directions", "shop_detail", "shop_detail") else Modifier)
             .shadow(elevation = 8.dp, shape = shape, clip = false)
             .clip(shape)
             .background(
@@ -1797,7 +1796,7 @@ private fun CoffeeDetailsSection(
 ) {
     Column(
         modifier = Modifier
-            .fillMaxWidth()
+            .fillMaxWidth().analyticsExposure("shop_roasters", "shop_detail", "shop_detail")
             .padding(horizontal = CpDimens.spacing4, vertical = 6.dp),
         verticalArrangement = Arrangement.spacedBy(CpDimens.spacing3),
     ) {

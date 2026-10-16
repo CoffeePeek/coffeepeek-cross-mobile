@@ -21,6 +21,7 @@ import com.coffeepeek.admin.utils.validateOptionalPhone
 import com.coffeepeek.admin.utils.validateOptionalUrl
 import com.coffeepeek.domain.repository.ShopRepository
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
@@ -414,6 +415,7 @@ class AddShopViewModel(
 
     fun nextStep() {
         val s = _state.value
+        if (s.isSubmitting || s.isSuccess) return
         when (s.currentStep) {
             AddShopStep.BASIC -> if (s.step1Valid) {
                 _state.update { it.copy(currentStep = AddShopStep.CONTACTS) }
@@ -429,6 +431,7 @@ class AddShopViewModel(
 
     fun prevStep() {
         _state.update {
+            if (it.isSubmitting || it.isSuccess) return@update it
             it.copy(currentStep = when (it.currentStep) {
                 AddShopStep.CONTACTS -> AddShopStep.BASIC
                 AddShopStep.PHOTOS -> AddShopStep.CONTACTS
@@ -444,9 +447,10 @@ class AddShopViewModel(
     private fun submit() {
         val s = _state.value
         val city = s.selectedCity ?: return
+        if (s.isLoadingCatalogs || !s.step1Valid || !s.contactsStepValid || s.isSubmitting || s.isSuccess) return
+        if (!_state.compareAndSet(s, s.copy(isSubmitting = true, submitError = null))) return
         workScope.launch {
-            _state.update { it.copy(isSubmitting = true, submitError = null) }
-            shopRepository.createShop(
+            val result = try { shopRepository.createShop(
                 CreateShopInput(
                     name        = s.name.trim(),
                     address     = s.address.trim(),
@@ -467,7 +471,13 @@ class AddShopViewModel(
                     menuPhotos = s.menuPhotos.map { PendingPhotoUpload(it.fileName, it.contentType, it.bytes) },
                     schedules = buildSchedulesForSubmit(s),
                 )
-            ).onSuccess {
+            ) } catch (cancelled: CancellationException) {
+                _state.update { it.copy(isSubmitting = false) }
+                throw cancelled
+            } catch (error: Exception) {
+                Result.failure(error)
+            }
+            result.onSuccess {
                 _state.update { it.copy(isSubmitting = false, isSuccess = true) }
             }.onFailure { err ->
                 _state.update { it.copy(

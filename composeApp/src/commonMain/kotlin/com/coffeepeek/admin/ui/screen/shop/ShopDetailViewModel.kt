@@ -1,5 +1,9 @@
 package com.coffeepeek.admin.ui.screen.shop
 
+import com.coffeepeek.admin.analytics.*
+import com.coffeepeek.admin.feature.checkin.api.DrinkPhotoPreparation
+import com.coffeepeek.admin.feature.checkin.api.DrinkPhotoState
+
 import com.coffeepeek.domain.model.ConsumedDrinkOption
 import com.coffeepeek.admin.base.BaseViewModel
 import com.coffeepeek.admin.feature.favorites.api.RoasterFavorites
@@ -9,7 +13,7 @@ import com.coffeepeek.admin.utils.ClipboardHelper
 import com.coffeepeek.admin.utils.FavoriteSync
 import com.coffeepeek.admin.utils.PickedImage
 import com.coffeepeek.admin.utils.ShareHelper
-import com.coffeepeek.admin.utils.datePickerMillisToUtcIsoInstant
+import com.coffeepeek.admin.utils.epochMillisToUtcIsoInstant
 import com.coffeepeek.domain.model.CoffeeShopDetails
 import com.coffeepeek.domain.model.CheckIn
 import com.coffeepeek.domain.model.CheckInVisibility
@@ -48,6 +52,7 @@ data class ShopDetailUiState(
     val error: String? = null,
     val favoriteRoasterIds: Set<String> = emptySet(),
     val savingRoasterFavoriteIds: Set<String> = emptySet(),
+    val drinkPhotoState: DrinkPhotoState = DrinkPhotoState(),
 )
 
 class ShopDetailViewModel(
@@ -59,12 +64,31 @@ class ShopDetailViewModel(
     private val checkInDraftStore: CheckInDraftStore,
     private val userRepository: UserRepository,
     private val roasterFavorites: RoasterFavorites,
+    private val drinkPhotoFactory: DrinkPhotoPreparation.Factory = DrinkPhotoPreparation.Factory.Unavailable,
 ) : BaseViewModel() {
 
     private val _uiState = MutableStateFlow(ShopDetailUiState())
     val uiState = _uiState.asStateFlow()
+    private val drinkPhotos = drinkPhotoFactory.create(workScope, ::onDrinkPhotoChanged)
+
+    private fun onDrinkPhotoChanged(photoState: DrinkPhotoState) {
+        _uiState.update { state ->
+            val draft = state.checkInDraft
+            if (photoState !== drinkPhotos.state || draft == null || draft.photos.firstOrNull()?.toPendingUpload() != photoState.source) state
+            else {
+                val updated = draft.copy(drinkPhoto = photoState.selected?.let { PickedImage(it.bytes, it.fileName, it.contentType) },
+                    drinkPhotoSkipped = photoState.skipped)
+                state.copy(checkInDraft = updated, drinkPhotoState = photoState)
+            }
+        }
+        _uiState.value.checkInDraft?.let(checkInDraftStore::save)
+    }
+    private var checkInAnalytics: CheckInTracker? = null
 
     init {
+        roasterFavorites.observeErrors()
+            .onEach { error -> if (error != null) _uiState.update { it.copy(actionMessage = error) } }
+            .launchIn(workScope)
         roasterFavorites.observeFavorites()
             .onEach { favorites -> _uiState.update { it.copy(favoriteRoasterIds = favorites.map { it.roasterFavoriteId }.toSet()) } }
             .catch { _uiState.update { it.copy(actionMessage = "Не удалось загрузить избранное") } }
@@ -113,49 +137,32 @@ class ShopDetailViewModel(
     }
 
     fun toggleFavorite() {
-        workScope.launch {
-            if (!sessionRepository.isLoggedIn()) {
-                Navigator.navigate(Navigator.Screen.Auth)
-                return@launch
-            }
-            val details = _uiState.value.details ?: return@launch
-            val isFavorite = details.shop.isFavorite
-            _uiState.update { it.copy(isFavoriteLoading = true) }
-            val result = if (isFavorite) {
-                favoriteRepository.removeFavorite(shopId)
-            } else {
-                favoriteRepository.addFavorite(
-                    shop = details.shop,
-                    address = details.location?.address ?: details.shop.address,
-                )
-            }
-            result
-                .onSuccess {
-                    val newFavoriteState = !isFavorite
-                    FavoriteSync.notifyChanged(shopId, newFavoriteState)
-                    _uiState.update { state ->
-                        val current = state.details ?: return@update state
-                        state.copy(
-                            details = current.copy(
-                                shop = current.shop.copy(isFavorite = newFavoriteState),
-                            ),
-                            isFavoriteLoading = false,
-                        )
-                    }
-                }
-                .onFailure { e ->
-                    _uiState.update { it.copy(actionMessage = e.message, isFavoriteLoading = false) }
-                }
-        }
+        val details = _uiState.value.details ?: return
+        val favoriteId = details.shop.publicAddress?.slug ?: details.shop.id
+        val desired = !details.shop.isFavorite
+        com.coffeepeek.admin.feature.favorites.api.FavoriteInteractions.change(workScope, favoriteId, false, desired,
+            action = { if (desired) favoriteRepository.addFavorite(details.shop, details.location?.address ?: details.shop.address) else favoriteRepository.removeFavorite(favoriteId) },
+            completed = { result -> result.onSuccess {
+                FavoriteSync.notifyChanged(favoriteId, desired)
+                _uiState.update { state -> state.copy(details = state.details?.let { it.copy(shop = it.shop.copy(isFavorite = desired)) }) }
+            }.onFailure { error -> _uiState.update { it.copy(actionMessage = error.message) } } },
+        )
     }
 
     fun openCheckInSheet() {
         if (_uiState.value.isCheckInLoading || _uiState.value.showCheckInSheet) return
+        val handedOff = com.coffeepeek.admin.feature.checkin.api.CheckInFlowHandoff.take()
+        if (handedOff == null) {
+            Analytics.shopAction("check_in")
+            Analytics.track(AnalyticsEvent.CHECK_IN_START_ATTEMPTED, "source" to "shop_detail")
+        }
         workScope.launch {
             if (!sessionRepository.isLoggedIn()) {
+                Analytics.gate("check_in")
                 Navigator.navigate(Navigator.Screen.Auth)
                 return@launch
             }
+            checkInAnalytics = (handedOff ?: CheckInTracker(CheckInKind.Visit, CheckInSource.Shop)).also { it.step(CheckInStep.Editor) }
             loadDrinks()
             val draft = checkInDraftStore.open(shopId)
             _uiState.update {
@@ -166,6 +173,7 @@ class ShopDetailViewModel(
                     checkInError = null,
                 )
             }
+            drinkPhotos.setSource(draft.photos.firstOrNull()?.toPendingUpload(), draft.drinkPhoto?.toPendingUpload(), draft.drinkPhotoSkipped)
         }
     }
 
@@ -179,6 +187,7 @@ class ShopDetailViewModel(
 
     fun dismissCheckInSheet() {
         if (_uiState.value.isCheckInLoading) return
+        checkInAnalytics?.cancel("close")
         _uiState.update {
             it.copy(showCheckInSheet = false, submittedCheckInVisibility = null, checkInError = null,
                 checkInDraft = if (it.submittedCheckInVisibility != null) null else it.checkInDraft)
@@ -187,22 +196,53 @@ class ShopDetailViewModel(
 
     fun updateCheckInDraft(draft: CheckInDraft) {
         if (draft.shopId != shopId || _uiState.value.isCheckInLoading || _uiState.value.submittedCheckInVisibility != null) return
-        checkInDraftStore.save(draft)
-        _uiState.update { it.copy(checkInDraft = draft, checkInError = null) }
+        val before = _uiState.value.checkInDraft
+        if (before != null) listOf(
+            "note" to (before.note != draft.note), "date" to (before.visitMillis != draft.visitMillis),
+            "drink" to (before.drinkSlug != draft.drinkSlug || before.customDrinkName != draft.customDrinkName),
+            "rating_coffee" to (before.coffeeRating != draft.coffeeRating), "rating_service" to (before.serviceRating != draft.serviceRating),
+            "rating_place" to (before.placeRating != draft.placeRating), "photos" to (before.photos != draft.photos), "visibility" to (before.isPublic != draft.isPublic),
+        ).filter { it.second }.forEach { checkInAnalytics?.field(it.first) }
+        val sourceChanged = before?.photos?.firstOrNull() != draft.photos.firstOrNull()
+        val next = if (sourceChanged) draft.copy(drinkPhoto = null, drinkPhotoSkipped = false)
+        else draft.copy(drinkPhoto = drinkPhotos.state.selected?.let { PickedImage(it.bytes, it.fileName, it.contentType) },
+            drinkPhotoSkipped = drinkPhotos.state.skipped)
+        checkInDraftStore.save(next)
+        _uiState.update { it.copy(checkInDraft = next, checkInError = null) }
+        drinkPhotos.setSource(next.photos.firstOrNull()?.toPendingUpload(), next.drinkPhoto?.toPendingUpload(), next.drinkPhotoSkipped)
     }
 
-    fun checkIn(draft: CheckInDraft) {
-        if (draft.shopId != shopId) return
+    fun selectDrinkPhoto(photo: PendingPhotoUpload) { if (!_uiState.value.isCheckInLoading) drinkPhotos.select(photo) }
+    fun retryDrinkPhoto() { if (!_uiState.value.isCheckInLoading) drinkPhotos.retry() }
+    fun skipDrinkPhoto() { if (!_uiState.value.isCheckInLoading) drinkPhotos.skip() }
+
+    fun checkIn(submittedDraft: CheckInDraft) {
+        if (submittedDraft.shopId != shopId) return
         if (_uiState.value.isCheckInLoading || _uiState.value.submittedCheckInVisibility != null) return
-        draft.validationError()?.let { error ->
+        val tracker = checkInAnalytics
+        // Reject invalid input before starting or waiting for optional image processing.
+        submittedDraft.validationError()?.let { error ->
+            tracker?.submit()
+            tracker?.validation(listOf("form"))
             _uiState.update { it.copy(checkInError = error) }
             return
         }
         val shopSlug = _uiState.value.details?.shop?.publicAddress?.slug?.takeIf(String::isNotBlank)
         if (shopSlug == null) {
+            tracker?.submit()
             _uiState.update { it.copy(checkInError = "Не удалось определить адрес кофейни") }
             return
         }
+        val photoState = drinkPhotos.state
+        if (!photoState.canSubmit) return
+        if (submittedDraft.photos.firstOrNull()?.toPendingUpload() != photoState.source) {
+            updateCheckInDraft(submittedDraft)
+            return
+        }
+        // A button may still hold the preceding frame's draft when native processing completes.
+        val draft = submittedDraft.copy(drinkPhoto = photoState.selected?.let { PickedImage(it.bytes, it.fileName, it.contentType) },
+            drinkPhotoSkipped = photoState.skipped)
+        tracker?.submit()
         checkInDraftStore.save(draft)
         _uiState.update { it.copy(isCheckInLoading = true, checkInDraft = draft, checkInError = null) }
         val visibility = if (draft.isPublic) CheckInVisibility.Public else CheckInVisibility.Private
@@ -219,12 +259,13 @@ class ShopDetailViewModel(
                         drinkSlug = draft.drinkSlug,
                         customDrinkName = draft.customDrinkName?.trim(),
                         text = draft.note.trim(),
-                        visitedAtIso = datePickerMillisToUtcIsoInstant(draft.visitMillis),
+                        visitedAtIso = epochMillisToUtcIsoInstant(draft.visitMillis),
                         visibility = visibility,
                         rating = com.coffeepeek.domain.model.ReviewRating(
                             place = draft.placeRating, service = draft.serviceRating, coffee = draft.coffeeRating,
                         ),
                         photos = draft.photos.map { it.toPendingUpload() },
+                        drinkPhoto = draft.drinkPhoto?.toPendingUpload(),
                     ),
                 )
             } catch (cancelled: CancellationException) {
@@ -233,6 +274,7 @@ class ShopDetailViewModel(
                 Result.failure(error)
             }
             result.onSuccess {
+                tracker?.saved(visibility.name, draft.photos.isNotEmpty())
                 checkInDraftStore.clear(shopId)
                 _uiState.update { state ->
                     val current = state.details
@@ -244,6 +286,9 @@ class ShopDetailViewModel(
                 }
                 refreshDetails(showLoading = false)
             }.onFailure { e ->
+                val failure = safeAnalyticsError(e)
+                if (failure.status == 400 || failure.status == 422) tracker?.validation(listOf("form"), server = true)
+                else tracker?.failed(if ((e as? com.coffeepeek.domain.model.CheckInOperationFailure)?.stage == com.coffeepeek.domain.model.CheckInFailureStage.PhotoUpload) CheckInStage.Photo else CheckInStage.Save, failure)
                 _uiState.update {
                     it.copy(
                         checkInError = e.message?.takeIf(String::isNotBlank) ?: "Не удалось отправить чекин. Попробуйте ещё раз",
@@ -290,7 +335,9 @@ class ShopDetailViewModel(
     }
 
     fun openSuggestChange() {
+        Analytics.shopAction("edit")
         if (!_uiState.value.isLoggedIn) {
+            Analytics.gate("edit_shop")
             Navigator.navigate(Navigator.Screen.Auth)
             return
         }
@@ -299,26 +346,18 @@ class ShopDetailViewModel(
 
     fun toggleRoasterFavorite(roaster: CatalogItem) {
         val id = roaster.roasterFavoriteId
-        val current = _uiState.value
-        if (id in current.savingRoasterFavoriteIds) return
-        _uiState.update { it.copy(savingRoasterFavoriteIds = it.savingRoasterFavoriteIds + id) }
-        workScope.launch {
-            try {
-                if (!sessionRepository.isLoggedIn()) {
-                    Navigator.navigate(Navigator.Screen.Auth)
-                    return@launch
-                }
-                roasterFavorites.setFavorite(roaster, id !in current.favoriteRoasterIds)
-                    .onFailure { _uiState.update { it.copy(actionMessage = "Не удалось изменить избранное") } }
-            } finally {
-                _uiState.update { it.copy(savingRoasterFavoriteIds = it.savingRoasterFavoriteIds - id) }
-            }
-        }
+        val desired = id !in _uiState.value.favoriteRoasterIds
+        com.coffeepeek.admin.feature.favorites.api.FavoriteInteractions.change(workScope, id, true, desired,
+            action = { roasterFavorites.setFavorite(roaster, desired) },
+            completed = { result -> result.onFailure { _uiState.update { it.copy(actionMessage = "Не удалось изменить избранное") } } },
+        )
     }
 
     fun openReportIssue() {
+        Analytics.shopAction("report_issue")
         val details = _uiState.value.details ?: return
         if (!_uiState.value.isLoggedIn) {
+            Analytics.gate("report_issue")
             Navigator.navigate(Navigator.Screen.Auth)
             return
         }
@@ -326,6 +365,8 @@ class ShopDetailViewModel(
     }
 
     fun openOnMap() {
+        Analytics.shopAction("directions")
+        checkInAnalytics?.cancel("map")
         val details = _uiState.value.details ?: return
         val location = details.location ?: return
         val lat = location.latitude ?: return
@@ -339,6 +380,7 @@ class ShopDetailViewModel(
     }
 
     fun shareShop() {
+        Analytics.shopAction("share", "shop_header")
         val title = _uiState.value.details?.shop?.title?.takeIf { it.isNotBlank() }
         val path = _uiState.value.details?.shop?.publicAddress?.canonicalPath ?: return
         val shareUrl = "https://coffeepeek.by$path"
@@ -351,6 +393,7 @@ class ShopDetailViewModel(
     }
 
     fun copyPhone(phone: String) {
+        Analytics.shopAction("phone_copy", "shop_contacts")
         ClipboardHelper.copyText(phone)
         _uiState.update { it.copy(actionMessage = "Номер скопирован") }
     }

@@ -7,6 +7,24 @@ import kotlin.test.assertNotEquals
 class CheckInDraftStoreTest {
 
     @Test
+    fun confirmingVisitDateKeepsTheExactTimeAndOtherDraftFields() {
+        val timestamp = kotlin.time.Instant.parse("2026-10-14T20:37:42.123Z").toEpochMilliseconds()
+        val draft = CheckInDraft("shop-a", visitMillis = timestamp, note = "Кофе", coffeeRating = 5)
+        assertEquals(draft, draft.withVisitDate(
+            com.coffeepeek.admin.utils.instantToDatePickerMillis(timestamp), now = timestamp + 60_000))
+    }
+
+    @Test
+    fun restoringADraftAndChoosingTodayDoesNotPlaceTheVisitInTheFuture() {
+        val timestamp = kotlin.time.Instant.parse("2026-10-13T20:37:42.123Z").toEpochMilliseconds()
+        val today = com.coffeepeek.admin.utils.instantToDatePickerMillis(timestamp + 86_400_000)
+        val adjusted = com.coffeepeek.admin.utils.datePickerMillisWithLocalTime(today, timestamp)
+        val now = adjusted - 60_000
+        val draft = CheckInDraft("shop-a", visitMillis = timestamp)
+        assertEquals(now, draft.withVisitDate(today, now).visitMillis)
+    }
+
+    @Test
     fun newDraftUsesVisibleFourStarDefaults() {
         val draft = CheckInDraftStore(now = { 1_000L }).open("shop-a")
 

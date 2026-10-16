@@ -5,6 +5,18 @@ import kotlin.test.*
 
 class CheckInResponseDtoTest {
     @Test
+    fun decodesAuthorAvatarAndRemainsCompatibleWithMissingOrNullAvatars() {
+        val withAvatar = Json.decodeFromString<CheckInDto>(
+            """{"id":"visit","authorAvatarUrl":"https://cdn.example/avatars/author.jpg"}""",
+        )
+        assertEquals("https://cdn.example/avatars/author.jpg", withAvatar.authorAvatarUrl)
+
+        for (payload in listOf("""{"id":"visit","authorAvatarUrl":null}""", """{"id":"visit"}""")) {
+            assertNull(Json.decodeFromString<CheckInDto>(payload).authorAvatarUrl)
+        }
+    }
+
+    @Test
     fun decodesPersonalHistoryWithNullableAddressesAndModerationState() {
         val response = Json.decodeFromString<GetUserCheckInsResponseDto>(
             """{"items":[{

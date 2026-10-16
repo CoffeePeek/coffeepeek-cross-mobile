@@ -33,12 +33,16 @@ import java.util.concurrent.atomic.AtomicReference
 import kotlin.math.roundToInt
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
+import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 
 /** Production UI with local fixtures: no account or real check-ins are changed. */
 @RunWith(AndroidJUnit4::class)
 class CheckInPresentationTest {
+    @Before
+    fun grantStartupPermissions() = grantCheckInFixtureStartupPermissions()
+
     @Test
     fun timelineConnectsThroughCardGapsOnTheRightInBothThemes() {
         for (dark in listOf(false, true)) {

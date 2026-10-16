@@ -25,6 +25,7 @@ let package = Package(
         ),
     ],
     dependencies: [
+        .package(path: "../../iosApp/KotlinMultiplatformLinkedPackage"),
         .package(url: "https://github.com/google/GoogleSignIn-iOS", from: "10.0.0"),
         .package(
             url: "https://github.com/maplibre/maplibre-gl-native-distribution",
@@ -35,6 +36,7 @@ let package = Package(
         .target(
             name: "CoffeePeek",
             dependencies: [
+                .product(name: "KotlinMultiplatformLinkedPackage", package: "KotlinMultiplatformLinkedPackage"),
                 .product(name: "GoogleSignIn", package: "GoogleSignIn-iOS"),
                 .product(name: "MapLibre", package: "maplibre-gl-native-distribution"),
             ],

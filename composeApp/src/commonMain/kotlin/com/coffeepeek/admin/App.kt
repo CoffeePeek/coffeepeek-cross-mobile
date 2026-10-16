@@ -36,6 +36,7 @@ fun App(onReady: () -> Unit = {}) {
             OrientationObserver.StartObserver()
             Navigator()
             com.coffeepeek.admin.feature.appupdate.ui.AppUpdatePrompt()
+            com.coffeepeek.admin.analytics.AnalyticsPrivacy()
         }
     }
 }

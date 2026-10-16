@@ -1,4 +1,9 @@
+@file:OptIn(androidx.compose.ui.ExperimentalComposeUiApi::class)
+
 package com.coffeepeek.admin.ui.screen.shop
+
+import com.coffeepeek.admin.analytics.*
+import com.coffeepeek.admin.feature.checkin.api.CheckInFlowHandoff
 
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
@@ -33,7 +38,15 @@ import com.coffeepeek.admin.ui.screen.map.MapScreen
 
 @Composable
 internal fun CheckInShopPickerScreen() {
+    androidx.compose.ui.backhandler.BackHandler {
+        CheckInFlowHandoff.cancelFromBack()
+        Navigator.popBack()
+    }
     val vm: FeedViewModel = platformViewModel()
+    LaunchedEffect(Unit) {
+        val tracker = CheckInFlowHandoff.tracker?.takeIf { it.isFresh } ?: CheckInTracker(CheckInKind.Visit, CheckInSource.Direct).also { CheckInFlowHandoff.tracker = it }
+        tracker.step(CheckInStep.Shop)
+    }
     val state by vm.uiState.collectAsState()
     val listState = rememberLazyListState()
     var locationRefreshKey by remember { mutableStateOf(0) }
@@ -44,6 +57,7 @@ internal fun CheckInShopPickerScreen() {
     val keyboard = LocalSoftwareKeyboardController.current
     var showMap by rememberSaveable { mutableStateOf(false) }
     val selectShop: (String) -> Unit = { id ->
+        CheckInFlowHandoff.continueToShop()
         focus.clearFocus(force = true)
         keyboard?.hide()
         Navigator.popThenNavigate(Navigator.Screen.ShopDetail(id, forCheckIn = true))
@@ -66,10 +80,10 @@ internal fun CheckInShopPickerScreen() {
     ) {
         Column(Modifier.fillMaxSize().navigationBarsPadding()) {
             CpTopBar(title = "Выберите кофейню", onBack = null,
-                nativeAction = com.coffeepeek.admin.ui.component.NavigationBarAction("Закрыть", Navigator::popBack), actions = {
+                nativeAction = com.coffeepeek.admin.ui.component.NavigationBarAction("Закрыть", { CheckInFlowHandoff.take()?.cancel("close"); Navigator.popBack() }), actions = {
                 PlatformGlassIconButton(
                     icon = GlassControlIcon.Close,
-                    onClick = Navigator::popBack,
+                    onClick = { CheckInFlowHandoff.take()?.cancel("close"); Navigator.popBack() },
                     contentDescription = "Закрыть выбор кофейни",
                 ) { Icon(CpIcons.Close, null, Modifier.size(20.dp), tint = MaterialTheme.colorScheme.onSurface) }
             })

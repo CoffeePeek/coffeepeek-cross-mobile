@@ -1,5 +1,7 @@
 package com.coffeepeek.admin.feature.coffee.ui
 
+import com.coffeepeek.admin.analytics.*
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -41,6 +43,7 @@ import org.koin.core.parameter.parametersOf
 internal fun CoffeeDetailScreen(slug: String) {
     val vm: CoffeeDetailViewModel = platformViewModel(key = slug, parameters = { parametersOf(slug) })
     val state by vm.state.collectAsState()
+    com.coffeepeek.admin.analytics.TrackEntityDetail(com.coffeepeek.admin.analytics.Entity.Coffee, state.details != null)
     val details = state.details
     val hazeState = rememberHazeState()
     var showPhotos by rememberSaveable(slug) { mutableStateOf(false) }
@@ -78,9 +81,9 @@ internal fun CoffeeDetailScreen(slug: String) {
                 ) {
                     item(key = "photo") {
                         Box(
-                            Modifier.fillMaxWidth().aspectRatio(1f)
+                            Modifier.fillMaxWidth().then(if (details.photos.isNotEmpty()) Modifier.analyticsExposure("coffee_photos", "coffee_detail", "coffee_detail") else Modifier).aspectRatio(1f)
                                 .background(MaterialTheme.colorScheme.surfaceVariant)
-                                .clickable(enabled = details.photos.isNotEmpty(), role = Role.Button, onClickLabel = "Открыть фото кофе") { showPhotos = true },
+                                .clickable(enabled = details.photos.isNotEmpty(), role = Role.Button, onClickLabel = "Открыть фото кофе") { Analytics.track(AnalyticsEvent.ENTITY_CONTENT_INTERACTED, "entity_type" to "coffee", "section" to "photos", "action" to "open"); showPhotos = true },
                         ) {
                             val photo = details.photos.firstOrNull()
                             if (photo != null) CoffeeShopImage(
@@ -108,7 +111,7 @@ internal fun CoffeeDetailScreen(slug: String) {
                                         overflow = TextOverflow.Ellipsis,
                                         onTextLayout = { if (!expandedDescription) descriptionOverflows = it.hasVisualOverflow },
                                     )
-                                    if (descriptionOverflows || expandedDescription) TextButton(onClick = { expandedDescription = !expandedDescription }, colors = actionColors) {
+                                    if (descriptionOverflows || expandedDescription) TextButton(onClick = { expandedDescription = !expandedDescription; Analytics.track(AnalyticsEvent.ENTITY_CONTENT_INTERACTED, "entity_type" to "coffee", "section" to "description", "action" to if (expandedDescription) "open" else "close") }, colors = actionColors) {
                                         Text(if (expandedDescription) "Свернуть" else "Читать полностью")
                                     }
                                 }
@@ -153,17 +156,17 @@ internal fun CoffeeDetailScreen(slug: String) {
                                     }
                                 }
                             }
-                            Text("Обжарщик", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Text("Обжарщик", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.analyticsExposure("coffee_roaster", "coffee_detail", "coffee_detail"))
                             OutlinedContentCard(contentPadding = PaddingValues(0.dp)) {
                                 RoasterLinkRow(
                                     name = details.coffee.roasterName, photoUrl = details.coffee.roasterPhotoUrl,
-                                    onClick = details.roasterSlug?.let { roaster -> { Navigator.navigate(Navigator.Screen.RoasterDetail(roaster)) } },
+                                    onClick = details.roasterSlug?.let { roaster -> { Analytics.track(AnalyticsEvent.ENTITY_CONTENT_INTERACTED, "entity_type" to "coffee", "section" to "roaster", "action" to "select"); DetailEntryMemory.record(Entity.Roaster, ResultSource.Related, null); Navigator.navigate(Navigator.Screen.RoasterDetail(roaster)) } },
                                 )
                             }
                         }
                     }
                     item(key = "offers-title") {
-                        Column(Modifier.padding(horizontal = CpDimens.spacing4), verticalArrangement = Arrangement.spacedBy(CpDimens.spacing2)) {
+                        Column(Modifier.padding(horizontal = CpDimens.spacing4).analyticsExposure("coffee_offers", "coffee_detail", "coffee_detail"), verticalArrangement = Arrangement.spacedBy(CpDimens.spacing2)) {
                             SectionTitle("Варианты покупки")
                             details.checkedAtUtc?.let { Text("Проверено ${utcIsoToLocalDateTime(it)}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
                             if (details.coffee.offers.isEmpty()) Text("Предложений пока нет", color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -174,12 +177,12 @@ internal fun CoffeeDetailScreen(slug: String) {
                     }
                     if (state.similarLoading || state.similarError || state.similar.isNotEmpty()) item(key = "similar") {
                         Column(verticalArrangement = Arrangement.spacedBy(CpDimens.spacing3)) {
-                            Box(Modifier.padding(horizontal = CpDimens.spacing4)) { SectionTitle("Похожие сорта") }
+                            Box(Modifier.padding(horizontal = CpDimens.spacing4).analyticsExposure("similar_coffees", "coffee_detail", "coffee_detail")) { SectionTitle("Похожие сорта") }
                             when {
                                 state.similarLoading -> Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) { CoffeePeekLoader() }
                                 state.similarError -> TextButton(onClick = vm::loadSimilar, modifier = Modifier.padding(horizontal = CpDimens.spacing4), colors = actionColors) { Text("Загрузить похожие сорта") }
                                 else -> LazyRow(contentPadding = PaddingValues(horizontal = CpDimens.spacing4), horizontalArrangement = Arrangement.spacedBy(CpDimens.spacing3)) {
-                                    items(state.similar, key = { it.slug }) { CoffeeCard(it, tasteNames, Modifier.width(280.dp)) }
+                                    items(state.similar, key = { it.slug }) { CoffeeCard(it, tasteNames, Modifier.width(280.dp), onOpen = { Analytics.track(AnalyticsEvent.ENTITY_CONTENT_INTERACTED, "entity_type" to "coffee", "section" to "similar_coffees", "action" to "select"); DetailEntryMemory.record(Entity.Coffee, ResultSource.Related, null) }) }
                                 }
                             }
                         }
@@ -196,7 +199,7 @@ internal fun CoffeeDetailScreen(slug: String) {
             }
             PlatformGlassIconButton(
                 GlassControlIcon.Share,
-                onClick = { details?.let { ShareHelper.shareText("${it.coffee.name} — https://coffeepeek.by${it.canonicalPath}") } },
+                onClick = { Analytics.track(AnalyticsEvent.ENTITY_CONTENT_INTERACTED, "entity_type" to "coffee", "section" to "contacts", "action" to "share"); details?.let { ShareHelper.shareText("${it.coffee.name} — https://coffeepeek.by${it.canonicalPath}") } },
                 contentDescription = "Поделиться кофе", enabled = details != null, hazeState = hazeState,
             ) {
                 Icon(CpIcons.Share, contentDescription = null, tint = MaterialTheme.colorScheme.onSurface)

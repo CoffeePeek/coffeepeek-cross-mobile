@@ -26,4 +26,5 @@ expect fun CoffeeMap(
     onLocationPermissionDenied: () -> Unit = {},
     requestLocationPermissionOnLoad: Boolean = true,
     showAttribution: Boolean = true,
+    onCameraCenterChanged: (Double, Double) -> Unit = { _, _ -> },
 )

@@ -27,19 +27,31 @@ class CheckInRepositoryContractTest {
         "photos":[{"id":"photo","storageKey":"do-not-invent-url","sortIndex":0,"url":"/api/v1/check-ins/visit/photos/photo"}]}"""
 
     @Test
+    fun readingCheckInsPreservesTheFullVisitTimestampFromTheBackend() = runBlocking {
+        val timestamp = "2026-10-07T09:37:42.123Z"
+        val responseVisit = visit.replace("2026-10-07T09:00:00Z", timestamp)
+        val client = client(MockEngine {
+            respond("""{"isSuccess":true,"data":{"items":[$responseVisit],"totalCount":1}}""", headers = headers)
+        })
+        try {
+            assertEquals(timestamp, repository(client).getMyCheckIns(1, 20).getOrThrow().items.single().visitedAt)
+        } finally { client.close() }
+    }
+
+    @Test
     fun createsCheckInWithOnlyVisitDateAndReadsMissingRating() = runBlocking {
         var requests = 0
         val client = client(MockEngine { request ->
             requests++
             assertEquals("/api/v1/check-ins", request.url.encodedPath)
             val body = Json.parseToJsonElement((request.body as TextContent).text).jsonObject
-            assertEquals(JsonPrimitive("2026-10-07T09:00:00Z"), body["visitedAt"])
+            assertEquals(JsonPrimitive("2026-10-07T09:37:42.123Z"), body["visitedAt"])
             assertTrue(body["rating"] == null || body["rating"] == JsonNull)
             assertTrue(body["text"] == null || body["text"] == JsonPrimitive(""))
             respond("""{"isSuccess":true,"data":{"id":"visit","rating":null}}""", headers = headers)
         })
         try {
-            repository(client).createCheckIn(CreateCheckInInput("coffee", visitedAtIso = "2026-10-07T09:00:00Z")).getOrThrow()
+            repository(client).createCheckIn(CreateCheckInInput("coffee", visitedAtIso = "2026-10-07T09:37:42.123Z")).getOrThrow()
             assertEquals(1, requests)
         } finally { client.close() }
     }

@@ -4,6 +4,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.getValue
 import com.coffeepeek.admin.ui.component.PlatformScrollableColumn
 import com.coffeepeek.admin.ui.component.PlatformAlert
+import com.coffeepeek.admin.ui.component.SubmissionStatus
+import com.coffeepeek.admin.ui.component.SubmissionStatusScreen
+import com.coffeepeek.admin.ui.component.SubmissionErrorActions
+import com.coffeepeek.admin.ui.component.HapticEvent
+import com.coffeepeek.admin.ui.component.platformHaptic
+import androidx.compose.runtime.LaunchedEffect
 import com.coffeepeek.admin.ui.component.CpTopBar
 
 import androidx.compose.foundation.BorderStroke
@@ -89,8 +95,23 @@ fun AddRoasterScreen(vm: AddRoasterViewModel = platformViewModel()) {
         return
     }
 
+    if (state.isSubmitting || state.submissionError != null) {
+        val failed = state.submissionError != null
+        SubmissionStatusScreen(
+            screenTitle = "Добавить обжарщика",
+            status = if (failed) SubmissionStatus.Error else SubmissionStatus.Sending,
+            title = if (failed) "Обжарщик не отправлен" else "Отправляем обжарщика…",
+            description = state.submissionError?.let { "$it\n\nВведённые данные остались в форме." }
+                ?: "Отправляем информацию и фотографии на проверку",
+            onBack = if (failed) vm::clearSubmissionError else Navigator::popBack,
+        ) {
+            if (failed) SubmissionErrorActions(vm::submit, vm::clearSubmissionError)
+        }
+        return
+    }
+
     state.error?.let { error ->
-        PlatformAlert(title = "Не удалось отправить", message = error, onConfirm = vm::clearError, onDismiss = vm::clearError)
+        PlatformAlert(title = "Не удалось загрузить города", message = error, onConfirm = vm::clearError, onDismiss = vm::clearError)
     }
 
     Scaffold(
@@ -201,15 +222,7 @@ fun AddRoasterScreen(vm: AddRoasterViewModel = platformViewModel()) {
                 ),
                 shape = RoundedCornerShape(CpDimens.buttonRadius),
             ) {
-                if (state.isSubmitting) {
-                    CoffeePeekLoader(
-                        size = CpDimens.loaderButton,
-                        color = MaterialTheme.colorScheme.onPrimary,
-                        strokeWidth = 2.dp,
-                    )
-                } else {
-                    Text("Отправить на модерацию", fontWeight = FontWeight.SemiBold)
-                }
+                Text("Отправить на модерацию", fontWeight = FontWeight.SemiBold)
             }
             Spacer(Modifier.height(CpDimens.spacing4))
         }
@@ -358,6 +371,7 @@ private fun RoasterSubmittedContent(
     message: String,
     onDone: () -> Unit,
 ) {
+    LaunchedEffect(Unit) { platformHaptic(HapticEvent.Success) }
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
         bottomBar = {
@@ -402,7 +416,7 @@ private fun RoasterSubmittedContent(
             }
             Spacer(Modifier.height(CpDimens.spacing4))
             Text(
-                text = "Обжарщик добавлен!",
+                text = "Обжарщик отправлен!",
                 style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold),
                 color = MaterialTheme.colorScheme.onSurface,
                 textAlign = TextAlign.Center,

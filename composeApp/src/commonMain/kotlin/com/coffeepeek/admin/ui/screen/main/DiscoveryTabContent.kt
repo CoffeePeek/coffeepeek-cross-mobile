@@ -1,5 +1,7 @@
 package com.coffeepeek.admin.ui.screen.main
 
+import com.coffeepeek.admin.analytics.*
+
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.getValue
 import androidx.compose.foundation.layout.Box
@@ -39,6 +41,14 @@ internal fun DiscoveryTabContent(onMapExpandedChange: (Boolean) -> Unit) {
     val feedState by feedVm.uiState.collectAsState()
     val roasterVm: RoasterListViewModel = platformViewModel()
     val pendingMapFocus by Navigator.pendingMapFocus.collectAsState()
+    var previousOverlay by remember { mutableStateOf("discovery") }
+    val overlay = if (showRoasters) "roasters" else if (isMapExpanded) "map" else "discovery"
+    LaunchedEffect(overlay) {
+        if (overlay != previousOverlay) {
+            Analytics.service?.screenShown(overlay, correlationId("screen"))
+            previousOverlay = overlay
+        }
+    }
     LaunchedEffect(pendingMapFocus) {
         if (pendingMapFocus != null) showRoasters = false
     }

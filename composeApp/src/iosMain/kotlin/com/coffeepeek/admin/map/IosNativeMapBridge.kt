@@ -11,6 +11,7 @@ import platform.UIKit.UIView
 interface IosNativeMapCallbacks {
     fun onShopClick(shopId: String)
     fun onZoneClick(zoneId: String)
+    fun onCameraCenterChanged(latitude: Double, longitude: Double) = Unit
     fun onBoundsChanged(
         minLat: Double,
         minLon: Double,

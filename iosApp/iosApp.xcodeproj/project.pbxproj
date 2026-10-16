@@ -7,15 +7,18 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+        A10000000000000000000006 /* NativeDrinkPhotoProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000010 /* NativeDrinkPhotoProvider.swift */; };
         A10000000000000000000007 /* SocialSignInProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000011 /* SocialSignInProvider.swift */; };
 		A10000000000000000000001 /* CoffeePeekApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000001 /* CoffeePeekApp.swift */; };
 		A10000000000000000000004 /* MapLibreMapProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000009 /* MapLibreMapProvider.swift */; };
 		A10000000000000000000002 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000002 /* Assets.xcassets */; };
 		A10000000000000000000003 /* GoogleSignIn in Frameworks */ = {isa = PBXBuildFile; productRef = A90000000000000000000001 /* GoogleSignIn */; };
 		A10000000000000000000005 /* MapLibre in Frameworks */ = {isa = PBXBuildFile; productRef = A90000000000000000000003 /* MapLibre */; };
+		A10000000000000000000008 /* KotlinMultiplatformLinkedPackage in Frameworks */ = {isa = PBXBuildFile; productRef = A90000000000000000000005 /* KotlinMultiplatformLinkedPackage */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+        A20000000000000000000010 /* NativeDrinkPhotoProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "../../iosXtool/CoffeePeek/Sources/CoffeePeek/NativeDrinkPhotoProvider.swift"; sourceTree = "<group>"; };
         A20000000000000000000011 /* SocialSignInProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "../../iosXtool/CoffeePeek/Sources/CoffeePeek/SocialSignInProvider.swift"; sourceTree = "<group>"; };
 		A20000000000000000000001 /* CoffeePeekApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoffeePeekApp.swift; sourceTree = "<group>"; };
 		A20000000000000000000002 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -35,6 +38,7 @@
 			files = (
 				A10000000000000000000003 /* GoogleSignIn in Frameworks */,
 				A10000000000000000000005 /* MapLibre in Frameworks */,
+				A10000000000000000000008 /* KotlinMultiplatformLinkedPackage in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -56,6 +60,7 @@
 				A20000000000000000000001 /* CoffeePeekApp.swift */,
                 A20000000000000000000011 /* SocialSignInProvider.swift */,
 				A20000000000000000000009 /* MapLibreMapProvider.swift */,
+                A20000000000000000000010 /* NativeDrinkPhotoProvider.swift */,
 				A20000000000000000000002 /* Assets.xcassets */,
 				A20000000000000000000003 /* Info.plist */,
 			);
@@ -101,6 +106,7 @@
 			packageProductDependencies = (
 				A90000000000000000000001 /* GoogleSignIn */,
 				A90000000000000000000003 /* MapLibre */,
+				A90000000000000000000005 /* KotlinMultiplatformLinkedPackage */,
 			);
 			productName = CoffeePeek;
 			productReference = A20000000000000000000004 /* CoffeePeek.app */;
@@ -132,6 +138,7 @@
 			);
 			mainGroup = A40000000000000000000001;
 			packageReferences = (
+				A90000000000000000000006 /* XCLocalSwiftPackageReference "KotlinMultiplatformLinkedPackage" */,
 				A90000000000000000000002 /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */,
 				A90000000000000000000004 /* XCRemoteSwiftPackageReference "maplibre-gl-native-distribution" */,
 			);
@@ -185,6 +192,7 @@
 				A10000000000000000000001 /* CoffeePeekApp.swift in Sources */,
                 A10000000000000000000007 /* SocialSignInProvider.swift in Sources */,
 				A10000000000000000000004 /* MapLibreMapProvider.swift in Sources */,
+                A10000000000000000000006 /* NativeDrinkPhotoProvider.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -290,6 +298,13 @@
 		};
 /* End XCConfigurationList section */
 
+/* Begin XCLocalSwiftPackageReference section */
+        A90000000000000000000006 /* XCLocalSwiftPackageReference "KotlinMultiplatformLinkedPackage" */ = {
+            isa = XCLocalSwiftPackageReference;
+            relativePath = KotlinMultiplatformLinkedPackage;
+        };
+/* End XCLocalSwiftPackageReference section */
+
 /* Begin XCRemoteSwiftPackageReference section */
 		A90000000000000000000002 /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */ = {
 			isa = XCRemoteSwiftPackageReference;
@@ -320,6 +335,11 @@
 			package = A90000000000000000000004 /* XCRemoteSwiftPackageReference "maplibre-gl-native-distribution" */;
 			productName = MapLibre;
 		};
+        A90000000000000000000005 /* KotlinMultiplatformLinkedPackage */ = {
+            isa = XCSwiftPackageProductDependency;
+            package = A90000000000000000000006 /* XCLocalSwiftPackageReference "KotlinMultiplatformLinkedPackage" */;
+            productName = KotlinMultiplatformLinkedPackage;
+        };
 /* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = A70000000000000000000001 /* Project object */;

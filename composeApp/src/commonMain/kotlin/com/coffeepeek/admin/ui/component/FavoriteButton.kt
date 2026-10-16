@@ -1,5 +1,7 @@
 package com.coffeepeek.admin.ui.component
 
+import com.coffeepeek.admin.analytics.*
+
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Icon
@@ -7,6 +9,7 @@ import androidx.compose.material3.IconToggleButton
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
@@ -25,13 +28,15 @@ internal fun FavoriteButton(
     enabled: Boolean = true,
     overImage: Boolean = false,
 ) {
+    val analyticsPage = Analytics.service?.state?.collectAsState()?.value?.page ?: "other"
     val contentColor = if (overImage) Color.White else MaterialTheme.colorScheme.onSurface
     val containerColor = if (overImage) Color.Black else Color.Transparent
     IconToggleButton(
         checked = isFavorite,
         onCheckedChange = { platformHaptic(HapticEvent.Selection); onClick() },
         enabled = enabled,
-        modifier = modifier.size(if (overImage) 40.dp else 48.dp).clip(CircleShape),
+        modifier = modifier.size(if (overImage) 40.dp else 48.dp).clip(CircleShape)
+            .analyticsExposure("favorites", when (analyticsPage) { "shop_detail" -> "shop_detail"; "roaster_detail" -> "roaster_card"; else -> "catalog_card" }, analyticsPage),
         colors = IconButtonDefaults.iconToggleButtonColors(
             containerColor = containerColor,
             contentColor = contentColor,

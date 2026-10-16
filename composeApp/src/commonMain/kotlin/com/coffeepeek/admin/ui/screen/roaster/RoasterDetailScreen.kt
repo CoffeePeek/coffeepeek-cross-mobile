@@ -1,5 +1,7 @@
 package com.coffeepeek.admin.ui.screen.roaster
 
+import com.coffeepeek.admin.analytics.*
+
 import com.coffeepeek.admin.ui.component.CpCircularBackButton
 
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -69,6 +71,7 @@ import org.koin.core.parameter.parametersOf
 fun RoasterDetailScreen(roasterId: String) {
     val vm: RoasterDetailViewModel = platformViewModel(parameters = { parametersOf(roasterId) })
     val state by vm.state.collectAsState()
+    com.coffeepeek.admin.analytics.TrackEntityDetail(com.coffeepeek.admin.analytics.Entity.Roaster, state.details != null)
     var previewUrl by remember { mutableStateOf<String?>(null) }
     val snackbarHostState = remember { SnackbarHostState() }
     LaunchedEffect(state.actionMessage) {
@@ -123,8 +126,8 @@ fun RoasterDetailScreen(roasterId: String) {
                 isFavoriteLoading = state.isFavoriteLoading,
                 onToggleFavorite = vm::toggleFavorite,
                 onBack = Navigator::popBack,
-                onPhotoClick = { previewUrl = it },
-                onShopClick = { Navigator.navigate(Navigator.Screen.ShopDetail(it)) },
+                onPhotoClick = { Analytics.track(AnalyticsEvent.ENTITY_CONTENT_INTERACTED, "entity_type" to "roaster", "section" to "photos", "action" to "open"); previewUrl = it },
+                onShopClick = { Analytics.track(AnalyticsEvent.ENTITY_CONTENT_INTERACTED, "entity_type" to "roaster", "section" to "shops", "action" to "select"); DetailEntryMemory.record(Entity.Shop, ResultSource.Related, null); Navigator.navigate(Navigator.Screen.ShopDetail(it)) },
             )
         }
     }
@@ -196,21 +199,21 @@ private fun RoasterContent(
                 if (!instagram.isNullOrBlank() || !website.isNullOrBlank()) {
                     RoasterSection(title = "Ссылки") {
                         Column(
-                            modifier = Modifier.fillMaxWidth(),
+                            modifier = Modifier.fillMaxWidth().analyticsExposure("roaster_contacts", "roaster_detail", "roaster_detail"),
                             verticalArrangement = Arrangement.spacedBy(11.dp),
                         ) {
                             if (!instagram.isNullOrBlank()) {
                                 RoasterContactPill(
                                     icon = CpIcons.Instagram,
                                     text = instagramDisplayText(instagram),
-                                    onClick = { OpenInBrowser.openInBrowser(normalizeInstagramUrl(instagram)) },
+                                    onClick = { Analytics.track(AnalyticsEvent.ENTITY_CONTENT_INTERACTED, "entity_type" to "roaster", "section" to "contacts", "action" to "instagram"); OpenInBrowser.openInBrowser(normalizeInstagramUrl(instagram)) },
                                 )
                             }
                             if (!website.isNullOrBlank()) {
                                 RoasterContactPill(
                                     icon = CpIcons.Globe,
                                     text = prettyExternalLink(website),
-                                    onClick = { OpenInBrowser.openInBrowser(normalizeExternalUrl(website)) },
+                                    onClick = { Analytics.track(AnalyticsEvent.ENTITY_CONTENT_INTERACTED, "entity_type" to "roaster", "section" to "contacts", "action" to "website"); OpenInBrowser.openInBrowser(normalizeExternalUrl(website)) },
                                 )
                             }
                         }
@@ -224,7 +227,7 @@ private fun RoasterContent(
                 text = "Где используют",
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(horizontal = CpDimens.spacing4, vertical = CpDimens.spacing2),
+                modifier = Modifier.padding(horizontal = CpDimens.spacing4, vertical = CpDimens.spacing2).analyticsExposure("roaster_shops", "roaster_detail", "roaster_detail"),
             )
         }
 
@@ -315,7 +318,7 @@ private fun RoasterHero(
 ) {
     Box(
         modifier = Modifier
-            .fillMaxWidth()
+            .fillMaxWidth().then(if (details.photos.isNotEmpty()) Modifier.analyticsExposure("roaster_photos", "roaster_detail", "roaster_detail") else Modifier)
             .height(280.dp)
             .background(MaterialTheme.colorScheme.surfaceVariant),
     ) {

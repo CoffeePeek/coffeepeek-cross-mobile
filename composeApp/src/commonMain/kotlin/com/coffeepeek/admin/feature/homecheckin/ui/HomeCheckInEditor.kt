@@ -1,5 +1,9 @@
 package com.coffeepeek.admin.feature.homecheckin.ui
 
+import com.coffeepeek.admin.feature.catalog.api.catalogBrewMethodSlug
+import com.coffeepeek.admin.feature.catalog.api.methodLabel
+import com.coffeepeek.admin.feature.checkin.api.DrinkPhotoPreview
+import com.coffeepeek.domain.model.PendingPhotoUpload
 import androidx.compose.foundation.background
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.border
@@ -90,7 +94,8 @@ import kotlin.time.Instant
 internal fun HomeEditor(state: HomeCheckInUiState, vm: HomeCheckInViewModel, modifier: Modifier) {
     HomeEditorContent(state, { draft -> vm.updateDraft { draft } }, vm::setCatalogQuery,
         vm::searchCatalog, vm::selectCatalogProduct, vm::save, vm::closeEditor, modifier,
-        onRetryMethods = vm::loadBrewMethods)
+        onRetryMethods = vm::loadBrewMethods, onSelectDrinkPhoto = vm::selectDrinkPhoto,
+        onRetryDrinkPhoto = vm::retryDrinkPhoto, onSkipDrinkPhoto = vm::skipDrinkPhoto)
 }
 
 /** Uses the same fields, rating card and step rhythm as the coffee-shop check-in form. */
@@ -106,6 +111,9 @@ internal fun HomeEditorContent(
     onClose: () -> Unit,
     modifier: Modifier = Modifier,
     onRetryMethods: () -> Unit = {},
+    onSelectDrinkPhoto: (PendingPhotoUpload) -> Unit = {},
+    onRetryDrinkPhoto: () -> Unit = {},
+    onSkipDrinkPhoto: () -> Unit = {},
 ) {
     val draft = state.draft
     val errors = state.fieldErrors
@@ -235,6 +243,8 @@ internal fun HomeEditorContent(
                                 } },
                                 hint = "Чашка, зерно или процесс приготовления — до 5 фото.",
                             )
+                            if (draft.photos.isNotEmpty()) DrinkPhotoPreview(state.drinkPhotoState,
+                                onSelectDrinkPhoto, onRetryDrinkPhoto, onSkipDrinkPhoto)
                         } else {
                             Text("Фотографии этой записи сохранятся без изменений", style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -246,7 +256,7 @@ internal fun HomeEditorContent(
                 verticalArrangement = Arrangement.spacedBy(CpDimens.spacing2)) {
                 AppButton(if (state.saving) "Сохраняем…" else "Сохранить чекин", onClick = {
                     keyboard?.hide(); focus.clearFocus(force = true); onSave()
-                }, enabled = !state.saving)
+                }, enabled = !state.saving && state.drinkPhotoState.canSubmit)
             }
         }
     }
@@ -274,7 +284,7 @@ private fun HomeSelectField(value: String, icon: ImageVector, action: String, en
 
 @Composable
 private fun HomeNumberField(value: String, placeholder: String, type: KeyboardType, enabled: Boolean,
-    error: String? = null, label: String = placeholder, onChange: (String) -> Unit) {
+    error: String? = null, label: String = placeholder, maximum: Int? = null, onChange: (String) -> Unit) {
     CompactOutlinedTextField(value, onChange, enabled = enabled, isError = error != null,
         modifier = Modifier.fillMaxWidth().heightIn(min = CpDimens.controlHeight)
             .semantics { contentDescription = label; error?.let { error(it) } },
@@ -282,6 +292,7 @@ private fun HomeNumberField(value: String, placeholder: String, type: KeyboardTy
         placeholder = { Text(placeholder, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant) },
         keyboardOptions = KeyboardOptions(keyboardType = type), maxLength = 8,
         inputFilter = { it.isDigit() || type == KeyboardType.Decimal && (it == '.' || it == ',') },
+        inputValidator = { maximum == null || it.isEmpty() || it.toIntOrNull() in 0..maximum },
         colors = OutlinedTextFieldDefaults.colors(
             errorContainerColor = MaterialTheme.colorScheme.error.copy(alpha = 0.05f),
             errorBorderColor = MaterialTheme.colorScheme.error,
@@ -373,7 +384,7 @@ private fun HomeDurationField(duration: Int?, enabled: Boolean, error: String?, 
         Row(horizontalArrangement = Arrangement.spacedBy(CpDimens.spacing3)) {
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(CpDimens.spacing1)) {
                 Text("Минуты", style = MaterialTheme.typography.bodySmall)
-                HomeNumberField(minutes, "0", KeyboardType.Number, enabled, error, "Минуты заваривания") { value ->
+                HomeNumberField(minutes, "0", KeyboardType.Number, enabled, error, "Минуты заваривания", maximum = 10080) { value ->
                     if (value.isEmpty() || value.toIntOrNull() in 0..10080) {
                         minutes = value
                         onChange(homeBrewDurationSeconds(minutes, seconds))
@@ -382,7 +393,7 @@ private fun HomeDurationField(duration: Int?, enabled: Boolean, error: String?, 
             }
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(CpDimens.spacing1)) {
                 Text("Секунды", style = MaterialTheme.typography.bodySmall)
-                HomeNumberField(seconds, "00", KeyboardType.Number, enabled, error, "Секунды заваривания") { value ->
+                HomeNumberField(seconds, "00", KeyboardType.Number, enabled, error, "Секунды заваривания", maximum = 59) { value ->
                     if (value.isEmpty() || value.toIntOrNull() in 0..59) {
                         seconds = value
                         onChange(homeBrewDurationSeconds(minutes, seconds))

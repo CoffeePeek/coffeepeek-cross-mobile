@@ -1,5 +1,8 @@
 package com.coffeepeek.admin.ui.screen.checkins
 
+import com.coffeepeek.admin.analytics.*
+import com.coffeepeek.admin.feature.checkin.api.CheckInFlowHandoff
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.selection.selectable
@@ -38,8 +41,9 @@ import com.coffeepeek.admin.ui.icons.CpIcons
 
 @Composable
 internal fun CheckInCreateButton(modifier: Modifier = Modifier, onClick: () -> Unit) {
+    val analyticsPage = Analytics.service?.state?.collectAsState()?.value?.page ?: "other"
     FloatingActionButton(onClick = onClick, shape = CircleShape,
-        modifier = modifier,
+        modifier = modifier.analyticsExposure("check_in", "global_create", analyticsPage),
         containerColor = MaterialTheme.colorScheme.primary,
         contentColor = MaterialTheme.colorScheme.onPrimary) {
         Icon(CpIcons.Add, "Добавить чекин", Modifier.size(28.dp))
@@ -61,28 +65,32 @@ internal fun CheckInCreateFlow(
     onHomeSaved: () -> Unit = {},
     homeVm: HomeCheckInViewModel = platformViewModel(),
 ) {
+    val tracker = remember(homeVm) { homeVm.creationTracker() }
     val home by homeVm.state.collectAsState()
-    var creatingHome by remember { mutableStateOf(false) }
+    var creatingHome by rememberSaveable { mutableStateOf(false) }
     LaunchedEffect(creatingHome, home.editing) {
         if (creatingHome && !home.editing) {
             if (home.selected != null) onHomeSaved()
+            homeVm.creationPickerFinished()
             onDismiss()
         }
     }
     SwipeDismissModalBottomSheet(
-        onDismissRequest = { if (creatingHome) homeVm.closeEditor(); onDismiss() },
+        onDismissRequest = { tracker.cancel("close"); homeVm.creationPickerFinished(); if (creatingHome) homeVm.closeEditor(); onDismiss() },
         dismissEnabled = !home.saving,
     ) {
         if (creatingHome) HomeEditor(home, homeVm, Modifier.fillMaxWidth().heightIn(max = 680.dp))
-        else CheckInCreateContent(onShop, onHome = { homeVm.create(); creatingHome = true })
+        else CheckInCreateContent(onShop = { tracker.kind(CheckInKind.Visit); CheckInFlowHandoff.tracker = tracker; homeVm.creationPickerFinished(); onShop() },
+            onHome = { tracker.kind(CheckInKind.Home); homeVm.create(tracker); creatingHome = true })
     }
 }
 
 @Composable
 private fun CheckInCreateContent(onShop: () -> Unit, onHome: () -> Unit) {
+    val analyticsPage = Analytics.service?.state?.collectAsState()?.value?.page ?: "other"
     var homeSelected by rememberSaveable { mutableStateOf(false) }
     Column(
-        Modifier.fillMaxWidth().padding(horizontal = CpDimens.spacing4).padding(bottom = CpDimens.spacing6),
+        Modifier.fillMaxWidth().analyticsExposure("home_check_in", "check_in_type_picker", analyticsPage).padding(horizontal = CpDimens.spacing4).padding(bottom = CpDimens.spacing6),
         verticalArrangement = Arrangement.spacedBy(CpDimens.spacing3),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {

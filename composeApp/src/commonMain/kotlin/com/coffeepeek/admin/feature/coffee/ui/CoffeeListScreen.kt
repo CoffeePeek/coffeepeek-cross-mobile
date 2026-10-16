@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
@@ -13,6 +14,7 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import com.coffeepeek.admin.analytics.analyticsExposure
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.draw.shadow
@@ -80,7 +82,8 @@ internal fun CoffeeListScreen(vm: CoffeeListViewModel = platformViewModel()) {
                     placeholder = "Название кофе",
                     showCategories = false,
                     filterCount = state.filters.activeCount,
-                    onFilters = { showFilters = true },
+                    analyticsCatalog = "coffees", analyticsScreen = "coffees",
+                    onFilters = { com.coffeepeek.admin.analytics.Analytics.track(com.coffeepeek.admin.analytics.AnalyticsEvent.FILTERS_OPENED, "catalog" to "coffees", "placement" to "mobile"); showFilters = true },
                 )
             }
         },
@@ -93,7 +96,7 @@ internal fun CoffeeListScreen(vm: CoffeeListViewModel = platformViewModel()) {
         ) { scrollModifier ->
             LazyColumn(
                 state = listState,
-                modifier = scrollModifier.fillMaxSize(),
+                modifier = scrollModifier.fillMaxSize().analyticsExposure("coffee_catalog", "catalog", "coffees"),
                 contentPadding = PaddingValues(
                     start = CpDimens.spacing4, top = CpDimens.spacing4,
                     end = CpDimens.spacing4, bottom = clearance + 88.dp,
@@ -105,7 +108,7 @@ internal fun CoffeeListScreen(vm: CoffeeListViewModel = platformViewModel()) {
                         CoffeePeekLoader()
                     }
                 }
-                items(state.items, key = { it.slug }) { coffee -> CoffeeCard(coffee, tasteNames) }
+                itemsIndexed(state.items, key = { _, coffee -> coffee.slug }) { index, coffee -> CoffeeCard(coffee, tasteNames, onOpen = { vm.openedCoffee(index) }) }
                 if (state.isLoadingMore) item {
                     Box(Modifier.fillMaxWidth().padding(CpDimens.spacing6), contentAlignment = Alignment.Center) {
                         CoffeePeekLoader()
@@ -125,7 +128,7 @@ internal fun CoffeeListScreen(vm: CoffeeListViewModel = platformViewModel()) {
 }
 
 @Composable
-internal fun CoffeeCard(coffee: Coffee, tasteNames: Map<String, String>, modifier: Modifier = Modifier) {
+internal fun CoffeeCard(coffee: Coffee, tasteNames: Map<String, String>, modifier: Modifier = Modifier, onOpen: () -> Unit = {}) {
     val offers = remember(coffee.offers) {
         coffee.offers.distinctBy { it.weightGrams }.sortedBy { it.weightGrams ?: Int.MAX_VALUE }
     }
@@ -134,7 +137,7 @@ internal fun CoffeeCard(coffee: Coffee, tasteNames: Map<String, String>, modifie
     }
     val offer = offers.firstOrNull { it.weightGrams == selectedWeight } ?: offers.firstOrNull()
     Card(
-        onClick = { Navigator.navigate(Navigator.Screen.CoffeeDetail(coffee.slug)) },
+        onClick = { onOpen(); Navigator.navigate(Navigator.Screen.CoffeeDetail(coffee.slug)) },
         modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(CpDimens.radius4xl),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),

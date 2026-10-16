@@ -15,6 +15,8 @@ data class UserProfileDto(
     @SerialName("reviewCount")    val reviewCount: Int = 0,
     @SerialName("checkInCount")   val checkInCount: Int = 0,
     @SerialName("addedShopsCount") val addedShopsCount: Int = 0,
+    @SerialName("addedRoastersCount") val addedRoastersCount: Int = 0,
+    @SerialName("followersCount") val followersCount: Int = 0,
 ) : DataResponse()
 
 @Serializable
@@ -26,6 +28,9 @@ data class PublicUserProfileDto(
     @SerialName("reviewCount") val reviewCount: Int = 0,
     @SerialName("checkInCount") val checkInCount: Int = 0,
     @SerialName("addedShopsCount") val addedShopsCount: Int = 0,
+    @SerialName("addedRoastersCount") val addedRoastersCount: Int = 0,
+    @SerialName("followersCount") val followersCount: Int = 0,
+    @SerialName("isFollowing") val isFollowing: Boolean = false,
 ) : DataResponse()
 
 @Serializable

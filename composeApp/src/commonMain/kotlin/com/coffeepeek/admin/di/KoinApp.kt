@@ -18,10 +18,13 @@ import com.coffeepeek.admin.feature.coffee.ui.CoffeeDetailViewModel
 import com.coffeepeek.admin.feature.passwordrecovery.data.PasswordRecoveryRepositoryImpl
 import com.coffeepeek.admin.feature.passwordrecovery.domain.PasswordRecoveryRepository
 import com.coffeepeek.admin.feature.passwordrecovery.ui.PasswordRecoveryViewModel
+import com.coffeepeek.admin.feature.profile.data.PublicProfileRepositoryImpl
+import com.coffeepeek.admin.feature.profile.domain.PublicProfileRepository
+import com.coffeepeek.admin.feature.profile.ui.PublicProfileViewModel
 import com.coffeepeek.admin.feature.homecheckin.ui.HomeCheckInViewModel
 import com.coffeepeek.feature.homecheckin.data.HomeCheckInRepositoryImpl
 import com.coffeepeek.feature.homecheckin.domain.HomeCheckInRepository
-import com.coffeepeek.admin.feature.favorites.data.LocalRoasterFavorites
+import com.coffeepeek.admin.feature.favorites.data.ServerRoasterFavorites
 import com.coffeepeek.admin.utils.CustomUrlFetcher
 import com.coffeepeek.api.CoffeePeekClient
 import com.coffeepeek.admin.ui.NavigatorViewModel
@@ -60,7 +63,7 @@ fun initKoin() {
     val database = Locator.database
     ThemeManager.initialize(database.settingRepository)
 
-    startKoin {
+    val application = startKoin {
         modules(
             dataModule(
                 baseUrl = Constants.BASE_URL,
@@ -75,9 +78,19 @@ fun initKoin() {
             updateInstallerModule(),
         )
     }
+    com.coffeepeek.admin.analytics.installAnalytics(database.settingRepository, application.koin.get(), application.koin.get())
 }
 
 private fun appModule(settingRepository: com.coffeepeek.room.repository.SettingRepository) = module {
+    single<com.coffeepeek.admin.feature.checkin.domain.DrinkPhotoExtractor> {
+        com.coffeepeek.admin.feature.checkin.data.createDrinkPhotoExtractor()
+    }
+    single<com.coffeepeek.admin.feature.checkin.api.DrinkPhotoPreparation.Factory> {
+        val extractor = get<com.coffeepeek.admin.feature.checkin.domain.DrinkPhotoExtractor>()
+        com.coffeepeek.admin.feature.checkin.api.DrinkPhotoPreparation.Factory { scope, onChanged ->
+            com.coffeepeek.admin.feature.checkin.ui.DrinkPhotoPreparationController(scope, extractor, onChanged)
+        }
+    }
     single<PasswordRecoveryRepository> { PasswordRecoveryRepositoryImpl(get<CoffeePeekClient>().plainClient) }
     factory { (email: String, token: String) -> PasswordRecoveryViewModel(email, token.takeIf(String::isNotBlank), get()) }
     single<CoffeeRepository> { CoffeeRepositoryImpl(get<CoffeePeekClient>().plainClient) }
@@ -87,10 +100,12 @@ private fun appModule(settingRepository: com.coffeepeek.room.repository.SettingR
         val gateway = get<CoffeePeekClient>()
         HomeCheckInRepositoryImpl(gateway.client, gateway.uploadClient, Constants.BASE_URL)
     }
-    factory { HomeCheckInViewModel(get(), get(), get()) }
+    factory { HomeCheckInViewModel(get(), get(), get(), get()) }
     factory { CoffeeListViewModel(get()) }
     factory { (slug: String) -> CoffeeDetailViewModel(slug, get()) }
-    single<RoasterFavorites> { LocalRoasterFavorites(settingRepository, get()) }
+    single<PublicProfileRepository> { PublicProfileRepositoryImpl(get<CoffeePeekClient>().client, get(), get(), get()) }
+    factory { (slug: String) -> PublicProfileViewModel(slug, get(), get()) }
+    single<RoasterFavorites> { ServerRoasterFavorites(get(), get()) }
     single<com.coffeepeek.admin.feature.appupdate.domain.AppUpdateRepository> {
         com.coffeepeek.admin.feature.appupdate.data.AppUpdateRepositoryImpl(get<CoffeePeekClient>().plainClient, settingRepository)
     }
@@ -106,7 +121,7 @@ private fun appModule(settingRepository: com.coffeepeek.room.repository.SettingR
     factory { com.coffeepeek.admin.feature.community.ui.CommunityViewModel(get(), get(), get(), get(), get()) }
     factory { com.coffeepeek.admin.ui.screen.roaster.RoasterListViewModel(get(), get(), get()) }
     factory { MapViewModel(get(), get()) }
-    factory { (shopId: String) -> ShopDetailViewModel(shopId, get(), get(), get(), get(), get(), get(), get()) }
+    factory { (shopId: String) -> ShopDetailViewModel(shopId, get(), get(), get(), get(), get(), get(), get(), get()) }
     factory { (shopId: String) -> ShopMenuGalleryViewModel(shopId, get()) }
     factory { (shopId: String) -> ShopReportViewModel(shopId, get()) }
     factory { (shopId: String) -> SuggestShopChangeViewModel(shopId, get()) }
@@ -118,7 +133,7 @@ private fun appModule(settingRepository: com.coffeepeek.room.repository.SettingR
     factory { DeleteAccountPendingViewModel(get(), get()) }
     factory { AddShopViewModel(get()) }
     factory { EditProfileViewModel(get()) }
-    factory { FavoritesViewModel(get(), get(), get()) }
+    factory { FavoritesViewModel(get(), get(), get(), get()) }
     factory { (kind: ContributionKind) -> MyContributionsViewModel(kind, get(), get(), get()) }
     factory { VisitedPlacesViewModel(get(), get()) }
     factory { AddRoasterViewModel(get(), get()) }
