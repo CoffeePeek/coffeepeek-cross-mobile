@@ -1,8 +1,9 @@
 package com.coffeepeek.admin.feature.profile.ui
 
 import com.coffeepeek.admin.feature.profile.domain.*
-import com.coffeepeek.domain.model.Session
+import com.coffeepeek.domain.model.*
 import com.coffeepeek.domain.repository.SessionRepository
+import com.coffeepeek.domain.repository.UserRepository
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.*
@@ -113,6 +114,125 @@ class PublicProfileViewModelTest {
     }
 
     @Test
+    fun ownCanonicalProfileOpenedThroughAliasCannotBeFollowed() = runTest {
+        val users = ProfileUsers(ownProfile("canonical"))
+        var mutations = 0
+        val repository = ProfileRepositoryFake().apply {
+            follow = { _, desired -> mutations++; Result.success(PublicProfileFollowState(desired, 18)) }
+        }
+        val vm = PublicProfileViewModel("old-alias", repository, ProfileSessions("account-id"), taskScope(testScheduler), users)
+        try {
+            runCurrent()
+            assertTrue(vm.state.value.isOwnProfile)
+            vm.toggleFollow(); runCurrent()
+            assertEquals(0, mutations)
+            assertFalse(vm.state.value.isFollowing)
+            assertFalse(vm.state.value.isFollowLoading)
+            assertFalse(vm.state.value.needsLogin)
+        } finally { vm.close() }
+    }
+
+    @Test
+    fun accountIdMatchingAnotherPublicSlugDoesNotMakeItOwnProfile() = runTest {
+        val users = ProfileUsers(ownProfile("different"))
+        var mutations = 0
+        val repository = ProfileRepositoryFake().apply {
+            follow = { _, desired -> mutations++; Result.success(PublicProfileFollowState(desired, 18)) }
+        }
+        val vm = PublicProfileViewModel("canonical", repository, ProfileSessions("canonical"), taskScope(testScheduler), users)
+        try {
+            runCurrent()
+            assertFalse(vm.state.value.isOwnProfile)
+            vm.toggleFollow(); runCurrent()
+            assertEquals(1, mutations)
+        } finally { vm.close() }
+    }
+
+    @Test
+    fun ownCanonicalPathMatchesEvenWhenCachedSlugIsAnAlias() = runTest {
+        val repository = ProfileRepositoryFake().apply {
+            profile = { Result.success(PublicProfile("canonical", "nickname", null, null,
+                PublicProfileStats(2, 1, 0, 17), emptyList(), null, canonicalPath = "/users/canonical")) }
+        }
+        val users = ProfileUsers(ownProfile("old-name", "/users/canonical/"))
+        val vm = PublicProfileViewModel("alias", repository, ProfileSessions("account-id"), taskScope(testScheduler), users)
+        try {
+            runCurrent()
+            assertTrue(vm.state.value.isOwnProfile)
+            vm.toggleFollow(); runCurrent()
+            assertFalse(vm.state.value.isFollowLoading)
+        } finally { vm.close() }
+    }
+
+    @Test
+    fun cachedAddressChangesUpdateOwnershipAndGuardFollowBeforeCollectorRuns() = runTest {
+        val users = ProfileUsers(ownProfile("different"))
+        var mutations = 0
+        val repository = ProfileRepositoryFake().apply {
+            follow = { _, desired -> mutations++; Result.success(PublicProfileFollowState(desired, 18)) }
+        }
+        val vm = PublicProfileViewModel("canonical", repository, ProfileSessions("account-id"), taskScope(testScheduler), users)
+        try {
+            runCurrent()
+            // The same display name is not an identity match.
+            assertFalse(vm.state.value.isOwnProfile)
+            users.publish(ownProfile("canonical"))
+            vm.toggleFollow()
+            runCurrent()
+            assertTrue(vm.state.value.isOwnProfile)
+            assertEquals(0, mutations)
+            users.publish(ownProfile("different")); runCurrent()
+            assertFalse(vm.state.value.isOwnProfile)
+            vm.toggleFollow(); runCurrent()
+            assertEquals(1, mutations)
+        } finally { vm.close() }
+    }
+
+    @Test
+    fun followWaitsForUnknownOwnIdentityAndDoesNotMutateOwnProfile() = runTest {
+        val loaded = CompletableDeferred<UserProfile>()
+        val users = ProfileUsers().apply { load = { Result.success(loaded.await()) } }
+        var mutations = 0
+        val repository = ProfileRepositoryFake().apply {
+            follow = { _, desired -> mutations++; Result.success(PublicProfileFollowState(desired, 18)) }
+        }
+        val vm = PublicProfileViewModel("canonical", repository, ProfileSessions("account-id"), taskScope(testScheduler), users)
+        try {
+            runCurrent()
+            vm.toggleFollow(); runCurrent()
+            assertEquals(0, mutations)
+            loaded.complete(ownProfile("canonical")); runCurrent()
+            assertTrue(vm.state.value.isOwnProfile)
+            assertFalse(vm.state.value.isFollowLoading)
+            assertEquals(0, mutations)
+        } finally { loaded.complete(ownProfile("canonical")); vm.close() }
+    }
+
+    @Test
+    fun accountChangeRejectsOldCachedOwnershipUntilCurrentIdentityLoadsAndLogoutClearsIt() = runTest {
+        val loaded = CompletableDeferred<UserProfile>()
+        val users = ProfileUsers(ownProfile("canonical"))
+        val sessions = ProfileSessions("alice")
+        val vm = PublicProfileViewModel("canonical", ProfileRepositoryFake(), sessions, taskScope(testScheduler), users)
+        try {
+            runCurrent()
+            assertTrue(vm.state.value.isOwnProfile)
+            users.load = { Result.success(loaded.await()) }
+            sessions.signIn("bob"); runCurrent()
+            assertFalse(vm.state.value.isOwnProfile)
+            assertEquals("canonical", users.observeProfile().value?.address?.slug)
+            loaded.complete(ownProfile("different")); runCurrent()
+            assertFalse(vm.state.value.isOwnProfile)
+            users.publish(ownProfile("canonical")); runCurrent()
+            assertTrue(vm.state.value.isOwnProfile)
+            sessions.signIn(null); runCurrent()
+            assertFalse(vm.state.value.isOwnProfile)
+            vm.toggleFollow(); runCurrent()
+            assertTrue(vm.state.value.needsLogin)
+        } finally { loaded.complete(ownProfile("different")); vm.close() }
+    }
+
+    @Test
     fun oldAccountsLateFollowCannotChangeNewViewersProfile() = runTest {
         val deferred = CompletableDeferred<PublicProfileFollowState>()
         val sessions = ProfileSessions("alice")
@@ -218,6 +338,8 @@ class PublicProfileViewModelTest {
     private fun taskScope(scheduler: TestCoroutineScheduler) = CoroutineScope(SupervisorJob() + StandardTestDispatcher(scheduler))
     private fun checkIn(id: String) = PublicProfileCheckIn(id, null, "Дома", "Кофе", null, null, "", "2026-10-15", emptyList())
     private fun person(slug: String) = PublicProfileConnection(slug, null, slug, "/users/$slug")
+    private fun ownProfile(slug: String, canonicalPath: String = "/users/$slug") =
+        UserProfile("nickname", "", null, null, 0, 0, 0, PublicAddress(slug, canonicalPath, 1, false))
 }
 
 private class ProfileRepositoryFake : PublicProfileRepository {
@@ -247,4 +369,19 @@ private class ProfileSessions(user: String? = null) : SessionRepository {
     override suspend fun warmCache() = Unit
     override fun observeSession() = state
     override suspend fun isLoggedIn() = state.value != null
+}
+
+private class ProfileUsers(initial: UserProfile? = null) : UserRepository {
+    private val profile = MutableStateFlow(initial)
+    var load: suspend () -> Result<UserProfile> = { Result.failure(IllegalStateException("Profile unavailable")) }
+    fun publish(value: UserProfile?) { profile.value = value }
+    override fun observeProfile() = profile
+    override suspend fun refreshProfile() = load().onSuccess(::publish)
+    override suspend fun getMe() = profile.value?.let { Result.success(it) } ?: refreshProfile()
+    override suspend fun getPublicAvatarUrl(userId: String): Result<String?> = error("Unused")
+    override suspend fun requestAccountDeletion(): Result<AccountDeletionRequest> = error("Unused")
+    override suspend fun getAccountDeletionRequest(): Result<AccountDeletionRequest?> = error("Unused")
+    override suspend fun updateUsername(username: String): Result<Unit> = error("Unused")
+    override suspend fun updateAbout(about: String): Result<Unit> = error("Unused")
+    override suspend fun updateAvatar(photo: PendingPhotoUpload): Result<Unit> = error("Unused")
 }

@@ -1,7 +1,6 @@
 package com.coffeepeek.admin.feature.profile.ui
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -12,13 +11,14 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.Dp
 import com.coffeepeek.admin.di.platformViewModel
+import com.coffeepeek.admin.feature.favorites.api.FavoritesPreviewCarousel
 import com.coffeepeek.admin.feature.profile.domain.PublicFavoriteKind
 import com.coffeepeek.admin.feature.profile.domain.PublicProfileFavorite
 import com.coffeepeek.admin.feature.profile.domain.PublicProfileConnectionKind
@@ -49,11 +49,42 @@ internal fun OtherUserProfileScreen(
     onLogin: () -> Unit,
     onUserClick: (slug: String, nickname: String, avatarUrl: String?) -> Unit,
     vm: PublicProfileViewModel = platformViewModel(key = slug, parameters = { parametersOf(slug) }),
+) = UserProfileScreen(
+    slug = slug,
+    nickname = nickname,
+    avatarUrl = avatarUrl,
+    onBack = onBack,
+    onCoffeeShopClick = onCoffeeShopClick,
+    onRoasterClick = onRoasterClick,
+    onLogin = onLogin,
+    onUserClick = onUserClick,
+    vm = vm,
+)
+
+@Composable
+internal fun UserProfileScreen(
+    slug: String,
+    nickname: String? = null,
+    avatarUrl: String? = null,
+    onBack: (() -> Unit)? = null,
+    onCoffeeShopClick: (String) -> Unit,
+    onRoasterClick: (String) -> Unit,
+    onLogin: () -> Unit,
+    onUserClick: (slug: String, nickname: String, avatarUrl: String?) -> Unit,
+    isOwnProfile: Boolean = false,
+    onEditProfile: (() -> Unit)? = null,
+    onFavoritesClick: (() -> Unit)? = null,
+    onCheckInsClick: (() -> Unit)? = null,
+    topBarActions: (@Composable () -> Unit)? = null,
+    favoritesPreview: (@Composable () -> Unit)? = null,
+    bottomContentPadding: Dp = 20.dp,
+    vm: PublicProfileViewModel = platformViewModel(key = slug, parameters = { parametersOf(slug) }),
 ) {
     val state by vm.state.collectAsState()
     var section by remember(slug) { mutableStateOf<ProfileSection?>(null) }
     var photos by remember(slug) { mutableStateOf<ProfilePhotos?>(null) }
     val profile = state.profile
+    val viewingOwnProfile = isOwnProfile || state.isOwnProfile
     LaunchedEffect(state.needsLogin) {
         if (state.needsLogin) {
             vm.loginHandled()
@@ -86,7 +117,7 @@ internal fun OtherUserProfileScreen(
                 Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp).height(48.dp),
                 contentAlignment = Alignment.Center,
             ) {
-                PlatformGlassIconButton(
+                if (onBack != null) PlatformGlassIconButton(
                     icon = GlassControlIcon.Back,
                     onClick = onBack,
                     contentDescription = "Назад",
@@ -98,7 +129,9 @@ internal fun OtherUserProfileScreen(
                     fontWeight = FontWeight.SemiBold,
                     textAlign = TextAlign.Center,
                 )
-                profile?.canonicalPath?.takeIf { it.startsWith("/") && !it.startsWith("//") }?.let { path ->
+                if (topBarActions != null) Box(Modifier.align(Alignment.CenterEnd)) {
+                    topBarActions()
+                } else profile?.canonicalPath?.takeIf { it.startsWith("/") && !it.startsWith("//") }?.let { path ->
                     PlatformGlassIconButton(
                         icon = GlassControlIcon.Share,
                         onClick = { ShareHelper.shareText("https://coffeepeek.by$path") },
@@ -146,7 +179,8 @@ internal fun OtherUserProfileScreen(
                         profile.nickname, profile.avatarUrl, profile.about,
                         isFollowing = state.isFollowing,
                         followEnabled = !state.isFollowLoading && !state.isLoading,
-                        onFollow = vm::toggleFollow,
+                        onFollow = if (viewingOwnProfile) null else vm::toggleFollow,
+                        onEditProfile = onEditProfile,
                     ) {
                         profile.avatarUrl?.let { photos = ProfilePhotos(listOf(it)) }
                     }
@@ -155,33 +189,28 @@ internal fun OtherUserProfileScreen(
                         vm.openConnections(PublicProfileConnectionKind.Followers)
                     })
                     if (state.error != null) InlineProfileError("Не удалось обновить профиль", vm::refresh)
-                    if (state.followError != null) InlineProfileError("Не удалось изменить подписку", vm::toggleFollow)
+                    if (!viewingOwnProfile && state.followError != null) InlineProfileError("Не удалось изменить подписку", vm::toggleFollow)
 
                     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                        ProfileSectionHeading("Избранное", onAll = { section = ProfileSection.Favorites })
-                        when {
+                        ProfileSectionHeading("Избранное", onAll = onFavoritesClick ?: { section = ProfileSection.Favorites })
+                        if (favoritesPreview != null) favoritesPreview() else when {
                             state.isLoadingFavorites && profile.favorites.isEmpty() -> ProfileSectionLoader()
                             state.favoritesError != null && profile.favorites.isEmpty() ->
                                 InlineProfileError("Не удалось загрузить избранное", vm::retryFavorites)
                             profile.favorites.isEmpty() -> ProfileEmptyCard("Пока ничего нет в избранном", CpIcons.Favorite)
                             else -> {
-                                BoxWithConstraints(Modifier.fillMaxWidth()) {
-                                    val cardWidth = if (LocalDensity.current.fontScale > 1.2f || maxWidth < 320.dp) 240.dp
-                                        else (maxWidth - 10.dp) / 2
-                                    Row(
-                                        Modifier.height(IntrinsicSize.Min).horizontalScroll(rememberScrollState()),
-                                        horizontalArrangement = Arrangement.spacedBy(10.dp),
-                                    ) {
-                                        profile.favorites.take(6).forEach { favorite ->
-                                            key("${favorite.kind}-${favorite.id}") {
-                                                PublicProfileFavoriteCard(
-                                                    favorite,
-                                                    modifier = Modifier.width(cardWidth).fillMaxHeight(),
-                                                    onClick = { openFavorite(favorite) },
-                                                )
-                                            }
-                                        }
-                                    }
+                                val favorites = profile.favorites.take(6)
+                                FavoritesPreviewCarousel(
+                                    coffeeShops = favorites.filter { it.kind == PublicFavoriteKind.CoffeeShop },
+                                    roasters = favorites.filter { it.kind == PublicFavoriteKind.Roaster },
+                                    drinks = favorites.filter { it.kind == PublicFavoriteKind.Drink },
+                                    itemKey = { it.id },
+                                ) { favorite, modifier ->
+                                    PublicProfileFavoriteCard(
+                                        favorite,
+                                        modifier = modifier,
+                                        onClick = { openFavorite(favorite) },
+                                    )
                                 }
                                 if (state.favoritesError != null) InlineProfileError("Не удалось обновить избранное", vm::retryFavorites)
                             }
@@ -189,7 +218,7 @@ internal fun OtherUserProfileScreen(
                     }
 
                     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                        ProfileSectionHeading("Чекины", onAll = { section = ProfileSection.CheckIns })
+                        ProfileSectionHeading("Чекины", onAll = onCheckInsClick ?: { section = ProfileSection.CheckIns })
                         Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                             when {
                                 state.isLoadingCheckIns -> Box(Modifier.fillMaxWidth().height(100.dp), contentAlignment = Alignment.Center) {
@@ -203,6 +232,9 @@ internal fun OtherUserProfileScreen(
                                         checkIn = checkIn,
                                         onShopClick = { checkIn.coffeeShopSlug?.let(onCoffeeShopClick) },
                                         onPhotoClick = { urls, index -> photos = ProfilePhotos(urls, index) },
+                                        authorName = profile.nickname,
+                                        authorAvatarUrl = profile.avatarUrl,
+                                        isOwnProfile = viewingOwnProfile,
                                     )
                                 }
                             }
@@ -218,21 +250,23 @@ internal fun OtherUserProfileScreen(
                             else -> ProfileSectionLoader()
                         }
                     }
-                    Spacer(Modifier.height(20.dp))
+                    Spacer(Modifier.height(bottomContentPadding))
                 }
             }
         }
     }
 
-    if (section != null && profile != null) SwipeDismissModalBottomSheet(
+    // Native sheet content can recompose while its controller is being dismissed.
+    val selectedSection = section
+    if (selectedSection != null && profile != null) SwipeDismissModalBottomSheet(
         onDismissRequest = { section = null },
         maxSheetHeightFraction = 0.9f,
     ) {
         Row(Modifier.fillMaxWidth().padding(start = 20.dp, end = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-            Text(section!!.title, Modifier.weight(1f), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold)
+            Text(selectedSection.title, Modifier.weight(1f), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold)
             IconButton(onClick = { section = null }) { Icon(CpIcons.Close, contentDescription = "Закрыть") }
         }
-        when (section) {
+        when (selectedSection) {
             ProfileSection.Favorites -> LazyColumn(
                 contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 32.dp),
                 verticalArrangement = Arrangement.spacedBy(10.dp),
@@ -253,7 +287,9 @@ internal fun OtherUserProfileScreen(
                         checkIn = checkIn,
                         onShopClick = { checkIn.coffeeShopSlug?.let { section = null; onCoffeeShopClick(it) } },
                         onPhotoClick = { urls, index -> photos = ProfilePhotos(urls, index) },
-                        compact = false,
+                        authorName = profile.nickname,
+                        authorAvatarUrl = profile.avatarUrl,
+                        isOwnProfile = viewingOwnProfile,
                     )
                 }
                 if (state.isLoadingCheckIns || state.isLoadingMoreCheckIns) item {
@@ -277,7 +313,6 @@ internal fun OtherUserProfileScreen(
                     onRetry = vm::retryActivity,
                 )
             }
-            null -> Unit
         }
     }
     if (state.connectionKind != null) PublicProfileConnectionsSheet(

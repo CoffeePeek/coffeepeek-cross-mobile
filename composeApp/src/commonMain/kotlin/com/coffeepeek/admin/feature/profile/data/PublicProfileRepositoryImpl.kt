@@ -220,6 +220,7 @@ private fun CheckIn.toPublicProfileCheckIn(): PublicProfileCheckIn {
         note,
         if (isHome) recipe?.preparedOn?.takeIf(String::isNotBlank) ?: visitedAt.ifBlank { createdAt } else visitedAt.ifBlank { createdAt },
         photoUrls,
+        source = this,
     )
 }
 

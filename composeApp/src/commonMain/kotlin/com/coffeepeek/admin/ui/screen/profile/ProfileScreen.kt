@@ -1,383 +1,160 @@
 package com.coffeepeek.admin.ui.screen.profile
 
-import com.coffeepeek.admin.analytics.*
-
-import androidx.compose.runtime.setValue
-import androidx.compose.runtime.getValue
-import com.coffeepeek.admin.ui.component.PlatformAlert
-import com.coffeepeek.admin.ui.component.GuestAuthCard
-import com.coffeepeek.admin.ui.icons.CpIcons
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import com.coffeepeek.admin.theme.CpColor
-import com.coffeepeek.admin.theme.CpDimens
+import com.coffeepeek.admin.analytics.Analytics
+import com.coffeepeek.admin.analytics.AnalyticsEvent
+import com.coffeepeek.admin.feature.favorites.api.FavoritesProfilePreview
+import com.coffeepeek.admin.feature.profile.domain.PublicProfileStats
+import com.coffeepeek.admin.feature.profile.ui.PublicProfileHeader
+import com.coffeepeek.admin.feature.profile.ui.PublicProfileStatsCard
+import com.coffeepeek.admin.feature.profile.ui.PublicProfileViewModel
+import com.coffeepeek.admin.feature.profile.ui.UserProfileScreen
 import com.coffeepeek.admin.ui.Navigator
-import com.coffeepeek.admin.ui.component.CoffeePeekLoader
-import com.coffeepeek.admin.ui.component.LocalFloatingNavClearance
-import com.coffeepeek.admin.ui.component.LoadErrorContent
-import com.coffeepeek.admin.ui.component.SettingsDivider
-import com.coffeepeek.admin.ui.component.SettingsIconPalette
-import com.coffeepeek.admin.ui.component.SettingsRow
-import com.coffeepeek.admin.ui.component.SettingsSection
+import com.coffeepeek.admin.ui.component.*
+import com.coffeepeek.admin.ui.icons.CpIcons
 import com.coffeepeek.admin.ui.screen.contributions.ContributionKind
-import com.coffeepeek.admin.utils.CpImage
+import kotlinx.coroutines.flow.drop
 import org.koin.compose.koinInject
-import coffeepeek.composeapp.generated.resources.Res
-import coffeepeek.composeapp.generated.resources.favorites_profile_title
-import coffeepeek.composeapp.generated.resources.favorites_profile_description
-import org.jetbrains.compose.resources.stringResource
+import org.koin.core.parameter.parametersOf
 
 @Composable
 fun ProfileScreen(vm: ProfileViewModel = koinInject()) {
     val state by vm.uiState.collectAsState()
     var showLogoutDialog by remember { mutableStateOf(false) }
+    val onEdit = { Navigator.navigate(Navigator.Screen.EditProfile) }
+    val openShop: (String) -> Unit = { Navigator.navigate(Navigator.Screen.ShopDetail(it)) }
+    val openRoaster: (String) -> Unit = { Navigator.navigate(Navigator.Screen.RoasterDetail(it)) }
+    val openFavorites = {
+        Analytics.track(AnalyticsEvent.FAVORITES_OPENED, "entry_point" to "profile")
+        Navigator.navigate(Navigator.Screen.Favorites)
+    }
+    val actions: @Composable () -> Unit = {
+        ProfileActions(onContributions = ::openContributions, onLogout = { showLogoutDialog = true })
+    }
+    val bottomPadding = 20.dp + LocalFloatingNavClearance.current
 
-    if (showLogoutDialog) {
-        LogoutDialog(
-            onConfirm = { showLogoutDialog = false; vm.logout() },
-            onDismiss = { showLogoutDialog = false },
-        )
+    if (showLogoutDialog) PlatformAlert(
+        title = "Выйти из аккаунта?",
+        message = "Вы уверены? Потребуется повторный вход.",
+        confirmLabel = "Выйти",
+        cancelLabel = "Отмена",
+        onConfirm = { showLogoutDialog = false; vm.logout() },
+        onDismiss = { showLogoutDialog = false },
+        destructive = true,
+    )
+
+    val slug = state.publicSlug
+    if (state.isLoggedIn && slug != null) {
+        key(slug) {
+            val publicVm: PublicProfileViewModel = koinInject(
+                parameters = { parametersOf(slug) },
+            )
+            DisposableEffect(publicVm) { onDispose(publicVm::close) }
+            LaunchedEffect(publicVm) {
+                snapshotFlow { state.publicAddress to Triple(state.displayName, state.about, state.avatarUrl) }
+                    .drop(1)
+                    .collect { publicVm.refresh() }
+            }
+            UserProfileScreen(
+                slug = slug,
+                nickname = state.displayName,
+                avatarUrl = state.avatarUrl,
+                isOwnProfile = true,
+                onEditProfile = onEdit,
+                onCoffeeShopClick = openShop,
+                onRoasterClick = openRoaster,
+                onLogin = { Navigator.navigate(Navigator.Screen.Auth) },
+                onUserClick = { userSlug, nickname, avatar ->
+                    Navigator.navigate(Navigator.Screen.UserProfile(userSlug, nickname, avatar))
+                },
+                onFavoritesClick = openFavorites,
+                onCheckInsClick = { Navigator.navigate(Navigator.Screen.VisitedPlaces) },
+                topBarActions = actions,
+                favoritesPreview = { FavoritesProfilePreview(openShop, openRoaster) },
+                bottomContentPadding = bottomPadding,
+                vm = publicVm,
+            )
+        }
+        return
     }
 
+    // Cached accounts without a public address keep access to their personal content.
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
     ) { _ ->
-        if (state.isLoading) {
+        Column(Modifier.fillMaxSize().statusBarsPadding()) {
             Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .statusBarsPadding(),
+                Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp).height(48.dp),
                 contentAlignment = Alignment.Center,
             ) {
-                CoffeePeekLoader()
+                Text("Профиль", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold)
+                if (state.isLoggedIn) Box(Modifier.align(Alignment.CenterEnd)) { actions() }
             }
-            return@Scaffold
-        }
-
-        if (state.error != null && !state.hasContent) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .statusBarsPadding()
-                    .padding(CpDimens.spacing4),
-                contentAlignment = Alignment.Center,
-            ) {
-                LoadErrorContent(onRetry = vm::refreshProfile)
-            }
-            return@Scaffold
-        }
-
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .statusBarsPadding()
-                .verticalScroll(rememberScrollState()),
-        ) {
-            Text(
-                text = "Профиль",
-                style = MaterialTheme.typography.headlineMedium,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onBackground,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(
-                        horizontal = CpDimens.settingsPagePadding,
-                        vertical = CpDimens.spacing4,
-                    ),
-            )
-
-            state.refreshError?.let {
-                LoadErrorContent(
-                    onRetry = vm::refreshProfile,
-                    modifier = Modifier.padding(horizontal = CpDimens.spacing4),
-                )
-            }
-
-            // ── Шапка ─────────────────────────────────────────────────────────
-            if (state.isLoggedIn) {
-                ProfileHeader(
-                    state = state,
-                    onEdit = { Navigator.navigate(Navigator.Screen.EditProfile) },
-                )
-            } else {
-                GuestLoginHeader(
-                    onLogin = { Navigator.navigate(Navigator.Screen.Auth) },
-                    onRegister = { Navigator.navigate(Navigator.Screen.Register) },
-                )
-            }
-
-            Spacer(Modifier.height(CpDimens.settingsSectionSpacing))
-
-            SettingsSection(title = "Моя активность") {
-                SettingsRow(
-                    icon = CpIcons.Favorite,
-                    label = stringResource(Res.string.favorites_profile_title),
-                    description = stringResource(Res.string.favorites_profile_description),
-                    iconColors = SettingsIconPalette.Rose,
-                    onClick = { run { Analytics.track(AnalyticsEvent.FAVORITES_OPENED, "entry_point" to "profile"); Navigator.navigate(Navigator.Screen.Favorites) } },
-                )
-                SettingsDivider()
-                SettingsRow(
-                    icon = CpIcons.Location,
-                    label = "Чекины",
-                    description = "В кофейнях и дома",
-                    iconColors = SettingsIconPalette.Sky,
-                    onClick = { Navigator.navigate(if (state.isLoggedIn) Navigator.Screen.VisitedPlaces else Navigator.Screen.Auth) },
-                )
-            }
-
-            if (state.isLoggedIn) {
-                Spacer(Modifier.height(CpDimens.settingsSectionSpacing))
-                SettingsSection(title = "Модерация") {
-                    SettingsRow(
-                        icon = CpIcons.NoteEdit,
-                        label = "Правки кофеен",
-                        description = "Изменения, которые вы отправили",
-                        iconColors = SettingsIconPalette.Gold,
-                        onClick = { openContributions(ContributionKind.Changes) },
-                    )
-                    SettingsDivider()
-                    SettingsRow(
-                        icon = CpIcons.Add,
-                        label = "Отправленные кофейни",
-                        description = "Кофейни, которые вы добавили",
-                        iconColors = SettingsIconPalette.Mint,
-                        onClick = { openContributions(ContributionKind.Shops) },
-                    )
-                    SettingsDivider()
-                    SettingsRow(
-                        icon = CpIcons.CoffeeBean,
-                        label = "Отправленные обжарщики",
-                        description = "Обжарщики, которых вы добавили",
-                        iconColors = SettingsIconPalette.Sky,
-                        onClick = { openContributions(ContributionKind.Roasters) },
-                    )
-                }
-            }
-
-            if (state.isLoggedIn) {
-                Spacer(Modifier.height(CpDimens.settingsSectionSpacing))
-                Button(
-                    onClick = { showLogoutDialog = true },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = CpDimens.settingsPagePadding)
-                        .height(CpDimens.buttonHeight),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = CpColor.Error.copy(alpha = 0.1f),
-                        contentColor   = CpColor.Error,
-                    ),
-                    shape = RoundedCornerShape(CpDimens.buttonRadius),
+            when {
+                state.isLoading -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CoffeePeekLoader() }
+                state.error != null && !state.hasContent -> Box(
+                    Modifier.fillMaxSize().padding(16.dp), contentAlignment = Alignment.Center,
+                ) { LoadErrorContent(onRetry = vm::refreshProfile) }
+                else -> Column(
+                    Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(horizontal = 16.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
-                    Icon(
-                        imageVector = CpIcons.Logout,
-                        contentDescription = null,
-                        modifier = Modifier.size(18.dp),
-                    )
-                    Spacer(Modifier.width(CpDimens.spacing2))
-                    Text(
-                        text = "Выйти",
-                        style = MaterialTheme.typography.labelLarge,
-                    )
-                }
-            }
-
-            Spacer(Modifier.height(CpDimens.spacing8 + LocalFloatingNavClearance.current))
-        }
-    }
-}
-
-// ── Шапка профиля ─────────────────────────────────────────────────────────────
-
-@Composable
-private fun ProfileHeader(state: ProfileUiState, onEdit: () -> Unit) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(
-                start = CpDimens.settingsPagePadding,
-                end = CpDimens.settingsPagePadding,
-            ),
-        verticalArrangement = Arrangement.spacedBy(CpDimens.spacing3),
-    ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(CpDimens.spacing4),
-            verticalAlignment = Alignment.Top,
-        ) {
-            Box(modifier = Modifier.size(104.dp)) {
-                Box(
-                    modifier = Modifier
-                        .size(96.dp)
-                        .clip(CircleShape)
-                        .background(Brush.linearGradient(listOf(CpColor.Primary, CpColor.GoldWarm))),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Text(
-                        text = state.initials.ifEmpty { "?" },
-                        style = MaterialTheme.typography.headlineMedium,
-                        color = CpColor.DarkTextOnPrimary,
-                        fontWeight = FontWeight.Bold,
-                    )
-                    if (!state.avatarUrl.isNullOrBlank()) {
-                        CpImage(
-                            data = state.avatarUrl,
-                            modifier = Modifier.fillMaxSize(),
-                            contentScale = ContentScale.Crop,
+                    if (state.isLoggedIn) {
+                        PublicProfileHeader(
+                            nickname = state.displayName,
+                            avatarUrl = state.avatarUrl,
+                            about = state.about,
+                            onEditProfile = onEdit,
+                            onAvatarClick = onEdit,
                         )
-                    }
-                }
-
-                Box(
-                    modifier = Modifier
-                        .align(Alignment.BottomEnd)
-                        .size(40.dp)
-                        .clip(CircleShape)
-                        .background(MaterialTheme.colorScheme.surface)
-                        .border(1.dp, MaterialTheme.colorScheme.outlineVariant, CircleShape)
-                        .clickable(onClick = onEdit),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Icon(
-                        imageVector = CpIcons.Edit,
-                        contentDescription = "Редактировать профиль",
-                        tint = MaterialTheme.colorScheme.onSurface,
-                        modifier = Modifier.size(17.dp),
+                        PublicProfileStatsCard(PublicProfileStats(
+                            checkIns = state.checkInCount,
+                            coffeeShops = state.addedShopsCount,
+                            roasters = state.addedRoastersCount,
+                            followers = state.followersCount,
+                        ))
+                        if (state.error != null || state.refreshError != null) LoadErrorContent(onRetry = vm::refreshProfile)
+                    } else GuestAuthCard(
+                        onLogin = { Navigator.navigate(Navigator.Screen.Auth) },
+                        onRegister = { Navigator.navigate(Navigator.Screen.Register) },
                     )
+                    TextButton(onClick = openFavorites) { Text("Избранное") }
+                    if (state.isLoggedIn) FavoritesProfilePreview(openShop, openRoaster)
+                    TextButton(onClick = {
+                        Navigator.navigate(if (state.isLoggedIn) Navigator.Screen.VisitedPlaces else Navigator.Screen.Auth)
+                    }) { Text("Чекины") }
+                    Spacer(Modifier.height(bottomPadding))
                 }
             }
-
-            Column(
-                modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(2.dp),
-            ) {
-                Text(
-                    text = state.displayName.ifBlank { "Пользователь" },
-                    style = MaterialTheme.typography.titleLarge,
-                    color = MaterialTheme.colorScheme.onBackground,
-                    fontWeight = FontWeight.Bold,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-                if (state.email.isNotBlank()) {
-                    Text(
-                        text = state.email,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                }
-
-                Spacer(Modifier.height(CpDimens.spacing2))
-                Row(modifier = Modifier.fillMaxWidth()) {
-                    StatBadge(state.checkInCount, "В кофейнях", Modifier.weight(1f)) {
-                        Navigator.navigate(Navigator.Screen.VisitedPlaces)
-                    }
-                    StatBadge(state.addedShopsCount, "Кофейни", Modifier.weight(1f)) {
-                        openContributions(ContributionKind.Shops)
-                    }
-                }
-            }
-        }
-
-        if (!state.about.isNullOrBlank()) {
-            Text(
-                text = state.about,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.fillMaxWidth(),
-                maxLines = 3,
-                overflow = TextOverflow.Ellipsis,
-            )
         }
     }
 }
 
 @Composable
-private fun GuestLoginHeader(
-    onLogin: () -> Unit,
-    onRegister: () -> Unit,
-) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth(),
-    ) {
-        GuestAuthCard(
-            onLogin = onLogin,
-            onRegister = onRegister,
-            modifier = Modifier.padding(horizontal = CpDimens.settingsPagePadding),
-        )
+internal fun ProfileActions(onContributions: (ContributionKind) -> Unit, onLogout: () -> Unit) {
+    PlatformMenuButton(
+        items = listOf(
+            PlatformMenuItem("shop-changes", "Правки кофеен", icon = PlatformMenuIcon.NoteEdit, onClick = { onContributions(ContributionKind.Changes) }),
+            PlatformMenuItem("submitted-shops", "Отправленные кофейни", icon = PlatformMenuIcon.Add, onClick = { onContributions(ContributionKind.Shops) }),
+            PlatformMenuItem("submitted-roasters", "Отправленные обжарщики", icon = PlatformMenuIcon.CoffeeBean, onClick = { onContributions(ContributionKind.Roasters) }),
+            PlatformMenuItem("logout", "Выйти", icon = PlatformMenuIcon.Logout, onClick = onLogout),
+        ),
+        contentDescription = "Действия с профилем",
+    ) { openMenu ->
+        IconButton(onClick = openMenu) {
+            Icon(CpIcons.MoreHorizontal, contentDescription = "Действия с профилем")
+        }
     }
 }
 
-@Composable
-private fun StatBadge(count: Int, label: String, modifier: Modifier = Modifier, onClick: () -> Unit) {
-    Column(
-        modifier = modifier
-            .clip(RoundedCornerShape(CpDimens.radiusMd))
-            .clickable(onClickLabel = label, onClick = onClick),
-        horizontalAlignment = Alignment.Start,
-    ) {
-        Text(
-            text = count.toString(),
-            style = MaterialTheme.typography.titleMedium.copy(lineHeight = 20.sp),
-            color = MaterialTheme.colorScheme.onBackground,
-            fontWeight = FontWeight.Bold,
-        )
-        Spacer(Modifier.height(3.dp))
-        Text(
-            text = label,
-            style = MaterialTheme.typography.labelSmall.copy(lineHeight = 16.sp),
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-    }
-}
-
-internal fun openContributions(kind: ContributionKind) =
+private fun openContributions(kind: ContributionKind) =
     Navigator.navigate(Navigator.Screen.MyContributions(kind.name))
-
-// ── Диалог выхода ─────────────────────────────────────────────────────────────
-
-@Composable
-private fun LogoutDialog(onConfirm: () -> Unit, onDismiss: () -> Unit) {
-    PlatformAlert(title = "Выйти из аккаунта?", message = "Вы уверены? Потребуется повторный вход.", confirmLabel = "Выйти", onConfirm = onConfirm, onDismiss = onDismiss, cancelLabel = "Отмена", destructive = true)
-}

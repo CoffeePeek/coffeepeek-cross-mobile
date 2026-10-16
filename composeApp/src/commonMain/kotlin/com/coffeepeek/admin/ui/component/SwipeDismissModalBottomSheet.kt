@@ -9,21 +9,17 @@ import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.draggable
 import androidx.compose.foundation.gestures.rememberDraggableState
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.SheetValue
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.mutableFloatStateOf
@@ -35,8 +31,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
-import com.coffeepeek.admin.theme.CoffeePeekTheme
-import org.jetbrains.compose.ui.tooling.preview.Preview
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -71,6 +65,7 @@ fun SwipeDismissModalBottomSheet(
     ModalBottomSheet(
         onDismissRequest = { if (dismissEnabled) onDismissRequest() },
         modifier = Modifier
+            .then(maxSheetHeightFraction?.let { Modifier.fillMaxHeight(it) } ?: Modifier)
             .graphicsLayer { translationY = dragOffset }
             .dismissKeyboardOnBackgroundGestures(),
         sheetState = sheetState,
@@ -108,36 +103,6 @@ fun SwipeDismissModalBottomSheet(
             }
         },
         containerColor = MaterialTheme.colorScheme.surface,
-    ) {
-        if (maxSheetHeightFraction == null) {
-            trackedContent()
-        } else {
-            // Keep the sheet's anchor constraints equal to the dialog viewport.
-            // Sizing the ModalBottomSheet itself makes Expanded resolve to y = 0,
-            // because Material sees the reduced height as the entire viewport.
-            Column(Modifier.fillMaxWidth().fillMaxHeight(maxSheetHeightFraction)) {
-                trackedContent()
-            }
-        }
-    }
+        content = trackedContent,
+    )
 }
-
-// A modal has its own window: use Interactive Preview / Run Preview to inspect its placement.
-@Composable
-private fun SwipeDismissModalBottomSheetPlacementPreview(darkTheme: Boolean) {
-    CoffeePeekTheme(darkTheme = darkTheme) {
-        SwipeDismissModalBottomSheet({}, maxSheetHeightFraction = 0.76f) {
-            Column(Modifier.fillMaxWidth().fillMaxHeight().verticalScroll(rememberScrollState())) {
-                repeat(40) { Text("Example row $it") }
-            }
-        }
-    }
-}
-
-@Preview
-@Composable
-private fun SwipeDismissModalBottomSheetLightPreview() = SwipeDismissModalBottomSheetPlacementPreview(false)
-
-@Preview
-@Composable
-private fun SwipeDismissModalBottomSheetDarkPreview() = SwipeDismissModalBottomSheetPlacementPreview(true)

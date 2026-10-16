@@ -90,7 +90,8 @@ internal fun Modifier.analyticsExposure(feature: String, placement: String, page
     val overlay = LocalAnalyticsOverlay.current
     val window = LocalWindowInfo.current
     var fraction by remember { mutableFloatStateOf(0f) }
-    val eligible = fraction >= .1f && visible && unobscured && (state.overlays.isEmpty() || state.overlays.lastOrNull() == overlay) && state.ready && state.foreground &&
+    val enoughVisible by remember { derivedStateOf { fraction >= .1f } }
+    val eligible = enoughVisible && visible && unobscured && (state.overlays.isEmpty() || state.overlays.lastOrNull() == overlay) && state.ready && state.foreground &&
         lifecycle == Lifecycle.State.RESUMED && state.page == page
     LaunchedEffect(eligible, state.generation, state.visit, state.visitSequence) {
         if (eligible) {

@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import com.coffeepeek.admin.feature.profile.domain.*
 import com.coffeepeek.domain.model.Session
 import com.coffeepeek.domain.repository.SessionRepository
+import com.coffeepeek.domain.repository.UserRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -30,6 +31,7 @@ internal data class PublicProfileUiState(
     val isLoadingMoreCheckIns: Boolean = false,
     val checkInsError: String? = null,
     val hasMoreCheckIns: Boolean = false,
+    val isOwnProfile: Boolean = false,
     val isFollowing: Boolean = false,
     val isFollowLoading: Boolean = false,
     val followError: String? = null,
@@ -52,6 +54,7 @@ internal class PublicProfileViewModel(
     private val repository: PublicProfileRepository,
     private val sessions: SessionRepository,
     private val scope: CoroutineScope = CoroutineScope(Dispatchers.Default + SupervisorJob()),
+    private val users: UserRepository? = null,
 ) : ViewModel(), AutoCloseable {
     private val _state = MutableStateFlow(PublicProfileUiState())
     val state = _state.asStateFlow()
@@ -61,22 +64,32 @@ internal class PublicProfileViewModel(
     private var favoritesJob: Job? = null
     private var activityJob: Job? = null
     private var connectionsJob: Job? = null
+    private var ownProfileJob: Job? = null
     private var nextCursor: String? = null
     private var connectionsPage = 0
     private var generation = 0
     private var activityGeneration = 0
     private var connectionsGeneration = 0
     private var account = sessionKey(sessions.peekSession())
+    private var ownProfileAccount = account
+    private var ownIdentityLoaded = users == null || users.observeProfile().value != null
+    private var ownAddress = users?.observeProfile()?.value?.address.takeIf { account != null }
 
     init {
         addCloseable(this)
         refresh()
+        observeOwnProfile()
+        loadOwnProfile(forceRefresh = false)
         scope.launch {
             sessions.observeSession().map(::sessionKey).distinctUntilChanged().collect { current ->
                 if (current != account) {
                     account = current
+                    ownProfileAccount = null
+                    ownIdentityLoaded = users == null
+                    ownAddress = null
                     _state.value = PublicProfileUiState(activityMonth = state.value.activityMonth)
                     refresh()
+                    loadOwnProfile(forceRefresh = true)
                 }
             }
         }
@@ -85,6 +98,58 @@ internal class PublicProfileViewModel(
     private fun sessionKey(session: Session?): String? = session?.takeIf(sessions::isActiveSession)?.let { it.userId ?: it.accessToken }
     private fun isCurrent(requestGeneration: Int, requestAccount: String?): Boolean =
         generation == requestGeneration && account == requestAccount && sessionKey(sessions.peekSession()) == requestAccount
+
+    private fun observeOwnProfile() {
+        val users = users ?: return
+        scope.launch {
+            users.observeProfile().collect { profile ->
+                val currentAccount = sessionKey(sessions.peekSession())
+                if (currentAccount != null && currentAccount == account && ownProfileAccount == currentAccount) {
+                    ownAddress = profile?.address
+                    ownIdentityLoaded = profile != null
+                    updateOwnProfile()
+                }
+            }
+        }
+    }
+
+    private fun loadOwnProfile(forceRefresh: Boolean) {
+        ownProfileJob?.cancel()
+        val users = users ?: return
+        val requestAccount = account ?: return
+        if (!forceRefresh && users.observeProfile().value != null) return
+        ownProfileJob = scope.launch {
+            val result = if (forceRefresh) users.refreshProfile() else users.getMe()
+            currentCoroutineContext().ensureActive()
+            if (account != requestAccount || sessionKey(sessions.peekSession()) != requestAccount) return@launch
+            result.onSuccess { profile ->
+                ownProfileAccount = requestAccount
+                ownIdentityLoaded = true
+                ownAddress = profile.address
+                updateOwnProfile()
+            }
+        }
+    }
+
+    private fun isOwnProfile(profile: PublicProfile): Boolean {
+        val session = sessions.peekSession()
+        val currentAccount = sessionKey(session) ?: return false
+        if (currentAccount != account) return false
+        if (ownProfileAccount != currentAccount) return false
+        val address = users?.observeProfile()?.value?.address ?: ownAddress ?: return false
+        return address.slug.isNotBlank() && address.slug == profile.slug ||
+            address.canonicalPath.isNotBlank() && profile.canonicalPath?.trimEnd('/') == address.canonicalPath.trimEnd('/')
+    }
+
+    private fun updateOwnProfile() {
+        val isOwn = state.value.profile?.let(::isOwnProfile) == true
+        if (isOwn) followJob?.cancel()
+        _state.update { it.copy(isOwnProfile = isOwn,
+            isFollowing = if (isOwn) false else it.isFollowing,
+            isFollowLoading = if (isOwn) false else it.isFollowLoading,
+            followError = if (isOwn) null else it.followError,
+            needsLogin = if (isOwn) false else it.needsLogin) }
+    }
 
     fun refresh() {
         profileJob?.cancel(); checkInsJob?.cancel(); followJob?.cancel()
@@ -102,7 +167,9 @@ internal class PublicProfileViewModel(
             currentCoroutineContext().ensureActive()
             if (!isCurrent(requestGeneration, requestAccount)) return@launch
             result.onSuccess { profile ->
-                _state.update { it.copy(isLoading = false, profile = profile, error = null, isFollowing = profile.isFollowing) }
+                val isOwn = isOwnProfile(profile)
+                _state.update { it.copy(isLoading = false, profile = profile, error = null,
+                    isOwnProfile = isOwn, isFollowing = !isOwn && profile.isFollowing) }
                 loadCheckIns(reset = true)
                 retryFavorites()
                 retryActivity()
@@ -119,16 +186,35 @@ internal class PublicProfileViewModel(
     fun toggleFollow() {
         val current = state.value
         val profile = current.profile ?: return
-        if (current.isFollowLoading || current.isLoading) return
+        if (current.isFollowLoading || current.isLoading || current.isOwnProfile || isOwnProfile(profile)) return
         val requestAccount = sessionKey(sessions.peekSession())
         if (requestAccount == null) { _state.update { it.copy(needsLogin = true) }; return }
         if (requestAccount != account) return
         val requestGeneration = generation
         _state.update { it.copy(isFollowLoading = true, followError = null) }
         followJob = scope.launch {
+            if (users != null && (!ownIdentityLoaded || ownProfileAccount != requestAccount)) {
+                ownProfileJob?.join()
+                if (!isCurrent(requestGeneration, requestAccount)) return@launch
+                if (!ownIdentityLoaded || ownProfileAccount != requestAccount) {
+                    val ownProfile = users.getMe()
+                    currentCoroutineContext().ensureActive()
+                    if (!isCurrent(requestGeneration, requestAccount)) return@launch
+                    ownProfile.onSuccess {
+                        ownProfileAccount = requestAccount
+                        ownIdentityLoaded = true
+                        ownAddress = it.address
+                        updateOwnProfile()
+                    }.onFailure {
+                        _state.update { it.copy(isFollowLoading = false, followError = "Не удалось проверить профиль. Попробуйте ещё раз") }
+                        return@launch
+                    }
+                }
+            }
+            if (isOwnProfile(profile)) { updateOwnProfile(); return@launch }
             val result = repository.setFollowing(profile.slug, !current.isFollowing)
             currentCoroutineContext().ensureActive()
-            if (!isCurrent(requestGeneration, requestAccount)) return@launch
+            if (!isCurrent(requestGeneration, requestAccount) || isOwnProfile(profile)) return@launch
             result.onSuccess { follow ->
                 _state.update { it.copy(isFollowing = follow.isFollowing, isFollowLoading = false,
                     profile = it.profile?.let { loaded -> loaded.copy(isFollowing = follow.isFollowing,

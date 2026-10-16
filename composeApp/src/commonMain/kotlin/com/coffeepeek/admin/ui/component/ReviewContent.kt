@@ -641,7 +641,7 @@ internal fun rememberReviewDisplayDate(raw: String): String {
             }
         }
     }
-    return formatReviewDisplayDate(raw, now)
+    return remember(raw, now) { formatReviewDisplayDate(raw, now) }
 }
 
 @OptIn(ExperimentalTime::class)

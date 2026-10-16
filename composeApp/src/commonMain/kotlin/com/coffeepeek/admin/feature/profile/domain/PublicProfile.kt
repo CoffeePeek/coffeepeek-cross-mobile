@@ -1,6 +1,7 @@
 package com.coffeepeek.admin.feature.profile.domain
 
 import com.coffeepeek.domain.model.PublicAddress
+import com.coffeepeek.domain.model.CheckIn
 
 internal data class PublicProfile(
     val slug: String,
@@ -82,6 +83,7 @@ internal data class PublicProfileCheckIn(
     val note: String,
     val occurredAt: String,
     val photoUrls: List<String>,
+    val source: CheckIn? = null,
 )
 
 internal data class PublicProfileCheckInPage(

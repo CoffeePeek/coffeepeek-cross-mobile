@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -156,6 +157,118 @@ class ContentSizedSheetLayoutTest {
             scenario.onActivity { mode.value = ContentMode.Short }
             waitUntil("Replacing a fill-height form must also shrink the requested detent") {
                 near(reportedHeight.get(), 136 * density) && scroll.get()?.maxValue == 0
+            }
+        }
+    }
+
+    @Test
+    fun fillHeightFormUsesExpandedNativeViewportWithKeyboardPaddingAndRestores() {
+        val viewport = mutableStateOf(320.dp)
+        val preferredMaximum = mutableStateOf(320.dp)
+        val keyboardHeight = mutableStateOf(0.dp)
+        val reportedHeight = AtomicInteger()
+        val containerHeight = AtomicInteger()
+        val containerBottom = AtomicInteger()
+        val formHeight = AtomicInteger()
+        val formBottom = AtomicInteger()
+        val scrollHeight = AtomicInteger()
+        val scrollBottom = AtomicInteger()
+        val lastRowBottom = AtomicInteger()
+        val scroll = AtomicReference<ScrollState>()
+        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+            scenario.onActivity { activity -> activity.setContent {
+                CoffeePeekTheme {
+                    Box(Modifier.size(width = 240.dp, height = viewport.value)) {
+                        ContentSizedSheetLayout(
+                            maxContentHeight = preferredMaximum.value,
+                            onContentHeightChanged = reportedHeight::set,
+                            modifier = Modifier.fillMaxSize().onGloballyPositioned {
+                                containerHeight.set(it.size.height)
+                                containerBottom.set((it.positionInRoot().y + it.size.height).roundToInt())
+                            },
+                        ) {
+                            Box(Modifier.fillMaxSize().onGloballyPositioned {
+                                formHeight.set(it.size.height)
+                                formBottom.set((it.positionInRoot().y + it.size.height).roundToInt())
+                            }) {
+                                Column(Modifier.fillMaxSize().padding(bottom = keyboardHeight.value)) {
+                                    Box(Modifier.fillMaxWidth().height(32.dp)) { Text("Check-in note") }
+                                    val scrollState = rememberScrollState()
+                                    scroll.set(scrollState)
+                                    Column(
+                                        Modifier.weight(1f).onGloballyPositioned {
+                                            scrollHeight.set(it.size.height)
+                                            scrollBottom.set((it.positionInRoot().y + it.size.height).roundToInt())
+                                        }.verticalScroll(scrollState),
+                                    ) {
+                                        repeat(20) { index ->
+                                            Box(Modifier.fillMaxWidth().height(28.dp).onGloballyPositioned {
+                                                if (index == 19) {
+                                                    lastRowBottom.set((it.positionInRoot().y + it.size.height).roundToInt())
+                                                }
+                                            }) { Text("Form row ${index + 1}") }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            } }
+
+            waitUntil("The initial form must fill a bounded native viewport") {
+                near(reportedHeight.get(), 320 * density) &&
+                    near(containerHeight.get(), 320 * density) &&
+                    near(formHeight.get(), 320 * density) &&
+                    near(scrollHeight.get(), 288 * density) &&
+                    (scroll.get()?.maxValue ?: 0) > 0
+            }
+
+            scenario.onActivity {
+                viewport.value = 480.dp
+                keyboardHeight.value = 160.dp
+            }
+            waitUntil("Keyboard expansion must fill the actual viewport without an unused region above the keyboard") {
+                near(reportedHeight.get(), 320 * density) &&
+                    near(containerHeight.get(), 480 * density) &&
+                    near(formHeight.get(), 480 * density) &&
+                    abs(formBottom.get() - containerBottom.get()) <= 2 &&
+                    near(containerBottom.get() - scrollBottom.get(), 160 * density) &&
+                    near(scrollHeight.get(), 288 * density) &&
+                    (scroll.get()?.maxValue ?: 0) > 0
+            }
+            scenario.onActivity { scroll.get().dispatchRawDelta(scroll.get().maxValue.toFloat()) }
+            waitUntil("The final form row must remain reachable above the simulated keyboard") {
+                scroll.get().value == scroll.get().maxValue &&
+                    abs(lastRowBottom.get() - scrollBottom.get()) <= 2
+            }
+
+            scenario.onActivity { preferredMaximum.value = 280.dp }
+            waitUntil("Updating the preferred detent must refresh its reported height while keeping the expanded form filled") {
+                near(reportedHeight.get(), 280 * density) &&
+                    near(formHeight.get(), 480 * density) &&
+                    abs(formBottom.get() - containerBottom.get()) <= 2 &&
+                    near(containerBottom.get() - scrollBottom.get(), 160 * density)
+            }
+
+            scenario.onActivity {
+                viewport.value = 320.dp
+                preferredMaximum.value = 320.dp
+                keyboardHeight.value = 0.dp
+            }
+            waitUntil("Dismissing the keyboard must restore the bounded form viewport") {
+                near(reportedHeight.get(), 320 * density) &&
+                    near(containerHeight.get(), 320 * density) &&
+                    near(formHeight.get(), 320 * density) &&
+                    near(scrollHeight.get(), 288 * density) &&
+                    abs(formBottom.get() - containerBottom.get()) <= 2 &&
+                    abs(scrollBottom.get() - containerBottom.get()) <= 2 &&
+                    (scroll.get()?.maxValue ?: 0) > 0
+            }
+            scenario.onActivity { scroll.get().dispatchRawDelta(scroll.get().maxValue.toFloat()) }
+            waitUntil("The final form row must remain reachable after the keyboard closes") {
+                scroll.get().value == scroll.get().maxValue &&
+                    abs(lastRowBottom.get() - scrollBottom.get()) <= 2
             }
         }
     }

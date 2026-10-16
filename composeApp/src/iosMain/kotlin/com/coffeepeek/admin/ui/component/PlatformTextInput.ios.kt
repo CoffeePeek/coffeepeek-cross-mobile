@@ -13,7 +13,9 @@ import platform.UIKit.UITextContentTypeUsername
 // Stable option objects keep the UIKit input configuration unchanged while text recomposes.
 private val nativeInput = PlatformImeOptions { usingNativeTextInput(true) }
 private val secureInput = PlatformImeOptions { usingNativeTextInput(false) }
-private val usernameInput = PlatformImeOptions { usingNativeTextInput(true); textContentType(UITextContentTypeUsername) }
+// The native menu can retain stale clipboard availability after the form opens.
+// Use the same editing path as passwords, which refreshes Paste when the menu opens.
+private val usernameInput = PlatformImeOptions { usingNativeTextInput(false); textContentType(UITextContentTypeUsername) }
 private val nameInput = PlatformImeOptions { usingNativeTextInput(true); textContentType(UITextContentTypeName) }
 private val passwordInput = PlatformImeOptions { usingNativeTextInput(false); textContentType(UITextContentTypePassword) }
 private val newPasswordInput = PlatformImeOptions { usingNativeTextInput(false); textContentType(UITextContentTypeNewPassword) }
