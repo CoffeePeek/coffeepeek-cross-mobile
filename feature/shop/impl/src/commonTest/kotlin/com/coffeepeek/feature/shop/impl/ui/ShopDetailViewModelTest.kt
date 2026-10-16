@@ -21,6 +21,7 @@ import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -127,6 +128,25 @@ class ShopDetailViewModelTest {
         viewModel.onAction(ShopDetailAction.OpenMap)
         runCurrent()
         assertEquals(ShopDetailEvent.OpenMap(53.9, 27.5, "Coffee"), viewModel.events.first().event)
+    }
+
+    @Test fun publicAuthorUsesCanonicalVisibleRowAndDoesNotExposeHiddenGuestAuthors() = runTest(dispatcher) {
+        val repository = DetailsRepository().apply { result = Result.success(details().copy(checkIns = listOf(
+            checkIn().copy(id = "visible", authorSlug = "canonical", username = "Author", authorAvatarUrl = "issued-avatar"),
+            checkIn().copy(id = "hidden", authorSlug = "hidden-author"),
+        ))) }
+        val model = viewModel(details = repository, viewer = ShopViewer(false, null))
+        val events = mutableListOf<ShopDetailEvent>()
+        backgroundScope.launch { model.events.collect { events += it.event } }
+        runCurrent()
+        model.onAction(ShopDetailAction.OpenAuthor("hidden"))
+        model.onAction(ShopDetailAction.OpenAuthor("missing"))
+        model.onAction(ShopDetailAction.OpenAuthor("visible")); runCurrent()
+        assertEquals(listOf<ShopDetailEvent>(ShopDetailEvent.OpenAuthor("canonical", "Author", "issued-avatar")), events)
+        repository.result = Result.success(details().copy(checkIns = listOf(checkIn().copy(id = "visible"))))
+        model.onAction(ShopDetailAction.Retry); runCurrent()
+        model.onAction(ShopDetailAction.OpenAuthor("visible")); runCurrent()
+        assertEquals(1, events.size)
     }
 
     @Test fun duplicateLoadsAreGuardedWhilePending() = runTest(dispatcher) {

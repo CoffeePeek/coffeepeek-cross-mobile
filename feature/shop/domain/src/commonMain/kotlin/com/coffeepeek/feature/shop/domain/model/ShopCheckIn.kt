@@ -23,6 +23,8 @@ data class ShopCheckIn(
     val helpfulCount: Int = 0,
     val isHelpfulByCurrentUser: Boolean = false,
     val drinkPhotoUrl: String? = null,
+    val authorAvatarUrl: String? = null,
+    val authorSlug: String? = null,
 )
 
 enum class ShopCheckInVisibility { Private, Public }

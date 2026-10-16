@@ -94,6 +94,7 @@ internal class AndroidShopDetailScreenRenderer(
                             is ShopDetailEffect.ReportShop -> Navigator.navigate(Navigator.Screen.ReportShop(effect.shop.shopId, effect.shop.shopName))
                             is ShopDetailEffect.OpenCheckIns -> Navigator.navigate(Navigator.Screen.ShopReviews(effect.shopId))
                             is ShopDetailEffect.ReportCheckIn -> Navigator.navigate(Navigator.Screen.ReportCheckIn(effect.checkInId))
+                            is ShopDetailEffect.OpenAuthor -> Navigator.navigate(Navigator.Screen.UserProfile(effect.slug, effect.nickname, effect.avatarUrl))
                             is ShopDetailEffect.FavoriteChanged -> scope.launch {
                                 if (session.lease.isCurrent()) FavoriteSync.notifyChanged(effect.shopId, effect.isFavorite)
                             }

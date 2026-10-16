@@ -40,6 +40,7 @@ internal fun ShopCheckInCard(
     shopTitle: String? = null,
     dateLabel: String = checkIn.createdAt.take(10),
     fullVersion: Boolean = false,
+    onOpenAuthor: (() -> Unit)? = null,
 ) {
     Card(modifier.fillMaxWidth(), shape = RoundedCornerShape(CoffeePeekDimens.radiusLg),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
@@ -49,7 +50,8 @@ internal fun ShopCheckInCard(
             if (showAuthor) {
                 val author = checkIn.username.ifBlank { stringResource(if (isOwn)
                     Res.string.shop_checkins_author_self else Res.string.shop_checkins_author_unknown) }
-                ShopCheckInHeader(author, dateLabel, onReport.takeUnless { isOwn })
+                ShopCheckInHeader(author, dateLabel, onReport.takeUnless { isOwn },
+                    avatarUrl = checkIn.authorAvatarUrl, onOpenAuthor = onOpenAuthor)
             }
             shopTitle?.takeIf(String::isNotBlank)?.let {
                 Text(it, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold, maxLines = 2)

@@ -225,6 +225,7 @@ internal fun ShopDetailScreenContent(
                         onOpenPhoto = { urls, index -> onAction(ShopDetailAction.OpenPhoto(urls, index)) },
                         onVote = { onAction(ShopDetailAction.VoteCheckInHelpful(it)) },
                         onReport = { onAction(ShopDetailAction.ReportCheckIn(it)) },
+                        onOpenAuthor = { onAction(ShopDetailAction.OpenAuthor(it)) },
                         onOpenAll = { onAction(ShopDetailAction.OpenCheckIns) },
                         onSignIn = { onAction(ShopDetailAction.SignIn) },
                         onRegister = { onAction(ShopDetailAction.Register) },

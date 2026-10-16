@@ -59,6 +59,11 @@ internal class ShopCheckInListViewModel(
             ShopCheckInListAction.SignIn -> emitEvent(ShopCheckInListEvent.SignIn)
             ShopCheckInListAction.Register -> emitEvent(ShopCheckInListEvent.Register)
             is ShopCheckInListAction.ToggleHelpful -> vote(action.checkInId)
+            is ShopCheckInListAction.OpenAuthor -> {
+                val row = currentState.checkIns.firstOrNull { it.id == action.checkInId } ?: return
+                val slug = row.authorSlug?.takeIf(String::isNotBlank) ?: return
+                emitEvent(ShopCheckInListEvent.OpenAuthor(slug, row.username, row.authorAvatarUrl))
+            }
             is ShopCheckInListAction.Report -> {
                 val checkIn = currentState.checkIns.firstOrNull { it.id == action.checkInId } ?: return
                 if (currentState.owns(checkIn)) return

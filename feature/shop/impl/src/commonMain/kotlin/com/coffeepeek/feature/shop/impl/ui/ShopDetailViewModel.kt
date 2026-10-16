@@ -135,6 +135,14 @@ internal class ShopDetailViewModel(
                 emitEvent(ShopDetailEvent.OpenCheckIns(shopId))
             }
             is ShopDetailAction.VoteCheckInHelpful -> voteCheckIn(action.checkInId)
+            is ShopDetailAction.OpenAuthor -> {
+                val visible = currentState.details?.checkIns.orEmpty().let {
+                    if (currentState.isLoggedIn) it.take(3) else it.take(1)
+                }
+                val row = visible.firstOrNull { it.id == action.checkInId } ?: return
+                val slug = row.authorSlug?.takeIf(String::isNotBlank) ?: return
+                emitEvent(ShopDetailEvent.OpenAuthor(slug, row.username, row.authorAvatarUrl))
+            }
             is ShopDetailAction.ReportCheckIn -> {
                 val checkIn = currentState.details?.checkIns?.firstOrNull { it.id == action.checkInId } ?: return
                 if (!currentState.isLoggedIn) emitEvent(ShopDetailEvent.SignIn)

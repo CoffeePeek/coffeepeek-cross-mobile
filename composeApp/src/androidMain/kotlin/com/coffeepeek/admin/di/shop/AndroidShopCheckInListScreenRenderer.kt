@@ -36,6 +36,9 @@ internal class AndroidShopCheckInListScreenRenderer(
                 onSignIn = { if (session.lease.isCurrent()) Navigator.navigate(Navigator.Screen.Auth) },
                 onRegister = { if (session.lease.isCurrent()) Navigator.navigate(Navigator.Screen.Register) },
                 onReportCheckIn = { if (session.lease.isCurrent()) Navigator.navigate(Navigator.Screen.ReportCheckIn(it)) },
+                onOpenAuthor = { slug, nickname, avatar ->
+                    if (session.lease.isCurrent()) Navigator.navigate(Navigator.Screen.UserProfile(slug, nickname, avatar))
+                },
                 onOpenPhoto = { urls, index -> if (session.lease.isCurrent()) preview = urls to index })
             preview?.let { (urls, index) ->
                 FullScreenImageDialog(imageUrls = urls, initialIndex = index, onDismiss = { preview = null })

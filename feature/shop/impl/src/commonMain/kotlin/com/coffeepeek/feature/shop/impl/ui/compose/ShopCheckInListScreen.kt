@@ -127,6 +127,9 @@ internal fun ShopCheckInListScreenContent(
                         onVote = if (isOwn || state.pendingVoteId != null || state.isLoading) null
                             else { { onAction(ShopCheckInListAction.ToggleHelpful(checkIn.id)) } },
                         onReport = if (isOwn) null else { { onAction(ShopCheckInListAction.Report(checkIn.id)) } },
+                        onOpenAuthor = checkIn.authorSlug?.takeIf(String::isNotBlank)?.let {
+                            { onAction(ShopCheckInListAction.OpenAuthor(checkIn.id)) }
+                        },
                         dateLabel = formatCheckInDate(checkIn.createdAt), fullVersion = true)
                 }
                 if (!state.isLoggedIn && state.checkIns.isNotEmpty()) item(key = "guest-prompt") {

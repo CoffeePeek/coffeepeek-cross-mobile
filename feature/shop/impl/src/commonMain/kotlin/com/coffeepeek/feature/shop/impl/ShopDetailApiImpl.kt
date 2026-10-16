@@ -68,6 +68,7 @@ private fun ShopDetailEvent.toPublicEffect(): ShopDetailEffect? = when (this) {
     is ShopDetailEvent.ReportShop -> ShopDetailEffect.ReportShop(shop)
     is ShopDetailEvent.OpenCheckIns -> ShopDetailEffect.OpenCheckIns(shopId)
     is ShopDetailEvent.ReportCheckIn -> ShopDetailEffect.ReportCheckIn(checkInId)
+    is ShopDetailEvent.OpenAuthor -> ShopDetailEffect.OpenAuthor(slug, nickname, avatarUrl)
     is ShopDetailEvent.FavoriteChanged -> ShopDetailEffect.FavoriteChanged(shopId, isFavorite)
     is ShopDetailEvent.OpenMap -> ShopDetailEffect.OpenMap(latitude, longitude, title)
     is ShopDetailEvent.OpenRoute -> ShopDetailEffect.OpenRoute(latitude, longitude)
