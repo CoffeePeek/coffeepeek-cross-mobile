@@ -40,13 +40,15 @@ class HomePreparationSafetyTest {
             requests++
             assertEquals("2026-09-20", request.url.parameters["from"])
             assertEquals("2026-09-20", request.url.parameters["to"])
-            respond("""{"isSuccess":true,"data":[{"preparedOn":"2026-09-20","brewCount":2}]}""", headers = jsonHeaders)
+            respond(if (request.url.encodedPath.endsWith("/calendar"))
+                """{"isSuccess":true,"data":[{"preparedOn":"2026-09-20","brewCount":2}]}"""
+                else """{"isSuccess":true,"data":{"items":[],"totalCount":0}}""", headers = jsonHeaders)
         })
         val uploader = HttpClient(MockEngine { error("Unexpected upload") })
         try {
             assertEquals(2, createHomePreparationRepository(gateway, uploader, "https://gateway.example.com")
                 .calendar(HomePreparationDateRange("2026-09-20", "2026-09-20")).getOrThrow().single().brewCount)
-            assertEquals(1, requests)
+            assertEquals(2, requests)
         } finally { gateway.close(); uploader.close() }
     }
 

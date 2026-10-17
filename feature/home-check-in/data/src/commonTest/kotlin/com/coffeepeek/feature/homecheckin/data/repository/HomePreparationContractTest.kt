@@ -148,6 +148,13 @@ class HomePreparationContractTest {
                     assertEquals("/api/v1/check-ins/home/calendar", request.url.encodedPath)
                     respond("""{"isSuccess":true,"data":[{"preparedOn":"2026-09-21","brewCount":2}]}""", headers = jsonHeaders)
                 }
+                2 -> {
+                    assertEquals(HttpMethod.Get, request.method)
+                    assertEquals("1", request.url.parameters["pageNumber"])
+                    assertEquals("2026-09-01", request.url.parameters["from"])
+                    assertEquals("2026-09-30", request.url.parameters["to"])
+                    respond("""{"isSuccess":true,"data":{"items":[$entry],"totalCount":1}}""", headers = jsonHeaders)
+                }
                 else -> {
                     assertEquals(HttpMethod.Delete, request.method)
                     assertEquals("/api/v1/check-ins/home/$id", request.url.encodedPath)
@@ -161,7 +168,7 @@ class HomePreparationContractTest {
             assertTrue(repository.page(2, 100, HomePreparationDateRange("2026-09-01", "2026-09-30")).getOrThrow().hasMore.not())
             assertEquals(2, repository.calendar(HomePreparationDateRange("2026-09-01", "2026-09-30")).getOrThrow().single().brewCount)
             repository.delete(id).getOrThrow()
-            assertEquals(3, calls)
+            assertEquals(4, calls)
         } finally { gateway.close(); uploader.close() }
     }
 

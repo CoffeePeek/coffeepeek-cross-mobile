@@ -1,41 +1,37 @@
 package com.coffeepeek.admin.di.checkinhistory
 
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.unit.dp
+import com.coffeepeek.admin.analytics.CheckInSource
+import com.coffeepeek.admin.analytics.CheckInTracker
+import com.coffeepeek.admin.di.homecheckin.AndroidHomeCheckInRepository
+import com.coffeepeek.admin.di.homecheckin.androidHomeCheckInEditor
 import com.coffeepeek.admin.feature.catalog.api.BrewMethodCatalog
+import com.coffeepeek.admin.feature.checkin.domain.DrinkPhotoExtractor
 import com.coffeepeek.admin.feature.coffee.api.CoffeePicker
-import com.coffeepeek.admin.feature.homecheckin.ui.HomeCheckInViewModel
-import com.coffeepeek.feature.homecheckin.domain.*
+import com.coffeepeek.admin.ui.component.DrinkCutoutImage
+import com.coffeepeek.admin.utils.CpImage
+import com.coffeepeek.feature.homecheckin.api.HomeCheckInDetailEntry
+import com.coffeepeek.feature.homecheckin.api.HomeCheckInEditorEntry
+import com.coffeepeek.feature.homecheckin.domain.repository.HomePreparationRepository
+import com.coffeepeek.feature.homecheckin.impl.createHomeCheckInDetailEntry
 
-/** Temporary Android composition seam; Home still owns its existing editor and writer. */
+/** App-owned assembly; history sees neither the Home ViewModel nor a legacy writer. */
 internal fun interface HistoryHomeEditorFactory {
-    fun create(lease: AndroidCheckInHistorySession, onMutation: () -> Unit, onDeleted: () -> Unit): HomeCheckInViewModel
+    fun create(lease: AndroidCheckInHistorySession, tracker: CheckInTracker?): HistoryHomeEntries
 }
 
-internal fun historyHomeEditorFactory(repository: HomeCheckInRepository, picker: CoffeePicker,
-    methods: BrewMethodCatalog,
-    drinkPhotos: com.coffeepeek.admin.feature.checkin.api.DrinkPhotoPreparation.Factory =
-        com.coffeepeek.admin.feature.checkin.api.DrinkPhotoPreparation.Factory.Unavailable,
-) = HistoryHomeEditorFactory { lease, onMutation, onDeleted ->
-    val editorRepository = object : HomeCheckInRepository {
-        // This VM is used ONLY for its editor/detail. The new MVI owns the actual timeline.
-        override suspend fun history(page: Int, pageSize: Int, from: String?, to: String?) =
-            Result.success(HomeCheckInPage(emptyList(), 0, page, pageSize))
-        override suspend fun calendar(from: String, to: String) = Result.success(emptyList<HomeCalendarDay>())
-        override suspend fun detail(id: String) = lease.withCurrentAccount {
-            repository.detail(id).mapCatching { check(it.id == id); it }
-        }
-        override suspend fun create(input: HomeCheckInInput) =
-            lease.withCurrentAccount { repository.create(input) }.also { if (it.isSuccess) onMutation() }
-        override suspend fun update(id: String, input: HomeCheckInInput) =
-            lease.withCurrentAccount { repository.update(id, input) }.also { if (it.isSuccess) onMutation() }
-        override suspend fun delete(id: String) =
-            lease.withCurrentAccount { repository.delete(id) }.also {
-                if (it.isSuccess) { onMutation(); onDeleted() }
-            }
-        override suspend fun photo(url: String) = lease.withCurrentAccount { repository.photo(url) }
-        override suspend fun beanStats() = lease.withCurrentAccount { repository.beanStats() }
-        override suspend fun methodStats() = lease.withCurrentAccount { repository.methodStats() }
-    }
-    HomeCheckInViewModel(editorRepository, object : CoffeePicker {
-        override suspend fun search(query: String) = lease.withCurrentAccount { picker.search(query) }
-    }, BrewMethodCatalog { lease.withCurrentAccount { methods.load() } }, drinkPhotos)
+internal class HistoryHomeEntries(val detail: HomeCheckInDetailEntry, val editor: HomeCheckInEditorEntry)
+
+internal fun historyHomeEditorFactory(repository: HomePreparationRepository, picker: CoffeePicker,
+    methods: BrewMethodCatalog, extractor: DrinkPhotoExtractor,
+) = HistoryHomeEditorFactory { lease, tracker ->
+    HistoryHomeEntries(
+        createHomeCheckInDetailEntry(AndroidHomeCheckInRepository(lease, repository),
+            { lease.isLoggedIn && lease.isCurrent() }) { url, description, modifier, cutout ->
+            if (cutout) DrinkCutoutImage(url, modifier = modifier, outlineWidth = 3.dp)
+            else CpImage(url, contentDescription = description, modifier = modifier, contentScale = ContentScale.Crop)
+        },
+        androidHomeCheckInEditor(lease, repository, picker, methods, extractor, CheckInSource.Diary, tracker),
+    )
 }

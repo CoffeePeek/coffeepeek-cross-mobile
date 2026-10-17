@@ -2,12 +2,97 @@
 
 Plan date: 2026-10-16; foundation work: 2026-10-17. Re-fetched source baseline:
 `origin/main` **0137ee7**; migration parent: history **c726944**, PR #95.
-Domain/data, detail/editor MVI, the Android detail entry and both renderers are
-prepared, but no active Home writer, screen, endpoint or DI binding has switched.
-The public editor factory and app-owned media/catalogue/picker/analytics adapters
-are also prepared. Active data/DI binding and Android route integration are pending.
+Android history now uses the new Home data repository and detail/editor entries.
+The three existing history routes, including community owner edit by ID, delegate
+to these entries. Global CheckInCreateFlow, profile Activity and shared/iOS Home
+paths remain legacy; this is not a completed Home migration.
 
-## Public editor entry and composition ports — 2026-10-17
+## Android history activation — 2026-10-17
+
+Source identity: d5da869 plus this activation diff; main re-fetched at 0137ee7,
+already an ancestor. Same Home child branch/PR #99 -> history #95; 31 Gradle
+modules, no new application/DI module or unrelated feature.
+
+- Android Koin supplies the prepared data factory with the existing authenticated
+  gateway, separate credential-free upload client and configured base URL.
+  HomePreparationReader aliases that same repository. Resolving the graph opens
+  no account lease, reads no credentials and starts no request; its unit graph
+  resolves without any legacy Home repository definition.
+- Combined history, detail, create, edit and delete inside history now use new
+  data and public Home entries. Existing VisitedPlaces/HomeCheckIns/EditHomeCheckIn
+  routes stay unchanged; Community's owner edit reaches the last of these.
+- Replaced the temporary HomeCheckInViewModel bridge with app-owned destination
+  bookkeeping only. Home impl owns loading, drafts, validation and writes.
+  Each detail has a separate ViewModel store, cleared on close/replacement;
+  cancelling edit returns to a fresh detail read, cancelling create closes it.
+  The editor keeps its own composed form store.
+- Every callback captures its destination identity and checks the current lease.
+  Old close/unlock/photo/save/delete callbacks cannot affect a replacement.
+  Saving/deleting blocks dismissal/replacement. Confirmed mutations invalidate
+  history exactly once; delete closes, save opens fresh detail and retains the
+  localized unconfirmed-visibility notice without claiming publication approval.
+  Original date/time formatting, app image loader and 3dp cutout outline remain.
+- The new calendar transport now preserves the compatibility bridge's month-wide
+  photo enrichment: bounded date-filtered owner pages, no per-entry detail calls,
+  record deduplication, cutout preference and original-photo fallback. Photo-less
+  activity counts remain; missing/invalid pages fail rather than publishing a
+  partial calendar. Cancellation still escapes Result.
+- Runtime DEX checks now require the active new data factory instead of the retired
+  history read bridge. The old shared repository/editor and compatibility tests
+  remain for global creation, profile Activity and iOS; no global cleanup yet.
+- Updated app-targeted history composition fixtures to the new repository and
+  entries, including a fresh detail read after edit cancellation. They are
+  compiled for both variants, NOT executed: their production-targeted Application
+  can initialize real services. Unit composition and self-targeted feature UI
+  evidence must not be presented as a production-startup/live-write acceptance.
+
+### Activation verification
+
+2026-10-17; d5da869 plus this activation diff. **1026 selected unit executions**
+pass, zero failures/errors/skips: Home 117 (domain 14, data 28, impl 75), legacy
+Home 16, history 54, presentation 3, app Direct/Play 418 each. Includes valid
+Gradle up-to-date results. The 13 navigation/lifetime cases replace the old
+legacy-VM bridge tests; draft/write/analytics/extraction behavior remains covered
+in Home MVI/port suites. New transport cases cover all month pages, date filtering,
+counts without photos, deduplication, empty month, malformed/missing pages and
+cancellation. Active transport -> history adapter is tested with MockEngine.
+
+Both app APKs and packaged DEX guards, Direct/Play instrumentation compilation,
+Home api/data/impl lint (no issues), fixture APK and data Native Simulator Arm64
+compatibility compilation pass. Initial verification used one nonexistent task
+name before correcting it; test development then exposed a nullable expected-list
+type inference error and a JUnit non-Unit cancellation-test signature. Both were
+fixed in fixtures; complete selections were rerun. No failing assertion was hidden.
+
+Studio's first bridge inspection timed out. A fresh module inventory then
+confirmed Home api/data/impl source sets are imported; repeated inspections of
+HistoryHomeEditorFactory, HistoryHomeOverlay and AndroidHistoryHomeBridge
+completed with no reported problems. This does not certify previews or a
+repository-wide clean inspection. Existing unrelated warnings remain.
+
+Full local build log: coffeepeek-home-activation-final-2026-10-17.log.
+**36/36 complete self-targeted Home UI regression cases pass**, first run in this
+slice, 146.8s; zero failures/skips/retries. Read-only Pixel_10_Pro AVD resolved as
+emulator-5554, API 37/arm64/16KB, 1280x2856/density 480, boot complete and unlocked.
+Only com.coffeepeek.feature.homecheckin.impl.test was installed: generic Application,
+same-package instrumentation target, no INTERNET or production DI. The fixture
+APK is unchanged from the previous entry slice, SHA-256:
+beb772a0825bfc9622745e045b1d6c3f0722658da390c268366f69202f8b25ad.
+This reruns entry/detail/editor fixtures, not the app-owned history overlay or
+configured app media. No phone, production deployment, real account, backend or
+OS camera/gallery was used. UI log: coffeepeek-home-activation-ui-full-2026-10-17.log.
+App APK SHA-256, Direct:
+07f82dbce063dcddb95f196b02c6431511d4f8ae44e2ee0a10fda0d7c415d65a;
+Play: fa3b7e55cb79f5293dcae7219a782dd94b1d36e73d541f474e8d7a05b36870b1.
+These APKs were assembled/DEX-checked, not deployed for production startup.
+
+Next coding slice: switch the global create flow used by tab/feed to the same
+Home entry/data and single tracker, retaining success refresh and cancel semantics.
+Then audit obsolete Android consumers before cleanup. Physical-device populated/
+protected-photo/IME/modal/visual checks, actual OS picker and explicitly authorized
+live CRUD/account acceptance remain open. iOS/profile Activity are not migrated.
+
+## Historical public editor entry and composition ports — 2026-10-17
 
 Source identity: d8cf13d plus this entry/adapters diff. Main re-fetched, still
 0137ee7 and already an ancestor. No new branch is needed inside the same Home
@@ -410,7 +495,7 @@ Reuse existing CoffeePeekButton and CoffeePeekFormStep where equivalent. Missing
 photo/picker-specific composition must remain injected/feature-owned; never import
 legacy app components or Shop impl to avoid implementing its own small adapter.
 
-## Current checkpoint — prepared foundation
+## Historical foundation checkpoint
 
 - Existing domain now also owns preparation input/upload types, read/write
   repository contracts and field validation. Errors are typed reasons, not
@@ -564,6 +649,11 @@ Bean selection and date/photo sheets are subordinate controls, not new features.
    and single analytics flow. Refresh history once after confirmed mutations;
    close after delete, retain notices and correct back/cancel behavior. New Home
    reads use new data; unrelated legacy/iOS DI stays unchanged.
+   - [x] Activate Android data/DI and replace history's temporary Home bridge.
+   - [x] Route detail/create/edit/delete in history and community owner edit by ID.
+   - [x] Verify once-only refresh, notice, fresh owners and stale/account callback guards.
+   - [ ] Switch global CheckInCreateFlow used by tab/feed to the new Home editor.
+   - [ ] Verify outer-modal/configured-media behavior and authorized live acceptance.
 9. [ ] Remove only obsolete Android bridge paths/dependencies after all migrated
    entrances work. Keep shared Home/profile-modal/iOS callers; do not delete the
    old artifact globally while any remain.
@@ -574,8 +664,8 @@ First coding slice: **domain validation/write contracts and data contract tests*
 UI and active binding switches follow within the same feature checkpoint.
 The subsequent detail/delete/editor MVI, Android renderers/internal runtime,
 public editor factory and app-owned port/analytics adaptation are prepared.
-Next is Android data/DI and route activation. Keep physical-device gates
-open while proceeding without a phone, as requested.
+Android data/DI and history entry activation are implemented. Next is global
+creation; keep physical-device gates open while proceeding without a phone.
 
 ## Verification and completion gates
 

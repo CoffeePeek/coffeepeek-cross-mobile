@@ -40,53 +40,35 @@ or release gates outstanding. **Not started** means the new migration has not
 started; the corresponding product capability may already work in main.
 A compilation/test pass is not evidence of pixel parity or a live write.
 
-## Next checkpoint — Home preparations (foundation prepared, not activated)
+## Current checkpoint — Home preparations (history activated; global creation pending)
 
-History/calendar code through **c726944** is published in #95. Compact rounded
-cells, bounded ripple, visit dots and latest available daily photos are implemented;
-the latest isolated suite passes 20 UI cases and 867 selected unit executions.
-Physical-device populated/account/write gates remain open in the history plan.
+History/calendar checkpoint **c726944** is published in #95. Home work continues
+in its child `feature/home-check-in-refactoring` / PR #99, not in a new feature.
+The detailed source audit, historical checks and remaining gates are in
+[home-check-in/MIGRATION_PLAN.md](home-check-in/MIGRATION_PLAN.md).
 
-The next child is `feature/home-check-in-refactoring` →
-`feature/check-in-history-refactoring`. Its scoped plan is
-[home-check-in/MIGRATION_PLAN.md](home-check-in/MIGRATION_PLAN.md): preserve current
-Home detail/create/edit/delete, extend the existing pure domain and incrementally
-add api/data/impl. On 2026-10-17, domain write/validation contracts, populated data
-and detail/delete/editor MVI plus the Android detail API/renderer are prepared; this child
-registers 31 modules. Editor content/internal runtime are now prepared; its public
-factory and real ports/analytics adapters are also prepared; active Android
-data/DI/route bindings are pending. Profile Activity
-and iOS remain on their current paths. No phone is attached for a new visual audit.
-Foundation verification covered 37 Home unit cases and 917 selected executions.
-The subsequent detail/delete MVI slice adds 24 passing cases: latest selection
-is 944 executions, both app APKs/DEX guards, impl lint and Native compatibility
-compilation passing. No Home UI activation or physical-device acceptance is claimed.
-The Android detail renderer adds the real API/runtime entry, local resources and
-colocated paired previews. The same 944-unit selection and 12 self-targeted UI
-cases pass after dialog-window synchronization was corrected; both APK/DEX,
-API/impl lint and shared Native compilation pass. Light/dark fixture screenshots
-were inspected on a read-only emulator. Shared editor/save/catalogue/photo MVI is
-now prepared, as are editor content/components and its internal lifecycle runtime.
-Public editor factory and app-owned port/analytics adaptation are also prepared;
-active data/DI and app route wiring are the next slices,
-not another feature; Pixel 7, real-photo, keyboard and live-write gates remain open.
-The editor adds 43 passing fixture cases; latest selected total is 987 unit
-executions, with both APK/DEX guards, impl lint, test APK assembly and shared
-Native compilation passing. This logic-only slice did not execute UI tests or
-change the active Android editor, analytics or iOS paths.
-The following Android editor-renderer slice passes **29/29 isolated UI cases**
-(17 editor + 12 detail), the **987-unit selection**, both APK/DEX guards, impl
-lint and shared Native compilation. Header/fields/timeline/footer were inspected
-in light/dark brand-font fixture captures. It adds internal lifecycle/content,
-resources and colocated previews, not a public editor factory or active writer.
-The plan records initial harness failures and complete strict reruns. Configured
-media/picker, actual IME/modal, Pixel 7, composition and live-account gates remain.
-The public editor entry and app adapters are now prepared as well: **36/36 Home
-UI cases**, **1017 selected unit executions**, both APK/expanded DEX guards,
-API/impl lint and Native compatibility checks pass. Its independent form store,
-one-shot media delivery and single consent-aware analytics flow are verified
-with fixtures. App dependencies are added, but routes/Koin/writer are not switched.
-Studio's model still needs Gradle Sync; active data/DI and entry integration follow.
+As of 2026-10-17, the four Home boundaries contain real domain/data and shared
+detail/editor MVI plus Android entries/components, resources and paired previews.
+App-owned catalogue/media/picker/extraction/date/analytics adapters reuse current
+implementations. Module count remains 31; main **0137ee7** is already an ancestor.
+
+Android history now binds new Home data and detail/editor entries. All three
+existing history routes, including Community owner edit by ID, use them.
+Confirmed create/update/delete refresh history once; detail/form owners and
+callbacks are scoped to the current destination/account. Calendar photo
+enrichment/counts and unconfirmed-visibility notices are retained.
+Global CheckInCreateFlow in tab/feed, profile Activity and shared/iOS still use
+legacy paths. Global creation is the next slice; no wholesale legacy removal.
+
+Current selection: **1026 passing unit executions**, **36/36 isolated Home UI
+regressions**, Direct/Play APKs and DEX
+guards, app instrumentation compilation, Home api/data/impl lint and data Native
+compatibility compilation. App-targeted UI has only been compiled, not run.
+Self-targeted Home UI results and prior harness failures are recorded in the
+Home plan. Studio now imports all Home modules and the three changed composition
+files pass inspections; physical Pixel 7 populated/protected-photo/
+IME/modal parity, OS gallery/camera and authorized live CRUD/account acceptance
+remain open. None of these checks establishes full release completion.
 
 ## Completed engineering tasks
 
@@ -149,7 +131,7 @@ Next work is ordered, not parallel feature scaffolding:
 | Shop Report: incorrect shop data | In progress; Android entry active | Real safe submit/error/uncertain-delivery flow and paired preview inspection; retain shared/iOS fallback. |
 | Shop: detail, menu, public check-ins and creation sheet | In progress; Android entries active | Physical-device visual/guest/owner/return parity; picker/camera permissions and recreation, bundled extraction quality and safely authorized submissions. Prepared review editors are not a product requirement. |
 | Personal history: one combined Shop/Home calendar and timeline | In progress; Android code checkpoint prepared in #95 | Combined reads/MVI/content, month photos, Home photo preparation and creation-flow analytics are integrated. Personal author avatars match main; public author navigation belongs to Shop. Pixel 7 populated-history/photo/date/account/accessibility and safely authorized mutation checks remain. |
-| Home preparations: create/detail/edit/delete, recipes and photos | In progress; domain/data, detail/editor MVI, Android entries/renderers and app adapters prepared but inactive | Existing editor/detail remain active through history and global creation. New data/DI binding, Android entry switching, composition regressions, visual/keyboard parity and release checks remain. See home-check-in/MIGRATION_PLAN.md; no standalone history/statistics recreation. |
+| Home preparations: create/detail/edit/delete, recipes and photos | In progress; new data and entries active in Android history | History and Community owner edit use new data/detail/editor with leased destination lifetimes, refresh and notices. Global tab/feed creation remains legacy and is next. Profile Activity/iOS, physical visual/keyboard/OS-picker and authorized live acceptance remain deferred; see home-check-in/MIGRATION_PLAN.md. |
 | Discovery: shop list/search/filter/map and embedded roasters | Not started | Audit actual list/map/filter ownership and current platform map; no independent module for every mode. |
 | Coffee catalogue: Coffee tab/list/detail | Not started | Preserve current catalogue/search/detail and links to roasters; catalog pickers are existing shared app boundaries, not invented screens. |
 | Roasters: list/detail and saved membership | Not started | Preserve current entry points, contacts, catalogue links and favorites. Favorites parity is an earlier gate, not permission for a wholesale roaster rewrite. |

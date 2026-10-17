@@ -1,19 +1,29 @@
 # Home preparations — incremental migration
 
-Latest checkpoint, 2026-10-17: public Android editor entry/factory and app-owned
-catalogue/media/date/picker/extraction/analytics adapters are prepared. The entry
-owns a form store, one-shot picker deliveries and account-scoped outcomes.
-One existing consent-aware tracker is reused; no raw private content enters its
-typed metrics. App api/impl dependencies and DEX guards now cover these classes,
-but **no active route, Koin or writer binding has switched**. Next is prepared
-data/DI activation and replacement of the history compatibility bridge. The
-historical sections below describe earlier slices; use MIGRATION_PLAN.md for
-latest evidence and remaining physical-device/live acceptance gates.
-This slice passes **36/36 isolated Home UI cases** (7 new public-entry scenarios)
-and **1017 selected unit executions**, both app APK/expanded DEX checks, API/impl
-lint and shared Native compilation. Studio still needs Gradle Sync to import the
-new modules/dependencies; these results are compiler/lint/device-fixture checks,
-not a clean IDE inspection or real-account/OS-picker acceptance.
+Latest checkpoint, 2026-10-17: **Android history now uses the new Home data and
+detail/editor entries**, including creation inside history, exact-ID owner edits
+from Community, deletion and account-owned photo viewing. The application owns
+destination lifetimes/DI; feature impl owns MVI and rendering. Fresh detail stores,
+once-only refresh, visibility notices and stale-callback guards replace the
+temporary legacy Home VM bridge.
+
+The repository uses the existing gateway and credential-free upload clients.
+Calendar month photos/counts are preserved by bounded owner-page reads, including
+photo-less activity. No new module, backend/client or app-wide navigation change.
+Global creation from tab/feed, profile Activity and shared/iOS remain legacy.
+**Do not mark Home complete or remove shared legacy paths yet.**
+
+Verified in this slice: **1026 selected unit executions**, **36/36 isolated Home UI
+regressions**, Direct/Play APKs and
+packaged DEX guards, both app instrumentation compilations, Home api/data/impl
+lint and data Native compatibility compilation. App-targeted composition UI is
+compiled, not executed; real-service startup and live writes are not certified.
+Studio now imports all Home modules; three changed composition-file inspections
+completed without reported problems after an initial timeout.
+See [MIGRATION_PLAN.md](MIGRATION_PLAN.md) for current UI results, source identity,
+earlier failure/retry history and physical-device/OS-picker/release gates.
+
+## Historical checkpoints
 
 2026-10-16: the pure read domain is integrated into combined Android history in
 PR #95. All three Android history routes use the migrated combined entry; an
@@ -22,7 +32,7 @@ This does not migrate or replace that editor/writer. Shared/iOS remains legacy.
 
 2026-10-17: domain now includes write inputs, typed failures and validation; a
 populated data module implements read/detail/create/update/delete and signed
-photo uploads. It is **not wired into the application**. The old Home writer,
+photo uploads. At that foundation checkpoint it was **not wired into the application**. The old Home writer,
 shared/iOS UI and profile Activity bindings remain active and unchanged.
 Foundation verification passes 37 Home unit cases, both app APK/DEX checks,
 domain/data lint and shared Native compilation; live/visual acceptance is pending.

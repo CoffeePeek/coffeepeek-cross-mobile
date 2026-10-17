@@ -31,7 +31,7 @@ import java.time.LocalDate
 import java.time.ZoneOffset
 import java.time.temporal.ChronoUnit
 
-/** Prepared assembly only: no Koin registration/active route or legacy writer is changed here. */
+/** Android composition reuses the current catalogue, platform picker, artwork and consent-aware tracker. */
 internal fun androidHomeCheckInEditor(
     lease: AndroidCheckInHistorySession,
     repository: HomePreparationRepository,

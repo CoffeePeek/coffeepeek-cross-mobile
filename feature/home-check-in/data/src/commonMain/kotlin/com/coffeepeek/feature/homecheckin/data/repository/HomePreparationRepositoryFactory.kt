@@ -7,6 +7,8 @@ import com.coffeepeek.feature.homecheckin.domain.repository.HomePreparationRepos
 import com.coffeepeek.feature.homecheckin.domain.usecase.homePreparationFieldErrors
 import io.ktor.client.HttpClient
 import io.ktor.http.Url
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
 
 /**
  * Clients are owned by the caller. Upload client must be separate and credential-free;
@@ -58,7 +60,32 @@ private class RemoteHomePreparationRepository(
         }
 
     override suspend fun calendar(range: HomePreparationDateRange): Result<List<HomePreparationDay>> = homeRequestResult {
-        backend.calendar(range.from, range.to).map { HomePreparationDay(it.preparedOn, it.brewCount) }
+        val days = backend.calendar(range.from, range.to).map { HomePreparationDay(it.preparedOn, it.brewCount) }
+        // The calendar endpoint supplies counts only. Preserve the current month-photo
+        // behavior using bounded, date-filtered owner pages, never per-entry detail calls.
+        val entries = mutableListOf<HomePreparation>()
+        if (days.any { it.brewCount > 0 }) {
+            var page = 1
+            do {
+                currentCoroutineContext().ensureActive()
+                if (page > 10000) throw HomePreparationFailure(HomePreparationIssue.InvalidResponse)
+                val result = backend.page(page, 100, range.from, range.to)
+                if (result.totalCount < 0 || result.items.size > 100)
+                    throw HomePreparationFailure(HomePreparationIssue.InvalidResponse)
+                if (result.items.isEmpty() && result.totalCount > (page - 1).toLong() * 100)
+                    throw HomePreparationFailure(HomePreparationIssue.InvalidResponse)
+                entries += result.items.map { it.toDomain(apiBaseUrl) }
+                val hasMore = page.toLong() * 100 < result.totalCount
+                page++
+            } while (hasMore)
+        }
+        currentCoroutineContext().ensureActive()
+        val photos = entries.distinctBy(HomePreparation::id).filter { it.preparedOn in range.from..range.to }
+            .groupBy(HomePreparation::preparedOn).mapValues { (_, rows) -> rows.mapNotNull { row ->
+                row.drinkPhotoUrl?.takeIf(String::isNotBlank)?.let { HomePreparationCalendarPhoto(it, true, row.preparedAtUtc) }
+                    ?: row.photos.firstOrNull { it.url.isNotBlank() }?.let { HomePreparationCalendarPhoto(it.url, false, row.preparedAtUtc) }
+            } }
+        days.map { it.copy(photos = photos[it.preparedOn].orEmpty()) }
     }
 }
 

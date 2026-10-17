@@ -1,14 +1,13 @@
 package com.coffeepeek.admin.di.checkinhistory
 
 import com.coffeepeek.admin.di.shop.CheckInTestSessions
-import com.coffeepeek.admin.di.homecheckin.HomeReadTestRepository
 import com.coffeepeek.api.CoffeePeekClient
 import com.coffeepeek.domain.repository.SessionRepository
 import com.coffeepeek.admin.feature.catalog.api.BrewMethodCatalog
 import com.coffeepeek.admin.feature.coffee.api.CoffeePicker
 import com.coffeepeek.feature.checkinhistory.domain.repository.CheckInHistoryRepository
 import com.coffeepeek.feature.checkinhistory.domain.repository.HomeHistoryReader
-import com.coffeepeek.feature.homecheckin.domain.HomeCheckInRepository
+import com.coffeepeek.feature.homecheckin.domain.repository.HomePreparationRepository
 import com.coffeepeek.feature.homecheckin.domain.repository.HomePreparationReader
 import org.junit.Rule
 import org.junit.rules.TemporaryFolder
@@ -34,11 +33,10 @@ class CheckInHistoryModuleTest {
             }
         }
         val app = koinApplication {
-            modules(module { single { client }; single<SessionRepository> { sessions }
-                single<HomeCheckInRepository> { HomeReadTestRepository() } },
+            modules(module { single { client }; single<SessionRepository> { sessions } },
                 module {
-                    single<com.coffeepeek.admin.feature.checkin.api.DrinkPhotoPreparation.Factory> {
-                        com.coffeepeek.admin.feature.checkin.api.DrinkPhotoPreparation.Factory.Unavailable
+                    single<com.coffeepeek.admin.feature.checkin.domain.DrinkPhotoExtractor> {
+                        com.coffeepeek.admin.feature.checkin.domain.DrinkPhotoExtractor { error("Unexpected extraction") }
                     }
                     single<CoffeePicker> { object : CoffeePicker {
                         override suspend fun search(query: String) = error("Unexpected catalog read")
@@ -52,6 +50,7 @@ class CheckInHistoryModuleTest {
             assertSame(app.koin.get<AndroidCheckInHistoryCalendar>(), app.koin.get<AndroidCheckInHistoryCalendar>())
             assertEquals(1, app.koin.getAll<CheckInHistoryRepository>().size)
             assertEquals(1, app.koin.getAll<HomePreparationReader>().size)
+            assertSame(app.koin.get<HomePreparationRepository>(), app.koin.get<HomePreparationReader>())
             assertEquals(1, app.koin.getAll<HomeHistoryReader>().size)
             assertEquals(0, credentials)
             assertEquals(0, sessionReads)
