@@ -26,6 +26,19 @@ changed in that MVI slice; those checks are not live-write or physical-device ac
 
 ## Module gate and migration boundary
 
+The next slice prepares shared editor MVI and its internal catalogue/photo ports:
+guarded edit loading, optional form fields, incremental error correction,
+debounced bean search, first-photo selection/skip/retry and explicit create/update.
+Actual account replacement erases private work; a token error for the same owner
+keeps the draft. Saved outcomes carry only ID/notice metadata, not private photos
+or notes. No Android editor renderer, analytics adapter or active binding is
+introduced yet; current app/iOS flows remain unchanged. Verification and remaining
+factory/UI/device gates are in the latest migration-plan section.
+All 43 editor cases and the expanded 987-unit selection pass, with both app APK/
+DEX checks, impl lint, instrumentation APK assembly and Native compatibility
+compilation. No renderer changed; UI tests were compiled but not executed anew,
+and physical-device/editor visual acceptance remains open.
+
 The Android detail slice now adds a populated API and HomeCheckInApiImpl with a
 lifecycle adapter, stateless body, own components/resources and same-file paired
 previews. It uses caller-supplied image/date/method ports and preserves the current

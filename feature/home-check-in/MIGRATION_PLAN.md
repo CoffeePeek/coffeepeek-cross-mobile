@@ -2,9 +2,77 @@
 
 Plan date: 2026-10-16; foundation work: 2026-10-17. Re-fetched source baseline:
 `origin/main` **0137ee7**; migration parent: history **c726944**, PR #95.
-Domain/data, detail MVI and the Android detail entry/renderer are prepared, but
-no active Home writer, screen, endpoint or DI binding has switched. Editor
-rendering/MVI and Android integration are still pending.
+Domain/data, detail/editor MVI and the Android detail entry/renderer are prepared,
+but no active Home writer, screen, endpoint or DI binding has switched. Editor
+rendering/runtime entry, analytics adaptation and Android integration are pending.
+
+## Editor MVI — 2026-10-17
+
+- Common HomeCheckInEditorViewModel now owns typed State/Action/Event, form
+  loading/editing/validation/save and account/revision-scoped outcomes. Constructor
+  values come from composition's current instant/civil-date conversion; the
+  future factory must retain millisecond precision rather than nine fractional
+  digits. No Android/time-zone dependency is added to common code.
+- Create starts private at taste score 5. Recipe fields remain optional. Editing
+  loads only its requested preparation, preserves historical product identity,
+  nullable rating/visibility, custom drink and issued photos; its upload list stays
+  empty. Failed/mismatched/blank edit IDs never fall through to POST creation.
+- The same selected civil day keeps its existing instant; another day supplies
+  both explicit fields. Domain validation runs before requests. Dose comma input,
+  existing text limits and toggled optional rating follow the current form.
+  Only changed fields lose/revalidate prior errors; unrelated server errors remain.
+- Catalogue/method and first-photo processing ports are internal presentation
+  contracts, consumed by the new VM/tests. The future entry/composition will
+  adapt the existing catalogue/extractor; no backend/extraction algorithm or
+  feature-to-feature implementation dependency is created here. Bean search uses
+  the existing 300ms debounce, query limit and stale/cancellation checks.
+- A small form-owned photo preparation component uses the VM lifecycle scope.
+  It preserves five-original ordering, extracts only the first source, auto-selects
+  one candidate and requires selection/skip for multiple candidates. Source change,
+  skip, close or revocation invalidates late work; repeated active retries coalesce.
+  Source/draft/cutout state changes are atomic even for immediate Flow collectors.
+  Original/candidate bytes are copied at their ownership boundaries. Edit ignores
+  replacement-photo intents. Processor failures retain originals and permit saving
+  without a cutout, as before. Fixtures validate port metadata, not image decoding.
+- Save blocks conflicting edits/close/duplicate writes and never retries itself.
+  Result failures keep the draft and typed field/operation issues; cancellation
+  is rethrown, including when returned inside Result. One accepted response closes
+  the form and emits only saved ID plus visibility-unconfirmed flag. A moderation
+  Pending response is not mistaken for a visibility failure or publication approval;
+  a mismatch never starts a second create. Private form/photo state is then erased.
+- Account revocation/owner clearing cancels work and erases state; late non-
+  cooperative results cannot reopen a form or emit Saved. HTTP 401/403 alone is
+  not an account-generation change: when the same account lease remains current,
+  retain its draft and permit explicit retry after token renewal. Composition must
+  still guard the repository and invalidate the lease on actual account replacement.
+- This is prepared logic, not an activated editor. API/module count stays **31**;
+  Android editor content, components/resources/previews, lifecycle factory, picker/
+  extractor adapters and the single existing consent-aware analytics flow still
+  follow. No Compose renderer or old application/iOS binding changed in this slice.
+
+Verification: **2026-10-17**, base **e77821e** plus this editor diff. Main was
+re-fetched and remains **0137ee7**, already an ancestor; no new merge was needed.
+All **43 editor cases** pass: create/edit mapping, optionality/date/error correction,
+catalogue debounce/retry/late results, write/cancellation/lease guards, visibility
+notice, photo selection/skip/source changes and ownership/atomic-state invariants.
+Home now has **104 cases**: domain 14, data 23, detail 24, editor 43. The complete
+selected set passes **987 unit executions**, zero failures/errors/skips: Home 104,
+legacy Home 16, history 54, core presentation 3 and app Direct/Play 405 each,
+including valid Gradle up-to-date results. Both app APKs/packaged DEX checks, impl
+lint, self-targeted UI test APK compilation/assembly and impl iOS Simulator Arm64
+compilation pass. Initial 36-case logic run passed in 15s; after additional cases
+and review corrections all expanded selections passed, with the final complete
+run taking 7s. No failing tests, weakened assertions or hidden retries occurred.
+
+All ports/repositories and byte payloads in these tests are fixtures; no physical
+phone, real account, network writer, camera or iOS UI was used. Existing detail/
+calendar screenshots and UI counts below belong to their prior runs: UI tests
+were **compiled, not executed again** in this non-renderer slice, and there is no
+new editor preview/device/visual acceptance. Studio still reports the new source
+outside imported content roots; compiler/lint are the verified fallback, not an
+IDE inspection result. No forbidden app/data/other-feature implementation imports,
+new Gradle dependency, module or active DI binding was added. Local final log:
+coffeepeek-home-editor-mvi-atomic-final-2026-10-17.log, outside tracked sources.
 
 ## Android detail renderer — 2026-10-17
 
@@ -213,7 +281,7 @@ modules only with real code through `Modules.feature.homePreparation`. Keep
 | `api` — detail populated | Minimal Android detail body/caller contract; editor contract follows its real implementation. No ViewModel, screen implementation, DTO or Koin. | Compose runtime/UI only. App and genuine cross-feature callers consume it without access to Home implementation. |
 | `domain` — existing, extended | Preparation/input/photo/visibility models, validation and read/write capabilities in model/repository/usecase. | Pure Kotlin and explicitly justified domain dependencies. Own data/impl and composition consume it; packages in the mixed legacy artifact cannot enforce this independence. |
 | `data` — prepared, inactive | HTTP APIs/DTOs, envelope/error mapping, signed uploads, mappers and repository implementation; only narrow construction factories public. | Own domain, required core/network, Ktor/serialization. App constructs it; UI never consumes it. Separate artifact prevents transport exposure through domain. No new database/cache is needed. |
-| `impl` — Android detail prepared, inactive | Common detail/delete MVI; Android HomeCheckInApiImpl, runtime/stateless content, components/resources/previews. Editor MVI/UI follows. | Common: own domain/core presentation. Android: own API, design-system and lifecycle/Compose. No data/legacy/app imports; artifact enforces presentation-versus-transport boundaries. |
+| `impl` — detail/editor logic prepared, inactive | Common detail/delete and editor/save/catalogue/photo MVI; Android detail HomeCheckInApiImpl, runtime/stateless content, components/resources/previews. Editor UI/factory follows. | Common: own domain/core presentation. Android: own API, design-system and lifecycle/Compose. No data/legacy/app imports; artifact enforces presentation-versus-transport boundaries. |
 
 Use constructor DI in domain/data. Root Koin and platform/legacy adapters remain
 in `composeApp/androidMain/di/homecheckin`; no feature DI module, root Navigation 3
@@ -280,7 +348,8 @@ Bean selection and date/photo sheets are subordinate controls, not new features.
    to open a form. Guard save/delete/search/extraction races and late results.
    - [x] Prepare account-owned detail/delete MVI and effect validity checks.
    - [x] Add the real Android detail entry and its lifecycle/runtime adapter.
-   - [ ] Add editor/create/save/search/extraction MVI and its contracts.
+   - [x] Prepare editor/create/save/search/photo MVI and internal presentation ports.
+   - [ ] Connect the real editor entry, ports and existing analytics flow.
 7. [ ] Extract independent components into own files, reuse CoffeePeek primitives,
    feature resources and same-file paired previews. Preserve keyboard/scroll,
    outline/spacing/type and bounded ripple. Add shared design-system primitives
@@ -300,8 +369,9 @@ Bean selection and date/photo sheets are subordinate controls, not new features.
 
 First coding slice: **domain validation/write contracts and data contract tests**.
 UI and active binding switches follow within the same feature checkpoint.
-The subsequent detail/delete MVI and Android renderer are prepared. Next is
-the editor's create/edit/save/search/photo MVI and renderer. Keep physical-device gates
+The subsequent detail/delete MVI, Android detail renderer and editor MVI are
+prepared. Next is the Android editor renderer/runtime factory and actual port/
+analytics adaptation, followed by app activation. Keep physical-device gates
 open while proceeding without a phone, as requested.
 
 ## Verification and completion gates
