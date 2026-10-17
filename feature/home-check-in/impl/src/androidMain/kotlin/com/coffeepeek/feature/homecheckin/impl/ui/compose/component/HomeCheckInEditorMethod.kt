@@ -20,7 +20,7 @@ internal fun HomeCheckInEditorMethod(
     artwork: @Composable (String, Modifier) -> Unit, onSelect: (String?) -> Unit,
 ) {
     var expanded by remember { mutableStateOf(false) }
-    val selectedMethod = methods.firstOrNull { it.code == selected }
+    val selectedMethod = methods.firstOrNull { it.code == selected || selected in it.legacyCodes }
     val label = selectedMethod?.name ?: selected?.takeIf { error == null }?.let(formatMethod)
     Box {
         HomeCheckInEditorSelect(label ?: stringResource(R.string.home_check_in_choose_method), CoffeePeekIcons.Coffee,

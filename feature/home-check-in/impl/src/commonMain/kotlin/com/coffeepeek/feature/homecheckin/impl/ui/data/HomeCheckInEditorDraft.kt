@@ -17,18 +17,7 @@ internal fun HomePreparation.editorInput() = HomePreparationInput(
 
 /** Only changed fields lose/revalidate their previous errors; keep unrelated server failures. */
 internal fun HomeCheckInEditorState.withDraft(next: HomePreparationInput, now: Instant): HomeCheckInEditorState {
-    val changed = HomePreparationField.entries.filter { field -> when (field) {
-        Date -> draft.preparedAt != next.preparedAt || draft.preparedOn != next.preparedOn
-        Method -> draft.brewMethodCode != next.brewMethodCode
-        Bean -> draft.coffeeProductSlug != next.coffeeProductSlug || draft.coffeeProductId != next.coffeeProductId || draft.customBeanName != next.customBeanName
-        Dose -> draft.doseGrams != next.doseGrams
-        Duration -> draft.brewDurationSeconds != next.brewDurationSeconds
-        Rating -> draft.tasteScore != next.tasteScore
-        Note -> draft.text != next.text
-        Drink -> draft.drinkSlug != next.drinkSlug || draft.customDrinkName != next.customDrinkName
-        Photos -> draft.photos != next.photos || draft.drinkPhoto != next.drinkPhoto
-        Visibility -> draft.visibility != next.visibility
-    } }.toSet()
+    val changed = draft.changedFields(next)
     val local = if (fieldErrors.keys.any { it in changed }) homePreparationFieldErrors(next, entry != null, now) else emptyMap()
     val remaining = fieldErrors.toMutableMap().apply {
         changed.forEach { field -> if (field in this) {
@@ -39,3 +28,17 @@ internal fun HomeCheckInEditorState.withDraft(next: HomePreparationInput, now: I
     return copy(draft = next, fieldErrors = remaining,
         beanSelectionName = beanSelectionName.takeIf { next.coffeeProductSlug != null || next.coffeeProductId != null })
 }
+
+internal fun HomePreparationInput.changedFields(next: HomePreparationInput): Set<HomePreparationField> =
+    HomePreparationField.entries.filter { field -> when (field) {
+        Date -> preparedAt != next.preparedAt || preparedOn != next.preparedOn
+        Method -> brewMethodCode != next.brewMethodCode
+        Bean -> coffeeProductSlug != next.coffeeProductSlug || coffeeProductId != next.coffeeProductId || customBeanName != next.customBeanName
+        Dose -> doseGrams != next.doseGrams
+        Duration -> brewDurationSeconds != next.brewDurationSeconds
+        Rating -> tasteScore != next.tasteScore
+        Note -> text != next.text
+        Drink -> drinkSlug != next.drinkSlug || customDrinkName != next.customDrinkName
+        Photos -> photos != next.photos || drinkPhoto != next.drinkPhoto
+        Visibility -> visibility != next.visibility
+    } }.toSet()

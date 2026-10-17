@@ -26,7 +26,7 @@ feature/favorites/                  api/domain/data/impl; Android screen active
 feature/shop-report/                api/domain/data/impl; Android report active
 feature/shop/                       api/domain/data/impl; Android menu gallery active
 feature/check-in-history/           api/domain/data/impl; Android combined history active
-feature/home-check-in/              pure domain/data, Android detail api/impl prepared;
+feature/home-check-in/              pure domain/data, Android detail/editor api/impl prepared;
                                    app bridge still uses legacy editor/writer
 ```
 

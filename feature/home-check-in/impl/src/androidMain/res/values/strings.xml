@@ -90,6 +90,8 @@
     <string name="home_check_in_photos_hint">Чашка, зерно или процесс приготовления — до 5 фото.</string>
     <string name="home_check_in_photos_count">Добавлено: %1$d/5</string>
     <string name="home_check_in_add_photos">Добавить фото</string>
+    <string name="home_check_in_gallery">Выбрать из галереи</string>
+    <string name="home_check_in_camera">Сделать фото</string>
     <string name="home_check_in_remove_photo">Удалить фото %1$d</string>
     <string name="home_check_in_keep_photos">Фотографии этой записи сохранятся без изменений</string>
     <string name="home_check_in_cutout_title">Чашка для календаря</string>

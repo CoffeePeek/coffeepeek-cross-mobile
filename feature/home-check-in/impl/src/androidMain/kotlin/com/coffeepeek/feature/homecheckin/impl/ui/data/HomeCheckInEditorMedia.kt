@@ -5,7 +5,7 @@ import androidx.compose.ui.Modifier
 import com.coffeepeek.feature.homecheckin.domain.model.HomePreparationUpload
 
 /** Composition supplies existing artwork/image decoding; this UI never opens a camera or HTTP client. */
-internal class HomeCheckInEditorMedia(
+class HomeCheckInEditorMedia(
     val ratingArtwork: @Composable (Modifier) -> Unit,
     val emptyBeanArtwork: @Composable (Modifier) -> Unit,
     val methodArtwork: @Composable (String, Modifier) -> Unit,

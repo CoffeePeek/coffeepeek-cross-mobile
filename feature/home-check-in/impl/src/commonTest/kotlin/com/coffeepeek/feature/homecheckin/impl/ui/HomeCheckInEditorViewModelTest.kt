@@ -84,8 +84,9 @@ class HomeCheckInEditorViewModelTest {
     }
 
     private fun model(repo: Repository = Repository(), catalog: Catalog = Catalog(), processor: Processor = Processor(),
-        id: String? = null, access: () -> Boolean = { true }): HomeCheckInEditorViewModel = HomeCheckInEditorViewModel(
-        repo, catalog, processor, "2026-10-17T09:30:00Z", "2026-10-17", id, 7, access, { now },
+        id: String? = null, access: () -> Boolean = { true },
+        analytics: HomeCheckInEditorAnalytics = HomeCheckInEditorAnalytics.None): HomeCheckInEditorViewModel = HomeCheckInEditorViewModel(
+        repo, catalog, processor, "2026-10-17T09:30:00Z", "2026-10-17", id, 7, access, { now }, analytics,
     ).also { store.put("editor-${key++}", it) }
 
     private fun HomeCheckInEditorViewModel.act(vararg actions: HomeCheckInEditorAction) { actions.forEach(::onAction) }
@@ -625,6 +626,78 @@ class HomeCheckInEditorViewModelTest {
         vm.onAction(HomeCheckInEditorAction.RetryDetail); runCurrent()
         assertTrue(vm.state.value.isReady)
         assertEquals("home", vm.state.value.entry!!.id)
+    }
+
+    @Test fun metricsContainOnlyCategoriesAndInitializationAndUnchangedFieldsDoNotDuplicate() = runTest(dispatcher) {
+        val metrics = mutableListOf<HomeCheckInEditorMetric>()
+        val vm = model(analytics = HomeCheckInEditorAnalytics(metrics::add)); runCurrent()
+        vm.act(HomeCheckInEditorAction.Initialize, HomeCheckInEditorAction.NoteChanged("Private coffee note"),
+            HomeCheckInEditorAction.NoteChanged("Private coffee note")); runCurrent()
+        assertEquals(listOf(HomeCheckInEditorMetric.Opened, HomeCheckInEditorMetric.FieldChanged(HomePreparationField.Note)), metrics)
+        assertFalse(metrics.toString().contains("Private coffee note"))
+        vm.onAction(HomeCheckInEditorAction.Close); runCurrent()
+        store.clear()
+        assertEquals(1, metrics.count { it == HomeCheckInEditorMetric.Cancelled })
+    }
+
+    @Test fun metricsDistinguishClientServerAndPhotoFailuresAndSuccessIsTerminal() = runTest(dispatcher) {
+        val metrics = mutableListOf<HomeCheckInEditorMetric>()
+        val repo = Repository()
+        val vm = model(repo, analytics = HomeCheckInEditorAnalytics(metrics::add)); runCurrent()
+        vm.act(HomeCheckInEditorAction.DoseChanged("0"), HomeCheckInEditorAction.Save); runCurrent()
+        assertTrue(repo.creates.isEmpty())
+        assertTrue(metrics.contains(HomeCheckInEditorMetric.Validation(setOf(HomePreparationField.Dose), false)))
+        repo.saveResult = Result.failure(HomePreparationFailure(HomePreparationIssue.InvalidInput,
+            mapOf(HomePreparationField.Bean to HomePreparationIssue.BeanUnavailable)))
+        vm.act(HomeCheckInEditorAction.DoseChanged("18"), HomeCheckInEditorAction.Save); runCurrent()
+        assertTrue(metrics.contains(HomeCheckInEditorMetric.Validation(setOf(HomePreparationField.Bean), true)))
+        repo.saveResult = Result.failure(HomePreparationFailure(HomePreparationIssue.Offline, operation = HomePreparationOperation.PhotoUpload))
+        vm.onAction(HomeCheckInEditorAction.Save); runCurrent()
+        assertTrue(metrics.contains(HomeCheckInEditorMetric.Failed(HomeCheckInEditorStage.Photo, HomePreparationIssue.Offline)))
+        repo.saveResult = Result.success(entry())
+        vm.act(HomeCheckInEditorAction.Save, HomeCheckInEditorAction.Save); runCurrent()
+        store.clear()
+        assertEquals(1, metrics.count { it is HomeCheckInEditorMetric.Saved })
+        assertEquals(0, metrics.count { it == HomeCheckInEditorMetric.Cancelled })
+    }
+
+    @Test fun deniedAndRevokedOwnersNeverRecordLateSuccessOrCancellation() = runTest(dispatcher) {
+        val metrics = mutableListOf<HomeCheckInEditorMetric>()
+        model(access = { false }, analytics = HomeCheckInEditorAnalytics(metrics::add)); runCurrent()
+        assertTrue(metrics.isEmpty())
+        var allowed = true
+        val repo = Repository().apply { saveGate = CompletableDeferred(); ignoreCancellation = true }
+        val vm = model(repo, access = { allowed }, analytics = HomeCheckInEditorAnalytics(metrics::add)); runCurrent()
+        vm.onAction(HomeCheckInEditorAction.Save); runCurrent()
+        val before = metrics.toList()
+        allowed = false; vm.onAction(HomeCheckInEditorAction.RevokeAccess); runCurrent()
+        repo.saveGate!!.complete(Unit); runCurrent(); store.clear()
+        assertEquals(before, metrics)
+    }
+
+    @Test fun failedEditLoadDoesNotOpenFlowAndCancelledRequestDoesNotBecomeMetricFailure() = runTest(dispatcher) {
+        val metrics = mutableListOf<HomeCheckInEditorMetric>()
+        val repo = Repository().apply { detailResult = Result.failure(HomePreparationFailure(HomePreparationIssue.NotFound)) }
+        val vm = model(repo, id = "home", analytics = HomeCheckInEditorAnalytics(metrics::add)); runCurrent()
+        assertTrue(metrics.isEmpty())
+        repo.detailResult = Result.success(entry())
+        vm.onAction(HomeCheckInEditorAction.RetryDetail); runCurrent()
+        assertEquals(listOf<HomeCheckInEditorMetric>(HomeCheckInEditorMetric.Opened), metrics)
+        repo.saveResult = Result.failure(CancellationException("cancelled"))
+        vm.onAction(HomeCheckInEditorAction.Save); runCurrent()
+        assertFalse(metrics.any { it is HomeCheckInEditorMetric.Failed })
+    }
+
+    @Test fun brokenTelemetryCannotBlockEditingOrTurnAcceptedCreateIntoRetry() = runTest(dispatcher) {
+        val repo = Repository()
+        val vm = model(repo, analytics = HomeCheckInEditorAnalytics { error("Unavailable metrics SDK") }); runCurrent()
+        assertTrue(vm.state.value.isReady)
+        vm.act(HomeCheckInEditorAction.NoteChanged("Private"), HomeCheckInEditorAction.Save); runCurrent()
+        assertTrue(vm.state.value.isClosed)
+        assertNull(vm.state.value.saveIssue)
+        assertEquals(HomeCheckInEditorEvent.Saved("home", false), vm.events.first().event)
+        vm.onAction(HomeCheckInEditorAction.Save); runCurrent()
+        assertEquals(1, repo.creates.size)
     }
 
     companion object {

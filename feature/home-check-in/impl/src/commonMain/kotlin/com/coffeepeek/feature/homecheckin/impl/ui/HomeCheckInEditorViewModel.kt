@@ -27,6 +27,7 @@ internal class HomeCheckInEditorViewModel(
     private val sessionGeneration: Int,
     private val canAccess: () -> Boolean,
     private val now: () -> Instant = { Clock.System.now() },
+    private val analytics: HomeCheckInEditorAnalytics = HomeCheckInEditorAnalytics.None,
 ) : MviViewModel<HomeCheckInEditorState, HomeCheckInEditorAction, HomeCheckInEditorEventEnvelope>(
     HomeCheckInEditorState(draft = HomePreparationInput(preparedAt = initialPreparedAt,
         preparedOn = initialPreparedOn, tasteScore = 5)),
@@ -52,7 +53,10 @@ internal class HomeCheckInEditorViewModel(
             HomeCheckInEditorAction.Initialize -> if (!initialized) {
                 initialized = true
                 onAction(HomeCheckInEditorAction.RetryMethods)
-                if (preparationId == null) updateState { copy(isReady = true) } else loadDetail()
+                if (preparationId == null) {
+                    track(HomeCheckInEditorMetric.Opened)
+                    updateState { copy(isReady = true) }
+                } else loadDetail()
             }
             HomeCheckInEditorAction.RetryDetail -> if (initialized) loadDetail()
             HomeCheckInEditorAction.RetryMethods -> loadMethods()
@@ -73,15 +77,21 @@ internal class HomeCheckInEditorViewModel(
             }
             is HomeCheckInEditorAction.VisibilityChanged -> edit { copy(visibility = action.value) }
             HomeCheckInEditorAction.OpenBeanPicker -> if (canEdit()) {
+                track(HomeCheckInEditorMetric.BeanPickerOpened)
                 updateState { copy(isBeanPickerOpen = true) }
                 searchBeans(debounce = false)
             }
             HomeCheckInEditorAction.CloseBeanPicker -> if (canEdit()) closeBeanPicker()
             is HomeCheckInEditorAction.BeanQueryChanged -> if (canEdit() && currentState.isBeanPickerOpen) {
+                track(HomeCheckInEditorMetric.BeanPickerOpened)
+                track(HomeCheckInEditorMetric.FieldChanged(HomePreparationField.Bean))
                 updateState { copy(beanQuery = action.value.take(100)) }
                 searchBeans(debounce = true)
             }
-            HomeCheckInEditorAction.SearchBeans -> if (canEdit() && currentState.isBeanPickerOpen) searchBeans(debounce = false)
+            HomeCheckInEditorAction.SearchBeans -> if (canEdit() && currentState.isBeanPickerOpen) {
+                track(HomeCheckInEditorMetric.Retry(HomeCheckInEditorStage.Bean))
+                searchBeans(debounce = false)
+            }
             is HomeCheckInEditorAction.BeanSelected -> if (canEdit() && currentState.isBeanPickerOpen) {
                 currentState.beans.firstOrNull { it.slug == action.slug }?.let { bean ->
                     edit { copy(coffeeProductSlug = bean.slug, coffeeProductId = null, customBeanName = null) }
@@ -107,6 +117,7 @@ internal class HomeCheckInEditorViewModel(
             is HomeCheckInEditorAction.ChooseDrinkPhoto -> if (canPreparePhotos()) photos.select(action.index)
             HomeCheckInEditorAction.Save -> save()
             HomeCheckInEditorAction.Close -> if (saveJob == null) {
+                track(HomeCheckInEditorMetric.Cancelled)
                 invalidateWork()
                 updateState { HomeCheckInEditorState(isClosed = true) }
                 emit(HomeCheckInEditorEvent.Close)
@@ -128,6 +139,7 @@ internal class HomeCheckInEditorViewModel(
         var next = currentState.draft.transform()
         val sourceChanged = next.photos.firstOrNull() != currentState.draft.photos.firstOrNull()
         if (sourceChanged) next = next.copy(drinkPhoto = null)
+        currentState.draft.changedFields(next).forEach { track(HomeCheckInEditorMetric.FieldChanged(it)) }
         val instant = now()
         updateState {
             val updated = withDraft(next, instant)
@@ -159,6 +171,7 @@ internal class HomeCheckInEditorViewModel(
             if (loadJob !== job || expectedRevision != revision) return
             if (entry.id != preparationId) throw HomePreparationFailure(HomePreparationIssue.InvalidResponse)
             updateState { copy(entry = entry, draft = entry.editorInput(), beanSelectionName = entry.beanName, isReady = true) }
+            track(HomeCheckInEditorMetric.Opened)
         } catch (cancelled: CancellationException) { throw cancelled }
         catch (error: Exception) {
             if (!canAccess()) { revokeAccess(); return }
@@ -205,7 +218,10 @@ internal class HomeCheckInEditorViewModel(
         } catch (cancelled: CancellationException) { throw cancelled }
         catch (error: Exception) {
             if (!canAccess()) { revokeAccess(); return }
-            if (beansJob === job && searchRevision == expectedRevision && job.isActive) updateState { copy(beansIssue = error.issue()) }
+            if (beansJob === job && searchRevision == expectedRevision && job.isActive) {
+                track(HomeCheckInEditorMetric.Failed(HomeCheckInEditorStage.Bean, error.issue()))
+                updateState { copy(beansIssue = error.issue()) }
+            }
         } finally {
             if (beansJob === job) { beansJob = null; updateState { copy(beansLoading = false) } }
         }
@@ -225,9 +241,13 @@ internal class HomeCheckInEditorViewModel(
     private suspend fun save() {
         val snapshot = currentState
         if (!canEdit() || snapshot.isBeanPickerOpen || !snapshot.photoPreparation.canSubmit) return
+        track(HomeCheckInEditorMetric.Submitted)
         val errors = homePreparationFieldErrors(snapshot.draft, preparationId != null, now())
         updateState { copy(fieldErrors = errors, saveIssue = null, failedOperation = null) }
-        if (errors.isNotEmpty()) return
+        if (errors.isNotEmpty()) {
+            track(HomeCheckInEditorMetric.Validation(errors.keys, server = false))
+            return
+        }
         val job = currentCoroutineContext().job
         val expectedRevision = ++revision
         saveJob = job
@@ -245,6 +265,7 @@ internal class HomeCheckInEditorViewModel(
             revision++
             cancelAuxiliaryWork()
             updateState { HomeCheckInEditorState(isClosed = true) }
+            track(HomeCheckInEditorMetric.Saved(entry.visibility, entry.photos.isNotEmpty() || entry.drinkPhotoUrl != null))
             emit(HomeCheckInEditorEvent.Saved(entry.id, unconfirmed))
         } catch (cancelled: CancellationException) { throw cancelled }
         catch (error: Exception) {
@@ -252,6 +273,10 @@ internal class HomeCheckInEditorViewModel(
             if (saveJob === job && expectedRevision == revision && job.isActive) {
                 // HTTP auth failure alone is not account replacement: keep this owner's draft.
                 val failure = error as? HomePreparationFailure
+                if (!failure?.fieldErrors.isNullOrEmpty()) track(HomeCheckInEditorMetric.Validation(failure.fieldErrors.keys, server = true))
+                else track(HomeCheckInEditorMetric.Failed(
+                    if (failure?.operation == HomePreparationOperation.PhotoUpload) HomeCheckInEditorStage.Photo else HomeCheckInEditorStage.Save,
+                    error.issue()))
                 updateState { copy(fieldErrors = failure?.fieldErrors.orEmpty(),
                     saveIssue = error.issue().takeIf { failure?.fieldErrors.isNullOrEmpty() },
                     failedOperation = failure?.operation) }
@@ -287,8 +312,18 @@ internal class HomeCheckInEditorViewModel(
     }
 
     override fun onCleared() {
+        if (!currentState.isClosed && !currentState.isAccessRevoked) track(HomeCheckInEditorMetric.Cancelled)
         revokeAccess()
         super.onCleared()
+    }
+
+    private fun track(event: HomeCheckInEditorMetric) {
+        if (!canAccess() || currentState.isAccessRevoked) return
+        try { analytics.record(event) }
+        catch (cancelled: CancellationException) { throw cancelled }
+        catch (_: Exception) {
+            // Telemetry is ancillary: a broken SDK must not turn an accepted create into a retry.
+        }
     }
 }
 

@@ -4,8 +4,103 @@ Plan date: 2026-10-16; foundation work: 2026-10-17. Re-fetched source baseline:
 `origin/main` **0137ee7**; migration parent: history **c726944**, PR #95.
 Domain/data, detail/editor MVI, the Android detail entry and both renderers are
 prepared, but no active Home writer, screen, endpoint or DI binding has switched.
-The public editor factory, real port/analytics adaptation and Android integration
-are pending.
+The public editor factory and app-owned media/catalogue/picker/analytics adapters
+are also prepared. Active data/DI binding and Android route integration are pending.
+
+## Public editor entry and composition ports — 2026-10-17
+
+Source identity: d8cf13d plus this entry/adapters diff. Main re-fetched, still
+0137ee7 and already an ancestor. No new branch is needed inside the same Home
+checkpoint. The public editor ABI carries only requested ID, generation, reactive
+access, callbacks and modifier; it exports no draft, domain, ViewModel or DI.
+
+- HomeCheckInEditorEntry owns its own ViewModel store while composed. Removing/
+  reopening it, changing entry/ID or generation does not retain a previous form
+  under the parent screen's store. Independent lease checks, runtime privacy
+  masking and scoped event validity remain mandatory.
+- Intentionally public impl factory ports now have real application-composition
+  consumers: catalogue options, first-source processor, dates/media, platform
+  picker and typed telemetry. They are not re-exported through feature API.
+- Android app assembly reuses existing catalogue, extractor, image decoder,
+  coffee/magnifier/method artwork, URI/JPEG/camera-permission pipeline and date/
+  zone conventions. Initial instants keep millisecond precision. Historical brew
+  codes display the current catalogue option without rewriting the stored code.
+- Repository/catalogue/extraction adapters use the current account lease before,
+  during and after work; wrapped cancellation is preserved. Catalogue transport
+  messages become typed failures. Extraction and selected originals copy byte
+  ownership; no independent backend/client, ML algorithm or legacy writer added.
+- Photo-source sheet retains the current grouped gallery/camera choices. Each
+  launcher request has its own composition scope; late work cannot be redirected
+  to a new request. Delivery is bounded, one-shot and tied to the composed form/
+  lease. Busy, closed, revoked, replaced or disposed owners cannot receive it.
+  OS cancellation may return no result and does not prevent starting a fresh pick.
+- Shared MVI emits typed telemetry categories only: no IDs, query, bean/name/note,
+  dates or image bytes. The app adapts one existing consent-aware CheckInTracker,
+  including global creation handoff, rather than opening a duplicate flow.
+  Edits never report Created; terminal outcomes are deduplicated; revocation and
+  declined-at-start consent do not replay private work. Non-cancellation telemetry
+  failures cannot block editing or make an accepted create retryable.
+- Android app now depends on prepared Home api/impl and packaged DEX guards
+  explicitly verify their entry/VM and app adapter classes. **No active Koin,
+  renderer, writer or navigation binding changed**. Data remains unwired;
+  shared/iOS/profile Activity paths remain intact. Module count stays 31.
+
+Next: provide the prepared data factory with existing gateway/upload clients and
+bind it in Android composition; replace the temporary history Home bridge with
+detail/editor entries; activate history/global-create/community-edit entrances
+and verify injected composition, refresh/notice/back/dismiss behavior. Actual
+OS picker/camera, IME/modal placement, configured protected images, Pixel 7
+visual parity and explicitly authorized live CRUD/account acceptance remain gates.
+
+### Entry/adapters verification
+
+2026-10-17; d8cf13d plus this entry/adapters diff, main 0137ee7. The retained
+read-only Pixel_10_Pro AVD was resolved explicitly as emulator-5554, API 37/
+arm64/16KB, unlocked. Only the debug self-targeted fixture APK was installed;
+its package/instrumentation target is com.coffeepeek.feature.homecheckin.impl.test,
+generic Application, no INTERNET permission or production DI. No phone, real
+gallery/camera/account operation or production APK deployment occurred.
+APK SHA-256: beb772a0825bfc9622745e045b1d6c3f0722658da390c268366f69202f8b25ad.
+
+- **7/7 new public-entry UI cases** pass on their first run, 34.966s. Then
+  **36/36 complete Home UI cases** pass, 128.273s, including all previous 29
+  detail/editor cases. No UI failures, weakened assertions or skipped cases in
+  this slice. Earlier renderer harness failures remain recorded below.
+- New entry checks cover close/reopen with the same parent store, exact edit ID/
+  historical method display and unchanged submitted code, initially denied ports,
+  gallery/camera source actions and cancel, bounded/one-shot delivery, callbacks
+  from disposed forms and account-generation replacement during non-cooperative
+  fake saving. They exercise the feature entry, not real OS URI decoding.
+- **1017 selected unit executions** pass, zero failures/errors/skips: Home **112**
+  (domain 14, data 23, detail 24, editor 48, picker delivery 3), legacy Home 16,
+  history 54, core presentation 3 and app Direct/Play **416 each**. Valid Gradle
+  up-to-date results are included. New app cases cover catalogue/alias/typed-error
+  mapping, lease/cancellation and byte ownership, dates and one consent-aware
+  analytics flow, including global handoff, edit, consent refusal and revocation.
+  New common cases cover metrics/terminal/cancellation/SDK failure and deliveries.
+- The first expanded test compilation failed on a singleton metric list's type
+  inference; gave the fixture its explicit common metric type. Subsequent full
+  runs passed in 48s, 23s and 26s as lease/SDK/error-mapping cases were completed.
+  No failed unit assertion was hidden. One compiler warning introduced during
+  development (unnecessary assertion) was removed.
+- Direct/Play APKs and expanded packaged DEX guards, API/impl lint, self-targeted
+  UI APK and shared impl iOS Simulator Arm64 compatibility compilation pass.
+  API/impl lint report no issues; no concurrent Gradle builds. Existing app
+  namespace/expect-actual/deprecation warnings remain outside this task.
+- Studio module inventory still contains Home domain but not api/data/impl.
+  App-file diagnostics consequently report unresolved new dependency symbols;
+  no clean IDE inspection/preview result is claimed. Gradle compiler/lint are
+  the verified fallback; **Gradle Sync in Studio is still needed** for its model.
+- New photo-source body has colocated light/dark previews. Full UI regressions
+  include existing light/dark brand-font layout fixtures; new source choices
+  use fake ports, not actual camera/gallery acceptance. Actual configured
+  artwork/images, IME and outer history/modal parity stay open for integration.
+  Screenshots/diagnostics remain local, outside tracked sources.
+
+Local final logs: coffeepeek-home-entry-final-all-2026-10-17.log,
+coffeepeek-home-entry-ui-targeted-2026-10-17.log,
+coffeepeek-home-entry-ui-full-2026-10-17.log. No live backend or iOS UI acceptance
+is inferred from any of these fixture/compilation checks.
 
 ## Android editor renderer — 2026-10-17
 
@@ -448,13 +543,14 @@ Bean selection and date/photo sheets are subordinate controls, not new features.
 5. [x] Populate data/backend, mapper and repository using existing clients through
    a narrow factory. Port fake-HTTP envelope/error/upload contracts; cover reads
    needed to replace the compatibility reader too. Keep legacy bindings active.
-6. [ ] Add minimal API and MviViewModel-based detail/editor: immutable State/Action
+6. [x] Prepare minimal API and MviViewModel-based detail/editor: immutable State/Action
    and actual one-off Event. No old BaseViewModel or history/statistics load just
    to open a form. Guard save/delete/search/extraction races and late results.
    - [x] Prepare account-owned detail/delete MVI and effect validity checks.
    - [x] Add the real Android detail entry and its lifecycle/runtime adapter.
    - [x] Prepare editor/create/save/search/photo MVI and internal presentation ports.
-   - [ ] Connect the real editor entry, ports and existing analytics flow.
+   - [x] Prepare public editor entry and app-owned catalogue/media/picker/
+     extraction/date/analytics adapters. Active binding belongs to step 8.
 7. [ ] Extract independent components into own files, reuse CoffeePeek primitives,
    feature resources and same-file paired previews. Preserve keyboard/scroll,
    outline/spacing/type and bounded ripple. Add shared design-system primitives
@@ -476,9 +572,9 @@ Bean selection and date/photo sheets are subordinate controls, not new features.
 
 First coding slice: **domain validation/write contracts and data contract tests**.
 UI and active binding switches follow within the same feature checkpoint.
-The subsequent detail/delete MVI, Android detail renderer and editor MVI are
-prepared, including the Android editor renderer/internal runtime. Next is its
-public editor factory and actual port/analytics adaptation, followed by app activation. Keep physical-device gates
+The subsequent detail/delete/editor MVI, Android renderers/internal runtime,
+public editor factory and app-owned port/analytics adaptation are prepared.
+Next is Android data/DI and route activation. Keep physical-device gates
 open while proceeding without a phone, as requested.
 
 ## Verification and completion gates

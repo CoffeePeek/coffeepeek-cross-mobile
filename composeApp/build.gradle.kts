@@ -49,6 +49,8 @@ kotlin {
             implementation(project(module.feature.checkInHistory.data))
             implementation(project(module.feature.checkInHistory.impl))
             implementation(project(module.feature.homePreparation.domain))
+            implementation(project(module.feature.homePreparation.api))
+            implementation(project(module.feature.homePreparation.impl))
             implementation(project(module.core.coroutines))
             implementation(project(module.core.designSystem))
             implementation(compose.preview)
@@ -291,6 +293,14 @@ androidComponents {
                 "com.coffeepeek.admin.di.checkinhistory.HomeHistoryReaderAdapter",
                 "com.coffeepeek.feature.homecheckin.domain.repository.HomePreparationReader",
                 "com.coffeepeek.feature.homecheckin.domain.model.HomePreparation",
+                "com.coffeepeek.feature.homecheckin.api.HomeCheckInEditorEntry",
+                "com.coffeepeek.feature.homecheckin.api.HomeCheckInDetailEntry",
+                "com.coffeepeek.feature.homecheckin.impl.HomeCheckInEditorApiImplKt",
+                "com.coffeepeek.feature.homecheckin.impl.HomeCheckInApiImplKt",
+                "com.coffeepeek.feature.homecheckin.impl.ui.HomeCheckInEditorViewModel",
+                "com.coffeepeek.admin.di.homecheckin.AndroidHomeCheckInEditorKt",
+                "com.coffeepeek.admin.di.homecheckin.AndroidHomeCheckInRepository",
+                "com.coffeepeek.admin.di.homecheckin.AndroidHomeCheckInPhotoPicker",
                 "com.coffeepeek.feature.checkinhistory.domain.repository.HomeHistoryReader",
             ))
         }

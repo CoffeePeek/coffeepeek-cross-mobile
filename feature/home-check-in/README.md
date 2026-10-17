@@ -1,5 +1,20 @@
 # Home preparations — incremental migration
 
+Latest checkpoint, 2026-10-17: public Android editor entry/factory and app-owned
+catalogue/media/date/picker/extraction/analytics adapters are prepared. The entry
+owns a form store, one-shot picker deliveries and account-scoped outcomes.
+One existing consent-aware tracker is reused; no raw private content enters its
+typed metrics. App api/impl dependencies and DEX guards now cover these classes,
+but **no active route, Koin or writer binding has switched**. Next is prepared
+data/DI activation and replacement of the history compatibility bridge. The
+historical sections below describe earlier slices; use MIGRATION_PLAN.md for
+latest evidence and remaining physical-device/live acceptance gates.
+This slice passes **36/36 isolated Home UI cases** (7 new public-entry scenarios)
+and **1017 selected unit executions**, both app APK/expanded DEX checks, API/impl
+lint and shared Native compilation. Studio still needs Gradle Sync to import the
+new modules/dependencies; these results are compiler/lint/device-fixture checks,
+not a clean IDE inspection or real-account/OS-picker acceptance.
+
 2026-10-16: the pure read domain is integrated into combined Android history in
 PR #95. All three Android history routes use the migrated combined entry; an
 account-owned application bridge reuses the existing Home editor/detail/writer.
