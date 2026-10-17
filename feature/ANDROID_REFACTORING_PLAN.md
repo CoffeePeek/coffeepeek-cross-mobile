@@ -52,13 +52,19 @@ The next child is `feature/home-check-in-refactoring` →
 [home-check-in/MIGRATION_PLAN.md](home-check-in/MIGRATION_PLAN.md): preserve current
 Home detail/create/edit/delete, extend the existing pure domain and incrementally
 add api/data/impl. On 2026-10-17, domain write/validation contracts, populated data
-and detail/delete MVI are prepared; this child registers 30 modules. Public API,
-screen/editor rendering and active Android bindings are pending. Profile Activity
+and detail/delete MVI plus the Android detail API/renderer are prepared; this child
+registers 31 modules. Editor rendering/MVI and active Android bindings are pending. Profile Activity
 and iOS remain on their current paths. No phone is attached for a new visual audit.
 Foundation verification covered 37 Home unit cases and 917 selected executions.
 The subsequent detail/delete MVI slice adds 24 passing cases: latest selection
 is 944 executions, both app APKs/DEX guards, impl lint and Native compatibility
 compilation passing. No Home UI activation or physical-device acceptance is claimed.
+The Android detail renderer adds the real API/runtime entry, local resources and
+colocated paired previews. The same 944-unit selection and 12 self-targeted UI
+cases pass after dialog-window synchronization was corrected; both APK/DEX,
+API/impl lint and shared Native compilation pass. Light/dark fixture screenshots
+were inspected on a read-only emulator. Editor and app wiring are the next slices,
+not another feature; Pixel 7, real-photo, keyboard and live-write gates remain open.
 
 ## Completed engineering tasks
 

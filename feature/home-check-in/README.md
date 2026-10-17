@@ -14,16 +14,31 @@ domain/data lint and shared Native compilation; live/visual acceptance is pendin
 See [MIGRATION_PLAN.md](MIGRATION_PLAN.md) for source audit, module gates and the
 remaining api/impl, MVI, parity and integration work. No placeholder module exists.
 
-The next 2026-10-17 slice populates impl with internal detail/delete MVI: guarded
+The detail-MVI slice on 2026-10-17 populated impl with guarded
 detail loading, explicit deletion confirmation, typed failures, cancellation,
 account revocation and scoped one-off events. It depends on own domain and core
-presentation, never data or the app. It has no renderer/production binding yet;
-public API, form/editor and visual parity remain pending, including Pixel 7 checks.
+presentation, never data or the app. At that checkpoint it had no renderer;
+the subsequent Android detail renderer is described below. Form/editor and
+physical-device visual parity remain pending, including Pixel 7 checks.
 All 24 detail-MVI cases pass, with 944 selected unit executions overall, both
 APK/DEX checks, impl lint and shared Native compilation. No renderer or binding
-has changed; these checks are not live-write or physical-device acceptance.
+changed in that MVI slice; those checks are not live-write or physical-device acceptance.
 
 ## Module gate and migration boundary
+
+The Android detail slice now adds a populated API and HomeCheckInApiImpl with a
+lifecycle adapter, stateless body, own components/resources and same-file paired
+previews. It uses caller-supplied image/date/method ports and preserves the current
+detail geometry. Shared MVI retains Native compilation; Android UI/design-system
+dependencies remain in androidMain. Editor and application activation are still
+pending. The new API contains only the intentionally public detail entry, not
+domain re-exports, ViewModels, transport or DI; its module prevents those internals
+from becoming a caller dependency. See the newest plan section for verification.
+Latest validation passes 944 selected unit executions, 12 self-targeted UI tests
+on a read-only API 37 emulator, both app APK/DEX checks, API/impl lint and shared
+Native compilation. Two initial dialog-layout synchronization failures were
+fixed without weakening assertions; the full UI suite was rerun. Fixture light/
+dark screenshots were inspected locally, not certified against a physical phone.
 
 `domain` owns preparation models, write inputs, field validation/typed failures,
 civil-date bounds, page metadata and read/write contracts. Dependencies: Kotlin only. Allowed consumers:
