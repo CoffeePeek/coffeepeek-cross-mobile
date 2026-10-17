@@ -1,22 +1,37 @@
-# Home preparations — incremental read foundation
+# Home preparations — incremental migration
 
 2026-10-16: the pure read domain is integrated into combined Android history in
 PR #95. All three Android history routes use the migrated combined entry; an
 account-owned application bridge reuses the existing Home editor/detail/writer.
 This does not migrate or replace that editor/writer. Shared/iOS remains legacy.
 
+2026-10-17: domain now includes write inputs, typed failures and validation; a
+populated data module implements read/detail/create/update/delete and signed
+photo uploads. It is **not wired into the application**. The old Home writer,
+shared/iOS UI and profile Activity bindings remain active and unchanged.
+Foundation verification passes 37 Home unit cases, both app APK/DEX checks,
+domain/data lint and shared Native compilation; live/visual acceptance is pending.
+See [MIGRATION_PLAN.md](MIGRATION_PLAN.md) for source audit, module gates and the
+remaining api/impl, MVI, parity and integration work. No placeholder module exists.
+
 ## Module gate and migration boundary
 
-`domain` owns preparation read models, civil-date query bounds, page metadata and
-a read-only page/calendar contract. Dependencies: Kotlin only. Allowed consumers:
+`domain` owns preparation models, write inputs, field validation/typed failures,
+civil-date bounds, page metadata and read/write contracts. Dependencies: Kotlin only. Allowed consumers:
 Home data/presentation and application composition. Other features must not
 import this domain: history owns its own read port/models, adapted by the app.
-HTTP, DTOs, uploads, repository implementations and DI stay outside domain.
+HTTP, DTOs, signed-upload representation, repository implementations and DI stay
+outside domain; its upload input is just caller-supplied original/cutout bytes.
 
 A package inside `features/home-checkin` would also expose that artifact's Ktor
 dependencies and mixed read/write implementation. A separate populated module
 enforces the independent boundary. No empty api/data/impl modules are created.
 The existing legacy artifact and all iOS/editor/writer consumers remain intact.
+Prepared data depends on this domain, core/network and Ktor/serialization; only
+application composition may call its repository factory. Implementation and DTOs
+are internal, and the factory requires distinct gateway/upload clients. The caller
+must supply a credential-free upload client and an account-bound access lease.
+No new Room cache, Koin module or client lifecycle is created.
 
 Current path: legacy HomeCheckInRepository → Android app compatibility reader →
 new Home domain → app history adapter → history-owned port. The Android history

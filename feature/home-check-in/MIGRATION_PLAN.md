@@ -1,0 +1,226 @@
+# Home check-ins — Android migration plan
+
+Plan date: 2026-10-16; foundation work: 2026-10-17. Re-fetched source baseline:
+`origin/main` **0137ee7**; migration parent: history **c726944**, PR #95.
+Domain/data foundation is prepared, but no active Home writer, screen, endpoint
+or DI binding has switched. API/impl and Android UI integration are still pending.
+
+## Current checkpoint — prepared foundation
+
+- Existing domain now also owns preparation input/upload types, read/write
+  repository contracts and field validation. Errors are typed reasons, not
+  localized text or raw backend payloads. The future impl must map every reason
+  to feature resources while preserving current explanations.
+- New populated data module owns backend/DTOs, mappers, private repository and
+  narrow factory. Clients and account lifetime remain application-owned. The
+  old `features/home-checkin` repository and all application bindings are unchanged.
+- Paging rejects invalid arguments rather than silently clamping the existing
+  read-domain contract. Calendar bounds are forwarded as inclusive civil dates.
+  Signed uploads use a separate client and preflight the complete reservation
+  with the existing public-upload URL guard before transmitting any image.
+- No statistics or protected-photo download interface is added without a new
+  consumer: legacy statistics stay intact, and configured image/viewer ports
+  remain the intended presentation boundary.
+- No UI has changed in this slice. Live-form baseline comparison stays open
+  before the editor/detail migration, not a claimed result of foundation tests.
+
+## Goal and stack
+
+Extract existing Home preparation details and create/edit/delete without changing
+their product behavior or visual design. Combined history already has a pure Home
+read boundary, but editor/detail still delegates to application-owned legacy code.
+Do not move unrelated profile, catalogue or community business logic here.
+
+- Work in `feature/home-check-in-refactoring`, created from the published history
+  tip, not main. Its PR targets `feature/check-in-history-refactoring` (#95).
+- Keep one child PR for this feature, normally within the 100–150-file review
+  guide. This planning commit starts that checkpoint, not another task-sized PR
+  to close before implementation.
+- History's code checkpoint is published. Its populated Pixel 7/account/write/
+  accessibility gates remain open in `check-in-history/COMBINED_HISTORY_PLAN.md`;
+  Home planning does not certify them or make #95 ready for release.
+- Re-fetch main before implementation and recheck actual entry points. Inherit
+  parent updates normally; retarget a child after its parent reaches main. No
+  force-push or merge to main/develop is part of this plan.
+
+## Current ownership and entry-point audit
+
+| Existing capability | Actual source / consumer | Migration decision |
+|---|---|---|
+| Home history/calendar reads | `feature/home-check-in/domain`, Android `LegacyHomePreparationReader`, `HomeHistoryReaderAdapter` | Keep read contracts and civil dates; extend this domain, not a second Home domain. |
+| Domain, validation, HTTP and uploads in one artifact | `features/home-checkin` | Reproduce active contracts in the new boundaries. Keep the old artifact for shared/iOS and unmigrated consumers. |
+| Detail/create/edit | `composeApp/.../feature/homecheckin/ui/HomeCheckInDetail.kt`, `HomeCheckInEditor.kt`, `HomeCheckInViewModel.kt` | Extract incrementally into Home impl; retain legacy UI for iOS. |
+| Combined-history overlay | Android `HistoryHomeOverlay`, `AndroidHistoryHomeBridge`, `HistoryHomeEditorFactory` | Replace legacy-editor delegation in application composition, never inside history impl. Retain account leases and invalidation. |
+| Global creation | `CheckInCreateFlow` from `CheckInTabContent` and `CommunityScreen` | Audit and switch these Android entrances too; replacing the history overlay alone does not migrate creation everywhere. |
+| Community edit | `Screen.EditHomeCheckIn(id)` | Preserve the history destination and initial edit ID. No new root route is required. |
+| Own-profile Activity calendar | `PersonalProfileActivityCalendar` with legacy Home/Shop VMs | Separate profile read/modal consumer; preserve its UI and bindings. Not a Home editor or an already migrated history renderer. |
+| Standalone Home screen/statistics | `HomeCheckInScreen`, `beanStats` / `methodStats` | No current root navigation call site found for this standalone screen. Do not rebuild its history/calendar/statistics UI; retain legacy contracts while consumers remain. |
+
+Fresh-main `Navigator.kt` maps VisitedPlaces/HomeCheckIns/EditHomeCheckIn to the
+combined `ProfileCheckInsScreen`; Android migration uses `CheckInHistoryDestination`.
+Legacy repository/editor/detail match main. The stack's VM additionally rejects
+stale history/calendar/detail responses: do not lose those protections by copying
+the less guarded main VM verbatim. This is a source audit, not a new physical-
+device Home acceptance run.
+
+## Target boundaries and module gates
+
+There are **28** registered modules in the history parent: base 23, four history
+modules and one Home read domain. This child now registers **29**, adding populated
+Home data. API and impl will bring the count to 31 while legacy remains. Register
+modules only with real code through `Modules.feature.homePreparation`. Keep
+`Modules.feature.homeCheckIn` for the old artifact's remaining consumers.
+
+| Boundary | Responsibility and hidden implementation | Dependencies, consumers and reason for a module |
+|---|---|---|
+| `api` — new | Minimal create/detail/edit entry requests and necessary outcome/caller contracts; no ViewModel, Compose screen, DTO or Koin. | Minimal public-contract dependencies. App and genuine cross-feature callers consume it without access to Home implementation. |
+| `domain` — existing, extended | Preparation/input/photo/visibility models, validation and read/write capabilities in model/repository/usecase. | Pure Kotlin and explicitly justified domain dependencies. Own data/impl and composition consume it; packages in the mixed legacy artifact cannot enforce this independence. |
+| `data` — prepared, inactive | HTTP APIs/DTOs, envelope/error mapping, signed uploads, mappers and repository implementation; only narrow construction factories public. | Own domain, required core/network, Ktor/serialization. App constructs it; UI never consumes it. Separate artifact prevents transport exposure through domain. No new database/cache is needed. |
+| `impl` — new | HomeCheckInApiImpl, typed detail/editor MVI, stateless content/components, navigation adapter and resources. | Own api/domain and needed core presentation/design-system/coroutines. App consumes its entry factory; separate artifact prevents UI access to data/legacy implementation. |
+
+Use constructor DI in domain/data. Root Koin and platform/legacy adapters remain
+in `composeApp/androidMain/di/homecheckin`; no feature DI module, root Navigation 3
+swap or generic core module. History keeps its own ports and app-owned adapters,
+not a dependency on Home domain/data/impl.
+
+Shared models/data/ViewModels belong in commonMain. Android entries/platform ports
+and Android-only UI belong in androidMain; shared Compose UI may stay commonMain
+when platform-independent. Preview tooling alone is not a reason to move it.
+iOS keeps its current UI/writer/DI path.
+
+Impl layout: `HomeCheckInApiImpl.kt`, `navigation/`, `ui/<Name>ViewModel.kt`,
+`ui/compose/<Name>Screen.kt`, `compose/component/`, `compose/model/`.
+Detail and editor are two presentation surfaces; create/edit share one editor.
+Bean selection and date/photo sheets are subordinate controls, not new features.
+
+## Behavior contract to preserve
+
+- New drafts start private with taste score 5. Method, bean, dose, duration,
+  rating, note, drink and photos remain optional. Preserve validation bounds,
+  field errors, input limits and correction of previously invalid fields.
+- Keep `preparedOn` a civil date and `preparedAtUtc` an instant. Reselecting the
+  same date preserves recorded time; retain future-date limits, explicit offsets
+  and the server's timestamp-precision limit.
+- Edit retains historical product identity, custom drink, returned visibility,
+  unknown moderation and existing photos. Current PUT does not upload/replace
+  photos; do not invent that capability during extraction.
+- Preserve `/api/v1/check-ins/home` CRUD/calendar and inclusive Home day bounds.
+  Photo reservations use `/api/Photos/check-in`; signed PUT retains
+  `x-amz-tagging: is_permanent=False`. External upload uses the separate upload
+  client, never an authenticated gateway redirected to a signed URL.
+- Keep original gallery photos and drink cutout separate, first-source extraction,
+  candidate selection/retry/skip, readiness before submit and five-original limit.
+  Reuse the existing processor; no second extraction pipeline.
+- Public choice is not moderation approval. Retain Pending/Rejected/Unknown and
+  an explicit notice when the saved response does not confirm chosen visibility.
+  Retain the saved ID; never automatically repeat creation to repair visibility.
+- Keep `Result` and coroutine cancellation. Retain drafts on failure, safe error
+  text, conflicting-write guards, stale-result rejection and account revocation.
+  Ambiguous delivery must not trigger an automatic duplicate write.
+- Preserve one analytics flow across type choice/editor/save and current consent,
+  exposure and cancel policy. App adapts a narrow port; no application analytics
+  imports or personal field data in feature telemetry.
+- Inject configured image loader/photo viewer/picker/camera/extraction ports.
+  Existing coffee picker and brew-method catalogue stay behind app adapters until
+  their features migrate. Home cannot import composeApp or Shop/catalogue impl.
+
+## Ordered work
+
+1. [x] Publish history/calendar checkpoint; inspect Home sources, actual callers,
+   Gradle registration, bridges and existing tests against fresh main.
+2. [x] Isolate this plan in a child branch; identify module responsibilities.
+3. [ ] Before coding, compare current Home detail/editor/bean/photo controls in
+   the app and record baseline geometry, type/color and keyboard/modal behavior.
+   Recheck main and all Android creation/edit callers first.
+4. [x] Extend existing domain with independent input/write/detail contracts and
+   validation. Reuse read concepts where semantics match; no DTO/legacy aliases
+   or forwarding-only use cases. Port field/date/visibility tests first.
+5. [x] Populate data/backend, mapper and repository using existing clients through
+   a narrow factory. Port fake-HTTP envelope/error/upload contracts; cover reads
+   needed to replace the compatibility reader too. Keep legacy bindings active.
+6. [ ] Add minimal API and MviViewModel-based detail/editor: immutable State/Action
+   and actual one-off Event. No old BaseViewModel or history/statistics load just
+   to open a form. Guard save/delete/search/extraction races and late results.
+7. [ ] Extract independent components into own files, reuse CoffeePeek primitives,
+   feature resources and same-file paired previews. Preserve keyboard/scroll,
+   outline/spacing/type and bounded ripple. Add shared design-system primitives
+   only for an actual shared need, not a parallel redesign.
+8. [ ] Switch Android app delegation through Home entry/factories: history,
+   global creation and community edit. Preserve leases, photo/catalogue ports
+   and single analytics flow. Refresh history once after confirmed mutations;
+   close after delete, retain notices and correct back/cancel behavior. New Home
+   reads use new data; unrelated legacy/iOS DI stays unchanged.
+9. [ ] Remove only obsolete Android bridge paths/dependencies after all migrated
+   entrances work. Keep shared Home/profile-modal/iOS callers; do not delete the
+   old artifact globally while any remain.
+10. [ ] Complete verification, document limits and review the child diff against
+    #95. Choose another business owner only after this checkpoint.
+
+First coding slice: **domain validation/write contracts and data contract tests**.
+UI and active binding switches follow within the same feature checkpoint.
+
+## Verification and completion gates
+
+### Foundation verification — 2026-10-17
+
+Source/build identity: `feature/home-check-in-refactoring`, parent c726944 plus
+this Home foundation diff, re-fetched main 0137ee7. No device deployment or
+production-account request occurred. Android UI, DI and iOS rendering are unchanged.
+
+- **37 Home unit cases pass**: 14 domain (including three existing read-model
+  cases) and 23 new data/MockEngine cases. Total selected results: **917 executions**,
+  zero failures/errors/skips: Home 37, legacy Home 16, history domain/impl 54 and
+  app 405 per Direct/Play variant. Valid up-to-date results may be reused by Gradle.
+- Domain/data lint, both app debug APKs and both packaged DEX guards pass. Both
+  new Home domain/data compile for iOS Simulator Arm64; no iOS UI was implemented
+  or device-tested. No UI suite is claimed for this non-UI change.
+- The first full validation passed in 2m26s; after adding the last metadata guard,
+  the full relevant set passed again in 9s. Final local log is
+  `coffeepeek-home-foundation-validation-final-2026-10-17.log` outside the repo.
+- An initial CLI attempt was stopped without a test result when an IDE build was
+  found still active after its request timed out. Subsequent Gradle checks ran
+  sequentially after IDLE was confirmed; no failed test was hidden or weakened.
+- Studio's existing-domain file inspection returned no issues. Data-file
+  inspections are unavailable until the new Gradle module is imported; no clean
+  IDE-inspection result is claimed for those files. Compiler and Gradle lint pass.
+  Existing AGP/Compose deprecations in unrelated modules remain out of scope.
+- Boundary audit: domain imports Kotlin only; data uses own domain/core network,
+  has internal DTOs/backend/mappers and a private implementation. No app/legacy/
+  other-feature imports, UI dependency or Koin wiring were introduced.
+
+Still open: current-app editor/detail baseline comparison, api/impl, typed MVI,
+resource mapping, all Android entry switches and the device/release gates below.
+
+Calendar evidence is separate: 867 selected unit executions, 20 self-targeted history UI
+cases, Direct/Play APKs/DEX, history lint and shared Native compilation passed
+before c726944 publication. Fake light/dark calendar QA is not populated physical-
+device/account acceptance.
+
+- Domain: optionality/bounds, field correction, visibility/unknown states, civil
+  dates versus instants, timestamp precision and meaningful coordination.
+- Data/MockEngine: POST/PUT payloads, product ID/slug, missing/malformed/failed
+  envelopes, owner detail/delete, protected photos, reservation/tagging, no
+  credential forwarding, cancellation and no silent write retries.
+- MVI: create/detail/edit, debounce/out-of-order search, late detail/method retry,
+  duplicate writes, extraction selection/retry/skip, unconfirmed saved visibility,
+  retained failed draft and account revocation.
+- Self-targeted UI/fake ports: light/dark, small windows/large fonts, keyboard,
+  focus/scroll, errors/accessibility, bean/date/photo controls, sheet placement,
+  dismissal and detail/edit/delete confirmation. No production Application,
+  network, real camera or account data in that host.
+- Composition: every Android entry, factory/lease lifetime, confirmed mutation
+  invalidation, initial edit ID, photo callbacks and one consent-aware analytics
+  flow. Rerun affected history and parent regressions.
+- Both app APK variants/DEX guards, affected unit suites/lint/instrumentation
+  APKs and source-set/import/cycle checks. One Gradle build at a time with
+  `--max-workers=6`. Shared Native compilation is compatibility, not iOS acceptance.
+- Pixel 7: resolve serial/version/lock, compare baseline/new form/detail and
+  keyboard/photos read-only. No data loss or silent downgrade. Real CRUD/account
+  changes require a safe test account and explicit permission.
+- Record date/source/variant/device, executed versus compiled tests, counts,
+  failures/retries, visuals and untested gates here. Keep private diagnostics
+  outside tracked files. APK assembly alone does not close the feature.
+
+Excluded: iOS UI migration, profile/Activity extraction, separate Home history or
+statistics screens, new server capabilities, photo editing, root navigation
+replacement and wholesale removal of legacy code.

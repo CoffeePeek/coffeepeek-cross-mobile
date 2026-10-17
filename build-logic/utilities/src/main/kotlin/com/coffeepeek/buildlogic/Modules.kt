@@ -38,6 +38,7 @@ object Modules {
         val homePreparation = HomePreparation
         object HomePreparation {
             const val domain = ":feature:home-check-in:domain"
+            const val data = ":feature:home-check-in:data"
         }
 
         object CheckInHistory {
@@ -91,6 +92,7 @@ object Modules {
         feature.checkInHistory.data,
         feature.checkInHistory.impl,
         feature.homePreparation.domain,
+        feature.homePreparation.data,
         feature.homeCheckIn,
     )
 }

@@ -19,8 +19,10 @@ historical; they do not override the current server contract or latest route aud
 - `feature/check-in-history-refactoring` → the branch above: the **entire**
   prepared history migration, including four modules, resources, app wiring and
   tests. Continue that capability only there; do not split it into a third PR.
-- The base registers 23 modules; the history child registers 27. Existing
-  `features/home-checkin` remains registered in both. No new Home module exists.
+- The base registers 23 modules; the history child registers 28, including the
+  populated Home read domain. Existing `features/home-checkin` remains registered
+  in both; Home api/data/impl are not part of those parent branches. The next child
+  prepares Home data as described below.
 - The independent modal fix #92 reached develop and main and is already in the
   migration ancestry. Do not cherry-pick it again.
 - Preserve published history; no force-push or merging either PR to main/develop
@@ -37,6 +39,24 @@ not that every consuming feature is production-ready.
 or release gates outstanding. **Not started** means the new migration has not
 started; the corresponding product capability may already work in main.
 A compilation/test pass is not evidence of pixel parity or a live write.
+
+## Next checkpoint — Home preparations (foundation prepared, not activated)
+
+History/calendar code through **c726944** is published in #95. Compact rounded
+cells, bounded ripple, visit dots and latest available daily photos are implemented;
+the latest isolated suite passes 20 UI cases and 867 selected unit executions.
+Physical-device populated/account/write gates remain open in the history plan.
+
+The next child is `feature/home-check-in-refactoring` →
+`feature/check-in-history-refactoring`. Its scoped plan is
+[home-check-in/MIGRATION_PLAN.md](home-check-in/MIGRATION_PLAN.md): preserve current
+Home detail/create/edit/delete, extend the existing pure domain and incrementally
+add api/data/impl. On 2026-10-17, domain write/validation contracts and populated
+data are prepared; this child registers 29 modules. API/impl and active Android
+bindings are pending. Profile Activity and iOS remain on their current paths.
+Foundation verification: 37 Home unit cases, 917 selected executions overall,
+both app debug APKs/DEX guards, Home domain/data lint and Native compatibility
+compilation pass. No Home UI activation or physical-device acceptance is claimed.
 
 ## Completed engineering tasks
 
@@ -99,7 +119,7 @@ Next work is ordered, not parallel feature scaffolding:
 | Shop Report: incorrect shop data | In progress; Android entry active | Real safe submit/error/uncertain-delivery flow and paired preview inspection; retain shared/iOS fallback. |
 | Shop: detail, menu, public check-ins and creation sheet | In progress; Android entries active | Physical-device visual/guest/owner/return parity; picker/camera permissions and recreation, bundled extraction quality and safely authorized submissions. Prepared review editors are not a product requirement. |
 | Personal history: one combined Shop/Home calendar and timeline | In progress; Android code checkpoint prepared in #95 | Combined reads/MVI/content, month photos, Home photo preparation and creation-flow analytics are integrated. Personal author avatars match main; public author navigation belongs to Shop. Pixel 7 populated-history/photo/date/account/accessibility and safely authorized mutation checks remain. |
-| Home preparations: create/detail/edit/delete, recipes and photos | Not started as a new feature migration | Existing main editor/detail remain active through combined history. Extract only the needed read boundary first; do not recreate unused history/statistics tabs from the standalone Home screen. |
+| Home preparations: create/detail/edit/delete, recipes and photos | In progress; domain/data prepared but inactive | Existing editor/detail remain active through history and global creation. API/impl, typed MVI, visual/keyboard parity, Android switching and release checks remain. See home-check-in/MIGRATION_PLAN.md; no standalone history/statistics recreation. |
 | Discovery: shop list/search/filter/map and embedded roasters | Not started | Audit actual list/map/filter ownership and current platform map; no independent module for every mode. |
 | Coffee catalogue: Coffee tab/list/detail | Not started | Preserve current catalogue/search/detail and links to roasters; catalog pickers are existing shared app boundaries, not invented screens. |
 | Roasters: list/detail and saved membership | Not started | Preserve current entry points, contacts, catalogue links and favorites. Favorites parity is an earlier gate, not permission for a wholesale roaster rewrite. |
