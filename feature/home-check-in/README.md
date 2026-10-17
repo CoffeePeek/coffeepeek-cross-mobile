@@ -14,6 +14,15 @@ domain/data lint and shared Native compilation; live/visual acceptance is pendin
 See [MIGRATION_PLAN.md](MIGRATION_PLAN.md) for source audit, module gates and the
 remaining api/impl, MVI, parity and integration work. No placeholder module exists.
 
+The next 2026-10-17 slice populates impl with internal detail/delete MVI: guarded
+detail loading, explicit deletion confirmation, typed failures, cancellation,
+account revocation and scoped one-off events. It depends on own domain and core
+presentation, never data or the app. It has no renderer/production binding yet;
+public API, form/editor and visual parity remain pending, including Pixel 7 checks.
+All 24 detail-MVI cases pass, with 944 selected unit executions overall, both
+APK/DEX checks, impl lint and shared Native compilation. No renderer or binding
+has changed; these checks are not live-write or physical-device acceptance.
+
 ## Module gate and migration boundary
 
 `domain` owns preparation models, write inputs, field validation/typed failures,
@@ -49,8 +58,8 @@ moderation stays Unknown. Recipe fields and issued photo URLs are retained;
 no URL is synthesized from an ID/storage key.
 
 Combined history MVI/UI, delegated Home actions and Android route activation
-are now implemented. Full Home data/editor migration remains a later feature
-checkpoint, not a prerequisite for this compatibility read foundation. Physical-
+are now implemented. Home editor/entry migration continues in the Home child;
+prepared data/detail MVI are not active bindings yet. Physical-
 device/live-read release checks remain open; see the combined-history plan.
 
 Verification: three pure Home model tests, two new history model tests and 14

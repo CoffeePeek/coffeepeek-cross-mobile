@@ -2,8 +2,75 @@
 
 Plan date: 2026-10-16; foundation work: 2026-10-17. Re-fetched source baseline:
 `origin/main` **0137ee7**; migration parent: history **c726944**, PR #95.
-Domain/data foundation is prepared, but no active Home writer, screen, endpoint
-or DI binding has switched. API/impl and Android UI integration are still pending.
+Domain/data and detail MVI are prepared, but no active Home writer, screen,
+endpoint or DI binding has switched. The public API, screen/editor rendering and
+Android integration are still pending.
+
+## Detail MVI slice — 2026-10-17
+
+- The populated impl now owns a typed detail/delete ViewModel based on
+  core/presentation, with separate State/Action/Event files. No Compose renderer,
+  public API placeholder or application dependency is introduced in this slice.
+- It loads detail only, never history/calendar/statistics just to open a card.
+  Reloads coalesce; invalid/mismatched IDs do not become another record's content.
+  Offline refresh retains the current snapshot, while Unauthorized/Forbidden/
+  NotFound removes it. Unknown exceptions become typed generic issues, not UI text.
+- Delete requires explicit confirmation, blocks conflicting actions and emits
+  exactly one confirmed Deleted outcome for app-owned invalidation/dismissal.
+  Failed/ambiguous delivery retains the record where access permits and requires
+  new user confirmation to retry. There is no automatic retry or optimistic delete.
+- A VM belongs to one preparation and one account lease. Composition must guard
+  the repository too; the presentation predicate is not server authentication.
+  Revocation/owner clearing erases private state and rejects non-cooperative late
+  responses. A new account needs a new lifecycle owner/VM; token renewal must not
+  be treated as account revocation by the future adapter.
+- Photo/edit/close/deleted effects carry account generation and operation revision.
+  The future runtime adapter must check canDeliver before invoking callbacks and
+  hide content immediately when its account lease ceases to be current.
+- Fresh main is still 0137ee7. Source parity anchors remain the unchanged Home
+  detail/editor files, global creation and community edit callers. Pixel 7 is
+  not attached in this turn, so running-app/visual baseline is still unchecked.
+  This slice changes no renderer; screenshot/keyboard/modal parity is not claimed.
+- User chose to continue without the phone. Source/fixture-based renderer work
+  may continue, but the physical-device visual/keyboard gate must remain open;
+  do not repeatedly block code preparation on device availability.
+- Impl currently uses the shared-library convention for common MVI. When adding
+  Compose, preserve its existing Native targets with an appropriate convention;
+  do not move the ViewModel to Android merely for preview tooling.
+
+Verification for this slice: base **9c9d4f2** plus the detail-MVI diff, current
+main **0137ee7**, 2026-10-17. All **24 detail MVI cases** pass; Home now has 61
+cases across domain/data/impl. The full selected set reports **944 executions**,
+zero failures/errors/skips: Home 61, legacy Home 16, history 54, core presentation
+3 and app 405 per Direct/Play variant (valid up-to-date results may be reused).
+Both APK/DEX checks, impl lint and impl iOS Simulator Arm64 compilation pass.
+The initial full run took 10m14s, actively processing DEX rather than waiting on
+a network connection; read-only process diagnostics stayed outside the repo.
+After adding two final event-validity cases, the entire selected set passed
+again in 4s. No test failed, assertion was weakened or run was hidden. Local
+final log: `coffeepeek-home-detail-mvi-validation-final-2026-10-17.log`.
+Studio cannot inspect the new impl until its module is imported, so no clean
+IDE inspection is claimed; Gradle compiler/lint are the verified fallback.
+No renderer changed, so no UI/preview/device or live-write acceptance is claimed.
+
+### Source baseline for the upcoming renderer (not device acceptance)
+
+HomeCheckInDetail.kt and HomeCheckInEditor.kt have no diff versus main 0137ee7.
+Keep these audited properties when replacing legacy components with CoffeePeek
+primitives; neither missing device coverage nor migration is a redesign mandate.
+
+| Area | Existing source contract |
+|---|---|
+| Detail body | LazyColumn: start/end 20dp, top 4dp, bottom 24dp; 20dp item gaps. Heading block gap 10dp, bean title headlineSmall/Bold. |
+| Recipe card | Radius 20dp; padding/gaps 16dp; icon tile 44dp/radius 14dp, icon 24dp. Method value titleMedium/SemiBold; metric gaps 24dp. |
+| Detail photos | Original strip uses 16:10 for a single photo. Cutout container 160dp high/radius 20dp/padding 12dp and preserves transparent image presentation. |
+| Detail actions | Primary Edit, destructive text Delete; a separate destructive confirmation at the overlay boundary. Ordinary photo and cutout open separate supplied albums. |
+| Editor rhythm | headlineSmall/Bold create/edit title, keyboard-aware weighted body, error summary above scrolling fields, existing CpDimens spacing4/spacing6 rhythm. |
+| Editor fields | Visibility, optional taste rating, then date/method/bean/dose/duration/note/drink/photos steps. Bean search is an internal picker; edit keeps server photos without exposing replacement uploads. |
+
+Reuse existing CoffeePeekButton and CoffeePeekFormStep where equivalent. Missing
+photo/picker-specific composition must remain injected/feature-owned; never import
+legacy app components or Shop impl to avoid implementing its own small adapter.
 
 ## Current checkpoint — prepared foundation
 
@@ -66,8 +133,8 @@ device Home acceptance run.
 ## Target boundaries and module gates
 
 There are **28** registered modules in the history parent: base 23, four history
-modules and one Home read domain. This child now registers **29**, adding populated
-Home data. API and impl will bring the count to 31 while legacy remains. Register
+modules and one Home read domain. This child now registers **30**, adding populated
+Home data and detail-MVI impl. API will bring the count to 31 while legacy remains. Register
 modules only with real code through `Modules.feature.homePreparation`. Keep
 `Modules.feature.homeCheckIn` for the old artifact's remaining consumers.
 
@@ -76,7 +143,7 @@ modules only with real code through `Modules.feature.homePreparation`. Keep
 | `api` — new | Minimal create/detail/edit entry requests and necessary outcome/caller contracts; no ViewModel, Compose screen, DTO or Koin. | Minimal public-contract dependencies. App and genuine cross-feature callers consume it without access to Home implementation. |
 | `domain` — existing, extended | Preparation/input/photo/visibility models, validation and read/write capabilities in model/repository/usecase. | Pure Kotlin and explicitly justified domain dependencies. Own data/impl and composition consume it; packages in the mixed legacy artifact cannot enforce this independence. |
 | `data` — prepared, inactive | HTTP APIs/DTOs, envelope/error mapping, signed uploads, mappers and repository implementation; only narrow construction factories public. | Own domain, required core/network, Ktor/serialization. App constructs it; UI never consumes it. Separate artifact prevents transport exposure through domain. No new database/cache is needed. |
-| `impl` — new | HomeCheckInApiImpl, typed detail/editor MVI, stateless content/components, navigation adapter and resources. | Own api/domain and needed core presentation/design-system/coroutines. App consumes its entry factory; separate artifact prevents UI access to data/legacy implementation. |
+| `impl` — detail MVI prepared, inactive | Now: internal detail/delete VM and presentation models. Next: HomeCheckInApiImpl, editor MVI, stateless content/components and resources. | Currently own domain and core/presentation only; API/design-system are added when consumed. No data/legacy/app imports. A separate artifact already enforces presentation-versus-transport boundaries; app entry factory follows with the real renderer. |
 
 Use constructor DI in domain/data. Root Koin and platform/legacy adapters remain
 in `composeApp/androidMain/di/homecheckin`; no feature DI module, root Navigation 3
@@ -141,6 +208,9 @@ Bean selection and date/photo sheets are subordinate controls, not new features.
 6. [ ] Add minimal API and MviViewModel-based detail/editor: immutable State/Action
    and actual one-off Event. No old BaseViewModel or history/statistics load just
    to open a form. Guard save/delete/search/extraction races and late results.
+   - [x] Prepare account-owned detail/delete MVI and effect validity checks.
+   - [ ] Add the real public screen entry and its lifecycle/runtime adapter.
+   - [ ] Add editor/create/save/search/extraction MVI and its contracts.
 7. [ ] Extract independent components into own files, reuse CoffeePeek primitives,
    feature resources and same-file paired previews. Preserve keyboard/scroll,
    outline/spacing/type and bounded ripple. Add shared design-system primitives
@@ -158,6 +228,10 @@ Bean selection and date/photo sheets are subordinate controls, not new features.
 
 First coding slice: **domain validation/write contracts and data contract tests**.
 UI and active binding switches follow within the same feature checkpoint.
+The subsequent detail/delete MVI slice is also prepared and verified. Next is
+the real public entry/stateless detail renderer and resource/fixture parity,
+then the editor's create/edit/save/search/photo MVI. Keep physical-device gates
+open while proceeding without a phone, as requested.
 
 ## Verification and completion gates
 
@@ -188,8 +262,9 @@ production-account request occurred. Android UI, DI and iOS rendering are unchan
   has internal DTOs/backend/mappers and a private implementation. No app/legacy/
   other-feature imports, UI dependency or Koin wiring were introduced.
 
-Still open: current-app editor/detail baseline comparison, api/impl, typed MVI,
-resource mapping, all Android entry switches and the device/release gates below.
+At the foundation checkpoint the remaining work was current-app baseline, public
+entry/presentation, resource mapping, Android switching and device/release checks.
+The newer detail-MVI slice above completes only the detail/delete logic portion.
 
 Calendar evidence is separate: 867 selected unit executions, 20 self-targeted history UI
 cases, Direct/Play APKs/DEX, history lint and shared Native compilation passed
