@@ -53,7 +53,8 @@ The next child is `feature/home-check-in-refactoring` →
 Home detail/create/edit/delete, extend the existing pure domain and incrementally
 add api/data/impl. On 2026-10-17, domain write/validation contracts, populated data
 and detail/delete/editor MVI plus the Android detail API/renderer are prepared; this child
-registers 31 modules. Editor rendering/runtime, analytics and active Android bindings are pending. Profile Activity
+registers 31 modules. Editor content/internal runtime are now prepared; its public
+factory, real ports/analytics and active Android bindings are pending. Profile Activity
 and iOS remain on their current paths. No phone is attached for a new visual audit.
 Foundation verification covered 37 Home unit cases and 917 selected executions.
 The subsequent detail/delete MVI slice adds 24 passing cases: latest selection
@@ -64,12 +65,20 @@ colocated paired previews. The same 944-unit selection and 12 self-targeted UI
 cases pass after dialog-window synchronization was corrected; both APK/DEX,
 API/impl lint and shared Native compilation pass. Light/dark fixture screenshots
 were inspected on a read-only emulator. Shared editor/save/catalogue/photo MVI is
-now prepared; editor rendering/runtime and app wiring are the next slices,
+now prepared, as are editor content/components and its internal lifecycle runtime.
+Public editor factory and app wiring are the next slices,
 not another feature; Pixel 7, real-photo, keyboard and live-write gates remain open.
 The editor adds 43 passing fixture cases; latest selected total is 987 unit
 executions, with both APK/DEX guards, impl lint, test APK assembly and shared
 Native compilation passing. This logic-only slice did not execute UI tests or
 change the active Android editor, analytics or iOS paths.
+The following Android editor-renderer slice passes **29/29 isolated UI cases**
+(17 editor + 12 detail), the **987-unit selection**, both APK/DEX guards, impl
+lint and shared Native compilation. Header/fields/timeline/footer were inspected
+in light/dark brand-font fixture captures. It adds internal lifecycle/content,
+resources and colocated previews, not a public editor factory or active writer.
+The plan records initial harness failures and complete strict reruns. Configured
+media/picker, actual IME/modal, Pixel 7, composition and live-account gates remain.
 
 ## Completed engineering tasks
 
@@ -132,7 +141,7 @@ Next work is ordered, not parallel feature scaffolding:
 | Shop Report: incorrect shop data | In progress; Android entry active | Real safe submit/error/uncertain-delivery flow and paired preview inspection; retain shared/iOS fallback. |
 | Shop: detail, menu, public check-ins and creation sheet | In progress; Android entries active | Physical-device visual/guest/owner/return parity; picker/camera permissions and recreation, bundled extraction quality and safely authorized submissions. Prepared review editors are not a product requirement. |
 | Personal history: one combined Shop/Home calendar and timeline | In progress; Android code checkpoint prepared in #95 | Combined reads/MVI/content, month photos, Home photo preparation and creation-flow analytics are integrated. Personal author avatars match main; public author navigation belongs to Shop. Pixel 7 populated-history/photo/date/account/accessibility and safely authorized mutation checks remain. |
-| Home preparations: create/detail/edit/delete, recipes and photos | In progress; domain/data and detail/delete MVI prepared but inactive | Existing editor/detail remain active through history and global creation. Public entry, editor MVI, screen resources/rendering, visual/keyboard parity, Android switching and release checks remain. See home-check-in/MIGRATION_PLAN.md; no standalone history/statistics recreation. |
+| Home preparations: create/detail/edit/delete, recipes and photos | In progress; domain/data, detail/editor MVI and Android renderers prepared but inactive | Existing editor/detail remain active through history and global creation. Public editor factory, real port/analytics adaptation, visual/keyboard parity, Android switching and release checks remain. See home-check-in/MIGRATION_PLAN.md; no standalone history/statistics recreation. |
 | Discovery: shop list/search/filter/map and embedded roasters | Not started | Audit actual list/map/filter ownership and current platform map; no independent module for every mode. |
 | Coffee catalogue: Coffee tab/list/detail | Not started | Preserve current catalogue/search/detail and links to roasters; catalog pickers are existing shared app boundaries, not invented screens. |
 | Roasters: list/detail and saved membership | Not started | Preserve current entry points, contacts, catalogue links and favorites. Favorites parity is an earlier gate, not permission for a wholesale roaster rewrite. |

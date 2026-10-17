@@ -2,9 +2,114 @@
 
 Plan date: 2026-10-16; foundation work: 2026-10-17. Re-fetched source baseline:
 `origin/main` **0137ee7**; migration parent: history **c726944**, PR #95.
-Domain/data, detail/editor MVI and the Android detail entry/renderer are prepared,
-but no active Home writer, screen, endpoint or DI binding has switched. Editor
-rendering/runtime entry, analytics adaptation and Android integration are pending.
+Domain/data, detail/editor MVI, the Android detail entry and both renderers are
+prepared, but no active Home writer, screen, endpoint or DI binding has switched.
+The public editor factory, real port/analytics adaptation and Android integration
+are pending.
+
+## Android editor renderer — 2026-10-17
+
+Source baseline: main 0137ee7, re-fetched and already an ancestor; parent/source
+revision 393af7d plus this editor UI diff. Source geometry was checked against
+HomeCheckInEditor.kt, ReviewContent.kt, CheckInVisibilityControl.kt,
+PhotoAttachmentsSection.kt, DrinkPhotoPreview.kt and HomeCheckInErrorSummary.kt.
+Physical-phone baseline remains unavailable under the user's continue-without-
+phone instruction; source/fixture checks do not certify production pixel parity.
+
+- Added internal HomeCheckInEditorScreen lifecycle adapter and stateless
+  HomeCheckInEditorScreenContent. The public editor entry/factory is deliberately
+  deferred until its real app-owned lease, media/picker and analytics adapters.
+  No application route, writer, composition, profile modal or iOS UI was changed.
+- Runtime collects while STARTED, checks event revision/account and uses current
+  callbacks. Denied access masks old private content immediately. Back closes
+  the bean picker before the form; saving blocks close/back and outer dismissal.
+  As with detail, the future factory must use a separate form-owned ViewModel
+  store/key and an independently current account predicate, not a recomposition-
+  delayed Boolean alone. Repository and asynchronous picker guards remain required.
+- Preserved header/body/footer layout, 16dp side padding, 24dp section rhythm,
+  optional timeline steps, private-by-default visibility, optional rating card,
+  44dp outlined controls and 80dp note minimum. Error summary and field icons/
+  dark-theme contrast retain the current form presentation. Numeric duration
+  inputs retain partially typed zero/empty values while reflecting external totals.
+- Added own component files for date, method, bean search/custom choice, fields,
+  duration, visibility, rating, original photos and cutout selection/retry/skip.
+  Reused CoffeePeek fields, button, switch, form rail, loader and icon primitives.
+  Each component and screen has its own colocated PreviewLightDark; no preview-
+  only source file, new module, dependency or parallel design-system alias.
+- Material date picker uses UTC-midnight civil days and caller-supplied local
+  instant conversion. Selecting the same day never calls that conversion or
+  replaces the recorded timestamp; future dates are disabled.
+- Existing rating/method/empty-state artwork and original/cutout image decoding
+  are required injected media ports. Layout previews/tests use fixture icons/
+  boxes, not newly invented production assets or a separate network loader.
+  Real app artwork and protected-image appearance must be checked on integration.
+- Picking is a caller-owned request with the remaining five-photo allowance,
+  explicit busy rendering and no camera dependency. Originals/cutouts have
+  separate rendering roles. Edit explains that issued photos remain unchanged
+  and offers no replacement picker. A cutout selection or skip is required when
+  multiple objects remain unselected; the save footer reflects this and picker busy.
+- All new labels, accessibility descriptions and issue mappings are Russian
+  Android resources, matching this feature's actual locale baseline. Other
+  Material library locales in the test APK do not prove app translation coverage.
+
+Remaining gates: real public editor entry/factory; configured media, catalogue,
+picker/extractor adapters and one existing consent-aware analytics flow; Android
+history/global-create/community entrances and composition regressions; actual
+keyboard/modal placement, real protected photos and Pixel 7 visual acceptance;
+authorized live CRUD/account acceptance. No feature-complete claim yet.
+
+### Editor UI verification
+
+2026-10-17, source 393af7d plus this editor UI diff; Android debug self-targeted
+test host, package and instrumentation target
+com.coffeepeek.feature.homecheckin.impl.test, AndroidJUnitRunner, generic
+Application, no INTERNET permission or production DI. Read-only Pixel_10_Pro AVD,
+emulator-5554, API 37/arm64/16KB, 1280×2856, density 480, unlocked. Only that
+fixture APK was installed/updated; no production APK, account or camera was used.
+Test APK SHA-256:
+64ccebcfeeced602d8ae01f54fdd8a8da63a32646a254111fd4b7781a9c4048f.
+
+- **29/29 self-targeted UI tests pass**, including **17 new editor cases** and
+  all 12 detail regressions; complete final run 103.715s. Coverage includes both
+  themes, all fields, actual typed actions, selected/changed/cancelled civil date,
+  method choice, bean/custom selection and retry/back intents, partial duration,
+  localized error semantics, edit-photo retention, remaining picker allowance,
+  cutout selection/skip, busy/closed/revoked rendering, 320×520dp/font-scale 1.6
+  reachability, guarded saving/dismissal, latest callbacks and lease revocation.
+- Initial complete 28-case run had **five failures**, all traced to fixture/
+  synchronization assumptions: a controlled input did not echo its new value;
+  candidate scrolling targeted a horizontal ancestor instead of the vertical
+  body; an empty editable value was compared with its visible placeholder;
+  callback publication and a current lease were incorrectly delayed until
+  recomposition. Kept the strict assertions and corrected the fixture/state,
+  scroll and ordering setup, not the production outcome requirements.
+- Targeted expanded six-case rerun passed those five; its additional changed-day
+  check failed a visible-number selector. A diagnostic single-case reproduction
+  confirmed Material exposes the full localized date as semantic text. Replaced
+  that selector with the locale's full date, removed diagnostic output, reran it
+  **1/1**, then reran the **entire 29-case suite** successfully. No failing case
+  was skipped or assertion weakened.
+- **987 selected unit executions pass**, zero failures/errors/skips: Home 104,
+  legacy Home 16, history 54, core presentation 3 and app Direct/Play 405 each,
+  including valid Gradle up-to-date results. Both APK variants and packaged DEX
+  runtime-class guards, impl lint, UI APK assembly and impl iOS Simulator Arm64
+  compatibility compilation pass. Latest source checks passed in 11s after the
+  full selection passed in 13s; no concurrent Gradle builds.
+- Brand-font light/dark layout screenshots were inspected locally; header,
+  outlines, rail, rating, fields and save footer render without visible overflow.
+  Screenshots/diagnostics remain outside tracked sources. Fixture artwork is
+  explicitly not the final mascot/photo appearance. No individual IDE preview
+  rendering, actual IME/modal-container parity, protected-photo decoding, Pixel 7
+  or live backend/write acceptance is claimed.
+- Studio file diagnostics still report these sources outside imported content
+  roots; compiler/lint are the fallback. Lint reports no issues. Boundary checks
+  find no new app/data/legacy/other-feature implementation imports. Common MVI
+  stays platform-independent; UI stays Android-only. New module count: **zero**.
+
+Local logs: coffeepeek-home-editor-ui-final-2026-10-17.log,
+coffeepeek-home-editor-ui-suite-final-2026-10-17.log. Layout captures:
+coffeepeek-home-editor-{light,dark}-393af7d-ui-2026-10-17.png. All are local,
+outside the repository; screenshots contain fixture data only.
 
 ## Editor MVI — 2026-10-17
 
@@ -355,7 +460,9 @@ Bean selection and date/photo sheets are subordinate controls, not new features.
    outline/spacing/type and bounded ripple. Add shared design-system primitives
    only for an actual shared need, not a parallel redesign.
    - [x] Prepare Android detail content/components, resources and paired previews.
-   - [ ] Prepare editor/components and verify keyboard/modal/visual parity.
+   - [x] Prepare editor content/components/resources, paired previews and internal
+     lifecycle adapter using fake ports.
+   - [ ] Verify actual keyboard/modal/visual parity with configured app ports.
 8. [ ] Switch Android app delegation through Home entry/factories: history,
    global creation and community edit. Preserve leases, photo/catalogue ports
    and single analytics flow. Refresh history once after confirmed mutations;
@@ -370,8 +477,8 @@ Bean selection and date/photo sheets are subordinate controls, not new features.
 First coding slice: **domain validation/write contracts and data contract tests**.
 UI and active binding switches follow within the same feature checkpoint.
 The subsequent detail/delete MVI, Android detail renderer and editor MVI are
-prepared. Next is the Android editor renderer/runtime factory and actual port/
-analytics adaptation, followed by app activation. Keep physical-device gates
+prepared, including the Android editor renderer/internal runtime. Next is its
+public editor factory and actual port/analytics adaptation, followed by app activation. Keep physical-device gates
 open while proceeding without a phone, as requested.
 
 ## Verification and completion gates

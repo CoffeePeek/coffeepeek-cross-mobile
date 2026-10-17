@@ -18,22 +18,22 @@ The detail-MVI slice on 2026-10-17 populated impl with guarded
 detail loading, explicit deletion confirmation, typed failures, cancellation,
 account revocation and scoped one-off events. It depends on own domain and core
 presentation, never data or the app. At that checkpoint it had no renderer;
-the subsequent Android detail renderer is described below. Form/editor and
-physical-device visual parity remain pending, including Pixel 7 checks.
+the subsequent Android renderers are described below. Public editor composition
+and physical-device visual parity remain pending, including Pixel 7 checks.
 All 24 detail-MVI cases pass, with 944 selected unit executions overall, both
 APK/DEX checks, impl lint and shared Native compilation. No renderer or binding
 changed in that MVI slice; those checks are not live-write or physical-device acceptance.
 
 ## Module gate and migration boundary
 
-The next slice prepares shared editor MVI and its internal catalogue/photo ports:
+The editor-MVI slice prepared shared logic and internal catalogue/photo ports:
 guarded edit loading, optional form fields, incremental error correction,
 debounced bean search, first-photo selection/skip/retry and explicit create/update.
 Actual account replacement erases private work; a token error for the same owner
 keeps the draft. Saved outcomes carry only ID/notice metadata, not private photos
 or notes. No Android editor renderer, analytics adapter or active binding is
-introduced yet; current app/iOS flows remain unchanged. Verification and remaining
-factory/UI/device gates are in the latest migration-plan section.
+introduced in that logic-only slice; current app/iOS flows remain unchanged.
+Verification and remaining factory/device gates are in the latest migration-plan section.
 All 43 editor cases and the expanded 987-unit selection pass, with both app APK/
 DEX checks, impl lint, instrumentation APK assembly and Native compatibility
 compilation. No renderer changed; UI tests were compiled but not executed anew,
@@ -44,14 +44,30 @@ lifecycle adapter, stateless body, own components/resources and same-file paired
 previews. It uses caller-supplied image/date/method ports and preserves the current
 detail geometry. Shared MVI retains Native compilation; Android UI/design-system
 dependencies remain in androidMain. Editor and application activation are still
-pending. The new API contains only the intentionally public detail entry, not
+pending at that detail checkpoint. The API contains only the intentionally public detail entry, not
 domain re-exports, ViewModels, transport or DI; its module prevents those internals
 from becoming a caller dependency. See the newest plan section for verification.
-Latest validation passes 944 selected unit executions, 12 self-targeted UI tests
+That detail checkpoint passed 944 selected unit executions, 12 self-targeted UI tests
 on a read-only API 37 emulator, both app APK/DEX checks, API/impl lint and shared
 Native compilation. Two initial dialog-layout synchronization failures were
 fixed without weakening assertions; the full UI suite was rerun. Fixture light/
 dark screenshots were inspected locally, not certified against a physical phone.
+
+The subsequent Android editor slice adds internal lifecycle/runtime and stateless
+form content, own component files/resources and colocated light/dark previews.
+It retains the current field order, timeline, rating, outlines, errors and compact
+spacing. Date/method formatting, real artwork/decoding and picker launch remain
+explicit composition ports; fixtures use icons/boxes rather than production
+images. No public editor factory, live writer, analytics flow or Android/iOS
+application binding switches in this slice. The next step is real entry/adapter
+composition, then activation of existing Android entrances. See the newest plan
+section for executed verification and outstanding keyboard/modal/device gates.
+Latest checks pass **29/29 self-targeted UI cases** (17 editor + 12 detail) on a
+read-only API 37 emulator, **987 selected unit executions**, both app APK/DEX
+guards, impl lint and Native compatibility compilation. Initial fixture/selector/
+synchronization failures, corrected strict reruns and final APK identity are
+recorded in MIGRATION_PLAN.md. Light/dark brand-font layout captures were checked
+with fake media; they are not real-phone, protected-photo or IME acceptance.
 
 `domain` owns preparation models, write inputs, field validation/typed failures,
 civil-date bounds, page metadata and read/write contracts. Dependencies: Kotlin only. Allowed consumers:
