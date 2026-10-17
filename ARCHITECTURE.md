@@ -26,7 +26,8 @@ feature/favorites/                  api/domain/data/impl; Android screen active
 feature/shop-report/                api/domain/data/impl; Android report active
 feature/shop/                       api/domain/data/impl; Android menu gallery active
 feature/check-in-history/           api/domain/data/impl; Android combined history active
-feature/home-check-in/domain/       pure reads; legacy editor/writer reused by app bridge
+feature/home-check-in/              pure domain/data and Android detail/editor api/impl;
+                                   active in history; global creation/profile/iOS still legacy
 ```
 
 Target ownership is feature-based:

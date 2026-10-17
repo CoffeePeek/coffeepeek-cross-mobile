@@ -27,7 +27,9 @@ import com.coffeepeek.domain.repository.SessionRepository
 import com.coffeepeek.feature.checkinhistory.domain.model.*
 import com.coffeepeek.feature.checkinhistory.domain.repository.CheckInHistoryRepository
 import com.coffeepeek.feature.checkinhistory.domain.repository.HomeHistoryReader
-import com.coffeepeek.feature.homecheckin.domain.*
+import com.coffeepeek.feature.homecheckin.domain.model.*
+import com.coffeepeek.feature.homecheckin.domain.repository.HomePreparationRepository
+import com.coffeepeek.admin.feature.checkin.domain.DrinkPhotoExtractor
 import java.time.Clock
 import java.time.Instant
 import java.time.ZoneOffset
@@ -41,7 +43,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.koin.core.context.GlobalContext
 
-/** Actual Android destination + existing Home UI/writer, all repositories/auth/catalog/images are fake. */
+/** Actual Android destination + migrated Home entries/writer, all repositories/auth/catalog/images are fake. */
 class HistoryRouteIntegrationTest {
     @get:Rule val compose = createEmptyComposeRule()
 
@@ -101,18 +103,16 @@ class HistoryRouteIntegrationTest {
             compose.runOnIdle { unrelated.value++ }
             compose.waitForIdle()
             assertEquals(1, fixture.homes.details.get())
-            assertEquals(0, fixture.homes.legacyLists.get())
-            assertEquals(0, fixture.homes.legacyCalendars.get())
             compose.onNodeWithContentDescription("Закрыть форму").performClick()
             modalScrollTo("Редактировать")
             compose.onNodeWithText("Редактировать").assertExists()
             compose.onNodeWithContentDescription("Закрыть").performClick()
             compose.onNodeWithText("Редактировать").assertDoesNotExist()
-            assertEquals(1, fixture.homes.details.get())
+            assertEquals(2, fixture.homes.details.get())
         }
     }
 
-    @Test fun createHomeUsesExistingFormAndSuccessfulWriteRefreshesTheNewTimelineOnly() {
+    @Test fun createHomeUsesMigratedFormAndSuccessfulWriteRefreshesTheNewTimelineOnly() {
         val fixture = Fixture(empty = true)
         render { fixture.renderer.RouteContent(onBack = {}, onSignIn = {}, onOpenShop = {}, onCreateShop = {}) }.use {
             compose.onNodeWithContentDescription("Добавить чекин").performClick()
@@ -127,13 +127,11 @@ class HistoryRouteIntegrationTest {
             compose.onNodeWithContentDescription("Закрыть").performClick()
             rootScrollTo("Создано дома")
             compose.onNodeWithText("Создано дома").assertExists()
-            assertEquals(0, fixture.homes.legacyLists.get())
-            assertEquals(0, fixture.homes.legacyCalendars.get())
             assertEquals(1, fixture.homes.creates.get())
         }
     }
 
-    @Test fun ownedDetailEditAndConfirmedDeleteUseExistingWriterAndUpdateCombinedHistory() {
+    @Test fun ownedDetailEditAndConfirmedDeleteUseMigratedWriterAndUpdateCombinedHistory() {
         val fixture = Fixture()
         render { fixture.renderer.RouteContent(onBack = {}, onSignIn = {}, onOpenShop = {}, onCreateShop = {}) }.use {
             rootScrollTo("Owned beans")
@@ -155,8 +153,6 @@ class HistoryRouteIntegrationTest {
             compose.waitUntil(5_000) { fixture.homes.deletes.get() == 1 && fixture.homes.records.isEmpty() }
             compose.onNodeWithContentDescription("Закрыть").assertDoesNotExist()
             compose.onNodeWithText("Owned beans").assertDoesNotExist()
-            assertEquals(0, fixture.homes.legacyLists.get())
-            assertEquals(0, fixture.homes.legacyCalendars.get())
         }
     }
 
@@ -188,7 +184,7 @@ class HistoryRouteIntegrationTest {
     @Test fun failedDetailShowsLocalRetryAndBackDoesNotStartAWrite() {
         val fixture = Fixture().apply { homes.detailFails = true }
         render { fixture.renderer.RouteContent("home-one", {}, {}, {}, {}) }.use {
-            compose.onNodeWithText("Не удалось загрузить домашнюю запись").assertExists()
+            compose.onNodeWithText("Не удалось загрузить чекин.").assertExists()
             compose.onNodeWithText("SQL private details").assertDoesNotExist()
             compose.runOnIdle { fixture.homes.detailFails = false }
             compose.onNodeWithText("Повторить").performClick()
@@ -243,20 +239,19 @@ class HistoryRouteIntegrationTest {
             AndroidCheckInHistoryCalendar({ ZoneOffset.UTC }, Clock.fixed(Instant.parse("2026-10-16T12:00:00Z"), ZoneOffset.UTC)),
             historyHomeEditorFactory(homes, object : CoffeePicker {
                 override suspend fun search(query: String) = Result.success(emptyList<CoffeePickerItem>())
-            }, BrewMethodCatalog { Result.success(listOf(BrewMethodOption("hario-v60", "Hario V60"))) }),
+            }, BrewMethodCatalog { Result.success(listOf(BrewMethodOption("hario-v60", "Hario V60"))) },
+                DrinkPhotoExtractor { error("Fixture contains no photos") }),
             imageContent = { _, _, _ -> error("Fixture contains no remote images") },
             photoContent = { _, _, _ -> error("Fixture contains no photos") })
     }
 
-    private class Homes(empty: Boolean, private val owner: () -> Boolean) : HomeCheckInRepository, HomeHistoryReader {
-        val records = ConcurrentHashMap<String, HomeCheckIn>()
+    private class Homes(empty: Boolean, private val owner: () -> Boolean) : HomePreparationRepository, HomeHistoryReader {
+        val records = ConcurrentHashMap<String, HomePreparation>()
         val pages = AtomicInteger()
         val details = AtomicInteger()
         val creates = AtomicInteger()
         val updates = AtomicInteger()
         val deletes = AtomicInteger()
-        val legacyLists = AtomicInteger()
-        val legacyCalendars = AtomicInteger()
         @Volatile var detailFails = false
         @Volatile var writeGate: CompletableDeferred<Unit>? = null
         init { if (!empty) records["home-one"] = home("home-one", "Owned beans") }
@@ -267,22 +262,20 @@ class HistoryRouteIntegrationTest {
         }
         override suspend fun calendar(range: HomeHistoryDateRange) = Result.success(
             if (owner() && records.isNotEmpty()) listOf(HomeHistoryDay("2026-10-16", records.size)) else emptyList())
-        override suspend fun history(page: Int, pageSize: Int, from: String?, to: String?): Result<HomeCheckInPage> {
-            legacyLists.incrementAndGet(); error("Legacy duplicate timeline request")
-        }
-        override suspend fun calendar(from: String, to: String): Result<List<HomeCalendarDay>> {
-            legacyCalendars.incrementAndGet(); error("Legacy duplicate calendar request")
-        }
-        override suspend fun detail(id: String): Result<HomeCheckIn> {
+        override suspend fun page(page: Int, pageSize: Int, range: HomePreparationDateRange?): Result<HomePreparationPage> =
+            error("Detail/editor must not request a separate timeline")
+        override suspend fun calendar(range: HomePreparationDateRange): Result<List<HomePreparationDay>> =
+            error("Detail/editor must not request a separate calendar")
+        override suspend fun detail(id: String): Result<HomePreparation> {
             details.incrementAndGet()
             return if (detailFails) Result.failure(IllegalStateException("SQL private details"))
                 else records[id]?.let { Result.success(it) } ?: Result.failure(IllegalStateException("Not found"))
         }
-        override suspend fun create(input: HomeCheckInInput): Result<HomeCheckIn> {
+        override suspend fun create(input: HomePreparationInput): Result<HomePreparation> {
             creates.incrementAndGet(); writeGate?.await()
             return home("created", "Создано дома").copy(text = input.text).also { records[it.id] = it }.let { Result.success(it) }
         }
-        override suspend fun update(id: String, input: HomeCheckInInput): Result<HomeCheckIn> {
+        override suspend fun update(id: String, input: HomePreparationInput): Result<HomePreparation> {
             updates.incrementAndGet(); writeGate?.await()
             return records.getValue(id).copy(text = input.text).also { records[id] = it }.let { Result.success(it) }
         }
@@ -290,14 +283,10 @@ class HistoryRouteIntegrationTest {
             deletes.incrementAndGet(); writeGate?.await(); records.remove(id)
             return Result.success(Unit)
         }
-        override suspend fun beanStats(): Result<List<HomeBeanStats>> = error("No stats")
-        override suspend fun methodStats(): Result<List<HomeMethodStats>> = error("No stats")
-        override suspend fun photo(url: String): Result<ByteArray> = error("No images")
-
-        private fun home(id: String, name: String) = HomeCheckIn(id, "2026-10-16T00:30:00Z", "2026-10-16",
+        private fun home(id: String, name: String) = HomePreparation(id, "2026-10-16", "2026-10-16T00:30:00Z",
             "2026-10-16T00:30:00Z", "Home owner note", "hario-v60", null, name, "18", 180, 4,
-            null, null, null, emptyList(), null, HomeCheckInVisibility.Private, HomeCheckInModeration.NotSubmitted)
-        private fun HomeCheckIn.history() = HomeHistoryEntry(id, preparedOn, preparedAtUtc, createdAtUtc, text,
+            null, null, null, emptyList(), null, HomePreparationVisibility.Private, HomePreparationModeration.NotSubmitted)
+        private fun HomePreparation.history() = HomeHistoryEntry(id, preparedOn, preparedAtUtc, createdAtUtc, text,
             HomeHistoryRecipe(brewMethodCode, coffeeProductId, beanName, doseGrams, brewDurationSeconds, tasteScore),
             drinkName, drinkSlug, customDrinkName, emptyList(), null, HistoryVisibility.Private, HistoryModeration.NotSubmitted)
     }

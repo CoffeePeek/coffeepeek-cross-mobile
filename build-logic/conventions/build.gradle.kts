@@ -32,5 +32,9 @@ gradlePlugin {
             id = "com.coffeepeek.kmp.android-compose-library"
             implementationClass = "com.coffeepeek.buildlogic.KmpAndroidComposeLibraryPlugin"
         }
+        register("kmpSharedAndroidComposeLibrary") {
+            id = "com.coffeepeek.kmp.shared-android-compose-library"
+            implementationClass = "com.coffeepeek.buildlogic.KmpSharedAndroidComposeLibraryPlugin"
+        }
     }
 }

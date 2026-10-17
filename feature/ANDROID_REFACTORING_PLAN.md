@@ -19,8 +19,10 @@ historical; they do not override the current server contract or latest route aud
 - `feature/check-in-history-refactoring` → the branch above: the **entire**
   prepared history migration, including four modules, resources, app wiring and
   tests. Continue that capability only there; do not split it into a third PR.
-- The base registers 23 modules; the history child registers 27. Existing
-  `features/home-checkin` remains registered in both. No new Home module exists.
+- The base registers 23 modules; the history child registers 28, including the
+  populated Home read domain. Existing `features/home-checkin` remains registered
+  in both; Home api/data/impl are not part of those parent branches. The next child
+  prepares Home data as described below.
 - The independent modal fix #92 reached develop and main and is already in the
   migration ancestry. Do not cherry-pick it again.
 - Preserve published history; no force-push or merging either PR to main/develop
@@ -37,6 +39,36 @@ not that every consuming feature is production-ready.
 or release gates outstanding. **Not started** means the new migration has not
 started; the corresponding product capability may already work in main.
 A compilation/test pass is not evidence of pixel parity or a live write.
+
+## Current checkpoint — Home preparations (history activated; global creation pending)
+
+History/calendar checkpoint **c726944** is published in #95. Home work continues
+in its child `feature/home-check-in-refactoring` / PR #99, not in a new feature.
+The detailed source audit, historical checks and remaining gates are in
+[home-check-in/MIGRATION_PLAN.md](home-check-in/MIGRATION_PLAN.md).
+
+As of 2026-10-17, the four Home boundaries contain real domain/data and shared
+detail/editor MVI plus Android entries/components, resources and paired previews.
+App-owned catalogue/media/picker/extraction/date/analytics adapters reuse current
+implementations. Module count remains 31; main **0137ee7** is already an ancestor.
+
+Android history now binds new Home data and detail/editor entries. All three
+existing history routes, including Community owner edit by ID, use them.
+Confirmed create/update/delete refresh history once; detail/form owners and
+callbacks are scoped to the current destination/account. Calendar photo
+enrichment/counts and unconfirmed-visibility notices are retained.
+Global CheckInCreateFlow in tab/feed, profile Activity and shared/iOS still use
+legacy paths. Global creation is the next slice; no wholesale legacy removal.
+
+Current selection: **1026 passing unit executions**, **36/36 isolated Home UI
+regressions**, Direct/Play APKs and DEX
+guards, app instrumentation compilation, Home api/data/impl lint and data Native
+compatibility compilation. App-targeted UI has only been compiled, not run.
+Self-targeted Home UI results and prior harness failures are recorded in the
+Home plan. Studio now imports all Home modules and the three changed composition
+files pass inspections; physical Pixel 7 populated/protected-photo/
+IME/modal parity, OS gallery/camera and authorized live CRUD/account acceptance
+remain open. None of these checks establishes full release completion.
 
 ## Completed engineering tasks
 
@@ -99,7 +131,7 @@ Next work is ordered, not parallel feature scaffolding:
 | Shop Report: incorrect shop data | In progress; Android entry active | Real safe submit/error/uncertain-delivery flow and paired preview inspection; retain shared/iOS fallback. |
 | Shop: detail, menu, public check-ins and creation sheet | In progress; Android entries active | Physical-device visual/guest/owner/return parity; picker/camera permissions and recreation, bundled extraction quality and safely authorized submissions. Prepared review editors are not a product requirement. |
 | Personal history: one combined Shop/Home calendar and timeline | In progress; Android code checkpoint prepared in #95 | Combined reads/MVI/content, month photos, Home photo preparation and creation-flow analytics are integrated. Personal author avatars match main; public author navigation belongs to Shop. Pixel 7 populated-history/photo/date/account/accessibility and safely authorized mutation checks remain. |
-| Home preparations: create/detail/edit/delete, recipes and photos | Not started as a new feature migration | Existing main editor/detail remain active through combined history. Extract only the needed read boundary first; do not recreate unused history/statistics tabs from the standalone Home screen. |
+| Home preparations: create/detail/edit/delete, recipes and photos | In progress; new data and entries active in Android history | History and Community owner edit use new data/detail/editor with leased destination lifetimes, refresh and notices. Global tab/feed creation remains legacy and is next. Profile Activity/iOS, physical visual/keyboard/OS-picker and authorized live acceptance remain deferred; see home-check-in/MIGRATION_PLAN.md. |
 | Discovery: shop list/search/filter/map and embedded roasters | Not started | Audit actual list/map/filter ownership and current platform map; no independent module for every mode. |
 | Coffee catalogue: Coffee tab/list/detail | Not started | Preserve current catalogue/search/detail and links to roasters; catalog pickers are existing shared app boundaries, not invented screens. |
 | Roasters: list/detail and saved membership | Not started | Preserve current entry points, contacts, catalogue links and favorites. Favorites parity is an earlier gate, not permission for a wholesale roaster rewrite. |

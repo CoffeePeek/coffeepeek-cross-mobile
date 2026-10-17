@@ -37,7 +37,10 @@ object Modules {
         val checkInHistory = CheckInHistory
         val homePreparation = HomePreparation
         object HomePreparation {
+            const val api = ":feature:home-check-in:api"
             const val domain = ":feature:home-check-in:domain"
+            const val data = ":feature:home-check-in:data"
+            const val impl = ":feature:home-check-in:impl"
         }
 
         object CheckInHistory {
@@ -91,6 +94,9 @@ object Modules {
         feature.checkInHistory.data,
         feature.checkInHistory.impl,
         feature.homePreparation.domain,
+        feature.homePreparation.api,
+        feature.homePreparation.data,
+        feature.homePreparation.impl,
         feature.homeCheckIn,
     )
 }

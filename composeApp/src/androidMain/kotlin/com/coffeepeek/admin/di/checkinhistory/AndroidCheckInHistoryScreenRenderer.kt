@@ -23,7 +23,7 @@ import com.coffeepeek.feature.checkinhistory.domain.repository.CheckInHistoryRep
 import com.coffeepeek.feature.checkinhistory.domain.repository.HomeHistoryReader
 import com.coffeepeek.feature.checkinhistory.impl.createCheckInHistoryEntry
 
-/** Android route adapter: read UI, legacy Home editor and photo viewer share a revocable account. */
+/** Android history, Home detail/editor entries and photo viewer share a revocable account. */
 internal class AndroidCheckInHistoryScreenRenderer(
     private val sessions: SessionRepository,
     private val repository: CheckInHistoryRepository,
@@ -72,11 +72,11 @@ internal class AndroidCheckInHistoryScreenRenderer(
                     creation.shop()?.let { CheckInFlowHandoff.tracker = it }
                     onCreateShop()
                 }, { home?.create(creation.home()) }, generation, creation)
-            home?.let { HistoryHomeOverlay(it, session::openPhoto) }
+            home?.let { HistoryHomeOverlay(it, session, session::openPhoto) }
         }
     }
 
-    /** Callback seam for feature-entry contracts, without constructing the legacy Home editor. */
+    /** Callback seam for feature-entry contracts, without constructing a Home destination. */
     @Composable
     fun Content(formatCheckInDate: (String) -> String, onBack: () -> Unit, onSignIn: () -> Unit,
         onOpenShop: (String) -> Unit, formatCheckInTime: (String) -> String, onOpenHome: (String) -> Unit,

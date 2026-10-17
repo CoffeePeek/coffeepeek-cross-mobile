@@ -48,7 +48,7 @@ internal class AndroidCheckInHistorySession(
 
     private suspend fun <T> read(block: suspend () -> Result<T>): Result<T> = withCurrentAccount(block)
 
-    /** Also bounds the temporary editor's operations; never retries an uncertain write. */
+    /** Also bounds Home entry operations; never retries an uncertain write. */
     suspend fun <T> withCurrentAccount(block: suspend () -> Result<T>): Result<T> = coroutineScope {
         currentCoroutineContext().ensureActive()
         ensureCurrent()
