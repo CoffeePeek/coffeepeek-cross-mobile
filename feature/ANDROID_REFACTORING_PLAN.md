@@ -82,6 +82,12 @@ establish release completion or an iOS UI migration.
 
 ## Completed engineering tasks
 
+- [x] Separate offline `directSandbox`/`playSandbox` APK for real Home/history
+  entries, app-owned fake HTTP/media and failure controls. Pixel 7 local fake
+  create/edit/delete/photo/error checks pass; ordinary app data is untouched.
+  This closes the safe local write-test setup, not the live server/account gates.
+  See [Sandbox guide](../composeApp/SANDBOX.md).
+
 - [x] Named Modules catalog and Gradle conventions; concise feature build files.
 - [x] Independent core coroutines, network, database, presentation and design-system
   boundaries; no core-to-feature dependency.

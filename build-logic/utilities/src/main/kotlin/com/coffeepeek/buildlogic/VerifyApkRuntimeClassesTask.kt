@@ -24,6 +24,11 @@ abstract class VerifyApkRuntimeClassesTask : DefaultTask() {
     @get:Input
     abstract val requiredClasses: ListProperty<String>
 
+    @get:Input
+    abstract val forbiddenClassPrefixes: ListProperty<String>
+
+    init { forbiddenClassPrefixes.convention(emptyList()) }
+
     @TaskAction
     fun verify() {
         val apks = apkDirectory.get().asFile.listFiles { file -> file.extension == "apk" }.orEmpty()
@@ -40,10 +45,15 @@ abstract class VerifyApkRuntimeClassesTask : DefaultTask() {
                 "${apk.name} is missing runtime classes: ${missing.joinToString()}. " +
                     "Compilation alone is insufficient. Rebuild the affected library and app outputs without build cache.",
             )
+            val forbidden = forbiddenRuntimeClasses(defined, forbiddenClassPrefixes.get())
+            if (forbidden.isNotEmpty()) throw GradleException("${apk.name} contains forbidden runtime classes: ${forbidden.joinToString()}")
             logger.lifecycle("Verified runtime class definitions in ${apk.name}")
         }
     }
 }
+
+internal fun forbiddenRuntimeClasses(descriptors: Set<String>, prefixes: List<String>): Set<String> =
+    descriptors.filterTo(mutableSetOf()) { descriptor -> prefixes.any { descriptor.startsWith("L${it.replace('.', '/')}") } }
 
 /** DEX class_defs -> type_ids -> string_ids. Referenced-but-undefined types do not count. */
 internal fun readDexClassDescriptors(bytes: ByteArray): Set<String> {

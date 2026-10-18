@@ -18,6 +18,14 @@ authorized live CRUD/account gates remain. The unused Android legacy read bridge
 has been removed; adapter/session fixtures use the new Home reader directly.
 Shared legacy dependencies remain required by profile Activity and iOS.
 
+An independent **offline Android Sandbox** now exercises these actual Home and
+combined-history entries with an in-memory HTTP transport. Select `directSandbox`;
+it installs as `com.coffeepeek.sandbox` next to the normal app, without INTERNET,
+production Application/DI/session or real photos. Local fake CRUD and failure
+scenarios can be tested safely; it does not certify live API acceptance. See
+[Sandbox guide](../../composeApp/SANDBOX.md) and the latest verification entry in
+the migration plan. No server changes or new Gradle business modules were needed.
+
 Current verification: **1054 selected unit executions** (14 new global-flow
 cases in each app variant), Direct/Play APKs and packaged DEX guards, both app
 instrumentation compilations; common/iOS Native compatibility passed in the

@@ -9,6 +9,66 @@ the new Home form/data. Scoped Android compatibility cleanup is complete;
 profile Activity and shared/iOS paths remain legacy. Broader physical-device
 and live acceptance gates are not feature-complete.
 
+## Offline Android Sandbox — 2026-10-18
+
+Source: 87481a3 plus this Sandbox support slice in the same Home PR #99 -> #95.
+No new business module, server change, feature implementation fork or iOS UI
+change. Verification plan: preserve the real Home/history factories, MVI and
+Result/upload contracts; isolate launcher, permissions, storage and transport;
+exercise fake CRUD/errors locally, then leave genuine backend/media gates open.
+
+- Separate Direct/Play Sandbox build type, `com.coffeepeek.sandbox`, purple icon,
+  generic Application and manual composition. Real Home/history entries use two
+  MockEngine clients and RAM fixtures only. Synthetic original/cutout images and
+  fake picker/extraction ports never read private photos or open camera/gallery.
+  INTERNET, camera, location, storage, phone and APK-install permissions are absent.
+  No production root DI/session/realtime/analytics/updater is initialized. Unknown
+  URLs/endpoints fail closed; normal debug DEX guards reject Sandbox/MockEngine
+  definitions. Provider authorities use the Sandbox package.
+- **441/441 app unit cases pass per Direct/Play** (882 results, zero failures/
+  errors/skips), including **nine exact Sandbox transport cases per variant**:
+  local CRUD/moderation, original/cutout uploads, preserved originals on edit,
+  combined shop reads/UTC bounds, calendar counts, unknown-host rejection,
+  errors/retry, independent byte ownership and delayed-request cancellation.
+  Build-logic DEX unit cases **4/4** pass. This slice did not rerun the previous
+  40-case self-targeted Home UI suite or production-targeted instrumentation.
+- Both Sandbox APKs/manifest isolation/DEX checks and both ordinary debug APKs/
+  DEX checks pass. Shared app iOS Simulator Arm64 compilation passes after
+  retaining the default KMP hierarchy; that is compatibility, not iOS acceptance.
+  Build sequence: broad Android/Native validation 3m49s; final Android/utilities
+  regression 9s; final cancellation regression 8s; final Sandbox theme build 5s.
+  Local logs: coffeepeek-sandbox-verified-, coffeepeek-sandbox-final-,
+  coffeepeek-sandbox-cancellation-final-, coffeepeek-sandbox-theme-final-, each
+  suffixed 2026-10-18.log. Pre-existing AGP/expect-actual/serialization warnings
+  remain; no warnings were suppressed or unrelated migrations attempted.
+- Setup failure retained: `testDirectSandboxUnitTest` does not exist in this
+  transitional KMP app. No test failure was concealed. Removed the unused custom
+  test source set; the actual SandboxBackend source is compiled as **test-only**
+  input in both normal Android unit tasks, never in their runtime APKs. The
+  nine-case suite then passed in each variant, including the final cancellation
+  addition. Studio file inspection reports the new source set outside imported
+  content roots until Gradle Sync; no clean IDE inspection/preview is claimed.
+- Physical **Pixel 7, API 37, 1080x2400/density 420**: installed Direct Sandbox
+  **1.0.650-sandbox** alongside ordinary **1.0.648**, then updated only that same
+  Sandbox package without uninstall/data clear. Local synthetic create with
+  original + cutout, confirmed rating edit 4->5, delete confirmation and calendar/
+  history invalidation passed. Local photo viewer/Back, modal placement, empty/
+  populated reset, light/dark, offline, 500, rejected save and rejected upload
+  passed; failures retain an actionable form instead of a fabricated saved row.
+  Final theme-only update was rechecked for startup, resets and both themes.
+  This was manual fixture acceptance, not app-targeted instrumentation or live API
+  CRUD. Ordinary CoffeePeek remained installed at 1.0.648 and was not updated,
+  opened for mutations, logged out or cleared. Final Sandbox APK SHA-256:
+  `02a45aaa3785ecb1af940c604f822cee4275b057fe1d00ef404b220eb90f78bb`.
+
+Sandbox currently covers combined-history reads and Home CRUD, not the whole
+app. Unsupported shop/auth navigation is explicitly explained. Scenario selection
+is done before opening a form; local data resets on process death. Real server
+contracts/persistence, protected live photos, camera/URI decode/ML extraction,
+live analytics, account replacement and release acceptance remain unverified.
+See [Sandbox guide](../../composeApp/SANDBOX.md); screenshots and sanitized device
+dumps stay outside tracked sources.
+
 ## Photo-picker cancellation and populated detail contracts — 2026-10-18
 
 Source: 3cac958 plus this test-only diff. Re-fetched main remains 0137ee7,

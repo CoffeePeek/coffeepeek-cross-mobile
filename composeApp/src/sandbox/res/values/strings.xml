@@ -1,0 +1,19 @@
+<resources>
+    <string name="sandbox_app_name">CoffeePeek Sandbox</string>
+    <string name="sandbox_banner">SANDBOX · локальные данные · без сети</string>
+    <string name="sandbox_ready">Обычно</string>
+    <string name="sandbox_slow">Задержка</string>
+    <string name="sandbox_offline">Нет сети</string>
+    <string name="sandbox_server_error">Ошибка 500</string>
+    <string name="sandbox_save_error">Ошибка записи</string>
+    <string name="sandbox_upload_error">Ошибка фото</string>
+    <string name="sandbox_reset">Заполнить</string>
+    <string name="sandbox_empty">Очистить</string>
+    <string name="sandbox_theme">Сменить тему</string>
+    <string name="sandbox_close">Закрыть</string>
+    <string name="sandbox_previous">Назад</string>
+    <string name="sandbox_next">Далее</string>
+    <string name="sandbox_photo">Тестовое фото</string>
+    <string name="sandbox_cutout_note">Фото и выделение тестовые. Камера и галерея не открываются.</string>
+    <string name="sandbox_scope">Этот Sandbox проверяет Home и историю. Экран кофейни пока не подключён.</string>
+</resources>

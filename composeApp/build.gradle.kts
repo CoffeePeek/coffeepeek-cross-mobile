@@ -108,6 +108,10 @@ kotlin {
         androidUnitTest.dependencies {
             implementation(libs.kotlinx.coroutines.test)
         }
+        // Test the exact sandbox transport without adding it to the live APK or requiring a new test variant.
+        androidUnitTest {
+            kotlin.srcDir("src/androidSandbox/kotlin/com/coffeepeek/admin/sandbox/backend")
+        }
         androidInstrumentedTest.dependencies {
             implementation(libs.kotlin.test)
             implementation(libs.androidx.compose.ui.test.junit4)
@@ -235,6 +239,17 @@ android {
         }
     }
     buildTypes {
+        create("sandbox") {
+            initWith(getByName("debug"))
+            applicationIdSuffix = ".sandbox"
+            versionNameSuffix = "-sandbox"
+            matchingFallbacks += "debug"
+            buildConfigField("boolean", "APK_UPDATES_ENABLED", "false")
+            buildConfigField("String", "API_BASE_URL", "\"https://sandbox.coffeepeek.invalid\"")
+            buildConfigField("String", "GOOGLE_WEB_CLIENT_ID", "\"\"")
+            buildConfigField("String", "POSTHOG_PROJECT_TOKEN", "\"\"")
+            buildConfigField("boolean", "POSTHOG_ENABLE_DEV", "false")
+        }
         getByName("release") {
             isMinifyEnabled = true
             isShrinkResources = true
@@ -248,6 +263,41 @@ android {
     compileOptions {
         sourceCompatibility = Config.JAVA_VERSION
         targetCompatibility = Config.JAVA_VERSION
+    }
+}
+
+kotlin.applyDefaultHierarchyTemplate()
+kotlin.sourceSets {
+    val androidSandbox = create("androidSandbox") {
+        dependsOn(getByName("androidMain"))
+        dependencies { implementation("io.ktor:ktor-client-mock:${libs.versions.ktor.get()}") }
+    }
+    matching { it.name in setOf("androidDirectSandbox", "androidPlaySandbox") }.all {
+        dependsOn(androidSandbox)
+    }
+}
+
+// The offline test app never starts the production Application/root graph.
+androidComponents.onVariants(androidComponents.selector().withBuildType("sandbox")) { variant ->
+    val runtimeVerification = tasks.register<VerifyApkRuntimeClassesTask>("verify${variant.name.replaceFirstChar { it.uppercaseChar() }}RuntimeClasses") {
+        apkDirectory.set(variant.artifacts.get(SingleArtifact.APK))
+        requiredClasses.set(listOf("com.coffeepeek.admin.sandbox.SandboxActivity",
+            "com.coffeepeek.admin.sandbox.backend.SandboxBackend", "com.coffeepeek.admin.sandbox.SandboxEnvironment",
+            "com.coffeepeek.feature.homecheckin.data.repository.HomePreparationRepositoryFactoryKt"))
+    }
+    val manifest = variant.artifacts.get(SingleArtifact.MERGED_MANIFEST)
+    val verification = tasks.register("verify${variant.name.replaceFirstChar { it.uppercaseChar() }}Isolation") {
+        inputs.file(manifest)
+        doLast {
+            val xml = manifest.get().asFile.readText()
+            check("android.permission.INTERNET" !in xml) { "Sandbox must not have network permission" }
+            check("com.coffeepeek.admin.MainActivity" !in xml) { "Sandbox must not launch the production root" }
+            check("com.coffeepeek.admin.CoffeePeekApplication" !in xml) { "Sandbox must not start production DI/services" }
+            check("com.coffeepeek.admin.sandbox.SandboxActivity" in xml) { "Missing Sandbox entry" }
+        }
+    }
+    tasks.matching { it.name == "assemble${variant.name.replaceFirstChar { it.uppercaseChar() }}" }.configureEach {
+        finalizedBy(verification, runtimeVerification)
     }
 }
 
@@ -265,6 +315,7 @@ androidComponents {
             group = "verification"
             description = "Checks startup class definitions inside the ${variant.name} APK."
             apkDirectory.set(variant.artifacts.get(SingleArtifact.APK))
+            forbiddenClassPrefixes.set(listOf("com.coffeepeek.admin.sandbox.", "io.ktor.client.engine.mock."))
             requiredClasses.set(listOf(
                 "com.coffeepeek.api.service.CheckInApiService",
                 "com.coffeepeek.api.CoffeePeekRepo",
