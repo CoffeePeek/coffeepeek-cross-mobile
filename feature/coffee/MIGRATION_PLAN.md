@@ -88,6 +88,14 @@ Coffee repository/picker while iOS still consumes it.
 
 ## Verification record
 
+The user also requested a shared affinity-heart correction during this checkpoint.
+It is implemented through design-system LikeIcon/LikeButton, selected gold and
+neutral outline, without changing Coffee catalogue ownership or adding new
+catalogue favorites. See [shared-heart evidence](../../core/design-system/LIKE_PLAN.md):
+1073 relevant unit executions and 136 self-targeted Pixel 7 UI cases pass, plus
+scoped fake Sandbox visuals. The catalogue's api/impl/UI migration below is still
+pending; this is not certification of the new catalogue screen.
+
 2026-10-18, first domain/data slice on top of `72cbae1f`: **18 new Android unit
 tests executed** (four domain, 14 data), zero failures/errors/skips. Both new
 libraries compile for Android, iOS arm64 and iOS Simulator arm64; no Native test

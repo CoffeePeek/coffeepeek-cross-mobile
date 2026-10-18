@@ -1,5 +1,7 @@
 package com.coffeepeek.admin.ui.screen.shop
 
+import com.coffeepeek.core.designsystem.component.CoffeePeekLikeIcon
+
 import com.coffeepeek.admin.analytics.*
 
 import androidx.compose.runtime.setValue
@@ -949,11 +951,7 @@ private fun HeaderActionButtons(
             isLoading = isFavoriteLoading,
             contentDescription = if (isFavorite) "Убрать из избранного" else "Добавить в избранное",
         ) {
-            Icon(
-                imageVector = if (isFavorite) CpIcons.FavoriteFilled else CpIcons.Favorite,
-                contentDescription = null,
-                tint = if (isFavorite) CpColor.Error else MaterialTheme.colorScheme.onSurface,
-            )
+            CoffeePeekLikeIcon(isFavorite, contentDescription = null)
         }
         HeroIconButton(
             icon = GlassControlIcon.Share,

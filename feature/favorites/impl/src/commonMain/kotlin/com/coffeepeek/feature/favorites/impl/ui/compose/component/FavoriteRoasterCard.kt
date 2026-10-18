@@ -16,8 +16,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButtonDefaults
-import androidx.compose.material3.IconToggleButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.VerticalDivider
@@ -32,6 +30,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
+import com.coffeepeek.core.designsystem.component.CoffeePeekLikeButton
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.feature.favorites.domain.model.FavoriteRoaster
@@ -77,15 +76,8 @@ internal fun FavoriteRoasterCard(
                 Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                     Text(roaster.title, Modifier.weight(1f), style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                    IconToggleButton(checked = true, onCheckedChange = { onRemove() },
-                        enabled = !removing && roaster.id.isNotBlank(), modifier = Modifier.size(48.dp),
-                        colors = IconButtonDefaults.iconToggleButtonColors(
-                            containerColor = Color.Transparent, contentColor = MaterialTheme.colorScheme.onSurface,
-                            checkedContainerColor = Color.Transparent, checkedContentColor = MaterialTheme.colorScheme.onSurface,
-                        )) {
-                        Icon(CoffeePeekIcons.FavoriteFilled,
-                            stringResource(Res.string.favorites_roaster_remove, roaster.title), Modifier.size(24.dp))
-                    }
+                    CoffeePeekLikeButton(true, stringResource(Res.string.favorites_roaster_remove, roaster.title), onRemove,
+                        enabled = !removing && roaster.id.isNotBlank(), modifier = Modifier.size(48.dp))
                 }
                 Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(6.dp)) {

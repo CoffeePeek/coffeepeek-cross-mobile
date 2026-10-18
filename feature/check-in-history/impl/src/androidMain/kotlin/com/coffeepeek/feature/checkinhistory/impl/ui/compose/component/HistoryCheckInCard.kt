@@ -12,7 +12,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
-import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
+import com.coffeepeek.core.designsystem.component.CoffeePeekLikeIcon
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.feature.checkinhistory.domain.model.*
@@ -38,8 +38,7 @@ internal fun HistoryCheckInCard(checkIn: PersonalCheckIn, dateLabel: String,
                 val likes = stringResource(Res.string.history_helpful_count, checkIn.helpfulCount)
                 Row(Modifier.semantics(mergeDescendants = true) { contentDescription = likes },
                     horizontalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing1)) {
-                    Icon(if (checkIn.isHelpfulByCurrentUser) CoffeePeekIcons.FavoriteFilled else CoffeePeekIcons.Favorite,
-                        null, Modifier.size(18.dp), tint = MaterialTheme.colorScheme.primary)
+                    CoffeePeekLikeIcon(checkIn.isHelpfulByCurrentUser, null, size = 18.dp)
                     Text(checkIn.helpfulCount.toString(), style = MaterialTheme.typography.labelMedium)
                 }
             }
@@ -58,5 +57,6 @@ internal fun previewHistoryCheckIn() = PersonalCheckIn(
 )
 
 @PreviewLightDark @Composable private fun HistoryCheckInCardPreview() = CoffeePeekTheme {
-    HistoryCheckInCard(previewHistoryCheckIn(), "14 октября 2026", {})
+    HistoryCheckInCard(previewHistoryCheckIn().copy(visibility = HistoryVisibility.Public,
+        helpfulCount = 3, isHelpfulByCurrentUser = true), "14 октября 2026", {})
 }

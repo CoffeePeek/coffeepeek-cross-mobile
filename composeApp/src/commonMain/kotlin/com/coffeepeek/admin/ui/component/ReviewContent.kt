@@ -1,5 +1,7 @@
 package com.coffeepeek.admin.ui.component
 
+import com.coffeepeek.core.designsystem.component.CoffeePeekLikeIcon
+
 import com.coffeepeek.domain.model.savedDrinkName
 import com.coffeepeek.core.designsystem.component.CoffeePeekRating
 import com.coffeepeek.core.designsystem.component.CoffeePeekRatingSize
@@ -493,12 +495,7 @@ internal fun HelpfulButton(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(CpDimens.spacing2),
     ) {
-        Icon(
-            imageVector = if (isHelpful) CpIcons.FavoriteFilled else CpIcons.Favorite,
-            contentDescription = null,
-            tint = CpColor.Error,
-            modifier = Modifier.size(24.dp),
-        )
+        CoffeePeekLikeIcon(isHelpful, contentDescription = null)
         Text(
             text = helpfulCount.toString(),
             style = MaterialTheme.typography.bodyMedium,

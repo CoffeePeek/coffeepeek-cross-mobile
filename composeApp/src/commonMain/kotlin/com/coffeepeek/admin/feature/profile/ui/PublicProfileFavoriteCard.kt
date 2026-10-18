@@ -1,5 +1,7 @@
 package com.coffeepeek.admin.feature.profile.ui
 
+import com.coffeepeek.core.designsystem.component.CoffeePeekLikeIcon
+
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -23,7 +25,6 @@ import com.coffeepeek.admin.feature.catalog.api.RoasterCard
 import com.coffeepeek.admin.feature.catalog.api.ShopCard
 import com.coffeepeek.admin.feature.profile.domain.PublicFavoriteKind
 import com.coffeepeek.admin.feature.profile.domain.PublicProfileFavorite
-import com.coffeepeek.admin.theme.CpColor
 import com.coffeepeek.admin.theme.CpDimens
 import com.coffeepeek.admin.ui.component.CoffeeShopImage
 import com.coffeepeek.admin.ui.icons.CpIcons
@@ -107,7 +108,7 @@ private fun PublicDrinkFavoriteCard(favorite: PublicProfileFavorite, modifier: M
                     .size(40.dp).clip(CircleShape).background(Color.Black),
                 contentAlignment = Alignment.Center,
             ) {
-                Icon(CpIcons.FavoriteFilled, "В избранном", tint = CpColor.Primary, modifier = Modifier.size(24.dp))
+                CoffeePeekLikeIcon(true, "В избранном", overImage = true)
             }
         }
         Column(Modifier.padding(CpDimens.spacing4), verticalArrangement = Arrangement.spacedBy(CpDimens.spacing2)) {

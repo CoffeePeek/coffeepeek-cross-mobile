@@ -86,6 +86,19 @@ so metadata remains observable both by accessibility and normal UI queries.
 Paired previews are colocated in the component and changed feature owners.
 Verification/failure history: [RATING_PLAN.md](RATING_PLAN.md).
 
+## Shared likes and favorites
+
+Use `CoffeePeekLikeButton` for stateless favorite/like toggles and
+`CoffeePeekLikeIcon` inside existing glass controls and read-only counters.
+Selected hearts are filled brand gold, unselected outlines use the theme's
+neutral foreground. Light surfaces use darker gold for contrast; `overImage`
+uses bright gold/white on photo controls. Disabled icons are muted. Do not tint
+affinity with `Error`, arbitrary primary/foreground colors or duplicate heart
+rendering in features. Keep feature actions, counts, loading, descriptions,
+authentication, haptics and analytics in their existing owners. Containers,
+button/heart sizes and localized labels remain caller-configurable; paired
+previews live beside each component. See [LIKE_PLAN.md](LIKE_PLAN.md).
+
 ## Fields and top bars slice
 
 CoffeePeekCompactOutlinedTextField exposes the basic decoration contract. CoffeePeekTextField adds

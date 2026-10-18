@@ -12,6 +12,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
+import com.coffeepeek.core.designsystem.component.CoffeePeekLikeButton
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.feature.favorites.domain.model.FavoriteDrink
 import com.coffeepeek.feature.favorites.impl.resources.*
@@ -37,13 +38,8 @@ internal fun FavoriteDrinkCard(drink: FavoriteDrink, removing: Boolean, onRemove
                 Text(stringResource(Res.string.favorites_drink), style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
-            IconToggleButton(true, { onRemove() }, enabled = !removing && drink.canRemove,
-                colors = IconButtonDefaults.iconToggleButtonColors(
-                    containerColor = androidx.compose.ui.graphics.Color.Transparent,
-                    checkedContainerColor = androidx.compose.ui.graphics.Color.Transparent,
-                    checkedContentColor = MaterialTheme.colorScheme.onSurface)) {
-                Icon(CoffeePeekIcons.FavoriteFilled, stringResource(Res.string.favorites_remove_description, title))
-            }
+            CoffeePeekLikeButton(true, stringResource(Res.string.favorites_remove_description, title), onRemove,
+                enabled = !removing && drink.canRemove)
         }
     }
 }

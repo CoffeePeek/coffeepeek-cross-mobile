@@ -1,5 +1,7 @@
 package com.coffeepeek.admin.feature.catalog.ui
 
+import com.coffeepeek.core.designsystem.component.CoffeePeekLikeIcon
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -574,10 +576,10 @@ private fun CatalogFavoriteControl(
                 .background(if (overImage) Color.Black else Color.Transparent),
             contentAlignment = Alignment.Center,
         ) {
-            Icon(
-                imageVector = if (isFavorite) CpIcons.FavoriteFilled else CpIcons.Favorite,
+            CoffeePeekLikeIcon(
+                selected = isFavorite,
                 contentDescription = if (isFavorite) "В избранном" else "Не в избранном",
-                tint = if (isFavorite) CpColor.Primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                overImage = overImage,
                 modifier = Modifier.size(24.dp),
             )
         }

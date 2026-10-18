@@ -23,6 +23,9 @@ object CoffeePeekColors {
     val Error          = Color(0xFFEF4444)
     val Warning        = Color(0xFFEAB308)
     val Info           = Color(0xFF3B82F6)
+    // Positive affinity has its own semantic role, using brand gold rather than error red.
+    val Like           = Primary
+    val LikeOnLight    = GoldWarmHover
 
     // ── Light palette ─────────────────────────────────────────────────────────
     val LightBackground    = Color(0xFFFAFAF9)

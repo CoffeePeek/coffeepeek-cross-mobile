@@ -1,14 +1,11 @@
 package com.coffeepeek.feature.shop.impl.ui.compose.component
 
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
+import com.coffeepeek.core.designsystem.component.CoffeePeekLikeIcon
 import com.coffeepeek.core.designsystem.component.CoffeePeekLoader
 import com.coffeepeek.core.designsystem.modifier.CoffeePeekGlassIconButton
-import com.coffeepeek.core.designsystem.theme.CoffeePeekColors
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.feature.shop.impl.resources.Res
 import com.coffeepeek.feature.shop.impl.resources.shop_favorite_add
@@ -39,11 +36,10 @@ internal fun ShopFavoriteButton(
             CoffeePeekLoader(contentDescription = stringResource(Res.string.shop_favorite_updating),
                 size = 18.dp, strokeWidth = 2.dp)
         } else {
-            Icon(
-                imageVector = if (isFavorite) CoffeePeekIcons.FavoriteFilled else CoffeePeekIcons.Favorite,
+            CoffeePeekLikeIcon(
+                selected = isFavorite,
                 contentDescription = null,
-                tint = if (isFavorite) CoffeePeekColors.Error
-                    else MaterialTheme.colorScheme.onSurface,
+                enabled = available,
             )
         }
     }

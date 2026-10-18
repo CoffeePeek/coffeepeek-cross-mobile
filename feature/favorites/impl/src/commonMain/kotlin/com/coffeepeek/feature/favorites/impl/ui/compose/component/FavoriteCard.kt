@@ -34,6 +34,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
+import com.coffeepeek.core.designsystem.component.CoffeePeekLikeButton
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.core.designsystem.theme.CoffeePeekColors
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
@@ -77,24 +78,19 @@ internal fun FavoriteCard(
                     shop.rating?.takeIf { it.isFinite() && it > 0 }?.let { rating ->
                         RatingBadge(rating, shop.reviewCount)
                     }
-                    Box(
+                    CoffeePeekLikeButton(
+                        selected = true,
+                        contentDescription = stringResource(Res.string.favorites_remove_description, shop.title),
+                        onClick = onRemove,
+                        enabled = !removing,
                         // Keep the full interactive target comfortably usable by touch and
                         // assistive technology; the icon itself remains visually compact.
-                        modifier = Modifier.size(48.dp)
-                            .clip(RoundedCornerShape(CoffeePeekDimens.radiusLg))
-                            .background(Color.Black.copy(alpha = 0.68f))
-                            .clickable(enabled = !removing, role = Role.Button, onClick = onRemove),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        Icon(
-                            CoffeePeekIcons.FavoriteFilled,
-                            contentDescription = stringResource(
-                                Res.string.favorites_remove_description, shop.title,
-                            ),
-                            tint = CoffeePeekColors.Error,
-                            modifier = Modifier.size(22.dp),
-                        )
-                    }
+                        modifier = Modifier.size(48.dp),
+                        shape = RoundedCornerShape(CoffeePeekDimens.radiusLg),
+                        containerColor = Color.Black.copy(alpha = 0.68f),
+                        iconSize = 22.dp,
+                        overImage = true,
+                    )
                 }
 
                 val logos = shop.roasterPhotoUrls.filter(String::isNotBlank).distinct().take(3)

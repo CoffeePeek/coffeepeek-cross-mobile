@@ -17,7 +17,9 @@ historical; they do not override the current server contract or latest route aud
 - `feature/coffee-catalog-refactoring` -> rating PR #102: Android-first Coffee
   catalogue migration. First slice prepares independent domain/data with parity
   tests; active screens/picker/DI still use the existing implementation. No new
-  iOS UI or catalogue redesign. See [Coffee plan](coffee/MIGRATION_PLAN.md).
+  iOS screen migration or catalogue redesign. See [Coffee plan](coffee/MIGRATION_PLAN.md).
+  Includes the user's explicit shared-heart UI correction: one affinity renderer/
+  toggle, selected gold and neutral outline, with [verification](../core/design-system/LIKE_PLAN.md).
 
 - `feature/shared-rating-component` / PR #102 -> Sandbox PR #101: one design-system rating
   renderer/input with fractional tenths and size variants, reused by migrated
