@@ -37,7 +37,8 @@ class AuthorBlockRepositoryTest {
         }).api("https://api.example")
         val repo = AuthorBlockRepositoryImpl(client, BlockSessions(), scope())
         try {
-            withTimeout(5_000) { repo.state.first { it.ready } }
+            // The list and visibility are separate flows; wait for the snapshot asserted below.
+            withTimeout(5_000) { repo.visibility.first { it.ready } }
             assertEquals(setOf("a", "b"), repo.visibility.value.blockedIds)
             repo.setBlocked(null, "old / slug", "New author", null, true).getOrThrow()
             assertEquals(setOf("a", "b", "opaque-new"), repo.visibility.value.blockedIds)
@@ -54,7 +55,7 @@ class AuthorBlockRepositoryTest {
         }).api("https://api.example")
         val repo = AuthorBlockRepositoryImpl(client, BlockSessions(), scope())
         try {
-            withTimeout(5_000) { repo.state.first { it.ready } }; fail = true
+            withTimeout(5_000) { repo.visibility.first { it.ready } }; fail = true
             assertTrue(repo.setBlocked("new", null, "New", null, true).isFailure)
             assertEquals(setOf("existing"), repo.visibility.value.blockedIds)
             assertFalse(repo.visibility.value.hides("new", null))
@@ -71,7 +72,7 @@ class AuthorBlockRepositoryTest {
         }).api("https://api.example")
         val repo = AuthorBlockRepositoryImpl(client, BlockSessions(), scope())
         try {
-            withTimeout(5_000) { repo.state.first { it.ready } }
+            withTimeout(5_000) { repo.visibility.first { it.ready } }
             repo.setBlocked("target", "target", "Target", null, true).getOrThrow()
             assertEquals(setOf("target"), repo.visibility.value.blockedIds)
             assertEquals(1, writes)
@@ -89,13 +90,13 @@ class AuthorBlockRepositoryTest {
         }).api("https://api.example")
         val repo = AuthorBlockRepositoryImpl(client, sessions, scope())
         try {
-            withTimeout(5_000) { repo.state.first { it.ready } }
+            withTimeout(5_000) { repo.visibility.first { it.ready } }
             val write = async { repo.setBlocked("target", "target", "Target", null, true) }
             started.await(); sessions.applySession(Session("token-b", userId = "b"))
             assertFalse(repo.visibility.value.ready)
             release.complete(Unit)
             assertFailsWith<CancellationException> { write.await() }
-            withTimeout(5_000) { repo.state.first { it.ready } }
+            withTimeout(5_000) { repo.visibility.first { it.ready } }
             assertTrue(repo.visibility.value.blockedIds.isEmpty())
         } finally { release.complete(Unit); repo.close(); client.close() }
     }

@@ -203,13 +203,14 @@ class ShopDetailViewModel internal constructor(
             val draft = checkInDraftStore.open(shopId)
             _uiState.update {
                 it.copy(
-                    showCheckInSheet = true,
                     checkInDraft = draft,
                     submittedCheckInVisibility = null,
                     checkInError = null,
                 )
             }
             drinkPhotos.setSource(draft.photos.firstOrNull()?.toPendingUpload(), draft.drinkPhoto?.toPendingUpload(), draft.drinkPhotoSkipped)
+            // Editing may start as soon as the sheet is visible; initialize the photo source first.
+            _uiState.update { it.copy(showCheckInSheet = true) }
         }
     }
 
