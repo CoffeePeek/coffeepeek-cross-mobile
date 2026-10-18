@@ -16,6 +16,9 @@ historical; they do not override the current server contract or latest route aud
 
 - `feature/sandbox-application` -> Home PR #99: application-wide offline test
   composition, actual navigation and local transport/media/session fixtures.
+  Scoped Pixel 7 app-graph/local CRUD/photo/error/theme/guest walkthrough passed
+  on 2026-10-18 after repairing the redesigned-profile fixture; 450 app unit cases
+  pass per delivery variant. Unsupported contracts/live release gates remain.
   This is verification infrastructure, not a completed migration of Discovery,
   Coffee, Profile or Community. Track device/contract gates in
   [Sandbox plan](../composeApp/SANDBOX_PLAN.md).

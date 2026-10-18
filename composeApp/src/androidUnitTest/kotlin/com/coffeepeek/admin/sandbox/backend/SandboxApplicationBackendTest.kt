@@ -9,6 +9,11 @@ import com.coffeepeek.api.model.request.ShopSearchFiltersDto
 import com.coffeepeek.api.model.request.ShopSearchOriginDto
 import com.coffeepeek.admin.feature.coffee.data.CoffeeRepositoryImpl
 import com.coffeepeek.admin.feature.coffee.domain.CoffeeFilters
+import com.coffeepeek.admin.feature.profile.data.PublicProfileRepositoryImpl
+import com.coffeepeek.admin.feature.profile.domain.PublicProfileConnectionKind
+import com.coffeepeek.domain.feature.feed.FeedRepository
+import com.coffeepeek.domain.feature.feed.FeedFilters
+import com.coffeepeek.domain.feature.feed.FeedPage
 import com.coffeepeek.feature.shop.data.repository.createShopCheckInRepository
 import com.coffeepeek.feature.shop.domain.model.*
 import io.ktor.client.engine.mock.MockEngine
@@ -68,6 +73,26 @@ class SandboxApplicationBackendTest {
         assertEquals("Local biography", users.getMe().getOrThrow().about)
         backend.reset(true)
         assertEquals("Sandbox", users.getMe().getOrThrow().userName)
+    } }
+
+    @Test fun redesignedProfileReadsRequiredStatsActivityFavoritesAndUnwrappedConnections() = runTest { fixture { _, client ->
+        val feed = object : FeedRepository {
+            override suspend fun getFeed(pageSize: Int, cursor: String?, filters: FeedFilters): Result<FeedPage> =
+                error("Profile metadata must not fetch the timeline")
+        }
+        val profiles = PublicProfileRepositoryImpl(client.client, feed)
+        val profile = profiles.getProfile("sandbox").getOrThrow()
+        assertEquals("Sandbox", profile.nickname)
+        assertEquals(1, profile.stats.checkIns)
+        assertFalse(profile.isFollowing)
+        assertEquals(3, profiles.getFavorites("sandbox").getOrThrow().size)
+        assertEquals(1, profiles.getActivity("sandbox", 2026, 10).getOrThrow().totalCheckIns)
+        for (kind in PublicProfileConnectionKind.entries) {
+            val connections = profiles.getConnections("sandbox", kind, 2, 10).getOrThrow()
+            assertTrue(connections.items.isEmpty())
+            assertEquals(2, connections.page)
+            assertEquals(10, connections.pageSize)
+        }
     } }
 
     @Test fun actualCoffeeRepositoryUsesOfflineSearchAndDetailContracts() = runTest { fixture { _, client ->

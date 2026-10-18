@@ -36,7 +36,11 @@ internal class SandboxApplicationBackend(private val today: LocalDate, private v
         if (path == "/api/users/me/deletion-request") return HttpStatusCode.NotFound to envelope(JsonNull, false)
         if (path.startsWith("/api/users/") && method == HttpMethod.Get) {
             if (path.endsWith("/check-ins")) return ok(page(JsonArray(visits)))
-            if (path.endsWith("/followers") || path.endsWith("/following")) return ok(page(JsonArray(emptyList())))
+            if (path.endsWith("/followers") || path.endsWith("/following")) return HttpStatusCode.OK to buildJsonObject {
+                putJsonArray("items") {}; put("totalCount", 0)
+                put("page", request.url.parameters["page"]?.toIntOrNull() ?: 1)
+                put("pageSize", request.url.parameters["pageSize"]?.toIntOrNull() ?: 20)
+            }
             return HttpStatusCode.OK to buildJsonObject { put("data", profile()); put("address", address("sandbox", "/users/sandbox")) }
         }
         if (path.startsWith("/api/v1/profiles/") && path.endsWith("/favorites")) return ok(favoriteRows())
@@ -128,6 +132,7 @@ internal class SandboxApplicationBackend(private val today: LocalDate, private v
     private fun profile() = buildJsonObject {
         put("userName", username); put("email", "sandbox@example.invalid"); put("about", about)
         put("avatarUrl", "${SandboxBackend.BASE_URL}/media/sample"); put("checkInCount", visits.size)
+        put("addedShopsCount", 0); put("addedRoastersCount", 0); put("followersCount", 0); put("isFollowing", false)
         put("address", address("sandbox", "/users/sandbox")); put("createdAtUtc", "${today}T07:00:00Z")
     }
     private fun shops(query: String?) = JsonArray(if (!populated) emptyList() else
