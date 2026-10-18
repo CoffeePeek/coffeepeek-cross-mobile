@@ -16,5 +16,10 @@ class ProtectedPhotoRequestTest {
         assertEquals(original, originalCheckInPhoto(variant))
         assertNull(originalCheckInPhoto(original))
         assertFalse(isProtectedCheckInPhoto("https://cdn.example/gallery/photo.jpg"))
+        assertTrue(isImmutablePhotoVariant(variant))
+        assertFalse(isImmutablePhotoVariant(original))
+        assertFalse(isImmutablePhotoVariant("$original/variants/pending"))
+        assertFalse(isImmutablePhotoVariant("$original/variants/source/0/feed.png"))
+        assertFalse(isImmutablePhotoVariant("$original/variants/source/1/original.png"))
     }
 }
