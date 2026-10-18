@@ -45,8 +45,10 @@ font scale. Brand styles are otherwise retained; screens are not redesigned.
 `modifier/`: coffeePeekLiquidGlass, its optional Haze composition local and CoffeePeekGlassIconButton.
 No backdrop source means the same translucent fallback as the legacy component.
 Haze ownership belongs to the screen; no global renderer or platform abstraction
-is created. Shared UI lives in commonMain with Android as the initial build target.
-Native iOS integration is outside this stage.
+is created. Shared UI lives in commonMain. Android was the initial build target;
+the rating slice also declares the application's existing iosArm64 and
+iosSimulatorArm64 targets so shared application UI can consume this module
+directly. No native screen/navigation/DI migration is implied by Native compilation.
 
 CoffeePeekSwitch owns the already-prepared production switch colors and a full-size
 thumb for enabled/disabled, checked/unchecked controls in both themes. Its palette
@@ -54,6 +56,33 @@ matches the application's current PlatformSwitch; core does not import that
 application implementation. Shop visibility and CoffeePeekSwitchRow use this one
 primitive. State/callbacks and localized labels are caller-owned; rows clear the
 child switch's semantics so the whole row remains the only accessible toggle.
+
+## Shared rating
+
+`CoffeePeekRating` owns the star rendering used by Shop/History/Home and the
+shared legacy feed/profile/review UI. Feature wrappers retain their rating
+averages, category descriptions, validation, state/actions and clear-on-repeat
+policy. Core accepts only a number and visual/accessibility configuration, never
+a feature/domain model. No new module or platform abstraction is introduced.
+
+Read-only `Stars` uses five glyphs with fractional clipping, not integer or
+half-star rounding: 4.3 is four full stars and 30% of the fifth. Values are
+normalized to the nearest tenth for both default label and fill; non-finite
+values render zero and finite values clamp to 0..5. Existing feature code still
+decides whether an absent/invalid rating should be shown at all. The fill direction
+mirrors with RTL. `Small`/`Medium`/`Large` are 16/20/24dp glyphs, not different
+rating algorithms. `Compact` is one rating symbol with a number (used by the
+favorites badge), not a one-star scale. Other standalone decorative stars or
+information-card icons need not become rating controls.
+
+Supplying `onRatingChange` enables integer 1..5 input with five selected/disabled
+accessible buttons. Targets are 44dp high and share up to 224dp width, shrinking
+equally in narrow containers; glyph sizes do not silently shrink. Ripple stays
+inside each rounded target. The feature supplies its localized per-score labels;
+fallback rating/choice resources are English with Russian translations. Read-only
+ratings expose one description/range, not five misleading accessibility targets.
+Paired previews are colocated in the component and changed feature owners.
+Verification/failure history: [RATING_PLAN.md](RATING_PLAN.md).
 
 ## Fields and top bars slice
 

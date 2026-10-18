@@ -53,7 +53,6 @@ kotlin {
             implementation(project(module.feature.homePreparation.data))
             implementation(project(module.feature.homePreparation.impl))
             implementation(project(module.core.coroutines))
-            implementation(project(module.core.designSystem))
             implementation(libs.androidx.activity.compose)
             implementation(libs.androidx.concurrent.futures)
             implementation(libs.androidx.appcompat)
@@ -69,6 +68,7 @@ kotlin {
             implementation("org.slf4j:slf4j-nop:2.0.16")
         }
         commonMain.dependencies {
+            implementation(project(module.core.designSystem))
             implementation(project(module.feature.favorites.domain))
             implementation(libs.posthog.kmp)
             implementation(project(module.legacy.domain))

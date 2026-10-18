@@ -1,6 +1,12 @@
 package com.coffeepeek.admin.feature.homecheckin.ui
 
 import com.coffeepeek.admin.feature.catalog.api.methodLabel
+import com.coffeepeek.core.designsystem.component.CoffeePeekRating
+import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
+import org.jetbrains.compose.ui.tooling.preview.Preview
+import coffeepeek.composeapp.generated.resources.Res
+import coffeepeek.composeapp.generated.resources.coffeepeek_home_taste_rating_description
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -112,15 +118,10 @@ internal fun HomeDetailContent(
             FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween,
                 verticalArrangement = Arrangement.spacedBy(8.dp), itemVerticalAlignment = Alignment.CenterVertically) {
                 Text("Оценка вкуса", style = MaterialTheme.typography.titleSmall)
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp),
-                    modifier = Modifier.semantics(mergeDescendants = true) { contentDescription = "Оценка вкуса $score из 5" }) {
-                    repeat(5) { index ->
-                        Icon(if (index < score) CpIcons.StarFilled else CpIcons.StarOutline, null,
-                            Modifier.size(20.dp), tint = if (index < score) MaterialTheme.colorScheme.primary
-                                else MaterialTheme.colorScheme.outlineVariant)
-                    }
-                    Text("$score/5", Modifier.padding(start = 6.dp), style = MaterialTheme.typography.labelLarge)
-                }
+                CoffeePeekRating(score.toDouble(), starSpacing = 4.dp, valueSpacing = 10.dp,
+                    valueText = "$score/5", valueStyle = MaterialTheme.typography.labelLarge,
+                    contentDescription = stringResource(Res.string.coffeepeek_home_taste_rating_description, score),
+                    inactiveColor = MaterialTheme.colorScheme.outlineVariant)
             }
         } }
         if (photos.isNotEmpty()) item(key = "photos") {
@@ -170,3 +171,13 @@ internal fun homeDurationLabel(seconds: Int): String = buildList {
     if (seconds / 60 % 60 > 0) add("${seconds / 60 % 60} мин")
     if (seconds % 60 > 0 || seconds == 0) add("${seconds % 60} с")
 }.joinToString(" ")
+
+@Composable private fun HomeDetailRatingPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
+    Surface {
+        HomeDetailContent(HomeCheckIn("preview", "2026-10-18T09:00:00Z", "2026-10-18", "2026-10-18T09:00:00Z",
+            null, "hario-v60", null, "Preview coffee", "18", 180, 4, null, null, null, emptyList(), null,
+            HomeCheckInVisibility.Private), onEdit = {}, onDelete = {}, onPhotoClick = { _, _ -> })
+    }
+}
+@Preview @Composable private fun HomeDetailRatingLightPreview() = HomeDetailRatingPreview(false)
+@Preview @Composable private fun HomeDetailRatingDarkPreview() = HomeDetailRatingPreview(true)

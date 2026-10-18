@@ -12,6 +12,8 @@ kotlin {
     androidTarget {
         compilerOptions { jvmTarget.set(JvmTarget.fromTarget(Config.JVM_VERSION)) }
     }
+    iosArm64()
+    iosSimulatorArm64()
     sourceSets {
         commonMain.dependencies {
             api(compose.runtime)

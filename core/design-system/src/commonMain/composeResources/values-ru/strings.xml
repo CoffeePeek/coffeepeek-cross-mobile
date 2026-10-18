@@ -1,0 +1,4 @@
+<resources>
+    <string name="coffeepeek_rating_description">Оценка %1$s из 5</string>
+    <string name="coffeepeek_rating_choose">Выбрать %1$d из 5</string>
+</resources>

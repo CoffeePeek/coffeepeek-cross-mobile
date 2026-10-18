@@ -14,6 +14,12 @@ historical; they do not override the current server contract or latest route aud
 
 ## Branch ownership
 
+- `feature/shared-rating-component` -> Sandbox PR #101: one design-system rating
+  renderer/input with fractional tenths and size variants, reused by migrated
+  feature UI and shared legacy feed/profile paths. Business averages/actions and
+  next-feature migration remain unchanged. Verification is tracked in
+  [rating checkpoint](../core/design-system/RATING_PLAN.md).
+
 - `feature/sandbox-application` -> Home PR #99: application-wide offline test
   composition, actual navigation and local transport/media/session fixtures.
   Scoped Pixel 7 app-graph/local CRUD/photo/error/theme/guest walkthrough passed
