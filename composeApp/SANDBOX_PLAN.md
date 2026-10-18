@@ -19,7 +19,8 @@ own review boundary. No main/develop merge or new Gradle business module.
    Verify both delivery flavors and Native compilation compatibility.
 6. [ ] Finish physical Pixel 7 navigation/CRUD/error/theme/guest verification on
    the final APK; compilation is not proof that every destination works.
-7. [ ] Publish a child PR to #99, retaining explicit unsupported-contract gates.
+7. [x] Publish draft child PR #101 to #99, retaining explicit unsupported-contract
+   and final-device gates. Runtime checkpoint: 994cb846; nothing merged.
 
 ## Coverage and limits
 
@@ -78,6 +79,9 @@ It includes a movable debug handle and a no-op/error-only update installer; no
 Play Store/Package Installer action can be invoked by that port. Source identity:
 1873b05 plus this application-wide checkpoint diff. The phone's final full UI
 walkthrough remains a gate, not inferred from the unit/assembly passes above.
+Final APK update succeeded over our own Sandbox without uninstall/data clear;
+the updated process stayed alive while Pixel 7 remained locked. Ordinary
+CoffeePeek stayed at 1.0.648. This is not an unlocked UI walkthrough.
 
 ## Return to feature refactoring
 
