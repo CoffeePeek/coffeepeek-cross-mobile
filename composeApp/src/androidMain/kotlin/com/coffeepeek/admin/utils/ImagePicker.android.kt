@@ -21,12 +21,18 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
 
+/** Composition-owned media port; live callers keep the existing OS pipeline by default. */
+internal val LocalPhotoPickerOverride = androidx.compose.runtime.staticCompositionLocalOf<
+    ((Int, (List<PickedImage>) -> Unit) -> PhotoPickerController)?
+> { null }
+
 @Composable
 actual fun rememberPhotoPicker(
     maxSelection: Int,
     isLoading: (Boolean) -> Unit,
     onPhotosPicked: (List<PickedImage>) -> Unit,
 ): PhotoPickerController {
+    LocalPhotoPickerOverride.current?.let { return it(maxSelection, onPhotosPicked) }
     val activity = LocalActivity.current
     val resolver = activity?.contentResolver
     val scope = rememberCoroutineScope()

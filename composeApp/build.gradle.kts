@@ -277,13 +277,14 @@ kotlin.sourceSets {
     }
 }
 
-// The offline test app never starts the production Application/root graph.
+// Reuse the app graph with isolated ports, never the production Application/services.
 androidComponents.onVariants(androidComponents.selector().withBuildType("sandbox")) { variant ->
     val runtimeVerification = tasks.register<VerifyApkRuntimeClassesTask>("verify${variant.name.replaceFirstChar { it.uppercaseChar() }}RuntimeClasses") {
         apkDirectory.set(variant.artifacts.get(SingleArtifact.APK))
         requiredClasses.set(listOf("com.coffeepeek.admin.sandbox.SandboxActivity",
-            "com.coffeepeek.admin.sandbox.backend.SandboxBackend", "com.coffeepeek.admin.sandbox.SandboxEnvironment",
-            "com.coffeepeek.feature.homecheckin.data.repository.HomePreparationRepositoryFactoryKt"))
+            "com.coffeepeek.admin.sandbox.backend.SandboxBackend", "com.coffeepeek.admin.sandbox.SandboxApplication",
+            "com.coffeepeek.feature.homecheckin.data.repository.HomePreparationRepositoryFactoryKt",
+            "com.coffeepeek.admin.ui.Navigator"))
     }
     val manifest = variant.artifacts.get(SingleArtifact.MERGED_MANIFEST)
     val verification = tasks.register("verify${variant.name.replaceFirstChar { it.uppercaseChar() }}Isolation") {
@@ -294,6 +295,7 @@ androidComponents.onVariants(androidComponents.selector().withBuildType("sandbox
             check("com.coffeepeek.admin.MainActivity" !in xml) { "Sandbox must not launch the production root" }
             check("com.coffeepeek.admin.CoffeePeekApplication" !in xml) { "Sandbox must not start production DI/services" }
             check("com.coffeepeek.admin.sandbox.SandboxActivity" in xml) { "Missing Sandbox entry" }
+            check("com.coffeepeek.admin.sandbox.SandboxApplication" in xml) { "Missing isolated Sandbox bootstrap" }
         }
     }
     tasks.matching { it.name == "assemble${variant.name.replaceFirstChar { it.uppercaseChar() }}" }.configureEach {

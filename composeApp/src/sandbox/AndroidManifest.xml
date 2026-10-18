@@ -9,7 +9,7 @@
     <uses-permission android:name="android.permission.READ_PHONE_STATE" tools:node="remove" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" tools:node="remove" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" tools:node="remove" />
-    <application android:name="android.app.Application" android:label="@string/sandbox_app_name"
+    <application android:name="com.coffeepeek.admin.sandbox.SandboxApplication" android:label="@string/sandbox_app_name"
         android:icon="@drawable/sandbox_launcher" android:roundIcon="@drawable/sandbox_launcher"
         tools:replace="android:name,android:label,android:icon,android:roundIcon">
         <activity android:name="com.coffeepeek.admin.MainActivity" tools:node="remove" />

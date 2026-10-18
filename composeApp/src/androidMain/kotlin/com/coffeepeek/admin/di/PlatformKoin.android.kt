@@ -16,8 +16,12 @@ import com.coffeepeek.feature.shopreport.impl.createShopReportEntry
 import com.coffeepeek.feature.shop.data.repository.createShopMenuGalleryRepository
 import com.coffeepeek.feature.shop.impl.createShopMenuGalleryEntry
 
-actual fun initPlatformKoin() {
+actual fun initPlatformKoin() = initAndroidKoin()
+
+/** Variant-owned composition can replace external ports without forking the app graph. */
+internal fun initAndroidKoin(extraModules: List<org.koin.core.module.Module> = emptyList(), analyticsEnabled: Boolean = true) {
     initKoin(
+        analyticsEnabled = analyticsEnabled,
         registerLegacyFavorites = true,
         platformModules = listOf(
             serverFavoritesModule(),
@@ -25,7 +29,7 @@ actual fun initPlatformKoin() {
             shopBrowsingModule(),
             homeCheckInModule(),
             checkInHistoryModule(),
-        ),
+        ) + extraModules,
         shopReportRendererFactory = { client ->
             AndroidShopReportScreenRenderer(
                 createShopReportEntry(createShopIssueReportRepository(client.client)),

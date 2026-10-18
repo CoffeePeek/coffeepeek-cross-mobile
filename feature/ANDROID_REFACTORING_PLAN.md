@@ -14,6 +14,12 @@ historical; they do not override the current server contract or latest route aud
 
 ## Branch ownership
 
+- `feature/sandbox-application` -> Home PR #99: application-wide offline test
+  composition, actual navigation and local transport/media/session fixtures.
+  This is verification infrastructure, not a completed migration of Discovery,
+  Coffee, Profile or Community. Track device/contract gates in
+  [Sandbox plan](../composeApp/SANDBOX_PLAN.md).
+
 - `feature/core-design-system-controls`, PR #43 → develop: core, favorites,
   Shop Report and Shop migration. New history code is excluded from its final diff.
 - `feature/check-in-history-refactoring` → the branch above: the **entire**
