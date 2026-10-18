@@ -43,9 +43,14 @@ actual object PlatformLocation {
             if (!runCatching { locationManager.isProviderEnabled(provider) }.getOrDefault(false)) continue
             val current = withTimeoutOrNull(6_000) {
                 awaitCurrentLocation { cancellation, onLocation ->
-                    LocationManagerCompat.getCurrentLocation(
-                        locationManager, provider, cancellation, ContextCompat.getMainExecutor(context),
-                    ) { location -> onLocation(location) }
+                    try {
+                        LocationManagerCompat.getCurrentLocation(
+                            locationManager, provider, cancellation, ContextCompat.getMainExecutor(context),
+                        ) { location -> onLocation(location) }
+                    } catch (_: SecurityException) {
+                        // Permission can be revoked after the initial check.
+                        onLocation(null)
+                    }
                 }
             }
             if (current != null) return@withContext GeoPoint(current.latitude, current.longitude)
