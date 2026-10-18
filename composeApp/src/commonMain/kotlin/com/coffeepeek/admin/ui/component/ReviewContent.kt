@@ -380,7 +380,7 @@ fun CheckInDisplayCard(
 
     CheckInCard(cardModifier, blurContent) {
         CheckInHeader(checkIn = checkIn, isOwn = isOwn, onAuthorClick = onAuthorClick) {
-            CheckInActions(onEditClick = null, onReportClick = onReportClick)
+            CheckInActions(onEditClick = null, onReportClick = onReportClick, author = checkIn.blockableAuthor().takeUnless { isOwn })
         }
         CheckInHeading(checkIn.shopName.ifBlank { "Кофейня" }.takeIf { showShopName }, checkIn.rating)
         val drinkName = savedDrinkName(checkIn.drinkNameRu, checkIn.drinkNameEn, checkIn.customDrinkName, Locale.current.language)

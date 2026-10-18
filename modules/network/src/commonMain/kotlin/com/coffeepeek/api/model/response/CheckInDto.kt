@@ -35,6 +35,7 @@ data class CheckInDto(
     val kind: String = "Shop",
     val home: FeedHomePreparationDto? = null,
     val authorAvatarUrl: String? = null,
+    val authorId: String? = null,
 )
 
 @Serializable

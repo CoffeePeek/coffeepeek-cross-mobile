@@ -12,6 +12,7 @@ internal fun CheckInDto.toDomain(fileUrls: FileUrlResolver): CheckIn = CheckIn(
     shopId = shop?.slug.orEmpty(),
     shopAddress = shop?.toDomain(),
     authorAddress = author?.toDomain(),
+    authorId = authorId,
     authorAvatarUrl = fileUrls.resolveApiUrl(authorAvatarUrl),
     username = username,
     shopName = shopName,

@@ -281,14 +281,14 @@ class FeedViewModel(
         loadShops(reset = true)
     }
 
-    fun onUserLocationChanged(location: GeoPoint) {
+    fun onUserLocationChanged(location: GeoPoint, selectNearbyOnFirstLocation: Boolean = false) {
         if (!location.latitude.isFinite() || location.latitude !in -90.0..90.0 ||
             !location.longitude.isFinite() || location.longitude !in -180.0..180.0) return
         val origin = ShopLocation(latitude = location.latitude, longitude = location.longitude)
         if (origin == nearbyOrigin) return
         val firstLocation = nearbyOrigin == null
         nearbyOrigin = origin
-        if (firstLocation) {
+        if (firstLocation && selectNearbyOnFirstLocation) {
             _uiState.update { it.copy(filters = it.filters.copy(nearbyOnly = true), shops = emptyList()) }
         } else if (_uiState.value.filters.nearbyOnly) {
             _uiState.update { it.copy(shops = emptyList()) }

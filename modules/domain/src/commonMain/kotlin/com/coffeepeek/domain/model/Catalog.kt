@@ -154,4 +154,5 @@ data class CheckIn(
     val isHome: Boolean = false,
     val homePreparation: com.coffeepeek.domain.feature.feed.FeedHomePreparation? = null,
     val authorAvatarUrl: String? = null,
+    val authorId: String? = null,
 )

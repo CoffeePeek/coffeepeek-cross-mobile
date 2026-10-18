@@ -21,6 +21,10 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.Semaphore
+import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.sync.withPermit
 
 internal data class RoasterListItem(
     val catalog: CatalogItem,
@@ -64,6 +68,9 @@ internal class RoasterListViewModel(
     val state = _state.asStateFlow()
     private val searchAnalytics = SearchTracker(Catalog.Roasters)
     private var loadJob: Job? = null
+    private val detailLocksMutex = Mutex()
+    private val detailLocks = mutableMapOf<String, Mutex>()
+    private val detailRequests = Semaphore(4)
     fun resultsShown(query: String, selected: Set<String>, favoritesOnly: Boolean) {
         val current = state.value
         if (current.isLoading) return
@@ -95,6 +102,23 @@ internal class RoasterListViewModel(
     }
 
     fun clearTags() { _state.update { it.copy(selectedTagIds = emptySet()) } }
+
+    suspend fun loadDetails(slug: String?) {
+        if (slug.isNullOrBlank()) return
+        val lock = detailLocksMutex.withLock { detailLocks.getOrPut(slug) { Mutex() } }
+        lock.withLock {
+            if (_state.value.items.none { it.routeId == slug && it.details == null }) return
+            val details = detailRequests.withPermit { roasters.getRoaster(slug).getOrNull() }
+            currentCoroutineContext().ensureActive()
+            if (details != null) {
+                _state.update { state ->
+                    state.copy(items = state.items.map { item ->
+                        if (item.routeId == slug) item.copy(details = details) else item
+                    })
+                }
+            }
+        }
+    }
 
     fun toggleFavorite(item: RoasterListItem) {
         val id = item.catalog.roasterFavoriteId

@@ -19,6 +19,7 @@ import androidx.lifecycle.compose.LifecycleEventEffect
 import com.coffeepeek.admin.di.platformViewModel
 import com.coffeepeek.admin.theme.CpDimens
 import com.coffeepeek.admin.ui.Navigator
+import com.coffeepeek.admin.ui.component.CpSnackbarHost
 import com.coffeepeek.admin.ui.component.CoffeePeekLoader
 import com.coffeepeek.admin.ui.component.CoffeePeekPullToRefresh
 import com.coffeepeek.admin.ui.component.FullScreenImageDialog
@@ -95,7 +96,7 @@ fun CommunityScreen(onCreateCheckIn: () -> Unit) {
         Scaffold(
             containerColor = MaterialTheme.colorScheme.background,
             contentWindowInsets = WindowInsets(0, 0, 0, 0),
-            snackbarHost = { SnackbarHost(snackbar) },
+            snackbarHost = { CpSnackbarHost(snackbar) },
         ) { padding ->
             CoffeePeekPullToRefresh(
                 listState, isRefreshing = state.isLoading && state.items.isNotEmpty(), onRefresh = { vm.refresh("gesture") },
@@ -134,6 +135,7 @@ fun CommunityScreen(onCreateCheckIn: () -> Unit) {
                                     TimelineCheckInCard(
                                         checkIn = checkIn,
                                         isOwn = state.owns(checkIn),
+                                        canBlockAuthor = state.canBlockAuthor(checkIn),
                                         isPublicTimeline = state.timeline == CommunityTimeline.Public,
                                         canAct = !state.isMutating,
                                         changingVisibility = state.changingVisibilityId == checkIn.id,

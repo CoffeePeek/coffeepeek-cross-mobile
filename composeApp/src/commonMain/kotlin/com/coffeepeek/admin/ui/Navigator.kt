@@ -151,6 +151,7 @@ object Navigator {
         @Serializable data class EditHomeCheckIn(val id: String) : Screen
         @Serializable data object CitySettings : Screen
         @Serializable data object ThemeSettings : Screen
+        @Serializable data object BlockedAuthors : Screen
         @Serializable data object UsagePolicy : Screen
         @Serializable data class ShopReviews(val shopId: String) : Screen
         @Serializable data class ReportReview(val reviewId: String, val isPreview: Boolean = false) : Screen
@@ -228,6 +229,7 @@ object Navigator {
         is Screen.EditHomeCheckIn,
         is Screen.CitySettings,
         is Screen.ThemeSettings,
+        is Screen.BlockedAuthors,
         is Screen.UsagePolicy -> true
         else -> false
     }
@@ -510,6 +512,7 @@ object Navigator {
                     }
                     composable<Screen.CitySettings> { CityScreen() }
                     composable<Screen.ThemeSettings> { ThemeScreen() }
+                    composable<Screen.BlockedAuthors> { com.coffeepeek.admin.feature.authorblocking.ui.BlockedAuthorsScreen() }
                     composable<Screen.UsagePolicy> { UsagePolicyScreen() }
             }
         }
@@ -547,6 +550,7 @@ object Navigator {
             is Screen.EditHomeCheckIn -> ProfileCheckInsScreen(initialHomeId = screen.id)
             Screen.CitySettings -> CityScreen()
             Screen.ThemeSettings -> ThemeScreen()
+            Screen.BlockedAuthors -> com.coffeepeek.admin.feature.authorblocking.ui.BlockedAuthorsScreen()
             Screen.UsagePolicy -> UsagePolicyScreen()
             else -> error("Tab route must be handled by MainScreen: $screen")
         }

@@ -52,6 +52,7 @@ kotlin {
             implementation(project(module.legacy.room))
             implementation(project(module.core.network))
             implementation(project(module.features.homeCheckIn))
+            implementation(project(module.features.authorBlocking))
             implementation(compose.runtime)
             implementation(compose.foundation)
             implementation(compose.material3)
