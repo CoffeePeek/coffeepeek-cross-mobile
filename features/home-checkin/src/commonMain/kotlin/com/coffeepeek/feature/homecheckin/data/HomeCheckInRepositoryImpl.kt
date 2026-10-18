@@ -40,6 +40,7 @@ import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.contentOrNull
+import kotlinx.serialization.json.decodeFromJsonElement
 
 private const val PATH = "/api/v1/check-ins/home"
 
@@ -158,14 +159,18 @@ class HomeCheckInRepositoryImpl(
         doseGrams = doseGrams?.toString(), brewDurationSeconds = brewDurationSeconds,
         tasteScore = tasteScore, drinkName = drink.displayName(),
         drinkSlug = drink.slug(), customDrinkName = drink.customName(),
-        photos = photos.map { HomeCheckInPhoto(it.id, it.url.absoluteUrl()) },
+        photos = photos.sortedBy { it.sortIndex }.map { HomeCheckInPhoto(it.id, it.url.absoluteUrl(),
+            it.variantUrl("feed").absoluteUrl(), it.variantUrl("detail").ifBlank { it.url }.absoluteUrl(), it.variantUrl("thumb").absoluteUrl()) },
         drinkPhotoUrl = drinkPhoto.urlOrNull()?.absoluteUrl(),
+        drinkPhotoThumbnailUrl = drinkPhoto.asPhoto()?.variantUrl("thumb")?.absoluteUrl(),
+        drinkPhotoDetailUrl = drinkPhoto.asPhoto()?.variantUrl("detail")?.absoluteUrl(),
         visibility = HomeCheckInVisibility.entries.firstOrNull { it.name.equals(visibility, ignoreCase = true) },
         moderation = HomeCheckInModeration.entries.firstOrNull { it.name.equals(moderationState, ignoreCase = true) }
             ?: HomeCheckInModeration.Unknown,
     )
 
     private fun String.absoluteUrl(): String = when {
+        isBlank() -> ""
         startsWith("https://") -> this
         startsWith("/") -> baseUrl.trimEnd('/') + this
         else -> baseUrl.trimEnd('/') + "/" + this
@@ -227,7 +232,23 @@ private fun JsonElement?.urlOrNull(): String? = when (this) {
 @Serializable private data class HomeEnvelope<T>(val isSuccess: Boolean, val message: String? = null, val data: T? = null)
 @Serializable private data class HomePageDto(val items: List<HomeDto> = emptyList(), val totalCount: Int = 0)
 @Serializable private data class HomeCalendarDto(val preparedOn: String, val brewCount: Int)
-@Serializable private data class HomePhotoDto(val id: String = "", @JsonNames("fullUrl") val url: String = "")
+@Serializable private data class HomePhotoDto(val id: String = "", @JsonNames("fullUrl") val url: String = "",
+    val sortIndex: Int = 0, val variants: List<HomePhotoVariantDto>? = null)
+@Serializable private data class HomePhotoVariantDto(val purpose: String = "", val contentType: String = "",
+    val width: Int = 0, val height: Int = 0, val sizeBytes: Long = 0, val url: String = "")
+
+private fun HomePhotoDto.variantUrl(purpose: String): String {
+    val ready = variants ?: return url
+    val candidates = ready.filter { it.purpose == purpose && it.width > 0 && it.height > 0 && it.sizeBytes > 0 && it.url.isNotBlank() }
+    return listOf("image/png", "image/jpeg", "image/webp").firstNotNullOfOrNull { type ->
+        candidates.firstOrNull { it.contentType == type }?.url
+    }.orEmpty()
+}
+
+private fun JsonElement?.asPhoto(): HomePhotoDto? = when (this) {
+    is JsonObject -> responseJson.decodeFromJsonElement<HomePhotoDto>(this)
+    else -> urlOrNull()?.let { HomePhotoDto(url = it) }
+}
 @Serializable private data class HomeDto(
     val id: String,
     val preparedAtUtc: String,

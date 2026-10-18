@@ -9,8 +9,8 @@ internal data class CalendarPhoto(val url: String, val isCutout: Boolean)
 internal fun homeCalendarPhotos(entries: List<HomeCheckIn>): Map<String, List<CalendarPhoto>> =
     entries.groupBy(HomeCheckIn::preparedOn).mapValues { (_, checkIns) ->
         checkIns.mapNotNull { entry ->
-            entry.drinkPhotoUrl?.takeIf(String::isNotBlank)?.let { CalendarPhoto(it, isCutout = true) }
-                ?: entry.photos.firstOrNull { it.url.isNotBlank() }?.let { CalendarPhoto(it.url, isCutout = false) }
+            entry.drinkPhotoThumbnailUrl?.takeIf(String::isNotBlank)?.let { CalendarPhoto(it, isCutout = true) }
+                ?: entry.photos.firstOrNull { it.calendarUrl.isNotBlank() }?.let { CalendarPhoto(it.calendarUrl, isCutout = false) }
         }
     }
 

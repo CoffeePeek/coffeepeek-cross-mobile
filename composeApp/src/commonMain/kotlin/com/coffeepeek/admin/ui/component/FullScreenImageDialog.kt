@@ -38,6 +38,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import com.coffeepeek.admin.utils.image.originalCheckInPhoto
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -72,6 +74,7 @@ fun FullScreenImageDialog(
     // While the current photo is zoomed, drags pan the photo instead of switching pages.
     var isZoomed by remember { mutableStateOf(false) }
     var controlsVisible by remember { mutableStateOf(true) }
+    var originalPage by remember { mutableStateOf<Int?>(null) }
     var dismissOffset by remember { mutableFloatStateOf(0f) }
     var viewportHeight by remember { mutableFloatStateOf(1f) }
     val reduceMotion = platformReduceMotion()
@@ -103,13 +106,21 @@ fun FullScreenImageDialog(
                 modifier = Modifier.fillMaxSize().graphicsLayer { translationY = dismissOffset },
             ) { page ->
                 val isCurrent = pagerState.currentPage == page
-                ZoomableImage(
-                    imageUrl = imageUrls[page],
+                if (isCurrent) ZoomableImage(
+                    imageUrl = if (originalPage == page) originalCheckInPhoto(imageUrls[page]) ?: imageUrls[page] else imageUrls[page],
                     contentDescription = "Фото ${page + 1} из ${imageUrls.size}",
                     isCurrent = isCurrent,
                     onTap = { controlsVisible = !controlsVisible },
                     onZoomChanged = { if (isCurrent) isZoomed = it },
                 )
+            }
+
+            if (controlsVisible && originalPage != pagerState.currentPage &&
+                originalCheckInPhoto(imageUrls[pagerState.currentPage]) != null) {
+                TextButton(onClick = { originalPage = pagerState.currentPage },
+                    modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 32.dp)) {
+                    Text("Открыть оригинал", color = Color.White)
+                }
             }
 
             if (controlsVisible && imageUrls.size > 1) {
