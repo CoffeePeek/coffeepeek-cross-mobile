@@ -185,6 +185,11 @@ their Result failures, cancellation, and conflicting-action policy.
 Place reusable visual tokens/components in design-system, feature-specific UI and
 assets in the feature, and user-facing strings/accessibility text in resources.
 Verify supported locales and translation parity before documenting their number.
+Migrated UI must consume applicable `core/design-system` components, icons,
+modifiers and tokens rather than copying them or creating parallel legacy-style
+implementations. Feature-owned components compose these primitives. Missing
+shared behavior is added to the existing primitive when truly reusable; custom
+business rendering and ordinary Compose layout remain in the feature.
 
 ### Core
 
@@ -313,6 +318,15 @@ Before adding a Gradle module, answer all of these:
 If any answer is unclear, keep a package boundary and revisit later.
 
 ## Verification checklist
+
+Android execution environments are explicit: Sandbox is the agent's default local fake
+environment in a separate `com.coffeepeek.sandbox` package; ordinary Debug uses
+the live configured backend and `com.coffeepeek` storage, with Google sign-in
+disabled. Direct/Play are delivery flavors, not mock/live selectors. See
+`composeApp/ANDROID_RUN_MODES.md`. Build-only configurations never authorize
+deployment, and Sandbox acceptance does not establish live-backend readiness.
+The user chooses the active Studio variant; this policy does not silently
+switch their ordinary Debug workflow to Sandbox.
 
 After an architectural change, verify:
 

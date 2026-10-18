@@ -14,6 +14,11 @@ historical; they do not override the current server contract or latest route aud
 
 ## Branch ownership
 
+- `feature/coffee-catalog-refactoring` -> rating PR #102: Android-first Coffee
+  catalogue migration. First slice prepares independent domain/data with parity
+  tests; active screens/picker/DI still use the existing implementation. No new
+  iOS UI or catalogue redesign. See [Coffee plan](coffee/MIGRATION_PLAN.md).
+
 - `feature/shared-rating-component` / PR #102 -> Sandbox PR #101: one design-system rating
   renderer/input with fractional tenths and size variants, reused by migrated
   feature UI and shared legacy feed/profile paths. Business averages/actions and
@@ -166,7 +171,7 @@ Next work is ordered, not parallel feature scaffolding:
 | Personal history: one combined Shop/Home calendar and timeline | In progress; Android code checkpoint prepared in #95 | Combined reads/MVI/content, month photos, Home photo preparation and creation-flow analytics are integrated. Personal author avatars match main; public author navigation belongs to Shop. Pixel 7 populated-history/photo/date/account/accessibility and safely authorized mutation checks remain. |
 | Home preparations: create/detail/edit/delete, recipes and photos | In progress; new data/entries active, unused Android read bridge removed | History, Community owner edit and global tab/feed creation use the new Home implementation. Pixel 7 self-targeted UI 40/40 and real-app create/cancel/date/numeric-IME/gallery-cancel-relaunch checks pass. Actual selected/protected-photo/camera, broader IME/recreation and authorized live acceptance remain; profile Activity/iOS stay legacy. See home-check-in/MIGRATION_PLAN.md. |
 | Discovery: shop list/search/filter/map and embedded roasters | Not started | Audit actual list/map/filter ownership and current platform map; no independent module for every mode. |
-| Coffee catalogue: Coffee tab/list/detail | Not started | Preserve current catalogue/search/detail and links to roasters; catalog pickers are existing shared app boundaries, not invented screens. |
+| Coffee catalogue: Coffee tab/list/detail | In progress — domain/data foundation; Android screens not switched | Preserve current catalogue/search/detail and links to roasters; catalog pickers are existing shared app boundaries, not invented screens. |
 | Roasters: list/detail and saved membership | Not started | Preserve current entry points, contacts, catalogue links and favorites. Favorites parity is an earlier gate, not permission for a wholesale roaster rewrite. |
 | Profile/account: personal/public profile, activity calendar, favorites preview, connections, edit, pending deletion | Not started | Main #97–98 redesign is retained, not extracted. Preserve its public-profile dependency, session-aware tabs, existing history/favorites/auth delegates and cached-account fallback; don't duplicate their business ownership. |
 | Auth: sign-in, registration, forgot/reset password | Not started as feature extraction | Existing session fixes are not a completed auth migration. Keep recovery/deep-link and Google/platform behavior. |

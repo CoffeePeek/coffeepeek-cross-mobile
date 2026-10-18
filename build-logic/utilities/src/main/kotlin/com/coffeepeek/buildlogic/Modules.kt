@@ -27,6 +27,12 @@ object Modules {
         }
 
         val shop = Shop
+        val coffee = Coffee
+        object Coffee {
+            const val domain = ":feature:coffee:domain"
+            const val data = ":feature:coffee:data"
+        }
+
         object Shop {
             const val api = ":feature:shop:api"
             const val domain = ":feature:shop:domain"
@@ -89,6 +95,8 @@ object Modules {
         feature.shop.domain,
         feature.shop.data,
         feature.shop.impl,
+        feature.coffee.domain,
+        feature.coffee.data,
         feature.checkInHistory.domain,
         feature.checkInHistory.api,
         feature.checkInHistory.data,

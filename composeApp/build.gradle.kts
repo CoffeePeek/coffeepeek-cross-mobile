@@ -239,6 +239,10 @@ android {
         }
     }
     buildTypes {
+        getByName("debug") {
+            // Normal backend/session, but no release OAuth flow in debug builds.
+            buildConfigField("String", "GOOGLE_WEB_CLIENT_ID", "\"\"")
+        }
         create("sandbox") {
             initWith(getByName("debug"))
             applicationIdSuffix = ".sandbox"

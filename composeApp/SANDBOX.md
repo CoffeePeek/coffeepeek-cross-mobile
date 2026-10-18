@@ -4,6 +4,10 @@ Sandbox is a separate application, not a switch inside the production app.
 Its package is `com.coffeepeek.sandbox`, its launcher label is **CoffeePeek Sandbox**
 and its icon is purple. Production remains `com.coffeepeek` with its existing data.
 
+For choosing between Sandbox and live Debug, Android Studio launch steps and
+explicit-device commands, see [Android run modes](ANDROID_RUN_MODES.md). Sandbox
+is the default for safe development tests; ordinary Debug is not a fake backend.
+
 Build/select `directSandbox` in Android Studio, or run:
 
 ```shell

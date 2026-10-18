@@ -106,6 +106,15 @@ still owns its root back stack and cross-feature routing.
 
 ## Presentation and resources
 
+- Use `core/design-system` as the source of shared UI: components, theme,
+  typography, dimensions, icons, modifiers, loading/error states and sheets.
+  Inspect its existing API before building a feature component. Do not copy a
+  design-system implementation or substitute a legacy App/Cp equivalent in new
+  migrated UI. Feature components compose these primitives; low-level Compose
+  layout/drawing is allowed when no matching primitive exists. Extend the shared
+  component for a genuinely reusable gap, preserving existing visuals and
+  accessibility; keep business-specific rendering in its feature. This is reuse
+  of applicable components, not a requirement to use every component everywhere.
 - Prefix reusable design-system components, supporting UI types, tokens and their
   Kotlin source files with `CoffeePeek` (for example `CoffeePeekButton.kt`,
   `CoffeePeekTextField`, `CoffeePeekIcons`, `CoffeePeekDimens`). Ordinary functions
@@ -205,6 +214,28 @@ implementation details.
 
 ## IDE and testing workflow
 
+- Choose the execution environment explicitly before every app run; see
+  `composeApp/ANDROID_RUN_MODES.md` for exact variants, commands and packages.
+  For agent-driven exploratory testing, default to `directSandbox`
+  (`com.coffeepeek.sandbox`) for fake account/data writes, errors and visual
+  checks. It uses a local in-memory
+  fake backend, not a staging server. Use ordinary `directDebug` or `playDebug`
+  (`com.coffeepeek`) only for requested live-backend/device integration checks;
+  Debug uses the normal app/data/backend and disables Google sign-in, not all
+  authentication. Delivery flavor (`direct`/`play`) is separate from execution
+  environment (`sandbox`/`debug`/`release`). Never use Release for routine tests.
+  This default does not override the user's chosen Studio Build Variant or
+  authorize silently switching it; the user chooses which app to run.
+- Android Studio's generic `composeApp` run configuration follows the active
+  Build Variant; its name does not prove Sandbox isolation. Check that variant,
+  merged manifest, entry Activity, package and agreed device before launch. The
+  shared `CoffeePeek Sandbox — Build` / `CoffeePeek Debug — Build` configurations
+  assemble exact variants only: they do not install or launch anything. Do not
+  install a live Debug APK merely because a Sandbox check was requested. Verify
+  installed version/signature first; normal Debug may share the real app's data
+  and cannot safely replace an incompatible-signed release. No uninstall or data
+  clearing to work around this. Fake tests never certify real backend, camera,
+  OAuth, analytics or persistence acceptance.
 - Define a short verification plan before changing code: the behavior to preserve,
   affected layers, relevant tests and remaining device/release gates. State
   assumptions; keep each changed line tied to the task. Do not mix speculative
