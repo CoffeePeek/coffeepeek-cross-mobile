@@ -82,6 +82,9 @@ internal fun RoasterListScreen(
                 verticalArrangement = Arrangement.spacedBy(CpDimens.spacing3),
             ) {
                 itemsIndexed(visible, key = { index, item -> item.catalog.id.ifBlank { "unaddressed-roaster:$index" } }) { index, item ->
+                    LaunchedEffect(item.routeId, state.isLoading) {
+                        if (!state.isLoading) vm.loadDetails(item.routeId)
+                    }
                     RoasterCard(
                         roaster = item.catalog,
                         details = item.details,
@@ -130,6 +133,9 @@ internal fun RoasterPreview(
             val cardWidth = (maxWidth * 0.88f).coerceIn(280.dp, 360.dp)
             LazyRow(horizontalArrangement = Arrangement.spacedBy(CpDimens.spacing3)) {
                 itemsIndexed(visible.take(8), key = { index, item -> item.catalog.id.ifBlank { "unaddressed-roaster:$index" } }) { index, item ->
+                    LaunchedEffect(item.routeId, state.isLoading) {
+                        if (!state.isLoading) vm.loadDetails(item.routeId)
+                    }
                     RoasterCard(
                         roaster = item.catalog,
                         details = item.details,
