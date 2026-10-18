@@ -34,6 +34,27 @@ class HomeCheckInContractTest {
     private val entry = """{"id":"$id","preparedAtUtc":"2026-09-20T22:15:00Z","preparedOn":"2026-09-21","createdAtUtc":"2026-10-01T08:00:00Z","beanName":"Honey Bloom","coffeeProductId":"22222222-2222-4222-8222-222222222222","doseGrams":75,"tasteScore":4,"photos":[{"id":"photo-1","url":"/api/v1/check-ins/$id/photos/photo-1"}]}"""
 
     @Test
+    fun readyHomeGalleryAndDrinkCutoutUseVariantsAndKeepOriginals() = runBlocking {
+        val original = "/api/v1/check-ins/$id/photos/photo-1"
+        val variants = listOf("thumb", "feed", "detail").joinToString(",") { purpose ->
+            """{"purpose":"$purpose","contentType":"image/png","width":320,"height":240,"sizeBytes":100,"url":"$original/variants/source/1/$purpose.png"}"""
+        }
+        val body = entry.replace("\"url\":\"$original\"", "\"url\":\"$original\",\"variants\":[$variants]")
+            .dropLast(1) + """, "drinkPhoto":{"url":"$original","variants":[$variants]}}"""
+        val client = gateway(MockEngine { respond("""{"isSuccess":true,"data":$body}""", headers = jsonHeaders) })
+        try {
+            val result = HomeCheckInRepositoryImpl(client, client, "https://gateway.example.com").detail(id).getOrThrow()
+            val photo = result.photos.single()
+            assertEquals("https://gateway.example.com$original", photo.url)
+            assertTrue(photo.thumbnailUrl.endsWith("feed.png"))
+            assertTrue(photo.detailUrl.endsWith("detail.png"))
+            assertTrue(photo.calendarUrl.endsWith("thumb.png"))
+            assertTrue(result.drinkPhotoThumbnailUrl!!.endsWith("thumb.png"))
+            assertTrue(result.drinkPhotoDetailUrl!!.endsWith("detail.png"))
+        } finally { client.close() }
+    }
+
+    @Test
     fun visibilityChoiceIsSentOnCreateAndEditAndServerStatusIsRead() = runBlocking {
         var calls = 0
         val gateway = gateway(MockEngine { request ->

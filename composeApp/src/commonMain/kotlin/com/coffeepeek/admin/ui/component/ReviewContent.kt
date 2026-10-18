@@ -389,7 +389,7 @@ fun CheckInDisplayCard(
             else ReviewQuote(checkIn.id, checkIn.note, padToCollapsedLines = false)
         }
         ReviewPhotoStrip(
-            photoUrls = checkIn.photoUrls,
+            photoUrls = checkIn.photoDetailUrls ?: checkIn.photoUrls,
             thumbnailUrls = checkIn.photoThumbnailUrls,
             onPhotoClick = onPhotoClick,
         )

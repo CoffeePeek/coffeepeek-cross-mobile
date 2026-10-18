@@ -132,6 +132,8 @@ data class CheckIn(
     // photoUrls open fullscreen; thumbnails are for small tiles.
     val photoUrls: List<String> = emptyList(),
     val photoThumbnailUrls: List<String> = photoUrls,
+    val photoDetailUrls: List<String>? = null,
+    val photoCalendarUrls: List<String>? = null,
     val rating: ReviewRating? = null,
     val drinkSlug: String? = null,
     val customDrinkName: String? = null,
@@ -147,6 +149,8 @@ data class CheckIn(
     val helpfulCount: Int = 0,
     val isHelpfulByCurrentUser: Boolean = false,
     val drinkPhotoUrl: String? = null,
+    val drinkPhotoThumbnailUrl: String? = null,
+    val drinkPhotoDetailUrl: String? = null,
     val isHome: Boolean = false,
     val homePreparation: com.coffeepeek.domain.feature.feed.FeedHomePreparation? = null,
     val authorAvatarUrl: String? = null,

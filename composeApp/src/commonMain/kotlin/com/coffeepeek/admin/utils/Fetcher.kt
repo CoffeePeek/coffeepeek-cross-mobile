@@ -27,6 +27,6 @@ val ByteArrayFetcher = object : Fetcher<ByteArray> {
 }
 
 
-data class CustomUrl(val url: String)
+data class CustomUrl(val url: String, val permissionScope: Any? = null)
 
 expect class CustomUrlFetcher : Fetcher<CustomUrl>
