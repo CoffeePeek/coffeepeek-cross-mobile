@@ -103,8 +103,13 @@ private fun appModule(settingRepository: com.coffeepeek.room.repository.SettingR
     factory { HomeCheckInViewModel(get(), get(), get(), get()) }
     factory { CoffeeListViewModel(get()) }
     factory { (slug: String) -> CoffeeDetailViewModel(slug, get()) }
+    single { com.coffeepeek.admin.feature.authorblocking.data.AuthorBlockRepositoryImpl(get<CoffeePeekClient>().client, get()) }
+    single<com.coffeepeek.admin.feature.authorblocking.domain.AuthorBlockRepository> { get<com.coffeepeek.admin.feature.authorblocking.data.AuthorBlockRepositoryImpl>() }
+    single<com.coffeepeek.admin.feature.authorblocking.api.AuthorVisibility> { get<com.coffeepeek.admin.feature.authorblocking.data.AuthorBlockRepositoryImpl>() }
+    single { com.coffeepeek.admin.feature.authorblocking.ui.AuthorBlockingViewModel(get(), get()) }
+    single<com.coffeepeek.admin.feature.authorblocking.api.AuthorBlockActions> { get<com.coffeepeek.admin.feature.authorblocking.ui.AuthorBlockingViewModel>() }
     single<PublicProfileRepository> { PublicProfileRepositoryImpl(get<CoffeePeekClient>().client, get(), get(), get()) }
-    factory { (slug: String) -> PublicProfileViewModel(slug, get(), get(), users = get()) }
+    factory { (slug: String) -> PublicProfileViewModel(slug, get(), get(), users = get(), visibility = get()) }
     single<RoasterFavorites> { ServerRoasterFavorites(get(), get()) }
     single<com.coffeepeek.admin.feature.appupdate.domain.AppUpdateRepository> {
         com.coffeepeek.admin.feature.appupdate.data.AppUpdateRepositoryImpl(get<CoffeePeekClient>().plainClient, settingRepository)
@@ -118,10 +123,10 @@ private fun appModule(settingRepository: com.coffeepeek.room.repository.SettingR
     factory { RegisterViewModel(get()) }
     factory { NavigatorViewModel(get()) }
     factory { FeedViewModel(get(), get(), get(), get()) }
-    factory { com.coffeepeek.admin.feature.community.ui.CommunityViewModel(get(), get(), get(), get(), get()) }
+    factory { com.coffeepeek.admin.feature.community.ui.CommunityViewModel(get(), get(), get(), get(), get(), get()) }
     factory { com.coffeepeek.admin.ui.screen.roaster.RoasterListViewModel(get(), get(), get()) }
     factory { MapViewModel(get(), get()) }
-    factory { (shopId: String) -> ShopDetailViewModel(shopId, get(), get(), get(), get(), get(), get(), get(), get()) }
+    factory { (shopId: String) -> ShopDetailViewModel(shopId, get(), get(), get(), get(), get(), get(), get(), get(), get()) }
     factory { (shopId: String) -> ShopMenuGalleryViewModel(shopId, get()) }
     factory { (shopId: String) -> ShopReportViewModel(shopId, get()) }
     factory { (shopId: String) -> SuggestShopChangeViewModel(shopId, get()) }

@@ -38,6 +38,8 @@ fun ShopReviewsScreen(shopId: String) {
     val vm: ShopDetailViewModel = platformViewModel(parameters = { parametersOf(shopId) })
     val state by vm.uiState.collectAsState()
     var preview by remember { mutableStateOf<Pair<List<String>, Int>?>(null) }
+    val authorVisibility by vm.authorVisibility.collectAsState()
+    androidx.compose.runtime.LaunchedEffect(authorVisibility.revision, state.isLoggedIn) { preview = null }
     preview?.let { (urls, index) ->
         FullScreenImageDialog(imageUrls = urls, initialIndex = index, onDismiss = { preview = null })
     }

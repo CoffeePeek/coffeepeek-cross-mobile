@@ -1,5 +1,7 @@
 package com.coffeepeek.admin.feature.profile.ui
 
+import com.coffeepeek.admin.feature.authorblocking.api.AuthorVisibility
+import kotlinx.coroutines.flow.drop
 import androidx.lifecycle.ViewModel
 import com.coffeepeek.admin.feature.profile.domain.*
 import com.coffeepeek.domain.model.Session
@@ -55,9 +57,11 @@ internal class PublicProfileViewModel(
     private val sessions: SessionRepository,
     private val scope: CoroutineScope = CoroutineScope(Dispatchers.Default + SupervisorJob()),
     private val users: UserRepository? = null,
+    private val visibility: AuthorVisibility = AuthorVisibility.None,
 ) : ViewModel(), AutoCloseable {
     private val _state = MutableStateFlow(PublicProfileUiState())
     val state = _state.asStateFlow()
+    val authorVisibility = visibility.visibility
     private var profileJob: Job? = null
     private var checkInsJob: Job? = null
     private var followJob: Job? = null
@@ -77,6 +81,12 @@ internal class PublicProfileViewModel(
 
     init {
         addCloseable(this)
+        scope.launch {
+            visibility.visibility.drop(1).collect {
+                _state.value = PublicProfileUiState(activityMonth = state.value.activityMonth)
+                refresh()
+            }
+        }
         refresh()
         observeOwnProfile()
         loadOwnProfile(forceRefresh = false)
@@ -163,6 +173,10 @@ internal class PublicProfileViewModel(
             isFollowLoading = false, followError = null, isLoadingFavorites = false,
             isLoadingActivity = false, isLoadingConnections = false, isLoadingMoreConnections = false) }
         profileJob = scope.launch {
+            if (!visibility.visibility.value.ready && visibility.refresh().isFailure) {
+                if (isCurrent(requestGeneration, requestAccount)) _state.update { it.copy(isLoading = false, error = "Не удалось загрузить блокировки. Повторите попытку.") }
+                return@launch
+            }
             val result = repository.getProfile(slug)
             currentCoroutineContext().ensureActive()
             if (!isCurrent(requestGeneration, requestAccount)) return@launch
@@ -170,6 +184,11 @@ internal class PublicProfileViewModel(
                 val isOwn = isOwnProfile(profile)
                 _state.update { it.copy(isLoading = false, profile = profile, error = null,
                     isOwnProfile = isOwn, isFollowing = !isOwn && profile.isFollowing) }
+                if (profile.isBlockedByViewer || visibility.visibility.value.hides(profile.authorId, profile.slug)) {
+                    _state.update { it.copy(profile = profile.copy(isBlockedByViewer = true, favorites = emptyList(), activity = null),
+                        checkIns = emptyList(), connections = emptyList(), isFollowing = false, hasMoreCheckIns = false) }
+                    return@onSuccess
+                }
                 loadCheckIns(reset = true)
                 retryFavorites()
                 retryActivity()
@@ -185,8 +204,8 @@ internal class PublicProfileViewModel(
 
     fun toggleFollow() {
         val current = state.value
-        val profile = current.profile ?: return
-        if (current.isFollowLoading || current.isLoading || current.isOwnProfile || isOwnProfile(profile)) return
+        val profile = current.profile?.takeUnless { it.isBlockedByViewer } ?: return
+        if (profile.isBlockedByViewer || current.isFollowLoading || current.isLoading || current.isOwnProfile || isOwnProfile(profile)) return
         val requestAccount = sessionKey(sessions.peekSession())
         if (requestAccount == null) { _state.update { it.copy(needsLogin = true) }; return }
         if (requestAccount != account) return
@@ -230,7 +249,7 @@ internal class PublicProfileViewModel(
     fun loginHandled() { _state.update { it.copy(needsLogin = false) } }
 
     fun retryFavorites() {
-        val profile = state.value.profile ?: return
+        val profile = state.value.profile?.takeUnless { it.isBlockedByViewer } ?: return
         if (state.value.isLoading) return
         favoritesJob?.cancel()
         val requestGeneration = generation
@@ -254,7 +273,7 @@ internal class PublicProfileViewModel(
 
     fun retryActivity() {
         val current = state.value
-        val profile = current.profile ?: return
+        val profile = current.profile?.takeUnless { it.isBlockedByViewer } ?: return
         if (current.isLoading) return
         activityJob?.cancel()
         val period = current.activityMonth
@@ -295,7 +314,7 @@ internal class PublicProfileViewModel(
 
     private fun loadConnections(reset: Boolean) {
         val current = state.value
-        val profile = current.profile ?: return
+        val profile = current.profile?.takeUnless { it.isBlockedByViewer } ?: return
         val kind = current.connectionKind ?: return
         if (current.isLoading || current.isLoadingConnections || current.isLoadingMoreConnections) return
         val page = if (reset) 1 else connectionsPage + 1
@@ -328,7 +347,7 @@ internal class PublicProfileViewModel(
     }
 
     private fun loadCheckIns(reset: Boolean) {
-        val profile = state.value.profile ?: return
+        val profile = state.value.profile?.takeUnless { it.isBlockedByViewer } ?: return
         val cursor = if (reset) null else nextCursor
         val requestGeneration = generation
         val requestAccount = account

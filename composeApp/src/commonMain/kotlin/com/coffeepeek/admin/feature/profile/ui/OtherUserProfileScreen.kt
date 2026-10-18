@@ -84,6 +84,9 @@ internal fun UserProfileScreen(
     val state by vm.state.collectAsState()
     var section by remember(slug) { mutableStateOf<ProfileSection?>(null) }
     var photos by remember(slug) { mutableStateOf<ProfilePhotos?>(null) }
+    val blocks = org.koin.compose.koinInject<com.coffeepeek.admin.feature.authorblocking.api.AuthorBlockActions>()
+    val authorVisibility by vm.authorVisibility.collectAsState()
+    LaunchedEffect(authorVisibility.revision, state.profile?.slug) { photos = null; section = null }
     val profile = state.profile
     val viewingOwnProfile = isOwnProfile || state.isOwnProfile
     LaunchedEffect(state.needsLogin) {
@@ -130,7 +133,20 @@ internal fun UserProfileScreen(
                     fontWeight = FontWeight.SemiBold,
                     textAlign = TextAlign.Center,
                 )
-                if (topBarActions != null) Box(Modifier.align(Alignment.CenterEnd)) {
+                if (!viewingOwnProfile && profile != null) {
+                    val author = com.coffeepeek.admin.feature.authorblocking.api.AuthorReference(profile.authorId, profile.slug, profile.nickname, profile.avatarUrl)
+                    val items = buildList {
+                        if (!profile.isBlockedByViewer) profile.canonicalPath?.takeIf { it.startsWith("/") && !it.startsWith("//") }?.let { path ->
+                            add(com.coffeepeek.admin.ui.component.PlatformMenuItem("share", "Поделиться профилем", onClick = { ShareHelper.shareText("https://coffeepeek.by$path") }))
+                        }
+                        add(com.coffeepeek.admin.ui.component.PlatformMenuItem("block", if (profile.isBlockedByViewer) "Разблокировать автора" else "Заблокировать автора",
+                            icon = com.coffeepeek.admin.ui.component.PlatformMenuIcon.Block, destructive = !profile.isBlockedByViewer,
+                            onClick = { if (profile.isBlockedByViewer) blocks.requestUnblock(author) else blocks.requestBlock(author) }))
+                    }
+                    com.coffeepeek.admin.ui.component.PlatformMenuButton(items, "Действия с автором", Modifier.align(Alignment.CenterEnd)) { open ->
+                        IconButton(onClick = open) { Icon(CpIcons.MoreHorizontal, "Действия с автором") }
+                    }
+                } else if (topBarActions != null) Box(Modifier.align(Alignment.CenterEnd)) {
                     topBarActions()
                 } else profile?.canonicalPath?.takeIf { it.startsWith("/") && !it.startsWith("//") }?.let { path ->
                     PlatformGlassIconButton(
@@ -150,9 +166,9 @@ internal fun UserProfileScreen(
                     if (state.isLoading) {
                         PublicProfileHeader(
                             nickname = nickname?.takeIf(String::isNotBlank) ?: slug,
-                            avatarUrl = avatarUrl,
+                            avatarUrl = avatarUrl.takeUnless { authorVisibility.hides(null, slug) },
                             about = null,
-                            onAvatarClick = { avatarUrl?.let { photos = ProfilePhotos(listOf(it)) } },
+                            onAvatarClick = { if (!authorVisibility.hides(null, slug)) avatarUrl?.let { photos = ProfilePhotos(listOf(it)) } },
                         )
                         Box(Modifier.fillMaxWidth().height(160.dp), contentAlignment = Alignment.Center) { CoffeePeekLoader() }
                     } else Column(
@@ -169,6 +185,15 @@ internal fun UserProfileScreen(
                         Button(onClick = vm::refresh) { Text("Попробовать снова") }
                     }
                 }
+            } else if (profile.isBlockedByViewer) {
+                com.coffeepeek.admin.ui.component.CpEmptyState(
+                    title = "Автор заблокирован",
+                    message = "Публикации автора «${profile.nickname}» скрыты. Вы можете снять блокировку в любой момент.",
+                    icon = CpIcons.VisibilityOff,
+                    modifier = Modifier.padding(top = com.coffeepeek.admin.theme.CpDimens.spacing6),
+                    actionLabel = "Разблокировать",
+                    onAction = { blocks.requestUnblock(com.coffeepeek.admin.feature.authorblocking.api.AuthorReference(profile.authorId, profile.slug, profile.nickname, profile.avatarUrl)) },
+                )
             } else {
                 Column(
                     Modifier.fillMaxSize().verticalScroll(rememberScrollState())
@@ -236,6 +261,7 @@ internal fun UserProfileScreen(
                                         authorName = profile.nickname,
                                         authorAvatarUrl = profile.avatarUrl,
                                         isOwnProfile = viewingOwnProfile,
+                                        author = com.coffeepeek.admin.feature.authorblocking.api.AuthorReference(profile.authorId, profile.slug, profile.nickname, profile.avatarUrl),
                                     )
                                 }
                             }
@@ -259,7 +285,7 @@ internal fun UserProfileScreen(
 
     // Native sheet content can recompose while its controller is being dismissed.
     val selectedSection = section
-    if (selectedSection != null && profile != null) SwipeDismissModalBottomSheet(
+    if (selectedSection != null && profile != null && !profile.isBlockedByViewer) SwipeDismissModalBottomSheet(
         onDismissRequest = { section = null },
         maxSheetHeightFraction = 0.9f,
     ) {
@@ -293,6 +319,7 @@ internal fun UserProfileScreen(
                         authorName = profile.nickname,
                         authorAvatarUrl = profile.avatarUrl,
                         isOwnProfile = viewingOwnProfile,
+                        author = com.coffeepeek.admin.feature.authorblocking.api.AuthorReference(profile.authorId, profile.slug, profile.nickname, profile.avatarUrl),
                     )
                 }
                 if (state.isLoadingCheckIns || state.isLoadingMoreCheckIns) item {

@@ -5,6 +5,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import com.coffeepeek.admin.feature.catalog.api.methodLabel
 import com.coffeepeek.admin.feature.checkin.api.CheckInTimelineContent
+import com.coffeepeek.admin.ui.component.blockableAuthor
 import com.coffeepeek.admin.ui.component.CheckInActions
 import com.coffeepeek.domain.feature.feed.FeedHomePreparation
 import com.coffeepeek.domain.model.CheckIn
@@ -43,6 +44,7 @@ internal fun TimelineCheckInCard(
                 onHideClick = onVisibility.takeIf { isOwn && checkIn.visibility == CheckInVisibility.Public },
                 enabled = canAct,
                 isHiding = changingVisibility,
+                author = checkIn.blockableAuthor().takeIf { isPublicTimeline && !isOwn },
             )
         },
         supportingContent = {

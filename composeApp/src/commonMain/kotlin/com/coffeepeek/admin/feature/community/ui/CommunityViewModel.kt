@@ -25,7 +25,9 @@ import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.map
+import com.coffeepeek.admin.feature.authorblocking.api.AuthorVisibility
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.flow.updateAndGet
 import kotlinx.coroutines.launch
@@ -87,6 +89,7 @@ internal class CommunityViewModel(
     private val shops: ShopRepository,
     private val feed: FeedRepository,
     private val users: UserRepository,
+    private val visibility: AuthorVisibility = AuthorVisibility.None,
 ) : BaseViewModel() {
     private val _state = MutableStateFlow(CommunityUiState())
     val state = _state.asStateFlow()
@@ -102,6 +105,18 @@ internal class CommunityViewModel(
     private var profileJob: Job? = null
 
     init {
+        workScope.launch {
+            visibility.visibility.drop(1).collect { snapshot ->
+                if (state.value.timeline == CommunityTimeline.Public) {
+                    loadJob?.cancel(); mutationJob?.cancel()
+                    _state.update { it.copy(items = emptyList(), publishedAt = emptyMap(), nextCursor = null,
+                        sessionGeneration = it.sessionGeneration + 1, isLoading = false, isLoadingMore = false,
+                        helpfulId = null, reportingId = null, isReporting = false, changingVisibilityId = null,
+                        hasMore = false, page = 0) }
+                    if (snapshot.ready) load(reset = true)
+                }
+            }
+        }
         workScope.launch {
             sessions.observeSession().map(::sessionKey).distinctUntilChanged().collect { key ->
                 loadJob?.cancel()
@@ -196,6 +211,12 @@ internal class CommunityViewModel(
         }
         val request = workScope.launch(start = CoroutineStart.LAZY) {
             if (!isCurrent(key) || state.value.sessionGeneration != generation) return@launch
+            if (timeline == CommunityTimeline.Public && !visibility.visibility.value.ready) {
+                if (visibility.refresh().isFailure) {
+                    if (state.value.sessionGeneration == generation) _state.update { it.copy(isLoading = false, isLoadingMore = false, error = "Не удалось загрузить блокировки. Повторите попытку.") }
+                    return@launch
+                }
+            }
             val result = if (timeline == CommunityTimeline.Public) {
                 feed.getFeed(20, cursor, filters).map { feedPage ->
                     TimelinePage(feedPage.items.map { it.checkIn }, feedPage.nextCursor != null, feedPage.nextCursor,
@@ -204,7 +225,10 @@ internal class CommunityViewModel(
             } else checkIns.getMyCheckIns(page, 20).map { TimelinePage(it.items, it.currentPage < it.totalPages) }
             currentCoroutineContext().ensureActive()
             if (!isCurrent(key)) return@launch
-            result.onSuccess { resultPage ->
+            result.onSuccess { loadedPage ->
+                val resultPage = if (timeline == CommunityTimeline.Public) loadedPage.copy(items = loadedPage.items.filterNot {
+                    visibility.visibility.value.hides(it.authorId, it.authorAddress?.slug)
+                }) else loadedPage
                 _state.update {
                     if (it.sessionGeneration != generation || !isCurrent(key)) it else it.copy(
                         items = if (reset) resultPage.items.distinctBy(CheckIn::id) else appendTimeline(it.items, resultPage.items),

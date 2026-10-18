@@ -165,6 +165,8 @@ fun ShopDetailScreen(shopId: String, forCheckIn: Boolean = false) {
         }
     }
 
+    val authorVisibility by vm.authorVisibility.collectAsState()
+    androidx.compose.runtime.LaunchedEffect(authorVisibility.revision, state.isLoggedIn) { preview = null }
     preview?.let { (urls, index) ->
         FullScreenImageDialog(imageUrls = urls, initialIndex = index, onDismiss = { preview = null })
     }
