@@ -10,8 +10,12 @@ import com.coffeepeek.admin.ui.component.PlatformAction
 import org.junit.Assert.assertTrue
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createComposeRule
-import com.coffeepeek.admin.feature.authorblocking.api.*
+import com.coffeepeek.feature.authorblocking.api.*
 import com.coffeepeek.admin.ui.component.CheckInActions
+import com.coffeepeek.admin.feature.community.ui.TimelineCheckInCard
+import com.coffeepeek.domain.model.CheckIn
+import com.coffeepeek.domain.model.CheckInVisibility
+import com.coffeepeek.domain.model.PublicAddress
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
@@ -41,6 +45,23 @@ class AuthorBlockingMenuTest {
         compose.onNodeWithText("Скрыть").assertIsDisplayed()
         compose.onNodeWithText("Заблокировать автора").assertDoesNotExist()
         compose.onNodeWithText("Пожаловаться").assertDoesNotExist()
+    }
+
+    @Test fun publicTimelineWithUnknownViewerIdentityOffersReportWithoutBlock() {
+        val post = CheckIn("post", "shop", "Coffee", "Note", "2026-10-18T09:15:00Z",
+            username = "Автор", authorId = "public-author",
+            authorAddress = PublicAddress("author", "/users/author", 1, false), visibility = CheckInVisibility.Public)
+        compose.setContent {
+            CoffeePeekTheme {
+                TimelineCheckInCard(post, isOwn = false, isPublicTimeline = true, canAct = true,
+                    changingVisibility = false, onShopClick = {}, onEdit = {}, onVisibility = {},
+                    onHelpful = {}, onReport = {}, onPhotoClick = { _, _ -> }, canBlockAuthor = false)
+            }
+        }
+        compose.onNodeWithContentDescription("Действия с чекином").performClick()
+        compose.onNodeWithText("Пожаловаться").assertIsDisplayed()
+        compose.onNodeWithText("Заблокировать автора").assertDoesNotExist()
+        compose.onNodeWithText("Редактировать").assertDoesNotExist()
     }
     @Test fun largeTextKeepsConfirmationAndCancelSeparateAndReachable() {
         var confirmed = 0

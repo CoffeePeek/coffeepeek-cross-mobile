@@ -150,7 +150,7 @@ internal fun PublicProfileCheckInCard(
     authorName: String = "",
     authorAvatarUrl: String? = null,
     isOwnProfile: Boolean = false,
-    author: com.coffeepeek.admin.feature.authorblocking.api.AuthorReference? = null,
+    author: com.coffeepeek.feature.authorblocking.api.AuthorReference? = null,
 ) {
     val source = checkIn.source ?: checkIn.legacyPresentation()
     CheckInTimelineContent(

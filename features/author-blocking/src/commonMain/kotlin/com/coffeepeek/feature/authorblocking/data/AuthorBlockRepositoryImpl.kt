@@ -1,8 +1,8 @@
-package com.coffeepeek.admin.feature.authorblocking.data
+package com.coffeepeek.feature.authorblocking.data
 
-import com.coffeepeek.admin.feature.authorblocking.api.AuthorVisibility
-import com.coffeepeek.admin.feature.authorblocking.api.AuthorVisibilitySnapshot
-import com.coffeepeek.admin.feature.authorblocking.domain.*
+import com.coffeepeek.feature.authorblocking.api.AuthorVisibility
+import com.coffeepeek.feature.authorblocking.api.AuthorVisibilitySnapshot
+import com.coffeepeek.feature.authorblocking.domain.*
 import com.coffeepeek.domain.model.Session
 import com.coffeepeek.domain.repository.SessionRepository
 import io.ktor.client.HttpClient
@@ -148,7 +148,11 @@ internal class AuthorBlockRepositoryImpl(
             page.items.forEach { dto ->
                 check(dto.authorId.isNotBlank())
                 items[dto.authorId] = BlockedAuthor(dto.authorId, dto.userName, dto.address?.slug,
-                    dto.avatarUrl?.let { URLBuilder(response.call.request.url).takeFrom(it).buildString() })
+                    dto.avatarUrl?.let { avatar -> URLBuilder(response.call.request.url).apply {
+                        parameters.clear()
+                        fragment = ""
+                        takeFrom(avatar)
+                    }.buildString() })
             }
             cursor = page.nextCursor
             check(cursor == null || cursors.add(cursor)) { "Некорректный ответ сервера" }

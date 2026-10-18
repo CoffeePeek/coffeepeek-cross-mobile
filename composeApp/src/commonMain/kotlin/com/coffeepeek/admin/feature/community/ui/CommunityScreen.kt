@@ -135,6 +135,7 @@ fun CommunityScreen(onCreateCheckIn: () -> Unit) {
                                     TimelineCheckInCard(
                                         checkIn = checkIn,
                                         isOwn = state.owns(checkIn),
+                                        canBlockAuthor = state.canBlockAuthor(checkIn),
                                         isPublicTimeline = state.timeline == CommunityTimeline.Public,
                                         canAct = !state.isMutating,
                                         changingVisibility = state.changingVisibilityId == checkIn.id,

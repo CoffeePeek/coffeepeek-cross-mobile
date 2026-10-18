@@ -1,4 +1,4 @@
-package com.coffeepeek.admin.feature.authorblocking.domain
+package com.coffeepeek.feature.authorblocking.domain
 
 import kotlinx.coroutines.flow.StateFlow
 

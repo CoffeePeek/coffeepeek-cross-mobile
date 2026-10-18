@@ -17,7 +17,8 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.coffeepeek.admin.feature.authorblocking.api.AuthorReference
+import com.coffeepeek.feature.authorblocking.api.AuthorReference
+import com.coffeepeek.feature.authorblocking.api.AuthorBlockingPresenter
 import com.coffeepeek.admin.theme.CpDimens
 import com.coffeepeek.admin.ui.Navigator
 import com.coffeepeek.admin.ui.component.*
@@ -25,7 +26,7 @@ import com.coffeepeek.admin.ui.icons.CpIcons
 import org.koin.compose.koinInject
 
 @Composable
-internal fun BlockedAuthorsScreen(vm: AuthorBlockingViewModel = koinInject()) {
+internal fun BlockedAuthorsScreen(vm: AuthorBlockingPresenter = koinInject()) {
     val state by vm.blocks.collectAsState()
     val prompt by vm.prompt.collectAsState()
     val colors = MaterialTheme.colorScheme

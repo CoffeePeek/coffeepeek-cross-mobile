@@ -27,6 +27,7 @@ internal fun TimelineCheckInCard(
     onPhotoClick: (List<String>, Int) -> Unit,
     modifier: Modifier = Modifier,
     onAuthorClick: (() -> Unit)? = null,
+    canBlockAuthor: Boolean = !isOwn,
 ) {
     CheckInTimelineContent(
         checkIn = checkIn,
@@ -44,7 +45,7 @@ internal fun TimelineCheckInCard(
                 onHideClick = onVisibility.takeIf { isOwn && checkIn.visibility == CheckInVisibility.Public },
                 enabled = canAct,
                 isHiding = changingVisibility,
-                author = checkIn.blockableAuthor().takeIf { isPublicTimeline && !isOwn },
+                author = checkIn.blockableAuthor().takeIf { isPublicTimeline && !isOwn && canBlockAuthor },
             )
         },
         supportingContent = {

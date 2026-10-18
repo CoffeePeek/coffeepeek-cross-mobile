@@ -24,6 +24,7 @@ object Modules {
 
     object Features {
         const val homeCheckIn = ":features:home-checkin"
+        const val authorBlocking = ":features:author-blocking"
     }
 
     val all: List<String> = listOf(
@@ -37,6 +38,7 @@ object Modules {
         core.database,
         core.designSystem,
         features.homeCheckIn,
+        features.authorBlocking,
     )
 }
 

@@ -13,10 +13,10 @@ internal fun CheckInActions(
     onHideClick: (() -> Unit)? = null,
     enabled: Boolean = true,
     isHiding: Boolean = false,
-    author: com.coffeepeek.admin.feature.authorblocking.api.AuthorReference? = null,
-    blockActions: com.coffeepeek.admin.feature.authorblocking.api.AuthorBlockActions? = null,
+    author: com.coffeepeek.feature.authorblocking.api.AuthorReference? = null,
+    blockActions: com.coffeepeek.feature.authorblocking.api.AuthorBlockActions? = null,
 ) {
-    val blocking = blockActions ?: if (author != null) org.koin.compose.koinInject<com.coffeepeek.admin.feature.authorblocking.api.AuthorBlockActions>() else null
+    val blocking = blockActions ?: if (author != null) org.koin.compose.koinInject<com.coffeepeek.feature.authorblocking.api.AuthorBlockActions>() else null
     if (onEditClick == null && onReportClick == null && onHideClick == null && author == null) return
     val items = buildList {
         if (author != null && blocking != null) add(PlatformMenuItem("block", "Заблокировать автора", enabled = enabled,

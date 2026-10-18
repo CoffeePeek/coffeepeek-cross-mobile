@@ -27,7 +27,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.map
-import com.coffeepeek.admin.feature.authorblocking.api.AuthorVisibility
+import com.coffeepeek.feature.authorblocking.api.AuthorVisibility
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.flow.updateAndGet
 import kotlinx.coroutines.launch
@@ -78,6 +78,13 @@ internal data class CommunityUiState(
         timeline == CommunityTimeline.Mine ||
             (ownAuthorSlug != null && checkIn.authorAddress?.slug == ownAuthorSlug)
         )
+    // Public author IDs differ from authentication user IDs. Wait for the canonical
+    // profile slug before offering a signed-in viewer an author-blocking action.
+    fun canBlockAuthor(checkIn: CheckIn): Boolean = timeline == CommunityTimeline.Public && when (isLoggedIn) {
+        false -> true // A guest may open the existing sign-in prompt.
+        true -> ownAuthorSlug != null && !owns(checkIn)
+        null -> false
+    }
     val isMutating: Boolean get() = isSaving || changingVisibilityId != null || helpfulId != null || isReporting
 }
 

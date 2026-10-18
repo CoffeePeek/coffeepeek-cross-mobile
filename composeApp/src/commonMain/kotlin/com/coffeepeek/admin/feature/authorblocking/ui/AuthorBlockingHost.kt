@@ -4,12 +4,13 @@ import androidx.compose.runtime.*
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import com.coffeepeek.feature.authorblocking.api.AuthorBlockingPresenter
 import com.coffeepeek.admin.ui.Navigator
 import com.coffeepeek.admin.ui.component.*
 import org.koin.compose.koinInject
 
 @Composable
-internal fun AuthorBlockingHost(vm: AuthorBlockingViewModel = koinInject()) {
+internal fun AuthorBlockingHost(vm: AuthorBlockingPresenter = koinInject()) {
     val prompt by vm.prompt.collectAsState()
     val needsLogin by vm.needsLogin.collectAsState()
     val lifecycle = LocalLifecycleOwner.current.lifecycle
@@ -31,12 +32,13 @@ internal fun AuthorBlockingHost(vm: AuthorBlockingViewModel = koinInject()) {
         val message = if (current.blocked) "Вы перестанете видеть публикации друг друга. Подписки друг на друга будут удалены. Автор не получит уведомление."
             else "Публикации автора снова смогут появляться в ленте. Прежние подписки не восстановятся."
         val label = if (current.blocked) "Заблокировать" else "Разблокировать"
+        val error = current.error
         when {
             current.working -> CpOperationStatus(if (current.blocked) "Блокируем автора…" else "Разблокируем автора…")
-            current.error != null -> {
+            error != null -> {
                 val errorTitle = "Не удалось сохранить"
-                if (!NativeAlert(errorTitle, current.error, "Повторить", vm::confirm, vm::dismiss, "Отмена")) {
-                    CpActionSheet(errorTitle, current.error, listOf(PlatformAction("Повторить", onClick = vm::confirm)), vm::dismiss)
+                if (!NativeAlert(errorTitle, error, "Повторить", vm::confirm, vm::dismiss, "Отмена")) {
+                    CpActionSheet(errorTitle, error, listOf(PlatformAction("Повторить", onClick = vm::confirm)), vm::dismiss)
                 }
             }
             else -> {

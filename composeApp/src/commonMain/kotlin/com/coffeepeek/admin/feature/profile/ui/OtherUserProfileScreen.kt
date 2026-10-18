@@ -84,7 +84,7 @@ internal fun UserProfileScreen(
     val state by vm.state.collectAsState()
     var section by remember(slug) { mutableStateOf<ProfileSection?>(null) }
     var photos by remember(slug) { mutableStateOf<ProfilePhotos?>(null) }
-    val blocks = org.koin.compose.koinInject<com.coffeepeek.admin.feature.authorblocking.api.AuthorBlockActions>()
+    val blocks = org.koin.compose.koinInject<com.coffeepeek.feature.authorblocking.api.AuthorBlockActions>()
     val authorVisibility by vm.authorVisibility.collectAsState()
     LaunchedEffect(authorVisibility.revision, state.profile?.slug) { photos = null; section = null }
     val profile = state.profile
@@ -134,7 +134,7 @@ internal fun UserProfileScreen(
                     textAlign = TextAlign.Center,
                 )
                 if (!viewingOwnProfile && profile != null) {
-                    val author = com.coffeepeek.admin.feature.authorblocking.api.AuthorReference(profile.authorId, profile.slug, profile.nickname, profile.avatarUrl)
+                    val author = com.coffeepeek.feature.authorblocking.api.AuthorReference(profile.authorId, profile.slug, profile.nickname, profile.avatarUrl)
                     val items = buildList {
                         if (!profile.isBlockedByViewer) profile.canonicalPath?.takeIf { it.startsWith("/") && !it.startsWith("//") }?.let { path ->
                             add(com.coffeepeek.admin.ui.component.PlatformMenuItem("share", "Поделиться профилем", onClick = { ShareHelper.shareText("https://coffeepeek.by$path") }))
@@ -192,7 +192,7 @@ internal fun UserProfileScreen(
                     icon = CpIcons.VisibilityOff,
                     modifier = Modifier.padding(top = com.coffeepeek.admin.theme.CpDimens.spacing6),
                     actionLabel = "Разблокировать",
-                    onAction = { blocks.requestUnblock(com.coffeepeek.admin.feature.authorblocking.api.AuthorReference(profile.authorId, profile.slug, profile.nickname, profile.avatarUrl)) },
+                    onAction = { blocks.requestUnblock(com.coffeepeek.feature.authorblocking.api.AuthorReference(profile.authorId, profile.slug, profile.nickname, profile.avatarUrl)) },
                 )
             } else {
                 Column(
@@ -261,7 +261,7 @@ internal fun UserProfileScreen(
                                         authorName = profile.nickname,
                                         authorAvatarUrl = profile.avatarUrl,
                                         isOwnProfile = viewingOwnProfile,
-                                        author = com.coffeepeek.admin.feature.authorblocking.api.AuthorReference(profile.authorId, profile.slug, profile.nickname, profile.avatarUrl),
+                                        author = com.coffeepeek.feature.authorblocking.api.AuthorReference(profile.authorId, profile.slug, profile.nickname, profile.avatarUrl),
                                     )
                                 }
                             }
@@ -319,7 +319,7 @@ internal fun UserProfileScreen(
                         authorName = profile.nickname,
                         authorAvatarUrl = profile.avatarUrl,
                         isOwnProfile = viewingOwnProfile,
-                        author = com.coffeepeek.admin.feature.authorblocking.api.AuthorReference(profile.authorId, profile.slug, profile.nickname, profile.avatarUrl),
+                        author = com.coffeepeek.feature.authorblocking.api.AuthorReference(profile.authorId, profile.slug, profile.nickname, profile.avatarUrl),
                     )
                 }
                 if (state.isLoadingCheckIns || state.isLoadingMoreCheckIns) item {

@@ -81,7 +81,7 @@ fun initKoin() {
     com.coffeepeek.admin.analytics.installAnalytics(database.settingRepository, application.koin.get(), application.koin.get())
     com.coffeepeek.admin.utils.image.ProtectedPhotoSession.install(
         application.koin.get(), application.koin.get<CoffeePeekClient>().client,
-        application.koin.get<com.coffeepeek.admin.feature.authorblocking.api.AuthorVisibility>().visibility,
+        application.koin.get<com.coffeepeek.feature.authorblocking.api.AuthorVisibility>().visibility,
     )
 }
 
@@ -107,11 +107,10 @@ private fun appModule(settingRepository: com.coffeepeek.room.repository.SettingR
     factory { HomeCheckInViewModel(get(), get(), get(), get()) }
     factory { CoffeeListViewModel(get()) }
     factory { (slug: String) -> CoffeeDetailViewModel(slug, get()) }
-    single { com.coffeepeek.admin.feature.authorblocking.data.AuthorBlockRepositoryImpl(get<CoffeePeekClient>().client, get()) }
-    single<com.coffeepeek.admin.feature.authorblocking.domain.AuthorBlockRepository> { get<com.coffeepeek.admin.feature.authorblocking.data.AuthorBlockRepositoryImpl>() }
-    single<com.coffeepeek.admin.feature.authorblocking.api.AuthorVisibility> { get<com.coffeepeek.admin.feature.authorblocking.data.AuthorBlockRepositoryImpl>() }
-    single { com.coffeepeek.admin.feature.authorblocking.ui.AuthorBlockingViewModel(get(), get()) }
-    single<com.coffeepeek.admin.feature.authorblocking.api.AuthorBlockActions> { get<com.coffeepeek.admin.feature.authorblocking.ui.AuthorBlockingViewModel>() }
+    single { com.coffeepeek.feature.authorblocking.api.createAuthorBlockingFeature(get<CoffeePeekClient>().client, get()) }
+    single<com.coffeepeek.feature.authorblocking.api.AuthorVisibility> { get<com.coffeepeek.feature.authorblocking.api.AuthorBlockingFeature>().visibility }
+    single<com.coffeepeek.feature.authorblocking.api.AuthorBlockingPresenter> { get<com.coffeepeek.feature.authorblocking.api.AuthorBlockingFeature>().presenter }
+    single<com.coffeepeek.feature.authorblocking.api.AuthorBlockActions> { get<com.coffeepeek.feature.authorblocking.api.AuthorBlockingPresenter>() }
     single<PublicProfileRepository> { PublicProfileRepositoryImpl(get<CoffeePeekClient>().client, get(), get(), get()) }
     factory { (slug: String) -> PublicProfileViewModel(slug, get(), get(), users = get(), visibility = get()) }
     single<RoasterFavorites> { ServerRoasterFavorites(get(), get()) }

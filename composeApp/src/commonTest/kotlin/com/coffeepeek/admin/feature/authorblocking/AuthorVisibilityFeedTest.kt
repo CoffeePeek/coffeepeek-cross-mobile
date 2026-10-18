@@ -1,6 +1,6 @@
 package com.coffeepeek.admin.feature.authorblocking
 
-import com.coffeepeek.admin.feature.authorblocking.api.*
+import com.coffeepeek.feature.authorblocking.api.*
 import com.coffeepeek.admin.feature.community.ui.*
 import com.coffeepeek.domain.feature.feed.*
 import com.coffeepeek.domain.model.*

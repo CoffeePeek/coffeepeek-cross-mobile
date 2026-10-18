@@ -9,8 +9,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.test.platform.app.InstrumentationRegistry
-import com.coffeepeek.admin.feature.authorblocking.api.*
-import com.coffeepeek.admin.feature.authorblocking.domain.*
+import com.coffeepeek.feature.authorblocking.api.*
 import com.coffeepeek.admin.feature.authorblocking.ui.*
 import com.coffeepeek.admin.feature.community.ui.*
 import com.coffeepeek.admin.feature.profile.domain.*
@@ -46,7 +45,7 @@ class AuthorBlockingFlowScreenshotsTest {
     @Test fun captureCompleteFlowAndAlternateStates() {
         val sessions = ScreenshotSessions(Session("screenshot-only", userId = "viewer"))
         val blocks = ScreenshotBlocks()
-        val blockVm = AuthorBlockingViewModel(blocks, sessions)
+        val blockVm = ScreenshotBlockPresenter(blocks, sessions)
         val users = ScreenshotUsers()
         val other = post.copy(id = "max-check-in", username = "Максим", authorId = "public-max",
             authorAddress = PublicAddress("max-brews", "/users/max-brews", 1, false), shopName = "Why Knot", note = "Фильтр на Эфиопии: яркая ягода и приятная кислотность.", helpfulCount = 7)
@@ -220,8 +219,9 @@ class AuthorBlockingFlowScreenshotsTest {
     }
 }
 
-private class ScreenshotBlocks : AuthorBlockRepository, AuthorVisibility {
-    override val state = MutableStateFlow(AuthorBlocksState(signedIn = true, ready = true))
+/** Public presentation/visibility fixtures; the feature module tests its real repository and presenter. */
+private class ScreenshotBlocks : AuthorVisibility {
+    val state = MutableStateFlow(AuthorBlockingListState(signedIn = true, ready = true))
     override val visibility = MutableStateFlow(AuthorVisibilitySnapshot())
     @Volatile var nextMutation: CompletableDeferred<Result<Unit>>? = null
     @Volatile var listMode = "ready"
@@ -230,17 +230,46 @@ private class ScreenshotBlocks : AuthorBlockRepository, AuthorVisibility {
         state.update { it.copy(loading = listMode == "loading", error = if (listMode == "error") "Не удалось загрузить блокировки. Повторите попытку." else null) }
         return Result.success(Unit)
     }
-    override suspend fun setBlocked(id: String?, slug: String?, name: String, avatarUrl: String?, blocked: Boolean): Result<Unit> {
+    suspend fun setBlocked(author: AuthorReference, blocked: Boolean): Result<Unit> {
         writes++
         val result = nextMutation?.await() ?: Result.success(Unit)
         result.onSuccess {
-            state.update { previous -> previous.copy(items = previous.items.filterNot { it.id == id }.let {
-                if (blocked) it + BlockedAuthor(requireNotNull(id), name, slug, avatarUrl) else it
+            state.update { previous -> previous.copy(items = previous.items.filterNot { it.id == author.id }.let {
+                if (blocked) it + BlockedAuthorItem(requireNotNull(author.id), author.name, author.slug, author.avatarUrl) else it
             }) }
             visibility.update { AuthorVisibilitySnapshot(it.revision + 1, blockedIds = state.value.items.mapTo(mutableSetOf()) { it.id }, blockedSlugs = state.value.items.mapNotNullTo(mutableSetOf()) { it.slug }) }
         }
         return result
     }
+}
+
+private class ScreenshotBlockPresenter(
+    private val fixture: ScreenshotBlocks,
+    private val sessions: ScreenshotSessions,
+) : AuthorBlockingPresenter {
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
+    override val blocks = fixture.state
+    override val prompt = MutableStateFlow<AuthorBlockPrompt?>(null)
+    override val needsLogin = MutableStateFlow(false)
+    override fun requestBlock(author: AuthorReference) = request(author, true)
+    override fun requestUnblock(author: AuthorReference) = request(author, false)
+    private fun request(author: AuthorReference, blocked: Boolean) {
+        if (!sessions.isActiveSession(sessions.peekSession())) needsLogin.value = true
+        else prompt.value = AuthorBlockPrompt(author, blocked)
+    }
+    override fun dismiss() { if (prompt.value?.working != true) prompt.value = null }
+    override fun loginHandled() { needsLogin.value = false }
+    override fun refresh() { scope.launch { fixture.refresh() } }
+    override fun confirm() {
+        val request = prompt.value?.takeUnless { it.working } ?: return
+        prompt.value = request.copy(working = true)
+        scope.launch {
+            fixture.setBlocked(request.author, request.blocked)
+                .onSuccess { prompt.value = null }
+                .onFailure { prompt.value = request.copy(error = "Не удалось сохранить блокировку. Проверьте подключение и повторите попытку.") }
+        }
+    }
+    override fun close() { scope.cancel() }
 }
 
 private class ScreenshotProfileRepository(private val blocks: ScreenshotBlocks, private val post: CheckIn) : PublicProfileRepository {

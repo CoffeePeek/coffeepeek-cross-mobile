@@ -1,6 +1,6 @@
 package com.coffeepeek.admin.ui.component
 
-import com.coffeepeek.admin.feature.authorblocking.api.AuthorReference
+import com.coffeepeek.feature.authorblocking.api.AuthorReference
 import com.coffeepeek.domain.model.CheckIn
 
 internal fun CheckIn.blockableAuthor(): AuthorReference? =

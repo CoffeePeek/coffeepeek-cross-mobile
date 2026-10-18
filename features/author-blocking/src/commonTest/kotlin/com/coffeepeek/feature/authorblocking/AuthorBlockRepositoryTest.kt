@@ -1,10 +1,11 @@
-package com.coffeepeek.admin.feature.authorblocking
+package com.coffeepeek.feature.authorblocking
 
-import com.coffeepeek.admin.feature.authorblocking.data.AuthorBlockRepositoryImpl
+import com.coffeepeek.feature.authorblocking.data.AuthorBlockRepositoryImpl
 import com.coffeepeek.core.network.HttpClientFactory
 import com.coffeepeek.domain.model.Session
 import com.coffeepeek.domain.repository.SessionRepository
 import io.ktor.client.engine.mock.*
+import io.ktor.client.plugins.defaultRequest
 import io.ktor.http.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
@@ -61,6 +62,28 @@ class AuthorBlockRepositoryTest {
             assertFalse(repo.visibility.value.hides("new", null))
             assertTrue(repo.refresh().isFailure)
             assertEquals(setOf("existing"), repo.visibility.value.blockedIds)
+        } finally { repo.close(); client.close() }
+    }
+
+    @Test fun avatarUrlsOnEveryPageKeepTheirOwnQueryWithoutInheritingListQueryOrFragment(): Unit = runBlocking {
+        val cursors = mutableListOf<String?>()
+        val client = HttpClientFactory(MockEngine { request ->
+            cursors += request.url.parameters["cursor"]
+            assertEquals("100", request.url.parameters["pageSize"])
+            val items = if (request.url.parameters["cursor"] == null)
+                """{"authorId":"plain","userName":"Author","avatarUrl":"/avatars/plain.png"},
+                    {"authorId":"relative","userName":"Author","avatarUrl":"/avatars/a.png?size=64"}"""
+            else """{"authorId":"absolute","userName":"Author","avatarUrl":"https://cdn.example/avatars/b.png?size=128#portrait"}"""
+            respond(page(items, if (cursors.size == 1) "second-page" else null), headers = headers)
+        }).api("https://api.example") {
+            defaultRequest { url.fragment = "list-only-fragment" }
+        }
+        val repo = AuthorBlockRepositoryImpl(client, BlockSessions(), scope())
+        try {
+            withTimeout(5_000) { repo.visibility.first { it.ready } }
+            assertEquals(listOf(null, "second-page"), cursors)
+            assertEquals(listOf("https://api.example/avatars/plain.png", "https://api.example/avatars/a.png?size=64",
+                "https://cdn.example/avatars/b.png?size=128#portrait"), repo.state.value.items.map { it.avatarUrl })
         } finally { repo.close(); client.close() }
     }
 
@@ -126,7 +149,7 @@ class AuthorBlockRepositoryTest {
     }
 }
 
-private class BlockSessions(initial: Session? = Session("token-a", userId = "a")) : SessionRepository {
+internal class BlockSessions(initial: Session? = Session("token-a", userId = "a")) : SessionRepository {
     private val session = MutableStateFlow(initial)
     override fun peekSession() = session.value
     override fun applySession(session: Session?) { this.session.value = session }

@@ -1,6 +1,6 @@
 package com.coffeepeek.admin.feature.profile.ui
 
-import com.coffeepeek.admin.feature.authorblocking.api.AuthorVisibility
+import com.coffeepeek.feature.authorblocking.api.AuthorVisibility
 import kotlinx.coroutines.flow.drop
 import androidx.lifecycle.ViewModel
 import com.coffeepeek.admin.feature.profile.domain.*

@@ -41,7 +41,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.updateAndGet
-import com.coffeepeek.admin.feature.authorblocking.api.AuthorVisibility
+import com.coffeepeek.feature.authorblocking.api.AuthorVisibility
 
 data class ShopDetailUiState(
     val drinks: List<ConsumedDrinkOption> = emptyList(),
