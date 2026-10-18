@@ -8,7 +8,6 @@ import android.location.LocationManager
 import android.os.Build
 import androidx.core.content.ContextCompat
 import androidx.core.location.LocationManagerCompat
-import androidx.core.os.CancellationSignal
 import com.coffeepeek.admin.locator.Locator
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.suspendCancellableCoroutine
@@ -43,18 +42,10 @@ actual object PlatformLocation {
         for (provider in providers) {
             if (!runCatching { locationManager.isProviderEnabled(provider) }.getOrDefault(false)) continue
             val current = withTimeoutOrNull(6_000) {
-                suspendCancellableCoroutine<android.location.Location?> { continuation ->
-                    val cancellation = CancellationSignal()
-                    continuation.invokeOnCancellation { cancellation.cancel() }
-                    try {
-                        LocationManagerCompat.getCurrentLocation(
-                            locationManager, provider, cancellation, ContextCompat.getMainExecutor(context),
-                        ) { location -> if (continuation.isActive) continuation.resume(location) }
-                    } catch (_: SecurityException) {
-                        if (continuation.isActive) continuation.resume(null)
-                    } catch (_: IllegalArgumentException) {
-                        if (continuation.isActive) continuation.resume(null)
-                    }
+                awaitCurrentLocation { cancellation, onLocation ->
+                    LocationManagerCompat.getCurrentLocation(
+                        locationManager, provider, cancellation, ContextCompat.getMainExecutor(context),
+                    ) { location -> onLocation(location) }
                 }
             }
             if (current != null) return@withContext GeoPoint(current.latitude, current.longitude)
