@@ -134,7 +134,7 @@ class CheckInPresentationTest {
                             SwipeDismissModalBottomSheet(onDismissRequest = {}) {
                                 HomeDetailContent(entry, Modifier.fillMaxWidth().heightIn(max = 680.dp),
                                     onEdit = { edits.incrementAndGet() }, onDelete = { deletes.incrementAndGet() },
-                                    onPhotoClick = { urls, index -> opened.set(urls to index) })
+                                    onPhotoClick = { images, index -> opened.set(images.previews to index) })
                             }
                         }
                     }

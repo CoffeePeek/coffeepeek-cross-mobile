@@ -50,6 +50,7 @@ import com.coffeepeek.admin.ui.component.CheckInDisplayCard
 import com.coffeepeek.admin.ui.component.CoffeePeekLoader
 import com.coffeepeek.admin.ui.component.CpTopBar
 import com.coffeepeek.admin.ui.component.FullScreenImageDialog
+import com.coffeepeek.admin.ui.component.PhotoViewerImages
 import com.coffeepeek.admin.ui.component.PlatformAlert
 import com.coffeepeek.admin.ui.component.PlatformScrollableColumn
 import com.coffeepeek.admin.ui.component.SwipeDismissModalBottomSheet
@@ -94,7 +95,7 @@ internal fun ProfileCheckInsScreen(
     var kind by remember { mutableStateOf(ActivityKind.All) }
     var showCreate by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(false) }
     var selectedShop by remember { mutableStateOf<CheckIn?>(null) }
-    var photoPreview by remember { mutableStateOf<Pair<List<String>, Int>?>(null) }
+    var photoPreview by remember { mutableStateOf<Pair<PhotoViewerImages, Int>?>(null) }
 
     LaunchedEffect(Unit) { shopVm.load(reset = true) }
     LaunchedEffect(initialHomeId) { initialHomeId?.let { homeVm.open(it, editOnLoad = true) } }
@@ -156,7 +157,7 @@ internal fun ProfileCheckInsScreen(
             PlatformScrollableColumn(Modifier.fillMaxWidth().weight(1f, fill = false)) {
                 CheckInDisplayCard(checkIn, fullVersion = true,
                     modifier = Modifier.padding(horizontal = 16.dp),
-                    onPhotoClick = { urls, index -> photoPreview = urls to index })
+                    onPhotoClick = { urls, index -> photoPreview = PhotoViewerImages(urls) to index })
                 if (checkIn.shopId.isNotBlank()) TextButton(onClick = {
                     selectedShop = null
                     Navigator.navigate(Navigator.Screen.ShopDetail(checkIn.shopId))
