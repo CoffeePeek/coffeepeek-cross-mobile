@@ -9,6 +9,66 @@ the new Home form/data. Scoped Android compatibility cleanup is complete;
 profile Activity and shared/iOS paths remain legacy. Broader physical-device
 and live acceptance gates are not feature-complete.
 
+## Photo-picker cancellation and populated detail contracts — 2026-10-18
+
+Source: 3cac958 plus this test-only diff. Re-fetched main remains 0137ee7,
+already an ancestor. Same Home PR #99 -> history #95; no runtime implementation,
+dependency, application binding, feature boundary or iOS source is changed.
+
+- On physical Pixel 7 (API 37, 1080x2400/density 420), continued the previously
+  verified Direct Debug 1.0.648 app. Opened Home from the feed and scrolled to
+  its photo-source menu. Opened Android's real system photopicker, cancelled with
+  Back, and repeated the entire picker-open/cancel sequence. Verified return to
+  the same usable form, **0/5 attachments**, enabled add/save controls, then
+  cancelled the form and returned to feed. No photo was selected and no record,
+  favorite, account or consent was changed. Camera/permissions were not opened.
+- System picker verification inspected only the foreground component name;
+  no gallery screenshot/UI dump, thumbnail or private photo was read. App-only
+  sanitized UI dumps remain local, outside Git. This proves OS picker launch/
+  cancellation/relaunch, not URI decoding, image extraction, upload or save.
+- Existing detail tests already cover basic public-entry edit/delete/revocation.
+  Extended that same owner test class (no duplicate harness) with four missing
+  runtime paths: the full issued album/index and independent cutout callback
+  without a second detail request; retry of failed load with no fabricated row;
+  failed delete -> read refresh only -> cancellation/fresh confirmation before
+  another delete; stopped destination queues a successful delete result until
+  resume, uses the latest committed callback and never replays after another
+  stop/resume. Every operation uses an in-memory fake repository/media port.
+- Targeted new cases **4/4** pass on the Pixel 7, first run (7.7s). Same-package
+  instrumentation host, generic Application, no INTERNET/production Koin/account.
+  Fixture APK SHA-256:
+  739e4fc5582c8fcd10a06a6dcbf1a9018f860347ecd05be0630abf0bae0c4240.
+  Log: coffeepeek-home-detail-runtime-targeted-2026-10-18.log; fixture build:
+  coffeepeek-home-detail-runtime-build-2026-10-18.log (3s).
+  Studio inspection of the extended detail test reports no problems.
+- Complete expanded Home UI regression **40/40** passes on the same Pixel 7,
+  first full run in this slice, 83.6s, zero failures/skips/retries. Includes all
+  previous 36 cases and the four new runtime cases. Log:
+  coffeepeek-home-media-ui-full-2026-10-18.log. No harness/product fix or weakened
+  assertion was needed. The earlier 35/36 locale-selector failure is retained
+  in the preceding slice's record below, not hidden by this run.
+- Selected unit regression remains **1054** passing results, zero failures/
+  errors/skips (Home 117, legacy Home 16, history 54, presentation 3, app Direct/
+  Play 432 each; includes valid up-to-date results). Both app APKs/DEX guards
+  and both app instrumentation compilations pass (30s). App-targeted tests are
+  still compiled only; the executed fixture is self-targeted. Native was not
+  rerun for this Android test-only change; its last global-slice pass is below.
+  Build log: coffeepeek-home-media-regression-2026-10-18.log. New app APKs are
+  Direct/Play Debug **1.0.649**, assembled but not deployed: the actual phone
+  checks above used the previously verified **1.0.648** without a new install.
+  Runtime source is unchanged; this distinction does not establish an installed
+  revision from the version number alone.
+
+New app APK SHA-256, Direct:
+8d1034908a45228f2900476e1e3b70524b0518454803846586e92247a988d449;
+Play: c58a8e283fe7487f962d75753e0c31ba67a5b4a6599600403ecef265a9e1a53e.
+
+Remaining actual release gates: populated live history/detail/edit and protected
+photos; real image selection/decoding/extraction, camera/permission and upload;
+broader IME/window/recreation; explicitly authorized live CRUD/account/consent
+acceptance using a safe test setup. Fake successful deletes are not live deletion
+or analytics acceptance, and the empty real account was not populated for testing.
+
 ## Android compatibility cleanup and Pixel 7 verification — 2026-10-18
 
 Source/build identity: b057e51 plus this cleanup/test diff; re-fetched main
@@ -799,6 +859,8 @@ Bean selection and date/photo sheets are subordinate controls, not new features.
    - [x] Pixel 7 empty-history and global-feed Home create/cancel, date picker,
      current artwork, modal placement and numeric IME/footer read-only checks.
      Populated/protected-media, broader IME and release gates remain below.
+   - [x] Real Pixel 7 OS gallery open/cancel/relaunch, with no photo selection.
+     Actual decoding/extraction, camera/permission and upload remain unverified.
 8. [x] Switch Android app delegation through Home entry/factories: history,
    global creation and community edit. Preserve leases, photo/catalogue ports
    and single analytics flow. Refresh history once after confirmed mutations;
@@ -819,7 +881,10 @@ Bean selection and date/photo sheets are subordinate controls, not new features.
      globally without breaking those actual callers.
 10. [ ] Complete verification, document limits and review the child diff against
     #95. Choose another business owner only after this checkpoint.
-    - [ ] Verify outer-modal/configured-media/IME/recreation behavior and authorized live acceptance.
+    - [x] Extend fake public-entry runtime tests for issued photo callbacks,
+      load/delete failures and stopped/resumed delivery; Pixel 7 full UI 40/40.
+    - [ ] Verify populated/protected media, actual image selection/extraction,
+      camera/permission, broader IME/recreation and authorized live acceptance.
 
 First coding slice: **domain validation/write contracts and data contract tests**.
 UI and active binding switches follow within the same feature checkpoint.

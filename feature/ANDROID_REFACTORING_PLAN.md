@@ -68,11 +68,15 @@ Current selection: **1054 passing unit executions**, Direct/Play APKs and expand
 DEX guards, both app instrumentation compilations and common/iOS Native
 compatibility compilation. The 14 new global navigation/analytics/lease cases
 pass in each app variant. On 2026-10-18, physical Pixel 7 Home self-targeted UI
-passed **36/36** after one locale-selector repair (initial 35/36, targeted 1/1,
-then complete 36/36). Direct Debug was updated in place; startup, empty history,
+passed **40/40**, including four new runtime photo/failure/lifecycle cases
+(targeted 4/4, full 40/40, first pass in that slice). The preceding locale-selector
+repair remains documented (initial 35/36, targeted 1/1, then complete 36/36).
+Direct Debug was updated in place; startup, empty history,
 Home create/cancel, date picker and numeric IME/footer were checked read-only.
+Real OS gallery open/cancel/relaunch passed twice without reading/selecting photos.
 App-targeted UI is compiled only. Failure history/build identities are in the Home plan.
-Populated Pixel 7 protected-photo/detail/edit, broader IME/recreation parity, OS gallery/camera
+Populated Pixel 7 protected-photo/detail/edit, broader IME/recreation parity,
+actual image selection/decoding/extraction/camera/permission
 and authorized live CRUD/account acceptance remain open. These checks do not
 establish release completion or an iOS UI migration.
 
@@ -137,7 +141,7 @@ Next work is ordered, not parallel feature scaffolding:
 | Shop Report: incorrect shop data | In progress; Android entry active | Real safe submit/error/uncertain-delivery flow and paired preview inspection; retain shared/iOS fallback. |
 | Shop: detail, menu, public check-ins and creation sheet | In progress; Android entries active | Physical-device visual/guest/owner/return parity; picker/camera permissions and recreation, bundled extraction quality and safely authorized submissions. Prepared review editors are not a product requirement. |
 | Personal history: one combined Shop/Home calendar and timeline | In progress; Android code checkpoint prepared in #95 | Combined reads/MVI/content, month photos, Home photo preparation and creation-flow analytics are integrated. Personal author avatars match main; public author navigation belongs to Shop. Pixel 7 populated-history/photo/date/account/accessibility and safely authorized mutation checks remain. |
-| Home preparations: create/detail/edit/delete, recipes and photos | In progress; new data/entries active, unused Android read bridge removed | History, Community owner edit and global tab/feed creation use the new Home implementation. Pixel 7 self-targeted UI 36/36 and real-app create/cancel/date/numeric-IME checks pass. Populated/protected-photo, broader IME/recreation/OS-picker and authorized live acceptance remain; profile Activity/iOS stay legacy. See home-check-in/MIGRATION_PLAN.md. |
+| Home preparations: create/detail/edit/delete, recipes and photos | In progress; new data/entries active, unused Android read bridge removed | History, Community owner edit and global tab/feed creation use the new Home implementation. Pixel 7 self-targeted UI 40/40 and real-app create/cancel/date/numeric-IME/gallery-cancel-relaunch checks pass. Actual selected/protected-photo/camera, broader IME/recreation and authorized live acceptance remain; profile Activity/iOS stay legacy. See home-check-in/MIGRATION_PLAN.md. |
 | Discovery: shop list/search/filter/map and embedded roasters | Not started | Audit actual list/map/filter ownership and current platform map; no independent module for every mode. |
 | Coffee catalogue: Coffee tab/list/detail | Not started | Preserve current catalogue/search/detail and links to roasters; catalog pickers are existing shared app boundaries, not invented screens. |
 | Roasters: list/detail and saved membership | Not started | Preserve current entry points, contacts, catalogue links and favorites. Favorites parity is an earlier gate, not permission for a wholesale roaster rewrite. |

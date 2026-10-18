@@ -14,6 +14,7 @@ import androidx.compose.ui.test.junit4.v2.createEmptyComposeRule
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.Lifecycle
 import androidx.test.core.app.ActivityScenario
 import androidx.test.platform.app.InstrumentationRegistry
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
@@ -212,6 +213,121 @@ class HomeCheckInDetailContractTest {
         }
     }
 
+    @Test fun runtimePhotoViewerReceivesIssuedAlbumAndCutoutWithoutAnotherDetailRead() {
+        val originals = (1..5).map { "https://fixture.invalid/issued/original-$it?signature=fixture" }
+        val cutout = "https://fixture.invalid/issued/cutout?signature=fixture"
+        val repository = Repository().apply { detail = previewHomePreparation().copy(
+            photos = originals.mapIndexed { index, url -> HomePreparationPhoto("photo-$index", url) },
+            drinkPhotoUrl = cutout,
+        ) }
+        val requests = java.util.concurrent.CopyOnWriteArraySet<Pair<String, Boolean>>()
+        val entry = createHomeCheckInDetailEntry(repository, { true }) { url, _, modifier, isCutout ->
+            requests += url to isCutout
+            Box(modifier)
+        }
+        val albums = mutableListOf<Pair<List<String>, Int>>()
+        render { entry.Content("fixture-home", 1, true, { date, _ -> date }, { it }, {}, {}, {},
+            { urls, index -> albums += urls to index }, {}) }.use {
+            awaitText("Эфиопия")
+            compose.onNode(hasScrollAction()).performScrollToNode(hasContentDescription("Фотография 3 из 5"))
+            compose.onNodeWithContentDescription("Фотография 3 из 5").performClick()
+            compose.waitUntil { albums.size == 1 }
+            assertEquals(originals to 2, albums.single())
+            compose.onNode(hasScrollAction()).performScrollToNode(hasContentDescription("Фото напитка"))
+            compose.onNodeWithContentDescription("Фото напитка").performClick()
+            compose.waitUntil { albums.size == 2 }
+            assertEquals(listOf(cutout) to 0, albums.last())
+            assertTrue(requests.containsAll(setOf(originals[0] to false, originals[2] to false, cutout to true)))
+            assertEquals(1, repository.detailCalls)
+            assertEquals(0, repository.deleteCalls)
+        }
+    }
+
+    @Test fun runtimeLoadFailureRetriesTheReadWithoutInventingAnEntryOrWriting() {
+        val repository = Repository().apply { detailFailure = HomePreparationFailure(HomePreparationIssue.Offline) }
+        val entry = createHomeCheckInDetailEntry(repository, { true }) { _, _, modifier, _ -> Box(modifier) }
+        render { entry.Content("fixture-home", 1, true, { date, _ -> date }, { it }, {}, {}, {}, { _, _ -> }, {}) }.use {
+            awaitText("Нет подключения к интернету. Попробуйте ещё раз.")
+            compose.onNodeWithText("Эфиопия").assertDoesNotExist()
+            assertEquals(1, repository.detailCalls)
+            compose.runOnIdle { repository.detailFailure = null }
+            compose.onNodeWithText("Повторить").performClick()
+            awaitText("Эфиопия")
+            assertEquals(2, repository.detailCalls)
+            assertEquals(0, repository.deleteCalls)
+            compose.onNodeWithText("Нет подключения к интернету. Попробуйте ещё раз.").assertDoesNotExist()
+        }
+    }
+
+    @Test fun runtimeFailedDeleteRefreshesOnlyAndRequiresFreshConfirmationBeforeAnotherDelete() {
+        val repository = Repository().apply { deleteFailure = HomePreparationFailure(HomePreparationIssue.RequestFailed) }
+        val entry = createHomeCheckInDetailEntry(repository, { true }) { _, _, modifier, _ -> Box(modifier) }
+        val deleted = mutableListOf<String>()
+        render { entry.Content("fixture-home", 1, true, { date, _ -> date }, { it }, {}, {}, deleted::add,
+            { _, _ -> }, {}) }.use {
+            awaitText("Эфиопия")
+            requestDelete()
+            confirmDelete()
+            compose.waitUntil { repository.deleteCalls == 1 }
+            compose.onNode(hasScrollAction()).performScrollToNode(hasText("Повторить"))
+            compose.onNodeWithText("Не удалось подтвердить удаление. Обновите запись перед повторной попыткой.")
+                .assertIsDisplayed()
+            assertTrue(deleted.isEmpty())
+            compose.runOnIdle { repository.deleteFailure = null }
+            compose.onNodeWithText("Повторить").performClick()
+            compose.waitUntil { repository.detailCalls == 2 }
+            awaitText("Эфиопия")
+            assertEquals(1, repository.deleteCalls)
+            assertTrue(deleted.isEmpty())
+            requestDelete()
+            compose.onNodeWithText("Отмена").performClick()
+            compose.onNodeWithText("Удалить домашнюю запись?").assertDoesNotExist()
+            assertEquals(1, repository.deleteCalls)
+            requestDelete()
+            confirmDelete()
+            compose.waitUntil { deleted.size == 1 }
+            assertEquals(2, repository.deleteCalls)
+            assertEquals(listOf("fixture-home"), deleted)
+        }
+    }
+
+    @Test fun runtimeStoppedDestinationDeliversDeleteOnlyOnceAfterResumingWithLatestCallback() {
+        val repository = Repository().apply { deleteGate = CompletableDeferred() }
+        val entry = createHomeCheckInDetailEntry(repository, { true }) { _, _, modifier, _ -> Box(modifier) }
+        val deleted = mutableListOf<String>()
+        var callback by mutableStateOf<(String) -> Unit>({ error("Old delete callback") })
+        render { entry.Content("fixture-home", 1, true, { date, _ -> date }, { it }, {}, {}, callback,
+            { _, _ -> }, {}) }.use { scenario ->
+            awaitText("Эфиопия")
+            requestDelete()
+            confirmDelete()
+            compose.waitUntil { repository.deleteCalls == 1 }
+            compose.runOnIdle { callback = deleted::add }
+            compose.waitForIdle()
+            scenario.moveToState(Lifecycle.State.CREATED)
+            InstrumentationRegistry.getInstrumentation().runOnMainSync { repository.deleteGate!!.complete(Unit) }
+            compose.waitUntil { repository.deleteReturned }
+            InstrumentationRegistry.getInstrumentation().waitForIdleSync()
+            assertTrue(deleted.isEmpty())
+            scenario.moveToState(Lifecycle.State.RESUMED)
+            compose.waitUntil { deleted.size == 1 }
+            assertEquals(listOf("fixture-home"), deleted)
+            scenario.moveToState(Lifecycle.State.CREATED)
+            scenario.moveToState(Lifecycle.State.RESUMED)
+            compose.waitForIdle()
+            assertEquals(listOf("fixture-home"), deleted)
+            assertEquals(1, repository.deleteCalls)
+        }
+    }
+
+    private fun requestDelete() {
+        compose.onNode(hasScrollAction()).performScrollToNode(hasText("Удалить запись"))
+        compose.onNodeWithText("Удалить запись").performClick()
+        awaitText("Удалить домашнюю запись?")
+    }
+
+    private fun confirmDelete() = compose.onNode(hasText("Удалить") and hasAnyAncestor(isDialog())).performClick()
+
     @Test fun brandFontFixtureRendersInBothThemes() {
         for (dark in listOf(false, true)) render(dark) {
             CoffeePeekTheme(darkTheme = dark) { Surface { Content() } }
@@ -227,10 +343,22 @@ class HomeCheckInDetailContractTest {
 
     private class Repository : HomePreparationRepository {
         @Volatile var detailCalls = 0
-        var deleteCalls = 0
+        @Volatile var deleteCalls = 0
+        @Volatile var deleteReturned = false
+        var detail = previewHomePreparation()
+        var detailFailure: HomePreparationFailure? = null
+        var deleteFailure: HomePreparationFailure? = null
         var deleteGate: CompletableDeferred<Unit>? = null
-        override suspend fun detail(id: String): Result<HomePreparation> { detailCalls++; return Result.success(previewHomePreparation()) }
-        override suspend fun delete(id: String): Result<Unit> { deleteCalls++; deleteGate?.await(); return Result.success(Unit) }
+        override suspend fun detail(id: String): Result<HomePreparation> {
+            detailCalls++
+            return detailFailure?.let { Result.failure(it) } ?: Result.success(detail)
+        }
+        override suspend fun delete(id: String): Result<Unit> {
+            deleteCalls++
+            deleteGate?.await()
+            deleteReturned = true
+            return deleteFailure?.let { Result.failure(it) } ?: Result.success(Unit)
+        }
         override suspend fun create(input: HomePreparationInput): Result<HomePreparation> = error("Unexpected create")
         override suspend fun update(id: String, input: HomePreparationInput): Result<HomePreparation> = error("Unexpected update")
         override suspend fun page(page: Int, pageSize: Int, range: HomePreparationDateRange?): Result<HomePreparationPage> = error("Unexpected history")

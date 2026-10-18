@@ -21,12 +21,17 @@ Shared legacy dependencies remain required by profile Activity and iOS.
 Current verification: **1054 selected unit executions** (14 new global-flow
 cases in each app variant), Direct/Play APKs and packaged DEX guards, both app
 instrumentation compilations; common/iOS Native compatibility passed in the
-preceding global slice. On **2026-10-18, physical Pixel 7** self-targeted Home UI
-passed **36/36** after repairing a localized date-selector mismatch (initial
-35/36, targeted 1/1, then complete 36/36). No product assertion was weakened.
+preceding global slice. On **2026-10-18, physical Pixel 7** the expanded
+self-targeted Home UI suite passed **40/40**, including four new runtime
+photo/failure/lifecycle cases (targeted 4/4, full 40/40, first pass in this slice).
+The preceding locale-selector repair remains documented: initial 35/36,
+targeted 1/1, then complete 36/36; no product assertion was weakened.
 Direct Debug 1.0.648 was installed over 1.0.645 without resetting user data.
 Real-app startup, empty combined history, history/global-feed Home create/cancel,
-date picker and numeric IME/footer checks passed without saving a record. App-targeted
+date picker and numeric IME/footer checks passed without saving a record.
+Real Android gallery open/Back cancellation/relaunch also passed twice; no photo
+was selected, read or uploaded, attachments stayed 0/5 and the form stayed usable.
+This is not URI-decoding/camera/extraction or save acceptance. App-targeted
 composition instrumentation remains compiled, not executed; self-targeted
 tests do not initialize the production Application or use a real account.
 See [MIGRATION_PLAN.md](MIGRATION_PLAN.md) for source/build identities, actual
