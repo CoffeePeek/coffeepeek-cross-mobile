@@ -40,6 +40,8 @@ import com.coffeepeek.feature.shop.impl.ui.compose.model.ShopCheckInFormState
 class ShopFormTestActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        // Scoped to this fake test window, not a device setting or keyguard override.
+        window.addFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         val detailPreview = intent.getBooleanExtra("detail_parity_preview", false)
         val photoSourcePreview = intent.getBooleanExtra("photo_source_preview", false)
         val drinkPreview = intent.getBooleanExtra("drink_controls_preview", false)

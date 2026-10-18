@@ -78,6 +78,40 @@ or evidence to weaken a product assertion. Request another unlock and rerun the
 complete 20-case History suite plus favorites and Sandbox visual checks.
 Log: coffeepeek-rating-ui-history-full-2026-10-18.log; do not overwrite it.
 
+After unlock, the complete History suite passed **20/20** (43s), without code or
+assertion changes: coffeepeek-rating-ui-history-rerun-2026-10-18.log.
+Favorites then ran **14 cases, 13 passed / 1 failed**: the existing metadata
+test could no longer observe the compact badge's numeric text in the merged
+semantics tree. The rating's clearAndSetSemantics discarded that child text.
+Replace it with one merging semantics group, retaining its precise description
+and range while exposing the rendered label. Keep the favorites assertion
+unchanged; strengthen both core read-only/compact tests to require visible text
+in the default merged tree. Rebuild and rerun before treating this as resolved.
+Initial failure log: coffeepeek-rating-ui-favorites-full-2026-10-18.log.
+
+After the semantic repair, Favorites passed **14/14** (24s) with its original
+metadata assertion unchanged; the strengthened rating class passed **6/6** (19s).
+Logs: coffeepeek-rating-ui-favorites-fixed-2026-10-18.log and
+coffeepeek-rating-ui-targeted-semantics-2026-10-18.log. The build/unit/Native/APK
+selection passed again (57s): coffeepeek-rating-semantics-regression-2026-10-18.log.
+No failed run was hidden or assertion weakened. The phone locked again after
+these checks; final Sandbox visual inspection and final complete suites await
+another unlock, without changing device security/settings.
+
+Repeated idle locks motivated a narrowly scoped harness repair: the five
+self-targeted test Activities set FLAG_KEEP_SCREEN_ON on their own foreground
+windows. Activity disposal removes that window; there is no system setting,
+lockscreen flag, keyguard dismissal or production/Sandbox Activity change.
+All five test APKs compile (5s): coffeepeek-rating-test-window-build-2026-10-18.log.
+The flag does not unlock an already locked phone; final device execution remains
+pending human unlock, not assumed from compilation.
+
+The updated Direct Sandbox **1.0.660-sandbox** was installed in place with the
+semantic repair, SHA-256
+`37fbb89c5472450d15279efe5f9778247ae578f2470a7574007c5c1273709127`.
+Its runtime source is 611d3462 plus the merging-semantics repair; the additional
+keep-screen-on code is test-only. The 1.0.659 identity below is historical.
+
 Prepared Direct Sandbox: **1.0.659-sandbox**, SHA-256
 `d24794bc318f1cc15cdfd1a7c75df0060b150ee970dd263e60ea412b6027c4c9`.
 Built from 4fcd08af plus this rating checkpoint's runtime diff. Only Sandbox

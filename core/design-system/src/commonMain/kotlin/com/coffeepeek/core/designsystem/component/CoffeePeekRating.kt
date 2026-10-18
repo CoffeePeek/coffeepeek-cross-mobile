@@ -60,7 +60,7 @@ fun CoffeePeekRating(
     require(onRatingChange == null || display == CoffeePeekRatingDisplay.Stars) { "Only Stars can be edited" }
     val value = coffeePeekRatingValue(rating)
     val description = contentDescription ?: stringResource(Res.string.coffeepeek_rating_description, coffeePeekRatingText(value))
-    val behavior = if (onRatingChange == null) Modifier.clearAndSetSemantics {
+    val behavior = if (onRatingChange == null) Modifier.semantics(mergeDescendants = true) {
         this.contentDescription = description
         progressBarRangeInfo = ProgressBarRangeInfo(value.toFloat(), 0f..5f)
     } else Modifier.widthIn(max = 224.dp).fillMaxWidth()

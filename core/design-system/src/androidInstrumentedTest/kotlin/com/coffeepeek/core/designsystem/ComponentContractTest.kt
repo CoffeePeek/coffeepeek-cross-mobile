@@ -21,7 +21,13 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.Assert.assertEquals
 
-class DesignSystemTestActivity : ComponentActivity()
+class DesignSystemTestActivity : ComponentActivity() {
+    override fun onCreate(savedInstanceState: android.os.Bundle?) {
+        super.onCreate(savedInstanceState)
+        // Foreground test window only; never change device settings or dismiss the keyguard.
+        window.addFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+    }
+}
 
 class ComponentContractTest {
     @get:Rule val compose = createEmptyComposeRule()

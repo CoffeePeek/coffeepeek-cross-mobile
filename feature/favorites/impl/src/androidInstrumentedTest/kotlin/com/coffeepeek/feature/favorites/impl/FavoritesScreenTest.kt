@@ -25,6 +25,8 @@ import org.junit.Test
 class FavoritesTestActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: android.os.Bundle?) {
         super.onCreate(savedInstanceState)
+        // Scoped to this fake test window, not a device setting or keyguard override.
+        window.addFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         // Explicit opt-in fake host: no DI, account, catalogue/photo reads or writes.
         if (intent.getBooleanExtra("roaster_parity_preview", false)) {
             val dark = intent.getBooleanExtra("parity_dark", false)

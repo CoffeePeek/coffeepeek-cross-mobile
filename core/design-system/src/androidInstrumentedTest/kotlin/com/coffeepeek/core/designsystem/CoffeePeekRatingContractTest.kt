@@ -100,6 +100,7 @@ class CoffeePeekRatingContractTest {
                 .assertHasNoClickAction()
             compose.onAllNodes(hasClickAction()).assertCountEquals(0)
             compose.onAllNodesWithContentDescription("Taste 4.3 of 5").assertCountEquals(1)
+            compose.onNodeWithText("4.3").assertIsDisplayed()
         }
     }
 
@@ -155,7 +156,7 @@ class CoffeePeekRatingContractTest {
             } }
             compose.onNodeWithTag("rating").assertContentDescriptionEquals("Rating 4.3 of 5")
                 .assertHasNoClickAction().assertIsDisplayed()
-            compose.onNodeWithText("4.3", useUnmergedTree = true).assertIsDisplayed()
+            compose.onNodeWithText("4.3").assertIsDisplayed()
         }
     }
 }

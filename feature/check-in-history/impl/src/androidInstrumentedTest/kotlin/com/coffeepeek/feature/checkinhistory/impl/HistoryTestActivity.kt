@@ -19,6 +19,8 @@ import com.coffeepeek.feature.checkinhistory.impl.ui.compose.model.CombinedHisto
 class HistoryTestActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        // Scoped to this fake test window, not a device setting or keyguard override.
+        window.addFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         if (intent.getStringExtra("preview_mode") == null) return
         val dark = intent.getBooleanExtra("preview_dark", false)
         enableEdgeToEdge(statusBarStyle = if (dark) SystemBarStyle.dark(Color.TRANSPARENT)

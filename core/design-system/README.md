@@ -81,6 +81,8 @@ equally in narrow containers; glyph sizes do not silently shrink. Ripple stays
 inside each rounded target. The feature supplies its localized per-score labels;
 fallback rating/choice resources are English with Russian translations. Read-only
 ratings expose one description/range, not five misleading accessibility targets.
+That group merges the visible numeric label instead of clearing its semantics,
+so metadata remains observable both by accessibility and normal UI queries.
 Paired previews are colocated in the component and changed feature owners.
 Verification/failure history: [RATING_PLAN.md](RATING_PLAN.md).
 
