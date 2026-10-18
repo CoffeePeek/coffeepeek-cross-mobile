@@ -54,7 +54,7 @@ internal fun CheckInTimelineContentImpl(
         if (checkIn.note.isNotBlank()) Text(checkIn.note, style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onSurface)
         ReviewPhotoStrip(
-            photoUrls = checkIn.photoUrls,
+            photoUrls = checkIn.photoDetailUrls ?: checkIn.photoUrls,
             thumbnailUrls = checkIn.photoThumbnailUrls,
             singlePhotoAspectRatio = 2f,
             onPhotoClick = onPhotoClick,

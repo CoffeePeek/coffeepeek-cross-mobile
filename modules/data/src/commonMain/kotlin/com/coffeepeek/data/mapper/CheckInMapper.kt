@@ -21,7 +21,15 @@ internal fun CheckInDto.toDomain(fileUrls: FileUrlResolver): CheckIn = CheckIn(
     visitedAt = visitedAt,
     rating = rating?.let { ReviewRating(place = it.place, service = it.service, coffee = it.coffee) },
     photoUrls = photos.sortedBy { it.sortIndex }.mapNotNull { fileUrls.resolveApiUrl(it.url) },
+    photoThumbnailUrls = photos.sortedBy { it.sortIndex }.filter { fileUrls.resolveApiUrl(it.url) != null }
+        .map { fileUrls.resolveApiUrl(it.variants.photoUrl("feed", it.url)).orEmpty() },
+    photoDetailUrls = photos.sortedBy { it.sortIndex }.filter { fileUrls.resolveApiUrl(it.url) != null }
+        .map { fileUrls.resolveApiUrl(it.variants.photoUrl("detail", it.url).ifBlank { it.url }).orEmpty() },
+    photoCalendarUrls = photos.sortedBy { it.sortIndex }.filter { fileUrls.resolveApiUrl(it.url) != null }
+        .map { fileUrls.resolveApiUrl(it.variants.photoUrl("thumb", it.url)).orEmpty() },
     drinkPhotoUrl = fileUrls.resolveApiUrl(drinkPhotoUrl),
+    drinkPhotoThumbnailUrl = drinkPhotoUrl?.let { fileUrls.resolveApiUrl(drinkPhotoVariants.photoUrl("thumb", it)).orEmpty() },
+    drinkPhotoDetailUrl = fileUrls.resolveApiUrl(drinkPhotoVariants.photoUrl("detail", drinkPhotoUrl.orEmpty())),
     drinkSlug = drinkSlug,
     customDrinkName = customDrinkName,
     drinkNameRu = drinkNameRu,

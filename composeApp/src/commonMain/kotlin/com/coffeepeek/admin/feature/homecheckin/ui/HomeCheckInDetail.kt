@@ -42,7 +42,7 @@ internal fun HomeDetailContent(
     onDelete: () -> Unit,
     onPhotoClick: (List<String>, Int) -> Unit,
 ) {
-    val photos = entry.photos.map { it.url }.filter(String::isNotBlank)
+    val photos = entry.photos.filter { it.url.isNotBlank() }
     LazyColumn(
         modifier.fillMaxWidth(), contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 4.dp, bottom = 24.dp),
         verticalArrangement = Arrangement.spacedBy(20.dp),
@@ -124,12 +124,13 @@ internal fun HomeDetailContent(
             }
         } }
         if (photos.isNotEmpty()) item(key = "photos") {
-            ReviewPhotoStrip(photos, singlePhotoAspectRatio = 16f / 10f, onPhotoClick = onPhotoClick)
+            ReviewPhotoStrip(photos.map { it.detailUrl }, thumbnailUrls = photos.map { it.thumbnailUrl },
+                singlePhotoAspectRatio = 16f / 10f, onPhotoClick = onPhotoClick)
         }
-        entry.drinkPhotoUrl?.takeIf(String::isNotBlank)?.let { url -> item(key = "drink-photo") {
+        entry.drinkPhotoThumbnailUrl?.takeIf(String::isNotBlank)?.let { url -> item(key = "drink-photo") {
             Box(Modifier.fillMaxWidth().height(160.dp).clip(RoundedCornerShape(20.dp))
                 .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f))
-                .clickable(role = Role.Button, onClickLabel = "Открыть фото напитка") { onPhotoClick(listOf(url), 0) },
+                .clickable(role = Role.Button, onClickLabel = "Открыть фото напитка") { onPhotoClick(listOf(entry.drinkPhotoDetailUrl.orEmpty()), 0) },
                 contentAlignment = Alignment.Center) {
                 DrinkCutoutImage(url, contentDescription = "Фото напитка", modifier = Modifier.fillMaxSize().padding(12.dp), outlineWidth = 3.dp)
             }
