@@ -1,7 +1,7 @@
 # P4: check-in photo variants in KMP
 
 Requires the additive backend contract from CoffeePeek/coffeepeek-backend PRs #346–#349.
-This branch starts from develop (613c7872); it does not include the unrelated local iOS merge.
+The production slice applies the photo changes to main (0137ee7a), independently of the other develop features.
 
 Feed/shop/profile cards use feed previews, calendars use thumb, and a tap opens detail. Original URLs and gallery order stay in the domain model. The viewer exposes an explicit original action; on a pending manifest only a user opening the viewer can load an original. Legacy responses without variants keep their previous behavior. Home gallery and drink cutout descriptors are handled separately, preserving PNG alpha. JPEG/PNG is preferred for platform compatibility, with WebP as a supported fallback.
 
@@ -11,6 +11,8 @@ Fresh reuse is capped by server `max-age`, 20 seconds and JWT expiry. RFC 9111 D
 
 Display permission is separate from cached bytes. The protected painter is removed at its actual permission deadline before reauthorization; it also clears on session/token changes, logout, local photo-affecting mutations and backgrounding. Resume checks both clocks before rendering. Kamel's decoded caches are explicitly bypassed, including the custom iOS bitmap cache. Original/private/home/moderation responses keep no-store behavior. Keep backend positive-cache rollout disabled until real-device acceptance.
 
+Session installation accepts an optional local author-visibility flow. Main has no author-blocking UI and uses the default empty flow; builds with that feature keep passing its explicit flow. Both forms observe credential/account/logout changes and revoke permission before and after photo-affecting HTTP mutations, including a lost mutation response. The optional flow does not change the server access checks or permission deadlines.
+
 At most four image transfers run simultaneously. Duplicate variants share in-flight work within one session scope. Leaving the last subscriber cancels the transfer, including queued work; cancelled or invalidated responses cannot publish later or overwrite a replacement. Variant bodies stream with the backend's 8 MiB limit. Original iOS downloads still stream into the existing bounded decoder. The iOS decode mutex is retained until profiling. Android server variants skip decode/re-encode and go directly to the decoder; legacy originals retain EXIF handling.
 
 Protected transfers use a dedicated authenticated Ktor client without `HttpCache`, plus request `no-cache, no-store` and explicit Darwin URL cache bypass. The request directive excludes lower transport caches; the separate application byte cache follows response policy. Ktor's HTTP cache otherwise intercepts manual 304 responses and can throw `InvalidCacheStateException`. API and image clients share refresh rotation coordination bound to the rejected request's actual bearer credential, including delayed 401 responses. An account switch never retries the old operation with another account. Other images retain their existing transport.
@@ -18,7 +20,7 @@ Protected transfers use a dedicated authenticated Ktor client without `HttpCache
 Validation commands:
 
 ```sh
-./gradlew :modules:network:testDebugUnitTest :modules:data:testDebugUnitTest :features:home-checkin:testDebugUnitTest :composeApp:testDirectDebugUnitTest
+./gradlew :modules:network:testDebugUnitTest :modules:data:testDebugUnitTest :features:home-checkin:testDebugUnitTest :composeApp:testDirectDebugUnitTest :composeApp:testPlayDebugUnitTest :composeApp:compileDirectDebugKotlinAndroid :composeApp:compilePlayDebugKotlinAndroid
 ./gradlew :composeApp:compileKotlinIosArm64
 ```
 

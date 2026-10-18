@@ -55,6 +55,49 @@ class HomeCheckInContractTest {
     }
 
     @Test
+    fun explicitEmptyHomeManifestKeepsOriginalSeparateFromPreviews() =
+        assertUnavailableHomeManifest("[]")
+
+    @Test
+    fun unsupportedHomeManifestKeepsOriginalSeparateFromPreviews() {
+        val variants = listOf("thumb", "feed", "detail").joinToString(",") { purpose ->
+            """{"purpose":"$purpose","contentType":"image/avif","width":320,"height":240,"sizeBytes":100,"url":"/api/v1/check-ins/$id/photos/photo-1/variants/source/1/$purpose.avif"}"""
+        }
+        assertUnavailableHomeManifest("[$variants]")
+    }
+
+    @Test
+    fun legacyHomeResponseWithoutManifestKeepsOriginalForEveryPurpose() = runBlocking {
+        val original = "https://gateway.example.com/api/v1/check-ins/$id/photos/photo-1"
+        val client = gateway(MockEngine { respond("""{"isSuccess":true,"data":$entry}""", headers = jsonHeaders) })
+        try {
+            val photo = HomeCheckInRepositoryImpl(client, client, "https://gateway.example.com").detail(id).getOrThrow().photos.single()
+            assertEquals(original, photo.url)
+            assertEquals(original, photo.thumbnailUrl)
+            assertEquals(original, photo.detailUrl)
+            assertEquals(original, photo.calendarUrl)
+        } finally { client.close() }
+    }
+
+    private fun assertUnavailableHomeManifest(manifest: String) = runBlocking {
+        val original = "/api/v1/check-ins/$id/photos/photo-1"
+        val body = entry.replace("\"url\":\"$original\"", "\"url\":\"$original\",\"variants\":$manifest")
+            .dropLast(1) + """, "drinkPhoto":{"url":"$original","variants":$manifest}}"""
+        val client = gateway(MockEngine { respond("""{"isSuccess":true,"data":$body}""", headers = jsonHeaders) })
+        try {
+            val result = HomeCheckInRepositoryImpl(client, client, "https://gateway.example.com").detail(id).getOrThrow()
+            val photo = result.photos.single()
+            assertEquals("https://gateway.example.com$original", photo.url)
+            assertEquals("", photo.thumbnailUrl)
+            assertEquals("", photo.detailUrl)
+            assertEquals("", photo.calendarUrl)
+            assertEquals("https://gateway.example.com$original", result.drinkPhotoUrl)
+            assertEquals("", result.drinkPhotoThumbnailUrl)
+            assertEquals("", result.drinkPhotoDetailUrl)
+        } finally { client.close() }
+    }
+
+    @Test
     fun visibilityChoiceIsSentOnCreateAndEditAndServerStatusIsRead() = runBlocking {
         var calls = 0
         val gateway = gateway(MockEngine { request ->

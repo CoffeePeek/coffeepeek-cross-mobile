@@ -81,7 +81,6 @@ fun initKoin() {
     com.coffeepeek.admin.analytics.installAnalytics(database.settingRepository, application.koin.get(), application.koin.get())
     com.coffeepeek.admin.utils.image.ProtectedPhotoSession.install(
         application.koin.get(), application.koin.get<CoffeePeekClient>().client,
-        application.koin.get<com.coffeepeek.admin.feature.authorblocking.api.AuthorVisibility>().visibility,
     )
 }
 
