@@ -14,7 +14,7 @@ concurrency:
 
 jobs:
   compile_ios:
-    if: github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
     runs-on: xcode-27
     timeout-minutes: 60
     steps:
@@ -45,7 +45,7 @@ jobs:
           path: ${{ runner.temp }}/ios-verify.log
           retention-days: 7
 
-  # Keep a completed check even when the macOS build is unnecessary.
+  # A manual verification must pass the real macOS build; regular non-main PRs retain the skip policy.
   build:
     needs: compile_ios
     if: always()
@@ -55,12 +55,13 @@ jobs:
         shell: bash
         env:
           BUILD_REF: ${{ github.ref }}
+          BUILD_EVENT: ${{ github.event_name }}
           BUILD_RESULT: ${{ needs.compile_ios.result }}
         run: |
           set -euo pipefail
-          if [[ "$BUILD_REF" != 'refs/heads/main' ]]; then
-            [[ "$BUILD_RESULT" == 'skipped' ]]
-            echo 'iOS builds run only from main; simulator build was skipped.'
-          else
+          if [[ "$BUILD_REF" == 'refs/heads/main' || "$BUILD_EVENT" == 'workflow_dispatch' ]]; then
             [[ "$BUILD_RESULT" == 'success' ]]
+          else
+            [[ "$BUILD_RESULT" == 'skipped' ]]
+            echo 'Simulator build was skipped for this pull request; dispatch this workflow to compile it.'
           fi
