@@ -1,4 +1,5 @@
 <resources>
+    <string name="check_in_create_close">Закрыть</string>
     <string name="history_home_visibility_unconfirmed">Чекин сохранён, но сервер не подтвердил выбранную видимость. Её можно повторно изменить через редактирование этой записи.</string>
     <string name="history_session_unavailable">Не удалось проверить сессию. История аккаунта скрыта; попробуйте ещё раз.</string>
     <string name="history_session_retry">Повторить</string>

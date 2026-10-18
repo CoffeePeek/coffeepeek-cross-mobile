@@ -1,27 +1,29 @@
 # Home preparations — incremental migration
 
-Latest checkpoint, 2026-10-17: **Android history now uses the new Home data and
-detail/editor entries**, including creation inside history, exact-ID owner edits
-from Community, deletion and account-owned photo viewing. The application owns
-destination lifetimes/DI; feature impl owns MVI and rendering. Fresh detail stores,
-once-only refresh, visibility notices and stale-callback guards replace the
-temporary legacy Home VM bridge.
+Latest checkpoint, **2026-10-18**: Android history and **global Home creation from
+tab/feed now use the migrated Home entries/data**. History owner edit, creation,
+deletion, photo viewer and calendar keep their existing contracts. Global creation
+reuses the current Shop/Home chooser, initializes Home lazily, preserves Shop
+routing and refreshes/closes once after an accepted save.
 
-The repository uses the existing gateway and credential-free upload clients.
-Calendar month photos/counts are preserved by bounded owner-page reads, including
-photo-less activity. No new module, backend/client or app-wide navigation change.
-Global creation from tab/feed, profile Activity and shared/iOS remain legacy.
-**Do not mark Home complete or remove shared legacy paths yet.**
+App composition owns destination lifetimes, revocable account guards, Koin and
+platform/media/catalogue adapters. Home impl owns MVI/rendering; data uses the
+existing authenticated gateway and separate credential-free upload client.
+A single consent-aware tracker is handed to the chosen flow, with no duplicate
+attempt/start/Created and no stale-account callback delivery. Module count is 31.
 
-Verified in this slice: **1026 selected unit executions**, **36/36 isolated Home UI
-regressions**, Direct/Play APKs and
-packaged DEX guards, both app instrumentation compilations, Home api/data/impl
-lint and data Native compatibility compilation. App-targeted composition UI is
-compiled, not executed; real-service startup and live writes are not certified.
-Studio now imports all Home modules; three changed composition-file inspections
-completed without reported problems after an initial timeout.
-See [MIGRATION_PLAN.md](MIGRATION_PLAN.md) for current UI results, source identity,
-earlier failure/retry history and physical-device/OS-picker/release gates.
+Shared/iOS and profile Activity remain legacy. **Do not mark Home fully complete
+or remove shared paths**: scoped Android compatibility cleanup, configured
+device/IME/modal/photo/recreation and authorized live CRUD/account gates remain.
+
+Current verification: **1054 selected unit executions** (14 new global-flow
+cases in each app variant), Direct/Play APKs and packaged DEX guards, both app
+instrumentation compilations and common/iOS Native compatibility compilation.
+No device/UI run or production deployment in this slice. The previous Home
+self-targeted **36/36 UI** run is from 2026-10-17; it does not test the app-global
+container. App-targeted composition UI remains compiled, not executed.
+See [MIGRATION_PLAN.md](MIGRATION_PLAN.md) for source/build identities, actual
+verification failures/repairs and the remaining acceptance checklist.
 
 ## Historical checkpoints
 

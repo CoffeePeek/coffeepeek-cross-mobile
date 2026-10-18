@@ -21,6 +21,8 @@ import com.coffeepeek.admin.feature.coffee.api.CoffeePickerItem
 import com.coffeepeek.admin.ui.Navigator
 import com.coffeepeek.admin.ui.screen.checkins.CheckInHistoryDestination
 import com.coffeepeek.admin.ui.screen.checkins.CheckInHistoryScreenRenderer
+import com.coffeepeek.admin.ui.screen.checkins.CheckInCreateFlowRenderer
+import com.coffeepeek.admin.di.homecheckin.AndroidCheckInCreateFlowRenderer
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.domain.model.Session
 import com.coffeepeek.domain.repository.SessionRepository
@@ -50,6 +52,7 @@ class HistoryRouteIntegrationTest {
     @Test fun applicationSelectsTheMigratedAndroidRenderer() {
         val graph = GlobalContext.get()
         assertSame(graph.get<AndroidCheckInHistoryScreenRenderer>(), graph.get<CheckInHistoryScreenRenderer>())
+        assertSame(graph.get<AndroidCheckInCreateFlowRenderer>(), graph.get<CheckInCreateFlowRenderer>())
     }
 
     @Test fun platformDestinationForwardsInitialEditIdWithoutCreatingAnotherScreenContract() {

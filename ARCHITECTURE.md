@@ -27,7 +27,7 @@ feature/shop-report/                api/domain/data/impl; Android report active
 feature/shop/                       api/domain/data/impl; Android menu gallery active
 feature/check-in-history/           api/domain/data/impl; Android combined history active
 feature/home-check-in/              pure domain/data and Android detail/editor api/impl;
-                                   active in history; global creation/profile/iOS still legacy
+                                   active in Android history/global creation; profile/iOS legacy
 ```
 
 Target ownership is feature-based:

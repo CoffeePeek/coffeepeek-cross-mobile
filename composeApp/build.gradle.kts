@@ -54,7 +54,6 @@ kotlin {
             implementation(project(module.feature.homePreparation.impl))
             implementation(project(module.core.coroutines))
             implementation(project(module.core.designSystem))
-            implementation(compose.preview)
             implementation(libs.androidx.activity.compose)
             implementation(libs.androidx.concurrent.futures)
             implementation(libs.androidx.appcompat)
@@ -85,6 +84,7 @@ kotlin {
             implementation(libs.compose.ui.backhandler)
             implementation(compose.components.resources)
             implementation(compose.components.uiToolingPreview)
+            implementation(compose.preview)
             implementation(libs.phosphor.icon)
             implementation(libs.haze)
 
@@ -302,6 +302,10 @@ androidComponents {
                 "com.coffeepeek.admin.di.homecheckin.AndroidHomeCheckInEditorKt",
                 "com.coffeepeek.admin.di.homecheckin.AndroidHomeCheckInRepository",
                 "com.coffeepeek.admin.di.homecheckin.AndroidHomeCheckInPhotoPicker",
+                "com.coffeepeek.admin.ui.screen.checkins.CheckInCreateFlowRenderer",
+                "com.coffeepeek.admin.di.homecheckin.HomeCheckInModuleKt",
+                "com.coffeepeek.admin.di.homecheckin.AndroidCheckInCreateFlowRenderer",
+                "com.coffeepeek.admin.di.homecheckin.AndroidGlobalCheckInFlow",
                 "com.coffeepeek.feature.checkinhistory.domain.repository.HomeHistoryReader",
             ))
         }

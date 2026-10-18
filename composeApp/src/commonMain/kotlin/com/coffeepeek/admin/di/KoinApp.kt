@@ -49,6 +49,8 @@ import com.coffeepeek.admin.ui.screen.deleteaccount.DeleteAccountPendingViewMode
 import com.coffeepeek.admin.ui.screen.checkins.VisitedPlacesViewModel
 import com.coffeepeek.admin.ui.screen.checkins.CheckInHistoryScreenRenderer
 import com.coffeepeek.admin.ui.screen.checkins.LegacyCheckInHistoryScreenRenderer
+import com.coffeepeek.admin.ui.screen.checkins.CheckInCreateFlowRenderer
+import com.coffeepeek.admin.ui.screen.checkins.LegacyCheckInCreateFlowRenderer
 import com.coffeepeek.admin.ui.screen.favorites.FavoritesViewModel
 import com.coffeepeek.admin.ui.screen.review.ReviewReportViewModel
 import com.coffeepeek.admin.ui.screen.contributions.ContributionKind
@@ -84,6 +86,7 @@ fun initKoin(
     shopDetailRendererFactory: Scope.() -> ShopDetailScreenRenderer = { LegacyShopDetailScreenRenderer },
     shopCheckInListRendererFactory: Scope.() -> ShopCheckInListScreenRenderer = { LegacyShopCheckInListScreenRenderer },
     checkInHistoryRendererFactory: Scope.() -> CheckInHistoryScreenRenderer = { LegacyCheckInHistoryScreenRenderer },
+    checkInCreateFlowRendererFactory: Scope.() -> CheckInCreateFlowRenderer = { LegacyCheckInCreateFlowRenderer },
 ) {
     check(AppConfig.baseUrl.isNotBlank()) {
         "API_BASE_URL is not configured. Copy local.properties.example to local.properties."
@@ -103,7 +106,7 @@ fun initKoin(
         ),
         appModule(database.settingRepository, shopReportRendererFactory, shopGalleryRendererFactory,
             shopCheckInRendererFactory, shopDetailRendererFactory, shopCheckInListRendererFactory,
-            checkInHistoryRendererFactory),
+            checkInHistoryRendererFactory, checkInCreateFlowRendererFactory),
         imageModule(),
         updateInstallerModule(),
     )
@@ -119,7 +122,9 @@ private fun appModule(
     shopDetailRendererFactory: Scope.() -> ShopDetailScreenRenderer,
     shopCheckInListRendererFactory: Scope.() -> ShopCheckInListScreenRenderer,
     checkInHistoryRendererFactory: Scope.() -> CheckInHistoryScreenRenderer,
+    checkInCreateFlowRendererFactory: Scope.() -> CheckInCreateFlowRenderer,
 ) = module {
+    single<CheckInCreateFlowRenderer> { checkInCreateFlowRendererFactory() }
     single<CheckInHistoryScreenRenderer> { checkInHistoryRendererFactory() }
     single<ShopDetailScreenRenderer> { shopDetailRendererFactory() }
     single<ShopCheckInListScreenRenderer> { shopCheckInListRendererFactory() }

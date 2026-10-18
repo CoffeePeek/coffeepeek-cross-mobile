@@ -4,10 +4,96 @@ Plan date: 2026-10-16; foundation work: 2026-10-17. Re-fetched source baseline:
 `origin/main` **0137ee7**; migration parent: history **c726944**, PR #95.
 Android history now uses the new Home data repository and detail/editor entries.
 The three existing history routes, including community owner edit by ID, delegate
-to these entries. Global CheckInCreateFlow, profile Activity and shared/iOS Home
-paths remain legacy; this is not a completed Home migration.
+to these entries. As of 2026-10-18, global Android CheckInCreateFlow also uses
+the new Home form/data. Profile Activity and shared/iOS paths remain legacy;
+cleanup, physical-device and live acceptance gates are not feature-complete.
 
-## Android history activation — 2026-10-17
+## Global Android creation — 2026-10-18
+
+Source identity: ceeb11e plus this global-flow diff; main re-fetched at 0137ee7,
+already an ancestor. Continue Home PR #99 -> history #95. No new Gradle module,
+business feature, dependency version or root-navigation migration.
+
+- Added an app-owned platform renderer, following the existing Shop/history
+  selection pattern. The shared wrapper resolves the legacy Home VM only inside
+  its fallback; Android no longer creates it (or its eager history/calendar
+  reads) merely to show the Shop/Home choice.
+- Android reuses the current choice content and opens the prepared Home editor
+  only after an explicit Home choice. Shop still uses its existing route and
+  CheckInFlowHandoff. The global flow has a fresh owned store on each opening;
+  Home impl still owns the actual form and create request.
+- Global account/navigation bookkeeping is app-owned, not another business
+  ViewModel/base in feature/core. It observes the existing revocable lease,
+  distinguishes token renewal from replacement, locks busy dismissal, rejects
+  old picker/form callbacks and consumes each terminal result once while STARTED.
+  Runtime delivery uses the latest caller callbacks. Saved refresh runs once,
+  followed by close even if that refresh callback throws. No accepted write retry.
+- The same consent-aware global tracker is handed to Home or Shop. Button
+  attempt tracking stays with current callers; no duplicate attempt/start/Created.
+  Cancellation and disposal share the tracker's terminal guard; revoked or
+  declined-at-start work cannot replay for another account/consent generation.
+- Home data definitions moved from the history Koin function into app-owned
+  homeCheckInModule so history and global creation resolve one repository,
+  gateway/upload-client pair and reader alias. This is a Kotlin Koin definition,
+  not a new Gradle DI module. Graph resolution remains request/credential/lease-free.
+- CheckInCreateFlow now has its own source file; unchanged shared/iOS form logic
+  stays as its private fallback. No iOS source, binding, writer or profile Activity
+  is replaced. Added paired same-file light/dark previews for the existing
+  choice body. The current multiplatform Preview dependency is available from
+  commonMain (and inherited on Android), with no version change.
+- Global success retains its existing refresh-and-close contract; unlike history,
+  it does not open a detail or invent a publication-confirmation UI. History's
+  unconfirmed-visibility notice remains intact.
+
+### Global-flow verification
+
+2026-10-18, ceeb11e plus this diff: **1054 selected unit executions** pass, zero
+failures/errors/skips: Home 117, legacy Home 16, history 54, presentation 3 and
+app Direct/Play **432 each**. Includes valid up-to-date results. **14 new global
+navigation/account/analytics cases** pass in both variants. After the harness
+repair, the complete new class passed targeted (14/14), then complete selections.
+
+Both APKs and expanded DEX guards, Direct/Play instrumentation compilation,
+self-targeted Home test APK and **composeApp Native Simulator Arm64 compilation**
+pass. The latter verifies the preserved common/iOS fallback's compilation, not
+iOS UI acceptance. No dependency cycle, new client or feature-layer DI was added.
+
+Verification history is retained: the first compile exposed suspend analytics
+setup calls in a non-suspending fixture. The next full run blocked in JUnit
+teardown: runTest had cancelled the fake analytics actor, but cleanup awaited a
+new consent command. A test-worker stack confirmed this exact wait; only the two
+stuck test JVMs were terminated. Cleanup now stops fake foreground delivery
+without waiting for the cancelled actor. No assertion was removed or weakened.
+The new Preview import also exposed a missing commonMain tooling dependency in
+Native; moving the already-used multiplatform preview artifact to commonMain
+fixed it. Complete final run passes (27s); this is not an iOS screen migration.
+
+Build log: coffeepeek-home-global-verified-2026-10-18.log; targeted log:
+coffeepeek-home-global-targeted-2026-10-18.log. Final app APK SHA-256:
+Direct 415a9e49dd54743473d8d5101fe0e7127a743d3cf740424fcf7b62a917c794d7;
+Play 26aab1ada198fcda2e2b549e892eda8003bcdec4a0d34e06a2ac6bfc29baccc7.
+
+No device was used and no APK was deployed in this slice. Home feature UI source
+and its fixture APK are unchanged (SHA beb772a0825bfc9622745e045b1d6c3f0722658da390c268366f69202f8b25ad);
+the previous **36/36 UI** execution is dated **2026-10-17**, not a new run or an
+app-global-modal test. App-targeted composition tests were compiled, not executed,
+because their Application may initialize real services. Preview rendering, live
+backend CRUD, OS picker/camera, IME, recreation and physical-device modal/visual/
+account acceptance remain open. No phone/account/consent data was changed.
+
+Studio inspections of the new coordinator, Android renderer, Home Koin module,
+common wrapper and root Koin file completed without reported problems (the first
+coordinator request timed out). The chooser's new Preview import initially
+remained unresolved in the old IDE dependency model despite both compilers
+passing. Ran this project's normal Gradle Sync in Studio; the follow-up chooser
+and renderer inspections report no problems. No preview render or project-wide
+clean inspection is claimed; unrelated pre-existing compiler warnings remain.
+
+Next: remove only obsolete Android compatibility code after its consumer audit;
+preserve shared Home/profile Activity/iOS paths. Then verify configured global
+and history entrances on Pixel 7, keeping real-account writes separately authorized.
+
+## Historical Android history activation — 2026-10-17
 
 Source identity: d5da869 plus this activation diff; main re-fetched at 0137ee7,
 already an ancestor. Same Home child branch/PR #99 -> history #95; 31 Gradle
@@ -644,7 +730,7 @@ Bean selection and date/photo sheets are subordinate controls, not new features.
    - [x] Prepare editor content/components/resources, paired previews and internal
      lifecycle adapter using fake ports.
    - [ ] Verify actual keyboard/modal/visual parity with configured app ports.
-8. [ ] Switch Android app delegation through Home entry/factories: history,
+8. [x] Switch Android app delegation through Home entry/factories: history,
    global creation and community edit. Preserve leases, photo/catalogue ports
    and single analytics flow. Refresh history once after confirmed mutations;
    close after delete, retain notices and correct back/cancel behavior. New Home
@@ -652,20 +738,20 @@ Bean selection and date/photo sheets are subordinate controls, not new features.
    - [x] Activate Android data/DI and replace history's temporary Home bridge.
    - [x] Route detail/create/edit/delete in history and community owner edit by ID.
    - [x] Verify once-only refresh, notice, fresh owners and stale/account callback guards.
-   - [ ] Switch global CheckInCreateFlow used by tab/feed to the new Home editor.
-   - [ ] Verify outer-modal/configured-media behavior and authorized live acceptance.
+   - [x] Switch global CheckInCreateFlow used by tab/feed to the new Home editor.
 9. [ ] Remove only obsolete Android bridge paths/dependencies after all migrated
    entrances work. Keep shared Home/profile-modal/iOS callers; do not delete the
    old artifact globally while any remain.
 10. [ ] Complete verification, document limits and review the child diff against
     #95. Choose another business owner only after this checkpoint.
+    - [ ] Verify outer-modal/configured-media/IME/recreation behavior and authorized live acceptance.
 
 First coding slice: **domain validation/write contracts and data contract tests**.
 UI and active binding switches follow within the same feature checkpoint.
 The subsequent detail/delete/editor MVI, Android renderers/internal runtime,
 public editor factory and app-owned port/analytics adaptation are prepared.
-Android data/DI and history entry activation are implemented. Next is global
-creation; keep physical-device gates open while proceeding without a phone.
+Android data/DI, history and global creation are activated. Next is scoped
+Android compatibility cleanup, then physical-device/release gates.
 
 ## Verification and completion gates
 
