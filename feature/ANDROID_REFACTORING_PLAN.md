@@ -14,10 +14,12 @@ historical; they do not override the current server contract or latest route aud
 
 ## Branch ownership
 
-- `feature/shared-rating-component` -> Sandbox PR #101: one design-system rating
+- `feature/shared-rating-component` / PR #102 -> Sandbox PR #101: one design-system rating
   renderer/input with fractional tenths and size variants, reused by migrated
   feature UI and shared legacy feed/profile paths. Business averages/actions and
-  next-feature migration remain unchanged. Verification is tracked in
+  next-feature migration remain unchanged. Android checkpoint verified with 1144
+  unit executions, 169/169 final self-targeted UI cases and scoped Sandbox visuals
+  on Pixel 7; Native compatibility compilation is not iOS UI acceptance. Evidence is in
   [rating checkpoint](../core/design-system/RATING_PLAN.md).
 
 - `feature/sandbox-application` -> Home PR #99: application-wide offline test

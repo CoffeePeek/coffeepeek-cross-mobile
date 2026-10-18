@@ -29,8 +29,8 @@ not a new business feature or a Sandbox-only change.
 - [x] Execute self-targeted rating tests: actual fractional pixels in all three
   sizes and both themes, RTL clipping, one read-only description/range, integer
   callbacks/repeat selection, disabled input and narrow/large-font layout.
-- [ ] Run full design-system and affected feature UI suites after targeted checks.
-- [ ] Inspect the installed Sandbox feed/history/form with fractional averages;
+- [x] Run full design-system and affected feature UI suites after targeted checks.
+- [x] Inspect the installed Sandbox feed/history/form with fractional averages;
   never install over or mutate ordinary CoffeePeek.
 - [x] Record exact counts/failures/source/APK identity and remaining gates below.
 
@@ -112,6 +112,16 @@ semantic repair, SHA-256
 Its runtime source is 611d3462 plus the merging-semantics repair; the additional
 keep-screen-on code is test-only. The 1.0.659 identity below is historical.
 
+After the next human unlock, physical Sandbox visual checks passed on 1.0.660:
+actual feed in dark and light themes showed four complete stars and a partial
+fifth beside 4.3. Profile -> All favorites showed a readable compact 4.5 badge
+and its numeric text in the UI hierarchy. Profile -> All check-ins -> Coffee shop
+filter -> visit opened the History card with the same fractional fill and localized
+4,3 label. The Shop form's large stars accepted Coffee=5 and exposed the checked
+score; the form was cancelled without submitting a record. Screenshots/UI dumps
+are fake-only and local, outside Git. This is scoped visual/manual acceptance,
+not live server/iOS/TalkBack/device-permission certification.
+
 Prepared Direct Sandbox: **1.0.659-sandbox**, SHA-256
 `d24794bc318f1cc15cdfd1a7c75df0060b150ee970dd263e60ea412b6027c4c9`.
 Built from 4fcd08af plus this rating checkpoint's runtime diff. Only Sandbox
@@ -129,3 +139,30 @@ source inspection still reports unresolved common imports until model refresh.
 The requested scoped IDE build returned success with existing AGP/KMP warnings.
 No clean final IDE source inspection, IDE preview rendering or iOS visual/release
 acceptance is claimed.
+
+## Final verification after all repairs
+
+The runtime and test-host source is **d5fea551**; later plan updates do not change
+the APKs. Source inspection of CoffeePeekRating reports no errors. The final
+build/unit/Native selection and subsequent feature unit rerun (15s,
+coffeepeek-rating-feature-units-final-2026-10-18.log) pass: **1144 unit executions**
+across the same selection, zero failures/errors/skips. No repeated executions
+are added to that count. Core/iOS compiler, ordinary APK/DEX and Sandbox
+isolation/DEX checks remain green after the actual semantic fix.
+
+Final complete UI reruns (self-targeted fake APKs, Pixel 7 / API 37): design-system
+**62/62** (132s), Shop **33/33**, Home **40/40** (87s), History **20/20** (42s)
+and Favorites **14/14** (23s) pass after both fixes: **169/169 UI cases**, with
+zero failures/skips in this final complete selection. The targeted six rating
+cases are included in 62, not counted again.
+Logs use the suffix `-final-2026-10-18.log`, retaining all earlier failed,
+aborted and intermediate runs separately. No assertions were relaxed to hide the
+numeric-text regression. No device-lock interruption recurred across this final
+selection. Foreground test-window keep-screen-on avoids changing phone settings;
+human unlock is still required if the phone is already locked.
+
+The scoped Android rating checkpoint is implemented and verified; the earlier
+pending device notes above are historical and superseded by this final result.
+No main/develop merge, live-account/backend acceptance, iOS visual test, actual
+TalkBack session or IDE preview rendering is included. Those are not claimed as
+passed merely because the common Native compilation and fake UI tests pass.
