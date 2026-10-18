@@ -39,9 +39,9 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import com.coffeepeek.admin.utils.image.originalCheckInPhoto
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -51,6 +51,7 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.coffeepeek.admin.theme.CpDimens
 import com.coffeepeek.admin.ui.icons.CpIcons
+import com.coffeepeek.admin.utils.CpImage
 
 @Composable
 fun FullScreenImageDialog(
@@ -64,7 +65,15 @@ fun FullScreenImageDialog(
     imageUrls: List<String>,
     initialIndex: Int,
     onDismiss: () -> Unit,
+) = FullScreenImageDialog(PhotoViewerImages(imageUrls), initialIndex, onDismiss)
+
+@Composable
+internal fun FullScreenImageDialog(
+    images: PhotoViewerImages,
+    initialIndex: Int,
+    onDismiss: () -> Unit,
 ) {
+    val imageUrls = images.previews
     if (imageUrls.isEmpty()) return
     com.coffeepeek.admin.analytics.AnalyticsOcclusion()
     val pagerState = rememberPagerState(
@@ -75,6 +84,9 @@ fun FullScreenImageDialog(
     var isZoomed by remember { mutableStateOf(false) }
     var controlsVisible by remember { mutableStateOf(true) }
     var originalPage by remember { mutableStateOf<Int?>(null) }
+    val visiblePages by remember {
+        derivedStateOf { pagerState.layoutInfo.visiblePagesInfo.map { it.index }.toSet() }
+    }
     var dismissOffset by remember { mutableFloatStateOf(0f) }
     var viewportHeight by remember { mutableFloatStateOf(1f) }
     val reduceMotion = platformReduceMotion()
@@ -100,14 +112,15 @@ fun FullScreenImageDialog(
         ) {
             HorizontalPager(
                 state = pagerState,
-                // The pager may prefetch while swiping; don't eagerly decode offscreen originals.
+                // Only pages entering the viewport may load alongside the current page.
                 beyondViewportPageCount = 0,
                 userScrollEnabled = !isZoomed,
                 modifier = Modifier.fillMaxSize().graphicsLayer { translationY = dismissOffset },
             ) { page ->
                 val isCurrent = pagerState.currentPage == page
-                if (isCurrent) ZoomableImage(
-                    imageUrl = if (originalPage == page) originalCheckInPhoto(imageUrls[page]) ?: imageUrls[page] else imageUrls[page],
+                val displayUrl = images.displayUrl(page, pagerState.currentPage, originalPage, page in visiblePages)
+                if (isCurrent || page in visiblePages) ZoomableImage(
+                    imageUrl = displayUrl.orEmpty(),
                     contentDescription = "Фото ${page + 1} из ${imageUrls.size}",
                     isCurrent = isCurrent,
                     onTap = { controlsVisible = !controlsVisible },
@@ -116,7 +129,7 @@ fun FullScreenImageDialog(
             }
 
             if (controlsVisible && originalPage != pagerState.currentPage &&
-                originalCheckInPhoto(imageUrls[pagerState.currentPage]) != null) {
+                images.originalForAction(pagerState.currentPage) != null) {
                 TextButton(onClick = { originalPage = pagerState.currentPage },
                     modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 32.dp)) {
                     Text("Открыть оригинал", color = Color.White)
@@ -189,8 +202,8 @@ private fun ZoomableImage(
     }
     LaunchedEffect(scale > 1f) { onZoomChanged(scale > 1f) }
 
-    CoffeeShopImage(
-        imageUrl = imageUrl,
+    CpImage(
+        data = imageUrl,
         contentDescription = contentDescription,
         contentScale = ContentScale.Fit,
         modifier = Modifier

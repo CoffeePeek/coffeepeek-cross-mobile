@@ -3,7 +3,6 @@ package com.coffeepeek.admin.utils.image
 import com.coffeepeek.domain.model.Session
 import com.coffeepeek.domain.repository.SessionRepository
 import io.ktor.client.HttpClient
-import io.ktor.client.request.HttpRequestPipeline
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import kotlin.concurrent.atomics.AtomicReference
@@ -46,23 +45,9 @@ internal object ProtectedPhotoSession {
 
     fun invalidate() = sync(if (sessions != null) sessions?.peekSession() else state.load().session, force = true)
 
-    fun install(repository: SessionRepository, client: HttpClient, visibility: Flow<*>) {
+    fun install(repository: SessionRepository, client: HttpClient, visibility: Flow<*> = emptyFlow<Unit>()) {
         sessions = repository
         sync(repository.peekSession(), force = true)
-        worker.launch { repository.observeSession().collect { sync(it) } }
-        worker.launch { visibility.drop(1).collect { invalidate() } }
-        // Hide/edit/delete/block can commit even when their response is lost. Revoke on
-        // both sides of a mutation so an earlier image request cannot publish afterwards.
-        client.requestPipeline.intercept(HttpRequestPipeline.State) {
-            val method = context.method.value
-            val path = context.url.build().encodedPath.lowercase()
-            val affectsPhotos = method in setOf("POST", "PUT", "PATCH", "DELETE") && (
-                "/check-ins" in path || "/home-check-ins" in path || "/me/blocks" in path ||
-                    path.trimEnd('/') == "/api/users/me"
-                )
-            if (!affectsPhotos) { proceed(); return@intercept }
-            invalidate()
-            try { proceed() } finally { invalidate() }
-        }
+        installPhotoSessionInvalidation(repository, client, worker, { sync(it) }, ::invalidate, visibility)
     }
 }

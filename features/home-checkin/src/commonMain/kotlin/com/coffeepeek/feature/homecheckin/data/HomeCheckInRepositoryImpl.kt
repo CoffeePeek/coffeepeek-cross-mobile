@@ -160,7 +160,7 @@ class HomeCheckInRepositoryImpl(
         tasteScore = tasteScore, drinkName = drink.displayName(),
         drinkSlug = drink.slug(), customDrinkName = drink.customName(),
         photos = photos.sortedBy { it.sortIndex }.map { HomeCheckInPhoto(it.id, it.url.absoluteUrl(),
-            it.variantUrl("feed").absoluteUrl(), it.variantUrl("detail").ifBlank { it.url }.absoluteUrl(), it.variantUrl("thumb").absoluteUrl()) },
+            it.variantUrl("feed").absoluteUrl(), it.variantUrl("detail").absoluteUrl(), it.variantUrl("thumb").absoluteUrl()) },
         drinkPhotoUrl = drinkPhoto.urlOrNull()?.absoluteUrl(),
         drinkPhotoThumbnailUrl = drinkPhoto.asPhoto()?.variantUrl("thumb")?.absoluteUrl(),
         drinkPhotoDetailUrl = drinkPhoto.asPhoto()?.variantUrl("detail")?.absoluteUrl(),
