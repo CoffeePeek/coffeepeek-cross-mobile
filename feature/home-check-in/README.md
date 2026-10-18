@@ -13,15 +13,22 @@ A single consent-aware tracker is handed to the chosen flow, with no duplicate
 attempt/start/Created and no stale-account callback delivery. Module count is 31.
 
 Shared/iOS and profile Activity remain legacy. **Do not mark Home fully complete
-or remove shared paths**: scoped Android compatibility cleanup, configured
-device/IME/modal/photo/recreation and authorized live CRUD/account gates remain.
+or remove shared paths**: configured device/IME/modal/photo/recreation and
+authorized live CRUD/account gates remain. The unused Android legacy read bridge
+has been removed; adapter/session fixtures use the new Home reader directly.
+Shared legacy dependencies remain required by profile Activity and iOS.
 
 Current verification: **1054 selected unit executions** (14 new global-flow
 cases in each app variant), Direct/Play APKs and packaged DEX guards, both app
-instrumentation compilations and common/iOS Native compatibility compilation.
-No device/UI run or production deployment in this slice. The previous Home
-self-targeted **36/36 UI** run is from 2026-10-17; it does not test the app-global
-container. App-targeted composition UI remains compiled, not executed.
+instrumentation compilations; common/iOS Native compatibility passed in the
+preceding global slice. On **2026-10-18, physical Pixel 7** self-targeted Home UI
+passed **36/36** after repairing a localized date-selector mismatch (initial
+35/36, targeted 1/1, then complete 36/36). No product assertion was weakened.
+Direct Debug 1.0.648 was installed over 1.0.645 without resetting user data.
+Real-app startup, empty combined history, history/global-feed Home create/cancel,
+date picker and numeric IME/footer checks passed without saving a record. App-targeted
+composition instrumentation remains compiled, not executed; self-targeted
+tests do not initialize the production Application or use a real account.
 See [MIGRATION_PLAN.md](MIGRATION_PLAN.md) for source/build identities, actual
 verification failures/repairs and the remaining acceptance checklist.
 
@@ -113,13 +120,13 @@ are internal, and the factory requires distinct gateway/upload clients. The call
 must supply a credential-free upload client and an account-bound access lease.
 No new Room cache, Koin module or client lifecycle is created.
 
-Current path: legacy HomeCheckInRepository → Android app compatibility reader →
+Initial path (before Android activation): legacy HomeCheckInRepository → Android app compatibility reader →
 new Home domain → app history adapter → history-owned port. The Android history
 account lease must wrap the final port before presentation consumes it. Resolving
 DI does not open a lease or make a request. There is no new client or endpoint.
 
 `preparedOn` stays a civil date distinct from `preparedAtUtc`/`createdAtUtc`.
-The compatibility reader forwards the existing `from`/`to` date strings unchanged,
+The initial compatibility reader forwarded the existing `from`/`to` date strings unchanged,
 including equal day bounds and first/last calendar days; it does not substitute
 Shop UTC-exclusive bounds. This preserves the audited client's convention. The
 backend source audit pinned in check-in-history/COMBINED_HISTORY_PLAN.md confirms

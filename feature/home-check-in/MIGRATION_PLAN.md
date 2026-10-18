@@ -5,8 +5,74 @@ Plan date: 2026-10-16; foundation work: 2026-10-17. Re-fetched source baseline:
 Android history now uses the new Home data repository and detail/editor entries.
 The three existing history routes, including community owner edit by ID, delegate
 to these entries. As of 2026-10-18, global Android CheckInCreateFlow also uses
-the new Home form/data. Profile Activity and shared/iOS paths remain legacy;
-cleanup, physical-device and live acceptance gates are not feature-complete.
+the new Home form/data. Scoped Android compatibility cleanup is complete;
+profile Activity and shared/iOS paths remain legacy. Broader physical-device
+and live acceptance gates are not feature-complete.
+
+## Android compatibility cleanup and Pixel 7 verification — 2026-10-18
+
+Source/build identity: b057e51 plus this cleanup/test diff; re-fetched main
+0137ee7 is already an ancestor. Same Home child PR #99 -> history #95.
+
+- Consumer audit found no production reference to LegacyHomePreparationReader.
+  Removed only that Android read bridge; history adapter and account-lease
+  tests now use a fake HomePreparationReader directly, without the old artifact.
+- Adapter coverage retains recipe/photo/unknown-publication mapping, civil
+  range forwarding, enriched-photo order/types, photo-less counts, metadata
+  validation, ordinary failures, wrapped/thrown cancellation and late responses.
+  It explicitly asserts no extra page reads during calendar adaptation. Actual
+  month pagination/deduplication/cutout fallback/failing-page behavior remains in
+  Home data tests, plus active MockEngine transport -> history adapter coverage.
+- Shared Home repository/VM/Koin/UI and their dependency remain: profile Activity
+  and shared/iOS fallback still use them. No iOS screen or binding was changed,
+  no Gradle dependency or navigation replacement was invented.
+- Complete selected regression: **1054 unit executions**, zero failures/errors/
+  skips (Home 117, legacy Home 16, history 54, presentation 3, app 432 per variant).
+  Includes valid Gradle up-to-date results; changed app suites executed anew.
+  Both Direct/Play APKs, packaged DEX checks, both app instrumentation
+  compilations and self-targeted Home test APK assembly pass (44s).
+  Log: coffeepeek-home-cleanup-2026-10-18.log. Studio inspections of the changed
+  reader fixture, adapter/session tests and calendar UI test report no problems.
+- Physical Pixel 7 resolved explicitly, Android API 37, 1080x2400/density 420,
+  unlocked. Only the self-targeted Home test package was used for instrumentation:
+  generic Application, same-package target, no INTERNET or production Koin.
+  Initial complete run: 35/36; date selection timed out on an exact label built
+  using java.text FULL. Material's actual dependency source uses an ICU skeleton
+  and standalone capitalization. The selector now uses the public Material
+  date formatter for the same UTC civil day/locale; no product code, expected
+  action/date/conversion assertions or timeout was weakened. Targeted rerun 1/1
+  passes (3.6s), followed by the **complete 36/36** regression (76.4s), no further
+  failures/skips. Logs: coffeepeek-home-pixel7-ui-2026-10-18.log (initial),
+  coffeepeek-home-pixel7-date-targeted-2026-10-18.log and
+  coffeepeek-home-pixel7-ui-full-final-2026-10-18.log. Light/dark fake detail/form
+  captures were inspected locally; they do not certify real protected photos.
+- App deployment is a signed, non-destructive in-place Direct Debug update:
+  installed 1.0.645 -> **1.0.648**. Package com.coffeepeek, MainActivity, same
+  signing certificate; no uninstall, downgrade, data/consent/account reset.
+  Cold launch and profile -> full combined history work; live history is empty.
+  This is startup/read-only evidence, not live-create/update/delete acceptance.
+- In the real history container, opened the Home chooser/form, inspected current
+  mascot/font/spacing, opened and cancelled the localized date picker, focused
+  the numeric dose field without entering data, verified the footer above the
+  real IME, dismissed IME with Back, and cancelled the form via its close control.
+  The modal stays bottom-aligned (including after keyboard dismissal); history
+  returns unchanged. This verifies this empty-history create/cancel scenario,
+  not populated detail/edit/delete, save delivery or protected photo loading.
+- Separately opened global creation from the feed, selected Home, verified its
+  actual form/modal/artwork and cancelled with system Back. Returned to the feed
+  with no residual chooser/form; app process remains alive. No save, delete,
+  favorite, consent or account change was made. No real photo was selected.
+- Still open: populated history/detail/edit/protected-photo acceptance, real OS
+  gallery/camera and extraction, broader IME/window/recreation coverage, and
+  explicitly authorized live CRUD/account/consent checks with a safe test setup.
+  Fake tests and read-only cancel checks are not backend mutation/analytics QA.
+
+Main APK SHA-256, Direct:
+9a31cbc0a521882e69b33f78bdf7324466a0ae158b6ca8b09c6cc14ee111b551;
+Play: 75bc6159cdae8a206abf6b62aec3447d5b12684f4c2d601ec4980fb879ae96bc.
+Repaired self-targeted fixture SHA-256:
+5880faa460c5da4cd4362f694a18f9b9e4d123894e8a2e6e264bc6374839b82f.
+Screenshots, sanitized UI dumps and raw local build/test logs stay outside Git.
 
 ## Global Android creation — 2026-10-18
 
@@ -619,7 +685,7 @@ Do not move unrelated profile, catalogue or community business logic here.
   parent updates normally; retarget a child after its parent reaches main. No
   force-push or merge to main/develop is part of this plan.
 
-## Current ownership and entry-point audit
+## Initial ownership and entry-point audit (2026-10-16; historical)
 
 | Existing capability | Actual source / consumer | Migration decision |
 |---|---|---|
@@ -730,6 +796,9 @@ Bean selection and date/photo sheets are subordinate controls, not new features.
    - [x] Prepare editor content/components/resources, paired previews and internal
      lifecycle adapter using fake ports.
    - [ ] Verify actual keyboard/modal/visual parity with configured app ports.
+   - [x] Pixel 7 empty-history and global-feed Home create/cancel, date picker,
+     current artwork, modal placement and numeric IME/footer read-only checks.
+     Populated/protected-media, broader IME and release gates remain below.
 8. [x] Switch Android app delegation through Home entry/factories: history,
    global creation and community edit. Preserve leases, photo/catalogue ports
    and single analytics flow. Refresh history once after confirmed mutations;
@@ -739,9 +808,15 @@ Bean selection and date/photo sheets are subordinate controls, not new features.
    - [x] Route detail/create/edit/delete in history and community owner edit by ID.
    - [x] Verify once-only refresh, notice, fresh owners and stale/account callback guards.
    - [x] Switch global CheckInCreateFlow used by tab/feed to the new Home editor.
-9. [ ] Remove only obsolete Android bridge paths/dependencies after all migrated
+9. [x] Remove only obsolete Android bridge paths/dependencies after all migrated
    entrances work. Keep shared Home/profile-modal/iOS callers; do not delete the
    old artifact globally while any remain.
+   - Removed the unreferenced Android LegacyHomePreparationReader; adapter/lease
+     fixtures now implement HomePreparationReader directly. Calendar pagination,
+     deduplication and photo fallback remain tested in the active data repository.
+   - Kept the shared legacy artifact, Koin definitions and UI: profile Activity
+     and the shared/iOS fallback still consume them. No dependency can be removed
+     globally without breaking those actual callers.
 10. [ ] Complete verification, document limits and review the child diff against
     #95. Choose another business owner only after this checkpoint.
     - [ ] Verify outer-modal/configured-media/IME/recreation behavior and authorized live acceptance.
@@ -750,8 +825,8 @@ First coding slice: **domain validation/write contracts and data contract tests*
 UI and active binding switches follow within the same feature checkpoint.
 The subsequent detail/delete/editor MVI, Android renderers/internal runtime,
 public editor factory and app-owned port/analytics adaptation are prepared.
-Android data/DI, history and global creation are activated. Next is scoped
-Android compatibility cleanup, then physical-device/release gates.
+Android data/DI, history and global creation are activated. Next are the
+physical-device/release gates; scoped Android compatibility cleanup is complete.
 
 ## Verification and completion gates
 

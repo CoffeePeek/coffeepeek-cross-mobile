@@ -2,6 +2,8 @@ package com.coffeepeek.feature.homecheckin.impl
 
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.*
+import androidx.compose.material3.DatePickerDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -93,6 +95,7 @@ class HomeCheckInEditorContractTest {
         }
     }
 
+    @OptIn(ExperimentalMaterial3Api::class)
     @Test fun sameDateDoesNotConvertOrReplaceRecordedTimeAndPickerCanBeCancelled() {
         val actions = mutableListOf<HomeCheckInEditorAction>()
         val conversions = mutableListOf<String>()
@@ -113,11 +116,13 @@ class HomeCheckInEditorContractTest {
             assertTrue(conversions.isEmpty())
             compose.onNodeWithContentDescription("Выбрать дату приготовления").performClick()
             awaitText("Готово")
-            // Material exposes the full localized date as its semantic text, not the visible day number.
+            // Match Material's ICU skeleton/standalone capitalization, not java.text's FULL format.
+            // These differ on real Russian-locale devices even for the same UTC civil day.
             val locale = InstrumentationRegistry.getInstrumentation().targetContext.resources.configuration.locales[0]
-            val dayLabel = java.text.DateFormat.getDateInstance(java.text.DateFormat.FULL, locale).apply {
-                timeZone = java.util.TimeZone.getTimeZone("UTC")
-            }.format(java.util.Date(Instant.parse("2026-10-16T00:00:00Z").toEpochMilliseconds()))
+            val dayLabel = requireNotNull(DatePickerDefaults.dateFormatter().formatDate(
+                Instant.parse("2026-10-16T00:00:00Z").toEpochMilliseconds(), locale,
+                forContentDescription = true,
+            ))
             awaitText(dayLabel)
             compose.onNodeWithText(dayLabel).assertIsEnabled().performClick()
             compose.onNodeWithText("Готово").performClick()
