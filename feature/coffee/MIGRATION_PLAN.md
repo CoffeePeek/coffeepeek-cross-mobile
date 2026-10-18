@@ -22,11 +22,13 @@ The same routes/repository are exercised by full-app Sandbox fixtures.
 |---|---|---|---|
 | domain | Catalogue/offer/filter/page models and repository contract; no DTO/HTTP/UI | Kotlin only | Own data/impl and app adapters. Compile-time independence from app and infrastructure. |
 | data | Existing catalogue endpoints, request/response DTOs, validation and mapping; expose only a factory returning domain repository | Own domain, core/network, Ktor, serialization, coroutines as needed | App composition via factory. Prevent transport types from leaking into UI/domain. |
-| api (later UI slice) | Minimal list/detail entry/navigation and genuinely needed picker ABI | Minimal Compose/route dependencies only when needed | App and other feature callers through public ABI, not implementations. |
-| impl (later UI slice) | Typed MVI, screens/content, components, resources, previews | Own api/domain, core/presentation/design-system | App composition through entry factory. Keeps UI independent of data/legacy/root navigation. |
+| api | Existing picker capability now; minimal list/detail entry/navigation with the later renderer | Kotlin now; minimal Compose/route dependencies only when needed | App and other feature callers through public ABI, not implementations. |
+| impl | Typed list/detail MVI and picker adapter now; screens/content, components, resources, previews in the UI slice | Own api/domain, core/presentation now; design-system with actual UI | App composition through entry factory. Keeps UI independent of data/legacy/root navigation. |
 
-Create modules only with real content. First slice adds domain/data; api/impl
-come with screen contracts/renderers, not empty placeholders. Domain/data use
+Create modules only with real content. First slice adds domain/data; the next
+adds the actual picker contract/adapter and tested list/detail MVI to api/impl,
+not empty placeholders. Until UI arrives these use the shared-library convention
+without speculative Compose, navigation or resource dependencies. Domain/data use
 manual constructor injection. App owns Koin, lifecycle/navigation, analytics
 adapters and plain-client lifetime. Cross-feature wiring goes through public API
 or composition adapters, never another feature's domain/data/impl. Reuse shared
@@ -42,14 +44,23 @@ design-system primitives rather than copying legacy App/Cp implementations.
 - [ ] Add api/impl entries and typed list/detail MVI. Preserve debounce, query
   limit, refresh/pagination, cancellation, filter draft/apply/reset/retry and
   stale-result protections. No meaningless one-call use cases.
+  - [x] Existing picker public contract and manual repository-to-API factory.
+  - [x] Typed state/action/event and lifecycle MVI implementation prepared.
+  - [x] Execute MVI/picker contract tests, including out-of-order and cancelled results.
+  - [ ] Add actual renderer/screen entry contracts with their Compose implementation.
 - [ ] Extract components into compose/component, state/action/events into model;
   stateless ScreenContent, colocated light/dark previews and localized resources.
   Preserve sizing/spacing/image treatment and offer/details behavior.
 - [ ] Wire Android tab/detail/deeplink, picker and app-owned analytics using
   factories. Keep shared/iOS fallback until its consumers deliberately migrate.
+  Preserve SearchTracker's normalized-query/filter fingerprint, consent/session
+  generation and result/open positions without importing an SDK into the feature.
+  MVI logic prepared in this slice has no telemetry adapter yet; do not activate
+  it in the app until search/detail/exposure analytics parity is explicitly wired
+  and tested. Existing legacy analytics stays active and unchanged for now.
 - [ ] Verify catalogue/picker/roaster return, browser/share/photo cancellation,
   empty/error/slow/out-of-order data and long/scaled text in fake UI/full Sandbox.
-- [ ] Publish a child PR targeting `feature/shared-rating-component`, with only
+- [x] Publish a child PR (#104) targeting `feature/shared-rating-component`, with only
   this checkpoint's changes and accurate remaining gates.
 
 ## Verification plan and risks
@@ -87,6 +98,37 @@ analytics, stale search pages, changing current visuals, or removing the shared
 Coffee repository/picker while iOS still consumes it.
 
 ## Verification record
+
+MVI slice prepared on top of `1ba91f8d`. Remote main rechecked at `0137ee7`.
+Prepared public picker API, its manual factory and shared list/detail ViewModels
+with typed models. No Compose screen, app Koin, Android entry, Sandbox binding
+or iOS screen is switched by this slice. State flags replace raw UI error strings;
+Result failures and cancellation remain feature-local. No new use-case wrappers
+or DI modules. Planned tests include debounce/query bounds, filter draft apply/
+cancel/reset, refresh/page failures and duplicate guards, stale non-cancellable
+responses, independent detail/labels/similar reads, lifecycle cancellation, safe
+navigation/media state and narrow picker results.
+
+2026-10-18: **38 new impl unit cases execute successfully** (17 list, 16 detail,
+five picker), zero failures/errors/skips. Domain/data remain green (four + 14),
+**56 Coffee feature tests** in total. Both new api/impl libraries compile for
+Android and both Native targets. First test compilation failed in two assertions
+because singleton/derived expected-event lists needed the explicit sealed-base
+type; corrected the test types without changing assertions, then reran the full
+selection successfully. No product assertion failed. Raw exceptions are not
+rendering state; Result cancellation is rethrown, including cancellation returned
+incorrectly as a failure by a port. No backend/DTO/DI/navigation imports enter
+these presentation models.
+
+Studio reports these new files outside imported content roots until Gradle Sync;
+CLI compilation/tests are the evidence here, not a clean IDE inspection. App
+Direct/Play Debug + Direct Sandbox builds pass with packaged DEX and Sandbox
+isolation guards; existing app unit suites execute **450 + 450** cases, all pass.
+Together with the feature selection this is **956 relevant unit cases** with no
+runtime test failures/errors/skips. App verification completed in 3m33s; the full
+feature retry completed successfully after the two test-compilation fixes.
+No device tests or app installation are needed/claimed for these inactive pure
+presentation models; the new UI/analytics/app-binding gates remain open.
 
 The user also requested a shared affinity-heart correction during this checkpoint.
 It is implemented through design-system LikeIcon/LikeButton, selected gold and
