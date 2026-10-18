@@ -79,6 +79,10 @@ fun initKoin() {
         )
     }
     com.coffeepeek.admin.analytics.installAnalytics(database.settingRepository, application.koin.get(), application.koin.get())
+    com.coffeepeek.admin.utils.image.ProtectedPhotoSession.install(
+        application.koin.get(), application.koin.get<CoffeePeekClient>().client,
+        application.koin.get<com.coffeepeek.admin.feature.authorblocking.api.AuthorVisibility>().visibility,
+    )
 }
 
 private fun appModule(settingRepository: com.coffeepeek.room.repository.SettingRepository) = module {
@@ -115,7 +119,10 @@ private fun appModule(settingRepository: com.coffeepeek.room.repository.SettingR
         com.coffeepeek.admin.feature.appupdate.data.AppUpdateRepositoryImpl(get<CoffeePeekClient>().plainClient, settingRepository)
     }
     single { com.coffeepeek.admin.feature.appupdate.ui.AppUpdateState(get()) }
-    single<CustomUrlFetcher> { createImageUrlFetcher(get<CoffeePeekClient>().client) }
+    single<CustomUrlFetcher> {
+        val gateway = get<CoffeePeekClient>()
+        createImageUrlFetcher(gateway.client, gateway.imageClient)
+    }
     single { CheckInDraftStore() }
     single { CityPreference(settingRepository) }
     single { ReviewDraftStore(settingRepository) }
