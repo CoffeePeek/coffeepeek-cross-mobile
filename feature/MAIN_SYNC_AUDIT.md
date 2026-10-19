@@ -302,8 +302,15 @@ in Home/history), `6493c444` (walkthrough record).
   Coffee list/search/filters/detail/gallery/roaster/both themes; share is blocked by Sandbox's external-app
   guard. No crash in the run.
 - Not verified: populated/slow/error fixtures for Coffee, large font, pagination, restored-route and Home
-  picker return on device, new Shop recomposition UI test on device, block UI walkthrough in Sandbox,
+  picker return on device, block UI walkthrough in Sandbox,
   live API/media/share targets, iOS.
 - Behaviour note: other check-in cards' like buttons stay tappable while one vote is pending; view models
   already ignore concurrent votes, so no second request is sent.
 
+Device UI run — 2026-10-19, runtime `96b4162d` (docs-only after): Pixel 7 (serial 2C121FDH2003NC) / API 37, test APKs only (`com.coffeepeek.feature.shop.impl.test`, `com.coffeepeek.core.designsystem.test`); no app package installed or updated.
+Shop impl **41/41** (1m32s) and core design-system **84/84** (2m59s) self-targeted UI cases pass, zero
+failures/retries/skips. Shop's 41 include the new `votingOneVisitDoesNotRecomposeItsNeighbour`
+(counts a neighbouring card's recompositions while another vote is pending). Negative check: with the
+pre-fix `ShopPublicCheckInsSection` (`9a96d756^`) the same test fails (`expected:<1> but was:<2>`);
+with the fix it passes, so it guards the regression. The restored bean `CoffeePeekLoader` is covered by
+core's `PresentationContractTest` (semantics only, not its look; the look was checked on the Sandbox build).

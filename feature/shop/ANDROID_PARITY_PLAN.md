@@ -724,3 +724,18 @@ These are fake Memories/rating/date fixtures, not a real backend form submission
 The emulator ran read-only and stopped without a snapshot; Pixel 7/10a were not
 updated or cleared. Live picker/camera/ML Kit/writes, physical-device parity and
 actual IDE rendering remain separate gates.
+
+## Vote recomposition guard — 2026-10-19
+
+Device UI run — 2026-10-19, runtime `96b4162d` (docs-only after): Pixel 7 (serial 2C121FDH2003NC) / API 37, test APKs only (`com.coffeepeek.feature.shop.impl.test`, `com.coffeepeek.core.designsystem.test`); no app package installed or updated.
+Shop impl **41/41** (1m32s) and core design-system **84/84** (2m59s) self-targeted UI cases pass, zero
+failures/retries/skips. Shop's 41 include the new `votingOneVisitDoesNotRecomposeItsNeighbour`
+(counts a neighbouring card's recompositions while another vote is pending). Negative check: with the
+pre-fix `ShopPublicCheckInsSection` (`9a96d756^`) the same test fails (`expected:<1> but was:<2>`);
+with the fix it passes, so it guards the regression. The restored bean `CoffeePeekLoader` is covered by
+core's `PresentationContractTest` (semantics only, not its look; the look was checked on the Sandbox build).
+
+Change: per-card item scope in `ShopPublicCheckInsSection`, memoized own-visit ids, and the public/full-list
+cards no longer null every card's vote callback while one vote is pending (both view models still reject
+concurrent votes). Visible effect: other like buttons stay tappable during a pending vote; a tap is ignored.
+

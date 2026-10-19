@@ -120,7 +120,16 @@ Coffee activation checkpoint (runtime `96b4162d`, plus loader/like and Sandbox-f
 new adapter/composition/Sandbox-blocking tests — **1088 results, zero failures** in the last full run;
 Direct/Play Debug, Direct Sandbox, Direct instrumentation compilation and iOS Simulator Arm64 compilation
 pass. Pixel 7 / API 37: only the Sandbox package (1.0.746-sandbox) was updated in place; ordinary
-CoffeePeek untouched. New instrumented recomposition test (Shop) is compiled but **not run on device**.
+CoffeePeek untouched. The Shop recomposition UI test was later run on device (see below).
+
+Device UI run — 2026-10-19, runtime `96b4162d` (docs-only after): Pixel 7 (serial 2C121FDH2003NC) / API 37, test APKs only (`com.coffeepeek.feature.shop.impl.test`, `com.coffeepeek.core.designsystem.test`); no app package installed or updated.
+Shop impl **41/41** (1m32s) and core design-system **84/84** (2m59s) self-targeted UI cases pass, zero
+failures/retries/skips. Shop's 41 include the new `votingOneVisitDoesNotRecomposeItsNeighbour`
+(counts a neighbouring card's recompositions while another vote is pending). Negative check: with the
+pre-fix `ShopPublicCheckInsSection` (`9a96d756^`) the same test fails (`expected:<1> but was:<2>`);
+with the fix it passes, so it guards the regression. The restored bean `CoffeePeekLoader` is covered by
+core's `PresentationContractTest` (semantics only, not its look; the look was checked on the Sandbox build).
+
 
 
 Shop author-menu follow-up: owner runtime `6dc3f115`, propagated to Coffee-tip
