@@ -147,7 +147,7 @@ internal fun HomeDetailContent(
 }
 
 internal fun homePhotoViewerImages(photos: List<HomeCheckInPhoto>) =
-    PhotoViewerImages(photos.map { it.detailUrl }, photos.map { it.url })
+    PhotoViewerImages(photos.map { it.thumbnailUrl }, photos.map { it.url })
 
 @Composable
 private fun RecipeMetric(label: String, value: String) {

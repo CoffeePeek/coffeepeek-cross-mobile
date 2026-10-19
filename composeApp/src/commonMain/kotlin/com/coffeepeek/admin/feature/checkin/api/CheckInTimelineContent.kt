@@ -3,6 +3,7 @@ package com.coffeepeek.admin.feature.checkin.api
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import com.coffeepeek.domain.model.CheckIn
+import com.coffeepeek.admin.ui.component.PhotoViewerImages
 
 /** Check-in presentation entry point; callers supply only the actions their screen supports. */
 @Composable
@@ -10,7 +11,7 @@ internal fun CheckInTimelineContent(
     checkIn: CheckIn,
     isOwn: Boolean,
     onShopClick: (() -> Unit)?,
-    onPhotoClick: (List<String>, Int) -> Unit,
+    onPhotoClick: (PhotoViewerImages, Int) -> Unit,
     modifier: Modifier = Modifier,
     onAuthorClick: (() -> Unit)? = null,
     onHelpful: (() -> Unit)? = null,
