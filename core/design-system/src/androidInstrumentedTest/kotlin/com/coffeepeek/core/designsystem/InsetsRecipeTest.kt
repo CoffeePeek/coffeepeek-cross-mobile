@@ -11,6 +11,7 @@ import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.test.junit4.createEmptyComposeRule
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.isRoot
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
@@ -36,6 +37,9 @@ class InsetsRecipeTest {
                     LocalDensity provides Density(density),
                 ) { content() }
             } }
+            compose.waitUntil(5_000) {
+                compose.onAllNodes(isRoot()).fetchSemanticsNodes(atLeastOneRootRequired = false).isNotEmpty()
+            }
         }
 
     private fun bounds(tag: String): Rect = compose.onNodeWithTag(tag)

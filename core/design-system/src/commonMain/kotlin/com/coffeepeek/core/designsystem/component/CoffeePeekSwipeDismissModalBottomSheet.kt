@@ -10,6 +10,8 @@ import androidx.compose.foundation.gestures.rememberDraggableState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -53,6 +55,8 @@ import org.jetbrains.compose.ui.tooling.preview.Preview
  * Use [maxSheetHeightFraction] to bound the handle and content within the available
  * modal content height. Do not put fractional height on [modifier]: Material's
  * anchors must see the full dialog viewport to keep the sheet bottom-aligned.
+ * [contentWindowInsets] are applied/consumed by Material once, including horizontal
+ * cutouts. Material owns IME avoidance; content must not add raw system-bar padding.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -62,6 +66,7 @@ fun CoffeePeekSwipeDismissModalBottomSheet(
     modifier: Modifier = Modifier,
     dismissEnabled: Boolean = true,
     maxSheetHeightFraction: Float? = null,
+    contentWindowInsets: @Composable () -> WindowInsets = { WindowInsets.safeDrawing },
     content: @Composable ColumnScope.() -> Unit,
 ) {
     require(maxSheetHeightFraction == null || maxSheetHeightFraction > 0f && maxSheetHeightFraction <= 1f) {
@@ -93,6 +98,7 @@ fun CoffeePeekSwipeDismissModalBottomSheet(
         dragHandle = null,
         properties = ModalBottomSheetProperties(shouldDismissOnClickOutside = dismissEnabled),
         containerColor = MaterialTheme.colorScheme.surface,
+        contentWindowInsets = contentWindowInsets,
     ) {
         // Fractional constraints belong below Material's anchor layout, not above it.
         Column(Modifier.fillMaxWidth().then(

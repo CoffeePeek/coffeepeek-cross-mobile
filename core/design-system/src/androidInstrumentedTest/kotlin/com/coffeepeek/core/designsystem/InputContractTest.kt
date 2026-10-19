@@ -25,6 +25,9 @@ class InputContractTest {
             scenario.onActivity { activity -> activity.setContent {
                 CoffeePeekTheme(FontFamily.Default) { content() }
             } }
+            compose.waitUntil(5_000) {
+                compose.onAllNodes(isRoot()).fetchSemanticsNodes(atLeastOneRootRequired = false).isNotEmpty()
+            }
         }
 
     @Test fun fieldEditsHoistedValueAndExposesError() {

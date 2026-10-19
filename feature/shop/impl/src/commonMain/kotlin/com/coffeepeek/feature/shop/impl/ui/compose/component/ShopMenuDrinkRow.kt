@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -13,7 +14,7 @@ import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.coffeepeek.core.designsystem.component.CoffeePeekBynPriceIndicators
+import com.coffeepeek.core.designsystem.component.CoffeePeekBynIcon
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.feature.shop.domain.model.ShopMenuItem
@@ -39,7 +40,7 @@ internal fun ShopMenuDrinkRow(item: ShopMenuItem, modifier: Modifier = Modifier)
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                 Text(amount, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.SemiBold)
-                if (isByn) CoffeePeekBynPriceIndicators(count = 1, iconWidth = 16.dp,
+                if (isByn) CoffeePeekBynIcon(modifier = Modifier.size(16.dp),
                     tint = MaterialTheme.colorScheme.onSurface)
                 else Text(item.currency, style = MaterialTheme.typography.bodyLarge)
             }
