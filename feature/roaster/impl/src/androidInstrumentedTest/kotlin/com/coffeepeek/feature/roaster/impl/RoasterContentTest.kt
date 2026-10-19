@@ -17,7 +17,6 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.test.assertHeightIsEqualTo
 import androidx.compose.ui.test.assertIsDisplayed
-import androidx.compose.ui.test.hasScrollToIndexAction
 import androidx.compose.ui.test.junit4.v2.createEmptyComposeRule
 import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onNodeWithContentDescription
@@ -29,6 +28,7 @@ import androidx.compose.ui.test.performScrollToIndex
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
 import androidx.test.core.app.ActivityScenario
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.feature.roaster.domain.model.RoasterAddress
@@ -129,10 +129,9 @@ class RoasterContentTest(private val dark: Boolean, private val fontScale: Float
         render { RoasterListScreenContent(state, { actions += it }, image, retryError) }.use {
             compose.onNodeWithText("No address").performClick()
             compose.onNodeWithText("Не удалось изменить избранное").assertIsDisplayed()
-            compose.runOnIdle {
-                assertTrue(actions.none { it is RoasterListAction.OpenRoaster || it is RoasterListAction.ToggleFavorite })
-                assertTrue(RoasterListAction.DismissMessage in actions)
-            }
+            // The snackbar reports dismissal when its (short) duration ends.
+            compose.waitUntil(timeoutMillis = 10_000) { RoasterListAction.DismissMessage in actions.toList() }
+            compose.runOnIdle { assertTrue(actions.none { it is RoasterListAction.OpenRoaster || it is RoasterListAction.ToggleFavorite }) }
         }
     }
 
@@ -141,7 +140,7 @@ class RoasterContentTest(private val dark: Boolean, private val fontScale: Float
         render { RoasterDiscoverySectionContent(RoasterListState(items = items, isLoading = false), {}, image, retryError) }.use {
             compose.onNodeWithText("Тег").assertIsDisplayed()
             compose.onNodeWithText("Roaster 1").assertIsDisplayed()
-            compose.onNode(hasScrollToIndexAction()).performScrollToIndex(7)
+            compose.onNodeWithTag("roaster-carousel").performScrollToIndex(7)
             compose.onNodeWithText("Roaster 8").assertExists()
             compose.onNodeWithText("Roaster 9").assertDoesNotExist()
         }
@@ -189,8 +188,9 @@ class RoasterContentTest(private val dark: Boolean, private val fontScale: Float
     @Test fun detailPhotoPreviewIsHostedByTheApplicationViewerAndClosesThroughAnAction() {
         val actions = mutableListOf<RoasterDetailAction>()
         val state = RoasterDetailState(isLoading = false, details = details(), previewPhotoUrl = "https://x/1")
+        // The app's viewer is a dialog window; the fake mirrors that so it sits above the screen.
         render { RoasterDetailScreenContent(state, { actions += it }, image, { url, onDismiss ->
-            Text("viewer:$url", Modifier.testTag("viewer").androidxClickable(onDismiss))
+            Dialog(onDismissRequest = onDismiss) { Text("viewer:$url", Modifier.testTag("viewer").androidxClickable(onDismiss)) }
         }) }.use {
             compose.onNodeWithTag("viewer").assertIsDisplayed().performClick()
             compose.runOnIdle { assertEquals(listOf<RoasterDetailAction>(RoasterDetailAction.ClosePhoto), actions) }

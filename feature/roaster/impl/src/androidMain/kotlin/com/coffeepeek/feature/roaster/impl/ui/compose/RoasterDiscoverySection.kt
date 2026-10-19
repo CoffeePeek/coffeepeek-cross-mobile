@@ -19,6 +19,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.coerceIn
 import androidx.compose.ui.unit.dp
@@ -86,7 +87,7 @@ internal fun RoasterDiscoverySectionContent(
             { onAction(RoasterListAction.ToggleTag(it)) }, { onAction(RoasterListAction.ClearTags) })
         BoxWithConstraints(screen.exposure(Modifier.fillMaxWidth(), RoasterExposure.Discovery)) {
             val cardWidth = (maxWidth * 0.88f).coerceIn(280.dp, 360.dp)
-            LazyRow(horizontalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing3)) {
+            LazyRow(Modifier.testTag("roaster-carousel"), horizontalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing3)) {
                 itemsIndexed(visible.take(DISCOVERY_LIMIT), key = { index, item -> item.slug ?: "unaddressed-roaster:$index" }) { _, item ->
                     RoasterListItemCard(item, state.isLoading, item.favoriteKey in state.favoriteKeys, onAction,
                         onFavoriteFeedback, image, Modifier.width(cardWidth))

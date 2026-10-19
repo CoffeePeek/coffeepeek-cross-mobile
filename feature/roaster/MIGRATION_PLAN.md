@@ -1,6 +1,6 @@
 # Roasters — Android-first migration plan
 
-Status: steps 2–4 done in code (2026-10-20): domain, data, api (ports) and impl (typed MVI + stateless UI); legacy screens still active, nothing activated; step 4 device UI tests not yet run. Child of the Coffee checkpoint
+Status: steps 2–4 done in code (2026-10-20): domain, data, api (ports) and impl (typed MVI + stateless UI); legacy screens still active, nothing activated; step 4 isolated UI suite passes on Pixel 7. Child of the Coffee checkpoint
 (`feature/coffee-catalog-refactoring`, PR #104); the branch/PR is created only after this plan is accepted.
 Same rules as Coffee: preserve the current product, requests and visuals; Android first; shared/iOS keep the
 legacy composeApp UI; no new feature in composeApp; modules only with real content.
@@ -43,7 +43,7 @@ adapter-free factory over the same endpoints, so reads and legacy writes cannot 
 3. [x] (2026-10-20, 19 impl unit tests; see "Step 3 record") `api` ports (analytics, favorites, shop-photo lookup) + `impl` typed MVI for list and detail:
    debounce/query bounds if any, lazy detail loading with the concurrency limit and per-slug de-duplication,
    favorite optimistic state and error message, stale-result/cancellation guards, retry.
-4. [~] (code, previews and isolated UI tests written 2026-10-20; tests compiled but **not yet run on a device**; see "Step 4 record") Stateless content, components in own files, colocated light/dark previews, resources; reuse design-system
+4. [x] (2026-10-20; isolated UI suite 36/36 on Pixel 7; see "Step 4 record") Stateless content, components in own files, colocated light/dark previews, resources; reuse design-system
    search, chips, cards, loader (bean), refresh, favorite heart; keep geometry and the discovery carousel layout.
 5. [ ] App adapters in composeApp androidMain: analytics (existing `SearchTracker`, `TrackEntityDetail`,
    exposures, `DetailEntryMemory`), favorites and shop-photo ports, `RoasterScreenRenderer` (Legacy default),
@@ -150,3 +150,23 @@ now reports results 350 ms after criteria/loading settle (typing is not reported
 - **Known gaps against legacy, to verify visually in step 6:** the detail back button is now the design-system glass
   button (legacy: app `CpCircularBackButton`); the favorite heart's analytics exposure and haptic are handled by the
   app wrapper in step 5; the detail error text is generic instead of the server message.
+
+### Step 4 device run — 2026-10-20
+
+Pixel 7 / API 37, `:feature:roaster:impl:connectedDebugAndroidTest`, self-targeted test APK only (no application
+package installed or updated). `RoasterContentTest`: 9 cases x 4 configurations (light/dark x font 1.0/1.5) =
+**36/36 pass** (1m10s) after one repair round.
+
+First run: 24/36 — three cases failed in all four configurations, all test-harness issues, no product change except
+one test tag:
+- photo-viewer case: the fake viewer was composed beneath the screen's own surfaces and never received the click;
+  the app's viewer is a dialog window, so the fake now uses a `Dialog`;
+- favorite-message case: the snackbar reports dismissal only after its short duration; the test now waits for
+  `DismissMessage` instead of asserting immediately;
+- carousel case: two lazy rows match `hasScrollToIndexAction` (tag chips and cards), so the scroll hit the wrong
+  one; the carousel row got a `roaster-carousel` test tag (same practice as Coffee's `coffee-list`).
+No assertion was weakened. The full suite was then rerun once: 36/36, no retries. Covered: loading/empty/failed list,
+card actions and tag chips, card without a public address (inert), typed message snackbar, carousel limit of eight,
+exact-height card keeping its stats footer, detail sections and actions, empty detail, application photo viewer slot,
+detail loading/failure with retry/back. Not covered: real images/loader/error artwork (app slots), Haze blur for the
+glass buttons, accessibility services, Sandbox/real-app behaviour (step 6).
