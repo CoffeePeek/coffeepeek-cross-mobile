@@ -170,8 +170,8 @@ internal fun homeDurationLabel(seconds: Int): String = buildList {
 @Composable private fun HomeDetailRatingPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
     Surface {
         HomeDetailContent(HomeCheckIn("preview", "2026-10-18T09:00:00Z", "2026-10-18", "2026-10-18T09:00:00Z",
-            null, "hario-v60", null, "Preview coffee", "18", 180, 4, null, null, null, emptyList(), null,
-            HomeCheckInVisibility.Private), onEdit = {}, onDelete = {}, onPhotoClick = { _, _ -> })
+            null, "hario-v60", null, "Preview coffee", "18", 180, 4, null, null, null, emptyList(),
+            visibility = HomeCheckInVisibility.Private), onEdit = {}, onDelete = {}, onPhotoClick = { _, _ -> })
     }
 }
 @Preview @Composable private fun HomeDetailRatingLightPreview() = HomeDetailRatingPreview(false)
