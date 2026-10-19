@@ -80,8 +80,8 @@ design-system primitives rather than copying legacy App/Cp implementations.
   and badge, detail, photo gallery open/close, roaster route and back, share (blocked by Sandbox's
   external-app guard, as designed), dark and light themes. No crash in this run. Manual smoke only:
   no populated/slow/error scenarios, large font, pagination, restored-route or picker return checks,
-  and no live API/browser/share-target verification. Sandbox fixtures have no filter groups, offers or
-  similar coffees, so those sections were not exercised.
+  and no live API/browser/share-target verification. A 2026-10-20 follow-up with richer Sandbox fixtures
+  covered taste/roast/available-only filters, offers and similar coffees (see composeApp/SANDBOX_PLAN.md).
 - [x] (superseded wording) Wire Android tab/detail/restored routes, picker and app-owned analytics using
   factories. Keep shared/iOS fallback until its consumers deliberately migrate.
   Preserve SearchTracker's normalized-query/filter fingerprint, consent/session

@@ -240,11 +240,11 @@ internal class SandboxApplicationBackend(private val today: LocalDate, private v
     }
     // Three synthetic coffees with distinct tastes/roasts/availability, so filters, offers and "similar" are exercised.
     private fun coffees() = listOf(
-        coffeeRow("sandbox-ethiopia", "Sandbox Ethiopia", listOf("fruity", "floral"), "light",
+        coffeeRow("sandbox-ethiopia", "Sandbox Ethiopia", "ET" to "Эфиопия", listOf("fruity" to "Фруктовый", "floral" to "Цветочный"), "light",
             listOf(coffeeOffer(45.0, 250, "InStock", "Sandbox Seller", "ethiopia"), coffeeOffer(80.0, 500, "PreOrder", "Sandbox Seller", "ethiopia-500"))),
-        coffeeRow("sandbox-kenya", "Sandbox Kenya", listOf("fruity"), "light",
+        coffeeRow("sandbox-kenya", "Sandbox Kenya", "KE" to "Кения", listOf("fruity" to "Фруктовый"), "light",
             listOf(coffeeOffer(52.5, 250, "OutOfStock", "Sandbox Seller", "kenya"))),
-        coffeeRow("sandbox-brazil", "Sandbox Brazil", listOf("nutty"), "medium",
+        coffeeRow("sandbox-brazil", "Sandbox Brazil", "BR" to "Бразилия", listOf("nutty" to "Ореховый"), "medium",
             listOf(coffeeOffer(38.0, 1000, "InStock", "Sandbox Roastery Shop", "brazil"))),
     )
     private fun coffeeOffer(price: Double, grams: Int, availability: String, seller: String, key: String) = buildJsonObject {
@@ -252,14 +252,14 @@ internal class SandboxApplicationBackend(private val today: LocalDate, private v
         put("availability", availability); put("sellerName", seller); put("sourceUrl", "https://seller.sandbox.invalid/$key")
         put("grind", "Beans"); put("availabilityScope", "Seller"); put("checkedAtUtc", "${today}T06:00:00Z")
     }
-    private fun coffeeRow(slug: String, name: String, tastes: List<String>, roast: String, offers: List<JsonObject>) = buildJsonObject {
+    private fun coffeeRow(slug: String, name: String, country: Pair<String, String>, tastes: List<Pair<String, String>>, roast: String, offers: List<JsonObject>) = buildJsonObject {
         put("address", address(slug, "/coffees/$slug")); put("name", name)
         putJsonObject("roaster") { put("name", "Sandbox Roaster"); put("address", address("sandbox-roaster", "/roasters/sandbox-roaster")) }
         put("coverPhoto", photo()); put("photos", JsonArray(listOf(photo()))); put("description", "Тестовое зерно для локальных сценариев")
-        putJsonArray("countries") { add(buildJsonObject { put("code", "ET"); put("nameRu", "Эфиопия") }) }
-        putJsonObject("classification") { putJsonArray("tasteGroups") { tastes.forEach(::add) }; put("roastLevel", roast) }
+        putJsonArray("countries") { add(buildJsonObject { put("code", country.first); put("nameRu", country.second) }) }
+        putJsonObject("classification") { putJsonArray("tasteGroups") { tastes.forEach { add(it.first) } }; put("roastLevel", roast) }
         put("offers", JsonArray(offers)); put("productKind", "Coffee"); put("productForm", "Beans")
-        putJsonArray("tasteDescriptors") { tastes.forEach(::add) }; put("catalogCheckedAtUtc", "${today}T06:00:00Z")
+        putJsonArray("tasteDescriptors") { tastes.forEach { add(it.second) } }; put("catalogCheckedAtUtc", "${today}T06:00:00Z")
     }
     private fun coffeeMatches(row: JsonObject, query: String, filters: JsonObject): Boolean {
         val name = row["name"]!!.jsonPrimitive.content

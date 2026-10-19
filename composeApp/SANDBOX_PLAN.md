@@ -5,8 +5,16 @@
 Fake backend now has three coffees, taste/roast filter groups, offers with availability and
 query/filter/available-only search; unit tests cover each filter and detail offers. App Direct+Play
 unit suites pass (1088, 0 failures) and Direct Sandbox assembles. The updated package was installed
-over the Sandbox on the Pixel 7, but the phone was locked, so the new filter/offer/similar screens
-are **not yet visually checked**.
+over the Sandbox on the Pixel 7 and walked through on 2026-10-20 (Sandbox 1.0.746+, ordinary app
+untouched): the filter sheet lists taste/roast groups; Nutty -> Brazil only; Light roast -> Ethiopia + Kenya;
+Light + "available only" -> Ethiopia only; filter badge counts 1/2; cards show country, taste chips, price and
+weight selector; detail shows two offers (in stock / pre-order) with seller details and checked-at date;
+the seller button shows the Sandbox external-app block; "similar coffees" shows Kenya, opening it shows its
+roast/taste traits, and Back returns to Ethiopia at the same scroll position. No crash from this package in
+the run. The USB link dropped several times (the phone also appears over Wi-Fi and a second phone is on the
+network), so commands used an explicit serial. Not covered: large font, light theme for these new screens,
+pagination, error/slow modes for Coffee. First fixture pass showed the same country/raw `fruity` descriptor on
+every coffee; fixed (per-coffee country and Russian descriptors) and covered by unit tests, not re-photographed.
 
 ## Author-blocking and protected-photo fixtures — 2026-10-19
 
