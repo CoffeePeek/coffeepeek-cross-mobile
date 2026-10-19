@@ -3,6 +3,8 @@ package com.coffeepeek.feature.shop.impl.ui.compose.component
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -12,6 +14,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.unit.dp
@@ -61,12 +64,19 @@ internal fun ShopCheckInCard(
             val fallbackDrinkName = if (Locale.current.language == "en") checkIn.drinkNameRu else checkIn.drinkNameEn
             val drink = checkIn.customDrinkName?.takeIf(String::isNotBlank)
                 ?: primaryDrinkName?.takeIf(String::isNotBlank) ?: fallbackDrinkName?.takeIf(String::isNotBlank)
-            drink?.let { ShopCheckInDrinkBadge(it, checkIn.drinkPhotoThumbnailUrl) }
             if (checkIn.note.isNotBlank()) ShopCheckInNote(checkIn.id, checkIn.note, fullVersion = fullVersion)
             ShopCheckInPhotos(checkIn.photoUrls, checkIn.photoThumbnailUrls, onOpenPhoto)
-            if (showHelpful && (checkIn.visibility == ShopCheckInVisibility.Public || checkIn.helpfulCount > 0))
-                ShopCheckInHelpfulButton(checkIn.helpfulCount, checkIn.isHelpfulByCurrentUser,
-                onClick = onVote.takeUnless { isOwn }, isLoading = isVoting)
+            val showHelpfulCount = showHelpful &&
+                (checkIn.visibility == ShopCheckInVisibility.Public || checkIn.helpfulCount > 0)
+            if (showHelpfulCount || drink != null) {
+                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing2)) {
+                    if (showHelpfulCount) ShopCheckInHelpfulButton(checkIn.helpfulCount, checkIn.isHelpfulByCurrentUser,
+                        onClick = onVote.takeUnless { isOwn }, isLoading = isVoting)
+                    Spacer(Modifier.weight(1f))
+                    drink?.let { ShopCheckInDrinkBadge(it, checkIn.drinkPhotoThumbnailUrl) }
+                }
+            }
         }
     }
 }
