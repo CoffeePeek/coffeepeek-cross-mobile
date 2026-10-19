@@ -85,3 +85,29 @@ from its installed version.
 All screenshots/UI dumps and instrumentation/build logs remain local outside
 tracked sources. No account identity, private media or raw diagnostics are
 published with the PR.
+
+## Photo container correction — 2026-10-19
+
+Requested during Coffee UI review: remove opaque black plates around photo
+favorites. CoffeePeekLikeButton now supports Glass and Plain. Away from images
+Plain remains transparent; photo controls use the shared glass modifier with a
+translucent tint/rim, preserving the gold/neutral glyphs, selection semantics and
+48dp actionable target. Existing custom container callers remain supported.
+Haze sources can supply blur; without one this is a translucent fallback, not
+real backdrop sampling. CoffeePeekLikeBadge covers passive photo markers without
+inventing an action. Catalogue/public-profile/favorites photo callers reuse these
+components; request/auth/analytics/haptic behavior and ordinary account data are
+unchanged. Existing Shop glass controls are not replaced with a second toggle.
+
+Android APK/DEX/isolation, unit suites and both Native app compilations pass.
+Two new glass/badge UI tests execute alongside the new card-builder contracts.
+Pixel 7 disconnected initially, then the user reconnected/unlocked it. Final
+full core **77**, Coffee **52** and Favorites **14** self-targeted cases pass:
+**143/143**, no failures/skips in this slice. Core also passed its first 77-case
+run before the import-only final rebuild. Manually inspected both styles and
+selection states on synthetic white/brown/black photo backgrounds in both
+themes; Plain's white outline disappears on white, so Glass is the photo
+default. Earlier 136/136 and 71/71 records above remain historical checkpoints.
+See the Coffee plan for exact final test-APK hashes, prior harness retries and
+remaining real-photo/Haze/integration gates. No normal app deployment or new
+Sandbox/live-account mutation is claimed.

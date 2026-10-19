@@ -4,6 +4,13 @@ Audit date: 2026-10-16. Product baseline: `origin/main` **0137ee7**.
 This is the current checklist. Older feature READMEs contain historical checkpoint
 notes; they do not override this source audit or certify later changes.
 
+2026-10-19 observation: remote main has advanced to **18142f80** (protected photo
+variants/cache/session rollout #105). It has been fetched, not yet reconciled
+through this stack. Coffee list/detail sources and HTTP contracts are unchanged;
+media/gallery/session adapters require a separate synchronization audit before
+the new Coffee entries are activated. Do not treat the verification below at
+0137ee7 as certification of that newer photo rollout.
+
 Latest parent synchronization includes main #97–98's personal/public profile
 redesign unchanged. Profile migration remains **not started**. Main #96 is
 reconciled with #43, including actual
@@ -15,7 +22,7 @@ historical; they do not override the current server contract or latest route aud
 ## Branch ownership
 
 - `feature/coffee-catalog-refactoring` -> rating PR #102: Android-first Coffee
-  catalogue migration. Domain/data and api/impl picker + shared MVI are prepared
+  catalogue migration. Domain/data, picker, shared MVI and Android list/detail UI are prepared
   with contract tests; active screens/picker/DI still use the existing implementation.
   No iOS screen migration or catalogue redesign. See [Coffee plan](coffee/MIGRATION_PLAN.md).
   Includes the user's explicit shared-heart UI correction: one affinity renderer/
@@ -173,7 +180,7 @@ Next work is ordered, not parallel feature scaffolding:
 | Personal history: one combined Shop/Home calendar and timeline | In progress; Android code checkpoint prepared in #95 | Combined reads/MVI/content, month photos, Home photo preparation and creation-flow analytics are integrated. Personal author avatars match main; public author navigation belongs to Shop. Pixel 7 populated-history/photo/date/account/accessibility and safely authorized mutation checks remain. |
 | Home preparations: create/detail/edit/delete, recipes and photos | In progress; new data/entries active, unused Android read bridge removed | History, Community owner edit and global tab/feed creation use the new Home implementation. Pixel 7 self-targeted UI 40/40 and real-app create/cancel/date/numeric-IME/gallery-cancel-relaunch checks pass. Actual selected/protected-photo/camera, broader IME/recreation and authorized live acceptance remain; profile Activity/iOS stay legacy. See home-check-in/MIGRATION_PLAN.md. |
 | Discovery: shop list/search/filter/map and embedded roasters | Not started | Audit actual list/map/filter ownership and current platform map; no independent module for every mode. |
-| Coffee catalogue: Coffee tab/list/detail | In progress — four boundaries, shared list/detail MVI and picker prepared; Android screens not switched | Preserve current catalogue/search/detail and links to roasters; catalog pickers are existing shared app boundaries, not invented screens. |
+| Coffee catalogue: Coffee tab/list/detail | In progress — four boundaries, shared MVI/picker and Android ScreenContent/entries/components/resources/previews prepared; active screens not switched | Preserve current catalogue/search/detail and links to roasters; app-owned analytics and navigation integration remain required. |
 | Roasters: list/detail and saved membership | Not started | Preserve current entry points, contacts, catalogue links and favorites. Favorites parity is an earlier gate, not permission for a wholesale roaster rewrite. |
 | Profile/account: personal/public profile, activity calendar, favorites preview, connections, edit, pending deletion | Not started | Main #97–98 redesign is retained, not extracted. Preserve its public-profile dependency, session-aware tabs, existing history/favorites/auth delegates and cached-account fallback; don't duplicate their business ownership. |
 | Auth: sign-in, registration, forgot/reset password | Not started as feature extraction | Existing session fixes are not a completed auth migration. Keep recovery/deep-link and Google/platform behavior. |

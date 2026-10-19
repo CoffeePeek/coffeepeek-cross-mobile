@@ -2,6 +2,8 @@ package com.coffeepeek.core.designsystem
 
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Surface
@@ -21,6 +23,8 @@ import androidx.compose.ui.unit.dp
 import androidx.test.core.app.ActivityScenario
 import com.coffeepeek.core.designsystem.component.CoffeePeekLikeButton
 import com.coffeepeek.core.designsystem.component.CoffeePeekLikeIcon
+import com.coffeepeek.core.designsystem.component.CoffeePeekLikeBadge
+import com.coffeepeek.core.designsystem.component.CoffeePeekLikeButtonStyle
 import com.coffeepeek.core.designsystem.theme.CoffeePeekColors
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import org.junit.Assert.assertEquals
@@ -31,6 +35,33 @@ import org.junit.Test
 /** Self-targeted library host: no production Application, account, DI or network. */
 class CoffeePeekLikeContractTest {
     @get:Rule val compose = createEmptyComposeRule()
+
+    @Test fun defaultPhotoGlassIsTranslucentAndPlainStyleHasNoPlate() {
+        for (dark in listOf(false, true)) {
+            val style = mutableStateOf(CoffeePeekLikeButtonStyle.Glass)
+            render(dark) {
+                Box(Modifier.background(Color.White)) {
+                    CoffeePeekLikeButton(true, "Saved", {}, Modifier.size(48.dp).testTag("glass"),
+                        overImage = true, style = style.value)
+                }
+            }.use {
+                val pixels = compose.onNodeWithTag("glass").captureToImage().toPixelMap()
+                val background = pixels[pixels.width / 2, pixels.height / 6]
+                assertTrue("Glass must show the image, not solid black", background.red in 0.35f..0.45f)
+                assertTrue(colorPixelCount("glass", CoffeePeekColors.Like) > 0)
+                compose.runOnIdle { style.value = CoffeePeekLikeButtonStyle.Plain }
+                val plain = compose.onNodeWithTag("glass").captureToImage().toPixelMap()
+                assertEquals(Color.White.toArgb(), plain[plain.width / 2, plain.height / 6].toArgb())
+            }
+        }
+    }
+
+    @Test fun photoBadgeIsReadOnlyNotADisabledToggle() {
+        render(false) { CoffeePeekLikeBadge(true, "Saved") }.use {
+            compose.onNodeWithContentDescription("Saved").assertHasNoClickAction()
+            compose.onAllNodes(hasClickAction()).assertCountEquals(0)
+        }
+    }
 
     @Test fun selectedHeartIsGoldAndUnselectedOutlineIsNeutralInBothThemes() {
         for (dark in listOf(false, true)) {

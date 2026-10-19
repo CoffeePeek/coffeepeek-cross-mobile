@@ -22,13 +22,15 @@ The same routes/repository are exercised by full-app Sandbox fixtures.
 |---|---|---|---|
 | domain | Catalogue/offer/filter/page models and repository contract; no DTO/HTTP/UI | Kotlin only | Own data/impl and app adapters. Compile-time independence from app and infrastructure. |
 | data | Existing catalogue endpoints, request/response DTOs, validation and mapping; expose only a factory returning domain repository | Own domain, core/network, Ktor, serialization, coroutines as needed | App composition via factory. Prevent transport types from leaking into UI/domain. |
-| api | Existing picker capability now; minimal list/detail entry/navigation with the later renderer | Kotlin now; minimal Compose/route dependencies only when needed | App and other feature callers through public ABI, not implementations. |
-| impl | Typed list/detail MVI and picker adapter now; screens/content, components, resources, previews in the UI slice | Own api/domain, core/presentation now; design-system with actual UI | App composition through entry factory. Keeps UI independent of data/legacy/root navigation. |
+| api | Existing shared picker capability and minimal Android list/detail entries | Kotlin shared picker; Compose runtime/UI only in androidMain | App and other feature callers through public ABI, not implementations. |
+| impl | Shared list/detail MVI/picker adapter; Android screens/content, components, resources, previews | Own api/domain, core/presentation; Android design-system/lifecycle/Compose | App composition through entry factory. Keeps UI independent of data/legacy/root navigation. |
 
 Create modules only with real content. First slice adds domain/data; the next
 adds the actual picker contract/adapter and tested list/detail MVI to api/impl,
-not empty placeholders. Until UI arrives these use the shared-library convention
-without speculative Compose, navigation or resource dependencies. Domain/data use
+not empty placeholders. The pure-logic slices used the shared-library convention;
+the UI slice uses shared-android-compose-library for api/impl, keeping Compose,
+Android resources and entry renderers in androidMain. Native picker/MVI remain
+shared, without introducing an iOS screen. Domain/data use
 manual constructor injection. App owns Koin, lifecycle/navigation, analytics
 adapters and plain-client lifetime. Cross-feature wiring goes through public API
 or composition adapters, never another feature's domain/data/impl. Reuse shared
@@ -41,14 +43,14 @@ design-system primitives rather than copying legacy App/Cp implementations.
   launch policy; disable Google sign-in only in ordinary Debug, not Release.
 - [x] Extract independently testable domain/data with parity tests; leave the
   active repository/screens unchanged until Android composition is ready.
-- [ ] Add api/impl entries and typed list/detail MVI. Preserve debounce, query
+- [x] Add api/impl entries and typed list/detail MVI. Preserve debounce, query
   limit, refresh/pagination, cancellation, filter draft/apply/reset/retry and
   stale-result protections. No meaningless one-call use cases.
   - [x] Existing picker public contract and manual repository-to-API factory.
   - [x] Typed state/action/event and lifecycle MVI implementation prepared.
   - [x] Execute MVI/picker contract tests, including out-of-order and cancelled results.
-  - [ ] Add actual renderer/screen entry contracts with their Compose implementation.
-- [ ] Extract components into compose/component, state/action/events into model;
+  - [x] Add actual renderer/screen entry contracts with their Compose implementation.
+- [x] Extract components into compose/component, state/action/events into model;
   stateless ScreenContent, colocated light/dark previews and localized resources.
   Preserve sizing/spacing/image treatment and offer/details behavior.
 - [ ] Wire Android tab/detail/deeplink, picker and app-owned analytics using
@@ -58,6 +60,10 @@ design-system primitives rather than copying legacy App/Cp implementations.
   MVI logic prepared in this slice has no telemetry adapter yet; do not activate
   it in the app until search/detail/exposure analytics parity is explicitly wired
   and tested. Existing legacy analytics stays active and unchanged for now.
+- [ ] Synchronize the newer main photo rollout #105 (`18142f80`) through the
+  parent stack before activating new bindings. It was fetched/reviewed during
+  the UI slice; no merge of that rollout is claimed here. Coffee source/HTTP
+  contracts have no diff from `0137ee7`; gallery/session/media composition does.
 - [ ] Verify catalogue/picker/roaster return, browser/share/photo cancellation,
   empty/error/slow/out-of-order data and long/scaled text in fake UI/full Sandbox.
 - [x] Publish a child PR (#104) targeting `feature/shared-rating-component`, with only
@@ -98,6 +104,116 @@ analytics, stale search pages, changing current visuals, or removing the shared
 Coffee repository/picker while iOS still consumes it.
 
 ## Verification record
+
+### Android UI slice — 2026-10-18–19
+
+Prepared actual `CoffeeListEntry` / `CoffeeDetailEntry` and manual implementations,
+lifecycle-owned Screen adapters and fake-state ScreenContent. Cards, prices,
+labels, search header, filter content/sheet, offer cards, intro and roaster row
+have their own files and colocated light/dark Android previews. Russian strings
+are moved into feature resources; current app/Coffee sources have no second
+translated locale, so no English localization is claimed. Search, grouped rows,
+switches/checkmarks, refresh, segmented weights, loader, currency, glass controls,
+icons/theme and brand placeholders reuse design-system. The existing outlined
+detail card is prepared there as CoffeePeekContentCard; grouped sections now
+support the existing titleless variant without an empty header gap.
+
+App supplies image loading (including Fit/Crop and failure rendering), gallery,
+localized dates, navigation and platform share/browser callbacks. No Koin,
+HTTP client, root navigator or production analytics SDK enters the new UI.
+No active Android route, Sandbox binding or iOS screen is switched. Search and
+detail analytics are still a required next integration slice, not an implicit
+side effect of creating these entries.
+
+Direct/Play Debug and Direct Sandbox assemblies pass with packaged DEX/isolation
+guards; ordinary CoffeePeek remains 1.0.648/code 648 on Pixel 7. App unit suites
+execute 450 + 450 cases; explicit fresh feature/core unit execution passes
+4 domain + 14 data + 41 impl + 23 design-system cases, **982 relevant executions**,
+zero failures/errors/skips. Three impl cases preserve price formatting. Both
+api/impl and the new shared design-system code compile for Native arm64 and
+Simulator arm64; this is compatibility, not iOS UI acceptance.
+
+New UI tests are self-targeted at `com.coffeepeek.feature.coffee.impl.test`
+(target API 36) on Pixel 7 `panther`, API 37; no production Application, account,
+network permission or external actions. Fake entry tests use the real lifecycle
+ViewModels and injected repository/image/gallery ports. The first content run
+had 7/48 harness failures: four merged-tree image lookups and three controlled
+search tests not feeding typed query back into state. Corrected the node lookup
+and controlled state without changing expected dimensions or actions; the full
+expanded 51-case suite then passed. Final modal Back/Done and post-lint evidence
+is recorded below. Design-system UI regression passes **71/71**, first pass,
+including titleless group height and exact outlined-card padding.
+
+Studio's new Android source-set classpath is not synced to its Gradle convention
+change, so unresolved IDE references are not counted as a clean feature inspection.
+CLI compilation succeeds; CoffeePeekContentCard IDE error inspection is clean,
+grouped rows have existing preview warnings, and the icon inspection timed out.
+IDE preview rendering, pixel-identical live catalogue acceptance, platform
+gallery/browser/share and actual server/media acceptance remain separate gates.
+Shared controls retain their design-system accessible hit areas; this slice does
+not certify exact 44/48dp legacy-control pixel parity. Product photo height,
+main card/detail spacings and type roles retain the baseline treatment.
+
+Before the subsequent card-builder request, the final post-lint Coffee APK
+`8fa5edd081c05f4de8aafc88a5f9c2b0bfed6f35a054c59721edf2761fa3eb22`
+passed **52/52** self-targeted UI/entry cases (including actual filter-sheet
+Back discarding the draft and Done searching once). The preceding expanded
+52-case run also passed. Core's 71-case APK was
+`474adb05f927e9ca2836b9ce6265709cd772e0ba123fb31af077baa318958d73`.
+Only the light-list fixture with real Manrope was manually inspected; the test
+host's light-theme system-bar icons are not application window-style acceptance.
+A later detail fixture launch delivered an intent to the existing Activity and
+did not constitute a new dark-detail visual check.
+
+### Requested card builder / readable intro / photo-heart correction — 2026-10-19
+
+`CoffeePeekCard` is the shared declarative builder: full-bleed header, padded
+body and optional footer; click is optional. CoffeePeekContentCard is its
+outlined preset, not a second copied card implementation. Coffee card uses
+photo/summary/offer-footer components, retaining the 216dp photo, existing
+section spacing and nested weight-selection behavior. Business models stay in
+the feature. CoffeeDetailIntro now only assembles heading, expandable description
+and traits; generic controlled expandable text and read-only value/caption
+rendering live in design-system. No mutable builder registry, framework-specific
+domain model or new module is introduced.
+
+Photo favorites now use the shared Glass style, a translucent black tint and
+subtle rim, rather than solid black containers; neutral and selected gold glyphs
+remain unchanged. Tint retains sufficient density for the glyph over bright
+photos. A Haze source enables backdrop blur; absent a source this is explicitly
+a translucent glass-style fallback, not a claim of real blur. Plain style has
+no plate and remains the default away from images. Passive markers use the
+read-only CoffeePeekLikeBadge, never a disabled/fictional toggle. Normal app
+catalogue/public favorite cards and migrated Favorites delegate this appearance;
+auth, request handling, analytics and persistence are unchanged.
+
+Final Android builds/DEX/Sandbox guards, both app unit suites and feature/core
+unit suites pass; api/impl lint has zero issues. Both complete Native app targets
+compile for shared-code compatibility, not iOS screen acceptance. Studio error
+inspection of CoffeePeekCard, CoffeePeekExpandableText and CoffeePeekLikeButton
+succeeds. Pixel 7 initially disconnected, then was reconnected/unlocked by the
+user. Final self-targeted suites pass **143/143**: core **77** (four new
+builder/text and two glass/badge contracts), Coffee **52**, Favorites **14**.
+No failures/skips or assertion changes in this component slice. Core's initial
+77-case run also passed; after an import-only rebuild the complete final 77-case
+suite was repeated and passed against the exact final APK below. Coffee's 52
+and Favorites' 14 cases then passed on their final APKs. Earlier UI harness
+failures are historical and remain recorded above, not hidden by this success.
+
+Manually inspected Glass/Plain with selected/unselected hearts on synthetic
+white, coffee-brown and black backgrounds in both themes. The plain white
+outline vanishes on a white photo, so Glass is the photo default; Plain remains
+available for non-photo surfaces. Also inspected the slot-based dark list/card
+and the simplified dark detail intro with real Manrope. Test-host system-bar
+styling/fixture header overlap is not production window-style acceptance;
+actual photo blur with a Haze source, live image loading and exact product
+pixel parity remain integration gates. Screenshots stay local.
+No ordinary app or Sandbox update, server/account write or device setting change
+was made by this slice. Build identity on top of `d0ec1930`:
+
+- Core test APK SHA-256: `c7b0f23ed4c92616722e28675d8ad31e32e096811985ee9914fee70c2be081d6`.
+- Coffee test APK SHA-256: `370a6e4c73e6394db3a93fa7e6aed7d9a121bbabd82a1f236ef666fc226c61dd`.
+- Favorites test APK SHA-256: `8a2e555e4f06295acaeb0071d0ffa4407e2f2434640dc344172b2e5d6218cb27`.
 
 MVI slice prepared on top of `1ba91f8d`. Remote main rechecked at `0137ee7`.
 Prepared public picker API, its manual factory and shared list/detail ViewModels

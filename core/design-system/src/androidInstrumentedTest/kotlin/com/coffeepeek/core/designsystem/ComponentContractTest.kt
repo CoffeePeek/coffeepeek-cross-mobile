@@ -3,6 +3,14 @@ package com.coffeepeek.core.designsystem
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.material3.Icon
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.assertHeightIsEqualTo
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsNotEnabled
@@ -13,6 +21,8 @@ import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.performClick
 import androidx.test.core.app.ActivityScenario
 import com.coffeepeek.core.designsystem.component.CoffeePeekButton
+import com.coffeepeek.core.designsystem.component.CoffeePeekGroupSection
+import com.coffeepeek.core.designsystem.component.CoffeePeekContentCard
 import com.coffeepeek.core.designsystem.component.CoffeePeekCheckmarkRow
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.modifier.CoffeePeekGlassIconButton
@@ -31,6 +41,32 @@ class DesignSystemTestActivity : ComponentActivity() {
 
 class ComponentContractTest {
     @get:Rule val compose = createEmptyComposeRule()
+
+    @Test fun optionalGroupHeaderDoesNotInsertAnEmptyTitleGap() {
+        ActivityScenario.launch(DesignSystemTestActivity::class.java).use { scenario ->
+            scenario.onActivity { it.setContent {
+                CoffeePeekTheme(FontFamily.Default) {
+                    Box(Modifier.testTag("group")) {
+                        CoffeePeekGroupSection { Box(Modifier.size(20.dp)) }
+                    }
+                }
+            } }
+            compose.onNodeWithTag("group").assertHeightIsEqualTo(20.dp)
+        }
+    }
+
+    @Test fun outlinedContentCardKeepsCallerPaddingWithoutExtraInsets() {
+        ActivityScenario.launch(DesignSystemTestActivity::class.java).use { scenario ->
+            scenario.onActivity { it.setContent {
+                CoffeePeekTheme(FontFamily.Default, darkTheme = true) {
+                    CoffeePeekContentCard(Modifier.testTag("card"), contentPadding = PaddingValues(16.dp)) {
+                        Box(Modifier.size(20.dp))
+                    }
+                }
+            } }
+            compose.onNodeWithTag("card").assertHeightIsEqualTo(52.dp)
+        }
+    }
 
     @Test fun buttonRendersAndInvokesCallback() {
         var clicks = 0

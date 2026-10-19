@@ -28,7 +28,7 @@ feature/shop/                       api/domain/data/impl; Android menu gallery a
 feature/check-in-history/           api/domain/data/impl; Android combined history active
 feature/home-check-in/              pure domain/data and Android detail/editor api/impl;
                                    active in Android history/global creation; profile/iOS legacy
-feature/coffee/                     api/domain/data/impl picker and MVI prepared;
+feature/coffee/                     api/domain/data/impl picker, MVI and Android UI prepared;
                                    current catalogue screens/DI still in composeApp
 ```
 

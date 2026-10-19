@@ -1,5 +1,16 @@
 # Migration stack versus main 0137ee7 — 2026-10-16
 
+## Observed newer main — synchronization pending (2026-10-19)
+
+Remote main `18142f80` includes photo rollout #105: protected variants, byte
+cache/session invalidation and full-screen original handling. It was fetched
+and its diff reviewed during the prepared Coffee UI slice. Coffee source/HTTP
+contracts have no change against 0137ee7, but existing shared media, gallery,
+session and Home/Shop photo contracts do. This is **not a completed stack merge**.
+Reconcile the rollout through parents/children and audit migrated photo adapters
+before activating Coffee entries; earlier unit/device evidence below certifies
+its stated baseline only, not the new production photo delivery.
+
 ## Latest profile update (#97–98)
 
 Main advanced again from f2b184b to 0137ee7. The new personal/public profile,

@@ -26,7 +26,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
@@ -87,7 +86,6 @@ internal fun FavoriteCard(
                         // assistive technology; the icon itself remains visually compact.
                         modifier = Modifier.size(48.dp),
                         shape = RoundedCornerShape(CoffeePeekDimens.radiusLg),
-                        containerColor = Color.Black.copy(alpha = 0.68f),
                         iconSize = 22.dp,
                         overImage = true,
                     )
