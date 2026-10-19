@@ -33,10 +33,11 @@ actual fun initPlatformKoin() {
         shopCheckInRendererFactory = { AndroidShopCheckInFormRenderer(get()) },
         shopDetailRendererFactory = {
             AndroidShopDetailScreenRenderer(sessions = get(), users = get(), details = get(), votes = get(),
-                favorites = get(), checkInForm = get(), visibility = get())
+                favorites = get(), checkInForm = get(), visibility = get(), blockActions = get())
         },
         shopCheckInListRendererFactory = {
-            AndroidShopCheckInListScreenRenderer(sessions = get(), users = get(), details = get(), votes = get(), visibility = get())
+            AndroidShopCheckInListScreenRenderer(sessions = get(), users = get(), details = get(), votes = get(),
+                visibility = get(), blockActions = get())
         },
     )
 }

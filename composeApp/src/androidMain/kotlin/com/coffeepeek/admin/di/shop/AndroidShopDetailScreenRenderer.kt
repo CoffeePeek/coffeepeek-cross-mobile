@@ -59,6 +59,7 @@ internal class AndroidShopDetailScreenRenderer(
     private val favorites: FavoritesRepository,
     private val checkInForm: ShopCheckInFormRenderer,
     private val visibility: com.coffeepeek.feature.authorblocking.api.AuthorVisibility,
+    private val blockActions: com.coffeepeek.feature.authorblocking.api.AuthorBlockActions,
 ) : ShopDetailScreenRenderer {
     @Composable
     override fun Content(shopId: String, forCheckIn: Boolean) {
@@ -98,6 +99,7 @@ internal class AndroidShopDetailScreenRenderer(
                             is ShopDetailEffect.OpenCheckIns -> Navigator.navigate(Navigator.Screen.ShopReviews(effect.shopId))
                             is ShopDetailEffect.ReportCheckIn -> Navigator.navigate(Navigator.Screen.ReportCheckIn(effect.checkInId))
                             is ShopDetailEffect.OpenAuthor -> Navigator.navigate(Navigator.Screen.UserProfile(effect.slug, effect.nickname, effect.avatarUrl))
+                            is ShopDetailEffect.BlockAuthor -> session.lease.requestAuthorBlock(effect.author, blockActions)
                             is ShopDetailEffect.FavoriteChanged -> scope.launch {
                                 if (session.lease.isCurrent()) FavoriteSync.notifyChanged(effect.shopId, effect.isFavorite)
                             }

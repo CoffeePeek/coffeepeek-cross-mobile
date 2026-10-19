@@ -45,6 +45,7 @@ import com.coffeepeek.feature.shop.impl.ui.compose.model.ShopCheckInListAction
 import com.coffeepeek.feature.shop.impl.ui.compose.model.ShopCheckInListEvent
 import com.coffeepeek.feature.shop.impl.ui.compose.model.ShopCheckInListState
 import com.coffeepeek.feature.shop.impl.ui.data.ratingSummary
+import com.coffeepeek.feature.shop.impl.ui.data.blockableAuthor
 import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
@@ -127,6 +128,10 @@ internal fun ShopCheckInListScreenContent(
                         onVote = if (isOwn || state.pendingVoteId != null || state.isLoading) null
                             else { { onAction(ShopCheckInListAction.ToggleHelpful(checkIn.id)) } },
                         onReport = if (isOwn) null else { { onAction(ShopCheckInListAction.Report(checkIn.id)) } },
+                        onBlockAuthor = checkIn.blockableAuthor(isOwn, state.isLoggedIn, state.currentUserId)
+                            ?.takeUnless { state.isLoading }?.let {
+                                { onAction(ShopCheckInListAction.BlockAuthor(checkIn.id)) }
+                            },
                         onOpenAuthor = checkIn.authorSlug?.takeIf(String::isNotBlank)?.let {
                             { onAction(ShopCheckInListAction.OpenAuthor(checkIn.id)) }
                         },

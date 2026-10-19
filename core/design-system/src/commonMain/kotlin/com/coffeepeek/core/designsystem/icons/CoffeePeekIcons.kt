@@ -59,6 +59,7 @@ import com.adamglin.phosphoricons.regular.PencilSimple
 import com.adamglin.phosphoricons.regular.PersonSimpleWalk
 import com.adamglin.phosphoricons.regular.Phone
 import com.adamglin.phosphoricons.regular.Plus
+import com.adamglin.phosphoricons.regular.Prohibit
 import com.adamglin.phosphoricons.regular.ShareNetwork
 import com.adamglin.phosphoricons.regular.SignOut
 import com.adamglin.phosphoricons.regular.Sparkle
@@ -86,6 +87,7 @@ object CoffeePeekIcons {
     val ShoppingBag: ImageVector get() = PhosphorIcons.Regular.ShoppingBag
     val Add: ImageVector get() = PhosphorIcons.Regular.Plus
     val Back: ImageVector get() = PhosphorIcons.Regular.ArrowLeft
+    val Block: ImageVector get() = PhosphorIcons.Regular.Prohibit
     val Calendar: ImageVector get() = PhosphorIcons.Regular.CalendarBlank
     val Camera: ImageVector get() = PhosphorIcons.Regular.Camera
     val Check: ImageVector get() = PhosphorIcons.Regular.Check

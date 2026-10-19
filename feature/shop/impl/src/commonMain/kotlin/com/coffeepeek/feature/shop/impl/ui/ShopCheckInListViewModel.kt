@@ -9,6 +9,7 @@ import com.coffeepeek.feature.shop.impl.ui.compose.model.ShopCheckInListEvent
 import com.coffeepeek.feature.shop.impl.ui.compose.model.ShopCheckInListEventEnvelope
 import com.coffeepeek.feature.shop.impl.ui.compose.model.ShopCheckInListState
 import com.coffeepeek.feature.shop.impl.ui.data.ratingSummary
+import com.coffeepeek.feature.shop.impl.ui.data.blockableAuthor
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.currentCoroutineContext
@@ -69,6 +70,13 @@ internal class ShopCheckInListViewModel(
                 if (currentState.owns(checkIn)) return
                 if (currentState.isLoggedIn) emitEvent(ShopCheckInListEvent.Report(checkIn.id))
                 else emitEvent(ShopCheckInListEvent.SignIn)
+            }
+            is ShopCheckInListAction.BlockAuthor -> {
+                if (loadJob != null || currentState.isLoading) return
+                val row = currentState.checkIns.firstOrNull { it.id == action.checkInId } ?: return
+                val author = row.blockableAuthor(currentState.owns(row), currentState.isLoggedIn,
+                    currentState.currentUserId) ?: return
+                emitEvent(ShopCheckInListEvent.BlockAuthor(author))
             }
             is ShopCheckInListAction.OpenPhoto -> {
                 val checkIn = currentState.checkIns.firstOrNull { it.id == action.checkInId } ?: return

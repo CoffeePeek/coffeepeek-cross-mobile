@@ -3,6 +3,7 @@ package com.coffeepeek.feature.shop.impl.ui.compose.model
 internal data class ShopCheckInListEventEnvelope(val event: ShopCheckInListEvent, val sessionGeneration: Int)
 
 internal sealed interface ShopCheckInListEvent {
+    data class BlockAuthor(val author: com.coffeepeek.feature.shop.api.ShopCheckInAuthor) : ShopCheckInListEvent
     data object Back : ShopCheckInListEvent
     data object SignIn : ShopCheckInListEvent
     data object Register : ShopCheckInListEvent
