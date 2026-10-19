@@ -37,7 +37,10 @@ internal object ProtectedPhotoSession {
             val next = State(session)
             if (state.compareAndSet(old, next)) {
                 _changes.value = next.scope
-                worker.launch { protectedPhotoCache.discardInvalidScopes(::current) }
+                worker.launch {
+                    protectedPhotoCache.discardInvalidScopes(::current)
+                    protectedPhotoPainterCache.discardInvalidScopes(::current)
+                }
                 return
             }
         }

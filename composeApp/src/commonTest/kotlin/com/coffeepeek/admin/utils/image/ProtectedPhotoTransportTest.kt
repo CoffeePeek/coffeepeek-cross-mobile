@@ -7,6 +7,7 @@ import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.respond
 import io.ktor.client.plugins.cache.HttpCache
 import io.ktor.http.*
+import io.ktor.util.date.GMTDate
 import io.ktor.utils.io.ByteReadChannel
 import kotlinx.coroutines.test.runTest
 import kotlin.io.encoding.Base64
@@ -63,6 +64,30 @@ class ProtectedPhotoTransportTest {
             val request = data("large-no-store")
             repeat(2) { assertEquals(5 * 1024 * 1024, protectedVariantBytes(client, request).size) }
             assertEquals(2, calls)
+        } finally { client.close() }
+    }
+
+    @Test fun anonymousVariantsReuseOnlyExplicitFreshPermissionWithinTheSameScope() = runTest {
+        var calls = 0
+        val client = HttpClient(MockEngine {
+            calls++
+            respond(ByteReadChannel(byteArrayOf(3, 7)), HttpStatusCode.OK, Headers.build {
+                appendAll(headers("private,max-age=20,must-revalidate"))
+                append(HttpHeaders.Date, GMTDate().toHttpDate())
+            })
+        })
+        try {
+            val scope = ProtectedPhotoSession.scope(null)
+            val url = "https://gateway.example/api/v1/check-ins/visit/photos/anonymous-fresh/variants/source/1/feed.png"
+            val first = CustomUrl(url, scope, PhotoDisplayPermission())
+            assertContentEquals(byteArrayOf(3, 7), protectedVariantBytes(client, first))
+            val reopened = CustomUrl(url, scope, PhotoDisplayPermission())
+            assertContentEquals(byteArrayOf(3, 7), protectedVariantBytes(client, reopened))
+            assertEquals(1, calls)
+            assertNotNull(first.displayPermission?.reusablePermission)
+            assertEquals(first.displayPermission?.reusablePermission, reopened.displayPermission?.reusablePermission)
+            ProtectedPhotoSession.invalidate()
+            assertFailsWith<IllegalStateException> { protectedVariantBytes(client, reopened) }
         } finally { client.close() }
     }
 

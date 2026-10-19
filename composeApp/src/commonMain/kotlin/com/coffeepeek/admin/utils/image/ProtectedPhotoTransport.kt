@@ -41,7 +41,7 @@ internal suspend fun protectedVariantBytes(client: HttpClient, data: CustomUrl):
         }
     }
     check(ProtectedPhotoSession.current(scope)) { "Фото недоступно" }
-    data.displayPermission?.grant(result.permission)
+    data.displayPermission?.grant(result.permission, result.reusablePermission)
     return result.bytes
 }
 
