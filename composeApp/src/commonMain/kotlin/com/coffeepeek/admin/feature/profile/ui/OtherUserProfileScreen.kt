@@ -132,10 +132,10 @@ internal fun UserProfileScreen(
                     modifier = Modifier.align(Alignment.CenterStart),
                 ) { Icon(CpIcons.ChevronLeft, contentDescription = null, modifier = Modifier.size(23.dp)) }
                 Text(
-                    "Профиль", Modifier.fillMaxWidth().padding(horizontal = 56.dp),
+                    "Профиль", Modifier.fillMaxWidth().padding(start = if (onBack == null) 0.dp else 56.dp, end = 56.dp),
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.SemiBold,
-                    textAlign = TextAlign.Center,
+                    textAlign = if (onBack == null) TextAlign.Start else TextAlign.Center,
                 )
                 if (!viewingOwnProfile && profile != null) {
                     val author = com.coffeepeek.feature.authorblocking.api.AuthorReference(profile.authorId, profile.slug, profile.nickname, profile.avatarUrl)
