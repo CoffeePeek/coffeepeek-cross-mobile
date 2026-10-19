@@ -1,5 +1,28 @@
 # Android shop migration — compatibility plan
 
+## Scoped interaction corrections — 2026-10-19
+
+Parent #43 (`d8dff6ed` plus this patch) restores the existing main hours-header
+behavior: expand/collapse remains an accessible button, without a ripple on the
+whole header. Ordinary actionable buttons and selection menus retain feedback.
+The static saved-drink summary now lives in the check-in card's bottom-trailing
+footer alongside the helpful count; it no longer occupies a full-width row before
+the note or displays a chevron suggesting nonexistent drink navigation. It uses
+the shared, unplated `CoffeePeekDrinkLabel`: no background/border or asymmetric
+internal padding. Monetary BYN amounts use the shared square `CoffeePeekBynIcon`
+at main's 16dp menu size, not the taller price-level indicator. Cutout
+image injection, localized drink-name fallback, note, album and vote behavior
+remain unchanged. Paired previews stay beside the component owners.
+
+Checks: Direct Debug APK and packaged runtime-class guard, **91 Shop impl unit
+results**, **439 app Direct unit results**, Shop lint, and both self-targeted test
+APKs pass. On Pixel 7 / API 37, **10 Shop detail UI tests** pass, including static
+drink/footer geometry in both themes and hours expansion/collapse. The six shared
+modal inset/placement tests and their harness retry are documented in
+`core/design-system/INSETS.md`. Light/dark brand-font fixtures were also visually
+inspected on the device; screenshots remain local. These are fake fixtures, not live account/backend,
+OS camera/picker or iOS acceptance. Screenshots remain local and untracked.
+
 ## Current visual scope — 2026-10-15
 
 The latest controls checkpoint additionally groups photo-source actions, adds

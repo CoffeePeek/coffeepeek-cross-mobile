@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -113,6 +114,9 @@ fun SwipeDismissModalBottomSheet(
             }
         },
         containerColor = MaterialTheme.colorScheme.surface,
+        // Native iOS sheets return above; the fallback must also protect horizontal
+        // cutouts. Material consumes these insets and owns its dialog's IME padding.
+        contentWindowInsets = { WindowInsets.safeDrawing },
         content = {
             if (maxContentHeight != null) {
                 // Keep the outer viewport intact: Material uses it to anchor the sheet
