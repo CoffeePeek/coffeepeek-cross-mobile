@@ -59,6 +59,7 @@ class ProtectedPhotoCacheTest {
         clock.advance(5_000)
         val second = cache.read(key(), base + 100_000, { true }) { error("must reuse") }
         assertSame(first.bytes, second.bytes)
+        assertEquals(first.reusablePermission, second.reusablePermission)
         assertEquals(15_000L, second.permission.remaining(clock))
         clock.advance(16_000)
         val third = cache.read(key(), base + 100_000, { true }) {
@@ -67,6 +68,47 @@ class ProtectedPhotoCacheTest {
         }
         assertSame(original, third.bytes)
         assertEquals(2, calls)
+    }
+
+    @Test fun onlyExplicitPositiveFreshnessCanAuthorizeAnotherPresentation() = runTest {
+        val cases = listOf(
+            headers() to true,
+            headers("private,max-age=0,must-revalidate") to false,
+            headers("private,max-age=20,no-cache") to false,
+            headers("private,no-store") to false,
+            headers(dateValue = null) to false,
+            headers(etag = null) to false,
+        )
+        for ((responseHeaders, reusable) in cases) {
+            val cache = ProtectedPhotoCache(backgroundScope, Clock(base))
+            val result = cache.read(key(), base + 100_000, { true }) { response(responseHeaders) }
+            assertEquals(reusable, result.reusablePermission != null)
+        }
+        val anonymous = ProtectedPhotoCache(backgroundScope, Clock(base))
+            .read(key(), null, { true }) { response() }
+        assertNotNull(anonymous.reusablePermission)
+    }
+
+    @Test fun anonymousFreshBytesReuseWithinTheirScopedPermissionAndThenRevalidate() = runTest {
+        val clock = Clock(base)
+        val cache = ProtectedPhotoCache(backgroundScope, clock)
+        val original = cache.read(key(), null, { true }) { response() }
+        clock.advance(5_000)
+        val reopened = cache.read(key(), null, { true }) { error("anonymous fresh variant must reuse") }
+        assertSame(original.bytes, reopened.bytes)
+        assertEquals(15_000L, reopened.permission.remaining(clock))
+        assertEquals(original.reusablePermission, reopened.reusablePermission)
+        clock.advance(15_000)
+        val revalidated = cache.read(key(), null, { true }) {
+            assertEquals("\"variant-a\"", it)
+            response(headers(dateValue = "Sun, 18 Oct 2026 12:00:20 GMT"), status = 304)
+        }
+        assertSame(original.bytes, revalidated.bytes)
+        assertEquals(20_000L, revalidated.permission.remaining(clock))
+        cache.read(key(Any()), null, { true }) { assertNull(it); response(headers(dateValue = "Sun, 18 Oct 2026 12:00:20 GMT")) }
+        assertFailsWith<IllegalStateException> {
+            cache.read(key(), null, { false }) { error("revoked anonymous scope must not transfer") }
+        }
     }
 
     @Test fun responseBodyAndDecodeTimeCannotExtendPositiveOrZeroFreshnessPermission() = runTest {

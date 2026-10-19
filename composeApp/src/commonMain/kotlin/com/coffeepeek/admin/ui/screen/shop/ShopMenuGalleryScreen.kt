@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
@@ -38,12 +39,17 @@ import com.coffeepeek.admin.ui.component.CoffeePeekLoader
 import com.coffeepeek.admin.ui.component.CoffeeShopImage
 import com.coffeepeek.admin.ui.component.CpTopBar
 import com.coffeepeek.admin.ui.component.FullScreenImageDialog
+import com.coffeepeek.admin.utils.PrefetchListPhotos
 import org.koin.core.parameter.parametersOf
 
 @Composable
 fun ShopMenuGalleryScreen(shopId: String) {
     val vm: ShopMenuGalleryViewModel = platformViewModel(parameters = { parametersOf(shopId) })
     val state by vm.uiState.collectAsState()
+    val listState = rememberLazyListState()
+    PrefetchListPhotos(listState, state.photos.mapIndexed { index, photo ->
+        "${photo.id}-${photo.fullUrl}-$index" to listOf(photo.fullUrl)
+    })
     var previewIndex by remember { mutableStateOf<Int?>(null) }
 
     previewIndex?.let { index ->
@@ -76,6 +82,7 @@ fun ShopMenuGalleryScreen(shopId: String) {
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
                 else -> LazyColumn(
+                    state = listState,
                     modifier = Modifier.fillMaxSize(),
                     contentPadding = PaddingValues(
                         start = CpDimens.spacing4,

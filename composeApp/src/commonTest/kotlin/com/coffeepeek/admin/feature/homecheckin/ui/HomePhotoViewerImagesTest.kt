@@ -16,27 +16,35 @@ class HomePhotoViewerImagesTest {
         ))
         assertEquals(listOf("", detail), images.previews)
         assertEquals(listOf(first, second), images.originals)
-        assertNull(images.displayUrl(0, 0, null, true))
-        assertEquals(first, images.originalForAction(0))
-        assertEquals(first, images.displayUrl(0, 0, 0, true))
-        assertEquals(second, images.originalForAction(1))
+        assertEquals(first, images.displayUrl(0, 0, true))
+        assertEquals(first, images.highQualityUrl(0, 0))
+        assertEquals(detail, images.displayUrl(1, 1, true))
+        assertNull(images.highQualityUrl(1, 1))
+        assertNull(images.highQualityUrl(1, 0))
     }
 
-    @Test fun pendingDrinkKeepsAnExplicitOriginalEvenWithoutADetailDescriptor() {
+    @Test fun pendingDrinkAutomaticallyShowsOriginalWithoutADetailDescriptor() {
         val original = "https://gateway.example/api/v1/check-ins/home/photos/drink"
         for (detail in listOf(null, "")) {
             val images = homeDrinkPhotoViewerImages(original, detail)
             assertEquals(listOf(""), images.previews)
-            assertNull(images.displayUrl(0, 0, null, true))
-            assertEquals(original, images.originalForAction(0))
-            assertEquals(original, images.displayUrl(0, 0, 0, true))
+            assertEquals(original, images.displayUrl(0, 0, true))
+            assertEquals(original, images.highQualityUrl(0, 0))
         }
     }
 
-    @Test fun legacyHomePhotoStillDisplaysWithoutASecondOriginalAction() {
+    @Test fun legacyHomePhotoDisplaysWithoutASecondQualityRequest() {
         val original = "https://gateway.example/api/v1/check-ins/home/photos/legacy"
         val images = homePhotoViewerImages(listOf(HomeCheckInPhoto("legacy", original)))
-        assertEquals(original, images.displayUrl(0, 0, null, true))
-        assertNull(images.originalForAction(0))
+        assertEquals(original, images.displayUrl(0, 0, true))
+        assertNull(images.highQualityUrl(0, 0))
+    }
+
+    @Test fun readyDrinkDetailDoesNotDownloadTheOriginalAgain() {
+        val original = "https://gateway.example/api/v1/check-ins/home/photos/drink"
+        val detail = "$original/variants/source/1/detail.png"
+        val images = homeDrinkPhotoViewerImages(original, detail)
+        assertEquals(detail, images.displayUrl(0, 0, true))
+        assertNull(images.highQualityUrl(0, 0))
     }
 }

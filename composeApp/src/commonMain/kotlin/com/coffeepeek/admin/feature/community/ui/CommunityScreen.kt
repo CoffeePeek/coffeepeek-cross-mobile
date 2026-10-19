@@ -28,6 +28,7 @@ import com.coffeepeek.admin.ui.component.LoadErrorContent
 import com.coffeepeek.admin.ui.component.ReviewTextInput
 import com.coffeepeek.admin.ui.screen.checkins.CheckInCreateButton
 import com.coffeepeek.admin.ui.screen.checkins.CheckInCreateFlow
+import com.coffeepeek.admin.utils.PrefetchListPhotos
 import com.coffeepeek.domain.model.CheckIn
 import com.coffeepeek.domain.model.CheckInModerationState
 import com.coffeepeek.domain.model.CheckInVisibility
@@ -38,6 +39,7 @@ fun CommunityScreen(onCreateCheckIn: () -> Unit) {
     val state by vm.state.collectAsState()
     TrackFeedViewed(state.firstPageCount, state.timeline == CommunityTimeline.Public)
     val listState = rememberLazyListState()
+    PrefetchListPhotos(listState, state.items.map { it.id to it.photoThumbnailUrls.take(3) })
     val snackbar = remember { SnackbarHostState() }
     val clearance = LocalFloatingNavClearance.current
     var preview by remember { mutableStateOf<CheckInPhotoPreview?>(null) }
