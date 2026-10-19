@@ -10,8 +10,8 @@ internal fun historyCalendarPhotos(state: CombinedHistoryState, date: String): L
     if (!state.isLoggedIn) return emptyList()
     val shops = if (state.filter.includes(HistorySource.Shop)) state.shopCalendar.content[date].orEmpty().mapNotNull { row ->
         val occurredAt = row.entry.visitedAt.ifBlank { row.entry.createdAt }
-        row.entry.drinkPhotoUrl?.takeIf(String::isNotBlank)?.let { HistoryCalendarPhoto(it, true, occurredAt) }
-            ?: row.entry.photoUrls.firstOrNull(String::isNotBlank)?.let { HistoryCalendarPhoto(it, false, occurredAt) }
+        (row.entry.drinkPhotoThumbnailUrl ?: row.entry.drinkPhotoUrl)?.takeIf(String::isNotBlank)?.let { HistoryCalendarPhoto(it, true, occurredAt) }
+            ?: (row.entry.photoCalendarUrls ?: row.entry.photoUrls).firstOrNull(String::isNotBlank)?.let { HistoryCalendarPhoto(it, false, occurredAt) }
     } else emptyList()
     val homes = if (state.filter.includes(HistorySource.Home)) state.homeCalendarPhotos[date].orEmpty() else emptyList()
     return (shops + homes).filter { it.url.isNotBlank() }

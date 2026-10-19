@@ -50,7 +50,8 @@ private fun HomePreparation.historyEntry() = HomeHistoryEntry(
     id = id, preparedOn = preparedOn, preparedAtUtc = preparedAtUtc, createdAtUtc = createdAtUtc, note = text,
     recipe = HomeHistoryRecipe(brewMethodCode, coffeeProductId, beanName, doseGrams, brewDurationSeconds, tasteScore),
     drinkName = drinkName, drinkSlug = drinkSlug, customDrinkName = customDrinkName,
-    photos = photos.map { HomeHistoryPhoto(it.id, it.url) }, drinkPhotoUrl = drinkPhotoUrl,
+    photos = photos.map { HomeHistoryPhoto(it.id, it.url, it.thumbnailUrl, it.detailUrl, it.calendarUrl) },
+    drinkPhotoUrl = drinkPhotoUrl, drinkPhotoThumbnailUrl = drinkPhotoThumbnailUrl, drinkPhotoDetailUrl = drinkPhotoDetailUrl,
     visibility = when (visibility) {
         HomePreparationVisibility.Private -> HistoryVisibility.Private
         HomePreparationVisibility.Public -> HistoryVisibility.Public

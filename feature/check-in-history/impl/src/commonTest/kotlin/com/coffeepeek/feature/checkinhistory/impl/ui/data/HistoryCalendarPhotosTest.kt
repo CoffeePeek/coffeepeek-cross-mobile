@@ -75,4 +75,14 @@ class HistoryCalendarPhotosTest {
         assertTrue(historyCalendarPhotos(state().visibleTo(1, true), day).isEmpty())
         assertTrue(state().visibleTo(1, false).homeCalendarPhotos.isEmpty())
     }
+
+    @Test fun calendarUsesThumbVariantsAndDoesNotDownloadUnavailableOriginals() {
+        fun photos(entry: PersonalCheckIn) = historyCalendarPhotos(state().copy(filter = HistoryKindFilter.Shop,
+            shopCalendar = CombinedHistoryLoadState(mapOf(day to listOf(HistoryTimelineItem.Shop(entry, day))))), day)
+        val entry = shop.copy(drinkPhotoUrl = "original-cutout", drinkPhotoThumbnailUrl = "",
+            photoCalendarUrls = listOf("calendar-thumb"))
+        assertEquals(listOf("calendar-thumb"), photos(entry).map { it.url })
+        assertTrue(photos(entry.copy(photoCalendarUrls = listOf(""))).isEmpty())
+        assertEquals(listOf("cutout-thumb"), photos(entry.copy(drinkPhotoThumbnailUrl = "cutout-thumb")).map { it.url })
+    }
 }
