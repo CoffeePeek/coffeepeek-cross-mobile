@@ -124,7 +124,8 @@ reason; a transport module does not need artificial business domain/data modules
 Current chain: #43 -> #95 -> #99 -> #101 -> #102 -> #104. The parent #43 targets
 develop; each child targets its predecessor's branch. Ownership is respectively
 core/favorites/Shop, combined history, Home, full-app Sandbox, shared ratings and
-prepared Coffee. Main 28917758 is inherited parent-first through the chain.
+prepared Coffee. Main dfb00e63 is inherited parent-first through the chain;
+its final CI-only change does not alter the verified 28917758 application baseline.
 Former checkpoint PRs remain closed/superseded. Parent fixes stay with their
 owner and flow into descendants; see the roadmap's exact branch table.
 

@@ -1,6 +1,7 @@
 # Android refactoring — current roadmap
 
-Audit date: **2026-10-19**. Product baseline: `origin/main` **28917758**.
+Audit date: **2026-10-19**. Current main: **dfb00e63**; application-code baseline
+remains **28917758** (the last commit changes iOS CI/signing tests only).
 The current inventory and ordered work below supersede dated 0137ee7/4976e53
 checklists retained later for provenance. Inspect actual entry points, not just
 screen filenames, before extracting another capability.
@@ -11,6 +12,9 @@ Main was integrated starting at #43, then propagated through #95 -> #99 ->
 #101 -> #102 -> #104. Local main is fast-forwarded to the same baseline. See
 [MAIN_SYNC_AUDIT.md](MAIN_SYNC_AUDIT.md) for reconciliation and verification.
 This synchronization does not activate Coffee or migrate new profile/auth UI.
+The final CI-only dfb00e63 update was also propagated parent-first; its two
+signing-profile unit tests pass. Android/KMP source did not change after the
+verification below.
 
 There are **36 registered application/library Gradle modules** at the Coffee tip:
 one composeApp, five core modules, 24 modules in six api/domain/data/impl feature

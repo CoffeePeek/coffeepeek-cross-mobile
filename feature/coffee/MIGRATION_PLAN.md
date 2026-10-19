@@ -2,11 +2,13 @@
 
 ## Baseline and scope (2026-10-18)
 
-Current synchronization baseline (2026-10-19): **main 28917758**, inherited
+Current synchronization baseline (2026-10-19): **main dfb00e63**, inherited
 parent-first through #43 -> #95 -> #99 -> #101 -> #102 -> #104. Coffee entries
 remain inactive. Home/history photo-variant/original and migrated blocking-menu
 parity are explicit stack gates before activation, not certified by a clean merge.
 See ../ANDROID_REFACTORING_PLAN.md for the current complete inventory/order.
+The final commit is CI-only (two signing-profile tests pass); application code
+and Android/Native verification retain baseline 28917758.
 
 Child branch `feature/coffee-catalog-refactoring` starts at rating checkpoint
 `72cbae1f` (PR #102), not at main. Remote main checked at `0137ee7`.

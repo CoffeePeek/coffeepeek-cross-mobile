@@ -1,5 +1,14 @@
 # Migration stack versus main — current and historical audits
 
+## Latest main dfb00e63 — CI-only follow-up, 2026-10-19
+
+During final publication main advanced from 28917758 to dfb00e63. Only the iOS
+TestFlight signing-profile validation and its test file changed. This commit was
+also inherited #43 -> #95 -> #99 -> #101 -> #102 -> #104; local main matches it.
+Both signing-profile unit tests pass. Application/KMP source is unchanged from
+the Android/Native verification recorded below; no signing/upload/release or
+device operation was executed. Current module/feature inventory is unchanged.
+
 ## Main 28917758 — parent reconciliation, 2026-10-19
 
 Synchronization starts at PR #43, not the Coffee tip. Main photo delivery,
