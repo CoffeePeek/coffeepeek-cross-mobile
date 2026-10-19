@@ -143,7 +143,7 @@ now reports results 350 ms after criteria/loading settle (typing is not reported
   failure with retry/back, photo viewer slot, `TrackDetail`, exposures Photos/Contacts/Shops).
 - **Not wired yet (step 5):** public entries/factories in api, app adapters (analytics, favorites, shop photos,
   image/error/viewer slots, haptics), renderer, Koin, route switch.
-- **Verification so far:** impl unit tests (19), Android + iOS compile, Android lint for impl (report generated; no
+- **Verification so far:** impl unit tests (19), Android + iOS compile, Android lint for impl (zero issues; no
   failing run), app still compiles. Isolated UI suite `RoasterContentTest` (9 cases x 4 theme/font-scale configs:
   states, filters/actions, carousel limit, exact-height footer, detail sections/actions, empty detail, photo viewer,
   loading/failure) compiles; the phone was locked, so it has **not** been executed.
