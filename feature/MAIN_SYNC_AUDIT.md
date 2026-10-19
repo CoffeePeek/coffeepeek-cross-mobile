@@ -1,5 +1,20 @@
 # Migration stack versus main — current and historical audits
 
+## New target-base conflict discovered — 2026-10-19
+
+All six branches contain main `dfb00e63` and are published. PR #104 is mergeable
+into #102, but parent #43 conflicts with its target develop, freshly fetched at
+`fc85f8e5`. Its five develop-side commits include `86698a69` removing drink
+cutouts/MediaPipe and `fc85f8e5` simplifying menu editing, plus cached-preview,
+profile-spacing and native encryption metadata fixes. The develop-side delta
+since the main/develop merge base is 96 files. Main has not adopted that baseline.
+
+Only read-only inspection/fetch was performed; no develop merge or deletion.
+The migration must adapt Shop/Home/history and thin integration paths coherently
+if that product baseline is selected. User direction is needed on adopting
+develop now versus waiting for main; current Android tests below do not close
+this new target-base parity gate. Root main/develop and their PRs are not merged.
+
 ## Shop author-block menu reconciliation — 2026-10-19
 
 Parent #43 runtime fix `6dc3f115` is inherited through #95 -> #99 -> #101 -> #102

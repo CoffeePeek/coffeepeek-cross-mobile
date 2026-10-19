@@ -1,5 +1,23 @@
 # Android refactoring — current roadmap
 
+## Target-develop reconciliation decision — 2026-10-19
+
+Main remains `dfb00e63`, but final PR inspection reports parent #43 conflicting
+with its target develop. Fresh `origin/develop` is `fc85f8e5`: five incoming
+commits remove check-in drink cutouts/MediaPipe (`86698a69`), preserve cached
+gallery previews, adjust profile layout and simplify menu editing (photo-first,
+no volume fields). The develop-side delta since its merge base with main spans
+96 files, including shared/native compatibility removals; it is not a two-line
+merge repair. The migrated Shop/Home/history media paths need a coherent parity
+audit if this target baseline is adopted now.
+
+No develop merge or feature removal has been performed. Current published code
+and verification below target main `dfb00e63`; they do not certify this newer
+develop product contract. Before another feature/activation, choose whether to
+reconcile develop now or wait until those changes reach main. Do not silently
+retain retired functionality after adopting that baseline or start an iOS UI
+migration under the guise of resolving this conflict.
+
 Audit date: **2026-10-19**. Current main: **dfb00e63**; application-code baseline
 remains **28917758** (the last commit changes iOS CI/signing tests only).
 The current inventory and ordered work below supersede dated 0137ee7/4976e53
