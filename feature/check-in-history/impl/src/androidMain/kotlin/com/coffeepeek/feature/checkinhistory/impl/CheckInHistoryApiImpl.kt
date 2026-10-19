@@ -46,7 +46,7 @@ private class DefaultCheckInHistoryEntry(
         onBack: () -> Unit,
         onSignIn: () -> Unit,
         onOpenShop: (String) -> Unit,
-        onOpenPhoto: (List<String>, Int) -> Unit,
+        onOpenPhoto: (List<String>, List<String>, Int) -> Unit,
         formatCheckInTime: (String) -> String,
         onOpenHome: (String) -> Unit,
         onCreateShop: () -> Unit,
@@ -74,7 +74,7 @@ private class DefaultCheckInHistoryEntry(
                 CheckInHistoryEvent.Back -> onBack()
                 CheckInHistoryEvent.SignIn -> onSignIn()
                 is CheckInHistoryEvent.OpenShop -> onOpenShop(event.slug)
-                is CheckInHistoryEvent.OpenPhoto -> onOpenPhoto(event.urls, event.index)
+                is CheckInHistoryEvent.OpenPhoto -> onOpenPhoto(event.urls, event.originalUrls, event.index)
                 is CheckInHistoryEvent.OpenHome -> onOpenHome(event.id)
                 is CheckInHistoryEvent.Create -> if (event.source == HistorySource.Shop) onCreateShop() else onCreateHome()
                 CheckInHistoryEvent.CreatePickerOpened -> onCreatePickerOpened()

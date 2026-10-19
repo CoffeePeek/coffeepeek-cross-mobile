@@ -20,7 +20,7 @@ interface CheckInHistoryEntry {
         onBack: () -> Unit,
         onSignIn: () -> Unit,
         onOpenShop: (shopSlug: String) -> Unit,
-        onOpenPhoto: (imageUrls: List<String>, initialIndex: Int) -> Unit,
+        onOpenPhoto: (imageUrls: List<String>, originalUrls: List<String>, initialIndex: Int) -> Unit,
         formatCheckInTime: (timestamp: String) -> String,
         onOpenHome: (id: String) -> Unit,
         onCreateShop: () -> Unit,

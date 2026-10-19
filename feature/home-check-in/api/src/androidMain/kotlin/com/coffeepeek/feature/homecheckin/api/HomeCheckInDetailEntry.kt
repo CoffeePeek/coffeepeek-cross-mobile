@@ -13,6 +13,9 @@ import androidx.compose.ui.Modifier
  * retained store; closing and reopening a detail must create a fresh ViewModel.
  * Block the outer sheet's swipe/outside dismissal while [onDismissAllowedChange]
  * reports false (confirmed deletion in flight).
+ * Photo callbacks keep detail previews and issued originals in the same album order.
+ * A blank detail preview means unavailable; only the active gallery page may fall
+ * back to its corresponding original. Do not derive originals from preview URLs.
  */
 interface HomeCheckInDetailEntry {
     @Composable
@@ -25,7 +28,7 @@ interface HomeCheckInDetailEntry {
         onClose: () -> Unit,
         onEdit: (preparationId: String) -> Unit,
         onDeleted: (preparationId: String) -> Unit,
-        onOpenPhoto: (urls: List<String>, initialIndex: Int) -> Unit,
+        onOpenPhoto: (urls: List<String>, originalUrls: List<String>, initialIndex: Int) -> Unit,
         onDismissAllowedChange: (Boolean) -> Unit,
         modifier: Modifier = Modifier,
         notice: String? = null,

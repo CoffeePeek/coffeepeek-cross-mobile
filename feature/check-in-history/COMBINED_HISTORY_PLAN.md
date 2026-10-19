@@ -1,5 +1,40 @@
 # Combined personal history — current-main parity and next slice
 
+## Shop-history photo representations — 2026-10-19
+
+Scope: existing #95, based on `e3676e94`; main is still `dfb00e63` (remote checked).
+Data retains sorted/aligned originals, feed, detail and thumb URLs, including
+drink thumbs. Absent manifests preserve legacy URLs; explicit empty/unsupported
+or invalid variants remain unavailable, never an inline original fallback.
+The calendar uses thumbs, cards use feed previews, and the gallery callback
+carries detail URLs plus explicit originals without shifting album indices.
+An unavailable preview remains openable when its original exists. The app-owned
+viewer only falls back to that original for the active page, using main's policy.
+Account revocation clears both representations; viewer state copies caller lists.
+
+Independent Home read snapshots/adapters now retain matching fields. The #95
+legacy Home adapter preserves main's already-issued variants; its obsolete gallery
+callback is reconciled with main's `PhotoViewerImages` contract. The new Home
+data/impl checkpoint in #99 still needs its own mapper, inline and gallery update;
+this parent slice does not certify that later repository. No upload/edit writer,
+profile Activity modal, iOS UI, endpoint or Gradle boundary is changed.
+
+Verification at this patch: **550 selected unit results** (11 history data,
+47 history impl, 492 app Direct), no failures/errors/skips; Direct Debug APK/DEX,
+history self-targeted test APK and app instrumentation Kotlin compilation pass.
+The new UI fixture checks actual requested feed/cutout-thumb URLs in both themes
+and opening a blank-preview album index without fetching its original inline.
+Pixel 7 / API 37: the entire self-targeted history suite passes **21/21**, zero
+failures/retries. The new case executes both themes with an injected recording
+image port, no network. APK target/package/version and matching debug signatures
+were checked before an in-place test-only update. Ordinary CoffeePeek is unchanged.
+
+Retry evidence: the initial independent parent build exposed the legacy Home
+viewer callback mismatch described above. Two subsequent compile attempts found
+a duplicate preview name and two remaining old-arity test callbacks; these were
+corrected without dropping assertions, and the complete selection was rerun.
+Logs and fixtures stay local; no live account/backend writes or iOS acceptance.
+
 ## Compact visit markers and latest available photo — 2026-10-16
 
 Days now show one dot per check-in up to three, then a compact `+N` for the

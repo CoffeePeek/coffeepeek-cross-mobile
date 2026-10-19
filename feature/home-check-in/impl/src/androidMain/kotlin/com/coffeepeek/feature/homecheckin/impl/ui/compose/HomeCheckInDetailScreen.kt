@@ -91,12 +91,16 @@ internal fun HomeCheckInDetailScreenContent(
             } }
             item(key = "recipe") { HomeCheckInRecipeCard(entry, entry.brewMethodCode?.let(formatBrewMethod)) }
             entry.tasteScore?.let { score -> item(key = "rating") { HomeCheckInTasteRating(score) } }
-            val urls = entry.photos.map { it.url }.filter(String::isNotBlank)
+            val urls = entry.photos.map { it.thumbnailUrl ?: it.url }
             if (urls.isNotEmpty()) item(key = "photos") {
-                HomeCheckInPhotos(urls, enabled, imageContent) { onAction(HomeCheckInDetailAction.OpenPhoto(it)) }
+                HomeCheckInPhotos(urls, enabled, imageContent, originalUrls = entry.photos.map { it.url }) {
+                    onAction(HomeCheckInDetailAction.OpenPhoto(it))
+                }
             }
             entry.drinkPhotoUrl?.takeIf(String::isNotBlank)?.let { url -> item(key = "drink-photo") {
-                HomeCheckInDrinkPhoto(url, enabled, imageContent) { onAction(HomeCheckInDetailAction.OpenDrinkPhoto) }
+                HomeCheckInDrinkPhoto(entry.drinkPhotoThumbnailUrl ?: url, enabled, imageContent) {
+                    onAction(HomeCheckInDetailAction.OpenDrinkPhoto)
+                }
             } }
             entry.text?.takeIf(String::isNotBlank)?.let { note -> item(key = "note") {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -131,6 +135,16 @@ internal fun previewHomePreparation() = HomePreparation(
 
 @PreviewLightDark @Composable private fun HomeCheckInDetailLoadingPreview() = CoffeePeekTheme {
     Surface { HomeCheckInDetailScreenContent(HomeCheckInDetailState(isLoading = true), {}, { date, _ -> date }, { it }, { _, _, _, _ -> }) }
+}
+
+@PreviewLightDark @Composable private fun HomeCheckInDetailPhotoVariantsPreview() = CoffeePeekTheme {
+    Surface { HomeCheckInDetailScreenContent(HomeCheckInDetailState(entry = previewHomePreparation().copy(
+        photos = listOf(HomePreparationPhoto("a", "fixture-original-a", thumbnailUrl = "fixture-feed-a"),
+            HomePreparationPhoto("b", "fixture-original-b", thumbnailUrl = "")),
+        drinkPhotoUrl = "fixture-cutout", drinkPhotoThumbnailUrl = "fixture-cutout-thumb")), {},
+        { _, _ -> "17.10.2026 · 10:30" }, { "Hario V60" }, { _, _, modifier, _ ->
+            Box(modifier) // Fake image port: previews never access private images or a network loader.
+        }) }
 }
 
 @PreviewLightDark @Composable private fun HomeCheckInDetailErrorPreview() = CoffeePeekTheme {

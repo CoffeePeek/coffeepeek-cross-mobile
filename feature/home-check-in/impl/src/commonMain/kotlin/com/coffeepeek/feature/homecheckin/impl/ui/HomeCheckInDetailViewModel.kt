@@ -46,12 +46,15 @@ internal class HomeCheckInDetailViewModel(
                 emit(HomeCheckInDetailEvent.Edit(preparationId))
             }
             is HomeCheckInDetailAction.OpenPhoto -> if (canUseEntry()) {
-                val urls = currentState.entry!!.photos.map { it.url }.filter(String::isNotBlank)
-                if (action.index in urls.indices) emit(HomeCheckInDetailEvent.OpenPhoto(urls, action.index))
+                val photos = currentState.entry!!.photos
+                if (action.index in photos.indices && photos.all { it.url.isNotBlank() }) {
+                    emit(HomeCheckInDetailEvent.OpenPhoto(photos.map { it.detailUrl ?: it.url }, action.index,
+                        photos.map { it.url }))
+                }
             }
             HomeCheckInDetailAction.OpenDrinkPhoto -> if (canUseEntry()) {
                 currentState.entry!!.drinkPhotoUrl?.takeIf(String::isNotBlank)?.let {
-                    emit(HomeCheckInDetailEvent.OpenPhoto(listOf(it), 0))
+                    emit(HomeCheckInDetailEvent.OpenPhoto(listOf(currentState.entry!!.drinkPhotoDetailUrl ?: it), 0, listOf(it)))
                 }
             }
             HomeCheckInDetailAction.RequestDelete -> if (canUseEntry()) {
