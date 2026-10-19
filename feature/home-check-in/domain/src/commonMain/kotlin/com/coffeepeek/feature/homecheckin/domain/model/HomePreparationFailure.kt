@@ -8,7 +8,7 @@ enum class HomePreparationIssue {
     InvalidMethod, ConflictingBeanSelection, BeanNameTooLong, InvalidBean, BeanUnavailable,
     InvalidDose, DoseTooSmall, DoseTooLarge, DosePrecision, DurationTooSmall, DurationTooLarge,
     InvalidRating, NoteTooLong, InvalidDrinkName, InvalidDrink, DrinkUnavailable,
-    PhotoEditUnsupported, TooManyPhotos, DuplicatePhotos, InvalidCutout, InvalidPhotos,
+    PhotoEditUnsupported, TooManyPhotos, DuplicatePhotos, InvalidPhotos,
     PhotosNotClaimed, PhotosAlreadyUsed, MissingDateOffset, InvalidDate, InvalidTime,
     InvalidDateOffset, CivilDateMismatch, FutureDate, InvalidVisibility, InvalidDuration,
     InvalidBeanName, InvalidInput, Timeout, Offline, InvalidResponse, Unauthorized, Forbidden,

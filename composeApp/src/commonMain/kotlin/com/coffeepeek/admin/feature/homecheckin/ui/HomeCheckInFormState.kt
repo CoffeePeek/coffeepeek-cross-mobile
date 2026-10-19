@@ -27,7 +27,7 @@ internal fun HomeCheckInUiState.withDraft(next: HomeCheckInInput): HomeCheckInUi
             Rating -> draft.tasteScore != next.tasteScore
             Note -> draft.text != next.text
             Drink -> draft.drinkSlug != next.drinkSlug || draft.customDrinkName != next.customDrinkName
-            Photos -> draft.photos != next.photos || draft.drinkPhoto != next.drinkPhoto
+            Photos -> draft.photos != next.photos
             Visibility -> draft.visibility != next.visibility
         }
     }.toSet()

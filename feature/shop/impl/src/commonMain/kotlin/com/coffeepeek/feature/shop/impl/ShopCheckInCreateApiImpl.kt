@@ -16,22 +16,19 @@ import com.coffeepeek.feature.shop.impl.ui.compose.model.ShopCheckInFormEvent
 import com.coffeepeek.feature.shop.impl.ui.data.ShopCheckInDateFormatter
 import com.coffeepeek.feature.shop.impl.ui.data.ShopCheckInDraftStore
 import com.coffeepeek.feature.shop.impl.ui.data.ShopCheckInPhotoPicker
-import com.coffeepeek.feature.shop.impl.ui.data.ShopDrinkPhotoProcessor
 
 fun createShopCheckInCreateEntry(
     repository: ShopCheckInRepository,
     draftsForShop: (shopId: String, shopSlug: String) -> ShopCheckInDraftStore,
     dates: ShopCheckInDateFormatter,
     photos: ShopCheckInPhotoPicker,
-    drinkPhotos: ShopDrinkPhotoProcessor? = null,
-): ShopCheckInCreateEntry = DefaultShopCheckInCreateEntry(repository, draftsForShop, dates, photos, drinkPhotos)
+): ShopCheckInCreateEntry = DefaultShopCheckInCreateEntry(repository, draftsForShop, dates, photos)
 
 private class DefaultShopCheckInCreateEntry(
     private val repository: ShopCheckInRepository,
     private val draftsForShop: (String, String) -> ShopCheckInDraftStore,
     private val dates: ShopCheckInDateFormatter,
     private val photos: ShopCheckInPhotoPicker,
-    private val drinkPhotos: ShopDrinkPhotoProcessor?,
 ) : ShopCheckInCreateEntry {
     @Composable
     override fun Content(
@@ -54,7 +51,6 @@ private class DefaultShopCheckInCreateEntry(
                 initial = ShopCheckInCreateInput(shopSlug, "", ShopRating(4, 4, 4), dates.visitInstant(dates.nowMillis())),
                 repository = repository,
                 drafts = draftsForShop(shopId, shopSlug),
-                drinkPhotos = drinkPhotos,
             )
         }
         ShopCheckInCreateScreen(model, shopName, dates, photos) { event ->

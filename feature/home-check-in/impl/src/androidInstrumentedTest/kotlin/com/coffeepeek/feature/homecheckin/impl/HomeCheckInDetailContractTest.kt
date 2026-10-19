@@ -74,43 +74,36 @@ class HomeCheckInDetailContractTest {
         }
     }
 
-    @Test fun originalsAndCutoutUseInjectedPortsAndSeparateActions() {
+    @Test fun ordinaryPhotosUseInjectedPortsAndPreserveTheirActions() {
         val actions = mutableListOf<HomeCheckInDetailAction>()
         val requested = java.util.concurrent.CopyOnWriteArraySet<Pair<String, Boolean>>()
-        val entry = previewHomePreparation().copy(photos = (1..5).map { HomePreparationPhoto("$it", "original-$it") },
-            drinkPhotoUrl = "transparent-cutout")
+        val entry = previewHomePreparation().copy(photos = (1..5).map { HomePreparationPhoto("$it", "original-$it") })
         render { Content(HomeCheckInDetailState(entry = entry), actions::add) { url, _, modifier, cutout ->
             requested += url to cutout; Box(modifier)
         } }.use {
             compose.onNode(hasScrollAction()).performScrollToNode(hasContentDescription("Фотография 3 из 5"))
             compose.onNodeWithContentDescription("Фотография 3 из 5").performClick()
             compose.onNodeWithText("+2").assertExists()
-            compose.onNode(hasScrollAction()).performScrollToNode(hasContentDescription("Фото напитка"))
-            compose.onNodeWithContentDescription("Фото напитка").performClick()
-            assertEquals(listOf(HomeCheckInDetailAction.OpenPhoto(2), HomeCheckInDetailAction.OpenDrinkPhoto), actions)
-            assertTrue(requested.containsAll(setOf("original-1" to false, "original-2" to false, "original-3" to false,
-                "transparent-cutout" to true)))
+            assertEquals(listOf(HomeCheckInDetailAction.OpenPhoto(2)), actions)
+            assertTrue(requested.containsAll(setOf("original-1" to false, "original-2" to false, "original-3" to false)))
             assertFalse(requested.any { it.first == "original-4" || it.first == "original-5" })
         }
     }
 
-    @Test fun feedAndCutoutThumbsNeverRequestOriginalsAndMissingPreviewsRemainClickableInBothThemes() {
+    @Test fun feedThumbsNeverRequestOriginalsAndMissingPreviewsRemainClickableInBothThemes() {
         for (dark in listOf(false, true)) {
             val actions = mutableListOf<HomeCheckInDetailAction>()
             val requested = java.util.concurrent.CopyOnWriteArraySet<Pair<String, Boolean>>()
             val entry = previewHomePreparation().copy(photos = listOf(
                 HomePreparationPhoto("a", "original-a", thumbnailUrl = "feed-a"),
-                HomePreparationPhoto("b", "original-b", thumbnailUrl = "")),
-                drinkPhotoUrl = "cutout-original", drinkPhotoThumbnailUrl = "cutout-thumb")
+                HomePreparationPhoto("b", "original-b", thumbnailUrl = "")))
             render(dark) { Content(HomeCheckInDetailState(entry = entry), actions::add) { url, _, modifier, cutout ->
                 requested += url to cutout; Box(modifier)
             } }.use {
                 compose.onNode(hasScrollAction()).performScrollToNode(hasContentDescription("Фотография 2 из 2"))
                 compose.onNodeWithContentDescription("Фотография 2 из 2").performClick()
-                compose.onNode(hasScrollAction()).performScrollToNode(hasContentDescription("Фото напитка"))
-                compose.onNodeWithContentDescription("Фото напитка").performClick()
-                assertEquals(listOf(HomeCheckInDetailAction.OpenPhoto(1), HomeCheckInDetailAction.OpenDrinkPhoto), actions)
-                assertEquals(setOf("feed-a" to false, "cutout-thumb" to true), requested.toSet())
+                assertEquals(listOf(HomeCheckInDetailAction.OpenPhoto(1)), actions)
+                assertEquals(setOf("feed-a" to false), requested.toSet())
             }
         }
     }
@@ -234,14 +227,12 @@ class HomeCheckInDetailContractTest {
         }
     }
 
-    @Test fun runtimePhotoViewerReceivesIssuedAlbumAndCutoutWithoutAnotherDetailRead() {
+    @Test fun runtimePhotoViewerReceivesIssuedAlbumWithoutAnotherDetailRead() {
         val originals = (1..5).map { "https://fixture.invalid/issued/original-$it?signature=fixture" }
         val details = originals.indices.map { if (it == 2) "" else "https://fixture.invalid/detail-$it" }
-        val cutout = "https://fixture.invalid/issued/cutout?signature=fixture"
         val repository = Repository().apply { detail = previewHomePreparation().copy(
             photos = originals.mapIndexed { index, url -> HomePreparationPhoto("photo-$index", url,
                 thumbnailUrl = "feed-$index", detailUrl = details[index]) },
-            drinkPhotoUrl = cutout, drinkPhotoThumbnailUrl = "cutout-thumb", drinkPhotoDetailUrl = "cutout-detail",
         ) }
         val requests = java.util.concurrent.CopyOnWriteArraySet<Pair<String, Boolean>>()
         val entry = createHomeCheckInDetailEntry(repository, { true }) { url, _, modifier, isCutout ->
@@ -256,12 +247,8 @@ class HomeCheckInDetailContractTest {
             compose.onNodeWithContentDescription("Фотография 3 из 5").performClick()
             compose.waitUntil { albums.size == 1 }
             assertEquals(Triple(details, originals, 2), albums.single())
-            compose.onNode(hasScrollAction()).performScrollToNode(hasContentDescription("Фото напитка"))
-            compose.onNodeWithContentDescription("Фото напитка").performClick()
-            compose.waitUntil { albums.size == 2 }
-            assertEquals(Triple(listOf("cutout-detail"), listOf(cutout), 0), albums.last())
-            assertTrue(requests.containsAll(setOf("feed-0" to false, "feed-2" to false, "cutout-thumb" to true)))
-            assertFalse(requests.any { it.first in originals || it.first == cutout || it.first in details })
+            assertTrue(requests.containsAll(setOf("feed-0" to false, "feed-2" to false)))
+            assertFalse(requests.any { it.first in originals || it.first in details })
             assertEquals(1, repository.detailCalls)
             assertEquals(0, repository.deleteCalls)
         }

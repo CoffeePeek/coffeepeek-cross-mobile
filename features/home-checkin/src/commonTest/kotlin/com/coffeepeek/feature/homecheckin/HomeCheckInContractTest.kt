@@ -34,13 +34,12 @@ class HomeCheckInContractTest {
     private val entry = """{"id":"$id","preparedAtUtc":"2026-09-20T22:15:00Z","preparedOn":"2026-09-21","createdAtUtc":"2026-10-01T08:00:00Z","beanName":"Honey Bloom","coffeeProductId":"22222222-2222-4222-8222-222222222222","doseGrams":75,"tasteScore":4,"photos":[{"id":"photo-1","url":"/api/v1/check-ins/$id/photos/photo-1"}]}"""
 
     @Test
-    fun readyHomeGalleryAndDrinkCutoutUseVariantsAndKeepOriginals() = runBlocking {
+    fun readyHomeGalleryUsesVariantsAndKeepsOriginals() = runBlocking {
         val original = "/api/v1/check-ins/$id/photos/photo-1"
         val variants = listOf("thumb", "feed", "detail").joinToString(",") { purpose ->
             """{"purpose":"$purpose","contentType":"image/png","width":320,"height":240,"sizeBytes":100,"url":"$original/variants/source/1/$purpose.png"}"""
         }
         val body = entry.replace("\"url\":\"$original\"", "\"url\":\"$original\",\"variants\":[$variants]")
-            .dropLast(1) + """, "drinkPhoto":{"url":"$original","variants":[$variants]}}"""
         val client = gateway(MockEngine { respond("""{"isSuccess":true,"data":$body}""", headers = jsonHeaders) })
         try {
             val result = HomeCheckInRepositoryImpl(client, client, "https://gateway.example.com").detail(id).getOrThrow()
@@ -49,8 +48,6 @@ class HomeCheckInContractTest {
             assertTrue(photo.thumbnailUrl.endsWith("feed.png"))
             assertTrue(photo.detailUrl.endsWith("detail.png"))
             assertTrue(photo.calendarUrl.endsWith("thumb.png"))
-            assertTrue(result.drinkPhotoThumbnailUrl!!.endsWith("thumb.png"))
-            assertTrue(result.drinkPhotoDetailUrl!!.endsWith("detail.png"))
         } finally { client.close() }
     }
 
@@ -82,7 +79,6 @@ class HomeCheckInContractTest {
     private fun assertUnavailableHomeManifest(manifest: String) = runBlocking {
         val original = "/api/v1/check-ins/$id/photos/photo-1"
         val body = entry.replace("\"url\":\"$original\"", "\"url\":\"$original\",\"variants\":$manifest")
-            .dropLast(1) + """, "drinkPhoto":{"url":"$original","variants":$manifest}}"""
         val client = gateway(MockEngine { respond("""{"isSuccess":true,"data":$body}""", headers = jsonHeaders) })
         try {
             val result = HomeCheckInRepositoryImpl(client, client, "https://gateway.example.com").detail(id).getOrThrow()
@@ -91,9 +87,6 @@ class HomeCheckInContractTest {
             assertEquals("", photo.thumbnailUrl)
             assertEquals("", photo.detailUrl)
             assertEquals("", photo.calendarUrl)
-            assertEquals("https://gateway.example.com$original", result.drinkPhotoUrl)
-            assertEquals("", result.drinkPhotoThumbnailUrl)
-            assertEquals("", result.drinkPhotoDetailUrl)
         } finally { client.close() }
     }
 
@@ -162,6 +155,9 @@ class HomeCheckInContractTest {
                     assertEquals(JsonPrimitive("honey-bloom"), body["coffeeProductSlug"])
                     assertEquals(JsonPrimitive(75.0), body["doseGrams"])
                     assertEquals("owned/key", body["photos"]!!.toString().substringAfter("storageKey\":\"").substringBefore('"'))
+                    assertEquals(setOf("preparedAt", "preparedOn", "brewMethodCode", "coffeeProductSlug", "coffeeProductId",
+                        "customBeanName", "doseGrams", "brewDurationSeconds", "tasteScore", "text", "drinkSlug", "customDrinkName",
+                        "photos", "visibility"), body.keys)
                     respond("""{"isSuccess":true,"data":$entry}""", headers = jsonHeaders)
                 }
                 else -> {
@@ -170,7 +166,6 @@ class HomeCheckInContractTest {
                     val body = Json.parseToJsonElement((request.body as TextContent).text).jsonObject
                     assertEquals(JsonPrimitive("22222222-2222-4222-8222-222222222222"), body["coffeeProductId"])
                     assertFalse("photos" in body)
-                    assertFalse("drinkPhoto" in body)
                     respond("""{"isSuccess":true,"data":$entry}""", headers = jsonHeaders)
                 }
             }
@@ -240,48 +235,6 @@ class HomeCheckInContractTest {
             assertEquals(5.0, repository.methodStats().getOrThrow().single().averageTasteScore)
             repository.delete(id).getOrThrow()
             assertEquals(5, calls)
-        } finally { gateway.close(); uploader.close() }
-    }
-
-    @Test
-    fun drinkCutoutUsesSeparatePngReservationAndOriginalRemainsTheOnlyGalleryPhoto() = runBlocking {
-        var reservations = 0
-        var created = false
-        val gateway = gateway(MockEngine { request ->
-            when (request.url.encodedPath) {
-                "/api/Photos/check-in" -> {
-                    reservations++
-                    val body = Json.parseToJsonElement((request.body as TextContent).text).toString()
-                    assertTrue(if (reservations == 1) "image/jpeg" in body else "image/png" in body)
-                    respond("""{"isSuccess":true,"data":[{"uploadUrl":"https://uploads.example.com/$reservations","storageKey":"key-$reservations"}]}""", headers = jsonHeaders)
-                }
-                else -> {
-                    created = true
-                    val body = Json.parseToJsonElement((request.body as TextContent).text).jsonObject
-                    assertTrue("key-1" in body["photos"].toString())
-                    assertFalse("key-2" in body["photos"].toString())
-                    assertTrue("key-2" in body["drinkPhoto"].toString())
-                    respond("""{"isSuccess":true,"data":$entry}""", headers = jsonHeaders)
-                }
-            }
-        })
-        var uploads = 0
-        val uploader = HttpClient(MockEngine { request ->
-            uploads++
-            assertEquals("is_permanent=False", request.headers["x-amz-tagging"])
-            assertEquals(if (uploads == 1) "image/jpeg" else "image/png",
-                request.headers[HttpHeaders.ContentType] ?: request.body.contentType?.toString())
-            respond("")
-        })
-        try {
-            HomeCheckInRepositoryImpl(gateway, uploader, "https://gateway.example.com")
-                .create(HomeCheckInInput("2026-09-21T01:15:00+03:00",
-                    photos = listOf(HomePhotoUpload("original.jpg", "image/jpeg", byteArrayOf(1))),
-                    drinkPhoto = HomePhotoUpload("cutout.png", "image/png", byteArrayOf(2)),
-                )).getOrThrow()
-            assertEquals(2, reservations)
-            assertEquals(2, uploads)
-            assertTrue(created)
         } finally { gateway.close(); uploader.close() }
     }
 

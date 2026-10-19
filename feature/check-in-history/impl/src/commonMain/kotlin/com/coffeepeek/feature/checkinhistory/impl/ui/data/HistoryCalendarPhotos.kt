@@ -5,13 +5,12 @@ import com.coffeepeek.feature.checkinhistory.impl.ui.compose.model.CombinedHisto
 import com.coffeepeek.feature.checkinhistory.impl.ui.compose.model.HistorySource
 import kotlin.time.Instant
 
-/** Month snapshots, newest photographed visit first; a cutout is preferred within that visit. */
+/** Month snapshots, newest photographed visit first. */
 internal fun historyCalendarPhotos(state: CombinedHistoryState, date: String): List<HistoryCalendarPhoto> {
     if (!state.isLoggedIn) return emptyList()
     val shops = if (state.filter.includes(HistorySource.Shop)) state.shopCalendar.content[date].orEmpty().mapNotNull { row ->
         val occurredAt = row.entry.visitedAt.ifBlank { row.entry.createdAt }
-        (row.entry.drinkPhotoThumbnailUrl ?: row.entry.drinkPhotoUrl)?.takeIf(String::isNotBlank)?.let { HistoryCalendarPhoto(it, true, occurredAt) }
-            ?: (row.entry.photoCalendarUrls ?: row.entry.photoUrls).firstOrNull(String::isNotBlank)?.let { HistoryCalendarPhoto(it, false, occurredAt) }
+        (row.entry.photoCalendarUrls ?: row.entry.photoUrls).firstOrNull(String::isNotBlank)?.let { HistoryCalendarPhoto(it, false, occurredAt) }
     } else emptyList()
     val homes = if (state.filter.includes(HistorySource.Home)) state.homeCalendarPhotos[date].orEmpty() else emptyList()
     return (shops + homes).filter { it.url.isNotBlank() }

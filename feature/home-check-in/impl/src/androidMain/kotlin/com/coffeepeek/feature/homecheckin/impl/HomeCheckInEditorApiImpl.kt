@@ -22,18 +22,16 @@ import com.coffeepeek.feature.homecheckin.impl.ui.data.*
 fun createHomeCheckInEditorEntry(
     repository: HomePreparationRepository,
     catalog: HomeCheckInEditorCatalog,
-    photoProcessor: HomeCheckInDrinkPhotoProcessor,
     canAccess: () -> Boolean,
     dates: HomeCheckInEditorDates,
     media: HomeCheckInEditorMedia,
     photoPicker: HomeCheckInPhotoPicker,
     analytics: (editing: Boolean) -> HomeCheckInEditorAnalytics = { HomeCheckInEditorAnalytics.None },
-): HomeCheckInEditorEntry = HomeCheckInEditorApiImpl(repository, catalog, photoProcessor, canAccess, dates, media, photoPicker, analytics)
+): HomeCheckInEditorEntry = HomeCheckInEditorApiImpl(repository, catalog, canAccess, dates, media, photoPicker, analytics)
 
 private class HomeCheckInEditorApiImpl(
     val repository: HomePreparationRepository,
     val catalog: HomeCheckInEditorCatalog,
-    val processor: HomeCheckInDrinkPhotoProcessor,
     val canAccess: () -> Boolean,
     val dates: HomeCheckInEditorDates,
     val media: HomeCheckInEditorMedia,
@@ -49,7 +47,7 @@ private class HomeCheckInEditorApiImpl(
             DisposableEffect(owner) { onDispose { owner.viewModelStore.clear() } }
             val model = viewModel(viewModelStoreOwner = owner) {
                 val instant = dates.currentInstant()
-                HomeCheckInEditorViewModel(repository, catalog, processor, instant, dates.localDate(instant),
+                HomeCheckInEditorViewModel(repository, catalog, instant, dates.localDate(instant),
                     preparationId, sessionGeneration, { currentAccess && canAccess() }, analytics = analytics(preparationId != null))
             }
             val state by model.state.collectAsStateWithLifecycle()

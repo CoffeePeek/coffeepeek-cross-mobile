@@ -12,11 +12,8 @@ data class HomeHistoryEntry(
     val drinkSlug: String?,
     val customDrinkName: String?,
     val photos: List<HomeHistoryPhoto>,
-    val drinkPhotoUrl: String?,
     val visibility: HistoryVisibility?,
     val moderation: HistoryModeration,
-    val drinkPhotoThumbnailUrl: String? = null,
-    val drinkPhotoDetailUrl: String? = null,
 )
 
 data class HomeHistoryRecipe(

@@ -103,14 +103,14 @@ class HistoryScreenContractTest {
                 selectedDate = "2026-10-01",
                 shops = CombinedHistoryPageState(), homes = CombinedHistoryPageState(),
                 shopCalendar = CombinedHistoryLoadState(mapOf(shop.date to listOf(shop.copy(
-                    entry = shop.entry.copy(drinkPhotoUrl = "fixture-shop-cutout"),
+                    entry = shop.entry.copy(photoUrls = listOf("fixture-shop-photo"), photoCalendarUrls = listOf("fixture-shop-photo")),
                 ))), hasLoaded = true),
                 homeCalendar = CombinedHistoryLoadState(mapOf("2026-10-13" to 1, shop.date to 1), hasLoaded = true),
                 homeCalendarPhotos = mapOf(
                     "2026-10-13" to listOf(
-                        com.coffeepeek.feature.checkinhistory.domain.model.HistoryCalendarPhoto("fixture-home-cutout", true)),
+                        com.coffeepeek.feature.checkinhistory.domain.model.HistoryCalendarPhoto("fixture-home-photo", false)),
                     shop.date to listOf(
-                        com.coffeepeek.feature.checkinhistory.domain.model.HistoryCalendarPhoto("fixture-second-cutout", true)),
+                        com.coffeepeek.feature.checkinhistory.domain.model.HistoryCalendarPhoto("fixture-second-photo", false)),
                 ),
             )
             render(dark) { CheckInHistoryScreenContent(source, {}, imageContent = { url, modifier, _ ->
@@ -118,7 +118,7 @@ class HistoryScreenContractTest {
                 Box(modifier)
             }) }.use {
                 compose.waitForIdle()
-                assertEquals(setOf("fixture-shop-cutout", "fixture-home-cutout"), requested.toSet())
+                assertEquals(setOf("fixture-shop-photo", "fixture-home-photo"), requested.toSet())
                 // Two visits use two dots, not a counter of the remaining photographs.
                 compose.onNodeWithText("+1", useUnmergedTree = true).assertDoesNotExist()
                 compose.onNodeWithText("Owner private note").assertDoesNotExist()
@@ -176,16 +176,13 @@ class HistoryScreenContractTest {
         }
     }
 
-    @Test fun drinkImageUsesFitThroughInjectedLoaderNotASeparateNetworkClient() {
-        val scales = mutableListOf<androidx.compose.ui.layout.ContentScale>()
-        val entry = previewHistoryCheckIn().copy(drinkPhotoUrl = "https://example.test/drink.png")
-        render { HistoryCheckInCard(entry, "14 октября 2026", {}, imageContent = { _, modifier, scale ->
-            scales += scale
-            Text("Fake protected image", modifier)
-        }) }.use {
-            compose.onNodeWithText("Fake protected image").assertExists()
-            assertTrue(scales.isNotEmpty())
-            assertTrue(scales.all { it == androidx.compose.ui.layout.ContentScale.Fit })
+    @Test fun drinkLabelRemainsWithoutLoadingARetiredCutout() {
+        var imageReads = 0
+        render { HistoryCheckInCard(previewHistoryCheckIn(), "14 октября 2026", {},
+            imageContent = { _, modifier, _ -> imageReads++; Box(modifier) }) }.use {
+            compose.onNodeWithText("Капучино").assertExists()
+            compose.waitForIdle()
+            assertEquals(0, imageReads)
         }
     }
 
@@ -285,12 +282,11 @@ class HistoryScreenContractTest {
             val opened = mutableListOf<Int>()
             render(dark) {
                 HistoryCheckInCard(previewHistoryCheckIn().copy(authorAvatarUrl = null,
-                    photoUrls = listOf("original-a", "original-b"), photoThumbnailUrls = listOf("feed-a", ""),
-                    drinkPhotoUrl = "original-cutout", drinkPhotoThumbnailUrl = "cutout-thumb"), "14 октября", opened::add,
+                    photoUrls = listOf("original-a", "original-b"), photoThumbnailUrls = listOf("feed-a", "")), "14 октября", opened::add,
                     imageContent = { url, modifier, _ -> requested += url; Box(modifier) })
             }.use {
                 compose.waitForIdle()
-                assertEquals(setOf("feed-a", "cutout-thumb"), requested.toSet())
+                assertEquals(setOf("feed-a"), requested.toSet())
                 compose.onNodeWithContentDescription("Фотография 2 из 2").performClick()
                 assertEquals(listOf(1), opened)
             }

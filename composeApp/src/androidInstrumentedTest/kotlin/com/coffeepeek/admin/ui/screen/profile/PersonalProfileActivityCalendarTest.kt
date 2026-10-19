@@ -1,9 +1,7 @@
 package com.coffeepeek.admin.ui.screen.profile
 
 import android.graphics.Bitmap
-import android.graphics.Canvas
 import android.graphics.Color
-import android.graphics.Paint
 import android.graphics.Rect as AndroidRect
 import android.view.accessibility.AccessibilityNodeInfo
 import androidx.activity.compose.setContent
@@ -90,20 +88,19 @@ class PersonalProfileActivityCalendarTest {
     fun grantStartupPermissions() = grantCheckInFixtureStartupPermissions()
 
     @Test
-    fun personalActivityKeepsCafeAndWholeMonthHomeCutoutsWithoutAFrameAndSupportsMonthNavigation() {
+    fun personalActivityKeepsCafeAndWholeMonthHomePhotosWithoutAFrameAndSupportsMonthNavigation() {
         val month = mutableStateOf(CalendarMonth(2026, 10))
         val selection = AtomicReference<String?>()
         val requestedPhotos = CopyOnWriteArraySet<String>()
         val fixtures = mapOf(
-            CAFE_CUTOUT to photo(Color.MAGENTA, cutout = true),
-            EXTRA_CUTOUT to photo(Color.YELLOW, cutout = true),
-            HOME_CUTOUT to photo(Color.CYAN, cutout = true),
-            FALLBACK_PHOTO to photo(Color.GREEN, cutout = false),
+            CAFE_PHOTO to photo(Color.MAGENTA),
+            EXTRA_PHOTO to photo(Color.YELLOW),
+            HOME_PHOTO to photo(Color.CYAN),
         )
-        val cafeVisits = listOf(cafeVisit(), cafeVisit().copy(id = "cafe-extra", drinkPhotoUrl = EXTRA_CUTOUT))
+        val cafeVisits = listOf(cafeVisit(), cafeVisit().copy(id = "cafe-extra", photoUrls = listOf(EXTRA_PHOTO)))
         val visitWithoutPhoto = cafeVisit().copy(
             id = "no-photo", createdAt = "2026-10-13T10:00:00Z", visitedAt = "2026-10-13T10:00:00Z",
-            drinkPhotoUrl = null, photoUrls = emptyList(), photoThumbnailUrls = emptyList(),
+            photoUrls = emptyList(), photoThumbnailUrls = emptyList(),
         )
         val imageConfig = KamelConfig {
             takeFrom(KamelConfig.Default)
@@ -182,17 +179,16 @@ class PersonalProfileActivityCalendarTest {
                     }
                 }
             } }
-            waitUntil("Cafe and home cutouts must both appear in the personal calendar") {
+            waitUntil("Cafe and home photos must both appear in the personal calendar") {
                 val cafe = day("12 октября 2026, 2 чекина") ?: return@waitUntil false
                 val home = day("14 октября 2026, 1 чекин, 1 дома") ?: return@waitUntil false
                 val bitmap = instrumentation.uiAutomation.takeScreenshot() ?: return@waitUntil false
                 try {
-                    hasCutoutPixels(bitmap, cafe, magenta = true) && hasCutoutPixels(bitmap, home, magenta = false)
+                    hasPhotoPixels(bitmap, cafe, magenta = true) && hasPhotoPixels(bitmap, home, magenta = false)
                 } finally { bitmap.recycle() }
             }
-            assertTrue("Cutout URLs must be chosen for both kinds of check-in", requestedPhotos.containsAll(listOf(CAFE_CUTOUT, HOME_CUTOUT)))
-            assertTrue("A regular photo must not replace an available cutout", FALLBACK_PHOTO !in requestedPhotos)
-            assertTrue("Additional cutouts must be represented by a marker instead of fetching a stack", EXTRA_CUTOUT !in requestedPhotos)
+            assertTrue("Photo URLs must be chosen for both kinds of check-in", requestedPhotos.containsAll(listOf(CAFE_PHOTO, HOME_PHOTO)))
+            assertTrue("Additional photos must be represented by a marker instead of fetching a stack", EXTRA_PHOTO !in requestedPhotos)
             val cafeDay = requireNotNull(day("12 октября 2026, 2 чекина"))
             val homeDay = requireNotNull(day("14 октября 2026, 1 чекин, 1 дома"))
             val plainDay = requireNotNull(day("13 октября 2026, 1 чекин"))
@@ -216,7 +212,7 @@ class PersonalProfileActivityCalendarTest {
             val bitmap = requireNotNull(instrumentation.uiAutomation.takeScreenshot())
             try {
                 assertNoCalendarFrame(bitmap, calendar.get())
-                save(bitmap, "personal-calendar-cutouts.png")
+                save(bitmap, "personal-calendar-photos.png")
             } finally { bitmap.recycle() }
 
             click(requireNotNull(day("14 октября 2026,")))
@@ -235,10 +231,9 @@ class PersonalProfileActivityCalendarTest {
         }
     }
 
-    private fun hasCutoutPixels(bitmap: Bitmap, day: AccessibilityNodeInfo, magenta: Boolean): Boolean {
+    private fun hasPhotoPixels(bitmap: Bitmap, day: AccessibilityNodeInfo, magenta: Boolean): Boolean {
         val bounds = AndroidRect().also(day::getBoundsInScreen)
         var colored = 0
-        var white = 0
         val top = (bounds.top + bounds.height() * .1f).toInt()
         val bottom = (bounds.bottom - bounds.height() * .1f).toInt()
         for (y in top.coerceAtLeast(0) until bottom.coerceAtMost(bitmap.height)) {
@@ -248,10 +243,9 @@ class PersonalProfileActivityCalendarTest {
                 val green = Color.green(pixel)
                 val blue = Color.blue(pixel)
                 if (blue > 180 && if (magenta) red > 180 && green < 80 else green > 180 && red < 80) colored++
-                if (red > 235 && green > 235 && blue > 235) white++
             }
         }
-        return colored > 10 && white > 2
+        return colored > 10
     }
 
     private fun assertNoCalendarFrame(bitmap: Bitmap, bounds: ComposeRect) {
@@ -269,27 +263,19 @@ class PersonalProfileActivityCalendarTest {
 
     private fun cafeVisit() = CheckIn(
         id = "cafe", shopId = "shop", shopName = "Coffee fixture", note = "", createdAt = "2026-10-12T10:00:00Z",
-        visitedAt = "2026-10-12T10:00:00Z", drinkPhotoUrl = CAFE_CUTOUT, photoUrls = listOf(FALLBACK_PHOTO),
+        visitedAt = "2026-10-12T10:00:00Z", photoUrls = listOf(CAFE_PHOTO),
     )
 
     private fun homeVisit() = HomeCheckIn(
         id = "home", preparedAtUtc = "2026-10-14T10:00:00Z", preparedOn = "2026-10-14", createdAtUtc = "2026-10-14T10:00:00Z",
         text = null, brewMethodCode = null, coffeeProductId = null, beanName = null, doseGrams = null,
         brewDurationSeconds = null, tasteScore = null, drinkName = null, drinkSlug = null, customDrinkName = null,
-        photos = listOf(HomeCheckInPhoto("photo", FALLBACK_PHOTO)), drinkPhotoUrl = HOME_CUTOUT,
+        photos = listOf(HomeCheckInPhoto("photo", HOME_PHOTO)),
     )
 
-    private fun photo(color: Int, cutout: Boolean): ByteArray {
+    private fun photo(color: Int): ByteArray {
         val bitmap = Bitmap.createBitmap(64, 64, Bitmap.Config.ARGB_8888)
-        val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply { this.color = color }
-        Canvas(bitmap).apply {
-            if (cutout) {
-                drawRoundRect(16f, 12f, 43f, 51f, 7f, 7f, paint)
-                paint.style = Paint.Style.STROKE
-                paint.strokeWidth = 5f
-                drawCircle(45f, 28f, 9f, paint)
-            } else drawColor(color)
-        }
+        bitmap.eraseColor(color)
         return ByteArrayOutputStream().use { bytes ->
             bitmap.compress(Bitmap.CompressFormat.PNG, 100, bytes)
             bitmap.recycle()
@@ -339,9 +325,8 @@ class PersonalProfileActivityCalendarTest {
     }
 
     private companion object {
-        const val CAFE_CUTOUT = "https://profile-calendar-fixture.invalid/cafe-cutout.png"
-        const val EXTRA_CUTOUT = "https://profile-calendar-fixture.invalid/extra-cutout.png"
-        const val HOME_CUTOUT = "https://profile-calendar-fixture.invalid/home-cutout.png"
-        const val FALLBACK_PHOTO = "https://profile-calendar-fixture.invalid/fallback.png"
+        const val CAFE_PHOTO = "https://profile-calendar-fixture.invalid/cafe.png"
+        const val EXTRA_PHOTO = "https://profile-calendar-fixture.invalid/extra.png"
+        const val HOME_PHOTO = "https://profile-calendar-fixture.invalid/home.png"
     }
 }

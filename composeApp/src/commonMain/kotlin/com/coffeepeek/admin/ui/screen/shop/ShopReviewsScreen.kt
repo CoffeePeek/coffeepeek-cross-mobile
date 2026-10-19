@@ -30,6 +30,7 @@ import com.coffeepeek.admin.ui.Navigator
 import com.coffeepeek.admin.ui.component.CoffeePeekLoader
 import com.coffeepeek.admin.ui.component.CpTopBar
 import com.coffeepeek.admin.ui.component.FullScreenImageDialog
+import com.coffeepeek.admin.ui.component.PhotoViewerImages
 import com.coffeepeek.admin.ui.component.GuestAuthCard
 import com.coffeepeek.admin.ui.component.CheckInDisplayCard
 import com.coffeepeek.admin.utils.PrefetchListPhotos
@@ -43,11 +44,11 @@ fun ShopReviewsScreen(shopId: String) {
     PrefetchListPhotos(listState, state.details?.checkIns.orEmpty()
         .take(if (state.isLoggedIn) Int.MAX_VALUE else 1)
         .map { it.id to it.photoThumbnailUrls.take(3) })
-    var preview by remember { mutableStateOf<Pair<List<String>, Int>?>(null) }
+    var preview by remember { mutableStateOf<Pair<PhotoViewerImages, Int>?>(null) }
     val authorVisibility by vm.authorVisibility.collectAsState()
     androidx.compose.runtime.LaunchedEffect(authorVisibility.revision, state.isLoggedIn) { preview = null }
     preview?.let { (urls, index) ->
-        FullScreenImageDialog(imageUrls = urls, initialIndex = index, onDismiss = { preview = null })
+        FullScreenImageDialog(images = urls, initialIndex = index, onDismiss = { preview = null })
     }
     Scaffold(topBar = { CpTopBar(title = "Чекины") }) { padding ->
         val details = state.details

@@ -26,53 +26,45 @@ import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 
 class ShopCheckInRepositoryTest {
-    @Test fun separateCutoutUploadFailurePreventsTheCreationRequestAndRetainsOriginalBytes() = runBlocking {
-        val png = kotlin.io.encoding.Base64.decode(
-            "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQIHWP4z8DwHwAFgAI/ScLbtAAAAABJRU5ErkJggg==")
+    @Test fun uploadsOnlyGalleryPhotosAndNeverSendsRetiredDrinkPhotoField() = runBlocking {
+        val original = byteArrayOf(1, 2, 3)
         var reservations = 0
+        var uploads = 0
         var writes = 0
-        var rejectPng = true
         val apiEngine = MockEngine { request ->
-            if (request.url.encodedPath == "/api/Photos/check-in") {
-                reservations++
-                val body = Json.parseToJsonElement((request.body as TextContent).text).jsonArray.single().jsonObject
-                val isPng = body["contentType"] == JsonPrimitive("image/png")
-                val key = if (isPng) "cutout" else "original"
-                respond("""{"isSuccess":true,"data":[{"uploadUrl":"https://uploads.example.com/$key","storageKey":"$key"}]}""",
-                    headers = headersOf(HttpHeaders.ContentType, "application/json"))
-            } else {
-                assertEquals("/api/v1/check-ins", request.url.encodedPath)
-                writes++
-                val body = Json.parseToJsonElement((request.body as TextContent).text).jsonObject
-                assertEquals(1, body["photos"]!!.jsonArray.size)
-                assertEquals(JsonPrimitive("cutout"), body["drinkPhoto"]!!.jsonObject["storageKey"])
-                respond("""{"isSuccess":true,"data":{"id":"created"}}""",
-                    headers = headersOf(HttpHeaders.ContentType, "application/json"))
+            when (request.url.encodedPath) {
+                "/api/Photos/check-in" -> {
+                    reservations++
+                    val photos = Json.parseToJsonElement((request.body as TextContent).text).jsonArray
+                    assertEquals(1, photos.size)
+                    assertEquals(JsonPrimitive("visit.jpg"), photos.single().jsonObject["fileName"])
+                    respond("""{"isSuccess":true,"data":[{"uploadUrl":"https://uploads.example.com/photo","storageKey":"original"}]}""",
+                        headers = headersOf(HttpHeaders.ContentType, "application/json"))
+                }
+                else -> {
+                    assertEquals("/api/v1/check-ins", request.url.encodedPath)
+                    writes++
+                    val body = Json.parseToJsonElement((request.body as TextContent).text).jsonObject
+                    assertFalse("drinkPhoto" in body)
+                    assertEquals(JsonPrimitive("original"), body["photos"]!!.jsonArray.single().jsonObject["storageKey"])
+                    respond("""{"isSuccess":true,"data":{"id":"created"}}""",
+                        headers = headersOf(HttpHeaders.ContentType, "application/json"))
+                }
             }
         }
         val uploadEngine = MockEngine { request ->
-            if (request.url.encodedPath == "/cutout") {
-                // Ktor can move entity headers from the request builder into OutgoingContent.
-                assertEquals("image/png", request.headers[HttpHeaders.ContentType] ?: request.body.contentType?.toString())
-                val bytes = (request.body as io.ktor.http.content.OutgoingContent.ByteArrayContent).bytes()
-                assertTrue(png.contentEquals(bytes))
-                respond("", if (rejectPng) HttpStatusCode.BadRequest else HttpStatusCode.OK)
-            } else respond("")
+            uploads++
+            assertTrue(original.contentEquals((request.body as io.ktor.http.content.OutgoingContent.ByteArrayContent).bytes()))
+            respond("")
         }
-        // Composition may supply clients without automatic HTTP validation.
-        val api = HttpClientFactory(apiEngine).api("https://example.com") { expectSuccess = false }
-        val upload = HttpClientFactory(uploadEngine).upload { expectSuccess = false }
+        val api = HttpClientFactory(apiEngine).api("https://example.com")
+        val upload = HttpClientFactory(uploadEngine).upload()
         try {
-            val repository = createShopCheckInRepository(api, upload)
-            val input = validInput().copy(photos = listOf(ShopCheckInPhoto(byteArrayOf(1), "full.jpg")),
-                drinkPhoto = ShopCheckInPhoto(png, "cup.png", "image/png"))
-            assertTrue(repository.create(input).isFailure)
-            assertEquals(0, writes)
-            rejectPng = false
-            val retry = repository.create(input)
-            assertTrue(retry.isSuccess, retry.exceptionOrNull()?.stackTraceToString())
+            createShopCheckInRepository(api, upload).create(validInput().copy(
+                photos = listOf(ShopCheckInPhoto(original, "visit.jpg")))).getOrThrow()
+            assertEquals(1, reservations)
+            assertEquals(1, uploads)
             assertEquals(1, writes)
-            assertEquals(4, reservations)
         } finally { api.close(); upload.close(); apiEngine.close(); uploadEngine.close() }
     }
 

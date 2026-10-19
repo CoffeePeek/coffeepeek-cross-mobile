@@ -15,7 +15,7 @@ import org.junit.runner.RunWith
 @RunWith(AndroidJUnit4::class)
 class DisplayPhotoTransparencyTest {
     @Test
-    fun downloadedCutoutKeepsTransparencyAndOriginalColorAfterDisplayPreparation() {
+    fun downloadedPngKeepsTransparencyAndOriginalColorAfterDisplayPreparation() {
         val source = Bitmap.createBitmap(40, 40, Bitmap.Config.ARGB_8888)
         Canvas(source).drawCircle(20f, 20f, 10f, Paint().apply { color = Color.MAGENTA })
         val original = source.toByteArray(Bitmap.CompressFormat.PNG)

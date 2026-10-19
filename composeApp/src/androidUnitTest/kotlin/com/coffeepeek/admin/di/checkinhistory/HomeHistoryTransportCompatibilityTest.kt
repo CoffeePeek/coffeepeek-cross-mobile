@@ -66,14 +66,14 @@ class HomeHistoryTransportCompatibilityTest {
             assertEquals("2026-10-15T22:15:00Z", item.preparedAtUtc)
             assertEquals("75.5", item.recipe.doseGrams)
             assertEquals(protectedUrl, item.photos.single().url)
-            assertEquals(protectedUrl, item.drinkPhotoUrl)
             assertNull(item.visibility)
             assertEquals("Unknown", item.moderation.name)
             assertFalse(page.hasMore)
             val calendarDay = reader.calendar(HomeHistoryDateRange("2024-02-01", "2024-02-29")).getOrThrow().single()
             assertEquals("2024-02-29", calendarDay.preparedOn)
-            assertEquals(protectedUrl, calendarDay.photos.single().url)
-            assertTrue(calendarDay.photos.single().isCutout)
+            // An old cutout-only record still contributes visits, never a retired image.
+            assertEquals(2, calendarDay.brewCount)
+            assertTrue(calendarDay.photos.isEmpty())
             assertEquals(3, calls)
         } finally { client.close(); uploader.close() }
     }

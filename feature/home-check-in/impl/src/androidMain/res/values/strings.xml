@@ -19,7 +19,6 @@
     <string name="home_check_in_rating_description">Оценка вкуса %1$d из 5</string>
     <string name="home_check_in_photo_description">Фотография %1$d из %2$d</string>
     <string name="home_check_in_more_photos">+%1$d</string>
-    <string name="home_check_in_drink_photo">Фото напитка</string>
     <string name="home_check_in_open_drink_photo">Открыть фото напитка</string>
     <string name="home_check_in_note">Впечатления</string>
     <string name="home_check_in_edit">Редактировать</string>
@@ -94,15 +93,6 @@
     <string name="home_check_in_camera">Сделать фото</string>
     <string name="home_check_in_remove_photo">Удалить фото %1$d</string>
     <string name="home_check_in_keep_photos">Фотографии этой записи сохранятся без изменений</string>
-    <string name="home_check_in_cutout_title">Чашка для календаря</string>
-    <string name="home_check_in_cutout_processing">Убираем фон с первого фото…</string>
-    <string name="home_check_in_cutout_skipped">Чекин сохранится без отдельного изображения чашки.</string>
-    <string name="home_check_in_cutout_failed">Не удалось выделить чашку. Можно повторить или сохранить исходное фото без вырезки.</string>
-    <string name="home_check_in_cutout_choose">Выберите чашку среди найденных объектов.</string>
-    <string name="home_check_in_cutout_check">Проверьте вырезку. Полная фотография тоже сохранится.</string>
-    <string name="home_check_in_cutout_candidate">Объект %1$d: выбрать как чашку</string>
-    <string name="home_check_in_cutout_retry">Повторить выделение</string>
-    <string name="home_check_in_cutout_skip">Без вырезки</string>
     <string name="home_check_in_error_date">Проверьте дату и время приготовления.</string>
     <string name="home_check_in_error_future_date">Дата приготовления не может быть в будущем.</string>
     <string name="home_check_in_error_method">Выберите доступный способ заваривания.</string>

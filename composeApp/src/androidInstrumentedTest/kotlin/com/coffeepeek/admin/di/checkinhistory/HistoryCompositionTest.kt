@@ -126,7 +126,7 @@ class HistoryCompositionTest {
             items = listOf(HomeHistoryEntry("home-owner", "2026-10-14", "2026-10-14T08:00:00Z",
                 "2026-10-14T08:00:00Z", "Home owner fixture",
                 HomeHistoryRecipe("hario-v60", null, "Home beans", "18", 180, 4),
-                null, null, null, emptyList(), null, HistoryVisibility.Private, HistoryModeration.NotSubmitted))
+                null, null, null, emptyList(), HistoryVisibility.Private, HistoryModeration.NotSubmitted))
         }
         val opened = mutableListOf<String>()
         var creates = 0
@@ -191,7 +191,7 @@ class HistoryCompositionTest {
         var load: suspend () -> Unit = {}
         private val item = PersonalCheckIn("fixture", HistoryAddress("public-slug", "/coffee-shop/public-slug"),
             "Fixture shop", null, "Fixture owner", "Owner fixture note", "2026-10-14T10:00:00Z",
-            "2026-10-14T10:00:00Z", null, listOf("https://fixture.invalid/photo.jpg"), null, null,
+            "2026-10-14T10:00:00Z", null, listOf("https://fixture.invalid/photo.jpg"), null,
             HistoryVisibility.Private, HistoryModeration.NotSubmitted, 0, null, 0, false)
         override suspend fun page(page: Int, pageSize: Int): Result<CheckInHistoryPage> {
             reads.incrementAndGet(); load()

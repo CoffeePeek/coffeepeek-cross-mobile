@@ -211,14 +211,13 @@ internal fun HomeCheckInEditorScreenContent(
                             HomeCheckInEditorPhotos(draft.photos, enabled, pickerLoading, media.photo, {
                                 focus.clearFocus(); keyboard?.hide(); onAddPhotos(it)
                             }, { onAction(HomeCheckInEditorAction.RemovePhoto(it)) })
-                            if (draft.photos.isNotEmpty()) HomeCheckInEditorCutout(state.photoPreparation, enabled, onAction, media.photo)
                         }
                     }
                 }
             }
             Column(Modifier.fillMaxWidth().padding(16.dp)) {
                 CoffeePeekButton(stringResource(if (state.isSaving) R.string.home_check_in_saving else R.string.home_check_in_save),
-                    { dispatch(HomeCheckInEditorAction.Save) }, enabled = enabled && !pickerLoading && state.photoPreparation.canSubmit)
+                    { dispatch(HomeCheckInEditorAction.Save) }, enabled = enabled && !pickerLoading)
             }
         }
     }

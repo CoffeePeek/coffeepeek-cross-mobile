@@ -33,7 +33,6 @@ import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.feature.shop.domain.model.MAX_SHOP_CHECK_IN_PHOTOS
 import com.coffeepeek.feature.shop.domain.model.ShopCheckInCreateInput
-import com.coffeepeek.feature.shop.domain.model.ShopCheckInPhoto
 import com.coffeepeek.feature.shop.domain.model.ShopRating
 import com.coffeepeek.feature.shop.domain.usecase.ShopCheckInValidationError
 import com.coffeepeek.feature.shop.impl.resources.Res
@@ -55,12 +54,10 @@ import com.coffeepeek.feature.shop.impl.resources.shop_checkin_form_invalid_note
 import com.coffeepeek.feature.shop.impl.resources.shop_checkin_form_invalid_rating
 import com.coffeepeek.feature.shop.impl.resources.shop_checkin_form_invalid_photos
 import com.coffeepeek.feature.shop.impl.resources.shop_checkin_form_invalid_photo
-import com.coffeepeek.feature.shop.impl.resources.shop_drink_photo_invalid
 import com.coffeepeek.feature.shop.impl.ui.ShopCheckInCreateViewModel
 import com.coffeepeek.feature.shop.impl.ui.compose.component.ShopCheckInDateField
 import com.coffeepeek.feature.shop.impl.ui.compose.component.ShopCheckInFormHeader
 import com.coffeepeek.feature.shop.impl.ui.compose.component.ShopCheckInDrinkField
-import com.coffeepeek.feature.shop.impl.ui.compose.component.ShopDrinkPhotoField
 import com.coffeepeek.feature.shop.impl.ui.compose.component.ShopCheckInNoteField
 import com.coffeepeek.feature.shop.impl.ui.compose.component.ShopCheckInRatings
 import com.coffeepeek.feature.shop.impl.ui.compose.component.ShopCheckInSubmissionContent
@@ -170,15 +167,6 @@ internal fun ShopCheckInCreateScreenContent(
                     onGallery = onGallery, onCamera = onCamera,
                 )
               }
-              if (state.input.photos.isNotEmpty()) CoffeePeekFormStep(optional = true, optionalDescription = optionalDescription) {
-                ShopDrinkPhotoField(
-                    state.drinkPhotoCandidates, state.input.drinkPhoto, state.drinkPhotoProcessing,
-                    state.drinkPhotoFailed, state.drinkPhotoSkipped, editable,
-                    onChoose = { onAction(ShopCheckInFormAction.ChooseDrinkPhoto(it)) },
-                    onRetry = { onAction(ShopCheckInFormAction.RetryDrinkPhoto) },
-                    onSkip = { onAction(ShopCheckInFormAction.SkipDrinkPhoto) },
-                )
-              }
               CoffeePeekFormStep(optional = true, optionalDescription = optionalDescription,
                   isError = state.validationError == ShopCheckInValidationError.InvalidDrink) {
                 ShopCheckInDrinkField(
@@ -216,7 +204,7 @@ internal fun ShopCheckInCreateScreenContent(
             }
             CoffeePeekButton(
                 text = stringResource(Res.string.shop_checkin_form_submit),
-                enabled = editable && !state.drinkPhotoProcessing && !state.drinkPhotoSelectionRequired,
+                enabled = editable,
                 onClick = {
                     keyboard?.hide()
                     focus.clearFocus(force = true)
@@ -237,18 +225,15 @@ private fun validationMessage(error: ShopCheckInValidationError?): String? = err
         ShopCheckInValidationError.InvalidRating -> Res.string.shop_checkin_form_invalid_rating
         ShopCheckInValidationError.TooManyPhotos -> Res.string.shop_checkin_form_invalid_photos
         ShopCheckInValidationError.InvalidPhoto -> Res.string.shop_checkin_form_invalid_photo
-        ShopCheckInValidationError.InvalidDrinkPhoto -> Res.string.shop_drink_photo_invalid
     })
 }
 
 @Composable
 private fun ShopCheckInFormPreview(dark: Boolean, uncertain: Boolean = false,
-    photosPreparing: Boolean = false, cutoutPreparing: Boolean = false) = CoffeePeekTheme(darkTheme = dark) {
+    photosPreparing: Boolean = false) = CoffeePeekTheme(darkTheme = dark) {
     val state = ShopCheckInFormState(
-        input = ShopCheckInCreateInput("preview-shop", "Понравился фильтр", ShopRating(4, 4, 4), "2026-10-09T09:00:00Z",
-            photos = if (cutoutPreparing) listOf(ShopCheckInPhoto(byteArrayOf(), "preview.jpg")) else emptyList()),
+        input = ShopCheckInCreateInput("preview-shop", "Понравился фильтр", ShopRating(4, 4, 4), "2026-10-09T09:00:00Z"),
         isLoading = false, deliveryUnconfirmed = uncertain,
-        drinkPhotoProcessing = cutoutPreparing,
     )
     ShopCheckInCreateScreenContent(state, "Кофейня", "9 октября 2026", 1791504000000, 1791547200000, {}, {}, {}, {}, photosPreparing = photosPreparing)
 }
@@ -259,5 +244,3 @@ private fun ShopCheckInFormPreview(dark: Boolean, uncertain: Boolean = false,
 @Preview @Composable private fun ShopCheckInUnconfirmedDarkPreview() = ShopCheckInFormPreview(true, true)
 @Preview @Composable private fun ShopCheckInPhotosPreparingLightPreview() = ShopCheckInFormPreview(false, photosPreparing = true)
 @Preview @Composable private fun ShopCheckInPhotosPreparingDarkPreview() = ShopCheckInFormPreview(true, photosPreparing = true)
-@Preview @Composable private fun ShopCheckInCutoutPreparingLightPreview() = ShopCheckInFormPreview(false, cutoutPreparing = true)
-@Preview @Composable private fun ShopCheckInCutoutPreparingDarkPreview() = ShopCheckInFormPreview(true, cutoutPreparing = true)

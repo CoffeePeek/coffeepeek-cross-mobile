@@ -173,7 +173,7 @@ class HomePreparationContractTest {
     }
 
     @Test
-    fun drinkCutoutUsesSeparatePngReservationAndOriginalRemainsTheOnlyGalleryPhoto() = runBlocking {
+    fun originalUploadsNeverReserveOrSendRetiredCutouts() = runBlocking {
         var reservations = 0
         var created = false
         val gateway = gateway(MockEngine { request ->
@@ -181,7 +181,7 @@ class HomePreparationContractTest {
                 "/api/Photos/check-in" -> {
                     reservations++
                     val body = Json.parseToJsonElement((request.body as TextContent).text).toString()
-                    assertTrue(if (reservations == 1) "image/jpeg" in body else "image/png" in body)
+                    assertTrue("image/jpeg" in body)
                     respond("""{"isSuccess":true,"data":[{"uploadUrl":"https://uploads.example.com/$reservations","storageKey":"key-$reservations"}]}""", headers = jsonHeaders)
                 }
                 else -> {
@@ -189,7 +189,7 @@ class HomePreparationContractTest {
                     val body = Json.parseToJsonElement((request.body as TextContent).text).jsonObject
                     assertTrue("key-1" in body["photos"].toString())
                     assertFalse("key-2" in body["photos"].toString())
-                    assertTrue("key-2" in body["drinkPhoto"].toString())
+                    assertFalse("drinkPhoto" in body)
                     respond("""{"isSuccess":true,"data":$entry}""", headers = jsonHeaders)
                 }
             }
@@ -198,7 +198,7 @@ class HomePreparationContractTest {
         val uploader = HttpClient(MockEngine { request ->
             uploads++
             assertEquals("is_permanent=False", request.headers["x-amz-tagging"])
-            assertEquals(if (uploads == 1) "image/jpeg" else "image/png",
+            assertEquals("image/jpeg",
                 request.headers[HttpHeaders.ContentType] ?: request.body.contentType?.toString())
             respond("")
         })
@@ -206,10 +206,9 @@ class HomePreparationContractTest {
             createHomePreparationRepository(gateway, uploader, "https://gateway.example.com")
                 .create(HomePreparationInput("2026-09-21T01:15:00+03:00",
                     photos = listOf(HomePreparationUpload("original.jpg", "image/jpeg", byteArrayOf(1))),
-                    drinkPhoto = HomePreparationUpload("cutout.png", "image/png", byteArrayOf(2)),
                 )).getOrThrow()
-            assertEquals(2, reservations)
-            assertEquals(2, uploads)
+            assertEquals(1, reservations)
+            assertEquals(1, uploads)
             assertTrue(created)
         } finally { gateway.close(); uploader.close() }
     }

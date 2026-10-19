@@ -23,7 +23,7 @@ class HomePreparationCalendarTest {
         install(ContentNegotiation) { json(Json { ignoreUnknownKeys = true }) }
     }
 
-    @Test fun monthPagesKeepCountsPreferCutoutsDeduplicateAndFilterCivilDates() = runBlocking {
+    @Test fun monthPagesKeepCountsIgnoreRetiredCutoutsDeduplicateAndFilterCivilDates() = runBlocking {
         val pages = mutableListOf<String>()
         val gateway = gateway(MockEngine { request ->
             assertEquals(range.from, request.url.parameters["from"])
@@ -44,9 +44,9 @@ class HomePreparationCalendarTest {
             val days = createHomePreparationRepository(gateway, upload, "https://fixture.invalid").calendar(range).getOrThrow()
             assertEquals(listOf(3, 1), days.map { it.brewCount })
             assertEquals(listOf("1", "2"), pages)
-            assertEquals(listOf("https://fixture.invalid/cutout/one", "https://fixture.invalid/original/two"),
+            assertEquals(listOf("https://fixture.invalid/original/one", "https://fixture.invalid/original/two"),
                 days.first().photos.map { it.url })
-            assertEquals(listOf(true, false), days.first().photos.map { it.isCutout })
+            assertEquals(listOf(false, false), days.first().photos.map { it.isCutout })
             assertTrue(days.last().photos.isEmpty())
         } finally { gateway.close(); upload.close() }
     }
@@ -72,8 +72,8 @@ class HomePreparationCalendarTest {
         try {
             val day = createHomePreparationRepository(gateway, upload, "https://fixture.invalid").calendar(range).getOrThrow().single()
             assertEquals(3, day.brewCount)
-            assertEquals(listOf("https://fixture.invalid/thumb", "https://fixture.invalid/thumb"), day.photos.map { it.url })
-            assertEquals(listOf(true, false), day.photos.map { it.isCutout })
+            assertEquals(listOf("https://fixture.invalid/thumb"), day.photos.map { it.url })
+            assertEquals(listOf(false), day.photos.map { it.isCutout })
             assertEquals(1, pageCalls)
         } finally { gateway.close(); upload.close() }
     }

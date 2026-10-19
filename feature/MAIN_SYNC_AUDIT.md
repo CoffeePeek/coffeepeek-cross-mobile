@@ -1,3 +1,14 @@
+# Accepted develop adoption — 2026-10-19
+
+Current baseline is main `dfb00e63` plus approved develop `fc85f8e5`.
+Develop's five incoming commits retire drink cutouts/MediaPipe, prioritize menu
+photos/remove volume fields, retain cached photo previews during original loads,
+adjust profile layout and add native encryption metadata. These product changes
+must also reach prepared migration code rather than surviving only in legacy UI.
+Synchronize #43 first and propagate normally through its children; do not modify
+main/develop or rewrite published branch history. Historical cutout acceptance
+below does not override this retirement.
+
 # Migration stack versus main — current and historical audits
 
 ## Main 28917758 — parent reconciliation, 2026-10-19

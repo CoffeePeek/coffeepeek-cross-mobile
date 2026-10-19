@@ -20,8 +20,6 @@ class HomePreparationPhotosTest {
         assertEquals(photo.url, photo.thumbnailUrl)
         assertEquals(photo.url, photo.detailUrl)
         assertEquals(photo.url, photo.calendarUrl)
-        assertEquals(item.drinkPhotoUrl, item.drinkPhotoThumbnailUrl)
-        assertEquals(item.drinkPhotoUrl, item.drinkPhotoDetailUrl)
     }
 
     @Test fun explicitEmptyAndUnsupportedManifestsNeverLoadOriginalsInline() {
@@ -31,9 +29,6 @@ class HomePreparationPhotosTest {
         assertEquals(listOf("", ""), item.photos.map { it.thumbnailUrl })
         assertEquals(listOf("", ""), item.photos.map { it.detailUrl })
         assertEquals(listOf("", ""), item.photos.map { it.calendarUrl })
-        assertEquals("https://fixture.invalid/cutout", item.drinkPhotoUrl)
-        assertEquals("", item.drinkPhotoThumbnailUrl)
-        assertEquals("", item.drinkPhotoDetailUrl)
     }
 
     @Test fun sortedAlbumAndObjectCutoutPreserveEachRepresentationWithoutInferringOriginals() {
@@ -49,8 +44,6 @@ class HomePreparationPhotosTest {
         assertEquals(listOf("https://fixture.invalid/feed-a", "https://fixture.invalid/feed-b"), item.photos.map { it.thumbnailUrl })
         assertEquals(listOf("https://fixture.invalid/detail-a", ""), item.photos.map { it.detailUrl })
         assertEquals(listOf("https://fixture.invalid/thumb-a", ""), item.photos.map { it.calendarUrl })
-        assertEquals("https://fixture.invalid/cutout-thumb", item.drinkPhotoThumbnailUrl)
-        assertEquals("https://fixture.invalid/cutout-detail", item.drinkPhotoDetailUrl)
     }
 
     @Test fun invalidGeometryPurposeAndUnsafeUrlsCannotDisplaceReadyVariants() {

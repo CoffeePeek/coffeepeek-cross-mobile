@@ -18,7 +18,6 @@ class PersonalCheckInPhotosTest {
         assertEquals(item.photoUrls, item.photoThumbnailUrls)
         assertEquals(item.photoUrls, item.photoDetailUrls)
         assertEquals(item.photoUrls, item.photoCalendarUrls)
-        assertEquals(item.drinkPhotoUrl, item.drinkPhotoThumbnailUrl)
     }
 
     @Test fun explicitEmptyOrUnsupportedManifestNeverFallsBackInlineToOriginals() {
@@ -29,7 +28,6 @@ class PersonalCheckInPhotosTest {
         assertEquals(listOf("", ""), item.photoThumbnailUrls)
         assertEquals(listOf("", ""), item.photoDetailUrls)
         assertEquals(listOf("", ""), item.photoCalendarUrls)
-        assertEquals("", item.drinkPhotoThumbnailUrl)
     }
 
     @Test fun purposeVariantsStayAlignedAfterSortingAndRejectingInvalidOriginals() {
@@ -42,7 +40,6 @@ class PersonalCheckInPhotosTest {
         assertEquals(listOf("https://fixture.test/feed-a", "https://fixture.test/feed-b"), item.photoThumbnailUrls)
         assertEquals(listOf("https://fixture.test/detail-a", "https://fixture.test/detail-b"), item.photoDetailUrls)
         assertEquals(listOf("https://fixture.test/thumb-a", "https://fixture.test/thumb-b"), item.photoCalendarUrls)
-        assertEquals("https://fixture.test/cutout-thumb", item.drinkPhotoThumbnailUrl)
     }
 
     @Test fun invalidGeometryAndUnsafeVariantUrlsCannotDisplaceAReadySupportedVariant() {

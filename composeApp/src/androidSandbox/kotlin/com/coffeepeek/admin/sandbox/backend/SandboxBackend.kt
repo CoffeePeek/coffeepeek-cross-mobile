@@ -16,7 +16,7 @@ import java.util.UUID
 internal enum class SandboxScenario { Ready, Slow, Offline, ServerError, SaveError, UploadError }
 
 /** Stateful HTTP fixture only. Both engines have no network delegate, even for unknown URLs. */
-internal class SandboxBackend(private val samplePhoto: ByteArray, private val sampleCutout: ByteArray = samplePhoto,
+internal class SandboxBackend(private val samplePhoto: ByteArray,
     private val today: LocalDate = LocalDate.now()) {
     companion object { const val BASE_URL = "https://sandbox.coffeepeek.invalid" }
     @Volatile var scenario = SandboxScenario.Ready
@@ -62,7 +62,6 @@ internal class SandboxBackend(private val samplePhoto: ByteArray, private val sa
     fun reset(populated: Boolean) = synchronized(lock) {
         rows.clear(); shopRows.clear(); images.clear(); reservations.clear(); uploaded.clear()
         images["/media/sample"] = samplePhoto.copyOf()
-        images["/media/cutout"] = sampleCutout.copyOf()
         scenario = SandboxScenario.Ready
         if (populated) repeat(3) { index ->
             val id = UUID.randomUUID().toString()
@@ -74,7 +73,6 @@ internal class SandboxBackend(private val samplePhoto: ByteArray, private val sa
                 put("tasteScore", 4); put("text", "Тестовая запись. Не отправляется на сервер.")
                 put("visibility", "Private"); put("moderationState", "NotSubmitted")
                 putJsonArray("photos") { if (index == 0) add(buildJsonObject { put("id", "sample"); put("url", "/media/sample") }) }
-                if (index == 1) putJsonObject("drinkPhoto") { put("url", "/media/cutout") }
             }
         }
         if (populated) shopRows += buildJsonObject {
@@ -182,7 +180,6 @@ internal class SandboxBackend(private val samplePhoto: ByteArray, private val sa
             val drinkName = input["customDrinkName"]?.jsonPrimitive?.contentOrNull
             if (drinkName != null) putJsonObject("drink") { put("nameRu", drinkName); put("slug", "other") }
             if (existing == null) put("photos", JsonArray(photos))
-            input["drinkPhoto"]?.let { photo(it)?.let { value -> put("drinkPhoto", value) } }
             val visibility = input["visibility"]?.jsonPrimitive?.content ?: "Private"
             put("visibility", visibility); put("moderationState", if (visibility == "Public") "Pending" else "NotSubmitted")
         }
