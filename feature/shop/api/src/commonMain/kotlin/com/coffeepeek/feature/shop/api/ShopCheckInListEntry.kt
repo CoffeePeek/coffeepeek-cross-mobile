@@ -15,6 +15,7 @@ interface ShopCheckInListEntry {
         onReportCheckIn: (checkInId: String) -> Unit,
         onOpenPhoto: (imageUrls: List<String>, originalUrls: List<String>, initialIndex: Int) -> Unit,
         onOpenAuthor: (slug: String, nickname: String, avatarUrl: String?) -> Unit,
+        onBlockAuthor: (ShopCheckInAuthor) -> Unit,
         refreshGeneration: Long = 0,
     )
 }

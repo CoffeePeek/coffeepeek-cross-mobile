@@ -167,6 +167,33 @@ class ShopDetailViewModelTest {
         assertEquals(1, events.size)
     }
 
+    @Test fun authorBlockUsesOnlyVisiblePreviewAndPreservesPublicIdentity() = runTest(dispatcher) {
+        val repository = DetailsRepository().apply { result = Result.success(details().copy(checkIns = (1..5).map {
+            checkIn().copy(id = "visit-$it", authorId = "author-$it", authorSlug = "slug-$it", username = "Author") })) }
+        val model = viewModel(details = repository, viewer = ShopViewer(false, null))
+        val events = mutableListOf<ShopDetailEvent>()
+        backgroundScope.launch { model.events.collect { events += it.event } }
+        runCurrent()
+        model.onAction(ShopDetailAction.BlockAuthor("visit-2"))
+        model.onAction(ShopDetailAction.BlockAuthor("missing"))
+        model.onAction(ShopDetailAction.BlockAuthor("visit-1")); runCurrent()
+        assertEquals(listOf<ShopDetailEvent>(ShopDetailEvent.BlockAuthor(
+            com.coffeepeek.feature.shop.api.ShopCheckInAuthor("author-1", "slug-1", "Author", null))), events)
+    }
+
+    @Test fun signedInBlockingRejectsOwnersUnknownViewerAndUnrenderedRows() = runTest(dispatcher) {
+        for (viewer in listOf(ShopViewer(true, null), ShopViewer(true, "viewer"))) {
+            val repository = DetailsRepository().apply { result = Result.success(details().copy(checkIns = (1..4).map {
+                checkIn().copy(id = "visit-$it", authorSlug = if (it == 4) "other" else "viewer") })) }
+            val model = viewModel(details = repository, viewer = viewer)
+            val events = mutableListOf<ShopDetailEvent>()
+            backgroundScope.launch { model.events.collect { events += it.event } }
+            runCurrent()
+            (1..4).forEach { model.onAction(ShopDetailAction.BlockAuthor("visit-$it")) }; runCurrent()
+            assertTrue(events.isEmpty())
+        }
+    }
+
     @Test fun duplicateLoadsAreGuardedWhilePending() = runTest(dispatcher) {
         val details = DetailsRepository().apply { gate = CompletableDeferred() }
         val viewModel = viewModel(details)
