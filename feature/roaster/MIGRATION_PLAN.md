@@ -1,6 +1,6 @@
 # Roasters — Android-first migration plan
 
-Status: **plan only** (2026-10-20). No module, code or route change yet. Child of the Coffee checkpoint
+Status: step 2 done (2026-10-20): domain + data modules with tests; legacy screens still active, nothing activated. Child of the Coffee checkpoint
 (`feature/coffee-catalog-refactoring`, PR #104); the branch/PR is created only after this plan is accepted.
 Same rules as Coffee: preserve the current product, requests and visuals; Android first; shared/iOS keep the
 legacy composeApp UI; no new feature in composeApp; modules only with real content.
@@ -38,7 +38,7 @@ adapter-free factory over the same endpoints, so reads and legacy writes cannot 
 
 1. [ ] Child branch/PR off #104; read the legacy list/detail/add-roaster, data impl and tests; inventory
    analytics events exactly (done above) and the data layer's request shapes and error handling.
-2. [ ] Extract `domain` + `data` with parity tests (paths/verbs, tag ordering, address/canonical path,
+2. [x] (2026-10-20, `feature:roaster:domain` + `feature:roaster:data`, 1 + 12 unit tests, Android + iOS device/simulator compile) Extract `domain` + `data` with parity tests (paths/verbs, tag ordering, address/canonical path,
    missing contact fields, cancellation). Legacy screens stay active.
 3. [ ] `api` ports (analytics, favorites, shop-photo lookup) + `impl` typed MVI for list and detail:
    debounce/query bounds if any, lazy detail loading with the concurrency limit and per-slug de-duplication,
@@ -69,3 +69,24 @@ adapter-free factory over the same endpoints, so reads and legacy writes cannot 
 Unit (domain/data/impl/adapters), composeApp composition test, Direct/Play/Sandbox builds with isolation
 checks, instrumentation compilation and iOS Simulator compilation, isolated feature UI tests on Pixel 7 (test
 APKs only), then a Sandbox walkthrough. Record dates, variants, counts and what was not covered.
+
+## Step 2 record — 2026-10-20
+
+- `domain`: `RoasterRepository` (read-only: `getRoasters`, `getRoaster(slug)`), summary/details/address/tag/
+  location/contact/photo/shop models. Its own `RoasterAddress` replaces the legacy `PublicAddress`; the summary
+  exposes `slug` (null without a public address).
+- `data`: private DTOs with the legacy wire names, `RoasterBackend` (`GET /api/roasters`,
+  `GET /api/roasters/{slug}` with an encoded path segment), mappers and `createRoasterRepository(client,
+  fileBaseUrl, store, nowMs)`. Preserved from the legacy repository: photo priority (card variant, logo URL,
+  cover full URL, storage key), tags sorted with slug fallback names, flexible numeric counters, unaddressed cards
+  kept and duplicate slugs dropped, detail location only with a non-blank address, blank contact links dropped,
+  photos sorted by `sortIndex` and resolved through the file host, shop thumbnails from the cover full URL, the
+  single-flight in-memory catalog (a loaded session stays stable) and the persisted 24 h catalog with
+  stale-on-error fallback, cache write/read failures ignored, cancellation rethrown.
+- Persistence goes through the app-supplied `RoasterCatalogStore`; with the legacy
+  `roaster_catalog_v1:<host>` key the saved JSON is read by both implementations (tested with a legacy-shaped
+  payload). The in-memory cache is per repository, so while both exist the app may issue one extra catalog
+  request per process; the legacy Shop filter catalog (`ShopRepositoryImpl`) still uses the legacy repository.
+- Differences from legacy, deliberately small: `getRoaster` encodes the slug as a path segment and rejects blank
+  or over-long slugs; the domain model drops upload-only fields (`fileName`, `storageKey`).
+- Not done: api/impl, app adapters, Koin, renderer, Sandbox fixtures, any activation.
