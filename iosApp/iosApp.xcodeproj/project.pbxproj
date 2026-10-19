@@ -124,7 +124,7 @@
 				TargetAttributes = {
 					A50000000000000000000001 = {
 						CreatedOnToolsVersion = 27.0;
-                        SystemCapabilities = { com.apple.SignInWithApple = { enabled = 1; }; };
+                        SystemCapabilities = { com.apple.AssociatedDomains = { enabled = 1; }; com.apple.SignInWithApple = { enabled = 1; }; };
 					};
 				};
 			};

@@ -8,10 +8,35 @@ class AppLinksTest {
     @Test
     fun routesPublicProfilesWithoutTreatingNicknameAsAnId() {
         assertEquals(Navigator.Screen.UserProfile("glasha"), appLinkScreen("https://coffeepeek.by/users/glasha"))
-        assertEquals(Navigator.Screen.UserProfile("old-slug"), appLinkScreen("https://coffeepeek.by/users/old-slug/?from=share"))
-        assertEquals(Navigator.Screen.Main, appLinkScreen("https://coffeepeek.by/users/glasha/extra"))
-        assertEquals(Navigator.Screen.Main, appLinkScreen("https://coffeepeek.by/users/a%2Fb"))
-        assertNull(appLinkScreen("https://coffeepeek.by.evil.com/users/glasha"))
+        assertEquals(Navigator.Screen.UserProfile("old-slug"), appLinkScreen("https://coffeepeek.by/users/old-slug/?from=share#profile"))
+    }
+
+    @Test
+    fun routesCoffeeShopsWithTheirFullSlug() {
+        val slug = "marks-prospekt-nezavisimosti-83"
+        assertEquals(Navigator.Screen.ShopDetail(slug), appLinkScreen("https://coffeepeek.by/coffee-shops/$slug"))
+        assertEquals(Navigator.Screen.ShopDetail(slug), appLinkScreen("https://coffeepeek.by/coffee-shops/$slug/?from=share#photos"))
+        assertEquals(
+            Navigator.Screen.ShopDetail("1801-kofe-pr-nezavisimosti-95"),
+            appLinkScreen("https://coffeepeek.by/coffee-shops/1801-kofe-pr-nezavisimosti-95"),
+        )
+    }
+
+    @Test
+    fun routesRoasters() {
+        val roaster = Navigator.Screen.RoasterDetail("roast")
+        assertEquals(roaster, appLinkScreen("https://coffeepeek.by/roasters/roast"))
+        assertEquals(roaster, appLinkScreen("https://coffeepeek.by/roasters/roast/?from=share#coffee"))
+    }
+
+    @Test
+    fun rejectsInvalidSlugsAndExtraPathSegments() {
+        for (path in listOf("coffee-shops", "roasters", "users")) {
+            for (slug in listOf("", ".", "..", "%2e%2e", "%20", "a%2Fb", "a%5Cb", "a%00b", "a%0Ab", "slug/extra")) {
+                val link = "https://coffeepeek.by/$path/$slug"
+                assertEquals(Navigator.Screen.Main, appLinkScreen(link), link)
+            }
+        }
     }
 
     @Test
@@ -26,14 +51,14 @@ class AppLinksTest {
 
     @Test
     fun routesOnlyCoffeePeekLinks() {
-        val shop = Navigator.Screen.ShopDetail("26")
-        assertEquals(shop, appLinkScreen("https://coffeepeek.by/coffee-shops/26-ulyanovskaya-ulitsa-30"))
-        assertEquals(shop, appLinkScreen("https://coffeepeek.by/coffee-shops/26/?from=share#photos"))
+        assertEquals(
+            Navigator.Screen.ShopDetail("marks-prospekt-nezavisimosti-83"),
+            appLinkScreen("http://COFFEEPEEK.BY/coffee-shops/marks-prospekt-nezavisimosti-83"),
+        )
         assertEquals(Navigator.Screen.Main, appLinkScreen("https://coffeepeek.by/"))
-        assertEquals(Navigator.Screen.Main, appLinkScreen("https://coffeepeek.by/coffee-shops/invalid"))
-        assertEquals(Navigator.Screen.Main, appLinkScreen("https://coffeepeek.by/coffee-shops/26-slug/extra"))
-        assertNull(appLinkScreen("https://coffeepeek.by.evil.com/coffee-shops/26-slug"))
-        assertNull(appLinkScreen("https://coffeepeek.by@evil.com/coffee-shops/26-slug"))
-        assertNull(appLinkScreen("ftp://coffeepeek.by/coffee-shops/26-slug"))
+        assertNull(appLinkScreen("https://coffeepeek.by.evil.com/coffee-shops/marks-prospekt-nezavisimosti-83"))
+        assertNull(appLinkScreen("https://coffeepeek.by@evil.com/roasters/roast"))
+        assertNull(appLinkScreen("https://coffeepeek.by.evil.com/users/glasha"))
+        assertNull(appLinkScreen("ftp://coffeepeek.by/users/glasha"))
     }
 }
