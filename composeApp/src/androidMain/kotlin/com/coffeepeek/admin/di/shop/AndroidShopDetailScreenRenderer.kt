@@ -58,20 +58,22 @@ internal class AndroidShopDetailScreenRenderer(
     private val votes: ShopCheckInVoteRepository,
     private val favorites: FavoritesRepository,
     private val checkInForm: ShopCheckInFormRenderer,
+    private val visibility: com.coffeepeek.feature.authorblocking.api.AuthorVisibility,
 ) : ShopDetailScreenRenderer {
     @Composable
     override fun Content(shopId: String, forCheckIn: Boolean) {
-        AndroidShopBrowsingHost("android-shop-detail:$shopId", sessions) { session ->
+        AndroidShopBrowsingHost("android-shop-detail:$shopId", sessions, visibility) { session ->
             val entry = remember(session) {
                 createShopDetailEntry(session.lease.details(details), session.lease.votes(votes),
                     shopFavorites(session.lease.favorites(favorites)), currentViewer = { session.lease.viewer(users) },
                     currentDayOfWeek = ::currentLocalDayOfWeek, currentMinuteOfDay = ::currentLocalMinuteOfDay,
-                    authorImage = { url, modifier -> com.coffeepeek.admin.utils.CpImage(data = url, modifier = modifier) })
+                    authorImage = { url, modifier -> com.coffeepeek.admin.utils.CpImage(data = url, modifier = modifier) },
+                    checkInImage = { url, modifier, scale -> com.coffeepeek.admin.utils.CpImage(data = url, modifier = modifier, contentScale = scale) })
             }
             val location = rememberPermittedUserLocation()
             val formatCheckInDate = rememberCheckInDateLabel()
             var form by rememberSaveable(stateSaver = shopFormContextSaver) { mutableStateOf<ShopDetailContext?>(null) }
-            var preview by remember { mutableStateOf<Pair<List<String>, Int>?>(null) }
+            var preview by remember { mutableStateOf<ShopDetailEffect.OpenPhoto?>(null) }
             var refreshGeneration by rememberSaveable { mutableLongStateOf(0) }
             val scope = rememberCoroutineScope()
             val snackbar = remember { SnackbarHostState() }
@@ -107,7 +109,7 @@ internal class AndroidShopDetailScreenRenderer(
                                 if (session.lease.isCurrent()) ShareHelper.shareText(text)
                             }
                             is ShopDetailEffect.SuggestChange -> Navigator.navigate(Navigator.Screen.SuggestShopChange(effect.shop.shopId))
-                            is ShopDetailEffect.OpenPhoto -> preview = effect.imageUrls to effect.initialIndex
+                            is ShopDetailEffect.OpenPhoto -> preview = effect
                             is ShopDetailEffect.OpenRoaster -> Navigator.navigate(Navigator.Screen.RoasterDetail(effect.slug))
                             is ShopDetailEffect.OpenLink -> OpenInBrowser.openInBrowser(effect.target)
                             is ShopDetailEffect.CopyPhone -> {
@@ -118,8 +120,9 @@ internal class AndroidShopDetailScreenRenderer(
                     })
                 SnackbarHost(snackbar, Modifier.align(Alignment.BottomCenter).navigationBarsPadding().padding(bottom = 72.dp))
             }
-            preview?.let { (urls, index) ->
-                FullScreenImageDialog(imageUrls = urls, initialIndex = index, onDismiss = { preview = null })
+            preview?.let { photo ->
+                FullScreenImageDialog(images = com.coffeepeek.admin.ui.component.PhotoViewerImages(photo.imageUrls, photo.originalUrls),
+                    initialIndex = photo.initialIndex, onDismiss = { preview = null })
             }
             form?.let { shop ->
                 checkInForm.Content(shopId = shop.shopId, shopSlug = shop.shopSlug, shopName = shop.shopName,

@@ -15,6 +15,7 @@ import androidx.compose.ui.viewinterop.UIKitView
 import androidx.compose.ui.viewinterop.UIKitInteropProperties
 import androidx.compose.ui.window.ComposeUIViewController
 import com.coffeepeek.admin.AppContent
+import com.coffeepeek.admin.theme.CpColor
 import com.coffeepeek.admin.theme.switchPalette
 import com.coffeepeek.admin.theme.toUIColor
 import com.coffeepeek.admin.theme.uiKitStyle
@@ -72,25 +73,34 @@ internal actual fun PlatformAlert(title: String, message: String, confirmLabel: 
     PresentNativeController(alert, host)
     SideEffect {
         alert.overrideUserInterfaceStyle = colors.uiKitStyle
-        alert.view.tintColor = colors.primary.toUIColor()
+        alert.view.tintColor = (if (colors.surface.luminance() < .5f) CpColor.AccentTextDark else CpColor.AccentTextLight).toUIColor()
         (alert.actions.firstOrNull() as? UIAlertAction)?.enabled = enabled
     }
 }
 
 @Composable
-internal actual fun NativeActionSheet(title: String, actions: List<PlatformAction>, onDismiss: () -> Unit): Boolean {
+internal actual fun NativeAlert(title: String, message: String, confirmLabel: String, onConfirm: () -> Unit, onDismiss: () -> Unit, cancelLabel: String?): Boolean {
+    PlatformAlert(title, message, confirmLabel, onConfirm, onDismiss, cancelLabel)
+    return true
+}
+
+@Composable
+internal actual fun NativeActionSheet(title: String, actions: List<PlatformAction>, message: String?, dismissBeforeAction: Boolean, onDismiss: () -> Unit): Boolean {
     val host = LocalUIViewController.current
     val colors = MaterialTheme.colorScheme
     val latestActions = rememberUpdatedState(actions)
     val dismiss = rememberUpdatedState(onDismiss)
     val alert = remember(host, title) {
         val presenter = host.presentationHost()
-        val alert = UIAlertController.alertControllerWithTitle(title, null, UIAlertControllerStyleActionSheet)
+        val alert = UIAlertController.alertControllerWithTitle(title, message, UIAlertControllerStyleActionSheet)
         actions.forEachIndexed { index, action ->
             alert.addAction(UIAlertAction.actionWithTitle(action.title, if (action.destructive) UIAlertActionStyleDestructive else UIAlertActionStyleDefault) {
                 // Run after dismissal: the next action may present the photo picker.
                 val selected = latestActions.value.getOrNull(index)
-                alert.dismissViewControllerAnimated(true) { dismiss.value(); selected?.onClick?.invoke() }
+                alert.dismissViewControllerAnimated(true) {
+                    if (dismissBeforeAction) dismiss.value()
+                    selected?.onClick?.invoke()
+                }
             }.apply { enabled = action.enabled })
         }
         alert.addAction(UIAlertAction.actionWithTitle("Отмена", UIAlertActionStyleCancel) { dismiss.value() })
@@ -103,7 +113,7 @@ internal actual fun NativeActionSheet(title: String, actions: List<PlatformActio
     }
     SideEffect {
         alert.overrideUserInterfaceStyle = colors.uiKitStyle
-        alert.view.tintColor = colors.primary.toUIColor()
+        alert.view.tintColor = (if (colors.surface.luminance() < .5f) CpColor.AccentTextDark else CpColor.AccentTextLight).toUIColor()
     }
     PresentNativeController(alert, host)
     return true

@@ -135,7 +135,7 @@ internal actual fun PlatformRootNavigation(
     fun controller(screen: Navigator.Screen): UIViewController = NativeScreenController(
         route = screen,
         extendsUnderHomeIndicator = screen == Navigator.Screen.Auth || screen == Navigator.Screen.Register ||
-            screen is Navigator.Screen.ForgotPassword || screen is Navigator.Screen.ResetPassword,
+            screen is Navigator.Screen.ForgotPassword,
     ) {
         body.value(screen) {
             scope.launch { navigate {

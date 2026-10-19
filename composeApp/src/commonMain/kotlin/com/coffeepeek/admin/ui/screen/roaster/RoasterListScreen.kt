@@ -19,6 +19,7 @@ import com.coffeepeek.admin.di.platformViewModel
 import com.coffeepeek.admin.feature.favorites.api.roasterFavoriteId
 import com.coffeepeek.admin.theme.CpDimens
 import com.coffeepeek.admin.ui.Navigator
+import com.coffeepeek.admin.ui.component.CpSnackbarHost
 import com.coffeepeek.admin.ui.component.CoffeePeekLoader
 import com.coffeepeek.admin.ui.component.CoffeePeekPullToRefresh
 import com.coffeepeek.admin.ui.component.LocalFloatingNavClearance
@@ -53,7 +54,7 @@ internal fun RoasterListScreen(
         }
     }
     Scaffold(
-        snackbarHost = { SnackbarHost(snackbarHostState) },
+        snackbarHost = { CpSnackbarHost(snackbarHostState) },
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
         topBar = {
             Column(Modifier.fillMaxWidth().statusBarsPadding().padding(horizontal = CpDimens.spacing4, vertical = CpDimens.spacing3)) {
@@ -81,6 +82,9 @@ internal fun RoasterListScreen(
                 verticalArrangement = Arrangement.spacedBy(CpDimens.spacing3),
             ) {
                 itemsIndexed(visible, key = { index, item -> item.catalog.id.ifBlank { "unaddressed-roaster:$index" } }) { index, item ->
+                    LaunchedEffect(item.routeId, state.isLoading) {
+                        if (!state.isLoading) vm.loadDetails(item.routeId)
+                    }
                     RoasterCard(
                         roaster = item.catalog,
                         details = item.details,
@@ -129,6 +133,9 @@ internal fun RoasterPreview(
             val cardWidth = (maxWidth * 0.88f).coerceIn(280.dp, 360.dp)
             LazyRow(horizontalArrangement = Arrangement.spacedBy(CpDimens.spacing3)) {
                 itemsIndexed(visible.take(8), key = { index, item -> item.catalog.id.ifBlank { "unaddressed-roaster:$index" } }) { index, item ->
+                    LaunchedEffect(item.routeId, state.isLoading) {
+                        if (!state.isLoading) vm.loadDetails(item.routeId)
+                    }
                     RoasterCard(
                         roaster = item.catalog,
                         details = item.details,
@@ -140,7 +147,7 @@ internal fun RoasterPreview(
                     )
                 }
             }
-            SnackbarHost(snackbar, modifier = Modifier.align(Alignment.BottomCenter))
+            CpSnackbarHost(snackbar, modifier = Modifier.align(Alignment.BottomCenter))
         }
         if (state.items.isEmpty() && state.isLoading) {
             Box(Modifier.fillMaxWidth().padding(CpDimens.spacing4), contentAlignment = Alignment.Center) { CoffeePeekLoader() }

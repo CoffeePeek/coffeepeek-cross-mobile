@@ -62,15 +62,23 @@ class CoffeePeekClient(
     }.also { intercept(it) }
 
     private val tokenRefreshService = AuthService(plainClient, plainClient)
+    private val sessionRefresh = SessionRefreshCoordinator(::resolveTokens, ::persistTokens) {
+        tokenRefreshService.refresh(it).getOrThrow()
+    }
+
+    /** Manual photo ETag/304 handling must never pass through Ktor's HttpCache. */
+    val imageClient: HttpClient = apiClientFactory {
+        installServerErrorValidation()
+        defaultRequest { url(baseUrl) }
+        configureSessionAuthentication(baseUrl, ::resolveTokens, ::persistTokens, sessionRefresh)
+    }.also { it.readCurrentSessionForRequests(); intercept(it) }
 
     val client: HttpClient = apiClientFactory {
         installServerErrorValidation()
         install(ContentNegotiation) { json(json = JsonExt.json) }
         defaultRequest { url(baseUrl) }
 
-        configureSessionAuthentication(baseUrl, ::resolveTokens, ::persistTokens) {
-            tokenRefreshService.refresh(it).getOrThrow()
-        }
+        configureSessionAuthentication(baseUrl, ::resolveTokens, ::persistTokens, sessionRefresh)
 
         install(HttpCache) {
             createHttpCacheStorage(cacheFolderPath)?.let(::publicStorage)

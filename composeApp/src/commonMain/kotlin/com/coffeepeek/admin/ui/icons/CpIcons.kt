@@ -7,6 +7,7 @@ import com.adamglin.phosphoricons.Regular
 import com.adamglin.phosphoricons.fill.Heart as FillHeart
 import com.adamglin.phosphoricons.fill.Star as FillStar
 import com.adamglin.phosphoricons.regular.ArrowLeft
+import com.adamglin.phosphoricons.regular.ArrowClockwise
 import com.adamglin.phosphoricons.regular.ArrowsOutSimple
 import com.adamglin.phosphoricons.regular.Avocado
 import com.adamglin.phosphoricons.regular.Bread
@@ -133,6 +134,7 @@ object CpIcons {
     val PawPrint: ImageVector get() = PhosphorIcons.Regular.PawPrint
     val Profile: ImageVector get() = PhosphorIcons.Regular.User
     val Review: ImageVector get() = PhosphorIcons.Regular.ChatCenteredText
+    val Retry: ImageVector get() = PhosphorIcons.Regular.ArrowClockwise
     val Share: ImageVector get() = PhosphorIcons.Regular.ShareNetwork
     val Search: ImageVector get() = PhosphorIcons.Regular.MagnifyingGlass
     val ShoppingBag: ImageVector get() = PhosphorIcons.Regular.ShoppingBag

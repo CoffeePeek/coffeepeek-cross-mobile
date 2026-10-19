@@ -39,7 +39,9 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -49,6 +51,9 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.coffeepeek.admin.theme.CpDimens
 import com.coffeepeek.admin.ui.icons.CpIcons
+import com.coffeepeek.admin.utils.CpImage
+import com.coffeepeek.admin.utils.PrefetchPhotos
+import com.coffeepeek.admin.utils.image.FullScreenPhotoPresence
 
 @Composable
 fun FullScreenImageDialog(
@@ -62,8 +67,20 @@ fun FullScreenImageDialog(
     imageUrls: List<String>,
     initialIndex: Int,
     onDismiss: () -> Unit,
+) = FullScreenImageDialog(PhotoViewerImages(imageUrls), initialIndex, onDismiss)
+
+@Composable
+internal fun FullScreenImageDialog(
+    images: PhotoViewerImages,
+    initialIndex: Int,
+    onDismiss: () -> Unit,
 ) {
+    val imageUrls = images.previews
     if (imageUrls.isEmpty()) return
+    DisposableEffect(Unit) {
+        FullScreenPhotoPresence.enter()
+        onDispose { FullScreenPhotoPresence.leave() }
+    }
     com.coffeepeek.admin.analytics.AnalyticsOcclusion()
     val pagerState = rememberPagerState(
         initialPage = initialIndex.coerceIn(0, imageUrls.lastIndex),
@@ -72,12 +89,16 @@ fun FullScreenImageDialog(
     // While the current photo is zoomed, drags pan the photo instead of switching pages.
     var isZoomed by remember { mutableStateOf(false) }
     var controlsVisible by remember { mutableStateOf(true) }
+    val visiblePages by remember {
+        derivedStateOf { pagerState.layoutInfo.visiblePagesInfo.map { it.index }.toSet() }
+    }
     var dismissOffset by remember { mutableFloatStateOf(0f) }
     var viewportHeight by remember { mutableFloatStateOf(1f) }
     val reduceMotion = platformReduceMotion()
     val threshold = with(LocalDensity.current) { 120.dp.toPx() }
     val flingThreshold = with(LocalDensity.current) { 900.dp.toPx() }
     val dismissDrag = rememberDraggableState { dismissOffset = (dismissOffset + it).coerceAtLeast(0f) }
+    PrefetchPhotos(images.adjacentPreviewUrls(pagerState.currentPage), inPhotoViewer = true)
 
     Dialog(
         onDismissRequest = onDismiss,
@@ -97,14 +118,16 @@ fun FullScreenImageDialog(
         ) {
             HorizontalPager(
                 state = pagerState,
-                // The pager may prefetch while swiping; don't eagerly decode offscreen originals.
+                // Neighbor previews are prefetched separately without retaining offscreen painters.
                 beyondViewportPageCount = 0,
                 userScrollEnabled = !isZoomed,
                 modifier = Modifier.fillMaxSize().graphicsLayer { translationY = dismissOffset },
             ) { page ->
                 val isCurrent = pagerState.currentPage == page
-                ZoomableImage(
-                    imageUrl = imageUrls[page],
+                val displayUrl = images.displayUrl(page, pagerState.currentPage, page in visiblePages)
+                if (isCurrent || page in visiblePages) ZoomableImage(
+                    imageUrl = displayUrl.orEmpty(),
+                    highQualityUrl = images.highQualityUrl(page, pagerState.currentPage),
                     contentDescription = "Фото ${page + 1} из ${imageUrls.size}",
                     isCurrent = isCurrent,
                     onTap = { controlsVisible = !controlsVisible },
@@ -153,6 +176,7 @@ private const val DOUBLE_TAP_ZOOM = 2.5f
 @Composable
 private fun ZoomableImage(
     imageUrl: String,
+    highQualityUrl: String?,
     contentDescription: String,
     isCurrent: Boolean,
     onTap: () -> Unit,
@@ -178,8 +202,10 @@ private fun ZoomableImage(
     }
     LaunchedEffect(scale > 1f) { onZoomChanged(scale > 1f) }
 
-    CoffeeShopImage(
-        imageUrl = imageUrl,
+    CpImage(
+        data = imageUrl,
+        highQualityData = highQualityUrl?.takeIf { it != imageUrl },
+        upgradeDelayMillis = 0L,
         contentDescription = contentDescription,
         contentScale = ContentScale.Fit,
         modifier = Modifier

@@ -20,6 +20,7 @@ internal data class UpdateUiState(
     val checking: Boolean = false,
     val message: String? = null,
     val manual: Boolean = false,
+    val checkFailed: Boolean = false,
 )
 
 internal fun needsPlayFallback(required: Boolean, transfer: InstallationState): Boolean = required &&
@@ -47,13 +48,15 @@ internal class AppUpdateState(
                     update = available,
                     showPrompt = available?.shouldPrompt(current!!, dismissed, manual) == true,
                     manual = manual,
+                    checkFailed = manual && policy == null,
                     message = if (manual && available == null) {
                         if (policy == null) "Не удалось проверить обновления. Попробуйте позже." else "Установлена актуальная версия"
                     } else null,
                 )
             } catch (error: Exception) {
                 if (error is CancellationException && error !is TimeoutCancellationException) throw error
-                mutableState.value = UpdateUiState(message = if (manual) "Не удалось проверить обновления. Попробуйте позже." else null)
+                mutableState.value = UpdateUiState(manual = manual, checkFailed = manual,
+                    message = if (manual) "Не удалось проверить обновления. Попробуйте позже." else null)
             }
         }
     }
