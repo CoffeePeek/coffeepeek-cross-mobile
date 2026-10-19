@@ -47,6 +47,18 @@ a duplicate preview name and two remaining old-arity test callbacks; these were
 corrected without dropping assertions, and the complete selection was rerun.
 Logs and fixtures stay local; no live account/backend writes or iOS acceptance.
 
+Downstream follow-up: Home runtime `fe80c7e0` closes its matching data/inline/
+gallery contract gap in #99; its owner suite passes 41/41 on Pixel 7. At the
+combined Coffee-tip runtime source `28c64bff`, history is repeated **21/21**
+(38.937s) and Home **41/41** (73.350s), no failures/retries. History APK SHA-256:
+`dbb3818484c454e8b5fdd4d80a4085506f884c0ab60a5769cf982bb43a9ee1fd`.
+Selected unit regression 704/704 and Direct Debug/Sandbox APK/DEX/isolation
+guards pass. App instrumentation is compiled only, not executed against live DI.
+The extra repetitions use self-targeted generic Applications and injected ports;
+ordinary CoffeePeek/Sandbox are not updated or cleared. Logs stay local as
+`coffeepeek-history-photo-stack-ui-2026-10-19.log` and the Home/final-build logs
+listed in its plan. This is not live protected-photo or release acceptance.
+
 ## Compact visit markers and latest available photo — 2026-10-16
 
 Days now show one dot per check-in up to three, then a compact `+N` for the

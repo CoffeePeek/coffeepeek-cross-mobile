@@ -16,8 +16,9 @@ test APK and app instrumentation compilation. Home's owner APK also passes
 `28c64bff` passes 704 selected unit results (33 Home data, 76 Home impl, 11 history
 data, 47 history impl, 537 app Direct), both Direct Debug/Sandbox APKs and DEX/
 Sandbox isolation guards, both feature test APKs and app Direct instrumentation
-compilation (2m21s). The final-tip device repetition is recorded in the owning
-plans once complete. Normal CoffeePeek/Sandbox device packages are unchanged.
+compilation (2m21s). Final-tip Pixel 7 UI repetition also passes: Home 41/41
+(73.350s), history 21/21 (38.937s), no failures/retries. APK identities and logs
+are in the owner plans. Normal CoffeePeek/Sandbox device packages are unchanged.
 This closes the identified code contract gap, not live protected media, actual
 camera/upload/account/release acceptance or Shop blocking-menu integration.
 See the owning history/Home plans for source identities and exact evidence.

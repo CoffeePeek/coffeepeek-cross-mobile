@@ -48,6 +48,17 @@ debug signatures were checked before updating only the self-targeted test APK.
 The ordinary CoffeePeek and Sandbox device packages/data were not changed.
 Local log: `coffeepeek-home-photo-parent-ui-2026-10-19.log`.
 History's parent separately passed 21/21 self-targeted cases on the same Pixel 7.
+Final-tip repetition at runtime source `28c64bff`: **41/41** Home UI cases pass
+again in 73.350s, zero failures/retries. APK SHA-256:
+`72165261cd3ec6fe6439e3c830aa1dfc58dc19c2829954fe6ceacaeae33995f5`.
+History separately passes **21/21** at that tip in 38.937s. Full-tip selected
+unit results are 704/704 (537 app Direct plus the 167 Home/history library cases).
+Direct Debug/Sandbox APKs, DEX/isolation guards, both feature test APKs and app
+Direct instrumentation Kotlin compilation pass (2m21s). Later source changes
+are documentation only. Local final logs: `coffeepeek-photo-stack-final-build-`,
+`coffeepeek-home-photo-stack-ui-` and `coffeepeek-history-photo-stack-ui-`, each
+suffixed `2026-10-19.log`. Only self-targeted fake APKs were installed; no live
+photo/backend/account operation, manual pixel acceptance or native UI check.
 Protected live photos, real media selection/extraction/uploads, backend writes,
 account replacement, analytics, release and iOS acceptance remain open.
 

@@ -49,7 +49,8 @@ iOS UI migration remains deferred; Native compilation is only compatibility.
    Home/history feed/thumb/detail variants, explicit originals, album indices and
    calendar thumbs are implemented in #95/#99 and propagated to children. Their
    owner tests and 41-case Home device suite pass; the final tip builds Debug and
-   Sandbox with 704 selected unit results. Final-tip UI repetition is in progress. Preserve
+   Sandbox with 704 selected unit results. Final-tip UI repetition also passes:
+   41 Home + 21 history cases, zero failures/retries. Preserve
    protected image permissions/cache/session invalidation and blocked-author
    filtering; complete migrated
    check-in menu integration. Fixes stay in their parent/history/Home owner and
@@ -99,8 +100,9 @@ Photo contract follow-up: history `abc5876f`, Home `fe80c7e0`, propagated to tip
 `28c64bff`. Owner history 21/21 and Home 41/41 isolated Pixel 7 UI cases pass,
 no failures/retries. Whole-tip selected unit regression **704/704**, Direct Debug
 and Direct Sandbox APK/DEX/isolation, both feature test APKs and app Direct
-instrumentation compilation pass (2m21s). The final-tip device repetition is
-tracked in the owner plans. These fake-port suites do not close protected live
+instrumentation compilation pass (2m21s). Final-tip device repetitions also pass:
+Home **41/41** (73.350s), history **21/21** (38.937s), no failures/retries. APK
+identities and logs are recorded in the owner plans. These fake-port suites do not close protected live
 photo, account/write, media, analytics, iOS or Shop blocking-menu acceptance.
 
 Source 32cc4d57 plus documentation-only audit edits: **1704 Android unit results**
