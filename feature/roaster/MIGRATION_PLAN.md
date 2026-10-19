@@ -233,3 +233,34 @@ scripted taps landed on other screens, so only the unit tests cover it; the roas
 header) and the full list screen on the device; the tag filter inside that list; large font (instrumented 1.5 scale only;
 the device font was not changed); the Haze glass back button vs the legacy back button; haptics; pagination is n/a.
 USB/touch automation was flaky around dialogs and scroll positions, so those are the items to repeat by hand.
+
+## Manual Sandbox checklist — roasters (open items)
+
+Setup: install the Direct Sandbox build over the Sandbox package only. Because the 24 h roaster catalog is cached in
+Sandbox's own settings, clear that package's data once after fixture changes (`adb shell pm clear com.coffeepeek.sandbox`).
+Use the SANDBOX handle for network mode, theme ("Сменить") and reset. Tick each item and note the build version.
+
+1. [ ] **Recovery after error.** Handle -> "Нет сети". Discovery -> open *Sandbox Roaster* (error screen appears). Handle ->
+   "Обычно" -> Закрыть. Tap **Повторить**: the detail loads (hero, links, shops). Repeat with **Назад**: returns to Discovery.
+2. [ ] **Catalog error and refresh.** Cold-start with the handle on "Нет сети" is not possible (it resets), so: open the roaster
+   search overlay, set "Нет сети", pull to refresh: the error content with retry appears; set "Обычно", retry: list returns.
+3. [ ] **Search overlay / full list.** Discovery -> "Показать все" in *Обжарщики* (or type in the search field and open roasters):
+   header with back arrow, tag chips, three cards, favorites heart, pull to refresh, empty text for a query like "zzz",
+   back closes the overlay and the carousel keeps its state.
+4. [ ] **Filters in the list.** Tag Декаф -> Roaster + Decaf; Светлая обжарка -> Roaster + Light Lab; both -> Roaster only;
+   "Все" resets. "Избранное" filter in Discovery shows only favorite roasters; a roaster selected in the Discovery roaster
+   filter narrows the carousel and the list.
+5. [ ] **Open and favorites.** Card tap opens the detail; toggling the heart in the list, carousel and detail stays in sync
+   after Back; haptic tick on the heart (device vibration enabled); guest mode (handle -> Гостевой режим) tapping the heart
+   opens sign-in instead of changing the state.
+6. [ ] **Detail variants.** *Sandbox Light Lab*: no hero photos (placeholder), no address, website pill only. *Sandbox Decaf*: no
+   about/address/links and the "no shops" note. Photo tap on *Sandbox Roaster* opens the viewer, close returns.
+7. [ ] **Back button look.** Compare the hero back button with the old one (design-system glass vs legacy circular button).
+8. [ ] **Large font.** In device settings set font size to the largest (restore afterwards): card name/stats do not clip
+   badly, the carousel card keeps its stats footer, chips and pills wrap/scroll, detail text stays readable.
+9. [ ] **Both themes** for every item above; **rotate** the phone on the detail (state and scroll position kept).
+10. [ ] **Analytics sanity (optional).** With analytics enabled in a non-Sandbox debug build only: roaster search start/results
+    once per settled criteria (not per keystroke), card open position, detail content events (photos, shops, contacts).
+
+Record outcome per item in this section (date, build, pass/fail, notes). Failures become issues on PR #109, not silent edits.
+
