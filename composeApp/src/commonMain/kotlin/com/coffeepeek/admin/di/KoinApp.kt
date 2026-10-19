@@ -86,15 +86,6 @@ fun initKoin() {
 }
 
 private fun appModule(settingRepository: com.coffeepeek.room.repository.SettingRepository) = module {
-    single<com.coffeepeek.admin.feature.checkin.domain.DrinkPhotoExtractor> {
-        com.coffeepeek.admin.feature.checkin.data.createDrinkPhotoExtractor()
-    }
-    single<com.coffeepeek.admin.feature.checkin.api.DrinkPhotoPreparation.Factory> {
-        val extractor = get<com.coffeepeek.admin.feature.checkin.domain.DrinkPhotoExtractor>()
-        com.coffeepeek.admin.feature.checkin.api.DrinkPhotoPreparation.Factory { scope, onChanged ->
-            com.coffeepeek.admin.feature.checkin.ui.DrinkPhotoPreparationController(scope, extractor, onChanged)
-        }
-    }
     single<PasswordRecoveryRepository> { PasswordRecoveryRepositoryImpl(get<CoffeePeekClient>().plainClient) }
     factory { (email: String) -> PasswordRecoveryViewModel(email, get()) }
     single<CoffeeRepository> { CoffeeRepositoryImpl(get<CoffeePeekClient>().plainClient) }
@@ -104,7 +95,7 @@ private fun appModule(settingRepository: com.coffeepeek.room.repository.SettingR
         val gateway = get<CoffeePeekClient>()
         HomeCheckInRepositoryImpl(gateway.client, gateway.uploadClient, Constants.BASE_URL)
     }
-    factory { HomeCheckInViewModel(get(), get(), get(), get()) }
+    factory { HomeCheckInViewModel(get(), get(), get()) }
     factory { CoffeeListViewModel(get()) }
     factory { (slug: String) -> CoffeeDetailViewModel(slug, get()) }
     single { com.coffeepeek.feature.authorblocking.api.createAuthorBlockingFeature(get<CoffeePeekClient>().client, get()) }
@@ -132,7 +123,7 @@ private fun appModule(settingRepository: com.coffeepeek.room.repository.SettingR
     factory { com.coffeepeek.admin.feature.community.ui.CommunityViewModel(get(), get(), get(), get(), get(), get()) }
     factory { com.coffeepeek.admin.ui.screen.roaster.RoasterListViewModel(get(), get(), get()) }
     factory { MapViewModel(get(), get()) }
-    factory { (shopId: String) -> ShopDetailViewModel(shopId, get(), get(), get(), get(), get(), get(), get(), get(), get()) }
+    factory { (shopId: String) -> ShopDetailViewModel(shopId, get(), get(), get(), get(), get(), get(), get(), get()) }
     factory { (shopId: String) -> ShopMenuGalleryViewModel(shopId, get()) }
     factory { (shopId: String) -> ShopReportViewModel(shopId, get()) }
     factory { (shopId: String) -> SuggestShopChangeViewModel(shopId, get()) }

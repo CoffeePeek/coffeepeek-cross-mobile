@@ -2,7 +2,6 @@ package com.coffeepeek.admin.feature.homecheckin.ui
 
 import com.coffeepeek.admin.feature.catalog.api.methodLabel
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -10,14 +9,11 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.admin.ui.component.AppButton
-import com.coffeepeek.admin.ui.component.DrinkCutoutImage
 import com.coffeepeek.admin.ui.component.ReviewPhotoStrip
 import com.coffeepeek.admin.ui.component.PhotoViewerImages
 import com.coffeepeek.admin.ui.icons.CpIcons
@@ -130,17 +126,6 @@ internal fun HomeDetailContent(
                 singlePhotoAspectRatio = 16f / 10f,
                 onPhotoClick = { _, index -> onPhotoClick(homePhotoViewerImages(photos), index) })
         }
-        entry.drinkPhotoUrl?.takeIf(String::isNotBlank)?.let { original -> item(key = "drink-photo") {
-            Box(Modifier.fillMaxWidth().height(160.dp).clip(RoundedCornerShape(20.dp))
-                .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f))
-                .clickable(role = Role.Button, onClickLabel = "Открыть фото напитка") {
-                    onPhotoClick(homeDrinkPhotoViewerImages(original, entry.drinkPhotoDetailUrl), 0)
-                },
-                contentAlignment = Alignment.Center) {
-                DrinkCutoutImage(entry.drinkPhotoThumbnailUrl.orEmpty(), contentDescription = "Фото напитка",
-                    modifier = Modifier.fillMaxSize().padding(12.dp), outlineWidth = 3.dp)
-            }
-        } }
         entry.text?.takeIf(String::isNotBlank)?.let { note -> item(key = "note") {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text("Впечатления", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
@@ -163,9 +148,6 @@ internal fun HomeDetailContent(
 
 internal fun homePhotoViewerImages(photos: List<HomeCheckInPhoto>) =
     PhotoViewerImages(photos.map { it.detailUrl }, photos.map { it.url })
-
-internal fun homeDrinkPhotoViewerImages(original: String, detail: String?) =
-    PhotoViewerImages(listOf(detail.orEmpty()), listOf(original))
 
 @Composable
 private fun RecipeMetric(label: String, value: String) {

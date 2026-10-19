@@ -275,6 +275,6 @@ class CheckInPresentationTest {
         text = "Яркий и насыщенный ягодный вкус", brewMethodCode = "hario-v60", coffeeProductId = null,
         beanName = "Руанда Ньякибанда", doseGrams = "15.0", brewDurationSeconds = 260, tasteScore = 5,
         drinkName = "Фильтр", drinkSlug = "filter", customDrinkName = null,
-        photos = emptyList(), drinkPhotoUrl = null, visibility = HomeCheckInVisibility.Private,
+        photos = emptyList(), visibility = HomeCheckInVisibility.Private,
     )
 }

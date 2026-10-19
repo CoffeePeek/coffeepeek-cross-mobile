@@ -44,14 +44,12 @@ fun homeCheckInFieldErrors(input: HomeCheckInInput, editing: Boolean = false): M
         put(Drink, "Укажите название напитка заново")
     else if ((input.drinkSlug?.trim()?.length ?: 0) > 50) put(Drink, "Укажите напиток заново")
     when {
-        editing && (input.photos.isNotEmpty() || input.drinkPhoto != null) ->
+        editing && input.photos.isNotEmpty() ->
             put(Photos, "Фотографии нельзя изменить при редактировании")
         input.photos.size > 5 -> put(Photos, "Можно добавить до пяти фотографий")
         input.photos.indices.any { index -> input.photos.drop(index + 1).any { next ->
             input.photos[index].bytes.contentEquals(next.bytes)
         } } -> put(Photos, "Добавьте разные фотографии")
-        input.drinkPhoto != null && (input.photos.isEmpty() || input.drinkPhoto.contentType != "image/png") ->
-            put(Photos, "Фото напитка должно быть PNG и требует основное фото")
     }
 }
 

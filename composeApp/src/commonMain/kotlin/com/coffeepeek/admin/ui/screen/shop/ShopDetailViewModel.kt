@@ -1,8 +1,6 @@
 package com.coffeepeek.admin.ui.screen.shop
 
 import com.coffeepeek.admin.analytics.*
-import com.coffeepeek.admin.feature.checkin.api.DrinkPhotoPreparation
-import com.coffeepeek.admin.feature.checkin.api.DrinkPhotoState
 
 import com.coffeepeek.domain.model.ConsumedDrinkOption
 import com.coffeepeek.admin.base.BaseViewModel
@@ -61,7 +59,6 @@ data class ShopDetailUiState(
     val error: String? = null,
     val favoriteRoasterIds: Set<String> = emptySet(),
     val savingRoasterFavoriteIds: Set<String> = emptySet(),
-    val drinkPhotoState: DrinkPhotoState = DrinkPhotoState(),
 )
 
 class ShopDetailViewModel internal constructor(
@@ -73,7 +70,6 @@ class ShopDetailViewModel internal constructor(
     private val checkInDraftStore: CheckInDraftStore,
     private val userRepository: UserRepository,
     private val roasterFavorites: RoasterFavorites,
-    private val drinkPhotoFactory: DrinkPhotoPreparation.Factory = DrinkPhotoPreparation.Factory.Unavailable,
     private val visibility: AuthorVisibility = AuthorVisibility.None,
 ) : BaseViewModel() {
 
@@ -83,20 +79,6 @@ class ShopDetailViewModel internal constructor(
     private fun accountKey() = sessionRepository.peekSession()?.takeIf(sessionRepository::isActiveSession)?.let { it.userId ?: it.accessToken }
     private val _uiState = MutableStateFlow(ShopDetailUiState())
     val uiState = _uiState.asStateFlow()
-    private val drinkPhotos = drinkPhotoFactory.create(workScope, ::onDrinkPhotoChanged)
-
-    private fun onDrinkPhotoChanged(photoState: DrinkPhotoState) {
-        _uiState.update { state ->
-            val draft = state.checkInDraft
-            if (photoState !== drinkPhotos.state || draft == null || draft.photos.firstOrNull()?.toPendingUpload() != photoState.source) state
-            else {
-                val updated = draft.copy(drinkPhoto = photoState.selected?.let { PickedImage(it.bytes, it.fileName, it.contentType) },
-                    drinkPhotoSkipped = photoState.skipped)
-                state.copy(checkInDraft = updated, drinkPhotoState = photoState)
-            }
-        }
-        _uiState.value.checkInDraft?.let(checkInDraftStore::save)
-    }
     private var checkInAnalytics: CheckInTracker? = null
 
     init {
@@ -208,8 +190,6 @@ class ShopDetailViewModel internal constructor(
                     checkInError = null,
                 )
             }
-            drinkPhotos.setSource(draft.photos.firstOrNull()?.toPendingUpload(), draft.drinkPhoto?.toPendingUpload(), draft.drinkPhotoSkipped)
-            // Editing may start as soon as the sheet is visible; initialize the photo source first.
             _uiState.update { it.copy(showCheckInSheet = true) }
         }
     }
@@ -240,24 +220,14 @@ class ShopDetailViewModel internal constructor(
             "rating_coffee" to (before.coffeeRating != draft.coffeeRating), "rating_service" to (before.serviceRating != draft.serviceRating),
             "rating_place" to (before.placeRating != draft.placeRating), "photos" to (before.photos != draft.photos), "visibility" to (before.isPublic != draft.isPublic),
         ).filter { it.second }.forEach { checkInAnalytics?.field(it.first) }
-        val sourceChanged = before?.photos?.firstOrNull() != draft.photos.firstOrNull()
-        val next = if (sourceChanged) draft.copy(drinkPhoto = null, drinkPhotoSkipped = false)
-        else draft.copy(drinkPhoto = drinkPhotos.state.selected?.let { PickedImage(it.bytes, it.fileName, it.contentType) },
-            drinkPhotoSkipped = drinkPhotos.state.skipped)
-        checkInDraftStore.save(next)
-        _uiState.update { it.copy(checkInDraft = next, checkInError = null) }
-        drinkPhotos.setSource(next.photos.firstOrNull()?.toPendingUpload(), next.drinkPhoto?.toPendingUpload(), next.drinkPhotoSkipped)
+        checkInDraftStore.save(draft)
+        _uiState.update { it.copy(checkInDraft = draft, checkInError = null) }
     }
-
-    fun selectDrinkPhoto(photo: PendingPhotoUpload) { if (!_uiState.value.isCheckInLoading) drinkPhotos.select(photo) }
-    fun retryDrinkPhoto() { if (!_uiState.value.isCheckInLoading) drinkPhotos.retry() }
-    fun skipDrinkPhoto() { if (!_uiState.value.isCheckInLoading) drinkPhotos.skip() }
 
     fun checkIn(submittedDraft: CheckInDraft) {
         if (submittedDraft.shopId != shopId) return
         if (_uiState.value.isCheckInLoading || _uiState.value.submittedCheckInVisibility != null) return
         val tracker = checkInAnalytics
-        // Reject invalid input before starting or waiting for optional image processing.
         submittedDraft.validationError()?.let { error ->
             tracker?.submit()
             tracker?.validation(listOf("form"))
@@ -270,15 +240,7 @@ class ShopDetailViewModel internal constructor(
             _uiState.update { it.copy(checkInError = "Не удалось определить адрес кофейни") }
             return
         }
-        val photoState = drinkPhotos.state
-        if (!photoState.canSubmit) return
-        if (submittedDraft.photos.firstOrNull()?.toPendingUpload() != photoState.source) {
-            updateCheckInDraft(submittedDraft)
-            return
-        }
-        // A button may still hold the preceding frame's draft when native processing completes.
-        val draft = submittedDraft.copy(drinkPhoto = photoState.selected?.let { PickedImage(it.bytes, it.fileName, it.contentType) },
-            drinkPhotoSkipped = photoState.skipped)
+        val draft = submittedDraft
         tracker?.submit()
         checkInDraftStore.save(draft)
         _uiState.update { it.copy(isCheckInLoading = true, checkInDraft = draft, checkInError = null) }
@@ -302,7 +264,6 @@ class ShopDetailViewModel internal constructor(
                             place = draft.placeRating, service = draft.serviceRating, coffee = draft.coffeeRating,
                         ),
                         photos = draft.photos.map { it.toPendingUpload() },
-                        drinkPhoto = draft.drinkPhoto?.toPendingUpload(),
                     ),
                 )
             } catch (cancelled: CancellationException) {
