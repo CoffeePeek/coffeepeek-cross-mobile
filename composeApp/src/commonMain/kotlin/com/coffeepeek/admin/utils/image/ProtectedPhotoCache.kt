@@ -8,7 +8,11 @@ import kotlinx.coroutines.sync.withLock
 
 internal data class PhotoCacheKey(val url: String, val sessionScope: Any)
 internal data class PhotoTransfer(val status: Int, val headers: Headers, val bytes: ByteArray = byteArrayOf())
-internal data class AuthorizedPhoto(val bytes: ByteArray, val permission: PhotoPermission)
+internal data class AuthorizedPhoto(
+    val bytes: ByteArray,
+    val permission: PhotoPermission,
+    val reusablePermission: PhotoPermission? = null,
+)
 
 /** Bounded encoded bytes only. Expired bytes never imply permission to display them. */
 internal class ProtectedPhotoCache(
@@ -32,10 +36,10 @@ internal class ProtectedPhotoCache(
     ): AuthorizedPhoto {
         check(current()) { "Фото недоступно" }
         val work = mutex.withLock {
-            stored[key]?.takeIf { it.permission.remaining(clock) > 0 && jwtDeadline != null && jwtDeadline > clock.wallMillis() }?.let {
+            stored[key]?.takeIf { it.permission.remaining(clock) > 0 && (jwtDeadline == null || jwtDeadline > clock.wallMillis()) }?.let {
                 check(current()) { "Фото недоступно" }
                 stored.remove(key); stored[key] = it
-                return AuthorizedPhoto(it.bytes, it.permission)
+                return AuthorizedPhoto(it.bytes, it.permission, it.permission)
             }
             pending.getOrPut(key) {
                 val result = CompletableDeferred<AuthorizedPhoto>()
@@ -90,7 +94,7 @@ internal class ProtectedPhotoCache(
         }
         // A 304 has its own current authorization headers. Never infer a new lease
         // from old metadata, and never carry an old max-age forward when absent.
-        val fresh = if (jwtDeadline == null) 0 else minOf(policy.freshMillis, (jwtDeadline - wall).coerceAtLeast(0))
+        val fresh = minOf(policy.freshMillis, jwtDeadline?.let { (it - wall).coerceAtLeast(0) } ?: policy.freshMillis)
         val freshness = PhotoPermission(received + fresh, wall + fresh)
         // A successful online access check also authorizes this individual presentation.
         // Missing/zero freshness cannot produce a later fresh-cache hit.
@@ -113,13 +117,21 @@ internal class ProtectedPhotoCache(
                 while (stored.size > maxEntries || byteCount > maxBytes) evict(stored.keys.first())
             }
         }
-        return AuthorizedPhoto(bytes, PhotoPermission(received + displayMillis, wall + displayMillis))
+        return AuthorizedPhoto(
+            bytes,
+            PhotoPermission(received + displayMillis, wall + displayMillis),
+            freshness.takeIf { policy.stores && responseTag != null && fresh > 0 },
+        )
     }
 
     suspend fun discardInvalidScopes(valid: (Any) -> Boolean) = mutex.withLock {
         stored.keys.filterNot { valid(it.sessionScope) }.forEach(::evict)
-        pending.entries.filterNot { valid(it.key.sessionScope) }.forEach { (key, work) ->
-            pending.remove(key); work.result.cancel(); work.job.cancel()
+        // Snapshot keys: removing an entry invalidates retained Map.Entry references on Native.
+        pending.keys.filterNot { valid(it.sessionScope) }.forEach { key ->
+            pending.remove(key)?.let { work ->
+                work.result.cancel()
+                work.job.cancel()
+            }
         }
     }
 

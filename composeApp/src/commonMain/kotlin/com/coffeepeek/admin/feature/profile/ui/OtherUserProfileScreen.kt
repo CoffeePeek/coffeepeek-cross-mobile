@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
@@ -30,6 +31,7 @@ import com.coffeepeek.admin.ui.component.PlatformGlassIconButton
 import com.coffeepeek.admin.ui.component.SwipeDismissModalBottomSheet
 import com.coffeepeek.admin.ui.icons.CpIcons
 import com.coffeepeek.admin.utils.ShareHelper
+import com.coffeepeek.admin.utils.PrefetchListPhotos
 import org.koin.core.parameter.parametersOf
 
 private enum class ProfileSection(val title: String) {
@@ -84,6 +86,7 @@ internal fun UserProfileScreen(
     val state by vm.state.collectAsState()
     var section by remember(slug) { mutableStateOf<ProfileSection?>(null) }
     var photos by remember(slug) { mutableStateOf<ProfilePhotos?>(null) }
+    val checkInsListState = rememberLazyListState()
     val blocks = org.koin.compose.koinInject<com.coffeepeek.feature.authorblocking.api.AuthorBlockActions>()
     val authorVisibility by vm.authorVisibility.collectAsState()
     LaunchedEffect(authorVisibility.revision, state.profile?.slug) { photos = null; section = null }
@@ -285,6 +288,11 @@ internal fun UserProfileScreen(
 
     // Native sheet content can recompose while its controller is being dismissed.
     val selectedSection = section
+    if (selectedSection == ProfileSection.CheckIns && profile != null && !profile.isBlockedByViewer) {
+        PrefetchListPhotos(checkInsListState, state.checkIns.map { checkIn ->
+            checkIn.id to (checkIn.source?.photoThumbnailUrls ?: checkIn.photoUrls).take(3)
+        })
+    }
     if (selectedSection != null && profile != null && !profile.isBlockedByViewer) SwipeDismissModalBottomSheet(
         onDismissRequest = { section = null },
         maxSheetHeightFraction = 0.9f,
@@ -307,6 +315,7 @@ internal fun UserProfileScreen(
                 else if (profile.favorites.isEmpty()) item { ProfileEmptyCard("Пока ничего нет в избранном", CpIcons.Favorite) }
             }
             ProfileSection.CheckIns -> LazyColumn(
+                state = checkInsListState,
                 modifier = Modifier.fillMaxWidth().weight(1f, fill = false),
                 contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 32.dp),
                 verticalArrangement = Arrangement.spacedBy(10.dp),

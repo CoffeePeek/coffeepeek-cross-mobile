@@ -104,6 +104,7 @@ import coffeepeek.composeapp.generated.resources.Res
 import coffeepeek.composeapp.generated.resources.maskot_with_magnifying_glass
 import org.jetbrains.compose.resources.painterResource
 import com.coffeepeek.admin.di.platformViewModel
+import com.coffeepeek.admin.utils.PrefetchListPhotos
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalComposeUiApi::class)
 @Composable
@@ -117,6 +118,7 @@ fun FeedScreen(
     val state by vm.uiState.collectAsState()
     val listState = rememberLazyListState()
     val discoveryListState = rememberLazyListState()
+    val discoveryShopsState = rememberLazyListState()
     val focusManager = LocalFocusManager.current
     val keyboard = LocalSoftwareKeyboardController.current
     val showDiscovery = mapPreview != null && state.showDiscovery
@@ -164,6 +166,11 @@ fun FeedScreen(
     val userLocation = rememberPermittedUserLocation(locationRefreshKey)
     LaunchedEffect(userLocation) { userLocation?.let { vm.onUserLocationChanged(it); Analytics.track(AnalyticsEvent.GEOLOCATION_RESULT, "placement" to "discovery", "trigger" to "automatic", "outcome" to "available") } }
     val displayedShops = state.visibleShops
+    if (!mapExpanded) {
+        if (showDiscovery) PrefetchListPhotos(discoveryShopsState,
+            displayedShops.take(8).map { it.id to listOfNotNull(it.photoUrl) })
+        else PrefetchListPhotos(listState, displayedShops.map { it.id to listOfNotNull(it.photoUrl) })
+    }
 
     val shouldLoadMore by remember(showDiscovery) {
         derivedStateOf {
@@ -319,7 +326,7 @@ fun FeedScreen(
                                             LoadErrorContent(onRetry = vm::refresh)
                                         }
                                         displayedShops.isEmpty() -> Text("Кофейни не найдены", color = MaterialTheme.colorScheme.onSurfaceVariant)
-                                        else -> LazyRow(horizontalArrangement = Arrangement.spacedBy(CpDimens.spacing3)) {
+                                        else -> LazyRow(state = discoveryShopsState, horizontalArrangement = Arrangement.spacedBy(CpDimens.spacing3)) {
                                             items(displayedShops.take(8), key = { it.id }) { shop ->
                                                 ShopCard(
                                                     shop = shop,
