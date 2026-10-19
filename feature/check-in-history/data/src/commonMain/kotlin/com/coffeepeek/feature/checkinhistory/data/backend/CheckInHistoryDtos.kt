@@ -32,6 +32,7 @@ internal data class HistoryCheckInDto(
     val rating: HistoryRatingDto? = null,
     val photos: List<HistoryPhotoDto> = emptyList(),
     val drinkPhotoUrl: String? = null,
+    val drinkPhotoVariants: List<HistoryPhotoVariantDto>? = null,
     val drinkSlug: String? = null,
     val customDrinkName: String? = null,
     val drinkNameRu: String? = null,
@@ -58,4 +59,11 @@ internal data class HistoryRatingDto(
 internal data class HistoryPhotoDto(
     @JsonNames("fullUrl") val url: String = "",
     val sortIndex: JsonElement? = null,
+    val variants: List<HistoryPhotoVariantDto>? = null,
+)
+
+@Serializable
+internal data class HistoryPhotoVariantDto(
+    val purpose: String = "", val contentType: String = "", val url: String = "",
+    val width: Int = 0, val height: Int = 0, val sizeBytes: Long = 0,
 )

@@ -22,25 +22,26 @@ import org.jetbrains.compose.resources.stringResource
 
 @Composable
 internal fun HistoryCheckInPhotos(urls: List<String>, onOpenPhoto: (Int) -> Unit, modifier: Modifier = Modifier,
-    imageContent: HistoryImageContent? = null) {
+    imageContent: HistoryImageContent? = null, originalUrls: List<String> = urls) {
+    require(originalUrls.size == urls.size)
     if (urls.isEmpty()) return
-    if (urls.size == 1) HistoryPhotoTile(urls, 0, onOpenPhoto, modifier.fillMaxWidth().aspectRatio(4f / 3f), imageContent)
+    if (urls.size == 1) HistoryPhotoTile(urls, originalUrls, 0, onOpenPhoto, modifier.fillMaxWidth().aspectRatio(4f / 3f), imageContent)
     else Row(modifier.fillMaxWidth().aspectRatio(4f / 3f), horizontalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing1)) {
-        HistoryPhotoTile(urls, 0, onOpenPhoto, Modifier.weight(1f).fillMaxHeight(), imageContent)
-        if (urls.size == 2) HistoryPhotoTile(urls, 1, onOpenPhoto, Modifier.weight(1f).fillMaxHeight(), imageContent)
+        HistoryPhotoTile(urls, originalUrls, 0, onOpenPhoto, Modifier.weight(1f).fillMaxHeight(), imageContent)
+        if (urls.size == 2) HistoryPhotoTile(urls, originalUrls, 1, onOpenPhoto, Modifier.weight(1f).fillMaxHeight(), imageContent)
         else Column(Modifier.weight(1f).fillMaxHeight(), verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing1)) {
-            HistoryPhotoTile(urls, 1, onOpenPhoto, Modifier.weight(1f).fillMaxWidth(), imageContent)
-            HistoryPhotoTile(urls, 2, onOpenPhoto, Modifier.weight(1f).fillMaxWidth(), imageContent)
+            HistoryPhotoTile(urls, originalUrls, 1, onOpenPhoto, Modifier.weight(1f).fillMaxWidth(), imageContent)
+            HistoryPhotoTile(urls, originalUrls, 2, onOpenPhoto, Modifier.weight(1f).fillMaxWidth(), imageContent)
         }
     }
 }
 
 @Composable
-private fun HistoryPhotoTile(urls: List<String>, index: Int, onOpenPhoto: (Int) -> Unit, modifier: Modifier,
+private fun HistoryPhotoTile(urls: List<String>, originals: List<String>, index: Int, onOpenPhoto: (Int) -> Unit, modifier: Modifier,
     imageContent: HistoryImageContent?) {
     val description = stringResource(Res.string.history_photo_description, index + 1, urls.size)
     Box(modifier.clip(RoundedCornerShape(CoffeePeekDimens.radiusMd))
-        .clickable(enabled = urls[index].isNotBlank(), role = Role.Button) { onOpenPhoto(index) }
+        .clickable(enabled = originals[index].isNotBlank(), role = Role.Button) { onOpenPhoto(index) }
         .semantics(mergeDescendants = true) { contentDescription = description }, contentAlignment = Alignment.Center) {
         HistoryPhoto(urls[index], Modifier.fillMaxSize(), imageContent = imageContent)
         if (index == 2 && urls.size > 3) Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.45f)),
@@ -52,5 +53,5 @@ private fun HistoryPhotoTile(urls: List<String>, index: Int, onOpenPhoto: (Int) 
 }
 
 @PreviewLightDark @Composable private fun HistoryCheckInPhotosPreview() = CoffeePeekTheme {
-    HistoryCheckInPhotos(List(4) { "" }, {})
+    HistoryCheckInPhotos(List(4) { "" }, {}, originalUrls = List(4) { "fixture-original-$it" })
 }

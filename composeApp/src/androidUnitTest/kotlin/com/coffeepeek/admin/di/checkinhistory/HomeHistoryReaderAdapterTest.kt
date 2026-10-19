@@ -26,6 +26,24 @@ import kotlin.test.assertTrue
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class HomeHistoryReaderAdapterTest {
+    @Test fun photoRepresentationsSurviveBothIndependentFeatureBoundaries() = runTest {
+        val source = HomeReadTestRepository().apply {
+            history = { query -> Result.success(HomeCheckInPage(listOf(homeReadFixture().copy(
+                photos = listOf(com.coffeepeek.feature.homecheckin.domain.HomeCheckInPhoto(
+                    "photo", "original", "feed", "detail", "thumb")),
+                drinkPhotoUrl = "cutout-original", drinkPhotoThumbnailUrl = "cutout-thumb",
+                drinkPhotoDetailUrl = "cutout-detail")), 1, query.page, query.size)) }
+        }
+        val entry = HomeHistoryReaderAdapter(LegacyHomePreparationReader(source)).page(1, 20, null).getOrThrow().items.single()
+        assertEquals("original", entry.photos.single().url)
+        assertEquals("feed", entry.photos.single().thumbnailUrl)
+        assertEquals("detail", entry.photos.single().detailUrl)
+        assertEquals("thumb", entry.photos.single().calendarUrl)
+        assertEquals("cutout-original", entry.drinkPhotoUrl)
+        assertEquals("cutout-thumb", entry.drinkPhotoThumbnailUrl)
+        assertEquals("cutout-detail", entry.drinkPhotoDetailUrl)
+    }
+
     @Test fun snapshotsPreserveCivilDateRecipePhotoIdentityAndUnknownPublication() = runTest {
         val source = homeReadFixture()
         val reader = HomeHistoryReaderAdapter(LegacyHomePreparationReader(HomeReadTestRepository()))

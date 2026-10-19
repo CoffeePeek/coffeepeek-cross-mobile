@@ -4,7 +4,7 @@ internal sealed interface CheckInHistoryEvent {
     data object Back : CheckInHistoryEvent
     data object SignIn : CheckInHistoryEvent
     data class OpenShop(val slug: String) : CheckInHistoryEvent
-    data class OpenPhoto(val urls: List<String>, val index: Int) : CheckInHistoryEvent
+    data class OpenPhoto(val urls: List<String>, val index: Int, val originalUrls: List<String> = urls) : CheckInHistoryEvent
     data class OpenHome(val id: String) : CheckInHistoryEvent
     data class Create(val source: HistorySource) : CheckInHistoryEvent
     data object CreatePickerOpened : CheckInHistoryEvent

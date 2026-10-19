@@ -208,7 +208,7 @@ class HistoryScreenContractTest {
         val homes = Homes()
         var signedIn = 0
         val entry = createCheckInHistoryEntry(repository, homes, { FakeCalendar() }, { _, modifier, _ -> Box(modifier) })
-        render { entry.Content(5, false, { it }, {}, { signedIn++ }, {}, { _, _ -> }, { "10:00" }, {}, {}, {}, 8) }.use {
+        render { entry.Content(5, false, { it }, {}, { signedIn++ }, {}, { _, _, _ -> }, { "10:00" }, {}, {}, {}, 8) }.use {
             compose.onNodeWithText("Войти").performClick()
             compose.waitUntil(5_000) { signedIn == 1 }
             compose.runOnIdle { assertEquals(1, signedIn); assertEquals(0, repository.reads); assertEquals(0, homes.reads) }
@@ -218,7 +218,7 @@ class HistoryScreenContractTest {
     @Test fun actualEntryDoesNotDuplicateStartupForNonzeroRefreshGeneration() {
         val repository = FakeRepository()
         val entry = createCheckInHistoryEntry(repository, Homes(), { FakeCalendar() }, { _, modifier, _ -> Box(modifier) })
-        render(dark = true) { entry.Content(5, true, { "14 октября 2026" }, {}, {}, {}, { _, _ -> }, { "10:00" }, {}, {}, {}, 8) }.use {
+        render(dark = true) { entry.Content(5, true, { "14 октября 2026" }, {}, {}, {}, { _, _, _ -> }, { "10:00" }, {}, {}, {}, 8) }.use {
             compose.onNodeWithContentDescription("14 октября 2026, сегодня, 2 чекина, 1 дома").assertExists()
             compose.runOnIdle { assertEquals(2, repository.reads) }
         }
@@ -254,7 +254,7 @@ class HistoryScreenContractTest {
         var pickerCancelled = 0
         val entry = createCheckInHistoryEntry(FakeRepository(), homes, { FakeCalendar() }, { _, modifier, _ -> Box(modifier) })
         render {
-            entry.Content(5, true, { it }, {}, {}, {}, { _, _ -> }, { "11:00" },
+            entry.Content(5, true, { it }, {}, {}, {}, { _, _, _ -> }, { "11:00" },
                 opened::add, {}, { created++ }, 8,
                 onCreatePickerOpened = { pickerOpened++ }, onCreatePickerCancelled = { pickerCancelled++ })
         }.use {
@@ -277,6 +277,24 @@ class HistoryScreenContractTest {
         // Lazy items below the viewport are not composed until the list scrolls to them.
         compose.onNode(hasScrollToIndexAction()).performScrollToNode(hasContentDescription(description))
         compose.onNodeWithContentDescription(description).performClick()
+    }
+
+    @Test fun inlineAlbumUsesFeedVariantsButUnavailablePreviewStillOpensTheOriginalIndex() {
+        for (dark in listOf(false, true)) {
+            val requested = java.util.concurrent.CopyOnWriteArraySet<String>()
+            val opened = mutableListOf<Int>()
+            render(dark) {
+                HistoryCheckInCard(previewHistoryCheckIn().copy(authorAvatarUrl = null,
+                    photoUrls = listOf("original-a", "original-b"), photoThumbnailUrls = listOf("feed-a", ""),
+                    drinkPhotoUrl = "original-cutout", drinkPhotoThumbnailUrl = "cutout-thumb"), "14 октября", opened::add,
+                    imageContent = { url, modifier, _ -> requested += url; Box(modifier) })
+            }.use {
+                compose.waitForIdle()
+                assertEquals(setOf("feed-a", "cutout-thumb"), requested.toSet())
+                compose.onNodeWithContentDescription("Фотография 2 из 2").performClick()
+                assertEquals(listOf(1), opened)
+            }
+        }
     }
 
     private fun scrollToText(text: String) {

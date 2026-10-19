@@ -15,6 +15,7 @@ import com.coffeepeek.admin.feature.homecheckin.ui.HomeDetailContent
 import com.coffeepeek.admin.feature.homecheckin.ui.HomeEditorContent
 import com.coffeepeek.admin.feature.homecheckin.ui.HomeMonth
 import com.coffeepeek.admin.ui.component.PlatformAlert
+import com.coffeepeek.admin.ui.component.PhotoViewerImages
 import com.coffeepeek.admin.analytics.AnalyticsOverlay
 import com.coffeepeek.core.designsystem.component.CoffeePeekButton
 import com.coffeepeek.core.designsystem.component.CoffeePeekLoader
@@ -25,7 +26,7 @@ import org.jetbrains.compose.resources.stringResource
 
 /** Existing Home UI with an Android account-owned lifetime; no Home implementation enters history impl. */
 @Composable
-internal fun HistoryHomeOverlay(bridge: AndroidHistoryHomeBridge, onPhoto: (List<String>, Int) -> Unit) {
+internal fun HistoryHomeOverlay(bridge: AndroidHistoryHomeBridge, onPhoto: (PhotoViewerImages, Int) -> Unit) {
     val editor by bridge.editor.collectAsStateWithLifecycle()
     editor?.let { current ->
         key(current) {
@@ -56,7 +57,7 @@ internal fun HistoryHomeOverlay(bridge: AndroidHistoryHomeBridge, onPhoto: (List
 @Composable
 internal fun HistoryHomeOverlayContent(state: HomeCheckInUiState, onDismiss: () -> Unit, onRetry: () -> Unit,
     onEdit: () -> Unit, onRequestDelete: () -> Unit, onCancelDelete: () -> Unit, onConfirmDelete: () -> Unit,
-    onPhoto: (List<String>, Int) -> Unit, editorContent: @Composable (Modifier) -> Unit) {
+    onPhoto: (PhotoViewerImages, Int) -> Unit, editorContent: @Composable (Modifier) -> Unit) {
     val fullHeight = state.editing || state.selected != null
     CoffeePeekSwipeDismissModalBottomSheet(onDismiss, stringResource(Res.string.history_home_close),
         dismissEnabled = !state.saving, maxSheetHeightFraction = if (fullHeight) 0.9f else null) {
@@ -72,7 +73,7 @@ internal fun HistoryHomeOverlayContent(state: HomeCheckInUiState, onDismiss: () 
 }
 
 @Composable private fun HistoryHomeBody(state: HomeCheckInUiState, onRetry: () -> Unit, onEdit: () -> Unit,
-    onRequestDelete: () -> Unit, onPhoto: (List<String>, Int) -> Unit, modifier: Modifier,
+    onRequestDelete: () -> Unit, onPhoto: (PhotoViewerImages, Int) -> Unit, modifier: Modifier,
     editorContent: @Composable (Modifier) -> Unit) {
     when {
         state.editing -> editorContent(modifier.fillMaxWidth())

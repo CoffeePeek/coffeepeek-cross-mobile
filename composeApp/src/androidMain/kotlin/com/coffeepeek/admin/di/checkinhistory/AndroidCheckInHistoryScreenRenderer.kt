@@ -16,6 +16,7 @@ import com.coffeepeek.admin.utils.CpImage
 import com.coffeepeek.admin.utils.utcIsoToLocalDateTime
 import com.coffeepeek.admin.ui.Navigator
 import com.coffeepeek.admin.ui.component.FullScreenImageDialog
+import com.coffeepeek.admin.ui.component.PhotoViewerImages
 import com.coffeepeek.admin.ui.component.rememberCheckInDateLabel
 import com.coffeepeek.admin.ui.screen.checkins.CheckInHistoryScreenRenderer
 import com.coffeepeek.domain.repository.SessionRepository
@@ -35,8 +36,8 @@ internal class AndroidCheckInHistoryScreenRenderer(
         if (scale == ContentScale.Fit) DrinkCutoutImage(data = url, modifier = modifier, outlineWidth = 1.dp)
         else CpImage(data = url, modifier = modifier, contentScale = scale)
     },
-    private val photoContent: @Composable (List<String>, Int, () -> Unit) -> Unit = { urls, index, dismiss ->
-        FullScreenImageDialog(imageUrls = urls, initialIndex = index, onDismiss = dismiss)
+    private val photoContent: @Composable (List<String>, List<String>, Int, () -> Unit) -> Unit = { urls, originals, index, dismiss ->
+        FullScreenImageDialog(images = PhotoViewerImages(urls, originals), initialIndex = index, onDismiss = dismiss)
     },
 ) : CheckInHistoryScreenRenderer {
     @Composable
@@ -72,7 +73,7 @@ internal class AndroidCheckInHistoryScreenRenderer(
                     creation.shop()?.let { CheckInFlowHandoff.tracker = it }
                     onCreateShop()
                 }, { home?.create(creation.home()) }, generation, creation)
-            home?.let { HistoryHomeOverlay(it, session::openPhoto) }
+            home?.let { HistoryHomeOverlay(it) { images, index -> session.openPhoto(images.previews, images.originals, index) } }
         }
     }
 
@@ -96,7 +97,7 @@ internal class AndroidCheckInHistoryScreenRenderer(
             CompositionLocalProvider(LocalViewModelStoreOwner provides session) {
                 content(host, session)
                 val photo by session.photoPreview.collectAsStateWithLifecycle()
-                photo?.let { photoContent(it.urls, it.initialIndex, session::dismissPhoto) }
+                photo?.let { photoContent(it.urls, it.originalUrls, it.initialIndex, session::dismissPhoto) }
             }
         }
     }

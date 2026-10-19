@@ -21,9 +21,12 @@ data class HomePreparation(
     /** Null means unknown, not Private or confirmed Public. */
     val visibility: HomePreparationVisibility?,
     val moderation: HomePreparationModeration,
+    val drinkPhotoThumbnailUrl: String? = null,
+    val drinkPhotoDetailUrl: String? = null,
 )
 
-data class HomePreparationPhoto(val id: String, val url: String)
+data class HomePreparationPhoto(val id: String, val url: String,
+    val thumbnailUrl: String? = null, val detailUrl: String? = null, val calendarUrl: String? = null)
 
 enum class HomePreparationVisibility { Private, Public }
 enum class HomePreparationModeration { NotSubmitted, Pending, Approved, Rejected, Unknown }
