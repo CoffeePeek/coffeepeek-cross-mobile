@@ -101,6 +101,7 @@ object Navigator {
         @Serializable data object Auth : Screen
         @Serializable data object Register : Screen
         @Serializable data class ForgotPassword(val email: String = "") : Screen
+        // Preserve the destination ID when Android restores a task from before web-only recovery.
         @Serializable data class ResetPassword(val token: String) : Screen
         @Serializable data object Main : Screen
 
@@ -428,14 +429,10 @@ object Navigator {
                             },
                         )
                     }
-                    composable<Screen.ResetPassword> { backStack ->
-                        PasswordRecoveryScreen(
-                            initialToken = backStack.toRoute<Screen.ResetPassword>().token,
-                            onClose = { nav.popBackStack() },
-                            onLogin = {
-                                nav.navigate(Screen.Auth) { popUpTo<Screen.Main>(); launchSingleTop = true }
-                            },
-                        )
+                    composable<Screen.ResetPassword> {
+                        LaunchedEffect(Unit) {
+                            nav.navigate(Screen.Auth) { popUpTo<Screen.Main>(); launchSingleTop = true }
+                        }
                     }
                     composable<Screen.Main> { entry ->
                         // The retained screen still needs a full-size transition target.
@@ -525,7 +522,7 @@ object Navigator {
             Screen.Auth -> AuthScreen()
             Screen.Register -> RegisterScreen()
             is Screen.ForgotPassword -> PasswordRecoveryScreen(initialEmail = screen.email, onClose = ::popBack, onLogin = resetToLogin)
-            is Screen.ResetPassword -> PasswordRecoveryScreen(initialToken = screen.token, onClose = ::popBack, onLogin = resetToLogin)
+            is Screen.ResetPassword -> LaunchedEffect(Unit) { resetToLogin() }
             is Screen.ShopDetail -> ShopDetailScreen(screen.shopId, screen.forCheckIn)
             Screen.CreateCheckIn -> com.coffeepeek.admin.ui.screen.shop.CheckInShopPickerScreen()
             is Screen.CoffeeDetail -> CoffeeDetailScreen(screen.slug)

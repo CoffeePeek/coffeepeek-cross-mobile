@@ -15,15 +15,13 @@ class AppLinksTest {
     }
 
     @Test
-    fun routesPasswordResetLinksAndDecodesTokenOnce() {
-        assertEquals(
-            Navigator.Screen.ResetPassword("a+b/c=="),
-            appLinkScreen("https://coffeepeek.by/reset-password?token=a%2Bb%2Fc%3D%3D"),
-        )
-        assertEquals(Navigator.Screen.ForgotPassword(), appLinkScreen("https://coffeepeek.by/reset-password?token="))
-        assertEquals(Navigator.Screen.ForgotPassword(), appLinkScreen("https://coffeepeek.by/reset-password"))
+    fun leavesPasswordResetLinksOnTheWebsite() {
+        assertNull(appLinkScreen("https://coffeepeek.by/reset-password?token=a%2Bb%2Fc%3D%3D"))
+        assertNull(appLinkScreen("https://coffeepeek.by/reset-password?token="))
+        assertNull(appLinkScreen("https://coffeepeek.by/reset-password"))
+        assertNull(appLinkScreen("https://coffeepeek.by/reset-password/?token=secret"))
         assertNull(appLinkScreen("https://coffeepeek.by.evil.com/reset-password?token=secret"))
-        assertEquals(Navigator.Screen.Main, appLinkScreen("http://coffeepeek.by/reset-password?token=secret"))
+        assertNull(appLinkScreen("http://coffeepeek.by/reset-password?token=secret"))
     }
 
     @Test

@@ -13,10 +13,8 @@ class NativeTabRoutesTest {
     }
 
     @Test
-    fun detailAndPasswordLinksStayInTheNavigationStack() {
-        listOf("https://coffeepeek.by/coffee-shops/26-name", "https://coffeepeek.by/reset-password?token=test").forEach { url ->
-            assertNull(nativeTabIndex(requireNotNull(appLinkScreen(url))))
-        }
+    fun detailLinksStayInTheNavigationStack() {
+        assertNull(nativeTabIndex(requireNotNull(appLinkScreen("https://coffeepeek.by/coffee-shops/26-name"))))
     }
 
     @Test

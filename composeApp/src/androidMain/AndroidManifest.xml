@@ -40,6 +40,10 @@
                 <data android:scheme="http" />
                 <data android:scheme="https" />
                 <data android:host="coffeepeek.by" />
+                <data android:path="" />
+                <data android:path="/" />
+                <data android:pathPrefix="/coffee-shops/" />
+                <data android:pathPrefix="/users/" />
             </intent-filter>
         </activity>
 
