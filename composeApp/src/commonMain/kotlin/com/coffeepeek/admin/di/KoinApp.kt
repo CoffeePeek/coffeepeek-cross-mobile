@@ -124,15 +124,6 @@ private fun appModule(
     single<ShopCheckInFormRenderer> { shopCheckInRendererFactory() }
     single<ShopReportScreenRenderer> { shopReportRendererFactory(get()) }
     single<ShopMenuGalleryScreenRenderer> { shopGalleryRendererFactory(get()) }
-    single<com.coffeepeek.admin.feature.checkin.domain.DrinkPhotoExtractor> {
-        com.coffeepeek.admin.feature.checkin.data.createDrinkPhotoExtractor()
-    }
-    single<com.coffeepeek.admin.feature.checkin.api.DrinkPhotoPreparation.Factory> {
-        val extractor = get<com.coffeepeek.admin.feature.checkin.domain.DrinkPhotoExtractor>()
-        com.coffeepeek.admin.feature.checkin.api.DrinkPhotoPreparation.Factory { scope, onChanged ->
-            com.coffeepeek.admin.feature.checkin.ui.DrinkPhotoPreparationController(scope, extractor, onChanged)
-        }
-    }
     single<PasswordRecoveryRepository> { PasswordRecoveryRepositoryImpl(get<CoffeePeekClient>().plainClient) }
     factory { (email: String) -> PasswordRecoveryViewModel(email, get()) }
     single<CoffeeRepository> { CoffeeRepositoryImpl(get<CoffeePeekClient>().plainClient) }
@@ -142,7 +133,7 @@ private fun appModule(
         val gateway = get<CoffeePeekClient>()
         HomeCheckInRepositoryImpl(gateway.client, gateway.uploadClient, Constants.BASE_URL)
     }
-    factory { HomeCheckInViewModel(get(), get(), get(), get()) }
+    factory { HomeCheckInViewModel(get(), get(), get()) }
     factory { CoffeeListViewModel(get()) }
     factory { (slug: String) -> CoffeeDetailViewModel(slug, get()) }
     single { com.coffeepeek.feature.authorblocking.api.createAuthorBlockingFeature(get<CoffeePeekClient>().client, get()) }
@@ -180,7 +171,6 @@ private fun appModule(
         userRepository = get(),
         observeFavoriteIds = getOrNull<ObserveFavoriteIdsUseCase>(),
         roasterFavorites = get(),
-        drinkPhotoFactory = get(),
         visibility = get(),
     ) }
     factory { (shopId: String) -> ShopMenuGalleryViewModel(shopId, get()) }

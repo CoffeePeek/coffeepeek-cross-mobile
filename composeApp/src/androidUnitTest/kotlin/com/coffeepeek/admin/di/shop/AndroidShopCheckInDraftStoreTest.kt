@@ -186,39 +186,30 @@ class AndroidShopCheckInDraftStoreTest {
         assertEquals("internal-id", legacy.peek()!!.shopId)
     }
 
-    @Test fun cutoutAndOptOutSurviveModalReopenButNeverAccountReplacement() {
+    @Test fun originalPhotosSurviveModalReopenButNeverAccountReplacement() {
         val legacy = CheckInDraftStore { now }
         val adapter = AndroidShopCheckInDraftStore(legacy, dates)
         val binding = adapter.forShop("internal-id", "public-address", "owner")
         val first = binding.open(initial("public-address")).getOrThrow()
         val original = ShopCheckInPhoto(byteArrayOf(1, 2), "visit.jpg")
-        val cutout = ShopCheckInPhoto(byteArrayOf(3, 4), "drink.png", "image/png")
-        binding.save(first.copy(input = first.input.copy(photos = listOf(original), drinkPhoto = cutout))).getOrThrow()
+        binding.save(first.copy(input = first.input.copy(photos = listOf(original)))).getOrThrow()
         val reopened = adapter.forShop("internal-id", "public-address", "owner")
         val selected = reopened.open(initial("public-address")).getOrThrow()
-        assertEquals(cutout, selected.input.drinkPhoto)
         assertEquals(listOf(original), selected.input.photos)
         assertEquals(1, legacy.peek()!!.photos.size)
-        reopened.save(selected.copy(input = selected.input.copy(drinkPhoto = null), drinkPhotoSkipped = true)).getOrThrow()
-        assertTrue(adapter.forShop("internal-id", "public-address", "owner")
-            .open(initial("public-address")).getOrThrow().drinkPhotoSkipped)
         val otherAccount = adapter.forShop("internal-id", "public-address", "other")
             .open(initial("public-address")).getOrThrow()
-        assertEquals(null, otherAccount.input.drinkPhoto)
-        assertFalse(otherAccount.drinkPhotoSkipped)
         assertTrue(otherAccount.input.photos.isEmpty())
         assertTrue(reopened.save(selected).isFailure)
     }
 
-    @Test fun legacyClearInvalidatesCutoutAndOptOutSidecar() {
+    @Test fun legacyClearInvalidatesOriginalPhotoDraft() {
         val legacy = CheckInDraftStore { now }
         val adapter = AndroidShopCheckInDraftStore(legacy, dates)
         val first = adapter.open(initial()).getOrThrow()
-        adapter.save(first.copy(input = first.input.copy(photos = listOf(ShopCheckInPhoto(byteArrayOf(1), "visit.jpg")),
-            drinkPhoto = ShopCheckInPhoto(byteArrayOf(2), "drink.png", "image/png")), drinkPhotoSkipped = true)).getOrThrow()
+        adapter.save(first.copy(input = first.input.copy(photos = listOf(ShopCheckInPhoto(byteArrayOf(1), "visit.jpg"))))).getOrThrow()
         legacy.clearAll()
         val fresh = adapter.open(initial()).getOrThrow()
-        assertEquals(null, fresh.input.drinkPhoto)
-        assertFalse(fresh.drinkPhotoSkipped)
+        assertTrue(fresh.input.photos.isEmpty())
     }
 }

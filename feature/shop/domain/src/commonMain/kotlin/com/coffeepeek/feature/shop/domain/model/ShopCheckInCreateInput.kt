@@ -1,8 +1,6 @@
 package com.coffeepeek.feature.shop.domain.model
 
 const val MAX_SHOP_CHECK_IN_PHOTOS = 5
-const val MAX_SHOP_DRINK_PHOTO_BYTES = 4 * 1024 * 1024
-const val MAX_SHOP_DRINK_PHOTO_EDGE = 768
 
 data class ShopConsumedDrinkOption(
     val slug: String,
@@ -35,6 +33,4 @@ data class ShopCheckInCreateInput(
     val drinkSlug: String? = null,
     val customDrinkName: String? = null,
     val photos: List<ShopCheckInPhoto> = emptyList(),
-    /** Transparent PNG belonging to the first full photo; never part of the gallery photo limit. */
-    val drinkPhoto: ShopCheckInPhoto? = null,
 )

@@ -35,21 +35,19 @@ class ShopCheckInPhotoDeliveryTest {
           {"url":"/legacy"}, {"url":"/empty","variants":[]}
         ],"drinkPhotoUrl":"/cup","drinkPhotoVariants":[]}""")
         assertEquals(listOf("https://api.example/legacy", ""), visit.photoThumbnailUrls)
-        assertEquals("https://api.example/cup", visit.drinkPhotoUrl)
-        assertEquals("", visit.drinkPhotoThumbnailUrl)
     }
 
-    @Test fun cutoutPrefersPngAndRejectsInvalidOrUnsupportedVariants() {
-        val visit = decode("""{"id":"visit","drinkPhotoUrl":"/cup","drinkPhotoVariants":[
-          {"purpose":"thumb","url":"/jpeg","contentType":"image/jpeg","width":100,"height":100,"sizeBytes":10},
-          {"purpose":"thumb","url":"/png","contentType":"image/png","width":100,"height":100,"sizeBytes":20},
-          {"purpose":"thumb","url":"/invalid","contentType":"image/png","width":0,"height":100,"sizeBytes":20}
-        ],"photos":[{"url":"/original","variants":[
-          {"purpose":"feed","url":"/avif","contentType":"image/avif","width":100,"height":100,"sizeBytes":10}
-        ]}]}""")
-        assertEquals("https://api.example/png", visit.drinkPhotoThumbnailUrl)
-        assertEquals(listOf(""), visit.photoThumbnailUrls)
-    }
 
     private fun decode(value: String) = assertNotNull(json.decodeFromString<ShopCheckInDto>(value).toDomain(files))
+
+    @Test fun retiredCutoutDoesNotEnterTheAlbumOrOverrideUnsupportedPhotoVariants() {
+        val visit = decode("""{"id":"visit","drinkPhotoUrl":"/retired-cutout","drinkPhotoVariants":[
+          {"purpose":"thumb","url":"/retired-thumb","contentType":"image/png","width":100,"height":100,"sizeBytes":10}
+        ],"photos":[{"url":"/original","variants":[
+          {"purpose":"feed","url":"/unsupported","contentType":"image/avif","width":100,"height":100,"sizeBytes":10}
+        ]}]}""")
+        assertEquals(listOf("https://api.example/original"), visit.photoUrls)
+        assertEquals(listOf(""), visit.photoThumbnailUrls)
+        assertEquals(listOf("https://api.example/original"), visit.photoDetailUrls)
+    }
 }

@@ -48,7 +48,7 @@ There are no new data, domain, DI, Gradle, or Swift framework dependencies.
    and keyboard interaction. Preserve credential content types and reuse the
    existing native photo pickers.
 3. Search/feed/shop/check-in screen content, native refresh, and photo viewer.
-   Preserve CoffeePeek branding, drink cutouts, and the existing MapLibre engine.
+   Preserve CoffeePeek branding and the existing MapLibre engine.
 
 ## Risks and verification
 

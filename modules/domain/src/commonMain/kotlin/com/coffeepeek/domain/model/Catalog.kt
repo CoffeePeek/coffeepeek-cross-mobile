@@ -118,7 +118,6 @@ data class CreateCheckInInput(
     val photos: List<PendingPhotoUpload> = emptyList(),
     val drinkSlug: String? = null,
     val customDrinkName: String? = null,
-    val drinkPhoto: PendingPhotoUpload? = null,
 )
 
 data class CheckIn(
@@ -148,9 +147,6 @@ data class CheckIn(
     val rejectionReason: String? = null,
     val helpfulCount: Int = 0,
     val isHelpfulByCurrentUser: Boolean = false,
-    val drinkPhotoUrl: String? = null,
-    val drinkPhotoThumbnailUrl: String? = null,
-    val drinkPhotoDetailUrl: String? = null,
     val isHome: Boolean = false,
     val homePreparation: com.coffeepeek.domain.feature.feed.FeedHomePreparation? = null,
     val authorAvatarUrl: String? = null,

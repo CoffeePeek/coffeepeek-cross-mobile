@@ -21,7 +21,6 @@ import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.admin.ui.icons.CpIcons
-import com.coffeepeek.admin.ui.component.DrinkCutoutImage
 import com.coffeepeek.admin.utils.CpImage
 import com.coffeepeek.admin.utils.formatOneDecimal
 import com.coffeepeek.admin.utils.utcIsoToLocalDateTime
@@ -64,19 +63,14 @@ private fun DiaryRating(checkIn: CheckIn) {
     }
 }
 
-internal fun diaryPhoto(checkIn: CheckIn): Pair<String, Boolean>? {
-    (checkIn.drinkPhotoThumbnailUrl ?: checkIn.drinkPhotoUrl)?.takeIf(String::isNotBlank)?.let { return it to true }
-    val photo = (checkIn.photoCalendarUrls ?: checkIn.photoThumbnailUrls.ifEmpty { checkIn.photoUrls }).firstOrNull(String::isNotBlank)
-    return photo?.let { it to false }
-}
+internal fun diaryPhoto(checkIn: CheckIn): String? =
+    (checkIn.photoCalendarUrls ?: checkIn.photoThumbnailUrls.ifEmpty { checkIn.photoUrls }).firstOrNull(String::isNotBlank)
 
 @Composable
 internal fun CheckInDiaryThumbnail(checkIn: CheckIn, modifier: Modifier = Modifier) {
     val photo = diaryPhoto(checkIn)
-    if (photo?.second == true) {
-        DrinkCutoutImage(photo.first, modifier = modifier)
-    } else if (photo != null) {
-        CpImage(data = photo.first, contentDescription = null,
+    if (photo != null) {
+        CpImage(data = photo, contentDescription = null,
             contentScale = ContentScale.Crop,
             modifier = modifier.clip(RoundedCornerShape(10.dp)))
     } else {

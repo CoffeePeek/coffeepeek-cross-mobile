@@ -24,7 +24,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.coffeepeek.admin.ui.component.HapticEvent
-import com.coffeepeek.admin.ui.component.DrinkCutoutImage
 import com.coffeepeek.admin.ui.component.platformHaptic
 import com.coffeepeek.admin.ui.icons.CpIcons
 import com.coffeepeek.admin.utils.CpImage
@@ -180,8 +179,7 @@ private fun CalendarDay(
             ) {
                 Box(Modifier.fillMaxWidth().weight(1f), contentAlignment = Alignment.Center) {
                     val imageModifier = Modifier.aspectRatio(1f, matchHeightConstraintsFirst = true).clearAndSetSemantics {}
-                    if (photo.isCutout) DrinkCutoutImage(data = photo.url, modifier = imageModifier, outlineWidth = 1.dp)
-                    else CpImage(data = photo.url, contentScale = ContentScale.Crop,
+                    CpImage(data = photo.url, contentScale = ContentScale.Crop,
                         modifier = imageModifier.clip(RoundedCornerShape(6.dp)))
                 }
                 if (photos.size > 1) {

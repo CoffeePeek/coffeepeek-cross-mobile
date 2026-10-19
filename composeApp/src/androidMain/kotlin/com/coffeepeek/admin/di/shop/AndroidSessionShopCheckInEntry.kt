@@ -12,7 +12,6 @@ import com.coffeepeek.feature.shop.domain.repository.ShopCheckInRepository
 import com.coffeepeek.feature.shop.impl.createShopCheckInCreateEntry
 import com.coffeepeek.feature.shop.impl.ui.data.ShopCheckInDateFormatter
 import com.coffeepeek.feature.shop.impl.ui.data.ShopCheckInPhotoPicker
-import com.coffeepeek.feature.shop.impl.ui.data.ShopDrinkPhotoProcessor
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.catch
 
@@ -23,7 +22,6 @@ internal class AndroidSessionShopCheckInEntry(
     private val drafts: AndroidShopCheckInDraftStore,
     private val dates: ShopCheckInDateFormatter,
     private val photos: ShopCheckInPhotoPicker,
-    private val drinkPhotos: ShopDrinkPhotoProcessor? = null,
 ) : ShopCheckInCreateEntry {
     @Composable
     override fun Content(
@@ -57,7 +55,7 @@ internal class AndroidSessionShopCheckInEntry(
             return
         }
         val entry = remember(lease) {
-            createShopCheckInCreateEntry(lease, { _, _ -> boundDrafts }, dates, photos, drinkPhotos)
+            createShopCheckInCreateEntry(lease, { _, _ -> boundDrafts }, dates, photos)
         }
         entry.Content(
             shopId, shopSlug, shopName,

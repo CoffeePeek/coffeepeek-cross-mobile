@@ -104,7 +104,7 @@ and after captures. Avoid a debugger when collecting a termination report.
 2. Mark the initial feed, open viewer, immediately after dismissal and 5 seconds
    after dismissal. Track process physical footprint, live allocations,
    ImageIO/Skia/Metal allocations, main-thread stalls and frame responsiveness.
-3. Repeat portrait/landscape photos, transparent cutouts, rotated/mirrored JPEGs,
+3. Repeat portrait/landscape photos, transparent PNGs, rotated/mirrored JPEGs,
    rapid dismissal during loading, paging, pinch zoom and double tap. Check
    visual orientation and alpha on device. Include a long feed scroll after the
    cycles to exercise cache eviction.

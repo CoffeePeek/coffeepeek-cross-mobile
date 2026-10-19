@@ -4,10 +4,6 @@ import com.coffeepeek.admin.feature.catalog.api.BrewMethodCatalog
 import com.coffeepeek.admin.feature.catalog.api.BrewMethodOption
 import com.coffeepeek.admin.feature.coffee.api.CoffeePicker
 import com.coffeepeek.admin.feature.coffee.api.CoffeePickerItem
-import com.coffeepeek.admin.feature.checkin.api.DrinkPhotoPreparation
-import com.coffeepeek.admin.feature.checkin.ui.DrinkPhotoPreparationController
-import com.coffeepeek.admin.feature.checkin.domain.DrinkPhotoExtractor
-import com.coffeepeek.domain.model.PendingPhotoUpload
 import com.coffeepeek.feature.homecheckin.domain.*
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.NonCancellable
@@ -190,55 +186,36 @@ class HomeCheckInEditorTest {
     }
 
     @Test
-    fun homeCreationWaitsForCutoutAndPreservesOriginalAndOtherFields() = runBlocking {
+    fun homeCreationSubmitsOriginalPhotosAndOtherFields() = runBlocking {
         val repository = EditorRepository()
-        val release = CompletableDeferred<Unit>()
         val original = HomePhotoUpload("home.jpg", "image/jpeg", byteArrayOf(1, 2))
-        val cutout = PendingPhotoUpload("cup.png", "image/png", byteArrayOf(3, 4))
-        val factory = DrinkPhotoPreparation.Factory { scope, changed ->
-            DrinkPhotoPreparationController(scope, DrinkPhotoExtractor { release.await(); listOf(cutout) }, changed)
-        }
-        val vm = HomeCheckInViewModel(repository, EditorCoffeePicker(), catalog, factory)
+        val vm = HomeCheckInViewModel(repository, EditorCoffeePicker(), catalog)
         try {
             vm.create()
             vm.updateDraft { it.copy(photos = listOf(original), text = "Ягодный кофе") }
-            assertTrue(vm.state.value.drinkPhotoState.processing)
-            vm.save()
-            assertEquals(0, repository.saves)
             vm.updateDraft { it.copy(doseGrams = "15") }
-            release.complete(Unit)
-            withTimeout(2_000) { vm.state.first { it.drinkPhotoState.selected == cutout } }
             vm.save()
             withTimeout(2_000) { vm.state.first { !it.saving && it.selected != null } }
             val input = assertNotNull(repository.submitted)
             assertEquals("Ягодный кофе", input.text)
             assertEquals("15", input.doseGrams)
             assertEquals(listOf(original), input.photos)
-            assertContentEquals(cutout.bytes, assertNotNull(input.drinkPhoto).bytes)
-            assertEquals("image/png", input.drinkPhoto?.contentType)
-        } finally { release.complete(Unit); vm.close() }
+        } finally { vm.close() }
     }
 
     @Test
-    fun editingExistingHomePreservesServerPhotosWithoutExtractionOrReplacementUploads() = runBlocking {
+    fun editingExistingHomePreservesServerPhotosWithoutReplacementUploads() = runBlocking {
         val repository = EditorRepository().apply { entry = entry.copy(
-            photos = listOf(HomeCheckInPhoto("photo", "/full.jpg")), drinkPhotoUrl = "/cup.png") }
-        var extractions = 0
-        val factory = DrinkPhotoPreparation.Factory { scope, changed ->
-            DrinkPhotoPreparationController(scope, DrinkPhotoExtractor { extractions++; emptyList() }, changed)
-        }
-        val vm = HomeCheckInViewModel(repository, EditorCoffeePicker(), catalog, factory)
+            photos = listOf(HomeCheckInPhoto("photo", "/full.jpg"))) }
+        val vm = HomeCheckInViewModel(repository, EditorCoffeePicker(), catalog)
         try {
             vm.open("entry", editOnLoad = true)
             withTimeout(2_000) { vm.state.first { it.editing } }
             vm.updateDraft { it.copy(text = "Новая заметка") }
             vm.save()
             withTimeout(2_000) { vm.state.first { !it.saving && !it.editing } }
-            assertEquals(0, extractions)
             val input = assertNotNull(repository.updated)
             assertTrue(input.photos.isEmpty())
-            assertNull(input.drinkPhoto)
-            assertEquals("/cup.png", vm.state.value.selected?.drinkPhotoUrl)
             assertEquals(repository.entry.photos, vm.state.value.selected?.photos)
         } finally { vm.close() }
     }
@@ -258,7 +235,7 @@ private class EditorRepository(private val saveFailure: Throwable? = null) : Hom
         id = "entry", preparedAtUtc = "2026-10-13T08:00:00Z", preparedOn = "2026-10-13", createdAtUtc = "2026-10-13T08:00:00Z",
         text = null, brewMethodCode = "hario-v60", coffeeProductId = null, beanName = null,
         doseGrams = null, brewDurationSeconds = 195, tasteScore = 2, drinkName = "Мой кофе",
-        drinkSlug = null, customDrinkName = "Мой кофе", photos = emptyList(), drinkPhotoUrl = null,
+        drinkSlug = null, customDrinkName = "Мой кофе", photos = emptyList(),
     )
     override suspend fun history(page: Int, pageSize: Int, from: String?, to: String?) = Result.success(HomeCheckInPage(emptyList(), 0, page, pageSize))
     override suspend fun calendar(from: String, to: String) = Result.success(emptyList<HomeCalendarDay>())
