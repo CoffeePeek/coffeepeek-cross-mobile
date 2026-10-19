@@ -84,6 +84,7 @@ class AndroidShopBrowsingHostViewModelTest {
                 else original.observeSession()
         }
         val host = AndroidShopBrowsingHostViewModel(sessions).also { store.put("host", it) }
+        runCurrent()
         assertTrue(host.session.value.observationFailed)
         val failed = host.session.value
         fail = false

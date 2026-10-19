@@ -127,7 +127,7 @@ class ShopDetailViewModelTest {
         assertTrue(events.isEmpty())
         model.onAction(ShopDetailAction.OpenCheckInPhoto("visit", 0))
         runCurrent()
-        assertEquals(listOf(ShopDetailEvent.OpenPhoto(listOf("/detail"), 0, listOf("/signed-original"))), events)
+        assertEquals<List<ShopDetailEvent>>(listOf(ShopDetailEvent.OpenPhoto(listOf("/detail"), 0, listOf("/signed-original"))), events)
     }
 
     @Test fun loadAndLocalExpansionAreIndependentOfNavigation() = runTest(dispatcher) {
