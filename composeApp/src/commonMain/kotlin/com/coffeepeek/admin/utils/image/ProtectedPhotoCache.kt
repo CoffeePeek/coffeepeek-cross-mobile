@@ -126,8 +126,12 @@ internal class ProtectedPhotoCache(
 
     suspend fun discardInvalidScopes(valid: (Any) -> Boolean) = mutex.withLock {
         stored.keys.filterNot { valid(it.sessionScope) }.forEach(::evict)
-        pending.entries.filterNot { valid(it.key.sessionScope) }.forEach { (key, work) ->
-            pending.remove(key); work.result.cancel(); work.job.cancel()
+        // Snapshot keys: removing an entry invalidates retained Map.Entry references on Native.
+        pending.keys.filterNot { valid(it.sessionScope) }.forEach { key ->
+            pending.remove(key)?.let { work ->
+                work.result.cancel()
+                work.job.cancel()
+            }
         }
     }
 

@@ -287,6 +287,54 @@ class ProtectedPhotoCacheTest {
         load("large", size = 5) // exceeds byte cap, no validator
     }
 
+    @Test fun invalidationCancelsAllObsoleteTransfersAndKeepsCurrentScope() = runTest {
+        val cache = ProtectedPhotoCache(backgroundScope, Clock(base))
+        val obsoleteScope = Any()
+        val currentScope = Any()
+        val obsoleteKeys = (0..2).map { key(obsoleteScope, "obsolete-$it") }
+        val currentKey = key(currentScope)
+        val finish = CompletableDeferred<Unit>()
+        val cancelled = mutableSetOf<PhotoCacheKey>()
+        val requests = (obsoleteKeys + currentKey).associateWith { photoKey ->
+            async { cache.read(photoKey, base + 100_000, { true }) {
+                try { finish.await(); response() }
+                finally { if (!finish.isCompleted) cancelled += photoKey }
+            } }
+        }
+        runCurrent()
+
+        cache.discardInvalidScopes { it === currentScope }
+        runCurrent()
+
+        obsoleteKeys.forEach { assertTrue(requests.getValue(it).isCancelled) }
+        assertEquals(obsoleteKeys.toSet(), cancelled)
+        assertTrue(requests.getValue(currentKey).isActive)
+        finish.complete(Unit)
+        val current = requests.getValue(currentKey).await()
+        assertSame(current.bytes, cache.read(currentKey, base + 100_000, { true }) { error("current photo must stay cached") }.bytes)
+        obsoleteKeys.forEach { photoKey ->
+            cache.read(photoKey, base + 100_000, { true }) { assertNull(it); response() }
+        }
+    }
+
+    @Test fun invalidationEvictsObsoleteStoredPhotosAndKeepsCurrentScope() = runTest {
+        val cache = ProtectedPhotoCache(backgroundScope, Clock(base))
+        val obsoleteScope = Any()
+        val currentScope = Any()
+        val obsoleteKeys = (0..2).map { key(obsoleteScope, "obsolete-$it") }
+        val currentKey = key(currentScope)
+        obsoleteKeys.forEach { cache.read(it, base + 100_000, { true }) { response() } }
+        val current = cache.read(currentKey, base + 100_000, { true }) { response() }
+
+        cache.discardInvalidScopes { it === currentScope }
+        cache.discardInvalidScopes { it === currentScope }
+
+        obsoleteKeys.forEach { photoKey ->
+            cache.read(photoKey, base + 100_000, { true }) { assertNull(it); response() }
+        }
+        assertSame(current.bytes, cache.read(currentKey, base + 100_000, { true }) { error("current photo must stay cached") }.bytes)
+    }
+
     @Test fun duplicateSubscribersShareTransferAndLastCancellationStopsIt() = runTest {
         val clock = Clock(base)
         val cache = ProtectedPhotoCache(backgroundScope, clock)
