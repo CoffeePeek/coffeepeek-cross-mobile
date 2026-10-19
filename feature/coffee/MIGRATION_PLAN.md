@@ -75,6 +75,13 @@ design-system primitives rather than copying legacy App/Cp implementations.
   Android Home/history catalogue ports now consume the migrated `CoffeePicker`. Legacy composeApp
   catalogue code stays for iOS. Verified by unit/composition tests, Direct/Play/Sandbox assemblies,
   instrumentation and iOS compilation; **not** checked on a device or in the full Sandbox walkthrough.
+- [~] Sandbox device walkthrough (2026-10-19, Pixel 7 / API 37, Direct Sandbox 1.0.746, updated in
+  place; ordinary CoffeePeek untouched): Coffee tab list, search (empty state and match), filter sheet
+  and badge, detail, photo gallery open/close, roaster route and back, share (blocked by Sandbox's
+  external-app guard, as designed), dark and light themes. No crash in this run. Manual smoke only:
+  no populated/slow/error scenarios, large font, pagination, restored-route or picker return checks,
+  and no live API/browser/share-target verification. Sandbox fixtures have no filter groups, offers or
+  similar coffees, so those sections were not exercised.
 - [x] (superseded wording) Wire Android tab/detail/restored routes, picker and app-owned analytics using
   factories. Keep shared/iOS fallback until its consumers deliberately migrate.
   Preserve SearchTracker's normalized-query/filter fingerprint, consent/session
