@@ -44,6 +44,7 @@ internal fun ShopCheckInCard(
     dateLabel: String = checkIn.createdAt.take(10),
     fullVersion: Boolean = false,
     onOpenAuthor: (() -> Unit)? = null,
+    onBlockAuthor: (() -> Unit)? = null,
 ) {
     Card(modifier.fillMaxWidth(), shape = RoundedCornerShape(CoffeePeekDimens.radiusLg),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
@@ -54,7 +55,8 @@ internal fun ShopCheckInCard(
                 val author = checkIn.username.ifBlank { stringResource(if (isOwn)
                     Res.string.shop_checkins_author_self else Res.string.shop_checkins_author_unknown) }
                 ShopCheckInHeader(author, dateLabel, onReport.takeUnless { isOwn },
-                    avatarUrl = checkIn.authorAvatarUrl, onOpenAuthor = onOpenAuthor)
+                    avatarUrl = checkIn.authorAvatarUrl, onOpenAuthor = onOpenAuthor,
+                    onBlockAuthor = onBlockAuthor.takeUnless { isOwn })
             }
             shopTitle?.takeIf(String::isNotBlank)?.let {
                 Text(it, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold, maxLines = 2)
@@ -83,7 +85,7 @@ internal fun ShopCheckInCard(
 
 @Preview @Composable private fun ShopCheckInCardLightPreview() = CoffeePeekTheme(darkTheme = false) {
     ShopCheckInCard(previewCheckIn(), onOpenPhoto = { _, _ -> }, showAuthor = true,
-        showHelpful = true, onVote = {}, onReport = {})
+        showHelpful = true, onVote = {}, onReport = {}, onBlockAuthor = {})
 }
 
 @Preview @Composable private fun ShopCheckInCardDarkPreview() = CoffeePeekTheme(darkTheme = true) {
