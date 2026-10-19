@@ -36,8 +36,25 @@ internal class SandboxBackend(private val samplePhoto: ByteArray,
             return@MockEngine respond(bytes ?: byteArrayOf(), if (bytes == null) HttpStatusCode.NotFound else HttpStatusCode.OK,
                 headersOf(HttpHeaders.ContentType, "image/png"))
         }
+        protectedPhotoPath.matchEntire(request.url.encodedPath)?.takeIf { request.method == HttpMethod.Get }?.let { match ->
+            val (status, headers, bytes) = synchronized(lock) { protectedPhoto(request, mode, match.groupValues[1]) }
+            return@MockEngine respond(bytes, status, headers)
+        }
         synchronized(lock) { handle(request, mode) }.let { (status, payload) ->
             respond(payload.toString(), status, headersOf(HttpHeaders.ContentType, "application/json"))
+        }
+    }
+    private val protectedPhotoPath = Regex("/api/v1/check-ins/([^/]+)/photos/[^/]+(?:/variants/[A-Za-z0-9_-]+/[1-9][0-9]*/[a-z]+\\.[a-z]+)?")
+    // Owner-scoped media: uncached, ETag-revalidated, and a blocked author's photo disappears (404, no existence leak).
+    private fun protectedPhoto(request: HttpRequestData, mode: SandboxScenario, checkInId: String): Triple<HttpStatusCode, Headers, ByteArray> {
+        val etag = "\"sandbox-photo\""
+        return when {
+            mode == SandboxScenario.ServerError -> Triple(HttpStatusCode.InternalServerError, Headers.Empty, byteArrayOf())
+            !application.protectedPhotoAvailable(checkInId) -> Triple(HttpStatusCode.NotFound, Headers.Empty, byteArrayOf())
+            request.headers[HttpHeaders.IfNoneMatch] == etag ->
+                Triple(HttpStatusCode.NotModified, headersOf(HttpHeaders.ETag, etag), byteArrayOf())
+            else -> Triple(HttpStatusCode.OK, headersOf(HttpHeaders.ContentType to listOf("image/png"), HttpHeaders.ETag to listOf(etag),
+                HttpHeaders.CacheControl to listOf("private, no-cache")), images["/media/sample"] ?: byteArrayOf())
         }
     }
     private fun uploadEngine() = MockEngine { request ->
@@ -77,6 +94,7 @@ internal class SandboxBackend(private val samplePhoto: ByteArray,
         }
         if (populated) shopRows += buildJsonObject {
             put("id", UUID.randomUUID().toString()); put("shopName", "Sandbox Cafe"); put("username", "Sandbox")
+            put("authorId", SandboxApplicationBackend.SELF_ID)
             putJsonObject("author") { put("slug", "sandbox"); put("canonicalPath", "/users/sandbox"); put("revision", 0); put("isAlias", false) }
             putJsonObject("shop") { put("slug", "sandbox-cafe"); put("canonicalPath", "/coffee-shops/sandbox-cafe"); put("revision", 0); put("isAlias", false) }
             put("createdAt", "${today}T07:00:00Z"); put("visitedAt", "${today}T07:00:00Z")

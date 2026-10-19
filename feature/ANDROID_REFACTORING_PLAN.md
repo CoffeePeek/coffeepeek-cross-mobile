@@ -66,9 +66,10 @@ iOS UI migration remains deferred; Native compilation is only compatibility.
      Pixel 7 UI cases pass after the documented existing-selector correction.
      Final tip `46b1943a`: 650 unit results, Debug/Sandbox APK/DEX/isolation and
      repeated **40/40** isolated Shop UI cases pass, no failures/retries.
-   - [ ] Full-app Sandbox block/unblock/failure/login/visibility fixtures and
-     protected-photo lifecycle scenarios. The fake backend currently lacks
-     `/api/v1/me/blocks`; self-targeted menu tests do not certify that app graph.
+   - [~] Full-app Sandbox block/unblock/failure/visibility fixtures and protected-photo
+     revalidation/revocation are in the fake backend with unit coverage (see
+     `composeApp/SANDBOX_PLAN.md`, 2026-10-19). Still open: manual device walkthrough
+     of the block UI, guest/login interplay and incoming blocks.
 
    Preserve protected permissions/cache/session invalidation and blocked-author
    filtering. Live media/account/write acceptance remains a separate authorized

@@ -16,7 +16,24 @@ import com.coffeepeek.domain.feature.feed.FeedFilters
 import com.coffeepeek.domain.feature.feed.FeedPage
 import com.coffeepeek.feature.shop.data.repository.createShopCheckInRepository
 import com.coffeepeek.feature.shop.domain.model.*
+import com.coffeepeek.domain.model.Session
+import com.coffeepeek.domain.repository.SessionRepository
+import com.coffeepeek.feature.authorblocking.api.AuthorReference
+import com.coffeepeek.feature.authorblocking.api.createAuthorBlockingFeature
 import io.ktor.client.engine.mock.MockEngine
+import io.ktor.client.plugins.expectSuccess
+import io.ktor.client.statement.bodyAsText
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.setMain
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeout
+import kotlinx.serialization.json.*
 import io.ktor.client.request.*
 import io.ktor.client.call.body
 import io.ktor.http.*
@@ -25,6 +42,21 @@ import org.junit.Rule
 import org.junit.rules.TemporaryFolder
 import java.time.LocalDate
 import kotlin.test.*
+
+/** Same shape as the Sandbox app's no-credential session, without its Android-only source set. */
+private class LocalSession : SessionRepository {
+    private val current = MutableStateFlow<Session?>(Session("local", "local", "11111111-1111-4111-8111-111111111111"))
+    override fun peekSession() = current.value
+    override fun applySession(session: Session?) { current.value = session }
+    override fun isActiveSession(session: Session?) = session != null
+    override suspend fun getSession() = peekSession()
+    override suspend fun persistSession(session: Session?) = applySession(session)
+    override suspend fun replaceSession(expected: Session?, session: Session?) = current.compareAndSet(expected, session)
+    override suspend fun saveSession(session: Session?) = applySession(session)
+    override suspend fun warmCache() = Unit
+    override fun observeSession() = current.asStateFlow()
+    override suspend fun isLoggedIn() = current.value != null
+}
 
 class SandboxApplicationBackendTest {
     @get:Rule val temporary = TemporaryFolder()
@@ -118,7 +150,7 @@ class SandboxApplicationBackendTest {
     @Test fun actualMigratedShopWriteUpdatesHistoryButNeverPublishesPrivateOrPendingRows() = runTest { fixture { _, client ->
         val writer = createShopCheckInRepository(client.client, client.uploadClient)
         val feed = FeedApiService(client.client)
-        assertEquals(1, feed.getFeed(20).getOrThrow().items.size)
+        assertEquals(2, feed.getFeed(20).getOrThrow().items.size)
         val input = ShopCheckInCreateInput("sandbox-cafe", "Only local", ShopRating(4, 5, 4), "2026-10-18T09:00:00Z",
             photos = listOf(ShopCheckInPhoto(byteArrayOf(9, 8), "sandbox.png", "image/png")))
         writer.create(input).getOrThrow()
@@ -127,7 +159,7 @@ class SandboxApplicationBackendTest {
         assertEquals("Only local", visits.last().text)
         assertTrue(visits.last().photos.single().url.startsWith("/media/"))
         writer.create(input.copy(visibility = ShopCheckInVisibility.Public)).getOrThrow()
-        assertEquals(1, feed.getFeed(20).getOrThrow().items.size)
+        assertEquals(2, feed.getFeed(20).getOrThrow().items.size)
     } }
 
     @Test fun writeErrorScenarioDoesNotChangeProfileFavoritesOrVisits() = runTest { fixture { backend, client ->
@@ -145,5 +177,84 @@ class SandboxApplicationBackendTest {
         assertTrue(ShopApiService(client.client).searchShops().getOrThrow().coffeeShops.isEmpty())
         assertTrue(FeedApiService(client.client).getFeed(20).getOrThrow().items.isEmpty())
         assertTrue(FavoritesApiService(client.client).getFavorites().getOrThrow().isEmpty())
+    } }
+
+    private val friend = SandboxApplicationBackend.FRIEND_ID
+    private val friendPhoto = "/api/v1/check-ins/${SandboxApplicationBackend.FRIEND_VISIT_ID}/photos/${SandboxApplicationBackend.FRIEND_PHOTO_ID}/variants/feed/1/feed.png"
+    private suspend fun json(response: io.ktor.client.statement.HttpResponse) = Json.parseToJsonElement(response.bodyAsText()).jsonObject["data"]!!.jsonObject
+
+    @Test fun blockContractIsIdempotentPagedAndRejectsSelfAndUnknownAuthors() = runTest { fixture { _, client ->
+        assertTrue(json(client.client.get("/api/v1/me/blocks") { parameter("pageSize", 100) })["items"]!!.jsonArray.isEmpty())
+        repeat(2) { // idempotent
+            val state = json(client.client.put("/api/v1/me/blocks/$friend"))
+            assertEquals(friend, state["authorId"]!!.jsonPrimitive.content); assertTrue(state["isBlocked"]!!.jsonPrimitive.boolean)
+        }
+        val page = json(client.client.get("/api/v1/me/blocks") { parameter("pageSize", 1) })
+        assertEquals(friend, page["items"]!!.jsonArray.single().jsonObject["authorId"]!!.jsonPrimitive.content)
+        assertTrue(page["nextCursor"] is JsonNull)
+        assertEquals(HttpStatusCode.BadRequest, client.client.put("/api/v1/me/blocks/${SandboxApplicationBackend.SELF_ID}").status)
+        assertEquals(HttpStatusCode.NotFound, client.client.put("/api/v1/me/blocks/unknown").status)
+        repeat(2) { assertFalse(json(client.client.delete("/api/v1/me/blocks/$friend"))["isBlocked"]!!.jsonPrimitive.boolean) }
+        assertTrue(json(client.client.get("/api/v1/me/blocks") { parameter("pageSize", 100) })["items"]!!.jsonArray.isEmpty())
+    } }
+
+    @Test fun blockingHidesVisitsFromFeedAndShopButKeepsServerAggregatesAndUnblockRestores() = runTest { fixture { _, client ->
+        val feed = FeedApiService(client.client)
+        suspend fun cards() = json(client.client.get("/api/coffeeshops/sandbox-cafe"))["checkIns"]!!.jsonArray.size
+        assertEquals(2, feed.getFeed(20).getOrThrow().items.size); assertEquals(2, cards())
+        val count = json(client.client.get("/api/coffeeshops/sandbox-cafe"))["checkInCount"]
+        client.client.put("/api/v1/me/blocks/$friend")
+        assertEquals(1, feed.getFeed(20).getOrThrow().items.size); assertEquals(1, cards())
+        assertEquals(count, json(client.client.get("/api/coffeeshops/sandbox-cafe"))["checkInCount"])
+        assertEquals(1, json(client.client.get("/api/coffeeshops/sandbox-cafe"))["userCheckIns"]!!.jsonArray.size)
+        assertTrue(json(client.client.get("/api/Users/${SandboxApplicationBackend.FRIEND_SLUG}"))["isBlockedByViewer"]!!.jsonPrimitive.boolean)
+        client.client.delete("/api/v1/me/blocks/$friend")
+        assertEquals(2, feed.getFeed(20).getOrThrow().items.size); assertEquals(2, cards())
+    } }
+
+    @Test fun slugResolvesToOpaqueAuthorIdForLegacyContent() = runTest { fixture { _, client ->
+        val profile = json(client.client.get("/api/Users/${SandboxApplicationBackend.FRIEND_SLUG}"))
+        assertEquals(friend, profile["authorId"]!!.jsonPrimitive.content)
+        assertFalse(profile["isBlockedByViewer"]!!.jsonPrimitive.boolean)
+    } }
+
+    @Test fun protectedPhotoRevalidatesAndDisappearsWhileAuthorIsBlocked() = runTest { fixture { backend, client ->
+        val first = client.imageClient.get("${SandboxBackend.BASE_URL}$friendPhoto")
+        assertEquals(HttpStatusCode.OK, first.status)
+        assertEquals("image/png", first.headers[HttpHeaders.ContentType])
+        val etag = assertNotNull(first.headers[HttpHeaders.ETag])
+        assertEquals(HttpStatusCode.NotModified, client.imageClient.get("${SandboxBackend.BASE_URL}$friendPhoto") {
+            expectSuccess = false; header(HttpHeaders.IfNoneMatch, etag) }.status)
+        client.client.put("/api/v1/me/blocks/$friend")
+        // Even a valid validator must not reveal a blocked author's media.
+        assertEquals(HttpStatusCode.NotFound, client.imageClient.get("${SandboxBackend.BASE_URL}$friendPhoto") {
+            expectSuccess = false; header(HttpHeaders.IfNoneMatch, etag) }.status)
+        client.client.delete("/api/v1/me/blocks/$friend")
+        assertEquals(HttpStatusCode.OK, client.imageClient.get("${SandboxBackend.BASE_URL}$friendPhoto") { expectSuccess = false }.status)
+        assertEquals(HttpStatusCode.NotFound, client.imageClient.get("${SandboxBackend.BASE_URL}/api/v1/check-ins/missing/photos/x") { expectSuccess = false }.status)
+        backend.scenario = SandboxScenario.ServerError
+        // The shared transport maps 5xx to its own service error instead of returning bytes.
+        assertFailsWith<com.coffeepeek.api.utils.ApiException> { client.imageClient.get("${SandboxBackend.BASE_URL}$friendPhoto") }
+    } }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    @Test fun actualAuthorBlockingFeatureBlocksThroughFakeTransportAndFailureLeavesVisibilityUnchanged() = runTest { fixture { backend, client ->
+        Dispatchers.setMain(UnconfinedTestDispatcher())
+        val feature = createAuthorBlockingFeature(client.client, LocalSession())
+        try {
+            val author = AuthorReference(friend, SandboxApplicationBackend.FRIEND_SLUG, SandboxApplicationBackend.FRIEND_NAME)
+            withContext(Dispatchers.Default) { withTimeout(10_000) {
+                feature.visibility.visibility.first { it.ready }
+                backend.scenario = SandboxScenario.SaveError
+                feature.presenter.requestBlock(author); feature.presenter.confirm()
+                feature.presenter.prompt.first { it?.error != null }
+                assertTrue(feature.visibility.visibility.value.blockedIds.isEmpty())
+                feature.presenter.dismiss()
+                backend.scenario = SandboxScenario.Ready
+                feature.presenter.requestBlock(author); feature.presenter.confirm()
+                feature.visibility.visibility.first { friend in it.blockedIds }
+                feature.presenter.blocks.first { state -> state.items.any { it.id == friend } }
+            } }
+        } finally { feature.close(); Dispatchers.resetMain() }
     } }
 }

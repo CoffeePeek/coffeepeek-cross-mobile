@@ -8,12 +8,26 @@ import java.util.UUID
 
 /** Local fixture contracts for the existing app, not an alternative implementation of its UI. */
 internal class SandboxApplicationBackend(private val today: LocalDate, private val visits: MutableList<JsonObject>) {
+    companion object {
+        const val SELF_ID = "sandbox-author-self"
+        const val FRIEND_ID = "sandbox-author-friend"
+        const val FRIEND_SLUG = "sandbox-friend"
+        const val FRIEND_NAME = "Sandbox Friend"
+        const val FRIEND_VISIT_ID = "sandbox-friend-visit"
+        const val FRIEND_PHOTO_ID = "sandbox-friend-photo"
+    }
     private val favorites = linkedSetOf("coffee_shop:sandbox-cafe", "roaster:sandbox-roaster", "drink:cappuccino")
     private var username = "Sandbox"
     private var about = "Локальный тестовый профиль. Все действия остаются в Sandbox."
     private var populated = true
+    // Other authors' public visits live apart from the account's own rows, so history/calendar never include them.
+    private val others = mutableListOf<JsonObject>()
+    private val blocked = linkedSetOf<String>()
+    private var blocksRevision = 0
     fun reset(populated: Boolean) {
         this.populated = populated
+        others.clear(); blocked.clear(); blocksRevision++
+        if (populated) others += friendVisit()
         username = "Sandbox"
         about = "Локальный тестовый профиль. Все действия остаются в Sandbox."
         favorites.clear()
@@ -24,6 +38,15 @@ internal class SandboxApplicationBackend(private val today: LocalDate, private v
         val path = request.url.encodedPath.lowercase()
         val method = request.method
         val input = body as? JsonObject ?: buildJsonObject {}
+        if (path == "/api/v1/me/blocks" && method == HttpMethod.Get) return blockPage(request)
+        if (path.startsWith("/api/v1/me/blocks/") && method in listOf(HttpMethod.Put, HttpMethod.Delete)) {
+            val id = path.removePrefix("/api/v1/me/blocks/")
+            if (id == SELF_ID) return HttpStatusCode.BadRequest to envelope(JsonNull, false)
+            if (id != FRIEND_ID) return HttpStatusCode.NotFound to envelope(JsonNull, false)
+            val changed = if (method == HttpMethod.Put) blocked.add(id) else blocked.remove(id)
+            if (changed) blocksRevision++
+            return ok(buildJsonObject { put("authorId", id); put("isBlocked", method == HttpMethod.Put) })
+        }
         if (path == "/api/users/me" && method == HttpMethod.Get) return ok(profile())
         if (path == "/api/users/me/username" && method == HttpMethod.Patch) {
             username = input["username"]?.jsonPrimitive?.content ?: username
@@ -35,13 +58,15 @@ internal class SandboxApplicationBackend(private val today: LocalDate, private v
         if (path == "/api/users/me/avatar" && method == HttpMethod.Patch) return ok(JsonNull)
         if (path == "/api/users/me/deletion-request") return HttpStatusCode.NotFound to envelope(JsonNull, false)
         if (path.startsWith("/api/users/") && method == HttpMethod.Get) {
-            if (path.endsWith("/check-ins")) return ok(page(JsonArray(visits)))
+            val friend = path.removePrefix("/api/users/").substringBefore('/') == FRIEND_SLUG
+            if (path.endsWith("/check-ins")) return ok(page(JsonArray(if (friend) others.filter(::visible) else visits)))
             if (path.endsWith("/followers") || path.endsWith("/following")) return HttpStatusCode.OK to buildJsonObject {
                 putJsonArray("items") {}; put("totalCount", 0)
                 put("page", request.url.parameters["page"]?.toIntOrNull() ?: 1)
                 put("pageSize", request.url.parameters["pageSize"]?.toIntOrNull() ?: 20)
             }
-            return HttpStatusCode.OK to buildJsonObject { put("data", profile()); put("address", address("sandbox", "/users/sandbox")) }
+            return if (friend) HttpStatusCode.OK to buildJsonObject { put("data", friendProfile()); put("address", address(FRIEND_SLUG, "/users/$FRIEND_SLUG")) }
+            else HttpStatusCode.OK to buildJsonObject { put("data", profile()); put("address", address("sandbox", "/users/sandbox")) }
         }
         if (path.startsWith("/api/v1/profiles/") && path.endsWith("/favorites")) return ok(favoriteRows())
         if (path.startsWith("/api/v1/profiles/") && path.endsWith("/activity")) {
@@ -101,7 +126,7 @@ internal class SandboxApplicationBackend(private val today: LocalDate, private v
         if (path.startsWith("/api/v1/coffees/") && method == HttpMethod.Get) return ok(coffee())
         if (path == "/api/v1/feed") return ok(buildJsonObject {
             putJsonArray("items") {
-                visits.filter { it["visibility"]?.jsonPrimitive?.content == "Public" && it["moderationState"]?.jsonPrimitive?.content == "Approved" }.forEach { row -> add(buildJsonObject {
+                (visits + others.filter(::visible)).filter { it["visibility"]?.jsonPrimitive?.content == "Public" && it["moderationState"]?.jsonPrimitive?.content == "Approved" }.forEach { row -> add(buildJsonObject {
                     put("publishedAtUtc", "${today}T07:00:00Z"); put("checkIn", row)
                 }) }
             }
@@ -115,7 +140,9 @@ internal class SandboxApplicationBackend(private val today: LocalDate, private v
         }
         if (path.startsWith("/api/v1/check-ins/") && method in listOf(HttpMethod.Put, HttpMethod.Delete, HttpMethod.Post)) {
             val id = path.removePrefix("/api/v1/check-ins/").substringBefore('/')
-            val old = visits.firstOrNull { it["id"]?.jsonPrimitive?.content == id } ?: return null
+            val old = visits.firstOrNull { it["id"]?.jsonPrimitive?.content == id }
+                ?: others.firstOrNull { it["id"]?.jsonPrimitive?.content == id && visible(it) && (path.endsWith("/helpful") || path.endsWith("/reports")) }
+                ?: return null
             if (path.endsWith("/helpful") || path.endsWith("/reports")) return ok(buildJsonObject { put("helpfulCount", 1); put("isHelpfulByCurrentUser", method == HttpMethod.Put) })
             if (method == HttpMethod.Delete) { visits.remove(old); return ok(JsonNull) }
             val updated = JsonObject(old + input)
@@ -129,8 +156,57 @@ internal class SandboxApplicationBackend(private val today: LocalDate, private v
         return null // An unimplemented contract is an error, never a fabricated successful write.
     }
 
+    /** Photo availability for protected check-in image URLs: a blocked author's media is not served. */
+    fun protectedPhotoAvailable(checkInId: String): Boolean =
+        (visits + others).firstOrNull { it["id"]?.jsonPrimitive?.content == checkInId }?.let(::visible) == true
+
+    private fun visible(row: JsonObject) = row["authorId"]?.jsonPrimitive?.contentOrNull !in blocked
+    private fun blockPage(request: HttpRequestData): Pair<HttpStatusCode, JsonObject> {
+        val size = request.url.parameters["pageSize"]?.toIntOrNull()
+        val offset = request.url.parameters["cursor"]?.let { it.toIntOrNull() ?: return HttpStatusCode.BadRequest to envelope(JsonNull, false) } ?: 0
+        if (size == null || size !in 1..100 || offset < 0) return HttpStatusCode.BadRequest to envelope(JsonNull, false)
+        val all = blocked.toList()
+        return ok(buildJsonObject {
+            putJsonArray("items") { all.drop(offset).take(size).forEach { id ->
+                add(buildJsonObject {
+                    put("authorId", id); put("userName", FRIEND_NAME); put("avatarUrl", "/media/sample")
+                    put("address", address(FRIEND_SLUG, "/users/$FRIEND_SLUG"))
+                })
+            } }
+            put("nextCursor", if (offset + size < all.size) JsonPrimitive((offset + size).toString()) else JsonNull)
+            put("revision", "$blocksRevision")
+        })
+    }
+    private fun friendProfile() = buildJsonObject {
+        put("authorId", FRIEND_ID); put("userName", FRIEND_NAME); put("about", "Другой автор для проверки блокировок.")
+        put("avatarUrl", "${SandboxBackend.BASE_URL}/media/sample"); put("checkInCount", 1)
+        put("addedShopsCount", 0); put("addedRoastersCount", 0); put("followersCount", 0); put("isFollowing", false)
+        put("isBlockedByViewer", FRIEND_ID in blocked)
+        put("address", address(FRIEND_SLUG, "/users/$FRIEND_SLUG")); put("createdAtUtc", "${today}T07:00:00Z")
+    }
+    private fun friendVisit() = buildJsonObject {
+        put("id", FRIEND_VISIT_ID); put("shopName", "Sandbox Cafe"); put("username", FRIEND_NAME)
+        put("authorId", FRIEND_ID); put("author", address(FRIEND_SLUG, "/users/$FRIEND_SLUG"))
+        put("authorAvatarUrl", "/media/sample"); put("shop", address("sandbox-cafe", "/coffee-shops/sandbox-cafe"))
+        put("createdAtUtc", "${today}T06:00:00Z"); put("visitedAt", "${today}T06:00:00Z")
+        put("text", "Публичный визит другого автора"); put("visibility", "Public"); put("moderationState", "Approved")
+        put("helpfulCount", 2); put("isHelpfulByCurrentUser", false)
+        putJsonObject("rating") { put("coffee", 5); put("service", 4); put("place", 5) }
+        // Protected delivery shape: an owner-scoped original plus immutable feed/detail variants.
+        val original = "/api/v1/check-ins/$FRIEND_VISIT_ID/photos/$FRIEND_PHOTO_ID"
+        putJsonArray("photos") { add(buildJsonObject {
+            put("url", original); put("sortIndex", 0)
+            putJsonArray("variants") { listOf("thumb", "feed", "detail").forEach { purpose ->
+                add(buildJsonObject {
+                    put("purpose", purpose); put("url", "$original/variants/$purpose/1/$purpose.png")
+                    put("contentType", "image/png"); put("width", 600); put("height", 600); put("sizeBytes", 3)
+                })
+            } }
+        }) }
+    }
+
     private fun profile() = buildJsonObject {
-        put("userName", username); put("email", "sandbox@example.invalid"); put("about", about)
+        put("authorId", SELF_ID); put("userName", username); put("email", "sandbox@example.invalid"); put("about", about)
         put("avatarUrl", "${SandboxBackend.BASE_URL}/media/sample"); put("checkInCount", visits.size)
         put("addedShopsCount", 0); put("addedRoastersCount", 0); put("followersCount", 0); put("isFollowing", false)
         put("address", address("sandbox", "/users/sandbox")); put("createdAtUtc", "${today}T07:00:00Z")
@@ -147,7 +223,8 @@ internal class SandboxApplicationBackend(private val today: LocalDate, private v
         putJsonObject("location") { put("address", "Тестовая улица, 1"); put("latitude", 53.9); put("longitude", 27.56) }
         putJsonArray("photos") { add(photo()) }; put("coverPhoto", photo())
         put("roasters", JsonArray(listOf(catalog("sandbox-roaster", "Sandbox Roaster"))))
-        put("checkIns", JsonArray(visits)); put("userCheckIns", JsonArray(visits))
+        // Counters above stay server aggregates; only the visible cards are filtered.
+        put("checkIns", JsonArray(visits + others.filter(::visible))); put("userCheckIns", JsonArray(visits))
         putJsonObject("menu") { put("currency", "BYN"); put("photos", JsonArray(listOf(photo()))); put("items", drinks()) }
         putJsonArray("schedules") { (1..7).forEach { day -> add(buildJsonObject { put("dayOfWeek", day); putJsonArray("intervals") { add(buildJsonObject { put("openTime", "08:00:00"); put("closeTime", "23:00:00") }) } }) } }
     }

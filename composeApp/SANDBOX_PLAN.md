@@ -1,5 +1,19 @@
 # Application-wide offline Sandbox checkpoint
 
+## Author-blocking and protected-photo fixtures — 2026-10-19
+
+Full-app fake backend now serves `/api/v1/me/blocks` (list/PUT/DELETE), a second
+synthetic author with a public visit, visibility filtering of feed/Shop cards and a
+protected check-in photo route (ETag/304, 404 while blocked). Existing feed
+expectations went from one to two public entries because of the new author; history
+and calendar stay own-only. New tests use the actual `FeedApiService`, shared client
+transports and the real `createAuthorBlockingFeature` presenter: contract/idempotency,
+filtering plus unchanged aggregates, slug→authorId, photo revalidation/revocation,
+write-error leaving visibility unchanged. Verification: app Direct+Play unit suites
+(1078 results, 0 failures) and Direct Sandbox assembly. **Not done:** manual device
+walkthrough of the block UI, incoming/two-way blocks, guest/login behaviour with
+blocks, live backend.
+
 ## Develop baseline reconciliation — 2026-10-19
 
 Inherit Home `c165d8fc`, main `dfb00e63` and approved develop `fc85f8e5`.
