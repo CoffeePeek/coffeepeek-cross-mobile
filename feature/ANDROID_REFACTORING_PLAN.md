@@ -42,7 +42,7 @@ paths, not templates for new migrations.
 | Shop | Four boundaries; active detail, menu gallery, public check-in list and creation sheet; shared controls/prod geometry; block/report menus delegate through revocable app adapters | Full-app Sandbox blocking fixtures, protected-photo visual acceptance, media/permissions, guest/owner/return and authorized writes |
 | Combined history | Four boundaries; three Android aliases use combined Shop/Home calendar/timeline, paging, filters, visit markers and current-main feed/thumb/detail/original photo contracts | Populated live/protected-photo/accessibility checks. Profile Activity modal remains a separate legacy consumer |
 | Home check-ins | Four boundaries; history/global creation use new data/entries, media/analytics bridges; distinct photo variants reach calendar/detail/gallery, 41/41 isolated owner UI cases pass | Real media/upload/account/CRUD acceptance. Profile Activity and shared/iOS consumers remain legacy |
-| Coffee catalogue | Four boundaries; repository/picker, typed list/detail MVI, Android entries/content/components/resources/previews and isolated tests prepared | **Not activated**: tab/detail routes/Koin/picker still use composeApp implementation. Finish analytics adapters, Android DI/routes/picker and full Sandbox checks before switching |
+| Coffee catalogue | Four boundaries; repository/picker, typed list/detail MVI, Android entries/content/components/resources/previews and isolated tests prepared | **Activated on Android** (2026-10-19, `96b4162d`): `CoffeeScreenRenderer` routes the tab and detail routes to the migrated entries, app-owned `coffeeModule` + analytics adapters, Home/history use the migrated picker; iOS/shared stay on legacy composeApp code. Pixel 7 Sandbox smoke only; populated/error/large-font scenarios, restored-route/picker-return checks and live read/platform acceptance remain |
 | Sandbox / shared UI support | Separate offline app with actual app graph, RAM fake backend and explicit run modes; common rating/heart/card changes also affect normal consumers | New-main author-blocking scenarios and protected-photo lifecycle fixtures need explicit fake coverage; Sandbox does not certify live APIs/OAuth/camera/storage |
 | Discovery, roasters, profile/account, auth, community/content reporting, settings, contributions | Current-main product behavior retained; new four-boundary extraction not started | Extract by business owner after Coffee, auditing current routes and dependencies first |
 | Author blocking | Incoming main implementation in features/author-blocking plus shared app UI; Shop adapters honor visibility and forward eligible author-block requests | Full-app Sandbox blocking transport fixtures; not a completed four-boundary migration, preserve behavior while later extracting UI/ownership |
@@ -80,10 +80,10 @@ iOS UI migration remains deferred; Native compilation is only compatibility.
 4. [~] (code done 2026-10-19, device/Sandbox acceptance pending) Wire Coffee Android factories, Koin, tab/detail/restored routes and picker.
    Keep existing root navigation/iOS fallback. Do not invent a Coffee app-link:
    current-main public links cover shops/roasters/users.
-5. [ ] Verify integrated Coffee in full Sandbox, then authorized live-read/
+5. [~] (smoke done 2026-10-19: list/search/filter sheet/detail/gallery/roaster/both themes; share blocked by Sandbox by design) Verify integrated Coffee in full Sandbox, then authorized live-read/
    platform checks: themes, text scaling, gallery/share/browser return and cancel.
    Keep unit, self-targeted UI, app composition and real backend evidence separate.
-6. [ ] Close the Coffee engineering checkpoint with acceptance gates documented.
+6. [~] (documented 2026-10-19; open gates listed in the Coffee plan) Close the Coffee engineering checkpoint with acceptance gates documented.
    Start the next owner in a child branch/PR using the 100–150-file guide. Roasters
    are a candidate because Coffee links to them, not work authorized by this audit.
 7. [ ] Later extract discovery, profile/account, auth, community/reporting,
@@ -114,6 +114,14 @@ No PR is merged into main/develop by synchronization; published history is not
 rewritten. Root Navigation 3 and native iOS presentation remain separate decisions.
 
 ## Fresh verification — 2026-10-19
+
+Coffee activation checkpoint (runtime `96b4162d`, plus loader/like and Sandbox-fixture commits `9a96d756`,
+`4129a80c`, analytics `d72a81c5`): app Direct+Play unit suites, Coffee domain/data/impl and the
+new adapter/composition/Sandbox-blocking tests — **1088 results, zero failures** in the last full run;
+Direct/Play Debug, Direct Sandbox, Direct instrumentation compilation and iOS Simulator Arm64 compilation
+pass. Pixel 7 / API 37: only the Sandbox package (1.0.746-sandbox) was updated in place; ordinary
+CoffeePeek untouched. New instrumented recomposition test (Shop) is compiled but **not run on device**.
+
 
 Shop author-menu follow-up: owner runtime `6dc3f115`, propagated to Coffee-tip
 runtime `46b1943a`. **650/650** selected unit results (Shop impl 99, author-blocking

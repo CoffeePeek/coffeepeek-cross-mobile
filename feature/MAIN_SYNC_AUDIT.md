@@ -284,3 +284,26 @@ image/account is used. The first adapter run exposed a non-void expression-body
 JUnit signature; explicit Unit fixes the harness, not production cancellation.
 Existing fake-data test hosts use no production DI/network for their UI; app
 instrumentation still performs normal Application initialization. Phones unchanged.
+
+
+## Coffee activation checkpoint — 2026-10-19
+
+Not a main synchronization; recorded here because it changes what the stack ships on Android.
+Runtime commits on `feature/coffee-catalog-refactoring`: `9a96d756` (core bean loader restored; Shop
+check-in votes no longer recompose neighbouring cards), `4129a80c` (full-app Sandbox author-blocking and
+protected-photo fixtures), `d72a81c5` (Coffee analytics ports and Android adapters with legacy event
+names), `96b4162d` (Android activation via `CoffeeScreenRenderer`, `coffeeModule`, migrated `CoffeePicker`
+in Home/history), `6493c444` (walkthrough record).
+
+- Legacy composeApp catalogue screens/ViewModels/repository stay for iOS and as the renderer default; no
+  root navigation, route or iOS screen change.
+- Verification: unit/composition/adapter suites (1088 app + Coffee results, 0 failures), Direct/Play/
+  Sandbox builds and isolation, instrumentation and iOS Simulator compilation. Pixel 7 Sandbox smoke:
+  Coffee list/search/filters/detail/gallery/roaster/both themes; share is blocked by Sandbox's external-app
+  guard. No crash in the run.
+- Not verified: populated/slow/error fixtures for Coffee, large font, pagination, restored-route and Home
+  picker return on device, new Shop recomposition UI test on device, block UI walkthrough in Sandbox,
+  live API/media/share targets, iOS.
+- Behaviour note: other check-in cards' like buttons stay tappable while one vote is pending; view models
+  already ignore concurrent votes, so no second request is sent.
+
