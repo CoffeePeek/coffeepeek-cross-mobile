@@ -38,7 +38,7 @@ internal val LocalShopAuthorImage = staticCompositionLocalOf<ShopAuthorImage?> {
 
 @Composable
 internal fun ShopCheckInHeader(author: String, dateLabel: String, onReport: (() -> Unit)?, modifier: Modifier = Modifier,
-    avatarUrl: String? = null, onOpenAuthor: (() -> Unit)? = null) {
+    avatarUrl: String? = null, onOpenAuthor: (() -> Unit)? = null, onBlockAuthor: (() -> Unit)? = null) {
     val openLabel = stringResource(Res.string.shop_checkins_open_author, author)
     val imageContent = LocalShopAuthorImage.current
     Row(modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
@@ -59,7 +59,7 @@ internal fun ShopCheckInHeader(author: String, dateLabel: String, onReport: (() 
                     color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
         }
-        if (onReport != null) ShopCheckInActions(onReport)
+        if (onReport != null || onBlockAuthor != null) ShopCheckInActions(onReport, onBlockAuthor = onBlockAuthor)
     }
 }
 

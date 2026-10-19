@@ -3,6 +3,7 @@ package com.coffeepeek.feature.shop.impl.ui
 import androidx.lifecycle.viewModelScope
 import com.coffeepeek.feature.shop.api.ShopDetailContext
 import com.coffeepeek.core.presentation.MviViewModel
+import com.coffeepeek.feature.shop.impl.ui.data.blockableAuthor
 import com.coffeepeek.feature.shop.domain.model.ShopViewer
 import com.coffeepeek.feature.shop.domain.model.ShopCheckIn
 import com.coffeepeek.feature.shop.domain.repository.ShopDetailsRepository
@@ -147,6 +148,16 @@ internal class ShopDetailViewModel(
                 val checkIn = currentState.details?.checkIns?.firstOrNull { it.id == action.checkInId } ?: return
                 if (!currentState.isLoggedIn) emitEvent(ShopDetailEvent.SignIn)
                 else if (!ownsCheckIn(checkIn)) emitEvent(ShopDetailEvent.ReportCheckIn(checkIn.id))
+            }
+            is ShopDetailAction.BlockAuthor -> {
+                if (currentState.isLoading) return
+                val visible = currentState.details?.checkIns.orEmpty().let {
+                    if (currentState.isLoggedIn) it.take(3) else it.take(1)
+                }
+                val row = visible.firstOrNull { it.id == action.checkInId } ?: return
+                val author = row.blockableAuthor(ownsCheckIn(row), currentState.isLoggedIn,
+                    currentState.currentUserId) ?: return
+                emitEvent(ShopDetailEvent.BlockAuthor(author))
             }
             is ShopDetailAction.OpenPhoto -> {
                 if (action.index in action.urls.indices) {

@@ -5,6 +5,7 @@ import com.coffeepeek.feature.shop.api.ShopDetailContext
 internal data class ShopDetailEventEnvelope(val event: ShopDetailEvent, val sessionGeneration: Int)
 
 internal sealed interface ShopDetailEvent {
+    data class BlockAuthor(val author: com.coffeepeek.feature.shop.api.ShopCheckInAuthor) : ShopDetailEvent
     data object Back : ShopDetailEvent
     data class OpenMenuGallery(val shopId: String) : ShopDetailEvent
     data object SignIn : ShopDetailEvent

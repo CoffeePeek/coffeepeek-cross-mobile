@@ -106,6 +106,7 @@
     <string name="shop_checkins_author_unknown">Пользователь</string>
     <string name="shop_checkins_helpful">Полезно: %1$d</string>
     <string name="shop_checkins_report">Пожаловаться</string>
+    <string name="shop_checkins_block_author">Заблокировать автора</string>
     <string name="shop_checkins_author_self">Вы</string>
     <string name="shop_checkins_actions">Действия с чекином</string>
     <string name="shop_checkins_read_more">Читать полностью</string>
