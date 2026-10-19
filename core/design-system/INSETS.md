@@ -9,11 +9,11 @@ Do not copy it or add a public `Insets`, safe-area wrapper or base screen to cor
 Compose foundation already provides direction-aware, density-aware inset APIs.
 The design-system exports foundation; no dependency or new module is needed.
 
-This slice provides executable Android fixtures and recipe regression tests,
-not a new production API. Screens own edge-to-edge policy, which edges their
+The original extraction provided executable Android fixtures and recipe
+regression tests, not a new inset wrapper. Screens own edge-to-edge policy, which edges their
 chrome handles, scrolling and keyboard behaviour. Android application composition
-owns Activity edge-to-edge/soft-input configuration. Nothing is integrated into
-composeApp, and no iOS implementation is introduced.
+owns Activity edge-to-edge/soft-input configuration. The later shared-sheet
+policy is recorded below; no iOS implementation is introduced.
 
 ## Prefer layout-phase padding
 
@@ -86,9 +86,40 @@ combining inset types explicitly, `navigationBars.union(ime)` takes the maximum
 per edge, whereas `add` would sum overlapping protection. Do not blindly combine
 outer keyboard padding, Scaffold padding and Material modal defaults.
 
-The prepared sheet retains Material's default inset handling. This slice does
-not alter sheet behaviour, Activity configuration, navigation or any old screen.
-System/predictive Back routing on API 37 remains unverified (see README).
+The shared `CoffeePeekSwipeDismissModalBottomSheet` explicitly supplies all-edge
+`WindowInsets.safeDrawing` through Material's `contentWindowInsets` callback.
+Material's bundled Android default protected top/bottom only; the explicit policy
+also protects horizontal cutouts. Material applies and consumes content insets
+and owns dialog IME avoidance. Do not add raw navigation-bar heights or a second
+outer IME spacer. Nested consumption-aware padding may still protect remaining
+edges. The callback can be overridden for a deliberately different content policy.
+The legacy Compose fallback uses the same policy; native iOS sheets are unchanged.
+Fractional height stays on inner content, preserving Material's bottom anchors.
+This does not change Activity configuration or system/predictive Back policy.
+
+### Modal verification — 2026-10-19
+
+At parent #43 source `d8dff6ed` plus this scoped patch, self-targeted Debug tests
+ran on Pixel 7 / Android API 37. All **6 modal tests pass**: asymmetric physical
+safe areas in LTR/RTL, nested consumption, changed-inset remeasurement, a real
+keyboard/focused field/bottom action, short/bounded bottom placement, and
+loading/dismiss/reopen placement. The first run had one test-harness failure:
+text input targeted the field's outer layout instead of its editable child.
+After correcting that selector (and an intermediate chaining compile error),
+the entire six-test selection was rerun successfully; geometry assertions remain.
+The first full 59-test run additionally reported three `No compose hierarchies`
+failures in existing Input/Insets test fixtures before their assertions could
+run. Their render functions now await an actual Compose root instead of assuming
+that `ActivityScenario.onActivity { setContent { ... } }` has already attached it.
+All **16 tests** in those two classes pass on the targeted rerun, with the original
+behavior and geometry assertions retained.
+The complete parent suite then passed: **59 tests, zero failures**, on the same
+Pixel 7. The three initial failures are retained here as retry evidence, not
+omitted from the result.
+Synthetic cutouts are not physical rotation/cutout or three-button-navigation
+acceptance. No ordinary app installation, account/backend writes or iOS device
+checks were involved. Full relevant suite results are recorded with this patch's
+Shop verification.
 
 ## Verification and limits
 
