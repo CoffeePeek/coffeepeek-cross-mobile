@@ -150,6 +150,9 @@ internal fun ShopDetailScreenContent(
     ) { insets ->
         Box(Modifier.fillMaxSize().padding(insets).consumeWindowInsets(insets), contentAlignment = Alignment.Center) {
             val details = state.details
+            val ownCheckInIds = remember(details?.userCheckIns) {
+                details?.userCheckIns.orEmpty().mapTo(HashSet()) { it.id }
+            }
             when {
                 details == null -> ShopDetailLoadState(state.isLoading,
                     onRetry = { onAction(ShopDetailAction.Retry) })
@@ -220,7 +223,7 @@ internal fun ShopDetailScreenContent(
                                 .padding(top = CoffeePeekDimens.spacing6, bottom = CoffeePeekDimens.spacing3)) }
                     }
                     item { ShopPublicCheckInsSection(details.checkIns, details.overview.title,
-                        state.isLoggedIn, state.currentUserId, details.userCheckIns.map { it.id }.toSet(),
+                        state.isLoggedIn, state.currentUserId, ownCheckInIds,
                         state.pendingCheckInVoteId,
                         onOpenPhoto = { checkIn, index -> onAction(ShopDetailAction.OpenCheckInPhoto(checkIn.id, index)) },
                         onVote = { onAction(ShopDetailAction.VoteCheckInHelpful(it)) },

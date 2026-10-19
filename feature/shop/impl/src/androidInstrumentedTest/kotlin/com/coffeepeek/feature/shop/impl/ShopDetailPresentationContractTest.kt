@@ -73,6 +73,24 @@ class ShopDetailPresentationContractTest {
         }
     }
 
+    @Test fun votingOneVisitDoesNotRecomposeItsNeighbour() {
+        val calls = mutableMapOf<String, Int>()
+        var pending by mutableStateOf<String?>(null)
+        val visits = listOf(previewCheckIn(), previewCheckIn().copy(id = "visit-2", userId = "user-3",
+            createdAt = "2026-10-02T12:00:00Z"))
+        render {
+            ShopPublicCheckInsSection(visits, "Кофейня", true, "user-9", emptySet(), pending,
+                { _, _ -> }, {}, {}, {}, {}, {},
+                formatDate = { date -> calls[date] = (calls[date] ?: 0) + 1; date.take(10) })
+        }.use {
+            compose.waitForIdle()
+            val before = calls.toMap()
+            pending = "check-in-1"
+            compose.waitForIdle()
+            assertEquals(before["2026-10-02T12:00:00Z"], calls["2026-10-02T12:00:00Z"])
+        }
+    }
+
     @Test fun ownVisitHasNeitherReportMenuNorInteractiveHelpfulAction() {
         render(dark = true) {
             ShopCheckInCard(previewCheckIn(), { _, _ -> }, showAuthor = true, showHelpful = true,
