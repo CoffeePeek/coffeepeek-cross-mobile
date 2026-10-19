@@ -90,7 +90,8 @@ internal class RoasterDetailViewModel(
         val state = currentState
         val details = state.details ?: return
         val key = details.address.slug.ifBlank { details.id }
-        val target = RoasterFavoriteTarget(key, details.name, details.photos.firstOrNull()?.url)
+        val target = RoasterFavoriteTarget(key, details.name, details.photos.firstOrNull()?.url,
+            details.address.canonicalPath, details.address.revision, details.address.isAlias)
         favorites.change(target, favorite = !state.isFavorite) {
             updateState { copy(message = RoasterMessage.FavoriteChangeFailed) }
         }

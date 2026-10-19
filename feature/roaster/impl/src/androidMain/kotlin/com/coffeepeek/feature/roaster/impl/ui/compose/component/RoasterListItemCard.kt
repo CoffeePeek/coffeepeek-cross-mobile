@@ -3,7 +3,9 @@ package com.coffeepeek.feature.roaster.impl.ui.compose.component
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
-import com.coffeepeek.feature.roaster.impl.ui.compose.RoasterImage
+import com.coffeepeek.feature.roaster.api.RoasterExposure
+import com.coffeepeek.feature.roaster.api.RoasterImage
+import com.coffeepeek.feature.roaster.api.RoasterScreenAnalytics
 import com.coffeepeek.feature.roaster.impl.ui.model.RoasterListAction
 import com.coffeepeek.feature.roaster.impl.ui.model.RoasterListItem
 
@@ -16,6 +18,7 @@ internal fun RoasterListItemCard(
     onAction: (RoasterListAction) -> Unit,
     onFavoriteFeedback: () -> Unit,
     image: RoasterImage,
+    screen: RoasterScreenAnalytics,
     modifier: Modifier = Modifier,
 ) {
     val slug = item.slug
@@ -31,5 +34,6 @@ internal fun RoasterListItemCard(
         onToggleFavorite = slug?.let { { onFavoriteFeedback(); onAction(RoasterListAction.ToggleFavorite(it)) } },
         image = image,
         modifier = modifier,
+        heartModifier = screen.exposure(Modifier, RoasterExposure.FavoriteCard),
     )
 }

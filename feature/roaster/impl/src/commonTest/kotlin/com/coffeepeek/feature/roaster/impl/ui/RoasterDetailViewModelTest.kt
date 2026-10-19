@@ -67,7 +67,7 @@ class RoasterDetailViewModelTest {
         val favorites = FakeFavorites()
         val model = model(favorites = favorites); runCurrent()
         model.onAction(RoasterDetailAction.ToggleFavorite); runCurrent()
-        assertEquals(listOf(RoasterFavoriteTarget("roast", "Roaster roast", "https://m/roast-1") to true), favorites.changes)
+        assertEquals(listOf(RoasterFavoriteTarget("roast", "Roaster roast", "https://m/roast-1", "/roasters/roast", 1, false) to true), favorites.changes)
         favorites.failChange = true
         model.onAction(RoasterDetailAction.ToggleFavorite); runCurrent()
         assertEquals(RoasterMessage.FavoriteChangeFailed, model.state.value.message)

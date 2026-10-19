@@ -40,7 +40,7 @@ import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.feature.roaster.impl.R
-import com.coffeepeek.feature.roaster.impl.ui.compose.RoasterImage
+import com.coffeepeek.feature.roaster.api.RoasterImage
 
 /**
  * Catalogue card. Geometry is the legacy one: when the carousel supplies an exact height, the footer is measured
@@ -58,6 +58,7 @@ internal fun RoasterCard(
     onToggleFavorite: (() -> Unit)?,
     image: RoasterImage,
     modifier: Modifier = Modifier,
+    heartModifier: Modifier = Modifier,
 ) {
     val photo = photoUrl?.takeIf(String::isNotBlank)
     val summary = description?.takeIf(String::isNotBlank)
@@ -99,7 +100,7 @@ internal fun RoasterCard(
                                     color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 3, overflow = TextOverflow.Ellipsis)
                             }
                             if (onToggleFavorite != null) Box(Modifier.align(Alignment.TopEnd).offset(x = 8.dp, y = (-12).dp)) {
-                                RoasterFavoriteHeart(isFavorite, onToggleFavorite)
+                                RoasterFavoriteHeart(isFavorite, onToggleFavorite, heartModifier)
                             }
                         }
                     }

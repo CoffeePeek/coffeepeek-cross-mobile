@@ -1,5 +1,7 @@
 package com.coffeepeek.feature.roaster.impl.ui.compose
 
+import com.coffeepeek.feature.roaster.api.RoasterImage
+import com.coffeepeek.feature.roaster.api.RoasterLoadError
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -47,7 +49,9 @@ private const val DISCOVERY_LIMIT = 8
 @Composable
 internal fun RoasterDiscoverySection(
     viewModel: RoasterListViewModel,
+    query: String,
     selectedRoasters: Set<String>,
+    favoritesOnly: Boolean,
     image: RoasterImage,
     loadError: RoasterLoadError,
     screen: RoasterScreenAnalytics,
@@ -61,7 +65,9 @@ internal fun RoasterDiscoverySection(
     LaunchedEffect(viewModel, lifecycle) {
         lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) { viewModel.events.collect { currentEvent(it) } }
     }
+    LaunchedEffect(query) { viewModel.onAction(RoasterListAction.QueryChanged(query)) }
     LaunchedEffect(selectedRoasters) { viewModel.onAction(RoasterListAction.SelectedRoastersChanged(selectedRoasters)) }
+    LaunchedEffect(favoritesOnly) { viewModel.onAction(RoasterListAction.FavoritesOnlyChanged(favoritesOnly)) }
     RoasterDiscoverySectionContent(state, viewModel::onAction, image, loadError, screen, onFavoriteFeedback, modifier)
 }
 
@@ -90,7 +96,7 @@ internal fun RoasterDiscoverySectionContent(
             LazyRow(Modifier.testTag("roaster-carousel"), horizontalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing3)) {
                 itemsIndexed(visible.take(DISCOVERY_LIMIT), key = { index, item -> item.slug ?: "unaddressed-roaster:$index" }) { _, item ->
                     RoasterListItemCard(item, state.isLoading, item.favoriteKey in state.favoriteKeys, onAction,
-                        onFavoriteFeedback, image, Modifier.width(cardWidth))
+                        onFavoriteFeedback, image, screen, Modifier.width(cardWidth))
                 }
             }
             SnackbarHost(snackbar, modifier = Modifier.align(Alignment.BottomCenter))

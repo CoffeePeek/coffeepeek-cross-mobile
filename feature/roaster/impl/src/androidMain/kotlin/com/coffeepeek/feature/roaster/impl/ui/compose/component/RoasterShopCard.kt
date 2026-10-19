@@ -32,7 +32,7 @@ import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.feature.roaster.domain.model.RoasterAddress
 import com.coffeepeek.feature.roaster.domain.model.RoasterShop
 import com.coffeepeek.feature.roaster.impl.R
-import com.coffeepeek.feature.roaster.impl.ui.compose.RoasterImage
+import com.coffeepeek.feature.roaster.api.RoasterImage
 
 @Composable
 internal fun RoasterShopCard(shop: RoasterShop, onClick: () -> Unit, image: RoasterImage, modifier: Modifier = Modifier) {

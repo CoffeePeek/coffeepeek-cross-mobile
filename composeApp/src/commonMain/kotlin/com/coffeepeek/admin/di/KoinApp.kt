@@ -36,6 +36,8 @@ import com.coffeepeek.admin.ui.screen.shop.ShopCheckInFormRenderer
 import com.coffeepeek.admin.ui.screen.shop.LegacyShopCheckInFormRenderer
 import com.coffeepeek.admin.ui.screen.coffee.CoffeeScreenRenderer
 import com.coffeepeek.admin.ui.screen.coffee.LegacyCoffeeScreenRenderer
+import com.coffeepeek.admin.ui.screen.roaster.LegacyRoasterScreenRenderer
+import com.coffeepeek.admin.ui.screen.roaster.RoasterScreenRenderer
 import com.coffeepeek.admin.ui.screen.shop.ShopDetailScreenRenderer
 import com.coffeepeek.admin.ui.screen.shop.LegacyShopDetailScreenRenderer
 import com.coffeepeek.admin.ui.screen.shop.ShopCheckInListScreenRenderer
@@ -90,6 +92,7 @@ fun initKoin(
     checkInHistoryRendererFactory: Scope.() -> CheckInHistoryScreenRenderer = { LegacyCheckInHistoryScreenRenderer },
     checkInCreateFlowRendererFactory: Scope.() -> CheckInCreateFlowRenderer = { LegacyCheckInCreateFlowRenderer },
     coffeeRendererFactory: Scope.() -> CoffeeScreenRenderer = { LegacyCoffeeScreenRenderer },
+    roasterRendererFactory: Scope.() -> RoasterScreenRenderer = { LegacyRoasterScreenRenderer },
     analyticsEnabled: Boolean = true,
 ) {
     check(AppConfig.baseUrl.isNotBlank()) {
@@ -110,7 +113,7 @@ fun initKoin(
         ),
         appModule(database.settingRepository, shopReportRendererFactory, shopGalleryRendererFactory,
             shopCheckInRendererFactory, shopDetailRendererFactory, shopCheckInListRendererFactory,
-            checkInHistoryRendererFactory, checkInCreateFlowRendererFactory, coffeeRendererFactory),
+            checkInHistoryRendererFactory, checkInCreateFlowRendererFactory, coffeeRendererFactory, roasterRendererFactory),
         imageModule(),
         updateInstallerModule(),
     )
@@ -132,8 +135,10 @@ private fun appModule(
     checkInHistoryRendererFactory: Scope.() -> CheckInHistoryScreenRenderer,
     checkInCreateFlowRendererFactory: Scope.() -> CheckInCreateFlowRenderer,
     coffeeRendererFactory: Scope.() -> CoffeeScreenRenderer,
+    roasterRendererFactory: Scope.() -> RoasterScreenRenderer,
 ) = module {
     single<CoffeeScreenRenderer> { coffeeRendererFactory() }
+    single<RoasterScreenRenderer> { roasterRendererFactory() }
     single<CheckInCreateFlowRenderer> { checkInCreateFlowRendererFactory() }
     single<CheckInHistoryScreenRenderer> { checkInHistoryRendererFactory() }
     single<ShopDetailScreenRenderer> { shopDetailRendererFactory() }

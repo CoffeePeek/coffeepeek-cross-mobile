@@ -1,5 +1,7 @@
 package com.coffeepeek.feature.roaster.impl.ui.compose
 
+import com.coffeepeek.feature.roaster.api.RoasterImage
+import com.coffeepeek.feature.roaster.api.RoasterPhotoViewer
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -57,9 +59,6 @@ import com.coffeepeek.feature.roaster.impl.ui.data.prettyExternalLink
 import com.coffeepeek.feature.roaster.impl.ui.model.RoasterDetailAction
 import com.coffeepeek.feature.roaster.impl.ui.model.RoasterDetailEvent
 import com.coffeepeek.feature.roaster.impl.ui.model.RoasterDetailState
-
-/** Application viewer for a single photo URL (full-screen dialog). */
-internal typealias RoasterPhotoViewer = @Composable (url: String, onDismiss: () -> Unit) -> Unit
 
 @Composable
 internal fun RoasterDetailScreen(
@@ -126,7 +125,8 @@ private fun RoasterDetailContent(
                 onToggleFavorite = { onFavoriteFeedback(); onAction(RoasterDetailAction.ToggleFavorite) },
                 onBack = { onAction(RoasterDetailAction.Back) },
                 onPhotoClick = { onAction(RoasterDetailAction.OpenPhoto(it)) }, image = image,
-                modifier = if (details.photos.isNotEmpty()) screen.exposure(Modifier, RoasterExposure.Photos) else Modifier)
+                modifier = if (details.photos.isNotEmpty()) screen.exposure(Modifier, RoasterExposure.Photos) else Modifier,
+                heartModifier = screen.exposure(Modifier, RoasterExposure.FavoriteDetail))
         }
         item {
             Column(Modifier.padding(CoffeePeekDimens.spacing4), verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing4)) {

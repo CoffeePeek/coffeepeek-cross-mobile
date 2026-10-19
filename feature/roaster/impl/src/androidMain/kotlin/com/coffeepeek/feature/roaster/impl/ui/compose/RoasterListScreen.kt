@@ -1,5 +1,7 @@
 package com.coffeepeek.feature.roaster.impl.ui.compose
 
+import com.coffeepeek.feature.roaster.api.RoasterImage
+import com.coffeepeek.feature.roaster.api.RoasterLoadError
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
@@ -121,7 +123,7 @@ internal fun RoasterListScreenContent(
                 verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing3),
             ) {
                 itemsIndexed(visible, key = { index, item -> item.slug ?: "unaddressed-roaster:$index" }) { _, item ->
-                    RoasterListItemCard(item, state.isLoading, item.favoriteKey in state.favoriteKeys, onAction, onFavoriteFeedback, image)
+                    RoasterListItemCard(item, state.isLoading, item.favoriteKey in state.favoriteKeys, onAction, onFavoriteFeedback, image, screen)
                 }
                 if (state.isLoading) item { RoasterLoadingRow() }
                 if (state.loadFailed) item { loadError { onAction(RoasterListAction.Refresh) } }

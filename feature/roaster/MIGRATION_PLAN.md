@@ -1,6 +1,6 @@
 # Roasters — Android-first migration plan
 
-Status: steps 2–4 done in code (2026-10-20): domain, data, api (ports) and impl (typed MVI + stateless UI); legacy screens still active, nothing activated; step 4 isolated UI suite passes on Pixel 7. Child of the Coffee checkpoint
+Status: steps 2–5 done in code (2026-10-20): domain, data, api (ports + entries) and impl (typed MVI + stateless UI + entries); **activated on Android** (Discovery roasters and the roaster detail route); iOS/shared keep the legacy screens. Step 4 isolated UI suite passed on Pixel 7 before step 5; device/Sandbox acceptance of the activation is still open (step 6). Child of the Coffee checkpoint
 (`feature/coffee-catalog-refactoring`, PR #104); the branch/PR is created only after this plan is accepted.
 Same rules as Coffee: preserve the current product, requests and visuals; Android first; shared/iOS keep the
 legacy composeApp UI; no new feature in composeApp; modules only with real content.
@@ -45,7 +45,7 @@ adapter-free factory over the same endpoints, so reads and legacy writes cannot 
    favorite optimistic state and error message, stale-result/cancellation guards, retry.
 4. [x] (2026-10-20; isolated UI suite 36/36 on Pixel 7; see "Step 4 record") Stateless content, components in own files, colocated light/dark previews, resources; reuse design-system
    search, chips, cards, loader (bean), refresh, favorite heart; keep geometry and the discovery carousel layout.
-5. [ ] App adapters in composeApp androidMain: analytics (existing `SearchTracker`, `TrackEntityDetail`,
+5. [x] (2026-10-20, code + unit/composition tests; no device run yet; see "Step 5 record") App adapters in composeApp androidMain: analytics (existing `SearchTracker`, `TrackEntityDetail`,
    exposures, `DetailEntryMemory`), favorites and shop-photo ports, `RoasterScreenRenderer` (Legacy default),
    Koin module, Discovery section and detail route switch for Android only.
 6. [ ] Richer Sandbox fixtures (several roasters, tags, shops with/without photos, contacts, favorites) and
@@ -170,3 +170,32 @@ card actions and tag chips, card without a public address (inert), typed message
 exact-height card keeping its stats footer, detail sections and actions, empty detail, application photo viewer slot,
 detail loading/failure with retry/back. Not covered: real images/loader/error artwork (app slots), Haze blur for the
 glass buttons, accessibility services, Sandbox/real-app behaviour (step 6).
+
+## Step 5 record — 2026-10-20
+
+Roasters are now **active on Android** in code; shared/iOS keep the legacy composeApp screens (renderer default).
+
+- **api:** public `RoasterDiscoveryEntry` (`Section` carousel + `Search` overlay, which must be called in the same
+  ViewModel-store owner so they share one list state like the legacy Discovery) and `RoasterDetailEntry`; the slot
+  typealiases (`RoasterImage`, `RoasterLoadError`, `RoasterPhotoViewer`) became public; `RoasterFavoriteTarget` now
+  carries the public address parts (the favorites store persists the full address); `RoasterExposure` gained
+  `FavoriteCard`/`FavoriteDetail` (the legacy heart's exposure placement). `impl` exposes `createRoasterDiscoveryEntry`
+  and `createRoasterDetailEntry`; the Discovery section also pushes query/favorites-only into the shared state.
+- **composeApp (commonMain):** `RoasterScreenRenderer` (Legacy default: `RoasterPreview`, `RoasterListScreen`,
+  `RoasterDetailScreen`) with a Koin factory parameter; `DiscoveryTabContent` and both `RoasterDetail` route hosts in
+  `Navigator` call the renderer; the Discovery tab no longer builds the legacy list ViewModel itself.
+- **composeApp (androidMain, `di/roaster`):** `roasterModule()` (repository over the authenticated client, catalog
+  store over `SettingRepository` under the legacy `roaster_catalog_v1:<host>` key, favorites port, shop-photo port),
+  `AndroidRoasterFavorites` (wraps the existing `RoasterFavorites` + `FavoriteInteractions`, so auth gating,
+  de-duplication, account guards and favorite analytics are unchanged), `AndroidRoasterShopPhotos`,
+  `AndroidRoasterAnalytics`/`AndroidRoasterScreenAnalytics` (existing `SearchTracker`, `TrackEntityDetail`, exposures,
+  `DetailEntryMemory`, legacy names), and `AndroidRoasterScreenRenderer` (search header, navigation, browser, viewer,
+  `CoffeeShopImage`, `LoadErrorContent`, haptics supplied by the app).
+- **Tests:** 9 new app unit/composition tests per variant (ports 4, analytics 4, module 1); app Direct+Play suites
+  **1106 results, 0 failures**; roaster impl unit 19, domain 1, data 12. Builds: Direct/Play Debug, Direct Sandbox,
+  Direct instrumentation compilation, iOS Simulator Arm64 compilation, roaster impl lint (0 issues).
+- **Not verified:** any device or Sandbox behaviour of the activated screens (the phone was locked), the step 4 UI
+  suite after the entry/typealias refactor, haptic feedback, glass back button vs legacy back button, Haze, real images.
+- **Known differences from legacy:** the detail back button is the design-system glass button; the detail load error
+  text is generic instead of the server message; the legacy list's `isFavoriteLoading` was never set and is dropped.
+- Next (step 6): richer Sandbox fixtures, Sandbox walkthrough in both themes/error mode, rerun the isolated UI suite.

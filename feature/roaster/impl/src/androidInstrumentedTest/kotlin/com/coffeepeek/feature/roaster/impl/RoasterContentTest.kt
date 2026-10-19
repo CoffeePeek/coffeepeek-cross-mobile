@@ -41,7 +41,7 @@ import com.coffeepeek.feature.roaster.domain.model.RoasterSummary
 import com.coffeepeek.feature.roaster.domain.model.RoasterTag
 import com.coffeepeek.feature.roaster.impl.ui.compose.RoasterDetailScreenContent
 import com.coffeepeek.feature.roaster.impl.ui.compose.RoasterDiscoverySectionContent
-import com.coffeepeek.feature.roaster.impl.ui.compose.RoasterImage
+import com.coffeepeek.feature.roaster.api.RoasterImage
 import com.coffeepeek.feature.roaster.impl.ui.compose.RoasterListScreenContent
 import com.coffeepeek.feature.roaster.impl.ui.compose.component.RoasterCard
 import com.coffeepeek.feature.roaster.impl.ui.model.RoasterDetailAction

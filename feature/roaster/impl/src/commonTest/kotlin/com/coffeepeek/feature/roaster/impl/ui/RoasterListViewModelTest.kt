@@ -175,8 +175,8 @@ class RoasterListViewModelTest {
         model.onAction(RoasterListAction.LoadDetails("a")); runCurrent()
         model.onAction(RoasterListAction.ToggleFavorite("a")); model.onAction(RoasterListAction.ToggleFavorite("b")); runCurrent()
         assertEquals(listOf(
-            RoasterFavoriteTarget("a", "Roaster a", "https://m/a-1") to true,
-            RoasterFavoriteTarget("b", "Roaster b", "https://m/b") to false,
+            RoasterFavoriteTarget("a", "Roaster a", "https://m/a-1", "/roasters/a", 1, false) to true,
+            RoasterFavoriteTarget("b", "Roaster b", "https://m/b", "/roasters/b", 1, false) to false,
         ), favorites.changes)
         assertNull(model.state.value.message)
         favorites.failChange = true

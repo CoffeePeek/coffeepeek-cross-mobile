@@ -15,7 +15,7 @@ import com.coffeepeek.admin.ui.favorites.FavoritesDestination
 import com.coffeepeek.admin.ui.screen.contributions.ContributionKind
 import com.coffeepeek.admin.ui.screen.contributions.MyContributionsScreen
 import com.coffeepeek.admin.ui.screen.roaster.AddRoasterScreen
-import com.coffeepeek.admin.ui.screen.roaster.RoasterDetailScreen
+import com.coffeepeek.admin.ui.screen.roaster.RoasterScreenRenderer
 import com.coffeepeek.admin.ui.screen.profile.CityScreen
 import com.coffeepeek.admin.ui.screen.profile.ThemeScreen
 import com.coffeepeek.admin.ui.screen.profile.UsagePolicyScreen
@@ -499,7 +499,7 @@ object Navigator {
                     composable<Screen.AddRoaster> { AddRoasterScreen() }
                     composable<Screen.RoasterDetail> { backStack ->
                         val route = backStack.toRoute<Screen.RoasterDetail>()
-                        RoasterDetailScreen(roasterId = route.roasterId)
+                        koinInject<RoasterScreenRenderer>().Detail(route.roasterId)
                     }
                     composable<Screen.UserProfile> { backStack ->
                         PublicProfileRoute(backStack.toRoute<Screen.UserProfile>())
@@ -542,7 +542,7 @@ object Navigator {
             is Screen.ShopChangeRequestDetail -> ShopChangeRequestDetailScreen(screen.requestId)
             Screen.AddShop -> AddShopScreen()
             Screen.AddRoaster -> AddRoasterScreen()
-            is Screen.RoasterDetail -> RoasterDetailScreen(screen.roasterId)
+            is Screen.RoasterDetail -> koinInject<RoasterScreenRenderer>().Detail(screen.roasterId)
             is Screen.UserProfile -> PublicProfileRoute(screen)
             Screen.EditProfile -> EditProfileScreen()
             Screen.DeleteAccountPending -> DeleteAccountPendingScreen()

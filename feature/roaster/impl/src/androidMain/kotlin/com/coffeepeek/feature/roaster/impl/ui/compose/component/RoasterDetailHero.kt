@@ -32,7 +32,7 @@ import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.feature.roaster.domain.model.RoasterPhoto
 import com.coffeepeek.feature.roaster.impl.R
-import com.coffeepeek.feature.roaster.impl.ui.compose.RoasterImage
+import com.coffeepeek.feature.roaster.api.RoasterImage
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -45,6 +45,7 @@ internal fun RoasterDetailHero(
     onPhotoClick: (String) -> Unit,
     image: RoasterImage,
     modifier: Modifier = Modifier,
+    heartModifier: Modifier = Modifier,
 ) {
     Box(modifier.fillMaxWidth().height(280.dp).background(MaterialTheme.colorScheme.surfaceVariant)) {
         if (photos.isEmpty()) {
@@ -67,7 +68,7 @@ internal fun RoasterDetailHero(
             Icon(CoffeePeekIcons.Back, null)
         }
         RoasterFavoriteHeart(isFavorite, onToggleFavorite, overImage = true,
-            modifier = Modifier.align(Alignment.TopEnd).statusBarsPadding().padding(CoffeePeekDimens.spacing3))
+            modifier = heartModifier.align(Alignment.TopEnd).statusBarsPadding().padding(CoffeePeekDimens.spacing3))
     }
 }
 

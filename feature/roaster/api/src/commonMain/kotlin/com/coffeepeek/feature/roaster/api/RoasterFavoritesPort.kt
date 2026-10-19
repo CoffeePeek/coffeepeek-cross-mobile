@@ -3,8 +3,16 @@ package com.coffeepeek.feature.roaster.api
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
 
-/** What the favorites store needs to remember about a roaster. [key] is the public slug, falling back to the id. */
-data class RoasterFavoriteTarget(val key: String, val name: String, val photoUrl: String?)
+/** What the favorites store needs to remember about a roaster. [key] is the public slug. */
+data class RoasterFavoriteTarget(
+    val key: String,
+    val name: String,
+    val photoUrl: String?,
+    /** Public address parts; the favorites store persists the full address. */
+    val canonicalPath: String,
+    val revision: Int,
+    val isAlias: Boolean,
+)
 
 /**
  * Server favorites of the active account. The application owns authentication gating, in-flight de-duplication,

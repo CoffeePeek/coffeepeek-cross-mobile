@@ -118,8 +118,10 @@ internal class RoasterListViewModel(
     private fun toggleFavorite(slug: String) {
         val item = currentState.items.firstOrNull { it.slug == slug } ?: return
         val key = item.favoriteKey
+        val address = item.summary.address ?: return
         if (key.isBlank()) return
-        val target = RoasterFavoriteTarget(key, item.summary.name, item.summary.photoUrl ?: item.details?.photos?.firstOrNull()?.url)
+        val target = RoasterFavoriteTarget(key, item.summary.name, item.summary.photoUrl ?: item.details?.photos?.firstOrNull()?.url,
+            address.canonicalPath, address.revision, address.isAlias)
         favorites.change(target, favorite = key !in currentState.favoriteKeys) {
             updateState { copy(message = RoasterMessage.FavoriteChangeFailed) }
         }
