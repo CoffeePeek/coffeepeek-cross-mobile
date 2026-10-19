@@ -162,6 +162,22 @@ class HomeCheckInDetailViewModelTest {
         assertEquals(HomeCheckInDetailEvent.OpenPhoto(listOf("cutout"), 0), model.events.first().event)
     }
 
+    @Test fun detailAndOriginalAlbumsStayAlignedEvenWhenAPreviewIsUnavailable() = runTest(dispatcher) {
+        val repository = Repository().apply { detailResult = Result.success(entry().copy(
+            photos = listOf(HomePreparationPhoto("a", "original-a", detailUrl = "detail-a"),
+                HomePreparationPhoto("b", "original-b", detailUrl = "")),
+            drinkPhotoUrl = "cutout", drinkPhotoDetailUrl = "cutout-detail")) }
+        val model = model(repository)
+        runCurrent()
+        model.onAction(HomeCheckInDetailAction.OpenPhoto(1)); runCurrent()
+        assertEquals(HomeCheckInDetailEvent.OpenPhoto(listOf("detail-a", ""), 1,
+            listOf("original-a", "original-b")), model.events.first().event)
+        model.onAction(HomeCheckInDetailAction.OpenDrinkPhoto); runCurrent()
+        assertEquals(HomeCheckInDetailEvent.OpenPhoto(listOf("cutout-detail"), 0, listOf("cutout")),
+            model.events.first().event)
+        assertEquals(1, repository.detailCalls)
+    }
+
     @Test fun invalidPhotoIndicesAndBlankCutoutDoNotEmitEffects() = runTest(dispatcher) {
         val repository = Repository().apply {
             detailResult = Result.success(entry().copy(drinkPhotoUrl = " ", photos = listOf(HomePreparationPhoto("blank", ""))))

@@ -94,6 +94,27 @@ class HomeCheckInDetailContractTest {
         }
     }
 
+    @Test fun feedAndCutoutThumbsNeverRequestOriginalsAndMissingPreviewsRemainClickableInBothThemes() {
+        for (dark in listOf(false, true)) {
+            val actions = mutableListOf<HomeCheckInDetailAction>()
+            val requested = java.util.concurrent.CopyOnWriteArraySet<Pair<String, Boolean>>()
+            val entry = previewHomePreparation().copy(photos = listOf(
+                HomePreparationPhoto("a", "original-a", thumbnailUrl = "feed-a"),
+                HomePreparationPhoto("b", "original-b", thumbnailUrl = "")),
+                drinkPhotoUrl = "cutout-original", drinkPhotoThumbnailUrl = "cutout-thumb")
+            render(dark) { Content(HomeCheckInDetailState(entry = entry), actions::add) { url, _, modifier, cutout ->
+                requested += url to cutout; Box(modifier)
+            } }.use {
+                compose.onNode(hasScrollAction()).performScrollToNode(hasContentDescription("Фотография 2 из 2"))
+                compose.onNodeWithContentDescription("Фотография 2 из 2").performClick()
+                compose.onNode(hasScrollAction()).performScrollToNode(hasContentDescription("Фото напитка"))
+                compose.onNodeWithContentDescription("Фото напитка").performClick()
+                assertEquals(listOf(HomeCheckInDetailAction.OpenPhoto(1), HomeCheckInDetailAction.OpenDrinkPhoto), actions)
+                assertEquals(setOf("feed-a" to false, "cutout-thumb" to true), requested.toSet())
+            }
+        }
+    }
+
     @Test fun revokedOrClosedStateNeverComposesPrivateContentEvenIfEntryRemainsInSnapshot() {
         for (state in listOf(HomeCheckInDetailState(entry = previewHomePreparation(), isAccessRevoked = true),
                 HomeCheckInDetailState(entry = previewHomePreparation(), isClosed = true))) {
@@ -153,7 +174,7 @@ class HomeCheckInDetailContractTest {
         var callback by mutableStateOf<(String) -> Unit>({ error("Old callback must not be invoked") })
         val edits = mutableListOf<String>()
         render { entry.Content("fixture-home", generation, true, { date, _ -> date }, { it }, {}, callback,
-            { error("Unexpected delete") }, { _, _ -> error("Unexpected photo") }, {}) }.use {
+            { error("Unexpected delete") }, { _, _, _ -> error("Unexpected photo") }, {}) }.use {
             awaitText("Эфиопия")
             compose.onNode(hasScrollAction()).performScrollToNode(hasText("Редактировать"))
             compose.runOnIdle { callback = { edits += it } }
@@ -171,7 +192,7 @@ class HomeCheckInDetailContractTest {
         var allowed by mutableStateOf(true)
         val entry = createHomeCheckInDetailEntry(repository, { allowed }) { _, _, modifier, _ -> Box(modifier) }
         render { entry.Content("fixture-home", 1, allowed, { date, _ -> date }, { it }, {},
-            { error("Private edit after revocation") }, { error("Unexpected delete") }, { _, _ -> error("Unexpected photo") }, {}) }.use {
+            { error("Private edit after revocation") }, { error("Unexpected delete") }, { _, _, _ -> error("Unexpected photo") }, {}) }.use {
             awaitText("Эфиопия")
             compose.onNodeWithText("Эфиопия").assertExists()
             compose.runOnIdle { allowed = false }
@@ -186,7 +207,7 @@ class HomeCheckInDetailContractTest {
         val deleted = mutableListOf<String>()
         var dismissAllowed = true
         render { entry.Content("fixture-home", 1, true, { date, _ -> date }, { it }, {}, {}, deleted::add,
-            { _, _ -> }, { dismissAllowed = it }) }.use {
+            { _, _, _ -> }, { dismissAllowed = it }) }.use {
             awaitText("Эфиопия")
             compose.onNode(hasScrollAction()).performScrollToNode(hasText("Удалить запись"))
             compose.onNodeWithText("Удалить запись").performClick()
@@ -206,7 +227,7 @@ class HomeCheckInDetailContractTest {
     @Test fun initiallyDeniedSnapshotDoesNotStartEvenTheFirstDetailRequest() {
         val repository = Repository()
         val entry = createHomeCheckInDetailEntry(repository, { true }) { _, _, _, _ -> error("Denied image") }
-        render { entry.Content("fixture-home", 1, false, { date, _ -> date }, { it }, {}, {}, {}, { _, _ -> }, {}) }.use {
+        render { entry.Content("fixture-home", 1, false, { date, _ -> date }, { it }, {}, {}, {}, { _, _, _ -> }, {}) }.use {
             compose.waitForIdle()
             assertEquals(0, repository.detailCalls)
             compose.onNodeWithText("Эфиопия").assertDoesNotExist()
@@ -215,29 +236,32 @@ class HomeCheckInDetailContractTest {
 
     @Test fun runtimePhotoViewerReceivesIssuedAlbumAndCutoutWithoutAnotherDetailRead() {
         val originals = (1..5).map { "https://fixture.invalid/issued/original-$it?signature=fixture" }
+        val details = originals.indices.map { if (it == 2) "" else "https://fixture.invalid/detail-$it" }
         val cutout = "https://fixture.invalid/issued/cutout?signature=fixture"
         val repository = Repository().apply { detail = previewHomePreparation().copy(
-            photos = originals.mapIndexed { index, url -> HomePreparationPhoto("photo-$index", url) },
-            drinkPhotoUrl = cutout,
+            photos = originals.mapIndexed { index, url -> HomePreparationPhoto("photo-$index", url,
+                thumbnailUrl = "feed-$index", detailUrl = details[index]) },
+            drinkPhotoUrl = cutout, drinkPhotoThumbnailUrl = "cutout-thumb", drinkPhotoDetailUrl = "cutout-detail",
         ) }
         val requests = java.util.concurrent.CopyOnWriteArraySet<Pair<String, Boolean>>()
         val entry = createHomeCheckInDetailEntry(repository, { true }) { url, _, modifier, isCutout ->
             requests += url to isCutout
             Box(modifier)
         }
-        val albums = mutableListOf<Pair<List<String>, Int>>()
+        val albums = mutableListOf<Triple<List<String>, List<String>, Int>>()
         render { entry.Content("fixture-home", 1, true, { date, _ -> date }, { it }, {}, {}, {},
-            { urls, index -> albums += urls to index }, {}) }.use {
+            { urls, originals, index -> albums += Triple(urls, originals, index) }, {}) }.use {
             awaitText("Эфиопия")
             compose.onNode(hasScrollAction()).performScrollToNode(hasContentDescription("Фотография 3 из 5"))
             compose.onNodeWithContentDescription("Фотография 3 из 5").performClick()
             compose.waitUntil { albums.size == 1 }
-            assertEquals(originals to 2, albums.single())
+            assertEquals(Triple(details, originals, 2), albums.single())
             compose.onNode(hasScrollAction()).performScrollToNode(hasContentDescription("Фото напитка"))
             compose.onNodeWithContentDescription("Фото напитка").performClick()
             compose.waitUntil { albums.size == 2 }
-            assertEquals(listOf(cutout) to 0, albums.last())
-            assertTrue(requests.containsAll(setOf(originals[0] to false, originals[2] to false, cutout to true)))
+            assertEquals(Triple(listOf("cutout-detail"), listOf(cutout), 0), albums.last())
+            assertTrue(requests.containsAll(setOf("feed-0" to false, "feed-2" to false, "cutout-thumb" to true)))
+            assertFalse(requests.any { it.first in originals || it.first == cutout || it.first in details })
             assertEquals(1, repository.detailCalls)
             assertEquals(0, repository.deleteCalls)
         }
@@ -246,7 +270,7 @@ class HomeCheckInDetailContractTest {
     @Test fun runtimeLoadFailureRetriesTheReadWithoutInventingAnEntryOrWriting() {
         val repository = Repository().apply { detailFailure = HomePreparationFailure(HomePreparationIssue.Offline) }
         val entry = createHomeCheckInDetailEntry(repository, { true }) { _, _, modifier, _ -> Box(modifier) }
-        render { entry.Content("fixture-home", 1, true, { date, _ -> date }, { it }, {}, {}, {}, { _, _ -> }, {}) }.use {
+        render { entry.Content("fixture-home", 1, true, { date, _ -> date }, { it }, {}, {}, {}, { _, _, _ -> }, {}) }.use {
             awaitText("Нет подключения к интернету. Попробуйте ещё раз.")
             compose.onNodeWithText("Эфиопия").assertDoesNotExist()
             assertEquals(1, repository.detailCalls)
@@ -264,7 +288,7 @@ class HomeCheckInDetailContractTest {
         val entry = createHomeCheckInDetailEntry(repository, { true }) { _, _, modifier, _ -> Box(modifier) }
         val deleted = mutableListOf<String>()
         render { entry.Content("fixture-home", 1, true, { date, _ -> date }, { it }, {}, {}, deleted::add,
-            { _, _ -> }, {}) }.use {
+            { _, _, _ -> }, {}) }.use {
             awaitText("Эфиопия")
             requestDelete()
             confirmDelete()
@@ -297,7 +321,7 @@ class HomeCheckInDetailContractTest {
         val deleted = mutableListOf<String>()
         var callback by mutableStateOf<(String) -> Unit>({ error("Old delete callback") })
         render { entry.Content("fixture-home", 1, true, { date, _ -> date }, { it }, {}, {}, callback,
-            { _, _ -> }, {}) }.use { scenario ->
+            { _, _, _ -> }, {}) }.use { scenario ->
             awaitText("Эфиопия")
             requestDelete()
             confirmDelete()

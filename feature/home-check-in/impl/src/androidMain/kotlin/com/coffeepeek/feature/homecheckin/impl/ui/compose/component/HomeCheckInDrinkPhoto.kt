@@ -33,8 +33,12 @@ internal fun HomeCheckInDrinkPhoto(
         .clickable(enabled = enabled, role = Role.Button, onClickLabel = openLabel, onClick = onOpen)
         .semantics(mergeDescendants = true) { contentDescription = description },
         contentAlignment = Alignment.Center) {
-        imageContent(url, description, Modifier.fillMaxSize().padding(12.dp), true)
+        if (url.isNotBlank()) imageContent(url, description, Modifier.fillMaxSize().padding(12.dp), true)
     }
+}
+
+@PreviewLightDark @Composable private fun HomeCheckInUnavailableDrinkPhotoPreview() = CoffeePeekTheme {
+    HomeCheckInDrinkPhoto("", true, { _, _, _, _ -> }, {})
 }
 
 @PreviewLightDark @Composable private fun HomeCheckInDrinkPhotoPreview() = CoffeePeekTheme {
