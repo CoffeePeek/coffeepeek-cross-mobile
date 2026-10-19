@@ -23,16 +23,6 @@ class HomePhotoViewerImagesTest {
         assertNull(images.highQualityUrl(1, 0))
     }
 
-    @Test fun pendingDrinkAutomaticallyShowsOriginalWithoutADetailDescriptor() {
-        val original = "https://gateway.example/api/v1/check-ins/home/photos/drink"
-        for (detail in listOf(null, "")) {
-            val images = homeDrinkPhotoViewerImages(original, detail)
-            assertEquals(listOf(""), images.previews)
-            assertEquals(original, images.displayUrl(0, 0, true))
-            assertEquals(original, images.highQualityUrl(0, 0))
-        }
-    }
-
     @Test fun legacyHomePhotoDisplaysWithoutASecondQualityRequest() {
         val original = "https://gateway.example/api/v1/check-ins/home/photos/legacy"
         val images = homePhotoViewerImages(listOf(HomeCheckInPhoto("legacy", original)))
@@ -40,11 +30,4 @@ class HomePhotoViewerImagesTest {
         assertNull(images.highQualityUrl(0, 0))
     }
 
-    @Test fun readyDrinkDetailDoesNotDownloadTheOriginalAgain() {
-        val original = "https://gateway.example/api/v1/check-ins/home/photos/drink"
-        val detail = "$original/variants/source/1/detail.png"
-        val images = homeDrinkPhotoViewerImages(original, detail)
-        assertEquals(detail, images.displayUrl(0, 0, true))
-        assertNull(images.highQualityUrl(0, 0))
-    }
 }

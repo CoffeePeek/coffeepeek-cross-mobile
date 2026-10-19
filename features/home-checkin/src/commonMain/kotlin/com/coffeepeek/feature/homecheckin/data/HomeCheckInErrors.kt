@@ -87,7 +87,7 @@ private fun JsonObject?.string(key: String) = (value(key) as? JsonPrimitive)?.co
 private fun fieldForKey(key: String): HomeCheckInField? {
     val parts = key.lowercase().split('.', '[', ']')
     return when {
-        parts.any { it == "photos" || it == "drinkphoto" } -> Photos
+        "photos" in parts -> Photos
         parts.any { it == "preparedat" || it == "preparedon" } -> Date
         "brewmethodcode" in parts -> Method
         parts.any { it in setOf("coffeeproductslug", "coffeeproductid", "custombeanname") } -> Bean
@@ -145,11 +145,10 @@ private val knownFieldErrors: Map<String, Pair<HomeCheckInField, String>> = buil
     add(Visibility, serverMessages = arrayOf("Visibility must be Private or Public."))
     add(Photos, serverMessages = arrayOf(
         "Photos must be distinct, valid storage keys; at most five photos are allowed.",
-        "DrinkPhoto requires an original photo and a separate valid storage key.",
         "One or more photos are already attached to content.",
         "One or more photos were not found, do not belong to you, or were already used.",
         "Check-in photos must belong to the author and cannot be shared or exceed five.",
-        "Check-in photos must be distinct.", "A drink cutout requires its own PNG and an original photo.",
+        "Check-in photos must be distinct.",
     ))
     add(Photos, "Не удалось прикрепить фотографии. Попробуйте сохранить чекин ещё раз.",
         "Photos could not be claimed, please retry with the same uploads.")

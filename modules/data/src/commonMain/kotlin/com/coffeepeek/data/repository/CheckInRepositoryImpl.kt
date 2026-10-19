@@ -30,19 +30,9 @@ class CheckInRepositoryImpl(
         require(!input.visitedAtIso.isNullOrBlank()) { "Выберите дату визита" }
         validateCheckInContent(input.text, input.rating, input.drinkSlug, input.customDrinkName)?.let { error(it) }
         require(input.photos.size <= 5) { "Можно добавить до 5 фото" }
-        input.drinkPhoto?.let {
-            require(input.photos.isNotEmpty()) { "Для изображения напитка нужно полное фото" }
-            require(it.contentType == "image/png" && it.bytes.isNotEmpty()) { "Изображение напитка должно быть PNG" }
-        }
         val uploaded = photoRepository.uploadCheckInPhotos(input.photos).getOrElse { error ->
             if (error is CancellationException) throw error
             throw com.coffeepeek.domain.model.CheckInOperationFailure(com.coffeepeek.domain.model.CheckInFailureStage.PhotoUpload, error as? Exception ?: Exception(error))
-        }
-        val drinkPhoto = input.drinkPhoto?.let {
-            photoRepository.uploadCheckInPhotos(listOf(it)).getOrElse { error ->
-                if (error is CancellationException) throw error
-                throw com.coffeepeek.domain.model.CheckInOperationFailure(com.coffeepeek.domain.model.CheckInFailureStage.PhotoUpload, error as? Exception ?: Exception(error))
-            }.toUploadedPhotoReqs().single()
         }
         checkInApiService.createCheckIn(CreateCheckInReq(
             coffeeShopSlug = input.shopSlug,
@@ -53,7 +43,6 @@ class CheckInRepositoryImpl(
             drinkSlug = input.drinkSlug,
             customDrinkName = input.customDrinkName?.trim(),
             photos = uploaded.toUploadedPhotoReqs(),
-            drinkPhoto = drinkPhoto,
         )).getOrThrow()
         Result.success(Unit)
     } catch (cancelled: CancellationException) {

@@ -30,8 +30,6 @@ data class CheckInDto(
     val drinkNameEn: String? = null,
     @Serializable(with = FlexibleIntSerializer::class) val helpfulCount: Int = 0,
     val isHelpfulByCurrentUser: Boolean = false,
-    val drinkPhotoUrl: String? = null,
-    val drinkPhotoVariants: List<CheckInPhotoVariantDto>? = null,
     val kind: String = "Shop",
     val home: FeedHomePreparationDto? = null,
     val authorAvatarUrl: String? = null,

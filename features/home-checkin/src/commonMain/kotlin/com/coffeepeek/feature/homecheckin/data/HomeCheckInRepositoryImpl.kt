@@ -40,7 +40,6 @@ import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.contentOrNull
-import kotlinx.serialization.json.decodeFromJsonElement
 
 private const val PATH = "/api/v1/check-ins/home"
 
@@ -53,8 +52,7 @@ class HomeCheckInRepositoryImpl(
     override suspend fun create(input: HomeCheckInInput): Result<HomeCheckIn> = homeRequestResult {
         validateInput(input, editing = false)
         val originals = homePhotoUpload { upload(input.photos) }
-        val cutout = input.drinkPhoto?.let { homePhotoUpload { upload(listOf(it)).single() } }
-        client.post(PATH) { contentType(ContentType.Application.Json); setBody(input.toCreateRequest(originals, cutout)) }
+        client.post(PATH) { contentType(ContentType.Application.Json); setBody(input.toCreateRequest(originals)) }
             .data<HomeDto>().toDomain()
     }
 
@@ -161,9 +159,6 @@ class HomeCheckInRepositoryImpl(
         drinkSlug = drink.slug(), customDrinkName = drink.customName(),
         photos = photos.sortedBy { it.sortIndex }.map { HomeCheckInPhoto(it.id, it.url.absoluteUrl(),
             it.variantUrl("feed").absoluteUrl(), it.variantUrl("detail").absoluteUrl(), it.variantUrl("thumb").absoluteUrl()) },
-        drinkPhotoUrl = drinkPhoto.urlOrNull()?.absoluteUrl(),
-        drinkPhotoThumbnailUrl = drinkPhoto.asPhoto()?.variantUrl("thumb")?.absoluteUrl(),
-        drinkPhotoDetailUrl = drinkPhoto.asPhoto()?.variantUrl("detail")?.absoluteUrl(),
         visibility = HomeCheckInVisibility.entries.firstOrNull { it.name.equals(visibility, ignoreCase = true) },
         moderation = HomeCheckInModeration.entries.firstOrNull { it.name.equals(moderationState, ignoreCase = true) }
             ?: HomeCheckInModeration.Unknown,
@@ -202,10 +197,10 @@ private fun HomeCheckInInput.toEditRequest() = HomeEditDto(preparedAt, preparedO
     customBeanName?.trim(), doseGrams?.toDouble(), brewDurationSeconds, tasteScore,
     text?.trim(), drinkSlug, customDrinkName?.trim(), visibility?.name)
 
-private fun HomeCheckInInput.toCreateRequest(photos: List<UploadedPhotoDto>, drinkPhoto: UploadedPhotoDto?) =
+private fun HomeCheckInInput.toCreateRequest(photos: List<UploadedPhotoDto>) =
     HomeCreateDto(preparedAt, preparedOn, brewMethodCode, coffeeProductSlug, coffeeProductId,
         customBeanName?.trim(), doseGrams?.toDouble(), brewDurationSeconds, tasteScore,
-        text?.trim(), drinkSlug, customDrinkName?.trim(), photos, drinkPhoto,
+        text?.trim(), drinkSlug, customDrinkName?.trim(), photos,
         (visibility ?: HomeCheckInVisibility.Private).name)
 
 private fun JsonElement?.displayName(): String? = (this as? JsonObject)?.let {
@@ -219,14 +214,6 @@ private fun JsonElement?.customName(): String? = (this as? JsonObject)?.let {
     listOf("customName", "customDrinkName").firstNotNullOfOrNull { key ->
         (it[key] as? JsonPrimitive)?.contentOrNull
     }
-}
-
-private fun JsonElement?.urlOrNull(): String? = when (this) {
-    is JsonPrimitive -> contentOrNull
-    is JsonObject -> listOf("url", "fullUrl").firstNotNullOfOrNull { key ->
-        (this[key] as? JsonPrimitive)?.contentOrNull
-    }
-    else -> null
 }
 
 @Serializable private data class HomeEnvelope<T>(val isSuccess: Boolean, val message: String? = null, val data: T? = null)
@@ -245,10 +232,6 @@ private fun HomePhotoDto.variantUrl(purpose: String): String {
     }.orEmpty()
 }
 
-private fun JsonElement?.asPhoto(): HomePhotoDto? = when (this) {
-    is JsonObject -> responseJson.decodeFromJsonElement<HomePhotoDto>(this)
-    else -> urlOrNull()?.let { HomePhotoDto(url = it) }
-}
 @Serializable private data class HomeDto(
     val id: String,
     val preparedAtUtc: String,
@@ -263,7 +246,6 @@ private fun JsonElement?.asPhoto(): HomePhotoDto? = when (this) {
     val tasteScore: Int? = null,
     val drink: JsonElement? = null,
     val photos: List<HomePhotoDto> = emptyList(),
-    val drinkPhoto: JsonElement? = null,
     val visibility: String? = null,
     val moderationState: String? = null,
 )
@@ -296,7 +278,6 @@ private fun JsonElement?.asPhoto(): HomePhotoDto? = when (this) {
     val drinkSlug: String?,
     val customDrinkName: String?,
     val photos: List<UploadedPhotoDto>,
-    val drinkPhoto: UploadedPhotoDto?,
     val visibility: String,
 )
 @Serializable private data class PhotoUploadRequestDto(val sizeBytes: Int, val fileName: String, val contentType: String)
