@@ -16,6 +16,16 @@ network), so commands used an explicit serial. Not covered: large font, light th
 pagination, error/slow modes for Coffee. First fixture pass showed the same country/raw `fruity` descriptor on
 every coffee; fixed (per-coffee country and Russian descriptors) and covered by unit tests, not re-photographed.
 
+### Coffee error-mode follow-up — 2026-10-20
+
+With the Sandbox handle set to "no network", opening the Coffee tab after a cold start shows the
+list error state ("Не удалось загрузить кофе" + "Попробовать снова"), and the Discovery tab shows its
+own error state. **Not confirmed:** that "Попробовать снова" recovers after switching back to normal mode
+(my follow-up taps landed on other screens, so this stays an open check), light theme for the new
+filter/detail screens, large font on device (covered only by the earlier instrumented 1.0/1.5 scale
+tests; the device font setting was not changed), pagination, and the block UI walkthrough. The
+Sandbox process was force-stopped afterwards, which resets scenario and fixtures.
+
 ## Author-blocking and protected-photo fixtures — 2026-10-19
 
 Full-app fake backend now serves `/api/v1/me/blocks` (list/PUT/DELETE), a second
