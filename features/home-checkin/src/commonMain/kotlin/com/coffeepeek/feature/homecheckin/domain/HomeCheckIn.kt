@@ -25,9 +25,12 @@ data class HomeCheckIn(
     /** Null means the server has not supplied visibility; never infer publication. */
     val visibility: HomeCheckInVisibility? = null,
     val moderation: HomeCheckInModeration = HomeCheckInModeration.Unknown,
+    val drinkPhotoThumbnailUrl: String? = drinkPhotoUrl,
+    val drinkPhotoDetailUrl: String? = drinkPhotoUrl,
 )
 
-data class HomeCheckInPhoto(val id: String, val url: String)
+data class HomeCheckInPhoto(val id: String, val url: String, val thumbnailUrl: String = url,
+    val detailUrl: String = url, val calendarUrl: String = thumbnailUrl)
 
 data class HomePhotoUpload(val fileName: String, val contentType: String, val bytes: ByteArray)
 

@@ -52,7 +52,9 @@ internal fun CheckInShopPickerScreen() {
     var locationRefreshKey by remember { mutableStateOf(0) }
     LocationPermissionEffect(requestKey = 1, onGranted = { locationRefreshKey++ })
     val location = rememberPermittedUserLocation(locationRefreshKey)
-    LaunchedEffect(location) { location?.let(vm::onUserLocationChanged) }
+    LaunchedEffect(location) {
+        location?.let { vm.onUserLocationChanged(it, selectNearbyOnFirstLocation = true) }
+    }
     val focus = LocalFocusManager.current
     val keyboard = LocalSoftwareKeyboardController.current
     var showMap by rememberSaveable { mutableStateOf(false) }

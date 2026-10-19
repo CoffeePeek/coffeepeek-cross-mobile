@@ -1,6 +1,7 @@
 package com.coffeepeek.feature.shop.data.mapper
 
 import com.coffeepeek.feature.shop.data.backend.ShopCheckInDto
+import com.coffeepeek.feature.shop.data.backend.ShopCheckInPhotoVariantDto
 import com.coffeepeek.feature.shop.data.backend.ShopRatingDto
 import com.coffeepeek.feature.shop.data.backend.ShopReviewDto
 import com.coffeepeek.feature.shop.domain.model.ShopCheckIn
@@ -65,8 +66,9 @@ internal fun ShopReviewDto.toDomain(files: ShopFileUrlResolver): ShopReview? {
 
 internal fun ShopCheckInDto.toDomain(files: ShopFileUrlResolver): ShopCheckIn? {
     if (id.isBlank()) return null
-    val resolvedPhotos = photos.sortedBy { it.sortIndex.toFlexibleInt() }
-        .mapNotNull { files.resolveApiUrl(it.url) }
+    val orderedPhotos = photos.sortedBy { it.sortIndex.toFlexibleInt() }
+        .filter { files.resolveApiUrl(it.url) != null }
+    val resolvedPhotos = orderedPhotos.map { files.resolveApiUrl(it.url).orEmpty() }
     return ShopCheckIn(
         id = id,
         userId = author?.slug.orEmpty(),
@@ -76,7 +78,10 @@ internal fun ShopCheckInDto.toDomain(files: ShopFileUrlResolver): ShopCheckIn? {
         visitedAt = visitedAt,
         reviewId = null,
         photoUrls = resolvedPhotos,
-        photoThumbnailUrls = resolvedPhotos,
+        photoThumbnailUrls = orderedPhotos.map { files.resolveApiUrl(it.variants.photoUrl("feed", it.url)).orEmpty() },
+        photoDetailUrls = orderedPhotos.map {
+            files.resolveApiUrl(it.variants.photoUrl("detail", it.url).ifBlank { it.url }).orEmpty()
+        },
         rating = rating?.toDomain(),
         username = username,
         drinkSlug = drinkSlug,
@@ -84,8 +89,12 @@ internal fun ShopCheckInDto.toDomain(files: ShopFileUrlResolver): ShopCheckIn? {
         drinkNameRu = drinkNameRu,
         drinkNameEn = drinkNameEn,
         drinkPhotoUrl = files.resolveApiUrl(drinkPhotoUrl),
+        drinkPhotoThumbnailUrl = drinkPhotoUrl?.let {
+            files.resolveApiUrl(drinkPhotoVariants.photoUrl("thumb", it)).orEmpty()
+        },
         authorAvatarUrl = files.resolveApiUrl(authorAvatarUrl),
         authorSlug = author?.slug?.takeIf(String::isNotBlank),
+        authorId = authorId?.takeIf(String::isNotBlank),
         visibility = ShopCheckInVisibility.entries.firstOrNull { it.name == visibility }
             ?: ShopCheckInVisibility.Private,
         moderationState = ShopCheckInModerationState.entries.firstOrNull { it.name == moderationState }
@@ -95,6 +104,15 @@ internal fun ShopCheckInDto.toDomain(files: ShopFileUrlResolver): ShopCheckIn? {
         helpfulCount = helpfulCount.toFlexibleInt(),
         isHelpfulByCurrentUser = isHelpfulByCurrentUser,
     )
+}
+
+/** Missing manifest is legacy; an explicit empty/unsupported manifest must not fetch an original inline. */
+private fun List<ShopCheckInPhotoVariantDto>?.photoUrl(purpose: String, original: String): String {
+    if (this == null) return original
+    val supported = filter { it.purpose == purpose && it.width > 0 && it.height > 0 && it.sizeBytes > 0 && it.url.isNotBlank() }
+    return listOf("image/png", "image/jpeg", "image/webp").firstNotNullOfOrNull { type ->
+        supported.firstOrNull { it.contentType == type }?.url
+    }.orEmpty()
 }
 
 private fun ShopRatingDto.toDomain(): ShopRating = ShopRating(

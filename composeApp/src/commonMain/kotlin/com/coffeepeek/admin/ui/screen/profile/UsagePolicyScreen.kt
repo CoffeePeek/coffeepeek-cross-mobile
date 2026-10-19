@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -24,8 +25,9 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -35,11 +37,11 @@ import com.adamglin.phosphoricons.regular.FileText
 import com.adamglin.phosphoricons.regular.Shield
 import com.coffeepeek.admin.analytics.Analytics
 import com.coffeepeek.admin.analytics.AnalyticsConsent
-import com.coffeepeek.admin.analytics.AnalyticsConsentSwitch
 import com.coffeepeek.admin.legal.LegalUrls
 import com.coffeepeek.admin.theme.CpDimens
 import com.coffeepeek.admin.ui.component.CpTopBar
 import com.coffeepeek.admin.ui.component.PlatformScrollableColumn
+import com.coffeepeek.admin.ui.component.PlatformSwitch
 import com.coffeepeek.admin.ui.component.SettingsIconBadge
 import com.coffeepeek.admin.ui.component.SettingsIconColors
 import com.coffeepeek.admin.ui.icons.CpIcons
@@ -70,15 +72,21 @@ internal fun UsagePolicyScreen() {
                     background = MaterialTheme.colorScheme.primary.copy(alpha = 0.12f),
                     icon = MaterialTheme.colorScheme.primary,
                 )
-                if (analytics != null && state?.let { it.authReady && !it.userId.isNullOrBlank() } == true) {
-                    UsagePolicyCard(onClick = {
-                        scope.launch {
-                            analytics.setConsent(
-                                if (analytics.state.value.consent == AnalyticsConsent.Accepted)
-                                    AnalyticsConsent.Declined else AnalyticsConsent.Accepted,
-                            )
-                        }
-                    }) {
+                if (analytics != null && state != null && state.authReady && !state.userId.isNullOrBlank()) {
+                    val analyticsAccepted = state.consent == AnalyticsConsent.Accepted
+                    UsagePolicyCard(
+                        modifier = Modifier.toggleable(
+                            value = analyticsAccepted,
+                            role = Role.Switch,
+                            onValueChange = { checked ->
+                                scope.launch {
+                                    analytics.setConsent(
+                                        if (checked) AnalyticsConsent.Accepted else AnalyticsConsent.Declined,
+                                    )
+                                }
+                            },
+                        ),
+                    ) {
                         Row(verticalAlignment = Alignment.Top) {
                             SettingsIconBadge(
                                 icon = PhosphorIcons.Regular.Shield,
@@ -86,21 +94,12 @@ internal fun UsagePolicyScreen() {
                             )
                             Spacer(Modifier.width(CpDimens.spacing3))
                             Column(Modifier.weight(1f)) {
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Text(
-                                        text = "Аналитика использования",
-                                        style = MaterialTheme.typography.bodyLarge,
-                                        fontWeight = FontWeight.Medium,
-                                        color = MaterialTheme.colorScheme.onSurface,
-                                        modifier = Modifier.weight(1f),
-                                    )
-                                    Spacer(Modifier.width(CpDimens.spacing2))
-                                    AnalyticsConsentSwitch(
-                                        modifier = Modifier.semantics {
-                                            contentDescription = "Аналитика использования"
-                                        },
-                                    )
-                                }
+                                Text(
+                                    text = "Аналитика использования",
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    fontWeight = FontWeight.Medium,
+                                    color = MaterialTheme.colorScheme.onSurface,
+                                )
                                 Spacer(Modifier.height(CpDimens.spacing2))
                                 Text(
                                     text = "С вашего согласия события использования отправляются в PostHog (ЕС), " +
@@ -109,40 +108,33 @@ internal fun UsagePolicyScreen() {
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 )
                             }
+                            Spacer(Modifier.width(CpDimens.spacing3))
+                            PlatformSwitch(
+                                checked = analyticsAccepted,
+                                onCheckedChange = null,
+                                modifier = Modifier
+                                    .align(Alignment.CenterVertically)
+                                    .clearAndSetSemantics { },
+                            )
                         }
                     }
                     Spacer(Modifier.height(CpDimens.settingsSectionSpacing))
                 }
-                UsagePolicyCard(onClick = { OpenInBrowser.openInBrowser(LegalUrls.TERMS) }) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        SettingsIconBadge(
-                            icon = PhosphorIcons.Regular.FileText,
-                            colors = iconColors,
-                        )
-                        Spacer(Modifier.width(CpDimens.spacing3))
-                        Column(Modifier.weight(1f)) {
-                            Text(
-                                text = "Правила использования",
-                                style = MaterialTheme.typography.bodyLarge,
-                                fontWeight = FontWeight.Medium,
-                                color = MaterialTheme.colorScheme.onSurface,
-                            )
-                            Spacer(Modifier.height(CpDimens.spacing1))
-                            Text(
-                                text = "Узнайте, как работает CoffeePeek.",
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            )
-                        }
-                        Spacer(Modifier.width(CpDimens.spacing2))
-                        Icon(
-                            imageVector = CpIcons.ChevronRight,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.size(CpDimens.settingsIconSize),
-                        )
-                    }
-                }
+                UsagePolicyLinkCard(
+                    title = "Правила использования",
+                    description = "Узнайте, как работает CoffeePeek.",
+                    url = LegalUrls.TERMS,
+                    icon = PhosphorIcons.Regular.FileText,
+                    iconColors = iconColors,
+                )
+                Spacer(Modifier.height(CpDimens.settingsSectionSpacing))
+                UsagePolicyLinkCard(
+                    title = "Политика конфиденциальности",
+                    description = "Как мы обрабатываем и защищаем ваши данные.",
+                    url = LegalUrls.PRIVACY,
+                    icon = PhosphorIcons.Regular.Shield,
+                    iconColors = iconColors,
+                )
             }
             Spacer(Modifier.height(CpDimens.spacing8))
         }
@@ -151,11 +143,11 @@ internal fun UsagePolicyScreen() {
 
 @Composable
 private fun UsagePolicyCard(
-    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
     content: @Composable ColumnScope.() -> Unit,
 ) {
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(CpDimens.cardRadius),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
@@ -164,9 +156,45 @@ private fun UsagePolicyCard(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .clickable(onClick = onClick)
                 .padding(CpDimens.settingsRowPaddingH),
             content = content,
         )
+    }
+}
+
+@Composable
+private fun UsagePolicyLinkCard(
+    title: String,
+    description: String,
+    url: String,
+    icon: ImageVector,
+    iconColors: SettingsIconColors,
+) {
+    UsagePolicyCard(modifier = Modifier.clickable(role = Role.Button) { OpenInBrowser.openInBrowser(url) }) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            SettingsIconBadge(icon = icon, colors = iconColors)
+            Spacer(Modifier.width(CpDimens.spacing3))
+            Column(Modifier.weight(1f)) {
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.bodyLarge,
+                    fontWeight = FontWeight.Medium,
+                    color = MaterialTheme.colorScheme.onSurface,
+                )
+                Spacer(Modifier.height(CpDimens.spacing1))
+                Text(
+                    text = description,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+            Spacer(Modifier.width(CpDimens.spacing2))
+            Icon(
+                imageVector = CpIcons.ChevronRight,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.size(CpDimens.settingsIconSize),
+            )
+        }
     }
 }

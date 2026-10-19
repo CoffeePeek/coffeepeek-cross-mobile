@@ -107,8 +107,9 @@ Device acceptance checks:
    gestures, rapidly navigate, then verify retained map/tab state.
 2. Open filters, check-in and nested date/photo sheets. Check medium/large
    heights, keyboard interaction, busy-state dismissal and iPad popovers.
-3. Sign-in/register/reset fields: Next/Done, Passwords AutoFill, secure toggle
-   while editing, selection retention and the first edit after toggling.
+3. Sign-in/register fields: Next/Done, Passwords AutoFill, secure toggle
+   while editing, selection retention and the first edit after toggling. Password
+   recovery: email request, browser reset from the email and return to login.
 4. Scroll forms with the keyboard open; test pan-to-dismiss, numeric fields'
    Done toolbar and large accessibility text sizes.
 5. Photo paging/pinch versus vertical dismissal, VoiceOver controls, Reduce

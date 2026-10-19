@@ -39,8 +39,21 @@ class AuthRepositoryImpl(
     override suspend fun beginAppleLogin(): Result<AppleLoginChallenge> =
         authService.beginAppleLogin().map { AppleLoginChallenge(it.challengeId, it.nonce) }
 
-    override suspend fun appleLogin(challengeId: String, idToken: String): Result<Session> =
-        authService.appleLogin(challengeId, idToken).map { it.toSession() }.persistSession()
+    override suspend fun appleLogin(challengeId: String, idToken: String): Result<Session> {
+        val result = authService.appleLogin(challengeId, idToken).map { it.toSession() }
+        val session = result.getOrElse { error ->
+            if (error is CancellationException) throw error
+            return result
+        }
+        return try {
+            sessionRepository.saveSession(session)
+            result
+        } catch (error: CancellationException) {
+            throw error
+        } catch (error: Exception) {
+            Result.failure(IllegalStateException("Не удалось сохранить сессию Apple. Попробуйте ещё раз. [ASI-P]", error))
+        }
+    }
 
     override suspend fun register(userName: String, email: String, password: String): Result<Unit> =
         authService.register(userName, email, password)

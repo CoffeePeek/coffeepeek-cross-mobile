@@ -22,7 +22,7 @@ internal sealed interface ShopDetailEvent {
     data class OpenRoute(val latitude: Double, val longitude: Double) : ShopDetailEvent
     data class ShareShop(val canonicalPath: String, val title: String) : ShopDetailEvent
     data class SuggestChange(val shop: ShopDetailContext) : ShopDetailEvent
-    data class OpenPhoto(val urls: List<String>, val index: Int) : ShopDetailEvent
+    data class OpenPhoto(val urls: List<String>, val index: Int, val originals: List<String> = urls) : ShopDetailEvent
     data class OpenRoaster(val id: String) : ShopDetailEvent
     data class OpenLink(val target: String) : ShopDetailEvent
     data class CopyPhone(val number: String) : ShopDetailEvent

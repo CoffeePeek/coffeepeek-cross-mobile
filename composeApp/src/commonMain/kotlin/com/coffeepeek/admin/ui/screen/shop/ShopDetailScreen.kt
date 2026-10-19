@@ -62,7 +62,6 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
@@ -129,6 +128,7 @@ import com.coffeepeek.admin.ui.component.priceLevelValue
 import com.coffeepeek.admin.ui.component.priceRangeLevel
 import com.coffeepeek.admin.ui.component.shopTagIcon
 import com.coffeepeek.admin.ui.component.FullScreenImageDialog
+import com.coffeepeek.admin.ui.component.CpSnackbarHost
 import com.coffeepeek.admin.ui.component.CoffeePeekLoader
 import com.coffeepeek.admin.ui.component.AppButton
 import com.coffeepeek.admin.ui.component.OutlinedContentCard
@@ -174,6 +174,8 @@ fun ShopDetailScreen(shopId: String, forCheckIn: Boolean = false) {
         }
     }
 
+    val authorVisibility by vm.authorVisibility.collectAsState()
+    androidx.compose.runtime.LaunchedEffect(authorVisibility.revision, state.isLoggedIn) { preview = null }
     preview?.let { (urls, index) ->
         FullScreenImageDialog(imageUrls = urls, initialIndex = index, onDismiss = { preview = null })
     }
@@ -243,7 +245,7 @@ fun ShopDetailScreen(shopId: String, forCheckIn: Boolean = false) {
         Scaffold(
             modifier = Modifier.hazeSource(hazeState),
             snackbarHost = {
-                SnackbarHost(
+                CpSnackbarHost(
                     hostState = snackbarHostState,
                     modifier = Modifier
                         .navigationBarsPadding()

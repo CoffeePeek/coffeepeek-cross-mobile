@@ -10,6 +10,7 @@ object Modules {
 
     object Feature {
         const val homeCheckIn = ":features:home-checkin"
+        const val authorBlocking = ":features:author-blocking"
 
         val favorites = Favorites
         val shopReport = ShopReport
@@ -92,6 +93,7 @@ object Modules {
         feature.checkInHistory.impl,
         feature.homePreparation.domain,
         feature.homeCheckIn,
+        feature.authorBlocking,
     )
 }
 

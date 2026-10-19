@@ -10,6 +10,10 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
@@ -17,7 +21,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.SnackbarDuration
-import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
 import androidx.compose.ui.Alignment
@@ -28,12 +31,15 @@ import com.coffeepeek.admin.feature.appupdate.api.AndroidUpdateInstaller
 import com.coffeepeek.admin.feature.appupdate.domain.InstallationStage
 import com.coffeepeek.BuildConfig
 import com.coffeepeek.admin.theme.CpDimens
+import com.coffeepeek.admin.ui.component.CpSnackbarHost
+import com.coffeepeek.admin.ui.icons.CpIcons
 import coffeepeek.composeapp.generated.resources.Res
 import coffeepeek.composeapp.generated.resources.update_downloaded_message
 import coffeepeek.composeapp.generated.resources.update_restart_action
 import coffeepeek.composeapp.generated.resources.update_retry_action
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
+import kotlinx.coroutines.launch
 
 @Composable
 internal actual fun UpdateInstallationEffect() {
@@ -59,8 +65,28 @@ internal actual fun UpdateInstallationEffect() {
 
     val policy by controller.state.collectAsState()
     val transfer by installer.state.collectAsState()
+    var manualNoticeRequest by remember { mutableIntStateOf(0) }
+    var retrying by remember { mutableStateOf(false) }
+    var retryMessage by remember { mutableStateOf<String?>(null) }
+    var retryOutcome by remember { mutableStateOf<PlayUpdateRetryOutcome?>(null) }
+    var hideRetryResult by remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
     LaunchedEffect(policy.showPrompt) {
+        // A manual check can reveal a previously dismissed downloaded update as well.
+        if (policy.showPrompt && policy.manual) {
+            manualNoticeRequest++
+            if (!retrying) {
+                hideRetryResult = false
+                retryOutcome = null
+            }
+        }
         controller.takeNativePrompt(transfer)?.let(installer::download)
+    }
+    LaunchedEffect(transfer.stage) {
+        if (transfer.stage == InstallationStage.Ready) {
+            hideRetryResult = false
+            retryOutcome = null
+        }
     }
 
     val required = (policy.update ?: transfer.update)?.isRequired(BuildConfig.VERSION_CODE.toLong()) == true
@@ -68,19 +94,30 @@ internal actual fun UpdateInstallationEffect() {
     val readyMessage = stringResource(Res.string.update_downloaded_message)
     val restart = stringResource(Res.string.update_restart_action)
     val retry = stringResource(Res.string.update_retry_action)
-    LaunchedEffect(transfer.stage, transfer.error, required) {
+    LaunchedEffect(transfer.stage, transfer.error, required, manualNoticeRequest, retrying, retryOutcome, hideRetryResult) {
         if (required && transfer.stage == InstallationStage.Ready && transfer.error == null) {
             installer.install()
-        } else if (!required) {
+        } else if (!required && !hideRetryResult) {
             val ready = transfer.stage == InstallationStage.Ready
-            val message = transfer.error ?: if (ready) readyMessage else return@LaunchedEffect
+            val message = if (retrying) retryMessage ?: return@LaunchedEffect
+                else retryOutcome?.message ?: transfer.error ?: if (ready) readyMessage else return@LaunchedEffect
+            val action = when {
+                retrying -> retry
+                retryOutcome != null -> retry.takeIf { retryOutcome?.canRetry == true }
+                ready && transfer.error == null -> restart
+                else -> retry
+            }
             if (snackbar.showSnackbar(
                     message = message,
-                    actionLabel = if (ready && transfer.error == null) restart else retry,
-                    duration = SnackbarDuration.Indefinite,
+                    actionLabel = action,
+                    withDismissAction = true,
+                    duration = if (retrying) SnackbarDuration.Indefinite else SnackbarDuration.Long,
                 ) == SnackbarResult.ActionPerformed
             ) {
                 if (ready) installer.install() else controller.check(manual = true)
+            } else {
+                hideRetryResult = true
+                controller.dismiss()
             }
         }
     }
@@ -90,5 +127,23 @@ internal actual fun UpdateInstallationEffect() {
                 CpDimens.floatingNavContentClearance + CpDimens.spacing2,
         ),
         contentAlignment = Alignment.BottomCenter,
-    ) { SnackbarHost(snackbar) }
+    ) {
+        CpSnackbarHost(
+            hostState = snackbar,
+            actionIcon = CpIcons.Retry.takeIf { snackbar.currentSnackbarData?.visuals?.actionLabel == retry },
+            actionInProgress = retrying,
+            onAction = if (snackbar.currentSnackbarData?.visuals?.actionLabel == retry) ({
+                if (!retrying) {
+                    retryMessage = snackbar.currentSnackbarData?.visuals?.message
+                    retryOutcome = null
+                    hideRetryResult = false
+                    retrying = true
+                    scope.launch {
+                        try { retryOutcome = retryPlayUpdate(controller, installer) }
+                        finally { retrying = false }
+                    }
+                }
+            }) else null,
+        )
+    }
 }

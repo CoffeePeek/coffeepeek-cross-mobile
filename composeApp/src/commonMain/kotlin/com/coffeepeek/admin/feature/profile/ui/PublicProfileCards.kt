@@ -150,6 +150,7 @@ internal fun PublicProfileCheckInCard(
     authorName: String = "",
     authorAvatarUrl: String? = null,
     isOwnProfile: Boolean = false,
+    author: com.coffeepeek.feature.authorblocking.api.AuthorReference? = null,
 ) {
     val source = checkIn.source ?: checkIn.legacyPresentation()
     CheckInTimelineContent(
@@ -161,6 +162,13 @@ internal fun PublicProfileCheckInCard(
         onShopClick = onShopClick.takeIf { !checkIn.coffeeShopSlug.isNullOrBlank() },
         onPhotoClick = onPhotoClick,
         modifier = Modifier.testTag("profile-check-in:${checkIn.id}"),
+        actions = {
+            if (!isOwnProfile) com.coffeepeek.admin.ui.component.CheckInActions(
+                onEditClick = null,
+                onReportClick = { com.coffeepeek.admin.ui.Navigator.navigate(com.coffeepeek.admin.ui.Navigator.Screen.ReportCheckIn(checkIn.id)) },
+                author = author,
+            )
+        },
     )
 }
 
