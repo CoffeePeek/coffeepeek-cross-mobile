@@ -7,12 +7,6 @@ import kotlinx.serialization.json.*
 internal fun HomeDto.toDomain(apiBaseUrl: String): HomePreparation {
     val orderedPhotos = photos.sortedBy(HomePhotoDto::sortIndex)
         .mapNotNull { photo -> photo.url.resolvePhotoUrl(apiBaseUrl)?.let { photo to it } }
-    val cutout = when (val photo = drinkPhoto) {
-        is JsonPrimitive -> photo.contentOrNull?.let { HomePhotoDto(url = it) }
-        is JsonObject -> photoJson.decodeFromJsonElement<HomePhotoDto>(photo)
-        else -> null
-    }
-    val cutoutOriginal = cutout?.url.resolvePhotoUrl(apiBaseUrl)
     return HomePreparation(
         id = id, preparedAtUtc = preparedAtUtc, preparedOn = preparedOn, createdAtUtc = createdAtUtc,
         text = text, brewMethodCode = brewMethodCode, coffeeProductId = coffeeProductId, beanName = beanName,
@@ -23,16 +17,12 @@ internal fun HomeDto.toDomain(apiBaseUrl: String): HomePreparation {
             photo.variants.variantUrl("feed", original, apiBaseUrl),
             photo.variants.variantUrl("detail", original, apiBaseUrl),
             photo.variants.variantUrl("thumb", original, apiBaseUrl)) },
-        drinkPhotoUrl = cutoutOriginal,
-        drinkPhotoThumbnailUrl = cutoutOriginal?.let { cutout?.variants.variantUrl("thumb", it, apiBaseUrl) },
-        drinkPhotoDetailUrl = cutoutOriginal?.let { cutout?.variants.variantUrl("detail", it, apiBaseUrl) },
         visibility = HomePreparationVisibility.entries.firstOrNull { it.name.equals(visibility, ignoreCase = true) },
         moderation = HomePreparationModeration.entries.firstOrNull { it.name.equals(moderationState, ignoreCase = true) }
             ?: HomePreparationModeration.Unknown,
     )
 }
 
-private val photoJson = Json { ignoreUnknownKeys = true }
 
 private fun List<HomePhotoVariantDto>?.variantUrl(purpose: String, original: String, base: String): String {
     if (this == null) return original
@@ -49,10 +39,10 @@ internal fun HomePreparationInput.toEditRequest() = HomeEditDto(
     drinkSlug, customDrinkName?.trim(), visibility?.name,
 )
 
-internal fun HomePreparationInput.toCreateRequest(photos: List<UploadedPhotoDto>, cutout: UploadedPhotoDto?) = HomeCreateDto(
+internal fun HomePreparationInput.toCreateRequest(photos: List<UploadedPhotoDto>) = HomeCreateDto(
     preparedAt, preparedOn, brewMethodCode, coffeeProductSlug, coffeeProductId,
     customBeanName?.trim(), doseGrams?.toDouble(), brewDurationSeconds, tasteScore, text?.trim(),
-    drinkSlug, customDrinkName?.trim(), photos, cutout, (visibility ?: HomePreparationVisibility.Private).name,
+    drinkSlug, customDrinkName?.trim(), photos, (visibility ?: HomePreparationVisibility.Private).name,
 )
 
 private fun JsonElement?.string(vararg keys: String): String? = (this as? JsonObject)?.let { value ->

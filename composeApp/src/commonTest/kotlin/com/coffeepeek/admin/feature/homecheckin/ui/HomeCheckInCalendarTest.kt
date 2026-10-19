@@ -39,7 +39,7 @@ class HomeCheckInCalendarTest {
         try {
             val state = withTimeout(2_000) { vm.state.first { !it.calendarLoading && it.calendarItems.size == 2 } }
             assertEquals(listOf(1, 2), repository.monthPages)
-            assertEquals(listOf("first.png", "second.png"), state.calendarItems.map(HomeCheckIn::drinkPhotoUrl))
+            assertEquals(listOf("first.jpg", "second.jpg"), state.calendarItems.map { it.photos.single().url })
             assertEquals(listOf(state.month.from to state.month.to, state.month.from to state.month.to), repository.monthRanges)
             vm.selectDate(state.month.from)
             withTimeout(2_000) { vm.state.first { !it.loading && it.items.size == 1 } }
@@ -112,7 +112,7 @@ private class CalendarRepository(
 
     private fun entry(id: String, date: String) = HomeCheckIn(
         id, "${date}T09:00:00Z", date, "${date}T09:00:00Z", null, null, null, null,
-        null, null, null, null, null, null, emptyList(), "$id.png",
+        null, null, null, null, null, null, listOf(HomeCheckInPhoto(id, "$id.jpg")),
     )
 
     override suspend fun create(input: HomeCheckInInput): Result<HomeCheckIn> = error("Unused")

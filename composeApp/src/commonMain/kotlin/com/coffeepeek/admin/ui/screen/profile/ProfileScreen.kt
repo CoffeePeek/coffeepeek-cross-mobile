@@ -95,7 +95,7 @@ fun ProfileScreen(vm: ProfileViewModel = koinInject()) {
         Column(Modifier.fillMaxSize().statusBarsPadding()) {
             Box(
                 Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp).height(48.dp),
-                contentAlignment = Alignment.Center,
+                contentAlignment = Alignment.CenterStart,
             ) {
                 Text("Профиль", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold)
                 if (state.isLoggedIn) Box(Modifier.align(Alignment.CenterEnd)) { actions() }

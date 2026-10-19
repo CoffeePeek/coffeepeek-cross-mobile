@@ -36,14 +36,13 @@ internal class ShopCheckInBackend(private val client: HttpClient) {
         text: String,
         rating: ShopRating,
         photos: List<UploadedShopPhoto>,
-        drinkPhoto: UploadedShopPhoto? = null,
     ): Result<Unit> = requestResult {
         val response = try {
             client.post("/api/v1/check-ins") {
                 expectSuccess = false
                 contentType(ContentType.Application.Json)
                 setBody(CreateCheckInRequest(shopSlug, text, rating.toRequest(), visibility,
-                    visitedAtIso, drinkSlug, customDrinkName, photos, drinkPhoto))
+                    visitedAtIso, drinkSlug, customDrinkName, photos))
             }
         } catch (cancelled: CancellationException) {
             throw cancelled
@@ -92,7 +91,6 @@ private data class CreateCheckInRequest(
     @SerialName("drinkSlug") val drinkSlug: String? = null,
     @SerialName("customDrinkName") val customDrinkName: String? = null,
     @SerialName("photos") val photos: List<UploadedShopPhoto> = emptyList(),
-    @SerialName("drinkPhoto") val drinkPhoto: UploadedShopPhoto? = null,
 )
 
 @Serializable

@@ -1,6 +1,5 @@
 package com.coffeepeek.feature.homecheckin.impl.ui
 
-import androidx.lifecycle.viewModelScope
 import com.coffeepeek.core.presentation.MviViewModel
 import com.coffeepeek.feature.homecheckin.domain.model.*
 import com.coffeepeek.feature.homecheckin.domain.repository.HomePreparationRepository
@@ -20,7 +19,6 @@ import kotlin.time.Instant
 internal class HomeCheckInEditorViewModel(
     private val repository: HomePreparationRepository,
     private val catalog: HomeCheckInEditorCatalog,
-    photoProcessor: HomeCheckInDrinkPhotoProcessor,
     initialPreparedAt: String,
     initialPreparedOn: String,
     private val preparationId: String?,
@@ -39,7 +37,6 @@ internal class HomeCheckInEditorViewModel(
     private var beansJob: Job? = null
     private var searchRevision = 0L
     private var revision = 0L
-    private val photos = HomeCheckInPhotoPreparation(viewModelScope, photoProcessor, ::onPhotoChanged)
 
     init { onAction(HomeCheckInEditorAction.Initialize) }
 
@@ -112,9 +109,6 @@ internal class HomeCheckInEditorViewModel(
             is HomeCheckInEditorAction.RemovePhoto -> if (preparationId == null && action.index in currentState.draft.photos.indices) edit {
                 copy(photos = photos.filterIndexed { index, _ -> index != action.index })
             }
-            HomeCheckInEditorAction.RetryDrinkPhoto -> if (canPreparePhotos()) photos.retry()
-            HomeCheckInEditorAction.SkipDrinkPhoto -> if (canPreparePhotos()) photos.skip()
-            is HomeCheckInEditorAction.ChooseDrinkPhoto -> if (canPreparePhotos()) photos.select(action.index)
             HomeCheckInEditorAction.Save -> save()
             HomeCheckInEditorAction.Close -> if (saveJob == null) {
                 track(HomeCheckInEditorMetric.Cancelled)
@@ -132,29 +126,13 @@ internal class HomeCheckInEditorViewModel(
     private fun canEdit() = currentState.isReady && !currentState.isLoading && !currentState.isSaving &&
         !currentState.isClosed && !currentState.isAccessRevoked
 
-    private fun canPreparePhotos() = canEdit() && preparationId == null && currentState.draft.photos.isNotEmpty()
 
     private fun edit(transform: HomePreparationInput.() -> HomePreparationInput) {
         if (!canEdit()) return
-        var next = currentState.draft.transform()
-        val sourceChanged = next.photos.firstOrNull() != currentState.draft.photos.firstOrNull()
-        if (sourceChanged) next = next.copy(drinkPhoto = null)
+        val next = currentState.draft.transform()
         currentState.draft.changedFields(next).forEach { track(HomeCheckInEditorMetric.FieldChanged(it)) }
         val instant = now()
-        updateState {
-            val updated = withDraft(next, instant)
-            if (sourceChanged) updated.copy(photoPreparation = HomeCheckInPhotoState(
-                source = next.photos.firstOrNull(), isProcessing = next.photos.isNotEmpty(),
-            )) else updated
-        }
-        if (sourceChanged) photos.setSource(next.photos.firstOrNull())
-    }
-
-    private fun onPhotoChanged(photoState: HomeCheckInPhotoState) {
-        if (!canAccess()) { revokeAccess(); return }
-        if (!canEdit() || photoState !== photos.state || photoState.source != currentState.draft.photos.firstOrNull()) return
-        val instant = now()
-        updateState { withDraft(draft.copy(drinkPhoto = photoState.selected), instant).copy(photoPreparation = photoState) }
+        updateState { withDraft(next, instant) }
     }
 
     private suspend fun loadDetail() {
@@ -240,7 +218,7 @@ internal class HomeCheckInEditorViewModel(
 
     private suspend fun save() {
         val snapshot = currentState
-        if (!canEdit() || snapshot.isBeanPickerOpen || !snapshot.photoPreparation.canSubmit) return
+        if (!canEdit() || snapshot.isBeanPickerOpen) return
         track(HomeCheckInEditorMetric.Submitted)
         val errors = homePreparationFieldErrors(snapshot.draft, preparationId != null, now())
         updateState { copy(fieldErrors = errors, saveIssue = null, failedOperation = null) }
@@ -265,7 +243,7 @@ internal class HomeCheckInEditorViewModel(
             revision++
             cancelAuxiliaryWork()
             updateState { HomeCheckInEditorState(isClosed = true) }
-            track(HomeCheckInEditorMetric.Saved(entry.visibility, entry.photos.isNotEmpty() || entry.drinkPhotoUrl != null))
+            track(HomeCheckInEditorMetric.Saved(entry.visibility, entry.photos.isNotEmpty()))
             emit(HomeCheckInEditorEvent.Saved(entry.id, unconfirmed))
         } catch (cancelled: CancellationException) { throw cancelled }
         catch (error: Exception) {
@@ -294,7 +272,6 @@ internal class HomeCheckInEditorViewModel(
         cancelSearch()
         methodsJob?.cancel()
         methodsJob = null
-        photos.clear()
     }
 
     private fun invalidateWork() {

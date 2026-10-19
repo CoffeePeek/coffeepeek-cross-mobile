@@ -17,12 +17,9 @@ data class HomePreparation(
     val drinkSlug: String?,
     val customDrinkName: String?,
     val photos: List<HomePreparationPhoto>,
-    val drinkPhotoUrl: String?,
     /** Null means unknown, not Private or confirmed Public. */
     val visibility: HomePreparationVisibility?,
     val moderation: HomePreparationModeration,
-    val drinkPhotoThumbnailUrl: String? = null,
-    val drinkPhotoDetailUrl: String? = null,
 )
 
 data class HomePreparationPhoto(val id: String, val url: String,

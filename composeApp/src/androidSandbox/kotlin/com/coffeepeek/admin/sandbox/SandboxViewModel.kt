@@ -1,6 +1,7 @@
 package com.coffeepeek.admin.sandbox
 
 import androidx.lifecycle.ViewModel
+import com.coffeepeek.admin.ui.component.PhotoViewerImages
 import androidx.lifecycle.ViewModelStore
 import androidx.lifecycle.ViewModelStoreOwner
 import com.coffeepeek.admin.sandbox.backend.SandboxScenario
@@ -15,7 +16,7 @@ internal data class SandboxState(
     val generation: Int = 0, val historyOwner: SandboxOwner = SandboxOwner(),
     val scenario: SandboxScenario = SandboxScenario.Ready, val dark: Boolean = true,
     val destination: SandboxDestination? = null, val dismissAllowed: Boolean = true,
-    val photos: Pair<List<String>, Int>? = null, val showScope: Boolean = false,
+    val photos: Pair<PhotoViewerImages, Int>? = null, val showScope: Boolean = false,
 )
 
 /** Sandbox navigation/scenario bookkeeping only; actual feature MVI owns drafts, validation and mutations. */
@@ -54,7 +55,10 @@ internal class SandboxViewModel : ViewModel() {
         if (state.value.destination !== expected) return
         replace(null); refresh(state.value)
     }
-    fun photos(urls: List<String>, index: Int) { mutableState.value = state.value.copy(photos = urls to index) }
+    fun photos(urls: List<String>, originals: List<String>, index: Int) {
+        if (urls.size != originals.size || index !in originals.indices || originals.any(String::isBlank)) return
+        mutableState.value = state.value.copy(photos = PhotoViewerImages(urls.toList(), originals.toList()) to index)
+    }
     fun closePhotos() { mutableState.value = state.value.copy(photos = null) }
     private fun replace(destination: SandboxDestination?) {
         val previous = state.value.destination

@@ -1,5 +1,48 @@
 # Home check-ins — Android migration plan
 
+## Develop reconciliation — 2026-10-19
+
+Inherited history `29ef7ea8` brings main `dfb00e63` and approved develop
+`fc85f8e5`. Retire the removed drink-cutout product behavior across the Home
+domain/input/DTOs, upload mapper, calendar enrichment, MVI, detail/editor UI,
+manual factories, app adapters and local Sandbox fixtures. Original gallery
+photos, metadata/byte ownership, picker capacity, aligned feed/detail/thumb/
+original URLs, historical edit identity, consent-aware metrics and account/write
+guards remain. A create needs no extraction/selection/skip step. The migrated
+Home entries remain active; do not resurrect this child's deleted legacy reader
+or editor overlay while resolving parent conflicts. Incoming iOS compatibility
+removal is inherited, not a new native screen migration.
+
+Historical cutout preparation/race tests below concern retired behavior. Replace
+those with ordinary-photo save/replace, no extra upload/field, cutout-only record
+count preservation and the existing cancellation/account/duplicate-write suites.
+Verification plan: independent Home unit and self-targeted UI suites, Debug and
+Sandbox assembly/packaging guards plus app instrumentation compilation. No live
+backend/camera/account mutation or manual pixel acceptance is implied.
+
+Inherited #95 history UI rerun completed on Pixel 7/API 37: **21/21**, 39.542s,
+zero failures/retries, both-theme fake recording image ports. Generic self target,
+package/version 0 and installed/built matching signatures verified before test-only
+in-place update. Test APK SHA-256:
+`5ca3b63d5798bba12825eeb5a0f7a16c0a57822196ae4728a3b04fe430615d59`.
+Local log: `coffeepeek-develop-history-ui-2026-10-19.log`.
+
+Independent Home build verification: **642 selected unit results** (domain 14,
+data 33, impl 70, app Direct 525), all pass. Direct Debug and Direct Sandbox APKs
+and packaged class checks pass; Home UI APK and app Direct instrumentation compile.
+The completed full selection took 1m06s. Retained repair history: first build
+(1m27s) found an old processor argument in a UI fixture; the next (1m59s) found
+the old Sandbox gallery callback; the third (26s) found its obsolete two-photo
+seed expectation. Retired cutout seed removal leaves two visits but one photo;
+both counts remain explicitly asserted. Original gallery byte/upload, metadata,
+edit identity, cancellation, session and duplicate-write assertions remain.
+Studio editor-VM inspection timed out; compilation is the completed source check.
+First device run passed 40/41; the new test attempted to scroll the fixed save
+footer (no scroll ancestor). Repair keeps display/enabled/action assertions and
+targets the footer directly; targeted and complete reruns are required below.
+No live app was installed or account changed. Logs stay local as
+`coffeepeek-develop-home-*2026-10-19.log`.
+
 ## Current-main photo representations — 2026-10-19
 
 Scope: existing #99 after merging history `abc5876f` at `6ccff47f`;

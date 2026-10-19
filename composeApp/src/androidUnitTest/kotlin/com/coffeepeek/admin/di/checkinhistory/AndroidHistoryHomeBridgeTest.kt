@@ -4,7 +4,6 @@ import androidx.lifecycle.ViewModel
 import com.coffeepeek.admin.analytics.CheckInTracker
 import com.coffeepeek.admin.di.shop.CheckInTestSessions
 import com.coffeepeek.admin.feature.catalog.api.BrewMethodCatalog
-import com.coffeepeek.admin.feature.checkin.domain.DrinkPhotoExtractor
 import com.coffeepeek.admin.feature.coffee.api.CoffeePicker
 import com.coffeepeek.admin.feature.coffee.api.CoffeePickerItem
 import com.coffeepeek.domain.model.Session
@@ -44,7 +43,7 @@ class AndroidHistoryHomeBridgeTest {
         val session = HistoryHostSession(0, AndroidCheckInHistorySession(sessions)).also(owned::add)
         val entries = historyHomeEditorFactory(source, object : CoffeePicker {
             override suspend fun search(query: String) = Result.success(emptyList<CoffeePickerItem>())
-        }, BrewMethodCatalog { Result.success(emptyList()) }, DrinkPhotoExtractor { error("No extraction") })
+        }, BrewMethodCatalog { Result.success(emptyList()) })
         val bridge = AndroidHistoryHomeBridge(session, HistoryHomeEditorFactory { lease, tracker ->
             onFactory(tracker); entries.create(lease, tracker)
         })

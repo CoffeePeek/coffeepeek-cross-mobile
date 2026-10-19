@@ -21,7 +21,7 @@ fun ShopChangeSection.hint(): String = when (this) {
     ShopChangeSection.Tags -> "Теги и особенности"
     ShopChangeSection.Roasters -> "С кем работает кофейня"
     ShopChangeSection.Equipment -> "Кофемашины и оборудование"
-    ShopChangeSection.Menu -> "Напитки, цены и фото меню"
+    ShopChangeSection.Menu -> "Фото меню, по желанию — напитки и цены"
     ShopChangeSection.BrewMethods -> "Способы приготовления"
 }
 

@@ -33,7 +33,6 @@ data class ShopChangeMenuRow(
     val name: String,
     val availability: MenuItemAvailability,
     val priceText: String,
-    val volumeText: String,
 )
 
 data class ShopChangeEditorUiState(
@@ -250,7 +249,6 @@ private fun List<CoffeeDrinkDefinition>.toMenuRows(
             name = drink.nameRu.ifBlank { drink.nameEn }.ifBlank { drink.slug },
             availability = item?.availability.toAvailability(),
             priceText = item?.price?.let { formatNumber(it) }.orEmpty(),
-            volumeText = item?.volumeMl?.toString().orEmpty(),
         )
     }
 }
@@ -299,7 +297,6 @@ private fun ShopChangeEditorUiState.applyRequest(
                     name = drink.nameRu.ifBlank { drink.nameEn }.ifBlank { drink.slug },
                     availability = item?.availability ?: MenuItemAvailability.Unknown,
                     priceText = item?.price?.let { formatNumber(it) }.orEmpty(),
-                    volumeText = item?.volumeMl?.toString().orEmpty(),
                 )
             }
         } ?: menuRows,
@@ -328,7 +325,6 @@ private fun ShopChangeEditorUiState.toDraft(shopId: String, section: ShopChangeS
             slug = row.slug,
             availability = row.availability,
             price = row.priceText.replace(',', '.').toDoubleOrNull(),
-            volumeMl = row.volumeText.toIntOrNull(),
         )
     },
     retainedMenuPhotoIds = retainedMenuPhotos.map { it.id },

@@ -14,6 +14,5 @@
     <string name="sandbox_previous">Назад</string>
     <string name="sandbox_next">Далее</string>
     <string name="sandbox_photo">Тестовое фото</string>
-    <string name="sandbox_cutout_note">Фото и выделение тестовые. Камера и галерея не открываются.</string>
     <string name="sandbox_scope">Этот Sandbox проверяет Home и историю. Экран кофейни пока не подключён.</string>
 </resources>

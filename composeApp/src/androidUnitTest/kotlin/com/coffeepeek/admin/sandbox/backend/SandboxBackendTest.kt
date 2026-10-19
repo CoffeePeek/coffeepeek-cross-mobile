@@ -45,7 +45,7 @@ class SandboxBackendTest {
             assertEquals(3, repo.page(1, 20, null).getOrThrow().totalCount)
             val calendar = repo.calendar(HomePreparationDateRange("2026-10-01", "2026-10-31")).getOrThrow()
             assertEquals(2, calendar.single { it.preparedOn == "2026-10-18" }.brewCount)
-            assertEquals(2, calendar.single { it.preparedOn == "2026-10-18" }.photos.size)
+            assertEquals(1, calendar.single { it.preparedOn == "2026-10-18" }.photos.size)
             assertTrue(calendar.single { it.preparedOn == "2026-10-17" }.photos.isEmpty())
             val url = repo.page(1, 20, null).getOrThrow().items.flatMap { it.photos }.single().url
             assertContentEquals(png, backend.photo(url))
@@ -71,19 +71,16 @@ class SandboxBackendTest {
         } finally { backend.close() }
     }
 
-    @Test fun signedUploadAndCutoutUseSeparateMockClientAndBytesStayInMemory() = runTest {
+    @Test fun galleryUploadUsesSeparateMockClientAndBytesStayInMemory() = runTest {
         val backend = backend()
         try {
             val repo = createHomePreparationRepository(backend.gateway, backend.uploader, SandboxBackend.BASE_URL)
             val photo = HomePreparationUpload("sample.png", "image/png", png)
-            val created = repo.create(input.copy(photos = listOf(photo), drinkPhoto = photo.copy(fileName = "cutout.png"))).getOrThrow()
+            val created = repo.create(input.copy(photos = listOf(photo))).getOrThrow()
             assertEquals(1, created.photos.size)
             assertContentEquals(png, backend.photo(created.photos.single().url))
-            assertContentEquals(png, backend.photo(requireNotNull(created.drinkPhotoUrl)))
-            assertNotEquals(created.photos.single().url, created.drinkPhotoUrl)
             val edited = repo.update(created.id, input).getOrThrow()
             assertEquals(created.photos, edited.photos)
-            assertEquals(created.drinkPhotoUrl, edited.drinkPhotoUrl)
         } finally { backend.close() }
     }
 

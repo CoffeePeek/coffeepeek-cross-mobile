@@ -20,9 +20,8 @@ import java.util.UUID
 
 /** Sandbox-only manual composition. No root Koin, production session, auth/client or analytics SDK. */
 internal class SandboxEnvironment {
-    private val original = sandboxImageBytes(false)
-    private val cutout = sandboxImageBytes(true)
-    val backend = SandboxBackend(original, cutout)
+    private val original = sandboxImageBytes()
+    val backend = SandboxBackend(original)
     val repository = createHomePreparationRepository(backend.gateway, backend.uploader, SandboxBackend.BASE_URL)
     var alive = true
         private set
@@ -42,7 +41,6 @@ internal class SandboxEnvironment {
                 listOf(HomeCheckInBeanOption("sandbox-ethiopia", "Sandbox Ethiopia", "Sandbox Roaster"))
                     .filter { query.isBlank() || it.name.contains(query, ignoreCase = true) })
         },
-        { Result.success(listOf(HomePreparationUpload("sandbox-cutout.png", "image/png", cutout.copyOf()))) },
         { alive }, androidHomeCheckInDates(),
         HomeCheckInEditorMedia(
             { Icon(CoffeePeekIcons.Coffee, null, it) }, { Icon(CoffeePeekIcons.Coffee, null, it) },

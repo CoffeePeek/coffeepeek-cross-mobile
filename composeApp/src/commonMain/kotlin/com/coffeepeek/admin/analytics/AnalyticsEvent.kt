@@ -152,7 +152,7 @@ internal object AnalyticsSchema {
             AnalyticsEvent.SHOP_ACTION_CLICKED -> setOf("directions", "share", "phone_copy", "phone_call", "email", "website", "instagram", "check_in", "edit", "report_issue")
             AnalyticsEvent.ENTITY_CONTENT_INTERACTED -> setOf("open", "close", "select", "view_all", "website", "instagram", "share")
             AnalyticsEvent.FEED_ACTION_CLICKED -> setOf("refresh", "load_more", "retry")
-            AnalyticsEvent.FEED_ITEM_INTERACTED -> setOf("author", "shop", "drink_photo", "photo", "like", "unlike", "home_detail")
+            AnalyticsEvent.FEED_ITEM_INTERACTED -> setOf("author", "shop", "photo", "like", "unlike", "home_detail")
             else -> null
         }
         else -> commonEnums[key]
