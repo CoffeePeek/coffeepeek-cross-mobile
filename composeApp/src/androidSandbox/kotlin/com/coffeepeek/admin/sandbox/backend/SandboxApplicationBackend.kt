@@ -108,8 +108,11 @@ internal class SandboxApplicationBackend(private val today: LocalDate, private v
         if (path == "/api/map" && method == HttpMethod.Get) return ok(buildJsonObject { putJsonArray("shops") {
             if (populated) add(buildJsonObject { put("address", address("sandbox-cafe", "/coffee-shops/sandbox-cafe")); put("latitude", 53.9); put("longitude", 27.56); put("title", "Sandbox Cafe") })
         } })
-        if (path == "/api/roasters" && method == HttpMethod.Get) return ok(JsonArray(if (populated) listOf(roaster()) else emptyList()))
-        if (path.startsWith("/api/roasters/") && method == HttpMethod.Get) return ok(roaster())
+        if (path == "/api/roasters" && method == HttpMethod.Get) return ok(JsonArray(if (populated) roasters() else emptyList()))
+        if (path.startsWith("/api/roasters/") && method == HttpMethod.Get) {
+            if (!populated) return null
+            return roasters().firstOrNull { it["address"]!!.jsonObject["slug"]!!.jsonPrimitive.content == path.substringAfterLast('/') }?.let(::ok)
+        }
         if (path == "/api/catalogs/cities") return ok(JsonArray(listOf(buildJsonObject {
             put("address", address("minsk", "/cities/minsk")); put("name", "Минск")
         })))
@@ -232,11 +235,35 @@ internal class SandboxApplicationBackend(private val today: LocalDate, private v
         putJsonObject("menu") { put("currency", "BYN"); put("photos", JsonArray(listOf(photo()))); put("items", drinks()) }
         putJsonArray("schedules") { (1..7).forEach { day -> add(buildJsonObject { put("dayOfWeek", day); putJsonArray("intervals") { add(buildJsonObject { put("openTime", "08:00:00"); put("closeTime", "23:00:00") }) } }) } }
     }
-    private fun roaster() = buildJsonObject {
-        put("address", address("sandbox-roaster", "/roasters/sandbox-roaster")); put("name", "Sandbox Roaster")
-        put("about", "Локальный обжарщик для тестирования"); put("coffeeShopsCount", 2); put("coffeeProductsCount", 1)
-        put("photoUrl", "${SandboxBackend.BASE_URL}/media/sample"); put("coverPhoto", photo())
-        put("photos", JsonArray(listOf(photo()))); putJsonArray("shops") { add(shop("sandbox-cafe")) }
+    // Three synthetic roasters: full data (tags, contacts, shops with and without photos), partial data, and bare.
+    private fun roasters() = listOf(
+        roasterRow("sandbox-roaster", "Sandbox Roaster", about = "Локальный обжарщик для тестирования", withPhotos = true,
+            tags = listOf("light" to "Светлая обжарка", "decaf" to "Декаф"), shops = listOf("sandbox-cafe" to true, "sandbox-lab" to false),
+            instagram = "@sandbox.roaster", site = "sandbox-roaster.example/about", location = "Минск, Тестовая улица, 5", products = 12),
+        roasterRow("sandbox-light", "Sandbox Light Lab", about = "Светлая обжарка под фильтр", withPhotos = false,
+            tags = listOf("light" to "Светлая обжарка"), shops = listOf("sandbox-cafe" to true),
+            instagram = null, site = "https://light.sandbox.invalid", location = null, products = 4),
+        roasterRow("sandbox-decaf", "Sandbox Decaf", about = null, withPhotos = false,
+            tags = listOf("decaf" to "Декаф"), shops = emptyList(), instagram = null, site = null, location = null, products = 0),
+    )
+    private fun roasterRow(slug: String, name: String, about: String?, withPhotos: Boolean, tags: List<Pair<String, String>>,
+        shops: List<Pair<String, Boolean>>, instagram: String?, site: String?, location: String?, products: Int) = buildJsonObject {
+        put("address", address(slug, "/roasters/$slug")); put("name", name)
+        about?.let { put("about", it) }
+        put("coffeeShopsCount", shops.size); put("coffeeProductsCount", products); put("availableCoffeeProducts", products / 2)
+        if (withPhotos) { put("photoUrl", "${SandboxBackend.BASE_URL}/media/sample"); put("coverPhoto", photo()) }
+        putJsonArray("tags") { tags.forEachIndexed { index, (tag, label) ->
+            add(buildJsonObject { put("slug", tag); put("name", label); put("sortOrder", index + 1) })
+        } }
+        location?.let { putJsonObject("location") { put("address", it); put("latitude", 53.9); put("longitude", 27.56) } }
+        if (instagram != null || site != null) putJsonObject("contact") { instagram?.let { put("instagramLink", it) }; site?.let { put("siteLink", it) } }
+        put("photos", JsonArray(if (withPhotos) listOf(photo(), photo()) else emptyList()))
+        putJsonArray("shops") { shops.forEach { (shopSlug, hasPhoto) -> add(roasterShop(shopSlug, hasPhoto)) } }
+    }
+    // Only some shops carry a cover photo, so the app's shop-photo enrichment is exercised.
+    private fun roasterShop(slug: String, withPhoto: Boolean) = buildJsonObject {
+        put("address", address(slug, "/coffee-shops/$slug")); put("name", if (slug == "sandbox-cafe") "Sandbox Cafe" else "Sandbox Lab")
+        if (withPhoto) put("coverPhoto", photo())
     }
     // Three synthetic coffees with distinct tastes/roasts/availability, so filters, offers and "similar" are exercised.
     private fun coffees() = listOf(
@@ -288,7 +315,9 @@ internal class SandboxApplicationBackend(private val today: LocalDate, private v
         val (kind, slug) = key.split(':', limit = 2)
         buildJsonObject {
             put("kind", kind); put("createdAtUtc", "${today}T07:00:00Z"); put("name", when (kind) {
-                "coffee_shop" -> "Sandbox Cafe"; "roaster" -> "Sandbox Roaster"; else -> "Капучино"
+                "coffee_shop" -> "Sandbox Cafe"
+                "roaster" -> roasters().firstOrNull { it["address"]!!.jsonObject["slug"]!!.jsonPrimitive.content == slug }?.get("name")?.jsonPrimitive?.content ?: "Sandbox Roaster"
+                else -> "Капучино"
             }); put("coverPhoto", photo())
             if (kind == "drink") putJsonObject("drink") { put("slug", slug) }
             else put("address", address(slug, if (kind == "roaster") "/roasters/$slug" else "/coffee-shops/$slug"))

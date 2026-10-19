@@ -43,7 +43,7 @@ class RoasterModuleTest {
             val repository = app.koin.get<RoasterRepository>()
             assertSame(repository, app.koin.get<RoasterRepository>())
             val list = repository.getRoasters().getOrThrow()
-            assertEquals(listOf("sandbox-roaster"), list.map { it.slug })
+            assertEquals(listOf("sandbox-roaster", "sandbox-light", "sandbox-decaf"), list.map { it.slug })
             // The catalog was persisted under the legacy slot.
             assertEquals(setOf(roasterCatalogCacheKey(SandboxBackend.BASE_URL)), settings.values.keys)
             assertEquals("Sandbox Roaster", repository.getRoaster("sandbox-roaster").getOrThrow().name)

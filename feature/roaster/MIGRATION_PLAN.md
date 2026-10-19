@@ -1,6 +1,6 @@
 # Roasters — Android-first migration plan
 
-Status: steps 2–5 done in code (2026-10-20): domain, data, api (ports + entries) and impl (typed MVI + stateless UI + entries); **activated on Android** (Discovery roasters and the roaster detail route); iOS/shared keep the legacy screens. Step 4 isolated UI suite passed on Pixel 7 before step 5; device/Sandbox acceptance of the activation is still open (step 6). Child of the Coffee checkpoint
+Status: steps 2–6 done (2026-10-20, step 6 with open items): domain, data, api (ports + entries) and impl (typed MVI + stateless UI + entries); **activated on Android** (Discovery roasters and the roaster detail route); iOS/shared keep the legacy screens. Step 4 isolated UI suite passed on Pixel 7 before step 5; device/Sandbox acceptance of the activation is still open (step 6). Child of the Coffee checkpoint
 (`feature/coffee-catalog-refactoring`, PR #104); the branch/PR is created only after this plan is accepted.
 Same rules as Coffee: preserve the current product, requests and visuals; Android first; shared/iOS keep the
 legacy composeApp UI; no new feature in composeApp; modules only with real content.
@@ -48,7 +48,7 @@ adapter-free factory over the same endpoints, so reads and legacy writes cannot 
 5. [x] (2026-10-20, code + unit/composition tests; no device run yet; see "Step 5 record") App adapters in composeApp androidMain: analytics (existing `SearchTracker`, `TrackEntityDetail`,
    exposures, `DetailEntryMemory`), favorites and shop-photo ports, `RoasterScreenRenderer` (Legacy default),
    Koin module, Discovery section and detail route switch for Android only.
-6. [ ] Richer Sandbox fixtures (several roasters, tags, shops with/without photos, contacts, favorites) and
+6. [~] (2026-10-20: fixtures, UI suite rerun, Sandbox walkthrough; open items in "Step 6 record") Richer Sandbox fixtures (several roasters, tags, shops with/without photos, contacts, favorites) and
    unit tests; isolated UI tests; Sandbox walkthrough in both themes, error mode and large font where the
    device allows without changing system settings.
 7. [ ] Document gates; keep live API/media, iOS and Contributions acceptance explicit.
@@ -199,3 +199,37 @@ Roasters are now **active on Android** in code; shared/iOS keep the legacy compo
 - **Known differences from legacy:** the detail back button is the design-system glass button; the detail load error
   text is generic instead of the server message; the legacy list's `isFavoriteLoading` was never set and is dropped.
 - Next (step 6): richer Sandbox fixtures, Sandbox walkthrough in both themes/error mode, rerun the isolated UI suite.
+
+## Step 6 record — 2026-10-20
+
+**Fixtures** (`composeApp/.../androidSandbox/backend/SandboxApplicationBackend.kt`): three roasters — *Sandbox Roaster*
+(tags Light/Decaf, two shops — one with a cover photo, one without — Instagram and website, address, two photos),
+*Sandbox Light Lab* (one tag, website only, no address/photos/logo) and *Sandbox Decaf* (one tag, no shops, no contacts,
+no about); `/api/roasters/{slug}` returns 404 for unknown slugs and in the empty/reset mode; favorite rows use the roaster
+name. Backend tests: legacy `RoasterApiService` assertions updated, plus a test through the **new** roaster data
+repository (tags, counters, photos, contacts, shops with/without photo, partial and bare roasters, 404, reset).
+App Direct+Play unit suites: **1108 results, 0 failures**; Direct Sandbox assembles.
+
+**Isolated UI suite** `RoasterContentTest`, Pixel 7 / API 37, test APK only: **36/36 pass** (1m11s) after the step 5 entry
+refactor (no retries).
+
+**Sandbox walkthrough** (Pixel 7 / API 37, Direct Sandbox over the existing Sandbox package; ordinary CoffeePeek untouched):
+- Roasters fixtures did not appear at first: the persisted 24 h catalog (shared legacy slot) still held the old
+  one-roaster list, as designed. I cleared the Sandbox package's own data (`pm clear com.coffeepeek.sandbox`, synthetic
+  data and Sandbox preferences only) and relaunched. After a fixture change in the future, clear that slot the same way.
+- Discovery: tag chips (Все / Светлая обжарка / Декаф) and the roaster carousel render with the legacy card geometry;
+  selecting Декаф keeps Roaster and Decaf; selecting both tags keeps only Sandbox Roaster (AND rule); "Все" resets.
+- Detail (dark): hero with a 1/2 counter, glass back and heart, about, address, Instagram and website pills, both shops
+  (the shop without a cover photo shows a photo — enrichment through the Shop port worked). Instagram tap shows the
+  Sandbox "external apps disabled" toast; tapping a shop opens Shop detail; Back returns.
+- Favorites: the heart on the detail turned from filled to outline, and the Discovery card's heart followed after
+  returning (shared favorites state).
+- Light theme: Discovery roasters and the roaster detail render correctly.
+- Error mode ("no network"): opening a roaster detail shows "Не удалось загрузить обжарщика" with Повторить / Назад (light theme).
+- No crash from this package in the run.
+
+**Not confirmed / open:** recovery after the error (switching Sandbox back to normal and tapping Повторить) — my
+scripted taps landed on other screens, so only the unit tests cover it; the roaster search overlay ("Показать все"/search
+header) and the full list screen on the device; the tag filter inside that list; large font (instrumented 1.5 scale only;
+the device font was not changed); the Haze glass back button vs the legacy back button; haptics; pagination is n/a.
+USB/touch automation was flaky around dialogs and scroll positions, so those are the items to repeat by hand.

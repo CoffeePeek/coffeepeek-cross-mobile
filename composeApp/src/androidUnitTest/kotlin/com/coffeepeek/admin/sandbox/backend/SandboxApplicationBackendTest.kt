@@ -81,11 +81,40 @@ class SandboxApplicationBackendTest {
         assertEquals("cappuccino", shops.getConsumedDrinks().getOrThrow().single().slug)
         assertEquals(2, shops.getBrewMethods().getOrThrow().size)
         val roasters = RoasterApiService(client.plainClient)
-        assertEquals("Sandbox Roaster", roasters.getRoasters().getOrThrow().single().name)
+        assertEquals(listOf("Sandbox Roaster", "Sandbox Light Lab", "Sandbox Decaf"), roasters.getRoasters().getOrThrow().map { it.name })
         assertEquals("sandbox-roaster", roasters.getRoaster("sandbox-roaster").getOrThrow().address.slug)
         assertContentEquals(byteArrayOf(1, 2, 3), client.client.get("${SandboxBackend.BASE_URL}/media/sample").body<ByteArray>())
         assertContentEquals(byteArrayOf(1, 2, 3), client.imageClient.get("${SandboxBackend.BASE_URL}/media/sample").body<ByteArray>())
         assertNull(backend.photo("https://example.org/media/sample"))
+    } }
+
+    @Test fun actualRoasterRepositoryReadsTagsShopsContactsAndPartialRoastersFromFixtures() = runTest { fixture { backend, client ->
+        val store = object : com.coffeepeek.feature.roaster.data.repository.RoasterCatalogStore {
+            var saved: String? = null
+            override suspend fun read() = saved
+            override suspend fun write(value: String) { saved = value }
+        }
+        val roasters = com.coffeepeek.feature.roaster.data.repository.createRoasterRepository(client.client, SandboxBackend.BASE_URL, store) { 1_000L }
+        val list = roasters.getRoasters().getOrThrow()
+        assertEquals(listOf("sandbox-roaster", "sandbox-light", "sandbox-decaf"), list.map { it.slug })
+        assertEquals(listOf("light", "decaf"), list.first().tags.map { it.slug })
+        assertEquals(listOf(2, 1, 0), list.map { it.coffeeShopsCount })
+        assertNotNull(list.first().photoUrl); assertNull(list.last().photoUrl)
+        assertNotNull(store.saved)
+        val full = roasters.getRoaster("sandbox-roaster").getOrThrow()
+        assertEquals("@sandbox.roaster", full.contact?.instagramLink)
+        assertEquals("sandbox-roaster.example/about", full.contact?.siteLink)
+        assertEquals("Минск, Тестовая улица, 5", full.location?.address)
+        assertEquals(2, full.photos.size)
+        assertEquals(listOf("sandbox-cafe" to true, "sandbox-lab" to false), full.shops.map { it.slug to (it.photoUrl != null) })
+        val partial = roasters.getRoaster("sandbox-light").getOrThrow()
+        assertNull(partial.contact?.instagramLink); assertEquals("https://light.sandbox.invalid", partial.contact?.siteLink)
+        assertNull(partial.location); assertTrue(partial.photos.isEmpty())
+        val bare = roasters.getRoaster("sandbox-decaf").getOrThrow()
+        assertNull(bare.about); assertNull(bare.contact); assertTrue(bare.shops.isEmpty())
+        assertTrue(roasters.getRoaster("missing").isFailure)
+        backend.reset(false)
+        assertTrue(roasters.getRoaster("sandbox-roaster").isFailure)
     } }
 
     @Test fun favoritesMutationsRoundTripThroughActualApiAndRemainLocal() = runTest { fixture { _, client ->
