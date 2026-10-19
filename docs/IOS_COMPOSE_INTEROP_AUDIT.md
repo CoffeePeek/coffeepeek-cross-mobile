@@ -89,8 +89,9 @@ Required iOS runtime acceptance checks before release:
 1. Dark, light and system themes, including switching explicit theme back to
    system while the app is open. Check search, auth, reset confirmation, loaders,
    filters, map loading, tab bar, native headers and native presentations.
-2. Login/register/reset: rounded fields, eye spacing, first edit after visibility
-   toggle, selection, Next/Done, Passwords AutoFill and reset-link input.
+2. Login/register: rounded fields, eye spacing, first edit after visibility
+   toggle, selection, Next/Done and Passwords AutoFill. Password recovery: email
+   request, confirmation, browser reset from the email and return to login.
 3. Filters/date/time sheets at medium and large detents: full switch geometry,
    no rectangular backgrounds, scrolling with the keyboard and large text.
 4. Feed/profile/settings heading alignment and first-item spacing; detail push,

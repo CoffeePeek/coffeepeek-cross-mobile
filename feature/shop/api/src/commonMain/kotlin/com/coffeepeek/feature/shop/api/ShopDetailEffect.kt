@@ -17,7 +17,7 @@ sealed interface ShopDetailEffect {
     data class OpenRoute(val latitude: Double, val longitude: Double) : ShopDetailEffect
     data class ShareShop(val canonicalPath: String, val title: String) : ShopDetailEffect
     data class SuggestChange(val shop: ShopDetailContext) : ShopDetailEffect
-    data class OpenPhoto(val imageUrls: List<String>, val initialIndex: Int) : ShopDetailEffect
+    data class OpenPhoto(val imageUrls: List<String>, val initialIndex: Int, val originalUrls: List<String> = imageUrls) : ShopDetailEffect
     data class OpenRoaster(val slug: String) : ShopDetailEffect
     data class OpenLink(val target: String) : ShopDetailEffect
     data class CopyPhone(val number: String) : ShopDetailEffect

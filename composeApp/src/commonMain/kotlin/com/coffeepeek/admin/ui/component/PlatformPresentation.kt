@@ -26,7 +26,17 @@ internal expect fun PlatformAlert(
 )
 
 @Composable
-internal expect fun NativeActionSheet(title: String, actions: List<PlatformAction>, onDismiss: () -> Unit): Boolean
+internal expect fun NativeActionSheet(title: String, actions: List<PlatformAction>, message: String? = null, dismissBeforeAction: Boolean = true, onDismiss: () -> Unit): Boolean
+
+/** Returns false on platforms that render CoffeePeek's own confirmation/error surface. */
+@Composable
+internal expect fun NativeAlert(
+    title: String, message: String, confirmLabel: String, onConfirm: () -> Unit,
+    onDismiss: () -> Unit, cancelLabel: String? = null,
+): Boolean
+
+@Composable
+internal expect fun NativeOperationStatus(message: String): Boolean
 
 /** Read only by the native iOS sheet; Android keeps its existing Material height policy. */
 internal val LocalNativeSheetHeightFraction = staticCompositionLocalOf<Float?> { null }

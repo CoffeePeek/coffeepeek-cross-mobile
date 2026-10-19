@@ -58,6 +58,24 @@ class AndroidShopBrowsingHostViewModelTest {
         assertFalse(session.lease.isCurrent())
     }
 
+    @Test fun authorVisibilityChangeClearsFeatureStoreEvenWhenRouteIsCovered() = runTest(dispatcher) {
+        val snapshots = kotlinx.coroutines.flow.MutableStateFlow(com.coffeepeek.feature.authorblocking.api.AuthorVisibilitySnapshot())
+        val visibility = object : com.coffeepeek.feature.authorblocking.api.AuthorVisibility {
+            override val visibility = snapshots
+            override suspend fun refresh() = Result.success(Unit)
+        }
+        val host = AndroidShopBrowsingHostViewModel(CheckInTestSessions(), visibility).also { store.put("host", it) }
+        runCurrent()
+        val first = host.session.value
+        val child = ProbeViewModel().also { first.viewModelStore.put("feature", it) }
+        snapshots.value = snapshots.value.copy(revision = 1, blockedIds = setOf("author"))
+        assertFalse(first.lease.isCurrent())
+        runCurrent()
+        assertTrue(child.cleared)
+        assertTrue(host.session.value.lease.isCurrent())
+        assertEquals(first.generation + 1, host.session.value.generation)
+    }
+
     @Test fun observationFailureHidesAccountDataAndExplicitRetryCreatesAFreshStore() = runTest(dispatcher) {
         var fail = true
         val original = CheckInTestSessions()
@@ -66,6 +84,7 @@ class AndroidShopBrowsingHostViewModelTest {
                 else original.observeSession()
         }
         val host = AndroidShopBrowsingHostViewModel(sessions).also { store.put("host", it) }
+        runCurrent()
         assertTrue(host.session.value.observationFailed)
         val failed = host.session.value
         fail = false

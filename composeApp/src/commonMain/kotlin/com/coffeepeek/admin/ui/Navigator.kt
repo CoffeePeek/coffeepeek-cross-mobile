@@ -106,6 +106,7 @@ object Navigator {
         @Serializable data object Auth : Screen
         @Serializable data object Register : Screen
         @Serializable data class ForgotPassword(val email: String = "") : Screen
+        // Preserve the destination ID when Android restores a task from before web-only recovery.
         @Serializable data class ResetPassword(val token: String) : Screen
         @Serializable data object Main : Screen
 
@@ -156,6 +157,7 @@ object Navigator {
         @Serializable data class EditHomeCheckIn(val id: String) : Screen
         @Serializable data object CitySettings : Screen
         @Serializable data object ThemeSettings : Screen
+        @Serializable data object BlockedAuthors : Screen
         @Serializable data object UsagePolicy : Screen
         @Serializable data class ShopReviews(val shopId: String) : Screen
         @Serializable data class ReportReview(val reviewId: String, val isPreview: Boolean = false) : Screen
@@ -233,6 +235,7 @@ object Navigator {
         is Screen.EditHomeCheckIn,
         is Screen.CitySettings,
         is Screen.ThemeSettings,
+        is Screen.BlockedAuthors,
         is Screen.UsagePolicy -> true
         else -> false
     }
@@ -431,14 +434,10 @@ object Navigator {
                             },
                         )
                     }
-                    composable<Screen.ResetPassword> { backStack ->
-                        PasswordRecoveryScreen(
-                            initialToken = backStack.toRoute<Screen.ResetPassword>().token,
-                            onClose = { nav.popBackStack() },
-                            onLogin = {
-                                nav.navigate(Screen.Auth) { popUpTo<Screen.Main>(); launchSingleTop = true }
-                            },
-                        )
+                    composable<Screen.ResetPassword> {
+                        LaunchedEffect(Unit) {
+                            nav.navigate(Screen.Auth) { popUpTo<Screen.Main>(); launchSingleTop = true }
+                        }
                     }
                     composable<Screen.Main> { entry ->
                         // The retained screen still needs a full-size transition target.
@@ -515,6 +514,7 @@ object Navigator {
                     }
                     composable<Screen.CitySettings> { CityScreen() }
                     composable<Screen.ThemeSettings> { ThemeScreen() }
+                    composable<Screen.BlockedAuthors> { com.coffeepeek.admin.feature.authorblocking.ui.BlockedAuthorsScreen() }
                     composable<Screen.UsagePolicy> { UsagePolicyScreen() }
             }
         }
@@ -527,7 +527,7 @@ object Navigator {
             Screen.Auth -> AuthScreen()
             Screen.Register -> RegisterScreen()
             is Screen.ForgotPassword -> PasswordRecoveryScreen(initialEmail = screen.email, onClose = ::popBack, onLogin = resetToLogin)
-            is Screen.ResetPassword -> PasswordRecoveryScreen(initialToken = screen.token, onClose = ::popBack, onLogin = resetToLogin)
+            is Screen.ResetPassword -> LaunchedEffect(Unit) { resetToLogin() }
             is Screen.ShopDetail -> koinInject<ShopDetailScreenRenderer>().Content(screen.shopId, screen.forCheckIn)
             Screen.CreateCheckIn -> com.coffeepeek.admin.ui.screen.shop.CheckInShopPickerScreen()
             is Screen.CoffeeDetail -> CoffeeDetailScreen(screen.slug)
@@ -552,6 +552,7 @@ object Navigator {
             is Screen.EditHomeCheckIn -> CheckInHistoryDestination(initialHomeId = screen.id)
             Screen.CitySettings -> CityScreen()
             Screen.ThemeSettings -> ThemeScreen()
+            Screen.BlockedAuthors -> com.coffeepeek.admin.feature.authorblocking.ui.BlockedAuthorsScreen()
             Screen.UsagePolicy -> UsagePolicyScreen()
             else -> error("Tab route must be handled by MainScreen: $screen")
         }

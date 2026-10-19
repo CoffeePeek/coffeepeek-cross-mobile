@@ -1,4 +1,45 @@
-# Migration stack versus main 0137ee7 — 2026-10-16
+# Migration stack versus main — current and historical audits
+
+## Main 28917758 — parent reconciliation, 2026-10-19
+
+Synchronization starts at PR #43, not the Coffee tip. Main photo delivery,
+author blocking, protected painter/cache invalidation, public entity app links
+and web-only password recovery are retained. ResetPassword remains a restored
+route compatibility contract, not a mobile editor to recreate. Incoming shared
+and iOS files are upstream compatibility changes, not a new iOS migration.
+
+Conflict resolutions keep the utilities-owned Modules catalog, migrated Android
+renderers and app-owned DI. No new feature screen is implemented in composeApp.
+The existing shared Shop ViewModel remains transitional: reconciliation combines
+upstream author visibility/request invalidation with existing favorite membership
+and cancellation guards. API/photo clients share one refresh rotation while
+retaining atomic expected-session persistence; a rejected write never returns
+another account's rotated credentials.
+
+Migrated Shop DTOs now retain author IDs and feed/detail/drink-thumb variants.
+Absent and explicitly empty manifests remain distinct, album order is aligned,
+and gallery effects retain the server-issued originals separately. Android
+composition injects the protected application image loader, filters blocked
+public authors and revokes feature stores/callbacks/open gallery composition on
+visibility revision changes. Domain/UI do not depend on the blocking implementation.
+Direct check-in blocking-menu parity, Home/history photo adapters and live protected
+photo acceptance still need auditing; this merge is not their completion claim.
+
+Parent verification on 495d4189 plus the two test corrections: **707 selected
+unit results** (77 network, 48 legacy data, 11 author blocking, 41 Shop data,
+91 Shop impl, 439 app Direct), zero failures/errors/skips; valid up-to-date
+results included. Direct Debug APK/packaged DEX checks and Shop instrumentation
+APK assembly pass. No device test, installation, account write or iOS acceptance
+is claimed. Parent-first propagation and whole-tip verification follow separately.
+
+Retry evidence: the initial new gallery test needed event-envelope access and
+explicit sealed-base assertion typing. The host observation test needed scheduler
+synchronization after combining session/visibility flows; its state assertions
+were retained. Upstream Apple cancellation test now asserts a thrown cancellation,
+not a failed Result, matching the existing cancellation-preserving request policy.
+The entire selection was rerun successfully; no product assertion was weakened.
+
+## Historical main 0137ee7 — 2026-10-16
 
 ## Observed newer main — synchronization pending (2026-10-19)
 

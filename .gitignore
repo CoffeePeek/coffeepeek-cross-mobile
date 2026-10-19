@@ -19,3 +19,5 @@ captures
 node_modules/
 iosApp/Configuration/Local.xcconfig
 iosXtool/CoffeePeek/.build/
+__pycache__/
+*.pyc
