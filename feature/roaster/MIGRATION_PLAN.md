@@ -1,6 +1,6 @@
 # Roasters — Android-first migration plan
 
-Status: step 2 done (2026-10-20): domain + data modules with tests; legacy screens still active, nothing activated. Child of the Coffee checkpoint
+Status: steps 2–3 done (2026-10-20): domain, data, api (ports) and impl (typed MVI) with tests; legacy screens still active, nothing activated. Child of the Coffee checkpoint
 (`feature/coffee-catalog-refactoring`, PR #104); the branch/PR is created only after this plan is accepted.
 Same rules as Coffee: preserve the current product, requests and visuals; Android first; shared/iOS keep the
 legacy composeApp UI; no new feature in composeApp; modules only with real content.
@@ -40,7 +40,7 @@ adapter-free factory over the same endpoints, so reads and legacy writes cannot 
    analytics events exactly (done above) and the data layer's request shapes and error handling.
 2. [x] (2026-10-20, `feature:roaster:domain` + `feature:roaster:data`, 1 + 12 unit tests, Android + iOS device/simulator compile) Extract `domain` + `data` with parity tests (paths/verbs, tag ordering, address/canonical path,
    missing contact fields, cancellation). Legacy screens stay active.
-3. [ ] `api` ports (analytics, favorites, shop-photo lookup) + `impl` typed MVI for list and detail:
+3. [x] (2026-10-20, 19 impl unit tests; see "Step 3 record") `api` ports (analytics, favorites, shop-photo lookup) + `impl` typed MVI for list and detail:
    debounce/query bounds if any, lazy detail loading with the concurrency limit and per-slug de-duplication,
    favorite optimistic state and error message, stale-result/cancellation guards, retry.
 4. [ ] Stateless content, components in own files, colocated light/dark previews, resources; reuse design-system
@@ -90,3 +90,32 @@ APKs only), then a Sandbox walkthrough. Record dates, variants, counts and what 
 - Differences from legacy, deliberately small: `getRoaster` encodes the slug as a path segment and rejects blank
   or over-long slugs; the domain model drops upload-only fields (`fileName`, `storageKey`).
 - Not done: api/impl, app adapters, Koin, renderer, Sandbox fixtures, any activation.
+
+## Step 3 record — 2026-10-20
+
+New modules `feature:roaster:api` and `feature:roaster:impl` (logic-only for now: shared-library convention; the
+Compose convention and entries arrive with step 4). No composeApp dependency yet.
+
+- **Ports (api, commonMain, Kotlin only):** `RoasterAnalytics` -> `RoasterListAnalytics` (`resultsShown(fingerprint,
+  query, filterKeys, resultCount, failed)`, `opened(position)`) and `RoasterDetailAnalytics` (`contentInteracted`
+  with Photos/Shops/Contacts and Open/Select/Instagram/Website, `shopOpened`); `RoasterFavoritesPort`
+  (`observeKeys`, `observeErrors`, fire-and-forget `change(target, favorite, onFailed)` — auth gating, de-duplication,
+  account guards and analytics stay in the app adapter around `TrackedFavoriteInteractions`/`RoasterFavorites`);
+  `RoasterShopPhotos` (`firstPhoto(shopSlug)`, null on failure). All have silent `None` defaults.
+- **List MVI:** state holds items (+ lazily loaded details), loading/failed, query, selected tags, Discovery's
+  selected roasters, favorites-only, favorite keys and a typed message. Filtering reproduces the legacy rules
+  (trimmed case-insensitive name, all selected tags, selected roaster slugs, favorites-only). Initialize loads
+  catalog + favorites + store errors as independent children, idempotently; a newer refresh supersedes an older one
+  even if the old result is non-cancellable; per-slug detail locks, at most 4 concurrent detail reads, failures
+  ignored and retryable; favorite toggle builds the target with the legacy photo fallback; results are reported once
+  settled with a canonical fingerprint (the adapter's tracker ignores unchanged criteria) and `opened` is a 1-based
+  position among visible items.
+- **Detail MVI:** load by slug (blank or >200 chars fails without a request), favorite state derived from the slug
+  key, shop-photo enrichment only for shops without photos and only if the same load is still current, photo preview
+  as state, validated photo/shop actions, Instagram/website events carry already normalized URLs (link rules copied
+  1:1 into `impl/ui/data/RoasterLinks.kt` with tests), back as an event.
+- **Verification:** 10 list + 9 detail unit tests (19), domain/data suites unchanged (13); api/impl compile for
+  Android, iOS device and simulator; the app still compiles. No device or Sandbox run (no UI yet).
+- **Deliberate parity notes:** the catalog reload drops loaded details exactly like the legacy list; the reporting
+  quirk that a retry after a failed first search is not re-reported (same fingerprint) is preserved in the adapter
+  contract, not hidden. Strings are typed messages here; localized resources arrive with the UI.
