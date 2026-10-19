@@ -26,10 +26,17 @@ Studio error inspections report none in the changed mapper, detail ViewModel
 and screen. Paired owner previews use only fake image ports; no IDE preview
 render is claimed. Local build log: `coffeepeek-home-photo-parent-build-2026-10-19.log`.
 
-Physical Home UI execution is pending device unlock after the long build.
+Physical Pixel 7 / API 37, 1080x2400 / density 420: **41/41** self-targeted Home
+UI cases pass in 73.492s, zero failures/skips/retries. Source: `fe80c7e0` owner
+checkpoint, APK SHA-256 `d471d058a3672e15bdeef9a10e102dc5e671032f6f4b64689fc6ae11be4ad465`.
 The new test checks actual feed/thumb requests, missing-preview clicks in both
 themes, and the public entry's independent detail/original albums without an
-extra read. History's parent already passed 21/21 self-targeted cases on Pixel 7.
+extra read. The full detail/editor/lifecycle/media-cancellation fixture suite was
+executed, not only compiled. Package/target, installed version 0 and matching
+debug signatures were checked before updating only the self-targeted test APK.
+The ordinary CoffeePeek and Sandbox device packages/data were not changed.
+Local log: `coffeepeek-home-photo-parent-ui-2026-10-19.log`.
+History's parent separately passed 21/21 self-targeted cases on the same Pixel 7.
 Protected live photos, real media selection/extraction/uploads, backend writes,
 account replacement, analytics, release and iOS acceptance remain open.
 
