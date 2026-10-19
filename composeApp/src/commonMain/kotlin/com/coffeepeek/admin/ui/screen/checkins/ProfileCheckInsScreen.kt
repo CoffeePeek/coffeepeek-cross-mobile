@@ -157,7 +157,7 @@ internal fun ProfileCheckInsScreen(
             PlatformScrollableColumn(Modifier.fillMaxWidth().weight(1f, fill = false)) {
                 CheckInDisplayCard(checkIn, fullVersion = true,
                     modifier = Modifier.padding(horizontal = 16.dp),
-                    onPhotoClick = { urls, index -> photoPreview = PhotoViewerImages(urls) to index })
+                    onPhotoClick = { images, index -> photoPreview = images to index })
                 if (checkIn.shopId.isNotBlank()) TextButton(onClick = {
                     selectedShop = null
                     Navigator.navigate(Navigator.Screen.ShopDetail(checkIn.shopId))

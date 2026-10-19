@@ -52,11 +52,6 @@ internal class HomeCheckInDetailViewModel(
                         photos.map { it.url }))
                 }
             }
-            HomeCheckInDetailAction.OpenDrinkPhoto -> if (canUseEntry()) {
-                currentState.entry!!.drinkPhotoUrl?.takeIf(String::isNotBlank)?.let {
-                    emit(HomeCheckInDetailEvent.OpenPhoto(listOf(currentState.entry!!.drinkPhotoDetailUrl ?: it), 0, listOf(it)))
-                }
-            }
             HomeCheckInDetailAction.RequestDelete -> if (canUseEntry()) {
                 revision++
                 updateState { copy(showDeleteConfirmation = true, deleteIssue = null) }

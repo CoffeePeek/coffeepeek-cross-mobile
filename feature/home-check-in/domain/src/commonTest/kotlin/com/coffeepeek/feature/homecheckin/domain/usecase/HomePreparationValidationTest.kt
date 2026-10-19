@@ -52,12 +52,9 @@ class HomePreparationValidationTest {
         assertEquals(InvalidDrink, errors(draft.copy(drinkSlug = "espresso", customDrinkName = "Custom"))[Drink])
     }
 
-    @Test fun photosRemainCreateOnlyDistinctAndCutoutNeedsPngAndOriginal() {
+    @Test fun photosRemainCreateOnlyAndDistinct() {
         assertEquals(PhotoEditUnsupported, errors(draft.copy(photos = listOf(photo(1))), editing = true)[Photos])
         assertEquals(DuplicatePhotos, errors(draft.copy(photos = listOf(photo(1), photo(1))))[Photos])
-        assertEquals(InvalidCutout, errors(draft.copy(drinkPhoto = photo(2, "image/png")))[Photos])
-        assertEquals(InvalidCutout, errors(draft.copy(photos = listOf(photo(1)), drinkPhoto = photo(2)))[Photos])
-        assertNull(errors(draft.copy(photos = listOf(photo(1)), drinkPhoto = photo(2, "image/png")))[Photos])
     }
 
     @Test fun timestampsRequireOffsetServerPrecisionAndRealCivilDates() {
@@ -69,13 +66,11 @@ class HomePreparationValidationTest {
         assertEquals(InvalidDate, errors(draft.copy(preparedOn = "2026-02-30"))[Date])
     }
 
-    @Test fun invalidOriginalOrCutoutMetadataIsRejectedBeforeUpload() {
+    @Test fun invalidOriginalMetadataIsRejectedBeforeUpload() {
         for (upload in listOf(photo(1).copy(fileName = " "), photo(1).copy(bytes = byteArrayOf()),
             photo(1).copy(contentType = "text/plain"))) {
             assertEquals(InvalidPhotos, errors(draft.copy(photos = listOf(upload)))[Photos])
         }
-        assertEquals(InvalidPhotos, errors(draft.copy(photos = listOf(photo(1)),
-            drinkPhoto = photo(2, "image/png").copy(bytes = byteArrayOf())))[Photos])
     }
 
     @Test fun civilDateIsCheckedAroundUtcDateNotJustIsoTextDate() {

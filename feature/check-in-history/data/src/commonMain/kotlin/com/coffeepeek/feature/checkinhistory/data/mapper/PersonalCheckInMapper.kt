@@ -34,10 +34,6 @@ internal fun HistoryCheckInDto.toDomain(apiBaseUrl: String): PersonalCheckIn {
         photoThumbnailUrls = orderedPhotos.map { (photo, original) -> photo.variants.variantUrl("feed", original, apiBaseUrl) },
         photoDetailUrls = orderedPhotos.map { (photo, original) -> photo.variants.variantUrl("detail", original, apiBaseUrl) },
         photoCalendarUrls = orderedPhotos.map { (photo, original) -> photo.variants.variantUrl("thumb", original, apiBaseUrl) },
-        drinkPhotoUrl = drinkPhotoUrl.resolveHistoryUrl(apiBaseUrl),
-        drinkPhotoThumbnailUrl = drinkPhotoUrl.resolveHistoryUrl(apiBaseUrl)?.let {
-            drinkPhotoVariants.variantUrl("thumb", it, apiBaseUrl)
-        },
         drink = HistoryDrink(drinkSlug, customDrinkName, drinkNameRu, drinkNameEn)
             .takeIf { listOf(it.slug, it.customName, it.nameRu, it.nameEn).any { value -> !value.isNullOrBlank() } },
         visibility = HistoryVisibility.entries.firstOrNull { it.name == visibility } ?: HistoryVisibility.Private,

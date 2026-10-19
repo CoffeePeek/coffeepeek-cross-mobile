@@ -5,7 +5,6 @@ internal sealed interface HomeCheckInDetailAction {
     data object Close : HomeCheckInDetailAction
     data object Edit : HomeCheckInDetailAction
     data class OpenPhoto(val index: Int) : HomeCheckInDetailAction
-    data object OpenDrinkPhoto : HomeCheckInDetailAction
     data object RequestDelete : HomeCheckInDetailAction
     data object CancelDelete : HomeCheckInDetailAction
     data object ConfirmDelete : HomeCheckInDetailAction

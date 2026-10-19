@@ -60,7 +60,6 @@ kotlin {
             implementation("androidx.exifinterface:exifinterface:1.4.1")
             implementation(libs.maplibre.android)
             implementation("com.google.android.gms:play-services-auth:21.3.0")
-            implementation("com.google.mediapipe:tasks-vision:0.10.35")
             // Match Espresso's annotations under Android's consistent runtime/test resolution.
             implementation(libs.errorprone.annotations)
             implementation("com.google.android.play:app-update:2.1.0")
@@ -197,9 +196,6 @@ android {
     buildFeatures {
         buildConfig = true
     }
-    androidResources {
-        noCompress += "tflite"
-    }
 
     defaultConfig {
         applicationId = Config.APPLICATION_ID
@@ -330,7 +326,6 @@ androidComponents {
                 "com.coffeepeek.data.feature.favorites.ServerFavoritesRepository",
                 "com.coffeepeek.admin.di.favorites.ServerFavoriteShopsRepository",
                 "com.coffeepeek.admin.di.favorites.ServerFavoriteDrinksRepository",
-                "com.coffeepeek.admin.di.shop.AndroidShopDrinkPhotoProcessor",
                 "com.coffeepeek.admin.di.shop.ShopCheckInModuleKt",
                 "com.coffeepeek.admin.di.shop.AndroidShopCheckInFormRenderer",
                 "com.coffeepeek.admin.di.shop.AndroidSessionShopCheckInEntry",

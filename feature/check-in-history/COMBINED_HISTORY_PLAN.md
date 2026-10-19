@@ -1,5 +1,34 @@
 # Combined personal history — current-main parity and next slice
 
+## Accepted develop product reconciliation — 2026-10-19
+
+Inherited parent `bb718dbb` includes main `dfb00e63` and develop `fc85f8e5`.
+Drink cutouts are retired in history DTOs/domain snapshots, Home read adapters,
+drink labels and calendars. Ordinary feed/detail/thumb/original representations
+remain aligned. Month pagination, instant ordering, record deduplication, visit
+markers, image-less dates, account revocation and cancellation remain supported.
+The temporary legacy Home editor factory no longer requests the deleted extractor.
+Incoming cached-preview/original viewer behavior is retained.
+
+Historical cutout preference/preparation notes below are superseded by this
+product decision. Verify the independent #95 unit suites, Debug APK/DEX and
+instrumentation compilation, then the complete self-targeted history suite on
+Pixel 7 with fake data. No live writes or new iOS screen work.
+
+Independent #95 verification: **559 selected unit results** (history domain 8,
+data 11, impl 47, Home read domain 3, app Direct 490), zero failures/errors/skips.
+Direct Debug APK/DEX guard, history test APK and app instrumentation compilation
+pass. First build (2m39s) exposed old positional constructors in two app test
+fixtures; the next run (11s) exposed a cutout-only calendar expectation. Updated
+that regression to assert the two visits remain but no retired image is loaded;
+ordinary-photo/calendar assertions remain in their existing cases. Full rerun
+passes (4s). Studio calendar-helper error inspection passes. Device history
+rerun completed on Pixel 7/API 37 at history source `29ef7ea8`: **21/21**, 39.542s,
+zero failures/retries, fake self-targeted APK only. Ordinary CoffeePeek is unchanged.
+APK SHA-256: `5ca3b63d5798bba12825eeb5a0f7a16c0a57822196ae4728a3b04fe430615d59`.
+Logs remain
+local as `coffeepeek-develop-history-*2026-10-19.log`.
+
 ## Current-main reconciliation gate — 2026-10-19
 
 Main **28917758** is inherited parent-first through #43 -> #95 and descendants.

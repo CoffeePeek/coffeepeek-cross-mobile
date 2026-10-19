@@ -38,7 +38,10 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -52,6 +55,7 @@ import com.coffeepeek.admin.di.platformViewModel
 import com.coffeepeek.admin.theme.CpDimens
 import com.coffeepeek.admin.ui.component.CompactOutlinedTextField
 import com.coffeepeek.admin.ui.component.AppButton
+import com.coffeepeek.admin.ui.component.ActionRow
 import com.coffeepeek.admin.ui.component.CoffeePeekLoader
 import com.coffeepeek.admin.ui.component.CpTopBar
 import com.coffeepeek.admin.ui.component.CheckmarkSection
@@ -379,20 +383,7 @@ private fun CatalogEditor(
 
 @Composable
 private fun MenuEditor(state: ShopChangeEditorUiState, vm: ShopChangeEditorViewModel) {
-    GroupSection(title = "Позиции меню") {
-        if (state.menuRows.isEmpty()) {
-            Text(
-                text = "Каталог напитков пуст",
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(CpDimens.spacing4),
-            )
-        }
-        state.menuRows.forEachIndexed { index, row ->
-            if (index > 0) RowSeparator()
-            MenuItemEditor(row = row, vm = vm)
-        }
-    }
-    Spacer(Modifier.height(CpDimens.spacing5))
+    var expanded by rememberSaveable { mutableStateOf(false) }
     Text("Фото меню", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
     Spacer(Modifier.height(CpDimens.spacing2))
     RetainedPhotoRow(state.retainedMenuPhotos, onRemove = vm::removeRetainedMenuPhoto)
@@ -407,6 +398,26 @@ private fun MenuEditor(state: ShopChangeEditorUiState, vm: ShopChangeEditorViewM
             title = "Новые фото меню",
             hint = "До $MAX_MENU_PHOTOS фото меню, включая сохранённые.",
         )
+    }
+    Spacer(Modifier.height(CpDimens.spacing5))
+    GroupSection(title = "Подробное меню", trailing = "Необязательно") {
+        ActionRow(
+            label = if (expanded) "Свернуть" else "Указать напитки и цены",
+            onClick = { expanded = !expanded },
+        )
+        if (expanded) {
+            if (state.menuRows.isEmpty()) {
+                Text(
+                    text = "Каталог напитков пуст",
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(CpDimens.spacing4),
+                )
+            }
+            state.menuRows.forEach { row ->
+                RowSeparator()
+                MenuItemEditor(row = row, vm = vm)
+            }
+        }
     }
 }
 
@@ -430,31 +441,16 @@ private fun MenuItemEditor(row: ShopChangeMenuRow, vm: ShopChangeEditorViewModel
             },
         )
         Spacer(Modifier.height(CpDimens.spacing2))
-        Row(horizontalArrangement = Arrangement.spacedBy(CpDimens.spacing2)) {
-            CompactOutlinedTextField(
-                value = row.priceText,
-                onValueChange = { value -> vm.updateMenuRow(row.slug) { it.copy(priceText = value) } },
-                modifier = Modifier.weight(1f).height(CpDimens.buttonHeight),
-                placeholder = { Text("Цена, BYN") },
-                singleLine = true,
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                shape = RoundedCornerShape(CpDimens.radiusMd),
-                colors = fieldColors(),
-            )
-            CompactOutlinedTextField(
-                value = row.volumeText,
-                inputFilter = Char::isDigit,
-                onValueChange = { value ->
-                    vm.updateMenuRow(row.slug) { it.copy(volumeText = value.filter(Char::isDigit)) }
-                },
-                modifier = Modifier.weight(1f).height(CpDimens.buttonHeight),
-                placeholder = { Text("Объём, мл") },
-                singleLine = true,
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                shape = RoundedCornerShape(CpDimens.radiusMd),
-                colors = fieldColors(),
-            )
-        }
+        CompactOutlinedTextField(
+            value = row.priceText,
+            onValueChange = { value -> vm.updateMenuRow(row.slug) { it.copy(priceText = value) } },
+            modifier = Modifier.fillMaxWidth().height(CpDimens.buttonHeight),
+            placeholder = { Text("Цена, BYN") },
+            singleLine = true,
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+            shape = RoundedCornerShape(CpDimens.radiusMd),
+            colors = fieldColors(),
+        )
     }
 }
 

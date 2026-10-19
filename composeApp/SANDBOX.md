@@ -37,7 +37,7 @@ package, so install only the preferred one. Normal debug/release IDs are unchang
 
 - Variant-only `SandboxApplication`/`SandboxActivity`, not production
   `CoffeePeekApplication.onCreate`. Reuse the existing Koin definitions with
-  explicitly replaced HTTP, session, auth, image and extraction ports. No real
+  explicitly replaced HTTP, session, auth and image ports. No real
   credential store, realtime, analytics installation or automatic update prompt.
 - Manifest removes INTERNET, CAMERA, location, storage, phone and APK-install permissions; production app links
   and MainActivity are absent. Provider authorities use the Sandbox package.
@@ -56,8 +56,9 @@ package, so install only the preferred one. Normal debug/release IDs are unchang
 ## Deliberate limits
 
 The shared photo-picker port returns **synthetic local PNGs**. Camera/gallery launch,
-URI decoding and ML extraction are not exercised; the banner states this. No
-private photos are bundled. Original/cutout reservation and upload requests do
+URI decoding are not exercised; no private photos are bundled. Drink cutouts/ML
+extraction were retired with develop `fc85f8e5`; Sandbox does not recreate them.
+Ordinary photo reservation and upload requests do
 exercise the real Home/Shop data layer, but upload bytes stay in memory.
 
 Root destinations are the existing application routes. Route availability does

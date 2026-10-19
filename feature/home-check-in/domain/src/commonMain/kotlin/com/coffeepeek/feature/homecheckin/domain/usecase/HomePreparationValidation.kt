@@ -43,17 +43,15 @@ fun homePreparationFieldErrors(input: HomePreparationInput, editing: Boolean = f
         put(Drink, HomePreparationIssue.InvalidDrink)
     else if ((input.drinkSlug?.trim()?.length ?: 0) > 50) put(Drink, HomePreparationIssue.InvalidDrink)
     when {
-        editing && (input.photos.isNotEmpty() || input.drinkPhoto != null) ->
+        editing && input.photos.isNotEmpty() ->
             put(Photos, HomePreparationIssue.PhotoEditUnsupported)
         input.photos.size > 5 -> put(Photos, HomePreparationIssue.TooManyPhotos)
-        (input.photos + listOfNotNull(input.drinkPhoto)).any {
+        input.photos.any {
             it.fileName.isBlank() || it.bytes.isEmpty() || !it.contentType.startsWith("image/")
         } -> put(Photos, HomePreparationIssue.InvalidPhotos)
         input.photos.indices.any { index -> input.photos.drop(index + 1).any { next ->
             input.photos[index].bytes.contentEquals(next.bytes)
         } } -> put(Photos, HomePreparationIssue.DuplicatePhotos)
-        input.drinkPhoto != null && (input.photos.isEmpty() || input.drinkPhoto.contentType != "image/png") ->
-            put(Photos, HomePreparationIssue.InvalidCutout)
     }
 }
 

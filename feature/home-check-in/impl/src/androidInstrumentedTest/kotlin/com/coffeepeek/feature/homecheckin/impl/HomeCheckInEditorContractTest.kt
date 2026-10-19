@@ -215,22 +215,17 @@ class HomeCheckInEditorContractTest {
         }
     }
 
-    @Test fun addPortReceivesRemainingLimitAndMultipleCutoutsRequireChoice() {
+    @Test fun addPortReceivesRemainingLimitAndSaveNeedsNoCutoutChoice() {
         val actions = mutableListOf<HomeCheckInEditorAction>()
         val remaining = mutableListOf<Int>()
-        val photo = upload("original")
-        val candidates = listOf(upload("first"), upload("second"))
-        val state = previewHomeEditorState().let { it.copy(draft = it.draft.copy(photos = listOf(photo)),
-            photoPreparation = HomeCheckInPhotoState(source = photo, candidates = candidates)) }
+        val state = previewHomeEditorState().let { it.copy(draft = it.draft.copy(photos = listOf(upload("original")))) }
         render { Content(state, actions::add, onAdd = remaining::add) }.use {
             scrollTo("Добавить фото"); compose.onNodeWithContentDescription("Добавить фото").performClick()
             assertEquals(listOf(4), remaining)
-            compose.onNodeWithText("Сохранить чекин").assertIsNotEnabled()
-            // Scroll the vertical body first, not the candidate's nearest (horizontal) scroll ancestor.
-            compose.onNodeWithText("Без вырезки").performScrollTo()
-            compose.onNodeWithContentDescription("Объект 2: выбрать как чашку").assertIsDisplayed().performClick()
-            compose.onNodeWithText("Без вырезки").performScrollTo().performClick()
-            assertEquals(listOf(HomeCheckInEditorAction.ChooseDrinkPhoto(1), HomeCheckInEditorAction.SkipDrinkPhoto), actions)
+            // Save is in the fixed footer, outside the scrolling form body.
+            compose.onNodeWithText("Сохранить чекин").assertIsDisplayed().assertIsEnabled().performClick()
+            assertEquals(listOf(HomeCheckInEditorAction.Save), actions)
+            compose.onNodeWithText("Без вырезки").assertDoesNotExist()
         }
     }
 
@@ -273,7 +268,7 @@ class HomeCheckInEditorContractTest {
             HomeCheckInEditorViewModel(repo, object : HomeCheckInEditorCatalog {
                 override suspend fun brewMethods() = Result.success(emptyList<HomeCheckInBrewMethod>())
                 override suspend fun searchBeans(query: String) = Result.success(emptyList<HomeCheckInBeanOption>())
-            }, { Result.success(emptyList()) }, "2026-10-17T07:30:00Z", "2026-10-17", null, 1, { access && lease() },
+            }, "2026-10-17T07:30:00Z", "2026-10-17", null, 1, { access && lease() },
                 { Instant.parse("2026-10-17T12:00:00Z") })
         }
         HomeCheckInEditorScreen(vm, allowed, "2026-10-17", { it }, { it + "T00:00:00Z" }, { it },

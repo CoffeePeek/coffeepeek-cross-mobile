@@ -27,7 +27,7 @@ internal fun HomePreparationIssue.editorText(): String = stringResource(when (th
     HomePreparationIssue.InvalidDrink, HomePreparationIssue.DrinkUnavailable,
     HomePreparationIssue.InvalidDrinkName -> R.string.home_check_in_error_drink
     HomePreparationIssue.PhotoEditUnsupported -> R.string.home_check_in_error_photo_edit
-    HomePreparationIssue.TooManyPhotos, HomePreparationIssue.DuplicatePhotos, HomePreparationIssue.InvalidCutout,
+    HomePreparationIssue.TooManyPhotos, HomePreparationIssue.DuplicatePhotos,
     HomePreparationIssue.InvalidPhotos, HomePreparationIssue.PhotosNotClaimed,
     HomePreparationIssue.PhotosAlreadyUsed -> R.string.home_check_in_error_photos
     HomePreparationIssue.MissingDateOffset, HomePreparationIssue.InvalidDate, HomePreparationIssue.InvalidTime,

@@ -37,9 +37,6 @@ class CheckInHistoryModuleTest {
         val app = koinApplication {
             modules(module { single { client }; single<SessionRepository> { sessions } },
                 module {
-                    single<com.coffeepeek.admin.feature.checkin.domain.DrinkPhotoExtractor> {
-                        com.coffeepeek.admin.feature.checkin.domain.DrinkPhotoExtractor { error("Unexpected extraction") }
-                    }
                     single<CoffeePicker> { object : CoffeePicker {
                         override suspend fun search(query: String) = error("Unexpected catalog read")
                     } }

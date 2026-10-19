@@ -9,7 +9,7 @@ import kotlin.test.assertTrue
 
 class CheckInPhotoVariantsTest {
     @Test
-    fun readyVariantsReachFeedViewerCalendarAndCutoutWithoutChangingOriginalsOrOrder() {
+    fun readyVariantsReachFeedViewerCalendarWithoutChangingOriginalsOrOrder() {
         val original = "/api/v1/check-ins/visit/photos/first"
         fun variants() = listOf("thumb", "feed", "detail").joinToString(",") { purpose ->
             """{"purpose":"$purpose","contentType":"image/png","width":320,"height":240,"sizeBytes":200,"url":"$original/variants/source/1/$purpose.png"}"""
@@ -17,13 +17,12 @@ class CheckInPhotoVariantsTest {
         val dto = Json.decodeFromString<CheckInDto>("""{"id":"visit","photos":[
             {"id":"second","sortIndex":1,"url":"/second"},
             {"id":"first","sortIndex":0,"url":"$original","variants":[${variants()}]}
-        ],"drinkPhotoUrl":"$original","drinkPhotoVariants":[${variants()}]}""")
+        ]}""")
         val model = dto.toDomain(FileUrlResolver("https://gateway.example/"))
         assertEquals("https://gateway.example$original", model.photoUrls[0])
         assertTrue(model.photoThumbnailUrls[0].endsWith("feed.png"))
         assertTrue(model.photoDetailUrls!![0].endsWith("detail.png"))
         assertTrue(model.photoCalendarUrls!![0].endsWith("thumb.png"))
-        assertTrue(model.drinkPhotoThumbnailUrl!!.endsWith("thumb.png"))
         assertEquals("https://gateway.example/second", model.photoThumbnailUrls[1])
     }
 

@@ -121,7 +121,7 @@ civil-date bounds, page metadata and read/write contracts. Dependencies: Kotlin 
 Home data/presentation and application composition. Other features must not
 import this domain: history owns its own read port/models, adapted by the app.
 HTTP, DTOs, signed-upload representation, repository implementations and DI stay
-outside domain; its upload input is just caller-supplied original/cutout bytes.
+outside domain; its upload input is just caller-supplied original photo bytes; drink cutouts are retired with develop `fc85f8e5`.
 
 A package inside `features/home-checkin` would also expose that artifact's Ktor
 dependencies and mixed read/write implementation. A separate populated module

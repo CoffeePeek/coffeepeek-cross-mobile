@@ -1,22 +1,15 @@
 # Android refactoring — current roadmap
 
-## Target-develop reconciliation decision — 2026-10-19
+## Accepted develop baseline — 2026-10-19
 
-Main remains `dfb00e63`, but final PR inspection reports parent #43 conflicting
-with its target develop. Fresh `origin/develop` is `fc85f8e5`: five incoming
-commits remove check-in drink cutouts/MediaPipe (`86698a69`), preserve cached
-gallery previews, adjust profile layout and simplify menu editing (photo-first,
-no volume fields). The develop-side delta since its merge base with main spans
-96 files, including shared/native compatibility removals; it is not a two-line
-merge repair. The migrated Shop/Home/history media paths need a coherent parity
-audit if this target baseline is adopted now.
-
-No develop merge or feature removal has been performed. Current published code
-and verification below target main `dfb00e63`; they do not certify this newer
-develop product contract. Before another feature/activation, choose whether to
-reconcile develop now or wait until those changes reach main. Do not silently
-retain retired functionality after adopting that baseline or start an iOS UI
-migration under the guise of resolving this conflict.
+User approved adopting `origin/develop` `fc85f8e5` ahead of main `dfb00e63`.
+Reconcile parent #43 first, then every existing child in order. Retire drink-photo
+cutouts/MediaPipe throughout prepared Shop, history, Home and Sandbox; preserve
+ordinary photos, variant/original alignment and existing session/privacy guards.
+Keep incoming menu-photo-first editing without volume fields, profile spacing
+and gallery preview fixes. No new feature/module or iOS screen migration is part
+of this synchronization. Dated extraction tasks below are historical, not work
+to restore. Verification is recorded in the owning feature plans.
 
 Audit date: **2026-10-19**. Current main: **dfb00e63**; application-code baseline
 remains **28917758** (the last commit changes iOS CI/signing tests only).
@@ -31,8 +24,8 @@ Main was integrated starting at #43, then propagated through #95 -> #99 ->
 [MAIN_SYNC_AUDIT.md](MAIN_SYNC_AUDIT.md) for reconciliation and verification.
 This synchronization does not activate Coffee or migrate new profile/auth UI.
 The final CI-only dfb00e63 update was also propagated parent-first; its two
-signing-profile unit tests pass. Android/KMP source did not change after the
-verification below.
+signing-profile unit tests pass. That earlier main-only verification is historical; the accepted develop
+reconciliation above changes product source and has its own recorded checks.
 
 There are **36 registered application/library Gradle modules** at the Coffee tip:
 one composeApp, five core modules, 24 modules in six api/domain/data/impl feature
@@ -46,7 +39,7 @@ paths, not templates for new migrations.
 | Core and build-logic | Coroutines, network, database, typed MVI, design-system; Modules catalog/conventions; shared fractional ratings, gold hearts, slot card and expandable text | Scoped reuse; remove legacy equivalents only after consumers migrate, not a new core/base/common project |
 | Favorites | Four boundaries; active Android entry for server-backed shops/roasters/drinks, account guards and app-owned DI | Live account/persistence/photo/accessibility acceptance and remaining analytics parity; never restore the local server-favorite writer |
 | Shop Report | Four boundaries; active Android reason selection/submission entry and grouped accessible choices | Safe live submit/error/uncertain-delivery acceptance; not the separate check-in abuse-report flow |
-| Shop | Four boundaries; active detail, menu gallery, public check-in list and creation sheet; shared controls/prod geometry; block/report menus delegate through revocable app adapters | Full-app Sandbox blocking fixtures, protected-photo visual acceptance, media/permissions/extraction, guest/owner/return and authorized writes |
+| Shop | Four boundaries; active detail, menu gallery, public check-in list and creation sheet; shared controls/prod geometry; block/report menus delegate through revocable app adapters | Full-app Sandbox blocking fixtures, protected-photo visual acceptance, media/permissions, guest/owner/return and authorized writes |
 | Combined history | Four boundaries; three Android aliases use combined Shop/Home calendar/timeline, paging, filters, visit markers and current-main feed/thumb/detail/original photo contracts | Populated live/protected-photo/accessibility checks. Profile Activity modal remains a separate legacy consumer |
 | Home check-ins | Four boundaries; history/global creation use new data/entries, media/analytics bridges; distinct photo variants reach calendar/detail/gallery, 41/41 isolated owner UI cases pass | Real media/upload/account/CRUD acceptance. Profile Activity and shared/iOS consumers remain legacy |
 | Coffee catalogue | Four boundaries; repository/picker, typed list/detail MVI, Android entries/content/components/resources/previews and isolated tests prepared | **Not activated**: tab/detail routes/Koin/picker still use composeApp implementation. Finish analytics adapters, Android DI/routes/picker and full Sandbox checks before switching |
@@ -63,7 +56,7 @@ iOS UI migration remains deferred; Native compilation is only compatibility.
 1. [x] Reconcile main 28917758 in #43 and propagate through all open children.
    Preserve Android entries, atomic sessions, incoming links/web-only password
    recovery, and injected fake Sandbox image transport.
-2. [ ] Close identified **current-main parity verification** before another screen switch:
+2. [ ] Close identified **current-baseline parity verification** before another screen switch:
 
    - [x] History/Home feed/thumb/detail variants, explicit originals, album indices
      and calendar thumbs in #95/#99, propagated to children. Recorded final-tip

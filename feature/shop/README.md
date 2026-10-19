@@ -65,15 +65,11 @@ Both Android variants, lint, unit tests and isolated device UI scenarios now pas
 (2026-10-14). Live authenticated writes and individual IDE previews remain
 unverified; see the compatibility plan's latest record rather than earlier slices.
 
-Incoming main now supplies drinkPhotoUrl. Prepared Shop cards decode/render it
-separately from the gallery with Fit and a neutral fallback. The Android form
-now has foreground extraction via an app-owned ML Kit adapter, selection/retry/
-opt-out, draft retention and separate PNG upload/payload. It does not classify
-cups. Changed-first-photo work is cancelled and late replies are rejected;
-selected PNG upload failures stop creation. The incoming source had no extraction
-provider despite its documentation. Sources compile, regression tests and native
-PNG encoding checks pass. Actual cup segmentation/model availability, picker/
-camera and authenticated backend submission still require QA.
+The accepted develop baseline `fc85f8e5` retires drink-photo cutouts and ML
+extraction. Prepared Shop keeps ordinary gallery photos, drink selection/name,
+ratings, account-owned drafts and uncertain-delivery guards. There is no extra
+PNG cutout upload, processor/DI or selection/retry/skip step. Historical extraction
+acceptance is superseded; do not restore it from old plans.
 See [ANDROID_PARITY_PLAN.md](ANDROID_PARITY_PLAN.md) for the next ordered work.
 
 `feature/shop` owns shop browsing. Android source wiring now selects its gallery,

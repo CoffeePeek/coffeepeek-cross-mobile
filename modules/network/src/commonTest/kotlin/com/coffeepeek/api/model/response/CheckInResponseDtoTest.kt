@@ -44,15 +44,14 @@ class CheckInResponseDtoTest {
         assertEquals(7, checkIn.helpfulCount)
         assertEquals("/api/v1/check-ins/check-in-1/photos/photo-1", checkIn.photos.single().url)
         assertEquals(41, response.totalCount)
-        assertNull(checkIn.drinkPhotoUrl)
     }
 
     @Test
-    fun decodesOptionalDrinkPhotoWithoutChangingOriginalPhotos() {
-        val checkIn = Json.decodeFromString<CheckInDto>(
-            """{"id":"visit","drinkPhotoUrl":"/api/v1/check-ins/visit/drink-photo","photos":[{"url":"/full.jpg"}]}""",
+    fun ignoresAdditionalServerFieldsWithoutChangingOriginalPhotos() {
+        val json = Json { ignoreUnknownKeys = true }
+        val checkIn = json.decodeFromString<CheckInDto>(
+            """{"id":"visit","additionalMetadata":{"url":"/extra.png"},"photos":[{"url":"/full.jpg"}]}""",
         )
-        assertEquals("/api/v1/check-ins/visit/drink-photo", checkIn.drinkPhotoUrl)
         assertEquals("/full.jpg", checkIn.photos.single().url)
     }
 }

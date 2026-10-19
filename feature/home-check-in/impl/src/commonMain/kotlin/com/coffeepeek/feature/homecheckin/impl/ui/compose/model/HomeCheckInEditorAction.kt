@@ -23,9 +23,6 @@ internal sealed interface HomeCheckInEditorAction {
     data class CustomBeanChosen(val name: String) : HomeCheckInEditorAction
     data class PhotosAdded(val photos: List<HomePreparationUpload>) : HomeCheckInEditorAction
     data class RemovePhoto(val index: Int) : HomeCheckInEditorAction
-    data class ChooseDrinkPhoto(val index: Int) : HomeCheckInEditorAction
-    data object RetryDrinkPhoto : HomeCheckInEditorAction
-    data object SkipDrinkPhoto : HomeCheckInEditorAction
     data object Save : HomeCheckInEditorAction
     data object Close : HomeCheckInEditorAction
     data object RevokeAccess : HomeCheckInEditorAction

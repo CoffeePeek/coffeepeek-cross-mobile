@@ -84,5 +84,5 @@ root navigation, fake CRUD, themes and error paths. Use the live Debug app only
 when actual backend/device behavior is the subject of the check. Real-account
 writes, logout, favorites, consent changes and destructive actions still need
 explicit authorization and a safe account. Sandbox uses in-memory local fixtures,
-not a server-side test account; it does not certify OAuth, real media/ML,
+not a server-side test account; it does not certify OAuth, real media,
 analytics, backend persistence or iOS readiness. See [Sandbox coverage](SANDBOX.md).

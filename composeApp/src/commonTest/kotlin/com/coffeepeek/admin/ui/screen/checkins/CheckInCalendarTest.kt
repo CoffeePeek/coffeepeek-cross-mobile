@@ -8,35 +8,35 @@ import kotlin.test.assertEquals
 
 class CheckInCalendarTest {
     @Test
-    fun calendarPrioritizesCutoutsAcrossHomeAndCafeVisitsAndKeepsAllUniquePhotos() {
+    fun calendarKeepsAllUniqueHomeAndCafePhotosInOrder() {
         val visits = listOf(
             CheckIn("original", "shop", "Coffee", "", "2026-10-12T09:00:00Z", photoUrls = listOf("original.jpg")),
-            CheckIn("cutout", "shop", "Coffee", "", "2026-10-12T10:00:00Z", drinkPhotoUrl = "cafe.png"),
+            CheckIn("cafe", "shop", "Coffee", "", "2026-10-12T10:00:00Z", photoUrls = listOf("cafe.jpg")),
         )
         val photos = calendarPhotos(visits, listOf(
-            CalendarPhoto("home.png", true), CalendarPhoto("fourth.jpg", false), CalendarPhoto("fifth.jpg", false),
+            CalendarPhoto("home.jpg"), CalendarPhoto("fourth.jpg"), CalendarPhoto("fifth.jpg"),
         ))
         assertEquals(listOf(
-            CalendarPhoto("cafe.png", true), CalendarPhoto("home.png", true), CalendarPhoto("original.jpg", false),
-            CalendarPhoto("fourth.jpg", false), CalendarPhoto("fifth.jpg", false),
+            CalendarPhoto("original.jpg"), CalendarPhoto("cafe.jpg"), CalendarPhoto("home.jpg"),
+            CalendarPhoto("fourth.jpg"), CalendarPhoto("fifth.jpg"),
         ), photos)
-        assertEquals(listOf(CalendarPhoto("cafe.png", true)),
-            calendarPhotos(visits.takeLast(1), listOf(CalendarPhoto("cafe.png", true))))
+        assertEquals(listOf(CalendarPhoto("cafe.jpg")),
+            calendarPhotos(visits.takeLast(1), listOf(CalendarPhoto("cafe.jpg"))))
     }
 
     @Test
-    fun homeCalendarKeepsPhotosGroupedByPreparedDayAndFallsBackToOriginal() {
-        fun entry(id: String, day: String, cutout: String?, photos: List<HomeCheckInPhoto>) = HomeCheckIn(
+    fun homeCalendarKeepsPhotosGroupedByPreparedDayAndIgnoresBlankUrls() {
+        fun entry(id: String, day: String, photos: List<HomeCheckInPhoto>) = HomeCheckIn(
             id, "${day}T09:00:00Z", day, "${day}T09:00:00Z", null, null, null, null,
-            null, null, null, null, null, null, photos, cutout,
+            null, null, null, null, null, null, photos,
         )
         assertEquals(mapOf(
-            "2026-10-12" to listOf(CalendarPhoto("home.png", true), CalendarPhoto("home.jpg", false)),
+            "2026-10-12" to listOf(CalendarPhoto("first.jpg"), CalendarPhoto("home.jpg")),
             "2026-10-13" to emptyList(),
         ), homeCalendarPhotos(listOf(
-            entry("cutout", "2026-10-12", "home.png", listOf(HomeCheckInPhoto("original", "unused.jpg"))),
-            entry("original", "2026-10-12", " ", listOf(HomeCheckInPhoto("blank", ""), HomeCheckInPhoto("photo", "home.jpg"))),
-            entry("empty", "2026-10-13", null, emptyList()),
+            entry("first", "2026-10-12", listOf(HomeCheckInPhoto("original", "first.jpg"))),
+            entry("original", "2026-10-12", listOf(HomeCheckInPhoto("blank", ""), HomeCheckInPhoto("photo", "home.jpg"))),
+            entry("empty", "2026-10-13", emptyList()),
         )))
     }
 
@@ -71,13 +71,13 @@ class CheckInCalendarTest {
     }
 
     @Test
-    fun diaryUsesCutoutBeforeGalleryAndIgnoresBlankUrls() {
+    fun diaryUsesPhotoVariantsAndIgnoresBlankUrls() {
         val visit = com.coffeepeek.domain.model.CheckIn("one", "shop", "Coffee", "", "2026-10-12T09:00:00Z",
-            drinkPhotoUrl = "drink.png", photoThumbnailUrls = listOf("", "thumb.jpg"), photoUrls = listOf("original.jpg"))
-        assertEquals("drink.png" to true, diaryPhoto(visit))
-        assertEquals("thumb.jpg" to false, diaryPhoto(visit.copy(drinkPhotoUrl = "")))
-        assertEquals("original.jpg" to false, diaryPhoto(visit.copy(drinkPhotoUrl = null, photoThumbnailUrls = emptyList())))
-        assertEquals(null, diaryPhoto(visit.copy(drinkPhotoUrl = null, photoThumbnailUrls = emptyList(), photoUrls = emptyList())))
+            photoThumbnailUrls = listOf("", "thumb.jpg"), photoUrls = listOf("original.jpg"))
+        assertEquals("calendar.jpg", diaryPhoto(visit.copy(photoCalendarUrls = listOf("", "calendar.jpg"))))
+        assertEquals("thumb.jpg", diaryPhoto(visit))
+        assertEquals("original.jpg", diaryPhoto(visit.copy(photoThumbnailUrls = emptyList())))
+        assertEquals(null, diaryPhoto(visit.copy(photoThumbnailUrls = emptyList(), photoUrls = emptyList())))
     }
     @Test
     fun september2026StartsOnTuesdayAndHasThirtyDays() {

@@ -43,8 +43,7 @@ internal fun HistoryCheckInCard(checkIn: PersonalCheckIn, dateLabel: String,
                     Text(checkIn.helpfulCount.toString(), style = MaterialTheme.typography.labelMedium)
                 }
             }
-            checkIn.drink.displayName(Locale.current.language)?.let { HistoryDrinkBadge(it,
-                checkIn.drinkPhotoThumbnailUrl ?: checkIn.drinkPhotoUrl, imageContent = imageContent) }
+            checkIn.drink.displayName(Locale.current.language)?.let { HistoryDrinkBadge(it) }
         }
     }
 }
@@ -53,7 +52,7 @@ internal fun previewHistoryCheckIn() = PersonalCheckIn(
     id = "preview", shop = HistoryAddress("coffee", "/coffee-shop/coffee"), shopName = "Кофейня",
     author = null, username = "Анна", note = "Уютное место и отличный кофе.",
     createdAt = "2026-10-14T10:00:00Z", visitedAt = "2026-10-14T10:00:00Z", rating = HistoryRating(4, 4, 5),
-    photoUrls = emptyList(), drinkPhotoUrl = null, drink = HistoryDrink("cappuccino", null, "Капучино", "Cappuccino"),
+    photoUrls = emptyList(), drink = HistoryDrink("cappuccino", null, "Капучино", "Cappuccino"),
     visibility = HistoryVisibility.Private, moderation = HistoryModeration.NotSubmitted, contentRevision = 0,
     rejectionReason = null, helpfulCount = 0, isHelpfulByCurrentUser = false,
 )

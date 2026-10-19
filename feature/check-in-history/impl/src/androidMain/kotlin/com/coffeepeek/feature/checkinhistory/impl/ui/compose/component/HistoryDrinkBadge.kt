@@ -17,17 +17,14 @@ import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 
 @Composable
-internal fun HistoryDrinkBadge(name: String, drinkPhotoUrl: String?, modifier: Modifier = Modifier,
-    imageContent: HistoryImageContent? = null) {
+internal fun HistoryDrinkBadge(name: String, modifier: Modifier = Modifier) {
     Row(modifier, verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing1)) {
-        if (drinkPhotoUrl.isNullOrBlank()) Icon(CoffeePeekIcons.Coffee, null, Modifier.size(16.dp))
-        else HistoryPhoto(drinkPhotoUrl, Modifier.size(44.dp).clip(RoundedCornerShape(CoffeePeekDimens.radiusMd)),
-            ContentScale.Fit, imageContent)
+        Icon(CoffeePeekIcons.Coffee, null, Modifier.size(16.dp))
         Text(name, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }
 
 @PreviewLightDark @Composable private fun HistoryDrinkBadgePreview() = CoffeePeekTheme {
-    HistoryDrinkBadge("Капучино", null)
+    HistoryDrinkBadge("Капучино")
 }

@@ -23,7 +23,6 @@ internal data class HomeCheckInEditorState(
     val beans: List<HomeCheckInBeanOption> = emptyList(),
     val beansLoading: Boolean = false,
     val beansIssue: HomePreparationIssue? = null,
-    val photoPreparation: HomeCheckInPhotoState = HomeCheckInPhotoState(),
     val isClosed: Boolean = false,
     val isAccessRevoked: Boolean = false,
 )

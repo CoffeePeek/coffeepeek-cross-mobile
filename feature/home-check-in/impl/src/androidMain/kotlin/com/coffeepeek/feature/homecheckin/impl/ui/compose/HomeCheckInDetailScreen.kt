@@ -97,11 +97,6 @@ internal fun HomeCheckInDetailScreenContent(
                     onAction(HomeCheckInDetailAction.OpenPhoto(it))
                 }
             }
-            entry.drinkPhotoUrl?.takeIf(String::isNotBlank)?.let { url -> item(key = "drink-photo") {
-                HomeCheckInDrinkPhoto(entry.drinkPhotoThumbnailUrl ?: url, enabled, imageContent) {
-                    onAction(HomeCheckInDetailAction.OpenDrinkPhoto)
-                }
-            } }
             entry.text?.takeIf(String::isNotBlank)?.let { note -> item(key = "note") {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text(stringResource(R.string.home_check_in_note), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
@@ -124,7 +119,7 @@ internal fun previewHomePreparation() = HomePreparation(
     id = "fixture-home", preparedOn = "2026-10-17", preparedAtUtc = "2026-10-17T07:30:00Z", createdAtUtc = "2026-10-17T07:30:00Z",
     text = "Ягодная кислотность и сладкое послевкусие", brewMethodCode = "hario-v60", coffeeProductId = null,
     beanName = "Эфиопия", doseGrams = "18.00", brewDurationSeconds = 180, tasteScore = 4,
-    drinkName = "Фильтр", drinkSlug = "filter", customDrinkName = null, photos = emptyList(), drinkPhotoUrl = null,
+    drinkName = "Фильтр", drinkSlug = "filter", customDrinkName = null, photos = emptyList(),
     visibility = HomePreparationVisibility.Private, moderation = HomePreparationModeration.NotSubmitted,
 )
 
@@ -140,8 +135,7 @@ internal fun previewHomePreparation() = HomePreparation(
 @PreviewLightDark @Composable private fun HomeCheckInDetailPhotoVariantsPreview() = CoffeePeekTheme {
     Surface { HomeCheckInDetailScreenContent(HomeCheckInDetailState(entry = previewHomePreparation().copy(
         photos = listOf(HomePreparationPhoto("a", "fixture-original-a", thumbnailUrl = "fixture-feed-a"),
-            HomePreparationPhoto("b", "fixture-original-b", thumbnailUrl = "")),
-        drinkPhotoUrl = "fixture-cutout", drinkPhotoThumbnailUrl = "fixture-cutout-thumb")), {},
+            HomePreparationPhoto("b", "fixture-original-b", thumbnailUrl = "")))), {},
         { _, _ -> "17.10.2026 · 10:30" }, { "Hario V60" }, { _, _, modifier, _ ->
             Box(modifier) // Fake image port: previews never access private images or a network loader.
         }) }

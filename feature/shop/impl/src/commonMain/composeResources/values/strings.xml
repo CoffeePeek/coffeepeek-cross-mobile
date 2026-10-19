@@ -1,15 +1,5 @@
 <resources>
     <string name="shop_checkins_open_author">Открыть профиль %1$s</string>
-    <string name="shop_drink_photo_title">Изображение напитка</string>
-    <string name="shop_drink_photo_help">Из первого фото выделяются объекты переднего плана. Проверьте результат и выберите чашку; неподходящую вырезку можно не использовать.</string>
-    <string name="shop_drink_photo_processing">Обрабатываем первое фото…</string>
-    <string name="shop_drink_photo_failed">Не удалось выделить объект. Повторите обработку или отправьте чекин без вырезки.</string>
-    <string name="shop_drink_photo_choose">Выберите подходящий объект или продолжите без вырезки.</string>
-    <string name="shop_drink_photo_skipped">Чекин будет отправлен без вырезки.</string>
-    <string name="shop_drink_photo_retry">Повторить обработку</string>
-    <string name="shop_drink_photo_skip">Без вырезки</string>
-    <string name="shop_drink_photo_description">Выбрать объект %1$d</string>
-    <string name="shop_drink_photo_invalid">Для вырезки нужен PNG до 768 пикселей и 4 МиБ, связанный с первым фото.</string>
     <string name="shop_type_specialty">SPECIALTY</string>
     <string name="shop_type_coffee_bar">Кофейня</string>
     <string name="shop_type_cafe">Кафе</string>

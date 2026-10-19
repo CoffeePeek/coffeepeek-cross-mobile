@@ -1,5 +1,42 @@
 # Android shop migration — compatibility plan
 
+## Develop reconciliation — 2026-10-19
+
+Approved product baseline: main `dfb00e63` plus develop `fc85f8e5`.
+The parent #43 incorporates develop before its descendants. Incoming menu-photo
+priority, volume-field removal, profile spacing and cached-gallery-preview fixes
+are retained. Native provider removal/plist metadata are incoming compatibility
+changes, not a new iOS screen migration.
+
+Drink-photo cutouts and MediaPipe are retired in both legacy and migrated Shop:
+no extraction processor/DI/model assets, cutout fields, extra upload, draft sidecar,
+choice/retry/skip UI or stale APK class requirement. Ordinary gallery uploads,
+issued variant/original alignment, drink selection/label, ratings, draft ownership,
+uncertain-delivery guards and author-block menu remain supported. Historical
+cutout preparation/acceptance notes below describe superseded product behavior.
+
+Verification plan: Shop domain/data/impl and app unit tests, Debug assembly with
+packaged DEX checks, self-targeted Shop APK and app instrumentation compilation;
+then propagate through history/Home/Sandbox/rating/Coffee and verify the tip.
+Regression cases preserve original bytes and prove the retired field is absent
+from a create request. Device tests use only a generic fake test application;
+live backend/camera/authentication and iOS UI acceptance remain separate gates.
+
+Parent verification completed: **725 selected unit results**, all passed
+(Shop domain 7/data 41/impl 96, app Direct 438, legacy data 47/network 77/Home 19).
+Direct Debug APK/packaged DEX guard, self-targeted Shop APK and app Direct
+instrumentation compilation pass (2m19s; additional contracts 11s). First build
+failed on a stale nullable preview argument after removal of the cutout parameter;
+corrected before the successful rerun. Pixel 7/API 37 full fake Shop suite:
+**39/39**, 68.542s, no UI retries/failures. Test APK SHA-256:
+`69b04263683b96f5b06236dd8922188792a781f74591492becb6e3d4cb815542`.
+Manifest/self target/version 0 and signatures checked before an in-place test-only
+update; ordinary CoffeePeek/Sandbox were not installed or cleared. APK contains
+no retired TFLite model assets. Studio reports no errors in form/DI files; the
+first ViewModel inspection timed out and is not counted as a completed IDE check.
+Light/dark behavior is automated; no new manual screenshot-parity claim is made.
+Logs remain local as `coffeepeek-develop-root-*2026-10-19.log`.
+
 ## Author-block action parity — 2026-10-19
 
 Owner: Shop parent #43, based on `58edfdbd`; remote main remains `dfb00e63`.

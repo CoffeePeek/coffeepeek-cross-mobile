@@ -37,7 +37,7 @@ class HomeCheckInEditorEntryTest {
     }
     private fun entry(repo: Repository = Repository(), picker: Picker = Picker(), catalog: Catalog = Catalog(),
         access: () -> Boolean = { true }, metrics: (HomeCheckInEditorMetric) -> Unit = {}) =
-        createHomeCheckInEditorEntry(repo, catalog, { Result.success(listOf(upload("cutout"))) }, access,
+        createHomeCheckInEditorEntry(repo, catalog, access,
             HomeCheckInEditorDates({ "2026-10-17T07:30:00Z" }, { "2026-10-17" }, { "17 октября 2026" },
                 { it + "T00:00:00Z" }, { it }),
             previewHomeEditorMedia(), picker, { HomeCheckInEditorAnalytics(metrics) })
@@ -118,7 +118,6 @@ class HomeCheckInEditorEntryTest {
             compose.onNodeWithText("Сохранить чекин").performClick()
             compose.waitUntil { saved.size == 1 }
             assertEquals(listOf("one", "two", "new1", "new2", "new3"), repo.creates.single().photos.map { it.fileName })
-            assertNotNull(repo.creates.single().drinkPhoto)
         }
     }
 

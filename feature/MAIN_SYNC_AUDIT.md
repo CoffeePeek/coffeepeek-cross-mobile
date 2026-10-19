@@ -1,19 +1,26 @@
+# Accepted develop adoption — 2026-10-19
+
+Current baseline is main `dfb00e63` plus approved develop `fc85f8e5`.
+Develop's five incoming commits retire drink cutouts/MediaPipe, prioritize menu
+photos/remove volume fields, retain cached photo previews during original loads,
+adjust profile layout and add native encryption metadata. These product changes
+must also reach prepared migration code rather than surviving only in legacy UI.
+Synchronize #43 first and propagate normally through its children; do not modify
+main/develop or rewrite published branch history. Historical cutout acceptance
+below does not override this retirement.
+
 # Migration stack versus main — current and historical audits
 
-## New target-base conflict discovered — 2026-10-19
+## Target-base conflict resolved — 2026-10-19
 
-All six branches contain main `dfb00e63` and are published. PR #104 is mergeable
-into #102, but parent #43 conflicts with its target develop, freshly fetched at
-`fc85f8e5`. Its five develop-side commits include `86698a69` removing drink
-cutouts/MediaPipe and `fc85f8e5` simplifying menu editing, plus cached-preview,
-profile-spacing and native encryption metadata fixes. The develop-side delta
-since the main/develop merge base is 96 files. Main has not adopted that baseline.
-
-Only read-only inspection/fetch was performed; no develop merge or deletion.
-The migration must adapt Shop/Home/history and thin integration paths coherently
-if that product baseline is selected. User direction is needed on adopting
-develop now versus waiting for main; current Android tests below do not close
-this new target-base parity gate. Root main/develop and their PRs are not merged.
+User approved adopting develop now. Parent #43 at `bb718dbb` merges develop
+`fc85f8e5`, reconciles migrated Shop/legacy compatibility and is MERGEABLE into
+develop. History `29ef7ea8`, Home `c165d8fc`, full Sandbox `e3ddf72d` and
+rating `03272578` inherit it normally; Coffee #104 is the final propagation gate.
+No main/develop push/merge, force-push or new iOS screen migration is performed.
+Ordinary photos remain; drink cutouts/MediaPipe do not. Dated pre-adoption
+main-only results below are historical. Current verification is in the Shop,
+history, Home and Sandbox plans; final-tip results are recorded separately.
 
 ## Shop author-block menu reconciliation — 2026-10-19
 

@@ -7,11 +7,11 @@ import kotlin.test.assertSame
 
 class CpImageUrlTest {
     @Test
-    fun cutoutRouteUsesTheApiOriginWhileLegacyFileNamesKeepTheFileRoute() {
-        val route = "/api/v1/check-ins/visit/photos/cup"
+    fun photoRouteUsesTheApiOriginWhileLegacyFileNamesKeepTheFileRoute() {
+        val route = "/api/v1/check-ins/visit/photos/photo"
         assertEquals(CustomUrl(Constants.BASE_URL.trimEnd('/') + route), cpImageData(route))
-        assertEquals(CustomUrl(Constants.BASE_URL + "api/file/cup.png"), cpImageData("cup.png"))
-        assertEquals(CustomUrl("https://cdn.example/cup.png"), cpImageData("https://cdn.example/cup.png"))
+        assertEquals(CustomUrl(Constants.BASE_URL + "api/file/photo.png"), cpImageData("photo.png"))
+        assertEquals(CustomUrl("https://cdn.example/photo.png"), cpImageData("https://cdn.example/photo.png"))
     }
 
     @Test

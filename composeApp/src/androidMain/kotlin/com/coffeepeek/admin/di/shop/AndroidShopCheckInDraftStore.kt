@@ -22,8 +22,6 @@ internal class AndroidShopCheckInDraftStore(
     private var guardedDraft: CheckInDraft? = null
     private var deliveryUnconfirmed = false
     private var accountId: String? = null
-    private var drinkPhoto: ShopCheckInPhoto? = null
-    private var drinkPhotoSkipped = false
 
     /** Draft ownership uses the internal ID; transport always keeps the public slug.
      * Each modal binding retains its own lease so an older screen cannot write into
@@ -37,8 +35,6 @@ internal class AndroidShopCheckInDraftStore(
                 legacy.clearAll()
                 guardedDraft = null
                 deliveryUnconfirmed = false
-                drinkPhoto = null
-                drinkPhotoSkipped = false
             }
             accountId = ownerAccountId
         }
@@ -81,8 +77,6 @@ internal class AndroidShopCheckInDraftStore(
         val draft = legacy.open(initial.shopSlug)
         if (guardedDraft !== draft) {
             deliveryUnconfirmed = false
-            drinkPhoto = null
-            drinkPhotoSkipped = false
         }
         guardedDraft = draft
         ShopCheckInDraftSnapshot(
@@ -94,10 +88,8 @@ internal class AndroidShopCheckInDraftStore(
                 drinkSlug = draft.drinkSlug,
                 customDrinkName = draft.customDrinkName,
                 photos = draft.photos.map { ShopCheckInPhoto(it.bytes, it.fileName, it.contentType) },
-                drinkPhoto = drinkPhoto.takeIf { draft.photos.isNotEmpty() },
             ),
             deliveryUnconfirmed = deliveryUnconfirmed,
-            drinkPhotoSkipped = drinkPhotoSkipped,
         )
     }
 
@@ -119,8 +111,6 @@ internal class AndroidShopCheckInDraftStore(
         legacy.save(updated)
         guardedDraft = updated
         deliveryUnconfirmed = snapshot.deliveryUnconfirmed
-        drinkPhoto = input.drinkPhoto
-        drinkPhotoSkipped = snapshot.drinkPhotoSkipped
     }
 
     override fun clear(shopSlug: String): Result<Unit> = draftResult {
@@ -130,8 +120,6 @@ internal class AndroidShopCheckInDraftStore(
         if (guardedDraft?.shopId == shopSlug) {
             guardedDraft = null
             deliveryUnconfirmed = false
-            drinkPhoto = null
-            drinkPhotoSkipped = false
         }
     }
 }

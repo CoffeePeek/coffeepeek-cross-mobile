@@ -39,6 +39,6 @@ internal fun HomePreparationInput.changedFields(next: HomePreparationInput): Set
         Rating -> tasteScore != next.tasteScore
         Note -> text != next.text
         Drink -> drinkSlug != next.drinkSlug || customDrinkName != next.customDrinkName
-        Photos -> photos != next.photos || drinkPhoto != next.drinkPhoto
+        Photos -> photos != next.photos
         Visibility -> visibility != next.visibility
     } }.toSet()

@@ -4,15 +4,13 @@ import com.coffeepeek.admin.di.checkinhistory.AndroidCheckInHistorySession
 import com.coffeepeek.admin.analytics.safeAnalyticsError
 import com.coffeepeek.admin.feature.catalog.api.BrewMethodCatalog
 import com.coffeepeek.admin.feature.catalog.api.catalogBrewMethodSlug
-import com.coffeepeek.admin.feature.checkin.domain.DrinkPhotoExtractor
 import com.coffeepeek.admin.feature.coffee.api.CoffeePicker
-import com.coffeepeek.domain.model.PendingPhotoUpload
 import com.coffeepeek.feature.homecheckin.domain.model.*
 import com.coffeepeek.feature.homecheckin.domain.repository.HomePreparationRepository
 import com.coffeepeek.feature.homecheckin.impl.ui.data.*
 import kotlinx.coroutines.CancellationException
 
-/** Current catalogue/ML implementation stays app-owned; late/revoked results never escape its lease. */
+/** Current catalogue implementation stays app-owned; late/revoked results never escape its lease. */
 internal class AndroidHomeCheckInCatalog(
     private val lease: AndroidCheckInHistorySession,
     private val picker: CoffeePicker,
@@ -43,19 +41,6 @@ private fun <T> Result<T>.homeCatalogResult(): Result<T> = fold({ Result.success
         else -> HomePreparationIssue.RequestFailed
     }))
 })
-
-internal class AndroidHomeCheckInPhotoProcessor(
-    private val lease: AndroidCheckInHistorySession,
-    private val extractor: DrinkPhotoExtractor,
-) : HomeCheckInDrinkPhotoProcessor {
-    override suspend fun process(source: HomePreparationUpload) = lease.withCurrentAccount {
-        try {
-            Result.success(extractor.extract(PendingPhotoUpload(source.fileName, source.contentType, source.bytes.copyOf()))
-                .map { HomePreparationUpload(it.fileName, it.contentType, it.bytes.copyOf()) })
-        } catch (cancelled: CancellationException) { throw cancelled }
-        catch (_: Exception) { Result.failure(HomePreparationFailure(HomePreparationIssue.InvalidCutout)) }
-    }
-}
 
 /** Guards the prepared repository without routing writes back to the legacy Home writer. */
 internal class AndroidHomeCheckInRepository(

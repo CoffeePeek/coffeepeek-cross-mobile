@@ -88,10 +88,6 @@ internal fun ShopCheckInDto.toDomain(files: ShopFileUrlResolver): ShopCheckIn? {
         customDrinkName = customDrinkName,
         drinkNameRu = drinkNameRu,
         drinkNameEn = drinkNameEn,
-        drinkPhotoUrl = files.resolveApiUrl(drinkPhotoUrl),
-        drinkPhotoThumbnailUrl = drinkPhotoUrl?.let {
-            files.resolveApiUrl(drinkPhotoVariants.photoUrl("thumb", it)).orEmpty()
-        },
         authorAvatarUrl = files.resolveApiUrl(authorAvatarUrl),
         authorSlug = author?.slug?.takeIf(String::isNotBlank),
         authorId = authorId?.takeIf(String::isNotBlank),

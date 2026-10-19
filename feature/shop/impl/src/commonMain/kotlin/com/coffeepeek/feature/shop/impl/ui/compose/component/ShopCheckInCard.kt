@@ -76,7 +76,7 @@ internal fun ShopCheckInCard(
                     if (showHelpfulCount) ShopCheckInHelpfulButton(checkIn.helpfulCount, checkIn.isHelpfulByCurrentUser,
                         onClick = onVote.takeUnless { isOwn }, isLoading = isVoting)
                     Spacer(Modifier.weight(1f))
-                    drink?.let { ShopCheckInDrinkBadge(it, checkIn.drinkPhotoThumbnailUrl) }
+                    drink?.let { ShopCheckInDrinkBadge(it) }
                 }
             }
         }

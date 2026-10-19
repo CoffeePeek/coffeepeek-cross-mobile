@@ -4,11 +4,9 @@ import com.coffeepeek.admin.di.checkinhistory.AndroidCheckInHistorySession
 import com.coffeepeek.admin.di.shop.CheckInTestSessions
 import com.coffeepeek.admin.feature.catalog.api.BrewMethodCatalog
 import com.coffeepeek.admin.feature.catalog.api.BrewMethodOption
-import com.coffeepeek.admin.feature.checkin.domain.DrinkPhotoExtractor
 import com.coffeepeek.admin.feature.coffee.api.CoffeePicker
 import com.coffeepeek.admin.feature.coffee.api.CoffeePickerItem
 import com.coffeepeek.admin.utils.PickedImage
-import com.coffeepeek.domain.model.PendingPhotoUpload
 import com.coffeepeek.domain.model.Session
 import com.coffeepeek.feature.homecheckin.domain.model.*
 import com.coffeepeek.feature.homecheckin.domain.repository.HomePreparationRepository
@@ -33,37 +31,6 @@ class AndroidHomeCheckInPortsTest {
         assertEquals(setOf("pour_over"), method.legacyCodes)
     }
 
-    @Test fun extractionOwnsBothByteBoundariesAndDoesNotSwallowCancellation() = runTest {
-        val original = HomePreparationUpload("original", "image/jpeg", byteArrayOf(1))
-        val candidate = PendingPhotoUpload("cutout", "image/png", byteArrayOf(2))
-        val lease = AndroidCheckInHistorySession(CheckInTestSessions())
-        val processor = AndroidHomeCheckInPhotoProcessor(lease, DrinkPhotoExtractor {
-            it.bytes[0] = 0; listOf(candidate)
-        })
-        val result = processor.process(original).getOrThrow().single()
-        candidate.bytes[0] = 0
-        assertContentEquals(byteArrayOf(1), original.bytes)
-        assertContentEquals(byteArrayOf(2), result.bytes)
-        assertEquals("image/png", result.contentType)
-        val cancelled = AndroidHomeCheckInPhotoProcessor(lease, DrinkPhotoExtractor { throw CancellationException("cancelled") })
-        assertFailsWith<CancellationException> { cancelled.process(original) }
-    }
-
-    @Test fun accountReplacementRejectsLateExtractionEvenIfItsImplementationIgnoresCancellation() = runTest {
-        val sessions = CheckInTestSessions()
-        val lease = AndroidCheckInHistorySession(sessions)
-        val gate = CompletableDeferred<Unit>()
-        val processor = AndroidHomeCheckInPhotoProcessor(lease, DrinkPhotoExtractor {
-            withContext(NonCancellable) { gate.await() }
-            listOf(PendingPhotoUpload("private", "image/png", byteArrayOf(1)))
-        })
-        val result = async { processor.process(HomePreparationUpload("source", "image/jpeg", byteArrayOf(1))) }
-        runCurrent(); sessions.applySession(Session("other", userId = "other")); runCurrent()
-        gate.complete(Unit)
-        assertFailsWith<CancellationException> { result.await() }
-        assertFalse(lease.isCurrent())
-    }
-
     @Test fun repositoryKeepsResultsAndTokenRenewalButRevokedLeaseNeverStartsAnotherCall() = runTest {
         val sessions = CheckInTestSessions()
         val lease = AndroidCheckInHistorySession(sessions)
@@ -83,14 +50,12 @@ class AndroidHomeCheckInPortsTest {
         assertEquals(6, source.calls)
     }
 
-    @Test fun guestCatalogueAndProcessorDoNotInvokeActualPortsAndPickedOriginalsAreBounded() = runTest {
+    @Test fun guestCatalogueDoesNotInvokeActualPortsAndPickedOriginalsAreBounded() = runTest {
         val lease = AndroidCheckInHistorySession(CheckInTestSessions(null))
         val catalog = AndroidHomeCheckInCatalog(lease, object : CoffeePicker {
             override suspend fun search(query: String): Result<List<CoffeePickerItem>> = error("Guest search")
         }, BrewMethodCatalog { error("Guest methods") })
-        val processor = AndroidHomeCheckInPhotoProcessor(lease, DrinkPhotoExtractor { error("Guest extraction") })
         assertTrue(catalog.brewMethods().isFailure); assertTrue(catalog.searchBeans("").isFailure)
-        assertTrue(processor.process(HomePreparationUpload("photo", "image/jpeg", byteArrayOf(1))).isFailure)
         val bytes = byteArrayOf(2)
         val photos = (1..7).map { PickedImage(bytes, it.toString()) }
         val selected = photos.toHomePreparationPhotos(99)
