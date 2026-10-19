@@ -1,5 +1,13 @@
 # Application-wide offline Sandbox checkpoint
 
+## Coffee catalogue fixtures — 2026-10-20
+
+Fake backend now has three coffees, taste/roast filter groups, offers with availability and
+query/filter/available-only search; unit tests cover each filter and detail offers. App Direct+Play
+unit suites pass (1088, 0 failures) and Direct Sandbox assembles. The updated package was installed
+over the Sandbox on the Pixel 7, but the phone was locked, so the new filter/offer/similar screens
+are **not yet visually checked**.
+
 ## Author-blocking and protected-photo fixtures — 2026-10-19
 
 Full-app fake backend now serves `/api/v1/me/blocks` (list/PUT/DELETE), a second

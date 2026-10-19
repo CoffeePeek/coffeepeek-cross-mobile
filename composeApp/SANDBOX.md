@@ -27,6 +27,10 @@ package, so install only the preferred one. Normal debug/release IDs are unchang
 - Home CRUD/uploads and Shop creation, favorites add/remove and profile name/
   biography edits use actual repositories and local HTTP state. Private or
   pending visits are not fabricated as public feed entries.
+- Coffee: three synthetic coffees (Ethiopia fruity/floral/light with two offers, Kenya fruity/light
+  out of stock, Brazil nutty/medium) plus taste/roast filter groups. Search honours query, selected
+  taste/roast and "available only"; detail offers have seller links (blocked by the external-app
+  guard) and taste-based "similar" coffees. Empty/reset mode returns no coffees or groups.
 - Author blocking: a second synthetic author (**Sandbox Friend**) has one public
   visit with a protected-style photo (original plus thumb/feed/detail variants).
   `GET/PUT/DELETE /api/v1/me/blocks` follow the real client contract (cursor pages,

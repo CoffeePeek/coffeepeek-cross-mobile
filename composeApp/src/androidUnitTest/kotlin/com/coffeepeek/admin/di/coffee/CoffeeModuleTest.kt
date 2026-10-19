@@ -25,9 +25,9 @@ class CoffeeModuleTest {
         try {
             val repository = app.koin.get<CoffeeRepository>()
             assertSame(repository, app.koin.get<CoffeeRepository>())
-            assertEquals("Sandbox Ethiopia", repository.search("", CoffeeFilters(), 1).getOrThrow().items.single().name)
+            assertEquals("Sandbox Ethiopia", repository.search("", CoffeeFilters(), 1).getOrThrow().items.first().name)
             val picker = app.koin.get<CoffeePicker>()
-            assertEquals(listOf("sandbox-ethiopia"), picker.search("  Sandbox ").getOrThrow().map { it.slug })
+            assertEquals(listOf("sandbox-kenya"), picker.search("  Kenya ").getOrThrow().map { it.slug })
             assertNotNull(androidCoffeeScreenRenderer(repository))
         } finally {
             app.close(); client.client.close(); client.plainClient.close(); client.uploadClient.close(); client.imageClient.close(); backend.close()

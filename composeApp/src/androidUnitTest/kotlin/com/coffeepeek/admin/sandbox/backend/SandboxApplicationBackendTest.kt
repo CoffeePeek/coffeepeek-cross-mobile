@@ -129,12 +129,21 @@ class SandboxApplicationBackendTest {
         }
     } }
 
-    @Test fun actualCoffeeRepositoryUsesOfflineSearchAndDetailContracts() = runTest { fixture { _, client ->
+    @Test fun actualCoffeeRepositoryUsesOfflineSearchFiltersOffersAndDetailContracts() = runTest { fixture { _, client ->
         val coffee = CoffeeRepositoryImpl(client.plainClient)
-        assertEquals("Sandbox Ethiopia", coffee.search("", CoffeeFilters(), 1).getOrThrow().items.single().name)
+        assertEquals(listOf("Sandbox Ethiopia", "Sandbox Kenya", "Sandbox Brazil"), coffee.search("", CoffeeFilters(), 1).getOrThrow().items.map { it.name })
+        assertEquals(listOf("Sandbox Kenya"), coffee.search("ken", CoffeeFilters(), 1).getOrThrow().items.map { it.name })
         assertTrue(coffee.search("not-present", CoffeeFilters(), 1).getOrThrow().items.isEmpty())
-        assertEquals("sandbox-ethiopia", coffee.getDetails("sandbox-ethiopia").getOrThrow().coffee.slug)
-        assertTrue(coffee.getFilterGroups().getOrThrow().isEmpty())
+        val fruity = coffee.search("", CoffeeFilters(mapOf("taste" to setOf("fruity"))), 1).getOrThrow().items.map { it.slug }
+        assertEquals(listOf("sandbox-ethiopia", "sandbox-kenya"), fruity)
+        assertEquals(listOf("sandbox-brazil"), coffee.search("", CoffeeFilters(mapOf("roast" to setOf("medium"))), 1).getOrThrow().items.map { it.slug })
+        assertEquals(listOf("sandbox-ethiopia", "sandbox-brazil"), coffee.search("", CoffeeFilters(availableOnly = true), 1).getOrThrow().items.map { it.slug })
+        val details = coffee.getDetails("sandbox-ethiopia").getOrThrow()
+        assertEquals("sandbox-ethiopia", details.coffee.slug)
+        assertEquals(2, details.coffee.offers.size)
+        assertTrue(details.coffee.offers.all { it.sourceUrl != null })
+        assertEquals(setOf("taste", "roast"), coffee.getFilterGroups().getOrThrow().map { it.code }.toSet())
+        assertTrue(coffee.getDetails("missing").isFailure)
     } }
 
     @Test fun nearbyDiscoveryUsesRealSearchPayloadAndSharedFavoriteFlags() = runTest { fixture { _, client ->

@@ -117,13 +117,17 @@ internal class SandboxApplicationBackend(private val today: LocalDate, private v
         if (path == "/api/menu/drinks") return ok(buildJsonObject { put("drinks", drinks()) })
         if (path == "/api/catalogs/brew-methods") return ok(JsonArray(listOf(catalog("hario-v60", "Hario V60"), catalog("aeropress", "AeroPress"))))
         if (path.startsWith("/api/catalogs/") && method == HttpMethod.Get) return ok(JsonArray(emptyList()))
-        if (path == "/api/v1/catalogs/coffee-filter-values") return ok(JsonArray(emptyList()))
+        if (path == "/api/v1/catalogs/coffee-filter-values") return ok(if (populated) coffeeFilterGroups() else JsonArray(emptyList()))
         if (path == "/api/v1/coffees/search") return ok(buildJsonObject {
-            val query = input["q"]?.jsonPrimitive?.content.orEmpty()
-            val rows = if (populated && (query.isBlank() || "Sandbox Ethiopia".contains(query, true))) listOf(coffee()) else emptyList()
+            val query = input["q"]?.jsonPrimitive?.content.orEmpty().trim()
+            val filters = input["filters"] as? JsonObject ?: buildJsonObject {}
+            val rows = if (!populated) emptyList() else coffees().filter { row -> coffeeMatches(row, query, filters) }
             put("items", JsonArray(rows)); put("currentPage", 1); put("totalPages", 1); put("totalCount", rows.size)
         })
-        if (path.startsWith("/api/v1/coffees/") && method == HttpMethod.Get) return ok(coffee())
+        if (path.startsWith("/api/v1/coffees/") && method == HttpMethod.Get) {
+            if (!populated) return null
+            return coffees().firstOrNull { it["address"]!!.jsonObject["slug"]!!.jsonPrimitive.content == path.substringAfterLast('/') }?.let(::ok)
+        }
         if (path == "/api/v1/feed") return ok(buildJsonObject {
             putJsonArray("items") {
                 (visits + others.filter(::visible)).filter { it["visibility"]?.jsonPrimitive?.content == "Public" && it["moderationState"]?.jsonPrimitive?.content == "Approved" }.forEach { row -> add(buildJsonObject {
@@ -234,11 +238,52 @@ internal class SandboxApplicationBackend(private val today: LocalDate, private v
         put("photoUrl", "${SandboxBackend.BASE_URL}/media/sample"); put("coverPhoto", photo())
         put("photos", JsonArray(listOf(photo()))); putJsonArray("shops") { add(shop("sandbox-cafe")) }
     }
-    private fun coffee() = buildJsonObject {
-        put("address", address("sandbox-ethiopia", "/coffees/sandbox-ethiopia")); put("name", "Sandbox Ethiopia")
+    // Three synthetic coffees with distinct tastes/roasts/availability, so filters, offers and "similar" are exercised.
+    private fun coffees() = listOf(
+        coffeeRow("sandbox-ethiopia", "Sandbox Ethiopia", listOf("fruity", "floral"), "light",
+            listOf(coffeeOffer(45.0, 250, "InStock", "Sandbox Seller", "ethiopia"), coffeeOffer(80.0, 500, "PreOrder", "Sandbox Seller", "ethiopia-500"))),
+        coffeeRow("sandbox-kenya", "Sandbox Kenya", listOf("fruity"), "light",
+            listOf(coffeeOffer(52.5, 250, "OutOfStock", "Sandbox Seller", "kenya"))),
+        coffeeRow("sandbox-brazil", "Sandbox Brazil", listOf("nutty"), "medium",
+            listOf(coffeeOffer(38.0, 1000, "InStock", "Sandbox Roastery Shop", "brazil"))),
+    )
+    private fun coffeeOffer(price: Double, grams: Int, availability: String, seller: String, key: String) = buildJsonObject {
+        put("price", price); put("currency", "BYN"); put("weightGrams", grams); put("offerKey", key)
+        put("availability", availability); put("sellerName", seller); put("sourceUrl", "https://seller.sandbox.invalid/$key")
+        put("grind", "Beans"); put("availabilityScope", "Seller"); put("checkedAtUtc", "${today}T06:00:00Z")
+    }
+    private fun coffeeRow(slug: String, name: String, tastes: List<String>, roast: String, offers: List<JsonObject>) = buildJsonObject {
+        put("address", address(slug, "/coffees/$slug")); put("name", name)
         putJsonObject("roaster") { put("name", "Sandbox Roaster"); put("address", address("sandbox-roaster", "/roasters/sandbox-roaster")) }
         put("coverPhoto", photo()); put("photos", JsonArray(listOf(photo()))); put("description", "Тестовое зерно для локальных сценариев")
+        putJsonArray("countries") { add(buildJsonObject { put("code", "ET"); put("nameRu", "Эфиопия") }) }
+        putJsonObject("classification") { putJsonArray("tasteGroups") { tastes.forEach(::add) }; put("roastLevel", roast) }
+        put("offers", JsonArray(offers)); put("productKind", "Coffee"); put("productForm", "Beans")
+        putJsonArray("tasteDescriptors") { tastes.forEach(::add) }; put("catalogCheckedAtUtc", "${today}T06:00:00Z")
     }
+    private fun coffeeMatches(row: JsonObject, query: String, filters: JsonObject): Boolean {
+        val name = row["name"]!!.jsonPrimitive.content
+        val classification = row["classification"]!!.jsonObject
+        fun selected(code: String) = (filters[code] as? JsonArray).orEmpty().map { it.jsonPrimitive.content }
+        val tastes = classification["tasteGroups"]!!.jsonArray.map { it.jsonPrimitive.content }
+        val roast = classification["roastLevel"]!!.jsonPrimitive.content
+        val inStock = row["offers"]!!.jsonArray.any { it.jsonObject["availability"]?.jsonPrimitive?.content == "InStock" }
+        return (query.isBlank() || name.contains(query, true)) &&
+            (selected("taste").isEmpty() || selected("taste").any { it in tastes }) &&
+            (selected("roast").isEmpty() || roast in selected("roast")) &&
+            (filters["availableOnly"]?.jsonPrimitive?.booleanOrNull != true || inStock)
+    }
+    private fun coffeeFilterGroups() = JsonArray(listOf(
+        buildJsonObject { put("code", "taste"); put("name", "Вкус"); putJsonArray("values") {
+            add(buildJsonObject { put("code", "fruity"); put("name", "Фруктовый"); put("sortOrder", 1) })
+            add(buildJsonObject { put("code", "floral"); put("name", "Цветочный"); put("sortOrder", 2) })
+            add(buildJsonObject { put("code", "nutty"); put("name", "Ореховый"); put("sortOrder", 3) })
+        } },
+        buildJsonObject { put("code", "roast"); put("name", "Обжарка"); putJsonArray("values") {
+            add(buildJsonObject { put("code", "light"); put("name", "Светлая"); put("sortOrder", 1) })
+            add(buildJsonObject { put("code", "medium"); put("name", "Средняя"); put("sortOrder", 2) })
+        } },
+    ))
     private fun favoriteRows() = JsonArray(favorites.map { key ->
         val (kind, slug) = key.split(':', limit = 2)
         buildJsonObject {
