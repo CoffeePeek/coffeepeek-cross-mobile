@@ -7,6 +7,7 @@ import androidx.compose.animation.expandVertically
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -23,6 +24,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
@@ -98,7 +100,8 @@ internal fun ShopScheduleSection(
             Column(Modifier.padding(CoffeePeekDimens.spacing4)) {
                 Row(Modifier.fillMaxWidth().heightIn(min = 44.dp)
                     .semantics { stateDescription = expansionState }
-                    .clickable(role = Role.Button, onClickLabel = toggleLabel, onClick = onToggle),
+                    .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null,
+                        role = Role.Button, onClickLabel = toggleLabel, onClick = onToggle),
                     horizontalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing4),
                     verticalAlignment = Alignment.CenterVertically) {
                     Icon(CoffeePeekIcons.Time, null, Modifier.size(24.dp))
