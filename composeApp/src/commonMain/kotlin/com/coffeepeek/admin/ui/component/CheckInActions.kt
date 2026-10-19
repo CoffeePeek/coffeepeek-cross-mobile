@@ -13,9 +13,14 @@ internal fun CheckInActions(
     onHideClick: (() -> Unit)? = null,
     enabled: Boolean = true,
     isHiding: Boolean = false,
+    author: com.coffeepeek.feature.authorblocking.api.AuthorReference? = null,
+    blockActions: com.coffeepeek.feature.authorblocking.api.AuthorBlockActions? = null,
 ) {
-    if (onEditClick == null && onReportClick == null && onHideClick == null) return
+    val blocking = blockActions ?: if (author != null) org.koin.compose.koinInject<com.coffeepeek.feature.authorblocking.api.AuthorBlockActions>() else null
+    if (onEditClick == null && onReportClick == null && onHideClick == null && author == null) return
     val items = buildList {
+        if (author != null && blocking != null) add(PlatformMenuItem("block", "Заблокировать автора", enabled = enabled,
+            destructive = true, icon = PlatformMenuIcon.Block, onClick = { blocking.requestBlock(author) }))
         onEditClick?.let {
             add(PlatformMenuItem("edit", "Редактировать", enabled = enabled, icon = PlatformMenuIcon.Edit, onClick = it))
         }

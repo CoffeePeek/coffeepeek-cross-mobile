@@ -13,6 +13,8 @@ internal data class PublicProfile(
     val activity: PublicProfileActivity?,
     val canonicalPath: String? = null,
     val isFollowing: Boolean = false,
+    val authorId: String? = null,
+    val isBlockedByViewer: Boolean = false,
 )
 
 internal data class PublicProfileStats(

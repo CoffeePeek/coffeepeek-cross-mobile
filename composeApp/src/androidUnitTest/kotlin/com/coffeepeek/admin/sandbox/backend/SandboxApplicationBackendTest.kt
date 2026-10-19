@@ -34,13 +34,14 @@ class SandboxApplicationBackendTest {
             getToken = { null }, saveToken = { error("No credential writes") },
             apiClientFactory = backend::apiClient, uploadClientFactory = backend::uploadClient)
         try { block(backend, client) } finally {
-            client.client.close(); client.plainClient.close(); client.uploadClient.close(); backend.close()
+            client.client.close(); client.plainClient.close(); client.uploadClient.close(); client.imageClient.close(); backend.close()
         }
     }
 
-    @Test fun allThreeLegacyTransportsAreMockOnlyAndRealServicesDecodeFixtures() = runTest { fixture { backend, client ->
-        listOf(client.client, client.plainClient, client.uploadClient).forEach { assertIs<MockEngine>(it.engine) }
+    @Test fun allFourTransportsAreMockOnlyAndRealServicesDecodeFixtures() = runTest { fixture { backend, client ->
+        listOf(client.client, client.plainClient, client.uploadClient, client.imageClient).forEach { assertIs<MockEngine>(it.engine) }
         assertNotSame(client.client, client.plainClient)
+        assertNotSame(client.client, client.imageClient)
         val shops = ShopApiService(client.client)
         assertEquals(2, shops.searchShops().getOrThrow().coffeeShops.size)
         assertEquals("Sandbox Cafe", shops.getShopDetails("sandbox-cafe").getOrThrow().name)
@@ -51,6 +52,7 @@ class SandboxApplicationBackendTest {
         assertEquals("Sandbox Roaster", roasters.getRoasters().getOrThrow().single().name)
         assertEquals("sandbox-roaster", roasters.getRoaster("sandbox-roaster").getOrThrow().address.slug)
         assertContentEquals(byteArrayOf(1, 2, 3), client.client.get("${SandboxBackend.BASE_URL}/media/sample").body<ByteArray>())
+        assertContentEquals(byteArrayOf(1, 2, 3), client.imageClient.get("${SandboxBackend.BASE_URL}/media/sample").body<ByteArray>())
         assertNull(backend.photo("https://example.org/media/sample"))
     } }
 

@@ -4,6 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Modifier
 import com.coffeepeek.feature.shop.impl.ui.compose.component.LocalShopAuthorImage
+import com.coffeepeek.feature.shop.impl.ui.compose.component.LocalShopCheckInImage
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.coffeepeek.feature.shop.domain.repository.ShopFavorites
 import com.coffeepeek.feature.shop.api.ShopDetailEffect
@@ -24,8 +25,9 @@ fun createShopDetailEntry(
     currentDayOfWeek: () -> Int,
     currentMinuteOfDay: () -> Int,
     authorImage: (@Composable (String, Modifier) -> Unit)? = null,
+    checkInImage: (@Composable (String, Modifier, androidx.compose.ui.layout.ContentScale) -> Unit)? = null,
 ): ShopDetailEntry = DefaultShopDetailEntry(detailsRepository, voteRepository, favoritesRepository,
-    currentViewer, currentDayOfWeek, currentMinuteOfDay, authorImage)
+    currentViewer, currentDayOfWeek, currentMinuteOfDay, authorImage, checkInImage)
 
 private class DefaultShopDetailEntry(
     private val detailsRepository: ShopDetailsRepository,
@@ -35,6 +37,7 @@ private class DefaultShopDetailEntry(
     private val currentDayOfWeek: () -> Int,
     private val currentMinuteOfDay: () -> Int,
     private val authorImage: (@Composable (String, Modifier) -> Unit)?,
+    private val checkInImage: (@Composable (String, Modifier, androidx.compose.ui.layout.ContentScale) -> Unit)?,
 ) : ShopDetailEntry {
     @Composable
     override fun Content(
@@ -54,7 +57,7 @@ private class DefaultShopDetailEntry(
                 currentMinuteOfDay = currentMinuteOfDay, initialSessionGeneration = sessionGeneration,
                 initialRefreshGeneration = refreshGeneration)
         }
-        CompositionLocalProvider(LocalShopAuthorImage provides authorImage) {
+        CompositionLocalProvider(LocalShopAuthorImage provides authorImage, LocalShopCheckInImage provides checkInImage) {
             ShopDetailScreen(viewModel = model, sessionGeneration = sessionGeneration,
                 formatDistance = formatDistance, forCheckIn = forCheckIn,
                 formatCheckInDate = formatCheckInDate, formatMenuDate = formatMenuDate,
@@ -81,7 +84,7 @@ private fun ShopDetailEvent.toPublicEffect(): ShopDetailEffect? = when (this) {
     is ShopDetailEvent.OpenRoute -> ShopDetailEffect.OpenRoute(latitude, longitude)
     is ShopDetailEvent.ShareShop -> ShopDetailEffect.ShareShop(canonicalPath, title)
     is ShopDetailEvent.SuggestChange -> ShopDetailEffect.SuggestChange(shop)
-    is ShopDetailEvent.OpenPhoto -> ShopDetailEffect.OpenPhoto(urls, index)
+    is ShopDetailEvent.OpenPhoto -> ShopDetailEffect.OpenPhoto(urls, index, originals)
     is ShopDetailEvent.OpenRoaster -> ShopDetailEffect.OpenRoaster(id)
     is ShopDetailEvent.OpenLink -> ShopDetailEffect.OpenLink(target)
     is ShopDetailEvent.CopyPhone -> ShopDetailEffect.CopyPhone(number)

@@ -5,17 +5,22 @@ import androidx.lifecycle.ViewModelStore
 import androidx.lifecycle.ViewModelStoreOwner
 import androidx.lifecycle.viewModelScope
 import com.coffeepeek.domain.repository.SessionRepository
+import com.coffeepeek.feature.authorblocking.api.AuthorVisibility
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 
 /** Navigation-owned lifetime. Session changes clear feature VMs even while a child route covers them. */
-internal class AndroidShopBrowsingHostViewModel(private val sessions: SessionRepository) : ViewModel() {
-    private val mutableSession = MutableStateFlow(ShopBrowsingHostSession(0, AndroidShopBrowsingSession(sessions)))
+internal class AndroidShopBrowsingHostViewModel(
+    private val sessions: SessionRepository,
+    private val visibility: AuthorVisibility = AuthorVisibility.None,
+) : ViewModel() {
+    private val mutableSession = MutableStateFlow(ShopBrowsingHostSession(0, AndroidShopBrowsingSession(sessions, visibility = visibility)))
     val session = mutableSession.asStateFlow()
     private var observation: Job? = null
 
@@ -29,7 +34,7 @@ internal class AndroidShopBrowsingHostViewModel(private val sessions: SessionRep
 
     private fun observeSession() {
         observation = viewModelScope.launch(start = CoroutineStart.UNDISPATCHED) {
-            sessions.observeSession().catch { error ->
+            combine(sessions.observeSession(), visibility.visibility) { session, _ -> session }.catch { error ->
                 if (error is CancellationException) throw error
                 // Never retain private screen content when observing account changes fails.
                 replaceSession(null, observationFailed = true)
@@ -44,7 +49,7 @@ internal class AndroidShopBrowsingHostViewModel(private val sessions: SessionRep
         old.lease.revoke()
         old.viewModelStore.clear()
         mutableSession.value = ShopBrowsingHostSession(old.generation + 1,
-            AndroidShopBrowsingSession(sessions, value), observationFailed)
+            AndroidShopBrowsingSession(sessions, value, visibility), observationFailed)
     }
 
     override fun onCleared() {

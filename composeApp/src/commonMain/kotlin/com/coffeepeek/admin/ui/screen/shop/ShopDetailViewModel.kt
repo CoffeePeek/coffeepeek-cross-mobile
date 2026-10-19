@@ -38,6 +38,15 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.drop
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.updateAndGet
+import com.coffeepeek.feature.authorblocking.api.AuthorVisibility
 
 data class ShopDetailUiState(
     val drinks: List<ConsumedDrinkOption> = emptyList(),
@@ -60,7 +69,7 @@ data class ShopDetailUiState(
     val drinkPhotoState: DrinkPhotoState = DrinkPhotoState(),
 )
 
-class ShopDetailViewModel(
+class ShopDetailViewModel internal constructor(
     private val shopId: String,
     private val shopRepository: ShopRepository,
     private val favoriteRepository: FavoriteRepository,
@@ -71,8 +80,13 @@ class ShopDetailViewModel(
     private val observeFavoriteIds: ObserveFavoriteIdsUseCase? = null,
     private val roasterFavorites: RoasterFavorites,
     private val drinkPhotoFactory: DrinkPhotoPreparation.Factory = DrinkPhotoPreparation.Factory.Unavailable,
+    private val visibility: AuthorVisibility = AuthorVisibility.None,
 ) : BaseViewModel() {
 
+    internal val authorVisibility = visibility.visibility
+    private var loadJob: Job? = null
+    private val requestSequence = MutableStateFlow(0L)
+    private fun accountKey() = sessionRepository.peekSession()?.takeIf(sessionRepository::isActiveSession)?.let { it.userId ?: it.accessToken }
     private val _uiState = MutableStateFlow(ShopDetailUiState())
     val uiState = _uiState.asStateFlow()
     private val drinkPhotos = drinkPhotoFactory.create(workScope, ::onDrinkPhotoChanged)
@@ -127,10 +141,20 @@ class ShopDetailViewModel(
             }
             .launchIn(workScope)
         load()
+        workScope.launch {
+            combine(sessionRepository.observeSession().map { session -> session?.takeIf(sessionRepository::isActiveSession)?.let { it.userId ?: it.accessToken } }.distinctUntilChanged(), visibility.visibility) { account, snapshot -> account to snapshot.revision }
+                .drop(1).collect {
+                    requestSequence.update { it + 1 }
+                    _uiState.update { state -> state.copy(details = state.details?.copy(checkIns = emptyList(), userCheckIns = emptyList()),
+                        isLoggedIn = accountKey() != null, currentUserId = null) }
+                    load()
+                }
+        }
     }
 
     fun load() {
-        workScope.launch {
+        loadJob?.cancel()
+        loadJob = workScope.launch {
             _uiState.update { it.copy(isLoading = true, error = null) }
             refreshDetails(showLoading = true)
         }
@@ -138,6 +162,16 @@ class ShopDetailViewModel(
 
     private suspend fun refreshDetails(showLoading: Boolean, isCurrent: () -> Boolean = { true }) {
         if (!isCurrent()) return
+        val request = requestSequence.updateAndGet { it + 1 }
+        val account = accountKey()
+        val revision = visibility.visibility.value.revision
+        fun current() = isCurrent() && requestSequence.value == request && accountKey() == account &&
+            visibility.visibility.value.revision == revision
+        if (!visibility.visibility.value.ready && visibility.refresh().isFailure) {
+            currentCoroutineContext().ensureActive()
+            if (current()) _uiState.update { it.copy(isLoading = false, error = "Не удалось загрузить блокировки. Повторите попытку.") }
+            return
+        }
         val isLoggedIn = sessionRepository.isLoggedIn()
         val currentUserId = if (isLoggedIn) userRepository.getMe().getOrNull()?.address?.slug else null
         val result = try {
@@ -149,13 +183,17 @@ class ShopDetailViewModel(
         }
         result.exceptionOrNull()?.let { if (it is CancellationException) throw it }
         result.onSuccess { details ->
+            currentCoroutineContext().ensureActive()
             // Membership and details must be committed together: an observer update
             // before details exist can otherwise leave the state equal and evade CAS retries.
             favoriteMembershipMutex.withLock {
-                if (!isCurrent()) return@withLock
+                if (!current()) return@withLock
+                val visibleDetails = details.copy(checkIns = details.checkIns.filterNot {
+                    visibility.visibility.value.hides(it.authorId, it.authorAddress?.slug)
+                })
                 _uiState.update {
                     it.copy(
-                        details = favoriteIds.value?.let(details::withFavoriteMembership) ?: details,
+                        details = favoriteIds.value?.let(visibleDetails::withFavoriteMembership) ?: visibleDetails,
                         isLoggedIn = isLoggedIn,
                         currentUserId = currentUserId,
                         isLoading = false,
@@ -163,7 +201,8 @@ class ShopDetailViewModel(
                 }
             }
         }.onFailure { e ->
-            if (!isCurrent()) return@onFailure
+            currentCoroutineContext().ensureActive()
+            if (!current()) return@onFailure
             _uiState.update {
                 it.copy(
                     isLoading = if (showLoading) false else it.isLoading,
@@ -250,13 +289,14 @@ class ShopDetailViewModel(
             val draft = if (prepareLegacyDraft) checkInDraftStore.open(shopId) else null
             _uiState.update {
                 it.copy(
-                    showCheckInSheet = true,
                     checkInDraft = draft,
                     submittedCheckInVisibility = null,
                     checkInError = null,
                 )
             }
             draft?.let { drinkPhotos.setSource(it.photos.firstOrNull()?.toPendingUpload(), it.drinkPhoto?.toPendingUpload(), it.drinkPhotoSkipped) }
+            // Editing may start as soon as the sheet is visible; initialize the photo source first.
+            _uiState.update { it.copy(showCheckInSheet = true) }
         }
     }
 

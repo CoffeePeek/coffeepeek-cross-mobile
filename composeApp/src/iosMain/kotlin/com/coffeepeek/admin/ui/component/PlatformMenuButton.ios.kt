@@ -70,12 +70,14 @@ internal actual fun PlatformMenuButton(
                             PlatformMenuIcon.Add -> "plus"
                             PlatformMenuIcon.CoffeeBean -> "leaf"
                             PlatformMenuIcon.Logout -> "rectangle.portrait.and.arrow.right"
+                            PlatformMenuIcon.Block -> "person.crop.circle.badge.xmark"
                             null -> null
                         }
                         UIAction.actionWithTitle(item.title, symbol?.let { UIImage.systemImageNamed(it) }, item.id) {
                             currentItems.value.firstOrNull { it.id == item.id && it.enabled }?.onClick?.invoke()
                         }.apply {
-                            attributes = if (item.enabled) 0uL else UIMenuElementAttributesDisabled
+                            attributes = (if (item.enabled) 0uL else UIMenuElementAttributesDisabled) or
+                                (if (item.destructive) platform.UIKit.UIMenuElementAttributesDestructive else 0uL)
                             state = if (item.selected == true) UIMenuElementState.UIMenuElementStateOn
                                 else UIMenuElementState.UIMenuElementStateOff
                         }

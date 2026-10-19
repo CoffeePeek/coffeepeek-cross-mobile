@@ -31,9 +31,11 @@ data class CheckInDto(
     @Serializable(with = FlexibleIntSerializer::class) val helpfulCount: Int = 0,
     val isHelpfulByCurrentUser: Boolean = false,
     val drinkPhotoUrl: String? = null,
+    val drinkPhotoVariants: List<CheckInPhotoVariantDto>? = null,
     val kind: String = "Shop",
     val home: FeedHomePreparationDto? = null,
     val authorAvatarUrl: String? = null,
+    val authorId: String? = null,
 )
 
 @Serializable
@@ -55,6 +57,7 @@ data class CheckInPhotoDto(
     val sizeBytes: Long = 0,
     @Serializable(with = FlexibleIntSerializer::class) val sortIndex: Int = 0,
     @JsonNames("fullUrl") val url: String = "",
+    val variants: List<CheckInPhotoVariantDto>? = null,
 )
 
 @Serializable

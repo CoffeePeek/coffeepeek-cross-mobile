@@ -332,6 +332,20 @@ class ShopCheckInListViewModelTest {
         assertTrue(events.isEmpty())
     }
 
+    @Test fun galleryUsesDetailVariantsWithoutLosingExplicitOriginals() = runTest(dispatcher) {
+        val details = Details()
+        val snapshot = details.result.getOrThrow()
+        details.result = Result.success(snapshot.copy(checkIns = snapshot.checkIns.map {
+            if (it.id == "first") it.copy(photoDetailUrls = listOf("detail-a", "detail-b")) else it
+        }))
+        val model = viewModel(details = details)
+        runCurrent()
+        model.onAction(ShopCheckInListAction.OpenPhoto("first", 1))
+        runCurrent()
+        assertEquals(ShopCheckInListEvent.OpenPhoto(listOf("detail-a", "detail-b"), 1,
+            listOf("photo-a", "photo-b")), model.events.first().event)
+    }
+
     @Test fun resultCancellationIsNotConvertedToLoadOrVoteError() = runTest(dispatcher) {
         val details = Details().apply { result = Result.failure(CancellationException("cancelled")) }
         val votes = Votes().apply { result = Result.failure(CancellationException("cancelled")) }

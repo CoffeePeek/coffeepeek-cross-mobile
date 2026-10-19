@@ -28,6 +28,7 @@ import org.jetbrains.compose.ui.tooling.preview.Preview
 /** Static saved-drink summary, not a new drink-detail navigation action. */
 @Composable
 internal fun ShopCheckInDrinkBadge(name: String, drinkPhotoUrl: String?, modifier: Modifier = Modifier) {
+    val imageContent = LocalShopCheckInImage.current
     Row(modifier.fillMaxWidth().clip(RoundedCornerShape(CoffeePeekDimens.radiusLg))
         .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.04f)).padding(CoffeePeekDimens.spacing1),
         verticalAlignment = Alignment.CenterVertically,
@@ -35,6 +36,7 @@ internal fun ShopCheckInDrinkBadge(name: String, drinkPhotoUrl: String?, modifie
         Box(Modifier.size(44.dp).clip(RoundedCornerShape(CoffeePeekDimens.radiusMd)),
             contentAlignment = Alignment.Center) {
             if (drinkPhotoUrl.isNullOrBlank()) DrinkPhotoPlaceholder()
+            else if (imageContent != null) imageContent(drinkPhotoUrl, Modifier.fillMaxSize(), ContentScale.Fit)
             else KamelImage(resource = { asyncPainterResource(drinkPhotoUrl) }, contentDescription = null,
                 contentScale = ContentScale.Fit, modifier = Modifier.fillMaxSize(),
                 onLoading = { DrinkPhotoPlaceholder() }, onFailure = { DrinkPhotoPlaceholder() })

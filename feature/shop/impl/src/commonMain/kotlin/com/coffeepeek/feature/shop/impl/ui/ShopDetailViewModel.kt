@@ -153,6 +153,15 @@ internal class ShopDetailViewModel(
                     emitEvent(ShopDetailEvent.OpenPhoto(action.urls, action.index))
                 }
             }
+            is ShopDetailAction.OpenCheckInPhoto -> {
+                val visible = currentState.details?.checkIns.orEmpty().let {
+                    if (currentState.isLoggedIn) it.take(3) else it.take(1)
+                }
+                val row = visible.firstOrNull { it.id == action.checkInId } ?: return
+                if (action.index in row.photoUrls.indices) {
+                    emitEvent(ShopDetailEvent.OpenPhoto(row.photoDetailUrls, action.index, row.photoUrls))
+                }
+            }
             is ShopDetailAction.OpenRoaster -> {
                 if (currentState.details?.coffee?.roasters?.any { it.id == action.id } == true) {
                     emitEvent(ShopDetailEvent.OpenRoaster(action.id))
