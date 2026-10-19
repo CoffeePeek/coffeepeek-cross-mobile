@@ -61,6 +61,13 @@ design-system primitives rather than copying legacy App/Cp implementations.
 - [x] Extract components into compose/component, state/action/events into model;
   stateless ScreenContent, colocated light/dark previews and localized resources.
   Preserve sizing/spacing/image treatment and offer/details behavior.
+- [x] App-owned analytics ports (2026-10-19): `CoffeeAnalytics`/`CoffeeListAnalytics`/
+  `CoffeeDetailAnalytics` (commonMain) and `CoffeeScreenAnalytics` (androidMain) in the api module;
+  list/detail ViewModels and screens report search start/results/failure/open position, filter
+  open/apply/reset, detail content interactions, detail view and exposure through them (defaults are
+  silent). `composeApp/.../di/coffee/AndroidCoffeeAnalytics.kt` adapts them to the existing
+  `SearchTracker`/`Analytics`/`DetailEntryMemory` with the legacy event names. Unit-tested (impl ports
+  test, adapter test); entries are **still not activated** — Koin/routes/picker remain item below.
 - [ ] Wire Android tab/detail/restored routes, picker and app-owned analytics using
   factories. Keep shared/iOS fallback until its consumers deliberately migrate.
   Preserve SearchTracker's normalized-query/filter fingerprint, consent/session

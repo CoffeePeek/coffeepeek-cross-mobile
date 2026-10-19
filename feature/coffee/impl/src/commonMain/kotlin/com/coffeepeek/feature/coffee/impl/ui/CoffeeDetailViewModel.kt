@@ -1,6 +1,9 @@
 package com.coffeepeek.feature.coffee.impl.ui
 
 import com.coffeepeek.core.presentation.MviViewModel
+import com.coffeepeek.feature.coffee.api.CoffeeContentAction
+import com.coffeepeek.feature.coffee.api.CoffeeDetailAnalytics
+import com.coffeepeek.feature.coffee.api.CoffeeDetailSection
 import com.coffeepeek.feature.coffee.domain.model.CoffeeFilters
 import com.coffeepeek.feature.coffee.domain.repository.CoffeeRepository
 import com.coffeepeek.feature.coffee.impl.ui.compose.model.CoffeeDetailAction
@@ -14,7 +17,11 @@ import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
 
-internal class CoffeeDetailViewModel(private val slug: String, private val repository: CoffeeRepository) :
+internal class CoffeeDetailViewModel(
+    private val slug: String,
+    private val repository: CoffeeRepository,
+    private val analytics: CoffeeDetailAnalytics = CoffeeDetailAnalytics.None,
+) :
     MviViewModel<CoffeeDetailState, CoffeeDetailAction, CoffeeDetailEvent>(CoffeeDetailState()) {
     private var initialized = false
     private var loadJob: Job? = null
@@ -36,19 +43,31 @@ internal class CoffeeDetailViewModel(private val slug: String, private val repos
             CoffeeDetailAction.Retry -> loadDetail()
             CoffeeDetailAction.RetrySimilar -> loadSimilar()
             CoffeeDetailAction.Back -> sendEvent(CoffeeDetailEvent.Back)
-            CoffeeDetailAction.OpenPhotos -> if (!currentState.details?.photos.isNullOrEmpty()) updateState { copy(arePhotosOpen = true) }
+            CoffeeDetailAction.OpenPhotos -> if (!currentState.details?.photos.isNullOrEmpty()) {
+                analytics.contentInteracted(CoffeeDetailSection.Photos, CoffeeContentAction.Open)
+                updateState { copy(arePhotosOpen = true) }
+            }
             CoffeeDetailAction.ClosePhotos -> updateState { copy(arePhotosOpen = false) }
-            CoffeeDetailAction.ToggleDescription -> if (currentState.details?.description != null) updateState { copy(isDescriptionExpanded = !isDescriptionExpanded) }
+            CoffeeDetailAction.ToggleDescription -> if (currentState.details?.description != null) {
+                analytics.contentInteracted(CoffeeDetailSection.Description,
+                    if (currentState.isDescriptionExpanded) CoffeeContentAction.Close else CoffeeContentAction.Open)
+                updateState { copy(isDescriptionExpanded = !isDescriptionExpanded) }
+            }
             CoffeeDetailAction.OpenRoaster -> currentState.details?.roasterSlug?.takeIf(String::isNotBlank)?.let {
+                analytics.contentInteracted(CoffeeDetailSection.Roaster, CoffeeContentAction.Select)
+                analytics.roasterOpened()
                 sendEvent(CoffeeDetailEvent.OpenRoaster(it))
             }
             is CoffeeDetailAction.OpenSimilar -> if (action.slug.isNotBlank() && currentState.similar.any { it.slug == action.slug }) {
+                analytics.contentInteracted(CoffeeDetailSection.SimilarCoffees, CoffeeContentAction.Select)
+                analytics.similarOpened()
                 sendEvent(CoffeeDetailEvent.OpenCoffee(action.slug))
             }
             is CoffeeDetailAction.OpenSeller -> currentState.details?.coffee?.offers?.getOrNull(action.offerIndex)?.sourceUrl?.let {
                 sendEvent(CoffeeDetailEvent.OpenSeller(it))
             }
             CoffeeDetailAction.Share -> currentState.details?.let {
+                analytics.contentInteracted(CoffeeDetailSection.Contacts, CoffeeContentAction.Share)
                 sendEvent(CoffeeDetailEvent.Share(it.coffee.name, it.canonicalPath))
             }
         }

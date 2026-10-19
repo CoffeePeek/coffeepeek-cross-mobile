@@ -1,5 +1,7 @@
 package com.coffeepeek.feature.coffee.impl.ui.compose
 
+import com.coffeepeek.feature.coffee.api.CoffeeExposure
+import com.coffeepeek.feature.coffee.api.CoffeeScreenAnalytics
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -45,6 +47,7 @@ internal fun CoffeeDetailScreen(
     galleryContent: @Composable (List<String>, Int, () -> Unit) -> Unit,
     formatCheckedAt: (String) -> String,
     modifier: Modifier,
+    screen: CoffeeScreenAnalytics,
     onEvent: (CoffeeDetailEvent) -> Unit,
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -54,7 +57,7 @@ internal fun CoffeeDetailScreen(
         lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) { viewModel.events.collect { currentEvent(it) } }
     }
     BackHandler { viewModel.onAction(if (state.arePhotosOpen) CoffeeDetailAction.ClosePhotos else CoffeeDetailAction.Back) }
-    CoffeeDetailScreenContent(state, viewModel::onAction, imageContent, galleryContent, formatCheckedAt, modifier)
+    CoffeeDetailScreenContent(state, viewModel::onAction, imageContent, galleryContent, formatCheckedAt, modifier, screen)
 }
 
 @Composable
@@ -65,7 +68,9 @@ internal fun CoffeeDetailScreenContent(
     galleryContent: @Composable (List<String>, Int, () -> Unit) -> Unit,
     formatCheckedAt: (String) -> String,
     modifier: Modifier = Modifier,
+    screen: CoffeeScreenAnalytics = CoffeeScreenAnalytics.None,
 ) {
+    screen.TrackDetail(loaded = state.details != null)
     val details = state.details
     val hazeState = rememberHazeState()
     val labels = remember(state.filterGroups) { state.filterGroups.associate { group -> group.code to group.options.associate { it.code to it.name } } }
@@ -81,7 +86,7 @@ internal fun CoffeeDetailScreenContent(
                     verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing6)) {
                     item(key = "photo") {
                         val photosDescription = stringResource(R.string.coffee_open_photos)
-                        Box(Modifier.fillMaxWidth().aspectRatio(1f).background(MaterialTheme.colorScheme.surfaceVariant)
+                        Box(screen.exposure(Modifier, CoffeeExposure.Photos).fillMaxWidth().aspectRatio(1f).background(MaterialTheme.colorScheme.surfaceVariant)
                             .semantics { contentDescription = photosDescription }
                             .clickable(enabled = details.photos.isNotEmpty(), role = Role.Button, onClickLabel = stringResource(R.string.coffee_open_photos)) {
                                 onAction(CoffeeDetailAction.OpenPhotos)
@@ -115,13 +120,14 @@ internal fun CoffeeDetailScreenContent(
                                         Text(value, style = MaterialTheme.typography.bodyMedium)
                                     } }
                             }
-                            Text(stringResource(R.string.coffee_roaster), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Text(stringResource(R.string.coffee_roaster), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = screen.exposure(Modifier, CoffeeExposure.Roaster))
                             CoffeeRoasterRow(details.coffee.roasterName, details.coffee.roasterPhotoUrl,
                                 if (details.roasterSlug != null) ({ onAction(CoffeeDetailAction.OpenRoaster) }) else null, imageContent)
                         }
                     }
                     item(key = "offers-title") {
-                        Column(Modifier.padding(horizontal = CoffeePeekDimens.spacing4), verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing2)) {
+                        Column(screen.exposure(Modifier, CoffeeExposure.Offers).padding(horizontal = CoffeePeekDimens.spacing4), verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing2)) {
                             SectionTitle(stringResource(R.string.coffee_offers))
                             details.checkedAtUtc?.let { Text(stringResource(R.string.coffee_checked_at, formatCheckedAt(it)),
                                 style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
@@ -135,7 +141,7 @@ internal fun CoffeeDetailScreenContent(
                     }
                     if (state.similarLoading || state.similarFailed || state.similar.isNotEmpty()) item(key = "similar") {
                         Column(verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing3)) {
-                            Box(Modifier.padding(horizontal = CoffeePeekDimens.spacing4)) { SectionTitle(stringResource(R.string.coffee_similar)) }
+                            Box(screen.exposure(Modifier, CoffeeExposure.SimilarCoffees).padding(horizontal = CoffeePeekDimens.spacing4)) { SectionTitle(stringResource(R.string.coffee_similar)) }
                             when {
                                 state.similarLoading -> Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) { CoffeePeekLoader(stringResource(R.string.coffee_loading)) }
                                 state.similarFailed -> TextButton({ onAction(CoffeeDetailAction.RetrySimilar) }, Modifier.padding(horizontal = CoffeePeekDimens.spacing4)) {

@@ -74,7 +74,7 @@ iOS UI migration remains deferred; Native compilation is only compatibility.
    Preserve protected permissions/cache/session invalidation and blocked-author
    filtering. Live media/account/write acceptance remains a separate authorized
    release gate. Keep fixes with their owner; no feature UI in composeApp.
-3. [ ] Finish Coffee app-owned analytics: normalized search/filter fingerprint,
+3. [~] Finish Coffee app-owned analytics (ports/adapters/tests done 2026-10-19; activation with item 4): normalized search/filter fingerprint,
    consent/session invalidation, result/open position and detail/section actions.
    Features receive narrow ports, never an analytics SDK.
 4. [ ] Wire Coffee Android factories, Koin, tab/detail/restored routes and picker.

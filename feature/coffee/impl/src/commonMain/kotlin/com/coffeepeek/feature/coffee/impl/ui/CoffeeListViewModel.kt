@@ -1,6 +1,7 @@
 package com.coffeepeek.feature.coffee.impl.ui
 
 import com.coffeepeek.core.presentation.MviViewModel
+import com.coffeepeek.feature.coffee.api.CoffeeListAnalytics
 import com.coffeepeek.feature.coffee.domain.model.CoffeeFilters
 import com.coffeepeek.feature.coffee.domain.repository.CoffeeRepository
 import com.coffeepeek.feature.coffee.impl.ui.compose.model.CoffeeListAction
@@ -15,7 +16,10 @@ import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
 
-internal class CoffeeListViewModel(private val repository: CoffeeRepository) :
+internal class CoffeeListViewModel(
+    private val repository: CoffeeRepository,
+    private val analytics: CoffeeListAnalytics = CoffeeListAnalytics.None,
+) :
     MviViewModel<CoffeeListState, CoffeeListAction, CoffeeListEvent>(CoffeeListState()) {
     private var initialized = false
     private var searchJob: Job? = null
@@ -43,7 +47,10 @@ internal class CoffeeListViewModel(private val repository: CoffeeRepository) :
             CoffeeListAction.LoadMore -> if (!currentState.isLoading && !currentState.isRefreshing &&
                 !currentState.isLoadingMore && currentState.hasMore) search(reset = false)
             CoffeeListAction.RetryFilters -> loadFilters()
-            CoffeeListAction.OpenFilters -> if (currentState.filterDraft == null) updateState { copy(filterDraft = filters) }
+            CoffeeListAction.OpenFilters -> if (currentState.filterDraft == null) {
+                analytics.filtersOpened()
+                updateState { copy(filterDraft = filters) }
+            }
             CoffeeListAction.CancelFilters -> updateState { copy(filterDraft = null) }
             CoffeeListAction.ResetFilterDraft -> if (currentState.filterDraft != null) updateState { copy(filterDraft = CoffeeFilters()) }
             is CoffeeListAction.FilterToggled -> if (currentState.filterGroups.any { group ->
@@ -51,10 +58,12 @@ internal class CoffeeListViewModel(private val repository: CoffeeRepository) :
             }) updateState { copy(filterDraft = filterDraft?.toggle(action.group, action.option)) }
             is CoffeeListAction.AvailableOnlyChanged -> updateState { copy(filterDraft = filterDraft?.copy(availableOnly = action.selected)) }
             CoffeeListAction.ApplyFilters -> currentState.filterDraft?.let { draft ->
+                analytics.filtersApplied(draft.analyticsKeys().sorted(), changedKeys(currentState.filters, draft), draft.activeCount == 0)
                 updateState { copy(filters = draft, filterDraft = null) }
                 search(reset = true)
             }
             is CoffeeListAction.OpenCoffee -> if (action.slug.isNotBlank() && currentState.items.any { it.slug == action.slug }) {
+                analytics.opened(currentState.items.indexOfFirst { it.slug == action.slug } + 1)
                 sendEvent(CoffeeListEvent.OpenCoffee(action.slug))
             }
         }
@@ -78,17 +87,20 @@ internal class CoffeeListViewModel(private val repository: CoffeeRepository) :
         ) }
         try {
             if (debounce) delay(300)
+            if (reset) analytics.searchStarted(snapshot.fingerprint(), snapshot.query, snapshot.filters.analyticsKeys())
             val pageResult = repository.search(snapshot.query, snapshot.filters, page).getOrThrow()
             currentCoroutineContext().ensureActive()
             if (searchJob !== job || revision != searchRevision) return
+            if (reset) (pageResult.totalCount ?: pageResult.items.size.takeIf { pageResult.totalPages <= 1 })?.let(analytics::resultsViewed)
             updateState { copy(
                 items = (if (reset) pageResult.items else items + pageResult.items).distinctBy { it.slug },
                 page = pageResult.currentPage,
                 hasMore = pageResult.currentPage < pageResult.totalPages,
             ) }
         } catch (cancelled: CancellationException) { throw cancelled }
-        catch (_: Exception) {
+        catch (failure: Exception) {
             if (searchJob === job && revision == searchRevision && job.isActive) {
+                if (reset) analytics.searchFailed(failure)
                 updateState { copy(loadFailed = true, loadMoreFailed = !reset) }
             }
         } finally {
@@ -123,3 +135,16 @@ internal class CoffeeListViewModel(private val repository: CoffeeRepository) :
         super.onCleared()
     }
 }
+
+private fun CoffeeFilters.analyticsKeys(): List<String> =
+    values.filterValues { it.isNotEmpty() }.keys.toList() + if (availableOnly) listOf("availableOnly") else emptyList()
+
+private fun changedKeys(old: CoffeeFilters, new: CoffeeFilters): List<String> =
+    ((old.values.keys + new.values.keys).filter { old.values[it] != new.values[it] } +
+        if (old.availableOnly != new.availableOnly) listOf("availableOnly") else emptyList()).sorted()
+
+/** Canonical identity of the criteria: whitespace-normalized query and sorted selections. */
+private fun CoffeeListState.fingerprint(): String =
+    query.trim().replace(Regex("\\s+"), " ") + "|" + filters.values.filterValues { it.isNotEmpty() }.toSortedMap()
+        .entries.joinToString(";") { (group, options) -> group + "=" + options.sorted().joinToString(",") } +
+        "|" + filters.availableOnly

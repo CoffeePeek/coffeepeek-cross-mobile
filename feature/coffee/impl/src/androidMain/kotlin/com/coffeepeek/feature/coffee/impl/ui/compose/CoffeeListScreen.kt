@@ -1,5 +1,7 @@
 package com.coffeepeek.feature.coffee.impl.ui.compose
 
+import com.coffeepeek.feature.coffee.api.CoffeeExposure
+import com.coffeepeek.feature.coffee.api.CoffeeScreenAnalytics
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -28,19 +30,20 @@ import com.coffeepeek.feature.coffee.impl.ui.compose.model.*
 
 @Composable
 internal fun CoffeeListScreen(viewModel: CoffeeListViewModel, imageContent: @Composable (String, String, Modifier, ContentScale) -> Unit,
-    bottomClearance: Dp, modifier: Modifier, onEvent: (CoffeeListEvent) -> Unit) {
+    bottomClearance: Dp, modifier: Modifier, screen: CoffeeScreenAnalytics, onEvent: (CoffeeListEvent) -> Unit) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val currentEvent by rememberUpdatedState(onEvent)
     val lifecycle = LocalLifecycleOwner.current.lifecycle
     LaunchedEffect(viewModel, lifecycle) {
         lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) { viewModel.events.collect { currentEvent(it) } }
     }
-    CoffeeListScreenContent(state, viewModel::onAction, imageContent, modifier, bottomClearance)
+    CoffeeListScreenContent(state, viewModel::onAction, imageContent, modifier, bottomClearance, screen)
 }
 
 @Composable
 internal fun CoffeeListScreenContent(state: CoffeeListState, onAction: (CoffeeListAction) -> Unit,
-    imageContent: @Composable (String, String, Modifier, ContentScale) -> Unit, modifier: Modifier = Modifier, bottomClearance: Dp = 0.dp) {
+    imageContent: @Composable (String, String, Modifier, ContentScale) -> Unit, modifier: Modifier = Modifier, bottomClearance: Dp = 0.dp,
+    screen: CoffeeScreenAnalytics = CoffeeScreenAnalytics.None) {
     val listState = rememberLazyListState()
     val currentAction by rememberUpdatedState(onAction)
     val tasteNames = remember(state.filterGroups) {
@@ -64,7 +67,7 @@ internal fun CoffeeListScreenContent(state: CoffeeListState, onAction: (CoffeeLi
         CoffeePeekPullToRefresh(listState, state.isRefreshing, { onAction(CoffeeListAction.Refresh) },
             stringResource(R.string.coffee_refresh), stringResource(R.string.coffee_loading),
             modifier = Modifier.fillMaxSize().padding(padding).imePadding()) { scrollModifier ->
-            LazyColumn(state = listState, modifier = scrollModifier.fillMaxSize().testTag("coffee-list"),
+            LazyColumn(state = listState, modifier = screen.exposure(scrollModifier.fillMaxSize().testTag("coffee-list"), CoffeeExposure.Catalog),
                 contentPadding = PaddingValues(start = CoffeePeekDimens.spacing4, top = CoffeePeekDimens.spacing4,
                     end = CoffeePeekDimens.spacing4, bottom = bottomClearance + 88.dp),
                 verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing4)) {
