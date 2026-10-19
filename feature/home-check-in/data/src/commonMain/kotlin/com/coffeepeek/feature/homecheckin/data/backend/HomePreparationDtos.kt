@@ -10,7 +10,14 @@ import kotlinx.serialization.json.JsonNames
 @Serializable internal data class HomeEnvelope<T>(val isSuccess: Boolean, val message: String? = null, val data: T? = null)
 @Serializable internal data class HomePageDto(val items: List<HomeDto> = emptyList(), val totalCount: Int = 0)
 @Serializable internal data class HomeCalendarDto(val preparedOn: String, val brewCount: Int)
-@Serializable internal data class HomePhotoDto(val id: String = "", @JsonNames("fullUrl") val url: String = "")
+@Serializable internal data class HomePhotoDto(
+    val id: String = "", @JsonNames("fullUrl") val url: String = "",
+    val sortIndex: Int = 0, val variants: List<HomePhotoVariantDto>? = null,
+)
+@Serializable internal data class HomePhotoVariantDto(
+    val purpose: String = "", val contentType: String = "", val url: String = "",
+    val width: Int = 0, val height: Int = 0, val sizeBytes: Long = 0,
+)
 @Serializable internal data class HomeDto(
     val id: String,
     val preparedAtUtc: String,

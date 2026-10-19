@@ -52,7 +52,15 @@ internal class AndroidHistoryHomeBridge(
     }
 
     fun openPhoto(expected: HistoryHomeDestination, urls: List<String>, index: Int, onPhoto: (List<String>, Int) -> Unit) {
-        if (owns(expected) && !expected.editing && expected.dismissAllowed.value) onPhoto(urls, index)
+        openPhoto(expected, urls, urls, index) { previews, _, selected -> onPhoto(previews, selected) }
+    }
+
+    fun openPhoto(expected: HistoryHomeDestination, urls: List<String>, originals: List<String>, index: Int,
+        onPhoto: (List<String>, List<String>, Int) -> Unit) {
+        if (owns(expected) && !expected.editing && expected.dismissAllowed.value &&
+            urls.size == originals.size && index in originals.indices && originals.all(String::isNotBlank)) {
+            onPhoto(urls.toList(), originals.toList(), index)
+        }
     }
 
     private fun owns(expected: HistoryHomeDestination) = mutableDestination.value === expected &&

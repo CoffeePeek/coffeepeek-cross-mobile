@@ -83,9 +83,12 @@ internal class CombinedHistoryViewModel private constructor(
                     updateState { copy(selectedShopKey = null) }
                     emit(CheckInHistoryEvent.OpenShop(slug))
                 }
-            is CombinedHistoryAction.OpenPhoto -> currentState.selectedShop?.entry?.photoUrls?.let { urls ->
-                if (action.index in urls.indices && urls.all(String::isNotBlank)) {
-                    emit(CheckInHistoryEvent.OpenPhoto(urls.toList(), action.index))
+            is CombinedHistoryAction.OpenPhoto -> currentState.selectedShop?.entry?.let { entry ->
+                val originals = entry.photoUrls
+                val details = entry.photoDetailUrls ?: originals
+                if (action.index in originals.indices && originals.all(String::isNotBlank) &&
+                    details.size == originals.size) {
+                    emit(CheckInHistoryEvent.OpenPhoto(details.toList(), action.index, originals.toList()))
                 }
             }
             CombinedHistoryAction.ShowCreate -> if (currentState.isLoggedIn) {

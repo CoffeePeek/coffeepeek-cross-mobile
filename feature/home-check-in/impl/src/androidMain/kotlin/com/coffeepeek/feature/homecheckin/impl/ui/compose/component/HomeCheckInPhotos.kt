@@ -20,21 +20,24 @@ import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.feature.homecheckin.impl.R
 
-/** Same 1/2/3-tile geometry as the current original-photo strip; +N opens the full album. */
+/** Feed-only tiles retain album positions even when a preview is unavailable. */
 @Composable
 internal fun HomeCheckInPhotos(
     urls: List<String>,
     enabled: Boolean,
     imageContent: @Composable (String, String, Modifier, Boolean) -> Unit,
+    originalUrls: List<String> = urls,
     onOpen: (Int) -> Unit,
 ) {
+    require(urls.size == originalUrls.size)
     if (urls.isEmpty()) return
     @Composable fun Photo(index: Int, modifier: Modifier) {
         val description = stringResource(R.string.home_check_in_photo_description, index + 1, urls.size)
         Box(modifier.clip(RoundedCornerShape(CoffeePeekDimens.radiusMd))
-            .clickable(enabled = enabled, role = Role.Button) { onOpen(index) }
+            .background(MaterialTheme.colorScheme.surfaceVariant)
+            .clickable(enabled = enabled && originalUrls[index].isNotBlank(), role = Role.Button) { onOpen(index) }
             .semantics(mergeDescendants = true) { contentDescription = description }) {
-            imageContent(urls[index], description, Modifier.fillMaxSize(), false)
+            if (urls[index].isNotBlank()) imageContent(urls[index], description, Modifier.fillMaxSize(), false)
             if (index == 2 && urls.size > 3) Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.45f)),
                 contentAlignment = Alignment.Center) {
                 Text(stringResource(R.string.home_check_in_more_photos, urls.size - 3),
@@ -54,6 +57,7 @@ internal fun HomeCheckInPhotos(
 }
 
 @PreviewLightDark @Composable private fun HomeCheckInPhotosPreview() = CoffeePeekTheme {
-    HomeCheckInPhotos(listOf("fixture-1", "fixture-2", "fixture-3", "fixture-4"), true,
+    HomeCheckInPhotos(listOf("fixture-1", "", "fixture-3", "fixture-4"), true,
+        originalUrls = List(4) { "fixture-original-$it" },
         imageContent = { _, _, modifier, _ -> Surface(modifier, color = MaterialTheme.colorScheme.surfaceVariant) {} }, onOpen = {})
 }

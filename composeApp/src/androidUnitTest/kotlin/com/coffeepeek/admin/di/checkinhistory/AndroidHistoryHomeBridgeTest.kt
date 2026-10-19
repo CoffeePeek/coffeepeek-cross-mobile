@@ -209,6 +209,12 @@ class AndroidHistoryHomeBridgeTest {
         var received: Pair<List<String>, Int>? = null
         bridge.openPhoto(detail, listOf("photo"), 0) { urls, index -> received = urls to index }
         assertEquals(listOf("photo") to 0, received)
+        var explicit: Triple<List<String>, List<String>, Int>? = null
+        bridge.openPhoto(detail, listOf("detail", ""), listOf("original-a", "original-b"), 1) { urls, originals, index ->
+            explicit = Triple(urls, originals, index)
+        }
+        assertEquals(Triple(listOf("detail", ""), listOf("original-a", "original-b"), 1), explicit)
+        bridge.openPhoto(detail, listOf("detail"), emptyList(), 0) { _, _, _ -> error("Misaligned album") }
         bridge.setDismissAllowed(detail, false)
         bridge.openPhoto(detail, listOf("wrong"), 0) { _, _ -> error("Busy details") }
     }

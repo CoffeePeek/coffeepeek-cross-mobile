@@ -21,6 +21,11 @@ data class PersonalCheckIn(
     val helpfulCount: Int,
     val isHelpfulByCurrentUser: Boolean,
     val authorAvatarUrl: String? = null,
+    /** Aligned with [photoUrls]. Null supports legacy snapshots; a blank entry is explicitly unavailable. */
+    val photoThumbnailUrls: List<String>? = null,
+    val photoDetailUrls: List<String>? = null,
+    val photoCalendarUrls: List<String>? = null,
+    val drinkPhotoThumbnailUrl: String? = null,
 ) {
     val effectiveVisitedAt: String get() = visitedAt.ifBlank { createdAt }
 }

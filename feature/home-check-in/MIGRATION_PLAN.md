@@ -3,13 +3,46 @@
 ## Current-main reconciliation gate — 2026-10-19
 
 Main **28917758** is now inherited through #43 -> #95 -> #99 and its children.
-The active Home repository still parses original photo URLs only, while main's
-legacy Home model now distinguishes feed/thumb/detail/calendar variants and
-explicit originals. Bring those fields through data/domain, the history adapter,
-inline rendering and gallery without changing upload/edit original ownership.
+The initial audit found original-only parsing while main distinguished photo
+variants. That code gap is addressed by the photo-representation slice below,
+through data/domain, history adapters, inline rendering and explicit originals,
+without changing upload/edit ownership.
 Do not interpret a passing merge/assembly as closing protected-photo acceptance.
 Profile Activity and shared/iOS UI remain deliberately legacy. No new UI belongs
 in composeApp; it supplies only the DI/lifecycle/platform adapters for this work.
+
+## Current-main photo representations — 2026-10-19
+
+Scope: existing #99 after merging history `abc5876f` at `6ccff47f`;
+remote main remains `dfb00e63` (already an ancestor, checked again).
+The independent Home data repository now preserves sorted original/feed/detail/
+thumb representations, including both string and object drink-photo responses.
+Absent manifests retain issued legacy URLs; explicit empty, unsupported or invalid
+variants do not silently fetch an original inline. Calendar enrichment retains
+counts, bounded month paging and no per-entry detail reads, choosing thumb URLs.
+Detail tiles use feed previews, drink cutouts use thumbs. Their gallery callback
+carries aligned detail URLs and explicit issued originals, including blank detail
+slots, through the account-bound destination bridge. Main's viewer owns the
+active-page-only original fallback; no storage-key or variant URL inference.
+No upload/edit writer, endpoint, dependency, module boundary or iOS UI is changed.
+The retired legacy Home reader stays deleted in this child checkpoint.
+
+Verification: **695 selected unit results**, no failures/errors/skips: Home data
+33, Home impl 76, history data 11, history impl 47, app Direct 528. Direct Debug
+APK and packaged DEX guard pass; Home self-targeted test APK and app Direct
+instrumentation Kotlin compilation pass. The first complete build passed in
+9m43s; D8 dependency transformation dominated the delay, confirmed from its
+active JVM stack. No dependency/cache deletion or compiler bypass was used.
+Studio error inspections report none in the changed mapper, detail ViewModel
+and screen. Paired owner previews use only fake image ports; no IDE preview
+render is claimed. Local build log: `coffeepeek-home-photo-parent-build-2026-10-19.log`.
+
+Physical Home UI execution is pending device unlock after the long build.
+The new test checks actual feed/thumb requests, missing-preview clicks in both
+themes, and the public entry's independent detail/original albums without an
+extra read. History's parent already passed 21/21 self-targeted cases on Pixel 7.
+Protected live photos, real media selection/extraction/uploads, backend writes,
+account replacement, analytics, release and iOS acceptance remain open.
 
 Plan date: 2026-10-16; foundation work: 2026-10-17. Re-fetched source baseline:
 `origin/main` **0137ee7**; migration parent: history **c726944**, PR #95.

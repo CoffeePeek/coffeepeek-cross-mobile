@@ -245,7 +245,7 @@ class HistoryRouteIntegrationTest {
             }, BrewMethodCatalog { Result.success(listOf(BrewMethodOption("hario-v60", "Hario V60"))) },
                 DrinkPhotoExtractor { error("Fixture contains no photos") }),
             imageContent = { _, _, _ -> error("Fixture contains no remote images") },
-            photoContent = { _, _, _ -> error("Fixture contains no photos") })
+            photoContent = { _, _, _, _ -> error("Fixture contains no photos") })
     }
 
     private class Homes(empty: Boolean, private val owner: () -> Boolean) : HomePreparationRepository, HomeHistoryReader {

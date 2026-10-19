@@ -74,8 +74,13 @@ internal class HistoryHostSession(
     }
 
     fun openPhoto(urls: List<String>, index: Int) {
-        if (lease.isCurrent() && lease.isLoggedIn && urls.getOrNull(index)?.isNotBlank() == true) {
-            mutablePhotoPreview.value = HistoryPhotoPreview(urls.toList(), index)
+        openPhoto(urls, urls, index)
+    }
+
+    fun openPhoto(urls: List<String>, originals: List<String>, index: Int) {
+        if (lease.isCurrent() && lease.isLoggedIn && urls.size == originals.size &&
+            originals.getOrNull(index)?.isNotBlank() == true && originals.all(String::isNotBlank)) {
+            mutablePhotoPreview.value = HistoryPhotoPreview(urls.toList(), index, originals.toList())
         }
     }
 
