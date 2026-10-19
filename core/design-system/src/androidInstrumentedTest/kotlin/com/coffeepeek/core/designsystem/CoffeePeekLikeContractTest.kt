@@ -14,6 +14,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.graphics.toPixelMap
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.test.*
@@ -46,12 +47,12 @@ class CoffeePeekLikeContractTest {
                 }
             }.use {
                 val pixels = compose.onNodeWithTag("glass").captureToImage().toPixelMap()
-                val background = pixels[pixels.width / 2, pixels.height / 6]
+                val background = pixels[pixels.width / 2, (pixels.height * 0.22f).toInt()]
                 assertTrue("Glass must show the image, not solid black", background.red in 0.35f..0.45f)
                 assertTrue(colorPixelCount("glass", CoffeePeekColors.Like) > 0)
                 compose.runOnIdle { style.value = CoffeePeekLikeButtonStyle.Plain }
                 val plain = compose.onNodeWithTag("glass").captureToImage().toPixelMap()
-                assertEquals(Color.White.toArgb(), plain[plain.width / 2, plain.height / 6].toArgb())
+                assertEquals(Color.White.toArgb(), plain[plain.width / 2, (plain.height * 0.22f).toInt()].toArgb())
             }
         }
     }
@@ -70,7 +71,7 @@ class CoffeePeekLikeContractTest {
                 val gold = if (dark) CoffeePeekColors.Like else CoffeePeekColors.LikeOnLight
                 assertEquals(0, colorPixelCount("heart", gold))
                 assertTrue("Outline must stay neutral in $dark", colorPixelCount("heart",
-                    if (dark) CoffeePeekColors.DarkTextPrimary else CoffeePeekColors.LightTextPrimary) > 0)
+                    if (dark) CoffeePeekColors.DarkTextSecondary else CoffeePeekColors.LightTextSecondary) > 0)
                 compose.runOnIdle { selected.value = true }
                 assertTrue("Selected heart must use gold in $dark", colorPixelCount("heart", gold) > 0)
             }
@@ -152,9 +153,45 @@ class CoffeePeekLikeContractTest {
         }
     }
 
+    @Test fun compactPlateDoesNotGrowWithTheTouchTargetOrDrawAPressRipple() {
+        var expectedPlatePixels = 0f
+        render(false) {
+            expectedPlatePixels = with(LocalDensity.current) { 32.dp.toPx() }
+            Box(Modifier.background(Color.White)) {
+                CoffeePeekLikeButton(false, "Favorite", {}, Modifier.size(64.dp).testTag("compact"),
+                    overImage = true)
+            }
+        }.use {
+            val node = compose.onNodeWithTag("compact")
+            val before = node.captureToImage().toPixelMap()
+            val changedColumns = (0 until before.width).filter { x ->
+                (0 until before.height).any { y -> before[x, y].toArgb() != Color.White.toArgb() }
+            }
+            assertEquals("The 64dp target must still draw a 32dp plate", expectedPlatePixels,
+                (changedColumns.last() - changedColumns.first() + 1).toFloat(), 2f)
+            node.performTouchInput { down(center) }
+            val pressed = node.captureToImage().toPixelMap()
+            for (y in 0 until before.height) for (x in 0 until before.width) {
+                assertEquals("Press must not draw a ripple at $x,$y", before[x, y].toArgb(), pressed[x, y].toArgb())
+            }
+            node.performTouchInput { up() }
+        }
+    }
+
+    @Test fun loadingToggleIsDisabledAndExposesOneProgressLabel() {
+        render(false) { CoffeePeekLikeButton(true, "Remove", { error("No loading writes") },
+            isLoading = true, loadingDescription = "Updating") }.use {
+            compose.onAllNodesWithContentDescription("Updating").assertCountEquals(1)
+            compose.onNodeWithContentDescription("Updating").assertIsOn().assertIsNotEnabled().performClick()
+        }
+    }
+
     private fun render(dark: Boolean, content: @androidx.compose.runtime.Composable () -> Unit): ActivityScenario<DesignSystemTestActivity> =
         ActivityScenario.launch(DesignSystemTestActivity::class.java).also { scenario ->
             scenario.onActivity { it.setContent { CoffeePeekTheme(FontFamily.Default, darkTheme = dark) { Surface(content = content) } } }
+            compose.waitUntil(5_000) {
+                compose.onAllNodes(isRoot()).fetchSemanticsNodes(atLeastOneRootRequired = false).isNotEmpty()
+            }
         }
 
     private fun colorPixelCount(tag: String, color: Color): Int {

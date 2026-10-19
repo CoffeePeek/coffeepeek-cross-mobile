@@ -19,6 +19,8 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollToIndex
 import androidx.compose.ui.test.assertHasNoClickAction
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.test.click
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import androidx.test.core.app.ActivityScenario
@@ -31,6 +33,7 @@ import com.coffeepeek.feature.shop.impl.ui.compose.component.ShopMenuSection
 import com.coffeepeek.feature.shop.impl.ui.compose.component.ShopContactSection
 import com.coffeepeek.feature.shop.impl.ui.compose.component.ShopCoffeeDetailsSection
 import com.coffeepeek.feature.shop.impl.ui.compose.component.ShopScheduleSection
+import com.coffeepeek.feature.shop.impl.ui.compose.component.ShopCheckInHelpfulButton
 import com.coffeepeek.feature.shop.domain.model.ShopSchedule
 import com.coffeepeek.feature.shop.domain.model.ScheduleInterval
 import com.coffeepeek.feature.shop.domain.model.MenuPhoto
@@ -124,6 +127,20 @@ class ShopDetailPresentationContractTest {
             compose.onNodeWithText("Понедельник").assertIsDisplayed()
             compose.onNodeWithText("Открыто до 21:00").performClick()
             compose.onNodeWithText("Понедельник").assertDoesNotExist()
+        }
+    }
+
+    @Test fun onlyTheHeartIsInteractiveNotTheAdjacentCount() {
+        var clicks = 0
+        render {
+            var selected by remember { mutableStateOf(false) }
+            ShopCheckInHelpfulButton(3, selected, { clicks++; selected = !selected })
+        }.use {
+            compose.onNodeWithText("3").assertHasNoClickAction().performTouchInput { click() }
+            compose.runOnIdle { assertEquals(0, clicks) }
+            compose.onNodeWithContentDescription("Поставить лайк, лайков: 3").performClick()
+            compose.onNodeWithContentDescription("Убрать лайк, лайков: 3").assertExists()
+            compose.runOnIdle { assertEquals(1, clicks) }
         }
     }
 

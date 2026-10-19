@@ -1,5 +1,51 @@
 # Shared affinity heart — 2026-10-18
 
+## Compact interaction follow-up — 2026-10-19
+
+Source: Coffee child `da67051b` plus this patch, inheriting parent UI fix
+`58edfdbd` through the existing stack. The shared toggle separates a **32dp visual
+plate** (default 24dp heart) from its **48dp minimum touch target**. A larger caller
+layout no longer stretches the glass circle. Passive photo markers use the same
+compact plate. Plain and Glass remain explicit styles; custom icon sizes may grow
+the plate enough to retain glyph padding.
+
+The toggle has no press ripple: controlled selection alone changes the heart.
+Unselected hearts use `onSurfaceVariant`, not red or primary text emphasis;
+selected hearts retain the existing accessible gold palette. Over-photo outlines
+remain readable white. Loading is caller-supplied visual state with a localized
+progress label and disabled dispatch, never an operation launched by core.
+
+Shop favorites and helpful hearts reuse that toggle. The adjacent helpful count
+is plain text outside the action, so pressing it cannot toggle the heart or paint
+a ripple. Own/read-only counts remain static, not disabled fictional actions.
+The unplated `CoffeePeekDrinkLabel` and square monetary `CoffeePeekBynIcon` are
+inherited from the parent. Coffee prices use main's 20dp square currency glyph;
+Shop menu prices use 16dp, without resizing the amount typography.
+
+The fractional-rating renderer already receives the unrounded average on this
+full branch. The earlier parent-only visual fixture still used its historical
+whole-star renderer; do not duplicate the newer renderer back into that parent.
+The full-branch pixel contract explicitly covers 4.0/4.3/**4.7**/5.0 in every
+size and both themes. No rating formula or server value is changed here.
+
+Full-stack checks: Direct Debug and Direct Sandbox APKs, packaged DEX/isolation
+guards, Shop lint and **690 selected unit results** pass (core 23, Shop impl 91,
+Coffee impl 41, app Direct 535). Pixel 7 / API 37 self-targeted core UI suite:
+**84/84 pass**, no failures/retries in this full-branch run. This includes actual
+fractional pixels, 32dp plate geometry inside a 64dp caller target, unchanged
+pixels while pressed (no ripple), loading/disabled behavior, static drink label,
+square currency dimensions and real modal keyboard/inset checks. Parent-only
+test-harness retries remain documented in `INSETS.md`; they are not erased by
+this later successful run. No normal CoffeePeek installation, account/backend
+write, native iOS UI check or live-photo/Haze acceptance is claimed.
+
+The full self-targeted Shop suite also passes **36/36**, without failures/retries,
+including the new physical count tap that must not vote, followed by a heart tap
+that must change controlled selection exactly once. Combined full-branch device
+result: **120/120**. A final `overImage` argument rebuild for the Shop photo heart
+passes Debug/Sandbox APK and DEX guards. Scoped Studio checks pass; the first
+LikeButton inspection timed out, its completed retry reports no errors.
+
 ## Audit and decision
 
 The same state used unrelated foreground sources: app FavoriteButton inherited

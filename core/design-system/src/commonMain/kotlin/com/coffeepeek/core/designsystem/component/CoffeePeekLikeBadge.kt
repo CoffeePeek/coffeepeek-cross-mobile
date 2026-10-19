@@ -14,10 +14,13 @@ import org.jetbrains.compose.ui.tooling.preview.Preview
 @Composable
 fun CoffeePeekLikeBadge(selected: Boolean, contentDescription: String, modifier: Modifier = Modifier) {
     Box(
-        modifier = modifier.size(40.dp).coffeePeekLikeBackground(CoffeePeekLikeButtonStyle.Glass, CircleShape),
+        modifier = modifier,
         contentAlignment = Alignment.Center,
     ) {
-        CoffeePeekLikeIcon(selected, contentDescription, overImage = true)
+        Box(Modifier.size(32.dp).coffeePeekLikeBackground(CoffeePeekLikeButtonStyle.Glass, CircleShape),
+            contentAlignment = Alignment.Center) {
+            CoffeePeekLikeIcon(selected, contentDescription, overImage = true)
+        }
     }
 }
 
