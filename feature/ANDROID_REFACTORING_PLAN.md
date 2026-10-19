@@ -1,15 +1,103 @@
 # Android refactoring — current roadmap
 
-Audit date: 2026-10-16. Product baseline: `origin/main` **0137ee7**.
-This is the current checklist. Older feature READMEs contain historical checkpoint
-notes; they do not override this source audit or certify later changes.
+Audit date: **2026-10-19**. Product baseline: `origin/main` **28917758**.
+The current inventory and ordered work below supersede dated 0137ee7/4976e53
+checklists retained later for provenance. Inspect actual entry points, not just
+screen filenames, before extracting another capability.
 
-2026-10-19 observation: remote main has advanced to **18142f80** (protected photo
-variants/cache/session rollout #105). It has been fetched, not yet reconciled
-through this stack. Coffee list/detail sources and HTTP contracts are unchanged;
-media/gallery/session adapters require a separate synchronization audit before
-the new Coffee entries are activated. Do not treat the verification below at
-0137ee7 as certification of that newer photo rollout.
+## Current status after parent-first main synchronization
+
+Main was integrated starting at #43, then propagated through #95 -> #99 ->
+#101 -> #102 -> #104. Local main is fast-forwarded to the same baseline. See
+[MAIN_SYNC_AUDIT.md](MAIN_SYNC_AUDIT.md) for reconciliation and verification.
+This synchronization does not activate Coffee or migrate new profile/auth UI.
+
+There are **36 registered application/library Gradle modules** at the Coffee tip:
+one composeApp, five core modules, 24 modules in six api/domain/data/impl feature
+families, four legacy modules and the two existing single-module features
+`features/home-checkin` / `features/author-blocking`. Included build-logic projects
+are separate from this count. The existing plural features remain compatibility
+paths, not templates for new migrations.
+
+| Owner | Implemented / active on Android | Still outstanding |
+|---|---|---|
+| Core and build-logic | Coroutines, network, database, typed MVI, design-system; Modules catalog/conventions; shared fractional ratings, gold hearts, slot card and expandable text | Scoped reuse; remove legacy equivalents only after consumers migrate, not a new core/base/common project |
+| Favorites | Four boundaries; active Android entry for server-backed shops/roasters/drinks, account guards and app-owned DI | Live account/persistence/photo/accessibility acceptance and remaining analytics parity; never restore the local server-favorite writer |
+| Shop Report | Four boundaries; active Android reason selection/submission entry and grouped accessible choices | Safe live submit/error/uncertain-delivery acceptance; not the separate check-in abuse-report flow |
+| Shop | Four boundaries; active detail, menu gallery, public check-in list and creation sheet; shared controls and prod geometry | New-main blocking-menu parity, protected-photo visual acceptance, media/permissions/extraction, guest/owner/return and authorized writes |
+| Combined history | Four boundaries; all three Android aliases use the combined Shop/Home calendar/timeline, month photos, paging, filters and visit markers | Adapt independent photo DTOs/calendar/gallery ports to current-main variants/originals; populated live/accessibility checks. Profile Activity modal remains a separate legacy consumer |
+| Home check-ins | Four boundaries; history detail/create/edit/delete and global Android creation use new data/entries, media/analytics bridges | Current-main photo variants in new repository/read models/gallery; real media/upload/account/CRUD acceptance. Profile Activity and shared/iOS consumers remain legacy |
+| Coffee catalogue | Four boundaries; repository/picker, typed list/detail MVI, Android entries/content/components/resources/previews and isolated tests prepared | **Not activated**: tab/detail routes/Koin/picker still use composeApp implementation. Finish analytics adapters, Android DI/routes/picker and full Sandbox checks before switching |
+| Sandbox / shared UI support | Separate offline app with actual app graph, RAM fake backend and explicit run modes; common rating/heart/card changes also affect normal consumers | New-main author-blocking scenarios and protected-photo lifecycle fixtures need explicit fake coverage; Sandbox does not certify live APIs/OAuth/camera/storage |
+| Discovery, roasters, profile/account, auth, community/content reporting, settings, contributions | Current-main product behavior retained; new four-boundary extraction not started | Extract by business owner after Coffee, auditing current routes and dependencies first |
+| Author blocking | Incoming main implementation in features/author-blocking plus shared app UI; new Shop adapters honor visibility | Not a completed four-boundary migration; preserve behavior while later extracting UI/ownership |
+
+Five feature families have active Android entries; Coffee is the sixth prepared
+family, not a sixth completed integration. No label closes every release gate.
+iOS UI migration remains deferred; Native compilation is only compatibility.
+
+## Current ordered work
+
+1. [x] Reconcile main 28917758 in #43 and propagate through all open children.
+   Preserve Android entries, atomic sessions, incoming links/web-only password
+   recovery, and injected fake Sandbox image transport.
+2. [ ] Close identified **current-main parity gaps** before another screen switch:
+   Home/history feed/thumb/detail variants, explicit originals and album indices;
+   calendar must use thumb variants. Reuse protected image permissions/cache and
+   session invalidation. Preserve blocked-author filtering and complete migrated
+   check-in menu integration. Fixes stay in their parent/history/Home owner and
+   flow to children; do not implement feature UI in composeApp.
+3. [ ] Finish Coffee app-owned analytics: normalized search/filter fingerprint,
+   consent/session invalidation, result/open position and detail/section actions.
+   Features receive narrow ports, never an analytics SDK.
+4. [ ] Wire Coffee Android factories, Koin, tab/detail/restored routes and picker.
+   Keep existing root navigation/iOS fallback. Do not invent a Coffee app-link:
+   current-main public links cover shops/roasters/users.
+5. [ ] Verify integrated Coffee in full Sandbox, then authorized live-read/
+   platform checks: themes, text scaling, gallery/share/browser return and cancel.
+   Keep unit, self-targeted UI, app composition and real backend evidence separate.
+6. [ ] Close the Coffee engineering checkpoint with acceptance gates documented.
+   Start the next owner in a child branch/PR using the 100–150-file guide. Roasters
+   are a candidate because Coffee links to them, not work authorized by this audit.
+7. [ ] Later extract discovery, profile/account, auth, community/reporting,
+   settings, contributions and author-blocking UI. New screens/ViewModels/business
+   code belong in feature; composeApp retains startup/root DI/navigation and thin
+   platform/legacy adapters only.
+8. [ ] Remove old code only after all platform consumers migrate. Do not delete
+   shared/iOS paths or revive retired review/journal screens to fill a diagram.
+
+Main declares **41 serialized route contracts**: five graphs, five tabs and 31
+other contracts, not 41 unique screens/features. ResetPassword is a restoration
+redirect after web-only recovery. Three history routes share one screen; profile
+Activity is a separate modal, Shop creation is a sheet, and ReportReview remains
+compatibility code rather than a new editor requirement.
+
+## Current stack
+
+| PR | Branch | Base |
+|---|---|---|
+| #43 | feature/core-design-system-controls | develop |
+| #95 | feature/check-in-history-refactoring | feature/core-design-system-controls |
+| #99 | feature/home-check-in-refactoring | feature/check-in-history-refactoring |
+| #101 | feature/sandbox-application | feature/home-check-in-refactoring |
+| #102 | feature/shared-rating-component | feature/sandbox-application |
+| #104 | feature/coffee-catalog-refactoring (current working tip) | feature/shared-rating-component |
+
+No PR is merged into main/develop by synchronization; published history is not
+rewritten. Root Navigation 3 and native iOS presentation remain separate decisions.
+
+## Fresh verification — 2026-10-19
+
+Source 32cc4d57 plus documentation-only audit edits: **1704 Android unit results**
+pass with zero failures/errors/skips; Direct/Play Debug APKs/DEX guards, Direct
+Sandbox APK/isolation/DEX, both app test APKs, Coffee/Shop impl lint and Direct
+app lint pass. The first broad packaging run hit D8 Java-heap exhaustion; the
+sequential retry with a temporary 5 GiB heap passes without changing project
+settings. Four build-logic tests and full app Kotlin compilation for iOS Simulator
+Arm64 also pass (compatibility only). No physical-device test or installation was performed;
+previous Pixel 7 evidence below is historical, not renewed live acceptance.
+
+## Historical baseline notes (0137ee7)
 
 Latest parent synchronization includes main #97–98's personal/public profile
 redesign unchanged. Profile migration remains **not started**. Main #96 is
@@ -19,7 +107,7 @@ visit times. See [MAIN_SYNC_AUDIT.md](MAIN_SYNC_AUDIT.md) for changed contracts,
 verification and history-child follow-up. Older dated 4976e53 notes below are
 historical; they do not override the current server contract or latest route audit.
 
-## Branch ownership
+## Historical branch/checkpoint notes
 
 - `feature/coffee-catalog-refactoring` -> rating PR #102: Android-first Coffee
   catalogue migration. Domain/data, picker, shared MVI and Android list/detail UI are prepared
@@ -71,7 +159,7 @@ or release gates outstanding. **Not started** means the new migration has not
 started; the corresponding product capability may already work in main.
 A compilation/test pass is not evidence of pixel parity or a live write.
 
-## Current checkpoint — Home preparations (Android entrances activated)
+## Home activation checkpoint — 2026-10-18 (historical evidence)
 
 History/calendar checkpoint **c726944** is published in #95. Home work continues
 in its child `feature/home-check-in-refactoring` / PR #99, not in a new feature.
@@ -170,7 +258,7 @@ Next work is ordered, not parallel feature scaffolding:
 4. Choose another business feature only after that checkpoint and a fresh main
    audit. iOS UI/integration remains deliberately deferred.
 
-## Current feature inventory versus main
+## Historical feature inventory versus main 0137ee7
 
 | Owner / current product | Migration state | What still blocks completion |
 |---|---|---|
@@ -192,7 +280,7 @@ No migrated business feature is marked fully closed while its production parity
 or release gates above remain open. iOS feature migrations are deferred, not done;
 shared Native compilation is only a compatibility check.
 
-## Verified product shape — do not redesign during extraction
+## Historical product-shape audit at 0137ee7
 
 Audit anchors are main's `ui/Navigator.kt`, `ui/screen/main/MainScreen.kt`,
 `ui/screen/checkins/ProfileCheckInsScreen.kt`, `ui/screen/profile/ProfileScreen.kt`,
@@ -232,7 +320,7 @@ These findings come from registered renderers and their call sites, not filename
 - Keep the existing root navigation and native/shared platform fallbacks. A root
   Navigation 3 swap or new iOS UI is not part of completing history.
 
-## Remaining work — ordered gates
+## Historical history-extraction gates — superseded above
 
 1. [ ] Finish the base's remaining release/visual gates before treating PR #43
    as ready. Favorites' missing roaster section is fixed and automatically tested;
@@ -267,7 +355,7 @@ These findings come from registered renderers and their call sites, not filename
    the latest main before coding. Later ordering is provisional, not authority
    to restore removed behavior or scaffold all future modules.
 
-## Verification limits
+## Historical verification limits (not fresh-main acceptance)
 
 Latest controls checkpoint (2026-10-15), parent #43: both Direct/Play debug APKs
 and packaged DEX guards, app Direct/Shop/Shop Report lint, and **518 selected

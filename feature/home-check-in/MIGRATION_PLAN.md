@@ -1,5 +1,16 @@
 # Home check-ins — Android migration plan
 
+## Current-main reconciliation gate — 2026-10-19
+
+Main **28917758** is now inherited through #43 -> #95 -> #99 and its children.
+The active Home repository still parses original photo URLs only, while main's
+legacy Home model now distinguishes feed/thumb/detail/calendar variants and
+explicit originals. Bring those fields through data/domain, the history adapter,
+inline rendering and gallery without changing upload/edit original ownership.
+Do not interpret a passing merge/assembly as closing protected-photo acceptance.
+Profile Activity and shared/iOS UI remain deliberately legacy. No new UI belongs
+in composeApp; it supplies only the DI/lifecycle/platform adapters for this work.
+
 Plan date: 2026-10-16; foundation work: 2026-10-17. Re-fetched source baseline:
 `origin/main` **0137ee7**; migration parent: history **c726944**, PR #95.
 Android history now uses the new Home data repository and detail/editor entries.

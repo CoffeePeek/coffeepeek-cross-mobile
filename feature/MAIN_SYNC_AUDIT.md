@@ -39,18 +39,48 @@ were retained. Upstream Apple cancellation test now asserts a thrown cancellatio
 not a failed Result, matching the existing cancellation-preserving request policy.
 The entire selection was rerun successfully; no product assertion was weakened.
 
+## Full-stack verification and inventory — 2026-10-19
+
+Runtime/test source is Coffee tip **32cc4d57** (audit/plan edits after it are
+documentation only). Local main equals origin/main 28917758, which is an ancestor
+of #43 and each child. The chain remains #43 -> #95 -> #99 -> #101 -> #102 -> #104;
+no rebase, force push, PR merge into main/develop or application switch is part
+of this synchronization. Coffee UI remains prepared/inactive.
+
+All Android library unit suites and both app delivery suites pass: **1704 results**,
+zero failures/errors/skips (535 app Direct + 535 app Play; 634 library cases).
+Direct/Play Debug APKs and packaged DEX checks, Direct Sandbox APK/isolation/DEX,
+both app instrumentation APKs, Coffee/Shop impl lint and Direct app lint pass.
+Full composeApp Kotlin compiles for iOS Simulator Arm64 (42s), and four build-logic
+DEX-check tests pass. Native compilation is compatibility only, not Swift/UI or
+iOS device acceptance. Android Studio reports zero errors in the inspected refresh coordinator, Shop
+photo mapper and detail ViewModel; this is scoped inspection, not every preview.
+
+The initial broad build ran out of Java heap in D8 while packing Debug/Sandbox;
+all unit tests had passed. Repeated packaging/lint sequentially with max-workers=6
+and a temporary 5 GiB heap succeeds (2m19s), without repository memory-setting
+changes or suppressed checks. Preserve the failed first run (6m1s) as environment
+evidence, not a passing build. No physical-device/UI test, deployment, backend
+write, live protected-photo acceptance or iOS screen migration is claimed.
+
+The fresh source audit finds remaining concrete gaps: migrated Home/history DTOs
+still discard variant manifests and retain only original URLs; calendar/gallery
+ports must retain distinct representations and aligned originals. Shop public
+reads now honor blocking, but its migrated action-menu parity remains open.
+Sandbox's image client is MockEngine-backed, while the new blocking scenarios
+still need explicit fake fixtures. These are tracked ahead of Coffee activation,
+not hidden behind compilation success. Main password reset is web-only; do not
+recreate its retired mobile form. Current-main routes total 41 contracts, not
+41 independent screens. See ANDROID_REFACTORING_PLAN.md for the full inventory.
+
 ## Historical main 0137ee7 — 2026-10-16
 
-## Observed newer main — synchronization pending (2026-10-19)
-
-Remote main `18142f80` includes photo rollout #105: protected variants, byte
-cache/session invalidation and full-screen original handling. It was fetched
-and its diff reviewed during the prepared Coffee UI slice. Coffee source/HTTP
-contracts have no change against 0137ee7, but existing shared media, gallery,
-session and Home/Shop photo contracts do. This is **not a completed stack merge**.
-Reconcile the rollout through parents/children and audit migrated photo adapters
-before activating Coffee entries; earlier unit/device evidence below certifies
-its stated baseline only, not the new production photo delivery.
+Earlier in the Coffee UI slice, main 18142f80 was observed but not merged.
+That pending-merge note is superseded by the 28917758 reconciliation above.
+The older unit/device evidence below retains its stated source baseline; it is
+not fresh production photo acceptance. Main's later gallery uses detail variants
+with aligned explicit-original fallback, rather than the earlier manual-original
+button. Home/history variant/calendar/gallery alignment remains outstanding.
 
 ## Latest profile update (#97–98)
 

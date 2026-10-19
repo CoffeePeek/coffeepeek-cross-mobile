@@ -4,6 +4,19 @@ Date: 2026-10-18. Branch `feature/sandbox-application`, child of Home checkpoint
 1873b05 / PR #99. The Home PR remains focused; the application-wide host has its
 own review boundary. No main/develop merge or new Gradle business module.
 
+## Main synchronization follow-up — 2026-10-19
+
+Main 28917758 was propagated through the migration stack, preserving analytics-off
+Sandbox composition. Its new uncached image client now uses the injected API
+transport factory as well: API, plain, upload and image clients must all be
+MockEngine-backed here. The existing transport regression checks all four engines
+and reads the synthetic image through the image client. Manifest/DEX isolation
+still applies. No real app installation, device check or network acceptance is
+implied by assembly. Incoming author-blocking flows and protected-photo lifecycle
+scenarios need explicit fake fixtures/acceptance; unsupported routes still fail
+closed, never fall through to a server. Earlier walkthrough evidence remains
+dated to its recorded build, not proof of all new-main flows.
+
 ## Plan and ownership
 
 1. [x] Reuse the actual root navigation/tab graph and Android feature bindings.

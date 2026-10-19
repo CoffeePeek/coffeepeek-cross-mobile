@@ -1,5 +1,17 @@
 # Combined personal history — current-main parity and next slice
 
+## Current-main reconciliation gate — 2026-10-19
+
+Main **28917758** is inherited parent-first through #43 -> #95 and descendants.
+The Android combined calendar/timeline and all three routes remain active, but
+its independent photo DTOs still ignore main's variant manifests. Before treating
+the feature as complete, retain aligned original/feed/detail/thumb representations
+through Shop history, Home reader adapters, calendar selection and gallery effects.
+In particular, an explicitly empty manifest must not silently fetch the original
+inline, and a detail URL must not erase a server-issued original. Existing account
+revocation and protected app image-loader policies remain required. Profile
+Activity is a separate legacy modal, not a completed full-screen migration.
+
 ## Compact visit markers and latest available photo — 2026-10-16
 
 Days now show one dot per check-in up to three, then a compact `+N` for the

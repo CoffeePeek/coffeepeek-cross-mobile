@@ -2,6 +2,12 @@
 
 ## Baseline and scope (2026-10-18)
 
+Current synchronization baseline (2026-10-19): **main 28917758**, inherited
+parent-first through #43 -> #95 -> #99 -> #101 -> #102 -> #104. Coffee entries
+remain inactive. Home/history photo-variant/original and migrated blocking-menu
+parity are explicit stack gates before activation, not certified by a clean merge.
+See ../ANDROID_REFACTORING_PLAN.md for the current complete inventory/order.
+
 Child branch `feature/coffee-catalog-refactoring` starts at rating checkpoint
 `72cbae1f` (PR #102), not at main. Remote main checked at `0137ee7`.
 Preserve the existing product, requests and visuals; no catalogue redesign,
@@ -53,17 +59,19 @@ design-system primitives rather than copying legacy App/Cp implementations.
 - [x] Extract components into compose/component, state/action/events into model;
   stateless ScreenContent, colocated light/dark previews and localized resources.
   Preserve sizing/spacing/image treatment and offer/details behavior.
-- [ ] Wire Android tab/detail/deeplink, picker and app-owned analytics using
+- [ ] Wire Android tab/detail/restored routes, picker and app-owned analytics using
   factories. Keep shared/iOS fallback until its consumers deliberately migrate.
   Preserve SearchTracker's normalized-query/filter fingerprint, consent/session
   generation and result/open positions without importing an SDK into the feature.
   MVI logic prepared in this slice has no telemetry adapter yet; do not activate
   it in the app until search/detail/exposure analytics parity is explicitly wired
   and tested. Existing legacy analytics stays active and unchanged for now.
-- [ ] Synchronize the newer main photo rollout #105 (`18142f80`) through the
-  parent stack before activating new bindings. It was fetched/reviewed during
-  the UI slice; no merge of that rollout is claimed here. Coffee source/HTTP
-  contracts have no diff from `0137ee7`; gallery/session/media composition does.
+- [x] Synchronize main 28917758 (including #105–107) through the parent stack.
+  Preserve app-owned DI, protected photo/session logic and fake Sandbox transport.
+- [ ] Close current-main Home/history photo-variant/original/calendar and migrated
+  author-blocking-menu gaps. Coffee's entry gallery uses the same app-owned
+  viewer; its feature does not introduce a parallel transport/cache. Current main
+  links cover shops/roasters/users; no Coffee app-link is invented here.
 - [ ] Verify catalogue/picker/roaster return, browser/share/photo cancellation,
   empty/error/slow/out-of-order data and long/scaled text in fake UI/full Sandbox.
 - [x] Publish a child PR (#104) targeting `feature/shared-rating-component`, with only
@@ -104,6 +112,20 @@ analytics, stale search pages, changing current visuals, or removing the shared
 Coffee repository/picker while iOS still consumes it.
 
 ## Verification record
+
+### Parent-first main synchronization — 2026-10-19
+
+Main 28917758 is inherited from #43 through all open parents into Coffee source
+32cc4d57. The audit/plan changes after that revision are documentation only.
+All library Android unit suites and both app variants pass: **1704 results**,
+zero failures/errors/skips; four build-logic checks pass separately. Direct/Play
+Debug APK/DEX, Direct Sandbox isolation/DEX, both app test APKs and Coffee/Shop/
+Direct-app lint pass. Full app Kotlin compiles for iOS Simulator Arm64, not an
+iOS feature/UI test. Initial broad packaging failed with D8 Java heap exhaustion;
+the sequential retry with a temporary 5 GiB heap passes without project-setting
+changes. No device deployment, fresh UI run, real account or backend write.
+Current-main Home/history photo variants and migrated blocking menus remain
+explicit prerequisites; Coffee analytics/routing/picker bindings are still inactive.
 
 ### Android UI slice — 2026-10-18–19
 
