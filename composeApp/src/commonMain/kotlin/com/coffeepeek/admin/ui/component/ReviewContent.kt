@@ -725,6 +725,7 @@ fun ReviewPhotoStrip(
         ) {
             CpImage(
                 data = thumbnailUrls.getOrNull(index) ?: photoUrls[index],
+                highQualityData = photoUrls[index].takeIf(String::isNotBlank),
                 contentScale = ContentScale.Crop,
                 modifier = Modifier.fillMaxSize(),
             )

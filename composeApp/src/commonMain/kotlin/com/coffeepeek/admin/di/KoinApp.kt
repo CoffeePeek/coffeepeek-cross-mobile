@@ -96,7 +96,7 @@ private fun appModule(settingRepository: com.coffeepeek.room.repository.SettingR
         }
     }
     single<PasswordRecoveryRepository> { PasswordRecoveryRepositoryImpl(get<CoffeePeekClient>().plainClient) }
-    factory { (email: String, token: String) -> PasswordRecoveryViewModel(email, token.takeIf(String::isNotBlank), get()) }
+    factory { (email: String) -> PasswordRecoveryViewModel(email, get()) }
     single<CoffeeRepository> { CoffeeRepositoryImpl(get<CoffeePeekClient>().plainClient) }
     single<CoffeePicker> { CoffeePickerAdapter(get()) }
     single<BrewMethodCatalog> { BrewMethodCatalogAdapter(get()) }

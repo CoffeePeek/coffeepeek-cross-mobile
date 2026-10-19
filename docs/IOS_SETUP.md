@@ -232,6 +232,46 @@ CoffeePeek → TestFlight. Чтобы новые сборки автоматич
 потребовать информацию о тестировании, проверку сборки и ответы по экспортному
 контролю. Загрузка в TestFlight сама по себе не публикует приложение в App Store.
 
+## Universal Links: открытие ссылок CoffeePeek
+
+Приложение объявляет Associated Domains для `applinks:coffeepeek.by` и обрабатывает
+главную страницу, `/coffee-shops/{slug}`, `/roasters/{slug}` и `/users/{slug}`.
+Ссылки сброса пароля остаются на сайте.
+
+Для TestFlight и App Store нужны настройки на обеих сторонах:
+
+1. В Apple Developer включите **Associated Domains** для App ID `com.coffeepeek`.
+   Пересоздайте App Store provisioning profile и обновите GitHub Secret
+   `IOS_PROVISIONING_PROFILE_BASE64`. Workflow проверяет наличие capability до сборки.
+2. Разместите JSON ниже по адресу
+   `https://coffeepeek.by/.well-known/apple-app-site-association` с HTTP 200,
+   `Content-Type: application/json`, без перенаправлений и HTML-подстановки SPA.
+   Замените `APPLICATION_IDENTIFIER_FROM_PROFILE` точным значением
+   `Entitlements.application-identifier` из профиля подписи; в текущем CI это
+   `<Apple Team ID>.com.coffeepeek`. Шаблон с незаменённым значением не работает.
+
+```json
+{
+  "applinks": {
+    "details": [{
+      "appIDs": ["APPLICATION_IDENTIFIER_FROM_PROFILE"],
+      "components": [
+        {"/": "/"},
+        {"/": "/coffee-shops/*"},
+        {"/": "/roasters/*"},
+        {"/": "/users/*"}
+      ]
+    }]
+  }
+}
+```
+
+После публикации файла и установки новой подписанной сборки проверьте на iPhone
+нажатие ссылок в Notes или сообщении: должны открываться соответствующие карточки.
+Обновление кэша Apple может занимать время; ввод адреса в строку Safari не заменяет
+эту проверку. Требования Apple:
+[Supporting Associated Domains](https://developer.apple.com/documentation/xcode/supporting-associated-domains).
+
 ## Проверка из Terminal
 
 Список доступных destination ID:

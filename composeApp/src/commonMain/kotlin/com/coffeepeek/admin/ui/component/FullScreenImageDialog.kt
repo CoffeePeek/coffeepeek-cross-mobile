@@ -38,8 +38,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.ui.Alignment
@@ -52,6 +52,8 @@ import androidx.compose.ui.window.DialogProperties
 import com.coffeepeek.admin.theme.CpDimens
 import com.coffeepeek.admin.ui.icons.CpIcons
 import com.coffeepeek.admin.utils.CpImage
+import com.coffeepeek.admin.utils.PrefetchPhotos
+import com.coffeepeek.admin.utils.image.FullScreenPhotoPresence
 
 @Composable
 fun FullScreenImageDialog(
@@ -75,6 +77,10 @@ internal fun FullScreenImageDialog(
 ) {
     val imageUrls = images.previews
     if (imageUrls.isEmpty()) return
+    DisposableEffect(Unit) {
+        FullScreenPhotoPresence.enter()
+        onDispose { FullScreenPhotoPresence.leave() }
+    }
     com.coffeepeek.admin.analytics.AnalyticsOcclusion()
     val pagerState = rememberPagerState(
         initialPage = initialIndex.coerceIn(0, imageUrls.lastIndex),
@@ -83,7 +89,6 @@ internal fun FullScreenImageDialog(
     // While the current photo is zoomed, drags pan the photo instead of switching pages.
     var isZoomed by remember { mutableStateOf(false) }
     var controlsVisible by remember { mutableStateOf(true) }
-    var originalPage by remember { mutableStateOf<Int?>(null) }
     val visiblePages by remember {
         derivedStateOf { pagerState.layoutInfo.visiblePagesInfo.map { it.index }.toSet() }
     }
@@ -93,6 +98,7 @@ internal fun FullScreenImageDialog(
     val threshold = with(LocalDensity.current) { 120.dp.toPx() }
     val flingThreshold = with(LocalDensity.current) { 900.dp.toPx() }
     val dismissDrag = rememberDraggableState { dismissOffset = (dismissOffset + it).coerceAtLeast(0f) }
+    PrefetchPhotos(images.adjacentPreviewUrls(pagerState.currentPage), inPhotoViewer = true)
 
     Dialog(
         onDismissRequest = onDismiss,
@@ -112,28 +118,21 @@ internal fun FullScreenImageDialog(
         ) {
             HorizontalPager(
                 state = pagerState,
-                // Only pages entering the viewport may load alongside the current page.
+                // Neighbor previews are prefetched separately without retaining offscreen painters.
                 beyondViewportPageCount = 0,
                 userScrollEnabled = !isZoomed,
                 modifier = Modifier.fillMaxSize().graphicsLayer { translationY = dismissOffset },
             ) { page ->
                 val isCurrent = pagerState.currentPage == page
-                val displayUrl = images.displayUrl(page, pagerState.currentPage, originalPage, page in visiblePages)
+                val displayUrl = images.displayUrl(page, pagerState.currentPage, page in visiblePages)
                 if (isCurrent || page in visiblePages) ZoomableImage(
                     imageUrl = displayUrl.orEmpty(),
+                    highQualityUrl = images.highQualityUrl(page, pagerState.currentPage),
                     contentDescription = "Фото ${page + 1} из ${imageUrls.size}",
                     isCurrent = isCurrent,
                     onTap = { controlsVisible = !controlsVisible },
                     onZoomChanged = { if (isCurrent) isZoomed = it },
                 )
-            }
-
-            if (controlsVisible && originalPage != pagerState.currentPage &&
-                images.originalForAction(pagerState.currentPage) != null) {
-                TextButton(onClick = { originalPage = pagerState.currentPage },
-                    modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 32.dp)) {
-                    Text("Открыть оригинал", color = Color.White)
-                }
             }
 
             if (controlsVisible && imageUrls.size > 1) {
@@ -177,6 +176,7 @@ private const val DOUBLE_TAP_ZOOM = 2.5f
 @Composable
 private fun ZoomableImage(
     imageUrl: String,
+    highQualityUrl: String?,
     contentDescription: String,
     isCurrent: Boolean,
     onTap: () -> Unit,
@@ -204,6 +204,8 @@ private fun ZoomableImage(
 
     CpImage(
         data = imageUrl,
+        highQualityData = highQualityUrl?.takeIf { it != imageUrl },
+        upgradeDelayMillis = 0L,
         contentDescription = contentDescription,
         contentScale = ContentScale.Fit,
         modifier = Modifier

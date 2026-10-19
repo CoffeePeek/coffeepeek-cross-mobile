@@ -23,6 +23,7 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.ComposeTimeoutException
 import androidx.compose.ui.test.click
 import androidx.compose.ui.test.captureToImage
 import androidx.compose.ui.test.junit4.createEmptyComposeRule
@@ -79,18 +80,25 @@ class FullScreenImageDialogTest {
     fun grantStartupPermissions() = grantCheckInFixtureStartupPermissions()
 
     @Test
-    fun openingMiddlePhotoLoadsOnlyThatPageAndSwipingLoadsTheNext() {
+    fun openingMiddlePhotoPrefetchesOnlyAdjacentPreviewsAndSwipingAdvancesTheWindow() {
         val loader = FixtureImages(pending = false)
         val urls = List(5) { "https://viewer-fixture.invalid/photo-$it.png" }
         withViewer(loader, urls, initialIndex = 2) { _ ->
             compose.onNodeWithText(OPEN).performClick()
-            compose.waitUntil(10_000) { loader.requested.isNotEmpty() && loader.active.get() == 0 }
+            val expected = urls.subList(1, 4)
+            try {
+                compose.waitUntil(10_000) { loader.requested.containsAll(expected) && loader.active.get() == 0 }
+            } catch (timeout: ComposeTimeoutException) {
+                throw AssertionError("Initial viewer window did not complete: expected=$expected; " +
+                    "requested=${loader.requested.toList()}; active=${loader.active.get()}; " +
+                    "cancelled=${loader.cancelled.get()}; decodedCacheEntries=${loader.config.imageBitmapCache.size}", timeout)
+            }
             compose.onNodeWithText("3 / 5").assertIsDisplayed()
             compose.waitForIdle()
-            assertEquals("Opening must not eagerly fetch both neighboring pages", listOf(urls[2]), loader.requested.toList())
+            assertEquals("Only current and adjacent previews may be fetched", urls.subList(1, 4).toSet(), loader.requested.toSet())
 
             compose.onNodeWithContentDescription("Фото 3 из 5").performTouchInput { swipeLeft() }
-            compose.waitUntil(10_000) { urls[3] in loader.requested }
+            compose.waitUntil(10_000) { urls[4] in loader.requested }
             compose.onNodeWithText("4 / 5").assertIsDisplayed()
             compose.onNodeWithContentDescription(CLOSE).performClick()
             compose.onNodeWithContentDescription(CLOSE).assertDoesNotExist()
@@ -99,12 +107,12 @@ class FullScreenImageDialogTest {
     }
 
     @Test
-    fun draggingRendersBothVisiblePreviewsWithoutPrefetchingHiddenPages() {
+    fun draggingRendersBothVisiblePreviewsFromTheBoundedPrefetchWindow() {
         val loader = FixtureImages(pending = false)
         val urls = List(4) { "https://viewer-fixture.invalid/swipe-$it.png" }
         withViewer(loader, urls, initialIndex = 1) {
             compose.onNodeWithText(OPEN).performClick()
-            compose.waitUntil(10_000) { loader.requested.size == 1 && loader.active.get() == 0 }
+            compose.waitUntil(10_000) { loader.requested.containsAll(urls.take(3)) && loader.active.get() == 0 }
             val current = compose.onNodeWithContentDescription("Фото 2 из 4")
             current.performTouchInput {
                 down(center)
@@ -113,7 +121,7 @@ class FullScreenImageDialogTest {
             try {
                 compose.waitUntil(10_000) { urls[2] in loader.requested && loader.active.get() == 0 }
                 compose.waitForIdle()
-                assertEquals(listOf(urls[1], urls[2]), loader.requested.toList())
+                assertEquals(urls.take(3).toSet(), loader.requested.toSet())
                 // Fetch completion precedes asynchronous decoding and presentation of the next frame.
                 compose.waitUntil(10_000) {
                     val frame = InstrumentationRegistry.getInstrumentation().uiAutomation.takeScreenshot()
@@ -142,7 +150,7 @@ class FullScreenImageDialogTest {
     fun protectedViewerLeafCarriesScopeAndRevokesItsDecodedPainterOnInvalidation() {
         val loader = FixtureImages(pending = false, pendingAfterFirst = true)
         val url = "https://viewer-fixture.invalid/api/v1/check-ins/visit/photos/scoped/variants/source/1/detail.png"
-        withViewer(loader, listOf(url)) {
+        withViewer(loader, listOf(url), images = PhotoViewerImages(listOf(url), listOf(url))) {
             compose.onNodeWithText(OPEN).performClick()
             compose.waitUntil(10_000) { loader.requested.size == 1 && loader.active.get() == 0 }
             assertNotNull(loader.inputs.single().permissionScope)
@@ -163,7 +171,7 @@ class FullScreenImageDialogTest {
     fun protectedViewerLeafRemovesDecodedPainterAtItsPermissionDeadline() {
         val loader = FixtureImages(pending = false, pendingAfterFirst = true, grantMillis = 10_000)
         val url = "https://viewer-fixture.invalid/api/v1/check-ins/visit/photos/expiry/variants/source/1/detail.png"
-        withViewer(loader, listOf(url)) {
+        withViewer(loader, listOf(url), images = PhotoViewerImages(listOf(url), listOf(url))) {
             compose.onNodeWithText(OPEN).performClick()
             compose.waitUntil(10_000) { loader.requested.size == 1 && loader.active.get() == 0 }
             compose.waitForIdle()
@@ -176,19 +184,77 @@ class FullScreenImageDialogTest {
     }
 
     @Test
-    fun pendingHomeViewerLoadsItsOriginalOnlyThroughTheExplicitAction() {
+    fun pendingHomeViewerAutomaticallyLoadsItsOriginalWithoutAnExtraAction() {
         val loader = FixtureImages(pending = false)
         val original = "https://viewer-fixture.invalid/api/v1/check-ins/home/photos/drink"
         withViewer(loader, listOf(""), images = PhotoViewerImages(listOf(""), listOf(original))) {
             compose.onNodeWithText(OPEN).performClick()
-            compose.onNodeWithText("Открыть оригинал").assertIsDisplayed()
-            compose.waitForIdle()
-            assertTrue("Opening a pending preview must not fetch the original", loader.requested.isEmpty())
-            compose.onNodeWithText("Открыть оригинал").performClick()
+            compose.onNodeWithText("Открыть оригинал").assertDoesNotExist()
             compose.waitUntil(10_000) { loader.requested.size == 1 && loader.active.get() == 0 }
             assertEquals(listOf(original), loader.requested.toList())
             assertNotNull(loader.inputs.single().permissionScope)
             assertNotNull(loader.inputs.single().displayPermission)
+        }
+    }
+
+    @Test
+    fun fullScreenUsesReadyDetailVariantsWithoutTransferringTheirOriginals() {
+        val loader = FixtureImages(pending = false)
+        val originals = List(5) { "https://viewer-fixture.invalid/api/v1/check-ins/visit/photos/quality-$it" }
+        val previews = originals.map { "$it/variants/source/1/detail.png" }
+        withViewer(loader, previews, initialIndex = 2) {
+            compose.onNodeWithText(OPEN).performClick()
+            val openingRequests = previews.subList(1, 4).toSet()
+            compose.waitUntil(10_000) { loader.requested.containsAll(openingRequests) && loader.active.get() == 0 }
+            compose.onNodeWithText("Открыть оригинал").assertDoesNotExist()
+            assertEquals(openingRequests, loader.requested.toSet())
+
+            compose.onNodeWithContentDescription("Фото 3 из 5").performTouchInput { swipeLeft() }
+            compose.waitUntil(10_000) { previews[4] in loader.requested }
+            compose.onNodeWithText("4 / 5").assertIsDisplayed()
+            assertTrue("Ready detail variants must avoid every no-store original transfer",
+                loader.requested.none { it in originals })
+        }
+    }
+
+    @Test
+    fun readyDetailVariantIsReusedWhenTheViewerIsReopened() {
+        val original = "https://viewer-fixture.invalid/api/v1/check-ins/visit/photos/reopened-detail"
+        val preview = "$original/variants/source/1/detail.png"
+        val loader = FixtureImages(pending = false, grantMillis = 60_000, reusablePermissions = true)
+        withViewer(loader, listOf(preview)) {
+            compose.onNodeWithText(OPEN).performClick()
+            compose.waitUntil(10_000) { isBluePreview(viewerCenterColor()) }
+            compose.waitForIdle()
+            compose.onNodeWithText("Открыть оригинал").assertDoesNotExist()
+            assertEquals(listOf(preview), loader.requested.toList())
+
+            compose.onNodeWithContentDescription(CLOSE).performClick()
+            compose.onNodeWithContentDescription(CLOSE).assertDoesNotExist()
+            compose.onNodeWithText(OPEN).performClick()
+            compose.waitUntil(10_000) { isBluePreview(viewerCenterColor()) }
+            compose.waitForIdle()
+            assertEquals("Reopening must reuse the granted decoded detail variant", listOf(preview), loader.requested.toList())
+        }
+    }
+
+    @Test
+    fun missingNeighborPreviewLoadsItsOriginalOnlyWhenThatPhotoBecomesCurrent() {
+        val loader = FixtureImages(pending = false)
+        val originals = List(3) { "https://viewer-fixture.invalid/api/v1/check-ins/visit/photos/pending-neighbor-$it" }
+        val previews = listOf("${originals[0]}/variants/source/1/detail.png", "",
+            "${originals[2]}/variants/source/1/detail.png")
+        withViewer(loader, previews, images = PhotoViewerImages(previews, originals)) {
+            compose.onNodeWithText(OPEN).performClick()
+            compose.waitUntil(10_000) { loader.requested.isNotEmpty() && loader.active.get() == 0 }
+            compose.waitForIdle()
+            assertEquals("A pending neighbor must not prefetch its original", listOf(previews[0]), loader.requested.toList())
+
+            compose.onNodeWithContentDescription("Фото 1 из 3").performTouchInput { swipeLeft() }
+            compose.waitUntil(10_000) { originals[1] in loader.requested }
+            compose.onNodeWithText("2 / 3").assertIsDisplayed()
+            assertEquals(setOf(originals[1]), loader.requested.filter { it in originals }.toSet())
+            compose.onNodeWithText("Открыть оригинал").assertDoesNotExist()
         }
     }
 
@@ -276,6 +342,7 @@ class FullScreenImageDialogTest {
         private val pending: Boolean,
         private val pendingAfterFirst: Boolean = false,
         private val grantMillis: Long = 20_000,
+        private val reusablePermissions: Boolean = false,
     ) {
         val requested = CopyOnWriteArrayList<String>()
         val inputs = CopyOnWriteArrayList<CustomUrl>()
@@ -297,10 +364,11 @@ class FullScreenImageDialogTest {
                             emit(Resource.Loading(0f))
                             awaitCancellation()
                         } else {
-                            data.displayPermission?.grant(PhotoPermission(
+                            val permission = PhotoPermission(
                                 SystemPhotoCacheClock.monotonicMillis() + grantMillis,
                                 SystemPhotoCacheClock.wallMillis() + grantMillis,
-                            ))
+                            )
+                            data.displayPermission?.grant(permission, permission.takeIf { reusablePermissions })
                             emit(Resource.Success(ByteReadChannel(byteArrayOf(1)), source))
                         }
                     } finally {

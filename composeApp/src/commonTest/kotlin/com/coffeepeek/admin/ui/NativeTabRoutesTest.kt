@@ -7,14 +7,18 @@ import kotlin.test.assertNull
 class NativeTabRoutesTest {
     @Test
     fun homeAndFallbackLinksSelectDiscoveryInsteadOfPushingAnotherMainScreen() {
-        listOf("https://coffeepeek.by/", "https://coffeepeek.by/coffee-shops/invalid").forEach { url ->
+        listOf("https://coffeepeek.by/", "https://coffeepeek.by/coffee-shops/invalid/extra").forEach { url ->
             assertEquals(0, nativeTabIndex(requireNotNull(appLinkScreen(url))))
         }
     }
 
     @Test
-    fun detailAndPasswordLinksStayInTheNavigationStack() {
-        listOf("https://coffeepeek.by/coffee-shops/26-name", "https://coffeepeek.by/reset-password?token=test").forEach { url ->
+    fun detailLinksStayInTheNavigationStack() {
+        listOf(
+            "https://coffeepeek.by/coffee-shops/marks-prospekt-nezavisimosti-83",
+            "https://coffeepeek.by/roasters/roast",
+            "https://coffeepeek.by/users/glasha",
+        ).forEach { url ->
             assertNull(nativeTabIndex(requireNotNull(appLinkScreen(url))))
         }
     }

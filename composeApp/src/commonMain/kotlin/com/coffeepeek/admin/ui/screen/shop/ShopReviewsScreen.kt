@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -31,12 +32,17 @@ import com.coffeepeek.admin.ui.component.CpTopBar
 import com.coffeepeek.admin.ui.component.FullScreenImageDialog
 import com.coffeepeek.admin.ui.component.GuestAuthCard
 import com.coffeepeek.admin.ui.component.CheckInDisplayCard
+import com.coffeepeek.admin.utils.PrefetchListPhotos
 import org.koin.core.parameter.parametersOf
 
 @Composable
 fun ShopReviewsScreen(shopId: String) {
     val vm: ShopDetailViewModel = platformViewModel(parameters = { parametersOf(shopId) })
     val state by vm.uiState.collectAsState()
+    val listState = rememberLazyListState()
+    PrefetchListPhotos(listState, state.details?.checkIns.orEmpty()
+        .take(if (state.isLoggedIn) Int.MAX_VALUE else 1)
+        .map { it.id to it.photoThumbnailUrls.take(3) })
     var preview by remember { mutableStateOf<Pair<List<String>, Int>?>(null) }
     val authorVisibility by vm.authorVisibility.collectAsState()
     androidx.compose.runtime.LaunchedEffect(authorVisibility.revision, state.isLoggedIn) { preview = null }
@@ -53,6 +59,7 @@ fun ShopReviewsScreen(shopId: String) {
                     Button(onClick = vm::load) { Text("Попробовать снова") }
                 }
                 details != null -> LazyColumn(
+                    state = listState,
                     modifier = Modifier.fillMaxSize(),
                     contentPadding = PaddingValues(horizontal = CpDimens.spacing4, vertical = CpDimens.spacing2),
                     verticalArrangement = Arrangement.spacedBy(CpDimens.spacing2),
