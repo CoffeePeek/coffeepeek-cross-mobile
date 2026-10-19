@@ -34,8 +34,9 @@ prepared Calendar/List screen/coordinator is retired, not activated alongside it
 API exposes narrow screen/date ports and required Home/create callbacks.
 Android app composition supplies revocable account leases, a navigation-owned
 feature store, zone-aware calendar snapshots, lazy DI and the configured image
-loader/photo viewer. Their new-main photo-variant contracts still need alignment;
-compilation does not certify that parity. All three Android history routes
+loader/photo viewer. Current-main feed/thumb/detail representations and aligned
+explicit originals now pass through history and Home data/UI/gallery contracts;
+live protected-photo acceptance remains open. All three Android history routes
 now render this combined entry, including initial Home edit-by-ID. Application
 composition delegates to the new Home detail/create/edit/delete workflow and
 Shop creation picker; successful Home writes refresh the combined reader.

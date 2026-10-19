@@ -1,5 +1,27 @@
 # Migration stack versus main — current and historical audits
 
+## Photo contract reconciliation — 2026-10-19
+
+The Home/history DTO/calendar/gallery gaps identified in the audit below are now
+implemented in their owners: history `abc5876f`, Home `fe80c7e0`, propagated
+parent-first to the Coffee tip. Separate feed/thumb/detail/original URLs preserve
+album indices; missing explicit previews never fetch originals inline. Main's
+active-gallery-page fallback remains application-owned. Upload/edit ownership,
+account leases, protected loader and iOS consumers are preserved.
+
+History passed 550 selected unit results and 21/21 isolated Pixel 7 UI cases;
+Home's owner checkpoint passed 695 selected unit results, Direct Debug APK/DEX,
+test APK and app instrumentation compilation. Home's owner APK also passes
+41/41 isolated Pixel 7 UI cases (73.492s), with no failures or retries. Whole-tip
+`28c64bff` passes 704 selected unit results (33 Home data, 76 Home impl, 11 history
+data, 47 history impl, 537 app Direct), both Direct Debug/Sandbox APKs and DEX/
+Sandbox isolation guards, both feature test APKs and app Direct instrumentation
+compilation (2m21s). The final-tip device repetition is recorded in the owning
+plans once complete. Normal CoffeePeek/Sandbox device packages are unchanged.
+This closes the identified code contract gap, not live protected media, actual
+camera/upload/account/release acceptance or Shop blocking-menu integration.
+See the owning history/Home plans for source identities and exact evidence.
+
 ## Latest main dfb00e63 — CI-only follow-up, 2026-10-19
 
 During final publication main advanced from 28917758 to dfb00e63. Only the iOS
@@ -72,9 +94,8 @@ changes or suppressed checks. Preserve the failed first run (6m1s) as environmen
 evidence, not a passing build. No physical-device/UI test, deployment, backend
 write, live protected-photo acceptance or iOS screen migration is claimed.
 
-The fresh source audit finds remaining concrete gaps: migrated Home/history DTOs
-still discard variant manifests and retain only original URLs; calendar/gallery
-ports must retain distinct representations and aligned originals. Shop public
+The initial source audit found Home/history photo representation gaps, addressed
+by the later owner slices recorded above. Shop public
 reads now honor blocking, but its migrated action-menu parity remains open.
 Sandbox's image client is MockEngine-backed, while the new blocking scenarios
 still need explicit fake fixtures. These are tracked ahead of Coffee activation,
@@ -89,7 +110,8 @@ That pending-merge note is superseded by the 28917758 reconciliation above.
 The older unit/device evidence below retains its stated source baseline; it is
 not fresh production photo acceptance. Main's later gallery uses detail variants
 with aligned explicit-original fallback, rather than the earlier manual-original
-button. Home/history variant/calendar/gallery alignment remains outstanding.
+button. The later Home/history slices above reconcile that contract; live
+protected-photo acceptance remains outstanding.
 
 ## Latest profile update (#97–98)
 
