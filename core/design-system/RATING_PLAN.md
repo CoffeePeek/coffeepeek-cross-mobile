@@ -1,5 +1,21 @@
 # Shared fractional rating checkpoint
 
+## Develop compatibility — 2026-10-19
+
+Inherited Sandbox `e3ddf72d` includes approved develop `fc85f8e5` and retired
+drink cutouts. Shared fractional ratings/hearts/cards remain. This checkpoint's
+legacy Home rating preview used the old positional model constructor; remove
+the retired slot and name visibility explicitly. This is a preview compatibility
+fix, not a new legacy feature implementation or iOS screen migration.
+Verify this parent independently before passing the fix to Coffee #104.
+
+Independent parent verification passes (2m09s): **649 selected unit results**
+(design-system 19, Shop impl 96, app Direct 534), Debug and Sandbox APKs with
+DEX/isolation guards. No device app installed by this build. The first Coffee-tip
+build exposed the obsolete preview argument and was not accepted; parent repair
+is inherited before repeating final-tip checks. Local log:
+`coffeepeek-develop-rating-parent-build-2026-10-19.log`.
+
 Date: 2026-10-18. Branch `feature/shared-rating-component`, child of
 `feature/sandbox-application` / PR #101 at 4fcd08af. This is a shared UI checkpoint,
 not a new business feature or a Sandbox-only change.
