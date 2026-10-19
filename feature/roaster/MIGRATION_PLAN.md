@@ -1,6 +1,6 @@
 # Roasters — Android-first migration plan
 
-Status: steps 2–3 done (2026-10-20): domain, data, api (ports) and impl (typed MVI) with tests; legacy screens still active, nothing activated. Child of the Coffee checkpoint
+Status: steps 2–4 done in code (2026-10-20): domain, data, api (ports) and impl (typed MVI + stateless UI); legacy screens still active, nothing activated; step 4 device UI tests not yet run. Child of the Coffee checkpoint
 (`feature/coffee-catalog-refactoring`, PR #104); the branch/PR is created only after this plan is accepted.
 Same rules as Coffee: preserve the current product, requests and visuals; Android first; shared/iOS keep the
 legacy composeApp UI; no new feature in composeApp; modules only with real content.
@@ -43,7 +43,7 @@ adapter-free factory over the same endpoints, so reads and legacy writes cannot 
 3. [x] (2026-10-20, 19 impl unit tests; see "Step 3 record") `api` ports (analytics, favorites, shop-photo lookup) + `impl` typed MVI for list and detail:
    debounce/query bounds if any, lazy detail loading with the concurrency limit and per-slug de-duplication,
    favorite optimistic state and error message, stale-result/cancellation guards, retry.
-4. [ ] Stateless content, components in own files, colocated light/dark previews, resources; reuse design-system
+4. [~] (code, previews and isolated UI tests written 2026-10-20; tests compiled but **not yet run on a device**; see "Step 4 record") Stateless content, components in own files, colocated light/dark previews, resources; reuse design-system
    search, chips, cards, loader (bean), refresh, favorite heart; keep geometry and the discovery carousel layout.
 5. [ ] App adapters in composeApp androidMain: analytics (existing `SearchTracker`, `TrackEntityDetail`,
    exposures, `DetailEntryMemory`), favorites and shop-photo ports, `RoasterScreenRenderer` (Legacy default),
@@ -119,3 +119,34 @@ Compose convention and entries arrive with step 4). No composeApp dependency yet
 - **Deliberate parity notes:** the catalog reload drops loaded details exactly like the legacy list; the reporting
   quirk that a retry after a failed first search is not re-reported (same fingerprint) is preserved in the adapter
   contract, not hidden. Strings are typed messages here; localized resources arrive with the UI.
+
+## Step 4 record — 2026-10-20
+
+`api`/`impl` now use the shared Android Compose convention; impl has `resourcePrefix = "roaster_"` and Russian-only
+strings (`values/strings.xml`). Besides the logic, step 3 changed one behaviour to match the legacy screen: the list
+now reports results 350 ms after criteria/loading settle (typing is not reported per keystroke); tests cover it.
+
+- **Ports added:** `RoasterScreenAnalytics` (androidMain: `TrackDetail(loaded)`, `exposure(modifier, RoasterExposure)`;
+  `RoasterExposure` = Catalog, Discovery, Photos, Contacts, Shops).
+- **Application slots (typealiases in impl):** `RoasterImage` (url, description, modifier, scale, placeholder label
+  size — the app keeps its loader/placeholder), `RoasterLoadError` (the app's mascot error content with retry, so the
+  artwork is not duplicated), `RoasterPhotoViewer` (full-screen dialog), the search `header` of the list, and
+  `onFavoriteFeedback` (haptics). Search header, tab/route logic and Discovery's criteria stay with the app.
+- **Components (one file each, with light/dark previews):** `RoasterCard` (legacy custom layout: footer measured
+  first so stats survive an exact carousel height), `RoasterStat`, `RoasterFavoriteHeart` (design-system
+  `CoffeePeekLikeButton`, 48dp), `RoasterTagFilters`, `RoasterListItemCard` (requests details once settled),
+  loading/empty rows, `RoasterSection`, `RoasterContactPill`, `RoasterShopCard`, `RoasterDetailHero` (pager, counter,
+  glass back button, glass heart), `RoasterDetailError`.
+- **Screens:** `RoasterListScreen(Content)` (pull to refresh, tag chips, snackbar for typed messages, exposure
+  `Catalog`), `RoasterDiscoverySection(Content)` (carousel: card width = 88% clamped to 280–360 dp, at most 8 cards,
+  exposure `Discovery`), `RoasterDetailScreen(Content)` (hero, about, address, links, shops, empty-shops note,
+  failure with retry/back, photo viewer slot, `TrackDetail`, exposures Photos/Contacts/Shops).
+- **Not wired yet (step 5):** public entries/factories in api, app adapters (analytics, favorites, shop photos,
+  image/error/viewer slots, haptics), renderer, Koin, route switch.
+- **Verification so far:** impl unit tests (19), Android + iOS compile, Android lint for impl (report generated; no
+  failing run), app still compiles. Isolated UI suite `RoasterContentTest` (9 cases x 4 theme/font-scale configs:
+  states, filters/actions, carousel limit, exact-height footer, detail sections/actions, empty detail, photo viewer,
+  loading/failure) compiles; the phone was locked, so it has **not** been executed.
+- **Known gaps against legacy, to verify visually in step 6:** the detail back button is now the design-system glass
+  button (legacy: app `CpCircularBackButton`); the favorite heart's analytics exposure and haptic are handled by the
+  app wrapper in step 5; the detail error text is generic instead of the server message.

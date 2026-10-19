@@ -50,3 +50,6 @@ interface RoasterDetailAnalytics {
         }
     }
 }
+
+/** Sections whose on-screen exposure the app measures; the feature only marks the container. */
+enum class RoasterExposure { Catalog, Discovery, Photos, Contacts, Shops }

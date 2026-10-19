@@ -14,6 +14,7 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
@@ -30,6 +31,7 @@ internal class RoasterListViewModel(
     private var initialized = false
     private var loadJob: Job? = null
     private var loadRevision = 0L
+    private var reportJob: Job? = null
     private val detailLocksMutex = Mutex()
     private val detailLocks = mutableMapOf<String, Mutex>()
     private val detailRequests = Semaphore(MAX_DETAIL_REQUESTS)
@@ -48,14 +50,14 @@ internal class RoasterListViewModel(
                 }
             }
             RoasterListAction.Refresh -> load()
-            is RoasterListAction.QueryChanged -> { updateState { copy(query = action.query) }; reportResults() }
+            is RoasterListAction.QueryChanged -> { updateState { copy(query = action.query) }; scheduleReport() }
             is RoasterListAction.ToggleTag -> {
                 updateState { copy(selectedTags = if (action.slug in selectedTags) selectedTags - action.slug else selectedTags + action.slug) }
-                reportResults()
+                scheduleReport()
             }
-            RoasterListAction.ClearTags -> { updateState { copy(selectedTags = emptySet()) }; reportResults() }
-            is RoasterListAction.FavoritesOnlyChanged -> { updateState { copy(favoritesOnly = action.enabled) }; reportResults() }
-            is RoasterListAction.SelectedRoastersChanged -> { updateState { copy(selectedRoasters = action.slugs) }; reportResults() }
+            RoasterListAction.ClearTags -> { updateState { copy(selectedTags = emptySet()) }; scheduleReport() }
+            is RoasterListAction.FavoritesOnlyChanged -> { updateState { copy(favoritesOnly = action.enabled) }; scheduleReport() }
+            is RoasterListAction.SelectedRoastersChanged -> { updateState { copy(selectedRoasters = action.slugs) }; scheduleReport() }
             is RoasterListAction.LoadDetails -> loadDetails(action.slug)
             is RoasterListAction.ToggleFavorite -> toggleFavorite(action.slug)
             is RoasterListAction.OpenRoaster -> openRoaster(action.slug)
@@ -95,7 +97,7 @@ internal class RoasterListViewModel(
             if (loadJob === job) {
                 loadJob = null
                 updateState { copy(isLoading = false) }
-                reportResults()
+                scheduleReport()
             }
         }
     }
@@ -130,6 +132,15 @@ internal class RoasterListViewModel(
         sendEvent(RoasterListEvent.OpenRoaster(slug))
     }
 
+    /** Same 350 ms settle delay as the legacy screen, so typing does not report every keystroke. */
+    private suspend fun scheduleReport() {
+        reportJob?.cancel()
+        val job = currentCoroutineContext().job
+        reportJob = job
+        delay(REPORT_DELAY_MS)
+        if (reportJob === job) reportResults()
+    }
+
     /** Reported once the visible set settled; the adapter ignores unchanged criteria. */
     private fun reportResults() {
         val state = currentState
@@ -146,9 +157,9 @@ internal class RoasterListViewModel(
 
     override fun onCleared() {
         loadRevision++
-        loadJob?.cancel()
+        loadJob?.cancel(); reportJob?.cancel()
         super.onCleared()
     }
 
-    private companion object { const val MAX_DETAIL_REQUESTS = 4 }
+    private companion object { const val MAX_DETAIL_REQUESTS = 4; const val REPORT_DELAY_MS = 350L }
 }

@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
@@ -39,6 +40,8 @@ class RoasterListViewModelTest {
         favorites: FakeFavorites = FakeFavorites(),
         analytics: RecordingListAnalytics = RecordingListAnalytics(),
     ) = RoasterListViewModel(repository, favorites, analytics).also { store.put("list-${nextKey++}", it) }
+
+    private fun TestScope.settle() { advanceTimeBy(350); runCurrent() }
 
     private fun TestScope.events(model: RoasterListViewModel): List<RoasterListEvent> =
         mutableListOf<RoasterListEvent>().also { list -> backgroundScope.launch { model.events.collect { list += it } } }
@@ -84,9 +87,13 @@ class RoasterListViewModelTest {
         val model = model(repository, analytics = analytics); runCurrent()
         assertTrue(analytics.calls.isEmpty()) // still loading
         gate.complete(Unit); runCurrent()
+        assertTrue(analytics.calls.isEmpty()) // settle delay not over yet
+        settle()
         assertEquals(listOf("shown:||false|:[]:2:false"), analytics.calls)
         model.onAction(RoasterListAction.QueryChanged(" B ")); runCurrent()
-        model.onAction(RoasterListAction.FavoritesOnlyChanged(true)); runCurrent()
+        model.onAction(RoasterListAction.QueryChanged(" Be ")); runCurrent() // typing: superseded before it settles
+        model.onAction(RoasterListAction.QueryChanged(" B ")); settle()
+        model.onAction(RoasterListAction.FavoritesOnlyChanged(true)); settle()
         assertEquals("shown:b||false|:[]:1:false", analytics.calls[1])
         assertEquals("shown:b||true|:[favoritesOnly]:0:false", analytics.calls[2])
     }
@@ -99,6 +106,7 @@ class RoasterListViewModelTest {
         val analytics = RecordingListAnalytics()
         val model = model(repository, analytics = analytics); runCurrent()
         assertTrue(model.state.value.loadFailed); assertFalse(model.state.value.isLoading)
+        settle()
         assertEquals(listOf("shown:||false|:[]:0:true"), analytics.calls)
         fail = false
         model.onAction(RoasterListAction.Refresh); runCurrent()
@@ -122,9 +130,8 @@ class RoasterListViewModelTest {
 
     @Test fun openReportsOneBasedVisiblePositionAndIgnoresUnknownSlugs() = runTest(dispatcher) {
         val analytics = RecordingListAnalytics()
-        val model = model(analytics = analytics); val events = events(model); runCurrent()
-        analytics.calls.clear()
-        model.onAction(RoasterListAction.QueryChanged("b")); runCurrent(); analytics.calls.clear()
+        val model = model(analytics = analytics); val events = events(model); runCurrent(); settle()
+        model.onAction(RoasterListAction.QueryChanged("b")); runCurrent(); settle(); analytics.calls.clear()
         model.onAction(RoasterListAction.OpenRoaster("a")) // filtered out
         model.onAction(RoasterListAction.OpenRoaster("")); model.onAction(RoasterListAction.OpenRoaster("b")); runCurrent()
         assertEquals(listOf("open:1"), analytics.calls)
