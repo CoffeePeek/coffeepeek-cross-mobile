@@ -1,7 +1,7 @@
 package com.coffeepeek.admin.auth
 
 private val googleSignInDiagnosticCode = Regex("""\[(GSI-(?:E-?[0-9]{1,10}|R|T))(?: D:([A-Za-z0-9._-]{1,80}))?(?: O:([A-Za-z][A-Za-z0-9_]{0,39}))?]""")
-private val appleSignInDiagnosticCode = Regex("""\[(ASI-(?:E-?[0-9]{1,10}|CH|X|W|C|S|T|B))(?: D:([A-Za-z0-9._-]{1,80}))?]""")
+private val appleSignInDiagnosticCode = Regex("""\[(ASI-(?:E-?[0-9]{1,10}|H[1-5][0-9]{2}|CH|X|W|C|S|T|B|R|A|I|P))(?: D:([A-Za-z0-9._-]{1,80}))?]""")
 
 internal fun socialLoginError(provider: String, message: String?): String {
     val normalized = message.orEmpty().lowercase()

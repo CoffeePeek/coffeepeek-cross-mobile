@@ -112,6 +112,24 @@ class ShopDetailViewModelTest {
         currentViewer = viewerProvider, currentDayOfWeek = dayProvider, currentMinuteOfDay = minuteProvider)
         .also { store.put("detail", it) }
 
+    @Test fun checkInGalleryKeepsExplicitOriginalAndRejectsGuestHiddenRows() = runTest(dispatcher) {
+        val repository = DetailsRepository()
+        val row = ShopCheckIn("visit", "author", "shop-1", "", "", "", null,
+            listOf("/signed-original"), listOf("/feed"), null, photoDetailUrls = listOf("/detail"))
+        repository.result = Result.success(details().copy(checkIns = listOf(row, row.copy(id = "hidden"))))
+        val model = viewModel(details = repository, viewer = ShopViewer(false, null))
+        val events = mutableListOf<ShopDetailEvent>()
+        backgroundScope.launch { model.events.collect { events += it.event } }
+        runCurrent()
+        model.onAction(ShopDetailAction.OpenCheckInPhoto("hidden", 0))
+        model.onAction(ShopDetailAction.OpenCheckInPhoto("visit", 1))
+        runCurrent()
+        assertTrue(events.isEmpty())
+        model.onAction(ShopDetailAction.OpenCheckInPhoto("visit", 0))
+        runCurrent()
+        assertEquals<List<ShopDetailEvent>>(listOf(ShopDetailEvent.OpenPhoto(listOf("/detail"), 0, listOf("/signed-original"))), events)
+    }
+
     @Test fun loadAndLocalExpansionAreIndependentOfNavigation() = runTest(dispatcher) {
         val repository = DetailsRepository()
         val viewModel = viewModel(details = repository)

@@ -62,6 +62,8 @@ internal class PublicProfileRepositoryImpl(
             activity = null,
             canonicalPath = envelope.address?.canonicalPath,
             isFollowing = dto.isFollowing,
+            authorId = dto.authorId,
+            isBlockedByViewer = dto.isBlockedByViewer,
         )
     }
 
@@ -235,6 +237,7 @@ private fun String.resolveAgainst(base: Url): String? = takeIf(String::isNotBlan
 
 @Serializable private data class PublicProfileResponseDto(val data: PublicProfileDto?, val address: ProfileAddressDto? = null)
 @Serializable private data class PublicProfileDto(
+    val authorId: String? = null, val isBlockedByViewer: Boolean = false,
     val userName: String, val about: String? = null, val avatarUrl: String? = null,
     val checkInCount: Int, val addedShopsCount: Int, val addedRoastersCount: Int, val followersCount: Int, val isFollowing: Boolean,
 )

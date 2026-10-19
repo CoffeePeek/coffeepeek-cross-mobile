@@ -61,7 +61,7 @@ internal fun ShopCheckInCard(
             val fallbackDrinkName = if (Locale.current.language == "en") checkIn.drinkNameRu else checkIn.drinkNameEn
             val drink = checkIn.customDrinkName?.takeIf(String::isNotBlank)
                 ?: primaryDrinkName?.takeIf(String::isNotBlank) ?: fallbackDrinkName?.takeIf(String::isNotBlank)
-            drink?.let { ShopCheckInDrinkBadge(it, checkIn.drinkPhotoUrl) }
+            drink?.let { ShopCheckInDrinkBadge(it, checkIn.drinkPhotoThumbnailUrl) }
             if (checkIn.note.isNotBlank()) ShopCheckInNote(checkIn.id, checkIn.note, fullVersion = fullVersion)
             ShopCheckInPhotos(checkIn.photoUrls, checkIn.photoThumbnailUrls, onOpenPhoto)
             if (showHelpful && (checkIn.visibility == ShopCheckInVisibility.Public || checkIn.helpfulCount > 0))

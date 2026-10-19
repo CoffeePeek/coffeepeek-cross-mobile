@@ -13,7 +13,7 @@ interface ShopCheckInListEntry {
         onSignIn: () -> Unit,
         onRegister: () -> Unit,
         onReportCheckIn: (checkInId: String) -> Unit,
-        onOpenPhoto: (imageUrls: List<String>, initialIndex: Int) -> Unit,
+        onOpenPhoto: (imageUrls: List<String>, originalUrls: List<String>, initialIndex: Int) -> Unit,
         onOpenAuthor: (slug: String, nickname: String, avatarUrl: String?) -> Unit,
         refreshGeneration: Long = 0,
     )

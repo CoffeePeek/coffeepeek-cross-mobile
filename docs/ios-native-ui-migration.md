@@ -59,7 +59,7 @@ selection after each navigation change.
 
 Compilation on Windows verifies Kotlin/Native API signatures, not UIKit runtime
 layout or gesture arbitration. Required device checks: tab state retention;
-cancelled swipe-back; editor back; password-reset links in foreground/cold start;
+cancelled swipe-back; editor back; password recovery email request and web reset;
 open shop on map from another tab; keyboard dismissal and search cancellation;
 large accessibility text; dark/light theme; iPad rotation; iOS 15 and iOS 26 bars.
 

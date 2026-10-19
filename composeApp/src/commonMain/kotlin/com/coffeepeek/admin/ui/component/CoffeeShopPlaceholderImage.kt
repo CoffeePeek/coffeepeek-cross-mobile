@@ -18,8 +18,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.sp
+import com.coffeepeek.admin.utils.cpImageData
+import com.coffeepeek.admin.utils.rememberCpImageResource
 import io.kamel.core.Resource
-import io.kamel.image.asyncPainterResource
 
 @Composable
 fun CoffeeShopPlaceholderImage(
@@ -59,7 +60,7 @@ fun CoffeeShopImage(
     contentScale: ContentScale = ContentScale.Crop,
     placeholderLabelSize: TextUnit = 18.sp,
 ) {
-    when (val resource = asyncPainterResource(data = imageUrl)) {
+    when (val resource = rememberCpImageResource(cpImageData(imageUrl))) {
         is Resource.Success -> Image(
             painter = resource.value,
             contentDescription = contentDescription,

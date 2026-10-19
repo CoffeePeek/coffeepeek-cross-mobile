@@ -1,0 +1,90 @@
+[
+  {
+    "file": "screenshots/01-feed-before.png",
+    "title": "Лента до блокировки"
+  },
+  {
+    "file": "screenshots/02-check-in-menu.png",
+    "title": "Меню чужого чек-ина"
+  },
+  {
+    "file": "screenshots/03-block-confirmation.png",
+    "title": "Подтверждение блокировки"
+  },
+  {
+    "file": "screenshots/04-block-saving.png",
+    "title": "Сохранение на сервере"
+  },
+  {
+    "file": "screenshots/05-block-error-retry.png",
+    "title": "Ошибка и повтор"
+  },
+  {
+    "file": "screenshots/06-feed-after-block.png",
+    "title": "Лента после блокировки"
+  },
+  {
+    "file": "screenshots/07-blocked-profile.png",
+    "title": "Заблокированный профиль"
+  },
+  {
+    "file": "screenshots/08-settings-entry.png",
+    "title": "Вход из настроек"
+  },
+  {
+    "file": "screenshots/09-blocked-list.png",
+    "title": "Список блокировок"
+  },
+  {
+    "file": "screenshots/10-unblock-confirmation.png",
+    "title": "Подтверждение разблокировки"
+  },
+  {
+    "file": "screenshots/11-empty-list-after-unblock.png",
+    "title": "Список после разблокировки"
+  },
+  {
+    "file": "screenshots/12-feed-restored.png",
+    "title": "Публикации вернулись"
+  },
+  {
+    "file": "screenshots/13-author-profile.png",
+    "title": "Профиль автора"
+  },
+  {
+    "file": "screenshots/14-profile-menu.png",
+    "title": "Меню профиля"
+  },
+  {
+    "file": "screenshots/15-block-from-profile.png",
+    "title": "Блокировка из профиля"
+  },
+  {
+    "file": "screenshots/16-shop-check-in-menu.png",
+    "title": "Меню чек-ина кофейни"
+  },
+  {
+    "file": "screenshots/17-own-check-in-menu.png",
+    "title": "Меню своей записи"
+  },
+  {
+    "file": "screenshots/18-guest-login-required.png",
+    "title": "Блокировка для гостя"
+  },
+  {
+    "file": "screenshots/19-list-loading.png",
+    "title": "Загрузка списка"
+  },
+  {
+    "file": "screenshots/20-list-error.png",
+    "title": "Ошибка загрузки списка"
+  },
+  {
+    "file": "screenshots/21-dark-block-confirmation.png",
+    "title": "Подтверждение в тёмной теме"
+  },
+  {
+    "file": "screenshots/22-dark-blocked-list.png",
+    "title": "Список в тёмной теме"
+  }
+]

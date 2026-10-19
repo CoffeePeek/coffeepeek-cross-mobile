@@ -13,7 +13,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -38,6 +37,7 @@ import com.coffeepeek.admin.location.formatDistance
 import com.coffeepeek.admin.location.rememberPermittedUserLocation
 import com.coffeepeek.admin.theme.CpDimens
 import com.coffeepeek.admin.ui.Navigator
+import com.coffeepeek.admin.ui.component.CpSnackbarHost
 import com.coffeepeek.admin.ui.component.CoffeePeekLoader
 import com.coffeepeek.admin.ui.component.CpTopBar
 import org.jetbrains.compose.resources.stringResource
@@ -57,7 +57,7 @@ fun FavoritesScreen(vm: FavoritesViewModel = platformViewModel()) {
 
     Scaffold(
         topBar = { CpTopBar("Избранное") },
-        snackbarHost = { SnackbarHost(snackbarHostState) },
+        snackbarHost = { CpSnackbarHost(snackbarHostState) },
         containerColor = MaterialTheme.colorScheme.background,
     ) { padding ->
         when {

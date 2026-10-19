@@ -73,7 +73,7 @@ internal class ShopCheckInListViewModel(
             is ShopCheckInListAction.OpenPhoto -> {
                 val checkIn = currentState.checkIns.firstOrNull { it.id == action.checkInId } ?: return
                 if (action.index in checkIn.photoUrls.indices) {
-                    emitEvent(ShopCheckInListEvent.OpenPhoto(checkIn.photoUrls, action.index))
+                    emitEvent(ShopCheckInListEvent.OpenPhoto(checkIn.photoDetailUrls, action.index, checkIn.photoUrls))
                 }
             }
         }

@@ -7,7 +7,7 @@ class AnalyticsSchemaTest {
         assertEquals("shop_detail", analyticsPage("com.coffeepeek.admin.ui.Navigator.Screen.ShopDetail/private-slug?token=secret"))
         assertEquals("profile", analyticsPage("com.coffeepeek.admin.ui.Navigator.Screen.Favorites"))
         assertEquals("other", analyticsPage("unknown/private-user-id?token=secret"))
-        assertEquals("login", analyticsPage("com.coffeepeek.admin.ui.Navigator.Screen.ResetPassword?token=secret"))
+        assertEquals("login", analyticsPage("com.coffeepeek.admin.ui.Navigator.Screen.ForgotPassword?email=private@example.com"))
     }
 
     @Test fun exactWireNamesAndNoArbitraryProperties() {

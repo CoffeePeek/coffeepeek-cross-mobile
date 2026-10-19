@@ -222,7 +222,7 @@ internal fun ShopDetailScreenContent(
                     item { ShopPublicCheckInsSection(details.checkIns, details.overview.title,
                         state.isLoggedIn, state.currentUserId, details.userCheckIns.map { it.id }.toSet(),
                         state.pendingCheckInVoteId,
-                        onOpenPhoto = { urls, index -> onAction(ShopDetailAction.OpenPhoto(urls, index)) },
+                        onOpenPhoto = { checkIn, index -> onAction(ShopDetailAction.OpenCheckInPhoto(checkIn.id, index)) },
                         onVote = { onAction(ShopDetailAction.VoteCheckInHelpful(it)) },
                         onReport = { onAction(ShopDetailAction.ReportCheckIn(it)) },
                         onOpenAuthor = { onAction(ShopDetailAction.OpenAuthor(it)) },

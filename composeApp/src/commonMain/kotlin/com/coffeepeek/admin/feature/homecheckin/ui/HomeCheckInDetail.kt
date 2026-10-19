@@ -19,10 +19,12 @@ import androidx.compose.ui.unit.dp
 import com.coffeepeek.admin.ui.component.AppButton
 import com.coffeepeek.admin.ui.component.DrinkCutoutImage
 import com.coffeepeek.admin.ui.component.ReviewPhotoStrip
+import com.coffeepeek.admin.ui.component.PhotoViewerImages
 import com.coffeepeek.admin.ui.icons.CpIcons
 import com.coffeepeek.admin.utils.utcIsoToLocalDateTime
 import com.coffeepeek.feature.homecheckin.domain.HomeCheckIn
 import com.coffeepeek.feature.homecheckin.domain.HomeCheckInVisibility
+import com.coffeepeek.feature.homecheckin.domain.HomeCheckInPhoto
 
 @Composable
 internal fun HomeDetail(
@@ -30,7 +32,7 @@ internal fun HomeDetail(
     vm: HomeCheckInViewModel,
     modifier: Modifier,
     notice: String? = null,
-    onPhotoClick: (List<String>, Int) -> Unit,
+    onPhotoClick: (PhotoViewerImages, Int) -> Unit,
 ) = HomeDetailContent(entry, modifier, notice, vm::edit, vm::confirmDelete, onPhotoClick)
 
 @Composable
@@ -40,9 +42,9 @@ internal fun HomeDetailContent(
     notice: String? = null,
     onEdit: () -> Unit,
     onDelete: () -> Unit,
-    onPhotoClick: (List<String>, Int) -> Unit,
+    onPhotoClick: (PhotoViewerImages, Int) -> Unit,
 ) {
-    val photos = entry.photos.map { it.url }.filter(String::isNotBlank)
+    val photos = entry.photos.filter { it.url.isNotBlank() }
     LazyColumn(
         modifier.fillMaxWidth(), contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 4.dp, bottom = 24.dp),
         verticalArrangement = Arrangement.spacedBy(20.dp),
@@ -124,14 +126,19 @@ internal fun HomeDetailContent(
             }
         } }
         if (photos.isNotEmpty()) item(key = "photos") {
-            ReviewPhotoStrip(photos, singlePhotoAspectRatio = 16f / 10f, onPhotoClick = onPhotoClick)
+            ReviewPhotoStrip(photos.map { it.detailUrl }, thumbnailUrls = photos.map { it.thumbnailUrl },
+                singlePhotoAspectRatio = 16f / 10f,
+                onPhotoClick = { _, index -> onPhotoClick(homePhotoViewerImages(photos), index) })
         }
-        entry.drinkPhotoUrl?.takeIf(String::isNotBlank)?.let { url -> item(key = "drink-photo") {
+        entry.drinkPhotoUrl?.takeIf(String::isNotBlank)?.let { original -> item(key = "drink-photo") {
             Box(Modifier.fillMaxWidth().height(160.dp).clip(RoundedCornerShape(20.dp))
                 .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f))
-                .clickable(role = Role.Button, onClickLabel = "Открыть фото напитка") { onPhotoClick(listOf(url), 0) },
+                .clickable(role = Role.Button, onClickLabel = "Открыть фото напитка") {
+                    onPhotoClick(homeDrinkPhotoViewerImages(original, entry.drinkPhotoDetailUrl), 0)
+                },
                 contentAlignment = Alignment.Center) {
-                DrinkCutoutImage(url, contentDescription = "Фото напитка", modifier = Modifier.fillMaxSize().padding(12.dp), outlineWidth = 3.dp)
+                DrinkCutoutImage(entry.drinkPhotoThumbnailUrl.orEmpty(), contentDescription = "Фото напитка",
+                    modifier = Modifier.fillMaxSize().padding(12.dp), outlineWidth = 3.dp)
             }
         } }
         entry.text?.takeIf(String::isNotBlank)?.let { note -> item(key = "note") {
@@ -153,6 +160,12 @@ internal fun HomeDetailContent(
         }
     }
 }
+
+internal fun homePhotoViewerImages(photos: List<HomeCheckInPhoto>) =
+    PhotoViewerImages(photos.map { it.detailUrl }, photos.map { it.url })
+
+internal fun homeDrinkPhotoViewerImages(original: String, detail: String?) =
+    PhotoViewerImages(listOf(detail.orEmpty()), listOf(original))
 
 @Composable
 private fun RecipeMetric(label: String, value: String) {

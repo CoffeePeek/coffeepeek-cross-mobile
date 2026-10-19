@@ -21,8 +21,6 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.admin.ui.icons.CpIcons
 import com.coffeepeek.admin.utils.cpImageData
-import io.kamel.core.Resource
-import io.kamel.image.asyncPainterResource
 import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.sin
@@ -35,17 +33,10 @@ internal fun DrinkCutoutImage(
     modifier: Modifier = Modifier,
     outlineWidth: Dp = 2.dp,
 ) {
-    val resource = asyncPainterResource(cpImageData(data))
-    when (resource) {
-        is Resource.Success -> {
-            val width = with(LocalDensity.current) { outlineWidth.toPx() }
-            val painter = remember(resource.value, width) { DrinkCutoutPainter(resource.value, width) }
-            Image(painter, contentDescription, modifier, contentScale = ContentScale.Fit)
-        }
-        is Resource.Loading -> androidx.compose.foundation.layout.Box(modifier)
-        is Resource.Failure -> Icon(CpIcons.Coffee, contentDescription, modifier,
-            tint = MaterialTheme.colorScheme.onSurfaceVariant)
-    }
+    val source = com.coffeepeek.admin.utils.rememberCpImagePainter(cpImageData(data))
+    val width = with(LocalDensity.current) { outlineWidth.toPx() }
+    val painter = remember(source, width) { DrinkCutoutPainter(source, width) }
+    Image(painter, contentDescription, modifier, contentScale = ContentScale.Fit)
 }
 
 internal class DrinkCutoutPainter(
