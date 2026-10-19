@@ -8,12 +8,14 @@ import com.coffeepeek.feature.favorites.domain.repository.FavoritesRepository
 import com.coffeepeek.feature.shop.domain.model.ShopViewer
 import com.coffeepeek.feature.shop.domain.repository.ShopCheckInVoteRepository
 import com.coffeepeek.feature.shop.domain.repository.ShopDetailsRepository
+import com.coffeepeek.feature.authorblocking.api.AuthorVisibility
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.channelFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import kotlin.concurrent.Volatile
 
@@ -21,18 +23,32 @@ import kotlin.concurrent.Volatile
 internal class AndroidShopBrowsingSession(
     private val sessions: SessionRepository,
     session: Session? = sessions.peekSession(),
+    private val visibility: AuthorVisibility = AuthorVisibility.None,
 ) {
+    private val visibilityRevision = visibility.visibility.value.revision
     private val loggedIn = sessions.isActiveSession(session)
     private val accountId = session?.userId.takeIf { loggedIn }
     @Volatile private var revoked = false
 
     fun isCurrent(session: Session? = sessions.peekSession()): Boolean = !revoked &&
+        visibility.visibility.value.revision == visibilityRevision &&
         sessions.isActiveSession(session) == loggedIn && (!loggedIn || session?.userId == accountId)
 
     fun revoke() { revoked = true }
 
     fun details(repository: ShopDetailsRepository): ShopDetailsRepository = object : ShopDetailsRepository {
-        override suspend fun getDetails(shopId: String) = withSession { repository.getDetails(shopId) }
+        override suspend fun getDetails(shopId: String) = withSession {
+            if (!visibility.visibility.value.ready) {
+                val refreshed = visibility.refresh()
+                refreshed.exceptionOrNull()?.let { if (it is CancellationException) throw it }
+                ensureCurrent()
+                refreshed.exceptionOrNull()?.let { return@withSession Result.failure(it) }
+            }
+            repository.getDetails(shopId).map { details ->
+                val snapshot = visibility.visibility.value
+                details.copy(checkIns = details.checkIns.filterNot { snapshot.hides(it.authorId, it.authorSlug) })
+            }
+        }
     }
 
     fun votes(repository: ShopCheckInVoteRepository): ShopCheckInVoteRepository = object : ShopCheckInVoteRepository {
@@ -80,7 +96,7 @@ internal class AndroidShopBrowsingSession(
             block().also { ensureCurrent() }
         }
         val observer = launch(start = CoroutineStart.UNDISPATCHED) {
-            sessions.observeSession().catch { error ->
+            combine(sessions.observeSession(), visibility.visibility) { session, _ -> session }.catch { error ->
                 if (error is CancellationException) throw error
                 revoke()
                 operation.cancel(CancellationException("Could not observe Shop session", error))

@@ -26,6 +26,7 @@ internal data class ShopReviewDto(
 @Serializable
 internal data class ShopCheckInDto(
     @SerialName("id") val id: String = "",
+    @SerialName("authorId") val authorId: String? = null,
     @SerialName("author") val author: ShopAddressDto? = null,
     @SerialName("shop") val shop: ShopAddressDto? = null,
     @SerialName("username") val username: String = "",
@@ -39,6 +40,7 @@ internal data class ShopCheckInDto(
     @SerialName("drinkNameRu") val drinkNameRu: String? = null,
     @SerialName("drinkNameEn") val drinkNameEn: String? = null,
     @SerialName("drinkPhotoUrl") val drinkPhotoUrl: String? = null,
+    val drinkPhotoVariants: List<ShopCheckInPhotoVariantDto>? = null,
     val authorAvatarUrl: String? = null,
     @SerialName("visibility") val visibility: String = "Private",
     @SerialName("moderationState") val moderationState: String = "NotSubmitted",
@@ -52,6 +54,17 @@ internal data class ShopCheckInDto(
 internal data class ShopCheckInPhotoDto(
     @SerialName("url") @JsonNames("fullUrl") val url: String = "",
     @SerialName("sortIndex") val sortIndex: JsonElement? = null,
+    val variants: List<ShopCheckInPhotoVariantDto>? = null,
+)
+
+@Serializable
+internal data class ShopCheckInPhotoVariantDto(
+    val purpose: String = "",
+    val url: String = "",
+    val contentType: String = "",
+    val width: Int = 0,
+    val height: Int = 0,
+    val sizeBytes: Long = 0,
 )
 
 @Serializable

@@ -56,7 +56,8 @@ internal fun ShopCheckInPhotos(urls: List<String>, thumbnailUrls: List<String>,
 private fun PhotoTile(urls: List<String>, thumbnails: List<String>, index: Int,
     onOpenPhoto: (List<String>, Int) -> Unit, modifier: Modifier) {
     val fullUrl = urls[index].takeIf(String::isNotBlank)
-    val preview = thumbnails.getOrNull(index)?.takeIf(String::isNotBlank) ?: fullUrl
+    val preview = if (index in thumbnails.indices) thumbnails[index].takeIf(String::isNotBlank) else fullUrl
+    val imageContent = LocalShopCheckInImage.current
     val description = stringResource(Res.string.shop_checkins_photo_description, index + 1, urls.size)
     Box(modifier.clip(RoundedCornerShape(CoffeePeekDimens.radiusMd))
         .background(MaterialTheme.colorScheme.surfaceVariant)
@@ -64,6 +65,7 @@ private fun PhotoTile(urls: List<String>, thumbnails: List<String>, index: Int,
         .semantics(mergeDescendants = true) { contentDescription = description },
         contentAlignment = Alignment.Center) {
         if (preview == null) PhotoUnavailable()
+        else if (imageContent != null) imageContent(preview, Modifier.fillMaxSize(), ContentScale.Crop)
         else KamelImage(resource = { asyncPainterResource(preview) }, contentDescription = null,
             contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize(),
             onLoading = { PhotoUnavailable() }, onFailure = { PhotoUnavailable() })

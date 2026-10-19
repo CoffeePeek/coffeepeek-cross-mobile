@@ -35,6 +35,7 @@ fun App(onReady: () -> Unit = {}) {
         Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).dismissKeyboardOnBackgroundGestures()) {
             OrientationObserver.StartObserver()
             Navigator()
+            com.coffeepeek.admin.feature.authorblocking.ui.AuthorBlockingHost()
             com.coffeepeek.admin.feature.appupdate.ui.AppUpdatePrompt()
             com.coffeepeek.admin.analytics.AnalyticsPrivacy()
         }

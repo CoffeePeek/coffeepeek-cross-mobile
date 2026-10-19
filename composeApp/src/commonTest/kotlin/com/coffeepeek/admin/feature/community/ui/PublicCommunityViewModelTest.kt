@@ -259,5 +259,43 @@ class PublicCommunityViewModelTest {
         } finally { voteResult.complete(CheckInHelpfulVote(true, 8)); vm.close() }
     }
 
+    @Test
+    fun blockingWaitsForCanonicalOwnershipWhileProfileRequestIsPending() = runBlocking {
+        val profile = CompletableDeferred<Result<UserProfile>>()
+        val own = visit.copy(id = "own", authorId = "public-author", authorAddress = PublicAddress("me", "/users/me", 1, false))
+        val users = FeedUsers().apply { load = { profile.await() } }
+        val feed = TestPublicFeed().apply { load = { _, _, _ -> Result.success(FeedPage(listOf(item(own), item(visit)), null)) } }
+        val vm = CommunityViewModel(FeedCheckIns(), FeedSessions(Session("token", userId = "private-account-id")), FeedShops(), feed, users)
+        try {
+            val pending = vm.await { !it.isLoading && it.items.size == 2 }
+            assertNull(pending.ownAuthorSlug)
+            assertFalse(pending.canBlockAuthor(own))
+            assertFalse(pending.canBlockAuthor(visit))
+            profile.complete(Result.success(UserProfile("Me", "", null, null, 0, 0, 0, PublicAddress("me", "/users/me", 1, false))))
+            val resolved = vm.await { it.ownAuthorSlug == "me" }
+            assertFalse(resolved.canBlockAuthor(own))
+            assertTrue(resolved.canBlockAuthor(visit))
+        } finally { profile.cancel(); vm.close() }
+    }
+
+    @Test
+    fun blockingRemainsHiddenWhenOwnershipLookupFailsButGuestCanRequestSignIn() = runBlocking {
+        val profileFailed = CompletableDeferred<Unit>()
+        val users = FeedUsers().apply { load = {
+            profileFailed.complete(Unit)
+            Result.failure(IllegalStateException("Profile unavailable"))
+        } }
+        val feed = TestPublicFeed().apply { load = { _, _, _ -> Result.success(FeedPage(listOf(item(visit)), null)) } }
+        val vm = CommunityViewModel(FeedCheckIns(), FeedSessions(Session("token", userId = "account")), FeedShops(), feed, users)
+        try {
+            withTimeout(5_000) { profileFailed.await() }
+            val state = vm.await { !it.isLoading && it.items.isNotEmpty() }
+            assertFalse(state.canBlockAuthor(visit))
+            assertTrue(CommunityUiState(isLoggedIn = false).canBlockAuthor(visit))
+            assertFalse(CommunityUiState().canBlockAuthor(visit))
+            assertFalse(CommunityUiState(isLoggedIn = true, timeline = CommunityTimeline.Mine).canBlockAuthor(visit))
+        } finally { vm.close() }
+    }
+
     private suspend fun CommunityViewModel.await(predicate: (CommunityUiState) -> Boolean) = withTimeout(5_000) { state.first(predicate) }
 }

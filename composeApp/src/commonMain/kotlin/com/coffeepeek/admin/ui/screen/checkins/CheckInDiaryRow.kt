@@ -65,9 +65,8 @@ private fun DiaryRating(checkIn: CheckIn) {
 }
 
 internal fun diaryPhoto(checkIn: CheckIn): Pair<String, Boolean>? {
-    checkIn.drinkPhotoUrl?.takeIf(String::isNotBlank)?.let { return it to true }
-    val photo = checkIn.photoThumbnailUrls.firstOrNull(String::isNotBlank)
-        ?: checkIn.photoUrls.firstOrNull(String::isNotBlank)
+    (checkIn.drinkPhotoThumbnailUrl ?: checkIn.drinkPhotoUrl)?.takeIf(String::isNotBlank)?.let { return it to true }
+    val photo = (checkIn.photoCalendarUrls ?: checkIn.photoThumbnailUrls.ifEmpty { checkIn.photoUrls }).firstOrNull(String::isNotBlank)
     return photo?.let { it to false }
 }
 

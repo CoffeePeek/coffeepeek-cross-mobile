@@ -105,6 +105,10 @@ fun initKoin(
     )
     val application = startKoin { modules(commonModules + platformModules) }
     com.coffeepeek.admin.analytics.installAnalytics(database.settingRepository, application.koin.get(), application.koin.get())
+    com.coffeepeek.admin.utils.image.ProtectedPhotoSession.install(
+        application.koin.get(), application.koin.get<CoffeePeekClient>().client,
+        application.koin.get<com.coffeepeek.feature.authorblocking.api.AuthorVisibility>().visibility,
+    )
 }
 
 private fun appModule(
@@ -141,14 +145,21 @@ private fun appModule(
     factory { HomeCheckInViewModel(get(), get(), get(), get()) }
     factory { CoffeeListViewModel(get()) }
     factory { (slug: String) -> CoffeeDetailViewModel(slug, get()) }
+    single { com.coffeepeek.feature.authorblocking.api.createAuthorBlockingFeature(get<CoffeePeekClient>().client, get()) }
+    single<com.coffeepeek.feature.authorblocking.api.AuthorVisibility> { get<com.coffeepeek.feature.authorblocking.api.AuthorBlockingFeature>().visibility }
+    single<com.coffeepeek.feature.authorblocking.api.AuthorBlockingPresenter> { get<com.coffeepeek.feature.authorblocking.api.AuthorBlockingFeature>().presenter }
+    single<com.coffeepeek.feature.authorblocking.api.AuthorBlockActions> { get<com.coffeepeek.feature.authorblocking.api.AuthorBlockingPresenter>() }
     single<PublicProfileRepository> { PublicProfileRepositoryImpl(get<CoffeePeekClient>().client, get(), get(), get()) }
-    factory { (slug: String) -> PublicProfileViewModel(slug, get(), get(), users = get()) }
+    factory { (slug: String) -> PublicProfileViewModel(slug, get(), get(), users = get(), visibility = get()) }
     single<RoasterFavorites> { ServerRoasterFavorites(get(), get(), get()) }
     single<com.coffeepeek.admin.feature.appupdate.domain.AppUpdateRepository> {
         com.coffeepeek.admin.feature.appupdate.data.AppUpdateRepositoryImpl(get<CoffeePeekClient>().plainClient, settingRepository)
     }
     single { com.coffeepeek.admin.feature.appupdate.ui.AppUpdateState(get()) }
-    single<CustomUrlFetcher> { createImageUrlFetcher(get<CoffeePeekClient>().client) }
+    single<CustomUrlFetcher> {
+        val gateway = get<CoffeePeekClient>()
+        createImageUrlFetcher(gateway.client, gateway.imageClient)
+    }
     single { CheckInDraftStore() }
     single { CityPreference(settingRepository) }
     single { ReviewDraftStore(settingRepository) }
@@ -156,7 +167,7 @@ private fun appModule(
     factory { RegisterViewModel(get()) }
     factory { NavigatorViewModel(get()) }
     factory { FeedViewModel(get(), get(), get(), get(), getOrNull<ObserveFavoriteIdsUseCase>()) }
-    factory { com.coffeepeek.admin.feature.community.ui.CommunityViewModel(get(), get(), get(), get(), get()) }
+    factory { com.coffeepeek.admin.feature.community.ui.CommunityViewModel(get(), get(), get(), get(), get(), get()) }
     factory { com.coffeepeek.admin.ui.screen.roaster.RoasterListViewModel(get(), get(), get()) }
     factory { MapViewModel(get(), get()) }
     factory { (shopId: String) -> ShopDetailViewModel(
@@ -170,6 +181,7 @@ private fun appModule(
         observeFavoriteIds = getOrNull<ObserveFavoriteIdsUseCase>(),
         roasterFavorites = get(),
         drinkPhotoFactory = get(),
+        visibility = get(),
     ) }
     factory { (shopId: String) -> ShopMenuGalleryViewModel(shopId, get()) }
     factory { (shopId: String) -> ShopReportViewModel(shopId, get()) }

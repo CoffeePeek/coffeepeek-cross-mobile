@@ -25,6 +25,7 @@ import com.coffeepeek.core.designsystem.component.CoffeePeekButton
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.domain.repository.SessionRepository
+import com.coffeepeek.feature.authorblocking.api.AuthorVisibility
 import org.jetbrains.compose.resources.stringResource
 
 /** The outer VM survives navigation/configuration; its inner feature store cannot survive account replacement. */
@@ -32,9 +33,10 @@ import org.jetbrains.compose.resources.stringResource
 internal fun AndroidShopBrowsingHost(
     ownerKey: String,
     sessions: SessionRepository,
+    visibility: AuthorVisibility = AuthorVisibility.None,
     content: @Composable (ShopBrowsingHostSession) -> Unit,
 ) {
-    val model = viewModel(key = ownerKey) { AndroidShopBrowsingHostViewModel(sessions) }
+    val model = viewModel(key = ownerKey) { AndroidShopBrowsingHostViewModel(sessions, visibility) }
     val session by model.session.collectAsStateWithLifecycle()
     if (session.observationFailed) {
         ShopSessionUnavailable(model::retry)

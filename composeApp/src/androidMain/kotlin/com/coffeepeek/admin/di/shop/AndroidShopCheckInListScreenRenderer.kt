@@ -20,16 +20,18 @@ internal class AndroidShopCheckInListScreenRenderer(
     private val users: UserRepository,
     private val details: ShopDetailsRepository,
     private val votes: ShopCheckInVoteRepository,
+    private val visibility: com.coffeepeek.feature.authorblocking.api.AuthorVisibility,
 ) : ShopCheckInListScreenRenderer {
     @Composable
     override fun Content(shopId: String) {
-        AndroidShopBrowsingHost("android-shop-list:$shopId", sessions) { session ->
+        AndroidShopBrowsingHost("android-shop-list:$shopId", sessions, visibility) { session ->
             val entry = remember(session) {
                 createShopCheckInListEntry(session.lease.details(details), session.lease.votes(votes),
                     currentViewer = { session.lease.viewer(users) },
-                    authorImage = { url, modifier -> com.coffeepeek.admin.utils.CpImage(data = url, modifier = modifier) })
+                    authorImage = { url, modifier -> com.coffeepeek.admin.utils.CpImage(data = url, modifier = modifier) },
+                    checkInImage = { url, modifier, scale -> com.coffeepeek.admin.utils.CpImage(data = url, modifier = modifier, contentScale = scale) })
             }
-            var preview by remember { mutableStateOf<Pair<List<String>, Int>?>(null) }
+            var preview by remember { mutableStateOf<com.coffeepeek.feature.shop.api.ShopDetailEffect.OpenPhoto?>(null) }
             val formatCheckInDate = rememberCheckInDateLabel()
             entry.Content(shopId = shopId, sessionGeneration = session.generation,
                 formatCheckInDate = formatCheckInDate,
@@ -40,9 +42,11 @@ internal class AndroidShopCheckInListScreenRenderer(
                 onOpenAuthor = { slug, nickname, avatar ->
                     if (session.lease.isCurrent()) Navigator.navigate(Navigator.Screen.UserProfile(slug, nickname, avatar))
                 },
-                onOpenPhoto = { urls, index -> if (session.lease.isCurrent()) preview = urls to index })
-            preview?.let { (urls, index) ->
-                FullScreenImageDialog(imageUrls = urls, initialIndex = index, onDismiss = { preview = null })
+                onOpenPhoto = { urls, originals, index -> if (session.lease.isCurrent())
+                    preview = com.coffeepeek.feature.shop.api.ShopDetailEffect.OpenPhoto(urls, index, originals) })
+            preview?.let { photo ->
+                FullScreenImageDialog(images = com.coffeepeek.admin.ui.component.PhotoViewerImages(photo.imageUrls, photo.originalUrls),
+                    initialIndex = photo.initialIndex, onDismiss = { preview = null })
             }
         }
     }

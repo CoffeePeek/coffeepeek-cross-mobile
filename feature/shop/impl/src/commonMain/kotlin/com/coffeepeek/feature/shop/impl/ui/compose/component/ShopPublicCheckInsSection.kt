@@ -35,7 +35,7 @@ internal fun ShopPublicCheckInsSection(
     currentUserId: String?,
     ownCheckInIds: Set<String>,
     pendingVoteId: String?,
-    onOpenPhoto: (List<String>, Int) -> Unit,
+    onOpenPhoto: (ShopCheckIn, Int) -> Unit,
     onVote: (String) -> Unit,
     onReport: (String) -> Unit,
     onOpenAll: () -> Unit,
@@ -75,7 +75,7 @@ internal fun ShopPublicCheckInsSection(
                         (currentUserId?.takeIf(String::isNotBlank)?.let { it == checkIn.userId } == true)
                     ShopCheckInCard(
                         checkIn = checkIn,
-                        onOpenPhoto = onOpenPhoto,
+                        onOpenPhoto = { _, index -> onOpenPhoto(checkIn, index) },
                         modifier = Modifier.width(width),
                         showAuthor = true, showHelpful = true,
                         isOwn = own, isVoting = pendingVoteId == checkIn.id,

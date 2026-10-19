@@ -11,6 +11,7 @@ import io.ktor.client.plugins.auth.providers.bearer
 import io.ktor.client.request.HttpRequestPipeline
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.Url
+import io.ktor.http.HttpHeaders
 import kotlinx.coroutines.CancellationException
 import com.coffeepeek.core.network.RefreshRejectedException
 
@@ -19,6 +20,25 @@ internal fun HttpClientConfig<*>.configureSessionAuthentication(
     current: () -> AuthResp?,
     save: suspend (AuthResp, AuthResp?) -> Boolean,
     refresh: suspend (String) -> AuthResp,
+) = configureSessionAuthenticationInternal(baseUrl, current, save) { old, rejected ->
+    if (old.accessToken != rejected) throw CancellationException("Session changed")
+    refresh(old.refreshToken)
+}
+
+internal fun HttpClientConfig<*>.configureSessionAuthentication(
+    baseUrl: String,
+    current: () -> AuthResp?,
+    save: suspend (AuthResp, AuthResp?) -> Boolean,
+    coordinator: SessionRefreshCoordinator,
+) = configureSessionAuthenticationInternal(baseUrl, current, save) { old, rejected ->
+    coordinator.refresh(old.refreshToken, rejected)
+}
+
+private fun HttpClientConfig<*>.configureSessionAuthenticationInternal(
+    baseUrl: String,
+    current: () -> AuthResp?,
+    save: suspend (AuthResp, AuthResp?) -> Boolean,
+    refresh: suspend (AuthResp, String) -> AuthResp,
 ) {
     val origin = Url(baseUrl)
     fun isApi(url: Url) = url.protocol == origin.protocol && url.host == origin.host && url.port == origin.port
@@ -34,14 +54,22 @@ internal fun HttpClientConfig<*>.configureSessionAuthentication(
             loadTokens { current()?.let { BearerTokens(it.accessToken, it.refreshToken) } }
             refreshTokens {
                 response.call.request.attributes.getOrNull(logicalRequestKey)?.authRetried = true
+                val rejected = response.call.request.headers[HttpHeaders.Authorization]
+                    ?.takeIf { it.startsWith("Bearer ", ignoreCase = true) }?.substring(7)
+                    ?: return@refreshTokens null
                 val old = current() ?: return@refreshTokens null
                 if (old.refreshToken.isBlank()) {
-                    save(old, null); return@refreshTokens null
+                    if (old.accessToken == rejected) save(old, null)
+                    return@refreshTokens null
                 }
                 try {
-                    val updated = refresh(old.refreshToken)
-                    if (current()?.accessToken != old.accessToken) return@refreshTokens null
-                    if (!save(old, updated)) return@refreshTokens null
+                    val updated = refresh(old, rejected)
+                    val latest = current()
+                    if (latest?.accessToken != old.accessToken) {
+                        // A shared refresh coordinator may already have persisted this
+                        // exact rotation. Never substitute an unrelated login/account.
+                        if (latest != updated) return@refreshTokens null
+                    } else if (!save(old, updated)) return@refreshTokens null
                     BearerTokens(updated.accessToken, updated.refreshToken)
                 } catch (cancelled: CancellationException) {
                     throw cancelled
