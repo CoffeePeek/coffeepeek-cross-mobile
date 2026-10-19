@@ -21,6 +21,7 @@ import androidx.compose.ui.unit.dp
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.feature.shop.domain.model.ShopCheckIn
+import com.coffeepeek.feature.shop.impl.ui.data.blockableAuthor
 import com.coffeepeek.feature.shop.impl.resources.Res
 import com.coffeepeek.feature.shop.impl.resources.shop_checkins_public_title
 import com.coffeepeek.feature.shop.impl.resources.shop_checkins_show_all
@@ -47,6 +48,7 @@ internal fun ShopPublicCheckInsSection(
     formatDate: (String) -> String = { it.take(10) },
     isRefreshing: Boolean = false,
     onOpenAuthor: (String) -> Unit = {},
+    onBlockAuthor: (String) -> Unit = {},
 ) {
     Column(modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing3)) {
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
@@ -83,6 +85,8 @@ internal fun ShopPublicCheckInsSection(
                         onVote = if (isLoggedIn && !own && pendingVoteId == null && !isRefreshing)
                             ({ onVote(checkIn.id) }) else null,
                         onReport = if (isLoggedIn && !own) ({ onReport(checkIn.id) }) else null,
+                        onBlockAuthor = checkIn.blockableAuthor(own, isLoggedIn, currentUserId)
+                            ?.takeUnless { isRefreshing }?.let { { onBlockAuthor(checkIn.id) } },
                         onOpenAuthor = checkIn.authorSlug?.takeIf(String::isNotBlank)?.let { { onOpenAuthor(checkIn.id) } },
                     )
                 }

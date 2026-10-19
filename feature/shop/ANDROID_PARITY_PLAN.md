@@ -1,5 +1,48 @@
 # Android shop migration — compatibility plan
 
+## Author-block action parity — 2026-10-19
+
+Owner: Shop parent #43, based on `58edfdbd`; remote main remains `dfb00e63`.
+Preserve main's block-first check-in menu and existing application-owned block
+confirmation/login flow. Shop emits only a narrow public-author identity through
+its API; no Koin, HTTP or author-block implementation is added to feature UI.
+Application composition adapts that identity while its account/visibility lease
+is current. Public author IDs are not authentication user IDs. Known own rows,
+canonical own slugs, unresolved signed-in profiles, unavailable identities,
+hidden guest rows and unrendered preview rows must not emit a block request.
+Only visible guest rows may request the existing sign-in prompt. Existing report,
+vote, album and blocked-author filtering/cancellation remain intact.
+
+Verification: **552 selected unit results** (99 Shop impl, 11 author-blocking,
+442 app Direct), zero failures/errors/skips. Direct Debug APK and packaged DEX
+guard, self-targeted Shop APK and app Direct instrumentation Kotlin compilation
+pass. First build: 1m43s; completed fixture build: 7s; final selector build: 2s.
+Studio error inspections report none in the block icon, Shop detail ViewModel,
+eligibility helper, menu and app bridge. Shared owner previews remain beside the
+components; popup placement is exercised on-device, not certified by IDE rendering.
+
+Physical **Pixel 7 / API 37**, 1080x2400/density 420: new menu/API cases **4/4**
+pass (11.884s); the final full Shop suite passes **39/39** (67.221s). Tests use
+only generic self-targeted Application, fake repositories and recording callbacks,
+not the live root DI. The public entry cases assert exact issued identity and
+localized missing-name fallback without another read or a vote/favorite write.
+Package/target/version 0 and matching signatures were checked before test-only
+in-place updates, without uninstall/data clear. Final test APK SHA-256:
+`92708dc930ef9eac514c2735b6fb52405a1eb4789bcc0f215b31844ee37e40ff`.
+
+Retained retry history: the first full run passed 38/39. An old parent-only
+author-navigation test scrolled to index 3 in a three-item fixture (valid indices
+0..2); its already-existing child fix selects the author semantically. Porting
+the selector initially missed two imports (3s compile failure), then compiled
+successfully. Targeted repair **1/1** passes (2.409s), followed by full **39/39**.
+No product assertion or scenario was dropped. Logs stay local under
+`coffeepeek-shop-block-parent-*2026-10-19.log`.
+
+Propagate the owner fix through the existing stack, then verify Debug/Sandbox at
+the tip. No real account/block/backend write, native iOS change, new Gradle module
+or manual pixel-parity acceptance. Full-app Sandbox blocking transport fixtures
+and live protected-media/blocking acceptance remain separate gates.
+
 ## Scoped interaction corrections — 2026-10-19
 
 Parent #43 (`d8dff6ed` plus this patch) restores the existing main hours-header

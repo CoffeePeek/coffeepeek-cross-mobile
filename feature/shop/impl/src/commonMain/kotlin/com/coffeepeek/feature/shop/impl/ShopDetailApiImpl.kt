@@ -15,6 +15,9 @@ import com.coffeepeek.feature.shop.domain.repository.ShopDetailsRepository
 import com.coffeepeek.feature.shop.impl.ui.ShopDetailViewModel
 import com.coffeepeek.feature.shop.impl.ui.compose.ShopDetailScreen
 import com.coffeepeek.feature.shop.impl.ui.compose.model.ShopDetailEvent
+import com.coffeepeek.feature.shop.impl.resources.Res
+import com.coffeepeek.feature.shop.impl.resources.shop_checkins_author_unknown
+import org.jetbrains.compose.resources.stringResource
 
 /** Composition supplies session-aware repositories and its local clock. No feature Koin lookup. */
 fun createShopDetailEntry(
@@ -50,6 +53,7 @@ private class DefaultShopDetailEntry(
         onEffect: (ShopDetailEffect) -> Unit,
         refreshGeneration: Long,
     ) {
+        val unknownAuthor = stringResource(Res.string.shop_checkins_author_unknown)
         val model = viewModel(key = "shop-detail:$shopId") {
             ShopDetailViewModel(shopId = shopId, detailsRepository = detailsRepository,
                 checkInVoteRepository = voteRepository, favoritesRepository = favoritesRepository,
@@ -62,13 +66,13 @@ private class DefaultShopDetailEntry(
                 formatDistance = formatDistance, forCheckIn = forCheckIn,
                 formatCheckInDate = formatCheckInDate, formatMenuDate = formatMenuDate,
                 refreshGeneration = refreshGeneration, onEvent = { event ->
-                    event.toPublicEffect()?.let(onEffect)
+                    event.toPublicEffect(unknownAuthor)?.let(onEffect)
                 })
         }
     }
 }
 
-private fun ShopDetailEvent.toPublicEffect(): ShopDetailEffect? = when (this) {
+private fun ShopDetailEvent.toPublicEffect(unknownAuthor: String): ShopDetailEffect? = when (this) {
     ShopDetailEvent.Back -> ShopDetailEffect.Back
     ShopDetailEvent.ChooseAnotherShop -> ShopDetailEffect.ChooseAnotherShop
     ShopDetailEvent.SignIn -> ShopDetailEffect.SignIn
@@ -79,6 +83,7 @@ private fun ShopDetailEvent.toPublicEffect(): ShopDetailEffect? = when (this) {
     is ShopDetailEvent.OpenCheckIns -> ShopDetailEffect.OpenCheckIns(shopId)
     is ShopDetailEvent.ReportCheckIn -> ShopDetailEffect.ReportCheckIn(checkInId)
     is ShopDetailEvent.OpenAuthor -> ShopDetailEffect.OpenAuthor(slug, nickname, avatarUrl)
+    is ShopDetailEvent.BlockAuthor -> ShopDetailEffect.BlockAuthor(author.copy(nickname = author.nickname.ifBlank { unknownAuthor }))
     is ShopDetailEvent.FavoriteChanged -> ShopDetailEffect.FavoriteChanged(shopId, isFavorite)
     is ShopDetailEvent.OpenMap -> ShopDetailEffect.OpenMap(latitude, longitude, title)
     is ShopDetailEvent.OpenRoute -> ShopDetailEffect.OpenRoute(latitude, longitude)

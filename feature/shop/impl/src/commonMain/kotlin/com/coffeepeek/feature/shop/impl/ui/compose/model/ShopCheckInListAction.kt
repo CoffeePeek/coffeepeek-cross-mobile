@@ -11,5 +11,6 @@ internal sealed interface ShopCheckInListAction {
     data class ToggleHelpful(val checkInId: String) : ShopCheckInListAction
     data class Report(val checkInId: String) : ShopCheckInListAction
     data class OpenAuthor(val checkInId: String) : ShopCheckInListAction
+    data class BlockAuthor(val checkInId: String) : ShopCheckInListAction
     data class OpenPhoto(val checkInId: String, val index: Int) : ShopCheckInListAction
 }
