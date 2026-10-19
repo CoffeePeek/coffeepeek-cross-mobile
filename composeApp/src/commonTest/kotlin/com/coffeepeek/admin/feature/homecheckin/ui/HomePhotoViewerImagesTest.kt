@@ -9,17 +9,17 @@ class HomePhotoViewerImagesTest {
     @Test fun pendingGalleryKeepsDistinctOriginalsInTheirPhotoOrder() {
         val first = "https://gateway.example/api/v1/check-ins/home/photos/first"
         val second = "https://gateway.example/api/v1/check-ins/home/photos/second"
-        val detail = "$second/variants/source/1/detail.png"
+        val thumbnail = "$second/variants/source/1/thumb.png"
         val images = homePhotoViewerImages(listOf(
             HomeCheckInPhoto("first", first, thumbnailUrl = "", detailUrl = ""),
-            HomeCheckInPhoto("second", second, detailUrl = detail),
+            HomeCheckInPhoto("second", second, thumbnailUrl = thumbnail),
         ))
-        assertEquals(listOf("", detail), images.previews)
+        assertEquals(listOf("", thumbnail), images.previews)
         assertEquals(listOf(first, second), images.originals)
         assertEquals(first, images.displayUrl(0, 0, true))
         assertEquals(first, images.highQualityUrl(0, 0))
-        assertEquals(detail, images.displayUrl(1, 1, true))
-        assertNull(images.highQualityUrl(1, 1))
+        assertEquals(thumbnail, images.displayUrl(1, 1, true))
+        assertEquals(second, images.highQualityUrl(1, 1))
         assertNull(images.highQualityUrl(1, 0))
     }
 

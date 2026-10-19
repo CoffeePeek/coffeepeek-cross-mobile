@@ -146,7 +146,7 @@ internal fun PublicProfileStatsCard(stats: PublicProfileStats, onFollowersClick:
 internal fun PublicProfileCheckInCard(
     checkIn: PublicProfileCheckIn,
     onShopClick: () -> Unit,
-    onPhotoClick: (List<String>, Int) -> Unit,
+    onPhotoClick: (com.coffeepeek.admin.ui.component.PhotoViewerImages, Int) -> Unit,
     authorName: String = "",
     authorAvatarUrl: String? = null,
     isOwnProfile: Boolean = false,

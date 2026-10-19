@@ -23,6 +23,7 @@ import com.coffeepeek.admin.ui.component.CpSnackbarHost
 import com.coffeepeek.admin.ui.component.CoffeePeekLoader
 import com.coffeepeek.admin.ui.component.CoffeePeekPullToRefresh
 import com.coffeepeek.admin.ui.component.FullScreenImageDialog
+import com.coffeepeek.admin.ui.component.PhotoViewerImages
 import com.coffeepeek.admin.ui.component.LocalFloatingNavClearance
 import com.coffeepeek.admin.ui.component.LoadErrorContent
 import com.coffeepeek.admin.ui.component.ReviewTextInput
@@ -73,7 +74,7 @@ fun CommunityScreen(onCreateCheckIn: () -> Unit) {
     LaunchedEffect(shouldLoadMore) { if (shouldLoadMore) vm.loadMore() }
 
     preview?.takeIf { it.generation == state.sessionGeneration }?.let {
-        FullScreenImageDialog(imageUrls = it.urls, initialIndex = it.index, onDismiss = { preview = null })
+        FullScreenImageDialog(images = it.images, initialIndex = it.index, onDismiss = { preview = null })
     }
     if (state.editing != null) key(state.sessionGeneration, state.editing?.source?.id) { EditCheckInSheet(state, vm) }
     if (state.reportingId != null) com.coffeepeek.admin.ui.component.SwipeDismissModalBottomSheet(
@@ -202,4 +203,4 @@ internal fun CheckIn.publicationLabel(): String = if (visibility == CheckInVisib
     CheckInModerationState.Unknown -> "Статус проверки неизвестен"
 }
 
-private data class CheckInPhotoPreview(val generation: Long, val urls: List<String>, val index: Int)
+private data class CheckInPhotoPreview(val generation: Long, val images: PhotoViewerImages, val index: Int)
