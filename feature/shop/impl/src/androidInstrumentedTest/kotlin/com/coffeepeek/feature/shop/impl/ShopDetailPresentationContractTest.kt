@@ -17,6 +17,8 @@ import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollToIndex
+import androidx.compose.ui.test.assertHasNoClickAction
+import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import androidx.test.core.app.ActivityScenario
@@ -28,6 +30,9 @@ import com.coffeepeek.feature.shop.impl.ui.compose.component.ShopFeaturesSection
 import com.coffeepeek.feature.shop.impl.ui.compose.component.ShopMenuSection
 import com.coffeepeek.feature.shop.impl.ui.compose.component.ShopContactSection
 import com.coffeepeek.feature.shop.impl.ui.compose.component.ShopCoffeeDetailsSection
+import com.coffeepeek.feature.shop.impl.ui.compose.component.ShopScheduleSection
+import com.coffeepeek.feature.shop.domain.model.ShopSchedule
+import com.coffeepeek.feature.shop.domain.model.ScheduleInterval
 import com.coffeepeek.feature.shop.domain.model.MenuPhoto
 import com.coffeepeek.feature.shop.domain.model.ShopFeature
 import com.coffeepeek.feature.shop.domain.model.ShopMenu
@@ -36,6 +41,7 @@ import com.coffeepeek.feature.shop.domain.model.ShopCoffeeDetails
 import com.coffeepeek.feature.shop.domain.model.ShopRoaster
 import com.coffeepeek.feature.shop.impl.ui.compose.component.previewCheckIn
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 
@@ -86,6 +92,38 @@ class ShopDetailPresentationContractTest {
             compose.onNodeWithContentDescription("Действия с чекином").performClick()
             compose.onNodeWithText("Пожаловаться").performClick()
             compose.runOnIdle { assertEquals(1, votes); assertEquals(1, reports) }
+        }
+    }
+
+    @Test fun savedDrinkIsStaticAndBottomAlignedWithHelpfulCountInBothThemes() {
+        listOf(false, true).forEach { dark ->
+            render(dark) {
+                ShopCheckInCard(previewCheckIn(), { _, _ -> }, showAuthor = true,
+                    showHelpful = true, onVote = {})
+            }.use {
+                val drink = compose.onNodeWithText("Фильтр").assertHasNoClickAction().fetchSemanticsNode().boundsInRoot
+                val note = compose.onNodeWithText("Вкусный кофе и приятная атмосфера.").fetchSemanticsNode().boundsInRoot
+                val helpful = compose.onNodeWithContentDescription("Поставить лайк, лайков: 3")
+                    .fetchSemanticsNode().boundsInRoot
+                assertTrue("Drink belongs below the note", drink.top > note.bottom)
+                assertTrue("Drink belongs on the trailing side of the footer", drink.left > helpful.right)
+                assertTrue("Helpful count and drink share a footer", drink.center.y in helpful.top..helpful.bottom)
+            }
+        }
+    }
+
+    @Test fun hoursHeaderStillExpandsAndCollapsesWithAccessibleActions() {
+        render {
+            var expanded by remember { mutableStateOf(false) }
+            ShopScheduleSection(listOf(ShopSchedule(1, false, listOf(ScheduleInterval("09:00", "21:00")))),
+                todayDayOfWeek = 1, expanded = expanded, onToggle = { expanded = !expanded },
+                isOpen = true, minuteOfDay = 720)
+        }.use {
+            compose.onNodeWithText("Понедельник").assertDoesNotExist()
+            compose.onNodeWithText("Открыто до 21:00").performClick()
+            compose.onNodeWithText("Понедельник").assertIsDisplayed()
+            compose.onNodeWithText("Открыто до 21:00").performClick()
+            compose.onNodeWithText("Понедельник").assertDoesNotExist()
         }
     }
 
