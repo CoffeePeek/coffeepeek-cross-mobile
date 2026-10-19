@@ -57,7 +57,7 @@ import com.coffeepeek.admin.ui.screen.main.MainScreen
 import com.coffeepeek.admin.ui.component.RetainedContent
 import com.coffeepeek.admin.ui.screen.shop.ShopDetailScreenRenderer
 import com.coffeepeek.admin.ui.screen.shop.ShopCheckInListScreenRenderer
-import com.coffeepeek.admin.feature.coffee.ui.CoffeeDetailScreen
+import com.coffeepeek.admin.ui.screen.coffee.CoffeeScreenRenderer
 import com.coffeepeek.admin.ui.screen.shop.ShopMenuGalleryScreenRenderer
 import com.coffeepeek.admin.ui.screen.shop.ShopReportScreenRenderer
 import com.coffeepeek.admin.feature.profile.ui.OtherUserProfileScreen
@@ -453,7 +453,7 @@ object Navigator {
                     }
                     composable<Screen.CoffeeDetail> { backStack ->
                         val route = backStack.toRoute<Screen.CoffeeDetail>()
-                        CoffeeDetailScreen(slug = route.slug)
+                        koinInject<CoffeeScreenRenderer>().Detail(route.slug)
                     }
                     composable<Screen.ShopReviews> { backStack ->
                         val route = backStack.toRoute<Screen.ShopReviews>()
@@ -530,7 +530,7 @@ object Navigator {
             is Screen.ResetPassword -> LaunchedEffect(Unit) { resetToLogin() }
             is Screen.ShopDetail -> koinInject<ShopDetailScreenRenderer>().Content(screen.shopId, screen.forCheckIn)
             Screen.CreateCheckIn -> com.coffeepeek.admin.ui.screen.shop.CheckInShopPickerScreen()
-            is Screen.CoffeeDetail -> CoffeeDetailScreen(screen.slug)
+            is Screen.CoffeeDetail -> koinInject<CoffeeScreenRenderer>().Detail(screen.slug)
             is Screen.ShopReviews -> koinInject<ShopCheckInListScreenRenderer>().Content(screen.shopId)
             is Screen.ReportReview -> com.coffeepeek.admin.ui.screen.review.ReviewReportScreen(reviewId = screen.reviewId, isPreview = screen.isPreview)
             is Screen.ReportCheckIn -> com.coffeepeek.admin.ui.screen.review.ReviewReportScreen(reviewId = screen.checkInId, isCheckIn = true)

@@ -16,8 +16,8 @@ import java.io.File
 import java.io.FileOutputStream
 import com.coffeepeek.admin.feature.catalog.api.BrewMethodCatalog
 import com.coffeepeek.admin.feature.catalog.api.BrewMethodOption
-import com.coffeepeek.admin.feature.coffee.api.CoffeePicker
-import com.coffeepeek.admin.feature.coffee.api.CoffeePickerItem
+import com.coffeepeek.feature.coffee.api.CoffeePicker
+import com.coffeepeek.feature.coffee.api.CoffeePickerItem
 import com.coffeepeek.admin.ui.Navigator
 import com.coffeepeek.admin.ui.screen.checkins.CheckInHistoryDestination
 import com.coffeepeek.admin.ui.screen.checkins.CheckInHistoryScreenRenderer

@@ -68,7 +68,14 @@ design-system primitives rather than copying legacy App/Cp implementations.
   silent). `composeApp/.../di/coffee/AndroidCoffeeAnalytics.kt` adapts them to the existing
   `SearchTracker`/`Analytics`/`DetailEntryMemory` with the legacy event names. Unit-tested (impl ports
   test, adapter test); entries are **still not activated** — Koin/routes/picker remain item below.
-- [ ] Wire Android tab/detail/restored routes, picker and app-owned analytics using
+- [x] Android activation (2026-10-19): `CoffeeScreenRenderer` (commonMain, Legacy default for
+  iOS/shared) used by MainScreen's Coffee tab and Navigator's CoffeeDetail routes (incl. restored);
+  `di/coffee/CoffeeModule.kt` provides the migrated repository/picker over the plain client and
+  `AndroidCoffeeScreenRenderer` owns navigation, browser, share, gallery and floating-nav clearance.
+  Android Home/history catalogue ports now consume the migrated `CoffeePicker`. Legacy composeApp
+  catalogue code stays for iOS. Verified by unit/composition tests, Direct/Play/Sandbox assemblies,
+  instrumentation and iOS compilation; **not** checked on a device or in the full Sandbox walkthrough.
+- [x] (superseded wording) Wire Android tab/detail/restored routes, picker and app-owned analytics using
   factories. Keep shared/iOS fallback until its consumers deliberately migrate.
   Preserve SearchTracker's normalized-query/filter fingerprint, consent/session
   generation and result/open positions without importing an SDK into the feature.

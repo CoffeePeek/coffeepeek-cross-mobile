@@ -77,7 +77,7 @@ iOS UI migration remains deferred; Native compilation is only compatibility.
 3. [~] Finish Coffee app-owned analytics (ports/adapters/tests done 2026-10-19; activation with item 4): normalized search/filter fingerprint,
    consent/session invalidation, result/open position and detail/section actions.
    Features receive narrow ports, never an analytics SDK.
-4. [ ] Wire Coffee Android factories, Koin, tab/detail/restored routes and picker.
+4. [~] (code done 2026-10-19, device/Sandbox acceptance pending) Wire Coffee Android factories, Koin, tab/detail/restored routes and picker.
    Keep existing root navigation/iOS fallback. Do not invent a Coffee app-link:
    current-main public links cover shops/roasters/users.
 5. [ ] Verify integrated Coffee in full Sandbox, then authorized live-read/

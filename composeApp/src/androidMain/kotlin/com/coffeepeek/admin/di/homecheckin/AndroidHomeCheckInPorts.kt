@@ -4,7 +4,7 @@ import com.coffeepeek.admin.di.checkinhistory.AndroidCheckInHistorySession
 import com.coffeepeek.admin.analytics.safeAnalyticsError
 import com.coffeepeek.admin.feature.catalog.api.BrewMethodCatalog
 import com.coffeepeek.admin.feature.catalog.api.catalogBrewMethodSlug
-import com.coffeepeek.admin.feature.coffee.api.CoffeePicker
+import com.coffeepeek.feature.coffee.api.CoffeePicker
 import com.coffeepeek.feature.homecheckin.domain.model.*
 import com.coffeepeek.feature.homecheckin.domain.repository.HomePreparationRepository
 import com.coffeepeek.feature.homecheckin.impl.ui.data.*
