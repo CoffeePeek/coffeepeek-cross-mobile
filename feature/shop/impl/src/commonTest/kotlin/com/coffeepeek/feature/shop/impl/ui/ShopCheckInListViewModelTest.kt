@@ -108,6 +108,52 @@ class ShopCheckInListViewModelTest {
         assertEquals(1, events.size)
     }
 
+    @Test fun blockRequestsUseOnlyVisiblePublicIdentityAndDoNotVote() = runTest(dispatcher) {
+        val repository = Details().apply { result = Result.success(details().let { source -> source.copy(
+            checkIns = source.checkIns.map { it.copy(authorId = "public-${it.id}", authorSlug = "slug-${it.id}", username = "Author") }) }) }
+        val votes = Votes()
+        val model = viewModel(repository, votes, viewer = { Result.success(ShopViewer(false, null)) })
+        val events = mutableListOf<ShopCheckInListEvent>()
+        backgroundScope.launch { model.events.collect { events += it.event } }
+        runCurrent()
+        model.onAction(ShopCheckInListAction.BlockAuthor("second"))
+        model.onAction(ShopCheckInListAction.BlockAuthor("missing"))
+        model.onAction(ShopCheckInListAction.BlockAuthor("first")); runCurrent()
+        assertEquals(listOf<ShopCheckInListEvent>(ShopCheckInListEvent.BlockAuthor(
+            com.coffeepeek.feature.shop.api.ShopCheckInAuthor("public-first", "slug-first", "Author", null))), events)
+        assertTrue(votes.calls.isEmpty())
+    }
+
+    @Test fun blockingRejectsOwnersAndUnresolvedSignedInViewer() = runTest(dispatcher) {
+        for (viewer in listOf(ShopViewer(true, null), ShopViewer(true, "viewer"))) {
+            val repository = Details().apply { result = Result.success(details().let { source -> source.copy(
+                checkIns = source.checkIns.map { it.copy(authorId = "public-${it.id}", authorSlug = "viewer") }) }) }
+            val model = viewModel(repository, viewer = { Result.success(viewer) })
+            val events = mutableListOf<ShopCheckInListEvent>()
+            backgroundScope.launch { model.events.collect { events += it.event } }
+            runCurrent()
+            listOf("first", "second", "third").forEach { model.onAction(ShopCheckInListAction.BlockAuthor(it)) }
+            runCurrent()
+            assertTrue(events.isEmpty())
+        }
+    }
+
+    @Test fun refreshingRowsCannotTriggerAnOldBlockRequest() = runTest(dispatcher) {
+        val repository = Details().apply { result = Result.success(details().let { source -> source.copy(
+            checkIns = source.checkIns.map { it.copy(authorSlug = "public-${it.id}") }) }) }
+        val model = viewModel(repository)
+        val events = mutableListOf<ShopCheckInListEvent>()
+        backgroundScope.launch { model.events.collect { events += it.event } }
+        runCurrent()
+        repository.gate = CompletableDeferred()
+        model.onAction(ShopCheckInListAction.Retry); runCurrent()
+        model.onAction(ShopCheckInListAction.BlockAuthor("first")); runCurrent()
+        assertTrue(events.isEmpty())
+        repository.gate!!.complete(Unit); runCurrent()
+        model.onAction(ShopCheckInListAction.BlockAuthor("first")); runCurrent()
+        assertEquals(1, events.size)
+    }
+
     @Test fun hiddenGuestActionsDoNotEmitEffectsOrMutate() = runTest(dispatcher) {
         val votes = Votes()
         val viewModel = viewModel(votes = votes, viewer = { Result.success(ShopViewer(false, null)) })

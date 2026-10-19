@@ -21,6 +21,7 @@ internal class AndroidShopCheckInListScreenRenderer(
     private val details: ShopDetailsRepository,
     private val votes: ShopCheckInVoteRepository,
     private val visibility: com.coffeepeek.feature.authorblocking.api.AuthorVisibility,
+    private val blockActions: com.coffeepeek.feature.authorblocking.api.AuthorBlockActions,
 ) : ShopCheckInListScreenRenderer {
     @Composable
     override fun Content(shopId: String) {
@@ -42,6 +43,7 @@ internal class AndroidShopCheckInListScreenRenderer(
                 onOpenAuthor = { slug, nickname, avatar ->
                     if (session.lease.isCurrent()) Navigator.navigate(Navigator.Screen.UserProfile(slug, nickname, avatar))
                 },
+                onBlockAuthor = { session.lease.requestAuthorBlock(it, blockActions) },
                 onOpenPhoto = { urls, originals, index -> if (session.lease.isCurrent())
                     preview = com.coffeepeek.feature.shop.api.ShopDetailEffect.OpenPhoto(urls, index, originals) })
             preview?.let { photo ->
