@@ -129,6 +129,24 @@ class AndroidCheckInHistoryHostViewModelTest {
         assertNull(host.session.value.photoPreview.value)
     }
 
+    @Test fun explicitOriginalsStayAlignedAndCannotSurviveAccountRevocation() = runTest(dispatcher) {
+        val sessions = CheckInTestSessions()
+        val host = AndroidCheckInHistoryHostViewModel(sessions).also { store.put("host", it) }
+        val current = host.session.value
+        val details = mutableListOf("https://fixture.invalid/detail", "")
+        val originals = mutableListOf("https://fixture.invalid/one", "https://fixture.invalid/two")
+        current.openPhoto(details, originals, 1)
+        details.clear(); originals.clear()
+        assertEquals(listOf("https://fixture.invalid/detail", ""), current.photoPreview.value?.urls)
+        assertEquals(listOf("https://fixture.invalid/one", "https://fixture.invalid/two"), current.photoPreview.value?.originalUrls)
+        current.dismissPhoto()
+        current.openPhoto(listOf("detail"), emptyList(), 0)
+        assertNull(current.photoPreview.value)
+        sessions.applySession(null); runCurrent()
+        current.openPhoto(listOf(""), listOf("private-original"), 0)
+        assertNull(current.photoPreview.value)
+    }
+
     @Test fun tokenRenewalPreservesAnOpenPhotoWithoutPreservingItAcrossLogout() = runTest(dispatcher) {
         val sessions = CheckInTestSessions()
         val host = AndroidCheckInHistoryHostViewModel(sessions).also { store.put("host", it) }

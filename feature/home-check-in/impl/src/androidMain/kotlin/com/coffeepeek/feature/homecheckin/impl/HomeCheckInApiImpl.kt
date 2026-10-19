@@ -17,7 +17,7 @@ import com.coffeepeek.feature.homecheckin.impl.ui.compose.model.HomeCheckInDetai
  * once per lease, not on each recomposition. Repository guards remain mandatory.
  * [imageContent] uses the configured authenticated loader; cutouts must preserve
  * transparency, fit inside their bounds and keep the existing 3dp outline.
- * Originals crop to their bounds. No client, picker or root navigation is owned here.
+ * Feed previews crop to their bounds. No client, picker or root navigation is owned here.
  */
 fun createHomeCheckInDetailEntry(
     repository: HomePreparationRepository,
@@ -40,7 +40,7 @@ private class HomeCheckInApiImpl(
         onClose: () -> Unit,
         onEdit: (String) -> Unit,
         onDeleted: (String) -> Unit,
-        onOpenPhoto: (List<String>, Int) -> Unit,
+        onOpenPhoto: (List<String>, List<String>, Int) -> Unit,
         onDismissAllowedChange: (Boolean) -> Unit,
         modifier: Modifier,
         notice: String?,
@@ -57,7 +57,7 @@ private class HomeCheckInApiImpl(
                     HomeCheckInDetailEvent.Close -> onClose()
                     is HomeCheckInDetailEvent.Edit -> onEdit(event.preparationId)
                     is HomeCheckInDetailEvent.Deleted -> onDeleted(event.preparationId)
-                    is HomeCheckInDetailEvent.OpenPhoto -> onOpenPhoto(event.urls, event.index)
+                    is HomeCheckInDetailEvent.OpenPhoto -> onOpenPhoto(event.urls, event.originalUrls, event.index)
                 }
             }
         }

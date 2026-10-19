@@ -17,7 +17,7 @@ import org.jetbrains.compose.resources.stringResource
 /** One app-owned sheet; feature entries render its body without nesting another editor/detail modal. */
 @Composable
 internal fun HistoryHomeOverlay(bridge: AndroidHistoryHomeBridge, session: HistoryHostSession,
-    onPhoto: (List<String>, Int) -> Unit) {
+    onPhoto: (List<String>, List<String>, Int) -> Unit) {
     val destination by bridge.destination.collectAsStateWithLifecycle()
     destination?.let { current -> key(current) {
         val dismissAllowed by current.dismissAllowed.collectAsStateWithLifecycle()
@@ -35,7 +35,7 @@ internal fun HistoryHomeOverlay(bridge: AndroidHistoryHomeBridge, session: Histo
                         { civil, instant -> listOf(civil.split('-').reversed().joinToString("."),
                             utcIsoToLocalDateTime(instant).substringAfterLast(' ', "")).filter(String::isNotBlank).joinToString(" · ") }, dates.formatMethod,
                         { bridge.dismiss(current) }, { bridge.edit(current, it) }, { bridge.deleted(current, it) },
-                        { urls, index -> bridge.openPhoto(current, urls, index, onPhoto) },
+                        { urls, originals, index -> bridge.openPhoto(current, urls, originals, index, onPhoto) },
                         { bridge.setDismissAllowed(current, it) }, modifier,
                         if (current.visibilityUnconfirmed) stringResource(Res.string.history_home_visibility_unconfirmed) else null)
                 }

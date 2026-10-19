@@ -51,6 +51,33 @@ class HomePreparationCalendarTest {
         } finally { gateway.close(); upload.close() }
     }
 
+    @Test fun calendarUsesOnlyThumbsAndPreservesCountsWhenManifestsAreEmpty() = runBlocking {
+        var pageCalls = 0
+        val gateway = gateway(MockEngine { request ->
+            val data = if (request.url.encodedPath.endsWith("/calendar"))
+                """[{"preparedOn":"2026-10-16","brewCount":3}]"""
+            else {
+                pageCalls++
+                assertEquals("/api/v1/check-ins/home", request.url.encodedPath)
+                val thumb = """{"purpose":"thumb","contentType":"image/png","width":80,"height":80,"sizeBytes":100,"url":"/thumb"}"""
+                """{"items":[
+                    {"id":"cutout","preparedOn":"2026-10-16","preparedAtUtc":"2026-10-16T08:00:00Z","drinkPhoto":{"url":"/cutout-original","variants":[$thumb]}},
+                    {"id":"photo","preparedOn":"2026-10-16","preparedAtUtc":"2026-10-16T09:00:00Z","photos":[{"url":"/photo-original","variants":[$thumb]}]},
+                    {"id":"pending","preparedOn":"2026-10-16","preparedAtUtc":"2026-10-16T10:00:00Z","photos":[{"url":"/pending-original","variants":[]}]}
+                ],"totalCount":3}"""
+            }
+            respond("""{"isSuccess":true,"data":$data}""", headers = headers)
+        })
+        val upload = HttpClient(MockEngine { error("No uploads") })
+        try {
+            val day = createHomePreparationRepository(gateway, upload, "https://fixture.invalid").calendar(range).getOrThrow().single()
+            assertEquals(3, day.brewCount)
+            assertEquals(listOf("https://fixture.invalid/thumb", "https://fixture.invalid/thumb"), day.photos.map { it.url })
+            assertEquals(listOf(true, false), day.photos.map { it.isCutout })
+            assertEquals(1, pageCalls)
+        } finally { gateway.close(); upload.close() }
+    }
+
     @Test fun emptyCalendarDoesNotRequestAnyPhotoPages() = runBlocking {
         var calls = 0
         val gateway = gateway(MockEngine { request ->

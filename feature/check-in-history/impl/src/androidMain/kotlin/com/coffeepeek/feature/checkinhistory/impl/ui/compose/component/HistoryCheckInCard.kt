@@ -33,7 +33,8 @@ internal fun HistoryCheckInCard(checkIn: PersonalCheckIn, dateLabel: String,
                 style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold)
             checkIn.rating?.let { HistoryCheckInRating(it) }
             HistoryCheckInNote(checkIn.note)
-            HistoryCheckInPhotos(checkIn.photoUrls, onOpenPhoto, imageContent = imageContent)
+            HistoryCheckInPhotos(checkIn.photoThumbnailUrls ?: checkIn.photoUrls, onOpenPhoto, imageContent = imageContent,
+                originalUrls = checkIn.photoUrls)
             if (checkIn.visibility == HistoryVisibility.Public || checkIn.helpfulCount > 0) {
                 val likes = stringResource(Res.string.history_helpful_count, checkIn.helpfulCount)
                 Row(Modifier.semantics(mergeDescendants = true) { contentDescription = likes },
@@ -43,7 +44,8 @@ internal fun HistoryCheckInCard(checkIn: PersonalCheckIn, dateLabel: String,
                     Text(checkIn.helpfulCount.toString(), style = MaterialTheme.typography.labelMedium)
                 }
             }
-            checkIn.drink.displayName(Locale.current.language)?.let { HistoryDrinkBadge(it, checkIn.drinkPhotoUrl, imageContent = imageContent) }
+            checkIn.drink.displayName(Locale.current.language)?.let { HistoryDrinkBadge(it,
+                checkIn.drinkPhotoThumbnailUrl ?: checkIn.drinkPhotoUrl, imageContent = imageContent) }
         }
     }
 }
@@ -56,6 +58,11 @@ internal fun previewHistoryCheckIn() = PersonalCheckIn(
     visibility = HistoryVisibility.Private, moderation = HistoryModeration.NotSubmitted, contentRevision = 0,
     rejectionReason = null, helpfulCount = 0, isHelpfulByCurrentUser = false,
 )
+
+@PreviewLightDark @Composable private fun HistoryCheckInUnavailablePhotoPreview() = CoffeePeekTheme {
+    HistoryCheckInCard(previewHistoryCheckIn().copy(photoUrls = listOf("fixture-original"),
+        photoThumbnailUrls = listOf("")), "14 октября", {})
+}
 
 @PreviewLightDark @Composable private fun HistoryCheckInCardPreview() = CoffeePeekTheme {
     HistoryCheckInCard(previewHistoryCheckIn(), "14 октября 2026", {})

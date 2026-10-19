@@ -691,7 +691,8 @@ class CombinedHistoryViewModelTest {
     }
 
     @Test fun visibleShopOpensDetailsBeforeCanonicalShopAndPhotosKeepAlbumIndex() = runTest(dispatcher) {
-        val entry = shop("entry").copy(photoUrls = listOf("https://fixture.test/1", "https://fixture.test/2"))
+        val entry = shop("entry").copy(photoUrls = listOf("https://fixture.test/1", "https://fixture.test/2"),
+            photoDetailUrls = listOf("https://fixture.test/detail-1", ""))
         val shops = Shops().apply { pageResult = { Result.success(CheckInHistoryPage(listOf(entry), 1, it, 20)) } }
         val vm = vm(shops)
         val events = mutableListOf<CheckInHistoryEventEnvelope>()
@@ -703,7 +704,7 @@ class CombinedHistoryViewModelTest {
         vm.onAction(CombinedHistoryAction.OpenPhoto(-1))
         vm.onAction(CombinedHistoryAction.OpenPhoto(2))
         vm.onAction(CombinedHistoryAction.OpenPhoto(1)); runCurrent()
-        assertEquals(CheckInHistoryEvent.OpenPhoto(entry.photoUrls, 1), events.single().event)
+        assertEquals(CheckInHistoryEvent.OpenPhoto(entry.photoDetailUrls!!, 1, entry.photoUrls), events.single().event)
         vm.onAction(CombinedHistoryAction.OpenSelectedShop); runCurrent()
         assertEquals(CheckInHistoryEvent.OpenShop("shop"), events.last().event)
         assertNull(vm.state.value.selectedShop)

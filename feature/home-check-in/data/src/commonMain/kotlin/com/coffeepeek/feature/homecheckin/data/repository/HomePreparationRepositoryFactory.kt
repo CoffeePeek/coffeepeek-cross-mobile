@@ -82,8 +82,10 @@ private class RemoteHomePreparationRepository(
         currentCoroutineContext().ensureActive()
         val photos = entries.distinctBy(HomePreparation::id).filter { it.preparedOn in range.from..range.to }
             .groupBy(HomePreparation::preparedOn).mapValues { (_, rows) -> rows.mapNotNull { row ->
-                row.drinkPhotoUrl?.takeIf(String::isNotBlank)?.let { HomePreparationCalendarPhoto(it, true, row.preparedAtUtc) }
-                    ?: row.photos.firstOrNull { it.url.isNotBlank() }?.let { HomePreparationCalendarPhoto(it.url, false, row.preparedAtUtc) }
+                row.drinkPhotoUrl?.takeIf(String::isNotBlank)?.let { row.drinkPhotoThumbnailUrl ?: it }
+                    ?.takeIf(String::isNotBlank)?.let { HomePreparationCalendarPhoto(it, true, row.preparedAtUtc) }
+                    ?: row.photos.firstNotNullOfOrNull { photo -> (photo.calendarUrl ?: photo.url).takeIf(String::isNotBlank) }
+                        ?.let { HomePreparationCalendarPhoto(it, false, row.preparedAtUtc) }
             } }
         days.map { it.copy(photos = photos[it.preparedOn].orEmpty()) }
     }
