@@ -51,7 +51,6 @@ private fun HomePreparation.historyEntry() = HomeHistoryEntry(
     recipe = HomeHistoryRecipe(brewMethodCode, coffeeProductId, beanName, doseGrams, brewDurationSeconds, tasteScore),
     drinkName = drinkName, drinkSlug = drinkSlug, customDrinkName = customDrinkName,
     photos = photos.map { HomeHistoryPhoto(it.id, it.url, it.thumbnailUrl, it.detailUrl, it.calendarUrl) },
-    drinkPhotoUrl = drinkPhotoUrl, drinkPhotoThumbnailUrl = drinkPhotoThumbnailUrl, drinkPhotoDetailUrl = drinkPhotoDetailUrl,
     visibility = when (visibility) {
         HomePreparationVisibility.Private -> HistoryVisibility.Private
         HomePreparationVisibility.Public -> HistoryVisibility.Public

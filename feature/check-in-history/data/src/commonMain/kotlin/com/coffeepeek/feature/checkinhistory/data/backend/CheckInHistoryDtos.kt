@@ -31,8 +31,6 @@ internal data class HistoryCheckInDto(
     val visitedAt: String = "",
     val rating: HistoryRatingDto? = null,
     val photos: List<HistoryPhotoDto> = emptyList(),
-    val drinkPhotoUrl: String? = null,
-    val drinkPhotoVariants: List<HistoryPhotoVariantDto>? = null,
     val drinkSlug: String? = null,
     val customDrinkName: String? = null,
     val drinkNameRu: String? = null,

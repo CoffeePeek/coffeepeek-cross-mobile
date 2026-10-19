@@ -805,10 +805,10 @@ class CombinedHistoryViewModelTest {
         private fun homePage(number: Int, vararg entries: HomeHistoryEntry) = HomeHistoryPage(entries.toList(), 41, number, 20)
         private fun shop(id: String, at: String = "2026-10-16T10:00:00Z") = PersonalCheckIn(
             id, HistoryAddress("shop", "/coffee-shop/shop"), "Coffee", null, "Owner", "Private note", at, at,
-            null, emptyList(), null, null, HistoryVisibility.Private, HistoryModeration.NotSubmitted, 0, null, 0, false)
+            null, emptyList(), null, HistoryVisibility.Private, HistoryModeration.NotSubmitted, 0, null, 0, false)
         private fun home(id: String, date: String = "2026-10-16") = HomeHistoryEntry(id, date,
             if (date == "2026-10-16") "2026-10-15T22:15:00Z" else "${date}T08:15:00Z", "${date}T08:00:00Z", null,
-            HomeHistoryRecipe("drip", null, "Beans", "20", 120, 4), null, null, null, emptyList(), null,
+            HomeHistoryRecipe("drip", null, "Beans", "20", 120, 4), null, null, null, emptyList(),
             null, HistoryModeration.Unknown)
     }
 }

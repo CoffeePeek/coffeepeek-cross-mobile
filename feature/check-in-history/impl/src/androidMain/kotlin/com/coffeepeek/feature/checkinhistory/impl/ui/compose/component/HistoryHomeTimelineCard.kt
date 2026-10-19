@@ -61,7 +61,7 @@ internal fun HistoryHomeTimelineCard(entry: HomeHistoryEntry, timeLabel: String,
 
 internal fun previewHomeHistoryEntry() = HomeHistoryEntry("home", "2026-10-14", "2026-10-14T08:00:00Z",
     "2026-10-14T08:00:00Z", "Сладкий и сбалансированный кофе.",
-    HomeHistoryRecipe("hario-v60", null, "Эфиопия", "18.00", 180, 4), null, null, null, emptyList(), null,
+    HomeHistoryRecipe("hario-v60", null, "Эфиопия", "18.00", 180, 4), null, null, null, emptyList(),
     HistoryVisibility.Private, HistoryModeration.NotSubmitted)
 
 @PreviewLightDark @Composable private fun HistoryHomeTimelineCardPreview() = CoffeePeekTheme {

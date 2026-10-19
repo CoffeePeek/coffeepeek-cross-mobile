@@ -30,18 +30,13 @@ class HomeHistoryReaderAdapterTest {
         val source = HomeReadTestRepository().apply {
             history = { query -> Result.success(HomeCheckInPage(listOf(homeReadFixture().copy(
                 photos = listOf(com.coffeepeek.feature.homecheckin.domain.HomeCheckInPhoto(
-                    "photo", "original", "feed", "detail", "thumb")),
-                drinkPhotoUrl = "cutout-original", drinkPhotoThumbnailUrl = "cutout-thumb",
-                drinkPhotoDetailUrl = "cutout-detail")), 1, query.page, query.size)) }
+                    "photo", "original", "feed", "detail", "thumb")))), 1, query.page, query.size)) }
         }
         val entry = HomeHistoryReaderAdapter(LegacyHomePreparationReader(source)).page(1, 20, null).getOrThrow().items.single()
         assertEquals("original", entry.photos.single().url)
         assertEquals("feed", entry.photos.single().thumbnailUrl)
         assertEquals("detail", entry.photos.single().detailUrl)
         assertEquals("thumb", entry.photos.single().calendarUrl)
-        assertEquals("cutout-original", entry.drinkPhotoUrl)
-        assertEquals("cutout-thumb", entry.drinkPhotoThumbnailUrl)
-        assertEquals("cutout-detail", entry.drinkPhotoDetailUrl)
     }
 
     @Test fun snapshotsPreserveCivilDateRecipePhotoIdentityAndUnknownPublication() = runTest {
@@ -65,7 +60,6 @@ class HomeHistoryReaderAdapterTest {
         assertEquals(source.customDrinkName, item.customDrinkName)
         assertEquals(source.photos.single().id, item.photos.single().id)
         assertEquals(source.photos.single().url, item.photos.single().url)
-        assertEquals(source.drinkPhotoUrl, item.drinkPhotoUrl)
         assertNull(item.visibility)
         assertEquals("Unknown", item.moderation.name)
         assertTrue(page.hasMore)
@@ -100,20 +94,19 @@ class HomeHistoryReaderAdapterTest {
         assertEquals(listOf("2024-02-01" to "2024-02-29"), source.ranges)
     }
 
-    @Test fun calendarPhotosReadAllMonthPagesPreferCutoutsAndDeduplicateRecords() = runTest {
+    @Test fun calendarPhotosReadAllMonthPagesAndDeduplicateRecords() = runTest {
         val source = HomeReadTestRepository().apply {
             days = { _, _ -> Result.success(listOf(com.coffeepeek.feature.homecheckin.domain.HomeCalendarDay("2026-10-16", 3))) }
             history = { query -> Result.success(HomeCheckInPage(
                 if (query.page == 1) listOf(homeReadFixture()) else listOf(
-                    homeReadFixture(), homeReadFixture().copy(id = "second", drinkPhotoUrl = null),
+                    homeReadFixture(), homeReadFixture().copy(id = "second"),
                     homeReadFixture().copy(id = "outside", preparedOn = "2026-09-30"),
                 ), 101, query.page, query.size,
             )) }
         }
         val range = HomeHistoryDateRange("2026-10-01", "2026-10-31")
         val photos = HomeHistoryReaderAdapter(LegacyHomePreparationReader(source)).calendar(range).getOrThrow().single().photos
-        assertEquals(listOf(homeReadFixture().drinkPhotoUrl, homeReadFixture().photos.single().url), photos.map { it.url })
-        assertEquals(listOf(true, false), photos.map { it.isCutout })
+        assertEquals(listOf(false, false), photos.map { it.isCutout })
         assertEquals(List(2) { homeReadFixture().preparedAtUtc }, photos.map { it.occurredAt })
         assertEquals(listOf(1, 2), source.queries.map { it.page })
         assertTrue(source.queries.all { it.size == 100 && it.from == range.from && it.to == range.to })
@@ -134,7 +127,7 @@ class HomeHistoryReaderAdapterTest {
         val source = HomeReadTestRepository().apply { history = { query ->
             Result.success(HomeCheckInPage(listOf(homeReadFixture().copy(text = null, brewMethodCode = null,
                 coffeeProductId = null, beanName = null, doseGrams = null, brewDurationSeconds = null, tasteScore = null,
-                drinkName = null, drinkSlug = null, customDrinkName = null, photos = emptyList(), drinkPhotoUrl = null)),
+                drinkName = null, drinkSlug = null, customDrinkName = null, photos = emptyList())),
                 1, query.page, query.size))
         } }
         val item = HomeHistoryReaderAdapter(LegacyHomePreparationReader(source)).page(1, 20, null).getOrThrow().items.single()
@@ -142,7 +135,6 @@ class HomeHistoryReaderAdapterTest {
         assertNull(item.recipe.tasteScore)
         assertNull(item.recipe.coffeeProductId)
         assertNull(item.drinkName)
-        assertNull(item.drinkPhotoUrl)
         assertNull(item.note)
         assertTrue(item.photos.isEmpty())
     }

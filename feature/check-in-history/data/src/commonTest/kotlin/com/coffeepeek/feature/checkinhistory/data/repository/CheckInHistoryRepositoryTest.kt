@@ -67,7 +67,6 @@ class CheckInHistoryRepositoryTest {
             assertTrue(entry.isHelpfulByCurrentUser)
             assertEquals("cappuccino", entry.drink?.slug)
             assertEquals(listOf("https://api.example/api/v1/check-ins/visit/photos/first", "https://images.example/last.jpg"), entry.photoUrls)
-            assertEquals("https://api.example/api/v1/check-ins/visit/drink-photo", entry.drinkPhotoUrl)
         } finally { client.close(); engine.close() }
     }
 
@@ -129,7 +128,6 @@ class CheckInHistoryRepositoryTest {
             assertNull(item.shop)
             assertNull(item.rating)
             assertNull(item.drink)
-            assertNull(item.drinkPhotoUrl)
             assertTrue(item.photoUrls.isEmpty())
             assertEquals(HistoryVisibility.Private, item.visibility)
             assertEquals(HistoryModeration.Unknown, item.moderation)

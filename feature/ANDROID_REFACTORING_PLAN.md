@@ -1,5 +1,16 @@
 # Android refactoring — current roadmap
 
+## Accepted develop baseline — 2026-10-19
+
+User approved adopting `origin/develop` `fc85f8e5` ahead of main `dfb00e63`.
+Reconcile parent #43 first, then every existing child in order. Retire drink-photo
+cutouts/MediaPipe throughout prepared Shop, history, Home and Sandbox; preserve
+ordinary photos, variant/original alignment and existing session/privacy guards.
+Keep incoming menu-photo-first editing without volume fields, profile spacing
+and gallery preview fixes. No new feature/module or iOS screen migration is part
+of this synchronization. Dated extraction tasks below are historical, not work
+to restore. Verification is recorded in the owning feature plans.
+
 Audit date: 2026-10-16. Product baseline: `origin/main` **0137ee7**.
 This is the current checklist. Older feature READMEs contain historical checkpoint
 notes; they do not override this source audit or certify later changes.

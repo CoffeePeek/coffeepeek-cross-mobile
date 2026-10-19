@@ -52,14 +52,12 @@ class AndroidHistoryHomeBridgeTest {
         }
     }
 
-    private fun bridge(repository: Repository = Repository(), sessions: CheckInTestSessions = CheckInTestSessions(),
-        drinkPhotos: com.coffeepeek.admin.feature.checkin.api.DrinkPhotoPreparation.Factory =
-            com.coffeepeek.admin.feature.checkin.api.DrinkPhotoPreparation.Factory.Unavailable):
+    private fun bridge(repository: Repository = Repository(), sessions: CheckInTestSessions = CheckInTestSessions()):
         Pair<HistoryHostSession, AndroidHistoryHomeBridge> {
         val session = HistoryHostSession(0, AndroidCheckInHistorySession(sessions)).also(owned::add)
         val factory = historyHomeEditorFactory(repository, object : CoffeePicker {
             override suspend fun search(query: String) = Result.success(emptyList<CoffeePickerItem>())
-        }, BrewMethodCatalog { Result.success(listOf(BrewMethodOption("hario-v60", "Hario V60"))) }, drinkPhotos)
+        }, BrewMethodCatalog { Result.success(listOf(BrewMethodOption("hario-v60", "Hario V60"))) })
         val bridge = AndroidHistoryHomeBridge(session, factory)
         session.viewModelStore.put("home", bridge)
         return session to bridge
@@ -108,27 +106,6 @@ class AndroidHistoryHomeBridgeTest {
             assertEquals("note", field["field"])
             assertTrue(sdk.events.none { "private fixture note" in it.second.values })
         } finally { service.setConsent(com.coffeepeek.admin.analytics.AnalyticsConsent.Declined) }
-    }
-
-    @Test fun existingHomePhotoPreparationIsInjectedAndCanBeSkippedWithoutAWrite() = runTest(dispatcher) {
-        val repository = Repository()
-        val photos = com.coffeepeek.admin.feature.checkin.api.DrinkPhotoPreparation.Factory { scope, changed ->
-            com.coffeepeek.admin.feature.checkin.ui.DrinkPhotoPreparationController(scope,
-                com.coffeepeek.admin.feature.checkin.domain.DrinkPhotoExtractor {
-                    assertContentEquals(byteArrayOf(1, 2), it.bytes)
-                    listOf(com.coffeepeek.domain.model.PendingPhotoUpload("cup.png", "image/png", byteArrayOf(3)))
-                }, changed)
-        }
-        val (_, bridge) = bridge(repository, drinkPhotos = photos)
-        bridge.create()
-        val editor = assertNotNull(bridge.editor.value)
-        bridge.withEditor(editor) { vm -> vm.updateDraft { it.copy(photos = listOf(HomePhotoUpload("source.jpg", "image/jpeg", byteArrayOf(1, 2)))) } }
-        awaitReal { editor.state.first { it.drinkPhotoState.selected != null } }
-        assertEquals("cup.png", editor.state.value.draft.drinkPhoto?.fileName)
-        bridge.withEditor(editor) { it.skipDrinkPhoto() }
-        assertNull(editor.state.value.draft.drinkPhoto)
-        assertTrue(editor.state.value.drinkPhotoState.skipped)
-        assertEquals(0, repository.saves)
     }
 
     @Test fun guestAndRevokedAccountCannotOpenOrCreateAnEditor() = runTest(dispatcher) {

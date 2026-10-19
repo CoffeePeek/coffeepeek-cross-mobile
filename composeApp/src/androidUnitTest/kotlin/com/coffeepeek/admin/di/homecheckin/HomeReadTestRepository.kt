@@ -45,6 +45,6 @@ internal fun homeReadFixture() = HomeCheckIn(
     brewMethodCode = "batch_drip", coffeeProductId = "coffee-id", beanName = "Honey Bloom", doseGrams = "75.50",
     brewDurationSeconds = 210, tasteScore = 4, drinkName = "My filter", drinkSlug = "other", customDrinkName = "My filter",
     photos = listOf(HomeCheckInPhoto("photo-id", "https://fixture.invalid/api/v1/check-ins/owned/photos/photo-id?signature=issued")),
-    drinkPhotoUrl = "https://fixture.invalid/api/v1/check-ins/owned/photos/cutout", visibility = null,
+    visibility = null,
     moderation = HomeCheckInModeration.Unknown,
 )

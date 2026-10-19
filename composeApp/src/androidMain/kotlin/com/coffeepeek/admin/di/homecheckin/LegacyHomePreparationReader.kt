@@ -46,9 +46,7 @@ internal class LegacyHomePreparationReader(private val repository: HomeCheckInRe
         }
         val photos = entries.distinctBy(HomeCheckIn::id).filter { it.preparedOn in range.from..range.to }
             .groupBy(HomeCheckIn::preparedOn).mapValues { (_, rows) -> rows.mapNotNull { row ->
-                row.drinkPhotoThumbnailUrl?.takeIf { it.isNotBlank() && !row.drinkPhotoUrl.isNullOrBlank() }
-                    ?.let { HomePreparationCalendarPhoto(it, true, row.preparedAtUtc) }
-                    ?: row.photos.firstOrNull { it.calendarUrl.isNotBlank() }?.let { HomePreparationCalendarPhoto(it.calendarUrl, false, row.preparedAtUtc) }
+                row.photos.firstOrNull { it.calendarUrl.isNotBlank() }?.let { HomePreparationCalendarPhoto(it.calendarUrl, false, row.preparedAtUtc) }
             } }
         days.map { it.copy(photos = photos[it.preparedOn].orEmpty()) }
     }
@@ -72,7 +70,6 @@ private fun HomeCheckIn.snapshot() = HomePreparation(
     doseGrams = doseGrams, brewDurationSeconds = brewDurationSeconds, tasteScore = tasteScore,
     drinkName = drinkName, drinkSlug = drinkSlug, customDrinkName = customDrinkName,
     photos = photos.map { HomePreparationPhoto(it.id, it.url, it.thumbnailUrl, it.detailUrl, it.calendarUrl) },
-    drinkPhotoUrl = drinkPhotoUrl, drinkPhotoThumbnailUrl = drinkPhotoThumbnailUrl, drinkPhotoDetailUrl = drinkPhotoDetailUrl,
     visibility = when (visibility) {
         HomeCheckInVisibility.Private -> HomePreparationVisibility.Private
         HomeCheckInVisibility.Public -> HomePreparationVisibility.Public

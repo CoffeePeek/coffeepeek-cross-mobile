@@ -77,7 +77,6 @@ class ShopDetailsRepositoryTest {
             assertEquals("Espresso tonic", checkIn.customDrinkName)
             assertEquals("Напиток", checkIn.drinkNameRu)
             assertEquals("Drink", checkIn.drinkNameEn)
-            assertEquals("https://files.example.com/api/v1/check-ins/checkin-1/photos/cup", checkIn.drinkPhotoUrl)
             assertEquals(ShopCheckInVisibility.Public, checkIn.visibility)
             assertEquals(ShopCheckInModerationState.Approved, checkIn.moderationState)
             assertEquals(2, checkIn.contentRevision)
@@ -88,7 +87,6 @@ class ShopDetailsRepositoryTest {
             assertEquals(ShopCheckInVisibility.Private, personal.visibility)
             assertEquals(ShopCheckInModerationState.Rejected, personal.moderationState)
             assertEquals("Needs editing", personal.rejectionReason)
-            assertNull(personal.drinkPhotoUrl)
         } finally {
             client.close()
             engine.close()

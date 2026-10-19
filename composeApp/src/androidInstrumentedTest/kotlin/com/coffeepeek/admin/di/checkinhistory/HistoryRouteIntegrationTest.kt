@@ -235,7 +235,7 @@ class HistoryRouteIntegrationTest {
         private val shops = object : CheckInHistoryRepository {
             private val entry = PersonalCheckIn("shop", HistoryAddress("public-shop", "/coffee-shop/public-shop"),
                 "Fixture cafe", null, "Owner", "Shop note", "2026-10-16T10:00:00Z", "2026-10-16T10:00:00Z",
-                null, emptyList(), null, null, HistoryVisibility.Private, HistoryModeration.NotSubmitted, 0, null, 0, false)
+                null, emptyList(), null, HistoryVisibility.Private, HistoryModeration.NotSubmitted, 0, null, 0, false)
             override suspend fun page(page: Int, pageSize: Int) = Result.success(CheckInHistoryPage(listOf(entry), 1, page, pageSize))
             override suspend fun period(period: HistoryPeriod) = Result.success(listOf(entry))
         }
@@ -296,10 +296,10 @@ class HistoryRouteIntegrationTest {
 
         private fun home(id: String, name: String) = HomeCheckIn(id, "2026-10-16T00:30:00Z", "2026-10-16",
             "2026-10-16T00:30:00Z", "Home owner note", "hario-v60", null, name, "18", 180, 4,
-            null, null, null, emptyList(), null, HomeCheckInVisibility.Private, HomeCheckInModeration.NotSubmitted)
+            null, null, null, emptyList(), HomeCheckInVisibility.Private, HomeCheckInModeration.NotSubmitted)
         private fun HomeCheckIn.history() = HomeHistoryEntry(id, preparedOn, preparedAtUtc, createdAtUtc, text,
             HomeHistoryRecipe(brewMethodCode, coffeeProductId, beanName, doseGrams, brewDurationSeconds, tasteScore),
-            drinkName, drinkSlug, customDrinkName, emptyList(), null, HistoryVisibility.Private, HistoryModeration.NotSubmitted)
+            drinkName, drinkSlug, customDrinkName, emptyList(), HistoryVisibility.Private, HistoryModeration.NotSubmitted)
     }
 
     private class Sessions(initial: Session?) : SessionRepository {

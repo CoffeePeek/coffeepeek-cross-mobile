@@ -127,7 +127,8 @@ internal fun FullScreenImageDialog(
                 val displayUrl = images.displayUrl(page, pagerState.currentPage, page in visiblePages)
                 if (isCurrent || page in visiblePages) ZoomableImage(
                     imageUrl = displayUrl.orEmpty(),
-                    highQualityUrl = images.highQualityUrl(page, pagerState.currentPage),
+                    highQualityUrl = images.highQualityUrl(page, pagerState.settledPage)
+                        .takeUnless { pagerState.isScrollInProgress },
                     contentDescription = "Фото ${page + 1} из ${imageUrls.size}",
                     isCurrent = isCurrent,
                     onTap = { controlsVisible = !controlsVisible },

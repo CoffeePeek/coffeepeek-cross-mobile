@@ -37,9 +37,6 @@ class CheckInHistoryModuleTest {
             modules(module { single { client }; single<SessionRepository> { sessions }
                 single<HomeCheckInRepository> { HomeReadTestRepository() } },
                 module {
-                    single<com.coffeepeek.admin.feature.checkin.api.DrinkPhotoPreparation.Factory> {
-                        com.coffeepeek.admin.feature.checkin.api.DrinkPhotoPreparation.Factory.Unavailable
-                    }
                     single<CoffeePicker> { object : CoffeePicker {
                         override suspend fun search(query: String) = error("Unexpected catalog read")
                     } }

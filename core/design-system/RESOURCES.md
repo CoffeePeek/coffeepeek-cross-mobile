@@ -57,8 +57,9 @@ rendering only if actual cross-feature reuse warrants it.
 2026-10-11: shop-specific rating mascots and empty-state imagery have independent
 feature/shop/impl resource copies. They remain feature-owned; required legacy
 copies stay in the app. On 2026-10-13 the three prepared synthetic drink images
-were removed to match main: Shop now uses optional server-issued drinkPhotoUrl
-and a neutral icon, with no replacement stock artwork. The reusable BYN glyph is packaged separately in
+were removed to match main. As of the accepted 2026-10-19 develop baseline,
+drink cutouts are retired altogether: Shop keeps the drink name and neutral
+coffee icon, with no replacement stock artwork. The reusable BYN glyph is packaged separately in
 design-system and rendered through CoffeePeekBynPriceIndicators; price thresholds
 and explanatory text remain in the shop feature.
 

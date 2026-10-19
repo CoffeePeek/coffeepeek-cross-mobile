@@ -9,7 +9,6 @@ import com.coffeepeek.feature.shop.domain.repository.ShopDetailsRepository
 import com.coffeepeek.feature.shop.domain.repository.ShopCheckInVoteRepository
 import com.coffeepeek.feature.shop.impl.ui.data.ShopCheckInDateFormatter
 import com.coffeepeek.feature.shop.impl.ui.data.ShopCheckInPhotoPicker
-import com.coffeepeek.feature.shop.impl.ui.data.ShopDrinkPhotoProcessor
 import org.junit.Rule
 import org.junit.rules.TemporaryFolder
 import org.koin.dsl.koinApplication
@@ -44,7 +43,6 @@ class ShopCheckInModuleTest {
             assertSame(app.koin.get<AndroidShopCheckInDraftStore>(), app.koin.get<AndroidShopCheckInDraftStore>())
             assertNotNull(app.koin.get<ShopCheckInDateFormatter>())
             assertNotNull(app.koin.get<ShopCheckInPhotoPicker>())
-            assertSame(app.koin.get<ShopDrinkPhotoProcessor>(), app.koin.get<ShopDrinkPhotoProcessor>())
             assertSame(existing, drafts.peek())
             assertEquals(0, credentialReads)
         } finally {
