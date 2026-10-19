@@ -158,29 +158,23 @@ class HomeCheckInDetailViewModelTest {
         assertEquals(HomeCheckInDetailEvent.Edit("home"), model.events.first().event)
         model.onAction(HomeCheckInDetailAction.OpenPhoto(1)); runCurrent()
         assertEquals(HomeCheckInDetailEvent.OpenPhoto(listOf("original-a", "original-b"), 1), model.events.first().event)
-        model.onAction(HomeCheckInDetailAction.OpenDrinkPhoto); runCurrent()
-        assertEquals(HomeCheckInDetailEvent.OpenPhoto(listOf("cutout"), 0), model.events.first().event)
     }
 
     @Test fun detailAndOriginalAlbumsStayAlignedEvenWhenAPreviewIsUnavailable() = runTest(dispatcher) {
         val repository = Repository().apply { detailResult = Result.success(entry().copy(
             photos = listOf(HomePreparationPhoto("a", "original-a", detailUrl = "detail-a"),
-                HomePreparationPhoto("b", "original-b", detailUrl = "")),
-            drinkPhotoUrl = "cutout", drinkPhotoDetailUrl = "cutout-detail")) }
+                HomePreparationPhoto("b", "original-b", detailUrl = "")))) }
         val model = model(repository)
         runCurrent()
         model.onAction(HomeCheckInDetailAction.OpenPhoto(1)); runCurrent()
         assertEquals(HomeCheckInDetailEvent.OpenPhoto(listOf("detail-a", ""), 1,
             listOf("original-a", "original-b")), model.events.first().event)
-        model.onAction(HomeCheckInDetailAction.OpenDrinkPhoto); runCurrent()
-        assertEquals(HomeCheckInDetailEvent.OpenPhoto(listOf("cutout-detail"), 0, listOf("cutout")),
-            model.events.first().event)
         assertEquals(1, repository.detailCalls)
     }
 
-    @Test fun invalidPhotoIndicesAndBlankCutoutDoNotEmitEffects() = runTest(dispatcher) {
+    @Test fun invalidPhotoIndicesAndBlankOriginalDoNotEmitEffects() = runTest(dispatcher) {
         val repository = Repository().apply {
-            detailResult = Result.success(entry().copy(drinkPhotoUrl = " ", photos = listOf(HomePreparationPhoto("blank", ""))))
+            detailResult = Result.success(entry().copy(photos = listOf(HomePreparationPhoto("blank", ""))))
         }
         val model = model(repository)
         val events = mutableListOf<HomeCheckInDetailEventEnvelope>()
@@ -188,7 +182,6 @@ class HomeCheckInDetailViewModelTest {
         runCurrent()
         model.onAction(HomeCheckInDetailAction.OpenPhoto(-1))
         model.onAction(HomeCheckInDetailAction.OpenPhoto(0))
-        model.onAction(HomeCheckInDetailAction.OpenDrinkPhoto)
         runCurrent()
         assertTrue(events.isEmpty())
     }
@@ -419,7 +412,7 @@ class HomeCheckInDetailViewModelTest {
             coffeeProductId = "historical-bean", beanName = "Fake bean", doseGrams = "18.5",
             brewDurationSeconds = 195, tasteScore = 4, drinkName = "Fake drink", drinkSlug = "other",
             customDrinkName = "Fake drink", photos = listOf(HomePreparationPhoto("a", "original-a"),
-                HomePreparationPhoto("b", "original-b")), drinkPhotoUrl = "cutout",
+                HomePreparationPhoto("b", "original-b")),
             visibility = null, moderation = HomePreparationModeration.Unknown,
         )
     }

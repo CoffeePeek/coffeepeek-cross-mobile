@@ -1,9 +1,7 @@
 package com.coffeepeek.admin.ui.screen.checkins
 
 import android.graphics.Bitmap
-import android.graphics.Canvas
 import android.graphics.Color
-import android.graphics.Paint
 import android.graphics.Rect
 import android.view.accessibility.AccessibilityNodeInfo
 import androidx.activity.compose.setContent
@@ -58,22 +56,16 @@ class CheckInCalendarInteractionTest {
     fun grantStartupPermissions() = grantCheckInFixtureStartupPermissions()
 
     @Test
-    fun calendarRendersTransparentDrinkPhotosWithOutlineAndRemainsSelectable() {
+    fun calendarRendersPhotosAndRemainsSelectable() {
         val selection = AtomicReference<String?>(null)
         val pixels = Bitmap.createBitmap(64, 64, Bitmap.Config.ARGB_8888)
-        val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.MAGENTA }
-        Canvas(pixels).apply {
-            drawRoundRect(16f, 16f, 43f, 49f, 7f, 7f, paint)
-            paint.style = Paint.Style.STROKE
-            paint.strokeWidth = 5f
-            drawCircle(45f, 29f, 9f, paint)
-        }
+        pixels.eraseColor(Color.MAGENTA)
         val png = ByteArrayOutputStream().use { bytes ->
             pixels.compress(Bitmap.CompressFormat.PNG, 100, bytes)
             bytes.toByteArray()
         }
         pixels.recycle()
-        val fixtureUrl = "https://calendar-fixture.invalid/cutout.png"
+        val fixtureUrl = "https://calendar-fixture.invalid/photo.png"
         val imageConfig = KamelConfig {
             takeFrom(KamelConfig.Default)
             fetcher(object : Fetcher<CustomUrl> {
@@ -96,7 +88,7 @@ class CheckInCalendarInteractionTest {
                                     today = "2026-10-13", onPreviousMonth = {}, onNextMonth = {},
                                     onSelectDate = { selection.set(it) }, onToday = {},
                                     homeCounts = mapOf("2026-10-12" to 1),
-                                    homePhotos = mapOf("2026-10-12" to listOf(CalendarPhoto(fixtureUrl, true))),
+                                    homePhotos = mapOf("2026-10-12" to listOf(CalendarPhoto(fixtureUrl))),
                                 )
                             }
                         }
@@ -104,26 +96,20 @@ class CheckInCalendarInteractionTest {
                 }
             } }
             val instrumentation = InstrumentationRegistry.getInstrumentation()
-            val density = instrumentation.targetContext.resources.displayMetrics.density
             waitUntil {
                 val day = node { it.contentDescription?.startsWith("12 октября 2026, 1 чекин") == true }
                     ?: return@waitUntil false
                 val bounds = Rect().also(day::getBoundsInScreen)
                 val shot = instrumentation.uiAutomation.takeScreenshot() ?: return@waitUntil false
-                // Only inspect the photo area below the date label, so date text cannot
-                // satisfy the white-edge assertion. The fixture's corners stay transparent.
-                val top = (bounds.bottom - 34 * density).toInt().coerceAtLeast(bounds.top)
                 var magenta = 0
-                var white = 0
-                for (y in top until bounds.bottom.coerceAtMost(shot.height)) {
+                for (y in bounds.top.coerceAtLeast(0) until bounds.bottom.coerceAtMost(shot.height)) {
                     for (x in bounds.left.coerceAtLeast(0) until bounds.right.coerceAtMost(shot.width)) {
                         val color = shot.getPixel(x, y)
                         if (Color.red(color) > 180 && Color.green(color) < 80 && Color.blue(color) > 180) magenta++
-                        if (Color.red(color) > 235 && Color.green(color) > 235 && Color.blue(color) > 235) white++
                     }
                 }
-                val rendered = magenta > 10 && white > 2
-                if (rendered) File(instrumentation.targetContext.getExternalFilesDir(null), "checkins-calendar-cutout.png")
+                val rendered = magenta > 10
+                if (rendered) File(instrumentation.targetContext.getExternalFilesDir(null), "checkins-calendar-photo.png")
                     .outputStream().use { shot.compress(Bitmap.CompressFormat.PNG, 100, it) }
                 shot.recycle()
                 rendered

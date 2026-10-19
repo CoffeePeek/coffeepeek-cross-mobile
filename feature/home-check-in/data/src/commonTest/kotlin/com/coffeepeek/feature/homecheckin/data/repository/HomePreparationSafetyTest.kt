@@ -24,8 +24,7 @@ class HomePreparationSafetyTest {
         try {
             val repository = createHomePreparationRepository(gateway, uploader, "https://gateway.example.com")
             assertTrue(repository.create(draft.copy(tasteScore = 6)).isFailure)
-            assertTrue(repository.create(draft.copy(photos = listOf(photo(1)),
-                drinkPhoto = photo(2).copy(contentType = "image/png", bytes = byteArrayOf()))).isFailure)
+            assertTrue(repository.create(draft.copy(photos = listOf(photo(1).copy(bytes = byteArrayOf())))).isFailure)
             assertTrue(repository.update(id, draft.copy(photos = listOf(photo(1)))).isFailure)
             assertTrue(repository.page(0, 100, null).isFailure)
             assertTrue(repository.page(1, 101, null).isFailure)

@@ -304,7 +304,7 @@ internal fun CheckInCard(
 fun ReviewDisplayCard(
     review: Review,
     modifier: Modifier = Modifier,
-    onPhotoClick: ((List<String>, Int) -> Unit)? = null,
+    onPhotoClick: ((PhotoViewerImages, Int) -> Unit)? = null,
     onEditClick: (() -> Unit)? = null,
     onReportClick: (() -> Unit)? = null,
     onHelpfulClick: (() -> Unit)? = null,
@@ -357,7 +357,7 @@ fun CheckInDisplayCard(
     modifier: Modifier = Modifier,
     showShopName: Boolean = true,
     onClick: (() -> Unit)? = null,
-    onPhotoClick: ((List<String>, Int) -> Unit)? = null,
+    onPhotoClick: ((PhotoViewerImages, Int) -> Unit)? = null,
     onHelpfulClick: (() -> Unit)? = null,
     onReportClick: (() -> Unit)? = null,
     isOwn: Boolean = true,
@@ -382,6 +382,7 @@ fun CheckInDisplayCard(
         ReviewPhotoStrip(
             photoUrls = checkIn.photoDetailUrls ?: checkIn.photoUrls,
             thumbnailUrls = checkIn.photoThumbnailUrls,
+            originalUrls = checkIn.photoUrls,
             onPhotoClick = onPhotoClick,
         )
         if (checkIn.visibility == CheckInVisibility.Public || checkIn.helpfulCount > 0 || drinkName != null) {
@@ -688,10 +689,10 @@ private fun RatingValue(label: String, value: Int) {
 fun ReviewPhotoStrip(
     photoUrls: List<String>,
     modifier: Modifier = Modifier,
-    // Same order as photoUrls: tiles show these, a click still hands out the full photo.
     thumbnailUrls: List<String> = photoUrls,
     singlePhotoAspectRatio: Float = 4f / 3f,
-    onPhotoClick: ((List<String>, Int) -> Unit)? = null,
+    originalUrls: List<String> = photoUrls,
+    onPhotoClick: ((PhotoViewerImages, Int) -> Unit)? = null,
 ) {
     if (photoUrls.isEmpty()) return
     @Composable
@@ -699,7 +700,9 @@ fun ReviewPhotoStrip(
         Box(
             photoModifier.clip(RoundedCornerShape(CpDimens.radiusMd))
                 .then(if (onPhotoClick != null) Modifier.clickable(role = Role.Button) {
-                    onPhotoClick(photoUrls, index)
+                    onPhotoClick(PhotoViewerImages(
+                        photoUrls.mapIndexed { i, url -> thumbnailUrls.getOrNull(i) ?: url }, originalUrls,
+                    ), index)
                 } else Modifier)
                 .semantics(mergeDescendants = true) {
                     contentDescription = "Фотография ${index + 1} из ${photoUrls.size}"

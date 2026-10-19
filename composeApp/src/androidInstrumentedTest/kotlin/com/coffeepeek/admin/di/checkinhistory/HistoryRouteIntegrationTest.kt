@@ -31,7 +31,6 @@ import com.coffeepeek.feature.checkinhistory.domain.repository.CheckInHistoryRep
 import com.coffeepeek.feature.checkinhistory.domain.repository.HomeHistoryReader
 import com.coffeepeek.feature.homecheckin.domain.model.*
 import com.coffeepeek.feature.homecheckin.domain.repository.HomePreparationRepository
-import com.coffeepeek.admin.feature.checkin.domain.DrinkPhotoExtractor
 import java.time.Clock
 import java.time.Instant
 import java.time.ZoneOffset
@@ -234,7 +233,7 @@ class HistoryRouteIntegrationTest {
         private val shops = object : CheckInHistoryRepository {
             private val entry = PersonalCheckIn("shop", HistoryAddress("public-shop", "/coffee-shop/public-shop"),
                 "Fixture cafe", null, "Owner", "Shop note", "2026-10-16T10:00:00Z", "2026-10-16T10:00:00Z",
-                null, emptyList(), null, null, HistoryVisibility.Private, HistoryModeration.NotSubmitted, 0, null, 0, false)
+                null, emptyList(), null, HistoryVisibility.Private, HistoryModeration.NotSubmitted, 0, null, 0, false)
             override suspend fun page(page: Int, pageSize: Int) = Result.success(CheckInHistoryPage(listOf(entry), 1, page, pageSize))
             override suspend fun period(period: HistoryPeriod) = Result.success(listOf(entry))
         }
@@ -242,8 +241,7 @@ class HistoryRouteIntegrationTest {
             AndroidCheckInHistoryCalendar({ ZoneOffset.UTC }, Clock.fixed(Instant.parse("2026-10-16T12:00:00Z"), ZoneOffset.UTC)),
             historyHomeEditorFactory(homes, object : CoffeePicker {
                 override suspend fun search(query: String) = Result.success(emptyList<CoffeePickerItem>())
-            }, BrewMethodCatalog { Result.success(listOf(BrewMethodOption("hario-v60", "Hario V60"))) },
-                DrinkPhotoExtractor { error("Fixture contains no photos") }),
+            }, BrewMethodCatalog { Result.success(listOf(BrewMethodOption("hario-v60", "Hario V60"))) }),
             imageContent = { _, _, _ -> error("Fixture contains no remote images") },
             photoContent = { _, _, _, _ -> error("Fixture contains no photos") })
     }
@@ -288,10 +286,10 @@ class HistoryRouteIntegrationTest {
         }
         private fun home(id: String, name: String) = HomePreparation(id, "2026-10-16", "2026-10-16T00:30:00Z",
             "2026-10-16T00:30:00Z", "Home owner note", "hario-v60", null, name, "18", 180, 4,
-            null, null, null, emptyList(), null, HomePreparationVisibility.Private, HomePreparationModeration.NotSubmitted)
+            null, null, null, emptyList(), HomePreparationVisibility.Private, HomePreparationModeration.NotSubmitted)
         private fun HomePreparation.history() = HomeHistoryEntry(id, preparedOn, preparedAtUtc, createdAtUtc, text,
             HomeHistoryRecipe(brewMethodCode, coffeeProductId, beanName, doseGrams, brewDurationSeconds, tasteScore),
-            drinkName, drinkSlug, customDrinkName, emptyList(), null, HistoryVisibility.Private, HistoryModeration.NotSubmitted)
+            drinkName, drinkSlug, customDrinkName, emptyList(), HistoryVisibility.Private, HistoryModeration.NotSubmitted)
     }
 
     private class Sessions(initial: Session?) : SessionRepository {

@@ -32,7 +32,6 @@ import kotlinx.serialization.json.JsonNames
     val tasteScore: Int? = null,
     val drink: JsonElement? = null,
     val photos: List<HomePhotoDto> = emptyList(),
-    val drinkPhoto: JsonElement? = null,
     val visibility: String? = null,
     val moderationState: String? = null,
 )
@@ -65,7 +64,6 @@ import kotlinx.serialization.json.JsonNames
     val drinkSlug: String?,
     val customDrinkName: String?,
     val photos: List<UploadedPhotoDto>,
-    val drinkPhoto: UploadedPhotoDto?,
     val visibility: String,
 )
 @Serializable internal data class PhotoUploadRequestDto(val sizeBytes: Int, val fileName: String, val contentType: String)

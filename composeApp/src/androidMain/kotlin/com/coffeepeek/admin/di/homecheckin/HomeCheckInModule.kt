@@ -2,7 +2,6 @@ package com.coffeepeek.admin.di.homecheckin
 
 import com.coffeepeek.admin.analytics.CheckInSource
 import com.coffeepeek.admin.feature.catalog.api.BrewMethodCatalog
-import com.coffeepeek.admin.feature.checkin.domain.DrinkPhotoExtractor
 import com.coffeepeek.admin.feature.coffee.api.CoffeePicker
 import com.coffeepeek.admin.locator.Constants
 import com.coffeepeek.api.CoffeePeekClient
@@ -22,9 +21,8 @@ internal fun homeCheckInModule(apiBaseUrl: String = Constants.BASE_URL) = module
         val repository = get<HomePreparationRepository>()
         val picker = get<CoffeePicker>()
         val methods = get<BrewMethodCatalog>()
-        val extractor = get<DrinkPhotoExtractor>()
         AndroidCheckInCreateFlowRenderer(get()) { lease, tracker ->
-            androidHomeCheckInEditor(lease, repository, picker, methods, extractor, CheckInSource.Global, tracker)
+            androidHomeCheckInEditor(lease, repository, picker, methods, CheckInSource.Global, tracker)
         }
     }
 }

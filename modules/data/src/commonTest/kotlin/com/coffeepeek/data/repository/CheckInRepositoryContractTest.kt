@@ -23,7 +23,6 @@ class CheckInRepositoryContractTest {
         "rating":{"coffee":5,"service":4,"place":4},"createdAtUtc":"2026-10-07T10:00:00Z","visitedAt":"2026-10-07T09:00:00Z",
         "visibility":"Public","moderationState":"Pending","contentRevision":2,"rejectionReason":null,
         "drinkSlug":"cappuccino","drinkNameRu":"Капучино","helpfulCount":7,
-        "drinkPhotoUrl":"/api/v1/check-ins/visit/drink-photo",
         "photos":[{"id":"photo","storageKey":"do-not-invent-url","sortIndex":0,"url":"/api/v1/check-ins/visit/photos/photo"}]}"""
 
     @Test
@@ -147,7 +146,6 @@ class CheckInRepositoryContractTest {
             assertEquals(2, updated.contentRevision)
             assertEquals(listOf("https://api.example/api/v1/check-ins/visit/photos/photo"), updated.photoUrls)
             assertEquals(updated.photoUrls, updated.photoThumbnailUrls)
-            assertEquals("https://api.example/api/v1/check-ins/visit/drink-photo", updated.drinkPhotoUrl)
             assertEquals(7, updated.helpfulCount)
         } finally { client.close() }
     }
@@ -168,11 +166,6 @@ class CheckInRepositoryContractTest {
                 valid.copy(drinkSlug = "other", customDrinkName = "a".repeat(101)),
                 valid.copy(drinkSlug = "cappuccino", customDrinkName = "Кофе"),
                 valid.copy(photos = List(6) { PendingPhotoUpload("p.jpg", "image/jpeg", byteArrayOf(1)) }),
-                valid.copy(drinkPhoto = PendingPhotoUpload("cup.png", "image/png", byteArrayOf(1))),
-                valid.copy(photos = listOf(PendingPhotoUpload("full.jpg", "image/jpeg", byteArrayOf(1))),
-                    drinkPhoto = PendingPhotoUpload("cup.jpg", "image/jpeg", byteArrayOf(2))),
-                valid.copy(photos = listOf(PendingPhotoUpload("full.jpg", "image/jpeg", byteArrayOf(1))),
-                    drinkPhoto = PendingPhotoUpload("cup.png", "image/png", byteArrayOf())),
             )) assertTrue(repo.createCheckIn(invalid).isFailure)
             assertTrue(repo.updateCheckIn("visit", UpdateCheckInInput("x".repeat(1001), valid.rating)).isFailure)
             assertEquals(0, requests)
@@ -242,52 +235,6 @@ class CheckInRepositoryContractTest {
                 assertEquals(listOf(if (withPhoto) "/api/Photos/check-in" else "/api/v1/check-ins"), paths)
             } finally { client.close() }
         }
-    }
-
-    @Test
-    fun uploadsPngSeparatelyAndDoesNotCreateVisitIfCutoutUploadFails() = runBlocking {
-        var failCutout = true
-        var creates = 0
-        val uploadTypes = mutableListOf<String>()
-        val original = PendingPhotoUpload("full.jpg", "image/jpeg", byteArrayOf(1, 2, 3))
-        val cutout = PendingPhotoUpload("cup.png", "image/png", byteArrayOf(4, 5))
-        val client = client(MockEngine { request ->
-            when (request.url.encodedPath) {
-                "/api/Photos/check-in" -> {
-                    val photo = Json.parseToJsonElement((request.body as TextContent).text).jsonArray.single().jsonObject
-                    val type = photo["contentType"]!!.jsonPrimitive.content
-                    uploadTypes += type
-                    val name = if (type == "image/png") "cup.png" else "full.jpg"
-                    respond("""{"isSuccess":true,"data":[{"photoId":"$name","uploadUrl":"https://uploads.example/$name","storageKey":"check-ins/$name"}]}""", headers = headers)
-                }
-                "/full.jpg", "/cup.png" -> {
-                    val png = request.url.encodedPath == "/cup.png"
-                    val photo = if (png) cutout else original
-                    assertEquals(photo.contentType, request.headers[HttpHeaders.ContentType] ?: request.body.contentType?.toString())
-                    assertContentEquals(photo.bytes, (request.body as io.ktor.http.content.OutgoingContent.ByteArrayContent).bytes())
-                    respond("", if (png && failCutout) HttpStatusCode.ServiceUnavailable else HttpStatusCode.OK)
-                }
-                "/api/v1/check-ins" -> {
-                    creates++
-                    val body = Json.parseToJsonElement((request.body as TextContent).text).jsonObject
-                    assertEquals(JsonPrimitive("check-ins/full.jpg"), body["photos"]!!.jsonArray.single().jsonObject["storageKey"])
-                    assertEquals(JsonPrimitive("check-ins/cup.png"), body["drinkPhoto"]!!.jsonObject["storageKey"])
-                    assertEquals(JsonPrimitive(2), body["drinkPhoto"]!!.jsonObject["size"])
-                    respond("""{"isSuccess":true,"data":$visit}""", headers = headers)
-                }
-                else -> error("Unexpected route")
-            }
-        })
-        try {
-            val repo = repository(client)
-            val input = CreateCheckInInput("coffee", visitedAtIso = "2026-10-07T09:00:00Z", photos = listOf(original), drinkPhoto = cutout)
-            assertTrue(repo.createCheckIn(input).isFailure)
-            assertEquals(0, creates)
-            failCutout = false
-            repo.createCheckIn(input).getOrThrow()
-            assertEquals(1, creates)
-            assertEquals(listOf("image/jpeg", "image/png", "image/jpeg", "image/png"), uploadTypes)
-        } finally { client.close() }
     }
 
     private fun client(engine: MockEngine) = HttpClient(engine) {

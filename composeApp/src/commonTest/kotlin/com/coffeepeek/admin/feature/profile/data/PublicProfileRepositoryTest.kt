@@ -201,7 +201,7 @@ class PublicProfileRepositoryTest {
             username = "glasha", authorAvatarUrl = "https://images.test/avatar.jpg",
             rating = ReviewRating(5, 4, 3), drinkNameRu = "Флэт уайт", drinkNameEn = "Flat white",
             photoUrls = listOf("https://images.test/full.jpg"), photoThumbnailUrls = listOf("https://images.test/thumb.jpg"),
-            drinkPhotoUrl = "https://images.test/drink-cutout.png", helpfulCount = 3, isHelpfulByCurrentUser = true,
+            helpfulCount = 3, isHelpfulByCurrentUser = true,
         )
         val home = shop.copy(id = "home", isHome = true,
             homePreparation = FeedHomePreparation("2026-10-12", "hario-v60", "Колумбия", 15.0, 120, 5))

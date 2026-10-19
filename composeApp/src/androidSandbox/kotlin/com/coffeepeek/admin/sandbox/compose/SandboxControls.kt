@@ -18,7 +18,6 @@ import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
     Surface(color = MaterialTheme.colorScheme.primaryContainer) {
         Column(Modifier.fillMaxWidth().padding(8.dp)) {
             Text(stringResource(R.string.sandbox_banner), style = MaterialTheme.typography.labelLarge)
-            Text(stringResource(R.string.sandbox_cutout_note), style = MaterialTheme.typography.bodySmall)
             Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 SandboxScenario.entries.forEach { mode ->
                     val label = when (mode) {

@@ -13,9 +13,7 @@ import com.coffeepeek.admin.analytics.CheckInTracker
 import com.coffeepeek.admin.di.checkinhistory.AndroidCheckInHistorySession
 import com.coffeepeek.admin.feature.catalog.api.BrewMethodCatalog
 import com.coffeepeek.admin.feature.catalog.api.methodLabel
-import com.coffeepeek.admin.feature.checkin.domain.DrinkPhotoExtractor
 import com.coffeepeek.admin.feature.coffee.api.CoffeePicker
-import com.coffeepeek.admin.ui.component.DrinkCutoutImage
 import com.coffeepeek.admin.ui.component.brewMethodIcon
 import com.coffeepeek.admin.utils.CpImage
 import com.coffeepeek.admin.utils.datePickerMillisToUtcIsoInstant
@@ -37,21 +35,19 @@ internal fun androidHomeCheckInEditor(
     repository: HomePreparationRepository,
     picker: CoffeePicker,
     methods: BrewMethodCatalog,
-    extractor: DrinkPhotoExtractor,
     source: CheckInSource,
     inheritedTracker: CheckInTracker? = null,
 ): HomeCheckInEditorEntry {
     var handoff = inheritedTracker
     return createHomeCheckInEditorEntry(AndroidHomeCheckInRepository(lease, repository),
-        AndroidHomeCheckInCatalog(lease, picker, methods), AndroidHomeCheckInPhotoProcessor(lease, extractor),
+        AndroidHomeCheckInCatalog(lease, picker, methods),
         { lease.isLoggedIn && lease.isCurrent() }, androidHomeCheckInDates(),
         HomeCheckInEditorMedia(
             { Image(painterResource(Res.drawable.checkin_rating_coffee), null, it, contentScale = ContentScale.Crop) },
             { Image(painterResource(Res.drawable.maskot_with_magnifying_glass), null, it) },
             { name, modifier -> Icon(painterResource(brewMethodIcon(name)), null, modifier, tint = MaterialTheme.colorScheme.onSurfaceVariant) },
-            { photo, modifier, cutout ->
-                if (cutout) DrinkCutoutImage(photo.bytes, modifier = modifier, outlineWidth = 2.dp)
-                else CpImage(photo.bytes, modifier = modifier, contentScale = ContentScale.Crop)
+            { photo, modifier, _ ->
+                CpImage(photo.bytes, modifier = modifier, contentScale = ContentScale.Crop)
             }),
         AndroidHomeCheckInPhotoPicker(),
         analytics = { editing ->

@@ -21,12 +21,9 @@ data class HomeCheckIn(
     val drinkSlug: String?,
     val customDrinkName: String?,
     val photos: List<HomeCheckInPhoto>,
-    val drinkPhotoUrl: String?,
     /** Null means the server has not supplied visibility; never infer publication. */
     val visibility: HomeCheckInVisibility? = null,
     val moderation: HomeCheckInModeration = HomeCheckInModeration.Unknown,
-    val drinkPhotoThumbnailUrl: String? = drinkPhotoUrl,
-    val drinkPhotoDetailUrl: String? = drinkPhotoUrl,
 )
 
 data class HomeCheckInPhoto(val id: String, val url: String, val thumbnailUrl: String = url,
@@ -49,7 +46,6 @@ data class HomeCheckInInput(
     val drinkSlug: String? = null,
     val customDrinkName: String? = null,
     val photos: List<HomePhotoUpload> = emptyList(),
-    val drinkPhoto: HomePhotoUpload? = null,
     /** Null on an edit preserves an unknown server value until the user chooses. */
     val visibility: HomeCheckInVisibility? = HomeCheckInVisibility.Private,
 )

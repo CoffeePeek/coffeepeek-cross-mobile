@@ -15,8 +15,7 @@ import com.coffeepeek.feature.homecheckin.impl.ui.compose.model.HomeCheckInDetai
 /**
  * [repository] and [canAccess] must be bound to the same account lease. Construct
  * once per lease, not on each recomposition. Repository guards remain mandatory.
- * [imageContent] uses the configured authenticated loader; cutouts must preserve
- * transparency, fit inside their bounds and keep the existing 3dp outline.
+ * [imageContent] uses the configured authenticated loader.
  * Feed previews crop to their bounds. No client, picker or root navigation is owned here.
  */
 fun createHomeCheckInDetailEntry(

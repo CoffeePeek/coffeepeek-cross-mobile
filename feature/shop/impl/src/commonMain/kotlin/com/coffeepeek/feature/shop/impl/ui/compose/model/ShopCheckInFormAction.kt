@@ -15,9 +15,6 @@ internal sealed interface ShopCheckInFormAction {
     data class CustomDrinkChanged(val value: String) : ShopCheckInFormAction
     data class PhotosAdded(val photos: List<ShopCheckInPhoto>) : ShopCheckInFormAction
     data class RemovePhoto(val index: Int) : ShopCheckInFormAction
-    data object RetryDrinkPhoto : ShopCheckInFormAction
-    data object SkipDrinkPhoto : ShopCheckInFormAction
-    data class ChooseDrinkPhoto(val index: Int) : ShopCheckInFormAction
     data object Submit : ShopCheckInFormAction
     data object Dismiss : ShopCheckInFormAction
     data object OpenHistory : ShopCheckInFormAction

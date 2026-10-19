@@ -35,8 +35,7 @@ private class RemoteHomePreparationRepository(
     override suspend fun create(input: HomePreparationInput): Result<HomePreparation> = homeRequestResult {
         validateInput(input, editing = false)
         val photos = uploads.upload(input.photos)
-        val cutout = input.drinkPhoto?.let { uploads.upload(listOf(it)).single() }
-        backend.create(input.toCreateRequest(photos, cutout)).toDomain(apiBaseUrl)
+        backend.create(input.toCreateRequest(photos)).toDomain(apiBaseUrl)
     }
 
     override suspend fun update(id: String, input: HomePreparationInput): Result<HomePreparation> = homeRequestResult {
@@ -82,9 +81,7 @@ private class RemoteHomePreparationRepository(
         currentCoroutineContext().ensureActive()
         val photos = entries.distinctBy(HomePreparation::id).filter { it.preparedOn in range.from..range.to }
             .groupBy(HomePreparation::preparedOn).mapValues { (_, rows) -> rows.mapNotNull { row ->
-                row.drinkPhotoUrl?.takeIf(String::isNotBlank)?.let { row.drinkPhotoThumbnailUrl ?: it }
-                    ?.takeIf(String::isNotBlank)?.let { HomePreparationCalendarPhoto(it, true, row.preparedAtUtc) }
-                    ?: row.photos.firstNotNullOfOrNull { photo -> (photo.calendarUrl ?: photo.url).takeIf(String::isNotBlank) }
+                row.photos.firstNotNullOfOrNull { photo -> (photo.calendarUrl ?: photo.url).takeIf(String::isNotBlank) }
                         ?.let { HomePreparationCalendarPhoto(it, false, row.preparedAtUtc) }
             } }
         days.map { it.copy(photos = photos[it.preparedOn].orEmpty()) }

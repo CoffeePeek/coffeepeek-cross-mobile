@@ -128,6 +128,7 @@ import com.coffeepeek.admin.ui.component.priceLevelValue
 import com.coffeepeek.admin.ui.component.priceRangeLevel
 import com.coffeepeek.admin.ui.component.shopTagIcon
 import com.coffeepeek.admin.ui.component.FullScreenImageDialog
+import com.coffeepeek.admin.ui.component.PhotoViewerImages
 import com.coffeepeek.admin.ui.component.CpSnackbarHost
 import com.coffeepeek.admin.ui.component.CoffeePeekLoader
 import com.coffeepeek.admin.ui.component.AppButton
@@ -164,7 +165,7 @@ fun ShopDetailScreen(shopId: String, forCheckIn: Boolean = false) {
     val screenScope = rememberCoroutineScope()
     val missingShopAddress = stringResource(Res.string.checkin_error_shop_address)
     // Photos open as a swipeable set: (urls, startIndex).
-    var preview by remember { mutableStateOf<Pair<List<String>, Int>?>(null) }
+    var preview by remember { mutableStateOf<Pair<PhotoViewerImages, Int>?>(null) }
     var showRoutePicker by remember { mutableStateOf(false) }
 
     LaunchedEffect(state.actionMessage) {
@@ -177,7 +178,7 @@ fun ShopDetailScreen(shopId: String, forCheckIn: Boolean = false) {
     val authorVisibility by vm.authorVisibility.collectAsState()
     androidx.compose.runtime.LaunchedEffect(authorVisibility.revision, state.isLoggedIn) { preview = null }
     preview?.let { (urls, index) ->
-        FullScreenImageDialog(imageUrls = urls, initialIndex = index, onDismiss = { preview = null })
+        FullScreenImageDialog(images = urls, initialIndex = index, onDismiss = { preview = null })
     }
 
     if (showRoutePicker) {
@@ -219,10 +220,6 @@ fun ShopDetailScreen(shopId: String, forCheckIn: Boolean = false) {
                     placeName = state.details?.shop?.title,
                     submittedVisibility = state.submittedCheckInVisibility,
                     submissionError = state.checkInError,
-                    drinkPhotoState = state.drinkPhotoState,
-                    onSelectDrinkPhoto = vm::selectDrinkPhoto,
-                    onRetryDrinkPhoto = vm::retryDrinkPhoto,
-                    onSkipDrinkPhoto = vm::skipDrinkPhoto,
                     onGoToFeed = {
                         vm.dismissCheckInSheet()
                         Navigator.popThenSelectTab(Navigator.Screen.CommunityTab)
@@ -351,8 +348,8 @@ private fun ShopDetailContent(
     onOpenOnMap: () -> Unit = {},
     onReportIssue: () -> Unit = {},
     onCopyPhone: (String) -> Unit = {},
-    onOpenPhotos: (List<String>, Int) -> Unit = { _, _ -> },
-    onReviewPhotoClick: (List<String>, Int) -> Unit = { _, _ -> },
+    onOpenPhotos: (PhotoViewerImages, Int) -> Unit = { _, _ -> },
+    onReviewPhotoClick: (PhotoViewerImages, Int) -> Unit = { _, _ -> },
     onReviewHelpfulClick: (String) -> Unit = {},
     menuGalleryAction: @Composable () -> Unit = {},
 ) {
@@ -387,7 +384,7 @@ private fun ShopDetailContent(
                         details.location?.longitude != null,
                     onOpenOnMap = onOpenOnMap,
                     onOpenReviews = { Navigator.navigate(Navigator.Screen.ShopReviews(shop.id)) },
-                    onPhotoClick = { url -> Analytics.track(AnalyticsEvent.SHOP_CONTENT_INTERACTED, "section" to "photos", "action" to "open"); onOpenPhotos(fullscreenPhotos, photos.indexOf(url).coerceAtLeast(0)) },
+                    onPhotoClick = { url -> Analytics.track(AnalyticsEvent.SHOP_CONTENT_INTERACTED, "section" to "photos", "action" to "open"); onOpenPhotos(PhotoViewerImages(photos, fullscreenPhotos), photos.indexOf(url).coerceAtLeast(0)) },
                 )
             }
         }
@@ -429,7 +426,7 @@ private fun ShopDetailContent(
             item {
                 MenuSection(
                     menu = menu,
-                    onPhotoClick = { index -> Analytics.track(AnalyticsEvent.SHOP_CONTENT_INTERACTED, "section" to "menu", "action" to "open"); onOpenPhotos(menu.photos.map { it.fullUrl }, index) },
+                    onPhotoClick = { index -> Analytics.track(AnalyticsEvent.SHOP_CONTENT_INTERACTED, "section" to "menu", "action" to "open"); onOpenPhotos(PhotoViewerImages(menu.photos.map { it.previewUrl }, menu.photos.map { it.fullUrl }), index) },
                     galleryAction = menuGalleryAction,
                 )
             }
@@ -1273,7 +1270,7 @@ private fun ReviewsSection(
     isLoggedIn: Boolean,
     currentUserId: String?,
     ownCheckInIds: Set<String>,
-    onReviewPhotoClick: (List<String>, Int) -> Unit,
+    onReviewPhotoClick: (PhotoViewerImages, Int) -> Unit,
     onReviewHelpfulClick: (String) -> Unit,
 ) {
     Column(

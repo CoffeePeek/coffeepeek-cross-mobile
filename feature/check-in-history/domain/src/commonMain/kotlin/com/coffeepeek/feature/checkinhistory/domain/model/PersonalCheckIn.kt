@@ -12,7 +12,6 @@ data class PersonalCheckIn(
     val visitedAt: String,
     val rating: HistoryRating?,
     val photoUrls: List<String>,
-    val drinkPhotoUrl: String?,
     val drink: HistoryDrink?,
     val visibility: HistoryVisibility,
     val moderation: HistoryModeration,
@@ -25,7 +24,6 @@ data class PersonalCheckIn(
     val photoThumbnailUrls: List<String>? = null,
     val photoDetailUrls: List<String>? = null,
     val photoCalendarUrls: List<String>? = null,
-    val drinkPhotoThumbnailUrl: String? = null,
 ) {
     val effectiveVisitedAt: String get() = visitedAt.ifBlank { createdAt }
 }

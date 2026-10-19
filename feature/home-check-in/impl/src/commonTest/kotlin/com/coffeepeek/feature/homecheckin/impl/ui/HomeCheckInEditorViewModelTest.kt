@@ -74,19 +74,11 @@ class HomeCheckInEditorViewModelTest {
         }
     }
 
-    private class Processor : HomeCheckInDrinkPhotoProcessor {
-        val sources = mutableListOf<HomePreparationUpload>()
-        var process: suspend (HomePreparationUpload) -> Result<List<HomePreparationUpload>> = { Result.success(listOf(png("cutout"))) }
-        override suspend fun process(source: HomePreparationUpload): Result<List<HomePreparationUpload>> {
-            sources += source
-            return process.invoke(source)
-        }
-    }
 
-    private fun model(repo: Repository = Repository(), catalog: Catalog = Catalog(), processor: Processor = Processor(),
+    private fun model(repo: Repository = Repository(), catalog: Catalog = Catalog(),
         id: String? = null, access: () -> Boolean = { true },
         analytics: HomeCheckInEditorAnalytics = HomeCheckInEditorAnalytics.None): HomeCheckInEditorViewModel = HomeCheckInEditorViewModel(
-        repo, catalog, processor, "2026-10-17T09:30:00Z", "2026-10-17", id, 7, access, { now }, analytics,
+        repo, catalog, "2026-10-17T09:30:00Z", "2026-10-17", id, 7, access, { now }, analytics,
     ).also { store.put("editor-${key++}", it) }
 
     private fun HomeCheckInEditorViewModel.act(vararg actions: HomeCheckInEditorAction) { actions.forEach(::onAction) }
@@ -118,7 +110,7 @@ class HomeCheckInEditorViewModelTest {
     @Test fun editPreservesHistoricalIdentityUnknownVisibilityCustomDrinkAndServerPhotos() = runTest(dispatcher) {
         val original = entry().copy(visibility = null, tasteScore = null, coffeeProductId = "historical-product",
             drinkSlug = null, drinkName = "Мой кофе", customDrinkName = null,
-            photos = listOf(HomePreparationPhoto("photo", "issued-original")), drinkPhotoUrl = "issued-cutout")
+            photos = listOf(HomePreparationPhoto("photo", "issued-original")))
         val repo = Repository().apply { detailResult = Result.success(original) }
         val vm = model(repo, id = "home"); runCurrent()
         assertEquals(original, vm.state.value.entry)
@@ -129,7 +121,6 @@ class HomeCheckInEditorViewModelTest {
         assertEquals("other", vm.state.value.draft.drinkSlug)
         assertEquals("Мой кофе", vm.state.value.draft.customDrinkName)
         assertTrue(vm.state.value.draft.photos.isEmpty())
-        assertNull(vm.state.value.draft.drinkPhoto)
     }
 
     @Test fun detailLoadBlocksEditsAndWritesAndDuplicateRetryDoesNotStartAnotherLoad() = runTest(dispatcher) {
@@ -363,13 +354,13 @@ class HomeCheckInEditorViewModelTest {
 
     @Test fun editSendsPutWithUnknownVisibilityAndNeverUploadsOrCreates() = runTest(dispatcher) {
         val repo = Repository().apply { detailResult = Result.success(entry().copy(visibility = null)) }
-        val processor = Processor(); val vm = model(repo, processor = processor, id = "home"); runCurrent()
+        val vm = model(repo, id = "home"); runCurrent()
         vm.act(HomeCheckInEditorAction.PhotosAdded(listOf(photo("ignored"))), HomeCheckInEditorAction.RemovePhoto(0),
-            HomeCheckInEditorAction.RetryDrinkPhoto, HomeCheckInEditorAction.Save); runCurrent()
+            HomeCheckInEditorAction.Save); runCurrent()
         assertEquals("home", repo.updates.single().first)
         assertNull(repo.updates.single().second.visibility)
         assertTrue(repo.updates.single().second.photos.isEmpty())
-        assertTrue(repo.creates.isEmpty()); assertTrue(processor.sources.isEmpty())
+        assertTrue(repo.creates.isEmpty())
     }
 
     @Test fun invalidSavedIdentityIsNotReportedAsSuccessOrRetriedAsCreate() = runTest(dispatcher) {
@@ -404,79 +395,17 @@ class HomeCheckInEditorViewModelTest {
         assertEquals(5, vm.state.value.draft.photos.size)
     }
 
-    @Test fun extractionBlocksSaveAndASingleCandidateIsSelectedWithoutReplacingTheOriginal() = runTest(dispatcher) {
-        val gate = CompletableDeferred<Unit>(); val processor = Processor().apply { process = { gate.await(); Result.success(listOf(png("cutout"))) } }
-        val repo = Repository(); val vm = model(repo, processor = processor); runCurrent()
-        vm.onAction(HomeCheckInEditorAction.PhotosAdded(listOf(photo("original")))); runCurrent()
-        assertTrue(vm.state.value.photoPreparation.isProcessing)
-        vm.onAction(HomeCheckInEditorAction.Save); runCurrent(); assertTrue(repo.creates.isEmpty())
-        gate.complete(Unit); runCurrent()
-        assertEquals("cutout", vm.state.value.draft.drinkPhoto!!.fileName)
-        assertEquals("original", vm.state.value.draft.photos.single().fileName)
+    @Test fun originalPhotoCanBeReplacedAndSavedWithoutAnExtractionStep() = runTest(dispatcher) {
+        val repo = Repository()
+        val vm = model(repo); runCurrent()
+        vm.act(HomeCheckInEditorAction.PhotosAdded(listOf(photo("first"), photo("second"))),
+            HomeCheckInEditorAction.NoteChanged("Keep note")); runCurrent()
+        vm.onAction(HomeCheckInEditorAction.RemovePhoto(0)); runCurrent()
         vm.onAction(HomeCheckInEditorAction.Save); runCurrent()
-        assertEquals("original", repo.creates.single().photos.single().fileName)
-        assertEquals("cutout", repo.creates.single().drinkPhoto!!.fileName)
-    }
-
-    @Test fun multipleCandidatesRequireASelectionOrExplicitSkip() = runTest(dispatcher) {
-        val processor = Processor().apply { process = { Result.success(listOf(png("first"), png("second"))) } }
-        val repo = Repository(); val vm = model(repo, processor = processor); runCurrent()
-        vm.onAction(HomeCheckInEditorAction.PhotosAdded(listOf(photo("original")))); runCurrent()
-        assertFalse(vm.state.value.photoPreparation.canSubmit)
-        vm.act(HomeCheckInEditorAction.Save, HomeCheckInEditorAction.ChooseDrinkPhoto(99)); runCurrent()
-        assertTrue(repo.creates.isEmpty()); assertNull(vm.state.value.draft.drinkPhoto)
-        vm.onAction(HomeCheckInEditorAction.ChooseDrinkPhoto(1)); runCurrent()
-        assertEquals("second", vm.state.value.draft.drinkPhoto!!.fileName)
-        vm.onAction(HomeCheckInEditorAction.SkipDrinkPhoto); runCurrent()
-        assertNull(vm.state.value.draft.drinkPhoto)
-        assertTrue(vm.state.value.photoPreparation.isSkipped)
-        assertTrue(vm.state.value.photoPreparation.canSubmit)
-    }
-
-    @Test fun invalidOrFailedExtractionAllowsOriginalsAndExplicitRetryPreservesOtherFields() = runTest(dispatcher) {
-        for (result in listOf(Result.success(emptyList()), Result.success(listOf(photo("not-png"))), Result.failure(IllegalStateException("private processor trace")))) {
-            val processor = Processor().apply { process = { result } }; val vm = model(processor = processor); runCurrent()
-            vm.act(HomeCheckInEditorAction.NoteChanged("Keep note"), HomeCheckInEditorAction.PhotosAdded(listOf(photo("original")))); runCurrent()
-            assertTrue(vm.state.value.photoPreparation.hasError)
-            assertTrue(vm.state.value.photoPreparation.canSubmit)
-            assertNull(vm.state.value.draft.drinkPhoto)
-            processor.process = { Result.success(listOf(png("recovered"))) }
-            vm.onAction(HomeCheckInEditorAction.RetryDrinkPhoto); runCurrent()
-            assertEquals("recovered", vm.state.value.draft.drinkPhoto!!.fileName)
-            assertEquals("Keep note", vm.state.value.draft.text)
-            assertFalse(vm.state.value.photoPreparation.hasError)
-        }
-    }
-
-    @Test fun removingNonFirstPhotoKeepsCutoutButRemovingFirstRejectsLateOldExtraction() = runTest(dispatcher) {
-        val gate = CompletableDeferred<Unit>(); val processor = Processor()
-        val vm = model(processor = processor); runCurrent()
-        val snapshots = mutableListOf<HomeCheckInEditorState>()
-        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { vm.state.collect { snapshots += it } }
-        vm.onAction(HomeCheckInEditorAction.PhotosAdded(listOf(photo("a"), photo("b"), photo("c")))); runCurrent()
-        val cutout = vm.state.value.draft.drinkPhoto
-        vm.onAction(HomeCheckInEditorAction.RemovePhoto(2)); runCurrent()
-        assertEquals(1, processor.sources.size); assertEquals(cutout, vm.state.value.draft.drinkPhoto)
-        processor.process = { source -> withContext(NonCancellable) { gate.await() }; Result.success(listOf(png(source.fileName))) }
-        vm.onAction(HomeCheckInEditorAction.RetryDrinkPhoto); runCurrent()
-        vm.onAction(HomeCheckInEditorAction.RemovePhoto(0)); runCurrent()
-        gate.complete(Unit); runCurrent()
-        assertEquals("b", vm.state.value.draft.drinkPhoto!!.fileName)
-        vm.onAction(HomeCheckInEditorAction.RemovePhoto(0)); runCurrent()
-        assertNull(vm.state.value.draft.drinkPhoto); assertNull(vm.state.value.photoPreparation.source)
-        assertTrue(snapshots.all { it.photoPreparation.source == it.draft.photos.firstOrNull() })
-        assertTrue(snapshots.all { it.photoPreparation.selected == it.draft.drinkPhoto })
-    }
-
-    @Test fun skippingProcessingInvalidatesItsLateResult() = runTest(dispatcher) {
-        val gate = CompletableDeferred<Unit>()
-        val processor = Processor().apply { process = { withContext(NonCancellable) { gate.await() }; Result.success(listOf(png("late"))) } }
-        val vm = model(processor = processor); runCurrent()
-        vm.onAction(HomeCheckInEditorAction.PhotosAdded(listOf(photo("a")))); runCurrent()
-        vm.onAction(HomeCheckInEditorAction.SkipDrinkPhoto); runCurrent()
-        gate.complete(Unit); runCurrent()
-        assertNull(vm.state.value.draft.drinkPhoto)
-        assertTrue(vm.state.value.photoPreparation.isSkipped)
+        assertEquals(listOf("second"), repo.creates.single().photos.map { it.fileName })
+        assertContentEquals("second".encodeToByteArray(), repo.creates.single().photos.single().bytes)
+        assertEquals("Keep note", repo.creates.single().text)
+        assertTrue(vm.state.value.isClosed)
     }
 
     @Test fun closingBeforeLateDetailErasesPrivateStateAndEmitsOnlyClose() = runTest(dispatcher) {
@@ -503,26 +432,24 @@ class HomeCheckInEditorViewModelTest {
         assertEquals(1, repo.creates.size)
     }
 
-    @Test fun revokedOrClearedOwnerRejectsNonCooperativeExtractionAndPrivateSnapshots() = runTest(dispatcher) {
+    @Test fun revokedOrClearedOwnerErasesPrivatePhotoSnapshots() = runTest(dispatcher) {
         for (clearOwner in listOf(false, true)) {
-            val gate = CompletableDeferred<Unit>()
-            val processor = Processor().apply { process = { withContext(NonCancellable) { gate.await() }; Result.success(listOf(png("late"))) } }
-            val vm = model(processor = processor); runCurrent()
+            val vm = model(); runCurrent()
             vm.onAction(HomeCheckInEditorAction.PhotosAdded(listOf(photo("private")))); runCurrent()
             if (clearOwner) store.clear() else vm.onAction(HomeCheckInEditorAction.RevokeAccess)
-            runCurrent(); gate.complete(Unit); runCurrent()
+            runCurrent()
             assertTrue(vm.state.value.isAccessRevoked)
-            assertTrue(vm.state.value.draft.photos.isEmpty()); assertNull(vm.state.value.photoPreparation.source)
+            assertTrue(vm.state.value.draft.photos.isEmpty())
         }
     }
 
     @Test fun initiallyDeniedAccountDoesNotStartAnyPortAndLaterActionsCannotReviveIt() = runTest(dispatcher) {
-        val repo = Repository(); val catalog = Catalog(); val processor = Processor()
-        val vm = model(repo, catalog, processor, access = { false }); runCurrent()
+        val repo = Repository(); val catalog = Catalog()
+        val vm = model(repo, catalog, access = { false }); runCurrent()
         vm.act(HomeCheckInEditorAction.Initialize, HomeCheckInEditorAction.Save, HomeCheckInEditorAction.OpenBeanPicker); runCurrent()
         assertTrue(vm.state.value.isAccessRevoked)
         assertEquals(0, catalog.methodsCalls); assertTrue(catalog.queries.isEmpty())
-        assertTrue(repo.creates.isEmpty()); assertTrue(processor.sources.isEmpty())
+        assertTrue(repo.creates.isEmpty())
     }
 
     @Test fun authorizationFailureDoesNotEraseCurrentOwnersDraftOrTreatTokenRenewalAsAccountChange() = runTest(dispatcher) {
@@ -573,38 +500,10 @@ class HomeCheckInEditorViewModelTest {
         assertTrue(vm.state.value.isAccessRevoked)
     }
 
-    @Test fun portCancellationNeverBecomesCatalogueOrExtractionFailure() = runTest(dispatcher) {
+    @Test fun portCancellationNeverBecomesCatalogueFailure() = runTest(dispatcher) {
         val catalog = Catalog().apply { methodsResult = Result.failure(CancellationException("methods cancelled")) }
-        val processor = Processor().apply { process = { Result.failure(CancellationException("photo cancelled")) } }
-        val vm = model(catalog = catalog, processor = processor); runCurrent()
+        val vm = model(catalog = catalog); runCurrent()
         assertFalse(vm.state.value.methodsLoading); assertNull(vm.state.value.methodsIssue)
-        vm.onAction(HomeCheckInEditorAction.PhotosAdded(listOf(photo("source")))); runCurrent()
-        assertFalse(vm.state.value.photoPreparation.isProcessing)
-        assertFalse(vm.state.value.photoPreparation.hasError)
-        assertNull(vm.state.value.draft.drinkPhoto)
-    }
-
-    @Test fun candidateBytesCannotBeMutatedByTheProcessorAfterTransfer() = runTest(dispatcher) {
-        val candidate = png("selected")
-        val processor = Processor().apply { process = { Result.success(listOf(candidate)) } }
-        val vm = model(processor = processor); runCurrent()
-        vm.onAction(HomeCheckInEditorAction.PhotosAdded(listOf(photo("source")))); runCurrent()
-        val expected = candidate.bytes.copyOf()
-        candidate.bytes.fill(0)
-        assertContentEquals(expected, vm.state.value.draft.drinkPhoto!!.bytes)
-    }
-
-    @Test fun duplicatePhotoRetryCannotLaunchParallelExtractionOrSelectWhileProcessing() = runTest(dispatcher) {
-        val gate = CompletableDeferred<Unit>()
-        val processor = Processor().apply { process = { gate.await(); Result.success(listOf(png("cutout"))) } }
-        val vm = model(processor = processor); runCurrent()
-        vm.onAction(HomeCheckInEditorAction.PhotosAdded(listOf(photo("original")))); runCurrent()
-        vm.act(HomeCheckInEditorAction.RetryDrinkPhoto, HomeCheckInEditorAction.RetryDrinkPhoto,
-            HomeCheckInEditorAction.ChooseDrinkPhoto(0)); runCurrent()
-        assertEquals(1, processor.sources.size)
-        assertNull(vm.state.value.draft.drinkPhoto)
-        gate.complete(Unit); runCurrent()
-        assertEquals("cutout", vm.state.value.draft.drinkPhoto!!.fileName)
     }
 
     @Test fun blankCustomBeanChoiceDoesNotEraseHistoricalSelectionOrClosePicker() = runTest(dispatcher) {
@@ -703,8 +602,7 @@ class HomeCheckInEditorViewModelTest {
     companion object {
         private fun entry() = HomePreparation("home", "2026-10-16", "2026-10-16T07:30:00Z", "2026-10-16T07:30:00Z",
             "Private note", "hario-v60", null, "Эфиопия", "18", 180, 2, "Фильтр", "filter", null,
-            emptyList(), null, HomePreparationVisibility.Private, HomePreparationModeration.NotSubmitted)
+            emptyList(), HomePreparationVisibility.Private, HomePreparationModeration.NotSubmitted)
         private fun photo(name: String) = HomePreparationUpload(name, "image/jpeg", name.encodeToByteArray())
-        private fun png(name: String) = HomePreparationUpload(name, "image/png", name.encodeToByteArray())
     }
 }

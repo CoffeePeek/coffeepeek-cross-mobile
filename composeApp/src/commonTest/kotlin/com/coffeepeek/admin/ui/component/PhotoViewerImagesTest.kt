@@ -26,8 +26,8 @@ class PhotoViewerImagesTest {
         assertNull(images.highQualityUrl(1, 0))
         assertNull(images.highQualityUrl(0, 1))
         assertEquals(previews[0], images.displayUrl(0, 0, true))
-        assertNull(images.highQualityUrl(0, 0))
-        assertNull(images.highQualityUrl(1, 1))
+        assertEquals(originals[0], images.highQualityUrl(0, 0))
+        assertEquals(originals[1], images.highQualityUrl(1, 1))
         assertNull(images.displayUrl(1, 0, false))
         assertNull(images.displayUrl(2, 0, true))
     }
@@ -51,13 +51,24 @@ class PhotoViewerImagesTest {
         assertEquals(listOf("fourth"), images.adjacentPreviewUrls(4))
     }
 
-    @Test fun readyDetailNeverDownloadsOriginalEvenWhenAnExplicitOriginalIsAvailable() {
+    @Test fun readyPreviewLoadsItsOriginalOnlyWhileSelected() {
         val detail = "$original/variants/source/1/detail.png"
         for (images in listOf(PhotoViewerImages(listOf(detail)), PhotoViewerImages(listOf(detail), listOf(original)))) {
             assertEquals(detail, images.displayUrl(0, 0, true))
-            assertNull(images.highQualityUrl(0, 0))
+            assertEquals(original, images.highQualityUrl(0, 0))
+            assertNull(images.highQualityUrl(0, 1))
             assertEquals(listOf(original), images.originals)
         }
+    }
+
+    @Test fun explicitThumbnailAndOriginalUrlsKeepTheirOrder() {
+        val previews = listOf("https://cdn.example/first-thumb.jpg", "https://cdn.example/second-thumb.jpg")
+        val originals = listOf("https://cdn.example/first.jpg", "https://cdn.example/second.jpg")
+        val images = PhotoViewerImages(previews, originals)
+        assertEquals(previews[1], images.displayUrl(1, 1, true))
+        assertEquals(originals[1], images.highQualityUrl(1, 1))
+        assertNull(images.highQualityUrl(0, 1))
+        assertEquals(listOf(previews[0]), images.adjacentPreviewUrls(1))
     }
 
     @Test fun missingOriginalDoesNotRequestAnEmptyUrlAndIndicesMustStayAligned() {

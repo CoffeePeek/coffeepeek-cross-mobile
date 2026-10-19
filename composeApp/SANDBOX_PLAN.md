@@ -1,5 +1,28 @@
 # Application-wide offline Sandbox checkpoint
 
+## Develop baseline reconciliation — 2026-10-19
+
+Inherit Home `c165d8fc`, main `dfb00e63` and approved develop `fc85f8e5`.
+Keep the full actual application graph/isolated clients; do not restore the
+retired calendar-only navigator/Environment/photo viewer when resolving the
+parent. Remove ML extractor/Shop processor overrides and synthetic drink cutouts
+from bootstrap, seeds and fake responses. Ordinary local media/uploads, photo-less
+visit counts, session scenarios, root navigation and network isolation remain.
+The actual migrated Home entries no longer require an extraction port.
+
+Verification: app unit suites, Direct Debug/Sandbox assemblies and their packaging/
+isolation checks plus app instrumentation compilation. This synchronization does
+not claim a new manual full-app walkthrough, author-block fake contract support,
+live backend or iOS acceptance. Parent Home/history UI evidence is recorded in
+their owning plans. No ordinary CoffeePeek or Sandbox package is installed here.
+
+Independent #101 reconciliation verification: **534 app Direct unit results**,
+zero failures/errors/skips; Direct Debug and full Direct Sandbox APKs, their
+packaged DEX/isolation guards and app Direct instrumentation compilation pass
+(1m55s), first run successful. Retired calendar-only host files stay deleted.
+Local log: `coffeepeek-develop-sandbox-build-2026-10-19.log`. This build evidence
+does not repeat or extend the historical manual full-app acceptance below.
+
 Date: 2026-10-18. Branch `feature/sandbox-application`, child of Home checkpoint
 1873b05 / PR #99. The Home PR remains focused; the application-wide host has its
 own review boundary. No main/develop merge or new Gradle business module.
@@ -10,7 +33,8 @@ own review boundary. No main/develop merge or new Gradle business module.
    Remove the old independent Home/calendar Sandbox navigator, not product UI.
 2. [x] Add optional client factories to legacy HTTP composition; production
    defaults and request/auth semantics remain unchanged. Replace all API/plain/
-   upload engines, session/auth, image fetching and extraction in Sandbox only.
+   upload engines, session/auth and image fetching in Sandbox only. The earlier
+   fake extraction override is retired with the accepted develop baseline.
 3. [x] Seed discovery, coffee, Shop, roaster, profile, feed and favorite fixtures;
    share mutations with history. Preserve private/pending feed exclusion.
 4. [x] Inject synthetic photo selection throughout the app and an offline map

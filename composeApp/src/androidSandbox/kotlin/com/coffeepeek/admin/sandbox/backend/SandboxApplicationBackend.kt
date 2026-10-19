@@ -173,7 +173,7 @@ internal class SandboxApplicationBackend(private val today: LocalDate, private v
         }
     })
     private fun visit(id: String, input: JsonObject) = buildJsonObject {
-        input.forEach { (key, value) -> put(key, value) }
+        input.forEach { (key, value) -> if (key != "drinkPhoto") put(key, value) }
         put("id", id); put("shop", address("sandbox-cafe", "/coffee-shops/sandbox-cafe")); put("shopName", "Sandbox Cafe")
         put("author", address("sandbox", "/users/sandbox")); put("username", username)
         put("createdAtUtc", "${today}T07:00:00Z"); put("visitedAt", input["visitedAt"] ?: JsonPrimitive("${today}T07:00:00Z"))
@@ -184,7 +184,6 @@ internal class SandboxApplicationBackend(private val today: LocalDate, private v
             val key = original["storageKey"]?.jsonPrimitive?.content ?: return@forEach
             add(JsonObject(original + mapOf("id" to JsonPrimitive(key), "url" to JsonPrimitive("/media/$key"))))
         } }
-        (input["drinkPhoto"] as? JsonObject)?.get("storageKey")?.jsonPrimitive?.content?.let { put("drinkPhotoUrl", "/media/$it") }
     }
     private fun drinks() = JsonArray(listOf(buildJsonObject { put("slug", "cappuccino"); put("nameRu", "Капучино"); put("nameEn", "Cappuccino"); put("category", "Coffee"); put("price", 8) }))
     private fun photo() = buildJsonObject { put("id", "sample"); put("url", "/media/sample"); put("fullUrl", "${SandboxBackend.BASE_URL}/media/sample") }
