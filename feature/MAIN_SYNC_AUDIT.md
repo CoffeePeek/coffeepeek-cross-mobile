@@ -1,5 +1,25 @@
 # Migration stack versus main — current and historical audits
 
+## Shop author-block menu reconciliation — 2026-10-19
+
+Parent #43 runtime fix `6dc3f115` is inherited through #95 -> #99 -> #101 -> #102
+to Coffee-tip runtime source `46b1943a`. Detail preview and full-list menus now
+request the existing block/login confirmation through a narrow Shop API identity
+and account/visibility-bound app adapter. No block backend/coordinator/UI is
+copied into Shop or new feature UI added to composeApp. Own/unresolved/hidden
+identities are guarded; the auth user ID is never substituted for public author ID.
+
+Parent checks: 552 selected unit results and final 39/39 isolated Pixel 7 Shop UI
+cases pass; prior selector failure and compile retry are preserved in
+`shop/ANDROID_PARITY_PLAN.md`. Final-tip selected unit results are 650/650;
+Direct Debug/Sandbox APKs, DEX/isolation, Shop test APK and app Direct test
+compilation pass (2m03s). The repeated final-tip Pixel 7 Shop suite also passes
+40/40 (67.277s), zero failures/retries. Its extra existing shared-heart case is
+inherited from the descendants. APK identity/logs are in the owning Shop plan.
+Full-app Sandbox still lacks the block transport contract/fixtures; safe menu
+fixtures alone do not close that graph, live protected media, real account/write
+or release gates. Coffee remains prepared/inactive; no iOS UI migration.
+
 ## Photo contract reconciliation — 2026-10-19
 
 The Home/history DTO/calendar/gallery gaps identified in the audit below are now
@@ -20,7 +40,8 @@ compilation (2m21s). Final-tip Pixel 7 UI repetition also passes: Home 41/41
 (73.350s), history 21/21 (38.937s), no failures/retries. APK identities and logs
 are in the owner plans. Normal CoffeePeek/Sandbox device packages are unchanged.
 This closes the identified code contract gap, not live protected media, actual
-camera/upload/account/release acceptance or Shop blocking-menu integration.
+camera/upload/account/release acceptance. Shop menu integration is addressed
+by the subsequent owner slice above, with its own separate evidence.
 See the owning history/Home plans for source identities and exact evidence.
 
 ## Latest main dfb00e63 — CI-only follow-up, 2026-10-19

@@ -28,13 +28,13 @@ paths, not templates for new migrations.
 | Core and build-logic | Coroutines, network, database, typed MVI, design-system; Modules catalog/conventions; shared fractional ratings, gold hearts, slot card and expandable text | Scoped reuse; remove legacy equivalents only after consumers migrate, not a new core/base/common project |
 | Favorites | Four boundaries; active Android entry for server-backed shops/roasters/drinks, account guards and app-owned DI | Live account/persistence/photo/accessibility acceptance and remaining analytics parity; never restore the local server-favorite writer |
 | Shop Report | Four boundaries; active Android reason selection/submission entry and grouped accessible choices | Safe live submit/error/uncertain-delivery acceptance; not the separate check-in abuse-report flow |
-| Shop | Four boundaries; active detail, menu gallery, public check-in list and creation sheet; shared controls and prod geometry | New-main blocking-menu parity, protected-photo visual acceptance, media/permissions/extraction, guest/owner/return and authorized writes |
+| Shop | Four boundaries; active detail, menu gallery, public check-in list and creation sheet; shared controls/prod geometry; block/report menus delegate through revocable app adapters | Full-app Sandbox blocking fixtures, protected-photo visual acceptance, media/permissions/extraction, guest/owner/return and authorized writes |
 | Combined history | Four boundaries; three Android aliases use combined Shop/Home calendar/timeline, paging, filters, visit markers and current-main feed/thumb/detail/original photo contracts | Populated live/protected-photo/accessibility checks. Profile Activity modal remains a separate legacy consumer |
 | Home check-ins | Four boundaries; history/global creation use new data/entries, media/analytics bridges; distinct photo variants reach calendar/detail/gallery, 41/41 isolated owner UI cases pass | Real media/upload/account/CRUD acceptance. Profile Activity and shared/iOS consumers remain legacy |
 | Coffee catalogue | Four boundaries; repository/picker, typed list/detail MVI, Android entries/content/components/resources/previews and isolated tests prepared | **Not activated**: tab/detail routes/Koin/picker still use composeApp implementation. Finish analytics adapters, Android DI/routes/picker and full Sandbox checks before switching |
 | Sandbox / shared UI support | Separate offline app with actual app graph, RAM fake backend and explicit run modes; common rating/heart/card changes also affect normal consumers | New-main author-blocking scenarios and protected-photo lifecycle fixtures need explicit fake coverage; Sandbox does not certify live APIs/OAuth/camera/storage |
 | Discovery, roasters, profile/account, auth, community/content reporting, settings, contributions | Current-main product behavior retained; new four-boundary extraction not started | Extract by business owner after Coffee, auditing current routes and dependencies first |
-| Author blocking | Incoming main implementation in features/author-blocking plus shared app UI; new Shop adapters honor visibility | Not a completed four-boundary migration; preserve behavior while later extracting UI/ownership |
+| Author blocking | Incoming main implementation in features/author-blocking plus shared app UI; Shop adapters honor visibility and forward eligible author-block requests | Full-app Sandbox blocking transport fixtures; not a completed four-boundary migration, preserve behavior while later extracting UI/ownership |
 
 Five feature families have active Android entries; Coffee is the sixth prepared
 family, not a sixth completed integration. No label closes every release gate.
@@ -45,16 +45,23 @@ iOS UI migration remains deferred; Native compilation is only compatibility.
 1. [x] Reconcile main 28917758 in #43 and propagate through all open children.
    Preserve Android entries, atomic sessions, incoming links/web-only password
    recovery, and injected fake Sandbox image transport.
-2. [ ] Close identified **current-main parity gaps** before another screen switch:
-   Home/history feed/thumb/detail variants, explicit originals, album indices and
-   calendar thumbs are implemented in #95/#99 and propagated to children. Their
-   owner tests and 41-case Home device suite pass; the final tip builds Debug and
-   Sandbox with 704 selected unit results. Final-tip UI repetition also passes:
-   41 Home + 21 history cases, zero failures/retries. Preserve
-   protected image permissions/cache/session invalidation and blocked-author
-   filtering; complete migrated
-   check-in menu integration. Fixes stay in their parent/history/Home owner and
-   flow to children; do not implement feature UI in composeApp.
+2. [ ] Close identified **current-main parity verification** before another screen switch:
+
+   - [x] History/Home feed/thumb/detail variants, explicit originals, album indices
+     and calendar thumbs in #95/#99, propagated to children. Recorded final-tip
+     checks: 704 unit results and 41 Home + 21 history isolated UI cases pass.
+   - [x] Shop block/report menu integration in parent #43 (`6dc3f115`), propagated
+     through the stack. Parent checks: 552 selected unit results and 39/39 isolated
+     Pixel 7 UI cases pass after the documented existing-selector correction.
+     Final tip `46b1943a`: 650 unit results, Debug/Sandbox APK/DEX/isolation and
+     repeated **40/40** isolated Shop UI cases pass, no failures/retries.
+   - [ ] Full-app Sandbox block/unblock/failure/login/visibility fixtures and
+     protected-photo lifecycle scenarios. The fake backend currently lacks
+     `/api/v1/me/blocks`; self-targeted menu tests do not certify that app graph.
+
+   Preserve protected permissions/cache/session invalidation and blocked-author
+   filtering. Live media/account/write acceptance remains a separate authorized
+   release gate. Keep fixes with their owner; no feature UI in composeApp.
 3. [ ] Finish Coffee app-owned analytics: normalized search/filter fingerprint,
    consent/session invalidation, result/open position and detail/section actions.
    Features receive narrow ports, never an analytics SDK.
@@ -95,6 +102,16 @@ No PR is merged into main/develop by synchronization; published history is not
 rewritten. Root Navigation 3 and native iOS presentation remain separate decisions.
 
 ## Fresh verification — 2026-10-19
+
+Shop author-menu follow-up: owner runtime `6dc3f115`, propagated to Coffee-tip
+runtime `46b1943a`. **650/650** selected unit results (Shop impl 99, author-blocking
+11, app Direct 540), Direct Debug/Sandbox APK/DEX/isolation, Shop test APK and app
+Direct instrumentation compilation pass (2m03s). Pixel 7 / API 37 complete Shop
+suite repeats **40/40** (67.277s) with fake ports, zero failures/retries at the tip.
+Parent 39-case run and its repaired selector failure remain in the owning Shop
+plan. Only self-targeted test APKs were deployed; no ordinary app update, real
+block/write, iOS UI or manual pixel acceptance. Full-app fake blocking transport
+and protected-image lifecycle scenarios remain the next parity gate.
 
 Photo contract follow-up: history `abc5876f`, Home `fe80c7e0`, propagated to tip
 `28c64bff`. Owner history 21/21 and Home 41/41 isolated Pixel 7 UI cases pass,

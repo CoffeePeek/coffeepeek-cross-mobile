@@ -38,10 +38,24 @@ successfully. Targeted repair **1/1** passes (2.409s), followed by full **39/39*
 No product assertion or scenario was dropped. Logs stay local under
 `coffeepeek-shop-block-parent-*2026-10-19.log`.
 
-Propagate the owner fix through the existing stack, then verify Debug/Sandbox at
-the tip. No real account/block/backend write, native iOS change, new Gradle module
-or manual pixel-parity acceptance. Full-app Sandbox blocking transport fixtures
-and live protected-media/blocking acceptance remain separate gates.
+Owner runtime `6dc3f115` is propagated parent-first through #95/#99/#101/#102 to
+tip runtime `46b1943a`. Final-tip verification: **650 selected unit results**
+(99 Shop impl, 11 author-blocking, 540 app Direct), zero failures/errors/skips;
+Direct Debug/Sandbox APKs, both packaged DEX guards, Sandbox isolation, Shop
+self-targeted APK and app Direct instrumentation Kotlin compilation pass (2m03s).
+The initial tip build launch was not executed because tool approval was
+unavailable; the same normal approval path later succeeded without a bypass.
+
+At that tip, the complete Pixel 7 fake Shop UI suite passes **40/40** (67.277s),
+no failures/retries. The extra case is an existing descendant shared-heart
+regression, not a new production capability. Test APK SHA-256:
+`3f52bd107a297533179ae6094bff605d4380b5f27be78f015b0a07272573d583`.
+Local final logs: `coffeepeek-shop-block-stack-final-build-2026-10-19.log` and
+`coffeepeek-shop-block-stack-full-ui-2026-10-19.log`. Later tip edits are docs only.
+Only test APKs were installed; ordinary CoffeePeek/Sandbox and account data are
+untouched by these checks. No real block/backend write, native iOS screen change,
+new Gradle module or manual pixel acceptance. Full-app Sandbox blocking transport
+fixtures and live protected-media/blocking acceptance remain separate gates.
 
 ## Scoped interaction corrections — 2026-10-19
 
