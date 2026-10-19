@@ -154,6 +154,7 @@ jobs:
         run: |
           set -euo pipefail
           umask 077
+          python3 -m unittest discover -s tools/release -p test_ios_signing_profile.py
           printf '%s' "$IOS_CERTIFICATE_BASE64" | base64 -D > "$RUNNER_TEMP/distribution.p12"
           printf '%s' "$IOS_PROVISIONING_PROFILE_BASE64" | base64 -D > "$RUNNER_TEMP/app-store.mobileprovision"
           printf '%s' "$APPSTORE_API_PRIVATE_KEY" > "$RUNNER_TEMP/AuthKey_${APPSTORE_API_KEY_ID}.p8"
@@ -189,7 +190,10 @@ jobs:
           if 'Default' not in profile.get('Entitlements', {}).get('com.apple.developer.applesignin', []):
               raise SystemExit('Regenerate the App Store profile with Sign in with Apple and update IOS_PROVISIONING_PROFILE_BASE64')
           associated_domains = profile.get('Entitlements', {}).get('com.apple.developer.associated-domains', [])
-          if not isinstance(associated_domains, list) or not any(domain in associated_domains for domain in ('*', 'applinks:coffeepeek.by')):
+          if associated_domains != '*' and not (
+              isinstance(associated_domains, list)
+              and any(domain in associated_domains for domain in ('*', 'applinks:coffeepeek.by'))
+          ):
               raise SystemExit('Regenerate the App Store profile with Associated Domains enabled and update IOS_PROVISIONING_PROFILE_BASE64')
           if profile.get('Entitlements', {}).get('get-task-allow') is not False or 'ProvisionedDevices' in profile or profile.get('ProvisionsAllDevices'):
               raise SystemExit('An App Store distribution profile is required')
