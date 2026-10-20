@@ -26,12 +26,6 @@ kotlin {
         commonTest.dependencies {
             implementation(libs.kotlin.test)
         }
-        androidInstrumentedTest.dependencies {
-            implementation(libs.androidx.compose.ui.test.junit4)
-            implementation(libs.androidx.activity.compose)
-            implementation(libs.androidx.test.runner)
-            implementation(libs.androidx.espresso.core)
-        }
     }
 }
 
@@ -49,7 +43,6 @@ android {
     compileSdk = Config.COMPILE_SDK
     defaultConfig {
         minSdk = Config.MIN_SDK
-        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
     compileOptions {
         sourceCompatibility = Config.JAVA_VERSION
