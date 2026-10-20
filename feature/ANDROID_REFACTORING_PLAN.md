@@ -1,5 +1,10 @@
 # Android refactoring — current roadmap
 
+UI verification policy update (2026-10-20): the agent-authored Android UI suites
+and their test-only hosts are removed at the user's request across the open
+migration stack. Dated UI results below are historical, not runnable suites.
+See [removal scope and retained verification](UI_TEST_REMOVAL.md).
+
 ## Accepted develop baseline — 2026-10-19
 
 User approved adopting `origin/develop` `fc85f8e5` ahead of main `dfb00e63`.
