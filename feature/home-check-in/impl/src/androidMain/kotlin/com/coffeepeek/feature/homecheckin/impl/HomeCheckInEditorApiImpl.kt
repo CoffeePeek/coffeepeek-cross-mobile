@@ -2,8 +2,6 @@ package com.coffeepeek.feature.homecheckin.impl
 
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.lifecycle.ViewModelStore
-import androidx.lifecycle.ViewModelStoreOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.coffeepeek.feature.homecheckin.api.HomeCheckInEditorEntry
@@ -43,9 +41,9 @@ private class HomeCheckInEditorApiImpl(
         onClose: () -> Unit, onSaved: (String, Boolean) -> Unit, onDismissAllowedChange: (Boolean) -> Unit, modifier: Modifier) {
         key(this, sessionGeneration, preparationId) {
             val currentAccess by rememberUpdatedState(accessAllowed)
-            val owner = remember { object : ViewModelStoreOwner { override val viewModelStore = ViewModelStore() } }
-            DisposableEffect(owner) { onDispose { owner.viewModelStore.clear() } }
-            val model = viewModel(viewModelStoreOwner = owner) {
+            // Lifetime belongs to the caller: it provides a ViewModelStoreOwner that outlives configuration
+            // changes (rotation, theme/font/locale, camera return) and clears it when the flow is over.
+            val model = viewModel(key = "home-check-in-editor:${preparationId.orEmpty()}:$sessionGeneration") {
                 val instant = dates.currentInstant()
                 HomeCheckInEditorViewModel(repository, catalog, instant, dates.localDate(instant),
                     preparationId, sessionGeneration, { currentAccess && canAccess() }, analytics = analytics(preparationId != null))

@@ -3,12 +3,12 @@ package com.coffeepeek.admin.di.homecheckin
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.ViewModelStore
-import androidx.lifecycle.ViewModelStoreOwner
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.repeatOnLifecycle
+import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coffeepeek.composeapp.generated.resources.Res
 import coffeepeek.composeapp.generated.resources.check_in_create_close
@@ -31,8 +31,12 @@ internal class AndroidCheckInCreateFlowRenderer(
     @Composable
     override fun Content(onDismiss: () -> Unit, onShop: () -> Unit, onHomeSaved: () -> Unit,
         legacyContent: @Composable () -> Unit) {
-        val owner = remember { object : ViewModelStoreOwner { override val viewModelStore = ViewModelStore() } }
-        DisposableEffect(owner) { onDispose { owner.viewModelStore.clear() } }
+        val owner = viewModel<RetainedViewModelStore>(key = "global-check-in-flow")
+        val activity = LocalContext.current.findActivity()
+        DisposableEffect(owner) {
+            // A rotation or theme change keeps the draft; closing the sheet releases it.
+            onDispose { if (activity?.isChangingConfigurations != true) owner.release() }
+        }
         val model = viewModel(viewModelStoreOwner = owner) { AndroidGlobalCheckInFlow(sessions, createEditor) }
         val state by model.state.collectAsStateWithLifecycle()
         val currentDismiss by rememberUpdatedState(onDismiss)
@@ -59,14 +63,22 @@ internal class AndroidCheckInCreateFlowRenderer(
         if (destination is GlobalCheckInDestination.Closed || !model.canAccess()) return
         val home = destination as? GlobalCheckInDestination.Home
         val dismissAllowed = home?.dismissAllowed?.collectAsStateWithLifecycle()?.value ?: true
-        AnalyticsOverlay {
-            CoffeePeekSwipeDismissModalBottomSheet({ model.cancel(destination) }, stringResource(Res.string.check_in_create_close),
-                dismissEnabled = dismissAllowed, maxSheetHeightFraction = if (home != null) 0.9f else null) {
-                if (home == null) CheckInCreateContent(model::shop, model::home)
-                else home.entry.Content(null, 0, model.canAccess(), { model.cancel(home) },
-                    { id, _ -> model.saved(home, id) }, { model.setDismissAllowed(home, it) },
-                    Modifier.weight(1f).fillMaxWidth())
+        CompositionLocalProvider(LocalViewModelStoreOwner provides owner) {
+            AnalyticsOverlay {
+                CoffeePeekSwipeDismissModalBottomSheet({ model.cancel(destination) }, stringResource(Res.string.check_in_create_close),
+                    dismissEnabled = dismissAllowed, maxSheetHeightFraction = if (home != null) 0.9f else null) {
+                    if (home == null) CheckInCreateContent(model::shop, model::home)
+                    else home.entry.Content(null, 0, model.canAccess(), { model.cancel(home) },
+                        { id, _ -> model.saved(home, id) }, { model.setDismissAllowed(home, it) },
+                        Modifier.weight(1f).fillMaxWidth())
+                }
             }
         }
     }
+}
+
+private tailrec fun android.content.Context.findActivity(): android.app.Activity? = when (this) {
+    is android.app.Activity -> this
+    is android.content.ContextWrapper -> baseContext.findActivity()
+    else -> null
 }
