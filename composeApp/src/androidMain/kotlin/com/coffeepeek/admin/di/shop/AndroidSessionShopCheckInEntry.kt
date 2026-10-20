@@ -1,6 +1,7 @@
 package com.coffeepeek.admin.di.shop
 
 import androidx.compose.runtime.Composable
+import com.coffeepeek.admin.analytics.AnalyticsOverlay
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -58,12 +59,12 @@ internal class AndroidSessionShopCheckInEntry(
             createShopCheckInCreateEntry(lease, { _, _ -> boundDrafts }, dates, photos,
                 analytics = { AndroidShopCheckInAnalytics(lease::isCurrent) })
         }
-        entry.Content(
+        AnalyticsOverlay { entry.Content(
             shopId, shopSlug, shopName,
             onDismiss = onDismiss,
             onSubmitted = { if (lease.isCurrent()) onSubmitted() },
             onGoToFeed = { if (lease.isCurrent()) onGoToFeed() },
             onOpenHistory = { if (lease.isCurrent()) onOpenHistory() },
-        )
+        ) }
     }
 }
