@@ -1330,7 +1330,7 @@ private fun ReviewsSection(
                                 },
                                 modifier = Modifier.fillMaxWidth(),
                                 onPhotoClick = onReviewPhotoClick,
-                                onHelpfulClick = if (isOwnCheckIn) null else ({ onReviewHelpfulClick(checkIn.id) }),
+                                onHelpfulClick = { onReviewHelpfulClick(checkIn.id) },
                                 onReportClick = if (isOwnCheckIn) null else ({ Navigator.navigate(Navigator.Screen.ReportCheckIn(checkIn.id)) }),
                             )
                         }

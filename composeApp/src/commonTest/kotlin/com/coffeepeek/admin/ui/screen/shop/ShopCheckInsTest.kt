@@ -70,7 +70,6 @@ class ShopCheckInsTest {
             assertTrue(loadedDetails.reviews.isEmpty())
             assertEquals(details.checkIns, loadedDetails.checkIns)
             assertEquals(23, loadedDetails.shop.reviewCount)
-            vm.toggleHelpful("own")
             vm.toggleHelpful("unknown")
             assertNull(vm.uiState.value.helpfulId)
             assertTrue(started.tryReceive().isFailure)
@@ -86,6 +85,32 @@ class ShopCheckInsTest {
             assertTrue(likedDetails.checkIns.first().isHelpfulByCurrentUser)
             assertEquals(ownVisit, likedDetails.checkIns.last())
         } finally { vm.close() }
+    }
+
+    @Test
+    fun ownPublishedCheckInCanBeLikedAndUnlikedWithoutChangingOtherCards() = runBlocking {
+        val requests = Channel<Pair<String, Boolean>>(Channel.UNLIMITED)
+        val repo = ShopTestCheckIns().apply {
+            helpful = { id, helpful ->
+                requests.send(id to helpful)
+                Result.success(CheckInHelpfulVote(helpful, if (helpful) 8 else 3))
+            }
+        }
+        val vm = viewModel(repo, loggedIn = true)
+        try {
+            val loaded = withTimeout(5_000) { vm.uiState.first { it.details != null && !it.isLoading } }
+            assertTrue(loaded.details!!.ownsCheckIn(ownVisit, loaded.currentUserId))
+            vm.toggleHelpful(ownVisit.id)
+            assertEquals(ownVisit.id to true, withTimeout(5_000) { requests.receive() })
+            val liked = withTimeout(5_000) { vm.uiState.first { it.helpfulId == null && it.details!!.checkIns.last().isHelpfulByCurrentUser } }
+            assertEquals(8, liked.details!!.checkIns.last().helpfulCount)
+            vm.toggleHelpful(ownVisit.id)
+            assertEquals(ownVisit.id to false, withTimeout(5_000) { requests.receive() })
+            val unliked = withTimeout(5_000) { vm.uiState.first { it.helpfulId == null && !it.details!!.checkIns.last().isHelpfulByCurrentUser } }
+            assertEquals(3, unliked.details!!.checkIns.last().helpfulCount)
+            assertEquals(listOf("public", "own"), unliked.details!!.checkIns.map { it.id })
+            assertEquals(publicVisit, unliked.details!!.checkIns.first())
+        } finally { vm.close(); requests.close() }
     }
 
     @Test

@@ -301,7 +301,7 @@ class ShopDetailViewModel internal constructor(
         val current = _uiState.value
         val details = current.details ?: return
         val checkIn = details.checkIns.firstOrNull { it.id == checkInId } ?: return
-        if (current.helpfulId != null || details.ownsCheckIn(checkIn, current.currentUserId)) return
+        if (current.helpfulId != null) return
         _uiState.update { it.copy(helpfulId = checkInId) }
         workScope.launch {
             try {
