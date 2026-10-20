@@ -313,3 +313,18 @@ Found and fixed on the way: the Sandbox root composed only `Navigator()`, so no 
 now hosts `AuthorBlockingHost()` as `App.kt` does. This closes part of the open "block UI walkthrough" item in the plan.
 
 Not checked: guest follow → sign-in, own profile through an alias, photo viewer from avatar/check-in photos (no photo fixtures), large font, light theme, rotation.
+
+## Step 5 result — Profile tab in `feature/profile/impl` (2026-10-20)
+
+- **Logic**: `OwnProfileViewModel` over `ProfileAccountPort`/`ProfileSignOutPort` (account switch and sign-out clear first, late answers for an old account ignored, refresh failure with content
+  only sets `refreshError`, logout resets the screen before the app ends the account). 6 tests ported from the account half of `ProfileViewModelTest`.
+- **UI**: the owner's page is the shared public-profile screen with `OwnProfileExtras` (no back button, owner actions menu: shop changes / submitted shops / submitted roasters / logout with a
+  confirmation dialog, edit button on the avatar, favorites preview and personal activity calendar as app slots, "Все" opens Favorites with the `favorites_opened {entry_point: profile}` event and the
+  VisitedPlaces list, bottom padding for the floating bar). The page reloads when the cached name, bio, avatar or address change. An account without a public address gets the plain summary
+  (header, stats, Избранное/Чекины buttons, favorites preview, mascot error with retry).
+- **api/app**: `OwnProfileEntry`, `OwnProfileSlots`, `ProfileSignOutPort`; `OwnProfileScreenRenderer` (Legacy default, Android entry) used by `MainScreen`'s Profile tab; `AndroidProfileSignOut` keeps the
+  legacy order (server logout with its message, platform sign-out, drafts). `AndroidProfileSignOutTest` (2). iOS keeps `ProfileScreen`.
+- **Dropped on purpose**: the guest card branch of the legacy `ProfileScreen` (the tab is only composed for signed-in users, see `MainScreen`) — owner question Q8 was not answered, revisit if guests ever get the tab.
+- **Pixel 7 Sandbox check**: tab renders (header, edit button, stats, favorites preview, check-ins, activity); actions menu and logout dialog (cancelled); «Все» of favorites → Favorites;
+  «Все» of check-ins → history; edit button → Edit profile, saving a new name updates the tab header (@Sandbox2); personal activity calendar sheet; bottom content clears the floating bar.
+  Not checked: logout itself, the no-public-address path (no fixture), large font, rotation, light theme, avatar photo viewer.
