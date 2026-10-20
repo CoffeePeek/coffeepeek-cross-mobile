@@ -108,4 +108,16 @@
     <string name="delete_account_pending_resend_wait">Повторная отправка пока недоступна</string>
     <string name="local_data_cleanup_error">Локальные данные не удалось полностью очистить</string>
     <string name="shop_menu_gallery_open">Фотографии меню</string>
+    <string name="select_city_label">Город</string>
+    <string name="select_city_placeholder">Выберите город</string>
+    <string name="select_city_none">Не указывать город</string>
+    <string name="select_drink_label">Напиток</string>
+    <string name="select_drink_none">Не выбран</string>
+    <string name="select_drink_other">Другое</string>
+    <string name="select_drink_custom">Название напитка</string>
+    <string name="select_drink_error">Не удалось загрузить напитки</string>
+    <string name="select_retry">Повторить</string>
+    <string name="select_method_label">Выбрать способ заваривания</string>
+    <string name="select_method_placeholder">Выбрать способ</string>
+    <string name="select_method_none">Не указывать</string>
 </resources>
