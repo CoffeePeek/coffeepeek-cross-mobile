@@ -1,5 +1,24 @@
 # Shared affinity heart — 2026-10-18
 
+## Contextual floating control — 2026-10-20
+
+Owner: Coffee/shared-like checkpoint #104, based on `d34ba4c7` after parent
+Shop corrections `6e118f14` were propagated through the stack. `FloatingGlass`
+is an explicit variant for grouped floating actions: its plate uses the shared
+`buttonHeight` and the same untinted `coffeePeekLiquidGlass` material/shadow as
+`CoffeePeekGlassIconButton`. Shop's header opts in; no other caller is resized.
+`Glass` remains the compact 32dp dark photo badge and `Plain` stays unplated.
+All variants keep the 48dp minimum touch target and ripple-free toggle behavior.
+The floating heart uses theme-neutral unselected foreground and accessible gold
+when selected, not the destructive/error palette. Loading, semantics, callbacks
+and exposure tracking are unchanged. Paired previews include both floating states.
+
+Verification plan: pure style-size and palette unit tests, Shop/Coffee/app unit
+regressions, Debug/Sandbox assembly and packaged DEX/isolation guards; then
+propagate to Roasters and verify the final tip. Manual Sandbox light/dark,
+actual-photo/Haze and motion acceptance remain separate device gates. No
+automated UI suites or test-only hosts are added or run.
+
 ## Compact interaction follow-up — 2026-10-19
 
 Source: Coffee child `da67051b` plus this patch, inheriting parent UI fix

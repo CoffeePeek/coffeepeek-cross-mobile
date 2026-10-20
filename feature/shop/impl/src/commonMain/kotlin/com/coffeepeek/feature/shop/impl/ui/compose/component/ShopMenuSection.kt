@@ -1,19 +1,14 @@
 package com.coffeepeek.feature.shop.impl.ui.compose.component
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import com.coffeepeek.feature.shop.api.ShopExposure
 import com.coffeepeek.feature.shop.api.ShopContentMetric
 import com.coffeepeek.feature.shop.api.ShopContentAction
@@ -25,6 +20,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
+import com.coffeepeek.core.designsystem.component.CoffeePeekContentCard
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.feature.shop.domain.model.ShopMenu
@@ -32,7 +28,6 @@ import com.coffeepeek.feature.shop.domain.model.ShopMenuItem
 import com.coffeepeek.feature.shop.domain.model.MenuPhoto
 import com.coffeepeek.feature.shop.impl.resources.Res
 import com.coffeepeek.feature.shop.impl.resources.shop_menu_no_items
-import com.coffeepeek.feature.shop.impl.resources.shop_menu_photos
 import com.coffeepeek.feature.shop.impl.resources.shop_menu_title
 import com.coffeepeek.feature.shop.impl.ui.data.formatShopMenuDate
 import com.coffeepeek.feature.shop.impl.ui.data.groupedPresentMenuItems
@@ -42,7 +37,6 @@ import org.jetbrains.compose.ui.tooling.preview.Preview
 @Composable
 internal fun ShopMenuSection(
     menu: ShopMenu,
-    onOpenPhotos: () -> Unit,
     onOpenPhoto: (Int) -> Unit,
     modifier: Modifier = Modifier,
     formatDate: (String) -> String = ::formatShopMenuDate,
@@ -52,51 +46,50 @@ internal fun ShopMenuSection(
     val updated = menu.updatedAtUtc?.takeIf(String::isNotBlank)?.let(formatDate)
     val analytics = LocalShopAnalytics.current
     Column(modifier.shopExposure(ShopExposure.Menu).fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing3)) {
-        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-            ShopSectionTitle(stringResource(Res.string.shop_menu_title), Modifier.weight(1f))
-            if (menu.photos.isNotEmpty()) TextButton(onClick = {
-                analytics.content(ShopContentMetric.Menu, ShopContentAction.Open)
-                onOpenPhotos()
-            }) {
-                Text(stringResource(Res.string.shop_menu_photos, menu.photos.size))
-            }
-        }
-        Card(Modifier.fillMaxWidth(), shape = RoundedCornerShape(CoffeePeekDimens.radius2xl),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline)) {
-            Column(Modifier.padding(CoffeePeekDimens.spacing4),
-                verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing3)) {
-                BoxWithConstraints(Modifier.fillMaxWidth()) {
-                    // Preserve the compact layout without squeezing text at large font scales.
-                    val canPlaceBesideItems = maxWidth >= 280.dp && LocalDensity.current.fontScale <= 1.3f
-                    val photoStack: @Composable () -> Unit = {
-                        ShopMenuPhotoStack(menu.photos, { index ->
-                            analytics.content(ShopContentMetric.Menu, ShopContentAction.Open)
-                            onOpenPhoto(index)
-                        }) {
-                            ShopMenuFreshness(captured, updated,
-                                Modifier.align(Alignment.BottomStart).padding(CoffeePeekDimens.spacing2),
-                                contentColor = Color.White)
-                        }
-                    }
-                    if (menu.photos.isNotEmpty() && groups.isNotEmpty() && canPlaceBesideItems) {
-                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing3),
-                            verticalAlignment = Alignment.Top) {
-                            MenuItems(groups, Modifier.weight(1f))
-                            photoStack()
-                        }
-                    } else {
-                        Column(verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing3)) {
-                            if (groups.isNotEmpty()) MenuItems(groups)
-                            else if (menu.photos.isEmpty()) Text(stringResource(Res.string.shop_menu_no_items),
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant)
-                            if (menu.photos.isNotEmpty()) photoStack()
-                        }
+        ShopSectionTitle(stringResource(Res.string.shop_menu_title))
+        MenuCard(menu, groups, captured, updated, onOpenPhoto = { index ->
+            analytics.content(ShopContentMetric.Menu, ShopContentAction.Open)
+            onOpenPhoto(index)
+        })
+    }
+}
+
+@Composable
+private fun MenuCard(menu: ShopMenu, groups: List<List<ShopMenuItem>>, captured: String?, updated: String?,
+    onOpenPhoto: (Int) -> Unit) {
+    CoffeePeekContentCard {
+        Column(verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing3)) {
+            BoxWithConstraints(Modifier.fillMaxWidth()) {
+                val canPlaceBesideItems = maxWidth >= 280.dp && LocalDensity.current.fontScale <= 1.3f
+                val photoStack: @Composable () -> Unit = {
+                    ShopMenuPhotoStack(menu.photos, onOpenPhoto) {
+                        ShopMenuFreshness(captured, updated,
+                            Modifier.align(Alignment.BottomStart).padding(CoffeePeekDimens.spacing2),
+                            contentColor = Color.White)
                     }
                 }
-                if (menu.photos.isEmpty()) ShopMenuFreshness(captured, updated)
+                MenuLayout(groups, menu.photos.isNotEmpty(), canPlaceBesideItems, photoStack)
             }
+            if (menu.photos.isEmpty()) ShopMenuFreshness(captured, updated)
+        }
+    }
+}
+
+@Composable
+private fun MenuLayout(groups: List<List<ShopMenuItem>>, hasPhotos: Boolean, canPlaceBesideItems: Boolean,
+    photoStack: @Composable () -> Unit) {
+    if (hasPhotos && groups.isNotEmpty() && canPlaceBesideItems) {
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing3),
+            verticalAlignment = Alignment.Top) {
+            MenuItems(groups, Modifier.weight(1f))
+            photoStack()
+        }
+    } else {
+        Column(verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing3)) {
+            if (groups.isNotEmpty()) MenuItems(groups)
+            else if (!hasPhotos) Text(stringResource(Res.string.shop_menu_no_items),
+                style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            if (hasPhotos) photoStack()
         }
     }
 }
@@ -113,16 +106,16 @@ private fun MenuItems(groups: List<List<ShopMenuItem>>, modifier: Modifier = Mod
 }
 
 @Preview @Composable private fun ShopMenuSectionLightPreview() = CoffeePeekTheme(darkTheme = false) {
-    ShopMenuSection(previewMenu(), onOpenPhotos = {}, onOpenPhoto = {})
+    ShopMenuSection(previewMenu(), onOpenPhoto = {})
 }
 @Preview @Composable private fun ShopMenuSectionDarkPreview() = CoffeePeekTheme(darkTheme = true) {
-    ShopMenuSection(previewMenu(), onOpenPhotos = {}, onOpenPhoto = {})
+    ShopMenuSection(previewMenu(), onOpenPhoto = {})
 }
 @Preview @Composable private fun ShopMenuWithPhotosLightPreview() = CoffeePeekTheme(darkTheme = false) {
-    ShopMenuSection(previewMenu().copy(photos = List(3) { MenuPhoto("preview-$it", "", "") }), {}, {})
+    ShopMenuSection(previewMenu().copy(photos = List(3) { MenuPhoto("preview-$it", "", "") }), {})
 }
 @Preview @Composable private fun ShopMenuWithPhotosDarkPreview() = CoffeePeekTheme(darkTheme = true) {
-    ShopMenuSection(previewMenu().copy(photos = List(3) { MenuPhoto("preview-$it", "", "") }), {}, {})
+    ShopMenuSection(previewMenu().copy(photos = List(3) { MenuPhoto("preview-$it", "", "") }), {})
 }
 private fun previewMenu() = ShopMenu(
     capturedAtUtc = "2026-10-02T10:00:00Z",
