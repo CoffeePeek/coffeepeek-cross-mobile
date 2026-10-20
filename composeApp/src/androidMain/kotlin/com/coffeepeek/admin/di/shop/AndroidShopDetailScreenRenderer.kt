@@ -57,6 +57,7 @@ internal class AndroidShopDetailScreenRenderer(
     private val details: ShopDetailsRepository,
     private val votes: ShopCheckInVoteRepository,
     private val favorites: FavoritesRepository,
+    private val favoriteIntent: ShopFavoriteIntent,
     private val checkInForm: ShopCheckInFormRenderer,
     private val visibility: com.coffeepeek.feature.authorblocking.api.AuthorVisibility,
     private val blockActions: com.coffeepeek.feature.authorblocking.api.AuthorBlockActions,
@@ -94,6 +95,10 @@ internal class AndroidShopDetailScreenRenderer(
                             ShopDetailEffect.Back -> Navigator.popBack()
                             ShopDetailEffect.ChooseAnotherShop -> Navigator.popThenNavigate(Navigator.Screen.CreateCheckIn)
                             ShopDetailEffect.SignIn -> Navigator.navigate(Navigator.Screen.Auth)
+                            is ShopDetailEffect.FavoriteRequiresSignIn -> {
+                                favoriteIntent.remember(effect.shopId, effect.desired)
+                                Navigator.navigate(Navigator.Screen.Auth)
+                            }
                             ShopDetailEffect.Register -> Navigator.navigate(Navigator.Screen.Register)
                             is ShopDetailEffect.OpenMenuGallery -> Navigator.navigate(Navigator.Screen.ShopMenuGallery(effect.shopId))
                             is ShopDetailEffect.CreateCheckIn -> form = effect.shop

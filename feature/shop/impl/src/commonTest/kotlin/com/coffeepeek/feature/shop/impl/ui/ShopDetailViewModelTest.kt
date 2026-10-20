@@ -318,6 +318,16 @@ class ShopDetailViewModelTest {
         assertFalse(viewModel.state.value.isFavorite)
     }
 
+    @Test fun guestFavoriteAsksTheAppToKeepTheIntentAcrossSignIn() = runTest(dispatcher) {
+        val favorites = Favorites()
+        val viewModel = viewModel(favorites = favorites, viewer = ShopViewer(false, null))
+        runCurrent()
+        viewModel.onAction(ShopDetailAction.ToggleFavorite)
+        runCurrent()
+        assertEquals(ShopDetailEvent.FavoriteRequiresSignIn("shop-1", true), viewModel.events.first().event)
+        assertEquals(0, favorites.saves)
+    }
+
     @Test fun favoriteFailureDoesNotChangeMembershipAndUnavailableStorageDisablesMutation() = runTest(dispatcher) {
         val favorites = Favorites().apply { mutationResult = Result.failure(IllegalStateException("secret")) }
         val viewModel = viewModel(favorites = favorites)

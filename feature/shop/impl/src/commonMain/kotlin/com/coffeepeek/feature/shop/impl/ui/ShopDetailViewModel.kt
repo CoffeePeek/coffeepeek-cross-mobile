@@ -267,7 +267,8 @@ internal class ShopDetailViewModel(
 
     private suspend fun toggleFavorite() {
         if (!currentState.isLoggedIn) {
-            emitEvent(ShopDetailEvent.SignIn)
+            val shop = currentState.details?.overview?.id ?: shopId
+            emitEvent(ShopDetailEvent.FavoriteRequiresSignIn(shop, !currentState.isFavorite))
             return
         }
         if (!currentState.favoriteAvailable || favoriteMutationJob != null) return
