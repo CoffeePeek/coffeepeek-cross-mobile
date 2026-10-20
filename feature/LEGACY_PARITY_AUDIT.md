@@ -101,12 +101,12 @@ Unchanged from legacy: shared `/coffees/{slug}` links are not mapped by `AppLink
 
 ## Fixes applied — 2026-10-20 (branch `feature/roaster-refactoring`)
 
-Unit tests pass; Android instrumented test APKs and the iOS composeApp compile build. **Not yet verified on a device.**
+Unit tests pass; Android instrumented test APKs and the iOS composeApp compile build. Device check: see "Pixel 7 Sandbox check" below.
 
 | id | change |
 |---|---|
 | H1 (+H2) | Editor no longer owns a private ViewModel store; the caller provides one. The global flow uses an Activity-retained store (`RetainedViewModelStore`) released only when the flow really ends, so rotation/theme/font/camera return keep the draft and no false `check_in_cancelled` is sent. History already used its destination store. |
-| G1 | Shop remembers a guest's favorite intent for 10 minutes and applies it once after sign-in when details and favorites are ready (test added). The `resumed_after_auth` analytics flag is not reproduced: the server-favorite events do not carry it on this path. |
+| G1 | The first attempt (intent kept in the shop ViewModel) **failed on the device**: signing in resets navigation to the root and destroys the detail screen. Now the guest's heart emits `FavoriteRequiresSignIn`; the app-level `ShopFavoriteIntent` keeps one 10-minute in-memory intent and applies it once for the next signed-in session (fetches details, saves, notifies `FavoriteSync`). Tests added. The `resumed_after_auth` analytics flag is not reproduced: the server-favorite events do not carry it on this path; the shop VM still reports the guest attempt/gate. |
 | G2 | Shop favorites use `observeIds()` (no per-favorite detail fetches); session wrapper overrides it. |
 | G3 | `shop_action(check_in)` / `CHECK_IN_START_ATTEMPTED` are skipped while a fresh global-create handoff exists (test added). |
 | G6 | Hero and menu pass detail previews as viewer images and full-screen URLs as originals. Missing photos elsewhere were reported by the owner without locations: **needs concrete screens**. |
@@ -118,6 +118,26 @@ Unit tests pass; Android instrumented test APKs and the iOS composeApp compile b
 
 Still open from the table: G1 analytics flag, G4, G5, G7–G9, H3–H7, H9, A1, A3–A8, B1, B2, B5, B6, C2–C4,
 R2 (decided: keep), R3, R4, S2–S5 and all Sandbox fixture rows.
+
+## Pixel 7 Sandbox check — 2026-10-20
+
+Pixel 7, `directSandbox` built from this branch, Sandbox package only (data cleared at install; ordinary CoffeePeek untouched).
+Auto-rotation and the Sandbox scenario were restored afterwards.
+
+| Check | Result |
+|---|---|
+| H1: create-home form across rotation (portrait → landscape → portrait) | **Pass**: sheet stayed open, rating 3 and dose 18 kept, scroll position kept; reopening after close starts at a clean type picker. |
+| G1: guest heart → real sign-in screen (local Sandbox login) → app returns to root | **Pass** on the second build: the second shop's heart became filled after sign-in. The first build failed this check (see G1). A scenario/"local account" switch from the Sandbox handle also resets navigation to the root. |
+| C1: coffee tab with "no network" | **Pass**: mascot error with retry button. |
+| R1: roaster detail | **Pass**: hero edge-to-edge under the status bar, no extra top gap, normal bottom spacing; photos 1/2, links, shops list. |
+| B4: favorites remove failure ("write error" scenario) | **Pass**: snackbar «Не удалось изменить избранное», no inline block. |
+| S1: report without network | **Not reproducible on the device**: changing the Sandbox scenario resets navigation, so the report screen cannot be left open while going offline. Covered by the unit test only. |
+| Large font, dark theme, retry after offline, B3 description on a roaster with a description | Not checked in this pass (Sandbox roaster has a short description; description shows only on the roaster card in favorites when the list data has one). |
+
+Found while checking (not fixed):
+- Shop detail, roaster row: the missing-logo placeholder text («Фото обжарщика отсутствует») overflows its circle.
+- Sandbox: every shop slug returns the same details, so the favorite saved for the second shop is titled "Sandbox Cafe" (fixture limitation, G9).
+- Sandbox: the Google Password Manager sheet appears after a local login (system UI, dismissed without saving).
 
 ## Suggested order of fixes (needs owner decision)
 1. H1 (+H2), G1, S1, R1, G2, G3 — behavioral regressions.
