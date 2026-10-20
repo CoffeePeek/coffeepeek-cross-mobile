@@ -1,0 +1,77 @@
+<resources>
+    <!-- Russian only, copied verbatim from the production profile. -->
+    <string name="profile_title">Профиль</string>
+    <string name="profile_loading">Загрузка</string>
+    <string name="profile_back">Назад</string>
+    <string name="profile_close">Закрыть</string>
+    <string name="profile_retry_full">Попробовать снова</string>
+    <string name="profile_retry">Повторить</string>
+    <string name="profile_load_more">Загрузить ещё</string>
+    <string name="profile_load_failed">Не удалось загрузить профиль</string>
+    <string name="profile_update_failed">Не удалось обновить профиль</string>
+    <string name="profile_follow_failed">Не удалось изменить подписку</string>
+    <string name="profile_open_avatar">Открыть аватар</string>
+    <string name="profile_avatar_of">Аватар @%1$s</string>
+    <string name="profile_follow">Подписаться</string>
+    <string name="profile_following">Вы подписаны</string>
+    <string name="profile_follow_description">Подписаться на @%1$s</string>
+    <string name="profile_unfollow_description">Отписаться от @%1$s</string>
+
+    <string name="profile_stat_check_ins">Чекины</string>
+    <string name="profile_stat_shops">Кофейни</string>
+    <string name="profile_stat_roasters">Обжарщики</string>
+    <string name="profile_stat_followers">Подписчики</string>
+    <string name="profile_open_followers">Открыть подписчиков</string>
+
+    <string name="profile_section_favorites">Избранное</string>
+    <string name="profile_section_check_ins">Чекины</string>
+    <string name="profile_section_activity">Активность</string>
+    <string name="profile_section_all">Все</string>
+    <string name="profile_section_all_description">Все: %1$s</string>
+
+    <string name="profile_favorites_failed">Не удалось загрузить избранное</string>
+    <string name="profile_favorites_refresh_failed">Не удалось обновить избранное</string>
+    <string name="profile_favorites_empty">Пока ничего нет в избранном</string>
+    <string name="profile_check_ins_failed">Не удалось загрузить чекины</string>
+    <string name="profile_check_ins_empty">Пока нет чекинов</string>
+    <string name="profile_activity_failed">Не удалось загрузить активность</string>
+
+    <string name="profile_blocked_title">Автор заблокирован</string>
+    <string name="profile_blocked_message">Публикации автора «%1$s» скрыты. Вы можете снять блокировку в любой момент.</string>
+    <string name="profile_unblock">Разблокировать</string>
+    <string name="profile_author_actions">Действия с автором</string>
+    <string name="profile_share">Поделиться профилем</string>
+    <string name="profile_block_author">Заблокировать автора</string>
+    <string name="profile_unblock_author">Разблокировать автора</string>
+
+    <string name="profile_followers">Подписчики</string>
+    <string name="profile_following_title">Подписки</string>
+    <string name="profile_open_user">Открыть профиль</string>
+    <string name="profile_followers_failed">Не удалось загрузить подписчиков</string>
+    <string name="profile_following_failed">Не удалось загрузить подписки</string>
+    <string name="profile_followers_empty">Пока нет подписчиков</string>
+    <string name="profile_following_empty">Пока нет подписок</string>
+
+    <string name="profile_open_activity">Открыть активность</string>
+    <string name="profile_previous_month">Предыдущий месяц</string>
+    <string name="profile_next_month">Следующий месяц</string>
+    <string name="profile_activity_legend">Дни с чекинами</string>
+    <string name="profile_activity_minsk_time">По времени Минска</string>
+    <string name="profile_day_active">%1$d, есть чекины</string>
+    <string name="profile_day_inactive">%1$d, нет чекинов</string>
+    <string name="profile_weekday_description">%1$s: %2$s</string>
+    <string name="profile_month_title">%1$s %2$d</string>
+    <plurals name="profile_days_with_check_ins">
+        <item quantity="one">%1$d день с чекинами</item>
+        <item quantity="few">%1$d дня с чекинами</item>
+        <item quantity="many">%1$d дней с чекинами</item>
+        <item quantity="other">%1$d дней с чекинами</item>
+    </plurals>
+    <string-array name="profile_weekdays">
+        <item>Пн</item><item>Вт</item><item>Ср</item><item>Чт</item><item>Пт</item><item>Сб</item><item>Вс</item>
+    </string-array>
+    <string-array name="profile_months">
+        <item>Январь</item><item>Февраль</item><item>Март</item><item>Апрель</item><item>Май</item><item>Июнь</item>
+        <item>Июль</item><item>Август</item><item>Сентябрь</item><item>Октябрь</item><item>Ноябрь</item><item>Декабрь</item>
+    </string-array>
+</resources>

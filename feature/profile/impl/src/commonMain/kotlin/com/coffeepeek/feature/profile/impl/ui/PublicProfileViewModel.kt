@@ -4,6 +4,7 @@ import androidx.lifecycle.viewModelScope
 import com.coffeepeek.core.presentation.MviViewModel
 import com.coffeepeek.feature.profile.api.ProfileAccountPort
 import com.coffeepeek.feature.profile.api.ProfileAuthorVisibility
+import com.coffeepeek.feature.profile.api.ProfileAuthorVisibilityState
 import com.coffeepeek.feature.profile.api.PublicCheckInsPort
 import com.coffeepeek.feature.profile.domain.PublicProfile
 import com.coffeepeek.feature.profile.domain.PublicProfileAuthenticationRequired
@@ -20,6 +21,7 @@ import com.coffeepeek.feature.profile.impl.ui.model.PublicProfileState
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.launch
 
@@ -51,6 +53,10 @@ internal class PublicProfileViewModel(
     private var ownProfileAccount = account
     private var ownIdentityLoaded = accounts.cachedOwnProfile() != null
     private var ownAddress = accounts.cachedOwnProfile()?.address.takeIf { account != null }
+
+    /** Author visibility for the screen: open photos and sheets are closed when a new revision arrives. */
+    val authorVisibility: Flow<ProfileAuthorVisibilityState> get() = visibility.observe()
+    fun currentVisibility(): ProfileAuthorVisibilityState = visibility.current()
 
     init { onAction(PublicProfileAction.Initialize) }
 

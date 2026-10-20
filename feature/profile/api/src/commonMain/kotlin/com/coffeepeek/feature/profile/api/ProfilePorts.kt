@@ -81,3 +81,17 @@ interface ProfileAnalyticsPort {
 interface PublicCheckInsPort {
     suspend fun page(slug: String, cursor: String?): Result<PublicProfileCheckInPage>
 }
+
+/** Opaque public identity of an author. The slug is only a fallback for older content. */
+data class ProfileAuthor(val id: String?, val slug: String?, val name: String, val avatarUrl: String? = null)
+
+/** Block and unblock confirmations are owned by the app; the profile only asks. */
+interface ProfileAuthorActions {
+    fun requestBlock(author: ProfileAuthor)
+    fun requestUnblock(author: ProfileAuthor)
+
+    object None : ProfileAuthorActions {
+        override fun requestBlock(author: ProfileAuthor) = Unit
+        override fun requestUnblock(author: ProfileAuthor) = Unit
+    }
+}
