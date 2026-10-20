@@ -7,6 +7,8 @@ import com.coffeepeek.api.service.*
 import com.coffeepeek.api.model.request.ShopSearchRequestDto
 import com.coffeepeek.api.model.request.ShopSearchFiltersDto
 import com.coffeepeek.api.model.request.ShopSearchOriginDto
+import com.coffeepeek.admin.feature.appupdate.data.AppVersionResponse
+import com.coffeepeek.admin.feature.appupdate.data.toUpdate
 import com.coffeepeek.admin.feature.coffee.data.CoffeeRepositoryImpl
 import com.coffeepeek.admin.feature.coffee.domain.CoffeeFilters
 import com.coffeepeek.feature.profile.data.createPublicProfileData
@@ -329,4 +331,37 @@ class SandboxApplicationBackendTest {
         assertEquals(false, profiles.getProfile(friend).getOrThrow().isFollowing)
         assertNull(users.getAccountDeletionRequest().getOrThrow())
     } }
+    @Test fun settingsFixturesServeTheUpdatePolicyAndTheCityCatalogThroughTheRealParsers() = runTest { fixture { backend, client ->
+        // The shared client throws on a non-2xx answer; the app's update state treats that exactly like "no policy".
+        suspend fun update() = runCatching {
+            client.client.get("/api/v1/app-version") { parameter("platform", "android") }.body<AppVersionResponse>().toUpdate()
+        }.getOrNull()
+        // Default: nothing newer than any real build, nothing required.
+        assertEquals(1L, update()?.versionCode); assertFalse(update()!!.isAvailable(current = 5))
+        backend.updatePolicy = SandboxUpdatePolicy.Available
+        assertTrue(update()!!.isAvailable(current = 5)); assertFalse(update()!!.isRequired(current = 5))
+        backend.updatePolicy = SandboxUpdatePolicy.Required
+        assertTrue(update()!!.isRequired(current = 5))
+        assertEquals("sandbox.coffeepeek.invalid", io.ktor.http.Url(update()!!.url).host)
+        backend.updatePolicy = SandboxUpdatePolicy.Failure
+        assertNull(update())
+
+        val shops = ShopApiService(client.client)
+        assertEquals(listOf("Минск"), shops.getCities().getOrThrow().map { it.name })
+        backend.cities = SandboxCities.Several
+        assertEquals(listOf("Минск", "Брест", "Гродно"), shops.getCities().getOrThrow().map { it.name })
+        backend.cities = SandboxCities.Empty
+        assertTrue(shops.getCities().getOrThrow().isEmpty())
+        backend.cities = SandboxCities.Failure
+        assertTrue(shops.getCities().isFailure)
+
+        // reset() returns both fixtures to their defaults; the scenarios still win over them.
+        backend.reset(populated = true)
+        assertEquals(listOf("Минск"), shops.getCities().getOrThrow().map { it.name })
+        assertEquals(1L, update()?.versionCode)
+        backend.updatePolicy = SandboxUpdatePolicy.Available
+        backend.scenario = SandboxScenario.ServerError
+        assertNull(update()); assertTrue(shops.getCities().isFailure)
+    } }
+
 }

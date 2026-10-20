@@ -155,3 +155,37 @@ platform night mode, iOS shell, Discovery), `AppUpdateState`/`AppUpdatePrompt`/i
 
 Answer 1 app-owned, 2 preserve, 3 improve (loader/error/retry is low risk), 4 yes, 5 keep verbatim until a product decision, 6 keep, 7 keep, 8 none, 9 leave, 10 yes.
 Start with step 0–1 (fixtures and parity tests), then the leaf screens, then the tab.
+
+## Owner decisions (2026-10-21)
+
+All ten questions were answered with the recommendations:
+
+1. `ThemeManager` and `CityPreference` stay app-owned behind ports.
+2. Add shop / Add roaster rows stay as in prod (shown to guests; no new sign-in redirect).
+3. **Deliberate improvement**: the city screen gets a loader, an error and a retry instead of an empty card.
+4. App update is its own owner; Settings gets only `UpdateCheckPort`.
+5. The «оценки в App Store» wording stays verbatim on Android until a product decision.
+6. The version is shown twice (row description and footer), as in prod.
+7. The legacy `ProfileViewModel` stays for the iOS/shared Profile tab until iOS migrates.
+8. No analytics events in these screens.
+9. `BlockedAuthors` stays on the unmapped `other` page.
+10. `feature/settings`, package root `com.coffeepeek.feature.settings`, resource prefix `settings_`.
+
+## Step 0 result — Sandbox fixtures (2026-10-21)
+
+`SandboxApplicationBackend` now serves, selectable from the Sandbox controls (new chip rows «Обновление приложения» and «Города»; they survive scenario
+changes, and «Заполнить»/«Очистить» return them to the defaults):
+
+- `GET /api/v1/app-version` — `UpToDate` (default: version 1, nothing newer, so the root check never prompts), `Available` (optional newer version), `Required`
+  (`minVersionCode` above any build, cannot be dismissed), `Failure` (503). The download URL is on the blocked sandbox host; `SandboxUpdateInstaller` already refuses to download.
+- `GET /api/catalogs/cities` — `Single` (Минск, default, unchanged for the existing tests), `Several` (Минск, Брест, Гродно), `Empty` (`[]`), `Failure` (500).
+
+`SandboxScenario.ServerError`/`Offline` still win over both. Covered by `SandboxApplicationBackendTest.settingsFixturesServeTheUpdatePolicyAndTheCityCatalogThroughTheRealParsers`
+(real `AppVersionResponse.toUpdate()` validation, `ShopApiService.getCities`, defaults after `reset`, scenario precedence). The `dismissed_app_version` setting lives in the Sandbox's own
+database and survives a restart of the process; clearing the app data resets it.
+
+Not covered: the Play/APK installer flows (the Sandbox installer never downloads), a catalogs failure that leaves other catalogs working (the app reads cities from the same call), real `app-version` acceptance.
+
+Device check (Pixel 7, Sandbox): the new chip rows render in the controls dialog; choosing «Есть версия» and tapping «Проверить обновления» on the Settings tab changes the row
+description to «Доступна новая версия CoffeePeek». Selecting a chip re-creates the app (as the existing scenario chips do) and closes the dialog. The other policies and the city modes were
+checked only through the unit test, not on the device.

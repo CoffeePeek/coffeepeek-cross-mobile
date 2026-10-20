@@ -11,6 +11,16 @@
     <string name="sandbox_server_error">Ошибка 500</string>
     <string name="sandbox_save_error">Ошибка записи</string>
     <string name="sandbox_upload_error">Ошибка фото</string>
+    <string name="sandbox_update_title">Обновление приложения</string>
+    <string name="sandbox_update_current">Актуально</string>
+    <string name="sandbox_update_available">Есть версия</string>
+    <string name="sandbox_update_required">Обязательное</string>
+    <string name="sandbox_update_failure">Сбой проверки</string>
+    <string name="sandbox_cities_title">Города</string>
+    <string name="sandbox_cities_single">Один</string>
+    <string name="sandbox_cities_several">Несколько</string>
+    <string name="sandbox_cities_empty">Пусто</string>
+    <string name="sandbox_cities_failure">Ошибка</string>
     <string name="sandbox_reset">Заполнить</string>
     <string name="sandbox_empty">Очистить</string>
     <string name="sandbox_theme">Сменить тему</string>
