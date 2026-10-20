@@ -88,7 +88,11 @@ internal class CombinedHistoryViewModel private constructor(
                 val details = entry.photoDetailUrls ?: originals
                 if (action.index in originals.indices && originals.all(String::isNotBlank) &&
                     details.size == originals.size) {
-                    emit(CheckInHistoryEvent.OpenPhoto(details.toList(), action.index, originals.toList()))
+                    // As in production, the viewer opens on the thumbnail already on screen, then upgrades.
+                    val previews = originals.indices.map { i ->
+                        entry.photoThumbnailUrls?.getOrNull(i)?.takeIf(String::isNotBlank) ?: details[i]
+                    }
+                    emit(CheckInHistoryEvent.OpenPhoto(previews, action.index, originals.toList()))
                 }
             }
             CombinedHistoryAction.ShowCreate -> if (currentState.isLoggedIn) {

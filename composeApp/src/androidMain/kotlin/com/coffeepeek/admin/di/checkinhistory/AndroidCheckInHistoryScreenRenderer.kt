@@ -105,6 +105,9 @@ internal class AndroidCheckInHistoryScreenRenderer(
         creation: HistoryCreationAnalytics? = null) {
         val entry = remember(session) {
             createCheckInHistoryEntry(session.lease.bind(repository), session.lease.bind(homeReader), calendar::snapshot, imageContent,
+                highQualityImage = { url, highQualityUrl, modifier, scale ->
+                    CpImage(data = url, highQualityData = highQualityUrl, modifier = modifier, contentScale = scale)
+                },
                 createButtonModifier = {
                     val page = Analytics.service?.state?.collectAsState()?.value?.page ?: "other"
                     Modifier.analyticsExposure("check_in", "global_create", page)

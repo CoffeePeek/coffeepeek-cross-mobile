@@ -23,7 +23,7 @@ import kotlinx.serialization.json.put
 internal fun CoffeeDto.toDomain() = Coffee(
     slug = address.slug,
     name = name,
-    photoUrl = coverPhoto?.cardUrl ?: photos.firstOrNull()?.cardUrl,
+    photoUrl = (coverPhoto?.cardUrl ?: photos.firstOrNull()?.cardUrl)?.takeIf(String::isNotBlank),
     roasterName = roaster.name,
     roasterPhotoUrl = roaster.coverPhoto?.thumbnailUrl,
     countries = countries.map { it.nameRu ?: it.nameEn ?: it.code },

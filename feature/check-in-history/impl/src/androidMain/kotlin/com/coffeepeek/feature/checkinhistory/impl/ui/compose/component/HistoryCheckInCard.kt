@@ -34,7 +34,7 @@ internal fun HistoryCheckInCard(checkIn: PersonalCheckIn, dateLabel: String,
             checkIn.rating?.let { HistoryCheckInRating(it) }
             HistoryCheckInNote(checkIn.note)
             HistoryCheckInPhotos(checkIn.photoThumbnailUrls ?: checkIn.photoUrls, onOpenPhoto, imageContent = imageContent,
-                originalUrls = checkIn.photoUrls)
+                originalUrls = checkIn.photoUrls, detailUrls = checkIn.photoDetailUrls)
             if (checkIn.visibility == HistoryVisibility.Public || checkIn.helpfulCount > 0) {
                 val likes = stringResource(Res.string.history_helpful_count, checkIn.helpfulCount)
                 Row(Modifier.semantics(mergeDescendants = true) { contentDescription = likes },

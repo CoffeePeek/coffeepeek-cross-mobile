@@ -87,6 +87,9 @@ internal fun ShopCheckInListScreenContent(
 ) {
     val listState = rememberLazyListState()
     LaunchedEffect(sessionGeneration) { listState.scrollToItem(0) }
+    LocalShopPhotoPrefetch.current?.invoke(listState, state.checkIns
+        .take(if (state.isLoggedIn) Int.MAX_VALUE else 1)
+        .mapIndexed { index, checkIn -> "check-in:${checkIn.id}:$index" to checkIn.photoThumbnailUrls.take(3) })
     Scaffold(
         modifier = Modifier.windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal)),
         topBar = {
