@@ -18,6 +18,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import com.coffeepeek.feature.shop.impl.ui.data.LocalShopAnalytics
+import com.coffeepeek.feature.shop.impl.ui.data.trackShopAction
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -113,13 +115,18 @@ internal fun ShopDetailScreen(
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { viewModel.onAction(ShopDetailAction.Resume) }
     val visibleState = state.takeIf { it.sessionGeneration == sessionGeneration }
         ?: ShopDetailState(sessionGeneration = sessionGeneration)
+    val analytics = LocalShopAnalytics.current
+    analytics.TrackDetail(visibleState.details != null)
     val overview = visibleState.details?.overview
     val latitude = overview?.latitude
     val longitude = overview?.longitude
     val distance = if (latitude != null && longitude != null)
         formatDistance(latitude, longitude) else null
     key(sessionGeneration) {
-        ShopDetailScreenContent(visibleState, viewModel::onAction, distance, forCheckIn,
+        ShopDetailScreenContent(visibleState, { action ->
+            trackShopAction(action, visibleState, analytics)
+            viewModel.onAction(action)
+        }, distance, forCheckIn,
             formatCheckInDate, formatMenuDate, snackbarHostState)
     }
 }
