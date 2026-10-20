@@ -35,6 +35,7 @@ import com.coffeepeek.feature.shop.impl.resources.shop_checkin_list_title
 import com.coffeepeek.feature.shop.impl.resources.shop_checkin_list_empty
 import com.coffeepeek.feature.shop.impl.resources.shop_detail_back
 import com.coffeepeek.feature.shop.impl.ui.ShopCheckInListViewModel
+import com.coffeepeek.feature.shop.impl.ui.compose.component.LocalShopPhotoPrefetch
 import com.coffeepeek.feature.shop.impl.ui.compose.component.ShopCheckInCard
 import com.coffeepeek.feature.shop.impl.ui.compose.component.ShopCheckInGuestPlaceholder
 import com.coffeepeek.feature.shop.impl.ui.compose.component.ShopCheckInGuestPrompt
