@@ -199,6 +199,18 @@ Found while checking (not fixed):
 - Sandbox: every shop slug returns the same details, so the favorite saved for the second shop is titled "Sandbox Cafe" (fixture limitation, G9).
 - Sandbox: the Google Password Manager sheet appears after a local login (system UI, dismissed without saving).
 
+### Pixel 7 Sandbox check of the third pass — 2026-10-20
+
+Pixel 7, `directSandbox` from this branch, Sandbox package only (data cleared at install).
+
+| Check | Result |
+|---|---|
+| S3: report reasons order | **Pass**: menu, closed, schedule, photos, address, other. |
+| C2: Cyrillic search (Gboard, Russian layout) | **Pass**: fast typing kept every letter and the cursor, tapping an autocorrect suggestion replaced the word without rewinding, the clear button emptied the field and the list returned. A real hardware-keyboard/long-composition session was not tried. |
+| G4: picker-mode shop detail | Seen: «Выбрать другую» / «Продолжить» bar, no extra check-in button. |
+| A1: history photo upgrade and viewer | **Not verifiable in Sandbox**: the own shop check-in row has no photos and a check-in created with a synthetic photo does not get a photo in the history row (upload bytes stay in memory). Needs the postponed history fixtures (A8) or a real account. |
+| G7: list prefetch, S4, H5, H9, B6, G8 | Not checked on the device (no visible effect in Sandbox or needs fixtures). |
+
 ## Suggested order of fixes (needs owner decision)
 1. H1 (+H2), G1, S1, R1, G2, G3 — behavioral regressions.
 2. A1, B1, B2, C1 — visible differences.
