@@ -37,6 +37,19 @@ class AndroidShopAnalyticsTest {
         assertEquals(2, sdk.events.count { it.first == "shop_content_interacted" })
     }
 
+    @Test fun checkInStartIsNotCountedTwiceInTheGlobalCreateFlow() = runTest {
+        val sdk = startAnalytics()
+        CheckInFlowHandoff.tracker = CheckInTracker(CheckInKind.Visit, CheckInSource.Global)
+        AndroidShopAnalytics.checkInStarted(authenticated = true)
+        runCurrent()
+        assertTrue(sdk.events.none { it.first == "check_in_start_attempted" || it.first == "shop_action_clicked" })
+        assertNotNull(CheckInFlowHandoff.tracker)
+        CheckInFlowHandoff.take()
+        AndroidShopAnalytics.checkInStarted(authenticated = true)
+        runCurrent()
+        assertEquals(1, sdk.events.count { it.first == "check_in_start_attempted" })
+    }
+
     @Test fun formKeepsTheGlobalFlowAndStopsAfterItsSingleSave() = runTest {
         val sdk = startAnalytics()
         CheckInFlowHandoff.tracker = CheckInTracker(CheckInKind.Visit, CheckInSource.Global)

@@ -161,7 +161,7 @@ internal class ShopDetailViewModel(
             }
             is ShopDetailAction.OpenPhoto -> {
                 if (action.index in action.urls.indices) {
-                    emitEvent(ShopDetailEvent.OpenPhoto(action.urls, action.index))
+                    emitEvent(ShopDetailEvent.OpenPhoto(action.urls, action.index, action.originals))
                 }
             }
             is ShopDetailAction.OpenCheckInPhoto -> {

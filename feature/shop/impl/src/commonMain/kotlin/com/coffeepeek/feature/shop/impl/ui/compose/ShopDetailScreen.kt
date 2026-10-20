@@ -171,7 +171,7 @@ internal fun ShopDetailScreenContent(
                     item {
                         Column {
                             ShopOverviewHero(details.overview,
-                                onOpenPhoto = { urls, index -> onAction(ShopDetailAction.OpenPhoto(urls, index)) })
+                                onOpenPhoto = { urls, originals, index -> onAction(ShopDetailAction.OpenPhoto(urls, index, originals)) })
                             Column(Modifier.padding(horizontal = CoffeePeekDimens.spacing4,
                                 vertical = CoffeePeekDimens.spacing3),
                                 verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing2)) {
@@ -210,7 +210,7 @@ internal fun ShopDetailScreenContent(
                         menu.photos.isNotEmpty() || menu.items.any { it.availability.equals("Present", true) }
                     }?.let { menu ->
                         item { ShopMenuSection(menu, onOpenPhoto = { index ->
-                            onAction(ShopDetailAction.OpenPhoto(menu.photos.map { it.fullUrl }, index))
+                            onAction(ShopDetailAction.OpenPhoto(menu.photos.map { it.previewUrl }, index, menu.photos.map { it.fullUrl }))
                         }, modifier = Modifier.padding(horizontal = CoffeePeekDimens.spacing4, vertical = 6.dp),
                             formatDate = formatMenuDate) }
                     }

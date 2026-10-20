@@ -42,7 +42,7 @@ import org.jetbrains.compose.ui.tooling.preview.Preview
 @Composable
 internal fun ShopOverviewHero(
     overview: ShopOverview,
-    onOpenPhoto: (urls: List<String>, index: Int) -> Unit,
+    onOpenPhoto: (urls: List<String>, originals: List<String>, index: Int) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val analytics = LocalShopAnalytics.current
@@ -65,7 +65,7 @@ internal fun ShopOverviewHero(
                     contentScale = ContentScale.Crop,
                     modifier = Modifier.fillMaxSize().clickable {
                         analytics.content(ShopContentMetric.Photos, ShopContentAction.Open)
-                        onOpenPhoto(photos.map { it.fullUrl }, index)
+                        onOpenPhoto(photos.map { it.previewUrl }, photos.map { it.fullUrl }, index)
                     },
                     onLoading = { CoffeePeekImagePlaceholder(labelSize = 24.sp) },
                     onFailure = { CoffeePeekImagePlaceholder(labelSize = 24.sp) },
@@ -95,11 +95,11 @@ internal fun ShopOverviewHero(
 }
 
 @Preview @Composable private fun ShopOverviewHeroLightPreview() = CoffeePeekTheme(darkTheme = false) {
-    ShopOverviewHero(previewOverview(), { _, _ -> })
+    ShopOverviewHero(previewOverview(), { _, _, _ -> })
 }
 
 @Preview @Composable private fun ShopOverviewHeroDarkPreview() = CoffeePeekTheme(darkTheme = true) {
-    ShopOverviewHero(previewOverview(), { _, _ -> })
+    ShopOverviewHero(previewOverview(), { _, _, _ -> })
 }
 
 private fun previewOverview() = ShopOverview(

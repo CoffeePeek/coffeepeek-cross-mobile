@@ -9,7 +9,9 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.lazy.LazyColumn
@@ -97,14 +99,16 @@ internal fun RoasterDetailScreenContent(
     }
     state.previewPhotoUrl?.let { photoViewer(it) { onAction(RoasterDetailAction.ClosePhoto) } }
     val details = state.details
-    Scaffold(modifier, snackbarHost = { SnackbarHost(snackbar) }, containerColor = MaterialTheme.colorScheme.background) { padding ->
+    // Zero insets: the hero runs edge-to-edge like the legacy screen and pads its own controls.
+    Scaffold(modifier, snackbarHost = { SnackbarHost(snackbar, Modifier.navigationBarsPadding()) },
+        containerColor = MaterialTheme.colorScheme.background, contentWindowInsets = WindowInsets(0)) {
         when {
-            state.isLoading && details == null -> Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
+            state.isLoading && details == null -> Box(Modifier.fillMaxSize().safeDrawingPadding(), contentAlignment = Alignment.Center) {
                 CoffeePeekLoader(stringResource(R.string.roaster_loading))
             }
             state.loadFailed && details == null -> RoasterDetailError({ onAction(RoasterDetailAction.Retry) },
-                { onAction(RoasterDetailAction.Back) }, Modifier.padding(padding))
-            details != null -> RoasterDetailContent(details, state.isFavorite, onAction, image, screen, onFavoriteFeedback, Modifier.padding(padding))
+                { onAction(RoasterDetailAction.Back) }, Modifier.safeDrawingPadding())
+            details != null -> RoasterDetailContent(details, state.isFavorite, onAction, image, screen, onFavoriteFeedback)
         }
     }
 }
