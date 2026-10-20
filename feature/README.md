@@ -242,3 +242,7 @@ and risks. Compile changed modules and app whenever integration changes; run
 contract/UI tests, check cycles/imports and DTO/entity containment. Inspect both
 preview themes, record modal/font/RTL limitations, and keep main unchanged until
 the corresponding PR is merged.
+
+## Legacy-first parity gate
+
+Before migrating or activating any owner, inventory the legacy composeApp behaviour (entries, states, analytics, platform behaviour, cross-feature contracts) and map every row to code and tests. Details and checklist: [ANDROID_REFACTORING_PLAN.md](ANDROID_REFACTORING_PLAN.md#legacy-first-parity-gate-mandatory-for-every-owner).

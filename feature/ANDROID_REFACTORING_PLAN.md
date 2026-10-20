@@ -56,6 +56,36 @@ Five feature families have active Android entries; Coffee is the sixth prepared
 family, not a sixth completed integration. No label closes every release gate.
 iOS UI migration remains deferred; Native compilation is only compatibility.
 
+## Legacy-first parity gate (mandatory for every owner)
+
+Migration rewrites working code, so the working code is the specification. Before
+writing a feature module, and again before switching its screens on, read the legacy
+code in `composeApp` (screens, ViewModels, repositories, Koin, `Navigator`, app links,
+Sandbox fixtures) and write the result into the owner's MIGRATION_PLAN as a
+"What exists today" inventory. Nothing is dropped silently: each row is
+**preserved**, **improved (say how)** or **intentionally removed (say why, with approval)**.
+
+Inventory checklist, per owner:
+
+1. Entry points: routes, tabs, deep/app links, callers from other features, iOS/shared consumers.
+2. Behaviour: states (loading/empty/error/refresh/pagination), filters and search rules,
+   debounce/limits, caching and TTL, error texts, restored state and process death.
+3. **Analytics**: every `Analytics.track`, `SearchTracker`, `TrackEntityDetail`,
+   `analyticsExposure`, `DetailEntryMemory` call and screen visibility marker, with event
+   names and properties. Reproduce through narrow api ports and app adapters, and cover
+   them with parity tests against the legacy trackers (see `ANALYTICS_PARITY_AUDIT.md`).
+4. Platform behaviour: haptics, system chooser/share/browser, permissions, back handling,
+   insets/bottom clearance, accessibility labels, large font, both themes.
+5. Cross-feature contracts: favorites identity, session/guest guards, image/viewer slots,
+   shared design-system geometry.
+6. Sandbox fixtures able to exercise each row, plus a manual checklist for rows tests
+   cannot cover.
+
+Gate to switch a screen on: inventory complete, every row mapped to code and a test or
+an explicit open item, legacy screen kept for iOS/other consumers. Gate for a screen that
+is already switched: run the same inventory as a retroactive audit and fix gaps as
+regressions in the owning branch. A green build or a Sandbox smoke is not evidence of parity.
+
 ## Current ordered work
 
 1. [x] Reconcile main 28917758 in #43 and propagate through all open children.
