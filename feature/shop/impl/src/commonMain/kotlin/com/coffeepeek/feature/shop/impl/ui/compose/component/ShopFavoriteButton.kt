@@ -2,6 +2,8 @@ package com.coffeepeek.feature.shop.impl.ui.compose.component
 
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import com.coffeepeek.feature.shop.api.ShopExposure
+import com.coffeepeek.feature.shop.impl.ui.data.shopExposure
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -34,7 +36,7 @@ internal fun ShopFavoriteButton(
         else -> Res.string.shop_favorite_add
     })
     CoffeePeekGlassIconButton(onClick = onClick, enabled = available && !isLoading,
-        contentDescription = description, modifier = modifier, hazeState = hazeState) {
+        contentDescription = description, modifier = modifier.shopExposure(ShopExposure.Favorite), hazeState = hazeState) {
         if (isLoading) {
             CoffeePeekLoader(contentDescription = stringResource(Res.string.shop_favorite_updating),
                 size = 18.dp, strokeWidth = 2.dp)

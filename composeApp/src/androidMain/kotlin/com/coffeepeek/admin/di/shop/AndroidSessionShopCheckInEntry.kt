@@ -55,7 +55,8 @@ internal class AndroidSessionShopCheckInEntry(
             return
         }
         val entry = remember(lease) {
-            createShopCheckInCreateEntry(lease, { _, _ -> boundDrafts }, dates, photos)
+            createShopCheckInCreateEntry(lease, { _, _ -> boundDrafts }, dates, photos,
+                analytics = { AndroidShopCheckInAnalytics(lease::isCurrent) })
         }
         entry.Content(
             shopId, shopSlug, shopName,

@@ -22,6 +22,8 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import com.coffeepeek.feature.shop.api.ShopExposure
+import com.coffeepeek.feature.shop.impl.ui.data.shopExposure
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -92,7 +94,7 @@ internal fun ShopScheduleSection(
     val expansionState = stringResource(if (expanded) Res.string.shop_schedule_expanded_state
         else Res.string.shop_schedule_collapsed_state)
     val rotation by animateFloatAsState(if (expanded) 90f else 0f, tween(250))
-    Column(modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing3)) {
+    Column(modifier.shopExposure(ShopExposure.Hours).fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing3)) {
         ShopSectionTitle(stringResource(Res.string.shop_schedule_title))
         Card(Modifier.fillMaxWidth(), shape = RoundedCornerShape(CoffeePeekDimens.radius2xl),
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),

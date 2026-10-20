@@ -1,5 +1,8 @@
 package com.coffeepeek.feature.shop.impl.ui
 
+import com.coffeepeek.feature.shop.api.ShopCheckInAnalytics
+import com.coffeepeek.feature.shop.domain.model.ShopCheckInVisibility
+import com.coffeepeek.feature.shop.impl.ui.data.changed
 import com.coffeepeek.core.presentation.MviViewModel
 import com.coffeepeek.feature.shop.domain.model.MAX_SHOP_CHECK_IN_PHOTOS
 import com.coffeepeek.feature.shop.domain.model.ShopCheckInCreateInput
@@ -21,10 +24,19 @@ internal class ShopCheckInCreateViewModel(
     private val repository: ShopCheckInRepository,
     private val drafts: ShopCheckInDraftStore,
     private val now: () -> Instant = { Clock.System.now() },
+    private val analytics: ShopCheckInAnalytics = ShopCheckInAnalytics.None,
 ) : MviViewModel<ShopCheckInFormState, ShopCheckInFormAction, ShopCheckInFormEvent>(
     ShopCheckInFormState(initial),
 ) {
-    init { onAction(ShopCheckInFormAction.Load) }
+    init {
+        analytics.opened()
+        onAction(ShopCheckInFormAction.Load)
+    }
+
+    override fun onCleared() {
+        analytics.cancelled()
+        super.onCleared()
+    }
 
     override suspend fun handleActionInternal(action: ShopCheckInFormAction) {
         when (action) {
@@ -47,7 +59,10 @@ internal class ShopCheckInCreateViewModel(
                 copy(photos = photos.filterIndexed { index, _ -> index != action.index })
             }
             ShopCheckInFormAction.Submit -> submit()
-            ShopCheckInFormAction.Dismiss -> if (!currentState.isSubmitting) sendEvent(ShopCheckInFormEvent.Dismiss)
+            ShopCheckInFormAction.Dismiss -> if (!currentState.isSubmitting) {
+                analytics.cancelled()
+                sendEvent(ShopCheckInFormEvent.Dismiss)
+            }
             ShopCheckInFormAction.OpenHistory -> if (!currentState.isSubmitting) sendEvent(ShopCheckInFormEvent.OpenHistory)
             ShopCheckInFormAction.GoToFeed -> if (currentState.submitted && !currentState.isSubmitting) sendEvent(ShopCheckInFormEvent.GoToFeed)
             ShopCheckInFormAction.HistoryChecked -> {
@@ -86,7 +101,9 @@ internal class ShopCheckInCreateViewModel(
 
     private fun edit(transform: ShopCheckInCreateInput.() -> ShopCheckInCreateInput) {
         if (!canEdit()) return
-        val input = currentState.input.transform()
+        val before = currentState.input
+        val input = before.transform()
+        analytics.changed(before, input)
         updateState { copy(input = input, validationError = null, submitFailed = false) }
         saveDraft(input, currentState.deliveryUnconfirmed)
     }
@@ -101,29 +118,46 @@ internal class ShopCheckInCreateViewModel(
     }
 
     private suspend fun submit() {
-        val state = currentState
-        if (state.isLoading || state.isSubmitting || state.submitted || state.deliveryUnconfirmed) return
-        val validation = validateShopCheckIn(state.input, now())
-        updateState { copy(validationError = validation, submitFailed = false) }
-        if (validation != null) return
-        // Store the delivery guard before the write so recreation/cancellation cannot retry it silently.
-        if (!saveDraft(state.input, unconfirmed = true)) return
+        val input = prepareSubmission() ?: return
         updateState { copy(isSubmitting = true) }
         try {
-            repository.create(state.input).getOrThrow()
-            // Cleanup failure cannot turn an accepted write into another submission.
-            updateState { copy(submitted = true, deliveryUnconfirmed = false) }
-            val cleanup = draftResult { drafts.clear(initial.shopSlug) }
-            updateState { copy(draftFailed = cleanup.isFailure) }
-            sendEvent(ShopCheckInFormEvent.Submitted(state.input.visibility))
+            repository.create(input).getOrThrow()
+            completeSubmission(input)
         } catch (cancelled: CancellationException) {
             updateState { copy(deliveryUnconfirmed = true) }
             throw cancelled
         } catch (error: Exception) {
-            val uncertain = error is ShopCheckInCreationUnconfirmed
-            val saved = if (uncertain) true else saveDraft(state.input, unconfirmed = false)
-            updateState { copy(deliveryUnconfirmed = uncertain || !saved, submitFailed = !uncertain) }
+            failSubmission(input, error)
         } finally { updateState { copy(isSubmitting = false) } }
+    }
+
+    private fun prepareSubmission(): ShopCheckInCreateInput? {
+        val state = currentState
+        if (state.isLoading || state.isSubmitting || state.submitted || state.deliveryUnconfirmed) return null
+        analytics.submitted()
+        val validation = validateShopCheckIn(state.input, now())
+        updateState { copy(validationError = validation, submitFailed = false) }
+        if (validation != null) {
+            analytics.validationFailed()
+            return null
+        }
+        // Persist the delivery guard before any request; never silently repeat an uncertain write.
+        return state.input.takeIf { saveDraft(it, unconfirmed = true) }
+    }
+
+    private suspend fun completeSubmission(input: ShopCheckInCreateInput) {
+        analytics.saved(input.visibility == ShopCheckInVisibility.Public, input.photos.isNotEmpty())
+        updateState { copy(submitted = true, deliveryUnconfirmed = false) }
+        val cleanup = draftResult { drafts.clear(initial.shopSlug) }
+        updateState { copy(draftFailed = cleanup.isFailure) }
+        sendEvent(ShopCheckInFormEvent.Submitted(input.visibility))
+    }
+
+    private fun failSubmission(input: ShopCheckInCreateInput, error: Exception) {
+        analytics.failed(error)
+        val uncertain = error is ShopCheckInCreationUnconfirmed
+        val saved = if (uncertain) true else saveDraft(input, unconfirmed = false)
+        updateState { copy(deliveryUnconfirmed = uncertain || !saved, submitFailed = !uncertain) }
     }
 }
 
