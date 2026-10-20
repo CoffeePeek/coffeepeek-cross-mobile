@@ -36,6 +36,7 @@ internal class AndroidAccountScreenRenderer(
     /** Outlives the screen: the redirect must still happen after the screen has left composition with the session. */
     private val appScope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate),
     private val platformSignOut: suspend () -> Unit = { GoogleAuth.signOut() },
+    private val openLogin: () -> Unit = { Navigator.openLoginAfterSessionEnd() },
 ) : AccountScreenRenderer {
     @Composable
     override fun EditProfile() {
@@ -49,8 +50,13 @@ internal class AndroidAccountScreenRenderer(
     override fun DeletionPending() {
         deletion.Content(
             onClose = Navigator::popBack,
-            onSessionEnded = { appScope.launch { platformSignOut(); Navigator.openLoginAfterSessionEnd() } },
+            onSessionEnded = ::endSession,
         )
+    }
+
+    /** Legacy order: platform sign-out first, then the login redirect the root consumes on the next login-state change. */
+    internal fun endSession() {
+        appScope.launch { platformSignOut(); openLogin() }
     }
 }
 

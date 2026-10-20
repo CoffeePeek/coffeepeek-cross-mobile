@@ -345,3 +345,34 @@ Not checked: guest follow → sign-in, own profile through an alias, photo viewe
 - **Pixel 7 Sandbox check**: tab → edit (save disabled without changes), typing updates the counter and enables save with the keyboard open, save returns to the tab with the new name, «Удалить аккаунт» alert →
   deletion screen opens in the confirmation state without sending, «Отправить письмо» → «Письмо отправлено» with the resend gated, rotation keeps that state.
   Not checked: avatar picker/camera (no files in Sandbox), failure dialogs, session-end redirect, large font, light theme, the legacy `PublicProfilePresentationTest`.
+
+## Step 7 result — retroactive audit of the activated Android path (2026-10-21)
+
+Checked the risk table (P1–P17) against the migrated code, tests and the Pixel 7 Sandbox runs. No defect needing a code change was found; one test gap was closed
+(`AndroidAccountPortsTest`: write/deletion adapters, session end → platform sign-out before the login redirect).
+
+| id | status |
+|---|---|
+| P1 logout order | kept: `AndroidProfileSignOut` (server logout, platform, drafts) + `AndroidProfileSignOutTest`; the screen resets before signing out. Not executed on a device |
+| P2 account switch | `OwnProfileViewModelTest`, `PublicProfileViewModelTest` (generation + account guards) |
+| P3 deletion | **changed on purpose**: no request on open; explicit send; one request per frame; session end reported once (tests + device) |
+| P4 own-profile detection, guest follow | tests; guest follow → sign-in not run on a device (Sandbox has no guest mode) |
+| P5 blocked authors | tests + Sandbox walkthrough (step 4); block confirmation needed `AuthorBlockingHost` in the Sandbox root (fixed) |
+| P6 own tab without a slug | handled (plain summary); no fixture for it, so not run on a device |
+| P7 edit save | kept; partial-save quirk **fixed on purpose** (finished steps are not repeated) |
+| P8 stale counters | kept as in prod (no refresh on return) |
+| P9 analytics | one `favorites_opened {entry_point: profile}` via `AndroidProfileAnalytics` (tested); page names come from unchanged route classes |
+| P10 activity / connections / favorites | repository and ViewModel tests; Sandbox connections list is empty (fixture limit) |
+| P11 guest tab rules | untouched (`MainScreen`, `NativeTabRoutes`) |
+| P12 theme/city, P16 singleton `ProfileViewModel` | untouched: Settings is a separate later owner, so the singleton stays |
+| P13 share rule | identical single-slash check and `https://coffeepeek.by` prefix; the own tab has no share button (it did not before either) |
+| P14 recreation | edit/deletion state lives in the nav entry's ViewModel store; rotation checked for the deletion screen |
+| P15 texts/descriptions | all Russian strings and content descriptions from the table exist in `strings.xml` (`Выбрано` belongs to Settings) |
+| P17 Sandbox fixtures | about/avatar/deletion/follow served; 401 follow, no-address account and blocked-follow rule still missing |
+
+**Legacy that stays and why**: `ProfileScreen`, `EditProfileScreen`, `DeleteAccountPendingScreen`, `OtherUserProfileScreen`, their ViewModels and the 22 parity tests are still
+the iOS and shared path (the Legacy renderers). They can only go when iOS consumes the new modules, which needs an iOS Compose entry for the profile api (not started).
+`PublicProfilePresentationTest` (instrumented) still targets the legacy screen; it compiles but was not run.
+
+**Open, not verified**: logout executed on a device, avatar picker/camera, failure dialogs of edit/deletion, session-end redirect on a device, large font, light theme, own profile via alias,
+the first own-actions menu icon looked partly overlapped. Settings owner, Discovery, Auth, Community and Contributions owners follow later.
