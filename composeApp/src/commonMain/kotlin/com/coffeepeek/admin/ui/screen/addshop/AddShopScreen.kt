@@ -1,6 +1,16 @@
 package com.coffeepeek.admin.ui.screen.addshop
 
-import androidx.compose.runtime.setValue
+import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
+import org.jetbrains.compose.ui.tooling.preview.Preview
+import androidx.compose.material3.Surface
+
+import com.coffeepeek.core.designsystem.component.CoffeePeekSelectField
+import com.coffeepeek.core.designsystem.component.CoffeePeekSelectOption
+import coffeepeek.composeapp.generated.resources.Res
+import coffeepeek.composeapp.generated.resources.select_city_placeholder
+import coffeepeek.composeapp.generated.resources.select_city_label
+import org.jetbrains.compose.resources.stringResource
+
 import androidx.compose.runtime.getValue
 import com.coffeepeek.admin.ui.component.PlatformScrollableColumn
 import com.coffeepeek.admin.ui.component.SubmissionStatus
@@ -12,8 +22,6 @@ import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -29,8 +37,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.Icon
@@ -43,8 +49,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -805,89 +809,28 @@ private fun CityDropdown(
     onSelect: (City) -> Unit,
     error: String? = null,
 ) {
-    var expanded by remember { mutableStateOf(false) }
-    val menuShape = RoundedCornerShape(CpDimens.selectRadius)
-    Box {
-        CompactOutlinedTextField(
-            value = selected?.name ?: "",
-            onValueChange = {},
-            readOnly = true,
-            modifier = Modifier.fillMaxWidth().height(CpDimens.buttonHeight).clickable { expanded = true },
-            placeholder = {
-                Text(
-                    "Выберите город",
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            },
-            textStyle = MaterialTheme.typography.bodyLarge,
-            trailingIcon = {
-                Icon(
-                    CpIcons.ChevronUpDown,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            },
-            isError = error != null,
-            shape = RoundedCornerShape(percent = 50),
-            contentPadding = CpDimens.singleLineFieldContentPadding,
-            colors = OutlinedTextFieldDefaults.colors(
-                focusedBorderColor   = MaterialTheme.colorScheme.outline,
-                unfocusedBorderColor = MaterialTheme.colorScheme.outline,
-                errorBorderColor     = MaterialTheme.colorScheme.error,
-                focusedContainerColor   = MaterialTheme.colorScheme.surface,
-                unfocusedContainerColor = MaterialTheme.colorScheme.surface,
-                disabledBorderColor  = MaterialTheme.colorScheme.outline,
-                disabledTextColor    = MaterialTheme.colorScheme.onSurface,
-            ),
-            enabled = false,
-        )
-        // Invisible clickable overlay
-        Box(
-            modifier = Modifier
-                .matchParentSize()
-                .clickable { expanded = true }
-        )
-        val nativeMenu = expanded && com.coffeepeek.admin.ui.component.NativeActionSheet("Город", cities.map { city -> com.coffeepeek.admin.ui.component.PlatformAction(city.name, onClick = { onSelect(city) }) }) { expanded = false }
-        DropdownMenu(
-            expanded = expanded && !nativeMenu,
-            onDismissRequest = { expanded = false },
-            modifier = Modifier
-                .clip(menuShape)
-                .border(1.dp, MaterialTheme.colorScheme.outlineVariant, menuShape),
-            shape = menuShape,
-            containerColor = MaterialTheme.colorScheme.surface,
-            tonalElevation = 0.dp,
-        ) {
-            cities.forEach { city ->
-                DropdownMenuItem(
-                    text = {
-                        Text(
-                            text = city.name,
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = if (city.id == selected?.id)
-                                MaterialTheme.colorScheme.primary
-                            else
-                                MaterialTheme.colorScheme.onSurface,
-                        )
-                    },
-                    onClick = {
-                        onSelect(city)
-                        expanded = false
-                    },
-                    leadingIcon = if (city.id == selected?.id) {
-                        { Icon(CpIcons.Check, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(18.dp)) }
-                    } else null,
-                )
-            }
-        }
-    }
+    CoffeePeekSelectField(
+        value = selected?.name ?: stringResource(Res.string.select_city_placeholder),
+        options = cities.map { city ->
+            CoffeePeekSelectOption("city:${city.id}", city.name, city.id == selected?.id) { onSelect(city) }
+        },
+        contentDescription = stringResource(Res.string.select_city_label),
+        modifier = Modifier.fillMaxWidth(),
+        isPlaceholder = selected == null,
+        errorDescription = error,
+    )
     if (error != null) {
-        Text(
-            text = error,
-            style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.error,
-            modifier = Modifier.padding(top = 4.dp, start = 4.dp),
-        )
+        Text(error, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.error,
+            modifier = Modifier.padding(top = 4.dp, start = 4.dp))
     }
 }
+
+@Composable
+private fun CityDropdownPreview(darkTheme: Boolean) = CoffeePeekTheme(darkTheme = darkTheme) {
+    Surface { Column(Modifier.padding(16.dp)) {
+        val cities = listOf(City("minsk", "Минск"), City("brest", "Брест"))
+        CityDropdown(cities, cities.first(), {})
+    } }
+}
+@Preview @Composable private fun CityDropdownLightPreview() = CityDropdownPreview(false)
+@Preview @Composable private fun CityDropdownDarkPreview() = CityDropdownPreview(true)
