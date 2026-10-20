@@ -21,6 +21,7 @@ internal fun trackShopAction(action: ShopDetailAction, state: ShopDetailState, a
         ShopDetailAction.SuggestChange -> trackShopProtectedAction(ShopActionMetric.Edit, state, analytics)
         ShopDetailAction.ReportShop -> trackShopProtectedAction(ShopActionMetric.Report, state, analytics)
         ShopDetailAction.OpenRoute -> analytics.action(ShopActionMetric.Directions)
+        ShopDetailAction.OpenMap -> analytics.action(ShopActionMetric.ShowOnMap)
         ShopDetailAction.Share -> analytics.action(ShopActionMetric.Share)
         ShopDetailAction.ToggleSchedule -> analytics.content(ShopContentMetric.Hours,
             if (state.scheduleExpanded) ShopContentAction.Close else ShopContentAction.Open)
