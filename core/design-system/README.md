@@ -55,6 +55,38 @@ the rating slice also declares the application's existing iosArm64 and
 iosSimulatorArm64 targets so shared application UI can consume this module
 directly. No native screen/navigation/DI migration is implied by Native compilation.
 
+## Single-choice fields
+
+`CoffeePeekSelectField` is the shared trigger and selection contract for city,
+consumed drink and home brewing-method fields. `CoffeePeekSelectOption` contains
+only presentation identity, localized label, selection, optional Compose icon and
+callback; catalogs, optional choices, saved values, loading/retry and validation
+remain feature-owned. Unique IDs and at most one selection are checked before rendering.
+
+Android uses one bounded, scrollable Material dropdown anchored to the button;
+iOS uses the same trigger with a UIKit single-selection menu, following the
+check-in drink selector. UIKit owns touch and VoiceOver, including field label,
+value and error hint; optional Compose menu icons are Android-only. Disabled or
+empty fields cannot open a menu. The trigger grows with text and has a minimum
+48.dp touch target. Error text remains caller-owned.
+
+Design-system now supplies Android, iosArm64 and iosSimulatorArm64 variants so
+legacy shared forms and migrated Android shop UI consume the same primitive.
+No feature/domain/platform-app dependency or new module is introduced. The app's
+design-system dependency therefore lives in commonMain. Command/action menus
+retain their separate platform component.
+
+Paired previews live with the primitive and each replaced field. Use Interactive
+Preview to open the Android popup; static previews show the trigger only.
+UIKit menu placement, VoiceOver and iOS framework linking require a macOS/device
+check; Windows Android builds do not verify them.
+
+Verified on 2026-10-20: design-system (19), shop impl (96) and DirectDebug app
+(438) unit tests pass; `:composeApp:assembleDirectDebug` and its packaged DEX
+runtime-class check pass. Both `:core:design-system:compileKotlinIosArm64` and
+`:composeApp:compileKotlinIosArm64` pass. No connected device was available;
+IDE preview rendering and final iOS framework linking were not run.
+
 CoffeePeekSwitch owns the already-prepared production switch colors and a full-size
 thumb for enabled/disabled, checked/unchecked controls in both themes. Its palette
 matches the application's current PlatformSwitch; core does not import that
@@ -206,7 +238,7 @@ states, grouped rows, badges, segmented control, loader, sheet, dialogs and FAB.
 large-font fixtures. Refresh has both idle/interactive and running samples.
 Previews require no app DI, network, navigation or data. The Compose preview
 annotation is in commonMain; Android Studio's rendering tooling remains a
-debug-only Android dependency. This module currently has an Android target only.
+debug-only Android dependency. The module also supplies iOS variants for shared consumers.
 
 Use Interactive Preview / Run Preview for modal windows and stateful callbacks;
 static layout previews are not guaranteed to display separate dialog windows.
