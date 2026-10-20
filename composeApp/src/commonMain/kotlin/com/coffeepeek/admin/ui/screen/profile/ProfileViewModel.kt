@@ -54,6 +54,7 @@ class ProfileViewModel(
     private val shopRepository: ShopRepository,
     private val cityPreference: CityPreference,
     private val reviewDrafts: ReviewDraftStore,
+    private val notifications: com.coffeepeek.feature.notifications.api.NotificationFeature,
 ) {
     private val workScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
@@ -126,6 +127,7 @@ class ProfileViewModel(
     fun logout() {
         resetProfileState()
         workScope.launch {
+            notifications.beforeLogout()
             authRepository.logout()
             GoogleAuth.signOut()
             // Drafts belong to the signed-in user; don't leak them into the next account.

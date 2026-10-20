@@ -25,6 +25,7 @@ object Modules {
     object Features {
         const val homeCheckIn = ":features:home-checkin"
         const val authorBlocking = ":features:author-blocking"
+        const val notifications = ":features:notifications"
     }
 
     val all: List<String> = listOf(
@@ -39,6 +40,7 @@ object Modules {
         core.designSystem,
         features.homeCheckIn,
         features.authorBlocking,
+        features.notifications,
     )
 }
 
