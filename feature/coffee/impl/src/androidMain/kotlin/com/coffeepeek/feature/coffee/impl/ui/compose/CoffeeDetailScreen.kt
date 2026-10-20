@@ -86,7 +86,7 @@ internal fun CoffeeDetailScreenContent(
                     verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing6)) {
                     item(key = "photo") {
                         val photosDescription = stringResource(R.string.coffee_open_photos)
-                        Box(screen.exposure(Modifier, CoffeeExposure.Photos).fillMaxWidth().aspectRatio(1f).background(MaterialTheme.colorScheme.surfaceVariant)
+                        Box((if (details.photos.isNotEmpty()) screen.exposure(Modifier, CoffeeExposure.Photos) else Modifier).fillMaxWidth().aspectRatio(1f).background(MaterialTheme.colorScheme.surfaceVariant)
                             .semantics { contentDescription = photosDescription }
                             .clickable(enabled = details.photos.isNotEmpty(), role = Role.Button, onClickLabel = stringResource(R.string.coffee_open_photos)) {
                                 onAction(CoffeeDetailAction.OpenPhotos)

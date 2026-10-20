@@ -10,6 +10,9 @@ interface CoffeeScreenAnalytics {
     fun TrackDetail(loaded: Boolean)
 
     @Composable
+    fun Overlay(content: @Composable () -> Unit) { content() }
+
+    @Composable
     fun exposure(modifier: Modifier, section: CoffeeExposure): Modifier
 
     companion object {

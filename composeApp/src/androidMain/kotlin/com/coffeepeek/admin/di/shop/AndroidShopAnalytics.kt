@@ -35,6 +35,7 @@ internal object AndroidShopAnalytics : ShopAnalytics {
     }
 
     @Composable override fun TrackDetail(loaded: Boolean) = TrackEntityDetail(Entity.Shop, loaded)
+    @Composable override fun Overlay(content: @Composable () -> Unit) = AnalyticsOverlay(content)
 
     @Composable override fun exposure(modifier: Modifier, feature: ShopExposure): Modifier =
         modifier.analyticsExposure(feature.wire(), "shop_detail", "shop_detail")

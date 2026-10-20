@@ -25,6 +25,15 @@ also hard-coded Yandex instead of the existing Android provider chooser.
 
 ## Verification and remaining work
 
+## Coffee checkpoint #104
+
+Search/filter controls lost their legacy `search`/`filters` visibility markers
+(`placement=coffees`, `page=coffees`). Restore them through the existing screen
+port, together with the filters' overlay ownership. A missing coffee photo must
+not count as an exposed photo; the current placeholder had inherited that marker.
+Search/filter/content click events and detail/related correlation already have
+active adapters and are retained, not emitted a second time.
+
 Parent #43 verification: Shop impl **98** and application Direct **445** unit
 tests pass (zero failures/errors/skips), including new field/save/privacy and
 favorite mutation regressions. Direct Debug assembly and packaged DEX checks
