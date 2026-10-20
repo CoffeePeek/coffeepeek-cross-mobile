@@ -4,11 +4,24 @@ package com.coffeepeek.admin.di.shop
 import com.coffeepeek.admin.analytics.*
 import com.coffeepeek.admin.feature.checkin.api.CheckInFlowHandoff
 import com.coffeepeek.feature.shop.api.*
+import com.coffeepeek.feature.shop.domain.repository.ShopCheckInPhotoUploadFailure
 import com.coffeepeek.admin.ui.screen.shop.shopRouteOptions
 import kotlinx.coroutines.test.*
 import kotlin.test.*
 
 class AndroidShopAnalyticsTest {
+    @Test fun photoFailureKeepsItsStageAndSafeNetworkCategory() = runTest {
+        val sdk = startAnalytics()
+        val form = AndroidShopCheckInAnalytics { true }
+        form.opened()
+        form.submitted()
+        form.failed(ShopCheckInPhotoUploadFailure(java.io.IOException("private upload URL")))
+        runCurrent()
+        val failure = sdk.events.single { it.first == "check_in_failed" }.second
+        assertEquals("photo_upload", failure["stage"])
+        assertEquals("network", failure["error_category"])
+        assertTrue(sdk.events.none { "private upload URL" in it.second.toString() })
+    }
     @Test fun detailActionsUseTheLegacySchemaAndRelatedEntry() = runTest {
         val sdk = startAnalytics()
         AndroidShopAnalytics.action(ShopActionMetric.Directions)
