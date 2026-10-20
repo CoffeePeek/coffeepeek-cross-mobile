@@ -32,19 +32,55 @@ class NotificationPresenterTest {
         assertEquals(listOf("alice-token"), repository.registrations)
     }
 
-    @Test fun accountSwitchClearsPreferencesAndFailedSaveKeepsLastSavedChoice() = runTest {
-        val sessions = Sessions(); val repository = Repository()
-        val feature = NotificationPresenter(repository, sessions, Platform(), backgroundScope)
+    @Test fun allCategoriesAreEnabledForEachAccountWithoutAskingPermissionOnLogin() = runTest {
+        val sessions = Sessions(); val repository = Repository(); val platform = Platform()
+        val feature = NotificationPresenter(repository, sessions, platform, backgroundScope)
         sessions.applySession(Session("access-a", userId = "alice")); runCurrent()
-        feature.save(NotificationPreferences(inactivity = true)); runCurrent()
-        assertEquals(true, feature.state.value.preferences?.inactivity)
-        repository.failSave = true
-        feature.save(NotificationPreferences(inactivity = false)); runCurrent()
-        assertEquals(true, feature.state.value.preferences?.inactivity)
-        assertNotNull(feature.state.value.error)
+        assertEquals(NotificationPreferences(true, true, true), repository.value)
+        val saves = repository.saves
+        feature.foreground(); runCurrent()
+        assertEquals(saves, repository.saves)
         sessions.applySession(null); runCurrent()
-        assertFalse(feature.state.value.signedIn)
-        assertNull(feature.state.value.preferences)
+        repository.value = NotificationPreferences(false, false, false)
+        sessions.applySession(Session("access-b", userId = "bob")); runCurrent()
+        assertEquals(NotificationPreferences(true, true, true), repository.value)
+        assertEquals(saves + 1, repository.saves)
+        assertEquals(0, platform.permissionRequests)
+    }
+
+    @Test fun failedDefaultsAreRetriedOnForegroundWithoutRequestingPermission() = runTest {
+        val sessions = Sessions(); val repository = Repository().apply { failSave = true }; val platform = Platform()
+        val feature = NotificationPresenter(repository, sessions, platform, backgroundScope)
+        sessions.applySession(Session("access", userId = "alice")); runCurrent()
+        assertFalse(repository.value.inactivity)
+        repository.failSave = false
+        feature.foreground(); runCurrent()
+        assertTrue(repository.value.inactivity)
+        assertEquals(0, platform.permissionRequests)
+    }
+
+    @Test fun onlySuccessfulCheckInEventRequestsMissingPermissionForSignedInDevice() = runTest {
+        val sessions = Sessions(); val platform = Platform()
+        platform.mutable.update { it.copy(permissionGranted = false) }
+        val feature = NotificationPresenter(Repository(), sessions, platform, backgroundScope)
+        runCurrent()
+        feature.onCheckInCreated()
+        assertEquals(0, platform.permissionRequests)
+        sessions.applySession(Session("access", userId = "alice")); runCurrent()
+        feature.foreground(); runCurrent()
+        assertEquals(0, platform.permissionRequests)
+        feature.onCheckInCreated()
+        assertEquals(1, platform.permissionRequests)
+        platform.mutable.update { it.copy(permissionGranted = true) }; runCurrent()
+        feature.onCheckInCreated()
+        assertEquals(1, platform.permissionRequests)
+        platform.mutable.update { it.copy(permissionGranted = false, available = false) }; runCurrent()
+        feature.onCheckInCreated()
+        assertEquals(1, platform.permissionRequests)
+        platform.mutable.update { it.copy(available = true) }; runCurrent()
+        feature.beforeLogout()
+        feature.onCheckInCreated()
+        assertEquals(1, platform.permissionRequests)
     }
 
     @Test fun permissionRevocationRemovesRegistrationAndActivityIsThrottled() = runTest {
@@ -72,17 +108,17 @@ private class Sessions : SessionRepository {
 }
 
 private class Platform : PushDevicePlatform {
+    var permissionRequests = 0
     val mutable = MutableStateFlow(PushDeviceState("installation", true, true))
     override val state = mutable.asStateFlow()
     override fun setAccount(userId: String?) { mutable.update { it.copy(userId = userId, token = null) } }
-    override fun requestPermission() {}
+    override fun requestPermission() { permissionRequests++ }
 }
 
 private class Repository : NotificationRepository {
-    var value = NotificationPreferences(); var failSave = false
+    var value = NotificationPreferences(false, false, false); var failSave = false; var saves = 0
     val registrations = mutableListOf<String>(); var removals = 0; var activities = 0
-    override suspend fun preferences() = value
-    override suspend fun save(value: NotificationPreferences) { if (failSave) error("offline"); this.value = value }
+    override suspend fun save(value: NotificationPreferences) { if (failSave) error("offline"); this.value = value; saves++ }
     override suspend fun register(installationId: String, token: String) { registrations += token }
     override suspend fun remove(installationId: String) { removals++ }
     override suspend fun activity() { activities++ }

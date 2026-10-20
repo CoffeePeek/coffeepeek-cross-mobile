@@ -77,9 +77,7 @@ final class PushAppDelegate: NSObject, UIApplicationDelegate, UNUserNotification
 
     private func requestPermission() {
         UNUserNotificationCenter.current().getNotificationSettings { settings in
-            if settings.authorizationStatus == .denied {
-                DispatchQueue.main.async { if let url = URL(string: UIApplication.openSettingsURLString) { UIApplication.shared.open(url) } }
-            } else {
+            if settings.authorizationStatus == .notDetermined {
                 UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound, .badge]) { _, _ in self.foreground() }
             }
         }

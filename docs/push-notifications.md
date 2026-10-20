@@ -12,11 +12,26 @@ Services Gradle plugin is applied only when this file exists, so builds without 
 still compile and show push as unavailable. Both Play and Direct use the same package.
 Firebase BoM 35.0.2 and Google Services plugin 4.5.0 are pinned in the app build.
 
-Sign in, open Settings → Уведомления → Разрешить уведомления. Android 13+ asks for
-POST_NOTIFICATIONS; after a denial, this row can open system notification settings.
-Older Android versions use the app/channel system settings. Foreground messages are
-shown by CoffeePeekMessagingService; background messages use FCM's system display.
-The channel is “Уведомления CoffeePeek”. Tapping opens the app's normal entry screen.
+After a signed-in user successfully creates a shop or home check-in, Android 13+
+asks for POST_NOTIFICATIONS once per installation. Opening the editor, a failed
+submission or editing an existing check-in never triggers the prompt. A denial is
+respected; subsequent check-ins do not open system settings or repeat the prompt.
+Android 8–12 already allow notifications without a runtime permission prompt.
+Foreground messages are shown by CoffeePeekMessagingService; background messages
+use FCM's system display. The channel is “Уведомления CoffeePeek”. Tapping opens
+the app's normal entry screen.
+
+The channel explicitly uses the default notification sound with notification audio
+attributes; foreground notifications also specify DEFAULT_SOUND. Android keeps the
+existing channel ID, including any sound/mute choice the user has made. Recreating
+a channel cannot override its saved sound or importance. Silent mode, Do Not Disturb,
+notification volume and user-muted channels still govern whether a sound is heard.
+See [Android notification channels](https://developer.android.com/develop/ui/views/notifications/channels).
+
+Both foreground and FCM background notifications use `ic_stat_coffee_bean`: a white
+24 dp vector of the standing mascot holding a coffee bean, with transparent eyes,
+seams and a thin outline around the held bean. The editable SVG and Figma previews
+are in `design/notifications/README.md`.
 
 ## iOS activation through CI
 
@@ -47,6 +62,11 @@ Firebase package/resource wiring before being used for push.
 The delegate registers APNs, exchanges it for an FCM registration token, presents
 foreground banners and refreshes system permission on app activation. It never uses
 the APNs token as the backend device address.
+The same successful check-in callback requests alert/sound/badge authorization only
+while authorization is not determined; denied users are not redirected to Settings.
+For audible iOS delivery, the sender must also include `apns.payload.aps.sound =
+"default"`. Foreground `.sound` presentation alone does not supply a missing sound
+in the APNs payload. See [FCM Apple message handling](https://firebase.google.com/docs/cloud-messaging/ios/receive-messages).
 
 ## Sessions, preferences and activity
 
@@ -56,9 +76,12 @@ storage. Tokens are registered only for the current signed-in account with OS pe
 Registration renews on token changes and foreground entry; activity reports on entry and
 every 15 foreground minutes, including when push permission is denied.
 
-Settings expose moderation, inactivity and custom switches for every installation of
-the account. Moderation/custom default on; inactivity defaults off and needs explicit
-opt-in. Saving uses server state and reports failures. Account changes clear preferences.
+There are no in-app notification settings or category switches. Moderation, inactivity
+and custom notifications are all enabled. Shared coordination saves those defaults
+for each signed-in account, including existing accounts whose reminders were disabled.
+A failed save is retried on the next foreground entry or device state update; a successful
+save is not repeated on every heartbeat. OS permission remains independent of these
+account preferences, and is requested only after a successful new check-in.
 
 Before explicit logout the app attempts device removal with a three-second bound while
 the old access token is usable. Native FCM auto-init stays disabled. Token revocation
@@ -88,12 +111,16 @@ secret storage, never in Git or chat. See the backend's docs/api/push-notificati
 
 ## Verification
 
-On Windows, verified Direct debug APK assembly, Play Kotlin compilation and three
-shared tests: current-account token filtering/logout, failed preference save/account
-reset, permission revocation/activity throttling. On macOS also build the Xcode app.
+On 2026-10-20, Linux verification passed Direct debug APK assembly, 5 notification
+tests and 353 application unit tests. Coverage includes defaults/account switching,
+failed-default retry, permission request timing, current-account token filtering/logout,
+permission revocation/activity throttling and shop/home check-in success/failure/edit
+callbacks. The SVG and Android vector paths match. The Figma board was visually
+checked at 16, 20, 24 and 32 px on light/dark backgrounds. No Android device was connected
+for audible-delivery verification during this change. On macOS also build the Xcode app.
 
 On real devices verify: foreground/background/terminated notification, permission denial
-and re-enable, token renewal, logout/account switch, custom category off, moderation
+and re-enable, token renewal, logout/account switch, all categories enabled, moderation
 decision and weekly reminder. Use a designated test account and the admin Notifications
 page. A 202 response only means queued; inspect provider acceptance and the device.
 On 2026-10-20, real FCM delivery was verified on a USB-connected Pixel 9 (API 37).

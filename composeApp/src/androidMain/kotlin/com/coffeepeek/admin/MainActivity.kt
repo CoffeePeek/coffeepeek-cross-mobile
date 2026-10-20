@@ -35,13 +35,13 @@ class MainActivity : ComponentActivity() {
         _context = this
         com.coffeepeek.admin.notifications.AndroidPush.requestPermission = {
             runOnUiThread {
+                if (isFinishing || isDestroyed) return@runOnUiThread
                 val preferences = getSharedPreferences("push_device", Context.MODE_PRIVATE)
                 if (android.os.Build.VERSION.SDK_INT >= 33 &&
-                    (!preferences.getBoolean("asked", false) || shouldShowRequestPermissionRationale(android.Manifest.permission.POST_NOTIFICATIONS))) {
+                    checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS) != android.content.pm.PackageManager.PERMISSION_GRANTED &&
+                    !preferences.getBoolean("asked", false)) {
                     preferences.edit().putBoolean("asked", true).apply()
                     notificationPermission.launch(android.Manifest.permission.POST_NOTIFICATIONS)
-                } else {
-                    startActivity(Intent(android.provider.Settings.ACTION_APP_NOTIFICATION_SETTINGS).putExtra(android.provider.Settings.EXTRA_APP_PACKAGE, packageName))
                 }
             }
         }

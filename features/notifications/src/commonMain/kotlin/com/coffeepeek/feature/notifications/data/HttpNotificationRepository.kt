@@ -2,7 +2,6 @@ package com.coffeepeek.feature.notifications.data
 
 import com.coffeepeek.feature.notifications.domain.*
 import io.ktor.client.HttpClient
-import io.ktor.client.call.body
 import io.ktor.client.plugins.expectSuccess
 import io.ktor.client.request.*
 import io.ktor.client.statement.HttpResponse
@@ -11,8 +10,6 @@ import kotlinx.serialization.Serializable
 
 internal class HttpNotificationRepository(private val client: HttpClient) : NotificationRepository {
     private val root = "/api/v1/me/notifications"
-    override suspend fun preferences(): NotificationPreferences = client.get("$root/preferences") { expectSuccess = true }
-        .body<PreferencesDto>().let { NotificationPreferences(it.moderation, it.inactivity, it.custom) }
     override suspend fun save(value: NotificationPreferences) {
         client.put("$root/preferences") { expectSuccess = true; contentType(ContentType.Application.Json)
             setBody(PreferencesDto(value.moderation, value.inactivity, value.custom)) }.checked()

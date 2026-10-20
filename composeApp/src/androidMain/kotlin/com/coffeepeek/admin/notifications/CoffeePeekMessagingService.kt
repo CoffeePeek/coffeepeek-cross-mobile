@@ -19,7 +19,8 @@ class CoffeePeekMessagingService : FirebaseMessagingService() {
         val intent = Intent(this, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
         val pending = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
         val notification = NotificationCompat.Builder(this, AndroidPush.CHANNEL)
-            .setSmallIcon(R.drawable.ic_stat_coffee).setContentTitle(notice.title).setContentText(notice.body)
+            .setSmallIcon(R.drawable.ic_stat_coffee_bean).setContentTitle(notice.title).setContentText(notice.body)
+            .setDefaults(NotificationCompat.DEFAULT_SOUND)
             .setStyle(NotificationCompat.BigTextStyle().bigText(notice.body)).setAutoCancel(true).setContentIntent(pending).build()
         try { NotificationManagerCompat.from(this).notify(id, 0, notification) } catch (_: SecurityException) { }
     }
