@@ -260,3 +260,21 @@ Created and registered in `Modules.kt`; `composeApp` depends on both in `commonM
 - Behaviour unchanged: 15 `PublicProfileViewModelTest`, 8+8+6 step-1 parity tests, 16 Sandbox backend tests, 2 app repository tests pass;
   instrumented tests compile; Direct Debug, Direct Sandbox and iOS simulator compile build. Pixel 7 not run in this step.
 - Deviation from the plan table: the plan said "move the repository"; check-ins could not move without a legacy dependency, so they stay in the app.
+
+## Step 3 result — `feature/profile/api` ports and app adapters (2026-10-20)
+
+`feature/profile/api` (registered, iOS compiles) holds only ports with a real consumer today:
+
+- `ProfileAccountPort` (+ `OwnProfile`): active account key (user id, else token; null for guest/inactive), distinct account changes,
+  the shared own-profile cache and `loadOwnProfile(forceRefresh)` with the legacy rule (cache unless forced, else `getMe`). Read side only;
+  edit/deletion/sign-out ports come with steps 5-6 when their screens move.
+- `ProfileAuthorVisibility` (+ state with `hides`, hides everything until ready) and `ProfileAnalyticsPort.favoritesOpened()`.
+
+Adapters in `composeApp/.../androidMain/di/profile/AndroidProfilePorts.kt`: over `SessionRepository`/`UserRepository`, the author-blocking
+`AuthorVisibility` (a profile-owned port, so the feature module does not import the legacy-dependent author-blocking module) and the exact
+legacy `Analytics.track(FAVORITES_OPENED, entry_point=profile)`. `AndroidProfilePortsTest` (6) pins key rules, distinct account flow, cache/force
+semantics, mapping, visibility semantics and legacy-vs-adapter analytics parity. Not bound in Koin yet: the first consumer is the public-profile
+entry (step 4).
+
+Deviations from the plan table: `PublicCheckInsPort` is deferred (the check-in model is the legacy timeline `CheckIn`; it moves with the
+history/Community timeline owner, not here) and `ShareLinkPort` is dropped (sharing is an action callback of the entry, not a port).

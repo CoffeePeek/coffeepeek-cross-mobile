@@ -38,6 +38,7 @@ object Modules {
 
         val profile = Profile
         object Profile {
+            const val api = ":feature:profile:api"
             const val domain = ":feature:profile:domain"
             const val data = ":feature:profile:data"
         }
@@ -117,6 +118,7 @@ object Modules {
         feature.roaster.data,
         feature.roaster.impl,
         feature.profile.domain,
+        feature.profile.api,
         feature.profile.data,
         feature.coffee.domain,
         feature.coffee.data,
