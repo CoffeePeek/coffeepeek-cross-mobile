@@ -213,3 +213,11 @@ Sev H/M/L. "Guard" is the test that must exist before the step that can break it
 Not verified in this inventory (read-only pass over profile code only): guards inside `AddShop`/`AddRoaster`/`BlockedAuthors`,
 `AppUpdateState` details, `PublicProfileCards`/`PublicProfileFavoriteCard` visual geometry, Room persistence of the own profile,
 actual iOS behaviour, `PlatformMenuButton`/`PlatformAlert` semantics beyond the strings above.
+
+## Owner decisions — 2026-10-20
+
+- Settings (theme, city, usage policy, update check) are a separate later owner; split the shared `ProfileViewModel` first.
+- Deletion: opening the pending-deletion screen must not send `DELETE /api/Users/me` by itself; the request goes out only after an explicit user confirmation (deliberate difference from prod).
+- Edit profile: fix the partial-save quirk, a retry must not re-upload an avatar that already succeeded (deliberate difference from prod).
+- Own-account data (`UserRepository`, `UserProfile`, deletion request) stays in `modules/*` behind narrow ports.
+- Other open questions keep the inventory's recommendations until the owner says otherwise.
