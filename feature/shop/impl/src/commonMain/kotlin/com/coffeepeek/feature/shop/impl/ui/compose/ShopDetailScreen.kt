@@ -189,7 +189,7 @@ internal fun ShopDetailScreenContent(
                     }
                     details.overview.description?.let { description ->
                         item { ShopDescriptionSection(description, Modifier.padding(horizontal = CoffeePeekDimens.spacing4,
-                            vertical = CoffeePeekDimens.spacing2)) }
+                            vertical = 6.dp)) }
                     }
                     item { ShopCoffeeDetailsSection(details.coffee,
                         onOpenRoaster = { onAction(ShopDetailAction.OpenRoaster(it)) },
