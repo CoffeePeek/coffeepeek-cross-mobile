@@ -21,6 +21,7 @@ import androidx.compose.material3.IconToggleButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.VerticalDivider
+import com.coffeepeek.feature.favorites.impl.ui.compose.favoriteExposure
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -78,7 +79,7 @@ internal fun FavoriteRoasterCard(
                     Text(roaster.title, Modifier.weight(1f), style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
                     IconToggleButton(checked = true, onCheckedChange = { onRemove() },
-                        enabled = !removing && roaster.id.isNotBlank(), modifier = Modifier.size(48.dp),
+                        enabled = !removing && roaster.id.isNotBlank(), modifier = Modifier.favoriteExposure(roaster = true).size(48.dp),
                         colors = IconButtonDefaults.iconToggleButtonColors(
                             containerColor = Color.Transparent, contentColor = MaterialTheme.colorScheme.onSurface,
                             checkedContainerColor = Color.Transparent, checkedContentColor = MaterialTheme.colorScheme.onSurface,
