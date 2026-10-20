@@ -2,6 +2,15 @@
 
 ## Screenshot corrections — 2026-10-20
 
+Description follow-up: restore main's outlined `surface` card (24dp corners,
+zero elevation/tonal fill), the common section heading, 16dp inner inset, 8dp
+heading gap and 6dp external vertical inset. Keep the complete backend text and
+its existing body typography; main has no expand/collapse affordance here.
+Parent Shop unit selection **101** remains green; Debug/DEX pass (56s). The later
+shared-card checkpoint should reuse its existing outlined card primitive rather
+than introduce another card builder. Manual description comparison follows its
+new Sandbox build; earlier device captures used the pre-follow-up description.
+
 Owner: parent #43, based on `daabcebc`. Preserve menu-photo taps, guest sign-in,
 report routing, canonical public author identities and existing analytics.
 Remove only the redundant menu-photo heading button. Registration uses theme
