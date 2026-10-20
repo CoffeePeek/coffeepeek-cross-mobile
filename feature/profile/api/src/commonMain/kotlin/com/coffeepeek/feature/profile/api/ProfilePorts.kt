@@ -95,3 +95,15 @@ interface ProfileAuthorActions {
         override fun requestUnblock(author: ProfileAuthor) = Unit
     }
 }
+
+/**
+ * Ends the signed-in account. The app owns the order and the side effects (server logout, platform sign-out, local drafts) and
+ * surfaces its own failures; the profile only resets its screen first and then calls this.
+ */
+interface ProfileSignOutPort {
+    suspend fun signOut()
+
+    object None : ProfileSignOutPort {
+        override suspend fun signOut() = Unit
+    }
+}

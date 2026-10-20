@@ -19,6 +19,9 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.FilledIconButton
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
@@ -36,6 +39,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.theme.CoffeePeekColors
 import com.coffeepeek.feature.profile.api.ProfileImage
 import com.coffeepeek.feature.profile.domain.PublicProfileStats
@@ -51,24 +55,35 @@ internal fun PublicProfileHeader(
     isFollowing: Boolean = false,
     followEnabled: Boolean = true,
     onFollow: (() -> Unit)? = null,
+    onEditProfile: (() -> Unit)? = null,
     onAvatarClick: () -> Unit,
 ) {
     val handle = nickname.trimStart('@')
     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp), verticalAlignment = Alignment.CenterVertically) {
-        Box(
-            Modifier.size(92.dp).clip(CircleShape)
-                .background(Brush.linearGradient(listOf(CoffeePeekColors.GoldWarm, CoffeePeekColors.Primary)))
-                .then(if (!avatarUrl.isNullOrBlank()) Modifier.clickable(role = Role.Button,
-                    onClickLabel = stringResource(R.string.profile_open_avatar), onClick = onAvatarClick) else Modifier),
-            contentAlignment = Alignment.Center,
-        ) {
-            Text(
-                nickname.trimStart('@').take(1).uppercase().ifBlank { "?" },
-                style = MaterialTheme.typography.headlineLarge,
-                color = CoffeePeekColors.LightTextOnPrimary,
-                fontWeight = FontWeight.SemiBold,
-            )
-            if (!avatarUrl.isNullOrBlank()) image(avatarUrl, stringResource(R.string.profile_avatar_of, handle), Modifier.fillMaxSize())
+        Box(Modifier.size(92.dp)) {
+            Box(
+                Modifier.fillMaxSize().clip(CircleShape)
+                    .background(Brush.linearGradient(listOf(CoffeePeekColors.GoldWarm, CoffeePeekColors.Primary)))
+                    .then(if (!avatarUrl.isNullOrBlank()) Modifier.clickable(role = Role.Button,
+                        onClickLabel = stringResource(R.string.profile_open_avatar), onClick = onAvatarClick) else Modifier),
+                contentAlignment = Alignment.Center,
+            ) {
+                Text(
+                    nickname.trimStart('@').take(1).uppercase().ifBlank { "?" },
+                    style = MaterialTheme.typography.headlineLarge,
+                    color = CoffeePeekColors.LightTextOnPrimary,
+                    fontWeight = FontWeight.SemiBold,
+                )
+                if (!avatarUrl.isNullOrBlank()) image(avatarUrl, stringResource(R.string.profile_avatar_of, handle), Modifier.fillMaxSize())
+            }
+            if (onEditProfile != null) FilledIconButton(
+                onClick = onEditProfile,
+                modifier = Modifier.align(Alignment.BottomEnd).size(32.dp),
+                colors = IconButtonDefaults.filledIconButtonColors(
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    contentColor = MaterialTheme.colorScheme.onSurface,
+                ),
+            ) { Icon(CoffeePeekIcons.Edit, contentDescription = stringResource(R.string.profile_edit), modifier = Modifier.size(16.dp)) }
         }
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
             FlowRow(

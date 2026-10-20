@@ -86,7 +86,21 @@ internal fun androidPublicProfileScreenRenderer(
     blocks: AuthorBlockActions,
 ): AndroidPublicProfileScreenRenderer {
     val checkIns = AndroidPublicCheckIns(repository)
-    val slots = ProfileSlots(
+    val slots = androidProfileSlots(checkIns)
+    return AndroidPublicProfileScreenRenderer(createPublicProfileEntry(
+        data = repository,
+        checkIns = checkIns,
+        accounts = AndroidProfileAccountPort(sessions, users),
+        visibility = AndroidProfileAuthorVisibility(visibility),
+        authorActions = AndroidProfileAuthorActions(blocks),
+        slots = slots,
+    ))
+}
+
+
+/** The legacy-rendered pieces shared by the public profile and the Profile tab. */
+internal fun androidProfileSlots(checkIns: AndroidPublicCheckIns): ProfileSlots {
+    return ProfileSlots(
         image = { url, description, modifier -> CpImage(data = url, modifier = modifier, contentScale = ContentScale.Crop, contentDescription = description) },
         photoViewer = { previews, originals, index, onDismiss -> FullScreenImageDialog(PhotoViewerImages(previews, originals), index, onDismiss) },
         favoritesPreview = { favorites, onOpen ->
@@ -111,12 +125,4 @@ internal fun androidPublicProfileScreenRenderer(
         },
         photoPrefetch = { listState, items -> PrefetchListPhotos(listState, items) },
     )
-    return AndroidPublicProfileScreenRenderer(createPublicProfileEntry(
-        data = repository,
-        checkIns = checkIns,
-        accounts = AndroidProfileAccountPort(sessions, users),
-        visibility = AndroidProfileAuthorVisibility(visibility),
-        authorActions = AndroidProfileAuthorActions(blocks),
-        slots = slots,
-    ))
 }

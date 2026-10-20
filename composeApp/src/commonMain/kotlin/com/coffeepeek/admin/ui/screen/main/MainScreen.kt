@@ -54,7 +54,7 @@ import com.coffeepeek.admin.ui.component.RetainedContent
 import com.coffeepeek.admin.ui.component.ProvideFloatingNavClearance
 import com.coffeepeek.admin.ui.screen.coffee.CoffeeScreenRenderer
 import org.koin.compose.koinInject
-import com.coffeepeek.admin.ui.screen.profile.ProfileScreen
+import com.coffeepeek.admin.ui.screen.profile.OwnProfileScreenRenderer
 import com.coffeepeek.admin.ui.screen.profile.SettingsScreen
 import com.coffeepeek.admin.ui.icons.CpIcons
 
@@ -235,7 +235,7 @@ internal fun ComposeMainScreen(isLoggedIn: Boolean) {
                     }
 
                     navigation<Navigator.Screen.ProfileGraph>(startDestination = Navigator.Screen.ProfileTab) {
-                        composable<Navigator.Screen.ProfileTab> { if (isLoggedIn) ProfileScreen() }
+                        composable<Navigator.Screen.ProfileTab> { if (isLoggedIn) koinInject<OwnProfileScreenRenderer>().Content() }
                     }
 
                     navigation<Navigator.Screen.SettingsGraph>(startDestination = Navigator.Screen.SettingsTab) {
