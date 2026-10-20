@@ -1,5 +1,7 @@
 package com.coffeepeek.feature.shop.impl.ui
 
+import com.coffeepeek.feature.shop.api.ShopCheckInAnalytics
+import com.coffeepeek.feature.shop.api.ShopCheckInField
 import androidx.lifecycle.ViewModelStore
 import com.coffeepeek.feature.shop.domain.model.ShopCheckInCreateInput
 import com.coffeepeek.feature.shop.domain.model.ShopCheckInPhoto
@@ -73,9 +75,49 @@ class ShopCheckInCreateViewModelTest {
         }
     }
 
-    private fun viewModel(repository: Repository = Repository(), drafts: Drafts = Drafts()) =
-        ShopCheckInCreateViewModel(initial, repository, drafts, now = { now })
+    private fun viewModel(repository: Repository = Repository(), drafts: Drafts = Drafts(),
+        analytics: ShopCheckInAnalytics = ShopCheckInAnalytics.None) =
+        ShopCheckInCreateViewModel(initial, repository, drafts, now = { now }, analytics = analytics)
             .also { store.put("create", it) }
+
+    private class Metrics : ShopCheckInAnalytics {
+        val events = mutableListOf<String>()
+        override fun opened() { events += "opened" }
+        override fun field(field: ShopCheckInField) { events += field.name }
+        override fun submitted() { events += "submit" }
+        override fun validationFailed() { events += "validation" }
+        override fun failed(error: Throwable) { events += "failure" }
+        override fun saved(public: Boolean, hasPhotos: Boolean) { events += "saved" }
+    }
+
+    @Test fun analyticsFollowsActualChangesAndSingleAcceptedSubmission() = runTest(dispatcher) {
+        val metrics = Metrics()
+        val model = viewModel(analytics = metrics)
+        runCurrent()
+        model.onAction(ShopCheckInFormAction.TextChanged("private text"))
+        model.onAction(ShopCheckInFormAction.TextChanged("private text"))
+        runCurrent()
+        model.onAction(ShopCheckInFormAction.Submit)
+        model.onAction(ShopCheckInFormAction.Submit)
+        runCurrent()
+        assertEquals(listOf("opened", "Note", "submit", "saved"), metrics.events)
+        assertTrue(metrics.events.none { "private text" in it })
+    }
+
+    @Test fun analyticsDistinguishesValidationAndRequestFailure() = runTest(dispatcher) {
+        val metrics = Metrics()
+        val repository = Repository().apply { writeResult = Result.failure(IllegalStateException("failure")) }
+        val model = viewModel(repository, analytics = metrics)
+        runCurrent()
+        model.onAction(ShopCheckInFormAction.Submit)
+        runCurrent()
+        assertEquals(listOf("opened", "submit", "failure"), metrics.events)
+        model.onAction(ShopCheckInFormAction.VisitDateChanged("invalid"))
+        runCurrent()
+        model.onAction(ShopCheckInFormAction.Submit)
+        runCurrent()
+        assertEquals(listOf("opened", "submit", "failure", "Date", "submit", "validation"), metrics.events)
+    }
 
     @Test fun galleryPhotoAndDrinkChoiceSubmitWithoutAnExtractionStep() = runTest(dispatcher) {
         val repository = Repository()

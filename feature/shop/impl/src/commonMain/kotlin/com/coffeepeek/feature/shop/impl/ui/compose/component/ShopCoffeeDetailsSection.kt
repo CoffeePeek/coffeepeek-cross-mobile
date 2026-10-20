@@ -10,6 +10,8 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
+import com.coffeepeek.feature.shop.api.ShopExposure
+import com.coffeepeek.feature.shop.impl.ui.data.shopExposure
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -31,7 +33,8 @@ internal fun ShopCoffeeDetailsSection(
     modifier: Modifier = Modifier,
 ) {
     if (coffee.beans.isEmpty() && coffee.roasters.isEmpty() && coffee.equipment.isEmpty()) return
-    Column(modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing3)) {
+    val section = if (coffee.roasters.isNotEmpty()) modifier.shopExposure(ShopExposure.Roasters) else modifier
+    Column(section.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing3)) {
         if (coffee.roasters.isNotEmpty()) {
             ShopSectionTitle(stringResource(Res.string.shop_coffee_roasters))
             Card(Modifier.fillMaxWidth(), shape = RoundedCornerShape(CoffeePeekDimens.radius2xl),
