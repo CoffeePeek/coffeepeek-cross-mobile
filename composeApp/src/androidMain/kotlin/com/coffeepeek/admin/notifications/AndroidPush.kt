@@ -45,6 +45,7 @@ internal object AndroidPush {
     }
 
     private fun accountChanged(userId: String?) {
+        NotificationManagerCompat.from(context).cancelAll()
         if (!configured) return
         scope.launch {
             lock.withLock {

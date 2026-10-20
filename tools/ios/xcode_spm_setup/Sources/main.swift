@@ -146,12 +146,13 @@ func main() {
         let packageRef: XCRemoteSwiftPackageReference
         if let existingPkg = rootObject.remotePackages.first(where: { $0.repositoryURL == repoURL }) {
             packageRef = existingPkg
+            packageRef.versionRequirement = .exact(versionRequirementString)
             print("Package already present.")
         } else {
             packageRef = try rootObject.addSwiftPackage(
                 repositoryURL: repoURL,
                 productName: products.first!,
-                versionRequirement: .upToNextMajorVersion(versionRequirementString),
+                versionRequirement: .exact(versionRequirementString),
                 targetName: target.name
             )
         }
