@@ -79,10 +79,15 @@ installs alongside the normal app and does not need that workaround.
 
 ## What each check proves
 
-Use unit tests and isolated feature UI tests for behavior, then full Sandbox for
+Use the remaining unit/contract tests for behavior, then manual full Sandbox checks for
 root navigation, fake CRUD, themes and error paths. Use the live Debug app only
 when actual backend/device behavior is the subject of the check. Real-account
 writes, logout, favorites, consent changes and destructive actions still need
 explicit authorization and a safe account. Sandbox uses in-memory local fixtures,
 not a server-side test account; it does not certify OAuth, real media,
 analytics, backend persistence or iOS readiness. See [Sandbox coverage](SANDBOX.md).
+
+The agent-authored feature/design-system UI suites and test-only hosts were
+removed on 2026-10-20 at the user's request; earlier recorded runs are historical.
+Other contributors' application UI tests and database instrumentation remain.
+See [removal scope](../feature/UI_TEST_REMOVAL.md).
