@@ -58,9 +58,10 @@ internal class AndroidCheckInHistoryScreenRenderer(
             val home = if (session.lease.isLoggedIn) viewModel(key = "history-home-bridge") {
                 AndroidHistoryHomeBridge(session, homeEditors)
             } else null
-            LaunchedEffect(host, initialHomeId, session) {
-                host.consumeInitialHomeId(initialHomeId)?.let { id ->
-                    if (session.lease.isCurrent()) home?.open(id, editOnLoad = true)
+            LaunchedEffect(host, initialHomeId, session, home) {
+                // Consume only once the editor can really open: a stale lease or a guest must not drop the request.
+                if (home != null && session.lease.isCurrent()) {
+                    host.consumeInitialHomeId(initialHomeId)?.let { id -> home.open(id, editOnLoad = true) }
                 }
             }
             val generation by session.contentGeneration.collectAsStateWithLifecycle()

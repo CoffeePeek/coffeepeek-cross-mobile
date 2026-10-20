@@ -156,6 +156,29 @@ are module-internal. Legacy analytics that live inside Composables (coffee detai
 events, shop actions, history, home editor) cannot be replayed without UI and are **not** covered by the harness; they stay
 covered by the adapter contract tests. To add an owner: write its two journeys and call `ParityHarness.assertParity`.
 
+## Remaining regressions — fixes and decisions, 2026-10-20 (third pass)
+
+Owner decisions: A1, G7, S3, S4, C2, C3, H5, H9, B6, G8 return to the production behaviour; **B1 closed** (owner: production and
+migrated cards do not differ); **S2 intentional** (users see a clear fixed text, never the server's message); **Sandbox fixtures
+(G9, H7, A8, C4, R4, S5) are postponed on request**. Unit tests, instrumented test APKs and the iOS compile pass; not verified on
+a device.
+
+| id | change |
+|---|---|
+| A1 | History card photos start with the thumbnail and upgrade to the detail variant (`highQualityImage` slot, `CpImage(highQualityData=)`); the viewer opens on the thumbnail already shown. Test added. |
+| G7 | Shop check-in list warms the next cards' thumbnails (`photoPrefetch` slot wired to the app's `PrefetchListPhotos`). The menu gallery has no Android entry, so it is unchanged. |
+| S3 | Report reasons use the production order: menu, closed, schedule, photos, address, other. |
+| S4 | Report description is cut without splitting an emoji (surrogate pair). Test added. |
+| C2 | `CoffeePeekSearchField` (core) keeps cursor and IME composition local (`SyncedTextFieldState`), so autocorrect and fast typing are not rewound; test added. Applies to every screen using the field. Cyrillic IME still to be checked on a device. |
+| C3 | Coffee mapper drops blank photo URLs. |
+| H5 | Editor save errors use the production texts for 401/403 and a failed photo upload; the validation summary has Russian plural forms. |
+| H9 | Community owner-edit request is consumed only when the editor can open (lease current, signed in), so it is no longer dropped silently. |
+| B6 | Favorite writes sync the signed-in identity before the write, as in production. |
+| G8 | Shop detail reloads on return only after 2 minutes away (share, maps, phone calls no longer refetch). Production reloaded only on session/visibility change; explicit refresh after a check-in still works. Test added. |
+
+Not done: **B5** (guest/expired-session remove opening sign-in and resuming) — a guest has no saved rows, so only an expired session
+mid-use is affected; left open. **R2** stays as is. **S2/B1** need no change.
+
 ## Pixel 7 Sandbox check — 2026-10-20
 
 Pixel 7, `directSandbox` built from this branch, Sandbox package only (data cleared at install; ordinary CoffeePeek untouched).

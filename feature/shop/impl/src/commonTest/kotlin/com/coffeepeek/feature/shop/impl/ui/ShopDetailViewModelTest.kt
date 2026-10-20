@@ -106,10 +106,12 @@ class ShopDetailViewModelTest {
         viewerProvider: suspend () -> Result<ShopViewer> = { Result.success(viewer) },
         dayProvider: () -> Int = { 1 },
         minuteProvider: () -> Int? = { null },
+        resumeRefreshAfter: kotlin.time.Duration = kotlin.time.Duration.ZERO,
     ): ShopDetailViewModel = ShopDetailViewModel(
         shopId = "shop-1", detailsRepository = details,
         checkInVoteRepository = checkInVotes, favoritesRepository = favorites,
-        currentViewer = viewerProvider, currentDayOfWeek = dayProvider, currentMinuteOfDay = minuteProvider)
+        currentViewer = viewerProvider, currentDayOfWeek = dayProvider, currentMinuteOfDay = minuteProvider,
+        resumeRefreshAfter = resumeRefreshAfter)
         .also { store.put("detail", it) }
 
     @Test fun checkInGalleryKeepsExplicitOriginalAndRejectsGuestHiddenRows() = runTest(dispatcher) {
@@ -530,6 +532,17 @@ class ShopDetailViewModelTest {
         runCurrent()
         assertEquals(2, repository.calls)
         assertEquals("Updated", viewModel.state.value.details!!.overview.title)
+    }
+
+    @Test fun quickReturnKeepsTheLoadedPageWithoutAnotherRequest() = runTest(dispatcher) {
+        val repository = DetailsRepository()
+        val viewModel = viewModel(resumeRefreshAfter = kotlin.time.Duration.parse("2m"), details = repository)
+        viewModel.onAction(ShopDetailAction.Resume)
+        runCurrent()
+        viewModel.onAction(ShopDetailAction.Resume)
+        viewModel.onAction(ShopDetailAction.Resume)
+        runCurrent()
+        assertEquals(1, repository.calls)
     }
 
     @Test fun sessionChangeCancelsPreviousLoadAndClearsPrivateDetailsBeforeRefresh() = runTest(dispatcher) {

@@ -130,7 +130,7 @@ internal class LegacyFavoriteRoastersRepository(
         val captured = snapshot.value ?: return Result.failure(IllegalStateException("Favorites not loaded"))
         val item = captured.items[roasterId] ?: return Result.failure(IllegalArgumentException("Unknown saved roaster"))
         ensureOwner(captured.owner)
-        val result = trackFavoriteMutation(Entity.Roaster, false) {
+        val result = trackFavoriteMutation(Entity.Roaster, false, captured.owner) {
             favorites.removeForAccount(item, captured.owner)
         }
         result.exceptionOrNull()?.let { if (it is CancellationException) throw it }

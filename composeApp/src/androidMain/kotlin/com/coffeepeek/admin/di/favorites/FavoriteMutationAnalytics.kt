@@ -16,9 +16,12 @@ internal object ResumedAfterAuth : AbstractCoroutineContextElement(Key) {
 internal suspend fun trackFavoriteMutation(
     entity: Entity,
     desired: Boolean,
+    userId: String? = null,
     action: suspend () -> Result<Unit>,
 ): Result<Unit> {
     val service = Analytics.service
+    // As in production: attribute the write to the signed-in account even if the identity sync is still pending.
+    if (userId != null) service?.syncIdentityNow(userId)
     val scope = service?.operationScope()
     val started = TimeSource.Monotonic.markNow()
     val resumed = coroutineContext[ResumedAfterAuth.Key] != null

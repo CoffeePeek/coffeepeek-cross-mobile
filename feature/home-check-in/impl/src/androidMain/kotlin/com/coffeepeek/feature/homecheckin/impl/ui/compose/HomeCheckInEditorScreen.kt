@@ -11,6 +11,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.*
 import androidx.compose.ui.text.font.FontWeight
@@ -141,8 +142,13 @@ internal fun HomeCheckInEditorScreenContent(
                 }
                 return@Column
             }
-            val summary = if (state.fieldErrors.isNotEmpty()) stringResource(R.string.home_check_in_validation_summary, state.fieldErrors.size)
-                else state.saveIssue?.editorText()
+            val saveText = state.saveIssue?.editorText()
+            val photoUploadText = stringResource(R.string.home_check_in_photo_upload_failed)
+            val summary = if (state.fieldErrors.isNotEmpty()) pluralStringResource(R.plurals.home_check_in_validation_summary,
+                    state.fieldErrors.size, state.fieldErrors.size)
+                // Production reported any failed photo upload with one clear message, whatever the transport reason.
+                else if (state.saveIssue != null && state.failedOperation == HomePreparationOperation.PhotoUpload) photoUploadText
+                else saveText
             summary?.let { HomeCheckInEditorErrorSummary(it, Modifier.padding(horizontal = 16.dp).padding(bottom = 16.dp)) }
             Column(Modifier.weight(1f).fillMaxWidth().verticalScroll(rememberScrollState()).padding(horizontal = 16.dp),
                 verticalArrangement = Arrangement.spacedBy(24.dp)) {

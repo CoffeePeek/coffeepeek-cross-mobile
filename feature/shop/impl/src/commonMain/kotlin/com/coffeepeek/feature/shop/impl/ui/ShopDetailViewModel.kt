@@ -1,5 +1,9 @@
 package com.coffeepeek.feature.shop.impl.ui
 
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.minutes
+import kotlin.time.TimeMark
+import kotlin.time.TimeSource
 import androidx.lifecycle.viewModelScope
 import com.coffeepeek.feature.shop.api.ShopDetailContext
 import com.coffeepeek.core.presentation.MviViewModel
@@ -31,6 +35,8 @@ internal class ShopDetailViewModel(
     private val currentMinuteOfDay: () -> Int? = { null },
     initialSessionGeneration: Int = 0,
     initialRefreshGeneration: Long = 0,
+    /** A quick return (share, maps, phone) keeps the loaded page; only a long absence reloads it. */
+    private val resumeRefreshAfter: Duration = 2.minutes,
 ) : MviViewModel<ShopDetailState, ShopDetailAction, ShopDetailEventEnvelope>(
     ShopDetailState(sessionGeneration = initialSessionGeneration),
 ) {
@@ -40,6 +46,7 @@ internal class ShopDetailViewModel(
     private var sessionGeneration = initialSessionGeneration
     private var refreshGeneration = initialRefreshGeneration
     private var resumedOnce = false
+    private var loadedAt: TimeMark? = null
     private var favoriteMutationJob: Job? = null
     private var favoriteObservation: Job? = null
     private var favoriteGeneration = 0
@@ -55,7 +62,8 @@ internal class ShopDetailViewModel(
             }
             ShopDetailAction.Resume -> {
                 updateClock()
-                if (resumedOnce) load() else resumedOnce = true
+                if (!resumedOnce) resumedOnce = true
+                else if (loadedAt?.let { it.elapsedNow() >= resumeRefreshAfter } != false) load()
             }
             is ShopDetailAction.Refresh -> {
                 if (action.generation <= refreshGeneration) return
@@ -219,6 +227,7 @@ internal class ShopDetailViewModel(
                     isFavorite = latestFavorites?.contains(details.overview.id) == true,
                     hasError = false)
             }
+            loadedAt = TimeSource.Monotonic.markNow()
         } catch (cancelled: CancellationException) {
             wasCancelled = true
             throw cancelled
