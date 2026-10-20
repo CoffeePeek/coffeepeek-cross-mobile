@@ -57,11 +57,12 @@ internal fun CoffeeListScreenContent(state: CoffeeListState, onAction: (CoffeeLi
             }
         }
     }
-    if (state.filterDraft != null) CoffeeFiltersSheet(state, onAction)
+    if (state.filterDraft != null) screen.Overlay { CoffeeFiltersSheet(state, onAction) }
     Scaffold(modifier, contentWindowInsets = WindowInsets(0, 0, 0, 0), containerColor = MaterialTheme.colorScheme.background,
         topBar = {
             Column(Modifier.fillMaxWidth().statusBarsPadding().padding(horizontal = CoffeePeekDimens.spacing4, vertical = CoffeePeekDimens.spacing3)) {
-                CoffeeSearchHeader(state.query, state.filters.activeCount, { onAction(CoffeeListAction.QueryChanged(it)) }, { onAction(CoffeeListAction.OpenFilters) })
+                CoffeeSearchHeader(state.query, state.filters.activeCount, { onAction(CoffeeListAction.QueryChanged(it)) },
+                    { onAction(CoffeeListAction.OpenFilters) }, screen)
             }
         }) { padding ->
         CoffeePeekPullToRefresh(listState, state.isRefreshing, { onAction(CoffeeListAction.Refresh) },

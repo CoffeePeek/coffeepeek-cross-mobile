@@ -61,4 +61,4 @@ interface CoffeeDetailAnalytics {
 }
 
 /** Sections whose on-screen exposure the app measures; the feature only marks the container. */
-enum class CoffeeExposure { Catalog, Photos, Roaster, Offers, SimilarCoffees }
+enum class CoffeeExposure { Catalog, Photos, Roaster, Offers, SimilarCoffees, Search, Filters }

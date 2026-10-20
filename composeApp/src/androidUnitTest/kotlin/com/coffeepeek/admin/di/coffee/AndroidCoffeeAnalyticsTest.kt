@@ -5,6 +5,7 @@ package com.coffeepeek.admin.di.coffee
 import com.coffeepeek.admin.analytics.*
 import com.coffeepeek.feature.coffee.api.CoffeeContentAction
 import com.coffeepeek.feature.coffee.api.CoffeeDetailSection
+import com.coffeepeek.feature.coffee.api.CoffeeExposure
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import java.io.IOException
@@ -12,6 +13,11 @@ import kotlin.test.*
 
 /** Adapter parity with the legacy catalogue events (see CoffeeFilterAnalyticsTest for the legacy ViewModel). */
 class AndroidCoffeeAnalyticsTest {
+    @Test fun searchAndFilterExposureKeepsTheLegacyPlacementAndPage() {
+        assertEquals(Triple("search", "coffees", "coffees"), CoffeeExposure.Search.tracking())
+        assertEquals(Triple("filters", "coffees", "coffees"), CoffeeExposure.Filters.tracking())
+        assertEquals(Triple("coffee_catalog", "catalog", "coffees"), CoffeeExposure.Catalog.tracking())
+    }
     private suspend fun kotlinx.coroutines.test.TestScope.installed(): RecordingTransport {
         val sdk = RecordingTransport()
         val service = analytics(MemoryConsent(AnalyticsConsent.Accepted), sdk)

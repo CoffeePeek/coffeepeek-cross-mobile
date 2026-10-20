@@ -66,11 +66,21 @@ internal object AndroidCoffeeScreenAnalytics : CoffeeScreenAnalytics {
     override fun TrackDetail(loaded: Boolean) = TrackEntityDetail(Entity.Coffee, loaded)
 
     @Composable
-    override fun exposure(modifier: Modifier, section: CoffeeExposure): Modifier = when (section) {
-        CoffeeExposure.Catalog -> modifier.analyticsExposure("coffee_catalog", "catalog", "coffees")
-        CoffeeExposure.Photos -> modifier.analyticsExposure("coffee_photos", "coffee_detail", "coffee_detail")
-        CoffeeExposure.Roaster -> modifier.analyticsExposure("coffee_roaster", "coffee_detail", "coffee_detail")
-        CoffeeExposure.Offers -> modifier.analyticsExposure("coffee_offers", "coffee_detail", "coffee_detail")
-        CoffeeExposure.SimilarCoffees -> modifier.analyticsExposure("similar_coffees", "coffee_detail", "coffee_detail")
+    override fun Overlay(content: @Composable () -> Unit) = AnalyticsOverlay(content)
+
+    @Composable
+    override fun exposure(modifier: Modifier, section: CoffeeExposure): Modifier {
+        val (feature, placement, page) = section.tracking()
+        return modifier.analyticsExposure(feature, placement, page)
     }
+}
+
+internal fun CoffeeExposure.tracking(): Triple<String, String, String> = when (this) {
+    CoffeeExposure.Catalog -> Triple("coffee_catalog", "catalog", "coffees")
+    CoffeeExposure.Photos -> Triple("coffee_photos", "coffee_detail", "coffee_detail")
+    CoffeeExposure.Roaster -> Triple("coffee_roaster", "coffee_detail", "coffee_detail")
+    CoffeeExposure.Offers -> Triple("coffee_offers", "coffee_detail", "coffee_detail")
+    CoffeeExposure.SimilarCoffees -> Triple("similar_coffees", "coffee_detail", "coffee_detail")
+    CoffeeExposure.Search -> Triple("search", "coffees", "coffees")
+    CoffeeExposure.Filters -> Triple("filters", "coffees", "coffees")
 }
