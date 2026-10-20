@@ -9,11 +9,8 @@ import com.coffeepeek.api.model.request.ShopSearchFiltersDto
 import com.coffeepeek.api.model.request.ShopSearchOriginDto
 import com.coffeepeek.admin.feature.coffee.data.CoffeeRepositoryImpl
 import com.coffeepeek.admin.feature.coffee.domain.CoffeeFilters
-import com.coffeepeek.admin.feature.profile.data.PublicProfileRepositoryImpl
-import com.coffeepeek.admin.feature.profile.domain.PublicProfileConnectionKind
-import com.coffeepeek.domain.feature.feed.FeedRepository
-import com.coffeepeek.domain.feature.feed.FeedFilters
-import com.coffeepeek.domain.feature.feed.FeedPage
+import com.coffeepeek.feature.profile.data.createPublicProfileData
+import com.coffeepeek.feature.profile.domain.PublicProfileConnectionKind
 import com.coffeepeek.feature.shop.data.repository.createShopCheckInRepository
 import com.coffeepeek.feature.shop.domain.model.*
 import com.coffeepeek.domain.model.Session
@@ -139,11 +136,7 @@ class SandboxApplicationBackendTest {
     } }
 
     @Test fun redesignedProfileReadsRequiredStatsActivityFavoritesAndUnwrappedConnections() = runTest { fixture { _, client ->
-        val feed = object : FeedRepository {
-            override suspend fun getFeed(pageSize: Int, cursor: String?, filters: FeedFilters): Result<FeedPage> =
-                error("Profile metadata must not fetch the timeline")
-        }
-        val profiles = PublicProfileRepositoryImpl(client.client, feed)
+        val profiles = createPublicProfileData(client.client)
         val profile = profiles.getProfile("sandbox").getOrThrow()
         assertEquals("Sandbox", profile.nickname)
         assertEquals(1, profile.stats.checkIns)
@@ -318,10 +311,7 @@ class SandboxApplicationBackendTest {
         assertNull(users.getAccountDeletionRequest().getOrThrow())
 
         // Follow: friend only, bare body, counters follow the state; self 400; unknown slug 404 for follow and profile.
-        val profiles = PublicProfileRepositoryImpl(client.client, object : FeedRepository {
-            override suspend fun getFeed(pageSize: Int, cursor: String?, filters: FeedFilters): Result<FeedPage> =
-                error("Profile metadata must not fetch the timeline")
-        })
+        val profiles = createPublicProfileData(client.client)
         val friend = SandboxApplicationBackend.FRIEND_SLUG
         assertEquals(false, profiles.getProfile(friend).getOrThrow().isFollowing)
         assertEquals(true, profiles.setFollowing(friend, true).getOrThrow().isFollowing)

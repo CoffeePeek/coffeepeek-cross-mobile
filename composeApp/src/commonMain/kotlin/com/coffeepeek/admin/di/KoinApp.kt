@@ -18,7 +18,9 @@ import com.coffeepeek.admin.feature.coffee.ui.CoffeeDetailViewModel
 import com.coffeepeek.admin.feature.passwordrecovery.data.PasswordRecoveryRepositoryImpl
 import com.coffeepeek.admin.feature.passwordrecovery.domain.PasswordRecoveryRepository
 import com.coffeepeek.admin.feature.passwordrecovery.ui.PasswordRecoveryViewModel
-import com.coffeepeek.admin.feature.profile.data.PublicProfileRepositoryImpl
+import com.coffeepeek.admin.feature.profile.data.AppPublicProfileRepository
+import com.coffeepeek.admin.feature.profile.data.LegacyPublicProfileFavoriteDetails
+import com.coffeepeek.feature.profile.data.createPublicProfileData
 import com.coffeepeek.admin.feature.profile.domain.PublicProfileRepository
 import com.coffeepeek.admin.feature.profile.ui.PublicProfileViewModel
 import com.coffeepeek.admin.feature.homecheckin.ui.HomeCheckInViewModel
@@ -162,7 +164,12 @@ private fun appModule(
     single<com.coffeepeek.feature.authorblocking.api.AuthorVisibility> { get<com.coffeepeek.feature.authorblocking.api.AuthorBlockingFeature>().visibility }
     single<com.coffeepeek.feature.authorblocking.api.AuthorBlockingPresenter> { get<com.coffeepeek.feature.authorblocking.api.AuthorBlockingFeature>().presenter }
     single<com.coffeepeek.feature.authorblocking.api.AuthorBlockActions> { get<com.coffeepeek.feature.authorblocking.api.AuthorBlockingPresenter>() }
-    single<PublicProfileRepository> { PublicProfileRepositoryImpl(get<CoffeePeekClient>().client, get(), get(), get()) }
+    single<PublicProfileRepository> {
+        AppPublicProfileRepository(
+            createPublicProfileData(get<CoffeePeekClient>().client, LegacyPublicProfileFavoriteDetails(get(), get())),
+            get(),
+        )
+    }
     factory { (slug: String) -> PublicProfileViewModel(slug, get(), get(), users = get(), visibility = get()) }
     single<RoasterFavorites> { ServerRoasterFavorites(get(), get(), get()) }
     single<com.coffeepeek.admin.feature.appupdate.domain.AppUpdateRepository> {

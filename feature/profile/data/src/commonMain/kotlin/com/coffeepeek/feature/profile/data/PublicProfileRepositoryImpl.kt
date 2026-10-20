@@ -1,16 +1,7 @@
-package com.coffeepeek.admin.feature.profile.data
+package com.coffeepeek.feature.profile.data
 
-import com.coffeepeek.admin.feature.profile.domain.*
+import com.coffeepeek.feature.profile.domain.*
 import com.coffeepeek.core.network.requestResult
-import com.coffeepeek.domain.feature.feed.FeedFilters
-import com.coffeepeek.domain.feature.feed.FeedRepository
-import com.coffeepeek.domain.model.CheckIn
-import com.coffeepeek.domain.model.CheckInModerationState
-import com.coffeepeek.domain.model.CheckInVisibility
-import com.coffeepeek.domain.model.PublicAddress
-import com.coffeepeek.domain.model.RoasterSummary
-import com.coffeepeek.domain.repository.RoasterRepository
-import com.coffeepeek.domain.repository.ShopRepository
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.plugins.expectSuccess
@@ -35,12 +26,14 @@ import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
 import kotlinx.serialization.Serializable
 
+/** Public profile reads and follow writes over the shared authenticated client. */
+fun createPublicProfileData(client: HttpClient, details: PublicProfileFavoriteDetails? = null): PublicProfileData =
+    PublicProfileRepositoryImpl(client, details)
+
 internal class PublicProfileRepositoryImpl(
     private val client: HttpClient,
-    private val feed: FeedRepository,
-    private val shops: ShopRepository? = null,
-    private val roasters: RoasterRepository? = null,
-) : PublicProfileRepository {
+    private val details: PublicProfileFavoriteDetails? = null,
+) : PublicProfileData {
     override suspend fun getProfile(slug: String): Result<PublicProfile> = requestResult {
         validateSlug(slug)
         val response = client.get("/api/Users") {
@@ -114,7 +107,7 @@ internal class PublicProfileRepositoryImpl(
                     slug = targetSlug,
                     publicAddress = address,
                     drinkSlug = drinkSlug,
-                    tags = summary?.tags?.map { it.name }.orEmpty(),
+                    tags = summary?.tags.orEmpty(),
                     coffeeShopsCount = summary?.coffeeShopsCount,
                     coffeeProductsCount = summary?.coffeeProductsCount,
                     availableCoffeeProducts = summary?.availableCoffeeProducts,
@@ -124,10 +117,8 @@ internal class PublicProfileRepositoryImpl(
         }
     }
 
-    private suspend fun loadRoasterCatalog(): Map<String, RoasterSummary> = try {
-        roasters?.getRoasters()?.getOrNull().orEmpty().mapNotNull { summary ->
-            summary.publicAddress?.slug?.let { it to summary }
-        }.toMap()
+    private suspend fun loadRoasterCatalog(): Map<String, FavoriteRoasterSummary> = try {
+        details?.roasterSummaries().orEmpty().associateBy { it.slug }
     } catch (cancelled: CancellationException) {
         throw cancelled
     } catch (_: Exception) {
@@ -135,19 +126,19 @@ internal class PublicProfileRepositoryImpl(
     }
 
     private suspend fun hydrate(favorite: PublicProfileFavorite): PublicProfileFavorite = try { when (favorite.kind) {
-        PublicFavoriteKind.CoffeeShop -> shops?.getShopDetails(favorite.slug.orEmpty())?.getOrNull()?.let { details ->
+        PublicFavoriteKind.CoffeeShop -> details?.shop(favorite.slug.orEmpty())?.let { shop ->
             favorite.copy(
-                imageUrl = favorite.imageUrl ?: details.shop.photoUrl,
-                description = details.description,
-                address = details.location?.address ?: details.shop.address,
-                rating = details.shop.rating,
-                reviewCount = details.shop.reviewCount,
-                isOpen = details.shop.isOpen,
-                tags = details.shop.tags,
+                imageUrl = favorite.imageUrl ?: shop.photoUrl,
+                description = shop.description,
+                address = shop.address,
+                rating = shop.rating,
+                reviewCount = shop.reviewCount,
+                isOpen = shop.isOpen,
+                tags = shop.tags,
             )
         } ?: favorite
-        PublicFavoriteKind.Roaster -> roasters?.getRoaster(favorite.slug.orEmpty())?.getOrNull()?.let { details ->
-            favorite.copy(imageUrl = favorite.imageUrl ?: details.photos.firstOrNull()?.fullUrl, description = details.about)
+        PublicFavoriteKind.Roaster -> details?.roaster(favorite.slug.orEmpty())?.let { roaster ->
+            favorite.copy(imageUrl = favorite.imageUrl ?: roaster.photoUrl, description = roaster.about)
         } ?: favorite
         PublicFavoriteKind.Drink -> favorite
     } } catch (cancelled: CancellationException) {
@@ -192,14 +183,6 @@ internal class PublicProfileRepositoryImpl(
             PublicProfileConnection(person.userName, person.avatarUrl?.resolveAgainst(response.call.request.url), person.address.slug, person.address.canonicalPath)
         }, dto.totalCount, dto.page, dto.pageSize)
     }
-
-    override suspend fun getCheckIns(slug: String, cursor: String?): Result<PublicProfileCheckInPage> = requestResult {
-        validateSlug(slug)
-        val page = feed.getFeed(20, cursor, FeedFilters(authorSlug = slug)).getOrThrow()
-        PublicProfileCheckInPage(page.items.map { it.checkIn }.filter {
-            it.authorAddress?.slug == slug && it.visibility == CheckInVisibility.Public && it.moderationState == CheckInModerationState.Approved
-        }.map(CheckIn::toPublicProfileCheckIn), page.nextCursor)
-    }
 }
 
 private fun HttpResponse.requireSuccess(message: String) {
@@ -209,22 +192,6 @@ private fun HttpResponse.requireSuccess(message: String) {
 }
 
 private fun validateSlug(slug: String) { require(slug.isNotBlank() && slug.length <= 100) { "Некорректный адрес профиля" } }
-
-private fun CheckIn.toPublicProfileCheckIn(): PublicProfileCheckIn {
-    val recipe = homePreparation
-    val drink = customDrinkName?.takeIf(String::isNotBlank) ?: drinkNameRu?.takeIf(String::isNotBlank) ?: drinkNameEn?.takeIf(String::isNotBlank)
-    return PublicProfileCheckIn(
-        id, shopAddress?.slug?.takeIf(String::isNotBlank)?.takeUnless { isHome },
-        if (isHome) "Дома" else shopName.ifBlank { "Кофейня" },
-        if (isHome) recipe?.beanName?.takeIf(String::isNotBlank) ?: "Кофе дома" else drink ?: "Чекин в кофейне",
-        if (isHome) listOfNotNull(recipe?.brewMethodCode, recipe?.doseGrams?.let { "$it г" }, recipe?.brewDurationSeconds?.let { "$it с" }).joinToString(" · ").takeIf(String::isNotBlank) else drink,
-        if (isHome) recipe?.tasteScore?.toDouble() else rating?.average,
-        note,
-        if (isHome) recipe?.preparedOn?.takeIf(String::isNotBlank) ?: visitedAt.ifBlank { createdAt } else visitedAt.ifBlank { createdAt },
-        photoUrls,
-        source = this,
-    )
-}
 
 private fun String.resolveAgainst(base: Url): String? = takeIf(String::isNotBlank)?.let { reference ->
     URLBuilder(base).apply {
@@ -242,7 +209,7 @@ private fun String.resolveAgainst(base: Url): String? = takeIf(String::isNotBlan
     val checkInCount: Int, val addedShopsCount: Int, val addedRoastersCount: Int, val followersCount: Int, val isFollowing: Boolean,
 )
 @Serializable private data class ProfileAddressDto(val slug: String, val canonicalPath: String, val revision: Int = 0, val isAlias: Boolean = false) {
-    fun toDomain() = PublicAddress(slug, canonicalPath, revision, isAlias)
+    fun toDomain() = ProfileAddress(slug, canonicalPath, revision, isAlias)
 }
 @Serializable private data class ProfileEnvelopeDto<T>(val data: T? = null, val isSuccess: Boolean? = null, val message: String? = null) {
     fun requireData(): T { check(isSuccess != false) { message ?: "Не удалось загрузить данные" }; return checkNotNull(data) { message ?: "Ответ сервера не содержит данных" } }

@@ -1,10 +1,7 @@
-package com.coffeepeek.admin.feature.profile.data
+package com.coffeepeek.feature.profile.data
 
-import com.coffeepeek.admin.feature.profile.domain.*
+import com.coffeepeek.feature.profile.domain.*
 import com.coffeepeek.core.network.HttpClientFactory
-import com.coffeepeek.domain.feature.feed.*
-import com.coffeepeek.domain.model.*
-import com.coffeepeek.domain.repository.RoasterRepository
 import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.respond
 import io.ktor.http.*
@@ -23,7 +20,7 @@ class PublicProfileRepositoryTest {
             respond("""{"data":{"userName":"new_nick","about":"Кофе каждый день","avatarUrl":"/api/Photos/avatar.jpg","checkInCount":0,"addedShopsCount":4,"addedRoastersCount":2,"followersCount":17,"isFollowing":true},"address":{"slug":"new-nick","canonicalPath":"/users/new-nick","revision":2,"isAlias":true}}""", headers = jsonHeaders)
         }).api("https://api.coffeepeek.by")
         try {
-            val profile = PublicProfileRepositoryImpl(client, NoFeed).getProfile("old-nick").getOrThrow()
+            val profile = PublicProfileRepositoryImpl(client).getProfile("old-nick").getOrThrow()
             assertEquals("new_nick", profile.nickname)
             assertEquals("new-nick", profile.slug)
             assertEquals("/users/new-nick", profile.canonicalPath)
@@ -44,7 +41,7 @@ class PublicProfileRepositoryTest {
             respond(if (request.method == HttpMethod.Put) """{"followersCount":44,"isFollowing":true}""" else """{"followersCount":3,"isFollowing":false}""", headers = jsonHeaders)
         }).api("https://api.coffeepeek.by")
         try {
-            val repo = PublicProfileRepositoryImpl(client, NoFeed)
+            val repo = PublicProfileRepositoryImpl(client)
             assertEquals(PublicProfileFollowState(true, 44), repo.setFollowing("coffee / friend", true).getOrThrow())
             assertEquals(PublicProfileFollowState(true, 44), repo.setFollowing("coffee / friend", true).getOrThrow())
             assertEquals(PublicProfileFollowState(false, 3), repo.setFollowing("coffee / friend", false).getOrThrow())
@@ -63,7 +60,7 @@ class PublicProfileRepositoryTest {
             ]}""", headers = jsonHeaders)
         }).api("https://api.coffeepeek.by")
         try {
-            val items = PublicProfileRepositoryImpl(client, NoFeed).getFavorites("glasha").getOrThrow()
+            val items = PublicProfileRepositoryImpl(client).getFavorites("glasha").getOrThrow()
             assertEquals(listOf(PublicFavoriteKind.CoffeeShop, PublicFavoriteKind.Roaster, PublicFavoriteKind.Drink), items.map { it.kind })
             assertEquals(listOf("Территория кофе", "Memories", "Матча"), items.map { it.title })
             assertEquals("https://api.coffeepeek.by/photo/card.jpg", items[0].imageUrl)
@@ -87,7 +84,7 @@ class PublicProfileRepositoryTest {
             respond("""{"isSuccess":true,"data":{"year":2026,"month":10,"timeZone":"Europe/Minsk","activeDays":1,"totalCheckIns":3,"days":[{"date":"2026-10-01","checkInCount":0},{"date":"2026-10-02","checkInCount":3}]}}""", headers = jsonHeaders)
         }).api("https://api.coffeepeek.by")
         try {
-            val activity = PublicProfileRepositoryImpl(client, NoFeed).getActivity("glasha", 2026, 10).getOrThrow()
+            val activity = PublicProfileRepositoryImpl(client).getActivity("glasha", 2026, 10).getOrThrow()
             assertEquals("2026-10", activity.month)
             assertEquals("Europe/Minsk", activity.timeZone)
             assertEquals(setOf(2), activity.activeDays)
@@ -105,7 +102,7 @@ class PublicProfileRepositoryTest {
             ]}""", headers = jsonHeaders)
         }).api("https://api.coffeepeek.by")
         try {
-            val entries = PublicProfileRepositoryImpl(client, NoFeed).getFavorites("glasha").getOrThrow()
+            val entries = PublicProfileRepositoryImpl(client).getFavorites("glasha").getOrThrow()
             assertEquals(2, entries.size)
             assertEquals(2, entries.map { it.id }.toSet().size)
             assertTrue(entries.all { it.publicAddress == null && it.slug == null })
@@ -114,21 +111,20 @@ class PublicProfileRepositoryTest {
     }
 
     @Test
-    fun realRoasterCatalogLoadsOnceAndDetailFailuresPreserveEntriesAndKnownCounts(): Unit = runBlocking {
+    fun roasterCatalogLoadsOnceAndDetailFailuresPreserveEntriesAndKnownCounts(): Unit = runBlocking {
         var catalogRequests = 0
         var failCatalog = false
-        val roasters = object : RoasterRepository {
-            override suspend fun getRoasters(): Result<List<RoasterSummary>> {
+        val details = object : PublicProfileFavoriteDetails {
+            override suspend fun roasterSummaries(): List<FavoriteRoasterSummary> {
                 catalogRequests++
-                return if (failCatalog) Result.failure(IllegalStateException("Catalog unavailable"))
-                else Result.success(listOf(
-                    RoasterSummary(address("first"), "Catalog name", coffeeShopsCount = 5, coffeeProductsCount = 12, availableCoffeeProducts = 9),
-                    RoasterSummary(address("second"), "Another catalog name", coffeeShopsCount = 2, coffeeProductsCount = 4, availableCoffeeProducts = 3),
-                ))
+                if (failCatalog) throw IllegalStateException("Catalog unavailable")
+                return listOf(
+                    FavoriteRoasterSummary("first", null, listOf("Светлая"), 5, 12, 9),
+                    FavoriteRoasterSummary("second", null, emptyList(), 2, 4, 3),
+                )
             }
-            override suspend fun getRoaster(id: String): Result<RoasterDetails> = Result.failure(IllegalStateException("Details unavailable"))
-            override suspend fun submitRoaster(input: CreateRoasterInput): Result<RoasterSubmissionResult> = error("No mutation expected")
-            override suspend fun getMyRoasterSubmissions(status: ModerationStatus, page: Int, pageSize: Int): Result<PagedResult<RoasterSubmission>> = error("No private data expected")
+            override suspend fun shop(slug: String): FavoriteShopDetails? = null
+            override suspend fun roaster(slug: String): FavoriteRoasterDetails? = throw IllegalStateException("Details unavailable")
         }
         val client = HttpClientFactory(MockEngine {
             respond("""{"isSuccess":true,"data":[
@@ -137,13 +133,14 @@ class PublicProfileRepositoryTest {
             ]}""", headers = jsonHeaders)
         }).api("https://api.coffeepeek.by")
         try {
-            val repo = PublicProfileRepositoryImpl(client, NoFeed, roasters = roasters)
+            val repo = PublicProfileRepositoryImpl(client, details)
             val entries = repo.getFavorites("glasha").getOrThrow()
             assertEquals(1, catalogRequests)
             assertEquals(listOf("First saved", "Second saved"), entries.map { it.title })
             assertEquals<List<Int?>>(listOf(5, 2), entries.map { it.coffeeShopsCount })
             assertEquals(12, entries[0].coffeeProductsCount)
             assertEquals(9, entries[0].availableCoffeeProducts)
+            assertEquals(listOf("Светлая"), entries[0].tags)
             failCatalog = true
             val unavailable = repo.getFavorites("glasha").getOrThrow()
             assertEquals(2, catalogRequests)
@@ -151,7 +148,6 @@ class PublicProfileRepositoryTest {
             assertTrue(unavailable.all { it.coffeeShopsCount == null && it.coffeeProductsCount == null && it.availableCoffeeProducts == null })
         } finally { client.close() }
     }
-
     @Test
     fun connectionsUseDirectPagedBodyAndKeepServerNicknamesAndAddresses(): Unit = runBlocking {
         val client = HttpClientFactory(MockEngine { request ->
@@ -161,7 +157,7 @@ class PublicProfileRepositoryTest {
             respond("""{"items":[{"userName":"petr","avatarUrl":"/avatar/petr.jpg","address":{"slug":"petr-public","canonicalPath":"/users/petr-public","revision":1,"isAlias":false}}],"totalCount":21,"page":2,"pageSize":20}""", headers = jsonHeaders)
         }).api("https://api.coffeepeek.by")
         try {
-            val repo = PublicProfileRepositoryImpl(client, NoFeed)
+            val repo = PublicProfileRepositoryImpl(client)
             for (kind in PublicProfileConnectionKind.entries) {
                 val page = repo.getConnections("glasha", kind, 2, 20).getOrThrow()
                 assertEquals(21, page.totalCount)
@@ -181,7 +177,7 @@ class PublicProfileRepositoryTest {
             respond("", HttpStatusCode.Unauthorized)
         }).api("https://api.coffeepeek.by")
         try {
-            val repo = PublicProfileRepositoryImpl(client, NoFeed)
+            val repo = PublicProfileRepositoryImpl(client)
             assertTrue(repo.setFollowing("glasha", true).exceptionOrNull() is PublicProfileAuthenticationRequired)
             assertTrue(repo.getProfile("").isFailure)
             assertTrue(repo.getActivity("glasha", 2026, 13).isFailure)
@@ -192,55 +188,19 @@ class PublicProfileRepositoryTest {
         } finally { client.close() }
     }
 
-    @Test
-    fun checkInsStayFilteredByAuthorVisibilityAndModerationAndRetainHomeRecipe(): Unit = runBlocking {
-        val shop = CheckIn(
-            "shop", "coffee-shop", "Кофейня", "Заметка", "2026-10-14",
-            authorAddress = address("glasha"), shopAddress = address("coffee-shop"),
-            visibility = CheckInVisibility.Public, moderationState = CheckInModerationState.Approved,
-            username = "glasha", authorAvatarUrl = "https://images.test/avatar.jpg",
-            rating = ReviewRating(5, 4, 3), drinkNameRu = "Флэт уайт", drinkNameEn = "Flat white",
-            photoUrls = listOf("https://images.test/full.jpg"), photoThumbnailUrls = listOf("https://images.test/thumb.jpg"),
-            helpfulCount = 3, isHelpfulByCurrentUser = true,
-        )
-        val home = shop.copy(id = "home", isHome = true,
-            homePreparation = FeedHomePreparation("2026-10-12", "hario-v60", "Колумбия", 15.0, 120, 5))
-        val feed = object : FeedRepository {
-            override suspend fun getFeed(pageSize: Int, cursor: String?, filters: FeedFilters): Result<FeedPage> {
-                assertEquals(FeedFilters(authorSlug = "glasha"), filters)
-                assertEquals("cursor", cursor)
-                return Result.success(FeedPage(listOf(shop, shop.copy(id = "private", visibility = CheckInVisibility.Private), shop.copy(id = "other", authorAddress = address("other")), shop.copy(id = "pending", moderationState = CheckInModerationState.Pending), home).map { FeedItem("2026-10-15", it) }, "next"))
-            }
-        }
-        val client = HttpClientFactory(MockEngine { error("No private/profile endpoint expected") }).api("https://api.coffeepeek.by")
-        try {
-            val page = PublicProfileRepositoryImpl(client, feed).getCheckIns("glasha", "cursor").getOrThrow()
-            assertEquals(listOf("shop", "home"), page.items.map { it.id })
-            assertEquals("next", page.nextCursor)
-            assertEquals("Колумбия", page.items.last().title)
-            assertEquals(5.0, page.items.last().rating)
-            assertNull(page.items.last().coffeeShopSlug)
-            assertSame(shop, page.items.first().source)
-            assertSame(home, page.items.last().source)
-        } finally { client.close() }
-    }
 
     @Test
     fun preservesRequestCancellation(): Unit = runBlocking {
         val client = HttpClientFactory(MockEngine { throw CancellationException("Profile closed") }).api("https://api.coffeepeek.by")
-        try { assertFailsWith<CancellationException> { PublicProfileRepositoryImpl(client, NoFeed).getProfile("glasha") } }
+        try { assertFailsWith<CancellationException> { PublicProfileRepositoryImpl(client).getProfile("glasha") } }
         finally { client.close() }
     }
 
     @Test
     fun unavailableOrDeletedProfileRemainsTypedFailure(): Unit = runBlocking {
         val client = HttpClientFactory(MockEngine { respond("", HttpStatusCode.NotFound) }).api("https://api.coffeepeek.by")
-        try { assertTrue(PublicProfileRepositoryImpl(client, NoFeed).getProfile("deleted").exceptionOrNull() is PublicProfileUnavailable) }
+        try { assertTrue(PublicProfileRepositoryImpl(client).getProfile("deleted").exceptionOrNull() is PublicProfileUnavailable) }
         finally { client.close() }
     }
 
-    private fun address(slug: String) = PublicAddress(slug, "/users/$slug", 1, false)
-    private object NoFeed : FeedRepository {
-        override suspend fun getFeed(pageSize: Int, cursor: String?, filters: FeedFilters): Result<FeedPage> = error("No feed request expected")
-    }
 }

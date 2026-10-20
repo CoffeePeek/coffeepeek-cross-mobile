@@ -244,3 +244,19 @@ two requests (the server window limits the damage). Not changed; decide with the
 Done in `SandboxApplicationBackend` (see `composeApp/SANDBOX_PLAN.md`, "Profile/account fixtures"). Correction to the inventory: PATCH
 about/avatar and the deletion-request GET already existed but were unconditional; they now validate and keep state. Open: 401 follow,
 no-public-address account, blocked-profile follow rule, device walkthrough.
+
+## Step 2 result — `feature/profile/{domain,data}` (2026-10-20)
+
+Created and registered in `Modules.kt`; `composeApp` depends on both in `commonMain` (iOS compiles them: `compileKotlinIosSimulatorArm64`).
+
+- **domain** (`com.coffeepeek.feature.profile.domain`): public profile models, own `ProfileAddress` (no legacy `PublicAddress`),
+  `PublicProfileData` (profile, follow, favorites, activity, connections), `PublicProfileFavoriteDetails` port (+ `FavoriteShopDetails`,
+  `FavoriteRoasterSummary/Details`), the two typed exceptions.
+- **data**: `createPublicProfileData(client, details)` (impl internal) and the moved `PublicProfileRepositoryTest` (10 cases, the roaster-catalog
+  case rewritten against the port). Feature modules do not depend on legacy `modules/*`, so nothing legacy leaks in.
+- **app**: `AppPublicProfileRepository` = `PublicProfileData by data` + the author's check-ins (legacy `CheckIn`/`FeedRepository`, stays until the
+  profile UI moves, step 4); `LegacyPublicProfileFavoriteDetails` adapts `ShopRepository`/`RoasterRepository`; Koin binds both; the
+  favorite card converts `ProfileAddress` to the legacy `PublicAddress` for the shared shop card.
+- Behaviour unchanged: 15 `PublicProfileViewModelTest`, 8+8+6 step-1 parity tests, 16 Sandbox backend tests, 2 app repository tests pass;
+  instrumented tests compile; Direct Debug, Direct Sandbox and iOS simulator compile build. Pixel 7 not run in this step.
+- Deviation from the plan table: the plan said "move the repository"; check-ins could not move without a legacy dependency, so they stay in the app.
