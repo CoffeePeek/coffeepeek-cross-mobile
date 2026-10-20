@@ -2,6 +2,18 @@
 
 ## Final device follow-up — 2026-10-20
 
+Publication reconciliation: concurrent parent `91dcde2c` (shared single-choice
+fields) is retained via normal parent-first merges, with no force push. Resolve
+the Home Gradle conflict by keeping design-system in commonMain without restoring
+the removed preview dependency. Preserve the entire incoming select README
+section verbatim alongside rating/Native documentation. Combined source
+`68248716` passes **758** selected unit results (core 29, Shop 101, Coffee 46,
+Roaster 19, app Direct 563), zero failures/errors/skips; Debug/Sandbox and
+DEX/isolation plus design-system iOS Arm64 Kotlin compilation pass (54s).
+The device build below predates this selector integration: it verifies the
+unchanged Shop visual controls, not the selector's device/iOS behavior. No
+new application Native framework/device acceptance is inferred from compilation.
+
 Runtime source `d8289294` includes description follow-up `91b23c42` and shared
 outlined-card reuse `fd929916`. **755** selected unit results (core 26, Shop 101,
 Coffee 46, Roaster 19, app Direct 563), zero failures/errors/skips; Debug/Sandbox
