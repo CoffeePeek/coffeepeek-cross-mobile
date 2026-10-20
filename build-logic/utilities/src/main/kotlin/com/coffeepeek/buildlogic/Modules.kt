@@ -41,6 +41,7 @@ object Modules {
             const val api = ":feature:profile:api"
             const val domain = ":feature:profile:domain"
             const val data = ":feature:profile:data"
+            const val impl = ":feature:profile:impl"
         }
 
         val coffee = Coffee
@@ -120,6 +121,7 @@ object Modules {
         feature.profile.domain,
         feature.profile.api,
         feature.profile.data,
+        feature.profile.impl,
         feature.coffee.domain,
         feature.coffee.data,
         feature.coffee.api,

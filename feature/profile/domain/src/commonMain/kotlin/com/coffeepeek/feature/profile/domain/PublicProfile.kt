@@ -104,3 +104,32 @@ data class FavoriteShopDetails(
 )
 
 data class FavoriteRoasterDetails(val photoUrl: String?, val about: String?)
+
+data class PublicProfileCheckIn(
+    val id: String,
+    val coffeeShopSlug: String?,
+    val venue: String,
+    val title: String,
+    val details: String?,
+    val rating: Double?,
+    val note: String,
+    val occurredAt: String,
+    val photoUrls: List<String>,
+    /** Small previews for lists; equals [photoUrls] when the server sends no thumbnails. */
+    val photoPreviewUrls: List<String> = photoUrls,
+)
+
+data class PublicProfileCheckInPage(
+    val items: List<PublicProfileCheckIn>,
+    val nextCursor: String?,
+)
+
+/** Own-profile identity is the public address (slug or canonical path), never the account id or a display name. */
+fun isOwnPublicProfile(own: ProfileAddress, profile: PublicProfile): Boolean =
+    own.slug.isNotBlank() && own.slug == profile.slug ||
+        own.canonicalPath.isNotBlank() && profile.canonicalPath?.trimEnd('/') == own.canonicalPath.trimEnd('/')
+
+private val activityMonthPattern = Regex("\\d{4}-(0[1-9]|1[0-2])")
+
+/** `yyyy-MM` with a year the server accepts. */
+fun isValidActivityMonth(month: String): Boolean = month.matches(activityMonthPattern) && month.take(4).toInt() in 2000..2100

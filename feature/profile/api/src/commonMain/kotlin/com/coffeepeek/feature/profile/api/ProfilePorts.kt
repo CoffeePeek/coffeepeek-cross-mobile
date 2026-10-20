@@ -1,6 +1,7 @@
 package com.coffeepeek.feature.profile.api
 
 import com.coffeepeek.feature.profile.domain.ProfileAddress
+import com.coffeepeek.feature.profile.domain.PublicProfileCheckInPage
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 
@@ -71,4 +72,12 @@ interface ProfileAnalyticsPort {
     object None : ProfileAnalyticsPort {
         override fun favoritesOpened() = Unit
     }
+}
+
+/**
+ * The author's public check-ins, filtered to public and approved ones for exactly this author. Supplied by the app until the timeline
+ * owner exposes its own API; the app keeps whatever rendering data it needs for these ids.
+ */
+interface PublicCheckInsPort {
+    suspend fun page(slug: String, cursor: String?): Result<PublicProfileCheckInPage>
 }
