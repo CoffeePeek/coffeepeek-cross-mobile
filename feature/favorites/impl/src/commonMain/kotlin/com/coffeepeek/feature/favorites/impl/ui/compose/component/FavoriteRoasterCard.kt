@@ -19,6 +19,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.VerticalDivider
+import com.coffeepeek.feature.favorites.impl.ui.compose.favoriteExposure
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -77,7 +78,7 @@ internal fun FavoriteRoasterCard(
                     Text(roaster.title, Modifier.weight(1f), style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
                     CoffeePeekLikeButton(true, stringResource(Res.string.favorites_roaster_remove, roaster.title), onRemove,
-                        enabled = !removing && roaster.id.isNotBlank(), modifier = Modifier.size(48.dp))
+                        enabled = !removing && roaster.id.isNotBlank(), modifier = Modifier.favoriteExposure(roaster = true).size(48.dp))
                 }
                 Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(6.dp)) {

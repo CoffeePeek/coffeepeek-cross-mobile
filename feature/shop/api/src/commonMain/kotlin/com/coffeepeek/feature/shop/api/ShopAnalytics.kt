@@ -11,6 +11,7 @@ interface ShopAnalytics {
     fun favoriteRequiresSignIn(desired: Boolean) {}
     fun content(section: ShopContentMetric, action: ShopContentAction) {}
     @Composable fun TrackDetail(loaded: Boolean) {}
+    @Composable fun Overlay(content: @Composable () -> Unit) { content() }
     @Composable fun exposure(modifier: Modifier, feature: ShopExposure): Modifier = modifier
 
     companion object { val None: ShopAnalytics = object : ShopAnalytics {} }
