@@ -12,13 +12,14 @@ class AndroidShopAnalyticsTest {
     @Test fun detailActionsUseTheLegacySchemaAndRelatedEntry() = runTest {
         val sdk = startAnalytics()
         AndroidShopAnalytics.action(ShopActionMetric.Directions)
+        AndroidShopAnalytics.action(ShopActionMetric.ShowOnMap)
         AndroidShopAnalytics.action(ShopActionMetric.PhoneCall)
         AndroidShopAnalytics.content(ShopContentMetric.Hours, ShopContentAction.Close)
         AndroidShopAnalytics.content(ShopContentMetric.Roasters, ShopContentAction.Select)
         runCurrent()
         val actions = sdk.events.filter { it.first == "shop_action_clicked" }.map { it.second }
-        assertEquals(listOf("mobile_actions", "shop_contacts"), actions.map { it["entry_point"] })
-        assertEquals(listOf("directions", "phone_call"), actions.map { it["action"] })
+        assertEquals(listOf("mobile_actions", "shop_detail", "shop_contacts"), actions.map { it["entry_point"] })
+        assertEquals(listOf("directions", "directions", "phone_call"), actions.map { it["action"] })
         assertEquals("related", DetailEntryMemory.consume(Entity.Roaster)["entry_point"])
         assertEquals(2, sdk.events.count { it.first == "shop_content_interacted" })
     }
