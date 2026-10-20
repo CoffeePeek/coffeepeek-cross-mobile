@@ -22,6 +22,7 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import com.coffeepeek.feature.favorites.impl.ui.compose.favoriteExposure
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -80,7 +81,7 @@ internal fun FavoriteCard(
                     Box(
                         // Keep the full interactive target comfortably usable by touch and
                         // assistive technology; the icon itself remains visually compact.
-                        modifier = Modifier.size(48.dp)
+                        modifier = Modifier.favoriteExposure(roaster = false).size(48.dp)
                             .clip(RoundedCornerShape(CoffeePeekDimens.radiusLg))
                             .background(Color.Black.copy(alpha = 0.68f))
                             .clickable(enabled = !removing, role = Role.Button, onClick = onRemove),

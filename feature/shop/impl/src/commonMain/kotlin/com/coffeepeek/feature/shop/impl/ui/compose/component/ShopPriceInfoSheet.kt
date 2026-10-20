@@ -34,11 +34,14 @@ import com.coffeepeek.feature.shop.impl.resources.shop_price_title
 import com.coffeepeek.feature.shop.impl.ui.compose.model.ShopPriceLevel
 import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
+import com.coffeepeek.feature.shop.impl.ui.data.LocalShopAnalytics
 
 @Composable
 internal fun ShopPriceInfoSheet(level: ShopPriceLevel, onDismiss: () -> Unit) {
-    CoffeePeekSwipeDismissModalBottomSheet(onDismiss, stringResource(Res.string.shop_price_dismiss)) {
-        ShopPriceInfoContent(level)
+    LocalShopAnalytics.current.Overlay {
+        CoffeePeekSwipeDismissModalBottomSheet(onDismiss, stringResource(Res.string.shop_price_dismiss)) {
+            ShopPriceInfoContent(level)
+        }
     }
 }
 
