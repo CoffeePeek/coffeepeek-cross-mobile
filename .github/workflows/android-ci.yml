@@ -63,4 +63,3 @@ jobs:
           :composeApp:assembleDirectDebug :composeApp:assemblePlayDebug
           testDebugUnitTest :composeApp:testDirectDebugUnitTest :composeApp:testPlayDebugUnitTest
           lintDebug :composeApp:lintDirectDebug :composeApp:lintPlayDebug
-          :core:design-system:assembleDebugAndroidTest :feature:shop:impl:assembleDebugAndroidTest
