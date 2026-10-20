@@ -14,8 +14,13 @@ A difference is not a defect when the UI was deliberately improved. Such rows ar
 visible. Analytics, data, session/guard and behaviour rows cannot be closed this way without an explicit
 product decision.
 
-Visual/UX rows that may be intentional and **need the owner's confirmation** (none is closed yet):
-A2, A3, A4, A7, B1, B3, B4, C1, G5, G6, G10, R1 (glass back button/hero layout), R2.
+Owner decisions (2026-10-20): the like colour, larger/more readable fonts, moved and improved icons are
+intentional product changes; **A2** (sign-in block for guests instead of an empty history) is intentional.
+Prod is the reference: where prod behaved differently and the change was not deliberate, the prod behaviour
+is restored (see "Fixes applied"). R2 is kept as is: the roaster heart needs the public slug (identity of a
+favorite), not an address; a roaster without a slug cannot be addressed, so the heart stays hidden.
+
+Rows still **awaiting the owner's confirmation**: A3, A4, A7, B1, G5, G10.
 Already documented as approved elsewhere: guest block-author action hidden, menu-photos heading button
 removed, yellow info-card icons and badge sizes, glass back button, generic detail error text.
 
@@ -93,6 +98,26 @@ Unchanged from legacy: shared `/coffees/{slug}` links are not mapped by `AppLink
 | S3 | L | Category order differs (Address/Hours vs Schedule/Address). | R |
 | S4 | L | `take(500)` can split a surrogate pair. | R |
 | S5 | L (Sandbox) | Endpoint always 200; no rejected/5xx/unconfirmed scenario. | R |
+
+## Fixes applied — 2026-10-20 (branch `feature/roaster-refactoring`)
+
+Unit tests pass; Android instrumented test APKs and the iOS composeApp compile build. **Not yet verified on a device.**
+
+| id | change |
+|---|---|
+| H1 (+H2) | Editor no longer owns a private ViewModel store; the caller provides one. The global flow uses an Activity-retained store (`RetainedViewModelStore`) released only when the flow really ends, so rotation/theme/font/camera return keep the draft and no false `check_in_cancelled` is sent. History already used its destination store. |
+| G1 | Shop remembers a guest's favorite intent for 10 minutes and applies it once after sign-in when details and favorites are ready (test added). The `resumed_after_auth` analytics flag is not reproduced: the server-favorite events do not carry it on this path. |
+| G2 | Shop favorites use `observeIds()` (no per-favorite detail fetches); session wrapper overrides it. |
+| G3 | `shop_action(check_in)` / `CHECK_IN_START_ATTEMPTED` are skipped while a fresh global-create handoff exists (test added). |
+| G6 | Hero and menu pass detail previews as viewer images and full-screen URLs as originals. Missing photos elsewhere were reported by the owner without locations: **needs concrete screens**. |
+| S1 | Connection/DNS failures before sending are an ordinary failure with retry; unconfirmed delivery remains for failures after the write (test added). |
+| R1 | Roaster detail Scaffold uses zero insets; hero is edge-to-edge and pads its own controls; no doubled bottom inset. |
+| C1 | Coffee list takes an optional `loadError` slot; the app passes the mascot `LoadErrorContent`. |
+| B3 | `FavoriteRoaster.description` restored (3-line text on the card). |
+| B4 | Remove failures show a snackbar ("Не удалось изменить избранное"); the inline block stays for load failures. |
+
+Still open from the table: G1 analytics flag, G4, G5, G7–G9, H3–H7, H9, A1, A3–A8, B1, B2, B5, B6, C2–C4,
+R2 (decided: keep), R3, R4, S2–S5 and all Sandbox fixture rows.
 
 ## Suggested order of fixes (needs owner decision)
 1. H1 (+H2), G1, S1, R1, G2, G3 — behavioral regressions.

@@ -291,3 +291,5 @@ Record outcome per item in this section (date, build, pass/fail, notes). Failure
 ## Retroactive parity audit — 2026-10-20
 
 Open gaps from the legacy-first audit: R1–R4 (medium: R1 detail insets). Full table and verification status: [LEGACY_PARITY_AUDIT.md](../LEGACY_PARITY_AUDIT.md).
+
+Fixes applied 2026-10-20 and owner decisions on intentional differences: see the "Fixes applied" and "Intentional differences" sections of [LEGACY_PARITY_AUDIT.md](../LEGACY_PARITY_AUDIT.md). Device verification is still open.

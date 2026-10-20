@@ -321,3 +321,5 @@ non-UI slice. Existing AGP/KMP and preview deprecation warnings remain out of sc
 ## Retroactive parity audit — 2026-10-20
 
 Open gaps from the legacy-first audit: C1–C4 (medium: C1 mascot load-error slot). Full table and verification status: [LEGACY_PARITY_AUDIT.md](../LEGACY_PARITY_AUDIT.md).
+
+Fixes applied 2026-10-20 and owner decisions on intentional differences: see the "Fixes applied" and "Intentional differences" sections of [LEGACY_PARITY_AUDIT.md](../LEGACY_PARITY_AUDIT.md). Device verification is still open.

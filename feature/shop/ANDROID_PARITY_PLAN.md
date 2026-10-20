@@ -811,3 +811,5 @@ concurrent votes). Visible effect: other like buttons stay tappable during a pen
 ## Retroactive parity audit — 2026-10-20
 
 Open gaps from the legacy-first audit: G1–G10 (high: G1 favorite after login; medium: G2, G3). Full table and verification status: [LEGACY_PARITY_AUDIT.md](../LEGACY_PARITY_AUDIT.md).
+
+Fixes applied 2026-10-20 and owner decisions on intentional differences: see the "Fixes applied" and "Intentional differences" sections of [LEGACY_PARITY_AUDIT.md](../LEGACY_PARITY_AUDIT.md). Device verification is still open.
