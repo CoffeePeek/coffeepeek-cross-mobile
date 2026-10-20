@@ -19,6 +19,17 @@ propagate to Roasters and verify the final tip. Manual Sandbox light/dark,
 actual-photo/Haze and motion acceptance remain separate device gates. No
 automated UI suites or test-only hosts are added or run.
 
+Checkpoint `6e176444`: **726** unit results (design-system 26, Shop 101, Coffee
+46, app Direct 553), zero failures/errors/skips. Debug/Sandbox APKs and packaged
+DEX/isolation guards pass (4m52s). Studio's completed repeat reports no errors in
+the like toggle and Shop author eligibility helper; the earlier generated-resource
+resolution errors cleared after resource generation. The installed Sandbox
+verification source is `6e176444`, version **1.0.829-sandbox / 829**, with matching
+installed/new signing certificates and no INTERNET permission. Pixel 7/API 37
+was explicitly selected; ordinary CoffeePeek and Pixel 10a were not updated.
+The phone locked during installation, so no successful visual or motion check
+is claimed from the initial launcher/black captures. No data was cleared.
+
 ## Compact interaction follow-up — 2026-10-19
 
 Source: Coffee child `da67051b` plus this patch, inheriting parent UI fix
