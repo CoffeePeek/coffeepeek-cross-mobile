@@ -108,7 +108,7 @@ class ShopCheckInListViewModelTest {
         assertEquals(1, events.size)
     }
 
-    @Test fun blockRequestsUseOnlyVisiblePublicIdentityAndDoNotVote() = runTest(dispatcher) {
+    @Test fun guestBlockRequestsDoNotEmitEffectsOrVote() = runTest(dispatcher) {
         val repository = Details().apply { result = Result.success(details().let { source -> source.copy(
             checkIns = source.checkIns.map { it.copy(authorId = "public-${it.id}", authorSlug = "slug-${it.id}", username = "Author") }) }) }
         val votes = Votes()
@@ -118,6 +118,19 @@ class ShopCheckInListViewModelTest {
         runCurrent()
         model.onAction(ShopCheckInListAction.BlockAuthor("second"))
         model.onAction(ShopCheckInListAction.BlockAuthor("missing"))
+        model.onAction(ShopCheckInListAction.BlockAuthor("first")); runCurrent()
+        assertTrue(events.isEmpty())
+        assertTrue(votes.calls.isEmpty())
+    }
+
+    @Test fun signedInBlockingPreservesPublicIdentityWithoutVoting() = runTest(dispatcher) {
+        val repository = Details().apply { result = Result.success(details().let { source -> source.copy(
+            checkIns = source.checkIns.map { it.copy(authorId = "public-${it.id}", authorSlug = "slug-${it.id}", username = "Author") }) }) }
+        val votes = Votes()
+        val model = viewModel(repository, votes)
+        val events = mutableListOf<ShopCheckInListEvent>()
+        backgroundScope.launch { model.events.collect { events += it.event } }
+        runCurrent()
         model.onAction(ShopCheckInListAction.BlockAuthor("first")); runCurrent()
         assertEquals(listOf<ShopCheckInListEvent>(ShopCheckInListEvent.BlockAuthor(
             com.coffeepeek.feature.shop.api.ShopCheckInAuthor("public-first", "slug-first", "Author", null))), events)

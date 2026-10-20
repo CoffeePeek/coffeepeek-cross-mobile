@@ -206,9 +206,7 @@ internal fun ShopDetailScreenContent(
                     details.menu?.takeIf { menu ->
                         menu.photos.isNotEmpty() || menu.items.any { it.availability.equals("Present", true) }
                     }?.let { menu ->
-                        item { ShopMenuSection(menu, onOpenPhotos = {
-                            onAction(ShopDetailAction.OpenMenuGallery)
-                        }, onOpenPhoto = { index ->
+                        item { ShopMenuSection(menu, onOpenPhoto = { index ->
                             onAction(ShopDetailAction.OpenPhoto(menu.photos.map { it.fullUrl }, index))
                         }, modifier = Modifier.padding(horizontal = CoffeePeekDimens.spacing4, vertical = 6.dp),
                             formatDate = formatMenuDate) }
