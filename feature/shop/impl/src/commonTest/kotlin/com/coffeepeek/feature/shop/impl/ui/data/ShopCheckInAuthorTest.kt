@@ -17,9 +17,15 @@ class ShopCheckInAuthorTest {
         assertNull(row.copy(authorId = " ", authorSlug = null).blockableAuthor(false, false, null))
     }
 
-    @Test fun guestsMayRequestTheExistingLoginPromptUsingIdOrCanonicalSlug() {
-        assertEquals("public-slug", row.copy(authorId = null).blockableAuthor(false, false, null)?.slug)
-        assertEquals("public-id", row.copy(authorSlug = null).blockableAuthor(false, false, null)?.id)
+    @Test fun guestsAreNotOfferedBlockingForAnyPublicIdentity() {
+        assertNull(row.blockableAuthor(false, false, null))
+        assertNull(row.copy(authorId = null).blockableAuthor(false, false, null))
+        assertNull(row.copy(authorSlug = null).blockableAuthor(false, false, "viewer"))
+    }
+
+    @Test fun signedInViewersCanBlockUsingIdOrCanonicalSlug() {
+        assertEquals("public-slug", row.copy(authorId = null).blockableAuthor(false, true, "viewer")?.slug)
+        assertEquals("public-id", row.copy(authorSlug = null).blockableAuthor(false, true, "viewer")?.id)
     }
 
     @Test fun ownersAndUnresolvedSignedInProfilesAreNotOfferedBlocking() {

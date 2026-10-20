@@ -12,6 +12,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
@@ -72,7 +73,8 @@ internal fun ShopReviewsSection(
                             TextButton(onClick = onSignIn) {
                                 Text(stringResource(Res.string.shop_reviews_sign_in))
                             }
-                            TextButton(onClick = onRegister) {
+                            TextButton(onClick = onRegister, colors = ButtonDefaults.textButtonColors(
+                                contentColor = MaterialTheme.colorScheme.onSurface)) {
                                 Text(stringResource(Res.string.shop_reviews_register))
                             }
                         }

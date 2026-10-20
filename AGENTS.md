@@ -184,6 +184,10 @@ module boundary.
   publishing them. Before merging a child, retarget it to main after its parent
   has reached main; recheck its diff and tests. Do not merge children into an
   already merged parent and assume they reached main.
+- Clean up completed working branches after confirming their commits are retained
+  in main/develop or the replacement checkpoint. Preserve open PR heads, their
+  stack dependencies, branches with unique work, and occupied worktrees. Do not
+  force-delete a branch or remove another task's worktree just to tidy the list.
 - Branch isolation does not prove application correctness: every integration
   slice must compile the Android app and test the affected behaviour.
 - Current favorites completion is Android-first. Do not change the iOS screen,

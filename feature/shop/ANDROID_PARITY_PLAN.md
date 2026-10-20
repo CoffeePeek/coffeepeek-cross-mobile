@@ -1,5 +1,29 @@
 # Android shop migration — compatibility plan
 
+## Screenshot corrections — 2026-10-20
+
+Owner: parent #43, based on `daabcebc`. Preserve menu-photo taps, guest sign-in,
+report routing, canonical public author identities and existing analytics.
+Remove only the redundant menu-photo heading button. Registration uses theme
+`onSurface` (black in light mode), not the primary yellow. Report information
+matches main's 24dp corner, 16dp inset, 12dp gap and semibold title. Hours retain
+their non-ripple header and 250ms chevron rotation, now with main's top-anchored
+expand/shrink and 180/150ms fade. Updated paired previews remain with each owner.
+
+Approved behavior difference from main: guests no longer see or emit block-author
+actions, including a direct/stale ViewModel intent. Main previously offered the
+sign-in prompt from this menu. Both detail and full check-in list share the same
+eligibility guard; signed-in non-owner blocking and public profile navigation
+remain supported. No author-block server or native iOS flow is changed.
+
+Verification: Shop impl **101** and app Direct **446** unit results, zero
+failures/errors/skips; Direct Debug assembly and packaged DEX check pass (1m12s).
+IDE menu inspection timed out and is not a clean inspection result. No automated
+UI tests, device installation or real account write. Manual light/dark Sandbox
+comparison, popup placement and animation acceptance remain open. The contextual
+header-heart glass treatment is owned by the later shared-like checkpoint and
+will be verified after propagation; compact card/feed hearts must not resize.
+
 ## Develop reconciliation — 2026-10-19
 
 Approved product baseline: main `dfb00e63` plus develop `fc85f8e5`.
