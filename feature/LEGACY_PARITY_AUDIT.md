@@ -137,8 +137,24 @@ Decisions: **A2** stays intentional (guest sees a sign-in block, no `check_in_st
 `step_viewed` on open, `retry_clicked` only on a real retry) is treated as an improvement; analytics owners must be told so
 dashboards are not misread. Still open: B5/B6 (guest remove gate, `syncIdentityNow`).
 
-**Not done:** a generic harness that replays the legacy trackers and the new adapters and diffs every event. Adapter tests already
-pin the contract flow by flow; a harness needs a decision on scope (see the proposal in the chat) and was not built.
+### Analytics parity harness
+
+`composeApp/src/androidUnitTest/.../analytics/parity/` (`AnalyticsParityHarness.kt`): a scenario is one user journey, run once
+against the **legacy reference** and once against the **migrated adapter**, each on a fresh consent-aware service with a recording
+transport; the wire events (names and all properties, except random ids and timings) must be identical. The harness fails on an
+empty reference, and `AnalyticsParityHarnessTest` proves it fails on drift.
+
+| Owner | Legacy side | Migrated side | Scenarios |
+|---|---|---|---|
+| Favorites | `TrackedFavoriteInteractions` | `trackFavoriteMutation` | shop/roaster add, remove, write failure (6) |
+| Coffee list | legacy `CoffeeListViewModel` (real VM, fake repository) | `AndroidCoffeeAnalytics.list()` | load, typed query, filter apply/reset, open, failure, filters-opened marker (4) |
+| Roaster list | legacy `RoasterListViewModel` (real VM, fake repository/favorites) | `AndroidRoasterAnalytics.list()` | search, tag filter, open, catalogue failure (3) |
+
+Limits, stated plainly: the migrated side is driven through the adapter ports with the call sequence the migrated ViewModel makes
+(pinned separately by the ViewModel tests in each feature), not through the migrated ViewModel itself, because feature ViewModels
+are module-internal. Legacy analytics that live inside Composables (coffee detail, shop/roaster detail exposures and content
+events, shop actions, history, home editor) cannot be replayed without UI and are **not** covered by the harness; they stay
+covered by the adapter contract tests. To add an owner: write its two journeys and call `ParityHarness.assertParity`.
 
 ## Pixel 7 Sandbox check — 2026-10-20
 
