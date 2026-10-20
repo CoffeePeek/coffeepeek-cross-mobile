@@ -8,6 +8,8 @@ import com.coffeepeek.feature.shop.data.backend.ShopPhotoPurpose
 import com.coffeepeek.feature.shop.domain.model.ShopCheckInCreateInput
 import com.coffeepeek.feature.shop.domain.model.ShopConsumedDrinkOption
 import com.coffeepeek.feature.shop.domain.repository.ShopCheckInRepository
+import com.coffeepeek.feature.shop.domain.repository.ShopCheckInPhotoUploadFailure
+import kotlinx.coroutines.CancellationException
 import com.coffeepeek.feature.shop.domain.usecase.validateShopCheckIn
 import io.ktor.client.HttpClient
 
@@ -30,7 +32,10 @@ private class DefaultShopCheckInRepository(
         require(error == null) { "Invalid check-in input: $error" }
         val uploaded = photos.upload(input.photos.map {
             ShopPhotoUpload(it.bytes, it.fileName, it.contentType)
-        }, purpose = ShopPhotoPurpose.CheckIn).getOrThrow()
+        }, purpose = ShopPhotoPurpose.CheckIn).getOrElse { failure ->
+            if (failure is CancellationException) throw failure
+            throw ShopCheckInPhotoUploadFailure(failure)
+        }
         backend.create(
             shopSlug = input.shopSlug,
             visitedAtIso = input.visitedAtIso,
