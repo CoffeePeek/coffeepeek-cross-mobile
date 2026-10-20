@@ -3,6 +3,8 @@ package com.coffeepeek.admin.notifications
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
+import android.media.AudioAttributes
+import android.media.RingtoneManager
 import android.os.Build
 import androidx.core.app.NotificationManagerCompat
 import com.google.firebase.FirebaseApp
@@ -28,7 +30,11 @@ internal object AndroidPush {
         context = application.applicationContext
         configured = FirebaseApp.initializeApp(context) != null
         if (Build.VERSION.SDK_INT >= 26) context.getSystemService(NotificationManager::class.java)
-            .createNotificationChannel(NotificationChannel(CHANNEL, "Уведомления CoffeePeek", NotificationManager.IMPORTANCE_DEFAULT))
+            .createNotificationChannel(NotificationChannel(CHANNEL, "Уведомления CoffeePeek", NotificationManager.IMPORTANCE_DEFAULT).apply {
+                setSound(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION), AudioAttributes.Builder()
+                    .setUsage(AudioAttributes.USAGE_NOTIFICATION)
+                    .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION).build())
+            })
         val preferences = context.getSharedPreferences("push_device", Context.MODE_PRIVATE)
         val installation = preferences.getString("installation", null) ?: UUID.randomUUID().toString().also {
             preferences.edit().putString("installation", it).apply()

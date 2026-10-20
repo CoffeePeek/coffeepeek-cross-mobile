@@ -15,11 +15,9 @@ internal class NotificationPresenter(
     private val platform: PushDevicePlatform,
     private val scope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default),
 ) : NotificationFeature {
-    private val mutable = MutableStateFlow(NotificationSettingsState())
-    override val state = mutable.asStateFlow()
-    override val device = platform.state
     private val lock = Mutex()
     private var activityAt: TimeSource.Monotonic.ValueTimeMark? = null
+    private var preferencesEnabledFor: String? = null
     private var loggingOut = false
     private fun account() = sessions.peekSession()?.takeIf(sessions::isActiveSession)?.userId
 
@@ -28,9 +26,9 @@ internal class NotificationPresenter(
             sessions.observeSession().map { it?.takeIf(sessions::isActiveSession)?.userId }.distinctUntilChanged().collectLatest { user ->
                 loggingOut = false
                 activityAt = null
-                mutable.value = NotificationSettingsState(signedIn = user != null)
+                preferencesEnabledFor = null
                 platform.setAccount(user)
-                if (user != null) { refresh(); foreground() }
+                if (user != null) foreground()
             }
         }
         scope.launch { platform.state.collectLatest { syncDevice() } }
@@ -38,8 +36,17 @@ internal class NotificationPresenter(
 
     private suspend fun syncDevice() = lock.withLock {
         val user = account() ?: return@withLock
-        val device = device.value
-        if (loggingOut || device.userId != user || device.installationId.isBlank() || !device.available) return@withLock
+        if (loggingOut) return@withLock
+        if (preferencesEnabledFor != user) {
+            try {
+                repository.save(NotificationPreferences())
+                if (account() == user && !loggingOut) preferencesEnabledFor = user
+            } catch (cancelled: CancellationException) { throw cancelled }
+            catch (_: Exception) { /* Retry defaults on the next foreground or token update. */ }
+        }
+        if (account() != user || loggingOut) return@withLock
+        val device = platform.state.value
+        if (device.userId != user || device.installationId.isBlank() || !device.available) return@withLock
         try {
             if (device.permissionGranted && !device.token.isNullOrBlank()) repository.register(device.installationId, device.token)
             else if (!device.permissionGranted) repository.remove(device.installationId)
@@ -60,30 +67,17 @@ internal class NotificationPresenter(
         }
     }
 
-    override fun refresh() = load(null)
-    override fun save(value: NotificationPreferences) = load(value)
-    private fun load(value: NotificationPreferences?) {
-        val user = account() ?: return
-        scope.launch {
-            lock.withLock {
-                if (account() != user || loggingOut) return@withLock
-                mutable.update { it.copy(loading = true, error = null) }
-                try {
-                    val preferences = if (value == null) repository.preferences() else { repository.save(value); value }
-                    if (account() == user) mutable.value = NotificationSettingsState(true, preferences = preferences)
-                } catch (cancelled: CancellationException) { throw cancelled }
-                catch (_: Exception) {
-                    if (account() == user) mutable.update { it.copy(loading = false, error = "Не удалось сохранить или загрузить настройки. Повторите попытку.") }
-                }
-            }
+    override fun onCheckInCreated() {
+        val device = platform.state.value
+        if (account() != null && !loggingOut && device.available && !device.permissionGranted) {
+            platform.requestPermission()
         }
     }
 
-    override fun requestPermission() = platform.requestPermission()
     override suspend fun beforeLogout() {
         loggingOut = true
         try {
-            withTimeoutOrNull(3_000) { lock.withLock { if (account() != null && device.value.installationId.isNotBlank()) repository.remove(device.value.installationId) } }
+            withTimeoutOrNull(3_000) { lock.withLock { if (account() != null && platform.state.value.installationId.isNotBlank()) repository.remove(platform.state.value.installationId) } }
         } catch (cancelled: CancellationException) { throw cancelled }
         catch (_: Exception) { }
         finally { platform.setAccount(null) }

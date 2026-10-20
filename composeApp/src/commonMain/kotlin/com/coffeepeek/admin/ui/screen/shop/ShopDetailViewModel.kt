@@ -71,6 +71,7 @@ class ShopDetailViewModel internal constructor(
     private val userRepository: UserRepository,
     private val roasterFavorites: RoasterFavorites,
     private val visibility: AuthorVisibility = AuthorVisibility.None,
+    private val onCheckInCreated: () -> Unit = {},
 ) : BaseViewModel() {
 
     internal val authorVisibility = visibility.visibility
@@ -282,6 +283,7 @@ class ShopDetailViewModel internal constructor(
                         submittedCheckInVisibility = visibility,
                     )
                 }
+                onCheckInCreated()
                 refreshDetails(showLoading = false)
             }.onFailure { e ->
                 val failure = safeAnalyticsError(e)

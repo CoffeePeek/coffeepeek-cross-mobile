@@ -24,6 +24,7 @@ import com.coffeepeek.admin.feature.profile.ui.PublicProfileViewModel
 import com.coffeepeek.admin.feature.homecheckin.ui.HomeCheckInViewModel
 import com.coffeepeek.feature.homecheckin.data.HomeCheckInRepositoryImpl
 import com.coffeepeek.feature.homecheckin.domain.HomeCheckInRepository
+import com.coffeepeek.feature.notifications.api.NotificationFeature
 import com.coffeepeek.admin.feature.favorites.data.ServerRoasterFavorites
 import com.coffeepeek.admin.utils.CustomUrlFetcher
 import com.coffeepeek.api.CoffeePeekClient
@@ -99,7 +100,9 @@ private fun appModule(settingRepository: com.coffeepeek.room.repository.SettingR
         val gateway = get<CoffeePeekClient>()
         HomeCheckInRepositoryImpl(gateway.client, gateway.uploadClient, Constants.BASE_URL)
     }
-    factory { HomeCheckInViewModel(get(), get(), get()) }
+    factory {
+        HomeCheckInViewModel(get(), get(), get(), onCheckInCreated = get<NotificationFeature>()::onCheckInCreated)
+    }
     factory { CoffeeListViewModel(get()) }
     factory { (slug: String) -> CoffeeDetailViewModel(slug, get()) }
     single { com.coffeepeek.feature.authorblocking.api.createAuthorBlockingFeature(get<CoffeePeekClient>().client, get()) }
@@ -127,7 +130,10 @@ private fun appModule(settingRepository: com.coffeepeek.room.repository.SettingR
     factory { com.coffeepeek.admin.feature.community.ui.CommunityViewModel(get(), get(), get(), get(), get(), get()) }
     factory { com.coffeepeek.admin.ui.screen.roaster.RoasterListViewModel(get(), get(), get()) }
     factory { MapViewModel(get(), get()) }
-    factory { (shopId: String) -> ShopDetailViewModel(shopId, get(), get(), get(), get(), get(), get(), get(), get()) }
+    factory { (shopId: String) ->
+        ShopDetailViewModel(shopId, get(), get(), get(), get(), get(), get(), get(), get(),
+            onCheckInCreated = get<NotificationFeature>()::onCheckInCreated)
+    }
     factory { (shopId: String) -> ShopMenuGalleryViewModel(shopId, get()) }
     factory { (shopId: String) -> ShopReportViewModel(shopId, get()) }
     factory { (shopId: String) -> SuggestShopChangeViewModel(shopId, get()) }
