@@ -189,3 +189,21 @@ Not covered: the Play/APK installer flows (the Sandbox installer never downloads
 Device check (Pixel 7, Sandbox): the new chip rows render in the controls dialog; choosing «Есть версия» and tapping «Проверить обновления» on the Settings tab changes the row
 description to «Доступна новая версия CoffeePeek». Selecting a chip re-creates the app (as the existing scenario chips do) and closes the dialog. The other policies and the city modes were
 checked only through the unit test, not on the device.
+
+## Step 1 result — parity tests on the legacy Settings code (2026-10-21)
+
+No production code changed. Added to `composeApp/src/commonTest` (all green on the Android host tests, repeated on a clean run; iOS test compilation green):
+
+- `theme/ThemeManagerTest` (2): the saved mode is restored, an invalid or missing value means `SYSTEM`, `setTheme` publishes the flow before the setting is saved (same key, enum name), a second
+  `initialize` is ignored (the manager is a process-wide `object`, so the persistence rules are one ordered scenario), the mode order.
+- `settings/CityPreferenceStorageTest` (5) next to the existing pure `CityPreferenceTest` (3): a saved city that still exists is kept and not rewritten; missing/removed → first city, persisted;
+  empty catalog → `null` and nothing saved; the in-memory choice wins on the next resolve; `select` ignores blank and repeated ids. Shared `FakeSettingRepository`.
+- `ui/screen/profile/ProfileViewModelTest` (+3, now 11): a catalog failure leaves the list empty with no selection and `setCity` ignores everything (this is the **empty city screen** the owner decided to improve);
+  a saved city survives the next start, a removed one falls back; the signed-in flag that Settings reads follows the session. The existing «city is resolved even if Settings is never opened» case stays.
+- `analytics/SettingsPagesTest` (2): `SettingsTab/SettingsGraph/CitySettings/ThemeSettings` → `settings`, `UsagePolicy` → `privacy`, `BlockedAuthors` → `other`.
+
+Already covered before this step and left as is: `AppUpdateStateTest`/`AppUpdateTest`/`PlayUpdateRetryTest`/`UpdateInstallationTest` (the update row's state source).
+
+**Not covered on purpose** (the logic is inline in composables, and the Compose UI suites were removed at the owner's request, see `feature/UI_TEST_REMOVAL.md`): the row rules of `SettingsScreen`
+(blocked-authors row only signed in, guest card only for guests, add-shop/roaster rows for everyone), the support/share/terms/privacy targets, and the consent row (`authReady && userId`, toggle → `setConsent`).
+These move into `SettingsViewModel`/`UsageConsentPort` at steps 3–4, where they get unit tests; until then Sandbox and device checks cover them. Nothing here changed behaviour, so no test had to flip.
