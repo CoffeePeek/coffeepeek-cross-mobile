@@ -43,8 +43,7 @@ These helpers map to `commonMainApi`, `commonMainImplementation`, and
 module instead targets Android's `main` configuration and would silently leave
 shared/iOS source sets without the dependency. Android-only dependencies use
 `androidImplementation`; Android-only public entry dependencies use `androidApi`
-(without exporting them into shared Native source sets). Instrumented-test dependencies use
-`androidInstrumentedTestImplementation`. Standard `debugImplementation` and
+(without exporting them into shared Native source sets). Standard `debugImplementation` and
 plugin-specific configurations such as `ksp` are not remapped.
 
 Core references are available but not automatically added to the application.
