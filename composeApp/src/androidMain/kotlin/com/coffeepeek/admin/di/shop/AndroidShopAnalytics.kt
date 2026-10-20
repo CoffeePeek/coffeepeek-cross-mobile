@@ -45,6 +45,7 @@ private fun ShopActionMetric.wire(): String = when (this) {
     ShopActionMetric.Edit -> "edit"
     ShopActionMetric.Report -> "report_issue"
     ShopActionMetric.Directions -> "directions"
+    ShopActionMetric.ShowOnMap -> "directions"
     ShopActionMetric.Share -> "share"
     ShopActionMetric.PhoneCopy -> "phone_copy"
     ShopActionMetric.PhoneCall -> "phone_call"
