@@ -29,7 +29,7 @@ import com.coffeepeek.admin.ui.component.FullScreenImageDialog
 import com.coffeepeek.admin.ui.component.rememberCheckInDateLabel
 import com.coffeepeek.admin.ui.screen.shop.ShopCheckInFormRenderer
 import com.coffeepeek.admin.ui.screen.shop.ShopDetailScreenRenderer
-import com.coffeepeek.admin.ui.screen.shop.buildYandexMapsRouteUrl
+import com.coffeepeek.admin.ui.screen.shop.ShopRoutePicker
 import com.coffeepeek.admin.utils.ClipboardHelper
 import com.coffeepeek.admin.utils.FavoriteSync
 import com.coffeepeek.admin.utils.OpenInBrowser
@@ -68,6 +68,7 @@ internal class AndroidShopDetailScreenRenderer(
                 createShopDetailEntry(session.lease.details(details), session.lease.votes(votes),
                     shopFavorites(session.lease.favorites(favorites)), currentViewer = { session.lease.viewer(users) },
                     currentDayOfWeek = ::currentLocalDayOfWeek, currentMinuteOfDay = ::currentLocalMinuteOfDay,
+                    analytics = AndroidShopAnalytics,
                     authorImage = { url, modifier -> com.coffeepeek.admin.utils.CpImage(data = url, modifier = modifier) },
                     checkInImage = { url, modifier, scale -> com.coffeepeek.admin.utils.CpImage(data = url, modifier = modifier, contentScale = scale) })
             }
@@ -75,6 +76,7 @@ internal class AndroidShopDetailScreenRenderer(
             val formatCheckInDate = rememberCheckInDateLabel()
             var form by rememberSaveable(stateSaver = shopFormContextSaver) { mutableStateOf<ShopDetailContext?>(null) }
             var preview by remember { mutableStateOf<ShopDetailEffect.OpenPhoto?>(null) }
+            var route by remember { mutableStateOf<ShopDetailEffect.OpenRoute?>(null) }
             var refreshGeneration by rememberSaveable { mutableLongStateOf(0) }
             val scope = rememberCoroutineScope()
             val snackbar = remember { SnackbarHostState() }
@@ -104,7 +106,7 @@ internal class AndroidShopDetailScreenRenderer(
                                 if (session.lease.isCurrent()) FavoriteSync.notifyChanged(effect.shopId, effect.isFavorite)
                             }
                             is ShopDetailEffect.OpenMap -> Navigator.openShopOnMap(shopId, effect.latitude, effect.longitude, effect.title)
-                            is ShopDetailEffect.OpenRoute -> OpenInBrowser.openInBrowser(buildYandexMapsRouteUrl(effect.latitude, effect.longitude))
+                            is ShopDetailEffect.OpenRoute -> route = effect
                             is ShopDetailEffect.ShareShop -> scope.launch {
                                 val text = getString(Res.string.shop_share_named, effect.title,
                                     "https://coffeepeek.by${effect.canonicalPath}")
@@ -125,6 +127,9 @@ internal class AndroidShopDetailScreenRenderer(
             preview?.let { photo ->
                 FullScreenImageDialog(images = com.coffeepeek.admin.ui.component.PhotoViewerImages(photo.imageUrls, photo.originalUrls),
                     initialIndex = photo.initialIndex, onDismiss = { preview = null })
+            }
+            route?.let { destination ->
+                ShopRoutePicker(destination.latitude, destination.longitude, onDismiss = { route = null })
             }
             form?.let { shop ->
                 checkInForm.Content(shopId = shop.shopId, shopSlug = shop.shopSlug, shopName = shop.shopName,

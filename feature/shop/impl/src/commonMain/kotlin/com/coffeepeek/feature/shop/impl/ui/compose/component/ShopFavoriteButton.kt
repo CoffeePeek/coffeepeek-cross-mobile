@@ -1,5 +1,7 @@
 package com.coffeepeek.feature.shop.impl.ui.compose.component
 
+import com.coffeepeek.feature.shop.api.ShopExposure
+import com.coffeepeek.feature.shop.impl.ui.data.shopExposure
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Modifier
@@ -31,7 +33,7 @@ internal fun ShopFavoriteButton(
         else -> Res.string.shop_favorite_add
     })
     CompositionLocalProvider(LocalCoffeePeekGlassHazeState provides hazeState) {
-        CoffeePeekLikeButton(isFavorite, description, onClick, modifier, enabled = available, overImage = true,
+        CoffeePeekLikeButton(isFavorite, description, onClick, modifier.shopExposure(ShopExposure.Favorite), enabled = available, overImage = true,
             style = CoffeePeekLikeButtonStyle.Glass, isLoading = isLoading,
             loadingDescription = stringResource(Res.string.shop_favorite_updating))
     }
