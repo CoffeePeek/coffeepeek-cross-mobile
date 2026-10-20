@@ -61,15 +61,14 @@ internal object AndroidRoasterScreenAnalytics : RoasterScreenAnalytics {
         RoasterExposure.Photos -> modifier.analyticsExposure("roaster_photos", "roaster_detail", "roaster_detail")
         RoasterExposure.Contacts -> modifier.analyticsExposure("roaster_contacts", "roaster_detail", "roaster_detail")
         RoasterExposure.Shops -> modifier.analyticsExposure("roaster_shops", "roaster_detail", "roaster_detail")
-        // The legacy favorite button chose its placement from the current page.
-        RoasterExposure.FavoriteCard -> modifier.favoriteExposure(detail = false)
-        RoasterExposure.FavoriteDetail -> modifier.favoriteExposure(detail = true)
+        // The legacy favorite button chose its placement from the current page, for card and detail alike.
+        RoasterExposure.FavoriteCard, RoasterExposure.FavoriteDetail -> modifier.favoriteExposure()
     }
 }
 
 @Composable
-private fun Modifier.favoriteExposure(detail: Boolean): Modifier {
+private fun Modifier.favoriteExposure(): Modifier {
     val page = Analytics.service?.state?.collectAsState()?.value?.page ?: "other"
     val placement = when (page) { "shop_detail" -> "shop_detail"; "roaster_detail" -> "roaster_card"; else -> "catalog_card" }
-    return analyticsExposure("favorites", if (detail) "roaster_card" else placement, page)
+    return analyticsExposure("favorites", placement, page)
 }

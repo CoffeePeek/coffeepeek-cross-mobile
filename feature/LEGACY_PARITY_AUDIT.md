@@ -119,6 +119,27 @@ Unit tests pass; Android instrumented test APKs and the iOS composeApp compile b
 Still open from the table: G1 analytics flag, G4, G5, G7–G9, H3–H7, H9, A1, A3–A8, B1, B2, B5, B6, C2–C4,
 R2 (decided: keep), R3, R4, S2–S5 and all Sandbox fixture rows.
 
+## Analytics parity fixes — 2026-10-20 (second pass)
+
+Unit tests pass (full `composeApp` Direct suite plus shop, favorites, roaster, coffee and home-check-in modules); instrumented
+test APKs and iOS composeApp compile build. Not re-verified on a device; Sandbox has analytics disabled, so event delivery
+is verified only by unit tests against the recording transport.
+
+| id | change |
+|---|---|
+| G4 | Directions exposure only when the route button is enabled; check-in exposure not applied to the picker-mode "Continue" button (as in prod). |
+| B2 | Saved-drink heart now has the favorites exposure and the 48dp size. |
+| R3 | Roaster detail heart exposure uses the same page-driven placement rule as the card (as in prod). |
+| H4 | `HomePreparationFailure.statusCode` carries the HTTP status; bean-search failures report `status_code` and category `validation` for 4xx. Test added. |
+| G1 | `favorite_changed.resumed_after_auth` is `true` for the write applied after sign-in, and no second `favorite_attempted` is sent for it (the guest tap already reported it). Tests added. |
+
+Decisions: **A2** stays intentional (guest sees a sign-in block, no `check_in_start_attempted` from a guest); **H3** (bean picker
+`step_viewed` on open, `retry_clicked` only on a real retry) is treated as an improvement; analytics owners must be told so
+dashboards are not misread. Still open: B5/B6 (guest remove gate, `syncIdentityNow`).
+
+**Not done:** a generic harness that replays the legacy trackers and the new adapters and diffs every event. Adapter tests already
+pin the contract flow by flow; a harness needs a decision on scope (see the proposal in the chat) and was not built.
+
 ## Pixel 7 Sandbox check — 2026-10-20
 
 Pixel 7, `directSandbox` built from this branch, Sandbox package only (data cleared at install; ordinary CoffeePeek untouched).

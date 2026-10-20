@@ -19,7 +19,7 @@ sealed interface HomeCheckInEditorMetric {
     data class FieldChanged(val field: HomePreparationField) : HomeCheckInEditorMetric
     data object Submitted : HomeCheckInEditorMetric
     data class Validation(val fields: Set<HomePreparationField>, val server: Boolean) : HomeCheckInEditorMetric
-    data class Failed(val stage: HomeCheckInEditorStage, val issue: HomePreparationIssue) : HomeCheckInEditorMetric
+    data class Failed(val stage: HomeCheckInEditorStage, val issue: HomePreparationIssue, val statusCode: Int? = null) : HomeCheckInEditorMetric
     data class Retry(val stage: HomeCheckInEditorStage) : HomeCheckInEditorMetric
     data class Saved(val visibility: HomePreparationVisibility?, val hasPhotos: Boolean) : HomeCheckInEditorMetric
     data object Cancelled : HomeCheckInEditorMetric

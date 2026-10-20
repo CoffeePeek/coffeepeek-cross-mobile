@@ -52,6 +52,23 @@ class AndroidHomeCheckInAnalyticsTest {
         } finally { service.setConsent(AnalyticsConsent.Declined) }
     }
 
+    @Test fun beanSearchFailureKeepsItsHttpStatusAndValidationCategory() = runTest {
+        val sdk = RecordingTransport()
+        val service = analytics(MemoryConsent(AnalyticsConsent.Accepted), sdk)
+        service.setForeground(true); service.restoreConsent(); service.syncIdentity("fixture-owner"); Analytics.install(service)
+        try {
+            val adapter = AndroidHomeCheckInAnalytics({ true }, false, CheckInSource.Direct)
+            adapter.record(HomeCheckInEditorMetric.Opened)
+            adapter.record(HomeCheckInEditorMetric.Failed(HomeCheckInEditorStage.Bean, HomePreparationIssue.RequestFailed, 422))
+            adapter.record(HomeCheckInEditorMetric.Failed(HomeCheckInEditorStage.Bean, HomePreparationIssue.RequestFailed)); runCurrent()
+            val failures = sdk.events.filter { it.first == "check_in_failed" }.map { it.second }
+            assertEquals("validation", failures[0]["error_category"])
+            assertEquals(422, failures[0]["status_code"])
+            assertEquals("unknown", failures[1]["error_category"])
+            assertNull(failures[1]["status_code"])
+        } finally { service.setConsent(AnalyticsConsent.Declined) }
+    }
+
     @Test fun consentDeclinedAtStartCannotReplayThisFlowAfterAcceptance() = runTest {
         val sdk = RecordingTransport()
         val service = analytics(MemoryConsent(AnalyticsConsent.Declined), sdk)

@@ -1,6 +1,7 @@
 package com.coffeepeek.admin.di.shop
 
 import com.coffeepeek.admin.utils.FavoriteSync
+import com.coffeepeek.admin.di.favorites.ResumedAfterAuth
 import com.coffeepeek.domain.repository.SessionRepository
 import com.coffeepeek.feature.favorites.domain.repository.FavoritesRepository
 import com.coffeepeek.feature.shop.domain.repository.ShopDetailsRepository
@@ -10,6 +11,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.TimeMark
 import kotlin.time.TimeSource
@@ -47,9 +49,11 @@ internal class ShopFavoriteIntent(
 
     private suspend fun apply(intent: Intent) {
         val result = try {
-            if (intent.favorite) {
-                details.getDetails(intent.shopId).fold({ favorites.save(it.toFavoriteSnapshot()) }, { Result.failure(it) })
-            } else favorites.remove(intent.shopId)
+            withContext(ResumedAfterAuth) {
+                if (intent.favorite) {
+                    details.getDetails(intent.shopId).fold({ favorites.save(it.toFavoriteSnapshot()) }, { Result.failure(it) })
+                } else favorites.remove(intent.shopId)
+            }
         } catch (cancelled: CancellationException) {
             throw cancelled
         } catch (error: Exception) {
