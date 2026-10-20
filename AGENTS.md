@@ -106,6 +106,14 @@ still owns its root back stack and cross-feature routing.
 
 ## Presentation and resources
 
+- Function bodies have a review limit of 40 lines for `@Composable` functions
+  and 20 for ordinary functions. Count non-blank, non-comment body lines,
+  including nested blocks, but not the signature. Never pack statements onto
+  one line to evade the limit. Extract cohesive, named components/helpers in
+  their owning module. Apply this to new/substantively changed functions, not
+  a mechanical repository-wide rewrite. Keep this rule in documentation/review;
+  do not introduce a lint/build limit without a separate request.
+
 - Prefix reusable design-system components, supporting UI types, tokens and their
   Kotlin source files with `CoffeePeek` (for example `CoffeePeekButton.kt`,
   `CoffeePeekTextField`, `CoffeePeekIcons`, `CoffeePeekDimens`). Ordinary functions
@@ -119,8 +127,8 @@ still owns its root back stack and cross-feature routing.
   a file solely to collect unrelated components or previews.
 - A screen's `NameScreen` is the runtime adapter: obtain its lifecycle-owned
   ViewModel/dependencies at the feature entry or composition boundary, collect
-  state, and pass state/actions to a stateless `NameScreenContent`. Preview and
-  test `NameScreenContent` with fake state, no Koin, network, or database.
+  state, and pass state/actions to a stateless `NameScreenContent`. Preview
+  `NameScreenContent` with fake state, no Koin, network, or database.
 - For MVI screens, model real user intents as `Action`, durable rendering data as
   immutable `State`, and non-replayable effects such as navigation as `Event`.
   Send actions into one ViewModel entry point. The screen maps events to caller
@@ -259,6 +267,17 @@ implementation details.
   inspection, preview, passing retry or APK assembly alone is not feature completion.
 
 ## After coding
+
+- Do not create, restore or run automated UI, instrumented Compose or screenshot
+  tests, or their test-only Activity/APK infrastructure. Use colocated previews
+  and manual checks in the explicitly selected Sandbox for UI. Keep unit tests
+  and non-UI contract/DI/database tests. Do not delete other contributors' tests.
+  Earlier migration UI-run records are historical, not current required suites.
+- Preserve analytics during migration: inventory existing events, properties,
+  screen/exposure ownership and consent/session guards before replacing UI.
+  Features use narrow injected ports; application composition adapts the
+  existing service. Add in-memory unit/contract regressions, never emit test
+  events to production or introduce a second analytics service in a feature.
 
 - Compile affected modules and run relevant tests.
 - Android debug assembly must pass the packaged DEX runtime-class checks.

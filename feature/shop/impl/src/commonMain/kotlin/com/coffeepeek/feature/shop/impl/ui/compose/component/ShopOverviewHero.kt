@@ -13,6 +13,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import com.coffeepeek.feature.shop.api.*
+import com.coffeepeek.feature.shop.impl.ui.data.LocalShopAnalytics
+import com.coffeepeek.feature.shop.impl.ui.data.shopExposure
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -42,10 +45,11 @@ internal fun ShopOverviewHero(
     onOpenPhoto: (urls: List<String>, index: Int) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val analytics = LocalShopAnalytics.current
     val photos = overview.photos
     val pagerState = rememberPagerState(pageCount = { photos.size })
     Box(
-        modifier.fillMaxWidth().height(300.dp)
+        (if (photos.isNotEmpty()) modifier.shopExposure(ShopExposure.Photos) else modifier).fillMaxWidth().height(300.dp)
             .clip(RoundedCornerShape(bottomStart = CoffeePeekDimens.radiusLg,
                 bottomEnd = CoffeePeekDimens.radiusLg))
             .background(MaterialTheme.colorScheme.surfaceVariant),
@@ -60,6 +64,7 @@ internal fun ShopOverviewHero(
                     contentDescription = stringResource(Res.string.shop_overview_photo_description, overview.title),
                     contentScale = ContentScale.Crop,
                     modifier = Modifier.fillMaxSize().clickable {
+                        analytics.content(ShopContentMetric.Photos, ShopContentAction.Open)
                         onOpenPhoto(photos.map { it.fullUrl }, index)
                     },
                     onLoading = { CoffeePeekImagePlaceholder(labelSize = 24.sp) },
