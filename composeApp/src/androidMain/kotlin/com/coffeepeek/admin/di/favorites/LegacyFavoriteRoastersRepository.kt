@@ -149,4 +149,5 @@ private fun CatalogItem.toFavorite() = FavoriteRoaster(
     id = roasterFavoriteId, title = name, publicSlug = address?.slug?.takeIf(String::isNotBlank),
     photoUrl = photoUrl?.takeIf(String::isNotBlank),
     coffeeShopsCount = coffeeShopsCount, coffeeProductsCount = coffeeProductsCount,
+    description = description?.takeIf(String::isNotBlank),
 )

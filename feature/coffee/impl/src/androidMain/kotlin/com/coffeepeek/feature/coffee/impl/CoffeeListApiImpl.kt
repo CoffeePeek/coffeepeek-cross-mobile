@@ -20,18 +20,21 @@ fun createCoffeeListEntry(repository: CoffeeRepository,
     analytics: CoffeeAnalytics = CoffeeAnalytics.None,
     screenAnalytics: CoffeeScreenAnalytics = CoffeeScreenAnalytics.None,
     imageContent: @Composable (url: String, description: String, modifier: Modifier, scale: ContentScale) -> Unit,
-): CoffeeListEntry = CoffeeListApiImpl(repository, imageContent, analytics, screenAnalytics)
+    /** Optional app-owned error presentation (brand mascot); the built-in text error is used when null. */
+    loadError: (@Composable (onRetry: () -> Unit) -> Unit)? = null,
+): CoffeeListEntry = CoffeeListApiImpl(repository, imageContent, analytics, screenAnalytics, loadError)
 
 private class CoffeeListApiImpl(private val repository: CoffeeRepository,
     private val imageContent: @Composable (String, String, Modifier, ContentScale) -> Unit,
-    private val analytics: CoffeeAnalytics, private val screenAnalytics: CoffeeScreenAnalytics) : CoffeeListEntry {
+    private val analytics: CoffeeAnalytics, private val screenAnalytics: CoffeeScreenAnalytics,
+    private val loadError: (@Composable (onRetry: () -> Unit) -> Unit)?) : CoffeeListEntry {
     private val instanceKey = UUID.randomUUID().toString()
 
     @Composable
     override fun Content(onOpenCoffee: (String) -> Unit, modifier: Modifier, bottomClearance: Dp) {
         key(this) {
             val model = viewModel(key = "coffee-list:$instanceKey") { CoffeeListViewModel(repository, analytics.list()) }
-            CoffeeListScreen(model, imageContent, bottomClearance, modifier, screenAnalytics) { event ->
+            CoffeeListScreen(model, imageContent, bottomClearance, modifier, screenAnalytics, loadError) { event ->
                 when (event) { is CoffeeListEvent.OpenCoffee -> onOpenCoffee(event.slug) }
             }
         }

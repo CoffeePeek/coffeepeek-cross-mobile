@@ -30,20 +30,21 @@ import com.coffeepeek.feature.coffee.impl.ui.compose.model.*
 
 @Composable
 internal fun CoffeeListScreen(viewModel: CoffeeListViewModel, imageContent: @Composable (String, String, Modifier, ContentScale) -> Unit,
-    bottomClearance: Dp, modifier: Modifier, screen: CoffeeScreenAnalytics, onEvent: (CoffeeListEvent) -> Unit) {
+    bottomClearance: Dp, modifier: Modifier, screen: CoffeeScreenAnalytics, loadError: (@Composable (onRetry: () -> Unit) -> Unit)?,
+    onEvent: (CoffeeListEvent) -> Unit) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val currentEvent by rememberUpdatedState(onEvent)
     val lifecycle = LocalLifecycleOwner.current.lifecycle
     LaunchedEffect(viewModel, lifecycle) {
         lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) { viewModel.events.collect { currentEvent(it) } }
     }
-    CoffeeListScreenContent(state, viewModel::onAction, imageContent, modifier, bottomClearance, screen)
+    CoffeeListScreenContent(state, viewModel::onAction, imageContent, modifier, bottomClearance, screen, loadError)
 }
 
 @Composable
 internal fun CoffeeListScreenContent(state: CoffeeListState, onAction: (CoffeeListAction) -> Unit,
     imageContent: @Composable (String, String, Modifier, ContentScale) -> Unit, modifier: Modifier = Modifier, bottomClearance: Dp = 0.dp,
-    screen: CoffeeScreenAnalytics = CoffeeScreenAnalytics.None) {
+    screen: CoffeeScreenAnalytics = CoffeeScreenAnalytics.None, loadError: (@Composable (onRetry: () -> Unit) -> Unit)? = null) {
     val listState = rememberLazyListState()
     val currentAction by rememberUpdatedState(onAction)
     val tasteNames = remember(state.filterGroups) {
@@ -78,7 +79,8 @@ internal fun CoffeeListScreenContent(state: CoffeeListState, onAction: (CoffeeLi
                 }
                 if (state.isLoadingMore) item(key = "more-loading") { LoadingRow() }
                 if (state.loadFailed || state.loadMoreFailed) item(key = "error") {
-                    CoffeeLoadError({ onAction(if (state.loadMoreFailed) CoffeeListAction.LoadMore else CoffeeListAction.Refresh) })
+                    val retry = { onAction(if (state.loadMoreFailed) CoffeeListAction.LoadMore else CoffeeListAction.Refresh) }
+                    if (loadError != null) loadError(retry) else CoffeeLoadError(retry)
                 } else if (state.items.isEmpty() && !state.isLoading) item(key = "empty") {
                     Column(Modifier.fillMaxWidth().padding(CoffeePeekDimens.spacing6), horizontalAlignment = Alignment.CenterHorizontally) {
                         Text(stringResource(R.string.coffee_empty), style = MaterialTheme.typography.titleMedium)
