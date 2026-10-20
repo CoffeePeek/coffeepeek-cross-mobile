@@ -22,4 +22,3 @@ fun DependencyHandlerScope.androidImplementation(notation: Any): Dependency? =
 /** Android entry contracts must not become dependencies of shared Native presentation. */
 fun DependencyHandlerScope.androidApi(notation: Any): Dependency? =
     add("androidMainApi", notation)
-
