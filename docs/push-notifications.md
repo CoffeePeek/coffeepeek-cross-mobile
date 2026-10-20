@@ -24,6 +24,9 @@ The existing macOS CI runner installs FirebaseCore/FirebaseMessaging using the
 vendored Firebase plugin Swift setup package in tools/ios/xcode_spm_setup. It links
 the plist resource and preserves -ObjC without raw pbxproj edits. Debug uses the
 development APNs entitlement; Release/TestFlight uses production.
+Firebase 12.19.2 is the latest compatible release with Google Sign-In 10: Firebase
+13 requires App Check 12, while the released Google Sign-In 10 requires App Check 11.
+Upgrade Firebase when a compatible Google Sign-In release is available.
 
 Repository secrets required for push-enabled releases:
 - FIREBASE_GOOGLE_SERVICES_JSON: raw composeApp/google-services.json.
