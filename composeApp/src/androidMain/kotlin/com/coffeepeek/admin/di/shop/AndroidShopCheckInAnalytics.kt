@@ -4,6 +4,7 @@ import com.coffeepeek.admin.analytics.*
 import com.coffeepeek.admin.feature.checkin.api.CheckInFlowHandoff
 import com.coffeepeek.feature.shop.api.ShopCheckInAnalytics
 import com.coffeepeek.feature.shop.api.ShopCheckInField
+import com.coffeepeek.feature.shop.domain.repository.ShopCheckInPhotoUploadFailure
 
 internal class AndroidShopCheckInAnalytics(private val isCurrent: () -> Boolean) : ShopCheckInAnalytics {
     private var tracker: CheckInTracker? = null
@@ -19,9 +20,10 @@ internal class AndroidShopCheckInAnalytics(private val isCurrent: () -> Boolean)
     override fun validationFailed() { current()?.validation(listOf("form")) }
 
     override fun failed(error: Throwable) {
-        val safe = safeAnalyticsError(error)
+        val photoFailure = error is ShopCheckInPhotoUploadFailure
+        val safe = safeAnalyticsError(if (photoFailure) error.cause ?: error else error)
         if (safe.status == 400 || safe.status == 422) current()?.validation(listOf("form"), server = true)
-        else current()?.failed(CheckInStage.Save, safe)
+        else current()?.failed(if (photoFailure) CheckInStage.Photo else CheckInStage.Save, safe)
     }
 
     override fun saved(public: Boolean, hasPhotos: Boolean) {
