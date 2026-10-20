@@ -17,7 +17,7 @@ interface ShopAnalytics {
     companion object { val None: ShopAnalytics = object : ShopAnalytics {} }
 }
 
-enum class ShopActionMetric { Edit, Report, Directions, Share, PhoneCopy, PhoneCall, Instagram, Website, Email }
+enum class ShopActionMetric { Edit, Report, Directions, ShowOnMap, Share, PhoneCopy, PhoneCall, Instagram, Website, Email }
 enum class ShopContentMetric { Photos, Menu, Roasters, Hours }
 enum class ShopContentAction { Open, Close, Select }
 enum class ShopExposure { Photos, Hours, Menu, Roasters, Contacts, Favorite, Share, CheckIn, Directions }
