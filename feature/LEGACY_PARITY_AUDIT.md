@@ -177,7 +177,7 @@ a device.
 | G8 | Shop detail reloads on return only after 2 minutes away (share, maps, phone calls no longer refetch). Production reloaded only on session/visibility change; explicit refresh after a check-in still works. Test added. |
 
 Not done: **B5** (guest/expired-session remove opening sign-in and resuming) — a guest has no saved rows, so only an expired session
-mid-use is affected; left open. **R2** stays as is. **S2/B1** need no change.
+mid-use is affected; closed 2026-10-20 without code: signed-out users already get the guest login block, and an expired token mid-use shows the remove-failure snackbar. **R2** stays as is. **S2/B1** need no change.
 
 ## Pixel 7 Sandbox check — 2026-10-20
 
@@ -219,3 +219,8 @@ Pixel 7, `directSandbox` from this branch, Sandbox package only (data cleared at
 
 ## Not verified by this audit
 Device behaviour (IME, insets, large font, TalkBack, process death), live analytics delivery, iOS, server contracts.
+
+
+## Follow-up — 2026-10-20
+
+- Shop detail roaster row: the logo placeholder was text overflowing the 64dp circle; it is now the coffee icon with the same accessibility label. Compiles; not re-checked on device (Sandbox roasters have no logo fixture gap issue beyond this).
