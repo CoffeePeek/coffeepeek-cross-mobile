@@ -2,6 +2,14 @@
 
 ## Inherited Shop visual corrections — 2026-10-20
 
+Follow-up runtime `d8289294` adds the production-shaped Shop description and
+passes the same **755** selected unit results plus Debug/Sandbox DEX/isolation
+checks (1m). Sandbox 843 on Pixel 7 is manually inspected for Shop description
+and header in both themes; earlier 829 covers guest/menu/report/hours end states.
+This closes only the listed Shop visual checks, not Roaster activation or live
+backend acceptance. Detailed build/device identity and limitations are in the
+latest section of `feature/shop/ANDROID_PARITY_PLAN.md`.
+
 Parent-first propagation retains the Shop fixes from #43 (`6e118f14`) and the
 contextual shared-like fix from #104 (`6e176444`). No new Roaster behavior is
 included. Runtime source `02f9a746` passes **755 unit results** (design-system 26,

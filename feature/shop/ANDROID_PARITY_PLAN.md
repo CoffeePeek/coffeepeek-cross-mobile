@@ -1,5 +1,29 @@
 # Android shop migration — compatibility plan
 
+## Final device follow-up — 2026-10-20
+
+Runtime source `d8289294` includes description follow-up `91b23c42` and shared
+outlined-card reuse `fd929916`. **755** selected unit results (core 26, Shop 101,
+Coffee 46, Roaster 19, app Direct 563), zero failures/errors/skips; Debug/Sandbox
+assemblies, packaged DEX and Sandbox isolation pass (1m). Description IDE
+inspection completes without errors. Paired previews remain beside their owners.
+
+Manual **Pixel 7 / API 37**, 1080x2400: Sandbox 829 (`6e176444`) verified equal
+floating glass plates/neutral-gold states, removed menu heading action, photo-tap
+gallery and return, report-card shape/spacing, expanded/collapsed hours, and guest
+author menu absence plus themed registration in light/dark. The later Sandbox
+**843 / 1.0.843-sandbox** from `d8289294` was updated in place and its corrected
+description/header visually inspected in both themes. Theme was restored to
+light. App package, launcher, increasing version and matching signing certificate
+were checked; no data clearing, normal CoffeePeek/Pixel 10a installation, live
+account or backend mutation. Screenshots/video remain local, not tracked.
+
+Final APK SHA-256: `c02d495f93b3780cb9b9fc7d8eb3162bd1d2f0347d62cade547511a3f10b9a1a`.
+No automated UI suite/host was added or run. Hours end states and source animation
+specs were checked; the short manual recording did not reliably capture the
+transition, so frame timing/fluidity is not certified. Actual backend media/Haze,
+large-font/window/accessibility acceptance and native iOS remain separate gates.
+
 ## Screenshot corrections — 2026-10-20
 
 Description follow-up: restore main's outlined `surface` card (24dp corners,
