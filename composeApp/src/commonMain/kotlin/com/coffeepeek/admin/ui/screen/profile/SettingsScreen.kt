@@ -132,6 +132,11 @@ fun SettingsScreen(vm: ProfileViewModel = koinInject()) {
 
             Spacer(Modifier.height(CpDimens.settingsSectionSpacing))
 
+            if (profile.isLoggedIn) {
+                com.coffeepeek.admin.notifications.NotificationSettings()
+                Spacer(Modifier.height(CpDimens.settingsSectionSpacing))
+            }
+
             SettingsSection(
                 title = "Другие настройки",
                 description = "Управление полезными дополнениями, оценки в App Store и настройки конфиденциальности",
