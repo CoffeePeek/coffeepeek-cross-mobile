@@ -318,24 +318,6 @@ class ShopDetailViewModelTest {
         assertFalse(viewModel.state.value.isFavorite)
     }
 
-    @Test fun guestFavoriteIsAppliedOnceAfterSigningIn() = runTest(dispatcher) {
-        val favorites = Favorites()
-        var viewer = ShopViewer(false, null)
-        val viewModel = viewModel(favorites = favorites, viewerProvider = { Result.success(viewer) })
-        runCurrent()
-        viewModel.onAction(ShopDetailAction.ToggleFavorite)
-        runCurrent()
-        assertEquals(ShopDetailEvent.SignIn, viewModel.events.first().event)
-        assertEquals(0, favorites.saves)
-        viewer = ShopViewer(true, "viewer")
-        viewModel.onAction(ShopDetailAction.Retry)
-        runCurrent()
-        assertEquals(1, favorites.saves)
-        viewModel.onAction(ShopDetailAction.Retry)
-        runCurrent()
-        assertEquals(1, favorites.saves)
-    }
-
     @Test fun favoriteFailureDoesNotChangeMembershipAndUnavailableStorageDisablesMutation() = runTest(dispatcher) {
         val favorites = Favorites().apply { mutationResult = Result.failure(IllegalStateException("secret")) }
         val viewModel = viewModel(favorites = favorites)

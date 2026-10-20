@@ -1,8 +1,5 @@
 package com.coffeepeek.feature.shop.impl.ui
 
-import kotlin.time.Duration.Companion.minutes
-import kotlin.time.TimeMark
-import kotlin.time.TimeSource
 import androidx.lifecycle.viewModelScope
 import com.coffeepeek.feature.shop.api.ShopDetailContext
 import com.coffeepeek.core.presentation.MviViewModel
@@ -46,7 +43,6 @@ internal class ShopDetailViewModel(
     private var favoriteMutationJob: Job? = null
     private var favoriteObservation: Job? = null
     private var favoriteGeneration = 0
-    private var favoriteIntent: Pair<Boolean, TimeMark>? = null
     private var latestFavorites: Set<String>? = null
 
     init { onAction(ShopDetailAction.Retry) }
@@ -223,7 +219,6 @@ internal class ShopDetailViewModel(
                     isFavorite = latestFavorites?.contains(details.overview.id) == true,
                     hasError = false)
             }
-            resumeFavoriteIntent()
         } catch (cancelled: CancellationException) {
             wasCancelled = true
             throw cancelled
@@ -261,7 +256,6 @@ internal class ShopDetailViewModel(
                             favoriteAvailable = result.isSuccess,
                         )
                     }
-                    resumeFavoriteIntent()
                 }
             } catch (cancelled: CancellationException) {
                 throw cancelled
@@ -271,20 +265,8 @@ internal class ShopDetailViewModel(
         }
     }
 
-    /** Applies the favorite a guest asked for once sign-in, details and favorites are all ready. */
-    private fun resumeFavoriteIntent() {
-        val (desired, markedAt) = favoriteIntent ?: return
-        val state = currentState
-        if (!state.isLoggedIn || !state.favoriteAvailable || state.details == null) return
-        favoriteIntent = null
-        if (markedAt.elapsedNow() > FAVORITE_INTENT_TTL || state.isFavorite == desired) return
-        viewModelScope.launch { toggleFavorite() }
-    }
-
     private suspend fun toggleFavorite() {
         if (!currentState.isLoggedIn) {
-            // One short-lived intent: it is applied once after the user signs in and returns.
-            favoriteIntent = !currentState.isFavorite to TimeSource.Monotonic.markNow()
             emitEvent(ShopDetailEvent.SignIn)
             return
         }
@@ -375,5 +357,3 @@ internal class ShopDetailViewModel(
         return overview.id.takeIf(String::isNotBlank)?.let { ShopDetailContext(shopId, it, overview.title) }
     }
 }
-
-private val FAVORITE_INTENT_TTL = 10.minutes
