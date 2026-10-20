@@ -1,5 +1,6 @@
 package com.coffeepeek.admin.sandbox.compose
 
+import com.coffeepeek.admin.feature.authorblocking.ui.AuthorBlockingHost
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -37,6 +38,8 @@ import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
                 key(state.owner) {
                     CompositionLocalProvider(LocalViewModelStoreOwner provides state.owner) { Navigator() }
                 }
+                // App.kt hosts this next to the Navigator; without it block/unblock confirmations never appear.
+                AuthorBlockingHost()
             }
         }
         if (state.controls) Dialog({ model.controls(false) }) {

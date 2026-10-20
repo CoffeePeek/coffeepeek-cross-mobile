@@ -294,3 +294,22 @@ history/Community timeline owner, not here) and `ShareLinkPort` is dropped (shar
 - Builds: unit tests, instrumented-test compile, iOS simulator compile (composeApp and impl), Direct Sandbox APK.
 - **Not done / not verified**: Pixel 7 walkthrough (phone was locked when the APK was installed), `PublicProfilePresentationTest` (instrumented) still targets the
   legacy screen and was not run, large-font/dark-theme visual check, parity of the author-menu look (now a dropdown instead of the platform menu).
+
+### Step 4 — Pixel 7 Sandbox check (2026-10-20)
+
+`directSandbox` from this branch, Sandbox package only (ordinary CoffeePeek untouched; the app process was force-stopped afterwards, which resets Sandbox state).
+Public profile of "Sandbox Friend", opened from the feed card author:
+
+| Check | Result |
+|---|---|
+| Header, stats, favorites carousel (shop/roaster/drink), check-ins, activity card | **Pass** |
+| Follow: button becomes «Вы подписаны», followers 0 → 1 | **Pass** |
+| Followers sheet | Opens; shows «Пока нет подписчиков» while the count says 1 — Sandbox fixture lists are empty (fixture limit, not the screen) |
+| Author menu (share / block) | **Pass** |
+| Block: confirmation → «Автор заблокирован» state without sections; unblock confirmation → content returns | **Pass** |
+| «Все» sheets: favorites (shop, roaster with description and stats, drink), check-ins (timeline card), activity (October 2026, 20th marked, previous month → September, 0 days) | **Pass** |
+
+Found and fixed on the way: the Sandbox root composed only `Navigator()`, so no block/unblock confirmation ever appeared there (also in the legacy feed). `SandboxScreen`
+now hosts `AuthorBlockingHost()` as `App.kt` does. This closes part of the open "block UI walkthrough" item in the plan.
+
+Not checked: guest follow → sign-in, own profile through an alias, photo viewer from avatar/check-in photos (no photo fixtures), large font, light theme, rotation.
