@@ -78,6 +78,7 @@ fun initKoin() {
             updateInstallerModule(),
         )
     }
+    application.koin.get<com.coffeepeek.feature.notifications.api.NotificationFeature>()
     com.coffeepeek.admin.analytics.installAnalytics(database.settingRepository, application.koin.get(), application.koin.get())
     com.coffeepeek.admin.utils.image.ProtectedPhotoSession.install(
         application.koin.get(), application.koin.get<CoffeePeekClient>().client,
@@ -86,6 +87,9 @@ fun initKoin() {
 }
 
 private fun appModule(settingRepository: com.coffeepeek.room.repository.SettingRepository) = module {
+    single<com.coffeepeek.feature.notifications.api.NotificationFeature> {
+        com.coffeepeek.feature.notifications.api.createNotificationFeature(get<CoffeePeekClient>().client, get(), com.coffeepeek.admin.notifications.NativePushBridge)
+    }
     single<PasswordRecoveryRepository> { PasswordRecoveryRepositoryImpl(get<CoffeePeekClient>().plainClient) }
     factory { (email: String) -> PasswordRecoveryViewModel(email, get()) }
     single<CoffeeRepository> { CoffeeRepositoryImpl(get<CoffeePeekClient>().plainClient) }
@@ -131,7 +135,7 @@ private fun appModule(settingRepository: com.coffeepeek.room.repository.SettingR
         ShopChangeEditorViewModel(shopId, section, requestId, get(), get())
     }
     factory { (requestId: String) -> ShopChangeRequestDetailViewModel(requestId, get()) }
-    single { ProfileViewModel(get(), get(), get(), get(), get(), get()) }
+    single { ProfileViewModel(get(), get(), get(), get(), get(), get(), get()) }
     factory { DeleteAccountPendingViewModel(get(), get()) }
     factory { AddShopViewModel(get()) }
     factory { EditProfileViewModel(get()) }
