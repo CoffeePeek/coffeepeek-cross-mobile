@@ -2,6 +2,7 @@ package com.coffeepeek.core.designsystem.component
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.sizeIn
@@ -29,11 +30,13 @@ import com.coffeepeek.core.designsystem.resources.Res
 import com.coffeepeek.core.designsystem.resources.coffeepeek_like_add
 import com.coffeepeek.core.designsystem.resources.coffeepeek_like_remove
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
+import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.core.designsystem.modifier.coffeePeekLiquidGlass
 import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
-enum class CoffeePeekLikeButtonStyle { Plain, Glass }
+/** Glass is a compact photo badge; FloatingGlass matches neighboring glass action buttons. */
+enum class CoffeePeekLikeButtonStyle { Plain, Glass, FloatingGlass }
 
 /** Stateless toggle: callers own persistence, auth, haptics, loading and analytics.
  * Container/shape may match a card or photo; the heart's affinity color is fixed.
@@ -69,7 +72,7 @@ fun CoffeePeekLikeButton(
         },
         contentAlignment = Alignment.Center) {
         // A compact visual plate is independent of the accessible touch target.
-        Box(Modifier.size(maxOf(32.dp, iconSize + 8.dp)).coffeePeekLikeBackground(style, shape)
+        Box(Modifier.size(coffeePeekLikePlateSize(style, iconSize)).coffeePeekLikeBackground(style, shape)
             .then(if (style == CoffeePeekLikeButtonStyle.Plain) Modifier.background(containerColor, shape) else Modifier)
             .clip(shape), contentAlignment = Alignment.Center) {
             if (isLoading) CoffeePeekLoader(label, modifier = Modifier.clearAndSetSemantics {},
@@ -79,22 +82,35 @@ fun CoffeePeekLikeButton(
     }
 }
 
+internal fun coffeePeekLikePlateSize(style: CoffeePeekLikeButtonStyle, iconSize: Dp): Dp =
+    maxOf(if (style == CoffeePeekLikeButtonStyle.FloatingGlass) CoffeePeekDimens.buttonHeight else 32.dp,
+        iconSize + 8.dp)
+
 @Composable
-internal fun Modifier.coffeePeekLikeBackground(style: CoffeePeekLikeButtonStyle, shape: Shape): Modifier =
-    if (style == CoffeePeekLikeButtonStyle.Glass) {
+internal fun Modifier.coffeePeekLikeBackground(style: CoffeePeekLikeButtonStyle, shape: Shape): Modifier = when (style) {
+    CoffeePeekLikeButtonStyle.Glass ->
         coffeePeekLiquidGlass(shape, shadowElevation = 0.dp, tintColor = Color.Black.copy(alpha = 0.60f))
-    } else this
+    CoffeePeekLikeButtonStyle.FloatingGlass -> coffeePeekLiquidGlass(shape)
+    CoffeePeekLikeButtonStyle.Plain -> this
+}
 
 @Composable
 private fun LikeButtonPreviewContent() {
-    Row(Modifier.padding(16.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        CoffeePeekLikeButton(false, stringResource(Res.string.coffeepeek_like_add), {})
-        CoffeePeekLikeButton(true, stringResource(Res.string.coffeepeek_like_remove), {})
-        CoffeePeekLikeButton(true, stringResource(Res.string.coffeepeek_like_remove), {}, enabled = false)
-        CoffeePeekLikeButton(true, stringResource(Res.string.coffeepeek_like_remove), {}, overImage = true)
-        CoffeePeekLikeButton(true, stringResource(Res.string.coffeepeek_like_remove), {}, overImage = true, style = CoffeePeekLikeButtonStyle.Plain)
-        CoffeePeekLikeButton(true, stringResource(Res.string.coffeepeek_like_remove), {}, isLoading = true,
-            loadingDescription = stringResource(Res.string.coffeepeek_like_remove))
+    val add = stringResource(Res.string.coffeepeek_like_add)
+    val remove = stringResource(Res.string.coffeepeek_like_remove)
+    Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            CoffeePeekLikeButton(false, add, {})
+            CoffeePeekLikeButton(true, remove, {})
+            CoffeePeekLikeButton(true, remove, {}, enabled = false)
+            CoffeePeekLikeButton(true, remove, {}, overImage = true)
+        }
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            CoffeePeekLikeButton(true, remove, {}, overImage = true, style = CoffeePeekLikeButtonStyle.Plain)
+            CoffeePeekLikeButton(false, add, {}, style = CoffeePeekLikeButtonStyle.FloatingGlass)
+            CoffeePeekLikeButton(true, remove, {}, style = CoffeePeekLikeButtonStyle.FloatingGlass)
+            CoffeePeekLikeButton(true, remove, {}, isLoading = true, loadingDescription = remove)
+        }
     }
 }
 

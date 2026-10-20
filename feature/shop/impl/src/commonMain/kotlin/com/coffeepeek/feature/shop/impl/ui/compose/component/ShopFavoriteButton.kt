@@ -33,8 +33,8 @@ internal fun ShopFavoriteButton(
         else -> Res.string.shop_favorite_add
     })
     CompositionLocalProvider(LocalCoffeePeekGlassHazeState provides hazeState) {
-        CoffeePeekLikeButton(isFavorite, description, onClick, modifier.shopExposure(ShopExposure.Favorite), enabled = available, overImage = true,
-            style = CoffeePeekLikeButtonStyle.Glass, isLoading = isLoading,
+        CoffeePeekLikeButton(isFavorite, description, onClick, modifier.shopExposure(ShopExposure.Favorite), enabled = available,
+            style = CoffeePeekLikeButtonStyle.FloatingGlass, isLoading = isLoading,
             loadingDescription = stringResource(Res.string.shop_favorite_updating))
     }
 }
