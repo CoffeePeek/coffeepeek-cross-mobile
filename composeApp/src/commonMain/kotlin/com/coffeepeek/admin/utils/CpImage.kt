@@ -24,6 +24,8 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.coffeepeek.admin.locator.Constants
 import com.coffeepeek.admin.utils.DrawableExt.toPainterResource
 import com.coffeepeek.admin.utils.image.PhotoDisplayPermission
+import com.coffeepeek.admin.utils.image.AuthorizedPhotoPainter
+import com.coffeepeek.admin.utils.image.PhotoAccessDenied
 import com.coffeepeek.admin.utils.image.FullScreenPhotoPresence
 import com.coffeepeek.admin.utils.image.ProtectedPhotoSession
 import com.coffeepeek.admin.utils.image.SystemPhotoCacheClock
@@ -172,24 +174,37 @@ internal fun rememberCpImageResource(resource: Any, renewPermission: Boolean = t
     val foreground = lifecycle.isAtLeast(Lifecycle.State.STARTED)
     val permissionScope = ProtectedPhotoSession.scope(session)
     var generation by remember(resource, session, epoch, permissionScope) { mutableIntStateOf(0) }
+    var retries by remember(resource, session, epoch, permissionScope, foreground) { mutableIntStateOf(0) }
     val retained = remember(resource, permissionScope, generation, foreground) {
-        if (foreground) protectedPhotoPainterCache.get(resource.url, permissionScope) else null
+        if (foreground && generation == 0) protectedPhotoPainterCache.get(resource.url, permissionScope) else null
+    }
+    var displayed by remember(resource, session, epoch, permissionScope, foreground) {
+        mutableStateOf(retained)
     }
     val presentation = remember(resource, session, epoch, permissionScope, generation, foreground) {
-        PhotoDisplayPermission().apply { retained?.let { grant(it.permission, it.permission) } }
+        PhotoDisplayPermission(revalidate = generation > 0).apply { retained?.let { grant(it.permission, it.permission) } }
     }
     val permission by presentation.permission.collectAsState()
     val base = LocalKamelConfig.current
     val uncached = remember(base) { protectedKamelConfig(base) }
 
-    // Prefetch gets one permission only: it must not poll/revalidate unseen images.
-    LaunchedEffect(presentation, permission, foreground, renewPermission) {
-        val grant = permission ?: return@LaunchedEffect
-        if (!foreground || !renewPermission) return@LaunchedEffect
+    val displayGrant = displayed?.permission
+    var expired by remember(displayGrant) { mutableStateOf(false) }
+    LaunchedEffect(displayGrant, foreground, renewPermission) {
+        val grant = displayGrant ?: return@LaunchedEffect
+        if (!foreground) return@LaunchedEffect
+        if (renewPermission) {
+            // Renew before expiry while the currently authorized painter stays visible.
+            val lead = minOf(2_000L, grant.remaining(SystemPhotoCacheClock) / 2)
+            while (grant.remaining(SystemPhotoCacheClock) > lead) {
+                delay(minOf(grant.remaining(SystemPhotoCacheClock) - lead, 1_000).coerceAtLeast(1))
+            }
+            generation++
+        }
         while (grant.remaining(SystemPhotoCacheClock) > 0) {
             delay(minOf(grant.remaining(SystemPhotoCacheClock), 1_000).coerceAtLeast(1))
         }
-        generation++
+        expired = true
     }
 
     var result: Resource<Painter> = Resource.Loading(0f)
@@ -201,15 +216,37 @@ internal fun rememberCpImageResource(resource: Any, renewPermission: Boolean = t
             }
         }
     }
-    val authorized = permission?.remaining(SystemPhotoCacheClock)?.let { it > 0 } == true &&
-        ProtectedPhotoSession.current(permissionScope)
-    if (!authorized) return if (result is Resource.Failure) result else Resource.Loading(0f)
-    val success = result as? Resource.Success
-    if (success != null) {
-        val painter = success.value
-        SideEffect {
-            protectedPhotoPainterCache.store(resource.url, permissionScope, painter, presentation.reusablePermission)
+    val failure = result as? Resource.Failure
+    val denied = failure?.exception is PhotoAccessDenied
+    LaunchedEffect(failure, foreground, renewPermission) {
+        if (failure != null && !denied && foreground && renewPermission && retries < 3) {
+            delay(1_000L * (retries + 1))
+            retries++
+            generation++
         }
     }
-    return result
+    if (!foreground || !ProtectedPhotoSession.current(permissionScope)) return Resource.Loading(0f)
+    if (denied) {
+        SideEffect {
+            displayed?.let { protectedPhotoPainterCache.store(resource.url, permissionScope, it.painter, null) }
+            displayed = null
+        }
+        return checkNotNull(failure)
+    }
+    val success = result as? Resource.Success
+    val grant = permission?.takeIf { it.remaining(SystemPhotoCacheClock) > 0 }
+    if (success != null && grant != null) {
+        val painter = success.value
+        SideEffect {
+            displayed = AuthorizedPhotoPainter(painter, grant)
+            retries = 0
+            protectedPhotoPainterCache.store(resource.url, permissionScope, painter, presentation.reusablePermission)
+        }
+        return success
+    }
+    val previous = displayed
+    if (!expired && previous != null && previous.permission.remaining(SystemPhotoCacheClock) > 0) {
+        return Resource.Success(previous.painter, DataSource.Memory)
+    }
+    return failure ?: Resource.Loading(0f)
 }
