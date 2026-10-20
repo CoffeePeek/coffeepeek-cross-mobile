@@ -328,3 +328,20 @@ Not checked: guest follow → sign-in, own profile through an alias, photo viewe
 - **Pixel 7 Sandbox check**: tab renders (header, edit button, stats, favorites preview, check-ins, activity); actions menu and logout dialog (cancelled); «Все» of favorites → Favorites;
   «Все» of check-ins → history; edit button → Edit profile, saving a new name updates the tab header (@Sandbox2); personal activity calendar sheet; bottom content clears the floating bar.
   Not checked: logout itself, the no-public-address path (no fixture), large font, rotation, light theme, avatar photo viewer.
+
+## Step 6 result — edit profile and account deletion in `feature/profile/impl` (2026-10-21)
+
+- **api**: `ProfileEditPort` (avatar/username/about writes, `ProfileAvatarImage`), `AccountDeletionPort` (`existingRequest`, `request`), `EditProfileEntry`, `AccountDeletionEntry`
+  (`onSessionEnded` callback), `EditProfileSlots` (image, picked-avatar preview, photo source sheet + picker). Own-account reads reuse `ProfileAccountPort`.
+- **Logic** (`EditProfileViewModel`, 11 tests; `AccountDeletionViewModel`, 10 tests, ported from the legacy parity tests): the save order, trimmed compare, 2–64/≤600, 5 MB and stop at the first
+  failure are kept. **Deliberate changes (owner decisions)**: a retry after a later failure does not re-upload the avatar or resend the name (finished steps are remembered);
+  opening the deletion screen never requests deletion — an existing request is shown, otherwise the user confirms with «Отправить письмо» (the edit screen keeps its «Удалить аккаунт?» alert, so
+  there are two confirmations now; decide whether to drop the alert). Two sends in one frame issue one request (the legacy double-tap race is gone). Session end is reported once
+  after an active session was seen; the app does the platform sign-out and `Navigator.openLoginAfterSessionEnd` on an app-lifetime scope so the redirect survives the screen leaving composition.
+- **UI**: form state lives in the host ViewModel store (survives rotation); IME-safe synced text fields (`rememberCoffeePeekSyncedText` added to the design system); validation texts via resources.
+- **App**: `AccountScreenRenderer` (Legacy default for iOS, Android entry), `AndroidProfileEditPort`/`AndroidAccountDeletionPort` over `UserRepository`, Koin param `accountRendererFactory`, `Navigator` routes use it.
+- **Checks**: `:feature:profile:impl:testDebugUnitTest` green (48 tests), `:composeApp:compileDirectDebugKotlinAndroid`, iOS simulator compile of profile api/impl and composeApp, `assembleDirectSandbox`.
+  Test-writing note: a ViewModel with a ticker that waits for a fixed fake clock never lets `runTest` go idle — close the ViewModel at the end of such tests.
+- **Pixel 7 Sandbox check**: tab → edit (save disabled without changes), typing updates the counter and enables save with the keyboard open, save returns to the tab with the new name, «Удалить аккаунт» alert →
+  deletion screen opens in the confirmation state without sending, «Отправить письмо» → «Письмо отправлено» with the resend gated, rotation keeps that state.
+  Not checked: avatar picker/camera (no files in Sandbox), failure dialogs, session-end redirect, large font, light theme, the legacy `PublicProfilePresentationTest`.

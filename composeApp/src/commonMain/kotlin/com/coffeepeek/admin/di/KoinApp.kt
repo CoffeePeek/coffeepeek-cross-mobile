@@ -38,6 +38,8 @@ import com.coffeepeek.admin.ui.screen.shop.ShopCheckInFormRenderer
 import com.coffeepeek.admin.ui.screen.shop.LegacyShopCheckInFormRenderer
 import com.coffeepeek.admin.ui.screen.coffee.CoffeeScreenRenderer
 import com.coffeepeek.admin.ui.screen.coffee.LegacyCoffeeScreenRenderer
+import com.coffeepeek.admin.ui.screen.profile.AccountScreenRenderer
+import com.coffeepeek.admin.ui.screen.profile.LegacyAccountScreenRenderer
 import com.coffeepeek.admin.ui.screen.profile.LegacyOwnProfileScreenRenderer
 import com.coffeepeek.admin.ui.screen.profile.LegacyPublicProfileScreenRenderer
 import com.coffeepeek.admin.ui.screen.profile.OwnProfileScreenRenderer
@@ -101,6 +103,7 @@ fun initKoin(
     roasterRendererFactory: Scope.() -> RoasterScreenRenderer = { LegacyRoasterScreenRenderer },
     publicProfileRendererFactory: Scope.() -> PublicProfileScreenRenderer = { LegacyPublicProfileScreenRenderer },
     ownProfileRendererFactory: Scope.() -> OwnProfileScreenRenderer = { LegacyOwnProfileScreenRenderer },
+    accountRendererFactory: Scope.() -> AccountScreenRenderer = { LegacyAccountScreenRenderer },
     analyticsEnabled: Boolean = true,
 ) {
     check(AppConfig.baseUrl.isNotBlank()) {
@@ -122,7 +125,7 @@ fun initKoin(
         appModule(database.settingRepository, shopReportRendererFactory, shopGalleryRendererFactory,
             shopCheckInRendererFactory, shopDetailRendererFactory, shopCheckInListRendererFactory,
             checkInHistoryRendererFactory, checkInCreateFlowRendererFactory, coffeeRendererFactory, roasterRendererFactory,
-            publicProfileRendererFactory, ownProfileRendererFactory),
+            publicProfileRendererFactory, ownProfileRendererFactory, accountRendererFactory),
         imageModule(),
         updateInstallerModule(),
     )
@@ -147,11 +150,13 @@ private fun appModule(
     roasterRendererFactory: Scope.() -> RoasterScreenRenderer,
     publicProfileRendererFactory: Scope.() -> PublicProfileScreenRenderer,
     ownProfileRendererFactory: Scope.() -> OwnProfileScreenRenderer,
+    accountRendererFactory: Scope.() -> AccountScreenRenderer,
 ) = module {
     single<CoffeeScreenRenderer> { coffeeRendererFactory() }
     single<RoasterScreenRenderer> { roasterRendererFactory() }
     single<PublicProfileScreenRenderer> { publicProfileRendererFactory() }
     single<OwnProfileScreenRenderer> { ownProfileRendererFactory() }
+    single<AccountScreenRenderer> { accountRendererFactory() }
     single<CheckInCreateFlowRenderer> { checkInCreateFlowRendererFactory() }
     single<CheckInHistoryScreenRenderer> { checkInHistoryRendererFactory() }
     single<ShopDetailScreenRenderer> { shopDetailRendererFactory() }

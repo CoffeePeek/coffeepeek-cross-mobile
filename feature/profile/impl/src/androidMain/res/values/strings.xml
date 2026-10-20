@@ -87,4 +87,38 @@
     <string name="profile_cancel">Отмена</string>
     <string name="profile_own_favorites">Избранное</string>
     <string name="profile_own_check_ins">Чекины</string>
+
+    <!-- Edit profile -->
+    <string name="profile_edit_title">Редактировать профиль</string>
+    <string name="profile_edit_photo_title">Фото профиля</string>
+    <string name="profile_edit_change_photo">Изменить фото профиля</string>
+    <string name="profile_edit_avatar_description">Фото профиля</string>
+    <string name="profile_edit_username_label">Имя пользователя</string>
+    <string name="profile_edit_username_placeholder">Ваше имя</string>
+    <string name="profile_edit_username_empty">Имя не может быть пустым</string>
+    <string name="profile_edit_username_short">Минимум 2 символа</string>
+    <string name="profile_edit_username_long">Максимум 64 символа</string>
+    <string name="profile_edit_about_label">О себе</string>
+    <string name="profile_edit_about_placeholder">Расскажите немного о себе…</string>
+    <string name="profile_edit_about_long">Максимум 600 символов</string>
+    <string name="profile_edit_save">Сохранить изменения</string>
+    <string name="profile_edit_saving">Сохранение</string>
+    <string name="profile_edit_delete_account">Удалить аккаунт</string>
+    <string name="profile_edit_delete_title">Удалить аккаунт?</string>
+    <string name="profile_edit_delete_message">Мы отправим ссылку на почту для подтверждения. Аккаунт останется активным, пока вы не подтвердите удаление в письме.</string>
+    <string name="profile_edit_delete_confirm">Удалить</string>
+    <string name="profile_error_title">Ошибка</string>
+    <string name="profile_ok">OK</string>
+
+    <!-- Account deletion -->
+    <string name="profile_deletion_title">Удаление аккаунта</string>
+    <string name="profile_deletion_confirm_title">Подтвердите удаление</string>
+    <string name="profile_deletion_confirm_subtitle">Мы отправим ссылку для подтверждения на %1$s. Аккаунт останется активным, пока вы не подтвердите удаление в письме.</string>
+    <string name="profile_deletion_confirm_no_email">вашу почту</string>
+    <string name="profile_deletion_send">Отправить письмо</string>
+    <string name="profile_deletion_sent_title">Письмо отправлено</string>
+    <string name="profile_deletion_sent_subtitle">Мы отправили ссылку на %1$s. Откройте письмо в браузере и подтвердите удаление аккаунта.</string>
+    <string name="profile_deletion_wait_hint">После подтверждения вы автоматически выйдете из приложения.</string>
+    <string name="profile_deletion_resend">Отправить письмо ещё раз</string>
+    <string name="profile_deletion_resend_wait">Повторная отправка пока недоступна</string>
 </resources>
