@@ -8,4 +8,5 @@ android.namespace = "com.coffeepeek.feature.shop.api"
 
 dependencies {
     api(libs.compose.runtime)
+    api(compose.ui)
 }

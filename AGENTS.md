@@ -115,6 +115,14 @@ still owns its root back stack and cross-feature routing.
   component for a genuinely reusable gap, preserving existing visuals and
   accessibility; keep business-specific rendering in its feature. This is reuse
   of applicable components, not a requirement to use every component everywhere.
+- Function bodies have a review limit of 40 lines for `@Composable` functions
+  and 20 for ordinary functions. Count non-blank, non-comment body lines,
+  including nested blocks, but not the signature. Never pack statements onto
+  one line to evade the limit. Extract cohesive, named components/helpers in
+  their owning module. Apply this to new/substantively changed functions, not
+  a mechanical repository-wide rewrite. Keep this rule in documentation/review;
+  do not introduce a lint/build limit without a separate request.
+
 - Prefix reusable design-system components, supporting UI types, tokens and their
   Kotlin source files with `CoffeePeek` (for example `CoffeePeekButton.kt`,
   `CoffeePeekTextField`, `CoffeePeekIcons`, `CoffeePeekDimens`). Ordinary functions
@@ -128,8 +136,8 @@ still owns its root back stack and cross-feature routing.
   a file solely to collect unrelated components or previews.
 - A screen's `NameScreen` is the runtime adapter: obtain its lifecycle-owned
   ViewModel/dependencies at the feature entry or composition boundary, collect
-  state, and pass state/actions to a stateless `NameScreenContent`. Preview and
-  test `NameScreenContent` with fake state, no Koin, network, or database.
+  state, and pass state/actions to a stateless `NameScreenContent`. Preview
+  `NameScreenContent` with fake state, no Koin, network, or database.
 - For MVI screens, model real user intents as `Action`, durable rendering data as
   immutable `State`, and non-replayable effects such as navigation as `Event`.
   Send actions into one ViewModel entry point. The screen maps events to caller
@@ -264,22 +272,17 @@ implementation details.
   never silently downgrade, uninstall, clear data or replace the user's newer APK.
   Record source revision/variant when verified; an installed version alone does
   not establish its exact source revision.
-- Separate verification layers: unit tests, self-targeted feature UI tests with
-  fake state/ports, application-composition tests with injected dependencies, and
-  read-only checks in the real app. A self-targeted APK must not initialize the
-  production Application, DI or network. App-targeted instrumentation may still
-  initialize real background services/analytics; inspect this before running it.
+- Separate verification layers: unit/contract tests, non-UI composition tests,
+  manual Sandbox review and explicitly requested read-only real-app checks.
+  Non-UI instrumentation may initialize services/analytics; inspect it first.
 - Real-account create/edit/delete, logout/account replacement, favorite changes,
   consent changes and destructive recovery require explicit authorization and a
   safe test setup. Empty live history is not permission to manufacture records.
   Opening/cancelling a form is not evidence that persistence or analytics passed.
-- UI tests must synchronize with actual state, scroll lazy containers to semantic
-  targets rather than assuming item indices, and inject image/picker ports. Cover
-  light/dark themes, relevant font/window sizes, accessibility semantics, modal
-  placement, privacy and back/cancel behavior without real camera/network writes.
-  Classify failures as product, test harness or environment only from evidence;
-  rerun affected tests and the complete relevant suite after a harness fix. Never
-  hide a flaky failure or weaken an assertion merely to obtain a green run.
+- Manual UI review must wait for actual state and cover light/dark themes,
+  font/window sizes, accessibility, modal placement, privacy and back/cancel.
+  Do not use real camera/network writes. Classify failures from evidence and
+  retain the original failure when recording a later successful check.
 - Keep screenshots/UI dumps and sanitized diagnostics local, outside tracked
   sources. Do not publish account identity, private photos, full logcat, credentials
   or authorization headers. Inspect IDE warnings on changed files when possible;
@@ -290,6 +293,17 @@ implementation details.
   inspection, preview, passing retry or APK assembly alone is not feature completion.
 
 ## After coding
+
+- Do not create, restore or run automated UI, instrumented Compose or screenshot
+  tests, or their test-only Activity/APK infrastructure. Use colocated previews
+  and manual checks in the explicitly selected Sandbox for UI. Keep unit tests
+  and non-UI contract/DI/database tests. Do not delete other contributors' tests.
+  Earlier migration UI-run records are historical, not current required suites.
+- Preserve analytics during migration: inventory existing events, properties,
+  screen/exposure ownership and consent/session guards before replacing UI.
+  Features use narrow injected ports; application composition adapts the
+  existing service. Add in-memory unit/contract regressions, never emit test
+  events to production or introduce a second analytics service in a feature.
 
 - Compile affected modules and run relevant tests.
 - Android debug assembly must pass the packaged DEX runtime-class checks.

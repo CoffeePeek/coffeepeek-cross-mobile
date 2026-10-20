@@ -1,5 +1,7 @@
 package com.coffeepeek.admin.di.favorites
 
+import com.coffeepeek.admin.analytics.Entity
+
 import com.coffeepeek.admin.feature.favorites.api.RoasterFavorites
 import com.coffeepeek.admin.feature.favorites.api.roasterFavoriteId
 import com.coffeepeek.domain.model.CatalogItem
@@ -128,7 +130,9 @@ internal class LegacyFavoriteRoastersRepository(
         val captured = snapshot.value ?: return Result.failure(IllegalStateException("Favorites not loaded"))
         val item = captured.items[roasterId] ?: return Result.failure(IllegalArgumentException("Unknown saved roaster"))
         ensureOwner(captured.owner)
-        val result = favorites.removeForAccount(item, captured.owner)
+        val result = trackFavoriteMutation(Entity.Roaster, false) {
+            favorites.removeForAccount(item, captured.owner)
+        }
         result.exceptionOrNull()?.let { if (it is CancellationException) throw it }
         return result
     }

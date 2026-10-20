@@ -20,6 +20,8 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
+import com.coffeepeek.feature.shop.api.ShopExposure
+import com.coffeepeek.feature.shop.impl.ui.data.shopExposure
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -64,7 +66,7 @@ internal fun ShopDetailBottomBar(
             }
         } else {
             FilledIconButton(onClick = onRoute, enabled = canOpenRoute,
-                modifier = Modifier.size(CoffeePeekDimens.buttonHeight)
+                modifier = Modifier.shopExposure(ShopExposure.Directions).size(CoffeePeekDimens.buttonHeight)
                     .shadow(8.dp, RoundedCornerShape(CoffeePeekDimens.buttonRadius)),
                 colors = IconButtonDefaults.filledIconButtonColors(containerColor = MaterialTheme.colorScheme.primary,
                     contentColor = MaterialTheme.colorScheme.onPrimary)) {
@@ -72,9 +74,9 @@ internal fun ShopDetailBottomBar(
             }
         }
         if (forCheckIn) CoffeePeekButton(text = stringResource(Res.string.shop_detail_continue),
-            onClick = onCheckIn, modifier = Modifier.weight(1f))
+            onClick = onCheckIn, modifier = Modifier.shopExposure(ShopExposure.CheckIn).weight(1f))
         else OutlinedButton(onClick = onCheckIn,
-            modifier = Modifier.weight(1f).height(CoffeePeekDimens.buttonHeight)
+            modifier = Modifier.shopExposure(ShopExposure.CheckIn).weight(1f).height(CoffeePeekDimens.buttonHeight)
                 .shadow(8.dp, RoundedCornerShape(CoffeePeekDimens.buttonRadius)),
             shape = RoundedCornerShape(CoffeePeekDimens.buttonRadius),
             border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
