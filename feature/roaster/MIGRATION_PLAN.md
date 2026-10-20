@@ -1,5 +1,21 @@
 # Roasters — Android-first migration plan
 
+## Inherited Shop visual corrections — 2026-10-20
+
+Parent-first propagation retains the Shop fixes from #43 (`6e118f14`) and the
+contextual shared-like fix from #104 (`6e176444`). No new Roaster behavior is
+included. Runtime source `02f9a746` passes **755 unit results** (design-system 26,
+Shop impl 101, Coffee impl 46, Roaster impl 19, app Direct 563), zero failures,
+errors or skips; Debug/Sandbox APKs and packaged DEX/isolation checks pass (1m42s).
+Subsequent changes are documentation only. No automated UI tests were added/run.
+
+Sandbox `1.0.829-sandbox / 829` from the identical Shop/design-system sources in
+`6e176444` was updated in place on Pixel 7, after package/version/signature checks.
+No ordinary CoffeePeek/Pixel 10a install, data clearing or real backend write.
+The phone locked during installation; manual Shop comparison and Roaster
+activation acceptance are not certified by this build. See the current Shop
+parity and shared-like plans for changed controls and remaining visual gates.
+
 Status: steps 2–6 done (2026-10-20, step 6 with open items): domain, data, api (ports + entries) and impl (typed MVI + stateless UI + entries); **activated on Android** (Discovery roasters and the roaster detail route); iOS/shared keep the legacy screens. Step 4 isolated UI suite passed on Pixel 7 before step 5; device/Sandbox acceptance of the activation is still open (step 6). Child of the Coffee checkpoint
 (`feature/coffee-catalog-refactoring`, PR #104); the branch/PR is created only after this plan is accepted.
 Same rules as Coffee: preserve the current product, requests and visuals; Android first; shared/iOS keep the
