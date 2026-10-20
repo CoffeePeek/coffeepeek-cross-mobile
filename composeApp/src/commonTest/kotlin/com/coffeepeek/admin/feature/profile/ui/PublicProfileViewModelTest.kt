@@ -2,6 +2,8 @@ package com.coffeepeek.admin.feature.profile.ui
 
 import com.coffeepeek.admin.feature.profile.domain.*
 import com.coffeepeek.feature.profile.domain.*
+import com.coffeepeek.admin.feature.profile.domain.PublicProfileCheckInPage
+import com.coffeepeek.admin.feature.profile.domain.PublicProfileCheckIn
 import com.coffeepeek.domain.model.*
 import com.coffeepeek.domain.repository.SessionRepository
 import com.coffeepeek.domain.repository.UserRepository

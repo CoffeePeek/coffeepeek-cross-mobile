@@ -14,6 +14,8 @@ import com.coffeepeek.admin.feature.authorblocking.ui.*
 import com.coffeepeek.admin.feature.community.ui.*
 import com.coffeepeek.admin.feature.profile.domain.*
 import com.coffeepeek.feature.profile.domain.*
+import com.coffeepeek.admin.feature.profile.domain.PublicProfileCheckInPage
+import com.coffeepeek.admin.feature.profile.domain.PublicProfileCheckIn
 import com.coffeepeek.admin.feature.profile.ui.*
 import com.coffeepeek.admin.theme.CoffeePeekTheme
 import com.coffeepeek.admin.theme.PlatformSystemBars

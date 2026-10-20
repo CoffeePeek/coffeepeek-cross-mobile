@@ -278,3 +278,19 @@ entry (step 4).
 
 Deviations from the plan table: `PublicCheckInsPort` is deferred (the check-in model is the legacy timeline `CheckIn`; it moves with the
 history/Community timeline owner, not here) and `ShareLinkPort` is dropped (sharing is an action callback of the entry, not a port).
+
+## Step 4 result — public profile in `feature/profile/impl` (2026-10-20)
+
+- **Logic**: typed MVI `PublicProfileViewModel` over ports (`PublicProfileData`, `PublicCheckInsPort`, `ProfileAccountPort`, `ProfileAuthorVisibility`) with
+  the legacy (generation, account) staleness rules intact. `needsLogin` state became the `RequireLogin` event. 18 ViewModel tests (the 15 legacy cases
+  ported, plus invalid activity months, blocked author/revision reload, unready visibility) and 3 month-math tests pass.
+- **UI** (`impl/androidMain`): header, stats, sections, favorites/check-ins/activity sheets, connections sheet, blocked state, author menu,
+  all strings in `res/values/strings.xml` (Russian verbatim; Russian plurals for "дней с чекинами"). Design-system loader, icons, sheet.
+  Replaced legacy-only controls: glass icon buttons and `PlatformMenuButton` are plain Material3 `IconButton`/`DropdownMenu`.
+- **api**: `PublicProfileEntry`, `ProfileSlots` (image, photo viewer with originals, favorites preview/card, check-in card, photo prefetch),
+  `ProfileAuthorActions`, `PublicCheckInsPort`.
+- **app**: `PublicProfileScreenRenderer` (Legacy default, Android entry) used by `Navigator` for `Screen.UserProfile`; `AndroidPublicCheckIns` keeps the
+  legacy rows behind the feature's own check-in model for the timeline-card slot; iOS and the own-profile tab keep the legacy screens.
+- Builds: unit tests, instrumented-test compile, iOS simulator compile (composeApp and impl), Direct Sandbox APK.
+- **Not done / not verified**: Pixel 7 walkthrough (phone was locked when the APK was installed), `PublicProfilePresentationTest` (instrumented) still targets the
+  legacy screen and was not run, large-font/dark-theme visual check, parity of the author-menu look (now a dropdown instead of the platform menu).

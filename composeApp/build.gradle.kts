@@ -44,6 +44,7 @@ kotlin {
             implementation(project(module.feature.shop.domain))
             implementation(project(module.feature.shop.data))
             implementation(project(module.feature.shop.impl))
+            implementation(project(module.feature.profile.impl))
             implementation(project(module.feature.roaster.api))
             implementation(project(module.feature.roaster.domain))
             implementation(project(module.feature.roaster.data))

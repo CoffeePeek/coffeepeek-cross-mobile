@@ -68,7 +68,7 @@ import com.coffeepeek.feature.profile.impl.ui.model.PublicProfileEvent
 
 private enum class ProfileSection { Favorites, CheckIns, Activity }
 
-private data class ProfilePhotos(val urls: List<String>, val index: Int = 0)
+private data class ProfilePhotos(val previews: List<String>, val originals: List<String> = previews, val index: Int = 0)
 
 private const val PUBLIC_PROFILE_BASE_URL = "https://coffeepeek.by"
 
@@ -230,7 +230,7 @@ internal fun PublicProfileScreen(
                                 state.checkIns.isEmpty() -> ProfileEmptyCard(stringResource(R.string.profile_check_ins_empty), CoffeePeekIcons.Coffee)
                                 else -> state.checkIns.take(2).forEach { checkIn ->
                                     slots.checkInCard(checkIn, author, state.isOwnProfile,
-                                        checkIn.coffeeShopSlug?.takeIf(String::isNotBlank)?.let { shop -> { onOpenShop(shop) } }) { urls, index -> photos = ProfilePhotos(urls, index) }
+                                        checkIn.coffeeShopSlug?.takeIf(String::isNotBlank)?.let { shop -> { onOpenShop(shop) } }) { previews, originals, index -> photos = ProfilePhotos(previews, originals, index) }
                                 }
                             }
                         }
@@ -292,7 +292,7 @@ internal fun PublicProfileScreen(
                 ) {
                     items(state.checkIns, key = { it.id }) { checkIn ->
                         slots.checkInCard(checkIn, author, state.isOwnProfile,
-                            checkIn.coffeeShopSlug?.takeIf(String::isNotBlank)?.let { shop -> { section = null; onOpenShop(shop) } }) { urls, index -> photos = ProfilePhotos(urls, index) }
+                            checkIn.coffeeShopSlug?.takeIf(String::isNotBlank)?.let { shop -> { section = null; onOpenShop(shop) } }) { previews, originals, index -> photos = ProfilePhotos(previews, originals, index) }
                     }
                     if (state.isLoadingCheckIns || state.isLoadingMoreCheckIns) item { ProfileSectionLoader(88.dp) }
                     else if (state.checkInsError != null) item {
@@ -332,5 +332,5 @@ internal fun PublicProfileScreen(
             onOpenUser(user.slug, user.userName, user.avatarUrl)
         },
     )
-    photos?.let { slots.photoViewer(it.urls, it.index) { photos = null } }
+    photos?.let { slots.photoViewer(it.previews, it.originals, it.index) { photos = null } }
 }

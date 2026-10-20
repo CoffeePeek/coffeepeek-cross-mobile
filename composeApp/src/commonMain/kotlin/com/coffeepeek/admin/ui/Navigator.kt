@@ -15,6 +15,7 @@ import com.coffeepeek.admin.ui.favorites.FavoritesDestination
 import com.coffeepeek.admin.ui.screen.contributions.ContributionKind
 import com.coffeepeek.admin.ui.screen.contributions.MyContributionsScreen
 import com.coffeepeek.admin.ui.screen.roaster.AddRoasterScreen
+import com.coffeepeek.admin.ui.screen.profile.PublicProfileScreenRenderer
 import com.coffeepeek.admin.ui.screen.roaster.RoasterScreenRenderer
 import com.coffeepeek.admin.ui.screen.profile.CityScreen
 import com.coffeepeek.admin.ui.screen.profile.ThemeScreen
@@ -60,7 +61,6 @@ import com.coffeepeek.admin.ui.screen.shop.ShopCheckInListScreenRenderer
 import com.coffeepeek.admin.ui.screen.coffee.CoffeeScreenRenderer
 import com.coffeepeek.admin.ui.screen.shop.ShopMenuGalleryScreenRenderer
 import com.coffeepeek.admin.ui.screen.shop.ShopReportScreenRenderer
-import com.coffeepeek.admin.feature.profile.ui.OtherUserProfileScreen
 import com.coffeepeek.admin.feature.passwordrecovery.ui.PasswordRecoveryScreen
 import com.coffeepeek.admin.ui.screen.shopchange.ShopChangeEditorScreen
 import com.coffeepeek.admin.ui.screen.shopchange.ShopChangeRequestDetailScreen
@@ -560,15 +560,6 @@ object Navigator {
 
     @Composable
     private fun PublicProfileRoute(screen: Screen.UserProfile) {
-        OtherUserProfileScreen(
-            slug = screen.slug,
-            nickname = screen.nickname,
-            avatarUrl = screen.avatarUrl,
-            onBack = ::popBack,
-            onCoffeeShopClick = { navigate(Screen.ShopDetail(it)) },
-            onRoasterClick = { navigate(Screen.RoasterDetail(it)) },
-            onLogin = { navigate(Screen.Auth) },
-            onUserClick = { slug, nickname, avatar -> navigate(Screen.UserProfile(slug, nickname, avatar)) },
-        )
+        koinInject<PublicProfileScreenRenderer>().Content(screen.slug, screen.nickname, screen.avatarUrl)
     }
 }
