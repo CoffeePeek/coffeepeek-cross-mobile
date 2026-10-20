@@ -31,7 +31,7 @@ internal fun serverFavoritesModule(): Module = module {
     single<com.coffeepeek.feature.favorites.domain.repository.FavoriteDrinksRepository> {
         ServerFavoriteDrinksRepository(get(), get())
     }
-    single<FavoritesEntry> { createFavoritesEntry(get(), get(), get()) }
+    single<FavoritesEntry> { createFavoritesEntry(get(), get(), get(), AndroidFavoritesScreenAnalytics) }
 }
 
 /** One repo per session/storage. Application explicitly loads this module; no global Koin start. */

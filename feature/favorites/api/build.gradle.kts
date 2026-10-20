@@ -8,4 +8,5 @@ android.namespace = "com.coffeepeek.feature.favorites.api"
 
 dependencies {
     api(libs.compose.runtime)
+    api(compose.ui)
 }
