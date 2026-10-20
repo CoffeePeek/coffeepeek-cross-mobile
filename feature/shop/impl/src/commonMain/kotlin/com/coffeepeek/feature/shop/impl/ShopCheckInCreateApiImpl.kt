@@ -6,6 +6,7 @@ import androidx.compose.runtime.remember
 import androidx.lifecycle.ViewModelStore
 import androidx.lifecycle.ViewModelStoreOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.coffeepeek.feature.shop.api.ShopCheckInAnalytics
 import com.coffeepeek.feature.shop.api.ShopCheckInCreateEntry
 import com.coffeepeek.feature.shop.domain.model.ShopCheckInCreateInput
 import com.coffeepeek.feature.shop.domain.model.ShopRating
@@ -22,13 +23,15 @@ fun createShopCheckInCreateEntry(
     draftsForShop: (shopId: String, shopSlug: String) -> ShopCheckInDraftStore,
     dates: ShopCheckInDateFormatter,
     photos: ShopCheckInPhotoPicker,
-): ShopCheckInCreateEntry = DefaultShopCheckInCreateEntry(repository, draftsForShop, dates, photos)
+    analytics: () -> ShopCheckInAnalytics = { ShopCheckInAnalytics.None },
+): ShopCheckInCreateEntry = DefaultShopCheckInCreateEntry(repository, draftsForShop, dates, photos, analytics)
 
 private class DefaultShopCheckInCreateEntry(
     private val repository: ShopCheckInRepository,
     private val draftsForShop: (String, String) -> ShopCheckInDraftStore,
     private val dates: ShopCheckInDateFormatter,
     private val photos: ShopCheckInPhotoPicker,
+    private val analytics: () -> ShopCheckInAnalytics,
 ) : ShopCheckInCreateEntry {
     @Composable
     override fun Content(
@@ -51,6 +54,7 @@ private class DefaultShopCheckInCreateEntry(
                 initial = ShopCheckInCreateInput(shopSlug, "", ShopRating(4, 4, 4), dates.visitInstant(dates.nowMillis())),
                 repository = repository,
                 drafts = draftsForShop(shopId, shopSlug),
+                analytics = analytics(),
             )
         }
         ShopCheckInCreateScreen(model, shopName, dates, photos) { event ->

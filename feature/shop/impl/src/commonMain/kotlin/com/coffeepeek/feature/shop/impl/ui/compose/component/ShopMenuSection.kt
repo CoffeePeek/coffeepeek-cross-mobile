@@ -14,6 +14,11 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import com.coffeepeek.feature.shop.api.ShopExposure
+import com.coffeepeek.feature.shop.api.ShopContentMetric
+import com.coffeepeek.feature.shop.api.ShopContentAction
+import com.coffeepeek.feature.shop.impl.ui.data.LocalShopAnalytics
+import com.coffeepeek.feature.shop.impl.ui.data.shopExposure
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -45,10 +50,14 @@ internal fun ShopMenuSection(
     val groups = groupedPresentMenuItems(menu.items)
     val captured = menu.capturedAtUtc?.takeIf(String::isNotBlank)?.let(formatDate)
     val updated = menu.updatedAtUtc?.takeIf(String::isNotBlank)?.let(formatDate)
-    Column(modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing3)) {
+    val analytics = LocalShopAnalytics.current
+    Column(modifier.shopExposure(ShopExposure.Menu).fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing3)) {
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             ShopSectionTitle(stringResource(Res.string.shop_menu_title), Modifier.weight(1f))
-            if (menu.photos.isNotEmpty()) TextButton(onClick = onOpenPhotos) {
+            if (menu.photos.isNotEmpty()) TextButton(onClick = {
+                analytics.content(ShopContentMetric.Menu, ShopContentAction.Open)
+                onOpenPhotos()
+            }) {
                 Text(stringResource(Res.string.shop_menu_photos, menu.photos.size))
             }
         }
@@ -61,7 +70,10 @@ internal fun ShopMenuSection(
                     // Preserve the compact layout without squeezing text at large font scales.
                     val canPlaceBesideItems = maxWidth >= 280.dp && LocalDensity.current.fontScale <= 1.3f
                     val photoStack: @Composable () -> Unit = {
-                        ShopMenuPhotoStack(menu.photos, onOpenPhoto) {
+                        ShopMenuPhotoStack(menu.photos, { index ->
+                            analytics.content(ShopContentMetric.Menu, ShopContentAction.Open)
+                            onOpenPhoto(index)
+                        }) {
                             ShopMenuFreshness(captured, updated,
                                 Modifier.align(Alignment.BottomStart).padding(CoffeePeekDimens.spacing2),
                                 contentColor = Color.White)

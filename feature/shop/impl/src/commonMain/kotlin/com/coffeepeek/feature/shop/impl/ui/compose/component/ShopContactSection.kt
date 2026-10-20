@@ -10,6 +10,8 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
+import com.coffeepeek.feature.shop.api.ShopExposure
+import com.coffeepeek.feature.shop.impl.ui.data.shopExposure
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -41,7 +43,7 @@ internal fun ShopContactSection(
         emailLink(contact.email)?.let { it to CoffeePeekIcons.Email },
     )
     if (phone == null && links.isEmpty()) return
-    Column(modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing3)) {
+    Column(modifier.shopExposure(ShopExposure.Contacts).fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing3)) {
         ShopSectionTitle(stringResource(Res.string.shop_contact_title))
         Card(Modifier.fillMaxWidth(), shape = RoundedCornerShape(CoffeePeekDimens.radius2xl),
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),

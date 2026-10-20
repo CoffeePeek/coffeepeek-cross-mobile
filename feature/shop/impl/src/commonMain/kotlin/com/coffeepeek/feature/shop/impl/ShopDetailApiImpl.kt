@@ -1,5 +1,7 @@
 package com.coffeepeek.feature.shop.impl
 
+import com.coffeepeek.feature.shop.api.ShopAnalytics
+import com.coffeepeek.feature.shop.impl.ui.data.LocalShopAnalytics
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Modifier
@@ -29,8 +31,9 @@ fun createShopDetailEntry(
     currentMinuteOfDay: () -> Int,
     authorImage: (@Composable (String, Modifier) -> Unit)? = null,
     checkInImage: (@Composable (String, Modifier, androidx.compose.ui.layout.ContentScale) -> Unit)? = null,
+    analytics: ShopAnalytics = ShopAnalytics.None,
 ): ShopDetailEntry = DefaultShopDetailEntry(detailsRepository, voteRepository, favoritesRepository,
-    currentViewer, currentDayOfWeek, currentMinuteOfDay, authorImage, checkInImage)
+    currentViewer, currentDayOfWeek, currentMinuteOfDay, authorImage, checkInImage, analytics)
 
 private class DefaultShopDetailEntry(
     private val detailsRepository: ShopDetailsRepository,
@@ -41,6 +44,7 @@ private class DefaultShopDetailEntry(
     private val currentMinuteOfDay: () -> Int,
     private val authorImage: (@Composable (String, Modifier) -> Unit)?,
     private val checkInImage: (@Composable (String, Modifier, androidx.compose.ui.layout.ContentScale) -> Unit)?,
+    private val analytics: ShopAnalytics,
 ) : ShopDetailEntry {
     @Composable
     override fun Content(
@@ -61,7 +65,7 @@ private class DefaultShopDetailEntry(
                 currentMinuteOfDay = currentMinuteOfDay, initialSessionGeneration = sessionGeneration,
                 initialRefreshGeneration = refreshGeneration)
         }
-        CompositionLocalProvider(LocalShopAuthorImage provides authorImage, LocalShopCheckInImage provides checkInImage) {
+        CompositionLocalProvider(LocalShopAnalytics provides analytics, LocalShopAuthorImage provides authorImage, LocalShopCheckInImage provides checkInImage) {
             ShopDetailScreen(viewModel = model, sessionGeneration = sessionGeneration,
                 formatDistance = formatDistance, forCheckIn = forCheckIn,
                 formatCheckInDate = formatCheckInDate, formatMenuDate = formatMenuDate,

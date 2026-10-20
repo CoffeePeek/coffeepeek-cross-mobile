@@ -1,5 +1,7 @@
 package com.coffeepeek.admin.di.favorites
 
+import com.coffeepeek.admin.analytics.Entity
+
 import com.coffeepeek.domain.feature.favorites.api.FavoriteEntry
 import com.coffeepeek.domain.feature.favorites.api.FavoriteKind
 import com.coffeepeek.domain.feature.favorites.api.FavoritesRepository as ServerFavorites
@@ -49,7 +51,10 @@ internal class ServerFavoriteShopsRepository(
         mapRows(server.getFavorites(refresh = true).getOrThrow(), account)
     }
 
-    override suspend fun save(shop: FavoriteShop): Result<Unit> = resultOf {
+    override suspend fun save(shop: FavoriteShop): Result<Unit> =
+        trackFavoriteMutation(Entity.Shop, true) { saveUntracked(shop) }
+
+    private suspend fun saveUntracked(shop: FavoriteShop): Result<Unit> = resultOf {
         val account = requireNotNull(owner()) { "Sign in to save favorites" }
         val resolved = detail(shop.id).getOrThrow().shop
         requireOwner(account)
@@ -59,7 +64,10 @@ internal class ServerFavoriteShopsRepository(
         requireOwner(account)
     }
 
-    override suspend fun remove(shopId: String): Result<Unit> = resultOf {
+    override suspend fun remove(shopId: String): Result<Unit> =
+        trackFavoriteMutation(Entity.Shop, false) { removeUntracked(shopId) }
+
+    private suspend fun removeUntracked(shopId: String): Result<Unit> = resultOf {
         val account = requireNotNull(owner()) { "Sign in to change favorites" }
         val entry = server.getFavorites().getOrThrow().firstOrNull {
             it.kind == FavoriteKind.CoffeeShop && (it.address?.slug == shopId || it.id == shopId)

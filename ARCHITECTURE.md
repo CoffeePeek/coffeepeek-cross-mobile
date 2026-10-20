@@ -142,6 +142,12 @@ be `internal` extension functions rather than artificial mapper interfaces.
 
 ### UI
 
+Function-size review limits are 40 non-blank, non-comment body lines for a
+Composable and 20 for an ordinary function. Nested blocks count; signatures do
+not. Extract cohesive components/helpers, not compressed formatting. Apply to
+new/substantively changed functions without mass-rewriting unrelated code or
+adding an automated lint/build limit.
+
 UI owns ViewModels, immutable UI state, actions/events, presentation models,
 screens, feature components, and feature navigation builders. Compose renders
 state and emits actions; it contains no network calls, database queries, or
@@ -166,7 +172,7 @@ typed core/presentation base; legacy ViewModels remain on their current path.
 Give each standalone component its own named file. `NameScreen` is the runtime
 adapter that observes a lifecycle-owned ViewModel and forwards state/events to
 stateless `NameScreenContent`; feature entry/application composition supplies its
-dependencies. `NameScreenContent` and components are previewed and tested with
+dependencies. `NameScreenContent` and components are previewed with
 fake state and callbacks. Keep each preview in the component or screen's own
 source file, not in a preview-only file. Shared `commonMain` Compose UI uses paired
 multiplatform light/dark previews; Android-only UI can use `PreviewLightDark` in
@@ -350,6 +356,17 @@ application flavor tests and Android instrumented compilation; Kotlin/Native
 compilation verifies the shared presentation/dependency boundary for iOS.
 
 ## Verification checklist
+
+Do not create, restore or run automated UI/Compose instrumentation/screenshot
+tests or test-only hosts. UI verification uses colocated previews and manual
+Sandbox review. Unit, non-UI contract/DI and database tests remain in scope;
+other contributors' existing UI tests are not removed or expanded by agents.
+Dated UI results in old migration plans are historical only.
+
+Analytics is part of migration parity: preserve existing event/property names,
+screen/exposure ownership, search correlation, consent and session invalidation.
+Inject narrow feature API ports and adapt the current service in composition.
+Verify through in-memory unit/contract tests, without production telemetry.
 
 After an architectural change, verify:
 
