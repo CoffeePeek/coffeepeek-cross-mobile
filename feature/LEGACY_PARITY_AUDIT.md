@@ -1,0 +1,92 @@
+# Legacy-first retroactive parity audit — 2026-10-20
+
+Method: the rule in [ANDROID_REFACTORING_PLAN.md](ANDROID_REFACTORING_PLAN.md#legacy-first-parity-gate-mandatory-for-every-owner).
+Four read-only code audits compared legacy `composeApp` with the migrated Android path for the six active
+owners (Shop, Home check-in, combined history, Favorites, Coffee, Roasters) plus Shop Report.
+Nothing was run on a device; "spot-checked" means the lead re-read the cited code after the audit.
+Items already recorded elsewhere are not repeated (see each owner plan, `ANALYTICS_PARITY_AUDIT.md`).
+Status of every row: **open** unless marked. Fixes belong to the owning branch/PR, not to this file.
+
+Legend: sev H/M/L. Verification: **S** = spot-checked in code by the lead, **R** = reported by the audit only.
+
+## Home check-in
+| id | sev | gap | where to fix | ver. |
+|---|---|---|---|---|
+| H1 | H | Form state (draft, photos, picker) is lost on Activity recreation (rotation, theme/font/locale change, camera return). The editor creates its own `ViewModelStoreOwner` and clears it on dispose and ignores `LocalViewModelStoreOwner` from `HistoryHomeOverlay`; the global flow does the same. Legacy kept the VM in the host store. | `HomeCheckInEditorApiImpl.kt:46`, `AndroidCheckInCreateFlowRenderer.kt:34` | S |
+| H2 | M | Consequence of H1: recreation emits a false `check_in_cancelled` and starts a new flow id. | after H1; skip Cancelled on config change | R |
+| H3 | L-M | Analytics semantics changed: `step_viewed(bean)` on open, `retry_clicked(bean)` only on a real retry (legacy fired retry on every open). Tell analytics owner. | none | R |
+| H4 | L | Bean-search failure loses `status_code`; other 4xx become `unknown`. | `AndroidHomeCheckInPorts` | R |
+| H5 | L | Save-failure texts (401/403, photo upload, validation plural) differ from legacy. | impl `strings.xml`, `IssueText` | R |
+| H6 | L | Editor re-fetches the record (extra loader/retry before the form). Accepted. | — | R |
+| H7 | M (Sandbox) | No Home rows in the Community feed, no Approved/Rejected/Unknown moderation, no photo variants on Home rows, no 400/401/403/404/409/429 payloads. | `SandboxBackend`, `SandboxApplicationBackend` | R |
+| H8 | — | Double refresh on Community resume — **fixed** with the removal of the resume auto-refresh (`7056de2f`). | done | S |
+| H9 | L | `consumeInitialHomeId` marks the id consumed before the lease check, so a Community owner-edit open can be dropped silently. | `AndroidCheckInHistoryScreenRenderer.kt:62` | R |
+Not a regression: legacy `HomeCheckInScreen` (History/Calendar/Statistics) is unrouted on `main` too.
+
+## Shop
+| id | sev | gap | where to fix | ver. |
+|---|---|---|---|---|
+| G1 | H | Guest taps the heart → Auth → favorite is **not** applied after login (legacy: 10-min deferred intent via `TrackedFavoriteInteractions`, `resumed_after_auth`). Shop adapters have no `FavoriteInteractions` path; whether `FavoriteInteractions.current` exists on Android is unverified. | route Shop favorite writes through `FavoriteInteractions.change` or add a deferred-intent port | S (no usage in shop adapters) |
+| G2 | M | Heart state uses `observe()` (fetches the details of every favorite, emits empty first) instead of ids only: N requests per shop open, flicker, heart disabled until hydrated. | `ShopFavoritesAdapter.kt` → `observeIds()`; override in `AndroidShopBrowsingSession` | S |
+| G3 | M | `shop_action(check_in)` + `CHECK_IN_START_ATTEMPTED` are always emitted; legacy took the global-create handoff first and emitted only without it → double count in the global flow. No test for it. | `AndroidShopAnalytics.checkInStarted` | S (always emits) |
+| G4 | L | Exposure markers wider than legacy (directions when disabled, check_in in picker mode). | `ShopDetailBottomBar.kt` | R |
+| G5 | L | Guest can open an author profile from the detail card. | `ShopPublicCheckInsSection.kt:132` | R |
+| G6 | L | Photo viewer gets full URLs only (no preview→full progression). | `ShopOverviewHero.kt`, `ShopDetailScreen.kt` | R |
+| G7 | L | Image prefetch (`PrefetchListPhotos`) lost in full check-in list/menu gallery. | image slot / renderer | R |
+| G8 | L | Detail reloads on every `ON_RESUME` after the first (plan says return refresh; extra network). Decide whether to keep. | `ShopDetailScreen.kt:115` | R |
+| G9 | L (Sandbox) | Fixture shop: invalid `priceRange`, no contacts/features/tags/menu timestamps, identical schedules, no 404 slug. | `SandboxApplicationBackend.kt:225` | R |
+| G10 | L | Error text and missing-slug check-in feedback differ. | optional | R |
+Also: `OpenMenuGallery`/`ShopMenuGalleryScreen` has no UI entry on Android (approved removal of the heading button) — confirm or delete later.
+
+## Combined history
+| id | sev | gap | ver. |
+|---|---|---|---|
+| A1 | M | Card photos show only the feed variant (no thumb→detail sharpening), viewer previews are uncached detail URLs. Fix: `HistoryPhoto`/`imageContent` slot with `highQualityData`. | R |
+| A2 | L | FAB hidden for guests (legacy fired the attempt event) — likely intentional. | R |
+| A3 | L | Calendar load error no longer shown in the month summary line. | R |
+| A4–A7 | L | Title `maxLines`, `showCreate` not `rememberSaveable`, fallback `CheckInSource`, SegmentTick haptic added on Android. | R |
+| A8 | M (Sandbox) | No paging (>20), no previous month, no day with ≥4 visits, own Shop row without variants, no single-source failure. | R |
+
+## Favorites
+| id | sev | gap | ver. |
+|---|---|---|---|
+| B1 | M | Saved-shop card differs from legacy `ShopCard(showCatalogDetails=false)`: logos/brew chips shown, price raw `$$` instead of BYN beans, no type label (`FavoriteShop` has no `type`), 2-line title. | R |
+| B2 | M | Saved-drink heart has no `favoriteExposure` and is not sized to 48dp (shop/roaster cards have both). | S |
+| B3 | L | Roaster card lost the description (up to 3 lines). | R |
+| B4–B6 | L | Remove error is an inline block (not snackbar); no auth gate/resume for guest remove; no `syncIdentityNow` before write. | R |
+Unverified: whether the legacy Profile favorites preview refreshes after a remove on the new screen (`FavoriteSync.notifyChanged` is no longer called).
+
+## Coffee
+| id | sev | gap | ver. |
+|---|---|---|---|
+| C1 | M | List load error is plain text; legacy showed `LoadErrorContent` with the mascot. Add a `loadError` slot like Roasters. | R |
+| C2 | L | Search field lost IME-safe synced text state (check Cyrillic autocorrect/fast typing on device). | R |
+| C3 | L | Blank photo URL not filtered in the mapper. | R |
+| C4 | L (Sandbox) | Fixture uses non-wire values (kind/form/availability), no brew group, one page, no photo-less/price-less coffee. | R |
+Unchanged from legacy: shared `/coffees/{slug}` links are not mapped by `AppLinks`.
+
+## Roasters
+| id | sev | gap | ver. |
+|---|---|---|---|
+| R1 | M | Detail hero should be edge-to-edge (legacy ignores Scaffold padding); new content gets Scaffold padding **and** `navigationBarsPadding` (inset applied twice). Fix: `contentWindowInsets=0` / no padding on the details branch; check visually. | S (code) |
+| R2 | L | Heart hidden (not disabled) for a roaster without slug. | R |
+| R3 | L | Detail heart exposure placement fixed to `roaster_card`. | R |
+| R4 | L (Sandbox) | No unaddressed/blank-name roaster; manual checklist still open. | R |
+
+## Shop Report
+| id | sev | gap | ver. |
+|---|---|---|---|
+| S1 | M | Every exception (including connect/DNS/timeout before send) becomes `ShopReportDeliveryUnconfirmed`, which blocks resubmission; offline users cannot resend. Legacy: error + retry. Fix: pre-send failures → ordinary failure. | S |
+| S2 | L | Server message replaced by a fixed string. | R |
+| S3 | L | Category order differs (Address/Hours vs Schedule/Address). | R |
+| S4 | L | `take(500)` can split a surrogate pair. | R |
+| S5 | L (Sandbox) | Endpoint always 200; no rejected/5xx/unconfirmed scenario. | R |
+
+## Suggested order of fixes (needs owner decision)
+1. H1 (+H2), G1, S1, R1, G2, G3 — behavioral regressions.
+2. A1, B1, B2, C1 — visible differences.
+3. Sandbox fixtures (H7, G9, A8, C4, R4, S5) so the above can be exercised.
+4. Low items as decided per owner.
+
+## Not verified by this audit
+Device behaviour (IME, insets, large font, TalkBack, process death), live analytics delivery, iOS, server contracts.

@@ -86,6 +86,15 @@ an explicit open item, legacy screen kept for iOS/other consumers. Gate for a sc
 is already switched: run the same inventory as a retroactive audit and fix gaps as
 regressions in the owning branch. A green build or a Sandbox smoke is not evidence of parity.
 
+## Retroactive parity audit — 2026-10-20
+
+The gate above was applied retroactively to the active owners; results, severities and
+verification status are in [LEGACY_PARITY_AUDIT.md](LEGACY_PARITY_AUDIT.md). Highest priority:
+Home form state on Activity recreation (H1), Shop favorite-after-login (G1), Shop Report
+resubmission after offline failure (S1), Roaster detail insets (R1), Shop favorites hydration
+and check-in double count (G2, G3). Sandbox fixtures for these scenarios are listed there. No fixes
+are applied by the audit; each belongs to its owner branch.
+
 ## Current ordered work
 
 1. [x] Reconcile main 28917758 in #43 and propagate through all open children.

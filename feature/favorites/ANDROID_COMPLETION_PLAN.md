@@ -73,3 +73,7 @@ journey or a claim that this checkpoint ran every historic migration on a phone.
 Root Navigation 3 migration, iOS presentation/storage migration, new favorites
 HTTP synchronization, generic core DI/storage modules, catalogue/roaster rewrites,
 new product sections and resurrection of removed/unused screens.
+
+## Retroactive parity audit — 2026-10-20
+
+Open gaps from the legacy-first audit: B1–B6 (medium: B1 saved-shop card, B2 drink heart exposure/size). Full table and verification status: [LEGACY_PARITY_AUDIT.md](../LEGACY_PARITY_AUDIT.md).

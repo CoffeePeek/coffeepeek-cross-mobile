@@ -808,3 +808,6 @@ Change: per-card item scope in `ShopPublicCheckInsSection`, memoized own-visit i
 cards no longer null every card's vote callback while one vote is pending (both view models still reject
 concurrent votes). Visible effect: other like buttons stay tappable during a pending vote; a tap is ignored.
 
+## Retroactive parity audit — 2026-10-20
+
+Open gaps from the legacy-first audit: G1–G10 (high: G1 favorite after login; medium: G2, G3). Full table and verification status: [LEGACY_PARITY_AUDIT.md](../LEGACY_PARITY_AUDIT.md).

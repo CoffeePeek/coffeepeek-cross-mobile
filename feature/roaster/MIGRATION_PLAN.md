@@ -288,3 +288,6 @@ Use the SANDBOX handle for network mode, theme ("Сменить") and reset. Tic
 
 Record outcome per item in this section (date, build, pass/fail, notes). Failures become issues on PR #109, not silent edits.
 
+## Retroactive parity audit — 2026-10-20
+
+Open gaps from the legacy-first audit: R1–R4 (medium: R1 detail insets). Full table and verification status: [LEGACY_PARITY_AUDIT.md](../LEGACY_PARITY_AUDIT.md).

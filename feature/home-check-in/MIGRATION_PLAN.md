@@ -1132,3 +1132,7 @@ device/account acceptance.
 Excluded: iOS UI migration, profile/Activity extraction, separate Home history or
 statistics screens, new server capabilities, photo editing, root navigation
 replacement and wholesale removal of legacy code.
+
+## Retroactive parity audit — 2026-10-20
+
+Open gaps from the legacy-first audit: H1–H9 (high: H1 form state lost on Activity recreation; H8 already fixed). Full table and verification status: [LEGACY_PARITY_AUDIT.md](../LEGACY_PARITY_AUDIT.md).
