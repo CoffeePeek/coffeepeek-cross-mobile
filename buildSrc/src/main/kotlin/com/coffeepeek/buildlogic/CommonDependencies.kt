@@ -23,5 +23,3 @@ fun DependencyHandlerScope.androidImplementation(notation: Any): Dependency? =
 fun DependencyHandlerScope.androidApi(notation: Any): Dependency? =
     add("androidMainApi", notation)
 
-fun DependencyHandlerScope.androidInstrumentedTestImplementation(notation: Any): Dependency? =
-    add("androidInstrumentedTestImplementation", notation)
