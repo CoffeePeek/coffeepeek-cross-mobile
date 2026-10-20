@@ -4,6 +4,8 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
@@ -90,40 +92,55 @@ internal fun ShopScheduleSection(
 ) {
     if (schedules.isEmpty()) return
     val status = scheduleStatusText(shopScheduleStatus(schedules, isOpen, todayDayOfWeek, minuteOfDay))
-    val toggleLabel = stringResource(if (expanded) Res.string.shop_schedule_collapse else Res.string.shop_schedule_expand)
-    val expansionState = stringResource(if (expanded) Res.string.shop_schedule_expanded_state
-        else Res.string.shop_schedule_collapsed_state)
-    val rotation by animateFloatAsState(if (expanded) 90f else 0f, tween(250))
     Column(modifier.shopExposure(ShopExposure.Hours).fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing3)) {
         ShopSectionTitle(stringResource(Res.string.shop_schedule_title))
         Card(Modifier.fillMaxWidth(), shape = RoundedCornerShape(CoffeePeekDimens.radius2xl),
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
             border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline)) {
             Column(Modifier.padding(CoffeePeekDimens.spacing4)) {
-                Row(Modifier.fillMaxWidth().heightIn(min = 44.dp)
-                    .semantics { stateDescription = expansionState }
-                    .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null,
-                        role = Role.Button, onClickLabel = toggleLabel, onClick = onToggle),
-                    horizontalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing4),
-                    verticalAlignment = Alignment.CenterVertically) {
-                    Icon(CoffeePeekIcons.Time, null, Modifier.size(24.dp))
-                    Text(status, Modifier.weight(1f), style = MaterialTheme.typography.bodyLarge,
-                        fontWeight = FontWeight.Medium, maxLines = 2, overflow = TextOverflow.Ellipsis)
-                    Icon(CoffeePeekIcons.ChevronRight, null, Modifier.size(18.dp).rotate(rotation),
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                ScheduleHeader(status, expanded, onToggle)
+                AnimatedVisibility(expanded,
+                    enter = expandVertically(tween(250), expandFrom = Alignment.Top) + fadeIn(tween(180)),
+                    exit = shrinkVertically(tween(250), shrinkTowards = Alignment.Top) + fadeOut(tween(150))) {
+                    ScheduleDays(schedules)
                 }
-                AnimatedVisibility(expanded, enter = expandVertically(tween(250)), exit = shrinkVertically(tween(250))) {
-                    Column(verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing2)) {
-                        HorizontalDivider(Modifier.padding(vertical = CoffeePeekDimens.spacing2))
-                        schedules.sortedBy { if (it.dayOfWeek == 0) 7 else it.dayOfWeek }.forEach { schedule ->
-                            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing3)) {
-                                Text(stringResource(dayName(schedule.dayOfWeek)), Modifier.weight(1f),
-                                    style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                                Text(scheduleHours(schedule), style = MaterialTheme.typography.bodyMedium,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.End)
-                            }
-                        }
-                    }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ScheduleHeader(status: String, expanded: Boolean, onToggle: () -> Unit) {
+    val toggleLabel = stringResource(if (expanded) Res.string.shop_schedule_collapse else Res.string.shop_schedule_expand)
+    val expansionState = stringResource(if (expanded) Res.string.shop_schedule_expanded_state
+        else Res.string.shop_schedule_collapsed_state)
+    val rotation by animateFloatAsState(if (expanded) 90f else 0f, tween(250))
+    Row(Modifier.fillMaxWidth().heightIn(min = 44.dp)
+        .semantics { stateDescription = expansionState }
+        .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null,
+            role = Role.Button, onClickLabel = toggleLabel, onClick = onToggle),
+        horizontalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing4),
+        verticalAlignment = Alignment.CenterVertically) {
+        Icon(CoffeePeekIcons.Time, null, Modifier.size(24.dp))
+        Text(status, Modifier.weight(1f), style = MaterialTheme.typography.bodyLarge,
+            fontWeight = FontWeight.Medium, maxLines = 2, overflow = TextOverflow.Ellipsis)
+        Icon(CoffeePeekIcons.ChevronRight, null, Modifier.size(18.dp).rotate(rotation),
+            tint = MaterialTheme.colorScheme.onSurfaceVariant)
+    }
+}
+
+@Composable
+private fun ScheduleDays(schedules: List<ShopSchedule>) {
+    Column {
+        HorizontalDivider(Modifier.padding(vertical = CoffeePeekDimens.spacing2),
+            color = MaterialTheme.colorScheme.outline)
+        Column(verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing2)) {
+            schedules.sortedBy { if (it.dayOfWeek == 0) 7 else it.dayOfWeek }.forEach { schedule ->
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing3)) {
+                    Text(stringResource(dayName(schedule.dayOfWeek)), Modifier.weight(1f),
+                        style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(scheduleHours(schedule), style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.End)
                 }
             }
         }

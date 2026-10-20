@@ -9,6 +9,7 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -42,7 +43,10 @@ internal fun ShopCheckInGuestPrompt(onSignIn: () -> Unit, onRegister: () -> Unit
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(stringResource(Res.string.shop_checkins_no_account),
                     style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                TextButton(onClick = onRegister) { Text(stringResource(Res.string.shop_reviews_register)) }
+                TextButton(onClick = onRegister, colors = ButtonDefaults.textButtonColors(
+                    contentColor = MaterialTheme.colorScheme.onSurface)) {
+                    Text(stringResource(Res.string.shop_reviews_register))
+                }
             }
         }
     }
