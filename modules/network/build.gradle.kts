@@ -39,6 +39,7 @@ kotlin {
 android {
     namespace = Config.APPLICATION_ID
     compileSdk = Config.COMPILE_SDK
+    defaultConfig { minSdk = Config.MIN_SDK }
     compileOptions {
         sourceCompatibility = Config.JAVA_VERSION
         targetCompatibility = Config.JAVA_VERSION
