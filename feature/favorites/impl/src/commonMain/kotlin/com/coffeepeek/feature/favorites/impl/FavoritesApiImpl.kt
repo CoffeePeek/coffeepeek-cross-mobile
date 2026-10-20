@@ -1,5 +1,8 @@
 package com.coffeepeek.feature.favorites.impl
 
+import com.coffeepeek.feature.favorites.api.FavoritesScreenAnalytics
+import com.coffeepeek.feature.favorites.impl.ui.compose.LocalFavoritesAnalytics
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.Composable
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.coffeepeek.feature.favorites.api.FavoritesEntry
@@ -14,12 +17,14 @@ fun createFavoritesEntry(
     repository: FavoritesRepository,
     roasters: FavoriteRoastersRepository? = null,
     drinks: FavoriteDrinksRepository? = null,
-): FavoritesEntry = FavoritesApiImpl(repository, roasters, drinks)
+    screenAnalytics: FavoritesScreenAnalytics = FavoritesScreenAnalytics.None,
+): FavoritesEntry = FavoritesApiImpl(repository, roasters, drinks, screenAnalytics)
 
 internal class FavoritesApiImpl(
     private val repository: FavoritesRepository,
     private val roasters: FavoriteRoastersRepository?,
     private val drinks: FavoriteDrinksRepository? = null,
+    private val screenAnalytics: FavoritesScreenAnalytics = FavoritesScreenAnalytics.None,
 ) : FavoritesEntry {
     @Composable
     override fun Content(
@@ -29,6 +34,8 @@ internal class FavoritesApiImpl(
         onOpenRoaster: (String) -> Unit,
     ) {
         val vm = viewModel { FavoritesViewModel(repository, roasters, drinks) }
-        FavoritesScreen(vm, onOpenShop, onBack, distanceForCoordinates, onOpenRoaster)
+        CompositionLocalProvider(LocalFavoritesAnalytics provides screenAnalytics) {
+            FavoritesScreen(vm, onOpenShop, onBack, distanceForCoordinates, onOpenRoaster)
+        }
     }
 }
