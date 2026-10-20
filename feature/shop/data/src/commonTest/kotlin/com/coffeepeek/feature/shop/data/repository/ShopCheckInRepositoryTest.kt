@@ -24,6 +24,7 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
+import com.coffeepeek.feature.shop.domain.repository.ShopCheckInPhotoUploadFailure
 
 class ShopCheckInRepositoryTest {
     @Test fun uploadsOnlyGalleryPhotosAndNeverSendsRetiredDrinkPhotoField() = runBlocking {
@@ -79,8 +80,9 @@ class ShopCheckInRepositoryTest {
             val api = HttpClientFactory(apiEngine).api("https://example.com") { expectSuccess = false }
             val upload = HttpClientFactory(uploadEngine).upload { expectSuccess = false }
             try {
-                assertTrue(createShopCheckInRepository(api, upload).create(validInput().copy(
-                    photos = listOf(ShopCheckInPhoto(byteArrayOf(1), "visit.jpg")))).isFailure)
+                val result = createShopCheckInRepository(api, upload).create(validInput().copy(
+                    photos = listOf(ShopCheckInPhoto(byteArrayOf(1), "visit.jpg"))))
+                assertIs<ShopCheckInPhotoUploadFailure>(result.exceptionOrNull())
             } finally { api.close(); upload.close(); apiEngine.close(); uploadEngine.close() }
         }
     }
