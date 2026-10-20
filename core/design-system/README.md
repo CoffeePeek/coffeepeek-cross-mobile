@@ -1,5 +1,10 @@
 # Design-system preparation
 
+As of 2026-10-20, the agent-authored instrumented UI suites and their hosts are
+removed at the user's request. Earlier test descriptions/results below are
+historical. Unit tests and colocated previews remain; use manual Sandbox checks
+for current visual verification. See [removal scope](../../feature/UI_TEST_REMOVAL.md).
+
 Responsibility: reusable visual tokens, themed primitives, icon facade and shared
 visual modifiers. Allowed consumers: application composition and feature UI.
 Dependencies: Compose runtime/UI/foundation/Material3, Haze and Phosphor icons.
@@ -208,7 +213,6 @@ item, along with velocity-only flings, scrim geometry, IME and nested scrolling.
 
 ```shell
 ./gradlew :core:design-system:testDebugUnitTest :core:design-system:assembleDebug
-./gradlew :core:design-system:connectedDebugAndroidTest
 ```
 
 Future consumers use `implementation(project(module.core.designSystem))`.
