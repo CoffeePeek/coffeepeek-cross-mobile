@@ -7,6 +7,18 @@ Nothing was run on a device; "spot-checked" means the lead re-read the cited cod
 Items already recorded elsewhere are not repeated (see each owner plan, `ANALYTICS_PARITY_AUDIT.md`).
 Status of every row: **open** unless marked. Fixes belong to the owning branch/PR, not to this file.
 
+## Intentional differences
+
+A difference is not a defect when the UI was deliberately improved. Such rows are closed as
+**intentional** with a reason and the owner's confirmation; they stay in the table so the decision is
+visible. Analytics, data, session/guard and behaviour rows cannot be closed this way without an explicit
+product decision.
+
+Visual/UX rows that may be intentional and **need the owner's confirmation** (none is closed yet):
+A2, A3, A4, A7, B1, B3, B4, C1, G5, G6, G10, R1 (glass back button/hero layout), R2.
+Already documented as approved elsewhere: guest block-author action hidden, menu-photos heading button
+removed, yellow info-card icons and badge sizes, glass back button, generic detail error text.
+
 Legend: sev H/M/L. Verification: **S** = spot-checked in code by the lead, **R** = reported by the audit only.
 
 ## Home check-in
