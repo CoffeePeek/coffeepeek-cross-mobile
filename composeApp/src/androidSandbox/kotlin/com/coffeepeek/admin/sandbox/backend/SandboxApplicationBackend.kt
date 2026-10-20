@@ -3,6 +3,7 @@ package com.coffeepeek.admin.sandbox.backend
 import io.ktor.client.request.HttpRequestData
 import io.ktor.http.*
 import kotlinx.serialization.json.*
+import java.time.Instant
 import java.time.LocalDate
 import java.util.UUID
 
@@ -15,6 +16,7 @@ internal class SandboxApplicationBackend(private val today: LocalDate, private v
         const val FRIEND_NAME = "Sandbox Friend"
         const val FRIEND_VISIT_ID = "sandbox-friend-visit"
         const val FRIEND_PHOTO_ID = "sandbox-friend-photo"
+        const val RESEND_WINDOW_SECONDS = 60L
     }
     private val favorites = linkedSetOf("coffee_shop:sandbox-cafe", "roaster:sandbox-roaster", "drink:cappuccino")
     private var username = "Sandbox"
@@ -24,9 +26,12 @@ internal class SandboxApplicationBackend(private val today: LocalDate, private v
     private val others = mutableListOf<JsonObject>()
     private val blocked = linkedSetOf<String>()
     private var blocksRevision = 0
+    private var friendFollowing = false
+    private var deletionRequest: JsonObject? = null
     fun reset(populated: Boolean) {
         this.populated = populated
         others.clear(); blocked.clear(); blocksRevision++
+        friendFollowing = false; deletionRequest = null
         if (populated) others += friendVisit()
         username = "Sandbox"
         about = "Локальный тестовый профиль. Все действия остаются в Sandbox."
@@ -49,16 +54,45 @@ internal class SandboxApplicationBackend(private val today: LocalDate, private v
         }
         if (path == "/api/users/me" && method == HttpMethod.Get) return ok(profile())
         if (path == "/api/users/me/username" && method == HttpMethod.Patch) {
-            username = input["username"]?.jsonPrimitive?.content ?: username
+            val requested = input["username"]?.jsonPrimitive?.contentOrNull?.trim().orEmpty()
+            if (requested.length !in 2..64) return HttpStatusCode.BadRequest to failure("Имя должно быть от 2 до 64 символов")
+            if (requested.equals(FRIEND_NAME, ignoreCase = true)) return HttpStatusCode.Conflict to failure("Имя уже занято")
+            username = requested
             return ok(buildJsonObject { put("username", username); put("address", address("sandbox", "/users/sandbox")) })
         }
         if (path == "/api/users/me/about" && method == HttpMethod.Patch) {
-            about = input["about"]?.jsonPrimitive?.content.orEmpty(); return ok(JsonNull)
+            val requested = input["about"]?.jsonPrimitive?.contentOrNull.orEmpty()
+            if (requested.length > 600) return HttpStatusCode.BadRequest to failure("Описание слишком длинное")
+            about = requested; return ok(JsonNull)
         }
         if (path == "/api/users/me/avatar" && method == HttpMethod.Patch) return ok(JsonNull)
-        if (path == "/api/users/me/deletion-request") return HttpStatusCode.NotFound to envelope(JsonNull, false)
+        // DELETE only requests deletion (the account stays active until the e-mailed link is confirmed); the request is kept in RAM.
+        if (path == "/api/users/me" && method == HttpMethod.Delete) {
+            val request = buildJsonObject {
+                put("requestId", UUID.randomUUID().toString()); put("status", "Pending")
+                put("expiresAtUtc", Instant.now().plusSeconds(24 * 3600).toString())
+                put("resendAvailableAtUtc", Instant.now().plusSeconds(RESEND_WINDOW_SECONDS).toString())
+            }
+            deletionRequest = request
+            return ok(request)
+        }
+        if (path == "/api/users/me/deletion-request" && method == HttpMethod.Get) {
+            return deletionRequest?.let(::ok) ?: (HttpStatusCode.NotFound to envelope(JsonNull, false))
+        }
+        if (path.startsWith("/api/users/") && path.endsWith("/follow") && method in listOf(HttpMethod.Put, HttpMethod.Delete)) {
+            return when (path.removePrefix("/api/users/").removeSuffix("/follow")) {
+                FRIEND_SLUG -> {
+                    friendFollowing = method == HttpMethod.Put
+                    HttpStatusCode.OK to buildJsonObject { put("followersCount", friendFollowers()); put("isFollowing", friendFollowing) }
+                }
+                "sandbox" -> HttpStatusCode.BadRequest to failure("Нельзя подписаться на себя")
+                else -> HttpStatusCode.NotFound to envelope(JsonNull, false)
+            }
+        }
         if (path.startsWith("/api/users/") && method == HttpMethod.Get) {
-            val friend = path.removePrefix("/api/users/").substringBefore('/') == FRIEND_SLUG
+            val slug = path.removePrefix("/api/users/").substringBefore('/')
+            if (slug != FRIEND_SLUG && slug != "sandbox") return HttpStatusCode.NotFound to envelope(JsonNull, false)
+            val friend = slug == FRIEND_SLUG
             if (path.endsWith("/check-ins")) return ok(page(JsonArray(if (friend) others.filter(::visible) else visits)))
             if (path.endsWith("/followers") || path.endsWith("/following")) return HttpStatusCode.OK to buildJsonObject {
                 putJsonArray("items") {}; put("totalCount", 0)
@@ -184,10 +218,11 @@ internal class SandboxApplicationBackend(private val today: LocalDate, private v
             put("revision", "$blocksRevision")
         })
     }
+    private fun friendFollowers() = if (friendFollowing) 1 else 0
     private fun friendProfile() = buildJsonObject {
         put("authorId", FRIEND_ID); put("userName", FRIEND_NAME); put("about", "Другой автор для проверки блокировок.")
         put("avatarUrl", "${SandboxBackend.BASE_URL}/media/sample"); put("checkInCount", 1)
-        put("addedShopsCount", 0); put("addedRoastersCount", 0); put("followersCount", 0); put("isFollowing", false)
+        put("addedShopsCount", 0); put("addedRoastersCount", 0); put("followersCount", friendFollowers()); put("isFollowing", friendFollowing)
         put("isBlockedByViewer", FRIEND_ID in blocked)
         put("address", address(FRIEND_SLUG, "/users/$FRIEND_SLUG")); put("createdAtUtc", "${today}T07:00:00Z")
     }
@@ -344,5 +379,6 @@ internal class SandboxApplicationBackend(private val today: LocalDate, private v
     }
     private fun page(items: JsonArray) = buildJsonObject { put("items", items); put("totalCount", items.size); put("currentPage", 1); put("totalPages", 1) }
     private fun envelope(data: JsonElement, success: Boolean = true) = buildJsonObject { put("isSuccess", success); put("data", data) }
+    private fun failure(message: String) = buildJsonObject { put("isSuccess", false); put("data", JsonNull); put("message", message) }
     private fun ok(data: JsonElement) = HttpStatusCode.OK to envelope(data)
 }

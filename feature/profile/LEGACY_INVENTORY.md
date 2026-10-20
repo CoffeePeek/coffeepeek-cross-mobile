@@ -238,3 +238,9 @@ object) — keep on the manual checklist; analytics page names (P9) and the Sand
 
 New finding: `DeleteAccountPendingViewModel.resendEmail()` checks `isResending` before launching, so two taps in the same frame can send
 two requests (the server window limits the damage). Not changed; decide with the deletion-confirmation change.
+
+## Step 0 result — Sandbox fixtures (2026-10-20)
+
+Done in `SandboxApplicationBackend` (see `composeApp/SANDBOX_PLAN.md`, "Profile/account fixtures"). Correction to the inventory: PATCH
+about/avatar and the deletion-request GET already existed but were unconditional; they now validate and keep state. Open: 401 follow,
+no-public-address account, blocked-profile follow rule, device walkthrough.

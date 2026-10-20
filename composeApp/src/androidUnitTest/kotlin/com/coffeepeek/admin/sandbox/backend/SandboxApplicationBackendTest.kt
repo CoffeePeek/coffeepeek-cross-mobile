@@ -295,4 +295,48 @@ class SandboxApplicationBackendTest {
             } }
         } finally { feature.close(); Dispatchers.resetMain() }
     } }
+
+    @Test fun profileEditingFollowAndDeletionFixturesFollowTheRealContracts() = runTest { fixture { backend, client ->
+        val users = UserApiService(client.client)
+        // Edit: validation and a taken name fail without changing the profile; valid writes persist.
+        assertTrue(users.updateUsername("A").isFailure)
+        assertTrue(users.updateUsername(SandboxApplicationBackend.FRIEND_NAME).isFailure)
+        assertTrue(users.updateAbout("x".repeat(601)).isFailure)
+        assertEquals("Sandbox", users.getMe().getOrThrow().userName)
+        assertTrue(users.updateUsername("Renamed").isSuccess)
+        assertTrue(users.updateAbout("New about").isSuccess)
+        assertEquals("Renamed", users.getMe().getOrThrow().userName)
+        assertEquals("New about", users.getMe().getOrThrow().about)
+
+        // Deletion: no request until DELETE; the request then exists with a resend window; reset clears it.
+        assertNull(users.getAccountDeletionRequest().getOrThrow())
+        val created = users.requestAccountDeletion().getOrThrow()
+        assertEquals("Pending", created.status)
+        assertEquals(created.requestId, users.getAccountDeletionRequest().getOrThrow()?.requestId)
+        assertTrue(java.time.Instant.parse(created.resendAvailableAtUtc).isAfter(java.time.Instant.now()))
+        backend.reset(populated = true)
+        assertNull(users.getAccountDeletionRequest().getOrThrow())
+
+        // Follow: friend only, bare body, counters follow the state; self 400; unknown slug 404 for follow and profile.
+        val profiles = PublicProfileRepositoryImpl(client.client, object : FeedRepository {
+            override suspend fun getFeed(pageSize: Int, cursor: String?, filters: FeedFilters): Result<FeedPage> =
+                error("Profile metadata must not fetch the timeline")
+        })
+        val friend = SandboxApplicationBackend.FRIEND_SLUG
+        assertEquals(false, profiles.getProfile(friend).getOrThrow().isFollowing)
+        assertEquals(true, profiles.setFollowing(friend, true).getOrThrow().isFollowing)
+        assertEquals(1, profiles.getProfile(friend).getOrThrow().stats.followers)
+        assertEquals(false, profiles.setFollowing(friend, false).getOrThrow().isFollowing)
+        assertTrue(profiles.setFollowing("sandbox", true).isFailure)
+        assertTrue(profiles.setFollowing("nobody", true).isFailure)
+        assertTrue(profiles.getProfile("nobody").isFailure)
+
+        // Writes fail closed under the error scenarios and leave the state unchanged.
+        backend.scenario = SandboxScenario.SaveError
+        assertTrue(profiles.setFollowing(friend, true).isFailure)
+        assertTrue(users.requestAccountDeletion().isFailure)
+        backend.scenario = SandboxScenario.Ready
+        assertEquals(false, profiles.getProfile(friend).getOrThrow().isFollowing)
+        assertNull(users.getAccountDeletionRequest().getOrThrow())
+    } }
 }

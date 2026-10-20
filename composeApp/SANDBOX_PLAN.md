@@ -26,6 +26,17 @@ filter/detail screens, large font on device (covered only by the earlier instrum
 tests; the device font setting was not changed), pagination, and the block UI walkthrough. The
 Sandbox process was force-stopped afterwards, which resets scenario and fixtures.
 
+## Profile/account fixtures — 2026-10-20
+
+Fake backend now serves, in RAM and reset with the scenario: `PATCH /api/users/me/username` (2–64 chars, the friend's name is a 409
+"Имя уже занято"), `PATCH .../about` (≤ 600), `DELETE /api/users/me` (creates a pending deletion request with a 60 s resend window; the
+account stays active) and `GET .../deletion-request` (404 until requested), `PUT/DELETE /api/users/{slug}/follow` (friend only, bare
+`{followersCount,isFollowing}` body, self 400), and unknown public slugs now answer 404 instead of the own profile. `SaveError`/`ServerError`
+fail all of these closed. Covered by `SandboxApplicationBackendTest.profileEditingFollowAndDeletionFixturesFollowTheRealContracts`.
+
+Not covered: a 401 follow scenario (no Unauthorized scenario exists), an account without a public address, a blocked profile rejecting follow
+(contract unknown, not invented), a resend-window rejection by the server, real account acceptance. Device walkthrough not done.
+
 ## Author-blocking and protected-photo fixtures — 2026-10-19
 
 Full-app fake backend now serves `/api/v1/me/blocks` (list/PUT/DELETE), a second
