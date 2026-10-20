@@ -221,3 +221,20 @@ actual iOS behaviour, `PlatformMenuButton`/`PlatformAlert` semantics beyond the 
 - Edit profile: fix the partial-save quirk, a retry must not re-upload an avatar that already succeeded (deliberate difference from prod).
 - Own-account data (`UserRepository`, `UserProfile`, deletion request) stays in `modules/*` behind narrow ports.
 - Other open questions keep the inventory's recommendations until the owner says otherwise.
+
+## Step 1 result — parity tests on the legacy code (2026-10-20)
+
+Added to `composeApp/src/commonTest/.../ui/screen/`: `profile/ProfileViewModelTest` (8), `editprofile/EditProfileViewModelTest` (8),
+`deleteaccount/DeleteAccountPendingViewModelTest` (6). All 22 pass, repeated runs stable (the ViewModels use real dispatchers, so the
+tests wait on conditions instead of virtual time). No production code changed.
+
+Covered: cached/uncached load, fixed error texts, refresh failure with and without content, session end reset, late failure of a
+previous account ignored (P2), logout order reset → server → drafts and failure message (P1), city resolved at creation and unknown
+ids ignored (P12/P16), edit validation/truncation/trim/5 MB/save order/stop at first failure, the recorded avatar re-upload quirk
+(flips when the owner-approved fix lands), deletion open side effect recorded once (flips with the approved confirmation), resend gating.
+
+Not covered, with reason: `GoogleAuth.signOut` and `Navigator.openLoginAfterSessionEnd` (no observable output: private flag/platform
+object) — keep on the manual checklist; analytics page names (P9) and the Sandbox fixtures (step 0).
+
+New finding: `DeleteAccountPendingViewModel.resendEmail()` checks `isResending` before launching, so two taps in the same frame can send
+two requests (the server window limits the damage). Not changed; decide with the deletion-confirmation change.
