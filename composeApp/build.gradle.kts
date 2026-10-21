@@ -285,6 +285,8 @@ kotlin.sourceSets {
 
 // Reuse the app graph with isolated ports, never the production Application/services.
 androidComponents.onVariants(androidComponents.selector().withBuildType("sandbox")) { variant ->
+    tasks.matching { it.name == "process${variant.name.replaceFirstChar { it.uppercaseChar() }}GoogleServices" }
+        .configureEach { enabled = false }
     val runtimeVerification = tasks.register<VerifyApkRuntimeClassesTask>("verify${variant.name.replaceFirstChar { it.uppercaseChar() }}RuntimeClasses") {
         apkDirectory.set(variant.artifacts.get(SingleArtifact.APK))
         requiredClasses.set(listOf("com.coffeepeek.admin.sandbox.SandboxActivity",
@@ -300,6 +302,8 @@ androidComponents.onVariants(androidComponents.selector().withBuildType("sandbox
             check("android.permission.INTERNET" !in xml) { "Sandbox must not have network permission" }
             check("com.coffeepeek.admin.MainActivity" !in xml) { "Sandbox must not launch the production root" }
             check("com.coffeepeek.admin.CoffeePeekApplication" !in xml) { "Sandbox must not start production DI/services" }
+            check("com.google.firebase.provider.FirebaseInitProvider" !in xml) { "Sandbox must not initialize Firebase" }
+            check("com.coffeepeek.admin.notifications.CoffeePeekMessagingService" !in xml) { "Sandbox must not start production push" }
             check("com.coffeepeek.admin.sandbox.SandboxActivity" in xml) { "Missing Sandbox entry" }
             check("com.coffeepeek.admin.sandbox.SandboxApplication" in xml) { "Missing isolated Sandbox bootstrap" }
         }
