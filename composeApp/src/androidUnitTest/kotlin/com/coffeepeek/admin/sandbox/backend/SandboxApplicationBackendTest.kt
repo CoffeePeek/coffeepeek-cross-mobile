@@ -1,5 +1,8 @@
 package com.coffeepeek.admin.sandbox.backend
 
+import kotlin.test.assertNotNull
+import com.coffeepeek.api.service.AuthService
+import com.coffeepeek.admin.feature.passwordrecovery.data.PasswordRecoveryRepositoryImpl
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.Flow
@@ -388,6 +391,49 @@ class SandboxApplicationBackendTest {
             backend.updatePolicy = SandboxUpdatePolicy.UpToDate
             assertEquals("Установлена актуальная версия", check(manual = true).second.message)
         } finally { scope.cancel() }
+    } }
+    @Test fun accountFixturesAnswerTheRealAuthServiceAndRecoveryRepository() = runTest { fixture { backend, client ->
+        val auth = AuthService(client.client, client.plainClient)
+        val recovery = PasswordRecoveryRepositoryImpl(client.plainClient)
+
+        // Default: sign-in succeeds with a token whose subject is the Sandbox account; nothing is taken; OAuth stays blocked.
+        val login = auth.login(" Tester@Example.com ", "any-password").getOrThrow()
+        assertEquals("11111111-1111-4111-8111-111111111111", com.coffeepeek.core.session.JwtUtils.extractUserId(login.accessToken))
+        assertEquals("sandbox-refresh-token", login.refreshToken)
+        assertEquals(false, auth.isEmailTaken("new@example.com").getOrThrow())
+        assertTrue(auth.register("Tester", "new@example.com", "password1").isSuccess)
+        assertTrue(recovery.requestReset("tester@example.com").isSuccess)
+        assertTrue(auth.logout("sandbox-refresh-token").isSuccess)
+        assertTrue(auth.googleLogin("token").isFailure)
+        assertTrue(auth.beginAppleLogin().isFailure)
+
+        backend.authPolicy = SandboxAuthPolicy.WrongPassword
+        val rejected = auth.login("tester@example.com", "wrong").exceptionOrNull()
+        assertNotNull(rejected)
+        assertEquals("Неверный email или пароль", com.coffeepeek.admin.utils.localizedLoginError(rejected.message))
+        assertTrue(auth.register("Tester", "new@example.com", "password1").isSuccess)
+
+        backend.authPolicy = SandboxAuthPolicy.EmailTaken
+        assertEquals(true, auth.isEmailTaken("taken@example.com").getOrThrow())
+        assertTrue(auth.login("tester@example.com", "password1").isSuccess)
+
+        backend.authPolicy = SandboxAuthPolicy.RegistrationFailure
+        assertTrue(auth.register("Tester", "new@example.com", "password1").isFailure)
+        assertEquals(false, auth.isEmailTaken("new@example.com").getOrThrow())
+
+        backend.authPolicy = SandboxAuthPolicy.RecoveryFailure
+        assertTrue(recovery.requestReset("tester@example.com").isFailure)
+        assertTrue(auth.register("Tester", "new@example.com", "password1").isSuccess)
+
+        // The scenario chips still win over the account policy, so offline and 5xx also reach sign-in.
+        backend.authPolicy = SandboxAuthPolicy.Works
+        backend.scenario = SandboxScenario.Offline
+        assertTrue(auth.login("tester@example.com", "password1").isFailure)
+        backend.scenario = SandboxScenario.ServerError
+        assertTrue(auth.login("tester@example.com", "password1").isFailure)
+        backend.scenario = SandboxScenario.Ready
+        backend.reset(true)
+        assertEquals(SandboxAuthPolicy.Works, backend.authPolicy)
     } }
     @Test fun settingsFixturesServeTheUpdatePolicyAndTheCityCatalogThroughTheRealParsers() = runTest { fixture { backend, client ->
         // The shared client throws on a non-2xx answer; the app's update state treats that exactly like "no policy".

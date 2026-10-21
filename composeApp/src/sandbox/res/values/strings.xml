@@ -16,6 +16,12 @@
     <string name="sandbox_update_available">Есть версия</string>
     <string name="sandbox_update_required">Обязательное</string>
     <string name="sandbox_update_failure">Сбой проверки</string>
+    <string name="sandbox_auth_title">Вход и регистрация</string>
+    <string name="sandbox_auth_works">Работает</string>
+    <string name="sandbox_auth_wrong_password">Неверный пароль</string>
+    <string name="sandbox_auth_email_taken">Email занят</string>
+    <string name="sandbox_auth_registration_failure">Сбой регистрации</string>
+    <string name="sandbox_auth_recovery_failure">Сбой восстановления</string>
     <string name="sandbox_cities_title">Города</string>
     <string name="sandbox_cities_single">Один</string>
     <string name="sandbox_cities_several">Несколько</string>

@@ -33,7 +33,6 @@ internal class SandboxApplication : Application() {
         MapLibre.getInstance(this)
         initAndroidKoin(analyticsEnabled = false, extraModules = listOf(module {
             single<SessionRepository> { sessions }
-            single<com.coffeepeek.domain.repository.AuthRepository> { SandboxAuthRepository(sessions) }
             single { CoffeePeekClient(SandboxBackend.BASE_URL, cacheDir.resolve("sandbox-http").path, false,
                 getToken = { null }, saveToken = {}, apiClientFactory = backend::apiClient,
                 uploadClientFactory = backend::uploadClient) }

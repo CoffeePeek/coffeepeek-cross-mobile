@@ -141,3 +141,15 @@ There is **no `feature/auth` module yet**; this directory holds only this file.
 | Q10 | `SessionRealtimeManager` and `requireAuthSession` stay outside Auth; Auth only provides `SignOut` for the profile | Yes |
 | Q11 | Analytics events (`sign_in_completed`, `sign_up_completed`, `auth_gate_shown`, consent) keep names and properties, behind `AuthAnalytics` | Yes |
 | Q12 | Texts verbatim (incl. both password minimums: 6 for login, 8 for registration) into `auth_` resources; `GuestAuthCard` stays an app component | Yes |
+
+## Step 0 result — Sandbox account fixtures (2026-10-21, branch `feature/auth-sandbox`)
+
+- The fake backend serves `POST /api/Tokens` (login), `DELETE /api/Tokens` (logout), `/api/Tokens/google/*` and `/api/Tokens/apple/*` (blocked, 503), `POST /api/Users` (register), `GET /api/Users/exists` and
+  `POST /api/Users/password/forgot`. `SandboxAuthRepository` is deleted: the Sandbox now runs the real `AuthRepositoryImpl`, `AuthService` and `PasswordRecoveryRepositoryImpl` against the fake backend.
+- New chip row «Вход и регистрация» and launch extra `sandbox_auth`: `Works` (default), `WrongPassword` (401 «Invalid credentials»), `EmailTaken`, `RegistrationFailure` (400), `RecoveryFailure` (500).
+  Offline and Server error from the scenario chips also reach sign-in, so the offline and 5xx login cases need no extra chip. `reset` returns the policy to `Works`.
+- The login answers with a JWT whose subject is the Sandbox account (`11111111-1111-4111-8111-111111111111`), so the local session and the signed-in one share a user id.
+- Test: `SandboxApplicationBackendTest.accountFixturesAnswerTheRealAuthServiceAndRecoveryRepository` (the class has 19 tests, 0 failures) drives the real `AuthService` and recovery repository through every policy and the scenarios,
+  and checks that the wrong-password message maps to «Неверный email или пароль» through the legacy `localizedLoginError`.
+- Verified: `SandboxApplicationBackendTest` 19, `assembleDirectSandbox`.
+- **Device check pending:** guest → sign-in under each policy, the registration steps, recovery and the «Забыли пароль?» link on Pixel 7; the phone was locked when the check ran.

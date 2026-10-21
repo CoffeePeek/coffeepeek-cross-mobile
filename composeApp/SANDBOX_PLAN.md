@@ -34,6 +34,12 @@ scenario changes and reset by «Заполнить»/«Очистить». The e
 `SandboxApplicationBackendTest.settingsFixturesServeTheUpdatePolicyAndTheCityCatalogThroughTheRealParsers`; the installer is still the blocking
 `SandboxUpdateInstaller`, so no download or install flow is exercised.
 
+Auth step 0 (2026-10-21): the fake backend now serves the account endpoints (`POST/DELETE /api/Tokens`, `/api/Tokens/google|apple/*` blocked with a 503, `POST /api/Users`, `GET /api/Users/exists`,
+`POST /api/Users/password/forgot`) and the Sandbox no longer replaces `AuthRepository`: the real repository, `AuthService` and `PasswordRecoveryRepositoryImpl` run against it. The login answers with a JWT whose subject
+is the Sandbox account, so the session code derives the same user id as the local session. A chip row «Вход и регистрация» (launch extra `--es sandbox_auth <Works|WrongPassword|EmailTaken|RegistrationFailure|RecoveryFailure>`)
+picks one failure; the existing Offline/Server error scenario chips also reach sign-in. Credentials are still never stored or sent anywhere. Covered by
+`SandboxApplicationBackendTest.accountFixturesAnswerTheRealAuthServiceAndRecoveryRepository`. Google and Apple stay blocked (live gate).
+
 App update step 0 (2026-10-21): the Sandbox root now composes `AppUpdatePrompt` next to the Navigator (as `App.kt` does) and re-checks when
 the update chip or «Заполнить»/«Очистить» changes the policy, so Available, Required and Failure are visible: the prompt/snackbar, «Позже»,
 the error from the non-installing installer and the manual check from Settings. A dismissed optional version is stored in the Sandbox

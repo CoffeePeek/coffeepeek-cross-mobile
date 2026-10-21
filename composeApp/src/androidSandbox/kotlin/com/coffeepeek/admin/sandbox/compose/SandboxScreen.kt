@@ -20,6 +20,7 @@ import com.coffeepeek.admin.AppContent
 import com.coffeepeek.admin.map.LocalMapStyleOverride
 import com.coffeepeek.admin.sandbox.SandboxApplication
 import com.coffeepeek.admin.sandbox.SandboxViewModel
+import com.coffeepeek.admin.sandbox.backend.SandboxAuthPolicy
 import com.coffeepeek.admin.sandbox.backend.SandboxCities
 import com.coffeepeek.admin.sandbox.backend.SandboxScenario
 import com.coffeepeek.admin.sandbox.backend.SandboxUpdatePolicy
@@ -58,7 +59,7 @@ import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
                         application.backend.scenario = scenario; model.refresh(scenario)
                     }, { populated ->
                         application.backend.reset(populated)
-                        model.refresh(SandboxScenario.Ready, SandboxUpdatePolicy.UpToDate, SandboxCities.Single)
+                        model.refresh(SandboxScenario.Ready, SandboxUpdatePolicy.UpToDate, SandboxCities.Single, SandboxAuthPolicy.Works)
                         updates.check()
                     }, {
                         ThemeManager.setTheme(if (ThemeManager.themeMode.value == ThemeMode.DARK) ThemeMode.LIGHT else ThemeMode.DARK)
@@ -67,6 +68,8 @@ import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
                         updates.check()
                     }, state.cities, { cities ->
                         application.backend.cities = cities; model.refresh(state.scenario, cities = cities)
+                    }, state.authPolicy, { policy ->
+                        application.backend.authPolicy = policy; model.refresh(state.scenario, authPolicy = policy)
                     })
                     TextButton({ application.sessions.login(); model.refresh(state.scenario) }) { Text(stringResource(R.string.sandbox_login)) }
                     TextButton({ application.sessions.applySession(null); model.refresh(state.scenario) }) { Text(stringResource(R.string.sandbox_guest)) }

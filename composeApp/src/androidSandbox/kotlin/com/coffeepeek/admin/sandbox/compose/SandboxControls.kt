@@ -10,6 +10,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.R
+import com.coffeepeek.admin.sandbox.backend.SandboxAuthPolicy
 import com.coffeepeek.admin.sandbox.backend.SandboxCities
 import com.coffeepeek.admin.sandbox.backend.SandboxScenario
 import com.coffeepeek.admin.sandbox.backend.SandboxUpdatePolicy
@@ -18,7 +19,8 @@ import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 @Composable internal fun SandboxControls(scenario: SandboxScenario, enabled: Boolean,
     onScenario: (SandboxScenario) -> Unit, onReset: (Boolean) -> Unit, onTheme: () -> Unit,
     updatePolicy: SandboxUpdatePolicy = SandboxUpdatePolicy.UpToDate, onUpdatePolicy: (SandboxUpdatePolicy) -> Unit = {},
-    cities: SandboxCities = SandboxCities.Single, onCities: (SandboxCities) -> Unit = {}) {
+    cities: SandboxCities = SandboxCities.Single, onCities: (SandboxCities) -> Unit = {},
+    authPolicy: SandboxAuthPolicy = SandboxAuthPolicy.Works, onAuthPolicy: (SandboxAuthPolicy) -> Unit = {}) {
     Surface(color = MaterialTheme.colorScheme.primaryContainer) {
         Column(Modifier.fillMaxWidth().padding(8.dp)) {
             Text(stringResource(R.string.sandbox_banner), style = MaterialTheme.typography.labelLarge)
@@ -57,6 +59,19 @@ import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
                         SandboxCities.Failure -> R.string.sandbox_cities_failure
                     }
                     FilterChip(cities == mode, { onCities(mode) }, { Text(stringResource(label)) }, enabled = enabled)
+                }
+            }
+            Text(stringResource(R.string.sandbox_auth_title), style = MaterialTheme.typography.labelMedium)
+            Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                SandboxAuthPolicy.entries.forEach { mode ->
+                    val label = when (mode) {
+                        SandboxAuthPolicy.Works -> R.string.sandbox_auth_works
+                        SandboxAuthPolicy.WrongPassword -> R.string.sandbox_auth_wrong_password
+                        SandboxAuthPolicy.EmailTaken -> R.string.sandbox_auth_email_taken
+                        SandboxAuthPolicy.RegistrationFailure -> R.string.sandbox_auth_registration_failure
+                        SandboxAuthPolicy.RecoveryFailure -> R.string.sandbox_auth_recovery_failure
+                    }
+                    FilterChip(authPolicy == mode, { onAuthPolicy(mode) }, { Text(stringResource(label)) }, enabled = enabled)
                 }
             }
             Row(Modifier.horizontalScroll(rememberScrollState())) {
