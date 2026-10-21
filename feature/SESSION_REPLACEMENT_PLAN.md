@@ -1,0 +1,116 @@
+# Session replacement — inventory and plan
+
+Goal: nothing in `feature/*`, `core/*` or migrated app code depends on the legacy
+`com.coffeepeek.domain.repository.SessionRepository` / `model.Session`, so that
+`modules/domain`, `modules/data` and `modules/network` can later be deleted in one sweep
+([LEGACY_REMOVAL.md](LEGACY_REMOVAL.md) section D, step 1). No product behaviour changes.
+Inventory taken 2026-10-21 at `feature/legacy-consolidation`.
+
+## 1. What exists today
+
+| Piece | Where | Notes |
+|---|---|---|
+| `Session(accessToken, refreshToken?, userId?)` | `modules/domain` | plain data class |
+| `SessionRepository` (10 methods) | `modules/domain` | peek/apply/isActive/get/persist/replace/save/warmCache/observe/isLoggedIn |
+| `SessionRepositoryImpl` | `modules/data` | in-memory snapshot + `writer` mutex; reads secure store, imports old `SESSION`/`API_KEYS` rows from the legacy Room settings table (uses `DatabaseCore`, `AuthResp`) |
+| `SessionAuth.isActive`, `JwtUtils` | `modules/data/util` | active = non-blank token + userId, and (unexpired token or a refresh token) |
+| `SessionSecureStore` + Android/iOS platform stores, `RoomSessionSecureStore` | `modules/data/session` | Keychain / encrypted storage; carries `AuthResp` |
+| `SessionTokenProvider` | `modules/data/session` | adapts the repository to the legacy API client (`getToken`, `saveToken`, `replaceToken` lambdas in `DataModule.kt`) |
+| `UserSessionCleaner` | `modules/data/session` | logout: clears session, favorites for the owner, HTTP/app caches |
+| `BearerSession`, `SessionTokens` | `core/network` | the new transport contract; **no implementation yet** |
+| `SessionAuthentication`, `SessionRefreshCoordinator` | `modules/network` | legacy token refresh; goes away with `modules/network` |
+
+## 2. Who uses it
+
+~75 files reference `SessionRepository` (about 45 production, the rest tests/fixtures):
+
+- `composeApp/androidMain/di/*` — **23 files**, the adapters of already migrated owners (Shop,
+  Profile, Settings, Home, History, Coffee, Roaster, Favorites...). They only **read**:
+  `peekSession` (16 call sites), `isActiveSession` (9), `observeSession` (13), `getSession` (1).
+- `composeApp/commonMain` — ~21 files: legacy ViewModels (`Navigator`, `Feed`, `Shop`, `Profile`,
+  roaster, review, delete-account, visited places...), `SessionRealtimeManager`, photo session
+  (`CpImage`, `ProtectedPhotoSession`, `PhotoSessionInvalidation`), analytics installation,
+  favorites, community.
+- `modules/data` — 14 files (repositories that attach the user id, `AuthRepositoryImpl`, cleaner).
+- Fields read from `Session` in the app: `userId` (~42 uses) and `accessToken` (~10, photos/transport).
+- **Writers** (save/apply/replace): only `AuthRepositoryImpl` (login/Google/refresh), the legacy
+  client `saveToken`/`replaceToken` lambdas, `UserSessionCleaner`, and `BaseViewModel` (session
+  expiry). Everything else reads.
+
+Conclusion: the API surface migrated features need is tiny and read-only ("who is the active
+account, is somebody signed in, tell me when it changes"). `author-blocking` already got exactly
+that as a port (`AuthorBlockingAccount`).
+
+## 3. Target
+
+New KMP module `core/session` (`module.core.session`), no dependency on Room, `modules/*` or Ktor:
+
+```kotlin
+data class Session(val accessToken: String, val refreshToken: String? = null, val userId: String? = null)
+
+interface SessionReader {                      // what features/adapters get
+    fun peekSession(): Session?                // in-memory snapshot
+    fun isActiveSession(session: Session?): Boolean
+    fun observeSession(): Flow<Session?>
+}
+
+interface SessionStore : SessionReader {       // auth, transport, logout only
+    suspend fun getSession(): Session?
+    suspend fun saveSession(session: Session?)
+    suspend fun replaceSession(expected: Session?, session: Session?): Boolean
+    fun applySession(session: Session?)
+    suspend fun persistSession(session: Session?)
+    suspend fun warmCache()
+    suspend fun isLoggedIn(): Boolean
+}
+```
+
+`SessionAuth` and `JwtUtils` move with it (they define "active"). The implementation, secure
+stores (Android/iOS) and `SessionTokenProvider` move from `modules/data` into `core/session`.
+The one-time import of old `SESSION`/`API_KEYS` rows from Room stays in the app as an injected
+`legacyImport: suspend () -> Session?` so core does not depend on Room. `UserSessionCleaner` stays
+legacy (it needs the legacy `FavoriteRepository`) and just uses `SessionStore`.
+
+Owner-facing rule afterwards: feature impls never see sessions; the app adapter hands them an
+opaque account key or a small port (as for author blocking). `SessionReader` is what app adapters
+and legacy ViewModels receive.
+
+## 4. Steps (each leaves the app building and all tests green)
+
+0. **Parity tests first** on the legacy code: `SessionAuth.isActive` table (blank token/userId,
+   expired access token with and without refresh token), `replaceSession` expected-mismatch,
+   observe emits on save/apply, import of old settings rows. Existing:
+   `SessionRepositoryConcurrencyTest`, `SessionTokenProviderTest`, `UserSessionCleanerTest`.
+1. **Create `core/session`** with `Session`, `SessionReader`, `SessionStore`, `SessionAuth`,
+   `JwtUtils` (moved, tests moved with them). No behaviour change.
+2. **Bridge with zero churn:** in `modules/domain`, `typealias Session = com.coffeepeek.core.session.Session`
+   and `interface SessionRepository : SessionStore`. All ~200 existing imports keep compiling.
+3. **Move the implementation** (`SessionRepositoryImpl`, secure stores, token provider) into
+   `core/session`, keeping the Room import behind the injected `legacyImport`. Android + iOS
+   compile; run the moved concurrency tests.
+4. **Migrate readers by area, smallest blast radius first:** (a) the 23 `androidMain/di` adapters
+   to `SessionReader`; (b) `SessionAuthorBlockingAccount` and other adapters; (c) legacy commonMain
+   ViewModels as each owner (App update, Auth, Community, Contributions, Discovery) is migrated —
+   new owners are written against `SessionReader` from day one.
+5. **Writers:** Auth owner takes login/Google/refresh/logout; transport switches to
+   `core/network` `BearerSession` implemented on `SessionStore`, retiring `SessionTokenProvider`
+   and `modules/network` refresh code.
+6. **Delete the bridge** (typealias and `SessionRepository`) when step 4/5 consumers are gone.
+
+## 5. Risks and gates
+
+- Security-sensitive: tokens, refresh races and account switching. Do not change algorithms while
+  moving; moved tests must pass unchanged. Account-switch tests exist in author blocking, Shop
+  and Profile adapters and must stay green.
+- iOS: the Keychain store and `compileKotlinIosSimulatorArm64` are part of every step's check.
+- Stored data: users must stay signed in across the update (secure store keys unchanged, old
+  Room rows still imported once). Verify on a build upgraded over an existing install, not only
+  in Sandbox; Sandbox covers signed-in/out flows with fake sessions only.
+- Out of scope: auth screens and `AuthRepositoryImpl` (Auth owner), `modules/network` removal.
+
+## 6. Decisions needed
+
+1. Module name `core/session` and the `SessionReader` / `SessionStore` split — recommended.
+2. Bridge through `typealias` + `SessionRepository : SessionStore` (zero churn) — recommended
+   over a big-bang import rewrite.
+3. Keep `UserSessionCleaner` in `modules/data` until legacy favorites go away — recommended.
