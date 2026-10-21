@@ -118,3 +118,14 @@ Layout `feature/app-update/{api,domain,data,impl}`, package `com.coffeepeek.feat
 | Q6 | Texts verbatim, the three `update_*` strings and the dialog texts move into `appupdate_` resources | Yes |
 | Q7 | No analytics events (none exist today) | Yes |
 | Q8 | Prompt visuals preserved (card, icon, buttons, swipe), only the building blocks move to design-system | Yes |
+
+## Step 0 result — Sandbox hosts the update prompt (2026-10-21)
+
+- `SandboxScreen` composes `AppUpdatePrompt(updates)` next to `AuthorBlockingHost` (outside the re-keyed Navigator) and calls `updates.check()` when the update chip or
+  the «Заполнить»/«Очистить» reset changes the policy. No production code changed; the installer stays the non-installing fake (decision Q5).
+- New unit test `SandboxApplicationBackendTest.updatePromptStateFollowsTheFixturePoliciesThroughTheRealRepository` drives the real `AppUpdateRepositoryImpl` and
+  `AppUpdateState` through every fixture: up to date (no prompt); available (prompt, not required, «Позже» persists across a fresh state, a manual check shows it again);
+  required (prompt, dismiss ignored); failure (silent when automatic, failure message when manual); manual up to date message.
+- Verified: `SandboxApplicationBackendTest` 18, 0 failures; `assembleDirectSandbox` passes.
+- **Not verified on a device:** the visual prompt, the Play snackbar flow and the Required card were not exercised. The only phone connected is a Pixel 10a, not the
+  Pixel 7 used so far, and it also has the regular app installed, so nothing was installed on it without your go-ahead.

@@ -1,5 +1,7 @@
 package com.coffeepeek.admin.sandbox.compose
 
+import com.coffeepeek.admin.feature.appupdate.ui.AppUpdatePrompt
+import com.coffeepeek.admin.feature.appupdate.ui.AppUpdateState
 import com.coffeepeek.admin.feature.authorblocking.ui.AuthorBlockingHost
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
@@ -12,6 +14,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
+import org.koin.compose.koinInject
 import com.coffeepeek.R
 import com.coffeepeek.admin.AppContent
 import com.coffeepeek.admin.map.LocalMapStyleOverride
@@ -30,6 +33,7 @@ import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 
 @Composable internal fun SandboxScreen(model: SandboxViewModel, application: SandboxApplication) {
     val state by model.state.collectAsStateWithLifecycle()
+    val updates = koinInject<AppUpdateState>()
     AppContent {
         CompositionLocalProvider(LocalMapStyleOverride provides """{"version":8,"sources":{},"layers":[{"id":"sandbox-background","type":"background","paint":{"background-color":"#716552"}}]}""",
             LocalPhotoPickerOverride provides { limit, deliver ->
@@ -42,6 +46,8 @@ import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
                 }
                 // App.kt hosts this next to the Navigator; without it block/unblock confirmations never appear.
                 AuthorBlockingHost()
+                // Same for the update prompt: App.kt hosts it at the root and it checks on every resume.
+                AppUpdatePrompt(updates)
             }
         }
         if (state.controls) Dialog({ model.controls(false) }) {
@@ -52,10 +58,12 @@ import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
                     }, { populated ->
                         application.backend.reset(populated)
                         model.refresh(SandboxScenario.Ready, SandboxUpdatePolicy.UpToDate, SandboxCities.Single)
+                        updates.check()
                     }, {
                         ThemeManager.setTheme(if (ThemeManager.themeMode.value == ThemeMode.DARK) ThemeMode.LIGHT else ThemeMode.DARK)
                     }, state.updatePolicy, { policy ->
                         application.backend.updatePolicy = policy; model.refresh(state.scenario, updatePolicy = policy)
+                        updates.check()
                     }, state.cities, { cities ->
                         application.backend.cities = cities; model.refresh(state.scenario, cities = cities)
                     })

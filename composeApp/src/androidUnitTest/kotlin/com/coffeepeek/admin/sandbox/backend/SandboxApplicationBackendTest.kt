@@ -1,5 +1,16 @@
 package com.coffeepeek.admin.sandbox.backend
 
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.CoroutineScope
+import com.coffeepeek.room.repository.SettingRepository
+import com.coffeepeek.room.model.Setting
+import com.coffeepeek.admin.feature.appupdate.ui.UpdateUiState
+import com.coffeepeek.admin.feature.appupdate.ui.AppUpdateState
+import com.coffeepeek.admin.feature.appupdate.data.AppUpdateRepositoryImpl
 import com.coffeepeek.api.CoffeePeekClient
 import com.coffeepeek.api.feature.favorites.FavoritesApiService
 import com.coffeepeek.api.feature.feed.FeedApiService
@@ -331,6 +342,49 @@ class SandboxApplicationBackendTest {
         backend.scenario = SandboxScenario.Ready
         assertEquals(false, profiles.getProfile(friend).getOrThrow().isFollowing)
         assertNull(users.getAccountDeletionRequest().getOrThrow())
+    } }
+    @Test fun updatePromptStateFollowsTheFixturePoliciesThroughTheRealRepository() = runBlocking { fixture { backend, client ->
+        class Settings : SettingRepository {
+            val rows = mutableMapOf<String, String>()
+            override suspend fun save(model: Setting) { rows[model.key] = model.value }
+            override suspend fun read(key: String) = rows[key]?.let { Setting(key, it) }
+            override fun readFlow(key: String): Flow<Setting?> = emptyFlow()
+            override suspend fun readAll() = rows.map { Setting(it.key, it.value) }
+            override fun readAllFlow(): Flow<List<Setting>> = emptyFlow()
+            override suspend fun delete(key: String) { rows.remove(key) }
+        }
+        val settings = Settings()
+        val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+        // A new state per call stands for a fresh process: only the dismissed version survives.
+        suspend fun check(manual: Boolean = false, state: AppUpdateState = AppUpdateState(AppUpdateRepositoryImpl(client.client, settings), scope, currentVersion = 5)): Pair<AppUpdateState, UpdateUiState> {
+            state.check(manual); return state to state.state.first { !it.checking }
+        }
+        try {
+            assertFalse(check().second.showPrompt)
+
+            backend.updatePolicy = SandboxUpdatePolicy.Available
+            val (optional, shown) = check()
+            assertTrue(shown.showPrompt); assertFalse(shown.update!!.isRequired(5))
+            optional.dismiss()
+            assertFalse(check(state = optional).second.showPrompt)
+            assertFalse(check().second.showPrompt)
+            assertTrue(check(manual = true).second.showPrompt)
+
+            backend.updatePolicy = SandboxUpdatePolicy.Required
+            val (required, mandatory) = check()
+            assertTrue(mandatory.showPrompt); assertTrue(mandatory.update!!.isRequired(5))
+            required.dismiss()
+            assertTrue(check().second.showPrompt)
+
+            backend.updatePolicy = SandboxUpdatePolicy.Failure
+            val automatic = check().second
+            assertFalse(automatic.showPrompt); assertNull(automatic.message)
+            val manual = check(manual = true).second
+            assertTrue(manual.checkFailed); assertEquals("Не удалось проверить обновления. Попробуйте позже.", manual.message)
+
+            backend.updatePolicy = SandboxUpdatePolicy.UpToDate
+            assertEquals("Установлена актуальная версия", check(manual = true).second.message)
+        } finally { scope.cancel() }
     } }
     @Test fun settingsFixturesServeTheUpdatePolicyAndTheCityCatalogThroughTheRealParsers() = runTest { fixture { backend, client ->
         // The shared client throws on a non-2xx answer; the app's update state treats that exactly like "no policy".
