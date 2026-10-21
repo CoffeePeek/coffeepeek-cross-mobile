@@ -207,3 +207,17 @@ Already covered before this step and left as is: `AppUpdateStateTest`/`AppUpdate
 **Not covered on purpose** (the logic is inline in composables, and the Compose UI suites were removed at the owner's request, see `feature/UI_TEST_REMOVAL.md`): the row rules of `SettingsScreen`
 (blocked-authors row only signed in, guest card only for guests, add-shop/roaster rows for everyone), the support/share/terms/privacy targets, and the consent row (`authReady && userId`, toggle → `setConsent`).
 These move into `SettingsViewModel`/`UsageConsentPort` at steps 3–4, where they get unit tests; until then Sandbox and device checks cover them. Nothing here changed behaviour, so no test had to flip.
+
+## Step 2 result — `feature/settings` domain and api, ports and app adapters (2026-10-21)
+
+- **Modules** `feature/settings/domain` and `feature/settings/api` (KMP, iOS targets compile), registered in `Modules.kt` and used by `composeApp`. No `impl` yet, so nothing is bound in Koin and no screen
+  changed: the legacy Settings code still runs on every platform.
+- **domain**: `ThemeMode` (same names as the persisted setting), `SettingsCity`, `UsageConsentState(available, accepted)`, `UpdateCheckState(checking, message, updateAvailable)`. The pure
+  `resolveSelectedCityId` from the plan was **not** copied: its only consumer is the app-owned `CityPreference`, so a second copy would be dead code.
+- **api ports**: `ThemePort`, `CityPort` (`loadCities` = load the catalog and resolve the saved choice, as production did; a failure changes nothing), `SettingsAccountPort`, `UsageConsentPort`,
+  `UpdateCheckPort` (a check is always manual), `SettingsExternalActions` (support, terms, privacy, share) and `SettingsAppInfo(versionName)`. Navigation callbacks come with the entries (steps 3–4).
+- **App adapters** (`composeApp/androidMain/di/settings/AndroidSettingsPorts.kt`) over `ThemeManager`, `CityPreference` + `ShopRepository`, `SessionRepository`, `AnalyticsService`, `AppUpdateState`,
+  `OpenInBrowser`/`ShareHelper`/`LegalUrls`. `AndroidSettingsPortsTest` (10): theme mapping both ways through the global manager; city resolve-on-load, failure changes nothing, select persists and
+  ignores blank; signed in = active session **with a user id** (legacy rule) and the distinct flow; consent unavailable without a service and before a signed-in identity, follows the toggle and the store,
+  turns unavailable on sign-out; update row mapping with manual checks (update available, current version, failure message); the legacy URLs and share text.
+- **Checks**: `testDirectDebugUnitTest --tests '*di.settings*'` green, `compileKotlinIosSimulatorArm64` (domain, api, composeApp) and `compileDirectDebugKotlinAndroid` green.

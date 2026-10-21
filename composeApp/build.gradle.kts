@@ -79,6 +79,8 @@ kotlin {
             implementation(project(module.feature.profile.api))
             implementation(project(module.feature.profile.domain))
             implementation(project(module.feature.profile.data))
+            implementation(project(module.feature.settings.api))
+            implementation(project(module.feature.settings.domain))
             implementation(project(module.core.designSystem))
             implementation(project(module.feature.favorites.domain))
             implementation(libs.posthog.kmp)
