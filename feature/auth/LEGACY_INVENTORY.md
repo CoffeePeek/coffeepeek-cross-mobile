@@ -151,5 +151,22 @@ There is **no `feature/auth` module yet**; this directory holds only this file.
 - The login answers with a JWT whose subject is the Sandbox account (`11111111-1111-4111-8111-111111111111`), so the local session and the signed-in one share a user id.
 - Test: `SandboxApplicationBackendTest.accountFixturesAnswerTheRealAuthServiceAndRecoveryRepository` (the class has 19 tests, 0 failures) drives the real `AuthService` and recovery repository through every policy and the scenarios,
   and checks that the wrong-password message maps to «Неверный email или пароль» through the legacy `localizedLoginError`.
-- Verified: `SandboxApplicationBackendTest` 19, `assembleDirectSandbox`.
-- **Device check pending:** guest → sign-in under each policy, the registration steps, recovery and the «Забыли пароль?» link on Pixel 7; the phone was locked when the check ran.
+- Verified: `SandboxApplicationBackendTest` 19, `assembleDirectSandbox`, the device run below.
+- Device check, Pixel 7 / Android 17, `com.coffeepeek.sandbox` only, data cleared per run, guest mode, launch extra `sandbox_auth` (screens opened from Settings → «Войти»):
+  - *Works*: empty/invalid fields show «Введите корректный email» and «Пароль должен содержать как минимум 6 символов» together (A2); valid credentials sign in, the app lands on the search tab, the Profile tab appears and the guest card is gone (A5, F3).
+  - *WrongPassword*: inline «Неверный email или пароль» above «Забыли пароль?» (A4).
+  - *Offline* (scenario chip, with the account policy on `Works`): inline «Не удалось войти. Проверьте email и пароль», i.e. the generic text, not the network text of `localizedLoginError` (see finding 2 below).
+  - *EmailTaken*: registration step 1 shows «Этот Email уже занят» under the field (C2).
+  - *RegistrationFailure*: the global dialog «Что-то пошло не так» with the **raw server message** («Registration rejected») and «Понятно».
+  - *Works* registration: reaches «Проверьте почту — Мы отправили ссылку на new@example.com. Перейдите по ссылке чтобы активировать аккаунт. Ссылка действует 10 минут.» with «На страницу входа» (C5).
+  - *RecoveryFailure*: «Не удалось отправить письмо. Проверьте соединение и попробуйте снова.» under the field; *Works*: the EmailSent text with «Вернуться ко входу» and «Указать другой email» (D2).
+  - Social buttons and the "or" divider are hidden because Google is not configured in the Sandbox (A8).
+
+### Findings from the device run (add to the inventory rows above)
+
+1. **C7 — the registration submit is gated.** On the Details step the primary button looks disabled and ignores taps until the name is filled, the password has 8+ characters and the terms are accepted; the "one global message" validation of C4 is therefore not reachable from the UI. It must be characterized with the view model, and the gating kept.
+2. **A4 note — offline mapping.** An offline request (an `IOException` in the Sandbox) reaches the user as «Не удалось войти. Проверьте email и пароль»: the exception text carries none of the words `localizedLoginError` treats as network. A real offline failure may word its message differently; step 1 should pin down what `AuthService` produces for an I/O failure before the mapping is rewritten.
+3. **C8 — password strength meter.** Under the registration password there is a three-segment meter with a label («средний» for `password1`).
+4. **C9 — global error dialog.** The legacy base class shows the raw server message (`ApiException.message`) in a dialog with a mascot titled «Что-то пошло не так» and a «Понятно» button; the migrated owner must decide what to show (see Q8).
+5. **A9 — system password manager.** After a successful sign-in and after a successful registration Android offers to save the password in Google Password Manager. The prompt is a system dialog and was dismissed with ✕ (nothing was saved); it comes from the autofill framework, so the migrated fields should keep the same autofill hints (username/email and password) or consciously change them.
+6. **Layout (owner request, recovery screen).** On «Восстановление пароля» (no mascot) the card starts right under the wordmark and almost touches the close button and the CoffeePeek logo. The card needs a gap below the header; the migrated screen must keep that gap, and the legacy scaffold gets the same fix on its own branch.
