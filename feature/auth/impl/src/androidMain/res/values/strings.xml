@@ -1,0 +1,33 @@
+<resources>
+    <!-- Russian only, copied verbatim from the production sign-in and password recovery screens. -->
+    <string name="auth_close">Закрыть</string>
+    <string name="auth_email_label">Email</string>
+    <string name="auth_email_placeholder">name@example.com</string>
+    <string name="auth_password_label">Пароль</string>
+    <string name="auth_show_password">Показать пароль</string>
+    <string name="auth_hide_password">Скрыть пароль</string>
+
+    <string name="auth_email_required">Введите email</string>
+    <string name="auth_email_invalid">Введите корректный email</string>
+    <string name="auth_password_required">Введите пароль</string>
+    <string name="auth_password_too_short">Пароль должен содержать как минимум %1$d символов</string>
+
+    <string name="auth_login_title">Вход в аккаунт</string>
+    <string name="auth_login_subtitle">Войдите в свой аккаунт CoffeePeek.</string>
+    <string name="auth_forgot_password">Забыли пароль?</string>
+    <string name="auth_login">Войти</string>
+    <string name="auth_create_account">Создать аккаунт</string>
+    <string name="auth_login_wrong_credentials">Неверный email или пароль</string>
+    <string name="auth_login_network">Не удалось подключиться. Проверьте интернет-соединение</string>
+    <string name="auth_login_unknown">Не удалось войти. Проверьте email и пароль</string>
+    <string name="auth_signing_in">Входим…</string>
+
+    <string name="auth_recovery_title">Восстановление пароля</string>
+    <string name="auth_recovery_info">Введите email аккаунта — мы отправим ссылку для восстановления пароля.</string>
+    <string name="auth_recovery_sent">Если аккаунт с этим email существует, на него отправлено письмо. Откройте ссылку из письма в браузере и измените пароль на сайте. Затем вернитесь в приложение и войдите с новым паролем. Проверьте также папку «Спам».</string>
+    <string name="auth_recovery_send">Отправить письмо</string>
+    <string name="auth_recovery_busy">Подождите…</string>
+    <string name="auth_recovery_back_to_login">Вернуться ко входу</string>
+    <string name="auth_recovery_another_email">Указать другой email</string>
+    <string name="auth_recovery_failed">Не удалось отправить письмо. Проверьте соединение и попробуйте снова.</string>
+</resources>

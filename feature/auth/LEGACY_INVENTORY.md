@@ -217,3 +217,19 @@ New modules `:feature:auth:{domain,api,data}` (`module.feature.auth.*`, package 
   registration, e-mail check, recovery, sign-out rules, ported from the legacy repository tests); app `AuthAdaptersTest` 1.
 - Verified: `:feature:auth:domain` 12 and `:feature:auth:data` 12 tests, composeApp Direct and Play unit runs (`di`), 0 failures; Android unit and instrumented test compilation; iOS simulator and iOS test compilation (`composeApp`, `feature:auth:data`);
   `assembleDirectSandbox`. No device check: no UI changed.
+
+## Step 3a result — `impl`: sign-in and password recovery (2026-10-21, branch `feature/auth-impl-login`)
+
+New module `:feature:auth:impl` (resource prefix `auth_`) with the two screens, their typed MVI view models and the Android entries. Nothing in the app composes them yet (step 4), so there is **no device check in this step**.
+
+- **View models** (commonMain): `LoginViewModel` ports `AuthViewModel`: both fields are checked at once, the e-mail is trimmed and the password sent as typed, a shown field error is validated live only while it is shown, any edit clears the request error;
+  a success reports `signedIn(userId, Password, Login, email)` through the new api port `AuthAnalytics` and emits `SignedIn`; a failure is classified by the domain rules. `PasswordRecoveryViewModel` ports the legacy recovery view model: edits ignored while busy,
+  invalid or empty e-mail never requests, failure retryable, EmailSent step with «Указать другой email». Errors are typed (`EmailIssue`, `PasswordIssue`, `LoginFailure`, `RecoveryError`), texts live in the UI.
+- **Screens** (androidMain, on `core/design-system`): `AuthScaffold` (ambient background, wordmark, card, glass close button via `CoffeePeekGlassIconButton`), `AuthTextField` (compact outlined field, leading icon, password toggle, inline error), `AuthPrimaryButton`, `LoginScreen`,
+  `PasswordRecoveryScreen`. Texts verbatim in `auth_` resources; the laptop mascot is copied as `auth_mascot_laptop` (the legacy copy stays for iOS).
+- **Improvements (owner decision Q8, accepted):** the global loading overlay is replaced by a spinner on the primary button while the form locks (a second submit is ignored); the global error dialog is not needed on these screens (errors are inline).
+  The recovery card keeps the 24 dp gap below the header (owner request).
+- **Left out on purpose:** the Google button and the "or" divider on the login screen (step 3c); the registration screens (step 3b). Navigation targets (`onSignedIn`, `onForgotPassword(email)`, `onCreateAccount`, `onClose`, `onBackToLogin`) are callbacks of the entries, as for the other owners.
+- Tests: `LoginViewModelTest` 6 and `PasswordRecoveryViewModelTest` 5 (validation, what is sent, analytics and event, failure classes, form lock, live-validation rule, edits ignored while busy, retry).
+- Verified: `:feature:auth:impl` 11 tests, domain 12 and data 12 still pass; impl and api iOS simulator compilation; `composeApp` Android unit-test compilation, iOS compilation and `assembleDirectSandbox`.
+- **Pending for step 4 (device):** the visual parity of the two screens against the legacy ones (card, wordmark, fields, errors, loader on the button, recovery spacing), the system password-manager prompt after sign-in (the new fields keep `Email`/`Password` keyboard types and no special hints), dark theme and large font.
