@@ -26,6 +26,8 @@ import com.coffeepeek.domain.repository.AuthRepository
 import com.coffeepeek.domain.repository.SessionRepository
 import com.coffeepeek.domain.repository.ShopRepository
 import com.coffeepeek.domain.repository.UserRepository
+import com.coffeepeek.feature.notifications.api.NotificationFeature
+import com.coffeepeek.feature.notifications.api.NotificationInboxState
 import com.coffeepeek.room.model.Setting
 import com.coffeepeek.room.repository.SettingRepository
 import kotlinx.coroutines.CompletableDeferred
@@ -214,6 +216,18 @@ class ProfileViewModelTest {
         override suspend fun delete(key: String) = Unit
     }
 
+    private object Notifications : NotificationFeature {
+        override val state: StateFlow<NotificationInboxState> get() = error("unused")
+        override fun refresh(): Unit = error("unused")
+        override fun loadMore(): Unit = error("unused")
+        override fun setPushEnabled(enabled: Boolean): Unit = error("unused")
+        override fun markRead(id: String): Unit = error("unused")
+        override fun markAllRead(): Unit = error("unused")
+        override fun foreground(): Unit = error("unused")
+        override fun onCheckInCreated(): Unit = error("unused")
+        override suspend fun beforeLogout() = Unit
+    }
+
     private inner class Harness(
         initial: Session?, cached: UserProfile?,
         refresh: Result<UserProfile> = Result.failure(IllegalStateException("none")),
@@ -226,6 +240,6 @@ class ProfileViewModelTest {
         val sessions = Sessions(initial)
         val users = Users(cached, refresh, refreshGate)
         fun viewModel() = ProfileViewModel(Auth(logout, onLogout), users, sessions, Shops(cities),
-            CityPreference(Settings {}), ReviewDraftStore(Settings(onClearDrafts)))
+            CityPreference(Settings {}), ReviewDraftStore(Settings(onClearDrafts)), Notifications)
     }
 }
