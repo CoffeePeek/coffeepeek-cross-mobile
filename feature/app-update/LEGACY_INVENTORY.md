@@ -132,3 +132,19 @@ Layout `feature/app-update/{api,domain,data,impl}`, package `com.coffeepeek.feat
   does when the native step fails; *Required*: the blocking card «Обновите CoffeePeek / Установите новую версию, чтобы продолжить.» appears over the app with the same
   error and «Повторить», no «Позже»; *Failure*: no prompt at launch (silent), and the manual check from Settings shows «Не удалось проверить обновления…» under the row.
 - **Still not exercised:** dark theme and large font on the card, back/outside-tap/swipe on the Required card, the real Play and APK installers, an iOS run, TalkBack.
+
+## Step 1 result — parity tests on the legacy code (2026-10-21, branch `feature/appupdate-parity-tests`)
+
+12 new tests, no production change. Together with the existing `AppUpdateStateTest` 5, `AppUpdateTest` 2, `PlayUpdateRetryTest` 5, `UpdateInstallationTest` 2 they pin rows A-C of the inventory:
+
+- `AppUpdateCheckBehaviourTest` (commonTest, 8): manual check answers «Установлена актуальная версия» / «Не удалось проверить обновления. Попробуйте позже.» while an automatic check stays silent
+  (B1); an error or a timeout is a failed check, not a crash (B1); an unconfigured version never fetches and a manual check reports a failure (A5); a second check while one runs is ignored (B1);
+  the dismissed version is read once per process, a stored older dismissal does not hide a newer version and a failed write still hides the prompt in memory (A4); a required update cannot be
+  dismissed and keeps prompting (A4); the stages that count as busy (C1); policy host validation (A2).
+- `AppUpdateRepositoryTest` (androidUnitTest, 4, real time because of the 10 s timeout): request is `GET /api/v1/app-version` with `platform`/`channel` from `AppConfig` and `Cache-Control: no-store`
+  (A3); 204, `isSuccess=false` and an http URL give no update; error statuses (404/503) and an unreadable body throw (the state turns them into a failed check); the dismissed version is stored under
+  `dismissed_app_version`, an unreadable value reads as none (A4).
+- **Characterized quirks (kept for the migration, not endorsed):** Ktor accepts `https:///app.apk` and `https://` as having a host, so the policy URL check lets them through; the shared client
+  throws on non-2xx instead of returning, so the repository's `status != 200 -> null` branch only covers 2xx answers other than 200; a manual check with an unconfigured version reports a *failure*.
+- Still not covered by unit tests (device/instrumented only): `PlayUpdateInstaller`, `ApkUpdateInstaller`, `AppUpdatePrompt`, the Android effect, `StoreUpdateInstaller` (inventory D-H).
+- Verified: Direct and Play unit runs of the new classes, 0 failures; iOS test compilation passes.
