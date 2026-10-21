@@ -84,7 +84,7 @@ fun ShopReviewsScreen(shopId: String) {
                             },
                             modifier = if (blurred) Modifier.fillMaxWidth().blur(5.dp) else Modifier.fillMaxWidth(),
                             onPhotoClick = if (blurred) null else { urls, photoIndex -> preview = urls to photoIndex },
-                            onHelpfulClick = if (blurred || own || state.helpfulId != null) null else ({ vm.toggleHelpful(checkIn.id) }),
+                            onHelpfulClick = if (blurred || state.helpfulId != null) null else ({ vm.toggleHelpful(checkIn.id) }),
                             fullVersion = true,
                             onReportClick = if (blurred || own) null else ({ Navigator.navigate(Navigator.Screen.ReportCheckIn(checkIn.id)) }),
                         )
