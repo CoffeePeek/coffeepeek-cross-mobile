@@ -25,15 +25,22 @@ class CommunityHost(
     val feedViewed: @Composable (firstPageCount: Int?, isPublic: Boolean) -> Unit = { _, _ -> },
 )
 
-/** «Лента». The caller owns navigation, the check-in creation flow (the [floatingAction] slot) and the ViewModel store. */
+/** What the floating action slot needs: whether a user is signed in, when the account or scope changes (close open sheets), and how to reload. */
+class CommunityFloating(val isLoggedIn: Boolean?, val sessionGeneration: Long, val refresh: () -> Unit)
+
+/**
+ * «Лента». The caller owns navigation, the check-in creation flow (the [floatingAction] slot) and the ViewModel store.
+ * [onEditHome] opens the Home editor for a home preparation; the list reloads when the user comes back.
+ */
 interface CommunityEntry {
     @Composable
     fun Content(
         onSignIn: () -> Unit,
         onOpenAuthor: (slug: String, name: String, avatarUrl: String?) -> Unit,
         onOpenShop: (slug: String) -> Unit,
+        onEditHome: (id: String) -> Unit,
         modifier: Modifier = Modifier,
         bottomClearance: Dp = 0.dp,
-        floatingAction: @Composable BoxScope.() -> Unit = {},
+        floatingAction: @Composable BoxScope.(CommunityFloating) -> Unit = {},
     )
 }

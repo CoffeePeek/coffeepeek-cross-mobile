@@ -45,8 +45,8 @@ class CommunityViewModelTest {
 
     private fun TestScope.model(
         repository: FakeRepository = FakeRepository(), account: FakeAccount = FakeAccount("one"), analytics: FakeAnalytics = FakeAnalytics(),
-        authors: FakeAuthors = FakeAuthors(),
-    ) = CommunityViewModel(repository, account, analytics, authors).also { store.put("community", it); runCurrent() }
+        authors: FakeAuthors = FakeAuthors(), drinks: FakeDrinks = FakeDrinks(),
+    ) = CommunityViewModel(repository, account, analytics, drinks, authors).also { store.put("community", it); runCurrent() }
 
     private fun TestScope.events(vm: CommunityViewModel) = mutableListOf<CommunityEvent>().also { list -> backgroundScope.launch { vm.events.collect { list += it } } }
     private fun CommunityViewModel.send(action: CommunityAction, scope: TestScope) { onAction(action); scope.runCurrent() }
