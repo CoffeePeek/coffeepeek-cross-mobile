@@ -43,6 +43,7 @@ interface CommunityEntry {
         onOpenShop: (slug: String) -> Unit,
         onEditHome: (id: String) -> Unit,
         modifier: Modifier = Modifier,
+        headerAction: @Composable () -> Unit = {},
         bottomClearance: Dp = 0.dp,
         floatingAction: @Composable BoxScope.(CommunityFloating) -> Unit = {},
     )

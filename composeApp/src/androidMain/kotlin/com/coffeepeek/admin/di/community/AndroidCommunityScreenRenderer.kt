@@ -44,12 +44,13 @@ import com.coffeepeek.feature.community.domain.repository.CommunityRepository
 /** Android routes the feed tab to the migrated entry; navigation, images, the photo viewer, analytics trackers and the creation flow stay app-owned. */
 internal class AndroidCommunityScreenRenderer(private val entry: CommunityEntry) : CommunityScreenRenderer {
     @Composable
-    override fun Content(onCreateCheckIn: () -> Unit) {
+    override fun Content(onCreateCheckIn: () -> Unit, notificationsAction: @Composable () -> Unit) {
         entry.Content(
             onSignIn = { Navigator.navigate(Navigator.Screen.Auth) },
             onOpenAuthor = { slug, name, avatar -> Navigator.navigate(Navigator.Screen.UserProfile(slug, name, avatar)) },
             onOpenShop = { Navigator.navigate(Navigator.Screen.ShopDetail(it)) },
             onEditHome = { Navigator.navigate(Navigator.Screen.EditHomeCheckIn(it)) },
+            headerAction = notificationsAction,
             bottomClearance = LocalFloatingNavClearance.current,
             floatingAction = { floating -> CreateAction(floating, onCreateCheckIn) },
         )
