@@ -9,6 +9,9 @@ routing and refreshes/closes once after an accepted save.
 App composition owns destination lifetimes, revocable account guards, Koin and
 platform/media/catalogue adapters. Home impl owns MVI/rendering; data uses the
 existing authenticated gateway and separate credential-free upload client.
+The editor uses the caller's destination store, retained across Activity
+configuration changes and cleared on final close/account replacement. Global
+creation retains its flow and form together and starts fresh when reopened.
 A single consent-aware tracker is handed to the chosen flow, with no duplicate
 attempt/start/Created and no stale-account callback delivery. Module count is 31.
 

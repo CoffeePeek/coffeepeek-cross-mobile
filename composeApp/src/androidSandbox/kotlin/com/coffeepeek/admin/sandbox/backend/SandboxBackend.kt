@@ -192,28 +192,38 @@ internal class SandboxBackend(private val samplePhoto: ByteArray,
     private fun update(id: String, input: JsonObject, existing: JsonObject?): JsonObject? {
         val instant = input["preparedAt"]?.jsonPrimitive?.content ?: return null
         val date = input["preparedOn"]?.jsonPrimitive?.contentOrNull ?: instant.take(10)
-        fun photo(value: JsonElement?): JsonObject? {
-            val key = (value as? JsonObject)?.get("storageKey")?.jsonPrimitive?.content ?: return null
-            if (key !in uploaded) return null
-            return buildJsonObject { put("id", key); put("url", "/media/$key") }
-        }
-        val originals = (input["photos"] as? JsonArray).orEmpty()
-        val photos = originals.map { photo(it) ?: return null }
+        val photos = (input["photos"] as? JsonArray).orEmpty().map { uploadedPhoto(it) ?: return null }
         return buildJsonObject {
             existing?.forEach { (key, value) -> put(key, value) }
             input.forEach { (key, value) -> if (key !in setOf("photos", "drinkPhoto", "preparedAt")) put(key, value) }
             put("id", id); put("preparedOn", date); put("preparedAtUtc", instant)
             put("createdAtUtc", existing?.get("createdAtUtc") ?: JsonPrimitive(instant))
-            input["customBeanName"]?.let { put("beanName", it) }
-            if (input["coffeeProductSlug"]?.jsonPrimitive?.contentOrNull == "sandbox-ethiopia") {
-                put("coffeeProductId", "22222222-2222-4222-8222-222222222222"); put("beanName", "Sandbox Ethiopia")
-            }
-            val drinkName = input["customDrinkName"]?.jsonPrimitive?.contentOrNull
-            if (drinkName != null) putJsonObject("drink") { put("nameRu", drinkName); put("slug", "other") }
+            put("beanName", beanName(input, existing))
+            if (input["coffeeProductSlug"]?.jsonPrimitive?.contentOrNull == "sandbox-ethiopia")
+                put("coffeeProductId", "22222222-2222-4222-8222-222222222222")
+            put("drink", drink(input))
             if (existing == null) put("photos", JsonArray(photos))
             val visibility = input["visibility"]?.jsonPrimitive?.content ?: "Private"
             put("visibility", visibility); put("moderationState", if (visibility == "Public") "Pending" else "NotSubmitted")
         }
+    }
+
+    private fun beanName(input: JsonObject, existing: JsonObject?): JsonElement = when {
+        input["coffeeProductSlug"]?.jsonPrimitive?.contentOrNull == "sandbox-ethiopia" -> JsonPrimitive("Sandbox Ethiopia")
+        input["coffeeProductId"]?.jsonPrimitive?.contentOrNull != null && input["coffeeProductId"] == existing?.get("coffeeProductId") ->
+            existing?.get("beanName") ?: JsonNull
+        else -> input["customBeanName"] ?: JsonNull
+    }
+
+    private fun drink(input: JsonObject): JsonElement {
+        val name = input["customDrinkName"]?.jsonPrimitive?.contentOrNull ?: return JsonNull
+        return buildJsonObject { put("nameRu", name); put("slug", "other") }
+    }
+
+    private fun uploadedPhoto(value: JsonElement): JsonObject? {
+        val key = (value as? JsonObject)?.get("storageKey")?.jsonPrimitive?.content ?: return null
+        if (key !in uploaded) return null
+        return buildJsonObject { put("id", key); put("url", "/media/$key") }
     }
 
     private fun body(request: HttpRequestData) = (request.body as? OutgoingContent.ByteArrayContent)?.bytes()
