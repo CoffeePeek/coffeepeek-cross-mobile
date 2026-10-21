@@ -26,6 +26,15 @@ import kotlin.test.assertTrue
 class AndroidShopCheckInSessionTest {
     private val input = ShopCheckInCreateInput("public-slug", "Visit", ShopRating(4, 4, 4), "2026-10-09T09:00:00Z")
 
+    @Test fun successfulCreationNotifiesOnceAndReadingOptionsDoesNotNotify() = runTest {
+        var notifications = 0
+        val lease = AndroidShopCheckInSession(CheckInTestSessions(), Repository()) { notifications++ }
+        lease.getDrinkOptions()
+        assertEquals(0, notifications)
+        assertTrue(lease.create(input).isSuccess)
+        assertEquals(1, notifications)
+    }
+
     @Test fun guestAndExpiredSessionCannotReadOrWrite() = runTest {
         for (session in listOf(null, Session("", userId = "owner"))) {
             val sessions = CheckInTestSessions(session)
@@ -76,20 +85,23 @@ class AndroidShopCheckInSessionTest {
     }
 
     @Test fun currentAccountIsCheckedEvenBeforeTheSessionFlowCatchesUp() = runTest {
+        var notifications = 0
         val sessions = CheckInTestSessions()
         val repository = Repository().apply {
             write = { sessions.applySession(Session("changed", userId = "other")); Result.success(Unit) }
         }
-        val lease = AndroidShopCheckInSession(sessions, repository)
+        val lease = AndroidShopCheckInSession(sessions, repository) { notifications++ }
         assertFailsWith<CancellationException> { lease.create(input) }
         assertFalse(lease.isCurrent())
+        assertEquals(0, notifications)
     }
 
     @Test fun resultFailureAndCallerCancellationArePreserved() = runTest {
+        var notifications = 0
         val sessions = CheckInTestSessions()
         val failure = IllegalStateException("Known rejection")
         val repository = Repository().apply { write = { Result.failure(failure) } }
-        val lease = AndroidShopCheckInSession(sessions, repository)
+        val lease = AndroidShopCheckInSession(sessions, repository) { notifications++ }
         assertSame(failure, lease.create(input).exceptionOrNull())
         assertTrue(lease.isCurrent())
         repository.write = { awaitCancellation() }
@@ -97,6 +109,7 @@ class AndroidShopCheckInSessionTest {
         runCurrent()
         pending.cancel()
         assertFailsWith<CancellationException> { pending.await() }
+        assertEquals(0, notifications)
     }
 
     @Test fun failedSessionObservationCancelsBeforeAnyTransportCall() = runTest {

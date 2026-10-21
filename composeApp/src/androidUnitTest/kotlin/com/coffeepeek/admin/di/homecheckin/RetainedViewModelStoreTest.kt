@@ -14,12 +14,12 @@ class RetainedViewModelStoreTest {
     }
 
     @Test fun flowSurvivesUntilReleasedAndTheNextFlowStartsFresh() {
-        val store = RetainedViewModelStore()
+        val store = AndroidGlobalCheckInFlowStore()
         val provider = ViewModelProvider.create(store, ViewModelProvider.NewInstanceFactory())
         val first = provider["flow", Flow::class]
         assertSame(first, provider["flow", Flow::class])
         assertFalse(first.cleared)
-        store.release()
+        store.dispose(changingConfigurations = false)
         assertTrue(first.cleared)
         assertFalse(first === provider["flow", Flow::class])
     }

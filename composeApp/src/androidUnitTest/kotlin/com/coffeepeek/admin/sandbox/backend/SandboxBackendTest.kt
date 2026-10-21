@@ -84,6 +84,33 @@ class SandboxBackendTest {
         } finally { backend.close() }
     }
 
+    @Test fun clearingCustomDrinkRemovesItFromTheSavedRecord() = runTest {
+        val backend = backend()
+        try {
+            val repo = createHomePreparationRepository(backend.gateway, backend.uploader, SandboxBackend.BASE_URL)
+            val created = repo.create(input.copy(drinkSlug = "other", customDrinkName = "Фильтр")).getOrThrow()
+            assertEquals("Фильтр", created.drinkName)
+            val edited = repo.update(created.id, input).getOrThrow()
+            assertNull(edited.drinkName)
+            assertNull(edited.drinkSlug)
+            assertNull(repo.detail(created.id).getOrThrow().drinkName)
+        } finally { backend.close() }
+    }
+
+    @Test fun editingOnlyTheNoteKeepsTheSelectedCatalogBeanName() = runTest {
+        val backend = backend()
+        try {
+            val repo = createHomePreparationRepository(backend.gateway, backend.uploader, SandboxBackend.BASE_URL)
+            val created = repo.create(input.copy(customBeanName = null, coffeeProductSlug = "sandbox-ethiopia")).getOrThrow()
+            assertEquals("Sandbox Ethiopia", created.beanName)
+            val edited = repo.update(created.id, input.copy(customBeanName = null,
+                coffeeProductId = created.coffeeProductId, text = "Edited note")).getOrThrow()
+            assertEquals(created.coffeeProductId, edited.coffeeProductId)
+            assertEquals(created.beanName, edited.beanName)
+            assertEquals(created.beanName, repo.detail(created.id).getOrThrow().beanName)
+        } finally { backend.close() }
+    }
+
     @Test fun readAndWriteFailureScenariosNeverChangeRows() = runTest {
         val backend = backend()
         try {

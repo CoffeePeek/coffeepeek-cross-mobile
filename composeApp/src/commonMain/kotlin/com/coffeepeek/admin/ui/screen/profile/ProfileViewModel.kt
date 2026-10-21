@@ -58,6 +58,7 @@ class ProfileViewModel(
     private val shopRepository: ShopRepository,
     private val cityPreference: CityPreference,
     private val reviewDrafts: ReviewDraftStore,
+    private val notifications: com.coffeepeek.feature.notifications.api.NotificationFeature,
 ) {
     private val workScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
@@ -130,6 +131,7 @@ class ProfileViewModel(
     fun logout() {
         resetProfileState()
         workScope.launch {
+            notifications.beforeLogout()
             authRepository.logout().onFailure { error ->
                 ErrorHandler.showError(
                     error.message?.takeIf(String::isNotBlank)
