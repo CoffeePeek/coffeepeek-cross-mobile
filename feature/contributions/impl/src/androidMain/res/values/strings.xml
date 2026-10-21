@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="contributions_back">Назад</string>
+    <string name="contributions_loading">Загрузка</string>
+    <string name="contributions_load_failed">Ошибка загрузки</string>
+    <string name="contributions_retry">Попробовать снова</string>
+    <string name="contributions_sign_in_prompt">Войдите, чтобы увидеть отправленное</string>
+    <string name="contributions_sign_in">Войти</string>
+
+    <string name="contributions_title_shops">Отправленные кофейни</string>
+    <string name="contributions_title_roasters">Отправленные обжарщики</string>
+    <string name="contributions_title_changes">Мои правки</string>
+    <string name="contributions_empty_shops">Вы ещё не добавляли кофейни</string>
+    <string name="contributions_empty_roasters">Вы ещё не добавляли обжарщиков</string>
+    <string name="contributions_empty_changes">Вы ещё не отправляли правки</string>
+
+    <string name="contributions_tab_approved">Опубликовано</string>
+    <string name="contributions_tab_pending">На модерации</string>
+    <string name="contributions_tab_rejected">Отклонено</string>
+    <string name="contributions_tab_label">%1$s · %2$d</string>
+    <string name="contributions_status_approved">Готово</string>
+    <string name="contributions_status_pending">Проверяется</string>
+    <string name="contributions_status_rejected">Отклонено</string>
+    <string name="contributions_note_waiting">Скоро появится в каталоге</string>
+    <string name="contributions_open_catalog">Открыть в каталоге</string>
+    <string name="contributions_open_request">Посмотреть заявку</string>
+    <string name="contributions_rejected_title">Почему отклонено</string>
+
+    <string name="contributions_section_photos">Фотографии</string>
+    <string name="contributions_section_contacts">Контакты</string>
+    <string name="contributions_section_description">Описание</string>
+    <string name="contributions_section_tags">Особенности</string>
+    <string name="contributions_section_roasters">Обжарщики</string>
+    <string name="contributions_section_equipment">Оборудование</string>
+    <string name="contributions_section_menu">Меню</string>
+    <string name="contributions_section_brew_methods">Методы заваривания</string>
+    <string name="contributions_hint_photos">Порядок и состав фотографий кофейни</string>
+    <string name="contributions_hint_contacts">Телефон, сайт, почта и Instagram</string>
+    <string name="contributions_hint_description">Текст описания заведения</string>
+    <string name="contributions_hint_tags">Теги и особенности</string>
+    <string name="contributions_hint_roasters">С кем работает кофейня</string>
+    <string name="contributions_hint_equipment">Кофемашины и оборудование</string>
+    <string name="contributions_hint_menu">Фото меню, по желанию — напитки и цены</string>
+    <string name="contributions_hint_brew_methods">Способы приготовления</string>
+
+    <string name="contributions_summary_description_cleared">Описание очищено</string>
+    <string name="contributions_summary_contacts">Телефон, почта, сайт и Instagram</string>
+    <string name="contributions_summary_photos">Фото: %1$d сохранено · %2$d добавлено</string>
+    <string name="contributions_summary_tags">Выбрано особенностей: %1$d</string>
+    <string name="contributions_summary_roasters">Выбрано обжарщиков: %1$d</string>
+    <string name="contributions_summary_equipment">Выбрано оборудования: %1$d</string>
+    <string name="contributions_summary_brew_methods">Выбрано методов: %1$d</string>
+    <string name="contributions_summary_menu">Меню: %1$d позиций · %2$d новых фото</string>
+
+    <string name="contributions_request_title">Отправленная правка</string>
+    <string name="contributions_request_not_found">Заявка не найдена</string>
+    <string name="contributions_request_rejection">Причина отклонения</string>
+    <string name="contributions_request_payload">Что отправлено</string>
+    <string name="contributions_request_open_shop">Открыть кофейню</string>
+    <string name="contributions_request_empty">В заявке нет данных для отображения.</string>
+    <string name="contributions_request_description_removed">Описание удалено</string>
+    <string name="contributions_request_removed">Удалено</string>
+    <string name="contributions_request_phone">Телефон</string>
+    <string name="contributions_request_email">Email</string>
+    <string name="contributions_request_site">Сайт</string>
+    <string name="contributions_request_instagram">Instagram</string>
+    <string name="contributions_request_retained">Сохранено</string>
+    <string name="contributions_request_added">Добавлено</string>
+    <string name="contributions_request_gallery_note">Новый состав галереи применится после одобрения.</string>
+    <string name="contributions_request_set_note">Новый набор применится после одобрения.</string>
+    <string name="contributions_request_selected_tags">Выбрано особенностей</string>
+    <string name="contributions_request_selected_roasters">Выбрано обжарщиков</string>
+    <string name="contributions_request_selected_equipment">Выбрано оборудования</string>
+    <string name="contributions_request_selected_brew_methods">Выбрано методов</string>
+    <string name="contributions_request_menu_items">Позиций</string>
+    <string name="contributions_request_menu_photos">Фото меню</string>
+    <string name="contributions_request_price">%1$s BYN</string>
+    <string name="contributions_availability_present">Есть</string>
+    <string name="contributions_availability_absent">Нет</string>
+    <string name="contributions_availability_unknown">Не указано</string>
+</resources>

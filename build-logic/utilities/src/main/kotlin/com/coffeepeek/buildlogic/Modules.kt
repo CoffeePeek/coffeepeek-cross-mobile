@@ -38,6 +38,7 @@ object Modules {
             const val api = ":feature:contributions:api"
             const val domain = ":feature:contributions:domain"
             const val data = ":feature:contributions:data"
+            const val impl = ":feature:contributions:impl"
         }
 
         const val notifications = ":features:notifications"
@@ -200,6 +201,7 @@ object Modules {
         feature.contributions.domain,
         feature.contributions.api,
         feature.contributions.data,
+        feature.contributions.impl,
         feature.authorBlocking.domain,
         feature.authorBlocking.api,
         feature.authorBlocking.data,
