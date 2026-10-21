@@ -127,5 +127,8 @@ Layout `feature/app-update/{api,domain,data,impl}`, package `com.coffeepeek.feat
   `AppUpdateState` through every fixture: up to date (no prompt); available (prompt, not required, «Позже» persists across a fresh state, a manual check shows it again);
   required (prompt, dismiss ignored); failure (silent when automatic, failure message when manual); manual up to date message.
 - Verified: `SandboxApplicationBackendTest` 18, 0 failures; `assembleDirectSandbox` passes.
-- **Not verified on a device:** the visual prompt, the Play snackbar flow and the Required card were not exercised. The only phone connected is a Pixel 10a, not the
-  Pixel 7 used so far, and it also has the regular app installed, so nothing was installed on it without your go-ahead.
+- **Device check, Pixel 7 / Android 17 (`com.coffeepeek.sandbox` only, updated in place, regular app untouched), launch extras `sandbox_update`:**
+  *Available*: the Play-channel snackbar appears with the blocked-installer message («Внешние приложения отключены в Sandbox») and «Повторить», as the legacy flow
+  does when the native step fails; *Required*: the blocking card «Обновите CoffeePeek / Установите новую версию, чтобы продолжить.» appears over the app with the same
+  error and «Повторить», no «Позже»; *Failure*: no prompt at launch (silent), and the manual check from Settings shows «Не удалось проверить обновления…» under the row.
+- **Still not exercised:** dark theme and large font on the card, back/outside-tap/swipe on the Required card, the real Play and APK installers, an iOS run, TalkBack.
