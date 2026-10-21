@@ -62,6 +62,7 @@ internal class HistoryHostSession(
     val observationFailed: Boolean = false,
 ) : ViewModelStoreOwner {
     override val viewModelStore = ViewModelStore()
+    val creationAnalytics = HistoryCreationAnalytics { lease.isCurrent() && lease.isLoggedIn }
     private val mutablePhotoPreview = MutableStateFlow<HistoryPhotoPreview?>(null)
     val photoPreview = mutablePhotoPreview.asStateFlow()
     private val mutableContentGeneration = MutableStateFlow(0)
@@ -87,6 +88,7 @@ internal class HistoryHostSession(
     fun dismissPhoto() { mutablePhotoPreview.value = null }
 
     fun clear() {
+        creationAnalytics.cancelled()
         lease.revoke()
         dismissPhoto()
         viewModelStore.clear()
