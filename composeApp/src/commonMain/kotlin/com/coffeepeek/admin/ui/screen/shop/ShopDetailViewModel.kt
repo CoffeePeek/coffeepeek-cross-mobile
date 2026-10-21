@@ -77,6 +77,7 @@ class ShopDetailViewModel internal constructor(
     private val observeFavoriteIds: ObserveFavoriteIdsUseCase? = null,
     private val roasterFavorites: RoasterFavorites,
     private val visibility: AuthorVisibility = AuthorVisibility.None,
+    private val onCheckInCreated: () -> Unit = {},
 ) : BaseViewModel() {
 
     internal val authorVisibility = visibility.visibility
@@ -380,6 +381,7 @@ class ShopDetailViewModel internal constructor(
                         submittedCheckInVisibility = visibility,
                     )
                 }
+                onCheckInCreated()
                 refreshDetails(showLoading = false)
             }.onFailure { e ->
                 val failure = safeAnalyticsError(e)
@@ -399,7 +401,7 @@ class ShopDetailViewModel internal constructor(
         val current = _uiState.value
         val details = current.details ?: return
         val checkIn = details.checkIns.firstOrNull { it.id == checkInId } ?: return
-        if (current.helpfulId != null || details.ownsCheckIn(checkIn, current.currentUserId)) return
+        if (current.helpfulId != null) return
         _uiState.update { it.copy(helpfulId = checkInId) }
         workScope.launch {
             try {

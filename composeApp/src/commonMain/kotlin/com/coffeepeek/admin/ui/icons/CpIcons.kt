@@ -11,6 +11,7 @@ import com.adamglin.phosphoricons.regular.ArrowClockwise
 import com.adamglin.phosphoricons.regular.ArrowsOutSimple
 import com.adamglin.phosphoricons.regular.Avocado
 import com.adamglin.phosphoricons.regular.Bread
+import com.adamglin.phosphoricons.regular.Bell
 import com.adamglin.phosphoricons.regular.CalendarBlank
 import com.adamglin.phosphoricons.regular.Camera
 import com.adamglin.phosphoricons.regular.Cake
@@ -79,6 +80,7 @@ import com.adamglin.phosphoricons.regular.WarningCircle
 import com.adamglin.phosphoricons.regular.X
 
 object CpIcons {
+    val Notifications: ImageVector get() = PhosphorIcons.Regular.Bell
     val MoreVertical: ImageVector get() = PhosphorIcons.Regular.DotsThreeVertical
     val MoreHorizontal: ImageVector get() = PhosphorIcons.Regular.DotsThree
     val Community: ImageVector get() = PhosphorIcons.Regular.Users

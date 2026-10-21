@@ -32,11 +32,12 @@ internal class ProtectedPhotoCache(
         key: PhotoCacheKey,
         jwtDeadline: Long?,
         current: () -> Boolean,
+        revalidate: Boolean = false,
         transfer: suspend (String?) -> PhotoTransfer,
     ): AuthorizedPhoto {
         check(current()) { "Фото недоступно" }
         val work = mutex.withLock {
-            stored[key]?.takeIf { it.permission.remaining(clock) > 0 && (jwtDeadline == null || jwtDeadline > clock.wallMillis()) }?.let {
+            stored[key]?.takeIf { !revalidate && it.permission.remaining(clock) > 0 && (jwtDeadline == null || jwtDeadline > clock.wallMillis()) }?.let {
                 check(current()) { "Фото недоступно" }
                 stored.remove(key); stored[key] = it
                 return AuthorizedPhoto(it.bytes, it.permission, it.permission)
@@ -80,6 +81,7 @@ internal class ProtectedPhotoCache(
         val received = clock.monotonicMillis()
         val wall = clock.wallMillis()
         check(current() && (jwtDeadline == null || jwtDeadline > wall)) { "Фото недоступно" }
+        requirePhotoAccess(response.status)
         val policy = PhotoCachePolicy.read(response.headers, start, received, wall)
         check(policy.allowsOnlineDisplay) { "Фото недоступно" }
         val responseTag = response.headers.getAll(HttpHeaders.ETag)?.singleOrNull()?.takeIf(::validPhotoEtag)
