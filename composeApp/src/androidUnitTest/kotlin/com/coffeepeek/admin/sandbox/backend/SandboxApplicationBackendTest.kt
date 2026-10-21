@@ -14,6 +14,8 @@ import com.coffeepeek.admin.feature.coffee.domain.CoffeeFilters
 import com.coffeepeek.feature.profile.data.createPublicProfileData
 import com.coffeepeek.feature.profile.domain.PublicProfileConnectionKind
 import com.coffeepeek.feature.shop.data.repository.createShopCheckInRepository
+import com.coffeepeek.feature.shop.data.repository.createShopCheckInVoteRepository
+import com.coffeepeek.feature.shop.data.repository.createShopDetailsRepository
 import com.coffeepeek.feature.shop.domain.model.*
 import com.coffeepeek.domain.model.Session
 import com.coffeepeek.domain.repository.SessionRepository
@@ -205,8 +207,80 @@ class SandboxApplicationBackendTest {
         assertEquals(3, FavoritesApiService(client.client).getFavorites().getOrThrow().size)
     } }
 
+    @Test fun helpfulVotesDecodeRemainIdempotentAndPersistAcrossReads() = runTest { fixture { _, client ->
+        val api = CheckInApiService(client.client)
+        val id = api.getMyCheckIns(1, 20).getOrThrow().items.single().id
+        val votes = createShopCheckInVoteRepository(client.client)
+        assertEquals(CheckInHelpfulDto(true, 1), api.setHelpful(id, true).getOrThrow())
+        assertEquals(ShopHelpfulVote(true, 1), votes.setHelpful(id, true).getOrThrow())
+        val details = createShopDetailsRepository(client.client, SandboxBackend.BASE_URL) { 0 }
+            .getDetails("sandbox-cafe").getOrThrow().checkIns.first { it.id == id }
+        assertTrue(details.isHelpfulByCurrentUser)
+        assertEquals(1, details.helpfulCount)
+        assertEquals(ShopHelpfulVote(false, 0), votes.setHelpful(id, false).getOrThrow())
+        assertEquals(CheckInHelpfulDto(false, 0), api.setHelpful(id, false).getOrThrow())
+        val row = api.getMyCheckIns(1, 20).getOrThrow().items.single()
+        assertFalse(row.isHelpfulByCurrentUser)
+        assertEquals(0, row.helpfulCount)
+    } }
+
+    @Test fun createdCheckInsKeepTheirShopAndRejectUnknownShopSlugs() = runTest { fixture { _, client ->
+        val writer = createShopCheckInRepository(client.client, client.uploadClient)
+        val input = ShopCheckInCreateInput("sandbox-lab", "Lab visit", ShopRating(4, 5, 4), "2026-10-18T09:00:00Z")
+        writer.create(input).getOrThrow()
+        val api = CheckInApiService(client.client)
+        val created = api.getMyCheckIns(1, 20).getOrThrow().items.last()
+        assertEquals("sandbox-lab", created.shop?.slug)
+        assertEquals("Sandbox Lab", created.shopName)
+        val shops = createShopDetailsRepository(client.client, SandboxBackend.BASE_URL) { 0 }
+        assertEquals(listOf(created.id), shops.getDetails("sandbox-lab").getOrThrow().userCheckIns.map { it.id })
+        assertTrue(shops.getDetails("sandbox-cafe").getOrThrow().userCheckIns.none { it.id == created.id })
+        assertTrue(writer.create(input.copy(shopSlug = "unknown-shop")).isFailure)
+        assertEquals(2, api.getMyCheckIns(1, 20).getOrThrow().items.size)
+    } }
+
+    @Test fun publicShopRowsExcludePrivateAndPendingVisitsWhileHistoryRetainsThem() = runTest { fixture { _, client ->
+        val api = CheckInApiService(client.client)
+        val shops = createShopDetailsRepository(client.client, SandboxBackend.BASE_URL) { 0 }
+        val published = shops.getDetails("sandbox-cafe").getOrThrow().checkIns.map { it.id }
+        val writer = createShopCheckInRepository(client.client, client.uploadClient)
+        val input = ShopCheckInCreateInput("sandbox-cafe", "Private visit", ShopRating(4, 5, 4), "2026-10-18T09:00:00Z")
+        writer.create(input).getOrThrow()
+        writer.create(input.copy(text = "Pending visit", visibility = ShopCheckInVisibility.Public)).getOrThrow()
+        val details = shops.getDetails("sandbox-cafe").getOrThrow()
+        assertEquals(published, details.checkIns.map { it.id })
+        assertEquals(published.size, details.overview.reviewCount)
+        assertEquals(3, details.userCheckIns.size)
+        assertEquals(3, api.getMyCheckIns(1, 20).getOrThrow().items.size)
+        assertEquals(published.size, FeedApiService(client.client).getFeed(20).getOrThrow().items.size)
+    } }
+
+    @Test fun anotherAuthorsVotesPreserveExistingCountAndBlockVisibility() = runTest { fixture { _, client ->
+        val id = SandboxApplicationBackend.FRIEND_VISIT_ID
+        val votes = createShopCheckInVoteRepository(client.client)
+        assertEquals(ShopHelpfulVote(true, 3), votes.setHelpful(id, true).getOrThrow())
+        assertEquals(ShopHelpfulVote(true, 3), votes.setHelpful(id, true).getOrThrow())
+        val shops = createShopDetailsRepository(client.client, SandboxBackend.BASE_URL) { 0 }
+        val row = shops.getDetails("sandbox-cafe").getOrThrow().checkIns.first { it.id == id }
+        assertTrue(row.isHelpfulByCurrentUser)
+        assertEquals(3, row.helpfulCount)
+        assertEquals(ShopHelpfulVote(false, 2), votes.setHelpful(id, false).getOrThrow())
+        client.client.put("/api/v1/me/blocks/$friend")
+        assertTrue(votes.setHelpful(id, true).isFailure)
+        client.client.delete("/api/v1/me/blocks/$friend")
+        val restored = shops.getDetails("sandbox-cafe").getOrThrow().checkIns.first { it.id == id }
+        assertFalse(restored.isHelpfulByCurrentUser)
+        assertEquals(2, restored.helpfulCount)
+    } }
+
     @Test fun unimplementedMutationsAreRejectedAndEmptyStateIsSharedAcrossSources() = runTest { fixture { backend, client ->
         assertFalse(client.client.post("/api/ModerationShops").status.isSuccess())
+        val api = CheckInApiService(client.client)
+        val id = api.getMyCheckIns(1, 20).getOrThrow().items.single().id
+        assertEquals(HttpStatusCode.MethodNotAllowed, client.client.post("/api/v1/check-ins/$id/helpful").status)
+        assertTrue(api.report(id, "Sandbox report").isFailure)
+        assertEquals(1, api.getMyCheckIns(1, 20).getOrThrow().items.size)
+        assertTrue(ShopApiService(client.client).getShopDetails("unknown-shop").isFailure)
         backend.reset(false)
         assertTrue(ShopApiService(client.client).searchShops().getOrThrow().coffeeShops.isEmpty())
         assertTrue(FeedApiService(client.client).getFeed(20).getOrThrow().items.isEmpty())
