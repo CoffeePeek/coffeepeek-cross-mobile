@@ -1,7 +1,12 @@
 package com.coffeepeek.feature.auth.impl
 
 import androidx.lifecycle.ViewModelStore
+import com.coffeepeek.feature.auth.api.AuthEntry
+import com.coffeepeek.feature.auth.api.SignInMethod
 import com.coffeepeek.feature.auth.domain.EmailIssue
+import com.coffeepeek.feature.auth.domain.SocialFailureKind
+import com.coffeepeek.feature.auth.impl.register.RegisterEvent
+import kotlinx.coroutines.launch
 import com.coffeepeek.feature.auth.domain.PasswordIssue
 import com.coffeepeek.feature.auth.domain.RegistrationIssue
 import com.coffeepeek.feature.auth.impl.register.RegisterAction
@@ -156,5 +161,23 @@ class RegisterViewModelTest {
         assertEquals(PasswordIssue.TooShort(8), vm.state.value.passwordIssue)
         vm.onAction(RegisterAction.PasswordChanged("longenough1")); runCurrent()
         assertNull(vm.state.value.passwordIssue)
+    }
+
+    @Test fun aGoogleSignUpSignsInWithTheRegisterEntryAndEmitsSignedIn() = runTest(dispatcher) {
+        val auth = FakeAuthRepository(); val analytics = FakeAnalytics(); val vm = model(auth, analytics)
+        val events = mutableListOf<RegisterEvent>().also { list -> backgroundScope.launch { vm.events.collect { list += it } } }
+        vm.onAction(RegisterAction.GoogleToken("id-token")); runCurrent()
+        assertEquals(listOf("id-token"), auth.googleTokens)
+        assertEquals<List<List<Any?>>>(listOf(listOf("google-user", SignInMethod.Google, AuthEntry.Register, null)), analytics.signedIn)
+        assertEquals(listOf<RegisterEvent>(RegisterEvent.SignedIn), events)
+        assertFalse(vm.state.value.busy)
+    }
+
+    @Test fun aFailedGoogleSignUpIsClassifiedAndStaysOnTheFirstStep() = runTest(dispatcher) {
+        val auth = FakeAuthRepository().apply { google = Result.failure(IllegalStateException("Network timeout")) }
+        val vm = model(auth)
+        vm.onAction(RegisterAction.GoogleToken("t")); runCurrent()
+        assertEquals(SocialFailureKind.Network, vm.state.value.socialFailure?.kind)
+        assertEquals(RegisterStep.Email, vm.state.value.step)
     }
 }

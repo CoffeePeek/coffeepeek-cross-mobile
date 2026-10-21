@@ -6,6 +6,7 @@ import com.coffeepeek.feature.auth.api.SignInMethod
 import com.coffeepeek.feature.auth.domain.EmailIssue
 import com.coffeepeek.feature.auth.domain.LoginFailure
 import com.coffeepeek.feature.auth.domain.PasswordIssue
+import com.coffeepeek.feature.auth.domain.SocialFailureKind
 import com.coffeepeek.feature.auth.impl.login.LoginAction
 import com.coffeepeek.feature.auth.impl.login.LoginEvent
 import com.coffeepeek.feature.auth.impl.login.LoginViewModel
@@ -120,5 +121,31 @@ class LoginViewModelTest {
         assertEquals(LoginFailure.WrongCredentials, vm.state.value.failure)
         vm.onAction(LoginAction.PasswordChanged("secret12")); runCurrent()
         assertNull(vm.state.value.failure, "Editing clears the request error")
+    }
+
+    @Test fun aGoogleTokenSignsInReportsTheGoogleMethodAndEmitsSignedIn() = runTest(dispatcher) {
+        val auth = FakeAuthRepository(); val analytics = FakeAnalytics(); val vm = model(auth, analytics); val events = events(vm)
+        vm.onAction(LoginAction.GoogleToken("id-token")); runCurrent()
+        assertEquals(listOf("id-token"), auth.googleTokens)
+        assertEquals<List<List<Any?>>>(listOf(listOf("google-user", SignInMethod.Google, AuthEntry.Login, null)), analytics.signedIn)
+        assertEquals(listOf<LoginEvent>(LoginEvent.SignedIn), events)
+        assertFalse(vm.state.value.signingIn)
+    }
+
+    @Test fun aRejectedGoogleTokenIsClassifiedAndClearedByAnEdit() = runTest(dispatcher) {
+        val auth = FakeAuthRepository().apply { google = Result.failure(IllegalStateException("An account with this email already exists")) }
+        val vm = model(auth)
+        vm.onAction(LoginAction.GoogleToken("t")); runCurrent()
+        assertEquals(SocialFailureKind.AccountExists, vm.state.value.socialFailure?.kind)
+        vm.onAction(LoginAction.EmailChanged("a")); runCurrent()
+        assertNull(vm.state.value.socialFailure)
+    }
+
+    @Test fun aLauncherFailureKeepsTheDiagnosticCode() = runTest(dispatcher) {
+        val vm = model()
+        vm.onAction(LoginAction.GoogleFailed("Google Sign-In ошибка 10 [GSI-E10 D:com.google.android.gms O:invalid_client]")); runCurrent()
+        val failure = vm.state.value.socialFailure!!
+        assertEquals(SocialFailureKind.Generic, failure.kind)
+        assertEquals("GSI-E10", failure.diagnostic?.code)
     }
 }

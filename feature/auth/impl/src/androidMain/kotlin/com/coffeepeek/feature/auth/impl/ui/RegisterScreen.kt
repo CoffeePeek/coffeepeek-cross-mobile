@@ -41,7 +41,13 @@ import androidx.compose.ui.text.withLink
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.repeatOnLifecycle
+import com.coffeepeek.feature.auth.impl.register.RegisterEvent
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.theme.CoffeePeekColors
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
@@ -65,10 +71,31 @@ internal fun RegisterScreen(
     vm: RegisterViewModel,
     onClose: () -> Unit,
     onGoToLogin: () -> Unit,
+    onSignedIn: () -> Unit,
+    googleWebClientId: String,
     modifier: Modifier = Modifier,
 ) {
     val state by vm.state.collectAsStateWithLifecycle()
-    RegisterContent(state, vm::onAction, onClose, onGoToLogin, modifier)
+    val lifecycle = LocalLifecycleOwner.current.lifecycle
+    val currentOnSignedIn by rememberUpdatedState(onSignedIn)
+    LaunchedEffect(vm, lifecycle) {
+        lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
+            vm.events.collect { event ->
+                when (event) {
+                    RegisterEvent.SignedIn -> currentOnSignedIn()
+                }
+            }
+        }
+    }
+    RegisterContent(
+        state, vm::onAction, onClose, onGoToLogin,
+        onGoogle = if (googleWebClientId.isBlank()) null else rememberGoogleSignIn(
+            googleWebClientId,
+            onToken = { vm.onAction(RegisterAction.GoogleToken(it)) },
+            onFailure = { vm.onAction(RegisterAction.GoogleFailed(it)) },
+        ),
+        modifier = modifier,
+    )
 }
 
 @Composable
@@ -77,6 +104,7 @@ internal fun RegisterContent(
     onAction: (RegisterAction) -> Unit,
     onClose: () -> Unit,
     onGoToLogin: () -> Unit,
+    onGoogle: (() -> Unit)?,
     modifier: Modifier = Modifier,
 ) {
     val done = state.step == RegisterStep.Success
@@ -86,7 +114,7 @@ internal fun RegisterContent(
         mascotRes = if (done) R.drawable.auth_mascot_happy else R.drawable.auth_mascot_laptop,
     ) {
         when (state.step) {
-            RegisterStep.Email -> EmailStep(state, onAction, onGoToLogin)
+            RegisterStep.Email -> EmailStep(state, onAction, onGoToLogin, onGoogle)
             RegisterStep.Details -> DetailsStep(state, onAction, onGoToLogin)
             RegisterStep.Success -> SuccessStep(state.email, onGoToLogin)
         }
@@ -114,7 +142,7 @@ private fun Subtitle(text: String, modifier: Modifier = Modifier) {
 }
 
 @Composable
-private fun EmailStep(state: RegisterState, onAction: (RegisterAction) -> Unit, onGoToLogin: () -> Unit) {
+private fun EmailStep(state: RegisterState, onAction: (RegisterAction) -> Unit, onGoToLogin: () -> Unit, onGoogle: (() -> Unit)?) {
     Stepper(activeIndex = 0)
     Spacer(Modifier.height(20.dp))
     Title(stringResource(R.string.auth_register_email_title))
@@ -132,7 +160,14 @@ private fun EmailStep(state: RegisterState, onAction: (RegisterAction) -> Unit, 
         enabled = !state.busy,
     )
     FailureText(state, R.string.auth_check_failed)
-    Spacer(Modifier.height(CoffeePeekDimens.spacing5))
+    if (onGoogle != null) {
+        Spacer(Modifier.height(14.dp))
+        AuthOrDivider()
+        Spacer(Modifier.height(14.dp))
+        SocialRow { GoogleSignInButton(onClick = onGoogle, enabled = !state.busy) }
+        SocialFailureText(state.socialFailure)
+    }
+    Spacer(Modifier.height(if (onGoogle != null) 14.dp else CoffeePeekDimens.spacing5))
     AuthPrimaryButton(
         text = stringResource(R.string.auth_continue),
         onClick = { onAction(RegisterAction.ContinueWithEmail) },
@@ -392,17 +427,17 @@ private fun Stepper(activeIndex: Int) {
 @PreviewLightDark
 @Composable
 private fun RegisterDetailsPreview() = CoffeePeekTheme {
-    RegisterContent(RegisterState(step = RegisterStep.Details, email = "name@example.com", name = "Анна", password = "password1"), {}, {}, {})
+    RegisterContent(RegisterState(step = RegisterStep.Details, email = "name@example.com", name = "Анна", password = "password1"), {}, {}, {}, onGoogle = {})
 }
 
 @PreviewLightDark
 @Composable
 private fun RegisterEmailPreview() = CoffeePeekTheme {
-    RegisterContent(RegisterState(email = "taken@example.com", emailTaken = true), {}, {}, {})
+    RegisterContent(RegisterState(email = "taken@example.com", emailTaken = true), {}, {}, {}, onGoogle = {})
 }
 
 @PreviewLightDark
 @Composable
 private fun RegisterSuccessPreview() = CoffeePeekTheme {
-    RegisterContent(RegisterState(step = RegisterStep.Success, email = "new@example.com"), {}, {}, {})
+    RegisterContent(RegisterState(step = RegisterStep.Success, email = "new@example.com"), {}, {}, {}, onGoogle = {})
 }

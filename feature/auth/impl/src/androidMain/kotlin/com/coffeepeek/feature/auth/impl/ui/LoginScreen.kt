@@ -45,6 +45,7 @@ internal fun LoginScreen(
     onSignedIn: () -> Unit,
     onForgotPassword: (String) -> Unit,
     onCreateAccount: () -> Unit,
+    googleWebClientId: String,
     modifier: Modifier = Modifier,
 ) {
     val state by vm.state.collectAsStateWithLifecycle()
@@ -67,6 +68,11 @@ internal fun LoginScreen(
         onClose = onClose,
         onForgotPassword = { onForgotPassword(state.email) },
         onCreateAccount = onCreateAccount,
+        onGoogle = if (googleWebClientId.isBlank()) null else rememberGoogleSignIn(
+            googleWebClientId,
+            onToken = { vm.onAction(LoginAction.GoogleToken(it)) },
+            onFailure = { vm.onAction(LoginAction.GoogleFailed(it)) },
+        ),
         modifier = modifier,
     )
 }
@@ -80,6 +86,7 @@ internal fun LoginContent(
     onClose: () -> Unit,
     onForgotPassword: () -> Unit,
     onCreateAccount: () -> Unit,
+    onGoogle: (() -> Unit)?,
     modifier: Modifier = Modifier,
 ) {
     AuthScaffold(onClose = onClose, modifier = modifier) {
@@ -96,6 +103,12 @@ internal fun LoginContent(
             modifier = Modifier.fillMaxWidth().padding(top = 4.dp, bottom = CoffeePeekDimens.spacing5),
         )
 
+        if (onGoogle != null) {
+            SocialRow { GoogleSignInButton(onClick = onGoogle, enabled = !state.signingIn) }
+            Spacer(Modifier.height(14.dp))
+            AuthOrDivider()
+            Spacer(Modifier.height(14.dp))
+        }
         AuthTextField(
             label = stringResource(R.string.auth_email_label),
             value = state.email,
@@ -117,6 +130,7 @@ internal fun LoginContent(
             errorText = state.passwordIssue?.let { passwordError(it) },
             enabled = !state.signingIn,
         )
+        SocialFailureText(state.socialFailure)
         AnimatedVisibility(visible = state.failure != null) {
             Text(
                 text = state.failure?.let { loginFailureText(it) }.orEmpty(),
@@ -162,5 +176,5 @@ private fun loginFailureText(failure: LoginFailure): String = stringResource(
 @PreviewLightDark
 @Composable
 private fun LoginPreview() = CoffeePeekTheme {
-    LoginContent(LoginState(email = "name@example.com", emailIssue = EmailIssue.Invalid), {}, {}, {}, {}, {}, {})
+    LoginContent(LoginState(email = "name@example.com", emailIssue = EmailIssue.Invalid), {}, {}, {}, {}, {}, {}, onGoogle = {})
 }

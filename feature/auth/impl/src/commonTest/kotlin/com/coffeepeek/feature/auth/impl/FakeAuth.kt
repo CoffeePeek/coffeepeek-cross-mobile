@@ -31,7 +31,14 @@ internal class FakeAuthRepository : AuthRepository {
         return reset
     }
 
-    override suspend fun signInWithGoogle(idToken: String): Result<SignedInAccount> = error("Unused")
+    val googleTokens = mutableListOf<String>()
+    var google: Result<SignedInAccount> = Result.success(SignedInAccount("google-user"))
+
+    override suspend fun signInWithGoogle(idToken: String): Result<SignedInAccount> {
+        googleTokens += idToken
+        gate?.await()
+        return google
+    }
     override suspend fun register(userName: String, email: String, password: String): Result<Unit> {
         registrations += listOf(userName, email, password)
         onRegister()

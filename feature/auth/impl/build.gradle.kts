@@ -22,6 +22,8 @@ dependencies {
     androidImplementation(libs.androidx.lifecycle.viewmodelCompose)
     androidImplementation(libs.androidx.lifecycle.runtimeCompose)
     androidImplementation(libs.androidx.compose.ui.tooling.preview)
+    androidImplementation(libs.androidx.activity.compose)
+    androidImplementation("com.google.android.gms:play-services-auth:21.3.0")
 
     testImplementation(libs.kotlin.test)
     testImplementation(libs.kotlinx.coroutines.test)
