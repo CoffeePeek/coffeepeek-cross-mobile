@@ -50,6 +50,30 @@ write-error leaving visibility unchanged. Verification: app Direct+Play unit sui
 (1078 results, 0 failures) and Direct Sandbox assembly. **Not done:** manual device
 walkthrough of the block UI, incoming/two-way blocks, guest/login behaviour with
 blocks, live backend.
+## Sandbox contract corrections — 2026-10-21
+
+Reviewed source `cfd9d15f` plus this backend/test correction. Fix three reproduced
+fixture defects: helpful responses now expose the production `isHelpful` field,
+persist vote state/count and keep repeated PUT/DELETE idempotent; Shop creation
+uses the requested known `coffeeShopSlug`; Shop details scope visits to that shop
+and expose only Public + Approved rows/counts in the public section. Private and
+pending rows remain in personal history. Feed shares the same publication filter.
+Unknown shops and unsupported report/vote methods fail without mutating visits.
+
+Three permanent regressions initially failed against the old backend (12 cases,
+three failures); all 12 then passed after the correction. The final complete run
+passes **1167 unit results** (545 Direct, 545 Play, 77 network), zero failures,
+errors or skips. Both ordinary Debug APKs and both Sandbox APKs pass packaged DEX
+checks; both Sandbox manifests pass isolation checks (55s). Logs are local under
+`build/reports/sandbox-fixes/`; no automated UI suite or device installation ran.
+Production ports, permissions, account data and iOS sources are unchanged.
+
+Coffee descendant integration retains its additional author/blocking fixtures:
+votes persist in the owning author's collection, blocked authors cannot be voted
+on, and public counts remain independent of block filtering. The regression also
+covers the friend's existing count (2 -> 3 -> 2). App Direct passes 557 unit
+results, including 18 Sandbox application cases; Direct Debug/Sandbox APKs and
+DEX/isolation guards pass (3m56s). Log: `build/reports/sandbox-fixes/coffee-validation.log`.
 
 ## Develop baseline reconciliation — 2026-10-19
 
