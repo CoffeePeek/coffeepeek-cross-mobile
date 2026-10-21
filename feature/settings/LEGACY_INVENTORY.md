@@ -299,4 +299,6 @@ Deliberate improvement requested by the owner (replaces the "result text under t
   automatic check and asks again with `manual = true`, so the result is always the manual one.
 - Tests: `SettingsViewModelTest` 12 (lock, minimum loader time, slow check, ignored second tap, automatic check in flight, available shows no toast, failure/throwing port),
   `AndroidSettingsPortsTest` 11 (outcomes, check during an automatic one). Compile of Android tests, iOS simulator and `assembleDirectSandbox` pass.
-- Device check on Pixel 7 (UpToDate toast, Failure toast, Available prompt) is pending: the phone was locked when the check started.
+- Device check, Pixel 7 / Android 17, `com.coffeepeek.sandbox` only, launch extras `sandbox_update`: *UpToDate*: the row turns grey with «Проверяем обновления…» and a spinner (locked), then the toast
+  «У вас установлена актуальная версия» and the row is active again; *Failure*: toast «Не удалось проверить обновления. Попробуйте позже.»; *Available*: no toast, the app's update
+  snackbar with the blocked-installer error and «Повторить» appears (the Sandbox installer never installs). Not exercised: dark theme, large font, TalkBack, rotation during a check.
