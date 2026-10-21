@@ -21,13 +21,14 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.admin.feature.catalog.api.RoasterCard
 import com.coffeepeek.admin.feature.catalog.api.ShopCard
-import com.coffeepeek.admin.feature.profile.domain.PublicFavoriteKind
-import com.coffeepeek.admin.feature.profile.domain.PublicProfileFavorite
+import com.coffeepeek.feature.profile.domain.PublicFavoriteKind
+import com.coffeepeek.feature.profile.domain.PublicProfileFavorite
 import com.coffeepeek.admin.theme.CpDimens
 import com.coffeepeek.admin.ui.component.CoffeeShopImage
 import com.coffeepeek.admin.ui.icons.CpIcons
 import com.coffeepeek.domain.model.CatalogItem
 import com.coffeepeek.domain.model.CoffeeShop
+import com.coffeepeek.domain.model.PublicAddress
 
 /** Reuses catalog's public card entry points with the viewed user's favorite state. */
 @Composable
@@ -36,7 +37,7 @@ internal fun PublicProfileFavoriteCard(
     modifier: Modifier = Modifier.width(300.dp),
     onClick: () -> Unit,
 ) {
-    val address = favorite.publicAddress
+    val address = favorite.publicAddress?.let { PublicAddress(it.slug, it.canonicalPath, it.revision, it.isAlias) }
     when (favorite.kind) {
         PublicFavoriteKind.CoffeeShop -> ShopCard(
             shop = CoffeeShop(
@@ -95,7 +96,7 @@ private fun PublicDrinkFavoriteCard(favorite: PublicProfileFavorite, modifier: M
             contentAlignment = Alignment.Center,
         ) {
             if (!favorite.imageUrl.isNullOrBlank()) CoffeeShopImage(
-                imageUrl = favorite.imageUrl, contentDescription = favorite.title,
+                imageUrl = favorite.imageUrl!!, contentDescription = favorite.title,
                 contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize(),
             ) else Icon(
                 CpIcons.Coffee, contentDescription = null,

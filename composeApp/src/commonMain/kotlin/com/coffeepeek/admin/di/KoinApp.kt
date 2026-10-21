@@ -18,7 +18,9 @@ import com.coffeepeek.admin.feature.coffee.ui.CoffeeDetailViewModel
 import com.coffeepeek.admin.feature.passwordrecovery.data.PasswordRecoveryRepositoryImpl
 import com.coffeepeek.admin.feature.passwordrecovery.domain.PasswordRecoveryRepository
 import com.coffeepeek.admin.feature.passwordrecovery.ui.PasswordRecoveryViewModel
-import com.coffeepeek.admin.feature.profile.data.PublicProfileRepositoryImpl
+import com.coffeepeek.admin.feature.profile.data.AppPublicProfileRepository
+import com.coffeepeek.admin.feature.profile.data.LegacyPublicProfileFavoriteDetails
+import com.coffeepeek.feature.profile.data.createPublicProfileData
 import com.coffeepeek.admin.feature.profile.domain.PublicProfileRepository
 import com.coffeepeek.admin.feature.profile.ui.PublicProfileViewModel
 import com.coffeepeek.admin.feature.homecheckin.ui.HomeCheckInViewModel
@@ -37,6 +39,12 @@ import com.coffeepeek.admin.ui.screen.shop.ShopCheckInFormRenderer
 import com.coffeepeek.admin.ui.screen.shop.LegacyShopCheckInFormRenderer
 import com.coffeepeek.admin.ui.screen.coffee.CoffeeScreenRenderer
 import com.coffeepeek.admin.ui.screen.coffee.LegacyCoffeeScreenRenderer
+import com.coffeepeek.admin.ui.screen.profile.AccountScreenRenderer
+import com.coffeepeek.admin.ui.screen.profile.LegacyAccountScreenRenderer
+import com.coffeepeek.admin.ui.screen.profile.LegacyOwnProfileScreenRenderer
+import com.coffeepeek.admin.ui.screen.profile.LegacyPublicProfileScreenRenderer
+import com.coffeepeek.admin.ui.screen.profile.OwnProfileScreenRenderer
+import com.coffeepeek.admin.ui.screen.profile.PublicProfileScreenRenderer
 import com.coffeepeek.admin.di.roaster.roasterModule
 import com.coffeepeek.admin.di.roaster.roasterScreenRenderer
 import com.coffeepeek.admin.ui.screen.roaster.RoasterScreenRenderer
@@ -95,6 +103,9 @@ fun initKoin(
     checkInCreateFlowRendererFactory: Scope.() -> CheckInCreateFlowRenderer = { LegacyCheckInCreateFlowRenderer },
     coffeeRendererFactory: Scope.() -> CoffeeScreenRenderer = { LegacyCoffeeScreenRenderer },
     roasterRendererFactory: Scope.() -> RoasterScreenRenderer = { roasterScreenRenderer(get(), get(), get()) },
+    publicProfileRendererFactory: Scope.() -> PublicProfileScreenRenderer = { LegacyPublicProfileScreenRenderer },
+    ownProfileRendererFactory: Scope.() -> OwnProfileScreenRenderer = { LegacyOwnProfileScreenRenderer },
+    accountRendererFactory: Scope.() -> AccountScreenRenderer = { LegacyAccountScreenRenderer },
     analyticsEnabled: Boolean = true,
 ) {
     check(AppConfig.baseUrl.isNotBlank()) {
@@ -115,7 +126,8 @@ fun initKoin(
         ),
         appModule(database.settingRepository, shopReportRendererFactory, shopGalleryRendererFactory,
             shopCheckInRendererFactory, shopDetailRendererFactory, shopCheckInListRendererFactory,
-            checkInHistoryRendererFactory, checkInCreateFlowRendererFactory, coffeeRendererFactory, roasterRendererFactory),
+            checkInHistoryRendererFactory, checkInCreateFlowRendererFactory, coffeeRendererFactory, roasterRendererFactory,
+            publicProfileRendererFactory, ownProfileRendererFactory, accountRendererFactory),
         imageModule(),
         roasterModule(),
         updateInstallerModule(),
@@ -140,9 +152,15 @@ private fun appModule(
     checkInCreateFlowRendererFactory: Scope.() -> CheckInCreateFlowRenderer,
     coffeeRendererFactory: Scope.() -> CoffeeScreenRenderer,
     roasterRendererFactory: Scope.() -> RoasterScreenRenderer,
+    publicProfileRendererFactory: Scope.() -> PublicProfileScreenRenderer,
+    ownProfileRendererFactory: Scope.() -> OwnProfileScreenRenderer,
+    accountRendererFactory: Scope.() -> AccountScreenRenderer,
 ) = module {
     single<CoffeeScreenRenderer> { coffeeRendererFactory() }
     single<RoasterScreenRenderer> { roasterRendererFactory() }
+    single<PublicProfileScreenRenderer> { publicProfileRendererFactory() }
+    single<OwnProfileScreenRenderer> { ownProfileRendererFactory() }
+    single<AccountScreenRenderer> { accountRendererFactory() }
     single<CheckInCreateFlowRenderer> { checkInCreateFlowRendererFactory() }
     single<CheckInHistoryScreenRenderer> { checkInHistoryRendererFactory() }
     single<ShopDetailScreenRenderer> { shopDetailRendererFactory() }
@@ -171,7 +189,12 @@ private fun appModule(
     single<com.coffeepeek.feature.authorblocking.api.AuthorVisibility> { get<com.coffeepeek.feature.authorblocking.api.AuthorBlockingFeature>().visibility }
     single<com.coffeepeek.feature.authorblocking.api.AuthorBlockingPresenter> { get<com.coffeepeek.feature.authorblocking.api.AuthorBlockingFeature>().presenter }
     single<com.coffeepeek.feature.authorblocking.api.AuthorBlockActions> { get<com.coffeepeek.feature.authorblocking.api.AuthorBlockingPresenter>() }
-    single<PublicProfileRepository> { PublicProfileRepositoryImpl(get<CoffeePeekClient>().client, get(), get(), get()) }
+    single<PublicProfileRepository> {
+        AppPublicProfileRepository(
+            createPublicProfileData(get<CoffeePeekClient>().client, LegacyPublicProfileFavoriteDetails(get(), get())),
+            get(),
+        )
+    }
     factory { (slug: String) -> PublicProfileViewModel(slug, get(), get(), users = get(), visibility = get()) }
     single<RoasterFavorites> { ServerRoasterFavorites(get(), get(), get()) }
     single<com.coffeepeek.admin.feature.appupdate.domain.AppUpdateRepository> {

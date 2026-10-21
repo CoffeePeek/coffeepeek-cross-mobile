@@ -47,6 +47,7 @@ kotlin {
             implementation(project(module.feature.shop.domain))
             implementation(project(module.feature.shop.data))
             implementation(project(module.feature.shop.impl))
+            implementation(project(module.feature.profile.impl))
             implementation(project(module.feature.coffee.api))
             implementation(project(module.feature.coffee.domain))
             implementation(project(module.feature.coffee.data))
@@ -76,6 +77,9 @@ kotlin {
             implementation("org.slf4j:slf4j-nop:2.0.16")
         }
         commonMain.dependencies {
+            implementation(project(module.feature.profile.api))
+            implementation(project(module.feature.profile.domain))
+            implementation(project(module.feature.profile.data))
             implementation(project(module.feature.roaster.api))
             implementation(project(module.feature.roaster.domain))
             implementation(project(module.feature.roaster.data))

@@ -221,3 +221,158 @@ actual iOS behaviour, `PlatformMenuButton`/`PlatformAlert` semantics beyond the 
 - Edit profile: fix the partial-save quirk, a retry must not re-upload an avatar that already succeeded (deliberate difference from prod).
 - Own-account data (`UserRepository`, `UserProfile`, deletion request) stays in `modules/*` behind narrow ports.
 - Other open questions keep the inventory's recommendations until the owner says otherwise.
+
+## Step 1 result — parity tests on the legacy code (2026-10-20)
+
+Added to `composeApp/src/commonTest/.../ui/screen/`: `profile/ProfileViewModelTest` (8), `editprofile/EditProfileViewModelTest` (8),
+`deleteaccount/DeleteAccountPendingViewModelTest` (6). All 22 pass, repeated runs stable (the ViewModels use real dispatchers, so the
+tests wait on conditions instead of virtual time). No production code changed.
+
+Covered: cached/uncached load, fixed error texts, refresh failure with and without content, session end reset, late failure of a
+previous account ignored (P2), logout order reset → server → drafts and failure message (P1), city resolved at creation and unknown
+ids ignored (P12/P16), edit validation/truncation/trim/5 MB/save order/stop at first failure, the recorded avatar re-upload quirk
+(flips when the owner-approved fix lands), deletion open side effect recorded once (flips with the approved confirmation), resend gating.
+
+Not covered, with reason: `GoogleAuth.signOut` and `Navigator.openLoginAfterSessionEnd` (no observable output: private flag/platform
+object) — keep on the manual checklist; analytics page names (P9) and the Sandbox fixtures (step 0).
+
+New finding: `DeleteAccountPendingViewModel.resendEmail()` checks `isResending` before launching, so two taps in the same frame can send
+two requests (the server window limits the damage). Not changed; decide with the deletion-confirmation change.
+
+## Step 0 result — Sandbox fixtures (2026-10-20)
+
+Done in `SandboxApplicationBackend` (see `composeApp/SANDBOX_PLAN.md`, "Profile/account fixtures"). Correction to the inventory: PATCH
+about/avatar and the deletion-request GET already existed but were unconditional; they now validate and keep state. Open: 401 follow,
+no-public-address account, blocked-profile follow rule, device walkthrough.
+
+## Step 2 result — `feature/profile/{domain,data}` (2026-10-20)
+
+Created and registered in `Modules.kt`; `composeApp` depends on both in `commonMain` (iOS compiles them: `compileKotlinIosSimulatorArm64`).
+
+- **domain** (`com.coffeepeek.feature.profile.domain`): public profile models, own `ProfileAddress` (no legacy `PublicAddress`),
+  `PublicProfileData` (profile, follow, favorites, activity, connections), `PublicProfileFavoriteDetails` port (+ `FavoriteShopDetails`,
+  `FavoriteRoasterSummary/Details`), the two typed exceptions.
+- **data**: `createPublicProfileData(client, details)` (impl internal) and the moved `PublicProfileRepositoryTest` (10 cases, the roaster-catalog
+  case rewritten against the port). Feature modules do not depend on legacy `modules/*`, so nothing legacy leaks in.
+- **app**: `AppPublicProfileRepository` = `PublicProfileData by data` + the author's check-ins (legacy `CheckIn`/`FeedRepository`, stays until the
+  profile UI moves, step 4); `LegacyPublicProfileFavoriteDetails` adapts `ShopRepository`/`RoasterRepository`; Koin binds both; the
+  favorite card converts `ProfileAddress` to the legacy `PublicAddress` for the shared shop card.
+- Behaviour unchanged: 15 `PublicProfileViewModelTest`, 8+8+6 step-1 parity tests, 16 Sandbox backend tests, 2 app repository tests pass;
+  instrumented tests compile; Direct Debug, Direct Sandbox and iOS simulator compile build. Pixel 7 not run in this step.
+- Deviation from the plan table: the plan said "move the repository"; check-ins could not move without a legacy dependency, so they stay in the app.
+
+## Step 3 result — `feature/profile/api` ports and app adapters (2026-10-20)
+
+`feature/profile/api` (registered, iOS compiles) holds only ports with a real consumer today:
+
+- `ProfileAccountPort` (+ `OwnProfile`): active account key (user id, else token; null for guest/inactive), distinct account changes,
+  the shared own-profile cache and `loadOwnProfile(forceRefresh)` with the legacy rule (cache unless forced, else `getMe`). Read side only;
+  edit/deletion/sign-out ports come with steps 5-6 when their screens move.
+- `ProfileAuthorVisibility` (+ state with `hides`, hides everything until ready) and `ProfileAnalyticsPort.favoritesOpened()`.
+
+Adapters in `composeApp/.../androidMain/di/profile/AndroidProfilePorts.kt`: over `SessionRepository`/`UserRepository`, the author-blocking
+`AuthorVisibility` (a profile-owned port, so the feature module does not import the legacy-dependent author-blocking module) and the exact
+legacy `Analytics.track(FAVORITES_OPENED, entry_point=profile)`. `AndroidProfilePortsTest` (6) pins key rules, distinct account flow, cache/force
+semantics, mapping, visibility semantics and legacy-vs-adapter analytics parity. Not bound in Koin yet: the first consumer is the public-profile
+entry (step 4).
+
+Deviations from the plan table: `PublicCheckInsPort` is deferred (the check-in model is the legacy timeline `CheckIn`; it moves with the
+history/Community timeline owner, not here) and `ShareLinkPort` is dropped (sharing is an action callback of the entry, not a port).
+
+## Step 4 result — public profile in `feature/profile/impl` (2026-10-20)
+
+- **Logic**: typed MVI `PublicProfileViewModel` over ports (`PublicProfileData`, `PublicCheckInsPort`, `ProfileAccountPort`, `ProfileAuthorVisibility`) with
+  the legacy (generation, account) staleness rules intact. `needsLogin` state became the `RequireLogin` event. 18 ViewModel tests (the 15 legacy cases
+  ported, plus invalid activity months, blocked author/revision reload, unready visibility) and 3 month-math tests pass.
+- **UI** (`impl/androidMain`): header, stats, sections, favorites/check-ins/activity sheets, connections sheet, blocked state, author menu,
+  all strings in `res/values/strings.xml` (Russian verbatim; Russian plurals for "дней с чекинами"). Design-system loader, icons, sheet.
+  Replaced legacy-only controls: glass icon buttons and `PlatformMenuButton` are plain Material3 `IconButton`/`DropdownMenu`.
+- **api**: `PublicProfileEntry`, `ProfileSlots` (image, photo viewer with originals, favorites preview/card, check-in card, photo prefetch),
+  `ProfileAuthorActions`, `PublicCheckInsPort`.
+- **app**: `PublicProfileScreenRenderer` (Legacy default, Android entry) used by `Navigator` for `Screen.UserProfile`; `AndroidPublicCheckIns` keeps the
+  legacy rows behind the feature's own check-in model for the timeline-card slot; iOS and the own-profile tab keep the legacy screens.
+- Builds: unit tests, instrumented-test compile, iOS simulator compile (composeApp and impl), Direct Sandbox APK.
+- **Not done / not verified**: Pixel 7 walkthrough (phone was locked when the APK was installed), `PublicProfilePresentationTest` (instrumented) still targets the
+  legacy screen and was not run, large-font/dark-theme visual check, parity of the author-menu look (now a dropdown instead of the platform menu).
+
+### Step 4 — Pixel 7 Sandbox check (2026-10-20)
+
+`directSandbox` from this branch, Sandbox package only (ordinary CoffeePeek untouched; the app process was force-stopped afterwards, which resets Sandbox state).
+Public profile of "Sandbox Friend", opened from the feed card author:
+
+| Check | Result |
+|---|---|
+| Header, stats, favorites carousel (shop/roaster/drink), check-ins, activity card | **Pass** |
+| Follow: button becomes «Вы подписаны», followers 0 → 1 | **Pass** |
+| Followers sheet | Opens; shows «Пока нет подписчиков» while the count says 1 — Sandbox fixture lists are empty (fixture limit, not the screen) |
+| Author menu (share / block) | **Pass** |
+| Block: confirmation → «Автор заблокирован» state without sections; unblock confirmation → content returns | **Pass** |
+| «Все» sheets: favorites (shop, roaster with description and stats, drink), check-ins (timeline card), activity (October 2026, 20th marked, previous month → September, 0 days) | **Pass** |
+
+Found and fixed on the way: the Sandbox root composed only `Navigator()`, so no block/unblock confirmation ever appeared there (also in the legacy feed). `SandboxScreen`
+now hosts `AuthorBlockingHost()` as `App.kt` does. This closes part of the open "block UI walkthrough" item in the plan.
+
+Not checked: guest follow → sign-in, own profile through an alias, photo viewer from avatar/check-in photos (no photo fixtures), large font, light theme, rotation.
+
+## Step 5 result — Profile tab in `feature/profile/impl` (2026-10-20)
+
+- **Logic**: `OwnProfileViewModel` over `ProfileAccountPort`/`ProfileSignOutPort` (account switch and sign-out clear first, late answers for an old account ignored, refresh failure with content
+  only sets `refreshError`, logout resets the screen before the app ends the account). 6 tests ported from the account half of `ProfileViewModelTest`.
+- **UI**: the owner's page is the shared public-profile screen with `OwnProfileExtras` (no back button, owner actions menu: shop changes / submitted shops / submitted roasters / logout with a
+  confirmation dialog, edit button on the avatar, favorites preview and personal activity calendar as app slots, "Все" opens Favorites with the `favorites_opened {entry_point: profile}` event and the
+  VisitedPlaces list, bottom padding for the floating bar). The page reloads when the cached name, bio, avatar or address change. An account without a public address gets the plain summary
+  (header, stats, Избранное/Чекины buttons, favorites preview, mascot error with retry).
+- **api/app**: `OwnProfileEntry`, `OwnProfileSlots`, `ProfileSignOutPort`; `OwnProfileScreenRenderer` (Legacy default, Android entry) used by `MainScreen`'s Profile tab; `AndroidProfileSignOut` keeps the
+  legacy order (server logout with its message, platform sign-out, drafts). `AndroidProfileSignOutTest` (2). iOS keeps `ProfileScreen`.
+- **Dropped on purpose**: the guest card branch of the legacy `ProfileScreen` (the tab is only composed for signed-in users, see `MainScreen`) — owner question Q8 was not answered, revisit if guests ever get the tab.
+- **Pixel 7 Sandbox check**: tab renders (header, edit button, stats, favorites preview, check-ins, activity); actions menu and logout dialog (cancelled); «Все» of favorites → Favorites;
+  «Все» of check-ins → history; edit button → Edit profile, saving a new name updates the tab header (@Sandbox2); personal activity calendar sheet; bottom content clears the floating bar.
+  Not checked: logout itself, the no-public-address path (no fixture), large font, rotation, light theme, avatar photo viewer.
+
+## Step 6 result — edit profile and account deletion in `feature/profile/impl` (2026-10-21)
+
+- **api**: `ProfileEditPort` (avatar/username/about writes, `ProfileAvatarImage`), `AccountDeletionPort` (`existingRequest`, `request`), `EditProfileEntry`, `AccountDeletionEntry`
+  (`onSessionEnded` callback), `EditProfileSlots` (image, picked-avatar preview, photo source sheet + picker). Own-account reads reuse `ProfileAccountPort`.
+- **Logic** (`EditProfileViewModel`, 11 tests; `AccountDeletionViewModel`, 10 tests, ported from the legacy parity tests): the save order, trimmed compare, 2–64/≤600, 5 MB and stop at the first
+  failure are kept. **Deliberate changes (owner decisions)**: a retry after a later failure does not re-upload the avatar or resend the name (finished steps are remembered);
+  opening the deletion screen never requests deletion — an existing request is shown, otherwise the user confirms with «Отправить письмо» (the edit screen keeps its «Удалить аккаунт?» alert, so
+  there are two confirmations now; decide whether to drop the alert). Two sends in one frame issue one request (the legacy double-tap race is gone). Session end is reported once
+  after an active session was seen; the app does the platform sign-out and `Navigator.openLoginAfterSessionEnd` on an app-lifetime scope so the redirect survives the screen leaving composition.
+- **UI**: form state lives in the host ViewModel store (survives rotation); IME-safe synced text fields (`rememberCoffeePeekSyncedText` added to the design system); validation texts via resources.
+- **App**: `AccountScreenRenderer` (Legacy default for iOS, Android entry), `AndroidProfileEditPort`/`AndroidAccountDeletionPort` over `UserRepository`, Koin param `accountRendererFactory`, `Navigator` routes use it.
+- **Checks**: `:feature:profile:impl:testDebugUnitTest` green (48 tests), `:composeApp:compileDirectDebugKotlinAndroid`, iOS simulator compile of profile api/impl and composeApp, `assembleDirectSandbox`.
+  Test-writing note: a ViewModel with a ticker that waits for a fixed fake clock never lets `runTest` go idle — close the ViewModel at the end of such tests.
+- **Pixel 7 Sandbox check**: tab → edit (save disabled without changes), typing updates the counter and enables save with the keyboard open, save returns to the tab with the new name, «Удалить аккаунт» alert →
+  deletion screen opens in the confirmation state without sending, «Отправить письмо» → «Письмо отправлено» with the resend gated, rotation keeps that state.
+  Not checked: avatar picker/camera (no files in Sandbox), failure dialogs, session-end redirect, large font, light theme, the legacy `PublicProfilePresentationTest`.
+
+## Step 7 result — retroactive audit of the activated Android path (2026-10-21)
+
+Checked the risk table (P1–P17) against the migrated code, tests and the Pixel 7 Sandbox runs. No defect needing a code change was found; one test gap was closed
+(`AndroidAccountPortsTest`: write/deletion adapters, session end → platform sign-out before the login redirect).
+
+| id | status |
+|---|---|
+| P1 logout order | kept: `AndroidProfileSignOut` (server logout, platform, drafts) + `AndroidProfileSignOutTest`; the screen resets before signing out. Not executed on a device |
+| P2 account switch | `OwnProfileViewModelTest`, `PublicProfileViewModelTest` (generation + account guards) |
+| P3 deletion | **changed on purpose**: no request on open; explicit send; one request per frame; session end reported once (tests + device) |
+| P4 own-profile detection, guest follow | tests; guest follow → sign-in not run on a device (Sandbox has no guest mode) |
+| P5 blocked authors | tests + Sandbox walkthrough (step 4); block confirmation needed `AuthorBlockingHost` in the Sandbox root (fixed) |
+| P6 own tab without a slug | handled (plain summary); no fixture for it, so not run on a device |
+| P7 edit save | kept; partial-save quirk **fixed on purpose** (finished steps are not repeated) |
+| P8 stale counters | kept as in prod (no refresh on return) |
+| P9 analytics | one `favorites_opened {entry_point: profile}` via `AndroidProfileAnalytics` (tested); page names come from unchanged route classes |
+| P10 activity / connections / favorites | repository and ViewModel tests; Sandbox connections list is empty (fixture limit) |
+| P11 guest tab rules | untouched (`MainScreen`, `NativeTabRoutes`) |
+| P12 theme/city, P16 singleton `ProfileViewModel` | untouched: Settings is a separate later owner, so the singleton stays |
+| P13 share rule | identical single-slash check and `https://coffeepeek.by` prefix; the own tab has no share button (it did not before either) |
+| P14 recreation | edit/deletion state lives in the nav entry's ViewModel store; rotation checked for the deletion screen |
+| P15 texts/descriptions | all Russian strings and content descriptions from the table exist in `strings.xml` (`Выбрано` belongs to Settings) |
+| P17 Sandbox fixtures | about/avatar/deletion/follow served; 401 follow, no-address account and blocked-follow rule still missing |
+
+**Legacy that stays and why**: `ProfileScreen`, `EditProfileScreen`, `DeleteAccountPendingScreen`, `OtherUserProfileScreen`, their ViewModels and the 22 parity tests are still
+the iOS and shared path (the Legacy renderers). They can only go when iOS consumes the new modules, which needs an iOS Compose entry for the profile api (not started).
+`PublicProfilePresentationTest` (instrumented) still targets the legacy screen; it compiles but was not run.
+
+**Open, not verified**: logout executed on a device, avatar picker/camera, failure dialogs of edit/deletion, session-end redirect on a device, large font, light theme, own profile via alias,
+the first own-actions menu icon looked partly overlapped. Settings owner, Discovery, Auth, Community and Contributions owners follow later.

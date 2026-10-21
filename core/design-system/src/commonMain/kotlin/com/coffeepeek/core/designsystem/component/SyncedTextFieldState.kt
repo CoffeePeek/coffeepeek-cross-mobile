@@ -41,3 +41,14 @@ internal class SyncedTextFieldState(initial: String) : MutableState<TextFieldVal
 
     private fun TextRange.clamp(length: Int) = TextRange(start.coerceIn(0, length), end.coerceIn(0, length))
 }
+
+/**
+ * The field value for a text field whose text is owned by a ViewModel that publishes it asynchronously: the cursor and IME
+ * composition stay local, and only a real external replacement overwrites them.
+ */
+@androidx.compose.runtime.Composable
+fun rememberCoffeePeekSyncedText(text: String): MutableState<TextFieldValue> {
+    val field = androidx.compose.runtime.remember { SyncedTextFieldState(text) }
+    androidx.compose.runtime.SideEffect { field.syncExternal(text) }
+    return field
+}

@@ -1,0 +1,36 @@
+package com.coffeepeek.feature.profile.api
+
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
+
+enum class ProfileContribution { Changes, Shops, Roasters }
+
+/** App-rendered pieces that only the owner's own profile shows. */
+class OwnProfileSlots(
+    val shared: ProfileSlots,
+    /** The owner's favorites preview with its own loading, empty and retry states. */
+    val favoritesPreview: @Composable (onOpenShop: (String) -> Unit, onOpenRoaster: (String) -> Unit) -> Unit,
+    /** The owner's personal activity calendar (private and home check-ins). */
+    val activityCalendar: @Composable () -> Unit,
+    /** Mascot error content with a retry action. */
+    val loadError: @Composable (onRetry: () -> Unit) -> Unit,
+)
+
+/** The Profile tab. Caller owns the tab, navigation, sign-in and the floating bar clearance. */
+interface OwnProfileEntry {
+    @Composable
+    fun Content(
+        onEditProfile: () -> Unit,
+        onOpenShop: (slug: String) -> Unit,
+        onOpenRoaster: (slug: String) -> Unit,
+        onLogin: () -> Unit,
+        onOpenUser: (slug: String, nickname: String, avatarUrl: String?) -> Unit,
+        onOpenFavorites: () -> Unit,
+        onOpenCheckIns: () -> Unit,
+        onOpenContributions: (ProfileContribution) -> Unit,
+        modifier: Modifier = Modifier,
+        bottomClearance: Dp = 0.dp,
+    )
+}

@@ -9,12 +9,12 @@ import com.coffeepeek.admin.ui.screen.shop.ShopDetailScreen
 import com.coffeepeek.admin.ui.screen.shop.ShopMenuGalleryScreen
 import com.coffeepeek.admin.ui.screen.shop.ShopReportScreen
 import com.coffeepeek.admin.ui.screen.favorites.FavoritesScreen
-import com.coffeepeek.admin.ui.screen.deleteaccount.DeleteAccountPendingScreen
-import com.coffeepeek.admin.ui.screen.editprofile.EditProfileScreen
 import com.coffeepeek.admin.ui.favorites.FavoritesDestination
 import com.coffeepeek.admin.ui.screen.contributions.ContributionKind
 import com.coffeepeek.admin.ui.screen.contributions.MyContributionsScreen
 import com.coffeepeek.admin.ui.screen.roaster.AddRoasterScreen
+import com.coffeepeek.admin.ui.screen.profile.AccountScreenRenderer
+import com.coffeepeek.admin.ui.screen.profile.PublicProfileScreenRenderer
 import com.coffeepeek.admin.ui.screen.roaster.RoasterScreenRenderer
 import com.coffeepeek.admin.ui.screen.profile.CityScreen
 import com.coffeepeek.admin.ui.screen.profile.ThemeScreen
@@ -60,7 +60,6 @@ import com.coffeepeek.admin.ui.screen.shop.ShopCheckInListScreenRenderer
 import com.coffeepeek.admin.ui.screen.coffee.CoffeeScreenRenderer
 import com.coffeepeek.admin.ui.screen.shop.ShopMenuGalleryScreenRenderer
 import com.coffeepeek.admin.ui.screen.shop.ShopReportScreenRenderer
-import com.coffeepeek.admin.feature.profile.ui.OtherUserProfileScreen
 import com.coffeepeek.admin.feature.passwordrecovery.ui.PasswordRecoveryScreen
 import com.coffeepeek.admin.ui.screen.shopchange.ShopChangeEditorScreen
 import com.coffeepeek.admin.ui.screen.shopchange.ShopChangeRequestDetailScreen
@@ -504,8 +503,8 @@ object Navigator {
                     composable<Screen.UserProfile> { backStack ->
                         PublicProfileRoute(backStack.toRoute<Screen.UserProfile>())
                     }
-                    composable<Screen.EditProfile> { EditProfileScreen() }
-                    composable<Screen.DeleteAccountPending> { DeleteAccountPendingScreen() }
+                    composable<Screen.EditProfile> { koinInject<AccountScreenRenderer>().EditProfile() }
+                    composable<Screen.DeleteAccountPending> { koinInject<AccountScreenRenderer>().DeletionPending() }
                     composable<Screen.Favorites> { FavoritesDestination() }
                     composable<Screen.VisitedPlaces> { CheckInHistoryDestination() }
                     composable<Screen.HomeCheckIns> { CheckInHistoryDestination() }
@@ -544,8 +543,8 @@ object Navigator {
             Screen.AddRoaster -> AddRoasterScreen()
             is Screen.RoasterDetail -> koinInject<RoasterScreenRenderer>().Detail(screen.roasterId)
             is Screen.UserProfile -> PublicProfileRoute(screen)
-            Screen.EditProfile -> EditProfileScreen()
-            Screen.DeleteAccountPending -> DeleteAccountPendingScreen()
+            Screen.EditProfile -> koinInject<AccountScreenRenderer>().EditProfile()
+            Screen.DeleteAccountPending -> koinInject<AccountScreenRenderer>().DeletionPending()
             Screen.Favorites -> FavoritesDestination()
             Screen.VisitedPlaces -> CheckInHistoryDestination()
             Screen.HomeCheckIns -> CheckInHistoryDestination()
@@ -560,15 +559,6 @@ object Navigator {
 
     @Composable
     private fun PublicProfileRoute(screen: Screen.UserProfile) {
-        OtherUserProfileScreen(
-            slug = screen.slug,
-            nickname = screen.nickname,
-            avatarUrl = screen.avatarUrl,
-            onBack = ::popBack,
-            onCoffeeShopClick = { navigate(Screen.ShopDetail(it)) },
-            onRoasterClick = { navigate(Screen.RoasterDetail(it)) },
-            onLogin = { navigate(Screen.Auth) },
-            onUserClick = { slug, nickname, avatar -> navigate(Screen.UserProfile(slug, nickname, avatar)) },
-        )
+        koinInject<PublicProfileScreenRenderer>().Content(screen.slug, screen.nickname, screen.avatarUrl)
     }
 }

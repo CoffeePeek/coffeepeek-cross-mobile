@@ -14,7 +14,7 @@ import com.coffeepeek.admin.analytics.Analytics
 import com.coffeepeek.admin.analytics.AnalyticsEvent
 import com.coffeepeek.admin.di.platformViewModel
 import com.coffeepeek.admin.feature.favorites.api.FavoritesProfilePreview
-import com.coffeepeek.admin.feature.profile.domain.PublicProfileStats
+import com.coffeepeek.feature.profile.domain.PublicProfileStats
 import com.coffeepeek.admin.feature.profile.ui.PublicProfileHeader
 import com.coffeepeek.admin.feature.profile.ui.PublicProfileStatsCard
 import com.coffeepeek.admin.feature.profile.ui.PublicProfileViewModel

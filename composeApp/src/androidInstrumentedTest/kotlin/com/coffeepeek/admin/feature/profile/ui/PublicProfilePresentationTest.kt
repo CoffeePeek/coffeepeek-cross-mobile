@@ -37,18 +37,19 @@ import com.coffeepeek.admin.MainActivity
 import com.coffeepeek.admin.feature.catalog.api.RoasterCard
 import com.coffeepeek.admin.feature.favorites.api.RoasterFavorites
 import com.coffeepeek.admin.feature.favorites.ui.FavoritesProfilePreviewContent
-import com.coffeepeek.admin.feature.profile.domain.PublicFavoriteKind
-import com.coffeepeek.admin.feature.profile.domain.PublicProfile
-import com.coffeepeek.admin.feature.profile.domain.PublicProfileActivity
+import com.coffeepeek.feature.profile.domain.ProfileAddress
+import com.coffeepeek.feature.profile.domain.PublicFavoriteKind
+import com.coffeepeek.feature.profile.domain.PublicProfile
+import com.coffeepeek.feature.profile.domain.PublicProfileActivity
 import com.coffeepeek.admin.feature.profile.domain.PublicProfileCheckIn
 import com.coffeepeek.admin.feature.profile.domain.PublicProfileCheckInPage
-import com.coffeepeek.admin.feature.profile.domain.PublicProfileFavorite
+import com.coffeepeek.feature.profile.domain.PublicProfileFavorite
 import com.coffeepeek.admin.feature.profile.domain.PublicProfileRepository
-import com.coffeepeek.admin.feature.profile.domain.PublicProfileStats
-import com.coffeepeek.admin.feature.profile.domain.PublicProfileFollowState
-import com.coffeepeek.admin.feature.profile.domain.PublicProfileConnection
-import com.coffeepeek.admin.feature.profile.domain.PublicProfileConnectionKind
-import com.coffeepeek.admin.feature.profile.domain.PublicProfileConnectionsPage
+import com.coffeepeek.feature.profile.domain.PublicProfileStats
+import com.coffeepeek.feature.profile.domain.PublicProfileFollowState
+import com.coffeepeek.feature.profile.domain.PublicProfileConnection
+import com.coffeepeek.feature.profile.domain.PublicProfileConnectionKind
+import com.coffeepeek.feature.profile.domain.PublicProfileConnectionsPage
 import com.coffeepeek.domain.model.*
 import com.coffeepeek.domain.repository.FavoriteRepository
 import com.coffeepeek.domain.repository.RoasterRepository
@@ -863,19 +864,19 @@ private class ProfileFixtureRepository : PublicProfileRepository {
     override suspend fun getFavorites(slug: String) = Result.success(listOf(
         PublicProfileFavorite(
             "shop", "Территория кофе", PublicFavoriteKind.CoffeeShop, slug = "territory-coffee",
-            publicAddress = PublicAddress("territory-coffee", "/coffee-shops/territory-coffee", 1, false),
+            publicAddress = ProfileAddress("territory-coffee", "/coffee-shops/territory-coffee", 1, false),
             address = "пр. Независимости 95", rating = 4.7, reviewCount = 12, isOpen = true,
             tags = listOf("To Go", "Laptop Friendly"),
         ),
         PublicProfileFavorite(
             "roaster", "Roast", PublicFavoriteKind.Roaster, slug = "roast",
-            publicAddress = PublicAddress("roast", "/roasters/roast", 1, false),
+            publicAddress = ProfileAddress("roast", "/roasters/roast", 1, false),
             description = ROAST_DESCRIPTION,
             coffeeShopsCount = 7, coffeeProductsCount = 38,
         ),
         PublicProfileFavorite(
             "roaster-lab", "Roast Lab", PublicFavoriteKind.Roaster, slug = "roast-lab",
-            publicAddress = PublicAddress("roast-lab", "/roasters/roast-lab", 1, false),
+            publicAddress = ProfileAddress("roast-lab", "/roasters/roast-lab", 1, false),
             description = ROAST_LAB_DESCRIPTION,
             coffeeShopsCount = 3, coffeeProductsCount = 16,
         ),

@@ -20,9 +20,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.Dp
 import com.coffeepeek.admin.di.platformViewModel
 import com.coffeepeek.admin.feature.favorites.api.FavoritesPreviewCarousel
-import com.coffeepeek.admin.feature.profile.domain.PublicFavoriteKind
-import com.coffeepeek.admin.feature.profile.domain.PublicProfileFavorite
-import com.coffeepeek.admin.feature.profile.domain.PublicProfileConnectionKind
+import com.coffeepeek.feature.profile.domain.PublicFavoriteKind
+import com.coffeepeek.feature.profile.domain.PublicProfileFavorite
+import com.coffeepeek.feature.profile.domain.PublicProfileConnectionKind
 import com.coffeepeek.admin.theme.CpColor
 import com.coffeepeek.admin.ui.component.CoffeePeekLoader
 import com.coffeepeek.admin.ui.component.FullScreenImageDialog
@@ -277,7 +277,7 @@ internal fun UserProfileScreen(
                         when {
                             state.isLoadingActivity -> ProfileSectionLoader()
                             state.activityError != null -> InlineProfileError("Не удалось загрузить активность", vm::retryActivity)
-                            profile.activity != null -> PublicProfileActivityCard(profile.activity, onClick = { section = ProfileSection.Activity })
+                            profile.activity != null -> PublicProfileActivityCard(profile.activity!!, onClick = { section = ProfileSection.Activity })
                             else -> ProfileSectionLoader()
                         }
                     }
