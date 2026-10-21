@@ -26,7 +26,7 @@ internal sealed interface ShopDetailAction {
     data class ReportCheckIn(val checkInId: String) : ShopDetailAction
     data class OpenAuthor(val checkInId: String) : ShopDetailAction
     data class BlockAuthor(val checkInId: String) : ShopDetailAction
-    data class OpenPhoto(val urls: List<String>, val index: Int) : ShopDetailAction
+    data class OpenPhoto(val urls: List<String>, val index: Int, val originals: List<String> = urls) : ShopDetailAction
     data class OpenCheckInPhoto(val checkInId: String, val index: Int) : ShopDetailAction
     data class OpenRoaster(val id: String) : ShopDetailAction
     data class OpenLink(val target: String) : ShopDetailAction

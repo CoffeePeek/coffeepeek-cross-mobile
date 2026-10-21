@@ -35,6 +35,7 @@ import com.coffeepeek.feature.shop.impl.resources.shop_checkin_list_title
 import com.coffeepeek.feature.shop.impl.resources.shop_checkin_list_empty
 import com.coffeepeek.feature.shop.impl.resources.shop_detail_back
 import com.coffeepeek.feature.shop.impl.ui.ShopCheckInListViewModel
+import com.coffeepeek.feature.shop.impl.ui.compose.component.LocalShopPhotoPrefetch
 import com.coffeepeek.feature.shop.impl.ui.compose.component.ShopCheckInCard
 import com.coffeepeek.feature.shop.impl.ui.compose.component.ShopCheckInGuestPlaceholder
 import com.coffeepeek.feature.shop.impl.ui.compose.component.ShopCheckInGuestPrompt
@@ -87,6 +88,9 @@ internal fun ShopCheckInListScreenContent(
 ) {
     val listState = rememberLazyListState()
     LaunchedEffect(sessionGeneration) { listState.scrollToItem(0) }
+    LocalShopPhotoPrefetch.current?.invoke(listState, state.checkIns
+        .take(if (state.isLoggedIn) Int.MAX_VALUE else 1)
+        .mapIndexed { index, checkIn -> "check-in:${checkIn.id}:$index" to checkIn.photoThumbnailUrls.take(3) })
     Scaffold(
         modifier = Modifier.windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal)),
         topBar = {

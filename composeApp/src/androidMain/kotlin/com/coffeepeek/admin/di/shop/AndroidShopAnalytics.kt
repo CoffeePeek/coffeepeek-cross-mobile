@@ -2,6 +2,7 @@ package com.coffeepeek.admin.di.shop
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import com.coffeepeek.admin.feature.checkin.api.CheckInFlowHandoff
 import com.coffeepeek.admin.analytics.*
 import com.coffeepeek.feature.shop.api.*
 
@@ -16,8 +17,11 @@ internal object AndroidShopAnalytics : ShopAnalytics {
     }
 
     override fun checkInStarted(authenticated: Boolean) {
-        Analytics.shopAction("check_in")
-        Analytics.track(AnalyticsEvent.CHECK_IN_START_ATTEMPTED, "source" to "shop_detail")
+        // A global-create flow already reported its start; the tracker stays for the check-in form to take.
+        if (CheckInFlowHandoff.tracker?.isFresh != true) {
+            Analytics.shopAction("check_in")
+            Analytics.track(AnalyticsEvent.CHECK_IN_START_ATTEMPTED, "source" to "shop_detail")
+        }
         if (!authenticated) Analytics.gate("check_in")
     }
 

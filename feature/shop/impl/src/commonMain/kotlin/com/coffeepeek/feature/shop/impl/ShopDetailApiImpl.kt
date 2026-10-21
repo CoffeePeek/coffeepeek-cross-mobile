@@ -80,6 +80,7 @@ private fun ShopDetailEvent.toPublicEffect(unknownAuthor: String): ShopDetailEff
     ShopDetailEvent.Back -> ShopDetailEffect.Back
     ShopDetailEvent.ChooseAnotherShop -> ShopDetailEffect.ChooseAnotherShop
     ShopDetailEvent.SignIn -> ShopDetailEffect.SignIn
+    is ShopDetailEvent.FavoriteRequiresSignIn -> ShopDetailEffect.FavoriteRequiresSignIn(shopId, desired)
     ShopDetailEvent.Register -> ShopDetailEffect.Register
     is ShopDetailEvent.OpenMenuGallery -> ShopDetailEffect.OpenMenuGallery(shopId)
     is ShopDetailEvent.CreateCheckIn -> ShopDetailEffect.CreateCheckIn(shop)

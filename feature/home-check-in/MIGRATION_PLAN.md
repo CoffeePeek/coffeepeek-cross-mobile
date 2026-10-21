@@ -79,6 +79,25 @@ targets the footer directly; targeted and complete reruns are required below.
 No live app was installed or account changed. Logs stay local as
 `coffeepeek-develop-home-*2026-10-19.log`.
 
+Completed device repair at source `c165d8fc`: test APK rebuild 7s; targeted
+footer scenario **1/1**, 2.208s; then complete Home suite **41/41**, 74.923s,
+zero failures on the full rerun. Both themes, entry/picker cancellation, ordinary
+album index/URL delivery and session/write guards use fake ports only. Final
+self-targeted Home APK SHA-256:
+`0669398c0977e055188bb7701b976db1567562212bf608577b0c92bbe17dd92a`.
+The first 40/41 failure is retained above, not treated as product acceptance.
+
+## Current-main reconciliation gate — 2026-10-19
+
+Main **28917758** is now inherited through #43 -> #95 -> #99 and its children.
+The initial audit found original-only parsing while main distinguished photo
+variants. That code gap is addressed by the photo-representation slice below,
+through data/domain, history adapters, inline rendering and explicit originals,
+without changing upload/edit ownership.
+Do not interpret a passing merge/assembly as closing protected-photo acceptance.
+Profile Activity and shared/iOS UI remain deliberately legacy. No new UI belongs
+in composeApp; it supplies only the DI/lifecycle/platform adapters for this work.
+
 ## Current-main photo representations — 2026-10-19
 
 Scope: existing #99 after merging history `abc5876f` at `6ccff47f`;
@@ -116,6 +135,17 @@ debug signatures were checked before updating only the self-targeted test APK.
 The ordinary CoffeePeek and Sandbox device packages/data were not changed.
 Local log: `coffeepeek-home-photo-parent-ui-2026-10-19.log`.
 History's parent separately passed 21/21 self-targeted cases on the same Pixel 7.
+Final-tip repetition at runtime source `28c64bff`: **41/41** Home UI cases pass
+again in 73.350s, zero failures/retries. APK SHA-256:
+`72165261cd3ec6fe6439e3c830aa1dfc58dc19c2829954fe6ceacaeae33995f5`.
+History separately passes **21/21** at that tip in 38.937s. Full-tip selected
+unit results are 704/704 (537 app Direct plus the 167 Home/history library cases).
+Direct Debug/Sandbox APKs, DEX/isolation guards, both feature test APKs and app
+Direct instrumentation Kotlin compilation pass (2m21s). Later source changes
+are documentation only. Local final logs: `coffeepeek-photo-stack-final-build-`,
+`coffeepeek-home-photo-stack-ui-` and `coffeepeek-history-photo-stack-ui-`, each
+suffixed `2026-10-19.log`. Only self-targeted fake APKs were installed; no live
+photo/backend/account operation, manual pixel acceptance or native UI check.
 Protected live photos, real media selection/extraction/uploads, backend writes,
 account replacement, analytics, release and iOS acceptance remain open.
 
@@ -1138,3 +1168,9 @@ device/account acceptance.
 Excluded: iOS UI migration, profile/Activity extraction, separate Home history or
 statistics screens, new server capabilities, photo editing, root navigation
 replacement and wholesale removal of legacy code.
+
+## Retroactive parity audit — 2026-10-20
+
+Open gaps from the legacy-first audit: H1–H9 (high: H1 form state lost on Activity recreation; H8 already fixed). Full table and verification status: [LEGACY_PARITY_AUDIT.md](../LEGACY_PARITY_AUDIT.md).
+
+Fixes applied 2026-10-20 and owner decisions on intentional differences: see the "Fixes applied" and "Intentional differences" sections of [LEGACY_PARITY_AUDIT.md](../LEGACY_PARITY_AUDIT.md). Device verification is still open.

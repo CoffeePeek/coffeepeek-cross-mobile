@@ -197,7 +197,7 @@ internal class HomeCheckInEditorViewModel(
         catch (error: Exception) {
             if (!canAccess()) { revokeAccess(); return }
             if (beansJob === job && searchRevision == expectedRevision && job.isActive) {
-                track(HomeCheckInEditorMetric.Failed(HomeCheckInEditorStage.Bean, error.issue()))
+                track(HomeCheckInEditorMetric.Failed(HomeCheckInEditorStage.Bean, error.issue(), (error as? HomePreparationFailure)?.statusCode))
                 updateState { copy(beansIssue = error.issue()) }
             }
         } finally {
@@ -254,7 +254,7 @@ internal class HomeCheckInEditorViewModel(
                 if (!failure?.fieldErrors.isNullOrEmpty()) track(HomeCheckInEditorMetric.Validation(failure.fieldErrors.keys, server = true))
                 else track(HomeCheckInEditorMetric.Failed(
                     if (failure?.operation == HomePreparationOperation.PhotoUpload) HomeCheckInEditorStage.Photo else HomeCheckInEditorStage.Save,
-                    error.issue()))
+                    error.issue(), failure?.statusCode))
                 updateState { copy(fieldErrors = failure?.fieldErrors.orEmpty(),
                     saveIssue = error.issue().takeIf { failure?.fieldErrors.isNullOrEmpty() },
                     failedOperation = failure?.operation) }

@@ -40,6 +40,8 @@ import com.adamglin.phosphoricons.regular.InstagramLogo
 import com.adamglin.phosphoricons.regular.Eye
 import com.adamglin.phosphoricons.regular.EyeSlash
 import com.adamglin.phosphoricons.regular.Funnel
+import com.adamglin.phosphoricons.regular.Fire
+import com.adamglin.phosphoricons.regular.Drop
 import com.adamglin.phosphoricons.regular.GearSix
 import com.adamglin.phosphoricons.regular.Globe
 import com.adamglin.phosphoricons.regular.Heart
@@ -108,6 +110,8 @@ object CoffeePeekIcons {
     val Favorite: ImageVector get() = PhosphorIcons.Regular.Heart
     val FavoriteFilled: ImageVector get() = PhosphorIcons.Fill.FillHeart
     val Filter: ImageVector get() = PhosphorIcons.Regular.Funnel
+    val Fire: ImageVector get() = PhosphorIcons.Regular.Fire
+    val Drop: ImageVector get() = PhosphorIcons.Regular.Drop
     val Gallery: ImageVector get() = PhosphorIcons.Regular.Images
     val Globe: ImageVector get() = PhosphorIcons.Regular.Globe
     val Grid: ImageVector get() = PhosphorIcons.Regular.SquaresFour

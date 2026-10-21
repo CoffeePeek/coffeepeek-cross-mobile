@@ -1,9 +1,10 @@
 package com.coffeepeek.admin.feature.profile.ui
 
+import com.coffeepeek.core.designsystem.component.CoffeePeekLikeBadge
+
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -14,7 +15,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -23,7 +23,6 @@ import com.coffeepeek.admin.feature.catalog.api.RoasterCard
 import com.coffeepeek.admin.feature.catalog.api.ShopCard
 import com.coffeepeek.admin.feature.profile.domain.PublicFavoriteKind
 import com.coffeepeek.admin.feature.profile.domain.PublicProfileFavorite
-import com.coffeepeek.admin.theme.CpColor
 import com.coffeepeek.admin.theme.CpDimens
 import com.coffeepeek.admin.ui.component.CoffeeShopImage
 import com.coffeepeek.admin.ui.icons.CpIcons
@@ -102,13 +101,11 @@ private fun PublicDrinkFavoriteCard(favorite: PublicProfileFavorite, modifier: M
                 CpIcons.Coffee, contentDescription = null,
                 tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(48.dp),
             )
-            Box(
-                modifier = Modifier.align(Alignment.TopEnd).padding(CpDimens.spacing3)
-                    .size(40.dp).clip(CircleShape).background(Color.Black),
-                contentAlignment = Alignment.Center,
-            ) {
-                Icon(CpIcons.FavoriteFilled, "В избранном", tint = CpColor.Primary, modifier = Modifier.size(24.dp))
-            }
+            CoffeePeekLikeBadge(
+                selected = true,
+                contentDescription = "В избранном",
+                modifier = Modifier.align(Alignment.TopEnd).padding(CpDimens.spacing3).size(40.dp),
+            )
         }
         Column(Modifier.padding(CpDimens.spacing4), verticalArrangement = Arrangement.spacedBy(CpDimens.spacing2)) {
             Text(

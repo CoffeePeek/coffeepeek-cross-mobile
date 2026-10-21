@@ -55,9 +55,10 @@ internal class AndroidCheckInHistoryScreenRenderer(
             val home = if (session.lease.isLoggedIn) viewModel(key = "history-home-bridge") {
                 AndroidHistoryHomeBridge(session, homeEditors)
             } else null
-            LaunchedEffect(host, initialHomeId, session) {
-                host.consumeInitialHomeId(initialHomeId)?.let { id ->
-                    if (session.lease.isCurrent()) home?.open(id, editOnLoad = true)
+            LaunchedEffect(host, initialHomeId, session, home) {
+                // Consume only once the editor can really open: a stale lease or a guest must not drop the request.
+                if (home != null && session.lease.isCurrent()) {
+                    host.consumeInitialHomeId(initialHomeId)?.let { id -> home.open(id, editOnLoad = true) }
                 }
             }
             val generation by session.contentGeneration.collectAsStateWithLifecycle()
@@ -102,6 +103,9 @@ internal class AndroidCheckInHistoryScreenRenderer(
         creation: HistoryCreationAnalytics? = null) {
         val entry = remember(session) {
             createCheckInHistoryEntry(session.lease.bind(repository), session.lease.bind(homeReader), calendar::snapshot, imageContent,
+                highQualityImage = { url, highQualityUrl, modifier, scale ->
+                    CpImage(data = url, highQualityData = highQualityUrl, modifier = modifier, contentScale = scale)
+                },
                 createButtonModifier = {
                     val page = Analytics.service?.state?.collectAsState()?.value?.page ?: "other"
                     Modifier.analyticsExposure("check_in", "global_create", page)

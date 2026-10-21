@@ -47,6 +47,10 @@ kotlin {
             implementation(project(module.feature.shop.domain))
             implementation(project(module.feature.shop.data))
             implementation(project(module.feature.shop.impl))
+            implementation(project(module.feature.coffee.api))
+            implementation(project(module.feature.coffee.domain))
+            implementation(project(module.feature.coffee.data))
+            implementation(project(module.feature.coffee.impl))
             implementation(project(module.feature.checkInHistory.api))
             implementation(project(module.feature.checkInHistory.domain))
             implementation(project(module.feature.checkInHistory.data))
@@ -72,6 +76,10 @@ kotlin {
             implementation("org.slf4j:slf4j-nop:2.0.16")
         }
         commonMain.dependencies {
+            implementation(project(module.feature.roaster.api))
+            implementation(project(module.feature.roaster.domain))
+            implementation(project(module.feature.roaster.data))
+            implementation(project(module.feature.roaster.impl))
             implementation(project(module.core.designSystem))
             implementation(project(module.feature.favorites.domain))
             implementation(libs.posthog.kmp)
@@ -245,6 +253,10 @@ android {
         }
     }
     buildTypes {
+        getByName("debug") {
+            // Normal backend/session, but no release OAuth flow in debug builds.
+            buildConfigField("String", "GOOGLE_WEB_CLIENT_ID", "\"\"")
+        }
         create("sandbox") {
             initWith(getByName("debug"))
             applicationIdSuffix = ".sandbox"
@@ -283,13 +295,16 @@ kotlin.sourceSets {
     }
 }
 
-// The offline test app never starts the production Application/root graph.
+// Reuse the app graph with isolated ports, never the production Application/services.
 androidComponents.onVariants(androidComponents.selector().withBuildType("sandbox")) { variant ->
+    tasks.matching { it.name == "process${variant.name.replaceFirstChar { it.uppercaseChar() }}GoogleServices" }
+        .configureEach { enabled = false }
     val runtimeVerification = tasks.register<VerifyApkRuntimeClassesTask>("verify${variant.name.replaceFirstChar { it.uppercaseChar() }}RuntimeClasses") {
         apkDirectory.set(variant.artifacts.get(SingleArtifact.APK))
         requiredClasses.set(listOf("com.coffeepeek.admin.sandbox.SandboxActivity",
-            "com.coffeepeek.admin.sandbox.backend.SandboxBackend", "com.coffeepeek.admin.sandbox.SandboxEnvironment",
-            "com.coffeepeek.feature.homecheckin.data.repository.HomePreparationRepositoryFactoryKt"))
+            "com.coffeepeek.admin.sandbox.backend.SandboxBackend", "com.coffeepeek.admin.sandbox.SandboxApplication",
+            "com.coffeepeek.feature.homecheckin.data.repository.HomePreparationRepositoryFactoryKt",
+            "com.coffeepeek.admin.ui.Navigator"))
     }
     val manifest = variant.artifacts.get(SingleArtifact.MERGED_MANIFEST)
     val verification = tasks.register("verify${variant.name.replaceFirstChar { it.uppercaseChar() }}Isolation") {
@@ -299,7 +314,10 @@ androidComponents.onVariants(androidComponents.selector().withBuildType("sandbox
             check("android.permission.INTERNET" !in xml) { "Sandbox must not have network permission" }
             check("com.coffeepeek.admin.MainActivity" !in xml) { "Sandbox must not launch the production root" }
             check("com.coffeepeek.admin.CoffeePeekApplication" !in xml) { "Sandbox must not start production DI/services" }
+            check("com.google.firebase.provider.FirebaseInitProvider" !in xml) { "Sandbox must not initialize Firebase" }
+            check("com.coffeepeek.admin.notifications.CoffeePeekMessagingService" !in xml) { "Sandbox must not start production push" }
             check("com.coffeepeek.admin.sandbox.SandboxActivity" in xml) { "Missing Sandbox entry" }
+            check("com.coffeepeek.admin.sandbox.SandboxApplication" in xml) { "Missing isolated Sandbox bootstrap" }
         }
     }
     tasks.matching { it.name == "assemble${variant.name.replaceFirstChar { it.uppercaseChar() }}" }.configureEach {
@@ -326,6 +344,10 @@ androidComponents {
                 "com.coffeepeek.api.service.CheckInApiService",
                 "com.coffeepeek.api.CoffeePeekRepo",
                 "com.coffeepeek.data.di.DataModuleKt",
+                "com.coffeepeek.admin.di.roaster.RoasterModuleKt",
+                "com.coffeepeek.admin.di.roaster.FeatureRoasterScreenRenderer",
+                "com.coffeepeek.feature.roaster.impl.RoasterEntryImplsKt",
+                "com.coffeepeek.feature.roaster.data.repository.RoasterRepositoryFactoryKt",
                 "com.coffeepeek.data.feature.favorites.ServerFavoritesRepository",
                 "com.coffeepeek.admin.di.favorites.ServerFavoriteShopsRepository",
                 "com.coffeepeek.admin.di.favorites.ServerFavoriteDrinksRepository",

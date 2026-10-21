@@ -21,6 +21,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.ui.semantics.contentDescription
@@ -58,24 +59,24 @@ private val RowInset = 16.dp
 
 @Composable
 fun CoffeePeekGroupSection(
-    title: String,
+    title: String? = null,
     trailing: String? = null,
     footer: String? = null,
     content: @Composable ColumnScope.() -> Unit,
 ) {
     Column {
-        Row(
+        if (title != null || trailing != null) Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = RowInset)
                 .padding(bottom = 6.dp),
         ) {
-            Text(
+            if (title != null) Text(
                 text = title.uppercase(),
                 fontSize = 13.sp,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.weight(1f),
-            )
+            ) else Spacer(Modifier.weight(1f))
             if (trailing != null) {
                 Text(text = trailing, fontSize = 13.sp, color = CoffeePeekColors.Primary)
             }

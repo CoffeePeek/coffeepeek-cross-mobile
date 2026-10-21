@@ -1,6 +1,7 @@
 package com.coffeepeek.admin.sandbox.backend
 
 import io.ktor.client.HttpClient
+import io.ktor.client.HttpClientConfig
 import io.ktor.client.engine.mock.*
 import io.ktor.client.request.HttpRequestData
 import io.ktor.http.*
@@ -25,15 +26,38 @@ internal class SandboxBackend(private val samplePhoto: ByteArray,
     private val images = mutableMapOf<String, ByteArray>()
     private val reservations = mutableSetOf<String>()
     private val uploaded = mutableSetOf<String>()
-    val gateway: HttpClient = HttpClientFactory(MockEngine { request ->
+    private val application = SandboxApplicationBackend(today, shopRows)
+    private fun apiEngine() = MockEngine { request ->
         val mode = scenario
         if (mode == SandboxScenario.Slow) delay(900)
         if (mode == SandboxScenario.Offline) throw IOException("Sandbox offline scenario")
+        if (request.url.host == "sandbox.coffeepeek.invalid" && request.url.encodedPath.startsWith("/media/")) {
+            val bytes = photo(request.url.toString())
+            return@MockEngine respond(bytes ?: byteArrayOf(), if (bytes == null) HttpStatusCode.NotFound else HttpStatusCode.OK,
+                headersOf(HttpHeaders.ContentType, "image/png"))
+        }
+        protectedPhotoPath.matchEntire(request.url.encodedPath)?.takeIf { request.method == HttpMethod.Get }?.let { match ->
+            val (status, headers, bytes) = synchronized(lock) { protectedPhoto(request, mode, match.groupValues[1]) }
+            return@MockEngine respond(bytes, status, headers)
+        }
         synchronized(lock) { handle(request, mode) }.let { (status, payload) ->
             respond(payload.toString(), status, headersOf(HttpHeaders.ContentType, "application/json"))
         }
-    }).api(BASE_URL)
-    val uploader: HttpClient = HttpClientFactory(MockEngine { request ->
+    }
+    private val protectedPhotoPath = Regex("/api/v1/check-ins/([^/]+)/photos/[^/]+(?:/variants/[A-Za-z0-9_-]+/[1-9][0-9]*/[a-z]+\\.[a-z]+)?")
+    // Owner-scoped media: uncached, ETag-revalidated, and a blocked author's photo disappears (404, no existence leak).
+    private fun protectedPhoto(request: HttpRequestData, mode: SandboxScenario, checkInId: String): Triple<HttpStatusCode, Headers, ByteArray> {
+        val etag = "\"sandbox-photo\""
+        return when {
+            mode == SandboxScenario.ServerError -> Triple(HttpStatusCode.InternalServerError, Headers.Empty, byteArrayOf())
+            !application.protectedPhotoAvailable(checkInId) -> Triple(HttpStatusCode.NotFound, Headers.Empty, byteArrayOf())
+            request.headers[HttpHeaders.IfNoneMatch] == etag ->
+                Triple(HttpStatusCode.NotModified, headersOf(HttpHeaders.ETag, etag), byteArrayOf())
+            else -> Triple(HttpStatusCode.OK, headersOf(HttpHeaders.ContentType to listOf("image/png"), HttpHeaders.ETag to listOf(etag),
+                HttpHeaders.CacheControl to listOf("private, no-cache")), images["/media/sample"] ?: byteArrayOf())
+        }
+    }
+    private fun uploadEngine() = MockEngine { request ->
         val accepted = synchronized(lock) {
             val key = request.url.encodedPath.removePrefix("/upload/")
             val bytes = (request.body as? OutgoingContent.ByteArrayContent)?.bytes()
@@ -43,7 +67,12 @@ internal class SandboxBackend(private val samplePhoto: ByteArray,
             else { images["/media/$key"] = bytes.copyOf(); uploaded += key; true }
         }
         respond("", if (accepted) HttpStatusCode.OK else HttpStatusCode.BadRequest)
-    }).upload()
+    }
+    val gateway: HttpClient = HttpClientFactory(apiEngine()).api(BASE_URL)
+    val uploader: HttpClient = HttpClientFactory(uploadEngine()).upload()
+
+    fun apiClient(configure: HttpClientConfig<*>.() -> Unit): HttpClient = HttpClient(apiEngine()) { configure() }
+    fun uploadClient(configure: HttpClientConfig<*>.() -> Unit): HttpClient = HttpClient(uploadEngine()) { configure() }
 
     init { reset(populated = true) }
 
@@ -65,12 +94,15 @@ internal class SandboxBackend(private val samplePhoto: ByteArray,
         }
         if (populated) shopRows += buildJsonObject {
             put("id", UUID.randomUUID().toString()); put("shopName", "Sandbox Cafe"); put("username", "Sandbox")
-            putJsonObject("shop") { put("slug", "sandbox-cafe"); put("canonicalPath", "/coffee-shop/sandbox-cafe") }
+            put("authorId", SandboxApplicationBackend.SELF_ID)
+            putJsonObject("author") { put("slug", "sandbox"); put("canonicalPath", "/users/sandbox"); put("revision", 0); put("isAlias", false) }
+            putJsonObject("shop") { put("slug", "sandbox-cafe"); put("canonicalPath", "/coffee-shops/sandbox-cafe"); put("revision", 0); put("isAlias", false) }
             put("createdAt", "${today}T07:00:00Z"); put("visitedAt", "${today}T07:00:00Z")
-            put("note", "Локальное тестовое посещение"); put("visibility", "Private"); put("moderationState", "NotSubmitted")
+            put("note", "Локальное тестовое посещение"); put("visibility", "Public"); put("moderationState", "Approved")
             putJsonObject("rating") { put("coffee", 4); put("service", 5); put("place", 4) }
             putJsonArray("photos") { add(buildJsonObject { put("url", "/media/sample"); put("sortIndex", 0) }) }
         }
+        application.reset(populated)
     }
 
     fun photo(url: String): ByteArray? = synchronized(lock) {
@@ -82,6 +114,8 @@ internal class SandboxBackend(private val samplePhoto: ByteArray,
         if (request.url.host != "sandbox.coffeepeek.invalid") return fail(HttpStatusCode.Forbidden)
         if (mode == SandboxScenario.ServerError) return fail(HttpStatusCode.InternalServerError)
         val path = request.url.encodedPath
+        if (mode == SandboxScenario.SaveError && request.method in listOf(HttpMethod.Post, HttpMethod.Put, HttpMethod.Patch, HttpMethod.Delete) &&
+            !path.endsWith("/search") && !path.startsWith("/api/Photos/")) return fail(HttpStatusCode.ServiceUnavailable)
         val home = "/api/v1/check-ins/home"
         if (mode == SandboxScenario.SaveError && (path == home || path.startsWith("$home/")) &&
             request.method in listOf(HttpMethod.Post, HttpMethod.Put, HttpMethod.Delete)) return fail(HttpStatusCode.ServiceUnavailable)
@@ -96,7 +130,7 @@ internal class SandboxBackend(private val samplePhoto: ByteArray,
             if (page !in 1..10000 || size !in 1..100) return fail(HttpStatusCode.BadRequest)
             return ok(buildJsonObject { put("totalCount", filtered.size); put("items", JsonArray(filtered.drop((page - 1) * size).take(size))) })
         }
-        if (path == "/api/Photos/check-in" && request.method == HttpMethod.Post) {
+        if (path.startsWith("/api/Photos/") && request.method == HttpMethod.Post) {
             val body = body(request) as? JsonArray ?: return fail(HttpStatusCode.BadRequest)
             return ok(JsonArray(body.map {
                 val key = UUID.randomUUID().toString(); reservations += key
@@ -139,7 +173,7 @@ internal class SandboxBackend(private val samplePhoto: ByteArray,
                 else -> fail(HttpStatusCode.MethodNotAllowed)
             }
         }
-        return fail(HttpStatusCode.NotFound) // Never fall back to a live transport.
+        return application.handle(request, body(request)) ?: fail(HttpStatusCode.NotFound) // Never fall back to a live transport.
     }
 
     private fun update(id: String, input: JsonObject, existing: JsonObject?): JsonObject? {

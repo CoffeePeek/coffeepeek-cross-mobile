@@ -1,5 +1,9 @@
 <resources>
     <string name="sandbox_app_name">CoffeePeek Sandbox</string>
+    <string name="sandbox_short_banner">SANDBOX · без сети</string>
+    <string name="sandbox_external_blocked">Внешние приложения отключены в Sandbox</string>
+    <string name="sandbox_login">Локальный тестовый аккаунт</string>
+    <string name="sandbox_guest">Гостевой режим</string>
     <string name="sandbox_banner">SANDBOX · локальные данные · без сети</string>
     <string name="sandbox_ready">Обычно</string>
     <string name="sandbox_slow">Задержка</string>
