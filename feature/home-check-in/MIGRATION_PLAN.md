@@ -1,5 +1,41 @@
 # Home check-ins — Android migration plan
 
+## Review corrections — 2026-10-21
+
+Source: `d3aae941` plus these scoped fixes in #99. The editor now uses its
+caller's destination-owned ViewModelStore, already retained by history and the
+Sandbox host. Global creation retains one child store in a parent lifecycle
+ViewModel across Activity configuration changes, and clears both flow/editor
+on final sheet removal or parent destruction. Its account observer, terminal
+result guard and fresh-store-on-reopen behavior remain in force. The retained
+editor uses the independently current account predicate, without capturing an
+old composition's access snapshot. Disposing the old editor composition no
+longer unlocks a saving destination during recreation. Picker deliveries still
+expire with their original composition; no private draft is serialized to disk.
+
+The calendar-only Sandbox transport now clears the nested drink response when
+the field is cleared, and preserves the name of an unchanged historical catalog
+product when editing by coffeeProductId. Custom bean replacement/clearing and
+original photos keep their existing contracts. Production endpoints, shared/iOS
+screens, dependency versions and module boundaries are unchanged.
+
+Verification: **1243 unit executions**, zero failures/errors/skips: Home domain
+14, data 33, impl 71, history impl 47, application Direct/Play 539 each. Seven new
+cases cover both Sandbox regressions, retained/final/reopened/parent store
+lifetimes, the actual busy global flow's once-only completion, and an actual
+editor draft/pending save rebound to the same owner without a second request.
+Both Sandbox defects were reproduced before correction using review-only HTTP
+contract probes; their failing logs are retained locally. No assertion was
+weakened. Direct/Play Debug and Sandbox APKs, four packaged DEX checks, both
+Sandbox isolation checks, app Native Simulator Arm64 compilation and Home impl
+Native test compilation pass (full selection: 2m43s).
+
+Logs: ignored `build/reports/home-fixes/`. No automated UI/instrumentation or
+screenshot suite was added or run. Device rotation/OS picker/IME and real
+account/backend acceptance, process-death recovery and Xcode/device launch
+remain manual gates. This is lifecycle/contract and compilation evidence,
+not a claim of physical-device acceptance.
+
 ## Develop reconciliation — 2026-10-19
 
 Inherited history `29ef7ea8` brings main `dfb00e63` and approved develop
