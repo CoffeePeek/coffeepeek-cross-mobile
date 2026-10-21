@@ -61,7 +61,7 @@ Coffee descendant integration retains its additional author/blocking fixtures:
 votes persist in the owning author's collection, blocked authors cannot be voted
 on, and public counts remain independent of block filtering. The regression also
 covers the friend's existing count (2 -> 3 -> 2). App Direct passes 557 unit
-results, including 21 Sandbox application cases; Direct Debug/Sandbox APKs and
+results, including 18 Sandbox application cases; Direct Debug/Sandbox APKs and
 DEX/isolation guards pass (3m56s). Log: `build/reports/sandbox-fixes/coffee-validation.log`.
 
 ## Develop baseline reconciliation — 2026-10-19
