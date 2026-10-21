@@ -1,15 +1,14 @@
-package com.coffeepeek.feature.authorblocking.ui
+package com.coffeepeek.feature.authorblocking.impl
 
 import com.coffeepeek.feature.authorblocking.api.*
 import com.coffeepeek.feature.authorblocking.domain.AuthorBlockRepository
 import com.coffeepeek.feature.authorblocking.domain.AuthorBlocksState
-import com.coffeepeek.domain.repository.SessionRepository
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 
 internal class AuthorBlockingViewModel(
     private val repository: AuthorBlockRepository,
-    private val sessions: SessionRepository,
+    private val account: AuthorBlockingAccount,
     private val scope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Main),
 ) : AuthorBlockingPresenter {
     override val blocks = repository.state.map(AuthorBlocksState::presentation)
@@ -22,7 +21,7 @@ internal class AuthorBlockingViewModel(
 
     init {
         scope.launch {
-            sessions.observeSession().map { session -> session?.takeIf(sessions::isActiveSession)?.let { it.userId ?: it.accessToken } }
+            account.changes
                 .distinctUntilChanged().drop(1).collect { mutation?.cancel(); _prompt.value = null; _needsLogin.value = false }
         }
     }
@@ -30,7 +29,7 @@ internal class AuthorBlockingViewModel(
     override fun requestUnblock(author: AuthorReference) = request(author, false)
     private fun request(author: AuthorReference, blocked: Boolean) {
         if (_prompt.value?.working == true) return
-        if (!sessions.isActiveSession(sessions.peekSession())) { _needsLogin.value = true; return }
+        if (account.current() == null) { _needsLogin.value = true; return }
         _prompt.value = AuthorBlockPrompt(author, blocked)
     }
     override fun dismiss() { if (_prompt.value?.working != true) _prompt.value = null }

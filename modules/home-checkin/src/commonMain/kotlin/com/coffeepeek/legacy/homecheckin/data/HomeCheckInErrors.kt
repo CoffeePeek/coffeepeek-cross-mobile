@@ -1,9 +1,9 @@
-package com.coffeepeek.feature.homecheckin.data
+package com.coffeepeek.legacy.homecheckin.data
 
 import com.coffeepeek.core.network.requestResult
-import com.coffeepeek.feature.homecheckin.domain.HomeCheckInFailure
-import com.coffeepeek.feature.homecheckin.domain.HomeCheckInField
-import com.coffeepeek.feature.homecheckin.domain.HomeCheckInField.*
+import com.coffeepeek.legacy.homecheckin.domain.HomeCheckInFailure
+import com.coffeepeek.legacy.homecheckin.domain.HomeCheckInField
+import com.coffeepeek.legacy.homecheckin.domain.HomeCheckInField.*
 import io.ktor.client.plugins.HttpRequestTimeoutException
 import io.ktor.client.plugins.ResponseException
 import io.ktor.client.statement.bodyAsText
@@ -38,7 +38,7 @@ internal suspend fun <T> homeRequestResult(block: suspend () -> T): Result<T> = 
 
 internal suspend fun <T> homePhotoUpload(block: suspend () -> T): T = homeRequestResult(block).getOrElse { failure ->
     val safe = failure as HomeCheckInFailure
-    throw HomeCheckInFailure(safe.message, safe.fieldErrors, com.coffeepeek.feature.homecheckin.domain.HomeCheckInOperation.PhotoUpload)
+    throw HomeCheckInFailure(safe.message, safe.fieldErrors, com.coffeepeek.legacy.homecheckin.domain.HomeCheckInOperation.PhotoUpload)
 }
 
 /** ErrorResponse and ASP.NET ValidationProblemDetails, as returned by the Shops service. */

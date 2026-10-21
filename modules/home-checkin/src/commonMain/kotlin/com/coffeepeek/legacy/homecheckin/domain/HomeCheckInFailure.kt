@@ -1,4 +1,4 @@
-package com.coffeepeek.feature.homecheckin.domain
+package com.coffeepeek.legacy.homecheckin.domain
 
 enum class HomeCheckInField { Date, Method, Bean, Dose, Duration, Rating, Note, Drink, Photos, Visibility }
 

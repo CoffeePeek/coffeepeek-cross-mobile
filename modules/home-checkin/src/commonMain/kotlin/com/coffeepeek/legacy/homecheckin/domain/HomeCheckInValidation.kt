@@ -1,8 +1,8 @@
 @file:OptIn(kotlin.time.ExperimentalTime::class)
 
-package com.coffeepeek.feature.homecheckin.domain
+package com.coffeepeek.legacy.homecheckin.domain
 
-import com.coffeepeek.feature.homecheckin.domain.HomeCheckInField.*
+import com.coffeepeek.legacy.homecheckin.domain.HomeCheckInField.*
 import kotlin.time.Clock
 import kotlin.time.Instant
 

@@ -1,9 +1,9 @@
 package com.coffeepeek.admin.feature.homecheckin.ui
 
-import com.coffeepeek.feature.homecheckin.domain.HomeCheckInField
-import com.coffeepeek.feature.homecheckin.domain.HomeCheckInField.*
-import com.coffeepeek.feature.homecheckin.domain.HomeCheckInInput
-import com.coffeepeek.feature.homecheckin.domain.homeCheckInFieldErrors
+import com.coffeepeek.legacy.homecheckin.domain.HomeCheckInField
+import com.coffeepeek.legacy.homecheckin.domain.HomeCheckInField.*
+import com.coffeepeek.legacy.homecheckin.domain.HomeCheckInInput
+import com.coffeepeek.legacy.homecheckin.domain.homeCheckInFieldErrors
 
 internal fun homeValidationSummary(count: Int): String {
     val noun = when {

@@ -9,8 +9,14 @@ object Modules {
     val feature = Feature
 
     object Feature {
-        const val homeCheckIn = ":features:home-checkin"
-        const val authorBlocking = ":features:author-blocking"
+
+        val authorBlocking = AuthorBlocking
+        object AuthorBlocking {
+            const val api = ":feature:author-blocking:api"
+            const val domain = ":feature:author-blocking:domain"
+            const val data = ":feature:author-blocking:data"
+            const val impl = ":feature:author-blocking:impl"
+        }
 
         val favorites = Favorites
         val shopReport = ShopReport
@@ -88,6 +94,7 @@ object Modules {
         const val data = ":modules:data"
         const val network = ":modules:network"
         const val room = ":modules:room"
+        const val homeCheckIn = ":modules:home-checkin"
     }
 
     object Core {
@@ -104,6 +111,7 @@ object Modules {
         legacy.data,
         legacy.network,
         legacy.room,
+        legacy.homeCheckIn,
         core.coroutines,
         core.network,
         core.database,
@@ -144,8 +152,10 @@ object Modules {
         feature.homePreparation.api,
         feature.homePreparation.data,
         feature.homePreparation.impl,
-        feature.homeCheckIn,
-        feature.authorBlocking,
+        feature.authorBlocking.domain,
+        feature.authorBlocking.api,
+        feature.authorBlocking.data,
+        feature.authorBlocking.impl,
     )
 }
 

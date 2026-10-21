@@ -9,7 +9,7 @@ on:
       - buildSrc/**
       - composeApp/**
       - core/**
-      - features/**
+      - feature/**
       - gradle/**
       - modules/**
       - iosApp/**

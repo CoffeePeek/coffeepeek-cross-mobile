@@ -1,7 +1,7 @@
 package com.coffeepeek.admin.ui.screen.checkins
 
 import com.coffeepeek.domain.model.CheckIn
-import com.coffeepeek.feature.homecheckin.domain.HomeCheckIn
+import com.coffeepeek.legacy.homecheckin.domain.HomeCheckIn
 
 internal data class CalendarPhoto(val url: String)
 

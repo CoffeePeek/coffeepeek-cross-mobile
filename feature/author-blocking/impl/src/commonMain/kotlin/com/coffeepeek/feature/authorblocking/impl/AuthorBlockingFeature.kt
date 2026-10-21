@@ -1,8 +1,9 @@
-package com.coffeepeek.feature.authorblocking.api
+package com.coffeepeek.feature.authorblocking.impl
 
-import com.coffeepeek.domain.repository.SessionRepository
-import com.coffeepeek.feature.authorblocking.data.AuthorBlockRepositoryImpl
-import com.coffeepeek.feature.authorblocking.ui.AuthorBlockingViewModel
+import com.coffeepeek.feature.authorblocking.api.AuthorBlockingAccount
+import com.coffeepeek.feature.authorblocking.api.AuthorBlockingPresenter
+import com.coffeepeek.feature.authorblocking.api.AuthorVisibility
+import com.coffeepeek.feature.authorblocking.data.createAuthorBlockData
 import io.ktor.client.HttpClient
 
 /** Application DI owns the lifecycle; implementation classes remain inside the feature. */
@@ -17,8 +18,8 @@ class AuthorBlockingFeature internal constructor(
     }
 }
 
-/** Composition-only factory. Rendering and cross-feature consumers use the contracts above. */
-fun createAuthorBlockingFeature(client: HttpClient, sessions: SessionRepository): AuthorBlockingFeature {
-    val repository = AuthorBlockRepositoryImpl(client, sessions)
-    return AuthorBlockingFeature(repository, AuthorBlockingViewModel(repository, sessions), repository::close)
+/** Composition-only factory. Rendering and cross-feature consumers use the api contracts. */
+fun createAuthorBlockingFeature(client: HttpClient, account: AuthorBlockingAccount): AuthorBlockingFeature {
+    val data = createAuthorBlockData(client, account)
+    return AuthorBlockingFeature(data.visibility, AuthorBlockingViewModel(data.repository, account), data::close)
 }

@@ -1,4 +1,4 @@
-package com.coffeepeek.feature.homecheckin.domain
+package com.coffeepeek.legacy.homecheckin.domain
 
 enum class HomeCheckInVisibility { Private, Public }
 

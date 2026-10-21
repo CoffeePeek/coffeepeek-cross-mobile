@@ -1,10 +1,9 @@
 package com.coffeepeek.feature.authorblocking.data
 
+import com.coffeepeek.feature.authorblocking.api.AuthorBlockingAccount
 import com.coffeepeek.feature.authorblocking.api.AuthorVisibility
 import com.coffeepeek.feature.authorblocking.api.AuthorVisibilitySnapshot
 import com.coffeepeek.feature.authorblocking.domain.*
-import com.coffeepeek.domain.model.Session
-import com.coffeepeek.domain.repository.SessionRepository
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.plugins.expectSuccess
@@ -19,12 +18,12 @@ import kotlinx.serialization.Serializable
 
 internal class AuthorBlockRepositoryImpl(
     private val client: HttpClient,
-    private val sessions: SessionRepository,
+    private val accounts: AuthorBlockingAccount,
     private val scope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default),
 ) : AuthorBlockRepository, AuthorVisibility, AutoCloseable {
     private val lock = Mutex()
     private val epoch = MutableStateFlow(0L)
-    private var account = key(sessions.peekSession())
+    private var account = accounts.current()
     private val _state = MutableStateFlow(AuthorBlocksState(signedIn = account != null, ready = account == null))
     override val state = _state.asStateFlow()
     private val _visibility = MutableStateFlow(AuthorVisibilitySnapshot(ready = account == null))
@@ -32,7 +31,7 @@ internal class AuthorBlockRepositoryImpl(
 
     init {
         scope.launch {
-            sessions.observeSession().map(::key).distinctUntilChanged().collectLatest { current ->
+            accounts.changes.distinctUntilChanged().collectLatest { current ->
                 val generation = epoch.updateAndGet { it + 1 }
                 account = current
                 _state.value = AuthorBlocksState(signedIn = current != null, ready = current == null, sessionVersion = generation)
@@ -42,9 +41,8 @@ internal class AuthorBlockRepositoryImpl(
         }
     }
 
-    private fun key(session: Session?): String? = session?.takeIf(sessions::isActiveSession)?.let { it.userId ?: it.accessToken }
     private fun requireCurrent(generation: Long) {
-        if (epoch.value != generation || account != key(sessions.peekSession())) throw CancellationException("Account changed")
+        if (epoch.value != generation || account != accounts.current()) throw CancellationException("Account changed")
     }
 
     override suspend fun refresh(): Result<Unit> = attempt {
@@ -161,7 +159,7 @@ internal class AuthorBlockRepositoryImpl(
     }
 
     private fun replace(items: List<BlockedAuthor>, generation: Long, force: Boolean = false) {
-        _state.update { if (it.sessionVersion == generation && account == key(sessions.peekSession())) AuthorBlocksState(items, signedIn = true, ready = true, sessionVersion = generation) else it }
+        _state.update { if (it.sessionVersion == generation && account == accounts.current()) AuthorBlocksState(items, signedIn = true, ready = true, sessionVersion = generation) else it }
         publish(items, ready = true, generation = generation, force = force)
     }
 
@@ -169,7 +167,7 @@ internal class AuthorBlockRepositoryImpl(
         val ids = items.mapTo(mutableSetOf()) { it.id }
         val slugs = items.mapNotNullTo(mutableSetOf()) { it.slug }
         _visibility.update { previous ->
-            if (_state.value.sessionVersion != generation || account != key(sessions.peekSession())) previous
+            if (_state.value.sessionVersion != generation || account != accounts.current()) previous
             else if (!force && previous.ready == ready && previous.blockedIds == ids && previous.blockedSlugs == slugs) previous
             else AuthorVisibilitySnapshot(previous.revision + 1, ready, ids, slugs)
         }

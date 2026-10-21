@@ -1,8 +1,8 @@
 package com.coffeepeek.admin.ui.screen.checkins
 
 import com.coffeepeek.domain.model.CheckIn
-import com.coffeepeek.feature.homecheckin.domain.HomeCheckIn
-import com.coffeepeek.feature.homecheckin.domain.HomeCheckInPhoto
+import com.coffeepeek.legacy.homecheckin.domain.HomeCheckIn
+import com.coffeepeek.legacy.homecheckin.domain.HomeCheckInPhoto
 import kotlin.test.Test
 import kotlin.test.assertEquals
 

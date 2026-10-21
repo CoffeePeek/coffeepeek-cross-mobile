@@ -1,9 +1,8 @@
 package com.coffeepeek.feature.authorblocking
 
+import com.coffeepeek.feature.authorblocking.api.AuthorBlockingAccount
 import com.coffeepeek.feature.authorblocking.data.AuthorBlockRepositoryImpl
 import com.coffeepeek.core.network.HttpClientFactory
-import com.coffeepeek.domain.model.Session
-import com.coffeepeek.domain.repository.SessionRepository
 import io.ktor.client.engine.mock.*
 import io.ktor.client.plugins.defaultRequest
 import io.ktor.http.*
@@ -36,7 +35,7 @@ class AuthorBlockRepositoryTest {
                 else -> respond(page(author("a"), "next"), headers = headers)
             }
         }).api("https://api.example")
-        val repo = AuthorBlockRepositoryImpl(client, BlockSessions(), scope())
+        val repo = AuthorBlockRepositoryImpl(client, FakeAccount(), scope())
         try {
             // The list and visibility are separate flows; wait for the snapshot asserted below.
             withTimeout(5_000) { repo.visibility.first { it.ready } }
@@ -54,7 +53,7 @@ class AuthorBlockRepositoryTest {
             if (fail) respond("{}", HttpStatusCode.ServiceUnavailable, headers)
             else respond(page(author("existing")), headers = headers)
         }).api("https://api.example")
-        val repo = AuthorBlockRepositoryImpl(client, BlockSessions(), scope())
+        val repo = AuthorBlockRepositoryImpl(client, FakeAccount(), scope())
         try {
             withTimeout(5_000) { repo.visibility.first { it.ready } }; fail = true
             assertTrue(repo.setBlocked("new", null, "New", null, true).isFailure)
@@ -78,7 +77,7 @@ class AuthorBlockRepositoryTest {
         }).api("https://api.example") {
             defaultRequest { url.fragment = "list-only-fragment" }
         }
-        val repo = AuthorBlockRepositoryImpl(client, BlockSessions(), scope())
+        val repo = AuthorBlockRepositoryImpl(client, FakeAccount(), scope())
         try {
             withTimeout(5_000) { repo.visibility.first { it.ready } }
             assertEquals(listOf(null, "second-page"), cursors)
@@ -93,7 +92,7 @@ class AuthorBlockRepositoryTest {
             if (request.method == HttpMethod.Put) { committed = true; writes++; error("Response lost") }
             respond(page(if (committed) author("target") else ""), headers = headers)
         }).api("https://api.example")
-        val repo = AuthorBlockRepositoryImpl(client, BlockSessions(), scope())
+        val repo = AuthorBlockRepositoryImpl(client, FakeAccount(), scope())
         try {
             withTimeout(5_000) { repo.visibility.first { it.ready } }
             repo.setBlocked("target", "target", "Target", null, true).getOrThrow()
@@ -104,18 +103,18 @@ class AuthorBlockRepositoryTest {
 
     @Test fun accountSwitchDiscardsLateMutationAndNeverInheritsBlocks(): Unit = runBlocking {
         val started = CompletableDeferred<Unit>(); val release = CompletableDeferred<Unit>()
-        val sessions = BlockSessions()
+        val account = FakeAccount()
         val client = HttpClientFactory(MockEngine { request ->
             if (request.method == HttpMethod.Put) {
                 started.complete(Unit); release.await()
                 respond("""{"data":{"authorId":"target","isBlocked":true}}""", headers = headers)
             } else respond(page(), headers = headers)
         }).api("https://api.example")
-        val repo = AuthorBlockRepositoryImpl(client, sessions, scope())
+        val repo = AuthorBlockRepositoryImpl(client, account, scope())
         try {
             withTimeout(5_000) { repo.visibility.first { it.ready } }
             val write = async { repo.setBlocked("target", "target", "Target", null, true) }
-            started.await(); sessions.applySession(Session("token-b", userId = "b"))
+            started.await(); account.switchTo("b")
             assertFalse(repo.visibility.value.ready)
             release.complete(Unit)
             assertFailsWith<CancellationException> { write.await() }
@@ -129,7 +128,7 @@ class AuthorBlockRepositoryTest {
             respond(if (request.url.parameters["cursor"] == null) page(author("a"), "next", "one")
                 else page(author("b"), revision = "two"), headers = headers)
         }).api("https://api.example")
-        val repo = AuthorBlockRepositoryImpl(client, BlockSessions(), scope())
+        val repo = AuthorBlockRepositoryImpl(client, FakeAccount(), scope())
         try {
             withTimeout(5_000) { repo.state.first { it.error != null } }
             assertFalse(repo.visibility.value.ready)
@@ -140,7 +139,7 @@ class AuthorBlockRepositoryTest {
 
     @Test fun guestsCannotWriteAndDoNotLoadPersonalBlocks(): Unit = runBlocking {
         val client = HttpClientFactory(MockEngine { error("Guest request") }).api("https://api.example")
-        val repo = AuthorBlockRepositoryImpl(client, BlockSessions(null), scope())
+        val repo = AuthorBlockRepositoryImpl(client, FakeAccount(null), scope())
         try {
             assertTrue(repo.setBlocked("target", null, "Target", null, true).isFailure)
             assertTrue(repo.visibility.value.ready)
@@ -149,15 +148,9 @@ class AuthorBlockRepositoryTest {
     }
 }
 
-internal class BlockSessions(initial: Session? = Session("token-a", userId = "a")) : SessionRepository {
-    private val session = MutableStateFlow(initial)
-    override fun peekSession() = session.value
-    override fun applySession(session: Session?) { this.session.value = session }
-    override fun isActiveSession(session: Session?) = session != null && session == this.session.value
-    override suspend fun getSession() = peekSession()
-    override suspend fun persistSession(session: Session?) = applySession(session)
-    override suspend fun saveSession(session: Session?) = applySession(session)
-    override suspend fun warmCache() = Unit
-    override fun observeSession() = session
-    override suspend fun isLoggedIn() = session.value != null
+internal class FakeAccount(initial: String? = "a") : AuthorBlockingAccount {
+    private val state = MutableStateFlow(initial)
+    override fun current() = state.value
+    override val changes: Flow<String?> = state
+    fun switchTo(key: String?) { state.value = key }
 }

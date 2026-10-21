@@ -30,7 +30,7 @@ kotlin {
 }
 
 android {
-    namespace = "${Config.APPLICATION_ID}.feature.homecheckin"
+    namespace = "${Config.APPLICATION_ID}.legacy.homecheckin"
     compileSdk = Config.COMPILE_SDK
     compileOptions {
         sourceCompatibility = Config.JAVA_VERSION

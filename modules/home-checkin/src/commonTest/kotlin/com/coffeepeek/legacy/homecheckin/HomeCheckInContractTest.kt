@@ -1,11 +1,11 @@
-package com.coffeepeek.feature.homecheckin
+package com.coffeepeek.legacy.homecheckin
 
-import com.coffeepeek.feature.homecheckin.data.HomeCheckInRepositoryImpl
-import com.coffeepeek.feature.homecheckin.domain.HomeCheckInInput
-import com.coffeepeek.feature.homecheckin.domain.HomeCheckInVisibility
-import com.coffeepeek.feature.homecheckin.domain.HomeCheckInModeration
-import com.coffeepeek.feature.homecheckin.domain.HomePhotoUpload
-import com.coffeepeek.feature.homecheckin.domain.validateHomeCheckIn
+import com.coffeepeek.legacy.homecheckin.data.HomeCheckInRepositoryImpl
+import com.coffeepeek.legacy.homecheckin.domain.HomeCheckInInput
+import com.coffeepeek.legacy.homecheckin.domain.HomeCheckInVisibility
+import com.coffeepeek.legacy.homecheckin.domain.HomeCheckInModeration
+import com.coffeepeek.legacy.homecheckin.domain.HomePhotoUpload
+import com.coffeepeek.legacy.homecheckin.domain.validateHomeCheckIn
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.respond

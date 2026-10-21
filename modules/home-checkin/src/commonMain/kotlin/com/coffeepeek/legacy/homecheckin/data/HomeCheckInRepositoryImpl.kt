@@ -1,21 +1,21 @@
 @file:OptIn(kotlinx.serialization.ExperimentalSerializationApi::class)
 
-package com.coffeepeek.feature.homecheckin.data
+package com.coffeepeek.legacy.homecheckin.data
 
-import com.coffeepeek.feature.homecheckin.domain.HomeBeanStats
-import com.coffeepeek.feature.homecheckin.domain.HomeCalendarDay
-import com.coffeepeek.feature.homecheckin.domain.HomeCheckIn
-import com.coffeepeek.feature.homecheckin.domain.HomeCheckInInput
-import com.coffeepeek.feature.homecheckin.domain.HomeCheckInVisibility
-import com.coffeepeek.feature.homecheckin.domain.HomeCheckInModeration
-import com.coffeepeek.feature.homecheckin.domain.HomeCheckInPage
-import com.coffeepeek.feature.homecheckin.domain.HomeCheckInPhoto
-import com.coffeepeek.feature.homecheckin.domain.HomeCheckInRepository
-import com.coffeepeek.feature.homecheckin.domain.HomeMethodStats
-import com.coffeepeek.feature.homecheckin.domain.HomePhotoUpload
-import com.coffeepeek.feature.homecheckin.domain.homeCheckInFieldErrors
-import com.coffeepeek.feature.homecheckin.domain.HomeCheckInFailure
-import com.coffeepeek.feature.homecheckin.domain.HomeCheckInField
+import com.coffeepeek.legacy.homecheckin.domain.HomeBeanStats
+import com.coffeepeek.legacy.homecheckin.domain.HomeCalendarDay
+import com.coffeepeek.legacy.homecheckin.domain.HomeCheckIn
+import com.coffeepeek.legacy.homecheckin.domain.HomeCheckInInput
+import com.coffeepeek.legacy.homecheckin.domain.HomeCheckInVisibility
+import com.coffeepeek.legacy.homecheckin.domain.HomeCheckInModeration
+import com.coffeepeek.legacy.homecheckin.domain.HomeCheckInPage
+import com.coffeepeek.legacy.homecheckin.domain.HomeCheckInPhoto
+import com.coffeepeek.legacy.homecheckin.domain.HomeCheckInRepository
+import com.coffeepeek.legacy.homecheckin.domain.HomeMethodStats
+import com.coffeepeek.legacy.homecheckin.domain.HomePhotoUpload
+import com.coffeepeek.legacy.homecheckin.domain.homeCheckInFieldErrors
+import com.coffeepeek.legacy.homecheckin.domain.HomeCheckInFailure
+import com.coffeepeek.legacy.homecheckin.domain.HomeCheckInField
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.delete

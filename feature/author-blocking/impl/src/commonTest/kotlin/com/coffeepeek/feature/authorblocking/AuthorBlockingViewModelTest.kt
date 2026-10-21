@@ -4,9 +4,10 @@ import com.coffeepeek.feature.authorblocking.api.AuthorReference
 import com.coffeepeek.feature.authorblocking.api.AuthorBlockingPresenter
 import com.coffeepeek.feature.authorblocking.api.BlockedAuthorItem
 import com.coffeepeek.feature.authorblocking.domain.*
-import com.coffeepeek.feature.authorblocking.ui.AuthorBlockingViewModel
-import com.coffeepeek.domain.model.Session
+import com.coffeepeek.feature.authorblocking.api.AuthorBlockingAccount
+import com.coffeepeek.feature.authorblocking.impl.AuthorBlockingViewModel
 import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.*
 import kotlin.test.*
@@ -17,7 +18,7 @@ class AuthorBlockingViewModelTest {
     @Test fun cancellationNeverWritesAndSuccessDismissesWithoutAnotherAlert() = runTest {
         var calls = 0
         val repository = FakeBlockRepository { calls++; Result.success(Unit) }
-        val vm = AuthorBlockingViewModel(repository, BlockSessions(Session("token", userId = "viewer")), backgroundScope)
+        val vm = AuthorBlockingViewModel(repository, FakeAccount("viewer"), backgroundScope)
         runCurrent()
         vm.requestBlock(author); assertNotNull(vm.prompt.value); vm.dismiss()
         assertEquals(0, calls)
@@ -26,22 +27,22 @@ class AuthorBlockingViewModelTest {
     }
     @Test fun failureOffersRetryAndAccountSwitchCancelsPendingConfirmation() = runTest {
         var calls = 0
-        val sessions = BlockSessions(Session("token", userId = "viewer"))
+        val sessions = FakeAccount("viewer")
         val repository = FakeBlockRepository { calls++; Result.failure(IllegalStateException("Offline")) }
         val vm = AuthorBlockingViewModel(repository, sessions, backgroundScope)
         runCurrent(); vm.requestBlock(author); vm.confirm(); runCurrent()
         assertNotNull(vm.prompt.value?.error); assertFalse(vm.prompt.value!!.working)
         vm.confirm(); runCurrent(); assertEquals(2, calls)
-        sessions.applySession(Session("other", userId = "other")); runCurrent()
+        sessions.switchTo("other"); runCurrent()
         assertNull(vm.prompt.value); vm.confirm(); runCurrent(); assertEquals(2, calls)
     }
     @Test fun guestLoginDoesNotAutomaticallyConfirmBlock() = runTest {
         var calls = 0
-        val sessions = BlockSessions(null)
+        val sessions = FakeAccount(null)
         val vm = AuthorBlockingViewModel(FakeBlockRepository { calls++; Result.success(Unit) }, sessions, backgroundScope)
         runCurrent(); vm.requestBlock(author)
         assertTrue(vm.needsLogin.value); assertNull(vm.prompt.value)
-        vm.loginHandled(); sessions.applySession(Session("token", userId = "viewer")); runCurrent()
+        vm.loginHandled(); sessions.switchTo("viewer"); runCurrent()
         assertFalse(vm.needsLogin.value); assertNull(vm.prompt.value); assertEquals(0, calls)
     }
 
@@ -49,7 +50,7 @@ class AuthorBlockingViewModelTest {
         val repository = FakeBlockRepository { error("Rendering must not mutate blocks") }
         repository.state.value = AuthorBlocksState(items = listOf(BlockedAuthor("a", "Author", "author", "/avatar.png")),
             signedIn = true, ready = true)
-        val presenter: AuthorBlockingPresenter = AuthorBlockingViewModel(repository, BlockSessions(), backgroundScope)
+        val presenter: AuthorBlockingPresenter = AuthorBlockingViewModel(repository, FakeAccount(), backgroundScope)
         assertEquals(listOf(BlockedAuthorItem("a", "Author", "author", "/avatar.png")), presenter.blocks.value.items)
         repository.state.value = repository.state.value.copy(loading = true, error = "Offline")
         runCurrent()
@@ -67,4 +68,11 @@ private class FakeBlockRepository(private val mutate: suspend () -> Result<Unit>
     override val state = MutableStateFlow(AuthorBlocksState(signedIn = true, ready = true))
     override suspend fun refresh() = Result.success(Unit)
     override suspend fun setBlocked(id: String?, slug: String?, name: String, avatarUrl: String?, blocked: Boolean) = mutate()
+}
+
+internal class FakeAccount(initial: String? = "a") : AuthorBlockingAccount {
+    private val state = MutableStateFlow(initial)
+    override fun current() = state.value
+    override val changes: Flow<String?> = state
+    fun switchTo(key: String?) { state.value = key }
 }

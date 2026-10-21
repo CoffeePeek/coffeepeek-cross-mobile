@@ -1,8 +1,8 @@
-package com.coffeepeek.feature.homecheckin
+package com.coffeepeek.legacy.homecheckin
 
-import com.coffeepeek.feature.homecheckin.data.HomeCheckInRepositoryImpl
-import com.coffeepeek.feature.homecheckin.domain.*
-import com.coffeepeek.feature.homecheckin.domain.HomeCheckInField.*
+import com.coffeepeek.legacy.homecheckin.data.HomeCheckInRepositoryImpl
+import com.coffeepeek.legacy.homecheckin.domain.*
+import com.coffeepeek.legacy.homecheckin.domain.HomeCheckInField.*
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.respond
