@@ -130,3 +130,13 @@ Open gates after the owner: real feed against the live backend, protected photo 
 
 Still not covered by tests (UI only, to be covered by the migrated screen's tests and the device pass): the home-vs-shop edit branch (B5, a screen decision), load-more threshold (A4), photo preview and scroll reset (A8), analytics exposure modifiers.
 
+## Step 2 result (api + domain + data)
+
+- **Modules** `feature/community/{api,domain,data}` (`module.feature.community.*` in `Modules.kt`); no dependency on any legacy module. `impl` comes in 3a/3b.
+- **domain**: `CommunityPost` (own model: author reference with opaque id and slug, photos in three sizes, drink, home preparation, visibility and moderation), `FeedFilters`/`FeedPage`/`MyPostsPage`/`HelpfulVote`/`PostEdit`, `FeedLoadException(restartPagination)`, typed `CommunityFailure(kind, serverMessage)`, `CommunityRepository` (feed, my posts, update, visibility, helpful, report). Pure rules in `CommunityRules.kt`: `validateEdit` (note, rating, drink in the legacy order), `validateReport`, `publicationLabel`, `isWithdrawnFromPublic`, `appendTimeline`, `ownsPost`, `canBlockAuthor`.
+- **api** (ports, commonMain): `CommunityAccount` (account key flow, current key, own canonical slug), `ConsumedDrinks`, `CommunityAnalytics` (feed actions with trigger, item interactions, guest like gate, the edit funnel). Author blocking is not re-wrapped: `impl` takes `AuthorVisibility` and `AuthorBlockActions` from the author-blocking api (decision Q5/Q8).
+- **data**: `createCommunityRepository(client, apiBaseUrl)` on the authenticated client. Own DTOs and mapper (photo order, server-issued URLs only, feed/detail variants in the legacy format order, empty feed variant stays empty, home kind with or without recipe, tolerant numbers), `CommunityBackend` with explicit status handling; user-facing texts are **not** in this layer (the screen maps `FailureKind` and `serverMessage` to resources, as the legacy screen did: server message first, else the default text).
+- **Behaviour kept from the legacy layers**: `Cache-Control: no-store` on the feed, page size 1..100 and filter length 1..100 checked before the request, `restartPagination` only for a 400 with a cursor, helpful as PUT/DELETE without a body with the authoritative count, report needs a 201 with data and a trimmed text of 1..2000 characters, edit/report validated before any request.
+- **Tests**: domain 8 (rules), data 16 (11 repository contract, 5 mapper); Android unit tests and iOS test compilation pass.
+- **Left for 3a**: the legacy `CheckInRepositoryImpl.getMyCheckIns` page semantics are reproduced (`hasMore = page < totalPages`); the app adapters (account from the session, drinks from the legacy `ShopRepository`, analytics) are written in step 4.
+
