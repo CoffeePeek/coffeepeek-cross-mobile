@@ -24,6 +24,9 @@ internal class FakeRepository : ContributionsRepository {
     var change: suspend (String) -> Result<ChangeRequest> = { Result.failure(ContributionFailure(FailureKind.NotFound)) }
     var shopSubmit: suspend (NewShop) -> Result<Unit> = { Result.success(Unit) }
     var roasterSubmit: suspend (NewRoaster) -> Result<RoasterSubmitted> = { Result.success(RoasterSubmitted("r1", "Pending", it.address != null, "ok")) }
+    var changeSubmit: suspend (ChangeDraft) -> Result<ChangeRequest> = { Result.success(request("new", it.section)) }
+    var changeEdit: suspend (String, ChangeDraft) -> Result<ChangeRequest> = { id, draft -> Result.success(request(id, draft.section)) }
+    val drafts = mutableListOf<ChangeDraft>()
     val requests = mutableListOf<String>()
 
     override suspend fun shops(status: ModerationStatus, page: Int, pageSize: Int) = shops(status, page).also { requests += "shops:$status:$page" }
@@ -33,8 +36,8 @@ internal class FakeRepository : ContributionsRepository {
     override suspend fun change(id: String) = change.invoke(id).also { requests += "change:$id" }
     override suspend fun submitShop(shop: NewShop): Result<Unit> = shopSubmit(shop).also { requests += "submitShop:${shop.name}" }
     override suspend fun submitRoaster(roaster: NewRoaster): Result<RoasterSubmitted> = roasterSubmit(roaster).also { requests += "submitRoaster:${roaster.name}" }
-    override suspend fun submitChange(draft: ChangeDraft): Result<ChangeRequest> = error("Unused")
-    override suspend fun editChange(id: String, draft: ChangeDraft): Result<ChangeRequest> = error("Unused")
+    override suspend fun submitChange(draft: ChangeDraft): Result<ChangeRequest> { drafts += draft; return changeSubmit(draft) }
+    override suspend fun editChange(id: String, draft: ChangeDraft): Result<ChangeRequest> { drafts += draft; requests += "edit:$id"; return changeEdit(id, draft) }
 }
 
 internal fun shop(id: String, status: ModerationStatus = ModerationStatus.Approved, published: String? = null, reason: String? = null) =
@@ -46,8 +49,10 @@ internal fun request(id: String, section: ChangeSection = ChangeSection.Descript
 internal class FakeCatalogs : ContributionCatalogs {
     var catalogs: suspend () -> Result<Catalogs> = { Result.success(Catalogs()) }
     override suspend fun catalogs() = catalogs.invoke()
-    override suspend fun shop(slug: String): Result<ShopSnapshot> = error("Unused")
-    override suspend fun drinks(): Result<List<DrinkOption>> = error("Unused")
+    var shop: suspend (String) -> Result<ShopSnapshot> = { Result.success(ShopSnapshot(it, "Shop $it")) }
+    var drinks: suspend () -> Result<List<DrinkOption>> = { Result.success(emptyList()) }
+    override suspend fun shop(slug: String) = shop.invoke(slug)
+    override suspend fun drinks() = drinks.invoke()
 }
 
 internal class FakeLocation : ContributionLocation {
