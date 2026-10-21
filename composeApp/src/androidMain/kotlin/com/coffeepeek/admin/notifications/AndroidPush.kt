@@ -19,6 +19,7 @@ import java.util.UUID
 internal object AndroidPush {
     const val CHANNEL = "coffeepeek_notifications"
     var requestPermission: () -> Unit = {}
+    var requestPermissionFromSettings: () -> Unit = {}
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
     private val lock = Mutex()
     private var activeUser: String? = null
@@ -39,7 +40,8 @@ internal object AndroidPush {
         val installation = preferences.getString("installation", null) ?: UUID.randomUUID().toString().also {
             preferences.edit().putString("installation", it).apply()
         }
-        NativePushBridge.configure(installation, configured, permitted(), { requestPermission() }, ::accountChanged)
+        NativePushBridge.configure(installation, configured, permitted(), { requestPermission() }, ::accountChanged,
+            { requestPermissionFromSettings() })
     }
 
     fun permitted(): Boolean = NotificationManagerCompat.from(context).areNotificationsEnabled() &&

@@ -17,6 +17,9 @@ asks for POST_NOTIFICATIONS once per installation. Opening the editor, a failed
 submission or editing an existing check-in never triggers the prompt. A denial is
 respected; subsequent check-ins do not open system settings or repeat the prompt.
 Android 8–12 already allow notifications without a runtime permission prompt.
+The notification panel also has one push switch. Explicit enabling requests permission
+on first use or opens Android notification settings after a previous denial. Disabling
+is saved in the account and unregisters this device; later check-ins do not undo it.
 Foreground messages are shown by CoffeePeekMessagingService; background messages
 use FCM's system display. The channel is “Уведомления CoffeePeek”. Tapping opens
 the app's normal entry screen.
@@ -64,6 +67,8 @@ foreground banners and refreshes system permission on app activation. It never u
 the APNs token as the backend device address.
 The same successful check-in callback requests alert/sound/badge authorization only
 while authorization is not determined; denied users are not redirected to Settings.
+Explicit enabling in the notification panel opens iOS Settings when authorization was
+previously denied. Returning to the app refreshes permission and the displayed switch.
 For audible iOS delivery, the sender must also include `apns.payload.aps.sound =
 "default"`. Foreground `.sound` presentation alone does not supply a missing sound
 in the APNs payload. See [FCM Apple message handling](https://firebase.google.com/docs/cloud-messaging/ios/receive-messages).
@@ -76,19 +81,31 @@ storage. Tokens are registered only for the current signed-in account with OS pe
 Registration renews on token changes and foreground entry; activity reports on entry and
 every 15 foreground minutes, including when push permission is denied.
 
-There are no in-app notification settings or category switches. Moderation, inactivity
-and custom notifications are all enabled. Shared coordination saves those defaults
-for each signed-in account, including existing accounts whose reminders were disabled.
-A failed save is retried on the next foreground entry or device state update; a successful
-save is not repeated on every heartbeat. OS permission remains independent of these
-account preferences, and is requested only after a successful new check-in.
+The feed bell opens notification history and one master push switch. The saved account
+setting is loaded from GET /api/v1/me/notifications/push and changed with PUT and an
+explicit {"enabled":true|false} body. Login and foreground entry preserve the setting
+and existing category preferences. OS permission remains independent; the switch is
+shown active when both the account setting and device authorization allow push.
+
+GET /api/v1/me/notifications returns items, nextCursor and unreadCount. Pass before
+with the previous nextCursor to load another page. PUT /{id}/read marks one owned row;
+PUT /read with {"throughId":"newest-visible-id"} marks the displayed snapshot and older
+messages, leaving later arrivals unread. Foreground receipts refresh the open panel
+and badge. Errors preserve the previous list and expose retry actions.
+
+Types include approval/rejection for shops and roasters, check-in moderation,
+correction moderation, newly published shops, general messages and existing inactivity
+reminders. Newly published shops are announced to all active CoffeePeek accounts;
+push delivery still respects opt-out. History remains available with push disabled.
+The backend retains the existing policy of purging rows 30 days after push expiry.
 
 Before explicit logout the app attempts device removal with a three-second bound while
 the old access token is usable. Native FCM auto-init stays disabled. Token revocation
 also runs for session invalidation/account switching and cold starts; failed revocation
 is retried before another token is registered. Offline logout cannot recall an already
 accepted system notification. Foreground handling ignores another account's userId.
-Tokens are never logged. There is no notification inbox or per-submission deep link.
+Tokens are never logged. There is no per-submission deep link; tapping an unread row
+marks it read. The backend Account inbox migration must be deployed before this client.
 
 ## Backend credential
 
