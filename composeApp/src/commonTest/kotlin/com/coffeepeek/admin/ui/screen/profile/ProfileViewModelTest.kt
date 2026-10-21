@@ -152,6 +152,33 @@ class ProfileViewModelTest {
         assertEquals("grodno", vm.selectedCityId.value)
     }
 
+    @Test fun aCatalogFailureLeavesTheCityListEmptyWithNoSelectionAndSetCityIgnoresEverything() = runTest {
+        val h = Harness(session("a"), cached = anna, catalogs = Result.failure(IllegalStateException("offline")))
+        val vm = h.viewModel()
+        delay(300)
+        assertTrue(vm.cities.value.isEmpty())
+        assertNull(vm.selectedCityId.value)
+        vm.setCity("minsk")
+        assertNull(vm.selectedCityId.value)
+    }
+
+    @Test fun aSavedCitySurvivesTheNextStartAndAMissingOneFallsBack() = runTest {
+        val cities = listOf(City("minsk", "Минск"), City("grodno", "Гродно"))
+        val kept = Harness(session("a"), cached = anna, cities = cities, savedCity = "grodno").viewModel()
+        await { kept.selectedCityId.value == "grodno" }
+        assertEquals(listOf("minsk", "grodno"), kept.cities.value.map { it.id })
+        val fallback = Harness(session("a"), cached = anna, cities = cities, savedCity = "removed").viewModel()
+        await { fallback.selectedCityId.value == "minsk" }
+    }
+
+    @Test fun settingsReadTheLoggedInFlagFromTheSameStateThatClearsOnSessionEnd() = runTest {
+        val h = Harness(session("a"), cached = anna)
+        val vm = h.viewModel()
+        await { vm.uiState.value.isLoggedIn }
+        h.sessions.set(null)
+        await { !vm.uiState.value.isLoggedIn }
+    }
+
     private suspend fun await(condition: () -> Boolean) =
         withContext(Dispatchers.Default) { withTimeout(5_000) { while (!condition()) delay(10) } }
 
@@ -195,11 +222,11 @@ class ProfileViewModelTest {
         override suspend fun logout(): Result<Unit> { onLogout(); return result }
     }
 
-    private class Shops(private val cities: List<City>) : ShopRepository {
+    private class Shops(private val catalogs: Result<ShopCatalogs>) : ShopRepository {
         override suspend fun searchShops(filters: ShopFilters): Result<PagedResult<CoffeeShop>> = error("unused")
         override suspend fun getShopDetails(id: String): Result<CoffeeShopDetails> = error("unused")
         override suspend fun getMapContent(bounds: MapBounds, zoom: Float, filters: ShopFilters): Result<MapContent> = error("unused")
-        override suspend fun getCatalogs() = Result.success(ShopCatalogs(cities = cities))
+        override suspend fun getCatalogs() = catalogs
         override suspend fun getConsumedDrinks(): Result<List<ConsumedDrinkOption>> = error("unused")
         override suspend fun getMenuDrinks(): Result<List<CoffeeDrinkDefinition>> = error("unused")
         override suspend fun createShop(input: CreateShopInput): Result<Unit> = error("unused")
@@ -207,9 +234,9 @@ class ProfileViewModelTest {
             Result<PagedResult<ShopSubmission>> = error("unused")
     }
 
-    private class Settings(private val onClearDrafts: () -> Unit) : SettingRepository {
+    private class Settings(private val onClearDrafts: () -> Unit, private val savedCity: String? = null) : SettingRepository {
         override suspend fun save(model: Setting) = Unit
-        override suspend fun read(key: String): Setting? = null
+        override suspend fun read(key: String): Setting? = if (key == "selected_city_id") savedCity?.let { Setting(key, it) } else null
         override fun readFlow(key: String): Flow<Setting?> = emptyFlow()
         override suspend fun readAll(): List<Setting> { onClearDrafts(); return emptyList() }
         override fun readAllFlow(): Flow<List<Setting>> = emptyFlow()
@@ -236,10 +263,12 @@ class ProfileViewModelTest {
         private val onLogout: () -> Unit = {},
         private val onClearDrafts: () -> Unit = {},
         private val cities: List<City> = emptyList(),
+        private val catalogs: Result<ShopCatalogs> = Result.success(ShopCatalogs(cities = cities)),
+        private val savedCity: String? = null,
     ) {
         val sessions = Sessions(initial)
         val users = Users(cached, refresh, refreshGate)
-        fun viewModel() = ProfileViewModel(Auth(logout, onLogout), users, sessions, Shops(cities),
-            CityPreference(Settings {}), ReviewDraftStore(Settings(onClearDrafts)), Notifications)
+        fun viewModel() = ProfileViewModel(Auth(logout, onLogout), users, sessions, Shops(catalogs),
+            CityPreference(Settings({}, savedCity)), ReviewDraftStore(Settings(onClearDrafts)), Notifications)
     }
 }

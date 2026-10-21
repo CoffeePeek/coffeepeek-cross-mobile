@@ -10,11 +10,15 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.R
+import com.coffeepeek.admin.sandbox.backend.SandboxCities
 import com.coffeepeek.admin.sandbox.backend.SandboxScenario
+import com.coffeepeek.admin.sandbox.backend.SandboxUpdatePolicy
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 
 @Composable internal fun SandboxControls(scenario: SandboxScenario, enabled: Boolean,
-    onScenario: (SandboxScenario) -> Unit, onReset: (Boolean) -> Unit, onTheme: () -> Unit) {
+    onScenario: (SandboxScenario) -> Unit, onReset: (Boolean) -> Unit, onTheme: () -> Unit,
+    updatePolicy: SandboxUpdatePolicy = SandboxUpdatePolicy.UpToDate, onUpdatePolicy: (SandboxUpdatePolicy) -> Unit = {},
+    cities: SandboxCities = SandboxCities.Single, onCities: (SandboxCities) -> Unit = {}) {
     Surface(color = MaterialTheme.colorScheme.primaryContainer) {
         Column(Modifier.fillMaxWidth().padding(8.dp)) {
             Text(stringResource(R.string.sandbox_banner), style = MaterialTheme.typography.labelLarge)
@@ -29,6 +33,30 @@ import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
                         SandboxScenario.UploadError -> R.string.sandbox_upload_error
                     }
                     FilterChip(scenario == mode, { onScenario(mode) }, { Text(stringResource(label)) }, enabled = enabled)
+                }
+            }
+            Text(stringResource(R.string.sandbox_update_title), style = MaterialTheme.typography.labelMedium)
+            Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                SandboxUpdatePolicy.entries.forEach { mode ->
+                    val label = when (mode) {
+                        SandboxUpdatePolicy.UpToDate -> R.string.sandbox_update_current
+                        SandboxUpdatePolicy.Available -> R.string.sandbox_update_available
+                        SandboxUpdatePolicy.Required -> R.string.sandbox_update_required
+                        SandboxUpdatePolicy.Failure -> R.string.sandbox_update_failure
+                    }
+                    FilterChip(updatePolicy == mode, { onUpdatePolicy(mode) }, { Text(stringResource(label)) }, enabled = enabled)
+                }
+            }
+            Text(stringResource(R.string.sandbox_cities_title), style = MaterialTheme.typography.labelMedium)
+            Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                SandboxCities.entries.forEach { mode ->
+                    val label = when (mode) {
+                        SandboxCities.Single -> R.string.sandbox_cities_single
+                        SandboxCities.Several -> R.string.sandbox_cities_several
+                        SandboxCities.Empty -> R.string.sandbox_cities_empty
+                        SandboxCities.Failure -> R.string.sandbox_cities_failure
+                    }
+                    FilterChip(cities == mode, { onCities(mode) }, { Text(stringResource(label)) }, enabled = enabled)
                 }
             }
             Row(Modifier.horizontalScroll(rememberScrollState())) {

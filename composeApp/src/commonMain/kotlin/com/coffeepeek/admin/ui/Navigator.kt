@@ -16,9 +16,7 @@ import com.coffeepeek.admin.ui.screen.roaster.AddRoasterScreen
 import com.coffeepeek.admin.ui.screen.profile.AccountScreenRenderer
 import com.coffeepeek.admin.ui.screen.profile.PublicProfileScreenRenderer
 import com.coffeepeek.admin.ui.screen.roaster.RoasterScreenRenderer
-import com.coffeepeek.admin.ui.screen.profile.CityScreen
-import com.coffeepeek.admin.ui.screen.profile.ThemeScreen
-import com.coffeepeek.admin.ui.screen.profile.UsagePolicyScreen
+import com.coffeepeek.admin.ui.screen.profile.SettingsScreenRenderer
 import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
@@ -511,10 +509,10 @@ object Navigator {
                     composable<Screen.EditHomeCheckIn> { entry ->
                         CheckInHistoryDestination(initialHomeId = entry.toRoute<Screen.EditHomeCheckIn>().id)
                     }
-                    composable<Screen.CitySettings> { CityScreen() }
-                    composable<Screen.ThemeSettings> { ThemeScreen() }
+                    composable<Screen.CitySettings> { koinInject<SettingsScreenRenderer>().City() }
+                    composable<Screen.ThemeSettings> { koinInject<SettingsScreenRenderer>().Theme() }
                     composable<Screen.BlockedAuthors> { com.coffeepeek.admin.feature.authorblocking.ui.BlockedAuthorsScreen() }
-                    composable<Screen.UsagePolicy> { UsagePolicyScreen() }
+                    composable<Screen.UsagePolicy> { koinInject<SettingsScreenRenderer>().UsagePolicy() }
             }
         }
     }
@@ -549,10 +547,10 @@ object Navigator {
             Screen.VisitedPlaces -> CheckInHistoryDestination()
             Screen.HomeCheckIns -> CheckInHistoryDestination()
             is Screen.EditHomeCheckIn -> CheckInHistoryDestination(initialHomeId = screen.id)
-            Screen.CitySettings -> CityScreen()
-            Screen.ThemeSettings -> ThemeScreen()
+            Screen.CitySettings -> koinInject<SettingsScreenRenderer>().City()
+            Screen.ThemeSettings -> koinInject<SettingsScreenRenderer>().Theme()
             Screen.BlockedAuthors -> com.coffeepeek.admin.feature.authorblocking.ui.BlockedAuthorsScreen()
-            Screen.UsagePolicy -> UsagePolicyScreen()
+            Screen.UsagePolicy -> koinInject<SettingsScreenRenderer>().UsagePolicy()
             else -> error("Tab route must be handled by MainScreen: $screen")
         }
     }

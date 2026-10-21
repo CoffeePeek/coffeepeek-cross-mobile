@@ -27,6 +27,13 @@ internal class SandboxBackend(private val samplePhoto: ByteArray,
     private val reservations = mutableSetOf<String>()
     private val uploaded = mutableSetOf<String>()
     private val application = SandboxApplicationBackend(today, shopRows)
+    /** Settings fixtures (see [SandboxApplicationBackend]); [reset] returns both to their defaults. */
+    var updatePolicy: SandboxUpdatePolicy
+        get() = application.updatePolicy
+        set(value) { application.updatePolicy = value }
+    var cities: SandboxCities
+        get() = application.cities
+        set(value) { application.cities = value }
     private fun apiEngine() = MockEngine { request ->
         val mode = scenario
         if (mode == SandboxScenario.Slow) delay(900)

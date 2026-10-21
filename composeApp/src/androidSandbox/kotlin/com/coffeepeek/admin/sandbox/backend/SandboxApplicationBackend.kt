@@ -7,6 +7,12 @@ import java.time.Instant
 import java.time.LocalDate
 import java.util.UUID
 
+/** What `GET /api/v1/app-version` answers. Versions are absolute so they do not depend on the installed Sandbox build. */
+internal enum class SandboxUpdatePolicy { UpToDate, Available, Required, Failure }
+
+/** What `GET /api/catalogs/cities` answers: one city (default), several, none, or a server error. */
+internal enum class SandboxCities { Single, Several, Empty, Failure }
+
 /** Local fixture contracts for the existing app, not an alternative implementation of its UI. */
 internal class SandboxApplicationBackend(private val today: LocalDate, private val visits: MutableList<JsonObject>) {
     companion object {
@@ -29,7 +35,11 @@ internal class SandboxApplicationBackend(private val today: LocalDate, private v
     private var blocksRevision = 0
     private var friendFollowing = false
     private var deletionRequest: JsonObject? = null
+    // Settings fixtures: chosen from the Sandbox controls, kept across scenario changes and cleared by reset().
+    @Volatile var updatePolicy = SandboxUpdatePolicy.UpToDate
+    @Volatile var cities = SandboxCities.Single
     fun reset(populated: Boolean) {
+        updatePolicy = SandboxUpdatePolicy.UpToDate; cities = SandboxCities.Single
         this.populated = populated
         others.clear(); blocked.clear(); blocksRevision++
         friendFollowing = false; deletionRequest = null
@@ -151,9 +161,13 @@ internal class SandboxApplicationBackend(private val today: LocalDate, private v
             if (!populated) return null
             return roasters().firstOrNull { it["address"]!!.jsonObject["slug"]!!.jsonPrimitive.content == path.substringAfterLast('/') }?.let(::ok)
         }
-        if (path == "/api/catalogs/cities") return ok(JsonArray(listOf(buildJsonObject {
-            put("address", address("minsk", "/cities/minsk")); put("name", "Минск")
-        })))
+        if (path == "/api/catalogs/cities") return when (cities) {
+            SandboxCities.Failure -> HttpStatusCode.InternalServerError to envelope(JsonNull, false)
+            SandboxCities.Empty -> ok(JsonArray(emptyList()))
+            SandboxCities.Single -> ok(JsonArray(listOf(city("minsk", "Минск"))))
+            SandboxCities.Several -> ok(JsonArray(listOf(city("minsk", "Минск"), city("brest", "Брест"), city("grodno", "Гродно"))))
+        }
+        if (path == "/api/v1/app-version" && method == HttpMethod.Get) return appVersion()
         if (path == "/api/catalogs/drinks") return ok(drinks())
         if (path == "/api/menu/drinks") return ok(buildJsonObject { put("drinks", drinks()) })
         if (path == "/api/catalogs/brew-methods") return ok(JsonArray(listOf(catalog("hario-v60", "Hario V60"), catalog("aeropress", "AeroPress"))))
@@ -404,6 +418,21 @@ internal class SandboxApplicationBackend(private val today: LocalDate, private v
     private fun drinks() = JsonArray(listOf(buildJsonObject { put("slug", "cappuccino"); put("nameRu", "Капучино"); put("nameEn", "Cappuccino"); put("category", "Coffee"); put("price", 8) }))
     private fun photo() = buildJsonObject { put("id", "sample"); put("url", "/media/sample"); put("fullUrl", "${SandboxBackend.BASE_URL}/media/sample") }
     private fun catalog(slug: String, name: String) = buildJsonObject { put("slug", slug); put("name", name); put("address", address(slug, "/catalog/$slug")) }
+    private fun city(slug: String, name: String) = buildJsonObject {
+        put("address", address(slug, "/cities/$slug")); put("name", name)
+    }
+
+    private fun appVersion(): Pair<HttpStatusCode, JsonObject> {
+        val url = "https://sandbox.coffeepeek.invalid/downloads/coffeepeek.apk"
+        fun policy(version: Long, minimum: Long) = ok(buildJsonObject { put("versionCode", version); put("minVersionCode", minimum); put("url", url) })
+        return when (updatePolicy) {
+            SandboxUpdatePolicy.UpToDate -> policy(1, 0)
+            SandboxUpdatePolicy.Available -> policy(999_999_999, 0)
+            SandboxUpdatePolicy.Required -> policy(999_999_999, 999_999_999)
+            SandboxUpdatePolicy.Failure -> HttpStatusCode.ServiceUnavailable to envelope(JsonNull, false)
+        }
+    }
+
     private fun address(slug: String, path: String) = buildJsonObject {
         put("slug", slug); put("canonicalPath", path); put("revision", 0); put("isAlias", false)
     }

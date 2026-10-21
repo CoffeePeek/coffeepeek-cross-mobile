@@ -26,6 +26,14 @@ filter/detail screens, large font on device (covered only by the earlier instrum
 tests; the device font setting was not changed), pagination, and the block UI walkthrough. The
 Sandbox process was force-stopped afterwards, which resets scenario and fixtures.
 
+## Settings fixtures — 2026-10-21
+
+Fake backend now answers `GET /api/v1/app-version` (up to date by default, update available, required update, 503) and `GET /api/catalogs/cities`
+(one city by default, several, empty, 500). Both are chosen from the Sandbox controls (chip rows «Обновление приложения» and «Города»), kept across
+scenario changes and reset by «Заполнить»/«Очистить». The existing `Offline`/`ServerError` scenarios override them. Covered by
+`SandboxApplicationBackendTest.settingsFixturesServeTheUpdatePolicyAndTheCityCatalogThroughTheRealParsers`; the installer is still the blocking
+`SandboxUpdateInstaller`, so no download or install flow is exercised.
+
 ## Profile/account fixtures — 2026-10-20
 
 Fake backend now serves, in RAM and reset with the scenario: `PATCH /api/users/me/username` (2–64 chars, the friend's name is a 409
