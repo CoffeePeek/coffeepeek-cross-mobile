@@ -24,3 +24,6 @@ __pycache__/
 
 # Swift Package Manager import cache created by Gradle iOS builds
 .swiftpm-locks/
+# Firebase app configuration is supplied locally or by CI.
+**/google-services.json
+**/GoogleService-Info.plist

@@ -181,6 +181,7 @@ class FullScreenImageDialogTest {
             compose.waitForIdle()
             assertEquals(android.graphics.Color.BLUE, viewerCenterColor())
             compose.waitUntil(20_000) { loader.requested.size == 2 }
+            compose.waitUntil(20_000) { viewerCenterColor() != android.graphics.Color.BLUE }
             compose.waitForIdle()
             assertTrue("An expired protected painter must not survive pending reauthorization",
                 viewerCenterColor() != android.graphics.Color.BLUE)

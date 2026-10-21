@@ -8,7 +8,7 @@ object CoffeePeekColors {
     val Primary        = Color(0xFFEAB308)
     val PrimaryHover   = Color(0xFFFACC15)
     val PrimaryTint10  = Color(0x1AEAB308)
-    val AccentTextLight = Color(0xFF7A5700)
+    val AccentTextLight = Primary
     val AccentTextDark  = Color(0xFFFACC15)
     val SwitchCheckedThumbLight = Color(0xFF684900)
     val SwitchCheckedTrackDark = Color(0xFF9A7A28)
