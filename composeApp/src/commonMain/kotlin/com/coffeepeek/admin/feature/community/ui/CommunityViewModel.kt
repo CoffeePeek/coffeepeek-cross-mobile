@@ -356,7 +356,7 @@ internal class CommunityViewModel(
     fun toggleHelpful(id: String) {
         val current = state.value
         val item = current.items.firstOrNull { it.id == id } ?: return
-        if (current.timeline != CommunityTimeline.Public || current.isMutating || current.editing != null || current.reportingId != null || current.owns(item)) return
+        if (current.timeline != CommunityTimeline.Public || current.isMutating || current.editing != null || current.reportingId != null) return
         itemAction(if (item.isHelpfulByCurrentUser) "unlike" else "like", item)
         val key = accountKey ?: run { Analytics.gate("feed_like"); requestLogin(); return }
         if (!isCurrent(key)) return
