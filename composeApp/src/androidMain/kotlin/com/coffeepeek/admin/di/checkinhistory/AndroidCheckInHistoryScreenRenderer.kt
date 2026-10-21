@@ -51,10 +51,7 @@ internal class AndroidCheckInHistoryScreenRenderer(
         onOpenShop: (String) -> Unit, onCreateShop: () -> Unit) {
         val dateLabel = rememberCheckInDateLabel()
         Host(onBack) { host, session ->
-            val creation = remember(session) { HistoryCreationAnalytics {
-                session.lease.isCurrent() && session.lease.isLoggedIn
-            } }
-            DisposableEffect(creation) { onDispose { creation.cancelled() } }
+            val creation = session.creationAnalytics
             val home = if (session.lease.isLoggedIn) viewModel(key = "history-home-bridge") {
                 AndroidHistoryHomeBridge(session, homeEditors)
             } else null
