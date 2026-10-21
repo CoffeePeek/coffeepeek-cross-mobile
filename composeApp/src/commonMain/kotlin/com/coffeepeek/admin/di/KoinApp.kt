@@ -26,6 +26,7 @@ import com.coffeepeek.admin.feature.profile.ui.PublicProfileViewModel
 import com.coffeepeek.admin.feature.homecheckin.ui.HomeCheckInViewModel
 import com.coffeepeek.legacy.homecheckin.data.HomeCheckInRepositoryImpl
 import com.coffeepeek.legacy.homecheckin.domain.HomeCheckInRepository
+import com.coffeepeek.feature.notifications.api.NotificationFeature
 import com.coffeepeek.admin.feature.favorites.data.ServerRoasterFavorites
 import com.coffeepeek.admin.utils.CustomUrlFetcher
 import com.coffeepeek.api.CoffeePeekClient
@@ -135,6 +136,7 @@ fun initKoin(
         updateInstallerModule(),
     )
     val application = startKoin { modules(commonModules + platformModules) }
+    application.koin.get<com.coffeepeek.feature.notifications.api.NotificationFeature>()
     if (analyticsEnabled) com.coffeepeek.admin.analytics.installAnalytics(database.settingRepository, application.koin.get(), application.koin.get())
     com.coffeepeek.admin.utils.image.ProtectedPhotoSession.install(
         application.koin.get(), application.koin.get<CoffeePeekClient>().client,
@@ -171,6 +173,9 @@ private fun appModule(
     single<ShopCheckInFormRenderer> { shopCheckInRendererFactory() }
     single<ShopReportScreenRenderer> { shopReportRendererFactory(get()) }
     single<ShopMenuGalleryScreenRenderer> { shopGalleryRendererFactory(get()) }
+    single<com.coffeepeek.feature.notifications.api.NotificationFeature> {
+        com.coffeepeek.feature.notifications.api.createNotificationFeature(get<CoffeePeekClient>().client, get(), com.coffeepeek.admin.notifications.NativePushBridge)
+    }
     single<PasswordRecoveryRepository> { PasswordRecoveryRepositoryImpl(get<CoffeePeekClient>().plainClient) }
     factory { (email: String) -> PasswordRecoveryViewModel(email, get()) }
     single<CoffeeRepository> { CoffeeRepositoryImpl(get<CoffeePeekClient>().plainClient) }
@@ -180,7 +185,9 @@ private fun appModule(
         val gateway = get<CoffeePeekClient>()
         HomeCheckInRepositoryImpl(gateway.client, gateway.uploadClient, Constants.BASE_URL)
     }
-    factory { HomeCheckInViewModel(get(), get(), get()) }
+    factory {
+        HomeCheckInViewModel(get(), get(), get(), onCheckInCreated = get<NotificationFeature>()::onCheckInCreated)
+    }
     factory { CoffeeListViewModel(get()) }
     factory { (slug: String) -> CoffeeDetailViewModel(slug, get()) }
     single { com.coffeepeek.feature.authorblocking.impl.createAuthorBlockingFeature(get<CoffeePeekClient>().client, com.coffeepeek.admin.di.authorblocking.SessionAuthorBlockingAccount(get())) }
@@ -228,6 +235,7 @@ private fun appModule(
         observeFavoriteIds = getOrNull<ObserveFavoriteIdsUseCase>(),
         roasterFavorites = get(),
         visibility = get(),
+        onCheckInCreated = get<NotificationFeature>()::onCheckInCreated,
     ) }
     factory { (shopId: String) -> ShopMenuGalleryViewModel(shopId, get()) }
     factory { (shopId: String) -> ShopReportViewModel(shopId, get()) }
@@ -236,11 +244,11 @@ private fun appModule(
         ShopChangeEditorViewModel(shopId, section, requestId, get(), get())
     }
     factory { (requestId: String) -> ShopChangeRequestDetailViewModel(requestId, get()) }
-    single { ProfileViewModel(get(), get(), get(), get(), get(), get()) }
+    single { ProfileViewModel(get(), get(), get(), get(), get(), get(), get()) }
     factory { DeleteAccountPendingViewModel(get(), get()) }
     factory { AddShopViewModel(get()) }
     factory { EditProfileViewModel(get()) }
-    factory { FavoritesViewModel(get(), get(), get(), get()) }
+    single { FavoritesViewModel(get(), get(), get(), get(), sessions = get()) }
     factory { (kind: ContributionKind) -> MyContributionsViewModel(kind, get(), get(), get()) }
     factory { VisitedPlacesViewModel(get(), get()) }
     factory { AddRoasterViewModel(get(), get()) }
