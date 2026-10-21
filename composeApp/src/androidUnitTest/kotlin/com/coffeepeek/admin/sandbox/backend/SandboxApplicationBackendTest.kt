@@ -435,6 +435,49 @@ class SandboxApplicationBackendTest {
         backend.reset(true)
         assertEquals(SandboxAuthPolicy.Works, backend.authPolicy)
     } }
+    @Test fun feedFixturesPageThroughTheRealFeedServiceAndHonourBlocksAndFailures() = runTest { fixture { backend, client ->
+        val feed = FeedApiService(client.client)
+        // Default: the visible fixtures in one page.
+        assertEquals(2, feed.getFeed(20).getOrThrow().items.size)
+        assertNull(feed.getFeed(20).getOrThrow().nextCursor)
+
+        backend.feed = SandboxFeed.Paged
+        val first = feed.getFeed(20).getOrThrow()
+        assertEquals(20, first.items.size); assertEquals("20", first.nextCursor)
+        val second = feed.getFeed(20, first.nextCursor).getOrThrow()
+        val third = feed.getFeed(20, second.nextCursor).getOrThrow()
+        val ids = (first.items + second.items + third.items).map { it.checkIn.id }
+        assertEquals(47, ids.size); assertEquals(ids.size, ids.toSet().size); assertNull(third.nextCursor)
+        assertTrue((first.items + second.items + third.items).any { it.checkIn.kind == "Home" && it.checkIn.home?.beanName != null })
+        // A blocked author disappears from every page and returns on unblock.
+        client.client.put("/api/v1/me/blocks/$friend")
+        val visible = feed.getFeed(100).getOrThrow().items
+        assertEquals(47 - 1 - 15, visible.size); assertTrue(visible.none { it.checkIn.authorId == friend })
+        client.client.delete("/api/v1/me/blocks/$friend")
+        assertEquals(47, feed.getFeed(100).getOrThrow().items.size)
+        // Votes and reports work for generated posts too.
+        assertTrue(client.client.put("/api/v1/check-ins/sandbox-feed-1/helpful").status.isSuccess())
+        assertTrue(client.client.post("/api/v1/check-ins/sandbox-feed-1/reports").status.isSuccess())
+
+        backend.feed = SandboxFeed.PageFailsOnce
+        val firstPage = feed.getFeed(20).getOrThrow()
+        assertTrue(feed.getFeed(20, firstPage.nextCursor).isFailure)
+        assertEquals(20, feed.getFeed(20, firstPage.nextCursor).getOrThrow().items.size)
+
+        backend.feed = SandboxFeed.InvalidCursor
+        assertEquals(20, feed.getFeed(20).getOrThrow().items.size)
+        val restart = feed.getFeed(20, "20").exceptionOrNull()
+        assertTrue((restart as com.coffeepeek.api.feature.feed.FeedApiException).restartPagination)
+
+        backend.feed = SandboxFeed.Empty
+        assertTrue(feed.getFeed(20).getOrThrow().items.isEmpty())
+        backend.feed = SandboxFeed.Failure
+        assertTrue(feed.getFeed(20).isFailure)
+
+        backend.feed = SandboxFeed.Paged
+        backend.reset(true)
+        assertEquals(SandboxFeed.Single, backend.feed)
+    } }
     @Test fun settingsFixturesServeTheUpdatePolicyAndTheCityCatalogThroughTheRealParsers() = runTest { fixture { backend, client ->
         // The shared client throws on a non-2xx answer; the app's update state treats that exactly like "no policy".
         suspend fun update() = runCatching {

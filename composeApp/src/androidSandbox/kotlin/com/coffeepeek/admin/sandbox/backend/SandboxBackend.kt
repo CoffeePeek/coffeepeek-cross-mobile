@@ -37,6 +37,9 @@ internal class SandboxBackend(private val samplePhoto: ByteArray,
     var authPolicy: SandboxAuthPolicy
         get() = application.authPolicy
         set(value) { application.authPolicy = value }
+    var feed: SandboxFeed
+        get() = application.feed
+        set(value) { application.feed = value }
     private fun apiEngine() = MockEngine { request ->
         val mode = scenario
         if (mode == SandboxScenario.Slow) delay(900)
