@@ -29,7 +29,7 @@ There is **no `feature/auth` module yet**; this directory holds only this file.
 | # | Behaviour |
 |---|---|
 | A1 | Fields: Email and Password (placeholder `name@example.com`, leading icons, password visibility handling in `AuthFields`); email is trimmed, password is not |
-| A2 | Validation on submit: email required (`Введите email`) and format (`Введите корректный email`), password required (`Введите пароль`, login uses the default minimum of 6 but only reports "required" in practice because `isBlank` is checked first, then length < 6 reports `Пароль должен содержать как минимум 6 символов`); both errors shown at once; nothing is sent while either is set |
+| A2 | Validation on submit: email required (`Введите email`) and format (`Введите корректный email`); password required (`Введите пароль`) and, for the login screen, at least 6 characters (`Пароль должен содержать как минимум 6 символов`); both field errors are shown at once and nothing is sent while either is set |
 | A3 | Editing clears the login error; a field error is re-validated live only after it has been shown once |
 | A4 | Request errors are mapped by `localizedLoginError`: credentials-like words (`unauthorized`, `invalid credential`, `wrong password`, `user not found`, `неверн`...) → `Неверный email или пароль`; network-like words → `Не удалось подключиться. Проверьте интернет-соединение`; anything else → `Не удалось войти. Проверьте email и пароль`; shown inline above the buttons |
 | A5 | Success: `AuthRepository.login` saves the session; if the user id differs from the stored one, local user data is cleared first (`UserSessionCleaner`); then analytics `sign_in_completed` (method `password`, entry `login`) with identity sync and completion of a pending password sign-up; then `Navigator.navigate(Screen.Main)` |
@@ -54,7 +54,7 @@ There is **no `feature/auth` module yet**; this directory holds only this file.
 | C1 | Three steps with a stepper (Email → Details → Success, mascot laptop then happy); back from Details returns to Email (and clears the password error), from Email/Success pops |
 | C2 | Email step: format validation, then `isEmailTaken`; a taken email shows the error text stored under the string key `email_no_exist` (the key name reads the opposite way); a failed check shows the global error with the default message |
 | C3 | Details step: name (required), password (min **8**, live re-validation after the first error), terms checkbox (required, with Terms and Privacy links from `LegalUrls`), optional analytics checkbox kept separate from the terms (saved with `setConsent` just before `register`; no SDK setup before login) |
-| C4 | Submit validation reports **one** global error in a fixed priority (name, then email, then password, then terms are overwritten in code order, so the last failing check wins: terms is checked first and overwritten by password, email, name) and marks the field errors; valid → consent saved → `register` → remembers the password sign-up for analytics → Success step |
+| C4 | Submit validation marks the field errors and reports **one** global message. The checks run in the order terms, password, email, name and each failure overwrites the message, so the **last failing check wins** (name beats email beats password beats terms); valid → consent saved → `register` → the password sign-up is remembered for analytics → Success step |
 | C5 | Success step shows the email and «go to login» |
 | C6 | Social sign-up buttons on the first step use entry `register` (B2, B4) |
 
