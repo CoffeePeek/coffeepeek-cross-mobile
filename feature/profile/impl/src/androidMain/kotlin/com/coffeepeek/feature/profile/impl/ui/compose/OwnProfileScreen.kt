@@ -114,8 +114,8 @@ internal fun OwnProfileScreen(
         return
     }
 
-    Scaffold(containerColor = MaterialTheme.colorScheme.background, contentWindowInsets = WindowInsets(0, 0, 0, 0)) { _ ->
-        Column(Modifier.fillMaxSize().statusBarsPadding()) {
+    Scaffold(containerColor = MaterialTheme.colorScheme.background, contentWindowInsets = WindowInsets(0, 0, 0, 0)) { innerPadding ->
+        Column(Modifier.fillMaxSize().padding(innerPadding).statusBarsPadding()) {
             Box(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp).height(48.dp), contentAlignment = Alignment.CenterStart) {
                 Text(stringResource(R.string.profile_title), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold)
                 if (state.isLoggedIn) Box(Modifier.align(Alignment.CenterEnd)) { actions() }

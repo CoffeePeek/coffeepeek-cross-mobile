@@ -122,9 +122,9 @@ internal fun PublicProfileScreen(
         }
     }
 
-    Scaffold(containerColor = MaterialTheme.colorScheme.background, contentWindowInsets = WindowInsets(0, 0, 0, 0)) { _ ->
+    Scaffold(containerColor = MaterialTheme.colorScheme.background, contentWindowInsets = WindowInsets(0, 0, 0, 0)) { innerPadding ->
         Column(
-            Modifier.fillMaxSize()
+            Modifier.fillMaxSize().padding(innerPadding)
                 .background(Brush.verticalGradient(listOf(CoffeePeekColors.GoldWarm.copy(alpha = 0.055f), MaterialTheme.colorScheme.background)))
                 .statusBarsPadding(),
         ) {

@@ -76,7 +76,7 @@
 | Публичная лента | `GET /api/v1/feed?pageSize=20[&cursor=…][&citySlug=…][&coffeeShopSlug=…][&authorSlug=…]` | `Cache-Control: no-store`; `{items:[{publishedAtUtc,checkIn}],nextCursor}`. Сохраняйте серверный порядок, догружайте по `nextCursor`; при 400 с курсором начните пагинацию заново. |
 | Редактировать визит | `PUT /api/v1/check-ins/{id}` | `{text,rating,drinkSlug,customDrinkName}`; фото и видимость не включаются. |
 | Видимость визита | `PUT /api/v1/check-ins/{id}/visibility` | `{visibility:"Private"|"Public"}`; берите возвращённые `visibility` и `moderationState`. |
-| Лайк и жалоба | `PUT`/`DELETE /api/v1/check-ins/{id}/helpful`; `POST /api/v1/check-ins/{id}/reports` | Лайк без body, ответ `{isHelpful,helpfulCount}`. Жалоба `{text}` (обрезать пробелы), успех HTTP 201. |
+| Лайк и жалоба | `PUT`/`DELETE /api/v1/check-ins/{id}/helpful`; `POST /api/v1/check-ins/{id}/reports` | Лайк без body, ответ `{isHelpful,helpfulCount}`. Клиент разрешает лайкать и снимать лайк со своих опубликованных чекинов. Жалоба `{text}` (обрезать пробелы), успех HTTP 201. |
 | Домашние изменения | `PUT`/`DELETE /api/v1/check-ins/home/{id}` | PUT содержит редактируемые поля создания, **без** `photos`; DELETE после подтверждения. |
 
 Пример тела для визита (значения иллюстративные, названия полей — точные):

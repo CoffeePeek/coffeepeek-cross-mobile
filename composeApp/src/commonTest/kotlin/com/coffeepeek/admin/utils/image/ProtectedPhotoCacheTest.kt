@@ -89,6 +89,36 @@ class ProtectedPhotoCacheTest {
         assertNotNull(anonymous.reusablePermission)
     }
 
+    @Test fun earlyRevalidationBypassesFreshReuseAnd304RenewsOnlyWithNewServerHeaders() = runTest {
+        val clock = Clock(base)
+        val cache = ProtectedPhotoCache(backgroundScope, clock)
+        val first = cache.read(key(), null, { true }) { response() }
+        clock.advance(5_000)
+        val renewed = cache.read(key(), null, { true }, revalidate = true) {
+            assertEquals("\"variant-a\"", it)
+            response(headers(dateValue = "Sun, 18 Oct 2026 12:00:05 GMT"), status = 304)
+        }
+        assertSame(first.bytes, renewed.bytes)
+        assertEquals(15_000L, first.permission.remaining(clock))
+        assertEquals(20_000L, renewed.permission.remaining(clock))
+    }
+
+    @Test fun earlyAccessDenialEvictsBytesDespiteTheirPreviousFreshness() = runTest {
+        for (status in listOf(401, 403, 404, 410)) {
+            val clock = Clock(base)
+            val cache = ProtectedPhotoCache(backgroundScope, clock)
+            cache.read(key(), null, { true }) { response() }
+            clock.advance(1_000)
+            assertFailsWith<PhotoAccessDenied> {
+                cache.read(key(), null, { true }, revalidate = true) { response(status = status) }
+            }
+            cache.read(key(), null, { true }) {
+                assertNull(it)
+                response(headers(dateValue = "Sun, 18 Oct 2026 12:00:01 GMT"))
+            }
+        }
+    }
+
     @Test fun anonymousFreshBytesReuseWithinTheirScopedPermissionAndThenRevalidate() = runTest {
         val clock = Clock(base)
         val cache = ProtectedPhotoCache(backgroundScope, clock)
@@ -342,8 +372,8 @@ class ProtectedPhotoCacheTest {
         var calls = 0
         var cancelled = false
         suspend fun transfer(tag: String?): PhotoTransfer { calls++; try { finish.await() } finally { cancelled = !finish.isCompleted }; return response() }
-        val first = async { cache.read(key(), base + 100_000, { true }, ::transfer) }
-        val second = async { cache.read(key(), base + 100_000, { true }, ::transfer) }
+        val first = async { cache.read(key(), base + 100_000, { true }, transfer = ::transfer) }
+        val second = async { cache.read(key(), base + 100_000, { true }, transfer = ::transfer) }
         runCurrent()
         assertEquals(1, calls)
         first.cancelAndJoin()
