@@ -59,8 +59,8 @@ internal fun ShopRoasterRow(roaster: ShopRoaster, onOpenRoaster: (String) -> Uni
 @Composable
 private fun RoasterPlaceholder() {
     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        Text(stringResource(Res.string.shop_coffee_roaster_photo_missing),
-            style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Icon(CoffeePeekIcons.Coffee, stringResource(Res.string.shop_coffee_roaster_photo_missing), Modifier.size(24.dp),
+            tint = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }
 

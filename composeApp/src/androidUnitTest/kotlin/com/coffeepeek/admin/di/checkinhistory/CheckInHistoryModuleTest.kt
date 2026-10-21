@@ -6,7 +6,7 @@ import com.coffeepeek.admin.di.homecheckin.AndroidCheckInCreateFlowRenderer
 import com.coffeepeek.api.CoffeePeekClient
 import com.coffeepeek.domain.repository.SessionRepository
 import com.coffeepeek.admin.feature.catalog.api.BrewMethodCatalog
-import com.coffeepeek.admin.feature.coffee.api.CoffeePicker
+import com.coffeepeek.feature.coffee.api.CoffeePicker
 import com.coffeepeek.feature.checkinhistory.domain.repository.CheckInHistoryRepository
 import com.coffeepeek.feature.checkinhistory.domain.repository.HomeHistoryReader
 import com.coffeepeek.feature.homecheckin.domain.repository.HomePreparationRepository

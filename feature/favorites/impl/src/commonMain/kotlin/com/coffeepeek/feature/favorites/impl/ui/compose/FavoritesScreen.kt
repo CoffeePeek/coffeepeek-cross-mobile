@@ -16,10 +16,13 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -50,6 +53,7 @@ import com.coffeepeek.feature.favorites.impl.resources.favorites_loading
 import com.coffeepeek.feature.favorites.impl.resources.favorites_retry
 import com.coffeepeek.feature.favorites.impl.resources.favorites_title
 import com.coffeepeek.feature.favorites.impl.resources.favorites_update_error
+import com.coffeepeek.feature.favorites.impl.resources.favorites_action_error
 import com.coffeepeek.feature.favorites.impl.resources.favorites_roasters
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.jetbrains.compose.resources.stringResource
@@ -90,7 +94,10 @@ internal fun FavoritesScreenContent(
     onAction: (FavoritesAction) -> Unit,
     distanceForCoordinates: (Double, Double) -> String? = { _, _ -> null },
 ) {
-    Scaffold(topBar = { CoffeePeekTopBar(stringResource(Res.string.favorites_title),
+    val snackbar = remember { SnackbarHostState() }
+    val actionError = stringResource(Res.string.favorites_action_error)
+    LaunchedEffect(state.actionFailed) { if (state.actionFailed) snackbar.showSnackbar(actionError) }
+    Scaffold(snackbarHost = { SnackbarHost(snackbar) }, topBar = { CoffeePeekTopBar(stringResource(Res.string.favorites_title),
         stringResource(Res.string.favorites_back), onBack = { onAction(FavoritesAction.Back) }) }) { padding ->
         Column(Modifier.fillMaxSize().padding(padding).consumeWindowInsets(padding)) {
             when {
@@ -103,7 +110,7 @@ internal fun FavoritesScreenContent(
                     }
                 state.shops.isEmpty() && state.roasters.isEmpty() && state.drinks.isEmpty() -> FavoritesMessage(stringResource(Res.string.favorites_empty))
                 else -> {
-                    if (state.actionFailed || state.loadFailed || state.roastersLoadFailed || state.drinksLoadFailed) {
+                    if (state.loadFailed || state.roastersLoadFailed || state.drinksLoadFailed) {
                         Text(stringResource(Res.string.favorites_update_error), Modifier.padding(16.dp),
                             color = MaterialTheme.colorScheme.error)
                         CoffeePeekButton(stringResource(Res.string.favorites_retry),

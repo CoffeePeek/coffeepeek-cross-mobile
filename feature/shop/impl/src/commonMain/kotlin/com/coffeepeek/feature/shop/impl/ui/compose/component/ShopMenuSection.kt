@@ -1,15 +1,11 @@
 package com.coffeepeek.feature.shop.impl.ui.compose.component
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -24,6 +20,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
+import com.coffeepeek.core.designsystem.component.CoffeePeekContentCard
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.feature.shop.domain.model.ShopMenu
@@ -60,11 +57,8 @@ internal fun ShopMenuSection(
 @Composable
 private fun MenuCard(menu: ShopMenu, groups: List<List<ShopMenuItem>>, captured: String?, updated: String?,
     onOpenPhoto: (Int) -> Unit) {
-    Card(Modifier.fillMaxWidth(), shape = RoundedCornerShape(CoffeePeekDimens.radius2xl),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline)) {
-        Column(Modifier.padding(CoffeePeekDimens.spacing4),
-            verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing3)) {
+    CoffeePeekContentCard {
+        Column(verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing3)) {
             BoxWithConstraints(Modifier.fillMaxWidth()) {
                 val canPlaceBesideItems = maxWidth >= 280.dp && LocalDensity.current.fontScale <= 1.3f
                 val photoStack: @Composable () -> Unit = {

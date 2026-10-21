@@ -51,6 +51,18 @@ APK SHA-256: `5ca3b63d5798bba12825eeb5a0f7a16c0a57822196ae4728a3b04fe430615d59`.
 Logs remain
 local as `coffeepeek-develop-history-*2026-10-19.log`.
 
+## Current-main reconciliation gate — 2026-10-19
+
+Main **28917758** is inherited parent-first through #43 -> #95 and descendants.
+The Android combined calendar/timeline and all three routes remain active, but
+the initial audit found independent DTOs ignoring main's variant manifests. The
+photo slices below and in Home #99 now retain aligned original/feed/detail/thumb
+representations through history, adapters, calendar selection and gallery effects.
+In particular, an explicitly empty manifest must not silently fetch the original
+inline, and a detail URL must not erase a server-issued original. Existing account
+revocation and protected app image-loader policies remain required. Profile
+Activity is a separate legacy modal, not a completed full-screen migration.
+
 ## Shop-history photo representations — 2026-10-19
 
 Scope: existing #95, based on `e3676e94`; main is still `dfb00e63` (remote checked).
@@ -85,6 +97,18 @@ viewer callback mismatch described above. Two subsequent compile attempts found
 a duplicate preview name and two remaining old-arity test callbacks; these were
 corrected without dropping assertions, and the complete selection was rerun.
 Logs and fixtures stay local; no live account/backend writes or iOS acceptance.
+
+Downstream follow-up: Home runtime `fe80c7e0` closes its matching data/inline/
+gallery contract gap in #99; its owner suite passes 41/41 on Pixel 7. At the
+combined Coffee-tip runtime source `28c64bff`, history is repeated **21/21**
+(38.937s) and Home **41/41** (73.350s), no failures/retries. History APK SHA-256:
+`dbb3818484c454e8b5fdd4d80a4085506f884c0ab60a5769cf982bb43a9ee1fd`.
+Selected unit regression 704/704 and Direct Debug/Sandbox APK/DEX/isolation
+guards pass. App instrumentation is compiled only, not executed against live DI.
+The extra repetitions use self-targeted generic Applications and injected ports;
+ordinary CoffeePeek/Sandbox are not updated or cleared. Logs stay local as
+`coffeepeek-history-photo-stack-ui-2026-10-19.log` and the Home/final-build logs
+listed in its plan. This is not live protected-photo or release acceptance.
 
 ## Compact visit markers and latest available photo — 2026-10-16
 
@@ -677,3 +701,7 @@ core lint and 601 selected unit executions pass (233 app per variant, 87 Shop MV
 fixtures cover that Shop correction, not a combined-history route switch. User-
 approved yellow information icons and 14/12sp badge text are intentional prod
 exceptions. No physical phone, account data, backend writes or iOS screen changed.
+
+## Retroactive parity audit — 2026-10-20
+
+Open gaps from the legacy-first audit: A1–A8 (medium: A1 photo quality, A8 Sandbox data). Full table and verification status: [LEGACY_PARITY_AUDIT.md](../LEGACY_PARITY_AUDIT.md).

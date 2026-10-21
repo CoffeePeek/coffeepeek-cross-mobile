@@ -46,7 +46,15 @@
     <string name="home_check_in_saving">Сохраняем…</string>
     <string name="home_check_in_save_failed">Не удалось сохранить чекин. Проверьте данные и попробуйте ещё раз.</string>
     <string name="home_check_in_save_error_title">Не удалось сохранить чекин</string>
-    <string name="home_check_in_validation_summary">Проверьте поля с ошибками: %1$d</string>
+    <plurals name="home_check_in_validation_summary">
+        <item quantity="one">Проверьте заполненные поля (%1$d ошибка).</item>
+        <item quantity="few">Проверьте заполненные поля (%1$d ошибки).</item>
+        <item quantity="many">Проверьте заполненные поля (%1$d ошибок).</item>
+        <item quantity="other">Проверьте заполненные поля (%1$d ошибки).</item>
+    </plurals>
+    <string name="home_check_in_save_unauthorized">Сессия истекла. Войдите в аккаунт и сохраните чекин снова.</string>
+    <string name="home_check_in_save_forbidden">Нет доступа к этой записи. Проверьте, в какой аккаунт вы вошли.</string>
+    <string name="home_check_in_photo_upload_failed">Не удалось загрузить фото. Попробуйте ещё раз.</string>
     <string name="home_check_in_optional">Необязательно</string>
     <string name="home_check_in_public_title">Сделать публичным</string>
     <string name="home_check_in_public_hint">Публичный чекин появится в ленте после модерации. Скрытый виден только вам.</string>

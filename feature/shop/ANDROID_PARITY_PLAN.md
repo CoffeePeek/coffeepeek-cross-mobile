@@ -1,5 +1,41 @@
 # Android shop migration — compatibility plan
 
+## Final device follow-up — 2026-10-20
+
+Publication reconciliation: concurrent parent `91dcde2c` (shared single-choice
+fields) is retained via normal parent-first merges, with no force push. Resolve
+the Home Gradle conflict by keeping design-system in commonMain without restoring
+the removed preview dependency. Preserve the entire incoming select README
+section verbatim alongside rating/Native documentation. Combined source
+`68248716` passes **758** selected unit results (core 29, Shop 101, Coffee 46,
+Roaster 19, app Direct 563), zero failures/errors/skips; Debug/Sandbox and
+DEX/isolation plus design-system iOS Arm64 Kotlin compilation pass (54s).
+The device build below predates this selector integration: it verifies the
+unchanged Shop visual controls, not the selector's device/iOS behavior. No
+new application Native framework/device acceptance is inferred from compilation.
+
+Runtime source `d8289294` includes description follow-up `91b23c42` and shared
+outlined-card reuse `fd929916`. **755** selected unit results (core 26, Shop 101,
+Coffee 46, Roaster 19, app Direct 563), zero failures/errors/skips; Debug/Sandbox
+assemblies, packaged DEX and Sandbox isolation pass (1m). Description IDE
+inspection completes without errors. Paired previews remain beside their owners.
+
+Manual **Pixel 7 / API 37**, 1080x2400: Sandbox 829 (`6e176444`) verified equal
+floating glass plates/neutral-gold states, removed menu heading action, photo-tap
+gallery and return, report-card shape/spacing, expanded/collapsed hours, and guest
+author menu absence plus themed registration in light/dark. The later Sandbox
+**843 / 1.0.843-sandbox** from `d8289294` was updated in place and its corrected
+description/header visually inspected in both themes. Theme was restored to
+light. App package, launcher, increasing version and matching signing certificate
+were checked; no data clearing, normal CoffeePeek/Pixel 10a installation, live
+account or backend mutation. Screenshots/video remain local, not tracked.
+
+Final APK SHA-256: `c02d495f93b3780cb9b9fc7d8eb3162bd1d2f0347d62cade547511a3f10b9a1a`.
+No automated UI suite/host was added or run. Hours end states and source animation
+specs were checked; the short manual recording did not reliably capture the
+transition, so frame timing/fluidity is not certified. Actual backend media/Haze,
+large-font/window/accessibility acceptance and native iOS remain separate gates.
+
 ## Screenshot corrections — 2026-10-20
 
 Description follow-up: restore main's outlined `surface` card (24dp corners,
@@ -108,10 +144,24 @@ successfully. Targeted repair **1/1** passes (2.409s), followed by full **39/39*
 No product assertion or scenario was dropped. Logs stay local under
 `coffeepeek-shop-block-parent-*2026-10-19.log`.
 
-Propagate the owner fix through the existing stack, then verify Debug/Sandbox at
-the tip. No real account/block/backend write, native iOS change, new Gradle module
-or manual pixel-parity acceptance. Full-app Sandbox blocking transport fixtures
-and live protected-media/blocking acceptance remain separate gates.
+Owner runtime `6dc3f115` is propagated parent-first through #95/#99/#101/#102 to
+tip runtime `46b1943a`. Final-tip verification: **650 selected unit results**
+(99 Shop impl, 11 author-blocking, 540 app Direct), zero failures/errors/skips;
+Direct Debug/Sandbox APKs, both packaged DEX guards, Sandbox isolation, Shop
+self-targeted APK and app Direct instrumentation Kotlin compilation pass (2m03s).
+The initial tip build launch was not executed because tool approval was
+unavailable; the same normal approval path later succeeded without a bypass.
+
+At that tip, the complete Pixel 7 fake Shop UI suite passes **40/40** (67.277s),
+no failures/retries. The extra case is an existing descendant shared-heart
+regression, not a new production capability. Test APK SHA-256:
+`3f52bd107a297533179ae6094bff605d4380b5f27be78f015b0a07272573d583`.
+Local final logs: `coffeepeek-shop-block-stack-final-build-2026-10-19.log` and
+`coffeepeek-shop-block-stack-full-ui-2026-10-19.log`. Later tip edits are docs only.
+Only test APKs were installed; ordinary CoffeePeek/Sandbox and account data are
+untouched by these checks. No real block/backend write, native iOS screen change,
+new Gradle module or manual pixel acceptance. Full-app Sandbox blocking transport
+fixtures and live protected-media/blocking acceptance remain separate gates.
 
 ## Scoped interaction corrections — 2026-10-19
 
@@ -743,3 +793,23 @@ These are fake Memories/rating/date fixtures, not a real backend form submission
 The emulator ran read-only and stopped without a snapshot; Pixel 7/10a were not
 updated or cleared. Live picker/camera/ML Kit/writes, physical-device parity and
 actual IDE rendering remain separate gates.
+
+## Vote recomposition guard — 2026-10-19
+
+Device UI run — 2026-10-19, runtime `96b4162d` (docs-only after): Pixel 7 (serial 2C121FDH2003NC) / API 37, test APKs only (`com.coffeepeek.feature.shop.impl.test`, `com.coffeepeek.core.designsystem.test`); no app package installed or updated.
+Shop impl **41/41** (1m32s) and core design-system **84/84** (2m59s) self-targeted UI cases pass, zero
+failures/retries/skips. Shop's 41 include the new `votingOneVisitDoesNotRecomposeItsNeighbour`
+(counts a neighbouring card's recompositions while another vote is pending). Negative check: with the
+pre-fix `ShopPublicCheckInsSection` (`9a96d756^`) the same test fails (`expected:<1> but was:<2>`);
+with the fix it passes, so it guards the regression. The restored bean `CoffeePeekLoader` is covered by
+core's `PresentationContractTest` (semantics only, not its look; the look was checked on the Sandbox build).
+
+Change: per-card item scope in `ShopPublicCheckInsSection`, memoized own-visit ids, and the public/full-list
+cards no longer null every card's vote callback while one vote is pending (both view models still reject
+concurrent votes). Visible effect: other like buttons stay tappable during a pending vote; a tap is ignored.
+
+## Retroactive parity audit — 2026-10-20
+
+Open gaps from the legacy-first audit: G1–G10 (high: G1 favorite after login; medium: G2, G3). Full table and verification status: [LEGACY_PARITY_AUDIT.md](../LEGACY_PARITY_AUDIT.md).
+
+Fixes applied 2026-10-20 and owner decisions on intentional differences: see the "Fixes applied" and "Intentional differences" sections of [LEGACY_PARITY_AUDIT.md](../LEGACY_PARITY_AUDIT.md). Device verification is still open.

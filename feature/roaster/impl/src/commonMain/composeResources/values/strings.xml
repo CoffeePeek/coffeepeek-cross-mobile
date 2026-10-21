@@ -1,0 +1,27 @@
+<resources>
+    <!-- The active Roasters UI currently has Russian text only. -->
+    <string name="roaster_loading">Загрузка</string>
+    <string name="roaster_refresh">Обновить обжарщиков</string>
+    <string name="roaster_empty">Обжарщики не найдены</string>
+    <string name="roaster_tag_all">Все</string>
+    <string name="roaster_logo">Логотип %1$s</string>
+    <string name="roaster_stat_shops">Кофейни</string>
+    <string name="roaster_stat_catalog">Каталог</string>
+    <string name="roaster_favorite_add">Добавить в избранное</string>
+    <string name="roaster_favorite_remove">Убрать из избранного</string>
+    <string name="roaster_message_favorites_unavailable">Не удалось загрузить избранное</string>
+    <string name="roaster_message_favorite_failed">Не удалось изменить избранное</string>
+    <string name="roaster_detail_load_failed">Не удалось загрузить обжарщика</string>
+    <string name="roaster_detail_retry">Повторить</string>
+    <string name="roaster_detail_back">Назад</string>
+    <string name="roaster_about_title">Об обжарщике</string>
+    <string name="roaster_address_title">Адрес</string>
+    <string name="roaster_links_title">Ссылки</string>
+    <string name="roaster_shops_title">Где используют</string>
+    <string name="roaster_shops_empty">Пока нет кофеен, которые указали этого обжарщика.</string>
+    <string name="roaster_shop_photo">Фото кофейни %1$s</string>
+    <string name="roaster_shop_photo_missing">Фото кофейни %1$s отсутствует</string>
+    <string name="roaster_open_shop">Открыть кофейню %1$s</string>
+    <string name="roaster_photos_missing">Фотографии %1$s отсутствуют</string>
+    <string name="roaster_photo_position">%1$d / %2$d</string>
+</resources>

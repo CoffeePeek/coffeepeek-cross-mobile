@@ -4,7 +4,7 @@ import com.coffeepeek.admin.di.checkinhistory.AndroidCheckInHistorySession
 import com.coffeepeek.admin.analytics.safeAnalyticsError
 import com.coffeepeek.admin.feature.catalog.api.BrewMethodCatalog
 import com.coffeepeek.admin.feature.catalog.api.catalogBrewMethodSlug
-import com.coffeepeek.admin.feature.coffee.api.CoffeePicker
+import com.coffeepeek.feature.coffee.api.CoffeePicker
 import com.coffeepeek.feature.homecheckin.domain.model.*
 import com.coffeepeek.feature.homecheckin.domain.repository.HomePreparationRepository
 import com.coffeepeek.feature.homecheckin.impl.ui.data.*
@@ -31,7 +31,7 @@ internal class AndroidHomeCheckInCatalog(
 private fun <T> Result<T>.homeCatalogResult(): Result<T> = fold({ Result.success(it) }, { error ->
     if (error is CancellationException) throw error
     if (error is HomePreparationFailure) Result.failure(error)
-    else Result.failure(HomePreparationFailure(when (safeAnalyticsError(error).category) {
+    else Result.failure(HomePreparationFailure(issue = when (safeAnalyticsError(error).category) {
         "authentication" -> HomePreparationIssue.Unauthorized
         "permission" -> HomePreparationIssue.Forbidden
         "not_found" -> HomePreparationIssue.NotFound
@@ -39,7 +39,7 @@ private fun <T> Result<T>.homeCatalogResult(): Result<T> = fold({ Result.success
         "server" -> HomePreparationIssue.Unavailable
         "network" -> HomePreparationIssue.Offline
         else -> HomePreparationIssue.RequestFailed
-    }))
+    }, statusCode = safeAnalyticsError(error).status))
 })
 
 /** Guards the prepared repository without routing writes back to the legacy Home writer. */

@@ -18,7 +18,24 @@ import com.coffeepeek.feature.shop.data.repository.createShopCheckInRepository
 import com.coffeepeek.feature.shop.data.repository.createShopCheckInVoteRepository
 import com.coffeepeek.feature.shop.data.repository.createShopDetailsRepository
 import com.coffeepeek.feature.shop.domain.model.*
+import com.coffeepeek.domain.model.Session
+import com.coffeepeek.domain.repository.SessionRepository
+import com.coffeepeek.feature.authorblocking.api.AuthorReference
+import com.coffeepeek.feature.authorblocking.api.createAuthorBlockingFeature
 import io.ktor.client.engine.mock.MockEngine
+import io.ktor.client.plugins.expectSuccess
+import io.ktor.client.statement.bodyAsText
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.setMain
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeout
+import kotlinx.serialization.json.*
 import io.ktor.client.request.*
 import io.ktor.client.call.body
 import io.ktor.http.*
@@ -27,6 +44,21 @@ import org.junit.Rule
 import org.junit.rules.TemporaryFolder
 import java.time.LocalDate
 import kotlin.test.*
+
+/** Same shape as the Sandbox app's no-credential session, without its Android-only source set. */
+private class LocalSession : SessionRepository {
+    private val current = MutableStateFlow<Session?>(Session("local", "local", "11111111-1111-4111-8111-111111111111"))
+    override fun peekSession() = current.value
+    override fun applySession(session: Session?) { current.value = session }
+    override fun isActiveSession(session: Session?) = session != null
+    override suspend fun getSession() = peekSession()
+    override suspend fun persistSession(session: Session?) = applySession(session)
+    override suspend fun replaceSession(expected: Session?, session: Session?) = current.compareAndSet(expected, session)
+    override suspend fun saveSession(session: Session?) = applySession(session)
+    override suspend fun warmCache() = Unit
+    override fun observeSession() = current.asStateFlow()
+    override suspend fun isLoggedIn() = current.value != null
+}
 
 class SandboxApplicationBackendTest {
     @get:Rule val temporary = TemporaryFolder()
@@ -51,11 +83,40 @@ class SandboxApplicationBackendTest {
         assertEquals("cappuccino", shops.getConsumedDrinks().getOrThrow().single().slug)
         assertEquals(2, shops.getBrewMethods().getOrThrow().size)
         val roasters = RoasterApiService(client.plainClient)
-        assertEquals("Sandbox Roaster", roasters.getRoasters().getOrThrow().single().name)
+        assertEquals(listOf("Sandbox Roaster", "Sandbox Light Lab", "Sandbox Decaf"), roasters.getRoasters().getOrThrow().map { it.name })
         assertEquals("sandbox-roaster", roasters.getRoaster("sandbox-roaster").getOrThrow().address.slug)
         assertContentEquals(byteArrayOf(1, 2, 3), client.client.get("${SandboxBackend.BASE_URL}/media/sample").body<ByteArray>())
         assertContentEquals(byteArrayOf(1, 2, 3), client.imageClient.get("${SandboxBackend.BASE_URL}/media/sample").body<ByteArray>())
         assertNull(backend.photo("https://example.org/media/sample"))
+    } }
+
+    @Test fun actualRoasterRepositoryReadsTagsShopsContactsAndPartialRoastersFromFixtures() = runTest { fixture { backend, client ->
+        val store = object : com.coffeepeek.feature.roaster.data.repository.RoasterCatalogStore {
+            var saved: String? = null
+            override suspend fun read() = saved
+            override suspend fun write(value: String) { saved = value }
+        }
+        val roasters = com.coffeepeek.feature.roaster.data.repository.createRoasterRepository(client.client, SandboxBackend.BASE_URL, store) { 1_000L }
+        val list = roasters.getRoasters().getOrThrow()
+        assertEquals(listOf("sandbox-roaster", "sandbox-light", "sandbox-decaf"), list.map { it.slug })
+        assertEquals(listOf("light", "decaf"), list.first().tags.map { it.slug })
+        assertEquals(listOf(2, 1, 0), list.map { it.coffeeShopsCount })
+        assertNotNull(list.first().photoUrl); assertNull(list.last().photoUrl)
+        assertNotNull(store.saved)
+        val full = roasters.getRoaster("sandbox-roaster").getOrThrow()
+        assertEquals("@sandbox.roaster", full.contact?.instagramLink)
+        assertEquals("sandbox-roaster.example/about", full.contact?.siteLink)
+        assertEquals("Минск, Тестовая улица, 5", full.location?.address)
+        assertEquals(2, full.photos.size)
+        assertEquals(listOf("sandbox-cafe" to true, "sandbox-lab" to false), full.shops.map { it.slug to (it.photoUrl != null) })
+        val partial = roasters.getRoaster("sandbox-light").getOrThrow()
+        assertNull(partial.contact?.instagramLink); assertEquals("https://light.sandbox.invalid", partial.contact?.siteLink)
+        assertNull(partial.location); assertTrue(partial.photos.isEmpty())
+        val bare = roasters.getRoaster("sandbox-decaf").getOrThrow()
+        assertNull(bare.about); assertNull(bare.contact); assertTrue(bare.shops.isEmpty())
+        assertTrue(roasters.getRoaster("missing").isFailure)
+        backend.reset(false)
+        assertTrue(roasters.getRoaster("sandbox-roaster").isFailure)
     } }
 
     @Test fun favoritesMutationsRoundTripThroughActualApiAndRemainLocal() = runTest { fixture { _, client ->
@@ -99,12 +160,21 @@ class SandboxApplicationBackendTest {
         }
     } }
 
-    @Test fun actualCoffeeRepositoryUsesOfflineSearchAndDetailContracts() = runTest { fixture { _, client ->
+    @Test fun actualCoffeeRepositoryUsesOfflineSearchFiltersOffersAndDetailContracts() = runTest { fixture { _, client ->
         val coffee = CoffeeRepositoryImpl(client.plainClient)
-        assertEquals("Sandbox Ethiopia", coffee.search("", CoffeeFilters(), 1).getOrThrow().items.single().name)
+        assertEquals(listOf("Sandbox Ethiopia", "Sandbox Kenya", "Sandbox Brazil"), coffee.search("", CoffeeFilters(), 1).getOrThrow().items.map { it.name })
+        assertEquals(listOf("Sandbox Kenya"), coffee.search("ken", CoffeeFilters(), 1).getOrThrow().items.map { it.name })
         assertTrue(coffee.search("not-present", CoffeeFilters(), 1).getOrThrow().items.isEmpty())
-        assertEquals("sandbox-ethiopia", coffee.getDetails("sandbox-ethiopia").getOrThrow().coffee.slug)
-        assertTrue(coffee.getFilterGroups().getOrThrow().isEmpty())
+        val fruity = coffee.search("", CoffeeFilters(mapOf("taste" to setOf("fruity"))), 1).getOrThrow().items.map { it.slug }
+        assertEquals(listOf("sandbox-ethiopia", "sandbox-kenya"), fruity)
+        assertEquals(listOf("sandbox-brazil"), coffee.search("", CoffeeFilters(mapOf("roast" to setOf("medium"))), 1).getOrThrow().items.map { it.slug })
+        assertEquals(listOf("sandbox-ethiopia", "sandbox-brazil"), coffee.search("", CoffeeFilters(availableOnly = true), 1).getOrThrow().items.map { it.slug })
+        val details = coffee.getDetails("sandbox-ethiopia").getOrThrow()
+        assertEquals("sandbox-ethiopia", details.coffee.slug)
+        assertEquals(2, details.coffee.offers.size)
+        assertTrue(details.coffee.offers.all { it.sourceUrl != null })
+        assertEquals(setOf("taste", "roast"), coffee.getFilterGroups().getOrThrow().map { it.code }.toSet())
+        assertTrue(coffee.getDetails("missing").isFailure)
     } }
 
     @Test fun nearbyDiscoveryUsesRealSearchPayloadAndSharedFavoriteFlags() = runTest { fixture { _, client ->
@@ -120,7 +190,7 @@ class SandboxApplicationBackendTest {
     @Test fun actualMigratedShopWriteUpdatesHistoryButNeverPublishesPrivateOrPendingRows() = runTest { fixture { _, client ->
         val writer = createShopCheckInRepository(client.client, client.uploadClient)
         val feed = FeedApiService(client.client)
-        assertEquals(1, feed.getFeed(20).getOrThrow().items.size)
+        assertEquals(2, feed.getFeed(20).getOrThrow().items.size)
         val input = ShopCheckInCreateInput("sandbox-cafe", "Only local", ShopRating(4, 5, 4), "2026-10-18T09:00:00Z",
             photos = listOf(ShopCheckInPhoto(byteArrayOf(9, 8), "sandbox.png", "image/png")))
         writer.create(input).getOrThrow()
@@ -129,7 +199,7 @@ class SandboxApplicationBackendTest {
         assertEquals("Only local", visits.last().text)
         assertTrue(visits.last().photos.single().url.startsWith("/media/"))
         writer.create(input.copy(visibility = ShopCheckInVisibility.Public)).getOrThrow()
-        assertEquals(1, feed.getFeed(20).getOrThrow().items.size)
+        assertEquals(2, feed.getFeed(20).getOrThrow().items.size)
     } }
 
     @Test fun writeErrorScenarioDoesNotChangeProfileFavoritesOrVisits() = runTest { fixture { backend, client ->
@@ -148,7 +218,7 @@ class SandboxApplicationBackendTest {
         assertEquals(CheckInHelpfulDto(true, 1), api.setHelpful(id, true).getOrThrow())
         assertEquals(ShopHelpfulVote(true, 1), votes.setHelpful(id, true).getOrThrow())
         val details = createShopDetailsRepository(client.client, SandboxBackend.BASE_URL) { 0 }
-            .getDetails("sandbox-cafe").getOrThrow().checkIns.single()
+            .getDetails("sandbox-cafe").getOrThrow().checkIns.first { it.id == id }
         assertTrue(details.isHelpfulByCurrentUser)
         assertEquals(1, details.helpfulCount)
         assertEquals(ShopHelpfulVote(false, 0), votes.setHelpful(id, false).getOrThrow())
@@ -175,18 +245,36 @@ class SandboxApplicationBackendTest {
 
     @Test fun publicShopRowsExcludePrivateAndPendingVisitsWhileHistoryRetainsThem() = runTest { fixture { _, client ->
         val api = CheckInApiService(client.client)
-        val publishedId = api.getMyCheckIns(1, 20).getOrThrow().items.single().id
+        val shops = createShopDetailsRepository(client.client, SandboxBackend.BASE_URL) { 0 }
+        val published = shops.getDetails("sandbox-cafe").getOrThrow().checkIns.map { it.id }
         val writer = createShopCheckInRepository(client.client, client.uploadClient)
         val input = ShopCheckInCreateInput("sandbox-cafe", "Private visit", ShopRating(4, 5, 4), "2026-10-18T09:00:00Z")
         writer.create(input).getOrThrow()
         writer.create(input.copy(text = "Pending visit", visibility = ShopCheckInVisibility.Public)).getOrThrow()
-        val details = createShopDetailsRepository(client.client, SandboxBackend.BASE_URL) { 0 }
-            .getDetails("sandbox-cafe").getOrThrow()
-        assertEquals(listOf(publishedId), details.checkIns.map { it.id })
-        assertEquals(1, details.overview.reviewCount)
+        val details = shops.getDetails("sandbox-cafe").getOrThrow()
+        assertEquals(published, details.checkIns.map { it.id })
+        assertEquals(published.size, details.overview.reviewCount)
         assertEquals(3, details.userCheckIns.size)
         assertEquals(3, api.getMyCheckIns(1, 20).getOrThrow().items.size)
-        assertEquals(1, FeedApiService(client.client).getFeed(20).getOrThrow().items.size)
+        assertEquals(published.size, FeedApiService(client.client).getFeed(20).getOrThrow().items.size)
+    } }
+
+    @Test fun anotherAuthorsVotesPreserveExistingCountAndBlockVisibility() = runTest { fixture { _, client ->
+        val id = SandboxApplicationBackend.FRIEND_VISIT_ID
+        val votes = createShopCheckInVoteRepository(client.client)
+        assertEquals(ShopHelpfulVote(true, 3), votes.setHelpful(id, true).getOrThrow())
+        assertEquals(ShopHelpfulVote(true, 3), votes.setHelpful(id, true).getOrThrow())
+        val shops = createShopDetailsRepository(client.client, SandboxBackend.BASE_URL) { 0 }
+        val row = shops.getDetails("sandbox-cafe").getOrThrow().checkIns.first { it.id == id }
+        assertTrue(row.isHelpfulByCurrentUser)
+        assertEquals(3, row.helpfulCount)
+        assertEquals(ShopHelpfulVote(false, 2), votes.setHelpful(id, false).getOrThrow())
+        client.client.put("/api/v1/me/blocks/$friend")
+        assertTrue(votes.setHelpful(id, true).isFailure)
+        client.client.delete("/api/v1/me/blocks/$friend")
+        val restored = shops.getDetails("sandbox-cafe").getOrThrow().checkIns.first { it.id == id }
+        assertFalse(restored.isHelpfulByCurrentUser)
+        assertEquals(2, restored.helpfulCount)
     } }
 
     @Test fun unimplementedMutationsAreRejectedAndEmptyStateIsSharedAcrossSources() = runTest { fixture { backend, client ->
@@ -201,5 +289,84 @@ class SandboxApplicationBackendTest {
         assertTrue(ShopApiService(client.client).searchShops().getOrThrow().coffeeShops.isEmpty())
         assertTrue(FeedApiService(client.client).getFeed(20).getOrThrow().items.isEmpty())
         assertTrue(FavoritesApiService(client.client).getFavorites().getOrThrow().isEmpty())
+    } }
+
+    private val friend = SandboxApplicationBackend.FRIEND_ID
+    private val friendPhoto = "/api/v1/check-ins/${SandboxApplicationBackend.FRIEND_VISIT_ID}/photos/${SandboxApplicationBackend.FRIEND_PHOTO_ID}/variants/feed/1/feed.png"
+    private suspend fun json(response: io.ktor.client.statement.HttpResponse) = Json.parseToJsonElement(response.bodyAsText()).jsonObject["data"]!!.jsonObject
+
+    @Test fun blockContractIsIdempotentPagedAndRejectsSelfAndUnknownAuthors() = runTest { fixture { _, client ->
+        assertTrue(json(client.client.get("/api/v1/me/blocks") { parameter("pageSize", 100) })["items"]!!.jsonArray.isEmpty())
+        repeat(2) { // idempotent
+            val state = json(client.client.put("/api/v1/me/blocks/$friend"))
+            assertEquals(friend, state["authorId"]!!.jsonPrimitive.content); assertTrue(state["isBlocked"]!!.jsonPrimitive.boolean)
+        }
+        val page = json(client.client.get("/api/v1/me/blocks") { parameter("pageSize", 1) })
+        assertEquals(friend, page["items"]!!.jsonArray.single().jsonObject["authorId"]!!.jsonPrimitive.content)
+        assertTrue(page["nextCursor"] is JsonNull)
+        assertEquals(HttpStatusCode.BadRequest, client.client.put("/api/v1/me/blocks/${SandboxApplicationBackend.SELF_ID}").status)
+        assertEquals(HttpStatusCode.NotFound, client.client.put("/api/v1/me/blocks/unknown").status)
+        repeat(2) { assertFalse(json(client.client.delete("/api/v1/me/blocks/$friend"))["isBlocked"]!!.jsonPrimitive.boolean) }
+        assertTrue(json(client.client.get("/api/v1/me/blocks") { parameter("pageSize", 100) })["items"]!!.jsonArray.isEmpty())
+    } }
+
+    @Test fun blockingHidesVisitsFromFeedAndShopButKeepsServerAggregatesAndUnblockRestores() = runTest { fixture { _, client ->
+        val feed = FeedApiService(client.client)
+        suspend fun cards() = json(client.client.get("/api/coffeeshops/sandbox-cafe"))["checkIns"]!!.jsonArray.size
+        assertEquals(2, feed.getFeed(20).getOrThrow().items.size); assertEquals(2, cards())
+        val count = json(client.client.get("/api/coffeeshops/sandbox-cafe"))["checkInCount"]
+        client.client.put("/api/v1/me/blocks/$friend")
+        assertEquals(1, feed.getFeed(20).getOrThrow().items.size); assertEquals(1, cards())
+        assertEquals(count, json(client.client.get("/api/coffeeshops/sandbox-cafe"))["checkInCount"])
+        assertEquals(1, json(client.client.get("/api/coffeeshops/sandbox-cafe"))["userCheckIns"]!!.jsonArray.size)
+        assertTrue(json(client.client.get("/api/Users/${SandboxApplicationBackend.FRIEND_SLUG}"))["isBlockedByViewer"]!!.jsonPrimitive.boolean)
+        client.client.delete("/api/v1/me/blocks/$friend")
+        assertEquals(2, feed.getFeed(20).getOrThrow().items.size); assertEquals(2, cards())
+    } }
+
+    @Test fun slugResolvesToOpaqueAuthorIdForLegacyContent() = runTest { fixture { _, client ->
+        val profile = json(client.client.get("/api/Users/${SandboxApplicationBackend.FRIEND_SLUG}"))
+        assertEquals(friend, profile["authorId"]!!.jsonPrimitive.content)
+        assertFalse(profile["isBlockedByViewer"]!!.jsonPrimitive.boolean)
+    } }
+
+    @Test fun protectedPhotoRevalidatesAndDisappearsWhileAuthorIsBlocked() = runTest { fixture { backend, client ->
+        val first = client.imageClient.get("${SandboxBackend.BASE_URL}$friendPhoto")
+        assertEquals(HttpStatusCode.OK, first.status)
+        assertEquals("image/png", first.headers[HttpHeaders.ContentType])
+        val etag = assertNotNull(first.headers[HttpHeaders.ETag])
+        assertEquals(HttpStatusCode.NotModified, client.imageClient.get("${SandboxBackend.BASE_URL}$friendPhoto") {
+            expectSuccess = false; header(HttpHeaders.IfNoneMatch, etag) }.status)
+        client.client.put("/api/v1/me/blocks/$friend")
+        // Even a valid validator must not reveal a blocked author's media.
+        assertEquals(HttpStatusCode.NotFound, client.imageClient.get("${SandboxBackend.BASE_URL}$friendPhoto") {
+            expectSuccess = false; header(HttpHeaders.IfNoneMatch, etag) }.status)
+        client.client.delete("/api/v1/me/blocks/$friend")
+        assertEquals(HttpStatusCode.OK, client.imageClient.get("${SandboxBackend.BASE_URL}$friendPhoto") { expectSuccess = false }.status)
+        assertEquals(HttpStatusCode.NotFound, client.imageClient.get("${SandboxBackend.BASE_URL}/api/v1/check-ins/missing/photos/x") { expectSuccess = false }.status)
+        backend.scenario = SandboxScenario.ServerError
+        // The shared transport maps 5xx to its own service error instead of returning bytes.
+        assertFailsWith<com.coffeepeek.api.utils.ApiException> { client.imageClient.get("${SandboxBackend.BASE_URL}$friendPhoto") }
+    } }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    @Test fun actualAuthorBlockingFeatureBlocksThroughFakeTransportAndFailureLeavesVisibilityUnchanged() = runTest { fixture { backend, client ->
+        Dispatchers.setMain(UnconfinedTestDispatcher())
+        val feature = createAuthorBlockingFeature(client.client, LocalSession())
+        try {
+            val author = AuthorReference(friend, SandboxApplicationBackend.FRIEND_SLUG, SandboxApplicationBackend.FRIEND_NAME)
+            withContext(Dispatchers.Default) { withTimeout(10_000) {
+                feature.visibility.visibility.first { it.ready }
+                backend.scenario = SandboxScenario.SaveError
+                feature.presenter.requestBlock(author); feature.presenter.confirm()
+                feature.presenter.prompt.first { it?.error != null }
+                assertTrue(feature.visibility.visibility.value.blockedIds.isEmpty())
+                feature.presenter.dismiss()
+                backend.scenario = SandboxScenario.Ready
+                feature.presenter.requestBlock(author); feature.presenter.confirm()
+                feature.visibility.visibility.first { friend in it.blockedIds }
+                feature.presenter.blocks.first { state -> state.items.any { it.id == friend } }
+            } }
+        } finally { feature.close(); Dispatchers.resetMain() }
     } }
 }

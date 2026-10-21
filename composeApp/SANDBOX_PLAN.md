@@ -1,5 +1,44 @@
 # Application-wide offline Sandbox checkpoint
 
+## Coffee catalogue fixtures — 2026-10-20
+
+Fake backend now has three coffees, taste/roast filter groups, offers with availability and
+query/filter/available-only search; unit tests cover each filter and detail offers. App Direct+Play
+unit suites pass (1088, 0 failures) and Direct Sandbox assembles. The updated package was installed
+over the Sandbox on the Pixel 7 and walked through on 2026-10-20 (Sandbox 1.0.746+, ordinary app
+untouched): the filter sheet lists taste/roast groups; Nutty -> Brazil only; Light roast -> Ethiopia + Kenya;
+Light + "available only" -> Ethiopia only; filter badge counts 1/2; cards show country, taste chips, price and
+weight selector; detail shows two offers (in stock / pre-order) with seller details and checked-at date;
+the seller button shows the Sandbox external-app block; "similar coffees" shows Kenya, opening it shows its
+roast/taste traits, and Back returns to Ethiopia at the same scroll position. No crash from this package in
+the run. The USB link dropped several times (the phone also appears over Wi-Fi and a second phone is on the
+network), so commands used an explicit serial. Not covered: large font, light theme for these new screens,
+pagination, error/slow modes for Coffee. First fixture pass showed the same country/raw `fruity` descriptor on
+every coffee; fixed (per-coffee country and Russian descriptors) and covered by unit tests, not re-photographed.
+
+### Coffee error-mode follow-up — 2026-10-20
+
+With the Sandbox handle set to "no network", opening the Coffee tab after a cold start shows the
+list error state ("Не удалось загрузить кофе" + "Попробовать снова"), and the Discovery tab shows its
+own error state. **Not confirmed:** that "Попробовать снова" recovers after switching back to normal mode
+(my follow-up taps landed on other screens, so this stays an open check), light theme for the new
+filter/detail screens, large font on device (covered only by the earlier instrumented 1.0/1.5 scale
+tests; the device font setting was not changed), pagination, and the block UI walkthrough. The
+Sandbox process was force-stopped afterwards, which resets scenario and fixtures.
+
+## Author-blocking and protected-photo fixtures — 2026-10-19
+
+Full-app fake backend now serves `/api/v1/me/blocks` (list/PUT/DELETE), a second
+synthetic author with a public visit, visibility filtering of feed/Shop cards and a
+protected check-in photo route (ETag/304, 404 while blocked). Existing feed
+expectations went from one to two public entries because of the new author; history
+and calendar stay own-only. New tests use the actual `FeedApiService`, shared client
+transports and the real `createAuthorBlockingFeature` presenter: contract/idempotency,
+filtering plus unchanged aggregates, slug→authorId, photo revalidation/revocation,
+write-error leaving visibility unchanged. Verification: app Direct+Play unit suites
+(1078 results, 0 failures) and Direct Sandbox assembly. **Not done:** manual device
+walkthrough of the block UI, incoming/two-way blocks, guest/login behaviour with
+blocks, live backend.
 ## Firebase integration isolation — 2026-10-21
 
 After inheriting develop's Firebase Messaging integration, Sandbox assembly
@@ -32,6 +71,13 @@ checks; both Sandbox manifests pass isolation checks (55s). Logs are local under
 `build/reports/sandbox-fixes/`; no automated UI suite or device installation ran.
 Production ports, permissions, account data and iOS sources are unchanged.
 
+Coffee descendant integration retains its additional author/blocking fixtures:
+votes persist in the owning author's collection, blocked authors cannot be voted
+on, and public counts remain independent of block filtering. The regression also
+covers the friend's existing count (2 -> 3 -> 2). App Direct passes 557 unit
+results, including 18 Sandbox application cases; Direct Debug/Sandbox APKs and
+DEX/isolation guards pass (3m56s). Log: `build/reports/sandbox-fixes/coffee-validation.log`.
+
 ## Develop baseline reconciliation — 2026-10-19
 
 Inherit Home `c165d8fc`, main `dfb00e63` and approved develop `fc85f8e5`.
@@ -58,6 +104,19 @@ does not repeat or extend the historical manual full-app acceptance below.
 Date: 2026-10-18. Branch `feature/sandbox-application`, child of Home checkpoint
 1873b05 / PR #99. The Home PR remains focused; the application-wide host has its
 own review boundary. No main/develop merge or new Gradle business module.
+
+## Main synchronization follow-up — 2026-10-19
+
+Main 28917758 was propagated through the migration stack, preserving analytics-off
+Sandbox composition. Its new uncached image client now uses the injected API
+transport factory as well: API, plain, upload and image clients must all be
+MockEngine-backed here. The existing transport regression checks all four engines
+and reads the synthetic image through the image client. Manifest/DEX isolation
+still applies. No real app installation, device check or network acceptance is
+implied by assembly. Incoming author-blocking flows and protected-photo lifecycle
+scenarios need explicit fake fixtures/acceptance; unsupported routes still fail
+closed, never fall through to a server. Earlier walkthrough evidence remains
+dated to its recorded build, not proof of all new-main flows.
 
 ## Plan and ownership
 
