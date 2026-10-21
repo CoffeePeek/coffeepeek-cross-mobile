@@ -68,7 +68,7 @@ final class PushAppDelegate: NSObject, UIApplicationDelegate, UNUserNotification
                     changeAccount: { [weak self] user in
                         DispatchQueue.main.async { self?.changeAccount(user) }
                         return KotlinUnit()
-                    })
+                    }, requestPermissionFromSettings: { [weak self] in self?.requestPermissionFromSettings(); return KotlinUnit() })
             }
         }
         NotificationCenter.default.addObserver(self, selector: #selector(foreground), name: UIApplication.didBecomeActiveNotification, object: nil)
@@ -79,6 +79,22 @@ final class PushAppDelegate: NSObject, UIApplicationDelegate, UNUserNotification
         UNUserNotificationCenter.current().getNotificationSettings { settings in
             if settings.authorizationStatus == .notDetermined {
                 UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound, .badge]) { _, _ in self.foreground() }
+            }
+        }
+    }
+
+    private func requestPermissionFromSettings() {
+        UNUserNotificationCenter.current().getNotificationSettings { settings in
+            if settings.authorizationStatus == .notDetermined {
+                self.requestPermission()
+            } else if settings.authorizationStatus == .denied {
+                DispatchQueue.main.async {
+                    if let url = URL(string: UIApplication.openSettingsURLString) {
+                        UIApplication.shared.open(url)
+                    }
+                }
+            } else {
+                self.foreground()
             }
         }
     }
@@ -129,7 +145,11 @@ final class PushAppDelegate: NSObject, UIApplicationDelegate, UNUserNotification
     func messaging(_ messaging: Messaging, didReceiveRegistrationToken fcmToken: String?) { DispatchQueue.main.async { self.fetchToken() } }
     func userNotificationCenter(_ center: UNUserNotificationCenter, willPresent notification: UNNotification, withCompletionHandler completion: @escaping (UNNotificationPresentationOptions) -> Void) {
         let recipient = notification.request.content.userInfo["userId"] as? String
-        completion(NativePushBridge.shared.accepts(userId: recipient) ? [.banner, .list, .sound] : [])
+        let accepted = NativePushBridge.shared.accepts(userId: recipient)
+        if accepted {
+            DispatchQueue.main.async { NativePushBridge.shared.notificationReceived(userId: recipient) }
+        }
+        completion(accepted ? [.banner, .list, .sound] : [])
     }
 }
 #endif

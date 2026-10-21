@@ -45,6 +45,21 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+        com.coffeepeek.admin.notifications.AndroidPush.requestPermissionFromSettings = {
+            runOnUiThread {
+                if (isFinishing || isDestroyed) return@runOnUiThread
+                if (android.os.Build.VERSION.SDK_INT >= 33 &&
+                    !getSharedPreferences("push_device", Context.MODE_PRIVATE).getBoolean("asked", false) &&
+                    checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS) != android.content.pm.PackageManager.PERMISSION_GRANTED) {
+                    com.coffeepeek.admin.notifications.AndroidPush.requestPermission()
+                } else if (!com.coffeepeek.admin.notifications.AndroidPush.permitted()) {
+                    val settings = if (android.os.Build.VERSION.SDK_INT >= 26)
+                        Intent(android.provider.Settings.ACTION_APP_NOTIFICATION_SETTINGS).putExtra(android.provider.Settings.EXTRA_APP_PACKAGE, packageName)
+                    else Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS, android.net.Uri.parse("package:$packageName"))
+                    startActivity(settings)
+                }
+            }
+        }
         if (savedInstanceState == null) handleAppLink(intent)
         setContent {
             App(onReady = { isAppReady.set(true) })
@@ -58,6 +73,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onDestroy() {
         com.coffeepeek.admin.notifications.AndroidPush.requestPermission = {}
+        com.coffeepeek.admin.notifications.AndroidPush.requestPermissionFromSettings = {}
         _context = null
         super.onDestroy()
     }
