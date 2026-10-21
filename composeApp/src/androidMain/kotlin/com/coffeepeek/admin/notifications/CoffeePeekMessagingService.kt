@@ -14,6 +14,7 @@ class CoffeePeekMessagingService : FirebaseMessagingService() {
 
     override fun onMessageReceived(message: RemoteMessage) {
         if (!NativePushBridge.accepts(message.data["userId"]) || !AndroidPush.permitted()) return
+        NativePushBridge.notificationReceived(message.data["userId"])
         val notice = message.notification ?: return
         val id = message.data["notificationId"] ?: message.messageId ?: return
         val intent = Intent(this, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
