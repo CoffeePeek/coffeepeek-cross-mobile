@@ -68,6 +68,6 @@ internal fun initAndroidKoin(extraModules: List<org.koin.core.module.Module> = e
         publicProfileRendererFactory = { androidPublicProfileScreenRenderer(get(), get(), get(), get(), get()) },
         ownProfileRendererFactory = { androidOwnProfileScreenRenderer(get(), get(), get(), get(), get(), get(), get()) },
         accountRendererFactory = { androidAccountScreenRenderer(get(), get()) },
-        settingsRendererFactory = { androidSettingsScreenRenderer(get(), get()) },
+        settingsRendererFactory = { androidSettingsScreenRenderer(get(), get(), get(), get()) },
     )
 }

@@ -242,3 +242,20 @@ These move into `SettingsViewModel`/`UsageConsentPort` at steps 3–4, where the
   Font scale and theme were restored afterwards.
 - **Not checked**: the consent switch (Sandbox runs with analytics disabled, so the row is hidden; only the unit tests cover it), tapping the terms/privacy cards (Sandbox blocks external apps), retry succeeding after a failure,
   rotation, the City screen at font scale 1.5, TalkBack.
+
+## Step 4 result — the Settings tab in `feature/settings/impl` (2026-10-21)
+
+- **api**: `SettingsEntry` (callbacks for add shop/roaster, blocked authors, city, theme, usage policy, login, register; `bottomClearance`), `SettingsSlots(guestCard)` (the app keeps `GuestAuthCard`).
+- **impl**: `SettingsViewModel` (signed-in flag, theme, selected city name, update row; it loads the city catalog on creation like the legacy singleton did — that also resolves the saved city — and loads it again when
+  the selection names a city it does not know yet) and `SettingsScreen` on the design-system settings list. Row rules are state: guest card for guests, blocked-authors row only signed in, add-shop/roaster rows for
+  everyone (decision 2), city trailing «Выберите» until the name is known, update row with the checking spinner / message / «Доступна новая версия CoffeePeek» / version, the version footer too (decision 6), the App Store wording
+  verbatim (decision 5). 6 new tests (module total 17).
+- **Design system**: `CoffeePeekSettingsSection` now upper-cases its title like the legacy `SettingsSection` (found on the device: the first build showed «Добавить», production shows «ДОБАВИТЬ»); it had no other consumer.
+- **App**: `SettingsScreenRenderer.Tab()` (Legacy default, iOS keeps `SettingsScreen` via its native shell), `MainScreen` composes the renderer, Android entry wired with the navigation callbacks, `LocalFloatingNavClearance`, `AppConfig.versionName`
+  and the Koin singletons (`ShopRepository`, `CityPreference`, `SessionRepository`, `AppUpdateState`). On Android the legacy `ProfileViewModel` singleton is no longer created by any screen (the Profile tab left it in step 5, Settings now), so its
+  startup work (session observer, city catalog) happens in `SettingsViewModel` instead; Feed and Map still resolve the city themselves. It remains for the iOS/shared Profile tab (decision 7).
+- **Checks**: `:feature:settings:impl:testDebugUnitTest` (17), `compileDirectDebugKotlinAndroid`, `compileKotlinIosSimulatorArm64` (impl, composeApp), `assembleDirectSandbox` green.
+- **Pixel 7 Sandbox check**: signed-in tab (all sections, theme «Авто», city value follows the selection: «Брест» after the city screen, «Минск» fresh), the update row with the `Available` policy → «Доступна новая версия CoffeePeek» and with `UpToDate`
+  → «Установлена актуальная версия», guest mode (card «Присоединяйтесь…» with «Войти»/«Зарегистрироваться», no blocked-authors row, no Profile tab) and «Войти» opening the login screen, section titles upper-cased, bottom clearance above the floating bar.
+- **Not checked**: the checking spinner state (the Sandbox answers instantly), the update row for `Required`/`Failure`, «Зарегистрироваться» and the add-shop/roaster rows' targets, support/share (Sandbox blocks external apps), large font and rotation on the tab, TalkBack,
+  the blocked-authors row target (author-blocking owner).

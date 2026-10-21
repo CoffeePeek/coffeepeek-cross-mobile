@@ -45,7 +45,7 @@ fun CoffeePeekSettingsSection(
 ) {
     Column(modifier = modifier.padding(horizontal = CoffeePeekDimens.settingsPagePadding)) {
         Text(
-            text = title,
+            text = title.uppercase(),
             style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             letterSpacing = TextUnit(0.08f, TextUnitType.Em),
