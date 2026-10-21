@@ -13,7 +13,10 @@ plugins {
     alias(libs.plugins.composeMultiplatform)
     alias(libs.plugins.composeCompiler)
     alias(libs.plugins.kotlin.serialization)
+    id("com.google.gms.google-services") version "4.5.0" apply false
 }
+
+if (file("google-services.json").isFile) apply(plugin = "com.google.gms.google-services")
 
 kotlin {
     androidTarget {
@@ -68,6 +71,8 @@ kotlin {
             implementation("com.google.android.gms:play-services-auth:21.3.0")
             // Match Espresso's annotations under Android's consistent runtime/test resolution.
             implementation(libs.errorprone.annotations)
+            implementation(project.dependencies.platform("com.google.firebase:firebase-bom:35.0.2"))
+            implementation("com.google.firebase:firebase-messaging")
             implementation("com.microsoft.signalr:signalr:10.0.9")
             implementation("org.slf4j:slf4j-nop:2.0.16")
         }
@@ -98,6 +103,7 @@ kotlin {
             implementation(project(module.feature.appUpdate.impl))
             implementation(project(module.feature.authorBlocking.api))
             implementation(project(module.feature.authorBlocking.impl))
+            implementation(project(module.feature.notifications))
             implementation(compose.runtime)
             implementation(compose.foundation)
             implementation(compose.material3)
@@ -150,7 +156,7 @@ val gitCommitCount: Provider<Int> = providers.exec {
 }.standardOutput.asText.map { it.trim().toIntOrNull() ?: 1 }
 
 val appVersionCode: Provider<Int> = gitCommitCount
-val appVersionName: Provider<String> = gitCommitCount.map { "1.0.$it" }
+val appVersionName: Provider<String> = gitCommitCount.map { "1.1.$it" }
 
 tasks.register<PrintValueTask>("printVersionName") {
     group = "versioning"
@@ -186,7 +192,7 @@ val googleWebClientId: String = run {
     }
 }
 
-val apiBaseUrl: String = run {
+val apiBaseUrl: String = providers.gradleProperty("apiBaseUrl").orNull ?: run {
     val localPropertiesFile = rootProject.file("local.properties")
     if (localPropertiesFile.exists()) {
         val props = Properties()
@@ -216,6 +222,9 @@ android {
 
     buildFeatures {
         buildConfig = true
+    }
+    if (providers.gradleProperty("pushTestApp").orNull == "true") {
+        buildTypes.getByName("debug") { applicationIdSuffix = ".pushdebug" }
     }
 
     defaultConfig {
@@ -301,6 +310,8 @@ kotlin.sourceSets {
 
 // Reuse the app graph with isolated ports, never the production Application/services.
 androidComponents.onVariants(androidComponents.selector().withBuildType("sandbox")) { variant ->
+    tasks.matching { it.name == "process${variant.name.replaceFirstChar { it.uppercaseChar() }}GoogleServices" }
+        .configureEach { enabled = false }
     val runtimeVerification = tasks.register<VerifyApkRuntimeClassesTask>("verify${variant.name.replaceFirstChar { it.uppercaseChar() }}RuntimeClasses") {
         apkDirectory.set(variant.artifacts.get(SingleArtifact.APK))
         requiredClasses.set(listOf("com.coffeepeek.admin.sandbox.SandboxActivity",
@@ -316,6 +327,8 @@ androidComponents.onVariants(androidComponents.selector().withBuildType("sandbox
             check("android.permission.INTERNET" !in xml) { "Sandbox must not have network permission" }
             check("com.coffeepeek.admin.MainActivity" !in xml) { "Sandbox must not launch the production root" }
             check("com.coffeepeek.admin.CoffeePeekApplication" !in xml) { "Sandbox must not start production DI/services" }
+            check("com.google.firebase.provider.FirebaseInitProvider" !in xml) { "Sandbox must not initialize Firebase" }
+            check("com.coffeepeek.admin.notifications.CoffeePeekMessagingService" !in xml) { "Sandbox must not start production push" }
             check("com.coffeepeek.admin.sandbox.SandboxActivity" in xml) { "Missing Sandbox entry" }
             check("com.coffeepeek.admin.sandbox.SandboxApplication" in xml) { "Missing isolated Sandbox bootstrap" }
         }
