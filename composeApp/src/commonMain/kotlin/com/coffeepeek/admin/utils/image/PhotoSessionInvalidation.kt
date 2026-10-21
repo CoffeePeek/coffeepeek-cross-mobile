@@ -26,7 +26,10 @@ internal fun installPhotoSessionInvalidation(
     client.requestPipeline.intercept(HttpRequestPipeline.State) {
         val method = context.method.value
         val path = context.url.build().encodedPath.lowercase()
-        val affectsPhotos = method in setOf("POST", "PUT", "PATCH", "DELETE") && (
+        // Votes change counters without changing access to the check-in's photos.
+        val isHelpfulVote = method in setOf("PUT", "DELETE") &&
+            Regex("/api/v1/check-ins/[^/]+/helpful/?").matches(path)
+        val affectsPhotos = !isHelpfulVote && method in setOf("POST", "PUT", "PATCH", "DELETE") && (
             "/check-ins" in path || "/home-check-ins" in path || "/me/blocks" in path ||
                 path.trimEnd('/') == "/api/users/me"
             )
