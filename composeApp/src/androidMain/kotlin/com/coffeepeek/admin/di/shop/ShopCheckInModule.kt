@@ -2,6 +2,7 @@ package com.coffeepeek.admin.di.shop
 
 import com.coffeepeek.admin.ui.screen.shop.CheckInDraftStore
 import com.coffeepeek.api.CoffeePeekClient
+import com.coffeepeek.feature.notifications.api.NotificationFeature
 import com.coffeepeek.feature.shop.api.ShopCheckInCreateEntry
 import com.coffeepeek.feature.shop.data.repository.createShopCheckInRepository
 import com.coffeepeek.feature.shop.domain.repository.ShopCheckInRepository
@@ -20,6 +21,6 @@ internal fun shopCheckInModule() = module {
     }
     single<ShopCheckInCreateEntry> {
         AndroidSessionShopCheckInEntry(sessions = get(), repository = get(), drafts = get(), dates = get(),
-            photos = get())
+            photos = get(), onCheckInCreated = { get<NotificationFeature>().onCheckInCreated() })
     }
 }

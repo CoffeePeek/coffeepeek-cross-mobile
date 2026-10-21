@@ -1,3 +1,4 @@
 #include "Shared.xcconfig"
 COFFEEPEEK_DEBUG = NO
 SWIFT_COMPILATION_MODE = wholemodule
+APS_ENVIRONMENT = production
