@@ -1,6 +1,10 @@
 package com.coffeepeek.feature.homecheckin.impl.ui
 
 import androidx.lifecycle.ViewModelStore
+import androidx.lifecycle.ViewModelStoreOwner
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.viewmodel.initializer
+import androidx.lifecycle.viewmodel.viewModelFactory
 import com.coffeepeek.feature.homecheckin.domain.model.*
 import com.coffeepeek.feature.homecheckin.domain.repository.HomePreparationRepository
 import com.coffeepeek.feature.homecheckin.domain.usecase.homePreparationFieldErrors
@@ -82,6 +86,33 @@ class HomeCheckInEditorViewModelTest {
     ).also { store.put("editor-${key++}", it) }
 
     private fun HomeCheckInEditorViewModel.act(vararg actions: HomeCheckInEditorAction) { actions.forEach(::onAction) }
+
+    private fun retainedProvider(repo: Repository) = ViewModelProvider.create(
+        object : ViewModelStoreOwner { override val viewModelStore = store },
+        viewModelFactory { initializer {
+            HomeCheckInEditorViewModel(repo, Catalog(), "2026-10-17T09:30:00Z", "2026-10-17",
+                null, 7, { true }, { now })
+        } },
+    )
+
+    @Test fun reboundOwnerKeepsPrivateDraftAndPendingSaveWithoutAnotherWrite() = runTest(dispatcher) {
+        val repo = Repository().apply { saveGate = CompletableDeferred() }
+        val first = retainedProvider(repo)[HomeCheckInEditorViewModel::class]
+        runCurrent()
+        first.act(HomeCheckInEditorAction.NoteChanged("Keep note"),
+            HomeCheckInEditorAction.PhotosAdded(listOf(photo("original"))), HomeCheckInEditorAction.Save)
+        runCurrent()
+        val rebound = retainedProvider(repo)[HomeCheckInEditorViewModel::class]
+        assertSame(first, rebound)
+        assertTrue(rebound.state.value.isSaving)
+        assertEquals("Keep note", rebound.state.value.draft.text)
+        assertEquals("original", rebound.state.value.draft.photos.single().fileName)
+        rebound.onAction(HomeCheckInEditorAction.Save); runCurrent()
+        assertEquals(1, repo.creates.size)
+        repo.saveGate!!.complete(Unit); runCurrent()
+        assertEquals(HomeCheckInEditorEvent.Saved("home", false), rebound.events.first().event)
+        assertTrue(rebound.state.value.isClosed)
+    }
 
     @Test fun createStartsPrivateAtFiveWithoutLoadingHistoryOrDetail() = runTest(dispatcher) {
         val repo = Repository(); val catalog = Catalog(); val vm = model(repo, catalog)
