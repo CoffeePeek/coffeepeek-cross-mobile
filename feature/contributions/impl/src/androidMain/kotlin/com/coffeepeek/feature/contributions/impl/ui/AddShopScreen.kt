@@ -54,7 +54,9 @@ internal fun AddShopContent(state: AddShopState, host: AddShopHost, callbacks: A
     val submit = state.submit
     when {
         state.signedIn == null -> Box(modifier.fillMaxSize(), Alignment.Center) { CoffeePeekLoader(stringResource(R.string.contributions_loading)) }
-        state.signedIn == false -> SignInPrompt(callbacks, modifier)
+        state.signedIn == false -> FormSignInPrompt(
+            stringResource(R.string.contributions_shop_title), stringResource(R.string.contributions_shop_sign_in_prompt), callbacks.onBack, callbacks.onSignIn, modifier,
+        )
         submit == SubmitState.Done -> AddShopSuccess(state, host, callbacks.onBack, modifier)
         submit == SubmitState.Sending -> SubmissionStatusScreen(
             stringResource(R.string.contributions_shop_title), SubmissionStatus.Sending, stringResource(R.string.contributions_shop_sending_title),
@@ -62,21 +64,6 @@ internal fun AddShopContent(state: AddShopState, host: AddShopHost, callbacks: A
         )
         submit is SubmitState.Failed -> FailedScreen(submit, host, callbacks, onAction, modifier)
         else -> AddShopForm(state, host, callbacks, onAction, modifier)
-    }
-}
-
-@Composable
-private fun SignInPrompt(callbacks: AddShopCallbacks, modifier: Modifier) {
-    Scaffold(
-        modifier = modifier,
-        topBar = { CoffeePeekTopBar(stringResource(R.string.contributions_shop_title), stringResource(R.string.contributions_back), onBack = callbacks.onBack) },
-        containerColor = MaterialTheme.colorScheme.background,
-    ) { padding ->
-        Column(Modifier.fillMaxSize().padding(padding).padding(CoffeePeekDimens.spacing4), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
-            Text(stringResource(R.string.contributions_shop_sign_in_prompt), color = MaterialTheme.colorScheme.onSurfaceVariant)
-            Spacer(Modifier.height(CoffeePeekDimens.spacing3))
-            CoffeePeekButton(stringResource(R.string.contributions_sign_in), callbacks.onSignIn)
-        }
     }
 }
 

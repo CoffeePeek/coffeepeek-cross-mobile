@@ -165,4 +165,23 @@
     <string name="contributions_shop_success_description">Мы проверим информацию и опубликуем вашу кофейню в течение 24 часов.</string>
     <string name="contributions_shop_go_home">На главную</string>
     <string name="contributions_shop_fallback_name">Кофейня</string>
+    <string name="contributions_roaster_title">Добавить обжарщика</string>
+    <string name="contributions_roaster_sign_in_prompt">Войдите, чтобы добавить обжарщика</string>
+    <string name="contributions_roaster_name_label">Название обжарщика</string>
+    <string name="contributions_roaster_name_placeholder">Например, Sandbox Roasters</string>
+    <string name="contributions_roaster_about_label">Описание</string>
+    <string name="contributions_roaster_about_placeholder">Чем известен, какое зерно обжаривает</string>
+    <string name="contributions_roaster_location_hint">Город и адрес указываются вместе — или не указываются совсем.</string>
+    <string name="contributions_roaster_error_name_too_long">Не более %1$d символов</string>
+    <string name="contributions_roaster_photos_title">Фотографии</string>
+    <string name="contributions_roaster_photos_hint">До %1$d фотографий (необязательно)</string>
+    <string name="contributions_roaster_submit">Отправить на модерацию</string>
+    <string name="contributions_roaster_sending_title">Отправляем обжарщика…</string>
+    <string name="contributions_roaster_sending_description">Отправляем информацию и фотографии</string>
+    <string name="contributions_roaster_failed_title">Обжарщик не отправлен</string>
+    <string name="contributions_roaster_failed_default">Ошибка отправки. Попробуйте ещё раз.</string>
+    <string name="contributions_roaster_success_title">Обжарщик отправлен!</string>
+    <string name="contributions_roaster_success_description">Мы проверим информацию и опубликуем обжарщика в каталоге.</string>
+    <string name="contributions_roaster_address_unchecked">Адрес пока не подтверждён — модератор проверит его вручную.</string>
+    <string name="contributions_roaster_done">Готово</string>
 </resources>

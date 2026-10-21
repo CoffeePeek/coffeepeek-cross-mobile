@@ -3,6 +3,8 @@ package com.coffeepeek.feature.contributions.impl
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.coffeepeek.feature.contributions.api.AddRoasterEntry
+import com.coffeepeek.feature.contributions.api.AddRoasterHost
 import com.coffeepeek.feature.contributions.api.AddShopEntry
 import com.coffeepeek.feature.contributions.api.AddShopHost
 import com.coffeepeek.feature.contributions.api.ChangeRequestEntry
@@ -14,7 +16,10 @@ import com.coffeepeek.feature.contributions.api.ContributionsListEntry
 import com.coffeepeek.feature.contributions.domain.repository.ContributionsRepository
 import com.coffeepeek.feature.contributions.impl.list.ContributionsListViewModel
 import com.coffeepeek.feature.contributions.impl.request.ChangeRequestViewModel
+import com.coffeepeek.feature.contributions.impl.roaster.AddRoasterViewModel
 import com.coffeepeek.feature.contributions.impl.shop.AddShopViewModel
+import com.coffeepeek.feature.contributions.impl.ui.AddRoasterCallbacks
+import com.coffeepeek.feature.contributions.impl.ui.AddRoasterScreen
 import com.coffeepeek.feature.contributions.impl.ui.AddShopCallbacks
 import com.coffeepeek.feature.contributions.impl.ui.AddShopScreen
 import com.coffeepeek.feature.contributions.impl.ui.ChangeRequestScreen
@@ -64,6 +69,22 @@ fun createAddShopEntry(
         AddShopScreen(
             viewModel(key = "contributions-add-shop") { AddShopViewModel(repository, catalogs, location, account) },
             host, AddShopCallbacks(onBack, onSignIn, onAddRoaster), modifier,
+        )
+    }
+}
+
+/** «Добавить обжарщика». The ViewModel lives in the destination's store; the form starts empty for every account. */
+fun createAddRoasterEntry(
+    repository: ContributionsRepository,
+    catalogs: ContributionCatalogs,
+    account: ContributionsAccount,
+    host: AddRoasterHost,
+): AddRoasterEntry = object : AddRoasterEntry {
+    @Composable
+    override fun Content(onBack: () -> Unit, onSignIn: () -> Unit, modifier: Modifier) {
+        AddRoasterScreen(
+            viewModel(key = "contributions-add-roaster") { AddRoasterViewModel(repository, catalogs, account) },
+            host, AddRoasterCallbacks(onBack, onSignIn), modifier,
         )
     }
 }

@@ -3,6 +3,7 @@ package com.coffeepeek.feature.contributions.impl.ui
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -15,6 +16,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -25,9 +27,11 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import com.coffeepeek.core.designsystem.component.CoffeePeekButton
 import com.coffeepeek.core.designsystem.component.CoffeePeekCompactOutlinedTextField
 import com.coffeepeek.core.designsystem.component.CoffeePeekSelectField
 import com.coffeepeek.core.designsystem.component.CoffeePeekSelectOption
+import com.coffeepeek.core.designsystem.component.CoffeePeekTopBar
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.feature.contributions.domain.model.CatalogOption
 import com.coffeepeek.feature.contributions.domain.rules.ContactIssue
@@ -167,3 +171,22 @@ internal fun ContactIssue.message(): String = stringResource(
         ContactIssue.Instagram -> R.string.contributions_error_instagram
     },
 )
+
+/** What a form shows to a guest: the reason to sign in and the way to do it. */
+@Composable
+internal fun FormSignInPrompt(title: String, prompt: String, onBack: () -> Unit, onSignIn: () -> Unit, modifier: Modifier = Modifier) {
+    Scaffold(
+        modifier = modifier,
+        topBar = { CoffeePeekTopBar(title, stringResource(R.string.contributions_back), onBack = onBack) },
+        containerColor = MaterialTheme.colorScheme.background,
+    ) { padding ->
+        Column(
+            Modifier.fillMaxSize().padding(padding).padding(CoffeePeekDimens.spacing4),
+            horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center,
+        ) {
+            Text(prompt, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Spacer(Modifier.height(CoffeePeekDimens.spacing3))
+            CoffeePeekButton(stringResource(R.string.contributions_sign_in), onSignIn)
+        }
+    }
+}
