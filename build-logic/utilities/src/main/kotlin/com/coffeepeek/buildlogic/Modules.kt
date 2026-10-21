@@ -31,6 +31,7 @@ object Modules {
             const val api = ":feature:community:api"
             const val domain = ":feature:community:domain"
             const val data = ":feature:community:data"
+            const val impl = ":feature:community:impl"
         }
 
         val authorBlocking = AuthorBlocking
@@ -188,6 +189,7 @@ object Modules {
         feature.community.domain,
         feature.community.api,
         feature.community.data,
+        feature.community.impl,
         feature.authorBlocking.domain,
         feature.authorBlocking.api,
         feature.authorBlocking.data,
