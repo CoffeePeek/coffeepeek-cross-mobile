@@ -166,3 +166,10 @@ Still not covered by tests (UI only, to be covered by the migrated screen's test
 - **Audit**: nothing of the legacy feed is deleted. `CommunityScreen`, `CommunityViewModel`, `TimelineCheckInCard`, `EditCheckInSheet` stay for iOS and shared; `CheckInTimelineContent`/`CheckInActions` stay for the legacy public profile and review cards. Check-in repository methods used only by the feed (`getMyCheckIns(page)`, `updateCheckIn`, `setVisibility`, `setHelpful`, `report`) are still used by other legacy code paths until their owners move.
 - **Follow-up (owner request)**: the same photo-loader underlay should be applied to the other places that show photos (shop, profile, history, favorites cards); done for the feed first.
 
+## Step 5 device check (2026-10-21, Pixel 7, Sandbox, dark theme, feed fixture Paged)
+
+- **Passed**: like on another author's post (count 1 -> 2, filled heart; the own post shows no like action); card menu of another author's post («Заблокировать автора», «Пожаловаться»); report sheet opens above the keyboard and keeps the typed text; block confirmation dialog; blocking the blockable friend removes their posts from the feed; hiding an own post removes it from the public feed; creation sheet («В кофейне» / «Дома»); home editor opens and saves a private home check-in, the sheet closes and the list stays as it was.
+- **Sandbox limits seen, not app defects**: the report endpoint (`/reports`) is intentionally not served, so sending a report shows «Не удалось отправить жалобу» with the text kept (the error path); blocking works only for the friend author, a generated reader gets 404 and the dialog «Не удалось сохранить» with «Повторить».
+- **Publishing back** is reachable only from the personal timeline (`CommunityTimeline.Mine`), which no entry selects on Android (the legacy feed does not expose it either), so it was not checked.
+- **Still not checked**: shop check-in creation round trip, large font, light theme, TalkBack, slow-photo loader.
+
