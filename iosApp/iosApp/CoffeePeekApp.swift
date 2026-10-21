@@ -68,11 +68,10 @@ final class PushAppDelegate: NSObject, UIApplicationDelegate, UNUserNotification
             DispatchQueue.main.async {
                 NativePushBridge.shared.configure(installationId: installation, available: true,
                     permissionGranted: settings.authorizationStatus == .authorized || settings.authorizationStatus == .provisional,
-                    requestPermission: { [weak self] in self?.requestPermission(); return KotlinUnit() },
+                    requestPermission: { [weak self] in self?.requestPermission() },
                     changeAccount: { [weak self] user in
                         DispatchQueue.main.async { self?.changeAccount(user) }
-                        return KotlinUnit()
-                    }, requestPermissionFromSettings: { [weak self] in self?.requestPermissionFromSettings(); return KotlinUnit() })
+                    }, requestPermissionFromSettings: { [weak self] in self?.requestPermissionFromSettings() })
             }
         }
         NotificationCenter.default.addObserver(self, selector: #selector(foreground), name: UIApplication.didBecomeActiveNotification, object: nil)
