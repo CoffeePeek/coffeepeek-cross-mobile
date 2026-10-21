@@ -11,6 +11,7 @@ import io.ktor.client.HttpClientConfig
 import io.ktor.client.plugins.HttpSend
 import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.plugins.HttpResponseValidator
+import io.ktor.client.plugins.UserAgent
 import io.ktor.client.plugins.cache.HttpCache
 import io.ktor.client.plugins.cache.storage.CacheStorage
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
@@ -47,6 +48,7 @@ class CoffeePeekClient(
     }
 
     val plainClient: HttpClient = apiClientFactory {
+        install(UserAgent) { agent = deviceUserAgent() }
         installServerErrorValidation()
         install(ContentNegotiation) { json(json = JsonExt.json) }
         defaultRequest { url(baseUrl) }

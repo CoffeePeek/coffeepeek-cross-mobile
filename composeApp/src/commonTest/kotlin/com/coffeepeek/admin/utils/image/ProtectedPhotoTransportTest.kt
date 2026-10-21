@@ -86,6 +86,9 @@ class ProtectedPhotoTransportTest {
             assertEquals(1, calls)
             assertNotNull(first.displayPermission?.reusablePermission)
             assertEquals(first.displayPermission?.reusablePermission, reopened.displayPermission?.reusablePermission)
+            val renewal = first.copy(displayPermission = PhotoDisplayPermission(revalidate = true))
+            assertContentEquals(byteArrayOf(3, 7), protectedVariantBytes(client, renewal))
+            assertEquals(2, calls)
             ProtectedPhotoSession.invalidate()
             assertFailsWith<IllegalStateException> { protectedVariantBytes(client, reopened) }
         } finally { client.close() }
