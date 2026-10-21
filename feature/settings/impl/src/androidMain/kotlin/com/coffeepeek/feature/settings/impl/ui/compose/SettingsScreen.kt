@@ -87,8 +87,8 @@ internal fun SettingsContent(
     state: SettingsState, navigation: SettingsNavigation, external: SettingsExternalActions, slots: SettingsSlots,
     appInfo: SettingsAppInfo, bottomClearance: Dp, onCheckForUpdates: () -> Unit, modifier: Modifier = Modifier,
 ) {
-    Scaffold(modifier = modifier, containerColor = MaterialTheme.colorScheme.background, contentWindowInsets = WindowInsets(0, 0, 0, 0)) { _ ->
-        Column(Modifier.fillMaxSize().statusBarsPadding().verticalScroll(rememberScrollState())) {
+    Scaffold(modifier = modifier, containerColor = MaterialTheme.colorScheme.background, contentWindowInsets = WindowInsets(0, 0, 0, 0)) { innerPadding ->
+        Column(Modifier.fillMaxSize().padding(innerPadding).statusBarsPadding().verticalScroll(rememberScrollState())) {
             Text(
                 stringResource(R.string.settings_tab_title), style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onBackground,

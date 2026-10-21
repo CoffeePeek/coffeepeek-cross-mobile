@@ -5,12 +5,14 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.admin.analytics.Analytics
 import com.coffeepeek.admin.analytics.AnalyticsEvent
+import com.coffeepeek.admin.di.platformViewModel
 import com.coffeepeek.admin.feature.favorites.api.FavoritesProfilePreview
 import com.coffeepeek.feature.profile.domain.PublicProfileStats
 import com.coffeepeek.admin.feature.profile.ui.PublicProfileHeader
@@ -21,13 +23,15 @@ import com.coffeepeek.admin.ui.Navigator
 import com.coffeepeek.admin.ui.component.*
 import com.coffeepeek.admin.ui.icons.CpIcons
 import com.coffeepeek.admin.ui.screen.contributions.ContributionKind
-import kotlinx.coroutines.flow.drop
 import org.koin.compose.koinInject
 import org.koin.core.parameter.parametersOf
 
 @Composable
 fun ProfileScreen(vm: ProfileViewModel = koinInject()) {
     val state by vm.uiState.collectAsState()
+    LaunchedEffect(vm) {
+        if (vm.uiState.value.isLoggedIn && vm.uiState.value.hasContent) vm.refreshProfile()
+    }
     var showLogoutDialog by remember { mutableStateOf(false) }
     val onEdit = { Navigator.navigate(Navigator.Screen.EditProfile) }
     val openShop: (String) -> Unit = { Navigator.navigate(Navigator.Screen.ShopDetail(it)) }
@@ -54,14 +58,18 @@ fun ProfileScreen(vm: ProfileViewModel = koinInject()) {
     val slug = state.publicSlug
     if (state.isLoggedIn && slug != null) {
         key(slug) {
-            val publicVm: PublicProfileViewModel = koinInject(
+            val publicVm: PublicProfileViewModel = platformViewModel(
+                key = slug,
                 parameters = { parametersOf(slug) },
             )
-            DisposableEffect(publicVm) { onDispose(publicVm::close) }
-            LaunchedEffect(publicVm) {
-                snapshotFlow { state.publicAddress to Triple(state.displayName, state.about, state.avatarUrl) }
-                    .drop(1)
-                    .collect { publicVm.refresh() }
+            val profileDetails = listOf(state.publicAddress?.revision, state.displayName, state.about, state.avatarUrl,
+                state.checkInCount, state.addedShopsCount, state.addedRoastersCount, state.followersCount)
+            var loadedProfileDetails by rememberSaveable { mutableStateOf(profileDetails) }
+            LaunchedEffect(publicVm, profileDetails) {
+                if (loadedProfileDetails != profileDetails) {
+                    loadedProfileDetails = profileDetails
+                    publicVm.refresh()
+                }
             }
             UserProfileScreen(
                 slug = slug,
