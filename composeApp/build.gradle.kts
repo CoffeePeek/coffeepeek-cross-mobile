@@ -152,7 +152,7 @@ val gitCommitCount: Provider<Int> = providers.exec {
 }.standardOutput.asText.map { it.trim().toIntOrNull() ?: 1 }
 
 val appVersionCode: Provider<Int> = gitCommitCount
-val appVersionName: Provider<String> = gitCommitCount.map { "1.0.$it" }
+val appVersionName: Provider<String> = gitCommitCount.map { "1.1.$it" }
 
 tasks.register<PrintValueTask>("printVersionName") {
     group = "versioning"
