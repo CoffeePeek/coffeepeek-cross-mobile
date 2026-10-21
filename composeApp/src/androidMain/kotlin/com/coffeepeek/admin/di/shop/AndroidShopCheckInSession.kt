@@ -16,6 +16,7 @@ import kotlin.concurrent.Volatile
 internal class AndroidShopCheckInSession(
     private val sessions: SessionRepository,
     private val repository: ShopCheckInRepository,
+    private val onCheckInCreated: () -> Unit = {},
 ) : ShopCheckInRepository {
     val userId = sessions.peekSession()?.userId
     @Volatile private var revoked = false
@@ -26,7 +27,8 @@ internal class AndroidShopCheckInSession(
     fun revoke() { revoked = true }
 
     override suspend fun getDrinkOptions() = withSession { repository.getDrinkOptions() }
-    override suspend fun create(input: ShopCheckInCreateInput) = withSession { repository.create(input) }
+    override suspend fun create(input: ShopCheckInCreateInput) =
+        withSession { repository.create(input) }.onSuccess { onCheckInCreated() }
 
     private suspend fun <T> withSession(block: suspend () -> T): T = coroutineScope {
         ensureCurrent()
