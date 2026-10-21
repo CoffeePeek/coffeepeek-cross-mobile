@@ -1,7 +1,7 @@
 package com.coffeepeek.admin.feature.appupdate.ui
 
-import com.coffeepeek.admin.feature.appupdate.domain.InstallationStage
-import com.coffeepeek.admin.feature.appupdate.domain.UpdateInstaller
+import com.coffeepeek.feature.appupdate.domain.InstallationStage
+import com.coffeepeek.feature.appupdate.domain.UpdateInstaller
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.flow.first

@@ -1,10 +1,10 @@
 package com.coffeepeek.admin.feature.appupdate.ui
 
 import com.coffeepeek.admin.config.AppConfig
-import com.coffeepeek.admin.feature.appupdate.domain.AppUpdate
-import com.coffeepeek.admin.feature.appupdate.domain.AppUpdateRepository
-import com.coffeepeek.admin.feature.appupdate.domain.InstallationStage
-import com.coffeepeek.admin.feature.appupdate.domain.InstallationState
+import com.coffeepeek.feature.appupdate.domain.AppUpdate
+import com.coffeepeek.feature.appupdate.domain.AppUpdateRepository
+import com.coffeepeek.feature.appupdate.domain.InstallationStage
+import com.coffeepeek.feature.appupdate.domain.InstallationState
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers

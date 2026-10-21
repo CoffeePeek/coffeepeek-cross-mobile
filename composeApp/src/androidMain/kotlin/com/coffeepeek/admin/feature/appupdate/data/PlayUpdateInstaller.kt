@@ -6,9 +6,9 @@ import android.content.Intent
 import android.content.IntentSender
 import com.coffeepeek.BuildConfig
 import com.coffeepeek.admin.feature.appupdate.api.AndroidUpdateInstaller
-import com.coffeepeek.admin.feature.appupdate.domain.AppUpdate
-import com.coffeepeek.admin.feature.appupdate.domain.InstallationStage
-import com.coffeepeek.admin.feature.appupdate.domain.InstallationState
+import com.coffeepeek.feature.appupdate.domain.AppUpdate
+import com.coffeepeek.feature.appupdate.domain.InstallationStage
+import com.coffeepeek.feature.appupdate.domain.InstallationState
 import com.google.android.play.core.appupdate.AppUpdateManagerFactory
 import com.google.android.play.core.appupdate.AppUpdateInfo
 import com.google.android.play.core.appupdate.AppUpdateOptions

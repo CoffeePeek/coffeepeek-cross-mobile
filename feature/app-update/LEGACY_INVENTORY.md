@@ -148,3 +148,18 @@ Layout `feature/app-update/{api,domain,data,impl}`, package `com.coffeepeek.feat
   throws on non-2xx instead of returning, so the repository's `status != 200 -> null` branch only covers 2xx answers other than 200; a manual check with an unconfigured version reports a *failure*.
 - Still not covered by unit tests (device/instrumented only): `PlayUpdateInstaller`, `ApkUpdateInstaller`, `AppUpdatePrompt`, the Android effect, `StoreUpdateInstaller` (inventory D-H).
 - Verified: Direct and Play unit runs of the new classes, 0 failures; iOS test compilation passes.
+
+## Step 2 result — `api` + `domain` + `data` modules (2026-10-21, branch `feature/appupdate-domain-data`)
+
+- New modules `:feature:app-update:{domain,api,data}` (`module.feature.appUpdate.*`, package `com.coffeepeek.feature.appupdate`), no dependency on `modules/*` or `composeApp`:
+  - **domain**: `AppUpdate` (policy rules A1), `AppUpdateRepository`, `UpdateInstaller`, `InstallationState/Stage`, `isCompatibleUpdate` (C1-C2). Types that were `internal` in `composeApp` are public now.
+  - **api**: ports `AppUpdateEnvironment` (versionCode, platform, channel) and `DismissedUpdateStore`.
+  - **data**: `AppUpdateRepositoryImpl(client, environment, dismissed)` (A3, A4) and `AppVersionResponse`/`toUpdate` (A2), moved unchanged apart from reading platform/channel from the environment and the dismissed version
+    from the store.
+- App (`composeApp/.../di/appupdate/AppUpdateAdapters.kt`): `AppConfigUpdateEnvironment` over `AppConfig` and `SettingsDismissedUpdateStore` over the Room settings table (key `dismissed_app_version` kept);
+  `KoinApp` builds the repository from them. The legacy domain and data files were deleted; the rest of `composeApp` only had its imports rewritten.
+- Tests moved with the code: domain `AppUpdateRulesTest` 1, `UpdateInstallationTest` 2; data `AppVersionResponseTest` 2 (incl. the characterized host quirks), `AppUpdateRepositoryTest` 5; app
+  `AppUpdateAdaptersTest` 2. `AppUpdateCheckBehaviourTest`, `AppUpdateStateTest` and `PlayUpdateRetryTest` stay in `composeApp` with `AppUpdateState` until the `impl` step.
+- Verified: domain 3 and data 7 tests, `composeApp` Direct/Play unit runs of the update, Sandbox, Settings and `di` tests, 0 failures; Android unit and instrumented test compilation, iOS simulator and iOS test
+  compilation, `assembleDirectSandbox`.
+- Unchanged on purpose: `AppUpdateState`/`AppUpdatePrompt`/installers/effects (still in `composeApp`, use `AppConfig` directly) move in the `impl` PRs (3a, 3b).

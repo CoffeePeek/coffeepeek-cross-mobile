@@ -1,10 +1,10 @@
 package com.coffeepeek.admin.feature.appupdate
 
-import com.coffeepeek.admin.feature.appupdate.domain.AppUpdate
-import com.coffeepeek.admin.feature.appupdate.domain.AppUpdateRepository
-import com.coffeepeek.admin.feature.appupdate.domain.InstallationStage
-import com.coffeepeek.admin.feature.appupdate.domain.InstallationState
-import com.coffeepeek.admin.feature.appupdate.domain.UpdateInstaller
+import com.coffeepeek.feature.appupdate.domain.AppUpdate
+import com.coffeepeek.feature.appupdate.domain.AppUpdateRepository
+import com.coffeepeek.feature.appupdate.domain.InstallationStage
+import com.coffeepeek.feature.appupdate.domain.InstallationState
+import com.coffeepeek.feature.appupdate.domain.UpdateInstaller
 import com.coffeepeek.admin.feature.appupdate.ui.AppUpdateState
 import com.coffeepeek.admin.feature.appupdate.ui.retryPlayUpdate
 import kotlinx.coroutines.async
