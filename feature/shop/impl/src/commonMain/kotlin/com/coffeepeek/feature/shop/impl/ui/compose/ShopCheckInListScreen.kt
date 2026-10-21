@@ -125,7 +125,7 @@ internal fun ShopCheckInListScreenContent(
                         onOpenPhoto = { _, index -> onAction(ShopCheckInListAction.OpenPhoto(checkIn.id, index)) },
                         showAuthor = true, showHelpful = true, isOwn = isOwn,
                         isVoting = state.pendingVoteId == checkIn.id,
-                        onVote = if (isOwn || state.pendingVoteId != null || state.isLoading) null
+                        onVote = if (state.pendingVoteId != null || state.isLoading) null
                             else { { onAction(ShopCheckInListAction.ToggleHelpful(checkIn.id)) } },
                         onReport = if (isOwn) null else { { onAction(ShopCheckInListAction.Report(checkIn.id)) } },
                         onBlockAuthor = checkIn.blockableAuthor(isOwn, state.isLoggedIn, state.currentUserId)

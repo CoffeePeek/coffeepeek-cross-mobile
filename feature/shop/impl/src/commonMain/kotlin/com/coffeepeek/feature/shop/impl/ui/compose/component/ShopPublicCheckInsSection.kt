@@ -82,7 +82,7 @@ internal fun ShopPublicCheckInsSection(
                         showAuthor = true, showHelpful = true,
                         isOwn = own, isVoting = pendingVoteId == checkIn.id,
                         shopTitle = shopTitle, dateLabel = formatDate(checkIn.createdAt),
-                        onVote = if (isLoggedIn && !own && pendingVoteId == null && !isRefreshing)
+                        onVote = if (isLoggedIn && pendingVoteId == null && !isRefreshing)
                             ({ onVote(checkIn.id) }) else null,
                         onReport = if (isLoggedIn && !own) ({ onReport(checkIn.id) }) else null,
                         onBlockAuthor = checkIn.blockableAuthor(own, isLoggedIn, currentUserId)

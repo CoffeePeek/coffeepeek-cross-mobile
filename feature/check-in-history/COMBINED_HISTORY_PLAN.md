@@ -1,5 +1,27 @@
 # Combined personal history — current-main parity and next slice
 
+## Creation analytics lifetime correction — 2026-10-21
+
+The account/destination-owned HistoryHostSession now retains the existing
+HistoryCreationAnalytics instance. Rebinding the Compose entry after Activity
+recreation no longer cancels the open picker or loses its original global_create
+tracker. Actual picker dismissal still cancels it; final owner disposal cancels
+an unselected picker once, while a handed-off Shop/Home tracker remains usable.
+Account replacement revokes the old flow without emitting into the new account.
+Consent/session checks and the existing analytics service are unchanged.
+
+Source: #95 after parent #43 (`44c76252`) synchronization, merge parent
+`6c06e7a2`, with this scoped lifetime patch. Four permanent unit regressions cover
+Home rebinding, Shop handoff/disposal, final closure and account replacement;
+all seven focused analytics tests pass. Full verification: **1089 unit
+executions** (history domain 8, data 11, impl 47, Home read domain 3, app Direct
+510 and Play 510), zero failures/errors/skips. Direct/Play Debug APKs and both
+packaged DEX guards pass; application/history Kotlin compiles for iOS Simulator
+Arm64. Logs remain local under build/reports/history-lifetime-fix.
+
+No automated UI/device test, live-account write or production telemetry was run.
+This local Kotlin check does not certify Swift/Xcode linking or device rotation.
+
 ## Accepted develop product reconciliation — 2026-10-19
 
 Inherited parent `bb718dbb` includes main `dfb00e63` and develop `fc85f8e5`.
