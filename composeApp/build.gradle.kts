@@ -92,6 +92,7 @@ kotlin {
             implementation(project(module.core.network))
             implementation(project(module.legacy.homeCheckIn))
             implementation(project(module.feature.appUpdate.api))
+            implementation(project(module.feature.auth.api))
             implementation(project(module.feature.appUpdate.domain))
             implementation(project(module.feature.appUpdate.data))
             implementation(project(module.feature.appUpdate.impl))

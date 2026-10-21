@@ -199,3 +199,21 @@ Test-only change (5 new test classes, 24 tests, no production change). Together 
 - Apple login (iOS, legacy path) keeps its existing tests; Google/Apple against real accounts remain the live gate.
 
 Verified: composeApp Direct (auth, utils, recovery suites: 124 tests) and Play (39) and `:modules:data` (58), 0 failures; iOS test compilation for `composeApp` and `modules:data`.
+
+## Step 2 result — `api` + `domain` + `data` modules (2026-10-21, branch `feature/auth-domain-data`)
+
+New modules `:feature:auth:{domain,api,data}` (`module.feature.auth.*`, package `com.coffeepeek.feature.auth`), independent of `modules/*` and `composeApp`. The legacy classes stay until the UI moves (steps 3-4); nothing in the app calls the new repository yet.
+
+- **domain**: `AuthRepository` (sign in with e-mail or Google, register, e-mail check, password reset request, sign out; sign-in returns only `SignedInAccount(userId)`), and the rules as pure functions with typed results instead of texts:
+  `validateEmail`/`validatePassword` (6 for login, 8 for registration), `canContinueWithEmail` (C7 step 1), `canSubmitRegistration` (C7: name of 2+ characters after trimming, 8+ characters, terms), `checkRegistration` with the
+  `reported` message priority (C4, now testable: the last failing check in the order terms, password, email, name wins), `passwordStrength` (C8), `classifyLoginFailure` (the word lists of `localizedLoginError`) and
+  `classifySocialFailure` with the trusted diagnostic pieces (`socialLoginError`). The Russian texts move to `auth_` resources in the impl step.
+- **api**: the port `LocalUserData` (`clear()`), the app's "forget the previous account's local data".
+- **data**: `AuthRepositoryImpl` on the two clients the app already has (`plain` for sign-in, registration, e-mail check and recovery; `authenticated` for sign-out), the same endpoints, request bodies (e-mail trimmed and lower-cased, password as typed),
+  refresh-token cookie handling and server messages as `AuthService` had; the session is written through `core/session` `SessionStore` (user id from the JWT subject) and local data of another account or a guest is cleared first; sign-out cleans locally
+  first, then calls the server best effort, and reports a cleanup failure after still calling it. Entry point `createAuthRepository(plain, authenticated, sessions, localUserData)`. Apple stays in `modules/network` for the iOS legacy path.
+- **app**: `UserSessionLocalUserData` implements the port over `UserSessionCleaner` (adapter test: sign-out of the stored session, owner favorites, caches). The Koin binding of the new repository comes with the UI wiring (step 4).
+- Tests: domain `AuthRulesTest` 6 and `AuthFailuresTest` 6 (the legacy `AuthValidationTest` and `SocialLoginErrorTest` tables plus C4, C7 and C8); data `AuthRepositoryImplTest` 12 (requests, persistence order, cookie, rejected messages,
+  registration, e-mail check, recovery, sign-out rules, ported from the legacy repository tests); app `AuthAdaptersTest` 1.
+- Verified: `:feature:auth:domain` 12 and `:feature:auth:data` 12 tests, composeApp Direct and Play unit runs (`di`), 0 failures; Android unit and instrumented test compilation; iOS simulator and iOS test compilation (`composeApp`, `feature:auth:data`);
+  `assembleDirectSandbox`. No device check: no UI changed.
