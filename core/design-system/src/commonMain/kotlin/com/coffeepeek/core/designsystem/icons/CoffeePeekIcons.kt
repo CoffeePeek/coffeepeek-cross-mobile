@@ -62,6 +62,8 @@ import com.adamglin.phosphoricons.regular.PersonSimpleWalk
 import com.adamglin.phosphoricons.regular.Phone
 import com.adamglin.phosphoricons.regular.Plus
 import com.adamglin.phosphoricons.regular.Prohibit
+import com.adamglin.phosphoricons.regular.FileText
+import com.adamglin.phosphoricons.regular.Shield
 import com.adamglin.phosphoricons.regular.ShareNetwork
 import com.adamglin.phosphoricons.regular.SignOut
 import com.adamglin.phosphoricons.regular.Sparkle
@@ -136,6 +138,8 @@ object CoffeePeekIcons {
     val Star: ImageVector get() = PhosphorIcons.Regular.Star
     val StarOutline: ImageVector get() = Star
     val StarFilled: ImageVector get() = PhosphorIcons.Fill.FillStar
+    val FileText: ImageVector get() = PhosphorIcons.Regular.FileText
+    val Shield: ImageVector get() = PhosphorIcons.Regular.Shield
     val ThemeDark: ImageVector get() = PhosphorIcons.Regular.Moon
     val ThemeLight: ImageVector get() = PhosphorIcons.Regular.Sun
     val ThemeSystem: ImageVector get() = PhosphorIcons.Regular.Monitor

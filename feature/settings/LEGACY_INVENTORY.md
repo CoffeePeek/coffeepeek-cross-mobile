@@ -221,3 +221,24 @@ These move into `SettingsViewModel`/`UsageConsentPort` at steps 3–4, where the
   ignores blank; signed in = active session **with a user id** (legacy rule) and the distinct flow; consent unavailable without a service and before a signed-in identity, follows the toggle and the store,
   turns unavailable on sign-out; update row mapping with manual checks (update available, current version, failure message); the legacy URLs and share text.
 - **Checks**: `testDirectDebugUnitTest --tests '*di.settings*'` green, `compileKotlinIosSimulatorArm64` (domain, api, composeApp) and `compileDirectDebugKotlinAndroid` green.
+
+## Step 3 result — Theme, City and Usage policy in `feature/settings/impl` (2026-10-21)
+
+- **Module** `feature/settings/impl` (resource prefix `settings_`, Russian strings verbatim except the two new city texts), `feature/settings/api` now a Compose library with the entries `ThemeEntry`, `CityEntry`,
+  `UsagePolicyEntry` (`createThemeEntry`, `createCityEntry`, `createUsagePolicyEntry` in impl). The design system gained `Shield` and `FileText` icons.
+- **ViewModels** (typed MVI, state in the destination's ViewModel store): `ThemeViewModel` (starts on the current mode, applies at once, follows changes made elsewhere), `CityViewModel` (loads the catalog on open,
+  only listed ids can be selected, a loaded list is not reloaded, two retries in one frame load once), `UsagePolicyViewModel` (the switch follows the app's analytics state, toggling while unavailable does nothing).
+  11 tests (3 + 5 + 3).
+- **Deliberate improvement (decision 3)**: the city screen shows a loader, then either the list or «Не удалось загрузить города» / «Список городов пуст» with «Повторить» instead of an empty card. The empty-catalog
+  text is mine (decision 3 only named loader/error/retry): an empty successful answer is treated as a retryable problem too.
+- **App**: `SettingsScreenRenderer` (Legacy default for iOS/shared, Android entry), `Navigator` routes `ThemeSettings`/`CitySettings`/`UsagePolicy` use it, Koin param `settingsRendererFactory`. The legacy Settings tab
+  still runs and reads the same `ThemeManager`/`CityPreference`, so a choice made on the new screens shows on the tab immediately.
+- **Sandbox**: the city catalog is cached by `ShopRepositoryImpl` after its first successful load, so the «Города» chips only take effect before the first load. The activity now also reads launch extras:
+  `am start -n com.coffeepeek.sandbox/com.coffeepeek.admin.sandbox.SandboxActivity --es sandbox_cities Several|Empty|Failure|Single --es sandbox_update Available|Required|Failure|UpToDate`
+  (applied on a fresh launch only, chips show the chosen values). The chips remain for the update policy, which is not cached.
+- **Checks**: `:feature:settings:impl:testDebugUnitTest` (11), `compileDirectDebugKotlinAndroid`, `compileKotlinIosSimulatorArm64` (api, impl, composeApp), `assembleDirectSandbox` green.
+- **Pixel 7 Sandbox check**: Theme in light and dark (check mark, immediate switch, back button, the tab row follows: «Тёмная»); City with one city, three cities (Брест selected, the tab row shows «Брест»), empty list and
+  load failure with «Повторить»; Usage policy with the two link cards in dark and light; font scale 1.5 on Theme and Usage policy (cards wrap, the long top-bar title is cut with an ellipsis as in the legacy bar).
+  Font scale and theme were restored afterwards.
+- **Not checked**: the consent switch (Sandbox runs with analytics disabled, so the row is hidden; only the unit tests cover it), tapping the terms/privacy cards (Sandbox blocks external apps), retry succeeding after a failure,
+  rotation, the City screen at font scale 1.5, TalkBack.

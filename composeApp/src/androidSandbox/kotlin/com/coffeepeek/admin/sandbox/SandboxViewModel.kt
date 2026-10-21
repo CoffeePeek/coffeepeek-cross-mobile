@@ -18,6 +18,10 @@ internal data class SandboxState(val owner: SandboxOwner = SandboxOwner(), val c
 internal class SandboxViewModel : ViewModel() {
     private val mutableState = MutableStateFlow(SandboxState())
     val state = mutableState.asStateFlow()
+    /** Shows the fixtures chosen at launch without re-creating the app. */
+    fun fixtures(updatePolicy: SandboxUpdatePolicy, cities: SandboxCities) {
+        mutableState.value = state.value.copy(updatePolicy = updatePolicy, cities = cities)
+    }
     fun controls(show: Boolean) { mutableState.value = state.value.copy(controls = show) }
     fun refresh(scenario: SandboxScenario, updatePolicy: SandboxUpdatePolicy = state.value.updatePolicy, cities: SandboxCities = state.value.cities) {
         val previous = state.value.owner
