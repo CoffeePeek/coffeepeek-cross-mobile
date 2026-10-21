@@ -7,14 +7,20 @@ import com.coffeepeek.feature.settings.api.ThemePort
 import com.coffeepeek.feature.settings.api.UpdateCheckPort
 import com.coffeepeek.feature.settings.domain.SettingsCity
 import com.coffeepeek.feature.settings.domain.ThemeMode
+import com.coffeepeek.feature.settings.domain.UpdateCheckOutcome
 import com.coffeepeek.feature.settings.domain.UpdateCheckState
 import com.coffeepeek.feature.settings.impl.ui.model.SettingsAction
+import com.coffeepeek.feature.settings.impl.ui.model.SettingsEvent
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
@@ -64,8 +70,16 @@ class SettingsViewModelTest {
     private class Updates : UpdateCheckPort {
         val state = MutableStateFlow(UpdateCheckState())
         var checks = 0
+        var outcome = UpdateCheckOutcome.UpToDate
+        var failure: Throwable? = null
+        var gate: CompletableDeferred<Unit>? = null
         override fun observe(): Flow<UpdateCheckState> = state
-        override fun check() { checks++ }
+        override suspend fun check(): UpdateCheckOutcome {
+            checks++
+            gate?.await()
+            failure?.let { throw it }
+            return outcome
+        }
     }
 
     private fun model(account: Account = Account(true), theme: Theme = Theme(ThemeMode.SYSTEM), cities: Cities = Cities(Result.success(listOf(minsk, brest))),
@@ -110,14 +124,73 @@ class SettingsViewModelTest {
         assertEquals(ThemeMode.LIGHT, vm.state.value.theme)
     }
 
-    @Test fun theUpdateRowMirrorsThePortAndACheckCallsItOnce() = runTest(dispatcher) {
+    private fun TestScope.events(vm: SettingsViewModel) =
+        mutableListOf<SettingsEvent>().also { list -> backgroundScope.launch { vm.events.collect { list += it } } }
+
+    @Test fun theUpdateRowMirrorsThePortState() = runTest(dispatcher) {
         val updates = Updates(); val vm = model(updates = updates); runCurrent()
+        updates.state.value = UpdateCheckState(checking = true); runCurrent()
+        assertTrue(vm.state.value.updateBusy)
+        updates.state.value = UpdateCheckState(updateAvailable = true); runCurrent()
+        assertFalse(vm.state.value.updateBusy)
+        assertTrue(vm.state.value.update.updateAvailable)
+    }
+
+    @Test fun aCheckLocksTheRowAndKeepsTheLoaderForAMinimumTimeBeforeTheToast() = runTest(dispatcher) {
+        val updates = Updates(); val vm = model(updates = updates); val events = events(vm); runCurrent()
+        assertFalse(vm.state.value.updateBusy)
         vm.onAction(SettingsAction.CheckForUpdates); runCurrent()
         assertEquals(1, updates.checks)
+        assertTrue(vm.state.value.updateBusy)
+        advanceTimeBy(699); runCurrent()
+        assertTrue(vm.state.value.updateBusy); assertTrue(events.isEmpty())
+        advanceTimeBy(1); runCurrent()
+        assertFalse(vm.state.value.updateBusy)
+        assertEquals(listOf<SettingsEvent>(SettingsEvent.UpToDate), events)
+    }
+
+    @Test fun aSlowCheckKeepsTheLoaderUntilThePortAnswers() = runTest(dispatcher) {
+        val updates = Updates().apply { gate = CompletableDeferred() }
+        val vm = model(updates = updates); val events = events(vm); runCurrent()
+        vm.onAction(SettingsAction.CheckForUpdates); runCurrent()
+        advanceTimeBy(30_000); runCurrent()
+        assertTrue(vm.state.value.updateBusy); assertTrue(events.isEmpty())
+        updates.gate!!.complete(Unit); runCurrent()
+        assertFalse(vm.state.value.updateBusy)
+        assertEquals(listOf<SettingsEvent>(SettingsEvent.UpToDate), events)
+    }
+
+    @Test fun aSecondTapWhileBusyIsIgnored() = runTest(dispatcher) {
+        val updates = Updates(); val vm = model(updates = updates); val events = events(vm); runCurrent()
+        vm.onAction(SettingsAction.CheckForUpdates); runCurrent()
+        vm.onAction(SettingsAction.CheckForUpdates); runCurrent()
+        advanceTimeBy(1_000); runCurrent()
+        assertEquals(1, updates.checks); assertEquals(1, events.size)
+        vm.onAction(SettingsAction.CheckForUpdates); runCurrent()
+        assertEquals(2, updates.checks)
+    }
+
+    @Test fun anAutomaticCheckInFlightAlsoLocksTheRow() = runTest(dispatcher) {
+        val updates = Updates(); val vm = model(updates = updates); runCurrent()
         updates.state.value = UpdateCheckState(checking = true); runCurrent()
-        assertTrue(vm.state.value.update.checking)
-        updates.state.value = UpdateCheckState(message = "Установлена актуальная версия"); runCurrent()
-        assertEquals("Установлена актуальная версия", vm.state.value.update.message)
-        assertFalse(vm.state.value.update.checking)
+        vm.onAction(SettingsAction.CheckForUpdates); runCurrent()
+        assertEquals(0, updates.checks)
+    }
+
+    @Test fun aNewerVersionShowsNoToastBecauseTheAppPromptTakesOver() = runTest(dispatcher) {
+        val updates = Updates().apply { outcome = UpdateCheckOutcome.Available }
+        val vm = model(updates = updates); val events = events(vm); runCurrent()
+        vm.onAction(SettingsAction.CheckForUpdates); advanceTimeBy(1_000); runCurrent()
+        assertTrue(events.isEmpty()); assertFalse(vm.state.value.updateBusy)
+    }
+
+    @Test fun aFailedCheckAndAThrowingPortBothReportAFailure() = runTest(dispatcher) {
+        val updates = Updates().apply { outcome = UpdateCheckOutcome.Failed }
+        val vm = model(updates = updates); val events = events(vm); runCurrent()
+        vm.onAction(SettingsAction.CheckForUpdates); advanceTimeBy(1_000); runCurrent()
+        updates.failure = IllegalStateException("boom")
+        vm.onAction(SettingsAction.CheckForUpdates); advanceTimeBy(1_000); runCurrent()
+        assertEquals(listOf<SettingsEvent>(SettingsEvent.UpdateCheckFailed, SettingsEvent.UpdateCheckFailed), events)
+        assertFalse(vm.state.value.updateBusy)
     }
 }

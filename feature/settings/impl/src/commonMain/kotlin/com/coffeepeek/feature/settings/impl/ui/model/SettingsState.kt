@@ -9,7 +9,12 @@ internal data class SettingsState(
     /** The selected city's name once the catalog is loaded; the row shows «Выберите» while it is `null`. */
     val cityName: String? = null,
     val update: UpdateCheckState = UpdateCheckState(),
+    /** A check the user started is in flight (kept visible for a minimum time so the loader is not a flash). */
+    val manualUpdateCheck: Boolean = false,
 ) {
+    /** The update row is locked and shows a loader. */
+    val updateBusy: Boolean get() = update.checking || manualUpdateCheck
+
     /** The sign-in prompt is for guests only. */
     val showGuestCard: Boolean get() = !signedIn
 
@@ -21,8 +26,12 @@ internal data class SettingsState(
 }
 
 internal sealed interface SettingsAction {
-    /** A manual check; the port ignores it while one is running. */
+    /** A manual check; ignored while one is already in flight. */
     data object CheckForUpdates : SettingsAction
 }
 
-internal sealed interface SettingsEvent
+internal sealed interface SettingsEvent {
+    /** The manual check found nothing newer. A newer version is offered by the app's update prompt instead. */
+    data object UpToDate : SettingsEvent
+    data object UpdateCheckFailed : SettingsEvent
+}

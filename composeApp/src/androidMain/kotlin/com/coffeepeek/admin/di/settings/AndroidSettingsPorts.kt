@@ -19,11 +19,13 @@ import com.coffeepeek.feature.settings.api.ThemePort
 import com.coffeepeek.feature.settings.api.UpdateCheckPort
 import com.coffeepeek.feature.settings.api.UsageConsentPort
 import com.coffeepeek.feature.settings.domain.SettingsCity
+import com.coffeepeek.feature.settings.domain.UpdateCheckOutcome
 import com.coffeepeek.feature.settings.domain.UpdateCheckState
 import com.coffeepeek.feature.settings.domain.UsageConsentState
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import com.coffeepeek.admin.theme.ThemeMode as LegacyThemeMode
 import com.coffeepeek.feature.settings.domain.ThemeMode as SettingsThemeMode
@@ -83,10 +85,22 @@ internal class AndroidUsageConsentPort(private val service: () -> AnalyticsServi
 
 internal class AndroidUpdateCheckPort(private val updates: AppUpdateState) : UpdateCheckPort {
     override fun observe(): Flow<UpdateCheckState> = updates.state
-        .map { UpdateCheckState(checking = it.checking, message = it.message, updateAvailable = it.update != null) }
+        .map { UpdateCheckState(checking = it.checking, updateAvailable = it.update != null) }
         .distinctUntilChanged()
 
-    override fun check() = updates.check(manual = true)
+    override suspend fun check(): UpdateCheckOutcome {
+        // An automatic check may already be running: the call below is then ignored, so wait for it and ask again.
+        repeat(3) {
+            updates.check(manual = true)
+            val result = updates.state.first { !it.checking }
+            if (result.manual) return when {
+                result.update != null -> UpdateCheckOutcome.Available
+                result.checkFailed -> UpdateCheckOutcome.Failed
+                else -> UpdateCheckOutcome.UpToDate
+            }
+        }
+        return UpdateCheckOutcome.Failed
+    }
 }
 
 internal class AndroidSettingsExternalActions(

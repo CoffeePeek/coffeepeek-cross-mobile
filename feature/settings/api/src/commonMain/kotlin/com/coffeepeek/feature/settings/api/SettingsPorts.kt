@@ -2,6 +2,7 @@ package com.coffeepeek.feature.settings.api
 
 import com.coffeepeek.feature.settings.domain.SettingsCity
 import com.coffeepeek.feature.settings.domain.ThemeMode
+import com.coffeepeek.feature.settings.domain.UpdateCheckOutcome
 import com.coffeepeek.feature.settings.domain.UpdateCheckState
 import com.coffeepeek.feature.settings.domain.UsageConsentState
 import kotlinx.coroutines.flow.Flow
@@ -52,8 +53,8 @@ interface UsageConsentPort {
 interface UpdateCheckPort {
     fun observe(): Flow<UpdateCheckState>
 
-    /** A manual check: ignored while one is running. */
-    fun check()
+    /** A manual check; returns once it has finished, also when an automatic check was already running. */
+    suspend fun check(): UpdateCheckOutcome
 }
 
 /** Actions that leave the app. The app owns the URLs and the share text. */

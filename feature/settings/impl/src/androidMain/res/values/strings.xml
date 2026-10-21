@@ -54,6 +54,8 @@
     <string name="settings_section_update">Обновление приложения</string>
     <string name="settings_update_check">Проверить обновления</string>
     <string name="settings_update_checking">Проверяем обновления…</string>
+    <string name="settings_update_up_to_date">У вас установлена актуальная версия</string>
+    <string name="settings_update_failed">Не удалось проверить обновления. Попробуйте позже.</string>
     <string name="settings_update_available">Доступна новая версия CoffeePeek</string>
     <string name="settings_version">Версия %1$s</string>
 </resources>
