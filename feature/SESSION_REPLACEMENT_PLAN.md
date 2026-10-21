@@ -135,3 +135,24 @@ newer session, cancelled write vs logout), `SessionTokenProviderTest`, `UserSess
 Verified: `:modules:data:testDebugUnitTest` 70 tests, 0 failures; `:modules:data:compileKotlinIosSimulatorArm64`
 passes. Not covered by unit tests and left for the device gate in step 3: the real Android/iOS
 secure stores and an upgrade over an existing signed-in install.
+
+## 8. Steps 1-2 result — `core/session` and the bridge (2026-10-21)
+
+- New KMP module `:core:session` (`module.core.session`, package `com.coffeepeek.core.session`):
+  `Session`, `SessionReader`, `SessionStore` (with the default `replaceSession`), `SessionAuth`,
+  `JwtUtils`; `SessionAuthTest` (8) moved with them. Depends on coroutines only.
+- Bridge in `modules/domain` (api dependency on `core:session`): `typealias Session` and
+  `interface SessionRepository : SessionStore`. No consumer import changed; `SessionRepositoryImpl`
+  and the secure stores stay in `modules/data` until step 3.
+- Verified: `:core:session:testDebugUnitTest`, `:modules:data:testDebugUnitTest`, Android unit and
+  instrumented test compilation, iOS simulator compilation (`core:session`, `composeApp`) and
+  `assembleDirectSandbox` all pass.
+
+## 9. PR slicing (rule: at most 40 files per PR, one logical layer group per PR)
+
+| PR | Content | Expected size |
+|---|---|---|
+| A | plan + parity tests + `core/session` + bridge (steps 0-2) | ~20 files |
+| B | step 3: move `SessionRepositoryImpl`, secure stores, token provider into `core/session` | check count; split platform stores from common code if over 40 |
+| C | step 4a: the 23 `androidMain/di` adapters to `SessionReader` | ~25-30 files |
+| D+ | step 4b/4c and 5: by area, each under 40 files, as owners migrate | |

@@ -103,6 +103,7 @@ object Modules {
         const val database = ":core:database"
         const val designSystem = ":core:design-system"
         const val presentation = ":core:presentation"
+        const val session = ":core:session"
     }
 
     val all: List<String> = listOf(
@@ -117,6 +118,7 @@ object Modules {
         core.database,
         core.designSystem,
         core.presentation,
+        core.session,
         feature.favorites.api,
         feature.favorites.domain,
         feature.favorites.data,

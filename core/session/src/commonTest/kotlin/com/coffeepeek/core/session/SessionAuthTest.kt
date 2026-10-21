@@ -1,6 +1,5 @@
-package com.coffeepeek.data.util
+package com.coffeepeek.core.session
 
-import com.coffeepeek.domain.model.Session
 import kotlin.io.encoding.Base64
 import kotlin.io.encoding.ExperimentalEncodingApi
 import kotlin.test.*
