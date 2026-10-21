@@ -33,6 +33,13 @@ object Modules {
             const val impl = ":feature:community:impl"
         }
 
+        val contributions = Contributions
+        object Contributions {
+            const val api = ":feature:contributions:api"
+            const val domain = ":feature:contributions:domain"
+            const val data = ":feature:contributions:data"
+        }
+
         const val notifications = ":features:notifications"
         val authorBlocking = AuthorBlocking
         object AuthorBlocking {
@@ -190,6 +197,9 @@ object Modules {
         feature.community.api,
         feature.community.data,
         feature.community.impl,
+        feature.contributions.domain,
+        feature.contributions.api,
+        feature.contributions.data,
         feature.authorBlocking.domain,
         feature.authorBlocking.api,
         feature.authorBlocking.data,
