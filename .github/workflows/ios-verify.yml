@@ -26,6 +26,19 @@ jobs:
       - uses: gradle/actions/setup-gradle@v6
         with:
           cache-read-only: ${{ github.event_name == 'pull_request' || (github.ref != 'refs/heads/main' && github.ref != 'refs/heads/develop') }}
+      - name: Configure Firebase Messaging for iOS
+        shell: bash
+        env:
+          FIREBASE_GOOGLE_SERVICE_INFO_PLIST: ${{ secrets.FIREBASE_GOOGLE_SERVICE_INFO_PLIST }}
+        run: |
+          set -euo pipefail
+          swift --version
+          python3 -m unittest discover -s tools/ios -p 'test_*.py'
+          python3 tools/ios/restore_firebase_config.py
+          swift run --package-path tools/ios/xcode_spm_setup xcode_spm_setup \
+            iosApp/iosApp.xcodeproj https://github.com/firebase/firebase-ios-sdk 12.19.2 \
+            --plist "$(pwd)/iosApp/iosApp/GoogleService-Info.plist" FirebaseCore FirebaseMessaging
+
       - name: Compile Kotlin and native Swift for iOS Simulator
         shell: bash
         run: |
