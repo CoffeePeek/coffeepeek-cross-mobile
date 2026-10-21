@@ -1,11 +1,8 @@
 @file:OptIn(kotlinx.cinterop.ExperimentalForeignApi::class)
 
-package com.coffeepeek.data.session
+package com.coffeepeek.core.session
 
 import cnames.structs.__CFData
-import com.coffeepeek.api.model.response.AuthResp
-import com.coffeepeek.room.DatabaseCore
-import com.coffeepeek.room.utils.JsonExt
 import kotlinx.cinterop.addressOf
 import kotlinx.cinterop.alloc
 import kotlinx.cinterop.memScoped
@@ -48,13 +45,13 @@ import platform.Security.kSecValueData
 private class IosKeychainSessionStore : SessionSecureStore {
     private val state = MutableStateFlow(readFromKeychain())
 
-    override suspend fun read(): AuthResp? = state.value ?: readFromKeychain().also { state.value = it }
+    override suspend fun read(): SessionCredentials? = state.value ?: readFromKeychain().also { state.value = it }
 
-    override suspend fun write(data: AuthResp?) {
+    override suspend fun write(data: SessionCredentials?) {
         baseQuery().useAndRelease { query -> SecItemDelete(query) }
 
         if (data != null) {
-            val bytes = JsonExt.json.encodeToString(data).encodeToByteArray()
+            val bytes = SessionJson.encodeToString(data).encodeToByteArray()
             val valueData = bytes.usePinned { pinned ->
                 CFDataCreate(
                     allocator = null,
@@ -82,9 +79,9 @@ private class IosKeychainSessionStore : SessionSecureStore {
         state.value = data
     }
 
-    override fun observe(): Flow<AuthResp?> = state.asStateFlow()
+    override fun observe(): Flow<SessionCredentials?> = state.asStateFlow()
 
-    private fun readFromKeychain(): AuthResp? = memScoped {
+    private fun readFromKeychain(): SessionCredentials? = memScoped {
         val result = alloc<CFTypeRefVar>()
         val status = baseQuery().useAndRelease { query ->
             CFDictionarySetValue(query, kSecReturnData, kCFBooleanTrue)
@@ -99,7 +96,7 @@ private class IosKeychainSessionStore : SessionSecureStore {
             val size = CFDataGetLength(data).toInt()
             val raw = CFDataGetBytePtr(data)?.readBytes(size)?.decodeToString()
                 ?: return@memScoped null
-            runCatching { JsonExt.json.decodeFromString<AuthResp>(raw) }.getOrNull()
+            runCatching { SessionJson.decodeFromString<SessionCredentials>(raw) }.getOrNull()
         } finally {
             CFRelease(retainedResult)
         }
@@ -142,7 +139,7 @@ private class IosKeychainSessionStore : SessionSecureStore {
     }
 }
 
-internal actual fun createPlatformSessionSecureStore(
-    database: DatabaseCore,
+actual fun createPlatformSessionSecureStore(
     platformContext: Any?,
+    legacyRows: LegacyCredentialRows,
 ): SessionSecureStore = IosKeychainSessionStore()

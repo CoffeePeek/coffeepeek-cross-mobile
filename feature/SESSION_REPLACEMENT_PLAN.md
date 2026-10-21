@@ -153,6 +153,32 @@ secure stores and an upgrade over an existing signed-in install.
 | PR | Content | Expected size |
 |---|---|---|
 | A | plan + parity tests + `core/session` + bridge (steps 0-2) | ~20 files |
-| B | step 3: move `SessionRepositoryImpl`, secure stores, token provider into `core/session` | check count; split platform stores from common code if over 40 |
+| B | step 3: move the session store implementation and secure stores into `core/session` | 18 files (done) |
 | C | step 4a: the 23 `androidMain/di` adapters to `SessionReader` | ~25-30 files |
 | D+ | step 4b/4c and 5: by area, each under 40 files, as owners migrate | |
+
+## 10. Step 3 result — implementation moved to `core/session` (2026-10-21)
+
+- `core/session` now holds `DefaultSessionStore` (the former `SessionRepositoryImpl`, same logic),
+  `SessionSecureStore`, `SessionCredentials` (stored JSON `{"accessToken","refreshToken"}`, same
+  shape as before, `refreshToken` defaults to `""`), the Android encrypted-preferences store and the
+  iOS Keychain store (same prefs/Keychain names, so existing installs keep their session), and an
+  `InMemorySessionSecureStore` for tests. Android adds `security-crypto` there; `modules/data` no
+  longer depends on it.
+- Room stays out of core: the one-time import of old `SESSION` / `API_KEYS` rows goes through the
+  `LegacyCredentialRows` port, implemented in `modules/data` by `RoomLegacyCredentialRows`.
+- `modules/data`: `SessionRepositoryImpl(store)` is now a thin delegate over `SessionStore`.
+  `DataModule` additionally exposes `SessionStore` and `SessionReader` (same instance) for the
+  readers migrated in step 4. `RoomSessionSecureStore` (plaintext fallback, test-only) was removed;
+  the one test that used it now uses `InMemorySessionSecureStore`. `SessionTokenProvider` and
+  `UserSessionCleaner` stay in `modules/data` (they adapt to the legacy API client / favorites).
+- Tests moved with the code and run against core types: `SessionStoreParityTest` (10),
+  `SessionStoreConcurrencyTest` (3), `SessionAuthTest` (8); new `RoomLegacyCredentialRowsTest` (3)
+  covers the old-row JSON handling (blank/"null"/unreadable rows are nothing).
+- Verified: `:core:session:testDebugUnitTest` 21 and `:modules:data:testDebugUnitTest` 51, 0
+  failures; iOS simulator compilation of `core:session`, `modules:data` and `composeApp`; Android
+  unit and instrumented test compilation; `assembleDirectSandbox` and `assembleDirectDebug`.
+- **Not verified (gate before merging):** the real Android encrypted store and the iOS Keychain
+  store have no unit tests (they need a device). The risk is limited to a mechanical move with the
+  same keys, but an upgrade over an existing signed-in install should be checked by the owner of
+  the release build; this session does not install the regular app on the phone.
