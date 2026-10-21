@@ -3,7 +3,6 @@ package com.coffeepeek.admin.ui
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.getValue
 import com.coffeepeek.admin.ui.screen.addshop.AddShopScreen
-import com.coffeepeek.admin.ui.screen.auth.registr.RegisterScreen
 import com.coffeepeek.admin.ui.screen.checkins.CheckInHistoryDestination
 import com.coffeepeek.admin.ui.screen.shop.ShopDetailScreen
 import com.coffeepeek.admin.ui.screen.shop.ShopMenuGalleryScreen
@@ -50,7 +49,7 @@ import com.coffeepeek.admin.ui.screen.shop.CheckInDraftStore
 import org.koin.compose.koinInject
 import com.coffeepeek.admin.ui.dialogs.ErrorDialog
 import com.coffeepeek.admin.ui.dialogs.LoadingDialog
-import com.coffeepeek.admin.ui.screen.auth.AuthScreen
+import com.coffeepeek.admin.ui.screen.auth.AuthScreenRenderer
 import com.coffeepeek.admin.ui.screen.main.MainScreen
 import com.coffeepeek.admin.ui.component.RetainedContent
 import com.coffeepeek.admin.ui.screen.shop.ShopDetailScreenRenderer
@@ -58,7 +57,6 @@ import com.coffeepeek.admin.ui.screen.shop.ShopCheckInListScreenRenderer
 import com.coffeepeek.admin.ui.screen.coffee.CoffeeScreenRenderer
 import com.coffeepeek.admin.ui.screen.shop.ShopMenuGalleryScreenRenderer
 import com.coffeepeek.admin.ui.screen.shop.ShopReportScreenRenderer
-import com.coffeepeek.admin.feature.passwordrecovery.ui.PasswordRecoveryScreen
 import com.coffeepeek.admin.ui.screen.shopchange.ShopChangeEditorScreen
 import com.coffeepeek.admin.ui.screen.shopchange.ShopChangeRequestDetailScreen
 import com.coffeepeek.admin.ui.screen.shopchange.SuggestShopChangeScreen
@@ -420,13 +418,13 @@ object Navigator {
                     )
                 },
             ) {
-                    composable<Screen.Auth> { AuthScreen() }
-                    composable<Screen.Register> { RegisterScreen() }
+                    composable<Screen.Auth> { koinInject<AuthScreenRenderer>().Login() }
+                    composable<Screen.Register> { koinInject<AuthScreenRenderer>().Register() }
                     composable<Screen.ForgotPassword> { backStack ->
-                        PasswordRecoveryScreen(
+                        koinInject<AuthScreenRenderer>().Recovery(
                             initialEmail = backStack.toRoute<Screen.ForgotPassword>().email,
                             onClose = { nav.popBackStack() },
-                            onLogin = {
+                            onBackToLogin = {
                                 nav.navigate(Screen.Auth) { popUpTo<Screen.Main>(); launchSingleTop = true }
                             },
                         )
@@ -521,9 +519,9 @@ object Navigator {
     private fun RootScreen(screen: Screen, resetToLogin: () -> Unit, isLoggedIn: Boolean) {
         when (screen) {
             Screen.Main -> MainScreen(isLoggedIn)
-            Screen.Auth -> AuthScreen()
-            Screen.Register -> RegisterScreen()
-            is Screen.ForgotPassword -> PasswordRecoveryScreen(initialEmail = screen.email, onClose = ::popBack, onLogin = resetToLogin)
+            Screen.Auth -> koinInject<AuthScreenRenderer>().Login()
+            Screen.Register -> koinInject<AuthScreenRenderer>().Register()
+            is Screen.ForgotPassword -> koinInject<AuthScreenRenderer>().Recovery(initialEmail = screen.email, onClose = ::popBack, onBackToLogin = resetToLogin)
             is Screen.ResetPassword -> LaunchedEffect(Unit) { resetToLogin() }
             is Screen.ShopDetail -> koinInject<ShopDetailScreenRenderer>().Content(screen.shopId, screen.forCheckIn)
             Screen.CreateCheckIn -> com.coffeepeek.admin.ui.screen.shop.CheckInShopPickerScreen()

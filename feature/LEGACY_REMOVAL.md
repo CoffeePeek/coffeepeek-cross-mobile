@@ -41,7 +41,7 @@ screen stays for iOS/shared until iOS consumes the new modules.
 | `ui/screen/checkins` history | in row 1 | migrated (`feature/check-in-history`) | legacy | |
 | `feature/authorblocking` | 145 | Cp UI over the migrated `feature/author-blocking` | legacy | move UI into `impl` on design-system |
 | `feature/appupdate` | ~250 | migrated (`feature/app-update`, audit done) | legacy prompt and `StoreUpdateInstaller` used by iOS | delete with the Legacy renderer when iOS migrates |
-| `ui/screen/auth`, `passwordrecovery` | 1699 + 159 | not migrated | used by iOS (`SocialSignIn*`) | owner: Auth |
+| `ui/screen/auth`, `passwordrecovery` | 1699 + 159 | migrated (`feature/auth`: sign-in, Google, registration, recovery) | legacy | `LegacyAuthScreenRenderer`; Apple, log-out and `ProfileViewModel` still use the legacy repository |
 | `ui/screen/feed`, `map`, `main`, `feature/catalog` | 1428 + 1406 + 463 + 691 | not migrated | used by iOS (`DiscoveryTabContent`, `CheckInTabContent`) | owner: Discovery |
 | `feature/community` | 770 | not migrated | used by iOS | owner: Community |
 | `ui/screen/addshop`, `contributions`, `review`, `shopchange` | 1873 + 513 + 215 + 1488 | not migrated | legacy | owner: Contributions |
