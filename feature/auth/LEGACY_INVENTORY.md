@@ -233,3 +233,11 @@ New module `:feature:auth:impl` (resource prefix `auth_`) with the two screens, 
 - Tests: `LoginViewModelTest` 6 and `PasswordRecoveryViewModelTest` 5 (validation, what is sent, analytics and event, failure classes, form lock, live-validation rule, edits ignored while busy, retry).
 - Verified: `:feature:auth:impl` 11 tests, domain 12 and data 12 still pass; impl and api iOS simulator compilation; `composeApp` Android unit-test compilation, iOS compilation and `assembleDirectSandbox`.
 - **Pending for step 4 (device):** the visual parity of the two screens against the legacy ones (card, wordmark, fields, errors, loader on the button, recovery spacing), the system password-manager prompt after sign-in (the new fields keep `Email`/`Password` keyboard types and no special hints), dark theme and large font.
+
+## Step 3b result (registration in `impl`)
+
+- **impl**: `register/{RegisterContract,RegisterViewModel}` (typed MVI: steps Email → Details → Success, e-mail check with the taken mark, submit gated by `canSubmitRegistration`, the legacy message priority `RegistrationIssue` kept for a submit with invalid fields, a second submit while busy ignored), `ui/RegisterScreen` (stepper that bleeds into the card padding, new-profile badge, e-mail chip, strength meter, terms with links, analytics choice, "check your mail" step with the happy mascot), `createRegisterEntry(repository, analytics)`, `auth_` strings copied verbatim.
+- **api**: `RegisterEntry` (`onClose`, `onGoToLogin`), `AuthAnalytics.saveAnalyticsConsent` (stored before the account is created) and `passwordSignUpCompleted(email)` (after it), the order the legacy view model used.
+- **Improvement (Q8)**: request errors are inline under the form (the server's own message, else the generic text of the step) instead of the global dialog; the loader is on the primary button.
+- **Left for step 4 (device check)**: autofill hints for the registration password (legacy `newPassword`) and the Google password manager prompt; the Apple/Google buttons and the "or" divider on the first step (3c); wiring `onGoToLogin` to `popThenNavigate(Auth)`.
+- **Tests**: `RegisterViewModelTest` 12 (steps, taken e-mail, check failure, consent/register/sign-up order, rejected registration, priority, busy guard, live password validation).

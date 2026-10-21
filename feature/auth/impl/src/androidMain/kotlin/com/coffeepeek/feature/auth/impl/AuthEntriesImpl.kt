@@ -6,11 +6,14 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.coffeepeek.feature.auth.api.AuthAnalytics
 import com.coffeepeek.feature.auth.api.LoginEntry
 import com.coffeepeek.feature.auth.api.PasswordRecoveryEntry
+import com.coffeepeek.feature.auth.api.RegisterEntry
 import com.coffeepeek.feature.auth.domain.AuthRepository
 import com.coffeepeek.feature.auth.impl.login.LoginViewModel
 import com.coffeepeek.feature.auth.impl.recovery.PasswordRecoveryViewModel
+import com.coffeepeek.feature.auth.impl.register.RegisterViewModel
 import com.coffeepeek.feature.auth.impl.ui.LoginScreen
 import com.coffeepeek.feature.auth.impl.ui.PasswordRecoveryScreen
+import com.coffeepeek.feature.auth.impl.ui.RegisterScreen
 
 /** «Вход в аккаунт». The ViewModel lives in the destination's store. */
 fun createLoginEntry(repository: AuthRepository, analytics: AuthAnalytics): LoginEntry = object : LoginEntry {
@@ -34,5 +37,13 @@ fun createPasswordRecoveryEntry(repository: AuthRepository): PasswordRecoveryEnt
             viewModel(key = "auth-recovery") { PasswordRecoveryViewModel(initialEmail, repository) },
             onClose, onBackToLogin, modifier,
         )
+    }
+}
+
+/** «Регистрация»: e-mail check, details, "check your mail". */
+fun createRegisterEntry(repository: AuthRepository, analytics: AuthAnalytics): RegisterEntry = object : RegisterEntry {
+    @Composable
+    override fun Content(onClose: () -> Unit, onGoToLogin: () -> Unit, modifier: Modifier) {
+        RegisterScreen(viewModel(key = "auth-register") { RegisterViewModel(repository, analytics) }, onClose, onGoToLogin, modifier)
     }
 }

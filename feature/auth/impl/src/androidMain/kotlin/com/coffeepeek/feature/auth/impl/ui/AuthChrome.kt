@@ -75,7 +75,7 @@ private val AuthLightBackground = Color(0xFFFFFCF7)
 private val AuthCardDark = Color(0x992D241F)
 private val AuthInputDark = Color(0x08FFFFFF)
 private val CardRadius = 24.dp
-private val CardPadding = 40.dp
+internal val AuthCardPadding = 40.dp
 private val MascotSize = 128.dp
 
 /**
@@ -87,6 +87,7 @@ internal fun AuthScaffold(
     onClose: () -> Unit,
     modifier: Modifier = Modifier,
     mascot: Boolean = true,
+    @androidx.annotation.DrawableRes mascotRes: Int = R.drawable.auth_mascot_laptop,
     content: @Composable ColumnScope.() -> Unit,
 ) {
     val isDark = MaterialTheme.colorScheme.background.luminance() < 0.5f
@@ -121,12 +122,12 @@ internal fun AuthScaffold(
                             .clip(RoundedCornerShape(CardRadius))
                             .background(cardBackground)
                             .border(1.dp, cardBorder, RoundedCornerShape(CardRadius))
-                            .padding(start = CardPadding, end = CardPadding, top = if (mascot) 48.dp else CardPadding, bottom = CardPadding),
+                            .padding(start = AuthCardPadding, end = AuthCardPadding, top = if (mascot) 48.dp else AuthCardPadding, bottom = AuthCardPadding),
                         content = content,
                     )
                     if (mascot) {
                         androidx.compose.foundation.Image(
-                            painter = painterResource(R.drawable.auth_mascot_laptop),
+                            painter = painterResource(mascotRes),
                             contentDescription = null,
                             contentScale = ContentScale.Fit,
                             modifier = Modifier.align(Alignment.TopCenter).padding(top = mascotTopGap).size(MascotSize).zIndex(1f),
@@ -198,6 +199,8 @@ internal fun AuthTextField(
     errorText: String? = null,
     next: Boolean = false,
     enabled: Boolean = true,
+    /** Plain text (a name) instead of the e-mail keyboard. */
+    text: Boolean = false,
 ) {
     var passwordVisible by remember { mutableStateOf(false) }
     val isError = errorText != null
@@ -264,7 +267,7 @@ internal fun AuthTextField(
             },
             visualTransformation = if (isPassword && !passwordVisible) PasswordVisualTransformation() else VisualTransformation.None,
             keyboardOptions = KeyboardOptions(
-                keyboardType = if (isPassword) KeyboardType.Password else KeyboardType.Email,
+                keyboardType = if (isPassword) KeyboardType.Password else if (text) KeyboardType.Text else KeyboardType.Email,
                 autoCorrectEnabled = false,
                 imeAction = if (next) ImeAction.Next else ImeAction.Done,
             ),

@@ -10,6 +10,11 @@ import kotlinx.coroutines.CompletableDeferred
 internal class FakeAuthRepository : AuthRepository {
     val signIns = mutableListOf<Pair<String, String>>()
     val resets = mutableListOf<String>()
+    val registrations = mutableListOf<List<String>>()
+    val emailChecks = mutableListOf<String>()
+    var register: Result<Unit> = Result.success(Unit)
+    var emailTaken: Result<Boolean> = Result.success(false)
+    var onRegister: () -> Unit = {}
     var signIn: Result<SignedInAccount> = Result.success(SignedInAccount("user-1"))
     var reset: Result<Unit> = Result.success(Unit)
     var gate: CompletableDeferred<Unit>? = null
@@ -27,14 +32,38 @@ internal class FakeAuthRepository : AuthRepository {
     }
 
     override suspend fun signInWithGoogle(idToken: String): Result<SignedInAccount> = error("Unused")
-    override suspend fun register(userName: String, email: String, password: String): Result<Unit> = error("Unused")
-    override suspend fun isEmailTaken(email: String): Result<Boolean> = error("Unused")
+    override suspend fun register(userName: String, email: String, password: String): Result<Unit> {
+        registrations += listOf(userName, email, password)
+        onRegister()
+        gate?.await()
+        return register
+    }
+
+    override suspend fun isEmailTaken(email: String): Result<Boolean> {
+        emailChecks += email
+        gate?.await()
+        return emailTaken
+    }
+
     override suspend fun signOut(): Result<Unit> = error("Unused")
 }
 
 internal class FakeAnalytics : AuthAnalytics {
     val signedIn = mutableListOf<List<Any?>>()
+    val consents = mutableListOf<Boolean>()
+    val signUps = mutableListOf<String>()
+    val calls = mutableListOf<String>()
     override fun signedIn(userId: String?, method: SignInMethod, entry: AuthEntry, email: String?) {
         signedIn += listOf(userId, method, entry, email)
+    }
+
+    override suspend fun saveAnalyticsConsent(accepted: Boolean) {
+        consents += accepted
+        calls += "consent"
+    }
+
+    override fun passwordSignUpCompleted(email: String) {
+        signUps += email
+        calls += "signup"
     }
 }
