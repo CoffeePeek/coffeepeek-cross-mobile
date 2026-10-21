@@ -42,6 +42,8 @@ import com.coffeepeek.admin.feature.appupdate.ui.AppUpdateRenderer
 import com.coffeepeek.admin.feature.appupdate.ui.LegacyAppUpdateRenderer
 import com.coffeepeek.admin.ui.screen.profile.AccountScreenRenderer
 import com.coffeepeek.admin.ui.screen.profile.LegacyAccountScreenRenderer
+import com.coffeepeek.admin.feature.community.ui.CommunityScreenRenderer
+import com.coffeepeek.admin.feature.community.ui.LegacyCommunityScreenRenderer
 import com.coffeepeek.admin.ui.screen.auth.AuthScreenRenderer
 import com.coffeepeek.admin.ui.screen.auth.LegacyAuthScreenRenderer
 import com.coffeepeek.admin.ui.screen.profile.LegacySettingsScreenRenderer
@@ -114,6 +116,7 @@ fun initKoin(
     settingsRendererFactory: Scope.() -> SettingsScreenRenderer = { LegacySettingsScreenRenderer },
     appUpdateRendererFactory: Scope.() -> AppUpdateRenderer = { LegacyAppUpdateRenderer },
     authRendererFactory: Scope.() -> AuthScreenRenderer = { LegacyAuthScreenRenderer },
+    communityRendererFactory: Scope.() -> CommunityScreenRenderer = { LegacyCommunityScreenRenderer },
     analyticsEnabled: Boolean = true,
 ) {
     check(AppConfig.baseUrl.isNotBlank()) {
@@ -136,7 +139,7 @@ fun initKoin(
             shopCheckInRendererFactory, shopDetailRendererFactory, shopCheckInListRendererFactory,
             checkInHistoryRendererFactory, checkInCreateFlowRendererFactory, coffeeRendererFactory, roasterRendererFactory,
             publicProfileRendererFactory, ownProfileRendererFactory, accountRendererFactory, settingsRendererFactory, appUpdateRendererFactory,
-            authRendererFactory),
+            authRendererFactory, communityRendererFactory),
         imageModule(),
         roasterModule(),
         updateInstallerModule(),
@@ -166,6 +169,7 @@ private fun appModule(
     settingsRendererFactory: Scope.() -> SettingsScreenRenderer,
     appUpdateRendererFactory: Scope.() -> AppUpdateRenderer,
     authRendererFactory: Scope.() -> AuthScreenRenderer,
+    communityRendererFactory: Scope.() -> CommunityScreenRenderer,
 ) = module {
     single<CoffeeScreenRenderer> { coffeeRendererFactory() }
     single<RoasterScreenRenderer> { roasterRendererFactory() }
@@ -175,6 +179,13 @@ private fun appModule(
     single<SettingsScreenRenderer> { settingsRendererFactory() }
     single<AppUpdateRenderer> { appUpdateRendererFactory() }
     single<AuthScreenRenderer> { authRendererFactory() }
+    single<CommunityScreenRenderer> { communityRendererFactory() }
+    single<com.coffeepeek.feature.community.domain.repository.CommunityRepository> {
+        com.coffeepeek.feature.community.data.repository.createCommunityRepository(get<CoffeePeekClient>().client, Constants.BASE_URL)
+    }
+    single<com.coffeepeek.feature.community.api.CommunityAccount> { com.coffeepeek.admin.di.community.SessionCommunityAccount(get(), get()) }
+    single<com.coffeepeek.feature.community.api.ConsumedDrinks> { com.coffeepeek.admin.di.community.ShopCommunityDrinks(get()) }
+    single<com.coffeepeek.feature.community.api.CommunityAnalytics> { com.coffeepeek.admin.di.community.AppCommunityAnalytics() }
     single<com.coffeepeek.feature.auth.api.LocalUserData> { com.coffeepeek.admin.di.auth.UserSessionLocalUserData(get()) }
     single<com.coffeepeek.feature.auth.api.AuthAnalytics> { com.coffeepeek.admin.di.auth.AppAuthAnalytics() }
     single<com.coffeepeek.feature.auth.domain.AuthRepository> {

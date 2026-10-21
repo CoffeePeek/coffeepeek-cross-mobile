@@ -8,6 +8,7 @@ import com.coffeepeek.admin.di.coffee.androidCoffeeScreenRenderer
 import com.coffeepeek.admin.di.coffee.coffeeModule
 import com.coffeepeek.admin.di.appupdate.androidAppUpdateRenderer
 import com.coffeepeek.admin.di.auth.androidAuthScreenRenderer
+import com.coffeepeek.admin.di.community.androidCommunityScreenRenderer
 import com.coffeepeek.admin.di.profile.androidAccountScreenRenderer
 import com.coffeepeek.admin.di.profile.androidOwnProfileScreenRenderer
 import com.coffeepeek.admin.di.settings.androidSettingsScreenRenderer
@@ -69,5 +70,6 @@ internal fun initAndroidKoin(extraModules: List<org.koin.core.module.Module> = e
         settingsRendererFactory = { androidSettingsScreenRenderer(get(), get(), get(), get()) },
         appUpdateRendererFactory = { androidAppUpdateRenderer(get(), get()) },
         authRendererFactory = { androidAuthScreenRenderer(get(), get()) },
+        communityRendererFactory = { androidCommunityScreenRenderer(get(), get(), get(), get(), get(), get()) },
     )
 }

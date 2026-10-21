@@ -15,4 +15,5 @@ dependencies {
     androidApi(libs.compose.runtime)
     androidApi(compose.ui)
     androidApi(compose.foundation)
+    androidApi(compose.material3)
 }

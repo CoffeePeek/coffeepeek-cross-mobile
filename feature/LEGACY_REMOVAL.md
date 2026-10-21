@@ -43,7 +43,7 @@ screen stays for iOS/shared until iOS consumes the new modules.
 | `feature/appupdate` | ~250 | migrated (`feature/app-update`, audit done) | legacy prompt and `StoreUpdateInstaller` used by iOS | delete with the Legacy renderer when iOS migrates |
 | `ui/screen/auth`, `passwordrecovery` | 1699 + 159 | migrated (`feature/auth`: sign-in, Google, registration, recovery) | legacy | `LegacyAuthScreenRenderer`; Apple, log-out and `ProfileViewModel` still use the legacy repository |
 | `ui/screen/feed`, `map`, `main`, `feature/catalog` | 1428 + 1406 + 463 + 691 | not migrated | used by iOS (`DiscoveryTabContent`, `CheckInTabContent`) | owner: Discovery |
-| `feature/community` | 770 | not migrated (inventory: `feature/community/LEGACY_INVENTORY.md`) | used by iOS | owner: Community |
+| `feature/community` | 770 | migrated (`feature/community`: feed, likes, edit, hide, report, blocking) | legacy | `LegacyCommunityScreenRenderer`; inventory in `feature/community/LEGACY_INVENTORY.md` |
 | `ui/screen/addshop`, `contributions`, `review`, `shopchange` | 1873 + 513 + 215 + 1488 | not migrated | legacy | owner: Contributions |
 
 Not-migrated areas are the real remaining work; everything marked "migrated" on Android only
