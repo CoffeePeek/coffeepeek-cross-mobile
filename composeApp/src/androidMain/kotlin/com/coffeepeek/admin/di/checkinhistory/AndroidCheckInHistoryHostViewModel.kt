@@ -4,8 +4,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelStore
 import androidx.lifecycle.ViewModelStoreOwner
 import androidx.lifecycle.viewModelScope
-import com.coffeepeek.domain.model.Session
-import com.coffeepeek.domain.repository.SessionRepository
+import com.coffeepeek.core.session.Session
+import com.coffeepeek.core.session.SessionReader
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Job
@@ -16,7 +16,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 /** Account observation outlives visible composition, including when another route covers history. */
-internal class AndroidCheckInHistoryHostViewModel(private val sessions: SessionRepository) : ViewModel() {
+internal class AndroidCheckInHistoryHostViewModel(private val sessions: SessionReader) : ViewModel() {
     private val mutableSession = MutableStateFlow(HistoryHostSession(0, AndroidCheckInHistorySession(sessions)))
     val session = mutableSession.asStateFlow()
     private var observation: Job? = null

@@ -24,7 +24,7 @@ import coffeepeek.composeapp.generated.resources.shop_session_retry
 import com.coffeepeek.core.designsystem.component.CoffeePeekButton
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
-import com.coffeepeek.domain.repository.SessionRepository
+import com.coffeepeek.core.session.SessionReader
 import com.coffeepeek.feature.authorblocking.api.AuthorVisibility
 import org.jetbrains.compose.resources.stringResource
 
@@ -32,7 +32,7 @@ import org.jetbrains.compose.resources.stringResource
 @Composable
 internal fun AndroidShopBrowsingHost(
     ownerKey: String,
-    sessions: SessionRepository,
+    sessions: SessionReader,
     visibility: AuthorVisibility = AuthorVisibility.None,
     content: @Composable (ShopBrowsingHostSession) -> Unit,
 ) {

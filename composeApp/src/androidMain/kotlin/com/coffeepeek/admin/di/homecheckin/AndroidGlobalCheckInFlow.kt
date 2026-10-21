@@ -5,7 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.coffeepeek.admin.analytics.CheckInTracker
 import com.coffeepeek.admin.di.checkinhistory.AndroidCheckInHistorySession
 import com.coffeepeek.admin.di.checkinhistory.HistoryCreationAnalytics
-import com.coffeepeek.domain.repository.SessionRepository
+import com.coffeepeek.core.session.SessionReader
 import com.coffeepeek.feature.homecheckin.api.HomeCheckInEditorEntry
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineStart
@@ -16,7 +16,7 @@ import kotlinx.coroutines.launch
 
 /** App navigation/lease only; the feature owns form state, validation, photos and writes. */
 internal class AndroidGlobalCheckInFlow(
-    sessions: SessionRepository,
+    sessions: SessionReader,
     private val createEditor: (AndroidCheckInHistorySession, CheckInTracker?) -> HomeCheckInEditorEntry,
 ) : ViewModel() {
     val lease = AndroidCheckInHistorySession(sessions)

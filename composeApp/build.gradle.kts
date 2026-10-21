@@ -83,6 +83,7 @@ kotlin {
             implementation(project(module.feature.roaster.data))
             implementation(project(module.feature.roaster.impl))
             implementation(project(module.core.designSystem))
+            implementation(project(module.core.session))
             implementation(project(module.feature.favorites.domain))
             implementation(libs.posthog.kmp)
             implementation(project(module.legacy.domain))

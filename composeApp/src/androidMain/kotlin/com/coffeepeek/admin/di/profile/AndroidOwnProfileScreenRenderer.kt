@@ -15,7 +15,7 @@ import com.coffeepeek.admin.ui.screen.profile.OwnProfileScreenRenderer
 import com.coffeepeek.admin.ui.screen.profile.PersonalProfileActivityCalendar
 import com.coffeepeek.admin.utils.ErrorHandler
 import com.coffeepeek.domain.repository.AuthRepository
-import com.coffeepeek.domain.repository.SessionRepository
+import com.coffeepeek.core.session.SessionReader
 import com.coffeepeek.domain.repository.UserRepository
 import com.coffeepeek.feature.authorblocking.api.AuthorBlockActions
 import com.coffeepeek.feature.authorblocking.api.AuthorVisibility
@@ -70,7 +70,7 @@ internal class AndroidProfileSignOut(
 
 internal fun androidOwnProfileScreenRenderer(
     repository: PublicProfileRepository,
-    sessions: SessionRepository,
+    sessions: SessionReader,
     users: UserRepository,
     auth: AuthRepository,
     drafts: ReviewDraftStore,

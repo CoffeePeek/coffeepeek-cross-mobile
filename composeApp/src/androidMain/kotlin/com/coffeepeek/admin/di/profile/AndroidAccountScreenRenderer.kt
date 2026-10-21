@@ -20,7 +20,7 @@ import com.coffeepeek.feature.profile.api.ProfileEditPort
 import com.coffeepeek.feature.profile.impl.createAccountDeletionEntry
 import com.coffeepeek.feature.profile.impl.createEditProfileEntry
 import androidx.compose.ui.layout.ContentScale
-import com.coffeepeek.domain.repository.SessionRepository
+import com.coffeepeek.core.session.SessionReader
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -95,7 +95,7 @@ internal fun androidEditProfileSlots() = EditProfileSlots(
     },
 )
 
-internal fun androidAccountScreenRenderer(sessions: SessionRepository, users: UserRepository): AndroidAccountScreenRenderer {
+internal fun androidAccountScreenRenderer(sessions: SessionReader, users: UserRepository): AndroidAccountScreenRenderer {
     val accounts = AndroidProfileAccountPort(sessions, users)
     return AndroidAccountScreenRenderer(
         edit = createEditProfileEntry(accounts, AndroidProfileEditPort(users), androidEditProfileSlots()),

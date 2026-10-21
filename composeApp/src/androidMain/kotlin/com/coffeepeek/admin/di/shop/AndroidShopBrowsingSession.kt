@@ -1,7 +1,7 @@
 package com.coffeepeek.admin.di.shop
 
-import com.coffeepeek.domain.model.Session
-import com.coffeepeek.domain.repository.SessionRepository
+import com.coffeepeek.core.session.Session
+import com.coffeepeek.core.session.SessionReader
 import com.coffeepeek.domain.repository.UserRepository
 import com.coffeepeek.feature.favorites.domain.model.FavoriteShop
 import com.coffeepeek.feature.favorites.domain.repository.FavoritesRepository
@@ -21,7 +21,7 @@ import kotlin.concurrent.Volatile
 
 /** A permanently revocable account lease; token renewal for the same account is not replacement. */
 internal class AndroidShopBrowsingSession(
-    private val sessions: SessionRepository,
+    private val sessions: SessionReader,
     session: Session? = sessions.peekSession(),
     private val visibility: AuthorVisibility = AuthorVisibility.None,
 ) {

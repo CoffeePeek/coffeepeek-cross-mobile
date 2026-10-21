@@ -1,7 +1,7 @@
 package com.coffeepeek.admin.di.checkinhistory
 
-import com.coffeepeek.domain.model.Session
-import com.coffeepeek.domain.repository.SessionRepository
+import com.coffeepeek.core.session.Session
+import com.coffeepeek.core.session.SessionReader
 import com.coffeepeek.feature.checkinhistory.domain.model.HistoryPeriod
 import com.coffeepeek.feature.checkinhistory.domain.model.HomeHistoryDateRange
 import com.coffeepeek.feature.checkinhistory.domain.repository.CheckInHistoryRepository
@@ -18,7 +18,7 @@ import kotlin.concurrent.Volatile
 
 /** Private reads are permanently revoked on replacement; same-account token renewal is not replacement. */
 internal class AndroidCheckInHistorySession(
-    private val sessions: SessionRepository,
+    private val sessions: SessionReader,
     session: Session? = sessions.peekSession(),
 ) {
     val isLoggedIn = sessions.isActiveSession(session) && !session?.userId.isNullOrBlank()

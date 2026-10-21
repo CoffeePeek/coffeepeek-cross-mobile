@@ -10,7 +10,7 @@ import com.coffeepeek.admin.theme.ThemeManager
 import com.coffeepeek.admin.utils.COFFEEPEEK_SHARE_TEXT
 import com.coffeepeek.admin.utils.OpenInBrowser
 import com.coffeepeek.admin.utils.ShareHelper
-import com.coffeepeek.domain.repository.SessionRepository
+import com.coffeepeek.core.session.SessionReader
 import com.coffeepeek.domain.repository.ShopRepository
 import com.coffeepeek.feature.settings.api.CityPort
 import com.coffeepeek.feature.settings.api.SettingsAccountPort
@@ -63,7 +63,7 @@ internal class AndroidCityPort(
 }
 
 /** Signed in = an active session that has a user id, exactly what the legacy settings state used. */
-internal class AndroidSettingsAccountPort(private val sessions: SessionRepository) : SettingsAccountPort {
+internal class AndroidSettingsAccountPort(private val sessions: SessionReader) : SettingsAccountPort {
     override fun isSignedIn(): Boolean = signedIn(sessions.peekSession())
     override fun observeSignedIn(): Flow<Boolean> = sessions.observeSession().map(::signedIn).distinctUntilChanged()
     private fun signedIn(session: com.coffeepeek.domain.model.Session?) = sessions.isActiveSession(session) && session?.userId != null
