@@ -195,4 +195,7 @@ Layout `feature/app-update/{api,domain,data,impl}`, package `com.coffeepeek.feat
 - Verified: `impl` 17 tests; `composeApp` Direct (Sandbox, Settings, update, `di`: 229) and Play (`di`: 202) unit runs, 0 failures; Android unit and instrumented test compilation, iOS simulator compilation, `assembleDirectSandbox`,
   `assembleDirectDebug`, `assemblePlayDebug`; merged manifests checked with aapt2: `Direct` has `REQUEST_INSTALL_PACKAGES`, `Play` and Sandbox do not, all three keep the FileProvider.
 - **Not verified:** the installers and the effect have no unit tests (they need Play, DownloadManager and a device) and the Sandbox installer is a fake, so no real download, install or Play flow ran. Device check of the
-  Sandbox prompt (Required card, Available snackbar after the move) is pending: the phone was locked.
+  Sandbox prompt (Required card, Available snackbar after the move) was checked afterwards, see below.
+- Device check after the move, Pixel 7 / Android 17, `com.coffeepeek.sandbox` only (data cleared first, launch extras `sandbox_update`): *Required*: the blocking card is the same as before (title, body, blocked-installer error,
+  one «Повторить», no «Позже»); *Available*: the Play-channel snackbar appears at launch with the same message and «Повторить», above the floating navigation (the clearance slot works). No real download, install or Play flow
+  ran (the Sandbox installer is a fake). Not exercised: dark theme, large font, rotation, TalkBack.
