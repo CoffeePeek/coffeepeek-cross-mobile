@@ -80,10 +80,11 @@ fun AuthScreenScaffold(
     // How much of the mascot sits above the card edge (rest overlaps the card).
     val mascotOverlap = 40.dp
     val mascotTopGap = 12.dp
+    // Without the mascot the card would sit right under the wordmark and the close button.
     val cardTopInset = if (showMascot) {
         mascotTopGap + CpDimens.authMascotSize - mascotOverlap
     } else {
-        0.dp
+        CpDimens.spacing6
     }
 
     val glassHaze = rememberHazeState()
