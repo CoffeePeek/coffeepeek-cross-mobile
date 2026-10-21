@@ -32,7 +32,6 @@ import com.coffeepeek.domain.repository.UserRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.launch
 import com.coffeepeek.room.DatabaseCore
 import org.koin.core.module.Module
 import org.koin.dsl.module
@@ -44,6 +43,7 @@ fun dataModule(
     database: DatabaseCore,
     platformContext: Any? = null,
     debug: Boolean = false,
+    registerLegacyFavorites: Boolean = true,
 ): Module = module {
     single { CoroutineScope(Dispatchers.Default + SupervisorJob()) }
 
@@ -61,7 +61,6 @@ fun dataModule(
     }
 
     single {
-        val scope = get<CoroutineScope>()
         val tokenProvider = get<SessionTokenProvider>()
         CoffeePeekClient(
             url = baseUrl,
@@ -79,8 +78,16 @@ fun dataModule(
                         userId = JwtUtils.extractUserId(it.accessToken) ?: current?.userId,
                     )
                 }
-                sessionRepository.applySession(session)
-                scope.launch { sessionRepository.persistSession(session) }
+                sessionRepository.saveSession(session)
+            },
+            replaceToken = { expected, updated ->
+                val sessions = get<SessionRepository>()
+                val old = sessions.peekSession()
+                if (old?.accessToken != expected.accessToken || old.refreshToken.orEmpty() != expected.refreshToken) false
+                else sessions.replaceSession(old, updated?.let {
+                    com.coffeepeek.domain.model.Session(it.accessToken, it.refreshToken,
+                        JwtUtils.extractUserId(it.accessToken) ?: old.userId)
+                })
             },
         )
     }
@@ -102,7 +109,9 @@ fun dataModule(
     single<com.coffeepeek.domain.feature.favorites.api.FavoritesRepository> {
         com.coffeepeek.data.feature.favorites.ServerFavoritesRepository(get(), get())
     }
-    single<FavoriteRepository> { FavoriteRepositoryImpl(get(), get(), get(), get()) }
+    if (registerLegacyFavorites) {
+        single<FavoriteRepository> { FavoriteRepositoryImpl(get(), get(), get(), get()) }
+    }
     single<ShopRepository> { ShopRepositoryImpl(get(), get(), get(), get(), get()) }
     single<UserRepository> { UserRepositoryImpl(get(), get(), get(), get()) }
     single<ReviewRepository> { ReviewRepositoryImpl(get(), get(), get()) }

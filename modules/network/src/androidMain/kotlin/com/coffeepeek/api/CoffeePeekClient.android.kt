@@ -9,7 +9,7 @@ import io.ktor.client.plugins.cache.storage.FileStorage
 import java.io.File
 
 internal actual fun deviceUserAgent(): String = formatDeviceUserAgent(
-    androidDeviceModel(Build.MANUFACTURER, Build.MODEL),
+    androidDeviceModel(Build.MANUFACTURER.orEmpty(), Build.MODEL.orEmpty()),
     "Android ${Build.VERSION.RELEASE}",
 )
 

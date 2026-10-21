@@ -23,7 +23,9 @@ class RequestObservationTest {
             if (request.headers[HttpHeaders.Authorization] == "Bearer old") respond("", HttpStatusCode.Unauthorized, headersOf(HttpHeaders.WWWAuthenticate, "Bearer"))
             else respond("ok", HttpStatusCode.OK)
         }) {
-            configureSessionAuthentication("https://api.example.test", { tokens }, { it?.let { tokens = it } }) {
+            configureSessionAuthentication("https://api.example.test", { tokens }, { expected, updated ->
+                if (tokens != expected) false else { updated?.let { tokens = it }; true }
+            }) {
                 refreshes++; AuthResp("new", "refresh")
             }
         }

@@ -15,7 +15,10 @@ class SessionRefreshCoordinatorTest {
         var rotations = 0
         val release = CompletableDeferred<Unit>()
         val started = CompletableDeferred<Unit>()
-        val coordinator = SessionRefreshCoordinator({ tokens }, { tokens = it }) {
+        val save: suspend (AuthResp, AuthResp?) -> Boolean = { expected, updated ->
+            if (tokens != expected) false else { tokens = updated; true }
+        }
+        val coordinator = SessionRefreshCoordinator({ tokens }, save) {
             rotations++; started.complete(Unit); release.await(); AuthResp("new-access", "new-refresh")
         }
         val engine = MockEngine { request ->
@@ -23,7 +26,7 @@ class SessionRefreshCoordinatorTest {
             else respond("denied", HttpStatusCode.Unauthorized)
         }
         fun client() = HttpClient(engine) {
-            configureSessionAuthentication("https://api.example", { tokens }, { tokens = it }, coordinator)
+            configureSessionAuthentication("https://api.example", { tokens }, save, coordinator)
         }.also { it.readCurrentSessionForRequests() }
         val api = client(); val images = client()
         try {
@@ -45,7 +48,9 @@ class SessionRefreshCoordinatorTest {
         var tokens: AuthResp? = initial
         val finish = CompletableDeferred<Unit>()
         val started = CompletableDeferred<Unit>()
-        val coordinator = SessionRefreshCoordinator({ tokens }, { tokens = it }) {
+        val coordinator = SessionRefreshCoordinator({ tokens }, { expected, updated ->
+            if (tokens != expected) false else { tokens = updated; true }
+        }) {
             started.complete(Unit); finish.await(); AuthResp("rotated-a", "rotated-refresh")
         }
         val inFlight = async { coordinator.refresh(initial.refreshToken, initial.accessToken) }
@@ -61,7 +66,14 @@ class SessionRefreshCoordinatorTest {
         var rotations = 0
         val firstSaved = CompletableDeferred<Unit>()
         val delayedStarted = CompletableDeferred<Unit>()
-        val coordinator = SessionRefreshCoordinator({ tokens }, { tokens = it; firstSaved.complete(Unit) }) {
+        val save: suspend (AuthResp, AuthResp?) -> Boolean = { expected, updated ->
+            if (tokens != expected) false else {
+                tokens = updated
+                firstSaved.complete(Unit)
+                true
+            }
+        }
+        val coordinator = SessionRefreshCoordinator({ tokens }, save) {
             rotations++; AuthResp("new-access", "new-refresh")
         }
         val engine = MockEngine { request ->
@@ -72,7 +84,7 @@ class SessionRefreshCoordinatorTest {
             }
         }
         fun client() = HttpClient(engine) {
-            configureSessionAuthentication("https://api.example", { tokens }, { tokens = it }, coordinator)
+            configureSessionAuthentication("https://api.example", { tokens }, save, coordinator)
         }.also { it.readCurrentSessionForRequests() }
         val api = client(); val images = client()
         try {
@@ -82,5 +94,21 @@ class SessionRefreshCoordinatorTest {
             assertEquals(HttpStatusCode.OK, delayed.await())
             assertEquals(1, rotations)
         } finally { api.close(); images.close() }
+    }
+
+    @Test fun rejectedAtomicPersistenceNeverReturnsRotatedCredentials() = runBlocking {
+        val initial = AuthResp("a-access", "a-refresh")
+        val replacement = AuthResp("b-access", "b-refresh")
+        var tokens: AuthResp? = initial
+        val coordinator = SessionRefreshCoordinator({ tokens }, { expected, _ ->
+            assertEquals(initial, expected)
+            tokens = replacement
+            false
+        }) { AuthResp("rotated-a", "rotated-refresh") }
+
+        assertFailsWith<CancellationException> { coordinator.refresh(initial.refreshToken, initial.accessToken) }
+        assertEquals(replacement, tokens)
+        assertFailsWith<CancellationException> { coordinator.refresh(initial.refreshToken, initial.accessToken) }
+        Unit
     }
 }

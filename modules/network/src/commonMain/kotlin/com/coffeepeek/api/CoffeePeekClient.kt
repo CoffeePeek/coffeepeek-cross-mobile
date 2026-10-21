@@ -30,25 +30,31 @@ class CoffeePeekClient(
     cacheFolderPath: String,
     private val debug: Boolean,
     private val getToken: () -> AuthResp?,
-    private val saveToken: (AuthResp?) -> Unit,
+    private val saveToken: suspend (AuthResp?) -> Unit,
+    private val replaceToken: (suspend (AuthResp, AuthResp?) -> Boolean)? = null,
+    apiClientFactory: (HttpClientConfig<*>.() -> Unit) -> HttpClient = ::createClient,
+    uploadClientFactory: (HttpClientConfig<*>.() -> Unit) -> HttpClient = ::createUploadClient,
 ) {
     var requestObserver: RequestObserver? = null
     private val baseUrl = normalizeBaseUrl(url)
 
     private fun resolveTokens(): AuthResp? = getToken()
 
-    private fun persistTokens(tokens: AuthResp?) {
+    private suspend fun persistTokens(expected: AuthResp, tokens: AuthResp?): Boolean {
+        replaceToken?.let { return it(expected, tokens) }
+        if (resolveTokens() != expected) return false
         saveToken(tokens)
+        return true
     }
 
-    val plainClient: HttpClient = createClient {
+    val plainClient: HttpClient = apiClientFactory {
         install(UserAgent) { agent = deviceUserAgent() }
         installServerErrorValidation()
         install(ContentNegotiation) { json(json = JsonExt.json) }
         defaultRequest { url(baseUrl) }
     }.also { intercept(it) }
 
-    val uploadClient: HttpClient = createUploadClient {
+    val uploadClient: HttpClient = uploadClientFactory {
         installServerErrorValidation()
         install(HttpTimeout) {
             requestTimeoutMillis = 120_000
@@ -63,13 +69,13 @@ class CoffeePeekClient(
     }
 
     /** Manual photo ETag/304 handling must never pass through Ktor's HttpCache. */
-    val imageClient: HttpClient = createClient {
+    val imageClient: HttpClient = apiClientFactory {
         installServerErrorValidation()
         defaultRequest { url(baseUrl) }
         configureSessionAuthentication(baseUrl, ::resolveTokens, ::persistTokens, sessionRefresh)
     }.also { it.readCurrentSessionForRequests(); intercept(it) }
 
-    val client: HttpClient = createClient {
+    val client: HttpClient = apiClientFactory {
         installServerErrorValidation()
         install(ContentNegotiation) { json(json = JsonExt.json) }
         defaultRequest { url(baseUrl) }

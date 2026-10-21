@@ -1,5 +1,7 @@
 package com.coffeepeek.admin.ui.screen.shop
 
+import com.coffeepeek.core.designsystem.component.CoffeePeekLikeIcon
+
 import com.coffeepeek.admin.analytics.*
 
 import androidx.compose.runtime.setValue
@@ -69,6 +71,8 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -101,6 +105,8 @@ import coffeepeek.composeapp.generated.resources.maskot_with_book
 import coffeepeek.composeapp.generated.resources.shop_report_issue
 import coffeepeek.composeapp.generated.resources.shop_report_hint
 import coffeepeek.composeapp.generated.resources.shop_report_prompt
+import coffeepeek.composeapp.generated.resources.checkin_error_shop_address
+import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
@@ -141,6 +147,7 @@ import com.coffeepeek.domain.model.ShopMenu
 import com.coffeepeek.domain.model.ShopMenuItem
 import com.coffeepeek.domain.model.ShopSchedule
 import com.coffeepeek.admin.di.platformViewModel
+import org.koin.compose.koinInject
 import org.koin.core.parameter.parametersOf
 
 private val GuestReviewPeekWidth = 56.dp
@@ -151,10 +158,14 @@ private const val FeaturePreviewCount = 5
 @Composable
 fun ShopDetailScreen(shopId: String, forCheckIn: Boolean = false) {
     val vm: ShopDetailViewModel = platformViewModel(parameters = { parametersOf(shopId) })
+    val menuGalleryRenderer = koinInject<ShopMenuGalleryScreenRenderer>()
+    val checkInRenderer = koinInject<ShopCheckInFormRenderer>()
     val state by vm.uiState.collectAsState()
     com.coffeepeek.admin.analytics.TrackEntityDetail(com.coffeepeek.admin.analytics.Entity.Shop, state.details != null)
     val userLocation = rememberPermittedUserLocation()
     val snackbarHostState = remember { SnackbarHostState() }
+    val screenScope = rememberCoroutineScope()
+    val missingShopAddress = stringResource(Res.string.checkin_error_shop_address)
     // Photos open as a swipeable set: (urls, startIndex).
     var preview by remember { mutableStateOf<Pair<PhotoViewerImages, Int>?>(null) }
     var showRoutePicker by remember { mutableStateOf(false) }
@@ -183,28 +194,44 @@ fun ShopDetailScreen(shopId: String, forCheckIn: Boolean = false) {
     }
 
     if (state.showCheckInSheet) {
-        state.checkInDraft?.let { draft ->
-            CheckInBottomSheet(
-                drinks = state.drinks,
-                drinksError = state.drinksError,
-                onRetryDrinks = vm::loadDrinks,
-                draft = draft,
-                isLoading = state.isCheckInLoading,
-                onDismiss = vm::dismissCheckInSheet,
-                onDraftChange = vm::updateCheckInDraft,
-                onSubmit = vm::checkIn,
-                placeName = state.details?.shop?.title,
-                submittedVisibility = state.submittedCheckInVisibility,
-                submissionError = state.checkInError,
-                onGoToFeed = {
-                    vm.dismissCheckInSheet()
-                    Navigator.popThenSelectTab(Navigator.Screen.CommunityTab)
-                },
-                onViewCheckIns = {
-                    vm.dismissCheckInSheet()
-                    Navigator.popThenNavigate(Navigator.Screen.VisitedPlaces)
-                },
-            )
+        checkInRenderer.Content(
+            shopId = shopId,
+            shopSlug = state.details?.shop?.publicAddress?.slug,
+            shopName = state.details?.shop?.title.orEmpty(),
+            onDismiss = vm::dismissCheckInSheet,
+            onSubmitted = vm::refreshAfterCheckIn,
+            onGoToFeed = {
+                vm.dismissCheckInSheet()
+                Navigator.popThenSelectTab(Navigator.Screen.CommunityTab)
+            },
+            onOpenHistory = {
+                vm.dismissCheckInSheet()
+                Navigator.popThenNavigate(Navigator.Screen.VisitedPlaces)
+            },
+        ) {
+            state.checkInDraft?.let { draft ->
+                CheckInBottomSheet(
+                    drinks = state.drinks,
+                    drinksError = state.drinksError,
+                    onRetryDrinks = vm::loadDrinks,
+                    draft = draft,
+                    isLoading = state.isCheckInLoading,
+                    onDismiss = vm::dismissCheckInSheet,
+                    onDraftChange = vm::updateCheckInDraft,
+                    onSubmit = vm::checkIn,
+                    placeName = state.details?.shop?.title,
+                    submittedVisibility = state.submittedCheckInVisibility,
+                    submissionError = state.checkInError,
+                    onGoToFeed = {
+                        vm.dismissCheckInSheet()
+                        Navigator.popThenSelectTab(Navigator.Screen.CommunityTab)
+                    },
+                    onViewCheckIns = {
+                        vm.dismissCheckInSheet()
+                        Navigator.popThenNavigate(Navigator.Screen.VisitedPlaces)
+                    },
+                )
+            }
         }
     }
 
@@ -272,6 +299,7 @@ fun ShopDetailScreen(shopId: String, forCheckIn: Boolean = false) {
                         onOpenPhotos = { urls, index -> preview = urls to index },
                         onReviewPhotoClick = { urls, index -> preview = urls to index },
                         onReviewHelpfulClick = vm::toggleHelpful,
+                        menuGalleryAction = { menuGalleryRenderer.MenuGalleryAction(shopId) },
                     )
                 }
             }
@@ -296,7 +324,13 @@ fun ShopDetailScreen(shopId: String, forCheckIn: Boolean = false) {
                 canOpenRoute = details.location?.latitude != null &&
                     details.location?.longitude != null,
                 onRoute = { Analytics.shopAction("directions", "mobile_actions"); showRoutePicker = true },
-                onCheckIn = vm::openCheckInSheet,
+                onCheckIn = {
+                    if (!checkInRenderer.usesLegacyDraft && state.details?.shop?.publicAddress?.slug.isNullOrBlank()) {
+                        screenScope.launch { snackbarHostState.showSnackbar(missingShopAddress) }
+                    } else {
+                        vm.openCheckInSheet(prepareLegacyDraft = checkInRenderer.usesLegacyDraft)
+                    }
+                },
                 forCheckIn = forCheckIn,
                 modifier = Modifier.align(Alignment.BottomCenter),
             )
@@ -319,6 +353,7 @@ private fun ShopDetailContent(
     onOpenPhotos: (PhotoViewerImages, Int) -> Unit = { _, _ -> },
     onReviewPhotoClick: (PhotoViewerImages, Int) -> Unit = { _, _ -> },
     onReviewHelpfulClick: (String) -> Unit = {},
+    menuGalleryAction: @Composable () -> Unit = {},
 ) {
     val shop = details.shop
     val photos = details.photos.filter { it.isNotBlank() }.ifEmpty {
@@ -394,6 +429,7 @@ private fun ShopDetailContent(
                 MenuSection(
                     menu = menu,
                     onPhotoClick = { index -> Analytics.track(AnalyticsEvent.SHOP_CONTENT_INTERACTED, "section" to "menu", "action" to "open"); onOpenPhotos(PhotoViewerImages(menu.photos.map { it.previewUrl }, menu.photos.map { it.fullUrl }), index) },
+                    galleryAction = menuGalleryAction,
                 )
             }
         }
@@ -914,11 +950,7 @@ private fun HeaderActionButtons(
             isLoading = isFavoriteLoading,
             contentDescription = if (isFavorite) "Убрать из избранного" else "Добавить в избранное",
         ) {
-            Icon(
-                imageVector = if (isFavorite) CpIcons.FavoriteFilled else CpIcons.Favorite,
-                contentDescription = null,
-                tint = if (isFavorite) CpColor.Error else MaterialTheme.colorScheme.onSurface,
-            )
+            CoffeePeekLikeIcon(isFavorite, contentDescription = null)
         }
         HeroIconButton(
             icon = GlassControlIcon.Share,
@@ -1442,6 +1474,7 @@ private fun DescriptionSection(description: String) {
 private fun MenuSection(
     menu: ShopMenu,
     onPhotoClick: (Int) -> Unit,
+    galleryAction: @Composable () -> Unit = {},
 ) {
     val capturedLabel = menu.capturedAtUtc?.let(::formatMenuDate)
     val updatedLabel = menu.updatedAtUtc?.let(::formatMenuDate)
@@ -1459,6 +1492,7 @@ private fun MenuSection(
             Box(modifier = Modifier.weight(1f)) {
                 SectionTitle("Меню")
             }
+            if (menu.photos.isNotEmpty()) galleryAction()
         }
         OutlinedContentCard {
             Row(

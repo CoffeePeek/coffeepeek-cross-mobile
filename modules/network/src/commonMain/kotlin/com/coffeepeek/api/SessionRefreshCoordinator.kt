@@ -8,7 +8,7 @@ import kotlinx.coroutines.sync.withLock
 /** API and uncached images share one refresh-token rotation. No cross-account retry. */
 internal class SessionRefreshCoordinator(
     private val current: () -> AuthResp?,
-    private val save: (AuthResp?) -> Unit,
+    private val save: suspend (AuthResp, AuthResp?) -> Boolean,
     private val refresh: suspend (String) -> AuthResp,
 ) {
     private val mutex = Mutex()
@@ -25,7 +25,7 @@ internal class SessionRefreshCoordinator(
         if (before.refreshToken != refreshToken) throw CancellationException("Session changed")
         val updated = refresh.invoke(refreshToken)
         if (current() != before) throw CancellationException("Session changed")
-        save(updated)
+        if (!save(before, updated)) throw CancellationException("Session changed")
         lastRotation = before to updated
         updated
     }

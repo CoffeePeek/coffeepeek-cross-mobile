@@ -29,6 +29,21 @@ import com.coffeepeek.admin.feature.favorites.data.ServerRoasterFavorites
 import com.coffeepeek.admin.utils.CustomUrlFetcher
 import com.coffeepeek.api.CoffeePeekClient
 import com.coffeepeek.admin.ui.NavigatorViewModel
+import com.coffeepeek.admin.ui.screen.shop.LegacyShopReportScreenRenderer
+import com.coffeepeek.admin.ui.screen.shop.ShopReportScreenRenderer
+import com.coffeepeek.admin.ui.screen.shop.LegacyShopMenuGalleryScreenRenderer
+import com.coffeepeek.admin.ui.screen.shop.ShopMenuGalleryScreenRenderer
+import com.coffeepeek.admin.ui.screen.shop.ShopCheckInFormRenderer
+import com.coffeepeek.admin.ui.screen.shop.LegacyShopCheckInFormRenderer
+import com.coffeepeek.admin.ui.screen.coffee.CoffeeScreenRenderer
+import com.coffeepeek.admin.ui.screen.coffee.LegacyCoffeeScreenRenderer
+import com.coffeepeek.admin.di.roaster.roasterModule
+import com.coffeepeek.admin.di.roaster.roasterScreenRenderer
+import com.coffeepeek.admin.ui.screen.roaster.RoasterScreenRenderer
+import com.coffeepeek.admin.ui.screen.shop.ShopDetailScreenRenderer
+import com.coffeepeek.admin.ui.screen.shop.LegacyShopDetailScreenRenderer
+import com.coffeepeek.admin.ui.screen.shop.ShopCheckInListScreenRenderer
+import com.coffeepeek.admin.ui.screen.shop.LegacyShopCheckInListScreenRenderer
 import com.coffeepeek.admin.ui.screen.auth.AuthViewModel
 import com.coffeepeek.admin.ui.screen.auth.registr.RegisterViewModel
 import com.coffeepeek.admin.ui.screen.feed.FeedViewModel
@@ -38,6 +53,10 @@ import com.coffeepeek.admin.ui.screen.map.MapViewModel
 import com.coffeepeek.admin.ui.screen.profile.ProfileViewModel
 import com.coffeepeek.admin.ui.screen.deleteaccount.DeleteAccountPendingViewModel
 import com.coffeepeek.admin.ui.screen.checkins.VisitedPlacesViewModel
+import com.coffeepeek.admin.ui.screen.checkins.CheckInHistoryScreenRenderer
+import com.coffeepeek.admin.ui.screen.checkins.LegacyCheckInHistoryScreenRenderer
+import com.coffeepeek.admin.ui.screen.checkins.CheckInCreateFlowRenderer
+import com.coffeepeek.admin.ui.screen.checkins.LegacyCheckInCreateFlowRenderer
 import com.coffeepeek.admin.ui.screen.favorites.FavoritesViewModel
 import com.coffeepeek.admin.ui.screen.review.ReviewReportViewModel
 import com.coffeepeek.admin.ui.screen.contributions.ContributionKind
@@ -54,40 +73,83 @@ import com.coffeepeek.admin.ui.screen.shopchange.SuggestShopChangeViewModel
 import com.coffeepeek.domain.model.ShopChangeSection
 import com.coffeepeek.admin.di.imageModule
 import com.coffeepeek.data.di.dataModule
+import com.coffeepeek.feature.favorites.domain.usecase.ObserveFavoriteIdsUseCase
 import org.koin.core.context.startKoin
+import org.koin.core.module.Module
+import org.koin.core.scope.Scope
 import org.koin.dsl.module
 
-fun initKoin() {
+fun initKoin(
+    registerLegacyFavorites: Boolean = true,
+    platformModules: List<Module> = emptyList(),
+    shopReportRendererFactory: (CoffeePeekClient) -> ShopReportScreenRenderer = {
+        LegacyShopReportScreenRenderer
+    },
+    shopGalleryRendererFactory: (CoffeePeekClient) -> ShopMenuGalleryScreenRenderer = {
+        LegacyShopMenuGalleryScreenRenderer
+    },
+    shopCheckInRendererFactory: Scope.() -> ShopCheckInFormRenderer = { LegacyShopCheckInFormRenderer },
+    shopDetailRendererFactory: Scope.() -> ShopDetailScreenRenderer = { LegacyShopDetailScreenRenderer },
+    shopCheckInListRendererFactory: Scope.() -> ShopCheckInListScreenRenderer = { LegacyShopCheckInListScreenRenderer },
+    checkInHistoryRendererFactory: Scope.() -> CheckInHistoryScreenRenderer = { LegacyCheckInHistoryScreenRenderer },
+    checkInCreateFlowRendererFactory: Scope.() -> CheckInCreateFlowRenderer = { LegacyCheckInCreateFlowRenderer },
+    coffeeRendererFactory: Scope.() -> CoffeeScreenRenderer = { LegacyCoffeeScreenRenderer },
+    roasterRendererFactory: Scope.() -> RoasterScreenRenderer = { roasterScreenRenderer(get(), get(), get()) },
+    analyticsEnabled: Boolean = true,
+) {
     check(AppConfig.baseUrl.isNotBlank()) {
         "API_BASE_URL is not configured. Copy local.properties.example to local.properties."
     }
     val database = Locator.database
     ThemeManager.initialize(database.settingRepository)
 
-    val application = startKoin {
-        modules(
-            dataModule(
-                baseUrl = Constants.BASE_URL,
-                cacheFolderPath = Locator.cacheFolderPath,
-                appCacheRootPath = Locator.appCacheRootPath,
-                database = database,
-                platformContext = Locator.platformContext,
-                debug = AppConfig.isDebug,
-            ),
-            appModule(database.settingRepository),
-            imageModule(),
-            updateInstallerModule(),
-        )
-    }
+    val commonModules = listOf(
+        dataModule(
+            baseUrl = Constants.BASE_URL,
+            cacheFolderPath = Locator.cacheFolderPath,
+            appCacheRootPath = Locator.appCacheRootPath,
+            database = database,
+            platformContext = Locator.platformContext,
+            debug = AppConfig.isDebug,
+            registerLegacyFavorites = registerLegacyFavorites,
+        ),
+        appModule(database.settingRepository, shopReportRendererFactory, shopGalleryRendererFactory,
+            shopCheckInRendererFactory, shopDetailRendererFactory, shopCheckInListRendererFactory,
+            checkInHistoryRendererFactory, checkInCreateFlowRendererFactory, coffeeRendererFactory, roasterRendererFactory),
+        imageModule(),
+        roasterModule(),
+        updateInstallerModule(),
+    )
+    val application = startKoin { modules(commonModules + platformModules) }
     application.koin.get<com.coffeepeek.feature.notifications.api.NotificationFeature>()
-    com.coffeepeek.admin.analytics.installAnalytics(database.settingRepository, application.koin.get(), application.koin.get())
+    if (analyticsEnabled) com.coffeepeek.admin.analytics.installAnalytics(database.settingRepository, application.koin.get(), application.koin.get())
     com.coffeepeek.admin.utils.image.ProtectedPhotoSession.install(
         application.koin.get(), application.koin.get<CoffeePeekClient>().client,
         application.koin.get<com.coffeepeek.feature.authorblocking.api.AuthorVisibility>().visibility,
     )
 }
 
-private fun appModule(settingRepository: com.coffeepeek.room.repository.SettingRepository) = module {
+private fun appModule(
+    settingRepository: com.coffeepeek.room.repository.SettingRepository,
+    shopReportRendererFactory: (CoffeePeekClient) -> ShopReportScreenRenderer,
+    shopGalleryRendererFactory: (CoffeePeekClient) -> ShopMenuGalleryScreenRenderer,
+    shopCheckInRendererFactory: Scope.() -> ShopCheckInFormRenderer,
+    shopDetailRendererFactory: Scope.() -> ShopDetailScreenRenderer,
+    shopCheckInListRendererFactory: Scope.() -> ShopCheckInListScreenRenderer,
+    checkInHistoryRendererFactory: Scope.() -> CheckInHistoryScreenRenderer,
+    checkInCreateFlowRendererFactory: Scope.() -> CheckInCreateFlowRenderer,
+    coffeeRendererFactory: Scope.() -> CoffeeScreenRenderer,
+    roasterRendererFactory: Scope.() -> RoasterScreenRenderer,
+) = module {
+    single<CoffeeScreenRenderer> { coffeeRendererFactory() }
+    single<RoasterScreenRenderer> { roasterRendererFactory() }
+    single<CheckInCreateFlowRenderer> { checkInCreateFlowRendererFactory() }
+    single<CheckInHistoryScreenRenderer> { checkInHistoryRendererFactory() }
+    single<ShopDetailScreenRenderer> { shopDetailRendererFactory() }
+    single<ShopCheckInListScreenRenderer> { shopCheckInListRendererFactory() }
+    single<ShopCheckInFormRenderer> { shopCheckInRendererFactory() }
+    single<ShopReportScreenRenderer> { shopReportRendererFactory(get()) }
+    single<ShopMenuGalleryScreenRenderer> { shopGalleryRendererFactory(get()) }
     single<com.coffeepeek.feature.notifications.api.NotificationFeature> {
         com.coffeepeek.feature.notifications.api.createNotificationFeature(get<CoffeePeekClient>().client, get(), com.coffeepeek.admin.notifications.NativePushBridge)
     }
@@ -111,7 +173,7 @@ private fun appModule(settingRepository: com.coffeepeek.room.repository.SettingR
     single<com.coffeepeek.feature.authorblocking.api.AuthorBlockActions> { get<com.coffeepeek.feature.authorblocking.api.AuthorBlockingPresenter>() }
     single<PublicProfileRepository> { PublicProfileRepositoryImpl(get<CoffeePeekClient>().client, get(), get(), get()) }
     factory { (slug: String) -> PublicProfileViewModel(slug, get(), get(), users = get(), visibility = get()) }
-    single<RoasterFavorites> { ServerRoasterFavorites(get(), get()) }
+    single<RoasterFavorites> { ServerRoasterFavorites(get(), get(), get()) }
     single<com.coffeepeek.admin.feature.appupdate.domain.AppUpdateRepository> {
         com.coffeepeek.admin.feature.appupdate.data.AppUpdateRepositoryImpl(get<CoffeePeekClient>().plainClient, settingRepository)
     }
@@ -126,14 +188,23 @@ private fun appModule(settingRepository: com.coffeepeek.room.repository.SettingR
     factory { AuthViewModel(get()) }
     factory { RegisterViewModel(get()) }
     factory { NavigatorViewModel(get()) }
-    factory { FeedViewModel(get(), get(), get(), get()) }
+    factory { FeedViewModel(get(), get(), get(), get(), getOrNull<ObserveFavoriteIdsUseCase>()) }
     factory { com.coffeepeek.admin.feature.community.ui.CommunityViewModel(get(), get(), get(), get(), get(), get()) }
     factory { com.coffeepeek.admin.ui.screen.roaster.RoasterListViewModel(get(), get(), get()) }
     factory { MapViewModel(get(), get()) }
-    factory { (shopId: String) ->
-        ShopDetailViewModel(shopId, get(), get(), get(), get(), get(), get(), get(), get(),
-            onCheckInCreated = get<NotificationFeature>()::onCheckInCreated)
-    }
+    factory { (shopId: String) -> ShopDetailViewModel(
+        shopId = shopId,
+        shopRepository = get(),
+        favoriteRepository = get(),
+        checkInRepository = get(),
+        sessionRepository = get(),
+        checkInDraftStore = get(),
+        userRepository = get(),
+        observeFavoriteIds = getOrNull<ObserveFavoriteIdsUseCase>(),
+        roasterFavorites = get(),
+        visibility = get(),
+        onCheckInCreated = get<NotificationFeature>()::onCheckInCreated,
+    ) }
     factory { (shopId: String) -> ShopMenuGalleryViewModel(shopId, get()) }
     factory { (shopId: String) -> ShopReportViewModel(shopId, get()) }
     factory { (shopId: String) -> SuggestShopChangeViewModel(shopId, get()) }

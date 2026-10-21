@@ -7,9 +7,11 @@ import com.coffeepeek.admin.base.BaseViewModel
 import com.coffeepeek.admin.feature.favorites.api.RoasterFavorites
 import com.coffeepeek.admin.feature.favorites.api.roasterFavoriteId
 import com.coffeepeek.admin.ui.Navigator
+import com.coffeepeek.admin.ui.favorites.withFavoriteMembership
 import com.coffeepeek.admin.utils.ClipboardHelper
 import com.coffeepeek.admin.utils.FavoriteSync
 import com.coffeepeek.admin.utils.PickedImage
+import com.coffeepeek.admin.utils.ReviewSync
 import com.coffeepeek.admin.utils.ShareHelper
 import com.coffeepeek.admin.utils.epochMillisToUtcIsoInstant
 import com.coffeepeek.domain.model.CoffeeShopDetails
@@ -22,6 +24,8 @@ import com.coffeepeek.domain.repository.CheckInRepository
 import com.coffeepeek.domain.repository.FavoriteRepository
 import com.coffeepeek.domain.repository.SessionRepository
 import com.coffeepeek.domain.repository.ShopRepository
+import com.coffeepeek.feature.favorites.domain.usecase.ObserveFavoriteIdsUseCase
+import kotlinx.coroutines.CancellationException
 import com.coffeepeek.domain.repository.UserRepository
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
@@ -30,7 +34,8 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
@@ -69,6 +74,7 @@ class ShopDetailViewModel internal constructor(
     private val sessionRepository: SessionRepository,
     private val checkInDraftStore: CheckInDraftStore,
     private val userRepository: UserRepository,
+    private val observeFavoriteIds: ObserveFavoriteIdsUseCase? = null,
     private val roasterFavorites: RoasterFavorites,
     private val visibility: AuthorVisibility = AuthorVisibility.None,
     private val onCheckInCreated: () -> Unit = {},
@@ -82,13 +88,40 @@ class ShopDetailViewModel internal constructor(
     val uiState = _uiState.asStateFlow()
     private var checkInAnalytics: CheckInTracker? = null
 
+    private val favoriteIds = MutableStateFlow<Set<String>?>(null)
+    private val favoriteMembershipMutex = Mutex()
+    private val favoriteMutationMutex = Mutex()
+
     init {
+        observeFavoriteIds?.invoke()
+            ?.onEach { result ->
+                result.exceptionOrNull()?.let { if (it is CancellationException) throw it }
+                val ids = result.getOrNull() ?: return@onEach
+                favoriteMembershipMutex.withLock {
+                    favoriteIds.value = ids
+                    _uiState.update { state ->
+                        state.copy(details = state.details?.withFavoriteMembership(ids))
+                    }
+                }
+            }
+            ?.launchIn(workScope)
+        ReviewSync.changes
+            .onEach { changedShopId ->
+                if (changedShopId == shopId) {
+                    _uiState.update { it.copy(actionMessage = "Отзыв отправлен на модерацию") }
+                    refreshDetails(showLoading = false)
+                }
+            }
+            .launchIn(workScope)
         roasterFavorites.observeErrors()
             .onEach { error -> if (error != null) _uiState.update { it.copy(actionMessage = error) } }
             .launchIn(workScope)
         roasterFavorites.observeFavorites()
             .onEach { favorites -> _uiState.update { it.copy(favoriteRoasterIds = favorites.map { it.roasterFavoriteId }.toSet()) } }
-            .catch { _uiState.update { it.copy(actionMessage = "Не удалось загрузить избранное") } }
+            .catch { error ->
+                if (error is CancellationException) throw error
+                _uiState.update { it.copy(actionMessage = "Не удалось загрузить избранное") }
+            }
             .launchIn(workScope)
         load()
         workScope.launch {
@@ -110,41 +143,56 @@ class ShopDetailViewModel internal constructor(
         }
     }
 
-    private suspend fun refreshDetails(showLoading: Boolean) {
+    private suspend fun refreshDetails(showLoading: Boolean, isCurrent: () -> Boolean = { true }) {
+        if (!isCurrent()) return
         val request = requestSequence.updateAndGet { it + 1 }
         val account = accountKey()
         val revision = visibility.visibility.value.revision
-        fun current() = requestSequence.value == request && accountKey() == account && visibility.visibility.value.revision == revision
+        fun current() = isCurrent() && requestSequence.value == request && accountKey() == account &&
+            visibility.visibility.value.revision == revision
         if (!visibility.visibility.value.ready && visibility.refresh().isFailure) {
+            currentCoroutineContext().ensureActive()
             if (current()) _uiState.update { it.copy(isLoading = false, error = "Не удалось загрузить блокировки. Повторите попытку.") }
             return
         }
         val isLoggedIn = sessionRepository.isLoggedIn()
         val currentUserId = if (isLoggedIn) userRepository.getMe().getOrNull()?.address?.slug else null
-        shopRepository.getShopDetails(shopId)
-            .mapCatching { enrichWithReviewAccess(it) }
-            .onSuccess { details ->
-                currentCoroutineContext().ensureActive()
-                if (!current()) return@onSuccess
+        val result = try {
+            shopRepository.getShopDetails(shopId).map { enrichWithReviewAccess(it) }
+        } catch (cancelled: CancellationException) {
+            throw cancelled
+        } catch (error: Exception) {
+            Result.failure(error)
+        }
+        result.exceptionOrNull()?.let { if (it is CancellationException) throw it }
+        result.onSuccess { details ->
+            currentCoroutineContext().ensureActive()
+            // Membership and details must be committed together: an observer update
+            // before details exist can otherwise leave the state equal and evade CAS retries.
+            favoriteMembershipMutex.withLock {
+                if (!current()) return@withLock
+                val visibleDetails = details.copy(checkIns = details.checkIns.filterNot {
+                    visibility.visibility.value.hides(it.authorId, it.authorAddress?.slug)
+                })
                 _uiState.update {
                     it.copy(
-                        details = details.copy(checkIns = details.checkIns.filterNot { visibility.visibility.value.hides(it.authorId, it.authorAddress?.slug) }),
+                        details = favoriteIds.value?.let(visibleDetails::withFavoriteMembership) ?: visibleDetails,
                         isLoggedIn = isLoggedIn,
                         currentUserId = currentUserId,
                         isLoading = false,
                     )
                 }
             }
-            .onFailure { e ->
-                currentCoroutineContext().ensureActive()
-                if (!current()) return@onFailure
-                _uiState.update {
-                    it.copy(
-                        isLoading = if (showLoading) false else it.isLoading,
-                        error = if (showLoading) e.message else it.error,
-                    )
-                }
+        }.onFailure { e ->
+            currentCoroutineContext().ensureActive()
+            if (!current()) return@onFailure
+            _uiState.update {
+                it.copy(
+                    isLoading = if (showLoading) false else it.isLoading,
+                    error = if (showLoading) e.message else it.error,
+                )
             }
+        }
     }
 
     private suspend fun enrichWithReviewAccess(details: CoffeeShopDetails): CoffeeShopDetails {
@@ -157,18 +205,56 @@ class ShopDetailViewModel internal constructor(
 
     fun toggleFavorite() {
         val details = _uiState.value.details ?: return
-        val favoriteId = details.shop.publicAddress?.slug ?: details.shop.id
-        val desired = !details.shop.isFavorite
-        com.coffeepeek.admin.feature.favorites.api.FavoriteInteractions.change(workScope, favoriteId, false, desired,
-            action = { if (desired) favoriteRepository.addFavorite(details.shop, details.location?.address ?: details.shop.address) else favoriteRepository.removeFavorite(favoriteId) },
-            completed = { result -> result.onSuccess {
-                FavoriteSync.notifyChanged(favoriteId, desired)
-                _uiState.update { state -> state.copy(details = state.details?.let { it.copy(shop = it.shop.copy(isFavorite = desired)) }) }
-            }.onFailure { error -> _uiState.update { it.copy(actionMessage = error.message) } } },
-        )
+        com.coffeepeek.admin.feature.favorites.api.FavoriteInteractions.change(workScope,
+            details.shop.publicAddress?.slug ?: details.shop.id, false, !details.shop.isFavorite,
+            action = { mutateFavorite() })
     }
 
-    fun openCheckInSheet() {
+    private suspend fun mutateFavorite(): Result<Unit> {
+        if (!favoriteMutationMutex.tryLock()) return Result.failure(IllegalStateException("Favorite action is unavailable"))
+        var loadingStarted = false
+        return try {
+            if (!sessionRepository.isLoggedIn()) {
+                Navigator.navigate(Navigator.Screen.Auth)
+                return Result.failure(IllegalStateException("Favorite action is unavailable"))
+            }
+            val details = _uiState.value.details ?: return Result.failure(IllegalStateException("Favorite action is unavailable"))
+            val isFavorite = details.shop.isFavorite
+            _uiState.update { it.copy(isFavoriteLoading = true) }
+            loadingStarted = true
+            val result = if (isFavorite) {
+                favoriteRepository.removeFavorite(details.shop.publicAddress?.slug ?: details.shop.id)
+            } else {
+                favoriteRepository.addFavorite(
+                    shop = details.shop,
+                    address = details.location?.address ?: details.shop.address,
+                )
+            }
+            result.exceptionOrNull()?.let { if (it is CancellationException) throw it }
+            result
+                .onSuccess {
+                    val newFavoriteState = !isFavorite
+                    FavoriteSync.notifyChanged(details.shop.publicAddress?.slug ?: details.shop.id, newFavoriteState)
+                    _uiState.update { state ->
+                        val current = state.details ?: return@update state
+                        state.copy(
+                            details = current.copy(
+                                shop = current.shop.copy(isFavorite = newFavoriteState),
+                            ),
+                            isFavoriteLoading = false,
+                        )
+                    }
+                }
+                .onFailure { e ->
+                    _uiState.update { it.copy(actionMessage = e.message, isFavoriteLoading = false) }
+                }
+        } finally {
+            if (loadingStarted) _uiState.update { it.copy(isFavoriteLoading = false) }
+            favoriteMutationMutex.unlock()
+        }
+    }
+
+    fun openCheckInSheet(prepareLegacyDraft: Boolean = true) {
         if (_uiState.value.isCheckInLoading || _uiState.value.showCheckInSheet) return
         val handedOff = com.coffeepeek.admin.feature.checkin.api.CheckInFlowHandoff.take()
         if (handedOff == null) {
@@ -182,8 +268,8 @@ class ShopDetailViewModel internal constructor(
                 return@launch
             }
             checkInAnalytics = (handedOff ?: CheckInTracker(CheckInKind.Visit, CheckInSource.Shop)).also { it.step(CheckInStep.Editor) }
-            loadDrinks()
-            val draft = checkInDraftStore.open(shopId)
+            if (prepareLegacyDraft) loadDrinks()
+            val draft = if (prepareLegacyDraft) checkInDraftStore.open(shopId) else null
             _uiState.update {
                 it.copy(
                     checkInDraft = draft,
@@ -193,6 +279,18 @@ class ShopDetailViewModel internal constructor(
             }
             _uiState.update { it.copy(showCheckInSheet = true) }
         }
+    }
+
+    /** Temporary app-owned bridge; the new form owns its draft and write result. */
+    fun refreshAfterCheckIn() {
+        val userId = sessionRepository.peekSession()?.userId ?: return
+        val isCurrent = {
+            val session = sessionRepository.peekSession()
+            session?.userId == userId && sessionRepository.isActiveSession(session)
+        }
+        if (!isCurrent()) return
+        _uiState.update { it.copy(details = it.details?.copy(isVisited = true)) }
+        workScope.launch { refreshDetails(showLoading = false, isCurrent = isCurrent) }
     }
 
     fun loadDrinks() {

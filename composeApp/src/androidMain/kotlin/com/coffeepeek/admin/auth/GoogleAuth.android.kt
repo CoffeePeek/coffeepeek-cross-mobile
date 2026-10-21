@@ -21,6 +21,7 @@ actual object GoogleAuth {
         Result.failure(UnsupportedOperationException("Используйте rememberGoogleSignInLauncher()"))
 
     actual suspend fun signOut() {
+        if (com.coffeepeek.BuildConfig.GOOGLE_WEB_CLIENT_ID.isBlank()) return
         runCatching {
             val context = CoffeePeekApplication.context
             val client = GoogleSignIn.getClient(

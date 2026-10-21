@@ -1,6 +1,15 @@
 package com.coffeepeek.admin.ui.screen.roaster
 
-import androidx.compose.runtime.setValue
+import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
+import org.jetbrains.compose.ui.tooling.preview.Preview
+import androidx.compose.material3.Surface
+
+import com.coffeepeek.core.designsystem.component.CoffeePeekSelectField
+import com.coffeepeek.core.designsystem.component.CoffeePeekSelectOption
+import coffeepeek.composeapp.generated.resources.select_city_none
+import coffeepeek.composeapp.generated.resources.select_city_label
+import org.jetbrains.compose.resources.stringResource
+
 import androidx.compose.runtime.getValue
 import com.coffeepeek.admin.ui.component.PlatformScrollableColumn
 import com.coffeepeek.admin.ui.component.PlatformAlert
@@ -19,7 +28,6 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -28,31 +36,23 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
@@ -298,66 +298,15 @@ private fun RoasterCityPicker(
     selected: City?,
     onSelect: (City?) -> Unit,
 ) {
-    var expanded by remember { mutableStateOf(false) }
-    var anchorWidth by remember { mutableStateOf(280.dp) }
-    val density = LocalDensity.current
-    Box {
-        OutlinedButton(
-            onClick = { expanded = true },
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(CpDimens.buttonHeight)
-                .onGloballyPositioned { anchorWidth = with(density) { it.size.width.toDp() } },
-            shape = RoundedCornerShape(percent = 50),
-            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
-            colors = ButtonDefaults.outlinedButtonColors(
-                containerColor = MaterialTheme.colorScheme.surface,
-                contentColor = MaterialTheme.colorScheme.onSurface,
-            ),
-            contentPadding = PaddingValues(horizontal = CpDimens.spacing4),
-        ) {
-            Text(
-                text = selected?.name ?: "Не указывать город",
-                modifier = Modifier.weight(1f),
-                color = if (selected == null) MaterialTheme.colorScheme.onSurfaceVariant
-                else MaterialTheme.colorScheme.onSurface,
-            )
-            Icon(CpIcons.ChevronUpDown, contentDescription = null)
-        }
-        val nativeMenu = expanded && com.coffeepeek.admin.ui.component.NativeActionSheet("Город", listOf(com.coffeepeek.admin.ui.component.PlatformAction("Не указывать город", onClick = { onSelect(null) })) + cities.map { city -> com.coffeepeek.admin.ui.component.PlatformAction(city.name, onClick = { onSelect(city) }) }) { expanded = false }
-        DropdownMenu(
-            expanded = expanded && !nativeMenu,
-            onDismissRequest = { expanded = false },
-            modifier = Modifier
-                .width(anchorWidth)
-                .clip(RoundedCornerShape(CpDimens.selectRadius))
-                .border(
-                    1.dp,
-                    MaterialTheme.colorScheme.outlineVariant,
-                    RoundedCornerShape(CpDimens.selectRadius),
-                ),
-            shape = RoundedCornerShape(CpDimens.selectRadius),
-            containerColor = MaterialTheme.colorScheme.surface,
-            tonalElevation = 0.dp,
-        ) {
-            DropdownMenuItem(
-                text = { Text("Не указывать город") },
-                onClick = { onSelect(null); expanded = false },
-                trailingIcon = if (selected == null) {
-                    { Icon(CpIcons.Check, contentDescription = null, tint = MaterialTheme.colorScheme.primary) }
-                } else null,
-            )
-            cities.forEach { city ->
-                DropdownMenuItem(
-                    text = { Text(city.name) },
-                    onClick = { onSelect(city); expanded = false },
-                    trailingIcon = if (city.id == selected?.id) {
-                        { Icon(CpIcons.Check, contentDescription = null, tint = MaterialTheme.colorScheme.primary) }
-                    } else null,
-                )
-            }
-        }
-    }
+    val none = stringResource(Res.string.select_city_none)
+    CoffeePeekSelectField(
+        value = selected?.name ?: none,
+        options = listOf(CoffeePeekSelectOption("none", none, selected == null) { onSelect(null) }) + cities.map { city ->
+            CoffeePeekSelectOption("city:${city.id}", city.name, city.id == selected?.id) { onSelect(city) }
+        },
+        contentDescription = stringResource(Res.string.select_city_label),
+        modifier = Modifier.fillMaxWidth(),
+    )
 }
 
 @Composable
@@ -526,3 +475,12 @@ private fun RoasterPreviewCard(
         }
     }
 }
+
+@Composable
+private fun RoasterCityPickerPreview(darkTheme: Boolean) = CoffeePeekTheme(darkTheme = darkTheme) {
+    Surface { Column(Modifier.padding(16.dp)) {
+        RoasterCityPicker(listOf(City("minsk", "Минск"), City("brest", "Брест")), null, {})
+    } }
+}
+@Preview @Composable private fun RoasterCityPickerLightPreview() = RoasterCityPickerPreview(false)
+@Preview @Composable private fun RoasterCityPickerDarkPreview() = RoasterCityPickerPreview(true)

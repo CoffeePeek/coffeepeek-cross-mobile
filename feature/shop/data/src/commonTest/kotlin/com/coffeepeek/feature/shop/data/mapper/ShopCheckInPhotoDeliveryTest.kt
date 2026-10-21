@@ -1,0 +1,53 @@
+package com.coffeepeek.feature.shop.data.mapper
+
+import com.coffeepeek.feature.shop.data.backend.ShopCheckInDto
+import kotlinx.serialization.json.Json
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
+
+class ShopCheckInPhotoDeliveryTest {
+    private val json = Json { ignoreUnknownKeys = true }
+    private val files = ShopFileUrlResolver("https://api.example")
+
+    @Test fun variantsKeepServerOriginalsAndOrderedAlbumIndices() {
+        val visit = decode("""{
+          "id":"visit","authorId":"opaque-id","author":{"slug":"public-slug"},
+          "photos":[
+            {"url":"/original-b?signature=issued","sortIndex":2,"variants":[]},
+            {"url":"/original-a","sortIndex":1,"variants":[
+              {"purpose":"feed","url":"/feed-a","contentType":"image/jpeg","width":600,"height":400,"sizeBytes":12},
+              {"purpose":"detail","url":"/detail-a","contentType":"image/jpeg","width":1200,"height":800,"sizeBytes":24}
+            ]},
+            {"url":"","sortIndex":0,"variants":[]}
+          ]
+        }""")
+        assertEquals("opaque-id", visit.authorId)
+        assertEquals("public-slug", visit.authorSlug)
+        assertEquals(listOf("https://api.example/original-a", "https://api.example/original-b?signature=issued"), visit.photoUrls)
+        assertEquals(listOf("https://api.example/feed-a", ""), visit.photoThumbnailUrls)
+        // Matches main: full-screen can fall back to the explicitly issued original, never an invented URL.
+        assertEquals(listOf("https://api.example/detail-a", "https://api.example/original-b?signature=issued"), visit.photoDetailUrls)
+    }
+
+    @Test fun missingManifestKeepsLegacyFallbackButEmptyManifestDoesNot() {
+        val visit = decode("""{"id":"visit","photos":[
+          {"url":"/legacy"}, {"url":"/empty","variants":[]}
+        ],"drinkPhotoUrl":"/cup","drinkPhotoVariants":[]}""")
+        assertEquals(listOf("https://api.example/legacy", ""), visit.photoThumbnailUrls)
+    }
+
+
+    private fun decode(value: String) = assertNotNull(json.decodeFromString<ShopCheckInDto>(value).toDomain(files))
+
+    @Test fun retiredCutoutDoesNotEnterTheAlbumOrOverrideUnsupportedPhotoVariants() {
+        val visit = decode("""{"id":"visit","drinkPhotoUrl":"/retired-cutout","drinkPhotoVariants":[
+          {"purpose":"thumb","url":"/retired-thumb","contentType":"image/png","width":100,"height":100,"sizeBytes":10}
+        ],"photos":[{"url":"/original","variants":[
+          {"purpose":"feed","url":"/unsupported","contentType":"image/avif","width":100,"height":100,"sizeBytes":10}
+        ]}]}""")
+        assertEquals(listOf("https://api.example/original"), visit.photoUrls)
+        assertEquals(listOf(""), visit.photoThumbnailUrls)
+        assertEquals(listOf("https://api.example/original"), visit.photoDetailUrls)
+    }
+}

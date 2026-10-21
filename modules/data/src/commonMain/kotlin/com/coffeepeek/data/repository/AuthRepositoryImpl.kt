@@ -23,7 +23,12 @@ class AuthRepositoryImpl(
     )
 
     private suspend fun Result<Session>.persistSession(): Result<Session> =
-        also { result -> result.onSuccess { sessionRepository.saveSession(it) } }
+        also { result -> result.onSuccess { next ->
+            if (sessionRepository.getSession()?.userId != next.userId) {
+                userSessionCleaner.clearLocalUserData()
+            }
+            sessionRepository.saveSession(next)
+        } }
 
     override suspend fun login(email: String, password: String): Result<Session> =
         authService.login(email, password).map { it.toSession() }.persistSession()
@@ -58,8 +63,23 @@ class AuthRepositoryImpl(
 
     override suspend fun logout(): Result<Unit> {
         val refreshToken = sessionRepository.getSession()?.refreshToken
-        userSessionCleaner.clearLocalUserData()
-        runCatching { authService.logout(refreshToken) }
-        return Result.success(Unit)
+        val cleanupFailure = try {
+            userSessionCleaner.clearLocalUserData()
+            null
+        } catch (cancellation: CancellationException) {
+            throw cancellation
+        } catch (error: Exception) {
+            error
+        }
+        try {
+            authService.logout(refreshToken).onFailure { error ->
+                if (error is CancellationException) throw error
+            }
+        } catch (cancellation: CancellationException) {
+            throw cancellation
+        } catch (_: Exception) {
+            // Remote logout is best-effort; local cleanup is authoritative.
+        }
+        return cleanupFailure?.let { Result.failure(it) } ?: Result.success(Unit)
     }
 }

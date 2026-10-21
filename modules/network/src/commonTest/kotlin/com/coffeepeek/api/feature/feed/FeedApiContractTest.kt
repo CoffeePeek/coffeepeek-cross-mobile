@@ -156,6 +156,8 @@ class FeedApiContractTest {
         refresh: suspend (String) -> AuthResp = { error("Unexpected refresh") }) = HttpClient(engine) {
         install(ContentNegotiation) { json(Json { ignoreUnknownKeys = true }) }
         defaultRequest { url("https://api.example") }
-        configureSessionAuthentication("https://api.example", token, save, refresh)
+        configureSessionAuthentication("https://api.example", token, { expected, updated ->
+            if (token() != expected) false else { save(updated); true }
+        }, refresh)
     }.also { it.readCurrentSessionForRequests() }
 }

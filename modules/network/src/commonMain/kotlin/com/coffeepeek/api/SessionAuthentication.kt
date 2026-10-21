@@ -13,11 +13,12 @@ import io.ktor.http.HttpStatusCode
 import io.ktor.http.Url
 import io.ktor.http.HttpHeaders
 import kotlinx.coroutines.CancellationException
+import com.coffeepeek.core.network.RefreshRejectedException
 
 internal fun HttpClientConfig<*>.configureSessionAuthentication(
     baseUrl: String,
     current: () -> AuthResp?,
-    save: (AuthResp?) -> Unit,
+    save: suspend (AuthResp, AuthResp?) -> Boolean,
     refresh: suspend (String) -> AuthResp,
 ) = configureSessionAuthenticationInternal(baseUrl, current, save) { old, rejected ->
     if (old.accessToken != rejected) throw CancellationException("Session changed")
@@ -27,7 +28,7 @@ internal fun HttpClientConfig<*>.configureSessionAuthentication(
 internal fun HttpClientConfig<*>.configureSessionAuthentication(
     baseUrl: String,
     current: () -> AuthResp?,
-    save: (AuthResp?) -> Unit,
+    save: suspend (AuthResp, AuthResp?) -> Boolean,
     coordinator: SessionRefreshCoordinator,
 ) = configureSessionAuthenticationInternal(baseUrl, current, save) { old, rejected ->
     coordinator.refresh(old.refreshToken, rejected)
@@ -36,7 +37,7 @@ internal fun HttpClientConfig<*>.configureSessionAuthentication(
 private fun HttpClientConfig<*>.configureSessionAuthenticationInternal(
     baseUrl: String,
     current: () -> AuthResp?,
-    save: (AuthResp?) -> Unit,
+    save: suspend (AuthResp, AuthResp?) -> Boolean,
     refresh: suspend (AuthResp, String) -> AuthResp,
 ) {
     val origin = Url(baseUrl)
@@ -58,7 +59,7 @@ private fun HttpClientConfig<*>.configureSessionAuthenticationInternal(
                     ?: return@refreshTokens null
                 val old = current() ?: return@refreshTokens null
                 if (old.refreshToken.isBlank()) {
-                    if (old.accessToken == rejected) save(null)
+                    if (old.accessToken == rejected) save(old, null)
                     return@refreshTokens null
                 }
                 try {
@@ -68,12 +69,12 @@ private fun HttpClientConfig<*>.configureSessionAuthenticationInternal(
                         // A shared refresh coordinator may already have persisted this
                         // exact rotation. Never substitute an unrelated login/account.
                         if (latest != updated) return@refreshTokens null
-                    } else save(updated)
+                    } else if (!save(old, updated)) return@refreshTokens null
                     BearerTokens(updated.accessToken, updated.refreshToken)
                 } catch (cancelled: CancellationException) {
                     throw cancelled
-                } catch (_: Exception) {
-                    if (current()?.accessToken == old.accessToken) save(null)
+                } catch (_: RefreshRejectedException) {
+                    save(old, null)
                     null
                 }
             }
