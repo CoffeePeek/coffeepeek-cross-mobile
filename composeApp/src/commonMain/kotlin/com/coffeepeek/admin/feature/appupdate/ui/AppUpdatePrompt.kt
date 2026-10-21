@@ -51,6 +51,8 @@ import com.coffeepeek.admin.config.AppConfig
 import com.coffeepeek.admin.theme.CoffeePeekTheme
 import com.coffeepeek.admin.ui.icons.CpIcons
 import com.coffeepeek.feature.appupdate.domain.InstallationStage
+import com.coffeepeek.feature.appupdate.impl.AppUpdateController
+import com.coffeepeek.feature.appupdate.impl.needsPlayFallback
 import com.coffeepeek.feature.appupdate.domain.InstallationState
 import com.coffeepeek.feature.appupdate.domain.UpdateInstaller
 import kotlin.math.roundToInt
@@ -58,7 +60,7 @@ import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.koin.compose.koinInject
 
 @Composable
-internal fun AppUpdatePrompt(controller: AppUpdateState = koinInject()) {
+internal fun AppUpdatePrompt(controller: AppUpdateController = koinInject()) {
     UpdateInstallationEffect()
     val installer = koinInject<UpdateInstaller>()
     val transfer by installer.state.collectAsState()

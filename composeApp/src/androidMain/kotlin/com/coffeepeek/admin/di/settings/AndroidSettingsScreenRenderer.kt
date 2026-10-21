@@ -2,7 +2,7 @@ package com.coffeepeek.admin.di.settings
 
 import androidx.compose.runtime.Composable
 import com.coffeepeek.admin.config.AppConfig
-import com.coffeepeek.admin.feature.appupdate.ui.AppUpdateState
+import com.coffeepeek.feature.appupdate.impl.AppUpdateController
 import com.coffeepeek.admin.settings.CityPreference
 import com.coffeepeek.admin.ui.Navigator
 import com.coffeepeek.admin.ui.component.GuestAuthCard
@@ -52,7 +52,7 @@ internal class AndroidSettingsScreenRenderer(
 }
 
 internal fun androidSettingsScreenRenderer(
-    shops: ShopRepository, cityPreference: CityPreference, sessions: SessionReader, updates: AppUpdateState,
+    shops: ShopRepository, cityPreference: CityPreference, sessions: SessionReader, updates: AppUpdateController,
 ): AndroidSettingsScreenRenderer {
     val theme = AndroidThemePort()
     val cities = AndroidCityPort(shops, cityPreference)

@@ -1,6 +1,6 @@
-package com.coffeepeek.admin.feature.appupdate.ui
+package com.coffeepeek.feature.appupdate.impl
 
-import com.coffeepeek.admin.config.AppConfig
+import com.coffeepeek.feature.appupdate.api.AppUpdateEnvironment
 import com.coffeepeek.feature.appupdate.domain.AppUpdate
 import com.coffeepeek.feature.appupdate.domain.AppUpdateRepository
 import com.coffeepeek.feature.appupdate.domain.InstallationStage
@@ -14,7 +14,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
-internal data class UpdateUiState(
+data class UpdateUiState(
     val update: AppUpdate? = null,
     val showPrompt: Boolean = false,
     val checking: Boolean = false,
@@ -23,14 +23,16 @@ internal data class UpdateUiState(
     val checkFailed: Boolean = false,
 )
 
-internal fun needsPlayFallback(required: Boolean, transfer: InstallationState): Boolean = required &&
+fun needsPlayFallback(required: Boolean, transfer: InstallationState): Boolean = required &&
     (transfer.error != null || (transfer.stage != InstallationStage.Available && transfer.stage != InstallationStage.Starting))
 
-internal class AppUpdateState(
+/** Process-wide update coordinator: the root prompt, the Settings row and the Play flow share one instance. */
+class AppUpdateController(
     private val repository: AppUpdateRepository,
+    private val environment: AppUpdateEnvironment,
     private val scope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Main),
-    private val currentVersion: Long? = AppConfig.versionCode,
 ) {
+    private val currentVersion: Long? get() = environment.versionCode
     private val mutableState = MutableStateFlow(UpdateUiState())
     val state = mutableState.asStateFlow()
     private var dismissed: Long? = null

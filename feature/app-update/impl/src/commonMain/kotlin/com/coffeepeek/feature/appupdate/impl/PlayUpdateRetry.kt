@@ -1,4 +1,4 @@
-package com.coffeepeek.admin.feature.appupdate.ui
+package com.coffeepeek.feature.appupdate.impl
 
 import com.coffeepeek.feature.appupdate.domain.InstallationStage
 import com.coffeepeek.feature.appupdate.domain.UpdateInstaller
@@ -7,10 +7,10 @@ import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withTimeout
 
-internal data class PlayUpdateRetryOutcome(val message: String, val canRetry: Boolean)
+data class PlayUpdateRetryOutcome(val message: String, val canRetry: Boolean)
 
 /** A retry covers both the backend policy check and Google Play's response. */
-internal suspend fun retryPlayUpdate(controller: AppUpdateState, installer: UpdateInstaller): PlayUpdateRetryOutcome? = try {
+suspend fun retryPlayUpdate(controller: AppUpdateController, installer: UpdateInstaller): PlayUpdateRetryOutcome? = try {
     withTimeout(30_000) {
         controller.state.first { !it.checking }
         controller.check(manual = true)

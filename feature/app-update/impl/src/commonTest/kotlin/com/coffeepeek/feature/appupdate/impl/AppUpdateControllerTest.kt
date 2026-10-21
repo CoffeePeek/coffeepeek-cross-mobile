@@ -1,11 +1,9 @@
-package com.coffeepeek.admin.feature.appupdate
+package com.coffeepeek.feature.appupdate.impl
 
 import com.coffeepeek.feature.appupdate.domain.AppUpdate
 import com.coffeepeek.feature.appupdate.domain.AppUpdateRepository
 import com.coffeepeek.feature.appupdate.domain.InstallationStage
 import com.coffeepeek.feature.appupdate.domain.InstallationState
-import com.coffeepeek.admin.feature.appupdate.ui.AppUpdateState
-import com.coffeepeek.admin.feature.appupdate.ui.needsPlayFallback
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import kotlin.test.Test
@@ -14,7 +12,7 @@ import kotlin.test.assertFalse
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
-class AppUpdateStateTest {
+class AppUpdateControllerTest {
     @Test
     fun nativeConfirmationSkipsTheCardButRequiredDownloadsAndErrorsStillBlockOldVersions() {
         assertFalse(needsPlayFallback(true, InstallationState()))
@@ -30,7 +28,7 @@ class AppUpdateStateTest {
     @Test
     fun nativePromptIsConsumedOnceAndAnOptionalDeclineStillAllowsManualRetry() = runBlocking {
         val repository = Updates(AppUpdate(140, 0, "https://play.google.com/store/apps/details?id=com.coffeepeek"))
-        val controller = AppUpdateState(repository, this, currentVersion = 100)
+        val controller = AppUpdateController(repository, FakeEnvironment(100), this)
         controller.check()
         controller.state.first { !it.checking }
         assertEquals(repository.update, controller.takeNativePrompt(InstallationState()))
@@ -41,7 +39,7 @@ class AppUpdateStateTest {
         controller.check()
         controller.state.first { !it.checking }
         assertFalse(controller.state.value.showPrompt)
-        val recreated = AppUpdateState(repository, this, currentVersion = 100)
+        val recreated = AppUpdateController(repository, FakeEnvironment(100), this)
         recreated.check()
         recreated.state.first { !it.checking }
         assertFalse(recreated.state.value.showPrompt)
@@ -57,7 +55,7 @@ class AppUpdateStateTest {
     @Test
     fun aFailedNativePromptDoesNotLoopAndCanBeRetriedManually() = runBlocking {
         val repository = Updates(AppUpdate(140, 120, "https://play.google.com/store/apps/details?id=com.coffeepeek"))
-        val controller = AppUpdateState(repository, this, currentVersion = 100)
+        val controller = AppUpdateController(repository, FakeEnvironment(100), this)
         val failed = InstallationState(error = "Google Play unavailable")
         controller.check()
         controller.state.first { !it.checking }
@@ -75,7 +73,7 @@ class AppUpdateStateTest {
     @Test
     fun resumeDoesNotStartASecondFlowDuringDownloadOrInstallation() = runBlocking {
         val repository = Updates(AppUpdate(140, 0, "https://play.google.com/store/apps/details?id=com.coffeepeek"))
-        val controller = AppUpdateState(repository, this, currentVersion = 100)
+        val controller = AppUpdateController(repository, FakeEnvironment(100), this)
         for (stage in InstallationStage.entries.filter { it != InstallationStage.Available }) {
             controller.check(manual = true)
             controller.state.first { !it.checking }
@@ -87,12 +85,12 @@ class AppUpdateStateTest {
     @Test
     fun currentAndUnconfiguredVersionsDoNotLaunchNativeUpdates() = runBlocking {
         val repository = Updates(AppUpdate(100, 0, "https://play.google.com/store/apps/details?id=com.coffeepeek"))
-        val controller = AppUpdateState(repository, this, currentVersion = 100)
+        val controller = AppUpdateController(repository, FakeEnvironment(100), this)
         controller.check(manual = true)
         controller.state.first { !it.checking }
         assertNull(controller.takeNativePrompt(InstallationState()))
         repository.update = AppUpdate(110, 0, repository.update.url)
-        val unknownVersion = AppUpdateState(repository, this, currentVersion = null)
+        val unknownVersion = AppUpdateController(repository, FakeEnvironment(null), this)
         unknownVersion.check()
         unknownVersion.state.first { !it.checking }
         assertNull(unknownVersion.takeNativePrompt(InstallationState()))

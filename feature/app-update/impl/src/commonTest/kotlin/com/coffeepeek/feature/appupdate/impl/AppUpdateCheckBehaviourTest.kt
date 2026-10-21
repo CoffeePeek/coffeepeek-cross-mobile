@@ -1,10 +1,9 @@
-package com.coffeepeek.admin.feature.appupdate
+package com.coffeepeek.feature.appupdate.impl
 
 import com.coffeepeek.feature.appupdate.domain.AppUpdate
 import com.coffeepeek.feature.appupdate.domain.AppUpdateRepository
 import com.coffeepeek.feature.appupdate.domain.InstallationStage
 import com.coffeepeek.feature.appupdate.domain.InstallationState
-import com.coffeepeek.admin.feature.appupdate.ui.AppUpdateState
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -38,7 +37,7 @@ class AppUpdateCheckBehaviourTest {
         override suspend fun dismiss(version: Long) { dismissWrites++; dismissError?.let { throw it }; dismissedStored = version }
     }
 
-    private suspend fun AppUpdateState.run(manual: Boolean) = apply { check(manual) }.state.first { !it.checking }
+    private suspend fun AppUpdateController.run(manual: Boolean) = apply { check(manual) }.state.first { !it.checking }
 
     private fun scope() = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
@@ -46,7 +45,7 @@ class AppUpdateCheckBehaviourTest {
         val scope = scope()
         try {
             val repo = Repo(AppUpdate(100, 0, url))
-            val current = AppUpdateState(repo, scope, currentVersion = 100)
+            val current = AppUpdateController(repo, FakeEnvironment(100), scope)
             current.run(manual = true).let { assertEquals(upToDate, it.message); assertFalse(it.checkFailed); assertFalse(it.showPrompt); assertNull(it.update) }
             current.run(manual = false).let { assertNull(it.message); assertFalse(it.checkFailed) }
 
@@ -63,7 +62,7 @@ class AppUpdateCheckBehaviourTest {
         val scope = scope()
         try {
             val repo = Repo(AppUpdate(140, 0, url))
-            val state = AppUpdateState(repo, scope, currentVersion = 100)
+            val state = AppUpdateController(repo, FakeEnvironment(100), scope)
             for (error in listOf<Throwable>(IllegalStateException("offline"), runCatching { withTimeout(1) { awaitCancellation() } }.exceptionOrNull()!!)) {
                 repo.fetchError = error
                 state.run(manual = true).let { assertEquals(failure, it.message); assertTrue(it.checkFailed); assertFalse(it.showPrompt) }
@@ -76,7 +75,7 @@ class AppUpdateCheckBehaviourTest {
         val scope = scope()
         try {
             val repo = Repo(AppUpdate(140, 0, url))
-            val state = AppUpdateState(repo, scope, currentVersion = null)
+            val state = AppUpdateController(repo, FakeEnvironment(null), scope)
             state.run(manual = false).let { assertFalse(it.showPrompt); assertNull(it.update) }
             state.run(manual = true).let { assertEquals(failure, it.message); assertTrue(it.checkFailed) }
             assertEquals(0, repo.fetches)
@@ -87,7 +86,7 @@ class AppUpdateCheckBehaviourTest {
         val scope = scope()
         try {
             val repo = Repo(AppUpdate(140, 0, url)).apply { gate = CompletableDeferred() }
-            val state = AppUpdateState(repo, scope, currentVersion = 100)
+            val state = AppUpdateController(repo, FakeEnvironment(100), scope)
             state.check()
             assertTrue(state.state.value.checking)
             state.check(manual = true)
@@ -102,7 +101,7 @@ class AppUpdateCheckBehaviourTest {
         val scope = scope()
         try {
             val repo = Repo(AppUpdate(140, 0, url), dismissedStored = 130).apply { dismissError = IllegalStateException("disk full") }
-            val state = AppUpdateState(repo, scope, currentVersion = 100)
+            val state = AppUpdateController(repo, FakeEnvironment(100), scope)
             assertTrue(state.run(manual = false).showPrompt)          // a stored dismissal of an older version does not hide 140
             state.dismiss()
             assertFalse(state.state.value.showPrompt)
@@ -116,7 +115,7 @@ class AppUpdateCheckBehaviourTest {
         val scope = scope()
         try {
             val repo = Repo(AppUpdate(140, 120, url))
-            val state = AppUpdateState(repo, scope, currentVersion = 100)
+            val state = AppUpdateController(repo, FakeEnvironment(100), scope)
             assertTrue(state.run(manual = false).showPrompt)
             state.dismiss()
             assertTrue(state.state.value.showPrompt)

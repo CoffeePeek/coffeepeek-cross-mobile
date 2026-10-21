@@ -29,6 +29,9 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import com.coffeepeek.admin.feature.appupdate.api.AndroidUpdateInstaller
 import com.coffeepeek.feature.appupdate.domain.InstallationStage
+import com.coffeepeek.feature.appupdate.impl.AppUpdateController
+import com.coffeepeek.feature.appupdate.impl.PlayUpdateRetryOutcome
+import com.coffeepeek.feature.appupdate.impl.retryPlayUpdate
 import com.coffeepeek.BuildConfig
 import com.coffeepeek.admin.theme.CpDimens
 import com.coffeepeek.admin.ui.component.CpSnackbarHost
@@ -44,7 +47,7 @@ import kotlinx.coroutines.launch
 @Composable
 internal actual fun UpdateInstallationEffect() {
     val installer = koinInject<AndroidUpdateInstaller>()
-    val controller = koinInject<AppUpdateState>()
+    val controller = koinInject<AppUpdateController>()
     val consent = rememberLauncherForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) {
         installer.consentResult(it.resultCode)
         if (it.resultCode == Activity.RESULT_CANCELED) controller.dismiss()

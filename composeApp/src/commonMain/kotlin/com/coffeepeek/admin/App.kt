@@ -36,7 +36,7 @@ fun App(onReady: () -> Unit = {}) {
             OrientationObserver.StartObserver()
             Navigator()
             com.coffeepeek.admin.feature.authorblocking.ui.AuthorBlockingHost()
-            com.coffeepeek.admin.feature.appupdate.ui.AppUpdatePrompt()
+            koinInject<com.coffeepeek.admin.feature.appupdate.ui.AppUpdateRenderer>().Prompt()
             com.coffeepeek.admin.analytics.AnalyticsPrivacy()
         }
     }

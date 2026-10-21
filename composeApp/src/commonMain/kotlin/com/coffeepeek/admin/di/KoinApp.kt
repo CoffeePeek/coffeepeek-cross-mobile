@@ -38,6 +38,8 @@ import com.coffeepeek.admin.ui.screen.shop.ShopCheckInFormRenderer
 import com.coffeepeek.admin.ui.screen.shop.LegacyShopCheckInFormRenderer
 import com.coffeepeek.admin.ui.screen.coffee.CoffeeScreenRenderer
 import com.coffeepeek.admin.ui.screen.coffee.LegacyCoffeeScreenRenderer
+import com.coffeepeek.admin.feature.appupdate.ui.AppUpdateRenderer
+import com.coffeepeek.admin.feature.appupdate.ui.LegacyAppUpdateRenderer
 import com.coffeepeek.admin.ui.screen.profile.AccountScreenRenderer
 import com.coffeepeek.admin.ui.screen.profile.LegacyAccountScreenRenderer
 import com.coffeepeek.admin.ui.screen.profile.LegacySettingsScreenRenderer
@@ -108,6 +110,7 @@ fun initKoin(
     ownProfileRendererFactory: Scope.() -> OwnProfileScreenRenderer = { LegacyOwnProfileScreenRenderer },
     accountRendererFactory: Scope.() -> AccountScreenRenderer = { LegacyAccountScreenRenderer },
     settingsRendererFactory: Scope.() -> SettingsScreenRenderer = { LegacySettingsScreenRenderer },
+    appUpdateRendererFactory: Scope.() -> AppUpdateRenderer = { LegacyAppUpdateRenderer },
     analyticsEnabled: Boolean = true,
 ) {
     check(AppConfig.baseUrl.isNotBlank()) {
@@ -129,7 +132,7 @@ fun initKoin(
         appModule(database.settingRepository, shopReportRendererFactory, shopGalleryRendererFactory,
             shopCheckInRendererFactory, shopDetailRendererFactory, shopCheckInListRendererFactory,
             checkInHistoryRendererFactory, checkInCreateFlowRendererFactory, coffeeRendererFactory, roasterRendererFactory,
-            publicProfileRendererFactory, ownProfileRendererFactory, accountRendererFactory, settingsRendererFactory),
+            publicProfileRendererFactory, ownProfileRendererFactory, accountRendererFactory, settingsRendererFactory, appUpdateRendererFactory),
         imageModule(),
         roasterModule(),
         updateInstallerModule(),
@@ -157,6 +160,7 @@ private fun appModule(
     ownProfileRendererFactory: Scope.() -> OwnProfileScreenRenderer,
     accountRendererFactory: Scope.() -> AccountScreenRenderer,
     settingsRendererFactory: Scope.() -> SettingsScreenRenderer,
+    appUpdateRendererFactory: Scope.() -> AppUpdateRenderer,
 ) = module {
     single<CoffeeScreenRenderer> { coffeeRendererFactory() }
     single<RoasterScreenRenderer> { roasterRendererFactory() }
@@ -164,6 +168,7 @@ private fun appModule(
     single<OwnProfileScreenRenderer> { ownProfileRendererFactory() }
     single<AccountScreenRenderer> { accountRendererFactory() }
     single<SettingsScreenRenderer> { settingsRendererFactory() }
+    single<AppUpdateRenderer> { appUpdateRendererFactory() }
     single<CheckInCreateFlowRenderer> { checkInCreateFlowRendererFactory() }
     single<CheckInHistoryScreenRenderer> { checkInHistoryRendererFactory() }
     single<ShopDetailScreenRenderer> { shopDetailRendererFactory() }
@@ -202,7 +207,7 @@ private fun appModule(
             com.coffeepeek.admin.di.appupdate.SettingsDismissedUpdateStore(settingRepository),
         )
     }
-    single { com.coffeepeek.admin.feature.appupdate.ui.AppUpdateState(get()) }
+    single { com.coffeepeek.feature.appupdate.impl.AppUpdateController(get(), com.coffeepeek.admin.di.appupdate.AppConfigUpdateEnvironment) }
     single<CustomUrlFetcher> {
         val gateway = get<CoffeePeekClient>()
         createImageUrlFetcher(gateway.client, gateway.imageClient)

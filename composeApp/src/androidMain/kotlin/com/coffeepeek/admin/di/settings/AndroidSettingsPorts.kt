@@ -3,7 +3,7 @@ package com.coffeepeek.admin.di.settings
 import com.coffeepeek.admin.analytics.Analytics
 import com.coffeepeek.admin.analytics.AnalyticsConsent
 import com.coffeepeek.admin.analytics.AnalyticsService
-import com.coffeepeek.admin.feature.appupdate.ui.AppUpdateState
+import com.coffeepeek.feature.appupdate.impl.AppUpdateController
 import com.coffeepeek.admin.legal.LegalUrls
 import com.coffeepeek.admin.settings.CityPreference
 import com.coffeepeek.admin.theme.ThemeManager
@@ -83,7 +83,7 @@ internal class AndroidUsageConsentPort(private val service: () -> AnalyticsServi
     }
 }
 
-internal class AndroidUpdateCheckPort(private val updates: AppUpdateState) : UpdateCheckPort {
+internal class AndroidUpdateCheckPort(private val updates: AppUpdateController) : UpdateCheckPort {
     override fun observe(): Flow<UpdateCheckState> = updates.state
         .map { UpdateCheckState(checking = it.checking, updateAvailable = it.update != null) }
         .distinctUntilChanged()
