@@ -46,10 +46,6 @@ kotlin {
             implementation(project(module.feature.shop.impl))
             implementation(project(module.feature.profile.impl))
             implementation(project(module.feature.settings.impl))
-            implementation(project(module.feature.roaster.api))
-            implementation(project(module.feature.roaster.domain))
-            implementation(project(module.feature.roaster.data))
-            implementation(project(module.feature.roaster.impl))
             implementation(project(module.feature.coffee.api))
             implementation(project(module.feature.coffee.domain))
             implementation(project(module.feature.coffee.data))
@@ -82,6 +78,10 @@ kotlin {
             implementation(project(module.feature.profile.data))
             implementation(project(module.feature.settings.api))
             implementation(project(module.feature.settings.domain))
+            implementation(project(module.feature.roaster.api))
+            implementation(project(module.feature.roaster.domain))
+            implementation(project(module.feature.roaster.data))
+            implementation(project(module.feature.roaster.impl))
             implementation(project(module.core.designSystem))
             implementation(project(module.feature.favorites.domain))
             implementation(libs.posthog.kmp)
@@ -338,6 +338,10 @@ androidComponents {
                 "com.coffeepeek.api.service.CheckInApiService",
                 "com.coffeepeek.api.CoffeePeekRepo",
                 "com.coffeepeek.data.di.DataModuleKt",
+                "com.coffeepeek.admin.di.roaster.RoasterModuleKt",
+                "com.coffeepeek.admin.di.roaster.FeatureRoasterScreenRenderer",
+                "com.coffeepeek.feature.roaster.impl.RoasterEntryImplsKt",
+                "com.coffeepeek.feature.roaster.data.repository.RoasterRepositoryFactoryKt",
                 "com.coffeepeek.data.feature.favorites.ServerFavoritesRepository",
                 "com.coffeepeek.admin.di.favorites.ServerFavoriteShopsRepository",
                 "com.coffeepeek.admin.di.favorites.ServerFavoriteDrinksRepository",

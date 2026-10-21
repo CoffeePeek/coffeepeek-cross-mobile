@@ -1,4 +1,17 @@
-# Roasters — Android-first migration plan
+# Roasters — feature migration plan
+
+## Shared UI and iOS activation — 2026-10-21
+
+The user approved extending this feature to iOS. Compose API entries, UI,
+resources and application adapters now live in commonMain; common Koin selects
+the migrated Roasters renderer for Android and iOS. Existing domain/data/MVI,
+catalog cache, server favorites and app-owned platform callbacks are reused.
+UIKit/SwiftUI navigation remains application-owned. Other features keep their
+existing platform selection. Legacy Contributions/read fixtures are retained.
+
+This supersedes the Android-only/iOS-fallback scope in the dated records below.
+Implementation, verification and remaining native-device gates are tracked in
+[IOS_MIGRATION_PLAN.md](IOS_MIGRATION_PLAN.md).
 
 ## Inherited Shop visual corrections — 2026-10-20
 

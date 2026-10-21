@@ -3,7 +3,7 @@
 package com.coffeepeek.admin.analytics.parity
 
 import com.coffeepeek.admin.analytics.parity.ParityHarness.record
-import com.coffeepeek.admin.di.roaster.AndroidRoasterAnalytics
+import com.coffeepeek.admin.di.roaster.RoasterAnalyticsAdapter
 import com.coffeepeek.admin.di.shop.CheckInTestSessions
 import com.coffeepeek.admin.feature.favorites.api.RoasterFavorites
 import com.coffeepeek.admin.ui.screen.roaster.RoasterListViewModel
@@ -54,7 +54,7 @@ class RoasterAnalyticsParityTest {
     }
 
     private suspend fun TestScope.migratedJourney(catalog: Result<List<RoasterSummary>>, open: Boolean) = record {
-        val list = AndroidRoasterAnalytics.list()
+        val list = RoasterAnalyticsAdapter.list()
         val failed = catalog.isFailure
         val total = catalog.getOrNull()?.size ?: 0
         list.resultsShown("|", "", emptyList(), total, failed)

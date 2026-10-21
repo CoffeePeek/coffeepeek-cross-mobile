@@ -49,7 +49,7 @@ class RoasterModuleTest {
             assertEquals("Sandbox Roaster", repository.getRoaster("sandbox-roaster").getOrThrow().name)
             assertIs<RoasterFavoritesPort>(app.koin.get<RoasterFavoritesPort>())
             assertIs<RoasterShopPhotos>(app.koin.get<RoasterShopPhotos>())
-            assertNotNull(androidRoasterScreenRenderer(repository, app.koin.get(), app.koin.get()))
+            assertNotNull(roasterScreenRenderer(repository, app.koin.get(), app.koin.get()))
         } finally {
             scope.coroutineContext[kotlinx.coroutines.Job]?.cancel()
             app.close(); client.client.close(); client.plainClient.close(); client.uploadClient.close(); client.imageClient.close(); backend.close()

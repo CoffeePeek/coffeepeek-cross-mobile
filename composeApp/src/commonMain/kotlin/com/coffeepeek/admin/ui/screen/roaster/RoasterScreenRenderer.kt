@@ -3,7 +3,7 @@ package com.coffeepeek.admin.ui.screen.roaster
 import androidx.compose.runtime.Composable
 
 /**
- * Platform selection only. Shared/iOS keep the legacy roaster UI; Android composes the migrated entries.
+ * Application entry adapter. Android and iOS compose the same migrated feature entries.
  * Discovery's carousel and its search overlay share one list state through the same renderer instance.
  */
 interface RoasterScreenRenderer {
