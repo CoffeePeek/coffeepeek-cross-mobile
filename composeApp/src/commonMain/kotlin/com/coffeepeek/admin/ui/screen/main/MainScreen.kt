@@ -230,6 +230,7 @@ internal fun ComposeMainScreen(isLoggedIn: Boolean) {
                         composable<Navigator.Screen.CommunityTab> {
                             com.coffeepeek.admin.feature.community.ui.CommunityScreen(
                                 onCreateCheckIn = { Navigator.navigate(Navigator.Screen.CreateCheckIn) },
+                                notificationsAction = { com.coffeepeek.admin.feature.notifications.ui.NotificationsButton() },
                             )
                         }
                     }

@@ -19,6 +19,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.test.captureToImage
 import androidx.compose.ui.test.junit4.createEmptyComposeRule
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.unit.dp
 import androidx.test.core.app.ActivityScenario
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -26,7 +27,15 @@ import androidx.test.platform.app.InstrumentationRegistry
 import com.coffeepeek.admin.MainActivity
 import com.coffeepeek.admin.theme.CoffeePeekTheme
 import com.coffeepeek.admin.ui.screen.checkins.grantCheckInFixtureStartupPermissions
+import com.coffeepeek.admin.ui.screen.checkins.CalendarCard
+import com.coffeepeek.admin.ui.screen.checkins.CalendarMonth
+import com.coffeepeek.admin.ui.screen.checkins.CalendarPhoto
+import com.coffeepeek.admin.ui.screen.checkins.VisitedPlacesUiState
 import com.coffeepeek.admin.utils.image.FullScreenPhotoPresence
+import com.coffeepeek.admin.utils.image.PhotoPermission
+import com.coffeepeek.admin.utils.image.PhotoAccessDenied
+import com.coffeepeek.admin.utils.image.SystemPhotoCacheClock
+import com.coffeepeek.admin.utils.image.protectedPhotoPainterCache
 import io.kamel.core.DataSource
 import io.kamel.core.Resource
 import io.kamel.core.config.KamelConfig
@@ -40,10 +49,12 @@ import io.ktor.utils.io.readRemaining
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.atomic.AtomicInteger
 import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.flow.flow
 import kotlinx.io.readByteArray
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -57,6 +68,60 @@ class CpImageLoadingTest {
 
     @Before
     fun grantStartupPermissions() = grantCheckInFixtureStartupPermissions()
+
+    @Test
+    fun calendarPhotoStaysVisibleDuringPermissionRenewal() {
+        val loader = FixtureImages(grantMillis = 6_000, holdAfterFirst = true)
+        fun photoColor(): Int {
+            val bitmap = compose.onNodeWithContentDescription("12 октября 2026, 1 чекин", substring = true)
+                .captureToImage().asAndroidBitmap()
+            return bitmap.getPixel(bitmap.width / 2, bitmap.height / 2)
+        }
+        withImageContent(loader, content = {
+            CalendarCard(VisitedPlacesUiState(calendarMonth = CalendarMonth(2026, 10)),
+                today = "2026-10-20", onPreviousMonth = {}, onNextMonth = {}, onSelectDate = {}, onToday = {},
+                homeCounts = mapOf("2026-10-12" to 1),
+                homePhotos = mapOf("2026-10-12" to listOf(CalendarPhoto(THUMB))))
+        }) {
+            compose.waitUntil(10_000) { photoColor() == Color.BLUE }
+            compose.waitUntil(10_000) { loader.requested.size == 2 }
+            compose.waitForIdle()
+            assertEquals("Renewing access must not erase an authorized calendar thumbnail", Color.BLUE, photoColor())
+            loader.release.complete(Unit)
+            compose.waitUntil(10_000) { loader.decoded.get() == 2 }
+            compose.waitUntil(10_000) { photoColor() == Color.BLUE }
+        }
+    }
+
+    @Test
+    fun protectedPhotoRecoversAfterATemporaryRenewalFailure() {
+        val loader = FixtureImages(grantMillis = 6_000,
+            failedRequests = mapOf(2 to IllegalStateException("Temporary renewal failure")))
+        withImageContent(loader, content = {
+            CpImage(THUMB.replace("/calendar/", "/recovery/"), modifier = Modifier.size(160.dp).testTag(IMAGE))
+        }) {
+            waitForColor(Color.BLUE)
+            compose.waitUntil(12_000) { loader.requested.size >= 3 && loader.decoded.get() >= 2 }
+            waitForColor(Color.BLUE)
+        }
+    }
+
+    @Test
+    fun accessDenialImmediatelyRemovesThePreviouslyGrantedPhoto() {
+        val loader = FixtureImages(grantMillis = 6_000, failedRequests = mapOf(2 to PhotoAccessDenied()))
+        withImageContent(loader, content = {
+            CpImage(THUMB.replace("/calendar/", "/denied/"), modifier = Modifier.size(160.dp).testTag(IMAGE))
+        }) {
+            waitForColor(Color.BLUE)
+            compose.waitUntil(10_000) { loader.requested.size == 2 && loader.active.get() == 0 }
+            compose.waitUntil(2_000) { centerColor() != Color.BLUE }
+            assertNull(protectedPhotoPainterCache.get(loader.requested.first(),
+                checkNotNull(loader.inputs.first().permissionScope)))
+            compose.mainClock.advanceTimeBy(3_000)
+            compose.waitForIdle()
+            assertEquals("Denied access must not automatically retry or restore an old photo", 2, loader.requested.size)
+        }
+    }
 
     @Test
     fun visiblePhotoWaitsForTheDwellBeforeRequestingHigherQuality() {
@@ -243,9 +308,12 @@ class CpImageLoadingTest {
         content: @Composable () -> Unit,
         check: () -> Unit,
     ) {
-        compose.mainClock.autoAdvance = !freezeClock
+        compose.mainClock.autoAdvance = true
         try {
             ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+                // Let App release MainActivity's splash before replacing its onReady effect.
+                compose.waitForIdle()
+                compose.mainClock.autoAdvance = !freezeClock
                 scenario.onActivity { activity -> activity.setContent {
                     CompositionLocalProvider(LocalKamelConfig provides loader.config) {
                         CoffeePeekTheme(darkTheme = true) { Surface { content() } }
@@ -273,7 +341,12 @@ class CpImageLoadingTest {
     private class FixtureImages(
         private val pendingUrls: Set<String> = emptySet(),
         private val failingUrls: Set<String> = emptySet(),
+        private val grantMillis: Long = 20_000,
+        private val holdAfterFirst: Boolean = false,
+        private val failedRequests: Map<Int, Throwable> = emptyMap(),
     ) {
+        val release = CompletableDeferred<Unit>()
+        val inputs = CopyOnWriteArrayList<CustomUrl>()
         val requested = CopyOnWriteArrayList<String>()
         val active = AtomicInteger()
         val peakActive = AtomicInteger()
@@ -285,17 +358,30 @@ class CpImageLoadingTest {
                 override val source = DataSource.Disk
                 override val CustomUrl.isSupported get() = Url(url).host == "cp-image-fixture.invalid"
                 override fun fetch(data: CustomUrl, resourceConfig: ResourceConfig) = flow {
+                    inputs += data
                     requested += data.url
+                    val attempt = requested.size
                     val running = active.incrementAndGet()
                     peakActive.updateAndGet { maxOf(it, running) }
                     try {
+                        if (holdAfterFirst && attempt > 1) {
+                            emit(Resource.Loading(0f))
+                            release.await()
+                        }
                         when (data.url) {
                             in pendingUrls -> {
                                 emit(Resource.Loading(0f))
                                 awaitCancellation()
                             }
                             in failingUrls -> emit(Resource.Failure(IllegalStateException("Fixture image unavailable"), source))
-                            else -> emit(Resource.Success(ByteReadChannel(byteArrayOf(if (data.url == DETAIL) 2 else 1)), source))
+                            else -> if (attempt in failedRequests) {
+                                emit(Resource.Failure(failedRequests.getValue(attempt), source))
+                            } else {
+                                val grant = PhotoPermission(SystemPhotoCacheClock.monotonicMillis() + grantMillis,
+                                    SystemPhotoCacheClock.wallMillis() + grantMillis)
+                                data.displayPermission?.grant(grant, grant)
+                                emit(Resource.Success(ByteReadChannel(byteArrayOf(if (data.url == DETAIL) 2 else 1)), source))
+                            }
                         }
                     } finally { active.decrementAndGet() }
                 }
@@ -315,6 +401,7 @@ class CpImageLoadingTest {
     private companion object {
         const val PREVIEW = "https://cp-image-fixture.invalid/preview.png"
         const val DETAIL = "https://cp-image-fixture.invalid/detail.png"
+        const val THUMB = "https://cp-image-fixture.invalid/api/v1/check-ins/visit/photos/calendar/variants/source/1/thumb.png"
         const val IMAGE = "cp-image-loading-fixture"
     }
 }

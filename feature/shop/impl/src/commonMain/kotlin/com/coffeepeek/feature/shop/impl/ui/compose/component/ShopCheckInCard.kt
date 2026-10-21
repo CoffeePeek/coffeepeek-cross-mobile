@@ -74,7 +74,7 @@ internal fun ShopCheckInCard(
                 Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing2)) {
                     if (showHelpfulCount) ShopCheckInHelpfulButton(checkIn.helpfulCount, checkIn.isHelpfulByCurrentUser,
-                        onClick = onVote.takeUnless { isOwn }, isLoading = isVoting)
+                        onClick = onVote, isLoading = isVoting)
                     Spacer(Modifier.weight(1f))
                     drink?.let { ShopCheckInDrinkBadge(it) }
                 }
@@ -90,7 +90,7 @@ internal fun ShopCheckInCard(
 
 @Preview @Composable private fun ShopCheckInCardDarkPreview() = CoffeePeekTheme(darkTheme = true) {
     ShopCheckInCard(previewCheckIn(), onOpenPhoto = { _, _ -> }, showAuthor = true, showHelpful = true,
-        isOwn = true, shopTitle = "Кофейня", dateLabel = "1 окт. 2026")
+        isOwn = true, onVote = {}, shopTitle = "Кофейня", dateLabel = "1 окт. 2026")
 }
 
 @Preview @Composable private fun ShopCheckInPhotoCardLightPreview() = CoffeePeekTheme(darkTheme = false) {
