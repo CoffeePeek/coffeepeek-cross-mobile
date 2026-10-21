@@ -13,6 +13,8 @@
         android:icon="@drawable/sandbox_launcher" android:roundIcon="@drawable/sandbox_launcher"
         tools:replace="android:name,android:label,android:icon,android:roundIcon">
         <activity android:name="com.coffeepeek.admin.MainActivity" tools:node="remove" />
+        <provider android:name="com.google.firebase.provider.FirebaseInitProvider" tools:node="remove" />
+        <service android:name="com.coffeepeek.admin.notifications.CoffeePeekMessagingService" tools:node="remove" />
         <activity android:name="com.coffeepeek.admin.sandbox.SandboxActivity"
             android:exported="true" android:theme="@style/AppTheme">
             <intent-filter>

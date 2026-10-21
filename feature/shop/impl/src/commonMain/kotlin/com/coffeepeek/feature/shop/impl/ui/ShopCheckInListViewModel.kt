@@ -136,7 +136,6 @@ internal class ShopCheckInListViewModel(
 
     private suspend fun vote(checkInId: String) {
         val checkIn = currentState.checkIns.firstOrNull { it.id == checkInId } ?: return
-        if (currentState.owns(checkIn)) return
         if (!currentState.isLoggedIn) { emitEvent(ShopCheckInListEvent.SignIn); return }
         if (voteJob != null || loadJob != null) return
         val job = currentCoroutineContext().job
