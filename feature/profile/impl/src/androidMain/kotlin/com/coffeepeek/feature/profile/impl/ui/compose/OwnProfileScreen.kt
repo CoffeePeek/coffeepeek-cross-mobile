@@ -13,8 +13,6 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -22,13 +20,13 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -37,6 +35,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.coffeepeek.core.designsystem.component.CoffeePeekActionMenu
+import com.coffeepeek.core.designsystem.component.CoffeePeekMenuItem
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.feature.profile.api.OwnProfileSlots
 import com.coffeepeek.feature.profile.api.ProfileAuthorActions
@@ -147,17 +147,11 @@ internal fun OwnProfileScreen(
 
 @Composable
 private fun OwnProfileActions(onContributions: (ProfileContribution) -> Unit, onLogout: () -> Unit) {
-    var open by remember { mutableStateOf(false) }
-    Box {
-        IconButton(onClick = { open = true }) { Icon(CoffeePeekIcons.MoreHorizontal, stringResource(R.string.profile_actions)) }
-        DropdownMenu(expanded = open, onDismissRequest = { open = false }) {
-            @Composable fun item(label: Int, icon: androidx.compose.ui.graphics.vector.ImageVector, onClick: () -> Unit) = DropdownMenuItem(
-                text = { Text(stringResource(label)) }, leadingIcon = { Icon(icon, null) }, onClick = { open = false; onClick() },
-            )
-            item(R.string.profile_menu_shop_changes, CoffeePeekIcons.NoteEdit) { onContributions(ProfileContribution.Changes) }
-            item(R.string.profile_menu_submitted_shops, CoffeePeekIcons.Add) { onContributions(ProfileContribution.Shops) }
-            item(R.string.profile_menu_submitted_roasters, CoffeePeekIcons.CoffeeBean) { onContributions(ProfileContribution.Roasters) }
-            item(R.string.profile_menu_logout, CoffeePeekIcons.Logout, onLogout)
-        }
-    }
+    val items = listOf(
+        CoffeePeekMenuItem("shop-changes", stringResource(R.string.profile_menu_shop_changes), CoffeePeekIcons.NoteEdit, onClick = { onContributions(ProfileContribution.Changes) }),
+        CoffeePeekMenuItem("submitted-shops", stringResource(R.string.profile_menu_submitted_shops), CoffeePeekIcons.Add, onClick = { onContributions(ProfileContribution.Shops) }),
+        CoffeePeekMenuItem("submitted-roasters", stringResource(R.string.profile_menu_submitted_roasters), CoffeePeekIcons.CoffeeBean, onClick = { onContributions(ProfileContribution.Roasters) }),
+        CoffeePeekMenuItem("logout", stringResource(R.string.profile_menu_logout), CoffeePeekIcons.Logout, onClick = onLogout),
+    )
+    CoffeePeekActionMenu(items) { open -> IconButton(onClick = open) { Icon(CoffeePeekIcons.MoreHorizontal, stringResource(R.string.profile_actions)) } }
 }

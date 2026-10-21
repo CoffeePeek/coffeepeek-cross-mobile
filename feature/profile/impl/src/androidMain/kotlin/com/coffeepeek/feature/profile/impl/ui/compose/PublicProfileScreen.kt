@@ -21,8 +21,6 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -30,11 +28,11 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
@@ -45,6 +43,8 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.coffeepeek.core.designsystem.component.CoffeePeekSwipeDismissModalBottomSheet
+import com.coffeepeek.core.designsystem.component.CoffeePeekActionMenu
+import com.coffeepeek.core.designsystem.component.CoffeePeekMenuItem
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.theme.CoffeePeekColors
 import com.coffeepeek.feature.profile.api.ProfileAuthor
@@ -140,26 +140,17 @@ internal fun PublicProfileScreen(
                 )
                 if (own != null) Box(Modifier.align(Alignment.CenterEnd)) { own.topBarActions() }
                 else if (profile != null && author != null && !viewingOwn) Box(Modifier.align(Alignment.CenterEnd)) {
-                    IconButton(onClick = { menuOpen = true }) {
-                        Icon(CoffeePeekIcons.MoreHorizontal, stringResource(R.string.profile_author_actions))
+                    val blocked = profile.isBlockedByViewer
+                    val shareLabel = stringResource(R.string.profile_share)
+                    val blockLabel = stringResource(if (blocked) R.string.profile_unblock_author else R.string.profile_block_author)
+                    val menu = buildList {
+                        if (!blocked && sharePath != null) add(CoffeePeekMenuItem("share", shareLabel, CoffeePeekIcons.Share, onClick = { onShare("$PUBLIC_PROFILE_BASE_URL$sharePath") }))
+                        add(CoffeePeekMenuItem("block", blockLabel, CoffeePeekIcons.Block, destructive = !blocked, onClick = {
+                            if (blocked) authorActions.requestUnblock(author) else authorActions.requestBlock(author)
+                        }))
                     }
-                    DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
-                        if (!profile.isBlockedByViewer && sharePath != null) DropdownMenuItem(
-                            text = { Text(stringResource(R.string.profile_share)) },
-                            leadingIcon = { Icon(CoffeePeekIcons.Share, null) },
-                            onClick = { menuOpen = false; onShare("$PUBLIC_PROFILE_BASE_URL$sharePath") },
-                        )
-                        DropdownMenuItem(
-                            text = {
-                                Text(stringResource(if (profile.isBlockedByViewer) R.string.profile_unblock_author else R.string.profile_block_author),
-                                    color = if (profile.isBlockedByViewer) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.error)
-                            },
-                            leadingIcon = { Icon(CoffeePeekIcons.Block, null, tint = if (profile.isBlockedByViewer) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.error) },
-                            onClick = {
-                                menuOpen = false
-                                if (profile.isBlockedByViewer) authorActions.requestUnblock(author) else authorActions.requestBlock(author)
-                            },
-                        )
+                    CoffeePeekActionMenu(menu) { open ->
+                        IconButton(onClick = open) { Icon(CoffeePeekIcons.MoreHorizontal, stringResource(R.string.profile_author_actions)) }
                     }
                 } else if (profile != null && sharePath != null) IconButton(
                     onClick = { onShare("$PUBLIC_PROFILE_BASE_URL$sharePath") }, modifier = Modifier.align(Alignment.CenterEnd),

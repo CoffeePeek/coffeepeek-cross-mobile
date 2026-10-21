@@ -17,18 +17,12 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -44,7 +38,9 @@ import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
+import com.coffeepeek.core.designsystem.component.CoffeePeekActionMenu
 import com.coffeepeek.core.designsystem.component.CoffeePeekLikeIcon
+import com.coffeepeek.core.designsystem.component.CoffeePeekMenuItem
 import com.coffeepeek.core.designsystem.component.CoffeePeekRating
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.theme.CoffeePeekColors
@@ -157,36 +153,18 @@ private fun Avatar(name: String, photoUrl: String?, host: CommunityHost) {
 @Composable
 private fun PostMenu(actions: PostCardActions, enabled: Boolean, hiding: Boolean) {
     if (actions.onBlock == null && actions.onEdit == null && actions.onHide == null && actions.onReport == null) return
-    var open by remember { mutableStateOf(false) }
     val label = stringResource(R.string.community_actions)
-    Box {
-        IconButton(onClick = { open = true }, enabled = enabled) {
-            Icon(CoffeePeekIcons.MoreHorizontal, label, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+    val items = buildList {
+        actions.onBlock?.let { add(CoffeePeekMenuItem("block", stringResource(R.string.community_block_author), CoffeePeekIcons.VisibilityOff, destructive = true, enabled = enabled, onClick = it)) }
+        actions.onEdit?.let { add(CoffeePeekMenuItem("edit", stringResource(R.string.community_edit), CoffeePeekIcons.Edit, enabled = enabled, onClick = it)) }
+        actions.onHide?.let {
+            add(CoffeePeekMenuItem("hide", stringResource(if (hiding) R.string.community_saving else R.string.community_hide), CoffeePeekIcons.VisibilityOff,
+                enabled = enabled && !hiding, onClick = it))
         }
-        DropdownMenu(open, { open = false }) {
-            actions.onBlock?.let { block ->
-                DropdownMenuItem(
-                    text = { Text(stringResource(R.string.community_block_author), color = MaterialTheme.colorScheme.error) },
-                    leadingIcon = { Icon(CoffeePeekIcons.Block, null, tint = MaterialTheme.colorScheme.error) },
-                    enabled = enabled, onClick = { open = false; block() },
-                )
-            }
-            actions.onEdit?.let { edit ->
-                DropdownMenuItem(text = { Text(stringResource(R.string.community_edit)) }, leadingIcon = { Icon(CoffeePeekIcons.Edit, null) },
-                    enabled = enabled, onClick = { open = false; edit() })
-            }
-            actions.onHide?.let { hide ->
-                DropdownMenuItem(
-                    text = { Text(stringResource(if (hiding) R.string.community_saving else R.string.community_hide)) },
-                    leadingIcon = { Icon(CoffeePeekIcons.VisibilityOff, null) },
-                    enabled = enabled && !hiding, onClick = { open = false; hide() },
-                )
-            }
-            actions.onReport?.let { report ->
-                DropdownMenuItem(text = { Text(stringResource(R.string.community_report)) }, leadingIcon = { Icon(CoffeePeekIcons.Error, null) },
-                    enabled = enabled, onClick = { open = false; report() })
-            }
-        }
+        actions.onReport?.let { add(CoffeePeekMenuItem("report", stringResource(R.string.community_report), CoffeePeekIcons.Error, enabled = enabled, onClick = it)) }
+    }
+    CoffeePeekActionMenu(items) { open ->
+        IconButton(onClick = open, enabled = enabled) { Icon(CoffeePeekIcons.MoreHorizontal, label, tint = MaterialTheme.colorScheme.onSurfaceVariant) }
     }
 }
 
