@@ -9,7 +9,6 @@ object Modules {
     val feature = Feature
 
     object Feature {
-
         val appUpdate = AppUpdate
         object AppUpdate {
             const val api = ":feature:app-update:api"
@@ -26,6 +25,7 @@ object Modules {
             const val impl = ":feature:auth:impl"
         }
 
+        const val notifications = ":features:notifications"
         val authorBlocking = AuthorBlocking
         object AuthorBlocking {
             const val api = ":feature:author-blocking:api"
@@ -182,6 +182,7 @@ object Modules {
         feature.authorBlocking.api,
         feature.authorBlocking.data,
         feature.authorBlocking.impl,
+        feature.notifications,
     )
 }
 

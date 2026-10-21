@@ -42,6 +42,9 @@ class PhotoSessionInvalidationTest {
             HttpMethod.Patch to "/api/v1/check-ins/visit/visibility",
             HttpMethod.Delete to "/api/v1/check-ins/home/home",
             HttpMethod.Put to "/api/v1/home-check-ins/home",
+            HttpMethod.Put to "/api/v1/check-ins/helpful",
+            HttpMethod.Delete to "/api/v1/check-ins/visit/helpful/photos/photo",
+            HttpMethod.Post to "/api/v1/check-ins/visit/helpful",
             HttpMethod.Post to "/api/v1/users/me/blocks",
             HttpMethod.Put to "/api/Users/me",
         )
@@ -63,6 +66,34 @@ class PhotoSessionInvalidationTest {
                 } else client.request("https://gateway.example$path") { this.method = method }
                 assertEquals(expectedBefore + 2, invalidations)
             }
+        } finally { client.close() }
+    }
+
+    @Test fun likesAndUnlikesDoNotRevokePhotosEvenWhenTheRequestFails() = runTest {
+        var invalidations = 0
+        var requests = 0
+        val client = HttpClient(MockEngine {
+            requests++
+            if (it.url.parameters["lost-response"] != null) error("Synthetic lost vote response")
+            respond("", if (it.url.parameters["denied"] != null) HttpStatusCode.Forbidden else HttpStatusCode.OK)
+        })
+        try {
+            installPhotoSessionInvalidation(Sessions(null), client, backgroundScope, {}, { invalidations++ })
+            for (method in listOf(HttpMethod.Put, HttpMethod.Delete)) {
+                for (path in listOf(
+                    "/api/v1/check-ins/shop-visit/helpful",
+                    "/API/v1/CHECK-INS/home-visit/HELPFUL/?denied=true",
+                    "/api/v1/check-ins/visit/helpful?lost-response=true",
+                )) {
+                    if ("lost-response" in path) {
+                        assertFailsWith<IllegalStateException> {
+                            client.request("https://gateway.example$path") { this.method = method }
+                        }
+                    } else client.request("https://gateway.example$path") { this.method = method }
+                    assertEquals(0, invalidations, "$method $path must keep the current photo permission")
+                }
+            }
+            assertEquals(6, requests)
         } finally { client.close() }
     }
 

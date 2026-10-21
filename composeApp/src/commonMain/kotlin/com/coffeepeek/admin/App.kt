@@ -1,5 +1,6 @@
 package com.coffeepeek.admin
 
+import kotlinx.coroutines.launch
 import androidx.compose.runtime.getValue
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.background
@@ -45,6 +46,14 @@ fun App(onReady: () -> Unit = {}) {
 /** Shared presentation environment, also used by native iOS tab controllers. */
 @Composable
 internal fun AppContent(content: @Composable () -> Unit) {
+    val notifications = koinInject<com.coffeepeek.feature.notifications.api.NotificationFeature>()
+    androidx.lifecycle.compose.LifecycleResumeEffect(notifications) {
+        notifications.foreground()
+        val heartbeat = kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.Default).launch {
+            while (true) { kotlinx.coroutines.delay(15 * 60 * 1_000L); notifications.foreground() }
+        }
+        onPauseOrDispose { heartbeat.cancel() }
+    }
     val kamelConfig = koinInject<KamelConfig>()
     val themeMode by ThemeManager.themeMode.collectAsState()
     val isSystemDark = isSystemInDarkTheme()
