@@ -529,9 +529,10 @@ class SandboxApplicationBackendTest {
         assertEquals(47 - 1 - 15, visible.size); assertTrue(visible.none { it.checkIn.authorId == friend })
         client.client.delete("/api/v1/me/blocks/$friend")
         assertEquals(47, feed.getFeed(100).getOrThrow().items.size)
-        // Votes and reports work for generated posts too.
-        assertTrue(client.client.put("/api/v1/check-ins/sandbox-feed-1/helpful").status.isSuccess())
-        assertTrue(client.client.post("/api/v1/check-ins/sandbox-feed-1/reports").status.isSuccess())
+        // Votes work for generated posts too and keep their state; reports stay unimplemented in the Sandbox.
+        val vote = json(client.client.put("/api/v1/check-ins/sandbox-feed-1/helpful"))
+        assertTrue(vote["isHelpful"]!!.jsonPrimitive.boolean); assertEquals(2, vote["helpfulCount"]!!.jsonPrimitive.int)
+        assertEquals(1, json(client.client.delete("/api/v1/check-ins/sandbox-feed-1/helpful"))["helpfulCount"]!!.jsonPrimitive.int)
 
         backend.feed = SandboxFeed.PageFailsOnce
         val firstPage = feed.getFeed(20).getOrThrow()
