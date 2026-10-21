@@ -8,6 +8,7 @@ import com.adamglin.phosphoricons.fill.Heart as FillHeart
 import com.adamglin.phosphoricons.fill.Star as FillStar
 import com.adamglin.phosphoricons.regular.ArrowLeft
 import com.adamglin.phosphoricons.regular.Avocado
+import com.adamglin.phosphoricons.regular.Bell
 import com.adamglin.phosphoricons.regular.Bread
 import com.adamglin.phosphoricons.regular.Cake
 import com.adamglin.phosphoricons.regular.Egg
@@ -128,6 +129,7 @@ object CoffeePeekIcons {
     val MoreHorizontal: ImageVector get() = PhosphorIcons.Regular.DotsThree
     val MyLocation: ImageVector get() = Location
     val Navigation: ImageVector get() = PhosphorIcons.Regular.NavigationArrow
+    val Notifications: ImageVector get() = PhosphorIcons.Regular.Bell
     val Distance: ImageVector get() = PhosphorIcons.Regular.PersonSimpleWalk
     val Photo: ImageVector get() = PhosphorIcons.Regular.ImageSquare
     val Profile: ImageVector get() = PhosphorIcons.Regular.User
