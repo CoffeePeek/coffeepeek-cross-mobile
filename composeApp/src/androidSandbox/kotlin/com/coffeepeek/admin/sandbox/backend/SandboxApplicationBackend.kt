@@ -35,6 +35,7 @@ internal class SandboxApplicationBackend(private val today: LocalDate, private v
         const val RESEND_WINDOW_SECONDS = 60L
     }
     private val shopNames = mapOf("sandbox-cafe" to "Sandbox Cafe", "sandbox-lab" to "Sandbox Lab")
+    private val contributionStore = SandboxContributionsBackend(today, shopNames.keys)
     private val favorites = linkedSetOf("coffee_shop:sandbox-cafe", "roaster:sandbox-roaster", "drink:cappuccino")
     private var username = "Sandbox"
     private var about = "Локальный тестовый профиль. Все действия остаются в Sandbox."
@@ -50,11 +51,15 @@ internal class SandboxApplicationBackend(private val today: LocalDate, private v
     @Volatile var cities = SandboxCities.Single
     @Volatile var authPolicy = SandboxAuthPolicy.Works
     @Volatile var feed = SandboxFeed.Single
+    var contributions: SandboxContributions
+        get() = contributionStore.mode
+        set(value) = contributionStore.select(value, populated)
     private var laterPageFailed = false
     fun reset(populated: Boolean) {
         updatePolicy = SandboxUpdatePolicy.UpToDate; cities = SandboxCities.Single; authPolicy = SandboxAuthPolicy.Works
         feed = SandboxFeed.Single; laterPageFailed = false; generated = null
         this.populated = populated
+        contributionStore.reset(populated)
         others.clear(); blocked.clear(); blocksRevision++
         friendFollowing = false; deletionRequest = null
         if (populated) others += friendVisit()
@@ -77,6 +82,7 @@ internal class SandboxApplicationBackend(private val today: LocalDate, private v
             if (changed) blocksRevision++
             return ok(buildJsonObject { put("authorId", id); put("isBlocked", method == HttpMethod.Put) })
         }
+        contributionStore.handle(path, method, request, input)?.let { return it }
         authRoute(path, method, input)?.let { return it }
         if (path == "/api/users/me" && method == HttpMethod.Get) return ok(profile())
         if (path == "/api/users/me/username" && method == HttpMethod.Patch) {
@@ -186,6 +192,9 @@ internal class SandboxApplicationBackend(private val today: LocalDate, private v
         if (path == "/api/catalogs/drinks") return ok(drinks())
         if (path == "/api/menu/drinks") return ok(buildJsonObject { put("drinks", drinks()) })
         if (path == "/api/catalogs/brew-methods") return ok(JsonArray(listOf(catalog("hario-v60", "Hario V60"), catalog("aeropress", "AeroPress"))))
+        if (path == "/api/catalogs/equipments") return ok(JsonArray(if (populated) listOf(catalog("espresso-machine", "Эспрессо-машина"), catalog("grinder", "Кофемолка")) else emptyList()))
+        if (path == "/api/catalogs/beans") return ok(JsonArray(if (populated) listOf(catalog("arabica", "Арабика"), catalog("robusta", "Робуста")) else emptyList()))
+        if (path == "/api/catalogs/shop-tags") return ok(JsonArray(if (populated) listOf(catalog("wifi", "Wi-Fi"), catalog("pets", "Можно с животными")) else emptyList()))
         if (path.startsWith("/api/catalogs/") && method == HttpMethod.Get) return ok(JsonArray(emptyList()))
         if (path == "/api/v1/catalogs/coffee-filter-values") return ok(if (populated) coffeeFilterGroups() else JsonArray(emptyList()))
         if (path == "/api/v1/coffees/search") return ok(buildJsonObject {

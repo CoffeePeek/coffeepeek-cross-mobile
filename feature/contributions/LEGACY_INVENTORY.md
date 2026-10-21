@@ -128,3 +128,11 @@ has no page type (falls into `other`).
 ## (8) Not checked in this pass
 
 Live API contracts (paths and DTOs of `moderation/*`, `shop-change-requests`), image upload to the real storage, camera, real location and map, iOS behaviour, large font, TalkBack. They stay explicit gates for the later steps.
+
+## Step 0 result (Sandbox fixtures)
+
+- **Added**: `SandboxContributionsBackend` (`ModerationShops`, `ModerationRoasters`, `ShopChangeRequests`: lists by status with paging and filters, create/submit with validation, read and edit of a change request, edit refused for an approved one), equipment/bean/shop-tag catalogs, the `SandboxContributions` modes (`Seeded`, `Paged`, `Empty`, `ListFailure`, `SubmitFailure`), the controls row «Мои вклады» and the launch extra `sandbox_contributions`; `SANDBOX.md` describes them.
+- **Tests**: `SandboxApplicationBackendTest` +1 (25 in total) runs the real `ShopApiService`, `RoasterApiService` and `ShopChangeRequestApiService` against the fixtures: lists per status, published vs waiting shops, rejected reasons, filters, submissions appearing as pending, server messages for invalid input, address/city pairing for roasters, edit rules, catalogs, paging (47 items, 3 pages), empty and failure modes, reset.
+- **Device check (Pixel 7, Sandbox, dark theme)**: profile menu -> «Отправленные кофейни» shows the three tabs with counts, the published shop with «Открыть в каталоге», the waiting one with «Скоро появится в каталоге», and the rejected one with the red reason block (legacy screen, nothing migrated yet).
+- **Not covered**: the real moderation decisions, photo key checks, real map/location, the wizard, roaster and change forms on a device (the step 1 and later checks).
+

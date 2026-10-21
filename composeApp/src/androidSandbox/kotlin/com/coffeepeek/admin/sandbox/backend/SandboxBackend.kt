@@ -40,6 +40,9 @@ internal class SandboxBackend(private val samplePhoto: ByteArray,
     var feed: SandboxFeed
         get() = application.feed
         set(value) { application.feed = value }
+    var contributions: SandboxContributions
+        get() = application.contributions
+        set(value) { application.contributions = value }
     private fun apiEngine() = MockEngine { request ->
         val mode = scenario
         if (mode == SandboxScenario.Slow) delay(900)

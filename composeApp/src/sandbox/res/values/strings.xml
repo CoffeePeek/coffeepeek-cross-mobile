@@ -29,6 +29,12 @@
     <string name="sandbox_feed_invalid_cursor">Курсор устарел</string>
     <string name="sandbox_feed_empty">Пусто</string>
     <string name="sandbox_feed_failure">Ошибка ленты</string>
+    <string name="sandbox_contributions_title">Мои вклады</string>
+    <string name="sandbox_contributions_seeded">Несколько заявок</string>
+    <string name="sandbox_contributions_paged">Страницы</string>
+    <string name="sandbox_contributions_empty">Пусто</string>
+    <string name="sandbox_contributions_list_failure">Ошибка списков</string>
+    <string name="sandbox_contributions_submit_failure">Отказ при отправке</string>
     <string name="sandbox_cities_title">Города</string>
     <string name="sandbox_cities_single">Один</string>
     <string name="sandbox_cities_several">Несколько</string>
