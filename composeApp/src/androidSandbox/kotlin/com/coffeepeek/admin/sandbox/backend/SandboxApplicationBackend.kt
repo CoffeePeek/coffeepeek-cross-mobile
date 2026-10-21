@@ -53,7 +53,7 @@ internal class SandboxApplicationBackend(private val today: LocalDate, private v
     private var laterPageFailed = false
     fun reset(populated: Boolean) {
         updatePolicy = SandboxUpdatePolicy.UpToDate; cities = SandboxCities.Single; authPolicy = SandboxAuthPolicy.Works
-        feed = SandboxFeed.Single; laterPageFailed = false
+        feed = SandboxFeed.Single; laterPageFailed = false; generated = null
         this.populated = populated
         others.clear(); blocked.clear(); blocksRevision++
         friendFollowing = false; deletionRequest = null
@@ -257,7 +257,9 @@ internal class SandboxApplicationBackend(private val today: LocalDate, private v
     }
 
     /** 45 public posts by the blockable friend (every third) and two other authors; every fifth is a home preparation. */
-    private val generatedFeed: List<JsonObject> by lazy {
+    private var generated: MutableList<JsonObject>? = null
+    private val generatedFeed: MutableList<JsonObject> get() = generated ?: buildGeneratedFeed().also { generated = it }
+    private fun buildGeneratedFeed(): MutableList<JsonObject> =
         (1..45).map { index ->
             val friend = index % 3 == 0
             val slug = if (friend) FRIEND_SLUG else "sandbox-reader-${index % 3}"
@@ -276,8 +278,7 @@ internal class SandboxApplicationBackend(private val today: LocalDate, private v
                     putJsonObject("home") { put("preparedOn", today.toString()); put("brewMethodCode", "hario-v60"); put("beanName", "Sandbox Bean $index"); put("doseGrams", 15.0); put("brewDurationSeconds", 150); put("tasteScore", 4) }
                 }
             }
-        }
-    }
+        }.toMutableList()
     private fun visible(row: JsonObject) = row["authorId"]?.jsonPrimitive?.contentOrNull !in blocked
     private fun blockPage(request: HttpRequestData): Pair<HttpStatusCode, JsonObject> {
         val size = request.url.parameters["pageSize"]?.toIntOrNull()
@@ -332,7 +333,11 @@ internal class SandboxApplicationBackend(private val today: LocalDate, private v
             else -> -1
         }
         val count = ((visit["helpfulCount"]?.jsonPrimitive?.intOrNull ?: 0) + delta).coerceAtLeast(0)
-        val source = if (visit in visits) visits else others
+        val source = when {
+            visit in visits -> visits
+            visit in others -> others
+            else -> generatedFeed
+        }
         source[source.indexOf(visit)] = JsonObject(visit + mapOf(
             "isHelpfulByCurrentUser" to JsonPrimitive(helpful), "helpfulCount" to JsonPrimitive(count)))
         return ok(buildJsonObject { put("isHelpful", helpful); put("helpfulCount", count) })
