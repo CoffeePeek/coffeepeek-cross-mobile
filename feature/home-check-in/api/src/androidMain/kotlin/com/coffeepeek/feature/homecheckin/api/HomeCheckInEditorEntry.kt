@@ -6,7 +6,8 @@ import androidx.compose.ui.Modifier
 /**
  * Form body for an app-owned destination/sheet, without root navigation or another form sheet.
  * Null ID creates; any non-null ID edits that exact record (including an invalid/blank ID).
- * Owns a fresh form ViewModel store while composed; removing/reopening Content resets it.
+ * Caller provides a destination-owned ViewModelStoreOwner, retained across Activity recreation
+ * and cleared on final close/replacement. Reopening must use a fresh store.
  * Caller supplies its lifecycle, reactive lease snapshot and generation, blocks outer dismissal
  * while requested, and refreshes once on Saved. Token renewal is not a generation change.
  */
