@@ -317,3 +317,9 @@ guards; **450 app unit tests executed per delivery variant**. Together with the
 verification build completed successfully in five minutes. No app was installed,
 no phone/account data was changed, and no UI/device suite was run for this
 non-UI slice. Existing AGP/KMP and preview deprecation warnings remain out of scope.
+
+## Retroactive parity audit — 2026-10-20
+
+Open gaps from the legacy-first audit: C1–C4 (medium: C1 mascot load-error slot). Full table and verification status: [LEGACY_PARITY_AUDIT.md](../LEGACY_PARITY_AUDIT.md).
+
+Fixes applied 2026-10-20 and owner decisions on intentional differences: see the "Fixes applied" and "Intentional differences" sections of [LEGACY_PARITY_AUDIT.md](../LEGACY_PARITY_AUDIT.md). Device verification is still open.

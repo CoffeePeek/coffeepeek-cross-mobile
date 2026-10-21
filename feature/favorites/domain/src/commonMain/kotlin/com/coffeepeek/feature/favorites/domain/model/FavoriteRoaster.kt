@@ -8,4 +8,5 @@ data class FavoriteRoaster(
     val photoUrl: String? = null,
     val coffeeShopsCount: Int = 0,
     val coffeeProductsCount: Int = 0,
+    val description: String? = null,
 )

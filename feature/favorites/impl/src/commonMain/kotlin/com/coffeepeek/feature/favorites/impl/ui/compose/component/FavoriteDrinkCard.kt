@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import com.coffeepeek.feature.favorites.impl.ui.compose.favoriteExposure
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -39,7 +40,7 @@ internal fun FavoriteDrinkCard(drink: FavoriteDrink, removing: Boolean, onRemove
                     color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
             CoffeePeekLikeButton(true, stringResource(Res.string.favorites_remove_description, title), onRemove,
-                enabled = !removing && drink.canRemove)
+                enabled = !removing && drink.canRemove, modifier = Modifier.favoriteExposure(roaster = false).size(48.dp))
         }
     }
 }

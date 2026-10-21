@@ -9,8 +9,8 @@ import com.coffeepeek.feature.homecheckin.impl.R
 internal fun HomePreparationIssue.editorText(): String = stringResource(when (this) {
     HomePreparationIssue.Offline -> R.string.home_check_in_offline
     HomePreparationIssue.Timeout -> R.string.home_check_in_timeout
-    HomePreparationIssue.Unauthorized -> R.string.home_check_in_unauthorized
-    HomePreparationIssue.Forbidden -> R.string.home_check_in_forbidden
+    HomePreparationIssue.Unauthorized -> R.string.home_check_in_save_unauthorized
+    HomePreparationIssue.Forbidden -> R.string.home_check_in_save_forbidden
     HomePreparationIssue.NotFound -> R.string.home_check_in_not_found
     HomePreparationIssue.RateLimited -> R.string.home_check_in_rate_limited
     HomePreparationIssue.Unavailable -> R.string.home_check_in_unavailable

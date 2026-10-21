@@ -30,6 +30,7 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.component.CoffeePeekLikeButton
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
@@ -80,6 +81,10 @@ internal fun FavoriteRoasterCard(
                     CoffeePeekLikeButton(true, stringResource(Res.string.favorites_roaster_remove, roaster.title), onRemove,
                         enabled = !removing && roaster.id.isNotBlank(), modifier = Modifier.favoriteExposure(roaster = true).size(48.dp))
                 }
+                roaster.description?.takeIf(String::isNotBlank)?.let { description ->
+                    Text(description, style = MaterialTheme.typography.bodySmall.copy(fontSize = 11.sp, lineHeight = 13.sp),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 3, overflow = TextOverflow.Ellipsis)
+                }
                 Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                     FavoriteRoasterStat(CoffeePeekIcons.Coffee, stringResource(Res.string.favorites_roaster_shops),
@@ -98,7 +103,8 @@ internal fun FavoriteRoasterCard(
 }
 
 @Preview @Composable private fun FavoriteRoasterCardLightPreview() = CoffeePeekTheme(darkTheme = false) {
-    FavoriteRoasterCard(FavoriteRoaster("sample", "Обжарщик", "sample", coffeeShopsCount = 7, coffeeProductsCount = 12), false, {}, {})
+    FavoriteRoasterCard(FavoriteRoaster("sample", "Обжарщик", "sample", coffeeShopsCount = 7, coffeeProductsCount = 12,
+        description = "Обжариваем светлую арабику для фильтра и эспрессо небольшими партиями"), false, {}, {})
 }
 @Preview @Composable private fun FavoriteRoasterCardDarkPreview() = CoffeePeekTheme(darkTheme = true) {
     FavoriteRoasterCard(FavoriteRoaster("sample", "Обжарщик с длинным названием без публичного адреса"), true, {}, {})

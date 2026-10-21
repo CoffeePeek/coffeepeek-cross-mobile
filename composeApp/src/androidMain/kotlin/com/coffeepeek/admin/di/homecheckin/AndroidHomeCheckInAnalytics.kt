@@ -29,7 +29,7 @@ internal class AndroidHomeCheckInAnalytics(
             is HomeCheckInEditorMetric.FieldChanged -> current.field(event.field.analyticsName())
             HomeCheckInEditorMetric.Submitted -> current.submit()
             is HomeCheckInEditorMetric.Validation -> current.validation(event.fields.map { it.analyticsName() }, event.server)
-            is HomeCheckInEditorMetric.Failed -> current.failed(event.stage.analyticsStage(), event.issue.analyticsError())
+            is HomeCheckInEditorMetric.Failed -> current.failed(event.stage.analyticsStage(), event.issue.analyticsError(event.statusCode))
             is HomeCheckInEditorMetric.Retry -> current.retry(event.stage.analyticsStage())
             is HomeCheckInEditorMetric.Saved -> {
                 current.saved(event.visibility?.name ?: "unknown", event.hasPhotos)
@@ -51,13 +51,14 @@ private fun HomeCheckInEditorStage.analyticsStage() = when (this) {
     HomeCheckInEditorStage.Photo -> CheckInStage.Photo
     HomeCheckInEditorStage.Save -> CheckInStage.Save
 }
-private fun HomePreparationIssue.analyticsError() = SafeAnalyticsError(when (this) {
+private fun HomePreparationIssue.analyticsError(status: Int? = null) = SafeAnalyticsError(when (this) {
     HomePreparationIssue.Unauthorized -> "authentication"
     HomePreparationIssue.Forbidden -> "permission"
     HomePreparationIssue.NotFound -> "not_found"
     HomePreparationIssue.RateLimited -> "rate_limited"
     HomePreparationIssue.Unavailable -> "server"
     HomePreparationIssue.Offline, HomePreparationIssue.Timeout -> "network"
-    HomePreparationIssue.InvalidResponse, HomePreparationIssue.RequestFailed, HomePreparationIssue.Conflict -> "unknown"
+    HomePreparationIssue.RequestFailed -> if (status in 400..499) "validation" else "unknown"
+    HomePreparationIssue.InvalidResponse, HomePreparationIssue.Conflict -> "unknown"
     else -> "validation"
-})
+}, status)

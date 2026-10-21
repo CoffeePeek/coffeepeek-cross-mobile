@@ -26,9 +26,19 @@ internal class ShopIssueReportBackend(private val client: HttpClient) {
         onSuccess = { Result.success(it) },
         onFailure = { error -> Result.failure(
             if (error is ShopIssueReportRejected || error is ShopReportDeliveryUnconfirmed) error
+            else if (error.failedBeforeSending()) error
             else ShopReportDeliveryUnconfirmed(error)
         ) },
     )
 }
 
 internal class ShopIssueReportRejected(message: String) : Exception(message)
+
+private val PRE_SEND_FAILURES = setOf(
+    "ConnectException", "UnknownHostException", "UnresolvedAddressException",
+    "ConnectTimeoutException", "NoRouteToHostException",
+)
+
+/** The connection never opened, so the server cannot have accepted the report and retrying is safe. */
+private fun Throwable.failedBeforeSending(): Boolean =
+    generateSequence(this) { it.cause?.takeIf { cause -> cause !== it } }.take(8).any { it::class.simpleName in PRE_SEND_FAILURES }

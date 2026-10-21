@@ -690,6 +690,21 @@ class CombinedHistoryViewModelTest {
         assertFalse(vm.state.value.homes.isLoadingMore)
     }
 
+    @Test fun photoViewerOpensOnTheThumbnailAlreadyShown() = runTest(dispatcher) {
+        val entry = shop("entry").copy(photoUrls = listOf("https://fixture.test/1", "https://fixture.test/2"),
+            photoDetailUrls = listOf("https://fixture.test/detail-1", "https://fixture.test/detail-2"),
+            photoThumbnailUrls = listOf("https://fixture.test/thumb-1", ""))
+        val shops = Shops().apply { pageResult = { Result.success(CheckInHistoryPage(listOf(entry), 1, it, 20)) } }
+        val vm = vm(shops)
+        val events = mutableListOf<CheckInHistoryEventEnvelope>()
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { vm.events.toList(events) }
+        runCurrent()
+        vm.onAction(CombinedHistoryAction.OpenEntry("shop:entry")); runCurrent()
+        vm.onAction(CombinedHistoryAction.OpenPhoto(1)); runCurrent()
+        assertEquals(CheckInHistoryEvent.OpenPhoto(
+            listOf("https://fixture.test/thumb-1", "https://fixture.test/detail-2"), 1, entry.photoUrls), events.single().event)
+    }
+
     @Test fun visibleShopOpensDetailsBeforeCanonicalShopAndPhotosKeepAlbumIndex() = runTest(dispatcher) {
         val entry = shop("entry").copy(photoUrls = listOf("https://fixture.test/1", "https://fixture.test/2"),
             photoDetailUrls = listOf("https://fixture.test/detail-1", ""))

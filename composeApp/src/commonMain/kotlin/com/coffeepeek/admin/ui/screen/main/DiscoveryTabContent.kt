@@ -28,8 +28,8 @@ import com.coffeepeek.admin.ui.screen.feed.FeedScreen
 import com.coffeepeek.admin.ui.screen.feed.FeedViewModel
 import com.coffeepeek.admin.di.platformViewModel
 import com.coffeepeek.admin.ui.screen.map.MapScreen
-import com.coffeepeek.admin.ui.screen.roaster.RoasterPreview
-import com.coffeepeek.admin.ui.screen.roaster.RoasterListViewModel
+import com.coffeepeek.admin.ui.screen.roaster.RoasterScreenRenderer
+import org.koin.compose.koinInject
 
 /** The same discovery content is hosted by Compose navigation and native iOS tabs. */
 @Composable
@@ -39,7 +39,7 @@ internal fun DiscoveryTabContent(onMapExpandedChange: (Boolean) -> Unit) {
     var isMapExpanded by remember { mutableStateOf(false) }
     val feedVm: FeedViewModel = platformViewModel()
     val feedState by feedVm.uiState.collectAsState()
-    val roasterVm: RoasterListViewModel = platformViewModel()
+    val roasters = koinInject<RoasterScreenRenderer>()
     val pendingMapFocus by Navigator.pendingMapFocus.collectAsState()
     var previousOverlay by remember { mutableStateOf("discovery") }
     val overlay = if (showRoasters) "roasters" else if (isMapExpanded) "map" else "discovery"
@@ -72,11 +72,10 @@ internal fun DiscoveryTabContent(onMapExpandedChange: (Boolean) -> Unit) {
                         )
                     },
                     roasterPreview = {
-                        RoasterPreview(
+                        roasters.DiscoverySection(
                             query = feedState.query,
                             selectedRoasterIds = feedState.filters.roasterIds,
                             favoritesOnly = feedState.filters.favoritesOnly,
-                            vm = roasterVm,
                         )
                     },
                     onMapExpandedChange = {
@@ -92,7 +91,7 @@ internal fun DiscoveryTabContent(onMapExpandedChange: (Boolean) -> Unit) {
             enter = fadeIn(tween(if (reduceMotion) 0 else 300)) + slideInVertically(tween(if (reduceMotion) 0 else 360)) { it / 5 },
             exit = fadeOut(tween(if (reduceMotion) 0 else 240)) + slideOutVertically(tween(if (reduceMotion) 0 else 360)) { -it / 5 },
         ) {
-            com.coffeepeek.admin.ui.screen.roaster.RoasterListScreen(
+            roasters.DiscoverySearch(
                 onCancel = {
                     feedVm.cancelSearch()
                     showRoasters = false
@@ -101,7 +100,6 @@ internal fun DiscoveryTabContent(onMapExpandedChange: (Boolean) -> Unit) {
                 onQueryChange = feedVm::onQueryChange,
                 selectedRoasterIds = feedState.filters.roasterIds,
                 favoritesOnly = feedState.filters.favoritesOnly,
-                vm = roasterVm,
             )
         }
     }

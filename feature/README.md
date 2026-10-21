@@ -4,6 +4,12 @@ The active Android audit and execution order are in
 [ANDROID_REFACTORING_PLAN.md](ANDROID_REFACTORING_PLAN.md). Historical stack and
 completed-slice notes below are context, not the next-work checklist.
 
+Roasters now shares its api/domain/data/impl, Compose UI/resources and application
+adapters between Android and iOS. Common Koin activates the same renderer while
+the application retains its platform navigation, browser, haptics and photo
+viewer. See [roaster/IOS_MIGRATION_PLAN.md](roaster/IOS_MIGRATION_PLAN.md) for scope
+and verification; other features' existing platform boundaries remain as below.
+
 This directory now contains six api/domain/data/impl families: favorites,
 shop-report, shop, check-in-history, home-check-in and coffee. The first five
 have active Android entries; Coffee list/detail/picker/UI are prepared but not
@@ -242,3 +248,7 @@ and risks. Compile changed modules and app whenever integration changes; run
 contract/UI tests, check cycles/imports and DTO/entity containment. Inspect both
 preview themes, record modal/font/RTL limitations, and keep main unchanged until
 the corresponding PR is merged.
+
+## Legacy-first parity gate
+
+Before migrating or activating any owner, inventory the legacy composeApp behaviour (entries, states, analytics, platform behaviour, cross-feature contracts) and map every row to code and tests. Details and checklist: [ANDROID_REFACTORING_PLAN.md](ANDROID_REFACTORING_PLAN.md#legacy-first-parity-gate-mandatory-for-every-owner).

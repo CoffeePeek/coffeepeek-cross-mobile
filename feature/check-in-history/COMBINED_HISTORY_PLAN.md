@@ -701,3 +701,7 @@ core lint and 601 selected unit executions pass (233 app per variant, 87 Shop MV
 fixtures cover that Shop correction, not a combined-history route switch. User-
 approved yellow information icons and 14/12sp badge text are intentional prod
 exceptions. No physical phone, account data, backend writes or iOS screen changed.
+
+## Retroactive parity audit — 2026-10-20
+
+Open gaps from the legacy-first audit: A1–A8 (medium: A1 photo quality, A8 Sandbox data). Full table and verification status: [LEGACY_PARITY_AUDIT.md](../LEGACY_PARITY_AUDIT.md).

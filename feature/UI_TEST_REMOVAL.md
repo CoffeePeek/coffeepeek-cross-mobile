@@ -18,3 +18,29 @@ visual, device or live-backend acceptance run.
 
 The removal is committed in each checkpoint and propagated parent-first without
 rewriting published history. Deleted sources remain recoverable from Git.
+
+## Verification at the Roasters tip — 2026-10-20
+
+Source: `9e78663534001ad90f85aa8b3e3f00b440d06120`, followed only by this
+documentation update. Compared with the original Roasters tip `ec3944db`,
+50 UI-only files were deleted: 36 suite files, six standalone test Activities,
+and eight manifests. No production source, unit test, Sandbox fixture or
+database instrumentation source changed. All seven checkpoints have no
+remaining design-system/feature instrumented UI sources from these suites,
+and each child contains its updated parent.
+
+One sequential Gradle invocation (`--max-workers=6 --no-parallel`) succeeded
+in 4m 50s: Direct Debug, Play Debug and Direct Sandbox APKs; all three packaged
+DEX checks; Sandbox manifest isolation; Direct/Play application instrumentation
+and core/database instrumentation compilation. All 30 unit-test tasks executed:
+1785 test executions, zero failures/errors/skips, no retries. Direct and Play
+include duplicate common cases; this is not a count of unique tests.
+
+IDE diagnostics reported no errors in the changed dependency DSL, design-system
+build file or application build file. The initial Roasters Gradle-file inspection
+was unavailable because the IDE excluded that file; it is not counted as a
+successful inspection. Existing AGP/KMP and preview deprecation warnings remain.
+
+No device tests, installation, visual review or live-backend acceptance were
+performed for this removal. Ordinary CoffeePeek and the installed Sandbox were
+not updated. Earlier feature/device acceptance gates remain separate.

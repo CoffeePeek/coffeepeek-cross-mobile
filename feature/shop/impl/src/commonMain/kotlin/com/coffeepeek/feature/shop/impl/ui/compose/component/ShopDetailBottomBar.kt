@@ -66,7 +66,8 @@ internal fun ShopDetailBottomBar(
             }
         } else {
             FilledIconButton(onClick = onRoute, enabled = canOpenRoute,
-                modifier = Modifier.shopExposure(ShopExposure.Directions).size(CoffeePeekDimens.buttonHeight)
+                modifier = Modifier.then(if (canOpenRoute) Modifier.shopExposure(ShopExposure.Directions) else Modifier)
+                    .size(CoffeePeekDimens.buttonHeight)
                     .shadow(8.dp, RoundedCornerShape(CoffeePeekDimens.buttonRadius)),
                 colors = IconButtonDefaults.filledIconButtonColors(containerColor = MaterialTheme.colorScheme.primary,
                     contentColor = MaterialTheme.colorScheme.onPrimary)) {
@@ -74,7 +75,7 @@ internal fun ShopDetailBottomBar(
             }
         }
         if (forCheckIn) CoffeePeekButton(text = stringResource(Res.string.shop_detail_continue),
-            onClick = onCheckIn, modifier = Modifier.shopExposure(ShopExposure.CheckIn).weight(1f))
+            onClick = onCheckIn, modifier = Modifier.weight(1f))
         else OutlinedButton(onClick = onCheckIn,
             modifier = Modifier.shopExposure(ShopExposure.CheckIn).weight(1f).height(CoffeePeekDimens.buttonHeight)
                 .shadow(8.dp, RoundedCornerShape(CoffeePeekDimens.buttonRadius)),

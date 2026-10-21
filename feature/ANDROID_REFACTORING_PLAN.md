@@ -54,7 +54,50 @@ paths, not templates for new migrations.
 
 Five feature families have active Android entries; Coffee is the sixth prepared
 family, not a sixth completed integration. No label closes every release gate.
-iOS UI migration remains deferred; Native compilation is only compatibility.
+iOS UI migration remains deferred for other features. The user approved shared
+Compose Roasters activation on iOS on 2026-10-21; see
+[roaster/IOS_MIGRATION_PLAN.md](roaster/IOS_MIGRATION_PLAN.md) for implementation,
+verification and native-device acceptance gates. Native compilation alone is
+not device acceptance.
+
+## Legacy-first parity gate (mandatory for every owner)
+
+Migration rewrites working code, so the working code is the specification. Before
+writing a feature module, and again before switching its screens on, read the legacy
+code in `composeApp` (screens, ViewModels, repositories, Koin, `Navigator`, app links,
+Sandbox fixtures) and write the result into the owner's MIGRATION_PLAN as a
+"What exists today" inventory. Nothing is dropped silently: each row is
+**preserved**, **improved (say how)** or **intentionally removed (say why, with approval)**.
+
+Inventory checklist, per owner:
+
+1. Entry points: routes, tabs, deep/app links, callers from other features, iOS/shared consumers.
+2. Behaviour: states (loading/empty/error/refresh/pagination), filters and search rules,
+   debounce/limits, caching and TTL, error texts, restored state and process death.
+3. **Analytics**: every `Analytics.track`, `SearchTracker`, `TrackEntityDetail`,
+   `analyticsExposure`, `DetailEntryMemory` call and screen visibility marker, with event
+   names and properties. Reproduce through narrow api ports and app adapters, and cover
+   them with parity tests against the legacy trackers (see `ANALYTICS_PARITY_AUDIT.md`).
+4. Platform behaviour: haptics, system chooser/share/browser, permissions, back handling,
+   insets/bottom clearance, accessibility labels, large font, both themes.
+5. Cross-feature contracts: favorites identity, session/guest guards, image/viewer slots,
+   shared design-system geometry.
+6. Sandbox fixtures able to exercise each row, plus a manual checklist for rows tests
+   cannot cover.
+
+Gate to switch a screen on: inventory complete, every row mapped to code and a test or
+an explicit open item, legacy screen kept for iOS/other consumers. Gate for a screen that
+is already switched: run the same inventory as a retroactive audit and fix gaps as
+regressions in the owning branch. A green build or a Sandbox smoke is not evidence of parity.
+
+## Retroactive parity audit — 2026-10-20
+
+The gate above was applied retroactively to the active owners; results, severities and
+verification status are in [LEGACY_PARITY_AUDIT.md](LEGACY_PARITY_AUDIT.md). Highest priority:
+Home form state on Activity recreation (H1), Shop favorite-after-login (G1), Shop Report
+resubmission after offline failure (S1), Roaster detail insets (R1), Shop favorites hydration
+and check-in double count (G2, G3). Sandbox fixtures for these scenarios are listed there. No fixes
+are applied by the audit; each belongs to its owner branch.
 
 ## Current ordered work
 

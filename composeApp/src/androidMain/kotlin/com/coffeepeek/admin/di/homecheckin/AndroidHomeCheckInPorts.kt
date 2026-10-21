@@ -31,7 +31,7 @@ internal class AndroidHomeCheckInCatalog(
 private fun <T> Result<T>.homeCatalogResult(): Result<T> = fold({ Result.success(it) }, { error ->
     if (error is CancellationException) throw error
     if (error is HomePreparationFailure) Result.failure(error)
-    else Result.failure(HomePreparationFailure(when (safeAnalyticsError(error).category) {
+    else Result.failure(HomePreparationFailure(issue = when (safeAnalyticsError(error).category) {
         "authentication" -> HomePreparationIssue.Unauthorized
         "permission" -> HomePreparationIssue.Forbidden
         "not_found" -> HomePreparationIssue.NotFound
@@ -39,7 +39,7 @@ private fun <T> Result<T>.homeCatalogResult(): Result<T> = fold({ Result.success
         "server" -> HomePreparationIssue.Unavailable
         "network" -> HomePreparationIssue.Offline
         else -> HomePreparationIssue.RequestFailed
-    }))
+    }, statusCode = safeAnalyticsError(error).status))
 })
 
 /** Guards the prepared repository without routing writes back to the legacy Home writer. */

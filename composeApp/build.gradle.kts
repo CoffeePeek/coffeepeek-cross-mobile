@@ -76,6 +76,10 @@ kotlin {
             implementation("org.slf4j:slf4j-nop:2.0.16")
         }
         commonMain.dependencies {
+            implementation(project(module.feature.roaster.api))
+            implementation(project(module.feature.roaster.domain))
+            implementation(project(module.feature.roaster.data))
+            implementation(project(module.feature.roaster.impl))
             implementation(project(module.core.designSystem))
             implementation(project(module.feature.favorites.domain))
             implementation(libs.posthog.kmp)
@@ -340,6 +344,10 @@ androidComponents {
                 "com.coffeepeek.api.service.CheckInApiService",
                 "com.coffeepeek.api.CoffeePeekRepo",
                 "com.coffeepeek.data.di.DataModuleKt",
+                "com.coffeepeek.admin.di.roaster.RoasterModuleKt",
+                "com.coffeepeek.admin.di.roaster.FeatureRoasterScreenRenderer",
+                "com.coffeepeek.feature.roaster.impl.RoasterEntryImplsKt",
+                "com.coffeepeek.feature.roaster.data.repository.RoasterRepositoryFactoryKt",
                 "com.coffeepeek.data.feature.favorites.ServerFavoritesRepository",
                 "com.coffeepeek.admin.di.favorites.ServerFavoriteShopsRepository",
                 "com.coffeepeek.admin.di.favorites.ServerFavoriteDrinksRepository",

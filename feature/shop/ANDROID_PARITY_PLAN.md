@@ -1,5 +1,41 @@
 # Android shop migration — compatibility plan
 
+## Final device follow-up — 2026-10-20
+
+Publication reconciliation: concurrent parent `91dcde2c` (shared single-choice
+fields) is retained via normal parent-first merges, with no force push. Resolve
+the Home Gradle conflict by keeping design-system in commonMain without restoring
+the removed preview dependency. Preserve the entire incoming select README
+section verbatim alongside rating/Native documentation. Combined source
+`68248716` passes **758** selected unit results (core 29, Shop 101, Coffee 46,
+Roaster 19, app Direct 563), zero failures/errors/skips; Debug/Sandbox and
+DEX/isolation plus design-system iOS Arm64 Kotlin compilation pass (54s).
+The device build below predates this selector integration: it verifies the
+unchanged Shop visual controls, not the selector's device/iOS behavior. No
+new application Native framework/device acceptance is inferred from compilation.
+
+Runtime source `d8289294` includes description follow-up `91b23c42` and shared
+outlined-card reuse `fd929916`. **755** selected unit results (core 26, Shop 101,
+Coffee 46, Roaster 19, app Direct 563), zero failures/errors/skips; Debug/Sandbox
+assemblies, packaged DEX and Sandbox isolation pass (1m). Description IDE
+inspection completes without errors. Paired previews remain beside their owners.
+
+Manual **Pixel 7 / API 37**, 1080x2400: Sandbox 829 (`6e176444`) verified equal
+floating glass plates/neutral-gold states, removed menu heading action, photo-tap
+gallery and return, report-card shape/spacing, expanded/collapsed hours, and guest
+author menu absence plus themed registration in light/dark. The later Sandbox
+**843 / 1.0.843-sandbox** from `d8289294` was updated in place and its corrected
+description/header visually inspected in both themes. Theme was restored to
+light. App package, launcher, increasing version and matching signing certificate
+were checked; no data clearing, normal CoffeePeek/Pixel 10a installation, live
+account or backend mutation. Screenshots/video remain local, not tracked.
+
+Final APK SHA-256: `c02d495f93b3780cb9b9fc7d8eb3162bd1d2f0347d62cade547511a3f10b9a1a`.
+No automated UI suite/host was added or run. Hours end states and source animation
+specs were checked; the short manual recording did not reliably capture the
+transition, so frame timing/fluidity is not certified. Actual backend media/Haze,
+large-font/window/accessibility acceptance and native iOS remain separate gates.
+
 ## Screenshot corrections — 2026-10-20
 
 Description follow-up: restore main's outlined `surface` card (24dp corners,
@@ -772,3 +808,8 @@ Change: per-card item scope in `ShopPublicCheckInsSection`, memoized own-visit i
 cards no longer null every card's vote callback while one vote is pending (both view models still reject
 concurrent votes). Visible effect: other like buttons stay tappable during a pending vote; a tap is ignored.
 
+## Retroactive parity audit — 2026-10-20
+
+Open gaps from the legacy-first audit: G1–G10 (high: G1 favorite after login; medium: G2, G3). Full table and verification status: [LEGACY_PARITY_AUDIT.md](../LEGACY_PARITY_AUDIT.md).
+
+Fixes applied 2026-10-20 and owner decisions on intentional differences: see the "Fixes applied" and "Intentional differences" sections of [LEGACY_PARITY_AUDIT.md](../LEGACY_PARITY_AUDIT.md). Device verification is still open.

@@ -141,4 +141,11 @@ class ShopReportViewModelTest {
         runCurrent()
         assertFalse(viewModel.state.value.isSubmitting)
     }
+
+    @Test fun longDescriptionNeverEndsInHalfAnEmoji() {
+        val text = "a".repeat(499) + "\uD83D\uDE00"
+        assertEquals("a".repeat(499), text.takeWithoutSplittingPairs(500))
+        assertEquals("a".repeat(500), ("a".repeat(500) + "b").takeWithoutSplittingPairs(500))
+        assertEquals("short", "short".takeWithoutSplittingPairs(500))
+    }
 }

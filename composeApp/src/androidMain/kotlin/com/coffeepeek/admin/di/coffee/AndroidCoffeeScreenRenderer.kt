@@ -15,6 +15,7 @@ import com.coffeepeek.feature.coffee.api.CoffeeDetailEntry
 import com.coffeepeek.feature.coffee.api.CoffeeListEntry
 import com.coffeepeek.feature.coffee.domain.repository.CoffeeRepository
 import com.coffeepeek.feature.coffee.impl.createCoffeeDetailEntry
+import com.coffeepeek.admin.ui.component.LoadErrorContent
 import com.coffeepeek.feature.coffee.impl.createCoffeeListEntry
 
 /** Android routes to the migrated catalogue; root navigation, browser, share and photo viewer stay app-owned. */
@@ -44,7 +45,7 @@ internal fun androidCoffeeScreenRenderer(repository: CoffeeRepository): AndroidC
             CoffeeShopImage(imageUrl = url, modifier = modifier, contentDescription = description, contentScale = scale)
         }
     return AndroidCoffeeScreenRenderer(
-        createCoffeeListEntry(repository, AndroidCoffeeAnalytics, AndroidCoffeeScreenAnalytics, image),
+        createCoffeeListEntry(repository, AndroidCoffeeAnalytics, AndroidCoffeeScreenAnalytics, image) { onRetry -> LoadErrorContent(onRetry) },
         createCoffeeDetailEntry(repository, image,
             { urls, index, onDismiss -> FullScreenImageDialog(urls, index, onDismiss = onDismiss) },
             ::utcIsoToLocalDateTime, AndroidCoffeeAnalytics, AndroidCoffeeScreenAnalytics),

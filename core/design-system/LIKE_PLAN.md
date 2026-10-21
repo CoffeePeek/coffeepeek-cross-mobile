@@ -1,5 +1,12 @@
 # Shared affinity heart — 2026-10-18
 
+Later manual follow-up: after unlocking Pixel 7, unchanged floating/compact like
+sources were visually checked in Sandbox 829 and 843 in light/dark themes. Header
+glass circles match neighboring actions; selected is gold, unselected neutral,
+and compact photo controls remain compact. See Shop's final device follow-up for
+exact build identity and remaining motion/live-media gates. Initial locked-phone
+captures below were not treated as acceptance evidence.
+
 ## Contextual floating control — 2026-10-20
 
 Owner: Coffee/shared-like checkpoint #104, based on `d34ba4c7` after parent
