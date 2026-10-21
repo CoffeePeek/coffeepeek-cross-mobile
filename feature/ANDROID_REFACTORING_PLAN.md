@@ -54,7 +54,11 @@ paths, not templates for new migrations.
 
 Five feature families have active Android entries; Coffee is the sixth prepared
 family, not a sixth completed integration. No label closes every release gate.
-iOS UI migration remains deferred; Native compilation is only compatibility.
+iOS UI migration remains deferred for other features. The user approved shared
+Compose Roasters activation on iOS on 2026-10-21; see
+[roaster/IOS_MIGRATION_PLAN.md](roaster/IOS_MIGRATION_PLAN.md) for implementation,
+verification and native-device acceptance gates. Native compilation alone is
+not device acceptance.
 
 ## Legacy-first parity gate (mandatory for every owner)
 

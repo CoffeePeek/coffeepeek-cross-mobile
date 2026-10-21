@@ -6,8 +6,6 @@ import com.coffeepeek.admin.di.shop.shopCheckInModule
 import com.coffeepeek.admin.di.shop.AndroidShopCheckInFormRenderer
 import com.coffeepeek.admin.di.coffee.androidCoffeeScreenRenderer
 import com.coffeepeek.admin.di.coffee.coffeeModule
-import com.coffeepeek.admin.di.roaster.androidRoasterScreenRenderer
-import com.coffeepeek.admin.di.roaster.roasterModule
 import com.coffeepeek.admin.di.shop.AndroidShopDetailScreenRenderer
 import com.coffeepeek.admin.di.shop.AndroidShopCheckInListScreenRenderer
 import com.coffeepeek.admin.di.shop.shopBrowsingModule
@@ -35,7 +33,6 @@ internal fun initAndroidKoin(extraModules: List<org.koin.core.module.Module> = e
             homeCheckInModule(),
             checkInHistoryModule(),
             coffeeModule(),
-            roasterModule(),
         ) + extraModules,
         shopReportRendererFactory = { client ->
             AndroidShopReportScreenRenderer(
@@ -60,6 +57,5 @@ internal fun initAndroidKoin(extraModules: List<org.koin.core.module.Module> = e
         checkInHistoryRendererFactory = { get<AndroidCheckInHistoryScreenRenderer>() },
         checkInCreateFlowRendererFactory = { get<AndroidCheckInCreateFlowRenderer>() },
         coffeeRendererFactory = { androidCoffeeScreenRenderer(get()) },
-        roasterRendererFactory = { androidRoasterScreenRenderer(get(), get(), get()) },
     )
 }
