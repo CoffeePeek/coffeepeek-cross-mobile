@@ -64,7 +64,6 @@ internal fun HomeCheckInEditorScreen(
     }
     val visible = if (accessAllowed) state else HomeCheckInEditorState(isAccessRevoked = true)
     LaunchedEffect(visible.isSaving) { currentDismiss(!visible.isSaving) }
-    DisposableEffect(viewModel) { onDispose { currentDismiss(true) } }
     BackHandler(enabled = !visible.isClosed) {
         when {
             visible.isAccessRevoked -> currentEvent(HomeCheckInEditorEvent.Close)

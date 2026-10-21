@@ -1,15 +1,15 @@
 package com.coffeepeek.admin.di.homecheckin
 
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.activity.compose.LocalActivity
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.ViewModelStore
-import androidx.lifecycle.ViewModelStoreOwner
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import coffeepeek.composeapp.generated.resources.Res
 import coffeepeek.composeapp.generated.resources.check_in_create_close
 import com.coffeepeek.admin.analytics.AnalyticsOverlay
@@ -31,10 +31,17 @@ internal class AndroidCheckInCreateFlowRenderer(
     @Composable
     override fun Content(onDismiss: () -> Unit, onShop: () -> Unit, onHomeSaved: () -> Unit,
         legacyContent: @Composable () -> Unit) {
-        val owner = remember { object : ViewModelStoreOwner { override val viewModelStore = ViewModelStore() } }
-        DisposableEffect(owner) { onDispose { owner.viewModelStore.clear() } }
+        val owner = viewModel(key = "global-check-in-flow-store") { AndroidGlobalCheckInFlowStore() }
+        val activity = LocalActivity.current
+        DisposableEffect(owner, activity) { onDispose { owner.dispose(activity?.isChangingConfigurations == true) } }
         val model = viewModel(viewModelStoreOwner = owner) { AndroidGlobalCheckInFlow(sessions, createEditor) }
         val state by model.state.collectAsStateWithLifecycle()
+        Completion(model, onDismiss, onShop, onHomeSaved)
+        CompositionLocalProvider(LocalViewModelStoreOwner provides owner) { Destination(model, state) }
+    }
+
+    @Composable
+    private fun Completion(model: AndroidGlobalCheckInFlow, onDismiss: () -> Unit, onShop: () -> Unit, onHomeSaved: () -> Unit) {
         val currentDismiss by rememberUpdatedState(onDismiss)
         val currentShop by rememberUpdatedState(onShop)
         val currentSaved by rememberUpdatedState(onHomeSaved)
@@ -55,6 +62,10 @@ internal class AndroidCheckInCreateFlowRenderer(
                 }
             }
         }
+    }
+
+    @Composable
+    private fun Destination(model: AndroidGlobalCheckInFlow, state: GlobalCheckInDestination) {
         val destination = state
         if (destination is GlobalCheckInDestination.Closed || !model.canAccess()) return
         val home = destination as? GlobalCheckInDestination.Home
