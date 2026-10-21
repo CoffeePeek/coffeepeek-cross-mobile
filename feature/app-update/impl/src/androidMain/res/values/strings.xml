@@ -21,4 +21,7 @@
     <string name="appupdate_retry">Повторить</string>
     <string name="appupdate_app_store">App Store</string>
     <string name="appupdate_download">Скачать</string>
+    <string name="appupdate_downloaded_message">Обновление загружено. Перезапустите приложение для установки.</string>
+    <string name="appupdate_restart_action">Перезапустить</string>
+    <string name="appupdate_retry_action">Повторить</string>
 </resources>

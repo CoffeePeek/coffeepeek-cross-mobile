@@ -181,3 +181,18 @@ Layout `feature/app-update/{api,domain,data,impl}`, package `com.coffeepeek.feat
 - Device check, Pixel 7 / Android 17, `com.coffeepeek.sandbox` only, against the screenshots taken before the move (step 0): *Required*: the blocking card is identical (icon, title «Обновите CoffeePeek»,
   body, error «Внешние приложения отключены в Sandbox», one «Повторить» button, no «Позже»); *Available*: the manual check from Settings shows the same Play-channel snackbar (message and «Повторить»).
   An automatic check right after a snackbar that closed by itself shows nothing: the dismissed version was stored (A4), as in the legacy flow. Not exercised: dark theme, large font, back/outside tap/swipe, TalkBack.
+
+## Step 3b result — installers and the installation effect move into `impl` (2026-10-21, branch `feature/appupdate-installers`)
+
+- **api (androidMain)**: the `AndroidUpdateInstaller` contract (consent and install launchers). **impl (androidMain)**: `PlayUpdateInstaller` (D1-D8), `ApkUpdateInstaller` (E1-E6) and the installation effect (G1-G7: launchers,
+  `refresh()` on resume, Play snackbar flow, automatic install of a required download, `retryPlayUpdate`), plus `createAndroidUpdateInstaller(context, environment)`; the Play `app-update` dependency moved with them.
+  The code moved as is, except that the version and the channel come from `AppUpdateEnvironment` (`channel == "apk"` replaces `BuildConfig.APK_UPDATES_ENABLED`; a null version counts as never required) and the three effect
+  strings are now `appupdate_` resources.
+- **Kept in the app on purpose**: the snackbar presentation (`CpSnackbarHost` is an app component, passed in as a slot together with the floating-navigation clearance), the FileProvider and `REQUEST_INSTALL_PACKAGES` manifest
+  entries (authority `${applicationId}.fileprovider`, prefs name `app_update_download`, download folder and the `Direct`/`Play`/Sandbox permission rules unchanged), the Koin binding by channel, and the iOS
+  `StoreUpdateInstaller`.
+- The legacy `UpdateInstallationEffect` expect/actual was removed; the legacy prompt (now iOS only in practice) no longer calls it, which changes nothing on iOS where the effect was a no-op.
+- Verified: `impl` 17 tests; `composeApp` Direct (Sandbox, Settings, update, `di`: 229) and Play (`di`: 202) unit runs, 0 failures; Android unit and instrumented test compilation, iOS simulator compilation, `assembleDirectSandbox`,
+  `assembleDirectDebug`, `assemblePlayDebug`; merged manifests checked with aapt2: `Direct` has `REQUEST_INSTALL_PACKAGES`, `Play` and Sandbox do not, all three keep the FileProvider.
+- **Not verified:** the installers and the effect have no unit tests (they need Play, DownloadManager and a device) and the Sandbox installer is a fake, so no real download, install or Play flow ran. Device check of the
+  Sandbox prompt (Required card, Available snackbar after the move) is pending: the phone was locked.

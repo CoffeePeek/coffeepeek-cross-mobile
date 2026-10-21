@@ -68,7 +68,6 @@ kotlin {
             implementation("com.google.android.gms:play-services-auth:21.3.0")
             // Match Espresso's annotations under Android's consistent runtime/test resolution.
             implementation(libs.errorprone.annotations)
-            implementation("com.google.android.play:app-update:2.1.0")
             implementation("com.microsoft.signalr:signalr:10.0.9")
             implementation("org.slf4j:slf4j-nop:2.0.16")
         }
