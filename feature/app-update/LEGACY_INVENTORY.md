@@ -178,4 +178,6 @@ Layout `feature/app-update/{api,domain,data,impl}`, package `com.coffeepeek.feat
 - Tests moved with the code to `impl/commonTest`: `AppUpdateControllerTest` 5, `AppUpdateCheckBehaviourTest` 7, `PlayUpdateRetryTest` 5 (17 with `FakeEnvironment`).
 - Verified: impl 17 tests, `composeApp` Direct (Sandbox, Settings, update, `di`: 229) and Play (`di`: 202) unit runs, 0 failures; Android unit and instrumented test compilation, iOS simulator and iOS test compilation,
   `assembleDirectSandbox`.
-- **Device check pending:** the migrated card (Required) and the Available snackbar on Pixel 7 against the earlier screenshots; the phone was locked when the check ran.
+- Device check, Pixel 7 / Android 17, `com.coffeepeek.sandbox` only, against the screenshots taken before the move (step 0): *Required*: the blocking card is identical (icon, title «Обновите CoffeePeek»,
+  body, error «Внешние приложения отключены в Sandbox», one «Повторить» button, no «Позже»); *Available*: the manual check from Settings shows the same Play-channel snackbar (message and «Повторить»).
+  An automatic check right after a snackbar that closed by itself shows nothing: the dismissed version was stored (A4), as in the legacy flow. Not exercised: dark theme, large font, back/outside tap/swipe, TalkBack.
