@@ -184,7 +184,7 @@ class ShopCheckInListViewModelTest {
         assertEquals(listOf<ShopCheckInListEvent>(ShopCheckInListEvent.SignIn), events)
     }
 
-    @Test fun ownerIsRecognizedByUserOrPersonalHistoryId() = runTest(dispatcher) {
+    @Test fun ownCheckInsAllowVotingButRejectReportingByUserOrPersonalHistoryId() = runTest(dispatcher) {
         val votes = Votes()
         val viewModel = viewModel(votes = votes)
         val events = mutableListOf<ShopCheckInListEvent>()
@@ -195,7 +195,7 @@ class ShopCheckInListViewModelTest {
             viewModel.onAction(ShopCheckInListAction.Report(it))
         }
         runCurrent()
-        assertTrue(votes.calls.isEmpty())
+        assertEquals(listOf("second" to true, "third" to true), votes.calls)
         assertTrue(events.isEmpty())
         viewModel.onAction(ShopCheckInListAction.Report("first"))
         runCurrent()

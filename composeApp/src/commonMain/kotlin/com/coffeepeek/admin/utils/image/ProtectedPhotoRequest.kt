@@ -4,6 +4,13 @@ import kotlinx.coroutines.sync.Semaphore
 import io.ktor.http.Url
 
 internal val protectedPhotoRequests = Semaphore(4)
+
+internal class PhotoAccessDenied : IllegalStateException("Фото недоступно")
+
+internal fun requirePhotoAccess(status: Int) {
+    if (status in setOf(401, 403, 404, 410)) throw PhotoAccessDenied()
+}
+
 internal fun isProtectedCheckInPhoto(url: String): Boolean =
     Regex("/api/v1/check-ins/[^/?]+/photos/[^/?]+").containsMatchIn(url)
 
