@@ -5,6 +5,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Modifier
 import com.coffeepeek.feature.shop.impl.ui.compose.component.LocalShopAuthorImage
 import com.coffeepeek.feature.shop.impl.ui.compose.component.LocalShopCheckInImage
+import com.coffeepeek.feature.shop.impl.ui.compose.component.LocalShopPhotoPrefetch
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.coffeepeek.feature.shop.api.ShopCheckInListEntry
 import com.coffeepeek.feature.shop.api.ShopCheckInAuthor
@@ -25,7 +26,10 @@ fun createShopCheckInListEntry(
     currentViewer: suspend () -> Result<ShopViewer>,
     authorImage: (@Composable (String, Modifier) -> Unit)? = null,
     checkInImage: (@Composable (String, Modifier, androidx.compose.ui.layout.ContentScale) -> Unit)? = null,
-): ShopCheckInListEntry = DefaultShopCheckInListEntry(detailsRepository, voteRepository, currentViewer, authorImage, checkInImage)
+    /** Warms the next cards' thumbnails while scrolling (list state, lazy item key to display URLs). */
+    photoPrefetch: (@Composable (androidx.compose.foundation.lazy.LazyListState, List<Pair<String, List<String>>>) -> Unit)? = null,
+): ShopCheckInListEntry = DefaultShopCheckInListEntry(detailsRepository, voteRepository, currentViewer, authorImage, checkInImage,
+    photoPrefetch)
 
 private class DefaultShopCheckInListEntry(
     private val detailsRepository: ShopDetailsRepository,
@@ -33,6 +37,7 @@ private class DefaultShopCheckInListEntry(
     private val currentViewer: suspend () -> Result<ShopViewer>,
     private val authorImage: (@Composable (String, Modifier) -> Unit)?,
     private val checkInImage: (@Composable (String, Modifier, androidx.compose.ui.layout.ContentScale) -> Unit)?,
+    private val photoPrefetch: (@Composable (androidx.compose.foundation.lazy.LazyListState, List<Pair<String, List<String>>>) -> Unit)?,
 ) : ShopCheckInListEntry {
     @Composable
     override fun Content(
@@ -53,7 +58,8 @@ private class DefaultShopCheckInListEntry(
             ShopCheckInListViewModel(shopId, detailsRepository, voteRepository, currentViewer,
                 sessionGeneration, refreshGeneration)
         }
-        CompositionLocalProvider(LocalShopAuthorImage provides authorImage, LocalShopCheckInImage provides checkInImage) {
+        CompositionLocalProvider(LocalShopAuthorImage provides authorImage, LocalShopCheckInImage provides checkInImage,
+            LocalShopPhotoPrefetch provides photoPrefetch) {
             ShopCheckInListScreen(viewModel, sessionGeneration, formatCheckInDate, refreshGeneration) { event ->
                 when (event) {
                     ShopCheckInListEvent.Back -> onBack()

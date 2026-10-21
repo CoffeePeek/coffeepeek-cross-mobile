@@ -1,6 +1,10 @@
 package com.coffeepeek.admin.ui.component
 
+import com.coffeepeek.core.designsystem.component.CoffeePeekLikeIcon
+
 import com.coffeepeek.domain.model.savedDrinkName
+import com.coffeepeek.core.designsystem.component.CoffeePeekRating
+import com.coffeepeek.core.designsystem.component.CoffeePeekRatingSize
 
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.intl.Locale
@@ -56,7 +60,6 @@ import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.blur
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
@@ -65,6 +68,11 @@ import com.coffeepeek.admin.utils.utcIsoToLocalDate
 import com.coffeepeek.admin.utils.currentEpochMillis
 import com.coffeepeek.admin.utils.formatOneDecimal
 import coffeepeek.composeapp.generated.resources.Res
+import coffeepeek.composeapp.generated.resources.coffeepeek_legacy_choose_rating
+import coffeepeek.composeapp.generated.resources.coffeepeek_legacy_rating_description
+import org.jetbrains.compose.resources.stringResource
+import org.jetbrains.compose.ui.tooling.preview.Preview
+import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import coffeepeek.composeapp.generated.resources.checkin_rating_atmosphere
 import coffeepeek.composeapp.generated.resources.checkin_rating_coffee
 import coffeepeek.composeapp.generated.resources.checkin_rating_service
@@ -255,25 +263,10 @@ internal fun EditableRatingCard(
             verticalArrangement = Arrangement.spacedBy(CpDimens.spacing1),
         ) {
             Text(label, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold)
-            Row(horizontalArrangement = Arrangement.spacedBy(1.dp)) {
-                (1..5).forEach { star ->
-                    val icon: ImageVector = if (star <= rating) CpIcons.StarFilled else CpIcons.StarOutline
-                    Box(
-                        modifier = Modifier
-                            .size(44.dp)
-                            .clickable { onRatingChange(star) },
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        Icon(
-                            imageVector = icon,
-                            contentDescription = "$label: выбрать $star из 5",
-                            tint = if (star <= rating) MaterialTheme.colorScheme.primary
-                            else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.65f),
-                            modifier = Modifier.size(24.dp),
-                        )
-                    }
-                }
-            }
+            CoffeePeekRating(rating.toDouble(), size = CoffeePeekRatingSize.Large,
+                onRatingChange = onRatingChange,
+                inactiveColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.65f),
+                starDescription = { stringResource(Res.string.coffeepeek_legacy_choose_rating, label, it) })
         }
     }
 }
@@ -503,12 +496,7 @@ internal fun HelpfulButton(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(CpDimens.spacing2),
     ) {
-        Icon(
-            imageVector = if (isHelpful) CpIcons.FavoriteFilled else CpIcons.Favorite,
-            contentDescription = null,
-            tint = CpColor.Error,
-            modifier = Modifier.size(24.dp),
-        )
+        CoffeePeekLikeIcon(isHelpful, contentDescription = null)
         Text(
             text = helpfulCount.toString(),
             style = MaterialTheme.typography.bodyMedium,
@@ -567,31 +555,22 @@ internal fun ReviewAvatar(username: String, photoUrl: String?) {
 
 @Composable
 internal fun CheckInRating(rating: ReviewRating) {
-    val filledStars = rating.average.toInt().coerceIn(0, 5)
-    Row(
-        modifier = Modifier.semantics(mergeDescendants = true) {
-            contentDescription = "Кофе: ${rating.coffee}, сервис: ${rating.service}, место: ${rating.place}. Средняя оценка ${formatOneDecimal(rating.average)} из 5"
-        },
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Row(horizontalArrangement = Arrangement.spacedBy(3.dp)) {
-            (1..5).forEach { star ->
-                Icon(
-                    imageVector = if (star <= filledStars) CpIcons.StarFilled else CpIcons.StarOutline,
-                    contentDescription = null,
-                    tint = if (star <= filledStars) CpColor.Primary else MaterialTheme.colorScheme.outline,
-                    modifier = Modifier.size(20.dp),
-                )
-            }
+    CoffeePeekRating(rating.average, activeColor = CpColor.Primary,
+        valueText = formatOneDecimal(rating.average), valueColor = MaterialTheme.colorScheme.onSurface,
+        contentDescription = stringResource(Res.string.coffeepeek_legacy_rating_description,
+            rating.coffee, rating.service, rating.place, formatOneDecimal(rating.average)))
+}
+
+@Composable private fun SharedReviewRatingPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
+    androidx.compose.material3.Surface {
+        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            CheckInRating(ReviewRating(4, 5, 4))
+            EditableRatingCard(Res.drawable.checkin_rating_coffee, "Кофе", 4, {})
         }
-        Text(
-            text = formatOneDecimal(rating.average),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurface,
-            modifier = Modifier.padding(start = CpDimens.spacing2),
-        )
     }
 }
+@Preview @Composable private fun SharedReviewRatingLightPreview() = SharedReviewRatingPreview(false)
+@Preview @Composable private fun SharedReviewRatingDarkPreview() = SharedReviewRatingPreview(true)
 
 private const val REVIEW_COLLAPSED_LINES = 4
 

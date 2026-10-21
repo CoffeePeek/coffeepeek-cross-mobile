@@ -47,6 +47,10 @@ shared/iOS source sets without the dependency. Android-only dependencies use
 plugin-specific configurations such as `ksp` are not remapped.
 
 Core references are available but not automatically added to the application.
+`com.coffeepeek.kmp.shared-android-compose-library` retains shared presentation's
+Native targets while enabling the Compose compiler only for Android. Its UI,
+design-system and public Android entry dependencies use `androidImplementation`
+and `androidApi`; common ViewModels do not acquire Compose or Android dependencies.
 Convention-based library test APKs use `testOptions.targetSdk = Config.TARGET_SDK`
 to exercise the current app's Android behaviour instead of AGP's minSdk default.
 This is test-only policy; it does not set or change any production application SDK.

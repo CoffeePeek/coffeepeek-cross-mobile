@@ -1,8 +1,7 @@
 package com.coffeepeek.admin.di.checkinhistory
 
-import com.coffeepeek.admin.di.homecheckin.LegacyHomePreparationReader
 import com.coffeepeek.feature.checkinhistory.domain.model.HomeHistoryDateRange
-import com.coffeepeek.feature.homecheckin.data.HomeCheckInRepositoryImpl
+import com.coffeepeek.feature.homecheckin.data.repository.createHomePreparationRepository
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.respond
@@ -16,9 +15,9 @@ import kotlin.test.assertFalse
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
-/** Actual existing transport with fake HTTP; no account, backend or upload request. */
+/** Active migrated transport and cross-feature adapter with fake HTTP; no backend/account. */
 class HomeHistoryTransportCompatibilityTest {
-    @Test fun actualLegacyTransportKeepsEqualDayBoundsAndCivilCalendarDates() = runTest {
+    @Test fun actualMigratedTransportKeepsEqualDayBoundsAndCivilCalendarDates() = runTest {
         var calls = 0
         val protectedUrl = "https://fixture.invalid/api/v1/check-ins/owned/photos/p?signature=issued"
         val client = HttpClient(MockEngine { request ->
@@ -60,8 +59,7 @@ class HomeHistoryTransportCompatibilityTest {
         }) { defaultRequest { url("https://fixture.invalid") } }
         val uploader = HttpClient(MockEngine { error("Read foundation must not upload") })
         try {
-            val reader = HomeHistoryReaderAdapter(LegacyHomePreparationReader(
-                HomeCheckInRepositoryImpl(client, uploader, "https://fixture.invalid")))
+            val reader = HomeHistoryReaderAdapter(createHomePreparationRepository(client, uploader, "https://fixture.invalid"))
             val page = reader.page(2, 100, HomeHistoryDateRange("2026-10-16", "2026-10-16")).getOrThrow()
             val item = page.items.single()
             assertEquals("2026-10-16", item.preparedOn)
@@ -87,8 +85,7 @@ class HomeHistoryTransportCompatibilityTest {
         }) { defaultRequest { url("https://fixture.invalid") } }
         val uploader = HttpClient(MockEngine { error("No upload") })
         try {
-            val reader = HomeHistoryReaderAdapter(LegacyHomePreparationReader(
-                HomeCheckInRepositoryImpl(client, uploader, "https://fixture.invalid")))
+            val reader = HomeHistoryReaderAdapter(createHomePreparationRepository(client, uploader, "https://fixture.invalid"))
             assertTrue(reader.page(1, 20, null).isFailure)
             assertTrue(reader.calendar(HomeHistoryDateRange("2026-10-16", "2026-10-16")).isFailure)
         } finally { client.close(); uploader.close() }

@@ -32,7 +32,7 @@ internal fun ShopReportCategoryList(selected: ShopIssueCategory?, onSelect: (Sho
         color = MaterialTheme.colorScheme.surface,
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline)) {
         Column(Modifier.selectableGroup()) {
-            ShopIssueCategory.entries.forEachIndexed { index, category ->
+            CATEGORY_ORDER.forEachIndexed { index, category ->
                 if (index > 0) HorizontalDivider(Modifier.padding(horizontal = CoffeePeekDimens.spacing4),
                     color = MaterialTheme.colorScheme.outline)
                 val label = stringResource(when (category) {
@@ -55,3 +55,9 @@ internal fun ShopReportCategoryList(selected: ShopIssueCategory?, onSelect: (Sho
 @Preview @Composable private fun ShopReportCategoryListDarkPreview() = CoffeePeekTheme(darkTheme = true) {
     ShopReportCategoryList(null, {})
 }
+
+/** Production order of the reasons. */
+private val CATEGORY_ORDER = listOf(
+    ShopIssueCategory.OutdatedMenu, ShopIssueCategory.ShopClosed, ShopIssueCategory.WrongOpeningHours,
+    ShopIssueCategory.IncorrectPhotos, ShopIssueCategory.IncorrectAddress, ShopIssueCategory.Other,
+)

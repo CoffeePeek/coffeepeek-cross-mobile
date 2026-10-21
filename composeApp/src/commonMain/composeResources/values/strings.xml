@@ -1,4 +1,9 @@
 <resources>
+    <string name="coffeepeek_legacy_choose_rating">%1$s: выбрать %2$d из 5</string>
+    <string name="coffeepeek_legacy_rating_description">Кофе: %1$d, сервис: %2$d, место: %3$d. Средняя оценка %4$s из 5</string>
+    <string name="coffeepeek_home_taste_rating_description">Оценка вкуса %1$d из 5</string>
+    <string name="check_in_create_close">Закрыть</string>
+    <string name="history_home_visibility_unconfirmed">Чекин сохранён, но сервер не подтвердил выбранную видимость. Её можно повторно изменить через редактирование этой записи.</string>
     <string name="history_session_unavailable">Не удалось проверить сессию. История аккаунта скрыта; попробуйте ещё раз.</string>
     <string name="history_session_retry">Повторить</string>
     <string name="history_session_back">Назад</string>

@@ -106,6 +106,15 @@ still owns its root back stack and cross-feature routing.
 
 ## Presentation and resources
 
+- Use `core/design-system` as the source of shared UI: components, theme,
+  typography, dimensions, icons, modifiers, loading/error states and sheets.
+  Inspect its existing API before building a feature component. Do not copy a
+  design-system implementation or substitute a legacy App/Cp equivalent in new
+  migrated UI. Feature components compose these primitives; low-level Compose
+  layout/drawing is allowed when no matching primitive exists. Extend the shared
+  component for a genuinely reusable gap, preserving existing visuals and
+  accessibility; keep business-specific rendering in its feature. This is reuse
+  of applicable components, not a requirement to use every component everywhere.
 - Function bodies have a review limit of 40 lines for `@Composable` functions
   and 20 for ordinary functions. Count non-blank, non-comment body lines,
   including nested blocks, but not the signature. Never pack statements onto
@@ -217,6 +226,28 @@ implementation details.
 
 ## IDE and testing workflow
 
+- Choose the execution environment explicitly before every app run; see
+  `composeApp/ANDROID_RUN_MODES.md` for exact variants, commands and packages.
+  For agent-driven exploratory testing, default to `directSandbox`
+  (`com.coffeepeek.sandbox`) for fake account/data writes, errors and visual
+  checks. It uses a local in-memory
+  fake backend, not a staging server. Use ordinary `directDebug` or `playDebug`
+  (`com.coffeepeek`) only for requested live-backend/device integration checks;
+  Debug uses the normal app/data/backend and disables Google sign-in, not all
+  authentication. Delivery flavor (`direct`/`play`) is separate from execution
+  environment (`sandbox`/`debug`/`release`). Never use Release for routine tests.
+  This default does not override the user's chosen Studio Build Variant or
+  authorize silently switching it; the user chooses which app to run.
+- Android Studio's generic `composeApp` run configuration follows the active
+  Build Variant; its name does not prove Sandbox isolation. Check that variant,
+  merged manifest, entry Activity, package and agreed device before launch. The
+  shared `CoffeePeek Sandbox — Build` / `CoffeePeek Debug — Build` configurations
+  assemble exact variants only: they do not install or launch anything. Do not
+  install a live Debug APK merely because a Sandbox check was requested. Verify
+  installed version/signature first; normal Debug may share the real app's data
+  and cannot safely replace an incompatible-signed release. No uninstall or data
+  clearing to work around this. Fake tests never certify real backend, camera,
+  OAuth, analytics or persistence acceptance.
 - Define a short verification plan before changing code: the behavior to preserve,
   affected layers, relevant tests and remaining device/release gates. State
   assumptions; keep each changed line tied to the task. Do not mix speculative
@@ -245,22 +276,17 @@ implementation details.
   never silently downgrade, uninstall, clear data or replace the user's newer APK.
   Record source revision/variant when verified; an installed version alone does
   not establish its exact source revision.
-- Separate verification layers: unit tests, self-targeted feature UI tests with
-  fake state/ports, application-composition tests with injected dependencies, and
-  read-only checks in the real app. A self-targeted APK must not initialize the
-  production Application, DI or network. App-targeted instrumentation may still
-  initialize real background services/analytics; inspect this before running it.
+- Separate verification layers: unit/contract tests, non-UI composition tests,
+  manual Sandbox review and explicitly requested read-only real-app checks.
+  Non-UI instrumentation may initialize services/analytics; inspect it first.
 - Real-account create/edit/delete, logout/account replacement, favorite changes,
   consent changes and destructive recovery require explicit authorization and a
   safe test setup. Empty live history is not permission to manufacture records.
   Opening/cancelling a form is not evidence that persistence or analytics passed.
-- UI tests must synchronize with actual state, scroll lazy containers to semantic
-  targets rather than assuming item indices, and inject image/picker ports. Cover
-  light/dark themes, relevant font/window sizes, accessibility semantics, modal
-  placement, privacy and back/cancel behavior without real camera/network writes.
-  Classify failures as product, test harness or environment only from evidence;
-  rerun affected tests and the complete relevant suite after a harness fix. Never
-  hide a flaky failure or weaken an assertion merely to obtain a green run.
+- Manual UI review must wait for actual state and cover light/dark themes,
+  font/window sizes, accessibility, modal placement, privacy and back/cancel.
+  Do not use real camera/network writes. Classify failures from evidence and
+  retain the original failure when recording a later successful check.
 - Keep screenshots/UI dumps and sanitized diagnostics local, outside tracked
   sources. Do not publish account identity, private photos, full logcat, credentials
   or authorization headers. Inspect IDE warnings on changed files when possible;

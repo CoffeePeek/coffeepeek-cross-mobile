@@ -23,7 +23,7 @@ import com.coffeepeek.feature.checkinhistory.domain.repository.CheckInHistoryRep
 import com.coffeepeek.feature.checkinhistory.domain.repository.HomeHistoryReader
 import com.coffeepeek.feature.checkinhistory.impl.createCheckInHistoryEntry
 
-/** Android route adapter: read UI, legacy Home editor and photo viewer share a revocable account. */
+/** Android history, Home detail/editor entries and photo viewer share a revocable account. */
 internal class AndroidCheckInHistoryScreenRenderer(
     private val sessions: SessionRepository,
     private val repository: CheckInHistoryRepository,
@@ -55,9 +55,10 @@ internal class AndroidCheckInHistoryScreenRenderer(
             val home = if (session.lease.isLoggedIn) viewModel(key = "history-home-bridge") {
                 AndroidHistoryHomeBridge(session, homeEditors)
             } else null
-            LaunchedEffect(host, initialHomeId, session) {
-                host.consumeInitialHomeId(initialHomeId)?.let { id ->
-                    if (session.lease.isCurrent()) home?.open(id, editOnLoad = true)
+            LaunchedEffect(host, initialHomeId, session, home) {
+                // Consume only once the editor can really open: a stale lease or a guest must not drop the request.
+                if (home != null && session.lease.isCurrent()) {
+                    host.consumeInitialHomeId(initialHomeId)?.let { id -> home.open(id, editOnLoad = true) }
                 }
             }
             val generation by session.contentGeneration.collectAsStateWithLifecycle()
@@ -67,11 +68,11 @@ internal class AndroidCheckInHistoryScreenRenderer(
                     creation.shop()?.let { CheckInFlowHandoff.tracker = it }
                     onCreateShop()
                 }, { home?.create(creation.home()) }, generation, creation)
-            home?.let { HistoryHomeOverlay(it) { images, index -> session.openPhoto(images.previews, images.originals, index) } }
+            home?.let { HistoryHomeOverlay(it, session, session::openPhoto) }
         }
     }
 
-    /** Callback seam for feature-entry contracts, without constructing the legacy Home editor. */
+    /** Callback seam for feature-entry contracts, without constructing a Home destination. */
     @Composable
     fun Content(formatCheckInDate: (String) -> String, onBack: () -> Unit, onSignIn: () -> Unit,
         onOpenShop: (String) -> Unit, formatCheckInTime: (String) -> String, onOpenHome: (String) -> Unit,
@@ -102,6 +103,9 @@ internal class AndroidCheckInHistoryScreenRenderer(
         creation: HistoryCreationAnalytics? = null) {
         val entry = remember(session) {
             createCheckInHistoryEntry(session.lease.bind(repository), session.lease.bind(homeReader), calendar::snapshot, imageContent,
+                highQualityImage = { url, highQualityUrl, modifier, scale ->
+                    CpImage(data = url, highQualityData = highQualityUrl, modifier = modifier, contentScale = scale)
+                },
                 createButtonModifier = {
                     val page = Analytics.service?.state?.collectAsState()?.value?.page ?: "other"
                     Modifier.analyticsExposure("check_in", "global_create", page)

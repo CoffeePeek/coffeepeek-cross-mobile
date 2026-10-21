@@ -59,7 +59,7 @@ jobs:
 
       - name: Build and check Android
         run: >-
-          ./gradlew --no-daemon
+          ./gradlew --no-daemon --max-workers=6
           :composeApp:assembleDirectDebug :composeApp:assemblePlayDebug
           testDebugUnitTest :composeApp:testDirectDebugUnitTest :composeApp:testPlayDebugUnitTest
           lintDebug :composeApp:lintDirectDebug :composeApp:lintPlayDebug

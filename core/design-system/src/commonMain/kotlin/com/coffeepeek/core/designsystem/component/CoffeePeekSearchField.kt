@@ -21,6 +21,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -32,6 +33,7 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
@@ -56,10 +58,16 @@ fun CoffeePeekSearchField(
 ) {
     val focusManager = LocalFocusManager.current
     val shape = RoundedCornerShape(percent = 50)
+    val field = remember { SyncedTextFieldState(value) }
+    SideEffect { field.syncExternal(value) }
 
     BasicTextField(
-        value = value,
-        onValueChange = onValueChange,
+        value = field.value,
+        onValueChange = { updated ->
+            val changed = field.value.text != updated.text
+            field.value = updated
+            if (changed) onValueChange(updated.text)
+        },
         modifier = modifier
             .heightIn(min = fieldHeight)
             .shadow(
@@ -103,7 +111,7 @@ fun CoffeePeekSearchField(
                     modifier = Modifier.weight(1f),
                     contentAlignment = Alignment.CenterStart,
                 ) {
-                    if (value.isEmpty()) {
+                    if (field.value.text.isEmpty()) {
                         Text(
                             text = placeholder,
                             style = MaterialTheme.typography.bodyLarge,
@@ -113,12 +121,15 @@ fun CoffeePeekSearchField(
                     }
                     innerTextField()
                 }
-                if (value.isNotEmpty()) {
+                if (field.value.text.isNotEmpty()) {
                     Box(
                         modifier = Modifier
                             .size(48.dp)
                             .clip(CircleShape)
-                            .clickable(enabled = enabled && !readOnly) { onValueChange("") },
+                            .clickable(enabled = enabled && !readOnly) {
+                                field.value = TextFieldValue("")
+                                onValueChange("")
+                            },
                         contentAlignment = Alignment.Center,
                     ) {
                         Icon(

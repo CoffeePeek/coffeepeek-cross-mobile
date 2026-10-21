@@ -1,0 +1,57 @@
+package com.coffeepeek.feature.coffee.impl.ui.compose.component
+
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.PreviewLightDark
+import androidx.compose.ui.unit.dp
+import com.coffeepeek.core.designsystem.component.CoffeePeekImagePlaceholder
+import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
+import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
+import com.coffeepeek.feature.coffee.domain.model.Coffee
+import com.coffeepeek.feature.coffee.impl.R
+
+@Composable
+internal fun CoffeeCardPhoto(coffee: Coffee, imageContent: @Composable (String, String, Modifier, ContentScale) -> Unit) {
+    Box(
+        Modifier.fillMaxWidth().height(216.dp).clipToBounds()
+            .background(MaterialTheme.colorScheme.surfaceVariant),
+    ) {
+        coffee.photoUrl?.let { imageContent(it, coffee.name, Modifier.matchParentSize(), ContentScale.Fit) }
+            ?: CoffeePeekImagePlaceholder(contentDescription = stringResource(R.string.coffee_photo_missing))
+
+        Box(
+            modifier = Modifier.align(Alignment.BottomEnd).padding(CoffeePeekDimens.spacing4).size(48.dp)
+                .shadow(3.dp, CircleShape).background(MaterialTheme.colorScheme.surface, CircleShape)
+                .semantics { contentDescription = coffee.roasterName },
+            contentAlignment = Alignment.Center,
+        ) {
+            val logo = coffee.roasterPhotoUrl
+            if (!logo.isNullOrBlank()) {
+                imageContent(logo, coffee.roasterName, Modifier.matchParentSize().padding(6.dp), ContentScale.Fit)
+            } else {
+                Text(
+                    text = coffee.roasterName.take(2).uppercase(),
+                    style = MaterialTheme.typography.labelMedium,
+                    fontWeight = FontWeight.Bold,
+                )
+            }
+        }
+    }
+}
+
+@PreviewLightDark @Composable private fun CoffeeCardPhotoPreview() = CoffeePeekTheme {
+    CoffeeCardPhoto(previewCoffee()) { _, _, modifier, _ -> CoffeePeekImagePlaceholder(modifier) }
+}

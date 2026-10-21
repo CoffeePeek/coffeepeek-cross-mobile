@@ -47,13 +47,19 @@ kotlin {
             implementation(project(module.feature.shop.domain))
             implementation(project(module.feature.shop.data))
             implementation(project(module.feature.shop.impl))
+            implementation(project(module.feature.coffee.api))
+            implementation(project(module.feature.coffee.domain))
+            implementation(project(module.feature.coffee.data))
+            implementation(project(module.feature.coffee.impl))
             implementation(project(module.feature.checkInHistory.api))
             implementation(project(module.feature.checkInHistory.domain))
             implementation(project(module.feature.checkInHistory.data))
             implementation(project(module.feature.checkInHistory.impl))
             implementation(project(module.feature.homePreparation.domain))
+            implementation(project(module.feature.homePreparation.api))
+            implementation(project(module.feature.homePreparation.data))
+            implementation(project(module.feature.homePreparation.impl))
             implementation(project(module.core.coroutines))
-            implementation(compose.preview)
             implementation(libs.androidx.activity.compose)
             implementation(libs.androidx.concurrent.futures)
             implementation(libs.androidx.appcompat)
@@ -70,6 +76,10 @@ kotlin {
             implementation("org.slf4j:slf4j-nop:2.0.16")
         }
         commonMain.dependencies {
+            implementation(project(module.feature.roaster.api))
+            implementation(project(module.feature.roaster.domain))
+            implementation(project(module.feature.roaster.data))
+            implementation(project(module.feature.roaster.impl))
             implementation(project(module.core.designSystem))
             implementation(project(module.feature.favorites.domain))
             implementation(libs.posthog.kmp)
@@ -88,6 +98,7 @@ kotlin {
             implementation(libs.compose.ui.backhandler)
             implementation(compose.components.resources)
             implementation(compose.components.uiToolingPreview)
+            implementation(compose.preview)
             implementation(libs.phosphor.icon)
             implementation(libs.haze)
 
@@ -110,6 +121,10 @@ kotlin {
         }
         androidUnitTest.dependencies {
             implementation(libs.kotlinx.coroutines.test)
+        }
+        // Test the exact sandbox transport without adding it to the live APK or requiring a new test variant.
+        androidUnitTest {
+            kotlin.srcDir("src/androidSandbox/kotlin/com/coffeepeek/admin/sandbox/backend")
         }
         androidInstrumentedTest.dependencies {
             implementation(libs.kotlin.test)
@@ -238,6 +253,21 @@ android {
         }
     }
     buildTypes {
+        getByName("debug") {
+            // Normal backend/session, but no release OAuth flow in debug builds.
+            buildConfigField("String", "GOOGLE_WEB_CLIENT_ID", "\"\"")
+        }
+        create("sandbox") {
+            initWith(getByName("debug"))
+            applicationIdSuffix = ".sandbox"
+            versionNameSuffix = "-sandbox"
+            matchingFallbacks += "debug"
+            buildConfigField("boolean", "APK_UPDATES_ENABLED", "false")
+            buildConfigField("String", "API_BASE_URL", "\"https://sandbox.coffeepeek.invalid\"")
+            buildConfigField("String", "GOOGLE_WEB_CLIENT_ID", "\"\"")
+            buildConfigField("String", "POSTHOG_PROJECT_TOKEN", "\"\"")
+            buildConfigField("boolean", "POSTHOG_ENABLE_DEV", "false")
+        }
         getByName("release") {
             isMinifyEnabled = true
             isShrinkResources = true
@@ -251,6 +281,47 @@ android {
     compileOptions {
         sourceCompatibility = Config.JAVA_VERSION
         targetCompatibility = Config.JAVA_VERSION
+    }
+}
+
+kotlin.applyDefaultHierarchyTemplate()
+kotlin.sourceSets {
+    val androidSandbox = create("androidSandbox") {
+        dependsOn(getByName("androidMain"))
+        dependencies { implementation("io.ktor:ktor-client-mock:${libs.versions.ktor.get()}") }
+    }
+    matching { it.name in setOf("androidDirectSandbox", "androidPlaySandbox") }.all {
+        dependsOn(androidSandbox)
+    }
+}
+
+// Reuse the app graph with isolated ports, never the production Application/services.
+androidComponents.onVariants(androidComponents.selector().withBuildType("sandbox")) { variant ->
+    tasks.matching { it.name == "process${variant.name.replaceFirstChar { it.uppercaseChar() }}GoogleServices" }
+        .configureEach { enabled = false }
+    val runtimeVerification = tasks.register<VerifyApkRuntimeClassesTask>("verify${variant.name.replaceFirstChar { it.uppercaseChar() }}RuntimeClasses") {
+        apkDirectory.set(variant.artifacts.get(SingleArtifact.APK))
+        requiredClasses.set(listOf("com.coffeepeek.admin.sandbox.SandboxActivity",
+            "com.coffeepeek.admin.sandbox.backend.SandboxBackend", "com.coffeepeek.admin.sandbox.SandboxApplication",
+            "com.coffeepeek.feature.homecheckin.data.repository.HomePreparationRepositoryFactoryKt",
+            "com.coffeepeek.admin.ui.Navigator"))
+    }
+    val manifest = variant.artifacts.get(SingleArtifact.MERGED_MANIFEST)
+    val verification = tasks.register("verify${variant.name.replaceFirstChar { it.uppercaseChar() }}Isolation") {
+        inputs.file(manifest)
+        doLast {
+            val xml = manifest.get().asFile.readText()
+            check("android.permission.INTERNET" !in xml) { "Sandbox must not have network permission" }
+            check("com.coffeepeek.admin.MainActivity" !in xml) { "Sandbox must not launch the production root" }
+            check("com.coffeepeek.admin.CoffeePeekApplication" !in xml) { "Sandbox must not start production DI/services" }
+            check("com.google.firebase.provider.FirebaseInitProvider" !in xml) { "Sandbox must not initialize Firebase" }
+            check("com.coffeepeek.admin.notifications.CoffeePeekMessagingService" !in xml) { "Sandbox must not start production push" }
+            check("com.coffeepeek.admin.sandbox.SandboxActivity" in xml) { "Missing Sandbox entry" }
+            check("com.coffeepeek.admin.sandbox.SandboxApplication" in xml) { "Missing isolated Sandbox bootstrap" }
+        }
+    }
+    tasks.matching { it.name == "assemble${variant.name.replaceFirstChar { it.uppercaseChar() }}" }.configureEach {
+        finalizedBy(verification, runtimeVerification)
     }
 }
 
@@ -268,10 +339,15 @@ androidComponents {
             group = "verification"
             description = "Checks startup class definitions inside the ${variant.name} APK."
             apkDirectory.set(variant.artifacts.get(SingleArtifact.APK))
+            forbiddenClassPrefixes.set(listOf("com.coffeepeek.admin.sandbox.", "io.ktor.client.engine.mock."))
             requiredClasses.set(listOf(
                 "com.coffeepeek.api.service.CheckInApiService",
                 "com.coffeepeek.api.CoffeePeekRepo",
                 "com.coffeepeek.data.di.DataModuleKt",
+                "com.coffeepeek.admin.di.roaster.RoasterModuleKt",
+                "com.coffeepeek.admin.di.roaster.FeatureRoasterScreenRenderer",
+                "com.coffeepeek.feature.roaster.impl.RoasterEntryImplsKt",
+                "com.coffeepeek.feature.roaster.data.repository.RoasterRepositoryFactoryKt",
                 "com.coffeepeek.data.feature.favorites.ServerFavoritesRepository",
                 "com.coffeepeek.admin.di.favorites.ServerFavoriteShopsRepository",
                 "com.coffeepeek.admin.di.favorites.ServerFavoriteDrinksRepository",
@@ -292,10 +368,22 @@ androidComponents {
                 "com.coffeepeek.feature.checkinhistory.data.repository.CheckInHistoryRepositoryFactoryKt",
                 "com.coffeepeek.feature.checkinhistory.impl.CheckInHistoryApiImplKt",
                 "com.coffeepeek.feature.checkinhistory.impl.ui.CombinedHistoryViewModel",
-                "com.coffeepeek.admin.di.homecheckin.LegacyHomePreparationReader",
+                "com.coffeepeek.feature.homecheckin.data.repository.HomePreparationRepositoryFactoryKt",
                 "com.coffeepeek.admin.di.checkinhistory.HomeHistoryReaderAdapter",
                 "com.coffeepeek.feature.homecheckin.domain.repository.HomePreparationReader",
                 "com.coffeepeek.feature.homecheckin.domain.model.HomePreparation",
+                "com.coffeepeek.feature.homecheckin.api.HomeCheckInEditorEntry",
+                "com.coffeepeek.feature.homecheckin.api.HomeCheckInDetailEntry",
+                "com.coffeepeek.feature.homecheckin.impl.HomeCheckInEditorApiImplKt",
+                "com.coffeepeek.feature.homecheckin.impl.HomeCheckInApiImplKt",
+                "com.coffeepeek.feature.homecheckin.impl.ui.HomeCheckInEditorViewModel",
+                "com.coffeepeek.admin.di.homecheckin.AndroidHomeCheckInEditorKt",
+                "com.coffeepeek.admin.di.homecheckin.AndroidHomeCheckInRepository",
+                "com.coffeepeek.admin.di.homecheckin.AndroidHomeCheckInPhotoPicker",
+                "com.coffeepeek.admin.ui.screen.checkins.CheckInCreateFlowRenderer",
+                "com.coffeepeek.admin.di.homecheckin.HomeCheckInModuleKt",
+                "com.coffeepeek.admin.di.homecheckin.AndroidCheckInCreateFlowRenderer",
+                "com.coffeepeek.admin.di.homecheckin.AndroidGlobalCheckInFlow",
                 "com.coffeepeek.feature.checkinhistory.domain.repository.HomeHistoryReader",
             ))
         }

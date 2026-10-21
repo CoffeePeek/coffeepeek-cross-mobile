@@ -4,9 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -16,11 +14,12 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
+import com.coffeepeek.core.designsystem.component.CoffeePeekRating
+import com.coffeepeek.core.designsystem.component.CoffeePeekRatingDisplay
+import com.coffeepeek.core.designsystem.component.CoffeePeekRatingSize
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.core.designsystem.theme.CoffeePeekColors
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
-import kotlin.math.round
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
 @Composable
@@ -32,9 +31,9 @@ internal fun RatingBadge(rating: Double, reviewCount: Int) {
         horizontalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing1),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Icon(CoffeePeekIcons.StarFilled, null, tint = CoffeePeekColors.Primary, modifier = Modifier.size(16.dp))
-        Text((round(rating * 10) / 10).toString(), color = Color.White,
-            style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold)
+        CoffeePeekRating(rating, size = CoffeePeekRatingSize.Small, display = CoffeePeekRatingDisplay.Compact,
+            activeColor = CoffeePeekColors.Primary, valueColor = Color.White, valueSpacing = CoffeePeekDimens.spacing1,
+            valueStyle = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold))
         if (reviewCount > 0) {
             Text("($reviewCount)", color = Color.White.copy(alpha = 0.82f),
                 style = MaterialTheme.typography.labelSmall)

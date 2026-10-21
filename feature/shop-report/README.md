@@ -58,3 +58,9 @@ locale for migrated features, so no unsupported translation is claimed.
 The current root navigator is still a shared Navigation 2 host and retains
 ownership of route arguments and back-stack changes. A root Navigation 3
 migration is not part of this feature slice.
+
+## Retroactive parity audit — 2026-10-20
+
+Open gaps from the legacy-first audit: S1–S5 (medium: S1 pre-send failures block resubmission). Full table and verification status: [LEGACY_PARITY_AUDIT.md](../LEGACY_PARITY_AUDIT.md).
+
+Fixes applied 2026-10-20 and owner decisions on intentional differences: see the "Fixes applied" and "Intentional differences" sections of [LEGACY_PARITY_AUDIT.md](../LEGACY_PARITY_AUDIT.md). Device verification is still open.
