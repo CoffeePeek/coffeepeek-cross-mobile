@@ -36,6 +36,7 @@ class CoffeePeekApplication : Application() {
         // Apply saved light/dark mode before any Activity/splash resolves resources.
         applyPersistedNightModeEarly()
         MapLibre.getInstance(this)
+        com.coffeepeek.admin.notifications.AndroidPush.install(this)
         initPlatformKoin()
 
         val koin = GlobalContext.get()
