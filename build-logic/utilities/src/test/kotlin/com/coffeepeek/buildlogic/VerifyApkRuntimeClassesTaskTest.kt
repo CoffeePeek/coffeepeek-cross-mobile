@@ -7,6 +7,15 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 
 class VerifyApkRuntimeClassesTaskTest {
+    @Test fun sandboxAndMockEngineDefinitionsAreForbiddenOnlyWhenConfigured() {
+        val classes = setOf("Lcom/coffeepeek/admin/sandbox/SandboxActivity;", "Lio/ktor/client/engine/mock/MockEngine;",
+            "Lcom/coffeepeek/admin/MainActivity;")
+        assertEquals(classes - "Lcom/coffeepeek/admin/MainActivity;", forbiddenRuntimeClasses(classes,
+            listOf("com.coffeepeek.admin.sandbox.", "io.ktor.client.engine.mock.")))
+        assertEquals(emptySet(), forbiddenRuntimeClasses(classes, emptyList()))
+        assertEquals(emptySet(), forbiddenRuntimeClasses(setOf("Lcom/coffeepeek/admin/sandboxed/Other;"),
+            listOf("com.coffeepeek.admin.sandbox.")))
+    }
     @Test fun onlyDefinedTypesCountEvenWhenMissingClassDescriptorIsReferenced() {
         val bytes = dexWithTypes(listOf("Ldefined/Present;", "Lreferenced/Missing;"), listOf(0))
         assertEquals(setOf("Ldefined/Present;"), readDexClassDescriptors(bytes))

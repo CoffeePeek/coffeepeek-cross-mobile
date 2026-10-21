@@ -163,6 +163,7 @@ actual fun CoffeeMap(
     showAttribution: Boolean,
     onCameraCenterChanged: (Double, Double) -> Unit,
 ) {
+    val styleOverride = LocalMapStyleOverride.current
     val context = LocalContext.current
     val appContext = context.applicationContext
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -310,14 +311,16 @@ actual fun CoffeeMap(
         }
     }
 
-    LaunchedEffect(map, isDarkTheme) {
+    LaunchedEffect(map, isDarkTheme, styleOverride) {
         val activeMap = map ?: return@LaunchedEffect
         animations.cancel()
         activeMap.removeAnnotations()
         shopMarks.clear()
         clusterMarks.clear()
         currentLocationMarker = null
-        activeMap.setStyle(Style.Builder().fromUri(coffeeMapStyleUri(isDarkTheme))) { style ->
+        val styleBuilder = styleOverride?.let { Style.Builder().fromJson(it) }
+            ?: Style.Builder().fromUri(coffeeMapStyleUri(isDarkTheme))
+        activeMap.setStyle(styleBuilder) { style ->
             styleGeneration += 1
             applyCoffeePeekMapStyle(style, isDarkTheme)
             addOverlayLayers(style, isDarkTheme)

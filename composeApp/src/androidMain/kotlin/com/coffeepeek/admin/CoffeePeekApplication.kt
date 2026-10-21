@@ -23,6 +23,8 @@ class CoffeePeekApplication : Application() {
         @SuppressLint("StaticFieldLeak")
         private var _context: Context? = null
         val context get() = _context!!
+        /** Bind an application-scoped context without starting production services. */
+        internal fun bindContext(context: Context) { _context = context }
     }
 
     private val warmupScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)

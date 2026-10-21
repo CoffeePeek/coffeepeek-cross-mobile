@@ -106,6 +106,15 @@ still owns its root back stack and cross-feature routing.
 
 ## Presentation and resources
 
+- Use `core/design-system` as the source of shared UI: components, theme,
+  typography, dimensions, icons, modifiers, loading/error states and sheets.
+  Inspect its existing API before building a feature component. Do not copy a
+  design-system implementation or substitute a legacy App/Cp equivalent in new
+  migrated UI. Feature components compose these primitives; low-level Compose
+  layout/drawing is allowed when no matching primitive exists. Extend the shared
+  component for a genuinely reusable gap, preserving existing visuals and
+  accessibility; keep business-specific rendering in its feature. This is reuse
+  of applicable components, not a requirement to use every component everywhere.
 - Function bodies have a review limit of 40 lines for `@Composable` functions
   and 20 for ordinary functions. Count non-blank, non-comment body lines,
   including nested blocks, but not the signature. Never pack statements onto
@@ -174,10 +183,12 @@ module boundary.
 
 - Continue the branch stack from the current migration tip, not main. Each new
   PR targets the previous open checkpoint branch and describes only the changes
-  since that branch. Work only in migration branches. Group related, independently
-  verifiable steps in one PR; use roughly 100–150 changed files in the PR diff
-  as the checkpoint guide, not one PR per small task. One checkpoint may contain
-  one to three related features when they can be reviewed and verified coherently.
+  since that branch. Work only in migration branches. Once the current business
+  feature checkpoint is complete, start the next feature in a new child branch
+  and PR; do not keep adding new features to a completed checkpoint. Supporting
+  slices required to finish the same feature stay together (including Home reads
+  required by combined history). Use roughly 100–150 changed files as a review
+  guide, not one PR per small task or a target to fill with unrelated work.
   A genuine review/risk boundary may justify an earlier PR; an indivisible change
   may exceed the guide with an explanation. Never mix unrelated work to fill it.
   Parent-scoped fixes may stay in that parent's PR; update its descendants after
@@ -190,6 +201,10 @@ module boundary.
   force-delete a branch or remove another task's worktree just to tidy the list.
 - Branch isolation does not prove application correctness: every integration
   slice must compile the Android app and test the affected behaviour.
+- Before migrating a screen, trace its actual entry points in fresh main and the
+  running app. Distinguish full-screen destinations from profile previews and
+  modal variants of similar content. A new modal does not prove an old route is
+  retired; a passing full-screen test does not certify the modal's migration.
 - Current favorites completion is Android-first. Do not change the iOS screen,
   binding or writer, or remove shared legacy paths still used by iOS. A root
   Navigation 3 migration is an application-wide decision, not a prerequisite
@@ -208,6 +223,78 @@ do not wrap one repository call without value. Prefer composition over generic
 `Base*`, `Manager`, `Helper`, or `Utils` abstractions unless an existing base
 demonstrably removes a shared, correct pattern. Prefer `internal` for
 implementation details.
+
+## IDE and testing workflow
+
+- Choose the execution environment explicitly before every app run; see
+  `composeApp/ANDROID_RUN_MODES.md` for exact variants, commands and packages.
+  For agent-driven exploratory testing, default to `directSandbox`
+  (`com.coffeepeek.sandbox`) for fake account/data writes, errors and visual
+  checks. It uses a local in-memory
+  fake backend, not a staging server. Use ordinary `directDebug` or `playDebug`
+  (`com.coffeepeek`) only for requested live-backend/device integration checks;
+  Debug uses the normal app/data/backend and disables Google sign-in, not all
+  authentication. Delivery flavor (`direct`/`play`) is separate from execution
+  environment (`sandbox`/`debug`/`release`). Never use Release for routine tests.
+  This default does not override the user's chosen Studio Build Variant or
+  authorize silently switching it; the user chooses which app to run.
+- Android Studio's generic `composeApp` run configuration follows the active
+  Build Variant; its name does not prove Sandbox isolation. Check that variant,
+  merged manifest, entry Activity, package and agreed device before launch. The
+  shared `CoffeePeek Sandbox — Build` / `CoffeePeek Debug — Build` configurations
+  assemble exact variants only: they do not install or launch anything. Do not
+  install a live Debug APK merely because a Sandbox check was requested. Verify
+  installed version/signature first; normal Debug may share the real app's data
+  and cannot safely replace an incompatible-signed release. No uninstall or data
+  clearing to work around this. Fake tests never certify real backend, camera,
+  OAuth, analytics or persistence acceptance.
+- Define a short verification plan before changing code: the behavior to preserve,
+  affected layers, relevant tests and remaining device/release gates. State
+  assumptions; keep each changed line tied to the task. Do not mix speculative
+  abstractions, adjacent cleanup or product redesign into a migration.
+- Check `<module-root>/AGENTS.md` when first entering a module, including included
+  builds, and read it if present. Load module rules lazily, not repository-wide.
+- Prefer the configured Android Studio `studio` MCP for project navigation,
+  source inspection, semantic refactoring and file diagnostics when available.
+  Discover its tools/capabilities first and always specify this project's path.
+  Respect the host agent's file-editing constraints. Keep Git and device/system
+  operations in their appropriate tools; IDE access does not broaden permission.
+  If IDE access fails, report it and use standard tools. Never claim IDE checks
+  ran merely because the server is configured. Keep local MCP endpoints, session
+  identifiers and permissions out of repository documentation and commits.
+- Inspect existing IDE run configurations or file run points before executing
+  them. Prefer relevant test configurations; do not blindly launch the application
+  configuration or another platform. Apply temporary overrides only when supported.
+  For shell Gradle runs use `--max-workers=6`; apply the same limit in IDE Gradle
+  arguments when supported. Do not run concurrent Gradle builds.
+- Before device tests, resolve the current device serial/model, connection and
+  lock state. Explicitly target the agreed device for every ADB operation. Never
+  use the default device when multiple phones are connected, or change a phone's
+  security/settings to make a test run. Ask for unlocking when needed.
+- Verify the built variant, application/test package, instrumentation target and
+  installed version before deployment. Prefer a non-destructive in-place update;
+  never silently downgrade, uninstall, clear data or replace the user's newer APK.
+  Record source revision/variant when verified; an installed version alone does
+  not establish its exact source revision.
+- Separate verification layers: unit/contract tests, non-UI composition tests,
+  manual Sandbox review and explicitly requested read-only real-app checks.
+  Non-UI instrumentation may initialize services/analytics; inspect it first.
+- Real-account create/edit/delete, logout/account replacement, favorite changes,
+  consent changes and destructive recovery require explicit authorization and a
+  safe test setup. Empty live history is not permission to manufacture records.
+  Opening/cancelling a form is not evidence that persistence or analytics passed.
+- Manual UI review must wait for actual state and cover light/dark themes,
+  font/window sizes, accessibility, modal placement, privacy and back/cancel.
+  Do not use real camera/network writes. Classify failures from evidence and
+  retain the original failure when recording a later successful check.
+- Keep screenshots/UI dumps and sanitized diagnostics local, outside tracked
+  sources. Do not publish account identity, private photos, full logcat, credentials
+  or authorization headers. Inspect IDE warnings on changed files when possible;
+  report pre-existing warnings without expanding scope to unrelated migrations.
+- Record test date, source/build identity, device, suite counts/failures/retries,
+  visual checks and untested gates in the feature plan. Distinguish compiled tests
+  from executed tests and fake scenarios from live backend acceptance. An IDE
+  inspection, preview, passing retry or APK assembly alone is not feature completion.
 
 ## After coding
 

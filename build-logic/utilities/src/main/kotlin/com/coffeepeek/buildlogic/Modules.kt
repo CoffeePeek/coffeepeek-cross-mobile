@@ -29,6 +29,22 @@ object Modules {
         }
 
         val shop = Shop
+        val roaster = Roaster
+        object Roaster {
+            const val api = ":feature:roaster:api"
+            const val domain = ":feature:roaster:domain"
+            const val data = ":feature:roaster:data"
+            const val impl = ":feature:roaster:impl"
+        }
+
+        val coffee = Coffee
+        object Coffee {
+            const val api = ":feature:coffee:api"
+            const val domain = ":feature:coffee:domain"
+            const val data = ":feature:coffee:data"
+            const val impl = ":feature:coffee:impl"
+        }
+
         object Shop {
             const val api = ":feature:shop:api"
             const val domain = ":feature:shop:domain"
@@ -36,6 +52,21 @@ object Modules {
             const val impl = ":feature:shop:impl"
         }
 
+        val checkInHistory = CheckInHistory
+        val homePreparation = HomePreparation
+        object HomePreparation {
+            const val api = ":feature:home-check-in:api"
+            const val domain = ":feature:home-check-in:domain"
+            const val data = ":feature:home-check-in:data"
+            const val impl = ":feature:home-check-in:impl"
+        }
+
+        object CheckInHistory {
+            const val api = ":feature:check-in-history:api"
+            const val domain = ":feature:check-in-history:domain"
+            const val data = ":feature:check-in-history:data"
+            const val impl = ":feature:check-in-history:impl"
+        }
     }
 
     object Legacy {
@@ -76,6 +107,22 @@ object Modules {
         feature.shop.domain,
         feature.shop.data,
         feature.shop.impl,
+        feature.roaster.domain,
+        feature.roaster.api,
+        feature.roaster.data,
+        feature.roaster.impl,
+        feature.coffee.domain,
+        feature.coffee.data,
+        feature.coffee.api,
+        feature.coffee.impl,
+        feature.checkInHistory.domain,
+        feature.checkInHistory.api,
+        feature.checkInHistory.data,
+        feature.checkInHistory.impl,
+        feature.homePreparation.domain,
+        feature.homePreparation.api,
+        feature.homePreparation.data,
+        feature.homePreparation.impl,
         feature.homeCheckIn,
         feature.authorBlocking,
         feature.notifications,

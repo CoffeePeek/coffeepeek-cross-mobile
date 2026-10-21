@@ -4,7 +4,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.getValue
 import com.coffeepeek.admin.ui.screen.addshop.AddShopScreen
 import com.coffeepeek.admin.ui.screen.auth.registr.RegisterScreen
-import com.coffeepeek.admin.ui.screen.checkins.ProfileCheckInsScreen
+import com.coffeepeek.admin.ui.screen.checkins.CheckInHistoryDestination
 import com.coffeepeek.admin.ui.screen.shop.ShopDetailScreen
 import com.coffeepeek.admin.ui.screen.shop.ShopMenuGalleryScreen
 import com.coffeepeek.admin.ui.screen.shop.ShopReportScreen
@@ -15,7 +15,7 @@ import com.coffeepeek.admin.ui.favorites.FavoritesDestination
 import com.coffeepeek.admin.ui.screen.contributions.ContributionKind
 import com.coffeepeek.admin.ui.screen.contributions.MyContributionsScreen
 import com.coffeepeek.admin.ui.screen.roaster.AddRoasterScreen
-import com.coffeepeek.admin.ui.screen.roaster.RoasterDetailScreen
+import com.coffeepeek.admin.ui.screen.roaster.RoasterScreenRenderer
 import com.coffeepeek.admin.ui.screen.profile.CityScreen
 import com.coffeepeek.admin.ui.screen.profile.ThemeScreen
 import com.coffeepeek.admin.ui.screen.profile.UsagePolicyScreen
@@ -57,7 +57,7 @@ import com.coffeepeek.admin.ui.screen.main.MainScreen
 import com.coffeepeek.admin.ui.component.RetainedContent
 import com.coffeepeek.admin.ui.screen.shop.ShopDetailScreenRenderer
 import com.coffeepeek.admin.ui.screen.shop.ShopCheckInListScreenRenderer
-import com.coffeepeek.admin.feature.coffee.ui.CoffeeDetailScreen
+import com.coffeepeek.admin.ui.screen.coffee.CoffeeScreenRenderer
 import com.coffeepeek.admin.ui.screen.shop.ShopMenuGalleryScreenRenderer
 import com.coffeepeek.admin.ui.screen.shop.ShopReportScreenRenderer
 import com.coffeepeek.admin.feature.profile.ui.OtherUserProfileScreen
@@ -453,7 +453,7 @@ object Navigator {
                     }
                     composable<Screen.CoffeeDetail> { backStack ->
                         val route = backStack.toRoute<Screen.CoffeeDetail>()
-                        CoffeeDetailScreen(slug = route.slug)
+                        koinInject<CoffeeScreenRenderer>().Detail(route.slug)
                     }
                     composable<Screen.ShopReviews> { backStack ->
                         val route = backStack.toRoute<Screen.ShopReviews>()
@@ -499,7 +499,7 @@ object Navigator {
                     composable<Screen.AddRoaster> { AddRoasterScreen() }
                     composable<Screen.RoasterDetail> { backStack ->
                         val route = backStack.toRoute<Screen.RoasterDetail>()
-                        RoasterDetailScreen(roasterId = route.roasterId)
+                        koinInject<RoasterScreenRenderer>().Detail(route.roasterId)
                     }
                     composable<Screen.UserProfile> { backStack ->
                         PublicProfileRoute(backStack.toRoute<Screen.UserProfile>())
@@ -507,10 +507,10 @@ object Navigator {
                     composable<Screen.EditProfile> { EditProfileScreen() }
                     composable<Screen.DeleteAccountPending> { DeleteAccountPendingScreen() }
                     composable<Screen.Favorites> { FavoritesDestination() }
-                    composable<Screen.VisitedPlaces> { ProfileCheckInsScreen() }
-                    composable<Screen.HomeCheckIns> { ProfileCheckInsScreen() }
+                    composable<Screen.VisitedPlaces> { CheckInHistoryDestination() }
+                    composable<Screen.HomeCheckIns> { CheckInHistoryDestination() }
                     composable<Screen.EditHomeCheckIn> { entry ->
-                        ProfileCheckInsScreen(initialHomeId = entry.toRoute<Screen.EditHomeCheckIn>().id)
+                        CheckInHistoryDestination(initialHomeId = entry.toRoute<Screen.EditHomeCheckIn>().id)
                     }
                     composable<Screen.CitySettings> { CityScreen() }
                     composable<Screen.ThemeSettings> { ThemeScreen() }
@@ -530,7 +530,7 @@ object Navigator {
             is Screen.ResetPassword -> LaunchedEffect(Unit) { resetToLogin() }
             is Screen.ShopDetail -> koinInject<ShopDetailScreenRenderer>().Content(screen.shopId, screen.forCheckIn)
             Screen.CreateCheckIn -> com.coffeepeek.admin.ui.screen.shop.CheckInShopPickerScreen()
-            is Screen.CoffeeDetail -> CoffeeDetailScreen(screen.slug)
+            is Screen.CoffeeDetail -> koinInject<CoffeeScreenRenderer>().Detail(screen.slug)
             is Screen.ShopReviews -> koinInject<ShopCheckInListScreenRenderer>().Content(screen.shopId)
             is Screen.ReportReview -> com.coffeepeek.admin.ui.screen.review.ReviewReportScreen(reviewId = screen.reviewId, isPreview = screen.isPreview)
             is Screen.ReportCheckIn -> com.coffeepeek.admin.ui.screen.review.ReviewReportScreen(reviewId = screen.checkInId, isCheckIn = true)
@@ -542,14 +542,14 @@ object Navigator {
             is Screen.ShopChangeRequestDetail -> ShopChangeRequestDetailScreen(screen.requestId)
             Screen.AddShop -> AddShopScreen()
             Screen.AddRoaster -> AddRoasterScreen()
-            is Screen.RoasterDetail -> RoasterDetailScreen(screen.roasterId)
+            is Screen.RoasterDetail -> koinInject<RoasterScreenRenderer>().Detail(screen.roasterId)
             is Screen.UserProfile -> PublicProfileRoute(screen)
             Screen.EditProfile -> EditProfileScreen()
             Screen.DeleteAccountPending -> DeleteAccountPendingScreen()
             Screen.Favorites -> FavoritesDestination()
-            Screen.VisitedPlaces -> ProfileCheckInsScreen()
-            Screen.HomeCheckIns -> ProfileCheckInsScreen()
-            is Screen.EditHomeCheckIn -> ProfileCheckInsScreen(initialHomeId = screen.id)
+            Screen.VisitedPlaces -> CheckInHistoryDestination()
+            Screen.HomeCheckIns -> CheckInHistoryDestination()
+            is Screen.EditHomeCheckIn -> CheckInHistoryDestination(initialHomeId = screen.id)
             Screen.CitySettings -> CityScreen()
             Screen.ThemeSettings -> ThemeScreen()
             Screen.BlockedAuthors -> com.coffeepeek.admin.feature.authorblocking.ui.BlockedAuthorsScreen()

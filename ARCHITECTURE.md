@@ -25,6 +25,13 @@ core/                               prepared infrastructure/design-system
 feature/favorites/                  api/domain/data/impl; Android screen active
 feature/shop-report/                api/domain/data/impl; Android report active
 feature/shop/                       api/domain/data/impl; Android menu gallery active
+feature/check-in-history/           api/domain/data/impl; Android combined history active
+feature/home-check-in/              pure domain/data and Android detail/editor api/impl;
+                                   active in Android history/global creation; profile/iOS legacy
+feature/coffee/                     api/domain/data/impl picker, MVI and Android UI prepared;
+                                   current catalogue screens/DI still in composeApp
+feature/roaster/                    shared api/domain/data/impl and Compose UI;
+                                   common application composition selects Android/iOS entries
 ```
 
 Target ownership is feature-based:
@@ -188,6 +195,11 @@ their Result failures, cancellation, and conflicting-action policy.
 Place reusable visual tokens/components in design-system, feature-specific UI and
 assets in the feature, and user-facing strings/accessibility text in resources.
 Verify supported locales and translation parity before documenting their number.
+Migrated UI must consume applicable `core/design-system` components, icons,
+modifiers and tokens rather than copying them or creating parallel legacy-style
+implementations. Feature-owned components compose these primitives. Missing
+shared behavior is added to the existing primitive when truly reusable; custom
+business rendering and ordinary Compose layout remain in the feature.
 
 ### Core
 
@@ -264,6 +276,9 @@ The current iOS SwiftUI shell hosts the shared Compose framework; it does not
 yet provide native SwiftUI versions of migrated screens. A native screen may
 later use shared domain/data through a deliberate public bridge without copying
 business rules.
+Roasters uses one commonMain Compose implementation and shared application
+adapters on Android and iOS; its native app navigation and platform callbacks
+stay application-owned. Other features retain their existing migration scope.
 Only Android-specific Compose/API code belongs in `androidMain`. Native SwiftUI
 always belongs in `iosApp`, not `iosMain` or shared feature modules. Prefer
 shared code where library support permits; use `expect`/`actual` only for a real
@@ -274,8 +289,10 @@ platform difference.
 Use stacked PRs from the current migration branch tip. Group cohesive migration
 steps in a checkpoint PR instead of opening one for every small task. The
 working guide for the next checkpoint is roughly 100–150 changed files in the PR
-diff against its base. One to three related features may share a coherent,
-independently verified checkpoint. A distinct review/risk boundary can justify
+diff against its base. Once a business feature checkpoint is complete, begin
+the next feature in a new child branch and PR. Keep supporting slices needed to
+finish that same feature together; do not append new features to an already
+completed checkpoint. A distinct review/risk boundary can justify
 an earlier split; an indivisible change may exceed the guide with an explanation.
 Never combine unrelated work to fill a PR. Fixes to a parent capability may stay
 in its PR, followed by explicit descendant synchronization. A child PR targets the previous open
@@ -357,6 +374,14 @@ compilation verifies the shared presentation/dependency boundary for iOS.
 
 ## Verification checklist
 
+Android execution environments are explicit: Sandbox is the agent's default local fake
+environment in a separate `com.coffeepeek.sandbox` package; ordinary Debug uses
+the live configured backend and `com.coffeepeek` storage, with Google sign-in
+disabled. Direct/Play are delivery flavors, not mock/live selectors. See
+`composeApp/ANDROID_RUN_MODES.md`. Build-only configurations never authorize
+deployment, and Sandbox acceptance does not establish live-backend readiness.
+The user chooses the active Studio variant; this policy does not silently
+switch their ordinary Debug workflow to Sandbox.
 Do not create, restore or run automated UI/Compose instrumentation/screenshot
 tests or test-only hosts. UI verification uses colocated previews and manual
 Sandbox review. Unit, non-UI contract/DI and database tests remain in scope;

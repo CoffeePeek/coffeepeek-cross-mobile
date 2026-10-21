@@ -4,8 +4,16 @@ The active Android audit and execution order are in
 [ANDROID_REFACTORING_PLAN.md](ANDROID_REFACTORING_PLAN.md). Historical stack and
 completed-slice notes below are context, not the next-work checklist.
 
-This directory now contains independent favorites, Shop Report, and Shop
-api/domain/data/impl modules. Android Shop gallery, check-in form, detail and
+Roasters now shares its api/domain/data/impl, Compose UI/resources and application
+adapters between Android and iOS. Common Koin activates the same renderer while
+the application retains its platform navigation, browser, haptics and photo
+viewer. See [roaster/IOS_MIGRATION_PLAN.md](roaster/IOS_MIGRATION_PLAN.md) for scope
+and verification; other features' existing platform boundaries remain as below.
+
+This directory now contains six api/domain/data/impl families: favorites,
+shop-report, shop, check-in-history, home-check-in and coffee. The first five
+have active Android entries; Coffee list/detail/picker/UI are prepared but not
+yet selected by application DI/navigation. Android Shop gallery, check-in form, detail and
 public check-in list are wired and have passed automated Android/device checks;
 live cup/picker/authenticated-write QA remains pending before release. See
 shop/README.md and shop/ANDROID_PARITY_PLAN.md for active versus prepared paths.
@@ -18,11 +26,33 @@ route intentionally keeps the legacy renderer. See shop-report/README.md.
 Actual registration remains in build-logic Modules.all. Android is the integration
 target; no native iOS implementation is part of these slices.
 
-Personal history is extracted in full to `feature/check-in-history-refactoring`,
-a child of this migration branch. Its prepared api/domain/data/impl, app adapters,
-tests and detailed plan belong to that child, not the final diff of PR #43.
-The existing combined ProfileCheckInsScreen, Home editing and shared/iOS legacy
-paths remain unchanged here. No history Gradle modules are registered in this base.
+As of 2026-10-19, Home has populated domain/data/api/impl, not only the earlier
+read domain. Android combined history and global creation use its new repository,
+detail and editor entries through account-owned app adapters. Shared/iOS and
+profile Activity keep their legacy consumers. See home-check-in/MIGRATION_PLAN.md
+for implementation and acceptance evidence.
+
+Combined personal history is integrated. Its populated
+check-in-history/domain and data modules prepare read-only pagination/calendar
+contracts; impl now uses one shared typed MVI and production-shaped Android
+All/Shop/Home calendar/timeline without data/HTTP dependencies. The obsolete
+prepared Calendar/List screen/coordinator is retired, not activated alongside it.
+API exposes narrow screen/date ports and required Home/create callbacks.
+Android app composition supplies revocable account leases, a navigation-owned
+feature store, zone-aware calendar snapshots, lazy DI and the configured image
+loader/photo viewer. Current-main feed/thumb/detail representations and aligned
+explicit originals now pass through history and Home data/UI/gallery contracts;
+live protected-photo acceptance remains open. All three Android history routes
+now render this combined entry, including initial Home edit-by-ID. Application
+composition delegates to the new Home detail/create/edit/delete workflow and
+Shop creation picker; successful Home writes refresh the combined reader.
+Shared/iOS selection retains ProfileCheckInsScreen and the existing writer.
+Backend source confirms inclusive Home civil dates and Shop lower-inclusive,
+upper-exclusive instant bounds. Physical-device/deployed-backend parity remains
+open; automated fake-data checks do not certify live behavior.
+See [check-in-history/README.md](check-in-history/README.md) for the audited boundaries,
+ordered implementation and session/time-zone risks. No empty API module or
+new application module is part of these migration slices.
 
 ## Target layout and graph
 
@@ -98,14 +128,18 @@ reason; a transport module does not need artificial business domain/data modules
 
 ## Branch and PR stack
 
-Current stack: PR #43 (`feature/core-design-system-controls` → `develop`) owns
-core/favorites/Shop; #95 (`feature/check-in-history-refactoring` → #43's branch)
-owns the complete prepared history migration. Former checkpoint PRs remain
-closed/superseded. Parent fixes stay with their owner and flow into descendants.
+Current chain: #43 -> #95 -> #99 -> #101 -> #102 -> #104. The parent #43 targets
+develop; each child targets its predecessor's branch. Ownership is respectively
+core/favorites/Shop, combined history, Home, full-app Sandbox, shared ratings and
+prepared Coffee. Main dfb00e63 is inherited parent-first through the chain;
+its final CI-only change does not alter the verified 28917758 application baseline.
+Former checkpoint PRs remain closed/superseded. Parent fixes stay with their
+owner and flow into descendants; see the roadmap's exact branch table.
 
 Every next work branch starts from the current migration tip, not main. Group
 related tested steps into a checkpoint PR, using roughly 100–150 changed files
-as the guide. One to three related features may share a reviewable checkpoint;
+as the guide. Finish the current business feature, then start the next in a new
+child branch and PR. Supporting slices needed by the same feature stay together;
 do not split every small task or mix unrelated work to fill the count. A clear
 review/risk boundary may justify an earlier split; an indivisible change may
 exceed the guide with an explanation. Each PR
@@ -214,3 +248,7 @@ and risks. Compile changed modules and app whenever integration changes; run
 contract/UI tests, check cycles/imports and DTO/entity containment. Inspect both
 preview themes, record modal/font/RTL limitations, and keep main unchanged until
 the corresponding PR is merged.
+
+## Legacy-first parity gate
+
+Before migrating or activating any owner, inventory the legacy composeApp behaviour (entries, states, analytics, platform behaviour, cross-feature contracts) and map every row to code and tests. Details and checklist: [ANDROID_REFACTORING_PLAN.md](ANDROID_REFACTORING_PLAN.md#legacy-first-parity-gate-mandatory-for-every-owner).

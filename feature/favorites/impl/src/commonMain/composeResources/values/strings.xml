@@ -11,6 +11,7 @@
     <string name="favorites_roaster_catalog">Каталог</string>
     <string name="favorites_roaster_logo">Логотип %1$s</string>
     <string name="favorites_roaster_remove">Убрать из избранного: %1$s</string>
+    <string name="favorites_action_error">Не удалось изменить избранное</string>
     <string name="favorites_update_error">Не удалось обновить избранное</string>
     <string name="favorites_retry">Повторить</string>
     <string name="favorites_remove_description">Удалить из избранного: %1$s</string>

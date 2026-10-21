@@ -4,10 +4,9 @@ import com.coffeepeek.feature.favorites.domain.model.FavoriteShop
 import com.coffeepeek.feature.shop.domain.model.ShopDetails
 import com.coffeepeek.feature.shop.domain.repository.ShopFavorites
 import com.coffeepeek.feature.favorites.domain.repository.FavoritesRepository
-import kotlinx.coroutines.flow.map
 
 internal fun shopFavorites(repository: FavoritesRepository): ShopFavorites = object : ShopFavorites {
-    override fun observeIds() = repository.observe().map { result -> result.map { shops -> shops.mapTo(mutableSetOf()) { it.id } } }
+    override fun observeIds() = repository.observeIds()
     override suspend fun save(shop: ShopDetails) = repository.save(shop.toFavoriteSnapshot())
     override suspend fun remove(shopId: String) = repository.remove(shopId)
 }

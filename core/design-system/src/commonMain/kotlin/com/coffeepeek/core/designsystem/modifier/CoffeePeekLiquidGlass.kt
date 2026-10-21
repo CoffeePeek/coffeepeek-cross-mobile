@@ -48,6 +48,7 @@ fun Modifier.coffeePeekLiquidGlass(
     shape: Shape,
     hazeState: HazeState? = LocalCoffeePeekGlassHazeState.current,
     shadowElevation: Dp = 6.dp,
+    tintColor: Color? = null,
 ): Modifier {
     val surface = MaterialTheme.colorScheme.surface
     val isDark = surface.luminance() < 0.5f
@@ -68,13 +69,13 @@ fun Modifier.coffeePeekLiquidGlass(
                     state = hazeState,
                     style = HazeStyle(
                         backgroundColor = surface,
-                        tint = HazeTint(surface.copy(alpha = if (isDark) 0.38f else 0.52f)),
+                        tint = HazeTint(tintColor ?: surface.copy(alpha = if (isDark) 0.38f else 0.52f)),
                         blurRadius = 24.dp,
                         noiseFactor = 0f,
                     ),
                 )
             } else {
-                Modifier.background(surface.copy(alpha = if (isDark) 0.72f else 0.78f))
+                Modifier.background(tintColor ?: surface.copy(alpha = if (isDark) 0.72f else 0.78f))
             },
         )
         .border(0.75.dp, rim, shape)

@@ -52,7 +52,7 @@ internal class ServerFavoriteShopsRepository(
     }
 
     override suspend fun save(shop: FavoriteShop): Result<Unit> =
-        trackFavoriteMutation(Entity.Shop, true) { saveUntracked(shop) }
+        trackFavoriteMutation(Entity.Shop, true, owner()) { saveUntracked(shop) }
 
     private suspend fun saveUntracked(shop: FavoriteShop): Result<Unit> = resultOf {
         val account = requireNotNull(owner()) { "Sign in to save favorites" }
@@ -65,7 +65,7 @@ internal class ServerFavoriteShopsRepository(
     }
 
     override suspend fun remove(shopId: String): Result<Unit> =
-        trackFavoriteMutation(Entity.Shop, false) { removeUntracked(shopId) }
+        trackFavoriteMutation(Entity.Shop, false, owner()) { removeUntracked(shopId) }
 
     private suspend fun removeUntracked(shopId: String): Result<Unit> = resultOf {
         val account = requireNotNull(owner()) { "Sign in to change favorites" }

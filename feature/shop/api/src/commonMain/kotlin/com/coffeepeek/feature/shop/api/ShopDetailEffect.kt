@@ -6,6 +6,8 @@ sealed interface ShopDetailEffect {
     data object ChooseAnotherShop : ShopDetailEffect
     data object SignIn : ShopDetailEffect
     data object Register : ShopDetailEffect
+    /** A guest asked for a favorite; the app keeps the intent across sign-in, which resets navigation. */
+    data class FavoriteRequiresSignIn(val shopId: String, val desired: Boolean) : ShopDetailEffect
     data class OpenMenuGallery(val shopId: String) : ShopDetailEffect
     data class CreateCheckIn(val shop: ShopDetailContext) : ShopDetailEffect
     data class ReportShop(val shop: ShopDetailContext) : ShopDetailEffect
