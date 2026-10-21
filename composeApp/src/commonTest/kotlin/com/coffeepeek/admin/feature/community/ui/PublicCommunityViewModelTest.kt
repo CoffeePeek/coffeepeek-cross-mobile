@@ -9,6 +9,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.job
 import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.first
@@ -223,7 +224,7 @@ class PublicCommunityViewModelTest {
     }
 
     @Test
-    fun votesUseAuthoritativeCountsAndOwnVoteIsBlockedAndReportRetainsFailedDraft() = runBlocking {
+    fun votesUseAuthoritativeCountsAndReportRetainsFailedDraft() = runBlocking {
         val own = visit.copy(id = "own", authorAddress = PublicAddress("me", "/users/me", 1, false))
         val voteStarted = CompletableDeferred<Unit>()
         val voteResult = CompletableDeferred<CheckInHelpfulVote>()
@@ -243,7 +244,6 @@ class PublicCommunityViewModelTest {
         val vm = CommunityViewModel(repo, FeedSessions(Session("token", userId = "one")), FeedShops(), feed, FeedUsers())
         try {
             vm.await { !it.isLoading && it.items.size == 2 && it.ownAuthorSlug == "me" }
-            vm.toggleHelpful("own"); assertEquals(0, votes)
             vm.toggleHelpful(visit.id); withTimeout(5_000) { voteStarted.await() }; vm.toggleHelpful(visit.id)
             assertEquals(1, votes)
             assertEquals(0, vm.state.value.items.last().helpfulCount)
@@ -257,6 +257,36 @@ class PublicCommunityViewModelTest {
             assertEquals(" Reason ", failed.reportText); assertEquals(visit.id, failed.reportingId)
             assertEquals(1, reports)
         } finally { voteResult.complete(CheckInHelpfulVote(true, 8)); vm.close() }
+    }
+
+    @Test
+    fun ownShopAndHomePublicationsCanBeLikedAndUnliked() = runBlocking {
+        for (isHome in listOf(false, true)) {
+            val own = visit.copy(id = "own", isHome = isHome, authorAddress = PublicAddress("me", "/users/me", 1, false))
+            val requests = Channel<Pair<String, Boolean>>(Channel.UNLIMITED)
+            val repo = FeedCheckIns().apply {
+                helpful = { id, helpful ->
+                    requests.send(id to helpful)
+                    Result.success(CheckInHelpfulVote(helpful, if (helpful) 8 else 3))
+                }
+            }
+            val feed = TestPublicFeed().apply { load = { _, _, _ -> Result.success(FeedPage(listOf(item(own)), null)) } }
+            val vm = CommunityViewModel(repo, FeedSessions(Session("token", userId = "one")), FeedShops(), feed, FeedUsers())
+            try {
+                val loaded = vm.await { !it.isLoading && it.items.size == 1 && it.ownAuthorSlug == "me" }
+                assertTrue(loaded.owns(own))
+                vm.toggleHelpful(own.id)
+                assertEquals(own.id to true, withTimeout(5_000) { requests.receive() })
+                val liked = vm.await { it.helpfulId == null && it.items.single().isHelpfulByCurrentUser }
+                assertEquals(8, liked.items.single().helpfulCount)
+                vm.toggleHelpful(own.id)
+                assertEquals(own.id to false, withTimeout(5_000) { requests.receive() })
+                val unliked = vm.await { it.helpfulId == null && !it.items.single().isHelpfulByCurrentUser }
+                assertEquals(3, unliked.items.single().helpfulCount)
+                vm.openReport(own.id)
+                assertNull(vm.state.value.reportingId)
+            } finally { vm.close(); requests.close() }
+        }
     }
 
     @Test

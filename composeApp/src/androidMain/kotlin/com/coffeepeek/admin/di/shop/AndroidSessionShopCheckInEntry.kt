@@ -23,6 +23,7 @@ internal class AndroidSessionShopCheckInEntry(
     private val drafts: AndroidShopCheckInDraftStore,
     private val dates: ShopCheckInDateFormatter,
     private val photos: ShopCheckInPhotoPicker,
+    private val onCheckInCreated: () -> Unit,
 ) : ShopCheckInCreateEntry {
     @Composable
     override fun Content(
@@ -34,7 +35,7 @@ internal class AndroidSessionShopCheckInEntry(
         onGoToFeed: () -> Unit,
         onOpenHistory: () -> Unit,
     ) {
-        val lease = remember(shopId, shopSlug) { AndroidShopCheckInSession(sessions, repository) }
+        val lease = remember(shopId, shopSlug) { AndroidShopCheckInSession(sessions, repository, onCheckInCreated) }
         val boundDrafts = remember(lease) {
             if (lease.isCurrent()) drafts.forShop(shopId, shopSlug, lease.userId) else null
         }

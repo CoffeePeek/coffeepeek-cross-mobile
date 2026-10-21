@@ -464,7 +464,7 @@ class ShopDetailViewModelTest {
         assertEquals(null, viewModel.state.value.pendingCheckInVoteId)
     }
 
-    @Test fun ownCheckInGuardsUseAuthorAndPersonalVisitIdsWhenIdentityIsMissing() = runTest(dispatcher) {
+    @Test fun ownCheckInsAllowVotingButRejectReportingByAuthorOrPersonalVisitId() = runTest(dispatcher) {
         for (viewer in listOf(ShopViewer(true, "author"), ShopViewer(true, null))) {
             val visits = CheckInVotes()
             val repository = DetailsRepository().apply { result = Result.success(details().copy(
@@ -475,7 +475,7 @@ class ShopDetailViewModelTest {
             viewModel.onAction(ShopDetailAction.VoteCheckInHelpful("visit"))
             viewModel.onAction(ShopDetailAction.ReportCheckIn("visit"))
             runCurrent()
-            assertTrue(visits.calls.isEmpty())
+            assertEquals(listOf("visit" to true), visits.calls)
             // Back must be the next event: owner report emitted nothing.
             viewModel.onAction(ShopDetailAction.Back)
             runCurrent()

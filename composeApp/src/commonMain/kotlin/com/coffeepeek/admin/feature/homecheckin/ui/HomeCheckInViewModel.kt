@@ -89,6 +89,7 @@ internal class HomeCheckInViewModel(
     private val repository: HomeCheckInRepository,
     private val coffeePicker: CoffeePicker,
     private val brewMethodCatalog: BrewMethodCatalog,
+    private val onCheckInCreated: () -> Unit = {},
 ) : BaseViewModel() {
     private val now = currentHomePreparedAt()
     private val today = utcIsoToLocalDate(now)
@@ -348,6 +349,7 @@ internal class HomeCheckInViewModel(
                 tracker?.saved(entry.visibility?.name ?: "unknown", entry.photos.isNotEmpty())
                 _state.update { it.copy(saving = false, editing = false, selected = entry,
                     saveNotice = homeVisibilitySaveNotice(snapshot.draft.visibility, entry.visibility)) }
+                if (snapshot.selected == null) onCheckInCreated()
                 refresh()
             }.onFailure { error ->
                 val failure = error as? HomeCheckInFailure

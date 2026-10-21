@@ -13,7 +13,10 @@ plugins {
     alias(libs.plugins.composeMultiplatform)
     alias(libs.plugins.composeCompiler)
     alias(libs.plugins.kotlin.serialization)
+    id("com.google.gms.google-services") version "4.5.0" apply false
 }
+
+if (file("google-services.json").isFile) apply(plugin = "com.google.gms.google-services")
 
 kotlin {
     androidTarget {
@@ -61,6 +64,8 @@ kotlin {
             // Match Espresso's annotations under Android's consistent runtime/test resolution.
             implementation(libs.errorprone.annotations)
             implementation("com.google.android.play:app-update:2.1.0")
+            implementation(project.dependencies.platform("com.google.firebase:firebase-bom:35.0.2"))
+            implementation("com.google.firebase:firebase-messaging")
             implementation("com.microsoft.signalr:signalr:10.0.9")
             implementation("org.slf4j:slf4j-nop:2.0.16")
         }
@@ -75,6 +80,7 @@ kotlin {
             implementation(project(module.core.network))
             implementation(project(module.feature.homeCheckIn))
             implementation(project(module.feature.authorBlocking))
+            implementation(project(module.feature.notifications))
             implementation(compose.runtime)
             implementation(compose.foundation)
             implementation(compose.material3)
@@ -158,7 +164,7 @@ val googleWebClientId: String = run {
     }
 }
 
-val apiBaseUrl: String = run {
+val apiBaseUrl: String = providers.gradleProperty("apiBaseUrl").orNull ?: run {
     val localPropertiesFile = rootProject.file("local.properties")
     if (localPropertiesFile.exists()) {
         val props = Properties()
@@ -188,6 +194,9 @@ android {
 
     buildFeatures {
         buildConfig = true
+    }
+    if (providers.gradleProperty("pushTestApp").orNull == "true") {
+        buildTypes.getByName("debug") { applicationIdSuffix = ".pushdebug" }
     }
 
     defaultConfig {
