@@ -8,6 +8,7 @@ import java.util.UUID
 
 /** Local fixture contracts for the existing app, not an alternative implementation of its UI. */
 internal class SandboxApplicationBackend(private val today: LocalDate, private val visits: MutableList<JsonObject>) {
+    private val shopNames = mapOf("sandbox-cafe" to "Sandbox Cafe", "sandbox-lab" to "Sandbox Lab")
     private val favorites = linkedSetOf("coffee_shop:sandbox-cafe", "roaster:sandbox-roaster", "drink:cappuccino")
     private var username = "Sandbox"
     private var about = "Локальный тестовый профиль. Все действия остаются в Sandbox."
@@ -79,7 +80,10 @@ internal class SandboxApplicationBackend(private val today: LocalDate, private v
             })
             put("items", items); put("totalItems", items.size); put("totalPages", 1); put("currentPage", 1)
         })
-        if (path.startsWith("/api/coffeeshops/") && method == HttpMethod.Get) return ok(shop(path.substringAfterLast('/')))
+        if (path.startsWith("/api/coffeeshops/") && method == HttpMethod.Get) {
+            val slug = path.substringAfterLast('/')
+            return if (slug in shopNames) ok(shop(slug)) else null
+        }
         if (path == "/api/map" && method == HttpMethod.Get) return ok(buildJsonObject { putJsonArray("shops") {
             if (populated) add(buildJsonObject { put("address", address("sandbox-cafe", "/coffee-shops/sandbox-cafe")); put("latitude", 53.9); put("longitude", 27.56); put("title", "Sandbox Cafe") })
         } })
@@ -101,22 +105,28 @@ internal class SandboxApplicationBackend(private val today: LocalDate, private v
         if (path.startsWith("/api/v1/coffees/") && method == HttpMethod.Get) return ok(coffee())
         if (path == "/api/v1/feed") return ok(buildJsonObject {
             putJsonArray("items") {
-                visits.filter { it["visibility"]?.jsonPrimitive?.content == "Public" && it["moderationState"]?.jsonPrimitive?.content == "Approved" }.forEach { row -> add(buildJsonObject {
+                visits.filter(::isPublished).forEach { row -> add(buildJsonObject {
                     put("publishedAtUtc", "${today}T07:00:00Z"); put("checkIn", row)
                 }) }
             }
             put("nextCursor", JsonNull)
         })
         if (path == "/api/v1/check-ins" && method == HttpMethod.Post) {
+            val shopSlug = (input["coffeeShopSlug"] as? JsonPrimitive)?.contentOrNull?.takeIf(shopNames::containsKey)
+                ?: return HttpStatusCode.BadRequest to envelope(JsonNull, false)
             val id = UUID.randomUUID().toString()
-            val row = visit(id, input)
+            val row = visit(id, shopSlug, input)
             visits += row
             return ok(row)
         }
         if (path.startsWith("/api/v1/check-ins/") && method in listOf(HttpMethod.Put, HttpMethod.Delete, HttpMethod.Post)) {
             val id = path.removePrefix("/api/v1/check-ins/").substringBefore('/')
             val old = visits.firstOrNull { it["id"]?.jsonPrimitive?.content == id } ?: return null
-            if (path.endsWith("/helpful") || path.endsWith("/reports")) return ok(buildJsonObject { put("helpfulCount", 1); put("isHelpfulByCurrentUser", method == HttpMethod.Put) })
+            if (path.endsWith("/helpful")) return when (method) {
+                HttpMethod.Put, HttpMethod.Delete -> setHelpful(old, method == HttpMethod.Put)
+                else -> HttpStatusCode.MethodNotAllowed to envelope(JsonNull, false)
+            }
+            if (path.endsWith("/reports")) return null
             if (method == HttpMethod.Delete) { visits.remove(old); return ok(JsonNull) }
             val updated = JsonObject(old + input)
             visits[visits.indexOf(old)] = updated
@@ -129,6 +139,22 @@ internal class SandboxApplicationBackend(private val today: LocalDate, private v
         return null // An unimplemented contract is an error, never a fabricated successful write.
     }
 
+    private fun setHelpful(visit: JsonObject, helpful: Boolean): Pair<HttpStatusCode, JsonObject> {
+        val previous = visit["isHelpfulByCurrentUser"]?.jsonPrimitive?.booleanOrNull == true
+        val delta = when {
+            previous == helpful -> 0
+            helpful -> 1
+            else -> -1
+        }
+        val count = ((visit["helpfulCount"]?.jsonPrimitive?.intOrNull ?: 0) + delta).coerceAtLeast(0)
+        visits[visits.indexOf(visit)] = JsonObject(visit + mapOf(
+            "isHelpfulByCurrentUser" to JsonPrimitive(helpful), "helpfulCount" to JsonPrimitive(count)))
+        return ok(buildJsonObject { put("isHelpful", helpful); put("helpfulCount", count) })
+    }
+
+    private fun isPublished(visit: JsonObject) = visit["visibility"]?.jsonPrimitive?.content == "Public" &&
+        visit["moderationState"]?.jsonPrimitive?.content == "Approved"
+
     private fun profile() = buildJsonObject {
         put("userName", username); put("email", "sandbox@example.invalid"); put("about", about)
         put("avatarUrl", "${SandboxBackend.BASE_URL}/media/sample"); put("checkInCount", visits.size)
@@ -136,18 +162,20 @@ internal class SandboxApplicationBackend(private val today: LocalDate, private v
         put("address", address("sandbox", "/users/sandbox")); put("createdAtUtc", "${today}T07:00:00Z")
     }
     private fun shops(query: String?) = JsonArray(if (!populated) emptyList() else
-        listOf("sandbox-cafe", "sandbox-lab").map(::shop).filter { query.isNullOrBlank() || it["name"].toString().contains(query, true) })
+        shopNames.keys.map(::shop).filter { query.isNullOrBlank() || it["name"].toString().contains(query, true) })
     private fun shop(slug: String) = buildJsonObject {
-        put("address", address(slug, "/coffee-shops/$slug")); put("name", if (slug == "sandbox-cafe") "Sandbox Cafe" else "Sandbox Lab")
+        val shopVisits = visits.filter { it["shop"]?.jsonObject?.get("slug")?.jsonPrimitive?.contentOrNull == slug }
+        val publicVisits = shopVisits.filter(::isPublished)
+        put("address", address(slug, "/coffee-shops/$slug")); put("name", shopNames.getValue(slug))
         put("description", "Тестовая кофейня. Данные и действия только локальные.")
-        put("city", address("minsk", "/cities/minsk")); put("rating", 4.5); put("checkInCount", visits.size)
-        put("isOpen", slug == "sandbox-cafe"); put("isNew", slug == "sandbox-lab"); put("isVisited", slug == "sandbox-cafe" && visits.isNotEmpty())
+        put("city", address("minsk", "/cities/minsk")); put("rating", 4.5); put("checkInCount", publicVisits.size)
+        put("isOpen", slug == "sandbox-cafe"); put("isNew", slug == "sandbox-lab"); put("isVisited", shopVisits.isNotEmpty())
         put("isFavorite", "coffee_shop:$slug" in favorites); put("priceRange", "Medium"); put("type", "CoffeeShop")
         put("addressLine", "Тестовая улица, 1"); put("distanceMeters", 250)
         putJsonObject("location") { put("address", "Тестовая улица, 1"); put("latitude", 53.9); put("longitude", 27.56) }
         putJsonArray("photos") { add(photo()) }; put("coverPhoto", photo())
         put("roasters", JsonArray(listOf(catalog("sandbox-roaster", "Sandbox Roaster"))))
-        put("checkIns", JsonArray(visits)); put("userCheckIns", JsonArray(visits))
+        put("checkIns", JsonArray(publicVisits)); put("userCheckIns", JsonArray(shopVisits))
         putJsonObject("menu") { put("currency", "BYN"); put("photos", JsonArray(listOf(photo()))); put("items", drinks()) }
         putJsonArray("schedules") { (1..7).forEach { day -> add(buildJsonObject { put("dayOfWeek", day); putJsonArray("intervals") { add(buildJsonObject { put("openTime", "08:00:00"); put("closeTime", "23:00:00") }) } }) } }
     }
@@ -172,9 +200,9 @@ internal class SandboxApplicationBackend(private val today: LocalDate, private v
             else put("address", address(slug, if (kind == "roaster") "/roasters/$slug" else "/coffee-shops/$slug"))
         }
     })
-    private fun visit(id: String, input: JsonObject) = buildJsonObject {
+    private fun visit(id: String, shopSlug: String, input: JsonObject) = buildJsonObject {
         input.forEach { (key, value) -> if (key != "drinkPhoto") put(key, value) }
-        put("id", id); put("shop", address("sandbox-cafe", "/coffee-shops/sandbox-cafe")); put("shopName", "Sandbox Cafe")
+        put("id", id); put("shop", address(shopSlug, "/coffee-shops/$shopSlug")); put("shopName", shopNames.getValue(shopSlug))
         put("author", address("sandbox", "/users/sandbox")); put("username", username)
         put("createdAtUtc", "${today}T07:00:00Z"); put("visitedAt", input["visitedAt"] ?: JsonPrimitive("${today}T07:00:00Z"))
         val visibility = input["visibility"]?.jsonPrimitive?.content ?: "Private"

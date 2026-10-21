@@ -1,5 +1,23 @@
 # Application-wide offline Sandbox checkpoint
 
+## Sandbox contract corrections — 2026-10-21
+
+Reviewed source `cfd9d15f` plus this backend/test correction. Fix three reproduced
+fixture defects: helpful responses now expose the production `isHelpful` field,
+persist vote state/count and keep repeated PUT/DELETE idempotent; Shop creation
+uses the requested known `coffeeShopSlug`; Shop details scope visits to that shop
+and expose only Public + Approved rows/counts in the public section. Private and
+pending rows remain in personal history. Feed shares the same publication filter.
+Unknown shops and unsupported report/vote methods fail without mutating visits.
+
+Three permanent regressions initially failed against the old backend (12 cases,
+three failures); all 12 then passed after the correction. The final complete run
+passes **1167 unit results** (545 Direct, 545 Play, 77 network), zero failures,
+errors or skips. Both ordinary Debug APKs and both Sandbox APKs pass packaged DEX
+checks; both Sandbox manifests pass isolation checks (55s). Logs are local under
+`build/reports/sandbox-fixes/`; no automated UI suite or device installation ran.
+Production ports, permissions, account data and iOS sources are unchanged.
+
 ## Develop baseline reconciliation — 2026-10-19
 
 Inherit Home `c165d8fc`, main `dfb00e63` and approved develop `fc85f8e5`.
