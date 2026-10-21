@@ -171,3 +171,53 @@ isolated debug package `com.coffeepeek.pushdebug`. Supply the matching Firebase 
 client configuration (project coffeepeek, display name CoffeePeek Push Test) in the local
 google-services.json alongside the normal com.coffeepeek client. Install/launch this
 package separately; it does not replace the existing app or use its local data.
+
+## Inbox presentation follow-up — 2026-10-21
+
+Source: codex/notifications-design-refactoring, based on migration tip 813f0ab8
+(feature/appupdate-audit), plus the uncommitted changes in this workspace.
+Scope: the shared feed bell and inbox UI/resources in composeApp, the existing
+bell icon exposed through core/design-system, and the failing profile/settings
+Scaffold padding. No Gradle boundaries or presenter/repository contracts change.
+The app's shared resource set currently contains only default Russian strings.
+
+Preserve generation-based sheet close, one accessible push toggle, permission/save
+guards, read-one/read-all snapshots, retry and cursor pagination. The existing
+platform modal and AnalyticsOverlay keep consent/session behavior; no analytics
+events are added. A sibling badge avoids the circular button clip, retains the
+full accessible count and visually caps at 99+. Non-filling list weight fits short
+content; the existing 88% maximum and scrolling bound long lists. Empty history
+omits the inactive read-all toolbar. Existing design-system components are reused.
+
+CI diagnosis: Android CI run 39612753340 and Android Release run 39612738657 both
+stopped at profile/impl's two unused Scaffold-padding errors. Applying its padding
+to both root containers fixed them; the next full local pass exposed the same
+error in settings/impl SettingsContent, also fixed at its root. Zero Scaffold
+insets and explicit status-bar handling are preserved. No suppressions are added.
+
+Verification on 2026-10-21:
+- Final full pass: BUILD SUCCESSFUL in 5m 4s, --max-workers=6 --continue.
+- assembleDirectSandbox, assembleDirectDebug, assemblePlayDebug passed, including
+  all three packaged DEX runtime-class checks and Sandbox manifest isolation.
+- testDebugUnitTest plus composeApp's Direct/Play unit tasks: 2,133 cases across
+  405 suites; zero failures, errors or skips. The application has 646 cases per
+  delivery variant. Notifications' 12 cases executed in the first attempt and
+  were UP-TO-DATE in the final pass; no failed test cases or test retries.
+- lintDebug and composeApp's lintDirectDebug/lintPlayDebug passed. Existing
+  ProfileCard ModifierParameter and common Preview/compiler warnings remain.
+- APK identity: 1.0.1010 (Sandbox: 1.0.1010-sandbox), code 1010; packages
+  com.coffeepeek for Direct/Play Debug and com.coffeepeek.sandbox for Sandbox.
+- Earlier local compilation failures (required loader accessibility description,
+  cross-module nullable smart cast and unsupported common Preview fontScale)
+  were corrected before the successful full pass. The third pass preserved
+  evidence of the settings lint failure before the final successful retry.
+- git diff --check passed. New/substantively changed UI functions meet the
+  40-line composable / 20-line ordinary-function review limits.
+
+Colocated light/dark previews compile with fake state for empty/short/long lists,
+read/unread cards, push settings and counts 0/1/12/99+, including 2x button text.
+They were not rendered: Android Studio tools were unavailable. No device was
+selected or deployed to, and no automated UI/instrumented/screenshot test ran.
+Manual modal sizing, light/dark rendering, font/window sizes, accessibility and
+back/cancel checks on Sandbox remain open. Live push/backend acceptance and iOS
+compilation/device checks were not performed. Remote CI was not rerun or published.
