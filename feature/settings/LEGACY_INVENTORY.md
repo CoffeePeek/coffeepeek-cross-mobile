@@ -259,3 +259,29 @@ These move into `SettingsViewModel`/`UsageConsentPort` at steps 3–4, where the
   → «Установлена актуальная версия», guest mode (card «Присоединяйтесь…» with «Войти»/«Зарегистрироваться», no blocked-authors row, no Profile tab) and «Войти» opening the login screen, section titles upper-cased, bottom clearance above the floating bar.
 - **Not checked**: the checking spinner state (the Sandbox answers instantly), the update row for `Required`/`Failure`, «Зарегистрироваться» and the add-shop/roaster rows' targets, support/share (Sandbox blocks external apps), large font and rotation on the tab, TalkBack,
   the blocked-authors row target (author-blocking owner).
+
+## Step 5 result — retroactive audit of the activated Android path (2026-10-21)
+
+Checked the risk table (S1–S10), the inventory rows and the strings against the migrated code, tests and the Pixel 7 Sandbox runs. **No defect needing a code change was found in this step.** The one real
+regression of the migration (section titles not upper-cased) was found on the device in step 4 and is already fixed. No code was changed in this step.
+
+| id | status |
+|---|---|
+| S1 theme | kept: `ThemeManager` stays app-owned behind `ThemePort`; `ThemeManagerTest`, `ThemeViewModelTest`, the adapter test; device: immediate switch in both directions, the choice survived a process restart, the tab row follows |
+| S2 city | kept: Feed (`FeedViewModel.loadCatalogs`) and Map (`MapViewModel.loadCatalogs`) still call `CityPreference.resolve` themselves. Guard: `FeedNearbySelectionTest.locationBeforeCatalogsKeepsInitialSearchInTheSelectedCity` (Feed resolves with no Settings screen anywhere). **Map has no such test** — verified by reading the code only. Fallback to the first city: `CityPreferenceStorageTest`, the port test; device: one, three cities, the tab and the screen agree |
+| S3 consent | availability rule and toggle covered by the adapter test (unavailable without a service and before a signed-in identity, follows `setConsent`, unavailable after sign-out) and `UsagePolicyViewModelTest`. **Not on a device**: the Sandbox runs with analytics disabled |
+| S4 row rules | state properties tested (`SettingsViewModelTest`); device: signed-in tab and guest tab (card, no blocked-authors row, no Profile tab), add rows for both |
+| S5 links | `AndroidSettingsExternalActions` test pins support, terms, privacy and the share text; not tapped on the device (the Sandbox blocks external apps) |
+| S6 update row | adapter test (available / current / failure message) + device: current, available, failure («Не удалось проверить обновления…»), required (row text only). The root `AppUpdatePrompt` lives in `App.kt`, which the Sandbox root does not compose, so the prompt for a required update is **not testable in the Sandbox**; the checking spinner is too fast to catch |
+| S7 singleton and iOS | the legacy `ProfileViewModel` is no longer created by any Android screen. Every consumer of the cached profile loads it itself (`getMe`/`refreshProfile` in the shop session, shop detail, community, public profile, edit, deletion), so nothing relied on its startup refresh. iOS compile green; the legacy `ProfileViewModelTest` (11) and `SettingsScreen` stay for iOS/shared |
+| S8 analytics pages | `SettingsPagesTest` (route class names unchanged) |
+| S9 texts | every Russian string literal of the four legacy screens exists verbatim in `settings/impl` `strings.xml` (checked mechanically; the only miss is the version template, implemented as `Версия %1$s`); new texts: the two city error messages. Large font 1.5 on the theme, usage-policy and tab screens: wrapping works, long top-bar titles and the 3-line row descriptions end with an ellipsis exactly as the legacy rows did |
+| S10 recreation | ViewModels live in the destination's store; device: landscape on the tab keeps the scroll position and content; no draft state exists. Rotation on the leaf screens and a rotation during an update check were not run |
+
+**Inventory rows**: preserved — rows, texts, rules, theme and city persistence, update row states, consent rules; improved on purpose — city screen (loader, error, retry, empty text), guest tapping nothing new; unchanged
+by design — add-shop/roaster rows for guests, App Store wording, duplicate version text, no analytics events, `BlockedAuthors` on `other`.
+
+**Legacy that stays and why**: `SettingsScreen`, `ThemeScreen`, `CityScreen`, `UsagePolicyScreen` and the `ProfileViewModel` singleton remain the iOS/shared path (Legacy renderers and the iOS native tab shell). They can go
+only when iOS consumes `feature/settings`. `ThemeManager`, `CityPreference`, the update machinery and `LegalUrls` stay app-owned by decision.
+
+**Open, not verified**: Map city resolution test, consent switch on a device, required-update prompt, spinner state, external links, TalkBack, rotation of the leaf screens. Next owners: App update (own owner), Discovery, Auth, Community, Contributions.
