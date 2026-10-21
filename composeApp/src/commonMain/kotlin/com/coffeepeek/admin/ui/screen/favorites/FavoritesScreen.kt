@@ -29,7 +29,6 @@ import coffeepeek.composeapp.generated.resources.favorites_empty
 import coffeepeek.composeapp.generated.resources.favorites_roasters
 import com.coffeepeek.admin.feature.catalog.api.RoasterCard
 import com.coffeepeek.admin.feature.catalog.api.ShopCard
-import com.coffeepeek.admin.di.platformViewModel
 import com.coffeepeek.admin.feature.favorites.api.roasterFavoriteId
 import com.coffeepeek.admin.feature.favorites.ui.SavedDrinkCard
 import com.coffeepeek.admin.location.distanceToShopMeters
@@ -41,9 +40,10 @@ import com.coffeepeek.admin.ui.component.CpSnackbarHost
 import com.coffeepeek.admin.ui.component.CoffeePeekLoader
 import com.coffeepeek.admin.ui.component.CpTopBar
 import org.jetbrains.compose.resources.stringResource
+import org.koin.compose.koinInject
 
 @Composable
-fun FavoritesScreen(vm: FavoritesViewModel = platformViewModel()) {
+fun FavoritesScreen(vm: FavoritesViewModel = koinInject()) {
     val state by vm.state.collectAsState()
     val error = state.error ?: state.roasterError
     val userLocation = rememberPermittedUserLocation()

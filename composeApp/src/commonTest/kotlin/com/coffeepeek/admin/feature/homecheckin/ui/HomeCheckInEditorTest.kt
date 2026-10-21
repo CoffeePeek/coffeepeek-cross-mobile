@@ -45,6 +45,27 @@ class HomeCheckInEditorTest {
     private val catalog = BrewMethodCatalog { Result.success(listOf(method)) }
 
     @Test
+    fun notificationPermissionIsRequestedAfterCreationAndNeverAfterEditing() = runBlocking {
+        val created = Channel<Unit>(Channel.UNLIMITED)
+        val repository = EditorRepository()
+        val vm = HomeCheckInViewModel(repository, EditorCoffeePicker(), catalog,
+            onCheckInCreated = { created.trySend(Unit) })
+        try {
+            vm.create()
+            assertTrue(created.tryReceive().isFailure)
+            vm.save()
+            withTimeout(2_000) { created.receive() }
+            assertEquals(1, repository.saves)
+            assertNotNull(vm.state.value.selected)
+            assertFalse(vm.state.value.saving)
+            vm.edit()
+            vm.save()
+            withTimeout(2_000) { vm.state.first { !it.saving && !it.editing } }
+            assertTrue(created.tryReceive().isFailure)
+        } finally { vm.close(); created.close() }
+    }
+
+    @Test
     fun newEntryStartsAtFiveAndEditKeepsItsActualScoreAndCustomDrink() = runBlocking {
         val vm = HomeCheckInViewModel(EditorRepository(), EditorCoffeePicker(), catalog)
         try {
@@ -163,7 +184,9 @@ class HomeCheckInEditorTest {
 
     @Test
     fun unexpectedExceptionsNeverLeakIntoTheFormAndTheDraftIsRetained() = runBlocking {
-        val vm = HomeCheckInViewModel(EditorRepository(IllegalStateException("SQL internal exception")), EditorCoffeePicker(), catalog)
+        val created = Channel<Unit>(Channel.UNLIMITED)
+        val vm = HomeCheckInViewModel(EditorRepository(IllegalStateException("SQL internal exception")), EditorCoffeePicker(), catalog,
+            onCheckInCreated = { created.trySend(Unit) })
         try {
             vm.create()
             vm.updateDraft { it.copy(doseGrams = "18", text = "Мой кофе") }
@@ -174,7 +197,8 @@ class HomeCheckInEditorTest {
             assertEquals(draft, vm.state.value.draft)
             assertFalse(vm.state.value.saving)
             assertTrue(vm.state.value.editing)
-        } finally { vm.close() }
+            assertTrue(created.tryReceive().isFailure)
+        } finally { vm.close(); created.close() }
     }
 
     @Test

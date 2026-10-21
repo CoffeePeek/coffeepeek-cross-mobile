@@ -5,11 +5,14 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import com.coffeepeek.admin.di.platformViewModel
 import com.coffeepeek.admin.feature.homecheckin.ui.HomeCheckInUiState
 import com.coffeepeek.admin.feature.homecheckin.ui.HomeCheckInViewModel
 import com.coffeepeek.admin.ui.screen.checkins.CalendarCard
@@ -18,24 +21,25 @@ import com.coffeepeek.admin.ui.screen.checkins.VisitedPlacesViewModel
 import com.coffeepeek.admin.ui.screen.checkins.homeCalendarPhotos
 import com.coffeepeek.admin.utils.currentUtcIsoDateTime
 import com.coffeepeek.admin.utils.utcIsoToLocalDate
-import org.koin.compose.koinInject
 
 /** Application composition joins personal shop and home activity without exposing their UI to profiles. */
 @Composable
 internal fun PersonalProfileActivityCalendar(
-    shopVm: VisitedPlacesViewModel = koinInject(),
-    homeVm: HomeCheckInViewModel = koinInject(),
+    shopVm: VisitedPlacesViewModel = platformViewModel(),
+    homeVm: HomeCheckInViewModel = platformViewModel(),
 ) {
     val shop by shopVm.state.collectAsState()
     val home by homeVm.state.collectAsState()
     val today = utcIsoToLocalDate(currentUtcIsoDateTime())
     val month = shop.calendarMonth
+    var opened by rememberSaveable { mutableStateOf(false) }
 
-    DisposableEffect(shopVm, homeVm) {
-        onDispose {
-            shopVm.close()
-            homeVm.close()
+    LaunchedEffect(shopVm, homeVm) {
+        if (opened) {
+            shopVm.refreshCalendar()
+            homeVm.loadCalendar()
         }
+        opened = true
     }
     LaunchedEffect(month) {
         val offset = (month.year - home.month.year) * 12 + month.month - home.month.month

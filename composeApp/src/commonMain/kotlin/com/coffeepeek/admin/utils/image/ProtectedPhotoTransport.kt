@@ -19,7 +19,8 @@ internal suspend fun protectedVariantBytes(client: HttpClient, data: CustomUrl):
     val session = ProtectedPhotoSession.session(scope)
     val jwtDeadline = session?.accessToken?.let(JwtUtils::extractExp)?.takeIf { it in 0..Long.MAX_VALUE / 1000 }?.times(1000)
     check(session == null || jwtDeadline != null) { "Фото недоступно" }
-    val result = protectedPhotoCache.read(PhotoCacheKey(data.url, scope), jwtDeadline, { ProtectedPhotoSession.current(scope) }) { etag ->
+    val result = protectedPhotoCache.read(PhotoCacheKey(data.url, scope), jwtDeadline,
+        { ProtectedPhotoSession.current(scope) }, revalidate = data.displayPermission?.revalidate == true) { etag ->
         protectedPhotoRequests.withPermit {
             check(ProtectedPhotoSession.current(scope)) { "Фото недоступно" }
             client.prepareGet(data.url) {

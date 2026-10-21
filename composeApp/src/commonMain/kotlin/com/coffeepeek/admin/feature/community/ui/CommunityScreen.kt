@@ -35,7 +35,7 @@ import com.coffeepeek.domain.model.CheckInModerationState
 import com.coffeepeek.domain.model.CheckInVisibility
 
 @Composable
-fun CommunityScreen(onCreateCheckIn: () -> Unit) {
+fun CommunityScreen(onCreateCheckIn: () -> Unit, notificationsAction: @Composable () -> Unit = {}) {
     val vm: CommunityViewModel = platformViewModel()
     val state by vm.state.collectAsState()
     TrackFeedViewed(state.firstPageCount, state.timeline == CommunityTimeline.Public)
@@ -115,12 +115,16 @@ fun CommunityScreen(onCreateCheckIn: () -> Unit) {
                     verticalArrangement = Arrangement.spacedBy(CpDimens.spacing3),
                 ) {
                     item(key = "heading", contentType = "heading") {
-                        Text(
-                            "Лента",
-                            style = MaterialTheme.typography.headlineMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onBackground,
-                        )
+                        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                            Text(
+                                "Лента",
+                                modifier = Modifier.weight(1f),
+                                style = MaterialTheme.typography.headlineMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onBackground,
+                            )
+                            notificationsAction()
+                        }
                     }
                     when {
                         state.isLoggedIn == null || (state.isLoading && state.items.isEmpty()) -> item(key = "loading", contentType = "loading") {
