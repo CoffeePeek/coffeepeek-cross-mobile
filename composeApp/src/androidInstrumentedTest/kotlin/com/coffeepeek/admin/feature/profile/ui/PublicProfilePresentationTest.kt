@@ -27,6 +27,9 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.testTagsAsResourceId
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.Density
+import androidx.lifecycle.ViewModelStore
+import androidx.lifecycle.ViewModelStoreOwner
+import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import androidx.test.core.app.ActivityScenario
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
@@ -66,11 +69,15 @@ import com.coffeepeek.admin.ui.screen.profile.ProfileActions
 import java.io.File
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.atomic.AtomicReference
+import java.util.concurrent.atomic.AtomicInteger
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.koin.compose.KoinIsolatedContext
+import org.koin.dsl.koinApplication
+import org.koin.dsl.module
 
 /** Local repository fixtures exercise the production screen without modifying server data. */
 @RunWith(AndroidJUnit4::class)
@@ -78,6 +85,73 @@ import org.junit.runner.RunWith
 class PublicProfilePresentationTest {
     @Before
     fun grantStartupPermissions() = grantCheckInFixtureStartupPermissions()
+
+    @Test
+    fun profileAndFavoritesSurviveCompositionRecreationWithoutReloading() {
+        val visible = mutableStateOf(true)
+        val showFavorites = mutableStateOf(false)
+        val owner = object : ViewModelStoreOwner {
+            override val viewModelStore = ViewModelStore()
+        }
+        val repository = ProfileFixtureRepository()
+        val profiles = CopyOnWriteArrayList<PublicProfileViewModel>()
+        val favorites = CopyOnWriteArrayList<FavoritesViewModel>()
+        val favoriteLoads = AtomicInteger()
+        val injection = koinApplication {
+            modules(module {
+                factory { (slug: String) -> PublicProfileViewModel(slug, repository, ProfileFixtureSessions()).also(profiles::add) }
+                single { personalFavoritesFixtureViewModel { favoriteLoads.incrementAndGet() }.also(favorites::add) }
+                single<com.coffeepeek.feature.authorblocking.api.AuthorBlockActions> {
+                    object : com.coffeepeek.feature.authorblocking.api.AuthorBlockActions {
+                        override fun requestBlock(author: com.coffeepeek.feature.authorblocking.api.AuthorReference) = Unit
+                        override fun requestUnblock(author: com.coffeepeek.feature.authorblocking.api.AuthorReference) = Unit
+                    }
+                }
+            })
+        }
+        try {
+            ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+                scenario.onActivity { activity -> activity.setContent {
+                    KoinIsolatedContext(injection) {
+                        CompositionLocalProvider(LocalViewModelStoreOwner provides owner) {
+                            CoffeePeekTheme(darkTheme = false) {
+                                if (showFavorites.value) FavoritesScreen()
+                                else if (visible.value) UserProfileScreen(
+                                    slug = "glasha", isOwnProfile = true,
+                                    onCoffeeShopClick = {}, onRoasterClick = {}, onLogin = {}, onUserClick = { _, _, _ -> },
+                                    favoritesPreview = { FavoritesProfilePreviewContent({}, {}) },
+                                    activityCalendar = {},
+                                )
+                            }
+                        }
+                    }
+                } }
+                waitUntil { text("glasha")?.isVisibleToUser == true && favoriteLoads.get() == 1 && !favorites.single().state.value.isLoading }
+                repeat(2) {
+                    scenario.onActivity { visible.value = false }
+                    waitUntil { text("glasha") == null }
+                    scenario.onActivity { visible.value = true }
+                    waitUntil { text("glasha")?.isVisibleToUser == true }
+                }
+                repeat(2) {
+                    scenario.onActivity { showFavorites.value = true }
+                    waitUntil { text("Избранное")?.isVisibleToUser == true && text("glasha") == null }
+                    scenario.onActivity { showFavorites.value = false }
+                    waitUntil { text("glasha")?.isVisibleToUser == true }
+                }
+                assertEquals(1, profiles.size)
+                assertEquals(1, favorites.size)
+                assertEquals(1, repository.cursors.size)
+                assertEquals(1, favoriteLoads.get())
+                favorites.single().load(force = true)
+                waitUntil { favoriteLoads.get() == 2 && !favorites.single().state.value.isLoading }
+            }
+        } finally {
+            InstrumentationRegistry.getInstrumentation().runOnMainSync { owner.viewModelStore.clear() }
+            favorites.forEach(FavoritesViewModel::close)
+            injection.close()
+        }
+    }
 
     @Test
     fun ownProfileAndPersonalFavoritesScreenshots() {
@@ -718,7 +792,7 @@ class PublicProfilePresentationTest {
 private const val ROAST_DESCRIPTION = "Белорусская обжарка с 2010 года. Чистый вкус и сезонные лоты."
 private const val ROAST_LAB_DESCRIPTION = "Обжариваем небольшие партии для фильтра и эспрессо в Минске."
 
-private fun personalFavoritesFixtureViewModel(): FavoritesViewModel {
+private fun personalFavoritesFixtureViewModel(onLoad: () -> Unit = {}): FavoritesViewModel {
     val shop = CoffeeShopDetails(
         shop = CoffeeShop(
             id = "territory-coffee",
@@ -749,7 +823,10 @@ private fun personalFavoritesFixtureViewModel(): FavoritesViewModel {
     val shops = object : FavoriteRepository {
         override suspend fun getFavoriteIds() = setOf(shop.shop.id)
         override suspend fun isFavorite(shopId: String) = shopId == shop.shop.id
-        override suspend fun getFavorites() = Result.success(listOf(shop))
+        override suspend fun getFavorites(): Result<List<CoffeeShopDetails>> {
+            onLoad()
+            return Result.success(listOf(shop))
+        }
         override suspend fun addFavorite(shop: CoffeeShop, address: String?): Result<Unit> = error("Screenshot fixture is read-only")
         override suspend fun removeFavorite(shopId: String): Result<Unit> = error("Screenshot fixture is read-only")
         override suspend fun clearAll() = Unit
