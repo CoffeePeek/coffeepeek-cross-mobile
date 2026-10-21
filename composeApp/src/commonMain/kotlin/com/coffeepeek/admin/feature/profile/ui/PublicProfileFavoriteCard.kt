@@ -1,9 +1,10 @@
 package com.coffeepeek.admin.feature.profile.ui
 
+import com.coffeepeek.core.designsystem.component.CoffeePeekLikeBadge
+
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -14,21 +15,20 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.admin.feature.catalog.api.RoasterCard
 import com.coffeepeek.admin.feature.catalog.api.ShopCard
-import com.coffeepeek.admin.feature.profile.domain.PublicFavoriteKind
-import com.coffeepeek.admin.feature.profile.domain.PublicProfileFavorite
-import com.coffeepeek.admin.theme.CpColor
+import com.coffeepeek.feature.profile.domain.PublicFavoriteKind
+import com.coffeepeek.feature.profile.domain.PublicProfileFavorite
 import com.coffeepeek.admin.theme.CpDimens
 import com.coffeepeek.admin.ui.component.CoffeeShopImage
 import com.coffeepeek.admin.ui.icons.CpIcons
 import com.coffeepeek.domain.model.CatalogItem
 import com.coffeepeek.domain.model.CoffeeShop
+import com.coffeepeek.domain.model.PublicAddress
 
 /** Reuses catalog's public card entry points with the viewed user's favorite state. */
 @Composable
@@ -37,7 +37,7 @@ internal fun PublicProfileFavoriteCard(
     modifier: Modifier = Modifier.width(300.dp),
     onClick: () -> Unit,
 ) {
-    val address = favorite.publicAddress
+    val address = favorite.publicAddress?.let { PublicAddress(it.slug, it.canonicalPath, it.revision, it.isAlias) }
     when (favorite.kind) {
         PublicFavoriteKind.CoffeeShop -> ShopCard(
             shop = CoffeeShop(
@@ -96,19 +96,17 @@ private fun PublicDrinkFavoriteCard(favorite: PublicProfileFavorite, modifier: M
             contentAlignment = Alignment.Center,
         ) {
             if (!favorite.imageUrl.isNullOrBlank()) CoffeeShopImage(
-                imageUrl = favorite.imageUrl, contentDescription = favorite.title,
+                imageUrl = favorite.imageUrl!!, contentDescription = favorite.title,
                 contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize(),
             ) else Icon(
                 CpIcons.Coffee, contentDescription = null,
                 tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(48.dp),
             )
-            Box(
-                modifier = Modifier.align(Alignment.TopEnd).padding(CpDimens.spacing3)
-                    .size(40.dp).clip(CircleShape).background(Color.Black),
-                contentAlignment = Alignment.Center,
-            ) {
-                Icon(CpIcons.FavoriteFilled, "В избранном", tint = CpColor.Primary, modifier = Modifier.size(24.dp))
-            }
+            CoffeePeekLikeBadge(
+                selected = true,
+                contentDescription = "В избранном",
+                modifier = Modifier.align(Alignment.TopEnd).padding(CpDimens.spacing3).size(40.dp),
+            )
         }
         Column(Modifier.padding(CpDimens.spacing4), verticalArrangement = Arrangement.spacedBy(CpDimens.spacing2)) {
             Text(

@@ -13,6 +13,9 @@ import com.coffeepeek.feature.authorblocking.api.*
 import com.coffeepeek.admin.feature.authorblocking.ui.*
 import com.coffeepeek.admin.feature.community.ui.*
 import com.coffeepeek.admin.feature.profile.domain.*
+import com.coffeepeek.feature.profile.domain.*
+import com.coffeepeek.admin.feature.profile.domain.PublicProfileCheckInPage
+import com.coffeepeek.admin.feature.profile.domain.PublicProfileCheckIn
 import com.coffeepeek.admin.feature.profile.ui.*
 import com.coffeepeek.admin.theme.CoffeePeekTheme
 import com.coffeepeek.admin.theme.PlatformSystemBars
@@ -56,7 +59,7 @@ class AuthorBlockingFlowScreenshotsTest {
         val community = CommunityViewModel(ScreenshotCheckIns(), sessions, ScreenshotShops(), feed, users, blocks)
         val profile = PublicProfileViewModel("anna-coffee", ScreenshotProfileRepository(blocks, post), sessions, users = users, visibility = blocks)
         val rootKoin = GlobalContext.get()
-        val settings = ProfileViewModel(rootKoin.get(), users, sessions, ScreenshotShops(), rootKoin.get(), rootKoin.get())
+        val settings = ProfileViewModel(rootKoin.get(), users, sessions, ScreenshotShops(), rootKoin.get(), rootKoin.get(), rootKoin.get())
         val screen = MutableStateFlow("feed")
         val dark = MutableStateFlow(false)
         val navigationScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)

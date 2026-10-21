@@ -21,6 +21,7 @@ import kotlinx.coroutines.runBlocking
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertFailsWith
 import kotlin.test.assertIs
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
@@ -162,13 +163,16 @@ class AppleLoginServiceTest {
     }
 
     @Test
-    fun cancellationRemainsTheSameFailure() = runBlocking {
+    fun cancellationIsRethrownInsteadOfBecomingAResultFailure() = runBlocking {
         val cancellation = CancellationException("cancel Apple exchange")
         val client = HttpClient(MockEngine { throw cancellation }) {
             install(ContentNegotiation) { json(JsonExt.json) }
         }
         // Ktor may copy exceptions while recovering coroutine stack traces.
-        val error = assertIs<CancellationException>(client.exchangeFailure())
+        val error = assertFailsWith<CancellationException> {
+            try { AuthService(client, client).appleLogin("id", "token") }
+            finally { client.close() }
+        }
         assertEquals(cancellation.message, error.message)
     }
 

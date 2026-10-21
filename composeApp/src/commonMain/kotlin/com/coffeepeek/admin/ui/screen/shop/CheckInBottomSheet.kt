@@ -5,9 +5,6 @@ import androidx.compose.runtime.getValue
 import com.coffeepeek.admin.ui.component.NativeDatePicker
 import com.coffeepeek.admin.ui.component.ReviewFormStep
 import com.coffeepeek.admin.ui.component.CheckInVisibilityControl
-import com.coffeepeek.admin.feature.checkin.api.DrinkPhotoPreview
-import com.coffeepeek.admin.feature.checkin.api.DrinkPhotoState
-import com.coffeepeek.domain.model.PendingPhotoUpload
 
 import com.coffeepeek.admin.ui.screen.review.ConsumedDrinkField
 
@@ -87,10 +84,6 @@ fun CheckInBottomSheet(
     submissionError: String? = null,
     onGoToFeed: () -> Unit,
     onViewCheckIns: () -> Unit,
-    drinkPhotoState: DrinkPhotoState = DrinkPhotoState(),
-    onSelectDrinkPhoto: (PendingPhotoUpload) -> Unit = {},
-    onRetryDrinkPhoto: () -> Unit = {},
-    onSkipDrinkPhoto: () -> Unit = {},
 ) {
     var showDatePicker by remember { mutableStateOf(false) }
     val visitDateMillis = remember(draft.visitMillis, showDatePicker) { instantToDatePickerMillis(draft.visitMillis) }
@@ -268,8 +261,6 @@ fun CheckInBottomSheet(
                         title = stringResource(Res.string.checkin_photos_label),
                         hint = "Добавьте до $MAX_REVIEW_PHOTOS фото вашего визита.",
                     )
-                    if (draft.photos.isNotEmpty()) DrinkPhotoPreview(drinkPhotoState,
-                        onSelectDrinkPhoto, onRetryDrinkPhoto, onSkipDrinkPhoto)
                 }
 
                 ReviewFormStep(optional = true) {
@@ -297,7 +288,7 @@ fun CheckInBottomSheet(
                     focusManager.clearFocus(force = true)
                     onSubmit(draft)
                 },
-                enabled = !isLoading && drinkPhotoState.canSubmit && validateConsumedDrink(draft.drinkSlug, draft.customDrinkName) == null,
+                enabled = !isLoading && validateConsumedDrink(draft.drinkSlug, draft.customDrinkName) == null,
             )
         }
     }

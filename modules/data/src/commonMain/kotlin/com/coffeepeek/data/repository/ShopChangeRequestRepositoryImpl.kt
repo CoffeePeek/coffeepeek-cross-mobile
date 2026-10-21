@@ -1,5 +1,6 @@
 package com.coffeepeek.data.repository
 
+import com.coffeepeek.api.utils.requestResult
 import com.coffeepeek.api.model.request.CreateShopChangeRequestBody
 import com.coffeepeek.api.model.request.UpdateShopChangeRequestBody
 import com.coffeepeek.api.service.ShopChangeRequestApiService
@@ -23,7 +24,7 @@ class ShopChangeRequestRepositoryImpl(
     private val photoRepository: PhotoRepository,
 ) : ShopChangeRequestRepository {
 
-    override suspend fun create(draft: ShopChangeDraft): Result<ShopChangeRequest> = runCatching {
+    override suspend fun create(draft: ShopChangeDraft): Result<ShopChangeRequest> = requestResult {
         val payload = draft.toPayload()
         api.create(
             CreateShopChangeRequestBody(
@@ -46,7 +47,7 @@ class ShopChangeRequestRepositoryImpl(
     override suspend fun getById(id: String): Result<ShopChangeRequest> =
         api.getById(id).map { it.toDomain() }
 
-    override suspend fun update(id: String, draft: ShopChangeDraft): Result<ShopChangeRequest> = runCatching {
+    override suspend fun update(id: String, draft: ShopChangeDraft): Result<ShopChangeRequest> = requestResult {
         val payload = draft.toPayload()
         api.update(
             id,

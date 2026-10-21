@@ -23,6 +23,8 @@ class CoffeePeekApplication : Application() {
         @SuppressLint("StaticFieldLeak")
         private var _context: Context? = null
         val context get() = _context!!
+        /** Bind an application-scoped context without starting production services. */
+        internal fun bindContext(context: Context) { _context = context }
     }
 
     private val warmupScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
@@ -34,6 +36,7 @@ class CoffeePeekApplication : Application() {
         // Apply saved light/dark mode before any Activity/splash resolves resources.
         applyPersistedNightModeEarly()
         MapLibre.getInstance(this)
+        com.coffeepeek.admin.notifications.AndroidPush.install(this)
         initPlatformKoin()
 
         val koin = GlobalContext.get()

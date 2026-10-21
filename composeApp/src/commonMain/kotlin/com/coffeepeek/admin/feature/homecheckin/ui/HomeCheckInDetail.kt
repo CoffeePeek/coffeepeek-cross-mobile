@@ -1,8 +1,13 @@
 package com.coffeepeek.admin.feature.homecheckin.ui
 
 import com.coffeepeek.admin.feature.catalog.api.methodLabel
+import com.coffeepeek.core.designsystem.component.CoffeePeekRating
+import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
+import org.jetbrains.compose.ui.tooling.preview.Preview
+import coffeepeek.composeapp.generated.resources.Res
+import coffeepeek.composeapp.generated.resources.coffeepeek_home_taste_rating_description
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -10,14 +15,11 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.admin.ui.component.AppButton
-import com.coffeepeek.admin.ui.component.DrinkCutoutImage
 import com.coffeepeek.admin.ui.component.ReviewPhotoStrip
 import com.coffeepeek.admin.ui.component.PhotoViewerImages
 import com.coffeepeek.admin.ui.icons.CpIcons
@@ -114,15 +116,10 @@ internal fun HomeDetailContent(
             FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween,
                 verticalArrangement = Arrangement.spacedBy(8.dp), itemVerticalAlignment = Alignment.CenterVertically) {
                 Text("Оценка вкуса", style = MaterialTheme.typography.titleSmall)
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp),
-                    modifier = Modifier.semantics(mergeDescendants = true) { contentDescription = "Оценка вкуса $score из 5" }) {
-                    repeat(5) { index ->
-                        Icon(if (index < score) CpIcons.StarFilled else CpIcons.StarOutline, null,
-                            Modifier.size(20.dp), tint = if (index < score) MaterialTheme.colorScheme.primary
-                                else MaterialTheme.colorScheme.outlineVariant)
-                    }
-                    Text("$score/5", Modifier.padding(start = 6.dp), style = MaterialTheme.typography.labelLarge)
-                }
+                CoffeePeekRating(score.toDouble(), starSpacing = 4.dp, valueSpacing = 10.dp,
+                    valueText = "$score/5", valueStyle = MaterialTheme.typography.labelLarge,
+                    contentDescription = stringResource(Res.string.coffeepeek_home_taste_rating_description, score),
+                    inactiveColor = MaterialTheme.colorScheme.outlineVariant)
             }
         } }
         if (photos.isNotEmpty()) item(key = "photos") {
@@ -130,17 +127,6 @@ internal fun HomeDetailContent(
                 singlePhotoAspectRatio = 16f / 10f,
                 onPhotoClick = { _, index -> onPhotoClick(homePhotoViewerImages(photos), index) })
         }
-        entry.drinkPhotoUrl?.takeIf(String::isNotBlank)?.let { original -> item(key = "drink-photo") {
-            Box(Modifier.fillMaxWidth().height(160.dp).clip(RoundedCornerShape(20.dp))
-                .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f))
-                .clickable(role = Role.Button, onClickLabel = "Открыть фото напитка") {
-                    onPhotoClick(homeDrinkPhotoViewerImages(original, entry.drinkPhotoDetailUrl), 0)
-                },
-                contentAlignment = Alignment.Center) {
-                DrinkCutoutImage(entry.drinkPhotoThumbnailUrl.orEmpty(), contentDescription = "Фото напитка",
-                    modifier = Modifier.fillMaxSize().padding(12.dp), outlineWidth = 3.dp)
-            }
-        } }
         entry.text?.takeIf(String::isNotBlank)?.let { note -> item(key = "note") {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text("Впечатления", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
@@ -162,10 +148,7 @@ internal fun HomeDetailContent(
 }
 
 internal fun homePhotoViewerImages(photos: List<HomeCheckInPhoto>) =
-    PhotoViewerImages(photos.map { it.detailUrl }, photos.map { it.url })
-
-internal fun homeDrinkPhotoViewerImages(original: String, detail: String?) =
-    PhotoViewerImages(listOf(detail.orEmpty()), listOf(original))
+    PhotoViewerImages(photos.map { it.thumbnailUrl }, photos.map { it.url })
 
 @Composable
 private fun RecipeMetric(label: String, value: String) {
@@ -183,3 +166,13 @@ internal fun homeDurationLabel(seconds: Int): String = buildList {
     if (seconds / 60 % 60 > 0) add("${seconds / 60 % 60} мин")
     if (seconds % 60 > 0 || seconds == 0) add("${seconds % 60} с")
 }.joinToString(" ")
+
+@Composable private fun HomeDetailRatingPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
+    Surface {
+        HomeDetailContent(HomeCheckIn("preview", "2026-10-18T09:00:00Z", "2026-10-18", "2026-10-18T09:00:00Z",
+            null, "hario-v60", null, "Preview coffee", "18", 180, 4, null, null, null, emptyList(),
+            visibility = HomeCheckInVisibility.Private), onEdit = {}, onDelete = {}, onPhotoClick = { _, _ -> })
+    }
+}
+@Preview @Composable private fun HomeDetailRatingLightPreview() = HomeDetailRatingPreview(false)
+@Preview @Composable private fun HomeDetailRatingDarkPreview() = HomeDetailRatingPreview(true)

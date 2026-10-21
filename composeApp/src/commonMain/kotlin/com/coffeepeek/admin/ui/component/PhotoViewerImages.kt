@@ -3,15 +3,15 @@ package com.coffeepeek.admin.ui.component
 import com.coffeepeek.admin.utils.image.originalCheckInPhoto
 import kotlin.math.abs
 
-/** Full-screen detail URLs with aligned originals used only while a detail variant is unavailable. */
-internal data class PhotoViewerImages(
+/** Already displayed previews with aligned originals loaded only for the selected photo. */
+data class PhotoViewerImages(
     val previews: List<String>,
-    val originals: List<String> = previews.map { originalCheckInPhoto(it).orEmpty() },
+    val originals: List<String> = previews.map { originalCheckInPhoto(it) ?: it },
 ) {
     init { require(previews.size == originals.size) }
 
     fun highQualityUrl(page: Int, currentPage: Int): String? = originals.getOrNull(page)
-        ?.takeIf { page == currentPage && previews.getOrNull(page)?.isBlank() == true }
+        ?.takeIf { page == currentPage && it != previews.getOrNull(page) }
         ?.takeIf(String::isNotBlank)
 
     fun displayUrl(page: Int, currentPage: Int, isVisible: Boolean): String? {

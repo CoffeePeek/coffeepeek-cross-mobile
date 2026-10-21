@@ -12,6 +12,12 @@ interface SessionRepository {
 
     suspend fun getSession(): Session?
     suspend fun persistSession(session: Session?)
+    /** Atomically replace credentials only while the expected session is current. */
+    suspend fun replaceSession(expected: Session?, session: Session?): Boolean {
+        if (peekSession() != expected) return false
+        saveSession(session)
+        return true
+    }
     suspend fun saveSession(session: Session?)
     suspend fun warmCache()
     fun observeSession(): Flow<Session?>

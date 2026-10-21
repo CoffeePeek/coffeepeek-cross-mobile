@@ -18,8 +18,6 @@ data class CheckInDraft(
     val serviceRating: Int = 4,
     val coffeeRating: Int = 4,
     val photos: List<PickedImage> = emptyList(),
-    val drinkPhoto: PickedImage? = null,
-    val drinkPhotoSkipped: Boolean = false,
 )
 
 internal fun CheckInDraft.withVisitDate(dateMillis: Long, now: Long = currentEpochMillis()): CheckInDraft =
@@ -43,6 +41,9 @@ class CheckInDraftStore(
     private val now: () -> Long = ::currentEpochMillis,
 ) {
     private var draft: CheckInDraft? = null
+
+    /** Android migration bridge can inspect ownership without creating/replacing a draft. */
+    internal fun peek(): CheckInDraft? = draft
 
     fun open(shopId: String): CheckInDraft {
         val current = draft

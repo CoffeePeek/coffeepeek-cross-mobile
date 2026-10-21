@@ -52,9 +52,10 @@ import com.coffeepeek.admin.ui.component.FloatingNavBottomMargin
 import com.coffeepeek.admin.ui.component.FloatingNavItem
 import com.coffeepeek.admin.ui.component.RetainedContent
 import com.coffeepeek.admin.ui.component.ProvideFloatingNavClearance
-import com.coffeepeek.admin.feature.coffee.ui.CoffeeListScreen
-import com.coffeepeek.admin.ui.screen.profile.ProfileScreen
-import com.coffeepeek.admin.ui.screen.profile.SettingsScreen
+import com.coffeepeek.admin.ui.screen.coffee.CoffeeScreenRenderer
+import org.koin.compose.koinInject
+import com.coffeepeek.admin.ui.screen.profile.OwnProfileScreenRenderer
+import com.coffeepeek.admin.ui.screen.profile.SettingsScreenRenderer
 import com.coffeepeek.admin.ui.icons.CpIcons
 
 data class BottomNavItem(
@@ -221,7 +222,7 @@ internal fun ComposeMainScreen(isLoggedIn: Boolean) {
 
                     navigation<Navigator.Screen.CoffeeGraph>(startDestination = Navigator.Screen.CoffeeTab) {
                         composable<Navigator.Screen.CoffeeTab> {
-                            CheckInTabContent { CoffeeListScreen() }
+                            CheckInTabContent { koinInject<CoffeeScreenRenderer>().List() }
                         }
                     }
 
@@ -229,16 +230,17 @@ internal fun ComposeMainScreen(isLoggedIn: Boolean) {
                         composable<Navigator.Screen.CommunityTab> {
                             com.coffeepeek.admin.feature.community.ui.CommunityScreen(
                                 onCreateCheckIn = { Navigator.navigate(Navigator.Screen.CreateCheckIn) },
+                                notificationsAction = { com.coffeepeek.admin.feature.notifications.ui.NotificationsButton() },
                             )
                         }
                     }
 
                     navigation<Navigator.Screen.ProfileGraph>(startDestination = Navigator.Screen.ProfileTab) {
-                        composable<Navigator.Screen.ProfileTab> { if (isLoggedIn) ProfileScreen() }
+                        composable<Navigator.Screen.ProfileTab> { if (isLoggedIn) koinInject<OwnProfileScreenRenderer>().Content() }
                     }
 
                     navigation<Navigator.Screen.SettingsGraph>(startDestination = Navigator.Screen.SettingsTab) {
-                        composable<Navigator.Screen.SettingsTab> { SettingsScreen() }
+                        composable<Navigator.Screen.SettingsTab> { koinInject<SettingsScreenRenderer>().Tab() }
                     }
                 }
             }

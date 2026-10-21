@@ -8,7 +8,9 @@ object CurlInterceptor {
 
     fun HttpRequestBuilder.asCurlString(): String {
         val method = method.value
-        val url = url.buildString()
+        // Signed URLs, recovery tokens, and userinfo must never reach diagnostic logs.
+        val target = url.build()
+        val url = "${target.protocol.name}://${target.host}:${target.port}${target.encodedPath}"
         val headers = headers.entries().joinToString(" ") {
             "-H '${it.key}: ${it.key.redactHeaderValue(it.value.joinToString(", "))}'"
         }

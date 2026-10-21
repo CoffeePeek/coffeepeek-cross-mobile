@@ -1,8 +1,9 @@
 # Public profiles
 
-This feature uses logical domain, data and UI boundaries inside the existing
-application module. Root composition owns its routes and DI. HTTP DTOs stay in
-data; UI consumes domain models and the profile repository contract.
+Profile models, the `PublicProfileData` contract and the HTTP data layer now live in
+`feature/profile/{domain,data}` (migration step 2, see `feature/profile/LEGACY_INVENTORY.md`). This package keeps the UI, the
+check-in list (it still uses the legacy timeline `CheckIn`) and the adapters that answer the profile's ports from legacy
+repositories. Root composition owns its routes and DI. HTTP DTOs stay in the data module.
 
 `GET /api/Users/{slug}` supplies the nickname, biography, avatar, all four
 statistics and the viewer's following state. The server's public address gives

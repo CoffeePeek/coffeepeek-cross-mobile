@@ -1,9 +1,18 @@
 package com.coffeepeek.admin.feature.homecheckin.ui
 
+import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
+import org.jetbrains.compose.ui.tooling.preview.Preview
+import androidx.compose.material3.Surface
+
+import com.coffeepeek.core.designsystem.component.CoffeePeekSelectField
+import com.coffeepeek.core.designsystem.component.CoffeePeekSelectOption
+import coffeepeek.composeapp.generated.resources.select_method_none
+import coffeepeek.composeapp.generated.resources.select_method_placeholder
+import coffeepeek.composeapp.generated.resources.select_method_label
+import org.jetbrains.compose.resources.stringResource
+
 import com.coffeepeek.admin.feature.catalog.api.catalogBrewMethodSlug
 import com.coffeepeek.admin.feature.catalog.api.methodLabel
-import com.coffeepeek.admin.feature.checkin.api.DrinkPhotoPreview
-import com.coffeepeek.domain.model.PendingPhotoUpload
 import androidx.compose.foundation.background
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.border
@@ -17,15 +26,12 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -94,8 +100,7 @@ import kotlin.time.Instant
 internal fun HomeEditor(state: HomeCheckInUiState, vm: HomeCheckInViewModel, modifier: Modifier) {
     HomeEditorContent(state, { draft -> vm.updateDraft { draft } }, vm::setCatalogQuery,
         vm::searchCatalog, vm::selectCatalogProduct, vm::save, vm::closeEditor, modifier,
-        onRetryMethods = vm::loadBrewMethods, onSelectDrinkPhoto = vm::selectDrinkPhoto,
-        onRetryDrinkPhoto = vm::retryDrinkPhoto, onSkipDrinkPhoto = vm::skipDrinkPhoto)
+        onRetryMethods = vm::loadBrewMethods)
 }
 
 /** Uses the same fields, rating card and step rhythm as the coffee-shop check-in form. */
@@ -111,9 +116,6 @@ internal fun HomeEditorContent(
     onClose: () -> Unit,
     modifier: Modifier = Modifier,
     onRetryMethods: () -> Unit = {},
-    onSelectDrinkPhoto: (PendingPhotoUpload) -> Unit = {},
-    onRetryDrinkPhoto: () -> Unit = {},
-    onSkipDrinkPhoto: () -> Unit = {},
 ) {
     val draft = state.draft
     val errors = state.fieldErrors
@@ -238,13 +240,10 @@ internal fun HomeEditorContent(
                                 onPhotosAdded = { added -> if (!state.saving) onDraftChange(draft.copy(
                                     photos = (draft.photos + added.map { HomePhotoUpload(it.fileName, it.contentType, it.bytes) }).take(5))) },
                                 onRemovePhoto = { index -> if (!state.saving) {
-                                    val remaining = draft.photos.filterIndexed { i, _ -> i != index }
-                                    onDraftChange(draft.copy(photos = remaining, drinkPhoto = draft.drinkPhoto.takeIf { remaining.isNotEmpty() }))
+                                    onDraftChange(draft.copy(photos = draft.photos.filterIndexed { i, _ -> i != index }))
                                 } },
                                 hint = "Чашка, зерно или процесс приготовления — до 5 фото.",
                             )
-                            if (draft.photos.isNotEmpty()) DrinkPhotoPreview(state.drinkPhotoState,
-                                onSelectDrinkPhoto, onRetryDrinkPhoto, onSkipDrinkPhoto)
                         } else {
                             Text("Фотографии этой записи сохранятся без изменений", style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -256,7 +255,7 @@ internal fun HomeEditorContent(
                 verticalArrangement = Arrangement.spacedBy(CpDimens.spacing2)) {
                 AppButton(if (state.saving) "Сохраняем…" else "Сохранить чекин", onClick = {
                     keyboard?.hide(); focus.clearFocus(force = true); onSave()
-                }, enabled = !state.saving && state.drinkPhotoState.canSubmit)
+                }, enabled = !state.saving)
             }
         }
     }
@@ -304,24 +303,26 @@ private fun HomeNumberField(value: String, placeholder: String, type: KeyboardTy
 
 @Composable
 private fun HomeMethodField(selected: String?, methods: List<BrewMethodOption>, enabled: Boolean, error: String?, onSelect: (String?) -> Unit) {
-    var expanded by remember { mutableStateOf(false) }
     val selectedMethod = methods.firstOrNull { it.slug == selected?.catalogBrewMethodSlug() }
     val selectedName = if (error != null && selectedMethod == null) null else selectedMethod?.name ?: selected?.methodLabel()
-    Box {
-        HomeSelectField(selectedName ?: "Выбрать способ", CpIcons.Coffee, "Выбрать способ заваривания", enabled,
-            methodName = selectedName, error = error) { expanded = true }
-        DropdownMenu(expanded, onDismissRequest = { expanded = false },
-            modifier = Modifier.widthIn(min = 240.dp, max = 320.dp).heightIn(max = 360.dp),
-            shape = RoundedCornerShape(CpDimens.radiusMd), containerColor = MaterialTheme.colorScheme.surface, tonalElevation = 0.dp) {
-            DropdownMenuItem(text = { Text("Не указывать") }, onClick = { onSelect(null); expanded = false })
-            methods.forEach { method ->
-                DropdownMenuItem(text = { Text(method.name, style = MaterialTheme.typography.bodyMedium) },
-                    onClick = { onSelect(method.slug); expanded = false },
-                    leadingIcon = { Icon(painterResource(brewMethodIcon(method.name)), null, Modifier.size(24.dp)) },
-                    trailingIcon = { if (method == selectedMethod) Icon(CpIcons.Check, null, Modifier.size(18.dp)) })
-            }
-        }
-    }
+    val none = stringResource(Res.string.select_method_none)
+    CoffeePeekSelectField(
+        value = selectedName ?: stringResource(Res.string.select_method_placeholder),
+        options = listOf(CoffeePeekSelectOption("none", none, selected == null) { onSelect(null) }) + methods.map { method ->
+            CoffeePeekSelectOption("method:${method.slug}", method.name, method == selectedMethod,
+                leadingIcon = { Icon(painterResource(brewMethodIcon(method.name)), null, Modifier.size(24.dp)) }) { onSelect(method.slug) }
+        },
+        contentDescription = stringResource(Res.string.select_method_label),
+        modifier = Modifier.fillMaxWidth(),
+        enabled = enabled,
+        isPlaceholder = selectedName == null,
+        errorDescription = error,
+        leadingIcon = {
+            if (selectedName != null) Icon(painterResource(brewMethodIcon(selectedName)), null,
+                Modifier.padding(end = CpDimens.spacing2).size(24.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
+            else Icon(CpIcons.Coffee, null, Modifier.padding(end = CpDimens.spacing2).size(18.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
+        },
+    )
 }
 
 @Composable
@@ -424,3 +425,12 @@ private fun HomeDatePicker(initialMillis: Long, onDismiss: () -> Unit, onSelecte
         dismissButton = { TextButton(onClick = onDismiss) { Text("Отмена") } },
     ) { DatePicker(state = state, showModeToggle = false) }
 }
+
+@Composable
+private fun HomeMethodFieldPreview(darkTheme: Boolean) = CoffeePeekTheme(darkTheme = darkTheme) {
+    Surface { Column(Modifier.padding(16.dp)) {
+        HomeMethodField("v60", listOf(BrewMethodOption("v60", "V60"), BrewMethodOption("aeropress", "Аэропресс")), true, null, {})
+    } }
+}
+@Preview @Composable private fun HomeMethodFieldLightPreview() = HomeMethodFieldPreview(false)
+@Preview @Composable private fun HomeMethodFieldDarkPreview() = HomeMethodFieldPreview(true)

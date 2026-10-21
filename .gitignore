@@ -21,3 +21,9 @@ iosApp/Configuration/Local.xcconfig
 iosXtool/CoffeePeek/.build/
 __pycache__/
 *.pyc
+
+# Swift Package Manager import cache created by Gradle iOS builds
+.swiftpm-locks/
+# Firebase app configuration is supplied locally or by CI.
+**/google-services.json
+**/GoogleService-Info.plist

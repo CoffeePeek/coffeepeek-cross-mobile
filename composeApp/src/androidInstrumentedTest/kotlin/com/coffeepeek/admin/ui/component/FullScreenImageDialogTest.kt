@@ -52,6 +52,7 @@ import io.kamel.image.config.LocalKamelConfig
 import io.ktor.http.Url
 import io.ktor.utils.io.ByteReadChannel
 import com.coffeepeek.admin.utils.CustomUrl
+import com.coffeepeek.admin.utils.CpImage
 import com.coffeepeek.admin.utils.image.PhotoPermission
 import com.coffeepeek.admin.utils.image.ProtectedPhotoSession
 import com.coffeepeek.admin.utils.image.SystemPhotoCacheClock
@@ -60,7 +61,10 @@ import java.io.File
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
 import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.flow.flow
+import kotlinx.io.readByteArray
+import io.ktor.utils.io.readRemaining
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNotSame
@@ -177,6 +181,7 @@ class FullScreenImageDialogTest {
             compose.waitForIdle()
             assertEquals(android.graphics.Color.BLUE, viewerCenterColor())
             compose.waitUntil(20_000) { loader.requested.size == 2 }
+            compose.waitUntil(20_000) { viewerCenterColor() != android.graphics.Color.BLUE }
             compose.waitForIdle()
             assertTrue("An expired protected painter must not survive pending reauthorization",
                 viewerCenterColor() != android.graphics.Color.BLUE)
@@ -198,43 +203,46 @@ class FullScreenImageDialogTest {
     }
 
     @Test
-    fun fullScreenUsesReadyDetailVariantsWithoutTransferringTheirOriginals() {
+    fun fullScreenLoadsOnlyTheSelectedOriginalAlongsideAdjacentPreviews() {
         val loader = FixtureImages(pending = false)
         val originals = List(5) { "https://viewer-fixture.invalid/api/v1/check-ins/visit/photos/quality-$it" }
         val previews = originals.map { "$it/variants/source/1/detail.png" }
         withViewer(loader, previews, initialIndex = 2) {
             compose.onNodeWithText(OPEN).performClick()
-            val openingRequests = previews.subList(1, 4).toSet()
+            val openingRequests = previews.subList(1, 4).toSet() + originals[2]
             compose.waitUntil(10_000) { loader.requested.containsAll(openingRequests) && loader.active.get() == 0 }
             compose.onNodeWithText("Открыть оригинал").assertDoesNotExist()
             assertEquals(openingRequests, loader.requested.toSet())
 
             compose.onNodeWithContentDescription("Фото 3 из 5").performTouchInput { swipeLeft() }
-            compose.waitUntil(10_000) { previews[4] in loader.requested }
+            compose.waitUntil(10_000) { previews[4] in loader.requested && originals[3] in loader.requested }
             compose.onNodeWithText("4 / 5").assertIsDisplayed()
-            assertTrue("Ready detail variants must avoid every no-store original transfer",
-                loader.requested.none { it in originals })
+            assertEquals("Only selected photos may request originals", originals.subList(2, 4).toSet(),
+                loader.requested.filter { it in originals }.toSet())
         }
     }
 
     @Test
-    fun readyDetailVariantIsReusedWhenTheViewerIsReopened() {
+    fun readyPreviewIsReusedWhenTheViewerIsReopenedWhileOriginalIsPending() {
         val original = "https://viewer-fixture.invalid/api/v1/check-ins/visit/photos/reopened-detail"
         val preview = "$original/variants/source/1/detail.png"
-        val loader = FixtureImages(pending = false, grantMillis = 60_000, reusablePermissions = true)
+        val loader = FixtureImages(pending = false, grantMillis = 60_000, reusablePermissions = true,
+            heldUrls = setOf(original))
         withViewer(loader, listOf(preview)) {
             compose.onNodeWithText(OPEN).performClick()
             compose.waitUntil(10_000) { isBluePreview(viewerCenterColor()) }
             compose.waitForIdle()
             compose.onNodeWithText("Открыть оригинал").assertDoesNotExist()
-            assertEquals(listOf(preview), loader.requested.toList())
+            compose.waitUntil(10_000) { original in loader.requested }
+            assertEquals(setOf(preview, original), loader.requested.toSet())
 
             compose.onNodeWithContentDescription(CLOSE).performClick()
             compose.onNodeWithContentDescription(CLOSE).assertDoesNotExist()
             compose.onNodeWithText(OPEN).performClick()
             compose.waitUntil(10_000) { isBluePreview(viewerCenterColor()) }
             compose.waitForIdle()
-            assertEquals("Reopening must reuse the granted decoded detail variant", listOf(preview), loader.requested.toList())
+            compose.waitUntil(10_000) { loader.requested.count { it == original } == 2 }
+            assertEquals("Reopening must reuse the granted decoded preview", 1, loader.requested.count { it == preview })
         }
     }
 
@@ -248,13 +256,49 @@ class FullScreenImageDialogTest {
             compose.onNodeWithText(OPEN).performClick()
             compose.waitUntil(10_000) { loader.requested.isNotEmpty() && loader.active.get() == 0 }
             compose.waitForIdle()
-            assertEquals("A pending neighbor must not prefetch its original", listOf(previews[0]), loader.requested.toList())
+            assertEquals("A pending neighbor must not prefetch its original", setOf(previews[0], originals[0]), loader.requested.toSet())
 
             compose.onNodeWithContentDescription("Фото 1 из 3").performTouchInput { swipeLeft() }
             compose.waitUntil(10_000) { originals[1] in loader.requested }
             compose.onNodeWithText("2 / 3").assertIsDisplayed()
-            assertEquals(setOf(originals[1]), loader.requested.filter { it in originals }.toSet())
+            assertEquals(originals.take(2).toSet(), loader.requested.filter { it in originals }.toSet())
             compose.onNodeWithText("Открыть оригинал").assertDoesNotExist()
+        }
+    }
+
+    @Test
+    fun openingReusesTheDisplayedPreviewUntilTheOriginalFinishes() {
+        val original = "https://viewer-fixture.invalid/api/v1/check-ins/visit/photos/progressive"
+        val preview = "$original/variants/source/1/thumb.png"
+        val loader = FixtureImages(pending = false, grantMillis = 60_000, reusablePermissions = true,
+            heldUrls = setOf(original))
+        withViewer(loader, listOf(preview), warmPreview = true) {
+            compose.waitUntil(10_000) { loader.requested.size == 1 && loader.active.get() == 0 }
+            compose.waitForIdle()
+            compose.onNodeWithText(OPEN).performClick()
+            compose.waitUntil(10_000) { original in loader.requested }
+            compose.waitUntil(10_000) { isBluePreview(viewerCenterColor()) }
+            assertEquals("Opening must reuse the decoded thumbnail", 1, loader.requested.count { it == preview })
+
+            loader.release.complete(Unit)
+            compose.waitUntil(10_000) { android.graphics.Color.green(viewerCenterColor()) >= 250 }
+            assertEquals("The original should load once", 1, loader.requested.count { it == original })
+        }
+    }
+
+    @Test
+    fun failedOriginalLeavesTheCachedPreviewVisible() {
+        val original = "https://viewer-fixture.invalid/api/v1/check-ins/visit/photos/failed-original"
+        val preview = "$original/variants/source/1/thumb.png"
+        val loader = FixtureImages(pending = false, grantMillis = 60_000, reusablePermissions = true,
+            failingUrls = setOf(original))
+        withViewer(loader, listOf(preview), warmPreview = true) {
+            compose.waitUntil(10_000) { loader.requested.size == 1 && loader.active.get() == 0 }
+            compose.waitForIdle()
+            compose.onNodeWithText(OPEN).performClick()
+            compose.waitUntil(10_000) { original in loader.requested && loader.active.get() == 0 }
+            compose.waitUntil(10_000) { isBluePreview(viewerCenterColor()) }
+            assertEquals(1, loader.requested.count { it == preview })
         }
     }
 
@@ -289,6 +333,7 @@ class FullScreenImageDialogTest {
         urls: List<String>,
         initialIndex: Int = 0,
         images: PhotoViewerImages = PhotoViewerImages(urls),
+        warmPreview: Boolean = false,
         block: (ViewerFixture) -> Unit,
     ) {
         val shown = mutableStateOf(false)
@@ -302,6 +347,8 @@ class FullScreenImageDialogTest {
                                 Column(Modifier.fillMaxSize().statusBarsPadding()) {
                                     Button(onClick = { shown.value = true }) { Text(OPEN) }
                                     Button(onClick = { fixture.clicks.incrementAndGet() }) { Text(PROBE) }
+                                    if (warmPreview && !shown.value) CpImage(images.previews.first(),
+                                        modifier = Modifier.fillMaxWidth().height(80.dp))
                                     val scroll = rememberScrollState()
                                     fixture.scroll.set(scroll)
                                     Column(Modifier.fillMaxWidth().weight(1f).testTag(SCROLL).verticalScroll(scroll)) {
@@ -343,11 +390,14 @@ class FullScreenImageDialogTest {
         private val pendingAfterFirst: Boolean = false,
         private val grantMillis: Long = 20_000,
         private val reusablePermissions: Boolean = false,
+        private val heldUrls: Set<String> = emptySet(),
+        private val failingUrls: Set<String> = emptySet(),
     ) {
         val requested = CopyOnWriteArrayList<String>()
         val inputs = CopyOnWriteArrayList<CustomUrl>()
         val active = AtomicInteger()
         val cancelled = AtomicInteger()
+        val release = CompletableDeferred<Unit>()
         val config = KamelConfig {
             // Fully local pipeline: no HTTP client, shared cache, or external fixture files.
             fetcher(object : Fetcher<CustomUrl> {
@@ -363,13 +413,19 @@ class FullScreenImageDialogTest {
                         if (waits) {
                             emit(Resource.Loading(0f))
                             awaitCancellation()
+                        } else if (data.url in failingUrls) {
+                            emit(Resource.Failure(IllegalStateException("Original unavailable"), source))
                         } else {
+                            if (data.url in heldUrls) {
+                                emit(Resource.Loading(0f))
+                                release.await()
+                            }
                             val permission = PhotoPermission(
                                 SystemPhotoCacheClock.monotonicMillis() + grantMillis,
                                 SystemPhotoCacheClock.wallMillis() + grantMillis,
                             )
                             data.displayPermission?.grant(permission, permission.takeIf { reusablePermissions })
-                            emit(Resource.Success(ByteReadChannel(byteArrayOf(1)), source))
+                            emit(Resource.Success(ByteReadChannel(byteArrayOf(if (data.url in heldUrls) 2 else 1)), source))
                         }
                     } finally {
                         active.decrementAndGet()
@@ -379,9 +435,11 @@ class FullScreenImageDialogTest {
             })
             decoder(object : Decoder<ImageBitmap> {
                 override val outputKClass = ImageBitmap::class
-                override suspend fun decode(channel: ByteReadChannel, resourceConfig: ResourceConfig): ImageBitmap =
-                    Bitmap.createBitmap(4, 4, Bitmap.Config.ARGB_8888)
-                        .apply { eraseColor(android.graphics.Color.BLUE) }.asImageBitmap()
+                override suspend fun decode(channel: ByteReadChannel, resourceConfig: ResourceConfig): ImageBitmap {
+                    val original = channel.readRemaining().readByteArray().single().toInt() == 2
+                    return Bitmap.createBitmap(4, 4, Bitmap.Config.ARGB_8888)
+                        .apply { eraseColor(if (original) android.graphics.Color.GREEN else android.graphics.Color.BLUE) }.asImageBitmap()
+                }
             })
         }
     }

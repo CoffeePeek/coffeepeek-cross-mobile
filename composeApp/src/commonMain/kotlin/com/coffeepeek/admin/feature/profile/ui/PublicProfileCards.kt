@@ -25,7 +25,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.coffeepeek.admin.feature.checkin.api.CheckInTimelineContent
 import com.coffeepeek.admin.feature.profile.domain.PublicProfileCheckIn
-import com.coffeepeek.admin.feature.profile.domain.PublicProfileStats
+import com.coffeepeek.feature.profile.domain.PublicProfileStats
 import com.coffeepeek.admin.theme.CpColor
 import com.coffeepeek.admin.ui.icons.CpIcons
 import com.coffeepeek.admin.utils.CpImage
@@ -146,7 +146,7 @@ internal fun PublicProfileStatsCard(stats: PublicProfileStats, onFollowersClick:
 internal fun PublicProfileCheckInCard(
     checkIn: PublicProfileCheckIn,
     onShopClick: () -> Unit,
-    onPhotoClick: (List<String>, Int) -> Unit,
+    onPhotoClick: (com.coffeepeek.admin.ui.component.PhotoViewerImages, Int) -> Unit,
     authorName: String = "",
     authorAvatarUrl: String? = null,
     isOwnProfile: Boolean = false,

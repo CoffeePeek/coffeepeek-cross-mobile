@@ -1,9 +1,7 @@
 package com.coffeepeek.admin.ui.screen.shop
 
 import com.coffeepeek.admin.feature.favorites.api.RoasterFavorites
-import com.coffeepeek.admin.feature.checkin.api.DrinkPhotoPreparation
-import com.coffeepeek.admin.feature.checkin.ui.DrinkPhotoPreparationController
-import com.coffeepeek.admin.feature.checkin.domain.DrinkPhotoExtractor
+import com.coffeepeek.admin.ui.Navigator
 import com.coffeepeek.admin.utils.PickedImage
 import com.coffeepeek.admin.utils.FavoriteSync
 import com.coffeepeek.domain.model.*
@@ -29,6 +27,92 @@ class ShopCheckInsTest {
             publicAddress = PublicAddress("coffee", "/shops/coffee", 1, false)),
         checkIns = listOf(publicVisit, ownVisit), userCheckIns = listOf(ownVisit, privateVisit),
     )
+
+    @Test
+    fun preparedFormOpeningDoesNotOpenLegacyDraftOrLoadDrinksTwice() = runBlocking {
+        val drafts = CheckInDraftStore()
+        val existing = drafts.open("another-shop").copy(note = "Unchanged legacy draft")
+        drafts.save(existing)
+        var drinkRequests = 0
+        val vm = viewModel(ShopTestCheckIns(), loggedIn = true, draftStore = drafts,
+            drinks = { drinkRequests++; Result.success(emptyList()) })
+        try {
+            withTimeout(5_000) { vm.uiState.first { it.details != null && !it.isLoading } }
+            vm.openCheckInSheet(prepareLegacyDraft = false)
+            val opened = withTimeout(5_000) { vm.uiState.first { it.showCheckInSheet } }
+            assertNull(opened.checkInDraft)
+            assertSame(existing, drafts.peek())
+            assertEquals(0, drinkRequests)
+            vm.dismissCheckInSheet()
+            assertFalse(vm.uiState.value.showCheckInSheet)
+        } finally { vm.close() }
+    }
+
+    @Test
+    fun acceptedPreparedCheckInRefreshesDetailsWithoutClearingDraftOrHidingConfirmation() = runBlocking {
+        val drafts = CheckInDraftStore()
+        val retained = drafts.open("coffee").copy(note = "Draft owned by feature")
+        drafts.save(retained)
+        var loads = 0
+        val vm = viewModel(ShopTestCheckIns(), loggedIn = true, draftStore = drafts,
+            detailsRequest = {
+                loads++
+                Result.success(details.copy(shop = details.shop.copy(reviewCount = loads)))
+            })
+        try {
+            withTimeout(5_000) { vm.uiState.first { it.details != null && !it.isLoading } }
+            vm.openCheckInSheet(prepareLegacyDraft = false)
+            withTimeout(5_000) { vm.uiState.first { it.showCheckInSheet } }
+            vm.refreshAfterCheckIn()
+            val refreshed = withTimeout(5_000) { vm.uiState.first { it.details?.shop?.reviewCount == 2 } }
+            assertTrue(refreshed.showCheckInSheet)
+            assertFalse(refreshed.isLoading)
+            assertSame(retained, drafts.peek())
+            assertEquals(2, loads)
+        } finally { vm.close() }
+    }
+
+    @Test
+    fun preparedFormStillRoutesGuestsToAuthWithoutOpeningDraftOrReadingDrinks() = runBlocking {
+        val drafts = CheckInDraftStore()
+        var drinkRequests = 0
+        val vm = viewModel(ShopTestCheckIns(), loggedIn = false, draftStore = drafts,
+            drinks = { drinkRequests++; Result.success(emptyList()) })
+        try {
+            withTimeout(5_000) { vm.uiState.first { it.details != null && !it.isLoading } }
+            val navigation = async(start = CoroutineStart.UNDISPATCHED) {
+                withTimeout(5_000) { Navigator.navigationEvents.first() }
+            }
+            vm.openCheckInSheet(prepareLegacyDraft = false)
+            assertEquals(Navigator.NavEvent.NavigateTo(Navigator.Screen.Auth), navigation.await())
+            assertFalse(vm.uiState.value.showCheckInSheet)
+            assertNull(drafts.peek())
+            assertEquals(0, drinkRequests)
+        } finally { vm.close() }
+    }
+
+    @Test
+    fun completedWriteRefreshCannotCommitDetailsAfterAccountReplacement() = runBlocking {
+        var session = Session("token", userId = "owner")
+        val rejectedCommit = CompletableDeferred<Unit>()
+        var loads = 0
+        val vm = viewModel(ShopTestCheckIns(), loggedIn = true,
+            sessionValue = {
+                session.also { if (it.userId == "other") rejectedCommit.complete(Unit) }
+            }, detailsRequest = {
+                if (++loads == 1) Result.success(details) else {
+                    session = Session("changed", userId = "other")
+                    Result.success(details.copy(shop = details.shop.copy(title = "Stale response")))
+                }
+            })
+        try {
+            withTimeout(5_000) { vm.uiState.first { it.details != null && !it.isLoading } }
+            vm.refreshAfterCheckIn()
+            withTimeout(5_000) { rejectedCommit.await() }
+            assertEquals(details.shop.title, vm.uiState.value.details!!.shop.title)
+            assertFalse(vm.uiState.value.isLoading)
+        } finally { vm.close() }
+    }
 
     @Test
     fun removesFavoriteByCanonicalPublicSlugWhenDetailWasOpenedThroughAnAlias() = runBlocking {
@@ -73,7 +157,6 @@ class ShopCheckInsTest {
             assertTrue(loadedDetails.reviews.isEmpty())
             assertEquals(details.checkIns, loadedDetails.checkIns)
             assertEquals(23, loadedDetails.shop.reviewCount)
-            vm.toggleHelpful("own")
             vm.toggleHelpful("unknown")
             assertNull(vm.uiState.value.helpfulId)
             assertTrue(started.tryReceive().isFailure)
@@ -92,6 +175,32 @@ class ShopCheckInsTest {
     }
 
     @Test
+    fun ownPublishedCheckInCanBeLikedAndUnlikedWithoutChangingOtherCards() = runBlocking {
+        val requests = Channel<Pair<String, Boolean>>(Channel.UNLIMITED)
+        val repo = ShopTestCheckIns().apply {
+            helpful = { id, helpful ->
+                requests.send(id to helpful)
+                Result.success(CheckInHelpfulVote(helpful, if (helpful) 8 else 3))
+            }
+        }
+        val vm = viewModel(repo, loggedIn = true)
+        try {
+            val loaded = withTimeout(5_000) { vm.uiState.first { it.details != null && !it.isLoading } }
+            assertTrue(loaded.details!!.ownsCheckIn(ownVisit, loaded.currentUserId))
+            vm.toggleHelpful(ownVisit.id)
+            assertEquals(ownVisit.id to true, withTimeout(5_000) { requests.receive() })
+            val liked = withTimeout(5_000) { vm.uiState.first { it.helpfulId == null && it.details!!.checkIns.last().isHelpfulByCurrentUser } }
+            assertEquals(8, liked.details!!.checkIns.last().helpfulCount)
+            vm.toggleHelpful(ownVisit.id)
+            assertEquals(ownVisit.id to false, withTimeout(5_000) { requests.receive() })
+            val unliked = withTimeout(5_000) { vm.uiState.first { it.helpfulId == null && !it.details!!.checkIns.last().isHelpfulByCurrentUser } }
+            assertEquals(3, unliked.details!!.checkIns.last().helpfulCount)
+            assertEquals(listOf("public", "own"), unliked.details!!.checkIns.map { it.id })
+            assertEquals(publicVisit, unliked.details!!.checkIns.first())
+        } finally { vm.close(); requests.close() }
+    }
+
+    @Test
     fun guestKeepsPublicCheckInsAndDoesNotReceivePersonalHistory() = runBlocking {
         val vm = viewModel(ShopTestCheckIns(), loggedIn = false)
         try {
@@ -106,6 +215,7 @@ class ShopCheckInsTest {
     @Test
     fun submissionBlocksDuplicateAndDismissAndKeepsSuccessVisibleUntilAcknowledged() = runBlocking {
         for (visibility in CheckInVisibility.entries) {
+            val created = Channel<Unit>(Channel.UNLIMITED)
             val started = Channel<CreateCheckInInput>(Channel.UNLIMITED)
             val release = CompletableDeferred<Unit>()
             val visitTime = kotlin.time.Instant.parse("2026-10-14T18:42:17.123Z")
@@ -115,7 +225,7 @@ class ShopCheckInsTest {
                 release.await()
                 Result.success(Unit)
             } }
-            val vm = viewModel(repo, loggedIn = true, draftStore = store)
+            val vm = viewModel(repo, loggedIn = true, draftStore = store, onCheckInCreated = { created.trySend(Unit) })
             try {
                 withTimeout(5_000) { vm.uiState.first { it.details != null && !it.isLoading } }
                 vm.openCheckInSheet()
@@ -136,7 +246,9 @@ class ShopCheckInsTest {
                 assertTrue(vm.uiState.value.showCheckInSheet)
                 assertEquals(draft, vm.uiState.value.checkInDraft)
                 assertTrue(started.tryReceive().isFailure)
+                assertTrue(created.tryReceive().isFailure)
                 release.complete(Unit)
+                withTimeout(5_000) { created.receive() }
                 val success = withTimeout(5_000) { vm.uiState.first { it.submittedCheckInVisibility != null } }
                 assertFalse(success.isCheckInLoading)
                 assertTrue(success.showCheckInSheet)
@@ -144,23 +256,25 @@ class ShopCheckInsTest {
                 assertEquals("", store.open("coffee").note)
                 vm.checkIn(draft)
                 assertTrue(started.tryReceive().isFailure)
+                assertTrue(created.tryReceive().isFailure)
                 vm.dismissCheckInSheet()
                 assertFalse(vm.uiState.value.showCheckInSheet)
                 assertNull(vm.uiState.value.submittedCheckInVisibility)
                 assertNull(vm.uiState.value.checkInDraft)
-            } finally { release.complete(Unit); vm.close() }
+            } finally { release.complete(Unit); vm.close(); created.close() }
         }
     }
 
     @Test
     fun failedSubmissionKeepsDraftAndCanRetry() = runBlocking {
+        val created = Channel<Unit>(Channel.UNLIMITED)
         val store = CheckInDraftStore()
         var attempts = 0
         val repo = ShopTestCheckIns().apply { create = { input ->
             assertEquals(ReviewRating(place = 5, service = 3, coffee = 2), input.rating)
             if (++attempts == 1) Result.failure(IllegalStateException("Нет сети")) else Result.success(Unit)
         } }
-        val vm = viewModel(repo, loggedIn = true, draftStore = store)
+        val vm = viewModel(repo, loggedIn = true, draftStore = store, onCheckInCreated = { created.trySend(Unit) })
         try {
             withTimeout(5_000) { vm.uiState.first { it.details != null && !it.isLoading } }
             vm.openCheckInSheet()
@@ -169,7 +283,6 @@ class ShopCheckInsTest {
                 placeRating = 5, serviceRating = 3, coffeeRating = 2,
                 photos = listOf(PickedImage(byteArrayOf(1, 2, 3), "coffee.jpg")))
             vm.updateCheckInDraft(draft)
-            withTimeout(5_000) { vm.uiState.first { !it.drinkPhotoState.processing } }
             vm.checkIn(draft)
             val failed = withTimeout(5_000) { vm.uiState.first { it.checkInError != null && !it.isCheckInLoading } }
             assertEquals("Нет сети", failed.checkInError)
@@ -177,11 +290,13 @@ class ShopCheckInsTest {
             assertEquals(draft, store.open("coffee"))
             assertTrue(failed.showCheckInSheet)
             assertNull(failed.submittedCheckInVisibility)
+            assertTrue(created.tryReceive().isFailure)
             vm.checkIn(draft)
+            withTimeout(5_000) { created.receive() }
             val success = withTimeout(5_000) { vm.uiState.first { it.submittedCheckInVisibility != null } }
             assertNull(success.checkInError)
             assertEquals(2, attempts)
-        } finally { vm.close() }
+        } finally { vm.close(); created.close() }
     }
 
     @Test
@@ -228,7 +343,6 @@ class ShopCheckInsTest {
                     val opened = withTimeout(5_000) { vm.uiState.first { it.showCheckInSheet } }
                     val draft = opened.checkInDraft!!.copy(note = "Сохранить", photos = listOf(PickedImage(byteArrayOf(1), "coffee.jpg")))
                     vm.updateCheckInDraft(draft)
-                    withTimeout(5_000) { vm.uiState.first { !it.drinkPhotoState.processing } }
                     vm.checkIn(draft)
                     val failed = withTimeout(5_000) { vm.uiState.first { !it.isCheckInLoading && it.checkInError != null } }
                     assertTrue(failed.checkInError!!.isNotBlank())
@@ -300,7 +414,7 @@ class ShopCheckInsTest {
     }
 
     @Test
-    fun submitsOriginalPhotosWithoutASeparateDrinkCutout() = runBlocking {
+    fun submitsOriginalPhotosAfterReopeningDraft() = runBlocking {
         val original = PickedImage(byteArrayOf(1, 2, 3), "coffee.jpg")
         val submitted = CompletableDeferred<CreateCheckInInput>()
         val store = CheckInDraftStore()
@@ -313,7 +427,6 @@ class ShopCheckInsTest {
             vm.openCheckInSheet()
             val draft = withTimeout(5_000) { vm.uiState.first { it.showCheckInSheet } }.checkInDraft!!
             vm.updateCheckInDraft(draft.copy(photos = listOf(original)))
-            vm.skipDrinkPhoto()
             vm.dismissCheckInSheet()
             vm.openCheckInSheet()
             val reopened = withTimeout(5_000) { vm.uiState.first { it.showCheckInSheet } }.checkInDraft!!
@@ -322,47 +435,22 @@ class ShopCheckInsTest {
             val input = withTimeout(5_000) { submitted.await() }
             assertEquals(listOf("coffee.jpg"), input.photos.map { it.fileName })
             assertContentEquals(original.bytes, input.photos.single().bytes)
-            assertNull(input.drinkPhoto)
         } finally { vm.close() }
-    }
-
-    @Test
-    fun nativeProcessingBlocksSubmitAndSendsTheSelectedCutoutSeparatelyFromOriginals() = runBlocking {
-        val original = PickedImage(byteArrayOf(1, 2, 3), "coffee.jpg")
-        val cutout = PendingPhotoUpload("cup.png", "image/png", byteArrayOf(4, 5))
-        val release = CompletableDeferred<Unit>()
-        val submitted = Channel<CreateCheckInInput>(Channel.UNLIMITED)
-        val vm = viewModel(ShopTestCheckIns().apply { create = { input ->
-            submitted.send(input); Result.success(Unit)
-        } }, loggedIn = true, extract = DrinkPhotoExtractor { release.await(); listOf(cutout) })
-        try {
-            withTimeout(5_000) { vm.uiState.first { it.details != null && !it.isLoading } }
-            vm.openCheckInSheet()
-            val draft = withTimeout(5_000) { vm.uiState.first { it.showCheckInSheet } }.checkInDraft!!.copy(photos = listOf(original))
-            vm.updateCheckInDraft(draft)
-            assertTrue(vm.uiState.value.drinkPhotoState.processing)
-            vm.checkIn(draft)
-            assertTrue(submitted.tryReceive().isFailure)
-            release.complete(Unit)
-            withTimeout(5_000) { vm.uiState.first { it.drinkPhotoState.selected == cutout } }
-            vm.checkIn(draft)
-            val input = withTimeout(5_000) { submitted.receive() }
-            assertEquals(cutout, input.drinkPhoto)
-            assertEquals(listOf("coffee.jpg"), input.photos.map { it.fileName })
-            assertContentEquals(original.bytes, input.photos.single().bytes)
-        } finally { release.complete(Unit); vm.close() }
     }
 
     private fun viewModel(
         checkIns: CheckInRepository, loggedIn: Boolean, draftStore: CheckInDraftStore = CheckInDraftStore(),
         shopDetails: CoffeeShopDetails = details, sessionActive: () -> Boolean = { loggedIn },
         drinks: suspend () -> Result<List<ConsumedDrinkOption>> = { Result.success(emptyList()) },
-        extract: DrinkPhotoExtractor = DrinkPhotoExtractor { emptyList() },
+        detailsRequest: suspend () -> Result<CoffeeShopDetails> = { Result.success(shopDetails) },
+        sessionValue: () -> Session? = { if (loggedIn) Session("token", userId = "owner") else null },
         routeId: String = "coffee",
         onRemoveFavorite: suspend (String) -> Result<Unit> = { error("unused") },
+        onCheckInCreated: () -> Unit = {},
     ): ShopDetailViewModel = ShopDetailViewModel(
-        routeId, object : ShopRepository {
-            override suspend fun getShopDetails(id: String) = Result.success(shopDetails)
+        shopId = routeId,
+        shopRepository = object : ShopRepository {
+            override suspend fun getShopDetails(id: String) = detailsRequest()
             override suspend fun searchShops(filters: ShopFilters): Result<PagedResult<CoffeeShop>> = error("unused")
             override suspend fun getMapContent(bounds: MapBounds, zoom: Float, filters: ShopFilters): Result<MapContent> = error("unused")
             override suspend fun getCatalogs(): Result<ShopCatalogs> = error("unused")
@@ -370,25 +458,26 @@ class ShopCheckInsTest {
             override suspend fun getMenuDrinks(): Result<List<CoffeeDrinkDefinition>> = error("unused")
             override suspend fun createShop(input: CreateShopInput): Result<Unit> = error("unused")
             override suspend fun getMyShopSubmissions(status: ModerationStatus, page: Int, pageSize: Int): Result<PagedResult<ShopSubmission>> = error("unused")
-        }, object : FavoriteRepository {
+        }, favoriteRepository = object : FavoriteRepository {
             override suspend fun getFavoriteIds(): Set<String> = error("unused")
             override suspend fun isFavorite(shopId: String): Boolean = error("unused")
             override suspend fun getFavorites(): Result<List<CoffeeShopDetails>> = error("unused")
             override suspend fun addFavorite(shop: CoffeeShop, address: String?): Result<Unit> = error("unused")
             override suspend fun removeFavorite(shopId: String): Result<Unit> = onRemoveFavorite(shopId)
             override suspend fun clearAll() = Unit
-        }, checkIns, object : SessionRepository {
-            private val session = if (loggedIn) Session("token") else null
-            override fun peekSession() = session
+        }, checkInRepository = checkIns,
+        sessionRepository = object : SessionRepository {
+            override fun peekSession() = sessionValue()
             override fun applySession(session: Session?) = Unit
             override fun isActiveSession(session: Session?) = session != null
-            override suspend fun getSession() = session
+            override suspend fun getSession() = sessionValue()
             override suspend fun persistSession(session: Session?) = Unit
             override suspend fun saveSession(session: Session?) = Unit
             override suspend fun warmCache() = Unit
-            override fun observeSession() = flowOf(session)
+            override fun observeSession() = flowOf(sessionValue())
             override suspend fun isLoggedIn() = sessionActive()
-        }, draftStore, object : UserRepository {
+        }, checkInDraftStore = draftStore,
+        userRepository = object : UserRepository {
             override fun observeProfile() = MutableStateFlow<UserProfile?>(null)
             override suspend fun getMe(): Result<UserProfile> = Result.failure(IllegalStateException("No public author address"))
             override suspend fun refreshProfile(): Result<UserProfile> = error("unused")
@@ -398,11 +487,11 @@ class ShopCheckInsTest {
             override suspend fun updateUsername(username: String): Result<Unit> = error("unused")
             override suspend fun updateAbout(about: String): Result<Unit> = error("unused")
             override suspend fun updateAvatar(photo: PendingPhotoUpload): Result<Unit> = error("unused")
-        }, object : RoasterFavorites {
+        }, roasterFavorites = object : RoasterFavorites {
             override fun observeFavorites() = flowOf(emptyList<CatalogItem>())
             override suspend fun setFavorite(roaster: CatalogItem, isFavorite: Boolean): Result<Unit> = error("unused")
         },
-        DrinkPhotoPreparation.Factory { scope, changed -> DrinkPhotoPreparationController(scope, extract, changed) },
+        onCheckInCreated = onCheckInCreated,
     )
 }
 

@@ -20,12 +20,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.Dp
 import com.coffeepeek.admin.di.platformViewModel
 import com.coffeepeek.admin.feature.favorites.api.FavoritesPreviewCarousel
-import com.coffeepeek.admin.feature.profile.domain.PublicFavoriteKind
-import com.coffeepeek.admin.feature.profile.domain.PublicProfileFavorite
-import com.coffeepeek.admin.feature.profile.domain.PublicProfileConnectionKind
+import com.coffeepeek.feature.profile.domain.PublicFavoriteKind
+import com.coffeepeek.feature.profile.domain.PublicProfileFavorite
+import com.coffeepeek.feature.profile.domain.PublicProfileConnectionKind
 import com.coffeepeek.admin.theme.CpColor
 import com.coffeepeek.admin.ui.component.CoffeePeekLoader
 import com.coffeepeek.admin.ui.component.FullScreenImageDialog
+import com.coffeepeek.admin.ui.component.PhotoViewerImages
 import com.coffeepeek.admin.ui.component.GlassControlIcon
 import com.coffeepeek.admin.ui.component.PlatformGlassIconButton
 import com.coffeepeek.admin.ui.component.SwipeDismissModalBottomSheet
@@ -38,7 +39,7 @@ private enum class ProfileSection(val title: String) {
     Favorites("Избранное"), CheckIns("Чекины"), Activity("Активность"),
 }
 
-private data class ProfilePhotos(val urls: List<String>, val index: Int = 0)
+private data class ProfilePhotos(val images: PhotoViewerImages, val index: Int = 0)
 
 @Composable
 internal fun OtherUserProfileScreen(
@@ -131,10 +132,10 @@ internal fun UserProfileScreen(
                     modifier = Modifier.align(Alignment.CenterStart),
                 ) { Icon(CpIcons.ChevronLeft, contentDescription = null, modifier = Modifier.size(23.dp)) }
                 Text(
-                    "Профиль", Modifier.fillMaxWidth().padding(horizontal = 56.dp),
+                    "Профиль", Modifier.fillMaxWidth().padding(start = if (onBack == null) 0.dp else 56.dp, end = 56.dp),
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.SemiBold,
-                    textAlign = TextAlign.Center,
+                    textAlign = if (onBack == null) TextAlign.Start else TextAlign.Center,
                 )
                 if (!viewingOwnProfile && profile != null) {
                     val author = com.coffeepeek.feature.authorblocking.api.AuthorReference(profile.authorId, profile.slug, profile.nickname, profile.avatarUrl)
@@ -171,7 +172,7 @@ internal fun UserProfileScreen(
                             nickname = nickname?.takeIf(String::isNotBlank) ?: slug,
                             avatarUrl = avatarUrl.takeUnless { authorVisibility.hides(null, slug) },
                             about = null,
-                            onAvatarClick = { if (!authorVisibility.hides(null, slug)) avatarUrl?.let { photos = ProfilePhotos(listOf(it)) } },
+                            onAvatarClick = { if (!authorVisibility.hides(null, slug)) avatarUrl?.let { photos = ProfilePhotos(PhotoViewerImages(listOf(it))) } },
                         )
                         Box(Modifier.fillMaxWidth().height(160.dp), contentAlignment = Alignment.Center) { CoffeePeekLoader() }
                     } else Column(
@@ -211,7 +212,7 @@ internal fun UserProfileScreen(
                         onFollow = if (viewingOwnProfile) null else vm::toggleFollow,
                         onEditProfile = onEditProfile,
                     ) {
-                        profile.avatarUrl?.let { photos = ProfilePhotos(listOf(it)) }
+                        profile.avatarUrl?.let { photos = ProfilePhotos(PhotoViewerImages(listOf(it))) }
                     }
                     PublicProfileStatsCard(profile.stats, onFollowersClick = {
                         section = null
@@ -276,7 +277,7 @@ internal fun UserProfileScreen(
                         when {
                             state.isLoadingActivity -> ProfileSectionLoader()
                             state.activityError != null -> InlineProfileError("Не удалось загрузить активность", vm::retryActivity)
-                            profile.activity != null -> PublicProfileActivityCard(profile.activity, onClick = { section = ProfileSection.Activity })
+                            profile.activity != null -> PublicProfileActivityCard(profile.activity!!, onClick = { section = ProfileSection.Activity })
                             else -> ProfileSectionLoader()
                         }
                     }
@@ -366,7 +367,7 @@ internal fun UserProfileScreen(
             onUserClick(user.slug, user.userName, user.avatarUrl)
         },
     )
-    photos?.let { FullScreenImageDialog(imageUrls = it.urls, initialIndex = it.index, onDismiss = { photos = null }) }
+    photos?.let { FullScreenImageDialog(images = it.images, initialIndex = it.index, onDismiss = { photos = null }) }
 }
 
 @Composable

@@ -1,5 +1,6 @@
 package com.coffeepeek.api.service
 
+import com.coffeepeek.api.utils.requestResult
 import com.coffeepeek.api.model.ApiResponse
 import com.coffeepeek.api.model.request.CreateRoasterSubmissionReq
 import com.coffeepeek.api.model.request.ModerationStatusDto
@@ -21,7 +22,7 @@ import io.ktor.http.isSuccess
 
 class RoasterApiService(private val client: HttpClient) {
 
-    suspend fun getRoasters(): Result<List<RoasterSummaryDto>> = runCatching {
+    suspend fun getRoasters(): Result<List<RoasterSummaryDto>> = requestResult {
         val response = client.get("/api/roasters")
         val apiResponse = response.body<ApiResponse<List<RoasterSummaryDto>>>()
         if (!response.status.isSuccess() || !apiResponse.isSuccess || apiResponse.data == null) {
@@ -30,7 +31,7 @@ class RoasterApiService(private val client: HttpClient) {
         apiResponse.data
     }
 
-    suspend fun getRoaster(id: String): Result<RoasterDetailsDto> = runCatching {
+    suspend fun getRoaster(id: String): Result<RoasterDetailsDto> = requestResult {
         val response = client.get("/api/roasters/$id")
         val apiResponse = response.body<ApiResponse<RoasterDetailsDto>>()
         if (!response.status.isSuccess() || !apiResponse.isSuccess || apiResponse.data == null) {
@@ -41,7 +42,7 @@ class RoasterApiService(private val client: HttpClient) {
 
     suspend fun submitRoaster(
         request: CreateRoasterSubmissionReq,
-    ): Result<RoasterSubmissionApiResult> = runCatching {
+    ): Result<RoasterSubmissionApiResult> = requestResult {
         val response = client.post("/api/ModerationRoasters") {
             contentType(ContentType.Application.Json)
             setBody(request)
@@ -57,7 +58,7 @@ class RoasterApiService(private val client: HttpClient) {
         status: ModerationStatusDto,
         page: Int,
         pageSize: Int,
-    ): Result<MyModerationRoastersPageDto> = runCatching {
+    ): Result<MyModerationRoastersPageDto> = requestResult {
         val response = client.get("/api/ModerationRoasters/mine") {
             parameter("page", page)
             parameter("pageSize", pageSize)

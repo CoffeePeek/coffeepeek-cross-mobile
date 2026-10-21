@@ -6,6 +6,23 @@ import kotlin.test.assertNull
 
 class NativeTabRoutesTest {
     @Test
+    fun guestTabsExcludeProfileButPreserveSettingsIdentity() {
+        assertEquals(
+            listOf(Navigator.Screen.FeedTab, Navigator.Screen.CoffeeTab, Navigator.Screen.CommunityTab, Navigator.Screen.SettingsTab),
+            mainTabScreens(isLoggedIn = false),
+        )
+        assertEquals(4, nativeTabIndex(mainTabScreens(isLoggedIn = false).last()))
+    }
+
+    @Test
+    fun authenticatedTabsRestoreProfileWithoutChangingOtherTabIdentities() {
+        val authenticated = mainTabScreens(isLoggedIn = true)
+        assertEquals(5, authenticated.size)
+        assertEquals(Navigator.Screen.ProfileTab, authenticated[3])
+        assertEquals(mainTabScreens(isLoggedIn = false), authenticated.filterNot { it == Navigator.Screen.ProfileTab })
+    }
+
+    @Test
     fun homeAndFallbackLinksSelectDiscoveryInsteadOfPushingAnotherMainScreen() {
         listOf("https://coffeepeek.by/", "https://coffeepeek.by/coffee-shops/invalid/extra").forEach { url ->
             assertEquals(0, nativeTabIndex(requireNotNull(appLinkScreen(url))))

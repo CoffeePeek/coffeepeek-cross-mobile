@@ -44,7 +44,32 @@ with in-flight refresh (for example cancel session work before logout).
 Migration: adapt legacy token storage and refresh service to `BearerSession` only
 at the explicit integration stage, wire the engine and client lifecycle in app
 composition, then switch consumers and remove the old client when unused.
-Current legacy configuration, DI and consumers are not modified. Remaining work:
-cache storage policies and safe diagnostic logging. Tests use MockEngine and cover
+Current legacy configuration, DI and consumers are not modified. Tests use MockEngine and cover
 refresh retry bounds, parallel 401 responses, failures, cancellation, token cache
 invalidation, absent credentials and foreign-origin redirects.
+
+## Opt-in cache and safe diagnostics
+
+`configurePublicHttpCache(storage)` prepares Ktor HTTP caching for anonymous
+clients. Storage is explicit, not a hidden global/unbounded cache. Common code
+does not choose a filesystem path or Android context. The caller owns capacity,
+cleanup and lifecycle; create dedicated storage rather than reusing legacy caches.
+Shared-client mode and disabled private storage prevent private response caching.
+Requests with Authorization/Cookie are rejected, including cache hits. Responses
+setting cookies or varying on session headers are not stored/reused. HTTP
+Cache-Control, expiry and ETag revalidation remain Ktor responsibilities.
+Use only for public endpoints: the server must still label sensitive responses
+correctly. Authenticated/upload clients do not automatically install this cache.
+
+`configureNetworkDiagnostics(observer)` emits only a fixed method enum, outcome
+and numeric HTTP status when available. There is intentionally no URL, path,
+query, header, body, timestamp identifier or exception text. This is not a cURL
+logger. Composition chooses a debug/platform sink; no observer is installed by
+default. Ordinary observer failures do not fail requests; transport exceptions
+and cancellation remain unchanged. Events represent send-hook activity, not an
+exact engine-call count: retries, redirects and cache hits depend on Ktor hooks.
+Authenticated clients accept an optional diagnostics observer but no cache option.
+
+Existing FileStorage and cURL logging remain untouched in legacy modules until
+integration. Contract tests cover cache hits, private/no-store responses, cookie
+exclusion, credential rejection, conditional revalidation and diagnostic privacy.

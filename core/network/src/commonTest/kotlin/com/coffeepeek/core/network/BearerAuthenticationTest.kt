@@ -27,11 +27,41 @@ class BearerAuthenticationTest {
         var saves = 0
         override suspend fun load() = tokens
         override suspend fun save(tokens: SessionTokens?) { this.tokens = tokens; saves++ }
+        override suspend fun replace(expected: SessionTokens, tokens: SessionTokens?): Boolean {
+            if (this.tokens !== expected) return false
+            save(tokens)
+            return true
+        }
         override suspend fun refresh(refreshToken: String): Result<SessionTokens> {
             assertEquals("refresh", refreshToken)
             refreshes++
             return refreshBlock()
         }
+    }
+
+    @Test fun temporaryRefreshFailurePreservesCredentials() = runBlocking {
+        val failure = IllegalStateException("offline")
+        val session = Session(refreshBlock = { Result.failure(failure) })
+        val original = session.tokens
+        val engine = MockEngine { respond("", HttpStatusCode.Unauthorized) }
+        val client = HttpClientFactory(engine).authenticatedApi("https://api.example.com", session)
+        try {
+            assertTrue(requestResult { client.get("/items") }.isFailure)
+            assertSame(original, session.tokens)
+            assertEquals(0, session.saves)
+        } finally { client.close(); engine.close() }
+    }
+
+    @Test fun logoutDuringRefreshCannotRestoreCredentials() = runBlocking {
+        lateinit var session: Session
+        session = Session(refreshBlock = { session.tokens = null; Result.success(SessionTokens("new", "next")) })
+        val engine = MockEngine { respond("", HttpStatusCode.Unauthorized) }
+        val client = HttpClientFactory(engine).authenticatedApi("https://api.example.com", session)
+        try {
+            assertTrue(requestResult { client.get("/items") }.isFailure)
+            assertEquals(null, session.tokens)
+            assertEquals(0, session.saves)
+        } finally { client.close(); engine.close() }
     }
 
     @Test
@@ -70,7 +100,7 @@ class BearerAuthenticationTest {
 
     @Test
     fun failedRefreshClearsSessionWithoutRetry(): Unit = runBlocking {
-        val session = Session(refreshBlock = { Result.failure(IllegalStateException("failed")) })
+        val session = Session(refreshBlock = { Result.failure(RefreshRejectedException()) })
         var requests = 0
         val engine = MockEngine { requests++; respond("", HttpStatusCode.Unauthorized) }
         val client = HttpClientFactory(engine).authenticatedApi("https://api.example.com", session)

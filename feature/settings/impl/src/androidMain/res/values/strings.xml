@@ -1,0 +1,59 @@
+<resources>
+    <!-- Russian only, copied verbatim from the production settings screens; the city error texts are new. -->
+    <string name="settings_back">Назад</string>
+    <string name="settings_loading">Загрузка</string>
+    <string name="settings_retry">Повторить</string>
+    <string name="settings_selected">Выбрано</string>
+
+    <string name="settings_theme_title">Тема</string>
+    <string name="settings_theme_heading">Внешний вид</string>
+    <string name="settings_theme_description">Выберите, как CoffeePeek будет выглядеть на вашем устройстве.</string>
+    <string name="settings_theme_system">Системная</string>
+    <string name="settings_theme_light">Светлая</string>
+    <string name="settings_theme_dark">Тёмная</string>
+
+    <string name="settings_city_title">Город</string>
+    <string name="settings_city_heading">Ваш город</string>
+    <string name="settings_city_description">Определяет, какие кофейни показывать в первую очередь.</string>
+    <string name="settings_city_error">Не удалось загрузить города</string>
+    <string name="settings_city_empty">Список городов пуст</string>
+
+    <string name="settings_policy_title">Политика использования</string>
+    <string name="settings_policy_section">КОНФИДЕНЦИАЛЬНОСТЬ</string>
+    <string name="settings_policy_analytics_title">Аналитика использования</string>
+    <string name="settings_policy_analytics_text">С вашего согласия события использования отправляются в PostHog (ЕС), чтобы улучшать CoffeePeek. Без текстов поиска, заметок, фото и точных координат.</string>
+    <string name="settings_policy_terms_title">Правила использования</string>
+    <string name="settings_policy_terms_description">Узнайте, как работает CoffeePeek.</string>
+    <string name="settings_policy_privacy_title">Политика конфиденциальности</string>
+    <string name="settings_policy_privacy_description">Как мы обрабатываем и защищаем ваши данные.</string>
+
+    <!-- Settings tab -->
+    <string name="settings_tab_title">Настройки</string>
+    <string name="settings_section_add">Добавить</string>
+    <string name="settings_add_shop">Добавить кофейню</string>
+    <string name="settings_add_shop_description">Предложить новое место для CoffeePeek</string>
+    <string name="settings_add_roaster">Добавить обжарщика</string>
+    <string name="settings_add_roaster_description">Помогите сообществу открыть новых обжарщиков</string>
+    <string name="settings_section_settings">Настройки</string>
+    <string name="settings_blocked_authors">Заблокированные авторы</string>
+    <string name="settings_blocked_authors_description">Управление блокировками</string>
+    <string name="settings_city_row">Город</string>
+    <string name="settings_city_row_description">Определяет, какие кофейни показывать в первую очередь</string>
+    <string name="settings_city_not_selected">Выберите</string>
+    <string name="settings_theme_row">Тема</string>
+    <string name="settings_theme_row_description">Настройте внешний вид приложения</string>
+    <string name="settings_theme_value_system">Авто</string>
+    <string name="settings_theme_value_light">Светлая</string>
+    <string name="settings_theme_value_dark">Тёмная</string>
+    <string name="settings_section_other">Другие настройки</string>
+    <string name="settings_section_other_description">Управление полезными дополнениями, оценки в App Store и настройки конфиденциальности</string>
+    <string name="settings_support">Связаться с поддержкой</string>
+    <string name="settings_support_description">Поможем с вопросами и проблемами</string>
+    <string name="settings_policy_row">Политика использования</string>
+    <string name="settings_share">Поделиться</string>
+    <string name="settings_section_update">Обновление приложения</string>
+    <string name="settings_update_check">Проверить обновления</string>
+    <string name="settings_update_checking">Проверяем обновления…</string>
+    <string name="settings_update_available">Доступна новая версия CoffeePeek</string>
+    <string name="settings_version">Версия %1$s</string>
+</resources>

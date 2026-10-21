@@ -17,8 +17,8 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.coffeepeek.admin.feature.profile.domain.PublicProfileConnection
-import com.coffeepeek.admin.feature.profile.domain.PublicProfileConnectionKind
+import com.coffeepeek.feature.profile.domain.PublicProfileConnection
+import com.coffeepeek.feature.profile.domain.PublicProfileConnectionKind
 import com.coffeepeek.admin.ui.component.CoffeePeekLoader
 import com.coffeepeek.admin.ui.component.SwipeDismissModalBottomSheet
 import com.coffeepeek.admin.ui.icons.CpIcons
@@ -64,7 +64,7 @@ internal fun PublicProfileConnectionsSheet(
                         contentAlignment = Alignment.Center,
                     ) {
                         Text(user.userName.trimStart('@').take(1).uppercase().ifBlank { "?" }, style = MaterialTheme.typography.titleMedium)
-                        if (!user.avatarUrl.isNullOrBlank()) CpImage(user.avatarUrl, modifier = Modifier.fillMaxSize())
+                        user.avatarUrl?.takeIf(String::isNotBlank)?.let { CpImage(it, modifier = Modifier.fillMaxSize()) }
                     }
                     Text(
                         "@${user.userName.trimStart('@')}", Modifier.weight(1f),

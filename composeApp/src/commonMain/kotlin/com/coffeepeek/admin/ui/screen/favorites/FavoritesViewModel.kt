@@ -13,6 +13,11 @@ import com.coffeepeek.domain.feature.favorites.api.FavoriteKind
 import com.coffeepeek.domain.feature.favorites.api.FavoritesRepository
 import com.coffeepeek.domain.repository.FavoriteRepository
 import com.coffeepeek.domain.repository.RoasterRepository
+import com.coffeepeek.domain.repository.SessionRepository
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
@@ -20,8 +25,10 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Semaphore
@@ -46,25 +53,55 @@ class FavoritesViewModel(
     private val roasterFavorites: RoasterFavorites,
     private val roasterRepository: RoasterRepository,
     private val serverFavorites: FavoritesRepository? = null,
+    private val sessions: SessionRepository? = null,
 ) : BaseViewModel() {
 
     private val _state = MutableStateFlow(FavoritesUiState())
     val state = _state.asStateFlow()
+    private var favoritesScope: CoroutineScope? = null
 
     init {
+        if (sessions == null) {
+            favoritesScope = workScope
+            observeFavorites(workScope)
+        } else workScope.launch {
+            sessions.observeSession()
+                .map { session -> session?.takeIf(sessions::isActiveSession)?.let { it.userId ?: it.accessToken } }
+                .distinctUntilChanged()
+                .collect { account ->
+                    favoritesScope?.cancel()
+                    favoritesScope = null
+                    _state.value = FavoritesUiState(areRoastersLoading = account != null)
+                    if (account != null) {
+                        val scope = CoroutineScope(workScope.coroutineContext + SupervisorJob(workScope.coroutineContext[Job]))
+                        favoritesScope = scope
+                        observeFavorites(scope)
+                    }
+                }
+        }
+    }
+
+    private fun observeFavorites(scope: CoroutineScope) {
         serverFavorites?.observeFavorites()
-            ?.onEach { result -> result.onSuccess { entries ->
-                _state.update { it.copy(drinks = entries.filter { entry -> entry.kind == FavoriteKind.Drink }) }
-            } }
+            ?.onEach { result ->
+                currentCoroutineContext().ensureActive()
+                result.onSuccess { entries ->
+                    _state.update { it.copy(drinks = entries.filter { entry -> entry.kind == FavoriteKind.Drink }) }
+                }
+            }
             ?.catch { _state.update { it.copy(error = "Не удалось загрузить избранное") } }
-            ?.launchIn(workScope)
+            ?.launchIn(scope)
         roasterFavorites.observeErrors()
-            .onEach { error -> _state.update { it.copy(roasterError = error) } }
-            .launchIn(workScope)
-        workScope.launch {
+            .onEach { error ->
+                currentCoroutineContext().ensureActive()
+                _state.update { it.copy(roasterError = error) }
+            }
+            .launchIn(scope)
+        scope.launch {
             roasterFavorites.observeFavorites()
                 .catch { _state.update { it.copy(areRoastersLoading = false, actionMessage = "Не удалось загрузить обжарщиков") } }
                 .collectLatest { roasters ->
+                    currentCoroutineContext().ensureActive()
                     val ids = roasters.map { it.roasterFavoriteId }.toSet()
                     _state.update { it.copy(
                         roasters = roasters,
@@ -89,40 +126,47 @@ class FavoritesViewModel(
         load()
         FavoriteSync.changes
             .onEach { load(force = true) }
-            .launchIn(workScope)
+            .launchIn(scope)
     }
 
     fun clearActionMessage() { _state.update { it.copy(actionMessage = null) } }
 
     fun removeDrink(drink: FavoriteEntry) {
         val repository = serverFavorites ?: return
+        val scope = favoritesScope ?: return
         if (drink.kind != FavoriteKind.Drink || drink.id in _state.value.removingDrinkIds) return
         _state.update { it.copy(removingDrinkIds = it.removingDrinkIds + drink.id) }
-        workScope.launch {
+        scope.launch {
             try {
-                repository.setFavorite(drink, false).onSuccess {
+                val result = repository.setFavorite(drink, false)
+                currentCoroutineContext().ensureActive()
+                result.onSuccess {
                     _state.update { state -> state.copy(drinks = state.drinks.filterNot { it.id == drink.id }) }
                 }.onFailure {
                     _state.update { it.copy(actionMessage = "Не удалось изменить избранное") }
                 }
             } finally {
-                _state.update { it.copy(removingDrinkIds = it.removingDrinkIds - drink.id) }
+                if (favoritesScope === scope) _state.update { it.copy(removingDrinkIds = it.removingDrinkIds - drink.id) }
             }
         }
     }
 
     fun removeRoaster(roaster: CatalogItem) {
-        com.coffeepeek.admin.feature.favorites.api.FavoriteInteractions.change(workScope, roaster.roasterFavoriteId, true, false,
+        val scope = favoritesScope ?: return
+        com.coffeepeek.admin.feature.favorites.api.FavoriteInteractions.change(scope, roaster.roasterFavoriteId, true, false,
             action = { roasterFavorites.setFavorite(roaster, false) },
-            completed = { result -> result.onFailure { _state.update { it.copy(actionMessage = "Не удалось изменить избранное") } } },
+            completed = { result -> if (favoritesScope === scope) result.onFailure { _state.update { it.copy(actionMessage = "Не удалось изменить избранное") } } },
         )
     }
 
     fun load(force: Boolean = false) {
+        val scope = favoritesScope ?: return
         if (!force && (_state.value.isLoading || _state.value.shops.isNotEmpty())) return
-        workScope.launch {
+        scope.launch {
             _state.update { it.copy(isLoading = true, error = null) }
-            favoriteRepository.getFavorites()
+            val result = favoriteRepository.getFavorites()
+            currentCoroutineContext().ensureActive()
+            result
                 .onSuccess { shops -> _state.update { it.copy(shops = shops, isLoading = false) } }
                 .onFailure { e -> _state.update { it.copy(isLoading = false, error = e.message) } }
         }
@@ -130,9 +174,10 @@ class FavoritesViewModel(
 
     /** Tapping the heart on a favorites card unfavorites it and drops it from the list. */
     fun removeFavorite(shop: CoffeeShop) {
-        com.coffeepeek.admin.feature.favorites.api.FavoriteInteractions.change(workScope, shop.id, false, false,
+        val scope = favoritesScope ?: return
+        com.coffeepeek.admin.feature.favorites.api.FavoriteInteractions.change(scope, shop.id, false, false,
             action = { favoriteRepository.removeFavorite(shop.id) },
-            completed = { result -> result
+            completed = { result -> if (favoritesScope === scope) result
                 .onSuccess { FavoriteSync.notifyChanged(shop.id, false); load(force = true) }
                 .onFailure { _state.update { it.copy(actionMessage = "Не удалось изменить избранное") } }
             },

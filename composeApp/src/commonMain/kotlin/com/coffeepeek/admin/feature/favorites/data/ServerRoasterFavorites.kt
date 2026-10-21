@@ -22,6 +22,7 @@ import kotlinx.coroutines.sync.withPermit
 internal class ServerRoasterFavorites(
     private val favorites: FavoritesRepository,
     private val roasters: RoasterRepository,
+    private val sessions: com.coffeepeek.domain.repository.SessionRepository? = null,
 ) : RoasterFavorites {
     private val errors = MutableStateFlow<String?>(null)
     override fun observeErrors(): Flow<String?> = errors.asStateFlow()
@@ -60,5 +61,17 @@ internal class ServerRoasterFavorites(
             ?: return Result.failure(IllegalArgumentException("У обжарщика нет публичного адреса"))
         return favorites.setFavorite(FavoriteEntry(FavoriteKind.Roaster, address,
             name = roaster.name, coverPhotoUrl = roaster.photoUrl), isFavorite)
+    }
+
+    override suspend fun removeForAccount(roaster: CatalogItem, expectedUserId: String): Result<Unit> {
+        val ownerSessions = sessions ?: return Result.failure(IllegalStateException("Account guard is unavailable"))
+        val session = ownerSessions.peekSession()
+        if (session?.userId != expectedUserId || !ownerSessions.isActiveSession(session))
+            throw kotlinx.coroutines.CancellationException("Favorites account changed")
+        val result = setFavorite(roaster, false)
+        currentCoroutineContext().ensureActive()
+        if (ownerSessions.peekSession()?.userId != expectedUserId)
+            throw kotlinx.coroutines.CancellationException("Favorites account changed")
+        return result
     }
 }

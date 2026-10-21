@@ -23,6 +23,7 @@ import com.coffeepeek.admin.ui.component.CpSnackbarHost
 import com.coffeepeek.admin.ui.component.CoffeePeekLoader
 import com.coffeepeek.admin.ui.component.CoffeePeekPullToRefresh
 import com.coffeepeek.admin.ui.component.FullScreenImageDialog
+import com.coffeepeek.admin.ui.component.PhotoViewerImages
 import com.coffeepeek.admin.ui.component.LocalFloatingNavClearance
 import com.coffeepeek.admin.ui.component.LoadErrorContent
 import com.coffeepeek.admin.ui.component.ReviewTextInput
@@ -34,7 +35,7 @@ import com.coffeepeek.domain.model.CheckInModerationState
 import com.coffeepeek.domain.model.CheckInVisibility
 
 @Composable
-fun CommunityScreen(onCreateCheckIn: () -> Unit) {
+fun CommunityScreen(onCreateCheckIn: () -> Unit, notificationsAction: @Composable () -> Unit = {}) {
     val vm: CommunityViewModel = platformViewModel()
     val state by vm.state.collectAsState()
     TrackFeedViewed(state.firstPageCount, state.timeline == CommunityTimeline.Public)
@@ -73,7 +74,7 @@ fun CommunityScreen(onCreateCheckIn: () -> Unit) {
     LaunchedEffect(shouldLoadMore) { if (shouldLoadMore) vm.loadMore() }
 
     preview?.takeIf { it.generation == state.sessionGeneration }?.let {
-        FullScreenImageDialog(imageUrls = it.urls, initialIndex = it.index, onDismiss = { preview = null })
+        FullScreenImageDialog(images = it.images, initialIndex = it.index, onDismiss = { preview = null })
     }
     if (state.editing != null) key(state.sessionGeneration, state.editing?.source?.id) { EditCheckInSheet(state, vm) }
     if (state.reportingId != null) com.coffeepeek.admin.ui.component.SwipeDismissModalBottomSheet(
@@ -113,12 +114,16 @@ fun CommunityScreen(onCreateCheckIn: () -> Unit) {
                     verticalArrangement = Arrangement.spacedBy(CpDimens.spacing3),
                 ) {
                     item(key = "heading", contentType = "heading") {
-                        Text(
-                            "Лента",
-                            style = MaterialTheme.typography.headlineMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onBackground,
-                        )
+                        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                            Text(
+                                "Лента",
+                                modifier = Modifier.weight(1f),
+                                style = MaterialTheme.typography.headlineMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onBackground,
+                            )
+                            notificationsAction()
+                        }
                     }
                     when {
                         state.isLoggedIn == null || (state.isLoading && state.items.isEmpty()) -> item(key = "loading", contentType = "loading") {
@@ -202,4 +207,4 @@ internal fun CheckIn.publicationLabel(): String = if (visibility == CheckInVisib
     CheckInModerationState.Unknown -> "Статус проверки неизвестен"
 }
 
-private data class CheckInPhotoPreview(val generation: Long, val urls: List<String>, val index: Int)
+private data class CheckInPhotoPreview(val generation: Long, val images: PhotoViewerImages, val index: Int)
