@@ -21,3 +21,7 @@ iosApp/Configuration/Local.xcconfig
 iosXtool/CoffeePeek/.build/
 __pycache__/
 *.pyc
+
+# Firebase app configuration is supplied locally or by CI.
+**/google-services.json
+**/GoogleService-Info.plist

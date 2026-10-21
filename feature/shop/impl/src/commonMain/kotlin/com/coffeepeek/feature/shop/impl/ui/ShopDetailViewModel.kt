@@ -307,8 +307,7 @@ internal class ShopDetailViewModel(
             emitEvent(ShopDetailEvent.SignIn)
             return
         }
-        if (currentState.pendingCheckInVoteId != null || voteJob != null || loadJob?.isActive == true ||
-            ownsCheckIn(checkIn)) return
+        if (currentState.pendingCheckInVoteId != null || voteJob != null || loadJob?.isActive == true) return
         val job = currentCoroutineContext().job
         val generation = sessionGeneration
         voteJob = job
