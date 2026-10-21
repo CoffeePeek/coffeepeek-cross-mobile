@@ -157,7 +157,6 @@ class ShopCheckInsTest {
             assertTrue(loadedDetails.reviews.isEmpty())
             assertEquals(details.checkIns, loadedDetails.checkIns)
             assertEquals(23, loadedDetails.shop.reviewCount)
-            vm.toggleHelpful("own")
             vm.toggleHelpful("unknown")
             assertNull(vm.uiState.value.helpfulId)
             assertTrue(started.tryReceive().isFailure)
@@ -176,6 +175,32 @@ class ShopCheckInsTest {
     }
 
     @Test
+    fun ownPublishedCheckInCanBeLikedAndUnlikedWithoutChangingOtherCards() = runBlocking {
+        val requests = Channel<Pair<String, Boolean>>(Channel.UNLIMITED)
+        val repo = ShopTestCheckIns().apply {
+            helpful = { id, helpful ->
+                requests.send(id to helpful)
+                Result.success(CheckInHelpfulVote(helpful, if (helpful) 8 else 3))
+            }
+        }
+        val vm = viewModel(repo, loggedIn = true)
+        try {
+            val loaded = withTimeout(5_000) { vm.uiState.first { it.details != null && !it.isLoading } }
+            assertTrue(loaded.details!!.ownsCheckIn(ownVisit, loaded.currentUserId))
+            vm.toggleHelpful(ownVisit.id)
+            assertEquals(ownVisit.id to true, withTimeout(5_000) { requests.receive() })
+            val liked = withTimeout(5_000) { vm.uiState.first { it.helpfulId == null && it.details!!.checkIns.last().isHelpfulByCurrentUser } }
+            assertEquals(8, liked.details!!.checkIns.last().helpfulCount)
+            vm.toggleHelpful(ownVisit.id)
+            assertEquals(ownVisit.id to false, withTimeout(5_000) { requests.receive() })
+            val unliked = withTimeout(5_000) { vm.uiState.first { it.helpfulId == null && !it.details!!.checkIns.last().isHelpfulByCurrentUser } }
+            assertEquals(3, unliked.details!!.checkIns.last().helpfulCount)
+            assertEquals(listOf("public", "own"), unliked.details!!.checkIns.map { it.id })
+            assertEquals(publicVisit, unliked.details!!.checkIns.first())
+        } finally { vm.close(); requests.close() }
+    }
+
+    @Test
     fun guestKeepsPublicCheckInsAndDoesNotReceivePersonalHistory() = runBlocking {
         val vm = viewModel(ShopTestCheckIns(), loggedIn = false)
         try {
@@ -190,6 +215,7 @@ class ShopCheckInsTest {
     @Test
     fun submissionBlocksDuplicateAndDismissAndKeepsSuccessVisibleUntilAcknowledged() = runBlocking {
         for (visibility in CheckInVisibility.entries) {
+            val created = Channel<Unit>(Channel.UNLIMITED)
             val started = Channel<CreateCheckInInput>(Channel.UNLIMITED)
             val release = CompletableDeferred<Unit>()
             val visitTime = kotlin.time.Instant.parse("2026-10-14T18:42:17.123Z")
@@ -199,7 +225,7 @@ class ShopCheckInsTest {
                 release.await()
                 Result.success(Unit)
             } }
-            val vm = viewModel(repo, loggedIn = true, draftStore = store)
+            val vm = viewModel(repo, loggedIn = true, draftStore = store, onCheckInCreated = { created.trySend(Unit) })
             try {
                 withTimeout(5_000) { vm.uiState.first { it.details != null && !it.isLoading } }
                 vm.openCheckInSheet()
@@ -220,7 +246,9 @@ class ShopCheckInsTest {
                 assertTrue(vm.uiState.value.showCheckInSheet)
                 assertEquals(draft, vm.uiState.value.checkInDraft)
                 assertTrue(started.tryReceive().isFailure)
+                assertTrue(created.tryReceive().isFailure)
                 release.complete(Unit)
+                withTimeout(5_000) { created.receive() }
                 val success = withTimeout(5_000) { vm.uiState.first { it.submittedCheckInVisibility != null } }
                 assertFalse(success.isCheckInLoading)
                 assertTrue(success.showCheckInSheet)
@@ -228,23 +256,25 @@ class ShopCheckInsTest {
                 assertEquals("", store.open("coffee").note)
                 vm.checkIn(draft)
                 assertTrue(started.tryReceive().isFailure)
+                assertTrue(created.tryReceive().isFailure)
                 vm.dismissCheckInSheet()
                 assertFalse(vm.uiState.value.showCheckInSheet)
                 assertNull(vm.uiState.value.submittedCheckInVisibility)
                 assertNull(vm.uiState.value.checkInDraft)
-            } finally { release.complete(Unit); vm.close() }
+            } finally { release.complete(Unit); vm.close(); created.close() }
         }
     }
 
     @Test
     fun failedSubmissionKeepsDraftAndCanRetry() = runBlocking {
+        val created = Channel<Unit>(Channel.UNLIMITED)
         val store = CheckInDraftStore()
         var attempts = 0
         val repo = ShopTestCheckIns().apply { create = { input ->
             assertEquals(ReviewRating(place = 5, service = 3, coffee = 2), input.rating)
             if (++attempts == 1) Result.failure(IllegalStateException("Нет сети")) else Result.success(Unit)
         } }
-        val vm = viewModel(repo, loggedIn = true, draftStore = store)
+        val vm = viewModel(repo, loggedIn = true, draftStore = store, onCheckInCreated = { created.trySend(Unit) })
         try {
             withTimeout(5_000) { vm.uiState.first { it.details != null && !it.isLoading } }
             vm.openCheckInSheet()
@@ -260,11 +290,13 @@ class ShopCheckInsTest {
             assertEquals(draft, store.open("coffee"))
             assertTrue(failed.showCheckInSheet)
             assertNull(failed.submittedCheckInVisibility)
+            assertTrue(created.tryReceive().isFailure)
             vm.checkIn(draft)
+            withTimeout(5_000) { created.receive() }
             val success = withTimeout(5_000) { vm.uiState.first { it.submittedCheckInVisibility != null } }
             assertNull(success.checkInError)
             assertEquals(2, attempts)
-        } finally { vm.close() }
+        } finally { vm.close(); created.close() }
     }
 
     @Test
@@ -414,6 +446,7 @@ class ShopCheckInsTest {
         sessionValue: () -> Session? = { if (loggedIn) Session("token", userId = "owner") else null },
         routeId: String = "coffee",
         onRemoveFavorite: suspend (String) -> Result<Unit> = { error("unused") },
+        onCheckInCreated: () -> Unit = {},
     ): ShopDetailViewModel = ShopDetailViewModel(
         shopId = routeId,
         shopRepository = object : ShopRepository {
@@ -458,6 +491,7 @@ class ShopCheckInsTest {
             override fun observeFavorites() = flowOf(emptyList<CatalogItem>())
             override suspend fun setFavorite(roaster: CatalogItem, isFavorite: Boolean): Result<Unit> = error("unused")
         },
+        onCheckInCreated = onCheckInCreated,
     )
 }
 

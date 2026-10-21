@@ -59,7 +59,7 @@ class AuthorBlockingFlowScreenshotsTest {
         val community = CommunityViewModel(ScreenshotCheckIns(), sessions, ScreenshotShops(), feed, users, blocks)
         val profile = PublicProfileViewModel("anna-coffee", ScreenshotProfileRepository(blocks, post), sessions, users = users, visibility = blocks)
         val rootKoin = GlobalContext.get()
-        val settings = ProfileViewModel(rootKoin.get(), users, sessions, ScreenshotShops(), rootKoin.get(), rootKoin.get())
+        val settings = ProfileViewModel(rootKoin.get(), users, sessions, ScreenshotShops(), rootKoin.get(), rootKoin.get(), rootKoin.get())
         val screen = MutableStateFlow("feed")
         val dark = MutableStateFlow(false)
         val navigationScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)

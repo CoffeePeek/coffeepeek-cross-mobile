@@ -37,7 +37,7 @@ internal fun TimelineCheckInCard(
         onPhotoClick = onPhotoClick,
         modifier = modifier,
         onAuthorClick = onAuthorClick,
-        onHelpful = onHelpful.takeIf { canAct && isPublicTimeline && !isOwn },
+        onHelpful = onHelpful.takeIf { canAct && isPublicTimeline },
         showHelpfulCount = isPublicTimeline || checkIn.helpfulCount > 0,
         actions = {
             CheckInActions(
