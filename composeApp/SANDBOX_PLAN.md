@@ -1,5 +1,19 @@
 # Application-wide offline Sandbox checkpoint
 
+## Firebase integration isolation — 2026-10-21
+
+After inheriting develop's Firebase Messaging integration, Sandbox assembly
+reproduced a Google Services failure for its separate application ID. Sandbox
+variants now skip Google Services configuration processing and remove both the
+Firebase initialization provider and the production messaging service. Existing
+manifest isolation checks also assert that neither component is present.
+
+On #101 with the retained-history fix and current parent integrations, all 563
+Direct unit tests pass. Direct Debug and both Direct/Play Sandbox APKs pass their
+DEX checks; both Sandbox isolation guards pass. The local configuration remains
+untouched and untracked. No device, UI test, live account or production telemetry
+was used. Evidence: build/reports/history-lifetime-fix/101-firebase-isolation.log.
+
 ## Sandbox contract corrections — 2026-10-21
 
 Reviewed source `cfd9d15f` plus this backend/test correction. Fix three reproduced
