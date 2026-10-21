@@ -16,6 +16,7 @@ import com.coffeepeek.admin.utils.image.isImmutablePhotoVariant
 import com.coffeepeek.admin.utils.image.protectedPhotoRequests
 import com.coffeepeek.admin.utils.image.protectedVariantBytes
 import com.coffeepeek.admin.utils.image.grantOnlinePhoto
+import com.coffeepeek.admin.utils.image.requirePhotoAccess
 import com.coffeepeek.admin.utils.image.SystemPhotoCacheClock
 import io.ktor.http.HttpHeaders
 import kotlinx.coroutines.sync.withPermit
@@ -43,6 +44,7 @@ actual class CustomUrlFetcher(
             selectedClient.prepareGet(data.url) {
             if (isProtectedCheckInPhoto(data.url)) headers.append(HttpHeaders.CacheControl, "no-cache, no-store")
         }.execute { response ->
+            if (isProtectedCheckInPhoto(data.url)) requirePhotoAccess(response.status.value)
             check(response.status.value == 200) { "Фото недоступно" }
             if (isProtectedCheckInPhoto(data.url)) grantOnlinePhoto(data, start)
             // Kamel decodes inside its sequential map collector. Keep emit synchronous:
