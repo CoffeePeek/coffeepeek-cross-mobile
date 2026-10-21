@@ -4,8 +4,8 @@ import com.coffeepeek.admin.di.checkinhistory.AndroidCheckInHistorySession
 import com.coffeepeek.admin.di.shop.CheckInTestSessions
 import com.coffeepeek.admin.feature.catalog.api.BrewMethodCatalog
 import com.coffeepeek.admin.feature.catalog.api.BrewMethodOption
-import com.coffeepeek.admin.feature.coffee.api.CoffeePicker
-import com.coffeepeek.admin.feature.coffee.api.CoffeePickerItem
+import com.coffeepeek.feature.coffee.api.CoffeePicker
+import com.coffeepeek.feature.coffee.api.CoffeePickerItem
 import com.coffeepeek.admin.utils.PickedImage
 import com.coffeepeek.domain.model.Session
 import com.coffeepeek.feature.homecheckin.domain.model.*

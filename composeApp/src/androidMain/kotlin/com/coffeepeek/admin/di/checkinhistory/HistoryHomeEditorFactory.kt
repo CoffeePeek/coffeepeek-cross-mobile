@@ -7,7 +7,7 @@ import com.coffeepeek.admin.analytics.CheckInTracker
 import com.coffeepeek.admin.di.homecheckin.AndroidHomeCheckInRepository
 import com.coffeepeek.admin.di.homecheckin.androidHomeCheckInEditor
 import com.coffeepeek.admin.feature.catalog.api.BrewMethodCatalog
-import com.coffeepeek.admin.feature.coffee.api.CoffeePicker
+import com.coffeepeek.feature.coffee.api.CoffeePicker
 import com.coffeepeek.admin.utils.CpImage
 import com.coffeepeek.feature.homecheckin.api.HomeCheckInDetailEntry
 import com.coffeepeek.feature.homecheckin.api.HomeCheckInEditorEntry

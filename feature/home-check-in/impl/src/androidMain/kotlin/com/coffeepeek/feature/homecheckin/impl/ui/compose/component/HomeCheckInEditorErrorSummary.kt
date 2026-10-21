@@ -30,5 +30,5 @@ internal fun HomeCheckInEditorErrorSummary(message: String, modifier: Modifier =
 }
 
 @PreviewLightDark @Composable private fun HomeCheckInEditorErrorSummaryPreview() = CoffeePeekTheme {
-    Surface { HomeCheckInEditorErrorSummary(stringResource(R.string.home_check_in_validation_summary, 1)) }
+    Surface { HomeCheckInEditorErrorSummary(androidx.compose.ui.res.pluralStringResource(R.plurals.home_check_in_validation_summary, 1, 1)) }
 }

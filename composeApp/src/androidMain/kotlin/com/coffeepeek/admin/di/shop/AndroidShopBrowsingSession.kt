@@ -65,6 +65,12 @@ internal class AndroidShopBrowsingSession(
                 else send(Result.success(emptyList<FavoriteShop>()))
             }
         }
+        override fun observeIds() = channelFlow {
+            withSession {
+                if (loggedIn) repository.observeIds().collect { send(it) }
+                else send(Result.success(emptySet<String>()))
+            }
+        }
         override suspend fun read() = withSession {
             if (loggedIn) repository.read() else Result.success(emptyList())
         }

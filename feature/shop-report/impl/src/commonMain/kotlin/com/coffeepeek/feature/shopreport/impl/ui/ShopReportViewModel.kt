@@ -23,7 +23,7 @@ internal class ShopReportViewModel(
                 copy(selectedCategory = action.category, error = null)
             }
             is ShopReportAction.ChangeDescription -> updateState {
-                copy(description = action.description.take(MAX_DESCRIPTION_LENGTH), error = null)
+                copy(description = action.description.takeWithoutSplittingPairs(MAX_DESCRIPTION_LENGTH), error = null)
             }
             ShopReportAction.Submit -> submit()
             ShopReportAction.Back -> sendEvent(ShopReportEvent.Back)
@@ -67,4 +67,11 @@ internal class ShopReportViewModel(
     private companion object {
         const val MAX_DESCRIPTION_LENGTH = 500
     }
+}
+
+/** Never leaves half of an emoji (surrogate pair) at the limit. */
+internal fun String.takeWithoutSplittingPairs(limit: Int): String {
+    if (length <= limit) return this
+    val end = if (limit > 0 && this[limit - 1].isHighSurrogate() && this[limit].isLowSurrogate()) limit - 1 else limit
+    return take(end)
 }

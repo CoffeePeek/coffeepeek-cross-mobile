@@ -157,6 +157,9 @@ internal fun ShopDetailScreenContent(
     ) { insets ->
         Box(Modifier.fillMaxSize().padding(insets).consumeWindowInsets(insets), contentAlignment = Alignment.Center) {
             val details = state.details
+            val ownCheckInIds = remember(details?.userCheckIns) {
+                details?.userCheckIns.orEmpty().mapTo(HashSet()) { it.id }
+            }
             when {
                 details == null -> ShopDetailLoadState(state.isLoading,
                     onRetry = { onAction(ShopDetailAction.Retry) })
@@ -168,7 +171,7 @@ internal fun ShopDetailScreenContent(
                     item {
                         Column {
                             ShopOverviewHero(details.overview,
-                                onOpenPhoto = { urls, index -> onAction(ShopDetailAction.OpenPhoto(urls, index)) })
+                                onOpenPhoto = { urls, originals, index -> onAction(ShopDetailAction.OpenPhoto(urls, index, originals)) })
                             Column(Modifier.padding(horizontal = CoffeePeekDimens.spacing4,
                                 vertical = CoffeePeekDimens.spacing3),
                                 verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing2)) {
@@ -207,7 +210,7 @@ internal fun ShopDetailScreenContent(
                         menu.photos.isNotEmpty() || menu.items.any { it.availability.equals("Present", true) }
                     }?.let { menu ->
                         item { ShopMenuSection(menu, onOpenPhoto = { index ->
-                            onAction(ShopDetailAction.OpenPhoto(menu.photos.map { it.fullUrl }, index))
+                            onAction(ShopDetailAction.OpenPhoto(menu.photos.map { it.previewUrl }, index, menu.photos.map { it.fullUrl }))
                         }, modifier = Modifier.padding(horizontal = CoffeePeekDimens.spacing4, vertical = 6.dp),
                             formatDate = formatMenuDate) }
                     }
@@ -225,7 +228,7 @@ internal fun ShopDetailScreenContent(
                                 .padding(top = CoffeePeekDimens.spacing6, bottom = CoffeePeekDimens.spacing3)) }
                     }
                     item { ShopPublicCheckInsSection(details.checkIns, details.overview.title,
-                        state.isLoggedIn, state.currentUserId, details.userCheckIns.map { it.id }.toSet(),
+                        state.isLoggedIn, state.currentUserId, ownCheckInIds,
                         state.pendingCheckInVoteId,
                         onOpenPhoto = { checkIn, index -> onAction(ShopDetailAction.OpenCheckInPhoto(checkIn.id, index)) },
                         onVote = { onAction(ShopDetailAction.VoteCheckInHelpful(it)) },

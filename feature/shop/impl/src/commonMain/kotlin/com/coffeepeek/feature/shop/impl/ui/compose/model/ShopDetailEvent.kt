@@ -9,6 +9,7 @@ internal sealed interface ShopDetailEvent {
     data object Back : ShopDetailEvent
     data class OpenMenuGallery(val shopId: String) : ShopDetailEvent
     data object SignIn : ShopDetailEvent
+    data class FavoriteRequiresSignIn(val shopId: String, val desired: Boolean) : ShopDetailEvent
     data object Register : ShopDetailEvent
     data object VoteFailed : ShopDetailEvent
     data object FavoriteFailed : ShopDetailEvent

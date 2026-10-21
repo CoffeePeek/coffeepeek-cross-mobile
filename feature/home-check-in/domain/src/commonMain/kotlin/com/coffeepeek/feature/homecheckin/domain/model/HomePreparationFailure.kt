@@ -20,4 +20,6 @@ class HomePreparationFailure(
     val issue: HomePreparationIssue,
     val fieldErrors: Map<HomePreparationField, HomePreparationIssue> = emptyMap(),
     val operation: HomePreparationOperation = HomePreparationOperation.Save,
+    /** The HTTP status behind this reason, for diagnostics only; never shown to users. */
+    val statusCode: Int? = null,
 ) : Exception("Home preparation: ${issue.name}")

@@ -3,16 +3,13 @@ package com.coffeepeek.feature.shop.impl.ui.compose.component
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -20,12 +17,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.semantics.selected
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
+import com.coffeepeek.core.designsystem.component.CoffeePeekRating
+import com.coffeepeek.core.designsystem.component.CoffeePeekRatingSize
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.feature.shop.impl.resources.Res
@@ -51,18 +46,10 @@ internal fun ShopCheckInRatingCard(image: DrawableResource, label: String, ratin
             modifier = Modifier.size(56.dp).clip(RoundedCornerShape(CoffeePeekDimens.radiusSm)))
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing1)) {
             Text(label, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold)
-            Row(horizontalArrangement = Arrangement.spacedBy(1.dp)) {
-                (1..5).forEach { star ->
-                    val description = stringResource(Res.string.shop_review_rating_value, label, star)
-                    Box(Modifier.size(44.dp).clickable(enabled = enabled, role = Role.Button,
-                        onClickLabel = description) { onChange(star) }
-                        .semantics { selected = star == rating }, contentAlignment = Alignment.Center) {
-                        Icon(if (star <= rating) CoffeePeekIcons.StarFilled else CoffeePeekIcons.StarOutline,
-                            description, Modifier.size(24.dp), tint = if (star <= rating) MaterialTheme.colorScheme.primary
-                            else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.65f))
-                    }
-                }
-            }
+            CoffeePeekRating(rating.toDouble(), size = CoffeePeekRatingSize.Large,
+                onRatingChange = onChange, enabled = enabled,
+                inactiveColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.65f),
+                starDescription = { stringResource(Res.string.shop_review_rating_value, label, it) })
         }
     }
 }

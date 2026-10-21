@@ -1,8 +1,11 @@
 package com.coffeepeek.admin.di
 
 import com.coffeepeek.admin.di.favorites.serverFavoritesModule
+import com.coffeepeek.admin.di.shop.shopFavoriteIntent
 import com.coffeepeek.admin.di.shop.shopCheckInModule
 import com.coffeepeek.admin.di.shop.AndroidShopCheckInFormRenderer
+import com.coffeepeek.admin.di.coffee.androidCoffeeScreenRenderer
+import com.coffeepeek.admin.di.coffee.coffeeModule
 import com.coffeepeek.admin.di.shop.AndroidShopDetailScreenRenderer
 import com.coffeepeek.admin.di.shop.AndroidShopCheckInListScreenRenderer
 import com.coffeepeek.admin.di.shop.shopBrowsingModule
@@ -29,6 +32,7 @@ internal fun initAndroidKoin(extraModules: List<org.koin.core.module.Module> = e
             shopBrowsingModule(),
             homeCheckInModule(),
             checkInHistoryModule(),
+            coffeeModule(),
         ) + extraModules,
         shopReportRendererFactory = { client ->
             AndroidShopReportScreenRenderer(
@@ -43,7 +47,8 @@ internal fun initAndroidKoin(extraModules: List<org.koin.core.module.Module> = e
         shopCheckInRendererFactory = { AndroidShopCheckInFormRenderer(get()) },
         shopDetailRendererFactory = {
             AndroidShopDetailScreenRenderer(sessions = get(), users = get(), details = get(), votes = get(),
-                favorites = get(), checkInForm = get(), visibility = get(), blockActions = get())
+                favorites = get(), favoriteIntent = shopFavoriteIntent(get(), get(), get()), checkInForm = get(),
+                visibility = get(), blockActions = get())
         },
         shopCheckInListRendererFactory = {
             AndroidShopCheckInListScreenRenderer(sessions = get(), users = get(), details = get(), votes = get(),
@@ -51,5 +56,6 @@ internal fun initAndroidKoin(extraModules: List<org.koin.core.module.Module> = e
         },
         checkInHistoryRendererFactory = { get<AndroidCheckInHistoryScreenRenderer>() },
         checkInCreateFlowRendererFactory = { get<AndroidCheckInCreateFlowRenderer>() },
+        coffeeRendererFactory = { androidCoffeeScreenRenderer(get()) },
     )
 }

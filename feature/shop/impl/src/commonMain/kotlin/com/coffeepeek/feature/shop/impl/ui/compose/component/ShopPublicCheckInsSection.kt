@@ -17,6 +17,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.draw.clipToBounds
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
@@ -73,21 +74,22 @@ internal fun ShopPublicCheckInsSection(
                         ShopCheckInGuestPlaceholder(Modifier.width(width))
                         return@itemsIndexed
                     }
-                    val own = checkIn.id in ownCheckInIds ||
-                        (currentUserId?.takeIf(String::isNotBlank)?.let { it == checkIn.userId } == true)
-                    ShopCheckInCard(
+                    ShopPublicCheckInItem(
                         checkIn = checkIn,
-                        onOpenPhoto = { _, index -> onOpenPhoto(checkIn, index) },
-                        modifier = Modifier.width(width),
-                        showAuthor = true, showHelpful = true,
-                        isOwn = own, isVoting = pendingVoteId == checkIn.id,
-                        shopTitle = shopTitle, dateLabel = formatDate(checkIn.createdAt),
-                        onVote = if (isLoggedIn && pendingVoteId == null && !isRefreshing)
-                            ({ onVote(checkIn.id) }) else null,
-                        onReport = if (isLoggedIn && !own) ({ onReport(checkIn.id) }) else null,
-                        onBlockAuthor = checkIn.blockableAuthor(own, isLoggedIn, currentUserId)
-                            ?.takeUnless { isRefreshing }?.let { { onBlockAuthor(checkIn.id) } },
-                        onOpenAuthor = checkIn.authorSlug?.takeIf(String::isNotBlank)?.let { { onOpenAuthor(checkIn.id) } },
+                        width = width,
+                        shopTitle = shopTitle,
+                        isLoggedIn = isLoggedIn,
+                        currentUserId = currentUserId,
+                        isOwnCheckIn = checkIn.id in ownCheckInIds,
+                        isVoting = pendingVoteId == checkIn.id,
+                        hasPendingVote = pendingVoteId != null,
+                        isRefreshing = isRefreshing,
+                        formatDate = formatDate,
+                        onOpenPhoto = onOpenPhoto,
+                        onVote = onVote,
+                        onReport = onReport,
+                        onOpenAuthor = onOpenAuthor,
+                        onBlockAuthor = onBlockAuthor,
                     )
                 }
             }
@@ -95,6 +97,42 @@ internal fun ShopPublicCheckInsSection(
             if (!isLoggedIn) ShopCheckInGuestPrompt(onSignIn, onRegister)
         }
     }
+}
+
+/** Own item scope: a vote on one card must not recompose its neighbours. */
+@Composable
+private fun ShopPublicCheckInItem(
+    checkIn: ShopCheckIn,
+    width: Dp,
+    shopTitle: String,
+    isLoggedIn: Boolean,
+    currentUserId: String?,
+    isOwnCheckIn: Boolean,
+    isVoting: Boolean,
+    hasPendingVote: Boolean,
+    isRefreshing: Boolean,
+    formatDate: (String) -> String,
+    onOpenPhoto: (ShopCheckIn, Int) -> Unit,
+    onVote: (String) -> Unit,
+    onReport: (String) -> Unit,
+    onOpenAuthor: (String) -> Unit,
+    onBlockAuthor: (String) -> Unit,
+) {
+    val own = isOwnCheckIn ||
+        (currentUserId?.takeIf(String::isNotBlank)?.let { it == checkIn.userId } == true)
+    ShopCheckInCard(
+        checkIn = checkIn,
+        onOpenPhoto = { _, index -> onOpenPhoto(checkIn, index) },
+        modifier = Modifier.width(width),
+        showAuthor = true, showHelpful = true,
+        isOwn = own, isVoting = isVoting,
+        shopTitle = shopTitle, dateLabel = formatDate(checkIn.createdAt),
+        onVote = if (isLoggedIn && !hasPendingVote && !isRefreshing) ({ onVote(checkIn.id) }) else null,
+        onReport = if (isLoggedIn && !own) ({ onReport(checkIn.id) }) else null,
+        onBlockAuthor = checkIn.blockableAuthor(own, isLoggedIn, currentUserId)
+            ?.takeUnless { isRefreshing }?.let { { onBlockAuthor(checkIn.id) } },
+        onOpenAuthor = checkIn.authorSlug?.takeIf(String::isNotBlank)?.let { { onOpenAuthor(checkIn.id) } },
+    )
 }
 
 @Preview @Composable private fun ShopPublicCheckInsSectionLightPreview() = CoffeePeekTheme(darkTheme = false) {
