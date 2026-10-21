@@ -92,6 +92,8 @@ There is **no `feature/community` module yet**; this directory holds only this f
 | Q7 | Emit `author` and `home_detail` item events | Keep parity (do not emit) unless the analytics owner asks |
 | Q8 | Analytics names/properties unchanged behind `CommunityAnalytics` (incl. exposure and `FEED_VIEWED` trackers staying app-side as slots/modifiers) | Yes |
 
+Decisions Q1–Q8 accepted as recommended (2026-10-22).
+
 ## (5) Plan and PR slicing (each step on its own stacked branch, ≤40 files, logically grouped)
 
 | Step | Content | ~Files |
