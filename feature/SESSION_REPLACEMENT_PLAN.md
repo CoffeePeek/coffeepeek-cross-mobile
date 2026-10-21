@@ -108,9 +108,30 @@ and legacy ViewModels receive.
   in Sandbox; Sandbox covers signed-in/out flows with fake sessions only.
 - Out of scope: auth screens and `AuthRepositoryImpl` (Auth owner), `modules/network` removal.
 
-## 6. Decisions needed
+## 6. Decisions (accepted 2026-10-21, all as recommended)
 
-1. Module name `core/session` and the `SessionReader` / `SessionStore` split — recommended.
-2. Bridge through `typealias` + `SessionRepository : SessionStore` (zero churn) — recommended
-   over a big-bang import rewrite.
-3. Keep `UserSessionCleaner` in `modules/data` until legacy favorites go away — recommended.
+1. Module `core/session` with the `SessionReader` / `SessionStore` split.
+2. Zero-churn bridge: `typealias Session` + `SessionRepository : SessionStore`.
+3. `UserSessionCleaner` stays in `modules/data` until legacy favorites go away.
+
+## 7. Step 0 result — parity tests (2026-10-21)
+
+Added to `modules/data/src/commonTest` (no production change):
+
+- `util/SessionAuthTest` (8): null/blank token or userId, unexpired token without refresh token,
+  expired token with/without refresh token, tokens without a readable `exp`, the 30 s leeway,
+  `JwtUtils` subject/expiry extraction and malformed tokens.
+- `repository/SessionRepositoryParityTest` (11): stored credentials -> `Session` with the user id
+  from the JWT `sub`; signed-out when empty; import of old `SESSION` / `API_KEYS` rows (once, rows
+  deleted, `API_KEYS` fallback, secure store wins and leaves old rows, unreadable row ignored);
+  `applySession` is memory-only while `saveSession`/`persistSession` write the store (`null`
+  refresh token stored as `""`); `replaceSession` match/mismatch/clear; `observeSession` emits the
+  loaded value then only changes; `isActiveSession` rules; `warmCache`.
+
+Already covered before: `SessionRepositoryConcurrencyTest` (3, stale persistence, cold read vs
+newer session, cancelled write vs logout), `SessionTokenProviderTest`, `UserSessionCleanerTest`,
+`UserRepositorySessionTest`.
+
+Verified: `:modules:data:testDebugUnitTest` 70 tests, 0 failures; `:modules:data:compileKotlinIosSimulatorArm64`
+passes. Not covered by unit tests and left for the device gate in step 3: the real Android/iOS
+secure stores and an upgrade over an existing signed-in install.
