@@ -30,6 +30,8 @@ feature/home-check-in/              pure domain/data and Android detail/editor a
                                    active in Android history/global creation; profile/iOS legacy
 feature/coffee/                     api/domain/data/impl picker, MVI and Android UI prepared;
                                    current catalogue screens/DI still in composeApp
+feature/roaster/                    shared api/domain/data/impl and Compose UI;
+                                   common application composition selects Android/iOS entries
 ```
 
 Target ownership is feature-based:
@@ -274,6 +276,9 @@ The current iOS SwiftUI shell hosts the shared Compose framework; it does not
 yet provide native SwiftUI versions of migrated screens. A native screen may
 later use shared domain/data through a deliberate public bridge without copying
 business rules.
+Roasters uses one commonMain Compose implementation and shared application
+adapters on Android and iOS; its native app navigation and platform callbacks
+stay application-owned. Other features retain their existing migration scope.
 Only Android-specific Compose/API code belongs in `androidMain`. Native SwiftUI
 always belongs in `iosApp`, not `iosMain` or shared feature modules. Prefer
 shared code where library support permits; use `expect`/`actual` only for a real

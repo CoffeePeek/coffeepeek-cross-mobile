@@ -44,7 +44,8 @@ import com.coffeepeek.admin.ui.screen.profile.LegacyOwnProfileScreenRenderer
 import com.coffeepeek.admin.ui.screen.profile.LegacyPublicProfileScreenRenderer
 import com.coffeepeek.admin.ui.screen.profile.OwnProfileScreenRenderer
 import com.coffeepeek.admin.ui.screen.profile.PublicProfileScreenRenderer
-import com.coffeepeek.admin.ui.screen.roaster.LegacyRoasterScreenRenderer
+import com.coffeepeek.admin.di.roaster.roasterModule
+import com.coffeepeek.admin.di.roaster.roasterScreenRenderer
 import com.coffeepeek.admin.ui.screen.roaster.RoasterScreenRenderer
 import com.coffeepeek.admin.ui.screen.shop.ShopDetailScreenRenderer
 import com.coffeepeek.admin.ui.screen.shop.LegacyShopDetailScreenRenderer
@@ -100,7 +101,7 @@ fun initKoin(
     checkInHistoryRendererFactory: Scope.() -> CheckInHistoryScreenRenderer = { LegacyCheckInHistoryScreenRenderer },
     checkInCreateFlowRendererFactory: Scope.() -> CheckInCreateFlowRenderer = { LegacyCheckInCreateFlowRenderer },
     coffeeRendererFactory: Scope.() -> CoffeeScreenRenderer = { LegacyCoffeeScreenRenderer },
-    roasterRendererFactory: Scope.() -> RoasterScreenRenderer = { LegacyRoasterScreenRenderer },
+    roasterRendererFactory: Scope.() -> RoasterScreenRenderer = { roasterScreenRenderer(get(), get(), get()) },
     publicProfileRendererFactory: Scope.() -> PublicProfileScreenRenderer = { LegacyPublicProfileScreenRenderer },
     ownProfileRendererFactory: Scope.() -> OwnProfileScreenRenderer = { LegacyOwnProfileScreenRenderer },
     accountRendererFactory: Scope.() -> AccountScreenRenderer = { LegacyAccountScreenRenderer },
@@ -127,6 +128,7 @@ fun initKoin(
             checkInHistoryRendererFactory, checkInCreateFlowRendererFactory, coffeeRendererFactory, roasterRendererFactory,
             publicProfileRendererFactory, ownProfileRendererFactory, accountRendererFactory),
         imageModule(),
+        roasterModule(),
         updateInstallerModule(),
     )
     val application = startKoin { modules(commonModules + platformModules) }
