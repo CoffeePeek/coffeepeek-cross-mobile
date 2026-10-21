@@ -1,6 +1,9 @@
 package com.coffeepeek.feature.contributions.impl
 
+import com.coffeepeek.feature.contributions.api.ContributionCatalogs
+import com.coffeepeek.feature.contributions.api.ContributionLocation
 import com.coffeepeek.feature.contributions.api.ContributionsAccount
+import com.coffeepeek.feature.contributions.api.GeoPoint
 import com.coffeepeek.feature.contributions.domain.model.*
 import com.coffeepeek.feature.contributions.domain.repository.ContributionsRepository
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -19,6 +22,7 @@ internal class FakeRepository : ContributionsRepository {
     var roasters: suspend (ModerationStatus, Int) -> Result<Paged<RoasterSubmission>> = { _, _ -> pageOf() }
     var changes: suspend (ModerationStatus?, Int) -> Result<Paged<ChangeRequest>> = { _, _ -> pageOf() }
     var change: suspend (String) -> Result<ChangeRequest> = { Result.failure(ContributionFailure(FailureKind.NotFound)) }
+    var shopSubmit: suspend (NewShop) -> Result<Unit> = { Result.success(Unit) }
     val requests = mutableListOf<String>()
 
     override suspend fun shops(status: ModerationStatus, page: Int, pageSize: Int) = shops(status, page).also { requests += "shops:$status:$page" }
@@ -26,7 +30,7 @@ internal class FakeRepository : ContributionsRepository {
     override suspend fun changes(status: ModerationStatus?, page: Int, pageSize: Int, shopSlug: String?, section: ChangeSection?) =
         changes(status, page).also { requests += "changes:$status:$page" }
     override suspend fun change(id: String) = change.invoke(id).also { requests += "change:$id" }
-    override suspend fun submitShop(shop: NewShop): Result<Unit> = error("Unused")
+    override suspend fun submitShop(shop: NewShop): Result<Unit> = shopSubmit(shop).also { requests += "submitShop:${shop.name}" }
     override suspend fun submitRoaster(roaster: NewRoaster): Result<RoasterSubmitted> = error("Unused")
     override suspend fun submitChange(draft: ChangeDraft): Result<ChangeRequest> = error("Unused")
     override suspend fun editChange(id: String, draft: ChangeDraft): Result<ChangeRequest> = error("Unused")
@@ -37,3 +41,18 @@ internal fun shop(id: String, status: ModerationStatus = ModerationStatus.Approv
 
 internal fun request(id: String, section: ChangeSection = ChangeSection.Description, payload: ChangePayload = ChangePayload(description = "text"), status: ModerationStatus = ModerationStatus.Pending) =
     ChangeRequest(id, "cafe", section, payload, status, rejectionReason = null, createdAtUtc = "2026-10-21T07:00:00Z", updatedAtUtc = null)
+
+internal class FakeCatalogs : ContributionCatalogs {
+    var catalogs: suspend () -> Result<Catalogs> = { Result.success(Catalogs()) }
+    override suspend fun catalogs() = catalogs.invoke()
+    override suspend fun shop(slug: String): Result<ShopSnapshot> = error("Unused")
+    override suspend fun drinks(): Result<List<DrinkOption>> = error("Unused")
+}
+
+internal class FakeLocation : ContributionLocation {
+    var point: GeoPoint? = null
+    var address: String? = null
+    var calls = 0
+    override suspend fun lastKnown() = point.also { calls++ }
+    override suspend fun addressOf(point: GeoPoint) = address
+}
