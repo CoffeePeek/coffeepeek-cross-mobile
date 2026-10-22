@@ -10,7 +10,7 @@ class ProfileAvatarImage(val fileName: String, val contentType: String, val byte
 
 /**
  * Writes the signed-in user's own profile. Each call updates the shared cached profile on success, so the Profile tab follows without a
- * result being passed back. Failures carry a user-readable message when the server gave one.
+ * result being passed back. Username failures use [UsernameChangeFailure]; presentation owns their wording.
  */
 interface ProfileEditPort {
     suspend fun updateAvatar(image: ProfileAvatarImage): Result<Unit>

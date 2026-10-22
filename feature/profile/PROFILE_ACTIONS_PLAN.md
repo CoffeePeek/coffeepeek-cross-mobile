@@ -244,3 +244,40 @@ No production source changed in this correction. Library lint/tests, APK/DEX
 assembly, iOS execution, manual UI/device checks, signed release and GitHub CI
 were not rerun for this private-test-fixture change. No device or account was
 accessed, and no publication or CI rerun was requested.
+
+## Username confirmation and friendly errors — 2026-10-22
+
+Baseline: fresh `origin/develop` at `a00f5509`, isolated in
+`codex/migration-profile-username-confirmation` to preserve the main checkout's
+uncommitted work. Scope: the migrated Android edit-profile entry, its shared
+presentation state, the account composition bridge and preservation of the
+username endpoint's HTTP status. No module/dependency or navigation change.
+
+Saving a changed, trimmed username now requires confirmation, showing the exact
+new nickname and the owner-specified limit of three changes per week. Cancelling
+preserves the draft and performs no writes. About/avatar-only edits save directly.
+Successful partial steps remain remembered, so retrying a later failure cannot
+consume another username change. Unknown server diagnostics never become UI copy.
+The composition bridge translates legacy cooldown/quota messages to typed errors;
+the UI formats an optional retry instant in the device's locale and timezone.
+Confirmation and failure feedback use CoffeePeek design-system components and
+feature-owned resources, with paired previews. The server still owns enforcement;
+no remaining-change count or next-available date is invented.
+
+Verification plan: run the profile implementation's unit suite (confirmation,
+cancellation, duplicate saves, stale confirmation, quota and partial retries),
+network unit contracts (including non-JSON failure status), Android adapter unit
+tests, local-date unit tests, and directDebug APK assembly with runtime-class
+verification. No UI/instrumented tests, live writes or device installation.
+Manual modal/light/dark/font-size checks and iOS execution remain separate gates.
+
+Results: Windows/JDK 17, 2026-10-22. The first run stopped at compilation of the
+new network test because its closing class brace was missing (3m08s); that
+diagnostic is retained in the local verification log. After correcting the test,
+the complete command passed in 1m58s: 58 profile implementation tests (including
+three retry-date tests), 83 network tests and 17 Android profile-adapter tests,
+**158 tests total**, zero failures/errors/skips. The directDebug APK assembled
+and its packaged runtime-class verification passed. No APK was installed.
+`git diff --check` passes; Gradle/KMP and unrelated existing preview/compiler
+warnings remain. No IDE inspection, lint, manual UI review, iOS or live-backend
+acceptance is claimed. Publication to develop was explicitly requested.
