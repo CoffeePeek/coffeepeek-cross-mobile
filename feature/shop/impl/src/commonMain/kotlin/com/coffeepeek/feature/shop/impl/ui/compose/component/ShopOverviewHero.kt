@@ -3,6 +3,9 @@ package com.coffeepeek.feature.shop.impl.ui.compose.component
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -49,7 +52,8 @@ internal fun ShopOverviewHero(
     val photos = overview.photos
     val pagerState = rememberPagerState(pageCount = { photos.size })
     Box(
-        (if (photos.isNotEmpty()) modifier.shopExposure(ShopExposure.Photos) else modifier).fillMaxWidth().height(300.dp)
+        (if (photos.isNotEmpty()) modifier.shopExposure(ShopExposure.Photos) else modifier).fillMaxWidth()
+            .height(300.dp + WindowInsets.statusBars.asPaddingValues().calculateTopPadding())
             .clip(RoundedCornerShape(bottomStart = CoffeePeekDimens.radiusLg,
                 bottomEnd = CoffeePeekDimens.radiusLg))
             .background(MaterialTheme.colorScheme.surfaceVariant),
