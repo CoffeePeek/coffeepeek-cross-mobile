@@ -1,6 +1,5 @@
 package com.coffeepeek.feature.profile.impl.ui.compose
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -28,14 +27,13 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.setValue
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -43,10 +41,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.coffeepeek.core.designsystem.component.CoffeePeekSwipeDismissModalBottomSheet
-import com.coffeepeek.core.designsystem.component.CoffeePeekActionMenu
-import com.coffeepeek.core.designsystem.component.CoffeePeekMenuItem
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
-import com.coffeepeek.core.designsystem.theme.CoffeePeekColors
 import com.coffeepeek.feature.profile.api.ProfileAuthor
 import com.coffeepeek.feature.profile.api.ProfileAuthorActions
 import com.coffeepeek.feature.profile.api.ProfileSlots
@@ -60,10 +55,8 @@ import com.coffeepeek.feature.profile.impl.ui.compose.component.ProfileEmptyCard
 import com.coffeepeek.feature.profile.impl.ui.compose.component.ProfileSectionHeading
 import com.coffeepeek.feature.profile.impl.ui.compose.component.ProfileSectionLoader
 import com.coffeepeek.feature.profile.impl.ui.compose.component.PublicProfileActivityCalendar
-import com.coffeepeek.feature.profile.impl.ui.compose.component.PublicProfileActivityCard
 import com.coffeepeek.feature.profile.impl.ui.compose.component.PublicProfileConnectionsSheet
 import com.coffeepeek.feature.profile.impl.ui.compose.component.PublicProfileHeader
-import com.coffeepeek.feature.profile.impl.ui.compose.component.PublicProfileStatsCard
 import com.coffeepeek.feature.profile.impl.ui.model.PublicProfileAction
 import com.coffeepeek.feature.profile.impl.ui.model.PublicProfileEvent
 
@@ -81,6 +74,7 @@ internal class OwnProfileExtras(
     val topBarActions: @Composable () -> Unit,
     val favoritesPreview: @Composable () -> Unit,
     val activityCalendar: @Composable () -> Unit,
+    val activityPreview: @Composable (onClick: () -> Unit) -> Unit,
     val bottomContentPadding: Dp,
 )
 
@@ -104,7 +98,6 @@ internal fun PublicProfileScreen(
     val visibility by vm.authorVisibility.collectAsStateWithLifecycle(initialValue = vm.currentVisibility())
     var section by remember(slug) { mutableStateOf<ProfileSection?>(null) }
     var photos by remember(slug) { mutableStateOf<ProfilePhotos?>(null) }
-    var menuOpen by remember { mutableStateOf(false) }
     val checkInsListState = rememberLazyListState()
     val profile = state.profile
     val viewingOwn = own != null || state.isOwnProfile
@@ -125,7 +118,6 @@ internal fun PublicProfileScreen(
     Scaffold(containerColor = MaterialTheme.colorScheme.background, contentWindowInsets = WindowInsets(0, 0, 0, 0)) { innerPadding ->
         Column(
             Modifier.fillMaxSize().padding(innerPadding)
-                .background(Brush.verticalGradient(listOf(CoffeePeekColors.GoldWarm.copy(alpha = 0.055f), MaterialTheme.colorScheme.background)))
                 .statusBarsPadding(),
         ) {
             Box(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp).height(48.dp), contentAlignment = Alignment.Center) {
@@ -140,18 +132,11 @@ internal fun PublicProfileScreen(
                 )
                 if (own != null) Box(Modifier.align(Alignment.CenterEnd)) { own.topBarActions() }
                 else if (profile != null && author != null && !viewingOwn) Box(Modifier.align(Alignment.CenterEnd)) {
-                    val blocked = profile.isBlockedByViewer
-                    val shareLabel = stringResource(R.string.profile_share)
-                    val blockLabel = stringResource(if (blocked) R.string.profile_unblock_author else R.string.profile_block_author)
-                    val menu = buildList {
-                        if (!blocked && sharePath != null) add(CoffeePeekMenuItem("share", shareLabel, CoffeePeekIcons.Share, onClick = { onShare("$PUBLIC_PROFILE_BASE_URL$sharePath") }))
-                        add(CoffeePeekMenuItem("block", blockLabel, CoffeePeekIcons.Block, destructive = !blocked, onClick = {
-                            if (blocked) authorActions.requestUnblock(author) else authorActions.requestBlock(author)
-                        }))
-                    }
-                    CoffeePeekActionMenu(menu) { open ->
-                        IconButton(onClick = open) { Icon(CoffeePeekIcons.MoreHorizontal, stringResource(R.string.profile_author_actions)) }
-                    }
+                    PublicProfileActions(
+                        isBlocked = profile.isBlockedByViewer,
+                        onShare = sharePath?.let { path -> { onShare("$PUBLIC_PROFILE_BASE_URL$path") } },
+                        onBlock = { if (profile.isBlockedByViewer) authorActions.requestUnblock(author) else authorActions.requestBlock(author) },
+                    )
                 } else if (profile != null && sharePath != null) IconButton(
                     onClick = { onShare("$PUBLIC_PROFILE_BASE_URL$sharePath") }, modifier = Modifier.align(Alignment.CenterEnd),
                 ) { Icon(CoffeePeekIcons.Share, stringResource(R.string.profile_share), modifier = Modifier.size(21.dp)) }
@@ -193,7 +178,8 @@ internal fun PublicProfileScreen(
                 }
             } else {
                 Column(
-                    Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 16.dp).navigationBarsPadding(),
+                    Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 16.dp)
+                        .then(if (own == null) Modifier.navigationBarsPadding() else Modifier),
                     verticalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
                     Spacer(Modifier.height(2.dp))
@@ -203,11 +189,21 @@ internal fun PublicProfileScreen(
                         followEnabled = !state.isFollowLoading && !state.isLoading,
                         onFollow = if (viewingOwn) null else ({ vm.onAction(PublicProfileAction.ToggleFollow) }),
                         onEditProfile = own?.onEditProfile,
+                        stats = profile.stats,
+                        onFollowersClick = {
+                            section = null
+                            vm.onAction(PublicProfileAction.OpenConnections(PublicProfileConnectionKind.Followers))
+                        },
                     ) { profile.avatarUrl?.let { photos = ProfilePhotos(listOf(it)) } }
-                    PublicProfileStatsCard(profile.stats, onFollowersClick = {
-                        section = null
-                        vm.onAction(PublicProfileAction.OpenConnections(PublicProfileConnectionKind.Followers))
-                    })
+                    if (own != null) own.activityPreview { section = ProfileSection.Activity }
+                    else slots.activityPreview(slug, profile.activity, state.checkIns,
+                        state.isLoadingActivity || state.isLoadingCheckIns,
+                        state.activityError != null || state.checkInsError != null,
+                        {
+                            vm.onAction(PublicProfileAction.RetryActivity)
+                            vm.onAction(PublicProfileAction.RetryCheckIns)
+                        },
+                        { section = ProfileSection.Activity })
                     if (state.error != null) InlineProfileError(stringResource(R.string.profile_update_failed)) { vm.onAction(PublicProfileAction.Refresh) }
                     if (!viewingOwn && state.followError != null) {
                         InlineProfileError(stringResource(R.string.profile_follow_failed)) { vm.onAction(PublicProfileAction.ToggleFollow) }
@@ -245,15 +241,6 @@ internal fun PublicProfileScreen(
                         }
                     }
 
-                    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                        ProfileSectionHeading(stringResource(R.string.profile_section_activity)) { section = ProfileSection.Activity }
-                        when {
-                            state.isLoadingActivity -> ProfileSectionLoader()
-                            state.activityError != null -> InlineProfileError(stringResource(R.string.profile_activity_failed)) { vm.onAction(PublicProfileAction.RetryActivity) }
-                            profile.activity != null -> PublicProfileActivityCard(profile.activity!!) { section = ProfileSection.Activity }
-                            else -> ProfileSectionLoader()
-                        }
-                    }
                     Spacer(Modifier.height(own?.bottomContentPadding ?: 20.dp))
                 }
             }
