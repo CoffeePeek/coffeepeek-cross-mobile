@@ -35,8 +35,6 @@
     <string name="settings_add_roaster">Добавить обжарщика</string>
     <string name="settings_add_roaster_description">Помогите сообществу открыть новых обжарщиков</string>
     <string name="settings_section_settings">Настройки</string>
-    <string name="settings_blocked_authors">Заблокированные авторы</string>
-    <string name="settings_blocked_authors_description">Управление блокировками</string>
     <string name="settings_city_row">Город</string>
     <string name="settings_city_row_description">Определяет, какие кофейни показывать в первую очередь</string>
     <string name="settings_city_not_selected">Выберите</string>
