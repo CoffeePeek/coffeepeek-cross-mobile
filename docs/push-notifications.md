@@ -38,11 +38,14 @@ are in `design/notifications/README.md`.
 
 ## iOS activation through CI
 
-The existing macOS CI runner installs FirebaseCore/FirebaseMessaging using the
-vendored Firebase plugin Swift setup package in tools/ios/xcode_spm_setup. It links
-the plist resource and preserves -ObjC without raw pbxproj edits. Debug uses the
+The Xcode project links FirebaseCore/FirebaseMessaging 12.19.2 and the
+GoogleService-Info.plist resource, with -ObjC in both configurations. CI restores
+the release plist from its secret without rewriting the project. Local Xcode
+builds also need that ignored resource at iosApp/iosApp/GoogleService-Info.plist.
+Unsigned PR verification copies a synthetic plist and needs no secrets; the
+release configuration validator rejects this fixture. Debug uses the
 development APNs entitlement; Release/TestFlight uses production.
-Firebase 12.19.2 is the latest compatible release with Google Sign-In 10: Firebase
+Firebase is pinned to 12.19.2 for compatibility with Google Sign-In 10: Firebase
 13 requires App Check 12, while the released Google Sign-In 10 requires App Check 11.
 Upgrade Firebase when a compatible Google Sign-In release is available.
 
@@ -52,9 +55,10 @@ Repository secrets required for push-enabled releases:
 - IOS_PROVISIONING_PROFILE_BASE64: App Store profile with Push Notifications,
   Sign in with Apple and Associated Domains. CI validates all three capabilities.
 
-Release workflows fail when Firebase configuration is absent. Dispatch iOS build
-verification on a feature branch to compile Kotlin and native Firebase delegate on
-the macOS runner before merging. A local Mac is unnecessary.
+Release workflows fail when Firebase configuration is absent. Relevant PRs to
+main/develop automatically compile Kotlin and the native Firebase delegate and
+run the non-UI ViewModel compatibility tests on the macOS runner. Manual
+verification on a feature branch remains available. A local Mac is unnecessary.
 
 In Firebase Console, project coffeepeek -> Project settings -> Cloud Messaging ->
 Apple app configuration, upload the APNs .p8 with Key ID and Team ID. TestFlight
