@@ -101,12 +101,6 @@ fun SettingsScreen(vm: ProfileViewModel = koinInject()) {
             Spacer(Modifier.height(CpDimens.settingsSectionSpacing))
 
             SettingsSection(title = "Настройки") {
-                if (profile.isLoggedIn) {
-                    SettingsRow(icon = CpIcons.VisibilityOff, label = "Заблокированные авторы",
-                        description = "Управление блокировками", iconColors = SettingsIconPalette.Violet,
-                        onClick = { Navigator.navigate(Navigator.Screen.BlockedAuthors) })
-                    SettingsDivider()
-                }
                 SettingsRow(
                     icon = CpIcons.Location,
                     label = "Город",

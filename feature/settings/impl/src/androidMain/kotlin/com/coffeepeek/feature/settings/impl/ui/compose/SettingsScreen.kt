@@ -47,7 +47,7 @@ import com.coffeepeek.feature.settings.impl.ui.model.SettingsState
 
 /** Where the tab can go; supplied by the caller. */
 internal class SettingsNavigation(
-    val onAddShop: () -> Unit, val onAddRoaster: () -> Unit, val onBlockedAuthors: () -> Unit, val onCity: () -> Unit,
+    val onAddShop: () -> Unit, val onAddRoaster: () -> Unit, val onCity: () -> Unit,
     val onTheme: () -> Unit, val onUsagePolicy: () -> Unit, val onLogin: () -> Unit, val onRegister: () -> Unit,
 )
 
@@ -91,14 +91,6 @@ internal fun SettingsContent(
                 Spacer(Modifier.height(CoffeePeekDimens.settingsSectionSpacing))
             }
             CoffeePeekSettingsSection(title = stringResource(R.string.settings_section_settings)) {
-                if (state.showBlockedAuthors) {
-                    CoffeePeekSettingsRow(
-                        CoffeePeekIcons.VisibilityOff, stringResource(R.string.settings_blocked_authors),
-                        stringResource(R.string.settings_blocked_authors_description), navigation.onBlockedAuthors,
-                        iconColors = CoffeePeekIconBadgePalette.Violet,
-                    )
-                    CoffeePeekSettingsDivider()
-                }
                 CoffeePeekSettingsRow(
                     CoffeePeekIcons.Location, stringResource(R.string.settings_city_row), stringResource(R.string.settings_city_row_description),
                     navigation.onCity, iconColors = CoffeePeekIconBadgePalette.Aqua,
@@ -178,7 +170,7 @@ private fun ThemeMode.valueLabel() = when (this) {
     ThemeMode.DARK -> R.string.settings_theme_value_dark
 }
 
-private val previewNavigation = SettingsNavigation({}, {}, {}, {}, {}, {}, {}, {})
+private val previewNavigation = SettingsNavigation({}, {}, {}, {}, {}, {}, {})
 private val previewExternal = object : SettingsExternalActions {
     override fun openSupport() = Unit
     override fun openTerms() = Unit
