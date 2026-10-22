@@ -16,7 +16,6 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -34,6 +33,10 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -78,7 +81,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.draw.clipToBounds
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.semantics
@@ -133,7 +135,6 @@ import com.coffeepeek.admin.ui.component.FullScreenImageDialog
 import com.coffeepeek.admin.ui.component.PhotoViewerImages
 import com.coffeepeek.admin.ui.component.CpSnackbarHost
 import com.coffeepeek.admin.ui.component.CoffeePeekLoader
-import com.coffeepeek.admin.ui.component.AppButton
 import com.coffeepeek.admin.ui.component.OutlinedContentCard
 import com.coffeepeek.admin.ui.component.RoasterLinkRow
 import com.coffeepeek.admin.ui.component.SectionTitle
@@ -238,11 +239,13 @@ fun ShopDetailScreen(shopId: String, forCheckIn: Boolean = false) {
     val details = state.details
     val distance = formatDistance(distanceToShopMeters(userLocation, details?.location))
     val floatingActionsClearance = 72.dp
+    val systemBottomInset = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
     val hazeState = rememberHazeState()
 
     Box(modifier = Modifier.fillMaxSize()) {
         Scaffold(
             modifier = Modifier.hazeSource(hazeState),
+            contentWindowInsets = WindowInsets(0),
             snackbarHost = {
                 CpSnackbarHost(
                     hostState = snackbarHostState,
@@ -292,7 +295,7 @@ fun ShopDetailScreen(shopId: String, forCheckIn: Boolean = false) {
                         isLoggedIn = state.isLoggedIn,
                         currentUserId = state.currentUserId,
                         modifier = Modifier.padding(padding),
-                        bottomContentPadding = floatingActionsClearance,
+                        bottomContentPadding = floatingActionsClearance + systemBottomInset,
                         onOpenOnMap = vm::openOnMap,
                         onReportIssue = vm::openReportIssue,
                         onCopyPhone = vm::copyPhone,
@@ -333,6 +336,8 @@ fun ShopDetailScreen(shopId: String, forCheckIn: Boolean = false) {
                 },
                 forCheckIn = forCheckIn,
                 modifier = Modifier.align(Alignment.BottomCenter),
+                hazeState = hazeState,
+                onChooseAnotherShop = { Navigator.popThenNavigate(Navigator.Screen.CreateCheckIn) },
             )
         }
     }
@@ -364,7 +369,7 @@ private fun ShopDetailContent(
         .takeIf { it.size == photos.size } ?: photos
 
     LazyColumn(
-        modifier = modifier.fillMaxSize(),
+        modifier = modifier.fillMaxSize().clipToBounds(),
         contentPadding = PaddingValues(bottom = bottomContentPadding + CpDimens.spacing4),
     ) {
         item {
@@ -499,7 +504,7 @@ private fun ShopHeroImage(
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(300.dp)
+                .height(300.dp + WindowInsets.statusBars.asPaddingValues().calculateTopPadding())
                 .clip(heroShape)
                 .background(MaterialTheme.colorScheme.surfaceVariant),
         ) {
@@ -1635,133 +1640,6 @@ private fun EmptyMascotState(
             style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center,
-        )
-    }
-}
-
-@Composable
-private fun ShopDetailBottomBar(
-    isCheckInLoading: Boolean,
-    canOpenRoute: Boolean,
-    onRoute: () -> Unit,
-    onCheckIn: () -> Unit,
-    modifier: Modifier = Modifier,
-    forCheckIn: Boolean = false,
-) {
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .navigationBarsPadding()
-            .padding(horizontal = CpDimens.spacing3, vertical = CpDimens.spacing3)
-            .height(IntrinsicSize.Min),
-        horizontalArrangement = Arrangement.spacedBy(CpDimens.spacing2),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        if (forCheckIn) {
-            OutlinedButton(
-                onClick = { Navigator.popThenNavigate(Navigator.Screen.CreateCheckIn) },
-                modifier = Modifier.weight(1f).fillMaxHeight().heightIn(min = CpDimens.buttonHeight),
-                enabled = !isCheckInLoading,
-                shape = RoundedCornerShape(CpDimens.buttonRadius),
-                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
-                colors = ButtonDefaults.outlinedButtonColors(
-                    containerColor = MaterialTheme.colorScheme.surface,
-                    contentColor = MaterialTheme.colorScheme.onSurface,
-                ),
-                contentPadding = PaddingValues(horizontal = CpDimens.spacing2),
-            ) { Text("Выбрать другую", style = MaterialTheme.typography.labelLarge, textAlign = TextAlign.Center) }
-            AppButton(
-                text = if (isCheckInLoading) "Загрузка…" else "Продолжить",
-                onClick = onCheckIn,
-                enabled = !isCheckInLoading,
-                modifier = Modifier.weight(1f).fillMaxHeight(),
-            )
-        } else {
-            RouteIconButton(enabled = canOpenRoute, onClick = onRoute)
-            BottomBarAction(
-                icon = CpIcons.Check,
-                label = "Чекин",
-                enabled = !isCheckInLoading,
-                isLoading = isCheckInLoading,
-                onClick = onCheckIn,
-                modifier = Modifier.weight(1f).analyticsExposure("check_in", "shop_detail", "shop_detail"),
-            )
-        }
-    }
-}
-
-@Composable
-private fun RouteIconButton(
-    enabled: Boolean,
-    onClick: () -> Unit,
-) {
-    val shape = CircleShape
-    Box(
-        modifier = Modifier
-            .size(CpDimens.buttonHeight)
-            .then(if (enabled) Modifier.analyticsExposure("directions", "shop_detail", "shop_detail") else Modifier)
-            .shadow(elevation = 8.dp, shape = shape, clip = false)
-            .clip(shape)
-            .background(
-                if (enabled) CpColor.Primary
-                else CpColor.Primary.copy(alpha = 0.38f),
-            )
-            .clickable(enabled = enabled, onClick = onClick),
-        contentAlignment = Alignment.Center,
-    ) {
-        Icon(
-            imageVector = CpIcons.Navigation,
-            contentDescription = "Маршрут",
-            tint = CpColor.DarkTextOnPrimary,
-            modifier = Modifier.size(20.dp),
-        )
-    }
-}
-
-@Composable
-private fun BottomBarAction(
-    icon: ImageVector,
-    label: String,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-    enabled: Boolean = true,
-    isLoading: Boolean = false,
-) {
-    val tint = if (enabled) {
-        MaterialTheme.colorScheme.onSurface
-    } else {
-        MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
-    }
-    val shape = CircleShape
-    Row(
-        modifier = modifier
-            .height(CpDimens.buttonHeight)
-            .shadow(elevation = 8.dp, shape = shape, clip = false)
-            .border(1.dp, MaterialTheme.colorScheme.outline, shape)
-            .clip(shape)
-            .background(MaterialTheme.colorScheme.surface)
-            .clickable(enabled = enabled && !isLoading, onClick = onClick)
-            .padding(horizontal = CpDimens.spacing3),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.Center,
-    ) {
-        if (isLoading) {
-            CoffeePeekLoader(size = 16.dp, strokeWidth = 2.dp)
-        } else {
-            Icon(
-                imageVector = icon,
-                contentDescription = null,
-                tint = tint,
-                modifier = Modifier.size(16.dp),
-            )
-        }
-        Spacer(Modifier.width(CpDimens.spacing1))
-        Text(
-            text = label,
-            style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold),
-            color = tint,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
         )
     }
 }

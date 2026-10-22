@@ -31,6 +31,7 @@ import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.tooling.preview.Preview
 import com.adamglin.PhosphorIcons
 import com.adamglin.phosphoricons.Regular
 import com.adamglin.phosphoricons.regular.FileText
@@ -44,6 +45,8 @@ import com.coffeepeek.admin.ui.component.PlatformScrollableColumn
 import com.coffeepeek.admin.ui.component.PlatformSwitch
 import com.coffeepeek.admin.ui.component.SettingsIconBadge
 import com.coffeepeek.admin.ui.component.SettingsIconColors
+import com.coffeepeek.admin.ui.component.SettingsDivider
+import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.admin.ui.icons.CpIcons
 import com.coffeepeek.admin.utils.OpenInBrowser
 import kotlinx.coroutines.launch
@@ -87,7 +90,7 @@ internal fun UsagePolicyScreen() {
                             },
                         ),
                     ) {
-                        Row(verticalAlignment = Alignment.Top) {
+                        Row(Modifier.padding(CpDimens.settingsRowPaddingH), verticalAlignment = Alignment.Top) {
                             SettingsIconBadge(
                                 icon = PhosphorIcons.Regular.Shield,
                                 colors = iconColors,
@@ -120,20 +123,10 @@ internal fun UsagePolicyScreen() {
                     }
                     Spacer(Modifier.height(CpDimens.settingsSectionSpacing))
                 }
-                UsagePolicyLinkCard(
-                    title = "Правила использования",
-                    description = "Узнайте, как работает CoffeePeek.",
-                    url = LegalUrls.TERMS,
-                    icon = PhosphorIcons.Regular.FileText,
-                    iconColors = iconColors,
-                )
-                Spacer(Modifier.height(CpDimens.settingsSectionSpacing))
-                UsagePolicyLinkCard(
-                    title = "Политика конфиденциальности",
-                    description = "Как мы обрабатываем и защищаем ваши данные.",
-                    url = LegalUrls.PRIVACY,
-                    icon = PhosphorIcons.Regular.Shield,
-                    iconColors = iconColors,
+                UsagePolicyLinks(
+                    iconColors,
+                    onOpenTerms = { OpenInBrowser.openInBrowser(LegalUrls.TERMS) },
+                    onOpenPrivacy = { OpenInBrowser.openInBrowser(LegalUrls.PRIVACY) },
                 )
             }
             Spacer(Modifier.height(CpDimens.spacing8))
@@ -154,47 +147,83 @@ private fun UsagePolicyCard(
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
     ) {
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(CpDimens.settingsRowPaddingH),
+            modifier = Modifier.fillMaxWidth(),
             content = content,
         )
     }
 }
 
 @Composable
-private fun UsagePolicyLinkCard(
+private fun UsagePolicyLinks(
+    iconColors: SettingsIconColors,
+    onOpenTerms: () -> Unit,
+    onOpenPrivacy: () -> Unit,
+) {
+    UsagePolicyCard {
+        UsagePolicyLinkRow(
+            title = "Правила использования",
+            description = "Узнайте, как работает CoffeePeek.",
+            onClick = onOpenTerms,
+            icon = PhosphorIcons.Regular.FileText,
+            iconColors = iconColors,
+        )
+        SettingsDivider()
+        UsagePolicyLinkRow(
+            title = "Политика конфиденциальности",
+            description = "Как мы обрабатываем и защищаем ваши данные.",
+            onClick = onOpenPrivacy,
+            icon = PhosphorIcons.Regular.Shield,
+            iconColors = iconColors,
+        )
+    }
+}
+
+@Composable
+private fun UsagePolicyLinkRow(
     title: String,
     description: String,
-    url: String,
+    onClick: () -> Unit,
     icon: ImageVector,
     iconColors: SettingsIconColors,
 ) {
-    UsagePolicyCard(modifier = Modifier.clickable(role = Role.Button) { OpenInBrowser.openInBrowser(url) }) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            SettingsIconBadge(icon = icon, colors = iconColors)
-            Spacer(Modifier.width(CpDimens.spacing3))
-            Column(Modifier.weight(1f)) {
-                Text(
-                    text = title,
-                    style = MaterialTheme.typography.bodyLarge,
-                    fontWeight = FontWeight.Medium,
-                    color = MaterialTheme.colorScheme.onSurface,
-                )
-                Spacer(Modifier.height(CpDimens.spacing1))
-                Text(
-                    text = description,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-            Spacer(Modifier.width(CpDimens.spacing2))
-            Icon(
-                imageVector = CpIcons.ChevronRight,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.size(CpDimens.settingsIconSize),
+    Row(Modifier.fillMaxWidth().clickable(role = Role.Button, onClick = onClick)
+        .padding(CpDimens.settingsRowPaddingH), verticalAlignment = Alignment.CenterVertically) {
+        SettingsIconBadge(icon = icon, colors = iconColors)
+        Spacer(Modifier.width(CpDimens.spacing3))
+        Column(Modifier.weight(1f)) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.bodyLarge,
+                fontWeight = FontWeight.Medium,
+                color = MaterialTheme.colorScheme.onSurface,
+            )
+            Spacer(Modifier.height(CpDimens.spacing1))
+            Text(
+                text = description,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
+        Spacer(Modifier.width(CpDimens.spacing2))
+        Icon(
+            imageVector = CpIcons.ChevronRight,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.size(CpDimens.settingsIconSize),
+        )
     }
+}
+
+@Preview
+@Composable
+private fun UsagePolicyLinksLightPreview() = CoffeePeekTheme(darkTheme = false) {
+    val colors = SettingsIconColors(MaterialTheme.colorScheme.primary.copy(alpha = 0.12f), MaterialTheme.colorScheme.primary)
+    UsagePolicyLinks(colors, {}, {})
+}
+
+@Preview
+@Composable
+private fun UsagePolicyLinksDarkPreview() = CoffeePeekTheme(darkTheme = true) {
+    val colors = SettingsIconColors(MaterialTheme.colorScheme.primary.copy(alpha = 0.12f), MaterialTheme.colorScheme.primary)
+    UsagePolicyLinks(colors, {}, {})
 }

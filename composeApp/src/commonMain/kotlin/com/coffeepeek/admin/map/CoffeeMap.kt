@@ -2,10 +2,13 @@ package com.coffeepeek.admin.map
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.DpSize
 import com.coffeepeek.domain.model.MapBounds
 import com.coffeepeek.domain.model.MapCluster
 import com.coffeepeek.domain.model.MapCoffeeZone
 import com.coffeepeek.domain.model.MapShop
+
+internal expect fun Modifier.mapCanvasSize(canvasSize: DpSize?): Modifier
 
 @Composable
 expect fun CoffeeMap(

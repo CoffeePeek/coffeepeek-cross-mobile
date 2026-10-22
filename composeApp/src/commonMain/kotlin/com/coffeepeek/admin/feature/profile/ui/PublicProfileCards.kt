@@ -1,5 +1,18 @@
 package com.coffeepeek.admin.feature.profile.ui
 
+import org.jetbrains.compose.resources.stringResource
+import coffeepeek.composeapp.generated.resources.Res
+import coffeepeek.composeapp.generated.resources.profile_open_avatar
+import coffeepeek.composeapp.generated.resources.profile_avatar_of
+import coffeepeek.composeapp.generated.resources.profile_edit
+import coffeepeek.composeapp.generated.resources.profile_unfollow_description
+import coffeepeek.composeapp.generated.resources.profile_follow_description
+import coffeepeek.composeapp.generated.resources.profile_following
+import coffeepeek.composeapp.generated.resources.profile_follow
+import coffeepeek.composeapp.generated.resources.profile_stat_check_ins
+import coffeepeek.composeapp.generated.resources.profile_stat_shops
+import coffeepeek.composeapp.generated.resources.profile_stat_followers
+import coffeepeek.composeapp.generated.resources.profile_open_followers
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -41,102 +54,82 @@ internal fun PublicProfileHeader(
     followEnabled: Boolean = true,
     onFollow: (() -> Unit)? = null,
     onEditProfile: (() -> Unit)? = null,
+    stats: PublicProfileStats? = null,
+    onFollowersClick: () -> Unit = {},
     onAvatarClick: () -> Unit,
 ) {
-    Row(
-        Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(16.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Box(Modifier.size(92.dp)) {
-            Box(
-                Modifier.fillMaxSize().clip(CircleShape)
-                    .background(Brush.linearGradient(listOf(CpColor.GoldWarm, CpColor.Primary)))
-                    .then(if (!avatarUrl.isNullOrBlank()) Modifier.clickable(role = Role.Button, onClickLabel = "Открыть аватар", onClick = onAvatarClick) else Modifier),
-                contentAlignment = Alignment.Center,
-            ) {
-                Text(
-                    nickname.trimStart('@').take(1).uppercase().ifBlank { "?" },
-                    style = MaterialTheme.typography.headlineLarge,
-                    color = CpColor.DarkTextOnPrimary,
-                    fontWeight = FontWeight.SemiBold,
-                )
-                if (!avatarUrl.isNullOrBlank()) CpImage(
-                    data = avatarUrl, modifier = Modifier.fillMaxSize(),
-                    contentScale = ContentScale.Crop, contentDescription = "Аватар @$nickname".replace("@@", "@"),
-                )
-            }
-            if (onEditProfile != null) FilledIconButton(
-                onClick = onEditProfile,
-                modifier = Modifier.align(Alignment.BottomEnd).size(32.dp),
-                colors = IconButtonDefaults.filledIconButtonColors(
-                    containerColor = MaterialTheme.colorScheme.surface,
-                    contentColor = MaterialTheme.colorScheme.onSurface,
-                ),
-            ) {
-                Icon(CpIcons.Edit, contentDescription = "Редактировать профиль", modifier = Modifier.size(16.dp))
+    Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
+            ProfileAvatar(nickname, avatarUrl, onEditProfile, onAvatarClick)
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text("@${nickname.trimStart('@')}", style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground,
+                    maxLines = 2, overflow = TextOverflow.Ellipsis)
+                if (stats != null) ProfileStats(stats, onFollowersClick)
             }
         }
-        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-            FlowRow(
-                Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalArrangement = Arrangement.spacedBy(4.dp),
-                itemVerticalAlignment = Alignment.CenterVertically,
-            ) {
-                Text(
-                    "@${nickname.trimStart('@')}",
-                    style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onBackground,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis,
-                )
-                if (onFollow != null) OutlinedButton(
-                    onClick = onFollow,
-                    enabled = followEnabled,
-                    modifier = Modifier.semantics {
-                        contentDescription = if (isFollowing) "Отписаться от @${nickname.trimStart('@')}" else "Подписаться на @${nickname.trimStart('@')}"
-                    },
-                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
-                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
-                    colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.secondary),
-                ) {
-                    Text(if (isFollowing) "Вы подписаны" else "Подписаться", style = MaterialTheme.typography.labelMedium)
-                }
-            }
-            if (!about.isNullOrBlank()) Text(
-                about, style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
+        if (!about.isNullOrBlank()) Text(about, style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant)
+        if (onFollow != null) ProfileFollowButton(nickname, isFollowing, followEnabled, onFollow)
     }
 }
 
 @Composable
-internal fun PublicProfileStatsCard(stats: PublicProfileStats, onFollowersClick: () -> Unit = {}) {
-    ProfileCard {
-        Row(Modifier.fillMaxWidth().padding(horizontal = 4.dp, vertical = 12.dp), verticalAlignment = Alignment.CenterVertically) {
-            listOf(
-                stats.checkIns to "Чекины", stats.coffeeShops to "Кофейни",
-                stats.roasters to "Обжарщики", stats.followers to "Подписчики",
-            ).forEachIndexed { index, (count, label) ->
-                if (index > 0) Box(Modifier.width(1.dp).height(34.dp).background(MaterialTheme.colorScheme.outlineVariant))
-                Column(
-                    Modifier.weight(1f).then(
-                        if (index == 3) Modifier.clickable(role = Role.Button, onClickLabel = "Открыть подписчиков", onClick = onFollowersClick)
-                        else Modifier,
-                    ).padding(horizontal = 2.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                ) {
-                    Text(count.toString(), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold)
-                    Spacer(Modifier.height(2.dp))
-                    Text(
-                        label, style = MaterialTheme.typography.labelSmall.copy(fontSize = 11.sp, lineHeight = 14.sp),
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        textAlign = TextAlign.Center, maxLines = 2,
-                    )
-                }
+private fun ProfileAvatar(nickname: String, avatarUrl: String?,
+    onEditProfile: (() -> Unit)?, onAvatarClick: () -> Unit) {
+    Box(Modifier.size(88.dp)) {
+        Box(
+            Modifier.fillMaxSize().clip(CircleShape)
+                .background(Brush.linearGradient(listOf(CpColor.GoldWarm, CpColor.Primary)))
+                .then(if (!avatarUrl.isNullOrBlank()) Modifier.clickable(role = Role.Button,
+                    onClickLabel = stringResource(Res.string.profile_open_avatar), onClick = onAvatarClick) else Modifier),
+            contentAlignment = Alignment.Center,
+        ) {
+            Text(nickname.trimStart('@').take(1).uppercase().ifBlank { "?" },
+                style = MaterialTheme.typography.headlineLarge, color = CpColor.DarkTextOnPrimary,
+                fontWeight = FontWeight.SemiBold)
+            if (!avatarUrl.isNullOrBlank()) CpImage(data = avatarUrl, contentDescription =
+                stringResource(Res.string.profile_avatar_of, nickname.trimStart('@')),
+                modifier = Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
+        }
+        if (onEditProfile != null) FilledIconButton(
+            onClick = onEditProfile, modifier = Modifier.align(Alignment.BottomEnd).size(36.dp),
+            colors = IconButtonDefaults.filledIconButtonColors(
+                containerColor = MaterialTheme.colorScheme.surface, contentColor = MaterialTheme.colorScheme.onSurface),
+        ) { Icon(CpIcons.Edit, stringResource(Res.string.profile_edit), Modifier.size(18.dp)) }
+    }
+}
+
+@Composable
+private fun ProfileFollowButton(nickname: String, isFollowing: Boolean, enabled: Boolean, onClick: () -> Unit) {
+    val description = stringResource(if (isFollowing) Res.string.profile_unfollow_description else Res.string.profile_follow_description,
+        nickname.trimStart('@'))
+    OutlinedButton(
+        onClick = onClick, enabled = enabled, modifier = Modifier.semantics { contentDescription = description },
+        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+        colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.secondary),
+    ) { Text(stringResource(if (isFollowing) Res.string.profile_following else Res.string.profile_follow),
+        style = MaterialTheme.typography.labelMedium) }
+}
+
+@Composable
+private fun ProfileStats(stats: PublicProfileStats, onFollowersClick: () -> Unit) {
+    val items = listOf(stats.checkIns to stringResource(Res.string.profile_stat_check_ins),
+        stats.coffeeShops to stringResource(Res.string.profile_stat_shops),
+        stats.followers to stringResource(Res.string.profile_stat_followers))
+    val followersLabel = stringResource(Res.string.profile_open_followers)
+    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+        items.forEachIndexed { index, (count, label) ->
+            Column(
+                Modifier.weight(1f).then(if (index == items.lastIndex) Modifier.clickable(role = Role.Button,
+                    onClickLabel = followersLabel, onClick = onFollowersClick) else Modifier).padding(vertical = 4.dp),
+                horizontalAlignment = Alignment.Start,
+            ) {
+                Text(count.toString(), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold)
+                Text(label, style = MaterialTheme.typography.labelSmall.copy(fontSize = 11.sp, lineHeight = 14.sp),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.Start)
             }
         }
     }
@@ -209,4 +202,22 @@ internal fun ProfileCard(modifier: Modifier = Modifier.fillMaxWidth(), content: 
         border = BorderStroke(0.7.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.8f)),
         content = content,
     )
+}
+
+@androidx.compose.ui.tooling.preview.Preview
+@Composable
+private fun ProfileHeaderLightPreview() = ProfileHeaderPreview(false)
+
+@androidx.compose.ui.tooling.preview.Preview
+@Composable
+private fun ProfileHeaderDarkPreview() = ProfileHeaderPreview(true)
+
+@Composable
+private fun ProfileHeaderPreview(dark: Boolean) = com.coffeepeek.core.designsystem.theme.CoffeePeekTheme(darkTheme = dark) {
+    Surface(color = MaterialTheme.colorScheme.background) {
+        Column(Modifier.padding(16.dp)) {
+            PublicProfileHeader("goloologo", null, "Варю, пью, фоткаю…", onEditProfile = {},
+                stats = PublicProfileStats(24, 6, 9, 3), onAvatarClick = {})
+        }
+    }
 }
