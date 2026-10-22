@@ -4,6 +4,10 @@ import com.coffeepeek.feature.profile.api.ProfileAvatarImage
 
 internal enum class UsernameError { Empty, TooShort, TooLong }
 
+internal enum class EditProfileError {
+    Load, AvatarTooLarge, Avatar, Username, About, UsernameLimit, UsernameTaken, InvalidUsername, SignInRequired,
+}
+
 internal data class EditProfileState(
     val username: String = "",
     val about: String = "",
@@ -13,7 +17,9 @@ internal data class EditProfileState(
     val originalAbout: String = "",
     val isLoading: Boolean = true,
     val isSaving: Boolean = false,
-    val error: String? = null,
+    val error: EditProfileError? = null,
+    val usernameRetryAtUtc: String? = null,
+    val usernameToConfirm: String? = null,
 ) {
     /** Measured on the untrimmed value, as in production; the saved value is trimmed. */
     val usernameError: UsernameError? get() = when {
@@ -39,6 +45,8 @@ internal sealed interface EditProfileAction {
     data class AboutChanged(val value: String) : EditProfileAction
     data class AvatarPicked(val image: ProfileAvatarImage) : EditProfileAction
     data object DismissError : EditProfileAction
+    data object ConfirmUsernameChange : EditProfileAction
+    data object CancelUsernameChange : EditProfileAction
     data object Save : EditProfileAction
 }
 
