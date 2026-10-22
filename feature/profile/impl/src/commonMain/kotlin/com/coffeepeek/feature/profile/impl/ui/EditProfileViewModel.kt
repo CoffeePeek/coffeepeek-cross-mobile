@@ -4,16 +4,16 @@ import androidx.lifecycle.viewModelScope
 import com.coffeepeek.core.presentation.MviViewModel
 import com.coffeepeek.feature.profile.api.OwnProfile
 import com.coffeepeek.feature.profile.api.ProfileAccountPort
+import com.coffeepeek.feature.profile.api.ProfileAvatarImage
 import com.coffeepeek.feature.profile.api.ProfileEditPort
+import com.coffeepeek.feature.profile.api.UsernameChangeFailure
 import com.coffeepeek.feature.profile.impl.ui.model.EditProfileAction
+import com.coffeepeek.feature.profile.impl.ui.model.EditProfileError
 import com.coffeepeek.feature.profile.impl.ui.model.EditProfileEvent
 import com.coffeepeek.feature.profile.impl.ui.model.EditProfileState
 import kotlinx.coroutines.launch
 
-/**
- * The edit form. Saves sequentially (avatar, name, about) and stops at the first failure. Unlike production, a step that succeeded is
- * remembered, so a retry after a later failure does not upload the avatar or resend the name again.
- */
+/** Saves only after an explicit username confirmation and remembers completed steps on partial failure. */
 internal class EditProfileViewModel(
     private val accounts: ProfileAccountPort,
     private val edit: ProfileEditPort,
@@ -22,14 +22,23 @@ internal class EditProfileViewModel(
 
     override suspend fun handleActionInternal(action: EditProfileAction) {
         when (action) {
-            is EditProfileAction.UsernameChanged -> updateState { copy(username = action.value.take(EditProfileState.MAX_USERNAME)) }
-            is EditProfileAction.AboutChanged -> updateState { copy(about = action.value.take(EditProfileState.MAX_ABOUT)) }
-            is EditProfileAction.AvatarPicked ->
-                if (action.image.bytes.size > EditProfileState.MAX_AVATAR_BYTES) updateState { copy(error = AVATAR_TOO_LARGE) }
-                else updateState { copy(pendingAvatar = action.image, error = null) }
-            EditProfileAction.DismissError -> updateState { copy(error = null) }
-            EditProfileAction.Save -> save()
+            is EditProfileAction.UsernameChanged -> if (!currentState.isSaving) updateState {
+                copy(username = action.value.take(EditProfileState.MAX_USERNAME), usernameToConfirm = null)
+            }
+            is EditProfileAction.AboutChanged -> if (!currentState.isSaving) updateState {
+                copy(about = action.value.take(EditProfileState.MAX_ABOUT))
+            }
+            is EditProfileAction.AvatarPicked -> if (!currentState.isSaving) pickAvatar(action.image)
+            EditProfileAction.DismissError -> updateState { copy(error = null, usernameRetryAtUtc = null) }
+            EditProfileAction.CancelUsernameChange -> updateState { copy(usernameToConfirm = null) }
+            EditProfileAction.ConfirmUsernameChange -> confirmUsernameChange()
+            EditProfileAction.Save -> requestSave()
         }
+    }
+
+    private fun pickAvatar(image: ProfileAvatarImage) = updateState {
+        if (image.bytes.size > EditProfileState.MAX_AVATAR_BYTES) copy(error = EditProfileError.AvatarTooLarge)
+        else copy(pendingAvatar = image, error = null)
     }
 
     private fun load() {
@@ -38,7 +47,7 @@ internal class EditProfileViewModel(
             if (cached != null) return@launch apply(cached)
             accounts.loadOwnProfile(forceRefresh = true)
                 .onSuccess(::apply)
-                .onFailure { updateState { copy(isLoading = false, error = it.userMessage() ?: LOAD_FAILED) } }
+                .onFailure { updateState { copy(isLoading = false, error = EditProfileError.Load) } }
         }
     }
 
@@ -49,42 +58,72 @@ internal class EditProfileViewModel(
         )
     }
 
-    private suspend fun save() {
+    private suspend fun requestSave() {
         val form = currentState
-        if (!form.canSave) return
-        updateState { copy(isSaving = true, error = null) }
+        if (!form.canSave || form.usernameToConfirm != null) return
+        if (form.username.trim() != form.originalUsername) {
+            updateState { copy(usernameToConfirm = username.trim(), error = null) }
+        } else save(form)
+    }
 
-        form.pendingAvatar?.let { avatar ->
-            edit.updateAvatar(avatar).onFailure { return fail(it, AVATAR_FAILED, useCause = true) }
-            val uploaded = accounts.cachedOwnProfile()?.avatarUrl
-            updateState { copy(pendingAvatar = pendingAvatar.takeUnless { it === avatar }, avatarUrl = uploaded ?: avatarUrl) }
+    private suspend fun confirmUsernameChange() {
+        val form = currentState
+        val confirmedUsername = form.usernameToConfirm ?: return
+        if (!form.canSave || form.username.trim() != confirmedUsername) return
+        save(form)
+    }
+
+    private suspend fun save(form: EditProfileState) {
+        updateState { copy(isSaving = true, error = null, usernameRetryAtUtc = null, usernameToConfirm = null) }
+        try {
+            if (!saveAvatar(form.pendingAvatar)) return
+            if (!saveUsername(form)) return
+            if (!saveAbout(form)) return
+            sendEvent(EditProfileEvent.Saved)
+        } finally {
+            updateState { copy(isSaving = false) }
         }
+    }
+
+    private suspend fun saveAvatar(avatar: ProfileAvatarImage?): Boolean {
+        if (avatar == null) return true
+        edit.updateAvatar(avatar).onFailure { return fail(EditProfileError.Avatar) }
+        val uploaded = accounts.cachedOwnProfile()?.avatarUrl
+        updateState { copy(pendingAvatar = null, avatarUrl = uploaded ?: avatarUrl) }
+        return true
+    }
+
+    private suspend fun saveUsername(form: EditProfileState): Boolean {
         val username = form.username.trim()
-        if (username != form.originalUsername) {
-            edit.updateUsername(username).onFailure { return fail(it, USERNAME_FAILED) }
-            updateState { copy(originalUsername = username) }
-        }
+        if (username == form.originalUsername) return true
+        edit.updateUsername(username).onFailure { return failUsername(it) }
+        updateState { copy(originalUsername = username) }
+        return true
+    }
+
+    private suspend fun saveAbout(form: EditProfileState): Boolean {
         val about = form.about.trim()
-        if (about != form.originalAbout) {
-            edit.updateAbout(about).onFailure { return fail(it, ABOUT_FAILED) }
-            updateState { copy(originalAbout = about) }
+        if (about == form.originalAbout) return true
+        edit.updateAbout(about).onFailure { return fail(EditProfileError.About) }
+        updateState { copy(originalAbout = about) }
+        return true
+    }
+
+    private fun failUsername(error: Throwable): Boolean {
+        val failure = error as? UsernameChangeFailure
+        val reason = when (failure?.reason) {
+            UsernameChangeFailure.Reason.LimitReached -> EditProfileError.UsernameLimit
+            UsernameChangeFailure.Reason.Taken -> EditProfileError.UsernameTaken
+            UsernameChangeFailure.Reason.Invalid -> EditProfileError.InvalidUsername
+            UsernameChangeFailure.Reason.SignInRequired -> EditProfileError.SignInRequired
+            else -> EditProfileError.Username
         }
-        updateState { copy(isSaving = false) }
-        sendEvent(EditProfileEvent.Saved)
+        updateState { copy(error = reason, usernameRetryAtUtc = failure?.retryAtUtc) }
+        return false
     }
 
-    private fun fail(error: Throwable, fallback: String, useCause: Boolean = false) = updateState {
-        copy(isSaving = false, error = error.userMessage(useCause) ?: fallback)
-    }
-
-    private fun Throwable.userMessage(useCause: Boolean = false): String? =
-        (message ?: if (useCause) cause?.message else null)?.takeIf(String::isNotBlank)
-
-    private companion object {
-        const val LOAD_FAILED = "Ошибка загрузки профиля"
-        const val AVATAR_TOO_LARGE = "Размер файла не должен превышать 5 МБ"
-        const val AVATAR_FAILED = "Ошибка обновления аватара"
-        const val USERNAME_FAILED = "Ошибка обновления имени"
-        const val ABOUT_FAILED = "Ошибка обновления описания"
+    private fun fail(reason: EditProfileError): Boolean {
+        updateState { copy(error = reason) }
+        return false
     }
 }
