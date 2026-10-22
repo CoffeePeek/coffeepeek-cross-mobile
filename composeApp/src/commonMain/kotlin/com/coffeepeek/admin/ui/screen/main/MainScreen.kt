@@ -6,6 +6,7 @@ import dev.chrisbanes.haze.hazeSource
 import dev.chrisbanes.haze.rememberHazeState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.animation.AnimatedContentTransitionScope
@@ -28,9 +29,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.unit.dp
 import androidx.navigation.NavDestination
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavDestination.Companion.hasRoute
@@ -174,11 +175,9 @@ internal fun ComposeMainScreen(isLoggedIn: Boolean) {
     }
     val isExpandedMapVisible = isFeedMapExpanded &&
         currentDestination?.hasRoute<Navigator.Screen.FeedTab>() == true
-    val density = LocalDensity.current
-    val systemNavBottom = with(density) {
-        WindowInsets.navigationBars.getBottom(this).toDp()
-    }
-    val floatingClearance = systemNavBottom + floatingNavBarHeight() + FloatingNavBottomMargin
+    val systemBottomInset = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
+    val floatingClearance = systemBottomInset +
+        if (isExpandedMapVisible) 0.dp else floatingNavBarHeight() + FloatingNavBottomMargin
     val tabBarHaze = rememberHazeState()
     var feedEntry by remember { mutableStateOf<NavBackStackEntry?>(null) }
     val feedStateHolder = rememberSaveableStateHolder()

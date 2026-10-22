@@ -14,10 +14,10 @@ fun handleAppLink(link: String): Boolean {
     return true
 }
 
-fun MainViewController(): UIViewController {
+fun MainViewController(onReady: () -> Unit): UIViewController {
     if (!koinInitialized) {
         initPlatformKoin()
         koinInitialized = true
     }
-    return ComposeUIViewController { App() }
+    return ComposeUIViewController { App(onReady = onReady) }
 }

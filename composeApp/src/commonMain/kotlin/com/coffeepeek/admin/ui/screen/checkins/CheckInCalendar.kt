@@ -27,6 +27,14 @@ data class CalendarMonth(val year: Int, val month: Int) {
     val toUtc: String get() = localCalendarBoundary(plusMonths(1).isoDate(1))
 }
 
+/** A complete Monday–Sunday range, including days in neighbouring months. */
+data class CalendarWeek(val today: String) {
+    val dates: List<String> = calendarWeekDates(today)
+    init { require(dates.size == 7) }
+    val fromUtc: String get() = localCalendarBoundary(dates.first())
+    val toUtc: String get() = localCalendarBoundary(shiftCalendarDate(dates.last(), 1))
+}
+
 internal fun calendarMonthFromIsoDate(value: String): CalendarMonth? {
     val parts = value.substringBefore('T').split('-')
     val year = parts.getOrNull(0)?.toIntOrNull() ?: return null
