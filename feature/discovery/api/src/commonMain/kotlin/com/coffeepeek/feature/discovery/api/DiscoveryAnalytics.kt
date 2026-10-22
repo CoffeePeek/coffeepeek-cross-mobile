@@ -14,6 +14,9 @@ enum class DiscoveryGate { VisitedFilter, FavoritesFilter }
 /** Where a geolocation answer was asked and what it was. */
 enum class GeolocationOutcome { Available, Unavailable }
 
+/** What the user did on the map, as the legacy `map_interaction` event named it. */
+enum class MapInteraction { MarkerSelected, SearchSelected, Zoomed, ZonesToggled, Loaded, LoadFailed, NearbyLoaded, NearbyFailed, Expanded, Collapsed }
+
 /**
  * What Discovery reports. The application maps it to its analytics with the event names and properties of the legacy screens; the owner knows no vendor.
  * [filterKeys] are the property keys of the filters in use (`city`, `type`, `isOpen`, ...), [changedKeys] the ones whose value changed.
@@ -25,6 +28,10 @@ interface DiscoveryAnalytics {
     fun filtersChanged(filterKeys: List<String>, changedKeys: List<String>, action: FilterAction)
     fun gateShown(gate: DiscoveryGate)
     fun geolocation(placement: String, userTriggered: Boolean, outcome: GeolocationOutcome)
+    fun mapInteracted(action: MapInteraction, resultCount: Int? = null, durationMs: Long? = null, enabled: Boolean? = null)
+    fun mapSearchStarted(text: String, filterKeys: List<String>, citySlug: String?): SearchRun
+    /** A shop of the map opened; [fromSearch] when it was picked from the map's search suggestions. */
+    fun mapShopOpened(fromSearch: Boolean)
 }
 
 /** Reports nothing; for previews and tests. */
@@ -40,4 +47,7 @@ object NoDiscoveryAnalytics : DiscoveryAnalytics {
     override fun filtersChanged(filterKeys: List<String>, changedKeys: List<String>, action: FilterAction) = Unit
     override fun gateShown(gate: DiscoveryGate) = Unit
     override fun geolocation(placement: String, userTriggered: Boolean, outcome: GeolocationOutcome) = Unit
+    override fun mapInteracted(action: MapInteraction, resultCount: Int?, durationMs: Long?, enabled: Boolean?) = Unit
+    override fun mapSearchStarted(text: String, filterKeys: List<String>, citySlug: String?): SearchRun = NoRun
+    override fun mapShopOpened(fromSearch: Boolean) = Unit
 }
