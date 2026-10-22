@@ -1,6 +1,5 @@
 package com.coffeepeek.admin.feature.profile.ui
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -11,7 +10,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
@@ -23,7 +21,6 @@ import com.coffeepeek.admin.feature.favorites.api.FavoritesPreviewCarousel
 import com.coffeepeek.feature.profile.domain.PublicFavoriteKind
 import com.coffeepeek.feature.profile.domain.PublicProfileFavorite
 import com.coffeepeek.feature.profile.domain.PublicProfileConnectionKind
-import com.coffeepeek.admin.theme.CpColor
 import com.coffeepeek.admin.ui.component.CoffeePeekLoader
 import com.coffeepeek.admin.ui.component.FullScreenImageDialog
 import com.coffeepeek.admin.ui.component.PhotoViewerImages
@@ -81,6 +78,7 @@ internal fun UserProfileScreen(
     topBarActions: (@Composable () -> Unit)? = null,
     favoritesPreview: (@Composable () -> Unit)? = null,
     activityCalendar: (@Composable () -> Unit)? = null,
+    activityPreview: (@Composable (onClick: () -> Unit) -> Unit)? = null,
     bottomContentPadding: Dp = 20.dp,
     vm: PublicProfileViewModel = platformViewModel(key = slug, parameters = { parametersOf(slug) }),
 ) {
@@ -115,10 +113,6 @@ internal fun UserProfileScreen(
     ) { _ ->
         Column(
             Modifier.fillMaxSize()
-                .background(Brush.verticalGradient(listOf(
-                    CpColor.GoldWarm.copy(alpha = 0.055f),
-                    MaterialTheme.colorScheme.background,
-                )))
                 .statusBarsPadding(),
         ) {
             Box(
@@ -211,13 +205,23 @@ internal fun UserProfileScreen(
                         followEnabled = !state.isFollowLoading && !state.isLoading,
                         onFollow = if (viewingOwnProfile) null else vm::toggleFollow,
                         onEditProfile = onEditProfile,
+                        stats = profile.stats,
+                        onFollowersClick = {
+                            section = null
+                            vm.openConnections(PublicProfileConnectionKind.Followers)
+                        },
                     ) {
                         profile.avatarUrl?.let { photos = ProfilePhotos(PhotoViewerImages(listOf(it))) }
                     }
-                    PublicProfileStatsCard(profile.stats, onFollowersClick = {
-                        section = null
-                        vm.openConnections(PublicProfileConnectionKind.Followers)
-                    })
+                    if (activityPreview != null) activityPreview { section = ProfileSection.Activity }
+                    else PublicProfileActivityPreview(slug, profile.activity,
+                        state.checkIns.map { it.occurredAt to (it.source?.photoThumbnailUrls ?: it.photoUrls) },
+                        state.isLoadingActivity || state.isLoadingCheckIns,
+                        state.activityError != null || state.checkInsError != null,
+                        {
+                            vm.retryActivity()
+                            vm.retryCheckIns()
+                        }, { section = ProfileSection.Activity })
                     if (state.error != null) InlineProfileError("Не удалось обновить профиль", vm::refresh)
                     if (!viewingOwnProfile && state.followError != null) InlineProfileError("Не удалось изменить подписку", vm::toggleFollow)
 
@@ -272,15 +276,6 @@ internal fun UserProfileScreen(
                         }
                     }
 
-                    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                        ProfileSectionHeading("Активность", onAll = { section = ProfileSection.Activity })
-                        when {
-                            state.isLoadingActivity -> ProfileSectionLoader()
-                            state.activityError != null -> InlineProfileError("Не удалось загрузить активность", vm::retryActivity)
-                            profile.activity != null -> PublicProfileActivityCard(profile.activity!!, onClick = { section = ProfileSection.Activity })
-                            else -> ProfileSectionLoader()
-                        }
-                    }
                     Spacer(Modifier.height(bottomContentPadding))
                 }
             }

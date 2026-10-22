@@ -9,4 +9,7 @@ import androidx.compose.runtime.Composable
 expect fun applyPlatformNightMode(mode: ThemeMode)
 
 @Composable
-expect fun PlatformSystemBars(darkTheme: Boolean)
+expect fun PlatformSystemBars(darkTheme: Boolean, lightStatusBarIcons: Boolean = darkTheme)
+
+@Composable
+internal expect fun platformSystemDarkTheme(): Boolean

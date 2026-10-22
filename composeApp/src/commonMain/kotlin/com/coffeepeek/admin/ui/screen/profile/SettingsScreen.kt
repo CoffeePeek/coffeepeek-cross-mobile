@@ -37,6 +37,15 @@ import com.coffeepeek.admin.ui.icons.CpIcons
 import com.coffeepeek.admin.utils.COFFEEPEEK_SHARE_TEXT
 import com.coffeepeek.admin.utils.OpenInBrowser
 import com.coffeepeek.admin.utils.ShareHelper
+import com.coffeepeek.admin.utils.appReviewUrl
+import com.coffeepeek.admin.config.AppConfig
+import coffeepeek.composeapp.generated.resources.Res
+import coffeepeek.composeapp.generated.resources.settings_rate_app
+import coffeepeek.composeapp.generated.resources.settings_rate_app_description
+import coffeepeek.composeapp.generated.resources.settings_other_description
+import org.jetbrains.compose.resources.stringResource
+import androidx.compose.ui.tooling.preview.Preview
+import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import org.koin.compose.koinInject
 
 @Composable
@@ -101,12 +110,6 @@ fun SettingsScreen(vm: ProfileViewModel = koinInject()) {
             Spacer(Modifier.height(CpDimens.settingsSectionSpacing))
 
             SettingsSection(title = "Настройки") {
-                if (profile.isLoggedIn) {
-                    SettingsRow(icon = CpIcons.VisibilityOff, label = "Заблокированные авторы",
-                        description = "Управление блокировками", iconColors = SettingsIconPalette.Violet,
-                        onClick = { Navigator.navigate(Navigator.Screen.BlockedAuthors) })
-                    SettingsDivider()
-                }
                 SettingsRow(
                     icon = CpIcons.Location,
                     label = "Город",
@@ -134,7 +137,7 @@ fun SettingsScreen(vm: ProfileViewModel = koinInject()) {
 
             SettingsSection(
                 title = "Другие настройки",
-                description = "Управление полезными дополнениями, оценки в App Store и настройки конфиденциальности",
+                description = stringResource(Res.string.settings_other_description),
             ) {
                 SettingsRow(
                     icon = CpIcons.Review,
@@ -157,6 +160,8 @@ fun SettingsScreen(vm: ProfileViewModel = koinInject()) {
                     iconColors = SettingsIconPalette.BrightCyan,
                     onClick = { ShareHelper.shareText(COFFEEPEEK_SHARE_TEXT) },
                 )
+                val reviewUrl = appReviewUrl(AppConfig.updatePlatform, AppConfig.updateChannel)
+                StoreReviewRow(reviewUrl?.let { url -> { OpenInBrowser.openInBrowser(url) } })
             }
 
             Spacer(Modifier.height(CpDimens.settingsSectionSpacing))
@@ -176,6 +181,31 @@ fun SettingsScreen(vm: ProfileViewModel = koinInject()) {
             Spacer(Modifier.height(CpDimens.spacing8 + LocalFloatingNavClearance.current))
         }
     }
+}
+
+@Composable
+private fun StoreReviewRow(onReview: (() -> Unit)?) {
+    if (onReview == null) return
+    SettingsDivider()
+    SettingsRow(
+        icon = CpIcons.Star,
+        label = stringResource(Res.string.settings_rate_app),
+        description = stringResource(Res.string.settings_rate_app_description),
+        iconColors = SettingsIconPalette.Gold,
+        onClick = onReview,
+    )
+}
+
+@Preview
+@Composable
+private fun StoreReviewRowLightPreview() = CoffeePeekTheme(darkTheme = false) {
+    SettingsSection(title = "CoffeePeek") { StoreReviewRow({}) }
+}
+
+@Preview
+@Composable
+private fun StoreReviewRowDarkPreview() = CoffeePeekTheme(darkTheme = true) {
+    SettingsSection(title = "CoffeePeek") { StoreReviewRow({}) }
 }
 
 private fun ThemeMode.label() = when (this) {
