@@ -31,16 +31,23 @@ import com.coffeepeek.feature.notifications.api.NotificationInboxState
 import com.coffeepeek.room.model.Setting
 import com.coffeepeek.room.repository.SettingRepository
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Runnable
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.plus
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
+import kotlin.coroutines.CoroutineContext
 import kotlin.test.AfterTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -81,6 +88,28 @@ class ProfileViewModelTest {
         await { vm.uiState.value.error != null }
         assertEquals("Не удалось загрузить профиль", vm.uiState.value.error)
         assertFalse(vm.uiState.value.isLoading)
+    }
+
+    @Test fun aLateEmptyCacheEmissionKeepsTheRefreshFailure() = runTest {
+        val dispatcher = QueuedDispatcher()
+        val scope = backgroundScope + dispatcher
+        val h = Harness(session("a"), cached = null, refresh = Result.failure(RuntimeException("net")))
+        val vm = h.viewModel(scope)
+        try {
+            dispatcher.runAt(1) // Observe the session before the cache collector starts.
+            dispatcher.runAt(2) // Finish the refresh before the initial empty cache emission.
+            assertEquals("Не удалось загрузить профиль", vm.uiState.value.error)
+            dispatcher.runAt(0)
+            assertEquals("Не удалось загрузить профиль", vm.uiState.value.error)
+            assertFalse(vm.uiState.value.isLoading)
+            assertTrue(vm.uiState.value.isLoggedIn)
+            h.sessions.set(null)
+            dispatcher.runAll()
+            assertEquals(ProfileUiState(isLoading = false), vm.uiState.value)
+        } finally {
+            scope.cancel()
+            dispatcher.runAll()
+        }
     }
 
     @Test fun aFailedRefreshWithContentKeepsTheContentAndOnlySetsRefreshError() = runTest {
@@ -182,6 +211,15 @@ class ProfileViewModelTest {
     private suspend fun await(condition: () -> Boolean) =
         withContext(Dispatchers.Default) { withTimeout(5_000) { while (!condition()) delay(10) } }
 
+    private class QueuedDispatcher : CoroutineDispatcher() {
+        private val tasks = mutableListOf<Runnable>()
+        override fun dispatch(context: CoroutineContext, block: Runnable) { tasks.add(block) }
+        fun runAt(index: Int) = tasks.removeAt(index).run()
+        fun runAll() {
+            while (tasks.isNotEmpty()) runAt(0)
+        }
+    }
+
     private class Sessions(initial: Session?) : SessionRepository {
         private val state = MutableStateFlow(initial)
         fun set(session: Session?) { state.value = session }
@@ -268,7 +306,8 @@ class ProfileViewModelTest {
     ) {
         val sessions = Sessions(initial)
         val users = Users(cached, refresh, refreshGate)
-        fun viewModel() = ProfileViewModel(Auth(logout, onLogout), users, sessions, Shops(catalogs),
-            CityPreference(Settings({}, savedCity)), ReviewDraftStore(Settings(onClearDrafts)), Notifications)
+        fun viewModel(scope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)) =
+            ProfileViewModel(Auth(logout, onLogout), users, sessions, Shops(catalogs),
+                CityPreference(Settings({}, savedCity)), ReviewDraftStore(Settings(onClearDrafts)), Notifications, scope)
     }
 }
