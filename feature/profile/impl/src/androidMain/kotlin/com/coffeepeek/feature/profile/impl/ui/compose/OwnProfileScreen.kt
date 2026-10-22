@@ -12,11 +12,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -37,7 +32,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
+import com.coffeepeek.core.designsystem.component.CoffeePeekDestructiveConfirmationSheet
 import com.coffeepeek.feature.profile.api.OwnProfileSlots
 import com.coffeepeek.feature.profile.api.ProfileAuthorActions
 import com.coffeepeek.feature.profile.api.ProfileContribution
@@ -47,7 +42,6 @@ import com.coffeepeek.feature.profile.impl.ui.OwnProfileViewModel
 import com.coffeepeek.feature.profile.impl.ui.PublicProfileViewModel
 import com.coffeepeek.feature.profile.impl.ui.compose.component.ProfileSectionLoader
 import com.coffeepeek.feature.profile.impl.ui.compose.component.PublicProfileHeader
-import com.coffeepeek.feature.profile.impl.ui.compose.component.PublicProfileStatsCard
 import com.coffeepeek.feature.profile.impl.ui.model.OwnProfileAction
 import com.coffeepeek.feature.profile.impl.ui.model.PublicProfileAction
 import kotlinx.coroutines.flow.drop
@@ -68,22 +62,22 @@ internal fun OwnProfileScreen(
     onOpenFavorites: () -> Unit,
     onOpenCheckIns: () -> Unit,
     onOpenContributions: (ProfileContribution) -> Unit,
+    onOpenBlockedAuthors: () -> Unit,
 ) {
     val state by vm.state.collectAsStateWithLifecycle()
     var showLogout by remember { mutableStateOf(false) }
-    val actions: @Composable () -> Unit = { OwnProfileActions(onOpenContributions) { showLogout = true } }
+    val actions: @Composable () -> Unit = {
+        OwnProfileActions(onOpenContributions, onOpenBlockedAuthors) { showLogout = true }
+    }
     val bottomPadding = 20.dp + bottomClearance
 
-    if (showLogout) AlertDialog(
-        onDismissRequest = { showLogout = false },
-        title = { Text(stringResource(R.string.profile_logout_title)) },
-        text = { Text(stringResource(R.string.profile_logout_message)) },
-        confirmButton = {
-            TextButton(onClick = { showLogout = false; vm.onAction(OwnProfileAction.Logout) }) {
-                Text(stringResource(R.string.profile_menu_logout), color = MaterialTheme.colorScheme.error)
-            }
-        },
-        dismissButton = { TextButton(onClick = { showLogout = false }) { Text(stringResource(R.string.profile_cancel)) } },
+    if (showLogout) CoffeePeekDestructiveConfirmationSheet(
+        title = stringResource(R.string.profile_logout_title),
+        message = stringResource(R.string.profile_logout_message),
+        confirmLabel = stringResource(R.string.profile_menu_logout),
+        cancelLabel = stringResource(R.string.profile_cancel),
+        onConfirm = { showLogout = false; vm.onAction(OwnProfileAction.Logout) },
+        onDismiss = { showLogout = false },
     )
 
     val slug = state.publicSlug
@@ -107,6 +101,7 @@ internal fun OwnProfileScreen(
                     topBarActions = actions,
                     favoritesPreview = { slots.favoritesPreview(onOpenShop, onOpenRoaster) },
                     activityCalendar = slots.activityCalendar,
+                    activityPreview = slots.activityPreview,
                     bottomContentPadding = bottomPadding,
                 ),
             )
@@ -132,8 +127,9 @@ internal fun OwnProfileScreen(
                     PublicProfileHeader(
                         nickname = profile.userName, avatarUrl = profile.avatarUrl, about = profile.about, image = slots.shared.image,
                         onEditProfile = onEditProfile, onAvatarClick = onEditProfile,
+                        stats = PublicProfileStats(profile.checkInCount, profile.addedShopsCount, profile.addedRoastersCount, profile.followersCount),
                     )
-                    PublicProfileStatsCard(PublicProfileStats(profile.checkInCount, profile.addedShopsCount, profile.addedRoastersCount, profile.followersCount))
+                    slots.activityPreview(onOpenCheckIns)
                     if (state.error != null || state.refreshError != null) slots.loadError { vm.onAction(OwnProfileAction.Refresh) }
                     TextButton(onClick = onOpenFavorites) { Text(stringResource(R.string.profile_own_favorites)) }
                     slots.favoritesPreview(onOpenShop, onOpenRoaster)
@@ -141,23 +137,6 @@ internal fun OwnProfileScreen(
                     Spacer(Modifier.height(bottomPadding))
                 }
             }
-        }
-    }
-}
-
-@Composable
-private fun OwnProfileActions(onContributions: (ProfileContribution) -> Unit, onLogout: () -> Unit) {
-    var open by remember { mutableStateOf(false) }
-    Box {
-        IconButton(onClick = { open = true }) { Icon(CoffeePeekIcons.MoreHorizontal, stringResource(R.string.profile_actions)) }
-        DropdownMenu(expanded = open, onDismissRequest = { open = false }) {
-            @Composable fun item(label: Int, icon: androidx.compose.ui.graphics.vector.ImageVector, onClick: () -> Unit) = DropdownMenuItem(
-                text = { Text(stringResource(label)) }, leadingIcon = { Icon(icon, null) }, onClick = { open = false; onClick() },
-            )
-            item(R.string.profile_menu_shop_changes, CoffeePeekIcons.NoteEdit) { onContributions(ProfileContribution.Changes) }
-            item(R.string.profile_menu_submitted_shops, CoffeePeekIcons.Add) { onContributions(ProfileContribution.Shops) }
-            item(R.string.profile_menu_submitted_roasters, CoffeePeekIcons.CoffeeBean) { onContributions(ProfileContribution.Roasters) }
-            item(R.string.profile_menu_logout, CoffeePeekIcons.Logout, onLogout)
         }
     }
 }
