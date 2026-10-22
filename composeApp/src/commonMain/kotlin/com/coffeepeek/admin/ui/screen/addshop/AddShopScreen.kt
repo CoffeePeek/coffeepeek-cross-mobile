@@ -25,6 +25,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -185,9 +186,10 @@ fun AddShopScreen(vm: AddShopViewModel = platformViewModel()) {
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(padding)
-
-                    .padding(CpDimens.spacing4),
+                    .consumeWindowInsets(padding)
+                    .padding(horizontal = CpDimens.spacing4),
             ) {
+                Spacer(Modifier.height(CpDimens.spacing4))
                 when (step) {
                     AddShopStep.BASIC    -> StepBasic(state = state, vm = vm)
                     AddShopStep.CONTACTS -> StepContacts(state, vm)
@@ -211,7 +213,7 @@ fun AddShopScreen(vm: AddShopViewModel = platformViewModel()) {
                     },
                 )
 
-                Spacer(Modifier.height(CpDimens.spacing8))
+                Spacer(Modifier.height(CpDimens.spacing8 + CpDimens.spacing4))
             }
         }
     }

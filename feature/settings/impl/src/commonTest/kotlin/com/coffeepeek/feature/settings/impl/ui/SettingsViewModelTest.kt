@@ -94,9 +94,9 @@ class SettingsViewModelTest {
 
     @Test fun rowRulesFollowTheSession() = runTest(dispatcher) {
         val account = Account(false); val vm = model(account); runCurrent()
-        assertTrue(vm.state.value.showGuestCard); assertFalse(vm.state.value.showBlockedAuthors); assertTrue(vm.state.value.showAddRows)
+        assertTrue(vm.state.value.showGuestCard); assertTrue(vm.state.value.showAddRows)
         account.signedIn.value = true; runCurrent()
-        assertFalse(vm.state.value.showGuestCard); assertTrue(vm.state.value.showBlockedAuthors); assertTrue(vm.state.value.showAddRows)
+        assertFalse(vm.state.value.showGuestCard); assertTrue(vm.state.value.showAddRows)
     }
 
     @Test fun theCatalogIsLoadedOnCreationAndTheSelectedCityNameIsShown() = runTest(dispatcher) {

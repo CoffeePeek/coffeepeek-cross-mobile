@@ -5,11 +5,11 @@ import platform.Foundation.NSNumber
 
 actual object AppConfig {
     actual val versionCode: Long?
-        get() = bundleString("CFBundleVersion").toLongOrNull()?.takeIf { it >= 0 }
+        get() = iosUpdateVersionCode(bundleString("CFBundleVersion"))
     actual val updatePlatform: String = "ios"
     actual val updateChannel: String? = null
     actual val versionName: String
-        get() = bundleString("CFBundleShortVersionString").ifBlank { "1.1" }
+        get() = bundleString("CFBundleShortVersionString").ifBlank { "1.1.0" }
 
     actual val baseUrl: String
         get() = bundleString("APIBaseURL").trim()
