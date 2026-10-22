@@ -86,6 +86,7 @@ final class MapLibreMapProvider: NSObject, IosNativeMapProvider, MLNMapViewDeleg
             let annotation = map.points[key] ?? CoffeeAnnotation(id: shop.id, cluster: false)
             annotation.title = shop.title
             annotation.type = shop.type
+            annotation.dark = state.dark
             annotation.highlighted = shop.selected
             updateCoordinate(annotation, latitude: shop.lat, longitude: shop.lon)
             if map.points[key] == nil {
@@ -100,6 +101,7 @@ final class MapLibreMapProvider: NSObject, IosNativeMapProvider, MLNMapViewDeleg
             let key = "cluster:" + cluster.id
             let annotation = map.points[key] ?? CoffeeAnnotation(id: cluster.id, cluster: true)
             annotation.count = cluster.count
+            annotation.dark = state.dark
             annotation.title = String(cluster.count)
             updateCoordinate(annotation, latitude: cluster.lat, longitude: cluster.lon)
             if map.points[key] == nil {
@@ -129,7 +131,7 @@ final class MapLibreMapProvider: NSObject, IosNativeMapProvider, MLNMapViewDeleg
     private func configure(_ view: CoffeePinView, annotation: CoffeeAnnotation, animated: Bool) {
         let image = annotation.cluster && annotation.count != 1
             ? clusterImage(count: annotation.count)
-            : pinImage(type: annotation.cluster ? "specialty" : annotation.type, selected: annotation.highlighted)
+            : pinImage(type: annotation.cluster ? "specialty" : annotation.type, selected: annotation.highlighted, dark: annotation.dark)
         view.configure(image: image, highlighted: annotation.highlighted, animated: animated)
         view.accessibilityLabel = annotation.title
     }
@@ -248,49 +250,44 @@ final class MapLibreMapProvider: NSObject, IosNativeMapProvider, MLNMapViewDeleg
                       animationTimingFunction: CAMediaTimingFunction(name: .easeInEaseOut), completionHandler: nil)
     }
 
-    private func pinImage(type: String, selected: Bool) -> UIImage {
-        let key = "pin-\(type)-\(selected)" as NSString
+    private func pinImage(type: String, selected: Bool, dark: Bool) -> UIImage {
+        let key = "pin-\(type)-\(selected)-\(dark)" as NSString
         if let cached = images.object(forKey: key) { return cached }
-        let specialty = type == "specialty"
-        let cafe = type == "cafe"
-        let name = specialty ? "maskot_with_bean" : (cafe ? "maskot_with_dessert" : "maskot_with_cup")
-        let fill = UIColor(hex: specialty ? "#EAB308" : (cafe ? "#78716C" : "#1A1412"))
-        let ring = UIColor(hex: specialty ? "#CA8A04" : (cafe ? "#4A3D35" : "#3D2F28"))
         let size: CGFloat = selected ? 41 : 31
         let pad: CGFloat = selected ? 13.5 : 4
         let side = size + pad * 2
         let rect = CGRect(x: pad, y: pad, width: size, height: size)
-        let mascot = bundleImage(named: name)
         let image = UIGraphicsImageRenderer(size: CGSize(width: side, height: side)).image { context in
-            let cg = context.cgContext
-            cg.saveGState()
-            cg.setShadow(offset: CGSize(width: 0, height: selected ? 2 : 1), blur: selected ? 8 : 3,
-                         color: UIColor(hex: "#1A1412").withAlphaComponent(0.35).cgColor)
-            fill.setFill()
-            cg.fillEllipse(in: rect)
-            cg.restoreGState()
-            cg.saveGState()
-            cg.addEllipse(in: rect)
-            cg.clip()
-            let drawSize = size * 1.72
-            mascot?.draw(in: CGRect(x: side / 2 - drawSize / 2, y: side / 2 - drawSize * 0.58 + size * 0.08,
-                                   width: drawSize, height: drawSize))
-            cg.restoreGState()
-            UIColor.white.setStroke()
-            cg.setLineWidth(2.5)
-            cg.strokeEllipse(in: rect.insetBy(dx: 1.25, dy: 1.25))
-            let ringWidth: CGFloat = selected ? 1.6 : 1.1
-            ring.withAlphaComponent(selected ? 0.95 : 0.7).setStroke()
-            cg.setLineWidth(ringWidth)
-            cg.strokeEllipse(in: rect.insetBy(dx: ringWidth / 2, dy: ringWidth / 2))
-            if selected {
-                UIColor(hex: "#EAB308").withAlphaComponent(0.6).setStroke()
-                cg.setLineWidth(2)
-                cg.strokeEllipse(in: rect.insetBy(dx: -2.5, dy: -2.5))
-            }
+            drawPinBackground(context.cgContext, rect: rect, selected: selected, dark: dark)
+            drawPinIcon(type: type, rect: rect, dark: dark)
+            drawPinRing(context.cgContext, rect: rect, selected: selected, dark: dark)
         }
         images.setObject(image, forKey: key)
         return image
+    }
+
+    private func drawPinBackground(_ cg: CGContext, rect: CGRect, selected: Bool, dark: Bool) {
+        cg.saveGState()
+        cg.setShadow(offset: CGSize(width: 0, height: selected ? 2 : 1), blur: selected ? 8 : 3,
+                     color: UIColor(hex: "#1A1412").withAlphaComponent(0.35).cgColor)
+        UIColor(hex: dark ? "#2D241F" : "#FFFFFF").setFill()
+        cg.fillEllipse(in: rect)
+        cg.restoreGState()
+    }
+
+    private func drawPinIcon(type: String, rect: CGRect, dark: Bool) {
+        let name = type == "specialty" ? "map_coffeepeek_bean" : (type == "cafe" ? "map_fork_knife" : "map_cup_fill")
+        let tint = UIColor(hex: dark ? "#FFFFFF" : "#2D241F")
+        bundleImage(named: name)?.withTintColor(tint, renderingMode: .alwaysOriginal)
+            .draw(in: rect.insetBy(dx: rect.width * 0.20, dy: rect.height * 0.20))
+    }
+
+    private func drawPinRing(_ cg: CGContext, rect: CGRect, selected: Bool, dark: Bool) {
+        let border = dark ? "#3D2F28" : "#E7E5E4"
+        UIColor(hex: selected ? "#D4A84B" : border).setStroke()
+        cg.setLineWidth(selected ? 2 : 1.1)
+        let inset: CGFloat = selected ? -2.5 : 0.55
+        cg.strokeEllipse(in: rect.insetBy(dx: inset, dy: inset))
     }
 
     private func bundleImage(named name: String) -> UIImage? {
@@ -447,6 +444,7 @@ private final class CoffeeAnnotation: MLNPointAnnotation {
     let id: String
     let cluster: Bool
     var type = "coffee_bar"
+    var dark = false
     var count = 0
     var highlighted = false
 
