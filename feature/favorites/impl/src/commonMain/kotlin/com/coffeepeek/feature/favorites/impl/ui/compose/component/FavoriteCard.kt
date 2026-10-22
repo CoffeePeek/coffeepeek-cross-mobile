@@ -71,8 +71,7 @@ internal fun FavoriteCard(
                 FavoritePhoto(shop.photoUrl, shop.title, Modifier.fillMaxSize())
 
                 Row(
-                    modifier = Modifier.align(Alignment.TopEnd).padding(CoffeePeekDimens.spacing3),
-                    horizontalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing2),
+                    modifier = Modifier.align(Alignment.TopEnd).padding(CoffeePeekDimens.spacing1),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     shop.rating?.takeIf { it.isFinite() && it > 0 }?.let { rating ->

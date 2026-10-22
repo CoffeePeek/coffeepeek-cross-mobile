@@ -1,48 +1,68 @@
-@file:OptIn(kotlinx.cinterop.ExperimentalForeignApi::class, kotlinx.cinterop.BetaInteropApi::class)
+@file:OptIn(kotlinx.cinterop.ExperimentalForeignApi::class)
 
 package com.coffeepeek.admin.ui
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
+import androidx.compose.foundation.layout.only
+import androidx.compose.foundation.layout.consumeWindowInsets
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.systemBars
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.SideEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.collectAsState
-import androidx.compose.material3.MaterialTheme
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.ComposeUIViewController
 import com.coffeepeek.admin.AppContent
-import com.coffeepeek.admin.ui.component.NavigationBarAction
-import com.coffeepeek.admin.ui.component.ProvideFloatingNavClearance
-import androidx.compose.ui.unit.dp
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.WindowInsetsSides
-import androidx.compose.foundation.layout.consumeWindowInsets
-import androidx.compose.foundation.layout.only
-import androidx.compose.foundation.layout.systemBars
-import androidx.compose.ui.Modifier
-import com.coffeepeek.admin.ui.component.dismissKeyboardOnBackgroundGestures
+import com.coffeepeek.admin.theme.ThemeManager
 import com.coffeepeek.admin.theme.toUIColor
 import com.coffeepeek.admin.theme.uiKitStyle
-import com.coffeepeek.admin.theme.ThemeManager
-import kotlinx.cinterop.ObjCAction
-import platform.Foundation.NSSelectorFromString
-import platform.UIKit.*
-import platform.darwin.NSObject
+import com.coffeepeek.admin.ui.component.ProvideFloatingNavClearance
+import com.coffeepeek.admin.ui.component.dismissKeyboardOnBackgroundGestures
+import kotlinx.cinterop.useContents
+import platform.UIKit.NSLayoutConstraint
+import platform.UIKit.UIRectEdgeAll
+import platform.UIKit.UIRectEdgeBottom
+import platform.UIKit.UIRectEdgeNone
+import platform.UIKit.UIStatusBarStyle
+import platform.UIKit.UIStatusBarStyleLightContent
+import platform.UIKit.UIViewController
+import platform.UIKit.addChildViewController
+import platform.UIKit.didMoveToParentViewController
 
-/** Owns UIKit chrome and one retained Compose screen during the UI migration. */
+/** UIKit owns navigation and bounds; Compose owns headers and edge-to-edge insets. */
 internal class NativeScreenController(
     title: String? = null,
     val route: Navigator.Screen? = null,
-    private val extendsUnderHomeIndicator: Boolean = false,
     private val analyticsPage: String? = null,
+    private val isTabRoot: Boolean = false,
     private val content: @Composable () -> Unit,
 ) : UIViewController(nibName = null, bundle = null) {
     private val analyticsVisit = com.coffeepeek.admin.analytics.correlationId("screen")
     private var analyticsVisible by mutableStateOf(false)
+    private var bottomClearance by mutableStateOf(0.dp)
+    private val photoUnderStatusBar = route is Navigator.Screen.ShopDetail
+    var handlesBackLocally = false
+
+    init {
+        this.title = title
+        edgesForExtendedLayout = when {
+            isTabRoot -> UIRectEdgeBottom
+            photoUnderStatusBar -> UIRectEdgeAll
+            else -> UIRectEdgeNone
+        }
+    }
+
+    override fun preferredStatusBarStyle(): UIStatusBarStyle =
+        if (photoUnderStatusBar) UIStatusBarStyleLightContent else super.preferredStatusBarStyle()
 
     override fun viewDidAppear(animated: Boolean) {
         super.viewDidAppear(animated)
@@ -55,101 +75,57 @@ internal class NativeScreenController(
         analyticsVisible = false
         super.viewWillDisappear(animated)
     }
-    var usesNavigationBar by mutableStateOf(false)
-        private set
-    var handlesBackLocally = false
-        private set
-    private val backTarget = BarActionTarget()
-    private val actionTarget = BarActionTarget()
-
-    init {
-        this.title = title
-        edgesForExtendedLayout = UIRectEdgeNone
-    }
 
     override fun viewDidLoad() {
         super.viewDidLoad()
-        val child = ComposeUIViewController {
-            AppContent {
-                val colors = MaterialTheme.colorScheme
-                val themeMode by ThemeManager.themeMode.collectAsState()
-                SideEffect {
-                    overrideUserInterfaceStyle = themeMode.uiKitStyle
-                    view.backgroundColor = colors.background.toUIColor()
-                    // UIKit reserves the header's space, so it has no Compose content behind it.
-                    val appearance = UINavigationBarAppearance().apply {
-                        configureWithOpaqueBackground()
-                        backgroundColor = colors.background.toUIColor()
-                        titleTextAttributes = mapOf(NSForegroundColorAttributeName to colors.onBackground.toUIColor())
-                    }
-                    navigationItem.standardAppearance = appearance
-                    navigationItem.scrollEdgeAppearance = appearance
-                    navigationItem.compactAppearance = appearance
-                    navigationController?.navigationBar?.tintColor = colors.primary.toUIColor()
-                }
-                ProvideFloatingNavClearance(0.dp) {
-                    // The child is bounded above the tab bar/home indicator. When a native
-                    // header is visible, UIKit also bounds it below the navigation bar.
-                    val reservedSides = if (usesNavigationBar) WindowInsetsSides.Top + WindowInsetsSides.Bottom
-                        else WindowInsetsSides.Bottom
-                    Box(Modifier.fillMaxSize()
-                        .background(colors.background)
-                        .then(if (extendsUnderHomeIndicator) Modifier else Modifier.consumeWindowInsets(WindowInsets.systemBars.only(reservedSides)))
-                        .dismissKeyboardOnBackgroundGestures()) {
-                        CompositionLocalProvider(com.coffeepeek.admin.analytics.LocalAnalyticsVisible provides analyticsVisible) { content() }
-                    }
-                }
-            }
-        }
+        view.clipsToBounds = true
+        attachContent(ComposeUIViewController { AppContent { ScreenContent() } })
+    }
+
+    override fun viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
+        bottomClearance = if (isTabRoot) view.safeAreaInsets.useContents { bottom }.dp else 0.dp
+    }
+
+    private fun attachContent(child: UIViewController) {
         addChildViewController(child)
         child.view.translatesAutoresizingMaskIntoConstraints = false
+        child.view.clipsToBounds = true
         view.addSubview(child.view)
+        val safeArea = view.safeAreaLayoutGuide
         NSLayoutConstraint.activateConstraints(listOf(
-            child.view.topAnchor.constraintEqualToAnchor(view.topAnchor),
+            child.view.topAnchor.constraintEqualToAnchor(if (photoUnderStatusBar) view.topAnchor else safeArea.topAnchor),
             child.view.leadingAnchor.constraintEqualToAnchor(view.leadingAnchor),
             child.view.trailingAnchor.constraintEqualToAnchor(view.trailingAnchor),
-            child.view.bottomAnchor.constraintEqualToAnchor(
-                if (extendsUnderHomeIndicator) view.bottomAnchor else view.safeAreaLayoutGuide.bottomAnchor,
-            ),
+            child.view.bottomAnchor.constraintEqualToAnchor(if (isTabRoot || photoUnderStatusBar) view.bottomAnchor else safeArea.bottomAnchor),
         ))
         child.didMoveToParentViewController(this)
     }
 
-    fun configureHeader(title: String, back: (() -> Unit)?, customBack: Boolean, action: NavigationBarAction?) {
-        usesNavigationBar = true
-        handlesBackLocally = customBack && back != null
-        navigationItem.title = title
-        navigationItem.setHidesBackButton(back == null || handlesBackLocally, false)
-        backTarget.callback = back
-        navigationItem.leftBarButtonItem = if (handlesBackLocally) UIBarButtonItem(
-            title = "Назад", style = UIBarButtonItemStyle.UIBarButtonItemStylePlain,
-            target = backTarget, action = NSSelectorFromString("invoke"),
-        ) else null
-        actionTarget.callback = action?.onClick
-        navigationItem.rightBarButtonItem = action?.let {
-            UIBarButtonItem(title = it.label, style = UIBarButtonItemStyle.UIBarButtonItemStylePlain,
-                target = actionTarget, action = NSSelectorFromString("invoke"))
+    @Composable
+    private fun ScreenContent() {
+        val colors = MaterialTheme.colorScheme
+        val themeMode by ThemeManager.themeMode.collectAsState()
+        SideEffect {
+            overrideUserInterfaceStyle = themeMode.uiKitStyle
+            view.backgroundColor = colors.background.toUIColor()
+            setNeedsStatusBarAppearanceUpdate()
         }
-        if (navigationController?.topViewController == this) navigationController?.setNavigationBarHidden(false, false)
-    }
-
-    fun clearHeader() {
-        usesNavigationBar = false
-        handlesBackLocally = false
-        backTarget.callback = null
-        actionTarget.callback = null
-        navigationItem.leftBarButtonItem = null
-        navigationItem.rightBarButtonItem = null
-        if (navigationController?.topViewController == this) navigationController?.setNavigationBarHidden(true, false)
+        ProvideFloatingNavClearance(bottomClearance) {
+            // Tab content scrolls behind the glass; lists and controls reserve the measured safe area.
+            Box(Modifier.fillMaxSize().background(colors.background)
+                .consumeWindowInsets(if (photoUnderStatusBar) WindowInsets(0, 0, 0, 0)
+                    else WindowInsets.systemBars.only(WindowInsetsSides.Vertical))
+                .dismissKeyboardOnBackgroundGestures()) {
+                CompositionLocalProvider(com.coffeepeek.admin.analytics.LocalAnalyticsVisible provides analyticsVisible) {
+                    content()
+                }
+            }
+        }
     }
 }
 
-private class BarActionTarget : NSObject() {
-    var callback: (() -> Unit)? = null
-    @ObjCAction fun invoke() { callback?.invoke() }
-}
-
-/** Sheets cannot change their presenting screen's navigation bar. */
+/** Sheets cannot change their presenting screen's back policy. */
 internal fun UIViewController.nativeScreenHost(): NativeScreenController? {
     var current: UIViewController? = this
     while (current != null) {

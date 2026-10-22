@@ -47,7 +47,7 @@ private class OwnProfileEntryImpl(
     override fun Content(
         onEditProfile: () -> Unit, onOpenShop: (String) -> Unit, onOpenRoaster: (String) -> Unit, onLogin: () -> Unit,
         onOpenUser: (String, String, String?) -> Unit, onOpenFavorites: () -> Unit, onOpenCheckIns: () -> Unit,
-        onOpenContributions: (ProfileContribution) -> Unit, modifier: Modifier, bottomClearance: Dp,
+        onOpenContributions: (ProfileContribution) -> Unit, onOpenBlockedAuthors: () -> Unit, modifier: Modifier, bottomClearance: Dp,
     ) {
         val model = viewModel(key = "own-profile:$instanceKey") { OwnProfileViewModel(accounts, signOut) }
         OwnProfileScreen(
@@ -57,6 +57,7 @@ private class OwnProfileEntryImpl(
             onEditProfile = onEditProfile, onOpenShop = onOpenShop, onOpenRoaster = onOpenRoaster, onLogin = onLogin,
             onOpenUser = onOpenUser, onOpenFavorites = onOpenFavorites, onOpenCheckIns = onOpenCheckIns,
             onOpenContributions = onOpenContributions,
+            onOpenBlockedAuthors = onOpenBlockedAuthors,
         )
     }
 }
