@@ -177,7 +177,7 @@ class PublicProfilePresentationTest {
                                         onFavoritesClick = {},
                                         onCheckInsClick = {},
                                         topBarActions = {
-                                            ProfileActions(onContributions = {}, onLogout = {})
+                                            ProfileActions(onContributions = {}, onLogout = {}, onBlockedAuthors = {})
                                         },
                                         favoritesPreview = {
                                             FavoritesProfilePreviewContent({}, {}, vm = favoritesVm)
@@ -580,6 +580,7 @@ class PublicProfilePresentationTest {
                         ProfileActions(
                             onContributions = { selectedAction.set(it.name) },
                             onLogout = { selectedAction.set("logout") },
+                            onBlockedAuthors = {},
                         )
                     }
                 }

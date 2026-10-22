@@ -97,9 +97,12 @@ python3 iosApp/configure-auth.py --google-plist /path/GoogleService-Info.plist \
 Google iOS client и audience Apple в backend. Настройте отправителя писем
 CoffeePeek в Apple Private Email Relay, чтобы письма доходили на скрытые адреса.
 
-`iOS build verification` отдельно компилирует Kotlin и Swift для симулятора без
-сертификата. Проверка реального входа требует устройства, актуального профиля
-и настроенных OAuth ID.
+`iOS build verification` на PR с изменениями iOS/KMP-кода в `main`/`develop`
+и при ручном запуске компилирует Kotlin и Swift для симулятора без сертификата,
+затем выполняет не-UI Kotlin/Native тесты совместимости Koin/ViewModel.
+Для unsigned-проверки используется синтетический Firebase plist из `tools/ios`;
+секреты не нужны, приложение не запускается. Проверка реального входа требует
+устройства, актуального профиля и настроенных OAuth ID.
 
 При ошибке нативного входа приложение сохраняет короткий диагностический код:
 
@@ -158,13 +161,17 @@ Xcode сам вызывает Gradle task `:composeApp:embedAndSignAppleFramewor
 Workflow [`.github/workflows/ios-testflight.yml`](../.github/workflows/ios-testflight.yml)
 архивирует основное приложение `iosApp` на GitHub-hosted Mac с Xcode 27 и
 загружает архив в App Store Connect. Он запускается после изменений iOS/KMP-кода
-в `main` и `develop` или вручную через **Actions → iOS TestFlight → Run workflow**
-с выбором любой из этих двух веток. Сборки обеих веток загружаются в одно приложение
-TestFlight и используют текущий `API_BASE_URL_MAIN`. Изменения только документации
+в `main` или вручную через **Actions → iOS TestFlight → Run workflow**
+с выбором `main`. Публикация из других веток запрещена условием job.
+Используется текущий `API_BASE_URL_MAIN`. Изменения только документации
 не запускают автоматическую сборку: сохраняется фильтр путей iOS/KMP-кода.
-Для pull request ключи подписи не выдаются. Номер сборки формируется из номера
-запуска и попытки (`GITHUB_RUN_NUMBER.GITHUB_RUN_ATTEMPT`); версия приложения
-берётся из `iosApp/Configuration/Shared.xcconfig` (`MARKETING_VERSION`).
+Для pull request ключи подписи не выдаются. Номер сборки `CFBundleVersion` — целое
+число `1000 + git rev-list --count HEAD`, как `versionCode` Android. Сдвиг `1000`
+задан в `BUILD_NUMBER_OFFSET`, чтобы не уменьшить ранее опубликованный код. Повторный
+запуск CI для того же коммита не повышает номер. Публичная версия задаётся вручную
+в `iosApp/Configuration/Shared.xcconfig` (`MARKETING_VERSION = 1.1.0`); Android читает
+то же значение. Номер сборки не добавляется к версии в интерфейсе. Серверные коды
+обновления и обязательный минимум задаются вручную через админку.
 
 Перед первым запуском:
 
@@ -178,7 +185,7 @@ TestFlight и используют текущий `API_BASE_URL_MAIN`. Изме�
    ID. Ключ понадобится для неинтерактивной загрузки через `xcodebuild`.
 4. В настройках репозитория GitHub создайте Environment `testflight`. Секреты
    из таблицы могут быть заданы на уровне репозитория или этого Environment.
-   Если для Environment включены ограничения веток, разрешите `main` и `develop`.
+   Если для Environment включены ограничения веток, разрешите только `main`.
    Также можно включить требование
    одобрения перед публикацией.
 
@@ -191,9 +198,10 @@ TestFlight и используют текущий `API_BASE_URL_MAIN`. Изме�
 | `APPSTORE_API_KEY_ID` | Secret | Key ID ключа App Store Connect API |
 | `APPSTORE_ISSUER_ID` | Secret | Issuer ID ключа App Store Connect API |
 | `APPSTORE_API_PRIVATE_KEY` | Secret | Исходный многострочный текст файла `AuthKey_*.p8`, включая строки `BEGIN/END PRIVATE KEY`; не Base64 и не символы `\n` |
-| `GOOGLE_IOS_CLIENT_ID` | Secret (необязательный) | OAuth iOS client ID для `com.coffeepeek` |
-| `GOOGLE_WEB_CLIENT_ID` | Secret (необязательный) | OAuth Web client ID для backend (можно использовать существующий секрет) |
-| `GOOGLE_REVERSED_CLIENT_ID` | Secret (необязательный) | Reversed iOS client ID для URL scheme |
+| `GOOGLE_IOS_CLIENT_ID` | Secret | OAuth iOS client ID для `com.coffeepeek` |
+| `GOOGLE_WEB_CLIENT_ID` | Secret | OAuth Web client ID для backend (можно использовать существующий секрет) |
+| `GOOGLE_REVERSED_CLIENT_ID` | Secret | Reversed iOS client ID для URL scheme |
+| `FIREBASE_GOOGLE_SERVICE_INFO_PLIST` | Secret | Исходный Firebase plist для `coffeepeek` / `com.coffeepeek`; обязателен для TestFlight |
 
 На macOS Base64 для первых двух файлов можно получить командами
 `base64 -i distribution.p12 | tr -d '\n'` и
@@ -202,8 +210,22 @@ TestFlight и используют текущий `API_BASE_URL_MAIN`. Изме�
 профиля и release-конфигурацию приложения до загрузки. Apple Team ID берётся
 непосредственно из provisioning profile. При архивировании профиль подписи
 задаётся только для `iosApp`; Swift Package targets его не используют. Для Google Sign-In
-задайте все три OAuth ID вместе; если оставить их пустыми, кнопка Google
-будет скрыта, как при локальном запуске без OAuth.
+задайте все три OAuth ID вместе: release workflow требует их наличия.
+При локальном запуске без OAuth кнопка Google скрыта.
+
+FirebaseCore/FirebaseMessaging 12.19.2, ресурс `GoogleService-Info.plist` и `-ObjC`
+закреплены в Xcode-проекте. CI больше не переписывает `project.pbxproj`.
+Для локальной сборки поместите реальный Firebase plist в
+`iosApp/iosApp/GoogleService-Info.plist`; файл исключён из Git. Синтетический
+`tools/ios/GoogleService-Info.verification.plist` подходит только для unsigned
+проверки компиляции. Release-скрипт отклоняет его даже при передаче через секрет.
+Xcode обновляет SPM lockfile при разрешении добавленной зависимости;
+PR-проверка сохраняет фактический `Package.resolved` вместе с логами и результатами тестов.
+
+Фильтры обоих workflow включают `feature/`, `features/` и `tools/ios/`;
+Android-only изменения и Markdown не запускают iOS-сборку.
+Обязательность статуса `iOS build verification / build` для merge задаётся
+отдельно в GitHub rulesets; изменение workflow само по себе её не включает.
 
 Если импорт сертификата завершается ошибкой `Unknown format in import`, заново
 экспортируйте из Keychain Access именно **Apple Distribution identity вместе с
