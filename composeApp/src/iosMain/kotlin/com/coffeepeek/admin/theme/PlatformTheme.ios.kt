@@ -1,9 +1,14 @@
 package com.coffeepeek.admin.theme
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.ColorScheme
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
+import androidx.compose.ui.uikit.LocalUIViewController
 import platform.UIKit.UIColor
 import platform.UIKit.UIUserInterfaceStyle
 
@@ -27,4 +32,26 @@ internal fun Color.toUIColor(): UIColor = UIColor.colorWithRed(
 actual fun applyPlatformNightMode(mode: ThemeMode) = Unit
 
 @Composable
-actual fun PlatformSystemBars(darkTheme: Boolean) = Unit
+actual fun PlatformSystemBars(darkTheme: Boolean, lightStatusBarIcons: Boolean) {
+    val controller = LocalUIViewController.current
+    val mode by ThemeManager.themeMode.collectAsState()
+    SideEffect {
+        controller.view.window?.overrideUserInterfaceStyle = mode.uiKitStyle
+        controller.overrideUserInterfaceStyle = mode.uiKitStyle
+        controller.setNeedsStatusBarAppearanceUpdate()
+    }
+}
+
+@Composable
+internal actual fun platformSystemDarkTheme(): Boolean {
+    val observedDark = isSystemInDarkTheme()
+    // A screen's traits can still contain the app's previous forced appearance.
+    val systemStyle = LocalUIViewController.current.view.window?.windowScene?.traitCollection?.userInterfaceStyle
+    return systemDarkTheme(systemStyle, observedDark)
+}
+
+internal fun systemDarkTheme(style: UIUserInterfaceStyle?, fallback: Boolean): Boolean = when (style) {
+    UIUserInterfaceStyle.UIUserInterfaceStyleDark -> true
+    UIUserInterfaceStyle.UIUserInterfaceStyleLight -> false
+    else -> fallback
+}

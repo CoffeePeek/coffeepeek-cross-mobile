@@ -19,7 +19,15 @@ import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
+import androidx.compose.foundation.layout.displayCutout
+import androidx.compose.foundation.layout.systemBars
+import androidx.compose.foundation.layout.union
+import androidx.compose.foundation.layout.only
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -30,6 +38,10 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import androidx.compose.ui.Modifier
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.graphics.luminance
+import com.coffeepeek.admin.theme.PlatformSystemBars
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
@@ -361,12 +373,19 @@ object Navigator {
             }.launchIn(this)
         }
 
-        Box(Modifier.fillMaxSize()) {
+        val shopPhotoUnderStatusBar = currentEntry?.destination?.hasRoute<Screen.ShopDetail>() == true
+        val systemInsets = WindowInsets.systemBars.union(WindowInsets.displayCutout)
+        val darkTheme = MaterialTheme.colorScheme.background.luminance() < 0.5f
+        PlatformSystemBars(darkTheme, lightStatusBarIcons = shopPhotoUnderStatusBar || darkTheme)
+        // Native iOS navigation returns above; this is the Compose navigation host.
+        Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).clipToBounds()) {
             mainEntry?.takeIf { it.lifecycle.currentState != Lifecycle.State.DESTROYED }?.let { entry ->
                 entry.LocalOwnersProvider(mainStateHolder) {
                     RetainedContent(visible = entry in visibleEntries) {
                         // Main lives outside NavHost so its native map stays mounted during navigation.
-                        Box(Modifier.fillMaxSize().graphicsLayer { translationX = size.width * mainSlide }) {
+                        Box(Modifier.fillMaxSize()
+                            .windowInsetsPadding(systemInsets.only(WindowInsetsSides.Top))
+                            .clipToBounds().graphicsLayer { translationX = size.width * mainSlide }) {
                             MainScreen(isLoggedIn)
                         }
                     }
@@ -375,7 +394,9 @@ object Navigator {
             NavHost(
                 navController = nav,
                 startDestination = Screen.Main,
-                modifier = Modifier.fillMaxSize(),
+                modifier = Modifier.fillMaxSize().windowInsetsPadding(
+                    if (shopPhotoUnderStatusBar) WindowInsets(0) else systemInsets.only(WindowInsetsSides.Top),
+                ).clipToBounds(),
                 enterTransition = {
                     slideIntoContainer(
                         towards = AnimatedContentTransitionScope.SlideDirection.Left,

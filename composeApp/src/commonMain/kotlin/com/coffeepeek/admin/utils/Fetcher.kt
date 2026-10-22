@@ -31,6 +31,9 @@ data class CustomUrl(
     val url: String,
     val permissionScope: Any? = null,
     val displayPermission: com.coffeepeek.admin.utils.image.PhotoDisplayPermission? = null,
-)
+) {
+    // Kamel selects SVG/XML decoders from the resource's string URL.
+    override fun toString(): String = url
+}
 
 expect class CustomUrlFetcher : Fetcher<CustomUrl>
