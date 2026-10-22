@@ -18,6 +18,8 @@ import androidx.compose.ui.unit.dp
 import com.coffeepeek.admin.theme.CpDimens
 import com.coffeepeek.admin.ui.Navigator
 import com.coffeepeek.admin.ui.icons.CpIcons
+import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
+import androidx.compose.ui.tooling.preview.Preview
 
 /** Single top bar used across screens: center-aligned title + circular back button in the corner. */
 @OptIn(ExperimentalMaterial3Api::class)
@@ -70,4 +72,16 @@ fun CpCircularBackButton(
             modifier = Modifier.size(20.dp),
         )
     }
+}
+
+@Preview
+@Composable
+private fun CpTopBarLightPreview() = CoffeePeekTheme(darkTheme = false) {
+    CpTopBar(title = "CoffeePeek", onBack = {})
+}
+
+@Preview
+@Composable
+private fun CpTopBarDarkPreview() = CoffeePeekTheme(darkTheme = true) {
+    CpTopBar(title = "CoffeePeek", onBack = {})
 }

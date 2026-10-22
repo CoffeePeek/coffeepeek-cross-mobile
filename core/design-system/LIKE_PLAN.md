@@ -1,5 +1,37 @@
 # Shared affinity heart — 2026-10-18
 
+## Unified gold and card spacing — 2026-10-22
+
+Source: `codex/card-likes-spacing`, based on develop `61fec6fe`. The user requests
+one gold for shop, roaster and check-in hearts and a tighter shop rating/heart row.
+Selected hearts now share `Like = GoldWarmHover` (#B68A2E) across themes and photos.
+The compact photo plate uses an 80% black tint so this same gold retains at least
+3:1 contrast over both black and white images. Unselected, disabled, loading,
+toggle semantics, analytics, authentication and persistence behavior stay intact.
+The native iOS glass heart also consumes `Like`, replacing its separate primary/red
+foreground logic. No feature imports or Gradle dependencies change.
+
+Catalog and Favorites shop cards remove the extra 8dp row gap and use 4dp outer
+padding: the 48dp touch target still surrounds the 32dp plate, leaving an 8dp
+visual gap after the rating and 12dp visual insets. Passive catalog badges reserve
+the same 48dp slot. Light/dark previews cover the catalog card and shared heart;
+existing Favorites and roaster previews continue to use the shared component.
+
+Verification plan: existing palette/style unit tests plus photo contrast regression,
+Android Debug assembly and packaged DEX checks, affected feature unit tests and
+iOS app KLIB compilation for both targets. Studio MCP is unavailable. No app will
+be installed or launched; manual Sandbox/iPhone visual review remains a device gate.
+No automated UI, Compose instrumentation or screenshot tests are created or run.
+
+Local result: all **169 unit tests** executed successfully (design-system 32,
+Favorites impl 15, Shop impl 103, Roaster impl 19), zero failures/errors/skips
+and no retries. `assembleDirectDebug` and its packaged DEX runtime-class check
+passed. App KLIB compilation passed for both `iosArm64` and `iosSimulatorArm64`;
+Native executables were not linked or run on Windows. The combined Gradle run
+took 2m43s with `--max-workers=6`. Existing preview/interop and Gradle/KMP
+compatibility warnings remain. Paired previews compiled; Studio rendering and
+manual device checks were not performed. No app installation or account writes.
+
 Later manual follow-up: after unlocking Pixel 7, unchanged floating/compact like
 sources were visually checked in Sandbox 829 and 843 in light/dark themes. Header
 glass circles match neighboring actions; selected is gold, unselected neutral,

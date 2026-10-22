@@ -9,6 +9,8 @@ def validate(raw):
         raise ValueError('Firebase plist must match coffeepeek / com.coffeepeek')
     if not config.get('GOOGLE_APP_ID') or not config.get('API_KEY'):
         raise ValueError('Firebase plist is missing app configuration')
+    if config['API_KEY'] == 'ci-verification-only':
+        raise ValueError('Synthetic Firebase configuration must not be used for TestFlight')
     return config
 
 if __name__ == '__main__':

@@ -35,11 +35,13 @@ import com.coffeepeek.admin.ui.component.brewMethodIcon
 import com.coffeepeek.admin.ui.component.priceRangeLevel
 import com.coffeepeek.admin.ui.icons.CpIcons
 import com.coffeepeek.admin.utils.formatOneDecimal
+import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.domain.model.CatalogItem
 import com.coffeepeek.domain.model.CoffeeShop
 import com.coffeepeek.domain.model.RoasterDetails
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.ui.tooling.preview.Preview
 
 @Composable
 internal fun ShopCardContent(
@@ -115,8 +117,7 @@ internal fun ShopCardContent(
                 Row(
                     modifier = Modifier
                         .align(Alignment.TopEnd)
-                        .padding(CpDimens.spacing3),
-                    horizontalArrangement = Arrangement.spacedBy(CpDimens.spacing2),
+                        .padding(CpDimens.spacing1),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     val rating = shop.rating
@@ -576,7 +577,7 @@ private fun CatalogFavoriteControl(
             CoffeePeekLikeBadge(
                 selected = isFavorite,
                 contentDescription = if (isFavorite) "В избранном" else "Не в избранном",
-                modifier = Modifier.size(if (compact) 32.dp else 40.dp),
+                modifier = Modifier.size(if (compact) 32.dp else 48.dp),
             )
         } else Box(
             modifier = Modifier.size(if (compact) 24.dp else 48.dp),
@@ -608,3 +609,17 @@ private fun RoasterStat(icon: ImageVector, label: String, count: Int, modifier: 
 }
 
 internal fun roasterCountLabel(count: Int): String = if (count > 0) count.toString() else "—"
+
+@Preview @Composable private fun ShopCardLightPreview() = CoffeePeekTheme(darkTheme = false) {
+    ShopCardContent(previewShop, "7,5 км", {}, {}, Modifier.width(280.dp), showCatalogDetails = false)
+}
+
+@Preview @Composable private fun ShopCardDarkPreview() = CoffeePeekTheme(darkTheme = true) {
+    ShopCardContent(previewShop, "7,5 км", {}, {}, Modifier.width(280.dp), showCatalogDetails = false)
+}
+
+private val previewShop = CoffeeShop(
+    id = "preview", title = "Кофейня", rating = 4.0, reviewCount = 1,
+    cityName = null, priceRange = null, photoUrl = null,
+    address = "Кофейная улица, 1", isOpen = true, isFavorite = true,
+)
