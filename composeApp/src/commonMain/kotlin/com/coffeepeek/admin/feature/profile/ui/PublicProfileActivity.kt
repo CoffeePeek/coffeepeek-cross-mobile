@@ -1,7 +1,6 @@
 package com.coffeepeek.admin.feature.profile.ui
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -14,7 +13,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.text.font.FontWeight
@@ -26,39 +24,6 @@ import com.coffeepeek.admin.ui.icons.CpIcons
 
 private val weekdayLabels = listOf("Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс")
 private val monthLabels = listOf("Январь", "Февраль", "Март", "Апрель", "Май", "Июнь", "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь")
-
-@Composable
-internal fun PublicProfileActivityCard(activity: PublicProfileActivity, onClick: () -> Unit) {
-    val month = profileMonth(activity.month)
-    val activeDays = activity.activeDays.filter { it in 1..month.days }
-    ProfileCard(modifier = Modifier.fillMaxWidth().clickable(role = Role.Button, onClickLabel = "Открыть активность", onClick = onClick)) {
-        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(18.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    Text(profileMonthTitle(activity.month), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
-                    Text(activeDaysLabel(activeDays.size), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                }
-                Icon(CpIcons.ChevronRight, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(20.dp))
-            }
-            Row(Modifier.fillMaxWidth()) {
-                weekdayLabels.forEachIndexed { index, label ->
-                    val count = activeDays.count { day -> (month.firstWeekday + day - 1) % 7 == index }
-                    Column(
-                        Modifier.weight(1f).clearAndSetSemantics { contentDescription = "$label: ${activeDaysLabel(count)}" },
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.spacedBy(8.dp),
-                    ) {
-                        Text(label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        Box(Modifier.size(8.dp).background(
-                            if (count > 0) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.35f),
-                            CircleShape,
-                        ))
-                    }
-                }
-            }
-        }
-    }
-}
 
 @Composable
 internal fun PublicProfileActivityCalendar(

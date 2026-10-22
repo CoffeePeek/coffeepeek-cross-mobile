@@ -5,6 +5,7 @@
 package com.coffeepeek.admin.map
 
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -16,6 +17,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.viewinterop.UIKitView
 import androidx.compose.ui.viewinterop.UIKitInteropProperties
 import androidx.compose.ui.viewinterop.UIKitInteropInteractionMode
@@ -31,6 +33,9 @@ import kotlinx.coroutines.launch
 
 private const val TARGET_ZOOM = 16f
 private const val LOCATION_ZOOM = 15f
+
+// Oversized UIViews can escape Compose's preview clip and cover the header.
+internal actual fun Modifier.mapCanvasSize(canvasSize: DpSize?): Modifier = fillMaxSize()
 
 @Composable
 actual fun CoffeeMap(

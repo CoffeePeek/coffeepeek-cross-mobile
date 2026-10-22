@@ -1,6 +1,7 @@
 package com.coffeepeek.admin.theme
 
 import android.app.Activity
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.platform.LocalView
@@ -10,6 +11,9 @@ import com.coffeepeek.admin.CoffeePeekApplication
 
 private const val PREFS_NAME = "coffeepeek_theme"
 private const val KEY_THEME_MODE = "theme_mode"
+
+@Composable
+internal actual fun platformSystemDarkTheme(): Boolean = isSystemInDarkTheme()
 
 actual fun applyPlatformNightMode(mode: ThemeMode) {
     persistThemeMode(mode)
@@ -23,14 +27,15 @@ actual fun applyPlatformNightMode(mode: ThemeMode) {
 }
 
 @Composable
-actual fun PlatformSystemBars(darkTheme: Boolean) {
+actual fun PlatformSystemBars(darkTheme: Boolean, lightStatusBarIcons: Boolean) {
     val view = LocalView.current
     if (view.isInEditMode) return
 
     SideEffect {
         val window = (view.context as? Activity)?.window ?: return@SideEffect
+        window.isNavigationBarContrastEnforced = false
         WindowCompat.getInsetsController(window, view).run {
-            isAppearanceLightStatusBars = !darkTheme
+            isAppearanceLightStatusBars = !lightStatusBarIcons
             isAppearanceLightNavigationBars = !darkTheme
         }
     }

@@ -59,10 +59,12 @@ interface UpdateCheckPort {
 
 /** Actions that leave the app. The app owns the URLs and the share text. */
 interface SettingsExternalActions {
+    val canRateApp: Boolean
     fun openSupport()
     fun openTerms()
     fun openPrivacy()
     fun shareApp()
+    fun rateApp()
 }
 
 /** Static facts about the build that the rows show. */
