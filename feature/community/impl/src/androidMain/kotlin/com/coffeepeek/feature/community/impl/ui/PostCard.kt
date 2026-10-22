@@ -40,7 +40,7 @@ import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.core.designsystem.component.CoffeePeekActionMenu
 import com.coffeepeek.core.designsystem.component.CoffeePeekLikeIcon
-import com.coffeepeek.core.designsystem.component.CoffeePeekMenuItem
+import com.coffeepeek.core.designsystem.component.CoffeePeekMenuAction
 import com.coffeepeek.core.designsystem.component.CoffeePeekRating
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.theme.CoffeePeekColors
@@ -155,13 +155,13 @@ private fun PostMenu(actions: PostCardActions, enabled: Boolean, hiding: Boolean
     if (actions.onBlock == null && actions.onEdit == null && actions.onHide == null && actions.onReport == null) return
     val label = stringResource(R.string.community_actions)
     val items = buildList {
-        actions.onBlock?.let { add(CoffeePeekMenuItem("block", stringResource(R.string.community_block_author), CoffeePeekIcons.VisibilityOff, destructive = true, enabled = enabled, onClick = it)) }
-        actions.onEdit?.let { add(CoffeePeekMenuItem("edit", stringResource(R.string.community_edit), CoffeePeekIcons.Edit, enabled = enabled, onClick = it)) }
+        actions.onBlock?.let { add(CoffeePeekMenuAction(stringResource(R.string.community_block_author), CoffeePeekIcons.VisibilityOff, destructive = true, onClick = it)) }
+        actions.onEdit?.let { add(CoffeePeekMenuAction(stringResource(R.string.community_edit), CoffeePeekIcons.Edit, onClick = it)) }
         actions.onHide?.let {
-            add(CoffeePeekMenuItem("hide", stringResource(if (hiding) R.string.community_saving else R.string.community_hide), CoffeePeekIcons.VisibilityOff,
-                enabled = enabled && !hiding, onClick = it))
+            // The menu has no disabled rows: while the hide request is running the row only says so and does nothing.
+            add(CoffeePeekMenuAction(stringResource(if (hiding) R.string.community_saving else R.string.community_hide), CoffeePeekIcons.VisibilityOff, onClick = if (hiding) ({}) else it))
         }
-        actions.onReport?.let { add(CoffeePeekMenuItem("report", stringResource(R.string.community_report), CoffeePeekIcons.Error, enabled = enabled, onClick = it)) }
+        actions.onReport?.let { add(CoffeePeekMenuAction(stringResource(R.string.community_report), CoffeePeekIcons.Error, onClick = it)) }
     }
     CoffeePeekActionMenu(items) { open ->
         IconButton(onClick = open, enabled = enabled) { Icon(CoffeePeekIcons.MoreHorizontal, label, tint = MaterialTheme.colorScheme.onSurfaceVariant) }

@@ -30,18 +30,18 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.tooling.preview.Preview
 import coffeepeek.composeapp.generated.resources.Res
+import coffeepeek.composeapp.generated.resources.ic_apple_sign_in
 import coffeepeek.composeapp.generated.resources.ic_google_g
 import coffeepeek.composeapp.generated.resources.sign_in_apple
 import coffeepeek.composeapp.generated.resources.sign_in_google
-import com.adamglin.PhosphorIcons
-import com.adamglin.phosphoricons.Fill
-import com.adamglin.phosphoricons.fill.AppleLogo
 import com.coffeepeek.admin.auth.AppleAuth
 import com.coffeepeek.admin.auth.AppleSignInButton
 import com.coffeepeek.admin.auth.GoogleSignInButton
 import com.coffeepeek.admin.auth.isGoogleSignInConfigured
 import com.coffeepeek.admin.theme.CpDimens
+import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 
@@ -95,7 +95,7 @@ internal fun SocialSignInButton(
     ) {
         when (brand) {
             SocialSignInBrand.Apple -> Icon(
-                imageVector = PhosphorIcons.Fill.AppleLogo,
+                painter = painterResource(Res.drawable.ic_apple_sign_in),
                 contentDescription = null,
                 modifier = Modifier.size(SocialButtonIconSize),
             )
@@ -116,6 +116,18 @@ internal fun SocialSignInButton(
             style = socialButtonTextStyle(),
         )
     }
+}
+
+@Preview
+@Composable
+private fun AppleSignInButtonLightPreview() = CoffeePeekTheme(darkTheme = false) {
+    SocialSignInButton(brand = SocialSignInBrand.Apple, onClick = {})
+}
+
+@Preview
+@Composable
+private fun AppleSignInButtonDarkPreview() = CoffeePeekTheme(darkTheme = true) {
+    SocialSignInButton(brand = SocialSignInBrand.Apple, onClick = {})
 }
 
 @Composable

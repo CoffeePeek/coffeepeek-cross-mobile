@@ -1,6 +1,7 @@
 package com.coffeepeek.feature.roaster.impl.ui.compose.component
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.FilterChip
@@ -22,7 +23,8 @@ internal fun RoasterTagFilters(
     onClear: () -> Unit,
 ) {
     if (tags.isEmpty()) return
-    LazyRow(horizontalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing2)) {
+    LazyRow(contentPadding = PaddingValues(horizontal = CoffeePeekDimens.spacing4),
+        horizontalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing2)) {
         item { FilterChip(selected = selected.isEmpty(), onClick = onClear, label = { Text(stringResource(Res.string.roaster_tag_all)) }) }
         items(tags, key = { it.slug }) { tag ->
             FilterChip(selected = tag.slug in selected, onClick = { onToggle(tag.slug) }, label = { Text(tag.name) })

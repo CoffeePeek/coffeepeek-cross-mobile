@@ -127,9 +127,9 @@ Verification/failure history: [RATING_PLAN.md](RATING_PLAN.md).
 
 Use `CoffeePeekLikeButton` for stateless favorite/like toggles and
 `CoffeePeekLikeIcon` inside existing glass controls and read-only counters.
-Selected hearts are filled brand gold, unselected outlines use the theme's
-neutral foreground. Light surfaces use darker gold for contrast; `overImage`
-uses bright gold/white on photo controls. Disabled icons are muted. Do not tint
+Selected hearts use the same gold (`Like`, #B68A2E) on light/dark surfaces and
+photos. Unselected outlines use the theme's neutral foreground, or white with
+`overImage`. Disabled icons are muted. Do not tint
 affinity with `Error`, arbitrary primary/foreground colors or duplicate heart
 rendering in features. Keep feature actions, counts, loading, descriptions,
 authentication, haptics and analytics in their existing owners. Containers,
@@ -168,6 +168,15 @@ the top. Null keeps wrap-content behavior. Callers fill/scroll the remaining bod
 they must not put fillMaxHeight(fraction) on the sheet modifier.
 Material provides modal focus and default system/IME inset handling; validate
 keyboard/content scrolling and any custom consumer insets at integration.
+
+`CoffeePeekDestructiveConfirmationSheet` uses a transparent Material modal host
+for two floating rounded cards: title/message with a divided red text action,
+and a separate cancel card. There is no grabber or filled destructive button.
+The cards animate from below, respect safe insets and scroll for large text;
+Material owns modal focus, Back, scrim and swipe dismissal. The caller closes it
+before performing the operation; core owns no account, navigation or persistence
+behavior. The shared/iOS profile uses the existing native action-sheet presenter,
+matching author blocking on that platform.
 
 CoffeePeekFabMenu accepts neutral icon/description/callback/enabled actions, not routes or
 feature models. It retains joined rounded corners and the existing success
