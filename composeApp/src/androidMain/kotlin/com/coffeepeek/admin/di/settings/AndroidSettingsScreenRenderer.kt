@@ -32,7 +32,6 @@ internal class AndroidSettingsScreenRenderer(
     override fun Tab() = tab.Content(
         onAddShop = { Navigator.navigate(Navigator.Screen.AddShop) },
         onAddRoaster = { Navigator.navigate(Navigator.Screen.AddRoaster) },
-        onBlockedAuthors = { Navigator.navigate(Navigator.Screen.BlockedAuthors) },
         onCity = { Navigator.navigate(Navigator.Screen.CitySettings) },
         onTheme = { Navigator.navigate(Navigator.Screen.ThemeSettings) },
         onUsagePolicy = { Navigator.navigate(Navigator.Screen.UsagePolicy) },

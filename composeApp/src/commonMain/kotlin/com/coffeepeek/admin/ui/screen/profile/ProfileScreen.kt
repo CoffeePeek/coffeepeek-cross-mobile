@@ -21,7 +21,6 @@ import com.coffeepeek.admin.feature.profile.ui.PublicProfileViewModel
 import com.coffeepeek.admin.feature.profile.ui.UserProfileScreen
 import com.coffeepeek.admin.ui.Navigator
 import com.coffeepeek.admin.ui.component.*
-import com.coffeepeek.admin.ui.icons.CpIcons
 import com.coffeepeek.admin.ui.screen.contributions.ContributionKind
 import org.koin.compose.koinInject
 import org.koin.core.parameter.parametersOf
@@ -41,18 +40,14 @@ fun ProfileScreen(vm: ProfileViewModel = koinInject()) {
         Navigator.navigate(Navigator.Screen.Favorites)
     }
     val actions: @Composable () -> Unit = {
-        ProfileActions(onContributions = ::openContributions, onLogout = { showLogoutDialog = true })
+        ProfileActions(onContributions = ::openContributions, onLogout = { showLogoutDialog = true },
+            onBlockedAuthors = { Navigator.navigate(Navigator.Screen.BlockedAuthors) })
     }
     val bottomPadding = 20.dp + LocalFloatingNavClearance.current
 
-    if (showLogoutDialog) PlatformAlert(
-        title = "Выйти из аккаунта?",
-        message = "Вы уверены? Потребуется повторный вход.",
-        confirmLabel = "Выйти",
-        cancelLabel = "Отмена",
+    if (showLogoutDialog) ProfileLogoutConfirmation(
         onConfirm = { showLogoutDialog = false; vm.logout() },
         onDismiss = { showLogoutDialog = false },
-        destructive = true,
     )
 
     val slug = state.publicSlug
@@ -144,23 +139,6 @@ fun ProfileScreen(vm: ProfileViewModel = koinInject()) {
                     Spacer(Modifier.height(bottomPadding))
                 }
             }
-        }
-    }
-}
-
-@Composable
-internal fun ProfileActions(onContributions: (ContributionKind) -> Unit, onLogout: () -> Unit) {
-    PlatformMenuButton(
-        items = listOf(
-            PlatformMenuItem("shop-changes", "Правки кофеен", icon = PlatformMenuIcon.NoteEdit, onClick = { onContributions(ContributionKind.Changes) }),
-            PlatformMenuItem("submitted-shops", "Отправленные кофейни", icon = PlatformMenuIcon.Add, onClick = { onContributions(ContributionKind.Shops) }),
-            PlatformMenuItem("submitted-roasters", "Отправленные обжарщики", icon = PlatformMenuIcon.CoffeeBean, onClick = { onContributions(ContributionKind.Roasters) }),
-            PlatformMenuItem("logout", "Выйти", icon = PlatformMenuIcon.Logout, onClick = onLogout),
-        ),
-        contentDescription = "Действия с профилем",
-    ) { openMenu ->
-        IconButton(onClick = openMenu) {
-            Icon(CpIcons.MoreHorizontal, contentDescription = "Действия с профилем")
         }
     }
 }

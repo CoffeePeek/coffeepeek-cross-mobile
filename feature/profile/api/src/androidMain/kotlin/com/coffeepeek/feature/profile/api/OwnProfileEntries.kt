@@ -30,6 +30,7 @@ interface OwnProfileEntry {
         onOpenFavorites: () -> Unit,
         onOpenCheckIns: () -> Unit,
         onOpenContributions: (ProfileContribution) -> Unit,
+        onOpenBlockedAuthors: () -> Unit,
         modifier: Modifier = Modifier,
         bottomClearance: Dp = 0.dp,
     )
