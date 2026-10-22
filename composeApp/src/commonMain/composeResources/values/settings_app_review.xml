@@ -1,0 +1,5 @@
+<resources>
+    <string name="settings_rate_app">Оценить приложение</string>
+    <string name="settings_rate_app_description">Оставьте отзыв в App Store</string>
+    <string name="settings_other_description">Полезные дополнения, обратная связь и конфиденциальность</string>
+</resources>

@@ -1,0 +1,5 @@
+<resources>
+    <string name="shop_detail_route">Маршрут</string>
+    <string name="shop_detail_choose_another">Выбрать другую</string>
+    <string name="shop_detail_loading">Загрузка…</string>
+</resources>
