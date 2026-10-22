@@ -31,6 +31,7 @@ import com.coffeepeek.core.designsystem.resources.coffeepeek_like_add
 import com.coffeepeek.core.designsystem.resources.coffeepeek_like_remove
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
+import com.coffeepeek.core.designsystem.theme.CoffeePeekColors
 import com.coffeepeek.core.designsystem.modifier.coffeePeekLiquidGlass
 import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
@@ -89,7 +90,7 @@ internal fun coffeePeekLikePlateSize(style: CoffeePeekLikeButtonStyle, iconSize:
 @Composable
 internal fun Modifier.coffeePeekLikeBackground(style: CoffeePeekLikeButtonStyle, shape: Shape): Modifier = when (style) {
     CoffeePeekLikeButtonStyle.Glass ->
-        coffeePeekLiquidGlass(shape, shadowElevation = 0.dp, tintColor = Color.Black.copy(alpha = 0.60f))
+        coffeePeekLiquidGlass(shape, shadowElevation = 0.dp, tintColor = CoffeePeekColors.LikePhotoOverlay)
     CoffeePeekLikeButtonStyle.FloatingGlass -> coffeePeekLiquidGlass(shape)
     CoffeePeekLikeButtonStyle.Plain -> this
 }

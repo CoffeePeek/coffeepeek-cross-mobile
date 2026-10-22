@@ -92,7 +92,7 @@ internal fun CoffeeListScreen(vm: CoffeeListViewModel = platformViewModel()) {
             listState = listState,
             isRefreshing = state.isRefreshing,
             onRefresh = vm::refresh,
-            modifier = Modifier.fillMaxSize().padding(padding).imePadding(),
+            modifier = Modifier.fillMaxSize().padding(padding).imePadding().clipToBounds(),
         ) { scrollModifier ->
             LazyColumn(
                 state = listState,

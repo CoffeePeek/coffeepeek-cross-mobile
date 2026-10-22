@@ -35,8 +35,6 @@
     <string name="settings_add_roaster">Добавить обжарщика</string>
     <string name="settings_add_roaster_description">Помогите сообществу открыть новых обжарщиков</string>
     <string name="settings_section_settings">Настройки</string>
-    <string name="settings_blocked_authors">Заблокированные авторы</string>
-    <string name="settings_blocked_authors_description">Управление блокировками</string>
     <string name="settings_city_row">Город</string>
     <string name="settings_city_row_description">Определяет, какие кофейни показывать в первую очередь</string>
     <string name="settings_city_not_selected">Выберите</string>
@@ -46,7 +44,9 @@
     <string name="settings_theme_value_light">Светлая</string>
     <string name="settings_theme_value_dark">Тёмная</string>
     <string name="settings_section_other">Другие настройки</string>
-    <string name="settings_section_other_description">Управление полезными дополнениями, оценки в App Store и настройки конфиденциальности</string>
+    <string name="settings_section_other_description">Полезные дополнения, обратная связь и конфиденциальность</string>
+    <string name="settings_rate_app">Оценить приложение</string>
+    <string name="settings_rate_app_description">Оставьте отзыв в Google Play</string>
     <string name="settings_support">Связаться с поддержкой</string>
     <string name="settings_support_description">Поможем с вопросами и проблемами</string>
     <string name="settings_policy_row">Политика использования</string>

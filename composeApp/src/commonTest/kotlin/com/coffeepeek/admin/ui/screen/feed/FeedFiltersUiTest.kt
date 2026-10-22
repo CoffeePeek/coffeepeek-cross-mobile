@@ -10,6 +10,16 @@ import androidx.compose.ui.geometry.Size
 class FeedFiltersUiTest {
 
     @Test
+    fun previewFollowsScrollAndStaysAboveTheViewportWhenItsItemIsRecycled() {
+        val anchor = Rect(16f, 180f, 384f, 420f)
+        assertEquals(anchor, discoveryMapPreviewBounds(anchor, 164f, 16))
+        assertEquals(Rect(16f, 64f, 384f, 304f), discoveryMapPreviewBounds(anchor, 164f, -100))
+        val recycled = discoveryMapPreviewBounds(anchor, 164f, null)
+        assertEquals(164f, recycled.bottom)
+        assertEquals(anchor, discoveryMapPreviewBounds(anchor, 164f, 16))
+    }
+
+    @Test
     fun shopListPushesTheMapWithoutOverlappingItAndCancelReversesTheMotion() {
         val height = 800f
         for (progress in listOf(1f, 0.75f, 0.5f, 0.25f, 0f, 0.25f, 0.5f, 0.75f, 1f)) {
