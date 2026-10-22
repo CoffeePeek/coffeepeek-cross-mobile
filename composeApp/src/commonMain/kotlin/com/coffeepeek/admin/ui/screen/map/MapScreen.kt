@@ -7,10 +7,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.asPaddingValues
-import androidx.compose.foundation.layout.navigationBars
-import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
@@ -64,6 +60,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.sp
 import com.coffeepeek.admin.map.CoffeeMap
+import com.coffeepeek.admin.map.mapCanvasSize
 import com.coffeepeek.admin.theme.CpDimens
 import com.coffeepeek.admin.ui.Navigator
 import com.coffeepeek.admin.ui.component.CoffeeShopImage
@@ -127,9 +124,7 @@ fun MapScreen(
         ?: pendingFocus?.let { it.latitude to it.longitude }
     val cameraZoom = state.cameraZoom ?: if (pendingFocus != null) 16f else null
     val isDarkTheme = MaterialTheme.colorScheme.background.luminance() < 0.5f
-    val navClearance = if (onToggleExpand != null) {
-        WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
-    } else LocalFloatingNavClearance.current
+    val navClearance = LocalFloatingNavClearance.current
     val hasShopCarousel = state.selectedShop != null || state.nearbyShops.isNotEmpty()
 
     LaunchedEffect(pendingFocus) {
@@ -153,10 +148,7 @@ fun MapScreen(
                 else vm.onShopSelected(shop)
             },
             onZoneClick = vm::onZoneSelected,
-            // Keep the native renderer at one size; animate the surrounding viewport.
-            modifier = canvasSize?.let {
-                Modifier.align(Alignment.Center).requiredSize(it.width, it.height)
-            } ?: Modifier.fillMaxSize(),
+            modifier = Modifier.align(Alignment.Center).mapCanvasSize(canvasSize),
             cameraTarget = cameraTarget,
             cameraZoom = cameraZoom,
             onCameraTargetApplied = vm::onCameraTargetApplied,

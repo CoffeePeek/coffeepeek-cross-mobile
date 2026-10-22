@@ -66,12 +66,12 @@ fun createSettingsEntry(
 ): SettingsEntry = object : SettingsEntry {
     @Composable
     override fun Content(
-        onAddShop: () -> Unit, onAddRoaster: () -> Unit, onBlockedAuthors: () -> Unit, onCity: () -> Unit, onTheme: () -> Unit,
+        onAddShop: () -> Unit, onAddRoaster: () -> Unit, onCity: () -> Unit, onTheme: () -> Unit,
         onUsagePolicy: () -> Unit, onLogin: () -> Unit, onRegister: () -> Unit, modifier: Modifier, bottomClearance: Dp,
     ) {
         SettingsScreen(
             viewModel(key = "settings-tab") { SettingsViewModel(account, theme, cities, updates) },
-            SettingsNavigation(onAddShop, onAddRoaster, onBlockedAuthors, onCity, onTheme, onUsagePolicy, onLogin, onRegister),
+            SettingsNavigation(onAddShop, onAddRoaster, onCity, onTheme, onUsagePolicy, onLogin, onRegister),
             external, slots, appInfo, bottomClearance, modifier,
         )
     }

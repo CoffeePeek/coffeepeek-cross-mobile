@@ -2,6 +2,7 @@ package com.coffeepeek.core.designsystem.component
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Icon
@@ -9,7 +10,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
@@ -30,8 +30,7 @@ fun CoffeePeekLikeIcon(
     enabled: Boolean = true,
     overImage: Boolean = false,
 ) {
-    val color = coffeePeekLikeColor(selected, overImage,
-        MaterialTheme.colorScheme.surface, MaterialTheme.colorScheme.onSurfaceVariant)
+    val color = coffeePeekLikeColor(selected, overImage, MaterialTheme.colorScheme.onSurfaceVariant)
     Icon(
         imageVector = if (selected) CoffeePeekIcons.FavoriteFilled else CoffeePeekIcons.Favorite,
         contentDescription = contentDescription,
@@ -40,10 +39,10 @@ fun CoffeePeekLikeIcon(
     )
 }
 
-internal fun coffeePeekLikeColor(selected: Boolean, overImage: Boolean, surface: Color, content: Color): Color = when {
-    !selected -> if (overImage) Color.White else content
-    overImage || surface.luminance() < 0.5f -> CoffeePeekColors.Like
-    else -> CoffeePeekColors.LikeOnLight
+internal fun coffeePeekLikeColor(selected: Boolean, overImage: Boolean, content: Color): Color = when {
+    selected -> CoffeePeekColors.Like
+    overImage -> Color.White
+    else -> content
 }
 
 @Composable
@@ -52,6 +51,10 @@ private fun LikeIconPreviewContent() {
         CoffeePeekLikeIcon(false, null)
         CoffeePeekLikeIcon(true, null)
         CoffeePeekLikeIcon(true, null, enabled = false)
+        Row(Modifier.background(CoffeePeekColors.LikePhotoOverlay).padding(4.dp)) {
+            CoffeePeekLikeIcon(true, null, overImage = true)
+            CoffeePeekLikeIcon(false, null, overImage = true)
+        }
     }
 }
 

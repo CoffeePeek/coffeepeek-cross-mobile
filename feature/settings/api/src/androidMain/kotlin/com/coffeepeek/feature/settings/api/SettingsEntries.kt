@@ -33,7 +33,6 @@ interface SettingsEntry {
     fun Content(
         onAddShop: () -> Unit,
         onAddRoaster: () -> Unit,
-        onBlockedAuthors: () -> Unit,
         onCity: () -> Unit,
         onTheme: () -> Unit,
         onUsagePolicy: () -> Unit,
