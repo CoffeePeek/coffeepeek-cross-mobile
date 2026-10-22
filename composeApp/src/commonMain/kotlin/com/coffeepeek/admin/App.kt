@@ -2,7 +2,6 @@ package com.coffeepeek.admin
 
 import kotlinx.coroutines.launch
 import androidx.compose.runtime.getValue
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.background
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.LocalContentColor
@@ -15,6 +14,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
 import com.coffeepeek.admin.theme.CoffeePeekTheme
 import com.coffeepeek.admin.theme.PlatformSystemBars
+import com.coffeepeek.admin.theme.platformSystemDarkTheme
 import com.coffeepeek.admin.theme.ThemeManager
 import com.coffeepeek.admin.theme.ThemeMode
 import com.coffeepeek.admin.ui.Navigator
@@ -56,7 +56,7 @@ internal fun AppContent(content: @Composable () -> Unit) {
     }
     val kamelConfig = koinInject<KamelConfig>()
     val themeMode by ThemeManager.themeMode.collectAsState()
-    val isSystemDark = isSystemInDarkTheme()
+    val isSystemDark = platformSystemDarkTheme()
 
     val darkTheme = when (themeMode) {
         ThemeMode.SYSTEM -> isSystemDark

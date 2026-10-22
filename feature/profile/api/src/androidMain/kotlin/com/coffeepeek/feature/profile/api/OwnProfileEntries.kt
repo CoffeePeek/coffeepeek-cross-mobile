@@ -14,6 +14,8 @@ class OwnProfileSlots(
     val favoritesPreview: @Composable (onOpenShop: (String) -> Unit, onOpenRoaster: (String) -> Unit) -> Unit,
     /** The owner's personal activity calendar (private and home check-ins). */
     val activityCalendar: @Composable () -> Unit,
+    /** Current personal week, opening the full activity calendar on tap. */
+    val activityPreview: @Composable (onClick: () -> Unit) -> Unit,
     /** Mascot error content with a retry action. */
     val loadError: @Composable (onRetry: () -> Unit) -> Unit,
 )
@@ -30,6 +32,7 @@ interface OwnProfileEntry {
         onOpenFavorites: () -> Unit,
         onOpenCheckIns: () -> Unit,
         onOpenContributions: (ProfileContribution) -> Unit,
+        onOpenBlockedAuthors: () -> Unit,
         modifier: Modifier = Modifier,
         bottomClearance: Dp = 0.dp,
     )
