@@ -1,0 +1,31 @@
+<resources>
+    <string name="profile_open_avatar">Открыть аватар</string>
+    <string name="profile_avatar_of">Аватар @%1$s</string>
+    <string name="profile_edit">Редактировать профиль</string>
+    <string name="profile_follow">Подписаться</string>
+    <string name="profile_following">Вы подписаны</string>
+    <string name="profile_follow_description">Подписаться на @%1$s</string>
+    <string name="profile_unfollow_description">Отписаться от @%1$s</string>
+    <string name="profile_stat_check_ins">Чекины</string>
+    <string name="profile_stat_shops">Кофейни</string>
+    <string name="profile_stat_followers">Подписчики</string>
+    <string name="profile_open_followers">Открыть подписчиков</string>
+    <string name="profile_week_loading">Загрузка активности…</string>
+    <string name="profile_week_error">Не удалось загрузить активность</string>
+    <string name="profile_week_retry">Повторить</string>
+    <string name="profile_week_open">Открыть календарь активности</string>
+    <string name="profile_week_day">%1$s: %2$s</string>
+    <plurals name="profile_week_count">
+        <item quantity="one">%1$d чекин</item>
+        <item quantity="few">%1$d чекина</item>
+        <item quantity="many">%1$d чекинов</item>
+        <item quantity="other">%1$d чекинов</item>
+    </plurals>
+    <string name="profile_week_monday">Пн</string>
+    <string name="profile_week_tuesday">Вт</string>
+    <string name="profile_week_wednesday">Ср</string>
+    <string name="profile_week_thursday">Чт</string>
+    <string name="profile_week_friday">Пт</string>
+    <string name="profile_week_saturday">Сб</string>
+    <string name="profile_week_sunday">Вс</string>
+</resources>
