@@ -143,3 +143,56 @@ tracked sources. The temporary emulator was closed after capture.
 Remaining gates: real iPhone/native presentation and executable linking, physical
 Android, animation smoothness, larger fonts/window sizes, TalkBack, outside/swipe
 dismissal and confirmed logout. No real account/data actions were performed.
+
+## Android release CI regression — 2026-10-22
+
+Run `39749237148`, job `119725315494`, source `5cf6b2c8`, stopped at
+`:composeApp:testPlayDebugUnitTest`: 658 tests, one failure in legacy
+`ProfileViewModelTest.withoutACacheItRefreshesAndAFailureWithoutContentShowsTheFixedError`.
+Signed release assembly and publication were skipped.
+
+The legacy profile cache and session collectors run independently on Default.
+A late initial null cache emission can overwrite a completed refresh failure,
+removing its error and restoring the loading state. Preserve the current
+account's error atomically when rendering an empty cache; session reset still
+clears account state. Reach: the existing legacy ViewModel, its common unit
+test/fixtures and this plan. Its default scope, DI callers, migrated Android
+feature, logout, analytics, resources and Gradle boundaries stay as they are.
+
+Verification plan: force session/refresh-before-cache scheduling in a unit
+regression and observe it fail before the fix; execute both delivery variants'
+profile regressions, then the Android unit/lint checks and Debug APK assembly
+with packaged DEX verification. Checks started in the existing migration
+checkout at `4742a16d` plus pre-existing local work, which was independently
+committed as `69bb8bc7` during verification. The correction remains on
+`codex/migration-profile-cache-race`, based on that commit. The legacy ViewModel
+at the failed run's exact revision matches the local base. IDE access does not
+have this project open. No device deployment, UI/instrumented tests, live account
+operation or release publication is required for this state-update correction.
+
+Local unit results (Windows, JDK 17): the first attempt stopped at test
+compilation because the scope `plus` extension import was missing (1m42s).
+After that correction, the controlled regression failed as expected before the
+production fix: one test, one assertion failure, expected profile error but got
+null (30s). Its original log/XML are retained locally outside tracked sources.
+After the fix, all 671 application directDebug tests and the 35 selected
+playDebug profile tests passed (1m19s), including the new scheduling regression
+and its assertion that ending the session clears the error and all account state.
+
+The broader Android check executed 866 library unit tests and all 671 playDebug
+application tests; the 671 directDebug results from the preceding run were
+up-to-date. All **2208 full-suite results** have zero failures/errors/skips.
+Both Debug APKs assembled with packaged DEX runtime-class verification:
+`directDebug` / `playDebug`, package `com.coffeepeek`, version `1.1.1093` / code
+`1093`. No APK was installed or launched. Remaining gates: manual device review,
+iOS compilation/execution, signed release assembly and a new GitHub CI run after
+the patch is published. Existing Gradle/KMP, preview, namespace and unrelated
+test-source warnings remain; no IDE inspection is claimed.
+
+The full Android unit/lint/build command completed successfully in **12m24s**:
+root `testDebugUnitTest` / `lintDebug`, application directDebug/playDebug unit
+tests and lint, plus both Debug assemblies and their runtime-class checks.
+Each application lint report has zero errors and 84 warnings, none in the
+changed ViewModel/test. `git diff --check` passes. No failing tests were retried
+after the production fix; the initial compile failure and intentional red
+regression remain recorded above.
