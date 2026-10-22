@@ -14,6 +14,9 @@ enum class DiscoveryGate { VisitedFilter, FavoritesFilter }
 /** Where a geolocation answer was asked and what it was. */
 enum class GeolocationOutcome { Available, Unavailable }
 
+/** The full-screen parts of the tab: the legacy `screen_shown` named them `discovery`, `roasters` and `map`. */
+enum class DiscoveryOverlay { Discovery, Roasters, Map }
+
 /** What the user did on the map, as the legacy `map_interaction` event named it. */
 enum class MapInteraction { MarkerSelected, SearchSelected, Zoomed, ZonesToggled, Loaded, LoadFailed, NearbyLoaded, NearbyFailed, Expanded, Collapsed }
 
@@ -32,6 +35,7 @@ interface DiscoveryAnalytics {
     fun mapSearchStarted(text: String, filterKeys: List<String>, citySlug: String?): SearchRun
     /** A shop of the map opened; [fromSearch] when it was picked from the map's search suggestions. */
     fun mapShopOpened(fromSearch: Boolean)
+    fun overlayShown(overlay: DiscoveryOverlay)
 }
 
 /** Reports nothing; for previews and tests. */
@@ -50,4 +54,5 @@ object NoDiscoveryAnalytics : DiscoveryAnalytics {
     override fun mapInteracted(action: MapInteraction, resultCount: Int?, durationMs: Long?, enabled: Boolean?) = Unit
     override fun mapSearchStarted(text: String, filterKeys: List<String>, citySlug: String?): SearchRun = NoRun
     override fun mapShopOpened(fromSearch: Boolean) = Unit
+    override fun overlayShown(overlay: DiscoveryOverlay) = Unit
 }

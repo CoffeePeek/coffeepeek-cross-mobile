@@ -3,6 +3,7 @@ package com.coffeepeek.feature.discovery.impl
 import androidx.lifecycle.ViewModelStore
 import com.coffeepeek.feature.discovery.api.DiscoveryGate
 import com.coffeepeek.feature.discovery.api.FilterAction
+import com.coffeepeek.feature.discovery.api.GeolocationOutcome
 import com.coffeepeek.feature.discovery.domain.model.*
 import com.coffeepeek.feature.discovery.impl.search.*
 import kotlinx.coroutines.CompletableDeferred
@@ -287,6 +288,14 @@ class SearchViewModelTest {
         val moved = Coordinates(53.91, 27.57)
         location.flow.value = moved; runCurrent()
         assertEquals(moved, repository.queries.last().origin); assertEquals(3, repository.queries.size)
+    }
+
+    @Test fun aPositionAndADeniedPermissionAreReportedWithTheDiscoveryPlacement() = runTest(dispatcher) {
+        val vm = model()
+        location.flow.value = here; runCurrent()
+        vm.send(SearchAction.LocationDenied, SearchAction.LocationGranted, scope = this)
+        assertEquals(listOf(Triple("discovery", false, GeolocationOutcome.Available), Triple("discovery", false, GeolocationOutcome.Unavailable)), analytics.geolocations)
+        assertEquals(1, location.refreshes)
     }
 
     @Test fun aNewPositionWithoutNearbyKeepsTheShownShops() = runTest(dispatcher) {

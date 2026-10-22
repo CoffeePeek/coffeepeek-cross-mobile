@@ -18,6 +18,8 @@
     <string name="discovery_section_kind">Тип заведения</string>
     <string name="discovery_section_price">Цена</string>
     <string name="discovery_section_rating">Рейтинг</string>
+    <string name="discovery_section_shops">Кофейни</string>
+    <string name="discovery_show_all">Показать все</string>
     <string name="discovery_section_roasters">Обжарщики</string>
     <string name="discovery_section_beans">Зёрна</string>
     <string name="discovery_section_equipment">Оборудование</string>
@@ -72,4 +74,6 @@
     <string name="discovery_map_card_hours">%1$s · %2$s</string>
     <string name="discovery_map_carousel_position">Кофейня %1$d из %2$d</string>
     <string name="discovery_map_photo_missing">Фото %1$s отсутствует</string>
+    <string name="discovery_map_expand">Развернуть карту на весь экран</string>
+    <string name="discovery_map_collapse">Свернуть карту</string>
 </resources>

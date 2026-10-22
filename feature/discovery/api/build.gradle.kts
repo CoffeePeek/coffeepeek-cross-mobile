@@ -13,4 +13,5 @@ dependencies {
     api(libs.kotlinx.coroutines.core)
     androidApi(libs.compose.runtime)
     androidApi(compose.ui)
+    androidApi(compose.foundation)
 }
