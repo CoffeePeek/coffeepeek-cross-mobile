@@ -29,6 +29,8 @@ kotlin {
         iosArm64(),
         iosSimulatorArm64(),
     ).forEach { iosTarget ->
+        // Fail the build instead of shipping runtime IrLinkageError stubs to TestFlight.
+        iosTarget.compilerOptions.freeCompilerArgs.add("-Xpartial-linkage-loglevel=ERROR")
         iosTarget.binaries.framework {
             baseName = "ComposeApp"
             isStatic = true
