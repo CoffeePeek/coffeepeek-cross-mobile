@@ -694,3 +694,55 @@ No APK was installed and no Native application was linked or executed. Preview
 source compilation does not confirm rendering. Card layout, CTA opening/back,
 authentication handling and the manual visual gates above still need device
 review; no automated UI/instrumented/screenshot tests were created or run.
+
+## Shared profile overview and roaster SVG photos — 2026-10-22
+
+Base: `a7ff5894`, branch `codex/migration-profile-layout-roaster-photos`.
+The own/public entry points already share their header and overview screen on
+each platform, but the public page still uses the old bottom activity card.
+Reuse one stateless week component below the bio for both own and public pages,
+retaining the owner-only private/home data sources, public-only check-in photos,
+follow/block/share, followers, favorites, errors/retry and month-sheet navigation.
+Keep the Android feature independent through its existing application UI slots;
+update the iOS legacy binding without moving the Android-first feature.
+
+Roaster catalog and card/original logo GETs succeed (HTTP 200, image/svg+xml).
+Kamel determines the decoder from the resource's string representation; the
+CustomUrl data-class string hides the extension, selecting a bitmap decoder.
+Android additionally attempts to resize SVG bytes with BitmapFactory. Preserve
+the URL string for format selection and pass SVG through unchanged to the
+installed SVG decoder. Keep permission-scoped data equality and protected-photo
+authorization/caches intact. Reach: shared URL type, Android fetcher, their unit
+regressions; no backend/media write, new dependency or new loader.
+
+Verification plan: fake profile/privacy/session regressions, week-date/count
+mapping tests, SVG format/transport unit regressions, Android Debug/Sandbox APKs
+with DEX/isolation checks, and iOS device/simulator/test KLIB compilation.
+Colocated fake light/dark week previews; no automated UI/instrumented/screenshot
+tests. Device rendering, follow/back/month switching, protected-image behavior,
+large fonts and actual native iOS execution remain manual gates.
+
+Results: first complete check passed in 5m55s; final verification after preserving
+all Kamel-supported non-bitmap inputs (SVG/XML/GIF) passed in 2m34s. No failed
+build/test retry was needed. The final result set has 757 JVM tests with zero
+failures/errors/skips: application Direct Debug 678, Profile impl 48, Roaster
+data 12 and Roaster impl 19. The unchanged roaster suites were up-to-date; the
+application's seven added regressions executed (format/scope 2, Android raw
+non-bitmap transport/error 2, public week timezone/month/count mapping 3).
+No new dependency, source-set or server configuration change.
+
+Both Direct Debug and Direct Sandbox APKs assembled; packaged DEX runtime-class
+checks and Sandbox isolation passed. iOS device/simulator KLIBs and iOS test
+sources compile; Native tests, executable linking and Swift/Xcode application
+execution were not performed. Colocated light/dark previews compile without
+production DI or image requests; no IDE rendering is claimed. Existing KMP,
+preview and unrelated test warnings remain. `git diff --check` passes.
+
+The public week keeps activity snapshots for its visible month(s) while the
+full month sheet browses other periods, and uses only that author's loaded
+public feed for thumbnails. Photos from not-yet-loaded public feed pages are
+not fetched independently; days without a matching month snapshot use loaded
+public check-ins as the count fallback. The owner's existing full personal
+week loaders remain independent. Manual device review, native SVG rendering,
+month boundaries/large public feeds, navigation and accessibility remain gates.
+No device was installed/launched and no production data or analytics was written.

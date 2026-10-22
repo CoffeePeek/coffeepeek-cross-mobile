@@ -57,7 +57,6 @@ import com.coffeepeek.feature.profile.impl.ui.compose.component.ProfileEmptyCard
 import com.coffeepeek.feature.profile.impl.ui.compose.component.ProfileSectionHeading
 import com.coffeepeek.feature.profile.impl.ui.compose.component.ProfileSectionLoader
 import com.coffeepeek.feature.profile.impl.ui.compose.component.PublicProfileActivityCalendar
-import com.coffeepeek.feature.profile.impl.ui.compose.component.PublicProfileActivityCard
 import com.coffeepeek.feature.profile.impl.ui.compose.component.PublicProfileConnectionsSheet
 import com.coffeepeek.feature.profile.impl.ui.compose.component.PublicProfileHeader
 import com.coffeepeek.feature.profile.impl.ui.model.PublicProfileAction
@@ -215,7 +214,15 @@ internal fun PublicProfileScreen(
                             vm.onAction(PublicProfileAction.OpenConnections(PublicProfileConnectionKind.Followers))
                         },
                     ) { profile.avatarUrl?.let { photos = ProfilePhotos(listOf(it)) } }
-                    own?.activityPreview { section = ProfileSection.Activity }
+                    if (own != null) own.activityPreview { section = ProfileSection.Activity }
+                    else slots.activityPreview(slug, profile.activity, state.checkIns,
+                        state.isLoadingActivity || state.isLoadingCheckIns,
+                        state.activityError != null || state.checkInsError != null,
+                        {
+                            vm.onAction(PublicProfileAction.RetryActivity)
+                            vm.onAction(PublicProfileAction.RetryCheckIns)
+                        },
+                        { section = ProfileSection.Activity })
                     if (state.error != null) InlineProfileError(stringResource(R.string.profile_update_failed)) { vm.onAction(PublicProfileAction.Refresh) }
                     if (!viewingOwn && state.followError != null) {
                         InlineProfileError(stringResource(R.string.profile_follow_failed)) { vm.onAction(PublicProfileAction.ToggleFollow) }
@@ -253,15 +260,6 @@ internal fun PublicProfileScreen(
                         }
                     }
 
-                    if (own == null) Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                        ProfileSectionHeading(stringResource(R.string.profile_section_activity)) { section = ProfileSection.Activity }
-                        when {
-                            state.isLoadingActivity -> ProfileSectionLoader()
-                            state.activityError != null -> InlineProfileError(stringResource(R.string.profile_activity_failed)) { vm.onAction(PublicProfileAction.RetryActivity) }
-                            profile.activity != null -> PublicProfileActivityCard(profile.activity!!) { section = ProfileSection.Activity }
-                            else -> ProfileSectionLoader()
-                        }
-                    }
                     Spacer(Modifier.height(own?.bottomContentPadding ?: 20.dp))
                 }
             }

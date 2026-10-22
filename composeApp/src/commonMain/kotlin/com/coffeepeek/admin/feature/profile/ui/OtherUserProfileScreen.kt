@@ -213,7 +213,15 @@ internal fun UserProfileScreen(
                     ) {
                         profile.avatarUrl?.let { photos = ProfilePhotos(PhotoViewerImages(listOf(it))) }
                     }
-                    activityPreview?.invoke { section = ProfileSection.Activity }
+                    if (activityPreview != null) activityPreview { section = ProfileSection.Activity }
+                    else PublicProfileActivityPreview(slug, profile.activity,
+                        state.checkIns.map { it.occurredAt to (it.source?.photoThumbnailUrls ?: it.photoUrls) },
+                        state.isLoadingActivity || state.isLoadingCheckIns,
+                        state.activityError != null || state.checkInsError != null,
+                        {
+                            vm.retryActivity()
+                            vm.retryCheckIns()
+                        }, { section = ProfileSection.Activity })
                     if (state.error != null) InlineProfileError("Не удалось обновить профиль", vm::refresh)
                     if (!viewingOwnProfile && state.followError != null) InlineProfileError("Не удалось изменить подписку", vm::toggleFollow)
 
@@ -268,15 +276,6 @@ internal fun UserProfileScreen(
                         }
                     }
 
-                    if (activityPreview == null) Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                        ProfileSectionHeading("Активность", onAll = { section = ProfileSection.Activity })
-                        when {
-                            state.isLoadingActivity -> ProfileSectionLoader()
-                            state.activityError != null -> InlineProfileError("Не удалось загрузить активность", vm::retryActivity)
-                            profile.activity != null -> PublicProfileActivityCard(profile.activity!!, onClick = { section = ProfileSection.Activity })
-                            else -> ProfileSectionLoader()
-                        }
-                    }
                     Spacer(Modifier.height(bottomContentPadding))
                 }
             }
