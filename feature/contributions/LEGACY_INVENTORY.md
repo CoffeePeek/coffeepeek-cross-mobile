@@ -228,3 +228,6 @@ Passed: `SubmitFailure` on the roaster form (server message, «Повторит�
 ### Legacy map
 Android no longer reaches `addshop/*`, `contributions/*`, `shopchange/*` and `roaster/AddRoaster*`. They stay for iOS and shared code through `LegacyContributionsScreenRenderer`; delete them with the iOS migration of Contributions (see `feature/LEGACY_REMOVAL.md`).
 
+### Sync with main (2026-10-23)
+Main was merged through the whole stack. What it brought for this owner: the legacy add shop and add roaster screens got the keyboard fix of `docs/SYSTEM_LAYOUT_FIXES.md` (consume the Scaffold padding once before `imePadding`, no repeated navigation padding, vertical spacing inside the scroll). The migrated forms and the change editor now do the same (`consumeWindowInsets(padding)` before `imePadding`; in the editor the keyboard padding sits on the whole column so the send button rides above the keyboard). Checked on a Pixel 7 in the Sandbox: no blank strip above the keyboard on the roaster form, the editor button stays above the keyboard. Also from main and relevant here: the roaster empty state offers «Добавить обжарщика» (opens the migrated form) and the shared `CoffeePeekCatalogSuggestionCard`; the profile menu on the design system lists «Заблокированные авторы» and replaced the card menu of `fix/profile-action-menu`.
+
