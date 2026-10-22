@@ -122,6 +122,7 @@ internal fun SettingsContent(
                     CoffeePeekIcons.Share, stringResource(R.string.settings_share), null, external::shareApp,
                     iconColors = CoffeePeekIconBadgePalette.BrightCyan,
                 )
+                StoreReviewRow(external)
             }
             Spacer(Modifier.height(CoffeePeekDimens.settingsSectionSpacing))
             CoffeePeekSettingsSection(title = stringResource(R.string.settings_section_update)) {
@@ -172,10 +173,31 @@ private fun ThemeMode.valueLabel() = when (this) {
 
 private val previewNavigation = SettingsNavigation({}, {}, {}, {}, {}, {}, {})
 private val previewExternal = object : SettingsExternalActions {
+    override val canRateApp = false
     override fun openSupport() = Unit
     override fun openTerms() = Unit
     override fun openPrivacy() = Unit
     override fun shareApp() = Unit
+    override fun rateApp() = Unit
+}
+
+@Composable
+private fun StoreReviewRow(external: SettingsExternalActions) {
+    if (!external.canRateApp) return
+    CoffeePeekSettingsDivider()
+    CoffeePeekSettingsRow(
+        CoffeePeekIcons.Star, stringResource(R.string.settings_rate_app),
+        stringResource(R.string.settings_rate_app_description), external::rateApp,
+        iconColors = CoffeePeekIconBadgePalette.Gold,
+    )
+}
+
+@PreviewLightDark
+@Composable
+private fun SettingsStoreReviewPreview() = CoffeePeekTheme {
+    CoffeePeekSettingsSection(title = "CoffeePeek") {
+        StoreReviewRow(object : SettingsExternalActions by previewExternal { override val canRateApp = true })
+    }
 }
 private val previewSlots = SettingsSlots(guestCard = { _, _, modifier -> Text("Войти", modifier) })
 

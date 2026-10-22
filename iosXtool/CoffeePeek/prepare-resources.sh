@@ -12,3 +12,8 @@ mkdir -p "$launcher_dir/.build/compose-resources/composeResources"
 rsync -a --delete \
   "$repo_dir/composeApp/build/generated/compose/resourceGenerator/assembledResources/iosArm64Main/composeResources/" \
   "$launcher_dir/.build/compose-resources/composeResources/"
+
+# xtool copies raw launch images; Xcode compiles the same light/dark asset catalog.
+mkdir -p "$launcher_dir/.build/launch-resources"
+cp "$repo_dir/iosApp/iosApp/Assets.xcassets/LaunchLogo.imageset/"*.png \
+  "$launcher_dir/.build/launch-resources/"

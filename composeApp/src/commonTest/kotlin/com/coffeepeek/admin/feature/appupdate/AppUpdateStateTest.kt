@@ -1,5 +1,6 @@
 package com.coffeepeek.admin.feature.appupdate
 
+import com.coffeepeek.admin.config.iosUpdateVersionCode
 import com.coffeepeek.admin.feature.appupdate.domain.AppUpdate
 import com.coffeepeek.admin.feature.appupdate.domain.AppUpdateRepository
 import com.coffeepeek.admin.feature.appupdate.domain.InstallationStage
@@ -15,6 +16,40 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 class AppUpdateStateTest {
+    @Test
+    fun iosCiBuildChecksForANewerStoreVersionAutomaticallyAndManually() = runBlocking {
+        val repository = Updates(AppUpdate(49, 0, "https://apps.apple.com/app/id6821851267"))
+        val controller = AppUpdateState(repository, this, currentVersion = iosUpdateVersionCode("48.1"))
+        controller.check()
+        controller.state.first { !it.checking }
+        assertEquals(1, repository.fetches)
+        assertTrue(controller.state.value.showPrompt)
+        controller.dismiss()
+        controller.check(manual = true)
+        controller.state.first { !it.checking }
+        assertEquals(2, repository.fetches)
+        assertTrue(controller.state.value.showPrompt)
+        assertFalse(controller.state.value.checkFailed)
+    }
+
+    @Test
+    fun iosRequiredVersionCannotBeDismissedAndUploadRetriesAreNotUpdates() = runBlocking {
+        val repository = Updates(AppUpdate(49, 49, "https://apps.apple.com/app/id6821851267"))
+        val current = iosUpdateVersionCode("48.2")
+        val controller = AppUpdateState(repository, this, currentVersion = current)
+        controller.check()
+        controller.state.first { !it.checking }
+        assertTrue(controller.state.value.update!!.isRequired(current!!))
+        controller.dismiss()
+        assertNull(repository.dismissed)
+        assertTrue(controller.state.value.showPrompt)
+        repository.update = repository.update.copy(versionCode = 48, minVersionCode = 0)
+        controller.check(manual = true)
+        controller.state.first { !it.checking }
+        assertNull(controller.state.value.update)
+        assertFalse(controller.state.value.checkFailed)
+    }
+
     @Test
     fun nativeConfirmationSkipsTheCardButRequiredDownloadsAndErrorsStillBlockOldVersions() {
         assertFalse(needsPlayFallback(true, InstallationState()))
@@ -100,7 +135,11 @@ class AppUpdateStateTest {
 
     private class Updates(var update: AppUpdate) : AppUpdateRepository {
         var dismissed: Long? = null
-        override suspend fun fetch() = update
+        var fetches = 0
+        override suspend fun fetch(): AppUpdate {
+            fetches++
+            return update
+        }
         override suspend fun dismissedVersion() = dismissed
         override suspend fun dismiss(version: Long) { dismissed = version }
     }

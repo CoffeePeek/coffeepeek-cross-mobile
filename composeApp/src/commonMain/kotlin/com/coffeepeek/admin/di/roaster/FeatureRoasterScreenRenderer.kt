@@ -13,6 +13,8 @@ import com.coffeepeek.admin.ui.component.LocalFloatingNavClearance
 import com.coffeepeek.admin.ui.component.SearchHeader
 import com.coffeepeek.admin.ui.component.platformHaptic
 import com.coffeepeek.admin.ui.screen.roaster.RoasterScreenRenderer
+import com.coffeepeek.admin.ui.screen.feed.CatalogSuggestionCard
+import com.coffeepeek.admin.ui.screen.feed.CatalogSuggestionKind
 import com.coffeepeek.admin.utils.OpenInBrowser
 import com.coffeepeek.feature.roaster.api.RoasterDetailEntry
 import com.coffeepeek.feature.roaster.api.RoasterDiscoveryEntry
@@ -75,7 +77,9 @@ internal fun roasterScreenRenderer(
     val feedback = { platformHaptic(HapticEvent.Selection) }
     return FeatureRoasterScreenRenderer(
         createRoasterDiscoveryEntry(repository, favorites, RoasterAnalyticsAdapter, RoasterScreenAnalyticsAdapter, image,
-            loadError = { onRetry -> LoadErrorContent(onRetry) }, onFavoriteFeedback = feedback),
+            loadError = { onRetry -> LoadErrorContent(onRetry) },
+            emptyContent = { modifier -> CatalogSuggestionCard(CatalogSuggestionKind.Roaster,
+                onAdd = { Navigator.navigate(Navigator.Screen.AddRoaster) }, modifier = modifier) }, onFavoriteFeedback = feedback),
         createRoasterDetailEntry(repository, favorites, shopPhotos, RoasterAnalyticsAdapter, RoasterScreenAnalyticsAdapter, image,
             photoViewer = { url, onDismiss -> FullScreenImageDialog(imageUrl = url, onDismiss = onDismiss) }, onFavoriteFeedback = feedback),
     )

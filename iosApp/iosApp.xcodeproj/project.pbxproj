@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		A10000000000000000000012 /* CoffeePeekLaunchView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000013 /* CoffeePeekLaunchView.swift */; };
         A10000000000000000000007 /* SocialSignInProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000011 /* SocialSignInProvider.swift */; };
 		A10000000000000000000001 /* CoffeePeekApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000001 /* CoffeePeekApp.swift */; };
 		A10000000000000000000004 /* MapLibreMapProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000009 /* MapLibreMapProvider.swift */; };
@@ -20,6 +21,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		A20000000000000000000013 /* CoffeePeekLaunchView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "../../iosXtool/CoffeePeek/Sources/CoffeePeek/CoffeePeekLaunchView.swift"; sourceTree = "<group>"; };
         A20000000000000000000011 /* SocialSignInProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "../../iosXtool/CoffeePeek/Sources/CoffeePeek/SocialSignInProvider.swift"; sourceTree = "<group>"; };
 		A20000000000000000000001 /* CoffeePeekApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoffeePeekApp.swift; sourceTree = "<group>"; };
 		A20000000000000000000002 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -62,6 +64,7 @@
 			isa = PBXGroup;
 			children = (
 				A20000000000000000000001 /* CoffeePeekApp.swift */,
+				A20000000000000000000013 /* CoffeePeekLaunchView.swift */,
                 A20000000000000000000011 /* SocialSignInProvider.swift */,
 				A20000000000000000000009 /* MapLibreMapProvider.swift */,
 				A20000000000000000000002 /* Assets.xcassets */,
@@ -198,6 +201,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				A10000000000000000000001 /* CoffeePeekApp.swift in Sources */,
+				A10000000000000000000012 /* CoffeePeekLaunchView.swift in Sources */,
                 A10000000000000000000007 /* SocialSignInProvider.swift in Sources */,
 				A10000000000000000000004 /* MapLibreMapProvider.swift in Sources */,
 			);

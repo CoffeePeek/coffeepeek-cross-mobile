@@ -1,6 +1,5 @@
 package com.coffeepeek.feature.profile.impl.ui.compose
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -37,7 +36,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -46,7 +44,6 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.coffeepeek.core.designsystem.component.CoffeePeekSwipeDismissModalBottomSheet
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
-import com.coffeepeek.core.designsystem.theme.CoffeePeekColors
 import com.coffeepeek.feature.profile.api.ProfileAuthor
 import com.coffeepeek.feature.profile.api.ProfileAuthorActions
 import com.coffeepeek.feature.profile.api.ProfileSlots
@@ -63,7 +60,6 @@ import com.coffeepeek.feature.profile.impl.ui.compose.component.PublicProfileAct
 import com.coffeepeek.feature.profile.impl.ui.compose.component.PublicProfileActivityCard
 import com.coffeepeek.feature.profile.impl.ui.compose.component.PublicProfileConnectionsSheet
 import com.coffeepeek.feature.profile.impl.ui.compose.component.PublicProfileHeader
-import com.coffeepeek.feature.profile.impl.ui.compose.component.PublicProfileStatsCard
 import com.coffeepeek.feature.profile.impl.ui.model.PublicProfileAction
 import com.coffeepeek.feature.profile.impl.ui.model.PublicProfileEvent
 
@@ -81,6 +77,7 @@ internal class OwnProfileExtras(
     val topBarActions: @Composable () -> Unit,
     val favoritesPreview: @Composable () -> Unit,
     val activityCalendar: @Composable () -> Unit,
+    val activityPreview: @Composable (onClick: () -> Unit) -> Unit,
     val bottomContentPadding: Dp,
 )
 
@@ -125,7 +122,6 @@ internal fun PublicProfileScreen(
     Scaffold(containerColor = MaterialTheme.colorScheme.background, contentWindowInsets = WindowInsets(0, 0, 0, 0)) { innerPadding ->
         Column(
             Modifier.fillMaxSize().padding(innerPadding)
-                .background(Brush.verticalGradient(listOf(CoffeePeekColors.GoldWarm.copy(alpha = 0.055f), MaterialTheme.colorScheme.background)))
                 .statusBarsPadding(),
         ) {
             Box(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp).height(48.dp), contentAlignment = Alignment.Center) {
@@ -202,7 +198,8 @@ internal fun PublicProfileScreen(
                 }
             } else {
                 Column(
-                    Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 16.dp).navigationBarsPadding(),
+                    Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 16.dp)
+                        .then(if (own == null) Modifier.navigationBarsPadding() else Modifier),
                     verticalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
                     Spacer(Modifier.height(2.dp))
@@ -212,11 +209,13 @@ internal fun PublicProfileScreen(
                         followEnabled = !state.isFollowLoading && !state.isLoading,
                         onFollow = if (viewingOwn) null else ({ vm.onAction(PublicProfileAction.ToggleFollow) }),
                         onEditProfile = own?.onEditProfile,
+                        stats = profile.stats,
+                        onFollowersClick = {
+                            section = null
+                            vm.onAction(PublicProfileAction.OpenConnections(PublicProfileConnectionKind.Followers))
+                        },
                     ) { profile.avatarUrl?.let { photos = ProfilePhotos(listOf(it)) } }
-                    PublicProfileStatsCard(profile.stats, onFollowersClick = {
-                        section = null
-                        vm.onAction(PublicProfileAction.OpenConnections(PublicProfileConnectionKind.Followers))
-                    })
+                    own?.activityPreview { section = ProfileSection.Activity }
                     if (state.error != null) InlineProfileError(stringResource(R.string.profile_update_failed)) { vm.onAction(PublicProfileAction.Refresh) }
                     if (!viewingOwn && state.followError != null) {
                         InlineProfileError(stringResource(R.string.profile_follow_failed)) { vm.onAction(PublicProfileAction.ToggleFollow) }
@@ -254,7 +253,7 @@ internal fun PublicProfileScreen(
                         }
                     }
 
-                    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    if (own == null) Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                         ProfileSectionHeading(stringResource(R.string.profile_section_activity)) { section = ProfileSection.Activity }
                         when {
                             state.isLoadingActivity -> ProfileSectionLoader()

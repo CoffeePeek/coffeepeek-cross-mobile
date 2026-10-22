@@ -17,6 +17,19 @@ import kotlin.test.assertTrue
 
 class HomeCheckInCalendarTest {
     @Test
+    fun profileWeekLoadsEveryPhotoPageAcrossTheYearBoundary() = runBlocking {
+        val repository = CalendarRepository()
+        val week = com.coffeepeek.admin.ui.screen.checkins.CalendarWeek("2027-01-01")
+        val vm = viewModel(repository, week)
+        try {
+            val state = withTimeout(2_000) { vm.state.first { !it.calendarLoading && it.calendarItems.size == 2 } }
+            assertEquals(listOf("2026-12-28" to "2027-01-03", "2026-12-28" to "2027-01-03"), repository.monthRanges)
+            assertEquals(listOf(1, 2), repository.monthPages)
+            assertEquals(listOf("first.jpg", "second.jpg"), state.calendarItems.map { it.photos.single().url })
+        } finally { vm.close() }
+    }
+
+    @Test
     fun cancelledMonthPhotoRequestCannotReplaceTheNewMonthsPhotos() = runBlocking {
         val repository = CalendarRepository(pauseFirstMonthPhotos = true)
         val vm = viewModel(repository)
@@ -74,10 +87,12 @@ class HomeCheckInCalendarTest {
         } finally { vm.close() }
     }
 
-    private fun viewModel(repository: HomeCheckInRepository) = HomeCheckInViewModel(
+    private fun viewModel(repository: HomeCheckInRepository,
+        week: com.coffeepeek.admin.ui.screen.checkins.CalendarWeek? = null) = HomeCheckInViewModel(
         repository,
         object : CoffeePicker { override suspend fun search(query: String) = Result.success(emptyList<CoffeePickerItem>()) },
         BrewMethodCatalog { Result.success(emptyList()) },
+        calendarWeek = week,
     )
 }
 

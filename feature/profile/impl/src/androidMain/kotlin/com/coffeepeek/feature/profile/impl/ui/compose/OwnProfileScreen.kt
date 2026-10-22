@@ -42,7 +42,6 @@ import com.coffeepeek.feature.profile.impl.ui.OwnProfileViewModel
 import com.coffeepeek.feature.profile.impl.ui.PublicProfileViewModel
 import com.coffeepeek.feature.profile.impl.ui.compose.component.ProfileSectionLoader
 import com.coffeepeek.feature.profile.impl.ui.compose.component.PublicProfileHeader
-import com.coffeepeek.feature.profile.impl.ui.compose.component.PublicProfileStatsCard
 import com.coffeepeek.feature.profile.impl.ui.model.OwnProfileAction
 import com.coffeepeek.feature.profile.impl.ui.model.PublicProfileAction
 import kotlinx.coroutines.flow.drop
@@ -102,6 +101,7 @@ internal fun OwnProfileScreen(
                     topBarActions = actions,
                     favoritesPreview = { slots.favoritesPreview(onOpenShop, onOpenRoaster) },
                     activityCalendar = slots.activityCalendar,
+                    activityPreview = slots.activityPreview,
                     bottomContentPadding = bottomPadding,
                 ),
             )
@@ -127,8 +127,9 @@ internal fun OwnProfileScreen(
                     PublicProfileHeader(
                         nickname = profile.userName, avatarUrl = profile.avatarUrl, about = profile.about, image = slots.shared.image,
                         onEditProfile = onEditProfile, onAvatarClick = onEditProfile,
+                        stats = PublicProfileStats(profile.checkInCount, profile.addedShopsCount, profile.addedRoastersCount, profile.followersCount),
                     )
-                    PublicProfileStatsCard(PublicProfileStats(profile.checkInCount, profile.addedShopsCount, profile.addedRoastersCount, profile.followersCount))
+                    slots.activityPreview(onOpenCheckIns)
                     if (state.error != null || state.refreshError != null) slots.loadError { vm.onAction(OwnProfileAction.Refresh) }
                     TextButton(onClick = onOpenFavorites) { Text(stringResource(R.string.profile_own_favorites)) }
                     slots.favoritesPreview(onOpenShop, onOpenRoaster)
