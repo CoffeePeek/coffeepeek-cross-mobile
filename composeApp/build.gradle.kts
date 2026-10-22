@@ -29,6 +29,8 @@ kotlin {
         iosArm64(),
         iosSimulatorArm64(),
     ).forEach { iosTarget ->
+        // Fail the build instead of shipping runtime IrLinkageError stubs to TestFlight.
+        iosTarget.compilerOptions.freeCompilerArgs.add("-Xpartial-linkage-loglevel=ERROR")
         iosTarget.binaries.framework {
             baseName = "ComposeApp"
             isStatic = true
@@ -151,11 +153,21 @@ kotlin {
 }
 
 val gitCommitCount: Provider<Int> = providers.exec {
-    commandLine("git", "rev-list", "--all", "--count", "HEAD")
+    commandLine("git", "rev-list", "--count", "HEAD")
 }.standardOutput.asText.map { it.trim().toIntOrNull() ?: 1 }
 
-val appVersionCode: Provider<Int> = gitCommitCount
-val appVersionName: Provider<String> = gitCommitCount.map { "1.1.$it" }
+val appVersionConfig = providers.fileContents(
+    rootProject.layout.projectDirectory.file("iosApp/Configuration/Shared.xcconfig")
+).asText
+val appBuildNumberOffset = appVersionConfig.map { config ->
+    Regex("(?m)^BUILD_NUMBER_OFFSET = ([0-9]+)$")
+        .find(config)?.groupValues?.get(1)?.toInt() ?: error("BUILD_NUMBER_OFFSET is required")
+}
+val appVersionCode: Provider<Int> = gitCommitCount.zip(appBuildNumberOffset) { count, offset -> count + offset }
+val appVersionName: Provider<String> = appVersionConfig.map { config ->
+    Regex("(?m)^MARKETING_VERSION = ([0-9]+\\.[0-9]+\\.[0-9]+)$")
+        .find(config)?.groupValues?.get(1) ?: error("MARKETING_VERSION must be major.minor.patch")
+}
 
 tasks.register<PrintValueTask>("printVersionName") {
     group = "versioning"
