@@ -45,8 +45,8 @@ without opening a modal or resolving DI. No new module/dependency or UI test hos
   Two pre-existing instrumented-test callers receive the new callback argument
   solely to preserve source compatibility; no test cases or assertions are added.
 
-No app is installed or launched. Device visual review, light/dark modal animation,
-large-font layout and real-account logout remain separate untested gates.
+The initial checks below did not install or launch an app. The later requested
+Sandbox visual review is recorded separately; it does not certify real logout.
 
 ## Local results — 2026-10-22
 
@@ -65,3 +65,32 @@ changes stay within the existing application/Profile/Settings boundaries.
 Paired previews compile, including Android menu content and common confirmation
 content; rendering was not inspected. Gradle/KMP, interop and the existing project
 preview annotation's deprecation warnings remain; no IDE diagnostics are claimed.
+
+## Requested Sandbox visual review — 2026-10-22
+
+Source `a0d5deef181c72dcbc88cf57a8e7f4235bb4bc4e`, `directSandbox`, package
+`com.coffeepeek.sandbox`, version `1.1.1088-sandbox` / code `1088`. The APK SHA-256
+is `bf935a229b1e8c0cdd364bbd7147d0c8d2407fd928525bf3ec757e0c1b30699a`.
+Assembly, Sandbox manifest isolation and packaged DEX runtime-class checks passed
+in 2m08s, with no failed-build retry. No additional unit suite was run for this
+visual-only follow-up; the 147 passing unit results above remain applicable.
+
+No physical device was connected. Manual review used the existing Pixel 8 AVD,
+explicit serial `emulator-5554`, API 37 / x86_64, 1080x2400 at 420dpi, font scale
+1.0. It was launched with a temporary read-only disk and no snapshot saving.
+The screen was awake/unlocked and Sandbox was absent before installation; the
+installed package/version and launcher were verified. Production app/data were
+not opened or replaced. Sandbox has no INTERNET permission or analytics startup.
+
+Menu and confirmation screenshots were inspected in light and dark themes: menu
+labels fit, blocked authors appears between dividers, logout icon/text and the
+confirmation button are red, and the sheet occupies the bottom with readable
+content above the navigation inset. Light-theme Cancel and dark-theme system Back
+both returned to the same signed-in local profile. The new blocked-authors entry
+opened the existing empty blocking screen without changing any block or follow.
+Screenshots, UI dumps and build diagnostics remain outside tracked sources.
+No automated UI/instrumented/screenshot tests were created or executed.
+
+Not checked: physical devices/iOS presentation, animation smoothness, larger
+fonts or alternate window sizes, TalkBack, outside/swipe dismissal, and confirming
+logout. No real account actions or backend acceptance are claimed.
