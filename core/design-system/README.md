@@ -127,9 +127,9 @@ Verification/failure history: [RATING_PLAN.md](RATING_PLAN.md).
 
 Use `CoffeePeekLikeButton` for stateless favorite/like toggles and
 `CoffeePeekLikeIcon` inside existing glass controls and read-only counters.
-Selected hearts are filled brand gold, unselected outlines use the theme's
-neutral foreground. Light surfaces use darker gold for contrast; `overImage`
-uses bright gold/white on photo controls. Disabled icons are muted. Do not tint
+Selected hearts use the same gold (`Like`, #B68A2E) on light/dark surfaces and
+photos. Unselected outlines use the theme's neutral foreground, or white with
+`overImage`. Disabled icons are muted. Do not tint
 affinity with `Error`, arbitrary primary/foreground colors or duplicate heart
 rendering in features. Keep feature actions, counts, loading, descriptions,
 authentication, haptics and analytics in their existing owners. Containers,
