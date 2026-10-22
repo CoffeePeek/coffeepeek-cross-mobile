@@ -3,18 +3,23 @@ package com.coffeepeek.feature.shop.impl.ui.compose.component
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.FilledIconButton
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -24,14 +29,13 @@ import com.coffeepeek.feature.shop.impl.ui.data.shopExposure
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.core.designsystem.component.CoffeePeekButton
+import com.coffeepeek.core.designsystem.component.CoffeePeekGlassButton
+import com.coffeepeek.core.designsystem.component.CoffeePeekGlassButtonIcon
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
-import com.coffeepeek.core.designsystem.modifier.CoffeePeekGlassIconButton
-import com.coffeepeek.core.designsystem.modifier.coffeePeekLiquidGlass
+import com.coffeepeek.core.designsystem.theme.CoffeePeekColors
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.feature.shop.impl.resources.Res
@@ -42,6 +46,8 @@ import com.coffeepeek.feature.shop.impl.resources.shop_detail_route
 import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import dev.chrisbanes.haze.HazeState
+import dev.chrisbanes.haze.hazeSource
+import dev.chrisbanes.haze.rememberHazeState
 
 @Composable
 internal fun ShopDetailBottomBar(
@@ -58,11 +64,13 @@ internal fun ShopDetailBottomBar(
         verticalAlignment = Alignment.CenterVertically) {
         if (forCheckIn) ShopPickerActions(onChooseAnotherShop, onCheckIn)
         else {
-            CoffeePeekGlassIconButton(onClick = onRoute, enabled = canOpenRoute,
-                contentDescription = stringResource(Res.string.shop_detail_route), hazeState = hazeState,
+            FilledIconButton(onClick = onRoute, enabled = canOpenRoute,
+                shape = CircleShape,
+                colors = IconButtonDefaults.filledIconButtonColors(containerColor = CoffeePeekColors.Primary,
+                    contentColor = CoffeePeekColors.LightTextOnPrimary),
                 modifier = Modifier.then(if (canOpenRoute) Modifier.shopExposure(ShopExposure.Directions) else Modifier)
                     .size(CoffeePeekDimens.buttonHeight)) {
-                Icon(CoffeePeekIcons.Navigation, contentDescription = null, Modifier.size(20.dp))
+                Icon(CoffeePeekIcons.Navigation, stringResource(Res.string.shop_detail_route), Modifier.size(20.dp))
             }
             ShopCheckInButton(onCheckIn, hazeState, Modifier.weight(1f))
         }
@@ -87,32 +95,25 @@ private fun RowScope.ShopPickerActions(onChooseAnotherShop: () -> Unit, onCheckI
 
 @Composable
 private fun ShopCheckInButton(onClick: () -> Unit, hazeState: HazeState?, modifier: Modifier) {
-    val shape = RoundedCornerShape(CoffeePeekDimens.buttonRadius)
-    OutlinedButton(onClick = onClick,
-        modifier = modifier.shopExposure(ShopExposure.CheckIn).height(CoffeePeekDimens.buttonHeight)
-            .coffeePeekLiquidGlass(shape, hazeState, shadowElevation = 8.dp),
-        shape = shape, border = null,
-        colors = ButtonDefaults.outlinedButtonColors(containerColor = Color.Transparent,
-            contentColor = MaterialTheme.colorScheme.onSurface)) {
-        Icon(CoffeePeekIcons.Check, null, Modifier.size(16.dp))
-        Spacer(Modifier.width(CoffeePeekDimens.spacing1))
-        Text(stringResource(Res.string.shop_detail_checkin), style = MaterialTheme.typography.labelMedium,
-            fontWeight = FontWeight.SemiBold)
+    CoffeePeekGlassButton(text = stringResource(Res.string.shop_detail_checkin), onClick = onClick,
+        leadingIcon = CoffeePeekGlassButtonIcon.Check, hazeState = hazeState,
+        modifier = modifier.shopExposure(ShopExposure.CheckIn))
+}
+
+@Composable
+private fun ShopFooterPreview(dark: Boolean, forCheckIn: Boolean = false) = CoffeePeekTheme(darkTheme = dark) {
+    val haze = rememberHazeState()
+    Box(Modifier.fillMaxWidth().height(160.dp)) {
+        Column(Modifier.fillMaxSize().hazeSource(haze)) {
+            Box(Modifier.fillMaxWidth().weight(1f).background(MaterialTheme.colorScheme.primaryContainer))
+            Box(Modifier.fillMaxWidth().weight(1f).background(MaterialTheme.colorScheme.secondaryContainer))
+        }
+        ShopDetailBottomBar(true, forCheckIn, {}, {}, {}, hazeState = haze,
+            modifier = Modifier.align(Alignment.BottomCenter))
     }
 }
 
-@Preview @Composable private fun ShopDetailBottomBarLightPreview() = CoffeePeekTheme(darkTheme = false) {
-    ShopDetailBottomBar(true, false, {}, {}, {})
-}
-
-@Preview @Composable private fun ShopDetailBottomBarDarkPreview() = CoffeePeekTheme(darkTheme = true) {
-    ShopDetailBottomBar(false, false, {}, {}, {})
-}
-
-@Preview @Composable private fun ShopPickerBottomBarLightPreview() = CoffeePeekTheme(darkTheme = false) {
-    ShopDetailBottomBar(true, true, {}, {}, {})
-}
-
-@Preview @Composable private fun ShopPickerBottomBarDarkPreview() = CoffeePeekTheme(darkTheme = true) {
-    ShopDetailBottomBar(true, true, {}, {}, {})
-}
+@Preview @Composable private fun ShopDetailBottomBarLightPreview() = ShopFooterPreview(false)
+@Preview @Composable private fun ShopDetailBottomBarDarkPreview() = ShopFooterPreview(true)
+@Preview @Composable private fun ShopPickerBottomBarLightPreview() = ShopFooterPreview(false, true)
+@Preview @Composable private fun ShopPickerBottomBarDarkPreview() = ShopFooterPreview(true, true)
