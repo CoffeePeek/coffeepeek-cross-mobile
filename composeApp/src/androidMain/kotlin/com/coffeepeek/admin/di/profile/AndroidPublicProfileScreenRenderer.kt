@@ -7,6 +7,7 @@ import com.coffeepeek.admin.feature.profile.domain.PublicProfileCheckIn as Legac
 import com.coffeepeek.admin.feature.profile.domain.PublicProfileRepository
 import com.coffeepeek.admin.feature.profile.ui.PublicProfileCheckInCard
 import com.coffeepeek.admin.feature.profile.ui.PublicProfileFavoriteCard
+import com.coffeepeek.admin.feature.profile.ui.PublicProfileActivityPreview
 import com.coffeepeek.admin.ui.Navigator
 import com.coffeepeek.admin.ui.component.FullScreenImageDialog
 import com.coffeepeek.admin.ui.component.PhotoViewerImages
@@ -124,5 +125,9 @@ internal fun androidProfileSlots(checkIns: AndroidPublicCheckIns): ProfileSlots 
             )
         },
         photoPrefetch = { listState, items -> PrefetchListPhotos(listState, items) },
+        activityPreview = { slug, activity, items, loading, failed, onRetry, onOpen ->
+            PublicProfileActivityPreview(slug, activity, items.map { it.occurredAt to it.photoPreviewUrls },
+                loading, failed, onRetry, onOpen)
+        },
     )
 }

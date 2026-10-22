@@ -28,6 +28,9 @@ import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.core.animate
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.systemBars
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -109,6 +112,7 @@ internal fun FullScreenImageDialog(
                 .fillMaxSize()
                 .onSizeChanged { viewportHeight = it.height.toFloat().coerceAtLeast(1f) }
                 .background(Color.Black.copy(alpha = (1f - dismissOffset / viewportHeight).coerceIn(0f, 1f)))
+                .windowInsetsPadding(WindowInsets.systemBars)
                 .draggable(dismissDrag, Orientation.Vertical, enabled = !isZoomed,
                     onDragStopped = { velocity ->
                         val dismiss = dismissOffset >= threshold || velocity >= flingThreshold
