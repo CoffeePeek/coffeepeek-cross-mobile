@@ -40,8 +40,9 @@ internal fun SearchHeader(
         if (roastersSelected) Res.string.search_roasters_placeholder
         else Res.string.search_shops_and_roasters_placeholder,
     ),
+    modifier: Modifier = Modifier,
 ) {
-    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+    Row(modifier = modifier, verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         if (onCancelSearch != null) {
             CpCircularBackButton(
                 onClick = onCancelSearch,

@@ -20,6 +20,7 @@ import androidx.compose.ui.viewinterop.UIKitView
 import com.coffeepeek.admin.theme.CpDimens
 import com.coffeepeek.admin.theme.toUIColor
 import com.coffeepeek.admin.theme.uiKitStyle
+import com.coffeepeek.core.designsystem.theme.CoffeePeekColors
 import dev.chrisbanes.haze.HazeState
 import platform.UIKit.UIAction
 import platform.UIKit.UIButton
@@ -89,12 +90,10 @@ actual fun PlatformGlassIconButton(
             configuration.image = UIImage.systemImageNamed(icon.symbol)
             configuration.showsActivityIndicator = isLoading
             configuration.baseForegroundColor = colors.onSurface.toUIColor()
-            if (selected) {
+            if (icon == GlassControlIcon.FavoriteFilled || (icon == GlassControlIcon.Favorite && selected)) {
+                configuration.baseForegroundColor = CoffeePeekColors.Like.toUIColor()
+            } else if (selected) {
                 configuration.baseForegroundColor = colors.primary.toUIColor()
-            } else if (icon == GlassControlIcon.FavoriteFilled) {
-                configuration.baseForegroundColor = UIColor.colorWithRed(
-                    239.0 / 255.0, 68.0 / 255.0, 68.0 / 255.0, 1.0,
-                )
             }
             button.configuration = configuration
             button.accessibilityLabel = contentDescription

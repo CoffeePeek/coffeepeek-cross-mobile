@@ -6,6 +6,8 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
+import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.windowInsetsPadding
@@ -28,6 +30,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.key
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
@@ -148,9 +151,11 @@ internal fun ShopDetailScreenContent(
     }
     val hazeState = rememberHazeState()
     val floatingActionsClearance = 72.dp
+    val systemBottomInset = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
     Box(Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal))) {
       Scaffold(
         modifier = Modifier.hazeSource(hazeState),
+        contentWindowInsets = WindowInsets(0),
         snackbarHost = { SnackbarHost(snackbarHostState,
             Modifier.navigationBarsPadding().padding(bottom = floatingActionsClearance)) },
         containerColor = MaterialTheme.colorScheme.background,
@@ -164,9 +169,9 @@ internal fun ShopDetailScreenContent(
                 details == null -> ShopDetailLoadState(state.isLoading,
                     onRetry = { onAction(ShopDetailAction.Retry) })
                 else -> LazyColumn(
-                    modifier = Modifier.fillMaxSize(),
+                    modifier = Modifier.fillMaxSize().clipToBounds(),
                     contentPadding = PaddingValues(bottom = floatingActionsClearance +
-                        CoffeePeekDimens.spacing4 + CoffeePeekDimens.spacing6),
+                        CoffeePeekDimens.spacing4 + CoffeePeekDimens.spacing6 + systemBottomInset),
                 ) {
                     item {
                         Column {
@@ -270,6 +275,7 @@ internal fun ShopDetailScreenContent(
               onCheckIn = { onAction(ShopDetailAction.OpenCheckIn) },
               onChooseAnotherShop = { onAction(ShopDetailAction.ChooseAnotherShop) },
               modifier = Modifier.align(Alignment.BottomCenter),
+              hazeState = hazeState,
           )
       }
     }
