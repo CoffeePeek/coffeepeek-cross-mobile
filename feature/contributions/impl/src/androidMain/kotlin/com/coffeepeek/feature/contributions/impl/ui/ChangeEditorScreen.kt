@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -87,8 +88,8 @@ internal fun ChangeEditorContent(
             when {
                 state.signedIn == null || state.isLoading -> Box(Modifier.fillMaxSize().padding(padding), Alignment.Center) { CoffeePeekLoader(stringResource(R.string.contributions_loading)) }
                 state.loadError != null -> LoadFailure(state, onAction, callbacks, Modifier.padding(padding))
-                else -> Column(Modifier.fillMaxSize().padding(padding).padding(horizontal = CoffeePeekDimens.spacing4)) {
-                    Column(Modifier.weight(1f).imePadding().verticalScroll(rememberScrollState())) {
+                else -> Column(Modifier.fillMaxSize().padding(padding).consumeWindowInsets(padding).imePadding().padding(horizontal = CoffeePeekDimens.spacing4)) {
+                    Column(Modifier.weight(1f).verticalScroll(rememberScrollState())) {
                         if (state.shopTitle.isNotBlank()) {
                             Text(state.shopTitle, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                             Spacer(Modifier.height(CoffeePeekDimens.spacing3))
