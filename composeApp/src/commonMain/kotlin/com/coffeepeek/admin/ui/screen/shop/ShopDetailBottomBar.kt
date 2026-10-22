@@ -9,10 +9,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.tooling.preview.Preview
 import coffeepeek.composeapp.generated.resources.Res
@@ -24,10 +21,10 @@ import coffeepeek.composeapp.generated.resources.shop_detail_route
 import com.coffeepeek.admin.analytics.analyticsExposure
 import com.coffeepeek.admin.theme.CpDimens
 import com.coffeepeek.admin.ui.component.AppButton
-import com.coffeepeek.admin.ui.component.CoffeePeekLoader
 import com.coffeepeek.admin.ui.icons.CpIcons
-import com.coffeepeek.core.designsystem.modifier.CoffeePeekGlassIconButton
-import com.coffeepeek.core.designsystem.modifier.coffeePeekLiquidGlass
+import com.coffeepeek.core.designsystem.component.CoffeePeekGlassButton
+import com.coffeepeek.core.designsystem.component.CoffeePeekGlassButtonIcon
+import com.coffeepeek.core.designsystem.theme.CoffeePeekColors
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import dev.chrisbanes.haze.HazeState
 import dev.chrisbanes.haze.hazeSource
@@ -50,11 +47,13 @@ internal fun ShopDetailBottomBar(
         verticalAlignment = Alignment.CenterVertically) {
         if (forCheckIn) ShopPickerActions(isCheckInLoading, onChooseAnotherShop, onCheckIn)
         else {
-            CoffeePeekGlassIconButton(onRoute, stringResource(Res.string.shop_detail_route),
-                enabled = canOpenRoute, hazeState = hazeState,
+            FilledIconButton(onRoute, enabled = canOpenRoute, shape = CircleShape,
+                colors = IconButtonDefaults.filledIconButtonColors(containerColor = CoffeePeekColors.Primary,
+                    contentColor = CoffeePeekColors.LightTextOnPrimary),
                 modifier = Modifier.then(if (canOpenRoute)
-                    Modifier.analyticsExposure("directions", "shop_detail", "shop_detail") else Modifier)) {
-                Icon(CpIcons.Navigation, null, Modifier.size(20.dp))
+                    Modifier.analyticsExposure("directions", "shop_detail", "shop_detail") else Modifier)
+                    .size(CpDimens.buttonHeight)) {
+                Icon(CpIcons.Navigation, stringResource(Res.string.shop_detail_route), Modifier.size(20.dp))
             }
             ShopCheckInButton(isCheckInLoading, onCheckIn, hazeState,
                 Modifier.weight(1f).analyticsExposure("check_in", "shop_detail", "shop_detail"))
@@ -80,20 +79,9 @@ private fun RowScope.ShopPickerActions(loading: Boolean, onChooseAnotherShop: ()
 
 @Composable
 private fun ShopCheckInButton(loading: Boolean, onClick: () -> Unit, hazeState: HazeState?, modifier: Modifier) {
-    OutlinedButton(onClick, enabled = !loading,
-        modifier = modifier.height(CpDimens.buttonHeight)
-            .coffeePeekLiquidGlass(CircleShape, hazeState, shadowElevation = 8.dp),
-        shape = CircleShape, border = null,
-        colors = ButtonDefaults.outlinedButtonColors(containerColor = Color.Transparent,
-            disabledContainerColor = Color.Transparent, contentColor = MaterialTheme.colorScheme.onSurface,
-            disabledContentColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f))) {
-        if (loading) CoffeePeekLoader(size = 16.dp, strokeWidth = 2.dp)
-        else Icon(CpIcons.Check, null, Modifier.size(16.dp))
-        Spacer(Modifier.width(CpDimens.spacing1))
-        Text(stringResource(Res.string.checkin_action),
-            style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold),
-            maxLines = 1, overflow = TextOverflow.Ellipsis)
-    }
+    CoffeePeekGlassButton(text = stringResource(Res.string.checkin_action), onClick = onClick,
+        isLoading = loading, loadingDescription = stringResource(Res.string.shop_detail_loading),
+        leadingIcon = CoffeePeekGlassButtonIcon.Check, hazeState = hazeState, modifier = modifier)
 }
 
 @Composable
