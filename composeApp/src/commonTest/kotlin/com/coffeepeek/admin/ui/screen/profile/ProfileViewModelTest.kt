@@ -34,6 +34,7 @@ import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Runnable
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
@@ -42,6 +43,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.getAndUpdate
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.plus
 import kotlinx.coroutines.test.runTest
@@ -56,8 +58,8 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 /**
- * Parity tests for the legacy own-profile/settings ViewModel (profile migration step 1). It runs on real
- * dispatchers, so assertions wait for their condition. `GoogleAuth.signOut` is not observable from here.
+ * Parity tests for the legacy own-profile/settings ViewModel (profile migration step 1). Most tests use real
+ * dispatchers; race regressions use controlled scopes. `GoogleAuth.signOut` is not observable from here.
  */
 class ProfileViewModelTest {
     private val anna = UserProfile("Anna Lee", "anna@example.com", "About", "https://img/a.jpg", 0, 3, 2,
@@ -131,19 +133,26 @@ class ProfileViewModelTest {
         await { !vm.uiState.value.isLoggedIn && vm.uiState.value.displayName.isEmpty() }
     }
 
+    @OptIn(ExperimentalCoroutinesApi::class)
     @Test fun aLateFailureOfThePreviousAccountsRefreshIsIgnoredAfterASwitch() = runTest {
         val gate = CompletableDeferred<Result<UserProfile>>()
-        val h = Harness(session("a"), cached = null, refreshGate = gate)
-        val vm = h.viewModel()
-        await { h.users.refreshCalls == 1 }
+        val h = Harness(session("a"), cached = null, refresh = Result.success(boris), firstRefreshGate = gate)
+        val vm = h.viewModel(backgroundScope)
+        testScheduler.runCurrent()
+        assertEquals(1, h.users.refreshCalls)
         h.sessions.set(session("b"))
+        testScheduler.runCurrent()
+        assertEquals(2, h.users.refreshCalls)
         h.users.profile.value = boris
-        await { vm.uiState.value.displayName == "Boris" }
+        testScheduler.runCurrent()
+        assertEquals("Boris", vm.uiState.value.displayName)
         gate.complete(Result.failure(RuntimeException("late")))
-        delay(300)
+        testScheduler.runCurrent()
         assertNull(vm.uiState.value.error)
         assertNull(vm.uiState.value.refreshError)
         assertEquals("Boris", vm.uiState.value.displayName)
+        assertFalse(vm.uiState.value.isLoading)
+        assertFalse(vm.uiState.value.isRefreshing)
     }
 
     @Test fun logoutResetsTheUiBeforeTheServerCallAndClearsDraftsAfterwards() = runTest {
@@ -235,12 +244,16 @@ class ProfileViewModelTest {
     }
 
     private class Users(cached: UserProfile?, private val refresh: Result<UserProfile>,
-        private val gate: CompletableDeferred<Result<UserProfile>>?) : UserRepository {
+        private val firstRefreshGate: CompletableDeferred<Result<UserProfile>>?) : UserRepository {
         val profile = MutableStateFlow(cached)
         private val calls = MutableStateFlow(0)
         val refreshCalls: Int get() = calls.value
         override fun observeProfile(): StateFlow<UserProfile?> = profile
-        override suspend fun refreshProfile(): Result<UserProfile> { calls.update { it + 1 }; return gate?.await() ?: refresh }
+        override suspend fun refreshProfile(): Result<UserProfile> {
+            val call = calls.getAndUpdate { it + 1 }
+            if (call == 0 && firstRefreshGate != null) return firstRefreshGate.await()
+            return refresh
+        }
         override suspend fun getMe() = refresh
         override suspend fun getPublicAvatarUrl(userId: String): Result<String?> = Result.success(null)
         override suspend fun requestAccountDeletion(): Result<AccountDeletionRequest> = error("unused")
@@ -296,7 +309,7 @@ class ProfileViewModelTest {
     private inner class Harness(
         initial: Session?, cached: UserProfile?,
         refresh: Result<UserProfile> = Result.failure(IllegalStateException("none")),
-        refreshGate: CompletableDeferred<Result<UserProfile>>? = null,
+        firstRefreshGate: CompletableDeferred<Result<UserProfile>>? = null,
         private val logout: Result<Unit> = Result.success(Unit),
         private val onLogout: () -> Unit = {},
         private val onClearDrafts: () -> Unit = {},
@@ -305,7 +318,7 @@ class ProfileViewModelTest {
         private val savedCity: String? = null,
     ) {
         val sessions = Sessions(initial)
-        val users = Users(cached, refresh, refreshGate)
+        val users = Users(cached, refresh, firstRefreshGate)
         fun viewModel(scope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)) =
             ProfileViewModel(Auth(logout, onLogout), users, sessions, Shops(catalogs),
                 CityPreference(Settings({}, savedCity)), ReviewDraftStore(Settings(onClearDrafts)), Notifications, scope)

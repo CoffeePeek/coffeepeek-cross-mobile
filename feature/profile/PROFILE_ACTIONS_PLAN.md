@@ -196,3 +196,51 @@ Each application lint report has zero errors and 84 warnings, none in the
 changed ViewModel/test. `git diff --check` passes. No failing tests were retried
 after the production fix; the initial compile failure and intentional red
 regression remain recorded above.
+
+## Account-switch test isolation — 2026-10-22
+
+Run `39784075723`, job `119842488095`, source `a7ff5894`, failed the Android
+checks with one failure among 671 playDebug application tests, this time in
+`aLateFailureOfThePreviousAccountsRefreshIsIgnoredAfterASwitch`. Release assembly
+and all publication steps were skipped. The previous empty-cache regression
+did not fail in this run.
+
+The test's real Default scheduling permits a second refresh for account B
+before B's cache is published. Its fake currently shares the same deferred
+response between all refresh calls, so completing A's late failure also fails
+B's request. Its `delay(300)` runs on virtual test time and does not synchronize
+those Default jobs. Reach: the existing common unit test and its private Users
+fixture, plus this record; no production code, DI, module, resources or UI change.
+
+Verification plan: use the existing injected scope with the test scheduler to
+force both refreshes before publishing B's profile, assert their request counts,
+and reproduce the failure with the original fake. Give only the first request
+the deferred response, then execute the complete application unit suites for
+directDebug and playDebug. Keep the original red result locally; no UI/device
+test, release assembly or publication is needed for this test-only correction.
+
+Results: Windows/JDK 17, `a7ff5894` plus this correction and pre-existing local
+profile-layout/photo work in `codex/migration-profile-layout-roaster-photos`.
+The controlled test with the original shared-response fake failed as expected
+in 1m52s: one executed test, one assertion failure, expected null but got the
+profile-loading error. Its original log/XML are retained locally outside
+tracked sources. Request-count assertions confirmed both A and B refreshes
+started before the error was delivered.
+
+The fake now atomically reserves its deferred response for the first refresh;
+subsequent requests use their separately configured result. The test uses the
+injected background scope and `testScheduler.runCurrent()` instead of polling
+Default jobs and a virtual delay. It checks both request counts, B's content
+before and after A's late failure, both error fields and both loading flags.
+This also gives the test scope ownership of its pending request and collectors.
+
+The complete directDebug and playDebug application unit suites then passed in
+1m57s: **678 tests per variant, 1356 executed results**, zero failures/errors/
+skips. The additional tests compared with the failed CI source belong to the
+pre-existing local work, not this patch. No failed-test retry was needed after
+the fixture fix. Application Kotlin/unit sources compiled in both variants;
+`git diff --check` passes. Existing unrelated compiler/preview warnings remain.
+No production source changed in this correction. Library lint/tests, APK/DEX
+assembly, iOS execution, manual UI/device checks, signed release and GitHub CI
+were not rerun for this private-test-fixture change. No device or account was
+accessed, and no publication or CI rerun was requested.
