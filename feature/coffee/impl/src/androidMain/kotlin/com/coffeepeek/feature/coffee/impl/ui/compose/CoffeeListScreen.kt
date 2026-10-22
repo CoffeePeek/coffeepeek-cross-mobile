@@ -10,6 +10,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
@@ -68,7 +69,7 @@ internal fun CoffeeListScreenContent(state: CoffeeListState, onAction: (CoffeeLi
         }) { padding ->
         CoffeePeekPullToRefresh(listState, state.isRefreshing, { onAction(CoffeeListAction.Refresh) },
             stringResource(R.string.coffee_refresh), stringResource(R.string.coffee_loading),
-            modifier = Modifier.fillMaxSize().padding(padding).imePadding()) { scrollModifier ->
+            modifier = Modifier.fillMaxSize().padding(padding).imePadding().clipToBounds()) { scrollModifier ->
             LazyColumn(state = listState, modifier = screen.exposure(scrollModifier.fillMaxSize().testTag("coffee-list"), CoffeeExposure.Catalog),
                 contentPadding = PaddingValues(start = CoffeePeekDimens.spacing4, top = CoffeePeekDimens.spacing4,
                     end = CoffeePeekDimens.spacing4, bottom = bottomClearance + 88.dp),
