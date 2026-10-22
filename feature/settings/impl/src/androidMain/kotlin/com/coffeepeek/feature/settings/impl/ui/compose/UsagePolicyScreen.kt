@@ -2,6 +2,7 @@ package com.coffeepeek.feature.settings.impl.ui.compose
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
@@ -28,6 +29,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.coffeepeek.core.designsystem.component.CoffeePeekIconBadge
 import com.coffeepeek.core.designsystem.component.CoffeePeekIconBadgeColors
 import com.coffeepeek.core.designsystem.component.CoffeePeekSwitch
+import com.coffeepeek.core.designsystem.component.CoffeePeekSettingsDivider
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
@@ -78,9 +80,11 @@ internal fun UsagePolicyContent(
                 }
                 Spacer(Modifier.height(CoffeePeekDimens.settingsSectionSpacing))
             }
-            PolicyLink(R.string.settings_policy_terms_title, R.string.settings_policy_terms_description, CoffeePeekIcons.FileText, iconColors, onOpenTerms)
-            Spacer(Modifier.height(CoffeePeekDimens.settingsSectionSpacing))
-            PolicyLink(R.string.settings_policy_privacy_title, R.string.settings_policy_privacy_description, CoffeePeekIcons.Shield, iconColors, onOpenPrivacy)
+            SettingsCard {
+                PolicyLink(R.string.settings_policy_terms_title, R.string.settings_policy_terms_description, CoffeePeekIcons.FileText, iconColors, onOpenTerms)
+                CoffeePeekSettingsDivider()
+                PolicyLink(R.string.settings_policy_privacy_title, R.string.settings_policy_privacy_description, CoffeePeekIcons.Shield, iconColors, onOpenPrivacy)
+            }
         }
         Spacer(Modifier.height(CoffeePeekDimens.spacing8))
     }
@@ -88,18 +92,17 @@ internal fun UsagePolicyContent(
 
 @Composable
 private fun PolicyLink(title: Int, description: Int, icon: ImageVector, iconColors: CoffeePeekIconBadgeColors, onClick: () -> Unit) {
-    SettingsCard(Modifier.clickable(role = Role.Button, onClick = onClick)) {
-        Row(Modifier.padding(CoffeePeekDimens.settingsRowPaddingH), verticalAlignment = Alignment.CenterVertically) {
-            CoffeePeekIconBadge(icon, iconColors)
-            Spacer(Modifier.width(CoffeePeekDimens.spacing3))
-            Column(Modifier.weight(1f)) {
-                Text(stringResource(title), style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.onSurface)
-                Spacer(Modifier.height(CoffeePeekDimens.spacing1))
-                Text(stringResource(description), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            }
-            Spacer(Modifier.width(CoffeePeekDimens.spacing2))
-            Icon(CoffeePeekIcons.ChevronRight, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(CoffeePeekDimens.settingsIconSize))
+    Row(Modifier.fillMaxWidth().clickable(role = Role.Button, onClick = onClick)
+        .padding(CoffeePeekDimens.settingsRowPaddingH), verticalAlignment = Alignment.CenterVertically) {
+        CoffeePeekIconBadge(icon, iconColors)
+        Spacer(Modifier.width(CoffeePeekDimens.spacing3))
+        Column(Modifier.weight(1f)) {
+            Text(stringResource(title), style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.onSurface)
+            Spacer(Modifier.height(CoffeePeekDimens.spacing1))
+            Text(stringResource(description), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
+        Spacer(Modifier.width(CoffeePeekDimens.spacing2))
+        Icon(CoffeePeekIcons.ChevronRight, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(CoffeePeekDimens.settingsIconSize))
     }
 }
 
