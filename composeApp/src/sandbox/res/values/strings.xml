@@ -35,6 +35,13 @@
     <string name="sandbox_contributions_empty">Пусто</string>
     <string name="sandbox_contributions_list_failure">Ошибка списков</string>
     <string name="sandbox_contributions_submit_failure">Отказ при отправке</string>
+    <string name="sandbox_discovery_title">Поиск и карта</string>
+    <string name="sandbox_discovery_seeded">Две кофейни</string>
+    <string name="sandbox_discovery_paged">47 кофеен</string>
+    <string name="sandbox_discovery_truncated">Урезанная карта</string>
+    <string name="sandbox_discovery_empty">Пусто</string>
+    <string name="sandbox_discovery_search_failure">Ошибка поиска</string>
+    <string name="sandbox_discovery_map_failure">Ошибка карты</string>
     <string name="sandbox_cities_title">Города</string>
     <string name="sandbox_cities_single">Один</string>
     <string name="sandbox_cities_several">Несколько</string>

@@ -40,6 +40,9 @@ internal class SandboxBackend(private val samplePhoto: ByteArray,
     var feed: SandboxFeed
         get() = application.feed
         set(value) { application.feed = value }
+    var discovery: SandboxDiscovery
+        get() = application.discovery
+        set(value) { application.discovery = value }
     var contributions: SandboxContributions
         get() = application.contributions
         set(value) { application.contributions = value }
