@@ -16,7 +16,6 @@ import com.coffeepeek.admin.di.platformViewModel
 import com.coffeepeek.admin.feature.favorites.api.FavoritesProfilePreview
 import com.coffeepeek.feature.profile.domain.PublicProfileStats
 import com.coffeepeek.admin.feature.profile.ui.PublicProfileHeader
-import com.coffeepeek.admin.feature.profile.ui.PublicProfileStatsCard
 import com.coffeepeek.admin.feature.profile.ui.PublicProfileViewModel
 import com.coffeepeek.admin.feature.profile.ui.UserProfileScreen
 import com.coffeepeek.admin.ui.Navigator
@@ -83,6 +82,7 @@ fun ProfileScreen(vm: ProfileViewModel = koinInject()) {
                 topBarActions = actions,
                 favoritesPreview = { FavoritesProfilePreview(openShop, openRoaster) },
                 activityCalendar = { PersonalProfileActivityCalendar() },
+                activityPreview = { onClick -> PersonalProfileActivityPreview(onClick) },
                 bottomContentPadding = bottomPadding,
                 vm = publicVm,
             )
@@ -117,15 +117,12 @@ fun ProfileScreen(vm: ProfileViewModel = koinInject()) {
                             nickname = state.displayName,
                             avatarUrl = state.avatarUrl,
                             about = state.about,
+                            stats = PublicProfileStats(state.checkInCount, state.addedShopsCount,
+                                state.addedRoastersCount, state.followersCount),
                             onEditProfile = onEdit,
                             onAvatarClick = onEdit,
                         )
-                        PublicProfileStatsCard(PublicProfileStats(
-                            checkIns = state.checkInCount,
-                            coffeeShops = state.addedShopsCount,
-                            roasters = state.addedRoastersCount,
-                            followers = state.followersCount,
-                        ))
+                        PersonalProfileActivityPreview { Navigator.navigate(Navigator.Screen.VisitedPlaces) }
                         if (state.error != null || state.refreshError != null) LoadErrorContent(onRetry = vm::refreshProfile)
                     } else GuestAuthCard(
                         onLogin = { Navigator.navigate(Navigator.Screen.Auth) },

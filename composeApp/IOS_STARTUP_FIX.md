@@ -119,3 +119,30 @@ An assert-based IR comparison confirmed all three original nullable-parameter
 mismatches, then verified identical API/override signatures after recompilation.
 The lockfile parses as JSON, has unique pins and resolves Firebase 12.19.2.
 These local checks took two minutes; native executables still await macOS CI.
+
+## Second TestFlight report and completed CI verification — 2026-10-22
+
+The newly supplied report is still version 1.1 (47.1), this time on iPhone12,1,
+aborting about 0.72 seconds after launch. Its first frames are again
+`throwIrLinkageError`, `koinViewModel`, `platformViewModel` and `Navigator`.
+The missing declaration is absent from this report too; it cannot identify a
+different failure or confirm the behavior of a newer binary.
+
+The release workflow derives the bundle build from its run number and attempt.
+[Run 47.1](https://github.com/CoffeePeek/coffeepeek-cross-mobile/actions/runs/39620125811)
+used `8b2fe6fa`, before the fixes above: Koin was 4.0.1 and strict native linkage
+was not enabled. No additional runtime change is needed for this repeated report.
+
+The previously pending macOS gates have now passed for baseline `4742a16d`:
+[verification run 39749118453](https://github.com/CoffeePeek/coffeepeek-cross-mobile/actions/runs/39749118453)
+linked the simulator Debug framework, compiled the native Swift application and
+executed both `KoinViewModelCompatibilityTest` contracts (2 passed, 0 failures,
+0 errors, 0 skipped). The downloaded XML and build logs were inspected locally.
+
+[Release run 48.1](https://github.com/CoffeePeek/coffeepeek-cross-mobile/actions/runs/39749237125)
+at `5cf6b2c8` successfully archived and uploaded the signed application to
+App Store Connect. Its source contains Koin 4.1.1 and the strict linkage guard.
+Apple processing, tester availability and startup on a physical iPhone were not
+checked. The uncommitted system-layout/theme changes in the current branch are
+not covered by those earlier CI runs and still need their own native verification.
+No new workflow, upload, installation or account action was performed here.

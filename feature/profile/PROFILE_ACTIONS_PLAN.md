@@ -143,3 +143,104 @@ tracked sources. The temporary emulator was closed after capture.
 Remaining gates: real iPhone/native presentation and executable linking, physical
 Android, animation smoothness, larger fonts/window sizes, TalkBack, outside/swipe
 dismissal and confirmed logout. No real account/data actions were performed.
+
+## Android release CI regression — 2026-10-22
+
+Run `39749237148`, job `119725315494`, source `5cf6b2c8`, stopped at
+`:composeApp:testPlayDebugUnitTest`: 658 tests, one failure in legacy
+`ProfileViewModelTest.withoutACacheItRefreshesAndAFailureWithoutContentShowsTheFixedError`.
+Signed release assembly and publication were skipped.
+
+The legacy profile cache and session collectors run independently on Default.
+A late initial null cache emission can overwrite a completed refresh failure,
+removing its error and restoring the loading state. Preserve the current
+account's error atomically when rendering an empty cache; session reset still
+clears account state. Reach: the existing legacy ViewModel, its common unit
+test/fixtures and this plan. Its default scope, DI callers, migrated Android
+feature, logout, analytics, resources and Gradle boundaries stay as they are.
+
+Verification plan: force session/refresh-before-cache scheduling in a unit
+regression and observe it fail before the fix; execute both delivery variants'
+profile regressions, then the Android unit/lint checks and Debug APK assembly
+with packaged DEX verification. Checks started in the existing migration
+checkout at `4742a16d` plus pre-existing local work, which was independently
+committed as `69bb8bc7` during verification. The correction remains on
+`codex/migration-profile-cache-race`, based on that commit. The legacy ViewModel
+at the failed run's exact revision matches the local base. IDE access does not
+have this project open. No device deployment, UI/instrumented tests, live account
+operation or release publication is required for this state-update correction.
+
+Local unit results (Windows, JDK 17): the first attempt stopped at test
+compilation because the scope `plus` extension import was missing (1m42s).
+After that correction, the controlled regression failed as expected before the
+production fix: one test, one assertion failure, expected profile error but got
+null (30s). Its original log/XML are retained locally outside tracked sources.
+After the fix, all 671 application directDebug tests and the 35 selected
+playDebug profile tests passed (1m19s), including the new scheduling regression
+and its assertion that ending the session clears the error and all account state.
+
+The broader Android check executed 866 library unit tests and all 671 playDebug
+application tests; the 671 directDebug results from the preceding run were
+up-to-date. All **2208 full-suite results** have zero failures/errors/skips.
+Both Debug APKs assembled with packaged DEX runtime-class verification:
+`directDebug` / `playDebug`, package `com.coffeepeek`, version `1.1.1093` / code
+`1093`. No APK was installed or launched. Remaining gates: manual device review,
+iOS compilation/execution, signed release assembly and a new GitHub CI run after
+the patch is published. Existing Gradle/KMP, preview, namespace and unrelated
+test-source warnings remain; no IDE inspection is claimed.
+
+The full Android unit/lint/build command completed successfully in **12m24s**:
+root `testDebugUnitTest` / `lintDebug`, application directDebug/playDebug unit
+tests and lint, plus both Debug assemblies and their runtime-class checks.
+Each application lint report has zero errors and 84 warnings, none in the
+changed ViewModel/test. `git diff --check` passes. No failing tests were retried
+after the production fix; the initial compile failure and intentional red
+regression remain recorded above.
+
+## Account-switch test isolation — 2026-10-22
+
+Run `39784075723`, job `119842488095`, source `a7ff5894`, failed the Android
+checks with one failure among 671 playDebug application tests, this time in
+`aLateFailureOfThePreviousAccountsRefreshIsIgnoredAfterASwitch`. Release assembly
+and all publication steps were skipped. The previous empty-cache regression
+did not fail in this run.
+
+The test's real Default scheduling permits a second refresh for account B
+before B's cache is published. Its fake currently shares the same deferred
+response between all refresh calls, so completing A's late failure also fails
+B's request. Its `delay(300)` runs on virtual test time and does not synchronize
+those Default jobs. Reach: the existing common unit test and its private Users
+fixture, plus this record; no production code, DI, module, resources or UI change.
+
+Verification plan: use the existing injected scope with the test scheduler to
+force both refreshes before publishing B's profile, assert their request counts,
+and reproduce the failure with the original fake. Give only the first request
+the deferred response, then execute the complete application unit suites for
+directDebug and playDebug. Keep the original red result locally; no UI/device
+test, release assembly or publication is needed for this test-only correction.
+
+Results: Windows/JDK 17, `a7ff5894` plus this correction and pre-existing local
+profile-layout/photo work in `codex/migration-profile-layout-roaster-photos`.
+The controlled test with the original shared-response fake failed as expected
+in 1m52s: one executed test, one assertion failure, expected null but got the
+profile-loading error. Its original log/XML are retained locally outside
+tracked sources. Request-count assertions confirmed both A and B refreshes
+started before the error was delivered.
+
+The fake now atomically reserves its deferred response for the first refresh;
+subsequent requests use their separately configured result. The test uses the
+injected background scope and `testScheduler.runCurrent()` instead of polling
+Default jobs and a virtual delay. It checks both request counts, B's content
+before and after A's late failure, both error fields and both loading flags.
+This also gives the test scope ownership of its pending request and collectors.
+
+The complete directDebug and playDebug application unit suites then passed in
+1m57s: **678 tests per variant, 1356 executed results**, zero failures/errors/
+skips. The additional tests compared with the failed CI source belong to the
+pre-existing local work, not this patch. No failed-test retry was needed after
+the fixture fix. Application Kotlin/unit sources compiled in both variants;
+`git diff --check` passes. Existing unrelated compiler/preview warnings remain.
+No production source changed in this correction. Library lint/tests, APK/DEX
+assembly, iOS execution, manual UI/device checks, signed release and GitHub CI
+were not rerun for this private-test-fixture change. No device or account was
+accessed, and no publication or CI rerun was requested.

@@ -90,6 +90,7 @@ internal class HomeCheckInViewModel(
     private val coffeePicker: CoffeePicker,
     private val brewMethodCatalog: BrewMethodCatalog,
     private val onCheckInCreated: () -> Unit = {},
+    private val calendarWeek: com.coffeepeek.admin.ui.screen.checkins.CalendarWeek? = null,
 ) : BaseViewModel() {
     private val now = currentHomePreparedAt()
     private val today = utcIsoToLocalDate(now)
@@ -114,7 +115,7 @@ internal class HomeCheckInViewModel(
         .also { it.step(CheckInStep.Type); creationAnalytics = it }
     fun creationPickerFinished() { creationAnalytics = null }
 
-    init { refresh() }
+    init { if (calendarWeek == null) refresh() else loadCalendar() }
 
     fun refresh() {
         loadHistory(reset = true)
@@ -163,12 +164,14 @@ internal class HomeCheckInViewModel(
 
     fun loadCalendar() {
         val month = _state.value.month
+        val from = calendarWeek?.dates?.first() ?: month.from
+        val to = calendarWeek?.dates?.last() ?: month.to
         calendarJob?.cancel()
         val revision = calendarRevision.updateAndGet { it + 1 }
         _state.update { it.copy(calendarLoading = true, calendarError = null) }
         calendarJob = workScope.launch {
             try {
-                val days = repository.calendar(month.from, month.to).getOrThrow()
+                val days = repository.calendar(from, to).getOrThrow()
                 ensureActive()
                 _state.update { if (calendarRevision.value == revision && it.month == month) it.copy(calendar = days) else it }
                 // The summary route returns counts only. Fetch month photos separately so a
@@ -177,7 +180,7 @@ internal class HomeCheckInViewModel(
                 if (days.any { it.brewCount > 0 }) {
                     var page = 1
                     do {
-                        val result = repository.history(page, 100, month.from, month.to).getOrThrow()
+                        val result = repository.history(page, 100, from, to).getOrThrow()
                         ensureActive()
                         entries += result.items
                         page++

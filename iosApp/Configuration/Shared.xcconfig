@@ -3,7 +3,7 @@ PRODUCT_BUNDLE_IDENTIFIER = com.coffeepeek
 CODE_SIGN_ENTITLEMENTS = iosApp/CoffeePeek.entitlements
 MARKETING_VERSION = 1.1
 CURRENT_PROJECT_VERSION = 1
-IPHONEOS_DEPLOYMENT_TARGET = 15.0
+IPHONEOS_DEPLOYMENT_TARGET = 18.0
 EXCLUDED_ARCHS[sdk=iphonesimulator*] = x86_64
 
 // xcconfig treats // as a comment, so $() keeps the URL intact.
