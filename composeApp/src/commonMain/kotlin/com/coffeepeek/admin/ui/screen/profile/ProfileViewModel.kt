@@ -59,9 +59,8 @@ class ProfileViewModel(
     private val cityPreference: CityPreference,
     private val reviewDrafts: ReviewDraftStore,
     private val notifications: com.coffeepeek.feature.notifications.api.NotificationFeature,
+    private val workScope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default),
 ) {
-    private val workScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
-
     private val _uiState = MutableStateFlow(ProfileUiState())
     val uiState: StateFlow<ProfileUiState> = _uiState.asStateFlow()
 
@@ -150,10 +149,14 @@ class ProfileViewModel(
                 if (profile != null) {
                     applyProfile(profile)
                 } else {
-                    _uiState.value = ProfileUiState(
-                        isLoggedIn = sessionRepository.isActiveSession(sessionRepository.peekSession()) && loadedForUserId != null,
-                        isLoading = sessionRepository.isActiveSession(sessionRepository.peekSession()) && loadedForUserId != null,
-                    )
+                    _uiState.update { state ->
+                        val signedIn = sessionRepository.isActiveSession(sessionRepository.peekSession()) && loadedForUserId != null
+                        ProfileUiState(
+                            isLoggedIn = signedIn,
+                            isLoading = signedIn && state.error == null,
+                            error = state.error.takeIf { signedIn },
+                        )
+                    }
                 }
             }
         }

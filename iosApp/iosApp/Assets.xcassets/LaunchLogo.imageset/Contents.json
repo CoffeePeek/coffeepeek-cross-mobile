@@ -1,0 +1,7 @@
+{
+  "images": [
+    { "filename": "LaunchLogo.png", "idiom": "universal", "scale": "2x" },
+    { "filename": "LaunchLogo-dark.png", "idiom": "universal", "scale": "2x", "appearances": [{ "appearance": "luminosity", "value": "dark" }] }
+  ],
+  "info": { "author": "xcode", "version": 1 }
+}
