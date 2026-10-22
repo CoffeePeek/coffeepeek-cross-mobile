@@ -10,6 +10,8 @@ import com.coffeepeek.admin.theme.ThemeManager
 import com.coffeepeek.admin.utils.COFFEEPEEK_SHARE_TEXT
 import com.coffeepeek.admin.utils.OpenInBrowser
 import com.coffeepeek.admin.utils.ShareHelper
+import com.coffeepeek.admin.utils.appReviewUrl
+import com.coffeepeek.admin.config.AppConfig
 import com.coffeepeek.domain.repository.SessionRepository
 import com.coffeepeek.domain.repository.ShopRepository
 import com.coffeepeek.feature.settings.api.CityPort
@@ -92,11 +94,14 @@ internal class AndroidUpdateCheckPort(private val updates: AppUpdateState) : Upd
 internal class AndroidSettingsExternalActions(
     private val openUrl: (String) -> Unit = { OpenInBrowser.openInBrowser(it) },
     private val shareText: (String) -> Unit = { ShareHelper.shareText(it) },
+    private val reviewUrl: String? = appReviewUrl(AppConfig.updatePlatform, AppConfig.updateChannel),
 ) : SettingsExternalActions {
+    override val canRateApp: Boolean = reviewUrl != null
     override fun openSupport() = openUrl(SUPPORT_URL)
     override fun openTerms() = openUrl(LegalUrls.TERMS)
     override fun openPrivacy() = openUrl(LegalUrls.PRIVACY)
     override fun shareApp() = shareText(COFFEEPEEK_SHARE_TEXT)
+    override fun rateApp() { reviewUrl?.let(openUrl) }
 
     internal companion object { const val SUPPORT_URL = "https://coffeepeek.by/support" }
 }
