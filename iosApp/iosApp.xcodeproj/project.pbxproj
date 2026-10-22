@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		A10000000000000000000012 /* CoffeePeekLaunchView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000013 /* CoffeePeekLaunchView.swift */; };
         A10000000000000000000007 /* SocialSignInProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000011 /* SocialSignInProvider.swift */; };
 		A10000000000000000000001 /* CoffeePeekApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000001 /* CoffeePeekApp.swift */; };
 		A10000000000000000000004 /* MapLibreMapProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000009 /* MapLibreMapProvider.swift */; };
@@ -14,9 +15,13 @@
 		A10000000000000000000003 /* GoogleSignIn in Frameworks */ = {isa = PBXBuildFile; productRef = A90000000000000000000001 /* GoogleSignIn */; };
 		A10000000000000000000005 /* MapLibre in Frameworks */ = {isa = PBXBuildFile; productRef = A90000000000000000000003 /* MapLibre */; };
 		A10000000000000000000008 /* KotlinMultiplatformLinkedPackage in Frameworks */ = {isa = PBXBuildFile; productRef = A90000000000000000000005 /* KotlinMultiplatformLinkedPackage */; };
+		A10000000000000000000009 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000012 /* GoogleService-Info.plist */; };
+		A10000000000000000000010 /* FirebaseCore in Frameworks */ = {isa = PBXBuildFile; productRef = A90000000000000000000008 /* FirebaseCore */; };
+		A10000000000000000000011 /* FirebaseMessaging in Frameworks */ = {isa = PBXBuildFile; productRef = A90000000000000000000009 /* FirebaseMessaging */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		A20000000000000000000013 /* CoffeePeekLaunchView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "../../iosXtool/CoffeePeek/Sources/CoffeePeek/CoffeePeekLaunchView.swift"; sourceTree = "<group>"; };
         A20000000000000000000011 /* SocialSignInProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "../../iosXtool/CoffeePeek/Sources/CoffeePeek/SocialSignInProvider.swift"; sourceTree = "<group>"; };
 		A20000000000000000000001 /* CoffeePeekApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoffeePeekApp.swift; sourceTree = "<group>"; };
 		A20000000000000000000002 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -27,6 +32,7 @@
 		A20000000000000000000007 /* Shared.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Shared.xcconfig; sourceTree = "<group>"; };
 		A20000000000000000000008 /* Local.xcconfig.example */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Local.xcconfig.example; sourceTree = "<group>"; };
 		A20000000000000000000009 /* MapLibreMapProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "../../iosXtool/CoffeePeek/Sources/CoffeePeek/MapLibreMapProvider.swift"; sourceTree = "<group>"; };
+		A20000000000000000000012 /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -37,6 +43,8 @@
 				A10000000000000000000003 /* GoogleSignIn in Frameworks */,
 				A10000000000000000000005 /* MapLibre in Frameworks */,
 				A10000000000000000000008 /* KotlinMultiplatformLinkedPackage in Frameworks */,
+				A10000000000000000000010 /* FirebaseCore in Frameworks */,
+				A10000000000000000000011 /* FirebaseMessaging in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -56,10 +64,12 @@
 			isa = PBXGroup;
 			children = (
 				A20000000000000000000001 /* CoffeePeekApp.swift */,
+				A20000000000000000000013 /* CoffeePeekLaunchView.swift */,
                 A20000000000000000000011 /* SocialSignInProvider.swift */,
 				A20000000000000000000009 /* MapLibreMapProvider.swift */,
 				A20000000000000000000002 /* Assets.xcassets */,
 				A20000000000000000000003 /* Info.plist */,
+				A20000000000000000000012 /* GoogleService-Info.plist */,
 			);
 			path = iosApp;
 			sourceTree = "<group>";
@@ -104,6 +114,8 @@
 				A90000000000000000000001 /* GoogleSignIn */,
 				A90000000000000000000003 /* MapLibre */,
 				A90000000000000000000005 /* KotlinMultiplatformLinkedPackage */,
+				A90000000000000000000008 /* FirebaseCore */,
+				A90000000000000000000009 /* FirebaseMessaging */,
 			);
 			productName = CoffeePeek;
 			productReference = A20000000000000000000004 /* CoffeePeek.app */;
@@ -138,6 +150,7 @@
 				A90000000000000000000006 /* XCLocalSwiftPackageReference "KotlinMultiplatformLinkedPackage" */,
 				A90000000000000000000002 /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */,
 				A90000000000000000000004 /* XCRemoteSwiftPackageReference "maplibre-gl-native-distribution" */,
+				A90000000000000000000007 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
 			);
 			productRefGroup = A40000000000000000000004 /* Products */;
 			projectDirPath = "";
@@ -154,6 +167,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				A10000000000000000000002 /* Assets.xcassets in Resources */,
+				A10000000000000000000009 /* GoogleService-Info.plist in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -187,6 +201,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				A10000000000000000000001 /* CoffeePeekApp.swift in Sources */,
+				A10000000000000000000012 /* CoffeePeekLaunchView.swift in Sources */,
                 A10000000000000000000007 /* SocialSignInProvider.swift in Sources */,
 				A10000000000000000000004 /* MapLibreMapProvider.swift in Sources */,
 			);
@@ -231,6 +246,7 @@
 					"$(inherited)",
 					"-framework",
 					ComposeApp,
+					"-ObjC",
 				);
 				PRODUCT_MODULE_NAME = CoffeePeek;
 				SDKROOT = iphoneos;
@@ -261,6 +277,7 @@
 					"$(inherited)",
 					"-framework",
 					ComposeApp,
+					"-ObjC",
 				);
 				PRODUCT_MODULE_NAME = CoffeePeek;
 				SDKROOT = iphoneos;
@@ -302,6 +319,14 @@
 /* End XCLocalSwiftPackageReference section */
 
 /* Begin XCRemoteSwiftPackageReference section */
+		A90000000000000000000007 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/firebase/firebase-ios-sdk";
+			requirement = {
+				kind = exactVersion;
+				version = 12.19.2;
+			};
+		};
 		A90000000000000000000002 /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/google/GoogleSignIn-iOS";
@@ -321,6 +346,16 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		A90000000000000000000008 /* FirebaseCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A90000000000000000000007 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseCore;
+		};
+		A90000000000000000000009 /* FirebaseMessaging */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A90000000000000000000007 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseMessaging;
+		};
 		A90000000000000000000001 /* GoogleSignIn */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = A90000000000000000000002 /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */;
