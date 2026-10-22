@@ -11,11 +11,19 @@ development signature. The framework path below remains the easiest route with
 2. From the repository root, extract the tar archive into
    `composeApp/build/bin/iosArm64/debugFramework/`. This directory must contain
    `ComposeApp.framework/ComposeApp`.
-3. Prepare resources on Linux:
+3. Download `ios-launch-resources` from the **iOS build verification** workflow
+   at the same source revision. Extract its `Assets.car` into
+   `iosXtool/CoffeePeek/.build/launch-resources/`, then prepare resources on Linux:
 
    ```bash
    bash iosXtool/CoffeePeek/prepare-resources.sh
    ```
+
+   You can pass the downloaded `Assets.car` path as the script's first argument
+   instead. On macOS with Xcode, preparation compiles the catalog directly.
+   The compiled catalog preserves both `LaunchLogo` appearances and the named
+   `LaunchBackground` color for the native launch screen and SwiftUI splash.
+   Loose PNGs cannot provide these; preparation removes older staged copies.
 
 4. Build, sign, and install on a connected, trusted iPhone:
 
