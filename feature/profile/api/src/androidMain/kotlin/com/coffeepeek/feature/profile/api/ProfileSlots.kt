@@ -5,6 +5,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import com.coffeepeek.feature.profile.domain.PublicProfileCheckIn
 import com.coffeepeek.feature.profile.domain.PublicProfileFavorite
+import com.coffeepeek.feature.profile.domain.PublicProfileActivity
 
 /** Application image port: owns loading, caching and the failure state. */
 typealias ProfileImage = @Composable (url: String, description: String?, modifier: Modifier) -> Unit
@@ -33,6 +34,12 @@ typealias ProfileCheckInCard = @Composable (
 /** Warms image caches for the photos of the visible check-ins: pairs of (check-in id, preview urls). */
 typealias ProfilePhotoPrefetch = @Composable (listState: LazyListState, items: List<Pair<String, List<String>>>) -> Unit
 
+/** Public-only weekly activity, using the same app-rendered calendar as the owner's preview. */
+typealias ProfileActivityPreview = @Composable (
+    slug: String, activity: PublicProfileActivity?, checkIns: List<PublicProfileCheckIn>,
+    loading: Boolean, failed: Boolean, onRetry: () -> Unit, onOpen: () -> Unit,
+) -> Unit
+
 class ProfileSlots(
     val image: ProfileImage,
     val photoViewer: ProfilePhotoViewer,
@@ -40,4 +47,5 @@ class ProfileSlots(
     val favoriteCard: ProfileFavoriteCard,
     val checkInCard: ProfileCheckInCard,
     val photoPrefetch: ProfilePhotoPrefetch,
+    val activityPreview: ProfileActivityPreview,
 )

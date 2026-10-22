@@ -114,7 +114,7 @@ ssh-keygen -l -E sha256 -f /etc/ssh/ssh_host_ed25519_key.pub | awk '{print $2}'
 
 ## Версии и metadata
 
-Версия остаётся в текущем формате проекта: `1.0.<количество-коммитов>`. Workflow сохраняет в GitHub job summary:
+Публичная версия задаётся вручную в `iosApp/Configuration/Shared.xcconfig`: `MARKETING_VERSION = 1.1.0`, одинаково для Android и iOS. Номер сборки — `1000 + git rev-list --count HEAD`; он хранится отдельно и не добавляется к версии в интерфейсе. Workflow сохраняет в GitHub job summary:
 
 - version name и version code;
 - размер APK;
@@ -126,7 +126,7 @@ ssh-keygen -l -E sha256 -f /etc/ssh/ssh_host_ed25519_key.pub | awk '{print $2}'
 
 Bearer token должен оставаться действительным на момент запуска workflow. Публикация черновика выполняется вручную из админки.
 
-После успешной публикации в Play internal testing и на сайт workflow обновляет Android version policy через `PUT /api/admin/v1/app-downloads/android/version`: latest — не ниже выпущенного versionCode, minimum — не ниже `440` (`1.0.440`). Уже установленные более высокие значения сохраняются. Push в `develop` эту политику не меняет. Для APK сервер ограничивает порог активной версией; минимум `440` начнёт действовать после публикации нового черновика в админке. Пользователи Play должны иметь доступ к internal testing, пока сборка не перенесена в публичный track.
+CI не меняет серверную политику обновлений и не активирует APK. Актуальный код Google Play и общий минимум Android сохраняются вручную в админке через `PUT /api/admin/v1/app-downloads/android/version`. Для APK актуальный код берётся из production-релиза, выбранного в админке; сервер ограничивает минимум активной версией. Сначала обеспечьте доступность сборки пользователям нужного канала, затем меняйте актуальный код или обязательный минимум. Production workflow запускается только из `main`.
 
 ## Rollback
 
