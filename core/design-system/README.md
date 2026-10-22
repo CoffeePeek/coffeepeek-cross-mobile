@@ -169,10 +169,14 @@ they must not put fillMaxHeight(fraction) on the sheet modifier.
 Material provides modal focus and default system/IME inset handling; validate
 keyboard/content scrolling and any custom consumer insets at integration.
 
-`CoffeePeekDestructiveConfirmationSheet` composes that sheet with a resource-labelled
-title/message, red confirmation and separate cancel action. Its body scrolls for
-large text. The caller closes it before performing the operation; core owns no
-account, navigation or persistence behavior.
+`CoffeePeekDestructiveConfirmationSheet` uses a transparent Material modal host
+for two floating rounded cards: title/message with a divided red text action,
+and a separate cancel card. There is no grabber or filled destructive button.
+The cards animate from below, respect safe insets and scroll for large text;
+Material owns modal focus, Back, scrim and swipe dismissal. The caller closes it
+before performing the operation; core owns no account, navigation or persistence
+behavior. The shared/iOS profile uses the existing native action-sheet presenter,
+matching author blocking on that platform.
 
 CoffeePeekFabMenu accepts neutral icon/description/callback/enabled actions, not routes or
 feature models. It retains joined rounded corners and the existing success

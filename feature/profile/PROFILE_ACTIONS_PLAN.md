@@ -14,16 +14,18 @@ inventory's placement of blocked authors in Settings; the account guard remains.
   shared/iOS. Remove the Settings row, unused callback/state and its old labels.
   The existing `BlockedAuthors` root destination and analytics page stay unchanged.
 - Android's migrated profile menu uses an explicit 16dp corner radius, neutral
-  surface/border and bounded width, with separators before privacy and sign-out.
+  surface/border and width bounded at 304dp, with separators between every row.
   It no longer inherits the application theme's 50% button shape. The shared/iOS
   menu retains its anchored platform implementation and marks sign-out destructive.
 - Keep contribution actions and their root navigation. Logout's label and icon
   are destructive red. Close the menu before opening confirmation or navigating.
-- Replace both profile alerts with design-system
-  `CoffeePeekDestructiveConfirmationSheet`, using the existing swipe-dismiss
-  modal sheet, typography and button. It animates from below, respects safe insets,
-  and supports cancel, outside dismissal and the accessible dismiss handle. The
-  content scrolls when long text or large fonts exceed the available height.
+- Replace profile alerts with an action sheet matching author blocking. The
+  Android design-system `CoffeePeekDestructiveConfirmationSheet` has a rounded
+  title/message card with a divided red text action and a separate cancel card.
+  Its transparent Material modal host animates from below, applies safe insets,
+  owns focus/Back/scrim/swipe dismissal and lets the cards scroll for large text.
+  There is no grabber or filled destructive button. The shared/iOS profile uses
+  the same existing native action-sheet presenter as author blocking.
 - Confirmation closes before calling the existing logout action. Cancel/dismiss
   only close the sheet. Account cleanup order, failure handling, drafts, favorites,
   OAuth sign-out and ViewModels are unchanged. No real account operation is tested.
@@ -66,7 +68,10 @@ Paired previews compile, including Android menu content and common confirmation
 content; rendering was not inspected. Gradle/KMP, interop and the existing project
 preview annotation's deprecation warnings remain; no IDE diagnostics are claimed.
 
-## Requested Sandbox visual review — 2026-10-22
+## Initial requested Sandbox visual review — 2026-10-22
+
+This records the first design, superseded by the user's reference correction
+below; these screenshots do not certify the final design.
 
 Source `a0d5deef181c72dcbc88cf57a8e7f4235bb4bc4e`, `directSandbox`, package
 `com.coffeepeek.sandbox`, version `1.1.1088-sandbox` / code `1088`. The APK SHA-256
@@ -94,3 +99,47 @@ No automated UI/instrumented/screenshot tests were created or executed.
 Not checked: physical devices/iOS presentation, animation smoothness, larger
 fonts or alternate window sizes, TalkBack, outside/swipe dismissal, and confirming
 logout. No real account actions or backend acceptance are claimed.
+
+## Reference correction — 2026-10-22
+
+The user supplied the author-blocking confirmation and divided profile menu as
+visual references after seeing the first Sandbox screenshots. Reach: the common
+design-system confirmation and its existing Android profile caller; shared/iOS
+profile presentation adapter; migrated Android profile menu; colocated paired
+previews and this plan/design-system documentation. No account/session/favorites
+behavior, analytics, routes, resource labels or dependencies change.
+
+Before-check plan: execute design-system/Profile unit suites and app
+Profile/Settings regressions; assemble directDebug and directSandbox with their
+packaged DEX/isolation checks; compile both iOS KLIB targets. Manually inspect
+the new light/dark menu and confirmation in explicitly selected directSandbox
+on Pixel 8, checking Cancel/Back without confirming logout. Keep diagnostics and
+screenshots outside tracked sources. No automated UI tests or live app actions.
+
+Results: this reference-correction patch on `f72042a7` passed all **130 executed
+unit results**, zero failures/errors/skips: design-system 32, Profile impl 48 and
+application Profile/Settings 50. `assembleDirectDebug`, `assembleDirectSandbox`,
+both packaged DEX checks, Sandbox manifest isolation, `compileKotlinIosArm64` and
+`compileKotlinIosSimulatorArm64` passed in one 3m20s run, without failed-test/build
+retries. No dependency or source-set changes. Paired previews compile; there was
+no IDE renderer/diagnostic access, and existing KMP/preview deprecation warnings
+remain. No automated UI tests were added or run.
+
+Manual review: Pixel 8 AVD `emulator-5554`, API 37/x86_64, 1080x2400/420dpi,
+font 1.0, temporary read-only disk/no snapshot save. No physical device connected.
+The emulator was awake/unlocked; Sandbox was absent before install. Verified
+package/launcher and installed `1.1.1089-sandbox` / code `1089`, APK SHA-256
+`3c717b50f2fe1c5134b6fca1138d92a9d816302d9c14194c95125b14b239cdc2`.
+Only `com.coffeepeek.sandbox` was launched, without INTERNET or analytics startup.
+
+Inspected new menu and confirmation screenshots in both themes against the
+references: every menu row is divided, labels fit at the reference menu width,
+and logout stays red. Confirmation has an inset bordered card, a red text row
+below its divider and an independent cancel card, with no grabber or filled
+button. Light-theme Cancel and dark-theme system Back close it and leave the
+same signed-in local profile. Screenshots/UI dumps/build logs are local outside
+tracked sources. The temporary emulator was closed after capture.
+
+Remaining gates: real iPhone/native presentation and executable linking, physical
+Android, animation smoothness, larger fonts/window sizes, TalkBack, outside/swipe
+dismissal and confirmed logout. No real account/data actions were performed.

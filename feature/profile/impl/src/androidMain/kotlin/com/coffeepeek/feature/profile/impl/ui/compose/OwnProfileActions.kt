@@ -3,6 +3,7 @@ package com.coffeepeek.feature.profile.impl.ui.compose
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -25,6 +26,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
@@ -44,7 +46,7 @@ internal fun OwnProfileActions(
             Icon(CoffeePeekIcons.MoreHorizontal, stringResource(R.string.profile_actions))
         }
         DropdownMenu(expanded = open, onDismissRequest = { open = false },
-            modifier = Modifier.widthIn(min = 224.dp, max = 320.dp),
+            modifier = Modifier.widthIn(min = 224.dp, max = 304.dp).fillMaxWidth(),
             shape = RoundedCornerShape(CoffeePeekDimens.radiusLg),
             containerColor = MaterialTheme.colorScheme.surface, tonalElevation = 0.dp,
             border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)) {
@@ -63,8 +65,10 @@ private fun OwnProfileMenuItems(
 ) {
     OwnProfileMenuItem(R.string.profile_menu_shop_changes, CoffeePeekIcons.NoteEdit,
         onClick = { onContributions(ProfileContribution.Changes) })
+    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
     OwnProfileMenuItem(R.string.profile_menu_submitted_shops, CoffeePeekIcons.Add,
         onClick = { onContributions(ProfileContribution.Shops) })
+    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
     OwnProfileMenuItem(R.string.profile_menu_submitted_roasters, CoffeePeekIcons.CoffeeBean,
         onClick = { onContributions(ProfileContribution.Roasters) })
     HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
@@ -77,7 +81,8 @@ private fun OwnProfileMenuItems(
 private fun OwnProfileMenuItem(label: Int, icon: ImageVector, destructive: Boolean = false, onClick: () -> Unit) {
     val color = if (destructive) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface
     DropdownMenuItem(
-        text = { Text(stringResource(label), maxLines = 2, overflow = TextOverflow.Ellipsis) },
+        text = { Text(stringResource(label), style = MaterialTheme.typography.bodyLarge,
+            fontWeight = FontWeight.Normal, maxLines = 2, overflow = TextOverflow.Ellipsis) },
         leadingIcon = { Icon(icon, null, Modifier.size(CoffeePeekDimens.settingsIconSize)) },
         colors = MenuDefaults.itemColors(textColor = color, leadingIconColor = color),
         onClick = onClick,

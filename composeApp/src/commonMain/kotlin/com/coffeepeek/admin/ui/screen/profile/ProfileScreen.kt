@@ -10,12 +10,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import coffeepeek.composeapp.generated.resources.Res
-import coffeepeek.composeapp.generated.resources.profile_cancel
-import coffeepeek.composeapp.generated.resources.profile_logout_message
-import coffeepeek.composeapp.generated.resources.profile_logout_title
-import coffeepeek.composeapp.generated.resources.profile_menu_logout
-import com.coffeepeek.core.designsystem.component.CoffeePeekDestructiveConfirmationSheet
 import com.coffeepeek.admin.analytics.Analytics
 import com.coffeepeek.admin.analytics.AnalyticsEvent
 import com.coffeepeek.admin.di.platformViewModel
@@ -30,7 +24,6 @@ import com.coffeepeek.admin.ui.component.*
 import com.coffeepeek.admin.ui.screen.contributions.ContributionKind
 import org.koin.compose.koinInject
 import org.koin.core.parameter.parametersOf
-import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun ProfileScreen(vm: ProfileViewModel = koinInject()) {
@@ -52,11 +45,7 @@ fun ProfileScreen(vm: ProfileViewModel = koinInject()) {
     }
     val bottomPadding = 20.dp + LocalFloatingNavClearance.current
 
-    if (showLogoutDialog) CoffeePeekDestructiveConfirmationSheet(
-        title = stringResource(Res.string.profile_logout_title),
-        message = stringResource(Res.string.profile_logout_message),
-        confirmLabel = stringResource(Res.string.profile_menu_logout),
-        cancelLabel = stringResource(Res.string.profile_cancel),
+    if (showLogoutDialog) ProfileLogoutConfirmation(
         onConfirm = { showLogoutDialog = false; vm.logout() },
         onDismiss = { showLogoutDialog = false },
     )
