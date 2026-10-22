@@ -97,7 +97,7 @@ CoffeePeek-Android/
 
 - **API URL Android:** `local.properties` → `BuildConfig.API_BASE_URL`
 - **API URL iOS:** `iosApp/Configuration/Shared.xcconfig` или локальный `Local.xcconfig`
-- **Версия приложения:** `1.0.<git-commit-count>` из `composeApp/build.gradle.kts`
+- **Версия приложения:** `1.1.0`, задаётся вручную в `iosApp/Configuration/Shared.xcconfig` для Android и iOS. Внутренний номер сборки — `1000 +` число коммитов `HEAD`; он не добавляется к версии в интерфейсе. Production — только `main`; серверная политика обновлений меняется вручную через админку.
 - **Application ID:** `com.coffeepeek`
 
 ---

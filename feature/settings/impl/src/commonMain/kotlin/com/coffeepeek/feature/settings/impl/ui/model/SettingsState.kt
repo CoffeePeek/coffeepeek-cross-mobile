@@ -13,9 +13,6 @@ internal data class SettingsState(
     /** The sign-in prompt is for guests only. */
     val showGuestCard: Boolean get() = !signedIn
 
-    /** Blocked authors are managed by a signed-in user only. */
-    val showBlockedAuthors: Boolean get() = signedIn
-
     /** Add shop / add roaster are shown to everyone (production behaviour, owner decision 2). */
     val showAddRows: Boolean get() = true
 }
