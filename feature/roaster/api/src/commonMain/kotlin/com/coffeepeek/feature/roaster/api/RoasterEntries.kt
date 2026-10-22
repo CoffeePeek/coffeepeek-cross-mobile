@@ -4,7 +4,8 @@ import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.dp
+
+// shortcut: explicit arguments avoid KT-87326; restore defaults after upgrading to a compiler with the fix.
 
 /**
  * Discovery hosts the roaster carousel and the roaster search overlay with one shared state (tags, favorites,
@@ -17,7 +18,7 @@ interface RoasterDiscoveryEntry {
         selectedRoasters: Set<String>,
         favoritesOnly: Boolean,
         onOpenRoaster: (slug: String) -> Unit,
-        modifier: Modifier = Modifier,
+        modifier: Modifier,
     )
 
     /** The full list shown while searching roasters. [header] is the app's search header. */
@@ -27,9 +28,9 @@ interface RoasterDiscoveryEntry {
         selectedRoasters: Set<String>,
         favoritesOnly: Boolean,
         onOpenRoaster: (slug: String) -> Unit,
-        modifier: Modifier = Modifier,
-        bottomClearance: Dp = 0.dp,
-        header: @Composable ColumnScope.() -> Unit = {},
+        modifier: Modifier,
+        bottomClearance: Dp,
+        header: @Composable ColumnScope.() -> Unit,
     )
 }
 
@@ -41,6 +42,6 @@ interface RoasterDetailEntry {
         onBack: () -> Unit,
         onOpenShop: (slug: String) -> Unit,
         onOpenLink: (url: String) -> Unit,
-        modifier: Modifier = Modifier,
+        modifier: Modifier,
     )
 }

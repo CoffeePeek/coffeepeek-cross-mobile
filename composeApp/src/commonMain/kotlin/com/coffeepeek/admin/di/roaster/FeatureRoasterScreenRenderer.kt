@@ -30,7 +30,7 @@ internal class FeatureRoasterScreenRenderer(
 ) : RoasterScreenRenderer {
     @Composable
     override fun DiscoverySection(query: String, selectedRoasterIds: Set<String>, favoritesOnly: Boolean) {
-        discovery.Section(query, selectedRoasterIds, favoritesOnly, onOpenRoaster = ::openRoaster)
+        discovery.Section(query, selectedRoasterIds, favoritesOnly, onOpenRoaster = ::openRoaster, modifier = Modifier)
     }
 
     @Composable
@@ -57,7 +57,7 @@ internal class FeatureRoasterScreenRenderer(
     override fun Detail(roasterId: String) {
         detail.Content(roasterId, onBack = Navigator::popBack,
             onOpenShop = { Navigator.navigate(Navigator.Screen.ShopDetail(it)) },
-            onOpenLink = OpenInBrowser::openInBrowser)
+            onOpenLink = OpenInBrowser::openInBrowser, modifier = Modifier)
     }
 
     private fun openRoaster(slug: String) = Navigator.navigate(Navigator.Screen.RoasterDetail(slug))

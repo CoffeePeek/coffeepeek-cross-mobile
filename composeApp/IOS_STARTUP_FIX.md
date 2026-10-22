@@ -84,7 +84,38 @@ also passed (49 seconds); simulator test KLIBs were compiled, not executed.
 The new validator regression was checked against the baseline: the old validator
 accepted the synthetic config and the updated validator rejects it.
 
-The Xcode package graph/lockfile refresh, simulator executable linking/test
-execution and signed archive remain macOS gates. Verification now saves the
+The simulator executable linking/test execution and signed archive remain macOS
+gates. Verification now saves the
 resolved SPM lockfile, build/test logs and native test results as CI artifacts.
-No workflow was dispatched and no TestFlight build was published in this follow-up.
+No manual workflow was dispatched and no TestFlight build was published in this follow-up.
+
+## First macOS verification and Compose ABI correction — 2026-10-22
+
+PR #158 at `2e6c7a64`: Android CI passed, but iOS run `39736101502` failed
+at `linkDebugFrameworkIosSimulatorArm64`. The strict partial-linkage guard
+reported three unimplemented abstract methods: roaster `Section`, `Search`
+and `Content`. The original failure is retained in that run's build-log artifact.
+Native contract tests did not execute because framework linking failed first.
+
+Local KLIB IR inspection confirms the mismatch: interface parameters use
+non-null `Modifier`/`header`, whereas the cross-module overrides use nullable
+types after Compose transforms inherited default arguments. This matches
+[KT-87326](https://youtrack.jetbrains.com/issue/KT-87326). Remove defaults from
+those three interface methods and supply the same `Modifier` explicitly at the
+two callers that omitted it. Search already supplies all arguments. Rendering,
+ViewModel ownership and feature boundaries are unchanged; the strict check stays.
+No new UI test infrastructure is needed: the real native framework link checks
+these overrides, and local IR comparison checks the corrected signatures.
+
+Xcode successfully resolved the Firebase/PostHog package graph before the Kotlin
+failure. Its generated `Package.resolved` is copied from the CI artifact into
+the project, replacing the stale lockfile. Native linking, contract execution
+and signed/device checks still require successful subsequent verification.
+
+With this correction, the Android `directDebug` assembly and packaged DEX
+checks passed again, as did all 210 DI unit tests (zero failures/errors/skips).
+App/test KLIB compilation passed for both `iosArm64` and `iosSimulatorArm64`.
+An assert-based IR comparison confirmed all three original nullable-parameter
+mismatches, then verified identical API/override signatures after recompilation.
+The lockfile parses as JSON, has unique pins and resolves Firebase 12.19.2.
+These local checks took two minutes; native executables still await macOS CI.
