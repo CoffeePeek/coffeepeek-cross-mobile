@@ -14,7 +14,7 @@ on:
       - gradle/**
       - modules/**
       - iosApp/**
-      - iosXtool/CoffeePeek/Sources/**
+      - iosXtool/CoffeePeek/**
       - tools/ios/**
       - tools/release/test_ios_signing_profile.py
       - build.gradle.kts
@@ -54,6 +54,16 @@ jobs:
           python3 -m unittest discover -s tools/ios -p 'test_*.py'
           python3 -m unittest discover -s tools/release -p test_ios_signing_profile.py
           cp tools/ios/GoogleService-Info.verification.plist iosApp/iosApp/GoogleService-Info.plist
+
+      - name: Compile iPhone launch catalog for xtool
+        shell: bash
+        run: bash iosXtool/CoffeePeek/prepare-launch-resources.sh
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ios-launch-resources
+          path: iosXtool/CoffeePeek/.build/launch-resources/Assets.car
+          if-no-files-found: error
+          retention-days: 7
 
       - name: Compile Kotlin and native Swift for iOS Simulator
         shell: bash

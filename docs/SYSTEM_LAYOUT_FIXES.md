@@ -746,3 +746,52 @@ public check-ins as the count fallback. The owner's existing full personal
 week loaders remain independent. Manual device review, native SVG rendering,
 month boundaries/large public feeds, navigation and accessibility remain gates.
 No device was installed/launched and no production data or analytics was written.
+
+## Profile action menu parity — 2026-10-22
+
+The migrated Android public profile still opens an unstyled Material dropdown;
+the own profile has a separate styled Material implementation. Replace both
+with one Android design-system action menu matching the application's existing
+anchored popup (shape, surface/border, dividers, icons and pressed opacity).
+Preserve canonical-path share validation, blocked-author sharing restrictions,
+block/unblock confirmation, contribution navigation and logout confirmation.
+iOS already uses its native anchored menu and needs no change.
+
+Verification plan: unit-test popup placement below/above its anchor, window-edge
+clamping and RTL; run design-system/profile unit suites and assemble Direct
+Debug/Sandbox with their packaged DEX/isolation checks. Colocated light/dark
+previews use fake callbacks. Manual device review, large fonts, dismissal/back
+and TalkBack remain gates; no automated UI test or account write.
+
+Results: Windows/JDK 17, `1c2e4dda` plus this patch; Direct Debug and Direct
+Sandbox APK assembly, packaged DEX runtime-class checks and Sandbox isolation
+passed in 1m54s. All 83 executed JVM tests passed without failures/errors/skips:
+design-system 35 (including three placement regressions), profile impl 48.
+Colocated light/dark previews compile; no IDE rendering is claimed. The first
+sandboxed Gradle invocation could not open its wrapper cache lock; the normal
+cache-enabled build above passed. Existing unrelated warnings remain.
+No device, account, analytics or production data was accessed. Android popup
+rendering, large fonts, TalkBack and native dismissal remain manual gates.
+
+## xtool launch appearance metadata — 2026-10-22
+
+Replace loose launch PNG staging with the complete compiled asset catalog,
+preserving LaunchLogo luminosity variants and LaunchBackground named colors.
+The preparation script compiles with the iPhone actool on macOS or imports the
+catalog built by the existing macOS verification workflow for Linux. Fail early
+when the catalog is missing; remove known obsolete loose logo files after success.
+Both native launch plist and shared SwiftUI splash use the catalog's LaunchLogo
+name; appearance selection no longer uses loose-file names.
+
+Verification plan: run the existing iOS configuration tests plus isolated shell
+contracts for catalog import, stale-PNG removal, same-file import, missing/empty
+input, actool arguments/output and compilation failure propagation. Real actool,
+Assets.car rendition inspection, Swift compilation and native light/dark launch
+remain macOS/iPhone gates; no Xcode/Apple toolchain runs on this Windows host.
+
+Results: all 11 iOS configuration/shell tests passed on Windows with Git Bash
+(five new shell contracts using a mocked actool, six existing configuration
+tests). The first sandboxed Python attempt could not create its temporary
+fixture directories; the same suite passed with normal temporary-file access.
+No real Assets.car compilation/rendition inspection, Swift build, native launch,
+or device installation is claimed by these shell tests.

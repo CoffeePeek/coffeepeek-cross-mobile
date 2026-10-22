@@ -20,8 +20,6 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -100,7 +98,6 @@ internal fun PublicProfileScreen(
     val visibility by vm.authorVisibility.collectAsStateWithLifecycle(initialValue = vm.currentVisibility())
     var section by remember(slug) { mutableStateOf<ProfileSection?>(null) }
     var photos by remember(slug) { mutableStateOf<ProfilePhotos?>(null) }
-    var menuOpen by remember { mutableStateOf(false) }
     val checkInsListState = rememberLazyListState()
     val profile = state.profile
     val viewingOwn = own != null || state.isOwnProfile
@@ -135,27 +132,11 @@ internal fun PublicProfileScreen(
                 )
                 if (own != null) Box(Modifier.align(Alignment.CenterEnd)) { own.topBarActions() }
                 else if (profile != null && author != null && !viewingOwn) Box(Modifier.align(Alignment.CenterEnd)) {
-                    IconButton(onClick = { menuOpen = true }) {
-                        Icon(CoffeePeekIcons.MoreHorizontal, stringResource(R.string.profile_author_actions))
-                    }
-                    DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
-                        if (!profile.isBlockedByViewer && sharePath != null) DropdownMenuItem(
-                            text = { Text(stringResource(R.string.profile_share)) },
-                            leadingIcon = { Icon(CoffeePeekIcons.Share, null) },
-                            onClick = { menuOpen = false; onShare("$PUBLIC_PROFILE_BASE_URL$sharePath") },
-                        )
-                        DropdownMenuItem(
-                            text = {
-                                Text(stringResource(if (profile.isBlockedByViewer) R.string.profile_unblock_author else R.string.profile_block_author),
-                                    color = if (profile.isBlockedByViewer) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.error)
-                            },
-                            leadingIcon = { Icon(CoffeePeekIcons.Block, null, tint = if (profile.isBlockedByViewer) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.error) },
-                            onClick = {
-                                menuOpen = false
-                                if (profile.isBlockedByViewer) authorActions.requestUnblock(author) else authorActions.requestBlock(author)
-                            },
-                        )
-                    }
+                    PublicProfileActions(
+                        isBlocked = profile.isBlockedByViewer,
+                        onShare = sharePath?.let { path -> { onShare("$PUBLIC_PROFILE_BASE_URL$path") } },
+                        onBlock = { if (profile.isBlockedByViewer) authorActions.requestUnblock(author) else authorActions.requestBlock(author) },
+                    )
                 } else if (profile != null && sharePath != null) IconButton(
                     onClick = { onShare("$PUBLIC_PROFILE_BASE_URL$sharePath") }, modifier = Modifier.align(Alignment.CenterEnd),
                 ) { Icon(CoffeePeekIcons.Share, stringResource(R.string.profile_share), modifier = Modifier.size(21.dp)) }
