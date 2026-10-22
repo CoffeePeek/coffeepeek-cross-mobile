@@ -1,7 +1,6 @@
 package com.coffeepeek.feature.profile.impl.ui.compose.component
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -25,7 +24,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.text.font.FontWeight
@@ -44,41 +42,6 @@ private fun daysLabel(count: Int): String = pluralStringResource(R.plurals.profi
 private fun monthTitle(value: String): String {
     val month = profileMonth(value)
     return stringResource(R.string.profile_month_title, stringArrayResource(R.array.profile_months)[month.number - 1], month.year)
-}
-
-@Composable
-internal fun PublicProfileActivityCard(activity: PublicProfileActivity, onClick: () -> Unit) {
-    val month = profileMonth(activity.month)
-    val activeDays = activity.activeDays.filter { it in 1..month.days }
-    val weekdays = stringArrayResource(R.array.profile_weekdays)
-    ProfileCard(modifier = Modifier.fillMaxWidth().clickable(role = Role.Button, onClickLabel = stringResource(R.string.profile_open_activity), onClick = onClick)) {
-        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(18.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    Text(monthTitle(activity.month), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
-                    Text(daysLabel(activeDays.size), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                }
-                Icon(CoffeePeekIcons.ChevronRight, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(20.dp))
-            }
-            Row(Modifier.fillMaxWidth()) {
-                weekdays.forEachIndexed { index, label ->
-                    val count = activeDays.count { day -> (month.firstWeekday + day - 1) % 7 == index }
-                    val description = stringResource(R.string.profile_weekday_description, label, daysLabel(count))
-                    Column(
-                        Modifier.weight(1f).clearAndSetSemantics { contentDescription = description },
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.spacedBy(8.dp),
-                    ) {
-                        Text(label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        Box(Modifier.size(8.dp).background(
-                            if (count > 0) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.35f),
-                            CircleShape,
-                        ))
-                    }
-                }
-            }
-        }
-    }
 }
 
 @Composable
