@@ -68,7 +68,7 @@ class UserApiService(private val client: HttpClient) {
         }
         if (!response.status.isSuccess()) {
             val err = requestResult { response.body<ApiResponse<Unit>>() }.getOrNull()
-            throw ApiException(err?.message ?: "Ошибка обновления имени (${response.status.value})")
+            throw ApiException(err?.message, statusCode = response.status.value)
         }
         val result = response.body<ApiResponse<UsernameUpdateDto>>()
         if (!result.isSuccess || result.data == null) throw ApiException(result.message)
