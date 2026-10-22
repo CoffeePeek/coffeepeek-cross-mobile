@@ -4,6 +4,7 @@ import ComposeApp
 
 @main
 struct CoffeePeekApp: App {
+    @State private var isReady = false
     #if canImport(FirebaseCore) && canImport(FirebaseMessaging)
     @UIApplicationDelegateAdaptor(PushAppDelegate.self) private var pushDelegate
     #endif
@@ -14,12 +15,14 @@ struct CoffeePeekApp: App {
 
     var body: some Scene {
         WindowGroup {
-            ComposeRootView()
-                // Compose owns status/navigation bar insets. Keeping the host view
-                // inside SwiftUI's safe area applies those insets twice and leaves
-                // the system regions outside the current screen background.
-                .ignoresSafeArea(.container, edges: .all)
+            ZStack {
+                ComposeRootView(onReady: { isReady = true })
+                if !isReady { CoffeePeekLaunchView() }
+            }
+                // UIKit applies safe areas per screen, including full-bleed shop photos.
+                .ignoresSafeArea(.container)
                 .ignoresSafeArea(.keyboard)
+                .background(Color(uiColor: UIColor(named: "LaunchBackground") ?? .systemBackground).ignoresSafeArea())
                 .onOpenURL { url in
                     if !GIDSignIn.sharedInstance.handle(url) {
                         _ = MainViewControllerKt.handleAppLink(link: url.absoluteString)
@@ -36,8 +39,12 @@ struct CoffeePeekApp: App {
 }
 
 private struct ComposeRootView: UIViewControllerRepresentable {
+    let onReady: () -> Void
+
     func makeUIViewController(context: Context) -> UIViewController {
-        MainViewControllerKt.MainViewController()
+        MainViewControllerKt.MainViewController(onReady: {
+            DispatchQueue.main.async { onReady() }
+        })
     }
 
     func updateUIViewController(_ uiViewController: UIViewController, context: Context) {}

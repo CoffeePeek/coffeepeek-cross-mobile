@@ -224,6 +224,23 @@ class AndroidSettingsPortsTest {
 
     // --- external actions --------------------------------------------------------------------------------------------------
 
+    @Test fun reviewActionIsUnavailableInDirectApkBuilds() {
+        val opened = mutableListOf<String>()
+        val actions = AndroidSettingsExternalActions(openUrl = opened::add, reviewUrl = null)
+        assertEquals(false, actions.canRateApp)
+        actions.rateApp()
+        assertEquals(emptyList(), opened)
+    }
+
+    @Test fun reviewActionOpensGooglePlayInStoreBuilds() {
+        val opened = mutableListOf<String>()
+        val url = "https://play.google.com/store/apps/details?id=com.coffeepeek"
+        val actions = AndroidSettingsExternalActions(openUrl = opened::add, reviewUrl = url)
+        assertEquals(true, actions.canRateApp)
+        actions.rateApp()
+        assertEquals(listOf(url), opened)
+    }
+
     @Test fun externalActionsUseTheLegacyTargets() {
         val opened = mutableListOf<String>(); val shared = mutableListOf<String>()
         val actions = AndroidSettingsExternalActions(openUrl = opened::add, shareText = shared::add)

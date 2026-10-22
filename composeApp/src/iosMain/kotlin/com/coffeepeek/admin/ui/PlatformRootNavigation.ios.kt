@@ -34,8 +34,7 @@ private class NavigationDelegate : NSObject(), UINavigationControllerDelegatePro
     var onStackChanged: (() -> Unit)? = null
     @ObjCSignatureOverride
     override fun navigationController(navigationController: UINavigationController, willShowViewController: UIViewController, animated: Boolean) {
-        val show = (willShowViewController as? NativeScreenController)?.usesNavigationBar == true
-        navigationController.setNavigationBarHidden(!show, animated)
+        navigationController.setNavigationBarHidden(true, animated)
     }
 
     override fun gestureRecognizerShouldBegin(gestureRecognizer: UIGestureRecognizer): Boolean {
@@ -134,8 +133,6 @@ internal actual fun PlatformRootNavigation(
     }
     fun controller(screen: Navigator.Screen): UIViewController = NativeScreenController(
         route = screen,
-        extendsUnderHomeIndicator = screen == Navigator.Screen.Auth || screen == Navigator.Screen.Register ||
-            screen is Navigator.Screen.ForgotPassword,
     ) {
         body.value(screen) {
             scope.launch { navigate {
@@ -151,7 +148,7 @@ internal actual fun PlatformRootNavigation(
         val symbols = listOf("magnifyingglass", "cup.and.saucer", "person.2", "person.crop.circle", "gearshape")
         visibleTabIndices.forEach { index ->
             val navigation = navigations[index]
-            val root = NativeScreenController(labels[index], analyticsPage = listOf("discovery", "coffees", "feed", "profile", "settings")[index]) {
+            val root = NativeScreenController(labels[index], analyticsPage = listOf("discovery", "coffees", "feed", "profile", "settings")[index], isTabRoot = true) {
                 when (index) {
                     0 -> DiscoveryTabContent(onMapExpandedChange = {})
                     1 -> CheckInTabContent { CoffeeListScreen() }

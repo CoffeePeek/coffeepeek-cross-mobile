@@ -4,6 +4,7 @@ import io.kamel.core.DataSource
 import io.kamel.core.Resource
 import io.kamel.core.config.ResourceConfig
 import io.kamel.core.fetcher.Fetcher
+import io.kamel.image.getDataSourceEnding
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.get
@@ -50,8 +51,9 @@ actual class CustomUrlFetcher(
             check(response.status.value == 200) { "Фото недоступно" }
             val bytes = response.body<ByteArray>()
             if (isProtectedCheckInPhoto(data.url)) grantOnlinePhoto(data, start)
-            // Server variants are already oriented and bounded; decode only once in Kamel.
-            val display = if (isProtectedCheckInPhoto(data.url) && "/variants/" in data.url) bytes
+            // Vector/animated assets and bounded server variants must reach their own decoders unchanged.
+            val display = if (getDataSourceEnding(data) in setOf("svg", "xml", "gif") ||
+                isProtectedCheckInPhoto(data.url) && "/variants/" in data.url) bytes
                 else BitmapUtil.prepareForDisplay(bytes)
             display
         }
