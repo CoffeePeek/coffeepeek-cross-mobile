@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -20,7 +21,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import com.coffeepeek.core.designsystem.component.CoffeePeekButton
+import androidx.compose.ui.text.style.TextAlign
 import com.coffeepeek.core.designsystem.component.CoffeePeekFilterChip
 import com.coffeepeek.core.designsystem.component.CoffeePeekSwipeDismissModalBottomSheet
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
@@ -45,11 +46,16 @@ internal fun FilterSheet(state: SearchState, onAction: (SearchAction) -> Unit) {
         dismissDescription = stringResource(R.string.discovery_filters_close),
         maxSheetHeightFraction = 0.92f,
     ) {
-        Row(Modifier.fillMaxWidth().padding(horizontal = CoffeePeekDimens.spacing4), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
-            Text(stringResource(R.string.discovery_filters), style = MaterialTheme.typography.titleLarge)
-            TextButton(onClick = { draft = draft.clearSelections() }) { Text(stringResource(R.string.discovery_filters_reset)) }
+        Row(Modifier.fillMaxWidth().padding(horizontal = CoffeePeekDimens.spacing1), verticalAlignment = Alignment.CenterVertically) {
+            TextButton({ draft = draft.clearSelections() }, enabled = draft.activeCount > 0) { Text(stringResource(R.string.discovery_filters_reset)) }
+            Text(stringResource(R.string.discovery_filters), style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f), textAlign = TextAlign.Center)
+            TextButton({ onAction(SearchAction.ApplyFilters(draft)); onAction(SearchAction.CloseFilters) }) { Text(stringResource(R.string.discovery_filters_done)) }
         }
-        Column(Modifier.weight(1f, fill = false).verticalScroll(rememberScrollState()).padding(horizontal = CoffeePeekDimens.spacing4), verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing4)) {
+        Column(
+            Modifier.weight(1f, fill = false).verticalScroll(rememberScrollState()).navigationBarsPadding()
+                .padding(horizontal = CoffeePeekDimens.spacing4).padding(bottom = CoffeePeekDimens.spacing6),
+            verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing4),
+        ) {
             Section(R.string.discovery_section_kind) {
                 ShopKind.entries.forEach { kind ->
                     CoffeePeekFilterChip(stringResource(kind.label()), draft.kind == kind, { draft = draft.copy(kind = kind.takeUnless { draft.kind == it }) })
@@ -71,11 +77,6 @@ internal fun FilterSheet(state: SearchState, onAction: (SearchAction) -> Unit) {
             CatalogSection(R.string.discovery_section_brew_methods, state.catalogs.brewMethods, draft.brewMethodIds) { draft = draft.copy(brewMethodIds = draft.brewMethodIds.toggle(it)) }
             CatalogSection(R.string.discovery_section_tags, amenityTags(state.catalogs.tags), draft.tagIds) { draft = draft.copy(tagIds = draft.tagIds.toggle(it)) }
         }
-        CoffeePeekButton(
-            stringResource(R.string.discovery_filters_done),
-            onClick = { onAction(SearchAction.ApplyFilters(draft)); onAction(SearchAction.CloseFilters) },
-            modifier = Modifier.fillMaxWidth().padding(CoffeePeekDimens.spacing4),
-        )
     }
 }
 
