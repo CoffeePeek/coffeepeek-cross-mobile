@@ -13,6 +13,7 @@ import com.coffeepeek.admin.ui.component.LocalFloatingNavClearance
 import com.coffeepeek.admin.ui.screen.contributions.ContributionKind
 import com.coffeepeek.admin.ui.screen.profile.OwnProfileScreenRenderer
 import com.coffeepeek.admin.ui.screen.profile.PersonalProfileActivityCalendar
+import com.coffeepeek.admin.ui.screen.profile.PersonalProfileActivityPreview
 import com.coffeepeek.admin.utils.ErrorHandler
 import com.coffeepeek.domain.repository.AuthRepository
 import com.coffeepeek.core.session.SessionReader
@@ -42,6 +43,7 @@ internal class AndroidOwnProfileScreenRenderer(private val entry: OwnProfileEntr
             },
             onOpenCheckIns = { Navigator.navigate(Navigator.Screen.VisitedPlaces) },
             onOpenContributions = { kind -> Navigator.navigate(Navigator.Screen.MyContributions(kind.toContributionKind().name)) },
+            onOpenBlockedAuthors = { Navigator.navigate(Navigator.Screen.BlockedAuthors) },
             bottomClearance = LocalFloatingNavClearance.current,
         )
     }
@@ -82,6 +84,7 @@ internal fun androidOwnProfileScreenRenderer(
         shared = androidProfileSlots(checkIns),
         favoritesPreview = { openShop, openRoaster -> FavoritesProfilePreview(openShop, openRoaster) },
         activityCalendar = { PersonalProfileActivityCalendar() },
+        activityPreview = { onClick -> PersonalProfileActivityPreview(onClick) },
         loadError = { onRetry -> LoadErrorContent(onRetry = onRetry) },
     )
     return AndroidOwnProfileScreenRenderer(createOwnProfileEntry(

@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
@@ -54,6 +55,7 @@ internal fun RoasterDiscoverySection(
     favoritesOnly: Boolean,
     image: RoasterImage,
     loadError: RoasterLoadError,
+    emptyContent: @Composable (Modifier) -> Unit,
     screen: RoasterScreenAnalytics,
     onFavoriteFeedback: () -> Unit,
     modifier: Modifier,
@@ -68,7 +70,7 @@ internal fun RoasterDiscoverySection(
     LaunchedEffect(query) { viewModel.onAction(RoasterListAction.QueryChanged(query)) }
     LaunchedEffect(selectedRoasters) { viewModel.onAction(RoasterListAction.SelectedRoastersChanged(selectedRoasters)) }
     LaunchedEffect(favoritesOnly) { viewModel.onAction(RoasterListAction.FavoritesOnlyChanged(favoritesOnly)) }
-    RoasterDiscoverySectionContent(state, viewModel::onAction, image, loadError, screen, onFavoriteFeedback, modifier)
+    RoasterDiscoverySectionContent(state, viewModel::onAction, image, loadError, screen, onFavoriteFeedback, modifier, emptyContent)
 }
 
 /** The Discovery carousel: same card width rule (88% clamped to 280–360dp) and at most eight cards as before. */
@@ -81,6 +83,7 @@ internal fun RoasterDiscoverySectionContent(
     screen: RoasterScreenAnalytics = RoasterScreenAnalytics.None,
     onFavoriteFeedback: () -> Unit = {},
     modifier: Modifier = Modifier,
+    emptyContent: @Composable (Modifier) -> Unit = { RoasterEmptyText(it) },
 ) {
     val visible = state.visibleItems
     val snackbar = remember { SnackbarHostState() }
@@ -92,8 +95,10 @@ internal fun RoasterDiscoverySectionContent(
         RoasterTagFilters(state.availableTags, state.selectedTags,
             { onAction(RoasterListAction.ToggleTag(it)) }, { onAction(RoasterListAction.ClearTags) })
         BoxWithConstraints(screen.exposure(Modifier.fillMaxWidth(), RoasterExposure.Discovery)) {
-            val cardWidth = (maxWidth * 0.88f).coerceIn(280.dp, 360.dp)
-            LazyRow(Modifier.testTag("roaster-carousel"), horizontalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing3)) {
+            val cardWidth = ((maxWidth - CoffeePeekDimens.spacing4 * 2) * 0.88f).coerceIn(280.dp, 360.dp)
+            LazyRow(Modifier.testTag("roaster-carousel"),
+                contentPadding = PaddingValues(horizontal = CoffeePeekDimens.spacing4),
+                horizontalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing3)) {
                 itemsIndexed(visible.take(DISCOVERY_LIMIT), key = { index, item -> item.slug ?: "unaddressed-roaster:$index" }) { _, item ->
                     RoasterListItemCard(item, state.isLoading, item.favoriteKey in state.favoriteKeys, onAction,
                         onFavoriteFeedback, image, screen, Modifier.width(cardWidth))
@@ -106,7 +111,7 @@ internal fun RoasterDiscoverySectionContent(
         } else if (state.loadFailed) {
             loadError { onAction(RoasterListAction.Refresh) }
         } else if (visible.isEmpty() && !state.isLoading) {
-            RoasterEmptyText()
+            emptyContent(Modifier.padding(horizontal = if (state.query.isBlank()) CoffeePeekDimens.spacing4 else 0.dp))
         }
     }
 }

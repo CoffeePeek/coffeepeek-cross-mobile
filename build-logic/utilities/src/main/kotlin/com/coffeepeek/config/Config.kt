@@ -9,6 +9,6 @@ object Config {
     const val APPLICATION_ID = "com.coffeepeek"
 
     const val COMPILE_SDK = 37
-    const val MIN_SDK = 26
+    const val MIN_SDK = 31
     const val TARGET_SDK = 36
 }

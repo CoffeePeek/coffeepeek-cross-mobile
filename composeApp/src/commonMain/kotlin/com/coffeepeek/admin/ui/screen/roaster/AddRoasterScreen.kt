@@ -28,12 +28,12 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
@@ -132,13 +132,13 @@ fun AddRoasterScreen(vm: AddRoasterViewModel = platformViewModel()) {
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-
-                .navigationBarsPadding()
-                .padding(CpDimens.spacing4),
+                .consumeWindowInsets(padding)
+                .padding(horizontal = CpDimens.spacing4),
             verticalArrangement = Arrangement.spacedBy(CpDimens.spacing4),
         ) {
             Text(
                 text = "Расскажите об обжарщике. После проверки он появится в общем каталоге.",
+                modifier = Modifier.padding(top = CpDimens.spacing4),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -224,7 +224,7 @@ fun AddRoasterScreen(vm: AddRoasterViewModel = platformViewModel()) {
             ) {
                 Text("Отправить на модерацию", fontWeight = FontWeight.SemiBold)
             }
-            Spacer(Modifier.height(CpDimens.spacing4))
+            Spacer(Modifier.height(CpDimens.spacing8))
         }
     }
 }

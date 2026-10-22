@@ -3,6 +3,28 @@ name: iOS build verification
 on:
   pull_request:
     branches: [main, develop]
+    paths:
+      - .github/workflows/ios-*.yml
+      - build-logic/**
+      - buildSrc/**
+      - composeApp/**
+      - core/**
+      - feature/**
+      - features/**
+      - gradle/**
+      - modules/**
+      - iosApp/**
+      - iosXtool/CoffeePeek/**
+      - tools/ios/**
+      - tools/release/test_ios_signing_profile.py
+      - build.gradle.kts
+      - settings.gradle.kts
+      - gradle.properties
+      - gradlew
+      - gradlew.bat
+      - '!**/src/android*/**'
+      - '!**/proguard-rules.pro'
+      - '!**/*.md'
   workflow_dispatch:
 
 permissions:
@@ -13,8 +35,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  compile_ios:
-    if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
+  build:
     runs-on: xcode-27
     timeout-minutes: 60
     steps:
@@ -26,18 +47,23 @@ jobs:
       - uses: gradle/actions/setup-gradle@v6
         with:
           cache-read-only: ${{ github.event_name == 'pull_request' || (github.ref != 'refs/heads/main' && github.ref != 'refs/heads/develop') }}
-      - name: Configure Firebase Messaging for iOS
+      - name: Check CI configuration and prepare unsigned Firebase resource
         shell: bash
-        env:
-          FIREBASE_GOOGLE_SERVICE_INFO_PLIST: ${{ secrets.FIREBASE_GOOGLE_SERVICE_INFO_PLIST }}
         run: |
           set -euo pipefail
-          swift --version
           python3 -m unittest discover -s tools/ios -p 'test_*.py'
-          python3 tools/ios/restore_firebase_config.py
-          swift run --package-path tools/ios/xcode_spm_setup xcode_spm_setup \
-            iosApp/iosApp.xcodeproj https://github.com/firebase/firebase-ios-sdk 12.19.2 \
-            --plist "$(pwd)/iosApp/iosApp/GoogleService-Info.plist" FirebaseCore FirebaseMessaging
+          python3 -m unittest discover -s tools/release -p test_ios_signing_profile.py
+          cp tools/ios/GoogleService-Info.verification.plist iosApp/iosApp/GoogleService-Info.plist
+
+      - name: Compile iPhone launch catalog for xtool
+        shell: bash
+        run: bash iosXtool/CoffeePeek/prepare-launch-resources.sh
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ios-launch-resources
+          path: iosXtool/CoffeePeek/.build/launch-resources/Assets.car
+          if-no-files-found: error
+          retention-days: 7
 
       - name: Compile Kotlin and native Swift for iOS Simulator
         shell: bash
@@ -51,30 +77,23 @@ jobs:
               tail -n 150 "$RUNNER_TEMP/ios-verify.log"
               exit 1
             }
+      - name: Run Kotlin Native ViewModel contract tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          ./gradlew --max-workers=6 :composeApp:iosSimulatorArm64Test \
+            --tests 'com.coffeepeek.admin.di.KoinViewModelCompatibilityTest' \
+            > "$RUNNER_TEMP/ios-native-tests.log" 2>&1 || {
+              tail -n 150 "$RUNNER_TEMP/ios-native-tests.log"
+              exit 1
+            }
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: ios-build-log
-          path: ${{ runner.temp }}/ios-verify.log
+          path: |
+            ${{ runner.temp }}/ios-verify.log
+            ${{ runner.temp }}/ios-native-tests.log
+            composeApp/build/test-results/iosSimulatorArm64Test/
+            iosApp/iosApp.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved
           retention-days: 7
-
-  # A manual verification must pass the real macOS build; regular non-main PRs retain the skip policy.
-  build:
-    needs: compile_ios
-    if: always()
-    runs-on: ubuntu-latest
-    steps:
-      - name: Verify iOS check result
-        shell: bash
-        env:
-          BUILD_REF: ${{ github.ref }}
-          BUILD_EVENT: ${{ github.event_name }}
-          BUILD_RESULT: ${{ needs.compile_ios.result }}
-        run: |
-          set -euo pipefail
-          if [[ "$BUILD_REF" == 'refs/heads/main' || "$BUILD_EVENT" == 'workflow_dispatch' ]]; then
-            [[ "$BUILD_RESULT" == 'success' ]]
-          else
-            [[ "$BUILD_RESULT" == 'skipped' ]]
-            echo 'Simulator build was skipped for this pull request; dispatch this workflow to compile it.'
-          fi

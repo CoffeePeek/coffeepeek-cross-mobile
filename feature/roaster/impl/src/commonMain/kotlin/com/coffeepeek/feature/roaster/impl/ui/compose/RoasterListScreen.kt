@@ -63,6 +63,7 @@ internal fun RoasterListScreen(
     favoritesOnly: Boolean,
     image: RoasterImage,
     loadError: RoasterLoadError,
+    emptyContent: @Composable (Modifier) -> Unit,
     screen: RoasterScreenAnalytics,
     onFavoriteFeedback: () -> Unit,
     bottomClearance: Dp,
@@ -79,7 +80,7 @@ internal fun RoasterListScreen(
     LaunchedEffect(query) { viewModel.onAction(RoasterListAction.QueryChanged(query)) }
     LaunchedEffect(selectedRoasters) { viewModel.onAction(RoasterListAction.SelectedRoastersChanged(selectedRoasters)) }
     LaunchedEffect(favoritesOnly) { viewModel.onAction(RoasterListAction.FavoritesOnlyChanged(favoritesOnly)) }
-    RoasterListScreenContent(state, viewModel::onAction, image, loadError, screen, onFavoriteFeedback, modifier, bottomClearance, header)
+    RoasterListScreenContent(state, viewModel::onAction, image, loadError, screen, onFavoriteFeedback, modifier, bottomClearance, header, emptyContent)
 }
 
 @Composable
@@ -93,6 +94,7 @@ internal fun RoasterListScreenContent(
     modifier: Modifier = Modifier,
     bottomClearance: Dp = 0.dp,
     header: @Composable ColumnScope.() -> Unit = {},
+    emptyContent: @Composable (Modifier) -> Unit = { RoasterEmptyText(it) },
 ) {
     val listState = rememberLazyListState()
     val visible = state.visibleItems
@@ -107,8 +109,8 @@ internal fun RoasterListScreenContent(
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
         topBar = {
             Column(Modifier.fillMaxWidth().statusBarsPadding()
-                .padding(horizontal = CoffeePeekDimens.spacing4, vertical = CoffeePeekDimens.spacing3)) {
-                header()
+                .padding(vertical = CoffeePeekDimens.spacing3)) {
+                Column(Modifier.padding(horizontal = CoffeePeekDimens.spacing4), content = header)
                 RoasterTagFilters(state.availableTags, state.selectedTags,
                     { onAction(RoasterListAction.ToggleTag(it)) }, { onAction(RoasterListAction.ClearTags) })
             }
@@ -129,7 +131,7 @@ internal fun RoasterListScreenContent(
                 }
                 if (state.isLoading) item { RoasterLoadingRow() }
                 if (state.loadFailed) item { loadError { onAction(RoasterListAction.Refresh) } }
-                else if (visible.isEmpty() && !state.isLoading) item { RoasterEmptyText(Modifier.padding(24.dp)) }
+                else if (visible.isEmpty() && !state.isLoading) item { emptyContent(Modifier) }
             }
         }
     }
