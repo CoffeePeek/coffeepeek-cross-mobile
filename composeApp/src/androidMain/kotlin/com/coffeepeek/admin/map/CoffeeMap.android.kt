@@ -16,6 +16,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -33,6 +35,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
@@ -94,6 +97,10 @@ private const val DEFAULT_LON = 27.5615
 private const val DEFAULT_ZOOM = 12f
 private const val LOCATION_ZOOM = 15f
 private const val TARGET_ZOOM = 16f
+
+internal actual fun Modifier.mapCanvasSize(canvasSize: DpSize?): Modifier =
+    canvasSize?.let { requiredSize(it.width, it.height) } ?: fillMaxSize()
+
 private const val OSM_COPYRIGHT_URL = "https://www.openstreetmap.org/copyright"
 private const val OPEN_FREE_MAP_LIGHT_STYLE = "https://tiles.openfreemap.org/styles/positron"
 private const val OPEN_FREE_MAP_DARK_STYLE = "https://tiles.openfreemap.org/styles/dark"

@@ -13,6 +13,8 @@ import com.coffeepeek.admin.ui.component.LocalFloatingNavClearance
 import com.coffeepeek.admin.ui.component.SearchHeader
 import com.coffeepeek.admin.ui.component.platformHaptic
 import com.coffeepeek.admin.ui.screen.roaster.RoasterScreenRenderer
+import com.coffeepeek.admin.ui.screen.feed.CatalogSuggestionCard
+import com.coffeepeek.admin.ui.screen.feed.CatalogSuggestionKind
 import com.coffeepeek.admin.utils.OpenInBrowser
 import com.coffeepeek.feature.roaster.api.RoasterDetailEntry
 import com.coffeepeek.feature.roaster.api.RoasterDiscoveryEntry
@@ -30,7 +32,7 @@ internal class FeatureRoasterScreenRenderer(
 ) : RoasterScreenRenderer {
     @Composable
     override fun DiscoverySection(query: String, selectedRoasterIds: Set<String>, favoritesOnly: Boolean) {
-        discovery.Section(query, selectedRoasterIds, favoritesOnly, onOpenRoaster = ::openRoaster)
+        discovery.Section(query, selectedRoasterIds, favoritesOnly, onOpenRoaster = ::openRoaster, modifier = Modifier)
     }
 
     @Composable
@@ -57,7 +59,7 @@ internal class FeatureRoasterScreenRenderer(
     override fun Detail(roasterId: String) {
         detail.Content(roasterId, onBack = Navigator::popBack,
             onOpenShop = { Navigator.navigate(Navigator.Screen.ShopDetail(it)) },
-            onOpenLink = OpenInBrowser::openInBrowser)
+            onOpenLink = OpenInBrowser::openInBrowser, modifier = Modifier)
     }
 
     private fun openRoaster(slug: String) = Navigator.navigate(Navigator.Screen.RoasterDetail(slug))
@@ -75,7 +77,9 @@ internal fun roasterScreenRenderer(
     val feedback = { platformHaptic(HapticEvent.Selection) }
     return FeatureRoasterScreenRenderer(
         createRoasterDiscoveryEntry(repository, favorites, RoasterAnalyticsAdapter, RoasterScreenAnalyticsAdapter, image,
-            loadError = { onRetry -> LoadErrorContent(onRetry) }, onFavoriteFeedback = feedback),
+            loadError = { onRetry -> LoadErrorContent(onRetry) },
+            emptyContent = { modifier -> CatalogSuggestionCard(CatalogSuggestionKind.Roaster,
+                onAdd = { Navigator.navigate(Navigator.Screen.AddRoaster) }, modifier = modifier) }, onFavoriteFeedback = feedback),
         createRoasterDetailEntry(repository, favorites, shopPhotos, RoasterAnalyticsAdapter, RoasterScreenAnalyticsAdapter, image,
             photoViewer = { url, onDismiss -> FullScreenImageDialog(imageUrl = url, onDismiss = onDismiss) }, onFavoriteFeedback = feedback),
     )

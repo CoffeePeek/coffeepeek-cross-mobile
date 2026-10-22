@@ -35,6 +35,7 @@ data class VisitedPlacesUiState(
 class VisitedPlacesViewModel(
     private val checkInRepository: CheckInRepository,
     private val sessionRepository: SessionRepository,
+    private val calendarWeek: CalendarWeek? = null,
 ) : BaseViewModel() {
 
     private val today get() = utcIsoToLocalDate(currentUtcIsoDateTime())
@@ -89,7 +90,8 @@ class VisitedPlacesViewModel(
                 return@launch
             }
             _state.update { it.copy(isCalendarLoading = true, calendarError = null) }
-            checkInRepository.getMyCheckIns(month.fromUtc, month.toUtc, CALENDAR_PAGE_SIZE)
+            checkInRepository.getMyCheckIns(calendarWeek?.fromUtc ?: month.fromUtc,
+                calendarWeek?.toUtc ?: month.toUtc, CALENDAR_PAGE_SIZE)
                 .onSuccess { checkIns ->
                     val grouped = checkIns.groupBy { checkIn ->
                         utcIsoToLocalDate(checkIn.visitedAt.ifBlank { checkIn.createdAt })
