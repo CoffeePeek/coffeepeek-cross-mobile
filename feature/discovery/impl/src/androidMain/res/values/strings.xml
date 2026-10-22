@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="discovery_search_placeholder">Поиск кофеен и обжарщиков…</string>
+    <string name="discovery_search_clear">Очистить поиск</string>
+    <string name="discovery_search_cancel">Отмена</string>
+    <string name="discovery_filters">Фильтры</string>
+    <string name="discovery_filters_active">Фильтры, выбрано: %1$d</string>
+    <string name="discovery_filters_close">Закрыть фильтры</string>
+    <string name="discovery_filters_reset">Сбросить</string>
+    <string name="discovery_filters_done">Готово</string>
+
+    <string name="discovery_quick_open">Открыто</string>
+    <string name="discovery_quick_new">Новые</string>
+    <string name="discovery_quick_visited">Уже был</string>
+    <string name="discovery_quick_favorites">Избранное</string>
+    <string name="discovery_quick_nearby">Рядом</string>
+
+    <string name="discovery_section_kind">Тип заведения</string>
+    <string name="discovery_section_price">Цена</string>
+    <string name="discovery_section_rating">Рейтинг</string>
+    <string name="discovery_section_roasters">Обжарщики</string>
+    <string name="discovery_section_beans">Зёрна</string>
+    <string name="discovery_section_equipment">Оборудование</string>
+    <string name="discovery_section_brew_methods">Метод заваривания</string>
+    <string name="discovery_section_tags">Особенности</string>
+    <string name="discovery_any">Любая</string>
+    <string name="discovery_kind_specialty">Спешелти</string>
+    <string name="discovery_kind_coffee_bar">Кофейня</string>
+    <string name="discovery_kind_cafe">Кафе</string>
+    <string name="discovery_rating_from">от %1$s</string>
+
+    <string name="discovery_shop_kind_coffee_bar">кофейня</string>
+    <string name="discovery_shop_kind_cafe">кафе</string>
+    <string name="discovery_shop_kind_specialty">спешелти</string>
+    <string name="discovery_shop_new">Новая</string>
+    <string name="discovery_shop_open">Открыто</string>
+    <string name="discovery_distance_meters">%1$d м</string>
+    <string name="discovery_distance_km">%1$s км</string>
+    <string name="discovery_favorite_add">Добавить в избранное</string>
+    <string name="discovery_favorite_remove">Убрать из избранного</string>
+
+    <string name="discovery_loading">Загрузка</string>
+    <string name="discovery_refresh">Потяните, чтобы обновить</string>
+    <string name="discovery_refreshing">Обновление</string>
+    <string name="discovery_load_failed">Не удалось загрузить кофейни</string>
+    <string name="discovery_retry">Попробовать снова</string>
+    <string name="discovery_empty">Ничего не найдено</string>
+    <string name="discovery_empty_hint">Измените запрос или сбросьте фильтры</string>
+    <string name="discovery_suggestion_title">Не нашли?</string>
+    <string name="discovery_suggestion_description">Расскажите нам о кофейне, которой ещё нет в каталоге</string>
+    <string name="discovery_suggestion_action">Добавить кофейню</string>
+</resources>

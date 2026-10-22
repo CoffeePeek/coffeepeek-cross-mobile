@@ -46,6 +46,7 @@ object Modules {
             const val api = ":feature:discovery:api"
             const val domain = ":feature:discovery:domain"
             const val data = ":feature:discovery:data"
+            const val impl = ":feature:discovery:impl"
         }
 
         const val notifications = ":features:notifications"
@@ -212,6 +213,7 @@ object Modules {
         feature.discovery.domain,
         feature.discovery.api,
         feature.discovery.data,
+        feature.discovery.impl,
         feature.authorBlocking.domain,
         feature.authorBlocking.api,
         feature.authorBlocking.data,
