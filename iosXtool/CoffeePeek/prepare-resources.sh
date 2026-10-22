@@ -3,8 +3,9 @@ set -euo pipefail
 
 launcher_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 repo_dir="$(cd -- "$launcher_dir/../.." && pwd)"
+bash "$launcher_dir/prepare-launch-resources.sh" "$@"
 python3 "$repo_dir/iosApp/configure-auth.py"
-"$repo_dir/gradlew" -p "$repo_dir" :composeApp:assembleIosArm64MainResources
+"$repo_dir/gradlew" -p "$repo_dir" :composeApp:assembleIosArm64MainResources --max-workers=6
 
 # Compose 1.9.3's static iOS framework reader resolves paths relative to
 # <app>/compose-resources, then appends composeResources/<package>/... .

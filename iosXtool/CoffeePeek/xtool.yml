@@ -4,3 +4,4 @@ infoPath: .build/Info.plist
 entitlementsPath: ../../iosApp/iosApp/CoffeePeek.entitlements
 resources:
   - .build/compose-resources
+  - .build/launch-resources

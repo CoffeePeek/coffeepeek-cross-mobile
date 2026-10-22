@@ -12,21 +12,18 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.setValue
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -35,9 +32,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.coffeepeek.core.designsystem.component.CoffeePeekActionMenu
-import com.coffeepeek.core.designsystem.component.CoffeePeekMenuItem
-import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
+import com.coffeepeek.core.designsystem.component.CoffeePeekDestructiveConfirmationSheet
 import com.coffeepeek.feature.profile.api.OwnProfileSlots
 import com.coffeepeek.feature.profile.api.ProfileAuthorActions
 import com.coffeepeek.feature.profile.api.ProfileContribution
@@ -47,7 +42,6 @@ import com.coffeepeek.feature.profile.impl.ui.OwnProfileViewModel
 import com.coffeepeek.feature.profile.impl.ui.PublicProfileViewModel
 import com.coffeepeek.feature.profile.impl.ui.compose.component.ProfileSectionLoader
 import com.coffeepeek.feature.profile.impl.ui.compose.component.PublicProfileHeader
-import com.coffeepeek.feature.profile.impl.ui.compose.component.PublicProfileStatsCard
 import com.coffeepeek.feature.profile.impl.ui.model.OwnProfileAction
 import com.coffeepeek.feature.profile.impl.ui.model.PublicProfileAction
 import kotlinx.coroutines.flow.drop
@@ -68,22 +62,22 @@ internal fun OwnProfileScreen(
     onOpenFavorites: () -> Unit,
     onOpenCheckIns: () -> Unit,
     onOpenContributions: (ProfileContribution) -> Unit,
+    onOpenBlockedAuthors: () -> Unit,
 ) {
     val state by vm.state.collectAsStateWithLifecycle()
     var showLogout by remember { mutableStateOf(false) }
-    val actions: @Composable () -> Unit = { OwnProfileActions(onOpenContributions) { showLogout = true } }
+    val actions: @Composable () -> Unit = {
+        OwnProfileActions(onOpenContributions, onOpenBlockedAuthors) { showLogout = true }
+    }
     val bottomPadding = 20.dp + bottomClearance
 
-    if (showLogout) AlertDialog(
-        onDismissRequest = { showLogout = false },
-        title = { Text(stringResource(R.string.profile_logout_title)) },
-        text = { Text(stringResource(R.string.profile_logout_message)) },
-        confirmButton = {
-            TextButton(onClick = { showLogout = false; vm.onAction(OwnProfileAction.Logout) }) {
-                Text(stringResource(R.string.profile_menu_logout), color = MaterialTheme.colorScheme.error)
-            }
-        },
-        dismissButton = { TextButton(onClick = { showLogout = false }) { Text(stringResource(R.string.profile_cancel)) } },
+    if (showLogout) CoffeePeekDestructiveConfirmationSheet(
+        title = stringResource(R.string.profile_logout_title),
+        message = stringResource(R.string.profile_logout_message),
+        confirmLabel = stringResource(R.string.profile_menu_logout),
+        cancelLabel = stringResource(R.string.profile_cancel),
+        onConfirm = { showLogout = false; vm.onAction(OwnProfileAction.Logout) },
+        onDismiss = { showLogout = false },
     )
 
     val slug = state.publicSlug
@@ -107,6 +101,7 @@ internal fun OwnProfileScreen(
                     topBarActions = actions,
                     favoritesPreview = { slots.favoritesPreview(onOpenShop, onOpenRoaster) },
                     activityCalendar = slots.activityCalendar,
+                    activityPreview = slots.activityPreview,
                     bottomContentPadding = bottomPadding,
                 ),
             )
@@ -132,8 +127,9 @@ internal fun OwnProfileScreen(
                     PublicProfileHeader(
                         nickname = profile.userName, avatarUrl = profile.avatarUrl, about = profile.about, image = slots.shared.image,
                         onEditProfile = onEditProfile, onAvatarClick = onEditProfile,
+                        stats = PublicProfileStats(profile.checkInCount, profile.addedShopsCount, profile.addedRoastersCount, profile.followersCount),
                     )
-                    PublicProfileStatsCard(PublicProfileStats(profile.checkInCount, profile.addedShopsCount, profile.addedRoastersCount, profile.followersCount))
+                    slots.activityPreview(onOpenCheckIns)
                     if (state.error != null || state.refreshError != null) slots.loadError { vm.onAction(OwnProfileAction.Refresh) }
                     TextButton(onClick = onOpenFavorites) { Text(stringResource(R.string.profile_own_favorites)) }
                     slots.favoritesPreview(onOpenShop, onOpenRoaster)
@@ -143,15 +139,4 @@ internal fun OwnProfileScreen(
             }
         }
     }
-}
-
-@Composable
-private fun OwnProfileActions(onContributions: (ProfileContribution) -> Unit, onLogout: () -> Unit) {
-    val items = listOf(
-        CoffeePeekMenuItem("shop-changes", stringResource(R.string.profile_menu_shop_changes), CoffeePeekIcons.NoteEdit, onClick = { onContributions(ProfileContribution.Changes) }),
-        CoffeePeekMenuItem("submitted-shops", stringResource(R.string.profile_menu_submitted_shops), CoffeePeekIcons.Add, onClick = { onContributions(ProfileContribution.Shops) }),
-        CoffeePeekMenuItem("submitted-roasters", stringResource(R.string.profile_menu_submitted_roasters), CoffeePeekIcons.CoffeeBean, onClick = { onContributions(ProfileContribution.Roasters) }),
-        CoffeePeekMenuItem("logout", stringResource(R.string.profile_menu_logout), CoffeePeekIcons.Logout, onClick = onLogout),
-    )
-    CoffeePeekActionMenu(items) { open -> IconButton(onClick = open) { Icon(CoffeePeekIcons.MoreHorizontal, stringResource(R.string.profile_actions)) } }
 }

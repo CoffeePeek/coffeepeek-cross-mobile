@@ -28,7 +28,7 @@ import kotlin.uuid.Uuid
 /**
  * Construct once and call [RoasterDiscoveryEntry.Section] and [RoasterDiscoveryEntry.Search] in the same
  * ViewModel-store owner: both use one list ViewModel, like the legacy Discovery. The application supplies the image
- * loader, error content, analytics and haptics; no network client or navigation is created here.
+ * loader, error/empty content, analytics and haptics; no network client or navigation is created here.
  */
 fun createRoasterDiscoveryEntry(
     repository: RoasterRepository,
@@ -37,8 +37,9 @@ fun createRoasterDiscoveryEntry(
     screenAnalytics: RoasterScreenAnalytics = RoasterScreenAnalytics.None,
     image: RoasterImage,
     loadError: RoasterLoadError,
+    emptyContent: @Composable (Modifier) -> Unit,
     onFavoriteFeedback: () -> Unit = {},
-): RoasterDiscoveryEntry = RoasterDiscoveryApiImpl(repository, favorites, analytics, screenAnalytics, image, loadError, onFavoriteFeedback)
+): RoasterDiscoveryEntry = RoasterDiscoveryApiImpl(repository, favorites, analytics, screenAnalytics, image, loadError, emptyContent, onFavoriteFeedback)
 
 /** Caller owns the photo viewer, navigation and browser; destroy the destination's ViewModelStore on removal. */
 fun createRoasterDetailEntry(
@@ -59,6 +60,7 @@ private class RoasterDiscoveryApiImpl(
     private val screenAnalytics: RoasterScreenAnalytics,
     private val image: RoasterImage,
     private val loadError: RoasterLoadError,
+    private val emptyContent: @Composable (Modifier) -> Unit,
     private val onFavoriteFeedback: () -> Unit,
 ) : RoasterDiscoveryEntry {
     private val instanceKey = Uuid.random().toString()
@@ -71,7 +73,7 @@ private class RoasterDiscoveryApiImpl(
     override fun Section(query: String, selectedRoasters: Set<String>, favoritesOnly: Boolean,
         onOpenRoaster: (String) -> Unit, modifier: Modifier) {
         key(this) {
-            RoasterDiscoverySection(model(), query, selectedRoasters, favoritesOnly, image, loadError, screenAnalytics,
+            RoasterDiscoverySection(model(), query, selectedRoasters, favoritesOnly, image, loadError, emptyContent, screenAnalytics,
                 onFavoriteFeedback, modifier) { event -> when (event) { is RoasterListEvent.OpenRoaster -> onOpenRoaster(event.slug) } }
         }
     }
@@ -80,7 +82,7 @@ private class RoasterDiscoveryApiImpl(
     override fun Search(query: String, selectedRoasters: Set<String>, favoritesOnly: Boolean,
         onOpenRoaster: (String) -> Unit, modifier: Modifier, bottomClearance: Dp, header: @Composable ColumnScope.() -> Unit) {
         key(this) {
-            RoasterListScreen(model(), query, selectedRoasters, favoritesOnly, image, loadError, screenAnalytics,
+            RoasterListScreen(model(), query, selectedRoasters, favoritesOnly, image, loadError, emptyContent, screenAnalytics,
                 onFavoriteFeedback, bottomClearance, modifier, header) { event ->
                 when (event) { is RoasterListEvent.OpenRoaster -> onOpenRoaster(event.slug) }
             }
