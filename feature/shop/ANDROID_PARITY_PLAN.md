@@ -813,3 +813,42 @@ concurrent votes). Visible effect: other like buttons stay tappable during a pen
 Open gaps from the legacy-first audit: G1–G10 (high: G1 favorite after login; medium: G2, G3). Full table and verification status: [LEGACY_PARITY_AUDIT.md](../LEGACY_PARITY_AUDIT.md).
 
 Fixes applied 2026-10-20 and owner decisions on intentional differences: see the "Fixes applied" and "Intentional differences" sections of [LEGACY_PARITY_AUDIT.md](../LEGACY_PARITY_AUDIT.md). Device verification is still open.
+
+## Shop footer glass correction — 2026-10-22
+
+Scope: the migrated Android shop footer and the legacy shared footer used by iOS.
+Route has the design-system yellow fill in both themes. Check-in now uses the
+shared `CoffeePeekGlassButton`: UIKit's native
+[glass button configuration](https://developer.apple.com/documentation/uikit/uibuttonconfiguration/glassbuttonconfiguration)
+on iOS 26+, a native `UIBlurEffect` background on older iOS, and the existing
+Haze backdrop on Android. Both screen entries already supply their content's
+Haze source. The new reusable component belongs to the existing design-system;
+no Gradle module, dependency, business contract or DI port was added.
+
+Preserved the route/check-in callbacks, picker mode, disabled/loading behavior,
+localized labels, accessibility descriptions and direction/check-in exposure
+modifiers. Native actions observe the current callback and enabled state.
+Loading uses a localized accessibility value/state and blocks duplicate taps.
+Colocated light/dark previews include a backdrop source; native UIKit rendering
+still needs a real iOS runtime.
+
+Verification on 2026-10-22, source `f3520a04` plus the footer working tree:
+
+- `:core:design-system:compileKotlinIosArm64` passed (Kotlin/UIKit compilation,
+  not Xcode linking, app icon validation or an iPhone run).
+- Shop impl unit tests: 103 passed across 11 suites. Application shop/route and
+  analytics tests: 31 passed across five suites. Zero test failures/errors/skips.
+- `directSandbox` and `directDebug` assemblies passed with `--max-workers=6`,
+  including packaged DEX checks and Sandbox isolation. Build version: 1103.
+- The first compile failed on a required loader description and the scoped
+  UIKit blur enum; both were fixed. Subsequent builds, including the final
+  accessibility-state change, passed. No test failure was hidden by a retry.
+- Manual Sandbox 1.1.1103-sandbox check on unlocked `emulator-5554`, Android 17,
+  1080 × 2400, font scale 1.0: opened the synthetic shop and inspected yellow
+  route fill plus the blurred check-in background in light and dark themes.
+  Screenshots remain local outside tracked sources. No route app was opened,
+  check-in created or real-account data changed; no UI test infrastructure added.
+- Remaining gates: iPhone/iOS 26+ Liquid Glass and older-iOS blur at runtime,
+  VoiceOver/TalkBack, alternate font/window sizes, loading visuals and release.
+  IDE diagnostics/rendering were unavailable; compiler deprecation warnings
+  include the project's existing multiplatform preview annotation convention.

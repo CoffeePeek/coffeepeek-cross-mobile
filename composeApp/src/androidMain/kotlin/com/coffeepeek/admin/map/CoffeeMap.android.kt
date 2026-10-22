@@ -525,7 +525,7 @@ private fun syncMapMarkers(
             val marker = map.addMarker(
                 MarkerOptions()
                     .position(position)
-                    .icon(IconFactory.getInstance(context).fromBitmap(MapMarkerIcons.clusterBitmap(context, cluster.count))),
+                    .icon(IconFactory.getInstance(context).fromBitmap(MapMarkerIcons.clusterBitmap(context, cluster.count, isDarkTheme))),
             )
             clusterMarks[cluster.id] = ClusterMark(
                 marker = marker,
@@ -543,7 +543,7 @@ private fun syncMapMarkers(
             }
             if (existing.count != cluster.count) {
                 existing.marker.setIcon(
-                    IconFactory.getInstance(context).fromBitmap(MapMarkerIcons.clusterBitmap(context, cluster.count)),
+                    IconFactory.getInstance(context).fromBitmap(MapMarkerIcons.clusterBitmap(context, cluster.count, isDarkTheme)),
                 )
                 existing.count = cluster.count
             }
@@ -562,7 +562,7 @@ private fun syncMapMarkers(
             val marker = map.addMarker(
                 MarkerOptions()
                     .position(position)
-                    .icon(IconFactory.getInstance(context).fromBitmap(MapMarkerIcons.pinBitmap(context, shop.type, visual))),
+                    .icon(IconFactory.getInstance(context).fromBitmap(MapMarkerIcons.pinBitmap(context, shop.type, visual, isDarkTheme))),
             )
             val entry = ShopMark(
                 marker = marker,
@@ -582,7 +582,7 @@ private fun syncMapMarkers(
             }
             if (existing.isSelected != isSelected || existing.type != shop.type) {
                 existing.marker.setIcon(
-                    IconFactory.getInstance(context).fromBitmap(MapMarkerIcons.pinBitmap(context, shop.type, visual)),
+                    IconFactory.getInstance(context).fromBitmap(MapMarkerIcons.pinBitmap(context, shop.type, visual, isDarkTheme)),
                 )
                 existing.isSelected = isSelected
                 existing.type = shop.type
