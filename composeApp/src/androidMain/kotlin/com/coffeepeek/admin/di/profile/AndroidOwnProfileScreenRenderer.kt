@@ -82,7 +82,7 @@ internal fun androidOwnProfileScreenRenderer(
     val checkIns = AndroidPublicCheckIns(repository)
     val slots = OwnProfileSlots(
         shared = androidProfileSlots(checkIns),
-        favoritesPreview = { openShop, openRoaster -> FavoritesProfilePreview(openShop, openRoaster) },
+        favoritesPreview = { openShop, openRoaster, header -> FavoritesProfilePreview(openShop, openRoaster, header) },
         activityCalendar = { PersonalProfileActivityCalendar() },
         activityPreview = { onClick -> PersonalProfileActivityPreview(onClick) },
         loadError = { onRetry -> LoadErrorContent(onRetry = onRetry) },

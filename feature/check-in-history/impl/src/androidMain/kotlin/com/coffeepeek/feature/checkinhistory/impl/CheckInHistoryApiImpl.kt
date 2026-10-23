@@ -9,6 +9,10 @@ import com.coffeepeek.feature.checkinhistory.api.CheckInHistoryCalendarSnapshot
 import com.coffeepeek.feature.checkinhistory.api.CheckInHistoryEntry
 import com.coffeepeek.feature.checkinhistory.domain.model.HistoryMonth
 import com.coffeepeek.feature.checkinhistory.domain.model.HistoryPeriod
+import com.coffeepeek.feature.checkinhistory.domain.model.PersonalCheckIn
+import com.coffeepeek.feature.checkinhistory.domain.model.HomeHistoryEntry
+import com.coffeepeek.feature.checkinhistory.impl.ui.compose.component.LocalHistoryShopTimelineContent
+import com.coffeepeek.feature.checkinhistory.impl.ui.compose.component.LocalHistoryHomeTimelineContent
 import com.coffeepeek.feature.checkinhistory.domain.repository.CheckInHistoryRepository
 import com.coffeepeek.feature.checkinhistory.domain.repository.HomeHistoryReader
 import com.coffeepeek.feature.checkinhistory.impl.ui.CombinedHistoryViewModel
@@ -30,8 +34,10 @@ fun createCheckInHistoryEntry(
     modalContent: @Composable (content: @Composable () -> Unit) -> Unit = { it() },
     /** Optional: card photos start with the thumbnail and upgrade to the detail variant (url, highQualityUrl, ...). */
     highQualityImage: (@Composable (url: String, highQualityUrl: String, modifier: Modifier, scale: ContentScale) -> Unit)? = null,
+    shopTimelineContent: (@Composable (PersonalCheckIn, onOpen: () -> Unit) -> Unit)? = null,
+    homeTimelineContent: (@Composable (HomeHistoryEntry, onOpen: () -> Unit) -> Unit)? = null,
 ): CheckInHistoryEntry = DefaultCheckInHistoryEntry(repository, homeReader, calendarSnapshot, imageContent,
-    createButtonModifier, createPickerModifier, modalContent, highQualityImage)
+    createButtonModifier, createPickerModifier, modalContent, highQualityImage, shopTimelineContent, homeTimelineContent)
 
 private class DefaultCheckInHistoryEntry(
     private val repository: CheckInHistoryRepository,
@@ -42,6 +48,8 @@ private class DefaultCheckInHistoryEntry(
     private val createPickerModifier: @Composable () -> Modifier,
     private val modalContent: @Composable (@Composable () -> Unit) -> Unit,
     private val highQualityImage: (@Composable (String, String, Modifier, ContentScale) -> Unit)?,
+    private val shopTimelineContent: (@Composable (PersonalCheckIn, () -> Unit) -> Unit)?,
+    private val homeTimelineContent: (@Composable (HomeHistoryEntry, () -> Unit) -> Unit)?,
 ) : CheckInHistoryEntry {
     @Composable
     override fun Content(
@@ -73,7 +81,9 @@ private class DefaultCheckInHistoryEntry(
         val viewModel = viewModel(key = "check-in-history") {
             CombinedHistoryViewModel(repository, homeReader, provider, isLoggedIn, sessionGeneration, contentGeneration)
         }
-        CompositionLocalProvider(LocalHistoryHighQualityImage provides highQualityImage) {
+        CompositionLocalProvider(LocalHistoryHighQualityImage provides highQualityImage,
+            LocalHistoryShopTimelineContent provides shopTimelineContent,
+            LocalHistoryHomeTimelineContent provides homeTimelineContent) {
         CheckInHistoryScreen(viewModel, sessionGeneration, isLoggedIn, contentGeneration, formatCheckInDate, formatCheckInTime,
             imageContent, createButtonModifier(), createPickerModifier(), modalContent) { event ->
             when (event) {
