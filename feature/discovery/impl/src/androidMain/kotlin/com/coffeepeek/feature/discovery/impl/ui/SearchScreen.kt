@@ -15,14 +15,18 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.ui.draw.clip
+import androidx.compose.material3.OutlinedIconButton
+import androidx.compose.material3.BadgedBox
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.background
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.material3.Badge
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -122,11 +126,23 @@ private fun SearchHeader(state: SearchState, host: DiscoveryHost, onAction: (Sea
             TextButton(onClick = { focus.clearFocus(); onAction(SearchAction.CancelSearch) }) { Text(stringResource(R.string.discovery_search_cancel)) }
         } else {
             val description = if (state.activeFilterCount > 0) stringResource(R.string.discovery_filters_active, state.activeFilterCount) else stringResource(R.string.discovery_filters)
-            Box(host.exposure(Modifier, DiscoveryExposure.Filters)) {
-                IconButton(onClick = { onAction(SearchAction.ToggleFilters) }, modifier = Modifier.semantics { contentDescription = description }) {
-                    Icon(CoffeePeekIcons.Filter, contentDescription = null)
+            BadgedBox(
+                badge = {
+                    if (state.activeFilterCount > 0) Box(
+                        Modifier.size(22.dp).clip(CircleShape).background(MaterialTheme.colorScheme.primary),
+                        contentAlignment = Alignment.Center,
+                    ) { Text(state.activeFilterCount.toString(), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onPrimary) }
+                },
+                modifier = host.exposure(Modifier, DiscoveryExposure.Filters),
+            ) {
+                OutlinedIconButton(
+                    onClick = { onAction(SearchAction.ToggleFilters) },
+                    modifier = Modifier.size(CoffeePeekDimens.buttonHeight).semantics { contentDescription = description },
+                    shape = CircleShape,
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+                ) {
+                    Icon(CoffeePeekIcons.Filter, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(22.dp))
                 }
-                if (state.activeFilterCount > 0) Badge(Modifier.align(Alignment.TopEnd).padding(top = 6.dp, end = 6.dp)) { Text(state.activeFilterCount.toString()) }
             }
         }
     }
