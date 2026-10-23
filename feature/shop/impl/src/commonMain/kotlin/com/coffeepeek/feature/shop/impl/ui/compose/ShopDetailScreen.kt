@@ -174,20 +174,7 @@ internal fun ShopDetailScreenContent(
                         CoffeePeekDimens.spacing4 + CoffeePeekDimens.spacing6 + systemBottomInset),
                 ) {
                     item {
-                        Column {
-                            ShopOverviewHero(details.overview,
-                                onOpenPhoto = { urls, originals, index -> onAction(ShopDetailAction.OpenPhoto(urls, index, originals)) })
-                            Column(Modifier.padding(horizontal = CoffeePeekDimens.spacing4,
-                                vertical = CoffeePeekDimens.spacing3),
-                                verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing2)) {
-                                ShopOverviewHeader(details.overview,
-                                    onOpenMap = { onAction(ShopDetailAction.OpenMap) })
-                                ShopOverviewStats(details.overview,
-                                    onOpenCheckIns = { onAction(ShopDetailAction.OpenCheckIns) },
-                                    onOpenPriceInfo = { onAction(ShopDetailAction.OpenPriceInfo) },
-                                    distanceLabel = distanceLabel)
-                            }
-                        }
+                        ShopDetailHeader(state, onAction, distanceLabel)
                     }
                     if (state.isLoading || state.hasError) {
                         item { ShopDetailRefreshStatus(state.isLoading,
@@ -256,8 +243,8 @@ internal fun ShopDetailScreenContent(
             }
         }
       }
-      ShopDetailTopActions(
-          showShopActions = state.details != null,
+      if (state.details == null) ShopDetailTopActions(
+          showShopActions = false,
           isFavorite = state.isFavorite,
           favoriteAvailable = state.favoriteAvailable,
           isFavoriteLoading = state.isFavoriteLoading,
@@ -278,6 +265,44 @@ internal fun ShopDetailScreenContent(
               hazeState = hazeState,
           )
       }
+    }
+}
+
+@Composable
+private fun ShopDetailHeader(
+    state: ShopDetailState,
+    onAction: (ShopDetailAction) -> Unit,
+    distanceLabel: String?,
+) {
+    val overview = state.details?.overview ?: return
+    // The screen source includes these controls, so the hero uses a separate blur source.
+    val heroHaze = rememberHazeState()
+    Column {
+        Box {
+            ShopOverviewHero(overview,
+                onOpenPhoto = { urls, originals, index -> onAction(ShopDetailAction.OpenPhoto(urls, index, originals)) },
+                modifier = Modifier.hazeSource(heroHaze))
+            ShopDetailTopActions(
+                showShopActions = true,
+                isFavorite = state.isFavorite,
+                favoriteAvailable = state.favoriteAvailable,
+                isFavoriteLoading = state.isFavoriteLoading,
+                onBack = { onAction(ShopDetailAction.Back) },
+                onSuggestChange = { onAction(ShopDetailAction.SuggestChange) },
+                onToggleFavorite = { onAction(ShopDetailAction.ToggleFavorite) },
+                onShare = { onAction(ShopDetailAction.Share) },
+                hazeState = heroHaze,
+            )
+        }
+        Column(Modifier.padding(horizontal = CoffeePeekDimens.spacing4,
+            vertical = CoffeePeekDimens.spacing3),
+            verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing2)) {
+            ShopOverviewHeader(overview, onOpenMap = { onAction(ShopDetailAction.OpenMap) })
+            ShopOverviewStats(overview,
+                onOpenCheckIns = { onAction(ShopDetailAction.OpenCheckIns) },
+                onOpenPriceInfo = { onAction(ShopDetailAction.OpenPriceInfo) },
+                distanceLabel = distanceLabel)
+        }
     }
 }
 

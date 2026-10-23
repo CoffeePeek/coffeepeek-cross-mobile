@@ -1,23 +1,36 @@
+@file:OptIn(kotlinx.cinterop.ExperimentalForeignApi::class, androidx.compose.ui.ExperimentalComposeUiApi::class)
+
 package com.coffeepeek.admin.ui.screen.shop
 
 import androidx.compose.runtime.Composable
-import com.coffeepeek.admin.ui.component.NativeActionSheet
-import com.coffeepeek.admin.ui.component.PlatformAction
-import com.coffeepeek.admin.utils.OpenInBrowser
+import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.ui.uikit.LocalUIViewController
+import com.coffeepeek.admin.theme.ThemeManager
+import com.coffeepeek.admin.theme.uiKitStyle
+import com.coffeepeek.admin.ui.component.PresentNativeController
+import platform.Foundation.NSURL
+import platform.UIKit.UIActivityViewController
+import platform.UIKit.popoverPresentationController
 
 @Composable
 internal actual fun ShopRoutePicker(latitude: Double, longitude: Double, onDismiss: () -> Unit) {
-    NativeActionSheet(
-        title = "Построить маршрут",
-        actions = shopRouteOptions(latitude, longitude).map { option ->
-            PlatformAction(option.label, onClick = { OpenInBrowser.openInBrowser(option.url) })
-        },
-        onDismiss = onDismiss,
-    )
+    val host = LocalUIViewController.current
+    val dismiss = rememberUpdatedState(onDismiss)
+    val controller = remember(latitude, longitude, host) {
+        UIActivityViewController(
+            activityItems = listOf(NSURL(string = buildAppleMapsRouteUrl(latitude, longitude))),
+            applicationActivities = null,
+        ).apply {
+            completionWithItemsHandler = { _, _, _, _ -> dismiss.value() }
+            popoverPresentationController?.apply {
+                sourceView = host.view
+                sourceRect = host.view.bounds
+                permittedArrowDirections = 0u
+            }
+        }
+    }
+    SideEffect { controller.overrideUserInterfaceStyle = ThemeManager.themeMode.value.uiKitStyle }
+    PresentNativeController(controller, host)
 }
-
-internal actual fun shopRouteOptions(latitude: Double, longitude: Double): List<ShopRouteOption> = listOf(
-    ShopRouteOption("Apple Карты", buildAppleMapsRouteUrl(latitude, longitude)),
-    ShopRouteOption("Google Карты", buildGoogleMapsRouteUrl(latitude, longitude)),
-    ShopRouteOption("Яндекс Карты", buildYandexMapsRouteUrl(latitude, longitude)),
-)
