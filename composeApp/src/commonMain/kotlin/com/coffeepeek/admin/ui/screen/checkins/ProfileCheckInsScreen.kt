@@ -5,26 +5,18 @@ import com.coffeepeek.admin.feature.checkin.api.CheckInFlowHandoff
 
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -37,13 +29,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.admin.di.platformViewModel
 import com.coffeepeek.admin.feature.homecheckin.ui.HomeCheckInViewModel
 import com.coffeepeek.admin.feature.homecheckin.ui.HomeDetail
 import com.coffeepeek.admin.feature.homecheckin.ui.HomeEditor
-import com.coffeepeek.admin.feature.homecheckin.ui.HomeTimelineCard
+import com.coffeepeek.admin.feature.homecheckin.ui.visibilityLabel
 import com.coffeepeek.admin.ui.Navigator
 import com.coffeepeek.admin.ui.component.CapsuleSegmentedControl
 import com.coffeepeek.admin.ui.component.CheckInDisplayCard
@@ -54,10 +45,8 @@ import com.coffeepeek.admin.ui.component.PhotoViewerImages
 import com.coffeepeek.admin.ui.component.PlatformAlert
 import com.coffeepeek.admin.ui.component.PlatformScrollableColumn
 import com.coffeepeek.admin.ui.component.SwipeDismissModalBottomSheet
-import com.coffeepeek.admin.ui.icons.CpIcons
 import com.coffeepeek.admin.utils.currentUtcIsoDateTime
 import com.coffeepeek.admin.utils.utcIsoToLocalDate
-import com.coffeepeek.admin.utils.utcIsoToLocalDateTime
 import com.coffeepeek.domain.model.CheckIn
 import com.coffeepeek.legacy.homecheckin.domain.HomeCheckIn
 
@@ -236,8 +225,13 @@ internal fun ProfileCheckInsScreen(
                             modifier = Modifier.padding(top = 24.dp, bottom = 12.dp))
                         TimelineRail(entry is ActivityEntry.Home, firstInDay, lastInDay) {
                             when (entry) {
-                                is ActivityEntry.Home -> HomeTimelineCard(entry.value) { homeVm.open(entry.value.id) }
-                                is ActivityEntry.Shop -> ShopTimelineCard(entry.value) { selectedShop = entry.value }
+                                is ActivityEntry.Home -> HistoryTimelineCheckInCard(entry.value.toTimelineCheckIn(),
+                                    onClick = { homeVm.open(entry.value.id) },
+                                    onPhotoClick = { images, index -> photoPreview = images to index },
+                                    supportingLabel = entry.value.visibilityLabel())
+                                is ActivityEntry.Shop -> HistoryTimelineCheckInCard(entry.value,
+                                    onClick = { selectedShop = entry.value },
+                                    onPhotoClick = { images, index -> photoPreview = images to index })
                             }
                         }
                     }
@@ -287,31 +281,6 @@ internal fun TimelineRail(isHome: Boolean, firstInDay: Boolean, lastInDay: Boole
         }
         // The gap belongs to this item so the rail also paints between adjacent cards.
         Box(Modifier.fillMaxWidth().padding(end = 28.dp, bottom = if (lastInDay) 0.dp else 12.dp)) { content() }
-    }
-}
-
-@Composable
-private fun ShopTimelineCard(entry: CheckIn, onClick: () -> Unit) {
-    Card(Modifier.fillMaxWidth().clickable(onClick = onClick),
-        shape = RoundedCornerShape(20.dp),
-        border = BorderStroke(0.5.dp, MaterialTheme.colorScheme.outlineVariant),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)) {
-        Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(7.dp)) {
-                Icon(CpIcons.Location, contentDescription = null, modifier = Modifier.size(18.dp),
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant)
-                Text("В кофейне · ${utcIsoToLocalDateTime(entry.visitedAt.ifBlank { entry.createdAt }).substringAfterLast(' ', "")}",
-                    style = MaterialTheme.typography.labelLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant)
-            }
-            Text(entry.shopName.ifBlank { "Кофейня" }, style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold)
-            val drink = entry.drinkNameRu ?: entry.customDrinkName ?: entry.drinkNameEn
-            if (!drink.isNullOrBlank()) Text(drink, style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.primary)
-            if (entry.note.isNotBlank()) Text(entry.note, style = MaterialTheme.typography.bodyMedium,
-                maxLines = 2, overflow = TextOverflow.Ellipsis)
-        }
     }
 }
 
