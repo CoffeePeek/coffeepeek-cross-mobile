@@ -234,8 +234,8 @@ internal fun ShopDetailScreenContent(
                         checkInCount = details.overview.reviewCount,
                         formatDate = formatCheckInDate,
                         isRefreshing = state.isLoading,
-                        modifier = Modifier.padding(horizontal = CoffeePeekDimens.spacing4)
-                            .padding(top = CoffeePeekDimens.spacing3, bottom = CoffeePeekDimens.spacing2)) }
+                        contentPadding = CoffeePeekDimens.spacing4,
+                        modifier = Modifier.padding(top = CoffeePeekDimens.spacing3, bottom = CoffeePeekDimens.spacing2)) }
                     item { ShopReportIssueSection(onReport = { onAction(ShopDetailAction.ReportShop) },
                         modifier = Modifier.padding(horizontal = CoffeePeekDimens.spacing4,
                             vertical = CoffeePeekDimens.spacing2)) }

@@ -2,7 +2,10 @@ package com.coffeepeek.feature.shop.impl.ui.compose.component
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.width
@@ -15,7 +18,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.draw.clipToBounds
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -44,6 +46,7 @@ internal fun ShopPublicCheckInsSection(
     onSignIn: () -> Unit,
     onRegister: () -> Unit,
     modifier: Modifier = Modifier,
+    contentPadding: Dp = 0.dp,
     overallRating: Double? = null,
     checkInCount: Int = checkIns.size,
     formatDate: (String) -> String = { it.take(10) },
@@ -51,23 +54,26 @@ internal fun ShopPublicCheckInsSection(
     onOpenAuthor: (String) -> Unit = {},
     onBlockAuthor: (String) -> Unit = {},
 ) {
+    // [contentPadding] is the screen gutter: the cards scroll to the edges of the screen and only the first and the last keep the gutter.
+    val gutter = Modifier.padding(horizontal = contentPadding)
     Column(modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing3)) {
-        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+        Row(gutter.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             ShopSectionTitle(stringResource(Res.string.shop_checkins_public_title), Modifier.weight(1f))
             if (checkIns.isNotEmpty()) IconButton(onClick = onOpenAll) {
                 Icon(CoffeePeekIcons.ChevronRight, stringResource(Res.string.shop_checkins_show_all),
                     tint = MaterialTheme.colorScheme.onSurface)
             }
         }
-        if (checkIns.isEmpty()) ShopCheckInsEmptyState(shopTitle)
+        if (checkIns.isEmpty()) ShopCheckInsEmptyState(shopTitle, gutter)
         else {
-          ShopCheckInRatingsOverview(checkIns, overallRating, checkInCount)
-          BoxWithConstraints(Modifier.fillMaxWidth().clipToBounds()) {
+          Box(gutter) { ShopCheckInRatingsOverview(checkIns, overallRating, checkInCount) }
+          BoxWithConstraints(Modifier.fillMaxWidth()) {
             val multiple = checkIns.size > 1
             val spacing = if (multiple) CoffeePeekDimens.spacing3 else 0.dp
-            val width = if (!isLoggedIn && multiple) (maxWidth - spacing - 56.dp).coerceAtLeast(1.dp).coerceAtMost(320.dp)
-                else if (multiple) maxWidth.coerceAtMost(320.dp) else maxWidth
-            LazyRow(horizontalArrangement = Arrangement.spacedBy(spacing)) {
+            val available = maxWidth - contentPadding * 2
+            val width = if (!isLoggedIn && multiple) (available - spacing - 56.dp).coerceAtLeast(1.dp).coerceAtMost(320.dp)
+                else if (multiple) available.coerceAtMost(320.dp) else available
+            LazyRow(horizontalArrangement = Arrangement.spacedBy(spacing), contentPadding = PaddingValues(horizontal = contentPadding)) {
                 itemsIndexed(checkIns.take(3), key = { _, item -> item.id }) { index, checkIn ->
                     val hidden = !isLoggedIn && index > 0
                     if (hidden) {
@@ -94,7 +100,7 @@ internal fun ShopPublicCheckInsSection(
                 }
             }
           }
-            if (!isLoggedIn) ShopCheckInGuestPrompt(onSignIn, onRegister)
+            if (!isLoggedIn) Box(gutter) { ShopCheckInGuestPrompt(onSignIn, onRegister) }
         }
     }
 }
