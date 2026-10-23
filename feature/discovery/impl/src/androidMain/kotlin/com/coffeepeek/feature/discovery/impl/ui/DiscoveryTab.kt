@@ -281,12 +281,14 @@ private fun DiscoveryContent(
 ) {
     val shops = state.visibleShops
     host.photoPrefetch(shopsState, shops.take(PREVIEW_SHOP_COUNT).map { it.id to listOfNotNull(it.photoUrl) }.takeIf { !mapExpanded }.orEmpty())
+    // The map stays where it is while the shops below it are pulled down (its place comes from the item offset), and the loader shows under the map.
     CoffeePeekPullToRefresh(
         listState = listState,
         isRefreshing = state.isRefreshing,
         onRefresh = { onAction(SearchAction.Refresh) },
         refreshDescription = stringResource(R.string.discovery_refresh),
         loadingDescription = stringResource(R.string.discovery_refreshing),
+        indicatorTopOffset = CoffeePeekDimens.spacing4 + MiniMapHeight,
         modifier = Modifier.fillMaxSize()
             .then(if (mapExpanded) Modifier.clearAndSetSemantics {} else Modifier)
             .graphicsLayer { alpha = 1f - expansion; translationY = size.height * 0.3f * expansion },
