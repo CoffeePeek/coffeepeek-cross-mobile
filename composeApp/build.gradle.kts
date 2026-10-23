@@ -123,6 +123,7 @@ kotlin {
             implementation(project(module.feature.authorBlocking.impl))
             implementation(project(module.feature.notifications.api))
             implementation(project(module.feature.notifications.impl))
+            implementation(project(module.feature.notifications.data))
             implementation(compose.runtime)
             implementation(compose.foundation)
             implementation(compose.material3)

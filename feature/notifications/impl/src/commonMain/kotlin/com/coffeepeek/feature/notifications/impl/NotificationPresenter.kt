@@ -1,18 +1,16 @@
 package com.coffeepeek.feature.notifications.impl
 
 import com.coffeepeek.feature.notifications.api.*
-import com.coffeepeek.feature.notifications.data.createNotificationRepository
 import com.coffeepeek.feature.notifications.domain.*
-import io.ktor.client.HttpClient
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlin.time.TimeSource
 
-/** The notification feature of the application: [account] and [platform] are supplied by the composition root. */
-fun createNotificationFeature(client: HttpClient, account: NotificationAccount, platform: PushDevicePlatform): NotificationFeature =
-    NotificationPresenter(createNotificationRepository(client), account, platform)
+/** The notification feature of the application: [repository], [account] and [platform] are supplied by the composition root. */
+fun createNotificationFeature(repository: NotificationRepository, account: NotificationAccount, platform: PushDevicePlatform): NotificationFeature =
+    NotificationPresenter(repository, account, platform)
 
 internal class NotificationPresenter(
     private val repository: NotificationRepository,
