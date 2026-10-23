@@ -2,6 +2,8 @@ package com.coffeepeek.feature.community.api
 
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
@@ -13,7 +15,7 @@ enum class ExposureKind { Feed, ShopPost, HomePost }
 
 /**
  * What the screen borrows from the application: image loading with authentication, the relative date, the brew method names, photo prefetch,
- * the full-screen photo viewer and the exposure/viewed analytics. Defaults keep previews and tests free of app services.
+ * the full-screen photo viewer, the snackbar look (it must clear the floating navigation) and the exposure/viewed analytics. Defaults keep previews and tests free of app services.
  */
 class CommunityHost(
     val image: @Composable (url: String, highQualityUrl: String?, modifier: Modifier, contentScale: ContentScale) -> Unit = { _, _, _, _ -> },
@@ -23,6 +25,7 @@ class CommunityHost(
     val photoViewer: @Composable (thumbnails: List<String>, originals: List<String>, index: Int, onDismiss: () -> Unit) -> Unit = { _, _, _, _ -> },
     val exposure: (Modifier, ExposureKind) -> Modifier = { modifier, _ -> modifier },
     val feedViewed: @Composable (firstPageCount: Int?, isPublic: Boolean) -> Unit = { _, _ -> },
+    val snackbar: @Composable (state: SnackbarHostState, bottomClearance: Dp) -> Unit = { state, _ -> SnackbarHost(state) },
 )
 
 /** What the floating action slot needs: whether a user is signed in, when the account or scope changes (close open sheets), and how to reload. */
@@ -40,6 +43,7 @@ interface CommunityEntry {
         onOpenShop: (slug: String) -> Unit,
         onEditHome: (id: String) -> Unit,
         modifier: Modifier = Modifier,
+        headerAction: @Composable () -> Unit = {},
         bottomClearance: Dp = 0.dp,
         floatingAction: @Composable BoxScope.(CommunityFloating) -> Unit = {},
     )

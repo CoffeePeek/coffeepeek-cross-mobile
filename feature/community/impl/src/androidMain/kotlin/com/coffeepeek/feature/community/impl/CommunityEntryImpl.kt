@@ -35,12 +35,13 @@ fun createCommunityEntry(
         onOpenShop: (String) -> Unit,
         onEditHome: (String) -> Unit,
         modifier: Modifier,
+        headerAction: @Composable () -> Unit,
         bottomClearance: Dp,
         floatingAction: @Composable BoxScope.(CommunityFloating) -> Unit,
     ) {
         CommunityScreen(
             viewModel(key = "community-feed") { CommunityViewModel(repository, account, analytics, drinks, visibility) },
-            host, blockActions, CommunityCallbacks(onSignIn, onOpenAuthor, onOpenShop, onEditHome), modifier, bottomClearance, floatingAction,
+            host, blockActions, CommunityCallbacks(onSignIn, onOpenAuthor, onOpenShop, onEditHome), modifier, bottomClearance, headerAction, floatingAction,
         )
     }
 }

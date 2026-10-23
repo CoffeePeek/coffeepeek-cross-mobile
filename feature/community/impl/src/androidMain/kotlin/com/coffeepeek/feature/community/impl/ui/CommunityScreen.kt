@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
@@ -21,7 +22,6 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -89,6 +89,7 @@ internal fun CommunityScreen(
     callbacks: CommunityCallbacks,
     modifier: Modifier = Modifier,
     bottomClearance: Dp = 0.dp,
+    headerAction: @Composable () -> Unit = {},
     floatingAction: @Composable BoxScope.(CommunityFloating) -> Unit = {},
 ) {
     val state by vm.state.collectAsStateWithLifecycle()
@@ -110,7 +111,7 @@ internal fun CommunityScreen(
             }
         }
     }
-    CommunityContent(state, vm::onAction, host, blockActions, callbacks, snackbar, modifier, bottomClearance, floatingAction)
+    CommunityContent(state, vm::onAction, host, blockActions, callbacks, snackbar, modifier, bottomClearance, headerAction, floatingAction)
 }
 
 private class MessageTexts(val vote: String, val visibility: String, val reported: String, val saved: String, val review: String) {
@@ -133,6 +134,7 @@ internal fun CommunityContent(
     snackbar: SnackbarHostState,
     modifier: Modifier = Modifier,
     bottomClearance: Dp = 0.dp,
+    headerAction: @Composable () -> Unit = {},
     floatingAction: @Composable BoxScope.(CommunityFloating) -> Unit = {},
 ) {
     val listState = rememberLazyListState()
@@ -168,7 +170,7 @@ internal fun CommunityContent(
         Scaffold(
             containerColor = MaterialTheme.colorScheme.background,
             contentWindowInsets = WindowInsets(0, 0, 0, 0),
-            snackbarHost = { SnackbarHost(snackbar) },
+            snackbarHost = { host.snackbar(snackbar, bottomClearance) },
         ) { padding ->
             CoffeePeekPullToRefresh(
                 listState,
@@ -186,8 +188,11 @@ internal fun CommunityContent(
                     verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing3),
                 ) {
                     item(key = "heading", contentType = "heading") {
-                        Text(stringResource(R.string.community_title), style = MaterialTheme.typography.headlineMedium,
-                            fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground)
+                        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                            Text(stringResource(R.string.community_title), Modifier.weight(1f), style = MaterialTheme.typography.headlineMedium,
+                                fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground)
+                            headerAction()
+                        }
                     }
                     if (state.isLoggedIn == null || (state.isLoading && state.items.isEmpty())) {
                         item(key = "loading", contentType = "loading") { CenteredLoader() }

@@ -40,6 +40,7 @@ import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.core.designsystem.component.CoffeePeekActionMenu
 import com.coffeepeek.core.designsystem.component.CoffeePeekLikeIcon
+import com.coffeepeek.core.designsystem.component.CoffeePeekLoader
 import com.coffeepeek.core.designsystem.component.CoffeePeekMenuAction
 import com.coffeepeek.core.designsystem.component.CoffeePeekRating
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
@@ -243,6 +244,10 @@ private fun PostPhotoStrip(photos: PostPhotos, onPhoto: (Int) -> Unit, host: Com
             modifier.clip(RoundedCornerShape(CoffeePeekDimens.radiusMd)).clickable(role = Role.Button) { onPhoto(index) }
                 .semantics(mergeDescendants = true) { contentDescription = description },
         ) {
+            // The loader stays under the photo: a photo that is not loaded yet (a fresh list after leaving the tab) never shows an empty hole.
+            Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.surfaceVariant), contentAlignment = Alignment.Center) {
+                CoffeePeekLoader(stringResource(R.string.community_loading), size = 32.dp)
+            }
             host.image(photos.thumbnails.getOrNull(index) ?: photos.originals[index], photos.originals[index].takeIf(String::isNotBlank), Modifier.fillMaxSize(), ContentScale.Crop)
             if (index == 2 && count > 3) Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.45f)), contentAlignment = Alignment.Center) {
                 Text(stringResource(R.string.community_more_photos, count - 3), style = MaterialTheme.typography.headlineSmall, color = Color.White)
