@@ -41,9 +41,9 @@ private class PublicProfileEntryImpl(
     override fun Content(
         slug: String, nickname: String?, avatarUrl: String?, onBack: () -> Unit, onOpenShop: (String) -> Unit,
         onOpenRoaster: (String) -> Unit, onLogin: () -> Unit, onOpenUser: (String, String, String?) -> Unit,
-        onShare: (String) -> Unit, modifier: Modifier,
+        onShare: (String) -> Unit, onOpenCheckIns: () -> Unit, checkInsOnly: Boolean, modifier: Modifier,
     ) {
         val model = viewModel(key = "public-profile:$instanceKey:$slug") { PublicProfileViewModel(slug, data, checkIns, accounts, visibility) }
-        PublicProfileScreen(slug, nickname, avatarUrl, model, authorActions, slots, onBack, onOpenShop, onOpenRoaster, onLogin, onOpenUser, onShare)
+        PublicProfileScreen(slug, nickname, avatarUrl, model, authorActions, slots, onBack, onOpenShop, onOpenRoaster, onLogin, onOpenUser, onShare, onOpenCheckIns, checkInsOnly = checkInsOnly)
     }
 }
