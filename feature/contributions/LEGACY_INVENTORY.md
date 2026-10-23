@@ -202,3 +202,32 @@ Live API contracts (paths and DTOs of `moderation/*`, `shop-change-requests`), i
 - **Sandbox notes, not defects**: the drink catalog fixture has one drink (cappuccino) with a price and no availability, so the menu editor shows it as «Не указано» with the price filled; cyrillic text cannot be typed through adb, so texts were typed in latin.
 - **Left for step 5**: the audit and the legacy map: the legacy screens stay for iOS only.
 
+## Step 5 audit (2026-10-21)
+
+Read against the rules of section (3), the findings of section (5) and the decisions of section (6), with the code of steps 2–4, the unit tests and a second Pixel 7 pass in the Sandbox.
+
+### Rules (3) against the migrated code
+- **A (lists)**: A1–A7 hold: titles and empty texts from resources, the first page (20) of all three statuses loaded together and any failure fails the screen with retry, tabs only for statuses with items in the fixed order with `title · count`, per-tab paging (3 from the end, one load at a time, a failed page clears the spinner), item mapping and summaries as the rules (unit tests), card look on the design system, the selected tab falls back to the first visible one and survives rotation because it lives in the ViewModel.
+- **B (add shop)**: B1–B11 hold (unit tests of the ViewModel and the repository). The price control is the legacy three-level slider (levels 1–3); the fourth level `Luxury` exists in the domain and is not offered, as before.
+- **C (suggest a change)**: C1–C6 hold with two deliberate differences: the drink catalog is read only for the menu section, and the success screen offers the request and «Готово» as the legacy one did.
+- **D (add roaster)**: D1–D3 hold. The texts of the pair rule are shorter than the legacy ones (`Выберите город` / `Введите адрес`).
+
+### Findings (5)
+1 guest guard: done (sign-in prompts in every entry, a change of account starts empty). 2 raw error text: done (server message or a resource default; load failures of the legacy shop repository show the default). 3 strings: done (no literals in the migrated UI except preview fixtures; the legacy price slider title stays in the app host). 4 menu photo limit: one constant, the repository refuses more instead of dropping them. 5 unchanged payload: kept as the legacy (a section can be sent unchanged, a cleared description is sent as no text). 6 no drafts: unchanged, a gate for later. 7 schedule: covered by tests. 8 roasters without a link: kept. 9 out of scope. 10 Instagram link in the contacts editor: fixed (links are accepted).
+
+### Observations and gaps
+- **5xx never reaches the feature**: the application's API client replaces every 5xx with its own `ApiException` before the response is read, so a server message sent with a 5xx is lost and the screen shows the default text (checked with `ListFailure`). 4xx messages arrive (checked with `SubmitFailure`). Data tests use a client without that validator and pin the message for 500, so they do not show this. This is acceptable under Q4; a change belongs to the shared network layer, not to this owner.
+- **Roaster form city field**: with a single city it is shown read-only before an address is typed although it is sent only with an address (the rule «город и адрес вместе» is explained above the field).
+- **Request editing is not reachable**: no legacy route passes a request id to the editor, so editing an own pending request is covered by unit tests only; connect it when the request detail gets an edit action.
+- **Equipment** is left out of the suggest list as in the legacy while the editor supports it; confirm whether to offer it.
+- **Shared uploader, map and photo picker** stay legacy pieces plugged in through hosts until the shared extraction (images/media, location) is scheduled.
+
+### Device pass 2 (Pixel 7, Sandbox)
+Passed: `SubmitFailure` on the roaster form (server message, «Повторить отправку» and «Вернуться к форме», the typed data kept), `ListFailure` on the shops list (default text and retry, no transport text), light theme on the first wizard step and on the list failure (readable, contrast fine), then the theme was set back to «Системная». Not checked: large font (needs a system setting that was not changed), TalkBack, guest prompts on the device, map and real location, camera, live API.
+
+### Legacy map
+Android no longer reaches `addshop/*`, `contributions/*`, `shopchange/*` and `roaster/AddRoaster*`. They stay for iOS and shared code through `LegacyContributionsScreenRenderer`; delete them with the iOS migration of Contributions (see `feature/LEGACY_REMOVAL.md`).
+
+### Sync with main (2026-10-23)
+Main was merged through the whole stack. What it brought for this owner: the legacy add shop and add roaster screens got the keyboard fix of `docs/SYSTEM_LAYOUT_FIXES.md` (consume the Scaffold padding once before `imePadding`, no repeated navigation padding, vertical spacing inside the scroll). The migrated forms and the change editor now do the same (`consumeWindowInsets(padding)` before `imePadding`; in the editor the keyboard padding sits on the whole column so the send button rides above the keyboard). Checked on a Pixel 7 in the Sandbox: no blank strip above the keyboard on the roaster form, the editor button stays above the keyboard. Also from main and relevant here: the roaster empty state offers «Добавить обжарщика» (opens the migrated form) and the shared `CoffeePeekCatalogSuggestionCard`; the profile menu on the design system lists «Заблокированные авторы» and replaced the card menu of `fix/profile-action-menu`.
+

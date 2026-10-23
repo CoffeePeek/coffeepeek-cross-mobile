@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -93,7 +94,7 @@ private fun RoasterForm(state: AddRoasterState, host: AddRoasterHost, callbacks:
         topBar = { CoffeePeekTopBar(stringResource(R.string.contributions_roaster_title), stringResource(R.string.contributions_back), onBack = callbacks.onBack) },
         containerColor = MaterialTheme.colorScheme.background,
     ) { padding ->
-        Column(Modifier.fillMaxSize().padding(padding).imePadding().verticalScroll(rememberScrollState()).padding(CoffeePeekDimens.spacing4)) {
+        Column(Modifier.fillMaxSize().padding(padding).consumeWindowInsets(padding).imePadding().verticalScroll(rememberScrollState()).padding(CoffeePeekDimens.spacing4)) {
             val issues = state.issues
             RequiredLegend()
             Spacer(Modifier.height(CoffeePeekDimens.spacing3))
