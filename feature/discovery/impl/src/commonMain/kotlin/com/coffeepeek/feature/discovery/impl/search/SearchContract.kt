@@ -1,6 +1,7 @@
 package com.coffeepeek.feature.discovery.impl.search
 
 import com.coffeepeek.feature.discovery.domain.model.CityEntry
+import com.coffeepeek.feature.discovery.domain.model.Coordinates
 import com.coffeepeek.feature.discovery.domain.model.DiscoveryCatalogs
 import com.coffeepeek.feature.discovery.domain.model.DiscoveryFilters
 import com.coffeepeek.feature.discovery.domain.model.PriceLevel
@@ -36,6 +37,8 @@ internal data class SearchState(
     val hasMore: Boolean = false,
     /** A position is known, so «Рядом» can be offered. */
     val canUseNearby: Boolean = false,
+    /** Where the user is, for the distance on a card when the server sends none. */
+    val userLocation: Coordinates? = null,
 ) {
     val activeFilterCount: Int get() = filters.activeCount
     val showsDiscovery: Boolean get() = showsDiscovery(query, searchActive, filters)
