@@ -7,7 +7,7 @@ ROOT = Path(__file__).resolve().parents[2]
 
 
 class ReleaseVersioningTest(unittest.TestCase):
-    def test_android_reads_the_manual_ios_marketing_version(self):
+    def test_android_formats_version_with_shared_build_number_offset(self):
         config = (ROOT / 'iosApp/Configuration/Shared.xcconfig').read_text(encoding='utf-8')
         version = re.search(r'^MARKETING_VERSION = (.+)$', config, re.MULTILINE).group(1)
         self.assertRegex(version, r'^[0-9]+\.[0-9]+\.[0-9]+$')
@@ -15,7 +15,9 @@ class ReleaseVersioningTest(unittest.TestCase):
         self.assertGreaterEqual(offset, 1000)
         gradle = (ROOT / 'composeApp/build.gradle.kts').read_text(encoding='utf-8')
         self.assertIn('file("iosApp/Configuration/Shared.xcconfig")', gradle)
-        self.assertNotIn('gitCommitCount.map { "', gradle)
+        self.assertIn('val appVersionName: Provider<String> = appVersionCode.map { "1.1.1.$it" }', gradle)
+        self.assertIn('gitCommitCount.zip(appBuildNumberOffset) { count, offset -> count + offset }', gradle)
+        self.assertNotIn('"--all"', gradle)
         self.assertIn('commandLine("git", "rev-list", "--count", "HEAD")', gradle)
 
     def test_release_workflows_only_publish_main_and_never_raise_server_policy(self):
