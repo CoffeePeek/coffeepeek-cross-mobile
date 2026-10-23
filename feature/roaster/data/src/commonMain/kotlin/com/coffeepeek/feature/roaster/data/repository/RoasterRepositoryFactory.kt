@@ -52,11 +52,18 @@ private class RemoteRoasterRepository(
     // One request at a time; a loaded session stays stable, saved data is used while fresh or when offline.
     override suspend fun getRoasters(): Result<List<RoasterSummary>> = mutex.withLock {
         memory?.let { return@withLock Result.success(it) }
+        load(force = false)
+    }
+
+    // The explicit refresh asks the server again; what is already loaded stays when that fails.
+    override suspend fun refreshRoasters(): Result<List<RoasterSummary>> = mutex.withLock { load(force = true) }
+
+    private suspend fun load(force: Boolean): Result<List<RoasterSummary>> {
         val saved = try {
             store.read()?.let { runCatching { cacheJson.decodeFromString<CachedCatalog>(it) }.getOrNull() }
         } catch (cancelled: CancellationException) { throw cancelled } catch (_: Exception) { null }
-        try {
-            val items = if (saved != null && nowMs() - saved.savedAtMs in 0 until CATALOG_TTL_MS) saved.items else {
+        return try {
+            val items = if (!force && saved != null && nowMs() - saved.savedAtMs in 0 until CATALOG_TTL_MS) saved.items else {
                 val loaded = backend.list()
                 currentCoroutineContext().ensureActive()
                 try { store.write(cacheJson.encodeToString(CachedCatalog(nowMs(), loaded))) }
@@ -66,7 +73,14 @@ private class RemoteRoasterRepository(
             }
             Result.success(remember(items))
         } catch (cancelled: CancellationException) { throw cancelled }
-        catch (error: Exception) { if (saved != null) Result.success(remember(saved.items)) else Result.failure(error) }
+        catch (error: Exception) {
+            val kept = if (force) memory else null
+            when {
+                kept != null -> Result.success(kept)
+                saved != null -> Result.success(remember(saved.items))
+                else -> Result.failure(error)
+            }
+        }
     }
 
     private fun remember(items: List<RoasterSummaryDto>): List<RoasterSummary> {
