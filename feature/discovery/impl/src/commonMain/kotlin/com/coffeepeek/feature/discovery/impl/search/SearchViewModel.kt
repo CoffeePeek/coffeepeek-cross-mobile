@@ -135,7 +135,7 @@ internal class SearchViewModel(
         if (point == null || !point.isValid || point == origin) return
         origin = point
         analytics.geolocation(PLACEMENT, userTriggered = false, outcome = GeolocationOutcome.Available)
-        updateState { copy(canUseNearby = true) }
+        updateState { copy(canUseNearby = true, userLocation = point) }
         if (currentState.filters.nearbyOnly) {
             updateState { copy(shops = emptyList()) }
             if (cityReady) loadShops(reset = true)

@@ -54,36 +54,12 @@ import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.feature.discovery.api.DiscoveryExposure
 import com.coffeepeek.feature.discovery.api.DiscoveryHost
+import com.coffeepeek.feature.discovery.domain.model.ShopKind
 import com.coffeepeek.feature.discovery.impl.R
 import com.coffeepeek.feature.discovery.impl.search.SearchAction
 import com.coffeepeek.feature.discovery.impl.search.SearchEvent
 import com.coffeepeek.feature.discovery.impl.search.SearchState
 import com.coffeepeek.feature.discovery.impl.search.SearchViewModel
-
-internal class SearchCallbacks(val onOpenShop: (String) -> Unit, val onSignIn: () -> Unit, val onAddShop: () -> Unit)
-
-@Composable
-internal fun SearchScreen(
-    viewModel: SearchViewModel,
-    host: DiscoveryHost,
-    callbacks: SearchCallbacks,
-    bottomClearance: Dp,
-    discovery: @Composable () -> Unit,
-    textResults: (@Composable () -> Unit)?,
-    modifier: Modifier = Modifier,
-) {
-    val state by viewModel.state.collectAsStateWithLifecycle()
-    LaunchedEffect(viewModel) {
-        viewModel.events.collect { event ->
-            when (event) {
-                is SearchEvent.OpenShop -> callbacks.onOpenShop(event.shopId)
-                SearchEvent.SignInRequired -> callbacks.onSignIn()
-            }
-        }
-    }
-    SearchContent(state, host, callbacks.onAddShop, bottomClearance, discovery, textResults, viewModel::onAction, modifier)
-    if (state.showFilters) FilterSheet(state, onAction = viewModel::onAction)
-}
 
 @Composable
 internal fun SearchContent(
@@ -160,16 +136,26 @@ private fun SearchHeader(state: SearchState, host: DiscoveryHost, onAction: (Sea
 private fun QuickFilters(state: SearchState, onAction: (SearchAction) -> Unit) {
     val filters = state.filters
     LazyRow(
-        contentPadding = PaddingValues(horizontal = CoffeePeekDimens.spacing4),
-        horizontalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing2),
-        modifier = Modifier.fillMaxWidth().padding(bottom = CoffeePeekDimens.spacing2),
+        contentPadding = PaddingValues(horizontal = CoffeePeekDimens.spacing4, vertical = 4.dp),
+        horizontalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing1),
+        modifier = Modifier.fillMaxWidth(),
     ) {
-        item { CoffeePeekFilterChip(stringResource(R.string.discovery_quick_open), filters.openOnly, { onAction(SearchAction.ToggleOpen) }) }
-        item { CoffeePeekFilterChip(stringResource(R.string.discovery_quick_new), filters.newOnly, { onAction(SearchAction.ToggleNew) }) }
-        item { CoffeePeekFilterChip(stringResource(R.string.discovery_quick_visited), filters.visitedOnly, { onAction(SearchAction.ToggleVisited) }) }
-        item { CoffeePeekFilterChip(stringResource(R.string.discovery_quick_favorites), filters.favoritesOnly, { onAction(SearchAction.ToggleFavorites) }) }
-        if (state.canUseNearby) item { CoffeePeekFilterChip(stringResource(R.string.discovery_quick_nearby), filters.nearbyOnly, { onAction(SearchAction.ToggleNearby) }) }
+        if (state.canUseNearby) item { CoffeePeekFilterChip(stringResource(R.string.discovery_quick_nearby), filters.nearbyOnly, { onAction(SearchAction.ToggleNearby) }, leadingIcon = CoffeePeekIcons.Distance) }
+        item { CoffeePeekFilterChip(stringResource(R.string.discovery_quick_open), filters.openOnly, { onAction(SearchAction.ToggleOpen) }, leadingIcon = CoffeePeekIcons.Time) }
+        item { CoffeePeekFilterChip(stringResource(R.string.discovery_quick_new), filters.newOnly, { onAction(SearchAction.ToggleNew) }, leadingIcon = CoffeePeekIcons.Sparkle) }
+        item { CoffeePeekFilterChip(stringResource(R.string.discovery_quick_visited), filters.visitedOnly, { onAction(SearchAction.ToggleVisited) }, leadingIcon = CoffeePeekIcons.CheckCircle) }
+        item { CoffeePeekFilterChip(stringResource(R.string.discovery_quick_favorites), filters.favoritesOnly, { onAction(SearchAction.ToggleFavorites) }, leadingIcon = CoffeePeekIcons.Favorite) }
+        items(ShopKind.entries) { kind ->
+            // One kind at a time; tapping it again clears it.
+            CoffeePeekFilterChip(stringResource(kind.label()), filters.kind == kind, { onAction(SearchAction.SetKind(kind.takeUnless { filters.kind == it })) })
+        }
     }
+}
+
+private fun ShopKind.label() = when (this) {
+    ShopKind.Specialty -> R.string.discovery_kind_specialty
+    ShopKind.CoffeeBar -> R.string.discovery_kind_coffee_bar
+    ShopKind.Cafe -> R.string.discovery_kind_cafe
 }
 
 @Composable
@@ -188,7 +174,7 @@ private fun ResultsList(
     val showsTextResults = textResults != null && state.query.isNotBlank()
     LaunchedEffect(showsTextResults) { listState.scrollToItem(0) }
     if (prefetch) host.photoPrefetch(listState, shops.map { it.id to listOfNotNull(it.photoUrl) })
-    val nearEnd by remember { derivedStateOf { listState.layoutInfo.let { info -> (info.visibleItemsInfo.lastOrNull()?.index ?: 0) >= info.totalItemsCount - 3 } } }
+    val nearEnd by remember { derivedStateOf { listState.layoutInfo.let { info -> (info.visibleItemsInfo.lastOrNull()?.index ?: 0) >= info.totalItemsCount - 5 } } }
     LaunchedEffect(nearEnd, state.hasMore, state.isLoadingMore, shops.size) { if (nearEnd && state.hasMore && shops.isNotEmpty()) onAction(SearchAction.LoadMore) }
     CoffeePeekPullToRefresh(
         listState = listState,
@@ -218,32 +204,30 @@ private fun ResultsList(
                         }
                     }
                 }
-                shops.isEmpty() -> item(key = "empty") {
-                    Centered {
-                        Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing1)) {
-                            Text(stringResource(R.string.discovery_empty), style = MaterialTheme.typography.titleMedium)
-                            Text(stringResource(R.string.discovery_empty_hint), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center)
-                        }
-                    }
-                }
+                // Nothing found is the «Не нашли нужную кофейню?» card, not a plain message.
+                shops.isEmpty() -> item(key = "suggestion") { SuggestionCard(host, onAddShop) }
                 else -> {
                     items(shops, key = { it.id }, contentType = { "shop" }) { shop ->
-                        ShopRow(shop, host, shop.id in state.favoriteUpdates, onOpen = { onAction(SearchAction.OpenShop(shop.id)) }, onFavorite = { onAction(SearchAction.ToggleFavorite(shop.id)) })
+                        ShopRow(shop, host, shop.id in state.favoriteUpdates, state.userLocation, onOpen = { onAction(SearchAction.OpenShop(shop.id)) }, onFavorite = { onAction(SearchAction.ToggleFavorite(shop.id)) })
                     }
                     if (state.isLoadingMore) item(key = "more") { Centered { CoffeePeekLoader(stringResource(R.string.discovery_loading), size = 28.dp) } }
-                    else if (!state.hasMore) item(key = "suggestion") {
-                        CoffeePeekCatalogSuggestionCard(
-                            title = stringResource(R.string.discovery_suggestion_title),
-                            description = stringResource(R.string.discovery_suggestion_description),
-                            actionLabel = stringResource(R.string.discovery_suggestion_action),
-                            illustration = host.suggestionIllustration(),
-                            onAdd = onAddShop,
-                        )
-                    }
+                    // As in the legacy list: the card is the last item whenever nothing is loading and nothing failed.
+                    if (!state.isLoading && state.error == null) item(key = "suggestion") { SuggestionCard(host, onAddShop) }
                 }
             }
         }
     }
+}
+
+@Composable
+private fun SuggestionCard(host: DiscoveryHost, onAddShop: () -> Unit) {
+    CoffeePeekCatalogSuggestionCard(
+        title = stringResource(R.string.discovery_suggestion_title),
+        description = stringResource(R.string.discovery_suggestion_description),
+        actionLabel = stringResource(R.string.discovery_suggestion_action),
+        illustration = host.suggestionIllustration(),
+        onAdd = onAddShop,
+    )
 }
 
 @Composable

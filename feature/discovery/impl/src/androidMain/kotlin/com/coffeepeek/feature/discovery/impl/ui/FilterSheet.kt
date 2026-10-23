@@ -2,12 +2,11 @@ package com.coffeepeek.feature.discovery.impl.ui
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
@@ -22,24 +21,27 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
-import com.coffeepeek.core.designsystem.component.CoffeePeekFilterChip
+import androidx.compose.ui.unit.dp
+import com.coffeepeek.core.designsystem.component.CoffeePeekCheckmarkRow
+import com.coffeepeek.core.designsystem.component.CoffeePeekGroupSection
+import com.coffeepeek.core.designsystem.component.CoffeePeekRowSeparator
 import com.coffeepeek.core.designsystem.component.CoffeePeekSwipeDismissModalBottomSheet
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
+import com.coffeepeek.feature.discovery.api.DiscoveryHost
 import com.coffeepeek.feature.discovery.domain.model.CatalogEntry
-import com.coffeepeek.feature.discovery.domain.model.DiscoveryFilters
 import com.coffeepeek.feature.discovery.domain.model.PriceLevel
-import com.coffeepeek.feature.discovery.domain.model.ShopKind
 import com.coffeepeek.feature.discovery.domain.rules.amenityTags
 import com.coffeepeek.feature.discovery.impl.R
 import com.coffeepeek.feature.discovery.impl.search.SearchAction
 import com.coffeepeek.feature.discovery.impl.search.SearchState
 
-private val RatingSteps = listOf(3.5, 4.0, 4.5)
-
-/** The sheet edits a draft; «Готово» applies it with one reload, closing it without that drops the draft. */
-@OptIn(ExperimentalLayoutApi::class)
+/**
+ * The sheet edits a draft: «Готово» applies it with one reload, closing it without that drops the draft. The kind of the place is a quick filter,
+ * not a sheet section (as in the legacy sheet), and so is every switch; the sheet has the price, the roasters, the beans, the equipment, the brew methods
+ * and the amenity tags.
+ */
 @Composable
-internal fun FilterSheet(state: SearchState, onAction: (SearchAction) -> Unit) {
+internal fun FilterSheet(state: SearchState, host: DiscoveryHost, onAction: (SearchAction) -> Unit) {
     var draft by remember { mutableStateOf(state.filters) }
     CoffeePeekSwipeDismissModalBottomSheet(
         onDismissRequest = { onAction(SearchAction.CloseFilters) },
@@ -54,51 +56,38 @@ internal fun FilterSheet(state: SearchState, onAction: (SearchAction) -> Unit) {
         Column(
             Modifier.weight(1f, fill = false).verticalScroll(rememberScrollState()).navigationBarsPadding()
                 .padding(horizontal = CoffeePeekDimens.spacing4).padding(bottom = CoffeePeekDimens.spacing6),
-            verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing4),
+            verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing6),
         ) {
-            Section(R.string.discovery_section_kind) {
-                ShopKind.entries.forEach { kind ->
-                    CoffeePeekFilterChip(stringResource(kind.label()), draft.kind == kind, { draft = draft.copy(kind = kind.takeUnless { draft.kind == it }) })
-                }
+            CoffeePeekGroupSection(
+                title = stringResource(R.string.discovery_section_price),
+                trailing = host.priceHint(draft.priceLevel?.level) ?: stringResource(R.string.discovery_price_any),
+            ) {
+                host.priceSelector(draft.priceLevel?.level, { draft = draft.copy(priceLevel = PriceLevel.ofLevel(it)) }, Modifier.padding(horizontal = 16.dp, vertical = 8.dp))
             }
-            Section(R.string.discovery_section_price) {
-                PriceLevel.entries.forEach { level ->
-                    CoffeePeekFilterChip("$".repeat(level.level), draft.priceLevel == level, { draft = draft.copy(priceLevel = level.takeUnless { draft.priceLevel == it }) })
-                }
+            Selection(R.string.discovery_section_roasters, state.catalogs.roasters, draft.roasterIds, { draft = draft.copy(roasterIds = draft.roasterIds.toggle(it)) }) { entry ->
+                host.roasterAvatar(entry.name, entry.photoUrl)
             }
-            Section(R.string.discovery_section_rating) {
-                RatingSteps.forEach { rating ->
-                    CoffeePeekFilterChip(stringResource(R.string.discovery_rating_from, rating.toString()), draft.minRating == rating, { draft = draft.copy(minRating = rating.takeUnless { draft.minRating == it }) })
-                }
+            Selection(R.string.discovery_section_beans, state.catalogs.beans, draft.beanIds, { draft = draft.copy(beanIds = draft.beanIds.toggle(it)) })
+            Selection(R.string.discovery_section_equipment, state.catalogs.equipment, draft.equipmentIds, { draft = draft.copy(equipmentIds = draft.equipmentIds.toggle(it)) })
+            Selection(R.string.discovery_section_brew_methods, state.catalogs.brewMethods, draft.brewMethodIds, { draft = draft.copy(brewMethodIds = draft.brewMethodIds.toggle(it)) }) { entry ->
+                host.brewMethodIcon(entry.name, 22.dp)
             }
-            CatalogSection(R.string.discovery_section_roasters, state.catalogs.roasters, draft.roasterIds) { draft = draft.copy(roasterIds = draft.roasterIds.toggle(it)) }
-            CatalogSection(R.string.discovery_section_beans, state.catalogs.beans, draft.beanIds) { draft = draft.copy(beanIds = draft.beanIds.toggle(it)) }
-            CatalogSection(R.string.discovery_section_equipment, state.catalogs.equipment, draft.equipmentIds) { draft = draft.copy(equipmentIds = draft.equipmentIds.toggle(it)) }
-            CatalogSection(R.string.discovery_section_brew_methods, state.catalogs.brewMethods, draft.brewMethodIds) { draft = draft.copy(brewMethodIds = draft.brewMethodIds.toggle(it)) }
-            CatalogSection(R.string.discovery_section_tags, amenityTags(state.catalogs.tags), draft.tagIds) { draft = draft.copy(tagIds = draft.tagIds.toggle(it)) }
+            Selection(R.string.discovery_section_tags, amenityTags(state.catalogs.tags), draft.tagIds, { draft = draft.copy(tagIds = draft.tagIds.toggle(it)) }) { entry ->
+                host.tagIcon(entry.id)
+            }
         }
     }
 }
 
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun Section(title: Int, content: @Composable () -> Unit) {
-    Column(verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing2)) {
-        Text(stringResource(title), style = MaterialTheme.typography.titleSmall)
-        FlowRow(horizontalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing2), verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing2)) { content() }
-    }
-}
-
-@Composable
-private fun CatalogSection(title: Int, entries: List<CatalogEntry>, selected: Set<String>, onToggle: (String) -> Unit) {
+private fun Selection(title: Int, entries: List<CatalogEntry>, selected: Set<String>, onToggle: (String) -> Unit, leading: (@Composable (CatalogEntry) -> Unit)? = null) {
     if (entries.isEmpty()) return
-    Section(title) { entries.forEach { CoffeePeekFilterChip(it.name, it.id in selected, { onToggle(it.id) }) } }
-}
-
-private fun ShopKind.label() = when (this) {
-    ShopKind.Specialty -> R.string.discovery_kind_specialty
-    ShopKind.CoffeeBar -> R.string.discovery_kind_coffee_bar
-    ShopKind.Cafe -> R.string.discovery_kind_cafe
+    CoffeePeekGroupSection(title = stringResource(title)) {
+        entries.forEachIndexed { index, entry ->
+            if (index > 0) CoffeePeekRowSeparator()
+            CoffeePeekCheckmarkRow(entry.name, entry.id in selected, { onToggle(entry.id) }, leading = leading?.let { { it(entry) } })
+        }
+    }
 }
 
 private fun Set<String>.toggle(id: String): Set<String> = if (id in this) this - id else this + id

@@ -233,7 +233,7 @@ private fun MapShopCard(
                     }
                 }
                 Text(shop.title, Modifier.padding(top = 2.dp), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold, maxLines = 2, overflow = TextOverflow.Ellipsis)
-                distance?.let { Text(formatDistance(it), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
+                distance?.let { Text(distanceLabel(it), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
                 val hours = details?.hours
                 when {
                     hours != null -> Text(
@@ -246,8 +246,3 @@ private fun MapShopCard(
         }
     }
 }
-
-@Composable
-private fun formatDistance(meters: Double): String =
-    if (meters < 1000) stringResource(R.string.discovery_distance_meters, meters.toInt())
-    else stringResource(R.string.discovery_distance_km, String.format(Locale.getDefault(), "%.1f", meters / 1000))

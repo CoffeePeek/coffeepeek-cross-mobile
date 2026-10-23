@@ -20,9 +20,14 @@ class DiscoveryHost(
     val image: @Composable (url: String, description: String?, modifier: Modifier, scale: ContentScale) -> Unit = { _, _, _, _ -> },
     /** What a shop without a photo shows. */
     val coverPlaceholder: @Composable (description: String?, modifier: Modifier) -> Unit = { _, _ -> },
-    val brewMethodIcon: @Composable (name: String) -> Unit = {},
+    val brewMethodIcon: @Composable (name: String, size: Dp) -> Unit = { _, _ -> },
     val tagIcon: @Composable (tagId: String) -> Unit = {},
     val roasterLogo: @Composable (name: String, logoUrl: String?) -> Unit = { _, _ -> },
+    /** The roaster's avatar in a list row (the logo above sits on a shop card). */
+    val roasterAvatar: @Composable (name: String, logoUrl: String?) -> Unit = { _, _ -> },
+    /** The price level (1..4, null for any) as the application's slider, and the hint it shows beside the title. */
+    val priceSelector: @Composable (selected: Int?, onSelect: (Int?) -> Unit, modifier: Modifier) -> Unit = { _, _, _ -> },
+    val priceHint: (Int?) -> String? = { null },
     val suggestionIllustration: @Composable () -> Painter = { error("The application provides the illustration") },
     val exposure: (Modifier, DiscoveryExposure) -> Modifier = { modifier, _ -> modifier },
     val haptic: () -> Unit = {},
@@ -36,42 +41,6 @@ class DiscoveryHost(
     val reduceMotion: @Composable () -> Boolean = { false },
     val mapCanvas: @Composable (state: MapCanvasState, callbacks: MapCanvasCallbacks, modifier: Modifier) -> Unit = { _, _, _ -> },
 )
-
-/**
- * The shop search: the search field with the filter button, the quick filters, the filter sheet and the list of results. While nothing is searched
- * or filtered the [discovery] content is shown instead of the list; with a text, [textResults] (the roasters that match) leads the list.
- * The caller owns navigation and the ViewModel store.
- */
-interface DiscoverySearchEntry {
-    @Composable
-    fun Content(
-        onOpenShop: (slug: String) -> Unit,
-        onSignIn: () -> Unit,
-        onAddShop: () -> Unit,
-        modifier: Modifier = Modifier,
-        /** The floating navigation (and the system bar) that the lists must clear at the bottom. */
-        bottomClearance: Dp = 0.dp,
-        discovery: @Composable () -> Unit = {},
-        textResults: (@Composable () -> Unit)? = null,
-    )
-}
-
-/**
- * The full-screen map: the canvas with the search field and its suggestions, the zoom and location buttons, the zones switch and card,
- * the «Искать в этой области» button and the carousel of nearby shops. The caller owns navigation and the ViewModel store.
- */
-interface DiscoveryMapEntry {
-    @Composable
-    fun Content(
-        onOpenShop: (slug: String) -> Unit,
-        modifier: Modifier = Modifier,
-        /** The floating navigation (and the system bar) that the overlay must clear at the bottom. */
-        bottomClearance: Dp = 0.dp,
-        /** A shop to bring into view; [onFocusConsumed] tells the caller it was taken. */
-        focus: MapFocus? = null,
-        onFocusConsumed: () -> Unit = {},
-    )
-}
 
 /** What the roaster sections need to know about the search to filter themselves. */
 class DiscoveryRoasterContext(val query: String, val selectedRoasterIds: Set<String>, val favoritesOnly: Boolean)

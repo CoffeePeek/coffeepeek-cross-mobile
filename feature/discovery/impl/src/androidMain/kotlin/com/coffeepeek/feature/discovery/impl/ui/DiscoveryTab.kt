@@ -203,7 +203,7 @@ internal fun DiscoveryTab(
                     bodyModifier = Modifier.onGloballyPositioned { viewportTop = it.positionInRoot().y - rootOrigin.y; viewportHeight = it.size.height.toFloat() },
                     prefetch = !mapExpanded,
                 )
-                if (state.showFilters) FilterSheet(state, onAction = onAction)
+                if (state.showFilters) FilterSheet(state, host, onAction = onAction)
             }
         }
         AnimatedVisibility(
@@ -336,9 +336,9 @@ private fun DiscoveryContent(
                     ) {
                         items(shops.take(PREVIEW_SHOP_COUNT), key = { it.id }) { shop ->
                             ShopRow(
-                                shop, host, shop.id in state.favoriteUpdates,
+                                shop, host, shop.id in state.favoriteUpdates, state.userLocation,
                                 onOpen = { onAction(SearchAction.OpenShop(shop.id)) }, onFavorite = { onAction(SearchAction.ToggleFavorite(shop.id)) },
-                                modifier = Modifier.width(PreviewCardWidth),
+                                modifier = Modifier.width(PreviewCardWidth), showCatalogDetails = false,
                             )
                         }
                     }

@@ -20,11 +20,16 @@ import com.coffeepeek.admin.map.CoffeeMap
 import com.coffeepeek.admin.ui.component.CoffeeShopImage
 import com.coffeepeek.admin.ui.component.CoffeeShopPlaceholderImage
 import com.coffeepeek.admin.ui.component.HapticEvent
+import com.coffeepeek.admin.ui.component.PriceBeanSlider
 import com.coffeepeek.admin.ui.component.RetainedContent
+import com.coffeepeek.admin.ui.component.RoasterAvatar
 import com.coffeepeek.admin.ui.component.brewMethodIcon
 import com.coffeepeek.admin.ui.component.platformHaptic
 import com.coffeepeek.admin.ui.component.platformReduceMotion
+import com.coffeepeek.admin.ui.component.priceLevelHint
+import com.coffeepeek.admin.ui.component.shopTagIcon
 import com.coffeepeek.admin.utils.PrefetchListPhotos
+import com.coffeepeek.domain.model.CatalogItem
 import com.coffeepeek.domain.model.CoffeeShopType
 import com.coffeepeek.domain.model.MapBounds as LegacyBounds
 import com.coffeepeek.domain.model.MapCoffeeZone
@@ -43,9 +48,13 @@ import org.jetbrains.compose.resources.painterResource
 internal fun discoveryHost() = DiscoveryHost(
     image = { url, description, modifier, scale -> CoffeeShopImage(imageUrl = url, modifier = modifier, contentDescription = description, contentScale = scale) },
     coverPlaceholder = { description, modifier -> CoffeeShopPlaceholderImage(modifier, contentDescription = description ?: "Фото кофейни отсутствует") },
-    brewMethodIcon = { name ->
-        Icon(org.jetbrains.compose.resources.painterResource(brewMethodIcon(name)), contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(13.dp))
+    brewMethodIcon = { name, size ->
+        Icon(painterResource(brewMethodIcon(name)), contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(size))
     },
+    tagIcon = { slug -> Icon(shopTagIcon(slug), contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(22.dp)) },
+    roasterAvatar = { name, logoUrl -> RoasterAvatar(CatalogItem(id = name, name = name, photoUrl = logoUrl)) },
+    priceSelector = { selected, onSelect, modifier -> PriceBeanSlider(selected = selected, onSelect = onSelect, showTitle = false, showHint = false, modifier = modifier) },
+    priceHint = { priceLevelHint(it) },
     roasterLogo = { _, logoUrl -> if (logoUrl != null) CoffeeShopImage(imageUrl = logoUrl, modifier = Modifier.fillMaxSize(), contentScale = ContentScale.Crop, placeholderLabelSize = 5.sp) },
     suggestionIllustration = { painterResource(Res.drawable.maskot_with_magnifying_glass) },
     exposure = { modifier, exposure ->
