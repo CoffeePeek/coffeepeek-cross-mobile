@@ -16,7 +16,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
@@ -25,7 +24,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -51,7 +49,6 @@ import com.coffeepeek.feature.profile.domain.PublicProfileFavorite
 import com.coffeepeek.feature.profile.impl.R
 import com.coffeepeek.feature.profile.impl.ui.PublicProfileViewModel
 import com.coffeepeek.feature.profile.impl.ui.compose.component.InlineProfileError
-import com.coffeepeek.feature.profile.impl.ui.compose.component.ProfileEmptyCard
 import com.coffeepeek.feature.profile.impl.ui.compose.component.ProfileSectionHeading
 import com.coffeepeek.feature.profile.impl.ui.compose.component.ProfileSectionLoader
 import com.coffeepeek.feature.profile.impl.ui.compose.component.PublicProfileActivityCalendar
@@ -72,7 +69,8 @@ internal class OwnProfileExtras(
     val onOpenFavorites: () -> Unit,
     val onOpenCheckIns: () -> Unit,
     val topBarActions: @Composable () -> Unit,
-    val favoritesPreview: @Composable () -> Unit,
+    val favoritesPreview: @Composable (header: @Composable () -> Unit) -> Unit,
+    val checkInCount: Int,
     val activityCalendar: @Composable () -> Unit,
     val activityPreview: @Composable (onClick: () -> Unit) -> Unit,
     val bottomContentPadding: Dp,
@@ -92,13 +90,14 @@ internal fun PublicProfileScreen(
     onLogin: () -> Unit,
     onOpenUser: (slug: String, nickname: String, avatarUrl: String?) -> Unit,
     onShare: (url: String) -> Unit,
+    onOpenCheckIns: () -> Unit,
+    checkInsOnly: Boolean = false,
     own: OwnProfileExtras? = null,
 ) {
     val state by vm.state.collectAsStateWithLifecycle()
     val visibility by vm.authorVisibility.collectAsStateWithLifecycle(initialValue = vm.currentVisibility())
     var section by remember(slug) { mutableStateOf<ProfileSection?>(null) }
     var photos by remember(slug) { mutableStateOf<ProfilePhotos?>(null) }
-    val checkInsListState = rememberLazyListState()
     val profile = state.profile
     val viewingOwn = own != null || state.isOwnProfile
     LaunchedEffect(visibility.revision, profile?.slug) { photos = null; section = null }
@@ -113,6 +112,15 @@ internal fun PublicProfileScreen(
                 PublicFavoriteKind.Drink -> Unit
             }
         }
+    }
+
+    if (checkInsOnly) {
+        PublicProfileCheckInsScreenContent(state, slots, onBack ?: {}, onOpenShop,
+            onRetry = { vm.onAction(if (profile == null) PublicProfileAction.Refresh else PublicProfileAction.RetryCheckIns) },
+            onLoadMore = { vm.onAction(PublicProfileAction.LoadMoreCheckIns) },
+            onPhotoClick = { previews, originals, index -> photos = ProfilePhotos(previews, originals, index) })
+        photos?.let { slots.photoViewer(it.previews, it.originals, it.index) { photos = null } }
+        return
     }
 
     Scaffold(containerColor = MaterialTheme.colorScheme.background, contentWindowInsets = WindowInsets(0, 0, 0, 0)) { innerPadding ->
@@ -178,61 +186,68 @@ internal fun PublicProfileScreen(
                 }
             } else {
                 Column(
-                    Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 16.dp)
+                    Modifier.fillMaxSize().verticalScroll(rememberScrollState())
                         .then(if (own == null) Modifier.navigationBarsPadding() else Modifier),
                     verticalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
                     Spacer(Modifier.height(2.dp))
-                    PublicProfileHeader(
-                        profile.nickname, profile.avatarUrl, profile.about, slots.image,
-                        isFollowing = state.isFollowing,
-                        followEnabled = !state.isFollowLoading && !state.isLoading,
-                        onFollow = if (viewingOwn) null else ({ vm.onAction(PublicProfileAction.ToggleFollow) }),
-                        onEditProfile = own?.onEditProfile,
-                        stats = profile.stats,
-                        onFollowersClick = {
-                            section = null
-                            vm.onAction(PublicProfileAction.OpenConnections(PublicProfileConnectionKind.Followers))
-                        },
-                    ) { profile.avatarUrl?.let { photos = ProfilePhotos(listOf(it)) } }
-                    if (own != null) own.activityPreview { section = ProfileSection.Activity }
-                    else slots.activityPreview(slug, profile.activity, state.checkIns,
-                        state.isLoadingActivity || state.isLoadingCheckIns,
-                        state.activityError != null || state.checkInsError != null,
-                        {
-                            vm.onAction(PublicProfileAction.RetryActivity)
-                            vm.onAction(PublicProfileAction.RetryCheckIns)
-                        },
-                        { section = ProfileSection.Activity })
-                    if (state.error != null) InlineProfileError(stringResource(R.string.profile_update_failed)) { vm.onAction(PublicProfileAction.Refresh) }
-                    if (!viewingOwn && state.followError != null) {
-                        InlineProfileError(stringResource(R.string.profile_follow_failed)) { vm.onAction(PublicProfileAction.ToggleFollow) }
+                    Column(Modifier.padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        PublicProfileHeader(
+                            profile.nickname, profile.avatarUrl, profile.about, slots.image,
+                            isFollowing = state.isFollowing,
+                            followEnabled = !state.isFollowLoading && !state.isLoading,
+                            onFollow = if (viewingOwn) null else ({ vm.onAction(PublicProfileAction.ToggleFollow) }),
+                            onEditProfile = own?.onEditProfile,
+                            stats = profile.stats,
+                            onFollowersClick = {
+                                section = null
+                                vm.onAction(PublicProfileAction.OpenConnections(PublicProfileConnectionKind.Followers))
+                            },
+                        ) { profile.avatarUrl?.let { photos = ProfilePhotos(listOf(it)) } }
+                        if (own != null) own.activityPreview(own.onOpenCheckIns)
+                        else slots.activityPreview(slug, profile.activity, state.checkIns,
+                            state.isLoadingActivity || state.isLoadingCheckIns,
+                            state.activityError != null || state.checkInsError != null,
+                            {
+                                vm.onAction(PublicProfileAction.RetryActivity)
+                                vm.onAction(PublicProfileAction.RetryCheckIns)
+                            },
+                            onOpenCheckIns)
+                        if (state.error != null) InlineProfileError(stringResource(R.string.profile_update_failed)) { vm.onAction(PublicProfileAction.Refresh) }
+                        if (!viewingOwn && state.followError != null) {
+                            InlineProfileError(stringResource(R.string.profile_follow_failed)) { vm.onAction(PublicProfileAction.ToggleFollow) }
+                        }
                     }
-
-                    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                        ProfileSectionHeading(stringResource(R.string.profile_section_favorites), onAll = own?.onOpenFavorites ?: { section = ProfileSection.Favorites })
-                        if (own != null) own.favoritesPreview() else when {
+                    if (own != null) own.favoritesPreview {
+                        ProfileSectionHeading(stringResource(R.string.profile_section_favorites), onAll = own.onOpenFavorites)
+                    } else if (profile.favorites.isNotEmpty() || state.isLoadingFavorites || state.favoritesError != null) Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Box(Modifier.padding(horizontal = 16.dp)) {
+                            ProfileSectionHeading(stringResource(R.string.profile_section_favorites), onAll = { section = ProfileSection.Favorites })
+                        }
+                        when {
                             state.isLoadingFavorites && profile.favorites.isEmpty() -> ProfileSectionLoader()
                             state.favoritesError != null && profile.favorites.isEmpty() ->
-                                InlineProfileError(stringResource(R.string.profile_favorites_failed)) { vm.onAction(PublicProfileAction.RetryFavorites) }
-                            profile.favorites.isEmpty() -> ProfileEmptyCard(stringResource(R.string.profile_favorites_empty), CoffeePeekIcons.Favorite)
+                                Box(Modifier.padding(horizontal = 16.dp)) {
+                                    InlineProfileError(stringResource(R.string.profile_favorites_failed)) { vm.onAction(PublicProfileAction.RetryFavorites) }
+                                }
                             else -> {
                                 slots.favoritesPreview(profile.favorites.take(6), openFavorite)
                                 if (state.favoritesError != null) {
-                                    InlineProfileError(stringResource(R.string.profile_favorites_refresh_failed)) { vm.onAction(PublicProfileAction.RetryFavorites) }
+                                    Box(Modifier.padding(horizontal = 16.dp)) {
+                                        InlineProfileError(stringResource(R.string.profile_favorites_refresh_failed)) { vm.onAction(PublicProfileAction.RetryFavorites) }
+                                    }
                                 }
                             }
                         }
                     }
 
-                    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    if (state.checkIns.isNotEmpty() || state.isLoadingCheckIns || state.checkInsError != null || (own?.checkInCount ?: 0) > 0) Column(Modifier.padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                         ProfileSectionHeading(stringResource(R.string.profile_section_check_ins), onAll = own?.onOpenCheckIns ?: { section = ProfileSection.CheckIns })
                         Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                             when {
-                                state.isLoadingCheckIns -> ProfileSectionLoader(100.dp)
+                                state.isLoadingCheckIns && state.checkIns.isEmpty() -> ProfileSectionLoader(100.dp)
                                 state.checkInsError != null && state.checkIns.isEmpty() ->
                                     InlineProfileError(stringResource(R.string.profile_check_ins_failed)) { vm.onAction(PublicProfileAction.RetryCheckIns) }
-                                state.checkIns.isEmpty() -> ProfileEmptyCard(stringResource(R.string.profile_check_ins_empty), CoffeePeekIcons.Coffee)
                                 else -> state.checkIns.take(2).forEach { checkIn ->
                                     slots.checkInCard(checkIn, author, viewingOwn,
                                         checkIn.coffeeShopSlug?.takeIf(String::isNotBlank)?.let { shop -> { onOpenShop(shop) } }) { previews, originals, index -> photos = ProfilePhotos(previews, originals, index) }
@@ -248,9 +263,6 @@ internal fun PublicProfileScreen(
     }
 
     val selectedSection = section
-    if (selectedSection == ProfileSection.CheckIns && profile != null && author != null && !profile.isBlockedByViewer) {
-        slots.photoPrefetch(checkInsListState, state.checkIns.map { it.id to it.photoPreviewUrls.take(3) })
-    }
     if (selectedSection != null && profile != null && author != null && !profile.isBlockedByViewer) {
         val close = stringResource(R.string.profile_close)
         CoffeePeekSwipeDismissModalBottomSheet(onDismissRequest = { section = null }, dismissDescription = close, maxSheetHeightFraction = 0.9f) {
@@ -278,29 +290,15 @@ internal fun PublicProfileScreen(
                     else if (state.favoritesError != null) item {
                         InlineProfileError(stringResource(R.string.profile_favorites_failed)) { vm.onAction(PublicProfileAction.RetryFavorites) }
                     }
-                    else if (profile.favorites.isEmpty()) item { ProfileEmptyCard(stringResource(R.string.profile_favorites_empty), CoffeePeekIcons.Favorite) }
                 }
-                ProfileSection.CheckIns -> LazyColumn(
-                    state = checkInsListState,
+                ProfileSection.CheckIns -> PublicProfileCheckInsList(
+                    state, slots, onOpenShop = { section = null; onOpenShop(it) },
+                    onRetry = { vm.onAction(PublicProfileAction.RetryCheckIns) },
+                    onLoadMore = { vm.onAction(PublicProfileAction.LoadMoreCheckIns) },
+                    onPhotoClick = { previews, originals, index -> photos = ProfilePhotos(previews, originals, index) },
                     modifier = Modifier.fillMaxWidth().weight(1f, fill = false),
-                    contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 32.dp),
-                    verticalArrangement = Arrangement.spacedBy(10.dp),
-                ) {
-                    items(state.checkIns, key = { it.id }) { checkIn ->
-                        slots.checkInCard(checkIn, author, viewingOwn,
-                            checkIn.coffeeShopSlug?.takeIf(String::isNotBlank)?.let { shop -> { section = null; onOpenShop(shop) } }) { previews, originals, index -> photos = ProfilePhotos(previews, originals, index) }
-                    }
-                    if (state.isLoadingCheckIns || state.isLoadingMoreCheckIns) item { ProfileSectionLoader(88.dp) }
-                    else if (state.checkInsError != null) item {
-                        InlineProfileError(stringResource(R.string.profile_check_ins_failed)) { vm.onAction(PublicProfileAction.RetryCheckIns) }
-                    }
-                    else if (state.checkIns.isEmpty()) item { ProfileEmptyCard(stringResource(R.string.profile_check_ins_empty), CoffeePeekIcons.Coffee) }
-                    if (state.hasMoreCheckIns && !state.isLoadingMoreCheckIns && state.checkInsError == null) item {
-                        TextButton(onClick = { vm.onAction(PublicProfileAction.LoadMoreCheckIns) }, modifier = Modifier.fillMaxWidth()) {
-                            Text(stringResource(R.string.profile_load_more))
-                        }
-                    }
-                }
+                    isOwnProfile = viewingOwn,
+                )
                 ProfileSection.Activity -> Column(
                     Modifier.fillMaxWidth().weight(1f, fill = false).verticalScroll(rememberScrollState()).padding(16.dp).navigationBarsPadding(),
                 ) {
