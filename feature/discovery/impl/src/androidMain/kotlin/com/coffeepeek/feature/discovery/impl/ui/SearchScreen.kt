@@ -184,6 +184,9 @@ private fun ResultsList(
 ) {
     val listState = rememberLazyListState()
     val shops = state.visibleShops
+    // The roaster section appears above the shops the viewport is anchored to: bring it into view.
+    val showsTextResults = textResults != null && state.query.isNotBlank()
+    LaunchedEffect(showsTextResults) { listState.scrollToItem(0) }
     if (prefetch) host.photoPrefetch(listState, shops.map { it.id to listOfNotNull(it.photoUrl) })
     val nearEnd by remember { derivedStateOf { listState.layoutInfo.let { info -> (info.visibleItemsInfo.lastOrNull()?.index ?: 0) >= info.totalItemsCount - 3 } } }
     LaunchedEffect(nearEnd, state.hasMore, state.isLoadingMore, shops.size) { if (nearEnd && state.hasMore && shops.isNotEmpty()) onAction(SearchAction.LoadMore) }
@@ -197,10 +200,10 @@ private fun ResultsList(
         LazyColumn(
             state = listState,
             modifier = scrollModifier.fillMaxSize(),
-            contentPadding = PaddingValues(start = CoffeePeekDimens.spacing4, end = CoffeePeekDimens.spacing4, bottom = bottomClearance + CoffeePeekDimens.spacing4),
+            contentPadding = PaddingValues(start = CoffeePeekDimens.spacing4, top = CoffeePeekDimens.spacing4, end = CoffeePeekDimens.spacing4, bottom = bottomClearance + 88.dp),
             verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing3),
         ) {
-            if (textResults != null && state.query.isNotBlank()) {
+            if (textResults != null && showsTextResults) {
                 item(key = "text-results-heading") { Text(stringResource(R.string.discovery_section_roasters), style = MaterialTheme.typography.titleLarge) }
                 item(key = "text-results") { textResults() }
                 item(key = "shops-heading") { Text(stringResource(R.string.discovery_section_shops), style = MaterialTheme.typography.titleMedium) }
