@@ -15,6 +15,7 @@ internal data class CombinedHistoryState(
     val shops: CombinedHistoryPageState<HistoryTimelineItem.Shop> = CombinedHistoryPageState(),
     val homes: CombinedHistoryPageState<HistoryTimelineItem.Home> = CombinedHistoryPageState(),
     val isCalendarUnavailable: Boolean = false,
+    val isRefreshing: Boolean = false,
     val selectedShopKey: String? = null,
     val showCreate: Boolean = false,
     val homeCalendarPhotos: Map<String, List<HistoryCalendarPhoto>> = emptyMap(),
@@ -56,7 +57,7 @@ internal data class CombinedHistoryState(
             homeCalendar = CombinedHistoryLoadState(emptyMap(), isLoading = loggedIn),
             shops = CombinedHistoryPageState(isLoading = loggedIn),
             homes = CombinedHistoryPageState(isLoading = loggedIn),
-            selectedShopKey = null, showCreate = false,
+            selectedShopKey = null, showCreate = false, isRefreshing = false,
             homeCalendarPhotos = emptyMap(),
         )
 }
