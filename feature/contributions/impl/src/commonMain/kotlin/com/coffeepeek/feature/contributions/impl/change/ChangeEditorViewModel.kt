@@ -113,7 +113,8 @@ internal class ChangeEditorViewModel(
     private suspend fun read(): (ChangeEditorState) -> ChangeEditorState {
         val all = catalogs.catalogs().getOrThrow()
         val shop = catalogs.shop(shopSlug).getOrThrow()
-        val drinks = if (section == ChangeSection.Menu) catalogs.drinks().getOrNull().orEmpty() else emptyList()
+        // A failed drinks read must not look like an empty catalog: the editor would show no rows and send a menu without the saved items.
+        val drinks = if (section == ChangeSection.Menu) catalogs.drinks().getOrThrow() else emptyList()
         val request = requestId?.let { repository.change(it).getOrThrow() }
         return { state -> state.fromShop(shop, all, drinks).let { if (request != null) it.fromRequest(request, shop, drinks) else it } }
     }
@@ -146,10 +147,7 @@ private fun ChangeEditorState.fromShop(shop: ShopSnapshot, all: com.coffeepeek.f
     roasterIds = shop.roasterIds.toSet(),
     equipmentIds = shop.equipmentIds.toSet(),
     brewMethodIds = shop.brewMethodIds.toSet(),
-    menuRows = drinks.map { drink ->
-        val row = shop.menu.firstOrNull { it.slug.equals(drink.slug, ignoreCase = true) }
-        MenuRowState(drink.slug, drink.name, row?.availability ?: Availability.Unknown, row?.price?.let(::priceText).orEmpty())
-    },
+    menuRows = menuRows(drinks, shop.menu.map { MenuEntry(it.slug, it.availability, it.price) }),
     retainedMenuPhotos = shop.menuPhotos,
 )
 
@@ -171,12 +169,20 @@ private fun ChangeEditorState.fromRequest(request: ChangeRequest, shop: ShopSnap
         brewMethodIds = payload.brewMethodIds?.toSet() ?: brewMethodIds,
         retainedMenuPhotos = payload.menu?.retainedPhotoIds?.mapNotNull { menuPhotosById[it] } ?: retainedMenuPhotos,
         uploadedMenuPhotos = payload.menu?.uploaded.orEmpty(),
-        menuRows = payload.menu?.items?.let { items -> drinks.map { drink -> drink.toRow(items.firstOrNull { it.slug.equals(drink.slug, ignoreCase = true) }) } } ?: menuRows,
+        menuRows = payload.menu?.items?.let { items -> menuRows(drinks, items) } ?: menuRows,
     )
 }
 
 private fun DrinkOption.toRow(entry: MenuEntry?) =
     MenuRowState(slug, name, entry?.availability ?: Availability.Unknown, entry?.price?.let(::priceText).orEmpty())
+
+/** A row per drink of the catalog; an entry whose drink left the catalog keeps its row (named by its slug) instead of vanishing silently. */
+private fun menuRows(drinks: List<DrinkOption>, entries: List<MenuEntry>): List<MenuRowState> {
+    val known = drinks.map { drink -> drink.toRow(entries.firstOrNull { it.slug.equals(drink.slug, ignoreCase = true) }) }
+    val retired = entries.filter { entry -> drinks.none { it.slug.equals(entry.slug, ignoreCase = true) } }
+        .map { entry -> MenuRowState(entry.slug, entry.slug, entry.availability, entry.price?.let(::priceText).orEmpty()) }
+    return known + retired
+}
 
 private fun priceText(value: Double): String = if (value % 1.0 == 0.0) value.toInt().toString() else value.toString()
 
