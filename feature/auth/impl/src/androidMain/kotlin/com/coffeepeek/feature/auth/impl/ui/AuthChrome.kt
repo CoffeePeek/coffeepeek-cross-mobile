@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.offset
@@ -29,16 +30,17 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -47,9 +49,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.layout.layout
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.selected
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
@@ -124,6 +127,7 @@ internal fun AuthScaffold(
                             .background(cardBackground)
                             .border(1.dp, cardBorder, RoundedCornerShape(CardRadius))
                             .padding(start = AuthCardPadding, end = AuthCardPadding, top = if (mascot) 48.dp else AuthCardPadding, bottom = AuthCardPadding),
+                        verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing4),
                         content = content,
                     )
                     if (mascot) {
@@ -315,29 +319,83 @@ internal fun AuthPrimaryButton(
     }
 }
 
+/** The secondary action under the primary button: a text link at the end of a row at least 48 dp high. */
 @Composable
-internal fun AuthFooterLink(text: String, onClick: () -> Unit, modifier: Modifier = Modifier) {
-    Row(modifier.fillMaxWidth().padding(top = 14.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+internal fun AuthFooterRow(text: String, onClick: () -> Unit, modifier: Modifier = Modifier) {
+    Row(modifier.fillMaxWidth().heightIn(min = 48.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
         Spacer(Modifier.size(1.dp))
         Text(
             text = text,
             style = MaterialTheme.typography.labelMedium.copy(fontSize = 13.sp, fontWeight = FontWeight.SemiBold),
             color = CoffeePeekColors.Primary,
-            modifier = Modifier.clip(RoundedCornerShape(8.dp)).clickable(onClick = onClick).padding(horizontal = 8.dp, vertical = 8.dp),
+            modifier = Modifier.clip(RoundedCornerShape(8.dp)).clickable(onClick = onClick).padding(vertical = 8.dp),
         )
     }
 }
 
-/** Social buttons use the card's side padding so the label fits on a narrow phone. */
+/** The title of a step and, under it, its description: 8 dp apart; the card spaces everything else by 16 dp. */
 @Composable
-internal fun SocialRow(content: @Composable () -> Unit) {
-    val inset = AuthCardPadding - 16.dp
+internal fun AuthHeading(title: String, subtitle: String? = null) {
+    Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing2)) {
+        Text(
+            text = title,
+            style = MaterialTheme.typography.headlineMedium.copy(fontSize = 26.sp, fontWeight = FontWeight.Bold, letterSpacing = (-0.52).sp, lineHeight = 28.6.sp),
+            color = MaterialTheme.colorScheme.onSurface,
+        )
+        if (subtitle != null) {
+            Text(
+                text = subtitle,
+                style = MaterialTheme.typography.bodyMedium.copy(fontSize = 14.sp, lineHeight = 21.sp),
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+    }
+}
+
+/** The registration progress: three equal columns inside the card's content width, the labels wrap instead of being cut. */
+@Composable
+internal fun AuthStepper(activeIndex: Int, steps: List<String>, modifier: Modifier = Modifier) {
+    Row(modifier.fillMaxWidth()) {
+        steps.forEachIndexed { index, label ->
+            Column(
+                modifier = Modifier.weight(1f).semantics(mergeDescendants = true) { selected = index == activeIndex },
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    HorizontalDivider(Modifier.weight(1f), color = if (index == 0) Color.Transparent else MaterialTheme.colorScheme.outline)
+                    StepMarker(index, activeIndex)
+                    HorizontalDivider(Modifier.weight(1f), color = if (index == steps.lastIndex) Color.Transparent else MaterialTheme.colorScheme.outline)
+                }
+                Text(
+                    text = label,
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp),
+                    style = MaterialTheme.typography.labelSmall.copy(fontSize = 11.sp, fontWeight = FontWeight.SemiBold),
+                    color = if (index <= activeIndex) CoffeePeekColors.Primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.Center,
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun StepMarker(index: Int, activeIndex: Int) {
+    val active = index <= activeIndex
     Box(
-        Modifier.fillMaxWidth().layout { measurable, constraints ->
-            val insetPx = inset.roundToPx()
-            val width = constraints.maxWidth + insetPx * 2
-            val placeable = measurable.measure(constraints.copy(minWidth = width, maxWidth = width))
-            layout(constraints.maxWidth, placeable.height) { placeable.placeRelative(-insetPx, 0) }
-        },
-    ) { content() }
+        modifier = Modifier.size(24.dp).clip(CircleShape)
+            .background(if (active) CoffeePeekColors.Primary else Color.Transparent)
+            .border(1.dp, if (active) CoffeePeekColors.Primary else MaterialTheme.colorScheme.outline, CircleShape),
+        contentAlignment = Alignment.Center,
+    ) {
+        if (index < activeIndex) {
+            Icon(CoffeePeekIcons.Check, contentDescription = null, tint = CoffeePeekColors.DarkTextOnPrimary, modifier = Modifier.size(14.dp))
+        } else {
+            Text(
+                text = "${index + 1}",
+                style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
+                color = if (active) CoffeePeekColors.DarkTextOnPrimary else MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+    }
 }
