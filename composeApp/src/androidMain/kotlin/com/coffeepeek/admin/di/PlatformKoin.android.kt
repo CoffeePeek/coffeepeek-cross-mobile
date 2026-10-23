@@ -12,6 +12,7 @@ import com.coffeepeek.admin.di.community.androidCommunityScreenRenderer
 import com.coffeepeek.api.CoffeePeekClient
 import java.time.OffsetDateTime
 import com.coffeepeek.admin.di.contributions.androidContributionsScreenRenderer
+import com.coffeepeek.admin.di.discovery.androidDiscoveryScreenRenderer
 import com.coffeepeek.feature.contributions.data.repository.createContributionsRepository
 import com.coffeepeek.admin.di.profile.androidAccountScreenRenderer
 import com.coffeepeek.admin.di.profile.androidOwnProfileScreenRenderer
@@ -81,5 +82,6 @@ internal fun initAndroidKoin(extraModules: List<org.koin.core.module.Module> = e
                 createContributionsRepository(gateway.client, gateway.uploadClient) { OffsetDateTime.now().offset.totalSeconds / 60 }, get(), get(),
             )
         },
+        discoveryRendererFactory = { androidDiscoveryScreenRenderer(get<CoffeePeekClient>().client, get(), get(), get(), get(), get()) },
     )
 }

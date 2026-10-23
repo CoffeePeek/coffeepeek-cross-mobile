@@ -3,6 +3,7 @@ package com.coffeepeek.feature.discovery.impl.ui
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
@@ -10,6 +11,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.core.designsystem.component.CoffeePeekLikeButton
 import com.coffeepeek.core.designsystem.component.CoffeePeekShopCard
+import com.coffeepeek.core.designsystem.component.CoffeePeekShopInfoChip
 import com.coffeepeek.feature.discovery.api.DiscoveryExposure
 import com.coffeepeek.feature.discovery.api.DiscoveryHost
 import com.coffeepeek.feature.discovery.domain.model.ShopKind
@@ -33,7 +35,7 @@ internal fun ShopRow(shop: ShopSummary, host: DiscoveryHost, favoritePending: Bo
     CoffeePeekShopCard(
         title = shop.title,
         kindLabel = kind,
-        modifier = host.exposure(modifier, DiscoveryExposure.ShopCatalog),
+        modifier = modifier,
         rating = shop.rating,
         ratingText = shop.rating?.let { String.format(Locale.getDefault(), "%.1f", it) }.orEmpty(),
         ratingCount = shop.checkInCount,
@@ -52,7 +54,12 @@ internal fun ShopRow(shop: ShopSummary, host: DiscoveryHost, favoritePending: Bo
         roasterLogoCount = shop.roasterLogos.size,
         roasterLogo = { index -> host.roasterLogo(shop.title, shop.roasterLogos[index]) },
         brewMethods = shop.brewMethods.takeIf { it.isNotEmpty() }?.let { methods ->
-            { Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) { methods.forEach { host.brewMethodIcon(it) } } }
+            {
+                Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                    methods.take(2).forEach { method -> CoffeePeekShopInfoChip(method, Modifier.widthIn(max = 112.dp), icon = { host.brewMethodIcon(method) }) }
+                    if (methods.size > 2) CoffeePeekShopInfoChip("+${methods.size - 2}")
+                }
+            }
         },
         favorite = {
             CoffeePeekLikeButton(

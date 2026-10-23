@@ -48,8 +48,8 @@
     <string name="discovery_retry">Попробовать снова</string>
     <string name="discovery_empty">Ничего не найдено</string>
     <string name="discovery_empty_hint">Измените запрос или сбросьте фильтры</string>
-    <string name="discovery_suggestion_title">Не нашли?</string>
-    <string name="discovery_suggestion_description">Расскажите нам о кофейне, которой ещё нет в каталоге</string>
+    <string name="discovery_suggestion_title">Не нашли нужную кофейню?</string>
+    <string name="discovery_suggestion_description">Предложите добавить её в CoffeePeek — после проверки она появится в каталоге.</string>
     <string name="discovery_suggestion_action">Добавить кофейню</string>
 
     <string name="discovery_map_search_placeholder">Поиск кофейни…</string>

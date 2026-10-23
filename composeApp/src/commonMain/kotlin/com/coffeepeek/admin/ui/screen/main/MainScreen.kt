@@ -190,7 +190,7 @@ internal fun ComposeMainScreen(isLoggedIn: Boolean) {
                     entry.LocalOwnersProvider(feedStateHolder) {
                         RetainedContent(visible = entry in visibleEntries) {
                             Box(Modifier.fillMaxSize().graphicsLayer { translationX = size.width * feedSlide }) {
-                                DiscoveryTabContent(onMapExpandedChange = { isFeedMapExpanded = it })
+                                koinInject<DiscoveryScreenRenderer>().Tab(onMapExpandedChange = { isFeedMapExpanded = it })
                             }
                         }
                     }

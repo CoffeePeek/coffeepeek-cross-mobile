@@ -263,7 +263,7 @@ internal class MapViewModel(
             delay(SEARCH_DEBOUNCE_MS)
             val cityId = currentState.cityId
             val keys = if (cityId != null) listOf("city") else emptyList()
-            val run = analytics.mapSearchStarted(text.trim(), keys, cityId)
+            val run = analytics.mapSearchStarted(text.trim(), keys, cityId, criteria = text.trim() to cityId)
             val result = repository.search(ShopQuery(text.trim(), DiscoveryFilters(cityId = cityId), page = 1, pageSize = SUGGESTION_COUNT))
             currentCoroutineContext().ensureActive()
             if (currentState.query != text) return@launch

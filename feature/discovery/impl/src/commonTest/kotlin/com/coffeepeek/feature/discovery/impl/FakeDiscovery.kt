@@ -73,7 +73,7 @@ internal class RecordingAnalytics : DiscoveryAnalytics {
     val opened = mutableListOf<Int?>()
     var filtersOpened = 0
 
-    override fun searchStarted(text: String, filterKeys: List<String>, nearby: Boolean, citySlug: String?): SearchRun {
+    override fun searchStarted(text: String, filterKeys: List<String>, nearby: Boolean, citySlug: String?, criteria: Any): SearchRun {
         searches += "$text|${filterKeys.joinToString(",")}|$nearby|$citySlug"
         return object : SearchRun {
             override fun results(count: Int) { results += count }
@@ -93,7 +93,7 @@ internal class RecordingAnalytics : DiscoveryAnalytics {
     val mapSearchFailures = mutableListOf<Throwable>()
     val mapOpened = mutableListOf<Boolean>()
     override fun mapInteracted(action: MapInteraction, resultCount: Int?, durationMs: Long?, enabled: Boolean?) { interactions += action }
-    override fun mapSearchStarted(text: String, filterKeys: List<String>, citySlug: String?): SearchRun {
+    override fun mapSearchStarted(text: String, filterKeys: List<String>, citySlug: String?, criteria: Any): SearchRun {
         mapSearches += "$text|${filterKeys.joinToString(",")}|$citySlug"
         return object : SearchRun {
             override fun results(count: Int) { mapSearchResults += count }

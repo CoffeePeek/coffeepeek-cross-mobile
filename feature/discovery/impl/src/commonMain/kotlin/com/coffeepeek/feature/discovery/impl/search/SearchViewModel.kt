@@ -238,7 +238,7 @@ internal class SearchViewModel(
             val nearby = filters.nearbyOnly && origin != null
             val run = if (reset) {
                 requestedText = searchText(state.query)
-                analytics.searchStarted(state.query.trim(), filters.analyticsValues().keys.toList(), nearby, citySlug = filters.cityId)
+                analytics.searchStarted(state.query.trim(), filters.analyticsValues().keys.toList(), nearby, citySlug = filters.cityId, criteria = state.query.normalizedQuery() to filters)
             } else null
             // Nearby ignores the city: the distance is the scope.
             val query = ShopQuery(state.query, if (nearby) filters.copy(cityId = null) else filters, origin.takeIf { nearby }, page, PAGE_SIZE)
@@ -293,3 +293,5 @@ internal class SearchViewModel(
 }
 
 private fun Set<String>.toggle(id: String): Set<String> = if (id in this) this - id else this + id
+
+private fun String.normalizedQuery(): String = trim().replace(Regex("\\s+"), " ")
