@@ -1,21 +1,21 @@
 package com.coffeepeek.feature.shop.impl.ui.compose.component
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.key
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.Alignment
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
@@ -73,30 +73,34 @@ internal fun ShopPublicCheckInsSection(
             val available = maxWidth - contentPadding * 2
             val width = if (!isLoggedIn && multiple) (available - spacing - 56.dp).coerceAtLeast(1.dp).coerceAtMost(320.dp)
                 else if (multiple) available.coerceAtMost(320.dp) else available
-            LazyRow(horizontalArrangement = Arrangement.spacedBy(spacing), contentPadding = PaddingValues(horizontal = contentPadding)) {
-                itemsIndexed(checkIns.take(3), key = { _, item -> item.id }) { index, checkIn ->
-                    val hidden = !isLoggedIn && index > 0
-                    if (hidden) {
-                        ShopCheckInGuestPlaceholder(Modifier.width(width))
-                        return@itemsIndexed
+            // At most three cards, so a plain scrolling row: all of them stay composed, the row keeps the height of the tallest card, and a card that
+            // leaves or enters the screen no longer makes the page below jump (a lazy row measures only the visible cards).
+            Row(
+                Modifier.horizontalScroll(rememberScrollState()).padding(horizontal = contentPadding),
+                horizontalArrangement = Arrangement.spacedBy(spacing),
+            ) {
+                checkIns.take(3).forEachIndexed { index, checkIn ->
+                    key(checkIn.id) {
+                        val hidden = !isLoggedIn && index > 0
+                        if (hidden) ShopCheckInGuestPlaceholder(Modifier.width(width))
+                        else ShopPublicCheckInItem(
+                            checkIn = checkIn,
+                            width = width,
+                            shopTitle = shopTitle,
+                            isLoggedIn = isLoggedIn,
+                            currentUserId = currentUserId,
+                            isOwnCheckIn = checkIn.id in ownCheckInIds,
+                            isVoting = pendingVoteId == checkIn.id,
+                            hasPendingVote = pendingVoteId != null,
+                            isRefreshing = isRefreshing,
+                            formatDate = formatDate,
+                            onOpenPhoto = onOpenPhoto,
+                            onVote = onVote,
+                            onReport = onReport,
+                            onOpenAuthor = onOpenAuthor,
+                            onBlockAuthor = onBlockAuthor,
+                        )
                     }
-                    ShopPublicCheckInItem(
-                        checkIn = checkIn,
-                        width = width,
-                        shopTitle = shopTitle,
-                        isLoggedIn = isLoggedIn,
-                        currentUserId = currentUserId,
-                        isOwnCheckIn = checkIn.id in ownCheckInIds,
-                        isVoting = pendingVoteId == checkIn.id,
-                        hasPendingVote = pendingVoteId != null,
-                        isRefreshing = isRefreshing,
-                        formatDate = formatDate,
-                        onOpenPhoto = onOpenPhoto,
-                        onVote = onVote,
-                        onReport = onReport,
-                        onOpenAuthor = onOpenAuthor,
-                        onBlockAuthor = onBlockAuthor,
-                    )
                 }
             }
           }
