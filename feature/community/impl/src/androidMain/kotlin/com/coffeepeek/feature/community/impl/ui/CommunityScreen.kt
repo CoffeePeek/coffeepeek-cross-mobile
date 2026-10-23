@@ -27,6 +27,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.key
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -44,6 +45,7 @@ import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.repeatOnLifecycle
@@ -53,12 +55,15 @@ import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.feature.authorblocking.api.AuthorBlockActions
 import com.coffeepeek.feature.authorblocking.api.AuthorReference
+import com.coffeepeek.feature.community.api.CommunityFloating
 import com.coffeepeek.feature.community.api.CommunityHost
 import com.coffeepeek.feature.community.api.ExposureKind
 import com.coffeepeek.feature.community.api.FeedItemAction
 import com.coffeepeek.feature.community.api.FeedTrigger
 import com.coffeepeek.feature.community.domain.model.CommunityPost
+import com.coffeepeek.feature.community.domain.model.PostVisibility
 import com.coffeepeek.feature.community.impl.R
+import com.coffeepeek.feature.community.impl.timeline.ActionMessage
 import com.coffeepeek.feature.community.impl.timeline.CommunityAction
 import com.coffeepeek.feature.community.impl.timeline.CommunityEvent
 import com.coffeepeek.feature.community.impl.timeline.CommunityState
@@ -73,6 +78,7 @@ internal class CommunityCallbacks(
     val onSignIn: () -> Unit,
     val onOpenAuthor: (slug: String, name: String, avatarUrl: String?) -> Unit,
     val onOpenShop: (slug: String) -> Unit,
+    val onEditHome: (id: String) -> Unit,
 )
 
 @Composable
@@ -83,27 +89,38 @@ internal fun CommunityScreen(
     callbacks: CommunityCallbacks,
     modifier: Modifier = Modifier,
     bottomClearance: Dp = 0.dp,
-    floatingAction: @Composable BoxScope.() -> Unit = {},
+    floatingAction: @Composable BoxScope.(CommunityFloating) -> Unit = {},
 ) {
     val state by vm.state.collectAsStateWithLifecycle()
     val snackbar = remember { SnackbarHostState() }
     val lifecycle = LocalLifecycleOwner.current.lifecycle
     val currentCallbacks by rememberUpdatedState(callbacks)
-    val voteFailed = stringResource(R.string.community_vote_failed)
-    val currentVoteFailed by rememberUpdatedState(voteFailed)
+    val messages = MessageTexts(
+        stringResource(R.string.community_vote_failed), stringResource(R.string.community_visibility_failed), stringResource(R.string.community_report_sent),
+        stringResource(R.string.community_edit_saved), stringResource(R.string.community_edit_sent_for_review),
+    )
+    val currentMessages by rememberUpdatedState(messages)
     LaunchedEffect(vm, lifecycle) {
         lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
             vm.events.collect { event ->
                 when (event) {
                     CommunityEvent.SignInRequested -> currentCallbacks.onSignIn()
-                    is CommunityEvent.Message -> snackbar.showSnackbar(
-                        when (event.message.kind) { MessageKind.VoteFailed -> event.message.serverMessage ?: currentVoteFailed },
-                    )
+                    is CommunityEvent.Message -> snackbar.showSnackbar(currentMessages.text(event.message))
                 }
             }
         }
     }
     CommunityContent(state, vm::onAction, host, blockActions, callbacks, snackbar, modifier, bottomClearance, floatingAction)
+}
+
+private class MessageTexts(val vote: String, val visibility: String, val reported: String, val saved: String, val review: String) {
+    fun text(message: ActionMessage): String = when (message.kind) {
+        MessageKind.VoteFailed -> message.serverMessage ?: vote
+        MessageKind.VisibilityFailed -> message.serverMessage ?: visibility
+        MessageKind.ReportSent -> reported
+        MessageKind.EditSaved -> saved
+        MessageKind.EditSentForReview -> review
+    }
 }
 
 @Composable
@@ -116,9 +133,14 @@ internal fun CommunityContent(
     snackbar: SnackbarHostState,
     modifier: Modifier = Modifier,
     bottomClearance: Dp = 0.dp,
-    floatingAction: @Composable BoxScope.() -> Unit = {},
+    floatingAction: @Composable BoxScope.(CommunityFloating) -> Unit = {},
 ) {
     val listState = rememberLazyListState()
+    // A home editor opened from a post: the list reloads when the user comes back.
+    var homeEditorOpened by rememberSaveable { mutableStateOf(false) }
+    LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
+        if (homeEditorOpened) { homeEditorOpened = false; onAction(CommunityAction.Refresh()) }
+    }
     var preview by remember { mutableStateOf<PhotoPreview?>(null) }
     var displayedGeneration by rememberSaveable { mutableStateOf(state.sessionGeneration) }
     host.feedViewed(state.firstPageCount, state.timeline == CommunityTimeline.Public)
@@ -140,6 +162,8 @@ internal fun CommunityContent(
     preview?.takeIf { it.generation == state.sessionGeneration }?.let {
         host.photoViewer(it.thumbnails, it.originals, it.index) { preview = null }
     }
+    if (state.editing != null) key(state.sessionGeneration, state.editing.source.id) { EditSheet(state, onAction) }
+    if (state.reportingId != null) ReportSheet(state, onAction)
     Box(modifier.fillMaxSize()) {
         Scaffold(
             containerColor = MaterialTheme.colorScheme.background,
@@ -177,9 +201,11 @@ internal fun CommunityContent(
                                 PostCard(
                                     post = post,
                                     isOwn = state.owns(post),
+                                    publicTimeline = state.timeline == CommunityTimeline.Public,
+                                    changingVisibility = state.changingVisibilityId == post.id,
                                     showHelpfulCount = state.timeline == CommunityTimeline.Public || post.helpfulCount > 0,
                                     enabled = !state.isMutating,
-                                    actions = postActions(post, state, onAction, callbacks, blockActions) { thumbs, originals, photoIndex ->
+                                    actions = postActions(post, state, onAction, callbacks, blockActions, { homeEditorOpened = true }) { thumbs, originals, photoIndex ->
                                         preview = PhotoPreview(state.sessionGeneration, thumbs, originals, photoIndex)
                                     },
                                     host = host,
@@ -202,7 +228,7 @@ internal fun CommunityContent(
                 }
             }
         }
-        floatingAction()
+        floatingAction(CommunityFloating(state.isLoggedIn, state.sessionGeneration) { onAction(CommunityAction.Refresh()) })
     }
 }
 
@@ -212,6 +238,7 @@ private fun postActions(
     onAction: (CommunityAction) -> Unit,
     callbacks: CommunityCallbacks,
     blockActions: AuthorBlockActions,
+    onHomeEditorOpened: () -> Unit,
     onPhoto: (List<String>, List<String>, Int) -> Unit,
 ): PostCardActions {
     val isOwn = state.owns(post)
@@ -229,6 +256,12 @@ private fun postActions(
             onAction(CommunityAction.ItemInteracted(FeedItemAction.Photo, post.id))
             onPhoto(post.photos.thumbnails, post.photos.originals, index)
         },
+        onEdit = {
+            if (post.isHome) { onHomeEditorOpened(); callbacks.onEditHome(post.id) } else onAction(CommunityAction.Edit(post.id))
+        }.takeIf { isOwn },
+        onHide = { onAction(CommunityAction.ToggleVisibility(post.id)) }.takeIf { isOwn && post.visibility == PostVisibility.Public },
+        onReport = { onAction(CommunityAction.OpenReport(post.id)) }.takeIf { public && !isOwn },
+        onPublish = { onAction(CommunityAction.ToggleVisibility(post.id)) }.takeIf { isOwn && post.visibility == PostVisibility.Private },
     )
 }
 
@@ -257,7 +290,7 @@ private fun ErrorBlock(onRetry: () -> Unit, retryLabel: String, modifier: Modifi
     CommunityContent(
         CommunityState(isLoggedIn = true, items = listOf(previewPost(), previewPost().copy(id = "second", note = "Вторая запись", photos = com.coffeepeek.feature.community.domain.model.PostPhotos.None))),
         {}, CommunityHost(), object : AuthorBlockActions { override fun requestBlock(author: AuthorReference) {}; override fun requestUnblock(author: AuthorReference) {} },
-        CommunityCallbacks({}, { _, _, _ -> }, {}), SnackbarHostState(),
+        CommunityCallbacks({}, { _, _, _ -> }, {}, {}), SnackbarHostState(),
     )
 }
 
@@ -265,6 +298,6 @@ private fun ErrorBlock(onRetry: () -> Unit, retryLabel: String, modifier: Modifi
     CommunityContent(
         CommunityState(isLoggedIn = true, error = com.coffeepeek.feature.community.impl.timeline.TimelineError.LoadFailed),
         {}, CommunityHost(), object : AuthorBlockActions { override fun requestBlock(author: AuthorReference) {}; override fun requestUnblock(author: AuthorReference) {} },
-        CommunityCallbacks({}, { _, _, _ -> }, {}), SnackbarHostState(),
+        CommunityCallbacks({}, { _, _, _ -> }, {}, {}), SnackbarHostState(),
     )
 }

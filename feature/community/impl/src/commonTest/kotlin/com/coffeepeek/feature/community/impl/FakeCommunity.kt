@@ -4,11 +4,13 @@ import com.coffeepeek.feature.authorblocking.api.AuthorVisibility
 import com.coffeepeek.feature.authorblocking.api.AuthorVisibilitySnapshot
 import com.coffeepeek.feature.community.api.CommunityAccount
 import com.coffeepeek.feature.community.api.CommunityAnalytics
+import com.coffeepeek.feature.community.api.ConsumedDrinks
 import com.coffeepeek.feature.community.api.EditField
 import com.coffeepeek.feature.community.api.FeedAction
 import com.coffeepeek.feature.community.api.FeedItemAction
 import com.coffeepeek.feature.community.api.FeedTrigger
 import com.coffeepeek.feature.community.domain.model.CommunityPost
+import com.coffeepeek.feature.community.domain.model.DrinkOption
 import com.coffeepeek.feature.community.domain.model.FeedEntry
 import com.coffeepeek.feature.community.domain.model.FeedFilters
 import com.coffeepeek.feature.community.domain.model.FeedPage
@@ -34,6 +36,9 @@ internal class FakeRepository : CommunityRepository {
     var feed: suspend (Int, String?, FeedFilters) -> Result<FeedPage> = { _, _, _ -> Result.success(FeedPage(emptyList(), null)) }
     var mine: suspend (Int, Int) -> Result<MyPostsPage> = { _, _ -> Result.success(MyPostsPage(emptyList(), false)) }
     var helpful: suspend (String, Boolean) -> Result<HelpfulVote> = { _, _ -> error("Unused") }
+    var update: suspend (String, PostEdit) -> Result<CommunityPost> = { _, _ -> error("Unused") }
+    var visibility: suspend (String, PostVisibility) -> Result<CommunityPost> = { _, _ -> error("Unused") }
+    var report: suspend (String, String) -> Result<Unit> = { _, _ -> error("Unused") }
     val feedRequests = mutableListOf<Triple<Int, String?, FeedFilters>>()
     override suspend fun feed(pageSize: Int, cursor: String?, filters: FeedFilters): Result<FeedPage> {
         feedRequests += Triple(pageSize, cursor, filters)
@@ -41,9 +46,9 @@ internal class FakeRepository : CommunityRepository {
     }
     override suspend fun myPosts(page: Int, pageSize: Int) = mine(page, pageSize)
     override suspend fun setHelpful(id: String, helpful: Boolean) = this.helpful(id, helpful)
-    override suspend fun update(id: String, edit: PostEdit): Result<CommunityPost> = error("Unused")
-    override suspend fun setVisibility(id: String, visibility: PostVisibility): Result<CommunityPost> = error("Unused")
-    override suspend fun report(id: String, text: String): Result<Unit> = error("Unused")
+    override suspend fun update(id: String, edit: PostEdit) = update.invoke(id, edit)
+    override suspend fun setVisibility(id: String, visibility: PostVisibility) = this.visibility(id, visibility)
+    override suspend fun report(id: String, text: String) = report.invoke(id, text)
 }
 
 internal class FakeAccount(initial: String? = null) : CommunityAccount {
@@ -74,4 +79,10 @@ internal class FakeAuthors(ready: Boolean = true) : AuthorVisibility {
     var refreshes = 0
     var refresh: suspend () -> Result<Unit> = { visibility.value = AuthorVisibilitySnapshot(revision = visibility.value.revision + 1); Result.success(Unit) }
     override suspend fun refresh(): Result<Unit> { refreshes++; return refresh.invoke() }
+}
+
+internal class FakeDrinks : ConsumedDrinks {
+    var load: suspend () -> Result<List<DrinkOption>> = { Result.success(listOf(DrinkOption("cappuccino", "Капучино", "Cappuccino"), DrinkOption("other", "Другое", "Other"))) }
+    var loads = 0
+    override suspend fun load(): Result<List<DrinkOption>> { loads++; return load.invoke() }
 }

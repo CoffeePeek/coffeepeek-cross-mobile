@@ -23,6 +23,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -57,6 +58,8 @@ import com.coffeepeek.feature.community.domain.model.PostModeration
 import com.coffeepeek.feature.community.domain.model.PostPhotos
 import com.coffeepeek.feature.community.domain.model.PostRating
 import com.coffeepeek.feature.community.domain.model.PostVisibility
+import com.coffeepeek.feature.community.domain.rules.PublicationLabel
+import com.coffeepeek.feature.community.domain.rules.publicationLabel
 import com.coffeepeek.feature.community.impl.R
 import kotlin.math.roundToInt
 
@@ -67,20 +70,27 @@ internal class PostCardActions(
     val onHelpful: (() -> Unit)?,
     val onBlock: (() -> Unit)?,
     val onPhoto: (index: Int) -> Unit,
+    val onEdit: (() -> Unit)? = null,
+    val onHide: (() -> Unit)? = null,
+    val onReport: (() -> Unit)? = null,
+    /** The owner publishes a private post. */
+    val onPublish: (() -> Unit)? = null,
 )
 
 @Composable
 internal fun PostCard(
     post: CommunityPost,
     isOwn: Boolean,
+    publicTimeline: Boolean,
     showHelpfulCount: Boolean,
     enabled: Boolean,
     actions: PostCardActions,
     host: CommunityHost,
     modifier: Modifier = Modifier,
+    changingVisibility: Boolean = false,
 ) {
     Column(modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing2)) {
-        PostHeader(post, isOwn, actions, enabled, host)
+        PostHeader(post, isOwn, actions, enabled, changingVisibility, host)
         if (post.isHome) {
             post.home?.let { recipe ->
                 recipe.beanName?.takeIf(String::isNotBlank)?.let { Text(it, style = MaterialTheme.typography.titleMedium) }
@@ -90,19 +100,28 @@ internal fun PostCard(
         } else PostHeading(post.shopName.ifBlank { stringResource(R.string.community_shop_default) }, post.rating, actions.onShop)
         if (post.note.isNotBlank()) Text(post.note, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurface)
         PostPhotoStrip(post.photos, actions.onPhoto, host)
+        if (!publicTimeline) Text(publicationText(post.publicationLabel()), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        if (isOwn && post.moderation == PostModeration.Rejected) post.rejectionReason?.takeIf(String::isNotBlank)?.let {
+            Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
+        }
         val drinkName = post.drink?.displayName(Locale.current.language)
-        if (showHelpfulCount || drinkName != null) Row(
+        if (showHelpfulCount || drinkName != null || actions.onPublish != null) Row(
             Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing2),
         ) {
             if (showHelpfulCount) HelpfulButton(post.helpfulCount, post.isHelpfulByCurrentUser, actions.onHelpful)
             Spacer(Modifier.weight(1f))
+            actions.onPublish?.let { publish ->
+                TextButton(onClick = publish, enabled = enabled) {
+                    Text(stringResource(if (changingVisibility) R.string.community_saving else R.string.community_publish))
+                }
+            }
             drinkName?.let { DrinkLabel(it) }
         }
     }
 }
 
 @Composable
-private fun PostHeader(post: CommunityPost, isOwn: Boolean, actions: PostCardActions, enabled: Boolean, host: CommunityHost) {
+private fun PostHeader(post: CommunityPost, isOwn: Boolean, actions: PostCardActions, enabled: Boolean, hiding: Boolean, host: CommunityHost) {
     val name = post.author.name.ifBlank { stringResource(if (isOwn) R.string.community_you else R.string.community_user) }
     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
         val openLabel = stringResource(R.string.community_open_profile, name)
@@ -120,7 +139,7 @@ private fun PostHeader(post: CommunityPost, isOwn: Boolean, actions: PostCardAct
                     color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
         }
-        PostMenu(actions.onBlock, enabled)
+        PostMenu(actions, enabled, hiding)
     }
 }
 
@@ -134,10 +153,10 @@ private fun Avatar(name: String, photoUrl: String?, host: CommunityHost) {
     }
 }
 
-/** The overflow menu. 3a offers blocking; edit, hide and report join it with the editing step. */
+/** The overflow menu: block, edit, hide, report — only what this viewer may do with this post. */
 @Composable
-private fun PostMenu(onBlock: (() -> Unit)?, enabled: Boolean) {
-    if (onBlock == null) return
+private fun PostMenu(actions: PostCardActions, enabled: Boolean, hiding: Boolean) {
+    if (actions.onBlock == null && actions.onEdit == null && actions.onHide == null && actions.onReport == null) return
     var open by remember { mutableStateOf(false) }
     val label = stringResource(R.string.community_actions)
     Box {
@@ -145,15 +164,43 @@ private fun PostMenu(onBlock: (() -> Unit)?, enabled: Boolean) {
             Icon(CoffeePeekIcons.MoreHorizontal, label, tint = MaterialTheme.colorScheme.onSurfaceVariant)
         }
         DropdownMenu(open, { open = false }) {
-            DropdownMenuItem(
-                text = { Text(stringResource(R.string.community_block_author), color = MaterialTheme.colorScheme.error) },
-                leadingIcon = { Icon(CoffeePeekIcons.Block, null, tint = MaterialTheme.colorScheme.error) },
-                enabled = enabled,
-                onClick = { open = false; onBlock() },
-            )
+            actions.onBlock?.let { block ->
+                DropdownMenuItem(
+                    text = { Text(stringResource(R.string.community_block_author), color = MaterialTheme.colorScheme.error) },
+                    leadingIcon = { Icon(CoffeePeekIcons.Block, null, tint = MaterialTheme.colorScheme.error) },
+                    enabled = enabled, onClick = { open = false; block() },
+                )
+            }
+            actions.onEdit?.let { edit ->
+                DropdownMenuItem(text = { Text(stringResource(R.string.community_edit)) }, leadingIcon = { Icon(CoffeePeekIcons.Edit, null) },
+                    enabled = enabled, onClick = { open = false; edit() })
+            }
+            actions.onHide?.let { hide ->
+                DropdownMenuItem(
+                    text = { Text(stringResource(if (hiding) R.string.community_saving else R.string.community_hide)) },
+                    leadingIcon = { Icon(CoffeePeekIcons.VisibilityOff, null) },
+                    enabled = enabled && !hiding, onClick = { open = false; hide() },
+                )
+            }
+            actions.onReport?.let { report ->
+                DropdownMenuItem(text = { Text(stringResource(R.string.community_report)) }, leadingIcon = { Icon(CoffeePeekIcons.Error, null) },
+                    enabled = enabled, onClick = { open = false; report() })
+            }
         }
     }
 }
+
+@Composable
+private fun publicationText(label: PublicationLabel): String = stringResource(
+    when (label) {
+        PublicationLabel.Private -> R.string.community_label_private
+        PublicationLabel.Pending -> R.string.community_label_pending
+        PublicationLabel.Published -> R.string.community_label_published
+        PublicationLabel.Rejected -> R.string.community_label_rejected
+        PublicationLabel.Public -> R.string.community_label_public
+        PublicationLabel.Unknown -> R.string.community_label_unknown
+    },
+)
 
 @Composable
 private fun PostHeading(shopName: String, rating: PostRating?, onShop: (() -> Unit)?) {
@@ -258,10 +305,10 @@ internal fun previewPost() = CommunityPost(
 )
 
 @PreviewLightDark @Composable private fun PostCardPreview() = CoffeePeekTheme {
-    PostCard(previewPost(), isOwn = false, showHelpfulCount = true, enabled = true, PostCardActions({}, {}, {}, {}, {}), CommunityHost())
+    PostCard(previewPost(), isOwn = false, publicTimeline = true, showHelpfulCount = true, enabled = true, PostCardActions({}, {}, {}, {}, {}), CommunityHost())
 }
 
 @PreviewLightDark @Composable private fun HomePostCardPreview() = CoffeePeekTheme {
     PostCard(previewPost().copy(isHome = true, home = HomePreparation("2026-10-07", "hario-v60", "Эфиопия", 18.0, 150, 4), photos = PostPhotos.None, rating = null),
-        isOwn = true, showHelpfulCount = false, enabled = true, PostCardActions(null, null, null, null, {}), CommunityHost())
+        isOwn = true, publicTimeline = false, showHelpfulCount = false, enabled = true, PostCardActions(null, null, null, null, {}), CommunityHost())
 }
