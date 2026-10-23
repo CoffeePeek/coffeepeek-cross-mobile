@@ -4,8 +4,8 @@ import com.coffeepeek.domain.feature.feed.FeedHomePreparation
 import com.coffeepeek.domain.model.CheckIn
 import com.coffeepeek.domain.model.CheckInModerationState
 import com.coffeepeek.domain.model.CheckInVisibility
-import com.coffeepeek.feature.homecheckin.domain.HomeCheckIn
-import com.coffeepeek.feature.homecheckin.domain.HomeCheckInVisibility
+import com.coffeepeek.legacy.homecheckin.domain.HomeCheckIn
+import com.coffeepeek.legacy.homecheckin.domain.HomeCheckInVisibility
 
 internal fun HomeCheckIn.toTimelineCheckIn(): CheckIn = CheckIn(
     id = id, shopId = "", shopName = "", note = text.orEmpty(), createdAt = createdAtUtc,
