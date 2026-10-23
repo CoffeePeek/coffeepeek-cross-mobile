@@ -47,6 +47,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.layout
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.SpanStyle
@@ -325,4 +326,18 @@ internal fun AuthFooterLink(text: String, onClick: () -> Unit, modifier: Modifie
             modifier = Modifier.clip(RoundedCornerShape(8.dp)).clickable(onClick = onClick).padding(horizontal = 8.dp, vertical = 8.dp),
         )
     }
+}
+
+/** Social buttons use the card's side padding so the label fits on a narrow phone. */
+@Composable
+internal fun SocialRow(content: @Composable () -> Unit) {
+    val inset = AuthCardPadding - 16.dp
+    Box(
+        Modifier.fillMaxWidth().layout { measurable, constraints ->
+            val insetPx = inset.roundToPx()
+            val width = constraints.maxWidth + insetPx * 2
+            val placeable = measurable.measure(constraints.copy(minWidth = width, maxWidth = width))
+            layout(constraints.maxWidth, placeable.height) { placeable.placeRelative(-insetPx, 0) }
+        },
+    ) { content() }
 }

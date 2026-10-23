@@ -63,4 +63,13 @@
     <string name="auth_register_failed">Ошибка при попытке создания учетной записи, попробуйте позже!</string>
     <string name="auth_password_too_short_registration">Пароль должен содержать как минимум 8 символов</string>
     <string name="auth_check_failed">Попробуйте позже!</string>
+
+    <string name="auth_or">ИЛИ</string>
+    <string name="auth_sign_in_google">Войти через Google</string>
+    <string name="auth_social_account_exists">Аккаунт с этим email уже существует. Используйте способ входа, с которым вы регистрировались.</string>
+    <string name="auth_social_email_not_verified">Google не передал подтверждённый email. Разрешите доступ к email и попробуйте ещё раз.</string>
+    <string name="auth_social_generic">Не удалось войти через Google. Попробуйте ещё раз.</string>
+    <string name="auth_social_diag_domain">; домен %1$s</string>
+    <string name="auth_social_diag_oauth">; OAuth %1$s</string>
+    <string name="auth_social_diag">%1$s (код %2$s%3$s%4$s)</string>
 </resources>

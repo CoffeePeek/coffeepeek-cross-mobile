@@ -6,6 +6,8 @@ import com.coffeepeek.feature.auth.api.AuthEntry
 import com.coffeepeek.feature.auth.api.SignInMethod
 import com.coffeepeek.feature.auth.domain.AuthRepository
 import com.coffeepeek.feature.auth.domain.MIN_LOGIN_PASSWORD_LENGTH
+import com.coffeepeek.feature.auth.domain.SocialProvider
+import com.coffeepeek.feature.auth.domain.classifySocialFailure
 import com.coffeepeek.feature.auth.domain.classifyLoginFailure
 import com.coffeepeek.feature.auth.domain.validateEmail
 import com.coffeepeek.feature.auth.domain.validatePassword
@@ -22,12 +24,16 @@ internal class LoginViewModel(
     override suspend fun handleActionInternal(action: LoginAction) {
         when (action) {
             is LoginAction.EmailChanged -> updateState {
-                copy(email = action.value, failure = null, emailIssue = emailIssue?.let { validateEmail(action.value) })
+                copy(email = action.value, failure = null, socialFailure = null, emailIssue = emailIssue?.let { validateEmail(action.value) })
             }
             is LoginAction.PasswordChanged -> updateState {
-                copy(password = action.value, failure = null, passwordIssue = passwordIssue?.let { validatePassword(action.value, MIN_LOGIN_PASSWORD_LENGTH) })
+                copy(password = action.value, failure = null, socialFailure = null, passwordIssue = passwordIssue?.let { validatePassword(action.value, MIN_LOGIN_PASSWORD_LENGTH) })
             }
             LoginAction.Submit -> submit()
+            is LoginAction.GoogleToken -> googleSignIn(action.idToken)
+            is LoginAction.GoogleFailed -> updateState {
+                copy(socialFailure = classifySocialFailure(SocialProvider.Google, action.message), failure = null)
+            }
         }
     }
 
@@ -37,7 +43,7 @@ internal class LoginViewModel(
         val password = currentState.password
         val emailIssue = validateEmail(email)
         val passwordIssue = validatePassword(password, MIN_LOGIN_PASSWORD_LENGTH)
-        updateState { copy(emailIssue = emailIssue, passwordIssue = passwordIssue, failure = null) }
+        updateState { copy(emailIssue = emailIssue, passwordIssue = passwordIssue, failure = null, socialFailure = null) }
         if (emailIssue != null || passwordIssue != null) return
 
         updateState { copy(signingIn = true) }
@@ -48,6 +54,22 @@ internal class LoginViewModel(
                     sendEvent(LoginEvent.SignedIn)
                 },
                 onFailure = { error -> updateState { copy(failure = classifyLoginFailure(error.message)) } },
+            )
+        } finally {
+            updateState { copy(signingIn = false) }
+        }
+    }
+
+    private suspend fun googleSignIn(idToken: String) {
+        if (currentState.signingIn) return
+        updateState { copy(signingIn = true, failure = null, socialFailure = null) }
+        try {
+            repository.signInWithGoogle(idToken).fold(
+                onSuccess = { account ->
+                    analytics.signedIn(account.userId, SignInMethod.Google, AuthEntry.Login)
+                    sendEvent(LoginEvent.SignedIn)
+                },
+                onFailure = { error -> updateState { copy(socialFailure = classifySocialFailure(SocialProvider.Google, error.message)) } },
             )
         } finally {
             updateState { copy(signingIn = false) }

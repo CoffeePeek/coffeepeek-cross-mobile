@@ -241,3 +241,11 @@ New module `:feature:auth:impl` (resource prefix `auth_`) with the two screens, 
 - **Improvement (Q8)**: request errors are inline under the form (the server's own message, else the generic text of the step) instead of the global dialog; the loader is on the primary button.
 - **Left for step 4 (device check)**: autofill hints for the registration password (legacy `newPassword`) and the Google password manager prompt; the Apple/Google buttons and the "or" divider on the first step (3c); wiring `onGoToLogin` to `popThenNavigate(Auth)`.
 - **Tests**: `RegisterViewModelTest` 12 (steps, taken e-mail, check failure, consent/register/sign-up order, rejected registration, priority, busy guard, live password validation).
+
+## Step 3c result (Google sign-in in `impl`)
+
+- **api**: `GoogleSignInConfig` (`webClientId`; blank hides the button), entries take it as a factory argument; `RegisterEntry.Content` gained `onSignedIn` for a Google sign-up.
+- **impl androidMain**: `ui/GoogleSignIn.kt` — the Play-services chooser (`rememberGoogleSignIn`, legacy messages kept because the classifier and diagnostic codes read them; a cancelled chooser reports nothing), the white "Войти через Google" button, the "ИЛИ" divider, and `SocialFailureText` (kind text plus `(код GSI-… ; домен …; OAuth …)`). Login shows the button above the fields (legacy order), registration below the e-mail field.
+- **view models**: `GoogleToken` / `GoogleFailed` actions; `socialFailure` state cleared by any edit; success reports `signedIn(userId, Google, Login|Register)`. Errors are inline (Q8), not the global dialog.
+- **Not covered**: a real Google account (live gate). Apple stays iOS/legacy.
+- **Tests**: login +3, registration +2.

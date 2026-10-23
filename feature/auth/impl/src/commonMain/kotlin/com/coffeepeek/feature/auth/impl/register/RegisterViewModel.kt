@@ -2,9 +2,13 @@ package com.coffeepeek.feature.auth.impl.register
 
 import com.coffeepeek.core.presentation.MviViewModel
 import com.coffeepeek.feature.auth.api.AuthAnalytics
+import com.coffeepeek.feature.auth.api.AuthEntry
+import com.coffeepeek.feature.auth.api.SignInMethod
 import com.coffeepeek.feature.auth.domain.AuthRepository
 import com.coffeepeek.feature.auth.domain.MIN_REGISTRATION_PASSWORD_LENGTH
+import com.coffeepeek.feature.auth.domain.SocialProvider
 import com.coffeepeek.feature.auth.domain.checkRegistration
+import com.coffeepeek.feature.auth.domain.classifySocialFailure
 import com.coffeepeek.feature.auth.domain.validateEmail
 import com.coffeepeek.feature.auth.domain.validatePassword
 import kotlinx.coroutines.CancellationException
@@ -16,13 +20,13 @@ import kotlinx.coroutines.CancellationException
 internal class RegisterViewModel(
     private val repository: AuthRepository,
     private val analytics: AuthAnalytics,
-) : MviViewModel<RegisterState, RegisterAction, Nothing>(RegisterState()) {
+) : MviViewModel<RegisterState, RegisterAction, RegisterEvent>(RegisterState()) {
 
     override suspend fun handleActionInternal(action: RegisterAction) {
         when (action) {
-            is RegisterAction.NameChanged -> updateState { copy(name = action.value, reported = null, failure = null) }
+            is RegisterAction.NameChanged -> updateState { copy(name = action.value, reported = null, failure = null, socialFailure = null) }
             is RegisterAction.EmailChanged -> updateState {
-                copy(email = action.value, emailIssue = null, emailTaken = false, failure = null)
+                copy(email = action.value, emailIssue = null, emailTaken = false, failure = null, socialFailure = null)
             }
             is RegisterAction.PasswordChanged -> updateState {
                 copy(
@@ -37,6 +41,10 @@ internal class RegisterViewModel(
             RegisterAction.ChangeEmail -> updateState { copy(step = RegisterStep.Email, passwordIssue = null, reported = null, failure = null) }
             RegisterAction.ContinueWithEmail -> continueWithEmail()
             RegisterAction.Submit -> submit()
+            is RegisterAction.GoogleToken -> googleSignUp(action.idToken)
+            is RegisterAction.GoogleFailed -> updateState {
+                copy(socialFailure = classifySocialFailure(SocialProvider.Google, action.message), failure = null)
+            }
         }
     }
 
@@ -82,6 +90,22 @@ internal class RegisterViewModel(
                     updateState { copy(step = RegisterStep.Success) }
                 },
                 onFailure = { error -> updateState { copy(failure = failureOf(error)) } },
+            )
+        } finally {
+            updateState { copy(busy = false) }
+        }
+    }
+
+    private suspend fun googleSignUp(idToken: String) {
+        if (currentState.busy) return
+        updateState { copy(busy = true, failure = null, socialFailure = null) }
+        try {
+            repository.signInWithGoogle(idToken).fold(
+                onSuccess = { account ->
+                    analytics.signedIn(account.userId, SignInMethod.Google, AuthEntry.Register)
+                    sendEvent(RegisterEvent.SignedIn)
+                },
+                onFailure = { error -> updateState { copy(socialFailure = classifySocialFailure(SocialProvider.Google, error.message)) } },
             )
         } finally {
             updateState { copy(busy = false) }

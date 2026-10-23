@@ -23,3 +23,8 @@ interface AuthAnalytics {
     /** The account was created with a password: remembered so the first sign-in with this e-mail completes the sign-up. */
     fun passwordSignUpCompleted(email: String)
 }
+
+/** Android Google sign-in: the web client id of the OAuth project. A blank id hides the Google button. */
+interface GoogleSignInConfig {
+    val webClientId: String
+}
