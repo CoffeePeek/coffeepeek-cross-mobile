@@ -32,7 +32,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
@@ -282,8 +281,7 @@ private fun DiscoveryContent(
 ) {
     val shops = state.visibleShops
     host.photoPrefetch(shopsState, shops.take(PREVIEW_SHOP_COUNT).map { it.id to listOfNotNull(it.photoUrl) }.takeIf { !mapExpanded }.orEmpty())
-    // The map stays where it is while the shops below it are pulled down, and the loader shows in the gap under the map.
-    var pullOffset by remember { mutableFloatStateOf(0f) }
+    // The map stays where it is while the shops below it are pulled down (its place comes from the item offset), and the loader shows under the map.
     CoffeePeekPullToRefresh(
         listState = listState,
         isRefreshing = state.isRefreshing,
@@ -291,7 +289,6 @@ private fun DiscoveryContent(
         refreshDescription = stringResource(R.string.discovery_refresh),
         loadingDescription = stringResource(R.string.discovery_refreshing),
         indicatorTopOffset = CoffeePeekDimens.spacing4 + MiniMapHeight,
-        onPullOffset = { pullOffset = it },
         modifier = Modifier.fillMaxSize()
             .then(if (mapExpanded) Modifier.clearAndSetSemantics {} else Modifier)
             .graphicsLayer { alpha = 1f - expansion; translationY = size.height * 0.3f * expansion },
@@ -306,7 +303,7 @@ private fun DiscoveryContent(
             item(key = MAP_ITEM_KEY) {
                 Box(
                     Modifier.fillMaxWidth().padding(horizontal = CoffeePeekDimens.spacing4).height(MiniMapHeight).onGloballyPositioned {
-                        onMapSlot(Frame.of(it.positionInRoot().x, it.positionInRoot().y - pullOffset, it.size.width.toFloat(), it.size.height.toFloat()), true)
+                        onMapSlot(Frame.of(it.positionInRoot().x, it.positionInRoot().y, it.size.width.toFloat(), it.size.height.toFloat()), true)
                     },
                 )
             }
