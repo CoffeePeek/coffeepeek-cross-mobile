@@ -63,8 +63,6 @@ import com.coffeepeek.admin.ui.icons.CpIcons
 import com.coffeepeek.admin.utils.CpImage
 import com.coffeepeek.admin.utils.PrefetchPhotos
 import com.coffeepeek.admin.utils.image.FullScreenPhotoPresence
-import com.coffeepeek.admin.utils.image.photoId
-import com.coffeepeek.admin.utils.image.photoLog
 
 @Composable
 fun FullScreenImageDialog(
@@ -178,11 +176,6 @@ private fun PhotoViewerGallery(
     ) { page ->
         val isCurrent = pagerState.currentPage == page
         val displayUrl = images.displayUrl(page, pagerState.currentPage, page in visiblePages)
-        val scrolling = pagerState.isScrollInProgress
-        LaunchedEffect(page, isCurrent, displayUrl, pagerState.settledPage, scrolling, page in visiblePages) {
-            photoLog("viewer page=$page current=$isCurrent settled=${pagerState.settledPage} scrolling=$scrolling visible=${page in visiblePages} " +
-                "display=${photoId(displayUrl)} highQuality=${photoId(images.highQualityUrl(page, pagerState.settledPage).takeUnless { scrolling })}")
-        }
         if (isCurrent || page in visiblePages) ZoomableImage(
             imageUrl = displayUrl.orEmpty(),
             highQualityUrl = images.highQualityUrl(page, pagerState.settledPage)
