@@ -1,5 +1,39 @@
 # Coffee catalogue — Android-first migration
 
+## iOS catalogue rendering correction — 2026-10-23
+
+The reported iOS screenshot shows black rectangles behind the native weight
+selector and an inset square roaster logo inside its circular badge. This slice
+changes iOS rendering only; repositories, offers, weight selection and Android
+visuals keep their existing behavior.
+
+The iOS segmented control remains a UIKit underlay so scrolling and Compose
+clipping work. A plain UIView with the card surface color now fills its entire
+interop rectangle, including the native pill's transparent corners. Auto Layout
+pins the existing UISegmentedControl to that wrapper; target/action cleanup,
+selected state, accessibility and light/dark text colors remain in place.
+Existing light/dark segmented-control previews stay beside the component.
+
+The legacy shared catalogue delegates its roaster image styling to a small
+platform composable: iOS uses `Crop` without an inset inside the existing circle;
+Android delegates to the exact prior `CoffeeShopImage` setup (`Fit`, 6 dp padding,
+same modifier and placeholder font). The platform split is presentation-only,
+not a feature/domain boundary change. Paired shared previews use a blank image
+placeholder with no Koin, network or database; they do not certify a real logo.
+
+Verification: Android `directDebug` assembly and packaged DEX guard passed,
+along with coffee composition/analytics and migrated-catalogue unit contracts.
+Source: branch `codex/migration-ios-coffee-rendering`, based on `e4b9e453`, with
+local iOS rendering changes. No app was installed or launched. No automated
+UI/instrumentation/screenshot tests were created or run. iOS native compilation
+is unavailable on this Windows host. Actual black-corner removal, logo cropping,
+light/dark themes, scrolling, selected weights and VoiceOver remain manual iPhone
+gates; previews have not been rendered in an IDE.
+
+Executed on 2026-10-23: 6 application coffee composition/analytics tests and
+46 catalogue implementation tests, 52 passed with 0 failures/errors/skips and
+no failure retries. These Android unit results do not compile or render UIKit.
+
 ## Baseline and scope (2026-10-18)
 
 Current synchronization baseline (2026-10-19): **main dfb00e63**, inherited
