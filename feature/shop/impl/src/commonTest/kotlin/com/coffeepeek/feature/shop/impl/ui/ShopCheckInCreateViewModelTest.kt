@@ -138,7 +138,9 @@ class ShopCheckInCreateViewModelTest {
     }
 
     @Test fun restoresProcessDraftAndKeepsEditsOnDismissWhileGuardingPhotoLimit() = runTest(dispatcher) {
-        val drafts = Drafts().apply { snapshot = ShopCheckInDraftSnapshot(initial.copy(text = "Restored")) }
+        val drafts = Drafts().apply {
+            snapshot = ShopCheckInDraftSnapshot(initial.copy(text = "Restored", visibility = ShopCheckInVisibility.Private))
+        }
         val viewModel = viewModel(drafts = drafts)
         runCurrent()
         assertEquals("Restored", viewModel.state.value.input.text)
@@ -255,7 +257,7 @@ class ShopCheckInCreateViewModelTest {
         runCurrent()
         assertTrue(viewModel.state.value.submitted)
         assertTrue(viewModel.state.value.draftFailed)
-        assertEquals(ShopCheckInFormEvent.Submitted(ShopCheckInVisibility.Private), viewModel.events.first())
+        assertEquals(ShopCheckInFormEvent.Submitted(ShopCheckInVisibility.Public), viewModel.events.first())
         viewModel.onAction(ShopCheckInFormAction.Submit)
         runCurrent()
         assertEquals(1, repository.writes.size)
@@ -288,7 +290,7 @@ class ShopCheckInCreateViewModelTest {
         viewModel.onAction(ShopCheckInFormAction.TextChanged("Coffee"))
         viewModel.onAction(ShopCheckInFormAction.Submit)
         runCurrent()
-        assertEquals(ShopCheckInFormEvent.Submitted(ShopCheckInVisibility.Private), viewModel.events.first())
+        assertEquals(ShopCheckInFormEvent.Submitted(ShopCheckInVisibility.Public), viewModel.events.first())
         assertTrue(viewModel.state.value.submitted)
         viewModel.onAction(ShopCheckInFormAction.GoToFeed)
         runCurrent()

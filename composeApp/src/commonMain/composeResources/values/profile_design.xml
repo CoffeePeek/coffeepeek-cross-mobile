@@ -13,7 +13,7 @@
     <string name="profile_week_loading">Загрузка активности…</string>
     <string name="profile_week_error">Не удалось загрузить активность</string>
     <string name="profile_week_retry">Повторить</string>
-    <string name="profile_week_open">Открыть календарь активности</string>
+    <string name="profile_week_open">Открыть чекины</string>
     <string name="profile_week_day">%1$s: %2$s</string>
     <plurals name="profile_week_count">
         <item quantity="one">%1$d чекин</item>
@@ -28,4 +28,9 @@
     <string name="profile_week_friday">Пт</string>
     <string name="profile_week_saturday">Сб</string>
     <string name="profile_week_sunday">Вс</string>
+    <string name="profile_checkins_back">Назад</string>
+    <string name="profile_checkins_blocked">Автор заблокирован</string>
+    <string name="profile_checkins_error">Не удалось загрузить чекины</string>
+    <string name="profile_checkins_empty">Пока нет чекинов</string>
+    <string name="profile_checkins_more">Загрузить ещё</string>
 </resources>
