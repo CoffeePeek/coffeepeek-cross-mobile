@@ -103,6 +103,7 @@ private fun Tabs(state: ContributionsListState, selected: ModerationStatus, kind
             label = { status -> labels.getValue(status) },
             onSelected = { onAction(ContributionsListAction.Select(it)) },
             modifier = Modifier.padding(horizontal = CoffeePeekDimens.spacing4, vertical = CoffeePeekDimens.spacing2),
+            scrollable = true,
         )
         key(selected) {
             ContributionList(kind, selected, state.tabs[selected] ?: TabState(), callbacks, { onAction(ContributionsListAction.LoadMore(selected)) })
