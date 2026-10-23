@@ -1,7 +1,7 @@
 package com.coffeepeek.admin.utils.image
 
 import com.coffeepeek.admin.utils.CustomUrl
-import com.coffeepeek.data.util.JwtUtils
+import com.coffeepeek.core.session.JwtUtils
 import io.ktor.client.HttpClient
 import io.ktor.client.plugins.expectSuccess
 import io.ktor.client.plugins.pluginOrNull

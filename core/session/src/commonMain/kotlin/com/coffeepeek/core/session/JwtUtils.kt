@@ -1,4 +1,4 @@
-package com.coffeepeek.data.util
+package com.coffeepeek.core.session
 
 @OptIn(kotlin.time.ExperimentalTime::class)
 object JwtUtils {

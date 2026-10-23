@@ -3,7 +3,11 @@ package com.coffeepeek.data.di
 import com.coffeepeek.api.CoffeePeekClient
 import com.coffeepeek.api.CoffeePeekRepo
 import com.coffeepeek.data.session.SessionTokenProvider
-import com.coffeepeek.data.session.createPlatformSessionSecureStore
+import com.coffeepeek.core.session.DefaultSessionStore
+import com.coffeepeek.core.session.SessionReader
+import com.coffeepeek.core.session.SessionStore
+import com.coffeepeek.core.session.createPlatformSessionSecureStore
+import com.coffeepeek.data.session.RoomLegacyCredentialRows
 import com.coffeepeek.data.repository.AuthRepositoryImpl
 import com.coffeepeek.data.repository.CheckInRepositoryImpl
 import com.coffeepeek.data.repository.FavoriteRepositoryImpl
@@ -17,7 +21,7 @@ import com.coffeepeek.data.repository.ShopRepositoryImpl
 import com.coffeepeek.data.repository.UserRepositoryImpl
 import com.coffeepeek.data.session.UserSessionCleaner
 import com.coffeepeek.data.util.FileUrlResolver
-import com.coffeepeek.data.util.JwtUtils
+import com.coffeepeek.core.session.JwtUtils
 import com.coffeepeek.domain.repository.AuthRepository
 import com.coffeepeek.domain.repository.CheckInRepository
 import com.coffeepeek.domain.repository.FavoriteRepository
@@ -47,8 +51,11 @@ fun dataModule(
 ): Module = module {
     single { CoroutineScope(Dispatchers.Default + SupervisorJob()) }
 
-    single { createPlatformSessionSecureStore(database, platformContext) }
-    single<SessionRepository> { SessionRepositoryImpl(database, get()) }
+    single<com.coffeepeek.core.session.LegacyCredentialRows> { RoomLegacyCredentialRows(database.settingRepository) }
+    single { createPlatformSessionSecureStore(platformContext, get()) }
+    single<SessionRepository> { SessionRepositoryImpl(DefaultSessionStore(get(), get())) }
+    single<SessionStore> { get<SessionRepository>() }
+    single<SessionReader> { get<SessionRepository>() }
     single { SessionTokenProvider(get(), get()) }
     single { FileUrlResolver(baseUrl) }
     single {

@@ -1,6 +1,4 @@
-package com.coffeepeek.data.util
-
-import com.coffeepeek.domain.model.Session
+package com.coffeepeek.core.session
 
 object SessionAuth {
     fun isActive(session: Session?): Boolean {
