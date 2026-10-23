@@ -68,7 +68,7 @@ internal fun StepFeatures(state: AddShopState, host: AddShopHost, onAddRoaster: 
 }
 
 @Composable
-private fun CheckmarkSection(
+internal fun CheckmarkSection(
     title: String,
     items: List<CatalogOption>,
     selected: Set<String>,
