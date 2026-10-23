@@ -65,7 +65,7 @@ private fun PhotoTile(urls: List<String>, thumbnails: List<String>, index: Int,
         .semantics(mergeDescendants = true) { contentDescription = description },
         contentAlignment = Alignment.Center) {
         if (preview == null) PhotoUnavailable()
-        else if (imageContent != null) imageContent(preview, Modifier.fillMaxSize(), ContentScale.Crop)
+        else if (imageContent != null) imageContent(preview, fullUrl?.takeIf { it != preview }, Modifier.fillMaxSize(), ContentScale.Crop)
         else KamelImage(resource = { asyncPainterResource(preview) }, contentDescription = null,
             contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize(),
             onLoading = { PhotoUnavailable() }, onFailure = { PhotoUnavailable() })

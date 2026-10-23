@@ -30,7 +30,7 @@ fun createShopDetailEntry(
     currentDayOfWeek: () -> Int,
     currentMinuteOfDay: () -> Int,
     authorImage: (@Composable (String, Modifier) -> Unit)? = null,
-    checkInImage: (@Composable (String, Modifier, androidx.compose.ui.layout.ContentScale) -> Unit)? = null,
+    checkInImage: (@Composable (String, String?, Modifier, androidx.compose.ui.layout.ContentScale) -> Unit)? = null,
     analytics: ShopAnalytics = ShopAnalytics.None,
 ): ShopDetailEntry = DefaultShopDetailEntry(detailsRepository, voteRepository, favoritesRepository,
     currentViewer, currentDayOfWeek, currentMinuteOfDay, authorImage, checkInImage, analytics)
@@ -43,7 +43,7 @@ private class DefaultShopDetailEntry(
     private val currentDayOfWeek: () -> Int,
     private val currentMinuteOfDay: () -> Int,
     private val authorImage: (@Composable (String, Modifier) -> Unit)?,
-    private val checkInImage: (@Composable (String, Modifier, androidx.compose.ui.layout.ContentScale) -> Unit)?,
+    private val checkInImage: (@Composable (String, String?, Modifier, androidx.compose.ui.layout.ContentScale) -> Unit)?,
     private val analytics: ShopAnalytics,
 ) : ShopDetailEntry {
     @Composable

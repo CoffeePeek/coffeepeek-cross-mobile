@@ -25,7 +25,7 @@ fun createShopCheckInListEntry(
     voteRepository: ShopCheckInVoteRepository,
     currentViewer: suspend () -> Result<ShopViewer>,
     authorImage: (@Composable (String, Modifier) -> Unit)? = null,
-    checkInImage: (@Composable (String, Modifier, androidx.compose.ui.layout.ContentScale) -> Unit)? = null,
+    checkInImage: (@Composable (String, String?, Modifier, androidx.compose.ui.layout.ContentScale) -> Unit)? = null,
     /** Warms the next cards' thumbnails while scrolling (list state, lazy item key to display URLs). */
     photoPrefetch: (@Composable (androidx.compose.foundation.lazy.LazyListState, List<Pair<String, List<String>>>) -> Unit)? = null,
 ): ShopCheckInListEntry = DefaultShopCheckInListEntry(detailsRepository, voteRepository, currentViewer, authorImage, checkInImage,
@@ -36,7 +36,7 @@ private class DefaultShopCheckInListEntry(
     private val voteRepository: ShopCheckInVoteRepository,
     private val currentViewer: suspend () -> Result<ShopViewer>,
     private val authorImage: (@Composable (String, Modifier) -> Unit)?,
-    private val checkInImage: (@Composable (String, Modifier, androidx.compose.ui.layout.ContentScale) -> Unit)?,
+    private val checkInImage: (@Composable (String, String?, Modifier, androidx.compose.ui.layout.ContentScale) -> Unit)?,
     private val photoPrefetch: (@Composable (androidx.compose.foundation.lazy.LazyListState, List<Pair<String, List<String>>>) -> Unit)?,
 ) : ShopCheckInListEntry {
     @Composable
