@@ -44,7 +44,7 @@ screen stays for iOS/shared until iOS consumes the new modules.
 | `ui/screen/auth`, `passwordrecovery` | 1699 + 159 | migrated (`feature/auth`: sign-in, Google, registration, recovery) | legacy | `LegacyAuthScreenRenderer`; Apple, log-out and `ProfileViewModel` still use the legacy repository |
 | `ui/screen/feed`, `map`, `main`, `feature/catalog` | 1428 + 1406 + 463 + 691 | not migrated | used by iOS (`DiscoveryTabContent`, `CheckInTabContent`) | owner: Discovery |
 | `feature/community` | 770 | migrated (`feature/community`: feed, likes, edit, hide, report, blocking) | legacy | `LegacyCommunityScreenRenderer`; inventory in `feature/community/LEGACY_INVENTORY.md` |
-| `ui/screen/addshop`, `contributions`, `shopchange` | 1873 + 513 + 1488 | not migrated | legacy | owner: Contributions (`feature/contributions/LEGACY_INVENTORY.md`); `AddRoaster` (643, in `ui/screen/roaster`) goes with it |
+| `ui/screen/addshop`, `contributions`, `shopchange` | 1873 + 513 + 1488 | migrated and connected on Android | legacy on iOS and shared code (`LegacyContributionsScreenRenderer`) | owner: Contributions (`feature/contributions/LEGACY_INVENTORY.md`); `AddRoaster` (643, in `ui/screen/roaster`) goes with it |
 | `ui/screen/review` (report of a review/check-in, `ConsumedDrinkField`) | 215 | Shop migrated, check-in report inside Community sheet | legacy Shop review flow, legacy check-in report | owner: Shop (iOS migration), not Contributions |
 
 Not-migrated areas are the real remaining work; everything marked "migrated" on Android only

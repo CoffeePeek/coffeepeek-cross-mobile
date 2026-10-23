@@ -2,7 +2,6 @@ package com.coffeepeek.admin.ui
 
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.getValue
-import com.coffeepeek.admin.ui.screen.addshop.AddShopScreen
 import com.coffeepeek.admin.ui.screen.checkins.CheckInHistoryDestination
 import com.coffeepeek.admin.ui.screen.shop.ShopDetailScreen
 import com.coffeepeek.admin.ui.screen.shop.ShopMenuGalleryScreen
@@ -10,8 +9,7 @@ import com.coffeepeek.admin.ui.screen.shop.ShopReportScreen
 import com.coffeepeek.admin.ui.screen.favorites.FavoritesScreen
 import com.coffeepeek.admin.ui.favorites.FavoritesDestination
 import com.coffeepeek.admin.ui.screen.contributions.ContributionKind
-import com.coffeepeek.admin.ui.screen.contributions.MyContributionsScreen
-import com.coffeepeek.admin.ui.screen.roaster.AddRoasterScreen
+import com.coffeepeek.admin.ui.screen.contributions.ContributionsScreenRenderer
 import com.coffeepeek.admin.ui.screen.profile.AccountScreenRenderer
 import com.coffeepeek.admin.ui.screen.profile.PublicProfileScreenRenderer
 import com.coffeepeek.admin.ui.screen.roaster.RoasterScreenRenderer
@@ -70,9 +68,6 @@ import com.coffeepeek.admin.ui.screen.shop.ShopCheckInListScreenRenderer
 import com.coffeepeek.admin.ui.screen.coffee.CoffeeScreenRenderer
 import com.coffeepeek.admin.ui.screen.shop.ShopMenuGalleryScreenRenderer
 import com.coffeepeek.admin.ui.screen.shop.ShopReportScreenRenderer
-import com.coffeepeek.admin.ui.screen.shopchange.ShopChangeEditorScreen
-import com.coffeepeek.admin.ui.screen.shopchange.ShopChangeRequestDetailScreen
-import com.coffeepeek.admin.ui.screen.shopchange.SuggestShopChangeScreen
 import com.coffeepeek.admin.utils.ErrorHandler
 import com.coffeepeek.admin.utils.LoadingHandler
 import kotlinx.coroutines.CoroutineScope
@@ -502,26 +497,22 @@ object Navigator {
                     }
                     composable<Screen.SuggestShopChange> { backStack ->
                         val route = backStack.toRoute<Screen.SuggestShopChange>()
-                        SuggestShopChangeScreen(shopId = route.shopId)
+                        koinInject<ContributionsScreenRenderer>().Suggest(route.shopId)
                     }
                     composable<Screen.ShopChangeEditor> { backStack ->
                         val route = backStack.toRoute<Screen.ShopChangeEditor>()
-                        ShopChangeEditorScreen(
-                            shopId = route.shopId,
-                            sectionName = route.section,
-                            requestId = route.requestId,
-                        )
+koinInject<ContributionsScreenRenderer>().Editor(route.shopId, route.section, route.requestId)
                     }
                     composable<Screen.MyContributions> { backStack ->
                         val route = backStack.toRoute<Screen.MyContributions>()
-                        MyContributionsScreen(kind = ContributionKind.valueOf(route.kind))
+                        koinInject<ContributionsScreenRenderer>().List(ContributionKind.valueOf(route.kind))
                     }
                     composable<Screen.ShopChangeRequestDetail> { backStack ->
                         val route = backStack.toRoute<Screen.ShopChangeRequestDetail>()
-                        ShopChangeRequestDetailScreen(requestId = route.requestId)
+                        koinInject<ContributionsScreenRenderer>().RequestDetail(route.requestId)
                     }
-                    composable<Screen.AddShop> { AddShopScreen() }
-                    composable<Screen.AddRoaster> { AddRoasterScreen() }
+                    composable<Screen.AddShop> { koinInject<ContributionsScreenRenderer>().AddShop() }
+                    composable<Screen.AddRoaster> { koinInject<ContributionsScreenRenderer>().AddRoaster() }
                     composable<Screen.RoasterDetail> { backStack ->
                         val route = backStack.toRoute<Screen.RoasterDetail>()
                         koinInject<RoasterScreenRenderer>().Detail(route.roasterId)
@@ -564,12 +555,12 @@ object Navigator {
             is Screen.ReportCheckIn -> com.coffeepeek.admin.ui.screen.review.ReviewReportScreen(reviewId = screen.checkInId, isCheckIn = true)
             is Screen.ShopMenuGallery -> koinInject<ShopMenuGalleryScreenRenderer>().Content(screen.shopId)
             is Screen.ReportShop -> koinInject<ShopReportScreenRenderer>().Content(screen.shopId, screen.shopTitle)
-            is Screen.SuggestShopChange -> SuggestShopChangeScreen(screen.shopId)
-            is Screen.ShopChangeEditor -> ShopChangeEditorScreen(screen.shopId, screen.section, screen.requestId)
-            is Screen.MyContributions -> MyContributionsScreen(ContributionKind.valueOf(screen.kind))
-            is Screen.ShopChangeRequestDetail -> ShopChangeRequestDetailScreen(screen.requestId)
-            Screen.AddShop -> AddShopScreen()
-            Screen.AddRoaster -> AddRoasterScreen()
+            is Screen.SuggestShopChange -> koinInject<ContributionsScreenRenderer>().Suggest(screen.shopId)
+            is Screen.ShopChangeEditor -> koinInject<ContributionsScreenRenderer>().Editor(screen.shopId, screen.section, screen.requestId)
+            is Screen.MyContributions -> koinInject<ContributionsScreenRenderer>().List(ContributionKind.valueOf(screen.kind))
+            is Screen.ShopChangeRequestDetail -> koinInject<ContributionsScreenRenderer>().RequestDetail(screen.requestId)
+            Screen.AddShop -> koinInject<ContributionsScreenRenderer>().AddShop()
+            Screen.AddRoaster -> koinInject<ContributionsScreenRenderer>().AddRoaster()
             is Screen.RoasterDetail -> koinInject<RoasterScreenRenderer>().Detail(screen.roasterId)
             is Screen.UserProfile -> PublicProfileRoute(screen)
             is Screen.UserCheckIns -> PublicCheckInsRoute(screen)

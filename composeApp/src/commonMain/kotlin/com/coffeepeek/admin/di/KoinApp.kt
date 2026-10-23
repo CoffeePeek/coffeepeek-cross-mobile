@@ -45,6 +45,8 @@ import com.coffeepeek.admin.ui.screen.profile.AccountScreenRenderer
 import com.coffeepeek.admin.ui.screen.profile.LegacyAccountScreenRenderer
 import com.coffeepeek.admin.feature.community.ui.CommunityScreenRenderer
 import com.coffeepeek.admin.feature.community.ui.LegacyCommunityScreenRenderer
+import com.coffeepeek.admin.ui.screen.contributions.ContributionsScreenRenderer
+import com.coffeepeek.admin.ui.screen.contributions.LegacyContributionsScreenRenderer
 import com.coffeepeek.admin.ui.screen.auth.AuthScreenRenderer
 import com.coffeepeek.admin.ui.screen.auth.LegacyAuthScreenRenderer
 import com.coffeepeek.admin.ui.screen.profile.LegacySettingsScreenRenderer
@@ -118,6 +120,7 @@ fun initKoin(
     appUpdateRendererFactory: Scope.() -> AppUpdateRenderer = { LegacyAppUpdateRenderer },
     authRendererFactory: Scope.() -> AuthScreenRenderer = { LegacyAuthScreenRenderer },
     communityRendererFactory: Scope.() -> CommunityScreenRenderer = { LegacyCommunityScreenRenderer },
+    contributionsRendererFactory: Scope.() -> ContributionsScreenRenderer = { LegacyContributionsScreenRenderer },
     analyticsEnabled: Boolean = true,
 ) {
     check(AppConfig.baseUrl.isNotBlank()) {
@@ -140,7 +143,7 @@ fun initKoin(
             shopCheckInRendererFactory, shopDetailRendererFactory, shopCheckInListRendererFactory,
             checkInHistoryRendererFactory, checkInCreateFlowRendererFactory, coffeeRendererFactory, roasterRendererFactory,
             publicProfileRendererFactory, ownProfileRendererFactory, accountRendererFactory, settingsRendererFactory, appUpdateRendererFactory,
-            authRendererFactory, communityRendererFactory),
+            authRendererFactory, communityRendererFactory, contributionsRendererFactory),
         imageModule(),
         roasterModule(),
         updateInstallerModule(),
@@ -172,6 +175,7 @@ private fun appModule(
     appUpdateRendererFactory: Scope.() -> AppUpdateRenderer,
     authRendererFactory: Scope.() -> AuthScreenRenderer,
     communityRendererFactory: Scope.() -> CommunityScreenRenderer,
+    contributionsRendererFactory: Scope.() -> ContributionsScreenRenderer,
 ) = module {
     single<CoffeeScreenRenderer> { coffeeRendererFactory() }
     single<RoasterScreenRenderer> { roasterRendererFactory() }
@@ -182,6 +186,7 @@ private fun appModule(
     single<AppUpdateRenderer> { appUpdateRendererFactory() }
     single<AuthScreenRenderer> { authRendererFactory() }
     single<CommunityScreenRenderer> { communityRendererFactory() }
+    single<ContributionsScreenRenderer> { contributionsRendererFactory() }
     single<com.coffeepeek.feature.community.domain.repository.CommunityRepository> {
         com.coffeepeek.feature.community.data.repository.createCommunityRepository(get<CoffeePeekClient>().client, Constants.BASE_URL)
     }
