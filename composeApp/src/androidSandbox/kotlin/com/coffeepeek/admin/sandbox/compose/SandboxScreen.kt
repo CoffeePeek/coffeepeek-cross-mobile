@@ -1,7 +1,7 @@
 package com.coffeepeek.admin.sandbox.compose
 
-import com.coffeepeek.admin.feature.appupdate.ui.AppUpdatePrompt
-import com.coffeepeek.admin.feature.appupdate.ui.AppUpdateState
+import com.coffeepeek.admin.feature.appupdate.ui.AppUpdateRenderer
+import com.coffeepeek.feature.appupdate.impl.AppUpdateController
 import com.coffeepeek.admin.feature.authorblocking.ui.AuthorBlockingHost
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
@@ -33,7 +33,8 @@ import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 
 @Composable internal fun SandboxScreen(model: SandboxViewModel, application: SandboxApplication) {
     val state by model.state.collectAsStateWithLifecycle()
-    val updates = koinInject<AppUpdateState>()
+    val updates = koinInject<AppUpdateController>()
+    val updateRenderer = koinInject<AppUpdateRenderer>()
     AppContent {
         CompositionLocalProvider(LocalMapStyleOverride provides """{"version":8,"sources":{},"layers":[{"id":"sandbox-background","type":"background","paint":{"background-color":"#716552"}}]}""",
             LocalPhotoPickerOverride provides { limit, deliver ->
@@ -47,7 +48,7 @@ import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
                 // App.kt hosts this next to the Navigator; without it block/unblock confirmations never appear.
                 AuthorBlockingHost()
                 // Same for the update prompt: App.kt hosts it at the root and it checks on every resume.
-                AppUpdatePrompt(updates)
+                updateRenderer.Prompt()
             }
         }
         if (state.controls) Dialog({ model.controls(false) }) {

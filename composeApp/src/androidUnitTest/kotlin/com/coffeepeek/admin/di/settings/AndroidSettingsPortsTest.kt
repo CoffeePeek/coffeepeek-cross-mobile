@@ -9,7 +9,8 @@ import com.coffeepeek.admin.analytics.analytics
 import com.coffeepeek.admin.analytics.MemoryConsent
 import com.coffeepeek.feature.appupdate.domain.AppUpdate
 import com.coffeepeek.feature.appupdate.domain.AppUpdateRepository
-import com.coffeepeek.admin.feature.appupdate.ui.AppUpdateState
+import com.coffeepeek.feature.appupdate.api.AppUpdateEnvironment
+import com.coffeepeek.feature.appupdate.impl.AppUpdateController
 import com.coffeepeek.admin.legal.LegalUrls
 import com.coffeepeek.admin.settings.CityPreference
 import com.coffeepeek.admin.settings.FakeSettingRepository
@@ -189,7 +190,7 @@ class AndroidSettingsPortsTest {
     @Test fun theUpdateRowMapsTheCheckStateAndACheckAnswersWithTheManualResult() = runTest {
         val repository = Updates(AppUpdate(200, 0, "https://example.com/app.apk"))
         val scope = CoroutineScope(UnconfinedTestDispatcher(testScheduler))
-        val state = AppUpdateState(repository, scope, currentVersion = 100)
+        val state = AppUpdateController(repository, object : AppUpdateEnvironment { override val versionCode: Long? = 100; override val platform = "android"; override val channel: String? = "play" }, scope)
         val port = AndroidUpdateCheckPort(state)
         assertEquals(UpdateCheckState(), port.observe().first())
         assertEquals(UpdateCheckOutcome.Available, port.check())
@@ -211,7 +212,7 @@ class AndroidSettingsPortsTest {
             override suspend fun dismiss(version: Long) = Unit
         }
         val scope = CoroutineScope(UnconfinedTestDispatcher(testScheduler))
-        val state = AppUpdateState(repository, scope, currentVersion = 100)
+        val state = AppUpdateController(repository, object : AppUpdateEnvironment { override val versionCode: Long? = 100; override val platform = "android"; override val channel: String? = "play" }, scope)
         state.check()                       // the automatic check on resume, still waiting
         val port = AndroidUpdateCheckPort(state)
         val result = async { port.check() }

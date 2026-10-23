@@ -14,6 +14,7 @@ object Modules {
             const val api = ":feature:app-update:api"
             const val domain = ":feature:app-update:domain"
             const val data = ":feature:app-update:data"
+            const val impl = ":feature:app-update:impl"
         }
 
         const val notifications = ":features:notifications"
@@ -164,6 +165,7 @@ object Modules {
         feature.appUpdate.domain,
         feature.appUpdate.api,
         feature.appUpdate.data,
+        feature.appUpdate.impl,
         feature.authorBlocking.domain,
         feature.authorBlocking.api,
         feature.authorBlocking.data,

@@ -102,6 +102,7 @@ kotlin {
             implementation(project(module.feature.appUpdate.api))
             implementation(project(module.feature.appUpdate.domain))
             implementation(project(module.feature.appUpdate.data))
+            implementation(project(module.feature.appUpdate.impl))
             implementation(project(module.feature.authorBlocking.api))
             implementation(project(module.feature.authorBlocking.impl))
             implementation(project(module.feature.notifications))

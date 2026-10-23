@@ -1,12 +1,10 @@
-package com.coffeepeek.admin.feature.appupdate
+package com.coffeepeek.feature.appupdate.impl
 
 import com.coffeepeek.feature.appupdate.domain.AppUpdate
 import com.coffeepeek.feature.appupdate.domain.AppUpdateRepository
 import com.coffeepeek.feature.appupdate.domain.InstallationStage
 import com.coffeepeek.feature.appupdate.domain.InstallationState
 import com.coffeepeek.feature.appupdate.domain.UpdateInstaller
-import com.coffeepeek.admin.feature.appupdate.ui.AppUpdateState
-import com.coffeepeek.admin.feature.appupdate.ui.retryPlayUpdate
 import kotlinx.coroutines.async
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -23,7 +21,7 @@ import kotlin.test.assertTrue
 class PlayUpdateRetryTest {
     @Test fun waitsForGooglePlayAndReturnsItsFailure() = runTest {
         val repository = Updates()
-        val controller = AppUpdateState(repository, backgroundScope, currentVersion = 100)
+        val controller = AppUpdateController(repository, FakeEnvironment(100), backgroundScope)
         val installer = Installer()
         val request = async { retryPlayUpdate(controller, installer) }
         runCurrent()
@@ -37,7 +35,7 @@ class PlayUpdateRetryTest {
     }
 
     @Test fun backendFailureDoesNotStartGooglePlayAndCanBeRetried() = runTest {
-        val controller = AppUpdateState(Updates(fail = true), backgroundScope, currentVersion = 100)
+        val controller = AppUpdateController(Updates(fail = true), FakeEnvironment(100), backgroundScope)
         val installer = Installer()
         val result = retryPlayUpdate(controller, installer)!!
         assertTrue(result.canRetry)
@@ -46,7 +44,7 @@ class PlayUpdateRetryTest {
     }
 
     @Test fun currentVersionIsAnInformationalResultWithoutRetry() = runTest {
-        val controller = AppUpdateState(Updates(version = 100), backgroundScope, currentVersion = 100)
+        val controller = AppUpdateController(Updates(version = 100), FakeEnvironment(100), backgroundScope)
         val installer = Installer()
         val result = retryPlayUpdate(controller, installer)!!
         assertEquals("Установлена актуальная версия", result.message)
@@ -55,7 +53,7 @@ class PlayUpdateRetryTest {
     }
 
     @Test fun acceptedDownloadEndsRetryProgress() = runTest {
-        val controller = AppUpdateState(Updates(), backgroundScope, currentVersion = 100)
+        val controller = AppUpdateController(Updates(), FakeEnvironment(100), backgroundScope)
         val installer = Installer()
         val request = async { retryPlayUpdate(controller, installer) }
         runCurrent()
@@ -64,7 +62,7 @@ class PlayUpdateRetryTest {
     }
 
     @Test fun unresponsiveGooglePlayDoesNotLeaveProgressRunningForever() = runTest {
-        val controller = AppUpdateState(Updates(), backgroundScope, currentVersion = 100)
+        val controller = AppUpdateController(Updates(), FakeEnvironment(100), backgroundScope)
         val request = async { retryPlayUpdate(controller, Installer()) }
         runCurrent()
         advanceTimeBy(30_001)

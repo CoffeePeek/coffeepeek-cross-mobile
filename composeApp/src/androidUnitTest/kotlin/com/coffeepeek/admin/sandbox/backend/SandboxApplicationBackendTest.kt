@@ -8,8 +8,9 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.CoroutineScope
 import com.coffeepeek.room.repository.SettingRepository
 import com.coffeepeek.room.model.Setting
-import com.coffeepeek.admin.feature.appupdate.ui.UpdateUiState
-import com.coffeepeek.admin.feature.appupdate.ui.AppUpdateState
+import com.coffeepeek.feature.appupdate.impl.UpdateUiState
+import com.coffeepeek.feature.appupdate.api.AppUpdateEnvironment
+import com.coffeepeek.feature.appupdate.impl.AppUpdateController
 import com.coffeepeek.admin.di.appupdate.AppConfigUpdateEnvironment
 import com.coffeepeek.admin.di.appupdate.SettingsDismissedUpdateStore
 import com.coffeepeek.feature.appupdate.data.AppUpdateRepositoryImpl
@@ -432,7 +433,7 @@ class SandboxApplicationBackendTest {
         val settings = Settings()
         val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
         // A new state per call stands for a fresh process: only the dismissed version survives.
-        suspend fun check(manual: Boolean = false, state: AppUpdateState = AppUpdateState(AppUpdateRepositoryImpl(client.client, AppConfigUpdateEnvironment, SettingsDismissedUpdateStore(settings)), scope, currentVersion = 5)): Pair<AppUpdateState, UpdateUiState> {
+        suspend fun check(manual: Boolean = false, state: AppUpdateController = AppUpdateController(AppUpdateRepositoryImpl(client.client, AppConfigUpdateEnvironment, SettingsDismissedUpdateStore(settings)), object : AppUpdateEnvironment { override val versionCode: Long? = 5; override val platform = "android"; override val channel: String? = "play" }, scope)): Pair<AppUpdateController, UpdateUiState> {
             state.check(manual); return state to state.state.first { !it.checking }
         }
         try {

@@ -54,7 +54,7 @@ fun SettingsScreen(vm: ProfileViewModel = koinInject()) {
     val themeMode by vm.themeMode.collectAsState()
     val cities by vm.cities.collectAsState()
     val selectedCityId by vm.selectedCityId.collectAsState()
-    val updates = koinInject<com.coffeepeek.admin.feature.appupdate.ui.AppUpdateState>()
+    val updates = koinInject<com.coffeepeek.feature.appupdate.impl.AppUpdateController>()
     val updateState by updates.state.collectAsState()
 
     Scaffold(

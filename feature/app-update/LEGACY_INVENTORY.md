@@ -163,3 +163,21 @@ Layout `feature/app-update/{api,domain,data,impl}`, package `com.coffeepeek.feat
 - Verified: domain 3 and data 7 tests, `composeApp` Direct/Play unit runs of the update, Sandbox, Settings and `di` tests, 0 failures; Android unit and instrumented test compilation, iOS simulator and iOS test
   compilation, `assembleDirectSandbox`.
 - Unchanged on purpose: `AppUpdateState`/`AppUpdatePrompt`/installers/effects (still in `composeApp`, use `AppConfig` directly) move in the `impl` PRs (3a, 3b).
+
+## Step 3a result — `impl`: controller and Android prompt (2026-10-21, branch `feature/appupdate-impl`)
+
+- New module `:feature:app-update:impl` (`module.feature.appUpdate.impl`, resource prefix `appupdate_`), plus the Android `AppUpdateEntry` contract in `api`.
+  - **commonMain**: `AppUpdateController` (the former `AppUpdateState`: check/dismiss/takeNativePrompt, A1-B4, now reading the version through `AppUpdateEnvironment` at each use instead of a constructor snapshot),
+    `UpdateUiState`, `needsPlayFallback`, `retryPlayUpdate`. It stays a process-wide coordinator (not a screen ViewModel): the root prompt, the Settings row and the Play flow share one instance.
+  - **androidMain**: the prompt card (`AppUpdatePrompt`, F1-F4) with the same layout, behaviour and texts, now with the strings in `appupdate_` resources, `CoffeePeekIcons`/`CoffeePeekTheme`, and
+    `createAppUpdateEntry(controller, installer, environment, installationEffect)`.
+- App: `AppUpdateRenderer` (Legacy default calls the old prompt for iOS, decision Q4), `AndroidAppUpdateRenderer` over the entry, `appUpdateRendererFactory` in `KoinApp`/`PlatformKoin.android`; `App.kt` and
+  the Sandbox root compose the renderer, so the Sandbox now exercises the migrated prompt. Koin builds `AppUpdateController(repository, AppConfigUpdateEnvironment)`. The Settings port adapter and the legacy iOS
+  Settings screen use the controller.
+- Still in `composeApp` (step 3b): `PlayUpdateInstaller`, `ApkUpdateInstaller`, `AndroidUpdateInstaller`, the Android installation effect (launchers and Play snackbar flow); the entry takes it as `installationEffect`.
+- Tests moved with the code to `impl/commonTest`: `AppUpdateControllerTest` 5, `AppUpdateCheckBehaviourTest` 7, `PlayUpdateRetryTest` 5 (17 with `FakeEnvironment`).
+- Verified: impl 17 tests, `composeApp` Direct (Sandbox, Settings, update, `di`: 229) and Play (`di`: 202) unit runs, 0 failures; Android unit and instrumented test compilation, iOS simulator and iOS test compilation,
+  `assembleDirectSandbox`.
+- Device check, Pixel 7 / Android 17, `com.coffeepeek.sandbox` only, against the screenshots taken before the move (step 0): *Required*: the blocking card is identical (icon, title «Обновите CoffeePeek»,
+  body, error «Внешние приложения отключены в Sandbox», one «Повторить» button, no «Позже»); *Available*: the manual check from Settings shows the same Play-channel snackbar (message and «Повторить»).
+  An automatic check right after a snackbar that closed by itself shows nothing: the dismissed version was stored (A4), as in the legacy flow. Not exercised: dark theme, large font, back/outside tap/swipe, TalkBack.
