@@ -10,11 +10,11 @@ enum class ProfileContribution { Changes, Shops, Roasters }
 /** App-rendered pieces that only the owner's own profile shows. */
 class OwnProfileSlots(
     val shared: ProfileSlots,
-    /** The owner's favorites preview with its own loading, empty and retry states. */
-    val favoritesPreview: @Composable (onOpenShop: (String) -> Unit, onOpenRoaster: (String) -> Unit) -> Unit,
+    /** Owns loading/retry states and omits [header] with its content when successfully loaded empty. */
+    val favoritesPreview: @Composable (onOpenShop: (String) -> Unit, onOpenRoaster: (String) -> Unit, header: @Composable () -> Unit) -> Unit,
     /** The owner's personal activity calendar (private and home check-ins). */
     val activityCalendar: @Composable () -> Unit,
-    /** Current personal week, opening the full activity calendar on tap. */
+    /** Current personal week, opening personal check-in history on tap. */
     val activityPreview: @Composable (onClick: () -> Unit) -> Unit,
     /** Mascot error content with a retry action. */
     val loadError: @Composable (onRetry: () -> Unit) -> Unit,
