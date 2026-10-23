@@ -404,9 +404,10 @@ internal fun CheckInHeader(
     checkIn: CheckIn,
     isOwn: Boolean,
     onAuthorClick: (() -> Unit)? = null,
+    displayTimestamp: String = checkIn.createdAt,
     actions: @Composable () -> Unit,
 ) {
-    val date = checkIn.createdAt
+    val date = displayTimestamp
     val username = checkIn.username.ifBlank { if (isOwn) "Вы" else "Пользователь" }
     Row(
         modifier = Modifier.fillMaxWidth(),

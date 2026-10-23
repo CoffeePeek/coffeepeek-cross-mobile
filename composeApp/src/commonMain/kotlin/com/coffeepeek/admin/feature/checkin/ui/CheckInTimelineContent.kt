@@ -30,6 +30,7 @@ internal fun CheckInTimelineContentImpl(
     onAuthorClick: (() -> Unit)? = null,
     onHelpful: (() -> Unit)? = null,
     showHelpfulCount: Boolean = true,
+    displayTimestamp: String = checkIn.createdAt,
     actions: @Composable () -> Unit = {},
     supportingContent: @Composable () -> Unit = {},
     footerActions: (@Composable () -> Unit)? = null,
@@ -39,7 +40,7 @@ internal fun CheckInTimelineContentImpl(
         modifier = modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(CpDimens.spacing2),
     ) {
-        CheckInHeader(checkIn, isOwn, onAuthorClick = onAuthorClick, actions = actions)
+        CheckInHeader(checkIn, isOwn, onAuthorClick = onAuthorClick, displayTimestamp = displayTimestamp, actions = actions)
         if (checkIn.isHome) {
             checkIn.homePreparation?.let { recipe ->
                 recipe.beanName?.takeIf(String::isNotBlank)?.let { Text(it, style = MaterialTheme.typography.titleMedium) }
