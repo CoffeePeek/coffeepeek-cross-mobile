@@ -29,6 +29,8 @@ import com.coffeepeek.admin.utils.image.PhotoDisplayPermission
 import com.coffeepeek.admin.utils.image.AuthorizedPhotoPainter
 import com.coffeepeek.admin.utils.image.PhotoAccessDenied
 import com.coffeepeek.admin.utils.image.FullScreenPhotoPresence
+import com.coffeepeek.admin.utils.image.photoId
+import com.coffeepeek.admin.utils.image.photoLog
 import com.coffeepeek.admin.utils.image.ProtectedPhotoSession
 import com.coffeepeek.admin.utils.image.SystemPhotoCacheClock
 import com.coffeepeek.admin.utils.image.isImmutablePhotoVariant
@@ -90,6 +92,10 @@ fun CpImage(
     // Expired protected painters are withdrawn by the resource loader itself.
     val result = if (detail is Resource.Success) detail else preview
     // With the loader the tile is only a translucent veil over the screen background, not an opaque slab.
+    LaunchedEffect(previewData, detailData, upgradeReady, mayUpgrade, preview::class, detail?.let { it::class }) {
+        photoLog("CpImage preview=${photoId(previewData)} detail=${photoId(detailData)} upgradeReady=$upgradeReady mayUpgrade=$mayUpgrade visible=$visible showLoader=$showLoader " +
+            "previewState=${preview::class.simpleName} detailState=${detail?.let { it::class.simpleName }}")
+    }
     val loading = placeholder?.toPainterResource()
         ?: ColorPainter(MaterialTheme.colorScheme.surfaceVariant.let { if (showLoader) it.copy(alpha = 0.3f) else it })
     val painter = when (result) {
@@ -141,10 +147,11 @@ internal fun PrefetchPhotos(urls: List<String>, inPhotoViewer: Boolean = false) 
                     finished.await()
                 }
             }
+            LaunchedEffect(url, acquired) { photoLog("prefetch ${photoId(url)} acquired=$acquired") }
             if (acquired) {
                 val result = rememberCpImageResource(cpImageData(url), renewPermission = false)
                 if (result is Resource.Success || result is Resource.Failure) {
-                    SideEffect { completed = completed + url; finished.complete(Unit) }
+                    SideEffect { photoLog("prefetch ${photoId(url)} done ${result::class.simpleName}"); completed = completed + url; finished.complete(Unit) }
                 }
             }
         }
@@ -179,6 +186,18 @@ fun rememberCpImagePainter(
 
 @Composable
 internal fun rememberCpImageResource(resource: Any, renewPermission: Boolean = true): Resource<Painter> {
+    val result = rememberCpImageResourceImpl(resource, renewPermission)
+    val kind = when (result) {
+        is Resource.Success -> "Success"
+        is Resource.Failure -> "Failure(${result.exception::class.simpleName}: ${result.exception.message})"
+        is Resource.Loading -> "Loading"
+    }
+    LaunchedEffect(resource, kind) { photoLog("resource ${photoId(resource)} renew=$renewPermission -> $kind") }
+    return result
+}
+
+@Composable
+private fun rememberCpImageResourceImpl(resource: Any, renewPermission: Boolean): Resource<Painter> {
     if (resource is CustomUrl && resource.url.isBlank()) return Resource.Loading(0f)
     if (resource !is CustomUrl || !isProtectedCheckInPhoto(resource.url)) {
         return asyncPainterResource(data = resource)
@@ -265,5 +284,9 @@ internal fun rememberCpImageResource(resource: Any, renewPermission: Boolean = t
     if (!expired && previous != null && previous.permission.remaining(SystemPhotoCacheClock) > 0) {
         return Resource.Success(previous.painter, DataSource.Memory)
     }
+    val diag = "foreground=$foreground retained=${retained != null} displayed=${previous != null} expired=$expired success=${success != null} " +
+        "failure=${failure != null} permissionNull=${permission == null} permissionRemaining=${permission?.remaining(SystemPhotoCacheClock)} " +
+        "generation=$generation retries=$retries sessionCurrent=${ProtectedPhotoSession.current(permissionScope)}"
+    LaunchedEffect(resource, diag) { photoLog("STALL? ${photoId(resource)} no painter to show: $diag") }
     return failure ?: Resource.Loading(0f)
 }
