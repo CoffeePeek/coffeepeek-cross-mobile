@@ -283,6 +283,7 @@ private fun ZoomableImage(
         data = imageUrl,
         highQualityData = highQualityUrl?.takeIf { it != imageUrl },
         upgradeDelayMillis = 0L,
+        showLoader = true,
         contentDescription = contentDescription,
         contentScale = ContentScale.Fit,
         modifier = Modifier

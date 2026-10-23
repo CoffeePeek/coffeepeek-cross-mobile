@@ -1,6 +1,7 @@
 package com.coffeepeek.admin.utils
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.Box
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -13,6 +14,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.painter.ColorPainter
 import androidx.compose.ui.graphics.painter.Painter
@@ -42,7 +44,11 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
+import coffeepeek.composeapp.generated.resources.Res
+import coffeepeek.composeapp.generated.resources.photo_loading
+import com.coffeepeek.core.designsystem.component.CoffeePeekLoader
 import org.jetbrains.compose.resources.DrawableResource
+import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
 
 @Composable
@@ -55,6 +61,8 @@ fun CpImage(
     contentDescription: String? = null,
     highQualityData: Any? = null,
     upgradeDelayMillis: Long = 1_500L,
+    /** Draws the brand loader over the empty tile while nothing of the image has arrived yet. */
+    showLoader: Boolean = false,
 ) {
     val previewData = cpImageData(data)
     val detailData = highQualityData?.let(::cpImageData)?.takeUnless {
@@ -87,18 +95,24 @@ fun CpImage(
         is Resource.Failure -> error?.toPainterResource() ?: loading
         is Resource.Loading -> loading
     }
-    Image(
-        painter = painter,
-        contentDescription = contentDescription,
-        contentScale = contentScale,
-        modifier = modifier.then(if (detailData != null && upgradeDelayMillis > 0) {
-            Modifier.onGloballyPositioned { coordinates ->
-                val bounds = coordinates.boundsInWindow()
-                val total = coordinates.size.width.toDouble() * coordinates.size.height
-                visible = total > 0 && bounds.width.toDouble() * bounds.height / total >= 0.5
-            }
-        } else Modifier),
-    )
+    val image: @Composable () -> Unit = {
+        Image(
+            painter = painter,
+            contentDescription = contentDescription,
+            contentScale = contentScale,
+            modifier = modifier.then(if (detailData != null && upgradeDelayMillis > 0) {
+                Modifier.onGloballyPositioned { coordinates ->
+                    val bounds = coordinates.boundsInWindow()
+                    val total = coordinates.size.width.toDouble() * coordinates.size.height
+                    visible = total > 0 && bounds.width.toDouble() * bounds.height / total >= 0.5
+                }
+            } else Modifier),
+        )
+    }
+    if (showLoader) Box(contentAlignment = Alignment.Center) {
+        image()
+        if (result is Resource.Loading) CoffeePeekLoader(stringResource(Res.string.photo_loading))
+    } else image()
 }
 
 /** Bounded, one-shot warming through the same renderer/cache as visible images. */
