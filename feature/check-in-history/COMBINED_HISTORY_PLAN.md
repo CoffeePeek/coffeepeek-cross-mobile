@@ -1,5 +1,41 @@
 # Combined personal history — current-main parity and next slice
 
+## Reuse feed/profile timeline content — 2026-10-23
+
+Personal history's Android and shared/iOS Shop/Home rows now render through the
+same `CheckInTimelineContent` used by the feed and profile preview. Public-profile
+preview and all-check-ins sheets already use that component through their
+existing card slot; their rendering contracts stay unchanged.
+
+The right-hand timeline rail, date grouping, filtering, paging and calendar stay
+in their current owners. Row taps still open the existing detail/editor flow;
+photo taps open the existing session-bound viewer directly. Home visibility
+labels are preserved, including unknown visibility. No writer or analytics
+service is added or replaced.
+
+Android composition injects Shop/Home card-rendering callbacks through the
+existing history factory. History UI keeps its own models and imports no legacy
+application model or another feature implementation. Small app-owned adapters
+preserve photo variant alignment, addresses, moderation, helpful counts and
+recipe metadata. Missing rating dimensions are not fabricated as zero. The
+legacy shared/iOS history reuses the same app-owned card and Home presentation
+adapter. Existing summary renderers remain as standalone module preview fallbacks;
+the only production factory call supplies the shared renderers.
+
+Verification on 2026-10-23, branch `codex/migration-photo-viewer-safe-area` based
+on `b685d02a` with local profile/history UI changes: Android `directDebug` assembly
+and packaged runtime-class guard passed. Executed 89 app history/profile/viewer
+unit tests and 48 history-impl unit tests: 137 passed, 0 failures/errors/skips,
+no failure retries. Six new adapter tests cover recipe/photo/date preservation,
+unknown access, incomplete ratings and invalid/nonfinite dose strings. Colocated
+light/dark previews exercise the shared card without production DI or images.
+
+No app was installed or launched, and no automated UI/instrumentation/screenshot
+tests were run. Studio MCP is unavailable; no preview rendering or IDE inspection
+is claimed. iOS compilation and manual light/dark, font/accessibility, scrolling,
+photo/detail/back/cancel checks on Android/iOS remain open. No real-account write,
+live backend acceptance or production analytics event was performed.
+
 ## Creation analytics lifetime correction — 2026-10-21
 
 The account/destination-owned HistoryHostSession now retains the existing

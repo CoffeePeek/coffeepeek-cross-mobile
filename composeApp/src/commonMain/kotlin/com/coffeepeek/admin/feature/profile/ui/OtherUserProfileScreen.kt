@@ -76,7 +76,8 @@ internal fun UserProfileScreen(
     onFavoritesClick: (() -> Unit)? = null,
     onCheckInsClick: (() -> Unit)? = null,
     topBarActions: (@Composable () -> Unit)? = null,
-    favoritesPreview: (@Composable () -> Unit)? = null,
+    favoritesPreview: (@Composable (header: @Composable () -> Unit) -> Unit)? = null,
+    ownCheckInCount: Int = 0,
     activityCalendar: (@Composable () -> Unit)? = null,
     activityPreview: (@Composable (onClick: () -> Unit) -> Unit)? = null,
     bottomContentPadding: Dp = 20.dp,
@@ -225,13 +226,14 @@ internal fun UserProfileScreen(
                     if (state.error != null) InlineProfileError("Не удалось обновить профиль", vm::refresh)
                     if (!viewingOwnProfile && state.followError != null) InlineProfileError("Не удалось изменить подписку", vm::toggleFollow)
 
-                    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    if (favoritesPreview != null) favoritesPreview {
                         ProfileSectionHeading("Избранное", onAll = onFavoritesClick ?: { section = ProfileSection.Favorites })
-                        if (favoritesPreview != null) favoritesPreview() else when {
+                    } else if (profile.favorites.isNotEmpty() || state.isLoadingFavorites || state.favoritesError != null) Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        ProfileSectionHeading("Избранное", onAll = onFavoritesClick ?: { section = ProfileSection.Favorites })
+                        when {
                             state.isLoadingFavorites && profile.favorites.isEmpty() -> ProfileSectionLoader()
                             state.favoritesError != null && profile.favorites.isEmpty() ->
                                 InlineProfileError("Не удалось загрузить избранное", vm::retryFavorites)
-                            profile.favorites.isEmpty() -> ProfileEmptyCard("Пока ничего нет в избранном", CpIcons.Favorite)
                             else -> {
                                 val favorites = profile.favorites.take(6)
                                 FavoritesPreviewCarousel(
@@ -251,16 +253,15 @@ internal fun UserProfileScreen(
                         }
                     }
 
-                    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    if (state.checkIns.isNotEmpty() || state.isLoadingCheckIns || state.checkInsError != null || ownCheckInCount > 0) Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                         ProfileSectionHeading("Чекины", onAll = onCheckInsClick ?: { section = ProfileSection.CheckIns })
                         Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                             when {
-                                state.isLoadingCheckIns -> Box(Modifier.fillMaxWidth().height(100.dp), contentAlignment = Alignment.Center) {
+                                state.isLoadingCheckIns && state.checkIns.isEmpty() -> Box(Modifier.fillMaxWidth().height(100.dp), contentAlignment = Alignment.Center) {
                                     CoffeePeekLoader()
                                 }
                                 state.checkInsError != null && state.checkIns.isEmpty() ->
                                     InlineProfileError("Не удалось загрузить чекины", vm::retryCheckIns)
-                                state.checkIns.isEmpty() -> ProfileEmptyCard("Пока нет чекинов", CpIcons.Coffee)
                                 else -> state.checkIns.take(2).forEach { checkIn ->
                                     PublicProfileCheckInCard(
                                         checkIn = checkIn,
@@ -308,7 +309,6 @@ internal fun UserProfileScreen(
                 }
                 if (state.isLoadingFavorites) item { ProfileSectionLoader() }
                 else if (state.favoritesError != null) item { InlineProfileError("Не удалось загрузить избранное", vm::retryFavorites) }
-                else if (profile.favorites.isEmpty()) item { ProfileEmptyCard("Пока ничего нет в избранном", CpIcons.Favorite) }
             }
             ProfileSection.CheckIns -> LazyColumn(
                 state = checkInsListState,
@@ -331,7 +331,7 @@ internal fun UserProfileScreen(
                     Box(Modifier.fillMaxWidth().padding(24.dp), contentAlignment = Alignment.Center) { CoffeePeekLoader() }
                 } else if (state.checkInsError != null) item {
                     InlineProfileError("Не удалось загрузить чекины", vm::retryCheckIns)
-                } else if (state.checkIns.isEmpty()) item { ProfileEmptyCard("Пока нет чекинов", CpIcons.Coffee) }
+                }
                 if (state.hasMoreCheckIns && !state.isLoadingMoreCheckIns && state.checkInsError == null) item {
                     TextButton(onClick = vm::loadMoreCheckIns, modifier = Modifier.fillMaxWidth()) { Text("Загрузить ещё") }
                 }

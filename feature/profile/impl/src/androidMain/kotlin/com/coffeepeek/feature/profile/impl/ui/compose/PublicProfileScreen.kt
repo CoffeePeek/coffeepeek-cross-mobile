@@ -51,7 +51,6 @@ import com.coffeepeek.feature.profile.domain.PublicProfileFavorite
 import com.coffeepeek.feature.profile.impl.R
 import com.coffeepeek.feature.profile.impl.ui.PublicProfileViewModel
 import com.coffeepeek.feature.profile.impl.ui.compose.component.InlineProfileError
-import com.coffeepeek.feature.profile.impl.ui.compose.component.ProfileEmptyCard
 import com.coffeepeek.feature.profile.impl.ui.compose.component.ProfileSectionHeading
 import com.coffeepeek.feature.profile.impl.ui.compose.component.ProfileSectionLoader
 import com.coffeepeek.feature.profile.impl.ui.compose.component.PublicProfileActivityCalendar
@@ -72,7 +71,8 @@ internal class OwnProfileExtras(
     val onOpenFavorites: () -> Unit,
     val onOpenCheckIns: () -> Unit,
     val topBarActions: @Composable () -> Unit,
-    val favoritesPreview: @Composable () -> Unit,
+    val favoritesPreview: @Composable (header: @Composable () -> Unit) -> Unit,
+    val checkInCount: Int,
     val activityCalendar: @Composable () -> Unit,
     val activityPreview: @Composable (onClick: () -> Unit) -> Unit,
     val bottomContentPadding: Dp,
@@ -209,13 +209,14 @@ internal fun PublicProfileScreen(
                         InlineProfileError(stringResource(R.string.profile_follow_failed)) { vm.onAction(PublicProfileAction.ToggleFollow) }
                     }
 
-                    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                        ProfileSectionHeading(stringResource(R.string.profile_section_favorites), onAll = own?.onOpenFavorites ?: { section = ProfileSection.Favorites })
-                        if (own != null) own.favoritesPreview() else when {
+                    if (own != null) own.favoritesPreview {
+                        ProfileSectionHeading(stringResource(R.string.profile_section_favorites), onAll = own.onOpenFavorites)
+                    } else if (profile.favorites.isNotEmpty() || state.isLoadingFavorites || state.favoritesError != null) Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        ProfileSectionHeading(stringResource(R.string.profile_section_favorites), onAll = { section = ProfileSection.Favorites })
+                        when {
                             state.isLoadingFavorites && profile.favorites.isEmpty() -> ProfileSectionLoader()
                             state.favoritesError != null && profile.favorites.isEmpty() ->
                                 InlineProfileError(stringResource(R.string.profile_favorites_failed)) { vm.onAction(PublicProfileAction.RetryFavorites) }
-                            profile.favorites.isEmpty() -> ProfileEmptyCard(stringResource(R.string.profile_favorites_empty), CoffeePeekIcons.Favorite)
                             else -> {
                                 slots.favoritesPreview(profile.favorites.take(6), openFavorite)
                                 if (state.favoritesError != null) {
@@ -225,14 +226,13 @@ internal fun PublicProfileScreen(
                         }
                     }
 
-                    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    if (state.checkIns.isNotEmpty() || state.isLoadingCheckIns || state.checkInsError != null || (own?.checkInCount ?: 0) > 0) Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                         ProfileSectionHeading(stringResource(R.string.profile_section_check_ins), onAll = own?.onOpenCheckIns ?: { section = ProfileSection.CheckIns })
                         Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                             when {
-                                state.isLoadingCheckIns -> ProfileSectionLoader(100.dp)
+                                state.isLoadingCheckIns && state.checkIns.isEmpty() -> ProfileSectionLoader(100.dp)
                                 state.checkInsError != null && state.checkIns.isEmpty() ->
                                     InlineProfileError(stringResource(R.string.profile_check_ins_failed)) { vm.onAction(PublicProfileAction.RetryCheckIns) }
-                                state.checkIns.isEmpty() -> ProfileEmptyCard(stringResource(R.string.profile_check_ins_empty), CoffeePeekIcons.Coffee)
                                 else -> state.checkIns.take(2).forEach { checkIn ->
                                     slots.checkInCard(checkIn, author, viewingOwn,
                                         checkIn.coffeeShopSlug?.takeIf(String::isNotBlank)?.let { shop -> { onOpenShop(shop) } }) { previews, originals, index -> photos = ProfilePhotos(previews, originals, index) }
@@ -278,7 +278,6 @@ internal fun PublicProfileScreen(
                     else if (state.favoritesError != null) item {
                         InlineProfileError(stringResource(R.string.profile_favorites_failed)) { vm.onAction(PublicProfileAction.RetryFavorites) }
                     }
-                    else if (profile.favorites.isEmpty()) item { ProfileEmptyCard(stringResource(R.string.profile_favorites_empty), CoffeePeekIcons.Favorite) }
                 }
                 ProfileSection.CheckIns -> LazyColumn(
                     state = checkInsListState,
@@ -294,7 +293,6 @@ internal fun PublicProfileScreen(
                     else if (state.checkInsError != null) item {
                         InlineProfileError(stringResource(R.string.profile_check_ins_failed)) { vm.onAction(PublicProfileAction.RetryCheckIns) }
                     }
-                    else if (state.checkIns.isEmpty()) item { ProfileEmptyCard(stringResource(R.string.profile_check_ins_empty), CoffeePeekIcons.Coffee) }
                     if (state.hasMoreCheckIns && !state.isLoadingMoreCheckIns && state.checkInsError == null) item {
                         TextButton(onClick = { vm.onAction(PublicProfileAction.LoadMoreCheckIns) }, modifier = Modifier.fillMaxWidth()) {
                             Text(stringResource(R.string.profile_load_more))

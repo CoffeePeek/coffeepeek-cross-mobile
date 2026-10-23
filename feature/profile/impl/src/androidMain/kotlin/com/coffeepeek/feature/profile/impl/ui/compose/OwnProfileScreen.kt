@@ -99,7 +99,8 @@ internal fun OwnProfileScreen(
                 own = OwnProfileExtras(
                     onEditProfile = onEditProfile, onOpenFavorites = onOpenFavorites, onOpenCheckIns = onOpenCheckIns,
                     topBarActions = actions,
-                    favoritesPreview = { slots.favoritesPreview(onOpenShop, onOpenRoaster) },
+                    favoritesPreview = { header -> slots.favoritesPreview(onOpenShop, onOpenRoaster, header) },
+                    checkInCount = profile.checkInCount,
                     activityCalendar = slots.activityCalendar,
                     activityPreview = slots.activityPreview,
                     bottomContentPadding = bottomPadding,
@@ -131,9 +132,10 @@ internal fun OwnProfileScreen(
                     )
                     slots.activityPreview(onOpenCheckIns)
                     if (state.error != null || state.refreshError != null) slots.loadError { vm.onAction(OwnProfileAction.Refresh) }
-                    TextButton(onClick = onOpenFavorites) { Text(stringResource(R.string.profile_own_favorites)) }
-                    slots.favoritesPreview(onOpenShop, onOpenRoaster)
-                    TextButton(onClick = onOpenCheckIns) { Text(stringResource(R.string.profile_own_check_ins)) }
+                    slots.favoritesPreview(onOpenShop, onOpenRoaster) {
+                        TextButton(onClick = onOpenFavorites) { Text(stringResource(R.string.profile_own_favorites)) }
+                    }
+                    if (profile.checkInCount > 0) TextButton(onClick = onOpenCheckIns) { Text(stringResource(R.string.profile_own_check_ins)) }
                     Spacer(Modifier.height(bottomPadding))
                 }
             }
