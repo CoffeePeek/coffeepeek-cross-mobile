@@ -2,10 +2,10 @@ package com.coffeepeek.admin.ui.screen.checkins
 
 import com.coffeepeek.domain.model.CheckInModerationState
 import com.coffeepeek.domain.model.CheckInVisibility
-import com.coffeepeek.feature.homecheckin.domain.HomeCheckIn
-import com.coffeepeek.feature.homecheckin.domain.HomeCheckInModeration
-import com.coffeepeek.feature.homecheckin.domain.HomeCheckInPhoto
-import com.coffeepeek.feature.homecheckin.domain.HomeCheckInVisibility
+import com.coffeepeek.legacy.homecheckin.domain.HomeCheckIn
+import com.coffeepeek.legacy.homecheckin.domain.HomeCheckInModeration
+import com.coffeepeek.legacy.homecheckin.domain.HomeCheckInPhoto
+import com.coffeepeek.legacy.homecheckin.domain.HomeCheckInVisibility
 import kotlin.test.*
 
 class HomeTimelinePresentationTest {
