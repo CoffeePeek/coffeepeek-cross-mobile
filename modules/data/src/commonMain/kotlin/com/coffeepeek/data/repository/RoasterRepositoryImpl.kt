@@ -48,6 +48,12 @@ class RoasterRepositoryImpl(
 
     override suspend fun getRoasters(): Result<List<RoasterSummary>> = catalogMutex.withLock {
         cachedCatalog?.let { return@withLock Result.success(it) }
+        loadCatalog(force = false)
+    }
+
+    override suspend fun refreshRoasters(): Result<List<RoasterSummary>> = catalogMutex.withLock { loadCatalog(force = true) }
+
+    private suspend fun loadCatalog(force: Boolean): Result<List<RoasterSummary>> {
         val saved = try {
             settings.readSerializable<CachedRoasterCatalog>(catalogCacheKey)
         } catch (cancelled: CancellationException) {
@@ -55,8 +61,8 @@ class RoasterRepositoryImpl(
         } catch (_: Exception) {
             null
         }
-        try {
-            val catalog = if (saved != null && nowMs() - saved.savedAtMs in 0 until ROASTER_CACHE_TTL_MS) {
+        return try {
+            val catalog = if (!force && saved != null && nowMs() - saved.savedAtMs in 0 until ROASTER_CACHE_TTL_MS) {
                 saved.items
             } else {
                 val loaded = roasterApiService.getRoasters().getOrThrow()
@@ -74,7 +80,12 @@ class RoasterRepositoryImpl(
         } catch (cancelled: CancellationException) {
             throw cancelled
         } catch (error: Exception) {
-            if (saved != null) Result.success(cacheCatalog(saved.items)) else Result.failure(error)
+            val kept = if (force) cachedCatalog else null
+            when {
+                kept != null -> Result.success(kept)
+                saved != null -> Result.success(cacheCatalog(saved.items))
+                else -> Result.failure(error)
+            }
         }
     }
 

@@ -15,6 +15,7 @@ import kotlin.reflect.KClass
 import com.coffeepeek.admin.utils.image.isProtectedCheckInPhoto
 import com.coffeepeek.admin.utils.image.isImmutablePhotoVariant
 import com.coffeepeek.admin.utils.image.protectedPhotoRequests
+import com.coffeepeek.admin.utils.image.retryOnPhotoTimeout
 import com.coffeepeek.admin.utils.image.protectedVariantBytes
 import com.coffeepeek.admin.utils.image.grantOnlinePhoto
 import com.coffeepeek.admin.utils.image.requirePhotoAccess
@@ -57,7 +58,7 @@ actual class CustomUrlFetcher(
                 else BitmapUtil.prepareForDisplay(bytes)
             display
         }
-        val bytes = download()
+        val bytes = retryOnPhotoTimeout(::download)
         send(Resource.Success(ByteReadChannel(bytes), source))
     }
 

@@ -90,7 +90,7 @@ internal class RoasterListViewModel(
             .onEach { favorites -> _state.update { it.copy(favoriteIds = favorites.map { it.roasterFavoriteId }.toSet()) } }
             .catch { _state.update { it.copy(actionMessage = "Не удалось загрузить избранное") } }
             .launchIn(workScope)
-        refresh()
+        load(explicit = false)
     }
 
     fun clearActionMessage() { _state.update { it.copy(actionMessage = null) } }
@@ -129,11 +129,13 @@ internal class RoasterListViewModel(
         )
     }
 
-    fun refresh() {
+    fun refresh() = load(explicit = true)
+
+    private fun load(explicit: Boolean) {
         loadJob?.cancel()
         loadJob = workScope.launch {
             _state.update { it.copy(isLoading = true, error = null) }
-            val result = roasters.getRoasters()
+            val result = if (explicit) roasters.refreshRoasters() else roasters.getRoasters()
             currentCoroutineContext().ensureActive()
             result.onSuccess { catalog ->
                 _state.update { it.copy(items = catalog.map(::RoasterListItem), isLoading = false) }

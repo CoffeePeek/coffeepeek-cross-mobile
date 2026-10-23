@@ -123,4 +123,5 @@
     <string name="select_method_label">Выбрать способ заваривания</string>
     <string name="select_method_placeholder">Выбрать способ</string>
     <string name="select_method_none">Не указывать</string>
+    <string name="photo_loading">Загрузка фото…</string>
 </resources>

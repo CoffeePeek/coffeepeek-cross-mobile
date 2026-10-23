@@ -115,7 +115,14 @@ class ShopChangeEditorViewModel(
             _state.update { it.copy(isLoading = false, error = e.message) }
             return
         }
-        val drinks = shopRepository.getMenuDrinks().getOrNull().orEmpty()
+        // A failed drinks read must not look like an empty catalog: the menu editor would show no rows and send a menu without the saved items.
+        val drinks = shopRepository.getMenuDrinks().getOrElse { e ->
+            if (section == ShopChangeSection.Menu) {
+                _state.update { it.copy(isLoading = false, error = e.message) }
+                return
+            }
+            emptyList()
+        }
         _state.update { current ->
             current.copy(
                 shopTitle = details.shop.title,
@@ -242,7 +249,7 @@ private fun List<CoffeeDrinkDefinition>.toMenuRows(
     current: List<com.coffeepeek.domain.model.ShopMenuItem>,
 ): List<ShopChangeMenuRow> {
     val bySlug = current.associateBy { it.slug.lowercase() }
-    return map { drink ->
+    val known = map { drink ->
         val item = bySlug[drink.slug.lowercase()]
         ShopChangeMenuRow(
             slug = drink.slug,
@@ -251,6 +258,11 @@ private fun List<CoffeeDrinkDefinition>.toMenuRows(
             priceText = item?.price?.let { formatNumber(it) }.orEmpty(),
         )
     }
+    // An item whose drink left the catalog keeps its row instead of vanishing silently.
+    val retired = current.filter { item -> none { it.slug.equals(item.slug, ignoreCase = true) } }.map { item ->
+        ShopChangeMenuRow(item.slug, item.nameRu.ifBlank { item.nameEn }.ifBlank { item.slug }, item.availability.toAvailability(), item.price?.let { formatNumber(it) }.orEmpty())
+    }
+    return known + retired
 }
 
 private fun String?.toAvailability(): MenuItemAvailability = when (this?.lowercase()) {
@@ -290,7 +302,7 @@ private fun ShopChangeEditorUiState.applyRequest(
         alreadyUploadedMenuPhotos = payload.menu?.newPhotos.orEmpty(),
         menuRows = payload.menu?.items?.let { items ->
             val bySlug = items.associateBy { it.slug.lowercase() }
-            drinks.map { drink ->
+            val known = drinks.map { drink ->
                 val item = bySlug[drink.slug.lowercase()]
                 ShopChangeMenuRow(
                     slug = drink.slug,
@@ -299,6 +311,10 @@ private fun ShopChangeEditorUiState.applyRequest(
                     priceText = item?.price?.let { formatNumber(it) }.orEmpty(),
                 )
             }
+            // An item whose drink left the catalog keeps its row instead of vanishing silently.
+            val retired = items.filter { item -> drinks.none { it.slug.equals(item.slug, ignoreCase = true) } }
+                .map { item -> ShopChangeMenuRow(item.slug, item.slug, item.availability, item.price?.let { formatNumber(it) }.orEmpty()) }
+            known + retired
         } ?: menuRows,
     )
 }

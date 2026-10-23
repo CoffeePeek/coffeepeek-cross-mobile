@@ -143,6 +143,42 @@ class ChangeEditorViewModelTest {
         assertNull(vm.state.value.loadError); assertEquals(1, vm.state.value.catalogs.tags.size)
     }
 
+    @Test fun aFailedDrinksReadFailsTheMenuEditorInsteadOfShowingAnEmptyMenu() = runTest(dispatcher) {
+        repository.change = {
+            Result.success(request(it, ChangeSection.Menu, ChangePayload(menu = ChangeMenu(items = listOf(MenuEntry("espresso", Availability.Present, 4.5)), retainedPhotoIds = listOf("m1")))))
+        }
+        val vm = model(ChangeSection.Menu, requestId = "req")
+        catalogs.drinks = { Result.failure(ContributionFailure(FailureKind.Other, "Сервис недоступен")) }
+        vm.send(ChangeEditorAction.Reload, scope = this)
+        assertEquals(EditorLoadError.Failed, vm.state.value.loadError)
+        assertFalse(vm.state.value.canSubmit)
+        // A retry brings the saved items back, so a photo-only change keeps them.
+        catalogs.drinks = { Result.success(listOf(DrinkOption("espresso", "Эспрессо"), DrinkOption("latte", "Латте"))) }
+        vm.send(ChangeEditorAction.Reload, scope = this)
+        assertNull(vm.state.value.loadError)
+        vm.send(ChangeEditorAction.Submit, scope = this)
+        val sent = repository.drafts.single() as ChangeDraft.Menu
+        assertEquals(MenuEntry("espresso", Availability.Present, 4.5), sent.items.first { it.slug == "espresso" })
+    }
+
+    @Test fun anItemWhoseDrinkLeftTheCatalogKeepsItsRowAndIsSentAgain() = runTest(dispatcher) {
+        repository.change = {
+            Result.success(request(it, ChangeSection.Menu, ChangePayload(menu = ChangeMenu(items = listOf(MenuEntry("retired", Availability.Present, 3.0)), retainedPhotoIds = emptyList()))))
+        }
+        val vm = model(ChangeSection.Menu, requestId = "req")
+        assertTrue(MenuRowState("retired", "retired", Availability.Present, "3") in vm.state.value.menuRows)
+        vm.send(ChangeEditorAction.Submit, scope = this)
+        assertTrue(MenuEntry("retired", Availability.Present, 3.0) in (repository.drafts.single() as ChangeDraft.Menu).items)
+    }
+
+    @Test fun aSuccessfulEmptyDrinkCatalogIsAllowedWhenTheShopHasNoMenu() = runTest(dispatcher) {
+        catalogs.shop = { Result.success(shop.copy(menu = emptyList())) }
+        catalogs.drinks = { Result.success(emptyList()) }
+        val vm = ChangeEditorViewModel("cafe", ChangeSection.Menu, null, repository, catalogs, FakeAccount()).also { store.put("empty", it); runCurrent() }
+        assertNull(vm.state.value.loadError); assertTrue(vm.state.value.menuRows.isEmpty())
+        assertTrue(vm.state.value.canSubmit)
+    }
+
     @Test fun aMissingRequestIsNotFound() = runTest(dispatcher) {
         val vm = model(ChangeSection.Tags, requestId = "missing")
         assertEquals(EditorLoadError.NotFound, vm.state.value.loadError)

@@ -1,6 +1,9 @@
 package com.coffeepeek.feature.contributions.data.backend
 
 import com.coffeepeek.core.network.requestResult
+import com.coffeepeek.core.network.errorMessage
+import com.coffeepeek.core.network.envelopeData
+import com.coffeepeek.core.network.ApiEnvelope
 import com.coffeepeek.feature.contributions.domain.model.ContributionFailure
 import com.coffeepeek.feature.contributions.domain.model.FailureKind
 import io.ktor.client.HttpClient
@@ -16,8 +19,6 @@ import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
 import io.ktor.http.isSuccess
-import kotlinx.coroutines.CancellationException
-import kotlinx.serialization.json.JsonElement
 
 private const val MODERATION_SHOPS = "/api/ModerationShops"
 private const val MODERATION_ROASTERS = "/api/ModerationRoasters"
@@ -60,7 +61,7 @@ internal class ContributionsBackend(private val client: HttpClient) {
     suspend fun submitRoaster(request: CreateRoasterRequest): Result<Pair<RoasterSubmittedDto, String?>> = requestResult {
         val response = client.post(MODERATION_ROASTERS) { expectSuccess = false; contentType(ContentType.Application.Json); setBody(request) }
         response.requireSuccess()
-        val envelope = response.body<Envelope<RoasterSubmittedDto>>()
+        val envelope = response.body<ApiEnvelope<RoasterSubmittedDto>>()
         if (!envelope.isSuccess) throw ContributionFailure(FailureKind.Other, envelope.message.clean())
         checkNotNull(envelope.data) { "Missing response data" } to envelope.message.clean()
     }
@@ -90,11 +91,6 @@ internal class ContributionsBackend(private val client: HttpClient) {
 
     private suspend fun HttpResponse.requireSuccess() {
         if (status.isSuccess()) return
-        val message = try {
-            body<Envelope<JsonElement>>().message.clean()
-        } catch (cancelled: CancellationException) {
-            throw cancelled
-        } catch (_: Exception) { null }
         throw ContributionFailure(
             when (status) {
                 HttpStatusCode.Unauthorized -> FailureKind.SignInRequired
@@ -102,15 +98,11 @@ internal class ContributionsBackend(private val client: HttpClient) {
                 HttpStatusCode.NotFound -> FailureKind.NotFound
                 else -> FailureKind.Other
             },
-            message,
+            errorMessage(),
         )
     }
 
-    private suspend inline fun <reified T> HttpResponse.envelope(): T {
-        val envelope = body<Envelope<T>>()
-        if (!envelope.isSuccess) throw ContributionFailure(FailureKind.Other, envelope.message.clean())
-        return checkNotNull(envelope.data) { "Missing response data" }
-    }
+    private suspend inline fun <reified T> HttpResponse.envelope(): T = envelopeData { ContributionFailure(FailureKind.Other, it) }
 
     private fun String?.clean(): String? = this?.takeIf(String::isNotBlank)
 }

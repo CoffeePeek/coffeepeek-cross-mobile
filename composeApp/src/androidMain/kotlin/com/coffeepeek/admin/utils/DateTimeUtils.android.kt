@@ -1,5 +1,6 @@
 package com.coffeepeek.admin.utils
 
+import com.coffeepeek.core.datetime.parseServerJavaInstant
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
@@ -43,7 +44,7 @@ internal actual fun utcIsoToLocalDateTime(value: String): String =
     utcIsoToLocalDateTime(value, ZoneId.systemDefault())
 
 internal fun utcIsoToLocalDateTime(value: String, zoneId: ZoneId): String =
-    parseUtcInstant(value)
+    parseServerJavaInstant(value)
         ?.atZone(zoneId)
         ?.format(DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm"))
         ?: value
@@ -57,15 +58,8 @@ internal fun datePickerMillisToUtcIsoInstant(millis: Long, zoneId: ZoneId): Stri
         .toString()
 
 internal fun utcIsoToLocalDate(value: String, zoneId: ZoneId): String =
-    parseUtcInstant(value)?.atZone(zoneId)?.toLocalDate()?.toString()
+    parseServerJavaInstant(value)?.atZone(zoneId)?.toLocalDate()?.toString()
         ?: value.substringBefore('T').ifBlank { value }
-
-private fun parseUtcInstant(value: String): Instant? {
-    val trimmed = value.trim()
-    if (trimmed.isEmpty()) return null
-    runCatching { Instant.parse(trimmed) }.getOrNull()?.let { return it }
-    return runCatching { Instant.parse("${trimmed}Z") }.getOrNull()
-}
 
 private val visitDateFormatter: DateTimeFormatter =
     DateTimeFormatter.ofPattern("d MMMM yyyy", Locale("ru"))

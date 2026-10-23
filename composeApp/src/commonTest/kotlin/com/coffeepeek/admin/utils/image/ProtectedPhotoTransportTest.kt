@@ -5,6 +5,7 @@ import com.coffeepeek.domain.model.Session
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.respond
+import io.ktor.client.network.sockets.ConnectTimeoutException
 import io.ktor.client.plugins.cache.HttpCache
 import io.ktor.http.*
 import io.ktor.util.date.GMTDate
@@ -45,6 +46,36 @@ class ProtectedPhotoTransportTest {
             assertEquals(2, calls)
             assertNotNull(request.displayPermission?.permission?.value)
         } finally { client.close() }
+    }
+
+    @Test fun aTimedOutAttemptIsRepeatedOnceAtOnceAndASecondTimeoutFails() = runTest {
+        var calls = 0
+        val flaky = HttpClient(MockEngine {
+            calls++
+            if (calls == 1) throw ConnectTimeoutException("stalled connection")
+            respond(ByteReadChannel(byteArrayOf(7)), HttpStatusCode.OK, headers("private,max-age=60"))
+        })
+        val down = HttpClient(MockEngine { calls++; throw ConnectTimeoutException("offline") })
+        try {
+            assertContentEquals(byteArrayOf(7), protectedVariantBytes(flaky, data("retry-after-timeout")))
+            assertEquals(2, calls)
+            calls = 0
+            assertFailsWith<ConnectTimeoutException> { protectedVariantBytes(down, data("always-times-out")) }
+            assertEquals(2, calls)
+        } finally { flaky.close(); down.close() }
+    }
+
+    @Test fun anAccessDeniedOrOtherFailureIsNotRetried() = runTest {
+        var calls = 0
+        val denied = HttpClient(MockEngine { calls++; respond(ByteReadChannel(byteArrayOf()), HttpStatusCode.Forbidden, headersOf()) })
+        val broken = HttpClient(MockEngine { calls++; error("boom") })
+        try {
+            assertFailsWith<PhotoAccessDenied> { protectedVariantBytes(denied, data("denied-once")) }
+            assertEquals(1, calls)
+            calls = 0
+            assertFailsWith<IllegalStateException> { protectedVariantBytes(broken, data("broken-once")) }
+            assertEquals(1, calls)
+        } finally { denied.close(); broken.close() }
     }
 
     @Test fun accidentallyCachedTransportFailsBeforeAnyProtectedRequest() = runTest {

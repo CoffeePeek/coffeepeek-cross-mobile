@@ -7,13 +7,6 @@ import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonNames
 
 @Serializable
-internal data class Envelope<T>(
-    val isSuccess: Boolean = false,
-    val message: String? = null,
-    val data: T? = null,
-)
-
-@Serializable
 internal data class FeedPageDto(val items: List<FeedItemDto> = emptyList(), val nextCursor: String? = null)
 
 @Serializable
