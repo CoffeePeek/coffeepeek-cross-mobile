@@ -199,3 +199,54 @@ Layout `feature/app-update/{api,domain,data,impl}`, package `com.coffeepeek.feat
 - Device check after the move, Pixel 7 / Android 17, `com.coffeepeek.sandbox` only (data cleared first, launch extras `sandbox_update`): *Required*: the blocking card is the same as before (title, body, blocked-installer error,
   one «Повторить», no «Позже»); *Available*: the Play-channel snackbar appears at launch with the same message and «Повторить», above the floating navigation (the clearance slot works). No real download, install or Play flow
   ran (the Sandbox installer is a fake). Not exercised: dark theme, large font, rotation, TalkBack.
+
+## Step 5 — retroactive audit of the migrated path (2026-10-21, branch `feature/appupdate-audit`)
+
+Method: every inventory row is walked against the migrated code and ends as **preserved**, **improved (how)** or **intentionally removed (why)**. Evidence is a test, a device run, or a diff against the legacy file
+(`git diff -M` of the moved files shows what changed). "Unverified" marks what no test or device run reached. Device = Pixel 7 / Android 17, `com.coffeepeek.sandbox` only.
+
+**What the diffs show.** `AppUpdateController` differs from `AppUpdateState` only by visibility and by reading the version through `AppUpdateEnvironment` on each use instead of a constructor snapshot (the legacy prompt also read
+`AppConfig.versionCode` on every recomposition, so this is equivalent). The migrated prompt differs from the legacy one only by plumbing (controller, installer, environment and the installation effect as parameters), the texts
+moving to `appupdate_` string resources (identical wording), and `CoffeePeekIcons`/`CoffeePeekTheme` instead of `CpIcons`/`CoffeePeekTheme` of the app. `PlayUpdateInstaller` changes one line (version from the environment),
+`ApkUpdateInstaller` only its package and import. The effect changes only its inputs (parameters instead of Koin/`BuildConfig`/`Res`) and the snackbar slot.
+
+| Row | Status | Evidence |
+|---|---|---|
+| A1 policy rules | preserved | `AppUpdateRulesTest` |
+| A2 response validation | preserved | `AppVersionResponseTest` (incl. the characterized host quirks) |
+| A3 fetch contract | preserved | `AppUpdateRepositoryTest` (path, `platform`, `channel` and its absence, `no-store`, rejected policies, error statuses) |
+| A4 dismissed version | preserved | `AppUpdateCheckBehaviourTest` (read once, failed write, required ignored), `AppUpdateAdaptersTest` (key `dismissed_app_version`), `AppUpdateRepositoryTest` |
+| A5 unknown version | preserved | `AppUpdateCheckBehaviourTest`, `AppUpdateControllerTest` |
+| B1 check state machine | preserved | `AppUpdateCheckBehaviourTest` (messages, silent automatic failures, timeout/error, ignored second check), Sandbox policy test |
+| B2 `takeNativePrompt` | preserved | `AppUpdateControllerTest` |
+| B3 `needsPlayFallback` | preserved | `AppUpdateControllerTest` |
+| B4 triggers | preserved (resume) / **improved** (manual) | resume check: identical prompt code and the device runs at launch; the manual check from Settings now locks the row with a loader, holds it for 700 ms and answers with a toast (`SettingsViewModelTest` 12, `AndroidSettingsPortsTest` 11, device) |
+| C1 installer stages | preserved | `AppUpdateCheckBehaviourTest` (busy), `UpdateInstallationTest` (progress) |
+| C2 compatibility rule | preserved | `UpdateInstallationTest` |
+| D1-D8 Play installer | preserved, **unverified at runtime** | diff (one line); needs Play on a device |
+| E1-E6 APK installer | preserved, **unverified at runtime** | diff (package/import only); needs DownloadManager, FileProvider and a package install |
+| F1-F4 prompt card | preserved | diff (plumbing and strings only), device: Required card and Available snackbar identical before and after each move; previews kept; texts now resources (**improved**: translatable) |
+| G1 launchers | preserved, unverified at runtime | diff; Sandbox installer never launches Play/Package Installer |
+| G2 resume refresh | preserved | diff |
+| G3 snackbar texts/actions | preserved | device (Available snackbar with «Повторить») |
+| G4 automatic install of a required download | preserved, unverified | diff; needs a real download |
+| G5 retry | preserved | `PlayUpdateRetryTest` 5 |
+| G6 dismiss on snackbar dismissal | preserved | device (a snackbar that timed out stored the dismissed version, then the next automatic check showed nothing) |
+| G7 clearance over the floating navigation | preserved | device (snackbar sits above the bar); now an app-supplied slot |
+| H1-H2 iOS | preserved | untouched legacy prompt and `StoreUpdateInstaller` behind the Legacy renderer; iOS simulator compile passes, no iOS run |
+| I1 Koin wiring | preserved | `di` unit suites (Direct 229, Play 202), builds |
+| I2 root composition | preserved | `App.kt` and the Sandbox root compose the renderer |
+| I3 Settings link | **improved** | `UpdateCheckPort.check()` is `suspend` and returns `UpToDate`/`Available`/`Failed` (see the Settings follow-up) |
+| I4 manifest and Gradle | preserved | no manifest edits; aapt2 on the merged manifests: `Direct` has `REQUEST_INSTALL_PACKAGES`, `Play` and Sandbox do not, all keep the FileProvider; Play dependency moved to `impl` |
+| I5 Sandbox | **improved** | the Sandbox root now hosts the migrated prompt, so Available/Required/Failure are visible and covered |
+| I6 analytics | preserved | none existed, none added |
+
+**Intentionally removed:** the `UpdateInstallationEffect` expect/actual (a no-op on iOS, the Android version moved), and the `status != 200 -> null` branch is still there but, as characterized, only sees other 2xx answers.
+
+**Open / follow-ups (none blocks the owner):**
+1. A real Play update and a real APK update on a release-like build (D, E, G4): the only remaining runtime gate for this owner; the Sandbox cannot cover it.
+2. Device checks not done: dark theme and large font on the card, rotation during a download, TalkBack, back/outside tap/swipe on the Required card.
+3. The legacy prompt, `LegacyAppUpdateRenderer` and `StoreUpdateInstaller` stay in `composeApp` until iOS consumes `feature/app-update`; then delete them with the renderer indirection (`LEGACY_REMOVAL.md`).
+4. `CpSnackbarHost` is still an app component reached through a slot; moving it to `core/design-system` would remove the slot.
+5. The installers and the effect have no unit tests; extracting the Play/APK state machines behind small fakes would make D/E testable without a device.
+6. Characterized quirks kept as is: `https:///app.apk` and `https://` pass the host check; a manual check with an unconfigured version reports a failure.
