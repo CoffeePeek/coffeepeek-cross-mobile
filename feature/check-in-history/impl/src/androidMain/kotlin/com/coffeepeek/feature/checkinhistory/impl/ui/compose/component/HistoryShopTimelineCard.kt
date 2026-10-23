@@ -19,6 +19,10 @@ import org.jetbrains.compose.resources.stringResource
 
 @Composable
 internal fun HistoryShopTimelineCard(entry: PersonalCheckIn, timeLabel: String, onClick: () -> Unit) {
+    LocalHistoryShopTimelineContent.current?.let { content ->
+        content(entry, onClick)
+        return
+    }
     Card(onClick, Modifier.fillMaxWidth(), shape = RoundedCornerShape(20.dp),
         border = BorderStroke(0.5.dp, MaterialTheme.colorScheme.outlineVariant),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)) {

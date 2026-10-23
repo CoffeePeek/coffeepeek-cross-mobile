@@ -114,7 +114,7 @@ ssh-keygen -l -E sha256 -f /etc/ssh/ssh_host_ed25519_key.pub | awk '{print $2}'
 
 ## Версии и metadata
 
-Публичная версия задаётся вручную в `iosApp/Configuration/Shared.xcconfig`: `MARKETING_VERSION = 1.1.0`, одинаково для Android и iOS. Номер сборки — `1000 + git rev-list --count HEAD`; он хранится отдельно и не добавляется к версии в интерфейсе. Workflow сохраняет в GitHub job summary:
+Публичная версия Android — `1.1.1.N`, где `N` равен `versionCode`. Номер сборки — `BUILD_NUMBER_OFFSET + git rev-list --count HEAD`; сдвиг `1000` читается из `iosApp/Configuration/Shared.xcconfig`. iOS использует отдельную публичную версию `MARKETING_VERSION`. Workflow сохраняет в GitHub job summary:
 
 - version name и version code;
 - размер APK;
