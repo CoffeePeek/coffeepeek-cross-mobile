@@ -99,7 +99,8 @@ has no page type (falls into `other`).
 4. **Menu photos limit** lives twice (`MAX_MENU_PHOTOS` 4 in the UI and `take(4)` in data); extra photos are dropped silently in data.
 5. **`ShopChangeEditor` can send an unchanged payload** (tags, roasters, equipment, brew methods are always valid) and an empty-cleared description is a valid change (`Описание очищено`): confirm this is intended.
 6. **No drafts**: the wizard state lives in the route-scoped view model; process death loses it (same as legacy today).
-7. **Schedule conversion** (`localSchedulesToUtc`) has no test; the wizard sends seven days even when the user touched nothing (09:00–21:00).
+7. **Schedule**: the UTC shift (`shiftSchedules`) has a test in `modules/data`; the wizard's own week building was not tested (now covered by step 1). The wizard sends seven days even when the user touched nothing (09:00–21:00).
+10. **Instagram in the contacts editor**: it validates a handle only, so a prefilled Instagram link blocks the send until it is retyped (pinned by a step 1 test, to be decided in the impl step).
 8. **Roasters in the list have no link**, approved roasters are indistinguishable from published ones.
 9. `review/ReviewReportScreen` and `ConsumedDrinkField` are used by the legacy Shop review flow and legacy check-in report, not by Contributions.
 
@@ -135,4 +136,15 @@ Live API contracts (paths and DTOs of `moderation/*`, `shop-change-requests`), i
 - **Tests**: `SandboxApplicationBackendTest` +1 (25 in total) runs the real `ShopApiService`, `RoasterApiService` and `ShopChangeRequestApiService` against the fixtures: lists per status, published vs waiting shops, rejected reasons, filters, submissions appearing as pending, server messages for invalid input, address/city pairing for roasters, edit rules, catalogs, paging (47 items, 3 pages), empty and failure modes, reset.
 - **Device check (Pixel 7, Sandbox, dark theme)**: profile menu -> «Отправленные кофейни» shows the three tabs with counts, the published shop with «Открыть в каталоге», the waiting one with «Скоро появится в каталоге», and the rejected one with the red reason block (legacy screen, nothing migrated yet).
 - **Not covered**: the real moderation decisions, photo key checks, real map/location, the wizard, roaster and change forms on a device (the step 1 and later checks).
+
+## Step 1 result (parity tests on the legacy code)
+
+- **Added**: `ContributionsParityGapsTest` (composeApp `commonTest`, 21) and `ContributionSubmissionContractTest` (`modules/data`, 8).
+- **List (7)**: shop mapping (published target, waiting meta, rejected reason, tabs only with items), roaster mapping without a target, change summaries for every section with title, date and target, a failing status fails the whole list with its message or `Ошибка загрузки`, load more one page at a time with a failure keeping loaded items, the last page disables it.
+- **Wizard (7)**: name cut at 55 and step guards, single city / city from a picked point / address change clears coordinates, photo limits and removal, time stepper clamps, unified and per-day schedule as submitted (seven days, Monday first, closed days empty), trimmed input with blank optionals as null and the selections, catalog failure and retry.
+- **Change editor (4)**: prefill and the chosen section only (contacts, tags), the Instagram link quirk, photo caps counting retained photos, overlay of an existing request and a failed load.
+- **Roaster (3)**: city/address pairing, Instagram normalization, trimmed values, photo cap, no submit while cities load.
+- **Data (8)**: payload key per change section, `PUT` for edits, retained and earlier uploads before new ones, menu limited to 4 new photos, failed upload sends nothing, shop request without empty contact/description, with contact when any is filled, server message kept on rejection.
+- **Checked**: data unit tests, composeApp Direct unit tests, iOS simulator compile of both test source sets: all pass. No UI tests were added or run.
+- **Not covered**: location and map, the real uploader, screens on a device (later steps).
 
