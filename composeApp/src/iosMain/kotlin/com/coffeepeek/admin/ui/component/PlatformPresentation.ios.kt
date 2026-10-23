@@ -15,19 +15,23 @@ import androidx.compose.ui.uikit.LocalUIViewController
 import androidx.compose.ui.viewinterop.UIKitView
 import androidx.compose.ui.viewinterop.UIKitInteropProperties
 import androidx.compose.ui.window.ComposeUIViewController
+import coffeepeek.composeapp.generated.resources.Res
+import coffeepeek.composeapp.generated.resources.presentation_cancel
 import com.coffeepeek.admin.AppContent
-import com.coffeepeek.admin.theme.CpColor
 import com.coffeepeek.admin.theme.switchPalette
 import com.coffeepeek.admin.theme.toUIColor
 import com.coffeepeek.admin.theme.uiKitStyle
 import com.coffeepeek.admin.theme.ThemeManager
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
+import com.coffeepeek.core.designsystem.component.CoffeePeekActionDialog
+import com.coffeepeek.core.designsystem.component.CoffeePeekDialogAction
 import kotlinx.cinterop.ObjCAction
 import kotlinx.cinterop.useContents
 import platform.Foundation.*
 import platform.UIKit.*
 import platform.darwin.NSObject
 import kotlinx.coroutines.delay
+import org.jetbrains.compose.resources.stringResource
 import kotlin.math.abs
 import kotlin.math.min
 
@@ -41,7 +45,7 @@ internal fun UIViewController.presentationHost(): UIViewController {
 
 /** Presentation can be requested by state before its screen's push animation has finished. */
 @Composable
-private fun PresentNativeController(controller: UIViewController, host: UIViewController) {
+internal fun PresentNativeController(controller: UIViewController, host: UIViewController) {
     LaunchedEffect(controller, host) {
         while (host.view.window == null || host.transitionCoordinator != null) delay(16)
         var presenter = host.presentationHost()
@@ -60,24 +64,8 @@ private fun PresentNativeController(controller: UIViewController, host: UIViewCo
 
 @Composable
 internal actual fun PlatformAlert(title: String, message: String, confirmLabel: String, onConfirm: () -> Unit, onDismiss: () -> Unit, cancelLabel: String?, destructive: Boolean, enabled: Boolean) {
-    val host = LocalUIViewController.current
-    val colors = MaterialTheme.colorScheme
-    val confirm = rememberUpdatedState(onConfirm)
-    val dismiss = rememberUpdatedState(onDismiss)
-    val alert = remember(title, message, confirmLabel, cancelLabel, destructive) {
-        UIAlertController.alertControllerWithTitle(title, message, UIAlertControllerStyleAlert)
-    }
-    DisposableEffect(alert, host) {
-        alert.addAction(UIAlertAction.actionWithTitle(confirmLabel, if (destructive) UIAlertActionStyleDestructive else UIAlertActionStyleDefault) { confirm.value() })
-        cancelLabel?.let { alert.addAction(UIAlertAction.actionWithTitle(it, UIAlertActionStyleCancel) { dismiss.value() }) }
-        onDispose { }
-    }
-    PresentNativeController(alert, host)
-    SideEffect {
-        alert.overrideUserInterfaceStyle = colors.uiKitStyle
-        alert.view.tintColor = (if (colors.surface.luminance() < .5f) CpColor.AccentTextDark else CpColor.AccentTextLight).toUIColor()
-        (alert.actions.firstOrNull() as? UIAlertAction)?.enabled = enabled
-    }
+    IosActionDialog(title, message, listOf(PlatformAction(confirmLabel, destructive, enabled, onConfirm)),
+        cancelLabel, dismissBeforeAction = false, onDismiss = onDismiss)
 }
 
 @Composable
@@ -88,37 +76,32 @@ internal actual fun NativeAlert(title: String, message: String, confirmLabel: St
 
 @Composable
 internal actual fun NativeActionSheet(title: String, actions: List<PlatformAction>, message: String?, dismissBeforeAction: Boolean, onDismiss: () -> Unit): Boolean {
-    val host = LocalUIViewController.current
-    val colors = MaterialTheme.colorScheme
-    val latestActions = rememberUpdatedState(actions)
-    val dismiss = rememberUpdatedState(onDismiss)
-    val alert = remember(host, title) {
-        val presenter = host.presentationHost()
-        val alert = UIAlertController.alertControllerWithTitle(title, message, UIAlertControllerStyleActionSheet)
-        actions.forEachIndexed { index, action ->
-            alert.addAction(UIAlertAction.actionWithTitle(action.title, if (action.destructive) UIAlertActionStyleDestructive else UIAlertActionStyleDefault) {
-                // Run after dismissal: the next action may present the photo picker.
-                val selected = latestActions.value.getOrNull(index)
-                alert.dismissViewControllerAnimated(true) {
-                    if (dismissBeforeAction) dismiss.value()
-                    selected?.onClick?.invoke()
-                }
-            }.apply { enabled = action.enabled })
-        }
-        alert.addAction(UIAlertAction.actionWithTitle("Отмена", UIAlertActionStyleCancel) { dismiss.value() })
-        alert.popoverPresentationController?.apply {
-            sourceView = presenter.view
-            sourceRect = presenter.view.bounds
-            permittedArrowDirections = 0u
-        }
-        alert
-    }
-    SideEffect {
-        alert.overrideUserInterfaceStyle = colors.uiKitStyle
-        alert.view.tintColor = (if (colors.surface.luminance() < .5f) CpColor.AccentTextDark else CpColor.AccentTextLight).toUIColor()
-    }
-    PresentNativeController(alert, host)
+    IosActionDialog(title, message, actions, stringResource(Res.string.presentation_cancel), dismissBeforeAction, onDismiss)
     return true
+}
+
+@Composable
+private fun IosActionDialog(
+    title: String, message: String?, actions: List<PlatformAction>, cancelLabel: String?,
+    dismissBeforeAction: Boolean, onDismiss: () -> Unit,
+) {
+    val dismiss = rememberUpdatedState(onDismiss)
+    var visible by remember(title, message) { mutableStateOf(true) }
+    val selection = remember(title, message, dismissBeforeAction) {
+        PlatformActionSelection(dismissBeforeAction) { dismiss.value() }
+    }
+    if (!visible) return
+    CoffeePeekActionDialog(title, message, actions.map { action ->
+        CoffeePeekDialogAction(action.title, {
+            selection.select(action) { completed ->
+                visible = false
+                completed()
+            }
+        }, action.destructive, action.enabled)
+    }, cancelLabel, onDismiss = {
+        visible = false
+        dismiss.value()
+    })
 }
 
 private class SheetDelegate(val dismissed: () -> Unit) : NSObject(), UIAdaptivePresentationControllerDelegateProtocol {
