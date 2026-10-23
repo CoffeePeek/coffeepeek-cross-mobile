@@ -1,7 +1,5 @@
-package com.coffeepeek.admin.feature.appupdate
+package com.coffeepeek.feature.appupdate.domain
 
-import com.coffeepeek.admin.feature.appupdate.domain.InstallationState
-import com.coffeepeek.admin.feature.appupdate.domain.isCompatibleUpdate
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse

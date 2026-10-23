@@ -4,7 +4,7 @@ import com.coffeepeek.BuildConfig
 import com.coffeepeek.admin.feature.appupdate.api.AndroidUpdateInstaller
 import com.coffeepeek.admin.feature.appupdate.data.ApkUpdateInstaller
 import com.coffeepeek.admin.feature.appupdate.data.PlayUpdateInstaller
-import com.coffeepeek.admin.feature.appupdate.domain.UpdateInstaller
+import com.coffeepeek.feature.appupdate.domain.UpdateInstaller
 import com.coffeepeek.admin.locator.Locator
 import org.koin.dsl.module
 

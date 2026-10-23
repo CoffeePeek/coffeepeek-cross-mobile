@@ -1,12 +1,9 @@
 package com.coffeepeek.admin.feature.appupdate
 
-import com.coffeepeek.admin.feature.appupdate.data.AppVersionDto
-import com.coffeepeek.admin.feature.appupdate.data.AppVersionResponse
-import com.coffeepeek.admin.feature.appupdate.data.toUpdate
-import com.coffeepeek.admin.feature.appupdate.domain.AppUpdate
-import com.coffeepeek.admin.feature.appupdate.domain.AppUpdateRepository
-import com.coffeepeek.admin.feature.appupdate.domain.InstallationStage
-import com.coffeepeek.admin.feature.appupdate.domain.InstallationState
+import com.coffeepeek.feature.appupdate.domain.AppUpdate
+import com.coffeepeek.feature.appupdate.domain.AppUpdateRepository
+import com.coffeepeek.feature.appupdate.domain.InstallationStage
+import com.coffeepeek.feature.appupdate.domain.InstallationState
 import com.coffeepeek.admin.feature.appupdate.ui.AppUpdateState
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
@@ -136,16 +133,5 @@ class AppUpdateCheckBehaviourTest {
         )
         assertFalse(InstallationState(error = "x").busy)
         assertFalse(InstallationState(stage = InstallationStage.Ready).busy)
-    }
-
-    @Test fun aPolicyWithoutAUsableHostIsRejected() {
-        for (bad in listOf("ftp://example.com/app.apk", "")) {
-            assertNull(AppVersionResponse(true, AppVersionDto(140, 120, bad)).toUpdate(), bad)
-        }
-        assertEquals(AppUpdate(140, 140, url), AppVersionResponse(true, AppVersionDto(140, 140, url)).toUpdate())
-        // Characterized quirks of the legacy host check: Ktor parses these as having a host, so they are accepted.
-        for (odd in listOf("https:///app.apk", "https://")) {
-            assertEquals(odd, AppVersionResponse(true, AppVersionDto(140, 120, odd)).toUpdate()?.url, odd)
-        }
     }
 }

@@ -28,7 +28,7 @@ import androidx.compose.ui.Modifier
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import com.coffeepeek.admin.feature.appupdate.api.AndroidUpdateInstaller
-import com.coffeepeek.admin.feature.appupdate.domain.InstallationStage
+import com.coffeepeek.feature.appupdate.domain.InstallationStage
 import com.coffeepeek.BuildConfig
 import com.coffeepeek.admin.theme.CpDimens
 import com.coffeepeek.admin.ui.component.CpSnackbarHost

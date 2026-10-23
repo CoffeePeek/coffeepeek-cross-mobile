@@ -1,10 +1,10 @@
-package com.coffeepeek.admin.feature.appupdate.domain
+package com.coffeepeek.feature.appupdate.domain
 
 import kotlinx.coroutines.flow.StateFlow
 
-internal enum class InstallationStage { Available, Starting, Downloading, Verifying, Ready, Installing }
+enum class InstallationStage { Available, Starting, Downloading, Verifying, Ready, Installing }
 
-internal data class InstallationState(
+data class InstallationState(
     val update: AppUpdate? = null,
     val stage: InstallationStage = InstallationStage.Available,
     val downloadedBytes: Long = 0,
@@ -19,7 +19,7 @@ internal data class InstallationState(
             stage == InstallationStage.Verifying || stage == InstallationStage.Installing
 }
 
-internal interface UpdateInstaller {
+interface UpdateInstaller {
     val state: StateFlow<InstallationState>
     fun download(update: AppUpdate)
     fun install()
@@ -27,7 +27,7 @@ internal interface UpdateInstaller {
     fun refresh()
 }
 
-internal fun isCompatibleUpdate(
+fun isCompatibleUpdate(
     expectedPackage: String,
     expectedVersion: Long,
     currentVersion: Long,

@@ -7,8 +7,8 @@ import kotlinx.coroutines.CompletableDeferred
 import com.coffeepeek.admin.analytics.AnalyticsConsent
 import com.coffeepeek.admin.analytics.analytics
 import com.coffeepeek.admin.analytics.MemoryConsent
-import com.coffeepeek.admin.feature.appupdate.domain.AppUpdate
-import com.coffeepeek.admin.feature.appupdate.domain.AppUpdateRepository
+import com.coffeepeek.feature.appupdate.domain.AppUpdate
+import com.coffeepeek.feature.appupdate.domain.AppUpdateRepository
 import com.coffeepeek.admin.feature.appupdate.ui.AppUpdateState
 import com.coffeepeek.admin.legal.LegalUrls
 import com.coffeepeek.admin.settings.CityPreference

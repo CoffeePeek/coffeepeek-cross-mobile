@@ -203,8 +203,12 @@ private fun appModule(
     }
     factory { (slug: String) -> PublicProfileViewModel(slug, get(), get(), users = get(), visibility = get()) }
     single<RoasterFavorites> { ServerRoasterFavorites(get(), get(), get()) }
-    single<com.coffeepeek.admin.feature.appupdate.domain.AppUpdateRepository> {
-        com.coffeepeek.admin.feature.appupdate.data.AppUpdateRepositoryImpl(get<CoffeePeekClient>().plainClient, settingRepository)
+    single<com.coffeepeek.feature.appupdate.domain.AppUpdateRepository> {
+        com.coffeepeek.feature.appupdate.data.AppUpdateRepositoryImpl(
+            get<CoffeePeekClient>().plainClient,
+            com.coffeepeek.admin.di.appupdate.AppConfigUpdateEnvironment,
+            com.coffeepeek.admin.di.appupdate.SettingsDismissedUpdateStore(settingRepository),
+        )
     }
     single { com.coffeepeek.admin.feature.appupdate.ui.AppUpdateState(get()) }
     single<CustomUrlFetcher> {

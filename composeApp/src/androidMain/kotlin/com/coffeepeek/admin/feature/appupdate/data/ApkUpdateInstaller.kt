@@ -13,10 +13,10 @@ import android.provider.Settings
 import androidx.core.content.FileProvider
 import androidx.core.content.pm.PackageInfoCompat
 import com.coffeepeek.admin.feature.appupdate.api.AndroidUpdateInstaller
-import com.coffeepeek.admin.feature.appupdate.domain.AppUpdate
-import com.coffeepeek.admin.feature.appupdate.domain.InstallationStage
-import com.coffeepeek.admin.feature.appupdate.domain.InstallationState
-import com.coffeepeek.admin.feature.appupdate.domain.isCompatibleUpdate
+import com.coffeepeek.feature.appupdate.domain.AppUpdate
+import com.coffeepeek.feature.appupdate.domain.InstallationStage
+import com.coffeepeek.feature.appupdate.domain.InstallationState
+import com.coffeepeek.feature.appupdate.domain.isCompatibleUpdate
 import java.io.File
 import java.security.MessageDigest
 import kotlinx.coroutines.CancellationException

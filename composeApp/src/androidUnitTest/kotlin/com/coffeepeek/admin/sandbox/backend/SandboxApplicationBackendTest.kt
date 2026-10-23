@@ -10,7 +10,9 @@ import com.coffeepeek.room.repository.SettingRepository
 import com.coffeepeek.room.model.Setting
 import com.coffeepeek.admin.feature.appupdate.ui.UpdateUiState
 import com.coffeepeek.admin.feature.appupdate.ui.AppUpdateState
-import com.coffeepeek.admin.feature.appupdate.data.AppUpdateRepositoryImpl
+import com.coffeepeek.admin.di.appupdate.AppConfigUpdateEnvironment
+import com.coffeepeek.admin.di.appupdate.SettingsDismissedUpdateStore
+import com.coffeepeek.feature.appupdate.data.AppUpdateRepositoryImpl
 import com.coffeepeek.api.CoffeePeekClient
 import com.coffeepeek.api.feature.favorites.FavoritesApiService
 import com.coffeepeek.api.feature.feed.FeedApiService
@@ -18,8 +20,8 @@ import com.coffeepeek.api.service.*
 import com.coffeepeek.api.model.request.ShopSearchRequestDto
 import com.coffeepeek.api.model.request.ShopSearchFiltersDto
 import com.coffeepeek.api.model.request.ShopSearchOriginDto
-import com.coffeepeek.admin.feature.appupdate.data.AppVersionResponse
-import com.coffeepeek.admin.feature.appupdate.data.toUpdate
+import com.coffeepeek.feature.appupdate.data.AppVersionResponse
+import com.coffeepeek.feature.appupdate.data.toUpdate
 import com.coffeepeek.admin.feature.coffee.data.CoffeeRepositoryImpl
 import com.coffeepeek.admin.feature.coffee.domain.CoffeeFilters
 import com.coffeepeek.feature.profile.data.createPublicProfileData
@@ -430,7 +432,7 @@ class SandboxApplicationBackendTest {
         val settings = Settings()
         val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
         // A new state per call stands for a fresh process: only the dismissed version survives.
-        suspend fun check(manual: Boolean = false, state: AppUpdateState = AppUpdateState(AppUpdateRepositoryImpl(client.client, settings), scope, currentVersion = 5)): Pair<AppUpdateState, UpdateUiState> {
+        suspend fun check(manual: Boolean = false, state: AppUpdateState = AppUpdateState(AppUpdateRepositoryImpl(client.client, AppConfigUpdateEnvironment, SettingsDismissedUpdateStore(settings)), scope, currentVersion = 5)): Pair<AppUpdateState, UpdateUiState> {
             state.check(manual); return state to state.state.first { !it.checking }
         }
         try {

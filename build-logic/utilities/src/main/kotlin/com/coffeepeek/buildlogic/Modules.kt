@@ -9,6 +9,13 @@ object Modules {
     val feature = Feature
 
     object Feature {
+        val appUpdate = AppUpdate
+        object AppUpdate {
+            const val api = ":feature:app-update:api"
+            const val domain = ":feature:app-update:domain"
+            const val data = ":feature:app-update:data"
+        }
+
         const val notifications = ":features:notifications"
         val authorBlocking = AuthorBlocking
         object AuthorBlocking {
@@ -154,6 +161,9 @@ object Modules {
         feature.homePreparation.api,
         feature.homePreparation.data,
         feature.homePreparation.impl,
+        feature.appUpdate.domain,
+        feature.appUpdate.api,
+        feature.appUpdate.data,
         feature.authorBlocking.domain,
         feature.authorBlocking.api,
         feature.authorBlocking.data,
