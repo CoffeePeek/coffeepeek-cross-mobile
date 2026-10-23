@@ -107,3 +107,11 @@ Decisions Q1–Q8 accepted as recommended (2026-10-22).
 | 5 | Retroactive audit and `LEGACY_REMOVAL.md` update | ~3 |
 
 Open gates after the owner: real feed against the live backend, protected photo delivery, iOS keeps the legacy screen until it migrates.
+
+## Step 0 result (Sandbox fixtures and device check of the legacy feed)
+
+- **Fixtures** (`SandboxFeed`, launch extra `sandbox_feed`, chip row «Лента»): `Single` (default, unchanged: the visible public fixtures in one page), `Paged` (45 generated public posts of the blockable friend and two other authors, every fifth a home preparation, behind an offset cursor, page size honoured), `PageFailsOnce` (the first request for a later page answers 503, then recovers), `InvalidCursor` (every later page answers 400, so the app must restart from the first page), `Empty`, `Failure` (500). Blocking the friend hides their posts on every page; helpful/report routes accept generated posts. `reset()` returns the feed to `Single`; the scenario chips (offline, 5xx) still override everything.
+- **Tests**: `SandboxApplicationBackendTest` +1 through the real `FeedApiService` (default page, three pages with unique ids and a home post, block/unblock across pages, votes and reports on generated posts, failing-once page recovers, invalid cursor sets `restartPagination`, empty, failure, reset). The class passes (20 tests).
+- **Device (Pixel 7, legacy feed, dark theme)**: `Paged` renders the first page and loads the following ones while scrolling up to post 45; `PageFailsOnce` stops after page 1 with the shared error block and «Попробовать снова» loads the next page; `Failure` on the first page shows the same shared block («Упс, что-то пошло не так», «Сервис временно недоступен…») — the legacy text «Не удалось загрузить ленту» from the view model is **not shown** by this screen, the shared `LoadErrorContent` text is (note for the migrated owner: keep the shared look and wording).
+- **Not checked on a device**: `InvalidCursor` and `Empty` visuals, large font, light theme, own-item actions in the feed.
+

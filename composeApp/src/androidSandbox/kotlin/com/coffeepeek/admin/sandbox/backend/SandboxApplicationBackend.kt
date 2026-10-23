@@ -16,6 +16,13 @@ internal enum class SandboxCities { Single, Several, Empty, Failure }
 /** How the account endpoints answer: everything works, or one chosen failure (offline and 5xx come from the scenario chips). */
 internal enum class SandboxAuthPolicy { Works, WrongPassword, EmailTaken, RegistrationFailure, RecoveryFailure }
 
+/**
+ * What `GET /api/v1/feed` answers. `Single` (default) is one page with the visible public fixtures; the others add 45 generated posts of several authors
+ * (some by the blockable friend, some home check-ins) behind a cursor: `Paged` works, `PageFailsOnce` fails the first request for a later page and then recovers,
+ * `InvalidCursor` rejects every later page like an expired cursor (the app must restart from the first page), `Empty` has no posts, `Failure` answers 500.
+ */
+internal enum class SandboxFeed { Single, Paged, PageFailsOnce, InvalidCursor, Empty, Failure }
+
 /** Local fixture contracts for the existing app, not an alternative implementation of its UI. */
 internal class SandboxApplicationBackend(private val today: LocalDate, private val visits: MutableList<JsonObject>) {
     companion object {
@@ -42,8 +49,11 @@ internal class SandboxApplicationBackend(private val today: LocalDate, private v
     @Volatile var updatePolicy = SandboxUpdatePolicy.UpToDate
     @Volatile var cities = SandboxCities.Single
     @Volatile var authPolicy = SandboxAuthPolicy.Works
+    @Volatile var feed = SandboxFeed.Single
+    private var laterPageFailed = false
     fun reset(populated: Boolean) {
         updatePolicy = SandboxUpdatePolicy.UpToDate; cities = SandboxCities.Single; authPolicy = SandboxAuthPolicy.Works
+        feed = SandboxFeed.Single; laterPageFailed = false; generated = null
         this.populated = populated
         others.clear(); blocked.clear(); blocksRevision++
         friendFollowing = false; deletionRequest = null
@@ -188,14 +198,7 @@ internal class SandboxApplicationBackend(private val today: LocalDate, private v
             if (!populated) return null
             return coffees().firstOrNull { it["address"]!!.jsonObject["slug"]!!.jsonPrimitive.content == path.substringAfterLast('/') }?.let(::ok)
         }
-        if (path == "/api/v1/feed") return ok(buildJsonObject {
-            putJsonArray("items") {
-                (visits + others.filter(::visible)).filter(::isPublished).forEach { row -> add(buildJsonObject {
-                    put("publishedAtUtc", "${today}T07:00:00Z"); put("checkIn", row)
-                }) }
-            }
-            put("nextCursor", JsonNull)
-        })
+        if (path == "/api/v1/feed") return feedPage(request)
         if (path == "/api/v1/check-ins" && method == HttpMethod.Post) {
             val shopSlug = (input["coffeeShopSlug"] as? JsonPrimitive)?.contentOrNull?.takeIf(shopNames::containsKey)
                 ?: return HttpStatusCode.BadRequest to envelope(JsonNull, false)
@@ -208,6 +211,7 @@ internal class SandboxApplicationBackend(private val today: LocalDate, private v
             val id = path.removePrefix("/api/v1/check-ins/").substringBefore('/')
             val old = visits.firstOrNull { it["id"]?.jsonPrimitive?.content == id }
                 ?: others.firstOrNull { it["id"]?.jsonPrimitive?.content == id && visible(it) && (path.endsWith("/helpful") || path.endsWith("/reports")) }
+                ?: generatedFeed.firstOrNull { it["id"]?.jsonPrimitive?.content == id && visible(it) && (path.endsWith("/helpful") || path.endsWith("/reports")) }
                 ?: return null
             if (path.endsWith("/helpful")) return when (method) {
                 HttpMethod.Put, HttpMethod.Delete -> setHelpful(old, method == HttpMethod.Put)
@@ -230,6 +234,51 @@ internal class SandboxApplicationBackend(private val today: LocalDate, private v
     fun protectedPhotoAvailable(checkInId: String): Boolean =
         (visits + others).firstOrNull { it["id"]?.jsonPrimitive?.content == checkInId }?.let(::visible) == true
 
+    private fun feedItem(row: JsonObject) = buildJsonObject { put("publishedAtUtc", row["createdAtUtc"] ?: JsonPrimitive("${today}T07:00:00Z")); put("checkIn", row) }
+    /** Page size and cursor are validated like the real endpoint; the cursor is the offset into the visible fixtures. */
+    private fun feedPage(request: HttpRequestData): Pair<HttpStatusCode, JsonObject> {
+        if (feed == SandboxFeed.Failure) return HttpStatusCode.InternalServerError to failure("Не удалось загрузить ленту")
+        fun page(rows: List<JsonObject>, next: String?) = ok(buildJsonObject {
+            put("items", JsonArray(rows.map(::feedItem))); put("nextCursor", next?.let(::JsonPrimitive) ?: JsonNull)
+        })
+        if (feed == SandboxFeed.Empty) return page(emptyList(), null)
+        val base = (visits + others.filter(::visible)).filter(::isPublished)
+        if (feed == SandboxFeed.Single) return page(base, null)
+        val size = request.url.parameters["pageSize"]?.toIntOrNull()?.takeIf { it in 1..100 } ?: 20
+        val cursor = request.url.parameters["cursor"]
+        val offset = cursor?.let { it.toIntOrNull()?.takeIf { value -> value >= 0 } ?: return HttpStatusCode.BadRequest to failure("Лента изменилась. Обновите её с начала") } ?: 0
+        if (cursor != null && feed == SandboxFeed.InvalidCursor) return HttpStatusCode.BadRequest to failure("Cursor expired")
+        if (cursor != null && feed == SandboxFeed.PageFailsOnce && !laterPageFailed) {
+            laterPageFailed = true
+            return HttpStatusCode.ServiceUnavailable to failure("Не удалось загрузить ленту")
+        }
+        val all = base + generatedFeed.filter(::visible)
+        return page(all.drop(offset).take(size), if (offset + size < all.size) (offset + size).toString() else null)
+    }
+
+    /** 45 public posts by the blockable friend (every third) and two other authors; every fifth is a home preparation. */
+    private var generated: MutableList<JsonObject>? = null
+    private val generatedFeed: MutableList<JsonObject> get() = generated ?: buildGeneratedFeed().also { generated = it }
+    private fun buildGeneratedFeed(): MutableList<JsonObject> =
+        (1..45).map { index ->
+            val friend = index % 3 == 0
+            val slug = if (friend) FRIEND_SLUG else "sandbox-reader-${index % 3}"
+            val authorId = if (friend) FRIEND_ID else "sandbox-author-reader-${index % 3}"
+            val home = index % 5 == 0
+            buildJsonObject {
+                put("id", "sandbox-feed-$index"); put("shopName", "Sandbox Cafe"); put("username", if (friend) FRIEND_NAME else "Sandbox Reader ${index % 3}")
+                put("authorId", authorId); put("author", address(slug, "/users/$slug")); put("authorAvatarUrl", "/media/sample")
+                put("shop", address("sandbox-cafe", "/coffee-shops/sandbox-cafe"))
+                put("createdAtUtc", "${today}T05:${(59 - index).toString().padStart(2, '0')}:00Z"); put("visitedAt", "${today}T05:00:00Z")
+                put("text", "Запись ленты номер $index"); put("visibility", "Public"); put("moderationState", "Approved")
+                put("helpfulCount", index % 4); put("isHelpfulByCurrentUser", false)
+                putJsonObject("rating") { put("coffee", 4); put("service", 4); put("place", 5) }
+                if (home) {
+                    put("kind", "Home")
+                    putJsonObject("home") { put("preparedOn", today.toString()); put("brewMethodCode", "hario-v60"); put("beanName", "Sandbox Bean $index"); put("doseGrams", 15.0); put("brewDurationSeconds", 150); put("tasteScore", 4) }
+                }
+            }
+        }.toMutableList()
     private fun visible(row: JsonObject) = row["authorId"]?.jsonPrimitive?.contentOrNull !in blocked
     private fun blockPage(request: HttpRequestData): Pair<HttpStatusCode, JsonObject> {
         val size = request.url.parameters["pageSize"]?.toIntOrNull()
@@ -284,7 +333,11 @@ internal class SandboxApplicationBackend(private val today: LocalDate, private v
             else -> -1
         }
         val count = ((visit["helpfulCount"]?.jsonPrimitive?.intOrNull ?: 0) + delta).coerceAtLeast(0)
-        val source = if (visit in visits) visits else others
+        val source = when {
+            visit in visits -> visits
+            visit in others -> others
+            else -> generatedFeed
+        }
         source[source.indexOf(visit)] = JsonObject(visit + mapOf(
             "isHelpfulByCurrentUser" to JsonPrimitive(helpful), "helpfulCount" to JsonPrimitive(count)))
         return ok(buildJsonObject { put("isHelpful", helpful); put("helpfulCount", count) })

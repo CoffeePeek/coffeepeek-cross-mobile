@@ -12,6 +12,7 @@ import androidx.compose.ui.unit.dp
 import com.coffeepeek.R
 import com.coffeepeek.admin.sandbox.backend.SandboxAuthPolicy
 import com.coffeepeek.admin.sandbox.backend.SandboxCities
+import com.coffeepeek.admin.sandbox.backend.SandboxFeed
 import com.coffeepeek.admin.sandbox.backend.SandboxScenario
 import com.coffeepeek.admin.sandbox.backend.SandboxUpdatePolicy
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
@@ -20,7 +21,8 @@ import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
     onScenario: (SandboxScenario) -> Unit, onReset: (Boolean) -> Unit, onTheme: () -> Unit,
     updatePolicy: SandboxUpdatePolicy = SandboxUpdatePolicy.UpToDate, onUpdatePolicy: (SandboxUpdatePolicy) -> Unit = {},
     cities: SandboxCities = SandboxCities.Single, onCities: (SandboxCities) -> Unit = {},
-    authPolicy: SandboxAuthPolicy = SandboxAuthPolicy.Works, onAuthPolicy: (SandboxAuthPolicy) -> Unit = {}) {
+    authPolicy: SandboxAuthPolicy = SandboxAuthPolicy.Works, onAuthPolicy: (SandboxAuthPolicy) -> Unit = {},
+    feed: SandboxFeed = SandboxFeed.Single, onFeed: (SandboxFeed) -> Unit = {}) {
     Surface(color = MaterialTheme.colorScheme.primaryContainer) {
         Column(Modifier.fillMaxWidth().padding(8.dp)) {
             Text(stringResource(R.string.sandbox_banner), style = MaterialTheme.typography.labelLarge)
@@ -72,6 +74,20 @@ import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
                         SandboxAuthPolicy.RecoveryFailure -> R.string.sandbox_auth_recovery_failure
                     }
                     FilterChip(authPolicy == mode, { onAuthPolicy(mode) }, { Text(stringResource(label)) }, enabled = enabled)
+                }
+            }
+            Text(stringResource(R.string.sandbox_feed_title), style = MaterialTheme.typography.labelMedium)
+            Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                SandboxFeed.entries.forEach { mode ->
+                    val label = when (mode) {
+                        SandboxFeed.Single -> R.string.sandbox_feed_single
+                        SandboxFeed.Paged -> R.string.sandbox_feed_paged
+                        SandboxFeed.PageFailsOnce -> R.string.sandbox_feed_page_fails_once
+                        SandboxFeed.InvalidCursor -> R.string.sandbox_feed_invalid_cursor
+                        SandboxFeed.Empty -> R.string.sandbox_feed_empty
+                        SandboxFeed.Failure -> R.string.sandbox_feed_failure
+                    }
+                    FilterChip(feed == mode, { onFeed(mode) }, { Text(stringResource(label)) }, enabled = enabled)
                 }
             }
             Row(Modifier.horizontalScroll(rememberScrollState())) {
