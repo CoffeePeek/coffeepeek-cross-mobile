@@ -1,6 +1,7 @@
 package com.coffeepeek.feature.contributions.domain.model
 
-data class CatalogOption(val id: String, val name: String)
+/** [photoUrl] is the roaster's logo; other catalogs have none. */
+data class CatalogOption(val id: String, val name: String, val photoUrl: String? = null)
 
 /** What the forms choose from. */
 data class Catalogs(
