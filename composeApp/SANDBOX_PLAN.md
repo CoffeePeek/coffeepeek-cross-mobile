@@ -34,6 +34,12 @@ scenario changes and reset by «Заполнить»/«Очистить». The e
 `SandboxApplicationBackendTest.settingsFixturesServeTheUpdatePolicyAndTheCityCatalogThroughTheRealParsers`; the installer is still the blocking
 `SandboxUpdateInstaller`, so no download or install flow is exercised.
 
+App update step 0 (2026-10-21): the Sandbox root now composes `AppUpdatePrompt` next to the Navigator (as `App.kt` does) and re-checks when
+the update chip or «Заполнить»/«Очистить» changes the policy, so Available, Required and Failure are visible: the prompt/snackbar, «Позже»,
+the error from the non-installing installer and the manual check from Settings. A dismissed optional version is stored in the Sandbox
+settings and is not cleared by the reset; use the manual check in Settings to see it again. Covered by
+`SandboxApplicationBackendTest.updatePromptStateFollowsTheFixturePoliciesThroughTheRealRepository`.
+
 ## Profile/account fixtures — 2026-10-20
 
 Fake backend now serves, in RAM and reset with the scenario: `PATCH /api/users/me/username` (2–64 chars, the friend's name is a 409

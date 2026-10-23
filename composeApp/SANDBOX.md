@@ -50,7 +50,8 @@ package, so install only the preferred one. Normal debug/release IDs are unchang
 - Variant-only `SandboxApplication`/`SandboxActivity`, not production
   `CoffeePeekApplication.onCreate`. Reuse the existing Koin definitions with
   explicitly replaced HTTP, session, auth and image ports. No real
-  credential store, realtime, analytics installation or automatic update prompt.
+  credential store, realtime or analytics installation. The root hosts the update prompt
+  (`AppUpdatePrompt`) like `App.kt`, but its installer never downloads or installs.
 - Manifest removes INTERNET, CAMERA, location, storage, phone and APK-install permissions; production app links
   and MainActivity are absent. Provider authorities use the Sandbox package.
 - API URL is `.invalid`; OAuth/analytics configuration is blank/disabled.
