@@ -13,6 +13,9 @@ internal enum class SandboxUpdatePolicy { UpToDate, Available, Required, Failure
 /** What `GET /api/catalogs/cities` answers: one city (default), several, none, or a server error. */
 internal enum class SandboxCities { Single, Several, Empty, Failure }
 
+/** How the account endpoints answer: everything works, or one chosen failure (offline and 5xx come from the scenario chips). */
+internal enum class SandboxAuthPolicy { Works, WrongPassword, EmailTaken, RegistrationFailure, RecoveryFailure }
+
 /** Local fixture contracts for the existing app, not an alternative implementation of its UI. */
 internal class SandboxApplicationBackend(private val today: LocalDate, private val visits: MutableList<JsonObject>) {
     companion object {
@@ -38,8 +41,9 @@ internal class SandboxApplicationBackend(private val today: LocalDate, private v
     // Settings fixtures: chosen from the Sandbox controls, kept across scenario changes and cleared by reset().
     @Volatile var updatePolicy = SandboxUpdatePolicy.UpToDate
     @Volatile var cities = SandboxCities.Single
+    @Volatile var authPolicy = SandboxAuthPolicy.Works
     fun reset(populated: Boolean) {
-        updatePolicy = SandboxUpdatePolicy.UpToDate; cities = SandboxCities.Single
+        updatePolicy = SandboxUpdatePolicy.UpToDate; cities = SandboxCities.Single; authPolicy = SandboxAuthPolicy.Works
         this.populated = populated
         others.clear(); blocked.clear(); blocksRevision++
         friendFollowing = false; deletionRequest = null
@@ -63,6 +67,7 @@ internal class SandboxApplicationBackend(private val today: LocalDate, private v
             if (changed) blocksRevision++
             return ok(buildJsonObject { put("authorId", id); put("isBlocked", method == HttpMethod.Put) })
         }
+        authRoute(path, method, input)?.let { return it }
         if (path == "/api/users/me" && method == HttpMethod.Get) return ok(profile())
         if (path == "/api/users/me/username" && method == HttpMethod.Patch) {
             val requested = input["username"]?.jsonPrimitive?.contentOrNull?.trim().orEmpty()
@@ -437,6 +442,28 @@ internal class SandboxApplicationBackend(private val today: LocalDate, private v
         put("slug", slug); put("canonicalPath", path); put("revision", 0); put("isAlias", false)
     }
     private fun page(items: JsonArray) = buildJsonObject { put("items", items); put("totalCount", items.size); put("currentPage", 1); put("totalPages", 1) }
+    // Sign-in, registration and password recovery. Only the e-mail/password path exists: OAuth is blocked like every external service.
+    private fun authRoute(path: String, method: HttpMethod, input: JsonObject): Pair<HttpStatusCode, JsonObject>? = when {
+        path == "/api/tokens" && method == HttpMethod.Post ->
+            if (authPolicy == SandboxAuthPolicy.WrongPassword) HttpStatusCode.Unauthorized to failure("Invalid credentials")
+            else ok(buildJsonObject { put("accessToken", accessToken()); put("refreshToken", "sandbox-refresh-token") })
+        path == "/api/tokens" && method == HttpMethod.Delete -> ok(JsonNull)
+        path.startsWith("/api/tokens/") -> HttpStatusCode.ServiceUnavailable to failure("OAuth is disabled in offline Sandbox")
+        path == "/api/users" && method == HttpMethod.Post ->
+            if (authPolicy == SandboxAuthPolicy.RegistrationFailure) HttpStatusCode.BadRequest to failure("Registration rejected") else ok(JsonNull)
+        path == "/api/users/exists" && method == HttpMethod.Get -> ok(JsonPrimitive(authPolicy == SandboxAuthPolicy.EmailTaken))
+        path == "/api/users/password/forgot" && method == HttpMethod.Post ->
+            if (authPolicy == SandboxAuthPolicy.RecoveryFailure) HttpStatusCode.InternalServerError to failure("Recovery unavailable") else ok(JsonNull)
+        else -> null
+    }
+
+    // A JWT whose subject is the Sandbox account, so the real session code derives the same user id as the local session.
+    private fun accessToken(): String {
+        val encoder = java.util.Base64.getUrlEncoder().withoutPadding()
+        fun part(json: String) = encoder.encodeToString(json.toByteArray())
+        return "${part("""{"alg":"none"}""")}.${part("""{"sub":"11111111-1111-4111-8111-111111111111","exp":4102444800}""")}.sandbox"
+    }
+
     private fun envelope(data: JsonElement, success: Boolean = true) = buildJsonObject { put("isSuccess", success); put("data", data) }
     private fun failure(message: String) = buildJsonObject { put("isSuccess", false); put("data", JsonNull); put("message", message) }
     private fun ok(data: JsonElement) = HttpStatusCode.OK to envelope(data)

@@ -7,6 +7,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.compose.runtime.remember
+import com.coffeepeek.admin.sandbox.backend.SandboxAuthPolicy
 import com.coffeepeek.admin.sandbox.backend.SandboxCities
 import com.coffeepeek.admin.sandbox.backend.SandboxUpdatePolicy
 import com.coffeepeek.admin.sandbox.compose.SandboxScreen
@@ -21,14 +22,16 @@ class SandboxActivity : ComponentActivity() {
             val model: SandboxViewModel = viewModel()
             val sandbox = application as SandboxApplication
             // Fixtures that the app caches after its first load (the city catalog) can only be chosen at launch:
-            // `am start -n <package>/.sandbox.SandboxActivity --es sandbox_cities Empty --es sandbox_update Available`.
+            // `am start -n <package>/.sandbox.SandboxActivity --es sandbox_cities Empty --es sandbox_auth WrongPassword --es sandbox_update Available`.
             remember {
                 if (fresh) {
                     val cities = intent.getStringExtra(EXTRA_CITIES)?.let { runCatching { SandboxCities.valueOf(it) }.getOrNull() }
                     val update = intent.getStringExtra(EXTRA_UPDATE)?.let { runCatching { SandboxUpdatePolicy.valueOf(it) }.getOrNull() }
+                    val auth = intent.getStringExtra(EXTRA_AUTH)?.let { runCatching { SandboxAuthPolicy.valueOf(it) }.getOrNull() }
                     cities?.let { sandbox.backend.cities = it }
+                    auth?.let { sandbox.backend.authPolicy = it }
                     update?.let { sandbox.backend.updatePolicy = it }
-                    model.fixtures(sandbox.backend.updatePolicy, sandbox.backend.cities)
+                    model.fixtures(sandbox.backend.updatePolicy, sandbox.backend.cities, sandbox.backend.authPolicy)
                 }
             }
             SandboxScreen(model, sandbox)
@@ -37,6 +40,7 @@ class SandboxActivity : ComponentActivity() {
     private companion object {
         const val EXTRA_CITIES = "sandbox_cities"
         const val EXTRA_UPDATE = "sandbox_update"
+        const val EXTRA_AUTH = "sandbox_auth"
     }
 
     override fun startActivity(intent: Intent, options: Bundle?) {
