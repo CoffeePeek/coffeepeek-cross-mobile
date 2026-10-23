@@ -156,10 +156,8 @@ internal fun CoffeeCard(coffee: Coffee, tasteNames: Map<String, String>, modifie
                 contentAlignment = Alignment.Center,
             ) {
                 val logo = coffee.roasterPhotoUrl
-                if (!logo.isNullOrBlank()) CoffeeShopImage(
-                    imageUrl = logo, contentDescription = coffee.roasterName,
-                    contentScale = ContentScale.Fit, placeholderLabelSize = MaterialTheme.typography.labelSmall.fontSize,
-                    modifier = Modifier.matchParentSize().padding(6.dp),
+                if (!logo.isNullOrBlank()) CoffeeRoasterLogo(
+                    imageUrl = logo, description = coffee.roasterName, modifier = Modifier.matchParentSize(),
                 ) else Text(
                     coffee.roasterName.take(2).uppercase(), style = MaterialTheme.typography.labelMedium,
                     fontWeight = FontWeight.Bold,

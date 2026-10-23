@@ -28,15 +28,18 @@ import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.core.animate
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.systemBars
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -48,10 +51,13 @@ import androidx.compose.runtime.derivedStateOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.foundation.Image
+import androidx.compose.ui.graphics.painter.ColorPainter
+import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.admin.theme.CpDimens
 import com.coffeepeek.admin.ui.icons.CpIcons
 import com.coffeepeek.admin.utils.CpImage
@@ -89,86 +95,152 @@ internal fun FullScreenImageDialog(
         initialPage = initialIndex.coerceIn(0, imageUrls.lastIndex),
         pageCount = { imageUrls.size },
     )
+    PrefetchPhotos(images.adjacentPreviewUrls(pagerState.currentPage), inPhotoViewer = true)
+    PhotoViewerDialog(onDismiss = onDismiss) {
+        PhotoViewerContent(images, pagerState, onDismiss)
+    }
+}
+
+@Composable
+internal expect fun PhotoViewerDialog(onDismiss: () -> Unit, content: @Composable () -> Unit)
+
+@Composable
+private fun PhotoViewerContent(images: PhotoViewerImages, pagerState: PagerState, onDismiss: () -> Unit) {
     // While the current photo is zoomed, drags pan the photo instead of switching pages.
     var isZoomed by remember { mutableStateOf(false) }
     var controlsVisible by remember { mutableStateOf(true) }
-    val visiblePages by remember {
-        derivedStateOf { pagerState.layoutInfo.visiblePagesInfo.map { it.index }.toSet() }
-    }
     var dismissOffset by remember { mutableFloatStateOf(0f) }
     var viewportHeight by remember { mutableFloatStateOf(1f) }
     val reduceMotion = platformReduceMotion()
     val threshold = with(LocalDensity.current) { 120.dp.toPx() }
     val flingThreshold = with(LocalDensity.current) { 900.dp.toPx() }
     val dismissDrag = rememberDraggableState { dismissOffset = (dismissOffset + it).coerceAtLeast(0f) }
-    PrefetchPhotos(images.adjacentPreviewUrls(pagerState.currentPage), inPhotoViewer = true)
-
-    Dialog(
-        onDismissRequest = onDismiss,
-        properties = DialogProperties(usePlatformDefaultWidth = false),
+    PhotoViewerSurface(
+        alpha = 0.8f * (1f - dismissOffset / viewportHeight).coerceIn(0f, 1f),
+        modifier = Modifier
+            .onSizeChanged { viewportHeight = it.height.toFloat().coerceAtLeast(1f) }
+            .draggable(
+                dismissDrag, Orientation.Vertical, enabled = !isZoomed,
+                onDragStopped = { velocity ->
+                    val dismiss = dismissOffset >= threshold || velocity >= flingThreshold
+                    animate(
+                        dismissOffset, if (dismiss) viewportHeight else 0f,
+                        animationSpec = tween(if (reduceMotion) 0 else 180),
+                    ) { value, _ -> dismissOffset = value }
+                    if (dismiss) onDismiss()
+                },
+            ),
     ) {
-        Box(
+        PhotoViewerGallery(
+            images, pagerState, isZoomed, dismissOffset,
+            onTap = { controlsVisible = !controlsVisible }, onZoomChanged = { isZoomed = it },
+        )
+        if (controlsVisible) PhotoViewerControls(pagerState.currentPage, images.previews.size, onDismiss)
+    }
+}
+
+@Composable
+private fun PhotoViewerSurface(
+    alpha: Float,
+    modifier: Modifier = Modifier,
+    content: @Composable BoxScope.() -> Unit,
+) {
+    Box(
+        modifier = Modifier.fillMaxSize()
+            .background(Color.Black.copy(alpha = alpha))
+            .windowInsetsPadding(WindowInsets.safeDrawing)
+            .clipToBounds()
+            .then(modifier),
+        content = content,
+    )
+}
+
+@Composable
+private fun PhotoViewerGallery(
+    images: PhotoViewerImages,
+    pagerState: PagerState,
+    isZoomed: Boolean,
+    dismissOffset: Float,
+    onTap: () -> Unit,
+    onZoomChanged: (Boolean) -> Unit,
+) {
+    val visiblePages by remember(pagerState) {
+        derivedStateOf { pagerState.layoutInfo.visiblePagesInfo.map { it.index }.toSet() }
+    }
+    HorizontalPager(
+        state = pagerState,
+        // Neighbor previews are prefetched separately without retaining offscreen painters.
+        beyondViewportPageCount = 0,
+        userScrollEnabled = !isZoomed,
+        modifier = Modifier.fillMaxSize().graphicsLayer { translationY = dismissOffset },
+    ) { page ->
+        val isCurrent = pagerState.currentPage == page
+        val displayUrl = images.displayUrl(page, pagerState.currentPage, page in visiblePages)
+        if (isCurrent || page in visiblePages) ZoomableImage(
+            imageUrl = displayUrl.orEmpty(),
+            highQualityUrl = images.highQualityUrl(page, pagerState.settledPage)
+                .takeUnless { pagerState.isScrollInProgress },
+            contentDescription = "Фото ${page + 1} из ${images.previews.size}",
+            isCurrent = isCurrent,
+            onTap = onTap,
+            onZoomChanged = { if (isCurrent) onZoomChanged(it) },
+        )
+    }
+}
+
+@Composable
+private fun BoxScope.PhotoViewerControls(
+    page: Int, count: Int, onDismiss: () -> Unit,
+) {
+    if (count > 1) {
+        Text(
+            text = "${page + 1} / $count",
+            style = MaterialTheme.typography.labelLarge,
+            color = Color.White,
             modifier = Modifier
-                .fillMaxSize()
-                .onSizeChanged { viewportHeight = it.height.toFloat().coerceAtLeast(1f) }
-                .background(Color.Black.copy(alpha = (1f - dismissOffset / viewportHeight).coerceIn(0f, 1f)))
-                .windowInsetsPadding(WindowInsets.systemBars)
-                .draggable(dismissDrag, Orientation.Vertical, enabled = !isZoomed,
-                    onDragStopped = { velocity ->
-                        val dismiss = dismissOffset >= threshold || velocity >= flingThreshold
-                        animate(dismissOffset, if (dismiss) viewportHeight else 0f, animationSpec = tween(if (reduceMotion) 0 else 180)) { value, _ -> dismissOffset = value }
-                        if (dismiss) onDismiss()
-                    }),
-        ) {
-            HorizontalPager(
-                state = pagerState,
-                // Neighbor previews are prefetched separately without retaining offscreen painters.
-                beyondViewportPageCount = 0,
-                userScrollEnabled = !isZoomed,
-                modifier = Modifier.fillMaxSize().graphicsLayer { translationY = dismissOffset },
-            ) { page ->
-                val isCurrent = pagerState.currentPage == page
-                val displayUrl = images.displayUrl(page, pagerState.currentPage, page in visiblePages)
-                if (isCurrent || page in visiblePages) ZoomableImage(
-                    imageUrl = displayUrl.orEmpty(),
-                    highQualityUrl = images.highQualityUrl(page, pagerState.settledPage)
-                        .takeUnless { pagerState.isScrollInProgress },
-                    contentDescription = "Фото ${page + 1} из ${imageUrls.size}",
-                    isCurrent = isCurrent,
-                    onTap = { controlsVisible = !controlsVisible },
-                    onZoomChanged = { if (isCurrent) isZoomed = it },
-                )
-            }
+                .align(Alignment.TopCenter)
+                .padding(top = CpDimens.spacing4)
+                .background(Color.Black.copy(alpha = 0.45f), RoundedCornerShape(percent = 50))
+                .padding(horizontal = CpDimens.spacing3, vertical = CpDimens.spacing1),
+        )
+    }
 
-            if (controlsVisible && imageUrls.size > 1) {
-                Text(
-                    text = "${pagerState.currentPage + 1} / ${imageUrls.size}",
-                    style = MaterialTheme.typography.labelLarge,
-                    color = Color.White,
-                    modifier = Modifier
-                        .align(Alignment.TopCenter)
-                        .statusBarsPadding()
-                        .padding(top = CpDimens.spacing4)
-                        .background(Color.Black.copy(alpha = 0.45f), RoundedCornerShape(percent = 50))
-                        .padding(horizontal = CpDimens.spacing3, vertical = CpDimens.spacing1),
-                )
-            }
+    PlatformGlassIconButton(
+        icon = GlassControlIcon.Close,
+        onClick = onDismiss,
+        contentDescription = "Закрыть",
+        modifier = Modifier
+            .align(Alignment.TopEnd)
+            .padding(CpDimens.spacing3),
+    ) {
+        Icon(
+            imageVector = CpIcons.Close,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.onSurface,
+            modifier = Modifier.size(20.dp),
+        )
+    }
+}
 
-            if (controlsVisible) PlatformGlassIconButton(
-                icon = GlassControlIcon.Close,
-                onClick = onDismiss,
-                contentDescription = "Закрыть",
-                modifier = Modifier
-                    .align(Alignment.TopEnd)
-                    .statusBarsPadding()
-                    .padding(CpDimens.spacing3),
-            ) {
-                Icon(
-                    imageVector = CpIcons.Close,
+@Preview
+@Composable
+private fun PhotoViewerLightPreview() = PhotoViewerPreview(darkTheme = false)
+
+@Preview
+@Composable
+private fun PhotoViewerDarkPreview() = PhotoViewerPreview(darkTheme = true)
+
+@Composable
+private fun PhotoViewerPreview(darkTheme: Boolean) {
+    CoffeePeekTheme(darkTheme = darkTheme) {
+        Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.surface)) {
+            PhotoViewerSurface(alpha = 0.8f) {
+                Image(
+                    painter = ColorPainter(MaterialTheme.colorScheme.primary),
                     contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onSurface,
-                    modifier = Modifier.size(20.dp),
+                    modifier = Modifier.align(Alignment.Center).fillMaxWidth().height(240.dp),
                 )
+                PhotoViewerControls(page = 0, count = 3, onDismiss = {})
             }
         }
     }
