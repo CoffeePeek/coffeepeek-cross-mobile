@@ -12,9 +12,9 @@ class HomePreparationValidationTest {
     private fun errors(input: HomePreparationInput, editing: Boolean = false) =
         homePreparationFieldErrors(input, editing, now)
 
-    @Test fun minimalDraftKeepsOptionalFieldsOptionalAndStartsPrivate() {
+    @Test fun minimalDraftKeepsOptionalFieldsOptionalAndStartsPublic() {
         assertTrue(errors(draft).isEmpty())
-        assertEquals(HomePreparationVisibility.Private, draft.visibility)
+        assertEquals(HomePreparationVisibility.Public, draft.visibility)
         assertNull(draft.tasteScore) // Default score 5 belongs to new-form presentation, not domain.
     }
 

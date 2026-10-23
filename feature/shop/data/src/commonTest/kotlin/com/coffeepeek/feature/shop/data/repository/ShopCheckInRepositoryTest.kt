@@ -129,7 +129,7 @@ class ShopCheckInRepositoryTest {
         val uploadClient = HttpClientFactory(uploadEngine).upload()
         try {
             assertTrue(createShopCheckInRepository(apiClient, uploadClient).create(
-                validInput()).isSuccess)
+                validInput().copy(visibility = ShopCheckInVisibility.Private)).isSuccess)
         } finally {
             apiClient.close()
             uploadClient.close()
