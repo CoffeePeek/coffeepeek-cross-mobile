@@ -47,9 +47,9 @@
     <string name="auth_strength_weak">слабый</string>
     <string name="auth_strength_medium">средний</string>
     <string name="auth_strength_strong">надёжный</string>
-    <string name="auth_terms_prefix">Я принимаю </string>
+    <string name="auth_terms_prefix">"Я принимаю "</string>
     <string name="auth_terms_link">условия использования</string>
-    <string name="auth_terms_and"> и даю согласие на </string>
+    <string name="auth_terms_and">" и даю согласие на "</string>
     <string name="auth_privacy_link">обработку персональных данных</string>
     <string name="auth_analytics_title">Разрешить аналитику использования</string>
     <string name="auth_analytics_description">Необязательно. События использования отправляются в PostHog (ЕС), чтобы улучшать CoffeePeek. Без текстов поиска, заметок, фото и точных координат. Решение можно изменить в настройках.</string>
