@@ -30,4 +30,37 @@
     <string name="auth_recovery_back_to_login">Вернуться ко входу</string>
     <string name="auth_recovery_another_email">Указать другой email</string>
     <string name="auth_recovery_failed">Не удалось отправить письмо. Проверьте соединение и попробуйте снова.</string>
+
+    <string name="auth_step_email">Email</string>
+    <string name="auth_step_register">Регистрация</string>
+    <string name="auth_step_done">Готово</string>
+    <string name="auth_register_email_title">Введите email</string>
+    <string name="auth_register_email_subtitle">Мы проверим, есть ли у вас уже аккаунт CoffeePeek.</string>
+    <string name="auth_continue">Продолжить</string>
+    <string name="auth_already_have_account">Уже есть аккаунт</string>
+    <string name="auth_new_profile">Новый профиль</string>
+    <string name="auth_register_title">Создайте аккаунт</string>
+    <string name="auth_name_label">Имя</string>
+    <string name="auth_name_placeholder">Как вас зовут?</string>
+    <string name="auth_register_password_placeholder">От 8 символов</string>
+    <string name="auth_change_email">Изменить email</string>
+    <string name="auth_strength_weak">слабый</string>
+    <string name="auth_strength_medium">средний</string>
+    <string name="auth_strength_strong">надёжный</string>
+    <string name="auth_terms_prefix">Я принимаю </string>
+    <string name="auth_terms_link">условия использования</string>
+    <string name="auth_terms_and"> и даю согласие на </string>
+    <string name="auth_privacy_link">обработку персональных данных</string>
+    <string name="auth_analytics_title">Разрешить аналитику использования</string>
+    <string name="auth_analytics_description">Необязательно. События использования отправляются в PostHog (ЕС), чтобы улучшать CoffeePeek. Без текстов поиска, заметок, фото и точных координат. Решение можно изменить в настройках.</string>
+    <string name="auth_register_submit">Создать аккаунт</string>
+    <string name="auth_register_success_title">Проверьте почту</string>
+    <string name="auth_register_success_subtitle">Мы отправили ссылку на %1$s. Перейдите по ссылке чтобы активировать аккаунт. Ссылка действует 10 минут.</string>
+    <string name="auth_go_to_login">На страницу входа</string>
+    <string name="auth_email_taken">Этот Email уже занят</string>
+    <string name="auth_name_required">Введите имя!</string>
+    <string name="auth_terms_required">Для завершения регистрации необходимо принять условия соглашения и политику конфиденциальности!</string>
+    <string name="auth_register_failed">Ошибка при попытке создания учетной записи, попробуйте позже!</string>
+    <string name="auth_password_too_short_registration">Пароль должен содержать как минимум 8 символов</string>
+    <string name="auth_check_failed">Попробуйте позже!</string>
 </resources>

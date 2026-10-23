@@ -20,3 +20,9 @@ interface PasswordRecoveryEntry {
     @Composable
     fun Content(initialEmail: String, onClose: () -> Unit, onBackToLogin: () -> Unit, modifier: Modifier = Modifier)
 }
+
+/** «Регистрация»: three steps in one destination. [onGoToLogin] serves both the footer link and the final button. */
+interface RegisterEntry {
+    @Composable
+    fun Content(onClose: () -> Unit, onGoToLogin: () -> Unit, modifier: Modifier = Modifier)
+}
