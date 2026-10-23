@@ -102,7 +102,7 @@ class AndroidShopCheckInDraftStoreTest {
         val fresh = adapter.open(initial()).getOrThrow()
         assertFalse(fresh.deliveryUnconfirmed)
         assertEquals(ShopRating(4, 4, 4), fresh.input.rating)
-        assertEquals(ShopCheckInVisibility.Private, fresh.input.visibility)
+        assertEquals(ShopCheckInVisibility.Public, fresh.input.visibility)
     }
 
     @Test fun selectedDateRoundTripsInBothPositiveAndNegativeTimezones() {

@@ -8,6 +8,7 @@ import com.coffeepeek.admin.analytics.Analytics
 import com.coffeepeek.admin.analytics.AnalyticsOverlay
 import com.coffeepeek.admin.analytics.analyticsExposure
 import com.coffeepeek.admin.feature.checkin.api.CheckInFlowHandoff
+import com.coffeepeek.admin.feature.homecheckin.ui.visibilityLabel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -18,6 +19,8 @@ import com.coffeepeek.admin.ui.component.FullScreenImageDialog
 import com.coffeepeek.admin.ui.component.PhotoViewerImages
 import com.coffeepeek.admin.ui.component.rememberCheckInDateLabel
 import com.coffeepeek.admin.ui.screen.checkins.CheckInHistoryScreenRenderer
+import com.coffeepeek.admin.ui.screen.checkins.HistoryTimelineCheckInCard
+import com.coffeepeek.admin.ui.screen.checkins.toTimelineCheckIn
 import com.coffeepeek.domain.repository.SessionRepository
 import com.coffeepeek.feature.checkinhistory.domain.repository.CheckInHistoryRepository
 import com.coffeepeek.feature.checkinhistory.domain.repository.HomeHistoryReader
@@ -103,6 +106,16 @@ internal class AndroidCheckInHistoryScreenRenderer(
         creation: HistoryCreationAnalytics? = null) {
         val entry = remember(session) {
             createCheckInHistoryEntry(session.lease.bind(repository), session.lease.bind(homeReader), calendar::snapshot, imageContent,
+                shopTimelineContent = { checkIn, onOpen ->
+                    HistoryTimelineCheckInCard(checkIn.toTimelineCheckIn(), onClick = onOpen,
+                        onPhotoClick = { images, index -> session.openPhoto(images.previews, images.originals, index) })
+                },
+                homeTimelineContent = { checkIn, onOpen ->
+                    val home = checkIn.toTimelineHome()
+                    HistoryTimelineCheckInCard(home.toTimelineCheckIn(), onClick = onOpen,
+                        onPhotoClick = { images, index -> session.openPhoto(images.previews, images.originals, index) },
+                        supportingLabel = home.visibilityLabel())
+                },
                 highQualityImage = { url, highQualityUrl, modifier, scale ->
                     CpImage(data = url, highQualityData = highQualityUrl, modifier = modifier, contentScale = scale)
                 },
