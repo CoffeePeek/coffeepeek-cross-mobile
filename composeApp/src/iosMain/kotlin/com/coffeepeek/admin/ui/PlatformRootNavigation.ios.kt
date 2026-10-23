@@ -155,7 +155,7 @@ internal actual fun PlatformRootNavigation(
                     1 -> CheckInTabContent { CoffeeListScreen() }
                     2 -> CommunityScreen(
                         onCreateCheckIn = { Navigator.navigate(Navigator.Screen.CreateCheckIn) },
-                        notificationsAction = { com.coffeepeek.admin.feature.notifications.ui.NotificationsButton() },
+                        notificationsAction = { koinInject<com.coffeepeek.admin.feature.notifications.ui.NotificationsRenderer>().Bell() },
                     )
                     3 -> ProfileScreen()
                     4 -> SettingsScreen()
