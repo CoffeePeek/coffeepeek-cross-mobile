@@ -166,6 +166,11 @@ internal fun PrefetchPhotos(urls: List<String>, inPhotoViewer: Boolean = false) 
 
 private val photoPrefetchRequests = Semaphore(2)
 
+/** The latest state of one protected photo load, observable by the function that owns the load. */
+private class LoadedPhoto {
+    var value: Resource<Painter> by mutableStateOf(Resource.Loading(0f))
+}
+
 internal fun cpImageData(data: Any): Any = when (data) {
     is String -> CustomUrl(when {
         data.isBlank() -> ""
@@ -249,13 +254,20 @@ private fun rememberCpImageResourceImpl(resource: Any, renewPermission: Boolean)
         expired = true
     }
 
+    // The loader's state is read inside the CompositionLocalProvider lambda, which recomposes on its own: a plain local assigned there never reached this
+    // function again, so a photo that finished decoding after the permission arrived stayed on Loading until something unrelated recomposed it (a touch).
+    val loaded = remember(resource, session, epoch, permissionScope, generation, presentation) { LoadedPhoto() }
     var result: Resource<Painter> = Resource.Loading(0f)
     if (foreground) {
         if (retained != null) result = Resource.Success(retained.painter, DataSource.Memory)
-        else CompositionLocalProvider(LocalKamelConfig provides uncached) {
-            result = key(resource, session, epoch, permissionScope, generation, presentation) {
-                asyncPainterResource(data = resource.copy(permissionScope = permissionScope, displayPermission = presentation))
+        else {
+            CompositionLocalProvider(LocalKamelConfig provides uncached) {
+                val loading = key(resource, session, epoch, permissionScope, generation, presentation) {
+                    asyncPainterResource(data = resource.copy(permissionScope = permissionScope, displayPermission = presentation))
+                }
+                SideEffect { loaded.value = loading }
             }
+            result = loaded.value
         }
     }
     val failure = result as? Resource.Failure
