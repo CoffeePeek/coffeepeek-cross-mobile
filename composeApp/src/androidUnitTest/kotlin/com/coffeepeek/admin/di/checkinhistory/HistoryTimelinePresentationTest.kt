@@ -2,7 +2,7 @@ package com.coffeepeek.admin.di.checkinhistory
 
 import com.coffeepeek.feature.checkinhistory.domain.model.*
 import com.coffeepeek.domain.model.CheckInVisibility
-import com.coffeepeek.feature.homecheckin.domain.HomeCheckInModeration
+import com.coffeepeek.legacy.homecheckin.domain.HomeCheckInModeration
 import com.coffeepeek.admin.ui.screen.checkins.historyTimestamp
 import com.coffeepeek.admin.ui.screen.checkins.toTimelineCheckIn
 import kotlin.test.*
