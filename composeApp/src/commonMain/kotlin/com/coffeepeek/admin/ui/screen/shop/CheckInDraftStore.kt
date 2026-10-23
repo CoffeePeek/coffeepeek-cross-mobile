@@ -11,7 +11,7 @@ data class CheckInDraft(
     val customDrinkName: String? = null,
     val drinkName: String? = null,
     val note: String = "",
-    val isPublic: Boolean = false,
+    val isPublic: Boolean = true,
     /** Actual visit instant, never a date picker's UTC-midnight day token. */
     val visitMillis: Long,
     val placeRating: Int = 4,
