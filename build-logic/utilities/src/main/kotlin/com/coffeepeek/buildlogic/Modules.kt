@@ -17,6 +17,13 @@ object Modules {
             const val impl = ":feature:app-update:impl"
         }
 
+        val auth = Auth
+        object Auth {
+            const val api = ":feature:auth:api"
+            const val domain = ":feature:auth:domain"
+            const val data = ":feature:auth:data"
+        }
+
         const val notifications = ":features:notifications"
         val authorBlocking = AuthorBlocking
         object AuthorBlocking {
@@ -166,6 +173,9 @@ object Modules {
         feature.appUpdate.api,
         feature.appUpdate.data,
         feature.appUpdate.impl,
+        feature.auth.domain,
+        feature.auth.api,
+        feature.auth.data,
         feature.authorBlocking.domain,
         feature.authorBlocking.api,
         feature.authorBlocking.data,
