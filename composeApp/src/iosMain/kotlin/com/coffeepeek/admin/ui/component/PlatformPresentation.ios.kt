@@ -33,7 +33,6 @@ import platform.darwin.NSObject
 import kotlinx.coroutines.delay
 import org.jetbrains.compose.resources.stringResource
 import kotlin.math.abs
-import kotlin.math.min
 
 internal fun UIViewController.presentationHost(): UIViewController {
     var host = this
@@ -110,8 +109,7 @@ private class SheetDelegate(val dismissed: () -> Unit) : NSObject(), UIAdaptiveP
 
 @Composable
 internal actual fun NativeModalSheet(onDismiss: () -> Unit, dismissEnabled: Boolean, content: @Composable ColumnScope.() -> Unit): Boolean {
-    // UIKit cannot fit a page sheet to arbitrary content before iOS 16. Use the
-    // existing content-sized shared sheet there rather than retaining the empty medium detent.
+    // UIKit cannot fit a page sheet to arbitrary content before iOS 16.
     val supportsContentDetent = remember {
         (UIDevice.currentDevice.systemVersion.substringBefore('.').toIntOrNull() ?: 0) >= 16
     }
@@ -122,31 +120,10 @@ internal actual fun NativeModalSheet(onDismiss: () -> Unit, dismissEnabled: Bool
     val colors = MaterialTheme.colorScheme
     val themeMode by ThemeManager.themeMode.collectAsState()
     val heightFraction = rememberUpdatedState(LocalNativeSheetHeightFraction.current?.coerceIn(0.1f, 1f) ?: 1f)
-    val sizing = remember {
-        val window = host.view.window
-        val screenHeight = (window?.bounds ?: UIScreen.mainScreen.bounds).useContents { size.height }
-        val safeInsets = window?.safeAreaInsets?.useContents { top + bottom } ?: 0.0
-        NativeSheetSizing((screenHeight - safeInsets).coerceAtLeast(1.0))
-    }
+    val sizing = remember { nativeSheetSizing(host) }
     val controller = remember {
         ComposeUIViewController {
-            AppContent {
-                val density = LocalDensity.current
-                Surface(Modifier.fillMaxSize()) {
-                    // UIKit adds the bottom safe area to custom detent heights. Reserve it
-                    // once here and consume it for navigationBarsPadding/IME descendants.
-                    Box(Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.systemBars.only(WindowInsetsSides.Bottom))) {
-                        ContentSizedSheetLayout(
-                            maxContentHeight = (sizing.maximumHeight * heightFraction.value - NativeSheetTopPadding).coerceAtLeast(1.0).dp,
-                            onContentHeightChanged = { pixels ->
-                                val points = pixels / density.density + NativeSheetTopPadding
-                                if (abs(sizing.contentHeight - points) > 0.5) sizing.contentHeight = points
-                            },
-                            modifier = Modifier.fillMaxSize().padding(top = NativeSheetTopPadding.dp).dismissKeyboardOnBackgroundGestures(),
-                        ) { body.value(this) }
-                    }
-                }
-            }
+            AppContent { NativeSheetContent(sizing, heightFraction.value, body.value) }
         }.apply { modalPresentationStyle = UIModalPresentationPageSheet }
     }
     val delegate = remember { SheetDelegate { dismiss.value() } }
@@ -156,33 +133,68 @@ internal actual fun NativeModalSheet(onDismiss: () -> Unit, dismissEnabled: Bool
         controller.view.backgroundColor = colors.surface.toUIColor()
         controller.view.tintColor = colors.primary.toUIColor()
     }
+    NativeSheetDetents(controller, host, sizing, heightFraction, delegate)
+    NativeSheetResize(controller, sizing.contentHeight, sizing.maximumHeight, heightFraction.value)
+    PresentNativeController(controller, host)
+    return true
+}
+
+private fun nativeSheetSizing(host: UIViewController): NativeSheetSizing {
+    val window = host.view.window
+    val screenHeight = (window?.bounds ?: UIScreen.mainScreen.bounds).useContents { size.height }
+    val safeInsets = window?.safeAreaInsets?.useContents { top + bottom } ?: 0.0
+    return NativeSheetSizing((screenHeight - safeInsets).coerceAtLeast(1.0))
+}
+
+@Composable
+private fun NativeSheetContent(sizing: NativeSheetSizing, heightFraction: Float, content: @Composable ColumnScope.() -> Unit) {
+    val density = LocalDensity.current
+    Surface(Modifier.fillMaxSize()) {
+        // UIKit adds bottom safe area to the custom detent; consume it once for descendants.
+        Box(Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.systemBars.only(WindowInsetsSides.Bottom))) {
+            ContentSizedSheetLayout(
+                maxContentHeight = (sizing.maximumHeight * heightFraction - NativeSheetTopPadding).coerceAtLeast(1.0).dp,
+                onContentHeightChanged = { pixels ->
+                    val points = pixels / density.density + NativeSheetTopPadding
+                    if (abs(sizing.contentHeight - points) > 0.5) sizing.contentHeight = points
+                },
+                modifier = Modifier.fillMaxSize().padding(top = NativeSheetTopPadding.dp).dismissKeyboardOnBackgroundGestures(),
+                content = content,
+            )
+        }
+    }
+}
+
+@Composable
+private fun NativeSheetDetents(
+    controller: UIViewController, host: UIViewController, sizing: NativeSheetSizing,
+    heightFraction: State<Float>, delegate: SheetDelegate,
+) {
     DisposableEffect(controller, host) {
         controller.sheetPresentationController?.apply {
             detents = listOf(UISheetPresentationControllerDetent.customDetentWithIdentifier("content") { context ->
                 val maximum = context?.maximumDetentValue ?: sizing.maximumHeight
                 if (maximum > 0 && abs(sizing.maximumHeight - maximum) > 0.5) sizing.maximumHeight = maximum
-                val limit = (maximum * heightFraction.value).coerceAtLeast(1.0)
-                min(sizing.contentHeight.takeIf { it > 0 } ?: limit / 2, limit)
+                nativeSheetDetentHeight(sizing.contentHeight, maximum, heightFraction.value)
             })
             prefersGrabberVisible = true
             prefersScrollingExpandsWhenScrolledToEdge = false
             prefersEdgeAttachedInCompactHeight = true
         }
         controller.presentationController?.delegate = delegate
-        onDispose {
-            controller.presentationController?.delegate = null
+        onDispose { controller.presentationController?.delegate = null }
+    }
+}
+
+@Composable
+private fun NativeSheetResize(controller: UIViewController, contentHeight: Double, maximumHeight: Double, heightFraction: Float) {
+    LaunchedEffect(controller, contentHeight, maximumHeight, heightFraction) {
+        if (contentHeight > 0) {
+            while (controller.presentingViewController == null) delay(16)
+            // Correct the opening detent immediately; a delayed animation moves the sheet a second time.
+            controller.sheetPresentationController?.invalidateDetents()
         }
     }
-    LaunchedEffect(controller, sizing.contentHeight, sizing.maximumHeight, heightFraction.value) {
-        if (sizing.contentHeight > 0) {
-            while (controller.presentingViewController == null || controller.transitionCoordinator != null) delay(16)
-            controller.sheetPresentationController?.let { sheet ->
-                sheet.animateChanges { sheet.invalidateDetents() }
-            }
-        }
-    }
-    PresentNativeController(controller, host)
-    return true
 }
 
 private const val NativeSheetTopPadding = 24.0
