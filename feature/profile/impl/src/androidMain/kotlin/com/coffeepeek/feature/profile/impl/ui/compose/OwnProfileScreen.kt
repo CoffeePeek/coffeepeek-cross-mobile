@@ -95,11 +95,12 @@ internal fun OwnProfileScreen(
                 slug = slug, nickname = profile.userName, avatarUrl = profile.avatarUrl,
                 vm = publicVm, authorActions = authorActions, slots = slots.shared,
                 onBack = null, onOpenShop = onOpenShop, onOpenRoaster = onOpenRoaster, onLogin = onLogin, onOpenUser = onOpenUser,
-                onShare = {},
+                onShare = {}, onOpenCheckIns = onOpenCheckIns,
                 own = OwnProfileExtras(
                     onEditProfile = onEditProfile, onOpenFavorites = onOpenFavorites, onOpenCheckIns = onOpenCheckIns,
                     topBarActions = actions,
-                    favoritesPreview = { slots.favoritesPreview(onOpenShop, onOpenRoaster) },
+                    favoritesPreview = { header -> slots.favoritesPreview(onOpenShop, onOpenRoaster, header) },
+                    checkInCount = profile.checkInCount,
                     activityCalendar = slots.activityCalendar,
                     activityPreview = slots.activityPreview,
                     bottomContentPadding = bottomPadding,
@@ -121,19 +122,22 @@ internal fun OwnProfileScreen(
                     slots.loadError { vm.onAction(OwnProfileAction.Refresh) }
                 }
                 profile != null -> Column(
-                    Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(horizontal = 16.dp),
+                    Modifier.fillMaxWidth().verticalScroll(rememberScrollState()),
                     verticalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
-                    PublicProfileHeader(
-                        nickname = profile.userName, avatarUrl = profile.avatarUrl, about = profile.about, image = slots.shared.image,
-                        onEditProfile = onEditProfile, onAvatarClick = onEditProfile,
-                        stats = PublicProfileStats(profile.checkInCount, profile.addedShopsCount, profile.addedRoastersCount, profile.followersCount),
-                    )
-                    slots.activityPreview(onOpenCheckIns)
-                    if (state.error != null || state.refreshError != null) slots.loadError { vm.onAction(OwnProfileAction.Refresh) }
-                    TextButton(onClick = onOpenFavorites) { Text(stringResource(R.string.profile_own_favorites)) }
-                    slots.favoritesPreview(onOpenShop, onOpenRoaster)
-                    TextButton(onClick = onOpenCheckIns) { Text(stringResource(R.string.profile_own_check_ins)) }
+                    Column(Modifier.padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        PublicProfileHeader(
+                            nickname = profile.userName, avatarUrl = profile.avatarUrl, about = profile.about, image = slots.shared.image,
+                            onEditProfile = onEditProfile, onAvatarClick = onEditProfile,
+                            stats = PublicProfileStats(profile.checkInCount, profile.addedShopsCount, profile.addedRoastersCount, profile.followersCount),
+                        )
+                        slots.activityPreview(onOpenCheckIns)
+                        if (state.error != null || state.refreshError != null) slots.loadError { vm.onAction(OwnProfileAction.Refresh) }
+                    }
+                    slots.favoritesPreview(onOpenShop, onOpenRoaster) {
+                        TextButton(onClick = onOpenFavorites) { Text(stringResource(R.string.profile_own_favorites)) }
+                    }
+                    if (profile.checkInCount > 0) TextButton(onClick = onOpenCheckIns, modifier = Modifier.padding(horizontal = 16.dp)) { Text(stringResource(R.string.profile_own_check_ins)) }
                     Spacer(Modifier.height(bottomPadding))
                 }
             }

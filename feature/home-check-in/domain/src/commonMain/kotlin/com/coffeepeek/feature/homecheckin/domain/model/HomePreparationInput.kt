@@ -16,5 +16,5 @@ data class HomePreparationInput(
     val drinkSlug: String? = null,
     val customDrinkName: String? = null,
     val photos: List<HomePreparationUpload> = emptyList(),
-    val visibility: HomePreparationVisibility? = HomePreparationVisibility.Private,
+    val visibility: HomePreparationVisibility? = HomePreparationVisibility.Public,
 )
