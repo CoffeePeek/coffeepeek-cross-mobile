@@ -12,8 +12,11 @@ class OwnProfileSlots(
     val shared: ProfileSlots,
     /** Owns loading/retry states and omits [header] with its content when successfully loaded empty. */
     val favoritesPreview: @Composable (onOpenShop: (String) -> Unit, onOpenRoaster: (String) -> Unit, header: @Composable () -> Unit) -> Unit,
-    /** The owner's personal activity calendar (private and home check-ins). */
-    val activityCalendar: @Composable () -> Unit,
+    /**
+     * The owner's personal activity calendar (private and home check-ins) with the check-ins of the selected day under it. Opening a shop or the check-in
+     * history is asked through the callbacks, so the sheet that hosts the calendar can close first.
+     */
+    val activityCalendar: @Composable (onOpenShop: (String) -> Unit, onOpenCheckIns: () -> Unit) -> Unit,
     /** Current personal week, opening personal check-in history on tap. */
     val activityPreview: @Composable (onClick: () -> Unit) -> Unit,
     /** Mascot error content with a retry action. */

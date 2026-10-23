@@ -236,3 +236,16 @@ retain that commit. Final integration checks/publication identity are recorded
 locally in `publish-verification.md` beside the preserved screenshots/build logs.
 The original checkout remains separate, including its unrelated packaging and
 native map edits; they are not part of this publication.
+
+## Follow-up of 2026-10-23: the activity sheet and the check-ins of the tapped day
+
+- The week in the profile (own and public) opens the **«Активность» bottom sheet** with the calendar again, as in the release build. `e628de2e`
+  had sent the own profile to the full «Чекины» screen (`own.onOpenCheckIns`) and the public one to its check-ins route; the sheet code
+  (`ProfileSection.Activity`) was still there and is used again. The check-ins heading and the «Все» actions keep their own destinations.
+- Tapping a day in the sheet highlighted it but showed nothing about it (also in the release build). Under the calendar there is now the
+  title of the day («22 октября», «Четверг · 1 чекин»), then its coffee shop visits and home brews as diary rows, or «В этот день чекинов не было».
+  A shop row opens the shop and a home row opens the check-in history; the sheet closes first (new callbacks on `OwnProfileSlots.activityCalendar`).
+  The home rows are titled «Дома». The legacy shared calendar slot (iOS) gets the same list with the default navigation.
+- Tests: `SelectedDayEntriesTest` (order, creation-time fallback, home flag). Checked on a Pixel 7 in the Sandbox (own profile): sheet opens, day 22 shows
+  one home brew, day 23 shows a shop visit and two home brews, a shop row opens the shop and back returns to the profile with the sheet closed.
+  Not checked: the public profile of another user, iOS, large font and TalkBack.
