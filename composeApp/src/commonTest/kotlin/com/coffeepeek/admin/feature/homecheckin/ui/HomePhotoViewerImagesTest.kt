@@ -1,6 +1,6 @@
 package com.coffeepeek.admin.feature.homecheckin.ui
 
-import com.coffeepeek.feature.homecheckin.domain.HomeCheckInPhoto
+import com.coffeepeek.legacy.homecheckin.domain.HomeCheckInPhoto
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull

@@ -20,7 +20,8 @@ import com.coffeepeek.feature.shop.domain.model.*
 import com.coffeepeek.domain.model.Session
 import com.coffeepeek.domain.repository.SessionRepository
 import com.coffeepeek.feature.authorblocking.api.AuthorReference
-import com.coffeepeek.feature.authorblocking.api.createAuthorBlockingFeature
+import com.coffeepeek.admin.di.authorblocking.SessionAuthorBlockingAccount
+import com.coffeepeek.feature.authorblocking.impl.createAuthorBlockingFeature
 import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.plugins.expectSuccess
 import io.ktor.client.statement.bodyAsText
@@ -347,7 +348,7 @@ class SandboxApplicationBackendTest {
     @OptIn(ExperimentalCoroutinesApi::class)
     @Test fun actualAuthorBlockingFeatureBlocksThroughFakeTransportAndFailureLeavesVisibilityUnchanged() = runTest { fixture { backend, client ->
         Dispatchers.setMain(UnconfinedTestDispatcher())
-        val feature = createAuthorBlockingFeature(client.client, LocalSession())
+        val feature = createAuthorBlockingFeature(client.client, SessionAuthorBlockingAccount(LocalSession()))
         try {
             val author = AuthorReference(friend, SandboxApplicationBackend.FRIEND_SLUG, SandboxApplicationBackend.FRIEND_NAME)
             withContext(Dispatchers.Default) { withTimeout(10_000) {

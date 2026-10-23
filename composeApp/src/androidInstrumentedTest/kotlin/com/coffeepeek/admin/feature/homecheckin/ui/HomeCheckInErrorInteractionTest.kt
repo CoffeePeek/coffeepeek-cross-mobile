@@ -23,9 +23,9 @@ import com.coffeepeek.admin.feature.catalog.api.BrewMethodOption
 import com.coffeepeek.admin.theme.CoffeePeekTheme
 import com.coffeepeek.admin.ui.component.CpTopBar
 import com.coffeepeek.admin.ui.component.SwipeDismissModalBottomSheet
-import com.coffeepeek.feature.homecheckin.domain.HomeCheckInField
-import com.coffeepeek.feature.homecheckin.domain.HomeCheckInInput
-import com.coffeepeek.feature.homecheckin.domain.homeCheckInFieldErrors
+import com.coffeepeek.legacy.homecheckin.domain.HomeCheckInField
+import com.coffeepeek.legacy.homecheckin.domain.HomeCheckInInput
+import com.coffeepeek.legacy.homecheckin.domain.homeCheckInFieldErrors
 import java.io.File
 import java.util.concurrent.atomic.AtomicReference
 import org.junit.Assert.*

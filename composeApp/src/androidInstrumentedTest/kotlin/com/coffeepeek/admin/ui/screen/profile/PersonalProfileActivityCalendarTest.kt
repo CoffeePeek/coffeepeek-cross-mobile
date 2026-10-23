@@ -47,10 +47,10 @@ import com.coffeepeek.admin.ui.screen.checkins.VisitedPlacesUiState
 import com.coffeepeek.admin.ui.screen.checkins.grantCheckInFixtureStartupPermissions
 import com.coffeepeek.admin.utils.CustomUrl
 import com.coffeepeek.domain.model.CheckIn
-import com.coffeepeek.feature.homecheckin.domain.HomeCalendarDay
-import com.coffeepeek.feature.homecheckin.domain.HomeCheckIn
-import com.coffeepeek.feature.homecheckin.domain.HomeCheckInInput
-import com.coffeepeek.feature.homecheckin.domain.HomeCheckInPhoto
+import com.coffeepeek.legacy.homecheckin.domain.HomeCalendarDay
+import com.coffeepeek.legacy.homecheckin.domain.HomeCheckIn
+import com.coffeepeek.legacy.homecheckin.domain.HomeCheckInInput
+import com.coffeepeek.legacy.homecheckin.domain.HomeCheckInPhoto
 import io.kamel.core.DataSource
 import io.kamel.core.Resource
 import io.kamel.core.config.KamelConfig
