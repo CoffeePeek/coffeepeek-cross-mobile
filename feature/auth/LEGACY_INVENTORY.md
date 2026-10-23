@@ -170,3 +170,32 @@ There is **no `feature/auth` module yet**; this directory holds only this file.
 4. **C9 — global error dialog.** The legacy base class shows the raw server message (`ApiException.message`) in a dialog with a mascot titled «Что-то пошло не так» and a «Понятно» button; the migrated owner must decide what to show (see Q8).
 5. **A9 — system password manager.** After a successful sign-in and after a successful registration Android offers to save the password in Google Password Manager. The prompt is a system dialog and was dismissed with ✕ (nothing was saved); it comes from the autofill framework, so the migrated fields should keep the same autofill hints (username/email and password) or consciously change them.
 6. **Layout (owner request, recovery screen).** On «Восстановление пароля» (no mascot) the card starts right under the wordmark and almost touches the close button and the CoffeePeek logo. The card needs a gap below the header; the migrated screen must keep that gap, and the legacy scaffold got the same fix (branch `feature/auth-recovery-spacing`): without the mascot the card now starts 24 dp (`spacing6`) below the header, checked on Pixel 7. Login and registration are unchanged (they have the mascot).
+
+## Step 1 result — parity tests on the legacy code (2026-10-21, branch `feature/auth-parity-tests`)
+
+Test-only change (5 new test classes, 24 tests, no production change). Together with the existing `AppleLoginFlowTest`, `AppleLoginPersistenceTest`, `RegisterAnalyticsConsentTest`, `PasswordRecovery*Test`,
+`SocialLoginErrorTest`, `PasswordValidationTest` and `AuthServiceTest` they pin rows A, B (Google), C, D and E1 of the inventory.
+
+- `AuthViewModelTest` (composeApp commonTest, 6): empty submit shows both required errors and sends nothing; invalid email and a 5-character password are reported together; a valid login sends the trimmed email and the
+  password as typed, opens `Main` and clears the loading state; failures map through `localizedLoginError` (credentials / connection / generic), stay on the screen and clear the loading state; a field error is validated live
+  **only while it is shown** (a valid value clears it and later bad edits stay silent until the next submit) and editing clears the request error; Google login opens `Main`, its failures use the social messages, and
+  `clearFieldErrors` resets everything (A2-A5, B2, B3).
+- `RegisterViewModelTest` (composeApp commonTest, 5): invalid email stays on step 1 without asking the server; a free email is trimmed, checked once and moves to Details; invalid submits mark the field errors
+  («Введите корректный email», «Введите email», «Пароль должен содержать как минимум 8 символов») and send nothing and save no consent; password live re-validation follows the same "only while shown" rule;
+  back clears the password error and pops from step 1; `goToLogin` emits `PopBack` then `NavigateTo(Auth)` (C1-C3).
+- `AuthValidationTest` (commonTest, 5): the email pattern table, login password rules (6 characters, whitespace counts), and `localizedLoginError` word by word. **Characterized quirk:** the Russian network stem is
+  «сеть», so «Нет сети» does not match and gets the generic text.
+- `AuthTransportFailureTest` (androidUnitTest, 1): through the real client stack and `AuthService`, an I/O failure and an unknown host (JVM message is just the host name) reach the user as «Не удалось войти. Проверьте email и пароль»,
+  while connect failures and timeouts reach it as «Не удалось подключиться…». On a phone, `UnknownHostException` carries «Unable to resolve host…» which does match, so a real offline login shows the connection text; the generic text for
+  the Sandbox offline scenario is an artefact of its `IOException` (finding 2 of step 0).
+- `AuthRepositoryImplTest` (modules/data commonTest, 7): password and Google login save the session with the token's user id and keep local data for the same user; a different user or a guest clears local data **before**
+  saving (order: remote call, `save(null)`, favorites for the previous owner, caches, `save(new)`); a rejected login changes nothing; logout cleans local data first, then sends the refresh token, a failing remote logout
+  is ignored, and a cleanup failure is reported while caches are still cleared and the remote call still happens (A5, B2, E1).
+
+**Not pinned by a unit test and why:**
+- C2 «Этот Email уже занят» and C4 (the single submit message and its priority): these texts are compose resources, which a plain JVM unit test cannot load (`Resources.getSystem` is not mocked). They stay
+  characterized by code reading and by the device run; the migrated view model will expose typed error kinds and the texts move to Android string resources, which makes them testable (an improvement, noted for step 3b).
+- C7 (submit gated until name, an 8+ character password and the terms are valid), the strength meter, the dialog and everything visual: device only.
+- Apple login (iOS, legacy path) keeps its existing tests; Google/Apple against real accounts remain the live gate.
+
+Verified: composeApp Direct (auth, utils, recovery suites: 124 tests) and Play (39) and `:modules:data` (58), 0 failures; iOS test compilation for `composeApp` and `modules:data`.
