@@ -212,7 +212,9 @@ private fun appModule(
     single<ShopReportScreenRenderer> { shopReportRendererFactory(get()) }
     single<ShopMenuGalleryScreenRenderer> { shopGalleryRendererFactory(get()) }
     single<com.coffeepeek.feature.notifications.api.NotificationFeature> {
-        com.coffeepeek.feature.notifications.api.createNotificationFeature(get<CoffeePeekClient>().client, get(), com.coffeepeek.admin.notifications.NativePushBridge)
+        com.coffeepeek.feature.notifications.impl.createNotificationFeature(
+            get<CoffeePeekClient>().client, com.coffeepeek.admin.di.notifications.SessionNotificationAccount(get()), com.coffeepeek.admin.notifications.NativePushBridge,
+        )
     }
     single<PasswordRecoveryRepository> { PasswordRecoveryRepositoryImpl(get<CoffeePeekClient>().plainClient) }
     factory { (email: String) -> PasswordRecoveryViewModel(email, get()) }
