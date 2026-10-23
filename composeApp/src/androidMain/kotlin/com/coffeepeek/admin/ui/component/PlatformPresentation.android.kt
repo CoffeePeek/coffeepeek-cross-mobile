@@ -24,6 +24,8 @@ internal actual fun NativeOperationStatus(message: String) = false
 @Composable
 internal actual fun NativeActionSheet(title: String, actions: List<PlatformAction>, message: String?, dismissBeforeAction: Boolean, onDismiss: () -> Unit) = false
 @Composable
+internal actual fun NativePhotoSourceSheet(title: String, onGallery: () -> Unit, onCamera: () -> Unit, onDismiss: () -> Unit) = false
+@Composable
 internal actual fun NativeModalSheet(onDismiss: () -> Unit, dismissEnabled: Boolean, content: @Composable ColumnScope.() -> Unit) = false
 @Composable
 internal actual fun PlatformSwitch(checked: Boolean, onCheckedChange: ((Boolean) -> Unit)?, enabled: Boolean, modifier: Modifier) {

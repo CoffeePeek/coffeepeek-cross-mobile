@@ -499,8 +499,10 @@ internal fun expandedMapBounds(preview: Rect, screenSize: Size, expansion: Float
 internal fun discoveryMapOffsetY(viewportHeight: Float, progress: Float): Float =
     viewportHeight * (progress.coerceIn(0f, 1f) - 1f)
 
+// The measured anchor includes pull-to-refresh placement as well as list scrolling.
 internal fun discoveryMapPreviewBounds(anchor: Rect, viewportTop: Float, itemOffset: Int?): Rect =
-    Rect(Offset(anchor.left, viewportTop + (itemOffset?.toFloat() ?: -anchor.height)), anchor.size)
+    if (itemOffset != null) anchor
+    else Rect(Offset(anchor.left, viewportTop - anchor.height), anchor.size)
 
 @Composable
 private fun DiscoverySectionTitle(title: String, onShowAll: (() -> Unit)?, modifier: Modifier = Modifier) {

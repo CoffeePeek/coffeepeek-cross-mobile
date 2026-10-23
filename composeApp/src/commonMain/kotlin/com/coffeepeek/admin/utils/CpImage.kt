@@ -73,8 +73,9 @@ fun CpImage(
         }
     }
 
-    val detail = if (mayUpgrade && (upgradeReady || upgradeDelayMillis <= 0)) {
-        rememberCpImageResource(checkNotNull(detailData))
+    // Keep the selected quality through navigation; the loader gates transfers by lifecycle.
+    val detail = if (detailData != null && (upgradeReady || upgradeDelayMillis <= 0)) {
+        rememberCpImageResource(detailData, renewPermission = mayUpgrade)
     } else null
     val preview = rememberCpImageResource(previewData, renewPermission = detail !is Resource.Success)
     // Keep the preview during the higher-quality transfer, including failures.
@@ -178,7 +179,8 @@ internal fun rememberCpImageResource(resource: Any, renewPermission: Boolean = t
     val retained = remember(resource, permissionScope, generation, foreground) {
         if (foreground && generation == 0) protectedPhotoPainterCache.get(resource.url, permissionScope) else null
     }
-    var displayed by remember(resource, session, epoch, permissionScope, foreground) {
+    // A stopped navigation entry can still be visible during its exit transition.
+    var displayed by remember(resource, session, epoch, permissionScope) {
         mutableStateOf(retained)
     }
     val presentation = remember(resource, session, epoch, permissionScope, generation, foreground) {
@@ -192,8 +194,7 @@ internal fun rememberCpImageResource(resource: Any, renewPermission: Boolean = t
     var expired by remember(displayGrant) { mutableStateOf(false) }
     LaunchedEffect(displayGrant, foreground, renewPermission) {
         val grant = displayGrant ?: return@LaunchedEffect
-        if (!foreground) return@LaunchedEffect
-        if (renewPermission) {
+        if (foreground && renewPermission) {
             // Renew before expiry while the currently authorized painter stays visible.
             val lead = minOf(2_000L, grant.remaining(SystemPhotoCacheClock) / 2)
             while (grant.remaining(SystemPhotoCacheClock) > lead) {
@@ -225,7 +226,7 @@ internal fun rememberCpImageResource(resource: Any, renewPermission: Boolean = t
             generation++
         }
     }
-    if (!foreground || !ProtectedPhotoSession.current(permissionScope)) return Resource.Loading(0f)
+    if (!ProtectedPhotoSession.current(permissionScope)) return Resource.Loading(0f)
     if (denied) {
         SideEffect {
             displayed?.let { protectedPhotoPainterCache.store(resource.url, permissionScope, it.painter, null) }
