@@ -661,4 +661,68 @@ class SandboxApplicationBackendTest {
         assertEquals(SandboxContributions.Seeded, backend.contributions)
         assertEquals(2, shops.getMyModerationShops(ModerationStatusDto.Approved, 1, 20).getOrThrow().totalItems)
     } }
+
+    @Test fun discoveryFixturesPageFilterSortAndFailThroughTheRealSearchAndMapServices() = runTest { fixture { backend, client ->
+        val shops = ShopApiService(client.client)
+        val minsk = listOf(53.8, 27.4, 54.0, 27.7)
+        val brest = listOf(51.9, 23.5, 52.3, 24.0)
+        suspend fun map(box: List<Double>, city: String? = null) = shops.getShopsInBounds(box[0], box[1], box[2], box[3], zoom = 22, cityId = city).getOrThrow()
+        fun nearby(radiusKm: Int, pageSize: Int = 100, page: Int = 1, favoritesOnly: Boolean = false) = ShopSearchRequestDto(
+            ShopSearchFiltersDto(ShopSearchOriginDto(53.9006, 27.5590), radiusKm = radiusKm, favoritesOnly = favoritesOnly), page = page, pageSize = pageSize,
+        )
+
+        // The default fixture is the two core shops and the one-marker map.
+        assertEquals(2, shops.searchShops().getOrThrow().coffeeShops.size)
+
+        backend.discovery = SandboxDiscovery.Paged
+        val first = shops.searchShops(page = 1, pageSize = 20).getOrThrow()
+        assertEquals(47, first.totalItems); assertEquals(3, first.totalPages); assertEquals(20, first.coffeeShops.size)
+        assertEquals(7, shops.searchShops(page = 3, pageSize = 20).getOrThrow().coffeeShops.size)
+        assertEquals(9, shops.searchShops(cityId = "brest").getOrThrow().totalItems)
+        assertEquals(11, shops.searchShops(query = "Discovery Shop 1").getOrThrow().totalItems)
+        assertEquals(15, shops.searchShops(roasterIds = listOf("sandbox-decaf")).getOrThrow().totalItems)
+        assertEquals(4, shops.searchShops(minRating = 4.9).getOrThrow().totalItems)
+        assertEquals(16, shops.searchShops(type = "Specialty").getOrThrow().totalItems)
+        assertEquals(0, shops.searchShops(cityId = "brest", roasterIds = listOf("sandbox-decaf"), tagIds = listOf("none")).getOrThrow().totalItems)
+
+        // The nearby search is sorted by distance, limited to the radius, paged, and follows the shared favorites.
+        val near = shops.searchNearbyShops(nearby(radiusKm = 3)).getOrThrow()
+        val distances = near.items.mapNotNull { it.distanceMeters }
+        assertEquals(near.items.size, distances.size); assertEquals(distances.sorted(), distances); assertTrue(distances.all { it <= 3_000.0 })
+        assertTrue(shops.searchNearbyShops(nearby(radiusKm = 1)).getOrThrow().totalItems < near.totalItems)
+        val tenPerPage = shops.searchNearbyShops(nearby(radiusKm = 3, pageSize = 10)).getOrThrow()
+        assertEquals((near.totalItems + 9) / 10, tenPerPage.totalPages); assertEquals(minOf(10, near.totalItems), tenPerPage.items.size)
+        assertEquals("Sandbox Cafe", shops.searchNearbyShops(nearby(radiusKm = 3, favoritesOnly = true)).getOrThrow().items.single().name)
+        FavoritesApiService(client.client).setFavorite("coffee_shop", "discovery-3", true).getOrThrow()
+        assertEquals(2, shops.searchNearbyShops(nearby(radiusKm = 3, favoritesOnly = true)).getOrThrow().items.size)
+
+        // The map: shops by bounds and filters, zones inside the bounds, no clusters, nothing truncated.
+        val inMinsk = map(minsk)
+        assertEquals(38, inMinsk.shops.size); assertEquals(2, inMinsk.zones.size); assertTrue(inMinsk.clusters.isEmpty()); assertFalse(inMinsk.isTruncated)
+        assertEquals(9, map(brest).shops.size); assertTrue(map(brest).zones.isEmpty())
+        assertTrue(map(minsk, city = "brest").shops.isEmpty())
+
+        backend.discovery = SandboxDiscovery.Truncated
+        assertEquals(SandboxDiscoveryBackend.MAP_LIMIT, map(minsk).shops.size); assertTrue(map(minsk).isTruncated)
+        assertFalse(map(brest).isTruncated)
+
+        backend.discovery = SandboxDiscovery.Empty
+        assertEquals(0, shops.searchShops().getOrThrow().totalItems)
+        assertTrue(shops.searchNearbyShops(nearby(radiusKm = 3)).getOrThrow().items.isEmpty())
+        assertTrue(map(minsk).shops.isEmpty()); assertTrue(map(minsk).zones.isEmpty())
+
+        backend.discovery = SandboxDiscovery.SearchFailure
+        assertTrue(shops.searchShops().isFailure); assertTrue(shops.searchNearbyShops(nearby(radiusKm = 3)).isFailure)
+        assertTrue(shops.getShopsInBounds(minsk[0], minsk[1], minsk[2], minsk[3], zoom = 22).isSuccess)
+
+        backend.discovery = SandboxDiscovery.MapFailure
+        assertTrue(shops.getShopsInBounds(minsk[0], minsk[1], minsk[2], minsk[3], zoom = 22).isFailure)
+        assertEquals(47, shops.searchShops().getOrThrow().totalItems)
+
+        backend.discovery = SandboxDiscovery.Paged
+        backend.reset(true)
+        assertEquals(SandboxDiscovery.Seeded, backend.discovery)
+        assertEquals(2, shops.searchShops().getOrThrow().coffeeShops.size)
+    } }
 }
+

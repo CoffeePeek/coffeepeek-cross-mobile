@@ -36,6 +36,7 @@ internal class SandboxApplicationBackend(private val today: LocalDate, private v
     }
     private val shopNames = mapOf("sandbox-cafe" to "Sandbox Cafe", "sandbox-lab" to "Sandbox Lab")
     private val contributionStore = SandboxContributionsBackend(today, shopNames.keys)
+    private val discoveryStore = SandboxDiscoveryBackend({ populated }, { favorites }, ::photo, ::address, ::catalog)
     private val favorites = linkedSetOf("coffee_shop:sandbox-cafe", "roaster:sandbox-roaster", "drink:cappuccino")
     private var username = "Sandbox"
     private var about = "Локальный тестовый профиль. Все действия остаются в Sandbox."
@@ -51,6 +52,9 @@ internal class SandboxApplicationBackend(private val today: LocalDate, private v
     @Volatile var cities = SandboxCities.Single
     @Volatile var authPolicy = SandboxAuthPolicy.Works
     @Volatile var feed = SandboxFeed.Single
+    var discovery: SandboxDiscovery
+        get() = discoveryStore.mode
+        set(value) { discoveryStore.mode = value }
     var contributions: SandboxContributions
         get() = contributionStore.mode
         set(value) = contributionStore.select(value, populated)
@@ -60,6 +64,7 @@ internal class SandboxApplicationBackend(private val today: LocalDate, private v
         feed = SandboxFeed.Single; laterPageFailed = false; generated = null
         this.populated = populated
         contributionStore.reset(populated)
+        discoveryStore.reset()
         others.clear(); blocked.clear(); blocksRevision++
         friendFollowing = false; deletionRequest = null
         if (populated) others += friendVisit()
@@ -83,6 +88,7 @@ internal class SandboxApplicationBackend(private val today: LocalDate, private v
             return ok(buildJsonObject { put("authorId", id); put("isBlocked", method == HttpMethod.Put) })
         }
         contributionStore.handle(path, method, request, input)?.let { return it }
+        discoveryStore.handle(path, method, request, input)?.let { return it }
         authRoute(path, method, input)?.let { return it }
         if (path == "/api/users/me" && method == HttpMethod.Get) return ok(profile())
         if (path == "/api/users/me/username" && method == HttpMethod.Patch) {

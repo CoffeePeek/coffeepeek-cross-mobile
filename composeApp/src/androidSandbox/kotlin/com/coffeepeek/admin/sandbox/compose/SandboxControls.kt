@@ -13,6 +13,7 @@ import com.coffeepeek.R
 import com.coffeepeek.admin.sandbox.backend.SandboxAuthPolicy
 import com.coffeepeek.admin.sandbox.backend.SandboxCities
 import com.coffeepeek.admin.sandbox.backend.SandboxContributions
+import com.coffeepeek.admin.sandbox.backend.SandboxDiscovery
 import com.coffeepeek.admin.sandbox.backend.SandboxFeed
 import com.coffeepeek.admin.sandbox.backend.SandboxScenario
 import com.coffeepeek.admin.sandbox.backend.SandboxUpdatePolicy
@@ -24,7 +25,8 @@ import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
     cities: SandboxCities = SandboxCities.Single, onCities: (SandboxCities) -> Unit = {},
     authPolicy: SandboxAuthPolicy = SandboxAuthPolicy.Works, onAuthPolicy: (SandboxAuthPolicy) -> Unit = {},
     feed: SandboxFeed = SandboxFeed.Single, onFeed: (SandboxFeed) -> Unit = {},
-    contributions: SandboxContributions = SandboxContributions.Seeded, onContributions: (SandboxContributions) -> Unit = {}) {
+    contributions: SandboxContributions = SandboxContributions.Seeded, onContributions: (SandboxContributions) -> Unit = {},
+    discovery: SandboxDiscovery = SandboxDiscovery.Seeded, onDiscovery: (SandboxDiscovery) -> Unit = {}) {
     Surface(color = MaterialTheme.colorScheme.primaryContainer) {
         Column(Modifier.fillMaxWidth().padding(8.dp)) {
             Text(stringResource(R.string.sandbox_banner), style = MaterialTheme.typography.labelLarge)
@@ -103,6 +105,20 @@ import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
                         SandboxContributions.SubmitFailure -> R.string.sandbox_contributions_submit_failure
                     }
                     FilterChip(contributions == mode, { onContributions(mode) }, { Text(stringResource(label)) }, enabled = enabled)
+                }
+            }
+            Text(stringResource(R.string.sandbox_discovery_title), style = MaterialTheme.typography.labelMedium)
+            Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                SandboxDiscovery.entries.forEach { mode ->
+                    val label = when (mode) {
+                        SandboxDiscovery.Seeded -> R.string.sandbox_discovery_seeded
+                        SandboxDiscovery.Paged -> R.string.sandbox_discovery_paged
+                        SandboxDiscovery.Truncated -> R.string.sandbox_discovery_truncated
+                        SandboxDiscovery.Empty -> R.string.sandbox_discovery_empty
+                        SandboxDiscovery.SearchFailure -> R.string.sandbox_discovery_search_failure
+                        SandboxDiscovery.MapFailure -> R.string.sandbox_discovery_map_failure
+                    }
+                    FilterChip(discovery == mode, { onDiscovery(mode) }, { Text(stringResource(label)) }, enabled = enabled)
                 }
             }
             Row(Modifier.horizontalScroll(rememberScrollState())) {

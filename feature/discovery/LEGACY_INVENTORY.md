@@ -147,3 +147,11 @@ empty state with an «Добавить обжарщика» action through a com
 ## (9) Not checked in this pass
 
 Live search/map endpoints and their DTO details, the real MapLibre style and tiles, the native iOS map renderer and its Swift side, real location, large font and TalkBack, performance of the map choreography on low-end devices. They stay explicit gates for the later steps.
+
+## Step 0 result (Sandbox fixtures)
+
+- **Before**: the Sandbox answered the plain search with the two core shops and ignored every filter and paging, the nearby search honoured only open/new/visited/favorites without distance, radius or paging, and the map returned one marker without bounds, zones or truncation. Nothing could fail.
+- **Now** (`SandboxDiscoveryBackend`, mode `sandbox_discovery`): `Seeded` keeps the old answers; `Paged` has 47 shops in two cities with all filter dimensions, paging, the nearby search by distance and radius, the map by bounds and filters and two zones; `Truncated`, `Empty`, `SearchFailure`, `MapFailure` as in `composeApp/SANDBOX.md`.
+- **Tests**: one case in `SandboxApplicationBackendTest` goes through the real `ShopApiService` (paging 47/3/20/7, city, text, roaster, rating and type filters, an empty intersection, distance order and radius, paging of the nearby search, the shared favorites, map by bounds with zones, no clusters, truncation, empty, both failures and Reset). The class has 26 cases and all pass.
+- **Not yet**: a device pass with the fixtures (the phone was locked), the details of the generated shops, the parity tests of the legacy view models (step 1).
+
