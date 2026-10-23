@@ -8,12 +8,20 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.coffeepeek.admin.ui.component.CoffeeShopImage
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 
 @Composable
-internal expect fun CoffeeRoasterLogo(imageUrl: String, description: String, modifier: Modifier)
+internal fun CoffeeRoasterLogo(imageUrl: String, description: String, modifier: Modifier) {
+    CoffeeShopImage(
+        imageUrl = imageUrl, contentDescription = description,
+        contentScale = ContentScale.Crop, placeholderLabelSize = MaterialTheme.typography.labelSmall.fontSize,
+        modifier = modifier,
+    )
+}
 
 @Composable
 private fun CoffeeRoasterLogoPreview(darkTheme: Boolean) {
