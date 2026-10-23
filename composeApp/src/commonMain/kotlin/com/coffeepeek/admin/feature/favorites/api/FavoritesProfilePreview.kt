@@ -8,4 +8,5 @@ import com.coffeepeek.admin.feature.favorites.ui.FavoritesProfilePreviewContent
 internal fun FavoritesProfilePreview(
     onCoffeeShopClick: (String) -> Unit,
     onRoasterClick: (String) -> Unit,
-) = FavoritesProfilePreviewContent(onCoffeeShopClick, onRoasterClick)
+    header: @Composable () -> Unit = {},
+) = FavoritesProfilePreviewContent(onCoffeeShopClick, onRoasterClick, header = header)
