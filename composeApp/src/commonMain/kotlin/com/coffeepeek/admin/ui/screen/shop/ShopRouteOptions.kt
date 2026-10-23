@@ -2,10 +2,6 @@ package com.coffeepeek.admin.ui.screen.shop
 
 import androidx.compose.runtime.Composable
 
-internal data class ShopRouteOption(val label: String, val url: String)
-
-internal expect fun shopRouteOptions(latitude: Double, longitude: Double): List<ShopRouteOption>
-
 @Composable
 internal expect fun ShopRoutePicker(latitude: Double, longitude: Double, onDismiss: () -> Unit)
 
