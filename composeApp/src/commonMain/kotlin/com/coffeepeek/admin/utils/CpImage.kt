@@ -83,19 +83,25 @@ fun CpImage(
         }
     }
 
+    // The preview is loaded first and alone: the original (often a huge file) must not compete with it for the transfer and the decoder, which kept the
+    // preview of the full-screen viewer spinning until the original was dropped. The original starts once the preview has settled, success or failure.
+    var detailLoaded by remember(previewData, detailData) { mutableStateOf(false) }
+    var previewSettled by remember(previewData, detailData) { mutableStateOf(false) }
     // Keep the selected quality through navigation; the loader gates transfers by lifecycle.
-    val detail = if (detailData != null && (upgradeReady || upgradeDelayMillis <= 0)) {
+    val preview = rememberCpImageResource(previewData, renewPermission = !detailLoaded)
+    SideEffect { if (preview is Resource.Success || preview is Resource.Failure) previewSettled = true }
+    val detail = if (detailData != null && previewSettled && (upgradeReady || upgradeDelayMillis <= 0)) {
         rememberCpImageResource(detailData, renewPermission = mayUpgrade)
     } else null
-    val preview = rememberCpImageResource(previewData, renewPermission = detail !is Resource.Success)
+    SideEffect { detailLoaded = detail is Resource.Success }
     // Keep the preview during the higher-quality transfer, including failures.
     // Expired protected painters are withdrawn by the resource loader itself.
     val result = if (detail is Resource.Success) detail else preview
-    // With the loader the tile is only a translucent veil over the screen background, not an opaque slab.
     LaunchedEffect(previewData, detailData, upgradeReady, mayUpgrade, preview::class, detail?.let { it::class }) {
         photoLog("CpImage preview=${photoId(previewData)} detail=${photoId(detailData)} upgradeReady=$upgradeReady mayUpgrade=$mayUpgrade visible=$visible showLoader=$showLoader " +
             "previewState=${preview::class.simpleName} detailState=${detail?.let { it::class.simpleName }}")
     }
+    // With the loader the tile is only a translucent veil over the screen background, not an opaque slab.
     val loading = placeholder?.toPainterResource()
         ?: ColorPainter(MaterialTheme.colorScheme.surfaceVariant.let { if (showLoader) it.copy(alpha = 0.3f) else it })
     val painter = when (result) {
