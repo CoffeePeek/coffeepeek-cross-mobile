@@ -131,6 +131,54 @@ class CombinedHistoryViewModelTest {
         assertFalse(vm.state.value.isTimelineLoading)
     }
 
+    @Test fun partialInitialAndMonthLoadsNeverShowPullRefresh() = runTest(dispatcher) {
+        val pending = gate()
+        val homes = Homes().apply { calendarGate = pending }
+        val vm = vm(homes = homes)
+        runCurrent()
+        assertTrue(vm.state.value.timeline.isNotEmpty())
+        assertTrue(vm.state.value.homeCalendar.isLoading)
+        assertFalse(vm.state.value.isRefreshing)
+        vm.onAction(CombinedHistoryAction.ChangeMonth(-1))
+        runCurrent()
+        assertTrue(vm.state.value.homeCalendar.isLoading)
+        assertFalse(vm.state.value.isRefreshing)
+        vm.onAction(CombinedHistoryAction.SelectFilter(HistoryKindFilter.Home))
+        runCurrent()
+        assertFalse(vm.state.value.isRefreshing)
+    }
+
+    @Test fun explicitPullRefreshWaitsForTheLastReadAndClearsOnFailure() = runTest(dispatcher) {
+        val homes = Homes()
+        val vm = vm(homes = homes)
+        runCurrent()
+        val pending = gate()
+        homes.calendarGate = pending
+        homes.calendarResult = Result.failure(IllegalStateException("calendar unavailable"))
+        vm.onAction(CombinedHistoryAction.Refresh)
+        runCurrent()
+        assertTrue(vm.state.value.isRefreshing)
+        assertFalse(vm.state.value.isTimelineLoading)
+        pending.complete(Unit)
+        runCurrent()
+        assertFalse(vm.state.value.isRefreshing)
+        assertTrue(vm.state.value.homeCalendar.hasError)
+    }
+
+    @Test fun switchingAwayFromTheLastRefreshingSourceReleasesTheIndicator() = runTest(dispatcher) {
+        val homes = Homes()
+        val vm = vm(homes = homes)
+        runCurrent()
+        homes.calendarGate = gate()
+        vm.onAction(CombinedHistoryAction.Refresh)
+        runCurrent()
+        assertTrue(vm.state.value.isRefreshing)
+        assertFalse(vm.state.value.visibleTo(1, false).isRefreshing)
+        vm.onAction(CombinedHistoryAction.SelectFilter(HistoryKindFilter.Shop))
+        runCurrent()
+        assertFalse(vm.state.value.isRefreshing)
+    }
+
     @Test fun partialHomeFailureKeepsShopsAndRetryDoesNotReloadSuccessfulSources() = runTest(dispatcher) {
         val shops = Shops()
         val homes = Homes().apply { pageResult = { _, _ -> Result.failure(IllegalStateException("private server detail")) } }

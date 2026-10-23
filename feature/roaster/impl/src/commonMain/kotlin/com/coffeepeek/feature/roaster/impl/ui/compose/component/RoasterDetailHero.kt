@@ -4,15 +4,16 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -26,13 +27,10 @@ import org.jetbrains.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.coffeepeek.core.designsystem.component.CoffeePeekImagePlaceholder
-import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
-import com.coffeepeek.core.designsystem.modifier.CoffeePeekGlassIconButton
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.feature.roaster.domain.model.RoasterPhoto
 import com.coffeepeek.feature.roaster.impl.resources.Res
-import com.coffeepeek.feature.roaster.impl.resources.roaster_detail_back
 import com.coffeepeek.feature.roaster.impl.resources.roaster_photo_position
 import com.coffeepeek.feature.roaster.impl.resources.roaster_photos_missing
 import com.coffeepeek.feature.roaster.api.RoasterImage
@@ -50,7 +48,9 @@ internal fun RoasterDetailHero(
     modifier: Modifier = Modifier,
     heartModifier: Modifier = Modifier,
 ) {
-    Box(modifier.fillMaxWidth().height(280.dp).background(MaterialTheme.colorScheme.surfaceVariant)) {
+    Box(modifier.fillMaxWidth()
+        .height(280.dp + WindowInsets.statusBars.asPaddingValues().calculateTopPadding())
+        .background(MaterialTheme.colorScheme.surfaceVariant)) {
         if (photos.isEmpty()) {
             CoffeePeekImagePlaceholder(labelSize = 24.sp, contentDescription = stringResource(Res.string.roaster_photos_missing, name))
         } else {
@@ -66,12 +66,8 @@ internal fun RoasterDetailHero(
                     modifier = Modifier.padding(horizontal = CoffeePeekDimens.spacing3, vertical = CoffeePeekDimens.spacing1))
             }
         }
-        CoffeePeekGlassIconButton(onBack, stringResource(Res.string.roaster_detail_back),
-            Modifier.align(Alignment.TopStart).statusBarsPadding().padding(CoffeePeekDimens.spacing2)) {
-            Icon(CoffeePeekIcons.Back, null)
-        }
-        RoasterFavoriteHeart(isFavorite, onToggleFavorite, overImage = true,
-            modifier = heartModifier.align(Alignment.TopEnd).statusBarsPadding().padding(CoffeePeekDimens.spacing3))
+        RoasterDetailTopActions(isFavorite, onToggleFavorite, onBack,
+            modifier = Modifier.align(Alignment.TopCenter), heartModifier = heartModifier)
     }
 }
 
