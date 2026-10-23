@@ -25,6 +25,8 @@ class DiscoveryHost(
     val suggestionIllustration: @Composable () -> Painter = { error("The application provides the illustration") },
     val exposure: (Modifier, DiscoveryExposure) -> Modifier = { modifier, _ -> modifier },
     val haptic: () -> Unit = {},
+    /** The application's map: it draws [MapCanvasState] and reports through [MapCanvasCallbacks]. */
+    val mapCanvas: @Composable (state: MapCanvasState, callbacks: MapCanvasCallbacks, modifier: Modifier) -> Unit = { _, _, _ -> },
 )
 
 /**
@@ -43,5 +45,22 @@ interface DiscoverySearchEntry {
         bottomClearance: Dp = 0.dp,
         discovery: @Composable () -> Unit = {},
         textResults: (@Composable () -> Unit)? = null,
+    )
+}
+
+/**
+ * The full-screen map: the canvas with the search field and its suggestions, the zoom and location buttons, the zones switch and card,
+ * the «Искать в этой области» button and the carousel of nearby shops. The caller owns navigation and the ViewModel store.
+ */
+interface DiscoveryMapEntry {
+    @Composable
+    fun Content(
+        onOpenShop: (slug: String) -> Unit,
+        modifier: Modifier = Modifier,
+        /** The floating navigation (and the system bar) that the overlay must clear at the bottom. */
+        bottomClearance: Dp = 0.dp,
+        /** A shop to bring into view; [onFocusConsumed] tells the caller it was taken. */
+        focus: MapFocus? = null,
+        onFocusConsumed: () -> Unit = {},
     )
 }
