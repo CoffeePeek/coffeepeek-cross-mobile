@@ -285,10 +285,13 @@ private fun ZoomableImage(
         }
     }
     LaunchedEffect(scale > 1f) { onZoomChanged(scale > 1f) }
+    // The full-size original is a heavy download and decode: it is fetched only once the user zooms in, never on opening. It stays after zooming out.
+    var zoomedIn by remember(imageUrl) { mutableStateOf(false) }
+    LaunchedEffect(scale > 1f) { if (scale > 1f) zoomedIn = true }
 
     CpImage(
         data = imageUrl,
-        highQualityData = highQualityUrl?.takeIf { it != imageUrl },
+        highQualityData = highQualityUrl?.takeIf { zoomedIn && it != imageUrl },
         upgradeDelayMillis = 0L,
         showLoader = true,
         contentDescription = contentDescription,
