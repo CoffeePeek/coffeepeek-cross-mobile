@@ -60,5 +60,7 @@ internal class FakeLocation : ContributionLocation {
     var address: String? = null
     var calls = 0
     override suspend fun lastKnown() = point.also { calls++ }
-    override suspend fun addressOf(point: GeoPoint) = address
+    /** When set, the address lookup waits for it, so a test can change the form while the lookup is pending. */
+    var addressGate: kotlinx.coroutines.CompletableDeferred<Unit>? = null
+    override suspend fun addressOf(point: GeoPoint): String? { addressGate?.await(); return address }
 }
