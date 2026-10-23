@@ -23,6 +23,7 @@ import com.coffeepeek.admin.location.rememberPermittedUserLocation
 import com.coffeepeek.admin.theme.CpDimens
 import com.coffeepeek.admin.ui.component.CoffeePeekLoader
 import com.coffeepeek.admin.ui.screen.favorites.FavoritesViewModel
+import com.coffeepeek.admin.ui.screen.favorites.FavoritesUiState
 import com.coffeepeek.domain.feature.favorites.api.FavoriteEntry
 import com.coffeepeek.domain.model.CatalogItem
 import com.coffeepeek.domain.model.CoffeeShopDetails
@@ -38,7 +39,7 @@ internal fun FavoritesProfilePreviewContent(
     val state by vm.state.collectAsState()
     val error = state.error ?: state.roasterError
     val isEmpty = state.shops.isEmpty() && state.roasters.isEmpty() && state.drinks.isEmpty()
-    if (isEmpty && !state.isLoading && !state.areRoastersLoading && error == null) return
+    if (!state.shouldShowProfilePreview()) return
     val userLocation = rememberPermittedUserLocation()
 
     Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(CpDimens.spacing3)) {
@@ -118,6 +119,10 @@ internal fun FavoritesProfilePreviewContent(
         }
     }
 }
+
+internal fun FavoritesUiState.shouldShowProfilePreview(): Boolean =
+    shops.isNotEmpty() || roasters.isNotEmpty() || drinks.isNotEmpty() ||
+        isLoading || areRoastersLoading || error != null || roasterError != null || actionMessage != null
 
 private sealed interface ProfilePreviewFavorite {
     data class Shop(val details: CoffeeShopDetails) : ProfilePreviewFavorite

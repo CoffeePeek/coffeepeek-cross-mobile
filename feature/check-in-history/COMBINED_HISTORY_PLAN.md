@@ -1,5 +1,23 @@
 # Combined personal history — current-main parity and next slice
 
+## PR #173 review corrections — 2026-10-23
+
+History supplies an explicit display timestamp to the shared timeline/header:
+`visitedAt` (including Home's mapped `preparedAtUtc`), falling back to `createdAt`
+when blank. Creation metadata and the default feed/profile display stay intact.
+Unit regressions cover backdated Shop/Home entries and the blank-date fallback.
+The favorites profile preview also retains an empty section while an action
+message is present, so roaster loading failures can be read and dismissed.
+Visibility unit tests cover failure/dismissal, empty success, loading and errors.
+
+Verification on 2026-10-23, branch `codex/migration-pr173-review`, based on
+`7a4a73c7`: `directDebug` assembly and packaged runtime-class checks passed;
+78 application history and favorites presentation unit tests passed with zero
+failures/skips and no retries, including five new regression tests.
+No app was installed or launched. Android/iOS manual rendering, native iOS
+compilation and IDE preview rendering remain unchecked on this Windows host.
+No automated UI tests or live-account writes were performed.
+
 ## Reuse feed/profile timeline content — 2026-10-23
 
 Personal history's Android and shared/iOS Shop/Home rows now render through the

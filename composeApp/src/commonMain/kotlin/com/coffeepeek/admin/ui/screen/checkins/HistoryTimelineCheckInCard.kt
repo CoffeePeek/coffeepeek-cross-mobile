@@ -22,6 +22,7 @@ internal fun HistoryTimelineCheckInCard(
 ) {
     CheckInTimelineContent(
         checkIn = entry, isOwn = true,
+        displayTimestamp = entry.historyTimestamp(),
         onShopClick = onClick.takeIf { !entry.isHome && entry.shopId.isNotBlank() },
         onPhotoClick = onPhotoClick,
         showHelpfulCount = entry.helpfulCount > 0,
@@ -33,6 +34,8 @@ internal fun HistoryTimelineCheckInCard(
         },
     )
 }
+
+internal fun CheckIn.historyTimestamp(): String = visitedAt.ifBlank { createdAt }
 
 @Composable
 private fun HistoryTimelineCardPreview(darkTheme: Boolean) {
