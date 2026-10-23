@@ -21,7 +21,7 @@ internal suspend fun protectedVariantBytes(client: HttpClient, data: CustomUrl):
     check(session == null || jwtDeadline != null) { "Фото недоступно" }
     val result = protectedPhotoCache.read(PhotoCacheKey(data.url, scope), jwtDeadline,
         { ProtectedPhotoSession.current(scope) }, revalidate = data.displayPermission?.revalidate == true) { etag ->
-        protectedPhotoRequests.withPermit {
+        retryOnPhotoTimeout { protectedPhotoRequests.withPermit {
             check(ProtectedPhotoSession.current(scope)) { "Фото недоступно" }
             client.prepareGet(data.url) {
                 expectSuccess = false
@@ -39,7 +39,7 @@ internal suspend fun protectedVariantBytes(client: HttpClient, data: CustomUrl):
             } else byteArrayOf()
             PhotoTransfer(response.status.value, response.headers, bytes)
             }
-        }
+        } }
     }
     check(ProtectedPhotoSession.current(scope)) { "Фото недоступно" }
     data.displayPermission?.grant(result.permission, result.reusablePermission)

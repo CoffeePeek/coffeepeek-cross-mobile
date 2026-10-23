@@ -71,6 +71,12 @@ class CoffeePeekClient(
     /** Manual photo ETag/304 handling must never pass through Ktor's HttpCache. */
     val imageClient: HttpClient = apiClientFactory {
         installServerErrorValidation()
+        // A stalled photo connection is cut quickly; the photo transport makes one more attempt at once.
+        install(HttpTimeout) {
+            connectTimeoutMillis = 5_000
+            socketTimeoutMillis = 10_000
+            requestTimeoutMillis = 60_000
+        }
         defaultRequest { url(baseUrl) }
         configureSessionAuthentication(baseUrl, ::resolveTokens, ::persistTokens, sessionRefresh)
     }.also { it.readCurrentSessionForRequests(); intercept(it) }
