@@ -12,6 +12,7 @@ import androidx.compose.ui.unit.dp
 import com.coffeepeek.R
 import com.coffeepeek.admin.sandbox.backend.SandboxAuthPolicy
 import com.coffeepeek.admin.sandbox.backend.SandboxCities
+import com.coffeepeek.admin.sandbox.backend.SandboxContributions
 import com.coffeepeek.admin.sandbox.backend.SandboxFeed
 import com.coffeepeek.admin.sandbox.backend.SandboxScenario
 import com.coffeepeek.admin.sandbox.backend.SandboxUpdatePolicy
@@ -22,7 +23,8 @@ import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
     updatePolicy: SandboxUpdatePolicy = SandboxUpdatePolicy.UpToDate, onUpdatePolicy: (SandboxUpdatePolicy) -> Unit = {},
     cities: SandboxCities = SandboxCities.Single, onCities: (SandboxCities) -> Unit = {},
     authPolicy: SandboxAuthPolicy = SandboxAuthPolicy.Works, onAuthPolicy: (SandboxAuthPolicy) -> Unit = {},
-    feed: SandboxFeed = SandboxFeed.Single, onFeed: (SandboxFeed) -> Unit = {}) {
+    feed: SandboxFeed = SandboxFeed.Single, onFeed: (SandboxFeed) -> Unit = {},
+    contributions: SandboxContributions = SandboxContributions.Seeded, onContributions: (SandboxContributions) -> Unit = {}) {
     Surface(color = MaterialTheme.colorScheme.primaryContainer) {
         Column(Modifier.fillMaxWidth().padding(8.dp)) {
             Text(stringResource(R.string.sandbox_banner), style = MaterialTheme.typography.labelLarge)
@@ -88,6 +90,19 @@ import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
                         SandboxFeed.Failure -> R.string.sandbox_feed_failure
                     }
                     FilterChip(feed == mode, { onFeed(mode) }, { Text(stringResource(label)) }, enabled = enabled)
+                }
+            }
+            Text(stringResource(R.string.sandbox_contributions_title), style = MaterialTheme.typography.labelMedium)
+            Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                SandboxContributions.entries.forEach { mode ->
+                    val label = when (mode) {
+                        SandboxContributions.Seeded -> R.string.sandbox_contributions_seeded
+                        SandboxContributions.Paged -> R.string.sandbox_contributions_paged
+                        SandboxContributions.Empty -> R.string.sandbox_contributions_empty
+                        SandboxContributions.ListFailure -> R.string.sandbox_contributions_list_failure
+                        SandboxContributions.SubmitFailure -> R.string.sandbox_contributions_submit_failure
+                    }
+                    FilterChip(contributions == mode, { onContributions(mode) }, { Text(stringResource(label)) }, enabled = enabled)
                 }
             }
             Row(Modifier.horizontalScroll(rememberScrollState())) {

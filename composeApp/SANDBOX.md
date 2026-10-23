@@ -23,7 +23,7 @@ package, so install only the preferred one. Normal debug/release IDs are unchang
 - The actual `AppContent`/`Navigator`, session-aware tabs and Android feature
   bindings, not a calendar-only host or a copy of the app screens.
 - Local fixtures for discovery/search, shop detail/menu/check-ins, coffee list/
-  detail, roasters, Community feed, profile/public activity and favorites.
+  detail, roasters, Community feed, profile/public activity, favorites and the moderation lists/submissions of Contributions.
 - Home CRUD/uploads and Shop creation, favorites add/remove and profile name/
   biography edits use actual repositories and local HTTP state. Private or
   pending visits are not fabricated as public feed entries.
@@ -102,3 +102,13 @@ acceptance, not a run against the live API. Each Android unit variant passes
 441 cases, including nine Sandbox transport cases (also cancellation); build
 logic passes four DEX-scanner cases. IDE source inspection requires Gradle Sync
 to import the new variant/source set; no clean IDE inspection is claimed yet.
+
+## Contributions fixtures
+
+`SandboxContributionsBackend` serves `ModerationShops`, `ModerationRoasters` and `ShopChangeRequests` (list `/mine` with status, paging and, for changes,
+shop and section filters; create/submit; read and edit of a change request) plus the equipment, bean and shop-tag catalogs the forms read. Submissions live in RAM
+and are cleared by Reset. Choose the fixture with the controls row «Мои вклады» or at launch with `--es sandbox_contributions <mode>`:
+`Seeded` (default: shops, roasters and changes in every status, a rejected reason, an approved shop that is not published yet), `Paged` (45 more approved items),
+`Empty`, `ListFailure` (every list answers 500), `SubmitFailure` (every create, submit and edit is refused with a server message).
+Not covered: moderation decisions (a submission stays pending), uploaded photo keys are not checked against the reservation, no real map or location.
+

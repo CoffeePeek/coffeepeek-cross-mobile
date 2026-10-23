@@ -22,6 +22,7 @@ import com.coffeepeek.admin.sandbox.SandboxApplication
 import com.coffeepeek.admin.sandbox.SandboxViewModel
 import com.coffeepeek.admin.sandbox.backend.SandboxAuthPolicy
 import com.coffeepeek.admin.sandbox.backend.SandboxCities
+import com.coffeepeek.admin.sandbox.backend.SandboxContributions
 import com.coffeepeek.admin.sandbox.backend.SandboxFeed
 import com.coffeepeek.admin.sandbox.backend.SandboxScenario
 import com.coffeepeek.admin.sandbox.backend.SandboxUpdatePolicy
@@ -60,7 +61,7 @@ import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
                         application.backend.scenario = scenario; model.refresh(scenario)
                     }, { populated ->
                         application.backend.reset(populated)
-                        model.refresh(SandboxScenario.Ready, SandboxUpdatePolicy.UpToDate, SandboxCities.Single, SandboxAuthPolicy.Works, SandboxFeed.Single)
+                        model.refresh(SandboxScenario.Ready, SandboxUpdatePolicy.UpToDate, SandboxCities.Single, SandboxAuthPolicy.Works, SandboxFeed.Single, SandboxContributions.Seeded)
                         updates.check()
                     }, {
                         ThemeManager.setTheme(if (ThemeManager.themeMode.value == ThemeMode.DARK) ThemeMode.LIGHT else ThemeMode.DARK)
@@ -73,6 +74,8 @@ import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
                         application.backend.authPolicy = policy; model.refresh(state.scenario, authPolicy = policy)
                     }, state.feed, { feed ->
                         application.backend.feed = feed; model.refresh(state.scenario, feed = feed)
+                    }, state.contributions, { contributions ->
+                        application.backend.contributions = contributions; model.refresh(state.scenario, contributions = contributions)
                     })
                     TextButton({ application.sessions.login(); model.refresh(state.scenario) }) { Text(stringResource(R.string.sandbox_login)) }
                     TextButton({ application.sessions.applySession(null); model.refresh(state.scenario) }) { Text(stringResource(R.string.sandbox_guest)) }

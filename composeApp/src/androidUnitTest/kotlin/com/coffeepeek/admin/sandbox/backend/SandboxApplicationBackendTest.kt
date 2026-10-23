@@ -21,6 +21,7 @@ import com.coffeepeek.api.CoffeePeekClient
 import com.coffeepeek.api.feature.favorites.FavoritesApiService
 import com.coffeepeek.api.feature.feed.FeedApiService
 import com.coffeepeek.api.service.*
+import com.coffeepeek.api.model.request.*
 import com.coffeepeek.api.model.request.ShopSearchRequestDto
 import com.coffeepeek.api.model.request.ShopSearchFiltersDto
 import com.coffeepeek.api.model.request.ShopSearchOriginDto
@@ -586,4 +587,78 @@ class SandboxApplicationBackendTest {
         assertNull(update()); assertTrue(shops.getCities().isFailure)
     } }
 
+    @Test fun contributionFixturesServeTheModerationListsAndAcceptSubmissionsThroughTheRealServices() = runTest { fixture { backend, client ->
+        val shops = ShopApiService(client.client)
+        val roasters = RoasterApiService(client.client)
+        val changes = ShopChangeRequestApiService(client.client)
+
+        // Seeded: a few submissions per status; an approved shop opens the catalog only when it is published.
+        val approved = shops.getMyModerationShops(ModerationStatusDto.Approved, 1, 20).getOrThrow()
+        assertEquals(listOf("shop-approved-published", "shop-approved-waiting"), approved.moderationShops.map { it.id })
+        assertEquals(listOf("sandbox-cafe", null), approved.moderationShops.map { it.publishedShop?.slug })
+        assertEquals(1, shops.getMyModerationShops(ModerationStatusDto.Pending, 1, 20).getOrThrow().totalItems)
+        val rejected = shops.getMyModerationShops(ModerationStatusDto.Rejected, 1, 20).getOrThrow()
+        assertEquals(SandboxContributionsBackend.REJECTED_REASON, rejected.moderationShops.single().rejectedReason)
+        assertEquals(1, roasters.getMyModerationRoasters(ModerationStatusDto.Approved, 1, 20).getOrThrow().items.size)
+        assertEquals("Недостаточно данных", roasters.getMyModerationRoasters(ModerationStatusDto.Rejected, 1, 20).getOrThrow().items.single().rejectedReason)
+        assertEquals(listOf("change-approved"), changes.getMine(1, 20, ModerationStatusDto.Approved).getOrThrow().items.map { it.id })
+        assertEquals(listOf("change-rejected"), changes.getMine(1, 20, ModerationStatusDto.Rejected).getOrThrow().items.map { it.id })
+        assertEquals(listOf("change-pending"), changes.getMine(1, 20, ModerationStatusDto.Pending, "sandbox-cafe", ShopChangeSectionDto.Contacts).getOrThrow().items.map { it.id })
+        assertTrue(changes.getMine(1, 20, ModerationStatusDto.Pending, "sandbox-lab").getOrThrow().items.isEmpty())
+
+        // A submitted shop appears as pending; invalid input is rejected with the server message and stores nothing.
+        shops.createShop(CreateShopReq(name = "Новая кофейня", address = "Улица, 5", cityId = "minsk")).getOrThrow()
+        assertEquals(2, shops.getMyModerationShops(ModerationStatusDto.Pending, 1, 20).getOrThrow().totalItems)
+        val invalid = shops.createShop(CreateShopReq(name = " ", address = "Улица, 5", cityId = "minsk"))
+        assertEquals("Укажите название, адрес и город", invalid.exceptionOrNull()?.message)
+        assertEquals(2, shops.getMyModerationShops(ModerationStatusDto.Pending, 1, 20).getOrThrow().totalItems)
+
+        // Roaster: the server message and the address check come back; a city without an address is refused.
+        val submitted = roasters.submitRoaster(CreateRoasterSubmissionReq(name = "Новый обжарщик", cityId = "minsk", address = "Улица, 1")).getOrThrow()
+        assertEquals("Pending", submitted.data.status); assertTrue(submitted.data.isAddressValidated)
+        assertEquals("Обжарщик отправлен на модерацию", submitted.message)
+        assertTrue(roasters.submitRoaster(CreateRoasterSubmissionReq(name = "Без адреса", cityId = "minsk")).isFailure)
+        assertEquals(2, roasters.getMyModerationRoasters(ModerationStatusDto.Pending, 1, 20).getOrThrow().totalItems)
+
+        // Changes: create, read, edit (stays pending), unknown shop, approved request cannot be edited.
+        val created = changes.create(CreateShopChangeRequestBody("sandbox-lab", ShopChangeSectionDto.Description, ShopChangePayloadDto(description = "Новое"))).getOrThrow()
+        assertEquals(ModerationStatusDto.Pending, created.status)
+        assertEquals("Новое", changes.getById(created.id).getOrThrow().payload.description)
+        val edited = changes.update(created.id, UpdateShopChangeRequestBody(ShopChangeSectionDto.Tags, ShopChangePayloadDto(tagIds = listOf("wifi")))).getOrThrow()
+        assertEquals(ShopChangeSectionDto.Tags, edited.section); assertEquals(created.createdAtUtc, edited.createdAtUtc)
+        assertTrue(changes.create(CreateShopChangeRequestBody("unknown", ShopChangeSectionDto.Tags, ShopChangePayloadDto())).isFailure)
+        assertTrue(changes.update("change-approved", UpdateShopChangeRequestBody(ShopChangeSectionDto.Tags, ShopChangePayloadDto())).isFailure)
+        assertTrue(changes.getById("missing").isFailure)
+
+        // The wizard and the editor read the equipment, bean and tag catalogs.
+        assertEquals(2, shops.getEquipment().getOrThrow().size)
+        assertEquals(2, shops.getBeans().getOrThrow().size)
+        assertEquals(2, shops.getShopTags().getOrThrow().size)
+
+        // Paging: 45 extra approved shops are three pages of 20 with the remainder last.
+        backend.contributions = SandboxContributions.Paged
+        val first = shops.getMyModerationShops(ModerationStatusDto.Approved, 1, 20).getOrThrow()
+        assertEquals(47, first.totalItems); assertEquals(3, first.totalPages)
+        assertEquals(7, shops.getMyModerationShops(ModerationStatusDto.Approved, 3, 20).getOrThrow().moderationShops.size)
+
+        backend.contributions = SandboxContributions.Empty
+        assertTrue(shops.getMyModerationShops(ModerationStatusDto.Approved, 1, 20).getOrThrow().moderationShops.isEmpty())
+        assertTrue(changes.getMine(1, 20, ModerationStatusDto.Approved).getOrThrow().items.isEmpty())
+
+        backend.contributions = SandboxContributions.ListFailure
+        assertTrue(shops.getMyModerationShops(ModerationStatusDto.Approved, 1, 20).isFailure)
+        assertTrue(roasters.getMyModerationRoasters(ModerationStatusDto.Approved, 1, 20).isFailure)
+        assertTrue(changes.getMine(1, 20).isFailure)
+
+        backend.contributions = SandboxContributions.SubmitFailure
+        assertEquals(SandboxContributionsBackend.SUBMIT_FAILURE, shops.createShop(CreateShopReq(name = "A", address = "B", cityId = "minsk")).exceptionOrNull()?.message)
+        assertTrue(roasters.submitRoaster(CreateRoasterSubmissionReq(name = "A")).isFailure)
+        assertTrue(changes.create(CreateShopChangeRequestBody("sandbox-cafe", ShopChangeSectionDto.Tags, ShopChangePayloadDto())).isFailure)
+        assertTrue(shops.getMyModerationShops(ModerationStatusDto.Approved, 1, 20).isSuccess)
+
+        backend.contributions = SandboxContributions.Paged
+        backend.reset(true)
+        assertEquals(SandboxContributions.Seeded, backend.contributions)
+        assertEquals(2, shops.getMyModerationShops(ModerationStatusDto.Approved, 1, 20).getOrThrow().totalItems)
+    } }
 }
