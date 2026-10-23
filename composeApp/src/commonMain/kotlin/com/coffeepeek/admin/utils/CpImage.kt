@@ -61,7 +61,7 @@ fun CpImage(
     contentDescription: String? = null,
     highQualityData: Any? = null,
     upgradeDelayMillis: Long = 1_500L,
-    /** Draws the brand loader over the empty tile while nothing of the image has arrived yet. */
+    /** Draws the brand loader over a translucent tile while nothing of the image has arrived yet. */
     showLoader: Boolean = false,
 ) {
     val previewData = cpImageData(data)
@@ -89,7 +89,9 @@ fun CpImage(
     // Keep the preview during the higher-quality transfer, including failures.
     // Expired protected painters are withdrawn by the resource loader itself.
     val result = if (detail is Resource.Success) detail else preview
-    val loading = placeholder?.toPainterResource() ?: ColorPainter(MaterialTheme.colorScheme.surfaceVariant)
+    // With the loader the tile is only a translucent veil over the screen background, not an opaque slab.
+    val loading = placeholder?.toPainterResource()
+        ?: ColorPainter(MaterialTheme.colorScheme.surfaceVariant.let { if (showLoader) it.copy(alpha = 0.3f) else it })
     val painter = when (result) {
         is Resource.Success -> result.value
         is Resource.Failure -> error?.toPainterResource() ?: loading
