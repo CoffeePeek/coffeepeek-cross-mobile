@@ -1,0 +1,14 @@
+<resources>
+    <string name="auth_email_placeholder">name@example.com</string>
+    <string name="auth_edit_email">Изменить email</string>
+    <string name="auth_or">ИЛИ</string>
+    <string name="auth_recovery_title">Восстановление пароля</string>
+    <string name="auth_recovery_description">Введите email аккаунта — мы отправим ссылку для восстановления пароля.</string>
+    <string name="auth_recovery_sent">Если аккаунт с этим email существует, на него отправлено письмо. Откройте ссылку из письма в браузере и измените пароль на сайте. Затем вернитесь в приложение и войдите с новым паролем. Проверьте также папку «Спам».</string>
+    <string name="auth_recovery_send">Отправить письмо</string>
+    <string name="auth_recovery_busy">Подождите…</string>
+    <string name="auth_recovery_login">Вернуться ко входу</string>
+    <string name="auth_recovery_another_email">Указать другой email</string>
+    <string name="auth_analytics_consent">Разрешить аналитику использования</string>
+    <string name="auth_analytics_description">Необязательно. События использования отправляются в PostHog (ЕС), чтобы улучшать CoffeePeek. Без текстов поиска, заметок, фото и точных координат. Решение можно изменить в настройках.</string>
+</resources>
