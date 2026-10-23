@@ -49,7 +49,7 @@ internal class NativeScreenController(
     private val analyticsVisit = com.coffeepeek.admin.analytics.correlationId("screen")
     private var analyticsVisible by mutableStateOf(false)
     private var bottomClearance by mutableStateOf(0.dp)
-    private val photoUnderStatusBar = route is Navigator.Screen.ShopDetail
+    private val photoUnderStatusBar = route is Navigator.Screen.ShopDetail || route is Navigator.Screen.RoasterDetail
     var handlesBackLocally = false
 
     init {
