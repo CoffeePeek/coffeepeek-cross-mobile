@@ -19,6 +19,9 @@ dependencies {
     implementation(libs.kotlinx.coroutines.core)
     androidImplementation(project(module.core.designSystem))
     androidImplementation(libs.androidx.lifecycle.runtimeCompose)
+    androidImplementation(libs.androidx.core.ktx)
+    androidImplementation(libs.androidx.activity.compose)
+    androidImplementation("com.google.android.play:app-update:2.1.0")
     androidImplementation(libs.androidx.compose.ui.tooling.preview)
 
     testImplementation(libs.kotlin.test)

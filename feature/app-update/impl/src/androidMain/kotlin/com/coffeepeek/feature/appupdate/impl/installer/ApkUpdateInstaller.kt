@@ -1,4 +1,4 @@
-package com.coffeepeek.admin.feature.appupdate.data
+package com.coffeepeek.feature.appupdate.impl.installer
 
 import android.app.DownloadManager
 import android.content.Context
@@ -12,7 +12,7 @@ import android.os.Environment
 import android.provider.Settings
 import androidx.core.content.FileProvider
 import androidx.core.content.pm.PackageInfoCompat
-import com.coffeepeek.admin.feature.appupdate.api.AndroidUpdateInstaller
+import com.coffeepeek.feature.appupdate.api.AndroidUpdateInstaller
 import com.coffeepeek.feature.appupdate.domain.AppUpdate
 import com.coffeepeek.feature.appupdate.domain.InstallationStage
 import com.coffeepeek.feature.appupdate.domain.InstallationState

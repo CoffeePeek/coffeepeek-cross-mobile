@@ -38,7 +38,7 @@ internal class SandboxApplication : Application() {
                 getToken = { null }, saveToken = {}, apiClientFactory = backend::apiClient,
                 uploadClientFactory = backend::uploadClient) }
             single<io.kamel.core.config.KamelConfig> { sandboxImageConfig(backend.gateway) }
-            single<com.coffeepeek.admin.feature.appupdate.api.AndroidUpdateInstaller> {
+            single<com.coffeepeek.feature.appupdate.api.AndroidUpdateInstaller> {
                 SandboxUpdateInstaller(getString(R.string.sandbox_external_blocked))
             }
         }))

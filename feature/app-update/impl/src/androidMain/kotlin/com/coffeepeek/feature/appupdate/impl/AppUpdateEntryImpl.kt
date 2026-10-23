@@ -1,21 +1,27 @@
 package com.coffeepeek.feature.appupdate.impl
 
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.unit.Dp
+import com.coffeepeek.feature.appupdate.api.AndroidUpdateInstaller
 import com.coffeepeek.feature.appupdate.api.AppUpdateEntry
 import com.coffeepeek.feature.appupdate.api.AppUpdateEnvironment
-import com.coffeepeek.feature.appupdate.domain.UpdateInstaller
 import com.coffeepeek.feature.appupdate.impl.ui.AppUpdatePrompt
+import com.coffeepeek.feature.appupdate.impl.ui.UpdateInstallationEffect
+import com.coffeepeek.feature.appupdate.impl.ui.UpdateSnackbarHost
 
 /**
- * [installationEffect] hosts the platform side of the installer (Play/APK launchers and the snackbar flow) and still lives in the
- * application until the installers move into this module.
+ * The root update prompt with the platform side of the installer (Play/APK launchers and the Play snackbar flow).
+ * [snackbarHost] is the app's snackbar presentation; [extraBottomClearance] keeps it above the floating navigation.
  */
 fun createAppUpdateEntry(
     controller: AppUpdateController,
-    installer: UpdateInstaller,
+    installer: AndroidUpdateInstaller,
     environment: AppUpdateEnvironment,
-    installationEffect: @Composable () -> Unit,
+    snackbarHost: UpdateSnackbarHost,
+    extraBottomClearance: Dp,
 ): AppUpdateEntry = object : AppUpdateEntry {
     @Composable
-    override fun Content() = AppUpdatePrompt(controller, installer, environment, installationEffect)
+    override fun Content() = AppUpdatePrompt(controller, installer, environment) {
+        UpdateInstallationEffect(installer, controller, environment, snackbarHost, extraBottomClearance)
+    }
 }

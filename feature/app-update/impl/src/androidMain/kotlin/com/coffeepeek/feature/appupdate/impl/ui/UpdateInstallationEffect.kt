@@ -1,4 +1,4 @@
-package com.coffeepeek.admin.feature.appupdate.ui
+package com.coffeepeek.feature.appupdate.impl.ui
 
 import android.app.Activity
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -25,29 +25,30 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.Dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
-import com.coffeepeek.admin.feature.appupdate.api.AndroidUpdateInstaller
+import com.coffeepeek.feature.appupdate.api.AndroidUpdateInstaller
+import com.coffeepeek.feature.appupdate.api.AppUpdateEnvironment
+import com.coffeepeek.feature.appupdate.impl.R
 import com.coffeepeek.feature.appupdate.domain.InstallationStage
 import com.coffeepeek.feature.appupdate.impl.AppUpdateController
 import com.coffeepeek.feature.appupdate.impl.PlayUpdateRetryOutcome
 import com.coffeepeek.feature.appupdate.impl.retryPlayUpdate
-import com.coffeepeek.BuildConfig
-import com.coffeepeek.admin.theme.CpDimens
-import com.coffeepeek.admin.ui.component.CpSnackbarHost
-import com.coffeepeek.admin.ui.icons.CpIcons
-import coffeepeek.composeapp.generated.resources.Res
-import coffeepeek.composeapp.generated.resources.update_downloaded_message
-import coffeepeek.composeapp.generated.resources.update_restart_action
-import coffeepeek.composeapp.generated.resources.update_retry_action
-import org.jetbrains.compose.resources.stringResource
-import org.koin.compose.koinInject
+import androidx.compose.ui.res.stringResource
 import kotlinx.coroutines.launch
 
+/** Presentation of the app's snackbar: [showRetryIcon] puts the retry icon on the action and [onAction] overrides its click. */
+typealias UpdateSnackbarHost = @Composable (SnackbarHostState, Boolean, Boolean, (() -> Unit)?) -> Unit
+
 @Composable
-internal actual fun UpdateInstallationEffect() {
-    val installer = koinInject<AndroidUpdateInstaller>()
-    val controller = koinInject<AppUpdateController>()
+internal fun UpdateInstallationEffect(
+    installer: AndroidUpdateInstaller,
+    controller: AppUpdateController,
+    environment: AppUpdateEnvironment,
+    snackbarHost: UpdateSnackbarHost,
+    extraBottomClearance: Dp,
+) {
     val consent = rememberLauncherForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) {
         installer.consentResult(it.resultCode)
         if (it.resultCode == Activity.RESULT_CANCELED) controller.dismiss()
@@ -64,7 +65,7 @@ internal actual fun UpdateInstallationEffect() {
         }
     }
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { installer.refresh() }
-    if (BuildConfig.APK_UPDATES_ENABLED) return
+    if (environment.channel == "apk") return
 
     val policy by controller.state.collectAsState()
     val transfer by installer.state.collectAsState()
@@ -92,11 +93,11 @@ internal actual fun UpdateInstallationEffect() {
         }
     }
 
-    val required = (policy.update ?: transfer.update)?.isRequired(BuildConfig.VERSION_CODE.toLong()) == true
+    val required = (policy.update ?: transfer.update)?.isRequired(environment.versionCode ?: Long.MAX_VALUE) == true
     val snackbar = remember { SnackbarHostState() }
-    val readyMessage = stringResource(Res.string.update_downloaded_message)
-    val restart = stringResource(Res.string.update_restart_action)
-    val retry = stringResource(Res.string.update_retry_action)
+    val readyMessage = stringResource(R.string.appupdate_downloaded_message)
+    val restart = stringResource(R.string.appupdate_restart_action)
+    val retry = stringResource(R.string.appupdate_retry_action)
     LaunchedEffect(transfer.stage, transfer.error, required, manualNoticeRequest, retrying, retryOutcome, hideRetryResult) {
         if (required && transfer.stage == InstallationStage.Ready && transfer.error == null) {
             installer.install()
@@ -126,16 +127,15 @@ internal actual fun UpdateInstallationEffect() {
     }
     Box(
         Modifier.fillMaxSize().padding(
-            bottom = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding() +
-                CpDimens.floatingNavContentClearance + CpDimens.spacing2,
+            bottom = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding() + extraBottomClearance,
         ),
         contentAlignment = Alignment.BottomCenter,
     ) {
-        CpSnackbarHost(
-            hostState = snackbar,
-            actionIcon = CpIcons.Retry.takeIf { snackbar.currentSnackbarData?.visuals?.actionLabel == retry },
-            actionInProgress = retrying,
-            onAction = if (snackbar.currentSnackbarData?.visuals?.actionLabel == retry) ({
+        snackbarHost(
+            snackbar,
+            snackbar.currentSnackbarData?.visuals?.actionLabel == retry,
+            retrying,
+            if (snackbar.currentSnackbarData?.visuals?.actionLabel == retry) ({
                 if (!retrying) {
                     retryMessage = snackbar.currentSnackbarData?.visuals?.message
                     retryOutcome = null

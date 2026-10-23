@@ -61,7 +61,6 @@ import org.koin.compose.koinInject
 
 @Composable
 internal fun AppUpdatePrompt(controller: AppUpdateController = koinInject()) {
-    UpdateInstallationEffect()
     val installer = koinInject<UpdateInstaller>()
     val transfer by installer.state.collectAsState()
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { controller.check() }

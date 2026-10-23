@@ -1,10 +1,10 @@
-package com.coffeepeek.admin.feature.appupdate.api
+package com.coffeepeek.feature.appupdate.api
 
 import android.content.Intent
 import android.content.IntentSender
 import com.coffeepeek.feature.appupdate.domain.UpdateInstaller
 
-internal interface AndroidUpdateInstaller : UpdateInstaller {
+interface AndroidUpdateInstaller : UpdateInstaller {
     var requestConsent: ((IntentSender) -> Unit)?
     var requestInstallation: ((Intent) -> Unit)?
     fun consentResult(resultCode: Int)

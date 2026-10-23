@@ -2,7 +2,7 @@ package com.coffeepeek.admin.sandbox
 
 import android.content.Intent
 import android.content.IntentSender
-import com.coffeepeek.admin.feature.appupdate.api.AndroidUpdateInstaller
+import com.coffeepeek.feature.appupdate.api.AndroidUpdateInstaller
 import com.coffeepeek.feature.appupdate.domain.AppUpdate
 import com.coffeepeek.feature.appupdate.domain.InstallationState
 import kotlinx.coroutines.flow.MutableStateFlow

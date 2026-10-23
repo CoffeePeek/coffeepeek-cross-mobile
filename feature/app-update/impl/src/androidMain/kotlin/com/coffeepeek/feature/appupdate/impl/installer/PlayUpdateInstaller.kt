@@ -1,11 +1,11 @@
-package com.coffeepeek.admin.feature.appupdate.data
+package com.coffeepeek.feature.appupdate.impl.installer
 
 import android.content.Context
 import android.app.Activity
 import android.content.Intent
 import android.content.IntentSender
-import com.coffeepeek.BuildConfig
-import com.coffeepeek.admin.feature.appupdate.api.AndroidUpdateInstaller
+import com.coffeepeek.feature.appupdate.api.AndroidUpdateInstaller
+import com.coffeepeek.feature.appupdate.api.AppUpdateEnvironment
 import com.coffeepeek.feature.appupdate.domain.AppUpdate
 import com.coffeepeek.feature.appupdate.domain.InstallationStage
 import com.coffeepeek.feature.appupdate.domain.InstallationState
@@ -20,7 +20,7 @@ import com.google.android.play.core.install.model.UpdateAvailability
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
-internal class PlayUpdateInstaller(context: Context) : AndroidUpdateInstaller {
+internal class PlayUpdateInstaller(context: Context, private val environment: AppUpdateEnvironment) : AndroidUpdateInstaller {
     private val manager = AppUpdateManagerFactory.create(context)
     private val mutableState = MutableStateFlow(InstallationState())
     override val state = mutableState.asStateFlow()
@@ -48,7 +48,7 @@ internal class PlayUpdateInstaller(context: Context) : AndroidUpdateInstaller {
     override fun download(update: AppUpdate) {
         if (state.value.busy) return
         mutableState.value = InstallationState(update, InstallationStage.Starting)
-        updateType = if (update.isRequired(BuildConfig.VERSION_CODE.toLong())) AppUpdateType.IMMEDIATE else AppUpdateType.FLEXIBLE
+        updateType = if (update.isRequired(environment.versionCode ?: Long.MAX_VALUE)) AppUpdateType.IMMEDIATE else AppUpdateType.FLEXIBLE
         manager.appUpdateInfo.addOnSuccessListener { info ->
             if (info.availableVersionCode().toLong() < update.minVersionCode) {
                 failed("Обязательное обновление пока недоступно для вашего аккаунта Google Play. Попробуйте позже.")
