@@ -29,7 +29,7 @@ data class ShopCheckInCreateInput(
     val text: String,
     val rating: ShopRating,
     val visitedAtIso: String,
-    val visibility: ShopCheckInVisibility = ShopCheckInVisibility.Private,
+    val visibility: ShopCheckInVisibility = ShopCheckInVisibility.Public,
     val drinkSlug: String? = null,
     val customDrinkName: String? = null,
     val photos: List<ShopCheckInPhoto> = emptyList(),

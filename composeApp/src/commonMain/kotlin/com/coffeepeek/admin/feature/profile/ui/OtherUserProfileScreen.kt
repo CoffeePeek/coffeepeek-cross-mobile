@@ -3,7 +3,6 @@ package com.coffeepeek.admin.feature.profile.ui
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
@@ -29,7 +28,6 @@ import com.coffeepeek.admin.ui.component.PlatformGlassIconButton
 import com.coffeepeek.admin.ui.component.SwipeDismissModalBottomSheet
 import com.coffeepeek.admin.ui.icons.CpIcons
 import com.coffeepeek.admin.utils.ShareHelper
-import com.coffeepeek.admin.utils.PrefetchListPhotos
 import org.koin.core.parameter.parametersOf
 
 private enum class ProfileSection(val title: String) {
@@ -48,6 +46,8 @@ internal fun OtherUserProfileScreen(
     onRoasterClick: (String) -> Unit,
     onLogin: () -> Unit,
     onUserClick: (slug: String, nickname: String, avatarUrl: String?) -> Unit,
+    onCheckInsClick: (() -> Unit)? = null,
+    checkInsOnly: Boolean = false,
     vm: PublicProfileViewModel = platformViewModel(key = slug, parameters = { parametersOf(slug) }),
 ) = UserProfileScreen(
     slug = slug,
@@ -58,6 +58,8 @@ internal fun OtherUserProfileScreen(
     onRoasterClick = onRoasterClick,
     onLogin = onLogin,
     onUserClick = onUserClick,
+    onCheckInsClick = onCheckInsClick,
+    checkInsOnly = checkInsOnly,
     vm = vm,
 )
 
@@ -76,16 +78,17 @@ internal fun UserProfileScreen(
     onFavoritesClick: (() -> Unit)? = null,
     onCheckInsClick: (() -> Unit)? = null,
     topBarActions: (@Composable () -> Unit)? = null,
-    favoritesPreview: (@Composable () -> Unit)? = null,
+    favoritesPreview: (@Composable (header: @Composable () -> Unit) -> Unit)? = null,
+    ownCheckInCount: Int = 0,
     activityCalendar: (@Composable () -> Unit)? = null,
     activityPreview: (@Composable (onClick: () -> Unit) -> Unit)? = null,
     bottomContentPadding: Dp = 20.dp,
+    checkInsOnly: Boolean = false,
     vm: PublicProfileViewModel = platformViewModel(key = slug, parameters = { parametersOf(slug) }),
 ) {
     val state by vm.state.collectAsState()
     var section by remember(slug) { mutableStateOf<ProfileSection?>(null) }
     var photos by remember(slug) { mutableStateOf<ProfilePhotos?>(null) }
-    val checkInsListState = rememberLazyListState()
     val blocks = org.koin.compose.koinInject<com.coffeepeek.feature.authorblocking.api.AuthorBlockActions>()
     val authorVisibility by vm.authorVisibility.collectAsState()
     LaunchedEffect(authorVisibility.revision, state.profile?.slug) { photos = null; section = null }
@@ -105,6 +108,15 @@ internal fun UserProfileScreen(
                 PublicFavoriteKind.Drink -> Unit
             }
         }
+    }
+
+    if (checkInsOnly) {
+        PublicProfileCheckInsScreenContent(state, onBack ?: {}, onCoffeeShopClick,
+            onRetry = if (profile == null) vm::refresh else vm::retryCheckIns,
+            onLoadMore = vm::loadMoreCheckIns,
+            onPhotoClick = { images, index -> photos = ProfilePhotos(images, index) })
+        photos?.let { FullScreenImageDialog(images = it.images, initialIndex = it.index, onDismiss = { photos = null }) }
+        return
     }
 
     Scaffold(
@@ -195,43 +207,49 @@ internal fun UserProfileScreen(
             } else {
                 Column(
                     Modifier.fillMaxSize().verticalScroll(rememberScrollState())
-                        .padding(horizontal = 16.dp).navigationBarsPadding(),
+                        .navigationBarsPadding(),
                     verticalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
                     Spacer(Modifier.height(2.dp))
-                    PublicProfileHeader(
-                        profile.nickname, profile.avatarUrl, profile.about,
-                        isFollowing = state.isFollowing,
-                        followEnabled = !state.isFollowLoading && !state.isLoading,
-                        onFollow = if (viewingOwnProfile) null else vm::toggleFollow,
-                        onEditProfile = onEditProfile,
-                        stats = profile.stats,
-                        onFollowersClick = {
-                            section = null
-                            vm.openConnections(PublicProfileConnectionKind.Followers)
-                        },
-                    ) {
-                        profile.avatarUrl?.let { photos = ProfilePhotos(PhotoViewerImages(listOf(it))) }
+                    Column(Modifier.padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        PublicProfileHeader(
+                            profile.nickname, profile.avatarUrl, profile.about,
+                            isFollowing = state.isFollowing,
+                            followEnabled = !state.isFollowLoading && !state.isLoading,
+                            onFollow = if (viewingOwnProfile) null else vm::toggleFollow,
+                            onEditProfile = onEditProfile,
+                            stats = profile.stats,
+                            onFollowersClick = {
+                                section = null
+                                vm.openConnections(PublicProfileConnectionKind.Followers)
+                            },
+                        ) {
+                            profile.avatarUrl?.let { photos = ProfilePhotos(PhotoViewerImages(listOf(it))) }
+                        }
+                        if (activityPreview != null) activityPreview(onCheckInsClick ?: { section = ProfileSection.CheckIns })
+                        else PublicProfileActivityPreview(slug, profile.activity,
+                            state.checkIns.map { it.occurredAt to (it.source?.photoThumbnailUrls ?: it.photoUrls) },
+                            state.isLoadingActivity || state.isLoadingCheckIns,
+                            state.activityError != null || state.checkInsError != null,
+                            {
+                                vm.retryActivity()
+                                vm.retryCheckIns()
+                            }, onCheckInsClick ?: { section = ProfileSection.CheckIns })
+                        if (state.error != null) InlineProfileError("Не удалось обновить профиль", vm::refresh)
+                        if (!viewingOwnProfile && state.followError != null) InlineProfileError("Не удалось изменить подписку", vm::toggleFollow)
                     }
-                    if (activityPreview != null) activityPreview { section = ProfileSection.Activity }
-                    else PublicProfileActivityPreview(slug, profile.activity,
-                        state.checkIns.map { it.occurredAt to (it.source?.photoThumbnailUrls ?: it.photoUrls) },
-                        state.isLoadingActivity || state.isLoadingCheckIns,
-                        state.activityError != null || state.checkInsError != null,
-                        {
-                            vm.retryActivity()
-                            vm.retryCheckIns()
-                        }, { section = ProfileSection.Activity })
-                    if (state.error != null) InlineProfileError("Не удалось обновить профиль", vm::refresh)
-                    if (!viewingOwnProfile && state.followError != null) InlineProfileError("Не удалось изменить подписку", vm::toggleFollow)
-
-                    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    if (favoritesPreview != null) favoritesPreview {
                         ProfileSectionHeading("Избранное", onAll = onFavoritesClick ?: { section = ProfileSection.Favorites })
-                        if (favoritesPreview != null) favoritesPreview() else when {
+                    } else if (profile.favorites.isNotEmpty() || state.isLoadingFavorites || state.favoritesError != null) Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Box(Modifier.padding(horizontal = 16.dp)) {
+                            ProfileSectionHeading("Избранное", onAll = onFavoritesClick ?: { section = ProfileSection.Favorites })
+                        }
+                        when {
                             state.isLoadingFavorites && profile.favorites.isEmpty() -> ProfileSectionLoader()
                             state.favoritesError != null && profile.favorites.isEmpty() ->
-                                InlineProfileError("Не удалось загрузить избранное", vm::retryFavorites)
-                            profile.favorites.isEmpty() -> ProfileEmptyCard("Пока ничего нет в избранном", CpIcons.Favorite)
+                                Box(Modifier.padding(horizontal = 16.dp)) {
+                                    InlineProfileError("Не удалось загрузить избранное", vm::retryFavorites)
+                                }
                             else -> {
                                 val favorites = profile.favorites.take(6)
                                 FavoritesPreviewCarousel(
@@ -246,21 +264,22 @@ internal fun UserProfileScreen(
                                         onClick = { openFavorite(favorite) },
                                     )
                                 }
-                                if (state.favoritesError != null) InlineProfileError("Не удалось обновить избранное", vm::retryFavorites)
+                                if (state.favoritesError != null) Box(Modifier.padding(horizontal = 16.dp)) {
+                                    InlineProfileError("Не удалось обновить избранное", vm::retryFavorites)
+                                }
                             }
                         }
                     }
 
-                    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    if (state.checkIns.isNotEmpty() || state.isLoadingCheckIns || state.checkInsError != null || ownCheckInCount > 0) Column(Modifier.padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                         ProfileSectionHeading("Чекины", onAll = onCheckInsClick ?: { section = ProfileSection.CheckIns })
                         Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                             when {
-                                state.isLoadingCheckIns -> Box(Modifier.fillMaxWidth().height(100.dp), contentAlignment = Alignment.Center) {
+                                state.isLoadingCheckIns && state.checkIns.isEmpty() -> Box(Modifier.fillMaxWidth().height(100.dp), contentAlignment = Alignment.Center) {
                                     CoffeePeekLoader()
                                 }
                                 state.checkInsError != null && state.checkIns.isEmpty() ->
                                     InlineProfileError("Не удалось загрузить чекины", vm::retryCheckIns)
-                                state.checkIns.isEmpty() -> ProfileEmptyCard("Пока нет чекинов", CpIcons.Coffee)
                                 else -> state.checkIns.take(2).forEach { checkIn ->
                                     PublicProfileCheckInCard(
                                         checkIn = checkIn,
@@ -284,11 +303,6 @@ internal fun UserProfileScreen(
 
     // Native sheet content can recompose while its controller is being dismissed.
     val selectedSection = section
-    if (selectedSection == ProfileSection.CheckIns && profile != null && !profile.isBlockedByViewer) {
-        PrefetchListPhotos(checkInsListState, state.checkIns.map { checkIn ->
-            checkIn.id to (checkIn.source?.photoThumbnailUrls ?: checkIn.photoUrls).take(3)
-        })
-    }
     if (selectedSection != null && profile != null && !profile.isBlockedByViewer) SwipeDismissModalBottomSheet(
         onDismissRequest = { section = null },
         maxSheetHeightFraction = 0.9f,
@@ -308,34 +322,13 @@ internal fun UserProfileScreen(
                 }
                 if (state.isLoadingFavorites) item { ProfileSectionLoader() }
                 else if (state.favoritesError != null) item { InlineProfileError("Не удалось загрузить избранное", vm::retryFavorites) }
-                else if (profile.favorites.isEmpty()) item { ProfileEmptyCard("Пока ничего нет в избранном", CpIcons.Favorite) }
             }
-            ProfileSection.CheckIns -> LazyColumn(
-                state = checkInsListState,
+            ProfileSection.CheckIns -> PublicProfileCheckInsList(
+                state, { section = null; onCoffeeShopClick(it) }, vm::retryCheckIns, vm::loadMoreCheckIns,
+                onPhotoClick = { images, index -> photos = ProfilePhotos(images, index) },
                 modifier = Modifier.fillMaxWidth().weight(1f, fill = false),
-                contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 32.dp),
-                verticalArrangement = Arrangement.spacedBy(10.dp),
-            ) {
-                items(state.checkIns, key = { it.id }) { checkIn ->
-                    PublicProfileCheckInCard(
-                        checkIn = checkIn,
-                        onShopClick = { checkIn.coffeeShopSlug?.let { section = null; onCoffeeShopClick(it) } },
-                        onPhotoClick = { urls, index -> photos = ProfilePhotos(urls, index) },
-                        authorName = profile.nickname,
-                        authorAvatarUrl = profile.avatarUrl,
-                        isOwnProfile = viewingOwnProfile,
-                        author = com.coffeepeek.feature.authorblocking.api.AuthorReference(profile.authorId, profile.slug, profile.nickname, profile.avatarUrl),
-                    )
-                }
-                if (state.isLoadingCheckIns || state.isLoadingMoreCheckIns) item {
-                    Box(Modifier.fillMaxWidth().padding(24.dp), contentAlignment = Alignment.Center) { CoffeePeekLoader() }
-                } else if (state.checkInsError != null) item {
-                    InlineProfileError("Не удалось загрузить чекины", vm::retryCheckIns)
-                } else if (state.checkIns.isEmpty()) item { ProfileEmptyCard("Пока нет чекинов", CpIcons.Coffee) }
-                if (state.hasMoreCheckIns && !state.isLoadingMoreCheckIns && state.checkInsError == null) item {
-                    TextButton(onClick = vm::loadMoreCheckIns, modifier = Modifier.fillMaxWidth()) { Text("Загрузить ещё") }
-                }
-            }
+                isOwnProfile = viewingOwnProfile,
+            )
             ProfileSection.Activity -> Column(
                 Modifier.fillMaxWidth().weight(1f, fill = false)
                     .verticalScroll(rememberScrollState()).padding(16.dp).navigationBarsPadding(),
