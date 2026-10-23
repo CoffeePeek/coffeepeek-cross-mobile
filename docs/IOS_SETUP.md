@@ -169,7 +169,7 @@ Workflow [`.github/workflows/ios-testflight.yml`](../.github/workflows/ios-testf
 число `1000 + git rev-list --count HEAD`, как `versionCode` Android. Сдвиг `1000`
 задан в `BUILD_NUMBER_OFFSET`, чтобы не уменьшить ранее опубликованный код. Повторный
 запуск CI для того же коммита не повышает номер. Публичная версия задаётся вручную
-в `iosApp/Configuration/Shared.xcconfig` (`MARKETING_VERSION = 1.1.0`). Android
+в `iosApp/Configuration/Shared.xcconfig` (`MARKETING_VERSION = 1.1.1`). Android
 использует `1.1.1.N`, где `N` равен `versionCode`; iOS хранит номер сборки отдельно. Серверные коды
 обновления и обязательный минимум задаются вручную через админку.
 
