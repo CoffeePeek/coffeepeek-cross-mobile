@@ -117,6 +117,8 @@ import com.coffeepeek.admin.location.formatDistance
 import com.coffeepeek.admin.location.rememberPermittedUserLocation
 import com.coffeepeek.admin.theme.CpColor
 import com.coffeepeek.admin.theme.CpDimens
+import com.coffeepeek.admin.theme.CoffeePeekTheme
+import org.jetbrains.compose.ui.tooling.preview.Preview
 import com.coffeepeek.admin.ui.Navigator
 import com.coffeepeek.admin.ui.component.brewMethodIcon
 import com.coffeepeek.admin.ui.component.CoffeeShopImage
@@ -303,25 +305,17 @@ fun ShopDetailScreen(shopId: String, forCheckIn: Boolean = false) {
                         onReviewPhotoClick = { urls, index -> preview = urls to index },
                         onReviewHelpfulClick = vm::toggleHelpful,
                         menuGalleryAction = { menuGalleryRenderer.MenuGalleryAction(shopId) },
+                        headerActions = { heroHaze ->
+                            HeroTopActions(heroHaze, Navigator::popBack, details.shop.isFavorite,
+                                state.isFavoriteLoading, vm::toggleFavorite, vm::shareShop, vm::openSuggestChange,
+                                modifier = Modifier.statusBarsPadding())
+                        },
                     )
                 }
             }
         }
 
         if (details != null) {
-            HeroTopActions(
-                hazeState = hazeState,
-                onBack = Navigator::popBack,
-                isFavorite = details.shop.isFavorite,
-                isFavoriteLoading = state.isFavoriteLoading,
-                onToggleFavorite = vm::toggleFavorite,
-                onShare = vm::shareShop,
-                onSuggestChange = vm::openSuggestChange,
-                modifier = Modifier
-                    .align(Alignment.TopCenter)
-                    .statusBarsPadding(),
-            )
-
             ShopDetailBottomBar(
                 isCheckInLoading = state.isCheckInLoading,
                 canOpenRoute = details.location?.latitude != null &&
@@ -359,7 +353,10 @@ private fun ShopDetailContent(
     onReviewPhotoClick: (PhotoViewerImages, Int) -> Unit = { _, _ -> },
     onReviewHelpfulClick: (String) -> Unit = {},
     menuGalleryAction: @Composable () -> Unit = {},
+    headerActions: @Composable (HazeState) -> Unit = {},
 ) {
+    // The screen source includes these controls, so the hero uses a separate blur source.
+    val heroHaze = rememberHazeState()
     val shop = details.shop
     val photos = details.photos.filter { it.isNotBlank() }.ifEmpty {
         listOfNotNull(shop.photoUrl?.takeIf { it.isNotBlank() })
@@ -392,7 +389,9 @@ private fun ShopDetailContent(
                     onOpenOnMap = onOpenOnMap,
                     onOpenReviews = { Navigator.navigate(Navigator.Screen.ShopReviews(shop.id)) },
                     onPhotoClick = { url -> Analytics.track(AnalyticsEvent.SHOP_CONTENT_INTERACTED, "section" to "photos", "action" to "open"); onOpenPhotos(PhotoViewerImages(photos, fullscreenPhotos), photos.indexOf(url).coerceAtLeast(0)) },
+                    modifier = Modifier.hazeSource(heroHaze),
                 )
+                headerActions(heroHaze)
             }
         }
 
@@ -494,13 +493,14 @@ private fun ShopHeroImage(
     onOpenOnMap: () -> Unit,
     onOpenReviews: () -> Unit,
     onPhotoClick: (String) -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     var currentPhotoIndex by remember(photos) { mutableStateOf(0) }
     val heroShape = RoundedCornerShape(
         bottomStart = CpDimens.radiusLg,
         bottomEnd = CpDimens.radiusLg,
     )
-    Column(Modifier.fillMaxWidth().then(if (photos.isNotEmpty()) Modifier.analyticsExposure("shop_photos", "shop_detail", "shop_detail") else Modifier)) {
+    Column(modifier.fillMaxWidth().then(if (photos.isNotEmpty()) Modifier.analyticsExposure("shop_photos", "shop_detail", "shop_detail") else Modifier)) {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -583,9 +583,10 @@ private fun HeroTopActions(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .padding(CpDimens.spacing3),
+            .padding(CpDimens.spacing3)
+            .heightIn(min = 48.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.Top,
+        verticalAlignment = Alignment.CenterVertically,
     ) {
         HeroIconButton(
             icon = GlassControlIcon.Back,
@@ -610,6 +611,14 @@ private fun HeroTopActions(
             onSuggestChange = onSuggestChange,
         )
     }
+}
+
+@Preview @Composable private fun HeroTopActionsLightPreview() = CoffeePeekTheme(darkTheme = false) {
+    HeroTopActions(rememberHazeState(), {}, false, false, {}, {}, {})
+}
+
+@Preview @Composable private fun HeroTopActionsDarkPreview() = CoffeePeekTheme(darkTheme = true) {
+    HeroTopActions(rememberHazeState(), {}, true, false, {}, {}, {})
 }
 
 @Composable

@@ -23,14 +23,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
-import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.tooling.preview.Preview
+import org.jetbrains.compose.ui.tooling.preview.Preview
 import coffeepeek.composeapp.generated.resources.Res
 import coffeepeek.composeapp.generated.resources.ic_apple_sign_in
 import coffeepeek.composeapp.generated.resources.ic_google_g
@@ -150,32 +149,47 @@ internal fun AuthSocialSignInButtons(
     val minButtonWidth = with(LocalDensity.current) { labelWidth.toDp() } +
         SocialButtonIconSize + SocialButtonIconGap + SocialButtonPadding * 2
 
-    // Use the card's side insets so both full labels fit on typical phone screens.
-    val expandBy = CpDimens.authCardPadding - 16.dp
-    BoxWithConstraints(
-        modifier = modifier.fillMaxWidth().layout { measurable, constraints ->
-            val inset = expandBy.roundToPx()
-            val width = constraints.maxWidth + inset * 2
-            val placeable = measurable.measure(constraints.copy(minWidth = width, maxWidth = width))
-            layout(constraints.maxWidth, placeable.height) {
-                placeable.placeRelative(-inset, 0)
-            }
-        },
-    ) {
+    AuthSocialSignInLayout(
+        showApple, showGoogle, minButtonWidth, modifier,
+        appleButton = { AppleSignInButton(onClick = onAppleClick, enabled = appleEnabled, modifier = it) },
+        googleButton = { GoogleSignInButton(onResult = onGoogleResult, modifier = it) },
+    )
+}
+
+@Composable
+private fun AuthSocialSignInLayout(
+    showApple: Boolean,
+    showGoogle: Boolean,
+    minButtonWidth: androidx.compose.ui.unit.Dp,
+    modifier: Modifier = Modifier,
+    appleButton: @Composable (Modifier) -> Unit,
+    googleButton: @Composable (Modifier) -> Unit,
+) {
+    BoxWithConstraints(modifier.fillMaxWidth()) {
         if (showApple && showGoogle && maxWidth >= minButtonWidth * 2 + SocialButtonSpacing) {
             Row(horizontalArrangement = Arrangement.spacedBy(SocialButtonSpacing)) {
-                AppleSignInButton(
-                    onClick = onAppleClick,
-                    enabled = appleEnabled,
-                    modifier = Modifier.weight(1f),
-                )
-                GoogleSignInButton(onResult = onGoogleResult, modifier = Modifier.weight(1f))
+                appleButton(Modifier.weight(1f))
+                googleButton(Modifier.weight(1f))
             }
         } else {
             Column(verticalArrangement = Arrangement.spacedBy(SocialButtonSpacing)) {
-                if (showApple) AppleSignInButton(onClick = onAppleClick, enabled = appleEnabled)
-                if (showGoogle) GoogleSignInButton(onResult = onGoogleResult)
+                if (showApple) appleButton(Modifier.fillMaxWidth())
+                if (showGoogle) googleButton(Modifier.fillMaxWidth())
             }
         }
     }
 }
+
+@Composable
+private fun AuthSocialSignInPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
+    AuthSocialSignInLayout(
+        true, true, 180.dp,
+        appleButton = { SocialSignInButton(SocialSignInBrand.Apple, {}, modifier = it) },
+        googleButton = { SocialSignInButton(SocialSignInBrand.Google, {}, modifier = it) },
+    )
+}
+
+@Preview(widthDp = 280) @Composable
+private fun AuthSocialSignInLightPreview() = AuthSocialSignInPreview(false)
+@Preview(widthDp = 280) @Composable
+private fun AuthSocialSignInDarkPreview() = AuthSocialSignInPreview(true)
