@@ -17,6 +17,7 @@ dependencies {
     api(project(module.feature.profile.api))
     implementation(project(module.feature.profile.domain))
     implementation(project(module.core.presentation))
+    implementation(project(module.core.datetime))
     implementation(libs.kotlinx.coroutines.core)
     androidImplementation(project(module.core.designSystem))
     androidImplementation(libs.androidx.lifecycle.viewmodelCompose)

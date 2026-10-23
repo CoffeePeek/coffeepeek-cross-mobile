@@ -2,8 +2,8 @@ package com.coffeepeek.admin.di.checkinhistory
 
 import com.coffeepeek.feature.checkinhistory.api.CheckInHistoryCalendarSnapshot
 import com.coffeepeek.feature.checkinhistory.api.CheckInHistoryDateBounds
+import com.coffeepeek.core.datetime.parseServerJavaInstant
 import java.time.Clock
-import java.time.DateTimeException
 import java.time.Instant
 import java.time.YearMonth
 import java.time.ZoneId
@@ -29,17 +29,8 @@ internal class AndroidCheckInHistoryCalendar(
                 )
             }
 
-            override fun localDate(instant: String): String? = parseUtcInstant(instant)
+            override fun localDate(instant: String): String? = parseServerJavaInstant(instant)
                 ?.atZone(capturedZone)?.toLocalDate()?.toString()
-        }
-    }
-
-    /** Preserve the application's existing UTC fallback for server timestamps without a zone suffix. */
-    private fun parseUtcInstant(value: String): Instant? {
-        val trimmed = value.trim()
-        if (trimmed.isEmpty()) return null
-        return try { Instant.parse(trimmed) } catch (_: DateTimeException) {
-            try { Instant.parse("${trimmed}Z") } catch (_: DateTimeException) { null }
         }
     }
 }

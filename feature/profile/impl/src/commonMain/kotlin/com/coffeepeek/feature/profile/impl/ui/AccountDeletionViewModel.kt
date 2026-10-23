@@ -1,5 +1,6 @@
 package com.coffeepeek.feature.profile.impl.ui
 
+import com.coffeepeek.core.datetime.parseServerInstant
 import androidx.lifecycle.viewModelScope
 import com.coffeepeek.core.presentation.MviViewModel
 import com.coffeepeek.feature.profile.api.AccountDeletionPort
@@ -83,17 +84,8 @@ internal class AccountDeletionViewModel(
     }
 
     private fun isResendAvailable(resendAvailableAtUtc: String): Boolean {
-        val availableAt = parseInstant(resendAvailableAtUtc) ?: return true
+        val availableAt = parseServerInstant(resendAvailableAtUtc) ?: return true
         return now() >= availableAt
-    }
-
-    /** The server may omit the offset; such a value is UTC. */
-    private fun parseInstant(value: String): Instant? {
-        val trimmed = value.trim()
-        if (trimmed.isEmpty()) return null
-        runCatching { Instant.parse(trimmed) }.getOrNull()?.let { return it }
-        val hasOffset = trimmed.endsWith("Z", ignoreCase = true) || trimmed.contains('+') || trimmed.indexOf('-', startIndex = 10) >= 0
-        return if (hasOffset) null else runCatching { Instant.parse("${trimmed}Z") }.getOrNull()
     }
 
     private companion object {
