@@ -71,7 +71,9 @@ internal class AndroidShopDetailScreenRenderer(
                     currentDayOfWeek = ::currentLocalDayOfWeek, currentMinuteOfDay = ::currentLocalMinuteOfDay,
                     analytics = AndroidShopAnalytics,
                     authorImage = { url, modifier -> com.coffeepeek.admin.utils.CpImage(data = url, modifier = modifier) },
-                    checkInImage = { url, modifier, scale -> com.coffeepeek.admin.utils.CpImage(data = url, modifier = modifier, contentScale = scale) })
+                    checkInImage = { url, highQualityUrl, modifier, scale ->
+                        com.coffeepeek.admin.utils.CpImage(data = url, highQualityData = highQualityUrl, modifier = modifier, contentScale = scale)
+                    })
             }
             val location = rememberPermittedUserLocation()
             val formatCheckInDate = rememberCheckInDateLabel()

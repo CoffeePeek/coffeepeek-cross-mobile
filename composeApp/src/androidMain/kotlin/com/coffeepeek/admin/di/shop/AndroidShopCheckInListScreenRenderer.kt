@@ -30,7 +30,9 @@ internal class AndroidShopCheckInListScreenRenderer(
                 createShopCheckInListEntry(session.lease.details(details), session.lease.votes(votes),
                     currentViewer = { session.lease.viewer(users) },
                     authorImage = { url, modifier -> com.coffeepeek.admin.utils.CpImage(data = url, modifier = modifier) },
-                    checkInImage = { url, modifier, scale -> com.coffeepeek.admin.utils.CpImage(data = url, modifier = modifier, contentScale = scale) },
+                    checkInImage = { url, highQualityUrl, modifier, scale ->
+                        com.coffeepeek.admin.utils.CpImage(data = url, highQualityData = highQualityUrl, modifier = modifier, contentScale = scale)
+                    },
                     photoPrefetch = { listState, photos -> com.coffeepeek.admin.utils.PrefetchListPhotos(listState, photos) })
             }
             var preview by remember { mutableStateOf<com.coffeepeek.feature.shop.api.ShopDetailEffect.OpenPhoto?>(null) }
