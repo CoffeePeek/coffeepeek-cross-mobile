@@ -6,9 +6,17 @@ import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.snap
 import androidx.compose.animation.core.spring
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableFloatStateOf
@@ -23,12 +31,16 @@ import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.unit.dp
+import org.jetbrains.compose.ui.tooling.preview.Preview
+import com.coffeepeek.admin.theme.CoffeePeekTheme
 import com.coffeepeek.admin.theme.CpDimens
 import kotlin.math.min
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.TimeMark
+import kotlin.math.roundToInt
 import kotlin.time.TimeSource
 
 internal val PullRefreshSettleSpec = spring<Float>(
@@ -125,7 +137,7 @@ fun CoffeePeekPullToRefresh(
     )
     val scrollModifier = Modifier
         .nestedScroll(nestedScrollConnection)
-        .graphicsLayer { translationY = contentOffsetPx }
+        .offset { IntOffset(0, contentOffsetPx.roundToInt()) }
     val showIndicator = isRefreshing || contentOffsetPx > 0.5f
 
     Box(modifier = modifier) {
@@ -151,3 +163,18 @@ fun CoffeePeekPullToRefresh(
         }
     }
 }
+
+@Composable
+private fun CoffeePeekRefreshingPreviewContent(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
+    val list = rememberLazyListState()
+    Surface {
+        CoffeePeekPullToRefresh(list, true, {}, Modifier.height(240.dp)) { scrollModifier ->
+            LazyColumn(state = list, modifier = scrollModifier.fillMaxSize()) {
+                items(4) { Text("Example item ${it + 1}", Modifier.fillMaxWidth().padding(16.dp)) }
+            }
+        }
+    }
+}
+
+@Preview @Composable private fun CoffeePeekRefreshingLightPreview() = CoffeePeekRefreshingPreviewContent(false)
+@Preview @Composable private fun CoffeePeekRefreshingDarkPreview() = CoffeePeekRefreshingPreviewContent(true)

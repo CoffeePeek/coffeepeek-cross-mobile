@@ -23,21 +23,33 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import coffeepeek.composeapp.generated.resources.Res
+import coffeepeek.composeapp.generated.resources.photo_source_camera
+import coffeepeek.composeapp.generated.resources.photo_source_gallery
+import coffeepeek.composeapp.generated.resources.photo_source_title
+import coffeepeek.composeapp.generated.resources.presentation_cancel
 import com.coffeepeek.admin.theme.CpDimens
 import com.coffeepeek.admin.ui.icons.CpIcons
+import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
+import org.jetbrains.compose.resources.stringResource
+import org.jetbrains.compose.ui.tooling.preview.Preview
 
 @Composable
 fun PhotoSourceBottomSheet(
     onDismiss: () -> Unit,
     onGallery: () -> Unit,
     onCamera: () -> Unit,
-    title: String = "Добавить фото",
+    title: String = stringResource(Res.string.photo_source_title),
 ) {
-    if (NativeActionSheet(title, listOf(
-        PlatformAction("Выбрать из галереи", onClick = onGallery),
-        PlatformAction("Сделать фото", onClick = onCamera),
-    ), onDismiss = onDismiss)) return
+    if (NativePhotoSourceSheet(title, onGallery, onCamera, onDismiss)) return
     SwipeDismissModalBottomSheet(onDismissRequest = onDismiss) {
+        PhotoSourceContent(title, onGallery, onCamera, onDismiss)
+    }
+}
+
+@Composable
+private fun PhotoSourceContent(title: String, onGallery: () -> Unit, onCamera: () -> Unit, onDismiss: () -> Unit) {
+    Column {
         Text(
             text = title,
             style = MaterialTheme.typography.titleLarge,
@@ -47,19 +59,7 @@ fun PhotoSourceBottomSheet(
                 vertical = CpDimens.spacing2,
             ),
         )
-        Column(
-            modifier = Modifier
-                .padding(horizontal = CpDimens.spacing4)
-                .clip(RoundedCornerShape(CpDimens.radius2xl))
-                .background(MaterialTheme.colorScheme.surfaceVariant),
-        ) {
-            PhotoSourceRow(CpIcons.Gallery, "Выбрать из галереи", onGallery)
-            HorizontalDivider(
-                color = MaterialTheme.colorScheme.outlineVariant,
-                modifier = Modifier.padding(start = 56.dp),
-            )
-            PhotoSourceRow(CpIcons.Camera, "Сделать фото", onCamera)
-        }
+        PhotoSourceRows(onGallery, onCamera)
         TextButton(
             onClick = onDismiss,
             modifier = Modifier
@@ -67,9 +67,34 @@ fun PhotoSourceBottomSheet(
                 .navigationBarsPadding()
                 .padding(CpDimens.spacing2),
         ) {
-            Text("Отмена", style = MaterialTheme.typography.labelLarge)
+            Text(stringResource(Res.string.presentation_cancel), style = MaterialTheme.typography.labelLarge)
         }
     }
+}
+
+@Composable
+private fun PhotoSourceRows(onGallery: () -> Unit, onCamera: () -> Unit) {
+    Column(
+        modifier = Modifier
+            .padding(horizontal = CpDimens.spacing4)
+            .clip(RoundedCornerShape(CpDimens.radius2xl))
+            .background(MaterialTheme.colorScheme.surfaceVariant),
+    ) {
+        PhotoSourceRow(CpIcons.Gallery, stringResource(Res.string.photo_source_gallery), onGallery)
+        HorizontalDivider(
+            color = MaterialTheme.colorScheme.outlineVariant,
+            modifier = Modifier.padding(start = 56.dp),
+        )
+        PhotoSourceRow(CpIcons.Camera, stringResource(Res.string.photo_source_camera), onCamera)
+    }
+}
+
+@Preview @Composable private fun PhotoSourceLightPreview() = CoffeePeekTheme(darkTheme = false) {
+    PhotoSourceContent("Photo", {}, {}, {})
+}
+
+@Preview @Composable private fun PhotoSourceDarkPreview() = CoffeePeekTheme(darkTheme = true) {
+    PhotoSourceContent("Photo", {}, {}, {})
 }
 
 @Composable
