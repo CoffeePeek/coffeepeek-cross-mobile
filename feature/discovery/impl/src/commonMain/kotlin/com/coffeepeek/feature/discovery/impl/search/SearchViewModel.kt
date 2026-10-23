@@ -9,6 +9,7 @@ import com.coffeepeek.feature.discovery.api.DiscoveryFavorites
 import com.coffeepeek.feature.discovery.api.DiscoveryGate
 import com.coffeepeek.feature.discovery.api.DiscoveryLocation
 import com.coffeepeek.feature.discovery.api.FilterAction
+import com.coffeepeek.feature.discovery.api.GeolocationOutcome
 import com.coffeepeek.feature.discovery.domain.model.Coordinates
 import com.coffeepeek.feature.discovery.domain.model.DiscoveryFailure
 import com.coffeepeek.feature.discovery.domain.model.DiscoveryFilters
@@ -28,6 +29,7 @@ import kotlinx.coroutines.sync.withLock
 
 private const val PAGE_SIZE = 20
 private const val QUERY_DEBOUNCE_MS = 400L
+private const val PLACEMENT = "discovery"
 
 /**
  * The shop search as the legacy feed kept it (the debounced query, the filters, the city, nearby, paging, the optimistic favorite), with three differences.
@@ -81,6 +83,8 @@ internal class SearchViewModel(
             SearchAction.ToggleVisited -> if (guarded(DiscoveryGate.VisitedFilter)) changeFilters(reloadOnlyWithNearby = true) { copy(visitedOnly = !visitedOnly) }
             SearchAction.ToggleFavorites -> if (guarded(DiscoveryGate.FavoritesFilter)) changeFilters(reloadOnlyWithNearby = true) { copy(favoritesOnly = !favoritesOnly) }
             SearchAction.ToggleNearby -> toggleNearby()
+            SearchAction.LocationGranted -> location.refresh()
+            SearchAction.LocationDenied -> analytics.geolocation(PLACEMENT, userTriggered = false, outcome = GeolocationOutcome.Unavailable)
             is SearchAction.SetPrice -> changeFilters { copy(priceLevel = action.level) }
             is SearchAction.SetMinRating -> changeFilters { copy(minRating = action.rating) }
             is SearchAction.ToggleCatalog -> changeFilters {
@@ -130,6 +134,7 @@ internal class SearchViewModel(
     private fun onLocation(point: Coordinates?) {
         if (point == null || !point.isValid || point == origin) return
         origin = point
+        analytics.geolocation(PLACEMENT, userTriggered = false, outcome = GeolocationOutcome.Available)
         updateState { copy(canUseNearby = true) }
         if (currentState.filters.nearbyOnly) {
             updateState { copy(shops = emptyList()) }

@@ -1,5 +1,9 @@
 package com.coffeepeek.feature.discovery.impl.ui
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedContentTransitionScope
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -16,6 +20,7 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.Badge
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -28,6 +33,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
@@ -88,12 +95,33 @@ internal fun SearchContent(
     textResults: (@Composable () -> Unit)?,
     onAction: (SearchAction) -> Unit,
     modifier: Modifier = Modifier,
+    /** The tab fades and slides the header away while the map expands. */
+    headerModifier: Modifier = Modifier,
+    /** The tab measures the area below the header, where the map is clipped. */
+    bodyModifier: Modifier = Modifier,
+    /** No photo prefetch while the map covers the lists. */
+    prefetch: Boolean = true,
 ) {
+    val reduceMotion = host.reduceMotion()
     Column(modifier.fillMaxSize()) {
-        SearchHeader(state, host, onAction)
-        QuickFilters(state, onAction)
-        Box(Modifier.weight(1f).fillMaxWidth()) {
-            if (state.showsDiscovery) discovery() else ResultsList(state, host, onAddShop, bottomClearance, textResults, onAction)
+        Column(headerModifier) {
+            Column(Modifier.padding(top = CoffeePeekDimens.spacing3, bottom = CoffeePeekDimens.spacing2)) {
+                SearchHeader(state, host, onAction)
+                QuickFilters(state, onAction)
+            }
+            HorizontalDivider(thickness = 1.dp, color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.7f))
+        }
+        AnimatedContent(
+            targetState = state.showsDiscovery,
+            modifier = Modifier.weight(1f).fillMaxWidth().then(bodyModifier).clipToBounds(),
+            transitionSpec = {
+                val direction = if (targetState) AnimatedContentTransitionScope.SlideDirection.Down else AnimatedContentTransitionScope.SlideDirection.Up
+                val spec = tween<IntOffset>(if (reduceMotion) 0 else 360)
+                slideIntoContainer(direction, spec) togetherWith slideOutOfContainer(direction, spec)
+            },
+            label = "discovery-shop-list",
+        ) { showsDiscovery ->
+            if (showsDiscovery) discovery() else ResultsList(state, host, onAddShop, bottomClearance, textResults, prefetch, onAction)
         }
     }
 }
@@ -151,10 +179,12 @@ private fun ResultsList(
     onAddShop: () -> Unit,
     bottomClearance: Dp,
     textResults: (@Composable () -> Unit)?,
+    prefetch: Boolean,
     onAction: (SearchAction) -> Unit,
 ) {
     val listState = rememberLazyListState()
     val shops = state.visibleShops
+    if (prefetch) host.photoPrefetch(listState, shops.map { it.id to listOfNotNull(it.photoUrl) })
     val nearEnd by remember { derivedStateOf { listState.layoutInfo.let { info -> (info.visibleItemsInfo.lastOrNull()?.index ?: 0) >= info.totalItemsCount - 3 } } }
     LaunchedEffect(nearEnd, state.hasMore, state.isLoadingMore, shops.size) { if (nearEnd && state.hasMore && shops.isNotEmpty()) onAction(SearchAction.LoadMore) }
     CoffeePeekPullToRefresh(
@@ -170,7 +200,11 @@ private fun ResultsList(
             contentPadding = PaddingValues(start = CoffeePeekDimens.spacing4, end = CoffeePeekDimens.spacing4, bottom = bottomClearance + CoffeePeekDimens.spacing4),
             verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing3),
         ) {
-            if (textResults != null && state.query.isNotBlank()) item(key = "text-results") { textResults() }
+            if (textResults != null && state.query.isNotBlank()) {
+                item(key = "text-results-heading") { Text(stringResource(R.string.discovery_section_roasters), style = MaterialTheme.typography.titleLarge) }
+                item(key = "text-results") { textResults() }
+                item(key = "shops-heading") { Text(stringResource(R.string.discovery_section_shops), style = MaterialTheme.typography.titleMedium) }
+            }
             when {
                 state.isLoading && shops.isEmpty() -> item(key = "loading") { Centered { CoffeePeekLoader(stringResource(R.string.discovery_loading)) } }
                 state.error != null && shops.isEmpty() -> item(key = "error") {

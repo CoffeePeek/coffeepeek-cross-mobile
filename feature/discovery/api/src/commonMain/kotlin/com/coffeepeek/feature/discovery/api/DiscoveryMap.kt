@@ -26,6 +26,8 @@ data class MapCanvasState(
     val camera: MapCamera?,
     /** Grows when the user asks for their position; the canvas finds it and answers with [MapCanvasCallbacks.onMyLocationFound]. */
     val myLocationRequest: Int,
+    /** The small map of the tab: no attribution, no automatic permission request, no zones, taps open the shop. */
+    val isPreview: Boolean = false,
 )
 
 class MapCanvasCallbacks(

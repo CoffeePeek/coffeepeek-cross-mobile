@@ -19,6 +19,7 @@ dependencies {
     implementation(project(module.core.presentation))
     implementation(libs.kotlinx.coroutines.core)
     androidImplementation(project(module.core.designSystem))
+    androidImplementation(libs.androidx.activity.compose)
     androidImplementation(libs.androidx.lifecycle.viewmodelCompose)
     androidImplementation(libs.androidx.lifecycle.runtimeCompose)
     androidImplementation(libs.androidx.compose.ui.tooling.preview)

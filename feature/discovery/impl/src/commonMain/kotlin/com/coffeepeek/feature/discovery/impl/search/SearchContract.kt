@@ -57,6 +57,9 @@ internal sealed interface SearchAction {
     data object ToggleVisited : SearchAction
     data object ToggleFavorites : SearchAction
     data object ToggleNearby : SearchAction
+    /** The location permission was granted or refused by the screen's effect. */
+    data object LocationGranted : SearchAction
+    data object LocationDenied : SearchAction
     data class SetPrice(val level: PriceLevel?) : SearchAction
     data class SetMinRating(val rating: Double?) : SearchAction
     data class ToggleCatalog(val kind: CatalogKind, val id: String) : SearchAction

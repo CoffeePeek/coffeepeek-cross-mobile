@@ -8,6 +8,7 @@ import com.coffeepeek.feature.discovery.api.DiscoveryGate
 import com.coffeepeek.feature.discovery.api.DiscoveryLocation
 import com.coffeepeek.feature.discovery.api.FilterAction
 import com.coffeepeek.feature.discovery.api.MapInteraction
+import com.coffeepeek.feature.discovery.api.DiscoveryOverlay
 import com.coffeepeek.feature.discovery.api.GeolocationOutcome
 import com.coffeepeek.feature.discovery.api.SearchRun
 import com.coffeepeek.feature.discovery.domain.model.*
@@ -100,6 +101,8 @@ internal class RecordingAnalytics : DiscoveryAnalytics {
         }
     }
     override fun mapShopOpened(fromSearch: Boolean) { mapOpened += fromSearch }
+    val overlays = mutableListOf<DiscoveryOverlay>()
+    override fun overlayShown(overlay: DiscoveryOverlay) { overlays += overlay }
 }
 
 internal class FakeShopDetails : com.coffeepeek.feature.discovery.api.DiscoveryShopDetails {
