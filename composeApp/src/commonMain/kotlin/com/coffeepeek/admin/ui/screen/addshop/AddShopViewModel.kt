@@ -22,6 +22,7 @@ import com.coffeepeek.admin.utils.validateOptionalUrl
 import com.coffeepeek.domain.repository.ShopRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
@@ -181,14 +182,24 @@ class AddShopViewModel(
         ) }
     }
 
+    private var locationJob: Job? = null
+    // Bumped when the user takes the address or the point into their own hands; a late automatic answer must not overwrite it.
+    private var locationRevision = 0L
+    private fun takeLocationByHand() {
+        locationRevision++
+        locationJob?.cancel()
+    }
+
     fun onNameChange(v: String)         { _state.update { it.copy(name = v.take(55)) } }
     fun onAddressChange(v: String) {
+        takeLocationByHand()
         _state.update {
             it.copy(
                 address = v,
                 latitude = null,
                 longitude = null,
                 locationHint = null,
+                isResolvingAddress = false,
             )
         }
     }
@@ -201,7 +212,8 @@ class AddShopViewModel(
     fun onInstagramChange(v: String)    { _state.update { it.copy(instagram = v) } }
 
     fun openLocationPicker() {
-        _state.update { it.copy(showLocationPicker = true, locationHint = null) }
+        takeLocationByHand()
+        _state.update { it.copy(showLocationPicker = true, locationHint = null, isResolvingAddress = false) }
     }
 
     fun dismissLocationPicker() {
@@ -209,8 +221,10 @@ class AddShopViewModel(
     }
 
     fun onLocationPicked(latitude: Double, longitude: Double, address: String) {
+        takeLocationByHand()
         _state.update { state ->
             state.copy(
+                isResolvingAddress = false,
                 address = address,
                 latitude = latitude,
                 longitude = longitude,
@@ -222,11 +236,14 @@ class AddShopViewModel(
     }
 
     fun fillAddressFromCurrentLocation(force: Boolean = false) {
-        workScope.launch {
+        val revision = ++locationRevision
+        locationJob?.cancel()
+        locationJob = workScope.launch {
             _state.update {
                 it.copy(isResolvingAddress = true, locationHint = null)
             }
             val point = PlatformLocation.getLastKnownLocation()
+            if (revision != locationRevision) return@launch
             if (point == null) {
                 _state.update {
                     it.copy(
@@ -237,9 +254,12 @@ class AddShopViewModel(
                 return@launch
             }
             val address = PlatformLocation.reverseGeocode(point.latitude, point.longitude)
+            if (revision != locationRevision) return@launch
             if (address.isNullOrBlank()) {
                 _state.update {
-                    it.copy(
+                    // The phone position belongs to the form only while its address is empty.
+                    if (it.address.isNotBlank()) it.copy(isResolvingAddress = false)
+                    else it.copy(
                         latitude = point.latitude,
                         longitude = point.longitude,
                         isResolvingAddress = false,
@@ -249,13 +269,9 @@ class AddShopViewModel(
                 return@launch
             }
             _state.update { state ->
-                // Don't overwrite if the user already typed an address (auto-fill on open).
+                // Don't overwrite if the user already typed an address (auto-fill on open), and don't attach the phone position to it.
                 if (!force && state.address.isNotBlank()) {
-                    return@update state.copy(
-                        latitude = state.latitude ?: point.latitude,
-                        longitude = state.longitude ?: point.longitude,
-                        isResolvingAddress = false,
-                    )
+                    return@update state.copy(isResolvingAddress = false)
                 }
                 state.copy(
                     address = address,

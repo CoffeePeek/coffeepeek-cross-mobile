@@ -113,9 +113,32 @@ class AddShopViewModelTest {
         with(vm.state.value) { assertEquals("Минск, Ленина 1", address); assertEquals("minsk", cityId); assertNull(locationHint) }
 
         vm.send(AddShopAction.Address("Мой адрес"), AddShopAction.LocationGranted, scope = this)
-        with(vm.state.value) { assertEquals("Мой адрес", address); assertEquals(53.9, latitude) }
+        // The phone position is not attached to an address the user typed.
+        with(vm.state.value) { assertEquals("Мой адрес", address); assertNull(latitude); assertNull(longitude) }
         vm.send(AddShopAction.LocationDenied, scope = this)
         assertEquals(LocationHint.PermissionDenied, vm.state.value.locationHint)
+    }
+
+    @Test fun aLateAutomaticLookupNeverChangesAnAddressTheUserTypedMeanwhile() = runTest(dispatcher) {
+        withCities(minsk, brest)
+        location.point = GeoPoint(53.9, 27.5); location.address = "Минск, Ленина 1"
+        val gate = CompletableDeferred<Unit>(); location.addressGate = gate
+        val vm = model()
+        vm.send(AddShopAction.LocationGranted, scope = this)
+        vm.send(AddShopAction.Address("Брест, Советская 2"), scope = this)
+        gate.complete(Unit); runCurrent()
+        with(vm.state.value) { assertEquals("Брест, Советская 2", address); assertNull(latitude); assertNull(longitude); assertFalse(resolvingAddress) }
+    }
+
+    @Test fun aLateAutomaticLookupNeverReplacesAPointPickedOnTheMap() = runTest(dispatcher) {
+        withCities(minsk, brest)
+        location.point = GeoPoint(53.9, 27.5); location.address = null
+        val gate = CompletableDeferred<Unit>(); location.addressGate = gate
+        val vm = model()
+        vm.send(AddShopAction.LocationGranted, scope = this)
+        vm.send(AddShopAction.MapPicked(52.1, 23.7, "Брест, Советская 2"), scope = this)
+        gate.complete(Unit); runCurrent()
+        with(vm.state.value) { assertEquals("Брест, Советская 2", address); assertEquals(52.1, latitude); assertEquals(23.7, longitude); assertNull(locationHint) }
     }
 
     @Test fun photoLimitsAndRemovalByIndex() = runTest(dispatcher) {

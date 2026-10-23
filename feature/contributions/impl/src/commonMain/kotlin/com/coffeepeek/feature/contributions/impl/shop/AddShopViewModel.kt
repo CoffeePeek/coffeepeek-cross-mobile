@@ -33,6 +33,8 @@ internal class AddShopViewModel(
     private var generation = 0L
     private var work: Job? = null
     private var locationJob: Job? = null
+    // Bumped when the user takes the address or the point into their own hands; a late automatic answer must not overwrite it.
+    private var locationRevision = 0L
 
     init {
         viewModelScope.launch {
@@ -50,7 +52,10 @@ internal class AddShopViewModel(
         if (currentState.signedIn != true) return
         when (action) {
             is AddShopAction.Name -> updateState { copy(name = action.value.take(ContributionLimits.SHOP_NAME)) }
-            is AddShopAction.Address -> updateState { copy(address = action.value, latitude = null, longitude = null, locationHint = null) }
+            is AddShopAction.Address -> {
+                takeLocationByHand()
+                updateState { copy(address = action.value, latitude = null, longitude = null, locationHint = null, resolvingAddress = false) }
+            }
             is AddShopAction.Description -> updateState { copy(description = action.value) }
             is AddShopAction.City -> updateState { copy(cityId = action.id) }
             is AddShopAction.Price -> updateState { copy(priceRange = action.value) }
@@ -74,11 +79,17 @@ internal class AddShopViewModel(
             is AddShopAction.SetDayOpen -> updateDay(action.day) { copy(closed = !action.open) }
             is AddShopAction.AdjustDayOpen -> updateDay(action.day) { copy(open = shiftClock(open, action.minutes)) }
             is AddShopAction.AdjustDayClose -> updateDay(action.day) { copy(close = shiftClock(close, action.minutes)) }
-            AddShopAction.OpenMap -> updateState { copy(mapPickerOpen = true, locationHint = null) }
+            AddShopAction.OpenMap -> {
+                takeLocationByHand()
+                updateState { copy(mapPickerOpen = true, locationHint = null, resolvingAddress = false) }
+            }
             AddShopAction.DismissMap -> updateState { copy(mapPickerOpen = false) }
-            is AddShopAction.MapPicked -> updateState {
-                copy(address = action.address, latitude = action.latitude, longitude = action.longitude, mapPickerOpen = false, locationHint = null,
-                    cityId = cityId ?: matchCity(action.address, catalogs.cities))
+            is AddShopAction.MapPicked -> {
+                takeLocationByHand()
+                updateState {
+                    copy(address = action.address, latitude = action.latitude, longitude = action.longitude, mapPickerOpen = false, locationHint = null,
+                        resolvingAddress = false, cityId = cityId ?: matchCity(action.address, catalogs.cities))
+                }
             }
             AddShopAction.LocationGranted -> fillFromLocation()
             AddShopAction.LocationDenied -> updateState { copy(resolvingAddress = false, locationHint = LocationHint.PermissionDenied) }
@@ -104,27 +115,35 @@ internal class AddShopViewModel(
         }
     }
 
+    private fun takeLocationByHand() {
+        locationRevision++
+        locationJob?.cancel()
+    }
+
     private fun fillFromLocation() {
         val mine = generation
+        val revision = ++locationRevision
         locationJob?.cancel()
         updateState { copy(resolvingAddress = true, locationHint = null) }
         locationJob = viewModelScope.launch {
             val point = location.lastKnown()
-            if (mine != generation) return@launch
+            if (mine != generation || revision != locationRevision) return@launch
             if (point == null) {
                 updateState { copy(resolvingAddress = false, locationHint = LocationHint.NotFound) }
                 return@launch
             }
             val address = location.addressOf(point)?.takeIf(String::isNotBlank)
-            if (mine != generation) return@launch
+            if (mine != generation || revision != locationRevision) return@launch
             updateState { applyLocation(point, address) }
         }
     }
 
+    /** The phone position belongs to the form only while its address is empty; a typed address keeps unknown coordinates. */
     private fun AddShopState.applyLocation(point: GeoPoint, address: String?): AddShopState = when {
-        address == null -> copy(latitude = point.latitude, longitude = point.longitude, resolvingAddress = false, locationHint = LocationHint.NoAddress)
-        // The address the user already typed is not overwritten by the automatic fill.
-        this.address.isNotBlank() -> copy(latitude = latitude ?: point.latitude, longitude = longitude ?: point.longitude, resolvingAddress = false)
+        address.isNullOrBlank() && this.address.isBlank() ->
+            copy(latitude = point.latitude, longitude = point.longitude, resolvingAddress = false, locationHint = LocationHint.NoAddress)
+        address == null -> copy(resolvingAddress = false)
+        this.address.isNotBlank() -> copy(resolvingAddress = false)
         else -> copy(address = address, latitude = point.latitude, longitude = point.longitude, resolvingAddress = false, locationHint = null,
             cityId = cityId ?: matchCity(address, catalogs.cities))
     }
