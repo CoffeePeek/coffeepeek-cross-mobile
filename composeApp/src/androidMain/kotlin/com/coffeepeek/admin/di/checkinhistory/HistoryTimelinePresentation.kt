@@ -8,10 +8,10 @@ import com.coffeepeek.domain.model.ReviewRating
 import com.coffeepeek.feature.checkinhistory.domain.model.HomeHistoryEntry
 import com.coffeepeek.feature.checkinhistory.domain.model.HistoryRating
 import com.coffeepeek.feature.checkinhistory.domain.model.PersonalCheckIn
-import com.coffeepeek.feature.homecheckin.domain.HomeCheckIn
-import com.coffeepeek.feature.homecheckin.domain.HomeCheckInPhoto
-import com.coffeepeek.feature.homecheckin.domain.HomeCheckInVisibility
-import com.coffeepeek.feature.homecheckin.domain.HomeCheckInModeration
+import com.coffeepeek.legacy.homecheckin.domain.HomeCheckIn
+import com.coffeepeek.legacy.homecheckin.domain.HomeCheckInPhoto
+import com.coffeepeek.legacy.homecheckin.domain.HomeCheckInVisibility
+import com.coffeepeek.legacy.homecheckin.domain.HomeCheckInModeration
 
 internal fun PersonalCheckIn.toTimelineCheckIn(): CheckIn = CheckIn(
     id = id, shopId = shop?.slug.orEmpty(), shopName = shopName, note = note,
