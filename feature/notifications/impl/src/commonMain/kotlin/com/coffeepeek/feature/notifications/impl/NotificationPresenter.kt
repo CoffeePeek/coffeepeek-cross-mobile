@@ -101,7 +101,7 @@ internal class NotificationPresenter(
     override fun refresh() = load(more = false)
     override fun loadMore() = load(more = true)
 
-    private fun load(more: Boolean) {
+    private fun load(more: Boolean, keepError: Boolean = false) {
         val snapshot = state.value
         if (snapshot.accountId == null || !current(snapshot)) return
         if (loadJob?.isActive == true || snapshot.markingRead) {
@@ -110,7 +110,7 @@ internal class NotificationPresenter(
         }
         val cursor = if (more) snapshot.nextCursor ?: return else null
         if (!more) refreshPending = false
-        mutable.update { it.copy(loading = !more, loadingMore = more, error = null) }
+        mutable.update { it.copy(loading = !more, loadingMore = more, error = if (keepError) it.error else null) }
         loadJob = scope.launch {
             try {
                 val page = repository.inbox(cursor)
@@ -176,7 +176,11 @@ internal class NotificationPresenter(
                 refresh()
             } catch (cancelled: CancellationException) { throw cancelled }
             catch (_: Exception) {
-                if (current(snapshot)) mutable.update { it.copy(markingRead = false, error = "Не удалось отметить уведомления прочитанными") }
+                if (current(snapshot)) {
+                    mutable.update { it.copy(markingRead = false, error = "Не удалось отметить уведомления прочитанными") }
+                    // A refresh that arrived while the write was running was only queued; serve it now, without hiding why the write failed.
+                    if (refreshPending) load(more = false, keepError = true)
+                }
             }
         }
     }
