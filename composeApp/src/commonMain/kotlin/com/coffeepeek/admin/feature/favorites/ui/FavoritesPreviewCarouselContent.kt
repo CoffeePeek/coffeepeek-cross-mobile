@@ -1,13 +1,21 @@
 package com.coffeepeek.admin.feature.favorites.ui
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.key
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.Constraints
@@ -15,6 +23,7 @@ import androidx.compose.ui.unit.constrainHeight
 import androidx.compose.ui.unit.constrainWidth
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.admin.theme.CpDimens
+import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 
 @Composable
 internal fun <T> FavoritesPreviewCarouselContent(
@@ -26,7 +35,7 @@ internal fun <T> FavoritesPreviewCarouselContent(
 ) {
     Layout(
         modifier = Modifier.fillMaxWidth().testTag("favorites-preview-carousel")
-            .horizontalScroll(rememberScrollState()),
+            .horizontalScroll(rememberScrollState()).padding(horizontal = CpDimens.spacing4),
         content = {
             listOf("shop" to coffeeShops, "roaster" to roasters, "drink" to drinks).forEach { (kind, items) ->
                 items.forEach { item ->
@@ -84,3 +93,20 @@ internal fun <T> FavoritesPreviewCarouselContent(
         }
     }
 }
+
+@Composable
+private fun FavoritesCarouselPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
+    Surface {
+        FavoritesPreviewCarouselContent(listOf("Кофейня", "Ещё кофейня"), listOf("Обжарщик", "Ещё обжарщик"), emptyList(), { it }) { label, modifier ->
+            Box(modifier.padding(1.dp).height(160.dp).background(MaterialTheme.colorScheme.surfaceVariant),
+                contentAlignment = Alignment.Center) {
+                Text(label)
+            }
+        }
+    }
+}
+
+@Preview(widthDp = 360)
+@Composable private fun FavoritesCarouselLightPreview() = FavoritesCarouselPreview(false)
+@Preview(widthDp = 360)
+@Composable private fun FavoritesCarouselDarkPreview() = FavoritesCarouselPreview(true)
