@@ -52,10 +52,10 @@ interface SessionReader {                      // what features/adapters get
     fun peekSession(): Session?                // in-memory snapshot
     fun isActiveSession(session: Session?): Boolean
     fun observeSession(): Flow<Session?>
+    suspend fun getSession(): Session?         // loads the stored session first if needed
 }
 
 interface SessionStore : SessionReader {       // auth, transport, logout only
-    suspend fun getSession(): Session?
     suspend fun saveSession(session: Session?)
     suspend fun replaceSession(expected: Session?, session: Session?): Boolean
     fun applySession(session: Session?)
@@ -154,7 +154,7 @@ secure stores and an upgrade over an existing signed-in install.
 |---|---|---|
 | A | plan + parity tests + `core/session` + bridge (steps 0-2) | ~20 files |
 | B | step 3: move the session store implementation and secure stores into `core/session` | 18 files (done) |
-| C | step 4a: the 23 `androidMain/di` adapters to `SessionReader` | ~25-30 files |
+| C | step 4a: the `androidMain/di` adapters to `SessionReader` | 28 files (done) |
 | D+ | step 4b/4c and 5: by area, each under 40 files, as owners migrate | |
 
 ## 10. Step 3 result — implementation moved to `core/session` (2026-10-21)
@@ -182,3 +182,20 @@ secure stores and an upgrade over an existing signed-in install.
   store have no unit tests (they need a device). The risk is limited to a mechanical move with the
   same keys, but an upgrade over an existing signed-in install should be checked by the owner of
   the release build; this session does not install the regular app on the phone.
+
+## 11. Step 4a result — Android adapters read through `SessionReader` (2026-10-21)
+
+- All 23 `composeApp/androidMain/di` adapters (Shop, Profile, Settings, Home, History, Favorites)
+  now take `SessionReader` / `core.session.Session` instead of the legacy `SessionRepository`.
+  They only read, as the inventory predicted; one of them needed `getSession()` (favorites owner
+  lookup), so `getSession()` moved from `SessionStore` into `SessionReader` ("current session,
+  loading it first if needed").
+- `CoffeePeekApplication` is unchanged on purpose: it hands the store to the legacy
+  `SessionRealtimeManager` (commonMain), which migrates with the legacy ViewModels (step 4c).
+- Koin: adapters resolve `SessionReader`, registered in `DataModule` as the same instance as
+  `SessionRepository`. Three module tests (`FavoritesModuleTest`, `CheckInHistoryModuleTest`,
+  `ShopCheckInModuleTest`) now also register `SessionReader`. Test fakes still implement the
+  legacy interface; they are converted when the bridge goes away.
+- Verified: `:composeApp:testDirectDebugUnitTest` (di, sandbox, favorites, profile, settings: 297
+  tests) and `:composeApp:testPlayDebugUnitTest` (di: 199) with 0 failures; Android unit and
+  instrumented test compilation; iOS simulator compilation; `assembleDirectSandbox`.

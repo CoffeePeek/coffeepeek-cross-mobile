@@ -38,7 +38,7 @@ import com.coffeepeek.admin.utils.currentLocalDayOfWeek
 import com.coffeepeek.admin.utils.currentLocalMinuteOfDay
 import com.coffeepeek.admin.utils.utcIsoToLocalDate
 import com.coffeepeek.domain.model.ShopLocation
-import com.coffeepeek.domain.repository.SessionRepository
+import com.coffeepeek.core.session.SessionReader
 import com.coffeepeek.domain.repository.UserRepository
 import com.coffeepeek.feature.favorites.domain.repository.FavoritesRepository
 import com.coffeepeek.feature.shop.api.ShopDetailContext
@@ -52,7 +52,7 @@ import org.jetbrains.compose.resources.getString
 
 /** Feature effects are adapted to the existing application destinations/platform services, never vice versa. */
 internal class AndroidShopDetailScreenRenderer(
-    private val sessions: SessionRepository,
+    private val sessions: SessionReader,
     private val users: UserRepository,
     private val details: ShopDetailsRepository,
     private val votes: ShopCheckInVoteRepository,

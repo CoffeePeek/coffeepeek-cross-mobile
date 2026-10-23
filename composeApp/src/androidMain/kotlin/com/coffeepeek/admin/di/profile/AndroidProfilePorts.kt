@@ -4,7 +4,7 @@ import com.coffeepeek.admin.analytics.Analytics
 import com.coffeepeek.admin.analytics.AnalyticsEvent
 import com.coffeepeek.domain.model.PublicAddress
 import com.coffeepeek.domain.model.UserProfile
-import com.coffeepeek.domain.repository.SessionRepository
+import com.coffeepeek.core.session.SessionReader
 import com.coffeepeek.domain.repository.UserRepository
 import com.coffeepeek.feature.authorblocking.api.AuthorVisibility
 import com.coffeepeek.feature.authorblocking.api.AuthorVisibilitySnapshot
@@ -20,7 +20,7 @@ import kotlinx.coroutines.flow.map
 
 /** Adapter over the single session and own-profile cache, so the migrated screens cannot diverge from legacy ones. */
 internal class AndroidProfileAccountPort(
-    private val sessions: SessionRepository,
+    private val sessions: SessionReader,
     private val users: UserRepository,
 ) : ProfileAccountPort {
     override fun activeAccount(): String? = key(sessions.peekSession())

@@ -10,13 +10,15 @@ interface SessionReader {
     fun isActiveSession(session: Session?): Boolean
 
     fun observeSession(): Flow<Session?>
+
+    /** The current session, loading the stored one first if it has not been read yet. */
+    suspend fun getSession(): Session?
 }
 
 /** Read and write access, for sign-in, token refresh, sign-out and the transport layer only. */
 interface SessionStore : SessionReader {
     fun applySession(session: Session?)
 
-    suspend fun getSession(): Session?
     suspend fun persistSession(session: Session?)
 
     /** Atomically replace credentials only while the expected session is current. */

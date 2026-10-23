@@ -15,7 +15,7 @@ import com.coffeepeek.admin.ui.screen.profile.PublicProfileScreenRenderer
 import com.coffeepeek.admin.utils.CpImage
 import com.coffeepeek.admin.utils.PrefetchListPhotos
 import com.coffeepeek.admin.utils.ShareHelper
-import com.coffeepeek.domain.repository.SessionRepository
+import com.coffeepeek.core.session.SessionReader
 import com.coffeepeek.domain.repository.UserRepository
 import com.coffeepeek.feature.authorblocking.api.AuthorBlockActions
 import com.coffeepeek.feature.authorblocking.api.AuthorReference
@@ -83,7 +83,7 @@ private fun ProfileAuthor.toReference() = AuthorReference(id, slug, name, avatar
 
 internal fun androidPublicProfileScreenRenderer(
     repository: PublicProfileRepository,
-    sessions: SessionRepository,
+    sessions: SessionReader,
     users: UserRepository,
     visibility: AuthorVisibility,
     blocks: AuthorBlockActions,

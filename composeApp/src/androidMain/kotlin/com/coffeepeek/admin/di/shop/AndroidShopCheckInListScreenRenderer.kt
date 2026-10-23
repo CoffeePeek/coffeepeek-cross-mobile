@@ -9,14 +9,14 @@ import com.coffeepeek.admin.ui.Navigator
 import com.coffeepeek.admin.ui.component.FullScreenImageDialog
 import com.coffeepeek.admin.ui.component.rememberCheckInDateLabel
 import com.coffeepeek.admin.ui.screen.shop.ShopCheckInListScreenRenderer
-import com.coffeepeek.domain.repository.SessionRepository
+import com.coffeepeek.core.session.SessionReader
 import com.coffeepeek.domain.repository.UserRepository
 import com.coffeepeek.feature.shop.domain.repository.ShopCheckInVoteRepository
 import com.coffeepeek.feature.shop.domain.repository.ShopDetailsRepository
 import com.coffeepeek.feature.shop.impl.createShopCheckInListEntry
 
 internal class AndroidShopCheckInListScreenRenderer(
-    private val sessions: SessionRepository,
+    private val sessions: SessionReader,
     private val users: UserRepository,
     private val details: ShopDetailsRepository,
     private val votes: ShopCheckInVoteRepository,

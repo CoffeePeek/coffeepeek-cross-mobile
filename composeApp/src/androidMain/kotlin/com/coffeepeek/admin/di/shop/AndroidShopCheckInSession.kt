@@ -1,7 +1,7 @@
 package com.coffeepeek.admin.di.shop
 
-import com.coffeepeek.domain.model.Session
-import com.coffeepeek.domain.repository.SessionRepository
+import com.coffeepeek.core.session.Session
+import com.coffeepeek.core.session.SessionReader
 import com.coffeepeek.feature.shop.domain.model.ShopCheckInCreateInput
 import com.coffeepeek.feature.shop.domain.repository.ShopCheckInRepository
 import kotlinx.coroutines.CancellationException
@@ -14,7 +14,7 @@ import kotlin.concurrent.Volatile
 
 /** A modal lease, not a token snapshot: same-account token renewal stays valid. */
 internal class AndroidShopCheckInSession(
-    private val sessions: SessionRepository,
+    private val sessions: SessionReader,
     private val repository: ShopCheckInRepository,
     private val onCheckInCreated: () -> Unit = {},
 ) : ShopCheckInRepository {

@@ -8,7 +8,7 @@ import com.coffeepeek.admin.ui.Navigator
 import com.coffeepeek.admin.ui.component.GuestAuthCard
 import com.coffeepeek.admin.ui.component.LocalFloatingNavClearance
 import com.coffeepeek.admin.ui.screen.profile.SettingsScreenRenderer
-import com.coffeepeek.domain.repository.SessionRepository
+import com.coffeepeek.core.session.SessionReader
 import com.coffeepeek.domain.repository.ShopRepository
 import com.coffeepeek.feature.settings.api.CityEntry
 import com.coffeepeek.feature.settings.api.SettingsAppInfo
@@ -51,7 +51,7 @@ internal class AndroidSettingsScreenRenderer(
 }
 
 internal fun androidSettingsScreenRenderer(
-    shops: ShopRepository, cityPreference: CityPreference, sessions: SessionRepository, updates: AppUpdateState,
+    shops: ShopRepository, cityPreference: CityPreference, sessions: SessionReader, updates: AppUpdateState,
 ): AndroidSettingsScreenRenderer {
     val theme = AndroidThemePort()
     val cities = AndroidCityPort(shops, cityPreference)

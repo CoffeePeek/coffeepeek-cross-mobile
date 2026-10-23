@@ -1,6 +1,6 @@
 package com.coffeepeek.admin.di.favorites
 
-import com.coffeepeek.domain.repository.SessionRepository
+import com.coffeepeek.core.session.SessionReader
 import com.coffeepeek.feature.favorites.data.local.FavoritesStorage
 import com.coffeepeek.feature.favorites.data.repository.createFavoritesRepository
 import com.coffeepeek.feature.favorites.domain.model.FavoriteShop
@@ -25,7 +25,7 @@ import kotlinx.coroutines.withContext
 @OptIn(ExperimentalCoroutinesApi::class)
 internal class AccountFavoritesRepository(
     private val storage: FavoritesStorage,
-    private val sessions: SessionRepository,
+    private val sessions: SessionReader,
     private val dispatcher: CoroutineDispatcher,
 ) : FavoritesRepository {
     private val mutex = Mutex()
