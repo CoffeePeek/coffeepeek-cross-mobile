@@ -229,7 +229,7 @@ internal fun ComposeMainScreen(isLoggedIn: Boolean) {
                         composable<Navigator.Screen.CommunityTab> {
                             koinInject<com.coffeepeek.admin.feature.community.ui.CommunityScreenRenderer>().Content(
                                 onCreateCheckIn = { Navigator.navigate(Navigator.Screen.CreateCheckIn) },
-                                notificationsAction = { com.coffeepeek.admin.feature.notifications.ui.NotificationsButton() },
+                                notificationsAction = { koinInject<com.coffeepeek.admin.feature.notifications.ui.NotificationsRenderer>().Bell() },
                             )
                         }
                     }

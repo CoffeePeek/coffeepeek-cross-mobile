@@ -15,6 +15,7 @@ import com.coffeepeek.admin.di.contributions.androidContributionsScreenRenderer
 import com.coffeepeek.admin.di.discovery.androidDiscoveryScreenRenderer
 import com.coffeepeek.feature.contributions.data.repository.createContributionsRepository
 import com.coffeepeek.admin.di.profile.androidAccountScreenRenderer
+import com.coffeepeek.admin.di.notifications.androidNotificationsRenderer
 import com.coffeepeek.admin.di.profile.androidOwnProfileScreenRenderer
 import com.coffeepeek.admin.di.settings.androidSettingsScreenRenderer
 import com.coffeepeek.admin.di.profile.androidPublicProfileScreenRenderer
@@ -74,6 +75,7 @@ internal fun initAndroidKoin(extraModules: List<org.koin.core.module.Module> = e
         accountRendererFactory = { androidAccountScreenRenderer(get(), get()) },
         settingsRendererFactory = { androidSettingsScreenRenderer(get(), get(), get(), get()) },
         appUpdateRendererFactory = { androidAppUpdateRenderer(get(), get()) },
+        notificationsRendererFactory = { androidNotificationsRenderer(get()) },
         authRendererFactory = { androidAuthScreenRenderer(get(), get()) },
         communityRendererFactory = { androidCommunityScreenRenderer(get(), get(), get(), get(), get(), get()) },
         contributionsRendererFactory = {

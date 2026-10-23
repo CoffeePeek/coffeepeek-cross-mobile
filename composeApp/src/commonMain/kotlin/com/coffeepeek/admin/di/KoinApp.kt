@@ -41,6 +41,8 @@ import com.coffeepeek.admin.ui.screen.coffee.CoffeeScreenRenderer
 import com.coffeepeek.admin.ui.screen.coffee.LegacyCoffeeScreenRenderer
 import com.coffeepeek.admin.feature.appupdate.ui.AppUpdateRenderer
 import com.coffeepeek.admin.feature.appupdate.ui.LegacyAppUpdateRenderer
+import com.coffeepeek.admin.feature.notifications.ui.LegacyNotificationsRenderer
+import com.coffeepeek.admin.feature.notifications.ui.NotificationsRenderer
 import com.coffeepeek.admin.ui.screen.profile.AccountScreenRenderer
 import com.coffeepeek.admin.ui.screen.profile.LegacyAccountScreenRenderer
 import com.coffeepeek.admin.feature.community.ui.CommunityScreenRenderer
@@ -124,6 +126,7 @@ fun initKoin(
     communityRendererFactory: Scope.() -> CommunityScreenRenderer = { LegacyCommunityScreenRenderer },
     contributionsRendererFactory: Scope.() -> ContributionsScreenRenderer = { LegacyContributionsScreenRenderer },
     discoveryRendererFactory: Scope.() -> DiscoveryScreenRenderer = { LegacyDiscoveryScreenRenderer },
+    notificationsRendererFactory: Scope.() -> NotificationsRenderer = { LegacyNotificationsRenderer },
     analyticsEnabled: Boolean = true,
 ) {
     check(AppConfig.baseUrl.isNotBlank()) {
@@ -146,7 +149,7 @@ fun initKoin(
             shopCheckInRendererFactory, shopDetailRendererFactory, shopCheckInListRendererFactory,
             checkInHistoryRendererFactory, checkInCreateFlowRendererFactory, coffeeRendererFactory, roasterRendererFactory,
             publicProfileRendererFactory, ownProfileRendererFactory, accountRendererFactory, settingsRendererFactory, appUpdateRendererFactory,
-            authRendererFactory, communityRendererFactory, contributionsRendererFactory, discoveryRendererFactory),
+            authRendererFactory, communityRendererFactory, contributionsRendererFactory, discoveryRendererFactory, notificationsRendererFactory),
         imageModule(),
         roasterModule(),
         updateInstallerModule(),
@@ -180,6 +183,7 @@ private fun appModule(
     communityRendererFactory: Scope.() -> CommunityScreenRenderer,
     contributionsRendererFactory: Scope.() -> ContributionsScreenRenderer,
     discoveryRendererFactory: Scope.() -> DiscoveryScreenRenderer,
+    notificationsRendererFactory: Scope.() -> NotificationsRenderer,
 ) = module {
     single<CoffeeScreenRenderer> { coffeeRendererFactory() }
     single<RoasterScreenRenderer> { roasterRendererFactory() }
@@ -188,6 +192,7 @@ private fun appModule(
     single<AccountScreenRenderer> { accountRendererFactory() }
     single<SettingsScreenRenderer> { settingsRendererFactory() }
     single<AppUpdateRenderer> { appUpdateRendererFactory() }
+    single<NotificationsRenderer> { notificationsRendererFactory() }
     single<AuthScreenRenderer> { authRendererFactory() }
     single<CommunityScreenRenderer> { communityRendererFactory() }
     single<ContributionsScreenRenderer> { contributionsRendererFactory() }
