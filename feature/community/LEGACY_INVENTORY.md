@@ -115,3 +115,18 @@ Open gates after the owner: real feed against the live backend, protected photo 
 - **Device (Pixel 7, legacy feed, dark theme)**: `Paged` renders the first page and loads the following ones while scrolling up to post 45; `PageFailsOnce` stops after page 1 with the shared error block and «Попробовать снова» loads the next page; `Failure` on the first page shows the same shared block («Упс, что-то пошло не так», «Сервис временно недоступен…») — the legacy text «Не удалось загрузить ленту» from the view model is **not shown** by this screen, the shared `LoadErrorContent` text is (note for the migrated owner: keep the shared look and wording).
 - **Not checked on a device**: `InvalidCursor` and `Empty` visuals, large font, light theme, own-item actions in the feed.
 
+## Step 1 result (parity tests on the legacy code)
+
+`CommunityParityGapsTest` (9 tests, commonTest, stable over three full reruns; Direct and Play unit tests and the iOS test compile pass) pins what the 14 older tests did not reach:
+
+- **Feed actions and analytics (A4, C5)**: `refresh("gesture")`, `loadMore` (`load_more`/`scroll`), `retry` (`retry`/`button`), no event for a refresh without a trigger, no second `load_more` event when the retry of page 2 goes through `loadMore`, no feed events on the personal timeline; item events `like`/`unlike` with `check_in_kind` shop|home, `shop`, `photo`.
+- **Guest (B1)**: a guest's like gives `auth_gate_shown feed_like` and the sign-in request, `loginHandled` clears it, selecting the personal timeline as a guest requests sign-in and stays Public.
+- **Blocks snapshot (A6)**: with a not-ready snapshot the public feed asks `refresh()` first; its failure shows `Не удалось загрузить блокировки. Повторите попытку.` and requests no posts; a retry after success loads them. **Quirk found**: the snapshot change published by that refresh also restarts the load, so the posts may be requested twice (the test accepts 1 or 2; the migrated owner should request once).
+- **First-page failure (A5)**: `Не удалось загрузить ленту`, `failedPage = 1`, no restart flag; retry refreshes.
+- **Report (B2)**: own post cannot be reported, input is cut at 2000, a blank text gives `Опишите проблему: от 1 до 2000 символов` and no request, a 2000-character text is sent as is, success clears the draft, closes the sheet and shows `Жалоба отправлена`.
+- **Visibility (B3, B6)**: only own posts toggle; while a mutation runs refresh, filters, timeline, edit and another mutation are ignored; failure keeps the post and shows the server message (or `Не удалось изменить видимость`); success makes an own public post private and it leaves the public feed.
+- **Edit (B4)**: ignored for another author's post and while the report sheet is open; cancel closes the editor.
+- **Labels (C3)**: all six publication labels.
+
+Still not covered by tests (UI only, to be covered by the migrated screen's tests and the device pass): the home-vs-shop edit branch (B5, a screen decision), load-more threshold (A4), photo preview and scroll reset (A8), analytics exposure modifiers.
+
