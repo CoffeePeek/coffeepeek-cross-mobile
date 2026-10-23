@@ -65,7 +65,11 @@ internal class AndroidProfileEditPort(private val users: UserRepository) : Profi
     override suspend fun updateAvatar(image: ProfileAvatarImage): Result<Unit> =
         users.updateAvatar(PendingPhotoUpload(fileName = image.fileName, contentType = image.contentType, bytes = image.bytes))
 
-    override suspend fun updateUsername(username: String): Result<Unit> = users.updateUsername(username)
+    override suspend fun updateUsername(username: String): Result<Unit> =
+        users.updateUsername(username).fold(
+            onSuccess = { Result.success(Unit) },
+            onFailure = { Result.failure(it.toUsernameChangeFailure()) },
+        )
     override suspend fun updateAbout(about: String): Result<Unit> = users.updateAbout(about)
 }
 

@@ -32,7 +32,7 @@ class HomeCheckInEditorViewModelTest {
         val updates = mutableListOf<Pair<String, HomePreparationInput>>()
         val writeCompletions = mutableListOf<Throwable?>()
         var detailResult = Result.success(entry())
-        var saveResult = Result.success(entry())
+        var saveResult = Result.success(entry().copy(visibility = HomePreparationVisibility.Public))
         var detailGate: CompletableDeferred<Unit>? = null
         var saveGate: CompletableDeferred<Unit>? = null
         var ignoreCancellation = false
@@ -119,7 +119,7 @@ class HomeCheckInEditorViewModelTest {
         runCurrent()
         assertTrue(vm.state.value.isReady)
         assertEquals(5, vm.state.value.draft.tasteScore)
-        assertEquals(HomePreparationVisibility.Private, vm.state.value.draft.visibility)
+        assertEquals(HomePreparationVisibility.Public, vm.state.value.draft.visibility)
         assertTrue(homePreparationFieldErrors(vm.state.value.draft, now = now).isEmpty())
         assertEquals(1, catalog.methodsCalls)
         assertTrue(repo.detailIds.isEmpty())
@@ -351,7 +351,7 @@ class HomeCheckInEditorViewModelTest {
         assertEquals(draft, vm.state.value.draft)
         assertFalse(vm.state.value.isSaving); assertEquals(1, repo.creates.size)
         assertNull(withTimeoutOrNull(1) { vm.events.first() })
-        repo.saveResult = Result.success(entry())
+        repo.saveResult = Result.success(entry().copy(visibility = HomePreparationVisibility.Public))
         vm.onAction(HomeCheckInEditorAction.Save); runCurrent()
         assertEquals(2, repo.creates.size)
     }
@@ -491,7 +491,7 @@ class HomeCheckInEditorViewModelTest {
             assertFalse(vm.state.value.isAccessRevoked)
             assertEquals("Private", vm.state.value.draft.text)
             assertEquals(issue, vm.state.value.saveIssue)
-            repo.saveResult = Result.success(entry())
+            repo.saveResult = Result.success(entry().copy(visibility = HomePreparationVisibility.Public))
             vm.onAction(HomeCheckInEditorAction.Save); runCurrent()
             assertEquals(HomeCheckInEditorEvent.Saved("home", false), vm.events.first().event)
         }
@@ -584,7 +584,7 @@ class HomeCheckInEditorViewModelTest {
         repo.saveResult = Result.failure(HomePreparationFailure(HomePreparationIssue.Offline, operation = HomePreparationOperation.PhotoUpload))
         vm.onAction(HomeCheckInEditorAction.Save); runCurrent()
         assertTrue(metrics.contains(HomeCheckInEditorMetric.Failed(HomeCheckInEditorStage.Photo, HomePreparationIssue.Offline)))
-        repo.saveResult = Result.success(entry())
+        repo.saveResult = Result.success(entry().copy(visibility = HomePreparationVisibility.Public))
         vm.act(HomeCheckInEditorAction.Save, HomeCheckInEditorAction.Save); runCurrent()
         store.clear()
         assertEquals(1, metrics.count { it is HomeCheckInEditorMetric.Saved })

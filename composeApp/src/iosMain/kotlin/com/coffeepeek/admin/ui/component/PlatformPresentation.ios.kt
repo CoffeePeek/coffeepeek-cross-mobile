@@ -248,19 +248,40 @@ internal actual fun NativeSegmentedControl(labels: List<String>, selectedIndex: 
     val callback = rememberUpdatedState(onSelected)
     val target = remember { ControlTarget { platformHaptic(HapticEvent.Selection); callback.value((it as UISegmentedControl).selectedSegmentIndex.toInt()) } }
     key(labels) {
-        UIKitView(factory = { UISegmentedControl(items = labels).apply { addTarget(target, NSSelectorFromString("change:"), UIControlEventValueChanged) } },
+        UIKitView(factory = {
+            val control = UISegmentedControl(items = labels).apply {
+                addTarget(target, NSSelectorFromString("change:"), UIControlEventValueChanged)
+                translatesAutoresizingMaskIntoConstraints = false
+            }
+            // The underlay hole is rectangular; its transparent pill corners need the card's color.
+            UIView().apply {
+                addSubview(control)
+                NSLayoutConstraint.activateConstraints(listOf(
+                    control.topAnchor.constraintEqualToAnchor(topAnchor),
+                    control.bottomAnchor.constraintEqualToAnchor(bottomAnchor),
+                    control.leadingAnchor.constraintEqualToAnchor(leadingAnchor),
+                    control.trailingAnchor.constraintEqualToAnchor(trailingAnchor),
+                ))
+            }
+        },
             modifier = modifier.fillMaxWidth().height(44.dp),
             // Embedded segments must respect Compose clipping and draw order when scrolled.
             properties = UIKitInteropProperties(isNativeAccessibilityEnabled = true, placedAsOverlay = false),
-            update = {
-                it.selectedSegmentIndex = selectedIndex.toLong()
-                it.overrideUserInterfaceStyle = colors.uiKitStyle
-                it.backgroundColor = colors.surface.toUIColor()
-                it.selectedSegmentTintColor = colors.surface.toUIColor()
-                it.setTitleTextAttributes(mapOf(NSForegroundColorAttributeName to colors.onSurfaceVariant.toUIColor()), UIControlStateNormal)
-                it.setTitleTextAttributes(mapOf(NSForegroundColorAttributeName to colors.onSurface.toUIColor()), UIControlStateSelected)
+            update = { container ->
+                container.backgroundColor = colors.surface.toUIColor()
+                container.overrideUserInterfaceStyle = colors.uiKitStyle
+                val control = container.subviews.single() as UISegmentedControl
+                control.selectedSegmentIndex = selectedIndex.toLong()
+                control.overrideUserInterfaceStyle = colors.uiKitStyle
+                control.backgroundColor = colors.surface.toUIColor()
+                control.selectedSegmentTintColor = colors.surface.toUIColor()
+                control.setTitleTextAttributes(mapOf(NSForegroundColorAttributeName to colors.onSurfaceVariant.toUIColor()), UIControlStateNormal)
+                control.setTitleTextAttributes(mapOf(NSForegroundColorAttributeName to colors.onSurface.toUIColor()), UIControlStateSelected)
             },
-            onRelease = { it.removeTarget(target, NSSelectorFromString("change:"), UIControlEventValueChanged) })
+            onRelease = { container ->
+                (container.subviews.single() as UISegmentedControl)
+                    .removeTarget(target, NSSelectorFromString("change:"), UIControlEventValueChanged)
+            })
     }
     return true
 }

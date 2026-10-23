@@ -80,7 +80,8 @@ fun ProfileScreen(vm: ProfileViewModel = koinInject()) {
                 onFavoritesClick = openFavorites,
                 onCheckInsClick = { Navigator.navigate(Navigator.Screen.VisitedPlaces) },
                 topBarActions = actions,
-                favoritesPreview = { FavoritesProfilePreview(openShop, openRoaster) },
+                favoritesPreview = { header -> FavoritesProfilePreview(openShop, openRoaster, header) },
+                ownCheckInCount = state.checkInCount,
                 activityCalendar = { PersonalProfileActivityCalendar() },
                 activityPreview = { onClick -> PersonalProfileActivityPreview(onClick) },
                 bottomContentPadding = bottomPadding,
@@ -128,9 +129,10 @@ fun ProfileScreen(vm: ProfileViewModel = koinInject()) {
                         onLogin = { Navigator.navigate(Navigator.Screen.Auth) },
                         onRegister = { Navigator.navigate(Navigator.Screen.Register) },
                     )
-                    TextButton(onClick = openFavorites) { Text("Избранное") }
-                    if (state.isLoggedIn) FavoritesProfilePreview(openShop, openRoaster)
-                    TextButton(onClick = {
+                    if (state.isLoggedIn) FavoritesProfilePreview(openShop, openRoaster) {
+                        TextButton(onClick = openFavorites) { Text("Избранное") }
+                    }
+                    if (state.checkInCount > 0) TextButton(onClick = {
                         Navigator.navigate(if (state.isLoggedIn) Navigator.Screen.VisitedPlaces else Navigator.Screen.Auth)
                     }) { Text("Чекины") }
                     Spacer(Modifier.height(bottomPadding))
