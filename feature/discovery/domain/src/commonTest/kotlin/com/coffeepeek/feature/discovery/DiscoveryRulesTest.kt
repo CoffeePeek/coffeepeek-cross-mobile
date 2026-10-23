@@ -97,4 +97,10 @@ class DiscoveryRulesTest {
         assertEquals(85.0, nearbyBounds(Coordinates(84.99, 0.0)).maxLat)
         assertNotNull(clampZoom(1f)); assertEquals(3f, clampZoom(1f)); assertEquals(20f, clampZoom(25f)); assertEquals(14f, clampZoom(14f))
     }
+
+    @Test fun theFilterSheetOffersTheAmenityTagsWithoutTheKindsOfPlaces() {
+        val tags = listOf(CatalogEntry("wifi", "Wi-Fi"), CatalogEntry("specialty", "Specialty"), CatalogEntry("x", " Кафе "), CatalogEntry("kofeynya", "Любая"), CatalogEntry("pets", "Можно с животными"))
+        assertEquals(listOf("wifi", "pets"), amenityTags(tags).map { it.id })
+        assertTrue(CatalogEntry("coffee-house", "?").isVenueType()); assertFalse(CatalogEntry("garden", "Сад").isVenueType())
+    }
 }
