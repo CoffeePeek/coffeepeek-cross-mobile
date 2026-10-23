@@ -48,6 +48,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.lifecycle.Lifecycle
+import androidx.navigation.NavHostController
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.compose.LocalOwnersProvider
@@ -156,6 +157,11 @@ object Navigator {
             val nickname: String? = null,
             val avatarUrl: String? = null,
         ) : Screen
+        @Serializable data class UserCheckIns(
+            val slug: String,
+            val nickname: String? = null,
+            val avatarUrl: String? = null,
+        ) : Screen
         @Serializable data object EditProfile : Screen
         @Serializable data object DeleteAccountPending : Screen
         @Serializable data object Favorites : Screen
@@ -231,6 +237,7 @@ object Navigator {
         is Screen.AddRoaster,
         is Screen.RoasterDetail,
         is Screen.UserProfile,
+        is Screen.UserCheckIns,
         is Screen.EditProfile,
         is Screen.DeleteAccountPending,
         is Screen.ShopReviews,
@@ -370,7 +377,7 @@ object Navigator {
                     is NavEvent.NavigateUp -> nav.navigateUp()
                     is NavEvent.NavigateTo -> {
                         if (event.screen.isHandledByRootNav()) {
-                            nav.navigate(event.screen)
+                            nav.navigateFromRoot(event.screen)
                         }
                     }
                     else -> Unit
@@ -378,7 +385,9 @@ object Navigator {
             }.launchIn(this)
         }
 
-        val shopPhotoUnderStatusBar = currentEntry?.destination?.hasRoute<Screen.ShopDetail>() == true
+        val shopPhotoUnderStatusBar = currentEntry?.destination?.let {
+            it.hasRoute<Screen.ShopDetail>() || it.hasRoute<Screen.RoasterDetail>()
+        } == true
         val systemInsets = WindowInsets.systemBars.union(WindowInsets.displayCutout)
         val darkTheme = MaterialTheme.colorScheme.background.luminance() < 0.5f
         PlatformSystemBars(darkTheme, lightStatusBarIcons = shopPhotoUnderStatusBar || darkTheme)
@@ -520,6 +529,9 @@ object Navigator {
                     composable<Screen.UserProfile> { backStack ->
                         PublicProfileRoute(backStack.toRoute<Screen.UserProfile>())
                     }
+                    composable<Screen.UserCheckIns> { backStack ->
+                        PublicCheckInsRoute(backStack.toRoute<Screen.UserCheckIns>())
+                    }
                     composable<Screen.EditProfile> { koinInject<AccountScreenRenderer>().EditProfile() }
                     composable<Screen.DeleteAccountPending> { koinInject<AccountScreenRenderer>().DeletionPending() }
                     composable<Screen.Favorites> { FavoritesDestination() }
@@ -560,6 +572,7 @@ object Navigator {
             Screen.AddRoaster -> AddRoasterScreen()
             is Screen.RoasterDetail -> koinInject<RoasterScreenRenderer>().Detail(screen.roasterId)
             is Screen.UserProfile -> PublicProfileRoute(screen)
+            is Screen.UserCheckIns -> PublicCheckInsRoute(screen)
             Screen.EditProfile -> koinInject<AccountScreenRenderer>().EditProfile()
             Screen.DeleteAccountPending -> koinInject<AccountScreenRenderer>().DeletionPending()
             Screen.Favorites -> FavoritesDestination()
@@ -572,6 +585,19 @@ object Navigator {
             Screen.UsagePolicy -> koinInject<SettingsScreenRenderer>().UsagePolicy()
             else -> error("Tab route must be handled by MainScreen: $screen")
         }
+    }
+
+    private fun NavHostController.navigateFromRoot(screen: Screen) {
+        val stack = currentBackStack.value.map { entry ->
+            if (entry.destination.hasRoute<Screen.UserProfile>()) entry.toRoute<Screen.UserProfile>() else null
+        }
+        val existing = stack.getOrNull(existingProfileIndex(stack, screen))
+        if (existing != null) popBackStack(existing, inclusive = false) else navigate(screen)
+    }
+
+    @Composable
+    private fun PublicCheckInsRoute(screen: Screen.UserCheckIns) {
+        koinInject<PublicProfileScreenRenderer>().Content(screen.slug, screen.nickname, screen.avatarUrl, checkInsOnly = true)
     }
 
     @Composable

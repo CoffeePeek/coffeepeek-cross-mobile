@@ -62,6 +62,18 @@ actual fun PlatformGlassIconButton(
     isLoading: Boolean,
     hazeState: HazeState?,
     content: @Composable () -> Unit,
+) = IosGlassIconButton(icon, onClick, contentDescription, modifier, enabled, selected, isLoading, placedAsOverlay = true)
+
+@Composable
+private fun IosGlassIconButton(
+    icon: GlassControlIcon,
+    onClick: () -> Unit,
+    contentDescription: String,
+    modifier: Modifier,
+    enabled: Boolean,
+    selected: Boolean,
+    isLoading: Boolean,
+    placedAsOverlay: Boolean,
 ) {
     val currentOnClick = rememberUpdatedState(onClick)
     val currentIcon = rememberUpdatedState(icon)
@@ -77,7 +89,7 @@ actual fun PlatformGlassIconButton(
             )
         },
         modifier = modifier.size(CpDimens.buttonHeight),
-        properties = UIKitInteropProperties(isNativeAccessibilityEnabled = true, placedAsOverlay = true),
+        properties = UIKitInteropProperties(isNativeAccessibilityEnabled = true, placedAsOverlay = placedAsOverlay),
         update = { button ->
             button.overrideUserInterfaceStyle = colors.uiKitStyle
             button.backgroundColor = UIColor.clearColor
@@ -142,14 +154,16 @@ actual fun PlatformMapControlButton(
     selected: Boolean,
     content: @Composable () -> Unit,
 ) {
-    PlatformGlassIconButton(
+    IosGlassIconButton(
         icon = icon,
         onClick = onClick,
         contentDescription = contentDescription,
         modifier = modifier,
+        enabled = true,
         selected = selected,
-        hazeState = null,
-        content = content,
+        isLoading = false,
+        // Map controls must stay below Compose headers and obey the map preview's clip.
+        placedAsOverlay = false,
     )
 }
 

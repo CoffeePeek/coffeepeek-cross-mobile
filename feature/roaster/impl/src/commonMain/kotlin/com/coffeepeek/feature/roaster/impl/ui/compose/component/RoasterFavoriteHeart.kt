@@ -7,6 +7,7 @@ import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.core.designsystem.component.CoffeePeekLikeButton
+import com.coffeepeek.core.designsystem.component.CoffeePeekLikeButtonStyle
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.feature.roaster.impl.resources.Res
 import com.coffeepeek.feature.roaster.impl.resources.roaster_favorite_add
@@ -27,14 +28,15 @@ internal fun RoasterFavoriteHeart(
         onClick = onClick,
         enabled = enabled,
         overImage = overImage,
+        style = if (overImage) CoffeePeekLikeButtonStyle.FloatingGlass else CoffeePeekLikeButtonStyle.Plain,
         modifier = modifier.size(48.dp),
     )
 }
 
 @Preview @Composable private fun RoasterFavoriteHeartLightPreview() = CoffeePeekTheme(darkTheme = false) {
-    RoasterFavoriteHeart(isFavorite = true, onClick = {})
+    RoasterFavoriteHeart(isFavorite = false, onClick = {}, overImage = true)
 }
 
 @Preview @Composable private fun RoasterFavoriteHeartDarkPreview() = CoffeePeekTheme(darkTheme = true) {
-    RoasterFavoriteHeart(isFavorite = true, onClick = {})
+    RoasterFavoriteHeart(isFavorite = true, onClick = {}, overImage = true)
 }
