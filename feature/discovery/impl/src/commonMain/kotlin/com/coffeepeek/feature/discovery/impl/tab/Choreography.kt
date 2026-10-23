@@ -17,7 +17,7 @@ private fun lerp(from: Float, to: Float, fraction: Float) = from + (to - from) *
 
 /**
  * Where the small map is drawn. While the mini-map item is laid out ([itemOffset] not null) its measured [anchor] is the place: it already includes the scroll
- * and the pull-to-refresh displacement of the list. Once the item is recycled (null) the map is parked above the viewport ([viewportTop] is the top of the
+ * of the list but not the pull-to-refresh displacement, the map stays pinned while the shops below are pulled. Once the item is recycled (null) the map is parked above the viewport ([viewportTop] is the top of the
  * scrolling area), keeping the anchor's size and left edge.
  */
 internal fun previewFrame(anchor: Frame, viewportTop: Float, itemOffset: Int?): Frame =

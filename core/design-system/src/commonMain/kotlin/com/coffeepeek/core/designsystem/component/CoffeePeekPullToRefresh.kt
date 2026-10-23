@@ -34,7 +34,8 @@ import org.jetbrains.compose.ui.tooling.preview.Preview
 
 /**
  * Attach the supplied modifier to the LazyColumn using [listState].
- * The caller owns refresh work, errors and [isRefreshing]; there are no requests here.
+ * [indicatorTopOffset] moves the indicator below fixed content the list does not shift; [onPullOffset] reports the displacement of the content in pixels
+ * so a caller that draws something over the list can keep it in place. The caller owns refresh work, errors and [isRefreshing]; there are no requests here.
  */
 @Composable
 fun CoffeePeekPullToRefresh(
@@ -47,6 +48,8 @@ fun CoffeePeekPullToRefresh(
     enabled: Boolean = true,
     threshold: Dp = 72.dp,
     cooldown: Duration = 1.seconds,
+    indicatorTopOffset: Dp = 0.dp,
+    onPullOffset: (Float) -> Unit = {},
     content: @Composable (scrollModifier: Modifier) -> Unit,
 ) {
     val thresholdPx = with(LocalDensity.current) { threshold.toPx() }
@@ -89,6 +92,8 @@ fun CoffeePeekPullToRefresh(
 
     LaunchedEffect(isRefreshing, enabled) { gesture.reset() }
     val offset = if (isRefreshing) thresholdPx else if (enabled) gesture.offset else 0f
+    val currentOnPullOffset by rememberUpdatedState(onPullOffset)
+    SideEffect { currentOnPullOffset(offset) }
     Box(modifier.semantics {
         if (enabled && !isRefreshing) {
             customActions = listOf(CustomAccessibilityAction(refreshDescription) {
@@ -103,7 +108,7 @@ fun CoffeePeekPullToRefresh(
         if (isRefreshing || offset > 0f) {
             val progress = (offset / thresholdPx).coerceIn(0f, 1f)
             Box(
-                modifier = Modifier.fillMaxWidth().padding(top = CoffeePeekDimens.spacing2)
+                modifier = Modifier.fillMaxWidth().padding(top = indicatorTopOffset + CoffeePeekDimens.spacing2)
                     .graphicsLayer { alpha = if (isRefreshing) 1f else progress }
                     .clearAndSetSemantics {
                         contentDescription = if (isRefreshing) loadingDescription else refreshDescription
