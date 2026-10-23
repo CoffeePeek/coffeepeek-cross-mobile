@@ -1,0 +1,39 @@
+package com.coffeepeek.feature.contributions.impl
+
+import com.coffeepeek.feature.contributions.api.ContributionsAccount
+import com.coffeepeek.feature.contributions.domain.model.*
+import com.coffeepeek.feature.contributions.domain.repository.ContributionsRepository
+import kotlinx.coroutines.flow.MutableStateFlow
+
+internal class FakeAccount(key: String? = "one") : ContributionsAccount {
+    val key = MutableStateFlow(key)
+    override val accountKey = this.key
+    override fun currentAccountKey() = key.value
+}
+
+internal fun <T> pageOf(vararg items: T, total: Int = items.size, pages: Int = if (items.isEmpty()) 0 else 1, current: Int = 1): Result<Paged<T>> =
+    Result.success(Paged(items.toList(), total, pages, current))
+
+internal class FakeRepository : ContributionsRepository {
+    var shops: suspend (ModerationStatus, Int) -> Result<Paged<ShopSubmission>> = { _, _ -> pageOf() }
+    var roasters: suspend (ModerationStatus, Int) -> Result<Paged<RoasterSubmission>> = { _, _ -> pageOf() }
+    var changes: suspend (ModerationStatus?, Int) -> Result<Paged<ChangeRequest>> = { _, _ -> pageOf() }
+    var change: suspend (String) -> Result<ChangeRequest> = { Result.failure(ContributionFailure(FailureKind.NotFound)) }
+    val requests = mutableListOf<String>()
+
+    override suspend fun shops(status: ModerationStatus, page: Int, pageSize: Int) = shops(status, page).also { requests += "shops:$status:$page" }
+    override suspend fun roasters(status: ModerationStatus, page: Int, pageSize: Int) = roasters(status, page).also { requests += "roasters:$status:$page" }
+    override suspend fun changes(status: ModerationStatus?, page: Int, pageSize: Int, shopSlug: String?, section: ChangeSection?) =
+        changes(status, page).also { requests += "changes:$status:$page" }
+    override suspend fun change(id: String) = change.invoke(id).also { requests += "change:$id" }
+    override suspend fun submitShop(shop: NewShop): Result<Unit> = error("Unused")
+    override suspend fun submitRoaster(roaster: NewRoaster): Result<RoasterSubmitted> = error("Unused")
+    override suspend fun submitChange(draft: ChangeDraft): Result<ChangeRequest> = error("Unused")
+    override suspend fun editChange(id: String, draft: ChangeDraft): Result<ChangeRequest> = error("Unused")
+}
+
+internal fun shop(id: String, status: ModerationStatus = ModerationStatus.Approved, published: String? = null, reason: String? = null) =
+    ShopSubmission(id, "Shop $id", "Street $id", status, reason, published)
+
+internal fun request(id: String, section: ChangeSection = ChangeSection.Description, payload: ChangePayload = ChangePayload(description = "text"), status: ModerationStatus = ModerationStatus.Pending) =
+    ChangeRequest(id, "cafe", section, payload, status, rejectionReason = null, createdAtUtc = "2026-10-21T07:00:00Z", updatedAtUtc = null)
