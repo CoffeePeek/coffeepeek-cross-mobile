@@ -5,6 +5,8 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
@@ -69,10 +71,13 @@ internal fun CheckInHistoryScreenContent(state: CombinedHistoryState, onAction: 
             topBar = { CoffeePeekTopBar(stringResource(Res.string.history_title), stringResource(Res.string.history_back),
                 onBack = { onAction(CombinedHistoryAction.Back) }) },
             floatingActionButton = {
-                if (state.isLoggedIn) FloatingActionButton({ onAction(CombinedHistoryAction.ShowCreate) }, shape = CircleShape,
-                    modifier = createButtonModifier,
-                    containerColor = MaterialTheme.colorScheme.primary, contentColor = MaterialTheme.colorScheme.onPrimary) {
-                    Icon(CoffeePeekIcons.Add, stringResource(Res.string.history_add), Modifier.size(28.dp))
+                if (state.isLoggedIn) {
+                    val description = stringResource(Res.string.history_add)
+                    FloatingActionButton({ onAction(CombinedHistoryAction.ShowCreate) }, shape = CircleShape,
+                        modifier = createButtonModifier.semantics(mergeDescendants = true) { contentDescription = description },
+                        containerColor = MaterialTheme.colorScheme.primary, contentColor = MaterialTheme.colorScheme.onPrimary) {
+                        Icon(CoffeePeekIcons.Add, contentDescription = null, modifier = Modifier.size(28.dp))
+                    }
                 }
             }, containerColor = MaterialTheme.colorScheme.background) { insets ->
             Column(Modifier.fillMaxSize().padding(insets).consumeWindowInsets(insets)) {

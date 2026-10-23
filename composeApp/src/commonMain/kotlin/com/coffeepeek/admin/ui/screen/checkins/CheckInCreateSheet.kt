@@ -26,6 +26,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import coffeepeek.composeapp.generated.resources.Res
+import coffeepeek.composeapp.generated.resources.check_in_add
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.admin.theme.CpDimens
@@ -41,11 +46,13 @@ import androidx.compose.ui.tooling.preview.Preview
 @Composable
 internal fun CheckInCreateButton(modifier: Modifier = Modifier, onClick: () -> Unit) {
     val analyticsPage = Analytics.service?.state?.collectAsState()?.value?.page ?: "other"
+    val description = stringResource(Res.string.check_in_add)
     FloatingActionButton(onClick = onClick, shape = CircleShape,
-        modifier = modifier.analyticsExposure("check_in", "global_create", analyticsPage),
+        modifier = modifier.analyticsExposure("check_in", "global_create", analyticsPage)
+            .semantics(mergeDescendants = true) { contentDescription = description },
         containerColor = MaterialTheme.colorScheme.primary,
         contentColor = MaterialTheme.colorScheme.onPrimary) {
-        Icon(CpIcons.Add, "Добавить чекин", Modifier.size(28.dp))
+        Icon(CpIcons.Add, contentDescription = null, modifier = Modifier.size(28.dp))
     }
 }
 
@@ -108,4 +115,12 @@ private fun CreateChoice(title: String, description: String, icon: ImageVector, 
 
 @Preview @Composable private fun CheckInCreatePickerDarkPreview() = CoffeePeekTheme(darkTheme = true) {
     CheckInCreateContent({}, {})
+}
+
+@Preview @Composable private fun CheckInCreateButtonLightPreview() = CoffeePeekTheme(darkTheme = false) {
+    CheckInCreateButton(Modifier.padding(16.dp), onClick = {})
+}
+
+@Preview @Composable private fun CheckInCreateButtonDarkPreview() = CoffeePeekTheme(darkTheme = true) {
+    CheckInCreateButton(Modifier.padding(16.dp), onClick = {})
 }

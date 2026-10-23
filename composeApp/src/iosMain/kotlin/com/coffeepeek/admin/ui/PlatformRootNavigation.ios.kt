@@ -208,7 +208,12 @@ internal actual fun PlatformRootNavigation(
                     when {
                         event.screen == Navigator.Screen.Main -> navigation.popToRootViewControllerAnimated(animated)
                         tabIndex != null -> visibleTabIndices.indexOf(tabIndex).takeIf { it >= 0 }?.let { tabs.selectedIndex = it.toULong() }
-                        event.screen.isHandledByRootNav() -> navigation.pushViewController(controller(event.screen).apply { hidesBottomBarWhenPushed = true }, animated)
+                        event.screen.isHandledByRootNav() -> {
+                            val stack = navigation.viewControllers.map { (it as? NativeScreenController)?.route }
+                            val existing = navigation.viewControllers.getOrNull(existingProfileIndex(stack, event.screen)) as? UIViewController
+                            if (existing != null) navigation.popToViewController(existing, animated)
+                            else navigation.pushViewController(controller(event.screen).apply { hidesBottomBarWhenPushed = true }, animated)
+                        }
                     }
                 }
             }
