@@ -20,6 +20,7 @@ final class MapLibreMapProvider: NSObject, IosNativeMapProvider, MLNMapViewDeleg
         map.autoresizingMask = [.flexibleWidth, .flexibleHeight]
         map.automaticallyAdjustsContentInset = false
         map.delegate = self
+        map.showsCompassView = false
         map.showsLogoView = false
         map.showsAttributionButton = true
         map.setCenter(CLLocationCoordinate2D(latitude: 53.9045, longitude: 27.5615), zoomLevel: 12, animated: false)
