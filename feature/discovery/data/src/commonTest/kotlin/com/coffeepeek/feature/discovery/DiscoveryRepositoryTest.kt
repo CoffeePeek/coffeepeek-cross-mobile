@@ -5,6 +5,7 @@ import com.coffeepeek.feature.discovery.data.repository.createDiscoveryRepositor
 import com.coffeepeek.feature.discovery.domain.model.*
 import com.coffeepeek.feature.discovery.domain.repository.DiscoveryRepository
 import io.ktor.client.engine.mock.MockEngine
+import kotlinx.coroutines.sync.withLock
 import io.ktor.client.engine.mock.respond
 import io.ktor.client.request.HttpRequestData
 import io.ktor.http.HttpHeaders
@@ -19,6 +20,8 @@ import kotlin.test.*
 
 class DiscoveryRepositoryTest {
     private val requests = mutableListOf<HttpRequestData>()
+    /** The catalogs are read in parallel, so the recording must not race. */
+    private val recording = kotlinx.coroutines.sync.Mutex()
     private var reply: (HttpRequestData) -> Pair<HttpStatusCode, String> = { HttpStatusCode.OK to """{"isSuccess":true,"data":null}""" }
     private var favorites: suspend () -> Set<String> = { emptySet() }
     private var roasters: suspend () -> Result<List<CatalogEntry>> = { Result.success(emptyList()) }
@@ -26,7 +29,7 @@ class DiscoveryRepositoryTest {
 
     private fun repository(): DiscoveryRepository {
         val client = HttpClientFactory(MockEngine { request ->
-            requests += request
+            recording.withLock { requests += request }
             val (status, body) = reply(request)
             respond(body, status, json)
         }).api("https://api.example")

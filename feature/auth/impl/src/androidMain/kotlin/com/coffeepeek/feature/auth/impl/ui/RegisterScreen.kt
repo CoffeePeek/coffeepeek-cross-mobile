@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.selection.toggleable
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CheckboxDefaults
@@ -25,10 +24,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
-import androidx.compose.ui.layout.layout
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.LinkAnnotation
@@ -122,34 +119,16 @@ internal fun RegisterContent(
 }
 
 @Composable
-private fun Title(text: String, modifier: Modifier = Modifier) {
-    Text(
-        text = text,
-        style = MaterialTheme.typography.headlineMedium.copy(fontSize = 26.sp, fontWeight = FontWeight.Bold, letterSpacing = (-0.52).sp, lineHeight = 28.6.sp),
-        color = MaterialTheme.colorScheme.onSurface,
-        modifier = modifier.fillMaxWidth(),
-    )
-}
-
-@Composable
-private fun Subtitle(text: String, modifier: Modifier = Modifier) {
-    Text(
-        text = text,
-        style = MaterialTheme.typography.bodyMedium.copy(fontSize = 14.sp, lineHeight = 21.sp),
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-        modifier = modifier.fillMaxWidth(),
-    )
-}
+private fun steps() = listOf(stringResource(R.string.auth_step_email), stringResource(R.string.auth_step_register), stringResource(R.string.auth_step_done))
 
 @Composable
 private fun EmailStep(state: RegisterState, onAction: (RegisterAction) -> Unit, onGoToLogin: () -> Unit, onGoogle: (() -> Unit)?) {
-    Stepper(activeIndex = 0)
-    Spacer(Modifier.height(20.dp))
-    Title(stringResource(R.string.auth_register_email_title))
-    Subtitle(stringResource(R.string.auth_register_email_subtitle), Modifier.padding(top = 8.dp, bottom = 24.dp))
+    AuthStepper(activeIndex = 0, steps = steps())
+    AuthHeading(stringResource(R.string.auth_register_email_title), stringResource(R.string.auth_register_email_subtitle))
     AuthTextField(
         value = state.email,
         onValueChange = { onAction(RegisterAction.EmailChanged(it)) },
+        label = stringResource(R.string.auth_email_label),
         placeholder = stringResource(R.string.auth_email_placeholder),
         leadingIcon = CoffeePeekIcons.Email,
         errorText = when {
@@ -161,55 +140,51 @@ private fun EmailStep(state: RegisterState, onAction: (RegisterAction) -> Unit, 
     )
     FailureText(state, R.string.auth_check_failed)
     if (onGoogle != null) {
-        Spacer(Modifier.height(14.dp))
         AuthOrDivider()
-        Spacer(Modifier.height(14.dp))
-        SocialRow { GoogleSignInButton(onClick = onGoogle, enabled = !state.busy) }
+        GoogleSignInButton(onClick = onGoogle, enabled = !state.busy)
         SocialFailureText(state.socialFailure)
     }
-    Spacer(Modifier.height(if (onGoogle != null) 14.dp else CoffeePeekDimens.spacing5))
     AuthPrimaryButton(
         text = stringResource(R.string.auth_continue),
         onClick = { onAction(RegisterAction.ContinueWithEmail) },
         enabled = canContinueWithEmail(state.email),
         loading = state.busy,
     )
-    AuthFooterLink(text = stringResource(R.string.auth_already_have_account), onClick = onGoToLogin)
+    AuthFooterRow(text = stringResource(R.string.auth_already_have_account), onClick = onGoToLogin)
 }
 
 @Composable
 private fun DetailsStep(state: RegisterState, onAction: (RegisterAction) -> Unit, onGoToLogin: () -> Unit) {
-    Stepper(activeIndex = 1)
-    Spacer(Modifier.height(16.dp))
+    AuthStepper(activeIndex = 1, steps = steps())
     NewProfileBadge()
-    Title(stringResource(R.string.auth_register_title), Modifier.padding(top = 14.dp))
+    AuthHeading(stringResource(R.string.auth_register_title))
     EmailChip(state.email, onChange = { onAction(RegisterAction.ChangeEmail) })
-    Spacer(Modifier.height(14.dp))
-    AuthTextField(
-        label = stringResource(R.string.auth_name_label),
-        value = state.name,
-        onValueChange = { onAction(RegisterAction.NameChanged(it)) },
-        placeholder = stringResource(R.string.auth_name_placeholder),
-        leadingIcon = CoffeePeekIcons.User,
-        text = true,
-        next = true,
-        enabled = !state.busy,
-    )
-    Spacer(Modifier.height(14.dp))
-    AuthTextField(
-        label = stringResource(R.string.auth_password_label),
-        value = state.password,
-        onValueChange = { onAction(RegisterAction.PasswordChanged(it)) },
-        placeholder = stringResource(R.string.auth_register_password_placeholder),
-        leadingIcon = CoffeePeekIcons.Lock,
-        isPassword = true,
-        errorText = state.passwordIssue?.let { passwordError(it) },
-        enabled = !state.busy,
-    )
-    PasswordStrengthBar(state.password)
-    Spacer(Modifier.height(14.dp))
+    Column(verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing4)) {
+        AuthTextField(
+            label = stringResource(R.string.auth_name_label),
+            value = state.name,
+            onValueChange = { onAction(RegisterAction.NameChanged(it)) },
+            placeholder = stringResource(R.string.auth_name_placeholder),
+            leadingIcon = CoffeePeekIcons.User,
+            text = true,
+            next = true,
+            enabled = !state.busy,
+        )
+        Column {
+            AuthTextField(
+                label = stringResource(R.string.auth_password_label),
+                value = state.password,
+                onValueChange = { onAction(RegisterAction.PasswordChanged(it)) },
+                placeholder = stringResource(R.string.auth_register_password_placeholder),
+                leadingIcon = CoffeePeekIcons.Lock,
+                isPassword = true,
+                errorText = state.passwordIssue?.let { passwordError(it) },
+                enabled = !state.busy,
+            )
+            PasswordStrengthBar(state.password)
+        }
+    }
     CheckRow(state.termsAccepted, { onAction(RegisterAction.TermsChanged(it)) }) { TermsText() }
-    Spacer(Modifier.height(14.dp))
     CheckRow(state.analyticsAccepted, { onAction(RegisterAction.AnalyticsChanged(it)) }) {
         Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
             Text(stringResource(R.string.auth_analytics_title), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurface)
@@ -221,28 +196,21 @@ private fun DetailsStep(state: RegisterState, onAction: (RegisterAction) -> Unit
         }
     }
     state.reported?.let { issue ->
-        Text(
-            text = stringResource(reportedText(issue)),
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.error,
-            modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
-        )
+        Text(text = stringResource(reportedText(issue)), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
     }
     FailureText(state, R.string.auth_register_failed)
-    Spacer(Modifier.height(CoffeePeekDimens.spacing5))
     AuthPrimaryButton(
         text = stringResource(R.string.auth_register_submit),
         onClick = { onAction(RegisterAction.Submit) },
         enabled = canSubmitRegistration(state.name, state.password, state.termsAccepted),
         loading = state.busy,
     )
-    AuthFooterLink(text = stringResource(R.string.auth_already_have_account), onClick = onGoToLogin)
+    AuthFooterRow(text = stringResource(R.string.auth_already_have_account), onClick = onGoToLogin)
 }
 
 @Composable
 private fun SuccessStep(email: String, onGoToLogin: () -> Unit) {
-    Title(stringResource(R.string.auth_register_success_title))
-    Subtitle(stringResource(R.string.auth_register_success_subtitle, email), Modifier.padding(top = 10.dp, bottom = 28.dp))
+    AuthHeading(stringResource(R.string.auth_register_success_title), stringResource(R.string.auth_register_success_subtitle, email))
     AuthPrimaryButton(text = stringResource(R.string.auth_go_to_login), onClick = onGoToLogin)
 }
 
@@ -254,7 +222,6 @@ private fun FailureText(state: RegisterState, generic: Int) {
         text = failure.message ?: stringResource(generic),
         style = MaterialTheme.typography.bodySmall,
         color = MaterialTheme.colorScheme.error,
-        modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
     )
 }
 
@@ -318,7 +285,6 @@ private fun EmailChip(email: String, onChange: () -> Unit) {
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
             .fillMaxWidth()
-            .padding(top = 8.dp, bottom = 8.dp)
             .background(if (isDark) Color(0x08FFFFFF) else CoffeePeekColors.LightSurfaceAlt, RoundedCornerShape(12.dp))
             .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(12.dp))
             .padding(horizontal = 12.dp, vertical = 4.dp),
@@ -363,63 +329,6 @@ private fun PasswordStrengthBar(password: String) {
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(start = 8.dp),
             )
-        }
-    }
-}
-
-@Composable
-private fun Stepper(activeIndex: Int) {
-    val steps = listOf(R.string.auth_step_email, R.string.auth_step_register, R.string.auth_step_done)
-    // The card pads 40 dp; the pills bleed into that padding so the three labels fit on a narrow phone (negative padding is not allowed).
-    val bleed = AuthCardPadding - 16.dp
-    Row(
-        Modifier
-            .fillMaxWidth()
-            .layout { measurable, constraints ->
-                val bleedPx = bleed.roundToPx()
-                val widened = (constraints.maxWidth + bleedPx * 2).coerceAtLeast(0)
-                val placeable = measurable.measure(constraints.copy(minWidth = widened, maxWidth = widened))
-                layout(constraints.maxWidth, placeable.height) { placeable.placeRelative(-bleedPx, 0) }
-            },
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        steps.forEachIndexed { index, label ->
-            val active = index <= activeIndex
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier
-                    .clip(RoundedCornerShape(99.dp))
-                    .background(if (active) CoffeePeekColors.Primary.copy(alpha = 0.12f) else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.04f))
-                    .padding(horizontal = 8.dp, vertical = 4.dp),
-            ) {
-                Box(
-                    modifier = Modifier
-                        .size(16.dp)
-                        .clip(CircleShape)
-                        .background(if (active) CoffeePeekColors.Primary else Color.Transparent)
-                        .then(if (!active) Modifier.border(1.dp, MaterialTheme.colorScheme.outline, CircleShape) else Modifier),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    if (index < activeIndex) {
-                        Icon(CoffeePeekIcons.Check, contentDescription = null, tint = CoffeePeekColors.DarkTextOnPrimary, modifier = Modifier.size(10.dp))
-                    } else {
-                        Text(
-                            text = "${index + 1}",
-                            style = MaterialTheme.typography.labelSmall.copy(fontSize = 9.sp, fontWeight = FontWeight.Bold),
-                            color = if (active) CoffeePeekColors.DarkTextOnPrimary else MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    }
-                }
-                Spacer(Modifier.size(4.dp))
-                Text(
-                    text = stringResource(label),
-                    style = MaterialTheme.typography.labelSmall.copy(fontSize = 11.sp, fontWeight = FontWeight.SemiBold),
-                    color = if (active) CoffeePeekColors.Primary else MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 1,
-                    softWrap = false,
-                )
-            }
         }
     }
 }

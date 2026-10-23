@@ -5,11 +5,16 @@ import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 class ChoreographyTest {
-    @Test fun thePreviewFollowsTheScrollAndStaysAboveTheViewportWhenItsItemIsRecycled() {
+    @Test fun thePreviewIsTheMeasuredSlotAndStaysAboveTheViewportWhenItsItemIsRecycled() {
         val anchor = Frame(16f, 180f, 384f, 420f)
         assertEquals(anchor, previewFrame(anchor, 164f, 16))
-        assertEquals(Frame(16f, 64f, 384f, 304f), previewFrame(anchor, 164f, -100))
+        // The measured slot already follows the scroll and the pull to refresh.
+        val scrolled = Frame(16f, 64f, 384f, 304f)
+        assertEquals(scrolled, previewFrame(scrolled, 164f, -100))
+        val pulled = Frame(16f, 252f, 384f, 492f)
+        assertEquals(pulled, previewFrame(pulled, 164f, 16))
         assertEquals(164f, previewFrame(anchor, 164f, null).bottom)
+        assertEquals(anchor.width, previewFrame(anchor, 164f, null).width)
     }
 
     @Test fun theShopListPushesTheMapWithoutOverlappingItAndCancelReversesTheMotion() {
