@@ -1,10 +1,11 @@
 package com.coffeepeek.feature.discovery.data.backend
 
 import com.coffeepeek.core.network.requestResult
+import com.coffeepeek.core.network.errorMessage
+import com.coffeepeek.core.network.envelopeData
 import com.coffeepeek.feature.discovery.domain.model.DiscoveryFailure
 import com.coffeepeek.feature.discovery.domain.model.FailureKind
 import io.ktor.client.HttpClient
-import io.ktor.client.call.body
 import io.ktor.client.plugins.expectSuccess
 import io.ktor.client.request.get
 import io.ktor.client.request.parameter
@@ -15,8 +16,6 @@ import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
 import io.ktor.http.isSuccess
-import kotlinx.coroutines.CancellationException
-import kotlinx.serialization.json.JsonElement
 
 private const val SHOPS = "/api/CoffeeShops"
 private const val NEARBY = "/api/v1/coffee-shops/search"
@@ -97,19 +96,9 @@ internal class DiscoveryBackend(private val client: HttpClient) {
 
     private suspend fun HttpResponse.requireSuccess() {
         if (status.isSuccess()) return
-        val message = try {
-            body<Envelope<JsonElement>>().message.clean()
-        } catch (cancelled: CancellationException) {
-            throw cancelled
-        } catch (_: Exception) { null }
-        throw DiscoveryFailure(if (status == HttpStatusCode.Unauthorized) FailureKind.SignInRequired else FailureKind.Other, message)
+        throw DiscoveryFailure(if (status == HttpStatusCode.Unauthorized) FailureKind.SignInRequired else FailureKind.Other, errorMessage())
     }
 
-    private suspend inline fun <reified T> HttpResponse.envelope(): T {
-        val envelope = body<Envelope<T>>()
-        if (!envelope.isSuccess) throw DiscoveryFailure(FailureKind.Other, envelope.message.clean())
-        return checkNotNull(envelope.data) { "Missing response data" }
-    }
+    private suspend inline fun <reified T> HttpResponse.envelope(): T = envelopeData { DiscoveryFailure(FailureKind.Other, it) }
 
-    private fun String?.clean(): String? = this?.takeIf(String::isNotBlank)
 }

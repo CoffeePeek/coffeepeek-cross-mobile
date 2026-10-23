@@ -4,13 +4,6 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
-internal data class Envelope<T>(
-    @SerialName("isSuccess") val isSuccess: Boolean = false,
-    @SerialName("data") val data: T? = null,
-    @SerialName("message") val message: String? = null,
-)
-
-@Serializable
 internal data class PageDto<T>(
     @SerialName("items") val items: List<T> = emptyList(),
     @SerialName("totalItems") val totalItems: Int = 0,

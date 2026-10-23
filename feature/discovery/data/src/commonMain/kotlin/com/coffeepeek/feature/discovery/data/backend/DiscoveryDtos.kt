@@ -19,13 +19,6 @@ import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.doubleOrNull
 import kotlinx.serialization.json.intOrNull
 
-@Serializable
-internal data class Envelope<T>(
-    @SerialName("isSuccess") val isSuccess: Boolean = false,
-    @SerialName("data") val data: T? = null,
-    @SerialName("message") val message: String? = null,
-)
-
 /** The server sends counters as a number, a string or null. */
 internal object FlexibleIntSerializer : KSerializer<Int> {
     override val descriptor: SerialDescriptor = PrimitiveSerialDescriptor("FlexibleInt", PrimitiveKind.INT)

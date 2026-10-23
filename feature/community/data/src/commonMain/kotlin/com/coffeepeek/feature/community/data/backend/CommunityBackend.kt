@@ -1,6 +1,9 @@
 package com.coffeepeek.feature.community.data.backend
 
 import com.coffeepeek.core.network.requestResult
+import com.coffeepeek.core.network.errorMessage
+import com.coffeepeek.core.network.envelopeData
+import com.coffeepeek.core.network.ApiEnvelope
 import com.coffeepeek.feature.community.domain.model.CommunityFailure
 import com.coffeepeek.feature.community.domain.model.FailureKind
 import com.coffeepeek.feature.community.domain.model.FeedFilters
@@ -21,7 +24,6 @@ import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
 import io.ktor.http.isSuccess
-import kotlinx.coroutines.CancellationException
 
 private const val CHECK_INS = "/api/v1/check-ins"
 
@@ -78,17 +80,12 @@ internal class CommunityBackend(private val client: HttpClient) {
     suspend fun report(id: String, text: String): Result<Unit> = requestResult {
         val response = client.post("$CHECK_INS/$id/reports") { expectSuccess = false; contentType(ContentType.Application.Json); setBody(ReportRequest(text)) }
         response.requireSuccess()
-        val envelope = response.body<Envelope<kotlinx.serialization.json.JsonElement>>()
+        val envelope = response.body<ApiEnvelope<kotlinx.serialization.json.JsonElement>>()
         if (response.status != HttpStatusCode.Created || !envelope.isSuccess || envelope.data == null) throw CommunityFailure(FailureKind.Other, envelope.message?.takeIf(String::isNotBlank))
     }
 
     private suspend fun HttpResponse.requireSuccess() {
         if (status.isSuccess()) return
-        val message = try {
-            body<Envelope<kotlinx.serialization.json.JsonElement>>().message?.takeIf(String::isNotBlank)
-        } catch (cancelled: CancellationException) {
-            throw cancelled
-        } catch (_: Exception) { null }
         throw CommunityFailure(
             when (status) {
                 HttpStatusCode.Unauthorized -> FailureKind.SignInRequired
@@ -96,13 +93,9 @@ internal class CommunityBackend(private val client: HttpClient) {
                 HttpStatusCode.NotFound -> FailureKind.NotFound
                 else -> FailureKind.Other
             },
-            message,
+            errorMessage(),
         )
     }
 
-    private suspend inline fun <reified T> HttpResponse.envelope(): T {
-        val envelope = body<Envelope<T>>()
-        if (!envelope.isSuccess) throw CommunityFailure(FailureKind.Other, envelope.message?.takeIf(String::isNotBlank))
-        return checkNotNull(envelope.data) { "Missing response data" }
-    }
+    private suspend inline fun <reified T> HttpResponse.envelope(): T = envelopeData { CommunityFailure(FailureKind.Other, it) }
 }
