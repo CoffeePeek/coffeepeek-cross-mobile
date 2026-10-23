@@ -1,5 +1,6 @@
 package com.coffeepeek.core.designsystem.component
 
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -19,11 +20,13 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.nestedscroll.*
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.*
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
+import kotlin.math.roundToInt
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.TimeSource
@@ -96,7 +99,7 @@ fun CoffeePeekPullToRefresh(
             })
         }
     }) {
-        content(Modifier.nestedScroll(connection).graphicsLayer { translationY = offset })
+        content(Modifier.nestedScroll(connection).offset { IntOffset(0, offset.roundToInt()) })
         if (isRefreshing || offset > 0f) {
             val progress = (offset / thresholdPx).coerceIn(0f, 1f)
             Box(
