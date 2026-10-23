@@ -45,7 +45,9 @@ internal actual fun ShopRoutePicker(latitude: Double, longitude: Double, onDismi
     }
 }
 
-internal actual fun shopRouteOptions(latitude: Double, longitude: Double): List<ShopRouteOption> = listOf(
+internal data class ShopRouteOption(val label: String, val url: String)
+
+internal fun shopRouteOptions(latitude: Double, longitude: Double): List<ShopRouteOption> = listOf(
     ShopRouteOption("Google Карты", buildGoogleMapsRouteUrl(latitude, longitude)),
     ShopRouteOption("Яндекс Карты", buildYandexMapsRouteUrl(latitude, longitude)),
 )

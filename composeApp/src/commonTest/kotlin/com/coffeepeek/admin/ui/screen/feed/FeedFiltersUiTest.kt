@@ -13,7 +13,10 @@ class FeedFiltersUiTest {
     fun previewFollowsScrollAndStaysAboveTheViewportWhenItsItemIsRecycled() {
         val anchor = Rect(16f, 180f, 384f, 420f)
         assertEquals(anchor, discoveryMapPreviewBounds(anchor, 164f, 16))
-        assertEquals(Rect(16f, 64f, 384f, 304f), discoveryMapPreviewBounds(anchor, 164f, -100))
+        val scrolledAnchor = Rect(16f, 64f, 384f, 304f)
+        assertEquals(scrolledAnchor, discoveryMapPreviewBounds(scrolledAnchor, 164f, -100))
+        val pulledAnchor = Rect(16f, 252f, 384f, 492f)
+        assertEquals(pulledAnchor, discoveryMapPreviewBounds(pulledAnchor, 164f, 16))
         val recycled = discoveryMapPreviewBounds(anchor, 164f, null)
         assertEquals(164f, recycled.bottom)
         assertEquals(anchor, discoveryMapPreviewBounds(anchor, 164f, 16))

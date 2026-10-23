@@ -25,9 +25,7 @@ internal fun HistoryTimelineContent(state: CombinedHistoryState, onAction: (Comb
     formatTime: (String) -> String, modifier: Modifier = Modifier, imageContent: HistoryImageContent? = null) {
     val listState = rememberLazyListState()
     val entries = state.timeline
-    val refreshing = state.isTimelineLoading || state.filter.includes(HistorySource.Shop) && state.shopCalendar.isLoading ||
-        state.filter.includes(HistorySource.Home) && state.homeCalendar.isLoading
-    CoffeePeekPullToRefresh(listState, refreshing && entries.isNotEmpty(), { onAction(CombinedHistoryAction.Refresh) },
+    CoffeePeekPullToRefresh(listState, state.isRefreshing, { onAction(CombinedHistoryAction.Refresh) },
         stringResource(Res.string.history_refresh), stringResource(Res.string.history_loading), modifier.fillMaxSize()) { scroll ->
         LazyColumn(state = listState, modifier = scroll.fillMaxSize(),
             contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 96.dp)) {
@@ -107,4 +105,12 @@ internal fun HistoryTimelineContent(state: CombinedHistoryState, onAction: (Comb
 
 @PreviewLightDark @Composable private fun HistoryTimelinePreview() = CoffeePeekTheme {
     HistoryTimelineContent(previewCombinedHistoryState(), {}, { "13:00" })
+}
+
+@PreviewLightDark @Composable private fun HistoryTimelineLoadingPreview() = CoffeePeekTheme {
+    HistoryTimelineContent(previewCombinedHistoryState().copy(homeCalendar = CombinedHistoryLoadState(emptyMap(), isLoading = true)), {}, { "13:00" })
+}
+
+@PreviewLightDark @Composable private fun HistoryTimelineRefreshingPreview() = CoffeePeekTheme {
+    HistoryTimelineContent(previewCombinedHistoryState().copy(isRefreshing = true), {}, { "13:00" })
 }
