@@ -15,6 +15,20 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.foundation.layout.height
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.Animatable
 import androidx.compose.runtime.key
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.Alignment
@@ -73,38 +87,91 @@ internal fun ShopPublicCheckInsSection(
             val available = maxWidth - contentPadding * 2
             val width = if (!isLoggedIn && multiple) (available - spacing - 56.dp).coerceAtLeast(1.dp).coerceAtMost(320.dp)
                 else if (multiple) available.coerceAtMost(320.dp) else available
-            // At most three cards, so a plain scrolling row: all of them stay composed, the row keeps the height of the tallest card, and a card that
-            // leaves or enters the screen no longer makes the page below jump (a lazy row measures only the visible cards).
-            Row(
-                Modifier.horizontalScroll(rememberScrollState()).padding(horizontal = contentPadding),
-                horizontalArrangement = Arrangement.spacedBy(spacing),
-            ) {
-                checkIns.take(3).forEachIndexed { index, checkIn ->
-                    key(checkIn.id) {
-                        val hidden = !isLoggedIn && index > 0
-                        if (hidden) ShopCheckInGuestPlaceholder(Modifier.width(width))
-                        else ShopPublicCheckInItem(
-                            checkIn = checkIn,
-                            width = width,
-                            shopTitle = shopTitle,
-                            isLoggedIn = isLoggedIn,
-                            currentUserId = currentUserId,
-                            isOwnCheckIn = checkIn.id in ownCheckInIds,
-                            isVoting = pendingVoteId == checkIn.id,
-                            hasPendingVote = pendingVoteId != null,
-                            isRefreshing = isRefreshing,
-                            formatDate = formatDate,
-                            onOpenPhoto = onOpenPhoto,
-                            onVote = onVote,
-                            onReport = onReport,
-                            onOpenAuthor = onOpenAuthor,
-                            onBlockAuthor = onBlockAuthor,
-                        )
-                    }
+            val cards = checkIns.take(3)
+            ShopCheckInCarousel(cards.size, width, spacing, contentPadding, maxWidth) { index ->
+                val checkIn = cards[index]
+                key(checkIn.id) {
+                    val hidden = !isLoggedIn && index > 0
+                    if (hidden) ShopCheckInGuestPlaceholder(Modifier.width(width))
+                    else ShopPublicCheckInItem(
+                        checkIn = checkIn,
+                        width = width,
+                        shopTitle = shopTitle,
+                        isLoggedIn = isLoggedIn,
+                        currentUserId = currentUserId,
+                        isOwnCheckIn = checkIn.id in ownCheckInIds,
+                        isVoting = pendingVoteId == checkIn.id,
+                        hasPendingVote = pendingVoteId != null,
+                        isRefreshing = isRefreshing,
+                        formatDate = formatDate,
+                        onOpenPhoto = onOpenPhoto,
+                        onVote = onVote,
+                        onReport = onReport,
+                        onOpenAuthor = onOpenAuthor,
+                        onBlockAuthor = onBlockAuthor,
+                    )
                 }
             }
           }
             if (!isLoggedIn) Box(gutter) { ShopCheckInGuestPrompt(onSignIn, onRegister) }
+        }
+    }
+}
+
+/**
+ * The height the carousel should have: that of the tallest card that is at least partly on screen, or null until every card has been measured.
+ * All values are pixels; [scroll] is the horizontal scroll offset and [padding] the start padding of the row.
+ */
+internal fun carouselTargetHeight(heights: List<Int?>, scroll: Int, viewport: Int, card: Int, spacing: Int, padding: Int): Int? {
+    if (heights.isEmpty() || heights.any { it == null }) return null
+    var target = 0
+    heights.forEachIndexed { index, height ->
+        val left = padding + index * (card + spacing) - scroll
+        if (left + card > 0 && left < viewport) target = maxOf(target, height ?: 0)
+    }
+    return target.takeIf { it > 0 } ?: heights.maxOf { it ?: 0 }
+}
+
+/**
+ * At most three cards, so a plain scrolling row in which every card stays composed. Its height follows the cards that are on screen and is animated:
+ * a short card alone is not stretched to the tallest one, and a tall one entering or leaving does not make the page below jump. Each card is measured at
+ * its natural height; before all of them are measured the row simply wraps the tallest.
+ */
+@Composable
+private fun ShopCheckInCarousel(
+    count: Int,
+    cardWidth: Dp,
+    spacing: Dp,
+    contentPadding: Dp,
+    viewportWidth: Dp,
+    card: @Composable (index: Int) -> Unit,
+) {
+    val density = LocalDensity.current
+    val scroll = rememberScrollState()
+    val heights = remember(count) { mutableStateListOf<Int?>().apply { repeat(count) { add(null) } } }
+    val target by remember(count, cardWidth, spacing, contentPadding, viewportWidth) {
+        derivedStateOf {
+            with(density) {
+                carouselTargetHeight(heights.toList(), scroll.value, viewportWidth.roundToPx(), cardWidth.roundToPx(), spacing.roundToPx(), contentPadding.roundToPx())
+            }
+        }
+    }
+    val height = remember { Animatable(0f) }
+    var ready by remember { mutableStateOf(false) }
+    LaunchedEffect(target) {
+        val value = target?.toFloat() ?: return@LaunchedEffect
+        if (!ready) { height.snapTo(value); ready = true } else height.animateTo(value, tween(durationMillis = 250))
+    }
+    Row(
+        Modifier.then(if (ready) Modifier.height(with(density) { height.value.toDp() }).clipToBounds() else Modifier)
+            .horizontalScroll(scroll).padding(horizontal = contentPadding),
+        horizontalArrangement = Arrangement.spacedBy(spacing),
+    ) {
+        repeat(count) { index ->
+            Box(
+                Modifier.width(cardWidth).wrapContentHeight(Alignment.Top, unbounded = true)
+                    .onSizeChanged { size -> if (heights.getOrNull(index) != size.height) heights[index] = size.height },
+            ) { card(index) }
         }
     }
 }
