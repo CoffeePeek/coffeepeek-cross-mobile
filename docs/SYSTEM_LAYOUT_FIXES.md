@@ -795,3 +795,21 @@ tests). The first sandboxed Python attempt could not create its temporary
 fixture directories; the same suite passed with normal temporary-file access.
 No real Assets.car compilation/rendition inspection, Swift build, native launch,
 or device installation is claimed by these shell tests.
+
+## Updated launch artwork — 2026-10-23
+
+Replaced the Android light/dark splash PNGs and both iOS LaunchLogo appearances
+with the supplied `Frame 3(3).png` (1028x1028, transparent background). Resampled
+the full image to the existing 288x288 resource size without cropping or drawing
+changes. The native iOS launcher and shared SwiftUI splash continue to use the
+same catalog and 144-point presentation; existing light/dark backgrounds remain.
+
+Verification: Windows, `94584c68` plus these resource replacements, Direct Debug
+build `1.1.1.1960` / code `1960`; no device. All nine existing presentation and
+launch-resource contract tests passed with no failures or skips. The shell tests
+mock actool and do not certify a real iOS asset compilation. Final Android
+assembly and packaged DEX checks passed; both APK PNGs are 288x288 with transparent
+corners, and all four repository resources are identical. An earlier passing
+build used the first supplied image; the final tests/build were repeated with
+the replacement supplied without a border. Asset-file inspection passed; native
+launch rendering in both themes and an iOS archive remain device/macOS gates.
