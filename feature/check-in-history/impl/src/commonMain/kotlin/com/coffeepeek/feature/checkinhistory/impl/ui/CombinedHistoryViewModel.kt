@@ -130,7 +130,7 @@ internal class CombinedHistoryViewModel private constructor(
                 select(requireNotNull(HistoryMonth.fromDate(currentState.today)), currentState.today)
                 loadVisible()
             }
-            CombinedHistoryAction.Refresh -> refresh()
+            CombinedHistoryAction.Refresh -> refresh(fromUser = true)
             CombinedHistoryAction.Resume -> {
                 val previous = contextRevision
                 val available = synchronizeContext()
@@ -233,7 +233,15 @@ internal class CombinedHistoryViewModel private constructor(
         false
     }
 
-    private fun refresh() { if (synchronizeContext()) invalidateAndLoad() }
+    private fun refresh(fromUser: Boolean = false) {
+        if (!synchronizeContext()) return
+        invalidateAndLoad()
+        if (fromUser) updateState { copy(isRefreshing = slots.any { it.job != null }) }
+    }
+
+    private fun finishRefreshIfIdle() {
+        if (currentState.isRefreshing && slots.none { it.job != null }) updateState { copy(isRefreshing = false) }
+    }
 
     private fun invalidateAndLoad() {
         if (currentState.shops.isLoadingMore) {
@@ -250,7 +258,7 @@ internal class CombinedHistoryViewModel private constructor(
 
     private fun cancelAll() {
         slots.forEach(ReadSlot::cancel)
-        updateState { copy(shopCalendar = shopCalendar.copy(isLoading = false), homeCalendar = homeCalendar.copy(isLoading = false),
+        updateState { copy(isRefreshing = false, shopCalendar = shopCalendar.copy(isLoading = false), homeCalendar = homeCalendar.copy(isLoading = false),
             shops = shops.copy(isLoading = false, isLoadingMore = false), homes = homes.copy(isLoading = false, isLoadingMore = false)) }
     }
 
@@ -266,6 +274,7 @@ internal class CombinedHistoryViewModel private constructor(
             if (homeCalendar.stale && (retryErrors || !currentState.homeCalendar.hasError)) loadHomeCalendar()
             if (homePage.stale && (retryErrors || !currentState.homes.hasError)) loadHomePage(true)
         }
+        finishRefreshIfIdle()
     }
 
     private fun retryCalendar(source: HistorySource) {
@@ -404,6 +413,7 @@ internal class CombinedHistoryViewModel private constructor(
                     slot.queued = false
                     if (queued && !cancelled && currentCoroutineContext().isActive) followUp()
                 }
+                finishRefreshIfIdle()
             }
         }
         slot.job = work
