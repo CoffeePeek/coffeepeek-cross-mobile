@@ -237,7 +237,7 @@ internal class CommunityViewModel(
     private suspend fun toggleHelpful(id: String) {
         val current = currentState
         val item = current.items.firstOrNull { it.id == id } ?: return
-        if (current.timeline != CommunityTimeline.Public || current.isMutating || current.editing != null || current.reportingId != null || current.owns(item)) return
+        if (current.timeline != CommunityTimeline.Public || current.isMutating || current.editing != null || current.reportingId != null) return
         analytics.itemInteracted(if (item.isHelpfulByCurrentUser) FeedItemAction.Unlike else FeedItemAction.Like, item.isHome)
         val key = accountKey ?: run { analytics.likeGateShown(); requestSignIn(); return }
         if (!isCurrent(key)) return

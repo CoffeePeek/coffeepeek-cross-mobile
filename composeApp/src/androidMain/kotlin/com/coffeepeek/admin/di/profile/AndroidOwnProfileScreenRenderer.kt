@@ -13,6 +13,7 @@ import com.coffeepeek.admin.ui.component.LocalFloatingNavClearance
 import com.coffeepeek.admin.ui.screen.contributions.ContributionKind
 import com.coffeepeek.admin.ui.screen.profile.OwnProfileScreenRenderer
 import com.coffeepeek.admin.ui.screen.profile.PersonalProfileActivityCalendar
+import com.coffeepeek.feature.notifications.api.NotificationFeature
 import com.coffeepeek.admin.ui.screen.profile.PersonalProfileActivityPreview
 import com.coffeepeek.admin.utils.ErrorHandler
 import com.coffeepeek.domain.repository.AuthRepository
@@ -55,13 +56,15 @@ private fun ProfileContribution.toContributionKind() = when (this) {
     ProfileContribution.Roasters -> ContributionKind.Roasters
 }
 
-/** The legacy logout order: server logout (failure shown), platform sign-out, then the signed-in user's local drafts. */
+/** The legacy logout order: push unregistration, server logout (failure shown), platform sign-out, then the signed-in user's local drafts. */
 internal class AndroidProfileSignOut(
+    private val notifications: NotificationFeature,
     private val auth: AuthRepository,
     private val drafts: ReviewDraftStore,
     private val platformSignOut: suspend () -> Unit = { GoogleAuth.signOut() },
 ) : ProfileSignOutPort {
     override suspend fun signOut() {
+        notifications.beforeLogout()
         auth.logout().onFailure { error ->
             ErrorHandler.showError(error.message?.takeIf(String::isNotBlank) ?: getString(Res.string.local_data_cleanup_error))
         }
@@ -74,6 +77,7 @@ internal fun androidOwnProfileScreenRenderer(
     repository: PublicProfileRepository,
     sessions: SessionReader,
     users: UserRepository,
+    notifications: NotificationFeature,
     auth: AuthRepository,
     drafts: ReviewDraftStore,
     visibility: AuthorVisibility,
@@ -91,7 +95,7 @@ internal fun androidOwnProfileScreenRenderer(
         data = repository,
         checkIns = checkIns,
         accounts = AndroidProfileAccountPort(sessions, users),
-        signOut = AndroidProfileSignOut(auth, drafts),
+        signOut = AndroidProfileSignOut(notifications, auth, drafts),
         visibility = AndroidProfileAuthorVisibility(visibility),
         authorActions = AndroidProfileAuthorActions(blocks),
         slots = slots,

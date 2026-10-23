@@ -253,7 +253,7 @@ private fun postActions(
         onAuthor = author?.let { slug -> { callbacks.onOpenAuthor(slug, post.author.name, post.author.avatarUrl) } },
         onShop = { onAction(CommunityAction.ItemInteracted(FeedItemAction.Shop, post.id)); callbacks.onOpenShop(post.shopSlug) }
             .takeIf { post.shopSlug.isNotBlank() },
-        onHelpful = { onAction(CommunityAction.ToggleHelpful(post.id)) }.takeIf { !state.isMutating && public && !isOwn },
+        onHelpful = { onAction(CommunityAction.ToggleHelpful(post.id)) }.takeIf { !state.isMutating && public },
         onBlock = {
             blockActions.requestBlock(AuthorReference(post.author.id, post.author.slug, post.author.name.ifBlank { "Автор" }, post.author.avatarUrl))
         }.takeIf { public && !isOwn && state.canBlockAuthor(post) && (!post.author.id.isNullOrBlank() || !post.author.slug.isNullOrBlank()) },

@@ -192,7 +192,6 @@ class CommunityViewModelTest {
             helpful = { id, helpful -> assertEquals("other", id); votes++; if (helpful) Result.success(release.await()) else Result.failure(CommunityFailure(FailureKind.Other, "Server says no")) }
         }
         val analytics = FakeAnalytics(); val vm = model(repo, analytics = analytics); val events = events(vm)
-        vm.send(CommunityAction.ToggleHelpful("own"), this); assertEquals(0, votes) // own posts cannot be liked
         vm.send(CommunityAction.ToggleHelpful("other"), this)
         assertEquals("other", vm.state.value.helpfulId)
         vm.send(CommunityAction.ToggleHelpful("other"), this); assertEquals(1, votes) // one mutation at a time
@@ -204,6 +203,17 @@ class CommunityViewModelTest {
         assertEquals(MessageKind.VoteFailed, message.message.kind); assertEquals("Server says no", message.message.serverMessage)
         assertEquals(listOf("item:Like:home", "item:Unlike:home"), analytics.events)
         assertTrue(vm.state.value.items.last().isHelpfulByCurrentUser) // a failed vote changes nothing
+    }
+
+    @Test fun ownPublishedPostsCanBeLiked() = runTest(dispatcher) {
+        var voted: String? = null
+        val repo = FakeRepository().apply {
+            feed = { _, _, _ -> Result.success(FeedPage(listOf(entry(post("own", slug = "me"))), null)) }
+            helpful = { id, _ -> voted = id; Result.success(HelpfulVote(true, 1)) }
+        }
+        val vm = model(repo)
+        vm.send(CommunityAction.ToggleHelpful("own"), this); runCurrent()
+        assertEquals("own", voted); assertEquals(1, vm.state.value.items.single().helpfulCount)
     }
 
     @Test fun aVoteFailureThatIsNotAServerAnswerUsesTheDefaultTextAndNeverTheRawErrorMessage() = runTest(dispatcher) {

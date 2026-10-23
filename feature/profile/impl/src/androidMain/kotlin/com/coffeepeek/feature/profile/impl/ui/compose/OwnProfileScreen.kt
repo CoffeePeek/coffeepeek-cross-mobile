@@ -86,8 +86,12 @@ internal fun OwnProfileScreen(
         key(slug) {
             val publicVm = publicModel(slug)
             LaunchedEffect(publicVm) {
-                // The tab owns the cached account: a name, bio, avatar or address change reloads the public page.
-                snapshotFlow { state.profile?.let { it.address to Triple(it.userName, it.about, it.avatarUrl) } }
+                // The tab owns the cached account: a name, bio, avatar, address or counter change reloads the public page.
+                snapshotFlow {
+                    state.profile?.let {
+                        listOf(it.address, it.userName, it.about, it.avatarUrl, it.checkInCount, it.addedShopsCount, it.addedRoastersCount, it.followersCount)
+                    }
+                }
                     .drop(1)
                     .collect { publicVm.onAction(PublicProfileAction.Refresh) }
             }

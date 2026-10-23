@@ -12,6 +12,8 @@ import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.test.runTest
 import kotlin.test.AfterTest
 import kotlin.test.Test
+import com.coffeepeek.feature.notifications.api.NotificationFeature
+import java.lang.reflect.Proxy
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
 
@@ -21,6 +23,9 @@ class AndroidProfileSignOutTest {
     @AfterTest fun tearDown() = ErrorHandler.clearError()
 
     private fun signOut(logout: Result<Unit>) = AndroidProfileSignOut(
+        notifications = Proxy.newProxyInstance(NotificationFeature::class.java.classLoader, arrayOf(NotificationFeature::class.java)) { _, method, _ ->
+            if (method.name == "beforeLogout") events += "push"; null
+        } as NotificationFeature,
         auth = object : AuthRepository {
             override suspend fun login(email: String, password: String): Result<Session> = error("unused")
             override suspend fun googleLogin(idToken: String): Result<Session> = error("unused")
@@ -43,13 +48,13 @@ class AndroidProfileSignOutTest {
 
     @Test fun signsOutOnTheServerThenThePlatformThenClearsDrafts() = runTest {
         signOut(Result.success(Unit)).signOut()
-        assertEquals(listOf("server", "platform", "drafts"), events)
+        assertEquals(listOf("push", "server", "platform", "drafts"), events)
         assertNull(ErrorHandler.errorMessage.value)
     }
 
     @Test fun aServerFailureIsShownAndTheLocalCleanupStillRuns() = runTest {
         signOut(Result.failure(RuntimeException("server said no"))).signOut()
-        assertEquals(listOf("server", "platform", "drafts"), events)
+        assertEquals(listOf("push", "server", "platform", "drafts"), events)
         assertEquals("server said no", ErrorHandler.errorMessage.value)
     }
 }
