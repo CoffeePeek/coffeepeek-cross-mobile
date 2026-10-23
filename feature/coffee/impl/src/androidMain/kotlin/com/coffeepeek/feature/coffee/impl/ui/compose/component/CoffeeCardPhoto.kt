@@ -8,6 +8,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.layout.ContentScale
@@ -34,13 +35,13 @@ internal fun CoffeeCardPhoto(coffee: Coffee, imageContent: @Composable (String, 
 
         Box(
             modifier = Modifier.align(Alignment.BottomEnd).padding(CoffeePeekDimens.spacing4).size(48.dp)
-                .shadow(3.dp, CircleShape).background(MaterialTheme.colorScheme.surface, CircleShape)
+                .shadow(3.dp, CircleShape).clip(CircleShape).background(MaterialTheme.colorScheme.surface)
                 .semantics { contentDescription = coffee.roasterName },
             contentAlignment = Alignment.Center,
         ) {
             val logo = coffee.roasterPhotoUrl
             if (!logo.isNullOrBlank()) {
-                imageContent(logo, coffee.roasterName, Modifier.matchParentSize().padding(6.dp), ContentScale.Fit)
+                imageContent(logo, coffee.roasterName, Modifier.matchParentSize(), ContentScale.Crop)
             } else {
                 Text(
                     text = coffee.roasterName.take(2).uppercase(),
@@ -53,5 +54,7 @@ internal fun CoffeeCardPhoto(coffee: Coffee, imageContent: @Composable (String, 
 }
 
 @PreviewLightDark @Composable private fun CoffeeCardPhotoPreview() = CoffeePeekTheme {
-    CoffeeCardPhoto(previewCoffee()) { _, _, modifier, _ -> CoffeePeekImagePlaceholder(modifier) }
+    CoffeeCardPhoto(previewCoffee().copy(roasterPhotoUrl = "preview-logo")) { _, _, modifier, _ ->
+        CoffeePeekImagePlaceholder(modifier)
+    }
 }
