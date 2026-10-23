@@ -281,3 +281,64 @@ and its packaged runtime-class verification passed. No APK was installed.
 `git diff --check` passes; Gradle/KMP and unrelated existing preview/compiler
 warnings remain. No IDE inspection, lint, manual UI review, iOS or live-backend
 acceptance is claimed. Publication to develop was explicitly requested.
+
+## iOS confirmation width and resource selection — 2026-10-23
+
+Source: `codex/migration-public-check-in-default`, baseline `bcba3a3c` plus this
+presentation patch. Existing unrelated local Android packaging/run-mode changes
+remain in the checkout and are not part of this change. No new Gradle module,
+dependency, root route, account writer or feature business rule is introduced.
+
+The user requested centered, wider confirmations with explicit cancellation,
+bottom resource selection, and then explicitly selected the system Share Sheet
+for routes. Reach: application iOS presentation adapters, the common photo-source
+entry, shared design-system action content, the route adapter and its Android-only
+options fixture. Existing logout, blocking, photo upload and analytics ports keep
+their behavior. The route button still records its existing directions event;
+no additional events or service are added.
+
+- Logout, block/unblock, login prompts and existing platform alerts use the
+  design-system dialog in the center. It fills the safe phone width minus 16dp
+  on each side, capped at 560dp on larger windows, with scrollable content and
+  wrapping action labels. Explicit Cancel is shown for confirmations; existing
+  acknowledgement-only errors retain their single action. UIKit's fixed alert
+  width and popover suppression of Cancel are no longer used for these dialogs.
+- One photo-source entry covers profile avatar, new shop photos/menu, shop-change
+  photos/menu, roaster photos, shop check-in photos and new home check-in photos.
+  iOS 16+ uses the existing content-sized native bottom sheet; iOS 15 retains its
+  standard native bottom action sheet. Source selection has two actions plus
+  Cancel; the photo library remains PHPickerViewController and the camera remains
+  UIImagePickerController. No replacement photo grid or camera is built. A missing
+  camera disables its action. Native dismissal completes before opening a picker;
+  duplicate taps cannot open a second picker or confirm a second operation.
+- Routes use UIActivityViewController with a typed NSURL containing the existing
+  Apple Maps driving-route URL. The system determines available activities and
+  receiving apps; it does not guarantee the previous Apple/Google/Yandex list.
+  Completion and cancellation clear the route-picker state. Android's chooser
+  and URL contracts are preserved; its options fixture is now Android-only.
+
+Verification plan: run design-system unit tests, presentation callback ordering,
+disabled/double-selection regressions, route URL/analytics, logout and author
+visibility regressions. Assemble directDebug with the packaged DEX check and
+compile both iOS app KLIB targets. No application/device launch or real account,
+camera, gallery, sharing or backend action is part of these local checks.
+
+Results on 2026-10-23, Windows/Gradle JDK 17: **85 executed unit tests**, zero
+failures/errors/skips (design-system 35, application selections 50, including four
+new callback tests). directDebug assembly and verifyDirectDebugRuntimeClasses
+pass. compileKotlinIosArm64 and compileKotlinIosSimulatorArm64 pass. One combined
+Gradle invocation used --max-workers=6 and completed in 2m17s. The initial wrapper
+attempt was denied access to the local Gradle cache before tasks ran; the rerun
+with cache access passed, with no failed-test retry. Existing compiler/interop
+and preview-annotation deprecation warnings remain. Resource XML and the scoped
+source diff validate; unrelated pre-existing build-file line-ending differences
+are excluded from the whitespace check.
+
+Paired shared light/dark previews are colocated with the panel, dialog and
+photo-source content. They compile; modal preview rendering was not inspected.
+No automated UI/instrumented/screenshot test or Activity was added or run.
+Studio MCP is unavailable in this session. No device was used or APK installed.
+Remaining gates: macOS executable linking; iOS 15/26+ manual light/dark, large
+font/window, VoiceOver, modal placement, outside/Cancel/back and repeat-open
+checks; actual photo/camera flow and installed map/share extensions. System Share
+Sheet geometry is owned by iOS. No release or live-backend acceptance is claimed.
