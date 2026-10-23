@@ -90,6 +90,7 @@ kotlin {
             implementation(project(module.feature.roaster.impl))
             implementation(project(module.core.designSystem))
             implementation(project(module.core.session))
+            implementation(project(module.core.datetime))
             implementation(project(module.feature.favorites.domain))
             implementation(libs.posthog.kmp)
             implementation(project(module.legacy.domain))

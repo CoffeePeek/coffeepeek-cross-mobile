@@ -150,6 +150,7 @@ object Modules {
         const val database = ":core:database"
         const val designSystem = ":core:design-system"
         const val presentation = ":core:presentation"
+        const val datetime = ":core:datetime"
         const val session = ":core:session"
     }
 
@@ -165,6 +166,7 @@ object Modules {
         core.database,
         core.designSystem,
         core.presentation,
+        core.datetime,
         core.session,
         feature.favorites.api,
         feature.favorites.domain,
