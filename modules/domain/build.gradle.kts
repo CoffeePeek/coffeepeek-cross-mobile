@@ -1,3 +1,4 @@
+import com.coffeepeek.buildlogic.module
 import com.coffeepeek.config.Config
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
@@ -17,6 +18,7 @@ kotlin {
 
     sourceSets {
         commonMain.dependencies {
+            api(project(module.core.session))
             implementation(libs.kotlinx.coroutines.core)
         }
     }

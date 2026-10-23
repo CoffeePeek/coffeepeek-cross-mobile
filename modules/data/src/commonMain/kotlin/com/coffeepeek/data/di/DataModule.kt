@@ -17,7 +17,7 @@ import com.coffeepeek.data.repository.ShopRepositoryImpl
 import com.coffeepeek.data.repository.UserRepositoryImpl
 import com.coffeepeek.data.session.UserSessionCleaner
 import com.coffeepeek.data.util.FileUrlResolver
-import com.coffeepeek.data.util.JwtUtils
+import com.coffeepeek.core.session.JwtUtils
 import com.coffeepeek.domain.repository.AuthRepository
 import com.coffeepeek.domain.repository.CheckInRepository
 import com.coffeepeek.domain.repository.FavoriteRepository

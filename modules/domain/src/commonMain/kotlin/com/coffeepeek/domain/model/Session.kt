@@ -1,7 +1,4 @@
 package com.coffeepeek.domain.model
 
-data class Session(
-    val accessToken: String,
-    val refreshToken: String? = null,
-    val userId: String? = null,
-)
+/** Bridge while consumers move to com.coffeepeek.core.session.Session; delete with SessionRepository. */
+typealias Session = com.coffeepeek.core.session.Session

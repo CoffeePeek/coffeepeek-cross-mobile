@@ -1,8 +1,8 @@
 package com.coffeepeek.data.repository
 
 import com.coffeepeek.api.model.response.AuthResp
-import com.coffeepeek.data.util.JwtUtils
-import com.coffeepeek.data.util.SessionAuth
+import com.coffeepeek.core.session.JwtUtils
+import com.coffeepeek.core.session.SessionAuth
 import com.coffeepeek.data.session.SessionSecureStore
 import com.coffeepeek.domain.model.Session
 import com.coffeepeek.domain.repository.SessionRepository
