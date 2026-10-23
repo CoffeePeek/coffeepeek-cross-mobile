@@ -31,17 +31,19 @@ class CheckInDraftStoreTest {
         assertEquals(4, draft.coffeeRating)
         assertEquals(4, draft.serviceRating)
         assertEquals(4, draft.placeRating)
+        assertEquals(true, draft.isPublic)
     }
 
     @Test
     fun reopeningSameShopKeepsDraft() {
         val store = CheckInDraftStore(now = { 1_000L })
         val initial = store.open("shop-a")
-        store.save(initial.copy(note = "Вернусь сюда снова"))
+        store.save(initial.copy(note = "Вернусь сюда снова", isPublic = false))
 
         val reopened = store.open("shop-a")
 
         assertEquals("Вернусь сюда снова", reopened.note)
+        assertEquals(false, reopened.isPublic)
         assertEquals(1_000L, reopened.visitMillis)
     }
 

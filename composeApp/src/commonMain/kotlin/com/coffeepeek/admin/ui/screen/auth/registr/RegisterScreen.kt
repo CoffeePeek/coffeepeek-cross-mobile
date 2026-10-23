@@ -3,7 +3,6 @@ package com.coffeepeek.admin.ui.screen.auth.registr
 import androidx.compose.runtime.getValue
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -38,6 +37,12 @@ import androidx.compose.ui.text.withLink
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coffeepeek.composeapp.generated.resources.Res
+import coffeepeek.composeapp.generated.resources.auth_email_placeholder
+import coffeepeek.composeapp.generated.resources.auth_edit_email
+import coffeepeek.composeapp.generated.resources.auth_analytics_consent
+import coffeepeek.composeapp.generated.resources.auth_analytics_description
+import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
+import org.jetbrains.compose.ui.tooling.preview.Preview
 import coffeepeek.composeapp.generated.resources.already_have_account
 import coffeepeek.composeapp.generated.resources.continue_action
 import coffeepeek.composeapp.generated.resources.create_account
@@ -70,6 +75,7 @@ import com.coffeepeek.admin.theme.CpDimens
 import com.coffeepeek.admin.ui.Navigator
 import com.coffeepeek.admin.ui.icons.CpIcons
 import com.coffeepeek.admin.ui.screen.auth.AuthFooterRow
+import com.coffeepeek.admin.ui.screen.auth.AuthHeading
 import com.coffeepeek.admin.ui.screen.auth.AuthMascot
 import com.coffeepeek.admin.ui.screen.auth.AuthOrDivider
 import com.coffeepeek.admin.ui.screen.auth.AuthPrimaryButton
@@ -81,12 +87,20 @@ import com.coffeepeek.admin.utils.MIN_REGISTRATION_PASSWORD_LENGTH
 import org.jetbrains.compose.resources.stringResource
 import com.coffeepeek.admin.di.platformViewModel
 
-object RegisterScreen {
+private data class RegistrationFormState(
+    val step: RegisterStep = RegisterStep.Email,
+    val name: String = "",
+    val email: String = "",
+    val password: String = "",
+    val isTermsAccepted: Boolean = false,
+    val isAnalyticsAccepted: Boolean = false,
+    val passwordError: String? = null,
+    val emailError: String? = null,
+)
 
+object RegisterScreen {
     @Composable
-    operator fun invoke(
-        vm: RegisterViewModel = platformViewModel(),
-    ) {
+    operator fun invoke(vm: RegisterViewModel = platformViewModel()) {
         val step by vm.step.collectAsState()
         val name by vm.name.collectAsState()
         val email by vm.email.collectAsState()
@@ -95,204 +109,164 @@ object RegisterScreen {
         val isAnalyticsAccepted by vm.isAnalyticsAccepted.collectAsState()
         val passwordError by vm.passwordError.collectAsState()
         val emailError by vm.emailError.collectAsState()
-
-        val steps = listOf(
-            stringResource(Res.string.step_email),
-            stringResource(Res.string.step_register),
-            stringResource(Res.string.step_done),
-        )
-        val activeIndex = when (step) {
-            RegisterStep.Email -> 0
-            RegisterStep.Details -> 1
-            RegisterStep.Success -> 2
-        }
-
-        AuthScreenScaffold(
-            mascot = if (step == RegisterStep.Success) AuthMascot.Happy else AuthMascot.Laptop,
-            showMascot = true,
+        val appleSigningIn by vm.appleSigningIn.collectAsState()
+        RegisterScreenContent(
+            state = RegistrationFormState(step, name, email, password, isTermsAccepted, isAnalyticsAccepted, passwordError, emailError),
+            onEmailChange = vm::onEmailChange,
+            onNameChange = vm::onNameChange,
+            onPasswordChange = vm::onPasswordChange,
+            onTermsChange = vm::onTermsCheckedChange,
+            onAnalyticsChange = vm::onAnalyticsCheckedChange,
+            onContinue = vm::onContinueEmail,
+            onRegister = vm::onRegisterClick,
+            onBack = vm::onBack,
+            onLogin = vm::goToLogin,
             onClose = Navigator::closeAuth,
-        ) {
-            when (step) {
-                RegisterStep.Success -> {
-                    Text(
-                        text = stringResource(Res.string.register_success_title),
-                        style = MaterialTheme.typography.headlineMedium.copy(
-                            fontSize = 26.sp,
-                            fontWeight = FontWeight.Bold,
-                            letterSpacing = (-0.52).sp,
-                        ),
-                        color = MaterialTheme.colorScheme.onSurface,
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                    Text(
-                        text = stringResource(Res.string.register_success_subtitle, email),
-                        style = MaterialTheme.typography.bodyMedium.copy(
-                            fontSize = 14.sp,
-                            lineHeight = 21.sp,
-                        ),
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(top = 10.dp, bottom = 28.dp),
-                    )
-                    AuthPrimaryButton(
-                        text = stringResource(Res.string.go_to_login),
-                        onClick = { vm.goToLogin() },
+            socialSignIn = if (AppleAuth.isSupported() || isGoogleSignInConfigured()) {
+                {
+                    AuthSocialSignInButtons(
+                        onAppleClick = vm::onAppleLogin,
+                        appleEnabled = !appleSigningIn,
+                        onGoogleResult = { result -> handleGoogleSignInResult(result, vm::onGoogleLogin) },
                     )
                 }
+            } else null,
+        )
+    }
+}
 
-                RegisterStep.Email -> {
-                    AuthStepper(activeIndex = activeIndex, steps = steps)
-                    Spacer(modifier = Modifier.height(20.dp))
-                    Text(
-                        text = stringResource(Res.string.email_step_title),
-                        style = MaterialTheme.typography.headlineMedium.copy(
-                            fontSize = 26.sp,
-                            fontWeight = FontWeight.Bold,
-                            letterSpacing = (-0.52).sp,
-                        ),
-                        color = MaterialTheme.colorScheme.onSurface,
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                    Text(
-                        text = stringResource(Res.string.email_check_subtitle),
-                        style = MaterialTheme.typography.bodyMedium.copy(
-                            fontSize = 14.sp,
-                            lineHeight = 21.sp,
-                        ),
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(top = 8.dp, bottom = 24.dp),
-                    )
-
-                    AuthTextField(
-                        value = email,
-                        onValueChange = vm::onEmailChange,
-                        placeholder = "name@example.com",
-                        leadingIcon = CpIcons.Email,
-                        errorText = emailError,
-                    )
-
-                    Spacer(modifier = Modifier.height(14.dp))
-                    AuthOrDivider()
-                    Spacer(modifier = Modifier.height(14.dp))
-
-                    if (AppleAuth.isSupported() || isGoogleSignInConfigured()) {
-                        val appleSigningIn by vm.appleSigningIn.collectAsState()
-                        AuthSocialSignInButtons(
-                            onAppleClick = vm::onAppleLogin,
-                            appleEnabled = !appleSigningIn,
-                            onGoogleResult = { result ->
-                                handleGoogleSignInResult(result, vm::onGoogleLogin)
-                            },
-                        )
-                        Spacer(modifier = Modifier.height(14.dp))
-                    }
-
-                    AuthPrimaryButton(
-                        text = stringResource(Res.string.continue_action),
-                        onClick = { vm.onContinueEmail() },
-                        enabled = email.isNotBlank(),
-                    )
-
-                    AuthFooterRow(
-                        onBack = null,
-                        onSecondary = { vm.goToLogin() },
-                        secondaryText = stringResource(Res.string.already_have_account),
-                    )
-                }
-
-                RegisterStep.Details -> {
-                    AuthStepper(activeIndex = activeIndex, steps = steps)
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    NewProfileBadge()
-
-                    Text(
-                        text = stringResource(Res.string.create_account_title),
-                        style = MaterialTheme.typography.headlineMedium.copy(
-                            fontSize = 26.sp,
-                            fontWeight = FontWeight.Bold,
-                            letterSpacing = (-0.52).sp,
-                        ),
-                        color = MaterialTheme.colorScheme.onSurface,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(top = 14.dp),
-                    )
-
-                    EmailChip(
-                        email = email,
-                        onChange = { vm.onBack() },
-                    )
-
-                    Spacer(modifier = Modifier.height(14.dp))
-
-                    AuthTextField(
-                        label = stringResource(Res.string.name),
-                        value = name,
-                        onValueChange = vm::onNameChange,
-                        placeholder = stringResource(Res.string.name_hint),
-                        leadingIcon = CpIcons.User,
-                        keyboardType = KeyboardType.Text,
-                        next = true,
-                    )
-
-                    Spacer(modifier = Modifier.height(14.dp))
-
-                    AuthTextField(
-                        label = stringResource(Res.string.password),
-                        value = password,
-                        onValueChange = vm::onPasswordChange,
-                        placeholder = stringResource(Res.string.registration_password_placeholder),
-                        leadingIcon = CpIcons.Lock,
-                        isPassword = true,
-                        newPassword = true,
-                        errorText = passwordError,
-                    )
-
-                    PasswordStrengthBar(password = password)
-
-                    Spacer(modifier = Modifier.height(14.dp))
-
-                    Row(
-                        verticalAlignment = Alignment.Top,
-                        modifier = Modifier.fillMaxWidth(),
-                    ) {
-                        Checkbox(
-                            checked = isTermsAccepted,
-                            onCheckedChange = vm::onTermsCheckedChange,
-                            colors = CheckboxDefaults.colors(
-                                checkedColor = CpColor.Primary,
-                                checkmarkColor = CpColor.DarkTextOnPrimary,
-                            ),
-                            modifier = Modifier.size(24.dp),
-                        )
-                        Spacer(modifier = Modifier.width(CpDimens.spacing3))
-                        TermsText()
-                    }
-
-                    Spacer(modifier = Modifier.height(14.dp))
-                    RegistrationAnalyticsConsent(isAnalyticsAccepted, vm::onAnalyticsCheckedChange)
-                    Spacer(modifier = Modifier.height(CpDimens.spacing5))
-
-                    AuthPrimaryButton(
-                        text = stringResource(Res.string.create_account),
-                        onClick = { vm.onRegisterClick() },
-                        enabled = name.trim().length >= 2 &&
-                            password.length >= MIN_REGISTRATION_PASSWORD_LENGTH &&
-                            isTermsAccepted,
-                    )
-
-                    AuthFooterRow(
-                        onBack = null,
-                        onSecondary = { vm.goToLogin() },
-                        secondaryText = stringResource(Res.string.already_have_account),
-                    )
-                }
+@Composable
+private fun RegisterScreenContent(
+    state: RegistrationFormState,
+    onEmailChange: (String) -> Unit = {},
+    onNameChange: (String) -> Unit = {},
+    onPasswordChange: (String) -> Unit = {},
+    onTermsChange: (Boolean) -> Unit = {},
+    onAnalyticsChange: (Boolean) -> Unit = {},
+    onContinue: () -> Unit = {},
+    onRegister: () -> Unit = {},
+    onBack: () -> Unit = {},
+    onLogin: () -> Unit = {},
+    onClose: () -> Unit = {},
+    socialSignIn: (@Composable () -> Unit)? = null,
+) {
+    AuthScreenScaffold(
+        mascot = if (state.step == RegisterStep.Success) AuthMascot.Happy else AuthMascot.Laptop,
+        onClose = onClose,
+    ) {
+        if (state.step != RegisterStep.Success) {
+            AuthStepper(
+                activeIndex = if (state.step == RegisterStep.Email) 0 else 1,
+                steps = listOf(stringResource(Res.string.step_email), stringResource(Res.string.step_register), stringResource(Res.string.step_done)),
+            )
+        }
+        when (state.step) {
+            RegisterStep.Email -> RegistrationEmailContent(state, onEmailChange, onContinue, onLogin, socialSignIn)
+            RegisterStep.Details -> RegistrationDetailsContent(
+                state, onNameChange, onPasswordChange, onTermsChange, onAnalyticsChange, onRegister, onBack, onLogin,
+            )
+            RegisterStep.Success -> {
+                AuthHeading(stringResource(Res.string.register_success_title), stringResource(Res.string.register_success_subtitle, state.email))
+                AuthPrimaryButton(stringResource(Res.string.go_to_login), onLogin)
             }
         }
+    }
+}
+
+@Composable
+private fun RegistrationEmailContent(
+    state: RegistrationFormState,
+    onEmailChange: (String) -> Unit,
+    onContinue: () -> Unit,
+    onLogin: () -> Unit,
+    socialSignIn: (@Composable () -> Unit)?,
+) {
+    AuthHeading(stringResource(Res.string.email_step_title), stringResource(Res.string.email_check_subtitle))
+    AuthTextField(
+        value = state.email,
+        onValueChange = onEmailChange,
+        label = stringResource(Res.string.step_email),
+        placeholder = stringResource(Res.string.auth_email_placeholder),
+        leadingIcon = CpIcons.Email,
+        errorText = state.emailError,
+    )
+    if (socialSignIn != null) {
+        AuthOrDivider()
+        socialSignIn()
+    }
+    AuthPrimaryButton(stringResource(Res.string.continue_action), onContinue, enabled = state.email.isNotBlank())
+    AuthFooterRow(null, onLogin, stringResource(Res.string.already_have_account))
+}
+
+@Composable
+private fun RegistrationDetailsContent(
+    state: RegistrationFormState,
+    onNameChange: (String) -> Unit,
+    onPasswordChange: (String) -> Unit,
+    onTermsChange: (Boolean) -> Unit,
+    onAnalyticsChange: (Boolean) -> Unit,
+    onRegister: () -> Unit,
+    onBack: () -> Unit,
+    onLogin: () -> Unit,
+) {
+    NewProfileBadge()
+    AuthHeading(stringResource(Res.string.create_account_title))
+    EmailChip(state.email, onBack)
+    RegistrationFields(state, onNameChange, onPasswordChange)
+    RegistrationTermsConsent(state.isTermsAccepted, onTermsChange)
+    RegistrationAnalyticsConsent(state.isAnalyticsAccepted, onAnalyticsChange)
+    AuthPrimaryButton(
+        text = stringResource(Res.string.create_account),
+        onClick = onRegister,
+        enabled = state.name.trim().length >= 2 &&
+            state.password.length >= MIN_REGISTRATION_PASSWORD_LENGTH && state.isTermsAccepted,
+    )
+    AuthFooterRow(null, onLogin, stringResource(Res.string.already_have_account))
+}
+
+@Composable
+private fun RegistrationFields(
+    state: RegistrationFormState,
+    onNameChange: (String) -> Unit,
+    onPasswordChange: (String) -> Unit,
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(CpDimens.spacing4)) {
+        AuthTextField(
+            label = stringResource(Res.string.name),
+            value = state.name,
+            onValueChange = onNameChange,
+            placeholder = stringResource(Res.string.name_hint),
+            leadingIcon = CpIcons.User,
+            keyboardType = KeyboardType.Text,
+            next = true,
+        )
+        Column {
+            AuthTextField(
+                label = stringResource(Res.string.password),
+                value = state.password,
+                onValueChange = onPasswordChange,
+                placeholder = stringResource(Res.string.registration_password_placeholder),
+                leadingIcon = CpIcons.Lock,
+                isPassword = true,
+                newPassword = true,
+                errorText = state.passwordError,
+            )
+            PasswordStrengthBar(state.password)
+        }
+    }
+}
+
+@Composable
+private fun RegistrationTermsConsent(checked: Boolean, onCheckedChange: (Boolean) -> Unit) {
+    Row(verticalAlignment = Alignment.Top, modifier = Modifier.fillMaxWidth()) {
+        Checkbox(
+            checked = checked,
+            onCheckedChange = onCheckedChange,
+            colors = CheckboxDefaults.colors(checkedColor = CpColor.Primary, checkmarkColor = CpColor.DarkTextOnPrimary),
+            modifier = Modifier.size(24.dp),
+        )
+        Spacer(Modifier.width(CpDimens.spacing3))
+        TermsText()
     }
 }
 
@@ -301,7 +275,7 @@ private fun RegistrationAnalyticsConsent(checked: Boolean, onCheckedChange: (Boo
     Row(
         modifier = Modifier.fillMaxWidth().toggleable(
             value = checked, role = Role.Checkbox, onValueChange = onCheckedChange,
-        ).padding(vertical = 8.dp),
+        ),
         verticalAlignment = Alignment.Top,
     ) {
         Checkbox(
@@ -311,10 +285,9 @@ private fun RegistrationAnalyticsConsent(checked: Boolean, onCheckedChange: (Boo
         )
         Spacer(Modifier.width(CpDimens.spacing3))
         Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-            Text("Разрешить аналитику использования", style = MaterialTheme.typography.bodySmall,
+            Text(stringResource(Res.string.auth_analytics_consent), style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurface)
-            Text("Необязательно. События использования отправляются в PostHog (ЕС), чтобы улучшать CoffeePeek. " +
-                "Без текстов поиска, заметок, фото и точных координат. Решение можно изменить в настройках.",
+            Text(stringResource(Res.string.auth_analytics_description),
                 style = MaterialTheme.typography.bodySmall.copy(fontSize = 12.sp, lineHeight = 17.sp),
                 color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
@@ -351,7 +324,6 @@ private fun EmailChip(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
             .fillMaxWidth()
-            .padding(top = 8.dp, bottom = 8.dp)
             .background(
                 if (isDark) ColorWhite3 else CpColor.LightSurfaceAlt,
                 RoundedCornerShape(12.dp),
@@ -375,14 +347,15 @@ private fun EmailChip(
                 .weight(1f)
                 .padding(start = 8.dp, end = 4.dp),
         )
-        IconButton(onClick = onChange, modifier = Modifier.size(44.dp)) {
-            Icon(
-                imageVector = CpIcons.Edit,
-                contentDescription = "Изменить email",
-                tint = CpColor.Primary,
-                modifier = Modifier.size(20.dp),
-            )
-        }
+        EditEmailButton(onChange)
+    }
+}
+
+@Composable
+private fun EditEmailButton(onChange: () -> Unit) {
+    IconButton(onClick = onChange, modifier = Modifier.size(44.dp)) {
+        Icon(CpIcons.Edit, contentDescription = stringResource(Res.string.auth_edit_email),
+            tint = CpColor.Primary, modifier = Modifier.size(20.dp))
     }
 }
 
@@ -450,3 +423,21 @@ private fun TermsText() {
         color = MaterialTheme.colorScheme.onSurfaceVariant,
     )
 }
+
+@Composable
+private fun RegisterScreenPreview(dark: Boolean, step: RegisterStep) = CoffeePeekTheme(darkTheme = dark) {
+    RegisterScreenContent(RegistrationFormState(step = step, email = stringResource(Res.string.auth_email_placeholder)))
+}
+
+@Preview(widthDp = 360, heightDp = 900) @Composable
+private fun RegisterEmailLightPreview() = RegisterScreenPreview(false, RegisterStep.Email)
+@Preview(widthDp = 360, heightDp = 900) @Composable
+private fun RegisterEmailDarkPreview() = RegisterScreenPreview(true, RegisterStep.Email)
+@Preview(widthDp = 360, heightDp = 900) @Composable
+private fun RegisterDetailsLightPreview() = RegisterScreenPreview(false, RegisterStep.Details)
+@Preview(widthDp = 360, heightDp = 900) @Composable
+private fun RegisterDetailsDarkPreview() = RegisterScreenPreview(true, RegisterStep.Details)
+@Preview(widthDp = 360, heightDp = 900) @Composable
+private fun RegisterSuccessLightPreview() = RegisterScreenPreview(false, RegisterStep.Success)
+@Preview(widthDp = 360, heightDp = 900) @Composable
+private fun RegisterSuccessDarkPreview() = RegisterScreenPreview(true, RegisterStep.Success)
