@@ -169,3 +169,23 @@ Local verification of this implementation on 2026-10-24:
 - Native `.ipa` linking/packaging, updated-device visuals in both themes, keyboard,
   scrolling, sheet cancel/reopen, map handoff and accessibility remain separate
   device gates. Build/source identity is retained with the resulting artifact.
+
+### Native package and device update
+
+[Device build 40083882771](https://github.com/CoffeePeek/coffeepeek-cross-mobile/actions/runs/40083882771)
+passed in 18m30s using implementation commit `b2342f73`. Kotlin's strict iOS
+framework link and the native Xcode Debug build succeeded. Local verification
+confirmed the artifact's SHA-256, exact source revision, arm64 physical-device
+Mach-O, version 1.1.1/build 2417, 63 Compose resource files (including the new
+map chooser strings), launch assets and configured application resources.
+
+With the user-confirmed connected/unlocked iPhone15,4 on iOS 27.0.1, xtool
+successfully signed, installed and verified the in-place CoffeePeek Dev update
+from 2416 to 2417. Installed application metadata independently confirms 2417;
+the original TestFlight application remains at 1961. IPA files, hashes and
+sanitized installation/verification reports stay in ignored build output.
+
+Device startup and visual acceptance of the four reported issues are awaiting
+the user's manual check. No account logout, photo capture/upload or live data
+mutation was performed. Compiled previews and installation alone do not confirm
+light/dark rendering, keyboard/scroll behavior, map-app handoff or accessibility.
