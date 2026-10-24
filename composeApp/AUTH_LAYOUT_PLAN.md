@@ -253,3 +253,31 @@ duplicated. No Gradle dependencies, feature contracts, DI or analytics ownership
 changed. Paired design-system previews are colocated. No automated UI,
 instrumentation or screenshot tests ran. Native framework linking, device
 installation and manual visual acceptance remain separate gates.
+
+### Combined iPhone update 2423
+
+Native device workflow
+[40089562002](https://github.com/CoffeePeek/coffeepeek-cross-mobile/actions/runs/40089562002)
+built source `8cc5436d4eda85a773ad4cc0554e69cd0de36a3c` successfully in
+21m42s. The configuration suite executed 11 tests successfully; physical-iPhone
+arm64 Kotlin framework linking, Swift compilation and Debug packaging passed.
+Existing Swift capture/deprecated messaging API warnings remain in unchanged
+application code; no unrelated warning cleanup was included.
+
+The downloaded IPA reports 1.1.1 (2423), iPhoneOS Debug, the exact source SHA,
+63 Compose resource files and SHA-256
+`88bfdf8843923cd161b691eb0ccd148faafb8a84ed4dd9fae091dfb95b02d336`.
+Checksum, Mach-O device platform, executable permissions, launch catalog,
+configured resources and development entitlements passed local verification.
+The separately prepared `CoffeePeek Dev` copy retains the original artifact.
+Artifacts and sanitized verification records remain in ignored
+`iosApp/build/device/8cc5436d/`; private diagnostics stay outside tracked sources.
+
+After the user confirmed USB connection/unlocked state, the agreed iPhone15,4
+on iOS 27.0.1 was checked again. In-place installation of
+`XTL-93Y4D5FM2W.com.coffeepeek` advanced Dev 2419 to 2423, reached installer
+verification 100% and succeeded. Installed app metadata confirms 1.1.1 (2423)
+and the same Dev signing identity. Original TestFlight app metadata remains
+unchanged at build 1961. No uninstall, data clearing or account writes occurred.
+Manual launch and visual review of the login top inset and internal-screen
+bottom edge remain pending the user's device check.
