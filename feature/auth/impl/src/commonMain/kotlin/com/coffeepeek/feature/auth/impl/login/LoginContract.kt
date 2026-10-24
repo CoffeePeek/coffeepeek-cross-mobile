@@ -12,7 +12,7 @@ internal data class LoginState(
     val passwordIssue: PasswordIssue? = null,
     /** Why the last attempt failed; cleared by any edit. */
     val failure: LoginFailure? = null,
-    /** Why the last Google sign-in failed; cleared by any edit. */
+    /** Why the last social sign-in failed; cleared by any edit. */
     val socialFailure: SocialFailure? = null,
     /** The primary button shows a loader and the form ignores a second submit. */
     val signingIn: Boolean = false,
@@ -22,6 +22,7 @@ internal sealed interface LoginAction {
     data class EmailChanged(val value: String) : LoginAction
     data class PasswordChanged(val value: String) : LoginAction
     data object Submit : LoginAction
+    data object AppleSignIn : LoginAction
     data class GoogleToken(val idToken: String) : LoginAction
     data class GoogleFailed(val message: String) : LoginAction
 }

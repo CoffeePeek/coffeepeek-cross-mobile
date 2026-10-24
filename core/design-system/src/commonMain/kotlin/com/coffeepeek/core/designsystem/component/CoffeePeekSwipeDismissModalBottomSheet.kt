@@ -72,6 +72,8 @@ fun CoffeePeekSwipeDismissModalBottomSheet(
     require(maxSheetHeightFraction == null || maxSheetHeightFraction > 0f && maxSheetHeightFraction <= 1f) {
         "maxSheetHeightFraction must be in (0, 1]"
     }
+    val native = LocalCoffeePeekNativeSheetPresenter.current
+    if (native != null && native.Present(onDismissRequest, dismissEnabled, maxSheetHeightFraction, content)) return
     val scope = rememberCoroutineScope()
     val currentDismissEnabled by rememberUpdatedState(dismissEnabled)
     val currentOnDismiss by rememberUpdatedState(onDismissRequest)

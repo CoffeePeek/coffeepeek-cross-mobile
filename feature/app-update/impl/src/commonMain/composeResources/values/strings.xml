@@ -1,0 +1,27 @@
+<resources>
+    <!-- Russian only, copied verbatim from the production update card. -->
+    <string name="appupdate_title_starting">Подготовка обновления</string>
+    <string name="appupdate_title_downloading">Скачиваем обновление</string>
+    <string name="appupdate_title_verifying">Проверяем обновление</string>
+    <string name="appupdate_title_ready">Готово к установке</string>
+    <string name="appupdate_title_installing">Устанавливаем обновление</string>
+    <string name="appupdate_title_required">Обновите CoffeePeek</string>
+    <string name="appupdate_title_available">Доступно обновление</string>
+    <string name="appupdate_body_starting">Подтвердите загрузку обновления.</string>
+    <string name="appupdate_body_downloading_percent">Загружено %1$s</string>
+    <string name="appupdate_body_downloading">Загрузка продолжается…</string>
+    <string name="appupdate_body_verifying">Проверяем версию и подпись приложения.</string>
+    <string name="appupdate_body_ready">Обновление скачано. Можно установить.</string>
+    <string name="appupdate_body_installing">Подтвердите установку обновления.</string>
+    <string name="appupdate_body_required">Установите новую версию, чтобы продолжить.</string>
+    <string name="appupdate_body_available">Скачайте новую версию CoffeePeek.</string>
+    <string name="appupdate_cancel">Отмена</string>
+    <string name="appupdate_later">Позже</string>
+    <string name="appupdate_install">Установить</string>
+    <string name="appupdate_retry">Повторить</string>
+    <string name="appupdate_app_store">App Store</string>
+    <string name="appupdate_download">Скачать</string>
+    <string name="appupdate_downloaded_message">Обновление загружено. Перезапустите приложение для установки.</string>
+    <string name="appupdate_restart_action">Перезапустить</string>
+    <string name="appupdate_retry_action">Повторить</string>
+</resources>

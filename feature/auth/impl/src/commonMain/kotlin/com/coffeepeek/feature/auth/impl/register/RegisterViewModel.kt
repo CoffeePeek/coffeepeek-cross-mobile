@@ -2,9 +2,12 @@ package com.coffeepeek.feature.auth.impl.register
 
 import com.coffeepeek.core.presentation.MviViewModel
 import com.coffeepeek.feature.auth.api.AuthAnalytics
+import com.coffeepeek.feature.auth.api.AppleAuthorizer
 import com.coffeepeek.feature.auth.api.AuthEntry
 import com.coffeepeek.feature.auth.api.SignInMethod
 import com.coffeepeek.feature.auth.domain.AuthRepository
+import com.coffeepeek.feature.auth.domain.SignedInAccount
+import com.coffeepeek.feature.auth.impl.signInWithApple
 import com.coffeepeek.feature.auth.domain.MIN_REGISTRATION_PASSWORD_LENGTH
 import com.coffeepeek.feature.auth.domain.SocialProvider
 import com.coffeepeek.feature.auth.domain.checkRegistration
@@ -20,34 +23,42 @@ import kotlinx.coroutines.CancellationException
 internal class RegisterViewModel(
     private val repository: AuthRepository,
     private val analytics: AuthAnalytics,
+    private val apple: AppleAuthorizer? = null,
 ) : MviViewModel<RegisterState, RegisterAction, RegisterEvent>(RegisterState()) {
 
     override suspend fun handleActionInternal(action: RegisterAction) {
         // While a request is running the form is frozen: edits, consent and "change e-mail" must not change what is being sent or move the step.
-        if (currentState.busy && action.editsTheForm()) return
+        if (currentState.busy) return
         when (action) {
             is RegisterAction.NameChanged -> updateState { copy(name = action.value, reported = null, failure = null, socialFailure = null) }
-            is RegisterAction.EmailChanged -> updateState {
-                copy(email = action.value, emailIssue = null, emailTaken = false, failure = null, socialFailure = null)
-            }
-            is RegisterAction.PasswordChanged -> updateState {
-                copy(
-                    password = action.value,
-                    reported = null,
-                    failure = null,
-                    passwordIssue = passwordIssue?.let { validatePassword(action.value, MIN_REGISTRATION_PASSWORD_LENGTH) },
-                )
-            }
+            is RegisterAction.EmailChanged -> changeEmail(action.value)
+            is RegisterAction.PasswordChanged -> changePassword(action.value)
             is RegisterAction.TermsChanged -> updateState { copy(termsAccepted = action.checked, reported = null) }
             is RegisterAction.AnalyticsChanged -> updateState { copy(analyticsAccepted = action.checked) }
             RegisterAction.ChangeEmail -> updateState { copy(step = RegisterStep.Email, passwordIssue = null, reported = null, failure = null) }
             RegisterAction.ContinueWithEmail -> continueWithEmail()
             RegisterAction.Submit -> submit()
-            is RegisterAction.GoogleToken -> googleSignUp(action.idToken)
-            is RegisterAction.GoogleFailed -> updateState {
-                copy(socialFailure = classifySocialFailure(SocialProvider.Google, action.message), failure = null)
-            }
+            RegisterAction.AppleSignIn -> appleSignIn()
+            is RegisterAction.GoogleToken -> socialSignIn(SignInMethod.Google, SocialProvider.Google) { repository.signInWithGoogle(action.idToken) }
+            is RegisterAction.GoogleFailed -> googleFailed(action.message)
         }
+    }
+
+    private fun changeEmail(value: String) = updateState {
+        copy(email = value, emailIssue = null, emailTaken = false, failure = null, socialFailure = null)
+    }
+
+    private fun changePassword(value: String) = updateState {
+        copy(
+            password = value,
+            reported = null,
+            failure = null,
+            passwordIssue = passwordIssue?.let { validatePassword(value, MIN_REGISTRATION_PASSWORD_LENGTH) },
+        )
+    }
+
+    private fun googleFailed(message: String) = updateState {
+        copy(socialFailure = classifySocialFailure(SocialProvider.Google, message), failure = null)
     }
 
     private suspend fun continueWithEmail() {
@@ -99,25 +110,26 @@ internal class RegisterViewModel(
         }
     }
 
-    private suspend fun googleSignUp(idToken: String) {
+    private suspend fun appleSignIn() {
+        val authorizer = apple ?: return
+        socialSignIn(SignInMethod.Apple, SocialProvider.Apple) { signInWithApple(repository, authorizer) }
+    }
+
+    private suspend fun socialSignIn(method: SignInMethod, provider: SocialProvider, request: suspend () -> Result<SignedInAccount>) {
         if (currentState.busy) return
         updateState { copy(busy = true, failure = null, socialFailure = null) }
         try {
-            repository.signInWithGoogle(idToken).fold(
+            request().fold(
                 onSuccess = { account ->
-                    analytics.signedIn(account.userId, SignInMethod.Google, AuthEntry.Register)
+                    analytics.signedIn(account.userId, method, AuthEntry.Register)
                     sendEvent(RegisterEvent.SignedIn)
                 },
-                onFailure = { error -> updateState { copy(socialFailure = classifySocialFailure(SocialProvider.Google, error.message)) } },
+                onFailure = { error -> updateState { copy(socialFailure = classifySocialFailure(provider, error.message)) } },
             )
         } finally {
             updateState { copy(busy = false) }
         }
     }
-
-    private fun RegisterAction.editsTheForm() = this is RegisterAction.NameChanged || this is RegisterAction.EmailChanged ||
-        this is RegisterAction.PasswordChanged || this is RegisterAction.TermsChanged || this is RegisterAction.AnalyticsChanged ||
-        this === RegisterAction.ChangeEmail
 
     private fun failureOf(error: Throwable): RequestFailure {
         if (error is CancellationException) throw error

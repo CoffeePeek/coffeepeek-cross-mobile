@@ -10,6 +10,7 @@ import com.coffeepeek.feature.shop.impl.ui.data.shopExposure
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
+import com.coffeepeek.core.designsystem.component.CoffeePeekGlassIcon
 import com.coffeepeek.core.designsystem.modifier.CoffeePeekGlassIconButton
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
@@ -33,14 +34,15 @@ internal fun ShopHeaderActions(
     Row(horizontalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing2),
         verticalAlignment = Alignment.CenterVertically) {
         CoffeePeekGlassIconButton(onClick = onSuggestChange,
-            contentDescription = stringResource(Res.string.shop_detail_suggest_change), hazeState = hazeState) {
+            contentDescription = stringResource(Res.string.shop_detail_suggest_change), hazeState = hazeState,
+            nativeIcon = CoffeePeekGlassIcon.Edit) {
             Icon(CoffeePeekIcons.NoteEdit, contentDescription = null, tint = MaterialTheme.colorScheme.onSurface)
         }
         ShopFavoriteButton(isFavorite, favoriteAvailable, isFavoriteLoading, onToggleFavorite,
             hazeState = hazeState)
         CoffeePeekGlassIconButton(onClick = onShare,
             contentDescription = stringResource(Res.string.shop_detail_share),
-            modifier = Modifier.shopExposure(ShopExposure.Share), hazeState = hazeState) {
+            modifier = Modifier.shopExposure(ShopExposure.Share), hazeState = hazeState, nativeIcon = CoffeePeekGlassIcon.Share) {
             Icon(CoffeePeekIcons.Share, contentDescription = null, tint = MaterialTheme.colorScheme.onSurface)
         }
     }

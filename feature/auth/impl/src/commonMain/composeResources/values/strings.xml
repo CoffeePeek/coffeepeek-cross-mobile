@@ -1,0 +1,78 @@
+<resources>
+    <!-- Russian only, copied verbatim from the production sign-in and password recovery screens. -->
+    <string name="auth_close">Закрыть</string>
+    <string name="auth_email_label">Email</string>
+    <string name="auth_email_placeholder">name@example.com</string>
+    <string name="auth_password_label">Пароль</string>
+    <string name="auth_show_password">Показать пароль</string>
+    <string name="auth_hide_password">Скрыть пароль</string>
+
+    <string name="auth_email_required">Введите email</string>
+    <string name="auth_email_invalid">Введите корректный email</string>
+    <string name="auth_password_required">Введите пароль</string>
+    <string name="auth_password_too_short">Пароль должен содержать как минимум %1$d символов</string>
+
+    <string name="auth_login_title">Вход в аккаунт</string>
+    <string name="auth_login_subtitle">Войдите в свой аккаунт CoffeePeek.</string>
+    <string name="auth_forgot_password">Забыли пароль?</string>
+    <string name="auth_login">Войти</string>
+    <string name="auth_create_account">Создать аккаунт</string>
+    <string name="auth_login_wrong_credentials">Неверный email или пароль</string>
+    <string name="auth_login_network">Не удалось подключиться. Проверьте интернет-соединение</string>
+    <string name="auth_login_unknown">Не удалось войти. Проверьте email и пароль</string>
+    <string name="auth_signing_in">Входим…</string>
+
+    <string name="auth_recovery_title">Восстановление пароля</string>
+    <string name="auth_recovery_info">Введите email аккаунта — мы отправим ссылку для восстановления пароля.</string>
+    <string name="auth_recovery_sent">Если аккаунт с этим email существует, на него отправлено письмо. Откройте ссылку из письма в браузере и измените пароль на сайте. Затем вернитесь в приложение и войдите с новым паролем. Проверьте также папку «Спам».</string>
+    <string name="auth_recovery_send">Отправить письмо</string>
+    <string name="auth_recovery_busy">Подождите…</string>
+    <string name="auth_recovery_back_to_login">Вернуться ко входу</string>
+    <string name="auth_recovery_another_email">Указать другой email</string>
+    <string name="auth_recovery_failed">Не удалось отправить письмо. Проверьте соединение и попробуйте снова.</string>
+
+    <string name="auth_step_email">Email</string>
+    <string name="auth_step_register">Регистрация</string>
+    <string name="auth_step_done">Готово</string>
+    <string name="auth_register_email_title">Введите email</string>
+    <string name="auth_register_email_subtitle">Мы проверим, есть ли у вас уже аккаунт CoffeePeek.</string>
+    <string name="auth_continue">Продолжить</string>
+    <string name="auth_already_have_account">Уже есть аккаунт</string>
+    <string name="auth_new_profile">Новый профиль</string>
+    <string name="auth_register_title">Создайте аккаунт</string>
+    <string name="auth_name_label">Имя</string>
+    <string name="auth_name_placeholder">Как вас зовут?</string>
+    <string name="auth_register_password_placeholder">От 8 символов</string>
+    <string name="auth_change_email">Изменить email</string>
+    <string name="auth_strength_weak">слабый</string>
+    <string name="auth_strength_medium">средний</string>
+    <string name="auth_strength_strong">надёжный</string>
+    <string name="auth_terms_prefix">"Я принимаю "</string>
+    <string name="auth_terms_link">условия использования</string>
+    <string name="auth_terms_and">" и даю согласие на "</string>
+    <string name="auth_privacy_link">обработку персональных данных</string>
+    <string name="auth_analytics_title">Разрешить аналитику использования</string>
+    <string name="auth_analytics_description">Необязательно. События использования отправляются в PostHog (ЕС), чтобы улучшать CoffeePeek. Без текстов поиска, заметок, фото и точных координат. Решение можно изменить в настройках.</string>
+    <string name="auth_register_submit">Создать аккаунт</string>
+    <string name="auth_register_success_title">Проверьте почту</string>
+    <string name="auth_register_success_subtitle">Мы отправили ссылку на %1$s. Перейдите по ссылке чтобы активировать аккаунт. Ссылка действует 10 минут.</string>
+    <string name="auth_go_to_login">На страницу входа</string>
+    <string name="auth_email_taken">Этот Email уже занят</string>
+    <string name="auth_name_required">Введите имя!</string>
+    <string name="auth_terms_required">Для завершения регистрации необходимо принять условия соглашения и политику конфиденциальности!</string>
+    <string name="auth_register_failed">Ошибка при попытке создания учетной записи, попробуйте позже!</string>
+    <string name="auth_password_too_short_registration">Пароль должен содержать как минимум 8 символов</string>
+    <string name="auth_check_failed">Попробуйте позже!</string>
+
+    <string name="auth_or">ИЛИ</string>
+    <string name="auth_sign_in_google">Войти через Google</string>
+    <string name="auth_sign_in_apple">Войти через Apple</string>
+    <string name="auth_social_apple_generic">Не удалось войти через Apple. Попробуйте ещё раз.</string>
+    <string name="auth_social_apple_email_not_verified">Apple не передал подтверждённый email. Попробуйте ещё раз.</string>
+    <string name="auth_social_account_exists">Аккаунт с этим email уже существует. Используйте способ входа, с которым вы регистрировались.</string>
+    <string name="auth_social_email_not_verified">Google не передал подтверждённый email. Разрешите доступ к email и попробуйте ещё раз.</string>
+    <string name="auth_social_generic">Не удалось войти через Google. Попробуйте ещё раз.</string>
+    <string name="auth_social_diag_domain">; домен %1$s</string>
+    <string name="auth_social_diag_oauth">; OAuth %1$s</string>
+    <string name="auth_social_diag">%1$s (код %2$s%3$s%4$s)</string>
+</resources>

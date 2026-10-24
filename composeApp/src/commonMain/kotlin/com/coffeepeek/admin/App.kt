@@ -18,6 +18,7 @@ import com.coffeepeek.admin.theme.platformSystemDarkTheme
 import com.coffeepeek.admin.theme.ThemeManager
 import com.coffeepeek.admin.theme.ThemeMode
 import com.coffeepeek.admin.ui.Navigator
+import com.coffeepeek.admin.ui.component.ProvideDesignSystemPlatformHooks
 import com.coffeepeek.admin.ui.component.dismissKeyboardOnBackgroundGestures
 import com.coffeepeek.admin.utils.OrientationObserver
 import io.kamel.core.config.KamelConfig
@@ -70,7 +71,7 @@ internal fun AppContent(content: @Composable () -> Unit) {
             LocalKamelConfig provides kamelConfig,
             LocalContentColor provides MaterialTheme.colorScheme.onBackground,
         ) {
-            content()
+            ProvideDesignSystemPlatformHooks(content)
         }
     }
 }

@@ -1,5 +1,12 @@
 # Auth — legacy-first inventory and plan — 2026-10-21
 
+> iOS follow-up, 2026-10-24, PR #195: the migrated entries now have Apple challenge/login,
+> AppleAuthorizer and the native Google launcher, shared provider buttons and `method=apple`
+> analytics. The old statements below that iOS must stay on legacy/Apple-only legacy describe
+> the Android-first checkpoint, not current wiring. Swift providers are reused, not replaced;
+> real OAuth/device acceptance is still open. See [IOS_MIGRATION_PLAN.md](../IOS_MIGRATION_PLAN.md#checkpoint-googleapple-auth--2026-10-24)
+> for the 125 unit/contract results, Android/Native builds and remaining gates.
+
 Method: the rule in [ANDROID_REFACTORING_PLAN.md](../ANDROID_REFACTORING_PLAN.md#legacy-first-parity-gate-mandatory-for-every-owner), format as in
 [../app-update/LEGACY_INVENTORY.md](../app-update/LEGACY_INVENTORY.md). Read-only analysis of the legacy `composeApp`, `modules/data` and `modules/network` code on branch `feature/auth-refactoring`
 (stacked on #125): no code changed, Gradle not run, nothing tried on a device. Every row is **open** until the owner confirms it and ends as **preserved**, **improved (how)** or **intentionally removed

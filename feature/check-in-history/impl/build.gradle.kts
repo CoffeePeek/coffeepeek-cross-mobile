@@ -1,5 +1,4 @@
-import com.coffeepeek.buildlogic.androidApi
-import com.coffeepeek.buildlogic.androidImplementation
+import com.coffeepeek.buildlogic.api
 import com.coffeepeek.buildlogic.implementation
 import com.coffeepeek.buildlogic.module
 import com.coffeepeek.buildlogic.testImplementation
@@ -20,11 +19,11 @@ dependencies {
     implementation(project(module.core.datetime))
     implementation(libs.compose.components.resources)
 
-    androidApi(project(module.feature.checkInHistory.api))
-    androidImplementation(project(module.core.designSystem))
-    androidImplementation(libs.androidx.lifecycle.viewmodelCompose)
-    androidImplementation(libs.androidx.lifecycle.runtimeCompose)
-    androidImplementation(libs.androidx.compose.ui.tooling.preview)
+    api(project(module.feature.checkInHistory.api))
+    implementation(project(module.core.designSystem))
+    implementation(libs.androidx.lifecycle.viewmodelCompose)
+    implementation(libs.androidx.lifecycle.runtimeCompose)
+    implementation(compose.components.uiToolingPreview)
 
     testImplementation(libs.kotlin.test)
     testImplementation(libs.kotlinx.coroutines.test)

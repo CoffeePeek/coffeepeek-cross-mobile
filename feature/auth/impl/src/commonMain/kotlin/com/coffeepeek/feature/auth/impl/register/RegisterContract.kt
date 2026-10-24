@@ -24,7 +24,7 @@ internal data class RegisterState(
     /** The single message a submit with invalid fields reports (the legacy priority); the button gating keeps it out of reach from the UI. */
     val reported: RegistrationIssue? = null,
     val failure: RequestFailure? = null,
-    /** Why the last Google sign-up failed; cleared by any edit. */
+    /** Why the last social sign-in failed; cleared by any edit. */
     val socialFailure: SocialFailure? = null,
     /** A request is running: the primary button shows a loader and the form ignores a second submit. */
     val busy: Boolean = false,
@@ -39,11 +39,12 @@ internal sealed interface RegisterAction {
     data object ContinueWithEmail : RegisterAction
     data object ChangeEmail : RegisterAction
     data object Submit : RegisterAction
+    data object AppleSignIn : RegisterAction
     data class GoogleToken(val idToken: String) : RegisterAction
     data class GoogleFailed(val message: String) : RegisterAction
 }
 
 internal sealed interface RegisterEvent {
-    /** A Google sign-up finished: the account is signed in. */
+    /** A social sign-in finished: the account is signed in. */
     data object SignedIn : RegisterEvent
 }

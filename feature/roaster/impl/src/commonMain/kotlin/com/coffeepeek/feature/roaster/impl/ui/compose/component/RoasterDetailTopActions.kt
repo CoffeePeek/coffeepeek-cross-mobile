@@ -13,6 +13,7 @@ import androidx.compose.ui.draw.scale
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.LayoutDirection
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
+import com.coffeepeek.core.designsystem.component.CoffeePeekGlassIcon
 import com.coffeepeek.core.designsystem.icons.PlatformBack
 import com.coffeepeek.core.designsystem.modifier.CoffeePeekGlassIconButton
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
@@ -34,7 +35,7 @@ internal fun RoasterDetailTopActions(
     Row(modifier.fillMaxWidth().statusBarsPadding().padding(CoffeePeekDimens.spacing3),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically) {
-        CoffeePeekGlassIconButton(onBack, stringResource(Res.string.roaster_detail_back)) {
+        CoffeePeekGlassIconButton(onBack, stringResource(Res.string.roaster_detail_back), nativeIcon = CoffeePeekGlassIcon.Back) {
             Icon(CoffeePeekIcons.PlatformBack, null,
                 modifier = Modifier.scale(scaleX = backScale, scaleY = 1f))
         }

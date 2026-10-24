@@ -2,10 +2,10 @@ import com.coffeepeek.buildlogic.api
 import com.coffeepeek.buildlogic.implementation
 import com.coffeepeek.buildlogic.module
 import com.coffeepeek.buildlogic.testImplementation
-import com.coffeepeek.buildlogic.androidImplementation
 
 plugins {
-    id("com.coffeepeek.kmp.shared-android-compose-library")
+    id("com.coffeepeek.kmp.shared-library")
+    id("com.coffeepeek.kmp.android-compose-library")
 }
 
 android {
@@ -17,11 +17,11 @@ dependencies {
     api(project(module.feature.coffee.api))
     implementation(project(module.feature.coffee.domain))
     implementation(project(module.core.presentation))
-    androidImplementation(project(module.core.designSystem))
-    androidImplementation(libs.androidx.lifecycle.viewmodelCompose)
-    androidImplementation(libs.androidx.lifecycle.runtimeCompose)
-    androidImplementation(libs.androidx.activity.compose)
-    androidImplementation(libs.androidx.compose.ui.tooling.preview)
+    implementation(project(module.core.designSystem))
+    implementation(libs.androidx.lifecycle.viewmodelCompose)
+    implementation(libs.androidx.lifecycle.runtimeCompose)
+    implementation(compose.components.resources)
+    implementation(compose.components.uiToolingPreview)
 
     testImplementation(libs.kotlin.test)
     testImplementation(libs.kotlinx.coroutines.test)
