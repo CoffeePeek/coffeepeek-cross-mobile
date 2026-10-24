@@ -130,6 +130,15 @@ class AccountDeletionViewModelTest {
         assertEquals(1, events.size)
     }
 
+    @Test fun replacingTheAccountByAnotherOneEndsTheFormToo() = runTest(dispatcher) {
+        val accounts = FakeProfileAccounts()
+        val vm = model(FakeDeletion(existing = Result.success(null)), accounts); runCurrent()
+        val events = mutableListOf<AccountDeletionEvent>(); backgroundScope.launch(dispatcher) { vm.events.collect(events::add) }
+        runCurrent(); assertTrue(events.isEmpty())
+        accounts.signIn("b"); runCurrent()
+        assertEquals(listOf<AccountDeletionEvent>(AccountDeletionEvent.SessionEnded), events)
+    }
+
     @Test fun aGuestSessionNeverReportsAnEnd() = runTest(dispatcher) {
         val accounts = FakeProfileAccounts(user = null)
         val vm = model(FakeDeletion(existing = Result.success(null)), accounts)

@@ -23,6 +23,8 @@ internal class RegisterViewModel(
 ) : MviViewModel<RegisterState, RegisterAction, RegisterEvent>(RegisterState()) {
 
     override suspend fun handleActionInternal(action: RegisterAction) {
+        // While a request is running the form is frozen: edits, consent and "change e-mail" must not change what is being sent or move the step.
+        if (currentState.busy && action.editsTheForm()) return
         when (action) {
             is RegisterAction.NameChanged -> updateState { copy(name = action.value, reported = null, failure = null, socialFailure = null) }
             is RegisterAction.EmailChanged -> updateState {
@@ -76,6 +78,7 @@ internal class RegisterViewModel(
         val name = currentState.name.trim()
         val email = currentState.email.trim()
         val password = currentState.password
+        val analyticsAccepted = currentState.analyticsAccepted
         val check = checkRegistration(name, email, password, currentState.termsAccepted)
         if (!check.valid) {
             updateState { copy(passwordIssue = check.password, emailIssue = check.email, reported = check.reported, failure = null) }
@@ -83,7 +86,7 @@ internal class RegisterViewModel(
         }
         updateState { copy(busy = true, reported = null, failure = null) }
         try {
-            analytics.saveAnalyticsConsent(currentState.analyticsAccepted)
+            analytics.saveAnalyticsConsent(analyticsAccepted)
             repository.register(name, email, password).fold(
                 onSuccess = {
                     analytics.passwordSignUpCompleted(email)
@@ -111,6 +114,10 @@ internal class RegisterViewModel(
             updateState { copy(busy = false) }
         }
     }
+
+    private fun RegisterAction.editsTheForm() = this is RegisterAction.NameChanged || this is RegisterAction.EmailChanged ||
+        this is RegisterAction.PasswordChanged || this is RegisterAction.TermsChanged || this is RegisterAction.AnalyticsChanged ||
+        this === RegisterAction.ChangeEmail
 
     private fun failureOf(error: Throwable): RequestFailure {
         if (error is CancellationException) throw error

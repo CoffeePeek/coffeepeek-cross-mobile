@@ -53,6 +53,31 @@ class RegisterAnalyticsConsentTest {
         } finally { vm.close() }
     }
 
+    @Test fun theFormIsFrozenAndTheRegistrationIsSentOnceWhileTheRequestRuns() = runBlocking {
+        val calls = Channel<String>(Channel.UNLIMITED)
+        val gate = kotlinx.coroutines.CompletableDeferred<Unit>()
+        val vm = RegisterViewModel(ConsentAuthRepository(calls, gate)) { calls.send("consent:$it") }
+        try {
+            vm.onNameChange("Coffee User"); vm.onEmailChange("person@example.invalid"); vm.onPasswordChange("TestPassword123")
+            vm.onTermsCheckedChange(true); vm.onAnalyticsCheckedChange(true)
+            vm.onContinueEmail()
+            withTimeout(5_000) { vm.step.first { it == RegisterStep.Details } }
+            vm.onRegisterClick()
+            withTimeout(5_000) { assertEquals("consent:true", calls.receive()) }
+            // The request is parked in the repository: edits, a second tap and "back" must change nothing.
+            vm.onRegisterClick(); vm.onTermsCheckedChange(false); vm.onAnalyticsCheckedChange(false); vm.onBack()
+            assertTrue(vm.isTermsAccepted.value); assertTrue(vm.isAnalyticsAccepted.value)
+            assertEquals(RegisterStep.Details, vm.step.value)
+            gate.complete(Unit)
+            withTimeout(5_000) { vm.step.first { it == RegisterStep.Success } }
+            assertEquals("register", calls.receive())
+            assertTrue(calls.tryReceive().isFailure, "The registration must be sent once")
+            // The guard is released afterwards.
+            vm.onTermsCheckedChange(false)
+            assertFalse(vm.isTermsAccepted.value)
+        } finally { vm.close() }
+    }
+
     @Test fun socialLoginDoesNotApplyConsentFromTheHiddenSecondRegistrationStep() = runBlocking {
         for (accepted in listOf(false, true)) {
             val calls = Channel<String>(Channel.UNLIMITED)
@@ -73,8 +98,12 @@ class RegisterAnalyticsConsentTest {
     }
 }
 
-private class ConsentAuthRepository(private val calls: Channel<String>) : AuthRepository {
+private class ConsentAuthRepository(
+    private val calls: Channel<String>,
+    private val gate: kotlinx.coroutines.CompletableDeferred<Unit>? = null,
+) : AuthRepository {
     override suspend fun register(userName: String, email: String, password: String): Result<Unit> {
+        gate?.await()
         calls.send("register")
         return Result.success(Unit)
     }

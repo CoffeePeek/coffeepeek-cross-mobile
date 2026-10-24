@@ -193,10 +193,10 @@ class DiscoveryRepositoryTest {
         assertEquals(2, requests.size)
     }
 
-    @Test fun theMapKeepsOnlyTheFocusedKindAcceptsPascalCaseAndNamesNoShop() = runBlocking {
+    @Test fun theMapKeepsOnlyTheFocusedKindAcceptsPascalCaseAndNamesAnUntitledShopLikeProd() = runBlocking {
         reply = { ok("""{"Shops":[{"address":{"slug":"a"},"Latitude":1.0,"Longitude":2.0,"Title":" ","Type":"Cafe"},{"address":{"slug":"b"},"Latitude":3.0,"Longitude":4.0,"Title":"B","Type":"Specialty"}],"Zones":[],"IsTruncated":true}""") }
         val content = repository().mapContent(bounds, 22f, DiscoveryFilters(kind = ShopKind.Cafe)).getOrThrow()
-        assertEquals(listOf("a"), content.markers.map { it.id }); assertEquals("", content.markers.single().title); assertTrue(content.isTruncated)
+        assertEquals(listOf("a"), content.markers.map { it.id }); assertEquals("Кофейня", content.markers.single().title) /* a blank title is named as in prod */; assertTrue(content.isTruncated)
         assertEquals("Cafe", requests.single().url.parameters["type"])
     }
 

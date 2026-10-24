@@ -160,6 +160,25 @@ class SettingsViewModelTest {
         assertEquals(listOf<SettingsEvent>(SettingsEvent.UpToDate), events)
     }
 
+    @Test fun aCancelledCheckIsNotAFailedCheckAndReleasesTheRow() = runTest(dispatcher) {
+        val updates = Updates().apply { failure = kotlinx.coroutines.CancellationException("the check was cancelled") }
+        val vm = model(updates = updates); val events = events(vm); runCurrent()
+        vm.onAction(SettingsAction.CheckForUpdates); runCurrent()
+        advanceTimeBy(1_000); runCurrent()
+        assertEquals(1, updates.checks)
+        assertTrue(events.isEmpty())
+        assertFalse(vm.state.value.updateBusy)
+    }
+
+    @Test fun anOrdinaryCheckErrorStillReportsTheFailure() = runTest(dispatcher) {
+        val updates = Updates().apply { failure = IllegalStateException("offline") }
+        val vm = model(updates = updates); val events = events(vm); runCurrent()
+        vm.onAction(SettingsAction.CheckForUpdates); runCurrent()
+        advanceTimeBy(1_000); runCurrent()
+        assertEquals(listOf<SettingsEvent>(SettingsEvent.UpdateCheckFailed), events)
+        assertFalse(vm.state.value.updateBusy)
+    }
+
     @Test fun aSecondTapWhileBusyIsIgnored() = runTest(dispatcher) {
         val updates = Updates(); val vm = model(updates = updates); val events = events(vm); runCurrent()
         vm.onAction(SettingsAction.CheckForUpdates); runCurrent()

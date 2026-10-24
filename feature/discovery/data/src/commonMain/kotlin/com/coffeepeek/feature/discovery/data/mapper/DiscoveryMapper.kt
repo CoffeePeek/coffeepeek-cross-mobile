@@ -65,11 +65,14 @@ internal fun NearbyRowDto.toDomain(favorites: Set<String>, requestedKind: ShopKi
     distanceMeters = distanceMeters,
 )
 
+/** What prod shows for a map shop without a title. */
+internal const val UNNAMED_SHOP = "Кофейня"
+
 /** The markers come from this answer (asked at the shop zoom), the zones from [zonesFrom] (asked at the visible zoom). */
 internal fun MapDto.toContent(zonesFrom: MapDto, kind: ShopKind?): MapContent {
     val markers = shops.map { shop ->
         MapMarker(
-            id = shop.address.slug, title = shop.title?.takeIf(String::isNotBlank).orEmpty(), coordinates = Coordinates(shop.latitude, shop.longitude),
+            id = shop.address.slug, title = shop.title?.takeIf(String::isNotBlank) ?: UNNAMED_SHOP, coordinates = Coordinates(shop.latitude, shop.longitude),
             kind = ShopKind.fromApi(shop.type.text()), zoneId = shop.primaryZone?.slug,
         )
     }

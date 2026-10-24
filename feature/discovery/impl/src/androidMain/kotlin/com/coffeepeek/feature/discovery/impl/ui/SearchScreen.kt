@@ -2,6 +2,11 @@ package com.coffeepeek.feature.discovery.impl.ui
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedContentTransitionScope
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandHorizontally
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkHorizontally
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Arrangement
@@ -10,6 +15,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -44,15 +50,14 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.coffeepeek.core.designsystem.component.CoffeePeekButton
 import com.coffeepeek.core.designsystem.component.CoffeePeekCatalogSuggestionCard
 import com.coffeepeek.core.designsystem.component.CoffeePeekFilterChip
 import com.coffeepeek.core.designsystem.component.CoffeePeekLoader
 import com.coffeepeek.core.designsystem.component.CoffeePeekPullToRefresh
+import com.coffeepeek.core.designsystem.component.CoffeePeekCircularBackButton
 import com.coffeepeek.core.designsystem.component.CoffeePeekSearchField
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
@@ -87,6 +92,7 @@ internal fun SearchContent(
         Column(headerModifier) {
             Column(Modifier.padding(top = CoffeePeekDimens.spacing3, bottom = CoffeePeekDimens.spacing2)) {
                 SearchHeader(state, host, onAction)
+                Spacer(Modifier.height(CoffeePeekDimens.spacing2))
                 QuickFilters(state, onAction)
             }
             HorizontalDivider(thickness = 1.dp, color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.7f))
@@ -109,11 +115,28 @@ internal fun SearchContent(
 @Composable
 private fun SearchHeader(state: SearchState, host: DiscoveryHost, onAction: (SearchAction) -> Unit) {
     val focus = LocalFocusManager.current
+    // The back button shows whenever the results list replaces the home tab, also when only a filter is on.
+    val searching = !state.showsDiscovery
     Row(
-        Modifier.fillMaxWidth().padding(horizontal = CoffeePeekDimens.spacing4, vertical = CoffeePeekDimens.spacing2),
+        Modifier.fillMaxWidth().padding(horizontal = CoffeePeekDimens.spacing4),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing2),
     ) {
+        // As in prod: while searching a round back button leaves the search, and the filters stay available beside the field.
+        // The button and its gap grow and fade together, so the field slides instead of jumping.
+        AnimatedVisibility(
+            visible = searching,
+            enter = expandHorizontally(expandFrom = Alignment.Start) + fadeIn(),
+            exit = shrinkHorizontally(shrinkTowards = Alignment.Start) + fadeOut(),
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                CoffeePeekCircularBackButton(
+                    onClick = { focus.clearFocus(); onAction(SearchAction.CancelSearch) },
+                    contentDescription = stringResource(R.string.discovery_search_cancel),
+                    tint = MaterialTheme.colorScheme.primary,
+                )
+                Spacer(Modifier.width(CoffeePeekDimens.spacing2))
+            }
+        }
         CoffeePeekSearchField(
             value = state.query,
             onValueChange = { onAction(SearchAction.Query(it)) },
@@ -122,27 +145,24 @@ private fun SearchHeader(state: SearchState, host: DiscoveryHost, onAction: (Sea
             modifier = host.exposure(Modifier.weight(1f).onFocusChanged { if (it.isFocused) onAction(SearchAction.ActivateSearch) }, DiscoveryExposure.Search),
             onSearch = { focus.clearFocus() },
         )
-        if (state.searchActive || state.query.isNotBlank()) {
-            TextButton(onClick = { focus.clearFocus(); onAction(SearchAction.CancelSearch) }) { Text(stringResource(R.string.discovery_search_cancel)) }
-        } else {
-            val description = if (state.activeFilterCount > 0) stringResource(R.string.discovery_filters_active, state.activeFilterCount) else stringResource(R.string.discovery_filters)
-            BadgedBox(
-                badge = {
-                    if (state.activeFilterCount > 0) Box(
-                        Modifier.size(22.dp).clip(CircleShape).background(MaterialTheme.colorScheme.primary),
-                        contentAlignment = Alignment.Center,
-                    ) { Text(state.activeFilterCount.toString(), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onPrimary) }
-                },
-                modifier = host.exposure(Modifier, DiscoveryExposure.Filters),
+        Spacer(Modifier.width(CoffeePeekDimens.spacing2))
+        val description = if (state.activeFilterCount > 0) stringResource(R.string.discovery_filters_active, state.activeFilterCount) else stringResource(R.string.discovery_filters)
+        BadgedBox(
+            badge = {
+                if (state.activeFilterCount > 0) Box(
+                    Modifier.size(22.dp).clip(CircleShape).background(MaterialTheme.colorScheme.primary),
+                    contentAlignment = Alignment.Center,
+                ) { Text(state.activeFilterCount.toString(), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onPrimary) }
+            },
+            modifier = host.exposure(Modifier, DiscoveryExposure.Filters),
+        ) {
+            OutlinedIconButton(
+                onClick = { onAction(SearchAction.ToggleFilters) },
+                modifier = Modifier.size(CoffeePeekDimens.buttonHeight).semantics { contentDescription = description },
+                shape = CircleShape,
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
             ) {
-                OutlinedIconButton(
-                    onClick = { onAction(SearchAction.ToggleFilters) },
-                    modifier = Modifier.size(CoffeePeekDimens.buttonHeight).semantics { contentDescription = description },
-                    shape = CircleShape,
-                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
-                ) {
-                    Icon(CoffeePeekIcons.Filter, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(22.dp))
-                }
+                Icon(CoffeePeekIcons.Filter, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(22.dp))
             }
         }
     }
@@ -211,22 +231,16 @@ private fun ResultsList(
                 item(key = "shops-heading") { Text(stringResource(R.string.discovery_section_shops), style = MaterialTheme.typography.titleMedium) }
             }
             when {
-                state.isLoading && shops.isEmpty() -> item(key = "loading") { Centered { CoffeePeekLoader(stringResource(R.string.discovery_loading)) } }
-                state.error != null && shops.isEmpty() -> item(key = "error") {
-                    Centered {
-                        Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing3)) {
-                            Text(state.error.serverMessage ?: stringResource(R.string.discovery_load_failed), textAlign = TextAlign.Center, style = MaterialTheme.typography.bodyLarge)
-                            CoffeePeekButton(stringResource(R.string.discovery_retry), { onAction(SearchAction.Refresh) })
-                        }
-                    }
+                state.isLoading && shops.isEmpty() -> item(key = "loading") {
+                    Box(Modifier.fillParentMaxSize(), contentAlignment = Alignment.Center) { CoffeePeekLoader(stringResource(R.string.discovery_loading)) }
                 }
+                state.error != null && shops.isEmpty() -> item(key = "error") { host.loadError({ onAction(SearchAction.Refresh) }, Modifier.fillParentMaxSize()) }
                 // Nothing found is the «Не нашли нужную кофейню?» card, not a plain message.
                 shops.isEmpty() -> item(key = "suggestion") { SuggestionCard(host, onAddShop) }
                 else -> {
                     items(shops, key = { it.id }, contentType = { "shop" }) { shop ->
                         ShopRow(shop, host, shop.id in state.favoriteUpdates, state.userLocation, onOpen = { onAction(SearchAction.OpenShop(shop.id)) }, onFavorite = { onAction(SearchAction.ToggleFavorite(shop.id)) })
                     }
-                    if (state.isLoadingMore) item(key = "more") { Centered { CoffeePeekLoader(stringResource(R.string.discovery_loading), size = 28.dp) } }
                     // As in the legacy list: the card is the last item whenever nothing is loading and nothing failed.
                     if (!state.isLoading && state.error == null) item(key = "suggestion") { SuggestionCard(host, onAddShop) }
                 }
@@ -244,9 +258,4 @@ private fun SuggestionCard(host: DiscoveryHost, onAddShop: () -> Unit) {
         illustration = host.suggestionIllustration(),
         onAdd = onAddShop,
     )
-}
-
-@Composable
-private fun Centered(content: @Composable () -> Unit) {
-    Box(Modifier.fillMaxWidth().padding(vertical = CoffeePeekDimens.spacing8), contentAlignment = Alignment.Center) { content() }
 }

@@ -10,11 +10,10 @@ import com.coffeepeek.feature.community.domain.model.PostModeration
 import com.coffeepeek.feature.community.domain.model.PostPhotos
 import com.coffeepeek.feature.community.domain.model.PostRating
 import com.coffeepeek.feature.community.domain.model.PostVisibility
+import com.coffeepeek.core.network.flexibleIntOrNull
 import kotlinx.serialization.json.JsonElement
-import kotlinx.serialization.json.JsonPrimitive
-import kotlinx.serialization.json.intOrNull
 
-internal fun JsonElement?.intOrNullValue(): Int? = (this as? JsonPrimitive)?.intOrNull
+internal fun JsonElement?.intOrNullValue(): Int? = flexibleIntOrNull()
 
 /** Absolute URLs stay as issued; relative ones are resolved against the API base. */
 internal fun String?.resolveUrl(apiBaseUrl: String): String? = this?.trim()?.takeIf(String::isNotBlank)?.let {

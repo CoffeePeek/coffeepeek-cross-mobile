@@ -59,7 +59,7 @@ internal fun ConsumedDrinkField(
         if (slug != null && selected == null) {
             add(CoffeePeekSelectOption("saved:$slug", label, selected = true) { })
         }
-        drinks.forEach { drink ->
+        drinks.distinctBy { it.slug }.forEach { drink ->
             val drinkName = if (language == "en") drink.nameEn.ifBlank { drink.nameRu }
                 else drink.nameRu.ifBlank { drink.nameEn }
             add(CoffeePeekSelectOption("drink:${drink.slug}", drinkName, selected = drink.slug == slug) {

@@ -6,6 +6,7 @@ import com.coffeepeek.core.designsystem.component.CoffeePeekScaffold as Scaffold
 
 import com.coffeepeek.admin.analytics.*
 import com.coffeepeek.admin.feature.checkin.api.CheckInFlowHandoff
+import com.coffeepeek.core.datetime.parseServerInstant
 
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
@@ -131,7 +132,7 @@ internal fun ProfileCheckInsScreen(
     }
     val entries = remember(shopEntries, homeEntries) {
         (shopEntries.map(ActivityEntry::Shop) + homeEntries.map(ActivityEntry::Home))
-            .sortedWith(compareByDescending<ActivityEntry> { it.date }.thenByDescending { it.timestamp })
+            .sortedWith(compareByDescending<ActivityEntry> { it.date }.thenByDescending { legacyHistoryMillis(it.timestamp) }.thenByDescending { it.timestamp })
     }
     val isLoading = (kind != ActivityKind.Home && (if (selectedDate != null) shop.isCalendarLoading else shop.isLoading)) ||
         (kind != ActivityKind.Shop && home.loading)
@@ -322,3 +323,6 @@ private fun RetryMessage(message: String, onRetry: () -> Unit) {
         TextButton(onClick = onRetry) { Text("Повторить") }
     }
 }
+
+@OptIn(kotlin.time.ExperimentalTime::class)
+private fun legacyHistoryMillis(timestamp: String): Long = parseServerInstant(timestamp)?.toEpochMilliseconds() ?: Long.MIN_VALUE

@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.core.designsystem.component.CoffeePeekLikeButton
@@ -34,7 +33,6 @@ internal fun ShopRow(
     /** The roaster logos, the brew methods and the tag belong to the list card; the row of the discovery turns them off. */
     showCatalogDetails: Boolean = true,
 ) {
-    val locale = LocalConfiguration.current.locales[0]
     val kind = stringResource(
         when (shop.kind) {
             ShopKind.Specialty -> R.string.discovery_shop_kind_specialty
@@ -49,11 +47,11 @@ internal fun ShopRow(
         kindLabel = kind,
         modifier = modifier,
         rating = shop.rating,
-        ratingText = shop.rating?.let { String.format(locale, "%.1f", it) }.orEmpty(),
+        ratingText = shop.rating?.let(::oneDecimal).orEmpty(),
         ratingCount = shop.checkInCount,
         isNew = shop.isNew,
         newLabel = stringResource(R.string.discovery_shop_new),
-        statusLabel = if (shop.isOpen) stringResource(R.string.discovery_shop_open) else null,
+        statusLabel = stringResource(if (shop.isOpen) R.string.discovery_shop_open else R.string.discovery_shop_closed),
         isOpen = shop.isOpen,
         locationSummary = listOfNotNull(shop.address?.takeIf { it.isNotBlank() }, distance).joinToString(" • ").ifEmpty { null },
         priceLevel = shop.priceLevel?.level,
@@ -93,4 +91,11 @@ internal fun distanceLabel(meters: Double): String {
     val tenths = (meters / 100).roundToInt()
     val text = if (tenths % 10 == 0) "${tenths / 10}" else "${tenths / 10},${tenths % 10}"
     return stringResource(R.string.discovery_distance_km, text)
+}
+
+/** One decimal with a dot in every locale, as in prod (the rating badge never shows a decimal comma). */
+internal fun oneDecimal(value: Double): String {
+    val tenths = kotlin.math.round(value * 10.0).toLong()
+    val absolute = kotlin.math.abs(tenths)
+    return "${if (tenths < 0) "-" else ""}${absolute / 10}.${absolute % 10}"
 }

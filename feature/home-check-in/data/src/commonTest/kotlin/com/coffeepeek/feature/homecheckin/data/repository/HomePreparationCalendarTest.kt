@@ -92,7 +92,7 @@ class HomePreparationCalendarTest {
         } finally { gateway.close(); upload.close() }
     }
 
-    @Test fun missingMonthPageFailsInsteadOfPublishingAnIncompleteCalendar() = runBlocking {
+    @Test fun missingMonthPageKeepsTheCountsWithoutPhotos() = runBlocking {
         val gateway = gateway(MockEngine { request ->
             val data = if (request.url.encodedPath.endsWith("/calendar"))
                 """[{"preparedOn":"2026-10-16","brewCount":2}]"""
@@ -101,13 +101,29 @@ class HomePreparationCalendarTest {
         })
         val upload = HttpClient(MockEngine { error("No uploads") })
         try {
-            val error = assertIs<HomePreparationFailure>(createHomePreparationRepository(gateway, upload, "https://fixture.invalid")
-                .calendar(range).exceptionOrNull())
-            assertEquals(HomePreparationIssue.InvalidResponse, error.issue)
+            val day = createHomePreparationRepository(gateway, upload, "https://fixture.invalid").calendar(range).getOrThrow().single()
+            assertEquals(2, day.brewCount)
+            assertTrue(day.photos.isEmpty())
         } finally { gateway.close(); upload.close() }
     }
 
-    @Test fun invalidMonthPageMetadataDoesNotEscapeAsAPartialSuccess() = runBlocking {
+    @Test fun aFailedPhotoPageKeepsTheCountsButARejectedSessionStillSurfaces() = runBlocking {
+        for ((status, survives) in listOf(HttpStatusCode.InternalServerError to true, HttpStatusCode.Unauthorized to false)) {
+            val gateway = gateway(MockEngine { request ->
+                if (request.url.encodedPath.endsWith("/calendar"))
+                    respond("""{"isSuccess":true,"data":[{"preparedOn":"2026-10-16","brewCount":3}]}""", headers = headers)
+                else respond("{}", status, headers)
+            })
+            val upload = HttpClient(MockEngine { error("No uploads") })
+            try {
+                val result = createHomePreparationRepository(gateway, upload, "https://fixture.invalid").calendar(range)
+                if (survives) assertEquals(3, result.getOrThrow().single().brewCount)
+                else assertEquals(HomePreparationIssue.Unauthorized, assertIs<HomePreparationFailure>(result.exceptionOrNull()).issue)
+            } finally { gateway.close(); upload.close() }
+        }
+    }
+
+    @Test fun invalidMonthPageMetadataKeepsTheCountsWithoutPhotos() = runBlocking {
         for (data in listOf("""{"items":[],"totalCount":-1}""",
             """{"items":[${List(101) { row("entry") }.joinToString(",")}],"totalCount":101}""")) {
             val gateway = gateway(MockEngine { request ->
@@ -117,9 +133,9 @@ class HomePreparationCalendarTest {
             })
             val upload = HttpClient(MockEngine { error("No uploads") })
             try {
-                val error = assertIs<HomePreparationFailure>(createHomePreparationRepository(gateway, upload, "https://fixture.invalid")
-                    .calendar(range).exceptionOrNull())
-                assertEquals(HomePreparationIssue.InvalidResponse, error.issue)
+                val day = createHomePreparationRepository(gateway, upload, "https://fixture.invalid").calendar(range).getOrThrow().single()
+                assertEquals(1, day.brewCount)
+                assertTrue(day.photos.isEmpty())
             } finally { gateway.close(); upload.close() }
         }
     }

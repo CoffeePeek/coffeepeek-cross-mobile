@@ -65,10 +65,11 @@ internal class AccountDeletionViewModel(
 
     private fun observeSessionEnd() {
         viewModelScope.launch {
-            var sawActiveSession = false
+            // The form belongs to the account that opened it: signing out and replacing it by another account both end it.
+            var owner: String? = null
             accounts.observeActiveAccount().collect { account ->
-                if (account != null) sawActiveSession = true
-                else if (sawActiveSession) { sawActiveSession = false; sendEvent(AccountDeletionEvent.SessionEnded) }
+                if (owner == null) owner = account
+                else if (account != owner) { owner = null; sendEvent(AccountDeletionEvent.SessionEnded) }
             }
         }
     }

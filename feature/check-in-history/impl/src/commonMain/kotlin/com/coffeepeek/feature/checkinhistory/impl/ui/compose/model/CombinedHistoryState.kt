@@ -30,8 +30,7 @@ internal data class CombinedHistoryState(
         val shopItems = if (!filter.includes(HistorySource.Shop)) emptyList()
             else if (selectedDate == null) shops.items else shopCalendar.content[selectedDate].orEmpty()
         val homeItems = if (filter.includes(HistorySource.Home)) homes.items else emptyList()
-        return (shopItems + homeItems).sortedWith(compareByDescending<HistoryTimelineItem> { it.date }
-            .thenByDescending { it.timestamp })
+        return (shopItems + homeItems).sortedWith(HistoryTimelineOrder)
     }
 
     val calendarCounts: Map<String, Long> get() {

@@ -8,6 +8,9 @@
     <string name="discovery_filters_close">Закрыть фильтры</string>
     <string name="discovery_filters_reset">Сбросить</string>
     <string name="discovery_filters_done">Готово</string>
+    <string name="discovery_filters_selected">Выбрано: %1$d</string>
+    <string name="discovery_filters_show_all">Показать все (%1$d)</string>
+    <string name="discovery_filters_collapse">Свернуть</string>
 
     <string name="discovery_quick_open">Открыто</string>
     <string name="discovery_quick_new">Новые</string>
@@ -36,7 +39,10 @@
     <string name="discovery_shop_kind_cafe">Кафе</string>
     <string name="discovery_shop_kind_specialty">Specialty</string>
     <string name="discovery_shop_new">Новая</string>
-    <string name="discovery_shop_open">Открыто</string>
+    <string name="discovery_shop_open">ОТКРЫТО</string>
+    <string name="discovery_shop_closed">ЗАКРЫТО</string>
+    <string name="discovery_map_card_open">Открыто</string>
+    <string name="discovery_map_card_loading">Загрузка…</string>
     <string name="discovery_distance_meters">%1$d м</string>
     <string name="discovery_distance_from_you">%1$s от вас</string>
     <string name="discovery_distance_km">%1$s км</string>

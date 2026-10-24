@@ -105,6 +105,38 @@ class RegisterViewModelTest {
         assertEquals(RegisterStep.Success, vm.state.value.step)
     }
 
+    @Test fun theFormIsFrozenWhileTheRegistrationIsBeingSent() = runTest(dispatcher) {
+        val auth = FakeAuthRepository(); val analytics = FakeAnalytics()
+        val vm = model(auth, analytics); vm.toDetails("new@example.com"); runCurrent()
+        vm.fill(name = "Анна", password = "password1"); vm.onAction(RegisterAction.AnalyticsChanged(true)); runCurrent()
+        auth.gate = CompletableDeferred()
+        vm.onAction(RegisterAction.Submit); runCurrent()
+        assertTrue(vm.state.value.busy)
+        // None of these may change what is being sent or move the step while the request runs.
+        vm.onAction(RegisterAction.ChangeEmail); vm.onAction(RegisterAction.TermsChanged(false)); vm.onAction(RegisterAction.AnalyticsChanged(false))
+        vm.onAction(RegisterAction.NameChanged("Другое")); vm.onAction(RegisterAction.EmailChanged("other@example.com")); vm.onAction(RegisterAction.PasswordChanged("changed password"))
+        runCurrent()
+        with(vm.state.value) {
+            assertEquals(RegisterStep.Details, step); assertTrue(termsAccepted); assertTrue(analyticsAccepted)
+            assertEquals("Анна", name); assertEquals("new@example.com", email); assertEquals("password1", password)
+        }
+        auth.gate!!.complete(Unit); runCurrent()
+        assertEquals(listOf(listOf("Анна", "new@example.com", "password1")), auth.registrations)
+        assertEquals(listOf(true), analytics.consents)
+        assertEquals(RegisterStep.Success, vm.state.value.step)
+        assertFalse(vm.state.value.busy)
+    }
+
+    @Test fun theFormIsEditableAgainOnceTheRequestHasFailed() = runTest(dispatcher) {
+        val auth = FakeAuthRepository().apply { register = Result.failure(IllegalStateException("rejected")) }
+        val vm = model(auth); vm.toDetails(); runCurrent()
+        vm.fill(); auth.gate = CompletableDeferred(); vm.onAction(RegisterAction.Submit); runCurrent()
+        auth.gate!!.complete(Unit); runCurrent()
+        assertFalse(vm.state.value.busy)
+        vm.onAction(RegisterAction.TermsChanged(false)); runCurrent()
+        assertFalse(vm.state.value.termsAccepted)
+    }
+
     @Test fun declinedAnalyticsIsStoredAsDeclined() = runTest(dispatcher) {
         val analytics = FakeAnalytics(); val vm = model(analytics = analytics); vm.toDetails(); runCurrent()
         vm.fill(); vm.onAction(RegisterAction.Submit); runCurrent()

@@ -22,6 +22,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalFocusManager
@@ -74,10 +75,12 @@ internal fun MapScreen(
             onFocusConsumed()
         }
     }
+    val currentDismissInput by rememberUpdatedState(dismissInput)
     val callbacks = remember(viewModel, isPreview) {
         MapCanvasCallbacks(
             onBoundsChanged = { bounds, zoom -> viewModel.onAction(MapAction.BoundsChanged(bounds, zoom)) },
-            onMarkerClick = { id -> viewModel.onAction(if (isPreview) MapAction.OpenShop(id) else MapAction.SelectMarker(id)) },
+            // As in prod: a tap on a marker first closes the keyboard and the search field.
+            onMarkerClick = { id -> currentDismissInput(); viewModel.onAction(if (isPreview) MapAction.OpenShop(id) else MapAction.SelectMarker(id)) },
             onZoneClick = { id -> viewModel.onAction(MapAction.SelectZone(id)) },
             onCameraApplied = { viewModel.onAction(MapAction.CameraApplied) },
             onMyLocationFound = { point -> viewModel.onAction(MapAction.MyLocationFound(point)) },
@@ -169,8 +172,9 @@ internal fun MapContent(
             CoffeePeekGlassIconButton({ onAction(MapAction.ToggleZones) }, zones) {
                 Icon(CoffeePeekIcons.Polygon, null, Modifier.size(26.dp), tint = if (state.showZones) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface)
             }
-            CoffeePeekGlassIconButton({ onAction(MapAction.RequestMyLocation) }, stringResource(R.string.discovery_map_my_location)) {
-                Icon(CoffeePeekIcons.Navigation, null, Modifier.size(26.dp))
+            // Prod draws the location button 4 dp larger than the zones button, with a larger arrow.
+            CoffeePeekGlassIconButton({ onAction(MapAction.RequestMyLocation) }, stringResource(R.string.discovery_map_my_location), Modifier.size(CoffeePeekDimens.buttonHeight + 4.dp)) {
+                Icon(CoffeePeekIcons.Navigation, null, Modifier.size(32.dp))
             }
         }
         if (state.showSearchArea) {

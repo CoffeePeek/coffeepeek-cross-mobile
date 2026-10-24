@@ -248,7 +248,7 @@ private fun PostPhotoStrip(photos: PostPhotos, onPhoto: (Int) -> Unit, host: Com
             Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.surfaceVariant), contentAlignment = Alignment.Center) {
                 CoffeePeekLoader(stringResource(R.string.community_loading), size = 32.dp)
             }
-            host.image(photos.thumbnails.getOrNull(index) ?: photos.originals[index], photos.originals[index].takeIf(String::isNotBlank), Modifier.fillMaxSize(), ContentScale.Crop)
+            host.image(photos.thumbnails.getOrNull(index) ?: photos.originals[index], photos.inlineSource(index), Modifier.fillMaxSize(), ContentScale.Crop)
             if (index == 2 && count > 3) Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.45f)), contentAlignment = Alignment.Center) {
                 Text(stringResource(R.string.community_more_photos, count - 3), style = MaterialTheme.typography.headlineSmall, color = Color.White)
             }

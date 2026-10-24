@@ -1,6 +1,11 @@
 package com.coffeepeek.feature.discovery.impl.ui
 
 import androidx.compose.foundation.layout.Arrangement
+import com.coffeepeek.core.designsystem.component.CoffeePeekActionRow
+import androidx.compose.ui.unit.sp
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -46,12 +51,23 @@ internal fun FilterSheet(state: SearchState, host: DiscoveryHost, onAction: (Sea
     CoffeePeekSwipeDismissModalBottomSheet(
         onDismissRequest = { onAction(SearchAction.CloseFilters) },
         dismissDescription = stringResource(R.string.discovery_filters_close),
-        maxSheetHeightFraction = 0.92f,
     ) {
-        Row(Modifier.fillMaxWidth().padding(horizontal = CoffeePeekDimens.spacing1), verticalAlignment = Alignment.CenterVertically) {
-            TextButton({ draft = draft.clearSelections() }, enabled = draft.activeCount > 0) { Text(stringResource(R.string.discovery_filters_reset)) }
-            Text(stringResource(R.string.discovery_filters), style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f), textAlign = TextAlign.Center)
-            TextButton({ onAction(SearchAction.ApplyFilters(draft)); onAction(SearchAction.CloseFilters) }) { Text(stringResource(R.string.discovery_filters_done)) }
+        // The navigation bar of prod's sheet: 48 dp, 17 sp, the title centred.
+        Box(Modifier.fillMaxWidth().height(48.dp).padding(horizontal = 4.dp)) {
+            val resetEnabled = draft.activeCount > 0
+            TextButton({ draft = draft.clearSelections() }, enabled = resetEnabled, modifier = Modifier.align(Alignment.CenterStart)) {
+                Text(
+                    stringResource(R.string.discovery_filters_reset), fontSize = 17.sp,
+                    color = if (resetEnabled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
+                )
+            }
+            Text(
+                stringResource(R.string.discovery_filters), fontSize = 17.sp, fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onBackground, modifier = Modifier.align(Alignment.Center),
+            )
+            TextButton({ onAction(SearchAction.ApplyFilters(draft)); onAction(SearchAction.CloseFilters) }, modifier = Modifier.align(Alignment.CenterEnd)) {
+                Text(stringResource(R.string.discovery_filters_done), fontSize = 17.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.primary)
+            }
         }
         Column(
             Modifier.weight(1f, fill = false).verticalScroll(rememberScrollState()).navigationBarsPadding()
@@ -79,15 +95,32 @@ internal fun FilterSheet(state: SearchState, host: DiscoveryHost, onAction: (Sea
     }
 }
 
+/** As in prod: the first five rows plus every selected one, then «Показать все (N)» / «Свернуть», and «Выбрано: N» beside the title. */
 @Composable
 private fun Selection(title: Int, entries: List<CatalogEntry>, selected: Set<String>, onToggle: (String) -> Unit, leading: (@Composable (CatalogEntry) -> Unit)? = null) {
     if (entries.isEmpty()) return
-    CoffeePeekGroupSection(title = stringResource(title)) {
-        entries.forEachIndexed { index, entry ->
+    var expanded by remember { mutableStateOf(false) }
+    val collapsible = entries.size > COLLAPSED_ROWS
+    val visible = if (expanded || !collapsible) entries else (entries.take(COLLAPSED_ROWS) + entries.filter { it.id in selected }).distinctBy { it.id }
+    val selectedCount = entries.count { it.id in selected }
+    CoffeePeekGroupSection(
+        title = stringResource(title),
+        trailing = selectedCount.takeIf { it > 0 }?.let { stringResource(R.string.discovery_filters_selected, it) },
+    ) {
+        visible.forEachIndexed { index, entry ->
             if (index > 0) CoffeePeekRowSeparator()
             CoffeePeekCheckmarkRow(entry.name, entry.id in selected, { onToggle(entry.id) }, leading = leading?.let { { it(entry) } })
         }
+        if (collapsible) {
+            CoffeePeekRowSeparator()
+            CoffeePeekActionRow(
+                label = if (expanded) stringResource(R.string.discovery_filters_collapse) else stringResource(R.string.discovery_filters_show_all, entries.size),
+                onClick = { expanded = !expanded },
+            )
+        }
     }
 }
+
+private const val COLLAPSED_ROWS = 5
 
 private fun Set<String>.toggle(id: String): Set<String> = if (id in this) this - id else this + id
