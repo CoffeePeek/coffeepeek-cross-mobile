@@ -24,8 +24,8 @@ import com.coffeepeek.feature.profile.data.createPublicProfileData
 import com.coffeepeek.admin.feature.profile.domain.PublicProfileRepository
 import com.coffeepeek.admin.feature.profile.ui.PublicProfileViewModel
 import com.coffeepeek.admin.feature.homecheckin.ui.HomeCheckInViewModel
-import com.coffeepeek.feature.homecheckin.data.HomeCheckInRepositoryImpl
-import com.coffeepeek.feature.homecheckin.domain.HomeCheckInRepository
+import com.coffeepeek.legacy.homecheckin.data.HomeCheckInRepositoryImpl
+import com.coffeepeek.legacy.homecheckin.domain.HomeCheckInRepository
 import com.coffeepeek.feature.notifications.api.NotificationFeature
 import com.coffeepeek.admin.feature.favorites.data.ServerRoasterFavorites
 import com.coffeepeek.admin.utils.CustomUrlFetcher
@@ -39,8 +39,20 @@ import com.coffeepeek.admin.ui.screen.shop.ShopCheckInFormRenderer
 import com.coffeepeek.admin.ui.screen.shop.LegacyShopCheckInFormRenderer
 import com.coffeepeek.admin.ui.screen.coffee.CoffeeScreenRenderer
 import com.coffeepeek.admin.ui.screen.coffee.LegacyCoffeeScreenRenderer
+import com.coffeepeek.admin.feature.appupdate.ui.AppUpdateRenderer
+import com.coffeepeek.admin.feature.appupdate.ui.LegacyAppUpdateRenderer
+import com.coffeepeek.admin.feature.notifications.ui.LegacyNotificationsRenderer
+import com.coffeepeek.admin.feature.notifications.ui.NotificationsRenderer
 import com.coffeepeek.admin.ui.screen.profile.AccountScreenRenderer
 import com.coffeepeek.admin.ui.screen.profile.LegacyAccountScreenRenderer
+import com.coffeepeek.admin.feature.community.ui.CommunityScreenRenderer
+import com.coffeepeek.admin.feature.community.ui.LegacyCommunityScreenRenderer
+import com.coffeepeek.admin.ui.screen.contributions.ContributionsScreenRenderer
+import com.coffeepeek.admin.ui.screen.contributions.LegacyContributionsScreenRenderer
+import com.coffeepeek.admin.ui.screen.main.DiscoveryScreenRenderer
+import com.coffeepeek.admin.ui.screen.main.LegacyDiscoveryScreenRenderer
+import com.coffeepeek.admin.ui.screen.auth.AuthScreenRenderer
+import com.coffeepeek.admin.ui.screen.auth.LegacyAuthScreenRenderer
 import com.coffeepeek.admin.ui.screen.profile.LegacySettingsScreenRenderer
 import com.coffeepeek.admin.ui.screen.profile.SettingsScreenRenderer
 import com.coffeepeek.admin.ui.screen.profile.LegacyOwnProfileScreenRenderer
@@ -109,6 +121,12 @@ fun initKoin(
     ownProfileRendererFactory: Scope.() -> OwnProfileScreenRenderer = { LegacyOwnProfileScreenRenderer },
     accountRendererFactory: Scope.() -> AccountScreenRenderer = { LegacyAccountScreenRenderer },
     settingsRendererFactory: Scope.() -> SettingsScreenRenderer = { LegacySettingsScreenRenderer },
+    appUpdateRendererFactory: Scope.() -> AppUpdateRenderer = { LegacyAppUpdateRenderer },
+    authRendererFactory: Scope.() -> AuthScreenRenderer = { LegacyAuthScreenRenderer },
+    communityRendererFactory: Scope.() -> CommunityScreenRenderer = { LegacyCommunityScreenRenderer },
+    contributionsRendererFactory: Scope.() -> ContributionsScreenRenderer = { LegacyContributionsScreenRenderer },
+    discoveryRendererFactory: Scope.() -> DiscoveryScreenRenderer = { LegacyDiscoveryScreenRenderer },
+    notificationsRendererFactory: Scope.() -> NotificationsRenderer = { LegacyNotificationsRenderer },
     analyticsEnabled: Boolean = true,
 ) {
     check(AppConfig.baseUrl.isNotBlank()) {
@@ -130,7 +148,8 @@ fun initKoin(
         appModule(database.settingRepository, shopReportRendererFactory, shopGalleryRendererFactory,
             shopCheckInRendererFactory, shopDetailRendererFactory, shopCheckInListRendererFactory,
             checkInHistoryRendererFactory, checkInCreateFlowRendererFactory, coffeeRendererFactory, roasterRendererFactory,
-            publicProfileRendererFactory, ownProfileRendererFactory, accountRendererFactory, settingsRendererFactory),
+            publicProfileRendererFactory, ownProfileRendererFactory, accountRendererFactory, settingsRendererFactory, appUpdateRendererFactory,
+            authRendererFactory, communityRendererFactory, contributionsRendererFactory, discoveryRendererFactory, notificationsRendererFactory),
         imageModule(),
         roasterModule(),
         updateInstallerModule(),
@@ -159,6 +178,12 @@ private fun appModule(
     ownProfileRendererFactory: Scope.() -> OwnProfileScreenRenderer,
     accountRendererFactory: Scope.() -> AccountScreenRenderer,
     settingsRendererFactory: Scope.() -> SettingsScreenRenderer,
+    appUpdateRendererFactory: Scope.() -> AppUpdateRenderer,
+    authRendererFactory: Scope.() -> AuthScreenRenderer,
+    communityRendererFactory: Scope.() -> CommunityScreenRenderer,
+    contributionsRendererFactory: Scope.() -> ContributionsScreenRenderer,
+    discoveryRendererFactory: Scope.() -> DiscoveryScreenRenderer,
+    notificationsRendererFactory: Scope.() -> NotificationsRenderer,
 ) = module {
     single<CoffeeScreenRenderer> { coffeeRendererFactory() }
     single<RoasterScreenRenderer> { roasterRendererFactory() }
@@ -166,6 +191,24 @@ private fun appModule(
     single<OwnProfileScreenRenderer> { ownProfileRendererFactory() }
     single<AccountScreenRenderer> { accountRendererFactory() }
     single<SettingsScreenRenderer> { settingsRendererFactory() }
+    single<AppUpdateRenderer> { appUpdateRendererFactory() }
+    single<NotificationsRenderer> { notificationsRendererFactory() }
+    single<AuthScreenRenderer> { authRendererFactory() }
+    single<CommunityScreenRenderer> { communityRendererFactory() }
+    single<ContributionsScreenRenderer> { contributionsRendererFactory() }
+    single<DiscoveryScreenRenderer> { discoveryRendererFactory() }
+    single<com.coffeepeek.feature.community.domain.repository.CommunityRepository> {
+        com.coffeepeek.feature.community.data.repository.createCommunityRepository(get<CoffeePeekClient>().client, Constants.BASE_URL)
+    }
+    single<com.coffeepeek.feature.community.api.CommunityAccount> { com.coffeepeek.admin.di.community.SessionCommunityAccount(get(), get()) }
+    single<com.coffeepeek.feature.community.api.ConsumedDrinks> { com.coffeepeek.admin.di.community.ShopCommunityDrinks(get()) }
+    single<com.coffeepeek.feature.community.api.CommunityAnalytics> { com.coffeepeek.admin.di.community.AppCommunityAnalytics() }
+    single<com.coffeepeek.feature.auth.api.LocalUserData> { com.coffeepeek.admin.di.auth.UserSessionLocalUserData(get()) }
+    single<com.coffeepeek.feature.auth.api.AuthAnalytics> { com.coffeepeek.admin.di.auth.AppAuthAnalytics() }
+    single<com.coffeepeek.feature.auth.domain.AuthRepository> {
+        val gateway = get<CoffeePeekClient>()
+        com.coffeepeek.feature.auth.data.createAuthRepository(gateway.plainClient, gateway.client, get(), get())
+    }
     single<CheckInCreateFlowRenderer> { checkInCreateFlowRendererFactory() }
     single<CheckInHistoryScreenRenderer> { checkInHistoryRendererFactory() }
     single<ShopDetailScreenRenderer> { shopDetailRendererFactory() }
@@ -174,7 +217,10 @@ private fun appModule(
     single<ShopReportScreenRenderer> { shopReportRendererFactory(get()) }
     single<ShopMenuGalleryScreenRenderer> { shopGalleryRendererFactory(get()) }
     single<com.coffeepeek.feature.notifications.api.NotificationFeature> {
-        com.coffeepeek.feature.notifications.api.createNotificationFeature(get<CoffeePeekClient>().client, get(), com.coffeepeek.admin.notifications.NativePushBridge)
+        com.coffeepeek.feature.notifications.impl.createNotificationFeature(
+            com.coffeepeek.feature.notifications.data.createNotificationRepository(get<CoffeePeekClient>().client),
+            com.coffeepeek.admin.di.notifications.SessionNotificationAccount(get()), com.coffeepeek.admin.notifications.NativePushBridge,
+        )
     }
     single<PasswordRecoveryRepository> { PasswordRecoveryRepositoryImpl(get<CoffeePeekClient>().plainClient) }
     factory { (email: String) -> PasswordRecoveryViewModel(email, get()) }
@@ -191,9 +237,9 @@ private fun appModule(
     }
     factory { CoffeeListViewModel(get()) }
     factory { (slug: String) -> CoffeeDetailViewModel(slug, get()) }
-    single { com.coffeepeek.feature.authorblocking.api.createAuthorBlockingFeature(get<CoffeePeekClient>().client, get()) }
-    single<com.coffeepeek.feature.authorblocking.api.AuthorVisibility> { get<com.coffeepeek.feature.authorblocking.api.AuthorBlockingFeature>().visibility }
-    single<com.coffeepeek.feature.authorblocking.api.AuthorBlockingPresenter> { get<com.coffeepeek.feature.authorblocking.api.AuthorBlockingFeature>().presenter }
+    single { com.coffeepeek.feature.authorblocking.impl.createAuthorBlockingFeature(get<CoffeePeekClient>().client, com.coffeepeek.admin.di.authorblocking.SessionAuthorBlockingAccount(get())) }
+    single<com.coffeepeek.feature.authorblocking.api.AuthorVisibility> { get<com.coffeepeek.feature.authorblocking.impl.AuthorBlockingFeature>().visibility }
+    single<com.coffeepeek.feature.authorblocking.api.AuthorBlockingPresenter> { get<com.coffeepeek.feature.authorblocking.impl.AuthorBlockingFeature>().presenter }
     single<com.coffeepeek.feature.authorblocking.api.AuthorBlockActions> { get<com.coffeepeek.feature.authorblocking.api.AuthorBlockingPresenter>() }
     single<PublicProfileRepository> {
         AppPublicProfileRepository(
@@ -203,10 +249,14 @@ private fun appModule(
     }
     factory { (slug: String) -> PublicProfileViewModel(slug, get(), get(), users = get(), visibility = get()) }
     single<RoasterFavorites> { ServerRoasterFavorites(get(), get(), get()) }
-    single<com.coffeepeek.admin.feature.appupdate.domain.AppUpdateRepository> {
-        com.coffeepeek.admin.feature.appupdate.data.AppUpdateRepositoryImpl(get<CoffeePeekClient>().plainClient, settingRepository)
+    single<com.coffeepeek.feature.appupdate.domain.AppUpdateRepository> {
+        com.coffeepeek.feature.appupdate.data.AppUpdateRepositoryImpl(
+            get<CoffeePeekClient>().plainClient,
+            com.coffeepeek.admin.di.appupdate.AppConfigUpdateEnvironment,
+            com.coffeepeek.admin.di.appupdate.SettingsDismissedUpdateStore(settingRepository),
+        )
     }
-    single { com.coffeepeek.admin.feature.appupdate.ui.AppUpdateState(get()) }
+    single { com.coffeepeek.feature.appupdate.impl.AppUpdateController(get(), com.coffeepeek.admin.di.appupdate.AppConfigUpdateEnvironment) }
     single<CustomUrlFetcher> {
         val gateway = get<CoffeePeekClient>()
         createImageUrlFetcher(gateway.client, gateway.imageClient)

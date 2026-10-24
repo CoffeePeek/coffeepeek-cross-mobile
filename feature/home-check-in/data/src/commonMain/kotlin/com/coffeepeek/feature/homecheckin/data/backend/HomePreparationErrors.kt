@@ -42,7 +42,7 @@ internal fun homeServerFailure(status: Int, body: String): HomePreparationFailur
         status >= 500 || code in setOf("INTERNAL_ERROR", "SERVICE_UNAVAILABLE") -> HomePreparationIssue.Unavailable
         else -> null
     }
-    if (general != null) return HomePreparationFailure(general)
+    if (general != null) return HomePreparationFailure(general, statusCode = status)
     val fields = linkedMapOf<HomePreparationField, HomePreparationIssue>()
     (payload?.value("errors") as? JsonObject)?.forEach { (key, value) ->
         val messages = when (value) {
@@ -64,7 +64,7 @@ internal fun homeServerFailure(status: Int, body: String): HomePreparationFailur
         status == 400 || status == 422 || code == "VALIDATION_FAILED" -> HomePreparationIssue.InvalidInput
         else -> HomePreparationIssue.RequestFailed
     }
-    return HomePreparationFailure(issue, fields)
+    return HomePreparationFailure(issue, fields, statusCode = status)
 }
 
 private fun JsonObject?.value(key: String) = this?.entries?.firstOrNull { it.key.equals(key, ignoreCase = true) }?.value

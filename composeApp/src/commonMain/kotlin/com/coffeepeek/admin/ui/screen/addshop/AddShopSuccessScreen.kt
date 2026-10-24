@@ -1,5 +1,9 @@
 package com.coffeepeek.admin.ui.screen.addshop
 
+import com.coffeepeek.core.designsystem.component.coffeePeekScreenBottomPadding
+
+import com.coffeepeek.core.designsystem.component.CoffeePeekScaffold as Scaffold
+
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -21,7 +25,6 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -73,7 +76,7 @@ internal fun AddShopSuccessScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .verticalScroll(rememberScrollState())
+                .verticalScroll(rememberScrollState()).coffeePeekScreenBottomPadding()
                 .padding(horizontal = CpDimens.spacing4),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {

@@ -1,6 +1,7 @@
 package com.coffeepeek.admin.utils
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.Box
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -13,6 +14,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.painter.ColorPainter
 import androidx.compose.ui.graphics.painter.Painter
@@ -42,7 +44,11 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
+import coffeepeek.composeapp.generated.resources.Res
+import coffeepeek.composeapp.generated.resources.photo_loading
+import com.coffeepeek.core.designsystem.component.CoffeePeekLoader
 import org.jetbrains.compose.resources.DrawableResource
+import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
 
 @Composable
@@ -55,6 +61,8 @@ fun CpImage(
     contentDescription: String? = null,
     highQualityData: Any? = null,
     upgradeDelayMillis: Long = 1_500L,
+    /** Draws the brand loader over a translucent tile while nothing of the image has arrived yet. */
+    showLoader: Boolean = false,
 ) {
     val previewData = cpImageData(data)
     val detailData = highQualityData?.let(::cpImageData)?.takeUnless {
@@ -73,32 +81,46 @@ fun CpImage(
         }
     }
 
+    // The preview is loaded first and alone: the original (often a huge file) must not compete with it for the transfer and the decoder, which kept the
+    // preview of the full-screen viewer spinning until the original was dropped. The original starts once the preview has settled, success or failure.
+    var detailLoaded by remember(previewData, detailData) { mutableStateOf(false) }
+    var previewSettled by remember(previewData, detailData) { mutableStateOf(false) }
     // Keep the selected quality through navigation; the loader gates transfers by lifecycle.
-    val detail = if (detailData != null && (upgradeReady || upgradeDelayMillis <= 0)) {
+    val preview = rememberCpImageResource(previewData, renewPermission = !detailLoaded)
+    SideEffect { if (preview is Resource.Success || preview is Resource.Failure) previewSettled = true }
+    val detail = if (detailData != null && previewSettled && (upgradeReady || upgradeDelayMillis <= 0)) {
         rememberCpImageResource(detailData, renewPermission = mayUpgrade)
     } else null
-    val preview = rememberCpImageResource(previewData, renewPermission = detail !is Resource.Success)
+    SideEffect { detailLoaded = detail is Resource.Success }
     // Keep the preview during the higher-quality transfer, including failures.
     // Expired protected painters are withdrawn by the resource loader itself.
     val result = if (detail is Resource.Success) detail else preview
-    val loading = placeholder?.toPainterResource() ?: ColorPainter(MaterialTheme.colorScheme.surfaceVariant)
+    // With the loader the tile is only a translucent veil over the screen background, not an opaque slab.
+    val loading = placeholder?.toPainterResource()
+        ?: ColorPainter(MaterialTheme.colorScheme.surfaceVariant.let { if (showLoader) it.copy(alpha = 0.3f) else it })
     val painter = when (result) {
         is Resource.Success -> result.value
         is Resource.Failure -> error?.toPainterResource() ?: loading
         is Resource.Loading -> loading
     }
-    Image(
-        painter = painter,
-        contentDescription = contentDescription,
-        contentScale = contentScale,
-        modifier = modifier.then(if (detailData != null && upgradeDelayMillis > 0) {
-            Modifier.onGloballyPositioned { coordinates ->
-                val bounds = coordinates.boundsInWindow()
-                val total = coordinates.size.width.toDouble() * coordinates.size.height
-                visible = total > 0 && bounds.width.toDouble() * bounds.height / total >= 0.5
-            }
-        } else Modifier),
-    )
+    val image: @Composable () -> Unit = {
+        Image(
+            painter = painter,
+            contentDescription = contentDescription,
+            contentScale = contentScale,
+            modifier = modifier.then(if (detailData != null && upgradeDelayMillis > 0) {
+                Modifier.onGloballyPositioned { coordinates ->
+                    val bounds = coordinates.boundsInWindow()
+                    val total = coordinates.size.width.toDouble() * coordinates.size.height
+                    visible = total > 0 && bounds.width.toDouble() * bounds.height / total >= 0.5
+                }
+            } else Modifier),
+        )
+    }
+    if (showLoader) Box(contentAlignment = Alignment.Center) {
+        image()
+        if (result is Resource.Loading) CoffeePeekLoader(stringResource(Res.string.photo_loading))
+    } else image()
 }
 
 /** Bounded, one-shot warming through the same renderer/cache as visible images. */
@@ -136,6 +158,11 @@ internal fun PrefetchPhotos(urls: List<String>, inPhotoViewer: Boolean = false) 
 }
 
 private val photoPrefetchRequests = Semaphore(2)
+
+/** The latest state of one protected photo load, observable by the function that owns the load. */
+private class LoadedPhoto {
+    var value: Resource<Painter> by mutableStateOf(Resource.Loading(0f))
+}
 
 internal fun cpImageData(data: Any): Any = when (data) {
     is String -> CustomUrl(when {
@@ -208,13 +235,20 @@ internal fun rememberCpImageResource(resource: Any, renewPermission: Boolean = t
         expired = true
     }
 
+    // The loader's state is read inside the CompositionLocalProvider lambda, which recomposes on its own: a plain local assigned there never reached this
+    // function again, so a photo that finished decoding after the permission arrived stayed on Loading until something unrelated recomposed it (a touch).
+    val loaded = remember(resource, session, epoch, permissionScope, generation, presentation) { LoadedPhoto() }
     var result: Resource<Painter> = Resource.Loading(0f)
     if (foreground) {
         if (retained != null) result = Resource.Success(retained.painter, DataSource.Memory)
-        else CompositionLocalProvider(LocalKamelConfig provides uncached) {
-            result = key(resource, session, epoch, permissionScope, generation, presentation) {
-                asyncPainterResource(data = resource.copy(permissionScope = permissionScope, displayPermission = presentation))
+        else {
+            CompositionLocalProvider(LocalKamelConfig provides uncached) {
+                val loading = key(resource, session, epoch, permissionScope, generation, presentation) {
+                    asyncPainterResource(data = resource.copy(permissionScope = permissionScope, displayPermission = presentation))
+                }
+                SideEffect { loaded.value = loading }
             }
+            result = loaded.value
         }
     }
     val failure = result as? Resource.Failure

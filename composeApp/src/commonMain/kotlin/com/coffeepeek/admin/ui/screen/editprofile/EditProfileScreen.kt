@@ -1,5 +1,7 @@
 package com.coffeepeek.admin.ui.screen.editprofile
 
+import com.coffeepeek.core.designsystem.component.CoffeePeekScaffold as Scaffold
+
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.getValue
 import com.coffeepeek.admin.ui.component.PlatformScrollableColumn
@@ -28,7 +30,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -133,6 +134,8 @@ fun EditProfileScreen(vm: EditProfileViewModel = platformViewModel()) {
         }
 
         PlatformScrollableColumn(
+
+            reserveBottomClearance = true,
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)

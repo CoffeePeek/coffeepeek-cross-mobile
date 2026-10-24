@@ -1,6 +1,6 @@
 package com.coffeepeek.admin.feature.homecheckin.ui
 
-import com.coffeepeek.feature.homecheckin.domain.HomeCheckInVisibility
+import com.coffeepeek.legacy.homecheckin.domain.HomeCheckInVisibility
 import kotlin.test.Test
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull

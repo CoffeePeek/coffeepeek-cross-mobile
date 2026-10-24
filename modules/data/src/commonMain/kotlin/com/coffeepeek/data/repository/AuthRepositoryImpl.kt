@@ -3,7 +3,7 @@ package com.coffeepeek.data.repository
 import com.coffeepeek.api.model.response.AuthResp
 import com.coffeepeek.api.service.AuthService
 import com.coffeepeek.data.session.UserSessionCleaner
-import com.coffeepeek.data.util.JwtUtils
+import com.coffeepeek.core.session.JwtUtils
 import com.coffeepeek.domain.model.Session
 import com.coffeepeek.domain.model.AppleLoginChallenge
 import com.coffeepeek.domain.repository.AuthRepository

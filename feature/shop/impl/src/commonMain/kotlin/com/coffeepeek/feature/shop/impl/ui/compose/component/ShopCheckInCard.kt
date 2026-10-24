@@ -67,7 +67,7 @@ internal fun ShopCheckInCard(
             val drink = checkIn.customDrinkName?.takeIf(String::isNotBlank)
                 ?: primaryDrinkName?.takeIf(String::isNotBlank) ?: fallbackDrinkName?.takeIf(String::isNotBlank)
             if (checkIn.note.isNotBlank()) ShopCheckInNote(checkIn.id, checkIn.note, fullVersion = fullVersion)
-            ShopCheckInPhotos(checkIn.photoUrls, checkIn.photoThumbnailUrls, onOpenPhoto)
+            ShopCheckInPhotos(checkIn.photoUrls, checkIn.photoThumbnailUrls, onOpenPhoto, detailUrls = checkIn.photoDetailUrls)
             val showHelpfulCount = showHelpful &&
                 (checkIn.visibility == ShopCheckInVisibility.Public || checkIn.helpfulCount > 0)
             if (showHelpfulCount || drink != null) {

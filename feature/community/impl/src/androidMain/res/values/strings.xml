@@ -1,0 +1,79 @@
+<resources>
+    <!-- Russian only, copied from the production feed (Лента). -->
+    <string name="community_title">Лента</string>
+    <string name="community_empty">Пока нет опубликованных чек-инов.</string>
+    <string name="community_refresh">Обновить ленту</string>
+    <string name="community_loading">Загрузка</string>
+    <string name="community_error_title">Упс, что-то пошло не так</string>
+    <string name="community_error_body">Сервис временно недоступен. Возможно, ведутся работы. Попробуйте чуть позже.</string>
+    <string name="community_retry">Попробовать снова</string>
+    <string name="community_restart">Обновить ленту</string>
+    <string name="community_vote_failed">Не удалось изменить отметку</string>
+
+    <string name="community_you">Вы</string>
+    <string name="community_user">Пользователь</string>
+    <string name="community_shop_default">Кофейня</string>
+    <string name="community_open_profile">Открыть профиль %1$s</string>
+    <string name="community_actions">Действия с чекином</string>
+    <string name="community_block_author">Заблокировать автора</string>
+    <string name="community_photo">Фотография %1$d из %2$d</string>
+    <string name="community_more_photos">+%1$d</string>
+    <string name="community_likes">Лайки: %1$d</string>
+    <string name="community_unlike">Убрать лайк, лайков: %1$d</string>
+    <string name="community_like">Поставить лайк, лайков: %1$d</string>
+    <string name="community_rating_description">Кофе: %1$d, сервис: %2$d, место: %3$d. Средняя оценка %4$s из 5</string>
+    <string name="community_details_separator"> · </string>
+    <string name="community_dose">%1$s г</string>
+    <string name="community_seconds">%1$d с</string>
+    <string name="community_taste">%1$d/5</string>
+
+    <string name="community_edit">Редактировать</string>
+    <string name="community_hide">Скрыть</string>
+    <string name="community_saving">Сохраняем…</string>
+    <string name="community_report">Пожаловаться</string>
+    <string name="community_publish">Опубликовать</string>
+    <string name="community_label_private">Приватный</string>
+    <string name="community_label_pending">На проверке</string>
+    <string name="community_label_published">Опубликован</string>
+    <string name="community_label_rejected">Отклонён</string>
+    <string name="community_label_public">Публичный</string>
+    <string name="community_label_unknown">Статус проверки неизвестен</string>
+
+    <string name="community_edit_title">Редактировать чек-ин</string>
+    <string name="community_edit_kept">Кофейня, дата визита и фотографии сохранятся.</string>
+    <string name="community_edit_review">После сохранения публичный чек-ин снова отправится на проверку.</string>
+    <string name="community_ratings_title">Ваши оценки</string>
+    <string name="community_ratings_hint">Нажмите на звёзды, чтобы изменить оценку</string>
+    <string name="community_rating_coffee">Кофе</string>
+    <string name="community_rating_service">Сервис</string>
+    <string name="community_rating_atmosphere">Атмосфера</string>
+    <string name="community_choose_rating">%1$s: выбрать %2$d из 5</string>
+    <string name="community_note_label">Текст чек-ина</string>
+    <string name="community_note_placeholder">Расскажите о визите</string>
+    <string name="community_drink_label">Напиток</string>
+    <string name="community_drink_none">Не выбран</string>
+    <string name="community_drink_other">Другое</string>
+    <string name="community_drink_error">Не удалось загрузить напитки</string>
+    <string name="community_drink_retry">Повторить</string>
+    <string name="community_drink_custom">Название напитка</string>
+    <string name="community_save">Сохранить</string>
+    <string name="community_cancel">Отмена</string>
+    <string name="community_close">Закрыть</string>
+    <string name="community_edit_save_failed">Не удалось сохранить чек-ин</string>
+    <string name="community_issue_note_too_long">Текст должен быть не длиннее 1000 символов</string>
+    <string name="community_issue_rating">Оцените кофе, сервис и атмосферу от 1 до 5</string>
+    <string name="community_issue_drink_required">Укажите название напитка: от 1 до 100 символов</string>
+    <string name="community_issue_drink_not_allowed">Название можно указать только для другого напитка</string>
+
+    <string name="community_report_title">Пожаловаться на чекин</string>
+    <string name="community_report_placeholder">Опишите проблему</string>
+    <string name="community_report_issue">Опишите проблему: от 1 до 2000 символов</string>
+    <string name="community_report_failed">Не удалось отправить жалобу</string>
+    <string name="community_report_send">Отправить</string>
+    <string name="community_report_sending">Отправляем…</string>
+
+    <string name="community_visibility_failed">Не удалось изменить видимость</string>
+    <string name="community_report_sent">Жалоба отправлена</string>
+    <string name="community_edit_saved">Чек-ин сохранён</string>
+    <string name="community_edit_sent_for_review">Чек-ин сохранён и отправлен на проверку. Он доступен в профиле, в разделе «Чекины»</string>
+</resources>

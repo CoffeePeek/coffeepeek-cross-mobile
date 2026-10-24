@@ -27,11 +27,12 @@ import com.coffeepeek.admin.theme.toUIColor
 import com.coffeepeek.admin.theme.uiKitStyle
 import com.coffeepeek.admin.ui.component.ProvideFloatingNavClearance
 import com.coffeepeek.admin.ui.component.dismissKeyboardOnBackgroundGestures
+import com.coffeepeek.core.designsystem.component.CoffeePeekScreenInsets
+import com.coffeepeek.core.designsystem.component.LocalCoffeePeekScreenInsets
 import kotlinx.cinterop.useContents
 import platform.UIKit.NSLayoutConstraint
 import platform.UIKit.UIRectEdgeAll
 import platform.UIKit.UIRectEdgeBottom
-import platform.UIKit.UIRectEdgeNone
 import platform.UIKit.UIStatusBarStyle
 import platform.UIKit.UIStatusBarStyleLightContent
 import platform.UIKit.UIViewController
@@ -49,15 +50,17 @@ internal class NativeScreenController(
     private val analyticsVisit = com.coffeepeek.admin.analytics.correlationId("screen")
     private var analyticsVisible by mutableStateOf(false)
     private var bottomClearance by mutableStateOf(0.dp)
-    private val photoUnderStatusBar = route is Navigator.Screen.ShopDetail
+    private val photoUnderStatusBar = route is Navigator.Screen.ShopDetail || route is Navigator.Screen.RoasterDetail
+    private val isAuthFlow = route == Navigator.Screen.Auth || route == Navigator.Screen.Register ||
+        route == Navigator.Screen.ForgotPassword || route is Navigator.Screen.ResetPassword
+    private val extendsUnderStatusBar = photoUnderStatusBar || isAuthFlow
     var handlesBackLocally = false
 
     init {
         this.title = title
         edgesForExtendedLayout = when {
-            isTabRoot -> UIRectEdgeBottom
-            photoUnderStatusBar -> UIRectEdgeAll
-            else -> UIRectEdgeNone
+            extendsUnderStatusBar -> UIRectEdgeAll
+            else -> UIRectEdgeBottom
         }
     }
 
@@ -84,7 +87,7 @@ internal class NativeScreenController(
 
     override fun viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
-        bottomClearance = if (isTabRoot) view.safeAreaInsets.useContents { bottom }.dp else 0.dp
+        bottomClearance = view.safeAreaInsets.useContents { bottom }.dp
     }
 
     private fun attachContent(child: UIViewController) {
@@ -94,10 +97,10 @@ internal class NativeScreenController(
         view.addSubview(child.view)
         val safeArea = view.safeAreaLayoutGuide
         NSLayoutConstraint.activateConstraints(listOf(
-            child.view.topAnchor.constraintEqualToAnchor(if (photoUnderStatusBar) view.topAnchor else safeArea.topAnchor),
+            child.view.topAnchor.constraintEqualToAnchor(if (extendsUnderStatusBar) view.topAnchor else safeArea.topAnchor),
             child.view.leadingAnchor.constraintEqualToAnchor(view.leadingAnchor),
             child.view.trailingAnchor.constraintEqualToAnchor(view.trailingAnchor),
-            child.view.bottomAnchor.constraintEqualToAnchor(if (isTabRoot || photoUnderStatusBar) view.bottomAnchor else safeArea.bottomAnchor),
+            child.view.bottomAnchor.constraintEqualToAnchor(view.bottomAnchor),
         ))
         child.didMoveToParentViewController(this)
     }
@@ -111,13 +114,22 @@ internal class NativeScreenController(
             view.backgroundColor = colors.background.toUIColor()
             setNeedsStatusBarAppearanceUpdate()
         }
-        ProvideFloatingNavClearance(bottomClearance) {
+        ProvideFloatingNavClearance(if (isTabRoot) bottomClearance else 0.dp) {
             // Tab content scrolls behind the glass; lists and controls reserve the measured safe area.
             Box(Modifier.fillMaxSize().background(colors.background)
-                .consumeWindowInsets(if (photoUnderStatusBar) WindowInsets(0, 0, 0, 0)
-                    else WindowInsets.systemBars.only(WindowInsetsSides.Vertical))
+                .consumeWindowInsets(when {
+                    extendsUnderStatusBar -> WindowInsets(0, 0, 0, 0)
+                    isTabRoot -> WindowInsets.systemBars.only(WindowInsetsSides.Vertical)
+                    else -> WindowInsets.systemBars.only(WindowInsetsSides.Top)
+                })
                 .dismissKeyboardOnBackgroundGestures()) {
-                CompositionLocalProvider(com.coffeepeek.admin.analytics.LocalAnalyticsVisible provides analyticsVisible) {
+                CompositionLocalProvider(
+                    com.coffeepeek.admin.analytics.LocalAnalyticsVisible provides analyticsVisible,
+                    LocalCoffeePeekScreenInsets provides CoffeePeekScreenInsets(
+                        bottom = if (isTabRoot || isAuthFlow) 0.dp else bottomClearance,
+                        extendsToBottom = !isTabRoot && !isAuthFlow,
+                    ),
+                ) {
                     content()
                 }
             }

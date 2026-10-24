@@ -86,8 +86,12 @@ internal fun OwnProfileScreen(
         key(slug) {
             val publicVm = publicModel(slug)
             LaunchedEffect(publicVm) {
-                // The tab owns the cached account: a name, bio, avatar or address change reloads the public page.
-                snapshotFlow { state.profile?.let { it.address to Triple(it.userName, it.about, it.avatarUrl) } }
+                // The tab owns the cached account: a name, bio, avatar, address or counter change reloads the public page.
+                snapshotFlow {
+                    state.profile?.let {
+                        listOf(it.address, it.userName, it.about, it.avatarUrl, it.checkInCount, it.addedShopsCount, it.addedRoastersCount, it.followersCount)
+                    }
+                }
                     .drop(1)
                     .collect { publicVm.onAction(PublicProfileAction.Refresh) }
             }
@@ -95,7 +99,7 @@ internal fun OwnProfileScreen(
                 slug = slug, nickname = profile.userName, avatarUrl = profile.avatarUrl,
                 vm = publicVm, authorActions = authorActions, slots = slots.shared,
                 onBack = null, onOpenShop = onOpenShop, onOpenRoaster = onOpenRoaster, onLogin = onLogin, onOpenUser = onOpenUser,
-                onShare = {},
+                onShare = {}, onOpenCheckIns = onOpenCheckIns,
                 own = OwnProfileExtras(
                     onEditProfile = onEditProfile, onOpenFavorites = onOpenFavorites, onOpenCheckIns = onOpenCheckIns,
                     topBarActions = actions,
@@ -122,20 +126,22 @@ internal fun OwnProfileScreen(
                     slots.loadError { vm.onAction(OwnProfileAction.Refresh) }
                 }
                 profile != null -> Column(
-                    Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(horizontal = 16.dp),
+                    Modifier.fillMaxWidth().verticalScroll(rememberScrollState()),
                     verticalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
-                    PublicProfileHeader(
-                        nickname = profile.userName, avatarUrl = profile.avatarUrl, about = profile.about, image = slots.shared.image,
-                        onEditProfile = onEditProfile, onAvatarClick = onEditProfile,
-                        stats = PublicProfileStats(profile.checkInCount, profile.addedShopsCount, profile.addedRoastersCount, profile.followersCount),
-                    )
-                    slots.activityPreview(onOpenCheckIns)
-                    if (state.error != null || state.refreshError != null) slots.loadError { vm.onAction(OwnProfileAction.Refresh) }
+                    Column(Modifier.padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        PublicProfileHeader(
+                            nickname = profile.userName, avatarUrl = profile.avatarUrl, about = profile.about, image = slots.shared.image,
+                            onEditProfile = onEditProfile, onAvatarClick = onEditProfile,
+                            stats = PublicProfileStats(profile.checkInCount, profile.addedShopsCount, profile.addedRoastersCount, profile.followersCount),
+                        )
+                        slots.activityPreview(onOpenCheckIns)
+                        if (state.error != null || state.refreshError != null) slots.loadError { vm.onAction(OwnProfileAction.Refresh) }
+                    }
                     slots.favoritesPreview(onOpenShop, onOpenRoaster) {
                         TextButton(onClick = onOpenFavorites) { Text(stringResource(R.string.profile_own_favorites)) }
                     }
-                    if (profile.checkInCount > 0) TextButton(onClick = onOpenCheckIns) { Text(stringResource(R.string.profile_own_check_ins)) }
+                    if (profile.checkInCount > 0) TextButton(onClick = onOpenCheckIns, modifier = Modifier.padding(horizontal = 16.dp)) { Text(stringResource(R.string.profile_own_check_ins)) }
                     Spacer(Modifier.height(bottomPadding))
                 }
             }

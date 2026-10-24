@@ -72,6 +72,22 @@ class EditProfileViewModelTest {
         assertEquals(600, vm.state.value.about.length); assertFalse(vm.state.value.aboutTooLong)
     }
 
+    @Test fun theLaterWritesAreNotSentWhenAnotherAccountBecomesActiveBetweenThem() = runTest(dispatcher) {
+        val accounts = FakeProfileAccounts()
+        val edit = FakeEdit()
+        val vm = model(accounts, edit); runCurrent()
+        val events = mutableListOf<EditProfileEvent>(); backgroundScope.launch(dispatcher) { vm.events.collect(events::add) }
+        vm.act(EditProfileAction.AvatarPicked(image()))
+        vm.act(EditProfileAction.UsernameChanged("Anna Two")); vm.act(EditProfileAction.AboutChanged("New about"))
+        // Another account signs in while the avatar is being saved: neither the username nor the about is sent for it.
+        edit.onAvatar = { accounts.signIn("b") }
+        vm.act(EditProfileAction.Save); vm.act(EditProfileAction.ConfirmUsernameChange)
+        assertEquals(listOf("avatar:a.png:image/png"), edit.calls)
+        assertEquals(EditProfileError.SignInRequired, vm.state.value.error)
+        assertTrue(events.none { it == EditProfileEvent.Saved })
+        assertFalse(vm.state.value.isSaving)
+    }
+
     @Test fun whitespaceOnlyEditsAreNotChanges() = runTest(dispatcher) {
         val vm = model(); runCurrent()
         vm.act(EditProfileAction.UsernameChanged("  Anna  ")); vm.act(EditProfileAction.AboutChanged(" About "))
@@ -269,8 +285,9 @@ class EditProfileViewModelTest {
     ) : ProfileEditPort {
         val calls = mutableListOf<String>()
         var onAvatar: () -> Unit = {}
+        var onUsername: () -> Unit = {}
         override suspend fun updateAvatar(image: ProfileAvatarImage): Result<Unit> { calls += "avatar:${image.fileName}:${image.contentType}"; gate?.await(); onAvatar(); return avatar }
-        override suspend fun updateUsername(username: String): Result<Unit> { calls += "username:$username"; gate?.await(); return this.username }
+        override suspend fun updateUsername(username: String): Result<Unit> { calls += "username:$username"; gate?.await(); onUsername(); return this.username }
         override suspend fun updateAbout(about: String): Result<Unit> { calls += "about:$about"; gate?.await(); return this.about }
     }
 }

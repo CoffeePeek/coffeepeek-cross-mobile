@@ -49,7 +49,7 @@ internal class RoasterListViewModel(
                     launch { load() }
                 }
             }
-            RoasterListAction.Refresh -> load()
+            RoasterListAction.Refresh -> load(refresh = true)
             is RoasterListAction.QueryChanged -> { updateState { copy(query = action.query) }; scheduleReport() }
             is RoasterListAction.ToggleTag -> {
                 updateState { copy(selectedTags = if (action.slug in selectedTags) selectedTags - action.slug else selectedTags + action.slug) }
@@ -79,14 +79,14 @@ internal class RoasterListViewModel(
         catch (_: Exception) { /* Error reporting is best effort. */ }
     }
 
-    private suspend fun load() {
+    private suspend fun load(refresh: Boolean = false) {
         loadJob?.cancel()
         val job = currentCoroutineContext().job
         val revision = ++loadRevision
         loadJob = job
         updateState { copy(isLoading = true, loadFailed = false) }
         try {
-            val catalog = repository.getRoasters().getOrThrow()
+            val catalog = (if (refresh) repository.refreshRoasters() else repository.getRoasters()).getOrThrow()
             currentCoroutineContext().ensureActive()
             if (loadJob !== job || revision != loadRevision) return
             updateState { copy(items = catalog.map { RoasterListItem(it) }, isLoading = false) }

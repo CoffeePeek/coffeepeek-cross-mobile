@@ -18,16 +18,22 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import android.widget.Toast
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.Dp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.repeatOnLifecycle
 import com.coffeepeek.core.designsystem.component.CoffeePeekIconBadgePalette
 import com.coffeepeek.core.designsystem.component.CoffeePeekLoader
 import com.coffeepeek.core.designsystem.component.CoffeePeekSettingsDivider
@@ -43,6 +49,7 @@ import com.coffeepeek.feature.settings.domain.ThemeMode
 import com.coffeepeek.feature.settings.impl.R
 import com.coffeepeek.feature.settings.impl.ui.SettingsViewModel
 import com.coffeepeek.feature.settings.impl.ui.model.SettingsAction
+import com.coffeepeek.feature.settings.impl.ui.model.SettingsEvent
 import com.coffeepeek.feature.settings.impl.ui.model.SettingsState
 
 /** Where the tab can go; supplied by the caller. */
@@ -57,6 +64,21 @@ internal fun SettingsScreen(
     appInfo: SettingsAppInfo, bottomClearance: Dp, modifier: Modifier = Modifier,
 ) {
     val state by vm.state.collectAsStateWithLifecycle()
+    val context = LocalContext.current
+    val lifecycle = LocalLifecycleOwner.current.lifecycle
+    val upToDate = stringResource(R.string.settings_update_up_to_date)
+    val failed = stringResource(R.string.settings_update_failed)
+    LaunchedEffect(vm, lifecycle) {
+        lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
+            vm.events.collect { event ->
+                val message = when (event) {
+                    SettingsEvent.UpToDate -> upToDate
+                    SettingsEvent.UpdateCheckFailed -> failed
+                }
+                Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
     SettingsContent(state, navigation, external, slots, appInfo, bottomClearance, { vm.onAction(SettingsAction.CheckForUpdates) }, modifier)
 }
 
@@ -129,12 +151,12 @@ internal fun SettingsContent(
                 val update = state.update
                 CoffeePeekSettingsRow(
                     CoffeePeekIcons.Info,
-                    stringResource(if (update.checking) R.string.settings_update_checking else R.string.settings_update_check),
-                    update.message ?: if (update.updateAvailable) stringResource(R.string.settings_update_available)
+                    stringResource(if (state.updateBusy) R.string.settings_update_checking else R.string.settings_update_check),
+                    if (update.updateAvailable) stringResource(R.string.settings_update_available)
                     else stringResource(R.string.settings_version, appInfo.versionName),
                     onCheckForUpdates,
-                    enabled = !update.checking,
-                    trailing = if (update.checking) {
+                    enabled = !state.updateBusy,
+                    trailing = if (state.updateBusy) {
                         { CoffeePeekLoader(stringResource(R.string.settings_loading), size = CoffeePeekDimens.settingsIconSize) }
                     } else null,
                 )

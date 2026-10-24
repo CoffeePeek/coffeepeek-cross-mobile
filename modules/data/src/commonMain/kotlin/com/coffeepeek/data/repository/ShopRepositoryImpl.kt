@@ -39,7 +39,10 @@ import com.coffeepeek.domain.repository.FavoriteRepository
 import com.coffeepeek.domain.repository.PhotoRepository
 import com.coffeepeek.domain.repository.ShopRepository
 import com.coffeepeek.domain.repository.RoasterRepository
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.sync.Mutex
@@ -55,17 +58,20 @@ class ShopRepositoryImpl(
 
     private var cachedCatalogs: ShopCatalogs? = null
     private val catalogsMutex = Mutex()
+    // The load runs here, not in the first caller: a caller that stops waiting must not cancel it for the others.
+    private val catalogsScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     private var catalogsLoad: Deferred<Result<ShopCatalogs>>? = null
     private var cachedMenuDrinks: List<CoffeeDrinkDefinition>? = null
     private val menuDrinksMutex = Mutex()
 
-    override suspend fun getCatalogs(): Result<ShopCatalogs> = coroutineScope {
-        cachedCatalogs?.let { return@coroutineScope Result.success(it) }
+    override suspend fun getCatalogs(): Result<ShopCatalogs> {
+        cachedCatalogs?.let { return Result.success(it) }
         val load = catalogsMutex.withLock {
-            cachedCatalogs?.let { return@coroutineScope Result.success(it) }
-            catalogsLoad ?: async { fetchCatalogsFromApi() }.also { catalogsLoad = it }
+            cachedCatalogs?.let { return Result.success(it) }
+            // A finished load is never reused: a success is in the cache, a failure must be retried.
+            catalogsLoad?.takeIf { !it.isCompleted } ?: catalogsScope.async { fetchCatalogsFromApi() }.also { catalogsLoad = it }
         }
-        load.await().also { result ->
+        return load.await().also { result ->
             catalogsMutex.withLock {
                 if (catalogsLoad === load) catalogsLoad = null
             }

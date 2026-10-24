@@ -24,9 +24,9 @@ import com.coffeepeek.admin.ui.component.ReviewPhotoStrip
 import com.coffeepeek.admin.ui.component.PhotoViewerImages
 import com.coffeepeek.admin.ui.icons.CpIcons
 import com.coffeepeek.admin.utils.utcIsoToLocalDateTime
-import com.coffeepeek.feature.homecheckin.domain.HomeCheckIn
-import com.coffeepeek.feature.homecheckin.domain.HomeCheckInVisibility
-import com.coffeepeek.feature.homecheckin.domain.HomeCheckInPhoto
+import com.coffeepeek.legacy.homecheckin.domain.HomeCheckIn
+import com.coffeepeek.legacy.homecheckin.domain.HomeCheckInVisibility
+import com.coffeepeek.legacy.homecheckin.domain.HomeCheckInPhoto
 
 @Composable
 internal fun HomeDetail(

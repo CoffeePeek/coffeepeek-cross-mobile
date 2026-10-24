@@ -5,7 +5,7 @@ import com.coffeepeek.admin.analytics.Entity
 import com.coffeepeek.admin.feature.favorites.api.RoasterFavorites
 import com.coffeepeek.admin.feature.favorites.api.roasterFavoriteId
 import com.coffeepeek.domain.model.CatalogItem
-import com.coffeepeek.domain.repository.SessionRepository
+import com.coffeepeek.core.session.SessionReader
 import com.coffeepeek.feature.favorites.domain.model.FavoriteRoaster
 import com.coffeepeek.feature.favorites.domain.repository.FavoriteRoastersRepository
 import kotlinx.coroutines.CancellationException
@@ -29,7 +29,7 @@ import kotlinx.coroutines.sync.withPermit
 /** Temporary composition bridge: the existing store/JSON and catalogue remain authoritative. */
 internal class LegacyFavoriteRoastersRepository(
     private val favorites: RoasterFavorites,
-    private val sessions: SessionRepository,
+    private val sessions: SessionReader,
     private val loadPhoto: suspend (String) -> Result<String?>,
 ) : FavoriteRoastersRepository {
     private class Snapshot(val owner: String, val items: Map<String, CatalogItem>)

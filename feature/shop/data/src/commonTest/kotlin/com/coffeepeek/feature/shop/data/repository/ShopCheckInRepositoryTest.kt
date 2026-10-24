@@ -87,6 +87,23 @@ class ShopCheckInRepositoryTest {
         }
     }
 
+    @Test fun aRepeatedDrinkSlugInTheCatalogIsKeptOnce() = runBlocking {
+        val apiEngine = MockEngine {
+            respond("""{"isSuccess":true,"data":[{"slug":"filter","nameRu":"Фильтр","nameEn":"Filter"},{"slug":"espresso","nameRu":"Эспрессо","nameEn":"Espresso"},{"slug":"filter","nameRu":"Фильтр 2","nameEn":"Filter 2"}]}""",
+                headers = headersOf(HttpHeaders.ContentType, "application/json"))
+        }
+        val uploadEngine = MockEngine { error("No upload expected") }
+        val apiClient = HttpClientFactory(apiEngine).api("https://example.com")
+        val uploadClient = HttpClientFactory(uploadEngine).upload()
+        try {
+            val drinks = createShopCheckInRepository(apiClient, uploadClient).getDrinkOptions().getOrThrow()
+            assertEquals(listOf("filter", "espresso"), drinks.map { it.slug })
+            assertEquals("Фильтр", drinks.first().nameRu)
+        } finally {
+            apiClient.close(); uploadClient.close(); apiEngine.close(); uploadEngine.close()
+        }
+    }
+
     @Test fun loadsConsumedDrinksFromCurrentCatalogEndpoint() = runBlocking {
         val apiEngine = MockEngine { request ->
             assertEquals("/api/catalogs/drinks", request.url.encodedPath)

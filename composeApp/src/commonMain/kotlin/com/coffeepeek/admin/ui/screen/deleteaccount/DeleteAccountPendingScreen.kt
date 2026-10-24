@@ -1,5 +1,7 @@
 package com.coffeepeek.admin.ui.screen.deleteaccount
 
+import com.coffeepeek.core.designsystem.component.CoffeePeekScaffold as Scaffold
+
 import androidx.compose.runtime.getValue
 import com.coffeepeek.admin.ui.component.PlatformAlert
 import androidx.compose.foundation.layout.Arrangement
@@ -15,7 +17,6 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState

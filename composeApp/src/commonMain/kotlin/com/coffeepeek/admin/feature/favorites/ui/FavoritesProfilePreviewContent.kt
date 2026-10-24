@@ -43,10 +43,12 @@ internal fun FavoritesProfilePreviewContent(
     val userLocation = rememberPermittedUserLocation()
 
     Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(CpDimens.spacing3)) {
-        header()
+        Box(Modifier.padding(horizontal = CpDimens.spacing4)) { header() }
         state.actionMessage?.let { message ->
-            Text(message, color = MaterialTheme.colorScheme.error)
-            TextButton(onClick = vm::clearActionMessage) { Text("Закрыть") }
+            Column(Modifier.padding(horizontal = CpDimens.spacing4)) {
+                Text(message, color = MaterialTheme.colorScheme.error)
+                TextButton(onClick = vm::clearActionMessage) { Text("Закрыть") }
+            }
         }
         when {
             isEmpty && (state.isLoading || state.areRoastersLoading) -> {
@@ -54,7 +56,7 @@ internal fun FavoritesProfilePreviewContent(
                     CoffeePeekLoader()
                 }
             }
-            isEmpty && error != null -> {
+            isEmpty && error != null -> Column(Modifier.padding(horizontal = CpDimens.spacing4)) {
                 Text(
                     error,
                     style = MaterialTheme.typography.bodyMedium,
@@ -63,7 +65,7 @@ internal fun FavoritesProfilePreviewContent(
                 TextButton(onClick = { vm.load(force = true) }) { Text("Повторить") }
             }
             else -> {
-                if (error != null) {
+                if (error != null) Column(Modifier.padding(horizontal = CpDimens.spacing4)) {
                     Text(error, color = MaterialTheme.colorScheme.error)
                     TextButton(onClick = { vm.load(force = true) }) { Text("Повторить") }
                 }

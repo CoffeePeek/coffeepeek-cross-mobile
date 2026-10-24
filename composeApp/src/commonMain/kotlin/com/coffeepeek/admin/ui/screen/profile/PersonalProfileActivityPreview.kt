@@ -62,8 +62,8 @@ private fun PersonalProfileWeekPreview(dark: Boolean) = CoffeePeekTheme(darkThem
     val week = CalendarWeek("2026-10-22")
     PersonalProfileWeekContent(week, VisitedPlacesUiState(), HomeCheckInUiState(
         loading = false, month = com.coffeepeek.admin.feature.homecheckin.ui.HomeMonth(2026, 10),
-        draft = com.coffeepeek.feature.homecheckin.domain.HomeCheckInInput(preparedAt = "2026-10-22T09:00:00Z", preparedOn = week.today),
-        calendar = listOf(com.coffeepeek.feature.homecheckin.domain.HomeCalendarDay("2026-10-20", 2))), {}, {})
+        draft = com.coffeepeek.legacy.homecheckin.domain.HomeCheckInInput(preparedAt = "2026-10-22T09:00:00Z", preparedOn = week.today),
+        calendar = listOf(com.coffeepeek.legacy.homecheckin.domain.HomeCalendarDay("2026-10-20", 2))), {}, {})
 }
 
 @Preview @Composable private fun PersonalProfileWeekLightPreview() = PersonalProfileWeekPreview(false)

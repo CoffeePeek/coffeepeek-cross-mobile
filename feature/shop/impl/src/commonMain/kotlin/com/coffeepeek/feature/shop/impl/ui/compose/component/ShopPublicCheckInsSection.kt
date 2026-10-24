@@ -1,21 +1,37 @@
 package com.coffeepeek.feature.shop.impl.ui.compose.component
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.foundation.layout.height
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.Animatable
+import androidx.compose.runtime.key
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.draw.clipToBounds
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -44,6 +60,7 @@ internal fun ShopPublicCheckInsSection(
     onSignIn: () -> Unit,
     onRegister: () -> Unit,
     modifier: Modifier = Modifier,
+    contentPadding: Dp = 0.dp,
     overallRating: Double? = null,
     checkInCount: Int = checkIns.size,
     formatDate: (String) -> String = { it.take(10) },
@@ -51,30 +68,32 @@ internal fun ShopPublicCheckInsSection(
     onOpenAuthor: (String) -> Unit = {},
     onBlockAuthor: (String) -> Unit = {},
 ) {
+    // [contentPadding] is the screen gutter: the cards scroll to the edges of the screen and only the first and the last keep the gutter.
+    val gutter = Modifier.padding(horizontal = contentPadding)
     Column(modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing3)) {
-        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+        Row(gutter.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             ShopSectionTitle(stringResource(Res.string.shop_checkins_public_title), Modifier.weight(1f))
             if (checkIns.isNotEmpty()) IconButton(onClick = onOpenAll) {
                 Icon(CoffeePeekIcons.ChevronRight, stringResource(Res.string.shop_checkins_show_all),
                     tint = MaterialTheme.colorScheme.onSurface)
             }
         }
-        if (checkIns.isEmpty()) ShopCheckInsEmptyState(shopTitle)
+        if (checkIns.isEmpty()) ShopCheckInsEmptyState(shopTitle, gutter)
         else {
-          ShopCheckInRatingsOverview(checkIns, overallRating, checkInCount)
-          BoxWithConstraints(Modifier.fillMaxWidth().clipToBounds()) {
+          Box(gutter) { ShopCheckInRatingsOverview(checkIns, overallRating, checkInCount) }
+          BoxWithConstraints(Modifier.fillMaxWidth()) {
             val multiple = checkIns.size > 1
             val spacing = if (multiple) CoffeePeekDimens.spacing3 else 0.dp
-            val width = if (!isLoggedIn && multiple) (maxWidth - spacing - 56.dp).coerceAtLeast(1.dp).coerceAtMost(320.dp)
-                else if (multiple) maxWidth.coerceAtMost(320.dp) else maxWidth
-            LazyRow(horizontalArrangement = Arrangement.spacedBy(spacing)) {
-                itemsIndexed(checkIns.take(3), key = { _, item -> item.id }) { index, checkIn ->
+            val available = maxWidth - contentPadding * 2
+            val width = if (!isLoggedIn && multiple) (available - spacing - 56.dp).coerceAtLeast(1.dp).coerceAtMost(320.dp)
+                else if (multiple) available.coerceAtMost(320.dp) else available
+            val cards = checkIns.take(3)
+            ShopCheckInCarousel(cards.size, width, spacing, contentPadding, maxWidth) { index ->
+                val checkIn = cards[index]
+                key(checkIn.id) {
                     val hidden = !isLoggedIn && index > 0
-                    if (hidden) {
-                        ShopCheckInGuestPlaceholder(Modifier.width(width))
-                        return@itemsIndexed
-                    }
-                    ShopPublicCheckInItem(
+                    if (hidden) ShopCheckInGuestPlaceholder(Modifier.width(width))
+                    else ShopPublicCheckInItem(
                         checkIn = checkIn,
                         width = width,
                         shopTitle = shopTitle,
@@ -94,7 +113,65 @@ internal fun ShopPublicCheckInsSection(
                 }
             }
           }
-            if (!isLoggedIn) ShopCheckInGuestPrompt(onSignIn, onRegister)
+            if (!isLoggedIn) Box(gutter) { ShopCheckInGuestPrompt(onSignIn, onRegister) }
+        }
+    }
+}
+
+/**
+ * The height the carousel should have: that of the tallest card that is at least partly on screen, or null until every card has been measured.
+ * All values are pixels; [scroll] is the horizontal scroll offset and [padding] the start padding of the row.
+ */
+internal fun carouselTargetHeight(heights: List<Int?>, scroll: Int, viewport: Int, card: Int, spacing: Int, padding: Int): Int? {
+    if (heights.isEmpty() || heights.any { it == null }) return null
+    var target = 0
+    heights.forEachIndexed { index, height ->
+        val left = padding + index * (card + spacing) - scroll
+        if (left + card > 0 && left < viewport) target = maxOf(target, height ?: 0)
+    }
+    return target.takeIf { it > 0 } ?: heights.maxOf { it ?: 0 }
+}
+
+/**
+ * At most three cards, so a plain scrolling row in which every card stays composed. Its height follows the cards that are on screen and is animated:
+ * a short card alone is not stretched to the tallest one, and a tall one entering or leaving does not make the page below jump. Each card is measured at
+ * its natural height; before all of them are measured the row simply wraps the tallest.
+ */
+@Composable
+private fun ShopCheckInCarousel(
+    count: Int,
+    cardWidth: Dp,
+    spacing: Dp,
+    contentPadding: Dp,
+    viewportWidth: Dp,
+    card: @Composable (index: Int) -> Unit,
+) {
+    val density = LocalDensity.current
+    val scroll = rememberScrollState()
+    val heights = remember(count) { mutableStateListOf<Int?>().apply { repeat(count) { add(null) } } }
+    val target by remember(count, cardWidth, spacing, contentPadding, viewportWidth) {
+        derivedStateOf {
+            with(density) {
+                carouselTargetHeight(heights.toList(), scroll.value, viewportWidth.roundToPx(), cardWidth.roundToPx(), spacing.roundToPx(), contentPadding.roundToPx())
+            }
+        }
+    }
+    val height = remember { Animatable(0f) }
+    var ready by remember { mutableStateOf(false) }
+    LaunchedEffect(target) {
+        val value = target?.toFloat() ?: return@LaunchedEffect
+        if (!ready) { height.snapTo(value); ready = true } else height.animateTo(value, tween(durationMillis = 250))
+    }
+    Row(
+        Modifier.then(if (ready) Modifier.height(with(density) { height.value.toDp() }).clipToBounds() else Modifier)
+            .horizontalScroll(scroll).padding(horizontal = contentPadding),
+        horizontalArrangement = Arrangement.spacedBy(spacing),
+    ) {
+        repeat(count) { index ->
+            Box(
+                Modifier.width(cardWidth).wrapContentHeight(Alignment.Top, unbounded = true)
+                    .onSizeChanged { size -> if (heights.getOrNull(index) != size.height) heights[index] = size.height },
+            ) { card(index) }
         }
     }
 }

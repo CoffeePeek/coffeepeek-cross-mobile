@@ -7,9 +7,13 @@ import com.coffeepeek.feature.settings.api.SettingsAccountPort
 import com.coffeepeek.feature.settings.api.ThemePort
 import com.coffeepeek.feature.settings.api.UpdateCheckPort
 import com.coffeepeek.feature.settings.domain.SettingsCity
+import com.coffeepeek.feature.settings.domain.UpdateCheckOutcome
 import com.coffeepeek.feature.settings.impl.ui.model.SettingsAction
 import com.coffeepeek.feature.settings.impl.ui.model.SettingsEvent
 import com.coffeepeek.feature.settings.impl.ui.model.SettingsState
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.async
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 /**
@@ -22,6 +26,7 @@ internal class SettingsViewModel(
     private val theme: ThemePort,
     private val city: CityPort,
     private val update: UpdateCheckPort,
+    private val minimumCheckMillis: Long = MINIMUM_CHECK_MILLIS,
 ) : MviViewModel<SettingsState, SettingsAction, SettingsEvent>(SettingsState(account.isSignedIn(), theme.current())) {
     private var cities: List<SettingsCity> = emptyList()
     private var selectedId: String? = null
@@ -43,7 +48,33 @@ internal class SettingsViewModel(
 
     override suspend fun handleActionInternal(action: SettingsAction) {
         when (action) {
-            SettingsAction.CheckForUpdates -> update.check()
+            SettingsAction.CheckForUpdates -> checkForUpdates()
+        }
+    }
+
+    private suspend fun checkForUpdates() {
+        if (currentState.updateBusy) return
+        updateState { copy(manualUpdateCheck = true) }
+        try {
+            // A check can finish in a few milliseconds; hold the loader so the tap visibly does something.
+            val minimum = viewModelScope.async { delay(minimumCheckMillis) }
+            // Cancellation must pass through: leaving the screen is not a failed check and must not report one.
+            val outcome = try {
+                update.check()
+            } catch (cancelled: CancellationException) {
+                minimum.cancel()
+                throw cancelled
+            } catch (_: Exception) {
+                UpdateCheckOutcome.Failed
+            }
+            minimum.await()
+            when (outcome) {
+                UpdateCheckOutcome.UpToDate -> sendEvent(SettingsEvent.UpToDate)
+                UpdateCheckOutcome.Failed -> sendEvent(SettingsEvent.UpdateCheckFailed)
+                UpdateCheckOutcome.Available -> Unit
+            }
+        } finally {
+            updateState { copy(manualUpdateCheck = false) }
         }
     }
 
@@ -62,3 +93,5 @@ internal class SettingsViewModel(
         updateState { copy(cityName = name) }
     }
 }
+
+private const val MINIMUM_CHECK_MILLIS = 700L

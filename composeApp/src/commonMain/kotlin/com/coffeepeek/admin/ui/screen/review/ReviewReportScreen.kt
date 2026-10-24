@@ -1,5 +1,9 @@
 package com.coffeepeek.admin.ui.screen.review
 
+import com.coffeepeek.core.designsystem.component.coffeePeekScreenBottomPadding
+
+import com.coffeepeek.core.designsystem.component.CoffeePeekScaffold as Scaffold
+
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -10,7 +14,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -30,7 +33,7 @@ fun ReviewReportScreen(reviewId: String, isPreview: Boolean = false, isCheckIn: 
     val state by vm.state.collectAsState()
     Scaffold(topBar = { CpTopBar("Пожаловаться на чекин") }) { padding ->
         Column(
-            Modifier.fillMaxSize().padding(padding).imePadding().verticalScroll(rememberScrollState()).padding(CpDimens.spacing4),
+            Modifier.fillMaxSize().padding(padding).imePadding().verticalScroll(rememberScrollState()).coffeePeekScreenBottomPadding().padding(CpDimens.spacing4),
             verticalArrangement = Arrangement.spacedBy(CpDimens.spacing3),
         ) {
             if (state.isSubmitted) {

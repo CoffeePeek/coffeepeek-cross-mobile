@@ -129,6 +129,56 @@ class RoasterRepositoryTest {
         }
     }
 
+    @Test fun anExplicitRefreshAsksTheServerAgainOnTheSameRepositoryAndKeepsTheDataWhenItFails() = runTest {
+        var clock = 1_000L
+        var requests = 0
+        var mode = "v1"
+        val engine = MockEngine {
+            requests++
+            when (mode) {
+                "v1" -> respond(catalog, headers = json)
+                "v2" -> respond(catalog.replace("\"name\":\"Roast\"", "\"name\":\"Roast v2\""), headers = json)
+                else -> respond("""{"isSuccess":false}""", HttpStatusCode.ServiceUnavailable, json)
+            }
+        }
+        val client = HttpClientFactory(engine).api("https://example.invalid")
+        try {
+            val repository = createRoasterRepository(client, "https://files.example", MemoryStore()) { clock }
+            assertEquals("Roast", repository.getRoasters().getOrThrow().single().name)
+            mode = "v2"
+            // A normal read stays stable, also after the saved copy expired; only the refresh reads the server.
+            clock += 25 * 60 * 60 * 1_000L
+            assertEquals("Roast", repository.getRoasters().getOrThrow().single().name); assertEquals(1, requests)
+            assertEquals("Roast v2", repository.refreshRoasters().getOrThrow().single().name); assertEquals(2, requests)
+            assertEquals("Roast v2", repository.getRoasters().getOrThrow().single().name); assertEquals(2, requests)
+            mode = "down"
+            assertEquals("Roast v2", repository.refreshRoasters().getOrThrow().single().name) // a failed refresh keeps what is loaded
+            assertEquals("Roast v2", repository.getRoasters().getOrThrow().single().name)
+        } finally { client.close(); engine.close() }
+    }
+
+    @Test fun expiredSavedDataShownOfflineIsReplacedByTheRefreshOnceTheServerIsBack() = runTest {
+        var clock = 1_000L
+        var offline = false
+        val store = MemoryStore()
+        val engine = MockEngine {
+            if (offline) respond("""{"isSuccess":false}""", HttpStatusCode.ServiceUnavailable, json)
+            else respond(catalog.replace("\"name\":\"Roast\"", "\"name\":\"Roast v2\""), headers = json)
+        }
+        val client = HttpClientFactory(engine).api("https://example.invalid")
+        try {
+            // Saved long ago under the old name; the server is down when the session starts.
+            createRoasterRepository(client, "https://files.example", store) { clock }.getRoasters().getOrThrow()
+            store.value = store.value!!.replace("Roast v2", "Roast")
+            clock += 25 * 60 * 60 * 1_000L; offline = true
+            val repository = createRoasterRepository(client, "https://files.example", store) { clock }
+            assertEquals("Roast", repository.getRoasters().getOrThrow().single().name)
+            offline = false
+            assertEquals("Roast", repository.getRoasters().getOrThrow().single().name) // the normal read is the loaded session
+            assertEquals("Roast v2", repository.refreshRoasters().getOrThrow().single().name)
+        } finally { client.close(); engine.close() }
+    }
+
     @Test fun concurrentLoadsShareOneRequestAndLoadedSessionStaysStable() = runTest {
         val release = CompletableDeferred<Unit>()
         var requests = 0

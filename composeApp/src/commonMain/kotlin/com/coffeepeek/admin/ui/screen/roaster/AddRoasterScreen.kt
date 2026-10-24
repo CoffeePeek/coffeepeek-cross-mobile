@@ -1,5 +1,7 @@
 package com.coffeepeek.admin.ui.screen.roaster
 
+import com.coffeepeek.core.designsystem.component.CoffeePeekScaffold as Scaffold
+
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import androidx.compose.material3.Surface
@@ -45,7 +47,6 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextFieldDefaults
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -129,6 +130,8 @@ fun AddRoasterScreen(vm: AddRoasterViewModel = platformViewModel()) {
         }
 
         PlatformScrollableColumn(
+
+            reserveBottomClearance = true,
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
@@ -334,6 +337,7 @@ private fun RoasterSubmittedContent(
         },
     ) { padding ->
         PlatformScrollableColumn(
+            reserveBottomClearance = true,
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)

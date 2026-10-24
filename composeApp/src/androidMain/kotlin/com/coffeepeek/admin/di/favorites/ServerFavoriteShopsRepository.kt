@@ -6,7 +6,7 @@ import com.coffeepeek.domain.feature.favorites.api.FavoriteEntry
 import com.coffeepeek.domain.feature.favorites.api.FavoriteKind
 import com.coffeepeek.domain.feature.favorites.api.FavoritesRepository as ServerFavorites
 import com.coffeepeek.domain.model.CoffeeShopDetails
-import com.coffeepeek.domain.repository.SessionRepository
+import com.coffeepeek.core.session.SessionReader
 import com.coffeepeek.feature.favorites.domain.model.FavoriteShop
 import com.coffeepeek.feature.favorites.domain.repository.FavoritesRepository
 import kotlinx.coroutines.*
@@ -18,7 +18,7 @@ import kotlinx.coroutines.sync.withPermit
 /** Application-owned adaptation; server membership is authoritative, never the old Room snapshots. */
 internal class ServerFavoriteShopsRepository(
     private val server: ServerFavorites,
-    private val sessions: SessionRepository,
+    private val sessions: SessionReader,
     private val detail: suspend (String) -> Result<CoffeeShopDetails>,
 ) : FavoritesRepository {
     override fun observeIds(): Flow<Result<Set<String>>> = server.observeFavorites().map { result ->

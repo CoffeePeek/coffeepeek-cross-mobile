@@ -16,5 +16,8 @@ data class UsageConsentState(val available: Boolean, val accepted: Boolean) {
     }
 }
 
-/** The app-update row: [message] is the result text of a manual check, [updateAvailable] a newer version known to the app. */
-data class UpdateCheckState(val checking: Boolean = false, val message: String? = null, val updateAvailable: Boolean = false)
+/** The app-update row: [checking] while any check runs, [updateAvailable] when the app knows a newer version. */
+data class UpdateCheckState(val checking: Boolean = false, val updateAvailable: Boolean = false)
+
+/** Result of a manual check. [Available] is answered by the app's own update prompt, not by Settings. */
+enum class UpdateCheckOutcome { UpToDate, Available, Failed }

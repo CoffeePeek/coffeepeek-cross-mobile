@@ -1,5 +1,9 @@
 package com.coffeepeek.admin.feature.coffee.ui
 
+import com.coffeepeek.core.designsystem.component.coffeePeekScrollContentPadding
+
+import com.coffeepeek.core.designsystem.component.CoffeePeekScaffold as Scaffold
+
 import com.coffeepeek.admin.analytics.*
 
 import androidx.compose.foundation.background
@@ -76,7 +80,7 @@ internal fun CoffeeDetailScreen(slug: String) {
                 }
                 details != null -> LazyColumn(
                     modifier = Modifier.fillMaxSize().padding(padding),
-                    contentPadding = PaddingValues(bottom = CpDimens.spacing6),
+                    contentPadding = coffeePeekScrollContentPadding(PaddingValues(bottom = CpDimens.spacing6)),
                     verticalArrangement = Arrangement.spacedBy(CpDimens.spacing6),
                 ) {
                     item(key = "photo") {

@@ -79,7 +79,7 @@ in the APNs payload. See [FCM Apple message handling](https://firebase.google.co
 
 ## Sessions, preferences and activity
 
-`features/notifications` owns shared coordination. The app supplies authenticated Ktor,
+`feature/notifications` (api, domain, data, impl) owns shared coordination. The app supplies authenticated Ktor,
 SessionRepository and NativePushBridge. A random installation UUID is kept in platform
 storage. Tokens are registered only for the current signed-in account with OS permission.
 Registration renews on token changes and foreground entry; activity reports on entry and

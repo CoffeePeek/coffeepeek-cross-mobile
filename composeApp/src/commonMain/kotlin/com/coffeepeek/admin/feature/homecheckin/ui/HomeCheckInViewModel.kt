@@ -9,16 +9,16 @@ import com.coffeepeek.admin.feature.coffee.api.CoffeePicker
 import com.coffeepeek.admin.feature.coffee.api.CoffeePickerItem
 import com.coffeepeek.admin.utils.currentEpochMillis
 import com.coffeepeek.admin.utils.utcIsoToLocalDate
-import com.coffeepeek.feature.homecheckin.domain.HomeBeanStats
-import com.coffeepeek.feature.homecheckin.domain.HomeCalendarDay
-import com.coffeepeek.feature.homecheckin.domain.HomeCheckIn
-import com.coffeepeek.feature.homecheckin.domain.HomeCheckInInput
-import com.coffeepeek.feature.homecheckin.domain.HomeCheckInVisibility
-import com.coffeepeek.feature.homecheckin.domain.HomeCheckInRepository
-import com.coffeepeek.feature.homecheckin.domain.HomeMethodStats
-import com.coffeepeek.feature.homecheckin.domain.homeCheckInFieldErrors
-import com.coffeepeek.feature.homecheckin.domain.HomeCheckInField
-import com.coffeepeek.feature.homecheckin.domain.HomeCheckInFailure
+import com.coffeepeek.legacy.homecheckin.domain.HomeBeanStats
+import com.coffeepeek.legacy.homecheckin.domain.HomeCalendarDay
+import com.coffeepeek.legacy.homecheckin.domain.HomeCheckIn
+import com.coffeepeek.legacy.homecheckin.domain.HomeCheckInInput
+import com.coffeepeek.legacy.homecheckin.domain.HomeCheckInVisibility
+import com.coffeepeek.legacy.homecheckin.domain.HomeCheckInRepository
+import com.coffeepeek.legacy.homecheckin.domain.HomeMethodStats
+import com.coffeepeek.legacy.homecheckin.domain.homeCheckInFieldErrors
+import com.coffeepeek.legacy.homecheckin.domain.HomeCheckInField
+import com.coffeepeek.legacy.homecheckin.domain.HomeCheckInFailure
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
@@ -357,7 +357,7 @@ internal class HomeCheckInViewModel(
             }.onFailure { error ->
                 val failure = error as? HomeCheckInFailure
                 if (failure?.fieldErrors?.isNotEmpty() == true) tracker?.validation(failure.fieldErrors.keys.map { it.analyticsField() }, server = true)
-                else tracker?.failed(if (failure?.operation == com.coffeepeek.feature.homecheckin.domain.HomeCheckInOperation.PhotoUpload) CheckInStage.Photo else CheckInStage.Save, safeAnalyticsError(error))
+                else tracker?.failed(if (failure?.operation == com.coffeepeek.legacy.homecheckin.domain.HomeCheckInOperation.PhotoUpload) CheckInStage.Photo else CheckInStage.Save, safeAnalyticsError(error))
                 _state.update { it.copy(saving = false,
                     fieldErrors = failure?.fieldErrors.orEmpty(),
                     formError = if (failure?.fieldErrors?.isNotEmpty() == true) null

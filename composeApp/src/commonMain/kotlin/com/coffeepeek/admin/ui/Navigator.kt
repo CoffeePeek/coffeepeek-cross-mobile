@@ -2,8 +2,6 @@ package com.coffeepeek.admin.ui
 
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.getValue
-import com.coffeepeek.admin.ui.screen.addshop.AddShopScreen
-import com.coffeepeek.admin.ui.screen.auth.registr.RegisterScreen
 import com.coffeepeek.admin.ui.screen.checkins.CheckInHistoryDestination
 import com.coffeepeek.admin.ui.screen.shop.ShopDetailScreen
 import com.coffeepeek.admin.ui.screen.shop.ShopMenuGalleryScreen
@@ -11,8 +9,7 @@ import com.coffeepeek.admin.ui.screen.shop.ShopReportScreen
 import com.coffeepeek.admin.ui.screen.favorites.FavoritesScreen
 import com.coffeepeek.admin.ui.favorites.FavoritesDestination
 import com.coffeepeek.admin.ui.screen.contributions.ContributionKind
-import com.coffeepeek.admin.ui.screen.contributions.MyContributionsScreen
-import com.coffeepeek.admin.ui.screen.roaster.AddRoasterScreen
+import com.coffeepeek.admin.ui.screen.contributions.ContributionsScreenRenderer
 import com.coffeepeek.admin.ui.screen.profile.AccountScreenRenderer
 import com.coffeepeek.admin.ui.screen.profile.PublicProfileScreenRenderer
 import com.coffeepeek.admin.ui.screen.roaster.RoasterScreenRenderer
@@ -49,6 +46,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.lifecycle.Lifecycle
+import androidx.navigation.NavHostController
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.compose.LocalOwnersProvider
@@ -62,7 +60,7 @@ import com.coffeepeek.admin.ui.screen.shop.CheckInDraftStore
 import org.koin.compose.koinInject
 import com.coffeepeek.admin.ui.dialogs.ErrorDialog
 import com.coffeepeek.admin.ui.dialogs.LoadingDialog
-import com.coffeepeek.admin.ui.screen.auth.AuthScreen
+import com.coffeepeek.admin.ui.screen.auth.AuthScreenRenderer
 import com.coffeepeek.admin.ui.screen.main.MainScreen
 import com.coffeepeek.admin.ui.component.RetainedContent
 import com.coffeepeek.admin.ui.screen.shop.ShopDetailScreenRenderer
@@ -70,10 +68,6 @@ import com.coffeepeek.admin.ui.screen.shop.ShopCheckInListScreenRenderer
 import com.coffeepeek.admin.ui.screen.coffee.CoffeeScreenRenderer
 import com.coffeepeek.admin.ui.screen.shop.ShopMenuGalleryScreenRenderer
 import com.coffeepeek.admin.ui.screen.shop.ShopReportScreenRenderer
-import com.coffeepeek.admin.feature.passwordrecovery.ui.PasswordRecoveryScreen
-import com.coffeepeek.admin.ui.screen.shopchange.ShopChangeEditorScreen
-import com.coffeepeek.admin.ui.screen.shopchange.ShopChangeRequestDetailScreen
-import com.coffeepeek.admin.ui.screen.shopchange.SuggestShopChangeScreen
 import com.coffeepeek.admin.utils.ErrorHandler
 import com.coffeepeek.admin.utils.LoadingHandler
 import kotlinx.coroutines.CoroutineScope
@@ -158,6 +152,11 @@ object Navigator {
             val nickname: String? = null,
             val avatarUrl: String? = null,
         ) : Screen
+        @Serializable data class UserCheckIns(
+            val slug: String,
+            val nickname: String? = null,
+            val avatarUrl: String? = null,
+        ) : Screen
         @Serializable data object EditProfile : Screen
         @Serializable data object DeleteAccountPending : Screen
         @Serializable data object Favorites : Screen
@@ -233,6 +232,7 @@ object Navigator {
         is Screen.AddRoaster,
         is Screen.RoasterDetail,
         is Screen.UserProfile,
+        is Screen.UserCheckIns,
         is Screen.EditProfile,
         is Screen.DeleteAccountPending,
         is Screen.ShopReviews,
@@ -372,7 +372,7 @@ object Navigator {
                     is NavEvent.NavigateUp -> nav.navigateUp()
                     is NavEvent.NavigateTo -> {
                         if (event.screen.isHandledByRootNav()) {
-                            nav.navigate(event.screen)
+                            nav.navigateFromRoot(event.screen)
                         }
                     }
                     else -> Unit
@@ -380,7 +380,9 @@ object Navigator {
             }.launchIn(this)
         }
 
-        val shopPhotoUnderStatusBar = currentEntry?.destination?.hasRoute<Screen.ShopDetail>() == true
+        val shopPhotoUnderStatusBar = currentEntry?.destination?.let {
+            it.hasRoute<Screen.ShopDetail>() || it.hasRoute<Screen.RoasterDetail>()
+        } == true
         val systemInsets = WindowInsets.systemBars.union(WindowInsets.displayCutout)
         val darkTheme = MaterialTheme.colorScheme.background.luminance() < 0.5f
         PlatformSystemBars(darkTheme, lightStatusBarIcons = shopPhotoUnderStatusBar || darkTheme)
@@ -441,13 +443,13 @@ object Navigator {
                     )
                 },
             ) {
-                    composable<Screen.Auth> { AuthScreen() }
-                    composable<Screen.Register> { RegisterScreen() }
+                    composable<Screen.Auth> { koinInject<AuthScreenRenderer>().Login() }
+                    composable<Screen.Register> { koinInject<AuthScreenRenderer>().Register() }
                     composable<Screen.ForgotPassword> { backStack ->
-                        PasswordRecoveryScreen(
+                        koinInject<AuthScreenRenderer>().Recovery(
                             initialEmail = backStack.toRoute<Screen.ForgotPassword>().email,
                             onClose = { nav.popBackStack() },
-                            onLogin = {
+                            onBackToLogin = {
                                 nav.navigate(Screen.Auth) { popUpTo<Screen.Main>(); launchSingleTop = true }
                             },
                         )
@@ -495,32 +497,31 @@ object Navigator {
                     }
                     composable<Screen.SuggestShopChange> { backStack ->
                         val route = backStack.toRoute<Screen.SuggestShopChange>()
-                        SuggestShopChangeScreen(shopId = route.shopId)
+                        koinInject<ContributionsScreenRenderer>().Suggest(route.shopId)
                     }
                     composable<Screen.ShopChangeEditor> { backStack ->
                         val route = backStack.toRoute<Screen.ShopChangeEditor>()
-                        ShopChangeEditorScreen(
-                            shopId = route.shopId,
-                            sectionName = route.section,
-                            requestId = route.requestId,
-                        )
+koinInject<ContributionsScreenRenderer>().Editor(route.shopId, route.section, route.requestId)
                     }
                     composable<Screen.MyContributions> { backStack ->
                         val route = backStack.toRoute<Screen.MyContributions>()
-                        MyContributionsScreen(kind = ContributionKind.valueOf(route.kind))
+                        koinInject<ContributionsScreenRenderer>().List(ContributionKind.valueOf(route.kind))
                     }
                     composable<Screen.ShopChangeRequestDetail> { backStack ->
                         val route = backStack.toRoute<Screen.ShopChangeRequestDetail>()
-                        ShopChangeRequestDetailScreen(requestId = route.requestId)
+                        koinInject<ContributionsScreenRenderer>().RequestDetail(route.requestId)
                     }
-                    composable<Screen.AddShop> { AddShopScreen() }
-                    composable<Screen.AddRoaster> { AddRoasterScreen() }
+                    composable<Screen.AddShop> { koinInject<ContributionsScreenRenderer>().AddShop() }
+                    composable<Screen.AddRoaster> { koinInject<ContributionsScreenRenderer>().AddRoaster() }
                     composable<Screen.RoasterDetail> { backStack ->
                         val route = backStack.toRoute<Screen.RoasterDetail>()
                         koinInject<RoasterScreenRenderer>().Detail(route.roasterId)
                     }
                     composable<Screen.UserProfile> { backStack ->
                         PublicProfileRoute(backStack.toRoute<Screen.UserProfile>())
+                    }
+                    composable<Screen.UserCheckIns> { backStack ->
+                        PublicCheckInsRoute(backStack.toRoute<Screen.UserCheckIns>())
                     }
                     composable<Screen.EditProfile> { koinInject<AccountScreenRenderer>().EditProfile() }
                     composable<Screen.DeleteAccountPending> { koinInject<AccountScreenRenderer>().DeletionPending() }
@@ -542,9 +543,9 @@ object Navigator {
     private fun RootScreen(screen: Screen, resetToLogin: () -> Unit, isLoggedIn: Boolean) {
         when (screen) {
             Screen.Main -> MainScreen(isLoggedIn)
-            Screen.Auth -> AuthScreen()
-            Screen.Register -> RegisterScreen()
-            is Screen.ForgotPassword -> PasswordRecoveryScreen(initialEmail = screen.email, onClose = ::popBack, onLogin = resetToLogin)
+            Screen.Auth -> koinInject<AuthScreenRenderer>().Login()
+            Screen.Register -> koinInject<AuthScreenRenderer>().Register()
+            is Screen.ForgotPassword -> koinInject<AuthScreenRenderer>().Recovery(initialEmail = screen.email, onClose = ::popBack, onBackToLogin = resetToLogin)
             is Screen.ResetPassword -> LaunchedEffect(Unit) { resetToLogin() }
             is Screen.ShopDetail -> koinInject<ShopDetailScreenRenderer>().Content(screen.shopId, screen.forCheckIn)
             Screen.CreateCheckIn -> com.coffeepeek.admin.ui.screen.shop.CheckInShopPickerScreen()
@@ -554,14 +555,15 @@ object Navigator {
             is Screen.ReportCheckIn -> com.coffeepeek.admin.ui.screen.review.ReviewReportScreen(reviewId = screen.checkInId, isCheckIn = true)
             is Screen.ShopMenuGallery -> koinInject<ShopMenuGalleryScreenRenderer>().Content(screen.shopId)
             is Screen.ReportShop -> koinInject<ShopReportScreenRenderer>().Content(screen.shopId, screen.shopTitle)
-            is Screen.SuggestShopChange -> SuggestShopChangeScreen(screen.shopId)
-            is Screen.ShopChangeEditor -> ShopChangeEditorScreen(screen.shopId, screen.section, screen.requestId)
-            is Screen.MyContributions -> MyContributionsScreen(ContributionKind.valueOf(screen.kind))
-            is Screen.ShopChangeRequestDetail -> ShopChangeRequestDetailScreen(screen.requestId)
-            Screen.AddShop -> AddShopScreen()
-            Screen.AddRoaster -> AddRoasterScreen()
+            is Screen.SuggestShopChange -> koinInject<ContributionsScreenRenderer>().Suggest(screen.shopId)
+            is Screen.ShopChangeEditor -> koinInject<ContributionsScreenRenderer>().Editor(screen.shopId, screen.section, screen.requestId)
+            is Screen.MyContributions -> koinInject<ContributionsScreenRenderer>().List(ContributionKind.valueOf(screen.kind))
+            is Screen.ShopChangeRequestDetail -> koinInject<ContributionsScreenRenderer>().RequestDetail(screen.requestId)
+            Screen.AddShop -> koinInject<ContributionsScreenRenderer>().AddShop()
+            Screen.AddRoaster -> koinInject<ContributionsScreenRenderer>().AddRoaster()
             is Screen.RoasterDetail -> koinInject<RoasterScreenRenderer>().Detail(screen.roasterId)
             is Screen.UserProfile -> PublicProfileRoute(screen)
+            is Screen.UserCheckIns -> PublicCheckInsRoute(screen)
             Screen.EditProfile -> koinInject<AccountScreenRenderer>().EditProfile()
             Screen.DeleteAccountPending -> koinInject<AccountScreenRenderer>().DeletionPending()
             Screen.Favorites -> FavoritesDestination()
@@ -574,6 +576,19 @@ object Navigator {
             Screen.UsagePolicy -> koinInject<SettingsScreenRenderer>().UsagePolicy()
             else -> error("Tab route must be handled by MainScreen: $screen")
         }
+    }
+
+    private fun NavHostController.navigateFromRoot(screen: Screen) {
+        val stack = currentBackStack.value.map { entry ->
+            if (entry.destination.hasRoute<Screen.UserProfile>()) entry.toRoute<Screen.UserProfile>() else null
+        }
+        val existing = stack.getOrNull(existingProfileIndex(stack, screen))
+        if (existing != null) popBackStack(existing, inclusive = false) else navigate(screen)
+    }
+
+    @Composable
+    private fun PublicCheckInsRoute(screen: Screen.UserCheckIns) {
+        koinInject<PublicProfileScreenRenderer>().Content(screen.slug, screen.nickname, screen.avatarUrl, checkInsOnly = true)
     }
 
     @Composable

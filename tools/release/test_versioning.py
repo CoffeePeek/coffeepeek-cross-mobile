@@ -41,6 +41,16 @@ class ReleaseVersioningTest(unittest.TestCase):
         self.assertIn("Print :CFBundleVersion", workflow)
         self.assertIn("Print :CFBundleShortVersionString", workflow)
 
+    def test_develop_distribution_is_separate_from_production_publication(self):
+        workflow = (ROOT / '.github/workflows/android-firebase-develop.yml').read_text(encoding='utf-8')
+        self.assertIn('branches: [develop]', workflow)
+        self.assertEqual(2, workflow.count("if: github.ref == 'refs/heads/develop'"))
+        self.assertIn(':composeApp:assembleDirectRelease', workflow)
+        self.assertIn('Distribute APK to Firebase', workflow)
+        for production_action in ('publish_play:', 'publish_apk:', 'upload-google-play', 'VPS_',
+                                  '/android/version', '/ios/version', 'publish_android_release.py --publish'):
+            self.assertNotIn(production_action, workflow)
+
 
 if __name__ == '__main__':
     unittest.main()

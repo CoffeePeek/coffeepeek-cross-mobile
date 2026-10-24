@@ -1,5 +1,9 @@
 package com.coffeepeek.admin.ui.screen.shop
 
+import com.coffeepeek.core.designsystem.component.coffeePeekScreenBottomPadding
+
+import com.coffeepeek.core.designsystem.component.CoffeePeekScaffold as Scaffold
+
 import com.coffeepeek.admin.ui.component.CpTopBar
 
 import androidx.compose.foundation.BorderStroke
@@ -24,7 +28,6 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -63,7 +66,7 @@ fun ShopReportScreen(shopId: String, shopTitle: String) {
             modifier = Modifier
                 .fillMaxSize()
                 .padding(contentPadding)
-                .verticalScroll(rememberScrollState())
+                .verticalScroll(rememberScrollState()).coffeePeekScreenBottomPadding()
                 .padding(CpDimens.spacing4),
             verticalArrangement = Arrangement.spacedBy(CpDimens.spacing3),
         ) {

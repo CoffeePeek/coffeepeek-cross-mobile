@@ -1,5 +1,6 @@
 package com.coffeepeek.admin.ui.component
 
+import com.coffeepeek.core.datetime.parseServerInstant
 import com.coffeepeek.core.designsystem.component.CoffeePeekLikeIcon
 
 import com.coffeepeek.domain.model.savedDrinkName
@@ -92,7 +93,6 @@ import androidx.lifecycle.repeatOnLifecycle
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlin.time.ExperimentalTime
-import kotlin.time.Instant
 
 @Composable
 fun ReviewFormField(
@@ -628,8 +628,7 @@ internal fun rememberReviewDisplayDate(raw: String): String {
 @OptIn(ExperimentalTime::class)
 internal fun formatReviewDisplayDate(raw: String, nowMillis: Long = currentEpochMillis()): String {
     val trimmed = raw.trim()
-    val instant = runCatching { Instant.parse(trimmed) }.getOrNull()
-        ?: runCatching { Instant.parse("${trimmed}Z") }.getOrNull()
+    val instant = parseServerInstant(trimmed)
     if (instant != null) {
         val elapsed = nowMillis - instant.toEpochMilliseconds()
         if (elapsed in 0 until 86_400_000L) {

@@ -6,7 +6,9 @@ import com.coffeepeek.feature.homecheckin.domain.model.*
 import com.coffeepeek.feature.homecheckin.domain.repository.HomePreparationRepository
 import com.coffeepeek.feature.homecheckin.domain.usecase.homePreparationFieldErrors
 import io.ktor.client.HttpClient
+import io.ktor.client.plugins.ResponseException
 import io.ktor.http.Url
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
 
@@ -62,6 +64,16 @@ private class RemoteHomePreparationRepository(
         val days = backend.calendar(range.from, range.to).map { HomePreparationDay(it.preparedOn, it.brewCount) }
         // The calendar endpoint supplies counts only. Preserve the current month-photo
         // behavior using bounded, date-filtered owner pages, never per-entry detail calls.
+        val photos = try { calendarPhotos(range, days) }
+        catch (cancelled: CancellationException) { throw cancelled }
+        // A rejected session must still surface; any other failure only costs the photos, not the counts.
+        catch (failure: ResponseException) { if (failure.response.status.value in setOf(401, 403)) throw failure; emptyMap() }
+        catch (_: Exception) { emptyMap() }
+        days.map { it.copy(photos = photos[it.preparedOn].orEmpty()) }
+    }
+
+    private suspend fun calendarPhotos(range: HomePreparationDateRange, days: List<HomePreparationDay>):
+        Map<String, List<HomePreparationCalendarPhoto>> {
         val entries = mutableListOf<HomePreparation>()
         if (days.any { it.brewCount > 0 }) {
             var page = 1
@@ -79,12 +91,11 @@ private class RemoteHomePreparationRepository(
             } while (hasMore)
         }
         currentCoroutineContext().ensureActive()
-        val photos = entries.distinctBy(HomePreparation::id).filter { it.preparedOn in range.from..range.to }
+        return entries.distinctBy(HomePreparation::id).filter { it.preparedOn in range.from..range.to }
             .groupBy(HomePreparation::preparedOn).mapValues { (_, rows) -> rows.mapNotNull { row ->
                 row.photos.firstNotNullOfOrNull { photo -> (photo.calendarUrl ?: photo.url).takeIf(String::isNotBlank) }
                         ?.let { HomePreparationCalendarPhoto(it, false, row.preparedAtUtc) }
             } }
-        days.map { it.copy(photos = photos[it.preparedOn].orEmpty()) }
     }
 }
 

@@ -24,9 +24,9 @@ import com.coffeepeek.admin.theme.CoffeePeekTheme
 import com.coffeepeek.admin.theme.PlatformSystemBars
 import com.coffeepeek.admin.ui.component.CpTopBar
 import com.coffeepeek.admin.ui.component.SwipeDismissModalBottomSheet
-import com.coffeepeek.feature.homecheckin.domain.HomeCheckIn
-import com.coffeepeek.feature.homecheckin.domain.HomeCheckInPhoto
-import com.coffeepeek.feature.homecheckin.domain.HomeCheckInVisibility
+import com.coffeepeek.legacy.homecheckin.domain.HomeCheckIn
+import com.coffeepeek.legacy.homecheckin.domain.HomeCheckInPhoto
+import com.coffeepeek.legacy.homecheckin.domain.HomeCheckInVisibility
 import java.io.File
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference

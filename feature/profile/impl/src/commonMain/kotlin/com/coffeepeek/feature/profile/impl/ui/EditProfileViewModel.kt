@@ -75,15 +75,20 @@ internal class EditProfileViewModel(
 
     private suspend fun save(form: EditProfileState) {
         updateState { copy(isSaving = true, error = null, usernameRetryAtUtc = null, usernameToConfirm = null) }
+        // The three writes belong to the account that started the save: if another account becomes active between them, the rest is not sent.
+        val owner = accounts.activeAccount()
         try {
-            if (!saveAvatar(form.pendingAvatar)) return
-            if (!saveUsername(form)) return
+            if (!saveAvatar(form.pendingAvatar) || !stillOwnedBy(owner)) return
+            if (!saveUsername(form) || !stillOwnedBy(owner)) return
             if (!saveAbout(form)) return
             sendEvent(EditProfileEvent.Saved)
         } finally {
             updateState { copy(isSaving = false) }
         }
     }
+
+    private fun stillOwnedBy(owner: String?): Boolean =
+        if (accounts.activeAccount() == owner && owner != null) true else fail(EditProfileError.SignInRequired)
 
     private suspend fun saveAvatar(avatar: ProfileAvatarImage?): Boolean {
         if (avatar == null) return true

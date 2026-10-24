@@ -6,7 +6,16 @@ import com.coffeepeek.admin.di.shop.shopCheckInModule
 import com.coffeepeek.admin.di.shop.AndroidShopCheckInFormRenderer
 import com.coffeepeek.admin.di.coffee.androidCoffeeScreenRenderer
 import com.coffeepeek.admin.di.coffee.coffeeModule
+import com.coffeepeek.admin.di.appupdate.androidAppUpdateRenderer
+import com.coffeepeek.admin.di.auth.androidAuthScreenRenderer
+import com.coffeepeek.admin.di.community.androidCommunityScreenRenderer
+import com.coffeepeek.api.CoffeePeekClient
+import java.time.OffsetDateTime
+import com.coffeepeek.admin.di.contributions.androidContributionsScreenRenderer
+import com.coffeepeek.admin.di.discovery.androidDiscoveryScreenRenderer
+import com.coffeepeek.feature.contributions.data.repository.createContributionsRepository
 import com.coffeepeek.admin.di.profile.androidAccountScreenRenderer
+import com.coffeepeek.admin.di.notifications.androidNotificationsRenderer
 import com.coffeepeek.admin.di.profile.androidOwnProfileScreenRenderer
 import com.coffeepeek.admin.di.settings.androidSettingsScreenRenderer
 import com.coffeepeek.admin.di.profile.androidPublicProfileScreenRenderer
@@ -62,8 +71,19 @@ internal fun initAndroidKoin(extraModules: List<org.koin.core.module.Module> = e
         checkInCreateFlowRendererFactory = { get<AndroidCheckInCreateFlowRenderer>() },
         coffeeRendererFactory = { androidCoffeeScreenRenderer(get()) },
         publicProfileRendererFactory = { androidPublicProfileScreenRenderer(get(), get(), get(), get(), get()) },
-        ownProfileRendererFactory = { androidOwnProfileScreenRenderer(get(), get(), get(), get(), get(), get(), get()) },
+        ownProfileRendererFactory = { androidOwnProfileScreenRenderer(get(), get(), get(), get(), get(), get(), get(), get()) },
         accountRendererFactory = { androidAccountScreenRenderer(get(), get()) },
         settingsRendererFactory = { androidSettingsScreenRenderer(get(), get(), get(), get()) },
+        appUpdateRendererFactory = { androidAppUpdateRenderer(get(), get()) },
+        notificationsRendererFactory = { androidNotificationsRenderer(get()) },
+        authRendererFactory = { androidAuthScreenRenderer(get(), get()) },
+        communityRendererFactory = { androidCommunityScreenRenderer(get(), get(), get(), get(), get(), get()) },
+        contributionsRendererFactory = {
+            val gateway = get<CoffeePeekClient>()
+            androidContributionsScreenRenderer(
+                createContributionsRepository(gateway.client, gateway.uploadClient) { OffsetDateTime.now().offset.totalSeconds / 60 }, get(), get(),
+            )
+        },
+        discoveryRendererFactory = { androidDiscoveryScreenRenderer(get<CoffeePeekClient>().client, get(), get(), get(), get(), get()) },
     )
 }
