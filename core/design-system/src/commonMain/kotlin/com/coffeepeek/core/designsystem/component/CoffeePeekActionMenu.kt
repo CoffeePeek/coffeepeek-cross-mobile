@@ -35,7 +35,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.tooling.preview.PreviewLightDark
+import org.jetbrains.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntRect
 import androidx.compose.ui.unit.IntSize
@@ -122,7 +122,7 @@ private fun CoffeePeekActionMenuRow(action: CoffeePeekMenuAction, onClick: () ->
     }
 }
 
-@PreviewLightDark
+@Preview
 @Composable
 private fun CoffeePeekActionMenuPreview() = CoffeePeekTheme {
     CoffeePeekActionMenuContent(listOf(

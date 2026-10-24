@@ -1,6 +1,41 @@
 package com.coffeepeek.feature.community.impl.ui
 
 import androidx.compose.foundation.Image
+import org.jetbrains.compose.ui.tooling.preview.Preview
+import com.coffeepeek.feature.community.impl.resources.Res
+import com.coffeepeek.feature.community.impl.resources.community_cancel
+import com.coffeepeek.feature.community.impl.resources.community_choose_rating
+import com.coffeepeek.feature.community.impl.resources.community_close
+import com.coffeepeek.feature.community.impl.resources.community_drink_custom
+import com.coffeepeek.feature.community.impl.resources.community_drink_error
+import com.coffeepeek.feature.community.impl.resources.community_drink_label
+import com.coffeepeek.feature.community.impl.resources.community_drink_none
+import com.coffeepeek.feature.community.impl.resources.community_drink_other
+import com.coffeepeek.feature.community.impl.resources.community_drink_retry
+import com.coffeepeek.feature.community.impl.resources.community_edit_kept
+import com.coffeepeek.feature.community.impl.resources.community_edit_review
+import com.coffeepeek.feature.community.impl.resources.community_edit_save_failed
+import com.coffeepeek.feature.community.impl.resources.community_edit_title
+import com.coffeepeek.feature.community.impl.resources.community_issue_drink_not_allowed
+import com.coffeepeek.feature.community.impl.resources.community_issue_drink_required
+import com.coffeepeek.feature.community.impl.resources.community_issue_note_too_long
+import com.coffeepeek.feature.community.impl.resources.community_issue_rating
+import com.coffeepeek.feature.community.impl.resources.community_note_label
+import com.coffeepeek.feature.community.impl.resources.community_note_placeholder
+import com.coffeepeek.feature.community.impl.resources.community_rating_atmosphere
+import com.coffeepeek.feature.community.impl.resources.community_rating_coffee
+import com.coffeepeek.feature.community.impl.resources.community_rating_service
+import com.coffeepeek.feature.community.impl.resources.community_ratings_hint
+import com.coffeepeek.feature.community.impl.resources.community_ratings_title
+import com.coffeepeek.feature.community.impl.resources.community_report_failed
+import com.coffeepeek.feature.community.impl.resources.community_report_issue
+import com.coffeepeek.feature.community.impl.resources.community_report_placeholder
+import com.coffeepeek.feature.community.impl.resources.community_report_send
+import com.coffeepeek.feature.community.impl.resources.community_report_sending
+import com.coffeepeek.feature.community.impl.resources.community_report_title
+import com.coffeepeek.feature.community.impl.resources.community_save
+import com.coffeepeek.feature.community.impl.resources.community_saving
+import com.coffeepeek.feature.community.impl.resources.community_shop_default
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -29,12 +64,12 @@ import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.stringResource
+import org.jetbrains.compose.resources.DrawableResource
+import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.intl.Locale
-import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.core.designsystem.component.CoffeePeekButton
 import com.coffeepeek.core.designsystem.component.CoffeePeekRating
@@ -53,7 +88,6 @@ import com.coffeepeek.feature.community.domain.rules.MAX_NOTE_LENGTH
 import com.coffeepeek.feature.community.domain.rules.MAX_REPORT_LENGTH
 import com.coffeepeek.feature.community.domain.rules.OTHER_DRINK
 import com.coffeepeek.feature.community.domain.rules.ReportIssue
-import com.coffeepeek.feature.community.impl.R
 import com.coffeepeek.feature.community.impl.timeline.CommunityAction
 import com.coffeepeek.feature.community.impl.timeline.CommunityState
 import com.coffeepeek.feature.community.impl.timeline.EditError
@@ -63,7 +97,7 @@ import com.coffeepeek.feature.community.impl.timeline.PostEditState
 internal fun EditSheet(state: CommunityState, onAction: (CommunityAction) -> Unit) {
     val edit = state.editing ?: return
     CoffeePeekSwipeDismissModalBottomSheet(onDismissRequest = { onAction(CommunityAction.DismissEdit) },
-        dismissDescription = stringResource(R.string.community_close), dismissEnabled = !state.isSaving) {
+        dismissDescription = stringResource(Res.string.community_close), dismissEnabled = !state.isSaving) {
         EditSheetContent(edit, state.drinks, state.drinksFailed, state.isSaving, state.source().visibility == PostVisibility.Public, onAction)
     }
 }
@@ -73,29 +107,29 @@ private fun CommunityState.source() = editing!!.source
 @Composable
 internal fun EditSheetContent(edit: PostEditState, drinks: List<DrinkOption>, drinksFailed: Boolean, saving: Boolean, public: Boolean, onAction: (CommunityAction) -> Unit) {
     Column(Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(CoffeePeekDimens.spacing4), verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing3)) {
-        Text(stringResource(R.string.community_edit_title), style = MaterialTheme.typography.headlineSmall)
-        Text(edit.source.shopName.ifBlank { stringResource(R.string.community_shop_default) }, style = MaterialTheme.typography.titleMedium)
-        Text(stringResource(R.string.community_edit_kept), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        if (public) Text(stringResource(R.string.community_edit_review), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text(stringResource(Res.string.community_edit_title), style = MaterialTheme.typography.headlineSmall)
+        Text(edit.source.shopName.ifBlank { stringResource(Res.string.community_shop_default) }, style = MaterialTheme.typography.titleMedium)
+        Text(stringResource(Res.string.community_edit_kept), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        if (public) Text(stringResource(Res.string.community_edit_review), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         RatingCards(edit.rating) { onAction(CommunityAction.EditRating(it)) }
-        Text(stringResource(R.string.community_note_label), style = MaterialTheme.typography.labelMedium)
-        TextArea(edit.text, { onAction(CommunityAction.EditText(it)) }, stringResource(R.string.community_note_placeholder), MAX_NOTE_LENGTH, isError = edit.error != null)
+        Text(stringResource(Res.string.community_note_label), style = MaterialTheme.typography.labelMedium)
+        TextArea(edit.text, { onAction(CommunityAction.EditText(it)) }, stringResource(Res.string.community_note_placeholder), MAX_NOTE_LENGTH, isError = edit.error != null)
         DrinkField(edit, drinks, drinksFailed, onAction)
         edit.error?.let { Text(editErrorText(it), color = MaterialTheme.colorScheme.error) }
-        CoffeePeekButton(stringResource(if (saving) R.string.community_saving else R.string.community_save), { onAction(CommunityAction.SaveEdit) }, Modifier.fillMaxWidth(), enabled = !saving)
-        TextButton({ onAction(CommunityAction.DismissEdit) }, Modifier.fillMaxWidth(), enabled = !saving) { Text(stringResource(R.string.community_cancel)) }
+        CoffeePeekButton(stringResource(if (saving) Res.string.community_saving else Res.string.community_save), { onAction(CommunityAction.SaveEdit) }, Modifier.fillMaxWidth(), enabled = !saving)
+        TextButton({ onAction(CommunityAction.DismissEdit) }, Modifier.fillMaxWidth(), enabled = !saving) { Text(stringResource(Res.string.community_cancel)) }
     }
 }
 
 @Composable
 private fun editErrorText(error: EditError): String = when (error) {
-    is EditError.Server -> error.message ?: stringResource(R.string.community_edit_save_failed)
+    is EditError.Server -> error.message ?: stringResource(Res.string.community_edit_save_failed)
     is EditError.Invalid -> stringResource(
         when (error.issue) {
-            EditIssue.NoteTooLong -> R.string.community_issue_note_too_long
-            EditIssue.RatingOutOfRange -> R.string.community_issue_rating
-            EditIssue.DrinkNameRequired -> R.string.community_issue_drink_required
-            EditIssue.DrinkNameNotAllowed -> R.string.community_issue_drink_not_allowed
+            EditIssue.NoteTooLong -> Res.string.community_issue_note_too_long
+            EditIssue.RatingOutOfRange -> Res.string.community_issue_rating
+            EditIssue.DrinkNameRequired -> Res.string.community_issue_drink_required
+            EditIssue.DrinkNameNotAllowed -> Res.string.community_issue_drink_not_allowed
         },
     )
 }
@@ -104,17 +138,17 @@ private fun editErrorText(error: EditError): String = when (error) {
 private fun RatingCards(rating: PostRating, onChange: (PostRating) -> Unit) {
     Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing2)) {
         Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-            Text(stringResource(R.string.community_ratings_title), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
-            Text(stringResource(R.string.community_ratings_hint), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(stringResource(Res.string.community_ratings_title), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
+            Text(stringResource(Res.string.community_ratings_hint), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
-        RatingCard(R.drawable.community_rating_coffee, stringResource(R.string.community_rating_coffee), rating.coffee) { onChange(rating.copy(coffee = it)) }
-        RatingCard(R.drawable.community_rating_service, stringResource(R.string.community_rating_service), rating.service) { onChange(rating.copy(service = it)) }
-        RatingCard(R.drawable.community_rating_atmosphere, stringResource(R.string.community_rating_atmosphere), rating.place) { onChange(rating.copy(place = it)) }
+        RatingCard(Res.drawable.community_rating_coffee, stringResource(Res.string.community_rating_coffee), rating.coffee) { onChange(rating.copy(coffee = it)) }
+        RatingCard(Res.drawable.community_rating_service, stringResource(Res.string.community_rating_service), rating.service) { onChange(rating.copy(service = it)) }
+        RatingCard(Res.drawable.community_rating_atmosphere, stringResource(Res.string.community_rating_atmosphere), rating.place) { onChange(rating.copy(place = it)) }
     }
 }
 
 @Composable
-private fun RatingCard(image: Int, label: String, value: Int, onChange: (Int) -> Unit) {
+private fun RatingCard(image: DrawableResource, label: String, value: Int, onChange: (Int) -> Unit) {
     Row(
         Modifier.fillMaxWidth().clip(RoundedCornerShape(CoffeePeekDimens.radiusMd)).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.04f))
             .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(CoffeePeekDimens.radiusMd))
@@ -126,7 +160,7 @@ private fun RatingCard(image: Int, label: String, value: Int, onChange: (Int) ->
             Text(label, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold)
             CoffeePeekRating(value.toDouble(), size = CoffeePeekRatingSize.Large, onRatingChange = onChange,
                 inactiveColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.65f),
-                starDescription = { stringResource(R.string.community_choose_rating, label, it) })
+                starDescription = { stringResource(Res.string.community_choose_rating, label, it) })
         }
     }
 }
@@ -142,8 +176,8 @@ private fun DrinkField(edit: PostEditState, drinks: List<DrinkOption>, failed: B
     val savedName = edit.source.drink?.takeIf { unchanged }?.let { saved ->
         if (language == "en") saved.nameEn?.takeIf(String::isNotBlank) ?: saved.nameRu else saved.nameRu?.takeIf(String::isNotBlank) ?: saved.nameEn
     }?.takeIf { !it.isNullOrBlank() }
-    val none = stringResource(R.string.community_drink_none)
-    val other = stringResource(R.string.community_drink_other)
+    val none = stringResource(Res.string.community_drink_none)
+    val other = stringResource(Res.string.community_drink_other)
     val label = when (slug) {
         null -> none
         OTHER_DRINK -> edit.customDrinkName?.takeIf { it.isNotBlank() } ?: selected?.title() ?: if (language == "en") "Other" else other
@@ -159,16 +193,16 @@ private fun DrinkField(edit: PostEditState, drinks: List<DrinkOption>, failed: B
         }
     }
     Column(verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing2)) {
-        val title = stringResource(R.string.community_drink_label)
+        val title = stringResource(Res.string.community_drink_label)
         Text(title, style = MaterialTheme.typography.labelMedium)
         CoffeePeekSelectField(label, options, title, Modifier.fillMaxWidth())
         if (failed) {
-            Text(stringResource(R.string.community_drink_error), color = MaterialTheme.colorScheme.error)
-            TextButton({ onAction(CommunityAction.LoadDrinks) }) { Text(stringResource(R.string.community_drink_retry)) }
+            Text(stringResource(Res.string.community_drink_error), color = MaterialTheme.colorScheme.error)
+            TextButton({ onAction(CommunityAction.LoadDrinks) }) { Text(stringResource(Res.string.community_drink_retry)) }
         }
         if (slug == OTHER_DRINK) {
             TextArea(edit.customDrinkName.orEmpty(), { onAction(CommunityAction.EditDrink(slug, it.take(MAX_DRINK_NAME_LENGTH))) },
-                stringResource(R.string.community_drink_custom), MAX_DRINK_NAME_LENGTH, singleLine = true)
+                stringResource(Res.string.community_drink_custom), MAX_DRINK_NAME_LENGTH, singleLine = true)
         }
     }
 }
@@ -177,7 +211,7 @@ private fun DrinkField(edit: PostEditState, drinks: List<DrinkOption>, failed: B
 internal fun ReportSheet(state: CommunityState, onAction: (CommunityAction) -> Unit) {
     if (state.reportingId == null) return
     CoffeePeekSwipeDismissModalBottomSheet(onDismissRequest = { onAction(CommunityAction.DismissReport) },
-        dismissDescription = stringResource(R.string.community_close), dismissEnabled = !state.isReporting) {
+        dismissDescription = stringResource(Res.string.community_close), dismissEnabled = !state.isReporting) {
         ReportSheetContent(state, onAction)
     }
 }
@@ -185,19 +219,19 @@ internal fun ReportSheet(state: CommunityState, onAction: (CommunityAction) -> U
 @Composable
 internal fun ReportSheetContent(state: CommunityState, onAction: (CommunityAction) -> Unit) {
     Column(Modifier.fillMaxWidth().padding(CoffeePeekDimens.spacing4), verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing2)) {
-        Text(stringResource(R.string.community_report_title), style = MaterialTheme.typography.titleLarge)
+        Text(stringResource(Res.string.community_report_title), style = MaterialTheme.typography.titleLarge)
         val error = state.reportIssue != null || state.reportFailed
-        TextArea(state.reportText, { onAction(CommunityAction.ReportText(it)) }, stringResource(R.string.community_report_placeholder), MAX_REPORT_LENGTH, isError = error)
+        TextArea(state.reportText, { onAction(CommunityAction.ReportText(it)) }, stringResource(Res.string.community_report_placeholder), MAX_REPORT_LENGTH, isError = error)
         val message = when {
-            state.reportIssue != null -> stringResource(R.string.community_report_issue)
-            state.reportFailed -> state.reportFailure ?: stringResource(R.string.community_report_failed)
+            state.reportIssue != null -> stringResource(Res.string.community_report_issue)
+            state.reportFailed -> state.reportFailure ?: stringResource(Res.string.community_report_failed)
             else -> null
         }
         message?.let { Text(it, color = MaterialTheme.colorScheme.error) }
         TextButton({ onAction(CommunityAction.SubmitReport) }, enabled = !state.isReporting) {
-            Text(stringResource(if (state.isReporting) R.string.community_report_sending else R.string.community_report_send))
+            Text(stringResource(if (state.isReporting) Res.string.community_report_sending else Res.string.community_report_send))
         }
-        TextButton({ onAction(CommunityAction.DismissReport) }, enabled = !state.isReporting) { Text(stringResource(R.string.community_cancel)) }
+        TextButton({ onAction(CommunityAction.DismissReport) }, enabled = !state.isReporting) { Text(stringResource(Res.string.community_cancel)) }
     }
 }
 
@@ -226,13 +260,13 @@ private fun TextArea(value: String, onChange: (String) -> Unit, placeholder: Str
     )
 }
 
-@PreviewLightDark @Composable private fun EditSheetPreview() = CoffeePeekTheme {
+@Preview @Composable private fun EditSheetPreview() = CoffeePeekTheme {
     androidx.compose.material3.Surface {
         EditSheetContent(PostEditState(previewPost()), listOf(DrinkOption("cappuccino", "Капучино", "Cappuccino")), false, false, true, {})
     }
 }
 
-@PreviewLightDark @Composable private fun ReportSheetPreview() = CoffeePeekTheme {
+@Preview @Composable private fun ReportSheetPreview() = CoffeePeekTheme {
     androidx.compose.material3.Surface {
         ReportSheetContent(CommunityState(reportingId = "preview", reportText = "Нарушение", reportIssue = ReportIssue.Empty), {})
     }

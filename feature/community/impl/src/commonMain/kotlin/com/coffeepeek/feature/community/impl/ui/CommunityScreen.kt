@@ -1,6 +1,22 @@
 package com.coffeepeek.feature.community.impl.ui
 
 import androidx.compose.foundation.Image
+import org.jetbrains.compose.ui.tooling.preview.Preview
+import com.coffeepeek.feature.community.impl.resources.Res
+import com.coffeepeek.feature.community.impl.resources.community_mascot_error
+import com.coffeepeek.feature.community.impl.resources.community_edit_saved
+import com.coffeepeek.feature.community.impl.resources.community_edit_sent_for_review
+import com.coffeepeek.feature.community.impl.resources.community_empty
+import com.coffeepeek.feature.community.impl.resources.community_error_body
+import com.coffeepeek.feature.community.impl.resources.community_error_title
+import com.coffeepeek.feature.community.impl.resources.community_loading
+import com.coffeepeek.feature.community.impl.resources.community_refresh
+import com.coffeepeek.feature.community.impl.resources.community_report_sent
+import com.coffeepeek.feature.community.impl.resources.community_restart
+import com.coffeepeek.feature.community.impl.resources.community_retry
+import com.coffeepeek.feature.community.impl.resources.community_title
+import com.coffeepeek.feature.community.impl.resources.community_visibility_failed
+import com.coffeepeek.feature.community.impl.resources.community_vote_failed
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
@@ -37,11 +53,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.stringResource
+import org.jetbrains.compose.resources.DrawableResource
+import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
@@ -62,7 +78,6 @@ import com.coffeepeek.feature.community.api.FeedItemAction
 import com.coffeepeek.feature.community.api.FeedTrigger
 import com.coffeepeek.feature.community.domain.model.CommunityPost
 import com.coffeepeek.feature.community.domain.model.PostVisibility
-import com.coffeepeek.feature.community.impl.R
 import com.coffeepeek.feature.community.impl.timeline.ActionMessage
 import com.coffeepeek.feature.community.impl.timeline.CommunityAction
 import com.coffeepeek.feature.community.impl.timeline.CommunityEvent
@@ -97,8 +112,8 @@ internal fun CommunityScreen(
     val lifecycle = LocalLifecycleOwner.current.lifecycle
     val currentCallbacks by rememberUpdatedState(callbacks)
     val messages = MessageTexts(
-        stringResource(R.string.community_vote_failed), stringResource(R.string.community_visibility_failed), stringResource(R.string.community_report_sent),
-        stringResource(R.string.community_edit_saved), stringResource(R.string.community_edit_sent_for_review),
+        stringResource(Res.string.community_vote_failed), stringResource(Res.string.community_visibility_failed), stringResource(Res.string.community_report_sent),
+        stringResource(Res.string.community_edit_saved), stringResource(Res.string.community_edit_sent_for_review),
     )
     val currentMessages by rememberUpdatedState(messages)
     LaunchedEffect(vm, lifecycle) {
@@ -176,8 +191,8 @@ internal fun CommunityContent(
                 listState,
                 isRefreshing = state.isLoading && state.items.isNotEmpty(),
                 onRefresh = { onAction(CommunityAction.Refresh(FeedTrigger.Gesture)) },
-                refreshDescription = stringResource(R.string.community_refresh),
-                loadingDescription = stringResource(R.string.community_loading),
+                refreshDescription = stringResource(Res.string.community_refresh),
+                loadingDescription = stringResource(Res.string.community_loading),
                 modifier = Modifier.fillMaxSize().statusBarsPadding().padding(top = padding.calculateTopPadding()),
             ) { scrollModifier ->
                 LazyColumn(
@@ -189,7 +204,7 @@ internal fun CommunityContent(
                 ) {
                     item(key = "heading", contentType = "heading") {
                         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                            Text(stringResource(R.string.community_title), Modifier.weight(1f), style = MaterialTheme.typography.headlineMedium,
+                            Text(stringResource(Res.string.community_title), Modifier.weight(1f), style = MaterialTheme.typography.headlineMedium,
                                 fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground)
                             headerAction()
                         }
@@ -221,11 +236,11 @@ internal fun CommunityContent(
                             state.error != null -> item(key = "error", contentType = "error") {
                                 ErrorBlock(
                                     onRetry = { onAction(CommunityAction.Retry) },
-                                    retryLabel = stringResource(if (state.restartPagination) R.string.community_restart else R.string.community_retry),
+                                    retryLabel = stringResource(if (state.restartPagination) Res.string.community_restart else Res.string.community_retry),
                                 )
                             }
                             state.items.isEmpty() && !state.isLoading -> item(key = "empty", contentType = "empty") {
-                                Text(stringResource(R.string.community_empty), color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                Text(stringResource(Res.string.community_empty), color = MaterialTheme.colorScheme.onSurfaceVariant)
                             }
                         }
                         if (state.isLoadingMore) item(key = "loading-more", contentType = "loading") { CenteredLoader() }
@@ -272,26 +287,26 @@ private fun postActions(
 
 @Composable
 private fun CenteredLoader() {
-    Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.TopCenter) { CoffeePeekLoader(stringResource(R.string.community_loading)) }
+    Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.TopCenter) { CoffeePeekLoader(stringResource(Res.string.community_loading)) }
 }
 
 /** The shared "something went wrong" block: the same look and words the legacy list used for every load failure. */
 @Composable
 private fun ErrorBlock(onRetry: () -> Unit, retryLabel: String, modifier: Modifier = Modifier) {
     Column(modifier.fillMaxWidth().padding(16.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
-        Image(painterResource(R.drawable.community_mascot_error), null, contentScale = ContentScale.Fit, modifier = Modifier.size(120.dp))
+        Image(painterResource(Res.drawable.community_mascot_error), null, contentScale = ContentScale.Fit, modifier = Modifier.size(120.dp))
         Spacer(Modifier.height(16.dp))
-        Text(stringResource(R.string.community_error_title), style = MaterialTheme.typography.titleMedium,
+        Text(stringResource(Res.string.community_error_title), style = MaterialTheme.typography.titleMedium,
             color = MaterialTheme.colorScheme.onSurface, textAlign = TextAlign.Center)
         Spacer(Modifier.height(8.dp))
-        Text(stringResource(R.string.community_error_body), style = MaterialTheme.typography.bodyMedium,
+        Text(stringResource(Res.string.community_error_body), style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center)
         Spacer(Modifier.height(16.dp))
         Button(onClick = onRetry) { Text(retryLabel) }
     }
 }
 
-@PreviewLightDark @Composable private fun CommunityPreview() = CoffeePeekTheme {
+@Preview @Composable private fun CommunityPreview() = CoffeePeekTheme {
     CommunityContent(
         CommunityState(isLoggedIn = true, items = listOf(previewPost(), previewPost().copy(id = "second", note = "Вторая запись", photos = com.coffeepeek.feature.community.domain.model.PostPhotos.None))),
         {}, CommunityHost(), object : AuthorBlockActions { override fun requestBlock(author: AuthorReference) {}; override fun requestUnblock(author: AuthorReference) {} },
@@ -299,7 +314,7 @@ private fun ErrorBlock(onRetry: () -> Unit, retryLabel: String, modifier: Modifi
     )
 }
 
-@PreviewLightDark @Composable private fun CommunityErrorPreview() = CoffeePeekTheme {
+@Preview @Composable private fun CommunityErrorPreview() = CoffeePeekTheme {
     CommunityContent(
         CommunityState(isLoggedIn = true, error = com.coffeepeek.feature.community.impl.timeline.TimelineError.LoadFailed),
         {}, CommunityHost(), object : AuthorBlockActions { override fun requestBlock(author: AuthorReference) {}; override fun requestUnblock(author: AuthorReference) {} },
