@@ -1,6 +1,18 @@
 package com.coffeepeek.feature.notifications.impl.ui
 
 import androidx.compose.foundation.layout.*
+import com.coffeepeek.feature.notifications.impl.resources.Res
+import com.coffeepeek.feature.notifications.impl.resources.notifications_all_read
+import com.coffeepeek.feature.notifications.impl.resources.notifications_close
+import com.coffeepeek.feature.notifications.impl.resources.notifications_earlier
+import com.coffeepeek.feature.notifications.impl.resources.notifications_load_more
+import com.coffeepeek.feature.notifications.impl.resources.notifications_loading
+import com.coffeepeek.feature.notifications.impl.resources.notifications_read_all
+import com.coffeepeek.feature.notifications.impl.resources.notifications_retry
+import com.coffeepeek.feature.notifications.impl.resources.notifications_subtitle
+import com.coffeepeek.feature.notifications.impl.resources.notifications_title
+import com.coffeepeek.feature.notifications.impl.resources.notifications_today
+import com.coffeepeek.feature.notifications.impl.resources.notifications_unread_count
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
@@ -12,14 +24,13 @@ import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.coffeepeek.feature.notifications.impl.R
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.core.designsystem.component.CoffeePeekLoader
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.feature.notifications.api.*
-import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.tooling.preview.Preview
+import org.jetbrains.compose.resources.stringResource
+import org.jetbrains.compose.ui.tooling.preview.Preview
 
 @Composable
 internal fun NotificationsContent(
@@ -59,7 +70,7 @@ internal fun NotificationsContent(
                     TextButton(onClick = onLoadMore, modifier = Modifier.fillMaxWidth(),
                         colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.onSurface),
                         enabled = !state.loading && !state.loadingMore && !state.markingRead) {
-                        Text(stringResource(if (state.loadingMore) R.string.notifications_loading else R.string.notifications_load_more))
+                        Text(stringResource(if (state.loadingMore) Res.string.notifications_loading else Res.string.notifications_load_more))
                     }
                 }
             }
@@ -71,13 +82,13 @@ internal fun NotificationsContent(
 private fun NotificationsHeader(onClose: () -> Unit) {
     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing1)) {
-            Text(stringResource(R.string.notifications_title), style = MaterialTheme.typography.headlineSmall,
+            Text(stringResource(Res.string.notifications_title), style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.Bold, modifier = Modifier.semantics { heading() })
-            Text(stringResource(R.string.notifications_subtitle), style = MaterialTheme.typography.bodySmall,
+            Text(stringResource(Res.string.notifications_subtitle), style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
         IconButton(onClick = onClose) {
-            Icon(CoffeePeekIcons.Close, stringResource(R.string.notifications_close))
+            Icon(CoffeePeekIcons.Close, stringResource(Res.string.notifications_close))
         }
     }
 }
@@ -86,15 +97,15 @@ private fun NotificationsHeader(onClose: () -> Unit) {
 private fun NotificationsReadActions(state: NotificationInboxState, onReadAll: () -> Unit) {
     FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween,
         verticalArrangement = Arrangement.Center) {
-        Text(if (state.unreadCount > 0) stringResource(R.string.notifications_unread_count, state.unreadCount)
-            else stringResource(R.string.notifications_all_read), modifier = Modifier.padding(vertical = CoffeePeekDimens.spacing4),
+        Text(if (state.unreadCount > 0) stringResource(Res.string.notifications_unread_count, state.unreadCount)
+            else stringResource(Res.string.notifications_all_read), modifier = Modifier.padding(vertical = CoffeePeekDimens.spacing4),
             style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
         TextButton(onClick = onReadAll,
             colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.onSurface),
             enabled = state.unreadCount > 0 && !state.markingRead && !state.loading && !state.loadingMore) {
             Icon(CoffeePeekIcons.Check, null, Modifier.size(CoffeePeekDimens.spacing4))
             Spacer(Modifier.width(CoffeePeekDimens.spacing2))
-            Text(stringResource(R.string.notifications_read_all))
+            Text(stringResource(Res.string.notifications_read_all))
         }
     }
 }
@@ -102,7 +113,7 @@ private fun NotificationsReadActions(state: NotificationInboxState, onReadAll: (
 private fun LazyListScope.notificationHistory(state: NotificationInboxState, onRead: (String) -> Unit) {
     state.items.groupBy { isToday(it.createdAtUtc) }.forEach { (isToday, entries) ->
         item(key = if (isToday) "today" else "earlier") {
-            Text(stringResource(if (isToday) R.string.notifications_today else R.string.notifications_earlier),
+            Text(stringResource(if (isToday) Res.string.notifications_today else Res.string.notifications_earlier),
                 style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(top = CoffeePeekDimens.spacing1).semantics { heading() })
         }
@@ -119,12 +130,12 @@ private fun NotificationsStatus(state: NotificationInboxState, onRefresh: () -> 
     when {
         state.loading && state.items.isEmpty() -> Box(
             Modifier.fillMaxWidth().padding(CoffeePeekDimens.spacing6), contentAlignment = Alignment.Center,
-        ) { CoffeePeekLoader(stringResource(R.string.notifications_loading)) }
+        ) { CoffeePeekLoader(stringResource(Res.string.notifications_loading)) }
         error != null -> Column {
             Text(error, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodyMedium)
             TextButton(onClick = onRefresh,
                 colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.onSurface)) {
-                Text(stringResource(R.string.notifications_retry))
+                Text(stringResource(Res.string.notifications_retry))
             }
         }
         state.items.isEmpty() -> NotificationEmptyState()

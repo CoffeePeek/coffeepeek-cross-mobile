@@ -1,6 +1,11 @@
 package com.coffeepeek.feature.notifications.impl.ui
 
 import androidx.compose.foundation.layout.*
+import com.coffeepeek.feature.notifications.impl.resources.Res
+import com.coffeepeek.feature.notifications.impl.resources.notifications_badge_max
+import com.coffeepeek.feature.notifications.impl.resources.notifications_button_unread
+import com.coffeepeek.feature.notifications.impl.resources.notifications_close
+import com.coffeepeek.feature.notifications.impl.resources.notifications_title
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -9,14 +14,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.unit.Density
-import com.coffeepeek.feature.notifications.impl.R
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.core.designsystem.component.CoffeePeekSwipeDismissModalBottomSheet
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.feature.notifications.api.NotificationFeature
-import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.tooling.preview.Preview
+import org.jetbrains.compose.resources.stringResource
+import org.jetbrains.compose.ui.tooling.preview.Preview
 
 @Composable
 internal fun NotificationsButton(feature: NotificationFeature, onSignIn: () -> Unit) {
@@ -29,7 +33,7 @@ internal fun NotificationsButton(feature: NotificationFeature, onSignIn: () -> U
     })
     if (open) CoffeePeekSwipeDismissModalBottomSheet(
         onDismissRequest = { open = false },
-        dismissDescription = stringResource(R.string.notifications_close),
+        dismissDescription = stringResource(Res.string.notifications_close),
         maxSheetHeightFraction = .88f,
     ) {
         NotificationsContent(state, { open = false }, feature::setPushEnabled, feature::markRead,
@@ -43,12 +47,12 @@ private fun NotificationsIconButton(unreadCount: Int, onClick: () -> Unit) {
         IconButton(onClick = onClick, modifier = Modifier.align(Alignment.Center).size(CoffeePeekDimens.buttonHeight),
             colors = IconButtonDefaults.iconButtonColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
             Icon(CoffeePeekIcons.Notifications, contentDescription = if (unreadCount > 0)
-                stringResource(R.string.notifications_button_unread, unreadCount) else stringResource(R.string.notifications_title))
+                stringResource(Res.string.notifications_button_unread, unreadCount) else stringResource(Res.string.notifications_title))
         }
         // A sibling stays outside the circular IconButton's clip and inside the button's bounds.
         if (unreadCount > 0) Badge(modifier = Modifier.align(Alignment.TopEnd).clearAndSetSemantics { },
             containerColor = MaterialTheme.colorScheme.primary, contentColor = MaterialTheme.colorScheme.onPrimary) {
-            Text(if (unreadCount > 99) stringResource(R.string.notifications_badge_max) else unreadCount.toString(), maxLines = 1)
+            Text(if (unreadCount > 99) stringResource(Res.string.notifications_badge_max) else unreadCount.toString(), maxLines = 1)
         }
     }
 }

@@ -1,6 +1,10 @@
 package com.coffeepeek.feature.notifications.impl.ui
 
 import androidx.compose.foundation.BorderStroke
+import com.coffeepeek.feature.notifications.impl.resources.Res
+import com.coffeepeek.feature.notifications.impl.resources.notifications_mark_read
+import com.coffeepeek.feature.notifications.impl.resources.notifications_read
+import com.coffeepeek.feature.notifications.impl.resources.notifications_unread
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -14,7 +18,6 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.coffeepeek.feature.notifications.impl.R
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.core.designsystem.component.CoffeePeekIconBadge
 import com.coffeepeek.core.designsystem.component.CoffeePeekIconBadgePalette
@@ -22,15 +25,15 @@ import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.feature.notifications.api.NotificationItem
 import com.coffeepeek.feature.notifications.api.NotificationKind
-import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.tooling.preview.Preview
+import org.jetbrains.compose.resources.stringResource
+import org.jetbrains.compose.ui.tooling.preview.Preview
 
 @Composable
 internal fun NotificationRow(item: NotificationItem, enabled: Boolean, onClick: () -> Unit) {
     val colors = MaterialTheme.colorScheme
     val (icon, palette) = notificationAppearance(item)
-    val readDescription = stringResource(if (item.read) R.string.notifications_read else R.string.notifications_unread)
-    val readAction = stringResource(R.string.notifications_mark_read)
+    val readDescription = stringResource(if (item.read) Res.string.notifications_read else Res.string.notifications_unread)
+    val readAction = stringResource(Res.string.notifications_mark_read)
     Surface(shape = RoundedCornerShape(CoffeePeekDimens.radiusLg),
         color = if (item.read) colors.surfaceVariant.copy(alpha = .3f) else colors.primary.copy(alpha = .08f),
         border = BorderStroke(1.dp, if (item.read) colors.outlineVariant else colors.primary.copy(alpha = .25f))) {
