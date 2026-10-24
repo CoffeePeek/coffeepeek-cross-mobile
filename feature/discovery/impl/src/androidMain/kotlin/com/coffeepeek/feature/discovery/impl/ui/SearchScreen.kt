@@ -2,6 +2,11 @@ package com.coffeepeek.feature.discovery.impl.ui
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedContentTransitionScope
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandHorizontally
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkHorizontally
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Arrangement
@@ -10,6 +15,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -114,14 +120,23 @@ private fun SearchHeader(state: SearchState, host: DiscoveryHost, onAction: (Sea
     Row(
         Modifier.fillMaxWidth().padding(horizontal = CoffeePeekDimens.spacing4),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing2),
     ) {
         // As in prod: while searching a round back button leaves the search, and the filters stay available beside the field.
-        if (searching) CoffeePeekCircularBackButton(
-            onClick = { focus.clearFocus(); onAction(SearchAction.CancelSearch) },
-            contentDescription = stringResource(R.string.discovery_search_cancel),
-            tint = MaterialTheme.colorScheme.primary,
-        )
+        // The button and its gap grow and fade together, so the field slides instead of jumping.
+        AnimatedVisibility(
+            visible = searching,
+            enter = expandHorizontally(expandFrom = Alignment.Start) + fadeIn(),
+            exit = shrinkHorizontally(shrinkTowards = Alignment.Start) + fadeOut(),
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                CoffeePeekCircularBackButton(
+                    onClick = { focus.clearFocus(); onAction(SearchAction.CancelSearch) },
+                    contentDescription = stringResource(R.string.discovery_search_cancel),
+                    tint = MaterialTheme.colorScheme.primary,
+                )
+                Spacer(Modifier.width(CoffeePeekDimens.spacing2))
+            }
+        }
         CoffeePeekSearchField(
             value = state.query,
             onValueChange = { onAction(SearchAction.Query(it)) },
@@ -130,6 +145,7 @@ private fun SearchHeader(state: SearchState, host: DiscoveryHost, onAction: (Sea
             modifier = host.exposure(Modifier.weight(1f).onFocusChanged { if (it.isFocused) onAction(SearchAction.ActivateSearch) }, DiscoveryExposure.Search),
             onSearch = { focus.clearFocus() },
         )
+        Spacer(Modifier.width(CoffeePeekDimens.spacing2))
         val description = if (state.activeFilterCount > 0) stringResource(R.string.discovery_filters_active, state.activeFilterCount) else stringResource(R.string.discovery_filters)
         BadgedBox(
             badge = {
