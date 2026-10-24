@@ -11,18 +11,18 @@ interface LoginEntry {
         onSignedIn: () -> Unit,
         onForgotPassword: (email: String) -> Unit,
         onCreateAccount: () -> Unit,
-        modifier: Modifier = Modifier,
+        modifier: Modifier,
     )
 }
 
 /** «Восстановление пароля»: asks the server to e-mail a reset link; the reset itself happens on the web. */
 interface PasswordRecoveryEntry {
     @Composable
-    fun Content(initialEmail: String, onClose: () -> Unit, onBackToLogin: () -> Unit, modifier: Modifier = Modifier)
+    fun Content(initialEmail: String, onClose: () -> Unit, onBackToLogin: () -> Unit, modifier: Modifier)
 }
 
 /** «Регистрация»: three steps in one destination. [onGoToLogin] serves both the footer link and the final button; [onSignedIn] is a Google sign-up. */
 interface RegisterEntry {
     @Composable
-    fun Content(onClose: () -> Unit, onGoToLogin: () -> Unit, onSignedIn: () -> Unit, modifier: Modifier = Modifier)
+    fun Content(onClose: () -> Unit, onGoToLogin: () -> Unit, onSignedIn: () -> Unit, modifier: Modifier)
 }
