@@ -1,6 +1,7 @@
 package com.coffeepeek.feature.coffee.impl.ui.compose.component
 
 import androidx.compose.foundation.layout.Arrangement
+import org.jetbrains.compose.ui.tooling.preview.Preview
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.material3.MaterialTheme
@@ -8,7 +9,6 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.PreviewLightDark
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 
@@ -30,6 +30,6 @@ internal fun CoffeeDetailHeading(name: String, countries: List<String>, productL
     }
 }
 
-@PreviewLightDark @Composable private fun CoffeeDetailHeadingPreview() = CoffeePeekTheme {
+@Preview @Composable private fun CoffeeDetailHeadingPreview() = CoffeePeekTheme {
     Surface { CoffeeDetailHeading("Эфиопия", listOf("Эфиопия"), "Обжаренный кофе · В зёрнах") }
 }

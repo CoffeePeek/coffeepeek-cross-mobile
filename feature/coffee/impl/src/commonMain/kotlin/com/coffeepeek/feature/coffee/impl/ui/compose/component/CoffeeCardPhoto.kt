@@ -1,6 +1,9 @@
 package com.coffeepeek.feature.coffee.impl.ui.compose.component
 
 import androidx.compose.foundation.background
+import org.jetbrains.compose.ui.tooling.preview.Preview
+import com.coffeepeek.feature.coffee.impl.resources.Res
+import com.coffeepeek.feature.coffee.impl.resources.coffee_photo_missing
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.MaterialTheme
@@ -12,17 +15,15 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.stringResource
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.core.designsystem.component.CoffeePeekImagePlaceholder
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.feature.coffee.domain.model.Coffee
-import com.coffeepeek.feature.coffee.impl.R
 
 @Composable
 internal fun CoffeeCardPhoto(coffee: Coffee, imageContent: @Composable (String, String, Modifier, ContentScale) -> Unit) {
@@ -31,7 +32,7 @@ internal fun CoffeeCardPhoto(coffee: Coffee, imageContent: @Composable (String, 
             .background(MaterialTheme.colorScheme.surfaceVariant),
     ) {
         coffee.photoUrl?.let { imageContent(it, coffee.name, Modifier.matchParentSize(), ContentScale.Fit) }
-            ?: CoffeePeekImagePlaceholder(contentDescription = stringResource(R.string.coffee_photo_missing))
+            ?: CoffeePeekImagePlaceholder(contentDescription = stringResource(Res.string.coffee_photo_missing))
 
         Box(
             modifier = Modifier.align(Alignment.BottomEnd).padding(CoffeePeekDimens.spacing4).size(48.dp)
@@ -53,7 +54,7 @@ internal fun CoffeeCardPhoto(coffee: Coffee, imageContent: @Composable (String, 
     }
 }
 
-@PreviewLightDark @Composable private fun CoffeeCardPhotoPreview() = CoffeePeekTheme {
+@Preview @Composable private fun CoffeeCardPhotoPreview() = CoffeePeekTheme {
     CoffeeCardPhoto(previewCoffee().copy(roasterPhotoUrl = "preview-logo")) { _, _, modifier, _ ->
         CoffeePeekImagePlaceholder(modifier)
     }

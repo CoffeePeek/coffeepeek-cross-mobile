@@ -1,11 +1,11 @@
 package com.coffeepeek.feature.coffee.impl.ui.compose.component
 
 import androidx.compose.foundation.layout.*
+import org.jetbrains.compose.ui.tooling.preview.Preview
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.core.designsystem.component.CoffeePeekCard
 import com.coffeepeek.core.designsystem.component.CoffeePeekImagePlaceholder
@@ -57,6 +57,6 @@ internal fun CoffeeCard(
 internal fun previewCoffee() = Coffee("fixture-coffee", "Эфиопия", null, "CoffeePeek", null,
     listOf("Эфиопия"), listOf("berries"), listOf(CoffeeOffer(24.5, "BYN", 250), CoffeeOffer(48.0, "BYN", 500)))
 
-@PreviewLightDark @Composable private fun CoffeeCardPreview() = CoffeePeekTheme {
+@Preview @Composable private fun CoffeeCardPreview() = CoffeePeekTheme {
     CoffeeCard(previewCoffee(), mapOf("berries" to "Ягоды"), {}, { _, _, modifier, _ -> CoffeePeekImagePlaceholder(modifier) })
 }

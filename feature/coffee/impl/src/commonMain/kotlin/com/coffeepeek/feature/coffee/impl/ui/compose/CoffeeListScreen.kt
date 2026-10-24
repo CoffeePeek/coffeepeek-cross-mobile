@@ -1,6 +1,12 @@
 package com.coffeepeek.feature.coffee.impl.ui.compose
 
 import com.coffeepeek.feature.coffee.api.CoffeeExposure
+import org.jetbrains.compose.ui.tooling.preview.Preview
+import com.coffeepeek.feature.coffee.impl.resources.Res
+import com.coffeepeek.feature.coffee.impl.resources.coffee_empty
+import com.coffeepeek.feature.coffee.impl.resources.coffee_empty_hint
+import com.coffeepeek.feature.coffee.impl.resources.coffee_loading
+import com.coffeepeek.feature.coffee.impl.resources.coffee_refresh
 import com.coffeepeek.feature.coffee.api.CoffeeScreenAnalytics
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -13,8 +19,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.tooling.preview.PreviewLightDark
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
@@ -24,7 +29,6 @@ import androidx.lifecycle.repeatOnLifecycle
 import com.coffeepeek.core.designsystem.component.*
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
-import com.coffeepeek.feature.coffee.impl.R
 import com.coffeepeek.feature.coffee.impl.ui.CoffeeListViewModel
 import com.coffeepeek.feature.coffee.impl.ui.compose.component.*
 import com.coffeepeek.feature.coffee.impl.ui.compose.model.*
@@ -68,7 +72,7 @@ internal fun CoffeeListScreenContent(state: CoffeeListState, onAction: (CoffeeLi
             }
         }) { padding ->
         CoffeePeekPullToRefresh(listState, state.isRefreshing, { onAction(CoffeeListAction.Refresh) },
-            stringResource(R.string.coffee_refresh), stringResource(R.string.coffee_loading),
+            stringResource(Res.string.coffee_refresh), stringResource(Res.string.coffee_loading),
             modifier = Modifier.fillMaxSize().padding(padding).imePadding().clipToBounds()) { scrollModifier ->
             LazyColumn(state = listState, modifier = screen.exposure(scrollModifier.fillMaxSize().testTag("coffee-list"), CoffeeExposure.Catalog),
                 contentPadding = PaddingValues(start = CoffeePeekDimens.spacing4, top = CoffeePeekDimens.spacing4,
@@ -84,8 +88,8 @@ internal fun CoffeeListScreenContent(state: CoffeeListState, onAction: (CoffeeLi
                     if (loadError != null) loadError(retry) else CoffeeLoadError(retry)
                 } else if (state.items.isEmpty() && !state.isLoading) item(key = "empty") {
                     Column(Modifier.fillMaxWidth().padding(CoffeePeekDimens.spacing6), horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text(stringResource(R.string.coffee_empty), style = MaterialTheme.typography.titleMedium)
-                        Text(stringResource(R.string.coffee_empty_hint), color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(stringResource(Res.string.coffee_empty), style = MaterialTheme.typography.titleMedium)
+                        Text(stringResource(Res.string.coffee_empty_hint), color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 }
             }
@@ -95,17 +99,17 @@ internal fun CoffeeListScreenContent(state: CoffeeListState, onAction: (CoffeeLi
 
 @Composable private fun LoadingRow() {
     Box(Modifier.fillMaxWidth().padding(CoffeePeekDimens.spacing6), contentAlignment = Alignment.Center) {
-        CoffeePeekLoader(stringResource(R.string.coffee_loading))
+        CoffeePeekLoader(stringResource(Res.string.coffee_loading))
     }
 }
 
-@PreviewLightDark @Composable private fun CoffeeListPreview() = CoffeePeekTheme {
+@Preview @Composable private fun CoffeeListPreview() = CoffeePeekTheme {
     CoffeeListScreenContent(CoffeeListState(items = listOf(previewCoffee()), isLoading = false), {},
         { _, _, modifier, _ -> CoffeePeekImagePlaceholder(modifier) })
 }
-@PreviewLightDark @Composable private fun CoffeeListEmptyPreview() = CoffeePeekTheme {
+@Preview @Composable private fun CoffeeListEmptyPreview() = CoffeePeekTheme {
     CoffeeListScreenContent(CoffeeListState(isLoading = false), {}, { _, _, _, _ -> })
 }
-@PreviewLightDark @Composable private fun CoffeeListErrorPreview() = CoffeePeekTheme {
+@Preview @Composable private fun CoffeeListErrorPreview() = CoffeePeekTheme {
     CoffeeListScreenContent(CoffeeListState(isLoading = false, loadFailed = true), {}, { _, _, _, _ -> })
 }

@@ -1,6 +1,7 @@
 package com.coffeepeek.feature.coffee.impl.ui.compose.component
 
 import androidx.compose.foundation.layout.Arrangement
+import org.jetbrains.compose.ui.tooling.preview.Preview
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.material3.HorizontalDivider
@@ -10,7 +11,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.tooling.preview.PreviewLightDark
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.feature.coffee.domain.model.Coffee
@@ -43,6 +43,6 @@ internal fun CoffeeCardSummary(coffee: Coffee, tasteNames: Map<String, String>) 
     }
 }
 
-@PreviewLightDark @Composable private fun CoffeeCardSummaryPreview() = CoffeePeekTheme {
+@Preview @Composable private fun CoffeeCardSummaryPreview() = CoffeePeekTheme {
     Surface { CoffeeCardSummary(previewCoffee(), mapOf("berries" to "Ягоды")) }
 }

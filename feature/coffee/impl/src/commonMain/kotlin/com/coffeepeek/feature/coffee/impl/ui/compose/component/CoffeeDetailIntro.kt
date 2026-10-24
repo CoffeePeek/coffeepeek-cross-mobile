@@ -1,16 +1,18 @@
 package com.coffeepeek.feature.coffee.impl.ui.compose.component
 
 import androidx.compose.foundation.layout.Arrangement
+import org.jetbrains.compose.ui.tooling.preview.Preview
+import com.coffeepeek.feature.coffee.impl.resources.Res
+import com.coffeepeek.feature.coffee.impl.resources.coffee_collapse
+import com.coffeepeek.feature.coffee.impl.resources.coffee_read_more
 import androidx.compose.foundation.layout.Column
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.tooling.preview.PreviewLightDark
+import org.jetbrains.compose.resources.stringResource
 import com.coffeepeek.core.designsystem.component.CoffeePeekExpandableText
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.feature.coffee.domain.model.CoffeeDetails
-import com.coffeepeek.feature.coffee.impl.R
 import com.coffeepeek.feature.coffee.impl.ui.data.coffeeProductFormLabel
 import com.coffeepeek.feature.coffee.impl.ui.data.coffeeProductKindLabel
 
@@ -34,8 +36,8 @@ internal fun CoffeeDetailIntro(
                 text = description,
                 expanded = expanded,
                 onToggle = onToggle,
-                expandLabel = stringResource(R.string.coffee_read_more),
-                collapseLabel = stringResource(R.string.coffee_collapse),
+                expandLabel = stringResource(Res.string.coffee_read_more),
+                collapseLabel = stringResource(Res.string.coffee_collapse),
             )
         }
         CoffeeDetailTraits(
@@ -46,7 +48,7 @@ internal fun CoffeeDetailIntro(
     }
 }
 
-@PreviewLightDark @Composable private fun CoffeeDetailIntroPreview() = CoffeePeekTheme {
+@Preview @Composable private fun CoffeeDetailIntroPreview() = CoffeePeekTheme {
     Surface { CoffeeDetailIntro(previewCoffeeDetails(), emptyMap(), false, {}) }
 }
 

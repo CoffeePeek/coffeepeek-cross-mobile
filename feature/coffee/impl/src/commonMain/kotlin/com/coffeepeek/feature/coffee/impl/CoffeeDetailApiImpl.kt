@@ -12,7 +12,8 @@ import com.coffeepeek.feature.coffee.domain.repository.CoffeeRepository
 import com.coffeepeek.feature.coffee.impl.ui.CoffeeDetailViewModel
 import com.coffeepeek.feature.coffee.impl.ui.compose.CoffeeDetailScreen
 import com.coffeepeek.feature.coffee.impl.ui.compose.model.CoffeeDetailEvent
-import java.util.UUID
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 
 /** Caller owns gallery/platform ports and destroys the destination's ViewModelStore on removal. */
 fun createCoffeeDetailEntry(repository: CoffeeRepository,
@@ -30,7 +31,8 @@ private class CoffeeDetailApiImpl(private val repository: CoffeeRepository,
     private val analytics: CoffeeAnalytics,
     private val screenAnalytics: CoffeeScreenAnalytics,
 ) : CoffeeDetailEntry {
-    private val instanceKey = UUID.randomUUID().toString()
+    @OptIn(ExperimentalUuidApi::class)
+    private val instanceKey = Uuid.random().toString()
 
     @Composable
     override fun Content(slug: String, onBack: () -> Unit, onOpenCoffee: (String) -> Unit, onOpenRoaster: (String) -> Unit,

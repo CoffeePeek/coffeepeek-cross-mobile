@@ -13,7 +13,8 @@ import com.coffeepeek.feature.coffee.domain.repository.CoffeeRepository
 import com.coffeepeek.feature.coffee.impl.ui.CoffeeListViewModel
 import com.coffeepeek.feature.coffee.impl.ui.compose.CoffeeListScreen
 import com.coffeepeek.feature.coffee.impl.ui.compose.model.CoffeeListEvent
-import java.util.UUID
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 
 /** Construct once in composition. Image loader owns failure fallback; no network client is created here. */
 fun createCoffeeListEntry(repository: CoffeeRepository,
@@ -28,7 +29,8 @@ private class CoffeeListApiImpl(private val repository: CoffeeRepository,
     private val imageContent: @Composable (String, String, Modifier, ContentScale) -> Unit,
     private val analytics: CoffeeAnalytics, private val screenAnalytics: CoffeeScreenAnalytics,
     private val loadError: (@Composable (onRetry: () -> Unit) -> Unit)?) : CoffeeListEntry {
-    private val instanceKey = UUID.randomUUID().toString()
+    @OptIn(ExperimentalUuidApi::class)
+    private val instanceKey = Uuid.random().toString()
 
     @Composable
     override fun Content(onOpenCoffee: (String) -> Unit, modifier: Modifier, bottomClearance: Dp) {

@@ -1,6 +1,11 @@
 package com.coffeepeek.feature.coffee.impl.ui.compose.component
 
 import androidx.compose.foundation.layout.Arrangement
+import org.jetbrains.compose.ui.tooling.preview.Preview
+import com.coffeepeek.feature.coffee.impl.resources.Res
+import com.coffeepeek.feature.coffee.impl.resources.coffee_weight
+import com.coffeepeek.feature.coffee.impl.resources.coffee_weight_missing
+import com.coffeepeek.feature.coffee.impl.resources.coffee_weight_short_missing
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.width
@@ -8,14 +13,12 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.tooling.preview.PreviewLightDark
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.core.designsystem.component.CoffeePeekCapsuleSegmentedControl
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.feature.coffee.domain.model.CoffeeOffer
-import com.coffeepeek.feature.coffee.impl.R
 
 @Composable
 internal fun CoffeeCardOffers(
@@ -25,8 +28,8 @@ internal fun CoffeeCardOffers(
     modifier: Modifier = Modifier,
 ) {
     val weightLabels = offers.associateWith { offer ->
-        offer.weightGrams?.let { stringResource(R.string.coffee_weight, it) }
-            ?: stringResource(R.string.coffee_weight_short_missing)
+        offer.weightGrams?.let { stringResource(Res.string.coffee_weight, it) }
+            ?: stringResource(Res.string.coffee_weight_short_missing)
     }
     FlowRow(
         modifier = modifier.fillMaxWidth(),
@@ -44,12 +47,12 @@ internal fun CoffeeCardOffers(
                 modifier = Modifier.width((offers.size * 56).dp),
             )
         } else {
-            CoffeeLabel(selected?.weightGrams?.let { stringResource(R.string.coffee_weight, it) }
-                ?: stringResource(R.string.coffee_weight_missing))
+            CoffeeLabel(selected?.weightGrams?.let { stringResource(Res.string.coffee_weight, it) }
+                ?: stringResource(Res.string.coffee_weight_missing))
         }
     }
 }
 
-@PreviewLightDark @Composable private fun CoffeeCardOffersPreview() = CoffeePeekTheme {
+@Preview @Composable private fun CoffeeCardOffersPreview() = CoffeePeekTheme {
     Surface { CoffeeCardOffers(previewCoffee().offers, previewCoffee().offers.first(), {}) }
 }
