@@ -65,7 +65,7 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.repeatOnLifecycle
 import com.coffeepeek.core.designsystem.component.CoffeePeekIconBadgePalette
-import com.coffeepeek.core.designsystem.component.CoffeePeekLoader
+import com.coffeepeek.core.designsystem.component.CoffeePeekActivityIndicator
 import com.coffeepeek.core.designsystem.component.CoffeePeekSettingsDivider
 import com.coffeepeek.core.designsystem.component.CoffeePeekSettingsRow
 import com.coffeepeek.core.designsystem.component.CoffeePeekSettingsSection
@@ -185,7 +185,7 @@ internal fun SettingsContent(
                     onCheckForUpdates,
                     enabled = !state.updateBusy,
                     trailing = if (state.updateBusy) {
-                        { CoffeePeekLoader(stringResource(Res.string.settings_loading), size = CoffeePeekDimens.settingsIconSize) }
+                        { CoffeePeekActivityIndicator(stringResource(Res.string.settings_loading), size = CoffeePeekDimens.settingsIconSize) }
                     } else null,
                 )
             }

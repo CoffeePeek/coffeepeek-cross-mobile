@@ -6,7 +6,12 @@ import androidx.compose.runtime.CompositionLocalProvider
 import com.coffeepeek.admin.analytics.AnalyticsOverlay
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.Modifier
+import com.coffeepeek.core.designsystem.component.CoffeePeekGlassIcon
 import com.coffeepeek.core.designsystem.component.CoffeePeekHaptic
+import com.coffeepeek.core.designsystem.component.CoffeePeekNativeControlsPresenter
+import com.coffeepeek.core.designsystem.component.CoffeePeekNativeMenuItem
+import com.coffeepeek.core.designsystem.component.LocalCoffeePeekNativeControlsPresenter
 import com.coffeepeek.core.designsystem.component.CoffeePeekInputRole
 import com.coffeepeek.core.designsystem.component.CoffeePeekKeyboardPresenter
 import com.coffeepeek.core.designsystem.component.LocalCoffeePeekKeyboardPresenter
@@ -103,6 +108,37 @@ private object IosKeyboardPresenter : CoffeePeekKeyboardPresenter {
     override fun DoneAccessory(visible: Boolean, onDone: () -> Unit) = NativeKeyboardDoneAccessory(visible, onDone)
 }
 
+/** The UIKit glass buttons, UIMenu and spinner of the legacy controls (names of the glyph enums match). */
+private object IosNativeControlsPresenter : CoffeePeekNativeControlsPresenter {
+    @Composable
+    override fun GlassIconButton(
+        icon: CoffeePeekGlassIcon, onClick: () -> Unit, contentDescription: String, modifier: Modifier, enabled: Boolean,
+    ): Boolean {
+        PlatformGlassIconButton(GlassControlIcon.valueOf(icon.name), onClick, contentDescription, modifier, enabled) {}
+        return true
+    }
+
+    @Composable
+    override fun Menu(
+        items: List<CoffeePeekNativeMenuItem>, contentDescription: String, modifier: Modifier,
+        content: @Composable (onClick: () -> Unit) -> Unit,
+    ): Boolean {
+        PlatformMenuButton(
+            items = items.map { PlatformMenuItem(it.id, it.title, icon = it.icon?.let { icon -> PlatformMenuIcon.valueOf(icon.name) }, destructive = it.destructive, onClick = it.onClick) },
+            contentDescription = contentDescription,
+            modifier = modifier,
+            content = content,
+        )
+        return true
+    }
+
+    @Composable
+    override fun ActivityIndicator(contentDescription: String, modifier: Modifier): Boolean {
+        PlatformActivityIndicator(modifier)
+        return true
+    }
+}
+
 @Composable
 internal actual fun ProvideDesignSystemPlatformHooks(content: @Composable () -> Unit) {
     CompositionLocalProvider(
@@ -113,6 +149,7 @@ internal actual fun ProvideDesignSystemPlatformHooks(content: @Composable () -> 
         LocalCoffeePeekNativePhotoSourcePresenter provides IosNativePhotoSourcePresenter,
         LocalCoffeePeekPlatformEffects provides IosPlatformEffects,
         LocalCoffeePeekKeyboardPresenter provides IosKeyboardPresenter,
+        LocalCoffeePeekNativeControlsPresenter provides IosNativeControlsPresenter,
         content = content,
     )
 }

@@ -72,6 +72,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
 import com.coffeepeek.core.designsystem.component.CoffeePeekCompactOutlinedTextField
+import com.coffeepeek.core.designsystem.component.CoffeePeekGlassIcon
 import com.coffeepeek.core.designsystem.component.CoffeePeekInputRole
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.modifier.CoffeePeekGlassIconButton
@@ -154,7 +155,7 @@ internal fun AuthScaffold(
 
 @Composable
 private fun CloseButton(onClick: () -> Unit, haze: HazeState, modifier: Modifier) {
-    CoffeePeekGlassIconButton(onClick = onClick, contentDescription = stringResource(Res.string.auth_close), hazeState = haze, modifier = modifier) {
+    CoffeePeekGlassIconButton(onClick = onClick, contentDescription = stringResource(Res.string.auth_close), hazeState = haze, modifier = modifier, nativeIcon = CoffeePeekGlassIcon.Close) {
         Icon(CoffeePeekIcons.Close, contentDescription = null, tint = MaterialTheme.colorScheme.onSurface, modifier = Modifier.size(20.dp))
     }
 }

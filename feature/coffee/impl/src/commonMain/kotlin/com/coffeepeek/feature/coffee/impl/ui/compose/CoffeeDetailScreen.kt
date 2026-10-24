@@ -21,6 +21,7 @@ import com.coffeepeek.feature.coffee.impl.resources.coffee_taste
 import com.coffeepeek.feature.coffee.impl.resources.coffee_unspecified_feminine
 import com.coffeepeek.feature.coffee.api.CoffeeScreenAnalytics
 import com.coffeepeek.core.designsystem.component.CoffeePeekBackHandler
+import com.coffeepeek.core.designsystem.component.CoffeePeekGlassIcon
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -174,10 +175,10 @@ internal fun CoffeeDetailScreenContent(
             }
         }
         Row(Modifier.align(Alignment.TopCenter).fillMaxWidth().statusBarsPadding().padding(CoffeePeekDimens.spacing3), horizontalArrangement = Arrangement.SpaceBetween) {
-            CoffeePeekGlassIconButton({ onAction(CoffeeDetailAction.Back) }, stringResource(Res.string.coffee_back), hazeState = hazeState) {
+            CoffeePeekGlassIconButton({ onAction(CoffeeDetailAction.Back) }, stringResource(Res.string.coffee_back), hazeState = hazeState, nativeIcon = CoffeePeekGlassIcon.Back) {
                 Icon(CoffeePeekIcons.Back, null)
             }
-            CoffeePeekGlassIconButton({ onAction(CoffeeDetailAction.Share) }, stringResource(Res.string.coffee_share), enabled = details != null, hazeState = hazeState) {
+            CoffeePeekGlassIconButton({ onAction(CoffeeDetailAction.Share) }, stringResource(Res.string.coffee_share), enabled = details != null, hazeState = hazeState, nativeIcon = CoffeePeekGlassIcon.Share) {
                 Icon(CoffeePeekIcons.Share, null)
             }
         }

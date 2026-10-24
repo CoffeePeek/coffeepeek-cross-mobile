@@ -14,6 +14,7 @@ import androidx.compose.runtime.Composable
 import org.jetbrains.compose.resources.stringResource
 import com.coffeepeek.core.designsystem.component.CoffeePeekActionMenu
 import com.coffeepeek.core.designsystem.component.CoffeePeekMenuAction
+import com.coffeepeek.core.designsystem.component.CoffeePeekMenuIcon
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.feature.profile.api.ProfileContribution
@@ -24,17 +25,17 @@ internal fun OwnProfileActions(
 ) {
     val actions = listOf(
         CoffeePeekMenuAction(stringResource(Res.string.profile_menu_shop_changes), CoffeePeekIcons.NoteEdit,
-            onClick = { onContributions(ProfileContribution.Changes) }),
+            nativeIcon = CoffeePeekMenuIcon.NoteEdit, onClick = { onContributions(ProfileContribution.Changes) }),
         CoffeePeekMenuAction(stringResource(Res.string.profile_menu_submitted_shops), CoffeePeekIcons.Add,
-            onClick = { onContributions(ProfileContribution.Shops) }),
+            nativeIcon = CoffeePeekMenuIcon.Add, onClick = { onContributions(ProfileContribution.Shops) }),
         CoffeePeekMenuAction(stringResource(Res.string.profile_menu_submitted_roasters), CoffeePeekIcons.CoffeeBean,
-            onClick = { onContributions(ProfileContribution.Roasters) }),
+            nativeIcon = CoffeePeekMenuIcon.CoffeeBean, onClick = { onContributions(ProfileContribution.Roasters) }),
         CoffeePeekMenuAction(stringResource(Res.string.profile_menu_blocked_authors), CoffeePeekIcons.VisibilityOff,
-            onClick = onBlockedAuthors),
+            nativeIcon = CoffeePeekMenuIcon.Hide, onClick = onBlockedAuthors),
         CoffeePeekMenuAction(stringResource(Res.string.profile_menu_logout), CoffeePeekIcons.Logout,
-            destructive = true, onClick = onLogout),
+            destructive = true, nativeIcon = CoffeePeekMenuIcon.Logout, onClick = onLogout),
     )
-    CoffeePeekActionMenu(actions) { open ->
+    CoffeePeekActionMenu(actions, menuDescription = stringResource(Res.string.profile_actions)) { open ->
         IconButton(onClick = open) {
             Icon(CoffeePeekIcons.MoreHorizontal, stringResource(Res.string.profile_actions))
         }

@@ -52,6 +52,8 @@ data class CoffeePeekMenuAction(
     val label: String,
     val icon: ImageVector,
     val destructive: Boolean = false,
+    /** The glyph a native menu draws for this row; none draws the row without one. */
+    val nativeIcon: CoffeePeekMenuIcon? = null,
     val onClick: () -> Unit,
 )
 
@@ -59,8 +61,18 @@ data class CoffeePeekMenuAction(
 fun CoffeePeekActionMenu(
     actions: List<CoffeePeekMenuAction>,
     modifier: Modifier = Modifier,
+    /** The accessibility label of the trigger when a native menu replaces the popup. */
+    menuDescription: String = "",
     content: @Composable (open: () -> Unit) -> Unit,
 ) {
+    val native = LocalCoffeePeekNativeControlsPresenter.current
+    if (native != null && native.Menu(
+            actions.mapIndexed { index, action ->
+                CoffeePeekNativeMenuItem(index.toString(), action.label, action.nativeIcon, action.destructive, action.onClick)
+            },
+            menuDescription, modifier, content,
+        )
+    ) return
     var expanded by remember { mutableStateOf(false) }
     val margin = with(LocalDensity.current) { CoffeePeekDimens.spacing2.roundToPx() }
     val position = remember(margin) { object : PopupPositionProvider {

@@ -12,6 +12,7 @@ import androidx.compose.runtime.Composable
 import org.jetbrains.compose.resources.stringResource
 import com.coffeepeek.core.designsystem.component.CoffeePeekActionMenu
 import com.coffeepeek.core.designsystem.component.CoffeePeekMenuAction
+import com.coffeepeek.core.designsystem.component.CoffeePeekMenuIcon
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 
@@ -21,9 +22,9 @@ internal fun PublicProfileActions(isBlocked: Boolean, onShare: (() -> Unit)?, on
     val blockLabel = stringResource(if (isBlocked) Res.string.profile_unblock_author else Res.string.profile_block_author)
     val actions = buildList {
         if (!isBlocked && onShare != null) add(CoffeePeekMenuAction(shareLabel, CoffeePeekIcons.Share, onClick = onShare))
-        add(CoffeePeekMenuAction(blockLabel, CoffeePeekIcons.Block, destructive = !isBlocked, onClick = onBlock))
+        add(CoffeePeekMenuAction(blockLabel, CoffeePeekIcons.Block, destructive = !isBlocked, nativeIcon = CoffeePeekMenuIcon.Block, onClick = onBlock))
     }
-    CoffeePeekActionMenu(actions) { open ->
+    CoffeePeekActionMenu(actions, menuDescription = stringResource(Res.string.profile_author_actions)) { open ->
         IconButton(onClick = open) {
             Icon(CoffeePeekIcons.MoreHorizontal, stringResource(Res.string.profile_author_actions))
         }

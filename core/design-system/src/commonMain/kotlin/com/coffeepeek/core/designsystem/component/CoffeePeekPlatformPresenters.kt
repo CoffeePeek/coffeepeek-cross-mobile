@@ -4,6 +4,7 @@ import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.compose.ui.Modifier
 
 /**
  * Seams for platform-native presentation. The app installs a presenter for a platform that has a native counterpart
@@ -80,3 +81,38 @@ val LocalCoffeePeekPlatformEffects = staticCompositionLocalOf<CoffeePeekPlatform
 @Composable
 fun CoffeePeekNativePhotoSource(title: String, onGallery: () -> Unit, onCamera: () -> Unit, onDismiss: () -> Unit): Boolean =
     LocalCoffeePeekNativePhotoSourcePresenter.current?.Present(title, onGallery, onCamera, onDismiss) == true
+
+/** The native glyph a platform draws for a glass icon button; it replaces the Compose icon when a presenter takes over. */
+enum class CoffeePeekGlassIcon { Back, Add, Edit, Favorite, FavoriteFilled, Share, Close, Zones, Location }
+
+/** The native glyph of a menu row. */
+enum class CoffeePeekMenuIcon { Edit, Hide, Report, NoteEdit, Add, CoffeeBean, Logout, Block }
+
+data class CoffeePeekNativeMenuItem(
+    val id: String,
+    val title: String,
+    val icon: CoffeePeekMenuIcon?,
+    val destructive: Boolean,
+    val onClick: () -> Unit,
+)
+
+interface CoffeePeekNativeControlsPresenter {
+    /** Draws the glass button natively and returns true, or returns false to let the caller draw its own. */
+    @Composable
+    fun GlassIconButton(
+        icon: CoffeePeekGlassIcon, onClick: () -> Unit, contentDescription: String, modifier: Modifier, enabled: Boolean,
+    ): Boolean
+
+    /** Opens a native menu from the [content] trigger and returns true, or false to let the caller show its own popup. */
+    @Composable
+    fun Menu(
+        items: List<CoffeePeekNativeMenuItem>, contentDescription: String, modifier: Modifier,
+        content: @Composable (onClick: () -> Unit) -> Unit,
+    ): Boolean
+
+    /** Draws the platform's spinner and returns true, or false to let the caller draw its own loader. */
+    @Composable
+    fun ActivityIndicator(contentDescription: String, modifier: Modifier): Boolean
+}
+
+val LocalCoffeePeekNativeControlsPresenter = staticCompositionLocalOf<CoffeePeekNativeControlsPresenter?> { null }
