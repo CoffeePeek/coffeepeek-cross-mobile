@@ -21,6 +21,7 @@ import com.coffeepeek.admin.ui.component.CoffeeShopImage
 import com.coffeepeek.admin.ui.component.CoffeeShopPlaceholderImage
 import com.coffeepeek.admin.ui.component.HapticEvent
 import com.coffeepeek.admin.ui.component.PriceBeanSlider
+import com.coffeepeek.admin.ui.component.LoadErrorContent
 import com.coffeepeek.admin.ui.component.RetainedContent
 import com.coffeepeek.admin.ui.component.RoasterAvatar
 import com.coffeepeek.admin.ui.component.brewMethodIcon
@@ -48,6 +49,13 @@ import org.jetbrains.compose.resources.painterResource
 internal fun discoveryHost() = DiscoveryHost(
     image = { url, description, modifier, scale -> CoffeeShopImage(imageUrl = url, modifier = modifier, contentDescription = description, contentScale = scale) },
     coverPlaceholder = { description, modifier -> CoffeeShopPlaceholderImage(modifier, contentDescription = description ?: "Фото кофейни отсутствует") },
+    compactImage = { url, description, modifier, scale ->
+        CoffeeShopImage(imageUrl = url, modifier = modifier, contentDescription = description, contentScale = scale, placeholderLabelSize = 7.sp)
+    },
+    compactCoverPlaceholder = { description, modifier ->
+        CoffeeShopPlaceholderImage(modifier, labelSize = 7.sp, contentDescription = description ?: "Фото кофейни отсутствует")
+    },
+    loadError = { onRetry, modifier -> LoadErrorContent(onRetry, modifier) },
     brewMethodIcon = { name, size ->
         Icon(painterResource(brewMethodIcon(name)), contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(size))
     },

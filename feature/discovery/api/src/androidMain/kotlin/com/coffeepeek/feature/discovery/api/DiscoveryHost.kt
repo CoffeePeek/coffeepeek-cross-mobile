@@ -20,6 +20,11 @@ class DiscoveryHost(
     val image: @Composable (url: String, description: String?, modifier: Modifier, scale: ContentScale) -> Unit = { _, _, _, _ -> },
     /** What a shop without a photo shows. */
     val coverPlaceholder: @Composable (description: String?, modifier: Modifier) -> Unit = { _, _ -> },
+    /** The same two for a very small photo box (the card on the map), where the placeholder label must be tiny. */
+    val compactImage: @Composable (url: String, description: String?, modifier: Modifier, scale: ContentScale) -> Unit = image,
+    val compactCoverPlaceholder: @Composable (description: String?, modifier: Modifier) -> Unit = coverPlaceholder,
+    /** The full-size load error with the application's illustration, the wording of the other lists and the retry button. */
+    val loadError: @Composable (onRetry: () -> Unit, modifier: Modifier) -> Unit = { _, _ -> },
     val brewMethodIcon: @Composable (name: String, size: Dp) -> Unit = { _, _ -> },
     val tagIcon: @Composable (tagId: String) -> Unit = {},
     val roasterLogo: @Composable (name: String, logoUrl: String?) -> Unit = { _, _ -> },

@@ -44,11 +44,9 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.coffeepeek.core.designsystem.component.CoffeePeekButton
 import com.coffeepeek.core.designsystem.component.CoffeePeekCatalogSuggestionCard
 import com.coffeepeek.core.designsystem.component.CoffeePeekFilterChip
 import com.coffeepeek.core.designsystem.component.CoffeePeekLoader
@@ -88,6 +86,7 @@ internal fun SearchContent(
         Column(headerModifier) {
             Column(Modifier.padding(top = CoffeePeekDimens.spacing3, bottom = CoffeePeekDimens.spacing2)) {
                 SearchHeader(state, host, onAction)
+                Spacer(Modifier.height(CoffeePeekDimens.spacing2))
                 QuickFilters(state, onAction)
             }
             HorizontalDivider(thickness = 1.dp, color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.7f))
@@ -110,9 +109,10 @@ internal fun SearchContent(
 @Composable
 private fun SearchHeader(state: SearchState, host: DiscoveryHost, onAction: (SearchAction) -> Unit) {
     val focus = LocalFocusManager.current
-    val searching = state.searchActive || state.query.isNotBlank()
+    // The back button shows whenever the results list replaces the home tab, also when only a filter is on.
+    val searching = !state.showsDiscovery
     Row(
-        Modifier.fillMaxWidth().padding(horizontal = CoffeePeekDimens.spacing4, vertical = CoffeePeekDimens.spacing2),
+        Modifier.fillMaxWidth().padding(horizontal = CoffeePeekDimens.spacing4),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing2),
     ) {
@@ -215,22 +215,16 @@ private fun ResultsList(
                 item(key = "shops-heading") { Text(stringResource(R.string.discovery_section_shops), style = MaterialTheme.typography.titleMedium) }
             }
             when {
-                state.isLoading && shops.isEmpty() -> item(key = "loading") { Centered { CoffeePeekLoader(stringResource(R.string.discovery_loading)) } }
-                state.error != null && shops.isEmpty() -> item(key = "error") {
-                    Centered {
-                        Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing3)) {
-                            Text(state.error.serverMessage ?: stringResource(R.string.discovery_load_failed), textAlign = TextAlign.Center, style = MaterialTheme.typography.bodyLarge)
-                            CoffeePeekButton(stringResource(R.string.discovery_retry), { onAction(SearchAction.Refresh) })
-                        }
-                    }
+                state.isLoading && shops.isEmpty() -> item(key = "loading") {
+                    Box(Modifier.fillParentMaxSize(), contentAlignment = Alignment.Center) { CoffeePeekLoader(stringResource(R.string.discovery_loading)) }
                 }
+                state.error != null && shops.isEmpty() -> item(key = "error") { host.loadError({ onAction(SearchAction.Refresh) }, Modifier.fillParentMaxSize()) }
                 // Nothing found is the «Не нашли нужную кофейню?» card, not a plain message.
                 shops.isEmpty() -> item(key = "suggestion") { SuggestionCard(host, onAddShop) }
                 else -> {
                     items(shops, key = { it.id }, contentType = { "shop" }) { shop ->
                         ShopRow(shop, host, shop.id in state.favoriteUpdates, state.userLocation, onOpen = { onAction(SearchAction.OpenShop(shop.id)) }, onFavorite = { onAction(SearchAction.ToggleFavorite(shop.id)) })
                     }
-                    if (state.isLoadingMore) item(key = "more") { Centered { CoffeePeekLoader(stringResource(R.string.discovery_loading), size = 28.dp) } }
                     // As in the legacy list: the card is the last item whenever nothing is loading and nothing failed.
                     if (!state.isLoading && state.error == null) item(key = "suggestion") { SuggestionCard(host, onAddShop) }
                 }
@@ -248,9 +242,4 @@ private fun SuggestionCard(host: DiscoveryHost, onAddShop: () -> Unit) {
         illustration = host.suggestionIllustration(),
         onAdd = onAddShop,
     )
-}
-
-@Composable
-private fun Centered(content: @Composable () -> Unit) {
-    Box(Modifier.fillMaxWidth().padding(vertical = CoffeePeekDimens.spacing8), contentAlignment = Alignment.Center) { content() }
 }
