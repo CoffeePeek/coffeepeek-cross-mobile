@@ -1,0 +1,148 @@
+name: Android Firebase Develop
+
+on:
+  push:
+    branches: [develop]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: android-firebase-develop-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build_apk:
+    if: github.ref == 'refs/heads/develop'
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    outputs:
+      version: ${{ steps.meta.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v6
+      - name: Check distribution boundaries
+        run: python3 -m unittest discover -s tools/release -p 'test_*.py' -v
+      - name: Install Android SDK components
+        shell: bash
+        run: |
+          set -euo pipefail
+          SDKMANAGER="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
+          yes | "$SDKMANAGER" --licenses >/dev/null || true
+          "$SDKMANAGER" "platform-tools" "platforms;android-37.0" "build-tools;36.0.0"
+      - name: Restore build and signing configuration
+        shell: bash
+        env:
+          API_BASE_URL: ${{ vars.API_BASE_URL_MAIN }}
+          GOOGLE_WEB_CLIENT_ID: ${{ secrets.GOOGLE_WEB_CLIENT_ID }}
+          FIREBASE_GOOGLE_SERVICES_JSON: ${{ secrets.FIREBASE_GOOGLE_SERVICES_JSON }}
+          KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          for key in API_BASE_URL GOOGLE_WEB_CLIENT_ID FIREBASE_GOOGLE_SERVICES_JSON KEYSTORE_BASE64 KEYSTORE_PASSWORD KEY_ALIAS KEY_PASSWORD; do
+            [[ -n "${!key}" ]] || { echo "Missing configuration: $key"; exit 1; }
+          done
+          umask 077
+          python3 - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+          from urllib.parse import urlsplit
+          url = os.environ['API_BASE_URL']
+          parsed = urlsplit(url)
+          assert parsed.scheme == 'https' and parsed.netloc and not parsed.username and not parsed.password
+          assert not parsed.query and not parsed.fragment and not any(c.isspace() for c in url)
+          assert not any(c in url for c in '\\#$')
+          client = os.environ['GOOGLE_WEB_CLIENT_ID']
+          assert client.endswith('.apps.googleusercontent.com') and not any(c.isspace() for c in client)
+          Path('local.properties').write_text(f'API_BASE_URL={url}\nGOOGLE_WEB_CLIENT_ID={client}\n')
+          config = json.loads(os.environ['FIREBASE_GOOGLE_SERVICES_JSON'])
+          assert config['project_info']['project_id'] == 'coffeepeek'
+          assert any(c['client_info']['android_client_info']['package_name'] == 'com.coffeepeek' for c in config['client'])
+          Path('composeApp/google-services.json').write_text(json.dumps(config))
+          PY
+          printf '%s' "$KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/coffeepeek-release.jks"
+      - name: Build signed Firebase APK
+        env:
+          POSTHOG_PROJECT_TOKEN: ${{ secrets.POSTHOG_PROJECT_TOKEN }}
+          ANDROID_KEYSTORE_PATH: ${{ runner.temp }}/coffeepeek-release.jks
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: ./gradlew --no-daemon --max-workers=6 --no-configuration-cache :composeApp:assembleDirectRelease
+      - name: Verify APK and record source version
+        id: meta
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts
+          python3 - <<'PY'
+          import hashlib
+          import json
+          import os
+          import shutil
+          from pathlib import Path
+          folder = Path('composeApp/build/outputs/apk/direct/release')
+          metadata = json.loads((folder / 'output-metadata.json').read_text())
+          assert metadata['applicationId'] == 'com.coffeepeek' and metadata['variantName'] == 'directRelease'
+          assert len(metadata['elements']) == 1
+          element = metadata['elements'][0]
+          apk = folder / element['outputFile']
+          destination = Path('artifacts/coffeepeek.apk')
+          shutil.copyfile(apk, destination)
+          report = {'source_sha': os.environ['GITHUB_SHA'], 'branch': 'develop', 'variant': 'directRelease',
+                    'package': metadata['applicationId'], 'version': element['versionName'],
+                    'version_code': element['versionCode'], 'sha256': hashlib.file_digest(destination.open('rb'), 'sha256').hexdigest()}
+          Path('artifacts/build-metadata.json').write_text(json.dumps(report, indent=2) + '\n')
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as output:
+              output.write('version=' + element['versionName'] + '\n')
+          PY
+          "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --verbose --print-certs artifacts/coffeepeek.apk
+          cp composeApp/build/outputs/mapping/directRelease/mapping.txt artifacts/mapping.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: coffeepeek-develop-apk-${{ github.run_id }}
+          path: artifacts/
+          if-no-files-found: error
+          retention-days: 30
+
+  publish_firebase:
+    needs: build_apk
+    if: github.ref == 'refs/heads/develop'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Validate Firebase credentials
+        shell: bash
+        env:
+          APP_ID: ${{ secrets.FIREBASE_APP_ID_ANDROID }}
+          SERVICE_ACCOUNT_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_JSON }}
+          TESTER_GROUPS: ${{ secrets.FIREBASE_TESTER_GROUPS }}
+          TESTERS: ${{ secrets.FIREBASE_TESTERS }}
+        run: |
+          set -euo pipefail
+          [[ -n "$APP_ID" && ( -n "$TESTER_GROUPS" || -n "$TESTERS" ) ]]
+          printf '%s' "$SERVICE_ACCOUNT_JSON" | jq -e '.type == "service_account"' >/dev/null
+      - uses: actions/download-artifact@v4
+        with:
+          name: coffeepeek-develop-apk-${{ github.run_id }}
+          path: artifacts
+      - name: Distribute APK to Firebase
+        uses: wzieba/Firebase-Distribution-Github-Action@v1
+        with:
+          appId: ${{ secrets.FIREBASE_APP_ID_ANDROID }}
+          serviceCredentialsFileContent: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_JSON }}
+          groups: ${{ secrets.FIREBASE_TESTER_GROUPS }}
+          testers: ${{ secrets.FIREBASE_TESTERS }}
+          file: artifacts/coffeepeek.apk
+          releaseNotes: ${{ needs.build_apk.outputs.version }} develop (${{ github.sha }})

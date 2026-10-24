@@ -2,6 +2,13 @@
 
 Job `publish_firebase` в `.github/workflows/android-apk.yml` доставляет release APK на каждый push в `main`. Используется тот же APK с production backend, который публикуется на сайте; отдельной Firebase-сборки нет.
 
+Workflow `.github/workflows/android-firebase-develop.yml` дополнительно собирает
+`directRelease` при push в `develop` и доставляет подписанный APK только в Firebase
+App Distribution. Используются существующие production backend, Firebase app,
+keystore и список тестировщиков. APK, mapping и metadata с точным SHA/версией
+сохраняются в artifact `coffeepeek-develop-apk-<run-id>`. Публикация на сайте,
+Google Play и изменение серверной политики обновлений остаются отдельными.
+
 Обязательные GitHub secrets:
 
 - `FIREBASE_APP_ID_ANDROID` — Android App ID в Firebase.

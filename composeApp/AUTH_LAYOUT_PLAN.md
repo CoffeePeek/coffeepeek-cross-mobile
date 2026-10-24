@@ -281,3 +281,30 @@ and the same Dev signing identity. Original TestFlight app metadata remains
 unchanged at build 1961. No uninstall, data clearing or account writes occurred.
 Manual launch and visual review of the login top inset and internal-screen
 bottom edge remain pending the user's device check.
+
+### Logout cancellation and develop distribution follow-up
+
+The user confirmed both safe-area corrections work in installed build 2423.
+They then reported a missing Cancel action on logout, requested a push to
+`develop` for Firebase distribution and a fresh build for the connected Android.
+
+Logout now uses the existing native centered-alert contract with an explicit
+localized Cancel label and a destructive confirm action. Cancel only dismisses
+the confirmation; the account owner retains logout/session behavior. Android's
+existing design-system fallback is preserved. Reuse the colocated light/dark
+previews; do not test by logging out a real account.
+
+Latest `origin/develop` was merged into this isolated branch before publishing.
+The existing production Android workflow intentionally only targets `main`.
+A separate develop-only workflow builds the signed `directRelease` APK, records
+source/version/checksum, then distributes it through the existing Firebase app
+and tester configuration. Production Play/site publication and server policies
+remain independent. Test this delivery boundary and existing release guards.
+
+Verification plan: compile iOS arm64 KLIBs, assemble Android Debug/unsigned
+Release locally with max-workers=6 and packaged DEX guards, and execute existing
+application/design-system unit contracts. Then push the checked integration to
+develop, verify the signed Firebase artifact, and update the connected Pixel 9
+in place. Its installed Firebase release is 1.1.1.1961 (1961), so the local debug
+key is incompatible; the update must retain the release certificate. Device
+launch/visual review and iOS native alert rendering remain separate gates.
