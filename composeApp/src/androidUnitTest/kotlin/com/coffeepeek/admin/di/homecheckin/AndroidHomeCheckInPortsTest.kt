@@ -75,6 +75,14 @@ class AndroidHomeCheckInPortsTest {
         assertEquals("Пуровер", dates.formatMethod("pour_over"))
     }
 
+    @Test fun anUnreadableServerDateDoesNotBreakTheForm() {
+        val dates = androidHomeCheckInDates()
+        assertEquals("not-a-date", dates.formatDate("not-a-date"))
+        assertEquals("", dates.formatDate(""))
+        assertEquals("2026-02-30", dates.formatDate("2026-02-30"))
+        assertTrue(dates.civilDateToInstant("2026-13-01").endsWith("Z"))
+    }
+
     @Test fun catalogueTransportMessagesStayHiddenAndReturnedCancellationIsRethrown() = runTest {
         val lease = AndroidCheckInHistorySession(CheckInTestSessions())
         val catalog = AndroidHomeCheckInCatalog(lease, object : CoffeePicker {
