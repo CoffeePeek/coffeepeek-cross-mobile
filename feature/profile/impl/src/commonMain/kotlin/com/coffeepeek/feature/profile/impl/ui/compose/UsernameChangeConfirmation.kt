@@ -27,12 +27,19 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.coffeepeek.core.designsystem.component.CoffeePeekButton
+import com.coffeepeek.core.designsystem.component.CoffeePeekNativeAlert
 import com.coffeepeek.core.designsystem.component.CoffeePeekContentCard
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 
 @Composable
 internal fun UsernameChangeConfirmation(username: String, onConfirm: () -> Unit, onDismiss: () -> Unit) {
+    if (CoffeePeekNativeAlert(
+            title = stringResource(Res.string.profile_edit_confirm_username_title),
+            message = stringResource(Res.string.profile_edit_confirm_username_message, username),
+            confirmLabel = stringResource(Res.string.profile_edit_confirm_username_action),
+            onConfirm = onConfirm, onDismiss = onDismiss, cancelLabel = stringResource(Res.string.profile_cancel),
+        )) return
     Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false)) {
         Box(Modifier.widthIn(max = 440.dp).padding(CoffeePeekDimens.spacing6)) {
             UsernameChangeConfirmationContent(username, onConfirm, onDismiss)
@@ -64,8 +71,10 @@ private fun UsernameChangeConfirmationContent(username: String, onConfirm: () ->
     }
 }
 
-@Preview
 @Composable
-private fun UsernameChangeConfirmationPreview() {
-    CoffeePeekTheme { UsernameChangeConfirmationContent("coffee_lover", {}, {}) }
+private fun UsernameChangeConfirmationPreview(dark: Boolean) {
+    CoffeePeekTheme(darkTheme = dark) { UsernameChangeConfirmationContent("coffee_lover", {}, {}) }
 }
+
+@Preview @Composable private fun UsernameChangeConfirmationLightPreview() = UsernameChangeConfirmationPreview(false)
+@Preview @Composable private fun UsernameChangeConfirmationDarkPreview() = UsernameChangeConfirmationPreview(true)

@@ -1,6 +1,7 @@
 package com.coffeepeek.admin.di.profile
 
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
 import com.coffeepeek.admin.auth.GoogleAuth
 import com.coffeepeek.admin.ui.Navigator
 import com.coffeepeek.admin.ui.component.PhotoSourceBottomSheet
@@ -27,10 +28,10 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 
 /**
- * Android routes the edit and deletion screens to the migrated entries. Navigation, the platform sign-out after a session end and the
+ * Both platforms route edit and deletion screens to feature entries. Navigation, platform sign-out and the
  * photo picker stay app-owned.
  */
-internal class AndroidAccountScreenRenderer(
+internal class FeatureAccountScreenRenderer(
     private val edit: EditProfileEntry,
     private val deletion: AccountDeletionEntry,
     /** Outlives the screen: the redirect must still happen after the screen has left composition with the session. */
@@ -43,6 +44,7 @@ internal class AndroidAccountScreenRenderer(
         edit.Content(
             onBack = Navigator::popBack,
             onOpenAccountDeletion = { Navigator.navigate(Navigator.Screen.DeleteAccountPending) },
+            modifier = Modifier,
         )
     }
 
@@ -51,6 +53,7 @@ internal class AndroidAccountScreenRenderer(
         deletion.Content(
             onClose = Navigator::popBack,
             onSessionEnded = ::endSession,
+            modifier = Modifier,
         )
     }
 
@@ -61,7 +64,7 @@ internal class AndroidAccountScreenRenderer(
 }
 
 /** Writes through the shared `UserRepository`, which updates the cached profile the Profile tab observes. */
-internal class AndroidProfileEditPort(private val users: UserRepository) : ProfileEditPort {
+internal class AppProfileEditPort(private val users: UserRepository) : ProfileEditPort {
     override suspend fun updateAvatar(image: ProfileAvatarImage): Result<Unit> =
         users.updateAvatar(PendingPhotoUpload(fileName = image.fileName, contentType = image.contentType, bytes = image.bytes))
 
@@ -73,7 +76,7 @@ internal class AndroidProfileEditPort(private val users: UserRepository) : Profi
     override suspend fun updateAbout(about: String): Result<Unit> = users.updateAbout(about)
 }
 
-internal class AndroidAccountDeletionPort(private val users: UserRepository) : AccountDeletionPort {
+internal class AppAccountDeletionPort(private val users: UserRepository) : AccountDeletionPort {
     override suspend fun existingRequest(): Result<ProfileDeletionRequest?> =
         users.getAccountDeletionRequest().map { it?.let { request -> ProfileDeletionRequest(request.resendAvailableAtUtc) } }
 
@@ -81,10 +84,10 @@ internal class AndroidAccountDeletionPort(private val users: UserRepository) : A
         users.requestAccountDeletion().map { ProfileDeletionRequest(it.resendAvailableAtUtc) }
 }
 
-internal fun androidEditProfileSlots() = EditProfileSlots(
+internal fun editProfileSlots() = EditProfileSlots(
     image = { url, description, modifier -> CpImage(data = url, modifier = modifier, contentScale = ContentScale.Crop, contentDescription = description) },
     pickedAvatar = { image, modifier -> CpImage(data = image.bytes, modifier = modifier, contentScale = ContentScale.Crop) },
-    photoPicker = { show, onDismiss, onLoading, onPicked ->
+    photoPicker = { title, show, onDismiss, onLoading, onPicked ->
         val picker = rememberPhotoPicker(
             maxSelection = 1,
             isLoading = onLoading,
@@ -94,15 +97,15 @@ internal fun androidEditProfileSlots() = EditProfileSlots(
             onDismiss = onDismiss,
             onGallery = { onDismiss(); picker.pickFromGallery() },
             onCamera = { onDismiss(); picker.takePhoto() },
-            title = "Фото профиля",
+            title = title,
         )
     },
 )
 
-internal fun androidAccountScreenRenderer(sessions: SessionReader, users: UserRepository): AndroidAccountScreenRenderer {
-    val accounts = AndroidProfileAccountPort(sessions, users)
-    return AndroidAccountScreenRenderer(
-        edit = createEditProfileEntry(accounts, AndroidProfileEditPort(users), androidEditProfileSlots()),
-        deletion = createAccountDeletionEntry(accounts, AndroidAccountDeletionPort(users)),
+internal fun featureAccountScreenRenderer(sessions: SessionReader, users: UserRepository): FeatureAccountScreenRenderer {
+    val accounts = AppProfileAccountPort(sessions, users)
+    return FeatureAccountScreenRenderer(
+        edit = createEditProfileEntry(accounts, AppProfileEditPort(users), editProfileSlots()),
+        deletion = createAccountDeletionEntry(accounts, AppAccountDeletionPort(users)),
     )
 }

@@ -42,8 +42,10 @@ internal fun OwnProfileActions(
     }
 }
 
-@Preview
 @Composable
-private fun OwnProfileActionsPreview() = CoffeePeekTheme {
+private fun OwnProfileActionsPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
     OwnProfileActions({}, {}, {})
 }
+
+@Preview @Composable private fun OwnProfileActionsLightPreview() = OwnProfileActionsPreview(false)
+@Preview @Composable private fun OwnProfileActionsDarkPreview() = OwnProfileActionsPreview(true)

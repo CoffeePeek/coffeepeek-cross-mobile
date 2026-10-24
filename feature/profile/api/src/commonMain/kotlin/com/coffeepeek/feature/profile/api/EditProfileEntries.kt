@@ -12,13 +12,13 @@ class EditProfileSlots(
      * The photo source sheet and pickers. Composed always; the sheet is shown while [show] is true. [onLoading] reports a picker that is
      * still reading the file; [onPicked] receives the single chosen image.
      */
-    val photoPicker: @Composable (show: Boolean, onDismiss: () -> Unit, onLoading: (Boolean) -> Unit, onPicked: (ProfileAvatarImage) -> Unit) -> Unit,
+    val photoPicker: @Composable (title: String, show: Boolean, onDismiss: () -> Unit, onLoading: (Boolean) -> Unit, onPicked: (ProfileAvatarImage) -> Unit) -> Unit,
 )
 
 /** "Редактировать профиль". Caller owns navigation. The form lives in the host's ViewModel store, so it survives rotation. */
 interface EditProfileEntry {
     @Composable
-    fun Content(onBack: () -> Unit, onOpenAccountDeletion: () -> Unit, modifier: Modifier = Modifier)
+    fun Content(onBack: () -> Unit, onOpenAccountDeletion: () -> Unit, modifier: Modifier)
 }
 
 /**
@@ -28,5 +28,5 @@ interface EditProfileEntry {
  */
 interface AccountDeletionEntry {
     @Composable
-    fun Content(onClose: () -> Unit, onSessionEnded: () -> Unit, modifier: Modifier = Modifier)
+    fun Content(onClose: () -> Unit, onSessionEnded: () -> Unit, modifier: Modifier)
 }

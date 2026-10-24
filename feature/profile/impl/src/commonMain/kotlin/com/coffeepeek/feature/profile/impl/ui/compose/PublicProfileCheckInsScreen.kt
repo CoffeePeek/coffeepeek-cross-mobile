@@ -20,7 +20,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.material3.Scaffold
+import com.coffeepeek.core.designsystem.component.CoffeePeekScaffold as Scaffold
+import com.coffeepeek.core.designsystem.component.coffeePeekScrollContentPadding
+import com.coffeepeek.core.designsystem.component.coffeePeekViewportBottomPadding
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -45,7 +47,7 @@ internal fun PublicProfileCheckInsScreenContent(
         topBar = { CoffeePeekTopBar(stringResource(Res.string.profile_section_check_ins), stringResource(Res.string.profile_back), onBack = onBack) },
         contentWindowInsets = WindowInsets(0),
     ) { padding ->
-        Column(Modifier.fillMaxSize().padding(padding).navigationBarsPadding()) {
+        Column(Modifier.fillMaxSize().padding(padding).coffeePeekViewportBottomPadding()) {
             when {
                 state.profile?.isBlockedByViewer == true -> Text(stringResource(Res.string.profile_blocked_title), Modifier.padding(16.dp))
                 state.profile == null && state.isLoading -> ProfileSectionLoader(160.dp)
@@ -67,7 +69,7 @@ internal fun PublicProfileCheckInsList(
     val author = ProfileAuthor(profile.authorId, profile.slug, profile.nickname, profile.avatarUrl)
     val listState = rememberLazyListState()
     slots.photoPrefetch(listState, state.checkIns.map { it.id to it.photoPreviewUrls.take(3) })
-    LazyColumn(state = listState, modifier = modifier, contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 32.dp),
+    LazyColumn(state = listState, modifier = modifier, contentPadding = coffeePeekScrollContentPadding(PaddingValues(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 32.dp)),
         verticalArrangement = Arrangement.spacedBy(10.dp)) {
         items(state.checkIns, key = { it.id }) { checkIn ->
             slots.checkInCard(checkIn, author, isOwnProfile,
@@ -82,11 +84,13 @@ internal fun PublicProfileCheckInsList(
     }
 }
 
-@Preview
 @Composable
-private fun PublicProfileCheckInsPreview() = CoffeePeekTheme {
+private fun PublicProfileCheckInsPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
     val slots = ProfileSlots(image = { _, _, _ -> }, photoViewer = { _, _, _, _ -> },
         favoritesPreview = { _, _ -> }, favoriteCard = { _, _, _ -> }, checkInCard = { _, _, _, _, _ -> },
         photoPrefetch = { _, _ -> }, activityPreview = { _, _, _, _, _, _, _ -> })
     PublicProfileCheckInsScreenContent(PublicProfileState(isLoading = false), slots, {}, {}, {}, {}, { _, _, _ -> })
 }
+
+@Preview @Composable private fun PublicProfileCheckInsLightPreview() = PublicProfileCheckInsPreview(false)
+@Preview @Composable private fun PublicProfileCheckInsDarkPreview() = PublicProfileCheckInsPreview(true)

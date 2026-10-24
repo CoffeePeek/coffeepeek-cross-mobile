@@ -2,9 +2,11 @@ package com.coffeepeek.admin.di.profile
 
 import com.coffeepeek.api.utils.ApiException
 import com.coffeepeek.feature.profile.api.UsernameChangeFailure
+import kotlinx.coroutines.CancellationException
 
 /** Translates the legacy server contract at the composition bridge until profile writes migrate. */
 internal fun Throwable.toUsernameChangeFailure(): UsernameChangeFailure {
+    if (this is CancellationException) throw this
     if (this is UsernameChangeFailure) return this
     val text = message.orEmpty().lowercase()
     val status = (this as? ApiException)?.statusCode

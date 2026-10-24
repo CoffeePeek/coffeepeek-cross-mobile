@@ -24,8 +24,10 @@ iOS-документы (`docs/IOS_NATIVE_EXPERIENCE.md`, `IOS_NATIVE_NAVIGATION.
 
 **Этап 2 — сессия: F23 и F24 готовы** (выход стирает старые строки; сбой удаления Keychain сообщается). Core session port вместо `SessionRepository` (~43 файла) — **не сделан**.
 
-**Этап 3 — подключение на iOS: начат.** Через новые модули на iOS подключены: вкладка Settings (и три её подэкрана), окно обновления, колокольчик уведомлений, экраны входа, регистрации и восстановления пароля, **Community (вкладка «Лента»)**, **Discovery (вкладка «Поиск»)** и **Coffee (вкладка каталога и детали кофе)**. Подключены также Google/Apple кнопки и существующие Swift-провайдеры (при доступной конфигурации); реальный OAuth ещё не проверен.
-Остальное на iOS по-прежнему legacy: Profile и остальные владельцы. Вкладка Profile ещё вызывает legacy-экран напрямую; Community, Discovery и Coffee идут через feature-рендереры.
+**Этап 3 — подключение на iOS: начат.** Через новые модули на iOS подключены: вкладка Settings (и три её подэкрана), окно обновления, колокольчик уведомлений, экраны входа, регистрации и восстановления пароля, **Community (вкладка «Лента»)**, **Discovery (вкладка «Поиск»)**, **Coffee (вкладка каталога и детали кофе)** и **Profile (собственный/публичный профиль, его чекины, редактирование и подтверждение удаления аккаунта)**. Подключены также Google/Apple кнопки и существующие Swift-провайдеры (при доступной конфигурации); реальный OAuth ещё не проверен.
+На iOS Profile, Community, Discovery и Coffee идут через feature-рендереры.
+Contributions, Shop, личная история/Home и Favorites ещё используют текущие legacy entries;
+слоты календаря, избранного и карточек в Profile сохраняют эти существующие реализации.
 
 **Важные находки для следующих срезов**
 1. Kotlin/Native не линкует переопределение composable-метода интерфейса с аргументом по умолчанию (`modifier: Modifier = Modifier`): ошибка видна только при линковке и только у достижимого кода. У каждого владельца при подключении убрать значения по умолчанию из api-интерфейсов (так сделано у Settings и Auth).
@@ -34,7 +36,7 @@ iOS-документы (`docs/IOS_NATIVE_EXPERIENCE.md`, `IOS_NATIVE_NAVIGATION.
 4. Для сообщения проверки обновлений на iOS нет тоста: временно используется `ErrorHandler.showError`, нужно решение по UX.
 
 **Остаётся**
-- Этап 3: Profile (+вкладка), Contributions, Shop и Shop-report, Check-in history, Home check-in и общий create flow, Favorites (по решению продукта); ручная приёмка Community/Discovery/Coffee и live-приёмка Apple/Google.
+- Этап 3: Contributions, Shop и Shop-report, Check-in history, Home check-in и общий create flow, Favorites (по решению продукта); ручная приёмка Community/Discovery/Coffee/Profile и live-приёмка Apple/Google.
 - Этап 2: core session port.
 - Roaster: Xcode-линковка, симулятор, устройство.
 - Этап 5: удаление legacy — только после полной готовности и ручной приёмки.
@@ -330,7 +332,99 @@ safe area/tab bar, возврат из Roaster/similar Coffee и browser/share p
 Реальные browser/share actions, backend responses и production analytics не
 проверялись; fake unit suites не сертифицируют эти сценарии.
 
-Следующий владелец code-плана: **Profile / собственный и публичный профиль, account**.
+Следующий владелец code-плана на этом checkpoint: **Profile / собственный и публичный профиль, account**.
+
+### Checkpoint: Profile / own, public, edit, deletion — 2026-10-25
+
+Продолжение PR #195, база `ca86168d` + этот срез. Свежие `origin/main=16724b7e`
+и `origin/develop=8ac9f49a` сверены; обе ревизии уже входят в ветку. Сверены
+native Profile tab, UserProfile/UserCheckIns/EditProfile/DeleteAccountPending routes,
+ProfileScreen/OtherUserProfileScreen и legacy edit/deletion формы.
+
+Сделано:
+
+- Renderer/ports/username failure mapper перенесены из `androidMain/di/profile`
+  в общий app DI с именами FeatureOwn/Public/AccountScreenRenderer и AppProfile….
+  Зависимость profile impl перенесена в commonMain приложения; api/domain/data
+  уже были общими. UI/VM и ресурсы остаются в `feature/profile`, нового backend
+  или writer нет. Legacy screens остаются fallback, а shared slots не копировались.
+- iOS-фабрики выбирают feature own/public/account entries; native Profile tab
+  больше не вызывает legacy ProfileScreen напрямую. UserProfile/UserCheckIns,
+  edit и deletion routes уже проходили через renderer. Удалены default arguments
+  composable Content в feature API и PublicProfileScreenRenderer; modifier и режим
+  checkInsOnly передаются явно, без Native partial-linkage stubs.
+- Сохранены private/home personal activity calendar и weekly preview, Favorites
+  preview, собственная полная история, contributions/blocked authors routes,
+  канонические public share paths, фотографии и их preview/original policy,
+  prefetch, author visibility/actions, followers и legacy-rendered cards.
+  Подключение Profile не объявляет личную историю/Home/Favorites мигрированными.
+- JVM LinkedHashMap/access-order/synchronized заменены атомарным snapshot-кэшем
+  на StateFlow: последние четыре профиля, все строки каждого, refresh replacement,
+  merge одновременных страниц. Порядок хранится списком: равные по содержимому Map
+  не должны скрывать обновление recency. Есть проверки 500 строк, eviction,
+  refresh, concurrent pages и повторного открытия неизменившегося профиля.
+- Сохранён порядок выхода push → server → platform → drafts и login redirect
+  после session end. Result CancellationException теперь пробрасывается в sign-out
+  и username failure mapper; отмена не становится UI-ошибкой и не запускает остаток
+  очистки. Поведение обычной ошибки logout сохранено. Проверки используют fake
+  notifications/auth/settings/platform callbacks, без реальных действий аккаунта.
+- Avatar picker и его payload прежние; заголовок теперь приходит из ресурсов
+  feature через EditProfileSlots. Общий app bridge не содержит строку «Фото профиля».
+  UIKit photo source/gallery/camera остаются существующими platform интеграциями.
+- DS Scaffold/scroll padding сохраняют native tab clearance и нижнюю safe area
+  pushed profile/edit/delete/check-ins. Back/share публичного профиля используют
+  DS glass/native glyphs как legacy; menus идут через ранее подключённый UIMenu.
+  Username/delete confirmation сначала используют DS native-alert hook с прежним
+  Android fallback; ошибка deletion использует DS error dialog. Logout confirmation
+  уже шёл через DS destructive sheet. Нового дизайна Android-диалогов не вводилось.
+- AccountDeletionScreen разделён на runtime adapter и stateless content с малыми
+  helpers; добавлены paired confirm/sent previews. Обновлены light/dark previews
+  edit/check-ins/actions/username/error. Полные own/public экраны со слотовыми
+  календарями/карточками требуют ручной приёмки; preview не объявляется их проверкой.
+- Account/cache/mapper/sign-out tests перенесены в commonTest без JVM reflection.
+  Profile ports/analytics parity остаются Android unit tests из-за JVM parity harness.
+  Inventory analytics: прежний favorites_opened(entry_point=profile), session/
+  consent guards и screen ownership сохранены; новых edit/deletion events в legacy
+  нет. Test telemetry только in-memory, второго analytics service нет.
+
+Проверки (Mac/JBR 21, 2026-10-25, база `ca86168d` + этот срез):
+
+- Первый полный прогон прошёл: **192** unit/contract tests. Затем отдельный новый
+  regression test подтвердил дефект recency в первой Map-based версии общего кэша:
+  **5 tests, 1 failure** (`touchingAnUnchangedProfileUpdatesItsRecency`). После замены
+  snapshot на упорядоченный список полный прогон повторён успешно; это исправление
+  подтверждённого дефекта, не повтор случайно упавшего теста.
+- Итог: Profile data **10 tests** / 1 suite, impl **60 tests** / 6 suites;
+  domain task — без test sources. Design-system **44 tests** / 12 suites;
+  app subset `*Profile*`, `*AccountPorts*`, `*UsernameChangeFailureMapper*`,
+  `*RememberedCheckIns*`, `*NativeTabRoutes*` — **79 tests** / 17 suites.
+  Всего **193**, 0 failures/errors/skips. Проверены server/DTO contracts,
+  own/public/edit/deletion MVI, account switching/late results, payload/redirect,
+  cancellation, cache concurrency/eviction, analytics parity. DS/feature suites
+  в итоговом прогоне up-to-date после успешного первого выполнения; app subset выполнен заново.
+- `assembleDirectDebug`, `assembleDirectSandbox`, packaged runtime-class checks
+  обоих APK и Sandbox isolation прошли. Guards требуют три profile renderer
+  classes и три entry factory classes. APK не устанавливались/не запускались;
+  аккаунт, данные приложения и выбранный Studio Build Variant не менялись.
+- `compileKotlinIosArm64`, `linkDebugFrameworkIosSimulatorArm64`,
+  `compileTestKotlinIosSimulatorArm64` прошли. Общие profile factories и все четыре
+  entry достижимы в Native link. Common app tests только скомпилированы для iOS,
+  не выполнены на симуляторе. Swift app/signing в этом срезе не собирались.
+- Gradle последовательно, `--max-workers=6`, логи вне tracked sources. Прежние
+  Preview/expect-actual/framework bundle-ID warnings остаются. Первая Studio
+  inspection кэша закончилась timeout; после финального изменения повторная
+  inspection не нашла errors. Это не визуальная приёмка или тест запуска.
+- Paired previews компилируются; rendering в IDE не проверялся. Автоматизированные
+  UI/Compose/instrumentation/screenshot tests и их Activity/APK не создавались и не запускались.
+
+Открытые gates: iPhone own/public/alias/guest/blocked states и обе темы/крупный шрифт/
+VoiceOver, title/back/share/menu, personal activity sheet отдельно от личной истории,
+followers/favorites/check-ins sheets и фото/cancel, safe area/keyboard, avatar picker,
+username/deletion confirmations и системные ошибки. Live avatar/profile writes,
+logout/push unregistration/account deletion, browser/share и production analytics
+не выполнялись; нужны отдельные разрешённые проверки с безопасным аккаунтом.
+
+Следующий владелец code-плана: **Contributions / списки заявок и редакторы**.
 
 ## 1. Принципы (решение 2026-10-24)
 

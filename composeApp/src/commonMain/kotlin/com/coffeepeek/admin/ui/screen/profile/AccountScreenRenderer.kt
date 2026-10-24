@@ -4,7 +4,7 @@ import androidx.compose.runtime.Composable
 import com.coffeepeek.admin.ui.screen.deleteaccount.DeleteAccountPendingScreen
 import com.coffeepeek.admin.ui.screen.editprofile.EditProfileScreen
 
-/** Platform selection only. Shared/iOS keep the legacy edit and deletion screens; Android composes the migrated entries. */
+/** Both platforms bind feature edit/deletion entries; the legacy screens remain a fallback. */
 interface AccountScreenRenderer {
     @Composable
     fun EditProfile()

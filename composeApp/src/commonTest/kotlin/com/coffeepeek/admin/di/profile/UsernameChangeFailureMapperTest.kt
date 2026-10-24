@@ -7,7 +7,15 @@ import kotlin.test.assertEquals
 import kotlin.test.assertNull
 import kotlin.test.assertSame
 
+/** Common adapter contract, with fake repositories only. */
 class UsernameChangeFailureMapperTest {
+    @Test fun cancellationDoesNotBecomeAUsernameValidationError() {
+        val cancelled = kotlinx.coroutines.CancellationException("cancelled")
+        kotlin.test.assertSame(cancelled, kotlin.test.assertFailsWith<kotlinx.coroutines.CancellationException> {
+            cancelled.toUsernameChangeFailure()
+        })
+    }
+
     @Test fun legacyCooldownMessageKeepsOnlyTheReasonAndRetryInstant() {
         val error = ApiException("Username can be changed once every 7 days. Try again after 2026-10-29T17:12:31.5305240Z.")
         val mapped = error.toUsernameChangeFailure()

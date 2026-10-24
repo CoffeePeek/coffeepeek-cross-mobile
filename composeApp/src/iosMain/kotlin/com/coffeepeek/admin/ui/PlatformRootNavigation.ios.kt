@@ -18,7 +18,7 @@ import com.coffeepeek.admin.feature.community.ui.CommunityScreenRenderer
 import com.coffeepeek.admin.ui.Navigator.isHandledByRootNav
 import com.coffeepeek.admin.ui.screen.main.DiscoveryScreenRenderer
 import com.coffeepeek.admin.ui.screen.main.CheckInTabContent
-import com.coffeepeek.admin.ui.screen.profile.ProfileScreen
+import com.coffeepeek.admin.ui.screen.profile.OwnProfileScreenRenderer
 import com.coffeepeek.admin.ui.screen.profile.SettingsScreen
 import com.coffeepeek.admin.ui.screen.profile.SettingsScreenRenderer
 import kotlinx.coroutines.delay
@@ -158,7 +158,7 @@ internal actual fun PlatformRootNavigation(
                         onCreateCheckIn = { Navigator.navigate(Navigator.Screen.CreateCheckIn) },
                         notificationsAction = { koinInject<com.coffeepeek.admin.feature.notifications.ui.NotificationsRenderer>().Bell() },
                     )
-                    3 -> ProfileScreen()
+                    3 -> koinInject<OwnProfileScreenRenderer>().Content()
                     4 -> koinInject<SettingsScreenRenderer>().Tab()
                 }
             }

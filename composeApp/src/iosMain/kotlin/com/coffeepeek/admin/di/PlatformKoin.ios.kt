@@ -5,6 +5,9 @@ import com.coffeepeek.admin.di.auth.iosAuthScreenRenderer
 import com.coffeepeek.admin.di.community.featureCommunityScreenRenderer
 import com.coffeepeek.admin.di.coffee.coffeeModule
 import com.coffeepeek.admin.di.coffee.featureCoffeeScreenRenderer
+import com.coffeepeek.admin.di.profile.featureAccountScreenRenderer
+import com.coffeepeek.admin.di.profile.featureOwnProfileScreenRenderer
+import com.coffeepeek.admin.di.profile.featurePublicProfileScreenRenderer
 import com.coffeepeek.admin.di.discovery.featureDiscoveryScreenRenderer
 import com.coffeepeek.admin.di.favorites.serverFavoriteShopsModule
 import com.coffeepeek.api.CoffeePeekClient
@@ -25,6 +28,9 @@ actual fun initPlatformKoin() {
         authRendererFactory = { iosAuthScreenRenderer(get(), get()) },
         communityRendererFactory = { featureCommunityScreenRenderer(get(), get(), get(), get(), get(), get()) },
         coffeeRendererFactory = { featureCoffeeScreenRenderer(get()) },
+        publicProfileRendererFactory = { featurePublicProfileScreenRenderer(get(), get(), get(), get(), get()) },
+        ownProfileRendererFactory = { featureOwnProfileScreenRenderer(get(), get(), get(), get(), get(), get(), get(), get()) },
+        accountRendererFactory = { featureAccountScreenRenderer(get(), get()) },
         discoveryRendererFactory = { featureDiscoveryScreenRenderer(get<CoffeePeekClient>().client, get(), get(), get(), get(), get(), get()) },
     )
 }

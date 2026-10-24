@@ -593,6 +593,6 @@ koinInject<ContributionsScreenRenderer>().Editor(route.shopId, route.section, ro
 
     @Composable
     private fun PublicProfileRoute(screen: Screen.UserProfile) {
-        koinInject<PublicProfileScreenRenderer>().Content(screen.slug, screen.nickname, screen.avatarUrl)
+        koinInject<PublicProfileScreenRenderer>().Content(screen.slug, screen.nickname, screen.avatarUrl, checkInsOnly = false)
     }
 }

@@ -31,8 +31,10 @@ internal fun PublicProfileActions(isBlocked: Boolean, onShare: (() -> Unit)?, on
     }
 }
 
-@Preview
 @Composable
-private fun PublicProfileActionsPreview() = CoffeePeekTheme {
+private fun PublicProfileActionsPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
     PublicProfileActions(isBlocked = false, onShare = {}, onBlock = {})
 }
+
+@Preview @Composable private fun PublicProfileActionsLightPreview() = PublicProfileActionsPreview(false)
+@Preview @Composable private fun PublicProfileActionsDarkPreview() = PublicProfileActionsPreview(true)

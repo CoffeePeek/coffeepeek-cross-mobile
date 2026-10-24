@@ -17,7 +17,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
-class AndroidAccountPortsTest {
+class AccountPortsTest {
     private class Users : UserRepository {
         val calls = mutableListOf<String>()
         var existing: Result<AccountDeletionRequest?> = Result.success(null)
@@ -35,7 +35,7 @@ class AndroidAccountPortsTest {
     }
 
     @Test fun editWritesGoThroughTheSharedRepositoryWithTheirOwnArguments() = runTest {
-        val users = Users(); val port = AndroidProfileEditPort(users)
+        val users = Users(); val port = AppProfileEditPort(users)
         assertTrue(port.updateAvatar(ProfileAvatarImage("a.png", "image/png", byteArrayOf(1, 2))).isSuccess)
         assertEquals(PendingPhotoUpload("a.png", "image/png", byteArrayOf(1, 2)), users.photo)
         assertTrue(port.updateUsername("Boris").isSuccess)
@@ -44,7 +44,7 @@ class AndroidAccountPortsTest {
     }
 
     @Test fun deletionMapsTheRequestAndTheNoRequestCase() = runTest {
-        val users = Users(); val port = AndroidAccountDeletionPort(users)
+        val users = Users(); val port = AppAccountDeletionPort(users)
         assertNull(port.existingRequest().getOrThrow())
         users.existing = Result.success(AccountDeletionRequest("id", "pending", "2999", "2026-10-20T10:00:00Z"))
         assertEquals("2026-10-20T10:00:00Z", port.existingRequest().getOrThrow()?.resendAvailableAtUtc)
@@ -58,7 +58,7 @@ class AndroidAccountPortsTest {
     @Test fun sessionEndSignsOutOfThePlatformBeforeTheLoginRedirect() = runTest {
         val order = mutableListOf<String>()
         val scope = CoroutineScope(UnconfinedTestDispatcher(testScheduler))
-        val renderer = AndroidAccountScreenRenderer(
+        val renderer = FeatureAccountScreenRenderer(
             edit = ThrowingEdit, deletion = ThrowingDeletion, appScope = scope,
             platformSignOut = { order += "signOut" }, openLogin = { order += "login" },
         )

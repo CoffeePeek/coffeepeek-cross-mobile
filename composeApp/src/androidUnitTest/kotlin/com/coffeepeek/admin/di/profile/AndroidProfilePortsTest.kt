@@ -66,7 +66,7 @@ class AndroidProfilePortsTest {
 
     @Test fun accountKeyIsTheUserIdThenTheTokenAndNullForGuestsAndInactiveSessions() {
         fun key(session: Session?, active: Boolean = true) =
-            AndroidProfileAccountPort(Sessions(session) { it != null && active }, Users(null, anna)).activeAccount()
+            AppProfileAccountPort(Sessions(session) { it != null && active }, Users(null, anna)).activeAccount()
         assertEquals("u1", key(Session("t", null, "u1")))
         assertEquals("t", key(Session("t", null, null)))
         assertNull(key(null))
@@ -75,7 +75,7 @@ class AndroidProfilePortsTest {
 
     @Test fun observedAccountReplaysTheCurrentKeyAndEmitsOnlyChanges() = runTest {
         val sessions = Sessions(Session("t1", null, "a"))
-        val port = AndroidProfileAccountPort(sessions, Users(null, anna))
+        val port = AppProfileAccountPort(sessions, Users(null, anna))
         val seen = mutableListOf<String?>()
         val job = launch(UnconfinedTestDispatcher(testScheduler)) { port.observeActiveAccount().toList(seen) }
         sessions.state.value = Session("t2", null, "a") // token rotation, same account
@@ -87,7 +87,7 @@ class AndroidProfilePortsTest {
 
     @Test fun ownProfileIsMappedWithItsAddressAndFollowsTheSharedCache() = runTest {
         val users = Users(null, anna)
-        val port = AndroidProfileAccountPort(Sessions(Session("t", null, "a")), users)
+        val port = AppProfileAccountPort(Sessions(Session("t", null, "a")), users)
         assertNull(port.cachedOwnProfile())
         assertNull(port.observeOwnProfile().first())
         users.cache.update { anna }
@@ -100,14 +100,14 @@ class AndroidProfilePortsTest {
 
     @Test fun loadReturnsTheCacheUnlessForcedAndFallsBackToGetMeThenRefresh() = runTest {
         val cached = Users(anna, anna)
-        val withCache = AndroidProfileAccountPort(Sessions(Session("t", null, "a")), cached)
+        val withCache = AppProfileAccountPort(Sessions(Session("t", null, "a")), cached)
         assertEquals("Anna", withCache.loadOwnProfile(forceRefresh = false).getOrThrow().userName)
         assertTrue(cached.calls.isEmpty())
         withCache.loadOwnProfile(forceRefresh = true)
         assertEquals(listOf("refresh"), cached.calls)
 
         val empty = Users(null, anna)
-        val port = AndroidProfileAccountPort(Sessions(Session("t", null, "a")), empty)
+        val port = AppProfileAccountPort(Sessions(Session("t", null, "a")), empty)
         port.loadOwnProfile(forceRefresh = false)
         assertEquals(listOf("getMe"), empty.calls)
     }
@@ -123,7 +123,7 @@ class AndroidProfilePortsTest {
             var refreshes = 0
             override suspend fun refresh(): Result<Unit> { refreshes++; return Result.success(Unit) }
         }
-        val port = AndroidProfileAuthorVisibility(source)
+        val port = AppProfileAuthorVisibility(source)
         assertEquals(ProfileAuthorVisibilityState(revision = 1), port.current())
         source.visibility.value = AuthorVisibilitySnapshot(2, true, setOf("id"), setOf("slug"))
         assertEquals(ProfileAuthorVisibilityState(2, true, setOf("id"), setOf("slug")), port.observe().first())
@@ -134,7 +134,7 @@ class AndroidProfilePortsTest {
 
     @Test fun favoritesOpenedEmitsExactlyTheLegacyEvent() = runTest {
         val legacy = record { Analytics.track(AnalyticsEvent.FAVORITES_OPENED, "entry_point" to "profile") }
-        val migrated = record { AndroidProfileAnalytics.favoritesOpened() }
+        val migrated = record { AppProfileAnalytics.favoritesOpened() }
         ParityHarness.assertParity("profile: open all favorites", legacy, migrated)
         assertEquals(1, migrated.size)
     }

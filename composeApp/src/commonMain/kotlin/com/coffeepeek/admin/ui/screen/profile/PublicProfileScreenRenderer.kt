@@ -4,10 +4,10 @@ import androidx.compose.runtime.Composable
 import com.coffeepeek.admin.feature.profile.ui.OtherUserProfileScreen
 import com.coffeepeek.admin.ui.Navigator
 
-/** Platform selection only. Shared/iOS keep the legacy public profile; Android composes the migrated entry. */
+/** Both platforms bind the feature public profile; legacy content remains a fallback. */
 interface PublicProfileScreenRenderer {
     @Composable
-    fun Content(slug: String, nickname: String?, avatarUrl: String?, checkInsOnly: Boolean = false)
+    fun Content(slug: String, nickname: String?, avatarUrl: String?, checkInsOnly: Boolean)
 }
 
 internal object LegacyPublicProfileScreenRenderer : PublicProfileScreenRenderer {

@@ -19,7 +19,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 
 /** Adapter over the single session and own-profile cache, so the migrated screens cannot diverge from legacy ones. */
-internal class AndroidProfileAccountPort(
+internal class AppProfileAccountPort(
     private val sessions: SessionReader,
     private val users: UserRepository,
 ) : ProfileAccountPort {
@@ -45,7 +45,7 @@ internal fun UserProfile.toOwnProfile() = OwnProfile(userName, email, about, ava
 
 internal fun PublicAddress.toProfileAddress() = ProfileAddress(slug, canonicalPath, revision, isAlias)
 
-internal class AndroidProfileAuthorVisibility(private val source: AuthorVisibility) : ProfileAuthorVisibility {
+internal class AppProfileAuthorVisibility(private val source: AuthorVisibility) : ProfileAuthorVisibility {
     override fun current(): ProfileAuthorVisibilityState = source.visibility.value.toState()
     override fun observe(): Flow<ProfileAuthorVisibilityState> = source.visibility.map { it.toState() }
     override suspend fun refresh(): Result<Unit> = source.refresh()
@@ -53,7 +53,7 @@ internal class AndroidProfileAuthorVisibility(private val source: AuthorVisibili
 
 private fun AuthorVisibilitySnapshot.toState() = ProfileAuthorVisibilityState(revision, ready, blockedIds, blockedSlugs)
 
-internal object AndroidProfileAnalytics : ProfileAnalyticsPort {
+internal object AppProfileAnalytics : ProfileAnalyticsPort {
     override fun favoritesOpened() {
         Analytics.track(AnalyticsEvent.FAVORITES_OPENED, "entry_point" to "profile")
     }

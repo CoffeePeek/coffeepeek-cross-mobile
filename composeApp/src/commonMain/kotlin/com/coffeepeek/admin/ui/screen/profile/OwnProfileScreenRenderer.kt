@@ -2,7 +2,7 @@ package com.coffeepeek.admin.ui.screen.profile
 
 import androidx.compose.runtime.Composable
 
-/** Platform selection only. Shared/iOS keep the legacy Profile tab; Android composes the migrated entry. */
+/** Both platforms bind feature entries; the legacy Profile tab remains a fallback. */
 interface OwnProfileScreenRenderer {
     @Composable
     fun Content()

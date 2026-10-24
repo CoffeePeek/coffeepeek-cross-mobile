@@ -49,7 +49,6 @@ kotlin {
             implementation(project(module.feature.shop.domain))
             implementation(project(module.feature.shop.data))
             implementation(project(module.feature.shop.impl))
-            implementation(project(module.feature.profile.impl))
             implementation(project(module.feature.checkInHistory.api))
             implementation(project(module.feature.checkInHistory.domain))
             implementation(project(module.feature.checkInHistory.data))
@@ -77,6 +76,7 @@ kotlin {
             implementation(project(module.feature.profile.api))
             implementation(project(module.feature.profile.domain))
             implementation(project(module.feature.profile.data))
+            implementation(project(module.feature.profile.impl))
             implementation(project(module.feature.settings.api))
             implementation(project(module.feature.settings.domain))
             implementation(project(module.feature.settings.impl))
@@ -398,6 +398,12 @@ androidComponents {
                 "com.coffeepeek.admin.di.coffee.CoffeeModuleKt",
                 "com.coffeepeek.feature.coffee.impl.CoffeeListApiImplKt",
                 "com.coffeepeek.feature.coffee.impl.CoffeeDetailApiImplKt",
+                "com.coffeepeek.admin.di.profile.FeatureOwnProfileScreenRenderer",
+                "com.coffeepeek.admin.di.profile.FeaturePublicProfileScreenRenderer",
+                "com.coffeepeek.admin.di.profile.FeatureAccountScreenRenderer",
+                "com.coffeepeek.feature.profile.impl.OwnProfileEntryImplKt",
+                "com.coffeepeek.feature.profile.impl.PublicProfileEntryImplKt",
+                "com.coffeepeek.feature.profile.impl.EditProfileEntryImplKt",
                 "com.coffeepeek.feature.roaster.impl.RoasterEntryImplsKt",
                 "com.coffeepeek.feature.roaster.data.repository.RoasterRepositoryFactoryKt",
                 "com.coffeepeek.data.feature.favorites.ServerFavoritesRepository",

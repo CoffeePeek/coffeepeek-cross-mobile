@@ -59,10 +59,9 @@ private fun EditProfileError.messageResource(): StringResource = when (this) {
     EditProfileError.SignInRequired -> Res.string.profile_edit_error_sign_in
 }
 
-@Preview
 @Composable
-private fun EditProfileErrorDialogPreview() {
-    CoffeePeekTheme {
+private fun EditProfileErrorDialogPreview(dark: Boolean) {
+    CoffeePeekTheme(darkTheme = dark) {
         EditProfileErrorDialog(
             EditProfileState(error = EditProfileError.UsernameLimit, usernameRetryAtUtc = "2026-10-29T17:12:31Z"), {},
         )
@@ -71,3 +70,6 @@ private fun EditProfileErrorDialogPreview() {
 
 /** The retry moment in the user's locale and time zone, medium date and short time; null when it cannot be read. */
 internal expect fun localizedUsernameRetryAt(value: String?): String?
+
+@Preview @Composable private fun EditProfileErrorDialogLightPreview() = EditProfileErrorDialogPreview(false)
+@Preview @Composable private fun EditProfileErrorDialogDarkPreview() = EditProfileErrorDialogPreview(true)

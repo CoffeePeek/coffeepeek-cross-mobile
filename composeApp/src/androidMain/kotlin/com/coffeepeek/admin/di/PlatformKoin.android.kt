@@ -14,11 +14,11 @@ import java.time.OffsetDateTime
 import com.coffeepeek.admin.di.contributions.androidContributionsScreenRenderer
 import com.coffeepeek.admin.di.discovery.featureDiscoveryScreenRenderer
 import com.coffeepeek.feature.contributions.data.repository.createContributionsRepository
-import com.coffeepeek.admin.di.profile.androidAccountScreenRenderer
+import com.coffeepeek.admin.di.profile.featureAccountScreenRenderer
 import com.coffeepeek.admin.di.notifications.featureNotificationsRenderer
-import com.coffeepeek.admin.di.profile.androidOwnProfileScreenRenderer
+import com.coffeepeek.admin.di.profile.featureOwnProfileScreenRenderer
 import com.coffeepeek.admin.di.settings.featureSettingsScreenRenderer
-import com.coffeepeek.admin.di.profile.androidPublicProfileScreenRenderer
+import com.coffeepeek.admin.di.profile.featurePublicProfileScreenRenderer
 import com.coffeepeek.admin.di.shop.AndroidShopDetailScreenRenderer
 import com.coffeepeek.admin.di.shop.AndroidShopCheckInListScreenRenderer
 import com.coffeepeek.admin.di.shop.shopBrowsingModule
@@ -71,9 +71,9 @@ internal fun initAndroidKoin(extraModules: List<org.koin.core.module.Module> = e
         checkInHistoryRendererFactory = { get<AndroidCheckInHistoryScreenRenderer>() },
         checkInCreateFlowRendererFactory = { get<AndroidCheckInCreateFlowRenderer>() },
         coffeeRendererFactory = { featureCoffeeScreenRenderer(get()) },
-        publicProfileRendererFactory = { androidPublicProfileScreenRenderer(get(), get(), get(), get(), get()) },
-        ownProfileRendererFactory = { androidOwnProfileScreenRenderer(get(), get(), get(), get(), get(), get(), get(), get()) },
-        accountRendererFactory = { androidAccountScreenRenderer(get(), get()) },
+        publicProfileRendererFactory = { featurePublicProfileScreenRenderer(get(), get(), get(), get(), get()) },
+        ownProfileRendererFactory = { featureOwnProfileScreenRenderer(get(), get(), get(), get(), get(), get(), get(), get()) },
+        accountRendererFactory = { featureAccountScreenRenderer(get(), get()) },
         settingsRendererFactory = {
             featureSettingsScreenRenderer(get(), get(), get(), get(), notify = { Toast.makeText(Locator.appContext, it, Toast.LENGTH_SHORT).show() })
         },

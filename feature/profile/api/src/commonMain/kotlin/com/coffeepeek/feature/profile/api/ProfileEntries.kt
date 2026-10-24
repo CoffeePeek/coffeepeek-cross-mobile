@@ -18,7 +18,7 @@ interface PublicProfileEntry {
         /** Receives the full public profile URL. */
         onShare: (url: String) -> Unit,
         onOpenCheckIns: () -> Unit,
-        checkInsOnly: Boolean = false,
-        modifier: Modifier = Modifier,
+        checkInsOnly: Boolean,
+        modifier: Modifier,
     )
 }

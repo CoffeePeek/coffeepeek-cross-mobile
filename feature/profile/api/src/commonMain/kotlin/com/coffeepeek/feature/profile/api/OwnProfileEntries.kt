@@ -3,7 +3,6 @@ package com.coffeepeek.feature.profile.api
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.dp
 
 enum class ProfileContribution { Changes, Shops, Roasters }
 
@@ -36,7 +35,7 @@ interface OwnProfileEntry {
         onOpenCheckIns: () -> Unit,
         onOpenContributions: (ProfileContribution) -> Unit,
         onOpenBlockedAuthors: () -> Unit,
-        modifier: Modifier = Modifier,
-        bottomClearance: Dp = 0.dp,
+        modifier: Modifier,
+        bottomClearance: Dp,
     )
 }

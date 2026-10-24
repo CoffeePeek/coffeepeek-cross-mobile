@@ -1,5 +1,14 @@
 # Profile / account — legacy-first inventory — 2026-10-20
 
+> iOS activation, 2026-10-25 (PR #195): own/public/account renderers and shared app
+> ports now serve both platforms. The native Profile tab uses its renderer;
+> legacy calendar/favorites/card slots and data writers remain in place. JVM-only
+> row caching was replaced with an atomic ordered snapshot. See
+> [IOS_MIGRATION_PLAN.md](../IOS_MIGRATION_PLAN.md) for 193 passing unit/contract checks,
+> Android/Native builds, the recency
+> regression and open manual iPhone gates. Earlier Android-only wiring notes
+> below are historical checkpoints.
+
 Method: the rule in [ANDROID_REFACTORING_PLAN.md](../ANDROID_REFACTORING_PLAN.md#legacy-first-parity-gate-mandatory-for-every-owner),
 format as in [LEGACY_PARITY_AUDIT.md](../LEGACY_PARITY_AUDIT.md). This is a read-only analysis of the legacy `composeApp`
 code on branch `feature/roaster-refactoring` (`154259e4`). No code was changed, Gradle was not run, nothing was

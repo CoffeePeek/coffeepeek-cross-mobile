@@ -1,6 +1,7 @@
 package com.coffeepeek.admin.di.profile
 
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import com.coffeepeek.admin.feature.favorites.api.FavoritesPreviewCarousel
 import com.coffeepeek.admin.feature.profile.domain.PublicProfileCheckIn as LegacyCheckIn
@@ -30,8 +31,8 @@ import com.coffeepeek.feature.profile.domain.PublicProfileCheckIn
 import com.coffeepeek.feature.profile.domain.PublicProfileCheckInPage
 import com.coffeepeek.feature.profile.impl.createPublicProfileEntry
 
-/** Android routes to the migrated public profile; navigation, sharing and the legacy-rendered cards stay app-owned. */
-internal class AndroidPublicProfileScreenRenderer(private val entry: PublicProfileEntry) : PublicProfileScreenRenderer {
+/** Both platforms use the feature public profile; navigation, sharing and shared cards stay app-owned. */
+internal class FeaturePublicProfileScreenRenderer(private val entry: PublicProfileEntry) : PublicProfileScreenRenderer {
     @Composable
     override fun Content(slug: String, nickname: String?, avatarUrl: String?, checkInsOnly: Boolean) {
         entry.Content(slug, nickname, avatarUrl,
@@ -42,7 +43,7 @@ internal class AndroidPublicProfileScreenRenderer(private val entry: PublicProfi
             onOpenUser = { userSlug, userNickname, avatar -> Navigator.navigate(Navigator.Screen.UserProfile(userSlug, userNickname, avatar)) },
             onShare = { url -> ShareHelper.shareText(url) },
             onOpenCheckIns = { Navigator.navigate(Navigator.Screen.UserCheckIns(slug, nickname, avatarUrl)) },
-            checkInsOnly = checkInsOnly)
+            checkInsOnly = checkInsOnly, modifier = Modifier)
     }
 }
 
@@ -50,7 +51,7 @@ internal class AndroidPublicProfileScreenRenderer(private val entry: PublicProfi
  * Check-ins still render through the shared timeline card, which needs the legacy `CheckIn`. This adapter hands the feature its
  * own model and keeps the legacy rows (bounded, most recent first) for the card slot of the same ids.
  */
-internal class AndroidPublicCheckIns(private val repository: PublicProfileRepository) : PublicCheckInsPort {
+internal class AppPublicCheckIns(private val repository: PublicProfileRepository) : PublicCheckInsPort {
     private val sources = RememberedCheckIns()
 
     override suspend fun page(slug: String, cursor: String?): Result<PublicProfileCheckInPage> =
@@ -65,58 +66,40 @@ internal class AndroidPublicCheckIns(private val repository: PublicProfileReposi
     )
 }
 
-/**
- * Keeps the legacy rows of the profiles that were opened last, whole: a card must not change meaning because other rows pushed it out.
- * Memory is bounded by the number of remembered profiles, and a refresh of a profile starts its rows afresh.
- */
-internal class RememberedCheckIns(private val maxProfiles: Int = 4) {
-    private val byProfile = object : LinkedHashMap<String, MutableMap<String, LegacyCheckIn>>(8, 0.75f, true) {
-        override fun removeEldestEntry(eldest: MutableMap.MutableEntry<String, MutableMap<String, LegacyCheckIn>>) = size > maxProfiles
-    }
-
-    fun remember(slug: String, restart: Boolean, items: List<LegacyCheckIn>) = synchronized(byProfile) {
-        val rows = byProfile.getOrPut(slug) { HashMap() }
-        if (restart) rows.clear()
-        items.forEach { rows[it.id] = it }
-    }
-
-    fun find(id: String): LegacyCheckIn? = synchronized(byProfile) { byProfile.values.firstNotNullOfOrNull { it[id] } }
-}
-
 internal fun LegacyCheckIn.toFeatureModel() = PublicProfileCheckIn(
     id, coffeeShopSlug, venue, title, details, rating, note, occurredAt, photoUrls,
     photoPreviewUrls = source?.photoThumbnailUrls ?: photoUrls,
 )
 
-internal class AndroidProfileAuthorActions(private val blocks: AuthorBlockActions) : ProfileAuthorActions {
+internal class AppProfileAuthorActions(private val blocks: AuthorBlockActions) : ProfileAuthorActions {
     override fun requestBlock(author: ProfileAuthor) = blocks.requestBlock(author.toReference())
     override fun requestUnblock(author: ProfileAuthor) = blocks.requestUnblock(author.toReference())
 }
 
 private fun ProfileAuthor.toReference() = AuthorReference(id, slug, name, avatarUrl)
 
-internal fun androidPublicProfileScreenRenderer(
+internal fun featurePublicProfileScreenRenderer(
     repository: PublicProfileRepository,
     sessions: SessionReader,
     users: UserRepository,
     visibility: AuthorVisibility,
     blocks: AuthorBlockActions,
-): AndroidPublicProfileScreenRenderer {
-    val checkIns = AndroidPublicCheckIns(repository)
-    val slots = androidProfileSlots(checkIns)
-    return AndroidPublicProfileScreenRenderer(createPublicProfileEntry(
+): FeaturePublicProfileScreenRenderer {
+    val checkIns = AppPublicCheckIns(repository)
+    val slots = profileSlots(checkIns)
+    return FeaturePublicProfileScreenRenderer(createPublicProfileEntry(
         data = repository,
         checkIns = checkIns,
-        accounts = AndroidProfileAccountPort(sessions, users),
-        visibility = AndroidProfileAuthorVisibility(visibility),
-        authorActions = AndroidProfileAuthorActions(blocks),
+        accounts = AppProfileAccountPort(sessions, users),
+        visibility = AppProfileAuthorVisibility(visibility),
+        authorActions = AppProfileAuthorActions(blocks),
         slots = slots,
     ))
 }
 
 
 /** The legacy-rendered pieces shared by the public profile and the Profile tab. */
-internal fun androidProfileSlots(checkIns: AndroidPublicCheckIns): ProfileSlots {
+internal fun profileSlots(checkIns: AppPublicCheckIns): ProfileSlots {
     return ProfileSlots(
         image = { url, description, modifier -> CpImage(data = url, modifier = modifier, contentScale = ContentScale.Crop, contentDescription = description) },
         photoViewer = { previews, originals, index, onDismiss -> FullScreenImageDialog(PhotoViewerImages(previews, originals), index, onDismiss) },

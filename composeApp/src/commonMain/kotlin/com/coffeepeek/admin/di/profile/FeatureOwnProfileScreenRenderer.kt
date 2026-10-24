@@ -1,6 +1,7 @@
 package com.coffeepeek.admin.di.profile
 
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
 import coffeepeek.composeapp.generated.resources.Res
 import coffeepeek.composeapp.generated.resources.local_data_cleanup_error
 import com.coffeepeek.admin.auth.GoogleAuth
@@ -27,9 +28,10 @@ import com.coffeepeek.feature.profile.api.ProfileContribution
 import com.coffeepeek.feature.profile.api.ProfileSignOutPort
 import com.coffeepeek.feature.profile.impl.createOwnProfileEntry
 import org.jetbrains.compose.resources.getString
+import kotlinx.coroutines.CancellationException
 
-/** Android routes the Profile tab to the migrated entry; navigation, analytics, sign-out and legacy-rendered pieces stay app-owned. */
-internal class AndroidOwnProfileScreenRenderer(private val entry: OwnProfileEntry) : OwnProfileScreenRenderer {
+/** Both platforms use the feature Profile tab; navigation, native integrations and shared slots remain app-owned. */
+internal class FeatureOwnProfileScreenRenderer(private val entry: OwnProfileEntry) : OwnProfileScreenRenderer {
     @Composable
     override fun Content() {
         entry.Content(
@@ -39,12 +41,13 @@ internal class AndroidOwnProfileScreenRenderer(private val entry: OwnProfileEntr
             onLogin = { Navigator.navigate(Navigator.Screen.Auth) },
             onOpenUser = { slug, nickname, avatar -> Navigator.navigate(Navigator.Screen.UserProfile(slug, nickname, avatar)) },
             onOpenFavorites = {
-                AndroidProfileAnalytics.favoritesOpened()
+                AppProfileAnalytics.favoritesOpened()
                 Navigator.navigate(Navigator.Screen.Favorites)
             },
             onOpenCheckIns = { Navigator.navigate(Navigator.Screen.VisitedPlaces) },
             onOpenContributions = { kind -> Navigator.navigate(Navigator.Screen.MyContributions(kind.toContributionKind().name)) },
             onOpenBlockedAuthors = { Navigator.navigate(Navigator.Screen.BlockedAuthors) },
+            modifier = Modifier,
             bottomClearance = LocalFloatingNavClearance.current,
         )
     }
@@ -57,7 +60,7 @@ private fun ProfileContribution.toContributionKind() = when (this) {
 }
 
 /** The legacy logout order: push unregistration, server logout (failure shown), platform sign-out, then the signed-in user's local drafts. */
-internal class AndroidProfileSignOut(
+internal class AppProfileSignOut(
     private val notifications: NotificationFeature,
     private val auth: AuthRepository,
     private val drafts: ReviewDraftStore,
@@ -66,6 +69,7 @@ internal class AndroidProfileSignOut(
     override suspend fun signOut() {
         notifications.beforeLogout()
         auth.logout().onFailure { error ->
+            if (error is CancellationException) throw error
             ErrorHandler.showError(error.message?.takeIf(String::isNotBlank) ?: getString(Res.string.local_data_cleanup_error))
         }
         platformSignOut()
@@ -73,7 +77,7 @@ internal class AndroidProfileSignOut(
     }
 }
 
-internal fun androidOwnProfileScreenRenderer(
+internal fun featureOwnProfileScreenRenderer(
     repository: PublicProfileRepository,
     sessions: SessionReader,
     users: UserRepository,
@@ -82,22 +86,23 @@ internal fun androidOwnProfileScreenRenderer(
     drafts: ReviewDraftStore,
     visibility: AuthorVisibility,
     blocks: AuthorBlockActions,
-): AndroidOwnProfileScreenRenderer {
-    val checkIns = AndroidPublicCheckIns(repository)
-    val slots = OwnProfileSlots(
-        shared = androidProfileSlots(checkIns),
-        favoritesPreview = { openShop, openRoaster, header -> FavoritesProfilePreview(openShop, openRoaster, header) },
-        activityCalendar = { openShop, openCheckIns -> PersonalProfileActivityCalendar(onOpenShop = openShop, onOpenCheckIns = openCheckIns) },
-        activityPreview = { onClick -> PersonalProfileActivityPreview(onClick) },
-        loadError = { onRetry -> LoadErrorContent(onRetry = onRetry) },
-    )
-    return AndroidOwnProfileScreenRenderer(createOwnProfileEntry(
+): FeatureOwnProfileScreenRenderer {
+    val checkIns = AppPublicCheckIns(repository)
+    return FeatureOwnProfileScreenRenderer(createOwnProfileEntry(
         data = repository,
         checkIns = checkIns,
-        accounts = AndroidProfileAccountPort(sessions, users),
-        signOut = AndroidProfileSignOut(notifications, auth, drafts),
-        visibility = AndroidProfileAuthorVisibility(visibility),
-        authorActions = AndroidProfileAuthorActions(blocks),
-        slots = slots,
+        accounts = AppProfileAccountPort(sessions, users),
+        signOut = AppProfileSignOut(notifications, auth, drafts),
+        visibility = AppProfileAuthorVisibility(visibility),
+        authorActions = AppProfileAuthorActions(blocks),
+        slots = ownProfileSlots(checkIns),
     ))
 }
+
+private fun ownProfileSlots(checkIns: AppPublicCheckIns) = OwnProfileSlots(
+    shared = profileSlots(checkIns),
+    favoritesPreview = { openShop, openRoaster, header -> FavoritesProfilePreview(openShop, openRoaster, header) },
+    activityCalendar = { openShop, openCheckIns -> PersonalProfileActivityCalendar(onOpenShop = openShop, onOpenCheckIns = openCheckIns) },
+    activityPreview = { onClick -> PersonalProfileActivityPreview(onClick) },
+    loadError = { onRetry -> LoadErrorContent(onRetry = onRetry) },
+)
