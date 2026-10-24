@@ -5,7 +5,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import com.coffeepeek.admin.analytics.AnalyticsOverlay
 import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.text.KeyboardOptions
 import com.coffeepeek.core.designsystem.component.CoffeePeekHaptic
+import com.coffeepeek.core.designsystem.component.CoffeePeekInputRole
+import com.coffeepeek.core.designsystem.component.CoffeePeekKeyboardPresenter
+import com.coffeepeek.core.designsystem.component.LocalCoffeePeekKeyboardPresenter
 import com.coffeepeek.core.designsystem.component.CoffeePeekNativeAlertPresenter
 import com.coffeepeek.core.designsystem.component.CoffeePeekNativeDatePickerPresenter
 import com.coffeepeek.core.designsystem.component.CoffeePeekNativePhotoSourcePresenter
@@ -87,6 +91,18 @@ private object IosPlatformEffects : CoffeePeekPlatformEffects {
     override fun ScrollToTop(state: LazyListState) = PlatformScrollToTop(state)
 }
 
+/** UIKit traits, AutoFill content types and the keyboard "Done" bar of the legacy fields. */
+private object IosKeyboardPresenter : CoffeePeekKeyboardPresenter {
+    override fun textInputOptions(options: KeyboardOptions, role: CoffeePeekInputRole): KeyboardOptions = when (role) {
+        CoffeePeekInputRole.Default -> platformTextInputOptions(options)
+        CoffeePeekInputRole.Credential -> platformAuthKeyboardOptions(options, newPassword = false)
+        CoffeePeekInputRole.NewPassword -> platformAuthKeyboardOptions(options, newPassword = true)
+    }
+
+    @Composable
+    override fun DoneAccessory(visible: Boolean, onDone: () -> Unit) = NativeKeyboardDoneAccessory(visible, onDone)
+}
+
 @Composable
 internal actual fun ProvideDesignSystemPlatformHooks(content: @Composable () -> Unit) {
     CompositionLocalProvider(
@@ -96,6 +112,7 @@ internal actual fun ProvideDesignSystemPlatformHooks(content: @Composable () -> 
         LocalCoffeePeekNativeAlertPresenter provides IosNativeAlertPresenter,
         LocalCoffeePeekNativePhotoSourcePresenter provides IosNativePhotoSourcePresenter,
         LocalCoffeePeekPlatformEffects provides IosPlatformEffects,
+        LocalCoffeePeekKeyboardPresenter provides IosKeyboardPresenter,
         content = content,
     )
 }

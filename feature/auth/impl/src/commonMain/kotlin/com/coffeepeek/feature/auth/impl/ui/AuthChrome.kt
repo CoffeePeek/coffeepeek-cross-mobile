@@ -72,6 +72,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
 import com.coffeepeek.core.designsystem.component.CoffeePeekCompactOutlinedTextField
+import com.coffeepeek.core.designsystem.component.CoffeePeekInputRole
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.modifier.CoffeePeekGlassIconButton
 import com.coffeepeek.core.designsystem.theme.CoffeePeekColors
@@ -211,6 +212,8 @@ internal fun AuthTextField(
     enabled: Boolean = true,
     /** Plain text (a name) instead of the e-mail keyboard. */
     text: Boolean = false,
+    /** The password being created, so the platform suggests a strong one instead of filling a saved one. */
+    newPassword: Boolean = false,
 ) {
     var passwordVisible by remember { mutableStateOf(false) }
     val isError = errorText != null
@@ -281,6 +284,7 @@ internal fun AuthTextField(
                 autoCorrectEnabled = false,
                 imeAction = if (next) ImeAction.Next else ImeAction.Done,
             ),
+            inputRole = if (newPassword) CoffeePeekInputRole.NewPassword else CoffeePeekInputRole.Credential,
         )
         AnimatedVisibility(visible = isError) {
             Text(

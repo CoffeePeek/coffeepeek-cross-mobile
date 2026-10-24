@@ -218,6 +218,7 @@ private fun DetailsStep(state: RegisterState, onAction: (RegisterAction) -> Unit
                 placeholder = stringResource(Res.string.auth_register_password_placeholder),
                 leadingIcon = CoffeePeekIcons.Lock,
                 isPassword = true,
+                newPassword = true,
                 errorText = state.passwordIssue?.let { passwordError(it) },
                 enabled = !state.busy,
             )
