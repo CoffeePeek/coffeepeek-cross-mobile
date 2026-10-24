@@ -182,3 +182,9 @@ version 1.1.1/build 2419, 63 Compose resources, launch assets and app configurat
 A separate CoffeePeek Dev copy is prepared for the existing development bundle;
 IPA files and sanitized verification reports stay in ignored build output.
 Device installation and visual acceptance are pending connection at this stage.
+
+Following the user's connection/unlock confirmation, CoffeePeek Dev was updated
+in place from 2417 to 2419 on iPhone15,4/iOS 27.0.1. xtool completed installation
+and verification; a separate installed-app metadata read confirms build 2419.
+The original TestFlight app remains at 1961. Sanitized installation evidence is
+stored beside the ignored IPA. Manual startup and visual review remain pending.
