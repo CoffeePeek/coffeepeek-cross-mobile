@@ -123,3 +123,49 @@ patch; unrelated local APK packaging edits are excluded.
   Sandbox run documented above. No UI/device tests were added or run here.
 - Existing multiplatform preview annotations compile with deprecation warnings;
   this remains a tooling warning, not a rendering verification.
+
+## iOS presentation follow-up — 2026-10-24
+
+Baseline: `35d71005` on develop; implementation branch
+`codex/fix-ios-native-presentation`. Ownership remains existing authentication,
+profile/photo and shop presentation plus UIKit platform adapters. No feature,
+DI, navigation destination, dependency or business-rule migration is included.
+
+The authentication host extends to the bottom edge and consumes only the top
+system inset. Home-indicator clearance and vertical spacing now belong to the
+scrolling form content, eliminating the fixed blank band below the viewport.
+Registration/recovery reuse the same correction. Existing validation, keyboard
+handling, navigation, analytics ownership and consent behavior remain intact.
+
+UIKit `UIAlertController` now owns alerts and action sheets, including destructive
+logout confirmation and camera/gallery selection. Shared action sequencing still
+waits for native dismissal before opening another resource, ignores repeated taps
+and preserves disabled actions. The existing four action-selection contracts cover
+those semantics. Camera availability, current callbacks and iPad popover anchoring
+remain supported. Native controller rendering requires manual iOS review;
+Compose previews cannot render system alerts or exercise UIKit presentation.
+
+Routes offer Apple, Google and Yandex Maps again using the existing URL builders;
+the share sheet is removed. The location picker's header close button uses native
+overlay placement, while map-viewport controls retain clipping-aware underlay
+placement. See JetBrains' [interop placement explanation](https://youtrack.jetbrains.com/issue/CMP-8588):
+underlays cut a rectangle through Compose, which exposed the black background
+around the transparent close control. The marker uses SF Symbols `cup.and.saucer`
+on iOS, rasterized into Compose above the native map; Android keeps its existing
+coffee icon. Paired light/dark previews accompany the marker and platform icon.
+
+Local verification of this implementation on 2026-10-24:
+
+- `compileKotlinIosArm64`, `assembleDirectDebug`, packaged DEX runtime-class
+  verification, six selected app unit suites and design-system unit tests passed
+  in one invocation with `--max-workers=6` (53 seconds).
+- 25 application tests plus 36 design-system tests: 61 passed, no failures,
+  errors or skips. Tests executed; iOS KLIBs compiled, not linked/executed.
+- The first combined invocation rejected the unsupported replacement Preview
+  import. Restoring the repository's multiplatform annotation resolved it;
+  original/final logs remain local. No test failures or weakened assertions.
+- No automated UI/instrumentation/screenshot tests, real-account actions,
+  installation or iPhone launch were performed by these local checks.
+- Native `.ipa` linking/packaging, updated-device visuals in both themes, keyboard,
+  scrolling, sheet cancel/reopen, map handoff and accessibility remain separate
+  device gates. Build/source identity is retained with the resulting artifact.

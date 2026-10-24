@@ -50,12 +50,14 @@ internal class NativeScreenController(
     private var analyticsVisible by mutableStateOf(false)
     private var bottomClearance by mutableStateOf(0.dp)
     private val photoUnderStatusBar = route is Navigator.Screen.ShopDetail || route is Navigator.Screen.RoasterDetail
+    private val isAuthFlow = route == Navigator.Screen.Auth || route == Navigator.Screen.Register ||
+        route == Navigator.Screen.ForgotPassword || route is Navigator.Screen.ResetPassword
     var handlesBackLocally = false
 
     init {
         this.title = title
         edgesForExtendedLayout = when {
-            isTabRoot -> UIRectEdgeBottom
+            isTabRoot || isAuthFlow -> UIRectEdgeBottom
             photoUnderStatusBar -> UIRectEdgeAll
             else -> UIRectEdgeNone
         }
@@ -97,7 +99,7 @@ internal class NativeScreenController(
             child.view.topAnchor.constraintEqualToAnchor(if (photoUnderStatusBar) view.topAnchor else safeArea.topAnchor),
             child.view.leadingAnchor.constraintEqualToAnchor(view.leadingAnchor),
             child.view.trailingAnchor.constraintEqualToAnchor(view.trailingAnchor),
-            child.view.bottomAnchor.constraintEqualToAnchor(if (isTabRoot || photoUnderStatusBar) view.bottomAnchor else safeArea.bottomAnchor),
+            child.view.bottomAnchor.constraintEqualToAnchor(if (isTabRoot || photoUnderStatusBar || isAuthFlow) view.bottomAnchor else safeArea.bottomAnchor),
         ))
         child.didMoveToParentViewController(this)
     }
@@ -114,8 +116,11 @@ internal class NativeScreenController(
         ProvideFloatingNavClearance(bottomClearance) {
             // Tab content scrolls behind the glass; lists and controls reserve the measured safe area.
             Box(Modifier.fillMaxSize().background(colors.background)
-                .consumeWindowInsets(if (photoUnderStatusBar) WindowInsets(0, 0, 0, 0)
-                    else WindowInsets.systemBars.only(WindowInsetsSides.Vertical))
+                .consumeWindowInsets(when {
+                    photoUnderStatusBar -> WindowInsets(0, 0, 0, 0)
+                    isAuthFlow -> WindowInsets.systemBars.only(WindowInsetsSides.Top)
+                    else -> WindowInsets.systemBars.only(WindowInsetsSides.Vertical)
+                })
                 .dismissKeyboardOnBackgroundGestures()) {
                 CompositionLocalProvider(com.coffeepeek.admin.analytics.LocalAnalyticsVisible provides analyticsVisible) {
                     content()
