@@ -1,6 +1,7 @@
 package com.coffeepeek.feature.checkinhistory.impl.ui.compose.component
 
 import androidx.compose.foundation.background
+import org.jetbrains.compose.ui.tooling.preview.Preview
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.MaterialTheme
@@ -13,7 +14,6 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
@@ -42,6 +42,6 @@ internal fun HistoryCheckInHeader(username: String, dateLabel: String, modifier:
     }
 }
 
-@PreviewLightDark @Composable private fun HistoryCheckInHeaderPreview() = CoffeePeekTheme {
+@Preview @Composable private fun HistoryCheckInHeaderPreview() = CoffeePeekTheme {
     HistoryCheckInHeader("Анна", "14 октября 2026")
 }

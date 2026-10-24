@@ -1,6 +1,7 @@
 package com.coffeepeek.feature.checkinhistory.impl.ui.compose.component
 
 import androidx.compose.foundation.background
+import org.jetbrains.compose.ui.tooling.preview.Preview
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -15,7 +16,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.semantics.*
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.feature.checkinhistory.domain.model.HistoryCalendarPhoto
@@ -70,17 +70,17 @@ internal fun HistoryCalendarDay(day: Int, date: String, total: Long, homeCount: 
     }
 }
 
-@PreviewLightDark @Composable private fun HistoryCalendarDayPreview() = CoffeePeekTheme {
+@Preview @Composable private fun HistoryCalendarDayPreview() = CoffeePeekTheme {
     HistoryCalendarDay(14, "2026-10-14", 2, 1, isSelected = true, isToday = true, isFuture = false,
         onSelect = {}, modifier = Modifier.width(56.dp))
 }
 
-@PreviewLightDark @Composable private fun HistoryCalendarDayTodayPreview() = CoffeePeekTheme {
+@Preview @Composable private fun HistoryCalendarDayTodayPreview() = CoffeePeekTheme {
     HistoryCalendarDay(14, "2026-10-14", 0, 0, isSelected = false, isToday = true, isFuture = false,
         onSelect = {}, modifier = Modifier.width(56.dp))
 }
 
-@PreviewLightDark @Composable private fun HistoryCalendarDayPhotoPreview() = CoffeePeekTheme {
+@Preview @Composable private fun HistoryCalendarDayPhotoPreview() = CoffeePeekTheme {
     HistoryCalendarDay(14, "2026-10-14", 2, 1, isSelected = true, isToday = true, isFuture = false,
         onSelect = {}, modifier = Modifier.width(56.dp),
         photos = listOf(HistoryCalendarPhoto("fixture", true), HistoryCalendarPhoto("fixture-2", false)))

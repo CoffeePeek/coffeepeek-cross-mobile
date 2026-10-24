@@ -1,8 +1,8 @@
 package com.coffeepeek.feature.checkinhistory.impl.ui.compose.component
 
 import androidx.compose.runtime.Composable
+import org.jetbrains.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.PreviewLightDark
 import com.coffeepeek.core.designsystem.component.CoffeePeekCapsuleSegmentedControl
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.feature.checkinhistory.impl.resources.*
@@ -18,6 +18,6 @@ internal fun HistoryKindFilterControl(filter: HistoryKindFilter, onSelect: (Hist
     CoffeePeekCapsuleSegmentedControl(HistoryKindFilter.entries, filter, { labels.getValue(it) }, onSelect, modifier)
 }
 
-@PreviewLightDark @Composable private fun HistoryKindFilterPreview() = CoffeePeekTheme {
+@Preview @Composable private fun HistoryKindFilterPreview() = CoffeePeekTheme {
     HistoryKindFilterControl(HistoryKindFilter.All, {})
 }

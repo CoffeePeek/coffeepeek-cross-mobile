@@ -1,6 +1,7 @@
 package com.coffeepeek.feature.checkinhistory.impl.ui.compose.component
 
 import androidx.compose.foundation.layout.*
+import org.jetbrains.compose.ui.tooling.preview.Preview
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -9,7 +10,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.core.designsystem.component.CoffeePeekLoader
 import com.coffeepeek.core.designsystem.component.CoffeePeekPullToRefresh
@@ -103,14 +103,14 @@ internal fun HistoryTimelineContent(state: CombinedHistoryState, onAction: (Comb
     }
 }
 
-@PreviewLightDark @Composable private fun HistoryTimelinePreview() = CoffeePeekTheme {
+@Preview @Composable private fun HistoryTimelinePreview() = CoffeePeekTheme {
     HistoryTimelineContent(previewCombinedHistoryState(), {}, { "13:00" })
 }
 
-@PreviewLightDark @Composable private fun HistoryTimelineLoadingPreview() = CoffeePeekTheme {
+@Preview @Composable private fun HistoryTimelineLoadingPreview() = CoffeePeekTheme {
     HistoryTimelineContent(previewCombinedHistoryState().copy(homeCalendar = CombinedHistoryLoadState(emptyMap(), isLoading = true)), {}, { "13:00" })
 }
 
-@PreviewLightDark @Composable private fun HistoryTimelineRefreshingPreview() = CoffeePeekTheme {
+@Preview @Composable private fun HistoryTimelineRefreshingPreview() = CoffeePeekTheme {
     HistoryTimelineContent(previewCombinedHistoryState().copy(isRefreshing = true), {}, { "13:00" })
 }

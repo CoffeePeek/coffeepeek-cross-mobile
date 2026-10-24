@@ -1,13 +1,13 @@
 package com.coffeepeek.feature.checkinhistory.impl.ui.compose
 
 import androidx.compose.foundation.layout.*
+import org.jetbrains.compose.ui.tooling.preview.Preview
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
@@ -100,18 +100,18 @@ internal fun previewCombinedHistoryState(): CombinedHistoryState {
         homes = CombinedHistoryPageState(listOf(home), page = 1, hasLoaded = true))
 }
 
-@PreviewLightDark @Composable private fun CombinedHistoryPreview() = CoffeePeekTheme {
+@Preview @Composable private fun CombinedHistoryPreview() = CoffeePeekTheme {
     CheckInHistoryScreenContent(previewCombinedHistoryState(), {}, formatCheckInTime = { "13:00" })
 }
-@PreviewLightDark @Composable private fun HistoryGuestPreview() = CoffeePeekTheme {
+@Preview @Composable private fun HistoryGuestPreview() = CoffeePeekTheme {
     CheckInHistoryScreenContent(previewCombinedHistoryState().copy(isLoggedIn = false), {})
 }
-@PreviewLightDark @Composable private fun HistoryEmptyPreview() = CoffeePeekTheme {
+@Preview @Composable private fun HistoryEmptyPreview() = CoffeePeekTheme {
     CheckInHistoryScreenContent(CombinedHistoryState("2026-10-14", HistoryMonth(2026, 10), true, 0), {})
 }
-@PreviewLightDark @Composable private fun HistoryErrorPreview() = CoffeePeekTheme {
+@Preview @Composable private fun HistoryErrorPreview() = CoffeePeekTheme {
     CheckInHistoryScreenContent(previewCombinedHistoryState().copy(homes = CombinedHistoryPageState(hasError = true)), {})
 }
-@PreviewLightDark @Composable private fun HistoryLoadingPreview() = CoffeePeekTheme {
+@Preview @Composable private fun HistoryLoadingPreview() = CoffeePeekTheme {
     CheckInHistoryScreenContent(previewCombinedHistoryState().copy(shops = CombinedHistoryPageState(isLoading = true)), {})
 }

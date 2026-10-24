@@ -1,6 +1,7 @@
 package com.coffeepeek.feature.checkinhistory.impl.ui.compose.component
 
 import androidx.compose.foundation.Canvas
+import org.jetbrains.compose.ui.tooling.preview.Preview
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -8,7 +9,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.platform.LocalLayoutDirection
-import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
@@ -32,6 +32,6 @@ internal fun HistoryTimelineRail(isHome: Boolean, firstInDay: Boolean, lastInDay
     }
 }
 
-@PreviewLightDark @Composable private fun HistoryTimelineRailPreview() = CoffeePeekTheme {
+@Preview @Composable private fun HistoryTimelineRailPreview() = CoffeePeekTheme {
     HistoryTimelineRail(true, true, false) { Text("Hario V60", Modifier.padding(18.dp)) }
 }

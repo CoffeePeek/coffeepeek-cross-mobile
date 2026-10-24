@@ -1,6 +1,7 @@
 package com.coffeepeek.feature.checkinhistory.impl.ui.compose.component
 
 import androidx.compose.foundation.background
+import org.jetbrains.compose.ui.tooling.preview.Preview
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.selection.selectable
@@ -14,7 +15,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.core.designsystem.component.CoffeePeekButton
 import com.coffeepeek.core.designsystem.component.CoffeePeekIconBadge
@@ -69,4 +69,4 @@ internal fun HistoryCreateSheet(onDismiss: () -> Unit, onCreate: (HistorySource)
     }
 }
 
-@PreviewLightDark @Composable private fun HistoryCreatePreview() = CoffeePeekTheme { HistoryCreateContent({}) }
+@Preview @Composable private fun HistoryCreatePreview() = CoffeePeekTheme { HistoryCreateContent({}) }

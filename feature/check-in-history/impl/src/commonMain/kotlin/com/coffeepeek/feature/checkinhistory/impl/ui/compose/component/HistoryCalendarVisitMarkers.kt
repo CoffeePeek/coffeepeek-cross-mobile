@@ -1,6 +1,7 @@
 package com.coffeepeek.feature.checkinhistory.impl.ui.compose.component
 
 import androidx.compose.foundation.background
+import org.jetbrains.compose.ui.tooling.preview.Preview
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -12,7 +13,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.clearAndSetSemantics
-import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
@@ -33,11 +33,11 @@ internal fun HistoryCalendarVisitMarkers(total: Long, onSelectedBackground: Bool
     }
 }
 
-@PreviewLightDark @Composable private fun HistoryCalendarVisitMarkersPreview() = CoffeePeekTheme {
+@Preview @Composable private fun HistoryCalendarVisitMarkersPreview() = CoffeePeekTheme {
     HistoryCalendarVisitMarkers(5, onSelectedBackground = false)
 }
 
-@PreviewLightDark @Composable private fun HistoryCalendarVisitMarkersSelectedPreview() = CoffeePeekTheme {
+@Preview @Composable private fun HistoryCalendarVisitMarkersSelectedPreview() = CoffeePeekTheme {
     Box(Modifier.background(MaterialTheme.colorScheme.primary)) {
         HistoryCalendarVisitMarkers(5, onSelectedBackground = true)
     }

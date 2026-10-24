@@ -1,8 +1,8 @@
 package com.coffeepeek.feature.checkinhistory.impl.ui.compose.component
 
 import androidx.compose.runtime.Composable
+import org.jetbrains.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.PreviewLightDark
 import com.coffeepeek.core.designsystem.component.CoffeePeekRating
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.feature.checkinhistory.domain.model.HistoryRating
@@ -26,6 +26,6 @@ internal fun HistoryCheckInRating(rating: HistoryRating, modifier: Modifier = Mo
     CoffeePeekRating(average, modifier, valueText = label, contentDescription = description)
 }
 
-@PreviewLightDark @Composable private fun HistoryCheckInRatingPreview() = CoffeePeekTheme {
+@Preview @Composable private fun HistoryCheckInRatingPreview() = CoffeePeekTheme {
     HistoryCheckInRating(HistoryRating(4, 4, 5))
 }

@@ -1,6 +1,7 @@
 package com.coffeepeek.feature.checkinhistory.impl.ui.compose.component
 
 import androidx.compose.foundation.BorderStroke
+import org.jetbrains.compose.ui.tooling.preview.Preview
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
@@ -9,7 +10,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
@@ -68,6 +68,6 @@ internal fun previewHomeHistoryEntry() = HomeHistoryEntry("home", "2026-10-14", 
     HomeHistoryRecipe("hario-v60", null, "Эфиопия", "18.00", 180, 4), null, null, null, emptyList(),
     HistoryVisibility.Private, HistoryModeration.NotSubmitted)
 
-@PreviewLightDark @Composable private fun HistoryHomeTimelineCardPreview() = CoffeePeekTheme {
+@Preview @Composable private fun HistoryHomeTimelineCardPreview() = CoffeePeekTheme {
     HistoryHomeTimelineCard(previewHomeHistoryEntry(), "11:00", {})
 }

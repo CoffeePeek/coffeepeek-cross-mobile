@@ -1,6 +1,7 @@
 package com.coffeepeek.feature.checkinhistory.impl.ui.compose.component
 
 import androidx.compose.foundation.BorderStroke
+import org.jetbrains.compose.ui.tooling.preview.Preview
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
@@ -9,7 +10,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
@@ -44,6 +44,6 @@ internal fun HistoryShopTimelineCard(entry: PersonalCheckIn, timeLabel: String, 
     }
 }
 
-@PreviewLightDark @Composable private fun HistoryShopTimelineCardPreview() = CoffeePeekTheme {
+@Preview @Composable private fun HistoryShopTimelineCardPreview() = CoffeePeekTheme {
     HistoryShopTimelineCard(previewHistoryCheckIn(), "13:00", {})
 }

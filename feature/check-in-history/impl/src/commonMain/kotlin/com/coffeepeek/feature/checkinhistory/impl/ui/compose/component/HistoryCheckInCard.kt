@@ -1,6 +1,7 @@
 package com.coffeepeek.feature.checkinhistory.impl.ui.compose.component
 
 import androidx.compose.foundation.BorderStroke
+import org.jetbrains.compose.ui.tooling.preview.Preview
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
@@ -10,7 +11,6 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.intl.Locale
-import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.core.designsystem.component.CoffeePeekLikeIcon
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
@@ -57,12 +57,12 @@ internal fun previewHistoryCheckIn() = PersonalCheckIn(
     rejectionReason = null, helpfulCount = 0, isHelpfulByCurrentUser = false,
 )
 
-@PreviewLightDark @Composable private fun HistoryCheckInUnavailablePhotoPreview() = CoffeePeekTheme {
+@Preview @Composable private fun HistoryCheckInUnavailablePhotoPreview() = CoffeePeekTheme {
     HistoryCheckInCard(previewHistoryCheckIn().copy(photoUrls = listOf("fixture-original"),
         photoThumbnailUrls = listOf("")), "14 октября", {})
 }
 
-@PreviewLightDark @Composable private fun HistoryCheckInCardPreview() = CoffeePeekTheme {
+@Preview @Composable private fun HistoryCheckInCardPreview() = CoffeePeekTheme {
     HistoryCheckInCard(previewHistoryCheckIn().copy(visibility = HistoryVisibility.Public,
         helpfulCount = 3, isHelpfulByCurrentUser = true), "14 октября 2026", {})
 }

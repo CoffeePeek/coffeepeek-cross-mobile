@@ -1,6 +1,7 @@
 package com.coffeepeek.feature.checkinhistory.impl.ui.compose.component
 
 import androidx.compose.foundation.BorderStroke
+import org.jetbrains.compose.ui.tooling.preview.Preview
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
@@ -15,7 +16,6 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
@@ -100,7 +100,7 @@ internal fun HistoryCalendarCard(state: CombinedHistoryState, onAction: (Combine
     }
 }
 
-@PreviewLightDark @Composable private fun HistoryCalendarCardPreview() = CoffeePeekTheme {
+@Preview @Composable private fun HistoryCalendarCardPreview() = CoffeePeekTheme {
     HistoryCalendarCard(CombinedHistoryState("2026-10-14", HistoryMonth(2026, 10), true, 0,
         selectedDate = "2026-10-14", homeCalendar = CombinedHistoryLoadState(mapOf("2026-10-14" to 2), hasLoaded = true)), {})
 }
