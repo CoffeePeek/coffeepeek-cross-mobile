@@ -17,6 +17,9 @@ import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
+/** The proportions of the currency symbol drawable (446.4 / 360.67). */
+private const val BynSymbolHeightPerWidth = 446.4f / 360.67f
+
 /** Decorative currency indicators; the caller supplies price meaning and accessibility text. */
 @Composable
 fun CoffeePeekBynPriceIndicators(
@@ -26,12 +29,13 @@ fun CoffeePeekBynPriceIndicators(
     tint: Color = MaterialTheme.colorScheme.primary,
     maxCount: Int = count,
     inactiveTint: Color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.25f),
+    spacing: Dp = 3.dp,
 ) {
-    Row(modifier, horizontalArrangement = Arrangement.spacedBy(3.dp),
+    Row(modifier, horizontalArrangement = Arrangement.spacedBy(spacing),
         verticalAlignment = Alignment.CenterVertically) {
         repeat(maxCount.coerceAtLeast(0)) { index ->
             Icon(painterResource(Res.drawable.ic_byn_symbol), contentDescription = null,
-                modifier = Modifier.size(width = iconWidth, height = iconWidth * 1.25f),
+                modifier = Modifier.size(width = iconWidth, height = iconWidth * BynSymbolHeightPerWidth),
                 tint = if (index < count) tint else inactiveTint)
         }
     }

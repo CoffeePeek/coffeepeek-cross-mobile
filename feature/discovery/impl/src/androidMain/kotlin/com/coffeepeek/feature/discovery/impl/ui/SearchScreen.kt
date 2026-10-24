@@ -53,6 +53,7 @@ import com.coffeepeek.core.designsystem.component.CoffeePeekCatalogSuggestionCar
 import com.coffeepeek.core.designsystem.component.CoffeePeekFilterChip
 import com.coffeepeek.core.designsystem.component.CoffeePeekLoader
 import com.coffeepeek.core.designsystem.component.CoffeePeekPullToRefresh
+import com.coffeepeek.core.designsystem.component.CoffeePeekCircularBackButton
 import com.coffeepeek.core.designsystem.component.CoffeePeekSearchField
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
@@ -109,11 +110,18 @@ internal fun SearchContent(
 @Composable
 private fun SearchHeader(state: SearchState, host: DiscoveryHost, onAction: (SearchAction) -> Unit) {
     val focus = LocalFocusManager.current
+    val searching = state.searchActive || state.query.isNotBlank()
     Row(
         Modifier.fillMaxWidth().padding(horizontal = CoffeePeekDimens.spacing4, vertical = CoffeePeekDimens.spacing2),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing2),
     ) {
+        // As in prod: while searching a round back button leaves the search, and the filters stay available beside the field.
+        if (searching) CoffeePeekCircularBackButton(
+            onClick = { focus.clearFocus(); onAction(SearchAction.CancelSearch) },
+            contentDescription = stringResource(R.string.discovery_search_cancel),
+            tint = MaterialTheme.colorScheme.primary,
+        )
         CoffeePeekSearchField(
             value = state.query,
             onValueChange = { onAction(SearchAction.Query(it)) },
@@ -122,27 +130,23 @@ private fun SearchHeader(state: SearchState, host: DiscoveryHost, onAction: (Sea
             modifier = host.exposure(Modifier.weight(1f).onFocusChanged { if (it.isFocused) onAction(SearchAction.ActivateSearch) }, DiscoveryExposure.Search),
             onSearch = { focus.clearFocus() },
         )
-        if (state.searchActive || state.query.isNotBlank()) {
-            TextButton(onClick = { focus.clearFocus(); onAction(SearchAction.CancelSearch) }) { Text(stringResource(R.string.discovery_search_cancel)) }
-        } else {
-            val description = if (state.activeFilterCount > 0) stringResource(R.string.discovery_filters_active, state.activeFilterCount) else stringResource(R.string.discovery_filters)
-            BadgedBox(
-                badge = {
-                    if (state.activeFilterCount > 0) Box(
-                        Modifier.size(22.dp).clip(CircleShape).background(MaterialTheme.colorScheme.primary),
-                        contentAlignment = Alignment.Center,
-                    ) { Text(state.activeFilterCount.toString(), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onPrimary) }
-                },
-                modifier = host.exposure(Modifier, DiscoveryExposure.Filters),
+        val description = if (state.activeFilterCount > 0) stringResource(R.string.discovery_filters_active, state.activeFilterCount) else stringResource(R.string.discovery_filters)
+        BadgedBox(
+            badge = {
+                if (state.activeFilterCount > 0) Box(
+                    Modifier.size(22.dp).clip(CircleShape).background(MaterialTheme.colorScheme.primary),
+                    contentAlignment = Alignment.Center,
+                ) { Text(state.activeFilterCount.toString(), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onPrimary) }
+            },
+            modifier = host.exposure(Modifier, DiscoveryExposure.Filters),
+        ) {
+            OutlinedIconButton(
+                onClick = { onAction(SearchAction.ToggleFilters) },
+                modifier = Modifier.size(CoffeePeekDimens.buttonHeight).semantics { contentDescription = description },
+                shape = CircleShape,
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
             ) {
-                OutlinedIconButton(
-                    onClick = { onAction(SearchAction.ToggleFilters) },
-                    modifier = Modifier.size(CoffeePeekDimens.buttonHeight).semantics { contentDescription = description },
-                    shape = CircleShape,
-                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
-                ) {
-                    Icon(CoffeePeekIcons.Filter, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(22.dp))
-                }
+                Icon(CoffeePeekIcons.Filter, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(22.dp))
             }
         }
     }
