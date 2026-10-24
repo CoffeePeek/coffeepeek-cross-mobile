@@ -96,13 +96,10 @@ internal fun FullScreenImageDialog(
         pageCount = { imageUrls.size },
     )
     PrefetchPhotos(images.adjacentPreviewUrls(pagerState.currentPage), inPhotoViewer = true)
-    PhotoViewerDialog(onDismiss = onDismiss) {
+    PlatformFullScreenDialog(onDismiss = onDismiss) {
         PhotoViewerContent(images, pagerState, onDismiss)
     }
 }
-
-@Composable
-internal expect fun PhotoViewerDialog(onDismiss: () -> Unit, content: @Composable () -> Unit)
 
 @Composable
 private fun PhotoViewerContent(images: PhotoViewerImages, pagerState: PagerState, onDismiss: () -> Unit) {

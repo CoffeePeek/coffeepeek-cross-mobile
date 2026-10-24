@@ -52,12 +52,13 @@ internal class NativeScreenController(
     private val photoUnderStatusBar = route is Navigator.Screen.ShopDetail || route is Navigator.Screen.RoasterDetail
     private val isAuthFlow = route == Navigator.Screen.Auth || route == Navigator.Screen.Register ||
         route == Navigator.Screen.ForgotPassword || route is Navigator.Screen.ResetPassword
+    private val isCheckInHistory = route == Navigator.Screen.VisitedPlaces || route == Navigator.Screen.HomeCheckIns
     var handlesBackLocally = false
 
     init {
         this.title = title
         edgesForExtendedLayout = when {
-            isTabRoot || isAuthFlow -> UIRectEdgeBottom
+            isTabRoot || isAuthFlow || isCheckInHistory -> UIRectEdgeBottom
             photoUnderStatusBar -> UIRectEdgeAll
             else -> UIRectEdgeNone
         }
@@ -99,7 +100,7 @@ internal class NativeScreenController(
             child.view.topAnchor.constraintEqualToAnchor(if (photoUnderStatusBar) view.topAnchor else safeArea.topAnchor),
             child.view.leadingAnchor.constraintEqualToAnchor(view.leadingAnchor),
             child.view.trailingAnchor.constraintEqualToAnchor(view.trailingAnchor),
-            child.view.bottomAnchor.constraintEqualToAnchor(if (isTabRoot || photoUnderStatusBar || isAuthFlow) view.bottomAnchor else safeArea.bottomAnchor),
+            child.view.bottomAnchor.constraintEqualToAnchor(if (isTabRoot || photoUnderStatusBar || isAuthFlow || isCheckInHistory) view.bottomAnchor else safeArea.bottomAnchor),
         ))
         child.didMoveToParentViewController(this)
     }
@@ -118,7 +119,7 @@ internal class NativeScreenController(
             Box(Modifier.fillMaxSize().background(colors.background)
                 .consumeWindowInsets(when {
                     photoUnderStatusBar -> WindowInsets(0, 0, 0, 0)
-                    isAuthFlow -> WindowInsets.systemBars.only(WindowInsetsSides.Top)
+                    isAuthFlow || isCheckInHistory -> WindowInsets.systemBars.only(WindowInsetsSides.Top)
                     else -> WindowInsets.systemBars.only(WindowInsetsSides.Vertical)
                 })
                 .dismissKeyboardOnBackgroundGestures()) {

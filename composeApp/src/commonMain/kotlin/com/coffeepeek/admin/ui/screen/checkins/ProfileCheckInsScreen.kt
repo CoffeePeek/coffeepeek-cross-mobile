@@ -9,7 +9,10 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.calculateEndPadding
+import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -28,6 +31,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.admin.di.platformViewModel
@@ -49,6 +53,8 @@ import com.coffeepeek.admin.utils.currentUtcIsoDateTime
 import com.coffeepeek.admin.utils.utcIsoToLocalDate
 import com.coffeepeek.domain.model.CheckIn
 import com.coffeepeek.legacy.homecheckin.domain.HomeCheckIn
+import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
+import org.jetbrains.compose.ui.tooling.preview.Preview
 
 private enum class ActivityKind { All, Shop, Home }
 
@@ -173,94 +179,125 @@ internal fun ProfileCheckInsScreen(
         homeVm = homeVm,
     )
 
-    Scaffold(
-        topBar = { CpTopBar("Чекины") },
-        containerColor = MaterialTheme.colorScheme.background,
-        floatingActionButton = {
-            CheckInCreateButton(onClick = { Analytics.track(AnalyticsEvent.CHECK_IN_START_ATTEMPTED, "source" to "global_create"); showCreate = true })
+    CheckInHistoryScaffold(
+        onCreate = {
+            Analytics.track(AnalyticsEvent.CHECK_IN_START_ATTEMPTED, "source" to "global_create")
+            showCreate = true
         },
     ) { padding ->
-        Column(Modifier.fillMaxSize().padding(padding)) {
-            CapsuleSegmentedControl(ActivityKind.entries, kind,
-                label = { when (it) { ActivityKind.All -> "Все"; ActivityKind.Shop -> "В кофейне"; ActivityKind.Home -> "Дома" } },
-                onSelected = { kind = it }, modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp))
-            LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(
-                start = 16.dp, end = 16.dp, top = 8.dp, bottom = 96.dp)) {
-                item(key = "calendar") {
-                    CalendarCard(
-                        state = shop.copy(
-                            selectedDate = selectedDate,
-                            calendarCheckIns = if (kind == ActivityKind.Home) emptyMap() else shop.calendarCheckIns,
-                            isCalendarLoading = (kind != ActivityKind.Home && shop.isCalendarLoading) ||
-                                (kind != ActivityKind.Shop && home.calendarLoading),
-                            calendarError = (if (kind != ActivityKind.Home) shop.calendarError else null) ?:
-                                (if (kind != ActivityKind.Shop) home.calendarError else null),
-                        ),
-                        today = today,
-                        onPreviousMonth = { moveMonth(-1) }, onNextMonth = { moveMonth(1) },
-                        onSelectDate = { chooseDate(it) },
-                        onToday = { syncMonth(today); if (selectedDate != today) chooseDate(today) },
-                        homeCounts = if (kind == ActivityKind.Shop) emptyMap()
-                            else home.calendar.associate { it.preparedOn to it.brewCount },
-                        homePhotos = if (kind == ActivityKind.Shop) emptyMap() else homeCalendarPhotos(home.calendarItems),
-                    )
-                }
-                if (selectedDate != null) item(key = "clear-date") {
-                    TextButton(onClick = { chooseDate(null) }) { Text("Показать все даты") }
-                }
-                if (isLoading && entries.isEmpty()) item { Box(Modifier.fillMaxWidth().height(90.dp),
-                    contentAlignment = Alignment.Center) { CoffeePeekLoader() } }
-                if (!isLoading && entries.isEmpty()) item {
-                    Text(if (selectedDate != null) "В этот день чекинов не было" else "Пока нет чекинов",
-                        modifier = Modifier.padding(vertical = 32.dp),
-                        color = MaterialTheme.colorScheme.onSurfaceVariant)
-                }
-                itemsIndexed(entries, key = { _, entry -> entry.key }) { index, entry ->
-                    val firstInDay = index == 0 || entries[index - 1].date != entry.date
-                    val lastInDay = index == entries.lastIndex || entries[index + 1].date != entry.date
-                    Column {
-                        if (firstInDay) Text(
-                            selectedDateTitle(entry.date, includeYear = entry.date.take(4) != today.take(4)),
-                            style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold,
-                            modifier = Modifier.padding(top = 24.dp, bottom = 12.dp))
-                        TimelineRail(entry is ActivityEntry.Home, firstInDay, lastInDay) {
-                            when (entry) {
-                                is ActivityEntry.Home -> HistoryTimelineCheckInCard(entry.value.toTimelineCheckIn(),
-                                    onClick = { homeVm.open(entry.value.id) },
-                                    onPhotoClick = { images, index -> photoPreview = images to index },
-                                    supportingLabel = entry.value.visibilityLabel())
-                                is ActivityEntry.Shop -> HistoryTimelineCheckInCard(entry.value,
-                                    onClick = { selectedShop = entry.value },
-                                    onPhotoClick = { images, index -> photoPreview = images to index })
-                            }
+        CapsuleSegmentedControl(ActivityKind.entries, kind,
+            label = { when (it) { ActivityKind.All -> "Все"; ActivityKind.Shop -> "В кофейне"; ActivityKind.Home -> "Дома" } },
+            onSelected = { kind = it }, modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp))
+        LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(
+            start = 16.dp, end = 16.dp, top = 8.dp, bottom = 96.dp + padding.calculateBottomPadding())) {
+            item(key = "calendar") {
+                CalendarCard(
+                    state = shop.copy(
+                        selectedDate = selectedDate,
+                        calendarCheckIns = if (kind == ActivityKind.Home) emptyMap() else shop.calendarCheckIns,
+                        isCalendarLoading = (kind != ActivityKind.Home && shop.isCalendarLoading) ||
+                            (kind != ActivityKind.Shop && home.calendarLoading),
+                        calendarError = (if (kind != ActivityKind.Home) shop.calendarError else null) ?:
+                            (if (kind != ActivityKind.Shop) home.calendarError else null),
+                    ),
+                    today = today,
+                    onPreviousMonth = { moveMonth(-1) }, onNextMonth = { moveMonth(1) },
+                    onSelectDate = { chooseDate(it) },
+                    onToday = { syncMonth(today); if (selectedDate != today) chooseDate(today) },
+                    homeCounts = if (kind == ActivityKind.Shop) emptyMap()
+                        else home.calendar.associate { it.preparedOn to it.brewCount },
+                    homePhotos = if (kind == ActivityKind.Shop) emptyMap() else homeCalendarPhotos(home.calendarItems),
+                )
+            }
+            if (selectedDate != null) item(key = "clear-date") {
+                TextButton(onClick = { chooseDate(null) }) { Text("Показать все даты") }
+            }
+            if (isLoading && entries.isEmpty()) item { Box(Modifier.fillMaxWidth().height(90.dp),
+                contentAlignment = Alignment.Center) { CoffeePeekLoader() } }
+            if (!isLoading && entries.isEmpty()) item {
+                Text(if (selectedDate != null) "В этот день чекинов не было" else "Пока нет чекинов",
+                    modifier = Modifier.padding(vertical = 32.dp),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+            itemsIndexed(entries, key = { _, entry -> entry.key }) { index, entry ->
+                val firstInDay = index == 0 || entries[index - 1].date != entry.date
+                val lastInDay = index == entries.lastIndex || entries[index + 1].date != entry.date
+                Column {
+                    if (firstInDay) Text(
+                        selectedDateTitle(entry.date, includeYear = entry.date.take(4) != today.take(4)),
+                        style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold,
+                        modifier = Modifier.padding(top = 24.dp, bottom = 12.dp))
+                    TimelineRail(entry is ActivityEntry.Home, firstInDay, lastInDay) {
+                        when (entry) {
+                            is ActivityEntry.Home -> HistoryTimelineCheckInCard(entry.value.toTimelineCheckIn(),
+                                onClick = { homeVm.open(entry.value.id) },
+                                onPhotoClick = { images, index -> photoPreview = images to index },
+                                supportingLabel = entry.value.visibilityLabel())
+                            is ActivityEntry.Shop -> HistoryTimelineCheckInCard(entry.value,
+                                onClick = { selectedShop = entry.value },
+                                onPhotoClick = { images, index -> photoPreview = images to index })
                         }
                     }
                 }
-                if (home.detailLoading) item { CoffeePeekLoader() }
-                if (kind != ActivityKind.Home && shop.error != null) item {
-                    RetryMessage(shop.error.orEmpty(), shopVm::refresh)
-                }
-                if (kind != ActivityKind.Home && shop.calendarError != null) item {
-                    RetryMessage(shop.calendarError.orEmpty(), shopVm::refreshCalendar)
-                }
-                if (kind != ActivityKind.Shop && home.calendarError != null) item {
-                    RetryMessage(home.calendarError.orEmpty(), homeVm::loadCalendar)
-                }
-                if (kind != ActivityKind.Shop && home.error != null) item {
-                    RetryMessage(home.error.orEmpty(), homeVm::refresh)
-                }
-                if (hasMore) item {
-                    TextButton(onClick = {
-                        if (selectedDate == null && kind != ActivityKind.Home && shop.hasMore) shopVm.loadMore()
-                        if (kind != ActivityKind.Shop && home.hasMore) homeVm.loadMore()
-                    }, modifier = Modifier.fillMaxWidth(), enabled = !shop.isLoadingMore && !home.loadingMore) {
-                        Text(if (shop.isLoadingMore || home.loadingMore) "Загрузка…" else "Показать ещё")
-                    }
+            }
+            if (home.detailLoading) item { CoffeePeekLoader() }
+            if (kind != ActivityKind.Home && shop.error != null) item {
+                RetryMessage(shop.error.orEmpty(), shopVm::refresh)
+            }
+            if (kind != ActivityKind.Home && shop.calendarError != null) item {
+                RetryMessage(shop.calendarError.orEmpty(), shopVm::refreshCalendar)
+            }
+            if (kind != ActivityKind.Shop && home.calendarError != null) item {
+                RetryMessage(home.calendarError.orEmpty(), homeVm::loadCalendar)
+            }
+            if (kind != ActivityKind.Shop && home.error != null) item {
+                RetryMessage(home.error.orEmpty(), homeVm::refresh)
+            }
+            if (hasMore) item {
+                TextButton(onClick = {
+                    if (selectedDate == null && kind != ActivityKind.Home && shop.hasMore) shopVm.loadMore()
+                    if (kind != ActivityKind.Shop && home.hasMore) homeVm.loadMore()
+                }, modifier = Modifier.fillMaxWidth(), enabled = !shop.isLoadingMore && !home.loadingMore) {
+                    Text(if (shop.isLoadingMore || home.loadingMore) "Загрузка…" else "Показать ещё")
                 }
             }
         }
     }
 }
+
+@Composable
+private fun CheckInHistoryScaffold(onCreate: () -> Unit, content: @Composable ColumnScope.(PaddingValues) -> Unit) {
+    Scaffold(
+        topBar = { CpTopBar("Чекины") },
+        containerColor = MaterialTheme.colorScheme.background,
+        floatingActionButton = { CheckInCreateButton(onClick = onCreate) },
+    ) { padding ->
+        val direction = LocalLayoutDirection.current
+        // Keep the viewport edge-to-edge; the list reserves bottom clearance inside its content.
+        Column(Modifier.fillMaxSize().padding(
+            start = padding.calculateStartPadding(direction),
+            end = padding.calculateEndPadding(direction),
+            top = padding.calculateTopPadding(),
+        )) { content(padding) }
+    }
+}
+
+@Composable
+private fun CheckInHistoryScaffoldPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
+    CheckInHistoryScaffold(onCreate = {}) { padding ->
+        LazyColumn(contentPadding = PaddingValues(bottom = 96.dp + padding.calculateBottomPadding())) {
+            itemsIndexed(List(12) { "Чекин ${it + 1}" }) { _, title ->
+                Text(title, Modifier.fillMaxWidth().padding(24.dp))
+            }
+        }
+    }
+}
+
+@Preview @Composable
+private fun CheckInHistoryScaffoldLightPreview() = CheckInHistoryScaffoldPreview(false)
+
+@Preview @Composable
+private fun CheckInHistoryScaffoldDarkPreview() = CheckInHistoryScaffoldPreview(true)
 
 @Composable
 internal fun TimelineRail(isHome: Boolean, firstInDay: Boolean, lastInDay: Boolean, content: @Composable () -> Unit) {

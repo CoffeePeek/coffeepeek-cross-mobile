@@ -50,8 +50,6 @@ import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
 import com.coffeepeek.admin.location.GeoPoint
 import com.coffeepeek.admin.location.PlatformLocation
 import com.coffeepeek.admin.map.CoffeeMap
@@ -61,6 +59,7 @@ import com.coffeepeek.admin.ui.component.CoffeePeekLoader
 import com.coffeepeek.admin.ui.component.GlassControlIcon
 import com.coffeepeek.admin.ui.component.PlatformMapControlButton
 import com.coffeepeek.admin.ui.component.PlatformGlassIconButton
+import com.coffeepeek.admin.ui.component.PlatformFullScreenDialog
 import com.coffeepeek.admin.ui.icons.CpIcons
 import com.coffeepeek.core.designsystem.component.CoffeePeekPlatformCoffeeIcon
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
@@ -115,10 +114,7 @@ fun PickShopLocationDialog(
         }
     }
 
-    Dialog(
-        onDismissRequest = onDismiss,
-        properties = DialogProperties(usePlatformDefaultWidth = false),
-    ) {
+    PlatformFullScreenDialog(onDismiss = onDismiss) {
         BoxWithConstraints(
             modifier = Modifier
                 .fillMaxSize()
