@@ -22,6 +22,10 @@ data class HomePreparation(
 
 /** [thumbnails] may hold an empty string for a photo that has no usable feed variant; [details] falls back to the original. */
 data class PostPhotos(val originals: List<String>, val thumbnails: List<String>, val details: List<String>) {
+    /** The sharper source an inline photo may upgrade to: its detail variant, else the original; the full original stays for the viewer. */
+    fun inlineSource(index: Int): String? =
+        (details.getOrNull(index)?.takeIf(String::isNotBlank) ?: originals.getOrNull(index))?.takeIf(String::isNotBlank)
+
     companion object { val None = PostPhotos(emptyList(), emptyList(), emptyList()) }
 }
 
