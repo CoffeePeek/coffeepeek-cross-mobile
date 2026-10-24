@@ -50,10 +50,6 @@ kotlin {
             implementation(project(module.feature.shop.data))
             implementation(project(module.feature.shop.impl))
             implementation(project(module.feature.profile.impl))
-            implementation(project(module.feature.coffee.api))
-            implementation(project(module.feature.coffee.domain))
-            implementation(project(module.feature.coffee.data))
-            implementation(project(module.feature.coffee.impl))
             implementation(project(module.feature.checkInHistory.api))
             implementation(project(module.feature.checkInHistory.domain))
             implementation(project(module.feature.checkInHistory.data))
@@ -113,6 +109,10 @@ kotlin {
             implementation(project(module.feature.discovery.domain))
             implementation(project(module.feature.discovery.data))
             implementation(project(module.feature.discovery.impl))
+            implementation(project(module.feature.coffee.api))
+            implementation(project(module.feature.coffee.domain))
+            implementation(project(module.feature.coffee.data))
+            implementation(project(module.feature.coffee.impl))
             implementation(project(module.feature.auth.domain))
             implementation(project(module.feature.auth.data))
             implementation(project(module.feature.auth.impl))
@@ -393,6 +393,11 @@ androidComponents {
                 "com.coffeepeek.admin.di.discovery.FeatureDiscoveryScreenRendererKt",
                 "com.coffeepeek.feature.discovery.impl.DiscoveryEntriesImplKt",
                 "com.coffeepeek.admin.di.favorites.ServerFavoriteShopsRepository",
+                "com.coffeepeek.admin.di.coffee.FeatureCoffeeScreenRenderer",
+                "com.coffeepeek.admin.di.coffee.FeatureCoffeeScreenRendererKt",
+                "com.coffeepeek.admin.di.coffee.CoffeeModuleKt",
+                "com.coffeepeek.feature.coffee.impl.CoffeeListApiImplKt",
+                "com.coffeepeek.feature.coffee.impl.CoffeeDetailApiImplKt",
                 "com.coffeepeek.feature.roaster.impl.RoasterEntryImplsKt",
                 "com.coffeepeek.feature.roaster.data.repository.RoasterRepositoryFactoryKt",
                 "com.coffeepeek.data.feature.favorites.ServerFavoritesRepository",

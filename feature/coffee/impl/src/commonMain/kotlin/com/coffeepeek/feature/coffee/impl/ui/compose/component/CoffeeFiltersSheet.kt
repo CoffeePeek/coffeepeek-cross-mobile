@@ -11,8 +11,6 @@ import com.coffeepeek.feature.coffee.impl.resources.coffee_filters_failed
 import com.coffeepeek.feature.coffee.impl.resources.coffee_loading
 import com.coffeepeek.feature.coffee.impl.resources.coffee_reset
 import com.coffeepeek.feature.coffee.impl.resources.coffee_retry
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -40,13 +38,8 @@ internal fun CoffeeFiltersSheet(state: CoffeeListState, onAction: (CoffeeListAct
 internal fun CoffeeFiltersContent(state: CoffeeListState, onAction: (CoffeeListAction) -> Unit) {
     val draft = state.filterDraft ?: return
     Column(Modifier.fillMaxWidth()) {
-        Row(Modifier.fillMaxWidth().padding(horizontal = CoffeePeekDimens.spacing1), verticalAlignment = Alignment.CenterVertically) {
-            TextButton({ onAction(CoffeeListAction.ResetFilterDraft) }, enabled = draft.activeCount > 0) { Text(stringResource(Res.string.coffee_reset)) }
-            Text(stringResource(Res.string.coffee_filters), style = MaterialTheme.typography.titleMedium,
-                modifier = Modifier.weight(1f), textAlign = TextAlign.Center)
-            TextButton({ onAction(CoffeeListAction.ApplyFilters) }) { Text(stringResource(Res.string.coffee_done)) }
-        }
-        Column(Modifier.weight(1f, fill = false).verticalScroll(rememberScrollState()).navigationBarsPadding()
+        CoffeeFiltersHeader(draft, onAction)
+        CoffeePeekScrollableColumn(Modifier.weight(1f, fill = false).navigationBarsPadding()
             .padding(horizontal = CoffeePeekDimens.spacing4).padding(bottom = CoffeePeekDimens.spacing6),
             verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing6)) {
             CoffeePeekGroupSection {
@@ -77,8 +70,21 @@ internal fun CoffeeFiltersContent(state: CoffeeListState, onAction: (CoffeeListA
     }
 }
 
-@Preview @Composable private fun CoffeeFiltersPreview() = CoffeePeekTheme {
+@Composable
+private fun CoffeeFiltersHeader(draft: CoffeeFilters, onAction: (CoffeeListAction) -> Unit) {
+    Row(Modifier.fillMaxWidth().padding(horizontal = CoffeePeekDimens.spacing1), verticalAlignment = Alignment.CenterVertically) {
+        TextButton({ onAction(CoffeeListAction.ResetFilterDraft) }, enabled = draft.activeCount > 0) { Text(stringResource(Res.string.coffee_reset)) }
+        Text(stringResource(Res.string.coffee_filters), style = MaterialTheme.typography.titleMedium,
+            modifier = Modifier.weight(1f), textAlign = TextAlign.Center)
+        TextButton({ onAction(CoffeeListAction.ApplyFilters) }) { Text(stringResource(Res.string.coffee_done)) }
+    }
+}
+
+@Composable private fun CoffeeFiltersPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
     Surface(Modifier.height(400.dp)) {
         CoffeeFiltersContent(CoffeeListState(filterDraft = CoffeeFilters(), filtersLoading = false), {})
     }
 }
+
+@Preview @Composable private fun CoffeeFiltersLightPreview() = CoffeeFiltersPreview(false)
+@Preview @Composable private fun CoffeeFiltersDarkPreview() = CoffeeFiltersPreview(true)

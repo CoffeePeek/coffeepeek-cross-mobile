@@ -8,27 +8,30 @@ import com.coffeepeek.feature.coffee.api.CoffeeDetailSection
 import com.coffeepeek.feature.coffee.api.CoffeeExposure
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
-import java.io.IOException
+import kotlinx.io.IOException
 import kotlin.test.*
 
 /** Adapter parity with the legacy catalogue events (see CoffeeFilterAnalyticsTest for the legacy ViewModel). */
-class AndroidCoffeeAnalyticsTest {
+class CoffeeAnalyticsAdapterTest {
     @Test fun searchAndFilterExposureKeepsTheLegacyPlacementAndPage() {
         assertEquals(Triple("search", "coffees", "coffees"), CoffeeExposure.Search.tracking())
         assertEquals(Triple("filters", "coffees", "coffees"), CoffeeExposure.Filters.tracking())
         assertEquals(Triple("coffee_catalog", "catalog", "coffees"), CoffeeExposure.Catalog.tracking())
     }
-    private suspend fun kotlinx.coroutines.test.TestScope.installed(): RecordingTransport {
+    private suspend fun kotlinx.coroutines.test.TestScope.installed(consent: AnalyticsConsent = AnalyticsConsent.Accepted): RecordingTransport {
         val sdk = RecordingTransport()
-        val service = analytics(MemoryConsent(AnalyticsConsent.Accepted), sdk)
-        service.setForeground(true); service.restoreConsent(); service.syncIdentity("backend-id"); Analytics.install(service)
+        val service = analytics(MemoryConsent(consent), sdk)
+        service.setForeground(true)
+        service.restoreConsent()
+        service.syncIdentity("backend-id")
+        Analytics.install(service)
         runCurrent()
         return sdk
     }
 
     @Test fun searchLifecycleMatchesLegacyEventsAndDeduplicatesUnchangedCriteria() = runTest {
         val sdk = installed()
-        val list = AndroidCoffeeAnalytics.list()
+        val list = AppCoffeeAnalytics.list()
         list.searchStarted("||false", "", emptyList())
         list.searchStarted("||false", "", emptyList()) // refresh with unchanged criteria
         list.resultsViewed(3)
@@ -47,7 +50,7 @@ class AndroidCoffeeAnalyticsTest {
 
     @Test fun failureIsCategorizedAndSettlesTheAttempt() = runTest {
         val sdk = installed()
-        val list = AndroidCoffeeAnalytics.list()
+        val list = AppCoffeeAnalytics.list()
         list.searchStarted("q", "q", listOf("roast"))
         list.searchFailed(IOException("private payload"))
         list.resultsViewed(1)
@@ -60,7 +63,7 @@ class AndroidCoffeeAnalyticsTest {
 
     @Test fun filterEventsMatchLegacyShapeAndNeverCarryValues() = runTest {
         val sdk = installed()
-        val list = AndroidCoffeeAnalytics.list()
+        val list = AppCoffeeAnalytics.list()
         list.filtersOpened()
         list.filtersApplied(listOf("roast", "availableOnly"), listOf("roast", "availableOnly"), reset = false)
         list.filtersApplied(emptyList(), listOf("roast"), reset = true)
@@ -73,7 +76,7 @@ class AndroidCoffeeAnalyticsTest {
 
     @Test fun detailInteractionsUseLegacySectionAndActionNames() = runTest {
         val sdk = installed()
-        val detail = AndroidCoffeeAnalytics.detail()
+        val detail = AppCoffeeAnalytics.detail()
         detail.contentInteracted(CoffeeDetailSection.SimilarCoffees, CoffeeContentAction.Select)
         detail.contentInteracted(CoffeeDetailSection.Contacts, CoffeeContentAction.Share)
         detail.contentInteracted(CoffeeDetailSection.Description, CoffeeContentAction.Close)
@@ -81,6 +84,17 @@ class AndroidCoffeeAnalyticsTest {
         val rows = sdk.events.filter { it.first == "entity_content_interacted" }.map { it.second["section"] to it.second["action"] }
         assertEquals(listOf("similar_coffees" to "select", "contacts" to "share", "description" to "close"), rows)
         assertTrue(sdk.events.all { it.second["entity_type"] == "coffee" })
+    }
+
+    @Test fun declinedConsentSuppressesListAndDetailTelemetry() = runTest {
+        val sdk = installed(AnalyticsConsent.Declined)
+        val list = AppCoffeeAnalytics.list()
+        list.searchStarted("fixture", "private query", emptyList())
+        list.resultsViewed(3)
+        list.filtersOpened()
+        AppCoffeeAnalytics.detail().contentInteracted(CoffeeDetailSection.Photos, CoffeeContentAction.Open)
+        runCurrent()
+        assertTrue(sdk.events.isEmpty())
     }
 
     private fun Map<String, Any>.filterKeys(keys: Set<String>) = filter { it.key in keys }

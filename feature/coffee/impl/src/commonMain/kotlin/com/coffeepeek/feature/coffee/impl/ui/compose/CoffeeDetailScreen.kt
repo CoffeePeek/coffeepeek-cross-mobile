@@ -1,5 +1,8 @@
 package com.coffeepeek.feature.coffee.impl.ui.compose
 
+import com.coffeepeek.core.designsystem.component.CoffeePeekScaffold as Scaffold
+import com.coffeepeek.core.designsystem.component.coffeePeekScrollContentPadding
+
 import com.coffeepeek.feature.coffee.api.CoffeeExposure
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import com.coffeepeek.feature.coffee.impl.resources.Res
@@ -99,7 +102,7 @@ internal fun CoffeeDetailScreenContent(
                     CoffeePeekLoader(stringResource(Res.string.coffee_loading))
                 }
                 state.loadFailed -> CoffeeLoadError({ onAction(CoffeeDetailAction.Retry) }, Modifier.fillMaxSize().padding(padding))
-                details != null -> LazyColumn(Modifier.fillMaxSize().padding(padding).testTag("coffee-detail-list"), contentPadding = PaddingValues(bottom = CoffeePeekDimens.spacing6),
+                details != null -> LazyColumn(Modifier.fillMaxSize().padding(padding).testTag("coffee-detail-list"), contentPadding = coffeePeekScrollContentPadding(PaddingValues(bottom = CoffeePeekDimens.spacing6)),
                     verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing6)) {
                     item(key = "photo") {
                         val photosDescription = stringResource(Res.string.coffee_open_photos)
@@ -189,10 +192,15 @@ internal fun CoffeeDetailScreenContent(
     Text(title, style = MaterialTheme.typography.headlineSmall, modifier = Modifier.semantics { heading() })
 }
 
-@Preview @Composable private fun CoffeeDetailPreview() = CoffeePeekTheme {
+@Composable private fun CoffeeDetailPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
     CoffeeDetailScreenContent(CoffeeDetailState(details = previewCoffeeDetails(), isLoading = false), {},
         { _, _, modifier, _ -> CoffeePeekImagePlaceholder(modifier) }, { _, _, _ -> }, { it })
 }
-@Preview @Composable private fun CoffeeDetailErrorPreview() = CoffeePeekTheme {
+@Composable private fun CoffeeDetailErrorPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
     CoffeeDetailScreenContent(CoffeeDetailState(isLoading = false, loadFailed = true), {}, { _, _, _, _ -> }, { _, _, _ -> }, { it })
 }
+
+@Preview @Composable private fun CoffeeDetailLightPreview() = CoffeeDetailPreview(false)
+@Preview @Composable private fun CoffeeDetailDarkPreview() = CoffeeDetailPreview(true)
+@Preview @Composable private fun CoffeeDetailErrorLightPreview() = CoffeeDetailErrorPreview(false)
+@Preview @Composable private fun CoffeeDetailErrorDarkPreview() = CoffeeDetailErrorPreview(true)

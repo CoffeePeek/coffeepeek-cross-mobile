@@ -7,7 +7,7 @@ import com.coffeepeek.feature.coffee.domain.repository.CoffeeRepository
 import com.coffeepeek.feature.coffee.impl.createCoffeePicker
 import org.koin.dsl.module
 
-/** App-owned assembly of the migrated catalogue; the plain client keeps its existing lifetime and policy. */
+/** Shared app assembly; both platforms reuse the existing plain client and its policy. */
 internal fun coffeeModule() = module {
     single<CoffeeRepository> { createCoffeeRepository(get<CoffeePeekClient>().plainClient) }
     single<CoffeePicker> { createCoffeePicker(get()) }

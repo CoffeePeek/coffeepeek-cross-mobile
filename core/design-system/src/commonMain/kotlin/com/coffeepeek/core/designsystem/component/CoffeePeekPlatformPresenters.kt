@@ -97,6 +97,10 @@ data class CoffeePeekNativeMenuItem(
 )
 
 interface CoffeePeekNativeControlsPresenter {
+    /** Native equal-width segments; false keeps the shared renderer (for example for too many options). */
+    @Composable
+    fun SegmentedControl(labels: List<String>, selectedIndex: Int, onSelected: (Int) -> Unit, modifier: Modifier, enabled: Boolean): Boolean
+
     /** Draws the glass button natively and returns true, or returns false to let the caller draw its own. */
     @Composable
     fun GlassIconButton(

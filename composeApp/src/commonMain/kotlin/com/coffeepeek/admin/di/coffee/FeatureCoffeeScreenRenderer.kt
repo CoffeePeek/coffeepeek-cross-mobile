@@ -1,7 +1,6 @@
 package com.coffeepeek.admin.di.coffee
 
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import com.coffeepeek.admin.ui.Navigator
 import com.coffeepeek.admin.ui.component.CoffeeShopImage
@@ -18,8 +17,8 @@ import com.coffeepeek.feature.coffee.impl.createCoffeeDetailEntry
 import com.coffeepeek.admin.ui.component.LoadErrorContent
 import com.coffeepeek.feature.coffee.impl.createCoffeeListEntry
 
-/** Android routes to the migrated catalogue; root navigation, browser, share and photo viewer stay app-owned. */
-internal class AndroidCoffeeScreenRenderer(
+/** Both platforms use migrated catalogue entries; browser, share, photos and root navigation remain app-owned. */
+internal class FeatureCoffeeScreenRenderer(
     private val list: CoffeeListEntry,
     private val detail: CoffeeDetailEntry,
 ) : CoffeeScreenRenderer {
@@ -35,19 +34,19 @@ internal class AndroidCoffeeScreenRenderer(
             onOpenCoffee = { Navigator.navigate(Navigator.Screen.CoffeeDetail(it)) },
             onOpenRoaster = { Navigator.navigate(Navigator.Screen.RoasterDetail(it)) },
             onOpenSeller = OpenInBrowser::openInBrowser,
-            onShare = { name, path -> ShareHelper.shareText("$name — https://coffeepeek.by$path") })
+            onShare = { name, path -> ShareHelper.shareText("$name — https://coffeepeek.by$path") }, modifier = Modifier)
     }
 }
 
-internal fun androidCoffeeScreenRenderer(repository: CoffeeRepository): AndroidCoffeeScreenRenderer {
+internal fun featureCoffeeScreenRenderer(repository: CoffeeRepository): FeatureCoffeeScreenRenderer {
     val image: @Composable (String, String, Modifier, androidx.compose.ui.layout.ContentScale) -> Unit =
         { url, description, modifier, scale ->
             CoffeeShopImage(imageUrl = url, modifier = modifier, contentDescription = description, contentScale = scale)
         }
-    return AndroidCoffeeScreenRenderer(
-        createCoffeeListEntry(repository, AndroidCoffeeAnalytics, AndroidCoffeeScreenAnalytics, image) { onRetry -> LoadErrorContent(onRetry) },
+    return FeatureCoffeeScreenRenderer(
+        createCoffeeListEntry(repository, AppCoffeeAnalytics, AppCoffeeScreenAnalytics, image) { onRetry -> LoadErrorContent(onRetry) },
         createCoffeeDetailEntry(repository, image,
             { urls, index, onDismiss -> FullScreenImageDialog(urls, index, onDismiss = onDismiss) },
-            ::utcIsoToLocalDateTime, AndroidCoffeeAnalytics, AndroidCoffeeScreenAnalytics),
+            ::utcIsoToLocalDateTime, AppCoffeeAnalytics, AppCoffeeScreenAnalytics),
     )
 }

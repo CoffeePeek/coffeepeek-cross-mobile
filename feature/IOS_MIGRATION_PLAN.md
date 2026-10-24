@@ -19,13 +19,13 @@ iOS-документы (`docs/IOS_NATIVE_EXPERIENCE.md`, `IOS_NATIVE_NAVIGATION.
 - В `kotlinx-datetime` переведены даты в notifications, contributions, home-check-in.
 
 **Этап 1 — нативные хуки в design-system: готов.** Через точки подключения (`LocalCoffeePeek*Presenter`); iOS ставит UIKit-реализации одним местом, `ProvideDesignSystemPlatformHooks` в `composeApp`, Android рисует Material как раньше:
-шторка, native header, date picker, alert, выбор фото, haptic, scroll-to-top, роли клавиатуры (AutoFill, «Готово»), UIMenu для ActionMenu, glass-кнопки, переключатель с haptic, спиннер, `CoffeePeekBackHandler`, `CoffeePeekScrollableColumn`; `CoffeePeekActionMenu` перенесён в commonMain.
-Не использовано экранами пока: `CoffeePeekScrollableColumn`, `nativeAction` в header; native-иконки у части glass-кнопок и меню не проставлены.
+шторка, native header, date picker, alert, выбор фото, haptic, scroll-to-top, роли клавиатуры (AutoFill, «Готово»), UIMenu для ActionMenu, glass-кнопки, переключатель с haptic, спиннер, `CoffeePeekBackHandler`, `CoffeePeekScrollableColumn`; `CoffeePeekActionMenu` перенесён в commonMain. В checkpoint Coffee добавлено подключение UIKit segmented control к DS-капсуле.
+`CoffeePeekScrollableColumn` используется фильтрами Coffee. Не использовано экранами пока: `nativeAction` в header; native-иконки у части glass-кнопок и меню не проставлены.
 
 **Этап 2 — сессия: F23 и F24 готовы** (выход стирает старые строки; сбой удаления Keychain сообщается). Core session port вместо `SessionRepository` (~43 файла) — **не сделан**.
 
-**Этап 3 — подключение на iOS: начат.** Через новые модули на iOS подключены: вкладка Settings (и три её подэкрана), окно обновления, колокольчик уведомлений, экраны входа, регистрации и восстановления пароля, **Community (вкладка «Лента»)** и **Discovery (вкладка «Поиск»)**. Подключены также Google/Apple кнопки и существующие Swift-провайдеры (при доступной конфигурации); реальный OAuth ещё не проверен.
-Остальное на iOS по-прежнему legacy: Coffee, Profile и остальные владельцы. Вкладки Coffee и Profile ещё вызывают legacy-экраны напрямую; Community и Discovery идут через feature-рендереры.
+**Этап 3 — подключение на iOS: начат.** Через новые модули на iOS подключены: вкладка Settings (и три её подэкрана), окно обновления, колокольчик уведомлений, экраны входа, регистрации и восстановления пароля, **Community (вкладка «Лента»)**, **Discovery (вкладка «Поиск»)** и **Coffee (вкладка каталога и детали кофе)**. Подключены также Google/Apple кнопки и существующие Swift-провайдеры (при доступной конфигурации); реальный OAuth ещё не проверен.
+Остальное на iOS по-прежнему legacy: Profile и остальные владельцы. Вкладка Profile ещё вызывает legacy-экран напрямую; Community, Discovery и Coffee идут через feature-рендереры.
 
 **Важные находки для следующих срезов**
 1. Kotlin/Native не линкует переопределение composable-метода интерфейса с аргументом по умолчанию (`modifier: Modifier = Modifier`): ошибка видна только при линковке и только у достижимого кода. У каждого владельца при подключении убрать значения по умолчанию из api-интерфейсов (так сделано у Settings и Auth).
@@ -34,7 +34,7 @@ iOS-документы (`docs/IOS_NATIVE_EXPERIENCE.md`, `IOS_NATIVE_NAVIGATION.
 4. Для сообщения проверки обновлений на iOS нет тоста: временно используется `ErrorHandler.showError`, нужно решение по UX.
 
 **Остаётся**
-- Этап 3: Coffee (+вкладка), Profile (+вкладка), Contributions, Shop и Shop-report, Check-in history, Home check-in и общий create flow, Favorites (по решению продукта); ручная приёмка Community/Discovery и live-приёмка Apple/Google.
+- Этап 3: Profile (+вкладка), Contributions, Shop и Shop-report, Check-in history, Home check-in и общий create flow, Favorites (по решению продукта); ручная приёмка Community/Discovery/Coffee и live-приёмка Apple/Google.
 - Этап 2: core session port.
 - Roaster: Xcode-линковка, симулятор, устройство.
 - Этап 5: удаление legacy — только после полной готовности и ручной приёмки.
@@ -251,7 +251,86 @@ clip/touch при прокрутке и раскрытии, selected pin/zone/ca
 API favorite writes, permission dialogs и production analytics не запускались;
 fake проверки не заменяют их приёмку с согласованным аккаунтом.
 
-Следующий владелец code-плана: **Coffee / каталог и вкладка кофе**.
+Следующий владелец code-плана на этом checkpoint: **Coffee / каталог и вкладка кофе**.
+
+### Checkpoint: Coffee / каталог и детали — 2026-10-25
+
+Продолжение PR #195, база `4b108d3a` + этот срез. Свежие `origin/main=16724b7e`
+и `origin/develop=8ac9f49a` уже входят в ветку, дополнительный merge не требовался.
+Сверены native tab call, общий detail route, legacy CoffeeList/Detail/Filters,
+client/DI, weight selector и аналитика. Legacy-экраны/модели не удалены.
+
+Сделано:
+
+- `FeatureCoffeeScreenRenderer`, `CoffeeModule`, `AppCoffeeAnalytics` и screen
+  analytics перенесены в `composeApp/commonMain/di/coffee`. Четыре зависимости
+  Coffee api/domain/data/impl перенесены из Android в common source set приложения.
+  UI/MVI/resources остаются в `feature/coffee`, root navigation и platform ports — в app.
+- iOS подключает тот же coffeeModule и renderer; native Coffee tab больше не
+  вызывает legacy CoffeeListScreen напрямую. Detail route уже шёл через renderer.
+  Сохранены общий create slot, возврат, переходы к обжарщику/похожему кофе,
+  browser продавца, канонический share path, gallery и формат проверенной даты.
+- Repository по-прежнему использует существующий plainClient. Публичный feature
+  CoffeePicker регистрируется рядом с repository, legacy picker — отдельный контракт
+  и продолжает обслуживать текущие legacy формы. Auth/session/client policy не менялись.
+- Из CoffeeListEntry/CoffeeDetailEntry.Content убраны default arguments composable
+  интерфейсов; adapter передаёт modifier явно. List/detail используют DS Scaffold
+  и scroll content padding: clearance native tab и safe area pushed detail не теряются.
+  Фильтры используют существующий CoffeePeekScrollableColumn и native DS sheet;
+  MVI apply/cancel/reset и ресурсы не менялись.
+- В DS добавлен native SegmentedControl hook для не прокручиваемых капсул.
+  iOS делегирует существующему UISegmentedControl (2–4 варианта), остальные случаи
+  оставляют общий renderer; Android визуально не меняется. Нативная реализация
+  вынесена из PlatformPresentation в отдельный NativeSegmentedControl.ios файл:
+  сохранены surface-подложка против чёрных углов, underlay/clipping, цвета тем и
+  haptic. Передаются enabled и текущий callback; release отключает control и снимает target.
+- Три чистых DS unit tests проверяют disabled/невалидный индекс/current options
+  callback policy без Compose/UIKit execution. Analytics adapter tests перенесены
+  в commonTest с multiplatform IOException; добавлен consent-declined контракт.
+  Android legacy-vs-feature analytics parity и fake DI tests сохранены.
+- У list/detail/error/empty/filter/weight offer добавлены paired light/dark previews
+  рядом с владельцами, без DI/сети. Native selector сохраняет собственную пару previews.
+
+Проверки (Mac/JBR 21, 2026-10-25, база `4b108d3a` + этот срез):
+
+Первый полный прогон остановился на Native compilation:
+перенесённые common adapters ещё не видели Coffee, потому что app dependencies
+остались в androidMain. DS/feature unit suites успели пройти, общий прогон не был
+успешным. После переноса четырёх зависимостей в commonMain повторный полный прогон
+успешен. Исходная ошибка сохранена, не объявляется только проблемой IDE.
+
+- Coffee domain/data/impl: **64 tests**, 7 suites. Design-system: **44 tests**,
+  12 suites. App subset `*Coffee*` / `*NativeTabRoutes*`: **24 tests**, 8 suites.
+  Итого **132**, 0 failures/errors/skips. DS/feature suites прошли до первой Native
+  ошибки, а при повторе были up-to-date; app subset выполнен в успешном прогоне.
+  Нативные callbacks/рисование UI этим не проверялись. Включены fake DI/plain-client,
+  API mapping, picker, list/detail MVI, legacy-vs-feature analytics parity,
+  consent-declined и invalid/disabled segment callback contracts.
+- `assembleDirectDebug`, `assembleDirectSandbox`, packaged runtime-class checks
+  обоих APK и Sandbox isolation прошли. Новые guards требуют renderer/factory,
+  CoffeeModuleKt и entry factories. APK не устанавливались/не запускались;
+  обычный CoffeePeek, аккаунт и выбранный Studio Build Variant не менялись.
+- `compileKotlinIosArm64`, `linkDebugFrameworkIosSimulatorArm64`,
+  `compileTestKotlinIosSimulatorArm64` прошли. Новые adapter/module/entry и UIKit
+  selector достижимы в Native link. Common app tests для iOS только скомпилированы,
+  не выполнены на симуляторе. Swift app и signing в этом срезе не собирались.
+- Gradle последовательно, `--max-workers=6`, локальные логи вне tracked sources.
+  Прежние deprecation/expect-actual/framework bundle-ID warnings остаются. После
+  исправления Gradle source set Studio по-прежнему сообщает unresolved feature
+  dependencies в CoffeeModule; успешные Android/Native builds зафиксированы
+  отдельно, IDE inspection/preview не объявляются успешной ручной приёмкой.
+- Paired previews компилируются; IDE rendering и реальный UIKit UI не проверялись.
+  Автоматизированных UI/Compose/instrumentation/screenshot tests и их Activity/APK
+  инфраструктуры не добавлялось и не запускалось.
+
+Открытые gates: iPhone light/dark/большой шрифт/VoiceOver, scrolling и clipping
+package photos/roaster circles, смена веса и отсутствие чёрных углов native selector,
+filter sheet draft/apply/cancel/reset, pagination/retry, native gallery/back,
+safe area/tab bar, возврат из Roaster/similar Coffee и browser/share presentation.
+Реальные browser/share actions, backend responses и production analytics не
+проверялись; fake unit suites не сертифицируют эти сценарии.
+
+Следующий владелец code-плана: **Profile / собственный и публичный профиль, account**.
 
 ## 1. Принципы (решение 2026-10-24)
 

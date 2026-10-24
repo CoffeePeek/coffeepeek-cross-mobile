@@ -55,7 +55,7 @@ internal expect fun NativeModalSheet(
 internal expect fun PlatformSwitch(checked: Boolean, onCheckedChange: ((Boolean) -> Unit)?, enabled: Boolean = true, modifier: Modifier = Modifier)
 
 @Composable
-internal expect fun NativeSegmentedControl(labels: List<String>, selectedIndex: Int, onSelected: (Int) -> Unit, modifier: Modifier): Boolean
+internal expect fun NativeSegmentedControl(labels: List<String>, selectedIndex: Int, onSelected: (Int) -> Unit, modifier: Modifier, enabled: Boolean = true): Boolean
 
 internal enum class HapticEvent { Selection, Success, Error }
 internal expect fun platformHaptic(event: HapticEvent)

@@ -13,7 +13,7 @@ import com.coffeepeek.admin.theme.ThemeManager
 import androidx.compose.ui.viewinterop.UIKitInteropInteractionMode
 import androidx.compose.ui.viewinterop.UIKitInteropProperties
 import androidx.compose.ui.viewinterop.UIKitViewController
-import com.coffeepeek.admin.feature.coffee.ui.CoffeeListScreen
+import com.coffeepeek.admin.ui.screen.coffee.CoffeeScreenRenderer
 import com.coffeepeek.admin.feature.community.ui.CommunityScreenRenderer
 import com.coffeepeek.admin.ui.Navigator.isHandledByRootNav
 import com.coffeepeek.admin.ui.screen.main.DiscoveryScreenRenderer
@@ -153,7 +153,7 @@ internal actual fun PlatformRootNavigation(
             val root = NativeScreenController(labels[index], analyticsPage = listOf("discovery", "coffees", "feed", "profile", "settings")[index], isTabRoot = true) {
                 when (index) {
                     0 -> koinInject<DiscoveryScreenRenderer>().Tab(onMapExpandedChange = {})
-                    1 -> CheckInTabContent { CoffeeListScreen() }
+                    1 -> CheckInTabContent { koinInject<CoffeeScreenRenderer>().List() }
                     2 -> koinInject<CommunityScreenRenderer>().Content(
                         onCreateCheckIn = { Navigator.navigate(Navigator.Screen.CreateCheckIn) },
                         notificationsAction = { koinInject<com.coffeepeek.admin.feature.notifications.ui.NotificationsRenderer>().Bell() },

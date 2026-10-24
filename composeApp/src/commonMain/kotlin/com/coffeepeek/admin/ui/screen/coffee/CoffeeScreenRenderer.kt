@@ -4,7 +4,7 @@ import androidx.compose.runtime.Composable
 import com.coffeepeek.admin.feature.coffee.ui.CoffeeDetailScreen
 import com.coffeepeek.admin.feature.coffee.ui.CoffeeListScreen
 
-/** Platform selection only; shared/iOS keep the legacy catalogue UI, Android composes the migrated entries. */
+/** Platform selection only; both platforms bind feature entries, while legacy UI remains a fallback. */
 interface CoffeeScreenRenderer {
     @Composable
     fun List()

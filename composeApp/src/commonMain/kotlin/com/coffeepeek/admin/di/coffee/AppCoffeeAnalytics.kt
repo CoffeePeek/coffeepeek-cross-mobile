@@ -12,12 +12,12 @@ import com.coffeepeek.feature.coffee.api.CoffeeListAnalytics
 import com.coffeepeek.feature.coffee.api.CoffeeScreenAnalytics
 
 /** Same consent-aware trackers and event names as the legacy catalogue screens, not a second analytics service. */
-internal object AndroidCoffeeAnalytics : CoffeeAnalytics {
-    override fun list(): CoffeeListAnalytics = AndroidCoffeeListAnalytics()
-    override fun detail(): CoffeeDetailAnalytics = AndroidCoffeeDetailAnalytics
+internal object AppCoffeeAnalytics : CoffeeAnalytics {
+    override fun list(): CoffeeListAnalytics = AppCoffeeListAnalytics()
+    override fun detail(): CoffeeDetailAnalytics = AppCoffeeDetailAnalytics
 }
 
-private class AndroidCoffeeListAnalytics : CoffeeListAnalytics {
+private class AppCoffeeListAnalytics : CoffeeListAnalytics {
     // One tracker per list ViewModel: it deduplicates unchanged criteria and settles each attempt once.
     private val tracker = SearchTracker(Catalog.Coffees)
     private var attempt: SearchAttempt? = null
@@ -37,7 +37,7 @@ private class AndroidCoffeeListAnalytics : CoffeeListAnalytics {
     }
 }
 
-private object AndroidCoffeeDetailAnalytics : CoffeeDetailAnalytics {
+private object AppCoffeeDetailAnalytics : CoffeeDetailAnalytics {
     override fun contentInteracted(section: CoffeeDetailSection, action: CoffeeContentAction) {
         Analytics.track(AnalyticsEvent.ENTITY_CONTENT_INTERACTED, "entity_type" to "coffee", "section" to section.wire(),
             "action" to action.wire())
@@ -61,7 +61,7 @@ private fun CoffeeContentAction.wire() = when (this) {
     CoffeeContentAction.Share -> "share"
 }
 
-internal object AndroidCoffeeScreenAnalytics : CoffeeScreenAnalytics {
+internal object AppCoffeeScreenAnalytics : CoffeeScreenAnalytics {
     @Composable
     override fun TrackDetail(loaded: Boolean) = TrackEntityDetail(Entity.Coffee, loaded)
 

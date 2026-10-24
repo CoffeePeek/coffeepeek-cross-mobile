@@ -53,6 +53,9 @@ internal fun CoffeeCardOffers(
     }
 }
 
-@Preview @Composable private fun CoffeeCardOffersPreview() = CoffeePeekTheme {
+@Composable private fun CoffeeCardOffersPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
     Surface { CoffeeCardOffers(previewCoffee().offers, previewCoffee().offers.first(), {}) }
 }
+
+@Preview @Composable private fun CoffeeCardOffersLightPreview() = CoffeeCardOffersPreview(false)
+@Preview @Composable private fun CoffeeCardOffersDarkPreview() = CoffeeCardOffersPreview(true)

@@ -13,6 +13,6 @@ interface CoffeeDetailEntry {
         onOpenRoaster: (slug: String) -> Unit,
         onOpenSeller: (url: String) -> Unit,
         onShare: (name: String, canonicalPath: String) -> Unit,
-        modifier: Modifier = Modifier,
+        modifier: Modifier,
     )
 }
