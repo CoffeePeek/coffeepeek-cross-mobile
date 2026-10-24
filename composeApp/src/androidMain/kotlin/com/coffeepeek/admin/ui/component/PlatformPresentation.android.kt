@@ -18,7 +18,7 @@ internal actual fun PlatformAlert(title: String, message: String, confirmLabel: 
         dismissButton = cancelLabel?.let { { TextButton(onClick = onDismiss) { Text(it) } } })
 }
 @Composable
-internal actual fun NativeAlert(title: String, message: String, confirmLabel: String, onConfirm: () -> Unit, onDismiss: () -> Unit, cancelLabel: String?) = false
+internal actual fun NativeAlert(title: String, message: String, confirmLabel: String, onConfirm: () -> Unit, onDismiss: () -> Unit, cancelLabel: String?, destructive: Boolean) = false
 @Composable
 internal actual fun NativeOperationStatus(message: String) = false
 @Composable

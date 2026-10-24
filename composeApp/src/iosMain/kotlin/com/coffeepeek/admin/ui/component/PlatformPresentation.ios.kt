@@ -66,8 +66,8 @@ internal actual fun PlatformAlert(title: String, message: String, confirmLabel: 
 }
 
 @Composable
-internal actual fun NativeAlert(title: String, message: String, confirmLabel: String, onConfirm: () -> Unit, onDismiss: () -> Unit, cancelLabel: String?): Boolean {
-    PlatformAlert(title, message, confirmLabel, onConfirm, onDismiss, cancelLabel)
+internal actual fun NativeAlert(title: String, message: String, confirmLabel: String, onConfirm: () -> Unit, onDismiss: () -> Unit, cancelLabel: String?, destructive: Boolean): Boolean {
+    PlatformAlert(title, message, confirmLabel, onConfirm, onDismiss, cancelLabel, destructive)
     return true
 }
 
