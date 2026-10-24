@@ -1,5 +1,7 @@
 package com.coffeepeek.admin.ui.screen.shop
 
+import com.coffeepeek.core.designsystem.component.CoffeePeekScaffold as Scaffold
+
 import com.coffeepeek.core.designsystem.component.CoffeePeekLikeIcon
 
 import com.coffeepeek.admin.analytics.*
@@ -64,7 +66,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.SnackbarHostState

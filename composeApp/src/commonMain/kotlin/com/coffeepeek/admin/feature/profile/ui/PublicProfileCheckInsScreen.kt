@@ -1,17 +1,20 @@
 package com.coffeepeek.admin.feature.profile.ui
 
+import com.coffeepeek.core.designsystem.component.coffeePeekScrollContentPadding
+import com.coffeepeek.core.designsystem.component.coffeePeekViewportBottomPadding
+
+import com.coffeepeek.core.designsystem.component.CoffeePeekScaffold as Scaffold
+
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -36,7 +39,7 @@ internal fun PublicProfileCheckInsScreenContent(
         topBar = { CoffeePeekTopBar(stringResource(Res.string.profile_stat_check_ins), stringResource(Res.string.profile_checkins_back), onBack = onBack) },
         contentWindowInsets = WindowInsets(0),
     ) { padding ->
-        Column(Modifier.fillMaxSize().padding(padding).navigationBarsPadding()) {
+        Column(Modifier.fillMaxSize().padding(padding).coffeePeekViewportBottomPadding()) {
             when {
                 state.profile?.isBlockedByViewer == true -> Text(stringResource(Res.string.profile_checkins_blocked), Modifier.padding(16.dp))
                 state.profile == null && state.isLoading -> CoffeePeekLoader(stringResource(Res.string.profile_week_loading))
@@ -57,7 +60,7 @@ internal fun PublicProfileCheckInsList(
     val profile = state.profile ?: return
     val listState = rememberLazyListState()
     PrefetchListPhotos(listState, state.checkIns.map { it.id to (it.source?.photoThumbnailUrls ?: it.photoUrls).take(3) })
-    LazyColumn(state = listState, modifier = modifier, contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 32.dp),
+    LazyColumn(state = listState, modifier = modifier, contentPadding = coffeePeekScrollContentPadding(PaddingValues(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 32.dp)),
         verticalArrangement = Arrangement.spacedBy(10.dp)) {
         items(state.checkIns, key = { it.id }) { checkIn ->
             PublicProfileCheckInCard(checkIn, { checkIn.coffeeShopSlug?.takeIf(String::isNotBlank)?.let(onOpenShop) }, onPhotoClick,

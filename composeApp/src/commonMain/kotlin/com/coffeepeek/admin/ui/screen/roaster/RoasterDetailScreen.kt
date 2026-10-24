@@ -1,5 +1,10 @@
 package com.coffeepeek.admin.ui.screen.roaster
 
+import com.coffeepeek.core.designsystem.component.coffeePeekScrollContentPadding
+import com.coffeepeek.core.designsystem.component.coffeePeekViewportBottomPadding
+
+import com.coffeepeek.core.designsystem.component.CoffeePeekScaffold as Scaffold
+
 import com.coffeepeek.admin.analytics.*
 
 import com.coffeepeek.admin.ui.component.CpCircularBackButton
@@ -15,7 +20,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
@@ -32,7 +36,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.SnackbarHostState
@@ -144,8 +147,8 @@ private fun RoasterContent(
     onShopClick: (String) -> Unit,
 ) {
     LazyColumn(
-        modifier = Modifier.fillMaxSize().navigationBarsPadding(),
-        contentPadding = PaddingValues(bottom = CpDimens.spacing6),
+        modifier = Modifier.fillMaxSize().coffeePeekViewportBottomPadding(),
+        contentPadding = coffeePeekScrollContentPadding(PaddingValues(bottom = CpDimens.spacing6)),
     ) {
         item {
             RoasterHero(

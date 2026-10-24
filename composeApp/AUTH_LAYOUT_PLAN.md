@@ -218,3 +218,38 @@ Local checks passed in one invocation (1m09s): iOS arm64 KLIB compilation,
 Android DirectDebug assembly/DEX guard and 16 executed unit tests across the
 three selected suites, with zero failures/errors/skips and no retries. No device
 launch or visual acceptance is inferred from these local checks.
+
+### Internal-screen bottom inset scope
+
+Before packaging, the user clarified that build 2419 still has the lower band
+on internal screens; main tabs are unaffected. The auth-only packaging run
+`40087935217` was cancelled to include this correction in the same device update.
+
+The application owns UIKit screen bounds; the design system owns Scaffold and
+scroll-content inset distribution. Extend every internal native screen to its
+bottom edge, expose the actual bottom clearance through one design-system
+composition local, and let the shared Scaffold keep FAB/bottom-bar protection
+while omitting an unused bottom inset from the scroll viewport. Move that
+clearance into vertical list/form content. Main-tab composition and Android use
+the default inactive policy. Existing photo/header and auth top-inset ownership
+remain explicit. No Gradle module, DI, domain, navigation or product migration
+is required. Compile both platforms, run inset-geometry and existing screen/DI
+contracts, then package one native update and manually review internal lists,
+forms, bottom actions, back/cancel, keyboard and both themes.
+
+Local verification on 2026-10-24 passed with the final inset changes in one
+Gradle invocation (1m07s, max-workers=6): iOS arm64 KLIB compilation, Android
+DirectDebug assembly and packaged DEX runtime-class guard, 798 application unit
+tests and 41 design-system unit tests. All 839 tests completed with zero
+failures/errors/skips. Five new non-UI geometry cases cover inactive-host
+compatibility, header/RTL padding, measured bottom-bar clearance, preservation
+of last-item spacing and zero safe-area behavior. Earlier checks also passed;
+the final rerun followed the Android viewport-compatibility adjustment.
+
+Fixed bottom actions keep their measured height plus the native home-indicator
+clearance; scrolling lists/forms own that clearance inside their content. The
+existing shop-photo and other-profile scroll padding is retained rather than
+duplicated. No Gradle dependencies, feature contracts, DI or analytics ownership
+changed. Paired design-system previews are colocated. No automated UI,
+instrumentation or screenshot tests ran. Native framework linking, device
+installation and manual visual acceptance remain separate gates.

@@ -1,5 +1,9 @@
 package com.coffeepeek.admin.feature.profile.ui
 
+import com.coffeepeek.core.designsystem.component.coffeePeekScrollContentPadding
+
+import com.coffeepeek.core.designsystem.component.CoffeePeekScaffold as Scaffold
+
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -314,7 +318,7 @@ internal fun UserProfileScreen(
         when (selectedSection) {
             ProfileSection.Favorites -> LazyColumn(
                 modifier = Modifier.fillMaxWidth().weight(1f, fill = false),
-                contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 32.dp),
+                contentPadding = coffeePeekScrollContentPadding(PaddingValues(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 32.dp)),
                 verticalArrangement = Arrangement.spacedBy(10.dp),
             ) {
                 items(profile.favorites, key = { "${it.kind}-${it.id}" }) { favorite ->

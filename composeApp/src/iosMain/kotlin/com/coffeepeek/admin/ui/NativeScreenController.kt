@@ -27,11 +27,12 @@ import com.coffeepeek.admin.theme.toUIColor
 import com.coffeepeek.admin.theme.uiKitStyle
 import com.coffeepeek.admin.ui.component.ProvideFloatingNavClearance
 import com.coffeepeek.admin.ui.component.dismissKeyboardOnBackgroundGestures
+import com.coffeepeek.core.designsystem.component.CoffeePeekScreenInsets
+import com.coffeepeek.core.designsystem.component.LocalCoffeePeekScreenInsets
 import kotlinx.cinterop.useContents
 import platform.UIKit.NSLayoutConstraint
 import platform.UIKit.UIRectEdgeAll
 import platform.UIKit.UIRectEdgeBottom
-import platform.UIKit.UIRectEdgeNone
 import platform.UIKit.UIStatusBarStyle
 import platform.UIKit.UIStatusBarStyleLightContent
 import platform.UIKit.UIViewController
@@ -53,15 +54,13 @@ internal class NativeScreenController(
     private val isAuthFlow = route == Navigator.Screen.Auth || route == Navigator.Screen.Register ||
         route == Navigator.Screen.ForgotPassword || route is Navigator.Screen.ResetPassword
     private val extendsUnderStatusBar = photoUnderStatusBar || isAuthFlow
-    private val isCheckInHistory = route == Navigator.Screen.VisitedPlaces || route == Navigator.Screen.HomeCheckIns
     var handlesBackLocally = false
 
     init {
         this.title = title
         edgesForExtendedLayout = when {
             extendsUnderStatusBar -> UIRectEdgeAll
-            isTabRoot || isCheckInHistory -> UIRectEdgeBottom
-            else -> UIRectEdgeNone
+            else -> UIRectEdgeBottom
         }
     }
 
@@ -88,7 +87,7 @@ internal class NativeScreenController(
 
     override fun viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
-        bottomClearance = if (isTabRoot) view.safeAreaInsets.useContents { bottom }.dp else 0.dp
+        bottomClearance = view.safeAreaInsets.useContents { bottom }.dp
     }
 
     private fun attachContent(child: UIViewController) {
@@ -101,7 +100,7 @@ internal class NativeScreenController(
             child.view.topAnchor.constraintEqualToAnchor(if (extendsUnderStatusBar) view.topAnchor else safeArea.topAnchor),
             child.view.leadingAnchor.constraintEqualToAnchor(view.leadingAnchor),
             child.view.trailingAnchor.constraintEqualToAnchor(view.trailingAnchor),
-            child.view.bottomAnchor.constraintEqualToAnchor(if (isTabRoot || photoUnderStatusBar || isAuthFlow || isCheckInHistory) view.bottomAnchor else safeArea.bottomAnchor),
+            child.view.bottomAnchor.constraintEqualToAnchor(view.bottomAnchor),
         ))
         child.didMoveToParentViewController(this)
     }
@@ -115,16 +114,22 @@ internal class NativeScreenController(
             view.backgroundColor = colors.background.toUIColor()
             setNeedsStatusBarAppearanceUpdate()
         }
-        ProvideFloatingNavClearance(bottomClearance) {
+        ProvideFloatingNavClearance(if (isTabRoot) bottomClearance else 0.dp) {
             // Tab content scrolls behind the glass; lists and controls reserve the measured safe area.
             Box(Modifier.fillMaxSize().background(colors.background)
                 .consumeWindowInsets(when {
                     extendsUnderStatusBar -> WindowInsets(0, 0, 0, 0)
-                    isCheckInHistory -> WindowInsets.systemBars.only(WindowInsetsSides.Top)
-                    else -> WindowInsets.systemBars.only(WindowInsetsSides.Vertical)
+                    isTabRoot -> WindowInsets.systemBars.only(WindowInsetsSides.Vertical)
+                    else -> WindowInsets.systemBars.only(WindowInsetsSides.Top)
                 })
                 .dismissKeyboardOnBackgroundGestures()) {
-                CompositionLocalProvider(com.coffeepeek.admin.analytics.LocalAnalyticsVisible provides analyticsVisible) {
+                CompositionLocalProvider(
+                    com.coffeepeek.admin.analytics.LocalAnalyticsVisible provides analyticsVisible,
+                    LocalCoffeePeekScreenInsets provides CoffeePeekScreenInsets(
+                        bottom = if (isTabRoot || isAuthFlow) 0.dp else bottomClearance,
+                        extendsToBottom = !isTabRoot && !isAuthFlow,
+                    ),
+                ) {
                     content()
                 }
             }

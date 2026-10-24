@@ -1,5 +1,9 @@
 package com.coffeepeek.admin.feature.community.ui
 
+import com.coffeepeek.core.designsystem.component.coffeePeekScrollContentPadding
+
+import com.coffeepeek.core.designsystem.component.CoffeePeekScaffold as Scaffold
+
 import com.coffeepeek.admin.analytics.*
 import com.coffeepeek.admin.feature.checkin.api.CheckInFlowHandoff
 
@@ -107,10 +111,10 @@ fun CommunityScreen(onCreateCheckIn: () -> Unit, notificationsAction: @Composabl
             ) { scrollModifier ->
                 LazyColumn(
                     state = listState, modifier = scrollModifier.fillMaxSize().analyticsExposure("feed", "feed", "feed"),
-                    contentPadding = PaddingValues(
+                    contentPadding = coffeePeekScrollContentPadding(PaddingValues(
                         start = CpDimens.spacing4, end = CpDimens.spacing4,
                         top = CpDimens.spacing4, bottom = clearance + 88.dp,
-                    ),
+                    )),
                     verticalArrangement = Arrangement.spacedBy(CpDimens.spacing3),
                 ) {
                     item(key = "heading", contentType = "heading") {

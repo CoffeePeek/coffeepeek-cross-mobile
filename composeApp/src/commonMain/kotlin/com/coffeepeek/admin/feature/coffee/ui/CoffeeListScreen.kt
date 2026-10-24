@@ -1,5 +1,9 @@
 package com.coffeepeek.admin.feature.coffee.ui
 
+import com.coffeepeek.core.designsystem.component.coffeePeekScrollContentPadding
+
+import com.coffeepeek.core.designsystem.component.CoffeePeekScaffold as Scaffold
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
@@ -97,10 +101,10 @@ internal fun CoffeeListScreen(vm: CoffeeListViewModel = platformViewModel()) {
             LazyColumn(
                 state = listState,
                 modifier = scrollModifier.fillMaxSize().analyticsExposure("coffee_catalog", "catalog", "coffees"),
-                contentPadding = PaddingValues(
+                contentPadding = coffeePeekScrollContentPadding(PaddingValues(
                     start = CpDimens.spacing4, top = CpDimens.spacing4,
                     end = CpDimens.spacing4, bottom = clearance + 88.dp,
-                ),
+                )),
                 verticalArrangement = Arrangement.spacedBy(CpDimens.spacing4),
             ) {
                 if (state.isLoading && state.items.isEmpty()) item(key = "coffee-list-loading") {
