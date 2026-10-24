@@ -42,7 +42,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.res.stringResource
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
@@ -51,14 +51,35 @@ import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.feature.appupdate.api.AppUpdateEnvironment
 import com.coffeepeek.feature.appupdate.impl.AppUpdateController
-import com.coffeepeek.feature.appupdate.impl.R
+import com.coffeepeek.feature.appupdate.impl.resources.Res
+import com.coffeepeek.feature.appupdate.impl.resources.appupdate_app_store
+import com.coffeepeek.feature.appupdate.impl.resources.appupdate_body_available
+import com.coffeepeek.feature.appupdate.impl.resources.appupdate_body_downloading
+import com.coffeepeek.feature.appupdate.impl.resources.appupdate_body_downloading_percent
+import com.coffeepeek.feature.appupdate.impl.resources.appupdate_body_installing
+import com.coffeepeek.feature.appupdate.impl.resources.appupdate_body_ready
+import com.coffeepeek.feature.appupdate.impl.resources.appupdate_body_required
+import com.coffeepeek.feature.appupdate.impl.resources.appupdate_body_starting
+import com.coffeepeek.feature.appupdate.impl.resources.appupdate_body_verifying
+import com.coffeepeek.feature.appupdate.impl.resources.appupdate_cancel
+import com.coffeepeek.feature.appupdate.impl.resources.appupdate_download
+import com.coffeepeek.feature.appupdate.impl.resources.appupdate_install
+import com.coffeepeek.feature.appupdate.impl.resources.appupdate_later
+import com.coffeepeek.feature.appupdate.impl.resources.appupdate_retry
+import com.coffeepeek.feature.appupdate.impl.resources.appupdate_title_available
+import com.coffeepeek.feature.appupdate.impl.resources.appupdate_title_downloading
+import com.coffeepeek.feature.appupdate.impl.resources.appupdate_title_installing
+import com.coffeepeek.feature.appupdate.impl.resources.appupdate_title_ready
+import com.coffeepeek.feature.appupdate.impl.resources.appupdate_title_required
+import com.coffeepeek.feature.appupdate.impl.resources.appupdate_title_starting
+import com.coffeepeek.feature.appupdate.impl.resources.appupdate_title_verifying
 import com.coffeepeek.feature.appupdate.impl.needsPlayFallback
 import androidx.lifecycle.Lifecycle
 import com.coffeepeek.feature.appupdate.domain.InstallationStage
 import com.coffeepeek.feature.appupdate.domain.InstallationState
 import com.coffeepeek.feature.appupdate.domain.UpdateInstaller
 import kotlin.math.roundToInt
-import androidx.compose.ui.tooling.preview.Preview
+import org.jetbrains.compose.ui.tooling.preview.Preview
 
 @Composable
 internal fun AppUpdatePrompt(
@@ -171,24 +192,24 @@ private fun UpdateCard(
                 Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     Text(
                         text = when (transfer.stage) {
-                            InstallationStage.Starting -> stringResource(R.string.appupdate_title_starting)
-                            InstallationStage.Downloading -> stringResource(R.string.appupdate_title_downloading)
-                            InstallationStage.Verifying -> stringResource(R.string.appupdate_title_verifying)
-                            InstallationStage.Ready -> stringResource(R.string.appupdate_title_ready)
-                            InstallationStage.Installing -> stringResource(R.string.appupdate_title_installing)
-                            InstallationStage.Available -> stringResource(if (required) R.string.appupdate_title_required else R.string.appupdate_title_available)
+                            InstallationStage.Starting -> stringResource(Res.string.appupdate_title_starting)
+                            InstallationStage.Downloading -> stringResource(Res.string.appupdate_title_downloading)
+                            InstallationStage.Verifying -> stringResource(Res.string.appupdate_title_verifying)
+                            InstallationStage.Ready -> stringResource(Res.string.appupdate_title_ready)
+                            InstallationStage.Installing -> stringResource(Res.string.appupdate_title_installing)
+                            InstallationStage.Available -> stringResource(if (required) Res.string.appupdate_title_required else Res.string.appupdate_title_available)
                         },
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.SemiBold,
                     )
                     Text(
                         text = when (transfer.stage) {
-                            InstallationStage.Starting -> stringResource(R.string.appupdate_body_starting)
-                            InstallationStage.Downloading -> transfer.progress?.let { stringResource(R.string.appupdate_body_downloading_percent, (it * 100).toInt()) } ?: stringResource(R.string.appupdate_body_downloading)
-                            InstallationStage.Verifying -> stringResource(R.string.appupdate_body_verifying)
-                            InstallationStage.Ready -> stringResource(R.string.appupdate_body_ready)
-                            InstallationStage.Installing -> stringResource(R.string.appupdate_body_installing)
-                            InstallationStage.Available -> stringResource(if (required) R.string.appupdate_body_required else R.string.appupdate_body_available)
+                            InstallationStage.Starting -> stringResource(Res.string.appupdate_body_starting)
+                            InstallationStage.Downloading -> transfer.progress?.let { stringResource(Res.string.appupdate_body_downloading_percent, "${(it * 100).toInt()}%") } ?: stringResource(Res.string.appupdate_body_downloading)
+                            InstallationStage.Verifying -> stringResource(Res.string.appupdate_body_verifying)
+                            InstallationStage.Ready -> stringResource(Res.string.appupdate_body_ready)
+                            InstallationStage.Installing -> stringResource(Res.string.appupdate_body_installing)
+                            InstallationStage.Available -> stringResource(if (required) Res.string.appupdate_body_required else Res.string.appupdate_body_available)
                         },
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -205,7 +226,7 @@ private fun UpdateCard(
                         modifier = Modifier.weight(1f).heightIn(min = 48.dp),
                         shape = RoundedCornerShape(14.dp),
                         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
-                    ) { Text(stringResource(R.string.appupdate_cancel), color = MaterialTheme.colorScheme.onSurface) }
+                    ) { Text(stringResource(Res.string.appupdate_cancel), color = MaterialTheme.colorScheme.onSurface) }
                 } else {
                     if (!required) {
                         OutlinedButton(
@@ -214,7 +235,7 @@ private fun UpdateCard(
                             shape = RoundedCornerShape(14.dp),
                             border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
                         ) {
-                            Text(stringResource(R.string.appupdate_later), color = MaterialTheme.colorScheme.onSurface, textAlign = TextAlign.Center)
+                            Text(stringResource(Res.string.appupdate_later), color = MaterialTheme.colorScheme.onSurface, textAlign = TextAlign.Center)
                         }
                     }
                     if (!transfer.busy) {
@@ -225,10 +246,10 @@ private fun UpdateCard(
                         ) {
                             Text(
                                 when {
-                                    transfer.stage == InstallationStage.Ready -> stringResource(R.string.appupdate_install)
-                                    transfer.error != null -> stringResource(R.string.appupdate_retry)
-                                    ios -> stringResource(R.string.appupdate_app_store)
-                                    else -> stringResource(R.string.appupdate_download)
+                                    transfer.stage == InstallationStage.Ready -> stringResource(Res.string.appupdate_install)
+                                    transfer.error != null -> stringResource(Res.string.appupdate_retry)
+                                    ios -> stringResource(Res.string.appupdate_app_store)
+                                    else -> stringResource(Res.string.appupdate_download)
                                 },
                                 textAlign = TextAlign.Center,
                             )
