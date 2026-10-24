@@ -56,6 +56,12 @@ class PostMapperTest {
         assertEquals(listOf("https://api.example/d/jpeg", "https://api.example/o/2"), post.photos.details)
     }
 
+    @Test fun decimalNumbersAreReadLikeTheLegacyFlexibleInt() = runBlocking {
+        val post = one("""{"id":"v","contentRevision":2.0,"helpfulCount":3.0,"rating":{"place":4.0,"service":" 5 ","coffee":3}}""")
+        assertEquals(2, post.contentRevision); assertEquals(3, post.helpfulCount)
+        assertEquals(4, post.rating?.place); assertEquals(5, post.rating?.service); assertEquals(3, post.rating?.coffee)
+    }
+
     @Test fun unknownStatesAndNumbersFallBackSafely() = runBlocking {
         val post = one("""{"id":"v","visibility":"Weird","moderationState":"Weird","contentRevision":"x","helpfulCount":"3","rating":{"place":"4","service":null,"coffee":5},
             "drinkSlug":"","customDrinkName":" ","drinkNameRu":null}""")
