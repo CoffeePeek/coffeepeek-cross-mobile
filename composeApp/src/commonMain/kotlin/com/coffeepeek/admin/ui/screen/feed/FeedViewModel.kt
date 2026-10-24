@@ -130,15 +130,18 @@ class FeedViewModel(
 
     fun openedShop(shop: CoffeeShop) = searchAnalytics.open(Entity.Shop, _uiState.value.visibleShops.indexOfFirst { it.id == shop.id }.takeIf { it >= 0 }?.plus(1))
     private var isCityReady = false
+    private val lastPreferenceCityId = MutableStateFlow<String?>(null)
     private var nearbyOrigin: ShopLocation? = null
 
     init {
         loadCatalogs()
         cityPreference.selectedCityId
             .onEach { cityId ->
-                if (!isCityReady || cityId == null || cityId == _uiState.value.filters.cityId) {
+                if (!isCityReady || cityId == null || cityId == lastPreferenceCityId.value) {
                     return@onEach
                 }
+                lastPreferenceCityId.value = cityId
+                if (cityId == _uiState.value.filters.cityId) return@onEach
                 _uiState.update { it.copy(filters = it.filters.copy(cityId = cityId)) }
                 loadShops(reset = true)
             }
@@ -184,6 +187,8 @@ class FeedViewModel(
             shopRepository.getCatalogs()
                 .onSuccess { catalogs ->
                     val cityId = cityPreference.resolve(catalogs.cities)
+                    // A delayed replay of this choice must not overwrite filters the user applies later.
+                    lastPreferenceCityId.value = cityId
                     _uiState.update {
                         it.copy(
                             filters = it.filters.copy(cityId = cityId),
