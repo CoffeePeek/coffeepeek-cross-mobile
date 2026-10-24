@@ -169,3 +169,16 @@ assembly/DEX guard and the selected existing unit suites, in one invocation with
 errors, skips or retries. No automated UI, instrumentation or screenshot tests
 were added or run. Device visual acceptance, keyboard, both themes, accessibility,
 back/cancel/reopen and photo-viewer regression remain manual gates.
+
+Native package verification: [run 40086070708](https://github.com/CoffeePeek/coffeepeek-cross-mobile/actions/runs/40086070708)
+passed in 18m32s for implementation commit `71a705a2`, including the strict Kotlin
+device-framework link and native Xcode Debug build. The first dispatch,
+`40086012865`, stopped at checkout because its abbreviated SHA was interpreted as
+a branch/tag; it never compiled the app. Re-dispatching the full SHA succeeded
+without source changes. Both outcomes are retained.
+
+Local IPA verification confirmed exact source, checksum, iPhone arm64 Mach-O,
+version 1.1.1/build 2419, 63 Compose resources, launch assets and app configuration.
+A separate CoffeePeek Dev copy is prepared for the existing development bundle;
+IPA files and sanitized verification reports stay in ignored build output.
+Device installation and visual acceptance are pending connection at this stage.
