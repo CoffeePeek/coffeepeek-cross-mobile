@@ -112,6 +112,7 @@ internal fun RegisterScreen(
     onSignedIn: () -> Unit,
     google: GoogleSignInLauncher?,
     modifier: Modifier = Modifier,
+    appleAvailable: Boolean = false,
 ) {
     val state by vm.state.collectAsStateWithLifecycle()
     val lifecycle = LocalLifecycleOwner.current.lifecycle
@@ -132,6 +133,7 @@ internal fun RegisterScreen(
             onFailure = { vm.onAction(RegisterAction.GoogleFailed(it)) },
         ),
         modifier = modifier,
+        onApple = if (appleAvailable) ({ vm.onAction(RegisterAction.AppleSignIn) }) else null,
     )
 }
 
@@ -143,6 +145,7 @@ internal fun RegisterContent(
     onGoToLogin: () -> Unit,
     onGoogle: (() -> Unit)?,
     modifier: Modifier = Modifier,
+    onApple: (() -> Unit)? = null,
 ) {
     val done = state.step == RegisterStep.Success
     AuthScaffold(
@@ -151,7 +154,7 @@ internal fun RegisterContent(
         mascotRes = if (done) Res.drawable.auth_mascot_happy else Res.drawable.auth_mascot_laptop,
     ) {
         when (state.step) {
-            RegisterStep.Email -> EmailStep(state, onAction, onGoToLogin, onGoogle)
+            RegisterStep.Email -> EmailStep(state, onAction, onGoToLogin, onGoogle, onApple)
             RegisterStep.Details -> DetailsStep(state, onAction, onGoToLogin)
             RegisterStep.Success -> SuccessStep(state.email, onGoToLogin)
         }
@@ -162,7 +165,7 @@ internal fun RegisterContent(
 private fun steps() = listOf(stringResource(Res.string.auth_step_email), stringResource(Res.string.auth_step_register), stringResource(Res.string.auth_step_done))
 
 @Composable
-private fun EmailStep(state: RegisterState, onAction: (RegisterAction) -> Unit, onGoToLogin: () -> Unit, onGoogle: (() -> Unit)?) {
+private fun EmailStep(state: RegisterState, onAction: (RegisterAction) -> Unit, onGoToLogin: () -> Unit, onGoogle: (() -> Unit)?, onApple: (() -> Unit)?) {
     AuthStepper(activeIndex = 0, steps = steps())
     AuthHeading(stringResource(Res.string.auth_register_email_title), stringResource(Res.string.auth_register_email_subtitle))
     AuthTextField(
@@ -179,9 +182,9 @@ private fun EmailStep(state: RegisterState, onAction: (RegisterAction) -> Unit, 
         enabled = !state.busy,
     )
     FailureText(state, Res.string.auth_check_failed)
-    if (onGoogle != null) {
+    if (onGoogle != null || onApple != null) {
         AuthOrDivider()
-        GoogleSignInButton(onClick = onGoogle, enabled = !state.busy)
+        SocialSignInButtons(onGoogle, onApple, !state.busy)
         SocialFailureText(state.socialFailure)
     }
     AuthPrimaryButton(
@@ -374,20 +377,14 @@ private fun PasswordStrengthBar(password: String) {
     }
 }
 
-@Preview
 @Composable
-private fun RegisterDetailsPreview() = CoffeePeekTheme {
-    RegisterContent(RegisterState(step = RegisterStep.Details, email = "name@example.com", name = "Анна", password = "password1"), {}, {}, {}, onGoogle = {})
+private fun RegisterPreview(state: RegisterState, dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
+    RegisterContent(state, {}, {}, {}, onGoogle = {}, onApple = {})
 }
 
-@Preview
-@Composable
-private fun RegisterEmailPreview() = CoffeePeekTheme {
-    RegisterContent(RegisterState(email = "taken@example.com", emailTaken = true), {}, {}, {}, onGoogle = {})
-}
-
-@Preview
-@Composable
-private fun RegisterSuccessPreview() = CoffeePeekTheme {
-    RegisterContent(RegisterState(step = RegisterStep.Success, email = "new@example.com"), {}, {}, {}, onGoogle = {})
-}
+@Preview @Composable private fun RegisterDetailsLightPreview() = RegisterPreview(RegisterState(step = RegisterStep.Details, email = "name@example.com", name = "Анна", password = "password1"), false)
+@Preview @Composable private fun RegisterDetailsDarkPreview() = RegisterPreview(RegisterState(step = RegisterStep.Details, email = "name@example.com", name = "Анна", password = "password1"), true)
+@Preview @Composable private fun RegisterEmailLightPreview() = RegisterPreview(RegisterState(email = "taken@example.com", emailTaken = true), false)
+@Preview @Composable private fun RegisterEmailDarkPreview() = RegisterPreview(RegisterState(email = "taken@example.com", emailTaken = true), true)
+@Preview @Composable private fun RegisterSuccessLightPreview() = RegisterPreview(RegisterState(step = RegisterStep.Success, email = "new@example.com"), false)
+@Preview @Composable private fun RegisterSuccessDarkPreview() = RegisterPreview(RegisterState(step = RegisterStep.Success, email = "new@example.com"), true)

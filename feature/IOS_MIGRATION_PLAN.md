@@ -3,9 +3,10 @@
 Статус: принципы согласованы 2026-10-24; ход работ — в разделе «Статус» ниже. Основан на сверке с продом (`origin/main`) по всем владельцам: инвентарь Gradle-модулей,
 iOS-документы (`docs/IOS_NATIVE_EXPERIENCE.md`, `IOS_NATIVE_NAVIGATION.md`, `IOS_COMPOSE_INTEROP_AUDIT.md`, `IOS_MAP_PARITY.md`,
 `IOS_FEED_PHOTO_MEMORY.md`, `IOS_SETUP.md`), `feature/LEGACY_REMOVAL.md`, `feature/roaster/IOS_MIGRATION_PLAN.md`.
-Ничего из описанного здесь не проверялось на симуляторе или устройстве: документы сами отмечают, что iOS-часть проверена только компиляцией.
+Первоначальный инвентарь не был проверен запуском UI на симуляторе или устройстве.
+Фактически выполненные проверки последующих срезов и оставшиеся gates записаны ниже отдельно.
 
-## Статус на 2026-10-24 (ветка `feat/ios-build-foundation`, локальная, не запушена, PR нет)
+## Статус на 2026-10-24 (ветка `feat/ios-build-foundation`, PR #195 → `develop`)
 
 Сделано и проверено сборкой и юнит-тестами (Android и iOS compile; iOS-фреймворк линкуется; тесты сессии прошли и на iOS-симуляторе).
 На симуляторе и устройстве экраны **не запускались**.
@@ -23,21 +24,87 @@ iOS-документы (`docs/IOS_NATIVE_EXPERIENCE.md`, `IOS_NATIVE_NAVIGATION.
 
 **Этап 2 — сессия: F23 и F24 готовы** (выход стирает старые строки; сбой удаления Keychain сообщается). Core session port вместо `SessionRepository` (~43 файла) — **не сделан**.
 
-**Этап 3 — подключение на iOS: начат.** Через новые модули на iOS работают: вкладка Settings (и три её подэкрана), окно обновления, колокольчик уведомлений, экраны входа, регистрации и восстановления пароля (без кнопок Google и Apple).
+**Этап 3 — подключение на iOS: начат.** Через новые модули на iOS подключены: вкладка Settings (и три её подэкрана), окно обновления, колокольчик уведомлений, экраны входа, регистрации и восстановления пароля. Подключены также Google/Apple кнопки и существующие Swift-провайдеры (при доступной конфигурации); реальный OAuth ещё не проверен.
 Остальное на iOS по-прежнему legacy: Coffee, Community, Profile, Discovery и всё остальное, вкладки Coffee, Community, Profile ещё вызывают legacy-экраны напрямую.
 
 **Важные находки для следующих срезов**
 1. Kotlin/Native не линкует переопределение composable-метода интерфейса с аргументом по умолчанию (`modifier: Modifier = Modifier`): ошибка видна только при линковке и только у достижимого кода. У каждого владельца при подключении убрать значения по умолчанию из api-интерфейсов (так сделано у Settings и Auth).
 2. Подключение владельца требует: перенести platform-neutral адаптеры из `androidMain` в `commonMain` (как у Settings) или добавить iOS-пары, перенести зависимость `impl` в `commonMain.dependencies` composeApp и добавить фабрику в `PlatformKoin.ios.kt`.
-3. Вход через Apple и Google на iOS отсутствует в новом auth (в прод-версии есть). Проект: домен `beginAppleSignIn` и `signInWithApple`, порт `AppleAuthorizer` поверх `IosAppleAuthProvider`, Google через `GoogleSignInLauncher` поверх `IosGoogleAuthBridge`, кнопки и тесты. **Не начат.** До его готовности переключать iOS-вход в релиз нельзя.
+3. **Auth Google/Apple: реализация и offline-проверки готовы** (см. checkpoint ниже): домен challenge/login, `AppleAuthorizer` поверх существующего native provider, Google launcher поверх `IosGoogleAuthBridge`, кнопки и тесты. Реальный OAuth, signing/configuration и ручная iOS-приёмка остаются release gate; компиляция не закрывает их.
 4. Для сообщения проверки обновлений на iOS нет тоста: временно используется `ErrorHandler.showError`, нужно решение по UX.
 
 **Остаётся**
-- Этап 3: Community, Discovery (+вкладка Лента), Coffee (+вкладка), Profile (+вкладка), Contributions, Shop и Shop-report, Check-in history, Home check-in и общий create flow, Favorites (по решению продукта); вход через Apple/Google.
+- Этап 3: Community, Discovery (+вкладка Лента), Coffee (+вкладка), Profile (+вкладка), Contributions, Shop и Shop-report, Check-in history, Home check-in и общий create flow, Favorites (по решению продукта); ручная и live-приёмка Apple/Google.
 - Этап 2: core session port.
 - Roaster: Xcode-линковка, симулятор, устройство.
 - Этап 5: удаление legacy — только после полной готовности и ручной приёмки.
 - Push на iOS (`PushAppDelegate`, `NativePushBridge`) и Xcode/устройство-гейты не трогались.
+
+### Checkpoint: Google/Apple Auth — 2026-10-24
+
+Продолжение опубликованного [PR #195](https://github.com/CoffeePeek/coffeepeek-cross-mobile/pull/195), на базе `1c622b90`.
+Новых веток/PR для этого поддерживающего среза не создавали. Legacy fallback не удалён.
+
+Что сделано:
+
+- `feature/auth/domain`: `AppleSignInChallenge`, `beginAppleSignIn`, `signInWithApple`.
+  Data выполняет прежние `/api/Tokens/apple/challenge` и `/api/Tokens/apple/login`,
+  валидирует session envelope, сохраняет токены через тот же SessionStore и cleanup port.
+  Другой аккаунт очищается по общему правилу, серверное избранное не удаляется.
+- Impl координирует challenge → native authorize → exchange. Challenge ID идёт
+  как state, server nonce — без преобразования/повторного хеширования. Каждая
+  новая попытка запрашивает новый challenge. Отмена корутины не превращается в ошибку UI.
+- `composeApp/iosMain/di/auth`: iOS-порты используют существующие AppleAuth /
+  IosAppleAuthProvider и IosGoogleAuthBridge; Swift-реализации и OAuth IDs не менялись.
+  Google chooser не запускается повторно, поздний callback ушедшего экрана не
+  вызывает backend. Существующее значение отмены Swift Google chooser игнорируется.
+- В Login/Register доступны оба провайдера, если native bridge настроен. Кнопки
+  рядом, если помещаются, иначе колонкой с учётом размера текста; Apple logo —
+  прежний asset с сохранённой provenance. Есть colocated light/dark previews.
+  Без доступного провайдера кнопка скрыта; Android не получает Apple-заглушку.
+- Ошибки Apple имеют собственные ресурсы, не текст «через Google». Аналитика
+  сохраняет `sign_in_completed`, `method=apple/google`, `entry_point=login/register`;
+  social sign-in не создаёт password-sign-up и не меняет consent автоматически.
+  Busy guards не дают одновременно отправить password/Google/Apple запросы.
+- `core/network/HttpStatusFailure`: минимальный контракт статуса ошибки валидатора,
+  без UI/legacy dependencies. Старый ApiException реализует его, поэтому Apple
+  сохраняет ASI-H статус даже при раннем 5xx throw. Feature data не импортирует
+  legacy exception; ASI-CH/X/R/A/I и provider diagnostics остаются распознаваемыми.
+
+Проверки этого среза (Mac, JBR 21, 2026-10-24; база `1c622b90` + изменения auth):
+
+- Auth Android unit: **71 tests**, 7 suites, 0 failures/errors/skips. App auth/Apple
+  contract subset (`*Auth*`, `*Apple*`): **54 tests**, 24 suites, 0 failures/errors/skips.
+  Итого **125**, без UI/instrumentation/screenshot suites. Проверены отмена,
+  duplicate/competing submits, новый challenge после cancel, ошибка challenge,
+  exchange/body/HTTP/validator failures, отсутствие сохранения при cleanup failure,
+  аналитика и отсутствие password-registration/consent side effects.
+- Первый запуск остановился на компиляции двух новых assertEquals (generic type
+  inference), до полного выполнения impl suite. После явного типа прогоны зелёные;
+  первоначальный failure не скрывается успешным повтором.
+- `:composeApp:assembleDirectDebug` прошёл, включая packaged runtime-class/DEX checks.
+  APK не устанавливался, обычный CoffeePeek не запускался и его данные не менялись.
+  SHA-256 APK: `11922bf87096ea85236480bea94a93b059e21bb3c1a38d7050bbf5a792778812`.
+- `:composeApp:compileKotlinIosArm64` и `:composeApp:linkDebugFrameworkIosSimulatorArm64`
+  прошли; вторая задача также компилирует simulator target. Новые iOS adapter/entry
+  действительно достижимы в link, не только лежат в исходниках.
+- Все Gradle-запуски последовательные, `--max-workers=6`. Логи сохранены локально
+  вне tracked sources. Есть существующие deprecation/expect-actual warnings и
+  warning bundle ID framework; это не ошибки link и не изменения signing приложения.
+- Studio inspection для AppleAuthBackend не нашла errors. Для common Compose UI
+  IDE не разрешает Compose classpath, для iOS launcher сообщает conflicting
+  overloads; успешные Android/Native compile+link зафиксированы отдельно. IDE
+  inspection/preview не объявляется пройденной визуальной проверкой.
+
+Открытые gates: настоящий Google/Apple chooser на iOS, cancel/back, повторная попытка,
+nonce/state/expiry на реальном API, provider account-conflict/rejection, обновление
+токенов/сессии, обе темы/крупный шрифт/keyboard и screen/exposure events на устройстве.
+Нужны согласованный тестовый аккаунт и явное разрешение на live sign-in; offline
+fake tests не доказывают OAuth, серверную конфигурацию, Xcode app signing или acceptance.
+В этом срезе simulator/device UI и реальная авторизация не запускались.
+
+Следующая точка плана: ручная Auth-приёмка при готовом тестовом окружении; следующий
+безопасный code-срез этапа 3 — Community/Discovery/Coffee с проверкой tab roots и native hooks.
 
 ## 1. Принципы (решение 2026-10-24)
 

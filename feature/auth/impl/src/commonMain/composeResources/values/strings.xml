@@ -66,6 +66,9 @@
 
     <string name="auth_or">ИЛИ</string>
     <string name="auth_sign_in_google">Войти через Google</string>
+    <string name="auth_sign_in_apple">Войти через Apple</string>
+    <string name="auth_social_apple_generic">Не удалось войти через Apple. Попробуйте ещё раз.</string>
+    <string name="auth_social_apple_email_not_verified">Apple не передал подтверждённый email. Попробуйте ещё раз.</string>
     <string name="auth_social_account_exists">Аккаунт с этим email уже существует. Используйте способ входа, с которым вы регистрировались.</string>
     <string name="auth_social_email_not_verified">Google не передал подтверждённый email. Разрешите доступ к email и попробуйте ещё раз.</string>
     <string name="auth_social_generic">Не удалось войти через Google. Попробуйте ещё раз.</string>

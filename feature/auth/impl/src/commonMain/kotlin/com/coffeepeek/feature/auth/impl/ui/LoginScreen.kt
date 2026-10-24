@@ -52,6 +52,7 @@ internal fun LoginScreen(
     onCreateAccount: () -> Unit,
     google: GoogleSignInLauncher?,
     modifier: Modifier = Modifier,
+    appleAvailable: Boolean = false,
 ) {
     val state by vm.state.collectAsStateWithLifecycle()
     val lifecycle = LocalLifecycleOwner.current.lifecycle
@@ -78,6 +79,7 @@ internal fun LoginScreen(
             onFailure = { vm.onAction(LoginAction.GoogleFailed(it)) },
         ),
         modifier = modifier,
+        onApple = if (appleAvailable) ({ vm.onAction(LoginAction.AppleSignIn) }) else null,
     )
 }
 
@@ -92,35 +94,15 @@ internal fun LoginContent(
     onCreateAccount: () -> Unit,
     onGoogle: (() -> Unit)?,
     modifier: Modifier = Modifier,
+    onApple: (() -> Unit)? = null,
 ) {
     AuthScaffold(onClose = onClose, modifier = modifier) {
         AuthHeading(stringResource(Res.string.auth_login_title), stringResource(Res.string.auth_login_subtitle))
-        if (onGoogle != null) {
-            GoogleSignInButton(onClick = onGoogle, enabled = !state.signingIn)
+        if (onGoogle != null || onApple != null) {
+            SocialSignInButtons(onGoogle, onApple, !state.signingIn)
             AuthOrDivider()
         }
-        Column(verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing4)) {
-            AuthTextField(
-                label = stringResource(Res.string.auth_email_label),
-                value = state.email,
-                onValueChange = onEmail,
-                placeholder = stringResource(Res.string.auth_email_placeholder),
-                leadingIcon = CoffeePeekIcons.Email,
-                errorText = state.emailIssue?.let { emailError(it) },
-                next = true,
-                enabled = !state.signingIn,
-            )
-            AuthTextField(
-                label = stringResource(Res.string.auth_password_label),
-                value = state.password,
-                onValueChange = onPassword,
-                placeholder = stringResource(Res.string.auth_password_label),
-                leadingIcon = CoffeePeekIcons.Lock,
-                isPassword = true,
-                errorText = state.passwordIssue?.let { passwordError(it) },
-                enabled = !state.signingIn,
-            )
-        }
+        LoginFields(state, onEmail, onPassword)
         SocialFailureText(state.socialFailure)
         state.failure?.let { failure ->
             Text(text = loginFailureText(failure), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
@@ -128,6 +110,32 @@ internal fun LoginContent(
         AuthFooterRow(text = stringResource(Res.string.auth_forgot_password), onClick = onForgotPassword)
         AuthPrimaryButton(text = stringResource(Res.string.auth_login), onClick = onSubmit, loading = state.signingIn)
         AuthFooterRow(text = stringResource(Res.string.auth_create_account), onClick = onCreateAccount)
+    }
+}
+
+@Composable
+private fun LoginFields(state: LoginState, onEmail: (String) -> Unit, onPassword: (String) -> Unit) {
+    Column(verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing4)) {
+        AuthTextField(
+            label = stringResource(Res.string.auth_email_label),
+            value = state.email,
+            onValueChange = onEmail,
+            placeholder = stringResource(Res.string.auth_email_placeholder),
+            leadingIcon = CoffeePeekIcons.Email,
+            errorText = state.emailIssue?.let { emailError(it) },
+            next = true,
+            enabled = !state.signingIn,
+        )
+        AuthTextField(
+            label = stringResource(Res.string.auth_password_label),
+            value = state.password,
+            onValueChange = onPassword,
+            placeholder = stringResource(Res.string.auth_password_label),
+            leadingIcon = CoffeePeekIcons.Lock,
+            isPassword = true,
+            errorText = state.passwordIssue?.let { passwordError(it) },
+            enabled = !state.signingIn,
+        )
     }
 }
 
@@ -151,8 +159,10 @@ private fun loginFailureText(failure: LoginFailure): String = stringResource(
     },
 )
 
-@Preview
 @Composable
-private fun LoginPreview() = CoffeePeekTheme {
-    LoginContent(LoginState(email = "name@example.com", emailIssue = EmailIssue.Invalid), {}, {}, {}, {}, {}, {}, onGoogle = {})
+private fun LoginPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
+    LoginContent(LoginState(email = "name@example.com", emailIssue = EmailIssue.Invalid), {}, {}, {}, {}, {}, {}, onGoogle = {}, onApple = {})
 }
+
+@Preview @Composable private fun LoginLightPreview() = LoginPreview(false)
+@Preview @Composable private fun LoginDarkPreview() = LoginPreview(true)

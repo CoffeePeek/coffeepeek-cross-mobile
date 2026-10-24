@@ -8,7 +8,7 @@ interface LocalUserData {
     suspend fun clear()
 }
 
-enum class SignInMethod { Password, Google }
+enum class SignInMethod { Password, Google, Apple }
 
 /** The screen the sign-in started from, as the analytics event reports it. */
 enum class AuthEntry { Login, Register }

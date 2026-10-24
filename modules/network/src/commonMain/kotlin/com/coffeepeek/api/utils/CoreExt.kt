@@ -2,6 +2,7 @@ package com.coffeepeek.api.utils
 
 import com.coffeepeek.api.model.ApiResponse
 import com.coffeepeek.api.model.DataResponse
+import com.coffeepeek.core.network.HttpStatusFailure
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.HttpRequestBuilder
@@ -14,7 +15,7 @@ import io.ktor.client.statement.HttpResponse
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
 import io.ktor.http.isSuccess
-class ApiException(message: String?, val statusCode: Int? = null) : Exception() {
+class ApiException(message: String?, override val statusCode: Int? = null) : Exception(), HttpStatusFailure {
     override val message: String = message?.takeIf { it.isNotBlank() } ?: "Сервер вернул некорректный ответ"
 }
 

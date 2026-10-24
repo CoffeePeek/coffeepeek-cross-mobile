@@ -1,6 +1,7 @@
 package com.coffeepeek.feature.auth.data
 
 import com.coffeepeek.core.session.Session
+import com.coffeepeek.core.network.HttpStatusFailure
 import com.coffeepeek.core.session.SessionStore
 import com.coffeepeek.feature.auth.api.LocalUserData
 import io.ktor.client.HttpClient
@@ -8,6 +9,7 @@ import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.respond
 import io.ktor.client.engine.mock.toByteArray
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
+import io.ktor.client.plugins.HttpResponseValidator
 import io.ktor.client.request.HttpRequestData
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpMethod
@@ -17,6 +19,7 @@ import io.ktor.serialization.kotlinx.json.json
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.CancellationException
 import kotlinx.serialization.json.Json
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -37,6 +40,7 @@ class AuthRepositoryImplTest {
     private inner class Fixture(
         previous: Session?,
         localFailure: Throwable? = null,
+        private val validateStatus: Boolean = false,
         private val answer: (HttpMethod, String) -> Triple<HttpStatusCode, String, Map<String, String>>,
     ) {
         val log = mutableListOf<String>()
@@ -53,7 +57,12 @@ class AuthRepositoryImplTest {
             }.build()
             respond(body, status, headers)
         }
-        private fun client(name: String) = HttpClient(engine(name)) { install(ContentNegotiation) { json(Json { ignoreUnknownKeys = true }) } }
+        private fun client(name: String) = HttpClient(engine(name)) {
+            install(ContentNegotiation) { json(Json { ignoreUnknownKeys = true }) }
+            HttpResponseValidator {
+                validateResponse { response -> if (validateStatus && response.status.value >= 500) throw StatusFailure(response.status.value) }
+            }
+        }
         val plain = client("plain")
         val authenticated = client("auth")
         val repository: com.coffeepeek.feature.auth.domain.AuthRepository = AuthRepositoryImpl(plain, authenticated, store, local)
@@ -172,6 +181,80 @@ class AuthRepositoryImplTest {
         assertNull(f.requests.single().cookie)
         f.close()
     }
+
+    @Test fun appleChallengeKeepsTheServerNonceAndIdUnchanged() = runBlocking {
+        val f = Fixture(null) { _, _ -> ok("""{"isSuccess":true,"data":{"challengeId":"challenge","nonce":"nonce-+="}}""") }
+        val challenge = f.repository.beginAppleSignIn().getOrThrow()
+        assertEquals("challenge", challenge.challengeId)
+        assertEquals("nonce-+=", challenge.nonce)
+        assertEquals(HttpMethod.Post, f.requests.single().method)
+        assertEquals("/api/Tokens/apple/challenge", f.requests.single().path)
+        assertTrue(f.log.none { it == "clear" || it.startsWith("save:") })
+        f.close()
+    }
+
+    @Test fun appleExchangesTheChallengeThenUsesTheSameAccountCleanupAndSessionStore() = runBlocking {
+        val f = Fixture(Session("old", "old-refresh", "another")) { _, _ -> ok(success(tokenA)) }
+        assertEquals("user-a", f.repository.signInWithApple("challenge", "identity").getOrThrow().userId)
+        assertEquals(listOf("remote:plain:POST /api/Tokens/apple/login", "clear", "save:user-a"), f.log)
+        assertEquals("""{"challengeId":"challenge","idToken":"identity"}""", f.requests.single().body)
+        assertEquals(Session(tokenA, "refresh", "user-a"), f.store.peekSession())
+        f.close()
+    }
+
+    @Test fun rejectedOrIncompleteAppleResponsesNeverClearOrReplaceAnAccount() = runBlocking {
+        val replies = listOf("{}", "not-json", """{"isSuccess":false}""",
+            """{"isSuccess":true,"data":{"accessToken":""}}""", success(tokenA, refresh = ""))
+        for (reply in replies) {
+            val old = Session("old", "old-refresh", "previous")
+            val f = Fixture(old) { _, _ -> ok(reply) }
+            assertTrue(f.repository.signInWithApple("challenge", "identity").isFailure)
+            assertEquals(old, f.store.peekSession())
+            assertTrue(f.log.none { it == "clear" || it.startsWith("save:") })
+            f.close()
+        }
+    }
+
+    @Test fun appleHttpRejectionKeepsTheExistingAsiStatusDiagnostic() = runBlocking {
+        val f = Fixture(null) { _, _ -> Triple(HttpStatusCode.Unauthorized, """{"isSuccess":false,"message":"Rejected"}""", emptyMap()) }
+        val failure = f.repository.signInWithApple("challenge", "identity").exceptionOrNull()
+        assertTrue(failure?.message.orEmpty().contains("[ASI-H401]"))
+        assertNull(f.store.peekSession())
+        f.close()
+    }
+
+    @Test fun anIncompleteAppleChallengeFailsBeforeAuthorization() = runBlocking {
+        val f = Fixture(null) { _, _ -> ok("""{"isSuccess":true,"data":{"challengeId":"","nonce":"nonce"}}""") }
+        assertTrue(f.repository.beginAppleSignIn().isFailure)
+        assertNull(f.store.peekSession())
+        f.close()
+    }
+
+    @Test fun appleKeepsHttpStatusEvenWhenTheSharedValidatorThrowsBeforeReadingTheBody() = runBlocking {
+        val f = Fixture(null, validateStatus = true) { _, _ -> Triple(HttpStatusCode.ServiceUnavailable, "{}", emptyMap()) }
+        val failure = f.repository.signInWithApple("challenge", "identity").exceptionOrNull()
+        assertTrue(failure?.message.orEmpty().contains("[ASI-H503]"))
+        assertNull(f.store.peekSession())
+        f.close()
+    }
+
+    @Test fun appleTransportCancellationNeverClearsOrPublishesASession() = runBlocking {
+        val f = Fixture(null) { _, _ -> throw CancellationException("cancelled") }
+        assertFailsWith<CancellationException> { f.repository.signInWithApple("challenge", "identity") }
+        assertTrue(f.log.none { it == "clear" || it.startsWith("save:") })
+        f.close()
+    }
+
+    @Test fun appleCannotPublishTheNewSessionWhenPreviousAccountCleanupFails() = runBlocking {
+        val old = Session("old", "refresh-old", "previous")
+        val f = Fixture(old, localFailure = IllegalStateException("cleanup")) { _, _ -> ok(success(tokenA)) }
+        assertTrue(f.repository.signInWithApple("challenge", "identity").isFailure)
+        assertEquals(old, f.store.peekSession())
+        assertTrue(f.log.none { it.startsWith("save:") })
+        f.close()
+    }
+
+    private class StatusFailure(override val statusCode: Int) : Exception("Unavailable"), HttpStatusFailure
 
     private class Store(initial: Session?, private val log: MutableList<String>) : SessionStore {
         private val state = MutableStateFlow(initial)
