@@ -37,7 +37,7 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.Button
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
+import com.coffeepeek.core.designsystem.component.CoffeePeekScaffold as Scaffold
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -306,7 +306,7 @@ private fun ErrorBlock(onRetry: () -> Unit, retryLabel: String, modifier: Modifi
     }
 }
 
-@Preview @Composable private fun CommunityPreview() = CoffeePeekTheme {
+@Composable private fun CommunityPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
     CommunityContent(
         CommunityState(isLoggedIn = true, items = listOf(previewPost(), previewPost().copy(id = "second", note = "Вторая запись", photos = com.coffeepeek.feature.community.domain.model.PostPhotos.None))),
         {}, CommunityHost(), object : AuthorBlockActions { override fun requestBlock(author: AuthorReference) {}; override fun requestUnblock(author: AuthorReference) {} },
@@ -314,10 +314,15 @@ private fun ErrorBlock(onRetry: () -> Unit, retryLabel: String, modifier: Modifi
     )
 }
 
-@Preview @Composable private fun CommunityErrorPreview() = CoffeePeekTheme {
+@Composable private fun CommunityErrorPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
     CommunityContent(
         CommunityState(isLoggedIn = true, error = com.coffeepeek.feature.community.impl.timeline.TimelineError.LoadFailed),
         {}, CommunityHost(), object : AuthorBlockActions { override fun requestBlock(author: AuthorReference) {}; override fun requestUnblock(author: AuthorReference) {} },
         CommunityCallbacks({}, { _, _, _ -> }, {}, {}), SnackbarHostState(),
     )
 }
+
+@Preview @Composable private fun CommunityLightPreview() = CommunityPreview(false)
+@Preview @Composable private fun CommunityDarkPreview() = CommunityPreview(true)
+@Preview @Composable private fun CommunityErrorLightPreview() = CommunityErrorPreview(false)
+@Preview @Composable private fun CommunityErrorDarkPreview() = CommunityErrorPreview(true)

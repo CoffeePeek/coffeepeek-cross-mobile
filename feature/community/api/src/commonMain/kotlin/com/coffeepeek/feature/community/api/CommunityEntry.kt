@@ -8,7 +8,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.dp
 
 /** Where a card or the list is measured for exposure analytics. */
 enum class ExposureKind { Feed, ShopPost, HomePost }
@@ -42,9 +41,9 @@ interface CommunityEntry {
         onOpenAuthor: (slug: String, name: String, avatarUrl: String?) -> Unit,
         onOpenShop: (slug: String) -> Unit,
         onEditHome: (id: String) -> Unit,
-        modifier: Modifier = Modifier,
-        headerAction: @Composable () -> Unit = {},
-        bottomClearance: Dp = 0.dp,
-        floatingAction: @Composable BoxScope.(CommunityFloating) -> Unit = {},
+        modifier: Modifier,
+        headerAction: @Composable () -> Unit,
+        bottomClearance: Dp,
+        floatingAction: @Composable BoxScope.(CommunityFloating) -> Unit,
     )
 }

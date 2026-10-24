@@ -185,15 +185,15 @@ private fun PostMenu(actions: PostCardActions, enabled: Boolean, hiding: Boolean
     if (actions.onBlock == null && actions.onEdit == null && actions.onHide == null && actions.onReport == null) return
     val label = stringResource(Res.string.community_actions)
     val items = buildList {
-        actions.onBlock?.let { add(CoffeePeekMenuAction(stringResource(Res.string.community_block_author), CoffeePeekIcons.VisibilityOff, destructive = true, onClick = it)) }
-        actions.onEdit?.let { add(CoffeePeekMenuAction(stringResource(Res.string.community_edit), CoffeePeekIcons.Edit, onClick = it)) }
+        actions.onBlock?.let { add(CoffeePeekMenuAction(stringResource(Res.string.community_block_author), CoffeePeekIcons.VisibilityOff, destructive = true, nativeIcon = CoffeePeekMenuIcon.Block, onClick = it)) }
+        actions.onEdit?.let { add(CoffeePeekMenuAction(stringResource(Res.string.community_edit), CoffeePeekIcons.Edit, nativeIcon = CoffeePeekMenuIcon.Edit, onClick = it)) }
         actions.onHide?.let {
             // The menu has no disabled rows: while the hide request is running the row only says so and does nothing.
             add(CoffeePeekMenuAction(stringResource(if (hiding) Res.string.community_saving else Res.string.community_hide), CoffeePeekIcons.VisibilityOff, nativeIcon = CoffeePeekMenuIcon.Hide, onClick = if (hiding) ({}) else it))
         }
         actions.onReport?.let { add(CoffeePeekMenuAction(stringResource(Res.string.community_report), CoffeePeekIcons.Error, nativeIcon = CoffeePeekMenuIcon.Report, onClick = it)) }
     }
-    CoffeePeekActionMenu(items, menuDescription = label) { open ->
+    CoffeePeekActionMenu(items, menuDescription = label, enabled = enabled) { open ->
         IconButton(onClick = open, enabled = enabled) { Icon(CoffeePeekIcons.MoreHorizontal, label, tint = MaterialTheme.colorScheme.onSurfaceVariant) }
     }
 }
@@ -316,11 +316,16 @@ internal fun previewPost() = CommunityPost(
     1, null, 3, true, false, null,
 )
 
-@Preview @Composable private fun PostCardPreview() = CoffeePeekTheme {
+@Composable private fun PostCardPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
     PostCard(previewPost(), isOwn = false, publicTimeline = true, showHelpfulCount = true, enabled = true, PostCardActions({}, {}, {}, {}, {}), CommunityHost())
 }
 
-@Preview @Composable private fun HomePostCardPreview() = CoffeePeekTheme {
+@Composable private fun HomePostCardPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
     PostCard(previewPost().copy(isHome = true, home = HomePreparation("2026-10-07", "hario-v60", "Эфиопия", 18.0, 150, 4), photos = PostPhotos.None, rating = null),
         isOwn = true, publicTimeline = false, showHelpfulCount = false, enabled = true, PostCardActions(null, null, null, null, {}), CommunityHost())
 }
+
+@Preview @Composable private fun PostCardLightPreview() = PostCardPreview(false)
+@Preview @Composable private fun PostCardDarkPreview() = PostCardPreview(true)
+@Preview @Composable private fun HomePostCardLightPreview() = HomePostCardPreview(false)
+@Preview @Composable private fun HomePostCardDarkPreview() = HomePostCardPreview(true)

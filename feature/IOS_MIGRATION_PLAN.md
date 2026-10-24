@@ -24,8 +24,8 @@ iOS-документы (`docs/IOS_NATIVE_EXPERIENCE.md`, `IOS_NATIVE_NAVIGATION.
 
 **Этап 2 — сессия: F23 и F24 готовы** (выход стирает старые строки; сбой удаления Keychain сообщается). Core session port вместо `SessionRepository` (~43 файла) — **не сделан**.
 
-**Этап 3 — подключение на iOS: начат.** Через новые модули на iOS подключены: вкладка Settings (и три её подэкрана), окно обновления, колокольчик уведомлений, экраны входа, регистрации и восстановления пароля. Подключены также Google/Apple кнопки и существующие Swift-провайдеры (при доступной конфигурации); реальный OAuth ещё не проверен.
-Остальное на iOS по-прежнему legacy: Coffee, Community, Profile, Discovery и всё остальное, вкладки Coffee, Community, Profile ещё вызывают legacy-экраны напрямую.
+**Этап 3 — подключение на iOS: начат.** Через новые модули на iOS подключены: вкладка Settings (и три её подэкрана), окно обновления, колокольчик уведомлений, экраны входа, регистрации и восстановления пароля, **Community (вкладка «Лента»)**. Подключены также Google/Apple кнопки и существующие Swift-провайдеры (при доступной конфигурации); реальный OAuth ещё не проверен.
+Остальное на iOS по-прежнему legacy: Coffee, Profile, Discovery и остальные владельцы. Вкладки Coffee и Profile ещё вызывают legacy-экраны напрямую; Community теперь идёт через рендерер.
 
 **Важные находки для следующих срезов**
 1. Kotlin/Native не линкует переопределение composable-метода интерфейса с аргументом по умолчанию (`modifier: Modifier = Modifier`): ошибка видна только при линковке и только у достижимого кода. У каждого владельца при подключении убрать значения по умолчанию из api-интерфейсов (так сделано у Settings и Auth).
@@ -34,7 +34,7 @@ iOS-документы (`docs/IOS_NATIVE_EXPERIENCE.md`, `IOS_NATIVE_NAVIGATION.
 4. Для сообщения проверки обновлений на iOS нет тоста: временно используется `ErrorHandler.showError`, нужно решение по UX.
 
 **Остаётся**
-- Этап 3: Community, Discovery (+вкладка Лента), Coffee (+вкладка), Profile (+вкладка), Contributions, Shop и Shop-report, Check-in history, Home check-in и общий create flow, Favorites (по решению продукта); ручная и live-приёмка Apple/Google.
+- Этап 3: Discovery (вкладка «Поиск»), Coffee (+вкладка), Profile (+вкладка), Contributions, Shop и Shop-report, Check-in history, Home check-in и общий create flow, Favorites (по решению продукта); ручная приёмка Community и live-приёмка Apple/Google.
 - Этап 2: core session port.
 - Roaster: Xcode-линковка, симулятор, устройство.
 - Этап 5: удаление legacy — только после полной готовности и ручной приёмки.
@@ -103,8 +103,79 @@ nonce/state/expiry на реальном API, provider account-conflict/rejectio
 fake tests не доказывают OAuth, серверную конфигурацию, Xcode app signing или acceptance.
 В этом срезе simulator/device UI и реальная авторизация не запускались.
 
-Следующая точка плана: ручная Auth-приёмка при готовом тестовом окружении; следующий
-безопасный code-срез этапа 3 — Community/Discovery/Coffee с проверкой tab roots и native hooks.
+После auth checkpoint следующий code-срез Community выполнен ниже. Ручная
+Auth-приёмка при готовом тестовом окружении остаётся отдельным gate.
+
+### Checkpoint: Community / вкладка «Лента» — 2026-10-24
+
+Продолжение того же PR #195, база `cf68d8cb` + этот срез. Сверены свежие
+`origin/main=16724b7e` и `origin/develop=8ac9f49a`: обе ревизии уже входят
+в ветку, дополнительный merge не требовался.
+
+Сделано:
+
+- `FeatureCommunityScreenRenderer` перенесён из Android DI в `composeApp/commonMain/di/community`.
+  Android и iOS собирают один feature entry из уже общих repository/account/drinks/
+  analytics/author-blocking ports. Нового data source, session store или writer нет.
+  Экран и его MVI остаются в `feature/community/impl`, не перенесены в composeApp.
+- В `PlatformKoin.ios.kt` подключена feature-фабрика; native Community tab в
+  `PlatformRootNavigation.ios.kt` больше не вызывает legacy CommunityScreen напрямую.
+  В native header передаётся тот же NotificationsRenderer.Bell; UIKit shell не заменён.
+- Из CommunityEntry.Content убраны default arguments composable-интерфейса;
+  shared app adapter передаёт modifier, header, clearance и global-create slot явно.
+  Legacy renderer остаётся fallback, а его UI/VM не удаляются до общей приёмки.
+- Сохранены authenticated CpImage, feed/detail/original policy, prefetch, viewer,
+  display date, feed/exposure analytics, snackbar и нижний clearance. Community
+  использует DS Scaffold; в native tab inset уже принадлежит NativeScreenController,
+  явный clearance передаётся существующим slot-контрактом, не добавлен второй отступ.
+- Existing DS pull-to-refresh берёт native haptic/scroll-to-top hooks. Edit/report
+  sheets и drink select идут через native presenters. Block/Edit menu actions
+  получили существующие native glyphs; правила доступности действий не менялись.
+- Исправлен найденный при подключении дефект DS native menu: признак `enabled`
+  теперь доходит до UIKit overlay, а поздний callback проверяет текущее состояние
+  кнопки и текущий набор действий. При release кнопка отключается и menu удаляется.
+  Compose fallback тоже закрывается/игнорирует действие при блокировке. Добавлены
+  пять чистых common unit tests callback policy и paired light/dark menu previews;
+  UIKit touch/lifecycle этим не сертифицированы.
+- Global create и EditHomeCheckIn(id) маршруты сохранены. На iOS они пока используют
+  прежние формы/History renderer: подключение Community не означает миграцию Home
+  или общего создания. Переходы к Shop/Public Profile тоже используют текущий app renderer.
+- Account/catalog/analytics contract tests перенесены из androidUnitTest в commonTest.
+  Добавлены paired light/dark previews карточек и ленты/ошибки рядом с компонентами.
+  Автоматизированные UI/screenshot tests или test-only Activity/APK не создавались.
+
+Проверки этого среза (Mac/JBR 21, 2026-10-24):
+
+- Feature Community domain/data/MVI: **61 tests**, 6 suites. App subset
+  `*Community*` / `*Feed*` / `*PlatformMenuAction*`: **73 tests**, 12 suites;
+  design-system: **41 tests**, 11 suites. Итого **175**,
+  0 failures/errors/skips. Покрытие существующими fake unit/contract suites:
+  public/mine, account change и late results, pagination, edit/report/visibility/
+  helpful state, API mapping и analytics properties. Это не реальные server writes.
+- `assembleDirectDebug` и packaged runtime-class checks прошли. Проверка APK
+  теперь требует определения FeatureCommunityScreenRenderer, его factory и
+  CommunityEntryImplKt. Play Debug в этом срезе отдельно не собирался.
+- `compileKotlinIosArm64`, `linkDebugFrameworkIosSimulatorArm64` и
+  `compileTestKotlinIosSimulatorArm64` прошли. Common tests для Native только
+  **скомпилированы**, не выполнялись на симуляторе. Native interface/entry действительно
+  достижимы в линковке благодаря новой iOS factory и tab call.
+- Первые два полных прогона (до исправления native menu) успешны: **129** tests;
+  после исправления enabled/callback policy полный прогон с DS и новыми unit tests
+  тоже успешен: **175** tests. Gradle — последовательно, `--max-workers=6`; логи вне tracked sources.
+  Сохранились прежние Preview/expect-actual/other-module warnings.
+- Studio inspection shared adapter всё ещё сообщает несогласованные Compose
+  classpath/slot errors, как в auth checkpoint. Android/Native compile+link
+  зафиксированы независимо; у изменённого CoffeePeekActionMenu inspection ошибок
+  не нашёл. IDE preview не объявляется ручной UI-приёмкой.
+
+Не проверено: ручное открытие Community на iOS, обе темы/крупный шрифт/VoiceOver,
+native menus/sheets, keyboard, safe area/tab bar, refresh,
+photo viewer/cancel, возврат из Home editor, реальные API mutations и аналитика
+с согласованным аккаунтом. Устройства/симуляторы и обычный CoffeePeek не запускались;
+APK не устанавливался. Empty/live feed не использовался для создания записей.
+
+Следующая точка code-плана: **Discovery / вкладка «Поиск»**, затем Coffee.
+Auth и Community runtime/device acceptance остаются открытыми отдельно от следующих переносов.
 
 ## 1. Принципы (решение 2026-10-24)
 

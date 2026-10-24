@@ -19,6 +19,7 @@ import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlin.test.*
 
+/** The platform-neutral account/catalog/analytics adapters are shared by the Android and native iOS feed roots. */
 class CommunityAdaptersTest {
     @Test fun theAccountKeyIsTheUserIdElseTheTokenAndNullForAGuestOrAnInactiveSession() = runTest {
         val sessions = FeedSessions(null)

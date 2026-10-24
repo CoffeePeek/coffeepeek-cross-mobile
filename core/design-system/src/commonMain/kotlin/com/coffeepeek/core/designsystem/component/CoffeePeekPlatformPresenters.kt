@@ -106,7 +106,7 @@ interface CoffeePeekNativeControlsPresenter {
     /** Opens a native menu from the [content] trigger and returns true, or false to let the caller show its own popup. */
     @Composable
     fun Menu(
-        items: List<CoffeePeekNativeMenuItem>, contentDescription: String, modifier: Modifier,
+        items: List<CoffeePeekNativeMenuItem>, contentDescription: String, modifier: Modifier, enabled: Boolean,
         content: @Composable (onClick: () -> Unit) -> Unit,
     ): Boolean
 

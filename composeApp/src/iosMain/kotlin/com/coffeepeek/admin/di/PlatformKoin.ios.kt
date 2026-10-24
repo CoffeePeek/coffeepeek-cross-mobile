@@ -2,6 +2,7 @@ package com.coffeepeek.admin.di
 
 import com.coffeepeek.admin.di.appupdate.featureAppUpdateRenderer
 import com.coffeepeek.admin.di.auth.iosAuthScreenRenderer
+import com.coffeepeek.admin.di.community.featureCommunityScreenRenderer
 import com.coffeepeek.admin.di.notifications.featureNotificationsRenderer
 import com.coffeepeek.admin.di.settings.featureSettingsScreenRenderer
 import com.coffeepeek.admin.utils.ErrorHandler
@@ -16,5 +17,6 @@ actual fun initPlatformKoin() {
         appUpdateRendererFactory = { featureAppUpdateRenderer(get(), get()) },
         notificationsRendererFactory = { featureNotificationsRenderer(get()) },
         authRendererFactory = { iosAuthScreenRenderer(get(), get()) },
+        communityRendererFactory = { featureCommunityScreenRenderer(get(), get(), get(), get(), get(), get()) },
     )
 }

@@ -22,6 +22,7 @@ import androidx.compose.foundation.text.BasicText
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -63,6 +64,7 @@ fun CoffeePeekActionMenu(
     modifier: Modifier = Modifier,
     /** The accessibility label of the trigger when a native menu replaces the popup. */
     menuDescription: String = "",
+    enabled: Boolean = true,
     content: @Composable (open: () -> Unit) -> Unit,
 ) {
     val native = LocalCoffeePeekNativeControlsPresenter.current
@@ -70,10 +72,11 @@ fun CoffeePeekActionMenu(
             actions.mapIndexed { index, action ->
                 CoffeePeekNativeMenuItem(index.toString(), action.label, action.nativeIcon, action.destructive, action.onClick)
             },
-            menuDescription, modifier, content,
+            menuDescription, modifier, enabled, content,
         )
     ) return
     var expanded by remember { mutableStateOf(false) }
+    LaunchedEffect(enabled) { if (!enabled) expanded = false }
     val margin = with(LocalDensity.current) { CoffeePeekDimens.spacing2.roundToPx() }
     val position = remember(margin) { object : PopupPositionProvider {
         override fun calculatePosition(anchorBounds: IntRect, windowSize: IntSize,
@@ -81,11 +84,11 @@ fun CoffeePeekActionMenu(
             coffeePeekActionMenuPosition(anchorBounds, windowSize, layoutDirection, popupContentSize, margin)
     } }
     Box(modifier) {
-        content { expanded = true }
+        content { if (enabled) expanded = true }
         if (expanded) Popup(position, onDismissRequest = { expanded = false }, properties = PopupProperties(focusable = true)) {
             CoffeePeekActionMenuContent(actions) {
                 expanded = false
-                it.onClick()
+                if (enabled) it.onClick()
             }
         }
     }
@@ -134,11 +137,13 @@ private fun CoffeePeekActionMenuRow(action: CoffeePeekMenuAction, onClick: () ->
     }
 }
 
-@Preview
 @Composable
-private fun CoffeePeekActionMenuPreview() = CoffeePeekTheme {
+private fun CoffeePeekActionMenuPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
     CoffeePeekActionMenuContent(listOf(
         CoffeePeekMenuAction("Поделиться профилем", CoffeePeekIcons.Share) {},
         CoffeePeekMenuAction("Заблокировать автора", CoffeePeekIcons.Block, destructive = true) {},
     )) {}
 }
+
+@Preview @Composable private fun CoffeePeekActionMenuLightPreview() = CoffeePeekActionMenuPreview(false)
+@Preview @Composable private fun CoffeePeekActionMenuDarkPreview() = CoffeePeekActionMenuPreview(true)

@@ -74,7 +74,7 @@ internal actual fun PlatformMenuButton(
                             null -> null
                         }
                         UIAction.actionWithTitle(item.title, symbol?.let { UIImage.systemImageNamed(it) }, item.id) {
-                            currentItems.value.firstOrNull { it.id == item.id && it.enabled }?.onClick?.invoke()
+                            performPlatformMenuAction(currentItems.value, item.id, button.enabled)
                         }.apply {
                             attributes = (if (item.enabled) 0uL else UIMenuElementAttributesDisabled) or
                                 (if (item.destructive) platform.UIKit.UIMenuElementAttributesDestructive else 0uL)
@@ -84,7 +84,10 @@ internal actual fun PlatformMenuButton(
                     },
                 )
             },
-            onRelease = { it.menu = null },
+            onRelease = {
+                it.enabled = false
+                it.menu = null
+            },
         )
     }
 }

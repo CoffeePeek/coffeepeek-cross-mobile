@@ -120,13 +120,14 @@ private object IosNativeControlsPresenter : CoffeePeekNativeControlsPresenter {
 
     @Composable
     override fun Menu(
-        items: List<CoffeePeekNativeMenuItem>, contentDescription: String, modifier: Modifier,
+        items: List<CoffeePeekNativeMenuItem>, contentDescription: String, modifier: Modifier, enabled: Boolean,
         content: @Composable (onClick: () -> Unit) -> Unit,
     ): Boolean {
         PlatformMenuButton(
             items = items.map { PlatformMenuItem(it.id, it.title, icon = it.icon?.let { icon -> PlatformMenuIcon.valueOf(icon.name) }, destructive = it.destructive, onClick = it.onClick) },
             contentDescription = contentDescription,
             modifier = modifier,
+            enabled = enabled,
             content = content,
         )
         return true

@@ -8,7 +8,7 @@ import com.coffeepeek.admin.di.coffee.androidCoffeeScreenRenderer
 import com.coffeepeek.admin.di.coffee.coffeeModule
 import com.coffeepeek.admin.di.appupdate.androidAppUpdateRenderer
 import com.coffeepeek.admin.di.auth.androidAuthScreenRenderer
-import com.coffeepeek.admin.di.community.androidCommunityScreenRenderer
+import com.coffeepeek.admin.di.community.featureCommunityScreenRenderer
 import com.coffeepeek.api.CoffeePeekClient
 import java.time.OffsetDateTime
 import com.coffeepeek.admin.di.contributions.androidContributionsScreenRenderer
@@ -80,7 +80,7 @@ internal fun initAndroidKoin(extraModules: List<org.koin.core.module.Module> = e
         appUpdateRendererFactory = { androidAppUpdateRenderer(get(), get()) },
         notificationsRendererFactory = { featureNotificationsRenderer(get()) },
         authRendererFactory = { androidAuthScreenRenderer(get(), get()) },
-        communityRendererFactory = { androidCommunityScreenRenderer(get(), get(), get(), get(), get(), get()) },
+        communityRendererFactory = { featureCommunityScreenRenderer(get(), get(), get(), get(), get(), get()) },
         contributionsRendererFactory = {
             val gateway = get<CoffeePeekClient>()
             androidContributionsScreenRenderer(

@@ -16,6 +16,11 @@ internal data class PlatformMenuItem(
     val onClick: () -> Unit,
 )
 
+/** Native menus may deliver a callback after recomposition or release: use the current gate and current items, not captured actions. */
+internal fun performPlatformMenuAction(items: List<PlatformMenuItem>, id: String, enabled: Boolean) {
+    if (enabled) items.firstOrNull { it.id == id && it.enabled }?.onClick?.invoke()
+}
+
 /** A menu belongs to its trigger, including when the trigger moves inside a scrolling list. */
 @Composable
 internal expect fun PlatformMenuButton(

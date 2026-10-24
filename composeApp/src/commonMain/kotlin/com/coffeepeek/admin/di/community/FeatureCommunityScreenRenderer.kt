@@ -4,7 +4,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -41,8 +40,8 @@ import com.coffeepeek.feature.community.api.CommunityAnalytics
 import com.coffeepeek.feature.community.api.ConsumedDrinks
 import com.coffeepeek.feature.community.domain.repository.CommunityRepository
 
-/** Android routes the feed tab to the migrated entry; navigation, images, the photo viewer, analytics trackers and the creation flow stay app-owned. */
-internal class AndroidCommunityScreenRenderer(private val entry: CommunityEntry) : CommunityScreenRenderer {
+/** Both platforms use one migrated feed; navigation, protected media, analytics and the global creation flow remain app-owned. */
+internal class FeatureCommunityScreenRenderer(private val entry: CommunityEntry) : CommunityScreenRenderer {
     @Composable
     override fun Content(onCreateCheckIn: () -> Unit, notificationsAction: @Composable () -> Unit) {
         entry.Content(
@@ -50,6 +49,7 @@ internal class AndroidCommunityScreenRenderer(private val entry: CommunityEntry)
             onOpenAuthor = { slug, name, avatar -> Navigator.navigate(Navigator.Screen.UserProfile(slug, name, avatar)) },
             onOpenShop = { Navigator.navigate(Navigator.Screen.ShopDetail(it)) },
             onEditHome = { Navigator.navigate(Navigator.Screen.EditHomeCheckIn(it)) },
+            modifier = Modifier,
             headerAction = notificationsAction,
             bottomClearance = LocalFloatingNavClearance.current,
             floatingAction = { floating -> CreateAction(floating, onCreateCheckIn) },
@@ -91,9 +91,9 @@ internal fun communityHost() = CommunityHost(
     snackbar = { state, clearance -> CpSnackbarHost(state, Modifier.padding(bottom = clearance)) },
 )
 
-internal fun androidCommunityScreenRenderer(
+internal fun featureCommunityScreenRenderer(
     repository: CommunityRepository, account: CommunityAccount, analytics: CommunityAnalytics, drinks: ConsumedDrinks,
     visibility: AuthorVisibility, blockActions: AuthorBlockActions,
-): CommunityScreenRenderer = AndroidCommunityScreenRenderer(
+): CommunityScreenRenderer = FeatureCommunityScreenRenderer(
     createCommunityEntry(repository, account, analytics, drinks, visibility, blockActions, communityHost()),
 )
