@@ -35,6 +35,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.CollectionInfo
 import androidx.compose.ui.semantics.collectionInfo
@@ -55,7 +56,6 @@ import com.coffeepeek.feature.discovery.impl.map.MapAction
 import com.coffeepeek.feature.discovery.impl.map.MapState
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.drop
-import java.util.Locale
 
 @Composable
 internal fun MapSuggestions(state: MapState, onSelect: (String) -> Unit) {
@@ -199,6 +199,7 @@ private fun MapShopCard(
     distance: Double?,
     onOpen: () -> Unit,
 ) {
+    val locale = LocalConfiguration.current.locales[0]
     Card(
         Modifier.fillMaxWidth(), shape = RoundedCornerShape(CoffeePeekDimens.radiusXl),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface), elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
@@ -219,7 +220,7 @@ private fun MapShopCard(
                     if (rating != null && rating > 0) {
                         Icon(CoffeePeekIcons.StarFilled, null, Modifier.size(14.dp), tint = MaterialTheme.colorScheme.primary)
                         Spacer(Modifier.width(4.dp))
-                        Text(String.format(Locale.getDefault(), "%.1f", rating), style = MaterialTheme.typography.labelMedium)
+                        Text(String.format(locale, "%.1f", rating), style = MaterialTheme.typography.labelMedium)
                         if (details.reviewCount > 0) Text(" (${details.reviewCount})", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     } else {
                         Text(

@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.core.designsystem.component.CoffeePeekLikeButton
@@ -19,7 +20,6 @@ import com.coffeepeek.feature.discovery.domain.model.ShopKind
 import com.coffeepeek.feature.discovery.domain.model.ShopSummary
 import com.coffeepeek.feature.discovery.domain.rules.distanceMeters
 import com.coffeepeek.feature.discovery.impl.R
-import java.util.Locale
 import kotlin.math.roundToInt
 
 @Composable
@@ -34,6 +34,7 @@ internal fun ShopRow(
     /** The roaster logos, the brew methods and the tag belong to the list card; the row of the discovery turns them off. */
     showCatalogDetails: Boolean = true,
 ) {
+    val locale = LocalConfiguration.current.locales[0]
     val kind = stringResource(
         when (shop.kind) {
             ShopKind.Specialty -> R.string.discovery_shop_kind_specialty
@@ -48,7 +49,7 @@ internal fun ShopRow(
         kindLabel = kind,
         modifier = modifier,
         rating = shop.rating,
-        ratingText = shop.rating?.let { String.format(Locale.getDefault(), "%.1f", it) }.orEmpty(),
+        ratingText = shop.rating?.let { String.format(locale, "%.1f", it) }.orEmpty(),
         ratingCount = shop.checkInCount,
         isNew = shop.isNew,
         newLabel = stringResource(R.string.discovery_shop_new),
