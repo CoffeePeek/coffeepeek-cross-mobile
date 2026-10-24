@@ -6,8 +6,7 @@ import coffeepeek.composeapp.generated.resources.profile_cancel
 import coffeepeek.composeapp.generated.resources.profile_logout_message
 import coffeepeek.composeapp.generated.resources.profile_logout_title
 import coffeepeek.composeapp.generated.resources.profile_menu_logout
-import com.coffeepeek.admin.ui.component.NativeActionSheet
-import com.coffeepeek.admin.ui.component.PlatformAction
+import com.coffeepeek.admin.ui.component.NativeAlert
 import com.coffeepeek.core.designsystem.component.CoffeePeekDestructiveConfirmationSheet
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import org.jetbrains.compose.resources.stringResource
@@ -18,10 +17,10 @@ internal fun ProfileLogoutConfirmation(onConfirm: () -> Unit, onDismiss: () -> U
     val title = stringResource(Res.string.profile_logout_title)
     val message = stringResource(Res.string.profile_logout_message)
     val confirmLabel = stringResource(Res.string.profile_menu_logout)
-    if (!NativeActionSheet(title, listOf(PlatformAction(confirmLabel, destructive = true, onClick = onConfirm)),
-            message, dismissBeforeAction = false, onDismiss = onDismiss)) {
+    val cancelLabel = stringResource(Res.string.profile_cancel)
+    if (!NativeAlert(title, message, confirmLabel, onConfirm, onDismiss, cancelLabel, destructive = true)) {
         CoffeePeekDestructiveConfirmationSheet(title, message, confirmLabel,
-            stringResource(Res.string.profile_cancel), onConfirm, onDismiss)
+            cancelLabel, onConfirm, onDismiss)
     }
 }
 

@@ -1,5 +1,9 @@
 package com.coffeepeek.admin.ui.screen.feed
 
+import com.coffeepeek.core.designsystem.component.coffeePeekScrollContentPadding
+
+import com.coffeepeek.core.designsystem.component.CoffeePeekScaffold as Scaffold
+
 import com.coffeepeek.admin.analytics.*
 
 import com.coffeepeek.admin.ui.icons.CpIcons
@@ -31,7 +35,6 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.runtime.Composable
@@ -300,7 +303,7 @@ fun FeedScreen(
                                 state = discoveryListState,
                                 userScrollEnabled = !mapExpanded,
                                 modifier = scrollModifier.fillMaxSize(),
-                                contentPadding = PaddingValues(top = CpDimens.spacing4, bottom = navClearance + 88.dp),
+                                contentPadding = coffeePeekScrollContentPadding(PaddingValues(top = CpDimens.spacing4, bottom = navClearance + 88.dp)),
                                 verticalArrangement = Arrangement.spacedBy(CpDimens.spacing4),
                             ) {
                                 item(key = "mini-map") {
@@ -375,7 +378,7 @@ fun FeedScreen(
                             LazyColumn(
                                 state = listState,
                                 modifier = scrollModifier.fillMaxSize(),
-                                contentPadding = listContentPadding,
+                                contentPadding = coffeePeekScrollContentPadding(listContentPadding),
                                 verticalArrangement = Arrangement.Center,
                             ) {
                                 item {
@@ -397,7 +400,7 @@ fun FeedScreen(
                             LazyColumn(
                                 state = listState,
                                 modifier = scrollModifier.fillMaxSize(),
-                                contentPadding = listContentPadding,
+                                contentPadding = coffeePeekScrollContentPadding(listContentPadding),
                                 verticalArrangement = Arrangement.spacedBy(CpDimens.spacing3),
                             ) {
                                 if (showRoasterSearch) {

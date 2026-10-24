@@ -23,8 +23,6 @@ import com.coffeepeek.admin.theme.toUIColor
 import com.coffeepeek.admin.theme.uiKitStyle
 import com.coffeepeek.admin.theme.ThemeManager
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
-import com.coffeepeek.core.designsystem.component.CoffeePeekActionDialog
-import com.coffeepeek.core.designsystem.component.CoffeePeekDialogAction
 import kotlinx.cinterop.ObjCAction
 import kotlinx.cinterop.useContents
 import platform.Foundation.*
@@ -68,14 +66,15 @@ internal actual fun PlatformAlert(title: String, message: String, confirmLabel: 
 }
 
 @Composable
-internal actual fun NativeAlert(title: String, message: String, confirmLabel: String, onConfirm: () -> Unit, onDismiss: () -> Unit, cancelLabel: String?): Boolean {
-    PlatformAlert(title, message, confirmLabel, onConfirm, onDismiss, cancelLabel)
+internal actual fun NativeAlert(title: String, message: String, confirmLabel: String, onConfirm: () -> Unit, onDismiss: () -> Unit, cancelLabel: String?, destructive: Boolean): Boolean {
+    PlatformAlert(title, message, confirmLabel, onConfirm, onDismiss, cancelLabel, destructive)
     return true
 }
 
 @Composable
 internal actual fun NativeActionSheet(title: String, actions: List<PlatformAction>, message: String?, dismissBeforeAction: Boolean, onDismiss: () -> Unit): Boolean {
-    IosActionDialog(title, message, actions, stringResource(Res.string.presentation_cancel), dismissBeforeAction, onDismiss)
+    IosActionDialog(title, message, actions, stringResource(Res.string.presentation_cancel),
+        dismissBeforeAction, onDismiss, UIAlertControllerStyleActionSheet)
     return true
 }
 
@@ -83,24 +82,49 @@ internal actual fun NativeActionSheet(title: String, actions: List<PlatformActio
 private fun IosActionDialog(
     title: String, message: String?, actions: List<PlatformAction>, cancelLabel: String?,
     dismissBeforeAction: Boolean, onDismiss: () -> Unit,
+    style: UIAlertControllerStyle = UIAlertControllerStyleAlert,
 ) {
+    val host = LocalUIViewController.current
     val dismiss = rememberUpdatedState(onDismiss)
-    var visible by remember(title, message) { mutableStateOf(true) }
-    val selection = remember(title, message, dismissBeforeAction) {
-        PlatformActionSelection(dismissBeforeAction) { dismiss.value() }
-    }
-    if (!visible) return
-    CoffeePeekActionDialog(title, message, actions.map { action ->
-        CoffeePeekDialogAction(action.title, {
-            selection.select(action) { completed ->
-                visible = false
-                completed()
+    val latestActions = rememberUpdatedState(actions)
+    val colors = MaterialTheme.colorScheme
+    val themeMode by ThemeManager.themeMode.collectAsState()
+    val actionLabels = actions.map { it.title to it.destructive }
+    val alert = remember(host, title, message, actionLabels, cancelLabel, style, dismissBeforeAction) {
+        val selection = PlatformActionSelection(dismissBeforeAction) { dismiss.value() }
+        UIAlertController.alertControllerWithTitle(title, message, style).apply {
+            addNativeActions(this, actions, { latestActions.value }, selection)
+            if (cancelLabel != null) addAction(UIAlertAction.actionWithTitle(cancelLabel, UIAlertActionStyleCancel) {
+                dismissViewControllerAnimated(!UIAccessibilityIsReduceMotionEnabled()) { dismiss.value() }
+            })
+            popoverPresentationController?.apply {
+                sourceView = host.view
+                sourceRect = host.view.bounds
+                permittedArrowDirections = 0u
             }
-        }, action.destructive, action.enabled)
-    }, cancelLabel, onDismiss = {
-        visible = false
-        dismiss.value()
-    })
+        }
+    }
+    SideEffect {
+        alert.overrideUserInterfaceStyle = themeMode.uiKitStyle
+        alert.view.tintColor = colors.primary.toUIColor()
+        actions.forEachIndexed { index, action -> (alert.actions[index] as UIAlertAction).enabled = action.enabled }
+    }
+    PresentNativeController(alert, host)
+}
+
+private fun addNativeActions(
+    alert: UIAlertController, actions: List<PlatformAction>, latestActions: () -> List<PlatformAction>,
+    selection: PlatformActionSelection,
+) {
+    actions.forEachIndexed { index, action ->
+        val style = if (action.destructive) UIAlertActionStyleDestructive else UIAlertActionStyleDefault
+        alert.addAction(UIAlertAction.actionWithTitle(action.title, style) {
+            val currentAction = latestActions().getOrNull(index) ?: return@actionWithTitle
+            selection.select(currentAction) { completed ->
+                alert.dismissViewControllerAnimated(!UIAccessibilityIsReduceMotionEnabled(), completed)
+            }
+        }.apply { enabled = action.enabled })
+    }
 }
 
 private class SheetDelegate(val dismissed: () -> Unit) : NSObject(), UIAdaptivePresentationControllerDelegateProtocol {

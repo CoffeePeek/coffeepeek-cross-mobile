@@ -1,5 +1,9 @@
 package com.coffeepeek.admin.ui.screen.checkins
 
+import com.coffeepeek.core.designsystem.component.coffeePeekScrollContentPadding
+
+import com.coffeepeek.core.designsystem.component.CoffeePeekScaffold as Scaffold
+
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -14,7 +18,6 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -139,7 +142,7 @@ internal fun CheckInCalendarContent(
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
+        contentPadding = coffeePeekScrollContentPadding(PaddingValues(horizontal = 16.dp, vertical = 12.dp)),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         item {
@@ -241,7 +244,7 @@ private fun CheckInListContent(
         else -> LazyColumn(
             modifier = Modifier.fillMaxSize(),
             state = listState,
-            contentPadding = PaddingValues(CpDimens.spacing4),
+            contentPadding = coffeePeekScrollContentPadding(PaddingValues(CpDimens.spacing4)),
             verticalArrangement = Arrangement.spacedBy(CpDimens.spacing3),
         ) {
             items(state.checkIns, key = { it.id }) { checkIn ->

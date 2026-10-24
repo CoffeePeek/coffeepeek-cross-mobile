@@ -1,5 +1,7 @@
 package com.coffeepeek.admin.ui.screen.shopchange
 
+import com.coffeepeek.core.designsystem.component.CoffeePeekScaffold as Scaffold
+
 import androidx.compose.runtime.getValue
 import com.coffeepeek.admin.ui.component.PlatformScrollableColumn
 import com.coffeepeek.admin.ui.component.PlatformAlert
@@ -34,7 +36,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -145,6 +146,7 @@ fun ShopChangeEditorScreen(shopId: String, sectionName: String, requestId: Strin
                 .padding(horizontal = CpDimens.spacing4),
         ) {
             PlatformScrollableColumn(
+                reserveBottomClearance = true,
                 modifier = Modifier
                     .weight(1f)
                     ,

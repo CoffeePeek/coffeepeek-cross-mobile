@@ -1,5 +1,9 @@
 package com.coffeepeek.admin.feature.homecheckin.ui
 
+import com.coffeepeek.core.designsystem.component.coffeePeekScrollContentPadding
+
+import com.coffeepeek.core.designsystem.component.CoffeePeekScaffold as Scaffold
+
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.getValue
 import com.coffeepeek.admin.ui.component.PlatformAlert
@@ -28,7 +32,6 @@ import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -109,7 +112,7 @@ internal fun HomeCheckInScreen(vm: HomeCheckInViewModel = platformViewModel()) {
 
 @Composable
 private fun HomeHistory(state: HomeCheckInUiState, vm: HomeCheckInViewModel, modifier: Modifier) {
-    LazyColumn(modifier, contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+    LazyColumn(modifier, contentPadding = coffeePeekScrollContentPadding(PaddingValues(16.dp)), verticalArrangement = Arrangement.spacedBy(10.dp)) {
         if (state.selectedDate != null) item {
             TextButton(onClick = { vm.selectDate(null) }) { Text("${state.selectedDate} · Сбросить фильтр") }
         }
@@ -143,7 +146,7 @@ private fun HomeHistory(state: HomeCheckInUiState, vm: HomeCheckInViewModel, mod
 private fun HomeCalendar(state: HomeCheckInUiState, vm: HomeCheckInViewModel, modifier: Modifier) {
     val month = state.month
     val counts = state.calendar.associate { it.preparedOn to it.brewCount }
-    LazyColumn(modifier, contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+    LazyColumn(modifier, contentPadding = coffeePeekScrollContentPadding(PaddingValues(16.dp)), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         item {
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween) {
@@ -185,7 +188,7 @@ private fun HomeCalendar(state: HomeCheckInUiState, vm: HomeCheckInViewModel, mo
 
 @Composable
 private fun HomeStatistics(state: HomeCheckInUiState, modifier: Modifier) {
-    LazyColumn(modifier, contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+    LazyColumn(modifier, contentPadding = coffeePeekScrollContentPadding(PaddingValues(16.dp)), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         item { Text("По зерну", style = MaterialTheme.typography.titleMedium) }
         if (state.beanStats.isEmpty()) item { Text("Пока нет данных") }
         items(state.beanStats) { stats ->

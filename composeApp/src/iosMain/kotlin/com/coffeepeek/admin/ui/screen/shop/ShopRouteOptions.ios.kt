@@ -1,36 +1,31 @@
-@file:OptIn(kotlinx.cinterop.ExperimentalForeignApi::class, androidx.compose.ui.ExperimentalComposeUiApi::class)
-
 package com.coffeepeek.admin.ui.screen.shop
 
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.SideEffect
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberUpdatedState
-import androidx.compose.ui.uikit.LocalUIViewController
-import com.coffeepeek.admin.theme.ThemeManager
-import com.coffeepeek.admin.theme.uiKitStyle
-import com.coffeepeek.admin.ui.component.PresentNativeController
-import platform.Foundation.NSURL
-import platform.UIKit.UIActivityViewController
-import platform.UIKit.popoverPresentationController
+import coffeepeek.composeapp.generated.resources.Res
+import coffeepeek.composeapp.generated.resources.route_choose_app
+import coffeepeek.composeapp.generated.resources.route_apple_maps
+import coffeepeek.composeapp.generated.resources.route_google_maps
+import coffeepeek.composeapp.generated.resources.route_yandex_maps
+import com.coffeepeek.admin.ui.component.NativeActionSheet
+import com.coffeepeek.admin.ui.component.PlatformAction
+import com.coffeepeek.admin.utils.OpenInBrowser
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 internal actual fun ShopRoutePicker(latitude: Double, longitude: Double, onDismiss: () -> Unit) {
-    val host = LocalUIViewController.current
-    val dismiss = rememberUpdatedState(onDismiss)
-    val controller = remember(latitude, longitude, host) {
-        UIActivityViewController(
-            activityItems = listOf(NSURL(string = buildAppleMapsRouteUrl(latitude, longitude))),
-            applicationActivities = null,
-        ).apply {
-            completionWithItemsHandler = { _, _, _, _ -> dismiss.value() }
-            popoverPresentationController?.apply {
-                sourceView = host.view
-                sourceRect = host.view.bounds
-                permittedArrowDirections = 0u
-            }
-        }
-    }
-    SideEffect { controller.overrideUserInterfaceStyle = ThemeManager.themeMode.value.uiKitStyle }
-    PresentNativeController(controller, host)
+    NativeActionSheet(
+        title = stringResource(Res.string.route_choose_app),
+        actions = listOf(
+            PlatformAction(stringResource(Res.string.route_apple_maps)) {
+                OpenInBrowser.openInBrowser(buildAppleMapsRouteUrl(latitude, longitude))
+            },
+            PlatformAction(stringResource(Res.string.route_google_maps)) {
+                OpenInBrowser.openInBrowser(buildGoogleMapsRouteUrl(latitude, longitude))
+            },
+            PlatformAction(stringResource(Res.string.route_yandex_maps)) {
+                OpenInBrowser.openInBrowser(buildYandexMapsRouteUrl(latitude, longitude))
+            },
+        ),
+        onDismiss = onDismiss,
+    )
 }
