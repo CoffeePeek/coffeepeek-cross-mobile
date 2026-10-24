@@ -1,6 +1,9 @@
 package com.coffeepeek.feature.homecheckin.impl.ui.compose.component
 
 import androidx.compose.foundation.background
+import org.jetbrains.compose.ui.tooling.preview.Preview
+import com.coffeepeek.feature.homecheckin.impl.resources.Res
+import com.coffeepeek.feature.homecheckin.impl.resources.home_check_in_choose_bean
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -11,13 +14,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.res.stringResource
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.semantics.*
-import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
-import com.coffeepeek.feature.homecheckin.impl.R
 
 @Composable
 internal fun HomeCheckInEditorSelect(
@@ -40,7 +41,7 @@ internal fun HomeCheckInEditorSelect(
     }
 }
 
-@PreviewLightDark @Composable private fun HomeCheckInEditorSelectPreview() = CoffeePeekTheme {
-    Surface { HomeCheckInEditorSelect(stringResource(R.string.home_check_in_choose_bean), CoffeePeekIcons.CoffeeBean,
-        stringResource(R.string.home_check_in_choose_bean), true, onClick = {}) }
+@Preview @Composable private fun HomeCheckInEditorSelectPreview() = CoffeePeekTheme {
+    Surface { HomeCheckInEditorSelect(stringResource(Res.string.home_check_in_choose_bean), CoffeePeekIcons.CoffeeBean,
+        stringResource(Res.string.home_check_in_choose_bean), true, onClick = {}) }
 }

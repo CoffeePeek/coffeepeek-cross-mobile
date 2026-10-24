@@ -1,6 +1,34 @@
 package com.coffeepeek.feature.homecheckin.impl.ui.compose
 
-import androidx.activity.compose.BackHandler
+import com.coffeepeek.core.designsystem.component.CoffeePeekBackHandler
+import org.jetbrains.compose.ui.tooling.preview.Preview
+import com.coffeepeek.feature.homecheckin.impl.resources.Res
+import com.coffeepeek.feature.homecheckin.impl.resources.home_check_in_validation_summary
+import com.coffeepeek.feature.homecheckin.impl.resources.home_check_in_bean
+import com.coffeepeek.feature.homecheckin.impl.resources.home_check_in_brew_method
+import com.coffeepeek.feature.homecheckin.impl.resources.home_check_in_choose_bean
+import com.coffeepeek.feature.homecheckin.impl.resources.home_check_in_choose_date
+import com.coffeepeek.feature.homecheckin.impl.resources.home_check_in_dose_description
+import com.coffeepeek.feature.homecheckin.impl.resources.home_check_in_dose_hint
+import com.coffeepeek.feature.homecheckin.impl.resources.home_check_in_dose_label
+import com.coffeepeek.feature.homecheckin.impl.resources.home_check_in_drink
+import com.coffeepeek.feature.homecheckin.impl.resources.home_check_in_drink_hint
+import com.coffeepeek.feature.homecheckin.impl.resources.home_check_in_editor_close
+import com.coffeepeek.feature.homecheckin.impl.resources.home_check_in_editor_note
+import com.coffeepeek.feature.homecheckin.impl.resources.home_check_in_editor_title
+import com.coffeepeek.feature.homecheckin.impl.resources.home_check_in_home
+import com.coffeepeek.feature.homecheckin.impl.resources.home_check_in_keep_photos
+import com.coffeepeek.feature.homecheckin.impl.resources.home_check_in_load_failed
+import com.coffeepeek.feature.homecheckin.impl.resources.home_check_in_loading
+import com.coffeepeek.feature.homecheckin.impl.resources.home_check_in_methods_loading
+import com.coffeepeek.feature.homecheckin.impl.resources.home_check_in_methods_retry
+import com.coffeepeek.feature.homecheckin.impl.resources.home_check_in_note_hint
+import com.coffeepeek.feature.homecheckin.impl.resources.home_check_in_optional
+import com.coffeepeek.feature.homecheckin.impl.resources.home_check_in_photo_upload_failed
+import com.coffeepeek.feature.homecheckin.impl.resources.home_check_in_prepared_date
+import com.coffeepeek.feature.homecheckin.impl.resources.home_check_in_retry
+import com.coffeepeek.feature.homecheckin.impl.resources.home_check_in_save
+import com.coffeepeek.feature.homecheckin.impl.resources.home_check_in_saving
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -11,12 +39,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
-import androidx.compose.ui.res.pluralStringResource
-import androidx.compose.ui.res.stringResource
+import org.jetbrains.compose.resources.pluralStringResource
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.semantics.*
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -28,7 +55,6 @@ import com.coffeepeek.core.designsystem.component.CoffeePeekLoader
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.feature.homecheckin.domain.model.*
-import com.coffeepeek.feature.homecheckin.impl.R
 import com.coffeepeek.feature.homecheckin.impl.ui.HomeCheckInEditorViewModel
 import com.coffeepeek.feature.homecheckin.impl.ui.compose.component.*
 import com.coffeepeek.feature.homecheckin.impl.ui.compose.model.*
@@ -65,7 +91,7 @@ internal fun HomeCheckInEditorScreen(
     }
     val visible = if (accessAllowed) state else HomeCheckInEditorState(isAccessRevoked = true)
     LaunchedEffect(visible.isSaving) { currentDismiss(!visible.isSaving) }
-    BackHandler(enabled = !visible.isClosed) {
+    CoffeePeekBackHandler(enabled = !visible.isClosed) {
         when {
             visible.isAccessRevoked -> currentEvent(HomeCheckInEditorEvent.Close)
             visible.isBeanPickerOpen -> viewModel.onAction(HomeCheckInEditorAction.CloseBeanPicker)
@@ -120,30 +146,30 @@ internal fun HomeCheckInEditorScreenContent(
         Column(Modifier.fillMaxSize()) {
             Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp).padding(bottom = 16.dp),
                 verticalAlignment = Alignment.CenterVertically) {
-                Text(stringResource(if (state.entry == null) R.string.home_check_in_home else R.string.home_check_in_editor_title),
+                Text(stringResource(if (state.entry == null) Res.string.home_check_in_home else Res.string.home_check_in_editor_title),
                     Modifier.weight(1f), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
                 IconButton(onClick = { dispatch(HomeCheckInEditorAction.Close) }, enabled = !state.isSaving,
                     modifier = Modifier.size(44.dp)) {
-                    Icon(CoffeePeekIcons.Close, stringResource(R.string.home_check_in_editor_close), Modifier.size(20.dp))
+                    Icon(CoffeePeekIcons.Close, stringResource(Res.string.home_check_in_editor_close), Modifier.size(20.dp))
                 }
             }
             if (!state.isReady) {
                 Column(Modifier.weight(1f).fillMaxWidth().padding(16.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                    if (state.isLoading) CoffeePeekLoader(stringResource(R.string.home_check_in_loading))
+                    if (state.isLoading) CoffeePeekLoader(stringResource(Res.string.home_check_in_loading))
                     state.loadIssue?.let {
                         Text(if (it == HomePreparationIssue.RequestFailed || it == HomePreparationIssue.InvalidResponse)
-                            stringResource(R.string.home_check_in_load_failed) else it.editorText(),
+                            stringResource(Res.string.home_check_in_load_failed) else it.editorText(),
                             color = MaterialTheme.colorScheme.error, modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite })
                         TextButton(onClick = { onAction(HomeCheckInEditorAction.RetryDetail) }, enabled = !state.isLoading) {
-                            Text(stringResource(R.string.home_check_in_retry))
+                            Text(stringResource(Res.string.home_check_in_retry))
                         }
                     }
                 }
                 return@Column
             }
             val saveText = state.saveIssue?.editorText()
-            val photoUploadText = stringResource(R.string.home_check_in_photo_upload_failed)
-            val summary = if (state.fieldErrors.isNotEmpty()) pluralStringResource(R.plurals.home_check_in_validation_summary,
+            val photoUploadText = stringResource(Res.string.home_check_in_photo_upload_failed)
+            val summary = if (state.fieldErrors.isNotEmpty()) pluralStringResource(Res.plurals.home_check_in_validation_summary,
                     state.fieldErrors.size, state.fieldErrors.size)
                 // Production reported any failed photo upload with one clear message, whatever the transport reason.
                 else if (state.saveIssue != null && state.failedOperation == HomePreparationOperation.PhotoUpload) photoUploadText
@@ -165,52 +191,52 @@ internal fun HomeCheckInEditorScreenContent(
                         content: @Composable (String?) -> Unit) {
                         val error = state.fieldErrors[field]?.editorText()
                         CoffeePeekFormStep(optional = field != HomePreparationField.Date, last = last,
-                            isError = error != null, optionalDescription = stringResource(R.string.home_check_in_optional)) {
+                            isError = error != null, optionalDescription = stringResource(Res.string.home_check_in_optional)) {
                             HomeCheckInEditorField(label, error) { content(error) }
                         }
                     }
-                    Step(HomePreparationField.Date, stringResource(R.string.home_check_in_prepared_date)) { error ->
+                    Step(HomePreparationField.Date, stringResource(Res.string.home_check_in_prepared_date)) { error ->
                         HomeCheckInEditorSelect(formatDate(draft.preparedOn.orEmpty()), CoffeePeekIcons.Calendar,
-                            stringResource(R.string.home_check_in_choose_date), enabled, error) {
+                            stringResource(Res.string.home_check_in_choose_date), enabled, error) {
                             focus.clearFocus(); keyboard?.hide(); showDatePicker = true
                         }
                     }
-                    Step(HomePreparationField.Method, stringResource(R.string.home_check_in_brew_method)) { error ->
+                    Step(HomePreparationField.Method, stringResource(Res.string.home_check_in_brew_method)) { error ->
                         HomeCheckInEditorMethod(draft.brewMethodCode, state.methods, enabled && !state.methodsLoading,
                             error, formatMethod, media.methodArtwork, { onAction(HomeCheckInEditorAction.MethodChanged(it)) })
-                        if (state.methodsLoading) Text(stringResource(R.string.home_check_in_methods_loading), style = MaterialTheme.typography.bodySmall)
+                        if (state.methodsLoading) Text(stringResource(Res.string.home_check_in_methods_loading), style = MaterialTheme.typography.bodySmall)
                         if (state.methodsIssue != null) TextButton(onClick = { onAction(HomeCheckInEditorAction.RetryMethods) }, enabled = enabled) {
-                            Text(stringResource(R.string.home_check_in_methods_retry))
+                            Text(stringResource(Res.string.home_check_in_methods_retry))
                         }
                     }
-                    Step(HomePreparationField.Bean, stringResource(R.string.home_check_in_bean)) { error ->
-                        HomeCheckInEditorSelect(draft.customBeanName ?: state.beanSelectionName ?: stringResource(R.string.home_check_in_choose_bean),
-                            CoffeePeekIcons.CoffeeBean, stringResource(R.string.home_check_in_choose_bean), enabled, error) {
+                    Step(HomePreparationField.Bean, stringResource(Res.string.home_check_in_bean)) { error ->
+                        HomeCheckInEditorSelect(draft.customBeanName ?: state.beanSelectionName ?: stringResource(Res.string.home_check_in_choose_bean),
+                            CoffeePeekIcons.CoffeeBean, stringResource(Res.string.home_check_in_choose_bean), enabled, error) {
                             dispatch(HomeCheckInEditorAction.OpenBeanPicker)
                         }
                     }
-                    Step(HomePreparationField.Dose, stringResource(R.string.home_check_in_dose_label)) { error ->
+                    Step(HomePreparationField.Dose, stringResource(Res.string.home_check_in_dose_label)) { error ->
                         HomeCheckInEditorInput(draft.doseGrams.orEmpty(), { onAction(HomeCheckInEditorAction.DoseChanged(it)) },
-                            stringResource(R.string.home_check_in_dose_description), stringResource(R.string.home_check_in_dose_hint),
+                            stringResource(Res.string.home_check_in_dose_description), stringResource(Res.string.home_check_in_dose_hint),
                             enabled, error, keyboardType = KeyboardType.Decimal, maxLength = 8)
                     }
                     val durationError = state.fieldErrors[HomePreparationField.Duration]?.editorText()
                     CoffeePeekFormStep(optional = true, isError = durationError != null,
-                        optionalDescription = stringResource(R.string.home_check_in_optional)) {
+                        optionalDescription = stringResource(Res.string.home_check_in_optional)) {
                         HomeCheckInEditorDuration(draft.brewDurationSeconds, enabled, durationError) { onAction(HomeCheckInEditorAction.DurationChanged(it)) }
                     }
-                    Step(HomePreparationField.Note, stringResource(R.string.home_check_in_editor_note)) { error ->
+                    Step(HomePreparationField.Note, stringResource(Res.string.home_check_in_editor_note)) { error ->
                         HomeCheckInEditorInput(draft.text.orEmpty(), { onAction(HomeCheckInEditorAction.NoteChanged(it)) },
-                            stringResource(R.string.home_check_in_editor_note), stringResource(R.string.home_check_in_note_hint),
+                            stringResource(Res.string.home_check_in_editor_note), stringResource(Res.string.home_check_in_note_hint),
                             enabled, error, multiline = true, maxLength = 1000)
                     }
-                    Step(HomePreparationField.Drink, stringResource(R.string.home_check_in_drink)) { error ->
+                    Step(HomePreparationField.Drink, stringResource(Res.string.home_check_in_drink)) { error ->
                         HomeCheckInEditorInput(draft.customDrinkName ?: state.entry?.drinkName.takeIf { draft.drinkSlug != null }.orEmpty(),
-                            { onAction(HomeCheckInEditorAction.DrinkNameChanged(it)) }, stringResource(R.string.home_check_in_drink),
-                            stringResource(R.string.home_check_in_drink_hint), enabled, error, maxLength = 100)
+                            { onAction(HomeCheckInEditorAction.DrinkNameChanged(it)) }, stringResource(Res.string.home_check_in_drink),
+                            stringResource(Res.string.home_check_in_drink_hint), enabled, error, maxLength = 100)
                     }
                     Step(HomePreparationField.Photos, "", last = true) {
-                        if (state.entry != null) Text(stringResource(R.string.home_check_in_keep_photos),
+                        if (state.entry != null) Text(stringResource(Res.string.home_check_in_keep_photos),
                             style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         else {
                             HomeCheckInEditorPhotos(draft.photos, enabled, pickerLoading, media.photo, {
@@ -221,7 +247,7 @@ internal fun HomeCheckInEditorScreenContent(
                 }
             }
             Column(Modifier.fillMaxWidth().padding(16.dp)) {
-                CoffeePeekButton(stringResource(if (state.isSaving) R.string.home_check_in_saving else R.string.home_check_in_save),
+                CoffeePeekButton(stringResource(if (state.isSaving) Res.string.home_check_in_saving else Res.string.home_check_in_save),
                     { dispatch(HomeCheckInEditorAction.Save) }, enabled = enabled && !pickerLoading)
             }
         }
@@ -238,7 +264,7 @@ internal fun previewHomeEditorMedia() = HomeCheckInEditorMedia(
 internal fun previewHomeEditorState() = HomeCheckInEditorState(isReady = true,
     draft = HomePreparationInput(preparedAt = "2026-10-17T07:30:00Z", preparedOn = "2026-10-17", tasteScore = 5))
 
-@PreviewLightDark @Composable private fun HomeCheckInEditorPreview() = CoffeePeekTheme {
+@Preview @Composable private fun HomeCheckInEditorPreview() = CoffeePeekTheme {
     Surface { HomeCheckInEditorScreenContent(previewHomeEditorState(), {}, "2026-10-17", { "17 октября 2026" },
         { it + "T00:00:00Z" }, { it }, previewHomeEditorMedia(), false, {}) }
 }

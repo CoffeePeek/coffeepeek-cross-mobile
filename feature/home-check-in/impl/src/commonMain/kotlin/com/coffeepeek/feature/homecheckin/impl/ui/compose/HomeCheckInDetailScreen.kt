@@ -1,15 +1,18 @@
 package com.coffeepeek.feature.homecheckin.impl.ui.compose
 
-import androidx.activity.compose.BackHandler
+import com.coffeepeek.core.designsystem.component.CoffeePeekBackHandler
+import org.jetbrains.compose.ui.tooling.preview.Preview
+import com.coffeepeek.feature.homecheckin.impl.resources.Res
+import com.coffeepeek.feature.homecheckin.impl.resources.home_check_in_close
+import com.coffeepeek.feature.homecheckin.impl.resources.home_check_in_note
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -17,7 +20,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.repeatOnLifecycle
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.feature.homecheckin.domain.model.*
-import com.coffeepeek.feature.homecheckin.impl.R
 import com.coffeepeek.feature.homecheckin.impl.ui.HomeCheckInDetailViewModel
 import com.coffeepeek.feature.homecheckin.impl.ui.compose.component.*
 import com.coffeepeek.feature.homecheckin.impl.ui.compose.model.*
@@ -53,7 +55,7 @@ internal fun HomeCheckInDetailScreen(
     val visibleState = if (accessAllowed) state else HomeCheckInDetailState(isAccessRevoked = true)
     LaunchedEffect(visibleState.isDeleting) { currentDismissAllowed(!visibleState.isDeleting) }
     DisposableEffect(viewModel) { onDispose { currentDismissAllowed(true) } }
-    BackHandler(enabled = !visibleState.isClosed) {
+    CoffeePeekBackHandler(enabled = !visibleState.isClosed) {
         // Closing an already revoked destination is safe; private effects remain filtered above.
         if (visibleState.isAccessRevoked) currentEvent(HomeCheckInDetailEvent.Close)
         else viewModel.onAction(if (visibleState.showDeleteConfirmation) HomeCheckInDetailAction.CancelDelete else HomeCheckInDetailAction.Close)
@@ -99,7 +101,7 @@ internal fun HomeCheckInDetailScreenContent(
             }
             entry.text?.takeIf(String::isNotBlank)?.let { note -> item(key = "note") {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text(stringResource(R.string.home_check_in_note), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+                    Text(stringResource(Res.string.home_check_in_note), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
                     Text(note, style = MaterialTheme.typography.bodyLarge)
                 }
             } }
@@ -107,7 +109,7 @@ internal fun HomeCheckInDetailScreenContent(
                 HomeCheckInDetailActions(enabled, { onAction(HomeCheckInDetailAction.Edit) }, { onAction(HomeCheckInDetailAction.RequestDelete) })
             }
         } else if (!state.isDeleting) item(key = "close") {
-            TextButton(onClick = { onAction(HomeCheckInDetailAction.Close) }) { Text(stringResource(R.string.home_check_in_close)) }
+            TextButton(onClick = { onAction(HomeCheckInDetailAction.Close) }) { Text(stringResource(Res.string.home_check_in_close)) }
         }
     }
     if (state.showDeleteConfirmation && entry != null && !state.isDeleting) {
@@ -123,16 +125,16 @@ internal fun previewHomePreparation() = HomePreparation(
     visibility = HomePreparationVisibility.Private, moderation = HomePreparationModeration.NotSubmitted,
 )
 
-@PreviewLightDark @Composable private fun HomeCheckInDetailPreview() = CoffeePeekTheme {
+@Preview @Composable private fun HomeCheckInDetailPreview() = CoffeePeekTheme {
     Surface { HomeCheckInDetailScreenContent(HomeCheckInDetailState(entry = previewHomePreparation()), {},
         { _, _ -> "17.10.2026 · 10:30" }, { "Hario V60" }, { _, _, _, _ -> }) }
 }
 
-@PreviewLightDark @Composable private fun HomeCheckInDetailLoadingPreview() = CoffeePeekTheme {
+@Preview @Composable private fun HomeCheckInDetailLoadingPreview() = CoffeePeekTheme {
     Surface { HomeCheckInDetailScreenContent(HomeCheckInDetailState(isLoading = true), {}, { date, _ -> date }, { it }, { _, _, _, _ -> }) }
 }
 
-@PreviewLightDark @Composable private fun HomeCheckInDetailPhotoVariantsPreview() = CoffeePeekTheme {
+@Preview @Composable private fun HomeCheckInDetailPhotoVariantsPreview() = CoffeePeekTheme {
     Surface { HomeCheckInDetailScreenContent(HomeCheckInDetailState(entry = previewHomePreparation().copy(
         photos = listOf(HomePreparationPhoto("a", "fixture-original-a", thumbnailUrl = "fixture-feed-a"),
             HomePreparationPhoto("b", "fixture-original-b", thumbnailUrl = "")))), {},
@@ -141,7 +143,7 @@ internal fun previewHomePreparation() = HomePreparation(
         }) }
 }
 
-@PreviewLightDark @Composable private fun HomeCheckInDetailErrorPreview() = CoffeePeekTheme {
+@Preview @Composable private fun HomeCheckInDetailErrorPreview() = CoffeePeekTheme {
     Surface { HomeCheckInDetailScreenContent(HomeCheckInDetailState(loadIssue = HomePreparationIssue.Offline), {},
         { date, _ -> date }, { it }, { _, _, _, _ -> }) }
 }

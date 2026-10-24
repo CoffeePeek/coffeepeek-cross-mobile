@@ -1,15 +1,20 @@
 package com.coffeepeek.feature.homecheckin.impl.ui.compose.component
 
 import androidx.compose.foundation.layout.*
+import org.jetbrains.compose.ui.tooling.preview.Preview
+import com.coffeepeek.feature.homecheckin.impl.resources.Res
+import com.coffeepeek.feature.homecheckin.impl.resources.home_check_in_duration
+import com.coffeepeek.feature.homecheckin.impl.resources.home_check_in_duration_minutes
+import com.coffeepeek.feature.homecheckin.impl.resources.home_check_in_duration_minutes_description
+import com.coffeepeek.feature.homecheckin.impl.resources.home_check_in_duration_seconds
+import com.coffeepeek.feature.homecheckin.impl.resources.home_check_in_duration_seconds_description
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
-import com.coffeepeek.feature.homecheckin.impl.R
 
 @Composable
 internal fun HomeCheckInEditorDuration(seconds: Int?, enabled: Boolean, error: String?, onChange: (Int?) -> Unit) {
@@ -29,24 +34,24 @@ internal fun HomeCheckInEditorDuration(seconds: Int?, enabled: Boolean, error: S
             else (minutesText.toIntOrNull() ?: 0) * 60 + (secondsText.toIntOrNull() ?: 0)
         onChange(lastEmitted)
     }
-    HomeCheckInEditorField(stringResource(R.string.home_check_in_duration), error) {
+    HomeCheckInEditorField(stringResource(Res.string.home_check_in_duration), error) {
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                Text(stringResource(R.string.home_check_in_duration_minutes), style = MaterialTheme.typography.bodySmall)
+                Text(stringResource(Res.string.home_check_in_duration_minutes), style = MaterialTheme.typography.bodySmall)
                 HomeCheckInEditorInput(minutesText, { minutesText = it; emit() },
-                    stringResource(R.string.home_check_in_duration_minutes_description), "0", enabled, error,
+                    stringResource(Res.string.home_check_in_duration_minutes_description), "0", enabled, error,
                     keyboardType = KeyboardType.Number, maximum = 10080, maxLength = 8)
             }
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                Text(stringResource(R.string.home_check_in_duration_seconds), style = MaterialTheme.typography.bodySmall)
+                Text(stringResource(Res.string.home_check_in_duration_seconds), style = MaterialTheme.typography.bodySmall)
                 HomeCheckInEditorInput(secondsText, { secondsText = it; emit() },
-                    stringResource(R.string.home_check_in_duration_seconds_description), "00", enabled, error,
+                    stringResource(Res.string.home_check_in_duration_seconds_description), "00", enabled, error,
                     keyboardType = KeyboardType.Number, maximum = 59, maxLength = 8)
             }
         }
     }
 }
 
-@PreviewLightDark @Composable private fun HomeCheckInEditorDurationPreview() = CoffeePeekTheme {
+@Preview @Composable private fun HomeCheckInEditorDurationPreview() = CoffeePeekTheme {
     Surface { HomeCheckInEditorDuration(180, true, null, {}) }
 }

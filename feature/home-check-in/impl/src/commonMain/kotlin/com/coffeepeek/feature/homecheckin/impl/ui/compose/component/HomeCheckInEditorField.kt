@@ -1,16 +1,18 @@
 package com.coffeepeek.feature.homecheckin.impl.ui.compose.component
 
 import androidx.compose.foundation.layout.Arrangement
+import org.jetbrains.compose.ui.tooling.preview.Preview
+import com.coffeepeek.feature.homecheckin.impl.resources.Res
+import com.coffeepeek.feature.homecheckin.impl.resources.home_check_in_editor_note
+import com.coffeepeek.feature.homecheckin.impl.resources.home_check_in_note_hint
 import androidx.compose.foundation.layout.Column
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.semantics.*
-import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
-import com.coffeepeek.feature.homecheckin.impl.R
 
 @Composable
 internal fun HomeCheckInEditorField(label: String, error: String? = null, content: @Composable () -> Unit) {
@@ -21,9 +23,9 @@ internal fun HomeCheckInEditorField(label: String, error: String? = null, conten
     }
 }
 
-@PreviewLightDark @Composable private fun HomeCheckInEditorFieldPreview() = CoffeePeekTheme {
-    Surface { HomeCheckInEditorField(stringResource(R.string.home_check_in_editor_note)) {
-        HomeCheckInEditorInput("", {}, stringResource(R.string.home_check_in_editor_note),
-            stringResource(R.string.home_check_in_note_hint), true, multiline = true)
+@Preview @Composable private fun HomeCheckInEditorFieldPreview() = CoffeePeekTheme {
+    Surface { HomeCheckInEditorField(stringResource(Res.string.home_check_in_editor_note)) {
+        HomeCheckInEditorInput("", {}, stringResource(Res.string.home_check_in_editor_note),
+            stringResource(Res.string.home_check_in_note_hint), true, multiline = true)
     } }
 }

@@ -1,6 +1,10 @@
 package com.coffeepeek.feature.homecheckin.impl.ui.compose.component
 
 import androidx.compose.foundation.layout.*
+import org.jetbrains.compose.ui.tooling.preview.Preview
+import com.coffeepeek.feature.homecheckin.impl.resources.Res
+import com.coffeepeek.feature.homecheckin.impl.resources.home_check_in_dose_hint
+import com.coffeepeek.feature.homecheckin.impl.resources.home_check_in_dose_label
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -9,15 +13,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
-import androidx.compose.ui.res.stringResource
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.semantics.*
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.core.designsystem.component.CoffeePeekCompactOutlinedTextField
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
-import com.coffeepeek.feature.homecheckin.impl.R
 
 /** Text and numeric variants deliberately keep the current form's 44dp/pill and 80dp/note geometry. */
 @Composable
@@ -59,7 +61,7 @@ internal fun HomeCheckInEditorInput(
             errorBorderColor = MaterialTheme.colorScheme.error))
 }
 
-@PreviewLightDark @Composable private fun HomeCheckInEditorInputPreview() = CoffeePeekTheme {
-    Surface { HomeCheckInEditorInput("18", {}, stringResource(R.string.home_check_in_dose_label),
-        stringResource(R.string.home_check_in_dose_hint), true, keyboardType = KeyboardType.Decimal) }
+@Preview @Composable private fun HomeCheckInEditorInputPreview() = CoffeePeekTheme {
+    Surface { HomeCheckInEditorInput("18", {}, stringResource(Res.string.home_check_in_dose_label),
+        stringResource(Res.string.home_check_in_dose_hint), true, keyboardType = KeyboardType.Decimal) }
 }

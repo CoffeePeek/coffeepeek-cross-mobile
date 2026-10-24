@@ -1,20 +1,28 @@
 package com.coffeepeek.feature.homecheckin.impl.ui.compose.component
 
 import androidx.compose.foundation.background
+import org.jetbrains.compose.ui.tooling.preview.Preview
+import com.coffeepeek.feature.homecheckin.impl.resources.Res
+import com.coffeepeek.feature.homecheckin.impl.resources.home_check_in_dose
+import com.coffeepeek.feature.homecheckin.impl.resources.home_check_in_duration
+import com.coffeepeek.feature.homecheckin.impl.resources.home_check_in_grams
+import com.coffeepeek.feature.homecheckin.impl.resources.home_check_in_hours
+import com.coffeepeek.feature.homecheckin.impl.resources.home_check_in_method
+import com.coffeepeek.feature.homecheckin.impl.resources.home_check_in_minutes
+import com.coffeepeek.feature.homecheckin.impl.resources.home_check_in_seconds
+import com.coffeepeek.feature.homecheckin.impl.resources.home_check_in_unspecified
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.feature.homecheckin.domain.model.HomePreparation
-import com.coffeepeek.feature.homecheckin.impl.R
 import com.coffeepeek.feature.homecheckin.impl.ui.compose.previewHomePreparation
 
 @Composable
@@ -27,9 +35,9 @@ internal fun HomeCheckInRecipeCard(entry: HomePreparation, methodLabel: String?)
                     Icon(CoffeePeekIcons.Coffee, null, Modifier.size(24.dp), tint = MaterialTheme.colorScheme.primary)
                 }
                 Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
-                    Text(stringResource(R.string.home_check_in_method), style = MaterialTheme.typography.labelSmall,
+                    Text(stringResource(Res.string.home_check_in_method), style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    Text(methodLabel ?: stringResource(R.string.home_check_in_unspecified),
+                    Text(methodLabel ?: stringResource(Res.string.home_check_in_unspecified),
                         style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
                 }
             }
@@ -41,10 +49,10 @@ internal fun HomeCheckInRecipeCard(entry: HomePreparation, methodLabel: String?)
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(24.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     entry.doseGrams?.let { dose ->
                         val number = (if ('.' in dose) dose.trimEnd('0').trimEnd('.') else dose).replace('.', ',')
-                        RecipeMetric(stringResource(R.string.home_check_in_dose), stringResource(R.string.home_check_in_grams, number))
+                        RecipeMetric(stringResource(Res.string.home_check_in_dose), stringResource(Res.string.home_check_in_grams, number))
                     }
                     entry.brewDurationSeconds?.let {
-                        RecipeMetric(stringResource(R.string.home_check_in_duration), durationLabel(it))
+                        RecipeMetric(stringResource(Res.string.home_check_in_duration), durationLabel(it))
                     }
                 }
             }
@@ -62,11 +70,11 @@ private fun RecipeMetric(label: String, value: String) {
 
 @Composable
 private fun durationLabel(seconds: Int): String = listOfNotNull(
-    if (seconds >= 3600) stringResource(R.string.home_check_in_hours, seconds / 3600) else null,
-    if (seconds / 60 % 60 > 0) stringResource(R.string.home_check_in_minutes, seconds / 60 % 60) else null,
-    if (seconds % 60 > 0 || seconds == 0) stringResource(R.string.home_check_in_seconds, seconds % 60) else null,
+    if (seconds >= 3600) stringResource(Res.string.home_check_in_hours, seconds / 3600) else null,
+    if (seconds / 60 % 60 > 0) stringResource(Res.string.home_check_in_minutes, seconds / 60 % 60) else null,
+    if (seconds % 60 > 0 || seconds == 0) stringResource(Res.string.home_check_in_seconds, seconds % 60) else null,
 ).joinToString(" ")
 
-@PreviewLightDark @Composable private fun HomeCheckInRecipeCardPreview() = CoffeePeekTheme {
+@Preview @Composable private fun HomeCheckInRecipeCardPreview() = CoffeePeekTheme {
     HomeCheckInRecipeCard(previewHomePreparation(), "Hario V60")
 }

@@ -1,6 +1,12 @@
 package com.coffeepeek.feature.homecheckin.impl.ui.compose.component
 
 import androidx.compose.foundation.background
+import org.jetbrains.compose.ui.tooling.preview.Preview
+import com.coffeepeek.feature.homecheckin.impl.resources.Res
+import com.coffeepeek.feature.homecheckin.impl.resources.home_check_in_add_photos
+import com.coffeepeek.feature.homecheckin.impl.resources.home_check_in_camera
+import com.coffeepeek.feature.homecheckin.impl.resources.home_check_in_cancel
+import com.coffeepeek.feature.homecheckin.impl.resources.home_check_in_gallery
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -10,35 +16,33 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.res.stringResource
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.core.designsystem.component.CoffeePeekSwipeDismissModalBottomSheet
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
-import com.coffeepeek.feature.homecheckin.impl.R
 
 @Composable
 internal fun HomeCheckInPhotoSource(onDismiss: () -> Unit, onGallery: () -> Unit, onCamera: () -> Unit) {
-    CoffeePeekSwipeDismissModalBottomSheet(onDismiss, stringResource(R.string.home_check_in_cancel)) {
+    CoffeePeekSwipeDismissModalBottomSheet(onDismiss, stringResource(Res.string.home_check_in_cancel)) {
         HomeCheckInPhotoSourceContent(onDismiss, onGallery, onCamera)
     }
 }
 
 @Composable
 private fun HomeCheckInPhotoSourceContent(onDismiss: () -> Unit, onGallery: () -> Unit, onCamera: () -> Unit) {
-    Text(stringResource(R.string.home_check_in_add_photos), style = MaterialTheme.typography.titleLarge,
+    Text(stringResource(Res.string.home_check_in_add_photos), style = MaterialTheme.typography.titleLarge,
         fontWeight = FontWeight.Bold, modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp))
     Column(Modifier.padding(horizontal = 16.dp).clip(RoundedCornerShape(24.dp))
         .background(MaterialTheme.colorScheme.surfaceVariant)) {
-        SourceRow(CoffeePeekIcons.Gallery, stringResource(R.string.home_check_in_gallery), onGallery)
+        SourceRow(CoffeePeekIcons.Gallery, stringResource(Res.string.home_check_in_gallery), onGallery)
         HorizontalDivider(Modifier.padding(start = 56.dp), color = MaterialTheme.colorScheme.outlineVariant)
-        SourceRow(CoffeePeekIcons.Camera, stringResource(R.string.home_check_in_camera), onCamera)
+        SourceRow(CoffeePeekIcons.Camera, stringResource(Res.string.home_check_in_camera), onCamera)
     }
     TextButton(onClick = onDismiss, modifier = Modifier.fillMaxWidth().navigationBarsPadding().padding(8.dp)) {
-        Text(stringResource(R.string.home_check_in_cancel), style = MaterialTheme.typography.labelLarge)
+        Text(stringResource(Res.string.home_check_in_cancel), style = MaterialTheme.typography.labelLarge)
     }
 }
 
@@ -52,6 +56,6 @@ private fun SourceRow(icon: ImageVector, label: String, onClick: () -> Unit) {
     }
 }
 
-@PreviewLightDark @Composable private fun HomeCheckInPhotoSourcePreview() = CoffeePeekTheme {
+@Preview @Composable private fun HomeCheckInPhotoSourcePreview() = CoffeePeekTheme {
     Surface { Column { HomeCheckInPhotoSourceContent({}, {}, {}) } }
 }
