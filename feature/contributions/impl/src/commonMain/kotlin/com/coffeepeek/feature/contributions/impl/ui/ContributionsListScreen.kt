@@ -1,6 +1,15 @@
 package com.coffeepeek.feature.contributions.impl.ui
 
 import androidx.compose.foundation.layout.Arrangement
+import org.jetbrains.compose.ui.tooling.preview.Preview
+import com.coffeepeek.feature.contributions.impl.resources.Res
+import com.coffeepeek.feature.contributions.impl.resources.contributions_back
+import com.coffeepeek.feature.contributions.impl.resources.contributions_load_failed
+import com.coffeepeek.feature.contributions.impl.resources.contributions_loading
+import com.coffeepeek.feature.contributions.impl.resources.contributions_retry
+import com.coffeepeek.feature.contributions.impl.resources.contributions_sign_in
+import com.coffeepeek.feature.contributions.impl.resources.contributions_sign_in_prompt
+import com.coffeepeek.feature.contributions.impl.resources.contributions_tab_label
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -23,8 +32,7 @@ import androidx.compose.runtime.key
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.tooling.preview.PreviewLightDark
+import org.jetbrains.compose.resources.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.coffeepeek.core.designsystem.component.CoffeePeekButton
 import com.coffeepeek.core.designsystem.component.CoffeePeekCapsuleSegmentedControl
@@ -34,7 +42,6 @@ import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.feature.contributions.api.ContributionKind
 import com.coffeepeek.feature.contributions.domain.model.ModerationStatus
-import com.coffeepeek.feature.contributions.impl.R
 import com.coffeepeek.feature.contributions.impl.list.ContributionItem
 import com.coffeepeek.feature.contributions.impl.list.ContributionTarget
 import com.coffeepeek.feature.contributions.impl.list.ContributionsListAction
@@ -66,15 +73,15 @@ internal fun ContributionsListContent(
 ) {
     Scaffold(
         modifier = modifier,
-        topBar = { CoffeePeekTopBar(kind.title(), stringResource(R.string.contributions_back), onBack = callbacks.onBack) },
+        topBar = { CoffeePeekTopBar(kind.title(), stringResource(Res.string.contributions_back), onBack = callbacks.onBack) },
         containerColor = MaterialTheme.colorScheme.background,
     ) { padding ->
         val selected = state.selectedTab
         Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
             when {
-                state.isLoading -> CoffeePeekLoader(stringResource(R.string.contributions_loading))
-                state.error == ListError.SignInRequired -> Message(stringResource(R.string.contributions_sign_in_prompt), stringResource(R.string.contributions_sign_in), callbacks.onSignIn)
-                state.error != null -> Message(state.serverMessage ?: stringResource(R.string.contributions_load_failed), stringResource(R.string.contributions_retry)) { onAction(ContributionsListAction.Refresh) }
+                state.isLoading -> CoffeePeekLoader(stringResource(Res.string.contributions_loading))
+                state.error == ListError.SignInRequired -> Message(stringResource(Res.string.contributions_sign_in_prompt), stringResource(Res.string.contributions_sign_in), callbacks.onSignIn)
+                state.error != null -> Message(state.serverMessage ?: stringResource(Res.string.contributions_load_failed), stringResource(Res.string.contributions_retry)) { onAction(ContributionsListAction.Refresh) }
                 selected == null -> Text(kind.emptyText(), color = MaterialTheme.colorScheme.onSurfaceVariant)
                 else -> Tabs(state, selected, kind, callbacks, onAction)
             }
@@ -94,7 +101,7 @@ private fun Message(text: String, action: String, onAction: () -> Unit) {
 @Composable
 private fun Tabs(state: ContributionsListState, selected: ModerationStatus, kind: ContributionKind, callbacks: ListCallbacks, onAction: (ContributionsListAction) -> Unit) {
     val labels = state.visibleTabs.associateWith { status ->
-        stringResource(R.string.contributions_tab_label, status.tabTitle(), state.tabs[status]?.totalCount ?: 0)
+        stringResource(Res.string.contributions_tab_label, status.tabTitle(), state.tabs[status]?.totalCount ?: 0)
     }
     Column(Modifier.fillMaxSize()) {
         CoffeePeekCapsuleSegmentedControl(
@@ -137,7 +144,7 @@ private val noCallbacks = ListCallbacks({}, {}, {}, {})
 
 private fun previewTab(vararg items: ContributionItem) = TabState(items.toList(), items.size, 1, false)
 
-@PreviewLightDark @Composable private fun ContributionsListPreview() = CoffeePeekTheme {
+@Preview @Composable private fun ContributionsListPreview() = CoffeePeekTheme {
     Surface {
         ContributionsListContent(
             ContributionsListState(
@@ -155,10 +162,10 @@ private fun previewTab(vararg items: ContributionItem) = TabState(items.toList()
     }
 }
 
-@PreviewLightDark @Composable private fun ContributionsListEmptyPreview() = CoffeePeekTheme {
+@Preview @Composable private fun ContributionsListEmptyPreview() = CoffeePeekTheme {
     Surface { ContributionsListContent(ContributionsListState(isLoading = false), ContributionKind.Roasters, noCallbacks, {}) }
 }
 
-@PreviewLightDark @Composable private fun ContributionsListErrorPreview() = CoffeePeekTheme {
+@Preview @Composable private fun ContributionsListErrorPreview() = CoffeePeekTheme {
     Surface { ContributionsListContent(ContributionsListState(isLoading = false, error = ListError.LoadFailed), ContributionKind.Changes, noCallbacks, {}) }
 }

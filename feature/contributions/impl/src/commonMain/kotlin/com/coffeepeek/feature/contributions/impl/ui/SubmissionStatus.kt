@@ -1,6 +1,9 @@
 package com.coffeepeek.feature.contributions.impl.ui
 
-import androidx.activity.compose.BackHandler
+import com.coffeepeek.core.designsystem.component.CoffeePeekBackHandler
+import com.coffeepeek.feature.contributions.impl.resources.Res
+import com.coffeepeek.feature.contributions.impl.resources.contributions_back
+import com.coffeepeek.feature.contributions.impl.resources.contributions_loading
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -23,7 +26,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
-import androidx.compose.ui.res.stringResource
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
@@ -34,7 +37,6 @@ import com.coffeepeek.core.designsystem.component.CoffeePeekLoader
 import com.coffeepeek.core.designsystem.component.CoffeePeekTopBar
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
-import com.coffeepeek.feature.contributions.impl.R
 
 internal enum class SubmissionStatus { Sending, Error }
 
@@ -57,10 +59,10 @@ internal fun SubmissionStatusScreen(
         keyboard?.hide()
         if (status == SubmissionStatus.Error) onFeedback(false)
     }
-    BackHandler(enabled = status == SubmissionStatus.Error, onBack = onBack)
+    CoffeePeekBackHandler(enabled = status == SubmissionStatus.Error, onBack = onBack)
     Scaffold(
         modifier = modifier,
-        topBar = { CoffeePeekTopBar(screenTitle, stringResource(R.string.contributions_back), onBack = onBack.takeIf { status == SubmissionStatus.Error }) },
+        topBar = { CoffeePeekTopBar(screenTitle, stringResource(Res.string.contributions_back), onBack = onBack.takeIf { status == SubmissionStatus.Error }) },
         containerColor = MaterialTheme.colorScheme.background,
     ) { padding ->
         Column(Modifier.fillMaxSize().padding(padding).navigationBarsPadding().padding(CoffeePeekDimens.spacing6).semantics { liveRegion = LiveRegionMode.Polite }) {
@@ -68,7 +70,7 @@ internal fun SubmissionStatusScreen(
                 Modifier.weight(1f).fillMaxWidth().verticalScroll(rememberScrollState()).padding(bottom = CoffeePeekDimens.spacing4),
                 horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center,
             ) {
-                if (status == SubmissionStatus.Sending) CoffeePeekLoader(stringResource(R.string.contributions_loading), size = 88.dp)
+                if (status == SubmissionStatus.Sending) CoffeePeekLoader(stringResource(Res.string.contributions_loading), size = 88.dp)
                 else Icon(CoffeePeekIcons.Error, contentDescription = null, modifier = Modifier.size(88.dp), tint = MaterialTheme.colorScheme.error)
                 Spacer(Modifier.height(CoffeePeekDimens.spacing4))
                 Text(title, style = MaterialTheme.typography.headlineSmall, textAlign = TextAlign.Center)

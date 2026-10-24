@@ -1,6 +1,12 @@
 package com.coffeepeek.feature.contributions.impl.ui
 
 import androidx.compose.foundation.BorderStroke
+import org.jetbrains.compose.ui.tooling.preview.Preview
+import com.coffeepeek.feature.contributions.impl.resources.Res
+import com.coffeepeek.feature.contributions.impl.resources.contributions_note_waiting
+import com.coffeepeek.feature.contributions.impl.resources.contributions_open_catalog
+import com.coffeepeek.feature.contributions.impl.resources.contributions_open_request
+import com.coffeepeek.feature.contributions.impl.resources.contributions_rejected_title
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -22,11 +28,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.res.stringResource
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.tooling.preview.PreviewLightDark
 import com.coffeepeek.core.designsystem.component.CoffeePeekCard
 import com.coffeepeek.core.designsystem.component.CoffeePeekIconBadge
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
@@ -36,7 +41,6 @@ import com.coffeepeek.feature.contributions.api.ContributionKind
 import com.coffeepeek.feature.contributions.domain.model.ChangeSection
 import com.coffeepeek.feature.contributions.domain.model.ModerationStatus
 import com.coffeepeek.feature.contributions.impl.ChangeSummary
-import com.coffeepeek.feature.contributions.impl.R
 import com.coffeepeek.feature.contributions.impl.list.ContributionItem
 import com.coffeepeek.feature.contributions.impl.list.ContributionNote
 import com.coffeepeek.feature.contributions.impl.list.ContributionTarget
@@ -86,7 +90,7 @@ private fun CardText(item: ContributionItem, kind: ContributionKind, modifier: M
             )
         }
         val meta = when {
-            item.note == ContributionNote.WaitingForCatalog -> stringResource(R.string.contributions_note_waiting) to CoffeePeekIcons.Info
+            item.note == ContributionNote.WaitingForCatalog -> stringResource(Res.string.contributions_note_waiting) to CoffeePeekIcons.Info
             item.createdAtUtc != null -> localDateTime(item.createdAtUtc) to CoffeePeekIcons.Time
             else -> null
         }
@@ -110,7 +114,7 @@ private fun OpenFooter(target: ContributionTarget) {
         Modifier.fillMaxWidth().padding(horizontal = CoffeePeekDimens.spacing4, vertical = CoffeePeekDimens.spacing3),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        val label = if (target is ContributionTarget.Request) R.string.contributions_open_request else R.string.contributions_open_catalog
+        val label = if (target is ContributionTarget.Request) Res.string.contributions_open_request else Res.string.contributions_open_catalog
         Text(stringResource(label), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary, modifier = Modifier.weight(1f))
         Icon(CoffeePeekIcons.ChevronRight, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
     }
@@ -126,7 +130,7 @@ private fun RejectedReason(reason: String) {
     ) {
         Icon(CoffeePeekIcons.Error, contentDescription = null, tint = MaterialTheme.colorScheme.error, modifier = Modifier.size(18.dp))
         Column {
-            Text(stringResource(R.string.contributions_rejected_title), style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.error)
+            Text(stringResource(Res.string.contributions_rejected_title), style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.error)
             Text(reason, style = MaterialTheme.typography.bodySmall)
         }
     }
@@ -145,7 +149,7 @@ internal fun StatusPill(status: ModerationStatus, modifier: Modifier = Modifier)
     }
 }
 
-@PreviewLightDark @Composable private fun ContributionCardPreview() = CoffeePeekTheme {
+@Preview @Composable private fun ContributionCardPreview() = CoffeePeekTheme {
     androidx.compose.material3.Surface {
         Column(Modifier.padding(CoffeePeekDimens.spacing4), verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing3)) {
             ContributionCard(ContributionItem("a", title = "Sandbox Cafe", subtitle = "Тестовая улица, 1", target = ContributionTarget.Shop("cafe")), ContributionKind.Shops, ModerationStatus.Approved, {})

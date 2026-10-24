@@ -1,6 +1,22 @@
 package com.coffeepeek.feature.contributions.impl.ui
 
 import androidx.compose.foundation.background
+import com.coffeepeek.feature.contributions.impl.resources.Res
+import com.coffeepeek.feature.contributions.impl.resources.contributions_back
+import com.coffeepeek.feature.contributions.impl.resources.contributions_error_email
+import com.coffeepeek.feature.contributions.impl.resources.contributions_error_instagram
+import com.coffeepeek.feature.contributions.impl.resources.contributions_error_phone
+import com.coffeepeek.feature.contributions.impl.resources.contributions_error_website
+import com.coffeepeek.feature.contributions.impl.resources.contributions_shop_city_description
+import com.coffeepeek.feature.contributions.impl.resources.contributions_shop_city_placeholder
+import com.coffeepeek.feature.contributions.impl.resources.contributions_shop_error_address_blank
+import com.coffeepeek.feature.contributions.impl.resources.contributions_shop_error_city_missing
+import com.coffeepeek.feature.contributions.impl.resources.contributions_shop_error_name_blank
+import com.coffeepeek.feature.contributions.impl.resources.contributions_shop_error_name_too_long
+import com.coffeepeek.feature.contributions.impl.resources.contributions_shop_field_optional
+import com.coffeepeek.feature.contributions.impl.resources.contributions_shop_optional_legend
+import com.coffeepeek.feature.contributions.impl.resources.contributions_shop_required_hint
+import com.coffeepeek.feature.contributions.impl.resources.contributions_sign_in
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -23,7 +39,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.res.stringResource
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
@@ -37,14 +53,13 @@ import com.coffeepeek.feature.contributions.domain.model.CatalogOption
 import com.coffeepeek.feature.contributions.domain.rules.ContactIssue
 import com.coffeepeek.feature.contributions.domain.rules.ContributionLimits
 import com.coffeepeek.feature.contributions.domain.rules.ShopBasicsIssue
-import com.coffeepeek.feature.contributions.impl.R
 
 @Composable
 internal fun FormField(label: String, required: Boolean = false, optional: Boolean = false, content: @Composable () -> Unit) {
     Row(Modifier.padding(bottom = CoffeePeekDimens.spacing2), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing1)) {
         Text(if (required) "$label *" else label, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
         if (optional) Text(
-            stringResource(R.string.contributions_shop_field_optional), style = MaterialTheme.typography.labelSmall,
+            stringResource(Res.string.contributions_shop_field_optional), style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
         )
     }
@@ -118,9 +133,9 @@ internal fun ReadOnlyField(value: String) {
 internal fun CityField(cities: List<CatalogOption>, selectedId: String?, onSelect: (String) -> Unit, error: String?) {
     val selected = cities.firstOrNull { it.id == selectedId }
     CoffeePeekSelectField(
-        value = selected?.name ?: stringResource(R.string.contributions_shop_city_placeholder),
+        value = selected?.name ?: stringResource(Res.string.contributions_shop_city_placeholder),
         options = cities.map { city -> CoffeePeekSelectOption("city:${city.id}", city.name, city.id == selected?.id) { onSelect(city.id) } },
-        contentDescription = stringResource(R.string.contributions_shop_city_description),
+        contentDescription = stringResource(Res.string.contributions_shop_city_description),
         modifier = Modifier.fillMaxWidth(),
         isPlaceholder = selected == null,
         errorDescription = error,
@@ -143,32 +158,32 @@ internal fun StepDots(current: Int, total: Int, modifier: Modifier = Modifier) {
 
 @Composable
 internal fun RequiredLegend() = Text(
-    stringResource(R.string.contributions_shop_required_hint),
+    stringResource(Res.string.contributions_shop_required_hint),
     style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Medium), color = MaterialTheme.colorScheme.onSurface,
 )
 
 @Composable
 internal fun OptionalLegend() = Text(
-    stringResource(R.string.contributions_shop_optional_legend),
+    stringResource(Res.string.contributions_shop_optional_legend),
     style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.SemiBold), color = MaterialTheme.colorScheme.onSurface,
     modifier = Modifier.padding(bottom = CoffeePeekDimens.spacing1),
 )
 
 @Composable
 internal fun ShopBasicsIssue.message(): String = when (this) {
-    ShopBasicsIssue.NameBlank -> stringResource(R.string.contributions_shop_error_name_blank)
-    ShopBasicsIssue.NameTooLong -> stringResource(R.string.contributions_shop_error_name_too_long, ContributionLimits.SHOP_NAME)
-    ShopBasicsIssue.AddressBlank -> stringResource(R.string.contributions_shop_error_address_blank)
-    ShopBasicsIssue.CityMissing -> stringResource(R.string.contributions_shop_error_city_missing)
+    ShopBasicsIssue.NameBlank -> stringResource(Res.string.contributions_shop_error_name_blank)
+    ShopBasicsIssue.NameTooLong -> stringResource(Res.string.contributions_shop_error_name_too_long, ContributionLimits.SHOP_NAME)
+    ShopBasicsIssue.AddressBlank -> stringResource(Res.string.contributions_shop_error_address_blank)
+    ShopBasicsIssue.CityMissing -> stringResource(Res.string.contributions_shop_error_city_missing)
 }
 
 @Composable
 internal fun ContactIssue.message(): String = stringResource(
     when (this) {
-        ContactIssue.Phone -> R.string.contributions_error_phone
-        ContactIssue.Email -> R.string.contributions_error_email
-        ContactIssue.Website -> R.string.contributions_error_website
-        ContactIssue.Instagram -> R.string.contributions_error_instagram
+        ContactIssue.Phone -> Res.string.contributions_error_phone
+        ContactIssue.Email -> Res.string.contributions_error_email
+        ContactIssue.Website -> Res.string.contributions_error_website
+        ContactIssue.Instagram -> Res.string.contributions_error_instagram
     },
 )
 
@@ -177,7 +192,7 @@ internal fun ContactIssue.message(): String = stringResource(
 internal fun FormSignInPrompt(title: String, prompt: String, onBack: () -> Unit, onSignIn: () -> Unit, modifier: Modifier = Modifier) {
     Scaffold(
         modifier = modifier,
-        topBar = { CoffeePeekTopBar(title, stringResource(R.string.contributions_back), onBack = onBack) },
+        topBar = { CoffeePeekTopBar(title, stringResource(Res.string.contributions_back), onBack = onBack) },
         containerColor = MaterialTheme.colorScheme.background,
     ) { padding ->
         Column(
@@ -186,7 +201,7 @@ internal fun FormSignInPrompt(title: String, prompt: String, onBack: () -> Unit,
         ) {
             Text(prompt, color = MaterialTheme.colorScheme.onSurfaceVariant)
             Spacer(Modifier.height(CoffeePeekDimens.spacing3))
-            CoffeePeekButton(stringResource(R.string.contributions_sign_in), onSignIn)
+            CoffeePeekButton(stringResource(Res.string.contributions_sign_in), onSignIn)
         }
     }
 }

@@ -1,6 +1,12 @@
 package com.coffeepeek.feature.contributions.impl.ui
 
 import androidx.compose.foundation.BorderStroke
+import com.coffeepeek.feature.contributions.impl.resources.Res
+import com.coffeepeek.feature.contributions.impl.resources.contributions_mascot_happy
+import com.coffeepeek.feature.contributions.impl.resources.contributions_shop_fallback_name
+import com.coffeepeek.feature.contributions.impl.resources.contributions_shop_go_home
+import com.coffeepeek.feature.contributions.impl.resources.contributions_shop_success_description
+import com.coffeepeek.feature.contributions.impl.resources.contributions_shop_success_title
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -27,8 +33,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.stringResource
+import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -38,7 +44,6 @@ import com.coffeepeek.core.designsystem.component.CoffeePeekCard
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.feature.contributions.api.AddShopHost
-import com.coffeepeek.feature.contributions.impl.R
 import com.coffeepeek.feature.contributions.impl.shop.AddShopState
 
 @Composable
@@ -47,22 +52,22 @@ internal fun AddShopSuccess(state: AddShopState, host: AddShopHost, onGoHome: ()
     Scaffold(
         modifier = modifier,
         containerColor = MaterialTheme.colorScheme.background,
-        bottomBar = { Box(Modifier.fillMaxWidth().padding(CoffeePeekDimens.spacing4)) { CoffeePeekButton(stringResource(R.string.contributions_shop_go_home), onGoHome) } },
+        bottomBar = { Box(Modifier.fillMaxWidth().padding(CoffeePeekDimens.spacing4)) { CoffeePeekButton(stringResource(Res.string.contributions_shop_go_home), onGoHome) } },
     ) { padding ->
         Column(
             Modifier.fillMaxSize().padding(padding).verticalScroll(rememberScrollState()).padding(horizontal = CoffeePeekDimens.spacing4),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Spacer(Modifier.height(CoffeePeekDimens.spacing6))
-            Image(painterResource(R.drawable.contributions_mascot_happy), contentDescription = null, contentScale = ContentScale.Fit, modifier = Modifier.size(160.dp))
+            Image(painterResource(Res.drawable.contributions_mascot_happy), contentDescription = null, contentScale = ContentScale.Fit, modifier = Modifier.size(160.dp))
             Spacer(Modifier.height(CoffeePeekDimens.spacing4))
             Box(Modifier.size(48.dp).clip(CircleShape).background(MaterialTheme.colorScheme.primary), contentAlignment = Alignment.Center) {
                 Icon(CoffeePeekIcons.Check, contentDescription = null, tint = MaterialTheme.colorScheme.onPrimary, modifier = Modifier.size(24.dp))
             }
             Spacer(Modifier.height(CoffeePeekDimens.spacing4))
-            Text(stringResource(R.string.contributions_shop_success_title), style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold), textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth())
+            Text(stringResource(Res.string.contributions_shop_success_title), style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold), textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth())
             Spacer(Modifier.height(CoffeePeekDimens.spacing2))
-            Text(stringResource(R.string.contributions_shop_success_description), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth())
+            Text(stringResource(Res.string.contributions_shop_success_description), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth())
             Spacer(Modifier.height(CoffeePeekDimens.spacing6))
             SentShopCard(state, host)
             Spacer(Modifier.height(CoffeePeekDimens.spacing8))
@@ -80,7 +85,7 @@ private fun SentShopCard(state: AddShopState, host: AddShopHost) {
         header = { host.shopImage(state.photos.firstOrNull()?.bytes, Modifier.fillMaxWidth().height(120.dp).clip(RoundedCornerShape(topStart = CoffeePeekDimens.cardRadius, topEnd = CoffeePeekDimens.cardRadius))) },
     ) {
         Text(
-            state.name.trim().ifBlank { stringResource(R.string.contributions_shop_fallback_name) }, style = MaterialTheme.typography.titleMedium,
+            state.name.trim().ifBlank { stringResource(Res.string.contributions_shop_fallback_name) }, style = MaterialTheme.typography.titleMedium,
             maxLines = 1, overflow = TextOverflow.Ellipsis,
         )
         if (location.isNotBlank()) {

@@ -1,6 +1,28 @@
 package com.coffeepeek.feature.contributions.impl.ui
 
 import androidx.compose.animation.AnimatedContent
+import org.jetbrains.compose.ui.tooling.preview.Preview
+import com.coffeepeek.feature.contributions.impl.resources.Res
+import com.coffeepeek.feature.contributions.impl.resources.contributions_back
+import com.coffeepeek.feature.contributions.impl.resources.contributions_loading
+import com.coffeepeek.feature.contributions.impl.resources.contributions_retry
+import com.coffeepeek.feature.contributions.impl.resources.contributions_shop_back_to_form
+import com.coffeepeek.feature.contributions.impl.resources.contributions_shop_catalogs_failed
+import com.coffeepeek.feature.contributions.impl.resources.contributions_shop_failed_default
+import com.coffeepeek.feature.contributions.impl.resources.contributions_shop_failed_kept
+import com.coffeepeek.feature.contributions.impl.resources.contributions_shop_failed_title
+import com.coffeepeek.feature.contributions.impl.resources.contributions_shop_next
+import com.coffeepeek.feature.contributions.impl.resources.contributions_shop_retry_send
+import com.coffeepeek.feature.contributions.impl.resources.contributions_shop_sending_description
+import com.coffeepeek.feature.contributions.impl.resources.contributions_shop_sending_title
+import com.coffeepeek.feature.contributions.impl.resources.contributions_shop_sign_in_prompt
+import com.coffeepeek.feature.contributions.impl.resources.contributions_shop_step_basic
+import com.coffeepeek.feature.contributions.impl.resources.contributions_shop_step_contacts
+import com.coffeepeek.feature.contributions.impl.resources.contributions_shop_step_features
+import com.coffeepeek.feature.contributions.impl.resources.contributions_shop_step_photos
+import com.coffeepeek.feature.contributions.impl.resources.contributions_shop_step_schedule
+import com.coffeepeek.feature.contributions.impl.resources.contributions_shop_submit
+import com.coffeepeek.feature.contributions.impl.resources.contributions_shop_title
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
@@ -23,8 +45,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.tooling.preview.PreviewLightDark
+import org.jetbrains.compose.resources.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.coffeepeek.core.designsystem.component.CoffeePeekButton
 import com.coffeepeek.core.designsystem.component.CoffeePeekLoader
@@ -35,7 +56,6 @@ import com.coffeepeek.feature.contributions.api.AddShopHost
 import com.coffeepeek.feature.contributions.api.GeoPoint
 import com.coffeepeek.feature.contributions.domain.model.CatalogOption
 import com.coffeepeek.feature.contributions.domain.model.Catalogs
-import com.coffeepeek.feature.contributions.impl.R
 import com.coffeepeek.feature.contributions.impl.shop.AddShopAction
 import com.coffeepeek.feature.contributions.impl.shop.AddShopState
 import com.coffeepeek.feature.contributions.impl.shop.AddShopStep
@@ -54,14 +74,14 @@ internal fun AddShopScreen(viewModel: AddShopViewModel, host: AddShopHost, callb
 internal fun AddShopContent(state: AddShopState, host: AddShopHost, callbacks: AddShopCallbacks, onAction: (AddShopAction) -> Unit, modifier: Modifier = Modifier) {
     val submit = state.submit
     when {
-        state.signedIn == null -> Box(modifier.fillMaxSize(), Alignment.Center) { CoffeePeekLoader(stringResource(R.string.contributions_loading)) }
+        state.signedIn == null -> Box(modifier.fillMaxSize(), Alignment.Center) { CoffeePeekLoader(stringResource(Res.string.contributions_loading)) }
         state.signedIn == false -> FormSignInPrompt(
-            stringResource(R.string.contributions_shop_title), stringResource(R.string.contributions_shop_sign_in_prompt), callbacks.onBack, callbacks.onSignIn, modifier,
+            stringResource(Res.string.contributions_shop_title), stringResource(Res.string.contributions_shop_sign_in_prompt), callbacks.onBack, callbacks.onSignIn, modifier,
         )
         submit == SubmitState.Done -> AddShopSuccess(state, host, callbacks.onBack, modifier)
         submit == SubmitState.Sending -> SubmissionStatusScreen(
-            stringResource(R.string.contributions_shop_title), SubmissionStatus.Sending, stringResource(R.string.contributions_shop_sending_title),
-            stringResource(R.string.contributions_shop_sending_description), callbacks.onBack, host.feedback, modifier,
+            stringResource(Res.string.contributions_shop_title), SubmissionStatus.Sending, stringResource(Res.string.contributions_shop_sending_title),
+            stringResource(Res.string.contributions_shop_sending_description), callbacks.onBack, host.feedback, modifier,
         )
         submit is SubmitState.Failed -> FailedScreen(submit, host, callbacks, onAction, modifier)
         else -> AddShopForm(state, host, callbacks, onAction, modifier)
@@ -70,13 +90,13 @@ internal fun AddShopContent(state: AddShopState, host: AddShopHost, callbacks: A
 
 @Composable
 private fun FailedScreen(failed: SubmitState.Failed, host: AddShopHost, callbacks: AddShopCallbacks, onAction: (AddShopAction) -> Unit, modifier: Modifier) {
-    val reason = failed.serverMessage ?: stringResource(R.string.contributions_shop_failed_default)
+    val reason = failed.serverMessage ?: stringResource(Res.string.contributions_shop_failed_default)
     SubmissionStatusScreen(
-        stringResource(R.string.contributions_shop_title), SubmissionStatus.Error, stringResource(R.string.contributions_shop_failed_title),
-        "$reason\n\n${stringResource(R.string.contributions_shop_failed_kept)}", { onAction(AddShopAction.DismissFailure) }, host.feedback, modifier,
+        stringResource(Res.string.contributions_shop_title), SubmissionStatus.Error, stringResource(Res.string.contributions_shop_failed_title),
+        "$reason\n\n${stringResource(Res.string.contributions_shop_failed_kept)}", { onAction(AddShopAction.DismissFailure) }, host.feedback, modifier,
     ) {
         SubmissionErrorActions(
-            stringResource(R.string.contributions_shop_retry_send), stringResource(R.string.contributions_shop_back_to_form),
+            stringResource(Res.string.contributions_shop_retry_send), stringResource(Res.string.contributions_shop_back_to_form),
             { onAction(AddShopAction.Next) }, { onAction(AddShopAction.DismissFailure) },
         )
     }
@@ -96,12 +116,12 @@ private fun AddShopForm(state: AddShopState, host: AddShopHost, callbacks: AddSh
         containerColor = MaterialTheme.colorScheme.background,
     ) { padding ->
         when {
-            state.catalogsLoading -> Box(Modifier.fillMaxSize().padding(padding), Alignment.Center) { CoffeePeekLoader(stringResource(R.string.contributions_loading)) }
+            state.catalogsLoading -> Box(Modifier.fillMaxSize().padding(padding), Alignment.Center) { CoffeePeekLoader(stringResource(Res.string.contributions_loading)) }
             state.catalogsFailed -> Box(Modifier.fillMaxSize().padding(padding).padding(CoffeePeekDimens.spacing4), Alignment.Center) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(stringResource(R.string.contributions_shop_catalogs_failed), color = MaterialTheme.colorScheme.error)
+                    Text(stringResource(Res.string.contributions_shop_catalogs_failed), color = MaterialTheme.colorScheme.error)
                     Spacer(Modifier.height(CoffeePeekDimens.spacing3))
-                    CoffeePeekButton(stringResource(R.string.contributions_retry), { onAction(AddShopAction.RetryCatalogs) })
+                    CoffeePeekButton(stringResource(Res.string.contributions_retry), { onAction(AddShopAction.RetryCatalogs) })
                 }
             }
             else -> StepContent(state, host, callbacks, onAction, Modifier.padding(padding).consumeWindowInsets(padding))
@@ -113,7 +133,7 @@ private fun AddShopForm(state: AddShopState, host: AddShopHost, callbacks: AddSh
 private fun FormHeader(step: AddShopStep, onBack: () -> Unit, onAction: (AddShopAction) -> Unit) {
     Column(Modifier.padding(bottom = CoffeePeekDimens.spacing2)) {
         CoffeePeekTopBar(
-            step.title(), stringResource(R.string.contributions_back),
+            step.title(), stringResource(Res.string.contributions_back),
             onBack = if (step == AddShopStep.Basic) onBack else ({ onAction(AddShopAction.Previous) }),
         )
         StepDots(step.ordinal, AddShopStep.entries.size, Modifier.fillMaxWidth().padding(top = CoffeePeekDimens.spacing1))
@@ -140,7 +160,7 @@ private fun StepContent(state: AddShopState, host: AddShopHost, callbacks: AddSh
             }
             Spacer(Modifier.height(CoffeePeekDimens.spacing6))
             CoffeePeekButton(
-                stringResource(if (step == AddShopStep.Schedule) R.string.contributions_shop_submit else R.string.contributions_shop_next),
+                stringResource(if (step == AddShopStep.Schedule) Res.string.contributions_shop_submit else Res.string.contributions_shop_next),
                 { onAction(AddShopAction.Next) },
                 enabled = when (step) {
                     AddShopStep.Basic -> state.basicsValid
@@ -156,11 +176,11 @@ private fun StepContent(state: AddShopState, host: AddShopHost, callbacks: AddSh
 @Composable
 private fun AddShopStep.title() = stringResource(
     when (this) {
-        AddShopStep.Basic -> R.string.contributions_shop_step_basic
-        AddShopStep.Contacts -> R.string.contributions_shop_step_contacts
-        AddShopStep.Photos -> R.string.contributions_shop_step_photos
-        AddShopStep.Features -> R.string.contributions_shop_step_features
-        AddShopStep.Schedule -> R.string.contributions_shop_step_schedule
+        AddShopStep.Basic -> Res.string.contributions_shop_step_basic
+        AddShopStep.Contacts -> Res.string.contributions_shop_step_contacts
+        AddShopStep.Photos -> Res.string.contributions_shop_step_photos
+        AddShopStep.Features -> Res.string.contributions_shop_step_features
+        AddShopStep.Schedule -> Res.string.contributions_shop_step_schedule
     },
 )
 
@@ -171,22 +191,22 @@ private val previewCatalogs = Catalogs(
     roasters = listOf(CatalogOption("roast", "Sandbox Roaster")),
 )
 
-@PreviewLightDark @Composable private fun AddShopBasicPreview() = CoffeePeekTheme {
+@Preview @Composable private fun AddShopBasicPreview() = CoffeePeekTheme {
     androidx.compose.material3.Surface { AddShopContent(AddShopState(signedIn = true, catalogsLoading = false, catalogs = previewCatalogs, name = "Surf Coffee"), AddShopHost(), noCallbacks, {}) }
 }
 
-@PreviewLightDark @Composable private fun AddShopFeaturesPreview() = CoffeePeekTheme {
+@Preview @Composable private fun AddShopFeaturesPreview() = CoffeePeekTheme {
     androidx.compose.material3.Surface {
         AddShopContent(AddShopState(signedIn = true, catalogsLoading = false, catalogs = previewCatalogs, step = AddShopStep.Features, brewMethodIds = setOf("v60")), AddShopHost(), noCallbacks, {})
     }
 }
 
-@PreviewLightDark @Composable private fun AddShopSchedulePreview() = CoffeePeekTheme {
+@Preview @Composable private fun AddShopSchedulePreview() = CoffeePeekTheme {
     androidx.compose.material3.Surface {
         AddShopContent(AddShopState(signedIn = true, catalogsLoading = false, catalogs = previewCatalogs, step = AddShopStep.Schedule, closedDays = setOf(0)), AddShopHost(), noCallbacks, {})
     }
 }
 
-@PreviewLightDark @Composable private fun AddShopFailedPreview() = CoffeePeekTheme {
+@Preview @Composable private fun AddShopFailedPreview() = CoffeePeekTheme {
     androidx.compose.material3.Surface { AddShopContent(AddShopState(signedIn = true, catalogsLoading = false, submit = SubmitState.Failed(null)), AddShopHost(), noCallbacks, {}) }
 }
