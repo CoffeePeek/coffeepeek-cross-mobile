@@ -189,3 +189,32 @@ Device startup and visual acceptance of the four reported issues are awaiting
 the user's manual check. No account logout, photo capture/upload or live data
 mutation was performed. Compiled previews and installation alone do not confirm
 light/dark rendering, keyboard/scroll behavior, map-app handoff or accessibility.
+
+## Authentication top safe area — 2026-10-24
+
+Baseline: `9052226b` on `codex/fix-ios-native-presentation`. The user reported
+missing top safe-area clearance on login after installing device build 2419.
+This correction belongs to the existing UIKit screen host and shared auth
+scaffold's existing inset handling; it introduces no new feature or abstraction.
+
+Authentication now extends its Compose child to the controller's top edge and
+leaves the top system inset available to Compose. `AuthScreenScaffold` already
+uses `statusBarsPadding()` for its close button and scroll viewport, so it owns
+top clearance explicitly instead of depending on a nested UIKit safe-area guide
+while the same inset is marked consumed. Bottom clearance stays inside scroll
+content. Registration/recovery reuse the same scaffold. Photo-header status-bar
+styling, private-history layout, validation, navigation and analytics retain
+their existing owners and callbacks.
+
+Verification plan: compile iOS arm64 KLIBs, assemble Android DirectDebug including
+the packaged DEX guard, and execute the existing auth-validation/ViewModel and
+native-tab routing unit suites with `--max-workers=6`. Native packaging follows
+the local checks. Existing paired auth previews compile but cannot reproduce the
+UIKit host/status-area boundary; light/dark device review, scrolling, keyboard
+and back/close remain manual gates. No automated UI or screenshot tests, account
+logout or real authentication requests are required for this layout correction.
+
+Local checks passed in one invocation (1m09s): iOS arm64 KLIB compilation,
+Android DirectDebug assembly/DEX guard and 16 executed unit tests across the
+three selected suites, with zero failures/errors/skips and no retries. No device
+launch or visual acceptance is inferred from these local checks.
