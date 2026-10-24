@@ -3,22 +3,25 @@ package com.coffeepeek.feature.settings.api
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 
-/** "Тема". Caller owns navigation and the destination's ViewModel store. */
+/**
+ * "Тема". Caller owns navigation and the destination's ViewModel store.
+ * The entries declare no default arguments: Kotlin/Native links an override of a composable with a default as a different signature.
+ */
 interface ThemeEntry {
     @Composable
-    fun Content(onBack: () -> Unit, modifier: Modifier = Modifier)
+    fun Content(onBack: () -> Unit, modifier: Modifier)
 }
 
 /** "Город". Loads the catalog itself, with loading, error and retry states. */
 interface CityEntry {
     @Composable
-    fun Content(onBack: () -> Unit, modifier: Modifier = Modifier)
+    fun Content(onBack: () -> Unit, modifier: Modifier)
 }
 
 /** "Политика использования": the analytics consent switch (when available) and the terms/privacy links. */
 interface UsagePolicyEntry {
     @Composable
-    fun Content(onBack: () -> Unit, modifier: Modifier = Modifier)
+    fun Content(onBack: () -> Unit, modifier: Modifier)
 }
 
 /** App-rendered pieces of the Settings tab. */
@@ -40,7 +43,7 @@ interface SettingsEntry {
         onUsagePolicy: () -> Unit,
         onLogin: () -> Unit,
         onRegister: () -> Unit,
-        modifier: Modifier = Modifier,
-        bottomClearance: androidx.compose.ui.unit.Dp = androidx.compose.ui.unit.Dp.Hairline,
+        modifier: Modifier,
+        bottomClearance: androidx.compose.ui.unit.Dp,
     )
 }

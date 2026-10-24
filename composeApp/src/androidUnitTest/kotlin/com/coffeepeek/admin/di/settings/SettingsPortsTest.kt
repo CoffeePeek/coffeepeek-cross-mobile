@@ -57,14 +57,14 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import com.coffeepeek.admin.theme.ThemeMode as LegacyThemeMode
 
-class AndroidSettingsPortsTest {
+class SettingsPortsTest {
     private suspend fun await(condition: () -> Boolean) =
         withContext(Dispatchers.Default) { withTimeout(5_000) { while (!condition()) delay(10) } }
 
     // --- theme -------------------------------------------------------------------------------------------------------------
 
     @Test fun themeMapsBothWaysAndDelegatesToTheGlobalManager() = runTest {
-        val port = AndroidThemePort()
+        val port = AppThemePort()
         for (mode in ThemeMode.entries) {
             port.set(mode)
             assertEquals(mode, port.current())
@@ -93,7 +93,7 @@ class AndroidSettingsPortsTest {
     @Test fun loadingTheCatalogResolvesTheSavedCityAndReturnsTheCities() = runTest {
         val settings = FakeSettingRepository(mapOf("selected_city_id" to "removed"))
         val preference = CityPreference(settings)
-        val port = AndroidCityPort(Shops(Result.success(ShopCatalogs(cities = cities))), preference)
+        val port = AppCityPort(Shops(Result.success(ShopCatalogs(cities = cities))), preference)
         assertNull(port.observeSelectedCityId().first())
         assertEquals(listOf(SettingsCity("minsk", "Минск"), SettingsCity("grodno", "Гродно")), port.loadCities().getOrThrow())
         assertEquals("minsk", port.observeSelectedCityId().first())
@@ -102,7 +102,7 @@ class AndroidSettingsPortsTest {
 
     @Test fun aCatalogFailureChangesNothing() = runTest {
         val settings = FakeSettingRepository(mapOf("selected_city_id" to "grodno"))
-        val port = AndroidCityPort(Shops(Result.failure(IllegalStateException("offline"))), CityPreference(settings))
+        val port = AppCityPort(Shops(Result.failure(IllegalStateException("offline"))), CityPreference(settings))
         assertTrue(port.loadCities().isFailure)
         assertNull(port.observeSelectedCityId().first())
         assertEquals(emptyList(), settings.saves)
@@ -110,7 +110,7 @@ class AndroidSettingsPortsTest {
 
     @Test fun selectingPersistsAndIgnoresBlankIds() = runTest {
         val settings = FakeSettingRepository()
-        val port = AndroidCityPort(Shops(Result.success(ShopCatalogs(cities = cities))), CityPreference(settings))
+        val port = AppCityPort(Shops(Result.success(ShopCatalogs(cities = cities))), CityPreference(settings))
         port.loadCities()
         port.select("grodno"); port.select("")
         assertEquals("grodno", port.observeSelectedCityId().first())
@@ -133,15 +133,15 @@ class AndroidSettingsPortsTest {
     }
 
     @Test fun signedInNeedsAnActiveSessionWithAUserId() = runTest {
-        assertTrue(AndroidSettingsAccountPort(Sessions(Session("t", null, "user"))).isSignedIn())
-        assertFalse(AndroidSettingsAccountPort(Sessions(Session("t", null, null))).isSignedIn())
-        assertFalse(AndroidSettingsAccountPort(Sessions(null)).isSignedIn())
-        assertFalse(AndroidSettingsAccountPort(Sessions(Session("t", null, "user")) { false }).isSignedIn())
+        assertTrue(AppSettingsAccountPort(Sessions(Session("t", null, "user"))).isSignedIn())
+        assertFalse(AppSettingsAccountPort(Sessions(Session("t", null, null))).isSignedIn())
+        assertFalse(AppSettingsAccountPort(Sessions(null)).isSignedIn())
+        assertFalse(AppSettingsAccountPort(Sessions(Session("t", null, "user")) { false }).isSignedIn())
     }
 
     @Test fun theSignedInFlowReplaysAndEmitsOnlyChanges() = runTest {
         val sessions = Sessions(Session("t", null, "a"))
-        val port = AndroidSettingsAccountPort(sessions)
+        val port = AppSettingsAccountPort(sessions)
         val seen = mutableListOf<Boolean>()
         val job = launch(UnconfinedTestDispatcher(testScheduler)) { port.observeSignedIn().toList(seen) }
         sessions.state.value = Session("t2", null, "b")      // account switch: still signed in
@@ -154,7 +154,7 @@ class AndroidSettingsPortsTest {
     // --- consent -----------------------------------------------------------------------------------------------------------
 
     @Test fun withoutAnAnalyticsServiceTheConsentRowIsUnavailableAndTogglingDoesNothing() = runTest {
-        val port = AndroidUsageConsentPort { null }
+        val port = AppUsageConsentPort { null }
         assertEquals(UsageConsentState.Unavailable, port.observe().first())
         port.set(true)
     }
@@ -162,7 +162,7 @@ class AndroidSettingsPortsTest {
     @Test fun consentIsAvailableOnlyForASignedInUserAndFollowsTheToggle() = runTest {
         val store = MemoryConsent()
         val service = analytics(store)
-        val port = AndroidUsageConsentPort { service }
+        val port = AppUsageConsentPort { service }
         service.setForeground(true); service.restoreConsent()
         assertEquals(UsageConsentState(available = false, accepted = false), port.observe().first())
 
@@ -191,7 +191,7 @@ class AndroidSettingsPortsTest {
         val repository = Updates(AppUpdate(200, 0, "https://example.com/app.apk"))
         val scope = CoroutineScope(UnconfinedTestDispatcher(testScheduler))
         val state = AppUpdateController(repository, object : AppUpdateEnvironment { override val versionCode: Long? = 100; override val platform = "android"; override val channel: String? = "play" }, scope)
-        val port = AndroidUpdateCheckPort(state)
+        val port = AppUpdateCheckPort(state)
         assertEquals(UpdateCheckState(), port.observe().first())
         assertEquals(UpdateCheckOutcome.Available, port.check())
         assertEquals(UpdateCheckState(checking = false, updateAvailable = true), port.observe().first())
@@ -214,7 +214,7 @@ class AndroidSettingsPortsTest {
         val scope = CoroutineScope(UnconfinedTestDispatcher(testScheduler))
         val state = AppUpdateController(repository, object : AppUpdateEnvironment { override val versionCode: Long? = 100; override val platform = "android"; override val channel: String? = "play" }, scope)
         state.check()                       // the automatic check on resume, still waiting
-        val port = AndroidUpdateCheckPort(state)
+        val port = AppUpdateCheckPort(state)
         val result = async { port.check() }
         runCurrent()
         assertFalse(result.isCompleted)
@@ -227,7 +227,7 @@ class AndroidSettingsPortsTest {
 
     @Test fun reviewActionIsUnavailableInDirectApkBuilds() {
         val opened = mutableListOf<String>()
-        val actions = AndroidSettingsExternalActions(openUrl = opened::add, reviewUrl = null)
+        val actions = AppSettingsExternalActions(openUrl = opened::add, reviewUrl = null)
         assertEquals(false, actions.canRateApp)
         actions.rateApp()
         assertEquals(emptyList(), opened)
@@ -236,7 +236,7 @@ class AndroidSettingsPortsTest {
     @Test fun reviewActionOpensGooglePlayInStoreBuilds() {
         val opened = mutableListOf<String>()
         val url = "https://play.google.com/store/apps/details?id=com.coffeepeek"
-        val actions = AndroidSettingsExternalActions(openUrl = opened::add, reviewUrl = url)
+        val actions = AppSettingsExternalActions(openUrl = opened::add, reviewUrl = url)
         assertEquals(true, actions.canRateApp)
         actions.rateApp()
         assertEquals(listOf(url), opened)
@@ -244,7 +244,7 @@ class AndroidSettingsPortsTest {
 
     @Test fun externalActionsUseTheLegacyTargets() {
         val opened = mutableListOf<String>(); val shared = mutableListOf<String>()
-        val actions = AndroidSettingsExternalActions(openUrl = opened::add, shareText = shared::add)
+        val actions = AppSettingsExternalActions(openUrl = opened::add, shareText = shared::add)
         actions.openSupport(); actions.openTerms(); actions.openPrivacy(); actions.shareApp()
         assertEquals(listOf("https://coffeepeek.by/support", LegalUrls.TERMS, LegalUrls.PRIVACY), opened)
         assertEquals(listOf(COFFEEPEEK_SHARE_TEXT), shared)

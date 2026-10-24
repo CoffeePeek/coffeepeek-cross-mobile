@@ -7,11 +7,11 @@ import com.coffeepeek.feature.notifications.api.NotificationFeature
 import com.coffeepeek.feature.notifications.api.NotificationsEntry
 import com.coffeepeek.feature.notifications.impl.createNotificationsEntry
 
-/** Android composes the migrated bell and sheet; signing in is the application's navigation. */
-internal class AndroidNotificationsRenderer(private val entry: NotificationsEntry) : NotificationsRenderer {
+/** Android and iOS compose the migrated bell and sheet; signing in is the application's navigation. */
+internal class FeatureNotificationsRenderer(private val entry: NotificationsEntry) : NotificationsRenderer {
     @Composable
     override fun Bell() = entry.Bell()
 }
 
-internal fun androidNotificationsRenderer(feature: NotificationFeature): NotificationsRenderer =
-    AndroidNotificationsRenderer(createNotificationsEntry(feature, onSignIn = { Navigator.navigate(Navigator.Screen.Auth) }))
+internal fun featureNotificationsRenderer(feature: NotificationFeature): NotificationsRenderer =
+    FeatureNotificationsRenderer(createNotificationsEntry(feature, onSignIn = { Navigator.navigate(Navigator.Screen.Auth) }))

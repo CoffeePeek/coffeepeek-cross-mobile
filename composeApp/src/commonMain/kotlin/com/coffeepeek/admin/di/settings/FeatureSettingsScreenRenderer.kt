@@ -1,8 +1,7 @@
 package com.coffeepeek.admin.di.settings
 
-import android.widget.Toast
-import com.coffeepeek.admin.locator.Locator
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
 import com.coffeepeek.admin.config.AppConfig
 import com.coffeepeek.feature.appupdate.impl.AppUpdateController
 import com.coffeepeek.admin.settings.CityPreference
@@ -23,8 +22,8 @@ import com.coffeepeek.feature.settings.impl.createSettingsEntry
 import com.coffeepeek.feature.settings.impl.createThemeEntry
 import com.coffeepeek.feature.settings.impl.createUsagePolicyEntry
 
-/** Android routes the theme, city and usage-policy screens to the migrated entries; navigation and the ports' targets stay app-owned. */
-internal class AndroidSettingsScreenRenderer(
+/** The Settings tab and sub-screens on the migrated entries; Android and iOS differ only in how a short message is shown. Android routes the theme, city and usage-policy screens to the migrated entries; navigation and the ports' targets stay app-owned. */
+internal class FeatureSettingsScreenRenderer(
     private val tab: SettingsEntry,
     private val theme: ThemeEntry,
     private val city: CityEntry,
@@ -39,36 +38,39 @@ internal class AndroidSettingsScreenRenderer(
         onUsagePolicy = { Navigator.navigate(Navigator.Screen.UsagePolicy) },
         onLogin = { Navigator.navigate(Navigator.Screen.Auth) },
         onRegister = { Navigator.navigate(Navigator.Screen.Register) },
+        modifier = Modifier,
         bottomClearance = LocalFloatingNavClearance.current,
     )
 
     @Composable
-    override fun Theme() = theme.Content(onBack = Navigator::popBack)
+    override fun Theme() = theme.Content(onBack = Navigator::popBack, modifier = Modifier)
 
     @Composable
-    override fun City() = city.Content(onBack = Navigator::popBack)
+    override fun City() = city.Content(onBack = Navigator::popBack, modifier = Modifier)
 
     @Composable
-    override fun UsagePolicy() = policy.Content(onBack = Navigator::popBack)
+    override fun UsagePolicy() = policy.Content(onBack = Navigator::popBack, modifier = Modifier)
 }
 
-internal fun androidSettingsScreenRenderer(
+internal fun featureSettingsScreenRenderer(
     shops: ShopRepository, cityPreference: CityPreference, sessions: SessionReader, updates: AppUpdateController,
-): AndroidSettingsScreenRenderer {
-    val theme = AndroidThemePort()
-    val cities = AndroidCityPort(shops, cityPreference)
-    val external = AndroidSettingsExternalActions()
-    return AndroidSettingsScreenRenderer(
+    /** A short message that does not take focus: a toast on Android. */
+    notify: (String) -> Unit,
+): FeatureSettingsScreenRenderer {
+    val theme = AppThemePort()
+    val cities = AppCityPort(shops, cityPreference)
+    val external = AppSettingsExternalActions()
+    return FeatureSettingsScreenRenderer(
         tab = createSettingsEntry(
-            account = AndroidSettingsAccountPort(sessions), theme = theme, cities = cities, updates = AndroidUpdateCheckPort(updates),
+            account = AppSettingsAccountPort(sessions), theme = theme, cities = cities, updates = AppUpdateCheckPort(updates),
             external = external, appInfo = SettingsAppInfo(AppConfig.versionName),
             slots = SettingsSlots(
                 guestCard = { onLogin, onRegister, modifier -> GuestAuthCard(onLogin, onRegister, modifier) },
-                notify = { Toast.makeText(Locator.appContext, it, Toast.LENGTH_SHORT).show() },
+                notify = notify,
             ),
         ),
         theme = createThemeEntry(theme),
         city = createCityEntry(cities),
-        policy = createUsagePolicyEntry(AndroidUsageConsentPort(), external),
+        policy = createUsagePolicyEntry(AppUsageConsentPort(), external),
     )
 }

@@ -33,7 +33,7 @@ import com.coffeepeek.admin.theme.ThemeMode as LegacyThemeMode
 import com.coffeepeek.feature.settings.domain.ThemeMode as SettingsThemeMode
 
 /** Adapter over the process-wide [ThemeManager], which the app root and the iOS shell also read. */
-internal class AndroidThemePort : ThemePort {
+internal class AppThemePort : ThemePort {
     override fun current() = ThemeManager.themeMode.value.toSettings()
     override fun observe(): Flow<SettingsThemeMode> = ThemeManager.themeMode.map { it.toSettings() }
     override fun set(mode: SettingsThemeMode) = ThemeManager.setTheme(mode.toLegacy())
@@ -52,7 +52,7 @@ internal fun SettingsThemeMode.toLegacy() = when (this) {
 }
 
 /** The legacy order: load the catalog, then resolve the saved city against it (only on success). */
-internal class AndroidCityPort(
+internal class AppCityPort(
     private val shops: ShopRepository,
     private val preference: CityPreference,
 ) : CityPort {
@@ -67,14 +67,14 @@ internal class AndroidCityPort(
 }
 
 /** Signed in = an active session that has a user id, exactly what the legacy settings state used. */
-internal class AndroidSettingsAccountPort(private val sessions: SessionReader) : SettingsAccountPort {
+internal class AppSettingsAccountPort(private val sessions: SessionReader) : SettingsAccountPort {
     override fun isSignedIn(): Boolean = signedIn(sessions.peekSession())
     override fun observeSignedIn(): Flow<Boolean> = sessions.observeSession().map(::signedIn).distinctUntilChanged()
     private fun signedIn(session: com.coffeepeek.domain.model.Session?) = sessions.isActiveSession(session) && session?.userId != null
 }
 
 /** The row exists only for a signed-in user with analytics ready; the service is read when observed, as the legacy screen did. */
-internal class AndroidUsageConsentPort(private val service: () -> AnalyticsService? = { Analytics.service }) : UsageConsentPort {
+internal class AppUsageConsentPort(private val service: () -> AnalyticsService? = { Analytics.service }) : UsageConsentPort {
     override fun observe(): Flow<UsageConsentState> = service()?.state
         ?.map { UsageConsentState(available = it.authReady && !it.userId.isNullOrBlank(), accepted = it.consent == AnalyticsConsent.Accepted) }
         ?.distinctUntilChanged()
@@ -85,7 +85,7 @@ internal class AndroidUsageConsentPort(private val service: () -> AnalyticsServi
     }
 }
 
-internal class AndroidUpdateCheckPort(private val updates: AppUpdateController) : UpdateCheckPort {
+internal class AppUpdateCheckPort(private val updates: AppUpdateController) : UpdateCheckPort {
     override fun observe(): Flow<UpdateCheckState> = updates.state
         .map { UpdateCheckState(checking = it.checking, updateAvailable = it.update != null) }
         .distinctUntilChanged()
@@ -105,7 +105,7 @@ internal class AndroidUpdateCheckPort(private val updates: AppUpdateController) 
     }
 }
 
-internal class AndroidSettingsExternalActions(
+internal class AppSettingsExternalActions(
     private val openUrl: (String) -> Unit = { OpenInBrowser.openInBrowser(it) },
     private val shareText: (String) -> Unit = { ShareHelper.shareText(it) },
     private val reviewUrl: String? = appReviewUrl(AppConfig.updatePlatform, AppConfig.updateChannel),
