@@ -158,7 +158,7 @@ private fun DetailsStep(state: RegisterState, onAction: (RegisterAction) -> Unit
     AuthStepper(activeIndex = 1, steps = steps())
     NewProfileBadge()
     AuthHeading(stringResource(R.string.auth_register_title))
-    EmailChip(state.email, onChange = { onAction(RegisterAction.ChangeEmail) })
+    EmailChip(state.email, enabled = !state.busy, onChange = { onAction(RegisterAction.ChangeEmail) })
     Column(verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing4)) {
         AuthTextField(
             label = stringResource(R.string.auth_name_label),
@@ -184,8 +184,8 @@ private fun DetailsStep(state: RegisterState, onAction: (RegisterAction) -> Unit
             PasswordStrengthBar(state.password)
         }
     }
-    CheckRow(state.termsAccepted, { onAction(RegisterAction.TermsChanged(it)) }) { TermsText() }
-    CheckRow(state.analyticsAccepted, { onAction(RegisterAction.AnalyticsChanged(it)) }) {
+    CheckRow(state.termsAccepted, { onAction(RegisterAction.TermsChanged(it)) }, enabled = !state.busy) { TermsText() }
+    CheckRow(state.analyticsAccepted, { onAction(RegisterAction.AnalyticsChanged(it)) }, enabled = !state.busy) {
         Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
             Text(stringResource(R.string.auth_analytics_title), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurface)
             Text(
@@ -234,9 +234,9 @@ private fun reportedText(issue: RegistrationIssue): Int = when (issue) {
 }
 
 @Composable
-private fun CheckRow(checked: Boolean, onCheckedChange: (Boolean) -> Unit, content: @Composable () -> Unit) {
+private fun CheckRow(checked: Boolean, onCheckedChange: (Boolean) -> Unit, enabled: Boolean = true, content: @Composable () -> Unit) {
     Row(
-        modifier = Modifier.fillMaxWidth().toggleable(value = checked, role = Role.Checkbox, onValueChange = onCheckedChange),
+        modifier = Modifier.fillMaxWidth().toggleable(value = checked, enabled = enabled, role = Role.Checkbox, onValueChange = onCheckedChange),
         verticalAlignment = Alignment.Top,
     ) {
         Checkbox(
@@ -279,7 +279,7 @@ private fun NewProfileBadge() {
 }
 
 @Composable
-private fun EmailChip(email: String, onChange: () -> Unit) {
+private fun EmailChip(email: String, enabled: Boolean = true, onChange: () -> Unit) {
     val isDark = MaterialTheme.colorScheme.background.luminance() < 0.5f
     Row(
         verticalAlignment = Alignment.CenterVertically,
@@ -298,7 +298,7 @@ private fun EmailChip(email: String, onChange: () -> Unit) {
             overflow = TextOverflow.Ellipsis,
             modifier = Modifier.weight(1f).padding(start = 8.dp, end = 4.dp),
         )
-        IconButton(onClick = onChange, modifier = Modifier.size(44.dp)) {
+        IconButton(onClick = onChange, enabled = enabled, modifier = Modifier.size(44.dp)) {
             Icon(CoffeePeekIcons.Edit, contentDescription = stringResource(R.string.auth_change_email), tint = CoffeePeekColors.Primary, modifier = Modifier.size(20.dp))
         }
     }
