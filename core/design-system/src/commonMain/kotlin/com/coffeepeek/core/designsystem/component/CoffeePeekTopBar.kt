@@ -49,8 +49,14 @@ fun CoffeePeekTopBar(
     backDescription: String,
     modifier: Modifier = Modifier,
     onBack: (() -> Unit)? = null,
-    actions: @Composable RowScope.() -> Unit = {},
+    actions: (@Composable RowScope.() -> Unit)? = null,
+    customBack: Boolean = false,
+    nativeAction: CoffeePeekHeaderAction? = null,
 ) {
+    // A bar with only a title, back and one text action can live in the platform's native navigation bar.
+    if ((actions == null || nativeAction != null) &&
+        LocalCoffeePeekNativeHeaderPresenter.current?.Present(title, onBack, customBack, nativeAction) == true
+    ) return
     CenterAlignedTopAppBar(
         title = {
             Text(
@@ -62,7 +68,7 @@ fun CoffeePeekTopBar(
             )
         },
         navigationIcon = { onBack?.let { CoffeePeekCircularBackButton(onClick = it, contentDescription = backDescription) } },
-        actions = actions,
+        actions = actions ?: {},
         colors = TopAppBarDefaults.topAppBarColors(
             containerColor = MaterialTheme.colorScheme.background,
         ),
