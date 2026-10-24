@@ -45,6 +45,8 @@ fun CoffeePeekDestructiveConfirmationSheet(
     onConfirm: () -> Unit,
     onDismiss: () -> Unit,
 ) {
+    val native = LocalCoffeePeekNativeAlertPresenter.current
+    if (native != null && native.Present(title, message, confirmLabel, onConfirm, onDismiss, cancelLabel, true)) return
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),

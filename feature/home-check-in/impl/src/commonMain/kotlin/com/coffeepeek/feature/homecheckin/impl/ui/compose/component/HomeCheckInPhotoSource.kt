@@ -20,12 +20,14 @@ import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.coffeepeek.core.designsystem.component.CoffeePeekNativePhotoSource
 import com.coffeepeek.core.designsystem.component.CoffeePeekSwipeDismissModalBottomSheet
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 
 @Composable
 internal fun HomeCheckInPhotoSource(onDismiss: () -> Unit, onGallery: () -> Unit, onCamera: () -> Unit) {
+    if (CoffeePeekNativePhotoSource(stringResource(Res.string.home_check_in_add_photos), onGallery, onCamera, onDismiss)) return
     CoffeePeekSwipeDismissModalBottomSheet(onDismiss, stringResource(Res.string.home_check_in_cancel)) {
         HomeCheckInPhotoSourceContent(onDismiss, onGallery, onCamera)
     }

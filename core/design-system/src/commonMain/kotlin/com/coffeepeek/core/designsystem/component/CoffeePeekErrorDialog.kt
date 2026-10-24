@@ -41,6 +41,8 @@ object CoffeePeekErrorDialog {
         onDismiss: () -> Unit
     ) {
         if (show) {
+            val native = LocalCoffeePeekNativeAlertPresenter.current
+            if (native != null && native.Present(title, message, dismissLabel, onDismiss, onDismiss, null, false)) return
             Dialog(onDismissRequest = onDismiss) {
                 Surface(
                     shape = RoundedCornerShape(28.dp),
