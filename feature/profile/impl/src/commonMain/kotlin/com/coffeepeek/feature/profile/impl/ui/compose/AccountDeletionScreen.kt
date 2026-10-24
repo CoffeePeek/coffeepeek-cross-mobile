@@ -1,6 +1,22 @@
 package com.coffeepeek.feature.profile.impl.ui.compose
 
 import androidx.compose.foundation.layout.Arrangement
+import com.coffeepeek.feature.profile.impl.resources.Res
+import com.coffeepeek.feature.profile.impl.resources.profile_back
+import com.coffeepeek.feature.profile.impl.resources.profile_close
+import com.coffeepeek.feature.profile.impl.resources.profile_deletion_confirm_no_email
+import com.coffeepeek.feature.profile.impl.resources.profile_deletion_confirm_subtitle
+import com.coffeepeek.feature.profile.impl.resources.profile_deletion_confirm_title
+import com.coffeepeek.feature.profile.impl.resources.profile_deletion_resend
+import com.coffeepeek.feature.profile.impl.resources.profile_deletion_resend_wait
+import com.coffeepeek.feature.profile.impl.resources.profile_deletion_send
+import com.coffeepeek.feature.profile.impl.resources.profile_deletion_sent_subtitle
+import com.coffeepeek.feature.profile.impl.resources.profile_deletion_sent_title
+import com.coffeepeek.feature.profile.impl.resources.profile_deletion_title
+import com.coffeepeek.feature.profile.impl.resources.profile_deletion_wait_hint
+import com.coffeepeek.feature.profile.impl.resources.profile_error_title
+import com.coffeepeek.feature.profile.impl.resources.profile_loading
+import com.coffeepeek.feature.profile.impl.resources.profile_ok
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -25,7 +41,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -35,7 +51,6 @@ import com.coffeepeek.core.designsystem.component.CoffeePeekButton
 import com.coffeepeek.core.designsystem.component.CoffeePeekLoader
 import com.coffeepeek.core.designsystem.component.CoffeePeekTopBar
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
-import com.coffeepeek.feature.profile.impl.R
 import com.coffeepeek.feature.profile.impl.ui.AccountDeletionViewModel
 import com.coffeepeek.feature.profile.impl.ui.model.AccountDeletionAction
 import com.coffeepeek.feature.profile.impl.ui.model.AccountDeletionEvent
@@ -54,36 +69,36 @@ internal fun AccountDeletionScreen(
     state.error?.let { message ->
         AlertDialog(
             onDismissRequest = { vm.onAction(AccountDeletionAction.DismissError) },
-            title = { Text(stringResource(R.string.profile_error_title)) },
+            title = { Text(stringResource(Res.string.profile_error_title)) },
             text = { Text(message) },
-            confirmButton = { TextButton(onClick = { vm.onAction(AccountDeletionAction.DismissError) }) { Text(stringResource(R.string.profile_ok)) } },
+            confirmButton = { TextButton(onClick = { vm.onAction(AccountDeletionAction.DismissError) }) { Text(stringResource(Res.string.profile_ok)) } },
         )
     }
 
     Scaffold(
         modifier = modifier,
-        topBar = { CoffeePeekTopBar(stringResource(R.string.profile_deletion_title), stringResource(R.string.profile_back), onBack = onClose) },
+        topBar = { CoffeePeekTopBar(stringResource(Res.string.profile_deletion_title), stringResource(Res.string.profile_back), onBack = onClose) },
         containerColor = MaterialTheme.colorScheme.background,
     ) { padding ->
         if (state.isLoading) {
-            Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) { CoffeePeekLoader(stringResource(R.string.profile_loading)) }
+            Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) { CoffeePeekLoader(stringResource(Res.string.profile_loading)) }
             return@Scaffold
         }
-        val email = state.email.ifBlank { stringResource(R.string.profile_deletion_confirm_no_email) }
+        val email = state.email.ifBlank { stringResource(Res.string.profile_deletion_confirm_no_email) }
         Column(
             Modifier.fillMaxSize().padding(padding).verticalScroll(rememberScrollState()).padding(horizontal = CoffeePeekDimens.spacing4),
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Text(
-                stringResource(if (state.requested) R.string.profile_deletion_sent_title else R.string.profile_deletion_confirm_title),
+                stringResource(if (state.requested) Res.string.profile_deletion_sent_title else Res.string.profile_deletion_confirm_title),
                 Modifier.fillMaxWidth(),
                 style = MaterialTheme.typography.headlineMedium.copy(fontSize = 26.sp, fontWeight = FontWeight.Bold, letterSpacing = (-0.52).sp),
                 color = MaterialTheme.colorScheme.onSurface, textAlign = TextAlign.Center,
             )
             Spacer(Modifier.height(10.dp))
             Text(
-                stringResource(if (state.requested) R.string.profile_deletion_sent_subtitle else R.string.profile_deletion_confirm_subtitle, email),
+                stringResource(if (state.requested) Res.string.profile_deletion_sent_subtitle else Res.string.profile_deletion_confirm_subtitle, email),
                 Modifier.fillMaxWidth(),
                 style = MaterialTheme.typography.bodyMedium.copy(fontSize = 14.sp, lineHeight = 21.sp),
                 color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center,
@@ -91,16 +106,16 @@ internal fun AccountDeletionScreen(
             if (state.requested) {
                 Spacer(Modifier.height(12.dp))
                 Text(
-                    stringResource(R.string.profile_deletion_wait_hint), Modifier.fillMaxWidth(),
+                    stringResource(Res.string.profile_deletion_wait_hint), Modifier.fillMaxWidth(),
                     style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center,
                 )
             }
             Spacer(Modifier.height(28.dp))
             CoffeePeekButton(
                 text = stringResource(when {
-                    !state.requested -> R.string.profile_deletion_send
-                    state.resendAvailable -> R.string.profile_deletion_resend
-                    else -> R.string.profile_deletion_resend_wait
+                    !state.requested -> Res.string.profile_deletion_send
+                    state.resendAvailable -> Res.string.profile_deletion_resend
+                    else -> Res.string.profile_deletion_resend_wait
                 }),
                 onClick = { vm.onAction(AccountDeletionAction.Send) },
                 enabled = state.canSend,
@@ -112,7 +127,7 @@ internal fun AccountDeletionScreen(
                 modifier = Modifier.fillMaxWidth().heightIn(min = CoffeePeekDimens.buttonHeight),
                 colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.surfaceVariant, contentColor = MaterialTheme.colorScheme.onSurface),
                 shape = RoundedCornerShape(CoffeePeekDimens.buttonRadius),
-            ) { Text(stringResource(R.string.profile_close), style = MaterialTheme.typography.labelLarge) }
+            ) { Text(stringResource(Res.string.profile_close), style = MaterialTheme.typography.labelLarge) }
         }
     }
 }

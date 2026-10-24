@@ -1,6 +1,14 @@
 package com.coffeepeek.feature.profile.impl.ui.compose
 
 import androidx.compose.foundation.layout.Arrangement
+import com.coffeepeek.feature.profile.impl.resources.Res
+import com.coffeepeek.feature.profile.impl.resources.profile_cancel
+import com.coffeepeek.feature.profile.impl.resources.profile_logout_message
+import com.coffeepeek.feature.profile.impl.resources.profile_logout_title
+import com.coffeepeek.feature.profile.impl.resources.profile_menu_logout
+import com.coffeepeek.feature.profile.impl.resources.profile_own_check_ins
+import com.coffeepeek.feature.profile.impl.resources.profile_own_favorites
+import com.coffeepeek.feature.profile.impl.resources.profile_title
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -27,7 +35,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -37,7 +45,6 @@ import com.coffeepeek.feature.profile.api.OwnProfileSlots
 import com.coffeepeek.feature.profile.api.ProfileAuthorActions
 import com.coffeepeek.feature.profile.api.ProfileContribution
 import com.coffeepeek.feature.profile.domain.PublicProfileStats
-import com.coffeepeek.feature.profile.impl.R
 import com.coffeepeek.feature.profile.impl.ui.OwnProfileViewModel
 import com.coffeepeek.feature.profile.impl.ui.PublicProfileViewModel
 import com.coffeepeek.feature.profile.impl.ui.compose.component.ProfileSectionLoader
@@ -72,10 +79,10 @@ internal fun OwnProfileScreen(
     val bottomPadding = 20.dp + bottomClearance
 
     if (showLogout) CoffeePeekDestructiveConfirmationSheet(
-        title = stringResource(R.string.profile_logout_title),
-        message = stringResource(R.string.profile_logout_message),
-        confirmLabel = stringResource(R.string.profile_menu_logout),
-        cancelLabel = stringResource(R.string.profile_cancel),
+        title = stringResource(Res.string.profile_logout_title),
+        message = stringResource(Res.string.profile_logout_message),
+        confirmLabel = stringResource(Res.string.profile_menu_logout),
+        cancelLabel = stringResource(Res.string.profile_cancel),
         onConfirm = { showLogout = false; vm.onAction(OwnProfileAction.Logout) },
         onDismiss = { showLogout = false },
     )
@@ -117,7 +124,7 @@ internal fun OwnProfileScreen(
     Scaffold(containerColor = MaterialTheme.colorScheme.background, contentWindowInsets = WindowInsets(0, 0, 0, 0)) { innerPadding ->
         Column(Modifier.fillMaxSize().padding(innerPadding).statusBarsPadding()) {
             Box(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp).height(48.dp), contentAlignment = Alignment.CenterStart) {
-                Text(stringResource(R.string.profile_title), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold)
+                Text(stringResource(Res.string.profile_title), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold)
                 if (state.isLoggedIn) Box(Modifier.align(Alignment.CenterEnd)) { actions() }
             }
             when {
@@ -139,9 +146,9 @@ internal fun OwnProfileScreen(
                         if (state.error != null || state.refreshError != null) slots.loadError { vm.onAction(OwnProfileAction.Refresh) }
                     }
                     slots.favoritesPreview(onOpenShop, onOpenRoaster) {
-                        TextButton(onClick = onOpenFavorites) { Text(stringResource(R.string.profile_own_favorites)) }
+                        TextButton(onClick = onOpenFavorites) { Text(stringResource(Res.string.profile_own_favorites)) }
                     }
-                    if (profile.checkInCount > 0) TextButton(onClick = onOpenCheckIns, modifier = Modifier.padding(horizontal = 16.dp)) { Text(stringResource(R.string.profile_own_check_ins)) }
+                    if (profile.checkInCount > 0) TextButton(onClick = onOpenCheckIns, modifier = Modifier.padding(horizontal = 16.dp)) { Text(stringResource(Res.string.profile_own_check_ins)) }
                     Spacer(Modifier.height(bottomPadding))
                 }
             }

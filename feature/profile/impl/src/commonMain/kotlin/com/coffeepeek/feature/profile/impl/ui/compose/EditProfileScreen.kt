@@ -1,6 +1,28 @@
 package com.coffeepeek.feature.profile.impl.ui.compose
 
 import androidx.compose.foundation.background
+import org.jetbrains.compose.ui.tooling.preview.Preview
+import com.coffeepeek.feature.profile.impl.resources.Res
+import com.coffeepeek.feature.profile.impl.resources.profile_back
+import com.coffeepeek.feature.profile.impl.resources.profile_cancel
+import com.coffeepeek.feature.profile.impl.resources.profile_edit_about_label
+import com.coffeepeek.feature.profile.impl.resources.profile_edit_about_long
+import com.coffeepeek.feature.profile.impl.resources.profile_edit_about_placeholder
+import com.coffeepeek.feature.profile.impl.resources.profile_edit_avatar_description
+import com.coffeepeek.feature.profile.impl.resources.profile_edit_change_photo
+import com.coffeepeek.feature.profile.impl.resources.profile_edit_delete_account
+import com.coffeepeek.feature.profile.impl.resources.profile_edit_delete_confirm
+import com.coffeepeek.feature.profile.impl.resources.profile_edit_delete_message
+import com.coffeepeek.feature.profile.impl.resources.profile_edit_delete_title
+import com.coffeepeek.feature.profile.impl.resources.profile_edit_save
+import com.coffeepeek.feature.profile.impl.resources.profile_edit_saving
+import com.coffeepeek.feature.profile.impl.resources.profile_edit_title
+import com.coffeepeek.feature.profile.impl.resources.profile_edit_username_empty
+import com.coffeepeek.feature.profile.impl.resources.profile_edit_username_label
+import com.coffeepeek.feature.profile.impl.resources.profile_edit_username_long
+import com.coffeepeek.feature.profile.impl.resources.profile_edit_username_placeholder
+import com.coffeepeek.feature.profile.impl.resources.profile_edit_username_short
+import com.coffeepeek.feature.profile.impl.resources.profile_loading
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -43,8 +65,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
-import androidx.compose.ui.tooling.preview.PreviewLightDark
-import androidx.compose.ui.res.stringResource
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
@@ -61,7 +82,6 @@ import com.coffeepeek.core.designsystem.theme.CoffeePeekColors
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.feature.profile.api.EditProfileSlots
 import com.coffeepeek.feature.profile.api.ProfileAvatarImage
-import com.coffeepeek.feature.profile.impl.R
 import com.coffeepeek.feature.profile.impl.ui.EditProfileViewModel
 import com.coffeepeek.feature.profile.impl.ui.model.EditProfileAction
 import com.coffeepeek.feature.profile.impl.ui.model.EditProfileEvent
@@ -117,12 +137,12 @@ internal fun EditProfileScreenContent(
 ) {
     Scaffold(
         modifier = modifier,
-        topBar = { CoffeePeekTopBar(stringResource(R.string.profile_edit_title), stringResource(R.string.profile_back), onBack = onBack) },
+        topBar = { CoffeePeekTopBar(stringResource(Res.string.profile_edit_title), stringResource(Res.string.profile_back), onBack = onBack) },
         containerColor = MaterialTheme.colorScheme.background,
     ) { padding ->
         if (state.isLoading) {
             Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
-                CoffeePeekLoader(stringResource(R.string.profile_loading))
+                CoffeePeekLoader(stringResource(Res.string.profile_loading))
             }
         } else {
             Column(Modifier.fillMaxSize().padding(padding).imePadding().verticalScroll(rememberScrollState()).padding(CoffeePeekDimens.spacing4)) {
@@ -152,7 +172,7 @@ private fun EditProfileIdentity(
 
 @Composable
 private fun EditProfileUsername(state: EditProfileState, onAction: (EditProfileAction) -> Unit) {
-    FieldLabel(stringResource(R.string.profile_edit_username_label))
+    FieldLabel(stringResource(Res.string.profile_edit_username_label))
     val username = rememberCoffeePeekSyncedText(state.username)
     val usernameError = state.usernameError.takeIf { state.username.isNotEmpty() }?.let { it.message() }
     OutlinedTextField(
@@ -164,7 +184,7 @@ private fun EditProfileUsername(state: EditProfileState, onAction: (EditProfileA
         },
         modifier = Modifier.fillMaxWidth().heightIn(min = CoffeePeekDimens.buttonHeight),
         enabled = !state.isSaving,
-        placeholder = { Placeholder(stringResource(R.string.profile_edit_username_placeholder)) },
+        placeholder = { Placeholder(stringResource(Res.string.profile_edit_username_placeholder)) },
         textStyle = MaterialTheme.typography.bodyLarge,
         isError = usernameError != null,
         singleLine = true,
@@ -177,7 +197,7 @@ private fun EditProfileUsername(state: EditProfileState, onAction: (EditProfileA
 
 @Composable
 private fun EditProfileAbout(state: EditProfileState, onAction: (EditProfileAction) -> Unit) {
-    FieldLabel(stringResource(R.string.profile_edit_about_label))
+    FieldLabel(stringResource(Res.string.profile_edit_about_label))
     val about = rememberCoffeePeekSyncedText(state.about)
     OutlinedTextField(
         value = about.value,
@@ -188,7 +208,7 @@ private fun EditProfileAbout(state: EditProfileState, onAction: (EditProfileActi
         },
         modifier = Modifier.fillMaxWidth(),
         enabled = !state.isSaving,
-        placeholder = { Placeholder(stringResource(R.string.profile_edit_about_placeholder)) },
+        placeholder = { Placeholder(stringResource(Res.string.profile_edit_about_placeholder)) },
         textStyle = MaterialTheme.typography.bodyLarge,
         isError = state.aboutTooLong,
         minLines = 4,
@@ -197,7 +217,7 @@ private fun EditProfileAbout(state: EditProfileState, onAction: (EditProfileActi
         shape = RoundedCornerShape(CoffeePeekDimens.buttonRadius),
         colors = fieldColors(),
     )
-    FieldFooter(if (state.aboutTooLong) stringResource(R.string.profile_edit_about_long) else null, "${state.about.length}/${EditProfileState.MAX_ABOUT}")
+    FieldFooter(if (state.aboutTooLong) stringResource(Res.string.profile_edit_about_long) else null, "${state.about.length}/${EditProfileState.MAX_ABOUT}")
 }
 
 @Composable
@@ -213,8 +233,8 @@ private fun SaveProfileButton(state: EditProfileState, onClick: () -> Unit) {
             disabledContentColor = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.4f),
         ),
     ) {
-        if (state.isSaving) CoffeePeekLoader(stringResource(R.string.profile_edit_saving), size = 20.dp, color = MaterialTheme.colorScheme.onPrimary, strokeWidth = 2.dp)
-        else Text(stringResource(R.string.profile_edit_save), style = MaterialTheme.typography.labelLarge)
+        if (state.isSaving) CoffeePeekLoader(stringResource(Res.string.profile_edit_saving), size = 20.dp, color = MaterialTheme.colorScheme.onPrimary, strokeWidth = 2.dp)
+        else Text(stringResource(Res.string.profile_edit_save), style = MaterialTheme.typography.labelLarge)
     }
 }
 
@@ -223,7 +243,7 @@ private fun DeleteAccountButton(enabled: Boolean, onClick: () -> Unit) {
     TextButton(onClick = onClick, modifier = Modifier.fillMaxWidth(), enabled = enabled) {
         Icon(CoffeePeekIcons.Delete, contentDescription = null, tint = MaterialTheme.colorScheme.error, modifier = Modifier.size(18.dp))
         Spacer(Modifier.width(CoffeePeekDimens.spacing2))
-        Text(stringResource(R.string.profile_edit_delete_account), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.error)
+        Text(stringResource(Res.string.profile_edit_delete_account), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.error)
     }
 }
 
@@ -231,20 +251,20 @@ private fun DeleteAccountButton(enabled: Boolean, onClick: () -> Unit) {
 private fun DeleteAccountDialog(onConfirm: () -> Unit, onDismiss: () -> Unit) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.profile_edit_delete_title)) },
-        text = { Text(stringResource(R.string.profile_edit_delete_message)) },
+        title = { Text(stringResource(Res.string.profile_edit_delete_title)) },
+        text = { Text(stringResource(Res.string.profile_edit_delete_message)) },
         confirmButton = {
             TextButton(onClick = onConfirm) {
-                Text(stringResource(R.string.profile_edit_delete_confirm), color = MaterialTheme.colorScheme.error)
+                Text(stringResource(Res.string.profile_edit_delete_confirm), color = MaterialTheme.colorScheme.error)
             }
         },
-        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.profile_cancel)) } },
+        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(Res.string.profile_cancel)) } },
     )
 }
 
 
 
-@PreviewLightDark
+@Preview
 @Composable
 private fun EditProfileScreenPreview() {
     CoffeePeekTheme {
@@ -258,15 +278,15 @@ private fun EditProfileScreenPreview() {
 
 @Composable
 private fun UsernameError.message(): String = stringResource(when (this) {
-    UsernameError.Empty -> R.string.profile_edit_username_empty
-    UsernameError.TooShort -> R.string.profile_edit_username_short
-    UsernameError.TooLong -> R.string.profile_edit_username_long
+    UsernameError.Empty -> Res.string.profile_edit_username_empty
+    UsernameError.TooShort -> Res.string.profile_edit_username_short
+    UsernameError.TooLong -> Res.string.profile_edit_username_long
 })
 
 @Composable
 private fun AvatarPicker(state: EditProfileState, slots: EditProfileSlots, loading: Boolean, onClick: () -> Unit) {
-    val changePhoto = stringResource(R.string.profile_edit_change_photo)
-    val avatarDescription = stringResource(R.string.profile_edit_avatar_description)
+    val changePhoto = stringResource(Res.string.profile_edit_change_photo)
+    val avatarDescription = stringResource(Res.string.profile_edit_avatar_description)
     Box(Modifier.size(104.dp).clickable(enabled = !loading && !state.isSaving, onClickLabel = changePhoto, onClick = onClick)) {
         Box(
             Modifier.align(Alignment.Center).size(96.dp).clip(CircleShape)
@@ -283,7 +303,7 @@ private fun AvatarPicker(state: EditProfileState, slots: EditProfileSlots, loadi
                 )
             }
             if (loading) Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.scrim.copy(alpha = 0.35f)), contentAlignment = Alignment.Center) {
-                CoffeePeekLoader(stringResource(R.string.profile_loading), size = 20.dp, strokeWidth = 2.dp)
+                CoffeePeekLoader(stringResource(Res.string.profile_loading), size = 20.dp, strokeWidth = 2.dp)
             }
         }
         if (!loading) Box(

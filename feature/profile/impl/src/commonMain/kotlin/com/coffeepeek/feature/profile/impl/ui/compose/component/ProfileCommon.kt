@@ -1,6 +1,11 @@
 package com.coffeepeek.feature.profile.impl.ui.compose.component
 
 import androidx.compose.foundation.BorderStroke
+import com.coffeepeek.feature.profile.impl.resources.Res
+import com.coffeepeek.feature.profile.impl.resources.profile_loading
+import com.coffeepeek.feature.profile.impl.resources.profile_retry
+import com.coffeepeek.feature.profile.impl.resources.profile_section_all
+import com.coffeepeek.feature.profile.impl.resources.profile_section_all_description
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -22,14 +27,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.res.stringResource
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.core.designsystem.component.CoffeePeekLoader
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
-import com.coffeepeek.feature.profile.impl.R
 
 @Composable
 internal fun ProfileCard(modifier: Modifier = Modifier.fillMaxWidth(), content: @Composable () -> Unit) {
@@ -55,13 +59,13 @@ internal fun ProfileEmptyCard(text: String, icon: ImageVector) {
 @Composable
 internal fun ProfileSectionLoader(height: androidx.compose.ui.unit.Dp = 88.dp) {
     Box(Modifier.fillMaxWidth().height(height), contentAlignment = Alignment.Center) {
-        CoffeePeekLoader(stringResource(R.string.profile_loading))
+        CoffeePeekLoader(stringResource(Res.string.profile_loading))
     }
 }
 
 @Composable
 internal fun ProfileSectionHeading(title: String, onAll: () -> Unit) {
-    val description = stringResource(R.string.profile_section_all_description, title)
+    val description = stringResource(Res.string.profile_section_all_description, title)
     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
         Text(title, Modifier.weight(1f), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold)
         TextButton(
@@ -69,7 +73,7 @@ internal fun ProfileSectionHeading(title: String, onAll: () -> Unit) {
             modifier = Modifier.semantics { contentDescription = description },
             contentPadding = PaddingValues(start = 12.dp),
         ) {
-            Text(stringResource(R.string.profile_section_all), color = MaterialTheme.colorScheme.secondary)
+            Text(stringResource(Res.string.profile_section_all), color = MaterialTheme.colorScheme.secondary)
             Spacer(Modifier.width(3.dp))
             Icon(CoffeePeekIcons.ChevronRight, contentDescription = null, tint = MaterialTheme.colorScheme.secondary, modifier = Modifier.size(17.dp))
         }
@@ -80,6 +84,6 @@ internal fun ProfileSectionHeading(title: String, onAll: () -> Unit) {
 internal fun InlineProfileError(text: String, onRetry: () -> Unit) {
     Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
         Text(text, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        TextButton(onClick = onRetry) { Text(stringResource(R.string.profile_retry)) }
+        TextButton(onClick = onRetry) { Text(stringResource(Res.string.profile_retry)) }
     }
 }

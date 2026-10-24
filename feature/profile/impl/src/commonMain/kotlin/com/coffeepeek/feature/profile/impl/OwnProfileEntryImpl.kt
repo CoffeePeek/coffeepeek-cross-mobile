@@ -16,7 +16,8 @@ import com.coffeepeek.feature.profile.domain.PublicProfileData
 import com.coffeepeek.feature.profile.impl.ui.OwnProfileViewModel
 import com.coffeepeek.feature.profile.impl.ui.PublicProfileViewModel
 import com.coffeepeek.feature.profile.impl.ui.compose.OwnProfileScreen
-import java.util.UUID
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 
 /**
  * The Profile tab. Caller owns the tab's ViewModel-store lifetime, navigation, sign-in and the floating bar clearance; the app supplies
@@ -41,7 +42,8 @@ private class OwnProfileEntryImpl(
     private val authorActions: ProfileAuthorActions,
     private val slots: OwnProfileSlots,
 ) : OwnProfileEntry {
-    private val instanceKey = UUID.randomUUID().toString()
+    @OptIn(ExperimentalUuidApi::class)
+    private val instanceKey = Uuid.random().toString()
 
     @Composable
     override fun Content(

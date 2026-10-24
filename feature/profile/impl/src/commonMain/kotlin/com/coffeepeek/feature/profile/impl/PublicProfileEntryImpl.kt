@@ -12,7 +12,8 @@ import com.coffeepeek.feature.profile.api.PublicProfileEntry
 import com.coffeepeek.feature.profile.domain.PublicProfileData
 import com.coffeepeek.feature.profile.impl.ui.PublicProfileViewModel
 import com.coffeepeek.feature.profile.impl.ui.compose.PublicProfileScreen
-import java.util.UUID
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 
 /**
  * The caller owns destination lifetime (destroy its ViewModelStore on removal), root navigation, sign-in and sharing; the app supplies
@@ -35,7 +36,8 @@ private class PublicProfileEntryImpl(
     private val authorActions: ProfileAuthorActions,
     private val slots: ProfileSlots,
 ) : PublicProfileEntry {
-    private val instanceKey = UUID.randomUUID().toString()
+    @OptIn(ExperimentalUuidApi::class)
+    private val instanceKey = Uuid.random().toString()
 
     @Composable
     override fun Content(

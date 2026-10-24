@@ -1,6 +1,12 @@
 package com.coffeepeek.feature.profile.impl.ui.compose
 
 import androidx.compose.foundation.layout.Box
+import org.jetbrains.compose.ui.tooling.preview.Preview
+import com.coffeepeek.feature.profile.impl.resources.Res
+import com.coffeepeek.feature.profile.impl.resources.profile_cancel
+import com.coffeepeek.feature.profile.impl.resources.profile_edit_confirm_username_action
+import com.coffeepeek.feature.profile.impl.resources.profile_edit_confirm_username_message
+import com.coffeepeek.feature.profile.impl.resources.profile_edit_confirm_username_title
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -13,11 +19,10 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
@@ -25,7 +30,6 @@ import com.coffeepeek.core.designsystem.component.CoffeePeekButton
 import com.coffeepeek.core.designsystem.component.CoffeePeekContentCard
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
-import com.coffeepeek.feature.profile.impl.R
 
 @Composable
 internal fun UsernameChangeConfirmation(username: String, onConfirm: () -> Unit, onDismiss: () -> Unit) {
@@ -40,27 +44,27 @@ internal fun UsernameChangeConfirmation(username: String, onConfirm: () -> Unit,
 private fun UsernameChangeConfirmationContent(username: String, onConfirm: () -> Unit, onDismiss: () -> Unit) {
     CoffeePeekContentCard(Modifier.verticalScroll(rememberScrollState())) {
         Text(
-            stringResource(R.string.profile_edit_confirm_username_title),
+            stringResource(Res.string.profile_edit_confirm_username_title),
             Modifier.semantics { heading() },
             style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold,
         )
         Spacer(Modifier.height(CoffeePeekDimens.spacing3))
         Text(
-            stringResource(R.string.profile_edit_confirm_username_message, username),
+            stringResource(Res.string.profile_edit_confirm_username_message, username),
             style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         Spacer(Modifier.height(CoffeePeekDimens.spacing6))
-        CoffeePeekButton(stringResource(R.string.profile_edit_confirm_username_action), onConfirm)
+        CoffeePeekButton(stringResource(Res.string.profile_edit_confirm_username_action), onConfirm)
         TextButton(onDismiss, Modifier.fillMaxWidth()) {
             Text(
-                stringResource(R.string.profile_cancel),
+                stringResource(Res.string.profile_cancel),
                 style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurface,
             )
         }
     }
 }
 
-@PreviewLightDark
+@Preview
 @Composable
 private fun UsernameChangeConfirmationPreview() {
     CoffeePeekTheme { UsernameChangeConfirmationContent("coffee_lover", {}, {}) }

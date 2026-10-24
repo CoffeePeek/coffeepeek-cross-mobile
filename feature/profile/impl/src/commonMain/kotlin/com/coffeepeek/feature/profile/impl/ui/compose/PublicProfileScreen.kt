@@ -1,6 +1,24 @@
 package com.coffeepeek.feature.profile.impl.ui.compose
 
 import androidx.compose.foundation.layout.Arrangement
+import com.coffeepeek.feature.profile.impl.resources.Res
+import com.coffeepeek.feature.profile.impl.resources.profile_back
+import com.coffeepeek.feature.profile.impl.resources.profile_blocked_message
+import com.coffeepeek.feature.profile.impl.resources.profile_blocked_title
+import com.coffeepeek.feature.profile.impl.resources.profile_check_ins_failed
+import com.coffeepeek.feature.profile.impl.resources.profile_close
+import com.coffeepeek.feature.profile.impl.resources.profile_favorites_failed
+import com.coffeepeek.feature.profile.impl.resources.profile_favorites_refresh_failed
+import com.coffeepeek.feature.profile.impl.resources.profile_follow_failed
+import com.coffeepeek.feature.profile.impl.resources.profile_load_failed
+import com.coffeepeek.feature.profile.impl.resources.profile_retry_full
+import com.coffeepeek.feature.profile.impl.resources.profile_section_activity
+import com.coffeepeek.feature.profile.impl.resources.profile_section_check_ins
+import com.coffeepeek.feature.profile.impl.resources.profile_section_favorites
+import com.coffeepeek.feature.profile.impl.resources.profile_share
+import com.coffeepeek.feature.profile.impl.resources.profile_title
+import com.coffeepeek.feature.profile.impl.resources.profile_unblock
+import com.coffeepeek.feature.profile.impl.resources.profile_update_failed
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -32,7 +50,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
@@ -46,7 +64,6 @@ import com.coffeepeek.feature.profile.api.ProfileSlots
 import com.coffeepeek.feature.profile.domain.PublicFavoriteKind
 import com.coffeepeek.feature.profile.domain.PublicProfileConnectionKind
 import com.coffeepeek.feature.profile.domain.PublicProfileFavorite
-import com.coffeepeek.feature.profile.impl.R
 import com.coffeepeek.feature.profile.impl.ui.PublicProfileViewModel
 import com.coffeepeek.feature.profile.impl.ui.compose.component.InlineProfileError
 import com.coffeepeek.feature.profile.impl.ui.compose.component.ProfileSectionHeading
@@ -130,10 +147,10 @@ internal fun PublicProfileScreen(
         ) {
             Box(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp).height(48.dp), contentAlignment = Alignment.Center) {
                 if (onBack != null) IconButton(onClick = onBack, modifier = Modifier.align(Alignment.CenterStart)) {
-                    Icon(CoffeePeekIcons.ChevronLeft, contentDescription = stringResource(R.string.profile_back), modifier = Modifier.size(23.dp))
+                    Icon(CoffeePeekIcons.ChevronLeft, contentDescription = stringResource(Res.string.profile_back), modifier = Modifier.size(23.dp))
                 }
                 Text(
-                    stringResource(R.string.profile_title),
+                    stringResource(Res.string.profile_title),
                     Modifier.fillMaxWidth().padding(start = if (onBack == null) 0.dp else 56.dp, end = 56.dp),
                     style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold,
                     textAlign = if (onBack == null) TextAlign.Start else TextAlign.Center,
@@ -147,7 +164,7 @@ internal fun PublicProfileScreen(
                     )
                 } else if (profile != null && sharePath != null) IconButton(
                     onClick = { onShare("$PUBLIC_PROFILE_BASE_URL$sharePath") }, modifier = Modifier.align(Alignment.CenterEnd),
-                ) { Icon(CoffeePeekIcons.Share, stringResource(R.string.profile_share), modifier = Modifier.size(21.dp)) }
+                ) { Icon(CoffeePeekIcons.Share, stringResource(Res.string.profile_share), modifier = Modifier.size(21.dp)) }
             }
 
             if (profile == null || author == null) {
@@ -168,8 +185,8 @@ internal fun PublicProfileScreen(
                         verticalArrangement = Arrangement.spacedBy(12.dp),
                     ) {
                         Icon(CoffeePeekIcons.User, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(48.dp))
-                        Text(state.error ?: stringResource(R.string.profile_load_failed), style = MaterialTheme.typography.titleMedium, textAlign = TextAlign.Center)
-                        Button(onClick = { vm.onAction(PublicProfileAction.Refresh) }) { Text(stringResource(R.string.profile_retry_full)) }
+                        Text(state.error ?: stringResource(Res.string.profile_load_failed), style = MaterialTheme.typography.titleMedium, textAlign = TextAlign.Center)
+                        Button(onClick = { vm.onAction(PublicProfileAction.Refresh) }) { Text(stringResource(Res.string.profile_retry_full)) }
                     }
                 }
             } else if (profile.isBlockedByViewer) {
@@ -179,10 +196,10 @@ internal fun PublicProfileScreen(
                     verticalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
                     Icon(CoffeePeekIcons.VisibilityOff, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(48.dp))
-                    Text(stringResource(R.string.profile_blocked_title), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold, textAlign = TextAlign.Center)
-                    Text(stringResource(R.string.profile_blocked_message, profile.nickname), style = MaterialTheme.typography.bodyMedium,
+                    Text(stringResource(Res.string.profile_blocked_title), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold, textAlign = TextAlign.Center)
+                    Text(stringResource(Res.string.profile_blocked_message, profile.nickname), style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center)
-                    Button(onClick = { authorActions.requestUnblock(author) }) { Text(stringResource(R.string.profile_unblock)) }
+                    Button(onClick = { authorActions.requestUnblock(author) }) { Text(stringResource(Res.string.profile_unblock)) }
                 }
             } else {
                 Column(
@@ -213,28 +230,28 @@ internal fun PublicProfileScreen(
                                 vm.onAction(PublicProfileAction.RetryCheckIns)
                             },
                             { section = ProfileSection.Activity })
-                        if (state.error != null) InlineProfileError(stringResource(R.string.profile_update_failed)) { vm.onAction(PublicProfileAction.Refresh) }
+                        if (state.error != null) InlineProfileError(stringResource(Res.string.profile_update_failed)) { vm.onAction(PublicProfileAction.Refresh) }
                         if (!viewingOwn && state.followError != null) {
-                            InlineProfileError(stringResource(R.string.profile_follow_failed)) { vm.onAction(PublicProfileAction.ToggleFollow) }
+                            InlineProfileError(stringResource(Res.string.profile_follow_failed)) { vm.onAction(PublicProfileAction.ToggleFollow) }
                         }
                     }
                     if (own != null) own.favoritesPreview {
-                        ProfileSectionHeading(stringResource(R.string.profile_section_favorites), onAll = own.onOpenFavorites)
+                        ProfileSectionHeading(stringResource(Res.string.profile_section_favorites), onAll = own.onOpenFavorites)
                     } else if (profile.favorites.isNotEmpty() || state.isLoadingFavorites || state.favoritesError != null) Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                         Box(Modifier.padding(horizontal = 16.dp)) {
-                            ProfileSectionHeading(stringResource(R.string.profile_section_favorites), onAll = { section = ProfileSection.Favorites })
+                            ProfileSectionHeading(stringResource(Res.string.profile_section_favorites), onAll = { section = ProfileSection.Favorites })
                         }
                         when {
                             state.isLoadingFavorites && profile.favorites.isEmpty() -> ProfileSectionLoader()
                             state.favoritesError != null && profile.favorites.isEmpty() ->
                                 Box(Modifier.padding(horizontal = 16.dp)) {
-                                    InlineProfileError(stringResource(R.string.profile_favorites_failed)) { vm.onAction(PublicProfileAction.RetryFavorites) }
+                                    InlineProfileError(stringResource(Res.string.profile_favorites_failed)) { vm.onAction(PublicProfileAction.RetryFavorites) }
                                 }
                             else -> {
                                 slots.favoritesPreview(profile.favorites.take(6), openFavorite)
                                 if (state.favoritesError != null) {
                                     Box(Modifier.padding(horizontal = 16.dp)) {
-                                        InlineProfileError(stringResource(R.string.profile_favorites_refresh_failed)) { vm.onAction(PublicProfileAction.RetryFavorites) }
+                                        InlineProfileError(stringResource(Res.string.profile_favorites_refresh_failed)) { vm.onAction(PublicProfileAction.RetryFavorites) }
                                     }
                                 }
                             }
@@ -242,12 +259,12 @@ internal fun PublicProfileScreen(
                     }
 
                     if (state.checkIns.isNotEmpty() || state.isLoadingCheckIns || state.checkInsError != null || (own?.checkInCount ?: 0) > 0) Column(Modifier.padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                        ProfileSectionHeading(stringResource(R.string.profile_section_check_ins), onAll = own?.onOpenCheckIns ?: { section = ProfileSection.CheckIns })
+                        ProfileSectionHeading(stringResource(Res.string.profile_section_check_ins), onAll = own?.onOpenCheckIns ?: { section = ProfileSection.CheckIns })
                         Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                             when {
                                 state.isLoadingCheckIns && state.checkIns.isEmpty() -> ProfileSectionLoader(100.dp)
                                 state.checkInsError != null && state.checkIns.isEmpty() ->
-                                    InlineProfileError(stringResource(R.string.profile_check_ins_failed)) { vm.onAction(PublicProfileAction.RetryCheckIns) }
+                                    InlineProfileError(stringResource(Res.string.profile_check_ins_failed)) { vm.onAction(PublicProfileAction.RetryCheckIns) }
                                 else -> state.checkIns.take(2).forEach { checkIn ->
                                     slots.checkInCard(checkIn, author, viewingOwn,
                                         checkIn.coffeeShopSlug?.takeIf(String::isNotBlank)?.let { shop -> { onOpenShop(shop) } }) { previews, originals, index -> photos = ProfilePhotos(previews, originals, index) }
@@ -264,14 +281,14 @@ internal fun PublicProfileScreen(
 
     val selectedSection = section
     if (selectedSection != null && profile != null && author != null && !profile.isBlockedByViewer) {
-        val close = stringResource(R.string.profile_close)
+        val close = stringResource(Res.string.profile_close)
         CoffeePeekSwipeDismissModalBottomSheet(onDismissRequest = { section = null }, dismissDescription = close, maxSheetHeightFraction = 0.9f) {
             Row(Modifier.fillMaxWidth().padding(start = 20.dp, end = 8.dp), verticalAlignment = Alignment.CenterVertically) {
                 Text(
                     stringResource(when (selectedSection) {
-                        ProfileSection.Favorites -> R.string.profile_section_favorites
-                        ProfileSection.CheckIns -> R.string.profile_section_check_ins
-                        ProfileSection.Activity -> R.string.profile_section_activity
+                        ProfileSection.Favorites -> Res.string.profile_section_favorites
+                        ProfileSection.CheckIns -> Res.string.profile_section_check_ins
+                        ProfileSection.Activity -> Res.string.profile_section_activity
                     }),
                     Modifier.weight(1f), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold,
                 )
@@ -288,7 +305,7 @@ internal fun PublicProfileScreen(
                     }
                     if (state.isLoadingFavorites) item { ProfileSectionLoader() }
                     else if (state.favoritesError != null) item {
-                        InlineProfileError(stringResource(R.string.profile_favorites_failed)) { vm.onAction(PublicProfileAction.RetryFavorites) }
+                        InlineProfileError(stringResource(Res.string.profile_favorites_failed)) { vm.onAction(PublicProfileAction.RetryFavorites) }
                     }
                 }
                 ProfileSection.CheckIns -> PublicProfileCheckInsList(

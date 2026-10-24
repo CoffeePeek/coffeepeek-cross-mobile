@@ -1,6 +1,15 @@
 package com.coffeepeek.feature.profile.impl.ui.compose
 
 import androidx.compose.foundation.layout.Arrangement
+import org.jetbrains.compose.ui.tooling.preview.Preview
+import com.coffeepeek.feature.profile.impl.resources.Res
+import com.coffeepeek.feature.profile.impl.resources.profile_back
+import com.coffeepeek.feature.profile.impl.resources.profile_blocked_title
+import com.coffeepeek.feature.profile.impl.resources.profile_check_ins_empty
+import com.coffeepeek.feature.profile.impl.resources.profile_check_ins_failed
+import com.coffeepeek.feature.profile.impl.resources.profile_load_failed
+import com.coffeepeek.feature.profile.impl.resources.profile_load_more
+import com.coffeepeek.feature.profile.impl.resources.profile_section_check_ins
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsets
@@ -16,14 +25,12 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.tooling.preview.PreviewLightDark
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.core.designsystem.component.CoffeePeekTopBar
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.feature.profile.api.ProfileAuthor
 import com.coffeepeek.feature.profile.api.ProfileSlots
-import com.coffeepeek.feature.profile.impl.R
 import com.coffeepeek.feature.profile.impl.ui.compose.component.InlineProfileError
 import com.coffeepeek.feature.profile.impl.ui.compose.component.ProfileSectionLoader
 import com.coffeepeek.feature.profile.impl.ui.model.PublicProfileState
@@ -35,14 +42,14 @@ internal fun PublicProfileCheckInsScreenContent(
     onPhotoClick: (List<String>, List<String>, Int) -> Unit,
 ) {
     Scaffold(
-        topBar = { CoffeePeekTopBar(stringResource(R.string.profile_section_check_ins), stringResource(R.string.profile_back), onBack = onBack) },
+        topBar = { CoffeePeekTopBar(stringResource(Res.string.profile_section_check_ins), stringResource(Res.string.profile_back), onBack = onBack) },
         contentWindowInsets = WindowInsets(0),
     ) { padding ->
         Column(Modifier.fillMaxSize().padding(padding).navigationBarsPadding()) {
             when {
-                state.profile?.isBlockedByViewer == true -> Text(stringResource(R.string.profile_blocked_title), Modifier.padding(16.dp))
+                state.profile?.isBlockedByViewer == true -> Text(stringResource(Res.string.profile_blocked_title), Modifier.padding(16.dp))
                 state.profile == null && state.isLoading -> ProfileSectionLoader(160.dp)
-                state.profile == null -> InlineProfileError(stringResource(R.string.profile_load_failed), onRetry)
+                state.profile == null -> InlineProfileError(stringResource(Res.string.profile_load_failed), onRetry)
                 else -> PublicProfileCheckInsList(state, slots, onOpenShop, onRetry, onLoadMore, onPhotoClick)
             }
         }
@@ -67,15 +74,15 @@ internal fun PublicProfileCheckInsList(
                 checkIn.coffeeShopSlug?.takeIf(String::isNotBlank)?.let { slug -> { onOpenShop(slug) } }, onPhotoClick)
         }
         if (state.isLoadingCheckIns || state.isLoadingMoreCheckIns) item { ProfileSectionLoader(88.dp) }
-        else if (state.checkInsError != null) item { InlineProfileError(stringResource(R.string.profile_check_ins_failed), onRetry) }
-        else if (state.checkIns.isEmpty()) item { Text(stringResource(R.string.profile_check_ins_empty)) }
+        else if (state.checkInsError != null) item { InlineProfileError(stringResource(Res.string.profile_check_ins_failed), onRetry) }
+        else if (state.checkIns.isEmpty()) item { Text(stringResource(Res.string.profile_check_ins_empty)) }
         if (state.hasMoreCheckIns && !state.isLoadingMoreCheckIns && state.checkInsError == null) item {
-            TextButton(onClick = onLoadMore, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.profile_load_more)) }
+            TextButton(onClick = onLoadMore, modifier = Modifier.fillMaxWidth()) { Text(stringResource(Res.string.profile_load_more)) }
         }
     }
 }
 
-@PreviewLightDark
+@Preview
 @Composable
 private fun PublicProfileCheckInsPreview() = CoffeePeekTheme {
     val slots = ProfileSlots(image = { _, _, _ -> }, photoViewer = { _, _, _, _ -> },
