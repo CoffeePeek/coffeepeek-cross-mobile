@@ -1,13 +1,25 @@
 package com.coffeepeek.feature.discovery.impl.ui
 
 import androidx.compose.foundation.layout.Arrangement
+import com.coffeepeek.feature.discovery.impl.resources.Res
+import com.coffeepeek.feature.discovery.impl.resources.discovery_distance_from_you
+import com.coffeepeek.feature.discovery.impl.resources.discovery_distance_km
+import com.coffeepeek.feature.discovery.impl.resources.discovery_distance_meters
+import com.coffeepeek.feature.discovery.impl.resources.discovery_favorite_add
+import com.coffeepeek.feature.discovery.impl.resources.discovery_favorite_remove
+import com.coffeepeek.feature.discovery.impl.resources.discovery_shop_closed
+import com.coffeepeek.feature.discovery.impl.resources.discovery_shop_kind_cafe
+import com.coffeepeek.feature.discovery.impl.resources.discovery_shop_kind_coffee_bar
+import com.coffeepeek.feature.discovery.impl.resources.discovery_shop_kind_specialty
+import com.coffeepeek.feature.discovery.impl.resources.discovery_shop_new
+import com.coffeepeek.feature.discovery.impl.resources.discovery_shop_open
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.stringResource
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.core.designsystem.component.CoffeePeekLikeButton
 import com.coffeepeek.core.designsystem.component.CoffeePeekShopCard
@@ -18,7 +30,6 @@ import com.coffeepeek.feature.discovery.domain.model.Coordinates
 import com.coffeepeek.feature.discovery.domain.model.ShopKind
 import com.coffeepeek.feature.discovery.domain.model.ShopSummary
 import com.coffeepeek.feature.discovery.domain.rules.distanceMeters
-import com.coffeepeek.feature.discovery.impl.R
 import kotlin.math.roundToInt
 
 @Composable
@@ -35,13 +46,13 @@ internal fun ShopRow(
 ) {
     val kind = stringResource(
         when (shop.kind) {
-            ShopKind.Specialty -> R.string.discovery_shop_kind_specialty
-            ShopKind.CoffeeBar -> R.string.discovery_shop_kind_coffee_bar
-            ShopKind.Cafe -> R.string.discovery_shop_kind_cafe
+            ShopKind.Specialty -> Res.string.discovery_shop_kind_specialty
+            ShopKind.CoffeeBar -> Res.string.discovery_shop_kind_coffee_bar
+            ShopKind.Cafe -> Res.string.discovery_shop_kind_cafe
         },
     )
     // The server's distance first, else measured from where the user is.
-    val distance = (shop.distanceMeters ?: userLocation?.let { user -> shop.coordinates?.let { distanceMeters(user, it) } })?.let { stringResource(R.string.discovery_distance_from_you, distanceLabel(it)) }
+    val distance = (shop.distanceMeters ?: userLocation?.let { user -> shop.coordinates?.let { distanceMeters(user, it) } })?.let { stringResource(Res.string.discovery_distance_from_you, distanceLabel(it)) }
     CoffeePeekShopCard(
         title = shop.title,
         kindLabel = kind,
@@ -50,8 +61,8 @@ internal fun ShopRow(
         ratingText = shop.rating?.let(::oneDecimal).orEmpty(),
         ratingCount = shop.checkInCount,
         isNew = shop.isNew,
-        newLabel = stringResource(R.string.discovery_shop_new),
-        statusLabel = stringResource(if (shop.isOpen) R.string.discovery_shop_open else R.string.discovery_shop_closed),
+        newLabel = stringResource(Res.string.discovery_shop_new),
+        statusLabel = stringResource(if (shop.isOpen) Res.string.discovery_shop_open else Res.string.discovery_shop_closed),
         isOpen = shop.isOpen,
         locationSummary = listOfNotNull(shop.address?.takeIf { it.isNotBlank() }, distance).joinToString(" • ").ifEmpty { null },
         priceLevel = shop.priceLevel?.level,
@@ -74,7 +85,7 @@ internal fun ShopRow(
         favorite = {
             CoffeePeekLikeButton(
                 selected = shop.isFavorite,
-                contentDescription = stringResource(if (shop.isFavorite) R.string.discovery_favorite_remove else R.string.discovery_favorite_add),
+                contentDescription = stringResource(if (shop.isFavorite) Res.string.discovery_favorite_remove else Res.string.discovery_favorite_add),
                 onClick = { host.haptic(); onFavorite() },
                 modifier = host.exposure(Modifier, DiscoveryExposure.Favorite),
                 enabled = !favoritePending,
@@ -87,10 +98,10 @@ internal fun ShopRow(
 /** «350 м», «1,2 км»: the legacy wording, tenths of a kilometer with a comma whatever the locale. */
 @Composable
 internal fun distanceLabel(meters: Double): String {
-    if (meters < 1000) return stringResource(R.string.discovery_distance_meters, meters.roundToInt())
+    if (meters < 1000) return stringResource(Res.string.discovery_distance_meters, meters.roundToInt())
     val tenths = (meters / 100).roundToInt()
     val text = if (tenths % 10 == 0) "${tenths / 10}" else "${tenths / 10},${tenths % 10}"
-    return stringResource(R.string.discovery_distance_km, text)
+    return stringResource(Res.string.discovery_distance_km, text)
 }
 
 /** One decimal with a dot in every locale, as in prod (the rating badge never shows a decimal comma). */

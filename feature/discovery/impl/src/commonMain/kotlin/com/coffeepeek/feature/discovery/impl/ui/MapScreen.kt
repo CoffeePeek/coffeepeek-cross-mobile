@@ -1,6 +1,16 @@
 package com.coffeepeek.feature.discovery.impl.ui
 
 import androidx.compose.foundation.layout.Arrangement
+import com.coffeepeek.feature.discovery.impl.resources.Res
+import com.coffeepeek.feature.discovery.impl.resources.discovery_map_collapse
+import com.coffeepeek.feature.discovery.impl.resources.discovery_map_expand
+import com.coffeepeek.feature.discovery.impl.resources.discovery_map_my_location
+import com.coffeepeek.feature.discovery.impl.resources.discovery_map_search_area
+import com.coffeepeek.feature.discovery.impl.resources.discovery_map_search_placeholder
+import com.coffeepeek.feature.discovery.impl.resources.discovery_map_truncated
+import com.coffeepeek.feature.discovery.impl.resources.discovery_map_zones_hide
+import com.coffeepeek.feature.discovery.impl.resources.discovery_map_zones_show
+import com.coffeepeek.feature.discovery.impl.resources.discovery_search_clear
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -27,7 +37,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
-import androidx.compose.ui.res.stringResource
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
@@ -42,7 +52,6 @@ import com.coffeepeek.feature.discovery.api.DiscoveryHost
 import com.coffeepeek.feature.discovery.api.MapCanvasCallbacks
 import com.coffeepeek.feature.discovery.api.MapCanvasState
 import com.coffeepeek.feature.discovery.api.MapFocus
-import com.coffeepeek.feature.discovery.impl.R
 import com.coffeepeek.feature.discovery.impl.map.MapAction
 import com.coffeepeek.feature.discovery.impl.map.MapEvent
 import com.coffeepeek.feature.discovery.impl.map.MapState
@@ -114,12 +123,12 @@ internal fun MapContent(
         if (isPreview) {
             if (onToggleExpand != null) {
                 CoffeePeekGlassIconButton(
-                    onToggleExpand, stringResource(R.string.discovery_map_expand), Modifier.align(Alignment.TopEnd).padding(CoffeePeekDimens.spacing2), hazeState = null,
+                    onToggleExpand, stringResource(Res.string.discovery_map_expand), Modifier.align(Alignment.TopEnd).padding(CoffeePeekDimens.spacing2), hazeState = null,
                 ) { Icon(CoffeePeekIcons.Expand, null, Modifier.size(22.dp)) }
             }
             MapZoomControl({ onAction(MapAction.ZoomIn) }, { onAction(MapAction.ZoomOut) }, Modifier.align(Alignment.CenterEnd).padding(end = CoffeePeekDimens.spacing2))
             CoffeePeekGlassIconButton(
-                { onAction(MapAction.RequestMyLocation) }, stringResource(R.string.discovery_map_my_location),
+                { onAction(MapAction.RequestMyLocation) }, stringResource(Res.string.discovery_map_my_location),
                 Modifier.align(Alignment.BottomEnd).padding(end = CoffeePeekDimens.spacing2, bottom = CoffeePeekDimens.spacing2), hazeState = null,
             ) { Icon(CoffeePeekIcons.Navigation, null, Modifier.size(24.dp)) }
             return@Box
@@ -131,15 +140,15 @@ internal fun MapContent(
         ) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing2)) {
                 if (onToggleExpand != null) {
-                    CoffeePeekGlassIconButton({ dismissInput(); onToggleExpand() }, stringResource(R.string.discovery_map_collapse), hazeState = null) {
+                    CoffeePeekGlassIconButton({ dismissInput(); onToggleExpand() }, stringResource(Res.string.discovery_map_collapse), hazeState = null) {
                         Icon(CoffeePeekIcons.Close, null, Modifier.size(22.dp))
                     }
                 }
                 CoffeePeekSearchField(
                     value = state.query,
                     onValueChange = { onAction(MapAction.Query(it)) },
-                    placeholder = stringResource(R.string.discovery_map_search_placeholder),
-                    clearDescription = stringResource(R.string.discovery_search_clear),
+                    placeholder = stringResource(Res.string.discovery_map_search_placeholder),
+                    clearDescription = stringResource(Res.string.discovery_search_clear),
                     fieldHeight = CoffeePeekDimens.buttonHeight,
                     onSearch = dismissInput,
                     modifier = Modifier.weight(1f),
@@ -153,7 +162,7 @@ internal fun MapContent(
                 shape = RoundedCornerShape(CoffeePeekDimens.radiusMd), color = MaterialTheme.colorScheme.surface, tonalElevation = 3.dp, shadowElevation = 3.dp,
             ) {
                 Text(
-                    stringResource(R.string.discovery_map_truncated), style = MaterialTheme.typography.labelMedium,
+                    stringResource(Res.string.discovery_map_truncated), style = MaterialTheme.typography.labelMedium,
                     modifier = Modifier.padding(horizontal = CoffeePeekDimens.spacing3, vertical = CoffeePeekDimens.spacing2),
                 )
             }
@@ -168,12 +177,12 @@ internal fun MapContent(
             Modifier.align(Alignment.BottomEnd).padding(end = CoffeePeekDimens.spacing4, bottom = controlsBottom),
             verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing2), horizontalAlignment = Alignment.End,
         ) {
-            val zones = stringResource(if (state.showZones) R.string.discovery_map_zones_hide else R.string.discovery_map_zones_show)
+            val zones = stringResource(if (state.showZones) Res.string.discovery_map_zones_hide else Res.string.discovery_map_zones_show)
             CoffeePeekGlassIconButton({ onAction(MapAction.ToggleZones) }, zones) {
                 Icon(CoffeePeekIcons.Polygon, null, Modifier.size(26.dp), tint = if (state.showZones) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface)
             }
             // Prod draws the location button 4 dp larger than the zones button, with a larger arrow.
-            CoffeePeekGlassIconButton({ onAction(MapAction.RequestMyLocation) }, stringResource(R.string.discovery_map_my_location), Modifier.size(CoffeePeekDimens.buttonHeight + 4.dp)) {
+            CoffeePeekGlassIconButton({ onAction(MapAction.RequestMyLocation) }, stringResource(Res.string.discovery_map_my_location), Modifier.size(CoffeePeekDimens.buttonHeight + 4.dp)) {
                 Icon(CoffeePeekIcons.Navigation, null, Modifier.size(32.dp))
             }
         }
@@ -184,7 +193,7 @@ internal fun MapContent(
                 shape = RoundedCornerShape(percent = 50),
                 colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.onSurface, contentColor = MaterialTheme.colorScheme.surface),
                 contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = CoffeePeekDimens.spacing5),
-            ) { Text(stringResource(R.string.discovery_map_search_area), style = MaterialTheme.typography.labelLarge) }
+            ) { Text(stringResource(Res.string.discovery_map_search_area), style = MaterialTheme.typography.labelLarge) }
         }
         val zone = state.selectedZone
         if (zone != null) {

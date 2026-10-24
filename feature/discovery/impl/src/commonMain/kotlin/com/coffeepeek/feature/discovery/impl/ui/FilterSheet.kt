@@ -1,6 +1,21 @@
 package com.coffeepeek.feature.discovery.impl.ui
 
 import androidx.compose.foundation.layout.Arrangement
+import com.coffeepeek.feature.discovery.impl.resources.Res
+import com.coffeepeek.feature.discovery.impl.resources.discovery_filters
+import com.coffeepeek.feature.discovery.impl.resources.discovery_filters_close
+import com.coffeepeek.feature.discovery.impl.resources.discovery_filters_collapse
+import com.coffeepeek.feature.discovery.impl.resources.discovery_filters_done
+import com.coffeepeek.feature.discovery.impl.resources.discovery_filters_reset
+import com.coffeepeek.feature.discovery.impl.resources.discovery_filters_selected
+import com.coffeepeek.feature.discovery.impl.resources.discovery_filters_show_all
+import com.coffeepeek.feature.discovery.impl.resources.discovery_price_any
+import com.coffeepeek.feature.discovery.impl.resources.discovery_section_beans
+import com.coffeepeek.feature.discovery.impl.resources.discovery_section_brew_methods
+import com.coffeepeek.feature.discovery.impl.resources.discovery_section_equipment
+import com.coffeepeek.feature.discovery.impl.resources.discovery_section_price
+import com.coffeepeek.feature.discovery.impl.resources.discovery_section_roasters
+import com.coffeepeek.feature.discovery.impl.resources.discovery_section_tags
 import com.coffeepeek.core.designsystem.component.CoffeePeekActionRow
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.text.font.FontWeight
@@ -24,7 +39,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
+import org.jetbrains.compose.resources.StringResource
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.core.designsystem.component.CoffeePeekCheckmarkRow
@@ -36,7 +52,6 @@ import com.coffeepeek.feature.discovery.api.DiscoveryHost
 import com.coffeepeek.feature.discovery.domain.model.CatalogEntry
 import com.coffeepeek.feature.discovery.domain.model.PriceLevel
 import com.coffeepeek.feature.discovery.domain.rules.amenityTags
-import com.coffeepeek.feature.discovery.impl.R
 import com.coffeepeek.feature.discovery.impl.search.SearchAction
 import com.coffeepeek.feature.discovery.impl.search.SearchState
 
@@ -50,23 +65,23 @@ internal fun FilterSheet(state: SearchState, host: DiscoveryHost, onAction: (Sea
     var draft by remember { mutableStateOf(state.filters) }
     CoffeePeekSwipeDismissModalBottomSheet(
         onDismissRequest = { onAction(SearchAction.CloseFilters) },
-        dismissDescription = stringResource(R.string.discovery_filters_close),
+        dismissDescription = stringResource(Res.string.discovery_filters_close),
     ) {
         // The navigation bar of prod's sheet: 48 dp, 17 sp, the title centred.
         Box(Modifier.fillMaxWidth().height(48.dp).padding(horizontal = 4.dp)) {
             val resetEnabled = draft.activeCount > 0
             TextButton({ draft = draft.clearSelections() }, enabled = resetEnabled, modifier = Modifier.align(Alignment.CenterStart)) {
                 Text(
-                    stringResource(R.string.discovery_filters_reset), fontSize = 17.sp,
+                    stringResource(Res.string.discovery_filters_reset), fontSize = 17.sp,
                     color = if (resetEnabled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
                 )
             }
             Text(
-                stringResource(R.string.discovery_filters), fontSize = 17.sp, fontWeight = FontWeight.SemiBold,
+                stringResource(Res.string.discovery_filters), fontSize = 17.sp, fontWeight = FontWeight.SemiBold,
                 color = MaterialTheme.colorScheme.onBackground, modifier = Modifier.align(Alignment.Center),
             )
             TextButton({ onAction(SearchAction.ApplyFilters(draft)); onAction(SearchAction.CloseFilters) }, modifier = Modifier.align(Alignment.CenterEnd)) {
-                Text(stringResource(R.string.discovery_filters_done), fontSize = 17.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.primary)
+                Text(stringResource(Res.string.discovery_filters_done), fontSize = 17.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.primary)
             }
         }
         Column(
@@ -75,20 +90,20 @@ internal fun FilterSheet(state: SearchState, host: DiscoveryHost, onAction: (Sea
             verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing6),
         ) {
             CoffeePeekGroupSection(
-                title = stringResource(R.string.discovery_section_price),
-                trailing = host.priceHint(draft.priceLevel?.level) ?: stringResource(R.string.discovery_price_any),
+                title = stringResource(Res.string.discovery_section_price),
+                trailing = host.priceHint(draft.priceLevel?.level) ?: stringResource(Res.string.discovery_price_any),
             ) {
                 host.priceSelector(draft.priceLevel?.level, { draft = draft.copy(priceLevel = PriceLevel.ofLevel(it)) }, Modifier.padding(horizontal = 16.dp, vertical = 8.dp))
             }
-            Selection(R.string.discovery_section_roasters, state.catalogs.roasters, draft.roasterIds, { draft = draft.copy(roasterIds = draft.roasterIds.toggle(it)) }) { entry ->
+            Selection(Res.string.discovery_section_roasters, state.catalogs.roasters, draft.roasterIds, { draft = draft.copy(roasterIds = draft.roasterIds.toggle(it)) }) { entry ->
                 host.roasterAvatar(entry.name, entry.photoUrl)
             }
-            Selection(R.string.discovery_section_beans, state.catalogs.beans, draft.beanIds, { draft = draft.copy(beanIds = draft.beanIds.toggle(it)) })
-            Selection(R.string.discovery_section_equipment, state.catalogs.equipment, draft.equipmentIds, { draft = draft.copy(equipmentIds = draft.equipmentIds.toggle(it)) })
-            Selection(R.string.discovery_section_brew_methods, state.catalogs.brewMethods, draft.brewMethodIds, { draft = draft.copy(brewMethodIds = draft.brewMethodIds.toggle(it)) }) { entry ->
+            Selection(Res.string.discovery_section_beans, state.catalogs.beans, draft.beanIds, { draft = draft.copy(beanIds = draft.beanIds.toggle(it)) })
+            Selection(Res.string.discovery_section_equipment, state.catalogs.equipment, draft.equipmentIds, { draft = draft.copy(equipmentIds = draft.equipmentIds.toggle(it)) })
+            Selection(Res.string.discovery_section_brew_methods, state.catalogs.brewMethods, draft.brewMethodIds, { draft = draft.copy(brewMethodIds = draft.brewMethodIds.toggle(it)) }) { entry ->
                 host.brewMethodIcon(entry.name, 22.dp)
             }
-            Selection(R.string.discovery_section_tags, amenityTags(state.catalogs.tags), draft.tagIds, { draft = draft.copy(tagIds = draft.tagIds.toggle(it)) }) { entry ->
+            Selection(Res.string.discovery_section_tags, amenityTags(state.catalogs.tags), draft.tagIds, { draft = draft.copy(tagIds = draft.tagIds.toggle(it)) }) { entry ->
                 host.tagIcon(entry.id)
             }
         }
@@ -97,7 +112,7 @@ internal fun FilterSheet(state: SearchState, host: DiscoveryHost, onAction: (Sea
 
 /** As in prod: the first five rows plus every selected one, then «Показать все (N)» / «Свернуть», and «Выбрано: N» beside the title. */
 @Composable
-private fun Selection(title: Int, entries: List<CatalogEntry>, selected: Set<String>, onToggle: (String) -> Unit, leading: (@Composable (CatalogEntry) -> Unit)? = null) {
+private fun Selection(title: StringResource, entries: List<CatalogEntry>, selected: Set<String>, onToggle: (String) -> Unit, leading: (@Composable (CatalogEntry) -> Unit)? = null) {
     if (entries.isEmpty()) return
     var expanded by remember { mutableStateOf(false) }
     val collapsible = entries.size > COLLAPSED_ROWS
@@ -105,7 +120,7 @@ private fun Selection(title: Int, entries: List<CatalogEntry>, selected: Set<Str
     val selectedCount = entries.count { it.id in selected }
     CoffeePeekGroupSection(
         title = stringResource(title),
-        trailing = selectedCount.takeIf { it > 0 }?.let { stringResource(R.string.discovery_filters_selected, it) },
+        trailing = selectedCount.takeIf { it > 0 }?.let { stringResource(Res.string.discovery_filters_selected, it) },
     ) {
         visible.forEachIndexed { index, entry ->
             if (index > 0) CoffeePeekRowSeparator()
@@ -114,7 +129,7 @@ private fun Selection(title: Int, entries: List<CatalogEntry>, selected: Set<Str
         if (collapsible) {
             CoffeePeekRowSeparator()
             CoffeePeekActionRow(
-                label = if (expanded) stringResource(R.string.discovery_filters_collapse) else stringResource(R.string.discovery_filters_show_all, entries.size),
+                label = if (expanded) stringResource(Res.string.discovery_filters_collapse) else stringResource(Res.string.discovery_filters_show_all, entries.size),
                 onClick = { expanded = !expanded },
             )
         }

@@ -1,6 +1,16 @@
 package com.coffeepeek.feature.discovery.impl.ui
 
-import androidx.activity.compose.BackHandler
+import com.coffeepeek.core.designsystem.component.CoffeePeekBackHandler
+import com.coffeepeek.feature.discovery.impl.resources.Res
+import com.coffeepeek.feature.discovery.impl.resources.discovery_loading
+import com.coffeepeek.feature.discovery.impl.resources.discovery_refresh
+import com.coffeepeek.feature.discovery.impl.resources.discovery_refreshing
+import com.coffeepeek.feature.discovery.impl.resources.discovery_section_roasters
+import com.coffeepeek.feature.discovery.impl.resources.discovery_section_shops
+import com.coffeepeek.feature.discovery.impl.resources.discovery_show_all
+import com.coffeepeek.feature.discovery.impl.resources.discovery_suggestion_action
+import com.coffeepeek.feature.discovery.impl.resources.discovery_suggestion_description
+import com.coffeepeek.feature.discovery.impl.resources.discovery_suggestion_title
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
@@ -55,7 +65,7 @@ import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
-import androidx.compose.ui.res.stringResource
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Dp
@@ -78,7 +88,6 @@ import com.coffeepeek.feature.discovery.api.DiscoveryRoasterContext
 import com.coffeepeek.feature.discovery.api.DiscoveryRoasterSlots
 import com.coffeepeek.feature.discovery.api.MapFocus
 import com.coffeepeek.feature.discovery.api.MapInteraction
-import com.coffeepeek.feature.discovery.impl.R
 import com.coffeepeek.feature.discovery.impl.map.MapViewModel
 import com.coffeepeek.feature.discovery.impl.search.SearchAction
 import com.coffeepeek.feature.discovery.impl.search.SearchEvent
@@ -172,7 +181,7 @@ internal fun DiscoveryTab(
 
     val cancelSearch = { focusManager.clearFocus(force = true); keyboard?.hide(); onAction(SearchAction.CancelSearch) }
     val lifecycleState by LocalLifecycleOwner.current.lifecycle.currentStateFlow.collectAsStateWithLifecycle()
-    BackHandler(enabled = lifecycleState.isAtLeast(Lifecycle.State.STARTED) && (mapExpanded || !showDiscovery)) {
+    CoffeePeekBackHandler(enabled = lifecycleState.isAtLeast(Lifecycle.State.STARTED) && (mapExpanded || !showDiscovery)) {
         cancelSearch()
         mapExpanded = false
     }
@@ -285,8 +294,8 @@ private fun DiscoveryContent(
         listState = listState,
         isRefreshing = state.isRefreshing,
         onRefresh = { onAction(SearchAction.Refresh) },
-        refreshDescription = stringResource(R.string.discovery_refresh),
-        loadingDescription = stringResource(R.string.discovery_refreshing),
+        refreshDescription = stringResource(Res.string.discovery_refresh),
+        loadingDescription = stringResource(Res.string.discovery_refreshing),
         indicatorTopOffset = CoffeePeekDimens.spacing4 + MiniMapHeight,
         modifier = Modifier.fillMaxSize()
             .then(if (mapExpanded) Modifier.clearAndSetSemantics {} else Modifier)
@@ -308,19 +317,19 @@ private fun DiscoveryContent(
             }
             item(key = "shops-heading") {
                 Box(host.exposure(Modifier, DiscoveryExposure.ShopCatalog)) {
-                    SectionTitle(stringResource(R.string.discovery_section_shops), { onAction(SearchAction.ActivateSearch) }, Modifier.padding(horizontal = CoffeePeekDimens.spacing4))
+                    SectionTitle(stringResource(Res.string.discovery_section_shops), { onAction(SearchAction.ActivateSearch) }, Modifier.padding(horizontal = CoffeePeekDimens.spacing4))
                 }
             }
             item(key = "shops-preview") {
                 when {
                     state.isLoading && shops.isEmpty() -> Box(Modifier.fillMaxWidth().padding(CoffeePeekDimens.spacing4), contentAlignment = Alignment.Center) {
-                        CoffeePeekLoader(stringResource(R.string.discovery_loading))
+                        CoffeePeekLoader(stringResource(Res.string.discovery_loading))
                     }
                     state.error != null && shops.isEmpty() -> host.loadError({ onAction(SearchAction.Refresh) }, Modifier)
                     shops.isEmpty() -> CoffeePeekCatalogSuggestionCard(
-                        title = stringResource(R.string.discovery_suggestion_title),
-                        description = stringResource(R.string.discovery_suggestion_description),
-                        actionLabel = stringResource(R.string.discovery_suggestion_action),
+                        title = stringResource(Res.string.discovery_suggestion_title),
+                        description = stringResource(Res.string.discovery_suggestion_description),
+                        actionLabel = stringResource(Res.string.discovery_suggestion_action),
                         illustration = host.suggestionIllustration(),
                         onAdd = onAddShop,
                         modifier = Modifier.padding(horizontal = CoffeePeekDimens.spacing4),
@@ -341,7 +350,7 @@ private fun DiscoveryContent(
                 }
             }
             item(key = "roasters-heading") {
-                SectionTitle(stringResource(R.string.discovery_section_roasters), showAllRoasters, Modifier.padding(horizontal = CoffeePeekDimens.spacing4))
+                SectionTitle(stringResource(Res.string.discovery_section_roasters), showAllRoasters, Modifier.padding(horizontal = CoffeePeekDimens.spacing4))
             }
             item(key = "roasters-preview") { roasters.preview(roasterContext) }
         }
@@ -353,7 +362,7 @@ private fun SectionTitle(title: String, onShowAll: () -> Unit, modifier: Modifie
     Row(modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
         Text(title, Modifier.weight(1f), style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.onSurface)
         TextButton(onShowAll) {
-            Text(stringResource(R.string.discovery_show_all))
+            Text(stringResource(Res.string.discovery_show_all))
             Icon(CoffeePeekIcons.ChevronRight, null, Modifier.padding(start = CoffeePeekDimens.spacing1).height(16.dp).width(16.dp))
         }
     }

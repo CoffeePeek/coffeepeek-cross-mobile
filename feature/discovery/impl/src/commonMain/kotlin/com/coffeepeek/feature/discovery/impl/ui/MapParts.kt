@@ -1,6 +1,26 @@
 package com.coffeepeek.feature.discovery.impl.ui
 
 import androidx.compose.foundation.background
+import com.coffeepeek.feature.discovery.impl.resources.Res
+import com.coffeepeek.feature.discovery.impl.resources.discovery_loading
+import com.coffeepeek.feature.discovery.impl.resources.discovery_map_card_checkins
+import com.coffeepeek.feature.discovery.impl.resources.discovery_map_card_closed
+import com.coffeepeek.feature.discovery.impl.resources.discovery_map_card_hours
+import com.coffeepeek.feature.discovery.impl.resources.discovery_map_card_loading
+import com.coffeepeek.feature.discovery.impl.resources.discovery_map_card_nearby
+import com.coffeepeek.feature.discovery.impl.resources.discovery_map_card_no_checkins
+import com.coffeepeek.feature.discovery.impl.resources.discovery_map_card_open
+import com.coffeepeek.feature.discovery.impl.resources.discovery_map_carousel_position
+import com.coffeepeek.feature.discovery.impl.resources.discovery_map_photo_missing
+import com.coffeepeek.feature.discovery.impl.resources.discovery_map_search_empty
+import com.coffeepeek.feature.discovery.impl.resources.discovery_map_search_failed
+import com.coffeepeek.feature.discovery.impl.resources.discovery_map_zone_close
+import com.coffeepeek.feature.discovery.impl.resources.discovery_map_zone_shops_few
+import com.coffeepeek.feature.discovery.impl.resources.discovery_map_zone_shops_many
+import com.coffeepeek.feature.discovery.impl.resources.discovery_map_zone_shops_one
+import com.coffeepeek.feature.discovery.impl.resources.discovery_map_zone_show_shops
+import com.coffeepeek.feature.discovery.impl.resources.discovery_map_zoom_in
+import com.coffeepeek.feature.discovery.impl.resources.discovery_map_zoom_out
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -38,7 +58,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.stringResource
+import org.jetbrains.compose.resources.StringResource
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.semantics.CollectionInfo
 import androidx.compose.ui.semantics.collectionInfo
 import androidx.compose.ui.semantics.semantics
@@ -53,7 +74,6 @@ import com.coffeepeek.feature.discovery.api.DiscoveryHost
 import com.coffeepeek.feature.discovery.domain.model.MapMarker
 import com.coffeepeek.feature.discovery.domain.model.MapZone
 import com.coffeepeek.feature.discovery.domain.rules.distanceMeters
-import com.coffeepeek.feature.discovery.impl.R
 import com.coffeepeek.feature.discovery.impl.map.MapAction
 import com.coffeepeek.feature.discovery.impl.map.MapState
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -64,10 +84,10 @@ internal fun MapSuggestions(state: MapState, onSelect: (String) -> Unit) {
     Surface(Modifier.fillMaxWidth(), shape = RoundedCornerShape(CoffeePeekDimens.radiusLg), color = MaterialTheme.colorScheme.surface, shadowElevation = 6.dp) {
         when {
             state.isSearchLoading -> Box(Modifier.fillMaxWidth().height(56.dp), contentAlignment = Alignment.Center) {
-                CoffeePeekLoader(stringResource(R.string.discovery_loading), size = 24.dp)
+                CoffeePeekLoader(stringResource(Res.string.discovery_loading), size = 24.dp)
             }
-            state.searchFailed -> SuggestionText(R.string.discovery_map_search_failed)
-            state.suggestions.isEmpty() -> SuggestionText(R.string.discovery_map_search_empty)
+            state.searchFailed -> SuggestionText(Res.string.discovery_map_search_failed)
+            state.suggestions.isEmpty() -> SuggestionText(Res.string.discovery_map_search_empty)
             else -> Column {
                 state.suggestions.forEachIndexed { index, shop ->
                     Row(
@@ -91,7 +111,7 @@ internal fun MapSuggestions(state: MapState, onSelect: (String) -> Unit) {
 }
 
 @Composable
-private fun SuggestionText(text: Int) {
+private fun SuggestionText(text: StringResource) {
     Text(stringResource(text), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(CoffeePeekDimens.spacing4))
 }
 
@@ -99,14 +119,14 @@ private fun SuggestionText(text: Int) {
 internal fun MapZoomControl(onZoomIn: () -> Unit, onZoomOut: () -> Unit, modifier: Modifier = Modifier) {
     val shape = RoundedCornerShape(CoffeePeekDimens.radiusLg)
     Column(modifier.width(CoffeePeekDimens.buttonHeight).clip(shape).background(MaterialTheme.colorScheme.surface.copy(alpha = 0.94f)).border(1.dp, MaterialTheme.colorScheme.outline, shape)) {
-        ZoomButton(CoffeePeekIcons.Add, R.string.discovery_map_zoom_in, onZoomIn)
+        ZoomButton(CoffeePeekIcons.Add, Res.string.discovery_map_zoom_in, onZoomIn)
         HorizontalDivider(thickness = 1.dp, color = MaterialTheme.colorScheme.outline)
-        ZoomButton(CoffeePeekIcons.Minus, R.string.discovery_map_zoom_out, onZoomOut)
+        ZoomButton(CoffeePeekIcons.Minus, Res.string.discovery_map_zoom_out, onZoomOut)
     }
 }
 
 @Composable
-private fun ZoomButton(icon: androidx.compose.ui.graphics.vector.ImageVector, description: Int, onClick: () -> Unit) {
+private fun ZoomButton(icon: androidx.compose.ui.graphics.vector.ImageVector, description: StringResource, onClick: () -> Unit) {
     Box(Modifier.fillMaxWidth().height(CoffeePeekDimens.buttonHeight).clickable(onClick = onClick), contentAlignment = Alignment.Center) {
         Icon(icon, stringResource(description), Modifier.size(22.dp), tint = MaterialTheme.colorScheme.onSurface)
     }
@@ -124,13 +144,13 @@ internal fun MapZoneCard(zone: MapZone, onShowShops: () -> Unit, onDismiss: () -
                     Text(zone.name, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                     Text(zoneShopCount(zone.shopCount), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
-                IconButton(onDismiss) { Icon(CoffeePeekIcons.Close, stringResource(R.string.discovery_map_zone_close)) }
+                IconButton(onDismiss) { Icon(CoffeePeekIcons.Close, stringResource(Res.string.discovery_map_zone_close)) }
             }
             if (zone.description.isNotBlank()) {
                 Text(zone.description, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 3, overflow = TextOverflow.Ellipsis)
             }
             Button(onShowShops, Modifier.fillMaxWidth().height(CoffeePeekDimens.buttonHeight), shape = RoundedCornerShape(percent = 50)) {
-                Text(stringResource(R.string.discovery_map_zone_show_shops))
+                Text(stringResource(Res.string.discovery_map_zone_show_shops))
             }
         }
     }
@@ -142,10 +162,10 @@ private fun zoneShopCount(count: Int): String {
     val mod10 = count % 10
     return stringResource(
         when {
-            mod100 in 11..14 -> R.string.discovery_map_zone_shops_many
-            mod10 == 1 -> R.string.discovery_map_zone_shops_one
-            mod10 in 2..4 -> R.string.discovery_map_zone_shops_few
-            else -> R.string.discovery_map_zone_shops_many
+            mod100 in 11..14 -> Res.string.discovery_map_zone_shops_many
+            mod10 == 1 -> Res.string.discovery_map_zone_shops_one
+            mod10 in 2..4 -> Res.string.discovery_map_zone_shops_few
+            else -> Res.string.discovery_map_zone_shops_many
         },
         count,
     )
@@ -182,7 +202,7 @@ private fun MapShopPager(state: MapState, shops: List<MapMarker>, host: Discover
             if (shop.id != currentSelectedId) { dismissInput(); onAction(MapAction.SelectFromCarousel(shop.id)) }
         }
     }
-    val position = stringResource(R.string.discovery_map_carousel_position, pager.currentPage % shops.size + 1, shops.size)
+    val position = stringResource(Res.string.discovery_map_carousel_position, pager.currentPage % shops.size + 1, shops.size)
     HorizontalPager(
         pager, modifier.fillMaxWidth().semantics { collectionInfo = CollectionInfo(1, shops.size); stateDescription = position },
         contentPadding = PaddingValues(horizontal = 36.dp), pageSpacing = 12.dp, userScrollEnabled = shops.size > 1, beyondViewportPageCount = 1,
@@ -220,8 +240,8 @@ private fun MapShopCard(
                 val photo = details?.photoUrl
                 when {
                     !photo.isNullOrBlank() -> host.compactImage(photo, shop.title, Modifier.fillMaxSize(), ContentScale.Crop)
-                    isLoading -> CoffeePeekLoader(stringResource(R.string.discovery_loading), size = 20.dp, strokeWidth = 2.dp)
-                    else -> host.compactCoverPlaceholder(stringResource(R.string.discovery_map_photo_missing, shop.title), Modifier.fillMaxSize())
+                    isLoading -> CoffeePeekLoader(stringResource(Res.string.discovery_loading), size = 20.dp, strokeWidth = 2.dp)
+                    else -> host.compactCoverPlaceholder(stringResource(Res.string.discovery_map_photo_missing, shop.title), Modifier.fillMaxSize())
                 }
             }
             Spacer(Modifier.width(CoffeePeekDimens.spacing3))
@@ -236,9 +256,9 @@ private fun MapShopCard(
                     } else {
                         Text(
                             when {
-                                details == null -> stringResource(R.string.discovery_map_card_nearby)
-                                details.reviewCount > 0 -> stringResource(R.string.discovery_map_card_checkins, details.reviewCount)
-                                else -> stringResource(R.string.discovery_map_card_no_checkins)
+                                details == null -> stringResource(Res.string.discovery_map_card_nearby)
+                                details.reviewCount > 0 -> stringResource(Res.string.discovery_map_card_checkins, details.reviewCount)
+                                else -> stringResource(Res.string.discovery_map_card_no_checkins)
                             },
                             style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
@@ -249,10 +269,10 @@ private fun MapShopCard(
                 val hours = details?.hours
                 when {
                     hours != null -> Text(
-                        stringResource(R.string.discovery_map_card_hours, if (details.isOpen) stringResource(R.string.discovery_map_card_open) else stringResource(R.string.discovery_map_card_closed), hours),
+                        stringResource(Res.string.discovery_map_card_hours, if (details.isOpen) stringResource(Res.string.discovery_map_card_open) else stringResource(Res.string.discovery_map_card_closed), hours),
                         Modifier.padding(top = 4.dp), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
-                    isLoading -> Text(stringResource(R.string.discovery_map_card_loading), Modifier.padding(top = 4.dp), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    isLoading -> Text(stringResource(Res.string.discovery_map_card_loading), Modifier.padding(top = 4.dp), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
         }
