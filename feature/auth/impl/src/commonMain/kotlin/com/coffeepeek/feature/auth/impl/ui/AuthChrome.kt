@@ -1,6 +1,11 @@
 package com.coffeepeek.feature.auth.impl.ui
 
 import androidx.compose.animation.AnimatedVisibility
+import com.coffeepeek.feature.auth.impl.resources.Res
+import com.coffeepeek.feature.auth.impl.resources.auth_mascot_laptop
+import com.coffeepeek.feature.auth.impl.resources.auth_close
+import com.coffeepeek.feature.auth.impl.resources.auth_hide_password
+import com.coffeepeek.feature.auth.impl.resources.auth_show_password
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -49,8 +54,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.stringResource
+import org.jetbrains.compose.resources.DrawableResource
+import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.SpanStyle
@@ -70,7 +76,6 @@ import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.modifier.CoffeePeekGlassIconButton
 import com.coffeepeek.core.designsystem.theme.CoffeePeekColors
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
-import com.coffeepeek.feature.auth.impl.R
 import dev.chrisbanes.haze.HazeState
 import dev.chrisbanes.haze.hazeSource
 import dev.chrisbanes.haze.rememberHazeState
@@ -91,7 +96,7 @@ internal fun AuthScaffold(
     onClose: () -> Unit,
     modifier: Modifier = Modifier,
     mascot: Boolean = true,
-    @androidx.annotation.DrawableRes mascotRes: Int = R.drawable.auth_mascot_laptop,
+    mascotRes: DrawableResource = Res.drawable.auth_mascot_laptop,
     content: @Composable ColumnScope.() -> Unit,
 ) {
     val isDark = MaterialTheme.colorScheme.background.luminance() < 0.5f
@@ -148,7 +153,7 @@ internal fun AuthScaffold(
 
 @Composable
 private fun CloseButton(onClick: () -> Unit, haze: HazeState, modifier: Modifier) {
-    CoffeePeekGlassIconButton(onClick = onClick, contentDescription = stringResource(R.string.auth_close), hazeState = haze, modifier = modifier) {
+    CoffeePeekGlassIconButton(onClick = onClick, contentDescription = stringResource(Res.string.auth_close), hazeState = haze, modifier = modifier) {
         Icon(CoffeePeekIcons.Close, contentDescription = null, tint = MaterialTheme.colorScheme.onSurface, modifier = Modifier.size(20.dp))
     }
 }
@@ -254,7 +259,7 @@ internal fun AuthTextField(
                     IconButton(onClick = { passwordVisible = !passwordVisible }, modifier = Modifier.size(32.dp)) {
                         Icon(
                             imageVector = if (passwordVisible) CoffeePeekIcons.VisibilityOff else CoffeePeekIcons.Visibility,
-                            contentDescription = stringResource(if (passwordVisible) R.string.auth_hide_password else R.string.auth_show_password),
+                            contentDescription = stringResource(if (passwordVisible) Res.string.auth_hide_password else Res.string.auth_show_password),
                             modifier = Modifier.size(20.dp),
                             tint = MaterialTheme.colorScheme.onSurfaceVariant,
                         )

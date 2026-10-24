@@ -1,18 +1,30 @@
 package com.coffeepeek.feature.auth.impl.ui
 
 import androidx.compose.material3.MaterialTheme
+import com.coffeepeek.feature.auth.impl.resources.Res
+import com.coffeepeek.feature.auth.impl.resources.auth_email_invalid
+import com.coffeepeek.feature.auth.impl.resources.auth_email_label
+import com.coffeepeek.feature.auth.impl.resources.auth_email_placeholder
+import com.coffeepeek.feature.auth.impl.resources.auth_email_required
+import com.coffeepeek.feature.auth.impl.resources.auth_recovery_another_email
+import com.coffeepeek.feature.auth.impl.resources.auth_recovery_back_to_login
+import com.coffeepeek.feature.auth.impl.resources.auth_recovery_busy
+import com.coffeepeek.feature.auth.impl.resources.auth_recovery_failed
+import com.coffeepeek.feature.auth.impl.resources.auth_recovery_info
+import com.coffeepeek.feature.auth.impl.resources.auth_recovery_send
+import com.coffeepeek.feature.auth.impl.resources.auth_recovery_sent
+import com.coffeepeek.feature.auth.impl.resources.auth_recovery_title
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
-import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.tooling.preview.PreviewLightDark
+import org.jetbrains.compose.resources.stringResource
+import org.jetbrains.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
-import com.coffeepeek.feature.auth.impl.R
 import com.coffeepeek.feature.auth.impl.recovery.PasswordRecoveryAction
 import com.coffeepeek.feature.auth.impl.recovery.PasswordRecoveryState
 import com.coffeepeek.feature.auth.impl.recovery.PasswordRecoveryViewModel
@@ -52,15 +64,15 @@ internal fun PasswordRecoveryContent(
 ) {
     AuthScaffold(onClose = onClose, modifier = modifier) {
         AuthHeading(
-            title = stringResource(R.string.auth_recovery_title),
-            subtitle = stringResource(if (state.step == RecoveryStep.Email) R.string.auth_recovery_info else R.string.auth_recovery_sent),
+            title = stringResource(Res.string.auth_recovery_title),
+            subtitle = stringResource(if (state.step == RecoveryStep.Email) Res.string.auth_recovery_info else Res.string.auth_recovery_sent),
         )
         if (state.step == RecoveryStep.Email) {
             AuthTextField(
                 value = state.email,
                 onValueChange = onEmail,
-                placeholder = stringResource(R.string.auth_email_placeholder),
-                label = stringResource(R.string.auth_email_label),
+                placeholder = stringResource(Res.string.auth_email_placeholder),
+                label = stringResource(Res.string.auth_email_label),
                 leadingIcon = CoffeePeekIcons.Email,
             )
         }
@@ -69,13 +81,13 @@ internal fun PasswordRecoveryContent(
         }
         if (state.step == RecoveryStep.Email) {
             AuthPrimaryButton(
-                text = stringResource(if (state.busy) R.string.auth_recovery_busy else R.string.auth_recovery_send),
+                text = stringResource(if (state.busy) Res.string.auth_recovery_busy else Res.string.auth_recovery_send),
                 enabled = !state.busy,
                 onClick = onSubmit,
             )
         } else {
-            AuthPrimaryButton(stringResource(R.string.auth_recovery_back_to_login), onBackToLogin)
-            AuthFooterRow(stringResource(R.string.auth_recovery_another_email), onAnotherEmail)
+            AuthPrimaryButton(stringResource(Res.string.auth_recovery_back_to_login), onBackToLogin)
+            AuthFooterRow(stringResource(Res.string.auth_recovery_another_email), onAnotherEmail)
         }
     }
 }
@@ -83,13 +95,13 @@ internal fun PasswordRecoveryContent(
 @Composable
 private fun recoveryErrorText(error: RecoveryError): String = stringResource(
     when (error) {
-        RecoveryError.EmailEmpty -> R.string.auth_email_required
-        RecoveryError.EmailInvalid -> R.string.auth_email_invalid
-        RecoveryError.SendFailed -> R.string.auth_recovery_failed
+        RecoveryError.EmailEmpty -> Res.string.auth_email_required
+        RecoveryError.EmailInvalid -> Res.string.auth_email_invalid
+        RecoveryError.SendFailed -> Res.string.auth_recovery_failed
     },
 )
 
-@PreviewLightDark
+@Preview
 @Composable
 private fun PasswordRecoveryPreview() = CoffeePeekTheme {
     PasswordRecoveryContent(PasswordRecoveryState(email = "name@example.com"), {}, {}, {}, {}, {})

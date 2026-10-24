@@ -1,6 +1,23 @@
 package com.coffeepeek.feature.auth.impl.ui
 
 import androidx.compose.foundation.layout.Arrangement
+import com.coffeepeek.feature.auth.api.GoogleSignInLauncher
+import com.coffeepeek.feature.auth.impl.resources.Res
+import com.coffeepeek.feature.auth.impl.resources.auth_create_account
+import com.coffeepeek.feature.auth.impl.resources.auth_email_invalid
+import com.coffeepeek.feature.auth.impl.resources.auth_email_label
+import com.coffeepeek.feature.auth.impl.resources.auth_email_placeholder
+import com.coffeepeek.feature.auth.impl.resources.auth_email_required
+import com.coffeepeek.feature.auth.impl.resources.auth_forgot_password
+import com.coffeepeek.feature.auth.impl.resources.auth_login
+import com.coffeepeek.feature.auth.impl.resources.auth_login_network
+import com.coffeepeek.feature.auth.impl.resources.auth_login_subtitle
+import com.coffeepeek.feature.auth.impl.resources.auth_login_title
+import com.coffeepeek.feature.auth.impl.resources.auth_login_unknown
+import com.coffeepeek.feature.auth.impl.resources.auth_login_wrong_credentials
+import com.coffeepeek.feature.auth.impl.resources.auth_password_label
+import com.coffeepeek.feature.auth.impl.resources.auth_password_required
+import com.coffeepeek.feature.auth.impl.resources.auth_password_too_short
 import androidx.compose.foundation.layout.Column
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -9,8 +26,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.tooling.preview.PreviewLightDark
+import org.jetbrains.compose.resources.stringResource
+import org.jetbrains.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -21,7 +38,6 @@ import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.feature.auth.domain.EmailIssue
 import com.coffeepeek.feature.auth.domain.LoginFailure
 import com.coffeepeek.feature.auth.domain.PasswordIssue
-import com.coffeepeek.feature.auth.impl.R
 import com.coffeepeek.feature.auth.impl.login.LoginAction
 import com.coffeepeek.feature.auth.impl.login.LoginEvent
 import com.coffeepeek.feature.auth.impl.login.LoginState
@@ -34,7 +50,7 @@ internal fun LoginScreen(
     onSignedIn: () -> Unit,
     onForgotPassword: (String) -> Unit,
     onCreateAccount: () -> Unit,
-    googleWebClientId: String,
+    google: GoogleSignInLauncher?,
     modifier: Modifier = Modifier,
 ) {
     val state by vm.state.collectAsStateWithLifecycle()
@@ -57,8 +73,7 @@ internal fun LoginScreen(
         onClose = onClose,
         onForgotPassword = { onForgotPassword(state.email) },
         onCreateAccount = onCreateAccount,
-        onGoogle = if (googleWebClientId.isBlank()) null else rememberGoogleSignIn(
-            googleWebClientId,
+        onGoogle = google?.rememberSignIn(
             onToken = { vm.onAction(LoginAction.GoogleToken(it)) },
             onFailure = { vm.onAction(LoginAction.GoogleFailed(it)) },
         ),
@@ -79,27 +94,27 @@ internal fun LoginContent(
     modifier: Modifier = Modifier,
 ) {
     AuthScaffold(onClose = onClose, modifier = modifier) {
-        AuthHeading(stringResource(R.string.auth_login_title), stringResource(R.string.auth_login_subtitle))
+        AuthHeading(stringResource(Res.string.auth_login_title), stringResource(Res.string.auth_login_subtitle))
         if (onGoogle != null) {
             GoogleSignInButton(onClick = onGoogle, enabled = !state.signingIn)
             AuthOrDivider()
         }
         Column(verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing4)) {
             AuthTextField(
-                label = stringResource(R.string.auth_email_label),
+                label = stringResource(Res.string.auth_email_label),
                 value = state.email,
                 onValueChange = onEmail,
-                placeholder = stringResource(R.string.auth_email_placeholder),
+                placeholder = stringResource(Res.string.auth_email_placeholder),
                 leadingIcon = CoffeePeekIcons.Email,
                 errorText = state.emailIssue?.let { emailError(it) },
                 next = true,
                 enabled = !state.signingIn,
             )
             AuthTextField(
-                label = stringResource(R.string.auth_password_label),
+                label = stringResource(Res.string.auth_password_label),
                 value = state.password,
                 onValueChange = onPassword,
-                placeholder = stringResource(R.string.auth_password_label),
+                placeholder = stringResource(Res.string.auth_password_label),
                 leadingIcon = CoffeePeekIcons.Lock,
                 isPassword = true,
                 errorText = state.passwordIssue?.let { passwordError(it) },
@@ -110,33 +125,33 @@ internal fun LoginContent(
         state.failure?.let { failure ->
             Text(text = loginFailureText(failure), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
         }
-        AuthFooterRow(text = stringResource(R.string.auth_forgot_password), onClick = onForgotPassword)
-        AuthPrimaryButton(text = stringResource(R.string.auth_login), onClick = onSubmit, loading = state.signingIn)
-        AuthFooterRow(text = stringResource(R.string.auth_create_account), onClick = onCreateAccount)
+        AuthFooterRow(text = stringResource(Res.string.auth_forgot_password), onClick = onForgotPassword)
+        AuthPrimaryButton(text = stringResource(Res.string.auth_login), onClick = onSubmit, loading = state.signingIn)
+        AuthFooterRow(text = stringResource(Res.string.auth_create_account), onClick = onCreateAccount)
     }
 }
 
 @Composable
 internal fun emailError(issue: EmailIssue): String = stringResource(
-    if (issue == EmailIssue.Empty) R.string.auth_email_required else R.string.auth_email_invalid,
+    if (issue == EmailIssue.Empty) Res.string.auth_email_required else Res.string.auth_email_invalid,
 )
 
 @Composable
 internal fun passwordError(issue: PasswordIssue): String = when (issue) {
-    PasswordIssue.Empty -> stringResource(R.string.auth_password_required)
-    is PasswordIssue.TooShort -> stringResource(R.string.auth_password_too_short, issue.minLength)
+    PasswordIssue.Empty -> stringResource(Res.string.auth_password_required)
+    is PasswordIssue.TooShort -> stringResource(Res.string.auth_password_too_short, issue.minLength)
 }
 
 @Composable
 private fun loginFailureText(failure: LoginFailure): String = stringResource(
     when (failure) {
-        LoginFailure.WrongCredentials -> R.string.auth_login_wrong_credentials
-        LoginFailure.Network -> R.string.auth_login_network
-        LoginFailure.Unknown -> R.string.auth_login_unknown
+        LoginFailure.WrongCredentials -> Res.string.auth_login_wrong_credentials
+        LoginFailure.Network -> Res.string.auth_login_network
+        LoginFailure.Unknown -> Res.string.auth_login_unknown
     },
 )
 
-@PreviewLightDark
+@Preview
 @Composable
 private fun LoginPreview() = CoffeePeekTheme {
     LoginContent(LoginState(email = "name@example.com", emailIssue = EmailIssue.Invalid), {}, {}, {}, {}, {}, {}, onGoogle = {})

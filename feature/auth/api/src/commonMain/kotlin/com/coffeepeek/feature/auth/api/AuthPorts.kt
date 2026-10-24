@@ -28,3 +28,12 @@ interface AuthAnalytics {
 interface GoogleSignInConfig {
     val webClientId: String
 }
+
+/**
+ * The platform's Google account chooser. [rememberSignIn] returns the action that opens it: a token goes to [onToken],
+ * a failure to [onFailure] (a cancelled chooser reports nothing). A platform without one passes null and the button is hidden.
+ */
+interface GoogleSignInLauncher {
+    @androidx.compose.runtime.Composable
+    fun rememberSignIn(onToken: (String) -> Unit, onFailure: (String) -> Unit): () -> Unit
+}
