@@ -6,7 +6,6 @@ import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.Dp
 import androidx.compose.foundation.lazy.LazyListState
-import androidx.compose.ui.unit.dp
 
 /** The parts of the screen the application measures: an element asks for its exposure to be tracked. */
 enum class DiscoveryExposure { Search, Filters, ShopCatalog, Favorite, MapPreview, MapFull }
@@ -70,10 +69,10 @@ interface DiscoveryTabEntry {
         onAddShop: () -> Unit,
         /** Tells the host that the map covers the screen, so it can hide the floating navigation and the create button. */
         onMapExpandedChange: (Boolean) -> Unit,
-        modifier: Modifier = Modifier,
-        bottomClearance: Dp = 0.dp,
+        modifier: Modifier,
+        bottomClearance: Dp,
         /** A shop to bring into view on the expanded map; [onFocusConsumed] tells the caller it was taken. */
-        focus: MapFocus? = null,
-        onFocusConsumed: () -> Unit = {},
+        focus: MapFocus?,
+        onFocusConsumed: () -> Unit,
     )
 }

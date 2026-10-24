@@ -1,6 +1,5 @@
 package com.coffeepeek.admin.di.discovery
 
-import com.coffeepeek.admin.location.PlatformLocation
 import com.coffeepeek.admin.settings.CityPreference
 import com.coffeepeek.admin.ui.screen.map.formatMapHoursSummary
 import com.coffeepeek.admin.utils.FavoriteSync
@@ -11,26 +10,18 @@ import com.coffeepeek.domain.repository.ShopRepository
 import com.coffeepeek.feature.discovery.api.DiscoveryAccount
 import com.coffeepeek.feature.discovery.api.DiscoveryCity
 import com.coffeepeek.feature.discovery.api.DiscoveryFavorites
-import com.coffeepeek.feature.discovery.api.DiscoveryLocation
 import com.coffeepeek.feature.discovery.api.DiscoveryShopDetails
 import com.coffeepeek.feature.discovery.api.MapShopDetails
 import com.coffeepeek.feature.discovery.domain.model.CatalogEntry
 import com.coffeepeek.feature.discovery.domain.model.CityEntry
-import com.coffeepeek.feature.discovery.domain.model.Coordinates
 import com.coffeepeek.feature.discovery.domain.model.ShopSummary
 import com.coffeepeek.feature.favorites.domain.model.FavoriteShop
 import com.coffeepeek.feature.favorites.domain.repository.FavoritesRepository
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
-import kotlinx.coroutines.launch
 
 /** The account key is the user id (else the token) of an active session, null for a guest, as in the other migrated owners. */
 internal class SessionDiscoveryAccount(private val sessions: SessionReader) : DiscoveryAccount {
@@ -68,22 +59,6 @@ internal fun ShopSummary.toFavoriteShop() = FavoriteShop(
 internal class PreferenceDiscoveryCity(private val preference: CityPreference) : DiscoveryCity {
     override val selected: StateFlow<String?> = preference.selectedCityId
     override suspend fun resolve(cities: List<CityEntry>): String? = preference.resolve(cities.map { City(it.id, it.name) })
-}
-
-/** The position is read only while the permission is granted and never asked for here; the screen asks through its own effect and then calls [refresh]. */
-internal class AppDiscoveryLocation(
-    private val scope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default),
-) : DiscoveryLocation {
-    private val position = MutableStateFlow<Coordinates?>(null)
-    override val current: StateFlow<Coordinates?> = position.asStateFlow()
-
-    init { refresh() }
-
-    override fun refresh() {
-        scope.launch {
-            position.value = if (PlatformLocation.hasPermission()) PlatformLocation.getLastKnownLocation()?.let { Coordinates(it.latitude, it.longitude) } else null
-        }
-    }
 }
 
 /** The card of the selected shop reads the legacy shop details until the Shop owner backs this port. */

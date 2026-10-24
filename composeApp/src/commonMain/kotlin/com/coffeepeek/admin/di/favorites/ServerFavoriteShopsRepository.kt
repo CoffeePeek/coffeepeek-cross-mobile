@@ -15,7 +15,7 @@ import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
 
-/** Application-owned adaptation; server membership is authoritative, never the old Room snapshots. */
+/** Shared application adapter; server membership is authoritative, never the old Room snapshots. */
 internal class ServerFavoriteShopsRepository(
     private val server: ServerFavorites,
     private val sessions: SessionReader,

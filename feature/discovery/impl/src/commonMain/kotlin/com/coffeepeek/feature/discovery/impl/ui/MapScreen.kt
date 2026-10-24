@@ -18,7 +18,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -49,6 +48,8 @@ import com.coffeepeek.core.designsystem.modifier.CoffeePeekGlassIconButton
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.feature.discovery.api.DiscoveryExposure
 import com.coffeepeek.feature.discovery.api.DiscoveryHost
+import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
+import org.jetbrains.compose.ui.tooling.preview.Preview
 import com.coffeepeek.feature.discovery.api.MapCanvasCallbacks
 import com.coffeepeek.feature.discovery.api.MapCanvasState
 import com.coffeepeek.feature.discovery.api.MapFocus
@@ -116,9 +117,10 @@ internal fun MapContent(
         host.mapCanvas(
             MapCanvasState(
                 state.markers, if (state.showZones && !isPreview) state.zones else emptyList(), state.selectedShop?.id, state.camera, state.myLocationRequest, isPreview,
+                canvasSize = canvasSize,
             ),
             canvasCallbacks,
-            Modifier.align(Alignment.Center).then(canvasSize?.let { Modifier.requiredSize(it.width, it.height) } ?: Modifier.fillMaxSize()),
+            Modifier.align(Alignment.Center),
         )
         if (isPreview) {
             if (onToggleExpand != null) {
@@ -206,3 +208,19 @@ internal fun MapContent(
         }
     }
 }
+
+/** The shared controls can be previewed; the host's real MapLibre UIView requires manual iOS acceptance. */
+@Composable
+private fun MapContentPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
+    val host = DiscoveryHost(mapCanvas = { _, _, modifier ->
+        Surface(modifier.fillMaxSize(), color = MaterialTheme.colorScheme.surfaceVariant) {}
+    })
+    MapContent(
+        state = MapState(), host = host,
+        canvasCallbacks = MapCanvasCallbacks({ _, _ -> }, {}, {}, {}, {}, {}),
+        bottomClearance = 0.dp, dismissInput = {}, onAction = {},
+    )
+}
+
+@Preview @Composable private fun MapContentLightPreview() = MapContentPreview(false)
+@Preview @Composable private fun MapContentDarkPreview() = MapContentPreview(true)

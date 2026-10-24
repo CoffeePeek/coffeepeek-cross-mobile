@@ -17,6 +17,7 @@ import coffeepeek.composeapp.generated.resources.maskot_with_magnifying_glass
 import com.coffeepeek.admin.analytics.analyticsExposure
 import com.coffeepeek.admin.location.LocationPermissionEffect
 import com.coffeepeek.admin.map.CoffeeMap
+import com.coffeepeek.admin.map.mapCanvasSize
 import com.coffeepeek.admin.ui.component.CoffeeShopImage
 import com.coffeepeek.admin.ui.component.CoffeeShopPlaceholderImage
 import com.coffeepeek.admin.ui.component.HapticEvent
@@ -32,7 +33,6 @@ import com.coffeepeek.admin.ui.component.shopTagIcon
 import com.coffeepeek.admin.utils.PrefetchListPhotos
 import com.coffeepeek.domain.model.CatalogItem
 import com.coffeepeek.domain.model.CoffeeShopType
-import com.coffeepeek.domain.model.MapBounds as LegacyBounds
 import com.coffeepeek.domain.model.MapCoffeeZone
 import com.coffeepeek.domain.model.MapShop
 import com.coffeepeek.feature.discovery.api.DiscoveryExposure
@@ -94,7 +94,7 @@ private fun DiscoveryMapCanvas(state: MapCanvasState, callbacks: MapCanvasCallba
         onBoundsChanged = { bounds, zoom -> callbacks.onBoundsChanged(MapBounds(bounds.minLat, bounds.minLon, bounds.maxLat, bounds.maxLon), zoom) },
         onShopClick = { callbacks.onMarkerClick(it.id) },
         onZoneClick = { callbacks.onZoneClick(it.id) },
-        modifier = modifier,
+        modifier = modifier.mapCanvasSize(state.canvasSize),
         cameraTarget = state.camera?.let { it.target.latitude to it.target.longitude },
         cameraZoom = state.camera?.zoom,
         onCameraTargetApplied = callbacks.onCameraApplied,

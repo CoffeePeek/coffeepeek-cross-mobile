@@ -17,7 +17,7 @@ import com.coffeepeek.feature.discovery.api.GeolocationOutcome
 import com.coffeepeek.feature.discovery.api.MapInteraction
 import com.coffeepeek.feature.discovery.api.SearchRun
 
-/** The names and properties of the legacy discovery events; the owner knows no vendor. One instance serves the search and the map (each has its own search tracker). */
+/** Shared legacy event contracts; list and map retain independent search correlation. */
 internal class AppDiscoveryAnalytics : DiscoveryAnalytics {
     private val listSearches = SearchTracker(Catalog.Shops)
     private val mapSearches = SearchTracker(Catalog.Shops, ResultSource.Map)

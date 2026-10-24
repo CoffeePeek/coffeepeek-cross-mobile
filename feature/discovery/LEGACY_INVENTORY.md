@@ -1,5 +1,13 @@
 # Discovery: legacy-first inventory
 
+> iOS checkpoint, 2026-10-25 (PR #195): the native search tab now binds the shared
+> FeatureDiscoveryScreenRenderer. Shared app ports reuse the server favorites,
+> native CoffeeMap/MapLibre, media and analytics infrastructure; legacy picker
+> consumers stay intact. Platform canvas sizing and main-thread location reads
+> are preserved at the app boundary. See [IOS_MIGRATION_PLAN.md](../IOS_MIGRATION_PLAN.md)
+> for 164 passing unit/contract checks, Android/Native builds and open manual iOS gates.
+> Earlier Android-only/legacy-iOS wiring notes below are historical checkpoints.
+
 Date: 2026-10-23. Base: `feature/contributions-audit` (stack tip, main of 2026-10-23 merged in). Read-only pass: nothing is changed in code.
 
 Discovery is the **Поиск** tab: the shop search with quick filters and the full filter sheet, the discovery sections (mini map, nearby/found shops, roasters), the

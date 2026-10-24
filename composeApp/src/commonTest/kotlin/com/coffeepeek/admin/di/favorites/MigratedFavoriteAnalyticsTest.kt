@@ -7,6 +7,7 @@ import kotlinx.coroutines.test.*
 import kotlinx.coroutines.withContext
 import kotlin.test.*
 
+/** Shared analytics adapter contracts; the transport records only in memory. */
 class MigratedFavoriteAnalyticsTest {
     @Test fun mutationReportsOneAttemptAndOneServerResultWithoutIdentity() = runTest {
         val sdk = installAnalytics()

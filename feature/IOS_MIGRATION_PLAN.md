@@ -6,7 +6,7 @@ iOS-документы (`docs/IOS_NATIVE_EXPERIENCE.md`, `IOS_NATIVE_NAVIGATION.
 Первоначальный инвентарь не был проверен запуском UI на симуляторе или устройстве.
 Фактически выполненные проверки последующих срезов и оставшиеся gates записаны ниже отдельно.
 
-## Статус на 2026-10-24 (ветка `feat/ios-build-foundation`, PR #195 → `develop`)
+## Статус на 2026-10-25 (ветка `feat/ios-build-foundation`, PR #195 → `develop`)
 
 Сделано и проверено сборкой и юнит-тестами (Android и iOS compile; iOS-фреймворк линкуется; тесты сессии прошли и на iOS-симуляторе).
 На симуляторе и устройстве экраны **не запускались**.
@@ -24,8 +24,8 @@ iOS-документы (`docs/IOS_NATIVE_EXPERIENCE.md`, `IOS_NATIVE_NAVIGATION.
 
 **Этап 2 — сессия: F23 и F24 готовы** (выход стирает старые строки; сбой удаления Keychain сообщается). Core session port вместо `SessionRepository` (~43 файла) — **не сделан**.
 
-**Этап 3 — подключение на iOS: начат.** Через новые модули на iOS подключены: вкладка Settings (и три её подэкрана), окно обновления, колокольчик уведомлений, экраны входа, регистрации и восстановления пароля, **Community (вкладка «Лента»)**. Подключены также Google/Apple кнопки и существующие Swift-провайдеры (при доступной конфигурации); реальный OAuth ещё не проверен.
-Остальное на iOS по-прежнему legacy: Coffee, Profile, Discovery и остальные владельцы. Вкладки Coffee и Profile ещё вызывают legacy-экраны напрямую; Community теперь идёт через рендерер.
+**Этап 3 — подключение на iOS: начат.** Через новые модули на iOS подключены: вкладка Settings (и три её подэкрана), окно обновления, колокольчик уведомлений, экраны входа, регистрации и восстановления пароля, **Community (вкладка «Лента»)** и **Discovery (вкладка «Поиск»)**. Подключены также Google/Apple кнопки и существующие Swift-провайдеры (при доступной конфигурации); реальный OAuth ещё не проверен.
+Остальное на iOS по-прежнему legacy: Coffee, Profile и остальные владельцы. Вкладки Coffee и Profile ещё вызывают legacy-экраны напрямую; Community и Discovery идут через feature-рендереры.
 
 **Важные находки для следующих срезов**
 1. Kotlin/Native не линкует переопределение composable-метода интерфейса с аргументом по умолчанию (`modifier: Modifier = Modifier`): ошибка видна только при линковке и только у достижимого кода. У каждого владельца при подключении убрать значения по умолчанию из api-интерфейсов (так сделано у Settings и Auth).
@@ -34,7 +34,7 @@ iOS-документы (`docs/IOS_NATIVE_EXPERIENCE.md`, `IOS_NATIVE_NAVIGATION.
 4. Для сообщения проверки обновлений на iOS нет тоста: временно используется `ErrorHandler.showError`, нужно решение по UX.
 
 **Остаётся**
-- Этап 3: Discovery (вкладка «Поиск»), Coffee (+вкладка), Profile (+вкладка), Contributions, Shop и Shop-report, Check-in history, Home check-in и общий create flow, Favorites (по решению продукта); ручная приёмка Community и live-приёмка Apple/Google.
+- Этап 3: Coffee (+вкладка), Profile (+вкладка), Contributions, Shop и Shop-report, Check-in history, Home check-in и общий create flow, Favorites (по решению продукта); ручная приёмка Community/Discovery и live-приёмка Apple/Google.
 - Этап 2: core session port.
 - Roaster: Xcode-линковка, симулятор, устройство.
 - Этап 5: удаление legacy — только после полной готовности и ручной приёмки.
@@ -174,8 +174,84 @@ photo viewer/cancel, возврат из Home editor, реальные API mutat
 с согласованным аккаунтом. Устройства/симуляторы и обычный CoffeePeek не запускались;
 APK не устанавливался. Empty/live feed не использовался для создания записей.
 
-Следующая точка code-плана: **Discovery / вкладка «Поиск»**, затем Coffee.
+Следующая точка code-плана на этом checkpoint: **Discovery / вкладка «Поиск»**, затем Coffee.
 Auth и Community runtime/device acceptance остаются открытыми отдельно от следующих переносов.
+
+### Checkpoint: Discovery / вкладка «Поиск» — 2026-10-25
+
+Продолжение PR #195, база `15ea78de` + этот срез. Свежие `origin/main=16724b7e`
+и `origin/develop=8ac9f49a` уже входят в ветку; дополнительный merge не нужен.
+Сверены entry, legacy DiscoveryTabContent/MapScreen и текущий ShopRepositoryImpl.
+
+Сделано:
+
+- Platform-neutral renderer, host, account/city/favorites/detail adapters и analytics
+  перенесены из `androidMain` в `commonMain/di/discovery`. В `PlatformKoin.ios`
+  подключена feature-фабрика. Native tab уже вызывал DiscoveryScreenRenderer,
+  поэтому второй маршрут или замена UIKit shell не требуются. UI/MVI остаются
+  в `feature/discovery/impl`; FeedViewModel/MapViewModel не удаляются: они нужны
+  оставшимся legacy consumers, включая выбор кофейни при создании чекина.
+- У DiscoveryTabEntry.Content убраны default arguments composable-интерфейса;
+  общий адаптер явно передаёт modifier/clearance/focus/callback. Сохраняются
+  переходы к кофейне/Auth/AddShop, pending map focus/consume, roaster slots,
+  CheckInTabContent и скрытие глобальной create-кнопки при раскрытии карты.
+- На обеих платформах карта по-прежнему CoffeeMap; iOS использует существующий
+  Swift MapLibre provider. Политика размера canvas перенесена в app host через
+  существующий platform mapCanvasSize: Android сохраняет полноразмерный canvas
+  во время анимации; iOS ограничивает UIView видимым контейнером. Общий UI больше
+  не навязывает нативной мини-карте requiredSize всего экрана. Рендеринг Swift не менялся.
+- Проверена гипотеза о потерянных server clusters: текущий legacy repository
+  запрашивает shops на zoom 22 и возвращает пустые server clusters. Discovery
+  делает то же; группировка точек остаётся у platform map renderer. Новый
+  DTO/domain cluster contract не вводился. Два запроса shops/zones и fallback зон
+  при ошибке сохраняются существующими repository contract tests.
+- Существующие ServerFavoriteShopsRepository и mutation analytics перенесены
+  в общий app DI; узкий serverFavoriteShopsModule используется Android и iOS.
+  Источник тот же server FavoritesRepository, включая account/cancellation guards;
+  iOS legacy FavoriteRepository, экран Favorites и его writer не заменены.
+  DI-контракт проверяет чтение membership без гидрации карточек/нового writer.
+- AppDiscoveryLocation использует app-owned scope и Dispatchers.Main.immediate:
+  CoreLocation получает main run loop. Чтение только при уже выданном разрешении,
+  после ответа разрешение перепроверяется; запрос разрешения остаётся у существующего
+  LocationPermissionEffect. Четыре fake unit tests не вызывают платформенную геолокацию.
+- Сохранены media/placeholders/prefetch, haptic/Reduce Motion, RetainedContent,
+  search/map correlation и consent guards. Добавлены три in-memory analytics
+  контракта; тесты adapter/mutation analytics доступны в commonTest. Native sheets
+  идут через существующий DS hook; root/sheet уже потребляют safe area, новые
+  дополнительные отступы не добавлялись. Добавлены paired light/dark previews
+  SearchContent/MapContent; карта в preview — заглушка, не Swift/MapLibre.
+
+Проверки этого среза (Mac/JBR 21, 2026-10-25, база `15ea78de` + этот срез):
+
+- Discovery domain/data/MVI: **83 tests**, 6 suites. App subset `*Discovery*`,
+  `*di.favorites*`, `com.coffeepeek.admin.map.*`, `com.coffeepeek.admin.ui.screen.map.*`:
+  **81 tests**, 19 suites. Итого **164**, 0 failures/errors/skips, первый полный
+  прогон успешен. В выборку по имени попали также чистые geometry/tab-route/fake-backend
+  контракты; это не UI rendering/instrumentation. Проверены main-dispatcher location
+  seam, DI/server membership, account cancellation, favorite analytics/consent,
+  list/map correlation и отсутствие текста запроса в telemetry, search/filter/map правила.
+- `assembleDirectDebug` и `assembleDirectSandbox` прошли, включая packaged runtime-class
+  checks обоих APK и Sandbox isolation. Новая проверка требует FeatureDiscoveryScreenRenderer,
+  его factory, DiscoveryEntriesImplKt и общего ServerFavoriteShopsRepository.
+  Обычный CoffeePeek/Sandbox не устанавливались и не запускались; Build Variant Studio не менялся.
+- `compileKotlinIosArm64`, `linkDebugFrameworkIosSimulatorArm64` и
+  `compileTestKotlinIosSimulatorArm64` прошли. Общий entry/host/iOS graph достижимы
+  в линковке; Native common tests только скомпилированы, не выполнялись.
+  Swift-приложение и signing в этом срезе не собирались.
+- Gradle последовательно, `--max-workers=6`; лог вне tracked sources. Прежние
+  Preview/expect-actual и framework bundle-ID warnings остаются. Studio inspections
+  для location/module вернули timeout: результат inconclusive, не успешная IDE-приёмка.
+- Light/dark previews с fake state компилируются, IDE rendering не проверялся.
+  Автоматизированные UI/screenshot tests и test-only Activity/APK не создавались и не запускались.
+
+Открытые gates: ручной iOS поиск/быстрые фильтры/черновик шторки и cancel, mini-map
+clip/touch при прокрутке и раскрытии, selected pin/zone/carousel, pending focus и
+возврат из кофейни, permission denied/granted, keyboard/VoiceOver/крупный шрифт,
+обе темы/Reduce Motion/tab safe area, global create и roaster overlay. Настоящие
+API favorite writes, permission dialogs и production analytics не запускались;
+fake проверки не заменяют их приёмку с согласованным аккаунтом.
+
+Следующий владелец code-плана: **Coffee / каталог и вкладка кофе**.
 
 ## 1. Принципы (решение 2026-10-24)
 

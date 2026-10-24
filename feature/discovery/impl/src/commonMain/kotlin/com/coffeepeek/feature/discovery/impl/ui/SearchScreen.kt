@@ -85,6 +85,9 @@ import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.feature.discovery.api.DiscoveryExposure
 import com.coffeepeek.feature.discovery.api.DiscoveryHost
+import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
+import com.coffeepeek.feature.discovery.domain.model.ShopSummary
+import org.jetbrains.compose.ui.tooling.preview.Preview
 import com.coffeepeek.feature.discovery.domain.model.ShopKind
 import com.coffeepeek.feature.discovery.impl.search.SearchAction
 import com.coffeepeek.feature.discovery.impl.search.SearchEvent
@@ -280,3 +283,18 @@ private fun SuggestionCard(host: DiscoveryHost, onAddShop: () -> Unit) {
         onAdd = onAddShop,
     )
 }
+
+@Composable
+private fun SearchContentPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
+    androidx.compose.material3.Surface {
+        SearchContent(
+            state = SearchState(query = "Кофе", searchActive = true, isLoading = false,
+                shops = listOf(ShopSummary("fixture-shop", "CoffeePeek", rating = 4.7, checkInCount = 12))),
+            host = DiscoveryHost(), onAddShop = {}, bottomClearance = 0.dp,
+            discovery = {}, textResults = null, onAction = {},
+        )
+    }
+}
+
+@Preview @Composable private fun SearchContentLightPreview() = SearchContentPreview(false)
+@Preview @Composable private fun SearchContentDarkPreview() = SearchContentPreview(true)

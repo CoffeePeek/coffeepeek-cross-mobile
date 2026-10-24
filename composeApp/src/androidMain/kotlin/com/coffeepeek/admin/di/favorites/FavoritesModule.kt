@@ -19,10 +19,7 @@ import org.koin.dsl.module
 
 /** Active Android graph. Existing server infrastructure is shared with all legacy consumers. */
 internal fun serverFavoritesModule(): Module = module {
-    single<FavoritesRepository> {
-        val shops = get<com.coffeepeek.domain.repository.ShopRepository>()
-        ServerFavoriteShopsRepository(get(), get(), shops::getShopDetails)
-    }
+    includes(serverFavoriteShopsModule())
     factory { ObserveFavoriteIdsUseCase(get()) }
     single<FavoriteRoastersRepository> {
         val catalog = get<RoasterRepository>()

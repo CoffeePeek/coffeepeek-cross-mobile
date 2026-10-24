@@ -1,5 +1,6 @@
 package com.coffeepeek.feature.discovery.api
 
+import androidx.compose.ui.unit.DpSize
 import com.coffeepeek.feature.discovery.domain.model.Coordinates
 import com.coffeepeek.feature.discovery.domain.model.MapBounds
 import com.coffeepeek.feature.discovery.domain.model.MapMarker
@@ -28,6 +29,8 @@ data class MapCanvasState(
     val myLocationRequest: Int,
     /** The small map of the tab: no attribution, no automatic permission request, no zones, taps open the shop. */
     val isPreview: Boolean = false,
+    /** Android keeps the full canvas during expansion; iOS bounds its native UIView to the visible container. The host owns this policy. */
+    val canvasSize: DpSize? = null,
 )
 
 class MapCanvasCallbacks(

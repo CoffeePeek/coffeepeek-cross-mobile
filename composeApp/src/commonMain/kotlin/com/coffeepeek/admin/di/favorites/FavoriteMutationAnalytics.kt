@@ -12,7 +12,7 @@ internal object ResumedAfterAuth : AbstractCoroutineContextElement(Key) {
     object Key : CoroutineContext.Key<ResumedAfterAuth>
 }
 
-/** These migrated adapters bypass TrackedFavoriteInteractions; report their single actual write. */
+/** Shared migrated adapters bypass TrackedFavoriteInteractions; report their single actual write. */
 internal suspend fun trackFavoriteMutation(
     entity: Entity,
     desired: Boolean,

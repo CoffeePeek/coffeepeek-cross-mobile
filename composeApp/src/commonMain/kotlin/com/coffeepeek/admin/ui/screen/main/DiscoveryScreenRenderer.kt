@@ -2,7 +2,7 @@ package com.coffeepeek.admin.ui.screen.main
 
 import androidx.compose.runtime.Composable
 
-/** Platform selection only. iOS and shared code keep the legacy discovery tab; Android composes the migrated entry. */
+/** Platform selection only. Android and iOS bind the migrated entry; the legacy tab remains a fallback. */
 interface DiscoveryScreenRenderer {
     /** [onMapExpandedChange] tells the host that the map covers the screen, so it can hide the floating navigation. */
     @Composable
