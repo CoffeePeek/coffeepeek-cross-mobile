@@ -26,6 +26,7 @@ import com.coffeepeek.feature.homecheckin.impl.ui.data.*
 import org.jetbrains.compose.resources.painterResource
 import java.time.Instant
 import java.time.LocalDate
+import java.time.format.DateTimeParseException
 import java.time.ZoneOffset
 import java.time.temporal.ChronoUnit
 
@@ -59,7 +60,11 @@ internal fun androidHomeCheckInEditor(
 internal fun androidHomeCheckInDates() = HomeCheckInEditorDates(
     currentInstant = { Instant.now().truncatedTo(ChronoUnit.MILLIS).toString() },
     localDate = ::utcIsoToLocalDate,
-    formatDate = { date -> formatVisitDate(LocalDate.parse(date).atStartOfDay().toInstant(ZoneOffset.UTC).toEpochMilli()) },
-    civilDateToInstant = { date -> datePickerMillisToUtcIsoInstant(LocalDate.parse(date).atStartOfDay().toInstant(ZoneOffset.UTC).toEpochMilli()) },
+    // The date comes from the server as text: one that cannot be read must not break the form.
+    formatDate = { date -> civilDateMillis(date)?.let(::formatVisitDate) ?: date },
+    civilDateToInstant = { date -> civilDateMillis(date)?.let(::datePickerMillisToUtcIsoInstant) ?: Instant.now().truncatedTo(ChronoUnit.MILLIS).toString() },
     formatMethod = { it.methodLabel() },
 )
+
+internal fun civilDateMillis(date: String): Long? =
+    try { LocalDate.parse(date).atStartOfDay().toInstant(ZoneOffset.UTC).toEpochMilli() } catch (_: DateTimeParseException) { null }

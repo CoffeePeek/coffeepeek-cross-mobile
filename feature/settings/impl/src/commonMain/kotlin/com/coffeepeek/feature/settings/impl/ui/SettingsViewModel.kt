@@ -11,6 +11,7 @@ import com.coffeepeek.feature.settings.domain.UpdateCheckOutcome
 import com.coffeepeek.feature.settings.impl.ui.model.SettingsAction
 import com.coffeepeek.feature.settings.impl.ui.model.SettingsEvent
 import com.coffeepeek.feature.settings.impl.ui.model.SettingsState
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -57,7 +58,15 @@ internal class SettingsViewModel(
         try {
             // A check can finish in a few milliseconds; hold the loader so the tap visibly does something.
             val minimum = viewModelScope.async { delay(minimumCheckMillis) }
-            val outcome = runCatching { update.check() }.getOrDefault(UpdateCheckOutcome.Failed)
+            // Cancellation must pass through: leaving the screen is not a failed check and must not report one.
+            val outcome = try {
+                update.check()
+            } catch (cancelled: CancellationException) {
+                minimum.cancel()
+                throw cancelled
+            } catch (_: Exception) {
+                UpdateCheckOutcome.Failed
+            }
             minimum.await()
             when (outcome) {
                 UpdateCheckOutcome.UpToDate -> sendEvent(SettingsEvent.UpToDate)

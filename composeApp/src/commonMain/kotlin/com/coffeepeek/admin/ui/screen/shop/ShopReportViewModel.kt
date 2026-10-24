@@ -43,6 +43,8 @@ class ShopReportViewModel(
 
     fun submit() {
         val current = _state.value
+        // A second tap while the first report is in flight, or after it was sent, must not send another one.
+        if (current.isSubmitting || current.isSubmitted) return
         if (current.selectedReason == null) {
             _state.update { it.copy(error = "Выберите, какие данные нужно исправить") }
             return
@@ -52,9 +54,8 @@ class ShopReportViewModel(
             return
         }
 
+        _state.update { it.copy(isSubmitting = true, error = null) }
         workScope.launch {
-            _state.update { it.copy(isSubmitting = true, error = null) }
-
             shopIssueReportRepository.submitReport(
                 shopId = shopId,
                 category = current.selectedReason.category,

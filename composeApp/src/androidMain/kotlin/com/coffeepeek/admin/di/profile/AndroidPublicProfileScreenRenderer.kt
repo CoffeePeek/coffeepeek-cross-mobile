@@ -51,22 +51,36 @@ internal class AndroidPublicProfileScreenRenderer(private val entry: PublicProfi
  * own model and keeps the legacy rows (bounded, most recent first) for the card slot of the same ids.
  */
 internal class AndroidPublicCheckIns(private val repository: PublicProfileRepository) : PublicCheckInsPort {
-    private val sources = object : LinkedHashMap<String, LegacyCheckIn>(64, 0.75f, true) {
-        override fun removeEldestEntry(eldest: MutableMap.MutableEntry<String, LegacyCheckIn>) = size > MAX_REMEMBERED
-    }
+    private val sources = RememberedCheckIns()
 
     override suspend fun page(slug: String, cursor: String?): Result<PublicProfileCheckInPage> =
         repository.getCheckIns(slug, cursor).map { page ->
-            synchronized(sources) { page.items.forEach { sources[it.id] = it } }
+            sources.remember(slug, restart = cursor == null, page.items)
             PublicProfileCheckInPage(page.items.map(LegacyCheckIn::toFeatureModel), page.nextCursor)
         }
 
-    fun legacy(checkIn: PublicProfileCheckIn): LegacyCheckIn = synchronized(sources) { sources[checkIn.id] } ?: LegacyCheckIn(
+    fun legacy(checkIn: PublicProfileCheckIn): LegacyCheckIn = sources.find(checkIn.id) ?: LegacyCheckIn(
         checkIn.id, checkIn.coffeeShopSlug, checkIn.venue, checkIn.title, checkIn.details, checkIn.rating, checkIn.note,
         checkIn.occurredAt, checkIn.photoUrls,
     )
+}
 
-    private companion object { const val MAX_REMEMBERED = 200 }
+/**
+ * Keeps the legacy rows of the profiles that were opened last, whole: a card must not change meaning because other rows pushed it out.
+ * Memory is bounded by the number of remembered profiles, and a refresh of a profile starts its rows afresh.
+ */
+internal class RememberedCheckIns(private val maxProfiles: Int = 4) {
+    private val byProfile = object : LinkedHashMap<String, MutableMap<String, LegacyCheckIn>>(8, 0.75f, true) {
+        override fun removeEldestEntry(eldest: MutableMap.MutableEntry<String, MutableMap<String, LegacyCheckIn>>) = size > maxProfiles
+    }
+
+    fun remember(slug: String, restart: Boolean, items: List<LegacyCheckIn>) = synchronized(byProfile) {
+        val rows = byProfile.getOrPut(slug) { HashMap() }
+        if (restart) rows.clear()
+        items.forEach { rows[it.id] = it }
+    }
+
+    fun find(id: String): LegacyCheckIn? = synchronized(byProfile) { byProfile.values.firstNotNullOfOrNull { it[id] } }
 }
 
 internal fun LegacyCheckIn.toFeatureModel() = PublicProfileCheckIn(

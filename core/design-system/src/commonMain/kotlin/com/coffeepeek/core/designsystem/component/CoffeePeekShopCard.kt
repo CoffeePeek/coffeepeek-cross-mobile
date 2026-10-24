@@ -129,7 +129,8 @@ fun CoffeePeekShopCard(
                         Text(kindLabel, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
                         if (priceLevel != null && priceLevel > 0) {
                             Separator()
-                            CoffeePeekBynPriceIndicators(priceLevel, iconWidth = 8.dp, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                            // Prod proportions: the symbol drawn at 90% of 8 dp, one dp apart.
+                            CoffeePeekBynPriceIndicators(priceLevel, iconWidth = 7.2.dp, tint = MaterialTheme.colorScheme.onSurfaceVariant, spacing = 1.dp)
                         }
                         if (!tag.isNullOrBlank()) {
                             Separator()

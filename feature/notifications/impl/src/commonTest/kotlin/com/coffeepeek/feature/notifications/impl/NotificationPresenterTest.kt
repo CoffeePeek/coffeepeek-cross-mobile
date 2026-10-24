@@ -27,6 +27,49 @@ class NotificationPresenterTest {
         assertEquals(1, repository.removals)
     }
 
+    @Test fun aRefreshQueuedDuringAFailedMarkReadIsServedAndTheFailureStaysVisible() = runTest {
+        val account = Account(); val platform = Platform(); val repository = Repository()
+        val feature = NotificationPresenter(repository, account, platform, backgroundScope)
+        account.user.value = "alice"; runCurrent()
+        val release = CompletableDeferred<Unit>()
+        repository.markReadHandler = { release.await(); error("offline") }
+        val before = repository.inboxCalls
+        feature.markRead("first"); runCurrent()
+        // A push arrives while the write is running: the refresh is only queued.
+        platform.mutable.update { it.copy(notificationRevision = 1) }; runCurrent()
+        assertEquals(before, repository.inboxCalls)
+        release.complete(Unit); runCurrent()
+        assertEquals(before + 1, repository.inboxCalls)
+        assertEquals("Не удалось отметить уведомления прочитанными", feature.state.value.error)
+        assertFalse(feature.state.value.markingRead)
+    }
+
+    @Test fun aFailedMarkAllReadWithoutAQueuedRefreshDoesNotReloadTheInbox() = runTest {
+        val account = Account(); val platform = Platform(); val repository = Repository()
+        val feature = NotificationPresenter(repository, account, platform, backgroundScope)
+        account.user.value = "alice"; runCurrent()
+        repository.markAllReadHandler = { error("offline") }
+        val before = repository.inboxCalls
+        feature.markAllRead(); runCurrent()
+        assertEquals(before, repository.inboxCalls)
+        assertEquals("Не удалось отметить уведомления прочитанными", feature.state.value.error)
+    }
+
+    @Test fun aRefreshQueuedForAnOldAccountIsNotServedAfterTheAccountChanged() = runTest {
+        val account = Account(); val platform = Platform(); val repository = Repository()
+        val feature = NotificationPresenter(repository, account, platform, backgroundScope)
+        account.user.value = "alice"; runCurrent()
+        val release = CompletableDeferred<Unit>()
+        repository.markReadHandler = { release.await(); error("offline") }
+        feature.markRead("first"); runCurrent()
+        platform.mutable.update { it.copy(notificationRevision = 1) }; runCurrent()
+        account.user.value = "bob"; runCurrent()
+        val afterSwitch = repository.inboxCalls
+        release.complete(Unit); runCurrent()
+        assertEquals(afterSwitch, repository.inboxCalls)
+        assertNull(feature.state.value.error)
+    }
+
     @Test fun loginAndForegroundPreserveDisabledPushWithoutRequestingPermission() = runTest {
         val account = Account(); val repository = Repository().apply { enabled = false }; val platform = Platform()
         val feature = NotificationPresenter(repository, account, platform, backgroundScope)
@@ -182,11 +225,14 @@ private class Repository : NotificationRepository {
     var removals = 0
     var activities = 0
     var page: suspend (String?) -> NotificationPage = { NotificationPage(listOf(entry("first")), null, 1) }
-    override suspend fun inbox(before: String?) = page(before)
+    override suspend fun inbox(before: String?): NotificationPage { inboxCalls++; return page(before) }
     override suspend fun pushEnabled(): Boolean { if (failSettings) error("offline"); return enabled }
     override suspend fun setPushEnabled(enabled: Boolean) { if (failSave) error("offline"); settingsWrites += enabled; this.enabled = enabled }
-    override suspend fun markRead(id: String) {}
-    override suspend fun markAllRead(throughId: String) { readThrough += throughId }
+    var inboxCalls = 0
+    var markReadHandler: suspend (String) -> Unit = {}
+    var markAllReadHandler: suspend (String) -> Unit = {}
+    override suspend fun markRead(id: String) = markReadHandler(id)
+    override suspend fun markAllRead(throughId: String) { readThrough += throughId; markAllReadHandler(throughId) }
     override suspend fun register(installationId: String, token: String) { registrations += token }
     override suspend fun remove(installationId: String) { removals++ }
     override suspend fun activity() { activities++ }

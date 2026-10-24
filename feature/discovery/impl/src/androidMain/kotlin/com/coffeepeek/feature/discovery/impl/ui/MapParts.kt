@@ -30,12 +30,14 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.key
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.CollectionInfo
 import androidx.compose.ui.semantics.collectionInfo
@@ -113,7 +115,7 @@ private fun ZoomButton(icon: androidx.compose.ui.graphics.vector.ImageVector, de
 @Composable
 internal fun MapZoneCard(zone: MapZone, onShowShops: () -> Unit, onDismiss: () -> Unit, modifier: Modifier = Modifier) {
     Card(
-        modifier.fillMaxWidth(), shape = RoundedCornerShape(CoffeePeekDimens.radiusXl),
+        modifier.fillMaxWidth(), shape = RoundedCornerShape(CoffeePeekDimens.cardRadius),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface), elevation = CardDefaults.cardElevation(defaultElevation = 6.dp),
     ) {
         Column(Modifier.padding(CoffeePeekDimens.spacing4), verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing2)) {
@@ -153,7 +155,17 @@ private fun zoneShopCount(count: Int): String {
 @Composable
 internal fun MapShopCarousel(state: MapState, host: DiscoveryHost, dismissInput: () -> Unit, onAction: (MapAction) -> Unit, modifier: Modifier = Modifier) {
     val selected = state.selectedShop
-    val shops = (listOfNotNull(selected) + state.nearby.filter { it.id != selected?.id }).distinctBy { it.id }
+    // As in prod: a shop that is already among the nearby ones keeps the order of the list; only a shop from elsewhere is put in front of ten others.
+    val shops = if (selected == null || state.nearby.any { it.id == selected.id }) state.nearby else listOf(selected) + state.nearby.take(9)
+    // The pager is rebuilt when the set of shops changes, so it never animates over a list that was swapped under it.
+    key(shops.map { it.id }) { MapShopPager(state, shops.distinctBy { it.id }, host, dismissInput, onAction, modifier) }
+}
+
+@Composable
+private fun MapShopPager(state: MapState, shops: List<MapMarker>, host: DiscoveryHost, dismissInput: () -> Unit, onAction: (MapAction) -> Unit, modifier: Modifier) {
+    if (shops.isEmpty()) return
+    val selected = state.selectedShop
+    val currentSelectedId by rememberUpdatedState(state.selectedShop?.id)
     val selectedIndex = shops.indexOfFirst { it.id == selected?.id }.coerceAtLeast(0)
     val pager = rememberPagerState(initialPage = carouselStartPage(shops.size, selectedIndex), pageCount = { if (shops.size > 1) Int.MAX_VALUE else 1 })
     LaunchedEffect(selected?.id, shops.size) {
@@ -167,7 +179,7 @@ internal fun MapShopCarousel(state: MapState, host: DiscoveryHost, dismissInput:
     LaunchedEffect(pager, shops) {
         snapshotFlow { pager.settledPage }.distinctUntilChanged().drop(1).collect { page ->
             val shop = shops.getOrNull(page % shops.size) ?: return@collect
-            if (shop.id != state.selectedShop?.id) { dismissInput(); onAction(MapAction.SelectFromCarousel(shop.id)) }
+            if (shop.id != currentSelectedId) { dismissInput(); onAction(MapAction.SelectFromCarousel(shop.id)) }
         }
     }
     val position = stringResource(R.string.discovery_map_carousel_position, pager.currentPage % shops.size + 1, shops.size)
@@ -199,18 +211,17 @@ private fun MapShopCard(
     distance: Double?,
     onOpen: () -> Unit,
 ) {
-    val locale = LocalConfiguration.current.locales[0]
     Card(
-        Modifier.fillMaxWidth(), shape = RoundedCornerShape(CoffeePeekDimens.radiusXl),
+        Modifier.fillMaxWidth(), shape = RoundedCornerShape(CoffeePeekDimens.cardRadius),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface), elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
     ) {
         Row(Modifier.fillMaxWidth().clickable(onClick = onOpen).padding(CoffeePeekDimens.spacing3), verticalAlignment = Alignment.CenterVertically) {
             Box(Modifier.size(72.dp).clip(RoundedCornerShape(CoffeePeekDimens.radiusMd)).background(MaterialTheme.colorScheme.surfaceVariant), contentAlignment = Alignment.Center) {
                 val photo = details?.photoUrl
                 when {
-                    !photo.isNullOrBlank() -> host.image(photo, shop.title, Modifier.fillMaxSize(), ContentScale.Crop)
+                    !photo.isNullOrBlank() -> host.compactImage(photo, shop.title, Modifier.fillMaxSize(), ContentScale.Crop)
                     isLoading -> CoffeePeekLoader(stringResource(R.string.discovery_loading), size = 20.dp, strokeWidth = 2.dp)
-                    else -> host.coverPlaceholder(stringResource(R.string.discovery_map_photo_missing, shop.title), Modifier.fillMaxSize())
+                    else -> host.compactCoverPlaceholder(stringResource(R.string.discovery_map_photo_missing, shop.title), Modifier.fillMaxSize())
                 }
             }
             Spacer(Modifier.width(CoffeePeekDimens.spacing3))
@@ -220,7 +231,7 @@ private fun MapShopCard(
                     if (rating != null && rating > 0) {
                         Icon(CoffeePeekIcons.StarFilled, null, Modifier.size(14.dp), tint = MaterialTheme.colorScheme.primary)
                         Spacer(Modifier.width(4.dp))
-                        Text(String.format(locale, "%.1f", rating), style = MaterialTheme.typography.labelMedium)
+                        Text(oneDecimal(rating), style = MaterialTheme.typography.labelMedium)
                         if (details.reviewCount > 0) Text(" (${details.reviewCount})", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     } else {
                         Text(
@@ -238,10 +249,10 @@ private fun MapShopCard(
                 val hours = details?.hours
                 when {
                     hours != null -> Text(
-                        stringResource(R.string.discovery_map_card_hours, if (details.isOpen) stringResource(R.string.discovery_shop_open) else stringResource(R.string.discovery_map_card_closed), hours),
+                        stringResource(R.string.discovery_map_card_hours, if (details.isOpen) stringResource(R.string.discovery_map_card_open) else stringResource(R.string.discovery_map_card_closed), hours),
                         Modifier.padding(top = 4.dp), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
-                    isLoading -> Text(stringResource(R.string.discovery_loading), Modifier.padding(top = 4.dp), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    isLoading -> Text(stringResource(R.string.discovery_map_card_loading), Modifier.padding(top = 4.dp), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
         }

@@ -15,10 +15,9 @@ android {
 
 dependencies {
     api(project(module.feature.notifications.api))
-    implementation(project(module.feature.notifications.domain))
-    implementation(project(module.feature.notifications.data))
+    api(project(module.feature.notifications.domain))
+    implementation(project(module.core.datetime))
     implementation(libs.kotlinx.coroutines.core)
-    implementation(libs.ktor.client.core)
     androidImplementation(project(module.core.designSystem))
     androidImplementation(libs.androidx.lifecycle.runtimeCompose)
     androidImplementation(libs.androidx.compose.ui.tooling.preview)

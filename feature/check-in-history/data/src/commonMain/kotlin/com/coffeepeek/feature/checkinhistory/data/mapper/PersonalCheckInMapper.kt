@@ -9,11 +9,10 @@ import com.coffeepeek.feature.checkinhistory.domain.model.HistoryModeration
 import com.coffeepeek.feature.checkinhistory.domain.model.HistoryRating
 import com.coffeepeek.feature.checkinhistory.domain.model.HistoryVisibility
 import com.coffeepeek.feature.checkinhistory.domain.model.PersonalCheckIn
+import com.coffeepeek.core.network.flexibleIntOrNull
 import kotlinx.serialization.json.JsonElement
-import kotlinx.serialization.json.JsonPrimitive
-import kotlinx.serialization.json.intOrNull
 
-internal fun JsonElement?.historyIntOrNull(): Int? = (this as? JsonPrimitive)?.intOrNull
+internal fun JsonElement?.historyIntOrNull(): Int? = flexibleIntOrNull()
 
 internal fun HistoryCheckInDto.toDomain(apiBaseUrl: String): PersonalCheckIn {
     require(id.isNotBlank()) { "Missing personal check-in ID" }

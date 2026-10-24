@@ -65,7 +65,6 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.coffeepeek.core.designsystem.component.CoffeePeekButton
 import com.coffeepeek.core.designsystem.component.CoffeePeekCatalogSuggestionCard
 import com.coffeepeek.core.designsystem.component.CoffeePeekLoader
 import com.coffeepeek.core.designsystem.component.CoffeePeekPullToRefresh
@@ -317,12 +316,7 @@ private fun DiscoveryContent(
                     state.isLoading && shops.isEmpty() -> Box(Modifier.fillMaxWidth().padding(CoffeePeekDimens.spacing4), contentAlignment = Alignment.Center) {
                         CoffeePeekLoader(stringResource(R.string.discovery_loading))
                     }
-                    state.error != null && shops.isEmpty() -> Box(Modifier.fillMaxWidth().padding(CoffeePeekDimens.spacing4), contentAlignment = Alignment.Center) {
-                        androidx.compose.foundation.layout.Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing3)) {
-                            Text(state.error.serverMessage ?: stringResource(R.string.discovery_load_failed), style = MaterialTheme.typography.bodyLarge)
-                            CoffeePeekButton(stringResource(R.string.discovery_retry), { onAction(SearchAction.Refresh) })
-                        }
-                    }
+                    state.error != null && shops.isEmpty() -> host.loadError({ onAction(SearchAction.Refresh) }, Modifier)
                     shops.isEmpty() -> CoffeePeekCatalogSuggestionCard(
                         title = stringResource(R.string.discovery_suggestion_title),
                         description = stringResource(R.string.discovery_suggestion_description),
