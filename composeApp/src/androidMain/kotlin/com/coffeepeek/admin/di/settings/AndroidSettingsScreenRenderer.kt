@@ -1,5 +1,7 @@
 package com.coffeepeek.admin.di.settings
 
+import android.widget.Toast
+import com.coffeepeek.admin.locator.Locator
 import androidx.compose.runtime.Composable
 import com.coffeepeek.admin.config.AppConfig
 import com.coffeepeek.feature.appupdate.impl.AppUpdateController
@@ -60,7 +62,10 @@ internal fun androidSettingsScreenRenderer(
         tab = createSettingsEntry(
             account = AndroidSettingsAccountPort(sessions), theme = theme, cities = cities, updates = AndroidUpdateCheckPort(updates),
             external = external, appInfo = SettingsAppInfo(AppConfig.versionName),
-            slots = SettingsSlots(guestCard = { onLogin, onRegister, modifier -> GuestAuthCard(onLogin, onRegister, modifier) }),
+            slots = SettingsSlots(
+                guestCard = { onLogin, onRegister, modifier -> GuestAuthCard(onLogin, onRegister, modifier) },
+                notify = { Toast.makeText(Locator.appContext, it, Toast.LENGTH_SHORT).show() },
+            ),
         ),
         theme = createThemeEntry(theme),
         city = createCityEntry(cities),

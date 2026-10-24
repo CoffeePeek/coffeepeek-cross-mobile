@@ -1,6 +1,15 @@
 package com.coffeepeek.feature.settings.impl.ui.compose
 
 import androidx.compose.foundation.clickable
+import com.coffeepeek.feature.settings.impl.resources.Res
+import com.coffeepeek.feature.settings.impl.resources.settings_city_description
+import com.coffeepeek.feature.settings.impl.resources.settings_city_empty
+import com.coffeepeek.feature.settings.impl.resources.settings_city_error
+import com.coffeepeek.feature.settings.impl.resources.settings_city_heading
+import com.coffeepeek.feature.settings.impl.resources.settings_city_title
+import com.coffeepeek.feature.settings.impl.resources.settings_loading
+import com.coffeepeek.feature.settings.impl.resources.settings_retry
+import com.coffeepeek.feature.settings.impl.resources.settings_selected
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -20,12 +29,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
+import org.jetbrains.compose.resources.StringResource
+import org.jetbrains.compose.resources.stringResource
+import org.jetbrains.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.coffeepeek.core.designsystem.component.CoffeePeekIconBadge
@@ -35,7 +45,6 @@ import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.feature.settings.domain.SettingsCity
-import com.coffeepeek.feature.settings.impl.R
 import com.coffeepeek.feature.settings.impl.ui.CityViewModel
 import com.coffeepeek.feature.settings.impl.ui.model.CityAction
 import com.coffeepeek.feature.settings.impl.ui.model.CityLoad
@@ -49,14 +58,14 @@ internal fun CityScreen(vm: CityViewModel, onBack: () -> Unit, modifier: Modifie
 
 @Composable
 internal fun CityContent(state: CityState, onSelect: (String) -> Unit, onRetry: () -> Unit, onBack: () -> Unit, modifier: Modifier = Modifier) {
-    SettingsPage(stringResource(R.string.settings_city_title), onBack, modifier) {
-        SettingsHeading(stringResource(R.string.settings_city_heading), stringResource(R.string.settings_city_description))
+    SettingsPage(stringResource(Res.string.settings_city_title), onBack, modifier) {
+        SettingsHeading(stringResource(Res.string.settings_city_heading), stringResource(Res.string.settings_city_description))
         when {
             state.load == CityLoad.Loading -> Box(Modifier.fillMaxWidth().padding(CoffeePeekDimens.spacing6), contentAlignment = Alignment.Center) {
-                CoffeePeekLoader(stringResource(R.string.settings_loading))
+                CoffeePeekLoader(stringResource(Res.string.settings_loading))
             }
-            state.load == CityLoad.Failed -> CityMessage(R.string.settings_city_error, onRetry)
-            state.cities.isEmpty() -> CityMessage(R.string.settings_city_empty, onRetry)
+            state.load == CityLoad.Failed -> CityMessage(Res.string.settings_city_error, onRetry)
+            state.cities.isEmpty() -> CityMessage(Res.string.settings_city_empty, onRetry)
             else -> SettingsCard(Modifier.padding(horizontal = CoffeePeekDimens.spacing4)) {
                 state.cities.forEachIndexed { index, city ->
                     CityOption(city, city.id == state.selectedId) { onSelect(city.id) }
@@ -68,13 +77,13 @@ internal fun CityContent(state: CityState, onSelect: (String) -> Unit, onRetry: 
 }
 
 @Composable
-private fun CityMessage(text: Int, onRetry: () -> Unit) {
+private fun CityMessage(text: StringResource, onRetry: () -> Unit) {
     Column(
         Modifier.fillMaxWidth().padding(horizontal = CoffeePeekDimens.spacing4, vertical = CoffeePeekDimens.spacing6),
         horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing2),
     ) {
         Text(stringResource(text), style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center)
-        TextButton(onClick = onRetry) { Text(stringResource(R.string.settings_retry)) }
+        TextButton(onClick = onRetry) { Text(stringResource(Res.string.settings_retry)) }
     }
 }
 
@@ -91,7 +100,7 @@ private fun CityOption(city: SettingsCity, selected: Boolean, onClick: () -> Uni
         Spacer(Modifier.size(CoffeePeekDimens.spacing3))
         Text(city.name, Modifier.weight(1f), style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurface)
         if (selected) Icon(
-            CoffeePeekIcons.Check, contentDescription = stringResource(R.string.settings_selected),
+            CoffeePeekIcons.Check, contentDescription = stringResource(Res.string.settings_selected),
             tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(CoffeePeekDimens.settingsIconSize),
         )
     }
@@ -99,12 +108,12 @@ private fun CityOption(city: SettingsCity, selected: Boolean, onClick: () -> Uni
 
 private val previewCities = listOf(SettingsCity("minsk", "Минск"), SettingsCity("brest", "Брест"))
 
-@PreviewLightDark
+@Preview
 @Composable
 private fun CityContentPreview() = CoffeePeekTheme {
     Surface { CityContent(CityState(CityLoad.Loaded, previewCities, "brest"), {}, {}, {}) }
 }
 
-@PreviewLightDark
+@Preview
 @Composable
 private fun CityErrorPreview() = CoffeePeekTheme { Surface { CityContent(CityState(CityLoad.Failed), {}, {}, {}) } }

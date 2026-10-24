@@ -1,6 +1,15 @@
 package com.coffeepeek.feature.settings.impl.ui.compose
 
 import androidx.compose.foundation.clickable
+import com.coffeepeek.feature.settings.impl.resources.Res
+import com.coffeepeek.feature.settings.impl.resources.settings_policy_analytics_text
+import com.coffeepeek.feature.settings.impl.resources.settings_policy_analytics_title
+import com.coffeepeek.feature.settings.impl.resources.settings_policy_privacy_description
+import com.coffeepeek.feature.settings.impl.resources.settings_policy_privacy_title
+import com.coffeepeek.feature.settings.impl.resources.settings_policy_section
+import com.coffeepeek.feature.settings.impl.resources.settings_policy_terms_description
+import com.coffeepeek.feature.settings.impl.resources.settings_policy_terms_title
+import com.coffeepeek.feature.settings.impl.resources.settings_policy_title
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.Row
@@ -19,11 +28,12 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.res.stringResource
+import org.jetbrains.compose.resources.StringResource
+import org.jetbrains.compose.resources.stringResource
+import org.jetbrains.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.coffeepeek.core.designsystem.component.CoffeePeekIconBadge
@@ -34,7 +44,6 @@ import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.feature.settings.domain.UsageConsentState
-import com.coffeepeek.feature.settings.impl.R
 import com.coffeepeek.feature.settings.impl.ui.UsagePolicyViewModel
 import com.coffeepeek.feature.settings.impl.ui.model.UsagePolicyAction
 
@@ -50,11 +59,11 @@ internal fun UsagePolicyContent(
     onBack: () -> Unit, modifier: Modifier = Modifier,
 ) {
     val iconColors = CoffeePeekIconBadgeColors(MaterialTheme.colorScheme.primary.copy(alpha = 0.12f), MaterialTheme.colorScheme.primary)
-    SettingsPage(stringResource(R.string.settings_policy_title), onBack, modifier) {
+    SettingsPage(stringResource(Res.string.settings_policy_title), onBack, modifier) {
         Spacer(Modifier.height(CoffeePeekDimens.spacing6))
         Column(Modifier.padding(horizontal = CoffeePeekDimens.settingsPagePadding)) {
             Text(
-                stringResource(R.string.settings_policy_section), style = MaterialTheme.typography.labelSmall,
+                stringResource(Res.string.settings_policy_section), style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant, letterSpacing = 1.sp,
             )
             Spacer(Modifier.height(CoffeePeekDimens.spacing2))
@@ -65,12 +74,12 @@ internal fun UsagePolicyContent(
                         Spacer(Modifier.width(CoffeePeekDimens.spacing3))
                         Column(Modifier.weight(1f)) {
                             Text(
-                                stringResource(R.string.settings_policy_analytics_title), style = MaterialTheme.typography.bodyLarge,
+                                stringResource(Res.string.settings_policy_analytics_title), style = MaterialTheme.typography.bodyLarge,
                                 fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.onSurface,
                             )
                             Spacer(Modifier.height(CoffeePeekDimens.spacing2))
                             Text(
-                                stringResource(R.string.settings_policy_analytics_text), style = MaterialTheme.typography.bodyMedium,
+                                stringResource(Res.string.settings_policy_analytics_text), style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
                         }
@@ -81,9 +90,9 @@ internal fun UsagePolicyContent(
                 Spacer(Modifier.height(CoffeePeekDimens.settingsSectionSpacing))
             }
             SettingsCard {
-                PolicyLink(R.string.settings_policy_terms_title, R.string.settings_policy_terms_description, CoffeePeekIcons.FileText, iconColors, onOpenTerms)
+                PolicyLink(Res.string.settings_policy_terms_title, Res.string.settings_policy_terms_description, CoffeePeekIcons.FileText, iconColors, onOpenTerms)
                 CoffeePeekSettingsDivider()
-                PolicyLink(R.string.settings_policy_privacy_title, R.string.settings_policy_privacy_description, CoffeePeekIcons.Shield, iconColors, onOpenPrivacy)
+                PolicyLink(Res.string.settings_policy_privacy_title, Res.string.settings_policy_privacy_description, CoffeePeekIcons.Shield, iconColors, onOpenPrivacy)
             }
         }
         Spacer(Modifier.height(CoffeePeekDimens.spacing8))
@@ -91,7 +100,7 @@ internal fun UsagePolicyContent(
 }
 
 @Composable
-private fun PolicyLink(title: Int, description: Int, icon: ImageVector, iconColors: CoffeePeekIconBadgeColors, onClick: () -> Unit) {
+private fun PolicyLink(title: StringResource, description: StringResource, icon: ImageVector, iconColors: CoffeePeekIconBadgeColors, onClick: () -> Unit) {
     Row(Modifier.fillMaxWidth().clickable(role = Role.Button, onClick = onClick)
         .padding(CoffeePeekDimens.settingsRowPaddingH), verticalAlignment = Alignment.CenterVertically) {
         CoffeePeekIconBadge(icon, iconColors)
@@ -106,12 +115,12 @@ private fun PolicyLink(title: Int, description: Int, icon: ImageVector, iconColo
     }
 }
 
-@PreviewLightDark
+@Preview
 @Composable
 private fun UsagePolicyPreview() = CoffeePeekTheme {
     Surface { UsagePolicyContent(UsageConsentState(available = true, accepted = true), {}, {}, {}, {}) }
 }
 
-@PreviewLightDark
+@Preview
 @Composable
 private fun UsagePolicyGuestPreview() = CoffeePeekTheme { Surface { UsagePolicyContent(UsageConsentState.Unavailable, {}, {}, {}, {}) } }
