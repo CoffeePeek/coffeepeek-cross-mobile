@@ -5,6 +5,9 @@ import com.coffeepeek.feature.contributions.domain.model.*
 import com.coffeepeek.feature.contributions.domain.rules.ContributionLimits
 import com.coffeepeek.feature.contributions.impl.change.*
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -141,6 +144,34 @@ class ChangeEditorViewModelTest {
         catalogs.shop = { Result.success(shop) }
         vm.send(ChangeEditorAction.Reload, scope = this)
         assertNull(vm.state.value.loadError); assertEquals(1, vm.state.value.catalogs.tags.size)
+    }
+
+    @Test fun cancellationOfEveryRequiredReadCancelsTheJobWithoutPublishingALoadFailure() = runTest(dispatcher) {
+        for (stage in listOf("catalogs", "shop", "drinks", "request")) {
+            var readingJob: Job? = null
+            val cancel: suspend () -> Nothing = {
+                readingJob = currentCoroutineContext()[Job]
+                throw CancellationException(stage)
+            }
+            val vm = cancelledReadModel(stage, cancel)
+            runCurrent()
+            assertTrue(assertNotNull(readingJob, stage).isCancelled, stage)
+            assertNull(vm.state.value.loadError, stage)
+            assertNull(vm.state.value.loadMessage, stage)
+        }
+    }
+
+    private fun cancelledReadModel(stage: String, cancel: suspend () -> Nothing): ChangeEditorViewModel {
+        val source = FakeCatalogs()
+        val requests = FakeRepository()
+        when (stage) {
+            "catalogs" -> source.catalogs = { cancel() }
+            "shop" -> source.shop = { cancel() }
+            "drinks" -> source.drinks = { cancel() }
+            "request" -> requests.change = { cancel() }
+        }
+        return ChangeEditorViewModel("cafe", ChangeSection.Menu, "req", requests, source, FakeAccount())
+            .also { store.put(stage, it) }
     }
 
     @Test fun aFailedDrinksReadFailsTheMenuEditorInsteadOfShowingAnEmptyMenu() = runTest(dispatcher) {
