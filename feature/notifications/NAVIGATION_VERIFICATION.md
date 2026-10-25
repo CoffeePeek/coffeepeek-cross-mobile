@@ -1,6 +1,7 @@
 # Android notification navigation — 2026-10-25
 
-Source: `codex/migration-notification-navigation`, based on develop `2748f07a`.
+Verified implementation: `2067c185` on `codex/migration-notification-navigation`,
+based on develop `2748f07a`. Subsequent changes update this verification note only.
 Backend companion: CoffeePeek-NET `codex/notification-navigation`, commit `1269fa6e`.
 The backend branch is retained locally in that repository; no service was deployed.
 
@@ -59,6 +60,8 @@ correction opens Sandbox Cafe and closes the sheet, reducing the unread count fr
 Sandbox Lab, and a cold launch with a correction intent opens Sandbox Cafe. A missing
 shop displays a dismissible error while retaining the previous card. Back returns to
 the feed. These are manual fake-data checks, not actual FCM delivery or live acceptance.
+The final Sandbox APK was updated in place after the session-readiness refinement;
+cold launch again opened Sandbox Cafe directly, preserving the app's dark theme.
 
 ## Rollout and remaining gates
 
