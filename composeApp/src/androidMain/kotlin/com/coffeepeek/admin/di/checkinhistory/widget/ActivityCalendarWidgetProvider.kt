@@ -5,16 +5,13 @@ import android.appwidget.AppWidgetProvider
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
-import android.os.Bundle
 
 class ActivityCalendarWidgetProvider : AppWidgetProvider() {
     override fun onUpdate(context: Context, manager: AppWidgetManager, ids: IntArray) {
         ActivityCalendarWidgetRuntime.refresh(clear = true)
     }
 
-    override fun onAppWidgetOptionsChanged(context: Context, manager: AppWidgetManager, id: Int, options: Bundle) {
-        ActivityCalendarWidgetRuntime.refresh(clear = true)
-    }
+    // Android selects the supplied responsive RemoteViews during resize without clearing photos or starting a read.
 
     override fun onReceive(context: Context, intent: Intent) {
         super.onReceive(context, intent)

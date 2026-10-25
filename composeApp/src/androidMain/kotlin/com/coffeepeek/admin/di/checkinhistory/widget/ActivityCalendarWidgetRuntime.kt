@@ -70,17 +70,15 @@ internal object ActivityCalendarWidgetRuntime {
             return
         }
         val calendar = AndroidCheckInHistoryCalendar().snapshot()
-        val month = requireNotNull(HistoryMonth.fromDate(calendar.today))
-        val bounds = calendar.monthPeriod(month.year, month.month)
         val loaded = withContext(Dispatchers.IO) {
             val koin = GlobalContext.get()
             val load = LoadHistoryActivityMonth(lease.bind(koin.get<CheckInHistoryRepository>()), lease.bind(koin.get<HomeHistoryReader>()))
-            val activity = load(month, HistoryPeriod(bounds.fromInclusive, bounds.toExclusive), calendar::localDate).getOrThrow()
+            val activity = loadHistoryWidgetActivity(load, calendar)
             val photos = HistoryWidgetPhotos(koin.get(), sessions).load(activity)
             activity to photos
         }
         if (version == generation && lease.isCurrent()) {
-            publish(views(month, calendar.today, loaded.first, loaded.second, HistoryWidgetStatus.Ready))
+            publish(views(calendar.today, loaded.first, loaded.second, HistoryWidgetStatus.Ready))
         }
     }
 
@@ -88,11 +86,11 @@ internal object ActivityCalendarWidgetRuntime {
 
     private fun placeholder(status: HistoryWidgetStatus): RemoteViews {
         val calendar = AndroidCheckInHistoryCalendar().snapshot()
-        return views(requireNotNull(HistoryMonth.fromDate(calendar.today)), calendar.today, null, emptyMap(), status)
+        return views(calendar.today, emptyList(), emptyMap(), status)
     }
 
-    private fun views(month: HistoryMonth, today: String, activity: HistoryActivityMonth?, photos: Map<String, Bitmap>,
-        status: HistoryWidgetStatus) = historyCalendarWidgetViews(application, month, today, activity, photos, status,
+    private fun views(today: String, activity: List<HistoryActivityMonth>, photos: Map<String, Bitmap>,
+        status: HistoryWidgetStatus) = historyCalendarWidgetViews(application, today, activity, photos, status,
         historyWidgetOpenIntent(application), historyWidgetRefreshIntent(application))
 
     private fun publish(views: RemoteViews) {

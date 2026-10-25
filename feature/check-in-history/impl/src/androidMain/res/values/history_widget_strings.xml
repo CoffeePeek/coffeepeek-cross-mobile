@@ -2,12 +2,16 @@
     <string name="history_widget_brand" translatable="false">CoffeePeek</string>
     <string name="history_widget_activity_marker" translatable="false">●</string>
     <string name="history_widget_name">Календарь активности</string>
-    <string name="history_widget_description">Ваш кофе за месяц: фотографии посещений и домашних приготовлений на главном экране.</string>
+    <string name="history_widget_description">Фотографии кофе за неделю, две недели или месяц. Растяните виджет, чтобы показать больше дней.</string>
+    <string name="history_widget_week_title">Неделя · %1$s</string>
+    <string name="history_widget_fortnight_title">2 недели · %1$s</string>
     <string name="history_widget_loading">Загружаем вашу активность…</string>
     <string name="history_widget_signed_out">Войдите в CoffeePeek</string>
     <string name="history_widget_error">Не удалось загрузить · обновите</string>
+    <string name="history_widget_error_compact">Откройте CoffeePeek для обновления</string>
+    <string name="history_widget_partial_compact">Часть записей недоступна</string>
     <string name="history_widget_partial">Часть записей недоступна · обновите</string>
-    <string name="history_widget_empty">Первый кофе этого месяца ещё впереди</string>
+    <string name="history_widget_empty">В эти дни пока нет записей</string>
     <string name="history_widget_active_days">Активных дней: %1$d</string>
     <string name="history_widget_refresh">Обновить календарь</string>
     <string name="history_widget_open">Открыть историю в CoffeePeek</string>

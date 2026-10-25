@@ -1,14 +1,14 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/history_widget_root" android:layout_width="match_parent" android:layout_height="match_parent"
-    android:orientation="vertical" android:padding="12dp" android:background="@drawable/history_widget_background">
+    android:orientation="vertical" android:paddingHorizontal="8dp" android:paddingVertical="6dp" android:background="@drawable/history_widget_background">
     <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center_vertical" android:orientation="horizontal">
         <LinearLayout android:id="@+id/history_widget_heading" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:orientation="vertical">
-            <TextView android:id="@+id/history_widget_title" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/history_widget_name" android:textSize="18sp" android:textStyle="bold" android:maxLines="1" android:ellipsize="end"/>
-            <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/history_widget_brand" android:textColor="#FFB68A2E" android:textSize="11sp"/>
+            <TextView android:id="@+id/history_widget_title" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/history_widget_name" android:textSize="14sp" android:textStyle="bold" android:maxLines="1" android:ellipsize="end"/>
+            <TextView android:id="@+id/history_widget_brand" android:visibility="gone" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/history_widget_brand" android:textColor="#FFB68A2E" android:textSize="11sp"/>
         </LinearLayout>
-        <ImageButton android:id="@+id/history_widget_refresh" android:layout_width="48dp" android:layout_height="48dp" android:background="@android:color/transparent" android:padding="12dp" android:src="@drawable/history_widget_refresh" android:contentDescription="@string/history_widget_refresh"/>
+        <ImageButton android:id="@+id/history_widget_refresh" android:visibility="gone" android:layout_width="48dp" android:layout_height="48dp" android:background="@android:color/transparent" android:paddingHorizontal="8dp" android:paddingVertical="6dp" android:src="@drawable/history_widget_refresh" android:contentDescription="@string/history_widget_refresh"/>
     </LinearLayout>
-    <LinearLayout android:id="@+id/history_widget_weekdays" android:orientation="horizontal" android:layout_width="match_parent" android:layout_height="24dp"/>
+    <LinearLayout android:id="@+id/history_widget_weekdays" android:orientation="horizontal" android:layout_width="match_parent" android:layout_height="wrap_content" android:minHeight="16dp"/>
     <LinearLayout android:id="@+id/history_widget_weeks" android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" android:orientation="vertical"/>
-    <TextView android:id="@+id/history_widget_status" android:layout_width="match_parent" android:layout_height="wrap_content" android:paddingTop="6dp" android:text="@string/history_widget_loading" android:textSize="11sp" android:maxLines="2" android:ellipsize="end"/>
+    <TextView android:id="@+id/history_widget_status" android:layout_width="match_parent" android:layout_height="wrap_content" android:paddingTop="2dp" android:text="@string/history_widget_loading" android:textSize="11sp" android:maxLines="1" android:ellipsize="end"/>
 </LinearLayout>

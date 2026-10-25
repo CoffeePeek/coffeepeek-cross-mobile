@@ -22,10 +22,10 @@ import kotlinx.io.readByteArray
 
 /** Reuses the authenticated photo transport. Only small bitmaps cross into the launcher. */
 internal class HistoryWidgetPhotos(private val fetcher: CustomUrlFetcher, private val sessions: SessionReader) {
-    suspend fun load(month: HistoryActivityMonth): Map<String, Bitmap> = coroutineScope {
+    suspend fun load(months: List<HistoryActivityMonth>): Map<String, Bitmap> = coroutineScope {
         val limit = Semaphore(4)
         val permission = ProtectedPhotoSession.scope(sessions.peekSession())
-        month.days.mapNotNull { (date, day) -> day.photo?.let { photo ->
+        months.flatMap { it.days.entries }.associate { it.key to it.value }.mapNotNull { (date, day) -> day.photo?.let { photo ->
             async { limit.withPermit {
                 val bitmap = withTimeoutOrNull(6_000) { read(photo.url, permission, photo.isCutout) }
                 bitmap?.let { date to it }

@@ -106,3 +106,40 @@ ActivityCalendarWidgetProvider. This confirms installation/startup/provider
 registration only: adding the widget, photo rendering, resizing, theme/font/
 accessibility checks and widget navigation/account scenarios remain unverified.
 No automated UI/instrumentation test or live-backend action was performed.
+
+## Responsive calendar correction — 2026-10-25
+
+The user's device review found the fixed 4×4 month too large. Replace the default
+with a 4×1 week (launcher cell sizing varies), resizable horizontally and vertically
+from 180×80 dp. Responsive RemoteViews select one week below 160 dp, the previous
+and current weeks from 160 dp, and the current month from 250 dp. Compact layouts
+hide the brand, manual-refresh button and successful-state footer to reserve space
+for photos; opening history and scheduled/return refresh remain available.
+
+Verification plan: preserve account/cancellation and photo semantics; test complete
+Monday-first weeks at month/year boundaries, leap years, visible-date photo loading,
+partial errors per visible month, and zone-specific month query bounds. Compile
+all three colocated light/dark previews, run history/app contracts and lint, build
+Sandbox/Debug with DEX checks, then update the agreed Pixel 9 non-destructively if
+connected/unlocked. No automated UI/instrumentation or screenshot tests.
+
+All three size variants are delivered together, allowing immediate launcher resize
+without network reads or clearing photos. Query preceding-month data only where
+needed for the visible fortnight, and load thumbnails only for dates that can be
+shown. Multiple widget instances can independently display different periods.
+
+Responsive verification: **146 executed JVM tests** (77 history impl, 69 app
+history contracts), zero failures/errors/skips; includes 11 new period/calendar
+cases and 5 new multi-month loader cases. Domain code was unchanged in this step.
+History lint passes with the same three pre-existing ModifierParameter warnings.
+Both Direct Sandbox and Direct Debug APKs and their DEX checks pass; Sandbox
+isolation passes. Final Sandbox artifact is `1.1.1.2457-sandbox` (2457), built
+from `f3dee600` plus this responsive-layout change. Three light/dark previews
+compile; Android Studio rendering is unavailable.
+
+ADB initially detected the previously agreed Pixel 9, then it disconnected before
+lock-state/widget-size inspection. Subsequent inventories were empty. Therefore
+the responsive APK was not installed and actual launcher resize, photos, themes
+and font/accessibility behavior remain manual gates. The earlier installed
+month-only build is not evidence for these new layouts. No device settings were
+changed, and no UI/instrumentation tests or new test hosts were introduced.
