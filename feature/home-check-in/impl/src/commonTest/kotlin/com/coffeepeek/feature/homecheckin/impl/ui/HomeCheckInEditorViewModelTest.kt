@@ -426,6 +426,37 @@ class HomeCheckInEditorViewModelTest {
         assertEquals(5, vm.state.value.draft.photos.size)
     }
 
+    @Test fun photoMovesPreserveUploadBytesAndSubmissionOrderAfterRemoval() = runTest(dispatcher) {
+        val repo = Repository()
+        val vm = model(repo)
+        runCurrent()
+        vm.act(HomeCheckInEditorAction.PhotosAdded(listOf(photo("first"), photo("second"), photo("third"))),
+            HomeCheckInEditorAction.MovePhoto(0, 2), HomeCheckInEditorAction.MovePhoto(1, 0),
+            HomeCheckInEditorAction.RemovePhoto(1), HomeCheckInEditorAction.Save)
+        runCurrent()
+        val photos = repo.creates.single().photos
+        assertEquals(listOf("third", "first"), photos.map { it.fileName })
+        photos.forEach { assertContentEquals(it.fileName.encodeToByteArray(), it.bytes) }
+        assertTrue(vm.state.value.isClosed)
+    }
+
+    @Test fun stalePhotoMovesAndMovesDuringSaveDoNotChangeTheRequestOrMetrics() = runTest(dispatcher) {
+        val repo = Repository().apply { saveGate = CompletableDeferred() }
+        val metrics = mutableListOf<HomeCheckInEditorMetric>()
+        val vm = model(repo, analytics = HomeCheckInEditorAnalytics(metrics::add))
+        runCurrent()
+        vm.act(HomeCheckInEditorAction.PhotosAdded(listOf(photo("first"), photo("second"))),
+            HomeCheckInEditorAction.MovePhoto(-1, 1), HomeCheckInEditorAction.MovePhoto(0, 2),
+            HomeCheckInEditorAction.MovePhoto(1, 1), HomeCheckInEditorAction.Save,
+            HomeCheckInEditorAction.MovePhoto(0, 1))
+        runCurrent()
+        assertEquals(listOf("first", "second"), vm.state.value.draft.photos.map { it.fileName })
+        assertEquals(listOf("first", "second"), repo.creates.single().photos.map { it.fileName })
+        assertEquals(1, metrics.count { it == HomeCheckInEditorMetric.FieldChanged(HomePreparationField.Photos) })
+        repo.saveGate!!.complete(Unit)
+        runCurrent()
+    }
+
     @Test fun originalPhotoCanBeReplacedAndSavedWithoutAnExtractionStep() = runTest(dispatcher) {
         val repo = Repository()
         val vm = model(repo); runCurrent()

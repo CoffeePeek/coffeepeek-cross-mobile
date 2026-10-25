@@ -109,6 +109,7 @@ internal class HomeCheckInEditorViewModel(
             is HomeCheckInEditorAction.RemovePhoto -> if (preparationId == null && action.index in currentState.draft.photos.indices) edit {
                 copy(photos = photos.filterIndexed { index, _ -> index != action.index })
             }
+            is HomeCheckInEditorAction.MovePhoto -> movePhoto(action.from, action.to)
             HomeCheckInEditorAction.Save -> save()
             HomeCheckInEditorAction.Close -> if (saveJob == null) {
                 track(HomeCheckInEditorMetric.Cancelled)
@@ -126,6 +127,16 @@ internal class HomeCheckInEditorViewModel(
     private fun canEdit() = currentState.isReady && !currentState.isLoading && !currentState.isSaving &&
         !currentState.isClosed && !currentState.isAccessRevoked
 
+
+    private fun movePhoto(from: Int, to: Int) {
+        val photos = currentState.draft.photos
+        if (preparationId != null || from !in photos.indices || to !in photos.indices || from == to) return
+        edit {
+            val reordered = photos.toMutableList()
+            reordered.add(to, reordered.removeAt(from))
+            copy(photos = reordered)
+        }
+    }
 
     private fun edit(transform: HomePreparationInput.() -> HomePreparationInput) {
         if (!canEdit()) return

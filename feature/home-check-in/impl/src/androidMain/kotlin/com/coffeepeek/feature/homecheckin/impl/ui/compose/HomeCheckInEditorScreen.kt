@@ -215,7 +215,8 @@ internal fun HomeCheckInEditorScreenContent(
                         else {
                             HomeCheckInEditorPhotos(draft.photos, enabled, pickerLoading, media.photo, {
                                 focus.clearFocus(); keyboard?.hide(); onAddPhotos(it)
-                            }, { onAction(HomeCheckInEditorAction.RemovePhoto(it)) })
+                            }, { onAction(HomeCheckInEditorAction.RemovePhoto(it)) },
+                                { from, to -> onAction(HomeCheckInEditorAction.MovePhoto(from, to)) })
                         }
                     }
                 }
