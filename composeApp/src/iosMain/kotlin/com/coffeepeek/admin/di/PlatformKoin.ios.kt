@@ -49,7 +49,7 @@ actual fun initPlatformKoin() {
         communityRendererFactory = { featureCommunityScreenRenderer(get(), get(), get(), get(), get(), get()) },
         coffeeRendererFactory = { featureCoffeeScreenRenderer(get()) },
         publicProfileRendererFactory = { featurePublicProfileScreenRenderer(get(), get(), get(), get(), get()) },
-        ownProfileRendererFactory = { featureOwnProfileScreenRenderer(get(), get(), get(), get(), get(), get(), get(), get()) },
+        ownProfileRendererFactory = { featureOwnProfileScreenRenderer(get(), get(), get(), get(), get(), get(), get(), get(), get()) },
         contributionsRendererFactory = { featureContributionsScreenRenderer(get<CoffeePeekClient>(), get(), get()) },
         accountRendererFactory = { featureAccountScreenRenderer(get(), get()) },
         discoveryRendererFactory = { featureDiscoveryScreenRenderer(get<CoffeePeekClient>().client, get(), get(), get(), get(), get(), get()) },

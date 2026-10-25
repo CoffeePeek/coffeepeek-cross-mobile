@@ -24,10 +24,10 @@ iOS-документы (`docs/IOS_NATIVE_EXPERIENCE.md`, `IOS_NATIVE_NAVIGATION.
 
 **Этап 2 — сессия: F23 и F24 готовы** (выход стирает старые строки; сбой удаления Keychain сообщается). Core session port вместо `SessionRepository` (~43 файла) — **не сделан**.
 
-**Этап 3 — подключение на iOS: начат.** Через новые модули на iOS подключены: вкладка Settings (и три её подэкрана), окно обновления, колокольчик уведомлений, экраны входа, регистрации и восстановления пароля, **Community (вкладка «Лента»)**, **Discovery (вкладка «Поиск»)**, **Coffee (вкладка каталога и детали кофе)**, **Profile (собственный/публичный профиль, его чекины, редактирование и подтверждение удаления аккаунта)** и **Contributions (списки заявок, добавление кофейни/обжарщика, предложение правки, редактор и детали заявки)**, **Shop (кофейня, публичные чекины, галерея меню, форма чекина)** и **Shop-report (неточность в данных кофейни)**, **Check-in history (личная история, календарь и Home detail/editor внутри неё)** и **общий create flow (выбор типа + Home create)**, **выбор кофейни для чекина**. Подключены также Google/Apple кнопки и существующие Swift-провайдеры (при доступной конфигурации); реальный OAuth ещё не проверен.
+**Этап 3 — подключение на iOS: начат.** Через новые модули на iOS подключены: вкладка Settings (и три её подэкрана), окно обновления, колокольчик уведомлений, экраны входа, регистрации и восстановления пароля, **Community (вкладка «Лента»)**, **Discovery (вкладка «Поиск»)**, **Coffee (вкладка каталога и детали кофе)**, **Profile (собственный/публичный профиль, его чекины, редактирование и подтверждение удаления аккаунта)** и **Contributions (списки заявок, добавление кофейни/обжарщика, предложение правки, редактор и детали заявки)**, **Shop (кофейня, публичные чекины, галерея меню, форма чекина)** и **Shop-report (неточность в данных кофейни)**, **Check-in history (личная история, календарь и Home detail/editor внутри неё)** и **общий create flow (выбор типа + Home create)**, **выбор кофейни для чекина**, **личная Activity шторка и недельный обзор Profile**. Подключены также Google/Apple кнопки и существующие Swift-провайдеры (при доступной конфигурации); реальный OAuth ещё не проверен.
 На iOS Profile, Community, Discovery, Coffee, Contributions, Shop/Shop-report и личная история идут через feature-рендереры.
 В истории подключены Home detail/editor; общий выбор типа, Home create и выбор кофейни тоже используют feature entries. Favorites ещё использует текущий legacy entry;
-слоты календаря, избранного и карточек в Profile сохраняют эти существующие реализации.
+личная Activity использует отдельный entry истории; избранное и карточки в Profile сохраняют существующие slot providers.
 
 **Важные находки для следующих срезов**
 1. Kotlin/Native не линкует переопределение composable-метода интерфейса с аргументом по умолчанию (`modifier: Modifier = Modifier`): ошибка видна только при линковке и только у достижимого кода. У каждого владельца при подключении убрать значения по умолчанию из api-интерфейсов (так сделано у Settings и Auth).
@@ -36,8 +36,8 @@ iOS-документы (`docs/IOS_NATIVE_EXPERIENCE.md`, `IOS_NATIVE_NAVIGATION.
 4. Для сообщения проверки обновлений на iOS нет тоста: временно используется `ErrorHandler.showError`, нужно решение по UX.
 
 **Остаётся**
-- Этап 3: оставшиеся legacy follow-ups и Favorites (по решению продукта); ручная приёмка Community/Discovery/Coffee/Profile/Contributions/Shop/History и live-приёмка Apple/Google.
-- Календарь Activity в Profile — отдельный оставшийся legacy preview; миграция полной истории не закрывает этот сценарий.
+- Этап 3: контентные жалобы и оставшиеся legacy follow-ups, Favorites (по решению продукта); ручная приёмка Community/Discovery/Coffee/Profile/Contributions/Shop/History и live-приёмка Apple/Google.
+- Ручная приёмка отдельной Activity шторки и недельного обзора Profile ещё нужна; public-only календарь Profile не получает private reader.
 - Контентная жалоба `ReportCheckIn`/`ReportReview` пока использует общий legacy ReviewReportScreen; это отдельный маршрут, а не мигрированный Shop-report.
 - Этап 2: core session port.
 - Roaster: Xcode-линковка, симулятор, устройство.
@@ -858,6 +858,96 @@ OAuth/Keychain и Xcode/signing не проверялись этим checkpoint.
 entry относительно уже перенесённой полной истории, затем переносить его владельца.
 Далее контентные ReportCheckIn/ReportReview, Favorites по продуктовому решению
 и core session port; удаление legacy — после общей ручной приёмки.
+
+### Checkpoint: личная Activity в Profile / месяц и неделя — 2026-10-25
+
+Продолжение PR #195 на базе `fef8e201`. После fetch актуальный
+`origin/main=16724b7e` уже входит в HEAD; `origin/develop=105b8994`
+с параллельными изменениями не вливался в этот срез. Ветка/PR прежние.
+
+Сделано:
+
+- Сверены два входа: own-profile недельная карточка открывает Activity modal
+  (в fallback-представлении — полную историю), месяц внутри Activity позволяет
+  выбрать день. Это отдельный сценарий от VisitedPlaces/HomeCheckIns.
+  Публичный Activity calendar уже принадлежит Profile и читает только public API;
+  personal Shop/Home readers в него не передаются.
+- OwnProfileSlots на Android/iOS теперь используют app-owned
+  FeatureProfileActivityRenderer → ProfileActivityEntry в feature/check-in-history.
+  Нового бизнес-UI в composeApp нет. Прежние PersonalProfileActivity* и их VM
+  сохранены для legacy fallback, но активные feature slots их не вызывают.
+- Отдельные typed MVI month/week модели используют существующие history readers.
+  Shop читает полный instant period, Home — календарь и все страницы civil range
+  (100 rows/page, проверка metadata/пустой промежуточной страницы, dedup по ID).
+  Shop timeline pages и Home editor/writer не создаются. Ошибка одного источника
+  не стирает другой; retry и возврат на экран перечитывают range.
+- Неделя — Monday–Sunday, включая соседний месяц/год; она не меняется при
+  листании месячного календаря. Snapshot datePeriod переводит обе локальные
+  границы отдельно, сохраняя DST. Home bounds inclusive, Shop toExclusive.
+  Today, future-date/month guards, выбор/снятие выбора даты, shared counts/photos
+  сохранены. При выборе дня идут Shop visits, затем Home, по времени внутри
+  источника. Shop открывает его публичный slug, Home/отсутствующий shop — историю,
+  как в прежнем Activity; новый маршрут деталей не придуман.
+- HistoryCalendarCard получил frameless-вариант для Activity, сохраняя shared
+  geometry/dots/photos и framed-вариант полной истории. Header/grid выделены
+  в связные функции. Компактная дневная строка принадлежит истории и использует
+  shared rating. Имена напитка/время/thumbnail fallback и адаптация к крупному
+  шрифту сохранены; текст/доступность вынесены в русский values.
+- Общая визуальная недельная карточка выделена в CoffeePeekActivityWeek:
+  только labels, accessibility, flags/photo count и image slot, без дат/HTTP/feature
+  зависимостей. Personal feature и public/legacy adapter используют одну геометрию,
+  20dp corners, 0.7dp border, 10/12dp padding, dots/photos/+N.
+  Публичные counts и прежняя Minsk date policy остаются у public adapter.
+- Каждый personal surface имеет собственный CheckInHistoryHostViewModel/child
+  store и тот же revocable lease: guest не читает private data, replacement
+  очищает данные/VM, token renewal сохраняется, поздние ответы отменённых reads
+  не принимаются. Owner передаётся внутрь body UIKit sheet явно; live account
+  observation не замораживается при перекрытии родительского контроллера.
+  Buffered navigation имеет owner token и не воспроизводится новой шторкой.
+- Analytics inventory: старые PersonalProfileActivity* не отправляли отдельных
+  событий даты/месяца/строки. Новых событий/SDK не добавлено; существующий Profile
+  screen/sheet exposure и downstream navigation owners сохранены. Избранное,
+  consent/session policy и реальные analytics transports не менялись.
+  Парные colocated light/dark previews добавлены для изменённых компонентов.
+
+Проверки (Mac/JBR 21, 2026-10-25, source поверх `fef8e201`):
+
+- Design-system **44 tests / 12 suites**, history domain **8 / 3**,
+  history impl **75 / 7**, Profile impl **60 / 6**; app subset
+  `*CheckInHistory*`, `*HistoryHost*`, `*Profile*`, `*Activity*` — **89 / 19**.
+  Всего **276 tests**, 0 failures/errors/skips. 21 новых feature cases покрывают
+  week/year/leap bounds, оба источника/selected rows, all-pages/dedup/metadata,
+  cancellation, stale month, retry/resume/Today/guest и buffered event owner;
+  ещё 2 app cases — DST week boundaries и invalid civil bounds. Lazy DI test
+  дополнен разрешением Activity renderer без credentials/session reads.
+- Первые compile-попытки нашли отсутствующую UI dependency у API Modifier,
+  обращение к internal DS formatter и nullable CpImage argument. API сузили до
+  Compose runtime без Modifier/dependency, форматирование взяли из feature
+  resources, nullable photo обрабатывается до image call. Затем все тесты прошли.
+- assembleDirectDebug/Sandbox, packaged runtime-class checks и Sandbox isolation
+  успешны; guard включает Activity API/factory/app renderer/DS facade.
+  compileKotlinIosArm64, linkDebugFrameworkIosSimulatorArm64 и
+  compileTestKotlinIosSimulatorArm64 успешны. Native tests только скомпилированы.
+  Gradle последовательно, --max-workers=6. Прежние preview/expect-actual/bundle-ID
+  warnings остаются; partial-linkage errors не скрывались.
+- Studio MCP inspection AppCheckInHistoryCalendar: 0 errors. Это не полная IDE
+  проверка UI; previews/симулятор/устройство не запускались.
+- SHA-256 APK: Debug `4a59498ec259dd0ec4398f266154e756d7b3abf8252275bf42d252686a38f536`;
+  Sandbox `d0360b36ec3150a2479df62addc2fbc384313729e46748e68b564c19ffd724ab`.
+  Приложения не устанавливались, UI/instrumented/screenshot tests или test-only
+  Activity/APK не создавались. Backend, аккаунты и реальные analytics не менялись.
+
+Открытые gates: ручная iOS/Android Sandbox-приёмка недели/Activity отдельно от
+полной истории, light/dark/крупный шрифт/VoiceOver, фото и пустые дни, несколько
+чекинов/источников, month/Today/retry, UIKit height/scroll/insets/back/close,
+возврат/полночь/смена зоны, account replacement/renewal, навигация Shop/Home.
+Компиляция и fake tests не закрывают реальные backend/Keychain/OAuth/analytics,
+Xcode/signing или device acceptance.
+
+Следующий code-срез: **контентные жалобы ReportCheckIn/ReportReview** — сверить
+актуальные входы/причины/авторизацию и сохранить существующий контракт. После
+них — Favorites по продуктовому решению и core session port. Удаление legacy
+остаётся после общей ручной приёмки.
 
 ## 1. Принципы (решение 2026-10-24)
 

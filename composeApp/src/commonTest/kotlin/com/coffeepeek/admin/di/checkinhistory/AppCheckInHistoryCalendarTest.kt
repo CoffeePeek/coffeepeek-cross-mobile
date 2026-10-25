@@ -11,6 +11,23 @@ import kotlin.test.assertNull
 class AppCheckInHistoryCalendarTest {
     private val clock: () -> Instant = { Instant.parse("2026-10-14T22:30:00Z") }
 
+    @Test fun activityWeeksUseBothDstOffsetsInsteadOfSevenFixedUtcDays() {
+        val snapshot = AppCheckInHistoryCalendar({ TimeZone.of("America/New_York") }, clock).snapshot()
+        val spring = snapshot.datePeriod("2026-03-02", "2026-03-09")
+        assertEquals("2026-03-02T05:00:00Z", spring.fromInclusive)
+        assertEquals("2026-03-09T04:00:00Z", spring.toExclusive)
+        val autumn = snapshot.datePeriod("2026-10-26", "2026-11-02")
+        assertEquals("2026-10-26T04:00:00Z", autumn.fromInclusive)
+        assertEquals("2026-11-02T05:00:00Z", autumn.toExclusive)
+    }
+
+    @Test fun activityRangeRejectsEqualReversedAndInvalidDates() {
+        val snapshot = AppCheckInHistoryCalendar({ TimeZone.UTC }, clock).snapshot()
+        assertFailsWith<IllegalArgumentException> { snapshot.datePeriod("2026-10-25", "2026-10-25") }
+        assertFailsWith<IllegalArgumentException> { snapshot.datePeriod("2026-11-01", "2026-10-25") }
+        assertFailsWith<IllegalArgumentException> { snapshot.datePeriod("2026-02-30", "2026-03-01") }
+    }
+
     @Test fun minskBoundsAndGroupingUseTheSameLocalMonth() {
         val snapshot = AppCheckInHistoryCalendar({ TimeZone.of("Europe/Minsk") }, clock).snapshot()
         assertEquals("2026-10-15", snapshot.today)

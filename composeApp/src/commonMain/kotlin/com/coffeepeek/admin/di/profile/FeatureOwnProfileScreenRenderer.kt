@@ -13,9 +13,8 @@ import com.coffeepeek.admin.ui.component.LoadErrorContent
 import com.coffeepeek.admin.ui.component.LocalFloatingNavClearance
 import com.coffeepeek.admin.ui.screen.contributions.ContributionKind
 import com.coffeepeek.admin.ui.screen.profile.OwnProfileScreenRenderer
-import com.coffeepeek.admin.ui.screen.profile.PersonalProfileActivityCalendar
+import com.coffeepeek.admin.di.checkinhistory.FeatureProfileActivityRenderer
 import com.coffeepeek.feature.notifications.api.NotificationFeature
-import com.coffeepeek.admin.ui.screen.profile.PersonalProfileActivityPreview
 import com.coffeepeek.admin.utils.ErrorHandler
 import com.coffeepeek.domain.repository.AuthRepository
 import com.coffeepeek.core.session.SessionReader
@@ -86,6 +85,7 @@ internal fun featureOwnProfileScreenRenderer(
     drafts: ReviewDraftStore,
     visibility: AuthorVisibility,
     blocks: AuthorBlockActions,
+    activity: FeatureProfileActivityRenderer,
 ): FeatureOwnProfileScreenRenderer {
     val checkIns = AppPublicCheckIns(repository)
     return FeatureOwnProfileScreenRenderer(createOwnProfileEntry(
@@ -95,14 +95,14 @@ internal fun featureOwnProfileScreenRenderer(
         signOut = AppProfileSignOut(notifications, auth, drafts),
         visibility = AppProfileAuthorVisibility(visibility),
         authorActions = AppProfileAuthorActions(blocks),
-        slots = ownProfileSlots(checkIns),
+        slots = ownProfileSlots(checkIns, activity),
     ))
 }
 
-private fun ownProfileSlots(checkIns: AppPublicCheckIns) = OwnProfileSlots(
+private fun ownProfileSlots(checkIns: AppPublicCheckIns, activity: FeatureProfileActivityRenderer) = OwnProfileSlots(
     shared = profileSlots(checkIns),
     favoritesPreview = { openShop, openRoaster, header -> FavoritesProfilePreview(openShop, openRoaster, header) },
-    activityCalendar = { openShop, openCheckIns -> PersonalProfileActivityCalendar(onOpenShop = openShop, onOpenCheckIns = openCheckIns) },
-    activityPreview = { onClick -> PersonalProfileActivityPreview(onClick) },
+    activityCalendar = { openShop, openCheckIns -> activity.Calendar(openShop, openCheckIns) },
+    activityPreview = { onClick -> activity.Week(onClick) },
     loadError = { onRetry -> LoadErrorContent(onRetry = onRetry) },
 )

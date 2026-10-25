@@ -47,6 +47,7 @@ class CheckInHistoryModuleTest {
         }
         try {
             assertSame(app.koin.get<FeatureCheckInHistoryScreenRenderer>(), app.koin.get<FeatureCheckInHistoryScreenRenderer>())
+            assertSame(app.koin.get<FeatureProfileActivityRenderer>(), app.koin.get<FeatureProfileActivityRenderer>())
             assertSame(app.koin.get<AppCheckInHistoryCalendar>(), app.koin.get<AppCheckInHistoryCalendar>())
             assertEquals(1, app.koin.getAll<CheckInHistoryRepository>().size)
             assertEquals(1, app.koin.getAll<HomePreparationReader>().size)

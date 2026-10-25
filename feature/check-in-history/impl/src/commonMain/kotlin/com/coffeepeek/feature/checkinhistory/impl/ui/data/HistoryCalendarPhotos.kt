@@ -6,7 +6,7 @@ import com.coffeepeek.feature.checkinhistory.impl.ui.compose.model.HistorySource
 import kotlin.time.Instant
 
 /** Month snapshots, newest photographed visit first. */
-internal fun historyCalendarPhotos(state: CombinedHistoryState, date: String): List<HistoryCalendarPhoto> {
+internal fun historyCalendarPhotos(state: CombinedHistoryState, date: String, maxPhotos: Int = 3): List<HistoryCalendarPhoto> {
     if (!state.isLoggedIn) return emptyList()
     val shops = if (state.filter.includes(HistorySource.Shop)) state.shopCalendar.content[date].orEmpty().mapNotNull { row ->
         val occurredAt = row.entry.visitedAt.ifBlank { row.entry.createdAt }
@@ -15,7 +15,7 @@ internal fun historyCalendarPhotos(state: CombinedHistoryState, date: String): L
     val homes = if (state.filter.includes(HistorySource.Home)) state.homeCalendarPhotos[date].orEmpty() else emptyList()
     return (shops + homes).filter { it.url.isNotBlank() }
         .map { it to it.occurredAt?.instantOrNull() }.sortedByDescending { it.second }
-        .map { it.first }.distinctBy { it.url }.take(3)
+        .map { it.first }.distinctBy { it.url }.take(maxPhotos)
 }
 
 private fun String.instantOrNull(): Instant? = try {

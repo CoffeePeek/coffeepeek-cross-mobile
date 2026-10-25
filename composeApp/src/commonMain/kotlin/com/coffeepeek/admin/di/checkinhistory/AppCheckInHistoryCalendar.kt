@@ -29,10 +29,14 @@ private class CapturedHistoryCalendar(private val zone: TimeZone, override val t
     override fun monthPeriod(year: Int, month: Int): CheckInHistoryDateBounds {
         require(year in 1..9999)
         val first = LocalDate(year, month, 1)
-        return CheckInHistoryDateBounds(
-            first.atStartOfDayIn(zone).toString(),
-            first.plus(1, DateTimeUnit.MONTH).atStartOfDayIn(zone).toString(),
-        )
+        return datePeriod(first.toString(), first.plus(1, DateTimeUnit.MONTH).toString())
+    }
+
+    override fun datePeriod(fromDate: String, toExclusiveDate: String): CheckInHistoryDateBounds {
+        val from = LocalDate.parse(fromDate)
+        val to = LocalDate.parse(toExclusiveDate)
+        require(from < to)
+        return CheckInHistoryDateBounds(from.atStartOfDayIn(zone).toString(), to.atStartOfDayIn(zone).toString())
     }
 
     override fun localDate(instant: String): String? =

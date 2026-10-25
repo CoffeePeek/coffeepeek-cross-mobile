@@ -1,5 +1,13 @@
 # Profile / account — legacy-first inventory — 2026-10-20
 
+> Personal Activity, 2026-10-25 (PR #195): own-profile month/week slots now use
+> feature/check-in-history ProfileActivityEntry through an app session-bound
+> renderer on both platforms. They no longer construct VisitedPlacesViewModel or
+> legacy HomeCheckInViewModel. UIKit sheet content receives the captured parent
+> ViewModelStoreOwner. Public activity keeps its Profile calendar/data contract;
+> public/legacy weekly previews share CoffeePeekActivityWeek geometry with the
+> personal feature preview. See IOS_MIGRATION_PLAN.md for checks and manual gates.
+>
 > iOS activation, 2026-10-25 (PR #195): own/public/account renderers and shared app
 > ports now serve both platforms. The native Profile tab uses its renderer;
 > legacy calendar/favorites/card slots and data writers remain in place. JVM-only

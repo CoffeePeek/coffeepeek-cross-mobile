@@ -48,6 +48,8 @@ import com.coffeepeek.core.designsystem.component.CoffeePeekGlassIcon
 import com.coffeepeek.core.designsystem.modifier.CoffeePeekGlassIconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -288,6 +290,7 @@ internal fun PublicProfileScreen(
     }
 
     val selectedSection = section
+    val activityOwner = LocalViewModelStoreOwner.current
     if (selectedSection != null && profile != null && author != null && !profile.isBlockedByViewer) {
         val close = stringResource(Res.string.profile_close)
         CoffeePeekSwipeDismissModalBottomSheet(onDismissRequest = { section = null }, dismissDescription = close, maxSheetHeightFraction = 0.9f) {
@@ -327,7 +330,9 @@ internal fun PublicProfileScreen(
                 ProfileSection.Activity -> Column(
                     Modifier.fillMaxWidth().weight(1f, fill = false).verticalScroll(rememberScrollState()).padding(16.dp).navigationBarsPadding(),
                 ) {
-                    if (viewingOwn && own != null) own.activityCalendar({ section = null; onOpenShop(it) }, { section = null; own.onOpenCheckIns() }) else PublicProfileActivityCalendar(
+                    if (viewingOwn && own != null) CompositionLocalProvider(LocalViewModelStoreOwner provides requireNotNull(activityOwner)) {
+                        own.activityCalendar({ section = null; onOpenShop(it) }, { section = null; own.onOpenCheckIns() })
+                    } else PublicProfileActivityCalendar(
                         activity = profile.activity,
                         selectedMonth = state.activityMonth,
                         isLoading = state.isLoadingActivity,

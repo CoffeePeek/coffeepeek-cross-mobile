@@ -14,4 +14,5 @@ internal fun checkInHistoryModule(apiBaseUrl: String = Constants.BASE_URL) = mod
     single { AppCheckInHistoryCalendar() }
     single<HistoryHomeEditorFactory> { historyHomeEditorFactory(get(), get(), get()) }
     single { FeatureCheckInHistoryScreenRenderer(get(), get(), get(), get(), get()) }
+    single { FeatureProfileActivityRenderer(get(), get(), get(), get()) }
 }
