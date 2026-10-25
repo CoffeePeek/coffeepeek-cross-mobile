@@ -37,24 +37,18 @@ class AppUpdateController(
     val state = mutableState.asStateFlow()
     private var dismissed: Long? = null
 
+    val checksEnabled: Boolean get() = environment.checksEnabled
+
     fun check(manual: Boolean = false) {
+        if (!checksEnabled) {
+            mutableState.value = UpdateUiState(manual = manual)
+            return
+        }
         if (mutableState.value.checking) return
         mutableState.value = mutableState.value.copy(checking = true, message = null)
         scope.launch {
             try {
-                val current = currentVersion
-                val policy = if (current != null) repository.fetch() else null
-                dismissed = dismissed ?: repository.dismissedVersion()
-                val available = policy?.takeIf { current != null && it.isAvailable(current) }
-                mutableState.value = UpdateUiState(
-                    update = available,
-                    showPrompt = available?.shouldPrompt(current!!, dismissed, manual) == true,
-                    manual = manual,
-                    checkFailed = manual && policy == null,
-                    message = if (manual && available == null) {
-                        if (policy == null) "Не удалось проверить обновления. Попробуйте позже." else "Установлена актуальная версия"
-                    } else null,
-                )
+                checkPolicy(manual)
             } catch (error: Exception) {
                 if (error is CancellationException && error !is TimeoutCancellationException) throw error
                 mutableState.value = UpdateUiState(manual = manual, checkFailed = manual,
@@ -63,7 +57,28 @@ class AppUpdateController(
         }
     }
 
+    private suspend fun checkPolicy(manual: Boolean) {
+        val current = currentVersion
+        val policy = if (current != null) repository.fetch() else null
+        if (!checksEnabled) {
+            mutableState.value = UpdateUiState(manual = manual)
+            return
+        }
+        dismissed = dismissed ?: repository.dismissedVersion()
+        val available = policy?.takeIf { current != null && it.isAvailable(current) }
+        mutableState.value = UpdateUiState(
+            update = available,
+            showPrompt = available?.shouldPrompt(current!!, dismissed, manual) == true,
+            manual = manual,
+            checkFailed = manual && policy == null,
+            message = if (manual && available == null) {
+                if (policy == null) "Не удалось проверить обновления. Попробуйте позже." else "Установлена актуальная версия"
+            } else null,
+        )
+    }
+
     fun takeNativePrompt(transfer: InstallationState): AppUpdate? {
+        if (!checksEnabled) return null
         val pending = mutableState.value
         if (!pending.showPrompt) return null
         mutableState.value = pending.copy(showPrompt = false)
@@ -73,6 +88,7 @@ class AppUpdateController(
     }
 
     fun dismiss() {
+        if (!checksEnabled) return
         val update = mutableState.value.update ?: return
         if (update.isRequired(currentVersion ?: return)) return
         dismissed = update.versionCode

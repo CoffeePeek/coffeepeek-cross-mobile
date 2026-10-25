@@ -63,7 +63,7 @@ internal fun featureSettingsScreenRenderer(
     return FeatureSettingsScreenRenderer(
         tab = createSettingsEntry(
             account = AppSettingsAccountPort(sessions), theme = theme, cities = cities, updates = AppUpdateCheckPort(updates),
-            external = external, appInfo = SettingsAppInfo(AppConfig.versionName),
+            external = external, appInfo = SettingsAppInfo(AppConfig.versionName, updates.checksEnabled),
             slots = SettingsSlots(
                 guestCard = { onLogin, onRegister, modifier -> GuestAuthCard(onLogin, onRegister, modifier) },
                 notify = notify,

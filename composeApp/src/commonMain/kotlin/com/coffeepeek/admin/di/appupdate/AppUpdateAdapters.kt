@@ -8,10 +8,14 @@ import com.coffeepeek.room.repository.SettingRepository
 
 /** The installed version, platform and update channel come from the build configuration. */
 object AppConfigUpdateEnvironment : AppUpdateEnvironment {
+    override val checksEnabled: Boolean get() = appUpdateChecksEnabled(AppConfig.updatePlatform, AppConfig.isDebug)
     override val versionCode: Long? get() = AppConfig.versionCode
     override val platform: String get() = AppConfig.updatePlatform
     override val channel: String? get() = AppConfig.updateChannel
 }
+
+/** A local iOS development app is not an App Store installation. Android/Sandbox policies stay explicit. */
+internal fun appUpdateChecksEnabled(platform: String, debug: Boolean): Boolean = platform != "ios" || !debug
 
 /** Keeps the dismissed version in the app's settings table under the key earlier releases already use. */
 class SettingsDismissedUpdateStore(private val settings: SettingRepository) : DismissedUpdateStore {

@@ -88,6 +88,7 @@ internal fun AppUpdatePrompt(
     environment: AppUpdateEnvironment,
     installationEffect: @Composable () -> Unit,
 ) {
+    if (!environment.checksEnabled) return
     installationEffect()
     val transfer by installer.state.collectAsState()
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { controller.check() }

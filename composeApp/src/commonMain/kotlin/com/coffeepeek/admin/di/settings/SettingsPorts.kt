@@ -91,6 +91,7 @@ internal class AppUpdateCheckPort(private val updates: AppUpdateController) : Up
         .distinctUntilChanged()
 
     override suspend fun check(): UpdateCheckOutcome {
+        if (!updates.checksEnabled) return UpdateCheckOutcome.Disabled
         // An automatic check may already be running: the call below is then ignored, so wait for it and ask again.
         repeat(3) {
             updates.check(manual = true)

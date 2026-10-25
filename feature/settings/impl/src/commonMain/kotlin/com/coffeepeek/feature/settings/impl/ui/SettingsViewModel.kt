@@ -72,6 +72,7 @@ internal class SettingsViewModel(
                 UpdateCheckOutcome.UpToDate -> sendEvent(SettingsEvent.UpToDate)
                 UpdateCheckOutcome.Failed -> sendEvent(SettingsEvent.UpdateCheckFailed)
                 UpdateCheckOutcome.Available -> Unit
+                UpdateCheckOutcome.Disabled -> Unit
             }
         } finally {
             updateState { copy(manualUpdateCheck = false) }

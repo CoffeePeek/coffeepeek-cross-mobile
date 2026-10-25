@@ -1319,6 +1319,49 @@ GoogleService-Info.plist отсутствует. Приложение не ус�
 настоящие OAuth/push/аккаунты не проверялись. Gradle внутри Xcode ограничен 6
 workers; Release archive/signing и устройство не запускались.
 
+### Локальный iOS Debug: политика обновлений и аудит merge — 2026-10-25
+
+На базе 6ab9a959 локальный iOS bundle имеет CFBundleVersion=1 и
+CoffeePeekDebug=YES. AppUpdate использовал обычную серверную политику без
+различия development/install channel, поэтому локальная сборка могла считаться
+устаревшей. Номер версии не подменяется.
+
+AppUpdateEnvironment теперь сообщает checksEnabled: composition отключает его
+только для iOS Debug. Controller не запрашивает policy/dismissed storage, не
+предлагает даже required update при отключении; prompt не запускает native
+installation effect. Settings скрывает ручную проверку и не выдаёт ложный
+UpToDate/ошибку для Disabled. iOS Release и Android, включая Sandbox update
+fixtures, сохраняют прежние правила. Добавлены paired Settings previews.
+
+Проверки на базе 6ab9a959 + этот checkpoint:
+
+- Выбранный unit/contract набор: **94 tests / 13 suites**, 0 failures/errors/skips:
+  AppUpdate impl 21 / 4; Settings impl 26 / 4; app subset 47 / 5.
+  Пять новых регрессий проверяют disabled policy, поздний ответ required policy,
+  матрицу platform/debug, адаптер Settings и отсутствие ложных notifications.
+  Это отдельный subset, его нельзя суммировать с прежними 601 tests.
+- assembleDirectDebug/Sandbox прошли, включая packaged runtime-class guards и
+  Sandbox isolation. compileKotlinIosArm64, linkDebugFrameworkIosSimulatorArm64
+  и compileTestKotlinIosSimulatorArm64 успешны. Native tests скомпилированы,
+  не исполнены. Gradle последовательно с --max-workers=6.
+- Studio MCP не нашёл ошибок в изменённых AppUpdateController и SettingsScreen.
+  Preview rendering и ручная проверка баннера на устройстве ещё не выполнены;
+  приложение не устанавливалось/не запускалось, настоящий version endpoint,
+  аккаунт и данные не затрагивались.
+- Полный unsigned xcodebuild Debug для generic iOS Simulator/arm64 прошёл:
+  BUILD SUCCEEDED. Bundle подтверждает CoffeePeekDebug=YES; использован текущий
+  working tree с сохранёнными пользовательскими pbx изменениями. Signing,
+  установка/запуск, App Store и release archive не проверялись.
+
+Повторный аудит merge adc0f642: fresh origin/develop остаётся 105b8994,
+origin/main — 16724b7e; оба полностью входят в HEAD. Unmerged index entries и
+conflict markers отсутствуют. У десяти файлов Discovery после нормализации
+платформенных imports/resources/previews совпадает логика с develop. Новые
+notification handoff/account guards, Contributions DI и MovePhoto Shop/Home
+сохранены. В merge не было изменений project.pbxproj. PR #195 MERGEABLE;
+CI на 6ab9a959 ещё IN_PROGRESS при этой проверке, это не заявление об успехе CI.
+Пользовательские локальные pbx изменения сохранены вне checkpoint commit.
+
 ## 1. Принципы (решение 2026-10-24)
 
 - **iOS остаётся как в проде.** Нативная оболочка: `UITabBarController`, пять `UINavigationController`-стеков, `NativeScreenController`

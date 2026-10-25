@@ -174,21 +174,7 @@ internal fun SettingsContent(
                 )
                 StoreReviewRow(external)
             }
-            Spacer(Modifier.height(CoffeePeekDimens.settingsSectionSpacing))
-            CoffeePeekSettingsSection(title = stringResource(Res.string.settings_section_update)) {
-                val update = state.update
-                CoffeePeekSettingsRow(
-                    CoffeePeekIcons.Info,
-                    stringResource(if (state.updateBusy) Res.string.settings_update_checking else Res.string.settings_update_check),
-                    if (update.updateAvailable) stringResource(Res.string.settings_update_available)
-                    else stringResource(Res.string.settings_version, appInfo.versionName),
-                    onCheckForUpdates,
-                    enabled = !state.updateBusy,
-                    trailing = if (state.updateBusy) {
-                        { CoffeePeekActivityIndicator(stringResource(Res.string.settings_loading), size = CoffeePeekDimens.settingsIconSize) }
-                    } else null,
-                )
-            }
+            SettingsUpdateSection(state, appInfo, onCheckForUpdates)
             Text(
                 stringResource(Res.string.settings_version, appInfo.versionName), style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -198,6 +184,26 @@ internal fun SettingsContent(
             )
             Spacer(Modifier.height(CoffeePeekDimens.spacing8 + bottomClearance))
         }
+    }
+}
+
+@Composable
+private fun SettingsUpdateSection(state: SettingsState, appInfo: SettingsAppInfo, onCheckForUpdates: () -> Unit) {
+    if (!appInfo.canCheckForUpdates) return
+    Spacer(Modifier.height(CoffeePeekDimens.settingsSectionSpacing))
+    CoffeePeekSettingsSection(title = stringResource(Res.string.settings_section_update)) {
+        val update = state.update
+        CoffeePeekSettingsRow(
+            CoffeePeekIcons.Info,
+            stringResource(if (state.updateBusy) Res.string.settings_update_checking else Res.string.settings_update_check),
+            if (update.updateAvailable) stringResource(Res.string.settings_update_available)
+            else stringResource(Res.string.settings_version, appInfo.versionName),
+            onCheckForUpdates,
+            enabled = !state.updateBusy,
+            trailing = if (state.updateBusy) {
+                { CoffeePeekActivityIndicator(stringResource(Res.string.settings_loading), size = CoffeePeekDimens.settingsIconSize) }
+            } else null,
+        )
     }
 }
 
@@ -266,3 +272,14 @@ private fun SettingsGuestPreview() = CoffeePeekTheme {
         SettingsContent(SettingsState(false, ThemeMode.SYSTEM), previewNavigation, previewExternal, previewSlots, SettingsAppInfo("1.0"), Dp.Hairline, {})
     }
 }
+
+@Composable
+private fun SettingsDevelopmentPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
+    Surface {
+        SettingsContent(SettingsState(true, ThemeMode.SYSTEM), previewNavigation, previewExternal, previewSlots,
+            SettingsAppInfo("1.0", canCheckForUpdates = false), Dp.Hairline, {})
+    }
+}
+
+@Preview @Composable private fun SettingsDevelopmentLightPreview() = SettingsDevelopmentPreview(false)
+@Preview @Composable private fun SettingsDevelopmentDarkPreview() = SettingsDevelopmentPreview(true)
