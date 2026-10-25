@@ -36,6 +36,7 @@ internal class SandboxApplicationBackend(private val today: LocalDate, private v
     }
     private val shopNames = mapOf("sandbox-cafe" to "Sandbox Cafe", "sandbox-lab" to "Sandbox Lab")
     private val contributionStore = SandboxContributionsBackend(today, shopNames.keys)
+    private val notificationStore = SandboxNotificationsBackend(today)
     private val discoveryStore = SandboxDiscoveryBackend({ populated }, { favorites }, ::photo, ::address, ::catalog)
     private val favorites = linkedSetOf("coffee_shop:sandbox-cafe", "roaster:sandbox-roaster", "drink:cappuccino")
     private var username = "Sandbox"
@@ -64,6 +65,7 @@ internal class SandboxApplicationBackend(private val today: LocalDate, private v
         feed = SandboxFeed.Single; laterPageFailed = false; generated = null
         this.populated = populated
         contributionStore.reset(populated)
+        notificationStore.reset(populated)
         discoveryStore.reset()
         others.clear(); blocked.clear(); blocksRevision++
         friendFollowing = false; deletionRequest = null
@@ -78,6 +80,7 @@ internal class SandboxApplicationBackend(private val today: LocalDate, private v
         val path = request.url.encodedPath.lowercase()
         val method = request.method
         val input = body as? JsonObject ?: buildJsonObject {}
+        notificationStore.handle(path, method, input)?.let { return it }
         if (path == "/api/v1/me/blocks" && method == HttpMethod.Get) return blockPage(request)
         if (path.startsWith("/api/v1/me/blocks/") && method in listOf(HttpMethod.Put, HttpMethod.Delete)) {
             val id = path.removePrefix("/api/v1/me/blocks/")

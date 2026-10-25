@@ -19,6 +19,7 @@ import com.coffeepeek.admin.sandbox.compose.SandboxScreen
 class SandboxActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        if (savedInstanceState == null) com.coffeepeek.admin.notifications.openNotificationIntent(intent)
         enableEdgeToEdge()
         val fresh = savedInstanceState == null
         setContent {
@@ -57,5 +58,11 @@ class SandboxActivity : ComponentActivity() {
 
     override fun startActivity(intent: Intent, options: Bundle?) {
         (application as SandboxApplication).blockedExternalAction()
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        com.coffeepeek.admin.notifications.openNotificationIntent(intent)
     }
 }

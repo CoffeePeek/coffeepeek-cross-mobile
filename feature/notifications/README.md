@@ -21,9 +21,9 @@ the shared business code. The legacy modules have no dependency on this feature.
 
 The public API exposes immutable presentation state and actions. Domain models,
 repositories, transport DTOs and the presenter implementation remain internal.
-The Compose renderer temporarily lives in composeApp/feature/notifications/ui with
-the other application renderers because Cp controls and native sheets are still there.
-It consumes only the feature API. Android/shared and native iOS root composition pass
+Android's Compose renderer lives in notifications/impl and uses core/design-system;
+composeApp owns its root navigation adapter and native intent handoff. The remaining
+legacy shared renderer serves iOS. Android/shared and native iOS root composition pass
 the bell into the community header through a Composable slot; the community feature
 does not import notification implementation or require its DI binding in isolation.
 Account/session changes clear the inbox and fence
@@ -34,3 +34,11 @@ date groups, read/unread rows, pagination and snapshot-bounded “read all”. T
 works with push disabled or OS authorization denied. Supported types are ShopApproved,
 ShopRejected, RoasterApproved, RoasterRejected, CheckInModeration, CorrectionModeration,
 NewShop, Inactivity and General; unknown future types display as General.
+
+Android rows with supported entity metadata remain actionable after reading. The API
+resolves an owned notification through GET /api/v1/me/notifications/{id}/destination;
+transport DTOs and entity identifiers stay inside the feature. Its public destination
+contract distinguishes published shop slugs from correction/submission IDs. Application
+composition resolves contributions and owns cross-feature routing. Native push taps
+wait for root/session readiness and discard another account's or generation's result.
+Errors retain the sheet for retry. Deploy the additive Account endpoint before this client.

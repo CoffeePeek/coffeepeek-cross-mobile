@@ -6,6 +6,9 @@ import androidx.compose.runtime.Composable
 interface NotificationsRenderer {
     @Composable
     fun Bell()
+
+    @Composable
+    fun HandlePendingOpen(isLoggedIn: Boolean) = Unit
 }
 
 internal object LegacyNotificationsRenderer : NotificationsRenderer {

@@ -85,6 +85,7 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun handleAppLink(intent: Intent) {
+        com.coffeepeek.admin.notifications.openNotificationIntent(intent)
         if (intent.action != Intent.ACTION_VIEW) return
         appLinkScreen(intent.dataString ?: return)?.let(Navigator::openAppLink)
     }

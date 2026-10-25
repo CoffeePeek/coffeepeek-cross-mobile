@@ -30,12 +30,12 @@ internal fun NotificationRow(item: NotificationItem, enabled: Boolean, onClick: 
     val colors = MaterialTheme.colorScheme
     val (icon, palette) = notificationAppearance(item)
     val readDescription = stringResource(if (item.read) R.string.notifications_read else R.string.notifications_unread)
-    val readAction = stringResource(R.string.notifications_mark_read)
+    val clickAction = stringResource(if (item.canOpen) R.string.notifications_open else R.string.notifications_mark_read)
     Surface(shape = RoundedCornerShape(CoffeePeekDimens.radiusLg),
         color = if (item.read) colors.surfaceVariant.copy(alpha = .3f) else colors.primary.copy(alpha = .08f),
         border = BorderStroke(1.dp, if (item.read) colors.outlineVariant else colors.primary.copy(alpha = .25f))) {
         Row(Modifier.fillMaxWidth().semantics { stateDescription = readDescription }
-            .clickable(enabled = enabled && !item.read, role = Role.Button, onClickLabel = readAction, onClick = onClick)
+            .clickable(enabled = enabled && (item.canOpen || !item.read), role = Role.Button, onClickLabel = clickAction, onClick = onClick)
             .padding(CoffeePeekDimens.spacing4), horizontalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing3)) {
             CoffeePeekIconBadge(icon, palette)
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing2)) {
@@ -45,6 +45,7 @@ internal fun NotificationRow(item: NotificationItem, enabled: Boolean, onClick: 
                 Text(localDateTime(item.createdAtUtc), style = MaterialTheme.typography.labelSmall, color = colors.onSurfaceVariant)
             }
             if (!item.read) Box(Modifier.padding(top = CoffeePeekDimens.spacing2).size(6.dp).background(colors.primary, CircleShape))
+            if (item.canOpen) Icon(CoffeePeekIcons.ChevronRight, null, Modifier.size(20.dp), tint = colors.onSurfaceVariant)
         }
     }
 }
@@ -66,7 +67,7 @@ private fun NotificationRowPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = 
     Column(verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing3)) {
         listOf(false, true).forEach { read ->
             NotificationRow(NotificationItem("preview", NotificationKind.ShopApproved, "Кофейня добавлена",
-                "Спасибо! Новая кофейня уже появилась на карте.", "2026-10-21T08:00:00Z", read), true, {})
+                "Спасибо! Новая кофейня уже появилась на карте.", "2026-10-21T08:00:00Z", read, canOpen = true), true, {})
         }
     }
 }

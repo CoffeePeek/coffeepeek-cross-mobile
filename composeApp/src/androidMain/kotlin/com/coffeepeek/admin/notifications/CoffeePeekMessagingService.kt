@@ -1,10 +1,8 @@
 package com.coffeepeek.admin.notifications
 
 import android.app.PendingIntent
-import android.content.Intent
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
-import com.coffeepeek.admin.MainActivity
 import com.coffeepeek.R
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
@@ -17,7 +15,7 @@ class CoffeePeekMessagingService : FirebaseMessagingService() {
         NativePushBridge.notificationReceived(message.data["userId"])
         val notice = message.notification ?: return
         val id = message.data["notificationId"] ?: message.messageId ?: return
-        val intent = Intent(this, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
+        val intent = notificationLaunchIntent(this, message.data)
         val pending = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
         val notification = NotificationCompat.Builder(this, AndroidPush.CHANNEL)
             .setSmallIcon(R.drawable.ic_stat_coffee_bean).setContentTitle(notice.title).setContentText(notice.body)
