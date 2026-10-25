@@ -1275,6 +1275,26 @@ Xcode/signing/устройство, реальный OAuth/Keychain/сервер
 Наличие единичных legacy visual slots не означает смену публичного reader на
 private. Fallback/legacy bridge не удаляются до общей ручной приёмки.
 
+### Исправление запуска iOS из Studio — 2026-10-25
+
+На базе adc0f642 подтверждён реальный startup аргумент Gradle в IDE:
+`--max-workers=`. Плагин разбирал shell-default `${GRADLE_MAX_WORKERS:-2}`
+из Xcode Build Phase как неизвестную переменную и терял значение.
+
+Лимит теперь задан Xcode build setting GRADLE_MAX_WORKERS=6 в Shared.xcconfig,
+а Build Phase ссылается на переменную без shell-default. TestFlight archive
+передаёт явный build setting GRADLE_MAX_WORKERS=1, сохраняя CI memory limit.
+Локальные пользовательские изменения project.pbxproj, включая IDE skip guard,
+не отменены и не включены в коммит исправления.
+
+Проверки: plutil project lint и git diff --check успешны; аргумент извлечён из
+настоящего Build Phase и проверен для значений 6/1; Gradle --version с
+--max-workers=6 завершился успешно. Чтение полного Xcode build settings
+не завершено: SwiftPM загрузка Firebase получила RPC/HTTP2 error; запущенный
+для этой проверки xcodebuild остановлен. Это отдельная сетевая ошибка,
+не успешная iOS-сборка. Приложение не собиралось/не запускалось, UI/аккаунт
+не затрагивались; Kotlin/Android код не менялся.
+
 ## 1. Принципы (решение 2026-10-24)
 
 - **iOS остаётся как в проде.** Нативная оболочка: `UITabBarController`, пять `UINavigationController`-стеков, `NativeScreenController`

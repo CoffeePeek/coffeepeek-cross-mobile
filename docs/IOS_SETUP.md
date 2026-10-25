@@ -144,6 +144,13 @@ open iosApp/iosApp.xcodeproj
 
 Xcode сам вызывает Gradle task `:composeApp:embedAndSignAppleFrameworkForXcode`, собирает Kotlin framework и затем SwiftUI-приложение. Первый запуск может занять несколько минут; повторные сборки используют кэш.
 
+Лимит Gradle workers задан Xcode-настройкой `GRADLE_MAX_WORKERS = 6` в
+`Configuration/Shared.xcconfig`. Для локального изменения укажите положительное
+число в `Local.xcconfig`; TestFlight workflow передаёт `GRADLE_MAX_WORKERS=1`
+как build setting. Не используйте shell-default вида `${GRADLE_MAX_WORKERS:-2}`
+в аргументах Gradle внутри Build Phase: KMP-плагин IDE может преобразовать его в
+пустой `--max-workers=`.
+
 В Xcode 27 отдельного `Simulator.app` может не быть: устройства открываются через `Window → Devices and Simulators` / Device Hub. Для сборки это не имеет значения.
 
 ## Запуск на реальном iPhone
