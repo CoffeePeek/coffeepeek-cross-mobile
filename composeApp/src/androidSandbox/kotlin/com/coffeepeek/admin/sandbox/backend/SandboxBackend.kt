@@ -27,6 +27,7 @@ internal class SandboxBackend(private val samplePhoto: ByteArray,
     private val reservations = mutableSetOf<String>()
     private val uploaded = mutableSetOf<String>()
     private val application = SandboxApplicationBackend(today, shopRows)
+    val contentReportCount get() = synchronized(lock) { application.submittedReports.size }
     /** Settings fixtures (see [SandboxApplicationBackend]); [reset] returns both to their defaults. */
     var updatePolicy: SandboxUpdatePolicy
         get() = application.updatePolicy

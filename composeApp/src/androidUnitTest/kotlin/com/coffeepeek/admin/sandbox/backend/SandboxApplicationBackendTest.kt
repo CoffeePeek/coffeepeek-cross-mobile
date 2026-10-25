@@ -80,6 +80,32 @@ private class LocalSession : SessionRepository {
 
 class SandboxApplicationBackendTest {
     @get:Rule val temporary = TemporaryFolder()
+
+    @Test fun migratedContentReportUsesOnlyTheLocalSandboxContract() = runTest { fixture { backend, client ->
+        val repository = com.coffeepeek.feature.contentreport.data.repository.createContentReportRepository(client.client)
+        val target = com.coffeepeek.feature.contentreport.domain.model.ContentReportTarget(
+            com.coffeepeek.feature.contentreport.domain.model.ContentReportKind.CheckIn, SandboxApplicationBackend.FRIEND_VISIT_ID)
+        repository.submit(target, "  Тестовая причина  ").getOrThrow()
+        assertEquals(1, backend.contentReportCount)
+        assertIs<MockEngine>(client.client.engine)
+        backend.reset(populated = true)
+        assertEquals(0, backend.contentReportCount)
+    } }
+
+    @Test fun locallyCreatedOwnCheckInCannotBeReportedEvenWithoutAuthorId() = runTest { fixture { backend, client ->
+        val created = client.client.post("/api/v1/check-ins") {
+            contentType(ContentType.Application.Json)
+            setBody(buildJsonObject { put("coffeeShopSlug", "sandbox-cafe"); put("text", "Локальный чекин") })
+        }.body<JsonObject>()["data"]!!.jsonObject
+        assertNull(created["authorId"])
+        val repository = com.coffeepeek.feature.contentreport.data.repository.createContentReportRepository(client.client)
+        val target = com.coffeepeek.feature.contentreport.domain.model.ContentReportTarget(
+            com.coffeepeek.feature.contentreport.domain.model.ContentReportKind.CheckIn, created["id"]!!.jsonPrimitive.content)
+        val failure = repository.submit(target, "Тестовая причина").exceptionOrNull()
+        assertEquals(com.coffeepeek.feature.contentreport.domain.model.ContentReportProblem.Forbidden,
+            assertIs<com.coffeepeek.feature.contentreport.domain.model.ContentReportFailure>(failure).problem)
+        assertEquals(0, backend.contentReportCount)
+    } }
     private suspend fun fixture(block: suspend (SandboxBackend, CoffeePeekClient) -> Unit) {
         val backend = SandboxBackend(byteArrayOf(1, 2, 3), today = LocalDate.parse("2026-10-18"))
         val client = CoffeePeekClient(SandboxBackend.BASE_URL, temporary.newFolder().path, false,
@@ -530,7 +556,7 @@ class SandboxApplicationBackendTest {
         assertEquals(47 - 1 - 15, visible.size); assertTrue(visible.none { it.checkIn.authorId == friend })
         client.client.delete("/api/v1/me/blocks/$friend")
         assertEquals(47, feed.getFeed(100).getOrThrow().items.size)
-        // Votes work for generated posts too and keep their state; reports stay unimplemented in the Sandbox.
+        // Votes work for generated posts too and keep their state.
         val vote = json(client.client.put("/api/v1/check-ins/sandbox-feed-1/helpful"))
         assertTrue(vote["isHelpful"]!!.jsonPrimitive.boolean); assertEquals(2, vote["helpfulCount"]!!.jsonPrimitive.int)
         assertEquals(1, json(client.client.delete("/api/v1/check-ins/sandbox-feed-1/helpful"))["helpfulCount"]!!.jsonPrimitive.int)

@@ -24,6 +24,8 @@ import com.coffeepeek.admin.di.shop.FeatureShopDetailScreenRenderer
 import com.coffeepeek.admin.di.shop.FeatureShopCheckInListScreenRenderer
 import com.coffeepeek.admin.di.shop.shopBrowsingModule
 import com.coffeepeek.admin.di.checkinhistory.checkInHistoryModule
+import com.coffeepeek.admin.di.contentreport.contentReportModule
+import com.coffeepeek.admin.di.contentreport.FeatureContentReportRenderer
 import com.coffeepeek.admin.di.homecheckin.homeCheckInModule
 import android.widget.Toast
 import com.coffeepeek.admin.locator.Locator
@@ -45,6 +47,7 @@ internal fun initAndroidKoin(extraModules: List<org.koin.core.module.Module> = e
             shopBrowsingModule(),
             homeCheckInModule(),
             checkInHistoryModule(),
+            contentReportModule(),
             coffeeModule(),
         ) + extraModules,
         shopReportRendererFactory = { client ->
@@ -69,6 +72,7 @@ internal fun initAndroidKoin(extraModules: List<org.koin.core.module.Module> = e
                 visibility = get(), blockActions = get())
         },
         checkInRenderers = featureCheckInRendererFactories(),
+        contentReportRendererFactory = { get<FeatureContentReportRenderer>() },
         coffeeRendererFactory = { featureCoffeeScreenRenderer(get()) },
         publicProfileRendererFactory = { featurePublicProfileScreenRenderer(get(), get(), get(), get(), get()) },
         ownProfileRendererFactory = { featureOwnProfileScreenRenderer(get(), get(), get(), get(), get(), get(), get(), get(), get()) },

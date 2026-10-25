@@ -102,6 +102,10 @@ kotlin {
             implementation(project(module.feature.community.domain))
             implementation(project(module.feature.community.data))
             implementation(project(module.feature.community.impl))
+            implementation(project(module.feature.contentReport.api))
+            implementation(project(module.feature.contentReport.domain))
+            implementation(project(module.feature.contentReport.data))
+            implementation(project(module.feature.contentReport.impl))
             implementation(project(module.feature.contributions.api))
             implementation(project(module.feature.contributions.domain))
             implementation(project(module.feature.contributions.data))
@@ -394,6 +398,10 @@ androidComponents {
                 "com.coffeepeek.admin.di.discovery.FeatureDiscoveryScreenRendererKt",
                 "com.coffeepeek.feature.discovery.impl.DiscoveryEntriesImplKt",
                 "com.coffeepeek.feature.discovery.api.CheckInShopPickerEntry",
+                "com.coffeepeek.feature.contentreport.api.ContentReportEntry",
+                "com.coffeepeek.feature.contentreport.data.repository.ContentReportRepositoryFactoryKt",
+                "com.coffeepeek.feature.contentreport.impl.ContentReportApiImplKt",
+                "com.coffeepeek.admin.di.contentreport.FeatureContentReportRenderer",
                 "com.coffeepeek.feature.checkinhistory.api.ProfileActivityEntry",
                 "com.coffeepeek.feature.checkinhistory.impl.ProfileActivityApiImplKt",
                 "com.coffeepeek.admin.di.checkinhistory.FeatureProfileActivityRenderer",

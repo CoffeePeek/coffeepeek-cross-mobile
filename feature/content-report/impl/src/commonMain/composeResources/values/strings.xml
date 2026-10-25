@@ -1,0 +1,27 @@
+<resources>
+    <string name="content_report_title">Пожаловаться на чекин</string>
+    <string name="content_report_back">Назад</string>
+    <string name="content_report_prompt">Опишите проблему с чекином</string>
+    <string name="content_report_placeholder">Что не так с этим чекином?</string>
+    <string name="content_report_submit">Отправить</string>
+    <string name="content_report_loading">Отправка жалобы</string>
+    <string name="content_report_done">Готово</string>
+    <string name="content_report_preview_submit">Проверить форму</string>
+    <string name="content_report_preview_title">Превью жалобы</string>
+    <string name="content_report_preview_hint">Это пример публикации. Жалоба не будет отправлена на сервер.</string>
+    <string name="content_report_preview_success">Форма заполнена. Жалобы на примерные публикации не отправляются.</string>
+    <string name="content_report_success_title">Жалоба отправлена</string>
+    <string name="content_report_success">Спасибо. Мы проверим чекин.</string>
+    <string name="content_report_validation">Опишите проблему: от 1 до 2000 символов</string>
+    <string name="content_report_sign_in">Войдите в аккаунт, чтобы отправить жалобу</string>
+    <string name="content_report_check_in_sign_in">Войдите в аккаунт</string>
+    <string name="content_report_forbidden">Действие недоступно для этого чек-ина</string>
+    <string name="content_report_check_in_missing">Чек-ин удалён или больше недоступен</string>
+    <string name="content_report_review_missing">Отзыв удалён или больше недоступен</string>
+    <string name="content_report_rate_limit">Слишком много отправок. Попробуйте позже</string>
+    <string name="content_report_failed">Не удалось отправить жалобу. Попробуйте ещё раз</string>
+    <string name="content_report_check_in_failed">Не удалось выполнить действие. Попробуйте ещё раз</string>
+    <string name="content_report_unconfirmed">Ответ сервера не получен. Жалоба могла быть отправлена. Повторная отправка в этой форме недоступна, чтобы избежать дубликата.</string>
+    <string name="content_report_access_failed">Не удалось проверить аккаунт. Попробуйте ещё раз.</string>
+    <string name="content_report_retry">Повторить</string>
+</resources>

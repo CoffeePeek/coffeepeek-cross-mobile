@@ -79,6 +79,8 @@ import com.coffeepeek.admin.ui.screen.checkins.CheckInHistoryScreenRenderer
 import com.coffeepeek.admin.ui.screen.checkins.CheckInCreateFlowRenderer
 import com.coffeepeek.admin.ui.screen.favorites.FavoritesViewModel
 import com.coffeepeek.admin.ui.screen.review.ReviewReportViewModel
+import com.coffeepeek.admin.ui.screen.review.ContentReportScreenRenderer
+import com.coffeepeek.admin.ui.screen.review.LegacyContentReportScreenRenderer
 import com.coffeepeek.admin.ui.screen.contributions.ContributionKind
 import com.coffeepeek.admin.ui.screen.contributions.MyContributionsViewModel
 import com.coffeepeek.admin.ui.screen.roaster.AddRoasterViewModel
@@ -112,6 +114,7 @@ fun initKoin(
     shopDetailRendererFactory: Scope.() -> ShopDetailScreenRenderer = { LegacyShopDetailScreenRenderer },
     shopCheckInListRendererFactory: Scope.() -> ShopCheckInListScreenRenderer = { LegacyShopCheckInListScreenRenderer },
     checkInRenderers: CheckInRendererFactories = CheckInRendererFactories(),
+    contentReportRendererFactory: Scope.() -> ContentReportScreenRenderer = { LegacyContentReportScreenRenderer },
     coffeeRendererFactory: Scope.() -> CoffeeScreenRenderer = { LegacyCoffeeScreenRenderer },
     roasterRendererFactory: Scope.() -> RoasterScreenRenderer = { roasterScreenRenderer(get(), get(), get()) },
     publicProfileRendererFactory: Scope.() -> PublicProfileScreenRenderer = { LegacyPublicProfileScreenRenderer },
@@ -144,7 +147,7 @@ fun initKoin(
         ),
         appModule(database.settingRepository, shopReportRendererFactory, shopGalleryRendererFactory,
             shopCheckInRendererFactory, shopDetailRendererFactory, shopCheckInListRendererFactory,
-            checkInRenderers, coffeeRendererFactory, roasterRendererFactory,
+            checkInRenderers, contentReportRendererFactory, coffeeRendererFactory, roasterRendererFactory,
             publicProfileRendererFactory, ownProfileRendererFactory, accountRendererFactory, settingsRendererFactory, appUpdateRendererFactory,
             authRendererFactory, communityRendererFactory, contributionsRendererFactory, discoveryRendererFactory, notificationsRendererFactory),
         imageModule(),
@@ -168,6 +171,7 @@ private fun appModule(
     shopDetailRendererFactory: Scope.() -> ShopDetailScreenRenderer,
     shopCheckInListRendererFactory: Scope.() -> ShopCheckInListScreenRenderer,
     checkInRenderers: CheckInRendererFactories,
+    contentReportRendererFactory: Scope.() -> ContentReportScreenRenderer,
     coffeeRendererFactory: Scope.() -> CoffeeScreenRenderer,
     roasterRendererFactory: Scope.() -> RoasterScreenRenderer,
     publicProfileRendererFactory: Scope.() -> PublicProfileScreenRenderer,
@@ -181,6 +185,7 @@ private fun appModule(
     discoveryRendererFactory: Scope.() -> DiscoveryScreenRenderer,
     notificationsRendererFactory: Scope.() -> NotificationsRenderer,
 ) = module {
+    single<ContentReportScreenRenderer> { contentReportRendererFactory() }
     single<CoffeeScreenRenderer> { coffeeRendererFactory() }
     single<RoasterScreenRenderer> { roasterRendererFactory() }
     single<PublicProfileScreenRenderer> { publicProfileRendererFactory() }

@@ -22,9 +22,9 @@ iOS-документы (`docs/IOS_NATIVE_EXPERIENCE.md`, `IOS_NATIVE_NAVIGATION.
 шторка, native header, date picker, alert, выбор фото, haptic, scroll-to-top, роли клавиатуры (AutoFill, «Готово»), UIMenu для ActionMenu, glass-кнопки, переключатель с haptic, спиннер, `CoffeePeekBackHandler`, `CoffeePeekScrollableColumn`; `CoffeePeekActionMenu` перенесён в commonMain. В checkpoint Coffee добавлено подключение UIKit segmented control к DS-капсуле.
 `CoffeePeekScrollableColumn` используется фильтрами Coffee. Не использовано экранами пока: `nativeAction` в header; native-иконки у части glass-кнопок и меню не проставлены.
 
-**Этап 2 — сессия: F23 и F24 готовы** (выход стирает старые строки; сбой удаления Keychain сообщается). Core session port вместо `SessionRepository` (~43 файла) — **не сделан**.
+**Этап 2 — сессия: F23 и F24 готовы** (выход стирает старые строки; сбой удаления Keychain сообщается). Core session port вместо `SessionRepository` (оставшиеся app-потребители legacy bridge) — **не сделан**.
 
-**Этап 3 — подключение на iOS: начат.** Через новые модули на iOS подключены: вкладка Settings (и три её подэкрана), окно обновления, колокольчик уведомлений, экраны входа, регистрации и восстановления пароля, **Community (вкладка «Лента»)**, **Discovery (вкладка «Поиск»)**, **Coffee (вкладка каталога и детали кофе)**, **Profile (собственный/публичный профиль, его чекины, редактирование и подтверждение удаления аккаунта)** и **Contributions (списки заявок, добавление кофейни/обжарщика, предложение правки, редактор и детали заявки)**, **Shop (кофейня, публичные чекины, галерея меню, форма чекина)** и **Shop-report (неточность в данных кофейни)**, **Check-in history (личная история, календарь и Home detail/editor внутри неё)** и **общий create flow (выбор типа + Home create)**, **выбор кофейни для чекина**, **личная Activity шторка и недельный обзор Profile**. Подключены также Google/Apple кнопки и существующие Swift-провайдеры (при доступной конфигурации); реальный OAuth ещё не проверен.
+**Этап 3 — подключение на iOS: начат.** Через новые модули на iOS подключены: вкладка Settings (и три её подэкрана), окно обновления, колокольчик уведомлений, экраны входа, регистрации и восстановления пароля, **Community (вкладка «Лента»)**, **Discovery (вкладка «Поиск»)**, **Coffee (вкладка каталога и детали кофе)**, **Profile (собственный/публичный профиль, его чекины, редактирование и подтверждение удаления аккаунта)** и **Contributions (списки заявок, добавление кофейни/обжарщика, предложение правки, редактор и детали заявки)**, **Shop (кофейня, публичные чекины, галерея меню, форма чекина)** и **Shop-report (неточность в данных кофейни)**, **Check-in history (личная история, календарь и Home detail/editor внутри неё)** и **общий create flow (выбор типа + Home create)**, **выбор кофейни для чекина**, **личная Activity шторка и недельный обзор Profile**, **контентные жалобы на чекин/совместимый отзыв**. Подключены также Google/Apple кнопки и существующие Swift-провайдеры (при доступной конфигурации); реальный OAuth ещё не проверен.
 На iOS Profile, Community, Discovery, Coffee, Contributions, Shop/Shop-report и личная история идут через feature-рендереры.
 В истории подключены Home detail/editor; общий выбор типа, Home create и выбор кофейни тоже используют feature entries. Favorites ещё использует текущий legacy entry;
 личная Activity использует отдельный entry истории; избранное и карточки в Profile сохраняют существующие slot providers.
@@ -36,9 +36,9 @@ iOS-документы (`docs/IOS_NATIVE_EXPERIENCE.md`, `IOS_NATIVE_NAVIGATION.
 4. Для сообщения проверки обновлений на iOS нет тоста: временно используется `ErrorHandler.showError`, нужно решение по UX.
 
 **Остаётся**
-- Этап 3: контентные жалобы и оставшиеся legacy follow-ups, Favorites (по решению продукта); ручная приёмка Community/Discovery/Coffee/Profile/Contributions/Shop/History и live-приёмка Apple/Google.
+- Этап 3: оставшиеся legacy follow-ups и Favorites (по решению продукта); ручная приёмка Community/Discovery/Coffee/Profile/Contributions/Shop/History и live-приёмка Apple/Google.
 - Ручная приёмка отдельной Activity шторки и недельного обзора Profile ещё нужна; public-only календарь Profile не получает private reader.
-- Контентная жалоба `ReportCheckIn`/`ReportReview` пока использует общий legacy ReviewReportScreen; это отдельный маршрут, а не мигрированный Shop-report.
+- Ручная приёмка контентных ReportCheckIn/ReportReview ещё нужна; они подключены к content-report, отдельно от Shop-report.
 - Этап 2: core session port.
 - Roaster: Xcode-линковка, симулятор, устройство.
 - Этап 5: удаление legacy — только после полной готовности и ручной приёмки.
@@ -949,6 +949,114 @@ Xcode/signing или device acceptance.
 них — Favorites по продуктовому решению и core session port. Удаление legacy
 остаётся после общей ручной приёмки.
 
+### Checkpoint: контентные ReportCheckIn / ReportReview — 2026-10-25
+
+Продолжение PR #195 на базе `221819cd`, та же ветка `feat/ios-build-foundation`.
+После fetch `origin/main=16724b7e` уже предок HEAD; `origin/develop=105b8994`
+не добавлялся в этот срез. Нового PR/ветки не создавали.
+
+Сверка и реализация:
+
+- Действующие входы — Shop detail, публичный список чекинов и карточки публичного
+  профиля → Screen.ReportCheckIn. У ReportReview сейчас нет найденного producer;
+  маршрут/параметр isPreview и старый review HTTP contract сохраняются для
+  совместимости, без восстановления снятой фичи. Community inline-report остаётся
+  своим текущим dialog flow. Ни один из них не является Shop-report неточностью.
+- Новый заполненный feature/content-report имеет api/domain/data/impl boundaries.
+  Ответственность, зависимости, consumers, скрытые детали и причины Gradle
+  isolation вместо packages описаны в README. Регистрация — прежний Modules.all;
+  composeApp commonMain собирает data/impl через lazy module/factory на Android/iOS.
+  UI/domain не импортируют Ktor/data/legacy, DTO и HTTP validation скрыты в data.
+  Core не зависит от новой фичи, нового app/DI framework нет.
+- Оба navigation hosts разрешают ContentReportScreenRenderer. Старые
+  ReviewReportScreen/ViewModel, их Koin factory и 2 unit tests сохранены как
+  fallback, не активный platform default. Идентификаторы маршрутов не менялись.
+- UI — typed MVI и stateless content с colocated light/dark previews. Используются
+  DS header/back handler, scroll/IME/insets, compact multiline field, button/loader.
+  Сохранены free text до 2000 UTF-16 units, trim перед submit, success/Done,
+  preview copy, размеры/отступы/форма поля; лимит не разрывает surrogate pair.
+  Pending/submitted form не редактируется и не отправляется повторно. Серверные
+  ошибки стали immutable presentation data, transport exceptions в State не лежат.
+  Строки принадлежат русскому values; новых категорий жалоб/продуктовых экранов нет.
+- Preview не создаёт account host, не читает сессию и не вызывает repository.
+  Он только валидирует текст и показывает прежнее локальное подтверждение.
+  Guest submit вызывает sign-in один раз до возврата; auth-flow/root navigation
+  остаются у приложения. Старое очищение credentials из requireAuthSession
+  не копируется в форму: она получает read-only SessionReader.
+- App host даёт отдельный child store и revocable account capability. Replacement,
+  logout/observation failure очищают draft/VM и отменяют работу; известный user ID
+  сохраняет форму при token renewal, без ID используется fail-closed token identity.
+  Проверки до/после операции, observer и ensureActive отбрасывают late result.
+  Buffered back/sign-in/retry эффекты привязаны к текущему surface owner; старый
+  callback не управляет новой формой. Ошибку наблюдения можно закрыть/повторить.
+- Data сохраняет POST /api/v1/check-ins/{id}/reports и
+  /api/CoffeeShopReviews/{id}/reports, JSON {text}, экранирование ID одним segment,
+  HTTP 201 + successful envelope/non-null data; Review дополнительно требует
+  непустой string receipt id. Pascal envelope aliases остаются. 401/403/404/429
+  получают прежние mode-specific сообщения. Business rejection может показать
+  envelope message; private exception details не становятся UI.
+- Lost/malformed acknowledgement, unexpected 2xx/5xx и неизвестная transport
+  ошибка считаются unconfirmed. Фича не повторяет POST сама и блокирует submit
+  в этой форме; это не глобальная дедупликация после новой формы/процесса.
+  Нормальный auth-refresh клиента не заменён, idempotency сервера не придуман.
+- Analytics inventory: старый экран/VM не отправлял собственных report/field/
+  submit events. Root route/screen exposure, native controller и вызывающие
+  карточки остаются владельцами. Второго SDK/новой схемы нет, настоящие события
+  не отправлялись. Community dialog и его analytics не менялись.
+- Sandbox теперь хранит check-in reports только в памяти, валидирует текст/
+  POST и запрещает own records; reset очищает reports. Найденный edge case —
+  созданный локально visit без authorId — сначала воспроизведён unit test
+  (неправильный успешный ответ), затем закрыт проверкой принадлежности visits.
+  Это исправление fixture, не свидетельство ошибки deployed backend.
+  У review report нет активного Sandbox producer/набора отзывов; его контракт
+  проверен MockEngine, реальный dataset не фабриковался.
+
+Проверки (Mac/JBR 21, 2026-10-25, source поверх `221819cd`):
+
+- Новая фича: domain **2 tests / 1 suite**, data **11 / 1**, impl **13 / 1**;
+  app subset `*ContentReport*`, `*ReviewReport*`, `*SandboxApplicationBackendTest*`
+  — **44 / 6**. Итого **70 feature/app tests**, 0 failures/errors/skips.
+  Дополнительно build-logic-utils:test — **4 / 1**, также 0 failures/errors/skips.
+  Реальные UI/instrumented/screenshot tests и test-only Activities/APK не создавались.
+- Первый app test compile нашёл reset() без обязательного populated argument —
+  исправлен явным populated=true. После общего зелёного прогона новый отдельный
+  own-report regression был красным, как ожидалось; после store-ownership fix
+  повторён весь app subset и Sandbox assembly, всё успешно. Финальная проверка
+  общего UI нашла жёлтый default loader на жёлтой кнопке: выставлены 24dp и
+  inherited button content color. После этого повторены impl/app unit subset,
+  обе Android assemblies/guards, iOS arm64 compile и simulator framework link.
+- assembleDirectDebug/Sandbox, runtime-class checks и Sandbox isolation успешны.
+  Guard дополнен report API/data factory/impl factory/app renderer.
+  compileKotlinIosArm64 и linkDebugFrameworkIosSimulatorArm64 успешны;
+  compileTestKotlinIosSimulatorArm64 для app и трёх новых domain/data/impl modules
+  успешны. Native tests скомпилированы, не исполнены. Gradle последовательно,
+  --max-workers=6; прежние preview/expect-actual/bundle-ID warnings остаются.
+- Studio MCP прочитал legacy screen; новую domain file inspection не выполнил:
+  IDE ещё считает новые modules вне content roots, требуется Gradle sync.
+  CLI compilation/tests прошли; IDE/preview rendering не объявляется проверенным.
+  CI all-project testDebugUnitTest включает новые модули автоматически; CI здесь
+  не запускался и его результат не выводится из локальных checks.
+- SHA-256 APK: Debug `cbda1544fdced88ea37d6491cf4f9a7af8d8e12bd9618518e9cfb259d99d21e0`;
+  Sandbox `7fe626ebff70f2d0437558684c0697f5e0f51423ecefc4ab2465d591f15c74ab`.
+  Приложения не устанавливались/не запускались. Реальные reports, credentials,
+  аккаунты, согласия и данные сервера не менялись; только in-memory fixtures.
+
+Открытые gates: ручная Sandbox/iOS-приёмка обоих entry modes/preview, light/dark,
+крупный шрифт/VoiceOver, IME/emoji/инсеты/native back, pending/back/return,
+guest auth/401, replacement/renewal, success/rejection/unconfirmed. Live moderation,
+analytics, Xcode/signing/устройство, Google/Apple и Keychain остаются отдельной
+приёмкой. Сборки/fake scenarios её не сертифицируют.
+
+Следующий срез — **оставшиеся потребители legacy SessionRepository bridge**.
+Он уже extends core/session SessionStore; новый store создавать не нужно.
+Текущий Kotlin-import scan app common/android/ios + feature нашёл 25 файлов,
+включая legacy fallback. Сначала разделить активные analytics/realtime/media/
+notification/author-blocking/navigation adapters и оставляемые legacy VM,
+перевести первые на узкие SessionReader/SessionStore, сохранить account/consent
+и cancellation guards. Это не разрешение переписывать старые экраны или удалять
+fallback до приёмки. Favorites iOS — по продуктовому решению; затем общая ручная
+приёмка и только после неё удаление legacy.
+
 ## 1. Принципы (решение 2026-10-24)
 
 - **iOS остаётся как в проде.** Нативная оболочка: `UITabBarController`, пять `UINavigationController`-стеков, `NativeScreenController`
@@ -1022,7 +1130,7 @@ Xcode/signing или device acceptance.
 - **F23:** при secure=A и Room SESSION=B после logout следующий store импортирует B; сохранять приоритет secure store.
 - **F9:** классификация pre-send ошибок Darwin для жалобы на кофейню; не считать любую Darwin-ошибку безопасной для повтора.
 - Koin native-линковка (TestFlight-старт, `composeApp/IOS_STARTUP_FIX.md`): фикс не проверен на устройстве.
-- Core session port вместо `SessionRepository` (~43 файла) — первый блокер удаления legacy.
+- Core session port вместо `SessionRepository` (оставшиеся app-потребители legacy bridge) — первый блокер удаления legacy.
 
 ## 4. Порядок работ (внутри одного большого PR)
 

@@ -11,6 +11,8 @@ import com.coffeepeek.admin.di.shop.shopCheckInModule
 import com.coffeepeek.admin.di.shop.shopFavoriteIntent
 import org.koin.core.scope.Scope
 import com.coffeepeek.admin.di.checkinhistory.checkInHistoryModule
+import com.coffeepeek.admin.di.contentreport.contentReportModule
+import com.coffeepeek.admin.di.contentreport.FeatureContentReportRenderer
 import com.coffeepeek.admin.di.homecheckin.homeCheckInModule
 import com.coffeepeek.feature.shopreport.data.repository.createShopIssueReportRepository
 import com.coffeepeek.feature.shopreport.impl.createShopReportEntry
@@ -34,9 +36,10 @@ import com.coffeepeek.admin.utils.ErrorHandler
 
 actual fun initPlatformKoin() {
     initKoin(
-        platformModules = listOf(serverFavoriteShopsModule(), coffeeModule(), shopBrowsingModule(), shopCheckInModule(AppShopCheckInDateFormatter()), homeCheckInModule(), checkInHistoryModule()),
+        platformModules = listOf(serverFavoriteShopsModule(), coffeeModule(), shopBrowsingModule(), shopCheckInModule(AppShopCheckInDateFormatter()), homeCheckInModule(), checkInHistoryModule(), contentReportModule()),
         // Owners move to their migrated modules one at a time; the others keep the legacy renderers.
         checkInRenderers = featureCheckInRendererFactories(),
+        contentReportRendererFactory = { get<FeatureContentReportRenderer>() },
         shopReportRendererFactory = ::iosShopReportRenderer,
         shopGalleryRendererFactory = ::iosShopGalleryRenderer,
         shopCheckInRendererFactory = { FeatureShopCheckInFormRenderer(get()) },

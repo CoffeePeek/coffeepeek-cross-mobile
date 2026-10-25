@@ -36,6 +36,8 @@ internal class SandboxApplicationBackend(private val today: LocalDate, private v
     }
     private val shopNames = mapOf("sandbox-cafe" to "Sandbox Cafe", "sandbox-lab" to "Sandbox Lab")
     private val contributionStore = SandboxContributionsBackend(today, shopNames.keys)
+    private val contentReports = SandboxContentReportsBackend()
+    val submittedReports get() = contentReports.records
     private val discoveryStore = SandboxDiscoveryBackend({ populated }, { favorites }, ::photo, ::address, ::catalog)
     private val favorites = linkedSetOf("coffee_shop:sandbox-cafe", "roaster:sandbox-roaster", "drink:cappuccino")
     private var username = "Sandbox"
@@ -60,6 +62,7 @@ internal class SandboxApplicationBackend(private val today: LocalDate, private v
         set(value) = contributionStore.select(value, populated)
     private var laterPageFailed = false
     fun reset(populated: Boolean) {
+        contentReports.clear()
         updatePolicy = SandboxUpdatePolicy.UpToDate; cities = SandboxCities.Single; authPolicy = SandboxAuthPolicy.Works
         feed = SandboxFeed.Single; laterPageFailed = false; generated = null
         this.populated = populated
@@ -232,7 +235,8 @@ internal class SandboxApplicationBackend(private val today: LocalDate, private v
                 HttpMethod.Put, HttpMethod.Delete -> setHelpful(old, method == HttpMethod.Put)
                 else -> HttpStatusCode.MethodNotAllowed to envelope(JsonNull, false)
             }
-            if (path.endsWith("/reports")) return null
+            if (path.endsWith("/reports")) return contentReports.submit(method, id,
+                old in visits || old["authorId"]?.jsonPrimitive?.content == SELF_ID, input["text"]?.jsonPrimitive?.content.orEmpty())
             if (method == HttpMethod.Delete) { visits.remove(old); return ok(JsonNull) }
             val updated = JsonObject(old + input)
             visits[visits.indexOf(old)] = updated
