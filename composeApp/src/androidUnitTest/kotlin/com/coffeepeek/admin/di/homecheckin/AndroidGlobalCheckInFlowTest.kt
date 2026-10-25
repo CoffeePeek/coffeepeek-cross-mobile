@@ -4,7 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.ViewModelStore
 import com.coffeepeek.admin.analytics.*
-import com.coffeepeek.admin.di.checkinhistory.AndroidCheckInHistorySession
+import com.coffeepeek.admin.di.checkinhistory.CheckInHistorySession
 import com.coffeepeek.admin.di.shop.CheckInTestSessions
 import com.coffeepeek.domain.model.Session
 import com.coffeepeek.domain.repository.SessionRepository
@@ -92,7 +92,7 @@ class AndroidGlobalCheckInFlowTest {
         val f = fixture(accepted = true)
         f.model.home()
         val tracker = assertNotNull(f.handoffs.single())
-        val adapter = AndroidHomeCheckInAnalytics(f.model::canAccess, false, CheckInSource.Global, tracker)
+        val adapter = AppHomeCheckInAnalytics(f.model::canAccess, false, CheckInSource.Global, tracker)
         adapter.record(com.coffeepeek.feature.homecheckin.impl.ui.data.HomeCheckInEditorMetric.Opened)
         tracker.submit(); tracker.saved("Private", false)
         f.model.saved(f.model.homeDestination(), "created")

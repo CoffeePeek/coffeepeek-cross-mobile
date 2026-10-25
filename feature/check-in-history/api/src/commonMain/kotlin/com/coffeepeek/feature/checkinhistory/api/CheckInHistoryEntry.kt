@@ -25,8 +25,8 @@ interface CheckInHistoryEntry {
         onOpenHome: (id: String) -> Unit,
         onCreateShop: () -> Unit,
         onCreateHome: () -> Unit,
-        contentGeneration: Int = 0,
-        onCreatePickerOpened: () -> Unit = {},
-        onCreatePickerCancelled: () -> Unit = {},
+        contentGeneration: Int,
+        onCreatePickerOpened: () -> Unit,
+        onCreatePickerCancelled: () -> Unit,
     )
 }

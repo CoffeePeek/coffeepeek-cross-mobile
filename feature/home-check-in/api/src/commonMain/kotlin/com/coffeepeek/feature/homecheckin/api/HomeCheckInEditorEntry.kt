@@ -20,6 +20,6 @@ interface HomeCheckInEditorEntry {
         onClose: () -> Unit,
         onSaved: (preparationId: String, visibilityUnconfirmed: Boolean) -> Unit,
         onDismissAllowedChange: (Boolean) -> Unit,
-        modifier: Modifier = Modifier,
+        modifier: Modifier,
     )
 }

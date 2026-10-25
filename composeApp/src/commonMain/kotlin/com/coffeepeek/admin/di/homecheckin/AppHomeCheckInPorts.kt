@@ -1,6 +1,6 @@
 package com.coffeepeek.admin.di.homecheckin
 
-import com.coffeepeek.admin.di.checkinhistory.AndroidCheckInHistorySession
+import com.coffeepeek.admin.di.checkinhistory.CheckInHistorySession
 import com.coffeepeek.admin.analytics.safeAnalyticsError
 import com.coffeepeek.admin.feature.catalog.api.BrewMethodCatalog
 import com.coffeepeek.admin.feature.catalog.api.catalogBrewMethodSlug
@@ -11,8 +11,8 @@ import com.coffeepeek.feature.homecheckin.impl.ui.data.*
 import kotlinx.coroutines.CancellationException
 
 /** Current catalogue implementation stays app-owned; late/revoked results never escape its lease. */
-internal class AndroidHomeCheckInCatalog(
-    private val lease: AndroidCheckInHistorySession,
+internal class AppHomeCheckInCatalog(
+    private val lease: CheckInHistorySession,
     private val picker: CoffeePicker,
     private val methods: BrewMethodCatalog,
 ) : HomeCheckInEditorCatalog {
@@ -43,8 +43,8 @@ private fun <T> Result<T>.homeCatalogResult(): Result<T> = fold({ Result.success
 })
 
 /** Guards the prepared repository without routing writes back to the legacy Home writer. */
-internal class AndroidHomeCheckInRepository(
-    private val lease: AndroidCheckInHistorySession,
+internal class AppHomeCheckInRepository(
+    private val lease: CheckInHistorySession,
     private val source: HomePreparationRepository,
 ) : HomePreparationRepository {
     override suspend fun detail(id: String) = lease.withCurrentAccount { source.detail(id) }

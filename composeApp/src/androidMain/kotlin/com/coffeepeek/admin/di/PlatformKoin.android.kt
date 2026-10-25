@@ -24,7 +24,7 @@ import com.coffeepeek.admin.di.shop.FeatureShopDetailScreenRenderer
 import com.coffeepeek.admin.di.shop.FeatureShopCheckInListScreenRenderer
 import com.coffeepeek.admin.di.shop.shopBrowsingModule
 import com.coffeepeek.admin.di.checkinhistory.checkInHistoryModule
-import com.coffeepeek.admin.di.checkinhistory.AndroidCheckInHistoryScreenRenderer
+import com.coffeepeek.admin.di.checkinhistory.FeatureCheckInHistoryScreenRenderer
 import com.coffeepeek.admin.di.homecheckin.homeCheckInModule
 import com.coffeepeek.admin.di.homecheckin.AndroidCheckInCreateFlowRenderer
 import android.widget.Toast
@@ -70,7 +70,7 @@ internal fun initAndroidKoin(extraModules: List<org.koin.core.module.Module> = e
             FeatureShopCheckInListScreenRenderer(sessions = get(), users = get(), details = get(), votes = get(),
                 visibility = get(), blockActions = get())
         },
-        checkInHistoryRendererFactory = { get<AndroidCheckInHistoryScreenRenderer>() },
+        checkInHistoryRendererFactory = { get<FeatureCheckInHistoryScreenRenderer>() },
         checkInCreateFlowRendererFactory = { get<AndroidCheckInCreateFlowRenderer>() },
         coffeeRendererFactory = { featureCoffeeScreenRenderer(get()) },
         publicProfileRendererFactory = { featurePublicProfileScreenRenderer(get(), get(), get(), get(), get()) },

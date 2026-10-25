@@ -1,5 +1,13 @@
 # Combined personal check-in history — Android-first migration
 
+## iOS history activation — 2026-10-25
+
+The combined personal-history route now uses migrated feature entries on iOS,
+including its Home detail/editor overlays and common account/date/photo adapters.
+Global creation and Profile Activity preview remain separate migration slices.
+Legacy fallback remains until acceptance. Current checks and device/server gates:
+[iOS migration plan](../IOS_MIGRATION_PLAN.md). Older notes below are historical.
+
 ## Current status — Android route activated, 2026-10-16
 
 All three existing Android routes now resolve the migrated combined entry:

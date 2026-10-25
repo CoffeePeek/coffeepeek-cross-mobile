@@ -264,7 +264,10 @@ internal fun previewHomeEditorMedia() = HomeCheckInEditorMedia(
 internal fun previewHomeEditorState() = HomeCheckInEditorState(isReady = true,
     draft = HomePreparationInput(preparedAt = "2026-10-17T07:30:00Z", preparedOn = "2026-10-17", tasteScore = 5))
 
-@Preview @Composable private fun HomeCheckInEditorPreview() = CoffeePeekTheme {
+@Preview @Composable private fun HomeCheckInEditorPreviewLight() = HomeCheckInEditorPreview(false)
+@Preview @Composable private fun HomeCheckInEditorPreviewDark() = HomeCheckInEditorPreview(true)
+
+@Composable private fun HomeCheckInEditorPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
     Surface { HomeCheckInEditorScreenContent(previewHomeEditorState(), {}, "2026-10-17", { "17 октября 2026" },
         { it + "T00:00:00Z" }, { it }, previewHomeEditorMedia(), false, {}) }
 }

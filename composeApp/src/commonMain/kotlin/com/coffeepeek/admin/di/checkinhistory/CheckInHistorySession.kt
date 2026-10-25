@@ -17,7 +17,7 @@ import kotlinx.coroutines.ensureActive
 import kotlin.concurrent.Volatile
 
 /** Private reads are permanently revoked on replacement; same-account token renewal is not replacement. */
-internal class AndroidCheckInHistorySession(
+internal class CheckInHistorySession(
     private val sessions: SessionReader,
     session: Session? = sessions.peekSession(),
 ) {

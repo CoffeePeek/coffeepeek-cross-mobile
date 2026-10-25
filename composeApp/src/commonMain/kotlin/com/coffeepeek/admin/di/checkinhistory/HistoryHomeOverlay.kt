@@ -3,30 +3,31 @@ package com.coffeepeek.admin.di.checkinhistory
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import coffeepeek.composeapp.generated.resources.Res
 import coffeepeek.composeapp.generated.resources.history_home_close
 import coffeepeek.composeapp.generated.resources.history_home_visibility_unconfirmed
 import com.coffeepeek.admin.analytics.AnalyticsOverlay
-import com.coffeepeek.admin.di.homecheckin.androidHomeCheckInDates
+import com.coffeepeek.admin.di.homecheckin.appHomeCheckInDates
 import com.coffeepeek.admin.utils.utcIsoToLocalDateTime
 import com.coffeepeek.core.designsystem.component.CoffeePeekSwipeDismissModalBottomSheet
 import org.jetbrains.compose.resources.stringResource
 
 /** One app-owned sheet; feature entries render its body without nesting another editor/detail modal. */
 @Composable
-internal fun HistoryHomeOverlay(bridge: AndroidHistoryHomeBridge, session: HistoryHostSession,
+internal fun HistoryHomeOverlay(bridge: HistoryHomeBridge, session: HistoryHostSession,
     onPhoto: (List<String>, List<String>, Int) -> Unit) {
-    val destination by bridge.destination.collectAsStateWithLifecycle()
+    // UIKit can stop the presenting screen while its child sheet still needs replacement/dismissal updates.
+    val destination by bridge.destination.collectAsState()
     destination?.let { current -> key(current) {
-        val dismissAllowed by current.dismissAllowed.collectAsStateWithLifecycle()
-        val dates = remember { androidHomeCheckInDates() }
+        val dismissAllowed by current.dismissAllowed.collectAsState()
+        val dates = remember { appHomeCheckInDates() }
         val allowed = session.lease.isLoggedIn && session.lease.isCurrent()
-        CompositionLocalProvider(LocalViewModelStoreOwner provides current) {
-            AnalyticsOverlay {
-                CoffeePeekSwipeDismissModalBottomSheet({ bridge.dismiss(current) }, stringResource(Res.string.history_home_close),
-                    dismissEnabled = dismissAllowed, maxSheetHeightFraction = 0.9f) {
+        AnalyticsOverlay {
+            CoffeePeekSwipeDismissModalBottomSheet({ bridge.dismiss(current) }, stringResource(Res.string.history_home_close),
+                dismissEnabled = dismissAllowed, maxSheetHeightFraction = 0.9f) {
+                // UIKit sheets compose in a separate root: bind the destination store inside the body.
+                CompositionLocalProvider(LocalViewModelStoreOwner provides current) {
                     val modifier = Modifier.weight(1f).fillMaxWidth()
                     if (current.editing) current.entries.editor.Content(current.id, session.generation, allowed,
                         { bridge.dismiss(current) }, { id, notice -> bridge.saved(current, id, notice) },

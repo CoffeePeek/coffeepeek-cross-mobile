@@ -10,7 +10,7 @@ import coffeepeek.composeapp.generated.resources.checkin_rating_coffee
 import coffeepeek.composeapp.generated.resources.maskot_with_magnifying_glass
 import com.coffeepeek.admin.analytics.CheckInSource
 import com.coffeepeek.admin.analytics.CheckInTracker
-import com.coffeepeek.admin.di.checkinhistory.AndroidCheckInHistorySession
+import com.coffeepeek.admin.di.checkinhistory.CheckInHistorySession
 import com.coffeepeek.admin.feature.catalog.api.BrewMethodCatalog
 import com.coffeepeek.admin.feature.catalog.api.methodLabel
 import com.coffeepeek.feature.coffee.api.CoffeePicker
@@ -24,15 +24,15 @@ import com.coffeepeek.feature.homecheckin.domain.repository.HomePreparationRepos
 import com.coffeepeek.feature.homecheckin.impl.createHomeCheckInEditorEntry
 import com.coffeepeek.feature.homecheckin.impl.ui.data.*
 import org.jetbrains.compose.resources.painterResource
-import java.time.Instant
-import java.time.LocalDate
-import java.time.format.DateTimeParseException
-import java.time.ZoneOffset
-import java.time.temporal.ChronoUnit
+import kotlin.time.Instant
+import com.coffeepeek.admin.utils.currentEpochMillis
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.atStartOfDayIn
 
-/** Android composition reuses the current catalogue, platform picker, artwork and consent-aware tracker. */
-internal fun androidHomeCheckInEditor(
-    lease: AndroidCheckInHistorySession,
+/** App composition reuses the current catalogue, platform picker, artwork and consent-aware tracker. */
+internal fun appHomeCheckInEditor(
+    lease: CheckInHistorySession,
     repository: HomePreparationRepository,
     picker: CoffeePicker,
     methods: BrewMethodCatalog,
@@ -40,9 +40,9 @@ internal fun androidHomeCheckInEditor(
     inheritedTracker: CheckInTracker? = null,
 ): HomeCheckInEditorEntry {
     var handoff = inheritedTracker
-    return createHomeCheckInEditorEntry(AndroidHomeCheckInRepository(lease, repository),
-        AndroidHomeCheckInCatalog(lease, picker, methods),
-        { lease.isLoggedIn && lease.isCurrent() }, androidHomeCheckInDates(),
+    return createHomeCheckInEditorEntry(AppHomeCheckInRepository(lease, repository),
+        AppHomeCheckInCatalog(lease, picker, methods),
+        { lease.isLoggedIn && lease.isCurrent() }, appHomeCheckInDates(),
         HomeCheckInEditorMedia(
             { Image(painterResource(Res.drawable.checkin_rating_coffee), null, it, contentScale = ContentScale.Crop) },
             { Image(painterResource(Res.drawable.maskot_with_magnifying_glass), null, it) },
@@ -50,21 +50,21 @@ internal fun androidHomeCheckInEditor(
             { photo, modifier, _ ->
                 CpImage(photo.bytes, modifier = modifier, contentScale = ContentScale.Crop)
             }),
-        AndroidHomeCheckInPhotoPicker(),
+        AppHomeCheckInPhotoPicker(),
         analytics = { editing ->
             val inherited = if (!editing) handoff.also { handoff = null } else null
-            AndroidHomeCheckInAnalytics({ lease.isLoggedIn && lease.isCurrent() }, editing, source, inherited)
+            AppHomeCheckInAnalytics({ lease.isLoggedIn && lease.isCurrent() }, editing, source, inherited)
         })
 }
 
-internal fun androidHomeCheckInDates() = HomeCheckInEditorDates(
-    currentInstant = { Instant.now().truncatedTo(ChronoUnit.MILLIS).toString() },
+internal fun appHomeCheckInDates() = HomeCheckInEditorDates(
+    currentInstant = { Instant.fromEpochMilliseconds(currentEpochMillis()).toString() },
     localDate = ::utcIsoToLocalDate,
     // The date comes from the server as text: one that cannot be read must not break the form.
     formatDate = { date -> civilDateMillis(date)?.let(::formatVisitDate) ?: date },
-    civilDateToInstant = { date -> civilDateMillis(date)?.let(::datePickerMillisToUtcIsoInstant) ?: Instant.now().truncatedTo(ChronoUnit.MILLIS).toString() },
+    civilDateToInstant = { date -> civilDateMillis(date)?.let(::datePickerMillisToUtcIsoInstant) ?: Instant.fromEpochMilliseconds(currentEpochMillis()).toString() },
     formatMethod = { it.methodLabel() },
 )
 
 internal fun civilDateMillis(date: String): Long? =
-    try { LocalDate.parse(date).atStartOfDay().toInstant(ZoneOffset.UTC).toEpochMilli() } catch (_: DateTimeParseException) { null }
+    try { LocalDate.parse(date).atStartOfDayIn(TimeZone.UTC).toEpochMilliseconds() } catch (_: IllegalArgumentException) { null }

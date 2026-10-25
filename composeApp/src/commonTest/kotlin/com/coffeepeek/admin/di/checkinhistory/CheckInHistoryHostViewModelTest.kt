@@ -23,7 +23,7 @@ import kotlin.test.assertTrue
 import kotlin.test.assertNull
 
 @OptIn(ExperimentalCoroutinesApi::class)
-class AndroidCheckInHistoryHostViewModelTest {
+class CheckInHistoryHostViewModelTest {
     private val dispatcher = StandardTestDispatcher()
     private val store = ViewModelStore()
     @BeforeTest fun setUp() { Dispatchers.setMain(dispatcher) }
@@ -31,7 +31,7 @@ class AndroidCheckInHistoryHostViewModelTest {
 
     @Test fun editRouteIsConsumedOnceAndIsNotReplayedForAReplacementAccount() = runTest(dispatcher) {
         val sessions = CheckInTestSessions()
-        val host = AndroidCheckInHistoryHostViewModel(sessions).also { store.put("host", it) }
+        val host = CheckInHistoryHostViewModel(sessions).also { store.put("host", it) }
         assertNull(host.consumeInitialHomeId(null))
         assertNull(host.consumeInitialHomeId(""))
         assertEquals("entry", host.consumeInitialHomeId("entry"))
@@ -44,7 +44,7 @@ class AndroidCheckInHistoryHostViewModelTest {
 
     @Test fun hiddenRouteAccountReplacementClearsChildrenButTokenRenewalDoesNot() = runTest(dispatcher) {
         val sessions = CheckInTestSessions()
-        val host = AndroidCheckInHistoryHostViewModel(sessions).also { store.put("host", it) }
+        val host = CheckInHistoryHostViewModel(sessions).also { store.put("host", it) }
         val initial = host.session.value
         val child = Probe().also { initial.viewModelStore.put("history", it) }
         sessions.applySession(Session("renewed", userId = "owner"))
@@ -66,7 +66,7 @@ class AndroidCheckInHistoryHostViewModelTest {
     }
 
     @Test fun ownerDisposalRevokesCallbacksAndClearsFeatureStore() = runTest(dispatcher) {
-        val host = AndroidCheckInHistoryHostViewModel(CheckInTestSessions()).also { store.put("host", it) }
+        val host = CheckInHistoryHostViewModel(CheckInTestSessions()).also { store.put("host", it) }
         val session = host.session.value
         val child = Probe().also { session.viewModelStore.put("history", it) }
         session.openPhoto(listOf("https://fixture.invalid/private.jpg"), 0)
@@ -82,7 +82,7 @@ class AndroidCheckInHistoryHostViewModelTest {
         val sessions = object : SessionRepository by source {
             override fun observeSession() = if (fail) flow<Session?> { error("Store unavailable") } else source.observeSession()
         }
-        val host = AndroidCheckInHistoryHostViewModel(sessions).also { store.put("host", it) }
+        val host = CheckInHistoryHostViewModel(sessions).also { store.put("host", it) }
         val failed = host.session.value
         assertTrue(failed.observationFailed)
         fail = false
@@ -96,7 +96,7 @@ class AndroidCheckInHistoryHostViewModelTest {
 
     @Test fun accountReplacementClearsAnAlreadyOpenPhotoAndStaleCallbacksCannotReopenIt() = runTest(dispatcher) {
         val sessions = CheckInTestSessions()
-        val host = AndroidCheckInHistoryHostViewModel(sessions).also { store.put("host", it) }
+        val host = CheckInHistoryHostViewModel(sessions).also { store.put("host", it) }
         val previous = host.session.value
         previous.openPhoto(listOf("https://fixture.invalid/first.jpg", "https://fixture.invalid/second.jpg"), 1)
         assertEquals(1, previous.photoPreview.value?.initialIndex)
@@ -111,7 +111,7 @@ class AndroidCheckInHistoryHostViewModelTest {
 
     @Test fun photoViewerCopiesTheAlbumAndRejectsGuestOrInvalidIndices() = runTest(dispatcher) {
         val sessions = CheckInTestSessions()
-        val host = AndroidCheckInHistoryHostViewModel(sessions).also { store.put("host", it) }
+        val host = CheckInHistoryHostViewModel(sessions).also { store.put("host", it) }
         val current = host.session.value
         val photos = mutableListOf("https://fixture.invalid/photo.jpg")
         current.openPhoto(photos, 0)
@@ -131,7 +131,7 @@ class AndroidCheckInHistoryHostViewModelTest {
 
     @Test fun explicitOriginalsStayAlignedAndCannotSurviveAccountRevocation() = runTest(dispatcher) {
         val sessions = CheckInTestSessions()
-        val host = AndroidCheckInHistoryHostViewModel(sessions).also { store.put("host", it) }
+        val host = CheckInHistoryHostViewModel(sessions).also { store.put("host", it) }
         val current = host.session.value
         val details = mutableListOf("https://fixture.invalid/detail", "")
         val originals = mutableListOf("https://fixture.invalid/one", "https://fixture.invalid/two")
@@ -149,7 +149,7 @@ class AndroidCheckInHistoryHostViewModelTest {
 
     @Test fun tokenRenewalPreservesAnOpenPhotoWithoutPreservingItAcrossLogout() = runTest(dispatcher) {
         val sessions = CheckInTestSessions()
-        val host = AndroidCheckInHistoryHostViewModel(sessions).also { store.put("host", it) }
+        val host = CheckInHistoryHostViewModel(sessions).also { store.put("host", it) }
         val current = host.session.value
         current.openPhoto(listOf("https://fixture.invalid/photo.jpg"), 0)
         val photo = current.photoPreview.value

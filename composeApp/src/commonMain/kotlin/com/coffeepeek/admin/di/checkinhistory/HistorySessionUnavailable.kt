@@ -10,7 +10,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.PreviewLightDark
+import org.jetbrains.compose.ui.tooling.preview.Preview
 import coffeepeek.composeapp.generated.resources.Res
 import coffeepeek.composeapp.generated.resources.history_session_unavailable
 import coffeepeek.composeapp.generated.resources.history_session_retry
@@ -33,6 +33,8 @@ internal fun HistorySessionUnavailable(onRetry: () -> Unit, onBack: () -> Unit) 
     }
 }
 
-@PreviewLightDark
 @Composable
-private fun HistorySessionUnavailablePreview() = CoffeePeekTheme { HistorySessionUnavailable({}, {}) }
+private fun HistorySessionUnavailablePreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) { HistorySessionUnavailable({}, {}) }
+
+@Preview @Composable private fun HistorySessionUnavailableLightPreview() = HistorySessionUnavailablePreview(false)
+@Preview @Composable private fun HistorySessionUnavailableDarkPreview() = HistorySessionUnavailablePreview(true)

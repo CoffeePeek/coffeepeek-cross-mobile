@@ -1,5 +1,13 @@
 # Home preparations — incremental migration
 
+## iOS history activation — 2026-10-25
+
+The combined personal-history route now uses migrated feature entries on iOS,
+including its Home detail/editor overlays and common account/date/photo adapters.
+Global creation and Profile Activity preview remain separate migration slices.
+Legacy fallback remains until acceptance. Current checks and device/server gates:
+[iOS migration plan](../IOS_MIGRATION_PLAN.md). Older notes below are historical.
+
 Latest checkpoint, **2026-10-18**: Android history and **global Home creation from
 tab/feed now use the migrated Home entries/data**. History owner edit, creation,
 deletion, photo viewer and calendar keep their existing contracts. Global creation

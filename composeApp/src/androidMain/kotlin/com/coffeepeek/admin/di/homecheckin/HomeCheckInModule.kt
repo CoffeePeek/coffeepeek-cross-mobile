@@ -12,17 +12,13 @@ import org.koin.dsl.module
 
 /** Home data is shared by history and global creation; resolving definitions performs no work. */
 internal fun homeCheckInModule(apiBaseUrl: String = Constants.BASE_URL) = module {
-    single<HomePreparationRepository> {
-        val client = get<CoffeePeekClient>()
-        createHomePreparationRepository(client.client, client.uploadClient, apiBaseUrl)
-    }
-    single<HomePreparationReader> { get<HomePreparationRepository>() }
+    includes(homeCheckInDataModule(apiBaseUrl))
     single {
         val repository = get<HomePreparationRepository>()
         val picker = get<CoffeePicker>()
         val methods = get<BrewMethodCatalog>()
         AndroidCheckInCreateFlowRenderer(get()) { lease, tracker ->
-            androidHomeCheckInEditor(lease, repository, picker, methods, CheckInSource.Global, tracker)
+            appHomeCheckInEditor(lease, repository, picker, methods, CheckInSource.Global, tracker)
         }
     }
 }

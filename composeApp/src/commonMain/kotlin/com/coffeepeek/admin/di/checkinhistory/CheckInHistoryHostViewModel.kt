@@ -16,8 +16,8 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 /** Account observation outlives visible composition, including when another route covers history. */
-internal class AndroidCheckInHistoryHostViewModel(private val sessions: SessionReader) : ViewModel() {
-    private val mutableSession = MutableStateFlow(HistoryHostSession(0, AndroidCheckInHistorySession(sessions)))
+internal class CheckInHistoryHostViewModel(private val sessions: SessionReader) : ViewModel() {
+    private val mutableSession = MutableStateFlow(HistoryHostSession(0, CheckInHistorySession(sessions)))
     val session = mutableSession.asStateFlow()
     private var observation: Job? = null
     private val consumedInitialHomeIds = mutableSetOf<String>()
@@ -48,7 +48,7 @@ internal class AndroidCheckInHistoryHostViewModel(private val sessions: SessionR
         val previous = mutableSession.value
         previous.clear()
         mutableSession.value = HistoryHostSession(previous.generation + 1,
-            AndroidCheckInHistorySession(sessions, value), observationFailed)
+            CheckInHistorySession(sessions, value), observationFailed)
     }
 
     override fun onCleared() {
@@ -58,7 +58,7 @@ internal class AndroidCheckInHistoryHostViewModel(private val sessions: SessionR
 
 internal class HistoryHostSession(
     val generation: Int,
-    val lease: AndroidCheckInHistorySession,
+    val lease: CheckInHistorySession,
     val observationFailed: Boolean = false,
 ) : ViewModelStoreOwner {
     override val viewModelStore = ViewModelStore()

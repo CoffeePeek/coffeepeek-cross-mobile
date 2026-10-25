@@ -16,7 +16,7 @@ import kotlin.test.*
 
 /** Navigation/lifetime regressions. Home's own MVI suites exercise actual drafts and writes. */
 @OptIn(ExperimentalCoroutinesApi::class)
-class AndroidHistoryHomeBridgeTest {
+class HistoryHomeBridgeTest {
     private val dispatcher = StandardTestDispatcher()
     private val owned = mutableListOf<HistoryHostSession>()
     @BeforeTest fun setup() { Dispatchers.setMain(dispatcher) }
@@ -39,12 +39,12 @@ class AndroidHistoryHomeBridgeTest {
     }
 
     private fun bridge(sessions: CheckInTestSessions = CheckInTestSessions(), source: Source = Source(),
-        onFactory: (CheckInTracker?) -> Unit = {}): Pair<HistoryHostSession, AndroidHistoryHomeBridge> {
-        val session = HistoryHostSession(0, AndroidCheckInHistorySession(sessions)).also(owned::add)
+        onFactory: (CheckInTracker?) -> Unit = {}): Pair<HistoryHostSession, HistoryHomeBridge> {
+        val session = HistoryHostSession(0, CheckInHistorySession(sessions)).also(owned::add)
         val entries = historyHomeEditorFactory(source, object : CoffeePicker {
             override suspend fun search(query: String) = Result.success(emptyList<CoffeePickerItem>())
         }, BrewMethodCatalog { Result.success(emptyList()) })
-        val bridge = AndroidHistoryHomeBridge(session, HistoryHomeEditorFactory { lease, tracker ->
+        val bridge = HistoryHomeBridge(session, HistoryHomeEditorFactory { lease, tracker ->
             onFactory(tracker); entries.create(lease, tracker)
         })
         session.viewModelStore.put("home", bridge)

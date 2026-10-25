@@ -125,16 +125,25 @@ internal fun previewHomePreparation() = HomePreparation(
     visibility = HomePreparationVisibility.Private, moderation = HomePreparationModeration.NotSubmitted,
 )
 
-@Preview @Composable private fun HomeCheckInDetailPreview() = CoffeePeekTheme {
+@Preview @Composable private fun HomeCheckInDetailPreviewLight() = HomeCheckInDetailPreview(false)
+@Preview @Composable private fun HomeCheckInDetailPreviewDark() = HomeCheckInDetailPreview(true)
+
+@Composable private fun HomeCheckInDetailPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
     Surface { HomeCheckInDetailScreenContent(HomeCheckInDetailState(entry = previewHomePreparation()), {},
         { _, _ -> "17.10.2026 · 10:30" }, { "Hario V60" }, { _, _, _, _ -> }) }
 }
 
-@Preview @Composable private fun HomeCheckInDetailLoadingPreview() = CoffeePeekTheme {
+@Preview @Composable private fun HomeCheckInDetailLoadingPreviewLight() = HomeCheckInDetailLoadingPreview(false)
+@Preview @Composable private fun HomeCheckInDetailLoadingPreviewDark() = HomeCheckInDetailLoadingPreview(true)
+
+@Composable private fun HomeCheckInDetailLoadingPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
     Surface { HomeCheckInDetailScreenContent(HomeCheckInDetailState(isLoading = true), {}, { date, _ -> date }, { it }, { _, _, _, _ -> }) }
 }
 
-@Preview @Composable private fun HomeCheckInDetailPhotoVariantsPreview() = CoffeePeekTheme {
+@Preview @Composable private fun HomeCheckInDetailPhotoVariantsPreviewLight() = HomeCheckInDetailPhotoVariantsPreview(false)
+@Preview @Composable private fun HomeCheckInDetailPhotoVariantsPreviewDark() = HomeCheckInDetailPhotoVariantsPreview(true)
+
+@Composable private fun HomeCheckInDetailPhotoVariantsPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
     Surface { HomeCheckInDetailScreenContent(HomeCheckInDetailState(entry = previewHomePreparation().copy(
         photos = listOf(HomePreparationPhoto("a", "fixture-original-a", thumbnailUrl = "fixture-feed-a"),
             HomePreparationPhoto("b", "fixture-original-b", thumbnailUrl = "")))), {},
@@ -143,7 +152,10 @@ internal fun previewHomePreparation() = HomePreparation(
         }) }
 }
 
-@Preview @Composable private fun HomeCheckInDetailErrorPreview() = CoffeePeekTheme {
+@Preview @Composable private fun HomeCheckInDetailErrorPreviewLight() = HomeCheckInDetailErrorPreview(false)
+@Preview @Composable private fun HomeCheckInDetailErrorPreviewDark() = HomeCheckInDetailErrorPreview(true)
+
+@Composable private fun HomeCheckInDetailErrorPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
     Surface { HomeCheckInDetailScreenContent(HomeCheckInDetailState(loadIssue = HomePreparationIssue.Offline), {},
         { date, _ -> date }, { it }, { _, _, _, _ -> }) }
 }

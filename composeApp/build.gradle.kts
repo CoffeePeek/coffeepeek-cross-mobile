@@ -42,14 +42,6 @@ kotlin {
             implementation(project(module.feature.favorites.api))
             implementation(project(module.feature.favorites.data))
             implementation(project(module.feature.favorites.impl))
-            implementation(project(module.feature.checkInHistory.api))
-            implementation(project(module.feature.checkInHistory.domain))
-            implementation(project(module.feature.checkInHistory.data))
-            implementation(project(module.feature.checkInHistory.impl))
-            implementation(project(module.feature.homePreparation.domain))
-            implementation(project(module.feature.homePreparation.api))
-            implementation(project(module.feature.homePreparation.data))
-            implementation(project(module.feature.homePreparation.impl))
             implementation(project(module.core.coroutines))
             implementation(libs.androidx.activity.compose)
             implementation(libs.androidx.concurrent.futures)
@@ -66,6 +58,14 @@ kotlin {
             implementation("org.slf4j:slf4j-nop:2.0.16")
         }
         commonMain.dependencies {
+            implementation(project(module.feature.homePreparation.impl))
+            implementation(project(module.feature.homePreparation.data))
+            implementation(project(module.feature.homePreparation.domain))
+            implementation(project(module.feature.homePreparation.api))
+            implementation(project(module.feature.checkInHistory.impl))
+            implementation(project(module.feature.checkInHistory.data))
+            implementation(project(module.feature.checkInHistory.domain))
+            implementation(project(module.feature.checkInHistory.api))
             implementation(project(module.feature.shop.impl))
             implementation(project(module.feature.shop.data))
             implementation(project(module.feature.shop.domain))
@@ -423,9 +423,11 @@ androidComponents {
                 "com.coffeepeek.feature.shop.data.repository.ShopCheckInRepositoryFactoryKt",
                 "com.coffeepeek.feature.shop.impl.ShopCheckInCreateApiImplKt",
                 "com.coffeepeek.admin.di.checkinhistory.CheckInHistoryModuleKt",
-                "com.coffeepeek.admin.di.checkinhistory.AndroidCheckInHistoryScreenRenderer",
-                "com.coffeepeek.admin.di.checkinhistory.AndroidCheckInHistorySession",
-                "com.coffeepeek.admin.di.checkinhistory.AndroidHistoryHomeBridge",
+                "com.coffeepeek.admin.di.checkinhistory.AppCheckInHistoryCalendar",
+                "com.coffeepeek.admin.di.homecheckin.HomeCheckInDataModuleKt",
+                "com.coffeepeek.admin.di.checkinhistory.FeatureCheckInHistoryScreenRenderer",
+                "com.coffeepeek.admin.di.checkinhistory.CheckInHistorySession",
+                "com.coffeepeek.admin.di.checkinhistory.HistoryHomeBridge",
                 "com.coffeepeek.admin.di.checkinhistory.HistoryHomeEditorFactoryKt",
                 "com.coffeepeek.feature.checkinhistory.api.CheckInHistoryEntry",
                 "com.coffeepeek.feature.checkinhistory.data.repository.CheckInHistoryRepositoryFactoryKt",
@@ -440,9 +442,9 @@ androidComponents {
                 "com.coffeepeek.feature.homecheckin.impl.HomeCheckInEditorApiImplKt",
                 "com.coffeepeek.feature.homecheckin.impl.HomeCheckInApiImplKt",
                 "com.coffeepeek.feature.homecheckin.impl.ui.HomeCheckInEditorViewModel",
-                "com.coffeepeek.admin.di.homecheckin.AndroidHomeCheckInEditorKt",
-                "com.coffeepeek.admin.di.homecheckin.AndroidHomeCheckInRepository",
-                "com.coffeepeek.admin.di.homecheckin.AndroidHomeCheckInPhotoPicker",
+                "com.coffeepeek.admin.di.homecheckin.AppHomeCheckInEditorKt",
+                "com.coffeepeek.admin.di.homecheckin.AppHomeCheckInRepository",
+                "com.coffeepeek.admin.di.homecheckin.AppHomeCheckInPhotoPicker",
                 "com.coffeepeek.admin.ui.screen.checkins.CheckInCreateFlowRenderer",
                 "com.coffeepeek.admin.di.homecheckin.HomeCheckInModuleKt",
                 "com.coffeepeek.admin.di.homecheckin.AndroidCheckInCreateFlowRenderer",

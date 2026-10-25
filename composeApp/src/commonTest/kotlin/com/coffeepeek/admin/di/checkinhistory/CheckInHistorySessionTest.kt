@@ -25,14 +25,14 @@ import kotlin.test.assertSame
 import kotlin.test.assertTrue
 
 @OptIn(ExperimentalCoroutinesApi::class)
-class AndroidCheckInHistorySessionTest {
+class CheckInHistorySessionTest {
     private val period = HistoryPeriod("2026-10-01T00:00:00Z", "2026-11-01T00:00:00Z")
 
     @Test fun guestExpiredAndMissingAccountNeverReadPersonalHistory() = runTest {
         for (session in listOf(null, Session("", userId = "owner"), Session("token", userId = ""))) {
             val sessions = CheckInTestSessions(session)
             val repository = Repository()
-            val lease = AndroidCheckInHistorySession(sessions)
+            val lease = CheckInHistorySession(sessions)
             val bound = lease.bind(repository)
             assertFalse(lease.isLoggedIn)
             assertTrue(bound.page(1, 20).isFailure)
@@ -45,7 +45,7 @@ class AndroidCheckInHistorySessionTest {
         val sessions = CheckInTestSessions()
         val gate = CompletableDeferred<Unit>()
         val repository = Repository().apply { load = { gate.await() } }
-        val lease = AndroidCheckInHistorySession(sessions)
+        val lease = CheckInHistorySession(sessions)
         val result = async { lease.bind(repository).page(2, 20) }
         runCurrent()
         sessions.applySession(Session("renewed", userId = "owner"))
@@ -62,7 +62,7 @@ class AndroidCheckInHistorySessionTest {
             val sessions = CheckInTestSessions()
             val gate = CompletableDeferred<Unit>()
             val repository = Repository().apply { load = { withContext(NonCancellable) { gate.await() } } }
-            val lease = AndroidCheckInHistorySession(sessions)
+            val lease = CheckInHistorySession(sessions)
             val bound = lease.bind(repository)
             val page = async { bound.page(1, 20) }
             val calendar = async { bound.period(period) }
@@ -82,7 +82,7 @@ class AndroidCheckInHistorySessionTest {
     @Test fun synchronousAccountChangeIsCheckedBeforeFlowCatchesUp() = runTest {
         val sessions = CheckInTestSessions()
         val repository = Repository().apply { load = { sessions.applySession(null) } }
-        val lease = AndroidCheckInHistorySession(sessions)
+        val lease = CheckInHistorySession(sessions)
         assertFailsWith<CancellationException> { lease.bind(repository).period(period) }
         assertFalse(lease.isCurrent())
     }
@@ -92,7 +92,7 @@ class AndroidCheckInHistorySessionTest {
             override fun observeSession() = flow<Session?> { error("Secure store unavailable") }
         }
         val repository = Repository()
-        val lease = AndroidCheckInHistorySession(sessions)
+        val lease = CheckInHistorySession(sessions)
         assertFailsWith<CancellationException> { lease.bind(repository).page(1, 20) }
         assertFalse(lease.isCurrent())
         assertEquals(0, repository.reads)
@@ -100,7 +100,7 @@ class AndroidCheckInHistorySessionTest {
 
     @Test fun resultFailureAndResultWrappedCancellationKeepTheirContracts() = runTest {
         val repository = Repository()
-        val bound = AndroidCheckInHistorySession(CheckInTestSessions()).bind(repository)
+        val bound = CheckInHistorySession(CheckInTestSessions()).bind(repository)
         val failure = IllegalStateException("Server unavailable")
         repository.failure = failure
         assertSame(failure, bound.page(1, 20).exceptionOrNull())
@@ -111,7 +111,7 @@ class AndroidCheckInHistorySessionTest {
     }
 
     @Test fun callerCancellationDoesNotPermanentlyRevokeTheAccount() = runTest {
-        val lease = AndroidCheckInHistorySession(CheckInTestSessions())
+        val lease = CheckInHistorySession(CheckInTestSessions())
         val repository = Repository().apply { load = { awaitCancellation() } }
         val result = async { lease.bind(repository).page(1, 20) }
         runCurrent()

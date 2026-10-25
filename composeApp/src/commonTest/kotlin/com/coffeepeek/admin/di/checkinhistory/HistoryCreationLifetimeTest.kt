@@ -38,8 +38,8 @@ class HistoryCreationLifetimeTest {
     @AfterTest fun tearDown() { Dispatchers.resetMain() }
 
     private fun host() = ViewModelProvider.create(store, viewModelFactory {
-        initializer { AndroidCheckInHistoryHostViewModel(sessions) }
-    })["history", AndroidCheckInHistoryHostViewModel::class]
+        initializer { CheckInHistoryHostViewModel(sessions) }
+    })["history", CheckInHistoryHostViewModel::class]
 
     private fun lifetimeTest(block: suspend TestScope.() -> Unit) = runTest(dispatcher) {
         val service = analytics(MemoryConsent(AnalyticsConsent.Accepted), sdk)

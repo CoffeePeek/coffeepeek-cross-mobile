@@ -11,6 +11,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.coffeepeek.core.designsystem.component.coffeePeekScrollContentPadding
 import com.coffeepeek.core.designsystem.component.CoffeePeekLoader
 import com.coffeepeek.core.designsystem.component.CoffeePeekPullToRefresh
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
@@ -28,7 +29,7 @@ internal fun HistoryTimelineContent(state: CombinedHistoryState, onAction: (Comb
     CoffeePeekPullToRefresh(listState, state.isRefreshing, { onAction(CombinedHistoryAction.Refresh) },
         stringResource(Res.string.history_refresh), stringResource(Res.string.history_loading), modifier.fillMaxSize()) { scroll ->
         LazyColumn(state = listState, modifier = scroll.fillMaxSize(),
-            contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 96.dp)) {
+            contentPadding = coffeePeekScrollContentPadding(PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 96.dp))) {
             item("calendar") { HistoryCalendarCard(state, onAction, imageContent = imageContent) }
             if (state.isTimelineLoading && entries.isEmpty()) item("initial-loading") {
                 Box(Modifier.fillMaxWidth().height(90.dp), contentAlignment = Alignment.Center) {
@@ -103,14 +104,23 @@ internal fun HistoryTimelineContent(state: CombinedHistoryState, onAction: (Comb
     }
 }
 
-@Preview @Composable private fun HistoryTimelinePreview() = CoffeePeekTheme {
+@Preview @Composable private fun HistoryTimelinePreviewLight() = HistoryTimelinePreview(false)
+@Preview @Composable private fun HistoryTimelinePreviewDark() = HistoryTimelinePreview(true)
+
+@Composable private fun HistoryTimelinePreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
     HistoryTimelineContent(previewCombinedHistoryState(), {}, { "13:00" })
 }
 
-@Preview @Composable private fun HistoryTimelineLoadingPreview() = CoffeePeekTheme {
+@Preview @Composable private fun HistoryTimelineLoadingPreviewLight() = HistoryTimelineLoadingPreview(false)
+@Preview @Composable private fun HistoryTimelineLoadingPreviewDark() = HistoryTimelineLoadingPreview(true)
+
+@Composable private fun HistoryTimelineLoadingPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
     HistoryTimelineContent(previewCombinedHistoryState().copy(homeCalendar = CombinedHistoryLoadState(emptyMap(), isLoading = true)), {}, { "13:00" })
 }
 
-@Preview @Composable private fun HistoryTimelineRefreshingPreview() = CoffeePeekTheme {
+@Preview @Composable private fun HistoryTimelineRefreshingPreviewLight() = HistoryTimelineRefreshingPreview(false)
+@Preview @Composable private fun HistoryTimelineRefreshingPreviewDark() = HistoryTimelineRefreshingPreview(true)
+
+@Composable private fun HistoryTimelineRefreshingPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
     HistoryTimelineContent(previewCombinedHistoryState().copy(isRefreshing = true), {}, { "13:00" })
 }

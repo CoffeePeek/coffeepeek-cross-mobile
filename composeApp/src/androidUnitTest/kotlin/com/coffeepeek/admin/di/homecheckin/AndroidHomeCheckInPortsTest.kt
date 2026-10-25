@@ -1,6 +1,6 @@
 package com.coffeepeek.admin.di.homecheckin
 
-import com.coffeepeek.admin.di.checkinhistory.AndroidCheckInHistorySession
+import com.coffeepeek.admin.di.checkinhistory.CheckInHistorySession
 import com.coffeepeek.admin.di.shop.CheckInTestSessions
 import com.coffeepeek.admin.feature.catalog.api.BrewMethodCatalog
 import com.coffeepeek.admin.feature.catalog.api.BrewMethodOption
@@ -15,11 +15,11 @@ import kotlinx.coroutines.test.*
 import kotlin.test.*
 
 @OptIn(ExperimentalCoroutinesApi::class)
-class AndroidHomeCheckInPortsTest {
+class AppHomeCheckInPortsTest {
     @Test fun catalogMapsActualSlugsLabelsAndHistoricalAliasesWithoutASecondBackend() = runTest {
-        val lease = AndroidCheckInHistorySession(CheckInTestSessions())
+        val lease = CheckInHistorySession(CheckInTestSessions())
         val queries = mutableListOf<String>()
-        val catalog = AndroidHomeCheckInCatalog(lease, object : CoffeePicker {
+        val catalog = AppHomeCheckInCatalog(lease, object : CoffeePicker {
             override suspend fun search(query: String): Result<List<CoffeePickerItem>> {
                 queries += query; return Result.success(listOf(CoffeePickerItem("slug", "Зерно", "Обжарщик")))
             }
@@ -33,9 +33,9 @@ class AndroidHomeCheckInPortsTest {
 
     @Test fun repositoryKeepsResultsAndTokenRenewalButRevokedLeaseNeverStartsAnotherCall() = runTest {
         val sessions = CheckInTestSessions()
-        val lease = AndroidCheckInHistorySession(sessions)
+        val lease = CheckInHistorySession(sessions)
         val source = Repository()
-        val repository = AndroidHomeCheckInRepository(lease, source)
+        val repository = AppHomeCheckInRepository(lease, source)
         sessions.applySession(Session("renewed", userId = "owner"))
         assertTrue(repository.delete("id").isSuccess)
         val failure = repository.detail("id").exceptionOrNull()
@@ -51,8 +51,8 @@ class AndroidHomeCheckInPortsTest {
     }
 
     @Test fun guestCatalogueDoesNotInvokeActualPortsAndPickedOriginalsAreBounded() = runTest {
-        val lease = AndroidCheckInHistorySession(CheckInTestSessions(null))
-        val catalog = AndroidHomeCheckInCatalog(lease, object : CoffeePicker {
+        val lease = CheckInHistorySession(CheckInTestSessions(null))
+        val catalog = AppHomeCheckInCatalog(lease, object : CoffeePicker {
             override suspend fun search(query: String): Result<List<CoffeePickerItem>> = error("Guest search")
         }, BrewMethodCatalog { error("Guest methods") })
         assertTrue(catalog.brewMethods().isFailure); assertTrue(catalog.searchBeans("").isFailure)
@@ -67,7 +67,7 @@ class AndroidHomeCheckInPortsTest {
     }
 
     @Test fun dateAssemblyPreservesCivilDateAndLimitsInitialTimestampPrecision() {
-        val dates = androidHomeCheckInDates()
+        val dates = appHomeCheckInDates()
         val instant = dates.currentInstant()
         assertTrue(Regex("""\.\d{1,3}Z$|:\d{2}Z$""").containsMatchIn(instant))
         assertEquals("2026-10-16", dates.localDate(dates.civilDateToInstant("2026-10-16")))
@@ -76,7 +76,7 @@ class AndroidHomeCheckInPortsTest {
     }
 
     @Test fun anUnreadableServerDateDoesNotBreakTheForm() {
-        val dates = androidHomeCheckInDates()
+        val dates = appHomeCheckInDates()
         assertEquals("not-a-date", dates.formatDate("not-a-date"))
         assertEquals("", dates.formatDate(""))
         assertEquals("2026-02-30", dates.formatDate("2026-02-30"))
@@ -84,8 +84,8 @@ class AndroidHomeCheckInPortsTest {
     }
 
     @Test fun catalogueTransportMessagesStayHiddenAndReturnedCancellationIsRethrown() = runTest {
-        val lease = AndroidCheckInHistorySession(CheckInTestSessions())
-        val catalog = AndroidHomeCheckInCatalog(lease, object : CoffeePicker {
+        val lease = CheckInHistorySession(CheckInTestSessions())
+        val catalog = AppHomeCheckInCatalog(lease, object : CoffeePicker {
             override suspend fun search(query: String): Result<List<CoffeePickerItem>> =
                 Result.failure(java.io.IOException("Private transport details"))
         }, BrewMethodCatalog { Result.failure(CancellationException("cancelled")) })

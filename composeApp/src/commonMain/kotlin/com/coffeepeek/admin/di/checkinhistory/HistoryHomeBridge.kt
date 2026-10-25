@@ -8,7 +8,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
 /** Navigation/lifetime only. Feature entries own loading, drafts, validation and writes. */
-internal class AndroidHistoryHomeBridge(
+internal class HistoryHomeBridge(
     private val session: HistoryHostSession,
     private val factory: HistoryHomeEditorFactory,
 ) : ViewModel() {

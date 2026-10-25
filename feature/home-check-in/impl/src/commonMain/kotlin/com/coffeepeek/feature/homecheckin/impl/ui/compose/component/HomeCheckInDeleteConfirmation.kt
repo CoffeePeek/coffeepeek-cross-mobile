@@ -10,9 +10,17 @@ import com.coffeepeek.feature.homecheckin.impl.resources.home_check_in_delete_wa
 import androidx.compose.runtime.Composable
 import org.jetbrains.compose.resources.stringResource
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
+import com.coffeepeek.core.designsystem.component.CoffeePeekNativeAlert
 
 @Composable
 internal fun HomeCheckInDeleteConfirmation(onConfirm: () -> Unit, onCancel: () -> Unit) {
+    if (CoffeePeekNativeAlert(
+        title = stringResource(Res.string.home_check_in_delete_question),
+        message = stringResource(Res.string.home_check_in_delete_warning),
+        confirmLabel = stringResource(Res.string.home_check_in_delete_confirm),
+        onConfirm = onConfirm, onDismiss = onCancel,
+        cancelLabel = stringResource(Res.string.home_check_in_cancel), destructive = true,
+    )) return
     AlertDialog(
         onDismissRequest = onCancel,
         title = { Text(stringResource(Res.string.home_check_in_delete_question)) },
@@ -26,6 +34,9 @@ internal fun HomeCheckInDeleteConfirmation(onConfirm: () -> Unit, onCancel: () -
     )
 }
 
-@Preview @Composable private fun HomeCheckInDeleteConfirmationPreview() = CoffeePeekTheme {
+@Preview @Composable private fun HomeCheckInDeleteConfirmationLightPreview() = HomeCheckInDeleteConfirmationPreview(false)
+@Preview @Composable private fun HomeCheckInDeleteConfirmationDarkPreview() = HomeCheckInDeleteConfirmationPreview(true)
+
+@Composable private fun HomeCheckInDeleteConfirmationPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
     HomeCheckInDeleteConfirmation({}, {})
 }

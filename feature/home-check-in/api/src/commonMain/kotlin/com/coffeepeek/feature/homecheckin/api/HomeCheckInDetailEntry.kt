@@ -30,7 +30,7 @@ interface HomeCheckInDetailEntry {
         onDeleted: (preparationId: String) -> Unit,
         onOpenPhoto: (urls: List<String>, originalUrls: List<String>, initialIndex: Int) -> Unit,
         onDismissAllowedChange: (Boolean) -> Unit,
-        modifier: Modifier = Modifier,
-        notice: String? = null,
+        modifier: Modifier,
+        notice: String?,
     )
 }

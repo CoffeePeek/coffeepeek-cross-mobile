@@ -14,7 +14,7 @@ import coffeepeek.composeapp.generated.resources.Res
 import coffeepeek.composeapp.generated.resources.check_in_create_close
 import com.coffeepeek.admin.analytics.AnalyticsOverlay
 import com.coffeepeek.admin.analytics.CheckInTracker
-import com.coffeepeek.admin.di.checkinhistory.AndroidCheckInHistorySession
+import com.coffeepeek.admin.di.checkinhistory.CheckInHistorySession
 import com.coffeepeek.admin.feature.checkin.api.CheckInFlowHandoff
 import com.coffeepeek.admin.ui.screen.checkins.CheckInCreateContent
 import com.coffeepeek.admin.ui.screen.checkins.CheckInCreateFlowRenderer
@@ -26,7 +26,7 @@ import org.jetbrains.compose.resources.stringResource
 /** A new flow lifetime per opening. Never constructs legacy Home state or a second writer. */
 internal class AndroidCheckInCreateFlowRenderer(
     private val sessions: SessionReader,
-    private val createEditor: (AndroidCheckInHistorySession, CheckInTracker?) -> HomeCheckInEditorEntry,
+    private val createEditor: (CheckInHistorySession, CheckInTracker?) -> HomeCheckInEditorEntry,
 ) : CheckInCreateFlowRenderer {
     @Composable
     override fun Content(onDismiss: () -> Unit, onShop: () -> Unit, onHomeSaved: () -> Unit,

@@ -26,12 +26,12 @@ import com.coffeepeek.feature.checkinhistory.domain.repository.CheckInHistoryRep
 import com.coffeepeek.feature.checkinhistory.domain.repository.HomeHistoryReader
 import com.coffeepeek.feature.checkinhistory.impl.createCheckInHistoryEntry
 
-/** Android history, Home detail/editor entries and photo viewer share a revocable account. */
-internal class AndroidCheckInHistoryScreenRenderer(
+/** History, Home detail/editor entries and photo viewer share a revocable account. */
+internal class FeatureCheckInHistoryScreenRenderer(
     private val sessions: SessionReader,
     private val repository: CheckInHistoryRepository,
     private val homeReader: HomeHistoryReader,
-    private val calendar: AndroidCheckInHistoryCalendar,
+    private val calendar: AppCheckInHistoryCalendar,
     private val homeEditors: HistoryHomeEditorFactory,
     private val imageContent: @Composable (String, Modifier, ContentScale) -> Unit = { url, modifier, scale ->
         CpImage(data = url, modifier = modifier, contentScale = scale)
@@ -56,7 +56,7 @@ internal class AndroidCheckInHistoryScreenRenderer(
         Host(onBack) { host, session ->
             val creation = session.creationAnalytics
             val home = if (session.lease.isLoggedIn) viewModel(key = "history-home-bridge") {
-                AndroidHistoryHomeBridge(session, homeEditors)
+                HistoryHomeBridge(session, homeEditors)
             } else null
             LaunchedEffect(host, initialHomeId, session, home) {
                 // Consume only once the editor can really open: a stale lease or a guest must not drop the request.
@@ -87,14 +87,15 @@ internal class AndroidCheckInHistoryScreenRenderer(
     }
 
     @Composable private fun Host(onBack: () -> Unit,
-        content: @Composable (AndroidCheckInHistoryHostViewModel, HistoryHostSession) -> Unit) {
-        val host = viewModel(key = "android-check-in-history-host") { AndroidCheckInHistoryHostViewModel(sessions) }
-        val session by host.session.collectAsStateWithLifecycle()
+        content: @Composable (CheckInHistoryHostViewModel, HistoryHostSession) -> Unit) {
+        val host = viewModel(key = "android-check-in-history-host") { CheckInHistoryHostViewModel(sessions) }
+        // Privacy and overlay orchestration must stay reactive while a UIKit child covers this screen.
+        val session by host.session.collectAsState()
         if (session.observationFailed) HistorySessionUnavailable(host::retry, onBack)
         else if (session.lease.isCurrent()) key(session.generation) {
             CompositionLocalProvider(LocalViewModelStoreOwner provides session) {
                 content(host, session)
-                val photo by session.photoPreview.collectAsStateWithLifecycle()
+                val photo by session.photoPreview.collectAsState()
                 photo?.let { photoContent(it.urls, it.originalUrls, it.initialIndex, session::dismissPhoto) }
             }
         }
