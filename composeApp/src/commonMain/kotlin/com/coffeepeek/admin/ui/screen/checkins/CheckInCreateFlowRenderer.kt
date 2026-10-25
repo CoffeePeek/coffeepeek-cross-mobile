@@ -9,7 +9,7 @@ interface CheckInCreateFlowRenderer {
         legacyContent: @Composable () -> Unit)
 }
 
-/** Shared/iOS keeps its current form, writer and lifetime. */
+/** Legacy fallback retained until both platform migrations are accepted. */
 internal object LegacyCheckInCreateFlowRenderer : CheckInCreateFlowRenderer {
     @Composable
     override fun Content(onDismiss: () -> Unit, onShop: () -> Unit, onHomeSaved: () -> Unit,

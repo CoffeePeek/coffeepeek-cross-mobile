@@ -15,7 +15,7 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.launch
 
 /** App navigation/lease only; the feature owns form state, validation, photos and writes. */
-internal class AndroidGlobalCheckInFlow(
+internal class GlobalCheckInFlow(
     sessions: SessionReader,
     private val createEditor: (CheckInHistorySession, CheckInTracker?) -> HomeCheckInEditorEntry,
 ) : ViewModel() {

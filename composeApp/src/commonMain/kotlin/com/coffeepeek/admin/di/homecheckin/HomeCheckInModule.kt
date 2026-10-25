@@ -4,9 +4,6 @@ import com.coffeepeek.admin.analytics.CheckInSource
 import com.coffeepeek.admin.feature.catalog.api.BrewMethodCatalog
 import com.coffeepeek.feature.coffee.api.CoffeePicker
 import com.coffeepeek.admin.locator.Constants
-import com.coffeepeek.api.CoffeePeekClient
-import com.coffeepeek.feature.homecheckin.data.repository.createHomePreparationRepository
-import com.coffeepeek.feature.homecheckin.domain.repository.HomePreparationReader
 import com.coffeepeek.feature.homecheckin.domain.repository.HomePreparationRepository
 import org.koin.dsl.module
 
@@ -17,7 +14,7 @@ internal fun homeCheckInModule(apiBaseUrl: String = Constants.BASE_URL) = module
         val repository = get<HomePreparationRepository>()
         val picker = get<CoffeePicker>()
         val methods = get<BrewMethodCatalog>()
-        AndroidCheckInCreateFlowRenderer(get()) { lease, tracker ->
+        FeatureCheckInCreateFlowRenderer(get()) { lease, tracker ->
             appHomeCheckInEditor(lease, repository, picker, methods, CheckInSource.Global, tracker)
         }
     }

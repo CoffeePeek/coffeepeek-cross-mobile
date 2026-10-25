@@ -16,7 +16,7 @@ import kotlin.test.*
 
 /** App-only navigation/account/analytics policy; no backend, production Application or form writes. */
 @OptIn(ExperimentalCoroutinesApi::class)
-class AndroidGlobalCheckInFlowTest {
+class GlobalCheckInFlowTest {
     private val dispatcher = StandardTestDispatcher()
     private val stores = mutableListOf<ViewModelStore>()
     private val services = mutableListOf<AnalyticsService>()
@@ -33,7 +33,7 @@ class AndroidGlobalCheckInFlowTest {
             onClose: () -> Unit, onSaved: (String, Boolean) -> Unit, onDismissAllowedChange: (Boolean) -> Unit,
             modifier: Modifier) = error("Unit navigation tests must not render a form")
     }
-    private class Fixture(val model: AndroidGlobalCheckInFlow, val store: ViewModelStore,
+    private class Fixture(val model: GlobalCheckInFlow, val store: ViewModelStore,
         val sdk: RecordingTransport, val service: AnalyticsService, val handoffs: MutableList<CheckInTracker?>)
 
     private suspend fun TestScope.fixture(sessions: SessionRepository = CheckInTestSessions(), accepted: Boolean = false): Fixture {
@@ -43,7 +43,7 @@ class AndroidGlobalCheckInFlowTest {
         service.setForeground(true); service.restoreConsent(); service.syncIdentity("fixture-owner")
         Analytics.install(service)
         val handoffs = mutableListOf<CheckInTracker?>()
-        val model = AndroidGlobalCheckInFlow(sessions) { lease, tracker ->
+        val model = GlobalCheckInFlow(sessions) { lease, tracker ->
             assertTrue(lease.isCurrent() && lease.isLoggedIn)
             handoffs += tracker
             Entry()
@@ -52,8 +52,8 @@ class AndroidGlobalCheckInFlowTest {
         store.put("global-create", model)
         return Fixture(model, store, sdk, service, handoffs)
     }
-    private fun AndroidGlobalCheckInFlow.homeDestination() = assertIs<GlobalCheckInDestination.Home>(state.value)
-    private fun AndroidGlobalCheckInFlow.closed() = assertIs<GlobalCheckInDestination.Closed>(state.value)
+    private fun GlobalCheckInFlow.homeDestination() = assertIs<GlobalCheckInDestination.Home>(state.value)
+    private fun GlobalCheckInFlow.closed() = assertIs<GlobalCheckInDestination.Closed>(state.value)
 
     @Test fun pickerIsLazyAndHomeFactoryRunsOnceOnlyAfterExplicitSelection() = runTest(dispatcher) {
         val f = fixture()

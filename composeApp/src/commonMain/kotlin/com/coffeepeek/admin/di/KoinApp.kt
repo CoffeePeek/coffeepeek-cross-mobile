@@ -76,9 +76,7 @@ import com.coffeepeek.admin.ui.screen.profile.ProfileViewModel
 import com.coffeepeek.admin.ui.screen.deleteaccount.DeleteAccountPendingViewModel
 import com.coffeepeek.admin.ui.screen.checkins.VisitedPlacesViewModel
 import com.coffeepeek.admin.ui.screen.checkins.CheckInHistoryScreenRenderer
-import com.coffeepeek.admin.ui.screen.checkins.LegacyCheckInHistoryScreenRenderer
 import com.coffeepeek.admin.ui.screen.checkins.CheckInCreateFlowRenderer
-import com.coffeepeek.admin.ui.screen.checkins.LegacyCheckInCreateFlowRenderer
 import com.coffeepeek.admin.ui.screen.favorites.FavoritesViewModel
 import com.coffeepeek.admin.ui.screen.review.ReviewReportViewModel
 import com.coffeepeek.admin.ui.screen.contributions.ContributionKind
@@ -113,8 +111,7 @@ fun initKoin(
     shopCheckInRendererFactory: Scope.() -> ShopCheckInFormRenderer = { LegacyShopCheckInFormRenderer },
     shopDetailRendererFactory: Scope.() -> ShopDetailScreenRenderer = { LegacyShopDetailScreenRenderer },
     shopCheckInListRendererFactory: Scope.() -> ShopCheckInListScreenRenderer = { LegacyShopCheckInListScreenRenderer },
-    checkInHistoryRendererFactory: Scope.() -> CheckInHistoryScreenRenderer = { LegacyCheckInHistoryScreenRenderer },
-    checkInCreateFlowRendererFactory: Scope.() -> CheckInCreateFlowRenderer = { LegacyCheckInCreateFlowRenderer },
+    checkInRenderers: CheckInRendererFactories = CheckInRendererFactories(),
     coffeeRendererFactory: Scope.() -> CoffeeScreenRenderer = { LegacyCoffeeScreenRenderer },
     roasterRendererFactory: Scope.() -> RoasterScreenRenderer = { roasterScreenRenderer(get(), get(), get()) },
     publicProfileRendererFactory: Scope.() -> PublicProfileScreenRenderer = { LegacyPublicProfileScreenRenderer },
@@ -147,7 +144,7 @@ fun initKoin(
         ),
         appModule(database.settingRepository, shopReportRendererFactory, shopGalleryRendererFactory,
             shopCheckInRendererFactory, shopDetailRendererFactory, shopCheckInListRendererFactory,
-            checkInHistoryRendererFactory, checkInCreateFlowRendererFactory, coffeeRendererFactory, roasterRendererFactory,
+            checkInRenderers, coffeeRendererFactory, roasterRendererFactory,
             publicProfileRendererFactory, ownProfileRendererFactory, accountRendererFactory, settingsRendererFactory, appUpdateRendererFactory,
             authRendererFactory, communityRendererFactory, contributionsRendererFactory, discoveryRendererFactory, notificationsRendererFactory),
         imageModule(),
@@ -170,8 +167,7 @@ private fun appModule(
     shopCheckInRendererFactory: Scope.() -> ShopCheckInFormRenderer,
     shopDetailRendererFactory: Scope.() -> ShopDetailScreenRenderer,
     shopCheckInListRendererFactory: Scope.() -> ShopCheckInListScreenRenderer,
-    checkInHistoryRendererFactory: Scope.() -> CheckInHistoryScreenRenderer,
-    checkInCreateFlowRendererFactory: Scope.() -> CheckInCreateFlowRenderer,
+    checkInRenderers: CheckInRendererFactories,
     coffeeRendererFactory: Scope.() -> CoffeeScreenRenderer,
     roasterRendererFactory: Scope.() -> RoasterScreenRenderer,
     publicProfileRendererFactory: Scope.() -> PublicProfileScreenRenderer,
@@ -209,8 +205,8 @@ private fun appModule(
         val gateway = get<CoffeePeekClient>()
         com.coffeepeek.feature.auth.data.createAuthRepository(gateway.plainClient, gateway.client, get(), get())
     }
-    single<CheckInCreateFlowRenderer> { checkInCreateFlowRendererFactory() }
-    single<CheckInHistoryScreenRenderer> { checkInHistoryRendererFactory() }
+    single<CheckInCreateFlowRenderer> { checkInRenderers.create(this) }
+    single<CheckInHistoryScreenRenderer> { checkInRenderers.history(this) }
     single<ShopDetailScreenRenderer> { shopDetailRendererFactory() }
     single<ShopCheckInListScreenRenderer> { shopCheckInListRendererFactory() }
     single<ShopCheckInFormRenderer> { shopCheckInRendererFactory() }

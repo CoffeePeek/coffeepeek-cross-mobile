@@ -5,7 +5,7 @@ import androidx.lifecycle.ViewModelStore
 import androidx.lifecycle.ViewModelStoreOwner
 
 /** Parent lifecycle retains the flow and editor together; final sheet removal clears both. */
-internal class AndroidGlobalCheckInFlowStore : ViewModel(), ViewModelStoreOwner {
+internal class GlobalCheckInFlowStore : ViewModel(), ViewModelStoreOwner {
     override val viewModelStore = ViewModelStore()
 
     fun dispose(changingConfigurations: Boolean) {

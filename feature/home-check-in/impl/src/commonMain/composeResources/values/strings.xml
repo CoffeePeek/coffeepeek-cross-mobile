@@ -1,4 +1,11 @@
 <resources>
+    <string name="home_check_in_create_title">Новый чекин</string>
+    <string name="home_check_in_create_prompt">Где вы пили кофе?</string>
+    <string name="home_check_in_create_shop">В кофейне</string>
+    <string name="home_check_in_create_shop_hint">Выбрать место и напиток</string>
+    <string name="home_check_in_create_home">Дома</string>
+    <string name="home_check_in_create_home_hint">Записать приготовление</string>
+    <string name="home_check_in_create_continue">Продолжить</string>
     <string name="home_check_in_home">Кофе дома</string>
     <string name="home_check_in_title_fallback">Домашнее приготовление</string>
     <string name="home_check_in_private">Только мне</string>

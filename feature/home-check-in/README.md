@@ -1,10 +1,18 @@
 # Home preparations — incremental migration
 
+## iOS global creation activation — 2026-10-25
+
+Coffee/Community global creation now selects migrated Home entries on both
+platforms. The type-picker body lives in this feature and shares a design-system
+selection card with history. Android recreation/native sheet ownership remain
+app-owned; Shop selection itself is still a legacy follow-up. Verification and
+manual gates are recorded in the [iOS migration plan](../IOS_MIGRATION_PLAN.md).
+
 ## iOS history activation — 2026-10-25
 
 The combined personal-history route now uses migrated feature entries on iOS,
 including its Home detail/editor overlays and common account/date/photo adapters.
-Global creation and Profile Activity preview remain separate migration slices.
+At that checkpoint, global creation and Profile Activity preview were separate slices.
 Legacy fallback remains until acceptance. Current checks and device/server gates:
 [iOS migration plan](../IOS_MIGRATION_PLAN.md). Older notes below are historical.
 

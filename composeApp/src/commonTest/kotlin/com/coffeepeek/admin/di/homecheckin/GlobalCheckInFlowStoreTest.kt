@@ -17,10 +17,10 @@ import kotlin.test.*
 
 /** Non-UI lifetime contract: recreation retains work, final disposal and parent death clear it. */
 @OptIn(ExperimentalCoroutinesApi::class)
-class AndroidGlobalCheckInFlowStoreTest {
+class GlobalCheckInFlowStoreTest {
     private val dispatcher = StandardTestDispatcher()
     private val parent = ViewModelStore()
-    private val owner = AndroidGlobalCheckInFlowStore().also { parent.put("flow-store", it) }
+    private val owner = GlobalCheckInFlowStore().also { parent.put("flow-store", it) }
 
     @BeforeTest fun setup() { Dispatchers.setMain(dispatcher) }
     @AfterTest fun cleanup() { parent.clear(); Dispatchers.resetMain() }
@@ -61,7 +61,7 @@ class AndroidGlobalCheckInFlowStoreTest {
     }
 
     @Test fun busyHomeFlowSurvivesRecreationAndDeliversSavedOnce() = runTest(dispatcher) {
-        val flow = AndroidGlobalCheckInFlow(CheckInTestSessions()) { _, _ -> Entry() }
+        val flow = GlobalCheckInFlow(CheckInTestSessions()) { _, _ -> Entry() }
         owner.viewModelStore.put("flow", flow)
         flow.home()
         val home = assertIs<GlobalCheckInDestination.Home>(flow.state.value)

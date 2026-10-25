@@ -447,8 +447,12 @@ androidComponents {
                 "com.coffeepeek.admin.di.homecheckin.AppHomeCheckInPhotoPicker",
                 "com.coffeepeek.admin.ui.screen.checkins.CheckInCreateFlowRenderer",
                 "com.coffeepeek.admin.di.homecheckin.HomeCheckInModuleKt",
-                "com.coffeepeek.admin.di.homecheckin.AndroidCheckInCreateFlowRenderer",
-                "com.coffeepeek.admin.di.homecheckin.AndroidGlobalCheckInFlow",
+                "com.coffeepeek.admin.di.homecheckin.FeatureCheckInCreateFlowRenderer",
+                "com.coffeepeek.admin.di.CheckInRendererFactories",
+                "com.coffeepeek.admin.di.CheckInRendererFactoriesKt",
+                "com.coffeepeek.admin.di.homecheckin.GlobalCheckInFlow",
+                "com.coffeepeek.feature.homecheckin.api.CheckInCreatePickerEntry",
+                "com.coffeepeek.feature.homecheckin.impl.CheckInCreatePickerApiImplKt",
                 "com.coffeepeek.feature.checkinhistory.domain.repository.HomeHistoryReader",
             ))
         }
