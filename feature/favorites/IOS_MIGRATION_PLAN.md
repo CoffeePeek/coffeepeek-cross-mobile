@@ -90,3 +90,9 @@ Debug fef4d4329bc8ff2b6cb042f863f592cfcf1343f3cd79b529e270df0ac9701bcd;
 Sandbox 75eaf2c7bcacfe6db207eeb6918108c3752e2de79b6ed6eaf8d0f1a658002dd5.
 Приложения не устанавливались/не запускались; телефон, credentials и сервер
 не менялись. Ручные gates из плана выше остаются открытыми.
+
+После checkpoint e67692f3 выполнена синхронизация с develop 105b8994 и повторная
+интеграционная проверка: 601 selected unit/contract tests без failures/errors/skips,
+обе Android assemblies/guards, iOS compile/framework link/common test compile
+успешны. Favorites impl входит в этот набор (19 tests); подробные counts,
+конфликты и итоговые APK hashes — в общем IOS_MIGRATION_PLAN.

@@ -47,8 +47,8 @@ internal fun appHomeCheckInEditor(
             { Image(painterResource(Res.drawable.checkin_rating_coffee), null, it, contentScale = ContentScale.Crop) },
             { Image(painterResource(Res.drawable.maskot_with_magnifying_glass), null, it) },
             { name, modifier -> Icon(painterResource(brewMethodIcon(name)), null, modifier, tint = MaterialTheme.colorScheme.onSurfaceVariant) },
-            { photo, modifier, _ ->
-                CpImage(photo.bytes, modifier = modifier, contentScale = ContentScale.Crop)
+            { photo, modifier, fullSize ->
+                CpImage(photo.bytes, modifier = modifier, contentScale = if (fullSize) ContentScale.Fit else ContentScale.Crop)
             }),
         AppHomeCheckInPhotoPicker(),
         analytics = { editing ->

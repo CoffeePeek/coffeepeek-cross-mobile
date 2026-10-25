@@ -2,8 +2,7 @@ package com.coffeepeek.admin.di.contributions
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import com.coffeepeek.api.CoffeePeekClient
-import com.coffeepeek.feature.contributions.data.repository.createContributionsRepository
+import com.coffeepeek.feature.contributions.domain.repository.ContributionsRepository
 import com.coffeepeek.admin.ui.Navigator
 import com.coffeepeek.admin.ui.screen.contributions.ContributionsScreenRenderer
 import com.coffeepeek.core.session.SessionReader
@@ -66,9 +65,8 @@ internal class FeatureContributionsScreenRenderer(
 }
 
 internal fun featureContributionsScreenRenderer(
-    gateway: CoffeePeekClient, sessions: SessionReader, shops: ShopRepository,
+    repository: ContributionsRepository, sessions: SessionReader, shops: ShopRepository,
 ): ContributionsScreenRenderer {
-    val repository = createContributionsRepository(gateway.client, gateway.uploadClient, ::contributionUtcOffsetMinutes)
     val account = SessionContributionsAccount(sessions)
     val catalogs = ShopContributionCatalogs(shops)
     return FeatureContributionsScreenRenderer(

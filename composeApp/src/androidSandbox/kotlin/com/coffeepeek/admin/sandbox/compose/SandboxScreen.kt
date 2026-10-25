@@ -20,6 +20,7 @@ import com.coffeepeek.admin.AppContent
 import com.coffeepeek.admin.map.LocalMapStyleOverride
 import com.coffeepeek.admin.sandbox.SandboxApplication
 import com.coffeepeek.admin.sandbox.SandboxViewModel
+import com.coffeepeek.admin.sandbox.sandboxImageBytes
 import com.coffeepeek.admin.sandbox.backend.SandboxAuthPolicy
 import com.coffeepeek.admin.sandbox.backend.SandboxCities
 import com.coffeepeek.admin.sandbox.backend.SandboxContributions
@@ -39,10 +40,14 @@ import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
     val state by model.state.collectAsStateWithLifecycle()
     val updates = koinInject<AppUpdateController>()
     val updateRenderer = koinInject<AppUpdateRenderer>()
+    var nextPhoto by remember { mutableIntStateOf(0) }
     AppContent {
         CompositionLocalProvider(LocalMapStyleOverride provides """{"version":8,"sources":{},"layers":[{"id":"sandbox-background","type":"background","paint":{"background-color":"#716552"}}]}""",
             LocalPhotoPickerOverride provides { limit, deliver ->
-            val photo = { if (limit > 0) deliver(listOf(PickedImage(application.photoBytes.copyOf(), "sandbox.png", "image/png"))) }
+            val photo = { if (limit > 0) {
+                val variant = nextPhoto++
+                deliver(listOf(PickedImage(sandboxImageBytes(variant), "sandbox-$variant.png", "image/png")))
+            } }
             PhotoPickerController(photo, photo)
         }) {
             SandboxScreenContent({ model.controls(true) }) {

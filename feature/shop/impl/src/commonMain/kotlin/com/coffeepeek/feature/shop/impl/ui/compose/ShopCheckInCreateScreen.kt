@@ -31,7 +31,6 @@ import com.coffeepeek.core.designsystem.component.CoffeePeekFormStep
 import com.coffeepeek.core.designsystem.component.CoffeePeekSwipeDismissModalBottomSheet
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
-import com.coffeepeek.feature.shop.domain.model.MAX_SHOP_CHECK_IN_PHOTOS
 import com.coffeepeek.feature.shop.domain.model.ShopCheckInCreateInput
 import com.coffeepeek.feature.shop.domain.model.ShopRating
 import com.coffeepeek.feature.shop.domain.usecase.ShopCheckInValidationError
@@ -39,8 +38,6 @@ import com.coffeepeek.feature.shop.impl.resources.Res
 import com.coffeepeek.feature.shop.impl.resources.shop_checkin_form_dismiss
 import com.coffeepeek.feature.shop.impl.resources.shop_checkin_form_title
 import com.coffeepeek.feature.shop.impl.resources.shop_checkin_form_optional
-import com.coffeepeek.feature.shop.impl.resources.shop_checkin_form_photos
-import com.coffeepeek.feature.shop.impl.resources.shop_checkin_form_photos_hint
 import com.coffeepeek.feature.shop.impl.resources.shop_checkin_form_submit
 import com.coffeepeek.feature.shop.impl.resources.shop_checkin_form_history
 import com.coffeepeek.feature.shop.impl.resources.shop_checkin_form_uncertain
@@ -62,7 +59,7 @@ import com.coffeepeek.feature.shop.impl.ui.compose.component.ShopCheckInNoteFiel
 import com.coffeepeek.feature.shop.impl.ui.compose.component.ShopCheckInRatings
 import com.coffeepeek.feature.shop.impl.ui.compose.component.ShopCheckInSubmissionContent
 import com.coffeepeek.feature.shop.impl.ui.compose.component.ShopCheckInVisibilityField
-import com.coffeepeek.feature.shop.impl.ui.compose.component.ShopPhotoAttachments
+import com.coffeepeek.feature.shop.impl.ui.compose.component.ShopCheckInPhotoAttachments
 import com.coffeepeek.feature.shop.impl.ui.compose.model.ShopCheckInFormAction
 import com.coffeepeek.feature.shop.impl.ui.compose.model.ShopCheckInFormEvent
 import com.coffeepeek.feature.shop.impl.ui.compose.model.ShopCheckInFormState
@@ -88,7 +85,7 @@ internal fun ShopCheckInCreateScreen(
         onDismissRequest = { viewModel.onAction(ShopCheckInFormAction.Dismiss) },
         dismissDescription = stringResource(Res.string.shop_checkin_form_dismiss),
         dismissEnabled = !state.isSubmitting,
-        maxSheetHeightFraction = 0.76f,
+        maxSheetHeightFraction = if (state.submitted) null else 0.76f,
     ) {
         ShopCheckInCreateScreenContent(
             state = state, shopName = shopName,
@@ -98,7 +95,7 @@ internal fun ShopCheckInCreateScreen(
             onVisitDate = { viewModel.onAction(ShopCheckInFormAction.VisitDateChanged(dates.visitInstant(it, state.input.visitedAtIso))) },
             onGallery = { remaining -> picker.pickFromGallery(remaining) { viewModel.onAction(ShopCheckInFormAction.PhotosAdded(it)) } },
             onCamera = { picker.takePhoto { viewModel.onAction(ShopCheckInFormAction.PhotosAdded(it)) } },
-            modifier = Modifier.fillMaxHeight(),
+            modifier = if (state.submitted) Modifier else Modifier.fillMaxHeight(),
             photosPreparing = picker.isPreparing,
         )
     }
@@ -137,7 +134,6 @@ internal fun ShopCheckInCreateScreenContent(
                 submittedVisibility = state.input.visibility.takeIf { state.submitted },
                 cleanupFailed = state.submitted && state.draftFailed,
                 onFeed = { onAction(ShopCheckInFormAction.GoToFeed) },
-                onHistory = { onAction(ShopCheckInFormAction.OpenHistory) },
             )
         } else if (state.isLoading) {
             CircularProgressIndicator()
@@ -158,11 +154,9 @@ internal fun ShopCheckInCreateScreenContent(
               }
               CoffeePeekFormStep(optional = true, optionalDescription = optionalDescription,
                   isError = state.validationError in listOf(ShopCheckInValidationError.TooManyPhotos, ShopCheckInValidationError.InvalidPhoto)) {
-                ShopPhotoAttachments(
+                ShopCheckInPhotoAttachments(
                     photos = state.input.photos.map { it.bytes }, isLoading = photosPreparing, enabled = editable,
-                    title = stringResource(Res.string.shop_checkin_form_photos),
-                    hint = stringResource(Res.string.shop_checkin_form_photos_hint, MAX_SHOP_CHECK_IN_PHOTOS),
-                    maxPhotos = MAX_SHOP_CHECK_IN_PHOTOS,
+                    onMove = { from, to -> onAction(ShopCheckInFormAction.MovePhoto(from, to)) },
                     onRemove = { onAction(ShopCheckInFormAction.RemovePhoto(it)) },
                     onGallery = onGallery, onCamera = onCamera,
                 )
@@ -230,16 +224,18 @@ private fun validationMessage(error: ShopCheckInValidationError?): String? = err
 
 @Composable
 private fun ShopCheckInFormPreview(dark: Boolean, uncertain: Boolean = false,
-    photosPreparing: Boolean = false) = CoffeePeekTheme(darkTheme = dark) {
+    photosPreparing: Boolean = false, submitted: Boolean = false) = CoffeePeekTheme(darkTheme = dark) {
     val state = ShopCheckInFormState(
         input = ShopCheckInCreateInput("preview-shop", "Понравился фильтр", ShopRating(4, 4, 4), "2026-10-09T09:00:00Z"),
-        isLoading = false, deliveryUnconfirmed = uncertain,
+        isLoading = false, deliveryUnconfirmed = uncertain, submitted = submitted,
     )
     ShopCheckInCreateScreenContent(state, "Кофейня", "9 октября 2026", 1791504000000, 1791547200000, {}, {}, {}, {}, photosPreparing = photosPreparing)
 }
 
 @Preview @Composable private fun ShopCheckInFormLightPreview() = ShopCheckInFormPreview(false)
 @Preview @Composable private fun ShopCheckInFormDarkPreview() = ShopCheckInFormPreview(true)
+@Preview @Composable private fun ShopCheckInSuccessLightPreview() = ShopCheckInFormPreview(false, submitted = true)
+@Preview @Composable private fun ShopCheckInSuccessDarkPreview() = ShopCheckInFormPreview(true, submitted = true)
 @Preview @Composable private fun ShopCheckInUnconfirmedLightPreview() = ShopCheckInFormPreview(false, true)
 @Preview @Composable private fun ShopCheckInUnconfirmedDarkPreview() = ShopCheckInFormPreview(true, true)
 @Preview @Composable private fun ShopCheckInPhotosPreparingLightPreview() = ShopCheckInFormPreview(false, photosPreparing = true)

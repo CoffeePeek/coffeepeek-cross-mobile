@@ -19,6 +19,7 @@ import com.coffeepeek.feature.shopreport.impl.createShopReportEntry
 import com.coffeepeek.feature.shop.data.repository.createShopMenuGalleryRepository
 import com.coffeepeek.feature.shop.impl.createShopMenuGalleryEntry
 import com.coffeepeek.admin.di.appupdate.featureAppUpdateRenderer
+import com.coffeepeek.admin.di.contributions.contributionsModule
 import com.coffeepeek.admin.di.contributions.featureContributionsScreenRenderer
 import com.coffeepeek.admin.di.auth.iosAuthScreenRenderer
 import com.coffeepeek.admin.di.community.featureCommunityScreenRenderer
@@ -36,7 +37,7 @@ import com.coffeepeek.admin.utils.ErrorHandler
 
 actual fun initPlatformKoin() {
     initKoin(
-        platformModules = listOf(serverFavoritesModule(), coffeeModule(), shopBrowsingModule(), shopCheckInModule(AppShopCheckInDateFormatter()), homeCheckInModule(), checkInHistoryModule(), contentReportModule()),
+        platformModules = listOf(contributionsModule(), serverFavoritesModule(), coffeeModule(), shopBrowsingModule(), shopCheckInModule(AppShopCheckInDateFormatter()), homeCheckInModule(), checkInHistoryModule(), contentReportModule()),
         // Owners move to their migrated modules one at a time; the others keep the legacy renderers.
         checkInRenderers = featureCheckInRendererFactories(),
         contentReportRendererFactory = { get<FeatureContentReportRenderer>() },
@@ -47,13 +48,13 @@ actual fun initPlatformKoin() {
         shopCheckInListRendererFactory = { iosShopCheckInListRenderer() },
         settingsRendererFactory = { iosSettingsRenderer() },
         appUpdateRendererFactory = { featureAppUpdateRenderer(get(), get()) },
-        notificationsRendererFactory = { featureNotificationsRenderer(get()) },
+        notificationsRendererFactory = { featureNotificationsRenderer(get(), get(), get()) },
         authRendererFactory = { iosAuthScreenRenderer(get(), get()) },
         communityRendererFactory = { featureCommunityScreenRenderer(get(), get(), get(), get(), get(), get()) },
         coffeeRendererFactory = { featureCoffeeScreenRenderer(get()) },
         publicProfileRendererFactory = { featurePublicProfileScreenRenderer(get(), get(), get(), get(), get()) },
         ownProfileRendererFactory = { featureOwnProfileScreenRenderer(get(), get(), get(), get(), get(), get(), get(), get(), get()) },
-        contributionsRendererFactory = { featureContributionsScreenRenderer(get<CoffeePeekClient>(), get(), get()) },
+        contributionsRendererFactory = { featureContributionsScreenRenderer(get(), get(), get()) },
         accountRendererFactory = { featureAccountScreenRenderer(get(), get()) },
         discoveryRendererFactory = { featureDiscoveryScreenRenderer(get<CoffeePeekClient>().client, get(), get(), get(), get(), get(), get()) },
     )

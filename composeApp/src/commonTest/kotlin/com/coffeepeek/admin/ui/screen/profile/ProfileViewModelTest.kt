@@ -301,6 +301,7 @@ class ProfileViewModelTest {
         override fun setPushEnabled(enabled: Boolean): Unit = error("unused")
         override fun markRead(id: String): Unit = error("unused")
         override fun markAllRead(): Unit = error("unused")
+        override suspend fun destination(notificationId: String) = null
         override fun foreground(): Unit = error("unused")
         override fun onCheckInCreated(): Unit = error("unused")
         override suspend fun beforeLogout() = Unit

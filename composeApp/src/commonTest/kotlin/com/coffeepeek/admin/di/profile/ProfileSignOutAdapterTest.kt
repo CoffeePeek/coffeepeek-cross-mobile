@@ -34,6 +34,8 @@ class ProfileSignOutAdapterTest {
         override fun setPushEnabled(enabled: Boolean) = Unit
         override fun markRead(id: String) = Unit
         override fun markAllRead() = Unit
+        override suspend fun destination(notificationId: String): com.coffeepeek.feature.notifications.api.NotificationDestination? =
+            error("Sign-out must not resolve notification destinations")
         override fun foreground() = Unit
         override fun onCheckInCreated() = Unit
         override suspend fun beforeLogout() { events += "push" }

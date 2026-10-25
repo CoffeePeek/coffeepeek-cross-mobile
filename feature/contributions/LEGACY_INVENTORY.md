@@ -237,3 +237,20 @@ Android no longer reaches `addshop/*`, `contributions/*`, `shopchange/*` and `ro
 ### Sync with main (2026-10-23)
 Main was merged through the whole stack. What it brought for this owner: the legacy add shop and add roaster screens got the keyboard fix of `docs/SYSTEM_LAYOUT_FIXES.md` (consume the Scaffold padding once before `imePadding`, no repeated navigation padding, vertical spacing inside the scroll). The migrated forms and the change editor now do the same (`consumeWindowInsets(padding)` before `imePadding`; in the editor the keyboard padding sits on the whole column so the send button rides above the keyboard). Checked on a Pixel 7 in the Sandbox: no blank strip above the keyboard on the roaster form, the editor button stays above the keyboard. Also from main and relevant here: the roaster empty state offers «Добавить обжарщика» (opens the migrated form) and the shared `CoffeePeekCatalogSuggestionCard`; the profile menu on the design system lists «Заблокированные авторы» and replaced the card menu of `fix/profile-action-menu`.
 
+
+### PR #178 cancellation review — 2026-10-25
+
+Source: `codex/migration-pr178-review-fixes`, based on develop `5a1fe4a1`.
+The editor's required catalog/shop/drinks/request reads used suspend `runCatching`,
+which converted CancellationException to a visible load error. Load now rethrows
+cancellation before mapping ordinary Exception failures; generation fences and
+existing server-message/sign-in/not-found mappings are preserved. The load/error
+helpers meet the ordinary 20-line review limit. No DI, API or domain boundary changes.
+
+Verification plan: cancel each required read in the lifecycle job, preserve ordinary
+failed-load/retry/account-change tests, run module lint and compile both Android
+Debug/Sandbox variants; shared Native compilation remains covered by iOS CI.
+The new test first failed on the original code (job completed without cancellation).
+After the fix all four cancellation paths pass, no error state/message is published.
+Contributions impl: 63 executed tests/6 suites, zero failures/errors/skips; lintDebug
+passed. No new UI/instrumented/screenshot tests or real-account writes.

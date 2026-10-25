@@ -8,6 +8,9 @@ iOS-документы (`docs/IOS_NATIVE_EXPERIENCE.md`, `IOS_NATIVE_NAVIGATION.
 
 ## Статус на 2026-10-25 (ветка `feat/ios-build-foundation`, PR #195 → `develop`)
 
+В рабочую migration-ветку также включены изменения develop `105b8994`; детали
+разрешения конфликтов и проверки объединённого кода — в checkpoint синхронизации ниже.
+
 Сделано и проверено сборкой и юнит-тестами (Android и iOS compile; iOS-фреймворк линкуется; тесты сессии прошли и на iOS-симуляторе).
 На симуляторе и устройстве экраны **не запускались**.
 
@@ -1211,6 +1214,66 @@ removal допускается только на безопасном явно �
 Xcode/signing/устройство, OAuth/Keychain/realtime/analytics delivery — открытые
 общие release gates. После приёмки возможен отдельный этап удаления legacy;
 compile и fake-тесты не закрывают этот gate.
+
+### Checkpoint: синхронизация с develop — 2026-10-25
+
+После Favorites checkpoint `e67692f3` PR #195 оказался CONFLICTING с целевой
+develop `105b8994`. Выполнено обычное merge в migration-ветку, без rebase/force push
+или записи в main/develop. Fresh main `16724b7e` уже входит в историю.
+
+Что сохранено при разрешении конфликтов:
+
+- Новый split Discovery из develop перенесён в commonMain: content, map/search/
+  roaster layers, effects/state, section title и shop preview. Не восстановлен
+  прежний большой Tab. Android BackHandler заменён существующим CoffeePeekBackHandler;
+  строки и парные previews общие. Геометрия карты, host.retained, reduce-motion,
+  photo prefetch, overlays и callbacks оставлены по общей реализации.
+- Notifications сохраняет resolve destination/open/mark read, account/generation
+  guards и pending-open handoff. Общий FeatureNotificationsRenderer используется
+  обеими платформами; инъекция новых портов включена в Android и iOS. Это не
+  проверка настоящего iOS push tap/cold launch — Swift PushAppDelegate не менялся.
+- Новый contributionsModule стал общим. Notification navigation и Contributions
+  screen получают один registered feature repository. Вместо java.time в
+  commonMain используется существующий contributionUtcOffsetMinutes; backend
+  contract и cancellation fix ChangeEditor из develop сохранены.
+- В Sandbox оставлены оба local store: notifications и content reports,
+  включая их reset/dispatch. Реального сервера или аккаунта в них нет.
+- Перестановка фото Shop/Home из develop не потеряна. Общий Home photo component
+  использует CoffeePeekPhotoAttachments, callbacks move/remove/add и имеющиеся
+  feature resources; App Home media сохраняет Fit/Crop. Shared previews используют
+  multiplatform tooling. Не создавались новые UI/instrumentation test hosts.
+
+Проверки объединённого кода:
+
+- Выбранный unit/contract набор: **601 tests / 83 suites**, 0 failures/errors/skips.
+  App 202 / 36; design-system 47 / 13; Discovery impl 60 / 5;
+  Contributions impl 66 / 7; Notifications data 4 / 1 и impl 22 / 3;
+  Home impl 73 / 3; Shop impl 108 / 12; Favorites impl 19 / 3.
+  Используется Gradle cache для неизменённых прошедших suites; counts относятся
+  к результатам всего выбранного набора, не к числу заново исполненных tasks.
+- Первый app test compile после merge выявил старую ProfileSignOutAdapterTest
+  заглушку без нового NotificationFeature.destination. Она теперь fail-fast
+  запрещает этот вызов при logout; sign-out suite включён в повторный subset.
+  Исходный compile failure записан, повторный набор прошёл.
+- assembleDirectDebug/Sandbox, runtime-class guards и Sandbox isolation прошли.
+  compileKotlinIosArm64, linkDebugFrameworkIosSimulatorArm64 и common test compile
+  app, Notifications data/impl, Discovery impl, Contributions impl, Home impl и
+  Shop impl успешны. Native tests только скомпилированы, не исполнены.
+  Gradle последовательно с --max-workers=6; прежние preview/expect-actual/
+  bundle-ID warnings остаются.
+- Source: e67692f3 + merge develop 105b8994 с описанными resolutions.
+  SHA-256 APK: Debug `64eaad503d9db62f5120f82839f4bf2f4fe3bb9b5c6d3625f9583a679d1d0125`;
+  Sandbox `a6f5d2a3d9f8e23fbd9e3eaf60950214d397226853517575cd84294e936de36b`.
+  Приложения не устанавливались/не запускались, телефон и реальные
+  credentials/аккаунты/согласия/серверные записи не менялись.
+- Studio MCP проверил общие DiscoveryTabEffects и ContributionsModule без
+  ошибок. Полная IDE/preview проверка не заявляется; для новых common dependency
+  roots Favorites по-прежнему требуется Gradle sync.
+
+Gates прежние: ручной UI обеих платформ и safe test-account acceptance,
+Xcode/signing/устройство, реальный OAuth/Keychain/сервер/realtime/analytics.
+Наличие единичных legacy visual slots не означает смену публичного reader на
+private. Fallback/legacy bridge не удаляются до общей ручной приёмки.
 
 ## 1. Принципы (решение 2026-10-24)
 

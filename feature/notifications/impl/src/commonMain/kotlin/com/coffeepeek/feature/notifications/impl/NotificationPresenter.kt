@@ -116,7 +116,8 @@ internal class NotificationPresenter(
                 val items = page.items.map { notification ->
                     NotificationItem(notification.id,
                         NotificationKind.entries.firstOrNull { it.name == notification.type } ?: NotificationKind.General,
-                        notification.title, notification.body, notification.createdAtUtc, notification.readAtUtc != null, notification.status)
+                        notification.title, notification.body, notification.createdAtUtc, notification.readAtUtc != null,
+                        notification.status, canOpen = notification.canOpen())
                 }
                 mutable.update { it.copy(items = if (more) (it.items + items).distinctBy(NotificationItem::id) else items,
                     unreadCount = page.unreadCount, nextCursor = page.nextCursor, loading = false, loadingMore = false) }
@@ -157,30 +158,50 @@ internal class NotificationPresenter(
     override fun markRead(id: String) = read(id)
     override fun markAllRead() = read(null)
 
+    override suspend fun destination(notificationId: String): NotificationDestination? {
+        val snapshot = state.value
+        if (snapshot.accountId == null || !current(snapshot)) return null
+        val target = repository.destination(notificationId)
+        currentCoroutineContext().ensureActive()
+        return target?.toDestination().takeIf { current(snapshot) }
+    }
+
     private fun read(id: String?) {
         val snapshot = state.value
-        if (snapshot.accountId == null || !current(snapshot) || snapshot.markingRead || snapshot.loading || snapshot.loadingMore) return
-        val item = if (id == null) snapshot.items.firstOrNull() else snapshot.items.firstOrNull { it.id == id && !it.read }
-        if (item == null || snapshot.unreadCount == 0) return
+        if (snapshot.accountId == null || !current(snapshot) || snapshot.markingRead) return
+        if (id == null && (snapshot.loading || snapshot.loadingMore || snapshot.unreadCount == 0)) return
+        val item = if (id == null) snapshot.items.firstOrNull() else snapshot.items.firstOrNull { it.id == id }
+        if (id == null && item == null || id != null && item?.read == true) return
+        val targetId = id ?: item?.id ?: return
+        if (targetId.isBlank() || targetId.any { it in "/\\?#" || it.isISOControl() }) return
         mutable.update { it.copy(markingRead = true, error = null) }
-        readJob = scope.launch {
-            try {
-                if (id == null) repository.markAllRead(item.id) else repository.markRead(id)
-                if (!current(snapshot)) return@launch
-                mutable.update { value -> value.copy(markingRead = false,
-                    items = value.items.map { if (id == null || it.id == id) it.copy(read = true) else it },
-                    unreadCount = if (id == null) 0 else (value.unreadCount - 1).coerceAtLeast(0)) }
-                // Reload the count: messages arriving after this snapshot must stay unread.
-                refresh()
-            } catch (cancelled: CancellationException) { throw cancelled }
-            catch (_: Exception) {
-                if (current(snapshot)) {
-                    mutable.update { it.copy(markingRead = false, error = "Не удалось отметить уведомления прочитанными") }
-                    // A refresh that arrived while the write was running was only queued; serve it now, without hiding why the write failed.
-                    if (refreshPending) load(more = false, keepError = true)
-                }
-            }
+        readJob = scope.launch { writeRead(snapshot, id, targetId, item != null) }
+    }
+
+    private suspend fun writeRead(snapshot: NotificationInboxState, id: String?, targetId: String, wasLoaded: Boolean) {
+        try {
+            if (id == null) repository.markAllRead(targetId) else repository.markRead(id)
+            if (!current(snapshot)) return
+            applyRead(id, wasLoaded)
+            // Reload the count: messages arriving after this snapshot must stay unread.
+            refresh()
+        } catch (cancelled: CancellationException) {
+            throw cancelled
+        } catch (_: Exception) {
+            if (current(snapshot)) readFailed()
         }
+    }
+
+    private fun applyRead(id: String?, wasLoaded: Boolean) {
+        mutable.update { value -> value.copy(markingRead = false,
+            items = value.items.map { if (id == null || it.id == id) it.copy(read = true) else it },
+            unreadCount = if (id == null) 0 else if (wasLoaded) (value.unreadCount - 1).coerceAtLeast(0) else value.unreadCount) }
+    }
+
+    private fun readFailed() {
+        mutable.update { it.copy(markingRead = false, error = "Не удалось отметить уведомления прочитанными") }
+        // Serve any refresh queued during the write without hiding why the write failed.
+        if (refreshPending) load(more = false, keepError = true)
     }
 
     override fun onCheckInCreated() {

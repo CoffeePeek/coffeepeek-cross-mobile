@@ -1,4 +1,12 @@
 <resources>
+    <string name="coffeepeek_photos_manage_hint">Нажмите, чтобы посмотреть. Удерживайте и перетаскивайте, чтобы менять порядок.</string>
+    <string name="coffeepeek_photo_description">Фото %1$d из %2$d</string>
+    <string name="coffeepeek_photo_position">%1$d / %2$d</string>
+    <string name="coffeepeek_photo_remove">Удалить фото %1$d</string>
+    <string name="coffeepeek_photo_add">Добавить фотографии</string>
+    <string name="coffeepeek_photo_move_earlier">Переместить раньше</string>
+    <string name="coffeepeek_photo_move_later">Переместить позже</string>
+    <string name="coffeepeek_photo_close">Закрыть просмотр фотографий</string>
     <string name="coffeepeek_image_placeholder_brand">COFFEEPEEK</string>
     <string name="coffeepeek_rating_description">Rating %1$s out of 5</string>
     <string name="coffeepeek_rating_choose">Choose %1$d out of 5</string>

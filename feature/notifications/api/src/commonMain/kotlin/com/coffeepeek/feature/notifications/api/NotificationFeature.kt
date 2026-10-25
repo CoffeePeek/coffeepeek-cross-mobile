@@ -9,6 +9,8 @@ interface NotificationFeature {
     fun setPushEnabled(enabled: Boolean)
     fun markRead(id: String)
     fun markAllRead()
+    /** Resolves current owned metadata; null means there is no supported destination. */
+    suspend fun destination(notificationId: String): NotificationDestination?
     fun foreground()
     /** Called only after a new check-in has been successfully saved. */
     fun onCheckInCreated()

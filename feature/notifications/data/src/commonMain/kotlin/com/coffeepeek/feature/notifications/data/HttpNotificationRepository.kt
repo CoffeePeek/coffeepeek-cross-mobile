@@ -21,8 +21,15 @@ internal class HttpNotificationRepository(private val client: HttpClient) : Noti
             before?.let { parameter("before", it) }
         }.body<InboxDto>()
         return NotificationPage(page.items.map {
-            Notification(it.id, it.type, it.title, it.body, it.createdAtUtc, it.readAtUtc, it.status)
+            Notification(it.id, it.type, it.title, it.body, it.createdAtUtc, it.readAtUtc, it.status, it.entityType, it.entityId)
         }, page.nextCursor, page.unreadCount)
+    }
+    override suspend fun destination(notificationId: String): NotificationTarget? {
+        require(notificationId.isNotBlank() && notificationId.none { it in "/\\?#" || it.isISOControl() })
+        val response = client.get("$root/$notificationId/destination") { expectSuccess = true }
+        if (response.status == HttpStatusCode.NoContent) return null
+        val target = response.body<DestinationDto>()
+        return NotificationTarget(target.kind, target.value)
     }
     override suspend fun pushEnabled() = client.get("$root/push") { expectSuccess = true }.body<PushSettingsDto>().enabled
     override suspend fun setPushEnabled(enabled: Boolean) {
@@ -54,4 +61,6 @@ internal class HttpNotificationRepository(private val client: HttpClient) : Noti
 @Serializable private data class NotificationDto(
     val id: String, val type: String, val title: String, val body: String,
     val createdAtUtc: String, val readAtUtc: String? = null, val status: String? = null,
+    val entityType: String? = null, val entityId: String? = null,
 )
+@Serializable private data class DestinationDto(val kind: String, val value: String)

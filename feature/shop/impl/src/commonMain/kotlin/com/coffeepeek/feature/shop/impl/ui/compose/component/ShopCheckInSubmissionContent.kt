@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.LiveRegionMode
@@ -22,14 +21,13 @@ import com.coffeepeek.feature.shop.impl.resources.shop_checkin_form_success
 import com.coffeepeek.feature.shop.impl.resources.shop_checkin_form_success_public
 import com.coffeepeek.feature.shop.impl.resources.shop_checkin_form_success_private
 import com.coffeepeek.feature.shop.impl.resources.shop_checkin_form_feed
-import com.coffeepeek.feature.shop.impl.resources.shop_checkin_form_history
 import com.coffeepeek.feature.shop.impl.resources.shop_checkin_form_cleanup_error
 import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
 @Composable
 internal fun ShopCheckInSubmissionContent(
-    submittedVisibility: ShopCheckInVisibility?, cleanupFailed: Boolean, onFeed: () -> Unit, onHistory: () -> Unit,
+    submittedVisibility: ShopCheckInVisibility?, cleanupFailed: Boolean, onFeed: () -> Unit,
 ) {
     Column(Modifier.fillMaxWidth().semantics { liveRegion = LiveRegionMode.Polite },
         verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing4)) {
@@ -43,20 +41,19 @@ internal fun ShopCheckInSubmissionContent(
             if (cleanupFailed) Text(stringResource(Res.string.shop_checkin_form_cleanup_error),
                 color = MaterialTheme.colorScheme.error)
             CoffeePeekButton(stringResource(Res.string.shop_checkin_form_feed), onFeed)
-            TextButton(onClick = onHistory) { Text(stringResource(Res.string.shop_checkin_form_history)) }
         }
     }
 }
 
 @Preview @Composable private fun ShopCheckInSubmissionLightPreview() = CoffeePeekTheme(darkTheme = false) {
-    ShopCheckInSubmissionContent(ShopCheckInVisibility.Private, false, {}, {})
+    ShopCheckInSubmissionContent(ShopCheckInVisibility.Private, false, {})
 }
 @Preview @Composable private fun ShopCheckInSubmissionDarkPreview() = CoffeePeekTheme(darkTheme = true) {
-    ShopCheckInSubmissionContent(ShopCheckInVisibility.Public, false, {}, {})
+    ShopCheckInSubmissionContent(ShopCheckInVisibility.Public, false, {})
 }
 @Preview @Composable private fun ShopCheckInSendingLightPreview() = CoffeePeekTheme(darkTheme = false) {
-    ShopCheckInSubmissionContent(null, false, {}, {})
+    ShopCheckInSubmissionContent(null, false, {})
 }
 @Preview @Composable private fun ShopCheckInSendingDarkPreview() = CoffeePeekTheme(darkTheme = true) {
-    ShopCheckInSubmissionContent(null, false, {}, {})
+    ShopCheckInSubmissionContent(null, false, {})
 }

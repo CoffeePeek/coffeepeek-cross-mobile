@@ -13,6 +13,7 @@ import com.coffeepeek.admin.di.appupdate.androidAppUpdateRenderer
 import com.coffeepeek.admin.di.auth.androidAuthScreenRenderer
 import com.coffeepeek.admin.di.community.featureCommunityScreenRenderer
 import com.coffeepeek.api.CoffeePeekClient
+import com.coffeepeek.admin.di.contributions.contributionsModule
 import com.coffeepeek.admin.di.contributions.featureContributionsScreenRenderer
 import com.coffeepeek.admin.di.discovery.featureDiscoveryScreenRenderer
 import com.coffeepeek.admin.di.profile.featureAccountScreenRenderer
@@ -49,6 +50,7 @@ internal fun initAndroidKoin(extraModules: List<org.koin.core.module.Module> = e
             checkInHistoryModule(),
             contentReportModule(),
             coffeeModule(),
+            contributionsModule(),
         ) + extraModules,
         shopReportRendererFactory = { client ->
             FeatureShopReportScreenRenderer(
@@ -81,10 +83,10 @@ internal fun initAndroidKoin(extraModules: List<org.koin.core.module.Module> = e
             featureSettingsScreenRenderer(get(), get(), get(), get(), notify = { Toast.makeText(Locator.appContext, it, Toast.LENGTH_SHORT).show() })
         },
         appUpdateRendererFactory = { androidAppUpdateRenderer(get(), get()) },
-        notificationsRendererFactory = { featureNotificationsRenderer(get()) },
+        notificationsRendererFactory = { featureNotificationsRenderer(get(), get(), get()) },
         authRendererFactory = { androidAuthScreenRenderer(get(), get()) },
         communityRendererFactory = { featureCommunityScreenRenderer(get(), get(), get(), get(), get(), get()) },
-        contributionsRendererFactory = { featureContributionsScreenRenderer(get<CoffeePeekClient>(), get(), get()) },
+        contributionsRendererFactory = { featureContributionsScreenRenderer(get(), get(), get()) },
         discoveryRendererFactory = { featureDiscoveryScreenRenderer(get<CoffeePeekClient>().client, get(), get(), get(), get(), get(), get()) },
     )
 }

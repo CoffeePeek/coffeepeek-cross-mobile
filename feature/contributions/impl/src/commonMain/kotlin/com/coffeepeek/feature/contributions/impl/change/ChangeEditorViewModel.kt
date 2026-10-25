@@ -15,6 +15,7 @@ import com.coffeepeek.feature.contributions.domain.model.ShopSnapshot
 import com.coffeepeek.feature.contributions.domain.repository.ContributionsRepository
 import com.coffeepeek.feature.contributions.domain.rules.ContributionLimits
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 
@@ -90,22 +91,27 @@ internal class ChangeEditorViewModel(
         val mine = generation
         updateState { ChangeEditorState(section, signedIn = true) }
         work = viewModelScope.launch {
-            val loaded = runCatching { read() }.getOrElse { failure ->
-                if (mine != generation) return@launch
-                val known = failure as? ContributionFailure
-                updateState {
-                    copy(
-                        isLoading = false, loadMessage = known?.serverMessage,
-                        loadError = when (known?.kind) {
-                            FailureKind.SignInRequired -> EditorLoadError.SignInRequired
-                            FailureKind.NotFound -> EditorLoadError.NotFound
-                            else -> EditorLoadError.Failed
-                        },
-                    )
-                }
-                return@launch
+            try {
+                val loaded = read()
+                if (mine == generation) updateState { loaded(this).copy(isLoading = false) }
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (failure: Exception) {
+                if (mine == generation) loadFailed(failure)
             }
-            if (mine == generation) updateState { loaded(this).copy(isLoading = false) }
+        }
+    }
+
+    private fun loadFailed(failure: Exception) {
+        val known = failure as? ContributionFailure
+        updateState {
+            copy(isLoading = false, loadMessage = known?.serverMessage,
+                loadError = when (known?.kind) {
+                    FailureKind.SignInRequired -> EditorLoadError.SignInRequired
+                    FailureKind.NotFound -> EditorLoadError.NotFound
+                    else -> EditorLoadError.Failed
+                },
+            )
         }
     }
 

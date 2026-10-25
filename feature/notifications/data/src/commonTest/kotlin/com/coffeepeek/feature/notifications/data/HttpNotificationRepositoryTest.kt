@@ -32,6 +32,7 @@ class HttpNotificationRepositoryTest {
             val repository = HttpNotificationRepository(client)
             val page = repository.inbox("previous")
             assertEquals("RoasterRejected", page.items.single().type)
+            assertEquals("Roaster", page.items.single().entityType)
             assertNull(page.items.single().readAtUtc)
             assertFalse(repository.pushEnabled())
             repository.setPushEnabled(false)
@@ -46,5 +47,30 @@ class HttpNotificationRepositoryTest {
         val client = HttpClientFactory(MockEngine { respond("", HttpStatusCode.ServiceUnavailable) }).api("https://api.example")
         try { assertFails { HttpNotificationRepository(client).setPushEnabled(false) } }
         finally { client.close() }
+    }
+
+    @Test fun destinationUsesTheOwnedNotificationEndpointAndPreservesItsCurrentPublicSlug(): Unit = runBlocking {
+        val client = HttpClientFactory(MockEngine { request ->
+            assertEquals("/api/v1/me/notifications/notice/destination", request.url.encodedPath)
+            respond("""{"kind":"Shop","value":"renamed-cafe"}""",
+                headers = headersOf(HttpHeaders.ContentType, "application/json"))
+        }).api("https://api.example")
+        try {
+            assertEquals(com.coffeepeek.feature.notifications.domain.NotificationTarget("Shop", "renamed-cafe"),
+                HttpNotificationRepository(client).destination("notice"))
+        } finally { client.close() }
+    }
+
+    @Test fun noDestinationRemainsDifferentFromAnUnavailableOrForeignTarget(): Unit = runBlocking {
+        var status = HttpStatusCode.NoContent
+        val client = HttpClientFactory(MockEngine { respond("", status) }).api("https://api.example")
+        try {
+            val repository = HttpNotificationRepository(client)
+            assertNull(repository.destination("notice"))
+            status = HttpStatusCode.NotFound
+            assertFails { repository.destination("notice") }
+            status = HttpStatusCode.ServiceUnavailable
+            assertFails { repository.destination("notice") }
+        } finally { client.close() }
     }
 }

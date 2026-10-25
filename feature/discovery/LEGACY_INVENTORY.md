@@ -247,3 +247,43 @@ Open (not fixed, decisions or gates):
 ## Main sync of 2026-10-23 (pull to refresh and the map preview)
 
 `develop` (`e628de2e`) moved the pull-to-refresh translation of the list from a graphics layer to a layout offset and made the map preview follow the measured slot of the mini-map item (`discoveryMapPreviewBounds`: the measured anchor while the item is laid out, parked above the viewport once it is recycled), so the map follows the pull. The design-system `CoffeePeekPullToRefresh` came with the merge; `previewFrame` of the tab choreography now has the same rule and its test the same cases (scrolled and pulled anchors). **Reverted for Discovery (prod parity):** prod keeps the map pinned while only the shops below are pulled and the loader shows under the map, so `previewFrame` is `viewportTop + item offset` again (the item offset ignores the pull) and the loader is placed under the map with `indicatorTopOffset`. The other commits of this sync (history and favorites fixes, public check-ins by default, roaster badges, iOS sheets, version names, artwork) touch owners that were already migrated or the shared shell and need no port here.
+
+## PR #178 composable review limit — 2026-10-25
+
+Source: `codex/migration-pr178-review-fixes`, based on develop `5a1fe4a1`.
+Verification plan: keep the one mounted map, measured preview frame, animation
+durations, overlay analytics, permission callback, back/cancel and roaster/search
+slots while extracting cohesive components; use existing pure choreography and
+ViewModel tests, lint, Android assembly/DEX checks and manual isolated Sandbox.
+
+DiscoveryTab is the lifecycle adapter (9 body lines): it collects state/navigation
+events and supplies a map slot to DiscoveryTabContent, which has fake-state paired
+light/dark previews without ViewModels/DI/network. Transient overlay/scroll/frame
+state and animations have their own UI owner. Search, map, roaster overlay, landing
+list, shop carousel and section title have named components in their owning files.
+The native map remains mounted through the same injected retained-content host.
+Existing analytics exposure/event names, initial-overlay suppression, click ownership
+and permission/session boundaries are preserved; no analytics service is introduced.
+
+Review counted nonblank/noncomment body lines including nested blocks: all extracted
+composables are at most 26 lines (limit 40); ordinary helpers are below 20. The
+existing pure choreography functions are unchanged; no size lint/build rule is added.
+Discovery impl: 54 executed tests/4 suites, zero failures/errors/skips, including
+5 existing choreography tests; lintDebug passed. Together with Contributions,
+117 tests passed. DirectDebug and DirectSandbox assemblies, packaged DEX guards
+and Sandbox isolation passed in the same 25s Gradle run, max-workers=6.
+
+Manual run: read-only Pixel_5 AVD, Android 37, sdk_gphone16k_x86_64, unlocked,
+1080x2340; directSandbox com.coffeepeek.sandbox 1.1.1.2453-sandbox/code 2453.
+Sandbox was absent before installation; the real app/data and Studio variant were
+untouched. Checked mini-map/full-map layout and back/cancel in light/dark, text
+search/cancel, keyboard dismissal and tab retention. Local captures/UI dumps remain
+outside tracked sources and contain synthetic data only. Sandbox map tiles are
+blank by design (no INTERNET); live map/network acceptance is not claimed.
+Verified Sandbox APK SHA-256:
+`c42fd8e68d3beaf00a9316312bebc1166ad015d896bd41e498954ad2d7da0454`.
+
+IDE tools/preview rendering were unavailable. Paired Android previews compile.
+TalkBack, alternate font/window sizes, real map/permission/backend acceptance and
+iOS runtime UI checks remain untested. No automated UI/Compose/screenshot test
+was introduced or run, and no camera, production analytics or account write occurred.

@@ -331,6 +331,7 @@ object Navigator {
 
     @Composable
     private fun BaseNavigator(isLoggedIn: Boolean) {
+        koinInject<com.coffeepeek.admin.feature.notifications.ui.NotificationsRenderer>().HandlePendingOpen(isLoggedIn)
         val nativeAppLink by pendingAppLink.collectAsState()
         if (PlatformRootNavigation(isLoggedIn, navigationEvents, nativeAppLink,
             { pendingAppLink.compareAndSet(nativeAppLink, null) },

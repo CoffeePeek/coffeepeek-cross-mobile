@@ -19,11 +19,15 @@ import com.coffeepeek.core.designsystem.component.CoffeePeekSwipeDismissModalBot
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.feature.notifications.api.NotificationFeature
+import com.coffeepeek.feature.notifications.api.NotificationInboxState
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
 @Composable
-internal fun NotificationsButton(feature: NotificationFeature, onSignIn: () -> Unit) {
+internal fun NotificationsButton(feature: NotificationFeature, onSignIn: () -> Unit,
+    onOpen: suspend (String, String, Long) -> Boolean) {
     val state by feature.state.collectAsStateWithLifecycle()
     var open by remember { mutableStateOf(false) }
     LaunchedEffect(state.generation) { open = false }
@@ -31,13 +35,42 @@ internal fun NotificationsButton(feature: NotificationFeature, onSignIn: () -> U
         open = true
         feature.refresh()
     })
-    if (open) CoffeePeekSwipeDismissModalBottomSheet(
-        onDismissRequest = { open = false },
+    if (open) NotificationSheet(feature, state, { open = false }, onSignIn, onOpen)
+}
+
+@Composable
+private fun NotificationSheet(feature: NotificationFeature, state: NotificationInboxState,
+    onClose: () -> Unit, onSignIn: () -> Unit, onOpen: suspend (String, String, Long) -> Boolean) {
+    val scope = rememberCoroutineScope()
+    var openingId by remember { mutableStateOf<String?>(null) }
+    CoffeePeekSwipeDismissModalBottomSheet(
+        onDismissRequest = onClose,
         dismissDescription = stringResource(Res.string.notifications_close),
         maxSheetHeightFraction = .88f,
     ) {
-        NotificationsContent(state, { open = false }, feature::setPushEnabled, feature::markRead,
-            feature::markAllRead, feature::refresh, feature::loadMore, onSignIn)
+        NotificationsContent(state, onClose, feature::setPushEnabled, { id ->
+            if (openingId == null) openNotification(scope, feature, state, id, { openingId = it }, onClose, onOpen)
+        }, feature::markAllRead, feature::refresh, feature::loadMore, onSignIn, openingId)
+    }
+}
+
+private fun openNotification(scope: CoroutineScope, feature: NotificationFeature, expected: NotificationInboxState,
+    id: String, onOpening: (String?) -> Unit, onClose: () -> Unit, onOpen: suspend (String, String, Long) -> Boolean) {
+    val state = feature.state.value
+    if (state.generation != expected.generation || state.accountId != expected.accountId) return
+    val item = state.items.firstOrNull { it.id == id } ?: return
+    val account = state.accountId ?: return
+    if (!item.canOpen) {
+        feature.markRead(id)
+        return
+    }
+    onOpening(id)
+    scope.launch {
+        try {
+            if (onOpen(id, account, state.generation)) onClose()
+        } finally {
+            onOpening(null)
+        }
     }
 }
 

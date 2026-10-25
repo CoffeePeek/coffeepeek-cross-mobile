@@ -13,6 +13,7 @@ data class NotificationItem(
     val createdAtUtc: String,
     val read: Boolean,
     val status: String? = null,
+    val canOpen: Boolean = false,
 )
 
 data class NotificationInboxState(

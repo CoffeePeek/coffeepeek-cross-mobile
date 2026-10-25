@@ -1,4 +1,5 @@
 <resources>
+    <string name="notifications_open">Открыть связанный экран</string>
     <string name="notifications_title">Уведомления</string>
     <string name="notifications_subtitle">Всё важное о вашем кофе</string>
     <string name="notifications_close">Закрыть уведомления</string>

@@ -9,6 +9,46 @@ import kotlin.test.*
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class NotificationPresenterTest {
+    @Test fun lateDestinationCannotCrossAnAccountChange() = runTest {
+        val account = Account()
+        val repository = Repository()
+        val release = CompletableDeferred<Unit>()
+        repository.target = { release.await(); NotificationTarget("Shop", "alice-cafe") }
+        val feature = NotificationPresenter(repository, account, Platform(), backgroundScope)
+        account.user.value = "alice"
+        runCurrent()
+        val result = async { feature.destination("notice") }
+        runCurrent()
+        account.user.value = "bob"
+        runCurrent()
+        release.complete(Unit)
+        assertNull(result.await())
+    }
+
+    @Test fun openingAnOlderPushCanMarkAnIdOutsideTheLoadedPageRead() = runTest {
+        val account = Account()
+        val repository = Repository()
+        val read = mutableListOf<String>()
+        repository.markReadHandler = { read += it }
+        val feature = NotificationPresenter(repository, account, Platform(), backgroundScope)
+        account.user.value = "alice"
+        runCurrent()
+        feature.markRead("older-push")
+        runCurrent()
+        assertEquals(listOf("older-push"), read)
+        assertEquals("first", feature.state.value.items.single().id)
+    }
+
+    @Test fun cancellationDuringDestinationLookupIsNotConvertedIntoAnUnsupportedTarget() = runTest {
+        val account = Account()
+        val repository = Repository()
+        repository.target = { throw CancellationException("cancelled") }
+        val feature = NotificationPresenter(repository, account, Platform(), backgroundScope)
+        account.user.value = "alice"
+        runCurrent()
+        assertFailsWith<CancellationException> { feature.destination("notice") }
+    }
+
     @Test fun onlyCurrentAccountTokenIsRegisteredAndLogoutClearsInbox() = runTest {
         val account = Account(); val platform = Platform(); val repository = Repository()
         val feature = NotificationPresenter(repository, account, platform, backgroundScope)
@@ -216,6 +256,8 @@ private class Platform : PushDevicePlatform {
 }
 
 private class Repository : NotificationRepository {
+    var target: suspend (String) -> NotificationTarget? = { null }
+    override suspend fun destination(notificationId: String) = target(notificationId)
     var enabled = true
     var failSettings = false
     var failSave = false

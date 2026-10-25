@@ -42,6 +42,7 @@ internal fun NotificationsContent(
     onRefresh: () -> Unit,
     onLoadMore: () -> Unit,
     onSignIn: () -> Unit,
+    openingId: String? = null,
 ) {
     Column(Modifier.fillMaxWidth().padding(horizontal = CoffeePeekDimens.spacing5)) {
         NotificationsHeader(onClose)
@@ -62,7 +63,7 @@ internal fun NotificationsContent(
             } else {
                 item(key = "settings") { NotificationPushSettings(state, onPushChanged, onRefresh) }
                 if (state.items.isNotEmpty()) item(key = "actions") { NotificationsReadActions(state, onReadAll) }
-                notificationHistory(state, onRead)
+                notificationHistory(state, onRead, openingId)
                 if (state.items.isEmpty() || state.error != null) {
                     item(key = "status") { NotificationsStatus(state, onRefresh) }
                 }
@@ -110,7 +111,7 @@ private fun NotificationsReadActions(state: NotificationInboxState, onReadAll: (
     }
 }
 
-private fun LazyListScope.notificationHistory(state: NotificationInboxState, onRead: (String) -> Unit) {
+private fun LazyListScope.notificationHistory(state: NotificationInboxState, onRead: (String) -> Unit, openingId: String?) {
     state.items.groupBy { isToday(it.createdAtUtc) }.forEach { (isToday, entries) ->
         item(key = if (isToday) "today" else "earlier") {
             Text(stringResource(if (isToday) Res.string.notifications_today else Res.string.notifications_earlier),
@@ -118,7 +119,7 @@ private fun LazyListScope.notificationHistory(state: NotificationInboxState, onR
                 modifier = Modifier.padding(top = CoffeePeekDimens.spacing1).semantics { heading() })
         }
         items(entries, key = NotificationItem::id) { item ->
-            NotificationRow(item, enabled = !state.markingRead && !state.loading && !state.loadingMore,
+            NotificationRow(item, enabled = openingId == null && !state.markingRead && !state.loading && !state.loadingMore,
                 onClick = { onRead(item.id) })
         }
     }
@@ -147,7 +148,7 @@ private fun NotificationsPreview(dark: Boolean, count: Int) = CoffeePeekTheme(da
     val state = NotificationInboxState(accountId = "preview", settingsLoaded = true, deviceAvailable = true,
         unreadCount = count, items = List(count) { index ->
             NotificationItem("preview-$index", NotificationKind.ShopApproved, "Кофейня добавлена",
-                "Спасибо! Новая кофейня уже появилась на карте.", "2026-10-21T08:00:00Z", false)
+                "Спасибо! Новая кофейня уже появилась на карте.", "2026-10-21T08:00:00Z", false, canOpen = true)
         })
     Surface(Modifier.width(360.dp).heightIn(max = 640.dp)) {
         NotificationsContent(state, {}, {}, {}, {}, {}, {}, {})
