@@ -22,7 +22,7 @@ iOS-документы (`docs/IOS_NATIVE_EXPERIENCE.md`, `IOS_NATIVE_NAVIGATION.
 шторка, native header, date picker, alert, выбор фото, haptic, scroll-to-top, роли клавиатуры (AutoFill, «Готово»), UIMenu для ActionMenu, glass-кнопки, переключатель с haptic, спиннер, `CoffeePeekBackHandler`, `CoffeePeekScrollableColumn`; `CoffeePeekActionMenu` перенесён в commonMain. В checkpoint Coffee добавлено подключение UIKit segmented control к DS-капсуле.
 `CoffeePeekScrollableColumn` используется фильтрами Coffee. Не использовано экранами пока: `nativeAction` в header; native-иконки у части glass-кнопок и меню не проставлены.
 
-**Этап 2 — сессия: F23 и F24 готовы** (выход стирает старые строки; сбой удаления Keychain сообщается). Core session port вместо `SessionRepository` (оставшиеся app-потребители legacy bridge) — **не сделан**.
+**Этап 2 — сессия: F23 и F24 готовы** (выход стирает старые строки; сбой удаления Keychain сообщается). Активные app-адаптеры переведены с `SessionRepository` на core `SessionReader`; 13 файлов legacy fallback и старый data/writer bridge сохранены до приёмки.
 
 **Этап 3 — подключение на iOS: начат.** Через новые модули на iOS подключены: вкладка Settings (и три её подэкрана), окно обновления, колокольчик уведомлений, экраны входа, регистрации и восстановления пароля, **Community (вкладка «Лента»)**, **Discovery (вкладка «Поиск»)**, **Coffee (вкладка каталога и детали кофе)**, **Profile (собственный/публичный профиль, его чекины, редактирование и подтверждение удаления аккаунта)** и **Contributions (списки заявок, добавление кофейни/обжарщика, предложение правки, редактор и детали заявки)**, **Shop (кофейня, публичные чекины, галерея меню, форма чекина)** и **Shop-report (неточность в данных кофейни)**, **Check-in history (личная история, календарь и Home detail/editor внутри неё)** и **общий create flow (выбор типа + Home create)**, **выбор кофейни для чекина**, **личная Activity шторка и недельный обзор Profile**, **контентные жалобы на чекин/совместимый отзыв**. Подключены также Google/Apple кнопки и существующие Swift-провайдеры (при доступной конфигурации); реальный OAuth ещё не проверен.
 На iOS Profile, Community, Discovery, Coffee, Contributions, Shop/Shop-report и личная история идут через feature-рендереры.
@@ -39,7 +39,7 @@ iOS-документы (`docs/IOS_NATIVE_EXPERIENCE.md`, `IOS_NATIVE_NAVIGATION.
 - Этап 3: оставшиеся legacy follow-ups и Favorites (по решению продукта); ручная приёмка Community/Discovery/Coffee/Profile/Contributions/Shop/History и live-приёмка Apple/Google.
 - Ручная приёмка отдельной Activity шторки и недельного обзора Profile ещё нужна; public-only календарь Profile не получает private reader.
 - Ручная приёмка контентных ReportCheckIn/ReportReview ещё нужна; они подключены к content-report, отдельно от Shop-report.
-- Этап 2: core session port.
+- Этап 2: активные app-потребители используют core session port; удаление legacy session bridge вместе со старыми VM — после приёмки, не часть механической замены типов.
 - Roaster: Xcode-линковка, симулятор, устройство.
 - Этап 5: удаление legacy — только после полной готовности и ручной приёмки.
 - Push на iOS (`PushAppDelegate`, `NativePushBridge`) и Xcode/устройство-гейты не трогались.
@@ -1047,7 +1047,7 @@ guest auth/401, replacement/renewal, success/rejection/unconfirmed. Live moderat
 analytics, Xcode/signing/устройство, Google/Apple и Keychain остаются отдельной
 приёмкой. Сборки/fake scenarios её не сертифицируют.
 
-Следующий срез — **оставшиеся потребители legacy SessionRepository bridge**.
+Следующий срез после content-report — **оставшиеся потребители legacy SessionRepository bridge** (выполнен для активных адаптеров следующим checkpoint).
 Он уже extends core/session SessionStore; новый store создавать не нужно.
 Текущий Kotlin-import scan app common/android/ios + feature нашёл 25 файлов,
 включая legacy fallback. Сначала разделить активные analytics/realtime/media/
@@ -1056,6 +1056,83 @@ notification/author-blocking/navigation adapters и оставляемые legac
 и cancellation guards. Это не разрешение переписывать старые экраны или удалять
 fallback до приёмки. Favorites iOS — по продуктовому решению; затем общая ручная
 приёмка и только после неё удаление legacy.
+
+### Checkpoint: core SessionReader в активных app-адаптерах — 2026-10-25
+
+Продолжение PR #195 → develop, source поверх `066e9b94`. Новых модулей,
+веток и хранилища сессии нет. Fresh origin/main `16724b7e` уже в истории.
+Origin/develop `105b8994` содержит отдельные последующие изменения; этот
+checkpoint не утверждает их интеграцию или проверку их поведения.
+
+Что сделано:
+
+- 12 production Kotlin-файлов переведены на core SessionReader:
+  AnalyticsInstallation, SessionRealtimeManager, SessionNotificationAccount,
+  SessionAuthorBlockingAccount, ServerRoasterFavorites, TrackedFavoriteInteractions,
+  ProtectedPhotoSession, PhotoSessionInvalidation, CpImage, NavigatorViewModel,
+  CheckInTabContent и Android CoffeePeekApplication. В затронутых адаптерах
+  используется core Session вместо legacy typealias. Common app graph выводит
+  тип Koin dependency из новых конструкторов; платформа не получает второй store.
+- Startup warmup читает getSession(), эквивалент прежнего warmCache().
+  Favorite gate проверяет isActiveSession(getSession()), эквивалент isLoggedIn().
+  Эти потребители не записывают сессию и не требуют SessionStore. В настоящем
+  dataModule SessionRepository, SessionStore и SessionReader остались aliases
+  одного SessionRepositoryImpl/DefaultSessionStore; строго offline DI test
+  разрешает все три и проверяет одну in-memory snapshot без Room/Keychain/HTTP.
+- Analytics сохраняет ключ/значения consent, debug opt-in, schema/envelope,
+  API_REQUEST_COMPLETED properties, operation/account guard и только backend
+  userId как identity. Observer и request adapter выделены из install в небольшие
+  app-функции; второй SDK/feature analytics service не вводился. Все проверки
+  используют MemoryConsent/RecordingTransport, настоящие events не отправлялись.
+- Notifications получает только активный userId. Author blocking сохраняет
+  opaque fallback accessToken, если userId отсутствует; он не становится
+  notification/analytics identity. Protected photos сохраняют инвалидирование
+  при token rotation, account replacement/logout и до/после mutation, включая
+  потерянный ответ; helpful-only votes по-прежнему не инвалидируют фото.
+- Исправлена отмена suspend-загрузки сессии: favorite gate не открывает auth,
+  освобождает pending key и допускает следующую попытку. Startup не глотает
+  отмену warmup. Realtime retry пробрасывает CancellationException; transport
+  failures/обычный disconnect повторяются с прежней задержкой только пока token
+  актуален. URL, SignalR protocol, ForceLogout и cleanup не переписывались.
+- 13 оставшихся app imports SessionRepository принадлежат BaseViewModel,
+  legacy Community/PublicProfile/Feed/Profile/Activity/VisitedPlaces,
+  DeleteAccountPending/ReviewReport/ShopDetail/Favorites/RoasterList/RoasterDetail.
+  Старые экраны, Sandbox writer и modules/data SessionTokenProvider/Auth/cleanup
+  bridge не удалены и не объявлены мигрированными. NavigatorViewModel всё ещё
+  наследует transitional BaseViewModel; этот checkpoint не заменяет его на MVI.
+
+Проверки:
+
+- App unit/contract subset: **157 tests / 31 suites**, 0 failures/errors/skips,
+  включая **18 новых tests** для reader identity/consent/request observation,
+  отмены favorite gate/realtime и aliases настоящего dataModule. Существующие
+  favorite analytics parity, photo cache/request/transport/invalidation прошли.
+  Первое выполнение остановилось на компиляции новой заглушки: inferred
+  MutableStateFlow мешал подставить failing Flow. Возвращаемый тип задан Flow;
+  после этого повторён весь выбранный набор, без замены первоначального failure.
+- assembleDirectDebug/Sandbox, verifyDirectDebugRuntimeClasses,
+  verifyDirectSandboxRuntimeClasses и verifyDirectSandboxIsolation успешны.
+  Packaged guards дополнены core SessionReader/SessionStore; Debug также
+  проверяет DefaultSessionStore и SessionRealtimeManager. compileKotlinIosArm64,
+  linkDebugFrameworkIosSimulatorArm64 и compileTestKotlinIosSimulatorArm64
+  успешны. Native tests только скомпилированы, не исполнены. Gradle запускался
+  последовательно с --max-workers=6. Прежние preview/expect-actual/bundle-ID
+  warnings остаются; новых Gradle dependency/source-set boundaries нет.
+  UI/instrumentation/screenshot tests не создавались и не запускались.
+- SHA-256 APK: Debug `23fddfdecbd5a3f596468c46d06726cd71c51f4be4e59794ee31de36644b87f2`;
+  Sandbox `0fa12d7778a2257ef2b621bdd53c05211011a5e1d10c26c806015601b9bf3a0d`.
+  Source: `066e9b94` + этот checkpoint. Приложения не устанавливались и не
+  запускались, данные телефона/аккаунта/сервера не менялись.
+- Studio MCP: SessionRealtimeManager и AnalyticsInstallation проверены без
+  ошибок. Проверки нового request adapter, favorite bridge и Android startup
+  сначала вернули timedOut; после сборки повторены, ошибок не найдено.
+  Это выбранные файлы, не полная IDE-проверка. UI/preview rendering не выполнялся.
+
+Открытые gates: ручная iOS-приёмка session restore/logout/account replacement,
+реальный Keychain, OAuth, серверное realtime revocation и доставка analytics
+после consent. Unit fixtures не удостоверяют live backend, Xcode/signing или UI.
+Далее — сверка оставшихся legacy slot adapters и Favorites iOS по продуктовому
+решению; удаление fallback/bridge только после ручной приёмки.
 
 ## 1. Принципы (решение 2026-10-24)
 

@@ -1,7 +1,7 @@
 package com.coffeepeek.admin.utils.image
 
-import com.coffeepeek.domain.model.Session
-import com.coffeepeek.domain.repository.SessionRepository
+import com.coffeepeek.core.session.Session
+import com.coffeepeek.core.session.SessionReader
 import io.ktor.client.HttpClient
 import io.ktor.client.request.HttpRequestPipeline
 import kotlinx.coroutines.CoroutineScope
@@ -13,7 +13,7 @@ import kotlinx.coroutines.launch
 
 /** Session and mutation revocation also applies to builds without a local author-blocking UI. */
 internal fun installPhotoSessionInvalidation(
-    repository: SessionRepository,
+    repository: SessionReader,
     client: HttpClient,
     scope: CoroutineScope,
     onSessionChanged: (Session?) -> Unit,

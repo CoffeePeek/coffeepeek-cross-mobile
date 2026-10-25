@@ -347,6 +347,8 @@ androidComponents.onVariants(androidComponents.selector().withBuildType("sandbox
     val runtimeVerification = tasks.register<VerifyApkRuntimeClassesTask>("verify${variant.name.replaceFirstChar { it.uppercaseChar() }}RuntimeClasses") {
         apkDirectory.set(variant.artifacts.get(SingleArtifact.APK))
         requiredClasses.set(listOf("com.coffeepeek.admin.sandbox.SandboxActivity",
+            "com.coffeepeek.core.session.SessionReader",
+            "com.coffeepeek.core.session.SessionStore",
             "com.coffeepeek.admin.sandbox.backend.SandboxBackend", "com.coffeepeek.admin.sandbox.SandboxApplication",
             "com.coffeepeek.feature.homecheckin.data.repository.HomePreparationRepositoryFactoryKt",
             "com.coffeepeek.admin.ui.Navigator"))
@@ -386,6 +388,10 @@ androidComponents {
             apkDirectory.set(variant.artifacts.get(SingleArtifact.APK))
             forbiddenClassPrefixes.set(listOf("com.coffeepeek.admin.sandbox.", "io.ktor.client.engine.mock."))
             requiredClasses.set(listOf(
+                "com.coffeepeek.core.session.SessionReader",
+                "com.coffeepeek.core.session.SessionStore",
+                "com.coffeepeek.core.session.DefaultSessionStore",
+                "com.coffeepeek.admin.auth.SessionRealtimeManager",
                 "com.coffeepeek.api.service.CheckInApiService",
                 "com.coffeepeek.api.CoffeePeekRepo",
                 "com.coffeepeek.data.di.DataModuleKt",

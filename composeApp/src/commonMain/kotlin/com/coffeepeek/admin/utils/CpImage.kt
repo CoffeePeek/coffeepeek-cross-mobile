@@ -35,7 +35,7 @@ import com.coffeepeek.admin.utils.image.isImmutablePhotoVariant
 import com.coffeepeek.admin.utils.image.isProtectedCheckInPhoto
 import com.coffeepeek.admin.utils.image.protectedKamelConfig
 import com.coffeepeek.admin.utils.image.protectedPhotoPainterCache
-import com.coffeepeek.domain.repository.SessionRepository
+import com.coffeepeek.core.session.SessionReader
 import io.kamel.core.DataSource
 import io.kamel.core.Resource
 import io.kamel.image.asyncPainterResource
@@ -195,7 +195,7 @@ internal fun rememberCpImageResource(resource: Any, renewPermission: Boolean = t
         return asyncPainterResource(data = resource)
     }
 
-    val sessions = koinInject<SessionRepository>()
+    val sessions = koinInject<SessionReader>()
     val session by sessions.observeSession().collectAsState(initial = sessions.peekSession())
     val epoch by ProtectedPhotoSession.changes.collectAsState()
     val lifecycle by LocalLifecycleOwner.current.lifecycle.currentStateFlow.collectAsState()

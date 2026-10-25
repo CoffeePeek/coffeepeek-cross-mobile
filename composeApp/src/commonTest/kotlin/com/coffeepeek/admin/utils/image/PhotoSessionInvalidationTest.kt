@@ -1,7 +1,7 @@
 package com.coffeepeek.admin.utils.image
 
-import com.coffeepeek.domain.model.Session
-import com.coffeepeek.domain.repository.SessionRepository
+import com.coffeepeek.core.session.Session
+import com.coffeepeek.core.session.SessionReader
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.respond
@@ -125,16 +125,12 @@ class PhotoSessionInvalidationTest {
         } finally { client.close() }
     }
 
-    private class Sessions(initial: Session?) : SessionRepository {
+    private class Sessions(initial: Session?) : SessionReader {
         private val current = MutableStateFlow(initial)
         override fun peekSession() = current.value
-        override fun applySession(session: Session?) { current.value = session }
+        fun applySession(session: Session?) { current.value = session }
         override fun isActiveSession(session: Session?) = current.value == session
         override suspend fun getSession() = current.value
-        override suspend fun persistSession(session: Session?) = applySession(session)
-        override suspend fun saveSession(session: Session?) = applySession(session)
-        override suspend fun warmCache() = Unit
         override fun observeSession() = current
-        override suspend fun isLoggedIn() = current.value != null
     }
 }

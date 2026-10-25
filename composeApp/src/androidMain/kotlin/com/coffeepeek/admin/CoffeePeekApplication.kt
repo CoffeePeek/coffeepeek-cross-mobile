@@ -8,9 +8,11 @@ import com.coffeepeek.admin.auth.SessionRealtimeManager
 import com.coffeepeek.admin.config.AppConfig
 import com.coffeepeek.admin.di.initPlatformKoin
 import com.coffeepeek.api.CoffeePeekClient
-import com.coffeepeek.domain.repository.SessionRepository
+import com.coffeepeek.core.session.SessionReader
 import org.maplibre.android.MapLibre
 import io.kamel.core.config.KamelConfig
+import kotlinx.coroutines.CancellationException
+import org.koin.core.Koin
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -40,16 +42,29 @@ class CoffeePeekApplication : Application() {
         initPlatformKoin()
 
         val koin = GlobalContext.get()
-        val sessionRepository = koin.get<SessionRepository>()
+        val sessions = koin.get<SessionReader>()
+        startRealtime(koin, sessions)
+        warmRuntimeCaches(koin, sessions)
+    }
+
+    private fun startRealtime(koin: Koin, sessions: SessionReader) {
         sessionRealtimeManager = SessionRealtimeManager(
-            sessionRepository = sessionRepository,
+            sessionRepository = sessions,
             userSessionCleaner = koin.get(),
             httpClient = koin.get<CoffeePeekClient>().client,
             baseUrl = AppConfig.baseUrl,
         ).also { manager -> manager.start() }
+    }
 
+    private fun warmRuntimeCaches(koin: Koin, sessions: SessionReader) {
         warmupScope.launch {
-            runCatching { sessionRepository.warmCache() }
+            try {
+                sessions.getSession()
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (_: Exception) {
+                // Startup remains available if secure storage is temporarily unavailable.
+            }
             runCatching { koin.get<KamelConfig>() }
         }
     }

@@ -1,7 +1,7 @@
 package com.coffeepeek.admin.utils.image
 
-import com.coffeepeek.domain.model.Session
-import com.coffeepeek.domain.repository.SessionRepository
+import com.coffeepeek.core.session.Session
+import com.coffeepeek.core.session.SessionReader
 import io.ktor.client.HttpClient
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
@@ -16,7 +16,7 @@ internal object ProtectedPhotoSession {
     private val worker = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     private val _changes = MutableStateFlow(Any())
     val changes = _changes.asStateFlow()
-    private var sessions: SessionRepository? = null
+    private var sessions: SessionReader? = null
 
     fun scope(session: Session?): Any {
         sync(if (sessions != null) sessions?.peekSession() else session)
@@ -48,7 +48,7 @@ internal object ProtectedPhotoSession {
 
     fun invalidate() = sync(if (sessions != null) sessions?.peekSession() else state.load().session, force = true)
 
-    fun install(repository: SessionRepository, client: HttpClient, visibility: Flow<*> = emptyFlow<Unit>()) {
+    fun install(repository: SessionReader, client: HttpClient, visibility: Flow<*> = emptyFlow<Unit>()) {
         sessions = repository
         sync(repository.peekSession(), force = true)
         installPhotoSessionInvalidation(repository, client, worker, { sync(it) }, ::invalidate, visibility)
