@@ -25,8 +25,10 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
+import com.coffeepeek.core.designsystem.component.CoffeePeekScaffold as Scaffold
 import androidx.compose.material3.Text
+import org.jetbrains.compose.ui.tooling.preview.Preview
+import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
@@ -97,3 +99,11 @@ private fun SentShopCard(state: AddShopState, host: AddShopHost) {
         }
     }
 }
+
+@Composable
+private fun AddShopSuccessPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
+    AddShopSuccess(AddShopState(name = "Sandbox Cafe", address = "Sandbox address"), AddShopHost(), {})
+}
+
+@Preview @Composable private fun AddShopSuccessLightPreview() = AddShopSuccessPreview(false)
+@Preview @Composable private fun AddShopSuccessDarkPreview() = AddShopSuccessPreview(true)

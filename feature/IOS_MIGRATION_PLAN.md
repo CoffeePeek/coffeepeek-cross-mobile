@@ -24,9 +24,9 @@ iOS-документы (`docs/IOS_NATIVE_EXPERIENCE.md`, `IOS_NATIVE_NAVIGATION.
 
 **Этап 2 — сессия: F23 и F24 готовы** (выход стирает старые строки; сбой удаления Keychain сообщается). Core session port вместо `SessionRepository` (~43 файла) — **не сделан**.
 
-**Этап 3 — подключение на iOS: начат.** Через новые модули на iOS подключены: вкладка Settings (и три её подэкрана), окно обновления, колокольчик уведомлений, экраны входа, регистрации и восстановления пароля, **Community (вкладка «Лента»)**, **Discovery (вкладка «Поиск»)**, **Coffee (вкладка каталога и детали кофе)** и **Profile (собственный/публичный профиль, его чекины, редактирование и подтверждение удаления аккаунта)**. Подключены также Google/Apple кнопки и существующие Swift-провайдеры (при доступной конфигурации); реальный OAuth ещё не проверен.
-На iOS Profile, Community, Discovery и Coffee идут через feature-рендереры.
-Contributions, Shop, личная история/Home и Favorites ещё используют текущие legacy entries;
+**Этап 3 — подключение на iOS: начат.** Через новые модули на iOS подключены: вкладка Settings (и три её подэкрана), окно обновления, колокольчик уведомлений, экраны входа, регистрации и восстановления пароля, **Community (вкладка «Лента»)**, **Discovery (вкладка «Поиск»)**, **Coffee (вкладка каталога и детали кофе)**, **Profile (собственный/публичный профиль, его чекины, редактирование и подтверждение удаления аккаунта)** и **Contributions (списки заявок, добавление кофейни/обжарщика, предложение правки, редактор и детали заявки)**. Подключены также Google/Apple кнопки и существующие Swift-провайдеры (при доступной конфигурации); реальный OAuth ещё не проверен.
+На iOS Profile, Community, Discovery, Coffee и Contributions идут через feature-рендереры.
+Shop, личная история/Home и Favorites ещё используют текущие legacy entries;
 слоты календаря, избранного и карточек в Profile сохраняют эти существующие реализации.
 
 **Важные находки для следующих срезов**
@@ -36,7 +36,7 @@ Contributions, Shop, личная история/Home и Favorites ещё исп
 4. Для сообщения проверки обновлений на iOS нет тоста: временно используется `ErrorHandler.showError`, нужно решение по UX.
 
 **Остаётся**
-- Этап 3: Contributions, Shop и Shop-report, Check-in history, Home check-in и общий create flow, Favorites (по решению продукта); ручная приёмка Community/Discovery/Coffee/Profile и live-приёмка Apple/Google.
+- Этап 3: Shop и Shop-report, Check-in history, Home check-in и общий create flow, Favorites (по решению продукта); ручная приёмка Community/Discovery/Coffee/Profile/Contributions и live-приёмка Apple/Google.
 - Этап 2: core session port.
 - Roaster: Xcode-линковка, симулятор, устройство.
 - Этап 5: удаление legacy — только после полной готовности и ручной приёмки.
@@ -425,6 +425,81 @@ logout/push unregistration/account deletion, browser/share и production analyti
 не выполнялись; нужны отдельные разрешённые проверки с безопасным аккаунтом.
 
 Следующий владелец code-плана: **Contributions / списки заявок и редакторы**.
+
+
+### Checkpoint: Contributions / заявки и редакторы — 2026-10-25
+
+Продолжение того же PR #195 на базе `6cebcdb5`. Свежие после fetch
+`origin/main=16724b7e` и `origin/develop=8ac9f49a` уже входят в ветку;
+дополнительный merge не требуется.
+
+Сделано:
+
+- Общие account/catalog adapters, app-owned photo/map/price/haptic slots и
+  `FeatureContributionsScreenRenderer` перенесены из Android composition в
+  `composeApp/commonMain/di/contributions`. Android/iOS используют одну фабрику,
+  существующий authenticated API client и отдельный upload client для signed PUT.
+  Все шесть маршрутов уже проходят через app renderer в обоих navigation hosts.
+  UI/ViewModel остаются в `feature/contributions/impl`; legacy fallback сохранён.
+- Из шести API Content-методов убраны composable interface defaults; app adapter
+  передаёт Modifier явно. Модули Contributions уже были common-зависимостями app;
+  новых модулей, repository/session/analytics service или серверных endpoints нет.
+- Для недельного расписания сохранён текущий UTC offset устройства в минутах,
+  вычисляемый при операции, через kotlinx-datetime вместо Android java.time.
+  App получает прямую dependency на уже используемую в проекте библиотеку:
+  не зависит от скрытого legacy data helper. Чистые тесты покрывают знак,
+  неполные часы и winter/summer DST; часовой пояс устройства не меняется.
+- Чтение разрешённой позиции и reverse geocoding выполняются на Main.immediate
+  для CoreLocation. Повторная проверка permission после чтения отбрасывает
+  устаревшую позицию; ручная точка карты разрешается без доступа к GPS.
+  CancellationException не превращается в пустую позицию/адрес.
+- Сохранены существующие map picker/MapLibre, native photo-source/picker bridge,
+  выбор цены и логотипы. Две строки заголовка цены перенесены в app resources
+  единственного существующего locale; новых переводов не заявляется.
+- Формы/списки/детали/статусы используют DS Scaffold, scroll-safe-area helpers
+  и нижний clearance для fixed submit/error actions. Success bottom bars используют
+  clearance Scaffold. Добавлены парные light/dark previews с фиктивным состоянием;
+  длинная форма обжарщика и editor adapter разделены по смысловым блокам.
+- Аналитика: сверены прежние app page mappings (contributions/shop_edit),
+  route lifecycle и native screen owner остаются app-owned. В legacy Contributions
+  ViewModel нет отдельных track events; новые события и второй сервис не добавлены.
+  Реальная доставка screen/exposure events не проверялась.
+
+Проверки этого среза (Mac/JBR 21, 2026-10-25):
+
+- Domain: **16 tests / 2 suites**, data: **19 / 1**, impl: **65 / 7**;
+  app subset `*Contribution*`, `*AppContributionLocation*`: **35 / 5**.
+  Всего **135 tests**, 0 failures/errors/skips. Есть семь новых тестов location/time
+  zone; пять catalog/account adapter tests перенесены в commonTest.
+  Сохранены тесты account switching, drafts, submit guards, cancellation,
+  upload/HTTP contracts, validation и parity gaps.
+- Первый запуск остановился на app compilation: не было прямой зависимости
+  kotlinx-datetime у composeApp. После добавления зависимости повторный прогон
+  успешен. Первоначальная ошибка не скрывается повтором.
+- Финальные `assembleDirectDebug` и `assembleDirectSandbox` прошли, включая
+  packaged runtime-class checks и Sandbox isolation. Прежний порядок Android
+  scroll padding сохранён; native bottom clearance добавляется внутри scroll content.
+  Превью гостевого состояния находятся в том же файле, что и компонент.
+- `compileKotlinIosArm64`, `linkDebugFrameworkIosSimulatorArm64` и
+  `compileTestKotlinIosSimulatorArm64` прошли. Общие app tests на Native только
+  скомпилированы, не исполнены. Приложения/APK не устанавливались и не запускались.
+- Fingerprint APK (исходники этого checkpoint поверх `6cebcdb5`), SHA-256:
+  Debug `7533a1805923a6fca565aebc60410612e3e5eae563e1dc484b5141c08a28a1ec`,
+  Sandbox `7099815579348dbbc832e5cc3e8ca65e4e44f777fa4a243e2bdb56359bde2c02`.
+- Studio inspection: AppContributionLocation — 0 errors. Модель IDE пока
+  не разрешает common Compose/resources и новую datetime dependency; полноценная
+  IDE/preview-проверка не объявляется пройденной. Реальные Gradle compile/link
+  успешны. Есть прежние deprecation/expect-actual/framework bundle-id warnings.
+  Все Gradle-запуски последовательные, `--max-workers=6`; логи локально в `/private/tmp`.
+
+Открытые gates: ручной iOS-просмотр списков/статусов, всех шагов формы и секций
+редактора, safe area/клавиатуры/крупного шрифта, back/cancel/draft при переходах,
+MapLibre placement, permission denied/granted, фото-пикер/cancel и success/error
+native feedback. Серверные create/update/upload, аккаунт и analytics acceptance
+не выполнялись. UI/screenshot/instrumented тесты или test-only приложения
+не создавались; установок и запусков приложения не было.
+
+Следующий владелец code-плана: **Shop / кофейня, её формы и Shop-report**.
 
 ## 1. Принципы (решение 2026-10-24)
 

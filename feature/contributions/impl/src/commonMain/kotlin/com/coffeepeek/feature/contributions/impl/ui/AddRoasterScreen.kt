@@ -53,14 +53,16 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
+import com.coffeepeek.core.designsystem.component.CoffeePeekScaffold as Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import com.coffeepeek.core.designsystem.component.coffeePeekScrollContentPadding
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -132,51 +134,10 @@ private fun RoasterForm(state: AddRoasterState, host: AddRoasterHost, callbacks:
         topBar = { CoffeePeekTopBar(stringResource(Res.string.contributions_roaster_title), stringResource(Res.string.contributions_back), onBack = callbacks.onBack) },
         containerColor = MaterialTheme.colorScheme.background,
     ) { padding ->
-        Column(Modifier.fillMaxSize().padding(padding).consumeWindowInsets(padding).imePadding().verticalScroll(rememberScrollState()).padding(CoffeePeekDimens.spacing4)) {
-            val issues = state.issues
-            RequiredLegend()
-            Spacer(Modifier.height(CoffeePeekDimens.spacing3))
-            FormField(stringResource(Res.string.contributions_roaster_name_label), required = true) {
-                OutlinedField(
-                    state.name, { onAction(AddRoasterAction.Name(it)) }, stringResource(Res.string.contributions_roaster_name_placeholder),
-                    errorText = stringResource(Res.string.contributions_roaster_error_name_too_long, ContributionLimits.ROASTER_NAME).takeIf { RoasterIssue.NameTooLong in issues },
-                    counter = "${state.name.length}/${ContributionLimits.ROASTER_NAME}",
-                )
-            }
-            Spacer(Modifier.height(CoffeePeekDimens.spacing4))
-            FormField(stringResource(Res.string.contributions_roaster_about_label), optional = true) {
-                OutlinedField(state.about, { onAction(AddRoasterAction.About(it)) }, stringResource(Res.string.contributions_roaster_about_placeholder), minLines = 3, maxLines = 6)
-            }
-            Spacer(Modifier.height(CoffeePeekDimens.spacing4))
-            Text(stringResource(Res.string.contributions_roaster_location_hint), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            Spacer(Modifier.height(CoffeePeekDimens.spacing3))
-            FormField(stringResource(Res.string.contributions_shop_city_label), optional = true) {
-                CityFieldOrState(state, onAction, RoasterIssue.CityMissing in issues)
-            }
-            Spacer(Modifier.height(CoffeePeekDimens.spacing4))
-            FormField(stringResource(Res.string.contributions_shop_address_label), optional = true) {
-                OutlinedField(
-                    state.address, { onAction(AddRoasterAction.Address(it)) }, stringResource(Res.string.contributions_shop_address_placeholder),
-                    errorText = stringResource(Res.string.contributions_shop_error_address_blank).takeIf { RoasterIssue.AddressMissing in issues },
-                    leadingIcon = CoffeePeekIcons.Navigation,
-                )
-            }
-            Spacer(Modifier.height(CoffeePeekDimens.spacing4))
-            FormField(stringResource(Res.string.contributions_shop_instagram_label), optional = true) {
-                OutlinedField(
-                    state.instagram, { onAction(AddRoasterAction.Instagram(it)) }, stringResource(Res.string.contributions_shop_instagram_placeholder),
-                    errorText = stringResource(Res.string.contributions_error_instagram).takeIf { RoasterIssue.Instagram in issues },
-                    keyboardType = KeyboardType.Uri, leadingIcon = CoffeePeekIcons.Instagram,
-                )
-            }
-            Spacer(Modifier.height(CoffeePeekDimens.spacing4))
-            FormField(stringResource(Res.string.contributions_shop_website_label), optional = true) {
-                OutlinedField(
-                    state.website, { onAction(AddRoasterAction.Website(it)) }, stringResource(Res.string.contributions_shop_website_placeholder),
-                    errorText = stringResource(Res.string.contributions_error_website).takeIf { RoasterIssue.Website in issues },
-                    keyboardType = KeyboardType.Uri, leadingIcon = CoffeePeekIcons.Globe,
-                )
-            }
+        Column(Modifier.fillMaxSize().padding(padding).consumeWindowInsets(padding).imePadding().verticalScroll(rememberScrollState()).padding(coffeePeekScrollContentPadding(PaddingValues(CoffeePeekDimens.spacing4)))) {
+            RoasterIdentityFields(state, onAction)
+            RoasterLocationFields(state, onAction)
+            RoasterContactFields(state, onAction)
             Spacer(Modifier.height(CoffeePeekDimens.spacing4))
             host.photos(
                 state.photos, ContributionLimits.ROASTER_PHOTOS, stringResource(Res.string.contributions_roaster_photos_title),
@@ -187,6 +148,64 @@ private fun RoasterForm(state: AddRoasterState, host: AddRoasterHost, callbacks:
             CoffeePeekButton(stringResource(Res.string.contributions_roaster_submit), { onAction(AddRoasterAction.Submit) }, enabled = state.valid)
             Spacer(Modifier.height(CoffeePeekDimens.spacing8))
         }
+    }
+}
+
+@Composable
+private fun RoasterIdentityFields(state: AddRoasterState, onAction: (AddRoasterAction) -> Unit) {
+    val issues = state.issues
+    RequiredLegend()
+    Spacer(Modifier.height(CoffeePeekDimens.spacing3))
+    FormField(stringResource(Res.string.contributions_roaster_name_label), required = true) {
+        OutlinedField(
+            state.name, { onAction(AddRoasterAction.Name(it)) }, stringResource(Res.string.contributions_roaster_name_placeholder),
+            errorText = stringResource(Res.string.contributions_roaster_error_name_too_long, ContributionLimits.ROASTER_NAME).takeIf { RoasterIssue.NameTooLong in issues },
+            counter = "${state.name.length}/${ContributionLimits.ROASTER_NAME}",
+        )
+    }
+    Spacer(Modifier.height(CoffeePeekDimens.spacing4))
+    FormField(stringResource(Res.string.contributions_roaster_about_label), optional = true) {
+        OutlinedField(state.about, { onAction(AddRoasterAction.About(it)) }, stringResource(Res.string.contributions_roaster_about_placeholder), minLines = 3, maxLines = 6)
+    }
+    Spacer(Modifier.height(CoffeePeekDimens.spacing4))
+}
+
+@Composable
+private fun RoasterLocationFields(state: AddRoasterState, onAction: (AddRoasterAction) -> Unit) {
+    val issues = state.issues
+    Text(stringResource(Res.string.contributions_roaster_location_hint), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+    Spacer(Modifier.height(CoffeePeekDimens.spacing3))
+    FormField(stringResource(Res.string.contributions_shop_city_label), optional = true) {
+        CityFieldOrState(state, onAction, RoasterIssue.CityMissing in issues)
+    }
+    Spacer(Modifier.height(CoffeePeekDimens.spacing4))
+    FormField(stringResource(Res.string.contributions_shop_address_label), optional = true) {
+        OutlinedField(
+            state.address, { onAction(AddRoasterAction.Address(it)) }, stringResource(Res.string.contributions_shop_address_placeholder),
+            errorText = stringResource(Res.string.contributions_shop_error_address_blank).takeIf { RoasterIssue.AddressMissing in issues },
+            leadingIcon = CoffeePeekIcons.Navigation,
+        )
+    }
+    Spacer(Modifier.height(CoffeePeekDimens.spacing4))
+}
+
+@Composable
+private fun RoasterContactFields(state: AddRoasterState, onAction: (AddRoasterAction) -> Unit) {
+    val issues = state.issues
+    FormField(stringResource(Res.string.contributions_shop_instagram_label), optional = true) {
+        OutlinedField(
+            state.instagram, { onAction(AddRoasterAction.Instagram(it)) }, stringResource(Res.string.contributions_shop_instagram_placeholder),
+            errorText = stringResource(Res.string.contributions_error_instagram).takeIf { RoasterIssue.Instagram in issues },
+            keyboardType = KeyboardType.Uri, leadingIcon = CoffeePeekIcons.Instagram,
+        )
+    }
+    Spacer(Modifier.height(CoffeePeekDimens.spacing4))
+    FormField(stringResource(Res.string.contributions_shop_website_label), optional = true) {
+        OutlinedField(
+            state.website, { onAction(AddRoasterAction.Website(it)) }, stringResource(Res.string.contributions_shop_website_placeholder),
+            errorText = stringResource(Res.string.contributions_error_website).takeIf { RoasterIssue.Website in issues },
+            keyboardType = KeyboardType.Uri, leadingIcon = CoffeePeekIcons.Globe,
+        )
     }
 }
 
@@ -247,15 +266,24 @@ private fun RoasterSuccess(result: RoasterSubmitted, hadAddress: Boolean, host: 
 private val noCallbacks = AddRoasterCallbacks({}, {})
 private val cities = listOf(CatalogOption("minsk", "Минск"), CatalogOption("brest", "Брест"))
 
-@Preview @Composable private fun AddRoasterFormPreview() = CoffeePeekTheme {
+@Preview @Composable private fun AddRoasterFormPreviewLight() = AddRoasterFormPreview(false)
+@Preview @Composable private fun AddRoasterFormPreviewDark() = AddRoasterFormPreview(true)
+
+@Composable private fun AddRoasterFormPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
     Surface { AddRoasterContent(AddRoasterState(signedIn = true, citiesLoading = false, cities = cities, name = "Sandbox Roaster", cityId = "minsk"), AddRoasterHost(), noCallbacks, {}) }
 }
 
-@Preview @Composable private fun AddRoasterFailedPreview() = CoffeePeekTheme {
+@Preview @Composable private fun AddRoasterFailedPreviewLight() = AddRoasterFailedPreview(false)
+@Preview @Composable private fun AddRoasterFailedPreviewDark() = AddRoasterFailedPreview(true)
+
+@Composable private fun AddRoasterFailedPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
     Surface { AddRoasterContent(AddRoasterState(signedIn = true, citiesLoading = false, submit = RoasterSubmitState.Failed(null)), AddRoasterHost(), noCallbacks, {}) }
 }
 
-@Preview @Composable private fun AddRoasterSuccessPreview() = CoffeePeekTheme {
+@Preview @Composable private fun AddRoasterSuccessPreviewLight() = AddRoasterSuccessPreview(false)
+@Preview @Composable private fun AddRoasterSuccessPreviewDark() = AddRoasterSuccessPreview(true)
+
+@Composable private fun AddRoasterSuccessPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
     Surface {
         AddRoasterContent(
             AddRoasterState(signedIn = true, address = "Улица, 1", submit = RoasterSubmitState.Done(RoasterSubmitted("id", "Pending", isAddressValidated = false, message = "Обжарщик отправлен на модерацию"))),

@@ -20,13 +20,15 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
+import com.coffeepeek.core.designsystem.component.CoffeePeekScaffold as Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import com.coffeepeek.core.designsystem.component.coffeePeekScrollContentPadding
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -69,7 +71,7 @@ internal fun SuggestChangeContent(state: SuggestChangeState, callbacks: SuggestC
             containerColor = MaterialTheme.colorScheme.background,
         ) { padding ->
             if (state.signedIn == null || state.isLoading) Box(Modifier.fillMaxSize().padding(padding), Alignment.Center) { CoffeePeekLoader(stringResource(Res.string.contributions_loading)) }
-            else Column(Modifier.fillMaxSize().padding(padding).verticalScroll(rememberScrollState()).padding(CoffeePeekDimens.spacing4)) {
+            else Column(Modifier.fillMaxSize().padding(padding).verticalScroll(rememberScrollState()).padding(coffeePeekScrollContentPadding(PaddingValues(CoffeePeekDimens.spacing4)))) {
                 Text(
                     state.shopTitle?.let { stringResource(Res.string.contributions_suggest_heading_shop, it) } ?: stringResource(Res.string.contributions_suggest_heading),
                     style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold),
@@ -103,10 +105,16 @@ private fun SectionRow(section: ChangeSection, onPick: (ChangeSection) -> Unit) 
 
 private val noCallbacks = SuggestCallbacks({}, {}, {})
 
-@Preview @Composable private fun SuggestChangePreview() = CoffeePeekTheme {
+@Preview @Composable private fun SuggestChangePreviewLight() = SuggestChangePreview(false)
+@Preview @Composable private fun SuggestChangePreviewDark() = SuggestChangePreview(true)
+
+@Composable private fun SuggestChangePreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
     Surface { SuggestChangeContent(SuggestChangeState(signedIn = true, isLoading = false, shopTitle = "Sandbox Cafe"), noCallbacks) }
 }
 
-@Preview @Composable private fun SuggestChangeGuestPreview() = CoffeePeekTheme {
+@Preview @Composable private fun SuggestChangeGuestPreviewLight() = SuggestChangeGuestPreview(false)
+@Preview @Composable private fun SuggestChangeGuestPreviewDark() = SuggestChangeGuestPreview(true)
+
+@Composable private fun SuggestChangeGuestPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
     Surface { SuggestChangeContent(SuggestChangeState(signedIn = false, isLoading = false), noCallbacks) }
 }

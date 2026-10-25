@@ -1,6 +1,9 @@
 package com.coffeepeek.admin.di.contributions
 
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+import com.coffeepeek.api.CoffeePeekClient
+import com.coffeepeek.feature.contributions.data.repository.createContributionsRepository
 import com.coffeepeek.admin.ui.Navigator
 import com.coffeepeek.admin.ui.screen.contributions.ContributionsScreenRenderer
 import com.coffeepeek.core.session.SessionReader
@@ -12,7 +15,6 @@ import com.coffeepeek.feature.contributions.api.ChangeRequestEntry
 import com.coffeepeek.feature.contributions.api.ContributionsListEntry
 import com.coffeepeek.feature.contributions.api.SuggestChangeEntry
 import com.coffeepeek.feature.contributions.domain.model.ChangeSection
-import com.coffeepeek.feature.contributions.domain.repository.ContributionsRepository
 import com.coffeepeek.feature.contributions.impl.createAddRoasterEntry
 import com.coffeepeek.feature.contributions.impl.createAddShopEntry
 import com.coffeepeek.feature.contributions.impl.createChangeEditorEntry
@@ -22,8 +24,8 @@ import com.coffeepeek.feature.contributions.impl.createSuggestChangeEntry
 import com.coffeepeek.admin.ui.screen.contributions.ContributionKind as LegacyKind
 import com.coffeepeek.feature.contributions.api.ContributionKind
 
-/** Android routes the contribution screens to the migrated entries; navigation, the photo picker, the map and the sign-in stay app-owned. */
-internal class AndroidContributionsScreenRenderer(
+/** Routes the contribution screens to the migrated entries; navigation, the photo picker, the map and the sign-in stay app-owned. */
+internal class FeatureContributionsScreenRenderer(
     private val list: ContributionsListEntry,
     private val addShop: AddShopEntry,
     private val addRoaster: AddRoasterEntry,
@@ -37,38 +39,39 @@ internal class AndroidContributionsScreenRenderer(
     @Composable
     override fun List(kind: LegacyKind) = list.Content(
         kind = ContributionKind.valueOf(kind.name), onBack = Navigator::popBack, onSignIn = signIn, onOpenShop = openShop,
-        onOpenRequest = { Navigator.navigate(Navigator.Screen.ShopChangeRequestDetail(it)) },
+        onOpenRequest = { Navigator.navigate(Navigator.Screen.ShopChangeRequestDetail(it)) }, modifier = Modifier,
     )
 
     @Composable
-    override fun AddShop() = addShop.Content(onBack = Navigator::popBack, onSignIn = signIn, onAddRoaster = { Navigator.navigate(Navigator.Screen.AddRoaster) })
+    override fun AddShop() = addShop.Content(onBack = Navigator::popBack, onSignIn = signIn, onAddRoaster = { Navigator.navigate(Navigator.Screen.AddRoaster) }, modifier = Modifier)
 
     @Composable
-    override fun AddRoaster() = addRoaster.Content(onBack = Navigator::popBack, onSignIn = signIn)
+    override fun AddRoaster() = addRoaster.Content(onBack = Navigator::popBack, onSignIn = signIn, modifier = Modifier)
 
     @Composable
     override fun Suggest(shopId: String) = suggest.Content(
         shopSlug = shopId, onBack = Navigator::popBack, onSignIn = signIn,
-        onPickSection = { Navigator.navigate(Navigator.Screen.ShopChangeEditor(shopId = shopId, section = it.name)) },
+        onPickSection = { Navigator.navigate(Navigator.Screen.ShopChangeEditor(shopId = shopId, section = it.name)) }, modifier = Modifier,
     )
 
     @Composable
     override fun Editor(shopId: String, section: String, requestId: String) = editor.Content(
         shopSlug = shopId, section = ChangeSection.entries.firstOrNull { it.name == section } ?: ChangeSection.Description,
         requestId = requestId.ifBlank { null }, onBack = Navigator::popBack, onSignIn = signIn,
-        onOpenRequest = { Navigator.popThenNavigate(Navigator.Screen.ShopChangeRequestDetail(it)) },
+        onOpenRequest = { Navigator.popThenNavigate(Navigator.Screen.ShopChangeRequestDetail(it)) }, modifier = Modifier,
     )
 
     @Composable
-    override fun RequestDetail(requestId: String) = detail.Content(requestId = requestId, onBack = Navigator::popBack, onSignIn = signIn, onOpenShop = openShop)
+    override fun RequestDetail(requestId: String) = detail.Content(requestId = requestId, onBack = Navigator::popBack, onSignIn = signIn, onOpenShop = openShop, modifier = Modifier)
 }
 
-internal fun androidContributionsScreenRenderer(
-    repository: ContributionsRepository, sessions: SessionReader, shops: ShopRepository,
+internal fun featureContributionsScreenRenderer(
+    gateway: CoffeePeekClient, sessions: SessionReader, shops: ShopRepository,
 ): ContributionsScreenRenderer {
+    val repository = createContributionsRepository(gateway.client, gateway.uploadClient, ::contributionUtcOffsetMinutes)
     val account = SessionContributionsAccount(sessions)
     val catalogs = ShopContributionCatalogs(shops)
-    return AndroidContributionsScreenRenderer(
+    return FeatureContributionsScreenRenderer(
         list = createContributionsListEntry(repository, account),
         addShop = createAddShopEntry(repository, catalogs, AppContributionLocation(), account, addShopHost()),
         addRoaster = createAddRoasterEntry(repository, catalogs, account, addRoasterHost()),

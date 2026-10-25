@@ -19,6 +19,6 @@ interface AddRoasterEntry {
     fun Content(
         onBack: () -> Unit,
         onSignIn: () -> Unit,
-        modifier: Modifier = Modifier,
+        modifier: Modifier,
     )
 }

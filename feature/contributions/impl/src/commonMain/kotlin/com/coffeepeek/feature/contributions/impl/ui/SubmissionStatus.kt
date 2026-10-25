@@ -1,5 +1,7 @@
 package com.coffeepeek.feature.contributions.impl.ui
 
+import org.jetbrains.compose.ui.tooling.preview.Preview
+import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.core.designsystem.component.CoffeePeekBackHandler
 import com.coffeepeek.feature.contributions.impl.resources.Res
 import com.coffeepeek.feature.contributions.impl.resources.contributions_back
@@ -10,7 +12,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.navigationBarsPadding
+import com.coffeepeek.core.designsystem.component.coffeePeekViewportBottomPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
@@ -18,8 +20,9 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.Scaffold
+import com.coffeepeek.core.designsystem.component.CoffeePeekScaffold as Scaffold
 import androidx.compose.material3.Text
+import com.coffeepeek.core.designsystem.component.coffeePeekScreenBottomPadding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
@@ -65,7 +68,7 @@ internal fun SubmissionStatusScreen(
         topBar = { CoffeePeekTopBar(screenTitle, stringResource(Res.string.contributions_back), onBack = onBack.takeIf { status == SubmissionStatus.Error }) },
         containerColor = MaterialTheme.colorScheme.background,
     ) { padding ->
-        Column(Modifier.fillMaxSize().padding(padding).navigationBarsPadding().padding(CoffeePeekDimens.spacing6).semantics { liveRegion = LiveRegionMode.Polite }) {
+        Column(Modifier.fillMaxSize().padding(padding).coffeePeekViewportBottomPadding().coffeePeekScreenBottomPadding().padding(CoffeePeekDimens.spacing6).semantics { liveRegion = LiveRegionMode.Polite }) {
             Column(
                 Modifier.weight(1f).fillMaxWidth().verticalScroll(rememberScrollState()).padding(bottom = CoffeePeekDimens.spacing4),
                 horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center,
@@ -87,3 +90,14 @@ internal fun SubmissionErrorActions(retryText: String, backText: String, onRetry
     CoffeePeekButton(retryText, onRetry)
     OutlinedButton(onClick = onEdit, modifier = Modifier.fillMaxWidth().height(CoffeePeekDimens.buttonHeight)) { Text(backText) }
 }
+
+@Composable
+private fun SubmissionStatusPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
+    SubmissionStatusScreen(
+        stringResource(Res.string.contributions_loading), SubmissionStatus.Sending,
+        stringResource(Res.string.contributions_loading), "", {}, {},
+    )
+}
+
+@Preview @Composable private fun SubmissionStatusLightPreview() = SubmissionStatusPreview(false)
+@Preview @Composable private fun SubmissionStatusDarkPreview() = SubmissionStatusPreview(true)

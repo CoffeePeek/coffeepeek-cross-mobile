@@ -36,11 +36,13 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.MaterialTheme
+import com.coffeepeek.core.designsystem.component.CoffeePeekScaffold as Scaffold
+import androidx.compose.material3.Text
+import com.coffeepeek.core.designsystem.component.coffeePeekScrollContentPadding
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -150,7 +152,7 @@ private fun StepContent(state: AddShopState, host: AddShopHost, callbacks: AddSh
         },
         label = "add-shop-step",
     ) { step ->
-        Column(Modifier.fillMaxSize().imePadding().verticalScroll(rememberScrollState()).padding(CoffeePeekDimens.spacing4)) {
+        Column(Modifier.fillMaxSize().imePadding().verticalScroll(rememberScrollState()).padding(coffeePeekScrollContentPadding(PaddingValues(CoffeePeekDimens.spacing4)))) {
             when (step) {
                 AddShopStep.Basic -> StepBasic(state, host, onAction)
                 AddShopStep.Contacts -> StepContacts(state, onAction)
@@ -191,22 +193,34 @@ private val previewCatalogs = Catalogs(
     roasters = listOf(CatalogOption("roast", "Sandbox Roaster")),
 )
 
-@Preview @Composable private fun AddShopBasicPreview() = CoffeePeekTheme {
+@Preview @Composable private fun AddShopBasicPreviewLight() = AddShopBasicPreview(false)
+@Preview @Composable private fun AddShopBasicPreviewDark() = AddShopBasicPreview(true)
+
+@Composable private fun AddShopBasicPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
     androidx.compose.material3.Surface { AddShopContent(AddShopState(signedIn = true, catalogsLoading = false, catalogs = previewCatalogs, name = "Surf Coffee"), AddShopHost(), noCallbacks, {}) }
 }
 
-@Preview @Composable private fun AddShopFeaturesPreview() = CoffeePeekTheme {
+@Preview @Composable private fun AddShopFeaturesPreviewLight() = AddShopFeaturesPreview(false)
+@Preview @Composable private fun AddShopFeaturesPreviewDark() = AddShopFeaturesPreview(true)
+
+@Composable private fun AddShopFeaturesPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
     androidx.compose.material3.Surface {
         AddShopContent(AddShopState(signedIn = true, catalogsLoading = false, catalogs = previewCatalogs, step = AddShopStep.Features, brewMethodIds = setOf("v60")), AddShopHost(), noCallbacks, {})
     }
 }
 
-@Preview @Composable private fun AddShopSchedulePreview() = CoffeePeekTheme {
+@Preview @Composable private fun AddShopSchedulePreviewLight() = AddShopSchedulePreview(false)
+@Preview @Composable private fun AddShopSchedulePreviewDark() = AddShopSchedulePreview(true)
+
+@Composable private fun AddShopSchedulePreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
     androidx.compose.material3.Surface {
         AddShopContent(AddShopState(signedIn = true, catalogsLoading = false, catalogs = previewCatalogs, step = AddShopStep.Schedule, closedDays = setOf(0)), AddShopHost(), noCallbacks, {})
     }
 }
 
-@Preview @Composable private fun AddShopFailedPreview() = CoffeePeekTheme {
+@Preview @Composable private fun AddShopFailedPreviewLight() = AddShopFailedPreview(false)
+@Preview @Composable private fun AddShopFailedPreviewDark() = AddShopFailedPreview(true)
+
+@Composable private fun AddShopFailedPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
     androidx.compose.material3.Surface { AddShopContent(AddShopState(signedIn = true, catalogsLoading = false, submit = SubmitState.Failed(null)), AddShopHost(), noCallbacks, {}) }
 }

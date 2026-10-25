@@ -1,6 +1,7 @@
 package com.coffeepeek.admin.di
 
 import com.coffeepeek.admin.di.appupdate.featureAppUpdateRenderer
+import com.coffeepeek.admin.di.contributions.featureContributionsScreenRenderer
 import com.coffeepeek.admin.di.auth.iosAuthScreenRenderer
 import com.coffeepeek.admin.di.community.featureCommunityScreenRenderer
 import com.coffeepeek.admin.di.coffee.coffeeModule
@@ -30,6 +31,7 @@ actual fun initPlatformKoin() {
         coffeeRendererFactory = { featureCoffeeScreenRenderer(get()) },
         publicProfileRendererFactory = { featurePublicProfileScreenRenderer(get(), get(), get(), get(), get()) },
         ownProfileRendererFactory = { featureOwnProfileScreenRenderer(get(), get(), get(), get(), get(), get(), get(), get()) },
+        contributionsRendererFactory = { featureContributionsScreenRenderer(get<CoffeePeekClient>(), get(), get()) },
         accountRendererFactory = { featureAccountScreenRenderer(get(), get()) },
         discoveryRendererFactory = { featureDiscoveryScreenRenderer(get<CoffeePeekClient>().client, get(), get(), get(), get(), get(), get()) },
     )

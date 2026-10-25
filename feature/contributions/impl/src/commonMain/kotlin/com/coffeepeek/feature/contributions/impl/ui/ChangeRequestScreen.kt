@@ -44,16 +44,18 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.Scaffold
+import com.coffeepeek.core.designsystem.component.CoffeePeekScaffold as Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import com.coffeepeek.core.designsystem.component.coffeePeekScrollContentPadding
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -125,7 +127,7 @@ private fun Failure(text: String, action: String, onAction: () -> Unit) {
 @Composable
 private fun RequestBody(request: ChangeRequest, onOpenShop: (String) -> Unit) {
     Column(
-        Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(CoffeePeekDimens.spacing4),
+        Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(coffeePeekScrollContentPadding(PaddingValues(CoffeePeekDimens.spacing4))),
         verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing4),
     ) {
         Hero(request)
@@ -307,11 +309,17 @@ private fun sample(section: ChangeSection, payload: ChangePayload, status: Moder
     request = ChangeRequest("r", "cafe", section, payload, status, reason, "2026-10-21T07:00:00Z", null), isLoading = false,
 )
 
-@Preview @Composable private fun ChangeRequestContactsPreview() = CoffeePeekTheme {
+@Preview @Composable private fun ChangeRequestContactsPreviewLight() = ChangeRequestContactsPreview(false)
+@Preview @Composable private fun ChangeRequestContactsPreviewDark() = ChangeRequestContactsPreview(true)
+
+@Composable private fun ChangeRequestContactsPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
     Surface { ChangeRequestContent(sample(ChangeSection.Contacts, ChangePayload(contacts = Contacts(phone = "+375291112233", website = "sandbox.invalid"))), noCallbacks, {}) }
 }
 
-@Preview @Composable private fun ChangeRequestMenuRejectedPreview() = CoffeePeekTheme {
+@Preview @Composable private fun ChangeRequestMenuRejectedPreviewLight() = ChangeRequestMenuRejectedPreview(false)
+@Preview @Composable private fun ChangeRequestMenuRejectedPreviewDark() = ChangeRequestMenuRejectedPreview(true)
+
+@Composable private fun ChangeRequestMenuRejectedPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
     Surface {
         ChangeRequestContent(
             sample(ChangeSection.Menu, ChangePayload(menu = ChangeMenu(listOf(MenuEntry("latte", Availability.Present, 6.5), MenuEntry("tea", Availability.Absent)), listOf("m1"))),
@@ -321,6 +329,9 @@ private fun sample(section: ChangeSection, payload: ChangePayload, status: Moder
     }
 }
 
-@Preview @Composable private fun ChangeRequestNotFoundPreview() = CoffeePeekTheme {
+@Preview @Composable private fun ChangeRequestNotFoundPreviewLight() = ChangeRequestNotFoundPreview(false)
+@Preview @Composable private fun ChangeRequestNotFoundPreviewDark() = ChangeRequestNotFoundPreview(true)
+
+@Composable private fun ChangeRequestNotFoundPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
     Surface { ChangeRequestContent(ChangeRequestState(isLoading = false, error = RequestError.NotFound), noCallbacks, {}) }
 }

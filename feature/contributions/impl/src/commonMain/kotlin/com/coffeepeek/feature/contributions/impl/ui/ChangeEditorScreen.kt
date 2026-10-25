@@ -37,16 +37,17 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
-import androidx.compose.foundation.layout.navigationBarsPadding
+import com.coffeepeek.core.designsystem.component.coffeePeekViewportBottomPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.Scaffold
+import com.coffeepeek.core.designsystem.component.CoffeePeekScaffold as Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import com.coffeepeek.core.designsystem.component.coffeePeekScreenBottomPadding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -105,29 +106,38 @@ internal fun ChangeEditorContent(
                 { onAction(ChangeEditorAction.Submit) }, { onAction(ChangeEditorAction.DismissFailure) },
             )
         }
-        else -> Scaffold(
-            modifier = modifier,
-            topBar = { CoffeePeekTopBar(title, stringResource(Res.string.contributions_back), onBack = callbacks.onBack) },
-            containerColor = MaterialTheme.colorScheme.background,
-        ) { padding ->
-            when {
-                state.signedIn == null || state.isLoading -> Box(Modifier.fillMaxSize().padding(padding), Alignment.Center) { CoffeePeekLoader(stringResource(Res.string.contributions_loading)) }
-                state.loadError != null -> LoadFailure(state, onAction, callbacks, Modifier.padding(padding))
-                else -> Column(Modifier.fillMaxSize().padding(padding).consumeWindowInsets(padding).imePadding().padding(horizontal = CoffeePeekDimens.spacing4)) {
-                    Column(Modifier.weight(1f).verticalScroll(rememberScrollState())) {
-                        if (state.shopTitle.isNotBlank()) {
-                            Text(state.shopTitle, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                            Spacer(Modifier.height(CoffeePeekDimens.spacing3))
-                        }
-                        ChangeEditorBody(state, host, onAction)
-                        Spacer(Modifier.height(CoffeePeekDimens.spacing4))
+        else -> ChangeEditorForm(state, editing, host, callbacks, onAction, modifier)
+    }
+}
+
+@Composable
+private fun ChangeEditorForm(
+    state: ChangeEditorState, editing: Boolean, host: ChangeEditorHost, callbacks: EditorCallbacks,
+    onAction: (ChangeEditorAction) -> Unit, modifier: Modifier,
+) {
+    val title = state.section.title()
+    Scaffold(
+        modifier = modifier,
+        topBar = { CoffeePeekTopBar(title, stringResource(Res.string.contributions_back), onBack = callbacks.onBack) },
+        containerColor = MaterialTheme.colorScheme.background,
+    ) { padding ->
+        when {
+            state.signedIn == null || state.isLoading -> Box(Modifier.fillMaxSize().padding(padding), Alignment.Center) { CoffeePeekLoader(stringResource(Res.string.contributions_loading)) }
+            state.loadError != null -> LoadFailure(state, onAction, callbacks, Modifier.padding(padding))
+            else -> Column(Modifier.fillMaxSize().padding(padding).consumeWindowInsets(padding).coffeePeekScreenBottomPadding().imePadding().padding(horizontal = CoffeePeekDimens.spacing4)) {
+                Column(Modifier.weight(1f).verticalScroll(rememberScrollState())) {
+                    if (state.shopTitle.isNotBlank()) {
+                        Text(state.shopTitle, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Spacer(Modifier.height(CoffeePeekDimens.spacing3))
                     }
-                    CoffeePeekButton(
-                        stringResource(if (editing) Res.string.contributions_editor_save else Res.string.contributions_shop_submit),
-                        { onAction(ChangeEditorAction.Submit) }, enabled = state.canSubmit,
-                    )
-                    Spacer(Modifier.height(CoffeePeekDimens.spacing3))
+                    ChangeEditorBody(state, host, onAction)
+                    Spacer(Modifier.height(CoffeePeekDimens.spacing4))
                 }
+                CoffeePeekButton(
+                    stringResource(if (editing) Res.string.contributions_editor_save else Res.string.contributions_shop_submit),
+                    { onAction(ChangeEditorAction.Submit) }, enabled = state.canSubmit,
+                )
+                Spacer(Modifier.height(CoffeePeekDimens.spacing3))
             }
         }
     }
@@ -161,7 +171,7 @@ private fun EditorSuccess(title: String, request: ChangeRequest, editing: Boolea
         topBar = { CoffeePeekTopBar(title, stringResource(Res.string.contributions_back), onBack = callbacks.onBack) },
         containerColor = MaterialTheme.colorScheme.background,
         bottomBar = {
-            Column(Modifier.fillMaxWidth().navigationBarsPadding().padding(CoffeePeekDimens.spacing4), verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing3)) {
+            Column(Modifier.fillMaxWidth().coffeePeekViewportBottomPadding().coffeePeekScreenBottomPadding().padding(CoffeePeekDimens.spacing4), verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing3)) {
                 CoffeePeekButton(stringResource(Res.string.contributions_open_request), { callbacks.onOpenRequest(request.id) })
                 OutlinedButton(onClick = callbacks.onBack, modifier = Modifier.fillMaxWidth().height(CoffeePeekDimens.buttonHeight)) { Text(stringResource(Res.string.contributions_roaster_done)) }
             }
@@ -195,7 +205,10 @@ private fun EditorSuccess(title: String, request: ChangeRequest, editing: Boolea
 
 private val noCallbacks = EditorCallbacks({}, {}, {})
 
-@Preview @Composable private fun EditorDescriptionPreview() = CoffeePeekTheme {
+@Preview @Composable private fun EditorDescriptionPreviewLight() = EditorDescriptionPreview(false)
+@Preview @Composable private fun EditorDescriptionPreviewDark() = EditorDescriptionPreview(true)
+
+@Composable private fun EditorDescriptionPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
     Surface {
         ChangeEditorContent(
             ChangeEditorState(ChangeSection.Description, signedIn = true, isLoading = false, shopTitle = "Sandbox Cafe", description = "Новое описание кофейни"),
@@ -204,7 +217,10 @@ private val noCallbacks = EditorCallbacks({}, {}, {})
     }
 }
 
-@Preview @Composable private fun EditorContactsPreview() = CoffeePeekTheme {
+@Preview @Composable private fun EditorContactsPreviewLight() = EditorContactsPreview(false)
+@Preview @Composable private fun EditorContactsPreviewDark() = EditorContactsPreview(true)
+
+@Composable private fun EditorContactsPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
     Surface {
         ChangeEditorContent(
             ChangeEditorState(ChangeSection.Contacts, signedIn = true, isLoading = false, shopTitle = "Sandbox Cafe", phone = "abc", website = "sandbox.by"),
@@ -213,7 +229,10 @@ private val noCallbacks = EditorCallbacks({}, {}, {})
     }
 }
 
-@Preview @Composable private fun EditorFailedPreview() = CoffeePeekTheme {
+@Preview @Composable private fun EditorFailedPreviewLight() = EditorFailedPreview(false)
+@Preview @Composable private fun EditorFailedPreviewDark() = EditorFailedPreview(true)
+
+@Composable private fun EditorFailedPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
     Surface {
         ChangeEditorContent(ChangeEditorState(ChangeSection.Menu, signedIn = true, isLoading = false, submit = EditorSubmit.Failed(null)), editing = false, ChangeEditorHost(), noCallbacks, {})
     }

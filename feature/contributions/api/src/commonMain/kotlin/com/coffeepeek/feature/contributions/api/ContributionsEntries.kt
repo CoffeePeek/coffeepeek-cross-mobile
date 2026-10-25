@@ -12,7 +12,7 @@ interface ContributionsListEntry {
         onSignIn: () -> Unit,
         onOpenShop: (slug: String) -> Unit,
         onOpenRequest: (id: String) -> Unit,
-        modifier: Modifier = Modifier,
+        modifier: Modifier,
     )
 }
 
@@ -24,6 +24,6 @@ interface ChangeRequestEntry {
         onBack: () -> Unit,
         onSignIn: () -> Unit,
         onOpenShop: (slug: String) -> Unit,
-        modifier: Modifier = Modifier,
+        modifier: Modifier,
     )
 }

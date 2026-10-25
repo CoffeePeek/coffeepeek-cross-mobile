@@ -27,6 +27,10 @@ import com.coffeepeek.feature.contributions.api.GeoPoint
 import com.coffeepeek.feature.contributions.domain.model.CatalogOption
 import com.coffeepeek.feature.contributions.domain.model.PendingPhoto
 import com.coffeepeek.feature.contributions.domain.model.PriceRange
+import coffeepeek.composeapp.generated.resources.Res
+import coffeepeek.composeapp.generated.resources.contribution_price_title
+import coffeepeek.composeapp.generated.resources.contribution_price_cappuccino
+import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.resources.painterResource
 import com.coffeepeek.admin.location.GeoPoint as LegacyGeoPoint
 
@@ -53,23 +57,9 @@ private fun haptic(success: Boolean) = platformHaptic(if (success) HapticEvent.S
 
 internal fun addShopHost() = AddShopHost(
     locationPermission = { onGranted, onDenied -> LocationPermissionEffect(requestKey = 1, onGranted = onGranted, onDenied = onDenied) },
-    mapPicker = { initial, onConfirm, onDismiss ->
-        PickShopLocationDialog(
-            initialPoint = initial?.let { LegacyGeoPoint(it.latitude, it.longitude) },
-            onConfirm = { latitude, longitude, address -> onConfirm(GeoPoint(latitude, longitude), address) },
-            onDismiss = onDismiss,
-        )
-    },
+    mapPicker = { initial, onConfirm, onDismiss -> ContributionMapPicker(initial, onConfirm, onDismiss) },
     photos = photoSection,
-    priceSelector = { selected, onSelect ->
-        val level = selected?.let { it.ordinal + 1 }
-        PriceBeanSlider(
-            selected = level,
-            onSelect = { onSelect(it?.let { value -> PriceRange.entries.getOrNull(value - 1) }) },
-            title = priceLevelValue(level)?.let { "Цена (капучино за $it)" } ?: "Цена",
-            showHint = false,
-        )
-    },
+    priceSelector = { selected, onSelect -> ContributionPriceSelector(selected, onSelect) },
     brewMethodIcon = brewIcon,
     roasterLogo = roasterLogo,
     shopImage = { bytes, modifier ->
@@ -88,3 +78,24 @@ internal fun changeEditorHost() = ChangeEditorHost(
     roasterLogo = roasterLogo,
     feedback = ::haptic,
 )
+
+@androidx.compose.runtime.Composable
+private fun ContributionMapPicker(initial: GeoPoint?, onConfirm: (GeoPoint, String) -> Unit, onDismiss: () -> Unit) {
+    PickShopLocationDialog(
+        initialPoint = initial?.let { LegacyGeoPoint(it.latitude, it.longitude) },
+        onConfirm = { latitude, longitude, address -> onConfirm(GeoPoint(latitude, longitude), address) },
+        onDismiss = onDismiss,
+    )
+}
+
+@androidx.compose.runtime.Composable
+private fun ContributionPriceSelector(selected: PriceRange?, onSelect: (PriceRange?) -> Unit) {
+    val level = selected?.let { it.ordinal + 1 }
+    PriceBeanSlider(
+        selected = level,
+        onSelect = { onSelect(it?.let { value -> PriceRange.entries.getOrNull(value - 1) }) },
+        title = priceLevelValue(level)?.let { stringResource(Res.string.contribution_price_cappuccino, it) }
+            ?: stringResource(Res.string.contribution_price_title),
+        showHint = false,
+    )
+}

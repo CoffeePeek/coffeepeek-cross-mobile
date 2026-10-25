@@ -7,7 +7,7 @@ import com.coffeepeek.admin.ui.screen.shopchange.ShopChangeEditorScreen
 import com.coffeepeek.admin.ui.screen.shopchange.ShopChangeRequestDetailScreen
 import com.coffeepeek.admin.ui.screen.shopchange.SuggestShopChangeScreen
 
-/** Platform selection only. iOS and shared code keep the legacy screens; Android composes the migrated entries. */
+/** Platform selection only. Android and iOS compose the migrated entries; legacy screens remain a fallback. */
 interface ContributionsScreenRenderer {
     /** [kind] is a [ContributionKind] name. */
     @Composable

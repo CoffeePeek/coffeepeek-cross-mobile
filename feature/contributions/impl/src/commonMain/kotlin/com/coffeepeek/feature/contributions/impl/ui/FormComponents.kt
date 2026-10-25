@@ -17,6 +17,9 @@ import com.coffeepeek.feature.contributions.impl.resources.contributions_shop_fi
 import com.coffeepeek.feature.contributions.impl.resources.contributions_shop_optional_legend
 import com.coffeepeek.feature.contributions.impl.resources.contributions_shop_required_hint
 import com.coffeepeek.feature.contributions.impl.resources.contributions_sign_in
+import com.coffeepeek.feature.contributions.impl.resources.contributions_suggest_sign_in_prompt
+import org.jetbrains.compose.ui.tooling.preview.Preview
+import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -32,7 +35,8 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextFieldDefaults
-import androidx.compose.material3.Scaffold
+import com.coffeepeek.core.designsystem.component.CoffeePeekScaffold as Scaffold
+import com.coffeepeek.core.designsystem.component.coffeePeekScreenBottomPadding
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -196,7 +200,7 @@ internal fun FormSignInPrompt(title: String, prompt: String, onBack: () -> Unit,
         containerColor = MaterialTheme.colorScheme.background,
     ) { padding ->
         Column(
-            Modifier.fillMaxSize().padding(padding).padding(CoffeePeekDimens.spacing4),
+            Modifier.fillMaxSize().padding(padding).coffeePeekScreenBottomPadding().padding(CoffeePeekDimens.spacing4),
             horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center,
         ) {
             Text(prompt, color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -205,3 +209,14 @@ internal fun FormSignInPrompt(title: String, prompt: String, onBack: () -> Unit,
         }
     }
 }
+
+@Composable
+private fun FormSignInPromptPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
+    FormSignInPrompt(
+        stringResource(Res.string.contributions_sign_in),
+        stringResource(Res.string.contributions_suggest_sign_in_prompt), {}, {},
+    )
+}
+
+@Preview @Composable private fun FormSignInPromptLightPreview() = FormSignInPromptPreview(false)
+@Preview @Composable private fun FormSignInPromptDarkPreview() = FormSignInPromptPreview(true)

@@ -10,10 +10,8 @@ import com.coffeepeek.admin.di.appupdate.androidAppUpdateRenderer
 import com.coffeepeek.admin.di.auth.androidAuthScreenRenderer
 import com.coffeepeek.admin.di.community.featureCommunityScreenRenderer
 import com.coffeepeek.api.CoffeePeekClient
-import java.time.OffsetDateTime
-import com.coffeepeek.admin.di.contributions.androidContributionsScreenRenderer
+import com.coffeepeek.admin.di.contributions.featureContributionsScreenRenderer
 import com.coffeepeek.admin.di.discovery.featureDiscoveryScreenRenderer
-import com.coffeepeek.feature.contributions.data.repository.createContributionsRepository
 import com.coffeepeek.admin.di.profile.featureAccountScreenRenderer
 import com.coffeepeek.admin.di.notifications.featureNotificationsRenderer
 import com.coffeepeek.admin.di.profile.featureOwnProfileScreenRenderer
@@ -81,12 +79,7 @@ internal fun initAndroidKoin(extraModules: List<org.koin.core.module.Module> = e
         notificationsRendererFactory = { featureNotificationsRenderer(get()) },
         authRendererFactory = { androidAuthScreenRenderer(get(), get()) },
         communityRendererFactory = { featureCommunityScreenRenderer(get(), get(), get(), get(), get(), get()) },
-        contributionsRendererFactory = {
-            val gateway = get<CoffeePeekClient>()
-            androidContributionsScreenRenderer(
-                createContributionsRepository(gateway.client, gateway.uploadClient) { OffsetDateTime.now().offset.totalSeconds / 60 }, get(), get(),
-            )
-        },
+        contributionsRendererFactory = { featureContributionsScreenRenderer(get<CoffeePeekClient>(), get(), get()) },
         discoveryRendererFactory = { featureDiscoveryScreenRenderer(get<CoffeePeekClient>().client, get(), get(), get(), get(), get(), get()) },
     )
 }

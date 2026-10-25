@@ -34,6 +34,6 @@ interface AddShopEntry {
         onBack: () -> Unit,
         onSignIn: () -> Unit,
         onAddRoaster: () -> Unit,
-        modifier: Modifier = Modifier,
+        modifier: Modifier,
     )
 }

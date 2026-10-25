@@ -14,7 +14,7 @@ interface SuggestChangeEntry {
         onBack: () -> Unit,
         onSignIn: () -> Unit,
         onPickSection: (ChangeSection) -> Unit,
-        modifier: Modifier = Modifier,
+        modifier: Modifier,
     )
 }
 
@@ -44,6 +44,6 @@ interface ChangeEditorEntry {
         onBack: () -> Unit,
         onSignIn: () -> Unit,
         onOpenRequest: (id: String) -> Unit,
-        modifier: Modifier = Modifier,
+        modifier: Modifier,
     )
 }

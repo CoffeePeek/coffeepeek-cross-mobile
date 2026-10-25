@@ -21,9 +21,10 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
+import com.coffeepeek.core.designsystem.component.CoffeePeekScaffold as Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import com.coffeepeek.core.designsystem.component.coffeePeekScrollContentPadding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
@@ -126,7 +127,7 @@ private fun ContributionList(kind: ContributionKind, status: ModerationStatus, t
     }
     LaunchedEffect(nearEnd) { if (nearEnd) onLoadMore() }
     LazyColumn(
-        Modifier.fillMaxSize(), state = listState, contentPadding = PaddingValues(CoffeePeekDimens.spacing4),
+        Modifier.fillMaxSize(), state = listState, contentPadding = coffeePeekScrollContentPadding(PaddingValues(CoffeePeekDimens.spacing4)),
         verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing3),
     ) {
         items(tab.items, key = { it.id }) { item ->
@@ -144,7 +145,10 @@ private val noCallbacks = ListCallbacks({}, {}, {}, {})
 
 private fun previewTab(vararg items: ContributionItem) = TabState(items.toList(), items.size, 1, false)
 
-@Preview @Composable private fun ContributionsListPreview() = CoffeePeekTheme {
+@Preview @Composable private fun ContributionsListPreviewLight() = ContributionsListPreview(false)
+@Preview @Composable private fun ContributionsListPreviewDark() = ContributionsListPreview(true)
+
+@Composable private fun ContributionsListPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
     Surface {
         ContributionsListContent(
             ContributionsListState(
@@ -162,10 +166,16 @@ private fun previewTab(vararg items: ContributionItem) = TabState(items.toList()
     }
 }
 
-@Preview @Composable private fun ContributionsListEmptyPreview() = CoffeePeekTheme {
+@Preview @Composable private fun ContributionsListEmptyPreviewLight() = ContributionsListEmptyPreview(false)
+@Preview @Composable private fun ContributionsListEmptyPreviewDark() = ContributionsListEmptyPreview(true)
+
+@Composable private fun ContributionsListEmptyPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
     Surface { ContributionsListContent(ContributionsListState(isLoading = false), ContributionKind.Roasters, noCallbacks, {}) }
 }
 
-@Preview @Composable private fun ContributionsListErrorPreview() = CoffeePeekTheme {
+@Preview @Composable private fun ContributionsListErrorPreviewLight() = ContributionsListErrorPreview(false)
+@Preview @Composable private fun ContributionsListErrorPreviewDark() = ContributionsListErrorPreview(true)
+
+@Composable private fun ContributionsListErrorPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
     Surface { ContributionsListContent(ContributionsListState(isLoading = false, error = ListError.LoadFailed), ContributionKind.Changes, noCallbacks, {}) }
 }
