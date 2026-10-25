@@ -24,9 +24,9 @@ iOS-документы (`docs/IOS_NATIVE_EXPERIENCE.md`, `IOS_NATIVE_NAVIGATION.
 
 **Этап 2 — сессия: F23 и F24 готовы** (выход стирает старые строки; сбой удаления Keychain сообщается). Core session port вместо `SessionRepository` (~43 файла) — **не сделан**.
 
-**Этап 3 — подключение на iOS: начат.** Через новые модули на iOS подключены: вкладка Settings (и три её подэкрана), окно обновления, колокольчик уведомлений, экраны входа, регистрации и восстановления пароля, **Community (вкладка «Лента»)**, **Discovery (вкладка «Поиск»)**, **Coffee (вкладка каталога и детали кофе)**, **Profile (собственный/публичный профиль, его чекины, редактирование и подтверждение удаления аккаунта)** и **Contributions (списки заявок, добавление кофейни/обжарщика, предложение правки, редактор и детали заявки)**. Подключены также Google/Apple кнопки и существующие Swift-провайдеры (при доступной конфигурации); реальный OAuth ещё не проверен.
-На iOS Profile, Community, Discovery, Coffee и Contributions идут через feature-рендереры.
-Shop, личная история/Home и Favorites ещё используют текущие legacy entries;
+**Этап 3 — подключение на iOS: начат.** Через новые модули на iOS подключены: вкладка Settings (и три её подэкрана), окно обновления, колокольчик уведомлений, экраны входа, регистрации и восстановления пароля, **Community (вкладка «Лента»)**, **Discovery (вкладка «Поиск»)**, **Coffee (вкладка каталога и детали кофе)**, **Profile (собственный/публичный профиль, его чекины, редактирование и подтверждение удаления аккаунта)** и **Contributions (списки заявок, добавление кофейни/обжарщика, предложение правки, редактор и детали заявки)**, **Shop (кофейня, публичные чекины, галерея меню, форма чекина)** и **Shop-report (неточность в данных кофейни)**. Подключены также Google/Apple кнопки и существующие Swift-провайдеры (при доступной конфигурации); реальный OAuth ещё не проверен.
+На iOS Profile, Community, Discovery, Coffee, Contributions и Shop/Shop-report идут через feature-рендереры.
+Личная история/Home и Favorites ещё используют текущие legacy entries;
 слоты календаря, избранного и карточек в Profile сохраняют эти существующие реализации.
 
 **Важные находки для следующих срезов**
@@ -36,7 +36,8 @@ Shop, личная история/Home и Favorites ещё используют 
 4. Для сообщения проверки обновлений на iOS нет тоста: временно используется `ErrorHandler.showError`, нужно решение по UX.
 
 **Остаётся**
-- Этап 3: Shop и Shop-report, Check-in history, Home check-in и общий create flow, Favorites (по решению продукта); ручная приёмка Community/Discovery/Coffee/Profile/Contributions и live-приёмка Apple/Google.
+- Этап 3: Check-in history, Home check-in и общий create flow, Favorites (по решению продукта); ручная приёмка Community/Discovery/Coffee/Profile/Contributions/Shop и live-приёмка Apple/Google.
+- Контентная жалоба `ReportCheckIn`/`ReportReview` пока использует общий legacy ReviewReportScreen; это отдельный маршрут, а не мигрированный Shop-report.
 - Этап 2: core session port.
 - Roaster: Xcode-линковка, симулятор, устройство.
 - Этап 5: удаление legacy — только после полной готовности и ручной приёмки.
@@ -500,6 +501,102 @@ native feedback. Серверные create/update/upload, аккаунт и anal
 не создавались; установок и запусков приложения не было.
 
 Следующий владелец code-плана: **Shop / кофейня, её формы и Shop-report**.
+
+
+### Checkpoint: Shop / кофейня, публичные чекины, создание и Shop-report — 2026-10-25
+
+Продолжение PR #195 на базе `dd8c7a5e`. После fetch
+`origin/main=16724b7e`, `origin/develop=8ac9f49a`; оба ref уже предки HEAD.
+
+Сделано:
+
+- Shop api/domain/data/impl и Shop-report api/data/impl перенесены из Android
+  в common app dependencies. Общие renderer, navigation-owned session hosts,
+  author blocking, server favorites adapter, draft bridge, photo picker и analytics
+  находятся в app composition. iOS DI выбирает те же feature entries, что Android.
+  Экранный UI и бизнес-логика остаются в feature; новых модулей или клиентов нет.
+- Подключены ShopDetail, ShopReviews (публичные чекины), ShopMenuGallery,
+  ReportShop и modal создания чекина. Маршруты уже проходили через app renderer
+  в обоих navigation hosts. Native root/navigation stack не заменены.
+  ReportCheckIn/ReportReview остаются на прежнем общем ReviewReportScreen:
+  контентная жалоба не объявляется мигрированным Shop-report.
+- Сохранены authenticated CpImage, original/thumbnail policy, photo viewer,
+  prefetch списка, lifecycle-aware подпись даты, расстояние, copy/share/link,
+  выбор Apple/Google/Яндекс карт на iOS, переходы к обжарщику и автору.
+  Снятую ранее кнопку «Фото меню» в новом detail не возвращали. Legacy Android
+  gallery affordance передаётся platform slot, не копируется в общий feature UI.
+- У двух Shop API Content-методов убраны default arguments; list adapter явно
+  передаёт refreshGeneration. Эффекты детали разбиты на небольшие app-owned
+  navigation/platform helpers, состояние формы сохраняется через прежний saver.
+- Shared browsing/modal leases сохраняют обновление токена того же аккаунта,
+  отзываются при замене аккаунта/visibility и отменяют устаревшие операции.
+  Черновик использует прежний единый CheckInDraftStore; Java Instant в его адаптере
+  заменён Kotlin Instant без смены timestamp/storage format или приватности.
+- Android сохраняет свой проверенный formatter с явным ZoneId; iOS использует
+  существующие platform DateTimeUtils через AppShopCheckInDateFormatter.
+  Сохраняются UTC-midnight picker token, локальный день, время/миллисекунды,
+  поведение DST и ограничение будущего визита. Четыре новых common tests проверяют
+  invalid/offset-equivalent input, удержание точного instant и clamp.
+  Schedule UTC offset в общем browsing module вычисляется через kotlinx-datetime.
+- JVM synchronized в single pending favorite intent заменён AtomicReference.
+  Найденный дефект: смена аккаунта во время загрузки отложенного избранного могла
+  отправить запись в новую сессию. Новый тест сначала воспроизвёл лишний save.
+  Теперь intent захватывает lease наблюдавшегося аккаунта до запуска дочерней
+  операции; чтение/запись и onApplied проверяют владельца. Отмена операции
+  сохраняется, collector сессии продолжает жить; второй сервис/локальный writer
+  не создан, TTL/однократное выполнение и resumed-after-auth analytics сохранены.
+- Shop detail/list/gallery/report используют DS Scaffold и scroll bottom
+  clearance; floating actions/snackbar добавляют native safe area один раз.
+  Android viewport padding остаётся прежним. Native sheet уже потребляет нижний
+  inset и сохраняет существующий photo source/date picker; общую sheet механику
+  в этом срезе не меняли. Парные light/dark previews остаются рядом с content;
+  session-error preview адаптирован к common tooling.
+- Аналитика перенесена вместе с app adapters, не реализована заново:
+  shop_action, shop_content_interacted, auth gates, favorite attempt/resume,
+  entity detail/exposure, check-in tracker/handoff, field/submit/error/save/cancel.
+  Consent/session guards, безопасная классификация photo-upload ошибок и
+  прежние app page mappings сохранены; реальные события не отправлялись.
+
+Проверки (Mac/JBR 21, 2026-10-25; исходники checkpoint поверх `dd8c7a5e`):
+
+- Shop domain **7 tests / 3 suites**, data **42 / 13**, impl **106 / 12**;
+  Shop-report data **9 / 2**, impl **6 / 1**; app subset `*Shop*`,
+  `*CheckInDate*` — **109 / 35**. Всего **279 tests**, 0 failures/errors/skips.
+  Семь чистых app suites перенесены в commonTest; JVM date/DI/analytics harness
+  остались androidUnitTest. Проверены lease replacement, draft identity,
+  cancellation, HTTP/upload contracts, votes/favorites и analytics wire parity.
+- Первый compile остановился на двух app helpers, оставшихся Android-only.
+  Lifecycle date-label helper перенесён в common composition; legacy gallery
+  action остаётся platform slot. После исправления Android/Native compile успешны.
+- Воспроизведение гонки: **3 tests / 1 failure** (лишний `shop-1` в saved после
+  смены аккаунта). После lease fix весь app subset успешен; исходный failure сохранён.
+- Первая assembly остановилась на DEX guard со старыми Android* именами трёх
+  переименованных классов. Guard обновлён на реальные общие имена и дополнен
+  detail/list/report/gallery renderers; проверка не отключалась.
+  Финальные assembleDirectDebug/Sandbox, runtime-class checks и Sandbox isolation
+  успешны. Новые библиотеки в APK проверены, APK не установлен.
+- compileKotlinIosArm64, linkDebugFrameworkIosSimulatorArm64 и
+  compileTestKotlinIosSimulatorArm64 успешны. Native app tests только скомпилированы;
+  simulator/device UI и Xcode приложение не запускались.
+- SHA-256: Debug `853c447bdd3989e615da8f65351151e1ba100e66a2633ac7a9927d9290488eb8`;
+  Sandbox `7b6bc0117ef5b1f5397dc91b90abaf99ecc56f4854bfa3cdc6db74677fa84a09`.
+- Studio common source model ещё не разрешает новые зависимости Shop; ошибки
+  IDE classpath не объявляются успешной inspection/preview-приёмкой.
+  Реальные Gradle compile/link успешны; прежние preview/expect-actual warnings
+  остаются. Gradle последовательно, --max-workers=6, логи локально в /private/tmp.
+
+Открытые gates: iOS detail/list/gallery в обеих темах, размер шрифта/экрана,
+положение floating controls и sheet, клавиатура, свайп/back/cancel,
+реальный photo/camera picker и даты около полуночи/DST на устройстве,
+auth→favorite resume, авторские меню/блокировка, карты/share/copy.
+Create/upload/vote/favorite/report и настоящая аналитика на сервере не выполнялись.
+Ручная проверка Sandbox/устройства не заменяется 279 unit/contract tests.
+Автоматизированные UI/instrumented/screenshot tests и test-only Activity/APK
+не создавались. Пользовательские приложения/аккаунт/данные не менялись.
+
+Следующий владелец code-плана: **Check-in history / личная история и её карточки**;
+затем Home check-in и общий create flow. Контентная жалоба остаётся явным
+legacy follow-up, удаление fallback до общей приёмки не допускается.
 
 ## 1. Принципы (решение 2026-10-24)
 

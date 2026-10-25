@@ -6,7 +6,7 @@ import com.coffeepeek.feature.shop.api.ShopCheckInAnalytics
 import com.coffeepeek.feature.shop.api.ShopCheckInField
 import com.coffeepeek.feature.shop.domain.repository.ShopCheckInPhotoUploadFailure
 
-internal class AndroidShopCheckInAnalytics(private val isCurrent: () -> Boolean) : ShopCheckInAnalytics {
+internal class AppShopCheckInAnalytics(private val isCurrent: () -> Boolean) : ShopCheckInAnalytics {
     private var tracker: CheckInTracker? = null
 
     override fun opened() {

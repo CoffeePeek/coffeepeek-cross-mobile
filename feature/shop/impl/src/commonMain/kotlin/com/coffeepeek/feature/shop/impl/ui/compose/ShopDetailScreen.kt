@@ -14,10 +14,13 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.navigationBarsPadding
+import com.coffeepeek.core.designsystem.component.LocalCoffeePeekScreenInsets
+import com.coffeepeek.core.designsystem.component.coffeePeekViewportBottomPadding
+import com.coffeepeek.core.designsystem.component.coffeePeekScreenBottomPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
+import com.coffeepeek.core.designsystem.component.CoffeePeekScaffold as Scaffold
+import com.coffeepeek.core.designsystem.component.coffeePeekScrollContentPadding
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import com.coffeepeek.feature.shop.impl.ui.data.LocalShopAnalytics
@@ -151,13 +154,14 @@ internal fun ShopDetailScreenContent(
     }
     val hazeState = rememberHazeState()
     val floatingActionsClearance = 72.dp
-    val systemBottomInset = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
+    val systemBottomInset = if (LocalCoffeePeekScreenInsets.current.extendsToBottom) 0.dp
+        else WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
     Box(Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal))) {
       Scaffold(
         modifier = Modifier.hazeSource(hazeState),
         contentWindowInsets = WindowInsets(0),
         snackbarHost = { SnackbarHost(snackbarHostState,
-            Modifier.navigationBarsPadding().padding(bottom = floatingActionsClearance)) },
+            Modifier.coffeePeekViewportBottomPadding().coffeePeekScreenBottomPadding().padding(bottom = floatingActionsClearance)) },
         containerColor = MaterialTheme.colorScheme.background,
     ) { insets ->
         Box(Modifier.fillMaxSize().padding(insets).consumeWindowInsets(insets), contentAlignment = Alignment.Center) {
@@ -170,8 +174,8 @@ internal fun ShopDetailScreenContent(
                     onRetry = { onAction(ShopDetailAction.Retry) })
                 else -> LazyColumn(
                     modifier = Modifier.fillMaxSize().clipToBounds(),
-                    contentPadding = PaddingValues(bottom = floatingActionsClearance +
-                        CoffeePeekDimens.spacing4 + CoffeePeekDimens.spacing6 + systemBottomInset),
+                    contentPadding = coffeePeekScrollContentPadding(PaddingValues(bottom = floatingActionsClearance +
+                        CoffeePeekDimens.spacing4 + CoffeePeekDimens.spacing6 + systemBottomInset)),
                 ) {
                     item {
                         ShopDetailHeader(state, onAction, distanceLabel)

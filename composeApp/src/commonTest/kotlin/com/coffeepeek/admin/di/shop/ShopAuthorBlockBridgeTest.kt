@@ -12,7 +12,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
-class AndroidShopAuthorBlockBridgeTest {
+class ShopAuthorBlockBridgeTest {
     private val author = ShopCheckInAuthor("public-id", "public-slug", "Author", "issued-avatar")
 
     private class Actions : AuthorBlockActions {
@@ -24,14 +24,14 @@ class AndroidShopAuthorBlockBridgeTest {
     @Test fun guestsAndSignedInViewersDelegateToTheExistingPromptWithoutWriting() {
         for (sessions in listOf(CheckInTestSessions(null), CheckInTestSessions())) {
             val actions = Actions()
-            AndroidShopBrowsingSession(sessions).requestAuthorBlock(author, actions)
+            ShopBrowsingSession(sessions).requestAuthorBlock(author, actions)
             assertEquals(listOf(AuthorReference("public-id", "public-slug", "Author", "issued-avatar")), actions.requested)
         }
     }
 
     @Test fun tokenRenewalKeepsTheCallbackButAccountReplacementRevokesItPermanently() = runTest {
         val sessions = CheckInTestSessions()
-        val lease = AndroidShopBrowsingSession(sessions)
+        val lease = ShopBrowsingSession(sessions)
         val actions = Actions()
         sessions.applySession(Session("renewed", userId = "owner"))
         lease.requestAuthorBlock(author, actions)
@@ -48,7 +48,7 @@ class AndroidShopAuthorBlockBridgeTest {
             override val visibility = MutableStateFlow(AuthorVisibilitySnapshot())
             override suspend fun refresh() = Result.success(Unit)
         }
-        val lease = AndroidShopBrowsingSession(CheckInTestSessions(), visibility = visibility)
+        val lease = ShopBrowsingSession(CheckInTestSessions(), visibility = visibility)
         val actions = Actions()
         lease.requestAuthorBlock(author.copy(id = null, slug = " "), actions)
         assertTrue(actions.requested.isEmpty())

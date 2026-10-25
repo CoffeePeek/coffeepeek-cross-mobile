@@ -1,9 +1,12 @@
 package com.coffeepeek.admin.di
 
+import com.coffeepeek.admin.ui.Navigator
+import com.coffeepeek.admin.ui.screen.shop.component.ShopMenuGalleryLink
 import com.coffeepeek.admin.di.favorites.serverFavoritesModule
 import com.coffeepeek.admin.di.shop.shopFavoriteIntent
+import com.coffeepeek.admin.di.shop.AndroidShopCheckInDateFormatter
 import com.coffeepeek.admin.di.shop.shopCheckInModule
-import com.coffeepeek.admin.di.shop.AndroidShopCheckInFormRenderer
+import com.coffeepeek.admin.di.shop.FeatureShopCheckInFormRenderer
 import com.coffeepeek.admin.di.coffee.featureCoffeeScreenRenderer
 import com.coffeepeek.admin.di.coffee.coffeeModule
 import com.coffeepeek.admin.di.appupdate.androidAppUpdateRenderer
@@ -17,8 +20,8 @@ import com.coffeepeek.admin.di.notifications.featureNotificationsRenderer
 import com.coffeepeek.admin.di.profile.featureOwnProfileScreenRenderer
 import com.coffeepeek.admin.di.settings.featureSettingsScreenRenderer
 import com.coffeepeek.admin.di.profile.featurePublicProfileScreenRenderer
-import com.coffeepeek.admin.di.shop.AndroidShopDetailScreenRenderer
-import com.coffeepeek.admin.di.shop.AndroidShopCheckInListScreenRenderer
+import com.coffeepeek.admin.di.shop.FeatureShopDetailScreenRenderer
+import com.coffeepeek.admin.di.shop.FeatureShopCheckInListScreenRenderer
 import com.coffeepeek.admin.di.shop.shopBrowsingModule
 import com.coffeepeek.admin.di.checkinhistory.checkInHistoryModule
 import com.coffeepeek.admin.di.checkinhistory.AndroidCheckInHistoryScreenRenderer
@@ -40,30 +43,31 @@ internal fun initAndroidKoin(extraModules: List<org.koin.core.module.Module> = e
         registerLegacyFavorites = true,
         platformModules = listOf(
             serverFavoritesModule(),
-            shopCheckInModule(),
+            shopCheckInModule(AndroidShopCheckInDateFormatter()),
             shopBrowsingModule(),
             homeCheckInModule(),
             checkInHistoryModule(),
             coffeeModule(),
         ) + extraModules,
         shopReportRendererFactory = { client ->
-            AndroidShopReportScreenRenderer(
+            FeatureShopReportScreenRenderer(
                 createShopReportEntry(createShopIssueReportRepository(client.client)),
             )
         },
         shopGalleryRendererFactory = { client ->
-            AndroidShopMenuGalleryScreenRenderer(
+            FeatureShopMenuGalleryScreenRenderer(
                 createShopMenuGalleryEntry(createShopMenuGalleryRepository(client.client)),
+                legacyAction = { id -> ShopMenuGalleryLink(onOpen = { Navigator.navigate(Navigator.Screen.ShopMenuGallery(id)) }) },
             )
         },
-        shopCheckInRendererFactory = { AndroidShopCheckInFormRenderer(get()) },
+        shopCheckInRendererFactory = { FeatureShopCheckInFormRenderer(get()) },
         shopDetailRendererFactory = {
-            AndroidShopDetailScreenRenderer(sessions = get(), users = get(), details = get(), votes = get(),
+            FeatureShopDetailScreenRenderer(sessions = get(), users = get(), details = get(), votes = get(),
                 favorites = get(), favoriteIntent = shopFavoriteIntent(get(), get(), get()), checkInForm = get(),
                 visibility = get(), blockActions = get())
         },
         shopCheckInListRendererFactory = {
-            AndroidShopCheckInListScreenRenderer(sessions = get(), users = get(), details = get(), votes = get(),
+            FeatureShopCheckInListScreenRenderer(sessions = get(), users = get(), details = get(), votes = get(),
                 visibility = get(), blockActions = get())
         },
         checkInHistoryRendererFactory = { get<AndroidCheckInHistoryScreenRenderer>() },

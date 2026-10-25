@@ -13,7 +13,9 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Scaffold
+import com.coffeepeek.core.designsystem.component.CoffeePeekScaffold as Scaffold
+import com.coffeepeek.core.designsystem.component.coffeePeekScrollContentPadding
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -85,7 +87,7 @@ internal fun ShopReportScreenContent(
     ) { insets ->
         Column(
             modifier = Modifier.fillMaxSize().padding(insets).verticalScroll(rememberScrollState())
-                .padding(CoffeePeekDimens.spacing4),
+                .padding(coffeePeekScrollContentPadding(PaddingValues(CoffeePeekDimens.spacing4))),
             verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing3),
         ) {
             if (state.deliveryUnconfirmed) {

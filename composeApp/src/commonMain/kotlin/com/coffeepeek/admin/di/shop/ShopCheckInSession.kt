@@ -13,7 +13,7 @@ import kotlinx.coroutines.flow.catch
 import kotlin.concurrent.Volatile
 
 /** A modal lease, not a token snapshot: same-account token renewal stays valid. */
-internal class AndroidShopCheckInSession(
+internal class ShopCheckInSession(
     private val sessions: SessionReader,
     private val repository: ShopCheckInRepository,
     private val onCheckInCreated: () -> Unit = {},

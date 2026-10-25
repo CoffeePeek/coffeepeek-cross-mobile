@@ -16,11 +16,11 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 
 /** Navigation-owned lifetime. Session changes clear feature VMs even while a child route covers them. */
-internal class AndroidShopBrowsingHostViewModel(
+internal class ShopBrowsingHostViewModel(
     private val sessions: SessionReader,
     private val visibility: AuthorVisibility = AuthorVisibility.None,
 ) : ViewModel() {
-    private val mutableSession = MutableStateFlow(ShopBrowsingHostSession(0, AndroidShopBrowsingSession(sessions, visibility = visibility)))
+    private val mutableSession = MutableStateFlow(ShopBrowsingHostSession(0, ShopBrowsingSession(sessions, visibility = visibility)))
     val session = mutableSession.asStateFlow()
     private var observation: Job? = null
 
@@ -49,7 +49,7 @@ internal class AndroidShopBrowsingHostViewModel(
         old.lease.revoke()
         old.viewModelStore.clear()
         mutableSession.value = ShopBrowsingHostSession(old.generation + 1,
-            AndroidShopBrowsingSession(sessions, value, visibility), observationFailed)
+            ShopBrowsingSession(sessions, value, visibility), observationFailed)
     }
 
     override fun onCleared() {
@@ -60,7 +60,7 @@ internal class AndroidShopBrowsingHostViewModel(
 
 internal class ShopBrowsingHostSession(
     val generation: Int,
-    val lease: AndroidShopBrowsingSession,
+    val lease: ShopBrowsingSession,
     val observationFailed: Boolean = false,
 ) : ViewModelStoreOwner {
     override val viewModelStore = ViewModelStore()

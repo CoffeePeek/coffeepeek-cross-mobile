@@ -16,11 +16,11 @@ import com.coffeepeek.feature.shop.impl.ui.data.ShopCheckInPhotoPicker
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.catch
 
-/** Auth/session ownership remains in Android composition, not feature API/domain. */
-internal class AndroidSessionShopCheckInEntry(
+/** Auth/session ownership remains in application composition, not feature API/domain. */
+internal class SessionShopCheckInEntry(
     private val sessions: SessionReader,
     private val repository: ShopCheckInRepository,
-    private val drafts: AndroidShopCheckInDraftStore,
+    private val drafts: AppShopCheckInDraftStore,
     private val dates: ShopCheckInDateFormatter,
     private val photos: ShopCheckInPhotoPicker,
     private val onCheckInCreated: () -> Unit,
@@ -35,7 +35,7 @@ internal class AndroidSessionShopCheckInEntry(
         onGoToFeed: () -> Unit,
         onOpenHistory: () -> Unit,
     ) {
-        val lease = remember(shopId, shopSlug) { AndroidShopCheckInSession(sessions, repository, onCheckInCreated) }
+        val lease = remember(shopId, shopSlug) { ShopCheckInSession(sessions, repository, onCheckInCreated) }
         val boundDrafts = remember(lease) {
             if (lease.isCurrent()) drafts.forShop(shopId, shopSlug, lease.userId) else null
         }
@@ -58,7 +58,7 @@ internal class AndroidSessionShopCheckInEntry(
         }
         val entry = remember(lease) {
             createShopCheckInCreateEntry(lease, { _, _ -> boundDrafts }, dates, photos,
-                analytics = { AndroidShopCheckInAnalytics(lease::isCurrent) })
+                analytics = { AppShopCheckInAnalytics(lease::isCurrent) })
         }
         AnalyticsOverlay { entry.Content(
             shopId, shopSlug, shopName,

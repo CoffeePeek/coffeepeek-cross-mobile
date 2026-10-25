@@ -11,13 +11,14 @@ import com.coffeepeek.feature.shop.impl.ui.data.ShopCheckInDateFormatter
 import com.coffeepeek.feature.shop.impl.ui.data.ShopCheckInDraftSnapshot
 import com.coffeepeek.feature.shop.impl.ui.data.ShopCheckInDraftStore
 import kotlinx.coroutines.CancellationException
+import kotlin.time.Instant
 
 /** One app-owned adapter around the existing process store, not another persistent store.
  * Keep this instance across sheet recreation. Legacy logout/clear/replacement invalidates its guard.
  */
-internal class AndroidShopCheckInDraftStore(
+internal class AppShopCheckInDraftStore(
     private val legacy: CheckInDraftStore,
-    private val dates: ShopCheckInDateFormatter = AndroidShopCheckInDateFormatter(),
+    private val dates: ShopCheckInDateFormatter,
 ) : ShopCheckInDraftStore {
     private var guardedDraft: CheckInDraft? = null
     private var deliveryUnconfirmed = false
@@ -47,7 +48,7 @@ internal class AndroidShopCheckInDraftStore(
                     return Result.failure(IllegalStateException("Draft account was replaced"))
                 }
                 if (initial.shopSlug != shopSlug) return Result.failure(IllegalArgumentException("Mismatched shop slug"))
-                return this@AndroidShopCheckInDraftStore.open(initial.copy(shopSlug = shopId)).map {
+                return this@AppShopCheckInDraftStore.open(initial.copy(shopSlug = shopId)).map {
                     lease = legacy.peek()
                     it.copy(input = it.input.copy(shopSlug = shopSlug))
                 }
@@ -58,7 +59,7 @@ internal class AndroidShopCheckInDraftStore(
                     snapshot.input.shopSlug != shopSlug || lease == null || legacy.peek() !== lease) {
                     return Result.failure(IllegalStateException("Draft binding was replaced"))
                 }
-                return this@AndroidShopCheckInDraftStore.save(
+                return this@AppShopCheckInDraftStore.save(
                     snapshot.copy(input = snapshot.input.copy(shopSlug = shopId)),
                 ).onSuccess { lease = legacy.peek() }
             }
@@ -68,7 +69,7 @@ internal class AndroidShopCheckInDraftStore(
                     shopSlug != boundSlug || lease == null || legacy.peek() !== lease) {
                     return Result.failure(IllegalStateException("Draft binding was replaced"))
                 }
-                return this@AndroidShopCheckInDraftStore.clear(shopId).onSuccess { lease = null }
+                return this@AppShopCheckInDraftStore.clear(shopId).onSuccess { lease = null }
             }
         }
     }
@@ -83,7 +84,7 @@ internal class AndroidShopCheckInDraftStore(
             input = initial.copy(
                 text = draft.note,
                 rating = ShopRating(coffee = draft.coffeeRating, service = draft.serviceRating, place = draft.placeRating),
-                visitedAtIso = java.time.Instant.ofEpochMilli(draft.visitMillis).toString(),
+                visitedAtIso = Instant.fromEpochMilliseconds(draft.visitMillis).toString(),
                 visibility = if (draft.isPublic) ShopCheckInVisibility.Public else ShopCheckInVisibility.Private,
                 drinkSlug = draft.drinkSlug,
                 customDrinkName = draft.customDrinkName,
@@ -99,7 +100,7 @@ internal class AndroidShopCheckInDraftStore(
         check(current != null && current.shopId == input.shopSlug && guardedDraft === current) {
             "Draft was cleared or replaced; do not save stale screen state"
         }
-        val millis = java.time.Instant.parse(input.visitedAtIso).toEpochMilli()
+        val millis = Instant.parse(input.visitedAtIso).toEpochMilliseconds()
         val updated = current.copy(
             note = input.text, coffeeRating = input.rating.coffee,
             serviceRating = input.rating.service, placeRating = input.rating.place,

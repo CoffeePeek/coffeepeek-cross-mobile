@@ -7,7 +7,7 @@ import com.coffeepeek.admin.analytics.*
 import com.coffeepeek.feature.shop.api.*
 
 /** Keeps the existing consent-aware wire contract at the application boundary. */
-internal object AndroidShopAnalytics : ShopAnalytics {
+internal object AppShopAnalytics : ShopAnalytics {
     override fun action(action: ShopActionMetric) {
         Analytics.shopAction(action.wire(), action.placement())
     }

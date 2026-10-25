@@ -9,7 +9,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
+import com.coffeepeek.core.designsystem.component.CoffeePeekScaffold as Scaffold
+import com.coffeepeek.core.designsystem.component.coffeePeekScrollContentPadding
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -76,12 +77,12 @@ internal fun ShopMenuGalleryScreenContent(
                     onRetry = { onAction(ShopMenuGalleryAction.Load) })
                 else -> LazyColumn(
                     modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(
+                    contentPadding = coffeePeekScrollContentPadding(PaddingValues(
                         start = CoffeePeekDimens.spacing4,
                         top = CoffeePeekDimens.spacing2,
                         end = CoffeePeekDimens.spacing4,
                         bottom = CoffeePeekDimens.spacing6,
-                    ),
+                    )),
                     verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing4),
                 ) {
                     if (state.shopTitle.isNotBlank()) {

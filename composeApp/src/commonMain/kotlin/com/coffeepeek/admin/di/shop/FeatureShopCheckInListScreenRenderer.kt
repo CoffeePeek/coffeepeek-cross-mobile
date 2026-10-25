@@ -15,7 +15,7 @@ import com.coffeepeek.feature.shop.domain.repository.ShopCheckInVoteRepository
 import com.coffeepeek.feature.shop.domain.repository.ShopDetailsRepository
 import com.coffeepeek.feature.shop.impl.createShopCheckInListEntry
 
-internal class AndroidShopCheckInListScreenRenderer(
+internal class FeatureShopCheckInListScreenRenderer(
     private val sessions: SessionReader,
     private val users: UserRepository,
     private val details: ShopDetailsRepository,
@@ -25,7 +25,7 @@ internal class AndroidShopCheckInListScreenRenderer(
 ) : ShopCheckInListScreenRenderer {
     @Composable
     override fun Content(shopId: String) {
-        AndroidShopBrowsingHost("android-shop-list:$shopId", sessions, visibility) { session ->
+        ShopBrowsingHost("android-shop-list:$shopId", sessions, visibility) { session ->
             val entry = remember(session) {
                 createShopCheckInListEntry(session.lease.details(details), session.lease.votes(votes),
                     currentViewer = { session.lease.viewer(users) },
@@ -38,7 +38,7 @@ internal class AndroidShopCheckInListScreenRenderer(
             var preview by remember { mutableStateOf<com.coffeepeek.feature.shop.api.ShopDetailEffect.OpenPhoto?>(null) }
             val formatCheckInDate = rememberCheckInDateLabel()
             entry.Content(shopId = shopId, sessionGeneration = session.generation,
-                formatCheckInDate = formatCheckInDate,
+                formatCheckInDate = formatCheckInDate, refreshGeneration = 0,
                 onBack = Navigator::popBack,
                 onSignIn = { if (session.lease.isCurrent()) Navigator.navigate(Navigator.Screen.Auth) },
                 onRegister = { if (session.lease.isCurrent()) Navigator.navigate(Navigator.Screen.Register) },

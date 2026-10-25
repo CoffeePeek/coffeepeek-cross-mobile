@@ -5,7 +5,7 @@ import com.coffeepeek.admin.ui.Navigator
 import com.coffeepeek.admin.ui.screen.shop.ShopReportScreenRenderer
 import com.coffeepeek.feature.shopreport.api.ShopReportEntry
 
-internal class AndroidShopReportScreenRenderer(
+internal class FeatureShopReportScreenRenderer(
     private val entry: ShopReportEntry,
 ) : ShopReportScreenRenderer {
     @Composable

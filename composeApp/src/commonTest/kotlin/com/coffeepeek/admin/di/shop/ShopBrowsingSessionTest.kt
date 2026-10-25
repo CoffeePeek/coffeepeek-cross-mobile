@@ -24,10 +24,10 @@ import kotlin.test.assertSame
 import kotlin.test.assertTrue
 
 @OptIn(ExperimentalCoroutinesApi::class)
-class AndroidShopBrowsingSessionTest {
+class ShopBrowsingSessionTest {
     @Test fun guestsCanReadButCannotVote() = runTest {
         val sessions = CheckInTestSessions(null)
-        val lease = AndroidShopBrowsingSession(sessions)
+        val lease = ShopBrowsingSession(sessions)
         val failure = IllegalStateException("Backend unavailable")
         var reads = 0
         val details = lease.details(object : ShopDetailsRepository {
@@ -45,7 +45,7 @@ class AndroidShopBrowsingSessionTest {
 
     @Test fun tokenRenewalDoesNotCancelOrRepeatVote() = runTest {
         val sessions = CheckInTestSessions()
-        val lease = AndroidShopBrowsingSession(sessions)
+        val lease = ShopBrowsingSession(sessions)
         val gate = CompletableDeferred<Unit>()
         val votes = Votes().apply { write = { gate.await(); Result.success(ShopHelpfulVote(true, 1)) } }
         val request = async { lease.votes(votes).setHelpful("visit", true) }
@@ -61,7 +61,7 @@ class AndroidShopBrowsingSessionTest {
 
     @Test fun replacedAccountDropsEvenANonCooperativeLateVote() = runTest {
         val sessions = CheckInTestSessions()
-        val lease = AndroidShopBrowsingSession(sessions)
+        val lease = ShopBrowsingSession(sessions)
         val gate = CompletableDeferred<Unit>()
         val votes = Votes().apply {
             write = { withContext(NonCancellable) { gate.await() }; Result.success(ShopHelpfulVote(true, 1)) }
@@ -81,7 +81,7 @@ class AndroidShopBrowsingSessionTest {
 
     @Test fun peekSessionIsCheckedBeforeTheObserverCanCatchUp() = runTest {
         val sessions = CheckInTestSessions()
-        val lease = AndroidShopBrowsingSession(sessions)
+        val lease = ShopBrowsingSession(sessions)
         val votes = Votes().apply {
             write = { sessions.applySession(null); Result.success(ShopHelpfulVote(true, 1)) }
         }
@@ -93,7 +93,7 @@ class AndroidShopBrowsingSessionTest {
         val sessions = CheckInTestSessions()
         val failure = IllegalStateException("Rejected")
         val votes = Votes().apply { write = { Result.failure(failure) } }
-        assertSame(failure, AndroidShopBrowsingSession(sessions).votes(votes)
+        assertSame(failure, ShopBrowsingSession(sessions).votes(votes)
             .setHelpful("visit", true).exceptionOrNull())
     }
 
@@ -106,7 +106,7 @@ class AndroidShopBrowsingSessionTest {
             override suspend fun remove(shopId: String): Result<Unit> = error("Guest must not write")
             override suspend fun clear(): Result<Unit> = error("Guest must not clear")
         }
-        val favorites = AndroidShopBrowsingSession(CheckInTestSessions(null)).favorites(repository)
+        val favorites = ShopBrowsingSession(CheckInTestSessions(null)).favorites(repository)
         assertTrue(favorites.observe().first().getOrThrow().isEmpty())
         assertTrue(favorites.read().getOrThrow().isEmpty())
         assertTrue(favorites.remove("shop").isFailure)

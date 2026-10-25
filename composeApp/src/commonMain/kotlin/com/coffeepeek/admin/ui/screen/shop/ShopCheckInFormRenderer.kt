@@ -19,7 +19,7 @@ interface ShopCheckInFormRenderer {
     )
 }
 
-/** Do not switch the shared/iOS form or its writer during Android migration. */
+/** Legacy fallback retained until both platform migrations are accepted. */
 internal object LegacyShopCheckInFormRenderer : ShopCheckInFormRenderer {
     override val usesLegacyDraft = true
 

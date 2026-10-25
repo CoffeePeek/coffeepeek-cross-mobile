@@ -21,7 +21,7 @@ import kotlin.test.assertSame
 import kotlin.test.assertTrue
 
 @OptIn(ExperimentalCoroutinesApi::class)
-class AndroidShopBrowsingHostViewModelTest {
+class ShopBrowsingHostViewModelTest {
     private val dispatcher = StandardTestDispatcher()
     private val store = ViewModelStore()
     @BeforeTest fun setUp() { Dispatchers.setMain(dispatcher) }
@@ -29,7 +29,7 @@ class AndroidShopBrowsingHostViewModelTest {
 
     @Test fun sessionReplacementClearsFeatureStoreWithoutAnyUiSubscriber() = runTest(dispatcher) {
         val sessions = CheckInTestSessions()
-        val host = AndroidShopBrowsingHostViewModel(sessions).also { store.put("host", it) }
+        val host = ShopBrowsingHostViewModel(sessions).also { store.put("host", it) }
         val first = host.session.value
         val child = ProbeViewModel().also { first.viewModelStore.put("feature", it) }
         sessions.applySession(Session("renewed", userId = "owner"))
@@ -50,7 +50,7 @@ class AndroidShopBrowsingHostViewModelTest {
     }
 
     @Test fun parentDisposalClearsChildrenAndRevokesCallbacks() = runTest(dispatcher) {
-        val host = AndroidShopBrowsingHostViewModel(CheckInTestSessions()).also { store.put("host", it) }
+        val host = ShopBrowsingHostViewModel(CheckInTestSessions()).also { store.put("host", it) }
         val session = host.session.value
         val child = ProbeViewModel().also { session.viewModelStore.put("feature", it) }
         store.clear()
@@ -64,7 +64,7 @@ class AndroidShopBrowsingHostViewModelTest {
             override val visibility = snapshots
             override suspend fun refresh() = Result.success(Unit)
         }
-        val host = AndroidShopBrowsingHostViewModel(CheckInTestSessions(), visibility).also { store.put("host", it) }
+        val host = ShopBrowsingHostViewModel(CheckInTestSessions(), visibility).also { store.put("host", it) }
         runCurrent()
         val first = host.session.value
         val child = ProbeViewModel().also { first.viewModelStore.put("feature", it) }
@@ -83,7 +83,7 @@ class AndroidShopBrowsingHostViewModelTest {
             override fun observeSession() = if (fail) flow<Session?> { error("Session observation failed") }
                 else original.observeSession()
         }
-        val host = AndroidShopBrowsingHostViewModel(sessions).also { store.put("host", it) }
+        val host = ShopBrowsingHostViewModel(sessions).also { store.put("host", it) }
         runCurrent()
         assertTrue(host.session.value.observationFailed)
         val failed = host.session.value

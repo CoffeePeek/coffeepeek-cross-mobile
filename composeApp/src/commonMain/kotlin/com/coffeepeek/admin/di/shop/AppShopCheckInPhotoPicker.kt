@@ -12,8 +12,8 @@ import com.coffeepeek.feature.shop.domain.model.ShopCheckInPhoto
 import com.coffeepeek.feature.shop.impl.ui.data.ShopCheckInPhotoPicker
 import com.coffeepeek.feature.shop.impl.ui.data.ShopCheckInPhotoPickerController
 
-/** Reuses the current Android URI/JPEG/camera-permission pipeline; no second decoder. */
-internal class AndroidShopCheckInPhotoPicker : ShopCheckInPhotoPicker {
+/** Reuses the existing platform photo/camera pipeline; no second decoder. */
+internal class AppShopCheckInPhotoPicker : ShopCheckInPhotoPicker {
     @Composable
     override fun rememberController(): ShopCheckInPhotoPickerController {
         var preparing by remember { mutableStateOf(false) }

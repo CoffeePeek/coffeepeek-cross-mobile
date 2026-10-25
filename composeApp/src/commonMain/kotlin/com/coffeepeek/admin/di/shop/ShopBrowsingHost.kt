@@ -14,7 +14,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.PreviewLightDark
+import org.jetbrains.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -30,13 +30,13 @@ import org.jetbrains.compose.resources.stringResource
 
 /** The outer VM survives navigation/configuration; its inner feature store cannot survive account replacement. */
 @Composable
-internal fun AndroidShopBrowsingHost(
+internal fun ShopBrowsingHost(
     ownerKey: String,
     sessions: SessionReader,
     visibility: AuthorVisibility = AuthorVisibility.None,
     content: @Composable (ShopBrowsingHostSession) -> Unit,
 ) {
-    val model = viewModel(key = ownerKey) { AndroidShopBrowsingHostViewModel(sessions, visibility) }
+    val model = viewModel(key = ownerKey) { ShopBrowsingHostViewModel(sessions, visibility) }
     val session by model.session.collectAsStateWithLifecycle()
     if (session.observationFailed) {
         ShopSessionUnavailable(model::retry)
@@ -60,6 +60,8 @@ private fun ShopSessionUnavailable(onRetry: () -> Unit) {
     }
 }
 
-@PreviewLightDark
 @Composable
-private fun ShopSessionUnavailablePreview() = CoffeePeekTheme { ShopSessionUnavailable {} }
+private fun ShopSessionUnavailablePreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) { ShopSessionUnavailable {} }
+
+@Preview @Composable private fun ShopSessionUnavailableLightPreview() = ShopSessionUnavailablePreview(false)
+@Preview @Composable private fun ShopSessionUnavailableDarkPreview() = ShopSessionUnavailablePreview(true)

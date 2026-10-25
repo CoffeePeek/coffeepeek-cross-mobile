@@ -1,5 +1,19 @@
 package com.coffeepeek.admin.di
 
+import com.coffeepeek.admin.di.FeatureShopReportScreenRenderer
+import com.coffeepeek.admin.di.FeatureShopMenuGalleryScreenRenderer
+import com.coffeepeek.admin.di.shop.AppShopCheckInDateFormatter
+import com.coffeepeek.admin.di.shop.FeatureShopCheckInFormRenderer
+import com.coffeepeek.admin.di.shop.FeatureShopDetailScreenRenderer
+import com.coffeepeek.admin.di.shop.FeatureShopCheckInListScreenRenderer
+import com.coffeepeek.admin.di.shop.shopBrowsingModule
+import com.coffeepeek.admin.di.shop.shopCheckInModule
+import com.coffeepeek.admin.di.shop.shopFavoriteIntent
+import org.koin.core.scope.Scope
+import com.coffeepeek.feature.shopreport.data.repository.createShopIssueReportRepository
+import com.coffeepeek.feature.shopreport.impl.createShopReportEntry
+import com.coffeepeek.feature.shop.data.repository.createShopMenuGalleryRepository
+import com.coffeepeek.feature.shop.impl.createShopMenuGalleryEntry
 import com.coffeepeek.admin.di.appupdate.featureAppUpdateRenderer
 import com.coffeepeek.admin.di.contributions.featureContributionsScreenRenderer
 import com.coffeepeek.admin.di.auth.iosAuthScreenRenderer
@@ -18,12 +32,14 @@ import com.coffeepeek.admin.utils.ErrorHandler
 
 actual fun initPlatformKoin() {
     initKoin(
-        platformModules = listOf(serverFavoriteShopsModule(), coffeeModule()),
+        platformModules = listOf(serverFavoriteShopsModule(), coffeeModule(), shopBrowsingModule(), shopCheckInModule(AppShopCheckInDateFormatter())),
         // Owners move to their migrated modules one at a time; the others keep the legacy renderers.
-        settingsRendererFactory = {
-            // iOS has no toast: the short message goes through the app's message channel.
-            featureSettingsScreenRenderer(get(), get(), get(), get(), notify = ErrorHandler::showError)
-        },
+        shopReportRendererFactory = ::iosShopReportRenderer,
+        shopGalleryRendererFactory = ::iosShopGalleryRenderer,
+        shopCheckInRendererFactory = { FeatureShopCheckInFormRenderer(get()) },
+        shopDetailRendererFactory = { iosShopDetailRenderer() },
+        shopCheckInListRendererFactory = { iosShopCheckInListRenderer() },
+        settingsRendererFactory = { iosSettingsRenderer() },
         appUpdateRendererFactory = { featureAppUpdateRenderer(get(), get()) },
         notificationsRendererFactory = { featureNotificationsRenderer(get()) },
         authRendererFactory = { iosAuthScreenRenderer(get(), get()) },
@@ -36,3 +52,21 @@ actual fun initPlatformKoin() {
         discoveryRendererFactory = { featureDiscoveryScreenRenderer(get<CoffeePeekClient>().client, get(), get(), get(), get(), get(), get()) },
     )
 }
+
+private fun iosShopReportRenderer(client: CoffeePeekClient) =
+    FeatureShopReportScreenRenderer(createShopReportEntry(createShopIssueReportRepository(client.client)))
+
+private fun iosShopGalleryRenderer(client: CoffeePeekClient) =
+    FeatureShopMenuGalleryScreenRenderer(createShopMenuGalleryEntry(createShopMenuGalleryRepository(client.client)))
+
+private fun Scope.iosShopDetailRenderer() =
+    FeatureShopDetailScreenRenderer(sessions = get(), users = get(), details = get(), votes = get(),
+        favorites = get(), favoriteIntent = shopFavoriteIntent(get(), get(), get()), checkInForm = get(),
+        visibility = get(), blockActions = get())
+
+private fun Scope.iosShopCheckInListRenderer() =
+    FeatureShopCheckInListScreenRenderer(sessions = get(), users = get(), details = get(), votes = get(),
+        visibility = get(), blockActions = get())
+
+private fun Scope.iosSettingsRenderer() =
+    featureSettingsScreenRenderer(get(), get(), get(), get(), notify = ErrorHandler::showError)

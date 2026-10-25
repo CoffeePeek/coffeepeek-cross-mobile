@@ -6,7 +6,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertSame
 
-class AndroidShopCheckInPhotoPickerTest {
+class AppShopCheckInPhotoPickerTest {
     @Test fun mapsPreparedPhotosAndCapsDeliveryAtRemainingSlots() {
         val images = (1..8).map { PickedImage(byteArrayOf(it.toByte()), "$it.jpg", "image/jpeg") }
         assertEquals(listOf(ShopCheckInPhoto(byteArrayOf(1), "1.jpg"), ShopCheckInPhoto(byteArrayOf(2), "2.jpg")),

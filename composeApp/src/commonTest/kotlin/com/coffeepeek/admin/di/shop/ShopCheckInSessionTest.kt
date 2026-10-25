@@ -23,12 +23,12 @@ import kotlin.test.assertSame
 import kotlin.test.assertTrue
 
 @OptIn(ExperimentalCoroutinesApi::class)
-class AndroidShopCheckInSessionTest {
+class ShopCheckInSessionTest {
     private val input = ShopCheckInCreateInput("public-slug", "Visit", ShopRating(4, 4, 4), "2026-10-09T09:00:00Z")
 
     @Test fun successfulCreationNotifiesOnceAndReadingOptionsDoesNotNotify() = runTest {
         var notifications = 0
-        val lease = AndroidShopCheckInSession(CheckInTestSessions(), Repository()) { notifications++ }
+        val lease = ShopCheckInSession(CheckInTestSessions(), Repository()) { notifications++ }
         lease.getDrinkOptions()
         assertEquals(0, notifications)
         assertTrue(lease.create(input).isSuccess)
@@ -39,7 +39,7 @@ class AndroidShopCheckInSessionTest {
         for (session in listOf(null, Session("", userId = "owner"))) {
             val sessions = CheckInTestSessions(session)
             val repository = Repository()
-            val lease = AndroidShopCheckInSession(sessions, repository)
+            val lease = ShopCheckInSession(sessions, repository)
             assertFailsWith<CancellationException> { lease.getDrinkOptions() }
             assertFailsWith<CancellationException> { lease.create(input) }
             assertEquals(0, repository.reads)
@@ -51,7 +51,7 @@ class AndroidShopCheckInSessionTest {
         val sessions = CheckInTestSessions()
         val complete = CompletableDeferred<Unit>()
         val repository = Repository().apply { write = { complete.await(); Result.success(Unit) } }
-        val lease = AndroidShopCheckInSession(sessions, repository)
+        val lease = ShopCheckInSession(sessions, repository)
         val result = async { lease.create(input) }
         runCurrent()
         sessions.applySession(Session("renewed", userId = "owner"))
@@ -70,7 +70,7 @@ class AndroidShopCheckInSessionTest {
             val repository = Repository().apply {
                 write = { try { awaitCancellation() } finally { cancelled = true } }
             }
-            val lease = AndroidShopCheckInSession(sessions, repository)
+            val lease = ShopCheckInSession(sessions, repository)
             val result = async { lease.create(input) }
             runCurrent()
             sessions.applySession(replacement)
@@ -90,7 +90,7 @@ class AndroidShopCheckInSessionTest {
         val repository = Repository().apply {
             write = { sessions.applySession(Session("changed", userId = "other")); Result.success(Unit) }
         }
-        val lease = AndroidShopCheckInSession(sessions, repository) { notifications++ }
+        val lease = ShopCheckInSession(sessions, repository) { notifications++ }
         assertFailsWith<CancellationException> { lease.create(input) }
         assertFalse(lease.isCurrent())
         assertEquals(0, notifications)
@@ -101,7 +101,7 @@ class AndroidShopCheckInSessionTest {
         val sessions = CheckInTestSessions()
         val failure = IllegalStateException("Known rejection")
         val repository = Repository().apply { write = { Result.failure(failure) } }
-        val lease = AndroidShopCheckInSession(sessions, repository) { notifications++ }
+        val lease = ShopCheckInSession(sessions, repository) { notifications++ }
         assertSame(failure, lease.create(input).exceptionOrNull())
         assertTrue(lease.isCurrent())
         repository.write = { awaitCancellation() }
@@ -117,7 +117,7 @@ class AndroidShopCheckInSessionTest {
             override fun observeSession() = flow<Session?> { throw IllegalStateException("Secure store unavailable") }
         }
         val repository = Repository()
-        val lease = AndroidShopCheckInSession(sessions, repository)
+        val lease = ShopCheckInSession(sessions, repository)
         assertFailsWith<CancellationException> { lease.create(input) }
         assertFalse(lease.isCurrent())
         assertEquals(0, repository.writes)

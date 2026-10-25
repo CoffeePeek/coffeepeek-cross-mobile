@@ -5,7 +5,7 @@ import androidx.compose.runtime.LaunchedEffect
 import com.coffeepeek.admin.ui.screen.shop.ShopCheckInFormRenderer
 import com.coffeepeek.feature.shop.api.ShopCheckInCreateEntry
 
-internal class AndroidShopCheckInFormRenderer(
+internal class FeatureShopCheckInFormRenderer(
     private val entry: ShopCheckInCreateEntry,
 ) : ShopCheckInFormRenderer {
     override val usesLegacyDraft = false

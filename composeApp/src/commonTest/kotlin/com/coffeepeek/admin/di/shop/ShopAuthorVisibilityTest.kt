@@ -16,14 +16,14 @@ import kotlinx.coroutines.withContext
 import kotlin.test.*
 
 @OptIn(ExperimentalCoroutinesApi::class)
-class AndroidShopAuthorVisibilityTest {
+class ShopAuthorVisibilityTest {
     @Test fun blockedIdsAndLegacySlugsAreFilteredWithoutErasingOwnHistory() = runTest {
         val visibility = Visibility(AuthorVisibilitySnapshot(blockedIds = setOf("id-a"), blockedSlugs = setOf("slug-b")))
         val a = visit("a", "id-a", "slug-a")
         val b = visit("b", null, "slug-b")
         val c = visit("c", "id-c", "slug-c")
         val snapshot = details(listOf(a, b, c)).copy(userCheckIns = listOf(a))
-        val result = AndroidShopBrowsingSession(CheckInTestSessions(), visibility = visibility)
+        val result = ShopBrowsingSession(CheckInTestSessions(), visibility = visibility)
             .details(repository { Result.success(snapshot) }).getDetails("shop").getOrThrow()
         assertEquals(listOf(c), result.checkIns)
         assertEquals(listOf(a), result.userCheckIns)
@@ -33,7 +33,7 @@ class AndroidShopAuthorVisibilityTest {
         val error = IllegalStateException("Blocks unavailable")
         val visibility = Visibility(AuthorVisibilitySnapshot(ready = false), Result.failure(error))
         var reads = 0
-        val result = AndroidShopBrowsingSession(CheckInTestSessions(), visibility = visibility)
+        val result = ShopBrowsingSession(CheckInTestSessions(), visibility = visibility)
             .details(repository { reads++; Result.success(details(emptyList())) }).getDetails("shop")
         assertSame(error, result.exceptionOrNull())
         assertEquals(0, reads)
@@ -41,7 +41,7 @@ class AndroidShopAuthorVisibilityTest {
 
     @Test fun revisionChangeRevokesEvenANonCooperativeLateRead() = runTest {
         val visibility = Visibility(AuthorVisibilitySnapshot())
-        val lease = AndroidShopBrowsingSession(CheckInTestSessions(), visibility = visibility)
+        val lease = ShopBrowsingSession(CheckInTestSessions(), visibility = visibility)
         val gate = CompletableDeferred<Unit>()
         val request = async {
             lease.details(repository {

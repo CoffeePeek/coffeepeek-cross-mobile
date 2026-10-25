@@ -20,7 +20,7 @@ import kotlinx.coroutines.launch
 import kotlin.concurrent.Volatile
 
 /** A permanently revocable account lease; token renewal for the same account is not replacement. */
-internal class AndroidShopBrowsingSession(
+internal class ShopBrowsingSession(
     private val sessions: SessionReader,
     session: Session? = sessions.peekSession(),
     private val visibility: AuthorVisibility = AuthorVisibility.None,

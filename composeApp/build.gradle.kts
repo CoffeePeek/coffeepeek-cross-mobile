@@ -42,13 +42,6 @@ kotlin {
             implementation(project(module.feature.favorites.api))
             implementation(project(module.feature.favorites.data))
             implementation(project(module.feature.favorites.impl))
-            implementation(project(module.feature.shopReport.api))
-            implementation(project(module.feature.shopReport.data))
-            implementation(project(module.feature.shopReport.impl))
-            implementation(project(module.feature.shop.api))
-            implementation(project(module.feature.shop.domain))
-            implementation(project(module.feature.shop.data))
-            implementation(project(module.feature.shop.impl))
             implementation(project(module.feature.checkInHistory.api))
             implementation(project(module.feature.checkInHistory.domain))
             implementation(project(module.feature.checkInHistory.data))
@@ -73,6 +66,13 @@ kotlin {
             implementation("org.slf4j:slf4j-nop:2.0.16")
         }
         commonMain.dependencies {
+            implementation(project(module.feature.shop.impl))
+            implementation(project(module.feature.shop.data))
+            implementation(project(module.feature.shop.domain))
+            implementation(project(module.feature.shop.api))
+            implementation(project(module.feature.shopReport.impl))
+            implementation(project(module.feature.shopReport.data))
+            implementation(project(module.feature.shopReport.api))
             implementation(project(module.feature.profile.api))
             implementation(project(module.feature.profile.domain))
             implementation(project(module.feature.profile.data))
@@ -411,9 +411,13 @@ androidComponents {
                 "com.coffeepeek.admin.di.favorites.ServerFavoriteShopsRepository",
                 "com.coffeepeek.admin.di.favorites.ServerFavoriteDrinksRepository",
                 "com.coffeepeek.admin.di.shop.ShopCheckInModuleKt",
-                "com.coffeepeek.admin.di.shop.AndroidShopCheckInFormRenderer",
-                "com.coffeepeek.admin.di.shop.AndroidSessionShopCheckInEntry",
-                "com.coffeepeek.admin.di.shop.AndroidShopCheckInSession",
+                "com.coffeepeek.admin.di.shop.FeatureShopCheckInFormRenderer",
+                "com.coffeepeek.admin.di.shop.FeatureShopDetailScreenRenderer",
+                "com.coffeepeek.admin.di.shop.FeatureShopCheckInListScreenRenderer",
+                "com.coffeepeek.admin.di.FeatureShopReportScreenRenderer",
+                "com.coffeepeek.admin.di.FeatureShopMenuGalleryScreenRenderer",
+                "com.coffeepeek.admin.di.shop.SessionShopCheckInEntry",
+                "com.coffeepeek.admin.di.shop.ShopCheckInSession",
                 "com.coffeepeek.feature.shop.api.ShopCheckInCreateEntry",
                 "com.coffeepeek.feature.shop.domain.repository.ShopCheckInRepository",
                 "com.coffeepeek.feature.shop.data.repository.ShopCheckInRepositoryFactoryKt",

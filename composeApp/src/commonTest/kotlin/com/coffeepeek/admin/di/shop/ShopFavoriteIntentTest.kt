@@ -9,6 +9,7 @@ import com.coffeepeek.feature.shop.domain.model.ShopDetails
 import com.coffeepeek.feature.shop.domain.model.ShopOverview
 import com.coffeepeek.feature.shop.domain.repository.ShopDetailsRepository
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
@@ -48,6 +49,27 @@ class ShopFavoriteIntentTest {
         sessions.applySession(Session("renewed", userId = "owner"))
         runCurrent()
         assertEquals(listOf("shop-1"), favorites.saved)
+    }
+
+    @Test fun accountReplacementWhileLoadingDoesNotWriteIntoTheNewAccount() = runTest {
+        val sessions = CheckInTestSessions(null)
+        val favorites = Favorites()
+        val release = CompletableDeferred<Unit>()
+        val slowDetails = object : ShopDetailsRepository {
+            override suspend fun getDetails(shopId: String): Result<ShopDetails> {
+                release.await()
+                return details.getDetails(shopId)
+            }
+        }
+        val intent = ShopFavoriteIntent(sessions, slowDetails, favorites, backgroundScope)
+        runCurrent()
+        intent.remember("shop-1", true)
+        sessions.applySession(Session("first-token", userId = "first"))
+        runCurrent()
+        sessions.applySession(Session("second-token", userId = "second"))
+        release.complete(Unit)
+        runCurrent()
+        assertEquals(emptyList(), favorites.saved)
     }
 
     @Test fun nothingIsAppliedWithoutAnIntent() = runTest {
