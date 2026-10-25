@@ -865,6 +865,27 @@ rendering/gestures live in core/design-system, with feature-owned image adapters
 no new dependencies or Gradle modules. Validate order/bytes through form requests,
 shop draft restoration, stale indices, save guards and cancelled/outside drops.
 
+### Shared photo preview compilation follow-up — 2026-10-25
+
+Source: `codex/migration-ios-photo-preview-fix`, based on develop `b94c8fe8`.
+iOS verification runs 40187797534 and 40193203085 failed at
+`:core:design-system:compileKotlinIosSimulatorArm64`: the four new shared photo
+components imported Android's `androidx.compose.ui.tooling.preview.Preview`.
+The identical unresolved imports/annotations reproduced locally with
+`:core:design-system:compileCommonMainKotlinMetadata` before the fix.
+
+Use the existing multiplatform `org.jetbrains.compose.ui.tooling.preview.Preview`
+dependency for those colocated paired previews. Android CI now compiles the shared
+design-system metadata explicitly before the app, so this platform dependency error
+is also caught on Linux. Runtime bodies, Gradle boundaries/resources and analytics
+are unaffected. Verification plan: shared metadata, design-system unit/lint, Android
+Debug assembly/DEX check, then the real macOS iOS build and Native contract suite.
+
+Local verification passed in 23s with max-workers=6: shared metadata compilation,
+design-system unit tests/lintDebug, assembleDirectDebug and packaged DEX runtime-class
+checks. No application was installed or run and no UI/screenshot test was introduced.
+IDE tools are unavailable; preview rendering and iOS compilation need the macOS CI run.
+
 Source: `codex/migration-check-in-photo-order`, base `61aad2ec` plus working changes.
 Android build verification uses `directDebug` only for APK assembly; no app was
 installed/launched and no Studio Build Variant was changed.

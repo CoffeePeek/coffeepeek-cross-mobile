@@ -17,7 +17,7 @@ import com.coffeepeek.core.designsystem.resources.*
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import org.jetbrains.compose.resources.stringResource
-import androidx.compose.ui.tooling.preview.Preview
+import org.jetbrains.compose.ui.tooling.preview.Preview
 
 /** Local image rendering belongs to the caller; this component never loads or uploads photos. */
 @Composable
