@@ -35,6 +35,24 @@
     <string name="profile_check_ins_failed">Не удалось загрузить чекины</string>
     <string name="profile_check_ins_empty">Пока нет чекинов</string>
     <string name="profile_activity_failed">Не удалось загрузить активность</string>
+    <string name="profile_week_loading">Загрузка активности…</string>
+    <string name="profile_week_error">Не удалось загрузить активность</string>
+    <string name="profile_week_open">Открыть чекины</string>
+    <string name="profile_week_day">%1$s: %2$s</string>
+    <plurals name="profile_week_count">
+        <item quantity="one">%1$d чекин</item>
+        <item quantity="few">%1$d чекина</item>
+        <item quantity="many">%1$d чекинов</item>
+        <item quantity="other">%1$d чекинов</item>
+    </plurals>
+    <string name="profile_favorite_shop">Кофейня</string>
+    <string name="profile_favorite_shops">Кофейни</string>
+    <string name="profile_favorite_catalog">Каталог</string>
+    <string name="profile_favorite_drink">Напиток</string>
+    <string name="profile_favorite_saved">В избранном</string>
+    <string name="profile_favorite_open">ОТКРЫТО</string>
+    <string name="profile_favorite_closed">ЗАКРЫТО</string>
+    <string name="profile_favorite_no_photo">Фото %1$s отсутствует</string>
 
     <string name="profile_blocked_title">Автор заблокирован</string>
     <string name="profile_blocked_message">Публикации автора «%1$s» скрыты. Вы можете снять блокировку в любой момент.</string>

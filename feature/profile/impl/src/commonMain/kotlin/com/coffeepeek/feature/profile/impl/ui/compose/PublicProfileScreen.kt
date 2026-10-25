@@ -78,6 +78,9 @@ import com.coffeepeek.feature.profile.impl.ui.compose.component.ProfileSectionLo
 import com.coffeepeek.feature.profile.impl.ui.compose.component.PublicProfileActivityCalendar
 import com.coffeepeek.feature.profile.impl.ui.compose.component.PublicProfileConnectionsSheet
 import com.coffeepeek.feature.profile.impl.ui.compose.component.PublicProfileHeader
+import com.coffeepeek.feature.profile.impl.ui.compose.component.PublicProfileActivityPreview
+import com.coffeepeek.feature.profile.impl.ui.compose.component.PublicProfileFavoriteCard
+import com.coffeepeek.feature.profile.impl.ui.compose.component.PublicProfileFavoritesPreview
 import com.coffeepeek.feature.profile.impl.ui.model.PublicProfileAction
 import com.coffeepeek.feature.profile.impl.ui.model.PublicProfileEvent
 
@@ -232,9 +235,10 @@ internal fun PublicProfileScreen(
                             },
                         ) { profile.avatarUrl?.let { photos = ProfilePhotos(listOf(it)) } }
                         if (own != null) own.activityPreview { section = ProfileSection.Activity }
-                        else slots.activityPreview(slug, profile.activity, state.checkIns,
+                        else PublicProfileActivityPreview(slug, profile.activity, state.checkIns,
                             state.isLoadingActivity || state.isLoadingCheckIns,
                             state.activityError != null || state.checkInsError != null,
+                            slots.image,
                             {
                                 vm.onAction(PublicProfileAction.RetryActivity)
                                 vm.onAction(PublicProfileAction.RetryCheckIns)
@@ -258,7 +262,7 @@ internal fun PublicProfileScreen(
                                     InlineProfileError(stringResource(Res.string.profile_favorites_failed)) { vm.onAction(PublicProfileAction.RetryFavorites) }
                                 }
                             else -> {
-                                slots.favoritesPreview(profile.favorites.take(6), openFavorite)
+                                PublicProfileFavoritesPreview(profile.favorites.take(6), slots.image, slots.logoImage, openFavorite)
                                 if (state.favoritesError != null) {
                                     Box(Modifier.padding(horizontal = 16.dp)) {
                                         InlineProfileError(stringResource(Res.string.profile_favorites_refresh_failed)) { vm.onAction(PublicProfileAction.RetryFavorites) }
@@ -312,7 +316,7 @@ internal fun PublicProfileScreen(
                     verticalArrangement = Arrangement.spacedBy(10.dp),
                 ) {
                     items(profile.favorites, key = { "${it.kind}-${it.id}" }) { favorite ->
-                        slots.favoriteCard(favorite, Modifier.fillMaxWidth()) { openFavorite(favorite) }
+                        PublicProfileFavoriteCard(favorite, slots.image, slots.logoImage, Modifier.fillMaxWidth()) { openFavorite(favorite) }
                     }
                     if (state.isLoadingFavorites) item { ProfileSectionLoader() }
                     else if (state.favoritesError != null) item {

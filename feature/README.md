@@ -1,5 +1,9 @@
 # Feature migration: API / implementation
 
+The current priority is the full [legacy exit](LEGACY_EXIT_PLAN.md): remove
+remaining active app UI/data adapters, obsolete screens and `modules/`.
+Selecting feature routes alone is not migration completion.
+
 Current iOS activation and remaining gates are recorded in
 [IOS_MIGRATION_PLAN.md](IOS_MIGRATION_PLAN.md). The 2026-10-25 content-report
 checkpoint adds a populated api/domain/data/impl owner for existing CheckIn/Review

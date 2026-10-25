@@ -7,8 +7,3 @@ interface CheckInHistoryScreenRenderer {
     @Composable
     fun Content(initialHomeId: String?)
 }
-
-internal object LegacyCheckInHistoryScreenRenderer : CheckInHistoryScreenRenderer {
-    @Composable
-    override fun Content(initialHomeId: String?) = ProfileCheckInsScreen(initialHomeId = initialHomeId)
-}

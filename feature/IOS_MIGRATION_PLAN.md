@@ -8,6 +8,12 @@ iOS-документы (`docs/IOS_NATIVE_EXPERIENCE.md`, `IOS_NATIVE_NAVIGATION.
 
 ## Статус на 2026-10-25 (ветка `feat/ios-build-foundation`, PR #195 → `develop`)
 
+**Уточнение владельца, 2026-10-25:** подключение feature routes не завершает
+миграцию. Текущий приоритет — полностью убрать активные legacy зависимости,
+затем удалить старые экраны/graph и `modules/`; composeApp остаётся только
+startup/root DI/root navigation. Вариант для кофейни отложен. Проверенный
+остаток, порядок замены и критерии удаления — [LEGACY_EXIT_PLAN.md](LEGACY_EXIT_PLAN.md).
+
 В рабочую migration-ветку также включены изменения develop `105b8994`; детали
 разрешения конфликтов и проверки объединённого кода — в checkpoint синхронизации ниже.
 
@@ -1467,9 +1473,16 @@ F24, F23, core session port.
 7. Check-in history, Home check-in, общий create flow.
 8. Favorites — full screen и own-profile preview подключены в checkpoint 2026-10-25; ручная приёмка открыта.
 
-### Этап 5. Удаление legacy (когда всё выше готово и принято)
-`Legacy*Renderer` и их экраны/ViewModel/репозитории в `composeApp`, затем `modules/home-checkin`, `data`, `network`, `room`, `domain`,
-группа legacy в `Modules.kt` и Koin-обвязка. Навигация (Navigation 3) — отдельное решение.
+### Этап 5. Полный выход из legacy (текущий приоритет, уточнение 2026-10-25)
+Удалять по владельцам в том же срезе, где последний consumer заменён и проверен;
+не сохранять недостижимые экраны и запасные defaults до единовременной большой уборки.
+Оставшиеся активные бизнес-слоты, data bridges и инфраструктуру сначала перенести
+в feature/core. Затем убрать старые экраны/ViewModel/репозитории в composeApp,
+modules/home-checkin/data/network/room/domain, module.legacy и старый Koin graph.
+ComposeApp оставляет только startup/configuration/root DI/root navigation.
+Порядок, фактические блокеры и доказательства — [LEGACY_EXIT_PLAN.md](LEGACY_EXIT_PLAN.md).
+Ручная/live-приёмка остаётся отдельным release gate; её статус не подменяется
+удалением файлов. Навигация (Navigation 3) — отдельное решение.
 
 ## 5. Чеклист на каждый срез
 - [ ] Карта точек входа на iOS; нет прямых вызовов legacy мимо рендерера (вкладки!).
@@ -1486,7 +1499,8 @@ F24, F23, core session port.
 ## 6. Что не делаем
 - Не переключаем все рендереры разом и не повторяем Roaster.
 - Не считаем Android-only баги (даты, календарь) iOS-багами без проверки.
-- Не удаляем legacy до полной готовности миграции.
+- Не удаляем реализацию с незаменённым consumer; после его переноса и проверки
+  удаляем устаревший путь в том же checkpoint, не оставляем скрытого отката.
 
 ## 7. Не проверено сверкой
 - Пересылает ли `CoffeePeekTopBar` заголовок в `UINavigationItem` на iOS (сейчас нет).

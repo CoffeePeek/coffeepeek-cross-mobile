@@ -87,8 +87,7 @@ internal fun PublicProfileCheckInsList(
 @Composable
 private fun PublicProfileCheckInsPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
     val slots = ProfileSlots(image = { _, _, _ -> }, photoViewer = { _, _, _, _ -> },
-        favoritesPreview = { _, _ -> }, favoriteCard = { _, _, _ -> }, checkInCard = { _, _, _, _, _ -> },
-        photoPrefetch = { _, _ -> }, activityPreview = { _, _, _, _, _, _, _ -> })
+        checkInCard = { _, _, _, _, _ -> }, photoPrefetch = { _, _ -> })
     PublicProfileCheckInsScreenContent(PublicProfileState(isLoading = false), slots, {}, {}, {}, {}, { _, _, _ -> })
 }
 

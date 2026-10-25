@@ -18,20 +18,3 @@ interface ShopCheckInFormRenderer {
         legacyContent: @Composable () -> Unit,
     )
 }
-
-/** Legacy fallback retained until both platform migrations are accepted. */
-internal object LegacyShopCheckInFormRenderer : ShopCheckInFormRenderer {
-    override val usesLegacyDraft = true
-
-    @Composable
-    override fun Content(
-        shopId: String,
-        shopSlug: String?,
-        shopName: String,
-        onDismiss: () -> Unit,
-        onSubmitted: () -> Unit,
-        onGoToFeed: () -> Unit,
-        onOpenHistory: () -> Unit,
-        legacyContent: @Composable () -> Unit,
-    ) = legacyContent()
-}

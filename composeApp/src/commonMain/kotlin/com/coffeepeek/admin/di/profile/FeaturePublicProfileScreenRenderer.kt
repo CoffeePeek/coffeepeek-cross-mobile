@@ -3,12 +3,9 @@ package com.coffeepeek.admin.di.profile
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
-import com.coffeepeek.admin.feature.favorites.api.FavoritesPreviewCarousel
 import com.coffeepeek.admin.feature.profile.domain.PublicProfileCheckIn as LegacyCheckIn
 import com.coffeepeek.admin.feature.profile.domain.PublicProfileRepository
 import com.coffeepeek.admin.feature.profile.ui.PublicProfileCheckInCard
-import com.coffeepeek.admin.feature.profile.ui.PublicProfileFavoriteCard
-import com.coffeepeek.admin.feature.profile.ui.PublicProfileActivityPreview
 import com.coffeepeek.admin.ui.Navigator
 import com.coffeepeek.admin.ui.component.FullScreenImageDialog
 import com.coffeepeek.admin.ui.component.PhotoViewerImages
@@ -26,7 +23,6 @@ import com.coffeepeek.feature.profile.api.ProfileAuthorActions
 import com.coffeepeek.feature.profile.api.ProfileSlots
 import com.coffeepeek.feature.profile.api.PublicCheckInsPort
 import com.coffeepeek.feature.profile.api.PublicProfileEntry
-import com.coffeepeek.feature.profile.domain.PublicFavoriteKind
 import com.coffeepeek.feature.profile.domain.PublicProfileCheckIn
 import com.coffeepeek.feature.profile.domain.PublicProfileCheckInPage
 import com.coffeepeek.feature.profile.impl.createPublicProfileEntry
@@ -98,20 +94,12 @@ internal fun featurePublicProfileScreenRenderer(
 }
 
 
-/** The legacy-rendered pieces shared by the public profile and the Profile tab. */
+/** Platform media and the remaining check-in compatibility slot, shared by both profile entries. */
 internal fun profileSlots(checkIns: AppPublicCheckIns): ProfileSlots {
     return ProfileSlots(
         image = { url, description, modifier -> CpImage(data = url, modifier = modifier, contentScale = ContentScale.Crop, contentDescription = description) },
         photoViewer = { previews, originals, index, onDismiss -> FullScreenImageDialog(PhotoViewerImages(previews, originals), index, onDismiss) },
-        favoritesPreview = { favorites, onOpen ->
-            FavoritesPreviewCarousel(
-                coffeeShops = favorites.filter { it.kind == PublicFavoriteKind.CoffeeShop },
-                roasters = favorites.filter { it.kind == PublicFavoriteKind.Roaster },
-                drinks = favorites.filter { it.kind == PublicFavoriteKind.Drink },
-                itemKey = { it.id },
-            ) { favorite, modifier -> PublicProfileFavoriteCard(favorite, modifier = modifier, onClick = { onOpen(favorite) }) }
-        },
-        favoriteCard = { favorite, modifier, onClick -> PublicProfileFavoriteCard(favorite, modifier = modifier, onClick = onClick) },
+        logoImage = { url, description, modifier -> CpImage(data = url, modifier = modifier, contentScale = ContentScale.Fit, contentDescription = description) },
         checkInCard = { checkIn, author, isOwnProfile, onShopClick, onPhotoClick ->
             PublicProfileCheckInCard(
                 checkIn = checkIns.legacy(checkIn),
@@ -124,9 +112,5 @@ internal fun profileSlots(checkIns: AppPublicCheckIns): ProfileSlots {
             )
         },
         photoPrefetch = { listState, items -> PrefetchListPhotos(listState, items) },
-        activityPreview = { slug, activity, items, loading, failed, onRetry, onOpen ->
-            PublicProfileActivityPreview(slug, activity, items.map { it.occurredAt to it.photoPreviewUrls },
-                loading, failed, onRetry, onOpen)
-        },
     )
 }

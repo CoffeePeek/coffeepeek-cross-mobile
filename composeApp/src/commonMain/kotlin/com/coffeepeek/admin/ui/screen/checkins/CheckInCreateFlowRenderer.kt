@@ -8,10 +8,3 @@ interface CheckInCreateFlowRenderer {
     fun Content(onDismiss: () -> Unit, onShop: () -> Unit, onHomeSaved: () -> Unit,
         legacyContent: @Composable () -> Unit)
 }
-
-/** Legacy fallback retained until both platform migrations are accepted. */
-internal object LegacyCheckInCreateFlowRenderer : CheckInCreateFlowRenderer {
-    @Composable
-    override fun Content(onDismiss: () -> Unit, onShop: () -> Unit, onHomeSaved: () -> Unit,
-        legacyContent: @Composable () -> Unit) = legacyContent()
-}

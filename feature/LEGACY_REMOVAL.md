@@ -1,5 +1,10 @@
 # Legacy removal map
 
+**Current execution plan (2026-10-25): [LEGACY_EXIT_PLAN.md](LEGACY_EXIT_PLAN.md).**
+Both platforms now select feature entries; the tables below are the historical
+2026-10-21 baseline, not the current list of iOS consumers. Removal has started:
+unused renderer fallbacks must not remain as defaults in the application graph.
+
 Single place that answers: **what is still legacy, who still needs it, and what must be true
 before it can be deleted in one sweep.** Counts were taken on 2026-10-21 at the head of
 `feature/legacy-consolidation` (settings stack) with the commands at the bottom; rerun them
