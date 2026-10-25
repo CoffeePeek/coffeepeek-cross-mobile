@@ -196,3 +196,16 @@ is still 2457. Manual profile/month/widget photo rendering, week/fortnight/month
 resize, light/dark themes, large font/window sizes, TalkBack and navigation checks
 remain pending. No automated UI/instrumentation/screenshot tests or test hosts
 were created or run, and no live-account/backend actions occurred.
+
+## Requested regular Debug installation — 2026-10-25
+
+At the user's explicit request, assembled `directDebug` from `72fb027c`:
+`com.coffeepeek`, versionCode 2460 / `1.1.1.2460`. Assembly and the packaged DEX
+runtime-class check passed with `--max-workers=6`. On the agreed unlocked Pixel 9
+(arm64), Package Manager confirmed that the ordinary package was absent and only
+Sandbox was installed. APK signature, ABI and MainActivity were verified before
+`adb install -r`, which succeeded. Post-install Package Manager confirms version
+2460 and `com.coffeepeek.admin.MainActivity`; Sandbox remains installed separately.
+No uninstall, data clearing or downgrade occurred. This records installation only:
+the live app was not launched, no account/backend actions were performed, and the
+manual visual/resize/accessibility gates above remain pending.
