@@ -36,11 +36,13 @@ internal class SandboxApplication : Application() {
             single { CoffeePeekClient(SandboxBackend.BASE_URL, cacheDir.resolve("sandbox-http").path, false,
                 getToken = { null }, saveToken = {}, apiClientFactory = backend::apiClient,
                 uploadClientFactory = backend::uploadClient) }
+            single<com.coffeepeek.admin.utils.CustomUrlFetcher> { com.coffeepeek.admin.utils.CustomUrlFetcher(backend.gateway) }
             single<io.kamel.core.config.KamelConfig> { sandboxImageConfig(backend.gateway) }
             single<com.coffeepeek.feature.appupdate.api.AndroidUpdateInstaller> {
                 SandboxUpdateInstaller(getString(R.string.sandbox_external_blocked))
             }
         }))
+        com.coffeepeek.admin.di.checkinhistory.widget.ActivityCalendarWidgetRuntime.install(this)
     }
 
     fun blockedExternalAction() {

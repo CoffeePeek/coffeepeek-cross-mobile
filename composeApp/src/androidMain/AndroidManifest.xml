@@ -33,6 +33,18 @@
         <service android:name=".admin.notifications.CoffeePeekMessagingService" android:exported="false">
             <intent-filter><action android:name="com.google.firebase.MESSAGING_EVENT" /></intent-filter>
         </service>
+        <receiver android:name=".admin.di.checkinhistory.widget.ActivityCalendarWidgetProvider"
+            android:exported="false" android:label="@string/history_widget_name">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <action android:name="android.intent.action.TIMEZONE_CHANGED" />
+                <action android:name="android.intent.action.TIME_SET" />
+                <action android:name="android.intent.action.LOCALE_CHANGED" />
+            </intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/history_widget_info" />
+        </receiver>
+        <service android:name=".admin.di.checkinhistory.widget.ActivityCalendarWidgetJob"
+            android:permission="android.permission.BIND_JOB_SERVICE" android:exported="true" />
         <activity
             android:launchMode="singleTop"
             android:exported="true"

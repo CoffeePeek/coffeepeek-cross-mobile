@@ -1,0 +1,17 @@
+<resources>
+    <string name="history_widget_brand" translatable="false">CoffeePeek</string>
+    <string name="history_widget_activity_marker" translatable="false">●</string>
+    <string name="history_widget_name">Календарь активности</string>
+    <string name="history_widget_description">Ваш кофе за месяц: фотографии посещений и домашних приготовлений на главном экране.</string>
+    <string name="history_widget_loading">Загружаем вашу активность…</string>
+    <string name="history_widget_signed_out">Войдите в CoffeePeek</string>
+    <string name="history_widget_error">Не удалось загрузить · обновите</string>
+    <string name="history_widget_partial">Часть записей недоступна · обновите</string>
+    <string name="history_widget_empty">Первый кофе этого месяца ещё впереди</string>
+    <string name="history_widget_active_days">Активных дней: %1$d</string>
+    <string name="history_widget_refresh">Обновить календарь</string>
+    <string name="history_widget_open">Открыть историю в CoffeePeek</string>
+    <string name="history_widget_day_description">%1$s, записей: %2$d</string>
+    <string name="history_widget_today_description">Сегодня, %1$s, записей: %2$d</string>
+    <string-array name="history_widget_weekdays"><item>Пн</item><item>Вт</item><item>Ср</item><item>Чт</item><item>Пт</item><item>Сб</item><item>Вс</item></string-array>
+</resources>

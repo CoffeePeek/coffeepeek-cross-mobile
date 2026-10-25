@@ -38,6 +38,7 @@ class CoffeePeekApplication : Application() {
         MapLibre.getInstance(this)
         com.coffeepeek.admin.notifications.AndroidPush.install(this)
         initPlatformKoin()
+        com.coffeepeek.admin.di.checkinhistory.widget.ActivityCalendarWidgetRuntime.install(this)
 
         val koin = GlobalContext.get()
         val sessionRepository = koin.get<SessionRepository>()
