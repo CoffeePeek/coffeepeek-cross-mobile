@@ -2,8 +2,6 @@ package com.coffeepeek.admin.ui.screen.checkins
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -11,22 +9,15 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.coffeepeek.admin.ui.component.HapticEvent
 import com.coffeepeek.admin.ui.component.platformHaptic
 import com.coffeepeek.admin.ui.icons.CpIcons
-import com.coffeepeek.admin.utils.CpImage
 import com.coffeepeek.domain.model.CheckIn
 
 @Composable
@@ -128,66 +119,5 @@ private fun TodayButton(onClick: () -> Unit) {
         contentPadding = PaddingValues(horizontal = 8.dp), modifier = Modifier.heightIn(min = 44.dp)
             .semantics { contentDescription = "Сегодня, показать чекины за текущую дату" }) {
         Text("Сегодня", style = MaterialTheme.typography.labelMedium, maxLines = 1)
-    }
-}
-
-@Composable
-private fun CalendarDay(
-    day: Int,
-    date: String,
-    checkIns: List<CheckIn>,
-    homeCount: Int,
-    photos: List<CalendarPhoto>,
-    isSelected: Boolean,
-    isToday: Boolean,
-    isFuture: Boolean,
-    onClick: () -> Unit,
-    modifier: Modifier,
-) {
-    val total = checkIns.size + homeCount
-    val description = "${selectedDateTitle(date)}${if (isToday) ", сегодня" else ""}, ${visitCount(total)}" +
-        if (homeCount > 0) ", $homeCount дома" else ""
-    val photo = photos.firstOrNull()
-    val shape = RoundedCornerShape(12.dp)
-    Box(
-        modifier.aspectRatio(1f).padding(1.dp)
-            .clip(shape)
-            .background(when {
-                isSelected && photo == null -> MaterialTheme.colorScheme.primary
-                isSelected -> MaterialTheme.colorScheme.primary.copy(alpha = 0.10f)
-                else -> Color.Transparent
-            })
-            .then(if ((isToday && !isSelected) || (isSelected && photo != null)) {
-                Modifier.border(1.dp, MaterialTheme.colorScheme.primary, shape)
-            } else Modifier)
-            .clickable(enabled = !isFuture, role = Role.Button, onClickLabel = "Выбрать дату", onClick = onClick)
-            .semantics(mergeDescendants = true) { contentDescription = description; selected = isSelected },
-        contentAlignment = Alignment.Center,
-    ) {
-        if (photo == null) {
-            Text(day.toString(), style = MaterialTheme.typography.bodyMedium,
-                fontWeight = if (isSelected || isToday) FontWeight.SemiBold else FontWeight.Normal,
-                color = when {
-                    isSelected -> MaterialTheme.colorScheme.onPrimary
-                    isFuture -> MaterialTheme.colorScheme.onSurface.copy(alpha = 0.35f)
-                    else -> MaterialTheme.colorScheme.onSurface
-                }, modifier = Modifier.padding(4.dp))
-        } else {
-            Column(
-                Modifier.fillMaxSize().padding(3.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-            ) {
-                Box(Modifier.fillMaxWidth().weight(1f), contentAlignment = Alignment.Center) {
-                    val imageModifier = Modifier.aspectRatio(1f, matchHeightConstraintsFirst = true).clearAndSetSemantics {}
-                    CpImage(data = photo.url, contentScale = ContentScale.Crop,
-                        modifier = imageModifier.clip(RoundedCornerShape(6.dp)))
-                }
-                if (photos.size > 1) {
-                    Text("+${photos.size - 1}", style = MaterialTheme.typography.labelSmall,
-                        fontSize = 10.sp, lineHeight = 12.sp,
-                        color = MaterialTheme.colorScheme.primary, maxLines = 1)
-                }
-            }
-        }
     }
 }

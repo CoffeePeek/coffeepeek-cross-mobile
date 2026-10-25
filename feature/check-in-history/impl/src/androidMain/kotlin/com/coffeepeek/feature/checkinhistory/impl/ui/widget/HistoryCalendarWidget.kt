@@ -5,18 +5,15 @@ import androidx.core.graphics.createBitmap
 import android.content.Context
 import android.graphics.Bitmap
 import android.util.SizeF
-import android.util.TypedValue
 import android.view.View
 import android.widget.RemoteViews
 import androidx.compose.foundation.layout.size
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.viewinterop.AndroidView
-import com.coffeepeek.core.designsystem.theme.CoffeePeekColors
 import com.coffeepeek.feature.checkinhistory.domain.model.*
 import com.coffeepeek.feature.checkinhistory.impl.R
 import java.time.LocalDate
@@ -38,43 +35,29 @@ private fun widgetLayout(context: Context, today: String, period: HistoryWidgetP
     open: PendingIntent? = null, refresh: PendingIntent? = null): RemoteViews {
     val calendar = historyWidgetCalendar(today, period, activity)
     val views = RemoteViews(context.packageName, R.layout.history_widget)
-    widgetHeading(context, views, today, period, calendar)
+    widgetHeading(views, today, period)
     views.setTextViewText(R.id.history_widget_status, widgetStatus(context, calendar, status, period))
-    views.setViewVisibility(R.id.history_widget_status,
-        if (period == HistoryWidgetPeriod.Month || status != HistoryWidgetStatus.Ready || calendar.isPartial) View.VISIBLE else View.GONE)
+    widgetStatusDescription(context, views, calendar, status, period)
     views.removeAllViews(R.id.history_widget_weeks)
-    widgetWeekdays(context, views, WidgetPalette)
+    widgetWeekdays(context, views, today, period)
     calendar.dates.chunked(7).forEach { week ->
         val row = RemoteViews(context.packageName, R.layout.history_widget_week)
         week.forEach { date -> row.addView(R.id.history_widget_week,
-            widgetDay(context, date, today, calendar.days, photos, WidgetPalette, open)) }
+            historyWidgetDay(context, date, today, calendar.days, photos, open)) }
         views.addView(R.id.history_widget_weeks, row)
     }
     bindWidgetActions(context, views, open, refresh)
     return views
 }
 
-private fun widgetHeading(context: Context, views: RemoteViews, today: String,
-    period: HistoryWidgetPeriod, calendar: HistoryWidgetCalendar) {
-    val month = period == HistoryWidgetPeriod.Month
-    views.setTextViewText(R.id.history_widget_title, widgetTitle(context, today, period, calendar.dates))
-    views.setTextViewTextSize(R.id.history_widget_title, TypedValue.COMPLEX_UNIT_SP, if (month) 18f else 14f)
-    views.setViewVisibility(R.id.history_widget_brand, if (month) View.VISIBLE else View.GONE)
-    views.setViewVisibility(R.id.history_widget_refresh, if (month) View.VISIBLE else View.GONE)
-    WidgetPalette.text(views, R.id.history_widget_title)
-    WidgetPalette.secondary(views, R.id.history_widget_status)
-}
-
-private fun widgetTitle(context: Context, today: String, period: HistoryWidgetPeriod, dates: List<String?>): String {
+private fun widgetHeading(views: RemoteViews, today: String, period: HistoryWidgetPeriod) {
+    views.setViewVisibility(R.id.history_widget_header, if (period == HistoryWidgetPeriod.Month) View.VISIBLE else View.GONE)
     val locale = Locale.forLanguageTag("ru")
-    if (period == HistoryWidgetPeriod.Month) return LocalDate.parse(today)
-        .format(DateTimeFormatter.ofPattern("LLLL yyyy", locale)).replaceFirstChar { it.titlecase(locale) }
-    val start = LocalDate.parse(dates.filterNotNull().first())
-    val end = LocalDate.parse(dates.filterNotNull().last())
-    val format = DateTimeFormatter.ofPattern("d MMM", locale)
-    val first = if (start.month == end.month) start.dayOfMonth.toString() else start.format(format)
-    val title = if (period == HistoryWidgetPeriod.Week) R.string.history_widget_week_title else R.string.history_widget_fortnight_title
-    return context.getString(title, "$first–${end.format(format)}")
+    val title = LocalDate.parse(today).format(DateTimeFormatter.ofPattern("LLLL yyyy", locale))
+        .replaceFirstChar { it.titlecase(locale) }
+    views.setTextViewText(R.id.history_widget_title, title)
+    HistoryWidgetPalette.text(views, R.id.history_widget_title)
+    HistoryWidgetPalette.secondary(views, R.id.history_widget_status)
 }
 
 enum class HistoryWidgetStatus { Loading, SignedOut, Error, Ready }
@@ -97,65 +80,26 @@ private fun widgetStatus(context: Context, calendar: HistoryWidgetCalendar, stat
             R.string.history_widget_error else R.string.history_widget_error_compact
         calendar.isPartial -> if (period == HistoryWidgetPeriod.Month)
             R.string.history_widget_partial else R.string.history_widget_partial_compact
-        calendar.days.isEmpty() -> R.string.history_widget_empty
-        else -> R.string.history_widget_active_days
-    }, calendar.days.size)
+        else -> R.string.history_widget_month_progress
+    }, calendar.activeMonthDays, calendar.daysInMonth)
 
-private fun widgetWeekdays(context: Context, views: RemoteViews, palette: WidgetPalette) {
+private fun widgetStatusDescription(context: Context, views: RemoteViews, calendar: HistoryWidgetCalendar,
+    status: HistoryWidgetStatus, period: HistoryWidgetPeriod) {
+    val description = if (status == HistoryWidgetStatus.Ready && !calendar.isPartial)
+        context.getString(R.string.history_widget_month_progress_description, calendar.activeMonthDays, calendar.daysInMonth)
+    else widgetStatus(context, calendar, status, period)
+    views.setContentDescription(R.id.history_widget_status, description)
+}
+
+private fun widgetWeekdays(context: Context, views: RemoteViews, today: String, period: HistoryWidgetPeriod) {
     views.removeAllViews(R.id.history_widget_weekdays)
-    context.resources.getStringArray(R.array.history_widget_weekdays).forEach { label ->
+    val weekday = LocalDate.parse(today).dayOfWeek.value - 1
+    context.resources.getStringArray(R.array.history_widget_weekdays).forEachIndexed { index, label ->
         val child = RemoteViews(context.packageName, R.layout.history_widget_weekday)
         child.setTextViewText(R.id.history_widget_weekday, label)
-        palette.secondary(child, R.id.history_widget_weekday)
+        if (period != HistoryWidgetPeriod.Month && index == weekday) child.setTextColor(R.id.history_widget_weekday, HistoryWidgetPalette.accent)
+        else HistoryWidgetPalette.secondary(child, R.id.history_widget_weekday)
         views.addView(R.id.history_widget_weekdays, child)
-    }
-}
-
-private fun widgetDay(context: Context, date: String?, today: String, activity: Map<String, HistoryActivityDay>,
-    photos: Map<String, Bitmap>, palette: WidgetPalette, open: PendingIntent?): RemoteViews {
-    val cell = RemoteViews(context.packageName, R.layout.history_widget_day)
-    if (date == null) {
-        cell.setViewVisibility(R.id.history_widget_day, View.INVISIBLE)
-        return cell
-    }
-    val count = activity[date]?.count ?: 0
-    val photo = photos[date]
-    cell.setTextViewText(R.id.history_widget_number, date.takeLast(2).toInt().toString())
-    palette.text(cell, R.id.history_widget_number, photo != null)
-    cell.setInt(R.id.history_widget_number, "setBackgroundColor", if (photo != null) 0x99000000.toInt() else 0)
-    decorateWidgetDay(cell, photo, count, date == today, palette)
-    val description = if (date == today) R.string.history_widget_today_description else R.string.history_widget_day_description
-    cell.setContentDescription(R.id.history_widget_day, context.getString(description, widgetDateLabel(date), count))
-    open?.let { cell.setOnClickPendingIntent(R.id.history_widget_day, it) }
-    return cell
-}
-
-private fun widgetDateLabel(date: String): String = LocalDate.parse(date)
-    .format(DateTimeFormatter.ofPattern("d MMMM yyyy", Locale.forLanguageTag("ru")))
-
-private fun decorateWidgetDay(cell: RemoteViews, photo: Bitmap?, count: Long, today: Boolean, palette: WidgetPalette) {
-    cell.setInt(R.id.history_widget_day, "setBackgroundResource",
-        if (today) R.drawable.history_widget_today else R.drawable.history_widget_day_background)
-    cell.setImageViewBitmap(R.id.history_widget_photo, photo)
-    cell.setViewVisibility(R.id.history_widget_photo, if (photo != null) View.VISIBLE else View.GONE)
-    cell.setTextColor(R.id.history_widget_dot, palette.accent)
-    cell.setViewVisibility(R.id.history_widget_dot, if (count > 0 && photo == null) View.VISIBLE else View.GONE)
-    cell.setInt(R.id.history_widget_photo, "setAlpha", if (today) 210 else 255)
-}
-
-private object WidgetPalette {
-    val accent = CoffeePeekColors.Primary.toArgb()
-
-    fun text(views: RemoteViews, id: Int, onPhoto: Boolean = false) {
-        if (onPhoto) views.setTextColor(id, android.graphics.Color.WHITE)
-        else color(views, id, CoffeePeekColors.LightTextPrimary.toArgb(), CoffeePeekColors.DarkTextPrimary.toArgb())
-    }
-
-    fun secondary(views: RemoteViews, id: Int) =
-        color(views, id, CoffeePeekColors.LightTextSecondary.toArgb(), CoffeePeekColors.DarkTextSecondary.toArgb())
-
-    private fun color(views: RemoteViews, id: Int, light: Int, night: Int) {
-        views.setColorInt(id, "setTextColor", light, night)
     }
 }
 

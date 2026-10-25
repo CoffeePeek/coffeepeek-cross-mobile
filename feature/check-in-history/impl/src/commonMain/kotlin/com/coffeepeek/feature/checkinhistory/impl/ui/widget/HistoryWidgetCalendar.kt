@@ -13,6 +13,8 @@ internal data class HistoryWidgetCalendar(
     val dates: List<String?>,
     val days: Map<String, HistoryActivityDay>,
     val isPartial: Boolean,
+    val activeMonthDays: Int,
+    val daysInMonth: Int,
 )
 
 /** The current month plus any preceding days shown by the two-week layout; never request future months. */
@@ -25,8 +27,11 @@ internal fun historyWidgetCalendar(today: String, period: HistoryWidgetPeriod,
     val visibleDates = dates.filterNotNull().toSet()
     val months = visibleDates.mapNotNull(HistoryMonth::fromDate).toSet()
     val sources = activity.filter { it.month in months }
+    val month = requireNotNull(HistoryMonth.fromDate(today))
+    val monthActivity = activity.firstOrNull { it.month == month }
+    val activeDays = monthActivity?.days.orEmpty().count { (date, day) -> month.containsDate(date) && date <= today && day.count > 0 }
     return HistoryWidgetCalendar(dates, sources.flatMap { it.days.entries }
-        .filter { it.key in visibleDates && it.key <= today }.associate { it.key to it.value }, sources.any { it.isPartial })
+        .filter { it.key in visibleDates && it.key <= today }.associate { it.key to it.value }, sources.any { it.isPartial } || monthActivity?.isPartial == true, activeDays, month.daysInMonth)
 }
 
 /** Monday-first week; fortnight is the previous and current weeks, keeping recent activity visible. */

@@ -1,4 +1,9 @@
 <resources>
+    <string name="calendar_more_photos">+%1$d</string>
+    <string name="calendar_select_date">Выбрать дату</string>
+    <string name="calendar_today_suffix">%1$s, сегодня</string>
+    <string name="calendar_date_description">%1$s, %2$s</string>
+    <string name="calendar_home_description">%1$s, %2$d дома</string>
     <string name="coffeepeek_legacy_choose_rating">%1$s: выбрать %2$d из 5</string>
     <string name="coffeepeek_legacy_rating_description">Кофе: %1$d, сервис: %2$d, место: %3$d. Средняя оценка %4$s из 5</string>
     <string name="coffeepeek_home_taste_rating_description">Оценка вкуса %1$d из 5</string>

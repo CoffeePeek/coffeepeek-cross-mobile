@@ -155,3 +155,44 @@ implementation committed as `0fe7935e` (artifact built before that commit from
 SandboxActivity returned `Status: ok` / HOT and the process remained running;
 Android reports the widget provider and an existing widget instance. This update
 confirms delivery and launch, not a manual resize/visual/accessibility pass.
+
+## Shared calendar appearance — 2026-10-25
+
+User confirmed that both the launcher widget and the profile's compact calendar
+should match the large calendar: centered date numbers, gold today, photos replacing
+numbers, no week/fortnight title, and a compact month counter such as `2/31`.
+
+Verification plan: extract a reusable design-system day primitive and pure style
+policy; apply it to the profile week, profile month and migrated history day, and
+use the same policy in RemoteViews. Preserve selection, future-date muting, photo
+count/visit decorations, descriptions, data loading and existing navigation/
+analytics ownership. Widget progress counts distinct active dates in the current
+month, not entries or only the displayed week; failures retain explicit states.
+Run design-system style tests, history month/progress regressions, application
+calendar/profile/history contracts, relevant lint and both APK/DEX builds. Use
+paired colocated previews; manual device checks stay separate from JVM evidence.
+The shared profile/month Compose adapters also have shared/iOS consumers; no
+native iOS boundary or writer changes, but their shared visuals follow the same
+primitive. Native visual verification remains a separate gate.
+
+Final shared-appearance verification: **219 executed JVM tests** (49 design-system,
+80 history impl, 90 application history/calendar/public-profile contracts), zero
+failures/errors/skips. Eight new regressions cover shared date/photo/today/selection
+style and month progress across compact modes, month boundaries and leap years.
+Both lint tasks pass: design-system has no issues; history retains the same three
+pre-existing ModifierParameter warnings in unchanged screen signatures. Shared
+preview imports use the current multiplatform annotation; paired previews compile
+but IDE rendering remains unavailable.
+
+Direct Sandbox and Direct Debug assembly, both packaged DEX runtime-class checks
+and Sandbox isolation pass. Artifact: `com.coffeepeek.sandbox`, versionCode 2459 /
+`1.1.1.2459-sandbox`, built from `83a5ad3a` plus this shared-calendar change.
+All Gradle commands ran sequentially with `--max-workers=6`. No new dependencies,
+source sets, navigation routes, analytics events or production data flows.
+
+ADB inventories during this change and after APK assembly found no connected
+phones. This build was **not installed**; the last confirmed Pixel 9 installation
+is still 2457. Manual profile/month/widget photo rendering, week/fortnight/month
+resize, light/dark themes, large font/window sizes, TalkBack and navigation checks
+remain pending. No automated UI/instrumentation/screenshot tests or test hosts
+were created or run, and no live-account/backend actions occurred.

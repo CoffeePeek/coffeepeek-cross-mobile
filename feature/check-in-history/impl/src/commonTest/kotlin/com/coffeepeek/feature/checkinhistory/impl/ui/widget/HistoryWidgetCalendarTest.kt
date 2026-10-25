@@ -82,4 +82,30 @@ class HistoryWidgetCalendarTest {
         assertTrue(historyWidgetDatesToLoad("0001-01-01").all { it.startsWith("0001-01-") })
         assertEquals(7, widgetCalendarDates("9999-12-31", HistoryWidgetPeriod.Week).size)
     }
+    @Test fun progressCountsActiveDatesAcrossTheWholeMonthEvenInWeekView() {
+        val month = HistoryActivityMonth(HistoryMonth(2026, 10), mapOf(
+            "2026-10-01" to HistoryActivityDay(8, null), "2026-10-25" to HistoryActivityDay(2, null),
+            "2026-10-30" to HistoryActivityDay(1, null), "2026-10-02" to HistoryActivityDay(0, null)), false)
+        HistoryWidgetPeriod.entries.forEach { period ->
+            val calendar = historyWidgetCalendar("2026-10-25", period, listOf(month))
+            assertEquals(2, calendar.activeMonthDays)
+            assertEquals(31, calendar.daysInMonth)
+        }
+    }
+
+    @Test fun precedingMonthPhotosDoNotInflateCurrentMonthProgress() {
+        val october = HistoryActivityMonth(HistoryMonth(2026, 10), mapOf("2026-10-31" to HistoryActivityDay(4, null)), false)
+        val november = HistoryActivityMonth(HistoryMonth(2026, 11), mapOf("2026-11-02" to HistoryActivityDay(2, null)), false)
+        val calendar = historyWidgetCalendar("2026-11-02", HistoryWidgetPeriod.Fortnight, listOf(october, november))
+        assertEquals(2, calendar.days.size)
+        assertEquals(1, calendar.activeMonthDays)
+        assertEquals(30, calendar.daysInMonth)
+    }
+
+    @Test fun progressDenominatorFollowsLeapYearAndEmptyMonthRules() {
+        assertEquals(29, historyWidgetCalendar("2028-02-10", HistoryWidgetPeriod.Week, emptyList()).daysInMonth)
+        assertEquals(28, historyWidgetCalendar("2027-02-10", HistoryWidgetPeriod.Week, emptyList()).daysInMonth)
+        assertEquals(0, historyWidgetCalendar("2027-02-10", HistoryWidgetPeriod.Week, emptyList()).activeMonthDays)
+    }
+
 }

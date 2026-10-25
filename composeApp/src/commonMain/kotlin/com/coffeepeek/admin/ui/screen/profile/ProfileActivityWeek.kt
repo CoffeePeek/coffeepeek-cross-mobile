@@ -1,9 +1,7 @@
 package com.coffeepeek.admin.ui.screen.profile
 
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -13,7 +11,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
@@ -23,6 +20,7 @@ import com.coffeepeek.admin.ui.screen.checkins.CalendarPhoto
 import com.coffeepeek.admin.ui.screen.checkins.CalendarWeek
 import com.coffeepeek.admin.utils.CpImage
 import com.coffeepeek.core.designsystem.component.CoffeePeekCard
+import com.coffeepeek.core.designsystem.component.CoffeePeekCalendarDay
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
@@ -45,7 +43,7 @@ internal fun ProfileActivityWeek(
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
             week.dates.forEachIndexed { index, date ->
                 ProfileWeekDay(date, stringResource(labels[index]), counts[date] ?: 0, photos[date].orEmpty(),
-                    isToday = date == week.today, modifier = Modifier.weight(1f))
+                    isToday = date == week.today, isFuture = date > week.today, modifier = Modifier.weight(1f))
             }
         }
         if (loading) Text(stringResource(Res.string.profile_week_loading), Modifier.padding(top = 8.dp),
@@ -59,22 +57,21 @@ internal fun ProfileActivityWeek(
 
 @Composable
 private fun ProfileWeekDay(date: String, label: String, count: Int, photos: List<CalendarPhoto>,
-    isToday: Boolean, modifier: Modifier) {
+    isToday: Boolean, isFuture: Boolean, modifier: Modifier) {
     val visits = pluralStringResource(Res.plurals.profile_week_count, count, count)
     val description = stringResource(Res.string.profile_week_day, date, visits)
     Column(modifier.semantics(mergeDescendants = true) { contentDescription = description },
         horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(6.dp)) {
         Text(label, style = MaterialTheme.typography.labelSmall,
             color = if (isToday) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant)
-        Box(Modifier.fillMaxWidth().aspectRatio(1f).clip(RoundedCornerShape(10.dp)), contentAlignment = Alignment.Center) {
-            if (photos.isNotEmpty()) {
-                CpImage(data = photos.first().url, modifier = Modifier.fillMaxSize().clearAndSetSemantics {}, contentScale = ContentScale.Crop)
-                if (photos.size > 1) Text("+${photos.size - 1}",
-                    Modifier.align(Alignment.BottomEnd).background(MaterialTheme.colorScheme.surface.copy(alpha = 0.9f)).padding(horizontal = 3.dp),
-                    style = MaterialTheme.typography.labelSmall)
-            } else Box(Modifier.size(8.dp).background(if (count > 0) MaterialTheme.colorScheme.primary
-                else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f), CircleShape))
-        }
+        CoffeePeekCalendarDay(date.takeLast(2).toInt(), isToday, isFuture,
+            modifier = Modifier.fillMaxWidth().aspectRatio(1f),
+            photo = photos.firstOrNull()?.let { photo -> { imageModifier ->
+                CpImage(data = photo.url, modifier = imageModifier.clip(RoundedCornerShape(6.dp)), contentScale = ContentScale.Crop)
+            } }, footer = if (photos.size > 1) ({
+                Text(stringResource(Res.string.calendar_more_photos, photos.size - 1),
+                    style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)
+            }) else null)
     }
 }
 
