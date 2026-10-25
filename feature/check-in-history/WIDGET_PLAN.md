@@ -90,3 +90,19 @@ All Gradle runs used `--max-workers=6` and ran sequentially.
 
 Android platform behavior reference:
 [Widget updates and background execution](https://developer.android.com/develop/ui/views/appwidgets/advanced).
+
+## Device installation and startup — 2026-10-25
+
+User-requested retry detected an unlocked Pixel 9 (Android API 37, arm64-v8a).
+Installed `directSandbox`, package `com.coffeepeek.sandbox`, versionCode 2456 /
+`1.1.1.2456-sandbox`, built from `889d1805`. The prior no-device result above
+remains the original verification record. No existing Sandbox package was found;
+APK signature/ABI/entry were checked before non-destructive `adb install -r`.
+The regular CoffeePeek package and its data were not modified.
+
+Cold launch of SandboxActivity returned `Status: ok` (1019 ms); the process
+remained running with no entries in its scoped crash buffer. Android registered
+ActivityCalendarWidgetProvider. This confirms installation/startup/provider
+registration only: adding the widget, photo rendering, resizing, theme/font/
+accessibility checks and widget navigation/account scenarios remain unverified.
+No automated UI/instrumentation test or live-backend action was performed.
