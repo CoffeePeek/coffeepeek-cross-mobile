@@ -26,7 +26,7 @@ import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.sync.withPermit
 
-/** Temporary composition bridge: the existing store/JSON and catalogue remain authoritative. */
+/** Composition bridge: the existing server favorites source and catalogue remain authoritative. */
 internal class LegacyFavoriteRoastersRepository(
     private val favorites: RoasterFavorites,
     private val sessions: SessionReader,

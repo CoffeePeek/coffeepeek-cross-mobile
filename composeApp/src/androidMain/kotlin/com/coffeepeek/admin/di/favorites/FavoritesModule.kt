@@ -17,20 +17,6 @@ import kotlinx.coroutines.flow.map
 import org.koin.core.module.Module
 import org.koin.dsl.module
 
-/** Active Android graph. Existing server infrastructure is shared with all legacy consumers. */
-internal fun serverFavoritesModule(): Module = module {
-    includes(serverFavoriteShopsModule())
-    factory { ObserveFavoriteIdsUseCase(get()) }
-    single<FavoriteRoastersRepository> {
-        val catalog = get<RoasterRepository>()
-        LegacyFavoriteRoastersRepository(get(), get()) { slug -> catalog.getRoaster(slug).map { it.photos.firstOrNull()?.fullUrl } }
-    }
-    single<com.coffeepeek.feature.favorites.domain.repository.FavoriteDrinksRepository> {
-        ServerFavoriteDrinksRepository(get(), get())
-    }
-    single<FavoritesEntry> { createFavoritesEntry(get(), get(), get(), AndroidFavoritesScreenAnalytics) }
-}
-
 /** One repo per session/storage. Application explicitly loads this module; no global Koin start. */
 internal fun favoritesModule(
     storage: FavoritesStorage,

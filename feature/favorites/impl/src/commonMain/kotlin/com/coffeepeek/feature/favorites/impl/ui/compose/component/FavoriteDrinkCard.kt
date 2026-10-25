@@ -22,9 +22,9 @@ import org.jetbrains.compose.ui.tooling.preview.Preview
 
 /** Saved drinks intentionally have no invented detail route. */
 @Composable
-internal fun FavoriteDrinkCard(drink: FavoriteDrink, removing: Boolean, onRemove: () -> Unit) {
+internal fun FavoriteDrinkCard(drink: FavoriteDrink, removing: Boolean, modifier: Modifier = Modifier, onRemove: () -> Unit) {
     val title = drink.title.ifBlank { stringResource(Res.string.favorites_drink) }
-    Card(Modifier.fillMaxWidth(), shape = RoundedCornerShape(20.dp),
+    Card(modifier.fillMaxWidth(), shape = RoundedCornerShape(20.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)) {
         Row(Modifier.fillMaxWidth().padding(12.dp), verticalAlignment = Alignment.CenterVertically,
@@ -46,8 +46,8 @@ internal fun FavoriteDrinkCard(drink: FavoriteDrink, removing: Boolean, onRemove
 }
 
 @Preview @Composable private fun FavoriteDrinkLightPreview() = CoffeePeekTheme(darkTheme = false) {
-    FavoriteDrinkCard(FavoriteDrink("sample", "Капучино", null, true), false, {})
+    FavoriteDrinkCard(FavoriteDrink("sample", "Капучино", null, true), false, onRemove = {})
 }
 @Preview @Composable private fun FavoriteDrinkDarkPreview() = CoffeePeekTheme(darkTheme = true) {
-    FavoriteDrinkCard(FavoriteDrink("sample", "Капучино", null, true), false, {})
+    FavoriteDrinkCard(FavoriteDrink("sample", "Капучино", null, true), false, onRemove = {})
 }

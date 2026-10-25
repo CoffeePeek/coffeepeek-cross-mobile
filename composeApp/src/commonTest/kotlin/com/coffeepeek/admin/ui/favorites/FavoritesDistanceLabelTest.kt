@@ -1,9 +1,9 @@
 package com.coffeepeek.admin.ui.favorites
 
 import com.coffeepeek.admin.location.GeoPoint
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNull
-import org.junit.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertNull
+import kotlin.test.Test
 
 class FavoritesDistanceLabelTest {
     @Test fun formatsSavedCoordinatesUsingExistingAppDistanceRules() {

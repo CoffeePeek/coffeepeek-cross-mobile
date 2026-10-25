@@ -1,5 +1,17 @@
 # Favorites: incremental Android integration
 
+## iOS migration — 2026-10-25
+
+The active full-screen Favorites entry and the own-profile preview now use the
+feature implementation on both platforms, backed by the same server source.
+Composition-only adapters and heart exposure moved to app/commonMain; the old
+local compatibility graph remains Android-only and inactive in production.
+See [IOS_MIGRATION_PLAN.md](IOS_MIGRATION_PLAN.md) for scope and verification.
+
+The older checkpoints below are historical. Their local-storage assumptions and
+UI-run records do not describe the current server-backed graph or authorize
+automated UI tests; use MAIN_SYNC_AUDIT and the current iOS plan.
+
 ## Current checkpoint — 2026-10-15
 
 PR #43 owns this Android migration; the complete history migration remains in its

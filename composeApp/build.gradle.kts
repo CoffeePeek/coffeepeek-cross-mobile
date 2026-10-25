@@ -39,9 +39,7 @@ kotlin {
 
     sourceSets {
         androidMain.dependencies {
-            implementation(project(module.feature.favorites.api))
             implementation(project(module.feature.favorites.data))
-            implementation(project(module.feature.favorites.impl))
             implementation(project(module.core.coroutines))
             implementation(libs.androidx.activity.compose)
             implementation(libs.androidx.concurrent.futures)
@@ -58,6 +56,8 @@ kotlin {
             implementation("org.slf4j:slf4j-nop:2.0.16")
         }
         commonMain.dependencies {
+            implementation(project(module.feature.favorites.api))
+            implementation(project(module.feature.favorites.impl))
             implementation(project(module.feature.homePreparation.impl))
             implementation(project(module.feature.homePreparation.data))
             implementation(project(module.feature.homePreparation.domain))
@@ -347,6 +347,8 @@ androidComponents.onVariants(androidComponents.selector().withBuildType("sandbox
     val runtimeVerification = tasks.register<VerifyApkRuntimeClassesTask>("verify${variant.name.replaceFirstChar { it.uppercaseChar() }}RuntimeClasses") {
         apkDirectory.set(variant.artifacts.get(SingleArtifact.APK))
         requiredClasses.set(listOf("com.coffeepeek.admin.sandbox.SandboxActivity",
+            "com.coffeepeek.feature.favorites.impl.FavoritesApiImplKt",
+            "com.coffeepeek.admin.di.favorites.ServerFavoritesModuleKt",
             "com.coffeepeek.core.session.SessionReader",
             "com.coffeepeek.core.session.SessionStore",
             "com.coffeepeek.admin.sandbox.backend.SandboxBackend", "com.coffeepeek.admin.sandbox.SandboxApplication",
@@ -388,6 +390,9 @@ androidComponents {
             apkDirectory.set(variant.artifacts.get(SingleArtifact.APK))
             forbiddenClassPrefixes.set(listOf("com.coffeepeek.admin.sandbox.", "io.ktor.client.engine.mock."))
             requiredClasses.set(listOf(
+                "com.coffeepeek.feature.favorites.api.FavoritesEntry",
+                "com.coffeepeek.feature.favorites.impl.FavoritesApiImplKt",
+                "com.coffeepeek.admin.di.favorites.ServerFavoritesModuleKt",
                 "com.coffeepeek.core.session.SessionReader",
                 "com.coffeepeek.core.session.SessionStore",
                 "com.coffeepeek.core.session.DefaultSessionStore",

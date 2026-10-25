@@ -26,8 +26,9 @@ iOS-документы (`docs/IOS_NATIVE_EXPERIENCE.md`, `IOS_NATIVE_NAVIGATION.
 
 **Этап 3 — подключение на iOS: начат.** Через новые модули на iOS подключены: вкладка Settings (и три её подэкрана), окно обновления, колокольчик уведомлений, экраны входа, регистрации и восстановления пароля, **Community (вкладка «Лента»)**, **Discovery (вкладка «Поиск»)**, **Coffee (вкладка каталога и детали кофе)**, **Profile (собственный/публичный профиль, его чекины, редактирование и подтверждение удаления аккаунта)** и **Contributions (списки заявок, добавление кофейни/обжарщика, предложение правки, редактор и детали заявки)**, **Shop (кофейня, публичные чекины, галерея меню, форма чекина)** и **Shop-report (неточность в данных кофейни)**, **Check-in history (личная история, календарь и Home detail/editor внутри неё)** и **общий create flow (выбор типа + Home create)**, **выбор кофейни для чекина**, **личная Activity шторка и недельный обзор Profile**, **контентные жалобы на чекин/совместимый отзыв**. Подключены также Google/Apple кнопки и существующие Swift-провайдеры (при доступной конфигурации); реальный OAuth ещё не проверен.
 На iOS Profile, Community, Discovery, Coffee, Contributions, Shop/Shop-report и личная история идут через feature-рендереры.
-В истории подключены Home detail/editor; общий выбор типа, Home create и выбор кофейни тоже используют feature entries. Favorites ещё использует текущий legacy entry;
-личная Activity использует отдельный entry истории; избранное и карточки в Profile сохраняют существующие slot providers.
+В истории подключены Home detail/editor; общий выбор типа, Home create и выбор кофейни тоже используют feature entries.
+**Favorites: полный экран и собственное превью Profile используют feature entry на обеих платформах** с тем же серверным источником.
+Личная Activity использует отдельный entry истории; публичные карточки избранного/чекинов в Profile сохраняют существующие app slots.
 
 **Важные находки для следующих срезов**
 1. Kotlin/Native не линкует переопределение composable-метода интерфейса с аргументом по умолчанию (`modifier: Modifier = Modifier`): ошибка видна только при линковке и только у достижимого кода. У каждого владельца при подключении убрать значения по умолчанию из api-интерфейсов (так сделано у Settings и Auth).
@@ -36,7 +37,7 @@ iOS-документы (`docs/IOS_NATIVE_EXPERIENCE.md`, `IOS_NATIVE_NAVIGATION.
 4. Для сообщения проверки обновлений на iOS нет тоста: временно используется `ErrorHandler.showError`, нужно решение по UX.
 
 **Остаётся**
-- Этап 3: оставшиеся legacy follow-ups и Favorites (по решению продукта); ручная приёмка Community/Discovery/Coffee/Profile/Contributions/Shop/History и live-приёмка Apple/Google.
+- Этап 3: выбранные feature entries подключены, включая Favorites full screen и own-profile preview. Остались ручная приёмка всех владельцев и live-приёмка Apple/Google; публичные profile card slots и platform image/prefetch/viewer adapters остаются app-owned.
 - Ручная приёмка отдельной Activity шторки и недельного обзора Profile ещё нужна; public-only календарь Profile не получает private reader.
 - Ручная приёмка контентных ReportCheckIn/ReportReview ещё нужна; они подключены к content-report, отдельно от Shop-report.
 - Этап 2: активные app-потребители используют core session port; удаление legacy session bridge вместе со старыми VM — после приёмки, не часть механической замены типов.
@@ -1131,8 +1132,85 @@ checkpoint не утверждает их интеграцию или прове
 Открытые gates: ручная iOS-приёмка session restore/logout/account replacement,
 реальный Keychain, OAuth, серверное realtime revocation и доставка analytics
 после consent. Unit fixtures не удостоверяют live backend, Xcode/signing или UI.
-Далее — сверка оставшихся legacy slot adapters и Favorites iOS по продуктовому
-решению; удаление fallback/bridge только после ручной приёмки.
+Далее после core SessionReader — Favorites full screen и собственное Profile
+preview (следующий checkpoint). Удаление fallback/bridge — после ручной приёмки.
+
+### Checkpoint: Favorites full screen и Profile preview — 2026-10-25
+
+Продолжение PR #195 → develop поверх `b47a9417`, по поручению закончить
+оставшиеся пункты миграции. Fresh origin/main `16724b7e` уже в истории;
+origin/develop `105b8994` содержит отдельные дальнейшие изменения и не
+объявляется интегрированным этим checkpoint.
+
+- iOS FavoritesDestination теперь использует тот же feature FavoritesEntry,
+  что Android. Убрана лишняя expect/actual-развилка; root Navigator/NativeScreenController
+  остаются владельцами навигации, UIKit stack/back и screen exposure.
+- Активный serverFavoritesModule, adapters roaster/drink и heart exposure
+  перенесены из androidMain в app/commonMain. api/impl dependency доступна
+  app commonMain; новых Gradle-модулей нет. Серверный source один для shops,
+  roasters и drinks; retired local writer/JSON import не включались.
+- Собственное Favorites preview в новом Profile тоже идёт через feature,
+  с отдельным lifecycle ViewModel и теми же server ports. Активный Profile
+  больше не разрешает старый app FavoritesViewModel singleton. Старые
+  FavoritesScreen/ProfileScreen, VM, bindings и preview wrapper оставлены
+  доступными fallback callers до приёмки.
+- У preview сохранены пустое/загружаемое/ошибочное состояния, retry и dismiss
+  ошибки операции; наблюдение владеет списком, не оптимистическое удаление.
+  Shop/roaster открываются только по public slug; у drinks не придуман маршрут.
+  Геолокация/permission и прежний формат расстояния остаются app-owned.
+- Общая геометрия own/public profile carousel перенесена в design-system
+  CoffeePeekStackedCardCarousel: 300dp full cards, пары с высотой соседней
+  полной карточки, gap токен и relative placement сохранены. Layout принимает
+  только группы/ключи/визуальный slot, не знает feature/legacy models.
+  Старый app carousel стал compatibility wrapper без второго layout.
+- Feature использует CoffeePeekScaffold и scroll content padding, поэтому
+  NativeScreenController safe area учитывается в списке. Заголовок использует
+  существующий native header hook. Composable interface defaults убраны для
+  Native link. Missing/loading/failure photo использует существующий branded
+  CoffeePeekImagePlaceholder. Light/dark previews colocated; UI runtime не запускался.
+- Analytics inventory: favorites_opened(entry_point=profile), root screen owner,
+  consent-aware heart exposure и shop/roaster attempted/changed/failed wire
+  остались прежними. Drink removal не получает выдуманного event. Tests используют
+  только in-memory analytics, не production SDK/backend.
+- Публичные Profile favorite/check-in cards — намеренные app slots с публичными
+  моделями. Их источник не заменён private reader. Image/viewer/prefetch/platform
+  adapters остаются у composition; их наличие не означает активный старый
+  экран/VM. Полное удаление legacy modules/bridges этим не разрешается.
+
+Проверки:
+
+- App subset `*Favorite*Test`/`*Favorites*Test`: **74 tests / 17 suites**;
+  favorites domain **1 / 1**, impl **19 / 3**. Всего **94 tests / 21 suites**,
+  0 failures/errors/skips. Новые 4 actual production-graph cases проверяют lazy
+  resolution, три вида server-backed reads/removal, owner guard и memory-only
+  clear. Pure preview policy и dismiss regression не используют Compose instrumentation.
+  Перенесены в commonTest существующие server bridge/roaster/distance tests;
+  их исполнение подтверждено Android unit, а Native test compile записан отдельно.
+- Первые прогоны остановились на compile errors новых исходников: inference
+  nullable Triple в ожидаемом результате graph test и positional modifier вместо
+  content у Layout. Исправлены явный тип и named modifier; затем весь subset
+  повторён успешно. Эти failures сохранены в записи, не названы зелёными runs.
+- assembleDirectDebug/Sandbox, runtime-class guards и Sandbox isolation прошли.
+  compileKotlinIosArm64, linkDebugFrameworkIosSimulatorArm64 и общие test
+  compile app/favorites impl успешны; Native tests только скомпилированы.
+  Gradle последовательно с --max-workers=6. Source: b47a9417 + этот checkpoint.
+  APK SHA-256: Debug `fef4d4329bc8ff2b6cb042f863f592cfcf1343f3cd79b529e270df0ac9701bcd`;
+  Sandbox `75eaf2c7bcacfe6db207eeb6918108c3752e2de79b6ed6eaf8d0f1a658002dd5`.
+  Приложения не устанавливались/не запускались; аккаунт и сервер не менялись.
+  Автоматизированные UI/instrumentation/screenshot tests не создавались и не запускались.
+- Studio MCP: FavoritesList, FavoritesPreview и новая DS-карусель проверены
+  без ошибок. App server module получил unresolved api/impl из прежней IDE
+  модели common dependencies; требуется Gradle sync. Screen inspection один
+  раз timedOut. CLI compilation/tests/link прошли; IDE/preview rendering
+  не объявляется полностью проверенным.
+
+Gates: ручная iOS/Sandbox-приёмка полного экрана и Profile carousel, обе темы,
+крупный шрифт/VoiceOver, safe area/header/back/scroll, mixed/single/empty/error,
+гость/restore/logout/replacement/token renewal и защищённые фото. Real server
+removal допускается только на безопасном явно выбранном аккаунте; его не делали.
+Xcode/signing/устройство, OAuth/Keychain/realtime/analytics delivery — открытые
+общие release gates. После приёмки возможен отдельный этап удаления legacy;
+compile и fake-тесты не закрывают этот gate.
 
 ## 1. Принципы (решение 2026-10-24)
 
@@ -1145,7 +1223,7 @@ checkpoint не утверждает их интеграцию или прове
 - **Проблемные места не остаются в legacy.** Нужен нативный элемент — делаем его реализацию в `iosMain` и подключаем к новому UI через
   design-system, а не оставляем старый экран.
 
-## 2. Что показала сверка с продом
+## 2. Что показала сверка с продом (исходный инвентарь; текущий статус выше)
 
 ### 2.1 Сборка
 - Compose-компилятор выключен для iOS в `kmp.shared-android-compose-library` (`KmpSharedAndroidComposeLibraryPlugin.kt:14`).
@@ -1237,7 +1315,7 @@ F24, F23, core session port.
 5. Profile, Contributions.
 6. Shop, Shop-report (после F9).
 7. Check-in history, Home check-in, общий create flow.
-8. Favorites — по продуктовому решению.
+8. Favorites — full screen и own-profile preview подключены в checkpoint 2026-10-25; ручная приёмка открыта.
 
 ### Этап 5. Удаление legacy (когда всё выше готово и принято)
 `Legacy*Renderer` и их экраны/ViewModel/репозитории в `composeApp`, затем `modules/home-checkin`, `data`, `network`, `room`, `domain`,

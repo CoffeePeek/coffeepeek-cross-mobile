@@ -28,7 +28,7 @@ import com.coffeepeek.admin.di.profile.featureAccountScreenRenderer
 import com.coffeepeek.admin.di.profile.featureOwnProfileScreenRenderer
 import com.coffeepeek.admin.di.profile.featurePublicProfileScreenRenderer
 import com.coffeepeek.admin.di.discovery.featureDiscoveryScreenRenderer
-import com.coffeepeek.admin.di.favorites.serverFavoriteShopsModule
+import com.coffeepeek.admin.di.favorites.serverFavoritesModule
 import com.coffeepeek.api.CoffeePeekClient
 import com.coffeepeek.admin.di.notifications.featureNotificationsRenderer
 import com.coffeepeek.admin.di.settings.featureSettingsScreenRenderer
@@ -36,7 +36,7 @@ import com.coffeepeek.admin.utils.ErrorHandler
 
 actual fun initPlatformKoin() {
     initKoin(
-        platformModules = listOf(serverFavoriteShopsModule(), coffeeModule(), shopBrowsingModule(), shopCheckInModule(AppShopCheckInDateFormatter()), homeCheckInModule(), checkInHistoryModule(), contentReportModule()),
+        platformModules = listOf(serverFavoritesModule(), coffeeModule(), shopBrowsingModule(), shopCheckInModule(AppShopCheckInDateFormatter()), homeCheckInModule(), checkInHistoryModule(), contentReportModule()),
         // Owners move to their migrated modules one at a time; the others keep the legacy renderers.
         checkInRenderers = featureCheckInRendererFactories(),
         contentReportRendererFactory = { get<FeatureContentReportRenderer>() },

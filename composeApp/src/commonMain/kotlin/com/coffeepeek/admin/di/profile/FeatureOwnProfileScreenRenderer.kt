@@ -5,7 +5,7 @@ import androidx.compose.ui.Modifier
 import coffeepeek.composeapp.generated.resources.Res
 import coffeepeek.composeapp.generated.resources.local_data_cleanup_error
 import com.coffeepeek.admin.auth.GoogleAuth
-import com.coffeepeek.admin.feature.favorites.api.FavoritesProfilePreview
+import com.coffeepeek.admin.ui.favorites.FavoritesProfilePreview
 import com.coffeepeek.admin.feature.profile.domain.PublicProfileRepository
 import com.coffeepeek.admin.settings.ReviewDraftStore
 import com.coffeepeek.admin.ui.Navigator
