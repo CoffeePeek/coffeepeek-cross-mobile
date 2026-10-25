@@ -1,5 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="discovery_picker_nearby">Рядом со мной</string>
+    <string name="discovery_picker_title">Выберите кофейню</string>
+    <string name="discovery_picker_close">Закрыть</string>
+    <string name="discovery_picker_close_description">Закрыть выбор кофейни</string>
+    <string name="discovery_picker_search">Поиск кофеен</string>
+    <string name="discovery_picker_map">На карте</string>
+    <string name="discovery_picker_list">Списком</string>
+    <string name="discovery_picker_retry">Попробовать снова</string>
+    <string name="discovery_picker_empty">Кофейни не найдены</string>
+    <string name="discovery_picker_failed">Не удалось загрузить кофейни</string>
     <string name="discovery_search_placeholder">Поиск кофеен и обжарщиков…</string>
     <string name="discovery_search_clear">Очистить поиск</string>
     <string name="discovery_search_cancel">Отмена</string>

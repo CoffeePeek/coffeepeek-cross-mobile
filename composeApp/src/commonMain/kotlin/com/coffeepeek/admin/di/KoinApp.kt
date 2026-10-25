@@ -205,6 +205,7 @@ private fun appModule(
         val gateway = get<CoffeePeekClient>()
         com.coffeepeek.feature.auth.data.createAuthRepository(gateway.plainClient, gateway.client, get(), get())
     }
+    single<com.coffeepeek.admin.ui.screen.checkins.CheckInShopPickerRenderer> { checkInRenderers.shopPicker(this) }
     single<CheckInCreateFlowRenderer> { checkInRenderers.create(this) }
     single<CheckInHistoryScreenRenderer> { checkInRenderers.history(this) }
     single<ShopDetailScreenRenderer> { shopDetailRendererFactory() }

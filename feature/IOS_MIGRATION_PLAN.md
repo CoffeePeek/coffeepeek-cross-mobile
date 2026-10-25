@@ -24,9 +24,9 @@ iOS-документы (`docs/IOS_NATIVE_EXPERIENCE.md`, `IOS_NATIVE_NAVIGATION.
 
 **Этап 2 — сессия: F23 и F24 готовы** (выход стирает старые строки; сбой удаления Keychain сообщается). Core session port вместо `SessionRepository` (~43 файла) — **не сделан**.
 
-**Этап 3 — подключение на iOS: начат.** Через новые модули на iOS подключены: вкладка Settings (и три её подэкрана), окно обновления, колокольчик уведомлений, экраны входа, регистрации и восстановления пароля, **Community (вкладка «Лента»)**, **Discovery (вкладка «Поиск»)**, **Coffee (вкладка каталога и детали кофе)**, **Profile (собственный/публичный профиль, его чекины, редактирование и подтверждение удаления аккаунта)** и **Contributions (списки заявок, добавление кофейни/обжарщика, предложение правки, редактор и детали заявки)**, **Shop (кофейня, публичные чекины, галерея меню, форма чекина)** и **Shop-report (неточность в данных кофейни)**, **Check-in history (личная история, календарь и Home detail/editor внутри неё)** и **общий create flow (выбор типа + Home create)**. Подключены также Google/Apple кнопки и существующие Swift-провайдеры (при доступной конфигурации); реальный OAuth ещё не проверен.
+**Этап 3 — подключение на iOS: начат.** Через новые модули на iOS подключены: вкладка Settings (и три её подэкрана), окно обновления, колокольчик уведомлений, экраны входа, регистрации и восстановления пароля, **Community (вкладка «Лента»)**, **Discovery (вкладка «Поиск»)**, **Coffee (вкладка каталога и детали кофе)**, **Profile (собственный/публичный профиль, его чекины, редактирование и подтверждение удаления аккаунта)** и **Contributions (списки заявок, добавление кофейни/обжарщика, предложение правки, редактор и детали заявки)**, **Shop (кофейня, публичные чекины, галерея меню, форма чекина)** и **Shop-report (неточность в данных кофейни)**, **Check-in history (личная история, календарь и Home detail/editor внутри неё)** и **общий create flow (выбор типа + Home create)**, **выбор кофейни для чекина**. Подключены также Google/Apple кнопки и существующие Swift-провайдеры (при доступной конфигурации); реальный OAuth ещё не проверен.
 На iOS Profile, Community, Discovery, Coffee, Contributions, Shop/Shop-report и личная история идут через feature-рендереры.
-В истории подключены Home detail/editor; общий выбор типа и Home create тоже используют feature entries. Favorites ещё использует текущий legacy entry;
+В истории подключены Home detail/editor; общий выбор типа, Home create и выбор кофейни тоже используют feature entries. Favorites ещё использует текущий legacy entry;
 слоты календаря, избранного и карточек в Profile сохраняют эти существующие реализации.
 
 **Важные находки для следующих срезов**
@@ -36,7 +36,7 @@ iOS-документы (`docs/IOS_NATIVE_EXPERIENCE.md`, `IOS_NATIVE_NAVIGATION.
 4. Для сообщения проверки обновлений на iOS нет тоста: временно используется `ErrorHandler.showError`, нужно решение по UX.
 
 **Остаётся**
-- Этап 3: выбор кофейни для создания (legacy CheckInShopPickerScreen), оставшиеся legacy follow-ups и Favorites (по решению продукта); ручная приёмка Community/Discovery/Coffee/Profile/Contributions/Shop/History и live-приёмка Apple/Google.
+- Этап 3: оставшиеся legacy follow-ups и Favorites (по решению продукта); ручная приёмка Community/Discovery/Coffee/Profile/Contributions/Shop/History и live-приёмка Apple/Google.
 - Календарь Activity в Profile — отдельный оставшийся legacy preview; миграция полной истории не закрывает этот сценарий.
 - Контентная жалоба `ReportCheckIn`/`ReportReview` пока использует общий legacy ReviewReportScreen; это отдельный маршрут, а не мигрированный Shop-report.
 - Этап 2: core session port.
@@ -778,6 +778,86 @@ navigation hosts пока открывает общий legacy CheckInShopPicker
 этот экран не объявляется перенесённым лишь из-за готового выбора типа.
 Затем остаются Profile Activity preview, контентные жалобы и Favorites по решению
 продукта; удаление legacy — после общей приёмки.
+
+### Checkpoint: выбор кофейни для чекина — 2026-10-25
+
+Продолжение PR #195 на базе `0c52b0fa`, ветка `feat/ios-build-foundation`.
+После fetch `origin/main=16724b7e` остаётся предком HEAD. `origin/develop`
+продвинулся до `5a1fe4a1`; его параллельные изменения notifications/photo attachments
+в этот срез не включались. Нового checkpoint PR не создавали.
+
+Сделано:
+
+- Реальные входы `Screen.CreateCheckIn` в обоих hosts Navigator теперь разрешают
+  CheckInShopPickerRenderer. Android/iOS используют одну lazy factory из
+  CheckInRendererFactories; разрешение общего создания не конструирует поиск.
+  Legacy экран/FeedViewModel сохранены как явный fallback.
+- UI выбора находится в feature/discovery api/impl, зависимости Gradle уже были
+  общими. Узкий CheckInShopPickerEntry получает back/close/select/sign-in;
+  app composition владеет навигацией, сессией, адаптерами и tracker handoff.
+  Новый repository или параллельный backend не добавлены.
+- Список/поиск/пагинация/избранное используют существующий SearchViewModel,
+  карта — MapViewModel и прежний CoffeeMap/MapLibre host. Карточка — ShopRow с
+  CoffeePeekShopCard; header/search/chips/loader/insets — design-system.
+  Порядок чипов, тексты, page size 20, debounce и отсутствие расширенных
+  catalog details сохранены; строки принадлежат существующему русскому values.
+  Прокрутка списка сохраняется при переходе на карту и обратно.
+- SearchPurpose.CheckInPicker сохраняет старое правило picker: первая валидная
+  координата включает Nearby, nearby-запрос не ограничен городом, ручное выключение
+  не отменяется следующими координатами. Discovery tab сохраняет обычные defaults.
+  Без координат остаётся поиск по городу; выдача и гостевой sign-in gate общие.
+- ShopBrowsingHost создаёт отдельный child ViewModelStore на текущую session lease.
+  Старые select/close callbacks после смены аккаунта или disposal недействительны;
+  выбор/закрытие доставляются один раз. Пустой slug не закрывает экран.
+  Выбор передаёт публичный slug в ShopDetail(forCheckIn=true), закрывает клавиатуру
+  и устанавливает continueToShop до native pop callback.
+- Analytics inventory: исходный caller владеет attempt, picker продолжает тот же
+  CheckInTracker/Shop step; close/back сохраняют причины отмены. List search,
+  filter и map события используют AppDiscoveryAnalytics/существующий сервис.
+  Legacy picker не вызывал openedShop при выборе строки и не отправлял discovery
+  geolocation: purpose не добавляет их. Map selection сохраняет прежние map events.
+  Consent/session guards не обходятся, второй analytics SDK не добавлен.
+  Парные previews контента и ошибки списка размещены рядом с их компонентами.
+
+Проверки (Mac/JBR 21, 2026-10-25, source поверх `0c52b0fa`):
+
+- Discovery domain **12 tests / 1 suite**, data **17 / 1**, impl **60 / 5**;
+  app subset `*CheckInShop*`, `*CheckInRendererFactories*`, `*Discovery*`,
+  `*ShopBrowsing*`, `*GlobalCheckIn*`, `*AppShopAnalytics*` — **63 / 14**.
+  Итого **152 tests**, 0 failures/errors/skips. Шесть новых search cases проверяют
+  cached/first/invalid position, Nearby choice, query и guest favorite;
+  navigation и lazy DI — семь новых cases; analytics — четыре in-memory cases
+  handoff, back/close single cancel и declined consent. События не уходили в SDK.
+- Первый запуск остановился до тестов: неверное имя Gradle task
+  testAndroidHostTest, заменено на существующее testDebugUnitTest.
+  Следующий compile нашёл два вызова loader без обязательного contentDescription:
+  исправлены существующим локализованным resource. Последующие прогоны успешны.
+- assembleDirectDebug/Sandbox, verifyDirectDebugRuntimeClasses,
+  verifyDirectSandboxRuntimeClasses и verifyDirectSandboxIsolation успешны.
+  DEX guard дополнен picker API/factory/app renderer/navigation classes.
+  compileKotlinIosArm64, linkDebugFrameworkIosSimulatorArm64 и
+  compileTestKotlinIosSimulatorArm64 успешны. Native tests скомпилированы,
+  не исполнены. Gradle --max-workers=6, один процесс сборки.
+- Studio MCP смог прочитать shared MapScreen, но inspection нового picker
+  не разрешает даже Compose/design-system/resources из-за текущей IDE classpath
+  модели; чистой IDE-проверкой это не считается. Android/Native compiler прошли.
+  Preview deprecation и прежние expect/actual/bundle-ID warnings остаются;
+  IDE previews не рендерились.
+- SHA-256 APK: Debug `2746314d302cc53e1437c7fe373c68fe1231c732ed63fbf69eb85fd91870d79a`;
+  Sandbox `b4f4f301b1b41b41c4d27278f39a0cc1fd840a6b9fa9d4da9133e31ed53892aa`.
+  Приложения не устанавливались/не запускались, UI/instrumented/screenshot tests
+  и test-only Activity/APK не создавались. Аккаунты и backend не менялись.
+
+Открытые gates: ручная iOS-проверка открытия через Coffee/Community, native header
+и close/back, размеры/темы/инсеты/клавиатура, permission grant/denial/revocation,
+nearby/city, список↔карта/MapLibre, pagination/retry, guest sign-in и session renewal/
+replacement, переход в Shop form и cancel tracker. Live analytics/backend,
+OAuth/Keychain и Xcode/signing не проверялись этим checkpoint.
+
+Следующий code-срез: **календарь Activity в Profile** — проверить отдельный modal
+entry относительно уже перенесённой полной истории, затем переносить его владельца.
+Далее контентные ReportCheckIn/ReportReview, Favorites по продуктовому решению
+и core session port; удаление legacy — после общей ручной приёмки.
 
 ## 1. Принципы (решение 2026-10-24)
 
