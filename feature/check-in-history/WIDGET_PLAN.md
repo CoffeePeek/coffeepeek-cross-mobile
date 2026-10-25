@@ -143,3 +143,15 @@ the responsive APK was not installed and actual launcher resize, photos, themes
 and font/accessibility behavior remain manual gates. The earlier installed
 month-only build is not evidence for these new layouts. No device settings were
 changed, and no UI/instrumentation tests or new test hosts were introduced.
+
+## Responsive APK installed — 2026-10-25
+
+On the user's explicit installation request, the agreed Pixel 9 reconnected and
+was unlocked. Verified the installed Sandbox 2456 APK and new 2457 APK have the
+same signing certificate; updated in place with `adb install -r` successfully.
+Installed package: `com.coffeepeek.sandbox`, `1.1.1.2457-sandbox`, responsive
+implementation committed as `0fe7935e` (artifact built before that commit from
+`f3dee600` plus its exact source changes). The regular app/data were untouched.
+SandboxActivity returned `Status: ok` / HOT and the process remained running;
+Android reports the widget provider and an existing widget instance. This update
+confirms delivery and launch, not a manual resize/visual/accessibility pass.
