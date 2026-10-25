@@ -46,6 +46,12 @@ GOOGLE_REVERSED_CLIENT_ID = com.googleusercontent.apps.000000000000-xxxxxxxx
 
 Без Google OAuth приложение полностью запускается, а Google-кнопка скрыта. Email/password вход продолжает работать.
 
+Debug собирается без `iosApp/iosApp/GoogleService-Info.plist`: Firebase push в
+этом случае недоступен. Если настоящий локальный файл добавлен, он копируется
+в приложение и push можно проверять отдельно. В Debug Google-вход отключён
+независимо от заполненных OAuth ID. Для Release Firebase-файл обязателен;
+он не добавляется в Git.
+
 Для Google Sign-In нужны два OAuth client ID из одного Google Cloud проекта:
 
 1. iOS client ID для bundle id `com.coffeepeek`;

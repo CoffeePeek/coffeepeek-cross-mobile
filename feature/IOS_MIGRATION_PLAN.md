@@ -1295,6 +1295,30 @@ private. Fallback/legacy bridge не удаляются до общей ручн
 не успешная iOS-сборка. Приложение не собиралось/не запускалось, UI/аккаунт
 не затрагивались; Kotlin/Android код не менялся.
 
+### Debug без обязательного Firebase-конфига — 2026-10-25
+
+После исправления max-workers пользовательская сборка дошла до Xcode и упала
+на одном обязательном resource input GoogleService-Info.plist. Это конфигурация
+Firebase push, не запрос Google OAuth. PushAppDelegate уже пропускает Firebase
+при отсутствии файла, но статический Copy Bundle Resources не позволял собрать Debug.
+
+Статический resource заменён отдельной фазой copy-firebase-config.sh: Debug
+без файла пропускает Firebase и удаляет устаревшую копию из generated bundle,
+при наличии файл копируется; Release без файла явно падает. Настоящий plist
+остаётся локальным/ignored, тестовая заглушка в приложение не подставляется.
+IosGoogleAuthBridge не включает Google-вход при AppConfig.isDebug даже с OAuth
+IDs; email/password, backend и Apple provider не менялись.
+
+Проверки на базе e754799c + фикс и прежние пользовательские local pbx changes:
+4 изолированных shell contract сценария (missing/present Debug/Release и
+stale Debug artifact), 2 существующих Firebase config unit tests, plutil и
+shell syntax прошли. linkDebugFrameworkIosSimulatorArm64 успешен.
+Полный xcodebuild Debug, generic iOS Simulator/arm64, CODE_SIGNING_ALLOWED=NO
+прошёл: BUILD SUCCEEDED. В полученном com.coffeepeek bundle CoffeePeekDebug=YES,
+GoogleService-Info.plist отсутствует. Приложение не устанавливалось/не запускалось,
+настоящие OAuth/push/аккаунты не проверялись. Gradle внутри Xcode ограничен 6
+workers; Release archive/signing и устройство не запускались.
+
 ## 1. Принципы (решение 2026-10-24)
 
 - **iOS остаётся как в проде.** Нативная оболочка: `UITabBarController`, пять `UINavigationController`-стеков, `NativeScreenController`

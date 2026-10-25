@@ -1,5 +1,6 @@
 package com.coffeepeek.admin.auth
 
+import com.coffeepeek.admin.config.AppConfig
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlin.coroutines.resume
 
@@ -13,7 +14,7 @@ object IosGoogleAuthBridge {
         signIn: ((((String?, String?) -> Unit)) -> Unit)?,
         signOut: (() -> Unit)?,
     ) {
-        configured = isConfigured
+        configured = isConfigured && !AppConfig.isDebug
         signInHandler = signIn
         signOutHandler = signOut
     }
