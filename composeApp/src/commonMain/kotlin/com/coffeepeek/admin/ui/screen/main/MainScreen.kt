@@ -67,10 +67,10 @@ data class BottomNavItem(
 )
 
 @Composable
-expect fun MainScreen(isLoggedIn: Boolean)
+expect fun MainScreen(isLoggedIn: Boolean, onMapExpandedChange: (Boolean) -> Unit = {})
 
 @Composable
-internal fun ComposeMainScreen(isLoggedIn: Boolean) {
+internal fun ComposeMainScreen(isLoggedIn: Boolean, onMapExpandedChange: (Boolean) -> Unit) {
     val reduceMotion = com.coffeepeek.admin.ui.component.platformReduceMotion()
     val bottomNavController = rememberNavController()
     val analyticsEntry by bottomNavController.currentBackStackEntryAsState()
@@ -175,6 +175,7 @@ internal fun ComposeMainScreen(isLoggedIn: Boolean) {
     }
     val isExpandedMapVisible = isFeedMapExpanded &&
         currentDestination?.hasRoute<Navigator.Screen.FeedTab>() == true
+    LaunchedEffect(isExpandedMapVisible) { onMapExpandedChange(isExpandedMapVisible) }
     val systemBottomInset = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
     val floatingClearance = systemBottomInset +
         if (isExpandedMapVisible) 0.dp else floatingNavBarHeight() + FloatingNavBottomMargin

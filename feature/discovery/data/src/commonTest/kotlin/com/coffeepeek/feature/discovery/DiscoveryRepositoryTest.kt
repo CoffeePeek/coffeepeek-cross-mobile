@@ -165,13 +165,13 @@ class DiscoveryRepositoryTest {
 
     private val bounds = MapBounds(53.8, 27.5, 54.0, 27.7)
 
-    @Test fun theMapUsesOneVisibleZoomRequestAndRetainsServerClustersAndFilters() = runBlocking {
+    @Test fun theMapRequestsOneFinerZoomAndRetainsServerClustersAndFilters() = runBlocking {
         reply = { mapAnswer("""{"address":{"slug":"s1"},"latitude":53.9,"longitude":27.56,"title":"Cafe","type":"Specialty","primaryZone":{"slug":"z"}}""",
             """{"address":{"slug":"zone"},"name":"Centre","latitude":53.9,"longitude":27.56,"radiusMeters":800,"shopCount":7}""", truncated = true) }
         val filters = DiscoveryFilters(cityId = "minsk", priceLevel = PriceLevel.Cheap, minRating = 4.0, roasterIds = setOf("r"), tagIds = setOf("t"))
         val content = repository().mapContent(bounds, 14.7f, filters).getOrThrow()
         val request = requests.single()
-        assertEquals("14", request.url.parameters["zoom"])
+        assertEquals("15", request.url.parameters["zoom"])
         assertEquals("/api/Map", request.url.encodedPath)
         assertEquals("53.8", request.url.parameters["minLat"])
         assertEquals("minsk", request.url.parameters["city"])
@@ -183,6 +183,16 @@ class DiscoveryRepositoryTest {
         assertEquals(listOf("zone"), content.zones.map { it.id })
         assertEquals(MapCluster("c", Coordinates(1.0, 1.0), 3, MapBounds(0.0, 0.0, 2.0, 2.0)), content.clusters.single())
         assertTrue(content.isTruncated)
+    }
+
+    @Test fun mapDetailLevelUnfoldsCityClustersEarlierAndKeepsTheServerZoomLimits() = runBlocking {
+        reply = { ok("""{"shops":[],"clusters":[],"zones":[]}""") }
+        val cases = listOf(-2f to 0, 10f to 11, 12.9f to 13, 13f to 14, 22f to 22, 30f to 22)
+        val repository = repository()
+        for ((cameraZoom, requestZoom) in cases) {
+            repository.mapContent(bounds, cameraZoom, DiscoveryFilters()).getOrThrow()
+            assertEquals(requestZoom.toString(), requests.last().url.parameters["zoom"])
+        }
     }
 
     @Test fun clusterOnlyPascalCaseAnswersKeepBoundsCountsAndFallbackIdentity() = runBlocking {

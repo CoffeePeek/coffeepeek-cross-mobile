@@ -213,7 +213,8 @@ class ShopRepositoryImpl(
     }
 
     override suspend fun getMapContent(bounds: MapBounds, zoom: Float, filters: ShopFilters): Result<MapContent> =
-        requestMap(bounds, zoom.toInt().coerceIn(0, 22), filters).map { it.toMapContent(filters.coffeeFocus) }
+        // Match the migrated map: one finer server level keeps groups compact.
+        requestMap(bounds, (zoom + 1f).toInt().coerceIn(0, 22), filters).map { it.toMapContent(filters.coffeeFocus) }
 
     private suspend fun requestMap(bounds: MapBounds, zoom: Int, filters: ShopFilters) =
         shopApiService.getShopsInBounds(

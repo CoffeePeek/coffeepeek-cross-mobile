@@ -100,7 +100,8 @@ private class RemoteDiscoveryRepository(
     }
 
     override suspend fun mapContent(bounds: MapBounds, zoom: Float, filters: DiscoveryFilters): Result<MapContent> = requestResult {
-        backend.map(mapQuery(bounds, zoom.toInt().coerceIn(0, SHOP_ZOOM), filters)).getOrThrow().toContent(filters.kind)
+        // One finer server level halves cluster cells and unfolds dense areas sooner.
+        backend.map(mapQuery(bounds, (zoom + 1f).toInt().coerceIn(0, SHOP_ZOOM), filters)).getOrThrow().toContent(filters.kind)
     }
 
     private fun mapQuery(bounds: MapBounds, zoom: Int, filters: DiscoveryFilters) = MapQuery(
