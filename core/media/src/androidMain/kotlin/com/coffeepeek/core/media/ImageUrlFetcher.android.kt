@@ -28,14 +28,14 @@ actual class ImageUrlFetcher(
     private val protectedClient: HttpClient = client,
 ) : Fetcher<ImageUrl> {
 
-    override val inputDataKClass: KClass<ImageUrl> = ImageUrl::class
+    actual override val inputDataKClass: KClass<ImageUrl> = ImageUrl::class
 
-    override val source: DataSource = DataSource.Network
+    actual override val source: DataSource = DataSource.Network
 
-    override val ImageUrl.isSupported: Boolean
+    actual override val ImageUrl.isSupported: Boolean
         get() = true
 
-    override fun fetch(
+    actual override fun fetch(
         data: ImageUrl, resourceConfig: ResourceConfig
     ): Flow<Resource<ByteReadChannel>> = channelFlow {
         if (data.permissionScope != null && isImmutablePhotoVariant(data.url)) {

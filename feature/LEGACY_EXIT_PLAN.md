@@ -974,3 +974,29 @@ PR #201, parent `8843e5af`, child merge `76f2a5c8` + этот срез. Конф
 bridge relocation; оставшиеся legacy favorites/session/storage/transport readers
 и удаление старых screen/VM consumers по последней зависимости. Старые функции
 карты/репозитории всё ещё нужны оставшимся legacy consumers и не удаляются вслепую.
+
+## Parent #195: Android CI metadata repair — 2026-10-26
+
+GitHub Android CI run `40374896381`, job `121755150974`, source `8843e5af`,
+failed at `:core:media:compileCommonMainKotlinMetadata`: concrete expect
+ImageUrlFetcher inherited Fetcher<ImageUrl> without declaring its required
+members. Android/iOS target compilation alone had not exercised this separate
+metadata gate. iOS build verification for the same revision succeeded.
+
+The common expect contract now explicitly declares inputDataKClass, source,
+isSupported and fetch. Existing Android/iOS implementations mark those same
+members actual override. Clients, HTTP/permissions/session/cache policy and
+decoder behavior are unchanged; no dependency upgrade or CI bypass is used.
+
+- Targeted metadata compile (media and DS), media unit contracts and media
+  iOS Arm64 compile passed (22s).
+- The complete Android CI command then passed locally (3m03s): DS common
+  metadata, DirectDebug/PlayDebug assembly and DEX guards, aggregate
+  testDebugUnitTest plus app Direct/Play unit suites, all lintDebug tasks plus
+  app Direct/Play lint. Unchanged tasks may be cached/up-to-date.
+- No UI/instrumentation/screenshot suites, test hosts, app launches, production
+  requests/analytics or account writes. The repair was isolated from unfinished
+  Contributions work; local user Xcode/config files are not committed. The
+  exact published revision still needs its new GitHub run before CI is called green.
+- Shared Kotlin changes must include common metadata compilation in local
+  verification; target assembly/Native compile cannot stand in for it.
