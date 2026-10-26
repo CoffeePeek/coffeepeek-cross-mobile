@@ -20,6 +20,7 @@ actual fun LocationPermissionEffect(
     requestKey: Int,
     onGranted: () -> Unit,
     onDenied: () -> Unit,
+    requestOnce: Boolean,
 ) {
     val grantedState = rememberUpdatedState(onGranted)
     val deniedState = rememberUpdatedState(onDenied)

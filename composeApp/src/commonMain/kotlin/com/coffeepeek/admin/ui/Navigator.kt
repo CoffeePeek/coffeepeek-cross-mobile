@@ -13,6 +13,7 @@ import com.coffeepeek.admin.ui.screen.contributions.ContributionsScreenRenderer
 import com.coffeepeek.admin.ui.screen.profile.AccountScreenRenderer
 import com.coffeepeek.admin.ui.screen.profile.PublicProfileScreenRenderer
 import com.coffeepeek.admin.ui.screen.roaster.RoasterScreenRenderer
+import com.coffeepeek.admin.feature.community.ui.CheckInDetailScreenRenderer
 import com.coffeepeek.admin.ui.screen.profile.SettingsScreenRenderer
 import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.core.FastOutSlowInEasing
@@ -170,6 +171,8 @@ object Navigator {
         @Serializable data class ShopReviews(val shopId: String) : Screen
         @Serializable data class ReportReview(val reviewId: String, val isPreview: Boolean = false) : Screen
         @Serializable data class ReportCheckIn(val checkInId: String) : Screen
+        /** A post opened from a shared link (coffeepeek.by/check-ins/{id}). */
+        @Serializable data class CheckInDetail(val id: String) : Screen
     }
 
     data class MapShopFocus(
@@ -238,6 +241,7 @@ object Navigator {
         is Screen.ShopReviews,
         is Screen.ReportReview,
         is Screen.ReportCheckIn,
+        is Screen.CheckInDetail,
         is Screen.Favorites,
         is Screen.VisitedPlaces,
         is Screen.HomeCheckIns,
@@ -489,6 +493,9 @@ object Navigator {
                         val route = backStack.toRoute<Screen.ReportCheckIn>()
                         org.koin.compose.koinInject<com.coffeepeek.admin.ui.screen.review.ContentReportScreenRenderer>().Content(route.checkInId, true, false)
                     }
+                    composable<Screen.CheckInDetail> { backStack ->
+                        koinInject<CheckInDetailScreenRenderer>().Content(backStack.toRoute<Screen.CheckInDetail>().id)
+                    }
                     composable<Screen.ShopMenuGallery> { backStack ->
                         val route = backStack.toRoute<Screen.ShopMenuGallery>()
                         koinInject<ShopMenuGalleryScreenRenderer>().Content(shopId = route.shopId)
@@ -555,6 +562,7 @@ koinInject<ContributionsScreenRenderer>().Editor(route.shopId, route.section, ro
             is Screen.ShopReviews -> koinInject<ShopCheckInListScreenRenderer>().Content(screen.shopId)
             is Screen.ReportReview -> org.koin.compose.koinInject<com.coffeepeek.admin.ui.screen.review.ContentReportScreenRenderer>().Content(screen.reviewId, false, screen.isPreview)
             is Screen.ReportCheckIn -> org.koin.compose.koinInject<com.coffeepeek.admin.ui.screen.review.ContentReportScreenRenderer>().Content(screen.checkInId, true, false)
+            is Screen.CheckInDetail -> koinInject<CheckInDetailScreenRenderer>().Content(screen.id)
             is Screen.ShopMenuGallery -> koinInject<ShopMenuGalleryScreenRenderer>().Content(screen.shopId)
             is Screen.ReportShop -> koinInject<ShopReportScreenRenderer>().Content(screen.shopId, screen.shopTitle)
             is Screen.SuggestShopChange -> koinInject<ContributionsScreenRenderer>().Suggest(screen.shopId)

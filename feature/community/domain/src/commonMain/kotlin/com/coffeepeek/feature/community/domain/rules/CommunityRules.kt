@@ -46,6 +46,9 @@ fun CommunityPost.publicationLabel(): PublicationLabel = if (visibility == PostV
 fun isWithdrawnFromPublic(updated: CommunityPost): Boolean =
     updated.visibility != PostVisibility.Public || updated.moderation != PostModeration.Approved
 
+/** The website link of a post, null unless it is public and approved: anyone else opening the link of another post gets «unavailable». */
+fun CommunityPost.shareLink(): String? = "https://coffeepeek.by/check-ins/$id".takeIf { id.isNotBlank() && !isWithdrawnFromPublic(this) }
+
 /** Keeps the server's publication order: known posts are refreshed in place, new ones are appended. */
 fun appendTimeline(current: List<CommunityPost>, incoming: List<CommunityPost>): List<CommunityPost> {
     val updates = incoming.associateBy(CommunityPost::id)

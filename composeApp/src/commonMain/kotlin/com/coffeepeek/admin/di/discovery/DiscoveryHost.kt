@@ -77,7 +77,9 @@ internal fun discoveryHost() = DiscoveryHost(
     },
     haptic = { platformHaptic(HapticEvent.Selection) },
     retained = { visible, content -> RetainedContent(visible, content) },
-    locationPermission = { onGranted, onDenied -> LocationPermissionEffect(requestKey = 1, onGranted = onGranted, onDenied = onDenied) },
+    locationPermission = { requestKey, onGranted, onDenied ->
+        LocationPermissionEffect(requestKey, onGranted, onDenied, requestOnce = true)
+    },
     photoPrefetch = { listState, photos -> PrefetchListPhotos(listState, photos) },
     reduceMotion = { platformReduceMotion() },
     mapCanvas = { state, callbacks, modifier -> DiscoveryMapCanvas(state, callbacks, modifier) },
@@ -106,7 +108,7 @@ private fun DiscoveryMapCanvas(state: MapCanvasState, callbacks: MapCanvasCallba
         myLocationRequestKey = state.myLocationRequest,
         onMyLocationFound = { latitude, longitude -> callbacks.onMyLocationFound(com.coffeepeek.feature.discovery.domain.model.Coordinates(latitude, longitude)) },
         onLocationPermissionDenied = callbacks.onLocationDenied,
-        requestLocationPermissionOnLoad = !state.isPreview,
+        requestLocationPermissionOnLoad = false,
         showAttribution = !state.isPreview,
     )
 }

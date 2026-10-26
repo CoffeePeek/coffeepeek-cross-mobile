@@ -12,7 +12,7 @@ import com.coffeepeek.feature.discovery.impl.search.SearchAction
 
 @Composable
 internal fun DiscoveryTabEffects(
-    ui: DiscoveryTabState, showDiscovery: Boolean, host: DiscoveryHost, analytics: DiscoveryAnalytics,
+    ui: DiscoveryTabState, showDiscovery: Boolean, analytics: DiscoveryAnalytics,
     callbacks: TabCallbacks, focus: MapFocus?, onAction: (SearchAction) -> Unit,
 ) {
     DiscoveryOverlayAnalytics(ui, analytics)
@@ -26,7 +26,6 @@ internal fun DiscoveryTabEffects(
     LaunchedEffect(ui.mapExpanded) { callbacks.onMapExpandedChange(ui.mapExpanded) }
     DisposableEffect(Unit) { onDispose { callbacks.onMapExpandedChange(false) } }
     LaunchedEffect(showDiscovery) { if (!showDiscovery) ui.mapExpanded = false }
-    host.locationPermission({ onAction(SearchAction.LocationGranted) }, { onAction(SearchAction.LocationDenied) })
     val focusManager = LocalFocusManager.current
     val keyboard = LocalSoftwareKeyboardController.current
     val lifecycle by LocalLifecycleOwner.current.lifecycle.currentStateFlow.collectAsStateWithLifecycle()

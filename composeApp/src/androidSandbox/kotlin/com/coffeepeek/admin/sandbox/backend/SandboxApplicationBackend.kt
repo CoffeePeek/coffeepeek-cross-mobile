@@ -215,6 +215,8 @@ internal class SandboxApplicationBackend(private val today: LocalDate, private v
             if (!populated) return null
             return coffees().firstOrNull { it["address"]!!.jsonObject["slug"]!!.jsonPrimitive.content == path.substringAfterLast('/') }?.let(::ok)
         }
+        val checkInId = path.removePrefix("/api/v1/check-ins/").takeIf { path.startsWith("/api/v1/check-ins/") && '/' !in it && it !in setOf("home", "mine") }
+        if (checkInId != null && method == HttpMethod.Get) return checkIn(checkInId)
         if (path == "/api/v1/feed") return feedPage(request)
         if (path == "/api/v1/check-ins" && method == HttpMethod.Post) {
             val shopSlug = (input["coffeeShopSlug"] as? JsonPrimitive)?.contentOrNull?.takeIf(shopNames::containsKey)
@@ -252,7 +254,14 @@ internal class SandboxApplicationBackend(private val today: LocalDate, private v
     fun protectedPhotoAvailable(checkInId: String): Boolean =
         (visits + others).firstOrNull { it["id"]?.jsonPrimitive?.content == checkInId }?.let(::visible) == true
 
-    private fun feedItem(row: JsonObject) = buildJsonObject { put("publishedAtUtc", row["createdAtUtc"] ?: JsonPrimitive("${today}T07:00:00Z")); put("checkIn", row) }
+    /** Like the real read of a shared post: the account's own visit always, another author's only when published and not blocked; otherwise 404. */
+    private fun checkIn(id: String): Pair<HttpStatusCode, JsonObject> {
+        val own = visits.firstOrNull { it["id"]?.jsonPrimitive?.content == id }
+        val public = (others + generatedFeed).firstOrNull { it["id"]?.jsonPrimitive?.content == id && visible(it) && isPublished(it) }
+        return (own ?: public)?.let(::ok) ?: (HttpStatusCode.NotFound to failure("Check-in not found."))
+    }
+
+    private fun feedItem(row: JsonObject) =buildJsonObject { put("publishedAtUtc", row["createdAtUtc"] ?: JsonPrimitive("${today}T07:00:00Z")); put("checkIn", row) }
     /** Page size and cursor are validated like the real endpoint; the cursor is the offset into the visible fixtures. */
     private fun feedPage(request: HttpRequestData): Pair<HttpStatusCode, JsonObject> {
         if (feed == SandboxFeed.Failure) return HttpStatusCode.InternalServerError to failure("Не удалось загрузить ленту")

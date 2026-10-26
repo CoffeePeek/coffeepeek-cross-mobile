@@ -35,7 +35,7 @@ internal fun CheckInShopPickerScreen(
     val select by rememberUpdatedState(onSelect)
     val signIn by rememberUpdatedState(onSignIn)
     var showMap by rememberSaveable { mutableStateOf(false) }
-    host.locationPermission({ search.onAction(SearchAction.LocationGranted) }, { search.onAction(SearchAction.LocationDenied) })
+    host.locationPermission(1, { search.onAction(SearchAction.LocationGranted) }, { search.onAction(SearchAction.LocationDenied) })
     LaunchedEffect(search) {
         search.events.collect { event ->
             when (event) {

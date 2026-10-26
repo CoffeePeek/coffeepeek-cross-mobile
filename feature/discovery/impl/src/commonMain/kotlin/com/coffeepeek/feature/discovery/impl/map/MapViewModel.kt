@@ -65,6 +65,8 @@ internal class MapViewModel(
     private var queryJob: Job? = null
     private var detailsJob: Job? = null
     private var pauseJob: Job? = null
+    private var permissionRequestPending = false
+    private var locateAfterPermission = false
 
     init {
         viewModelScope.launch { city.selected.collect(::onCity) }
@@ -76,38 +78,74 @@ internal class MapViewModel(
         when (action) {
             is MapAction.BoundsChanged -> onBoundsChanged(action.bounds, action.zoom)
             MapAction.SearchArea -> searchCurrentArea()
+            is MapAction.Query -> changeQuery(action.text)
+            is MapAction.SelectSuggestion -> selectSuggestion(action.shopId)
+            MapAction.Interact -> requestLocationPermission()
+            MapAction.RequestMyLocation -> requestLocationPermission(locate = true)
+            MapAction.LocationGranted -> onLocationGranted()
+            is MapAction.MyLocationFound -> onMyLocationFound(action.point)
+            MapAction.LocationDenied -> onLocationDenied()
+            MapAction.ZoomIn -> changeZoom(1f)
+            MapAction.ZoomOut -> changeZoom(-1f)
+            is MapAction.Focus -> focusOnShop(action.focus.let { MapMarker(it.shopId, it.title, it.coordinates) })
+            MapAction.CameraApplied -> updateState { copy(camera = null) }
+            else -> handleSelection(action)
+        }
+    }
+
+    private suspend fun handleSelection(action: MapAction) {
+        when (action) {
             is MapAction.SelectMarker -> findMarker(action.shopId)?.let(::selectMarker)
-            is MapAction.SelectFromCarousel -> findMarker(action.shopId)?.let { marker ->
-                selectMarker(marker)
-                moveCamera(marker.coordinates, FOCUS_ZOOM, PAUSE_AFTER_MOVE_MS)
-            }
+            is MapAction.SelectFromCarousel -> selectFromCarousel(action.shopId)
             is MapAction.SelectZone -> currentState.zones.firstOrNull { it.id == action.zoneId }?.let { zone -> updateState { copy(selectedZone = zone) } }
-            MapAction.ShowZoneShops -> currentState.selectedZone?.let { zone ->
-                updateState { copy(selectedZone = null) }
-                moveCamera(zone.center, ZONE_ZOOM, PAUSE_AFTER_MOVE_MS)
-            }
+            MapAction.ShowZoneShops -> showZoneShops()
             MapAction.ClearZone -> updateState { copy(selectedZone = null) }
             MapAction.ToggleZones -> {
                 analytics.mapInteracted(MapInteraction.ZonesToggled, enabled = !currentState.showZones)
                 updateState { copy(showZones = !showZones, selectedZone = null) }
             }
-            is MapAction.Query -> changeQuery(action.text)
-            is MapAction.SelectSuggestion -> selectSuggestion(action.shopId)
-            MapAction.RequestMyLocation -> updateState { copy(myLocationRequest = myLocationRequest + 1) }
-            is MapAction.MyLocationFound -> onMyLocationFound(action.point)
-            MapAction.LocationDenied -> analytics.geolocation(PLACEMENT, userTriggered = currentState.myLocationRequest > 0, outcome = GeolocationOutcome.Unavailable)
-            MapAction.ZoomIn -> changeZoom(1f)
-            MapAction.ZoomOut -> changeZoom(-1f)
-            is MapAction.Focus -> focusOnShop(action.focus.let { MapMarker(it.shopId, it.title, it.coordinates) })
-            MapAction.CameraApplied -> updateState { copy(camera = null) }
             is MapAction.OpenShop -> {
                 analytics.mapShopOpened(fromSearch = selectionFromSearch)
                 sendEvent(MapEvent.OpenShop(action.shopId))
             }
+            else -> Unit
         }
     }
 
+    private fun selectFromCarousel(shopId: String) {
+        val marker = findMarker(shopId) ?: return
+        selectMarker(marker)
+        moveCamera(marker.coordinates, FOCUS_ZOOM, PAUSE_AFTER_MOVE_MS)
+    }
+
+    private fun showZoneShops() {
+        val zone = currentState.selectedZone ?: return
+        updateState { copy(selectedZone = null) }
+        moveCamera(zone.center, ZONE_ZOOM, PAUSE_AFTER_MOVE_MS)
+    }
+
     // ---- what comes from outside ----
+
+    private fun requestLocationPermission(locate: Boolean = false) {
+        if (locate) locateAfterPermission = true
+        if (permissionRequestPending || (!locate && currentState.locationPermissionRequest > 0)) return
+        permissionRequestPending = true
+        updateState { copy(locationPermissionRequest = locationPermissionRequest + 1) }
+    }
+
+    private fun onLocationGranted() {
+        permissionRequestPending = false
+        location.refresh()
+        if (locateAfterPermission) updateState { copy(myLocationRequest = myLocationRequest + 1) }
+        else analytics.geolocation(PLACEMENT, userTriggered = true, outcome = GeolocationOutcome.Available)
+        locateAfterPermission = false
+    }
+
+    private fun onLocationDenied() {
+        permissionRequestPending = false
+        locateAfterPermission = false
+        analytics.geolocation(PLACEMENT, userTriggered = currentState.locationPermissionRequest > 0, outcome = GeolocationOutcome.Unavailable)
+    }
 
     private fun onCity(cityId: String?) {
         if (!cityReady || cityId == null || cityId == currentState.cityId) return
@@ -323,6 +361,7 @@ internal class MapViewModel(
     // ---- the camera ----
 
     private fun changeZoom(delta: Float) {
+        requestLocationPermission()
         val bounds = currentState.pendingBounds ?: currentState.activeBounds ?: return
         val zoom = currentState.pendingZoom ?: currentState.activeZoom ?: return
         val next = clampZoom(zoom + delta)
