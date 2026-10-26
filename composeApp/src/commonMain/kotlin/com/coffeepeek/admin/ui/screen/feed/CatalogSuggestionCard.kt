@@ -1,5 +1,7 @@
 package com.coffeepeek.admin.ui.screen.feed
 
+import com.coffeepeek.core.designsystem.icons.CoffeePeekIllustrations
+
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
@@ -13,7 +15,6 @@ import coffeepeek.composeapp.generated.resources.catalog_shop_suggestion_action
 import coffeepeek.composeapp.generated.resources.catalog_roaster_suggestion_title
 import coffeepeek.composeapp.generated.resources.catalog_roaster_suggestion_description
 import coffeepeek.composeapp.generated.resources.catalog_roaster_suggestion_action
-import coffeepeek.composeapp.generated.resources.maskot_with_magnifying_glass
 import com.coffeepeek.core.designsystem.component.CoffeePeekCatalogSuggestionCard
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import org.jetbrains.compose.resources.painterResource
@@ -29,7 +30,7 @@ internal fun CatalogSuggestionCard(kind: CatalogSuggestionKind, onAdd: () -> Uni
         title = stringResource(if (shop) Res.string.catalog_shop_suggestion_title else Res.string.catalog_roaster_suggestion_title),
         description = stringResource(if (shop) Res.string.catalog_shop_suggestion_description else Res.string.catalog_roaster_suggestion_description),
         actionLabel = stringResource(if (shop) Res.string.catalog_shop_suggestion_action else Res.string.catalog_roaster_suggestion_action),
-        illustration = painterResource(Res.drawable.maskot_with_magnifying_glass), onAdd = onAdd, modifier = modifier,
+        illustration = painterResource(CoffeePeekIllustrations.CatalogSearch), onAdd = onAdd, modifier = modifier,
     )
 }
 

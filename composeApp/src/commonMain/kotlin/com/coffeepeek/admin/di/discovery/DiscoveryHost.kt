@@ -1,37 +1,20 @@
 package com.coffeepeek.admin.di.discovery
 
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.size
-import androidx.compose.material3.Icon
+
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.composed
 import androidx.compose.ui.graphics.luminance
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import coffeepeek.composeapp.generated.resources.Res
-import coffeepeek.composeapp.generated.resources.maskot_with_magnifying_glass
 import com.coffeepeek.admin.analytics.analyticsExposure
 import com.coffeepeek.admin.location.LocationPermissionEffect
 import com.coffeepeek.admin.map.CoffeeMap
 import com.coffeepeek.admin.map.mapCanvasSize
-import com.coffeepeek.admin.ui.component.CoffeeShopImage
-import com.coffeepeek.admin.ui.component.CoffeeShopPlaceholderImage
 import com.coffeepeek.admin.ui.component.HapticEvent
-import com.coffeepeek.admin.ui.component.PriceBeanSlider
-import com.coffeepeek.admin.ui.component.LoadErrorContent
 import com.coffeepeek.admin.ui.component.RetainedContent
-import com.coffeepeek.admin.ui.component.RoasterAvatar
-import com.coffeepeek.admin.ui.component.brewMethodIcon
 import com.coffeepeek.admin.ui.component.platformHaptic
 import com.coffeepeek.admin.ui.component.platformReduceMotion
-import com.coffeepeek.admin.ui.component.priceLevelHint
-import com.coffeepeek.admin.ui.component.shopTagIcon
-import com.coffeepeek.core.media.PrefetchListPhotos
-import com.coffeepeek.domain.model.CatalogItem
 import com.coffeepeek.domain.model.CoffeeShopType
 import com.coffeepeek.domain.model.MapCoffeeZone
 import com.coffeepeek.domain.model.MapShop
@@ -43,45 +26,25 @@ import com.coffeepeek.feature.discovery.domain.model.MapBounds
 import com.coffeepeek.feature.discovery.domain.model.MapMarker
 import com.coffeepeek.feature.discovery.domain.model.MapZone
 import com.coffeepeek.feature.discovery.domain.model.ShopKind
-import org.jetbrains.compose.resources.painterResource
 
-/** The legacy pieces Discovery borrows: the photo loader and its placeholders, the brew method icons, the map, the location permission, the analytics exposure. */
+/** Root supplies platform services and exposure ownership, never business visual slots. */
 internal fun discoveryHost() = DiscoveryHost(
-    image = { url, description, modifier, scale -> CoffeeShopImage(imageUrl = url, modifier = modifier, contentDescription = description, contentScale = scale) },
-    coverPlaceholder = { description, modifier -> CoffeeShopPlaceholderImage(modifier, contentDescription = description ?: "Фото кофейни отсутствует") },
-    compactImage = { url, description, modifier, scale ->
-        CoffeeShopImage(imageUrl = url, modifier = modifier, contentDescription = description, contentScale = scale, placeholderLabelSize = 7.sp)
-    },
-    compactCoverPlaceholder = { description, modifier ->
-        CoffeeShopPlaceholderImage(modifier, labelSize = 7.sp, contentDescription = description ?: "Фото кофейни отсутствует")
-    },
-    loadError = { onRetry, modifier -> LoadErrorContent(onRetry, modifier) },
-    brewMethodIcon = { name, size ->
-        Icon(painterResource(brewMethodIcon(name)), contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(size))
-    },
-    tagIcon = { slug -> Icon(shopTagIcon(slug), contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(22.dp)) },
-    roasterAvatar = { name, logoUrl -> RoasterAvatar(CatalogItem(id = name, name = name, photoUrl = logoUrl)) },
-    priceSelector = { selected, onSelect, modifier -> PriceBeanSlider(selected = selected, onSelect = onSelect, showTitle = false, showHint = false, modifier = modifier) },
-    priceHint = { priceLevelHint(it) },
-    roasterLogo = { _, logoUrl -> if (logoUrl != null) CoffeeShopImage(imageUrl = logoUrl, modifier = Modifier.fillMaxSize(), contentScale = ContentScale.Crop, placeholderLabelSize = 5.sp) },
-    suggestionIllustration = { painterResource(Res.drawable.maskot_with_magnifying_glass) },
-    exposure = { modifier, exposure ->
-        when (exposure) {
-            DiscoveryExposure.Search -> modifier.analyticsExposure("search", "shops", "discovery")
-            DiscoveryExposure.Filters -> modifier.analyticsExposure("filters", "shops", "discovery")
-            DiscoveryExposure.ShopCatalog -> modifier.analyticsExposure("shop_catalog", "discovery", "discovery")
-            DiscoveryExposure.Favorite -> modifier.favoriteExposure()
-            DiscoveryExposure.MapPreview -> modifier.analyticsExposure("map", "home", "discovery")
-            DiscoveryExposure.MapFull -> modifier.analyticsExposure("map", "discovery", "map")
-        }
-    },
+    exposure = ::discoveryExposure,
     haptic = { platformHaptic(HapticEvent.Selection) },
     retained = { visible, content -> RetainedContent(visible, content) },
     locationPermission = { onGranted, onDenied -> LocationPermissionEffect(requestKey = 1, onGranted = onGranted, onDenied = onDenied) },
-    photoPrefetch = { listState, photos -> PrefetchListPhotos(listState, photos) },
     reduceMotion = { platformReduceMotion() },
     mapCanvas = { state, callbacks, modifier -> DiscoveryMapCanvas(state, callbacks, modifier) },
 )
+
+private fun discoveryExposure(modifier: Modifier, exposure: DiscoveryExposure): Modifier = when (exposure) {
+    DiscoveryExposure.Search -> modifier.analyticsExposure("search", "shops", "discovery")
+    DiscoveryExposure.Filters -> modifier.analyticsExposure("filters", "shops", "discovery")
+    DiscoveryExposure.ShopCatalog -> modifier.analyticsExposure("shop_catalog", "discovery", "discovery")
+    DiscoveryExposure.Favorite -> modifier.favoriteExposure()
+    DiscoveryExposure.MapPreview -> modifier.analyticsExposure("map", "home", "discovery")
+    DiscoveryExposure.MapFull -> modifier.analyticsExposure("map", "discovery", "map")
+}
 
 @Composable
 private fun DiscoveryMapCanvas(state: MapCanvasState, callbacks: MapCanvasCallbacks, modifier: Modifier) {

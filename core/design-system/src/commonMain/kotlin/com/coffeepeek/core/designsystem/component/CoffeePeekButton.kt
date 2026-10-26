@@ -17,6 +17,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.Dp
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
@@ -29,12 +30,14 @@ fun CoffeePeekButton(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     leadingIcon: (@Composable () -> Unit)? = null,
+    fillWidth: Boolean = true,
+    minHeight: Dp = CoffeePeekDimens.buttonHeight,
 ) {
     Button(
         onClick = onClick,
         modifier = modifier
-            .fillMaxWidth()
-            .heightIn(min = CoffeePeekDimens.buttonHeight),
+                .then(if (fillWidth) Modifier.fillMaxWidth() else Modifier)
+                .heightIn(min = minHeight),
         colors = ButtonDefaults.buttonColors(
             containerColor         = MaterialTheme.colorScheme.primary,
             contentColor           = MaterialTheme.colorScheme.onPrimary,

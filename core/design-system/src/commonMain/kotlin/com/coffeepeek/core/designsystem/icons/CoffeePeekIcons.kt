@@ -149,7 +149,8 @@ object CoffeePeekIcons {
     val FileText: ImageVector get() = PhosphorIcons.Regular.FileText
     val Shield: ImageVector get() = PhosphorIcons.Regular.Shield
     val ThemeDark: ImageVector get() = PhosphorIcons.Regular.Moon
-    val ThemeLight: ImageVector get() = PhosphorIcons.Regular.Sun
+    val Sun: ImageVector get() = PhosphorIcons.Regular.Sun
+    val ThemeLight: ImageVector get() = Sun
     val ThemeSystem: ImageVector get() = PhosphorIcons.Regular.Monitor
     val Helpful: ImageVector get() = PhosphorIcons.Regular.ThumbsUp
     val Time: ImageVector get() = PhosphorIcons.Regular.Clock

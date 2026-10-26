@@ -1,5 +1,7 @@
 package com.coffeepeek.admin.di.homecheckin
 
+import com.coffeepeek.core.designsystem.icons.CoffeePeekIllustrations
+
 import androidx.compose.foundation.Image
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -7,7 +9,6 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import coffeepeek.composeapp.generated.resources.Res
 import coffeepeek.composeapp.generated.resources.checkin_rating_coffee
-import coffeepeek.composeapp.generated.resources.maskot_with_magnifying_glass
 import com.coffeepeek.admin.analytics.CheckInSource
 import com.coffeepeek.admin.analytics.CheckInTracker
 import com.coffeepeek.admin.di.checkinhistory.CheckInHistorySession
@@ -45,7 +46,7 @@ internal fun appHomeCheckInEditor(
         { lease.isLoggedIn && lease.isCurrent() }, appHomeCheckInDates(),
         HomeCheckInEditorMedia(
             { Image(painterResource(Res.drawable.checkin_rating_coffee), null, it, contentScale = ContentScale.Crop) },
-            { Image(painterResource(Res.drawable.maskot_with_magnifying_glass), null, it) },
+            { Image(painterResource(CoffeePeekIllustrations.CatalogSearch), null, it) },
             { name, modifier -> Icon(painterResource(brewMethodIcon(name)), null, modifier, tint = MaterialTheme.colorScheme.onSurfaceVariant) },
             { photo, modifier, fullSize ->
                 CoffeePeekImage(photo.bytes, modifier = modifier, contentScale = if (fullSize) ContentScale.Fit else ContentScale.Crop)

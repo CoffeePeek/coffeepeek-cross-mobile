@@ -1,5 +1,10 @@
 package com.coffeepeek.feature.discovery.impl.ui
 
+import com.coffeepeek.core.media.PrefetchListPhotos
+import com.coffeepeek.core.designsystem.component.CoffeePeekLoadErrorContent
+import com.coffeepeek.core.designsystem.icons.CoffeePeekIllustrations
+import org.jetbrains.compose.resources.painterResource
+
 import androidx.compose.animation.AnimatedContent
 import com.coffeepeek.feature.discovery.impl.resources.Res
 import com.coffeepeek.feature.discovery.impl.resources.discovery_filters
@@ -233,7 +238,7 @@ private fun ResultsList(
     // The roaster section appears above the shops the viewport is anchored to: bring it into view.
     val showsTextResults = textResults != null && state.query.isNotBlank()
     LaunchedEffect(showsTextResults) { listState.scrollToItem(0) }
-    if (prefetch) host.photoPrefetch(listState, shops.map { it.id to listOfNotNull(it.photoUrl) })
+    if (prefetch) PrefetchListPhotos(listState, shops.map { it.id to listOfNotNull(it.photoUrl) })
     val nearEnd by remember { derivedStateOf { listState.layoutInfo.let { info -> (info.visibleItemsInfo.lastOrNull()?.index ?: 0) >= info.totalItemsCount - 5 } } }
     LaunchedEffect(nearEnd, state.hasMore, state.isLoadingMore, shops.size) { if (nearEnd && state.hasMore && shops.isNotEmpty()) onAction(SearchAction.LoadMore) }
     CoffeePeekPullToRefresh(
@@ -258,15 +263,15 @@ private fun ResultsList(
                 state.isLoading && shops.isEmpty() -> item(key = "loading") {
                     Box(Modifier.fillParentMaxSize(), contentAlignment = Alignment.Center) { CoffeePeekLoader(stringResource(Res.string.discovery_loading)) }
                 }
-                state.error != null && shops.isEmpty() -> item(key = "error") { host.loadError({ onAction(SearchAction.Refresh) }, Modifier.fillParentMaxSize()) }
+                state.error != null && shops.isEmpty() -> item(key = "error") { CoffeePeekLoadErrorContent({ onAction(SearchAction.Refresh) }, Modifier.fillParentMaxSize()) }
                 // Nothing found is the «Не нашли нужную кофейню?» card, not a plain message.
-                shops.isEmpty() -> item(key = "suggestion") { SuggestionCard(host, onAddShop) }
+                shops.isEmpty() -> item(key = "suggestion") { SuggestionCard(onAddShop) }
                 else -> {
                     items(shops, key = { it.id }, contentType = { "shop" }) { shop ->
                         ShopRow(shop, host, shop.id in state.favoriteUpdates, state.userLocation, onOpen = { onAction(SearchAction.OpenShop(shop.id)) }, onFavorite = { onAction(SearchAction.ToggleFavorite(shop.id)) })
                     }
                     // As in the legacy list: the card is the last item whenever nothing is loading and nothing failed.
-                    if (!state.isLoading && state.error == null) item(key = "suggestion") { SuggestionCard(host, onAddShop) }
+                    if (!state.isLoading && state.error == null) item(key = "suggestion") { SuggestionCard(onAddShop) }
                 }
             }
         }
@@ -274,12 +279,12 @@ private fun ResultsList(
 }
 
 @Composable
-private fun SuggestionCard(host: DiscoveryHost, onAddShop: () -> Unit) {
+private fun SuggestionCard(onAddShop: () -> Unit) {
     CoffeePeekCatalogSuggestionCard(
         title = stringResource(Res.string.discovery_suggestion_title),
         description = stringResource(Res.string.discovery_suggestion_description),
         actionLabel = stringResource(Res.string.discovery_suggestion_action),
-        illustration = host.suggestionIllustration(),
+        illustration = painterResource(CoffeePeekIllustrations.CatalogSearch),
         onAdd = onAddShop,
     )
 }

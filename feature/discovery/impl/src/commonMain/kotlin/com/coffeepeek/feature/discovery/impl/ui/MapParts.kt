@@ -70,7 +70,7 @@ import androidx.compose.ui.unit.dp
 import com.coffeepeek.core.designsystem.component.CoffeePeekLoader
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
-import com.coffeepeek.feature.discovery.api.DiscoveryHost
+import com.coffeepeek.feature.discovery.impl.ui.compose.component.DiscoveryMapShopCard
 import com.coffeepeek.feature.discovery.domain.model.MapMarker
 import com.coffeepeek.feature.discovery.domain.model.MapZone
 import com.coffeepeek.feature.discovery.domain.rules.distanceMeters
@@ -173,16 +173,16 @@ private fun zoneShopCount(count: Int): String {
 
 /** The selected shop (or the nearby shops while nothing is selected) as cards that swipe around in a loop; swiping selects the shop. */
 @Composable
-internal fun MapShopCarousel(state: MapState, host: DiscoveryHost, dismissInput: () -> Unit, onAction: (MapAction) -> Unit, modifier: Modifier = Modifier) {
+internal fun MapShopCarousel(state: MapState, dismissInput: () -> Unit, onAction: (MapAction) -> Unit, modifier: Modifier = Modifier) {
     val selected = state.selectedShop
     // As in prod: a shop that is already among the nearby ones keeps the order of the list; only a shop from elsewhere is put in front of ten others.
     val shops = if (selected == null || state.nearby.any { it.id == selected.id }) state.nearby else listOf(selected) + state.nearby.take(9)
     // The pager is rebuilt when the set of shops changes, so it never animates over a list that was swapped under it.
-    key(shops.map { it.id }) { MapShopPager(state, shops.distinctBy { it.id }, host, dismissInput, onAction, modifier) }
+    key(shops.map { it.id }) { MapShopPager(state, shops.distinctBy { it.id }, dismissInput, onAction, modifier) }
 }
 
 @Composable
-private fun MapShopPager(state: MapState, shops: List<MapMarker>, host: DiscoveryHost, dismissInput: () -> Unit, onAction: (MapAction) -> Unit, modifier: Modifier) {
+private fun MapShopPager(state: MapState, shops: List<MapMarker>, dismissInput: () -> Unit, onAction: (MapAction) -> Unit, modifier: Modifier) {
     if (shops.isEmpty()) return
     val selected = state.selectedShop
     val currentSelectedId by rememberUpdatedState(state.selectedShop?.id)
@@ -209,8 +209,8 @@ private fun MapShopPager(state: MapState, shops: List<MapMarker>, host: Discover
     ) { page ->
         val shop = shops[page % shops.size]
         val isSelected = shop.id == selected?.id
-        MapShopCard(
-            shop, host, state.details.takeIf { isSelected }, isSelected && state.isLoadingDetails, state.nearbyOrigin?.let { distanceMeters(it, shop.coordinates) },
+        DiscoveryMapShopCard(
+            shop, state.details.takeIf { isSelected }, isSelected && state.isLoadingDetails, state.nearbyOrigin?.let { distanceMeters(it, shop.coordinates) },
             onOpen = { if (isSelected) onAction(MapAction.OpenShop(shop.id)) else onAction(MapAction.SelectMarker(shop.id)) },
         )
     }
@@ -220,61 +220,4 @@ internal fun carouselStartPage(count: Int, selectedIndex: Int): Int {
     if (count <= 1) return 0
     val middle = Int.MAX_VALUE / 2
     return middle - middle % count + selectedIndex.coerceIn(0, count - 1)
-}
-
-@Composable
-private fun MapShopCard(
-    shop: MapMarker,
-    host: DiscoveryHost,
-    details: com.coffeepeek.feature.discovery.api.MapShopDetails?,
-    isLoading: Boolean,
-    distance: Double?,
-    onOpen: () -> Unit,
-) {
-    Card(
-        Modifier.fillMaxWidth(), shape = RoundedCornerShape(CoffeePeekDimens.cardRadius),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface), elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
-    ) {
-        Row(Modifier.fillMaxWidth().clickable(onClick = onOpen).padding(CoffeePeekDimens.spacing3), verticalAlignment = Alignment.CenterVertically) {
-            Box(Modifier.size(72.dp).clip(RoundedCornerShape(CoffeePeekDimens.radiusMd)).background(MaterialTheme.colorScheme.surfaceVariant), contentAlignment = Alignment.Center) {
-                val photo = details?.photoUrl
-                when {
-                    !photo.isNullOrBlank() -> host.compactImage(photo, shop.title, Modifier.fillMaxSize(), ContentScale.Crop)
-                    isLoading -> CoffeePeekLoader(stringResource(Res.string.discovery_loading), size = 20.dp, strokeWidth = 2.dp)
-                    else -> host.compactCoverPlaceholder(stringResource(Res.string.discovery_map_photo_missing, shop.title), Modifier.fillMaxSize())
-                }
-            }
-            Spacer(Modifier.width(CoffeePeekDimens.spacing3))
-            Column(Modifier.weight(1f)) {
-                val rating = details?.rating
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    if (rating != null && rating > 0) {
-                        Icon(CoffeePeekIcons.StarFilled, null, Modifier.size(14.dp), tint = MaterialTheme.colorScheme.primary)
-                        Spacer(Modifier.width(4.dp))
-                        Text(oneDecimal(rating), style = MaterialTheme.typography.labelMedium)
-                        if (details.reviewCount > 0) Text(" (${details.reviewCount})", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    } else {
-                        Text(
-                            when {
-                                details == null -> stringResource(Res.string.discovery_map_card_nearby)
-                                details.reviewCount > 0 -> stringResource(Res.string.discovery_map_card_checkins, details.reviewCount)
-                                else -> stringResource(Res.string.discovery_map_card_no_checkins)
-                            },
-                            style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    }
-                }
-                Text(shop.title, Modifier.padding(top = 2.dp), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold, maxLines = 2, overflow = TextOverflow.Ellipsis)
-                distance?.let { Text(distanceLabel(it), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
-                val hours = details?.hours
-                when {
-                    hours != null -> Text(
-                        stringResource(Res.string.discovery_map_card_hours, if (details.isOpen) stringResource(Res.string.discovery_map_card_open) else stringResource(Res.string.discovery_map_card_closed), hours),
-                        Modifier.padding(top = 4.dp), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                    isLoading -> Text(stringResource(Res.string.discovery_map_card_loading), Modifier.padding(top = 4.dp), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                }
-            }
-        }
-    }
 }

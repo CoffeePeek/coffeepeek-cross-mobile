@@ -46,7 +46,7 @@ internal fun DiscoveryTabContent(
 private fun DiscoveryTabContentPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
     DiscoveryTabContent(
         state = SearchState(isLoading = false, shops = listOf(ShopSummary("sandbox-cafe", "Sandbox Cafe"))),
-        host = DiscoveryHost(suggestionIllustration = { ColorPainter(Color.Transparent) }),
+        host = DiscoveryHost(),
         roasters = DiscoveryRoasterSlots(preview = {}, search = { _, _, _ -> }),
         analytics = NoDiscoveryAnalytics, callbacks = TabCallbacks({}, {}, {}, {}, {}),
         bottomClearance = 80.dp, focus = null, onAction = {},

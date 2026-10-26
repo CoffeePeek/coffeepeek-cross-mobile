@@ -44,7 +44,7 @@ internal fun DiscoverySearchLayer(
                     }.statusBarsPadding(),
                 bodyModifier = Modifier.onGloballyPositioned(ui::recordViewport), prefetch = !ui.mapExpanded,
             )
-            if (state.showFilters) FilterSheet(state, host, onAction = onAction)
+            if (state.showFilters) FilterSheet(state, onAction = onAction)
         }
     }
 }

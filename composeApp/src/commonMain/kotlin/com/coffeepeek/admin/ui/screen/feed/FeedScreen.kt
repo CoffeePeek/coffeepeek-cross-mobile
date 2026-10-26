@@ -59,7 +59,7 @@ import com.coffeepeek.admin.ui.component.DesignFilterChip
 import com.coffeepeek.admin.ui.component.CoffeePeekPullToRefresh
 import com.coffeepeek.admin.ui.component.SearchHeader
 import com.coffeepeek.admin.ui.component.LocalFloatingNavClearance
-import com.coffeepeek.admin.ui.component.LoadErrorContent
+import com.coffeepeek.core.designsystem.component.CoffeePeekLoadErrorContent
 import com.coffeepeek.admin.ui.model.COFFEE_FOCUS_OPTIONS
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
@@ -327,7 +327,7 @@ fun FeedScreen(
                                             }
                                         }
                                         state.error != null && state.shops.isEmpty() -> {
-                                            LoadErrorContent(onRetry = vm::refresh)
+                                            CoffeePeekLoadErrorContent(onRetry = vm::refresh)
                                         }
                                         displayedShops.isEmpty() -> CatalogSuggestionCard(CatalogSuggestionKind.Shop,
                                             onAdd = { Navigator.navigate(Navigator.Screen.AddShop) },
@@ -382,7 +382,7 @@ fun FeedScreen(
                                 verticalArrangement = Arrangement.Center,
                             ) {
                                 item {
-                                    LoadErrorContent(
+                                    CoffeePeekLoadErrorContent(
                                         onRetry = vm::refresh,
                                         modifier = Modifier.fillParentMaxSize(),
                                     )
@@ -418,7 +418,7 @@ fun FeedScreen(
                                             }
                                         }
                                         state.error != null && state.shops.isEmpty() -> item(key = "shop-search-error") {
-                                            LoadErrorContent(onRetry = vm::refresh)
+                                            CoffeePeekLoadErrorContent(onRetry = vm::refresh)
                                         }
                                     }
                                 }

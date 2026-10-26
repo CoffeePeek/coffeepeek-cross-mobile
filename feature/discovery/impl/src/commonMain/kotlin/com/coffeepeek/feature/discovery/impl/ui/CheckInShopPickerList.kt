@@ -1,5 +1,7 @@
 package com.coffeepeek.feature.discovery.impl.ui
 
+import com.coffeepeek.core.media.PrefetchListPhotos
+
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
@@ -32,7 +34,7 @@ internal fun CheckInShopPickerList(
     LaunchedEffect(nearEnd, state.hasMore, state.currentPage, shops.size) {
         if (nearEnd && state.hasMore && shops.isNotEmpty() && state.error == null) onAction(SearchAction.LoadMore)
     }
-    host.photoPrefetch(list, shops.map { it.id to listOfNotNull(it.photoUrl) })
+    PrefetchListPhotos(list, shops.map { it.id to listOfNotNull(it.photoUrl) })
     LazyColumn(modifier, state = list,
         contentPadding = coffeePeekScrollContentPadding(PaddingValues(CoffeePeekDimens.spacing4)),
         verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing3)) {

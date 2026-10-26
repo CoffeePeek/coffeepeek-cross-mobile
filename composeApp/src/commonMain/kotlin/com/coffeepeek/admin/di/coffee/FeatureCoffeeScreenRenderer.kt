@@ -3,7 +3,7 @@ package com.coffeepeek.admin.di.coffee
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import com.coffeepeek.admin.ui.Navigator
-import com.coffeepeek.admin.ui.component.CoffeeShopImage
+import com.coffeepeek.core.designsystem.component.CoffeePeekBrandedImage
 import com.coffeepeek.core.designsystem.component.CoffeePeekPhotoViewer
 import com.coffeepeek.admin.ui.component.LocalFloatingNavClearance
 import com.coffeepeek.admin.ui.screen.coffee.CoffeeScreenRenderer
@@ -14,7 +14,7 @@ import com.coffeepeek.feature.coffee.api.CoffeeDetailEntry
 import com.coffeepeek.feature.coffee.api.CoffeeListEntry
 import com.coffeepeek.feature.coffee.domain.repository.CoffeeRepository
 import com.coffeepeek.feature.coffee.impl.createCoffeeDetailEntry
-import com.coffeepeek.admin.ui.component.LoadErrorContent
+import com.coffeepeek.core.designsystem.component.CoffeePeekLoadErrorContent
 import com.coffeepeek.feature.coffee.impl.createCoffeeListEntry
 
 /** Both platforms use migrated catalogue entries; browser, share, photos and root navigation remain app-owned. */
@@ -41,10 +41,10 @@ internal class FeatureCoffeeScreenRenderer(
 internal fun featureCoffeeScreenRenderer(repository: CoffeeRepository): FeatureCoffeeScreenRenderer {
     val image: @Composable (String, String, Modifier, androidx.compose.ui.layout.ContentScale) -> Unit =
         { url, description, modifier, scale ->
-            CoffeeShopImage(imageUrl = url, modifier = modifier, contentDescription = description, contentScale = scale)
+            CoffeePeekBrandedImage(imageUrl = url, modifier = modifier, contentDescription = description, contentScale = scale)
         }
     return FeatureCoffeeScreenRenderer(
-        createCoffeeListEntry(repository, AppCoffeeAnalytics, AppCoffeeScreenAnalytics, image) { onRetry -> LoadErrorContent(onRetry) },
+        createCoffeeListEntry(repository, AppCoffeeAnalytics, AppCoffeeScreenAnalytics, image) { onRetry -> CoffeePeekLoadErrorContent(onRetry) },
         createCoffeeDetailEntry(repository, image,
             { urls, index, onDismiss -> CoffeePeekPhotoViewer(urls, index, onDismiss = onDismiss) },
             ::utcIsoToLocalDateTime, AppCoffeeAnalytics, AppCoffeeScreenAnalytics),

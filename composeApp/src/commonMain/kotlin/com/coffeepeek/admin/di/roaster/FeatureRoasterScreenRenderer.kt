@@ -5,10 +5,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import com.coffeepeek.admin.ui.Navigator
-import com.coffeepeek.admin.ui.component.CoffeeShopImage
+import com.coffeepeek.core.designsystem.component.CoffeePeekBrandedImage
 import com.coffeepeek.core.designsystem.component.CoffeePeekPhotoViewer
 import com.coffeepeek.admin.ui.component.HapticEvent
-import com.coffeepeek.admin.ui.component.LoadErrorContent
+import com.coffeepeek.core.designsystem.component.CoffeePeekLoadErrorContent
 import com.coffeepeek.admin.ui.component.LocalFloatingNavClearance
 import com.coffeepeek.admin.ui.component.SearchHeader
 import com.coffeepeek.admin.ui.component.platformHaptic
@@ -71,13 +71,13 @@ internal fun roasterScreenRenderer(
     shopPhotos: RoasterShopPhotos,
 ): FeatureRoasterScreenRenderer {
     val image: RoasterImage = { url, description, modifier, scale, labelSize ->
-        CoffeeShopImage(imageUrl = url, modifier = modifier, contentDescription = description, contentScale = scale,
+        CoffeePeekBrandedImage(imageUrl = url, modifier = modifier, contentDescription = description, contentScale = scale,
             placeholderLabelSize = labelSize)
     }
     val feedback = { platformHaptic(HapticEvent.Selection) }
     return FeatureRoasterScreenRenderer(
         createRoasterDiscoveryEntry(repository, favorites, RoasterAnalyticsAdapter, RoasterScreenAnalyticsAdapter, image,
-            loadError = { onRetry -> LoadErrorContent(onRetry) },
+            loadError = { onRetry -> CoffeePeekLoadErrorContent(onRetry) },
             emptyContent = { modifier -> CatalogSuggestionCard(CatalogSuggestionKind.Roaster,
                 onAdd = { Navigator.navigate(Navigator.Screen.AddRoaster) }, modifier = modifier) }, onFavoriteFeedback = feedback),
         createRoasterDetailEntry(repository, favorites, shopPhotos, RoasterAnalyticsAdapter, RoasterScreenAnalyticsAdapter, image,

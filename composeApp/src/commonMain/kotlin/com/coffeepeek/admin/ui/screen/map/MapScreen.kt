@@ -64,8 +64,8 @@ import com.coffeepeek.admin.map.CoffeeMap
 import com.coffeepeek.admin.map.mapCanvasSize
 import com.coffeepeek.admin.theme.CpDimens
 import com.coffeepeek.admin.ui.Navigator
-import com.coffeepeek.admin.ui.component.CoffeeShopImage
-import com.coffeepeek.admin.ui.component.CoffeeShopPlaceholderImage
+import com.coffeepeek.core.designsystem.component.CoffeePeekBrandedImage
+import com.coffeepeek.core.designsystem.component.CoffeePeekImagePlaceholder
 import com.coffeepeek.admin.ui.component.CoffeePeekLoader
 import com.coffeepeek.admin.ui.component.CpSearchField
 import com.coffeepeek.admin.ui.component.LocalFloatingNavClearance
@@ -668,7 +668,7 @@ private fun MapShopBottomSheet(
             ) {
                 when {
                     !photoUrl.isNullOrBlank() -> {
-                        CoffeeShopImage(
+                        CoffeePeekBrandedImage(
                             imageUrl = photoUrl,
                             contentDescription = shop.title,
                             contentScale = ContentScale.Crop,
@@ -683,7 +683,7 @@ private fun MapShopBottomSheet(
                         )
                     }
                     else -> {
-                        CoffeeShopPlaceholderImage(
+                        CoffeePeekImagePlaceholder(
                             labelSize = 7.sp,
                             contentDescription = "Фото ${shop.title} отсутствует",
                         )

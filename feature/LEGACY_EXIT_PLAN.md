@@ -3,6 +3,8 @@
 Статус: в работе. Решение владельца от 2026-10-25. База `029a572a`,
 ветка `feat/ios-build-foundation`, PR #195 → develop.
 Вариант для кофейни отложен; новые продуктовые возможности не добавляем.
+Текущий дочерний срез: `codex/migration-discovery-ui-ownership` от `7f78ea21`,
+цель PR — открытая родительская ветка `feat/ios-build-foundation` (#195).
 
 ## Условие завершения
 
@@ -61,7 +63,10 @@ DatabaseCore. Старый LEGACY_REMOVAL.md — исторический сни
   Недостижимые старые UI/VM/test consumers остаются отдельным L4.
 - [x] History/Profile: один владелец общей геометрии чекина через
   существующие DS primitives; без преобразования обратно в legacy CheckIn.
-- [ ] Discovery/catalog и создание чекина: бизнес-UI/состояние только в impl.
+- [x] Собственные визуальные слоты Discovery (фото/заглушки/error/фильтры/
+  catalogue icons/prefetch) больше не приходят из composeApp; седьмой срез.
+- [ ] Вложенные catalog/roaster search UI и создание чекина: оставшиеся
+  бизнес-вставки/состояние из composeApp — в соответствующие impl.
 - [x] Author blocking: экран/host из composeApp в feature/author-blocking/impl;
   Android/Sandbox и видимый native iOS controller вызывают feature entry.
   Ручная приёмка native prompts остаётся открытой в шестом срезе.
@@ -682,3 +687,97 @@ app build не было: Kotlin framework link не компилирует Swift
 Следующий остаток L1: Discovery/catalog/create slots и root tab содержимое.
 Затем — оставшиеся общие platform services, L3 transport/session/storage и
 удаление последних legacy consumers L4. Полный legacy exit ещё не завершён.
+
+## Седьмой срез L1/L2: визуальные слоты Discovery — 2026-10-26
+
+Дочерняя ветка `codex/migration-discovery-ui-ownership` от `7f78ea21`, parent
+checkpoint #195 → develop. Срез блокировок завершён в родителе, поэтому новая
+работа не добавляется в его PR. Сверка fetched main/develop перед переносом:
+отсутствующих в parent коммитов нет; develop `381c6cc2`, main `16724b7e`.
+Нового Gradle module или business feature нет. Пользовательский локальный
+project.pbxproj остаётся вне коммитов (48+/41−).
+
+Владение:
+
+- DiscoveryHost удаляет 13 app-owned visual/prefetch slots. В нём остаются
+  exposure, haptic, retained lifecycle, permission effect, reduce-motion и
+  native map canvas. Root discoveryHost больше не рисует ошибки/фильтры/
+  иконки/аватары/картинки и не создаёт legacy CatalogItem для фильтра.
+- Discovery impl сам использует shared media prefetch, branded image/placeholder,
+  service error и существующую suggestion card. Roaster avatar, map shop card,
+  logo и brew/tag catalog mapping принадлежат ui/compose/component; glyphs и
+  artwork — design-system. Сопоставление backend names/slugs не попало в core.
+- FilterSheet получает stateless Content/Header/Choices и paired previews;
+  цена/лейблы — в DiscoveryPriceSection и feature resources. Сохранены draft,
+  reset с городом, close без apply, apply затем close, выбранные строки за
+  пределами первых пяти, selected counts и ограничение двух brew chips.
+- В DS расширен существующий CoffeePeekImage слотом placeholderContent;
+  явный error drawable сохраняет приоритет. CoffeePeekBrandedImage использует
+  тот же progressive/private pipeline, без второго resource loader или cache.
+  App CoffeeShopImage/CoffeeShopPlaceholderImage удалены, все Kotlin consumers
+  обеих платформ переключены. Бренд/контраст/18sp и compact 5/6/7sp сохранены.
+  Переданная feature accessibility подпись сохранена; default fallback labels
+  теперь общие «Фото отсутствует»/«Загрузка фото…», вместо привязки к кофейне.
+- LoadErrorContent удалён из app, общий CoffeePeekLoadErrorContent сохраняет
+  mascot 120dp, wording, отступы и компактную retry button. CoffeePeekButton
+  получил необходимые fillWidth/minHeight параметры с прежними defaults для
+  остальных consumers. Обе общие mascot PNG физически перенесены в DS,
+  байты сверены с parent (идентичны), имена ресурсов/происхождение сохранены.
+- CoffeePeekPriceLevelSlider в DS владеет только визуальным выбором null/1–3,
+  белым thumb 28dp, track 4dp и BYN stops с прежним масштабом 0.9. Подписи
+  «До/Около/Больше 8 BYN» принадлежат Discovery. Domain level 4 не удалён;
+  прежние clamp UI до 3 и hint=«Любая» для 4 сохранены. Старый app PriceBeanSlider
+  теперь делегирует визуал этому DS компоненту: у него ещё есть реальные
+  Contributions/add-shop/legacy filter consumers, поэтому он пока остаётся.
+  Остальные legacy price/name/tag helpers не объявляются удалёнными.
+- Geometry map card остаётся 72dp photo/7sp placeholder, прежние title/rating/
+  hours/distance и shadow. Общие карты/шаблоны уже были в DS и переиспользуются,
+  нового card builder или transport не создаётся. Map bounds/clusters/canvasSize,
+  location permission и навигация не заменялись.
+
+Контракты и проверки:
+
+- Инвентаризированы Search/Filters/ShopCatalog/Favorite/MapPreview/MapFull
+  exposure: прежние page/catalog/context strings и dynamic favorite page
+  сохранены. Haptic остаётся перед favorite action; consent/session SDK и
+  события ViewModel не менялись. Новых production analytics events не было.
+- Новые/существенно изменённые функции проверены по review limits: composable
+  bodies не длиннее 40, ordinary helpers не длиннее 20 строк. Без нового lint
+  или build gate. Colocated paired multiplatform previews используют fake state
+  и локальные картинки; UI-тестов/hosts нет.
+- Первый compile остановился на отсутствовавшем CoffeePeekIcons.Sun. Добавлен
+  прежний Phosphor Sun, ThemeLight использует тот же glyph. Повтор (1m12s)
+  Android/iOS production compile и unit tests успешен: Discovery impl, DS/media.
+- Studio inspection CoffeePeekPriceLevelSlider завершилась без ошибок; это
+  анализ одного файла, не render previews и не полная IDE приёмка.
+- Финальный прогон (4m02s), source `7f78ea21` + этот срез: **300 unit/contract
+  tests / 47 suites**, 0 failures/errors/skips. Discovery domain 12 / 1,
+  data 19 / 1, impl 63 / 6; DS 57 / 15; media 68 / 10; app subset 81 / 14
+  (discovery/map/renderers/photo projection/pickers и локальный Sandbox backend).
+  Неизменённые tasks могут быть UP-TO-DATE; counts не суммируются с повтором.
+- DirectDebug и DirectSandbox assembled, оба packaged DEX runtime-class guards
+  и Sandbox isolation прошли. Guards дополнены BrandedImage/LoadErrorContent/
+  PriceLevelSlider classes. iOS Arm64 production compile, Debug Simulator
+  framework link и common Native test compilation Discovery impl/DS/media/app
+  успешны. Native tests не исполнялись. Gradle последовательно, --max-workers=6.
+- APK SHA-256: Debug `880ecfbf87d5792a0a9d30700833c9a4a628631571eace420f0a89b3a57dc357`;
+  Sandbox `56192d2e46c170f3ea99ee04f68b11dd84a79fc72375d8d9633ec0e2a2e261fa`.
+  Новых UI/instrumentation/screenshot tests/hosts нет, чужие tests не удалялись
+  и не запускались. `git diff --check` проходит. Прежние preview/expect-actual/
+  opt-in/bundle-ID warnings сохранены; compiler pass не называется UI приёмкой.
+
+Остаток после этого среза:
+
+- Native map/platform effects/retained host и exposure service ещё app-owned;
+  map bridge всё ещё использует legacy map models до отдельного переноса.
+- Вложенный Roaster search header/suggestion host, Contributions editor slots,
+  root create/tab содержание и legacy data readers остаются в L1/L3/L4.
+- Обновлённый reduced plain search API contract описан в
+  feature/discovery/LEGACY_INVENTORY.md, но runtime backend/Sandbox ещё требуют
+  адаптации. HTTP/filter semantics в UI-срезе не менялись; passing fake tests
+  не доказывают совместимость с новым серверным GET. Это отдельный следующий
+  data checkpoint, не новая придуманная продуктовая возможность.
+- Ручная Android/iOS visual/accessibility/keyboard/modal/gesture приёмка,
+  live backend, Native test execution и полный Xcode app build остаются gates.
+  Ничего не устанавливалось/не запускалось, реальные аккаунты/данные/камера
+  не затронуты. Полный legacy exit не завершён.

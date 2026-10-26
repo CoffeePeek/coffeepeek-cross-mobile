@@ -8,7 +8,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.coffeepeek.admin.location.LocationPermissionEffect
-import com.coffeepeek.admin.ui.component.CoffeeShopPlaceholderImage
+import com.coffeepeek.core.designsystem.component.CoffeePeekImagePlaceholder
 import com.coffeepeek.admin.ui.component.HapticEvent
 import com.coffeepeek.admin.ui.component.PhotoAttachmentsSection
 import com.coffeepeek.admin.ui.component.PriceBeanSlider
@@ -64,7 +64,7 @@ internal fun addShopHost() = AddShopHost(
     roasterLogo = roasterLogo,
     shopImage = { bytes, modifier ->
         if (bytes != null) CoffeePeekImage(data = bytes, modifier = modifier, contentScale = ContentScale.Crop)
-        else CoffeeShopPlaceholderImage(modifier, labelSize = 16.sp)
+        else CoffeePeekImagePlaceholder(modifier, labelSize = 16.sp)
     },
     feedback = ::haptic,
 )

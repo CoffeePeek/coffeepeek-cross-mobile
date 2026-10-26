@@ -1,5 +1,8 @@
 package com.coffeepeek.admin.ui.component
 
+import com.coffeepeek.core.designsystem.component.CoffeePeekImagePlaceholder
+import com.coffeepeek.core.designsystem.component.CoffeePeekBrandedImage
+
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -57,13 +60,13 @@ internal fun RoasterLinkRow(name: String, photoUrl: String?, onClick: (() -> Uni
         horizontalArrangement = Arrangement.spacedBy(CpDimens.spacing5),
     ) {
         Box(Modifier.size(64.dp).clip(CircleShape)) {
-            if (!photoUrl.isNullOrBlank()) CoffeeShopImage(
+            if (!photoUrl.isNullOrBlank()) CoffeePeekBrandedImage(
                 imageUrl = photoUrl,
                 contentDescription = "Фото обжарщика $name",
                 contentScale = ContentScale.Crop,
                 placeholderLabelSize = 7.sp,
                 modifier = Modifier.fillMaxSize(),
-            ) else CoffeeShopPlaceholderImage(labelSize = 7.sp, contentDescription = "Фото обжарщика $name отсутствует")
+            ) else CoffeePeekImagePlaceholder(labelSize = 7.sp, contentDescription = "Фото обжарщика $name отсутствует")
         }
         Text(
             name,

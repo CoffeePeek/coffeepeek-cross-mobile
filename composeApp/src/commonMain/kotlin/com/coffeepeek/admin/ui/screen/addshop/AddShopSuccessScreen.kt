@@ -41,7 +41,7 @@ import coffeepeek.composeapp.generated.resources.Res
 import coffeepeek.composeapp.generated.resources.maskot_happy
 import com.coffeepeek.admin.theme.CpDimens
 import com.coffeepeek.admin.ui.component.AppButton
-import com.coffeepeek.admin.ui.component.CoffeeShopPlaceholderImage
+import com.coffeepeek.core.designsystem.component.CoffeePeekImagePlaceholder
 import com.coffeepeek.admin.ui.component.HapticEvent
 import com.coffeepeek.admin.ui.component.platformHaptic
 import com.coffeepeek.admin.ui.icons.CpIcons
@@ -162,7 +162,7 @@ private fun SuccessShopPreviewCard(
                         contentScale = ContentScale.Crop,
                     )
                 } else {
-                    CoffeeShopPlaceholderImage(labelSize = 16.sp)
+                    CoffeePeekImagePlaceholder(labelSize = 16.sp)
                 }
             }
             Column(modifier = Modifier.padding(CpDimens.spacing4)) {

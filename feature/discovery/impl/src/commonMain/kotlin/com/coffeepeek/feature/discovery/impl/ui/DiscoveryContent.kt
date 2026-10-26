@@ -1,5 +1,7 @@
 package com.coffeepeek.feature.discovery.impl.ui
 
+import com.coffeepeek.core.media.PrefetchListPhotos
+
 import com.coffeepeek.feature.discovery.impl.resources.Res
 import com.coffeepeek.feature.discovery.impl.resources.discovery_refresh
 import com.coffeepeek.feature.discovery.impl.resources.discovery_refreshing
@@ -36,7 +38,7 @@ internal fun DiscoveryContent(
     onAction: (SearchAction) -> Unit, onMapSlot: (Frame, Boolean) -> Unit,
 ) {
     val photos = state.visibleShops.take(PREVIEW_SHOP_COUNT).map { it.id to listOfNotNull(it.photoUrl) }
-    host.photoPrefetch(shopsState, photos.takeIf { !mapExpanded }.orEmpty())
+    PrefetchListPhotos(shopsState, photos.takeIf { !mapExpanded }.orEmpty())
     CoffeePeekPullToRefresh(
         listState = listState, isRefreshing = state.isRefreshing,
         onRefresh = { onAction(SearchAction.Refresh) },

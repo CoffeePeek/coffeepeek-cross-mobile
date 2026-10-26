@@ -206,7 +206,7 @@ internal fun MapContent(
                 Modifier.align(Alignment.BottomCenter).padding(start = CoffeePeekDimens.spacing4, end = CoffeePeekDimens.spacing4, bottom = bottomClearance + CoffeePeekDimens.spacing4),
             )
         } else if (state.hasCarousel) {
-            MapShopCarousel(state, host, dismissInput, onAction, Modifier.align(Alignment.BottomCenter).padding(bottom = bottomClearance + CoffeePeekDimens.spacing4))
+            MapShopCarousel(state, dismissInput, onAction, Modifier.align(Alignment.BottomCenter).padding(bottom = bottomClearance + CoffeePeekDimens.spacing4))
         }
     }
 }

@@ -29,7 +29,7 @@ import com.coffeepeek.admin.ui.component.CoffeePeekPullToRefresh
 import com.coffeepeek.core.designsystem.component.CoffeePeekPhotoViewer
 import com.coffeepeek.core.designsystem.component.CoffeePeekPhotoViewerImages
 import com.coffeepeek.admin.ui.component.LocalFloatingNavClearance
-import com.coffeepeek.admin.ui.component.LoadErrorContent
+import com.coffeepeek.core.designsystem.component.CoffeePeekLoadErrorContent
 import com.coffeepeek.admin.ui.component.ReviewTextInput
 import com.coffeepeek.admin.ui.screen.checkins.CheckInCreateButton
 import com.coffeepeek.admin.ui.screen.checkins.CheckInCreateFlow
@@ -174,7 +174,7 @@ fun CommunityScreen(onCreateCheckIn: () -> Unit, notificationsAction: @Composabl
                             }
                             when {
                                 state.error != null -> item(key = "error", contentType = "error") {
-                                    LoadErrorContent(
+                                    CoffeePeekLoadErrorContent(
                                         onRetry = vm::retry,
                                         retryLabel = if (state.restartPagination) "Обновить ленту" else "Попробовать снова",
                                     )
