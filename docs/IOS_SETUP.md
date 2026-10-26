@@ -165,9 +165,13 @@ Workflow [`.github/workflows/ios-testflight.yml`](../.github/workflows/ios-testf
 с выбором `main`. Публикация из других веток запрещена условием job.
 Используется текущий `API_BASE_URL_MAIN`. Изменения только документации
 не запускают автоматическую сборку: сохраняется фильтр путей iOS/KMP-кода.
-Для pull request ключи подписи не выдаются. Номер сборки формируется из номера
-запуска и попытки (`GITHUB_RUN_NUMBER.GITHUB_RUN_ATTEMPT`); версия приложения
-берётся из `iosApp/Configuration/Shared.xcconfig` (`MARKETING_VERSION`).
+Для pull request ключи подписи не выдаются. Номер сборки `CFBundleVersion` — целое
+число `1000 + git rev-list --count HEAD`, как `versionCode` Android. Сдвиг `1000`
+задан в `BUILD_NUMBER_OFFSET`, чтобы не уменьшить ранее опубликованный код. Повторный
+запуск CI для того же коммита не повышает номер. Публичная версия задаётся вручную
+в `iosApp/Configuration/Shared.xcconfig` (`MARKETING_VERSION = 1.1.1`). Android
+использует `1.1.1.N`, где `N` равен `versionCode`; iOS хранит номер сборки отдельно. Серверные коды
+обновления и обязательный минимум задаются вручную через админку.
 
 Перед первым запуском:
 

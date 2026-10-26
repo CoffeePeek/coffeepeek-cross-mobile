@@ -33,14 +33,16 @@ import com.coffeepeek.feature.profile.impl.createPublicProfileEntry
 /** Android routes to the migrated public profile; navigation, sharing and the legacy-rendered cards stay app-owned. */
 internal class AndroidPublicProfileScreenRenderer(private val entry: PublicProfileEntry) : PublicProfileScreenRenderer {
     @Composable
-    override fun Content(slug: String, nickname: String?, avatarUrl: String?) {
+    override fun Content(slug: String, nickname: String?, avatarUrl: String?, checkInsOnly: Boolean) {
         entry.Content(slug, nickname, avatarUrl,
             onBack = Navigator::popBack,
             onOpenShop = { Navigator.navigate(Navigator.Screen.ShopDetail(it)) },
             onOpenRoaster = { Navigator.navigate(Navigator.Screen.RoasterDetail(it)) },
             onLogin = { Navigator.navigate(Navigator.Screen.Auth) },
             onOpenUser = { userSlug, userNickname, avatar -> Navigator.navigate(Navigator.Screen.UserProfile(userSlug, userNickname, avatar)) },
-            onShare = { url -> ShareHelper.shareText(url) })
+            onShare = { url -> ShareHelper.shareText(url) },
+            onOpenCheckIns = { Navigator.navigate(Navigator.Screen.UserCheckIns(slug, nickname, avatarUrl)) },
+            checkInsOnly = checkInsOnly)
     }
 }
 

@@ -108,3 +108,18 @@ Verification completed on 2026-10-23.
   scales. Recovery EmailSent has fake-state previews only.
 - The comparison HTML and original PNGs remain local, outside tracked sources.
   Manual Android observations are the visual verification evidence.
+
+## Develop integration
+
+On 2026-10-23 the auth-only patch was applied cleanly to `origin/develop`
+(base `b889b73e`). Auth source/resources are identical to the Sandbox-reviewed
+patch; unrelated local APK packaging edits are excluded.
+
+- `assembleDirectDebug`, packaged DEX runtime-class checks and the same seven
+  unit suites passed: 41 tests, zero failures/errors/skips, no test retries.
+- Final integration invocation: `--max-workers=6`, 1m 52s, 1093 tasks:
+  567 executed and 526 from cache. The unit test task executed.
+- This integration APK was assembled only; device evidence remains the earlier
+  Sandbox run documented above. No UI/device tests were added or run here.
+- Existing multiplatform preview annotations compile with deprecation warnings;
+  this remains a tooling warning, not a rendering verification.

@@ -9,7 +9,7 @@ actual object AppConfig {
     actual val updatePlatform: String = "ios"
     actual val updateChannel: String? = null
     actual val versionName: String
-        get() = bundleString("CFBundleShortVersionString").ifBlank { "1.1" }
+        get() = bundleString("CFBundleShortVersionString").ifBlank { "1.1.1" }
 
     actual val baseUrl: String
         get() = bundleString("APIBaseURL").trim()

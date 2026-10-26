@@ -342,3 +342,13 @@ Remaining gates: macOS executable linking; iOS 15/26+ manual light/dark, large
 font/window, VoiceOver, modal placement, outside/Cancel/back and repeat-open
 checks; actual photo/camera flow and installed map/share extensions. System Share
 Sheet geometry is owned by iOS. No release or live-backend acceptance is claimed.
+
+Publication verification on 2026-10-23: the isolated migration branch applies only
+this 14-file patch to fresh develop at 16724b7e. The same combined Gradle command
+passed in 2m26s with --max-workers=6: 50 application unit tests executed with zero
+failures/errors/skips; 35 design-system test results restored from cache, also
+passing. Android directDebug assembly, packaged DEX checks and both iOS KLIB
+compilations pass on that integrated source. No failed-build/test retry, device,
+installation, UI suite or live account action. Parallel authorization and Android
+packaging edits from the primary checkout are excluded from publication. The
+manual iOS/linking/share-extension gates above remain open.
