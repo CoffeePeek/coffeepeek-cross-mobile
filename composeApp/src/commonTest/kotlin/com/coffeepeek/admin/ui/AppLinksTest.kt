@@ -30,6 +30,21 @@ class AppLinksTest {
     }
 
     @Test
+    fun routesSharedPostsByTheirServerId() {
+        val id = "6966d36f-f903-ccf8-8009-1a651d0c58ad"
+        assertEquals(Navigator.Screen.CheckInDetail(id), appLinkScreen("https://coffeepeek.by/check-ins/$id"))
+        assertEquals(Navigator.Screen.CheckInDetail(id), appLinkScreen("https://coffeepeek.by/check-ins/$id/?from=share#photos"))
+    }
+
+    @Test
+    fun aPostLinkWithoutAServerIdOrWithAnActionOpensTheMainScreen() {
+        for (path in listOf("not-an-id", "6966d36f", "6966d36f-f903-ccf8-8009-1a651d0c58ad-extra", "6966d36f-f903-ccf8-8009-1a651d0c58ad/edit", "..")) {
+            val link = "https://coffeepeek.by/check-ins/$path"
+            assertEquals(Navigator.Screen.Main, appLinkScreen(link), link)
+        }
+    }
+
+    @Test
     fun rejectsInvalidSlugsAndExtraPathSegments() {
         for (path in listOf("coffee-shops", "roasters", "users")) {
             for (slug in listOf("", ".", "..", "%2e%2e", "%20", "a%2Fb", "a%5Cb", "a%00b", "a%0Ab", "slug/extra")) {

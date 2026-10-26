@@ -63,6 +63,14 @@ class CommunityRulesTest {
         assertTrue(isWithdrawnFromPublic(post(moderation = PostModeration.Rejected)))
     }
 
+    @Test fun onlyAPublishedPostHasALinkToShare() {
+        assertEquals("https://coffeepeek.by/check-ins/6966d36f", post("6966d36f").shareLink())
+        assertNull(post(visibility = PostVisibility.Private).shareLink())
+        assertNull(post(moderation = PostModeration.Pending).shareLink())
+        assertNull(post(moderation = PostModeration.NotSubmitted).shareLink())
+        assertNull(post(" ").shareLink())
+    }
+
     @Test fun appendingKeepsOrderRefreshesKnownPostsInPlaceAndSkipsDuplicates() {
         val first = post("a"); val second = post("b")
         val merged = appendTimeline(listOf(first, second), listOf(post("b", note = "fresh"), post("c")))

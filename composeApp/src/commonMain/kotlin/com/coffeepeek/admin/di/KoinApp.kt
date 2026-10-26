@@ -46,7 +46,9 @@ import com.coffeepeek.admin.feature.notifications.ui.NotificationsRenderer
 import com.coffeepeek.admin.ui.screen.profile.AccountScreenRenderer
 import com.coffeepeek.admin.ui.screen.profile.LegacyAccountScreenRenderer
 import com.coffeepeek.admin.feature.community.ui.CommunityScreenRenderer
+import com.coffeepeek.admin.feature.community.ui.CheckInDetailScreenRenderer
 import com.coffeepeek.admin.feature.community.ui.LegacyCommunityScreenRenderer
+import com.coffeepeek.admin.feature.community.ui.UnsupportedCheckInDetailScreenRenderer
 import com.coffeepeek.admin.ui.screen.contributions.ContributionsScreenRenderer
 import com.coffeepeek.admin.ui.screen.contributions.LegacyContributionsScreenRenderer
 import com.coffeepeek.admin.ui.screen.main.DiscoveryScreenRenderer
@@ -124,6 +126,7 @@ fun initKoin(
     appUpdateRendererFactory: Scope.() -> AppUpdateRenderer = { LegacyAppUpdateRenderer },
     authRendererFactory: Scope.() -> AuthScreenRenderer = { LegacyAuthScreenRenderer },
     communityRendererFactory: Scope.() -> CommunityScreenRenderer = { LegacyCommunityScreenRenderer },
+    checkInDetailRendererFactory: Scope.() -> CheckInDetailScreenRenderer = { UnsupportedCheckInDetailScreenRenderer },
     contributionsRendererFactory: Scope.() -> ContributionsScreenRenderer = { LegacyContributionsScreenRenderer },
     discoveryRendererFactory: Scope.() -> DiscoveryScreenRenderer = { LegacyDiscoveryScreenRenderer },
     notificationsRendererFactory: Scope.() -> NotificationsRenderer = { LegacyNotificationsRenderer },
@@ -149,7 +152,7 @@ fun initKoin(
             shopCheckInRendererFactory, shopDetailRendererFactory, shopCheckInListRendererFactory,
             checkInHistoryRendererFactory, checkInCreateFlowRendererFactory, coffeeRendererFactory, roasterRendererFactory,
             publicProfileRendererFactory, ownProfileRendererFactory, accountRendererFactory, settingsRendererFactory, appUpdateRendererFactory,
-            authRendererFactory, communityRendererFactory, contributionsRendererFactory, discoveryRendererFactory, notificationsRendererFactory),
+            authRendererFactory, communityRendererFactory, checkInDetailRendererFactory, contributionsRendererFactory, discoveryRendererFactory, notificationsRendererFactory),
         imageModule(),
         roasterModule(),
         updateInstallerModule(),
@@ -181,6 +184,7 @@ private fun appModule(
     appUpdateRendererFactory: Scope.() -> AppUpdateRenderer,
     authRendererFactory: Scope.() -> AuthScreenRenderer,
     communityRendererFactory: Scope.() -> CommunityScreenRenderer,
+    checkInDetailRendererFactory: Scope.() -> CheckInDetailScreenRenderer,
     contributionsRendererFactory: Scope.() -> ContributionsScreenRenderer,
     discoveryRendererFactory: Scope.() -> DiscoveryScreenRenderer,
     notificationsRendererFactory: Scope.() -> NotificationsRenderer,
@@ -195,6 +199,7 @@ private fun appModule(
     single<NotificationsRenderer> { notificationsRendererFactory() }
     single<AuthScreenRenderer> { authRendererFactory() }
     single<CommunityScreenRenderer> { communityRendererFactory() }
+    single<CheckInDetailScreenRenderer> { checkInDetailRendererFactory() }
     single<ContributionsScreenRenderer> { contributionsRendererFactory() }
     single<DiscoveryScreenRenderer> { discoveryRendererFactory() }
     single<com.coffeepeek.feature.community.domain.repository.CommunityRepository> {

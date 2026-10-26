@@ -23,6 +23,7 @@ import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
+import io.ktor.http.encodeURLPathPart
 import io.ktor.http.isSuccess
 
 private const val CHECK_INS = "/api/v1/check-ins"
@@ -46,6 +47,15 @@ internal class CommunityBackend(private val client: HttpClient) {
             throw FeedLoadException("Feed request failed (${response.status.value})", restartPagination = response.status == HttpStatusCode.BadRequest && cursor != null)
         }
         response.envelope<FeedPageDto>()
+    }
+
+    suspend fun post(id: String): Result<PostDto> = requestResult {
+        val response = client.get("$CHECK_INS/${id.encodeURLPathPart()}") {
+            expectSuccess = false
+            header(HttpHeaders.CacheControl, "no-store")
+        }
+        response.requireSuccess()
+        response.envelope<PostDto>().also { check(it.id.isNotBlank()) { "Missing check-in" } }
     }
 
     suspend fun mine(page: Int, size: Int): Result<MyPostsDto> = requestResult {

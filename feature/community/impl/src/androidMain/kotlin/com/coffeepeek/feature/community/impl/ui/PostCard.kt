@@ -57,6 +57,7 @@ import com.coffeepeek.feature.community.domain.model.PostRating
 import com.coffeepeek.feature.community.domain.model.PostVisibility
 import com.coffeepeek.feature.community.domain.rules.PublicationLabel
 import com.coffeepeek.feature.community.domain.rules.publicationLabel
+import com.coffeepeek.feature.community.domain.rules.shareLink
 import com.coffeepeek.feature.community.impl.R
 import kotlin.math.roundToInt
 
@@ -72,6 +73,10 @@ internal class PostCardActions(
     val onReport: (() -> Unit)? = null,
     /** The owner publishes a private post. */
     val onPublish: (() -> Unit)? = null,
+    /** Only a published post has a link to share. */
+    val onShare: (() -> Unit)? = null,
+    /** The whole card opens the post on its own screen; the author, shop, photos, like and menu keep their own taps. */
+    val onOpen: (() -> Unit)? = null,
 )
 
 @Composable
@@ -86,7 +91,12 @@ internal fun PostCard(
     modifier: Modifier = Modifier,
     changingVisibility: Boolean = false,
 ) {
-    Column(modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing2)) {
+    val openLabel = stringResource(R.string.community_open_post)
+    Column(
+        modifier.fillMaxWidth().clip(RoundedCornerShape(CoffeePeekDimens.radiusMd))
+            .then(actions.onOpen?.let { Modifier.clickable(role = Role.Button, onClickLabel = openLabel, onClick = it) } ?: Modifier),
+        verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing2),
+    ) {
         PostHeader(post, isOwn, actions, enabled, changingVisibility, host)
         if (post.isHome) {
             post.home?.let { recipe ->
@@ -150,19 +160,20 @@ private fun Avatar(name: String, photoUrl: String?, host: CommunityHost) {
     }
 }
 
-/** The overflow menu: block, edit, hide, report — only what this viewer may do with this post. */
+/** The overflow menu: share, edit, hide, report, block (last, in red) — only what this viewer may do with this post. */
 @Composable
 private fun PostMenu(actions: PostCardActions, enabled: Boolean, hiding: Boolean) {
-    if (actions.onBlock == null && actions.onEdit == null && actions.onHide == null && actions.onReport == null) return
+    if (actions.onShare == null && actions.onBlock == null && actions.onEdit == null && actions.onHide == null && actions.onReport == null) return
     val label = stringResource(R.string.community_actions)
     val items = buildList {
-        actions.onBlock?.let { add(CoffeePeekMenuAction(stringResource(R.string.community_block_author), CoffeePeekIcons.VisibilityOff, destructive = true, onClick = it)) }
+        actions.onShare?.let { add(CoffeePeekMenuAction(stringResource(R.string.community_share), CoffeePeekIcons.Share, onClick = it)) }
         actions.onEdit?.let { add(CoffeePeekMenuAction(stringResource(R.string.community_edit), CoffeePeekIcons.Edit, onClick = it)) }
         actions.onHide?.let {
             // The menu has no disabled rows: while the hide request is running the row only says so and does nothing.
             add(CoffeePeekMenuAction(stringResource(if (hiding) R.string.community_saving else R.string.community_hide), CoffeePeekIcons.VisibilityOff, onClick = if (hiding) ({}) else it))
         }
         actions.onReport?.let { add(CoffeePeekMenuAction(stringResource(R.string.community_report), CoffeePeekIcons.Error, onClick = it)) }
+        actions.onBlock?.let { add(CoffeePeekMenuAction(stringResource(R.string.community_block_author), CoffeePeekIcons.VisibilityOff, destructive = true, onClick = it)) }
     }
     CoffeePeekActionMenu(items) { open ->
         IconButton(onClick = open, enabled = enabled) { Icon(CoffeePeekIcons.MoreHorizontal, label, tint = MaterialTheme.colorScheme.onSurfaceVariant) }
@@ -179,6 +190,32 @@ private fun publicationText(label: PublicationLabel): String = stringResource(
         PublicationLabel.Public -> R.string.community_label_public
         PublicationLabel.Unknown -> R.string.community_label_unknown
     },
+)
+
+/** Sends a post's link to the system share sheet with the title the website gives its page: «{author} в «{shop}»» or «Кофе дома — {author}». */
+internal class PostSharer(
+    private val shopFormat: String,
+    private val homeFormat: String,
+    private val userFallback: String,
+    private val shopFallback: String,
+    private val share: (String) -> Unit,
+) {
+    /** Null for a post that has no public link; [before] runs first, for analytics. */
+    fun action(post: CommunityPost, before: () -> Unit = {}): (() -> Unit)? {
+        val link = post.shareLink() ?: return null
+        return { before(); share(text(post, link)) }
+    }
+
+    private fun text(post: CommunityPost, link: String): String {
+        val author = post.author.name.ifBlank { userFallback }
+        return if (post.isHome) homeFormat.format(author, link) else shopFormat.format(author, post.shopName.ifBlank { shopFallback }, link)
+    }
+}
+
+@Composable
+internal fun postSharer(host: CommunityHost) = PostSharer(
+    stringResource(R.string.community_share_shop), stringResource(R.string.community_share_home),
+    stringResource(R.string.community_user), stringResource(R.string.community_shop_default), host.share,
 )
 
 @Composable

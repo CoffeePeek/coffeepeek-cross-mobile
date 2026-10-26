@@ -51,7 +51,14 @@ class AppCommunityAnalytics : CommunityAnalytics {
     override fun itemInteracted(action: FeedItemAction, isHome: Boolean) {
         Analytics.track(
             AnalyticsEvent.FEED_ITEM_INTERACTED,
-            "action" to when (action) { FeedItemAction.Shop -> "shop"; FeedItemAction.Photo -> "photo"; FeedItemAction.Like -> "like"; FeedItemAction.Unlike -> "unlike" },
+            "action" to when (action) {
+                FeedItemAction.Open -> "open"
+                FeedItemAction.Shop -> "shop"
+                FeedItemAction.Photo -> "photo"
+                FeedItemAction.Like -> "like"
+                FeedItemAction.Unlike -> "unlike"
+                FeedItemAction.Share -> "share"
+            },
             "check_in_kind" to if (isHome) "home" else "shop",
         )
     }
