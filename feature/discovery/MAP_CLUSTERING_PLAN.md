@@ -115,3 +115,82 @@ failures/errors/skips. Direct Debug/Sandbox assemblies, both packaged runtime
 class checks and Sandbox isolation pass. Native iOS/device acceptance gates
 above remain open; no further device installation or UI checks were performed.
 The primary checkout's two pre-existing local edits were not included.
+
+
+## Cluster density and top inset follow-up — 2026-10-26
+
+User report: city groups are too sparse and expanded Android map has a blank
+status-bar band. Scope: both retained/migrated map HTTP adapters, the retained
+Compose root and its Main entry callback, request-contract tests. No backend,
+marker animation, native map renderer, theme or account/data changes.
+
+Request one server zoom level above the camera integer bucket (clamped 0–22):
+server grid cells are half the previous width, zones unfold one level earlier.
+Camera position and viewport cache buckets stay unchanged. Preserve filters,
+server truncation, bounds, cluster transitions and the nearby carousel. The root
+receives the existing expanded-map visibility state; only the expanded map skips
+the root top inset. Its search/close controls retain their own status-bar inset.
+
+Verification plan: request zoom boundary/filter contracts; existing map/view-model,
+choreography and DI unit contracts; Direct Debug/Sandbox assembly and packaged
+runtime class guards. Manual Sandbox review: expand/collapse, top coverage and
+controls, denser groups, light/dark, Back and tab/detail return. Native iOS and
+live-backend geographic acceptance remain separate gates. Device is not yet
+verified for this follow-up; no UI or instrumentation automation is permitted.
+
+
+Follow-up results: source `4aea0e1c` (only this verification record is added
+subsequently), Direct Sandbox `1.1.1.2457-sandbox`, Direct Debug `1.1.1.2457`.
+All 143 executed unit/contract checks pass: Discovery data 19, Discovery impl 57,
+retained mapper 2, application 65; zero failures/errors/skips and no retries.
+Both Android assemblies, both packaged DEX runtime-class checks, Sandbox isolation
+and Kotlin iOS simulator KLIB compilation pass (`BUILD SUCCESSFUL in 3m 8s`).
+No warnings were reported against the changed Kotlin files; existing warnings
+elsewhere remain outside scope. Studio MCP was unavailable.
+
+Manual follow-up review was not run: ADB returned no connected devices; the user
+was asked for a device handoff. No APK was installed or launched, and no phone,
+account or application data was changed. The previous phase's Pixel 9 checks
+are historical and do not certify this fix. Top-edge/control placement, map
+expand/collapse animation, light/dark, font/window sizes, Back/tab/detail return
+and live backend density remain unverified. The one-level policy also makes
+individual-shop responses (and their existing server truncation cap) apply one
+camera bucket earlier; truncation signaling is preserved. Native Swift/iOS UI
+runtime is not certified by KLIB compilation. No automated UI tests were run.
+
+
+## Pixel 9 follow-up review — 2026-10-26
+
+Code source `771913fd`. Device: Pixel 9, API 37, 1080 x 2424, density 420,
+font scale 1.0. Explicit environment: `directSandbox`, package
+`com.coffeepeek.sandbox`, `SandboxActivity`, synthetic Discovery `Paged` fixture.
+The existing installed APK hash matched the previously recorded Sandbox build;
+its signing certificate matched the new APK. An external local Gradle init
+script set only Sandbox output metadata to version code 2463 / version name
+`1.1.1.2463-map-density-sandbox` so the update advanced installed version 2462.
+No repository version setting changed. APK SHA-256:
+`57ed296807761f32b7ee7393301175f5878ac13b1f77eb88c48448128e67d466`.
+Sandbox assembly, packaged DEX class guard and isolation pass in 2m 8s. In-place
+`install -r` succeeded; installed version/package were verified. No downgrade,
+uninstall, data clearing, ordinary Debug install or live backend access occurred.
+
+The first launch attempt stopped at the lock-state guard. After the phone was
+unlocked, a fresh Sandbox launch selected the Paged fixture. Manual observations:
+expanded native map bounds are [0,0]–[1080,2424]; search and close remain below
+the status bar, with no separate top band. Dark and light states were inspected.
+The overview shows two groups of 3 alongside the synthetic zone count 32;
+tapping a group exposes separate typed shop controls without opening a zone
+sheet. Zoom-out regroups the shops, then merges the two groups into 6; zoom-in
+splits 6 back into two groups of 3. Count circles and shop icons remain legible
+in both themes. These are manual state observations, not timing/performance or
+real-server density acceptance, and the fixture includes coincident shop points.
+
+The attempted post-Back check stopped on the foreground guard after the UI dump;
+the dump was not pulled, no subsequent tab tap was sent, and temporary device
+files were removed. A later attempt also stopped before UI interaction because
+Sandbox was not foreground. The user was asked to hand back Sandbox for the
+remaining navigation check. The original interruptions are retained here;
+Back/tab return is not certified yet. Sandbox was last reviewed in light theme.
+No automated UI, Compose instrumentation or screenshot test infrastructure was
+created or run; review images/dumps stay local outside tracked sources. Large
+font/window, screen reader execution, native iOS and live backend gates remain.

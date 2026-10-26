@@ -343,6 +343,7 @@ object Navigator {
         val keyboard = LocalSoftwareKeyboardController.current
         val appLink by pendingAppLink.collectAsState()
         var mainEntry by remember { mutableStateOf<NavBackStackEntry?>(null) }
+        var isMainMapExpanded by remember { mutableStateOf(false) }
         val mainStateHolder = rememberSaveableStateHolder()
         val visibleEntries by nav.visibleEntries.collectAsState()
         val currentEntry by nav.currentBackStackEntryAsState()
@@ -394,9 +395,9 @@ object Navigator {
                     RetainedContent(visible = entry in visibleEntries) {
                         // Main lives outside NavHost so its native map stays mounted during navigation.
                         Box(Modifier.fillMaxSize()
-                            .windowInsetsPadding(systemInsets.only(WindowInsetsSides.Top))
+                            .windowInsetsPadding(if (isMainMapExpanded) WindowInsets(0) else systemInsets.only(WindowInsetsSides.Top))
                             .clipToBounds().graphicsLayer { translationX = size.width * mainSlide }) {
-                            MainScreen(isLoggedIn)
+                            MainScreen(isLoggedIn, onMapExpandedChange = { isMainMapExpanded = it })
                         }
                     }
                 }
