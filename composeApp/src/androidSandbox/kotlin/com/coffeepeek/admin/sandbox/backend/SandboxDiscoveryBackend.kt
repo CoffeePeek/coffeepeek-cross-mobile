@@ -4,6 +4,8 @@ import io.ktor.client.request.HttpRequestData
 import io.ktor.http.*
 import kotlinx.serialization.json.*
 import kotlin.math.PI
+import kotlin.math.floor
+import kotlin.math.pow
 import kotlin.math.asin
 import kotlin.math.cos
 import kotlin.math.sin
@@ -154,16 +156,43 @@ internal class SandboxDiscoveryBackend(
         val truncated = mode == SandboxDiscovery.Truncated && inside.size > MAP_LIMIT
         val shown = if (truncated) inside.take(MAP_LIMIT) else inside
         val visibleZones = if (spots().isEmpty()) emptyList() else zones.filter { it.lat in minLat..maxLat && it.lon in minLon..maxLon }
-        return ok(buildJsonObject {
-            put("shops", JsonArray(shown.map { spot ->
-                buildJsonObject {
-                    put("address", address(spot.slug, "/coffee-shops/${spot.slug}")); put("latitude", spot.lat); put("longitude", spot.lon)
-                    put("title", spot.name); put("type", spot.type)
-                }
-            }))
-            put("clusters", JsonArray(emptyList()))
-            put("zones", JsonArray(visibleZones.map(::zoneRow)))
+        return ok(mapRows(shown, params["zoom"]?.toIntOrNull() ?: 22, visibleZones, truncated))
+    }
+
+    private fun mapRows(shown: List<Spot>, zoom: Int, visibleZones: List<Zone>, truncated: Boolean): JsonObject {
+        // Local groups exercise transitions; production grouping remains owned by the server.
+        val zoned = if (zoom <= 13) shown.groupBy { spot ->
+            visibleZones.firstOrNull { distance(it.lat, it.lon, spot.lat, spot.lon) <= it.radius }
+        } else mapOf(null to shown)
+        val unzoned = zoned[null].orEmpty()
+        val cell = 360.0 / 2.0.pow(zoom.coerceIn(0, 22))
+        val groups = if (zoom > 13) unzoned.map(::listOf) else unzoned.groupBy { floor(it.lat / cell) to floor(it.lon / cell) }.values
+        return buildJsonObject {
+            put("shops", JsonArray(groups.filter { it.size == 1 }.map { mapShop(it.single()) }))
+            put("clusters", JsonArray(groups.filter { it.size > 1 }.map(::mapCluster)))
+            put("zones", JsonArray(zoned.mapNotNull { (zone, members) -> zone?.let { zoneRow(it, members.size) } }))
             put("isTruncated", truncated)
+        }
+    }
+
+    private fun mapShop(spot: Spot) = buildJsonObject {
+        put("address", address(spot.slug, "/coffee-shops/${spot.slug}"))
+        put("latitude", spot.lat)
+        put("longitude", spot.lon)
+        put("title", spot.name)
+        put("type", spot.type)
+    }
+
+    private fun mapCluster(group: List<Spot>) = buildJsonObject {
+        put("id", group.map { it.slug }.sorted().joinToString(","))
+        put("latitude", group.map { it.lat }.average())
+        put("longitude", group.map { it.lon }.average())
+        put("count", group.size)
+        put("bounds", buildJsonObject {
+            put("minLatitude", group.minOf { it.lat })
+            put("minLongitude", group.minOf { it.lon })
+            put("maxLatitude", group.maxOf { it.lat })
+            put("maxLongitude", group.maxOf { it.lon })
         })
     }
 
@@ -212,10 +241,10 @@ internal class SandboxDiscoveryBackend(
         put("tags", JsonArray(spot.tags.map { catalog(it, names.getValue(it)) }))
     }
 
-    private fun zoneRow(zone: Zone) = buildJsonObject {
+    private fun zoneRow(zone: Zone, count: Int) = buildJsonObject {
         put("address", address(zone.slug, "/zones/${zone.slug}")); put("name", zone.name); put("description", "Район ${zone.name}")
         put("color", zone.color); put("latitude", zone.lat); put("longitude", zone.lon); put("radiusMeters", zone.radius)
-        put("shopCount", spots().count { distance(zone.lat, zone.lon, it.lat, it.lon) <= zone.radius })
+        put("shopCount", count)
         put("polygon", JsonArray((0 until 6).map { index ->
             val angle = 2 * PI * index / 6
             buildJsonObject {

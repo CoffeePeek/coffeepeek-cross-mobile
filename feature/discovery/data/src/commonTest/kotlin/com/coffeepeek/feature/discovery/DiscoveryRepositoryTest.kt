@@ -161,36 +161,48 @@ class DiscoveryRepositoryTest {
     // ---- the map ----
 
     private fun mapAnswer(shop: String, zone: String, truncated: Boolean = false) =
-        ok("""{"shops":[$shop],"clusters":[{"id":"c","latitude":1,"longitude":1,"count":3}],"zones":[$zone],"isTruncated":$truncated}""")
+        ok("""{"shops":[$shop],"clusters":[{"id":"c","latitude":1,"longitude":1,"count":3,"bounds":{"minLatitude":0,"minLongitude":0,"maxLatitude":2,"maxLongitude":2}}],"zones":[$zone],"isTruncated":$truncated}""")
 
     private val bounds = MapBounds(53.8, 27.5, 54.0, 27.7)
 
-    @Test fun theMapAsksTwiceAndTakesTheShopsFromTheShopZoomAndTheZonesFromTheVisibleZoom() = runBlocking {
-        reply = { request ->
-            if (request.url.parameters["zoom"] == "22") mapAnswer("""{"address":{"slug":"s1"},"latitude":53.9,"longitude":27.56,"title":"Cafe","type":"Specialty","primaryZone":{"slug":"z"}}""", """{"address":{"slug":"fine"},"latitude":1,"longitude":1,"radiusMeters":1,"shopCount":1}""", truncated = true)
-            else mapAnswer("{}".let { """{"address":{"slug":"x"},"latitude":0,"longitude":0}""" }, """{"address":{"slug":"zone"},"name":"Центр","description":"d","color":"#ABC","latitude":53.9,"longitude":27.56,"radiusMeters":800,"shopCount":7,"polygon":[{"latitude":1.0,"longitude":2.0}]}""")
-        }
+    @Test fun theMapUsesOneVisibleZoomRequestAndRetainsServerClustersAndFilters() = runBlocking {
+        reply = { mapAnswer("""{"address":{"slug":"s1"},"latitude":53.9,"longitude":27.56,"title":"Cafe","type":"Specialty","primaryZone":{"slug":"z"}}""",
+            """{"address":{"slug":"zone"},"name":"Centre","latitude":53.9,"longitude":27.56,"radiusMeters":800,"shopCount":7}""", truncated = true) }
         val filters = DiscoveryFilters(cityId = "minsk", priceLevel = PriceLevel.Cheap, minRating = 4.0, roasterIds = setOf("r"), tagIds = setOf("t"))
         val content = repository().mapContent(bounds, 14.7f, filters).getOrThrow()
-        assertEquals(setOf("22", "14"), requests.map { it.url.parameters["zoom"] }.toSet())
-        for (request in requests) {
-            assertEquals("/api/Map", request.url.encodedPath); assertEquals("53.8", request.url.parameters["minLat"]); assertEquals("27.7", request.url.parameters["maxLon"])
-            assertEquals("minsk", request.url.parameters["city"]); assertEquals("Cheap", request.url.parameters["priceRange"]); assertEquals(listOf("r"), params(request, "roasters"))
-        }
-        assertEquals(listOf("s1"), content.markers.map { it.id }); assertEquals(Coordinates(53.9, 27.56), content.markers.single().coordinates)
-        assertEquals(ShopKind.Specialty, content.markers.single().kind); assertEquals("z", content.markers.single().zoneId); assertTrue(content.isTruncated)
-        val zone = content.zones.single()
-        assertEquals("zone", zone.id); assertEquals("Центр", zone.name); assertEquals("#ABC", zone.color); assertEquals(7, zone.shopCount); assertEquals(listOf(Coordinates(1.0, 2.0)), zone.polygon)
+        val request = requests.single()
+        assertEquals("14", request.url.parameters["zoom"])
+        assertEquals("/api/Map", request.url.encodedPath)
+        assertEquals("53.8", request.url.parameters["minLat"])
+        assertEquals("minsk", request.url.parameters["city"])
+        assertEquals("Cheap", request.url.parameters["priceRange"])
+        assertEquals(listOf("r"), params(request, "roasters"))
+        assertEquals(listOf("s1"), content.markers.map { it.id })
+        assertEquals(ShopKind.Specialty, content.markers.single().kind)
+        assertEquals("z", content.markers.single().zoneId)
+        assertEquals(listOf("zone"), content.zones.map { it.id })
+        assertEquals(MapCluster("c", Coordinates(1.0, 1.0), 3, MapBounds(0.0, 0.0, 2.0, 2.0)), content.clusters.single())
+        assertTrue(content.isTruncated)
     }
 
-    @Test fun atTheShopZoomTheMapAsksOnceAndAFailedZoneRequestFallsBackToTheShopAnswer() = runBlocking {
-        reply = { mapAnswer("""{"address":{"slug":"s"},"latitude":1,"longitude":2}""", """{"address":{"slug":"own"},"latitude":1,"longitude":2,"radiusMeters":5,"shopCount":1}""") }
-        val atShopZoom = repository().mapContent(bounds, 22f, DiscoveryFilters()).getOrThrow()
-        assertEquals(1, requests.size); assertEquals(listOf("own"), atShopZoom.zones.map { it.id })
-        requests.clear()
-        reply = { request -> if (request.url.parameters["zoom"] == "22") mapAnswer("""{"address":{"slug":"s"},"latitude":1,"longitude":2}""", """{"address":{"slug":"own"},"latitude":1,"longitude":2,"radiusMeters":5,"shopCount":1}""") else HttpStatusCode.InternalServerError to "{}" }
-        assertEquals(listOf("own"), repository().mapContent(bounds, 12f, DiscoveryFilters()).getOrThrow().zones.map { it.id })
-        assertEquals(2, requests.size)
+    @Test fun clusterOnlyPascalCaseAnswersKeepBoundsCountsAndFallbackIdentity() = runBlocking {
+        reply = { ok("""{"Clusters":[{"Latitude":1,"Longitude":1,"Count":120,"Bounds":{"MinLatitude":0,"MinLongitude":0,"MaxLatitude":2,"MaxLongitude":2}}]}""") }
+        val content = repository().mapContent(bounds, 12f, DiscoveryFilters()).getOrThrow()
+        assertTrue(content.markers.isEmpty())
+        assertEquals("1.0:1.0:120", content.clusters.single().id)
+        assertEquals(120, content.clusters.single().count)
+        assertEquals(MapBounds(0.0, 0.0, 2.0, 2.0), content.clusters.single().bounds)
+        assertEquals(1, requests.size)
+    }
+
+    @Test fun invalidClustersAreDroppedAndAnAnswerWithoutClustersStillWorks() = runBlocking {
+        val cluster = """{"latitude":1,"longitude":1,"count":0,"bounds":{"minLatitude":0,"minLongitude":0,"maxLatitude":2,"maxLongitude":2}}"""
+        for (invalid in listOf(cluster, cluster.replace("\"count\":0", "\"count\":2").replace("\"latitude\":1", "\"latitude\":91"))) {
+            reply = { ok("""{"clusters":[$invalid]}""") }
+            assertTrue(repository().mapContent(bounds, 12f, DiscoveryFilters()).getOrThrow().clusters.isEmpty())
+        }
+        reply = { ok("""{"shops":[],"zones":[]}""") }
+        assertEquals(MapContent(), repository().mapContent(bounds, 22f, DiscoveryFilters()).getOrThrow())
     }
 
     @Test fun theMapKeepsOnlyTheFocusedKindAcceptsPascalCaseAndNamesAnUntitledShopLikeProd() = runBlocking {

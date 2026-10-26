@@ -52,6 +52,7 @@ data class MapUiState(
     val shops: List<MapShop> = emptyList(),
     val clusters: List<MapCluster> = emptyList(),
     val zones: List<MapCoffeeZone> = emptyList(),
+    val zoneGroups: List<MapCoffeeZone> = emptyList(),
     val showZones: Boolean = true,
     val selectedShop: MapShop? = null,
     val selectedZone: MapCoffeeZone? = null,
@@ -185,7 +186,7 @@ class MapViewModel(
             result.onSuccess { content ->
                 if (operation != null) Analytics.service?.track(AnalyticsEvent.MAP_INTERACTION, mapOf("action" to "nearby_loaded", "result_count" to content.shops.size), operation)
                 val nearest = nearestMapShops(content.shops, origin)
-                _state.update { it.copy(nearbyShops = nearest, shops = (it.shops + nearest).distinctBy { shop -> shop.id }) }
+                _state.update { it.copy(nearbyShops = nearest) }
             }.onFailure { if (operation != null) Analytics.service?.track(AnalyticsEvent.MAP_INTERACTION, mapOf("action" to "nearby_failed"), operation) }
         }
     }
@@ -447,7 +448,7 @@ class MapViewModel(
                     loadedArea = requestArea
                     loadedZoomLevel = zoom.toInt()
                     _state.update { current ->
-                        val merged = mergeShops(content.shops + current.nearbyShops, current.selectedShop)
+                        val merged = mergeShops(content.shops, current.selectedShop)
                         // The API only returns zones for the current viewport, so zooming in used to drop
                         // them. Keep every zone seen for this city; fresh data wins. Reset on city change.
                         val knownZones = if (zonesCityId == filters.cityId) current.zones else emptyList()
@@ -456,6 +457,7 @@ class MapViewModel(
                         current.copy(
                             shops = merged,
                             clusters = content.clusters,
+                            zoneGroups = content.zones,
                             zones = zones,
                             isTruncated = content.isTruncated,
                             isLoading = false,

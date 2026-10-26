@@ -100,14 +100,7 @@ private class RemoteDiscoveryRepository(
     }
 
     override suspend fun mapContent(bounds: MapBounds, zoom: Float, filters: DiscoveryFilters): Result<MapContent> = requestResult {
-        coroutineScope {
-            val visibleZoom = zoom.toInt().coerceIn(0, SHOP_ZOOM)
-            val shops = async { backend.map(mapQuery(bounds, SHOP_ZOOM, filters)) }
-            val zones = if (visibleZoom == SHOP_ZOOM) null else async { backend.map(mapQuery(bounds, visibleZoom, filters)) }
-            val zonesAnswer = zones?.await()?.getOrNull()
-            val answer = shops.await().getOrThrow()
-            answer.toContent(zonesFrom = zonesAnswer ?: answer, kind = filters.kind)
-        }
+        backend.map(mapQuery(bounds, zoom.toInt().coerceIn(0, SHOP_ZOOM), filters)).getOrThrow().toContent(filters.kind)
     }
 
     private fun mapQuery(bounds: MapBounds, zoom: Int, filters: DiscoveryFilters) = MapQuery(

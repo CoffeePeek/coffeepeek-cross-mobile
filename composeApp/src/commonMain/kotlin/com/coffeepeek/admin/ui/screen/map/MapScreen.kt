@@ -59,6 +59,7 @@ import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.sp
+import com.coffeepeek.admin.map.zoneMapCluster
 import com.coffeepeek.admin.map.CoffeeMap
 import com.coffeepeek.admin.map.mapCanvasSize
 import com.coffeepeek.admin.theme.CpDimens
@@ -138,7 +139,7 @@ fun MapScreen(
     Box(modifier.fillMaxSize().analyticsExposure("map", if (isPreview) "home" else "discovery", if (isPreview) "discovery" else "map")) {
         CoffeeMap(
             shops = mapShops,
-            clusters = state.clusters,
+            clusters = state.clusters + if (isPreview || !state.showZones) state.zoneGroups.filter { it.shopCount > 0 }.map(::zoneMapCluster) else emptyList(),
             zones = if (!isPreview && state.showZones) state.zones else emptyList(),
             selectedShopId = selectedShopId,
             onBoundsChanged = vm::onBoundsChanged,

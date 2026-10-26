@@ -12,8 +12,8 @@ import com.coffeepeek.api.model.request.ShopSearchOriginDto
 import com.coffeepeek.api.model.request.ShopSearchRequestDto
 import com.coffeepeek.api.model.response.shop.variantOr
 import com.coffeepeek.api.service.ShopApiService
-import com.coffeepeek.data.mapper.ShopMapper.parseShopType
 import com.coffeepeek.data.mapper.ShopMapper.toDomain
+import com.coffeepeek.data.mapper.toMapContent
 import com.coffeepeek.data.mapper.toDomain
 import com.coffeepeek.data.mapper.toDto
 import com.coffeepeek.data.util.FileUrlResolver
@@ -26,9 +26,7 @@ import com.coffeepeek.domain.model.CoffeeShopDetails
 import com.coffeepeek.domain.model.CoffeeShopType
 import com.coffeepeek.domain.model.CreateShopInput
 import com.coffeepeek.domain.model.MapBounds
-import com.coffeepeek.domain.model.MapCoffeeZone
 import com.coffeepeek.domain.model.MapContent
-import com.coffeepeek.domain.model.MapShop
 import com.coffeepeek.domain.model.ModerationStatus
 import com.coffeepeek.domain.model.PagedResult
 import com.coffeepeek.domain.model.ShopCatalogs
@@ -215,46 +213,7 @@ class ShopRepositoryImpl(
     }
 
     override suspend fun getMapContent(bounds: MapBounds, zoom: Float, filters: ShopFilters): Result<MapContent> =
-        coroutineScope {
-            val visibleZoom = zoom.toInt().coerceIn(0, 22)
-            val shopsRequest = async { requestMap(bounds, 22, filters) }
-            val zonesRequest = if (visibleZoom == 22) null else async { requestMap(bounds, visibleZoom, filters) }
-            val zonesResponse = zonesRequest?.await()?.getOrNull()
-
-            shopsRequest.await().map { response ->
-                val mapped = response.shops.map { dto ->
-                    MapShop(
-                        id = dto.address.slug,
-                        publicAddress = dto.address.toDomain(),
-                        title = dto.title?.takeIf { it.isNotBlank() } ?: "Кофейня",
-                        latitude = dto.latitude,
-                        longitude = dto.longitude,
-                        type = parseShopType(dto.type),
-                        primaryZoneId = dto.primaryZone?.slug,
-                    )
-                }
-                val focus = filters.coffeeFocus
-                MapContent(
-                    shops = if (focus.isNullOrBlank()) mapped else mapped.filter { it.type == focus },
-                    clusters = emptyList(),
-                    zones = (zonesResponse ?: response).zones.map { zone ->
-                        MapCoffeeZone(
-                            id = zone.address.slug,
-                            publicAddress = zone.address.toDomain(),
-                            name = zone.name,
-                            description = zone.description,
-                            color = zone.color,
-                            latitude = zone.latitude,
-                            longitude = zone.longitude,
-                            radiusMeters = zone.radiusMeters,
-                            shopCount = zone.shopCount,
-                            polygon = zone.polygon.map { it.latitude to it.longitude },
-                        )
-                    },
-                    isTruncated = response.isTruncated,
-                )
-            }
-        }
+        requestMap(bounds, zoom.toInt().coerceIn(0, 22), filters).map { it.toMapContent(filters.coffeeFocus) }
 
     private suspend fun requestMap(bounds: MapBounds, zoom: Int, filters: ShopFilters) =
         shopApiService.getShopsInBounds(

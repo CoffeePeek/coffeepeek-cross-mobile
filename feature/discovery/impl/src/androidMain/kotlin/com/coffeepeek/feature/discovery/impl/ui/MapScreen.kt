@@ -40,6 +40,7 @@ import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.feature.discovery.api.DiscoveryExposure
 import com.coffeepeek.feature.discovery.api.DiscoveryHost
 import com.coffeepeek.feature.discovery.api.MapCanvasCallbacks
+import com.coffeepeek.feature.discovery.impl.map.canvasClusters
 import com.coffeepeek.feature.discovery.api.MapCanvasState
 import com.coffeepeek.feature.discovery.api.MapFocus
 import com.coffeepeek.feature.discovery.impl.R
@@ -107,6 +108,7 @@ internal fun MapContent(
         host.mapCanvas(
             MapCanvasState(
                 state.markers, if (state.showZones && !isPreview) state.zones else emptyList(), state.selectedShop?.id, state.camera, state.myLocationRequest, isPreview,
+                clusters = state.canvasClusters(isPreview),
             ),
             canvasCallbacks,
             Modifier.align(Alignment.Center).then(canvasSize?.let { Modifier.requiredSize(it.width, it.height) } ?: Modifier.fillMaxSize()),

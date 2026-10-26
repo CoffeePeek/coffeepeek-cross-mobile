@@ -89,6 +89,10 @@ private fun DiscoveryMapCanvas(state: MapCanvasState, callbacks: MapCanvasCallba
     val zones = androidx.compose.runtime.remember(state.zones) { state.zones.map { it.toLegacy() } }
     CoffeeMap(
         shops = shops,
+        clusters = state.clusters.map { cluster ->
+            com.coffeepeek.domain.model.MapCluster(cluster.id, cluster.coordinates.latitude, cluster.coordinates.longitude, cluster.count,
+                com.coffeepeek.domain.model.MapBounds(cluster.bounds.minLat, cluster.bounds.minLon, cluster.bounds.maxLat, cluster.bounds.maxLon))
+        },
         zones = zones,
         selectedShopId = state.selectedShopId,
         onBoundsChanged = { bounds, zoom -> callbacks.onBoundsChanged(MapBounds(bounds.minLat, bounds.minLon, bounds.maxLat, bounds.maxLon), zoom) },

@@ -1,5 +1,6 @@
 import ComposeApp
 import Foundation
+import CoreText
 import MapLibre
 import UIKit
 
@@ -14,6 +15,7 @@ final class MapLibreMapProvider: NSObject, IosNativeMapProvider, MLNMapViewDeleg
     private static let zoneLine = "cp-zones-line"
     private static let zoneLabels = "cp-zone-labels"
     private let images = NSCache<NSString, UIImage>()
+    private var clusterFont: UIFont?
 
     func createMapView() -> UIView {
         let map = CoffeeMapView(frame: .zero, styleURL: Self.lightStyle)
@@ -51,7 +53,7 @@ final class MapLibreMapProvider: NSObject, IosNativeMapProvider, MLNMapViewDeleg
         if map.styleURL != desiredStyle {
             map.styleURL = desiredStyle
         }
-        syncAnnotations(map, state: state)
+        syncAnnotations(map, state: state, previous: previous)
         if let style = map.style, previous?.zones != state.zones || previous?.dark != state.dark {
             syncZones(map, style: style, state: state)
         }
@@ -77,41 +79,103 @@ final class MapLibreMapProvider: NSObject, IosNativeMapProvider, MLNMapViewDeleg
         map.reportBounds()
     }
 
-    private func syncAnnotations(_ map: CoffeeMapView, state: MapState) {
+    private func syncAnnotations(_ map: CoffeeMapView, state: MapState, previous: MapState?) {
+        let old = map.points.mapValues { snapshot($0, map: map) }
         let keys = Set(state.shops.map { "shop:" + $0.id } + state.clusters.map { "cluster:" + $0.id })
+        let animate = previous != nil && !UIAccessibility.isReduceMotionEnabled
+        for shop in state.shops { syncShop(shop, map: map, state: state, previous: previous, old: old, animate: animate) }
+        for cluster in state.clusters { syncCluster(cluster, map: map, state: state, previous: previous, old: old, animate: animate) }
         for key in Array(map.points.keys) where !keys.contains(key) {
-            if let annotation = map.points.removeValue(forKey: key) { map.removeAnnotation(annotation) }
+            retire(key, map: map, clusters: state.clusters, animate: animate)
         }
-        for shop in state.shops {
-            let key = "shop:" + shop.id
-            let annotation = map.points[key] ?? CoffeeAnnotation(id: shop.id, cluster: false)
-            annotation.title = shop.title
-            annotation.type = shop.type
-            annotation.dark = state.dark
-            annotation.highlighted = shop.selected
-            updateCoordinate(annotation, latitude: shop.lat, longitude: shop.lon)
-            if map.points[key] == nil {
-                map.points[key] = annotation
-                map.addAnnotation(annotation)
-            }
-            if let view = map.view(for: annotation) as? CoffeePinView {
-                configure(view, annotation: annotation, animated: true)
-            }
+    }
+
+    private func syncShop(_ shop: ShopState, map: CoffeeMapView, state: MapState,
+                          previous: MapState?, old: [String: MarkerSnapshot], animate: Bool) {
+        let key = "shop:" + shop.id
+        let annotation = map.points[key] ?? CoffeeAnnotation(id: shop.id, cluster: false)
+        annotation.title = shop.title
+        annotation.type = shop.type
+        annotation.dark = state.dark
+        annotation.highlighted = shop.selected
+        syncPoint(annotation, key: key, latitude: shop.lat, longitude: shop.lon, map: map,
+                  previous: previous, old: old, animate: animate)
+    }
+
+    private func syncCluster(_ cluster: ClusterState, map: CoffeeMapView, state: MapState,
+                             previous: MapState?, old: [String: MarkerSnapshot], animate: Bool) {
+        let key = "cluster:" + cluster.id
+        let annotation = map.points[key] ?? CoffeeAnnotation(id: cluster.id, cluster: true)
+        annotation.count = cluster.count
+        annotation.dark = state.dark
+        annotation.title = String(cluster.count)
+        syncPoint(annotation, key: key, latitude: cluster.lat, longitude: cluster.lon, map: map,
+                  previous: previous, old: old, animate: animate)
+    }
+
+    private func syncPoint(_ annotation: CoffeeAnnotation, key: String, latitude: Double, longitude: Double,
+                           map: CoffeeMapView, previous: MapState?, old: [String: MarkerSnapshot], animate: Bool) {
+        let retained = map.points[key] != nil
+        let changed = !retained || annotation.exiting || annotation.coordinate.latitude != latitude || annotation.coordinate.longitude != longitude
+        let parent = markerParent(latitude: latitude, longitude: longitude, clusters: previous?.clusters ?? [], excluding: key)
+        let from = old[key] ?? parent.flatMap { old["cluster:" + $0.id] }
+        annotation.exiting = false
+        annotation.generation += 1
+        updateCoordinate(annotation, latitude: latitude, longitude: longitude)
+        annotation.transition = animate && changed ? MarkerTransition(from: from, retained: retained) : nil
+        if !retained {
+            map.points[key] = annotation
+            map.addAnnotation(annotation)
         }
-        for cluster in state.clusters {
-            let key = "cluster:" + cluster.id
-            let annotation = map.points[key] ?? CoffeeAnnotation(id: cluster.id, cluster: true)
-            annotation.count = cluster.count
-            annotation.dark = state.dark
-            annotation.title = String(cluster.count)
-            updateCoordinate(annotation, latitude: cluster.lat, longitude: cluster.lon)
-            if map.points[key] == nil {
-                map.points[key] = annotation
-                map.addAnnotation(annotation)
-            }
-            if let view = map.view(for: annotation) as? CoffeePinView {
-                configure(view, annotation: annotation, animated: false)
-            }
+        if let view = map.view(for: annotation) as? CoffeePinView {
+            configure(view, annotation: annotation, animated: true)
+            applyTransition(annotation, view: view, map: map)
+        }
+    }
+
+    private func markerParent(latitude: Double, longitude: Double, clusters: [ClusterState], excluding key: String) -> ClusterState? {
+        clusters.filter { "cluster:" + $0.id != key && $0.bounds.contains(latitude: latitude, longitude: longitude) }
+            .min { $0.bounds.extent < $1.bounds.extent }
+    }
+
+    private func snapshot(_ annotation: CoffeeAnnotation, map: CoffeeMapView) -> MarkerSnapshot {
+        let anchor = map.convert(annotation.coordinate, toPointTo: map)
+        return (map.view(for: annotation) as? CoffeePinView)?.snapshot(anchor: anchor)
+            ?? MarkerSnapshot(center: anchor, alpha: 1, scale: 1)
+    }
+
+    private func applyTransition(_ annotation: CoffeeAnnotation, view: CoffeePinView, map: CoffeeMapView) {
+        view.isUserInteractionEnabled = true
+        view.accessibilityElementsHidden = false
+        if UIAccessibility.isReduceMotionEnabled { view.finishTransition() }
+        guard let transition = annotation.transition else { return }
+        annotation.transition = nil
+        let anchor = map.convert(annotation.coordinate, toPointTo: map)
+        let from = transition.from ?? MarkerSnapshot(center: anchor, alpha: 1, scale: 1)
+        let initial = MarkerSnapshot(center: from.center, alpha: transition.retained ? from.alpha : 0,
+                                     scale: transition.retained ? from.scale : 0.65)
+        view.transition(from: initial, to: MarkerSnapshot(center: anchor, alpha: 1, scale: 1), anchor: anchor)
+    }
+
+    private func retire(_ key: String, map: CoffeeMapView, clusters: [ClusterState], animate: Bool) {
+        guard let annotation = map.points[key] else { return }
+        if annotation.exiting && animate { return }
+        guard animate, let view = map.view(for: annotation) as? CoffeePinView else {
+            map.points.removeValue(forKey: key)
+            map.removeAnnotation(annotation)
+            return
+        }
+        annotation.exiting = true
+        let generation = annotation.generation
+        let anchor = map.convert(annotation.coordinate, toPointTo: map)
+        let parent = markerParent(latitude: annotation.coordinate.latitude, longitude: annotation.coordinate.longitude, clusters: clusters, excluding: key)
+        let destination = parent.map { map.convert(CLLocationCoordinate2D(latitude: $0.lat, longitude: $0.lon), toPointTo: map) } ?? anchor
+        view.isUserInteractionEnabled = false
+        view.accessibilityElementsHidden = true
+        view.transition(from: view.snapshot(anchor: anchor), to: MarkerSnapshot(center: destination, alpha: 0, scale: 0.5), anchor: anchor) { [weak map] in
+            guard let map, annotation.exiting, annotation.generation == generation, map.points[key] === annotation else { return }
+            map.points.removeValue(forKey: key)
+            map.removeAnnotation(annotation)
         }
     }
 
@@ -126,12 +190,13 @@ final class MapLibreMapProvider: NSObject, IosNativeMapProvider, MLNMapViewDeleg
         let view = (mapView.dequeueReusableAnnotationView(withIdentifier: "coffee-pin") as? CoffeePinView)
             ?? CoffeePinView(reuseIdentifier: "coffee-pin")
         configure(view, annotation: annotation, animated: false)
+        if let map = mapView as? CoffeeMapView { applyTransition(annotation, view: view, map: map) }
         return view
     }
 
     private func configure(_ view: CoffeePinView, annotation: CoffeeAnnotation, animated: Bool) {
         let image = annotation.cluster && annotation.count != 1
-            ? clusterImage(count: annotation.count)
+            ? clusterImage(count: annotation.count, dark: annotation.dark)
             : pinImage(type: annotation.cluster ? "specialty" : annotation.type, selected: annotation.highlighted, dark: annotation.dark)
         view.configure(image: image, highlighted: annotation.highlighted, animated: animated)
         view.accessibilityLabel = annotation.title
@@ -141,6 +206,7 @@ final class MapLibreMapProvider: NSObject, IosNativeMapProvider, MLNMapViewDeleg
         guard let map = mapView as? CoffeeMapView, let point = annotation as? CoffeeAnnotation else { return }
         // Shared selection is authoritative; don't let MapLibre's own selection pan the camera.
         map.deselectAnnotation(annotation, animated: false)
+        guard !point.exiting else { return }
         if point.cluster {
             if let cluster = map.content?.clusters.first(where: { $0.id == point.id }) {
                 zoomToCluster(cluster, map: map)
@@ -231,21 +297,21 @@ final class MapLibreMapProvider: NSObject, IosNativeMapProvider, MLNMapViewDeleg
     }
 
     private func zoomToCluster(_ cluster: ClusterState, map: CoffeeMapView) {
-        // Same 25% viewport padding, +2 zoom cap and maximum 17 as Android.
+        // Match the web: each tap advances at least one zoom level, including large bounds.
         let bounds = cluster.bounds
         if bounds.minLat == bounds.maxLat && bounds.minLon == bounds.maxLon {
             moveCamera(mapView: map, latitude: bounds.minLat, longitude: bounds.minLon,
-                       zoom: Float(min(map.zoomLevel + 2, 17)), animated: true)
+                       zoom: Float(min(map.zoomLevel + 1, 22)), animated: !UIAccessibility.isReduceMotionEnabled)
             return
         }
-        let insets = UIEdgeInsets(top: map.bounds.height * 0.125, left: map.bounds.width * 0.125,
-                                  bottom: map.bounds.height * 0.125, right: map.bounds.width * 0.125)
+        let padding = min(map.bounds.width, map.bounds.height) * 0.25
+        let insets = UIEdgeInsets(top: padding, left: padding, bottom: padding, right: padding)
         let camera = map.cameraThatFitsCoordinateBounds(MLNCoordinateBounds(
             sw: CLLocationCoordinate2D(latitude: bounds.minLat, longitude: bounds.minLon),
             ne: CLLocationCoordinate2D(latitude: bounds.maxLat, longitude: bounds.maxLon)
         ), edgePadding: insets)
         let fitted = MLNZoomLevelForAltitude(camera.altitude, camera.pitch, camera.centerCoordinate.latitude, map.bounds.size)
-        let zoom = min(fitted, min(map.zoomLevel + 2, 17))
+        let zoom = min(22, max(map.zoomLevel + 1, min(fitted, map.zoomLevel + 2)))
         camera.altitude = MLNAltitudeForZoomLevel(zoom, camera.pitch, camera.centerCoordinate.latitude, map.bounds.size)
         map.setCamera(camera, withDuration: UIAccessibility.isReduceMotionEnabled ? 0 : 0.35,
                       animationTimingFunction: CAMediaTimingFunction(name: .easeInEaseOut), completionHandler: nil)
@@ -307,28 +373,47 @@ final class MapLibreMapProvider: NSObject, IosNativeMapProvider, MLNMapViewDeleg
         return image
     }
 
-    private func clusterImage(count: Int) -> UIImage {
+    private func clusterImage(count: Int, dark: Bool) -> UIImage {
         let label = count > 99 ? "99+" : String(count)
-        let key = "cluster-\(label)" as NSString
+        let key = "cluster-\(label)-\(dark)" as NSString
         if let cached = images.object(forKey: key) { return cached }
-        let size: CGFloat = count >= 100 ? 60 : (count >= 10 ? 55 : 49)
-        let side = size + 24
+        let size: CGFloat = 34.1
+        let side = size + 8
         let image = UIGraphicsImageRenderer(size: CGSize(width: side, height: side)).image { context in
-            let cg = context.cgContext
-            cg.setShadow(offset: CGSize(width: 0, height: 2), blur: 10, color: UIColor.black.withAlphaComponent(0.35).cgColor)
-            UIColor(hex: "#EAB308").withAlphaComponent(0.92).setFill()
-            cg.fillEllipse(in: CGRect(x: 12, y: 12, width: size, height: size))
-            cg.setShadow(offset: .zero, blur: 0, color: nil)
-            UIColor.white.setStroke()
-            cg.setLineWidth(2)
-            cg.strokeEllipse(in: CGRect(x: 13, y: 13, width: size - 2, height: size - 2))
-            let attributes: [NSAttributedString.Key: Any] = [.font: UIFont.boldSystemFont(ofSize: 13), .foregroundColor: UIColor(hex: "#1A1412")]
-            let text = label as NSString
-            let measured = text.size(withAttributes: attributes)
-            text.draw(at: CGPoint(x: (side - measured.width) / 2, y: (side - measured.height) / 2), withAttributes: attributes)
+            let rect = CGRect(x: 4, y: 4, width: size, height: size)
+            drawPinBackground(context.cgContext, rect: rect, selected: false, dark: dark)
+            drawPinRing(context.cgContext, rect: rect, selected: false, dark: dark)
+            drawClusterCount(label, side: side, dark: dark)
         }
         images.setObject(image, forKey: key)
         return image
+    }
+
+    private func clusterTypeface() -> UIFont {
+        if let clusterFont { return clusterFont }
+        let root = Bundle.main.bundlePath
+        let directories = [root + "/compose-resources", root, root + "/Frameworks/ComposeApp.framework"]
+        let paths = directories.map { $0 + "/composeResources/coffeepeek.composeapp.generated.resources/font/manrope_extrabold.ttf" }
+        var loaded: UIFont?
+        if let path = paths.first(where: { FileManager.default.fileExists(atPath: $0) }),
+           let provider = CGDataProvider(url: URL(fileURLWithPath: path) as CFURL), let font = CGFont(provider),
+           let name = font.postScriptName {
+            CTFontManagerRegisterGraphicsFont(font, nil)
+            loaded = UIFont(name: name as String, size: 12)
+        }
+        let result = loaded ?? UIFont.systemFont(ofSize: 12, weight: .heavy)
+        clusterFont = result
+        return result
+    }
+
+    private func drawClusterCount(_ label: String, side: CGFloat, dark: Bool) {
+        let attributes: [NSAttributedString.Key: Any] = [
+            .font: clusterTypeface(),
+            .foregroundColor: UIColor(hex: dark ? "#FFFFFF" : "#2D241F"), .kern: -0.24,
+        ]
+        let text = label as NSString
+        let measured = text.size(withAttributes: attributes)
+        text.draw(at: CGPoint(x: (side - measured.width) / 2, y: (side - measured.height) / 2), withAttributes: attributes)
     }
 
     private func zoneImage(_ zone: ZoneState, dark: Bool) -> UIImage {
@@ -448,6 +533,9 @@ private final class CoffeeAnnotation: MLNPointAnnotation {
     var dark = false
     var count = 0
     var highlighted = false
+    var exiting = false
+    var generation = 0
+    var transition: MarkerTransition?
 
     init(id: String, cluster: Bool) {
         self.id = id
@@ -463,6 +551,8 @@ private final class CoffeeAnnotation: MLNPointAnnotation {
 }
 
 private final class CoffeePinView: MLNAnnotationView {
+    private let motion = UIView()
+    private var markerAnimator: UIViewPropertyAnimator?
     private let picture = UIImageView()
     private let pulse = CAShapeLayer()
     private var highlighted = false
@@ -471,8 +561,11 @@ private final class CoffeePinView: MLNAnnotationView {
         super.init(reuseIdentifier: reuseIdentifier)
         bounds = CGRect(x: 0, y: 0, width: 44, height: 44)
         scalesWithViewingDistance = false
-        layer.addSublayer(pulse)
-        addSubview(picture)
+        motion.frame = bounds
+        motion.isUserInteractionEnabled = false
+        addSubview(motion)
+        motion.layer.addSublayer(pulse)
+        motion.addSubview(picture)
         isAccessibilityElement = true
         accessibilityTraits = .button
         NotificationCenter.default.addObserver(self, selector: #selector(updatePulse), name: UIAccessibility.reduceMotionStatusDidChangeNotification, object: nil)
@@ -485,10 +578,51 @@ private final class CoffeePinView: MLNAnnotationView {
     override func prepareForReuse() {
         super.prepareForReuse()
         highlighted = false
+        markerAnimator?.stopAnimation(true)
+        markerAnimator = nil
+        motion.layer.removeAllAnimations()
+        motion.transform = .identity
+        motion.alpha = 1
+        isUserInteractionEnabled = true
+        accessibilityElementsHidden = false
         picture.layer.removeAllAnimations()
         picture.transform = .identity
         pulse.removeAllAnimations()
         pulse.isHidden = true
+    }
+
+    func snapshot(anchor: CGPoint) -> MarkerSnapshot {
+        let layer = motion.layer.presentation() ?? motion.layer
+        let transform = layer.affineTransform()
+        return MarkerSnapshot(center: CGPoint(x: anchor.x + transform.tx, y: anchor.y + transform.ty),
+                              alpha: CGFloat(layer.opacity), scale: hypot(transform.a, transform.b))
+    }
+
+    func transition(from: MarkerSnapshot, to: MarkerSnapshot, anchor: CGPoint, completion: @escaping () -> Void = {}) {
+        markerAnimator?.stopAnimation(true)
+        motion.layer.removeAllAnimations()
+        motion.transform = from.transform(anchor: anchor)
+        motion.alpha = from.alpha
+        let timing = UICubicTimingParameters(controlPoint1: CGPoint(x: 0.22, y: 1), controlPoint2: CGPoint(x: 0.36, y: 1))
+        let animator = UIViewPropertyAnimator(duration: UIAccessibility.isReduceMotionEnabled ? 0 : 0.38, timingParameters: timing)
+        animator.addAnimations { [weak self] in
+            guard let self else { return }
+            self.motion.transform = to.transform(anchor: anchor)
+            self.motion.alpha = to.alpha
+        }
+        animator.addCompletion { [weak self] _ in
+            self?.markerAnimator = nil
+            completion()
+        }
+        markerAnimator = animator
+        animator.startAnimation()
+    }
+
+    func finishTransition() {
+        guard let animator = markerAnimator else { return }
+        animator.stopAnimation(false)
+        animator.finishAnimation(at: .end)
+        markerAnimator = nil
     }
 
     func configure(image: UIImage, highlighted: Bool, animated: Bool) {
@@ -517,6 +651,7 @@ private final class CoffeePinView: MLNAnnotationView {
     }
 
     @objc private func updatePulse() {
+        if UIAccessibility.isReduceMotionEnabled { finishTransition() }
         pulse.removeAllAnimations()
         pulse.isHidden = !highlighted || window == nil
         guard highlighted, window != nil else { return }
@@ -551,6 +686,21 @@ private extension UIColor {
     }
 }
 
+private struct MarkerSnapshot {
+    let center: CGPoint
+    let alpha: CGFloat
+    let scale: CGFloat
+
+    func transform(anchor: CGPoint) -> CGAffineTransform {
+        CGAffineTransform(translationX: center.x - anchor.x, y: center.y - anchor.y).scaledBy(x: scale, y: scale)
+    }
+}
+
+private struct MarkerTransition {
+    let from: MarkerSnapshot?
+    let retained: Bool
+}
+
 private struct MapState: Decodable {
     let dark: Bool
     let showAttribution: Bool
@@ -581,6 +731,11 @@ private struct BoundsState: Decodable {
     let minLon: Double
     let maxLat: Double
     let maxLon: Double
+    var extent: Double { maxLat - minLat + maxLon - minLon }
+
+    func contains(latitude: Double, longitude: Double) -> Bool {
+        latitude >= minLat && latitude <= maxLat && longitude >= minLon && longitude <= maxLon
+    }
 }
 
 private struct ZoneState: Decodable, Equatable {

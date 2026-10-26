@@ -2,7 +2,6 @@ package com.coffeepeek.feature.discovery.data.mapper
 
 import com.coffeepeek.feature.discovery.data.backend.CityDto
 import com.coffeepeek.feature.discovery.data.backend.LocationDto
-import com.coffeepeek.feature.discovery.data.backend.MapDto
 import com.coffeepeek.feature.discovery.data.backend.NamedDto
 import com.coffeepeek.feature.discovery.data.backend.NearbyRowDto
 import com.coffeepeek.feature.discovery.data.backend.PhotoDto
@@ -10,9 +9,6 @@ import com.coffeepeek.feature.discovery.data.backend.ShopRowDto
 import com.coffeepeek.feature.discovery.domain.model.CatalogEntry
 import com.coffeepeek.feature.discovery.domain.model.CityEntry
 import com.coffeepeek.feature.discovery.domain.model.Coordinates
-import com.coffeepeek.feature.discovery.domain.model.MapContent
-import com.coffeepeek.feature.discovery.domain.model.MapMarker
-import com.coffeepeek.feature.discovery.domain.model.MapZone
 import com.coffeepeek.feature.discovery.domain.model.PriceLevel
 import com.coffeepeek.feature.discovery.domain.model.ShopKind
 import com.coffeepeek.feature.discovery.domain.model.ShopSummary
@@ -67,26 +63,6 @@ internal fun NearbyRowDto.toDomain(favorites: Set<String>, requestedKind: ShopKi
 
 /** What prod shows for a map shop without a title. */
 internal const val UNNAMED_SHOP = "Кофейня"
-
-/** The markers come from this answer (asked at the shop zoom), the zones from [zonesFrom] (asked at the visible zoom). */
-internal fun MapDto.toContent(zonesFrom: MapDto, kind: ShopKind?): MapContent {
-    val markers = shops.map { shop ->
-        MapMarker(
-            id = shop.address.slug, title = shop.title?.takeIf(String::isNotBlank) ?: UNNAMED_SHOP, coordinates = Coordinates(shop.latitude, shop.longitude),
-            kind = ShopKind.fromApi(shop.type.text()), zoneId = shop.primaryZone?.slug,
-        )
-    }
-    return MapContent(
-        markers = if (kind == null) markers else markers.filter { it.kind == kind },
-        zones = zonesFrom.zones.map { zone ->
-            MapZone(
-                id = zone.address.slug, name = zone.name, description = zone.description, color = zone.color, center = Coordinates(zone.latitude, zone.longitude),
-                radiusMeters = zone.radiusMeters, shopCount = zone.shopCount, polygon = zone.polygon.map { Coordinates(it.latitude, it.longitude) },
-            )
-        },
-        isTruncated = isTruncated,
-    )
-}
 
 internal fun CityDto.toDomain() = CityEntry(address.slug, name)
 
