@@ -6,7 +6,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import com.coffeepeek.admin.ui.Navigator
-import com.coffeepeek.admin.ui.component.FullScreenImageDialog
+import com.coffeepeek.core.designsystem.component.CoffeePeekPhotoViewer
 import com.coffeepeek.admin.ui.component.rememberCheckInDateLabel
 import com.coffeepeek.admin.ui.screen.shop.ShopCheckInListScreenRenderer
 import com.coffeepeek.core.session.SessionReader
@@ -29,11 +29,11 @@ internal class FeatureShopCheckInListScreenRenderer(
             val entry = remember(session) {
                 createShopCheckInListEntry(session.lease.details(details), session.lease.votes(votes),
                     currentViewer = { session.lease.viewer(accounts) },
-                    authorImage = { url, modifier -> com.coffeepeek.admin.utils.CpImage(data = url, modifier = modifier) },
+                    authorImage = { url, modifier -> com.coffeepeek.core.designsystem.component.CoffeePeekImage(data = url, modifier = modifier) },
                     checkInImage = { url, highQualityUrl, modifier, scale ->
-                        com.coffeepeek.admin.utils.CpImage(data = url, highQualityData = highQualityUrl, modifier = modifier, contentScale = scale)
+                        com.coffeepeek.core.designsystem.component.CoffeePeekImage(data = url, highQualityData = highQualityUrl, modifier = modifier, contentScale = scale)
                     },
-                    photoPrefetch = { listState, photos -> com.coffeepeek.admin.utils.PrefetchListPhotos(listState, photos) })
+                    photoPrefetch = { listState, photos -> com.coffeepeek.core.media.PrefetchListPhotos(listState, photos) })
             }
             var preview by remember { mutableStateOf<com.coffeepeek.feature.shop.api.ShopDetailEffect.OpenPhoto?>(null) }
             val formatCheckInDate = rememberCheckInDateLabel()
@@ -50,7 +50,7 @@ internal class FeatureShopCheckInListScreenRenderer(
                 onOpenPhoto = { urls, originals, index -> if (session.lease.isCurrent())
                     preview = com.coffeepeek.feature.shop.api.ShopDetailEffect.OpenPhoto(urls, index, originals) })
             preview?.let { photo ->
-                FullScreenImageDialog(images = com.coffeepeek.admin.ui.component.PhotoViewerImages(photo.imageUrls, photo.originalUrls),
+                CoffeePeekPhotoViewer(images = com.coffeepeek.core.designsystem.component.CoffeePeekPhotoViewerImages(photo.imageUrls, photo.originalUrls),
                     initialIndex = photo.initialIndex, onDismiss = { preview = null })
             }
         }

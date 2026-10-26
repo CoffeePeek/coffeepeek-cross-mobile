@@ -218,11 +218,18 @@ responsibilities. Examples:
 ```text
 core/network          HttpClient, auth/interceptors, serialization, logging, errors
 core/database         Room factory/configuration, database bootstrap, migrations
+core/media            image transport/cache/access, decoding, resources and prefetch
 core/coroutines       dispatcher and application-scope abstractions
 core/presentation     typed MVI ViewModel base and state/action/event contract
 core/navigation       shared navigation infrastructure, if truly required
 core/design-system    theme, typography, dimensions, icons, UI primitives
 ```
+
+Image infrastructure lives in `core/media`; design-system owns image rendering
+and the shared photo viewer. Root composition supplies the existing clients,
+SessionReader, API origin and platform/analytics hooks. Media never depends on
+design-system, features, legacy models, application configuration or Koin.
+See `core/media/README.md` for the public boundary and migration risks.
 
 Design-system Kotlin components, UI types, tokens and source files use the
 `CoffeePeek` prefix: `CoffeePeekButton`, `CoffeePeekTextField`, `CoffeePeekIcons`

@@ -1,7 +1,7 @@
 package com.coffeepeek.admin.sandbox
 
-import com.coffeepeek.admin.utils.ByteArrayFetcher
-import com.coffeepeek.admin.utils.CustomUrlFetcher
+import com.coffeepeek.core.media.ByteArrayFetcher
+import com.coffeepeek.core.media.ImageUrlFetcher
 import io.kamel.core.config.KamelConfig
 import io.kamel.core.config.httpUrlFetcher
 import io.kamel.image.config.Default
@@ -14,6 +14,6 @@ internal fun sandboxImageConfig(client: HttpClient) = KamelConfig {
     defaults.decoders.forEach { decoder(it) }
     defaults.mappers.values.flatten().forEach { mapper(it) }
     fetcher(ByteArrayFetcher)
-    fetcher(CustomUrlFetcher(client))
+    fetcher(ImageUrlFetcher(client))
     httpUrlFetcher(client)
 }

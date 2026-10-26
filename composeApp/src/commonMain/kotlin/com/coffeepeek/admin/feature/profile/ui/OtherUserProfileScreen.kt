@@ -25,8 +25,8 @@ import com.coffeepeek.feature.profile.domain.PublicFavoriteKind
 import com.coffeepeek.feature.profile.domain.PublicProfileFavorite
 import com.coffeepeek.feature.profile.domain.PublicProfileConnectionKind
 import com.coffeepeek.admin.ui.component.CoffeePeekLoader
-import com.coffeepeek.admin.ui.component.FullScreenImageDialog
-import com.coffeepeek.admin.ui.component.PhotoViewerImages
+import com.coffeepeek.core.designsystem.component.CoffeePeekPhotoViewer
+import com.coffeepeek.core.designsystem.component.CoffeePeekPhotoViewerImages
 import com.coffeepeek.admin.ui.component.GlassControlIcon
 import com.coffeepeek.admin.ui.component.PlatformGlassIconButton
 import com.coffeepeek.admin.ui.component.SwipeDismissModalBottomSheet
@@ -38,7 +38,7 @@ private enum class ProfileSection(val title: String) {
     Favorites("Избранное"), CheckIns("Чекины"), Activity("Активность"),
 }
 
-private data class ProfilePhotos(val images: PhotoViewerImages, val index: Int = 0)
+private data class ProfilePhotos(val images: CoffeePeekPhotoViewerImages, val index: Int = 0)
 
 @Composable
 internal fun OtherUserProfileScreen(
@@ -119,7 +119,7 @@ internal fun UserProfileScreen(
             onRetry = if (profile == null) vm::refresh else vm::retryCheckIns,
             onLoadMore = vm::loadMoreCheckIns,
             onPhotoClick = { images, index -> photos = ProfilePhotos(images, index) })
-        photos?.let { FullScreenImageDialog(images = it.images, initialIndex = it.index, onDismiss = { photos = null }) }
+        photos?.let { CoffeePeekPhotoViewer(images = it.images, initialIndex = it.index, onDismiss = { photos = null }) }
         return
     }
 
@@ -182,7 +182,7 @@ internal fun UserProfileScreen(
                             nickname = nickname?.takeIf(String::isNotBlank) ?: slug,
                             avatarUrl = avatarUrl.takeUnless { authorVisibility.hides(null, slug) },
                             about = null,
-                            onAvatarClick = { if (!authorVisibility.hides(null, slug)) avatarUrl?.let { photos = ProfilePhotos(PhotoViewerImages(listOf(it))) } },
+                            onAvatarClick = { if (!authorVisibility.hides(null, slug)) avatarUrl?.let { photos = ProfilePhotos(CoffeePeekPhotoViewerImages(listOf(it))) } },
                         )
                         Box(Modifier.fillMaxWidth().height(160.dp), contentAlignment = Alignment.Center) { CoffeePeekLoader() }
                     } else Column(
@@ -228,7 +228,7 @@ internal fun UserProfileScreen(
                                 vm.openConnections(PublicProfileConnectionKind.Followers)
                             },
                         ) {
-                            profile.avatarUrl?.let { photos = ProfilePhotos(PhotoViewerImages(listOf(it))) }
+                            profile.avatarUrl?.let { photos = ProfilePhotos(CoffeePeekPhotoViewerImages(listOf(it))) }
                         }
                         if (activityPreview != null) activityPreview(onCheckInsClick ?: { section = ProfileSection.CheckIns })
                         else PublicProfileActivityPreview(slug, profile.activity,
@@ -359,7 +359,7 @@ internal fun UserProfileScreen(
             onUserClick(user.slug, user.userName, user.avatarUrl)
         },
     )
-    photos?.let { FullScreenImageDialog(images = it.images, initialIndex = it.index, onDismiss = { photos = null }) }
+    photos?.let { CoffeePeekPhotoViewer(images = it.images, initialIndex = it.index, onDismiss = { photos = null }) }
 }
 
 @Composable

@@ -26,7 +26,7 @@ import com.coffeepeek.admin.location.distanceToShopMeters
 import com.coffeepeek.admin.location.formatDistance
 import com.coffeepeek.admin.location.rememberPermittedUserLocation
 import com.coffeepeek.admin.ui.Navigator
-import com.coffeepeek.admin.ui.component.FullScreenImageDialog
+import com.coffeepeek.core.designsystem.component.CoffeePeekPhotoViewer
 import com.coffeepeek.admin.ui.component.rememberCheckInDateLabel
 import com.coffeepeek.admin.ui.screen.shop.ShopCheckInFormRenderer
 import com.coffeepeek.admin.ui.screen.shop.ShopDetailScreenRenderer
@@ -78,9 +78,9 @@ internal class FeatureShopDetailScreenRenderer(
         shopFavorites(session.lease.favorites(favorites)), currentViewer = { session.lease.viewer(accounts) },
         currentDayOfWeek = ::currentLocalDayOfWeek, currentMinuteOfDay = ::currentLocalMinuteOfDay,
         analytics = AppShopAnalytics,
-        authorImage = { url, modifier -> com.coffeepeek.admin.utils.CpImage(data = url, modifier = modifier) },
+        authorImage = { url, modifier -> com.coffeepeek.core.designsystem.component.CoffeePeekImage(data = url, modifier = modifier) },
         checkInImage = { url, original, modifier, scale ->
-            com.coffeepeek.admin.utils.CpImage(data = url, highQualityData = original, modifier = modifier, contentScale = scale)
+            com.coffeepeek.core.designsystem.component.CoffeePeekImage(data = url, highQualityData = original, modifier = modifier, contentScale = scale)
         },
     )
 
@@ -109,7 +109,7 @@ internal class FeatureShopDetailScreenRenderer(
     @Composable
     private fun Overlays(state: ShopDetailHostState, session: ShopBrowsingHostSession) {
         state.preview?.let { photo ->
-            FullScreenImageDialog(images = com.coffeepeek.admin.ui.component.PhotoViewerImages(photo.imageUrls, photo.originalUrls),
+            CoffeePeekPhotoViewer(images = com.coffeepeek.core.designsystem.component.CoffeePeekPhotoViewerImages(photo.imageUrls, photo.originalUrls),
                 initialIndex = photo.initialIndex, onDismiss = { state.preview = null })
         }
         state.route?.let { ShopRoutePicker(it.latitude, it.longitude, onDismiss = { state.route = null }) }

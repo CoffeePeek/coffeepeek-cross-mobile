@@ -5,12 +5,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import com.coffeepeek.feature.profile.domain.PublicProfileData
 import com.coffeepeek.admin.ui.Navigator
-import com.coffeepeek.admin.ui.component.FullScreenImageDialog
-import com.coffeepeek.admin.ui.component.PhotoViewerImages
+import com.coffeepeek.core.designsystem.component.CoffeePeekPhotoViewer
+import com.coffeepeek.core.designsystem.component.CoffeePeekPhotoViewerImages
 import com.coffeepeek.admin.ui.component.rememberReviewDisplayDate
 import com.coffeepeek.admin.ui.screen.profile.PublicProfileScreenRenderer
-import com.coffeepeek.admin.utils.CpImage
-import com.coffeepeek.admin.utils.PrefetchListPhotos
+import com.coffeepeek.core.designsystem.component.CoffeePeekImage
+import com.coffeepeek.core.media.PrefetchListPhotos
 import com.coffeepeek.admin.utils.ShareHelper
 import com.coffeepeek.feature.profile.api.ProfileAccountPort
 import com.coffeepeek.feature.authorblocking.api.AuthorBlockActions
@@ -68,11 +68,11 @@ internal fun featurePublicProfileScreenRenderer(
 /** Platform media, formatting and routing; feature-owned card content is never injected here. */
 internal fun profileSlots(): ProfileSlots {
     return ProfileSlots(
-        image = { url, description, modifier -> CpImage(data = url, modifier = modifier, contentScale = ContentScale.Crop, contentDescription = description) },
-        photoViewer = { previews, originals, index, onDismiss -> FullScreenImageDialog(PhotoViewerImages(previews, originals), index, onDismiss) },
-        logoImage = { url, description, modifier -> CpImage(data = url, modifier = modifier, contentScale = ContentScale.Fit, contentDescription = description) },
+        image = { url, description, modifier -> CoffeePeekImage(data = url, modifier = modifier, contentScale = ContentScale.Crop, contentDescription = description) },
+        photoViewer = { previews, originals, index, onDismiss -> CoffeePeekPhotoViewer(CoffeePeekPhotoViewerImages(previews, originals), index, onDismiss) },
+        logoImage = { url, description, modifier -> CoffeePeekImage(data = url, modifier = modifier, contentScale = ContentScale.Fit, contentDescription = description) },
         displayDate = { rememberReviewDisplayDate(it) },
-        progressiveImage = { preview, detail, modifier -> CpImage(data = preview, highQualityData = detail,
+        progressiveImage = { preview, detail, modifier -> CoffeePeekImage(data = preview, highQualityData = detail,
             modifier = modifier, contentScale = ContentScale.Crop) },
         reportCheckIn = { Navigator.navigate(Navigator.Screen.ReportCheckIn(it)) },
         photoPrefetch = { listState, items -> PrefetchListPhotos(listState, items) },

@@ -25,7 +25,7 @@ import androidx.test.platform.app.InstrumentationRegistry
 import com.coffeepeek.admin.MainActivity
 import com.coffeepeek.admin.theme.CoffeePeekTheme
 import com.coffeepeek.admin.theme.PlatformSystemBars
-import com.coffeepeek.admin.utils.CustomUrl
+import com.coffeepeek.core.media.ImageUrl
 import com.coffeepeek.admin.ui.component.CapsuleSegmentedControl
 import com.coffeepeek.admin.ui.component.CpTopBar
 import com.coffeepeek.domain.model.CheckIn
@@ -68,11 +68,11 @@ class CheckInCalendarInteractionTest {
         val fixtureUrl = "https://calendar-fixture.invalid/photo.png"
         val imageConfig = KamelConfig {
             takeFrom(KamelConfig.Default)
-            fetcher(object : Fetcher<CustomUrl> {
-                override val inputDataKClass = CustomUrl::class
+            fetcher(object : Fetcher<ImageUrl> {
+                override val inputDataKClass = ImageUrl::class
                 override val source = DataSource.Disk
-                override val CustomUrl.isSupported get() = url == fixtureUrl
-                override fun fetch(data: CustomUrl, resourceConfig: ResourceConfig) = flow {
+                override val ImageUrl.isSupported get() = url == fixtureUrl
+                override fun fetch(data: ImageUrl, resourceConfig: ResourceConfig) = flow {
                     emit(Resource.Success(ByteReadChannel(png), source))
                 }
             })

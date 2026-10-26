@@ -6,7 +6,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import com.coffeepeek.admin.ui.Navigator
-import com.coffeepeek.admin.ui.component.FullScreenImageDialog
+import com.coffeepeek.core.designsystem.component.CoffeePeekPhotoViewer
 import com.coffeepeek.admin.ui.screen.shop.ShopMenuGalleryScreenRenderer
 import com.coffeepeek.feature.shop.api.ShopMenuGalleryEntry
 
@@ -25,7 +25,7 @@ internal class FeatureShopMenuGalleryScreenRenderer(
         entry.Content(shopId, onBack = Navigator::popBack,
             onOpenPhoto = { urls, index -> viewer = urls to index })
         viewer?.let { (urls, index) ->
-            FullScreenImageDialog(urls, index, onDismiss = { viewer = null })
+            CoffeePeekPhotoViewer(urls, index, onDismiss = { viewer = null })
         }
     }
 }

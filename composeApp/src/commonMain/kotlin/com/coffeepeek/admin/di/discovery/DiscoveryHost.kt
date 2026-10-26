@@ -30,7 +30,7 @@ import com.coffeepeek.admin.ui.component.platformHaptic
 import com.coffeepeek.admin.ui.component.platformReduceMotion
 import com.coffeepeek.admin.ui.component.priceLevelHint
 import com.coffeepeek.admin.ui.component.shopTagIcon
-import com.coffeepeek.admin.utils.PrefetchListPhotos
+import com.coffeepeek.core.media.PrefetchListPhotos
 import com.coffeepeek.domain.model.CatalogItem
 import com.coffeepeek.domain.model.CoffeeShopType
 import com.coffeepeek.domain.model.MapCoffeeZone

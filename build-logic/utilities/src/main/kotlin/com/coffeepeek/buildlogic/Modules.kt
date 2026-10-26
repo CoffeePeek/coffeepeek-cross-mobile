@@ -159,6 +159,7 @@ object Modules {
         const val presentation = ":core:presentation"
         const val datetime = ":core:datetime"
         const val session = ":core:session"
+        const val media = ":core:media"
     }
 
     val all: List<String> = listOf(
@@ -175,6 +176,7 @@ object Modules {
         core.presentation,
         core.datetime,
         core.session,
+        core.media,
         feature.favorites.api,
         feature.favorites.domain,
         feature.favorites.data,

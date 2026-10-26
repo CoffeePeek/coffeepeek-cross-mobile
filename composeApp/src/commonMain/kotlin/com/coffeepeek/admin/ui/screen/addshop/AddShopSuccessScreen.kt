@@ -45,7 +45,7 @@ import com.coffeepeek.admin.ui.component.CoffeeShopPlaceholderImage
 import com.coffeepeek.admin.ui.component.HapticEvent
 import com.coffeepeek.admin.ui.component.platformHaptic
 import com.coffeepeek.admin.ui.icons.CpIcons
-import com.coffeepeek.admin.utils.CpImage
+import com.coffeepeek.core.designsystem.component.CoffeePeekImage
 import org.jetbrains.compose.resources.painterResource
 
 @Composable
@@ -156,7 +156,7 @@ private fun SuccessShopPreviewCard(
                     .clip(RoundedCornerShape(topStart = CpDimens.cardRadius, topEnd = CpDimens.cardRadius)),
             ) {
                 if (coverPhoto != null) {
-                    CpImage(
+                    CoffeePeekImage(
                         data = coverPhoto,
                         modifier = Modifier.fillMaxSize(),
                         contentScale = ContentScale.Crop,

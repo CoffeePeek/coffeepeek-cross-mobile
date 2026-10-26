@@ -71,7 +71,7 @@ internal fun AppContent(content: @Composable () -> Unit) {
             LocalKamelConfig provides kamelConfig,
             LocalContentColor provides MaterialTheme.colorScheme.onBackground,
         ) {
-            ProvideDesignSystemPlatformHooks(content)
+            ProvideDesignSystemPlatformHooks { com.coffeepeek.admin.di.media.ProvideImageEnvironment(content) }
         }
     }
 }

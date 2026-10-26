@@ -6,7 +6,7 @@ import com.coffeepeek.admin.auth.GoogleAuth
 import com.coffeepeek.admin.ui.Navigator
 import com.coffeepeek.admin.ui.component.PhotoSourceBottomSheet
 import com.coffeepeek.admin.ui.screen.profile.AccountScreenRenderer
-import com.coffeepeek.admin.utils.CpImage
+import com.coffeepeek.core.designsystem.component.CoffeePeekImage
 import com.coffeepeek.admin.utils.PickedImage
 import com.coffeepeek.admin.utils.rememberPhotoPicker
 import com.coffeepeek.feature.profile.api.AccountDeletionEntry
@@ -61,8 +61,8 @@ internal class FeatureAccountScreenRenderer(
 }
 
 internal fun editProfileSlots() = EditProfileSlots(
-    image = { url, description, modifier -> CpImage(data = url, modifier = modifier, contentScale = ContentScale.Crop, contentDescription = description) },
-    pickedAvatar = { image, modifier -> CpImage(data = image.bytes, modifier = modifier, contentScale = ContentScale.Crop) },
+    image = { url, description, modifier -> CoffeePeekImage(data = url, modifier = modifier, contentScale = ContentScale.Crop, contentDescription = description) },
+    pickedAvatar = { image, modifier -> CoffeePeekImage(data = image.bytes, modifier = modifier, contentScale = ContentScale.Crop) },
     photoPicker = { title, show, onDismiss, onLoading, onPicked ->
         val picker = rememberPhotoPicker(
             maxSelection = 1,

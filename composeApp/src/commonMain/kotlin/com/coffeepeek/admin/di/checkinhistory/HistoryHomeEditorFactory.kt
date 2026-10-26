@@ -8,7 +8,7 @@ import com.coffeepeek.admin.di.homecheckin.AppHomeCheckInRepository
 import com.coffeepeek.admin.di.homecheckin.appHomeCheckInEditor
 import com.coffeepeek.admin.feature.catalog.api.BrewMethodCatalog
 import com.coffeepeek.feature.coffee.api.CoffeePicker
-import com.coffeepeek.admin.utils.CpImage
+import com.coffeepeek.core.designsystem.component.CoffeePeekImage
 import com.coffeepeek.feature.homecheckin.api.HomeCheckInDetailEntry
 import com.coffeepeek.feature.homecheckin.api.HomeCheckInEditorEntry
 import com.coffeepeek.feature.homecheckin.domain.repository.HomePreparationRepository
@@ -27,7 +27,7 @@ internal fun historyHomeEditorFactory(repository: HomePreparationRepository, pic
     HistoryHomeEntries(
         createHomeCheckInDetailEntry(AppHomeCheckInRepository(lease, repository),
             { lease.isLoggedIn && lease.isCurrent() }) { url, description, modifier, _ ->
-            CpImage(url, contentDescription = description, modifier = modifier, contentScale = ContentScale.Crop)
+            CoffeePeekImage(url, contentDescription = description, modifier = modifier, contentScale = ContentScale.Crop)
         },
         appHomeCheckInEditor(lease, repository, picker, methods, CheckInSource.Diary, tracker),
     )

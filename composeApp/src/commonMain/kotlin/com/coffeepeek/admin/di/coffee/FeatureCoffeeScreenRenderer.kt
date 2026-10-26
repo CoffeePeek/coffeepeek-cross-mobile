@@ -4,7 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import com.coffeepeek.admin.ui.Navigator
 import com.coffeepeek.admin.ui.component.CoffeeShopImage
-import com.coffeepeek.admin.ui.component.FullScreenImageDialog
+import com.coffeepeek.core.designsystem.component.CoffeePeekPhotoViewer
 import com.coffeepeek.admin.ui.component.LocalFloatingNavClearance
 import com.coffeepeek.admin.ui.screen.coffee.CoffeeScreenRenderer
 import com.coffeepeek.admin.utils.OpenInBrowser
@@ -46,7 +46,7 @@ internal fun featureCoffeeScreenRenderer(repository: CoffeeRepository): FeatureC
     return FeatureCoffeeScreenRenderer(
         createCoffeeListEntry(repository, AppCoffeeAnalytics, AppCoffeeScreenAnalytics, image) { onRetry -> LoadErrorContent(onRetry) },
         createCoffeeDetailEntry(repository, image,
-            { urls, index, onDismiss -> FullScreenImageDialog(urls, index, onDismiss = onDismiss) },
+            { urls, index, onDismiss -> CoffeePeekPhotoViewer(urls, index, onDismiss = onDismiss) },
             ::utcIsoToLocalDateTime, AppCoffeeAnalytics, AppCoffeeScreenAnalytics),
     )
 }

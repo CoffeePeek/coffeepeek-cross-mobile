@@ -26,7 +26,7 @@ import androidx.compose.ui.unit.sp
 import com.coffeepeek.admin.ui.component.HapticEvent
 import com.coffeepeek.admin.ui.component.platformHaptic
 import com.coffeepeek.admin.ui.icons.CpIcons
-import com.coffeepeek.admin.utils.CpImage
+import com.coffeepeek.core.designsystem.component.CoffeePeekImage
 import com.coffeepeek.domain.model.CheckIn
 
 @Composable
@@ -179,7 +179,7 @@ private fun CalendarDay(
             ) {
                 Box(Modifier.fillMaxWidth().weight(1f), contentAlignment = Alignment.Center) {
                     val imageModifier = Modifier.aspectRatio(1f, matchHeightConstraintsFirst = true).clearAndSetSemantics {}
-                    CpImage(data = photo.url, contentScale = ContentScale.Crop,
+                    CoffeePeekImage(data = photo.url, contentScale = ContentScale.Crop,
                         modifier = imageModifier.clip(RoundedCornerShape(6.dp)))
                 }
                 if (photos.size > 1) {

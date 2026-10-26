@@ -99,7 +99,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import kotlin.math.roundToInt
 import com.coffeepeek.admin.di.platformViewModel
-import com.coffeepeek.admin.utils.PrefetchListPhotos
+import com.coffeepeek.core.media.PrefetchListPhotos
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalComposeUiApi::class)
 @Composable

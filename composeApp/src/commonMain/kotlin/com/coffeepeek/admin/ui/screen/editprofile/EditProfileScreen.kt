@@ -59,7 +59,7 @@ import com.coffeepeek.admin.ui.component.rememberSyncedTextFieldValue
 import com.coffeepeek.admin.ui.component.limitTextLength
 import com.coffeepeek.admin.ui.component.updateFromInput
 import com.coffeepeek.admin.ui.component.PhotoSourceBottomSheet
-import com.coffeepeek.admin.utils.CpImage
+import com.coffeepeek.core.designsystem.component.CoffeePeekImage
 import com.coffeepeek.admin.utils.rememberPhotoPicker
 import com.coffeepeek.admin.di.platformViewModel
 
@@ -302,14 +302,14 @@ private fun AvatarPickerSection(
         ) {
             when {
                 pendingAvatar != null -> {
-                    CpImage(
+                    CoffeePeekImage(
                         data = pendingAvatar.bytes,
                         modifier = Modifier.fillMaxSize(),
                         contentScale = ContentScale.Crop,
                     )
                 }
                 !avatarUrl.isNullOrBlank() -> {
-                    CpImage(
+                    CoffeePeekImage(
                         data = avatarUrl,
                         modifier = Modifier.fillMaxSize(),
                         contentScale = ContentScale.Crop,

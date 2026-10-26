@@ -17,7 +17,7 @@ import com.coffeepeek.admin.ui.component.brewMethodIcon
 import com.coffeepeek.admin.ui.component.platformHaptic
 import com.coffeepeek.admin.ui.component.priceLevelValue
 import com.coffeepeek.admin.ui.screen.addshop.PickShopLocationDialog
-import com.coffeepeek.admin.utils.CpImage
+import com.coffeepeek.core.designsystem.component.CoffeePeekImage
 import com.coffeepeek.admin.utils.PickedImage
 import com.coffeepeek.domain.model.CatalogItem
 import com.coffeepeek.feature.contributions.api.AddRoasterHost
@@ -63,7 +63,7 @@ internal fun addShopHost() = AddShopHost(
     brewMethodIcon = brewIcon,
     roasterLogo = roasterLogo,
     shopImage = { bytes, modifier ->
-        if (bytes != null) CpImage(data = bytes, modifier = modifier, contentScale = ContentScale.Crop)
+        if (bytes != null) CoffeePeekImage(data = bytes, modifier = modifier, contentScale = ContentScale.Crop)
         else CoffeeShopPlaceholderImage(modifier, labelSize = 16.sp)
     },
     feedback = ::haptic,
@@ -73,7 +73,7 @@ internal fun addRoasterHost() = AddRoasterHost(photos = photoSection, feedback =
 
 internal fun changeEditorHost() = ChangeEditorHost(
     photos = photoSection,
-    remoteImage = { url, modifier -> CpImage(data = url, modifier = modifier, contentScale = ContentScale.Crop) },
+    remoteImage = { url, modifier -> CoffeePeekImage(data = url, modifier = modifier, contentScale = ContentScale.Crop) },
     brewMethodIcon = brewIcon,
     roasterLogo = roasterLogo,
     feedback = ::haptic,

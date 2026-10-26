@@ -4,7 +4,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.coffeepeek.admin.utils.CpImage
+import com.coffeepeek.core.designsystem.component.CoffeePeekImage
 import com.coffeepeek.admin.utils.utcIsoToLocalDateTime
 import com.coffeepeek.core.session.SessionReader
 import com.coffeepeek.feature.checkinhistory.api.ProfileActivityEntry
@@ -37,7 +37,7 @@ internal class FeatureProfileActivityRenderer(
             CompositionLocalProvider(LocalViewModelStoreOwner provides session) {
                 val entry = remember(session) {
                     createProfileActivityEntry(session.lease.bind(shops), session.lease.bind(homes), calendar::snapshot,
-                        { url, modifier, scale -> CpImage(data = url, modifier = modifier, contentScale = scale) },
+                        { url, modifier, scale -> CoffeePeekImage(data = url, modifier = modifier, contentScale = scale) },
                         { utcIsoToLocalDateTime(it).substringAfterLast(' ', "") })
                 }
                 content(session, entry)

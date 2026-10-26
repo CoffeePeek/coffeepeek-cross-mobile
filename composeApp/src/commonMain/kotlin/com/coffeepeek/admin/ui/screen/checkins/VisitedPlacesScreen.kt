@@ -42,8 +42,8 @@ import com.coffeepeek.admin.ui.component.CapsuleSegmentedControl
 import com.coffeepeek.admin.ui.component.CheckInDisplayCard
 import com.coffeepeek.admin.ui.component.CoffeePeekLoader
 import com.coffeepeek.admin.ui.component.CpTopBar
-import com.coffeepeek.admin.ui.component.FullScreenImageDialog
-import com.coffeepeek.admin.ui.component.PhotoViewerImages
+import com.coffeepeek.core.designsystem.component.CoffeePeekPhotoViewer
+import com.coffeepeek.core.designsystem.component.CoffeePeekPhotoViewerImages
 import com.coffeepeek.admin.ui.component.PlatformScrollableColumn
 import com.coffeepeek.admin.ui.component.SwipeDismissModalBottomSheet
 import com.coffeepeek.admin.utils.currentUtcIsoDateTime
@@ -54,7 +54,7 @@ import com.coffeepeek.domain.model.CheckIn
 fun VisitedPlacesScreen(vm: VisitedPlacesViewModel = platformViewModel()) {
     val state by vm.state.collectAsState()
     var viewMode by rememberSaveable { mutableStateOf(CheckInViewMode.Calendar) }
-    var photoPreview by remember { mutableStateOf<Pair<PhotoViewerImages, Int>?>(null) }
+    var photoPreview by remember { mutableStateOf<Pair<CoffeePeekPhotoViewerImages, Int>?>(null) }
     var selectedCheckIn by remember { mutableStateOf<CheckIn?>(null) }
 
     selectedCheckIn?.let { checkIn ->
@@ -79,7 +79,7 @@ fun VisitedPlacesScreen(vm: VisitedPlacesViewModel = platformViewModel()) {
     }
 
     photoPreview?.let { (urls, index) ->
-        FullScreenImageDialog(
+        CoffeePeekPhotoViewer(
             images = urls,
             initialIndex = index,
             onDismiss = { photoPreview = null },
@@ -220,7 +220,7 @@ internal fun CheckInCalendarContent(
 private fun CheckInListContent(
     state: VisitedPlacesUiState,
     vm: VisitedPlacesViewModel,
-    onPhotoClick: (PhotoViewerImages, Int) -> Unit,
+    onPhotoClick: (CoffeePeekPhotoViewerImages, Int) -> Unit,
 ) {
     val listState = rememberLazyListState()
     val shouldLoadMore by remember(state.checkIns.size, state.hasMore, state.isLoadingMore) {

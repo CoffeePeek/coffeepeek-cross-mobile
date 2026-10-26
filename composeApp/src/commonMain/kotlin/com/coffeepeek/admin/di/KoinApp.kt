@@ -1,5 +1,7 @@
 package com.coffeepeek.admin.di
 
+import com.coffeepeek.core.media.createImageUrlFetcher
+
 import com.coffeepeek.admin.config.AppConfig
 import com.coffeepeek.admin.locator.Constants
 import com.coffeepeek.admin.locator.Locator
@@ -19,7 +21,7 @@ import com.coffeepeek.legacy.homecheckin.data.HomeCheckInRepositoryImpl
 import com.coffeepeek.legacy.homecheckin.domain.HomeCheckInRepository
 import com.coffeepeek.feature.notifications.api.NotificationFeature
 import com.coffeepeek.admin.feature.favorites.data.ServerRoasterFavorites
-import com.coffeepeek.admin.utils.CustomUrlFetcher
+import com.coffeepeek.core.media.ImageUrlFetcher
 import com.coffeepeek.api.CoffeePeekClient
 import com.coffeepeek.admin.ui.NavigatorViewModel
 import com.coffeepeek.admin.ui.screen.shop.ShopReportScreenRenderer
@@ -121,7 +123,7 @@ fun initKoin(
     val application = startKoin { modules(commonModules + platformModules) }
     application.koin.get<com.coffeepeek.feature.notifications.api.NotificationFeature>()
     if (analyticsEnabled) com.coffeepeek.admin.analytics.installAnalytics(database.settingRepository, application.koin.get(), application.koin.get())
-    com.coffeepeek.admin.utils.image.ProtectedPhotoSession.install(
+    com.coffeepeek.core.media.installImageAccess(
         application.koin.get(), application.koin.get<CoffeePeekClient>().client,
         application.koin.get<com.coffeepeek.feature.authorblocking.api.AuthorVisibility>().visibility,
     )
@@ -235,7 +237,7 @@ private fun appModule(
         )
     }
     single { com.coffeepeek.feature.appupdate.impl.AppUpdateController(get(), com.coffeepeek.admin.di.appupdate.AppConfigUpdateEnvironment) }
-    single<CustomUrlFetcher> {
+    single<ImageUrlFetcher> {
         val gateway = get<CoffeePeekClient>()
         createImageUrlFetcher(gateway.client, gateway.imageClient)
     }

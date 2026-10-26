@@ -1,4 +1,5 @@
 import com.coffeepeek.buildlogic.module
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import com.coffeepeek.buildlogic.VerifyApkRuntimeClassesTask
 import com.android.build.api.artifact.SingleArtifact
 import com.coffeepeek.config.Config
@@ -17,6 +18,15 @@ plugins {
 }
 
 if (file("google-services.json").isFile) apply(plugin = "com.google.gms.google-services")
+
+// Existing external UI regressions retain compile-only access to moved internals.
+// No test cases, Activity, APK host or instrumentation execution are added.
+val mediaTestBuildDirectory = project(":core:media").layout.buildDirectory
+tasks.withType<KotlinCompile>().configureEach {
+    if (name.endsWith("AndroidTestKotlinAndroid")) {
+        friendPaths.from(libraries.filter { it.toPath().startsWith(mediaTestBuildDirectory.get().asFile.toPath()) })
+    }
+}
 
 kotlin {
     androidTarget {
@@ -148,6 +158,7 @@ kotlin {
             implementation(libs.ktor.client.websockets)
             implementation(libs.kotlinx.serialization.json)
             implementation(libs.kamel)
+            implementation(project(module.core.media))
             implementation(libs.koin.core)
             implementation(libs.koin.compose)
             implementation(libs.koin.compose.viewmodel)
@@ -351,6 +362,10 @@ androidComponents.onVariants(androidComponents.selector().withBuildType("sandbox
             "com.coffeepeek.admin.di.favorites.ServerFavoritesModuleKt",
             "com.coffeepeek.core.session.SessionReader",
             "com.coffeepeek.core.session.SessionStore",
+            "com.coffeepeek.core.media.ImageUrlFetcher",
+            "com.coffeepeek.core.media.ImageEnvironment",
+            "com.coffeepeek.core.designsystem.component.CoffeePeekImageKt",
+            "com.coffeepeek.core.designsystem.component.CoffeePeekPhotoViewerKt",
             "com.coffeepeek.admin.sandbox.backend.SandboxBackend", "com.coffeepeek.admin.sandbox.SandboxApplication",
             "com.coffeepeek.feature.homecheckin.data.repository.HomePreparationRepositoryFactoryKt",
             "com.coffeepeek.admin.ui.Navigator"))
@@ -395,6 +410,10 @@ androidComponents {
                 "com.coffeepeek.admin.di.favorites.ServerFavoritesModuleKt",
                 "com.coffeepeek.core.session.SessionReader",
                 "com.coffeepeek.core.session.SessionStore",
+                "com.coffeepeek.core.media.ImageUrlFetcher",
+                "com.coffeepeek.core.media.ImageEnvironment",
+                "com.coffeepeek.core.designsystem.component.CoffeePeekImageKt",
+                "com.coffeepeek.core.designsystem.component.CoffeePeekPhotoViewerKt",
                 "com.coffeepeek.core.session.DefaultSessionStore",
                 "com.coffeepeek.admin.auth.SessionRealtimeManager",
                 "com.coffeepeek.api.service.CheckInApiService",

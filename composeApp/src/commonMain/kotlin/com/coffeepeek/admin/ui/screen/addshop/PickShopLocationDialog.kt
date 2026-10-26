@@ -59,7 +59,7 @@ import com.coffeepeek.admin.ui.component.CoffeePeekLoader
 import com.coffeepeek.admin.ui.component.GlassControlIcon
 import com.coffeepeek.admin.ui.component.PlatformMapControlButton
 import com.coffeepeek.admin.ui.component.PlatformGlassIconButton
-import com.coffeepeek.admin.ui.component.PlatformFullScreenDialog
+import com.coffeepeek.core.designsystem.component.CoffeePeekFullScreenDialog
 import com.coffeepeek.admin.ui.icons.CpIcons
 import com.coffeepeek.core.designsystem.component.CoffeePeekPlatformCoffeeIcon
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
@@ -114,7 +114,7 @@ fun PickShopLocationDialog(
         }
     }
 
-    PlatformFullScreenDialog(onDismiss = onDismiss) {
+    CoffeePeekFullScreenDialog(onDismiss = onDismiss) {
         BoxWithConstraints(
             modifier = Modifier
                 .fillMaxSize()

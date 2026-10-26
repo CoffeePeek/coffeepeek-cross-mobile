@@ -6,7 +6,7 @@ import androidx.compose.ui.layout.ContentScale
 import coffeepeek.composeapp.generated.resources.*
 import com.coffeepeek.admin.ui.screen.checkins.CalendarPhoto
 import com.coffeepeek.admin.ui.screen.checkins.CalendarWeek
-import com.coffeepeek.admin.utils.CpImage
+import com.coffeepeek.core.designsystem.component.CoffeePeekImage
 import com.coffeepeek.core.designsystem.component.CoffeePeekActivityDay
 import com.coffeepeek.core.designsystem.component.CoffeePeekActivityWeek
 import com.coffeepeek.core.designsystem.component.CoffeePeekActivityWeekLabels
@@ -33,7 +33,7 @@ internal fun ProfileActivityWeek(
         stringResource(Res.string.profile_week_loading), stringResource(Res.string.profile_week_error),
         stringResource(Res.string.profile_week_retry)), loading, failed, onClick, onRetry) { index, modifier ->
         photos[week.dates[index]].orEmpty().firstOrNull()?.let { photo ->
-            CpImage(data = photo.url, modifier = modifier, contentScale = ContentScale.Crop)
+            CoffeePeekImage(data = photo.url, modifier = modifier, contentScale = ContentScale.Crop)
         }
     }
 }

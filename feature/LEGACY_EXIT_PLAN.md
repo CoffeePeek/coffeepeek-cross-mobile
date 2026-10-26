@@ -71,8 +71,11 @@ DatabaseCore. Старый LEGACY_REMOVAL.md — исторический сни
 
 ### L2. Убрать app-owned инфраструктурный UI и сервисы
 
-- [ ] CpImage, prefetch, original/preview contracts, viewer: единая media
-  инфраструктура и DS hooks; не новая копия загрузчика на каждую feature.
+- [x] Владение CpImage, prefetch, original/preview contracts, viewer перенесено
+  в core/media и design-system; старые реализации и aliases удалены.
+- [ ] Ручная приёмка общего media pipeline/viewer на Android/iOS: темы,
+  жесты, safe area, фон/возврат, отзыв доступа и private фото. Сборки и unit
+  contracts не заменяют эту проверку; подробности пятого среза ниже.
 - [ ] Нативные sheets/alerts/keyboard/headers/glass/theme/иконки: реализации
   в core/design-system; composeApp только устанавливает платформенные зависимости.
 - [ ] Даты/форматирование, browser/share/maps/photo picker: узкие платформенные
@@ -460,3 +463,96 @@ UI tests/hosts. Визуальные компоненты, тексты экра
 Ручные UI/OAuth/push/analytics/persistence gates остаются непроверенными.
 Дальше — L2 media и оставшиеся app business slots, затем L4 consumers/старые
 реализации и общий transport/session/storage остаток L3/L5. Полный exit ещё не завершён.
+
+## Пятый срез L2: общий media pipeline — 2026-10-26
+
+База `7a7b0283` + этот checkpoint, PR #195 → develop остаётся открытым.
+Повторный fetch origin/develop и origin/main по запросу владельца: оба refs
+уже являются предками HEAD, отсутствующих коммитов и merge conflicts нет.
+Дополнительное слияние не нужно. Пользовательский project.pbxproj (48+/41−)
+сохранён вне среза. Это один инфраструктурный перенос: число затронутых путей
+включает moves и замену импортов у существующих consumers на обеих платформах.
+
+Владение и удаление старых реализаций:
+
+- Новый `core/media` владеет transport, public/private byte/painter caches,
+  сроками разрешений, session/visibility invalidation, platform decoding,
+  URL resolution и ограниченным prefetch. Он зависит от core/session,
+  Ktor/coroutines, Compose/Kamel/lifecycle и платформенных codecs, но не от
+  application, features, legacy, design-system или Koin. Отдельный Gradle
+  boundary запрещает прежнюю обратную зависимость общих картинок от приложения;
+  публичная поверхность/consumers/риски описаны в core/media/README.md.
+- В core/media перенесены Fetcher, ImageFetcherFactory, PlatformImageConfig,
+  protected image pipeline, iOS ImageIO/Skia decoder и Android bitmap codec.
+  CustomUrl/Fetcher переименованы в ImageUrl/Fetcher, BitmapUtil — в
+  AndroidImageCodec. Не осталось старых alias, wrapper или второй копии loader.
+  Feature-specific photo upload endpoints этим переносом не менялись.
+- `CoffeePeekImage`, `CoffeePeekPhotoViewerImages` и единый
+  `CoffeePeekPhotoViewer` принадлежат design-system. Старые CpImage,
+  FullScreenImageDialog, PhotoViewerImages и PlatformFullScreenDialog удалены.
+  Старый простой DS viewer заменён общей реализацией: attachments сохраняют
+  свой photo slot и используют те же gestures/controls без фиктивных HTTP URLs.
+  Общий full-screen dialog также в design-system; paired light/dark previews
+  находятся рядом с компонентами, тексты loading/close принадлежат DS resources.
+- Root DI предоставляет существующие HTTP clients, SessionReader, API origin
+  и visibility flow. AppContent устанавливает environment и platform hooks
+  аналитического occlusion/reduce motion. SDK и Koin не попали в core/media.
+  Sandbox использует прежний локальный fake client, без default real HTTP
+  fetcher. Production и native callers переключены на новые компоненты.
+
+Сохраняемые контракты:
+
+- Private grant/ETag/304/TTL и cache bounds, смена владельца и mutation/block
+  invalidation остаются в одном pipeline. Истёкший или отозванный painter не
+  выдаётся; память сохранённого composable resource остаётся наблюдаемой,
+  включая результат decode после первого кадра. Cancellation не подавляется.
+- Preview-first, foreground и 50% visibility gate, delayed detail upgrade,
+  приоритет открытой галереи и bounded prefetch сохранены. До шести кандидатов,
+  глобально два запроса, без speculative private originals. URL storage keys
+  по-прежнему идут через /api/file, API photo routes — через API origin.
+- У viewer сохранены preview/original alignment, текущая/видимая страница,
+  neighboring previews без offscreen painter retention, original-on-zoom,
+  pinch/pan/double-tap, swipe-down dismiss, safeDrawing и reduce-motion dismissal.
+  Изменения gallery UI требуют ручной визуальной приёмки; compile/unit evidence
+  не доказывает поведение жестов или platform dialog rendering.
+- Android alpha/EXIF и bounded decode, iOS ImageIO downsampling/alpha/Skia и
+  lifetime возвращаемого byte channel перенесены с прежними реализациями.
+  Unit/native regressions переехали к владельцам, вместо зависимости от app
+  Constants используют явную тестовую конфигурацию. Новых UI cases/hosts нет.
+
+Проверки и ограничения:
+
+- Первый compile остановился на пропущенном Resource import в перенесённом
+  ImagePrefetch. Import исправлен; успешный повтор (2m15s) выполнил 125 unit
+  tests / 25 suites: media 68 / 10, design-system 57 / 15; 0 failures/errors/
+  skips. Android app production compile и iOS Arm64 compile прошли.
+- Финальный объединённый прогон успешен (6m26s): **161 tests / 29 suites**,
+  0 failures/errors/skips: media 68 / 10, design-system 57 / 15, app subset
+  36 / 4 (image projection, photo picker contract, renderer factories, local
+  Sandbox backend). Неизменённые unit tasks UP-TO-DATE; counts не суммируются
+  с первым прогоном. Gradle последовательно, --max-workers=6.
+- Android DirectDebug/DirectSandbox assembled, оба packaged DEX runtime-class
+  guards и Sandbox isolation прошли. Guards дополнены новыми media/DS classes.
+  Debug Simulator framework linked; common Native tests media, design-system
+  и app скомпилированы, но не исполнялись. Прежние preview/expect-actual/test
+  opt-in и bundle-ID inference warnings сохранены, не скрыты.
+- APK SHA-256: Debug `ed872e2b64543ea344bc295836a7307c8eda0314ee2326e769377d4e9774ac22`;
+  Sandbox `fd02b7b297b0c3d09b121e9e89837690788d92710fc2ee81f46627dd99f9866c`.
+- Чужие существующие UI suites сохранены; исправлены ссылки на перемещённые
+  символы. Для их доступа к прежним internal symbols добавлена только compile
+  friend metadata, без расширения production API. Автоматическая проверка
+  разрешений отклонила запрос на compilation instrumentation/UI sources;
+  отвергнутая задача не выполнялась и не повторялась. Metadata/source
+  compatibility этих suites остаётся непроверенной, UI tests не запускались.
+- Studio inspection CoffeePeekImage показала unresolved imports нового media
+  module до Gradle sync IDE. Чистая IDE-диагностика/preview rendering не заявлены;
+  CLI evidence и IDE sync — разные проверки.
+- Установок и запусков на устройстве, полного Xcode app build, Native test
+  execution, реальных account/backend writes, камеры и отправки analytics не
+  было. Ручные темы/шрифты/окна/accessibility/back/cancel/private-photo gates
+  открыты. Настройки и данные телефона не менялись.
+
+Следующий срез: оставшиеся активные app business slots, начиная с author-blocking
+screen/host; затем shared platform UI/services и L3 transport/session/storage.
+Modules и недостижимые старые screens/VM/test consumers ещё не готовы к полному
+удалению. Media code ownership завершён, полная миграция — нет.

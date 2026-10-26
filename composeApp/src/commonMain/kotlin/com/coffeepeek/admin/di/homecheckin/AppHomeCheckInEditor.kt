@@ -15,7 +15,7 @@ import com.coffeepeek.admin.feature.catalog.api.BrewMethodCatalog
 import com.coffeepeek.admin.feature.catalog.api.methodLabel
 import com.coffeepeek.feature.coffee.api.CoffeePicker
 import com.coffeepeek.admin.ui.component.brewMethodIcon
-import com.coffeepeek.admin.utils.CpImage
+import com.coffeepeek.core.designsystem.component.CoffeePeekImage
 import com.coffeepeek.admin.utils.datePickerMillisToUtcIsoInstant
 import com.coffeepeek.admin.utils.formatVisitDate
 import com.coffeepeek.admin.utils.utcIsoToLocalDate
@@ -48,7 +48,7 @@ internal fun appHomeCheckInEditor(
             { Image(painterResource(Res.drawable.maskot_with_magnifying_glass), null, it) },
             { name, modifier -> Icon(painterResource(brewMethodIcon(name)), null, modifier, tint = MaterialTheme.colorScheme.onSurfaceVariant) },
             { photo, modifier, fullSize ->
-                CpImage(photo.bytes, modifier = modifier, contentScale = if (fullSize) ContentScale.Fit else ContentScale.Crop)
+                CoffeePeekImage(photo.bytes, modifier = modifier, contentScale = if (fullSize) ContentScale.Fit else ContentScale.Crop)
             }),
         AppHomeCheckInPhotoPicker(),
         analytics = { editing ->

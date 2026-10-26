@@ -11,11 +11,11 @@ import com.coffeepeek.admin.feature.checkin.api.CheckInFlowHandoff
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.coffeepeek.admin.utils.CpImage
+import com.coffeepeek.core.designsystem.component.CoffeePeekImage
 import com.coffeepeek.admin.utils.utcIsoToLocalDateTime
 import com.coffeepeek.admin.ui.Navigator
-import com.coffeepeek.admin.ui.component.FullScreenImageDialog
-import com.coffeepeek.admin.ui.component.PhotoViewerImages
+import com.coffeepeek.core.designsystem.component.CoffeePeekPhotoViewer
+import com.coffeepeek.core.designsystem.component.CoffeePeekPhotoViewerImages
 import com.coffeepeek.admin.ui.component.rememberCheckInDateLabel
 import com.coffeepeek.admin.ui.screen.checkins.CheckInHistoryScreenRenderer
 import com.coffeepeek.core.session.SessionReader
@@ -31,10 +31,10 @@ internal class FeatureCheckInHistoryScreenRenderer(
     private val calendar: AppCheckInHistoryCalendar,
     private val homeEditors: HistoryHomeEditorFactory,
     private val imageContent: @Composable (String, Modifier, ContentScale) -> Unit = { url, modifier, scale ->
-        CpImage(data = url, modifier = modifier, contentScale = scale)
+        CoffeePeekImage(data = url, modifier = modifier, contentScale = scale)
     },
     private val photoContent: @Composable (List<String>, List<String>, Int, () -> Unit) -> Unit = { urls, originals, index, dismiss ->
-        FullScreenImageDialog(images = PhotoViewerImages(urls, originals), initialIndex = index, onDismiss = dismiss)
+        CoffeePeekPhotoViewer(images = CoffeePeekPhotoViewerImages(urls, originals), initialIndex = index, onDismiss = dismiss)
     },
 ) : CheckInHistoryScreenRenderer {
     @Composable
@@ -105,7 +105,7 @@ internal class FeatureCheckInHistoryScreenRenderer(
         val entry = remember(session) {
             createCheckInHistoryEntry(session.lease.bind(repository), session.lease.bind(homeReader), calendar::snapshot, imageContent,
                 highQualityImage = { url, highQualityUrl, modifier, scale ->
-                    CpImage(data = url, highQualityData = highQualityUrl, modifier = modifier, contentScale = scale)
+                    CoffeePeekImage(data = url, highQualityData = highQualityUrl, modifier = modifier, contentScale = scale)
                 },
                 createButtonModifier = {
                     val page = Analytics.service?.state?.collectAsState()?.value?.page ?: "other"
