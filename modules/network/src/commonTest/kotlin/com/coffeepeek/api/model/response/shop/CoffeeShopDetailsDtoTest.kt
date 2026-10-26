@@ -40,7 +40,7 @@ class CoffeeShopDetailsDtoTest {
 
     @Test
     fun decodesCheckInCountInShopSummaryAndDefaultsMissingLists() {
-        val summary = Json.decodeFromString<ShortShopDto>(
+        val summary = Json.decodeFromString<ShopSearchItemDto>(
             """{"address":{"slug":"shop","canonicalPath":"/coffee-shops/shop","revision":1,"isAlias":false},"name":"Кофейня","checkInCount":7}""",
         )
         assertEquals(7, summary.checkInCount)

@@ -139,20 +139,18 @@ class SearchViewModelTest {
         assertFalse(vm.now.filters.visitedOnly); assertFalse(vm.now.filters.favoritesOnly); assertEquals(1, repository.queries.size)
     }
 
-    @Test fun theQuickSwitchesFilterTheLoadedPageAndReloadOnlyWithNearby() = runTest(dispatcher) {
-        repository.search = { page(listOf(shop("a", favorite = true, open = true), shop("b", visited = true), shop("c", new = true))) }
-        favorites.flow.value = setOf("a")
+    @Test fun everyQuickSwitchReloadsTheServerSearchWithoutRequiringLocation() = runTest(dispatcher) {
         val vm = model()
-        vm.send(SearchAction.ToggleFavorites, scope = this)
-        assertEquals(listOf("a"), vm.now.visibleShops.map { it.id }); assertEquals(1, repository.queries.size)
-        vm.send(SearchAction.ToggleFavorites, SearchAction.ToggleVisited, scope = this)
-        assertEquals(listOf("b"), vm.now.visibleShops.map { it.id })
-        vm.send(SearchAction.ToggleNew, SearchAction.ToggleOpen, scope = this)
-        assertTrue(vm.now.visibleShops.isEmpty()); assertEquals(1, repository.queries.size)
-        location.flow.value = here; runCurrent()
-        vm.send(SearchAction.ToggleNearby, scope = this); assertEquals(2, repository.queries.size)
         vm.send(SearchAction.ToggleOpen, scope = this)
-        assertEquals(3, repository.queries.size); assertFalse(repository.queries.last().filters.openOnly)
+        assertTrue(repository.queries.last().filters.openOnly)
+        vm.send(SearchAction.ToggleNew, scope = this)
+        assertTrue(repository.queries.last().filters.newOnly)
+        vm.send(SearchAction.ToggleVisited, scope = this)
+        assertTrue(repository.queries.last().filters.visitedOnly)
+        vm.send(SearchAction.ToggleFavorites, scope = this)
+        assertTrue(repository.queries.last().filters.favoritesOnly)
+        assertEquals(5, repository.queries.size)
+        assertNull(repository.queries.last().origin)
     }
 
     @Test fun clearingTheFiltersKeepsTheCityDropsTheQueryAndReloadsOnce() = runTest(dispatcher) {

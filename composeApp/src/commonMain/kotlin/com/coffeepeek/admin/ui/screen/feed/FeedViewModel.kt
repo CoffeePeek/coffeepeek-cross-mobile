@@ -259,14 +259,14 @@ class FeedViewModel(
         val previousFilters = _uiState.value.filters
         _uiState.update { it.copy(filters = it.filters.copy(openOnly = !it.filters.openOnly)) }
         trackQuickFilters(previousFilters)
-        if (_uiState.value.filters.nearbyOnly) loadShops(reset = true)
+        loadShops(reset = true)
     }
 
     fun toggleNewOnly() {
         val previousFilters = _uiState.value.filters
         _uiState.update { it.copy(filters = it.filters.copy(newOnly = !it.filters.newOnly)) }
         trackQuickFilters(previousFilters)
-        if (_uiState.value.filters.nearbyOnly) loadShops(reset = true)
+        loadShops(reset = true)
     }
 
     fun toggleVisitedOnly() {
@@ -279,7 +279,7 @@ class FeedViewModel(
             val previousFilters = _uiState.value.filters
             _uiState.update { it.copy(filters = it.filters.copy(visitedOnly = !it.filters.visitedOnly)) }
             trackQuickFilters(previousFilters)
-            if (_uiState.value.filters.nearbyOnly) loadShops(reset = true)
+            loadShops(reset = true)
         }
     }
 
@@ -293,7 +293,7 @@ class FeedViewModel(
             val previousFilters = _uiState.value.filters
             _uiState.update { it.copy(filters = it.filters.copy(favoritesOnly = !it.filters.favoritesOnly)) }
             trackQuickFilters(previousFilters)
-            if (_uiState.value.filters.nearbyOnly) loadShops(reset = true)
+            loadShops(reset = true)
         }
     }
 
