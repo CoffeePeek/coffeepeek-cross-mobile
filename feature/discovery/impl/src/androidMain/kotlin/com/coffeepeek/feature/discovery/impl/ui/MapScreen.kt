@@ -65,6 +65,11 @@ internal fun MapScreen(
     canvasSize: DpSize? = null,
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    host.locationPermission(
+        state.locationPermissionRequest,
+        { viewModel.onAction(MapAction.LocationGranted) },
+        { viewModel.onAction(MapAction.LocationDenied) },
+    )
     val focusManager = LocalFocusManager.current
     val keyboard = LocalSoftwareKeyboardController.current
     val dismissInput: () -> Unit = { focusManager.clearFocus(force = true); keyboard?.hide() }
@@ -88,7 +93,14 @@ internal fun MapScreen(
             onLocationDenied = { viewModel.onAction(MapAction.LocationDenied) },
         )
     }
-    MapContent(state, host, callbacks, bottomClearance, dismissInput, viewModel::onAction, modifier, isPreview, onToggleExpand, canvasSize)
+    val toggleExpand = onToggleExpand?.let { toggle ->
+        {
+            viewModel.onAction(MapAction.Interact)
+            toggle()
+        }
+    }
+    val mapModifier = modifier.mapInteraction { viewModel.onAction(MapAction.Interact) }
+    MapContent(state, host, callbacks, bottomClearance, dismissInput, viewModel::onAction, mapModifier, isPreview, toggleExpand, canvasSize)
 }
 
 @Composable

@@ -88,6 +88,46 @@ production test events. The load result count describes represented shops.
   review and `git diff --check` pass; no added Gradle edges or dependency cycles.
   Existing compiler warnings were not expanded into unrelated cleanup.
 
+## Contextual Android location permission — 2026-10-26
+
+Scope: Android Discovery permission timing in `impl`, its public host port and
+the application permission adapter. Preserve map movement, nearby reads,
+navigation and consent/session-guarded geolocation analytics. Do not prompt on
+startup, viewport loading or programmatic shop focus. The first expand, zoom,
+location-button or completed map gesture requests permission. Repeated passive
+interactions never request again; the Android host persists the one-shot request
+so a refusal also survives screen recreation and application restart. Explicit
+location clicks recheck permission, allowing a grant made in system settings to
+take effect without another permission dialog. A location-button camera request
+waits for the permission result; a grant during zoom preserves the camera.
+
+Verification plan: run Discovery implementation unit tests, assemble exact
+`directSandbox` and `directDebug` variants and their packaged DEX checks. Manual
+Sandbox checks must cover fresh startup, first interaction, refusal/reopening,
+gesture delivery to the native map and permission grant/approximate location.
+The retained legacy iOS screens are outside this Android change; the iOS actual
+only accepts the additional parameter (iOS already suppresses repeat dialogs).
+No new Gradle dependencies, data/domain changes, UI tests or real-account writes.
+
+Verification on 2026-10-26, source `520ae529` plus this working diff:
+
+- 65 executed Discovery implementation unit tests, including 28 map tests;
+  zero failures/errors/skips and no failing test retries. The new cases cover
+  startup/programmatic focus, first interaction, both zoom buttons, refusal,
+  duplicate pending location clicks, permission grant and camera preservation.
+- `assembleDirectSandbox`, `assembleDirectDebug`, both packaged runtime-class
+  checks and Sandbox isolation passed. The final pass includes the saved
+  in-flight permission guard for activity recreation. Kotlin compilation for
+  `iosSimulatorArm64` passed; this does not build Swift or run an iOS application.
+- Final Sandbox: `com.coffeepeek.sandbox`, version `1.1.1.2467-sandbox` / 2467.
+  No APK was installed and no device or real account was used. Manual system
+  dialog, refusal/restart persistence, approximate location, native gesture
+  delivery and light/dark/accessibility checks remain unverified. Screen content
+  and its visuals were not changed; only the runtime interaction adapter changed.
+- No dependency/source-set edges were added. `git diff --check` passed. Studio
+  MCP was unavailable, so IDE inspection/rendering was not performed. Existing
+  preview deprecation and expect/actual compiler warnings remain outside scope.
+
 ## Remaining gates
 
 Native Swift compilation/signing and iOS runtime, VoiceOver/TalkBack execution,

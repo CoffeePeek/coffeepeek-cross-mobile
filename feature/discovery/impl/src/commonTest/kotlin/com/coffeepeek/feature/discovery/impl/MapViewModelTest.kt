@@ -230,10 +230,65 @@ class MapViewModelTest {
         val vm = model()
         vm.send(MapAction.LocationDenied, scope = this)
         vm.send(MapAction.RequestMyLocation, scope = this)
+        assertEquals(0, vm.now.myLocationRequest)
+        assertEquals(1, vm.now.locationPermissionRequest)
+        vm.send(MapAction.LocationGranted, scope = this)
         assertEquals(1, vm.now.myLocationRequest)
+        assertEquals(1, location.refreshes)
         vm.send(MapAction.MyLocationFound(here), scope = this)
         assertEquals(15f, vm.now.camera?.zoom); assertEquals(here, vm.now.nearbyOrigin)
         assertEquals(listOf(Triple("map", false, GeolocationOutcome.Unavailable), Triple("map", true, GeolocationOutcome.Available)), analytics.geolocations)
+    }
+
+    @Test fun openingAndLoadingTheMapDoesNotRequestLocationPermission() = runTest(dispatcher) {
+        val vm = model()
+        vm.send(MapAction.BoundsChanged(view, 14f), MapAction.CameraApplied, scope = this)
+        settle()
+        vm.send(MapAction.Focus(MapFocus("shop", "Shop", here)), scope = this)
+        assertEquals(0, vm.now.locationPermissionRequest)
+        assertEquals(0, vm.now.myLocationRequest)
+        assertEquals(0, location.refreshes)
+    }
+
+    @Test fun mapInteractionsAskOnceAndKeepZoomWorkingAfterDenial() = runTest(dispatcher) {
+        val vm = model()
+        vm.send(MapAction.BoundsChanged(view, 14f), MapAction.Interact, MapAction.Interact, scope = this)
+        assertEquals(1, vm.now.locationPermissionRequest)
+        vm.send(MapAction.LocationDenied, MapAction.Interact, MapAction.ZoomIn, MapAction.ZoomOut, scope = this)
+        assertEquals(1, vm.now.locationPermissionRequest)
+        assertEquals(14f, vm.now.camera?.zoom)
+        assertEquals(0, vm.now.myLocationRequest)
+        assertEquals(listOf(Triple("map", true, GeolocationOutcome.Unavailable)), analytics.geolocations)
+    }
+
+    @Test fun eitherZoomButtonCanBeTheFirstPermissionTrigger() = runTest(dispatcher) {
+        for (action in listOf(MapAction.ZoomIn, MapAction.ZoomOut)) {
+            val vm = model()
+            vm.send(action, scope = this)
+            assertEquals(1, vm.now.locationPermissionRequest)
+        }
+    }
+
+    @Test fun grantingPermissionAfterZoomRefreshesNearbyWithoutRecentering() = runTest(dispatcher) {
+        val vm = model()
+        vm.send(MapAction.BoundsChanged(view, 14f), MapAction.ZoomIn, scope = this)
+        val camera = vm.now.camera
+        vm.send(MapAction.LocationGranted, scope = this)
+        assertEquals(1, location.refreshes)
+        assertEquals(0, vm.now.myLocationRequest)
+        assertEquals(camera, vm.now.camera)
+        assertEquals(listOf(Triple("map", true, GeolocationOutcome.Available)), analytics.geolocations)
+    }
+
+    @Test fun locationClicksShareThePendingRequestAndDenialNeverStartsNativeLocation() = runTest(dispatcher) {
+        val vm = model()
+        vm.send(MapAction.Interact, MapAction.RequestMyLocation, MapAction.RequestMyLocation, scope = this)
+        assertEquals(1, vm.now.locationPermissionRequest)
+        vm.send(MapAction.LocationDenied, scope = this)
+        assertEquals(0, vm.now.myLocationRequest)
+        vm.send(MapAction.RequestMyLocation, MapAction.LocationGranted, scope = this)
+        assertEquals(2, vm.now.locationPermissionRequest)
+        assertEquals(1, vm.now.myLocationRequest)
     }
 
     // ---- the search ----

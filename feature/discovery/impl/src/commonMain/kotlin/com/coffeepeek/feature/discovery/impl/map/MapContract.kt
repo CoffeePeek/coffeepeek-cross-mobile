@@ -38,6 +38,7 @@ internal data class MapState(
     val pendingZoom: Float? = null,
     val isTruncated: Boolean = false,
     val myLocationRequest: Int = 0,
+    val locationPermissionRequest: Int = 0,
     val camera: MapCamera? = null,
 ) {
     val hasCarousel: Boolean get() = selectedShop != null || nearby.isNotEmpty()
@@ -55,6 +56,8 @@ internal sealed interface MapAction {
     data class Query(val text: String) : MapAction
     data class SelectSuggestion(val shopId: String) : MapAction
     data object RequestMyLocation : MapAction
+    data object Interact : MapAction
+    data object LocationGranted : MapAction
     data class MyLocationFound(val point: Coordinates) : MapAction
     data object LocationDenied : MapAction
     data object ZoomIn : MapAction
