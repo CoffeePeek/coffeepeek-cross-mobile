@@ -1,5 +1,16 @@
 # Roasters — feature migration plan
 
+## Application UI ownership exit — 2026-10-26
+
+PR #201 (child of #195) removes application-owned header, empty/error, image
+and photo-viewer contracts from the active feature entries. Roaster impl owns
+the header/resources and uses shared design-system/media. Root supplies only
+data/analytics/platform feedback and navigation/query callbacks. UIKit search
+is preserved through an optional DS presenter; the native implementation still
+needs its separate L2 relocation. Internal stateless renderer seams are not
+public application ports. See the eighth slice in [LEGACY_EXIT_PLAN.md](../LEGACY_EXIT_PLAN.md)
+for 285 combined unit/contract results, builds and open manual/native gates.
+
 ## Shared UI and iOS activation — 2026-10-21
 
 The user approved extending this feature to iOS. Compose API entries, UI,

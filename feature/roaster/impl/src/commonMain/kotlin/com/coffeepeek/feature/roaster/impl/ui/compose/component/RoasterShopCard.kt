@@ -35,7 +35,7 @@ import com.coffeepeek.feature.roaster.impl.resources.Res
 import com.coffeepeek.feature.roaster.impl.resources.roaster_open_shop
 import com.coffeepeek.feature.roaster.impl.resources.roaster_shop_photo
 import com.coffeepeek.feature.roaster.impl.resources.roaster_shop_photo_missing
-import com.coffeepeek.feature.roaster.api.RoasterImage
+import com.coffeepeek.feature.roaster.impl.ui.compose.model.RoasterImage
 
 @Composable
 internal fun RoasterShopCard(shop: RoasterShop, onClick: () -> Unit, image: RoasterImage, modifier: Modifier = Modifier) {

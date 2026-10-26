@@ -5,8 +5,9 @@
 > application visual/prefetch slots. Images, placeholders, shared errors and
 > price control use design-system/media; feature filters, avatars and catalog
 > icon mapping live in impl. Native map/platform hooks and exposure stay at
-> composition. This does not complete legacy data removal or the reduced-search
-> runtime adaptation described below. Verification and remaining gates are in
+> composition. Parent `a648e200` subsequently brings the unified POST search
+> migration from develop `21d9ee9a`; the child preserves it. Legacy data removal
+> remains open. Verification and remaining gates are in
 > `feature/LEGACY_EXIT_PLAN.md` (seventh slice).
 
 > Check-in picker checkpoint, 2026-10-25 (PR #195): both CreateCheckIn route hosts

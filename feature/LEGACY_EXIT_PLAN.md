@@ -65,8 +65,10 @@ DatabaseCore. Старый LEGACY_REMOVAL.md — исторический сни
   существующие DS primitives; без преобразования обратно в legacy CheckIn.
 - [x] Собственные визуальные слоты Discovery (фото/заглушки/error/фильтры/
   catalogue icons/prefetch) больше не приходят из composeApp; седьмой срез.
-- [ ] Вложенные catalog/roaster search UI и создание чекина: оставшиеся
-  бизнес-вставки/состояние из composeApp — в соответствующие impl.
+- [x] Вложенные Roaster search/empty/error/image/viewer: активный UI принадлежит
+  Roaster impl, публичные app visual ports удалены; восьмой срез.
+- [ ] Остальные catalog/create UI, Contributions и root tab содержание:
+  оставшиеся бизнес-вставки/состояние из composeApp — в соответствующие impl.
 - [x] Author blocking: экран/host из composeApp в feature/author-blocking/impl;
   Android/Sandbox и видимый native iOS controller вызывают feature entry.
   Ручная приёмка native prompts остаётся открытой в шестом срезе.
@@ -770,13 +772,12 @@ project.pbxproj остаётся вне коммитов (48+/41−).
 
 - Native map/platform effects/retained host и exposure service ещё app-owned;
   map bridge всё ещё использует legacy map models до отдельного переноса.
-- Вложенный Roaster search header/suggestion host, Contributions editor slots,
-  root create/tab содержание и legacy data readers остаются в L1/L3/L4.
-- Обновлённый reduced plain search API contract описан в
-  feature/discovery/LEGACY_INVENTORY.md, но runtime backend/Sandbox ещё требуют
-  адаптации. HTTP/filter semantics в UI-срезе не менялись; passing fake tests
-  не доказывают совместимость с новым серверным GET. Это отдельный следующий
-  data checkpoint, не новая придуманная продуктовая возможность.
+- На момент этого среза Roaster search/suggestion и POST adaptation ещё были
+  остатком; оба закрыты последующей синхронизацией parent и восьмым срезом ниже.
+  Contributions editor slots, root create/tab и legacy data readers остаются.
+  HTTP/filter semantics седьмой UI-срез не менял; последующий единый POST
+  пришёл из develop и проверен на обеих ветках стека. Passing fake tests
+  по-прежнему не подтверждают live backend acceptance.
 - Ручная Android/iOS visual/accessibility/keyboard/modal/gesture приёмка,
   live backend, Native test execution и полный Xcode app build остаются gates.
   Ничего не устанавливалось/не запускалось, реальные аккаунты/данные/камера
@@ -809,3 +810,68 @@ Parent checkpoint #195 обновлён первым: merge `5eefd288` вклю�
   writes, UI/instrumentation tests или новых test hosts. Полный Xcode/Swift build,
   Native execution и live backend acceptance этим прогоном не подтверждены.
   Пользовательский project.pbxproj сохраняется вне коммитов (48+/41−).
+
+## Восьмой срез L1: собственный UI Roaster в Discovery — 2026-10-26
+
+PR #201, parent `a648e200`; merge в child — `7e0ff262`. POST contract уже
+реализован в свежем develop и повторно не переписывался. Parent обновлён и
+проверен первым, затем child; единственный конфликт child был в дополнениях
+плана, обе записи сохранены. Runtime предупреждение о reduced GET больше не
+является открытой задачей: list/picker/map suggestions теперь используют POST.
+
+Владение и parity:
+
+- RoasterDiscoveryEntry принимает callbacks query/cancel/add вместо app header.
+  Текущий query и overlay navigation остаются у вызывающей Discovery, shared
+  list ViewModel/store/instance key/tag/favorite state не менялись. Root renderer
+  лишь вызывает entry и маршруты. Новый RoasterSearchHeader принадлежит impl,
+  включает прежние back/clear/cancel/keyboard действия, placeholder, отступы и
+  размер clear control 28dp. Основные DS search consumers сохраняют default 48dp.
+- На iOS сохранён прежний NativeSearchField через узкий DS presenter, установленный
+  root platform composition. Остальные shared search поля не переключены на
+  UIKit автоматически. Native реализация остаётся открытым L2, не дублируется.
+  Android использует существующий CoffeePeekSearchField; extraction его decoration
+  сохраняет SyncedTextFieldState, selection/composition, IME и clear semantics.
+- Empty/suggestion copy теперь в Roaster resources с прежними текстами и shared
+  mascot/DS card; create callback ведёт в прежний AddRoaster. Error content — DS.
+  Image и viewer собираются внутри feature через общий media pipeline/DS, без
+  отдельного cache/client. Public RoasterSlots удалён, renderer seams оставлены
+  только internal для stateless feature content/previews; aliases на legacy нет.
+- Search exposure перенесён на узкий RoasterExposure.Search со старыми значениями
+  search/roasters/roasters. List/detail search trackers, события и свойства,
+  consent/session guards, click ownership и lifecycle collection сохранены.
+  Тестовые события отправляются только in-memory RecordingTransport, не в SDK.
+- Парные light/dark previews header/suggestion находятся рядом и используют fake
+  state без DI/IO. Substantive composables <=40 строк, обычные helpers <=20;
+  нет нового lint/build size gate. Новых module edges, DTO в UI или feature
+  зависимости в core не добавлено. Backend/caches/HTTP для Roaster не менялись.
+
+Проверки:
+
+- Первый Android/iOS compile с header/empty переносом успешен (1m24s); затем
+  удалены оставшиеся public visual ports и выполнен финальный прогон.
+- Объединённое дерево `7e0ff262` + этот срез (3m25s): **285 unit/contract tests /
+  48 suites**, 0 failures/errors/skips. Discovery data 19 / 1, impl 66 / 6;
+  Roaster impl 19 / 2; DS 57 / 15; network contracts 8 / 2; data mapper
+  contracts 4 / 2; app subset 112 / 20, включая Roaster analytics adapters,
+  favorites/ports, Discovery/Map, renderer factories и Sandbox backend.
+  Неизменённые tasks могут быть UP-TO-DATE, counts не суммируются с parent.
+- DirectDebug/DirectSandbox assembly, оба packaged DEX checks и Sandbox isolation
+  прошли. iOS Arm64 production compile, Debug Simulator framework link и common
+  Native tests Discovery/Roaster impl, DS/app скомпилированы. Native tests не
+  исполнялись. Gradle последовательно, --max-workers=6.
+- APK SHA-256: Debug `811400e47e5f7cde4011c4816e1d01c9f50dff4eef336abdb3a39edc9c0bd054`;
+  Sandbox `62b6b4ff599d3dc80c5c68d58d602cabb250c18cf8c0f92a0997b5342fca3547`.
+- Studio inspection RoasterSearchHeader завершилась без ошибок. SearchField
+  inspection вернула timeout без найденных ошибок: это неполная проверка, а не
+  clean IDE/render acceptance. Полного Xcode/Swift build и ручной native
+  keyboard/cancel/VoiceOver/темы/шрифты/окна приёмки не было.
+- UI/instrumentation/screenshot tests/hosts не создавались, не компилировались
+  и не запускались; чужие тесты не удалялись. Никаких device/app установок,
+  backend/account mutations, production analytics или camera действий.
+  Пользовательский project.pbxproj сохранён вне среза (48+/41−).
+
+Следующий остаток: активные Discovery map-details/catalog data adapters и
+roaster-shop readers через legacy repositories; Contributions/create/root UI
+slots и platform infrastructure. Старые недостижимые screens/VM/test consumers
+удаляются по последнему потребителю в L4. Modules и полный legacy exit ещё не завершены.

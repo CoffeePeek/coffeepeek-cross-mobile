@@ -1,6 +1,5 @@
 package com.coffeepeek.feature.roaster.api
 
-import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.Dp
@@ -18,19 +17,22 @@ interface RoasterDiscoveryEntry {
         selectedRoasters: Set<String>,
         favoritesOnly: Boolean,
         onOpenRoaster: (slug: String) -> Unit,
+        onAddRoaster: () -> Unit,
         modifier: Modifier,
     )
 
-    /** The full list shown while searching roasters. [header] is the app's search header. */
+    /** The feature owns its header; Discovery retains the query and overlay navigation. */
     @Composable
     fun Search(
         query: String,
         selectedRoasters: Set<String>,
         favoritesOnly: Boolean,
         onOpenRoaster: (slug: String) -> Unit,
+        onAddRoaster: () -> Unit,
+        onQueryChange: (String) -> Unit,
+        onCancel: () -> Unit,
         modifier: Modifier,
         bottomClearance: Dp,
-        header: @Composable ColumnScope.() -> Unit,
     )
 }
 

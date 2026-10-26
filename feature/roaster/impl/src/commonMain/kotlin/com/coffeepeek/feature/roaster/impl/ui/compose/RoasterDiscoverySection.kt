@@ -1,7 +1,7 @@
 package com.coffeepeek.feature.roaster.impl.ui.compose
 
-import com.coffeepeek.feature.roaster.api.RoasterImage
-import com.coffeepeek.feature.roaster.api.RoasterLoadError
+import com.coffeepeek.feature.roaster.impl.ui.compose.model.RoasterImage
+import com.coffeepeek.feature.roaster.impl.ui.compose.model.RoasterLoadError
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
