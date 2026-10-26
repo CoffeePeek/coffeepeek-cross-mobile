@@ -23,9 +23,9 @@ private class LeaderboardApiImpl(
     private val instanceKey = Uuid.random().toString()
 
     @Composable
-    override fun Content(refreshKey: Long, onOpenProfile: (String, String, String?) -> Unit,
+    override fun Content(refreshKey: Long, collapsed: Boolean, onOpenProfile: (String, String, String?) -> Unit,
         overlay: @Composable (content: @Composable () -> Unit) -> Unit, modifier: Modifier) {
         val vm = viewModel(key = "leaderboard:$instanceKey") { LeaderboardViewModel(repository, contextChanges) }
-        LeaderboardScreen(vm, refreshKey, image, onOpenProfile, overlay, modifier)
+        LeaderboardScreen(vm, refreshKey, collapsed, image, onOpenProfile, overlay, modifier)
     }
 }

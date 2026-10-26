@@ -6,6 +6,8 @@ import io.ktor.http.HttpStatusCode
 import kotlinx.serialization.json.*
 import java.time.LocalDate
 
+private const val SELF_INDEX = 39
+
 internal fun sandboxLeaderboard(request: HttpRequestData, today: LocalDate, populated: Boolean,
     username: String, friendVisible: Boolean): Pair<HttpStatusCode, JsonObject> {
     val period = request.url.parameters["period"] ?: "week"
@@ -38,7 +40,7 @@ private fun sandboxLeaderboardPage(request: HttpRequestData, period: String, sta
 
 private fun sandboxLeaderboardRows(populated: Boolean, username: String, friendVisible: Boolean, month: Boolean): List<JsonObject> {
     if (!populated) return emptyList()
-    val indices = (0..24).filter { friendVisible || it != 0 }
+    val indices = (0..SELF_INDEX).filter { friendVisible || it != 0 }
     return indices.map { index ->
         val score = sandboxLeaderboardScore(index, month)
         buildJsonObject {
@@ -56,18 +58,18 @@ private fun sandboxLeaderboardRows(populated: Boolean, username: String, friendV
 private fun JsonObjectBuilder.putLeaderboardIdentity(index: Int, username: String) {
     put("authorId", when (index) {
         0 -> SandboxApplicationBackend.FRIEND_ID
-        24 -> SandboxApplicationBackend.SELF_ID
+        SELF_INDEX -> SandboxApplicationBackend.SELF_ID
         else -> "sandbox-leader-$index"
     })
     put("username", when (index) {
         0 -> SandboxApplicationBackend.FRIEND_NAME
-        24 -> username
+        SELF_INDEX -> username
         else -> "Участник ${index + 1}"
     })
-    if (index == 0 || index == 24) putJsonObject("address") {
+    if (index == 0 || index == SELF_INDEX) putJsonObject("address") {
         put("slug", if (index == 0) SandboxApplicationBackend.FRIEND_SLUG else "sandbox")
     }
 }
 
 private fun sandboxLeaderboardScore(index: Int, month: Boolean): Int =
-    (if (index < 2) 60 else 60 - index * 2) * (if (month) 2 else 1)
+    (if (index < 2) 100 else 100 - index * 2) * (if (month) 2 else 1)

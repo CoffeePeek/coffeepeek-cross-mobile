@@ -5,7 +5,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.core.designsystem.component.CoffeePeekContentCard
@@ -20,9 +19,11 @@ import com.coffeepeek.feature.leaderboard.impl.resources.*
 import com.coffeepeek.feature.leaderboard.impl.ui.compose.component.LeaderboardPeriods
 import com.coffeepeek.feature.leaderboard.impl.ui.compose.component.LeaderboardRow
 import com.coffeepeek.feature.leaderboard.impl.ui.compose.component.LeaderboardStatus
+import com.coffeepeek.feature.leaderboard.impl.ui.compose.component.LeaderboardRules
 import com.coffeepeek.feature.leaderboard.impl.ui.compose.model.LeaderboardAction
 import com.coffeepeek.feature.leaderboard.impl.ui.compose.model.LeaderboardState
 import org.jetbrains.compose.resources.stringResource
+import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
 @Composable
@@ -42,8 +43,8 @@ internal fun LeaderboardListContent(state: LeaderboardState, onAction: (Leaderbo
         item(key = "header") { LeaderboardListHeader(state, onAction) }
         state.data?.me?.let { me -> item(key = "me") {
             CoffeePeekContentCard {
-                Text(stringResource(Res.string.leaderboard_own_rank), style = MaterialTheme.typography.titleMedium)
-                LeaderboardRow(me, image, { onAction(LeaderboardAction.OpenProfile(me.authorId)) }, detailed = true)
+                Text(stringResource(Res.string.leaderboard_own_rank, me.rank), style = MaterialTheme.typography.titleMedium)
+                Text(pluralStringResource(Res.plurals.leaderboard_points, me.points, me.points))
             }
         } }
         items(state.data?.items.orEmpty(), key = { "author:${it.authorId}" }) { row ->
@@ -53,34 +54,15 @@ internal fun LeaderboardListContent(state: LeaderboardState, onAction: (Leaderbo
             }
         }
         item(key = "status") { LeaderboardStatus(state, onAction) }
-        if (state.data?.hasMore == true && state.failedPage == null && !state.isLoading) item(key = "more") {
-            TextButton(onClick = { onAction(LeaderboardAction.LoadMore) }, modifier = Modifier.fillMaxWidth()) {
-                Text(stringResource(Res.string.leaderboard_more))
-            }
-        }
-        item(key = "rules") {
-            Text(stringResource(Res.string.leaderboard_rules), style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant)
-        }
+        item(key = "rules") { LeaderboardRules() }
     }
 }
 
 @Composable
 private fun LeaderboardListHeader(state: LeaderboardState, onAction: (LeaderboardAction) -> Unit) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-            Text(stringResource(Res.string.leaderboard_title), style = MaterialTheme.typography.titleLarge,
-                modifier = Modifier.weight(1f))
-            TextButton(onClick = { onAction(LeaderboardAction.SetExpanded(false)) }) {
-                Text(stringResource(Res.string.leaderboard_close))
-            }
-        }
+        Text(stringResource(Res.string.leaderboard_title), style = MaterialTheme.typography.titleLarge)
         LeaderboardPeriods(state.period) { onAction(LeaderboardAction.SelectPeriod(it)) }
-        Text(stringResource(Res.string.leaderboard_calendar), style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant)
-        TextButton(onClick = { onAction(LeaderboardAction.Refresh) }, enabled = !state.isLoading) {
-            Text(stringResource(Res.string.leaderboard_refresh))
-        }
     }
 }
 
@@ -88,7 +70,7 @@ private fun LeaderboardListHeader(state: LeaderboardState, onAction: (Leaderboar
 private fun LeaderboardListPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
     val row = LeaderboardEntry(1, "preview", "Maria", null, "maria", 21, 3, 2, 5)
     val data = LeaderboardPage(LeaderboardPeriod.Week, "2026-10-26", "2026-11-02", "Europe/Minsk",
-        listOf(row), 1, 1, 20, row)
+        listOf(row), 1, 1, 30, row)
     Surface { LeaderboardListContent(LeaderboardState(data = data, isLoading = false), {}, { _, _ -> }) }
 }
 

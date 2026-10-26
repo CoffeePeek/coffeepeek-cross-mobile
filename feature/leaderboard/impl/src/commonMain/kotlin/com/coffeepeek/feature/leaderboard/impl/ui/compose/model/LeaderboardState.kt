@@ -7,7 +7,7 @@ internal data class LeaderboardState(
     val period: LeaderboardPeriod = LeaderboardPeriod.Week,
     val data: LeaderboardPage? = null,
     val isLoading: Boolean = true,
-    val failedPage: Int? = null,
+    val loadFailed: Boolean = false,
     val expanded: Boolean = false,
     val generation: Long = 0,
 )

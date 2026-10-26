@@ -8,9 +8,10 @@ import com.coffeepeek.feature.leaderboard.api.LeaderboardEntry
 import org.koin.compose.koinInject
 
 @Composable
-internal fun CommunityLeaderboard(refreshKey: Long) {
+internal fun CommunityLeaderboard(refreshKey: Long, collapsed: Boolean) {
     koinInject<LeaderboardEntry>().Content(
         refreshKey = refreshKey,
+        collapsed = collapsed,
         onOpenProfile = { slug, name, avatar -> Navigator.navigate(Navigator.Screen.UserProfile(slug, name, avatar)) },
         overlay = { content -> AnalyticsOverlay { content() } }, modifier = Modifier,
     )

@@ -43,15 +43,29 @@ internal fun LeaderboardRow(row: LeaderboardEntry, image: LeaderboardImage, onOp
                 modifier = Modifier.widthIn(min = 20.dp).semantics { contentDescription = rank })
             LeaderboardAvatar(row, image)
             Column(Modifier.weight(1f)) {
-                Text(row.username, style = MaterialTheme.typography.bodyLarge, maxLines = 2, overflow = TextOverflow.Ellipsis)
-                if (largeFont) LeaderboardPoints(row.points)
+                Text(row.username, style = MaterialTheme.typography.bodyLarge, maxLines = if (detailed) 2 else 1,
+                    overflow = TextOverflow.Ellipsis)
+                if (largeFont) LeaderboardScore(row, detailed)
             }
-            if (!largeFont) LeaderboardPoints(row.points)
+            if (!largeFont) LeaderboardScore(row, detailed)
         }
-        if (detailed) Text(stringResource(Res.string.leaderboard_breakdown, row.additions, row.edits, row.checkIns),
-            style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(top = CoffeePeekDimens.spacing1))
     }
+}
+
+@Composable
+private fun LeaderboardScore(row: LeaderboardEntry, detailed: Boolean) {
+    Column(horizontalAlignment = Alignment.End) {
+        LeaderboardPoints(row.points)
+        if (detailed) LeaderboardCounts(row)
+    }
+}
+
+@Composable
+private fun LeaderboardCounts(row: LeaderboardEntry) {
+    val description = stringResource(Res.string.leaderboard_breakdown_description, row.additions, row.edits, row.checkIns)
+    Text(stringResource(Res.string.leaderboard_breakdown, row.additions, row.edits, row.checkIns),
+        style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = Modifier.padding(top = CoffeePeekDimens.spacing1).semantics { contentDescription = description })
 }
 
 @Composable

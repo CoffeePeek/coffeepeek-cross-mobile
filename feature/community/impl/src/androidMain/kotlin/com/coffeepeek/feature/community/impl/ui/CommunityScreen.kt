@@ -140,6 +140,9 @@ internal fun CommunityContent(
 ) {
     val listState = rememberLazyListState()
     var abovePostsRefresh by remember { mutableLongStateOf(0L) }
+    val abovePostsCollapsed by remember {
+        derivedStateOf { listState.firstVisibleItemIndex > 0 || listState.firstVisibleItemScrollOffset > 0 }
+    }
     // A home editor opened from a post: the list reloads when the user comes back.
     var homeEditorOpened by rememberSaveable { mutableStateOf(false) }
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
@@ -200,7 +203,7 @@ internal fun CommunityContent(
                         }
                     }
                     host.abovePosts?.let { content ->
-                        item(key = "above-posts", contentType = "above-posts") { content(abovePostsRefresh) }
+                        item(key = "above-posts", contentType = "above-posts") { content(abovePostsRefresh, abovePostsCollapsed) }
                     }
                     if (state.isLoggedIn == null || (state.isLoading && state.items.isEmpty())) {
                         item(key = "loading", contentType = "loading") { CenteredLoader() }

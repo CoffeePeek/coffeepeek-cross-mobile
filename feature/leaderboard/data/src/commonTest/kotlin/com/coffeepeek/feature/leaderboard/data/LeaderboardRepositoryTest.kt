@@ -16,7 +16,7 @@ private const val entry = """{"rank":1,"authorId":"author-id","username":"Maria"
 
 private fun response(page: Int = 1, period: String = "week") = """{"isSuccess":true,"data":{
     "period":"$period","startsOn":"2026-10-26","endsOnExclusive":"2026-11-02","timeZone":"Europe/Minsk",
-    "items":[$entry],"totalCount":21,"page":$page,"pageSize":20,"me":$entry}}"""
+    "items":[$entry],"totalCount":21,"page":$page,"pageSize":30,"me":$entry}}"""
 
 class LeaderboardRepositoryTest {
     private suspend fun withRepository(engine: MockEngine, block: suspend (LeaderboardRepository) -> Unit) {
@@ -24,25 +24,24 @@ class LeaderboardRepositoryTest {
         try { block(createLeaderboardRepository(client)) } finally { client.close() }
     }
 
-    @Test fun usesPublicGetWithPeriodPagingAndNoStore() = runTest {
+    @Test fun requestsOnlyTheTopThirtyForTheCurrentPeriodWithNoStore() = runTest {
         withRepository(MockEngine { request ->
             assertEquals(HttpMethod.Get, request.method)
             assertEquals("/api/v1/leaderboard", request.url.encodedPath)
             assertEquals("month", request.url.parameters["period"])
             assertEquals("1", request.url.parameters["page"])
-            assertEquals("20", request.url.parameters["pageSize"])
+            assertEquals("30", request.url.parameters["pageSize"])
             assertNull(request.url.parameters["date"])
             assertNull(request.url.parameters["authorId"])
             assertEquals("no-store", request.headers[HttpHeaders.CacheControl])
             respond(response(period = "month"), headers = jsonHeaders)
-        }) { repository -> assertTrue(repository.load(LeaderboardPeriod.Month, 1, null).isSuccess) }
+        }) { repository -> assertTrue(repository.load(LeaderboardPeriod.Month).isSuccess) }
     }
 
     @Test fun mapsOwnRankAddressAndActionCountsWithoutRecalculatingPoints() = runTest {
         withRepository(MockEngine { respond(response(), headers = jsonHeaders) }) { repository ->
-            val page = repository.load(LeaderboardPeriod.Week, 1, null).getOrThrow()
+            val page = repository.load(LeaderboardPeriod.Week).getOrThrow()
             assertEquals("Europe/Minsk", page.timeZone)
-            assertTrue(page.hasMore)
             assertEquals(page.items.single(), page.me)
             val row = page.me!!
             assertEquals("maria", row.authorSlug)
@@ -51,20 +50,12 @@ class LeaderboardRepositoryTest {
         }
     }
 
-    @Test fun pinsAdditionalPagesToTheFirstCalendarPeriod() = runTest {
-        withRepository(MockEngine { request ->
-            assertEquals("2026-10-26", request.url.parameters["date"])
-            assertEquals("2", request.url.parameters["page"])
-            respond(response(page = 2), headers = jsonHeaders)
-        }) { repository -> assertFalse(repository.load(LeaderboardPeriod.Week, 2, "2026-10-26").getOrThrow().hasMore) }
-    }
-
     @Test fun preservesCompetitionRanksAndDoesNotInventPublicSlugs() = runTest {
         val rows = listOf(entry, entry.replace("author-id", "b").replace("\"maria\"", "\"\""),
             entry.replace("author-id", "c").replace("\"rank\":1", "\"rank\":3"))
         val payload = response().replace("\"items\":[$entry]", "\"items\":[${rows.joinToString(",")}]")
         withRepository(MockEngine { respond(payload, headers = jsonHeaders) }) { repository ->
-            val page = repository.load(LeaderboardPeriod.Week, 1, null).getOrThrow()
+            val page = repository.load(LeaderboardPeriod.Week).getOrThrow()
             assertEquals(listOf(1, 1, 3), page.items.map { it.rank })
             assertNull(page.items[1].authorSlug)
         }
@@ -74,27 +65,25 @@ class LeaderboardRepositoryTest {
         val payload = response().replace("[$entry]", "[]").replace("\"me\":$entry", "\"me\":null")
             .replace("\"totalCount\":21", "\"totalCount\":0")
         withRepository(MockEngine { respond(payload, headers = jsonHeaders) }) { repository ->
-            val page = repository.load(LeaderboardPeriod.Week, 1, null).getOrThrow()
+            val page = repository.load(LeaderboardPeriod.Week).getOrThrow()
             assertTrue(page.items.isEmpty())
-            assertFalse(page.hasMore)
             assertNull(page.me)
         }
     }
 
     @Test fun invalidEnvelopeMissingDataBadCountersAndMismatchedPagesAreFailures() = runTest {
         val invalid = listOf("{\"isSuccess\":false}", "{\"isSuccess\":true,\"data\":null}",
-            response().replace("\"points\":21", "\"points\":-1"), response(page = 2), response(period = "future"))
+            response().replace("\"points\":21", "\"points\":-1"), response(page = 2), response(period = "future"),
+            response().replace("\"pageSize\":30", "\"pageSize\":20"))
         for (payload in invalid) withRepository(MockEngine { respond(payload, headers = jsonHeaders) }) { repository ->
-            assertTrue(repository.load(LeaderboardPeriod.Week, 1, null).isFailure)
+            assertTrue(repository.load(LeaderboardPeriod.Week).isFailure)
         }
     }
 
-    @Test fun invalidPageDoesNotSendRequestAndServerFailuresAreResults() = runTest {
+    @Test fun serverFailuresAreResults() = runTest {
         var requests = 0
         withRepository(MockEngine { requests++; respond("unavailable", HttpStatusCode.ServiceUnavailable) }) { repository ->
-            assertTrue(repository.load(LeaderboardPeriod.Week, 0, null).isFailure)
-            assertEquals(0, requests)
-            assertTrue(repository.load(LeaderboardPeriod.Week, 1, null).isFailure)
+            assertTrue(repository.load(LeaderboardPeriod.Week).isFailure)
             assertEquals(1, requests)
         }
     }
@@ -102,11 +91,11 @@ class LeaderboardRepositoryTest {
     @Test fun everyReadUsesTheTransportAndCancellationEscapesResult() = runTest {
         var requests = 0
         withRepository(MockEngine { requests++; respond(response(), headers = jsonHeaders) }) { repository ->
-            repeat(2) { repository.load(LeaderboardPeriod.Week, 1, null).getOrThrow() }
+            repeat(2) { repository.load(LeaderboardPeriod.Week).getOrThrow() }
             assertEquals(2, requests)
         }
         withRepository(MockEngine { throw CancellationException("cancelled") }) { repository ->
-            assertFailsWith<CancellationException> { repository.load(LeaderboardPeriod.Week, 1, null) }
+            assertFailsWith<CancellationException> { repository.load(LeaderboardPeriod.Week) }
         }
     }
 }

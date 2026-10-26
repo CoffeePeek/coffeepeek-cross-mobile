@@ -3,6 +3,7 @@ package com.coffeepeek.feature.leaderboard.impl.ui
 import com.coffeepeek.core.presentation.MviViewModel
 import com.coffeepeek.feature.leaderboard.domain.model.LeaderboardPage
 import com.coffeepeek.feature.leaderboard.domain.model.LeaderboardPeriod
+import com.coffeepeek.feature.leaderboard.domain.model.LEADERBOARD_LIMIT
 import com.coffeepeek.feature.leaderboard.domain.repository.LeaderboardRepository
 import com.coffeepeek.feature.leaderboard.impl.ui.compose.model.LeaderboardAction
 import com.coffeepeek.feature.leaderboard.impl.ui.compose.model.LeaderboardEvent
@@ -29,9 +30,8 @@ internal class LeaderboardViewModel(
     override suspend fun handleActionInternal(action: LeaderboardAction) {
         when (action) {
             LeaderboardAction.ObserveContext -> observeContext()
-            LeaderboardAction.Refresh -> if (ready) load(1)
-            LeaderboardAction.Retry -> if (ready && !currentState.isLoading) load(currentState.failedPage ?: 1)
-            LeaderboardAction.LoadMore -> loadMore()
+            LeaderboardAction.Refresh -> if (ready) load()
+            LeaderboardAction.Retry -> if (ready && !currentState.isLoading) load()
             is LeaderboardAction.SelectPeriod -> selectPeriod(action.period)
             is LeaderboardAction.SetExpanded -> updateState { copy(expanded = action.expanded) }
             is LeaderboardAction.OpenProfile -> openProfile(action.authorId)
@@ -60,33 +60,26 @@ internal class LeaderboardViewModel(
     private suspend fun selectPeriod(period: LeaderboardPeriod) {
         if (period == currentState.period) return
         reset(period, closeSheet = false)
-        if (ready) load(1)
+        if (ready) load()
     }
 
-    private suspend fun loadMore() {
-        val data = currentState.data ?: return
-        if (!ready || currentState.isLoading || currentState.failedPage != null || !data.hasMore) return
-        load(data.page + 1)
-    }
-
-    private suspend fun load(page: Int) {
+    private suspend fun load() {
         loadJob?.cancel()
         val job = currentCoroutineContext().job
         val request = ++revision
         loadJob = job
-        val previous = currentState.data
-        updateState { copy(isLoading = true, failedPage = null) }
-        requestPage(page, previous, request)
+        updateState { copy(isLoading = true, loadFailed = false) }
+        requestPage(request)
     }
 
-    private suspend fun requestPage(page: Int, previous: LeaderboardPage?, request: Long) {
+    private suspend fun requestPage(request: Long) {
         try {
-            val result = repository.load(currentState.period, page, previous?.startsOn?.takeIf { page > 1 }).getOrThrow()
+            val result = repository.load(currentState.period).getOrThrow()
             currentCoroutineContext().ensureActive()
-            if (request == revision) accept(result, previous, page)
+            if (request == revision) accept(result)
         } catch (cancelled: CancellationException) { throw cancelled }
         catch (_: Exception) {
-            if (request == revision) updateState { copy(failedPage = page) }
+            if (request == revision) updateState { copy(loadFailed = true) }
         } finally {
             if (request == revision) {
                 loadJob = null
@@ -95,14 +88,9 @@ internal class LeaderboardViewModel(
         }
     }
 
-    private fun accept(result: LeaderboardPage, previous: LeaderboardPage?, page: Int) {
-        check(result.period == currentState.period && result.page == page)
-        if (page > 1) {
-            check(previous != null && result.startsOn == previous.startsOn &&
-                result.endsOnExclusive == previous.endsOnExclusive && result.timeZone == previous.timeZone)
-        }
-        val items = if (page == 1) result.items else (previous!!.items + result.items).distinctBy { it.authorId }
-        updateState { copy(data = result.copy(items = items), failedPage = null) }
+    private fun accept(result: LeaderboardPage) {
+        check(result.period == currentState.period && result.page == 1)
+        updateState { copy(data = result.copy(items = result.items.take(LEADERBOARD_LIMIT)), loadFailed = false) }
     }
 
     private suspend fun openProfile(authorId: String) {

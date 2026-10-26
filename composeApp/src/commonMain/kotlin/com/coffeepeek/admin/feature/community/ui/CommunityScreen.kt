@@ -44,6 +44,9 @@ fun CommunityScreen(onCreateCheckIn: () -> Unit, notificationsAction: @Composabl
     val state by vm.state.collectAsState()
     TrackFeedViewed(state.firstPageCount, state.timeline == CommunityTimeline.Public)
     val listState = rememberLazyListState()
+    val leaderboardCollapsed by remember {
+        derivedStateOf { listState.firstVisibleItemIndex > 0 || listState.firstVisibleItemScrollOffset > 0 }
+    }
     PrefetchListPhotos(listState, state.items.map { it.id to it.photoThumbnailUrls.take(3) })
     val snackbar = remember { SnackbarHostState() }
     val clearance = LocalFloatingNavClearance.current
@@ -134,7 +137,7 @@ fun CommunityScreen(onCreateCheckIn: () -> Unit, notificationsAction: @Composabl
                         }
                     }
                     item(key = "leaderboard", contentType = "leaderboard") {
-                        CommunityLeaderboard(leaderboardRefresh)
+                        CommunityLeaderboard(leaderboardRefresh, leaderboardCollapsed)
                     }
                     when {
                         state.isLoggedIn == null || (state.isLoading && state.items.isEmpty()) -> item(key = "loading", contentType = "loading") {

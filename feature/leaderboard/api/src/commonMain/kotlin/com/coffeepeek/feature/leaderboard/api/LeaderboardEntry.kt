@@ -9,6 +9,7 @@ interface LeaderboardEntry {
     @Composable
     fun Content(
         refreshKey: Long,
+        collapsed: Boolean,
         onOpenProfile: (slug: String, username: String, avatarUrl: String?) -> Unit,
         overlay: @Composable (content: @Composable () -> Unit) -> Unit,
         modifier: Modifier,

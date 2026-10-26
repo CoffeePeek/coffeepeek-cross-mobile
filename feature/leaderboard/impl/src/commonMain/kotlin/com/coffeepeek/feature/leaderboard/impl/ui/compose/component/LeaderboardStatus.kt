@@ -25,7 +25,7 @@ internal fun LeaderboardStatus(state: LeaderboardState, onAction: (LeaderboardAc
         horizontalAlignment = Alignment.CenterHorizontally) {
         when {
             state.isLoading -> CoffeePeekLoader(contentDescription = stringResource(Res.string.leaderboard_loading))
-            state.failedPage != null -> {
+            state.loadFailed -> {
                 Text(stringResource(Res.string.leaderboard_error), color = MaterialTheme.colorScheme.onSurfaceVariant)
                 TextButton(onClick = { onAction(LeaderboardAction.Retry) }) {
                     Text(stringResource(Res.string.leaderboard_retry))
@@ -38,7 +38,7 @@ internal fun LeaderboardStatus(state: LeaderboardState, onAction: (LeaderboardAc
 }
 
 @Preview @Composable private fun LeaderboardStatusLightPreview() = CoffeePeekTheme(darkTheme = false) {
-    LeaderboardStatus(LeaderboardState(isLoading = false, failedPage = 1), {})
+    LeaderboardStatus(LeaderboardState(isLoading = false, loadFailed = true), {})
 }
 
 @Preview @Composable private fun LeaderboardStatusDarkPreview() = CoffeePeekTheme(darkTheme = true) {

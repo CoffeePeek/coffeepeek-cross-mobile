@@ -2,6 +2,8 @@ package com.coffeepeek.feature.leaderboard.domain.model
 
 enum class LeaderboardPeriod { Week, Month }
 
+const val LEADERBOARD_LIMIT = 30
+
 data class LeaderboardEntry(
     val rank: Int,
     val authorId: String,
@@ -24,6 +26,4 @@ data class LeaderboardPage(
     val page: Int,
     val pageSize: Int,
     val me: LeaderboardEntry?,
-) {
-    val hasMore: Boolean get() = page.toLong() * pageSize < totalCount && page < 10_000
-}
+)

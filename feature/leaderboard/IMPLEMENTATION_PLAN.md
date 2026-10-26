@@ -1,6 +1,66 @@
 # Activity leaderboard
 
-## Scope and verification plan — 2026-10-26
+## Design corrections — 2026-10-26
+
+Follow-up scope from the user's Pixel 9 review of `e6e220b0` / Sandbox 2459:
+reserve the three-row preview's height during week/month loading to prevent feed
+reflow; collapse that preview as the owning feed moves away from its top; remove
+Close/Refresh/calendar text from the sheet header; show action counts as
+additions/edits/check-ins (`4/3/6`) directly below the points, right-aligned, with a readable accessibility description; show
+the first 30 leaders in one request with no load-more control; explain the counts,
+weights, eligibility and period rules at the bottom.
+
+The existing public own-rank response and server competition ranks remain intact.
+Scope reaches leaderboard api/domain/data/impl, both Community integrations and
+Sandbox fixtures/contracts. Remove obsolete leaderboard paging actions and
+request options rather than keep an unused pager. Preserve immediate privacy
+invalidation, cancellation, profile navigation and existing feed analytics.
+
+Verification plan: updated API/top-30/MVI/context/Sandbox regressions; Android
+Debug/Sandbox APK and DEX/isolation checks; shared iOS KLIB compilation. Use
+colocated collapsed/loading/light/dark previews and manual Sandbox review only,
+with no automated UI or screenshot suites. The phone disconnected during the
+first capture session; reconnect/unlock is needed for a new device run.
+
+### Follow-up verification results
+
+Verified on 2026-10-26, source `e6e220b0` plus this follow-up's source changes:
+
+- Both combined Gradle runs passed with `--max-workers=6`, sequentially: initial
+  six corrections in 3m33s (2025 tasks, 182 executed), then the user's requested
+  right-aligned counters in 1m19s (2011 tasks, 129 executed). Debug/Sandbox APKs,
+  both packaged DEX guards, Sandbox isolation and iOS Simulator Arm64 KLIB
+  compilation passed. No failed tests or failing-test retries in this follow-up.
+- **55 selected unit/contract results**, zero failures/errors/skips: leaderboard
+  data 7, leaderboard MVI 10, Community edit/timeline 33, app context 2 and Sandbox
+  HTTP 3. Up-to-date valid results were reused. Removed only this feature's now
+  obsolete paging cases; top-30 and refresh/retry regressions replace them.
+- Installed only `directSandbox`, `com.coffeepeek.sandbox`, version
+  `1.1.1.2460-sandbox` / code 2460 on the agreed Pixel 9, Android API 37.
+  In-place updates preserved data and the existing signing certificate; no
+  downgrade, uninstall, data clearing or phone security/settings changes.
+  Final APK SHA-256:
+  `7ed51376f47c4f15de0a458be07e78d39fd98bf245e9e63d20187f1f6790f797`.
+- Manual dark-theme Sandbox review: week/month values change (100/200 for the
+  first synthetic row), while the first post stays at the same vertical position;
+  an 80px upward gesture collapses the preview to its title/All row; returning to
+  the feed top restores the preview. Back dismisses the sheet. Its header has
+  only the title and period control; counters are below/right-aligned with points.
+  The list ends at participant 30 despite 40 synthetic backend participants.
+  The explanation below is readable and includes counts, weights and eligibility.
+- Local screenshots/UI dumps are outside tracked sources. Final dark sheet,
+  participant-30 boundary, explanatory footer and collapsed-feed screenshots were
+  visually inspected; captures interrupted by personal notification banners were
+  discarded. No screenshots or account data are published in the PR.
+- The Pixel 9 disconnected again before the light-theme operation could execute.
+  Light theme, large font/narrow-window, TalkBack, slow-response animation and
+  native iOS runtime checks remain open. Paired previews compile but were not
+  rendered. Sandbox checks do not certify live API, analytics, GPS or persistence.
+  No automated UI/instrumented/screenshot tests or live writes were run.
+- `git diff --check` and caller/dependency review pass. The original local release
+  ABI packaging and run-mode documentation edits remain outside this change.
+
+## Initial scope and verification plan — 2026-10-26
 
 Baseline: `8b8d88c9`, migration branch synchronized with freshly fetched
 `origin/develop` at `105b8994`. Backend contract: CoffeePeek/coffeepeek-backend#362,
@@ -50,7 +110,7 @@ accessibility, modal/back placement and physical-device checks remain gates unti
 performed on an explicitly selected Sandbox device. Live API rollout and native
 iOS executable/device acceptance are separate gates.
 
-## Results
+## Initial implementation results (before device review)
 
 The first build invocation was stopped before tests/assembly to integrate fresh
 develop (the earlier local remote-tracking ref was stale). It is not test evidence.

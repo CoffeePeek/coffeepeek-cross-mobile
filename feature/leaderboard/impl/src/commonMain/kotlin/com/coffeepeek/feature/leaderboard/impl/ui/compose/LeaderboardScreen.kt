@@ -14,7 +14,7 @@ import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
 @Composable
-internal fun LeaderboardScreen(vm: LeaderboardViewModel, refreshKey: Long, image: LeaderboardImage,
+internal fun LeaderboardScreen(vm: LeaderboardViewModel, refreshKey: Long, collapsed: Boolean, image: LeaderboardImage,
     onOpenProfile: (String, String, String?) -> Unit,
     overlay: @Composable (content: @Composable () -> Unit) -> Unit, modifier: Modifier) {
     val state by vm.state.collectAsStateWithLifecycle()
@@ -32,20 +32,20 @@ internal fun LeaderboardScreen(vm: LeaderboardViewModel, refreshKey: Long, image
             if (event.generation == vm.state.value.generation) openProfile(event.slug, event.username, event.avatarUrl)
         }
     }
-    LeaderboardScreenContent(state, vm::onAction, image, overlay, modifier)
+    LeaderboardScreenContent(state, collapsed, vm::onAction, image, overlay, modifier)
 }
 
 @Composable
-internal fun LeaderboardScreenContent(state: LeaderboardState, onAction: (LeaderboardAction) -> Unit,
+internal fun LeaderboardScreenContent(state: LeaderboardState, collapsed: Boolean, onAction: (LeaderboardAction) -> Unit,
     image: LeaderboardImage, overlay: @Composable (content: @Composable () -> Unit) -> Unit, modifier: Modifier) {
-    LeaderboardCard(state, onAction, image, modifier)
+    LeaderboardCard(state, collapsed, onAction, image, modifier)
     if (state.expanded) overlay { LeaderboardListSheet(state, onAction, image) }
 }
 
 @Preview @Composable private fun LeaderboardScreenLightPreview() = CoffeePeekTheme(darkTheme = false) {
-    LeaderboardScreenContent(LeaderboardState(isLoading = false, failedPage = 1), {}, { _, _ -> }, { it() }, Modifier)
+    LeaderboardScreenContent(LeaderboardState(isLoading = false, loadFailed = true), false, {}, { _, _ -> }, { it() }, Modifier)
 }
 
 @Preview @Composable private fun LeaderboardScreenDarkPreview() = CoffeePeekTheme(darkTheme = true) {
-    LeaderboardScreenContent(LeaderboardState(), {}, { _, _ -> }, { it() }, Modifier)
+    LeaderboardScreenContent(LeaderboardState(), false, {}, { _, _ -> }, { it() }, Modifier)
 }
