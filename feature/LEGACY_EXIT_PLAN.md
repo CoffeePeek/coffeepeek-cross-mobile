@@ -4,7 +4,7 @@
 ветка `feat/ios-build-foundation`, PR #195 → develop.
 Вариант для кофейни отложен; новые продуктовые возможности не добавляем.
 Текущий дочерний срез: `codex/migration-discovery-ui-ownership` от `7f78ea21`,
-цель PR — открытая родительская ветка `feat/ios-build-foundation` (#195).
+draft PR #201 → открытая родительская ветка `feat/ios-build-foundation` (#195).
 
 ## Условие завершения
 
@@ -691,7 +691,7 @@ app build не было: Kotlin framework link не компилирует Swift
 ## Седьмой срез L1/L2: визуальные слоты Discovery — 2026-10-26
 
 Дочерняя ветка `codex/migration-discovery-ui-ownership` от `7f78ea21`, parent
-checkpoint #195 → develop. Срез блокировок завершён в родителе, поэтому новая
+checkpoint #195 → develop, draft PR #201. Срез блокировок завершён в родителе, поэтому новая
 работа не добавляется в его PR. Сверка fetched main/develop перед переносом:
 отсутствующих в parent коммитов нет; develop `381c6cc2`, main `16724b7e`.
 Нового Gradle module или business feature нет. Пользовательский локальный
