@@ -10,7 +10,6 @@ import com.coffeepeek.api.model.request.ScheduleReq
 import com.coffeepeek.api.model.request.ShopSearchFiltersDto
 import com.coffeepeek.api.model.request.ShopSearchOriginDto
 import com.coffeepeek.api.model.request.ShopSearchRequestDto
-import com.coffeepeek.api.model.response.shop.variantOr
 import com.coffeepeek.api.service.ShopApiService
 import com.coffeepeek.data.mapper.ShopMapper.toDomain
 import com.coffeepeek.data.mapper.toMapContent
@@ -95,87 +94,39 @@ class ShopRepositoryImpl(
         }
     }
 
-    override suspend fun searchShops(filters: ShopFilters): Result<PagedResult<CoffeeShop>> {
-        filters.origin?.let { origin ->
-            val latitude = origin.latitude ?: return Result.failure(IllegalArgumentException("Missing latitude"))
-            val longitude = origin.longitude ?: return Result.failure(IllegalArgumentException("Missing longitude"))
-            return shopApiService.searchNearbyShops(
-                ShopSearchRequestDto(
-                    q = filters.query,
-                    filters = ShopSearchFiltersDto(
-                        origin = ShopSearchOriginDto(latitude, longitude),
-                        city = filters.cityId,
-                        tags = filters.tagIds,
-                        roasters = filters.roasterIds,
-                        equipments = filters.equipmentIds,
-                        beans = filters.beanIds,
-                        brewMethods = filters.brewMethodIds,
-                        isOpen = if (filters.openOnly) true else null,
-                        isNew = if (filters.newOnly) true else null,
-                        visitedOnly = filters.visitedOnly,
-                        favoritesOnly = filters.favoritesOnly,
-                        minRating = filters.minRating,
-                        priceRange = filters.priceRange.toApiPriceRange(),
-                        type = filters.coffeeFocus?.let(CoffeeShopType::toApi),
-                    ),
-                    page = filters.page,
-                    pageSize = filters.pageSize,
-                ),
-            ).map { dto ->
-                val favoriteIds = favoriteRepository.getFavoriteIds()
-                PagedResult(
-                    items = dto.items.map { shop ->
-                        CoffeeShop(
-                            id = shop.address.slug,
-                            publicAddress = shop.address.toDomain(),
-                            title = shop.name,
-                            rating = shop.rating?.takeIf { it > 0 },
-                            cityName = null,
-                            priceRange = null,
-                            photoUrl = shop.coverPhoto?.let { it.urls.variantOr(it.fullUrl) { urls -> urls.card } },
-                            address = shop.addressLine,
-                            isOpen = shop.isOpen,
-                            isFavorite = shop.address.slug in favoriteIds || shop.isFavorite == true,
-                            isVisited = shop.isVisited == true || filters.visitedOnly,
-                            // The search response omits isNew; the server applied this filter.
-                            isNew = filters.newOnly,
-                            reviewCount = shop.checkInCount,
-                            tags = shop.tags.mapNotNull { it.name?.takeIf(String::isNotBlank) }.take(3),
-                            type = filters.coffeeFocus ?: CoffeeShopType.COFFEE_BAR,
-                            distanceMeters = shop.distanceMeters,
-                        )
-                    },
-                    totalCount = dto.totalItems,
-                    totalPages = dto.totalPages,
-                    currentPage = dto.currentPage,
-                )
-            }
+    override suspend fun searchShops(filters: ShopFilters): Result<PagedResult<CoffeeShop>> = requestResult {
+        val origin = filters.origin?.let { point ->
+            ShopSearchOriginDto(requireNotNull(point.latitude), requireNotNull(point.longitude))
         }
-        return shopApiService.searchShops(
-            query = filters.query,
-            cityId = filters.cityId,
-            type = filters.coffeeFocus?.let(CoffeeShopType::toApi),
-            roasterIds = filters.roasterIds.takeIf { it.isNotEmpty() },
-            equipmentIds = filters.equipmentIds.takeIf { it.isNotEmpty() },
-            beanIds = filters.beanIds.takeIf { it.isNotEmpty() },
-            brewMethodIds = filters.brewMethodIds.takeIf { it.isNotEmpty() },
-            tagIds = filters.tagIds.takeIf { it.isNotEmpty() },
-            priceRange = filters.priceRange.toApiPriceRange(),
-            minRating = filters.minRating,
+        val request = ShopSearchRequestDto(
+            filters = searchFilters(filters, origin),
+            q = filters.query?.trim()?.takeIf(String::isNotEmpty),
+            sort = if (origin != null) "distance_asc" else null,
             page = filters.page,
             pageSize = filters.pageSize,
-        ).map { dto ->
-            val favoriteIds = favoriteRepository.getFavoriteIds()
-            PagedResult(
-                items = dto.coffeeShops.map { shop ->
-                    shop.toDomain().copy(isFavorite = shop.address.slug in favoriteIds)
-                },
-                totalCount = dto.totalItems,
-                totalPages = dto.totalPages,
-                currentPage = dto.currentPage,
-            )
-        }
+        )
+        val dto = shopApiService.searchShops(request).getOrThrow()
+        val favorites = favoriteRepository.getFavoriteIds()
+        PagedResult(dto.items.map { it.toDomain(favorites, filters) }, dto.totalItems, dto.totalPages, dto.currentPage)
     }
+
+    private fun searchFilters(filters: ShopFilters, origin: ShopSearchOriginDto?) = ShopSearchFiltersDto(
+        origin = origin,
+        radiusKm = if (origin != null) 3 else null,
+        city = filters.cityId,
+        tags = filters.tagIds,
+        roasters = filters.roasterIds,
+        equipments = filters.equipmentIds,
+        beans = filters.beanIds,
+        brewMethods = filters.brewMethodIds,
+        isOpen = true.takeIf { filters.openOnly },
+        isNew = true.takeIf { filters.newOnly },
+        visitedOnly = filters.visitedOnly,
+        favoritesOnly = filters.favoritesOnly,
+        minRating = filters.minRating,
+        priceRange = filters.priceRange.toSearchPriceRange(),
+        type = filters.coffeeFocus?.replace('_', '-'),
+    )
 
     override suspend fun getConsumedDrinks() = shopApiService.getConsumedDrinks().map { options ->
         options.map { ConsumedDrinkOption(it.slug, it.nameRu, it.nameEn) }
@@ -320,6 +271,14 @@ private fun ShopMenu.alignedWithCatalog(drinks: List<CoffeeDrinkDefinition>?): S
             }
             .sortedBy { order[it.slug] ?: Int.MAX_VALUE },
     )
+}
+
+private fun Int?.toSearchPriceRange(): String? = when (this) {
+    1 -> "cheap"
+    2 -> "moderate"
+    // shortcut: the API has three price bands; keep legacy Luxury in expensive until the fourth UI band is retired.
+    3, 4 -> "expensive"
+    else -> null
 }
 
 private fun Int?.toApiPriceRange(): String? = when (this) {

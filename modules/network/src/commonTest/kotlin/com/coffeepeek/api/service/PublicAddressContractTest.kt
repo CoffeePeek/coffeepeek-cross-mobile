@@ -5,12 +5,14 @@ import com.coffeepeek.api.utils.JsonExt
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.respond
+import io.ktor.client.engine.mock.toByteArray
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.headersOf
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.coroutines.runBlocking
+import kotlinx.serialization.json.*
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -27,11 +29,13 @@ class PublicAddressContractTest {
             if (request.url.encodedPath == "/api/CoffeeShops/old-address") {
                 respond("""{"isSuccess":true,"message":null,"data":{"address":$address,"name":"26","beans":[{"slug":"arabica","name":"Arabica"}],"canCreateReview":false,"existingReviewId":"review-guid"}}""", headers = headers)
             } else {
-                assertEquals("minsk", request.url.parameters["city"])
-                assertNull(request.url.parameters["cityId"])
-                assertEquals(listOf("dog-friendly", "laptop-friendly"), request.url.parameters.getAll("tags"))
-                assertNull(request.url.parameters["beans"])
-                respond("""{"isSuccess":true,"message":null,"data":{"coffeeShops":[{"address":$address,"name":"26"}],"totalItems":1}}""", headers = headers)
+                assertEquals("/api/v1/coffee-shops/search", request.url.encodedPath)
+                val filters = Json.parseToJsonElement(request.body.toByteArray().decodeToString()).jsonObject["filters"]!!.jsonObject
+                assertEquals("minsk", filters["city"]!!.jsonPrimitive.content)
+                assertNull(filters["cityId"])
+                assertEquals(listOf("dog-friendly", "laptop-friendly"), filters["tags"]!!.jsonArray.map { it.jsonPrimitive.content })
+                assertTrue(filters["beans"]!!.jsonArray.isEmpty())
+                respond("""{"isSuccess":true,"message":null,"data":{"items":[{"address":$address,"name":"26"}],"totalItems":1}}""", headers = headers)
             }
         }) { install(ContentNegotiation) { json(JsonExt.json) } }
         try {
@@ -141,7 +145,7 @@ class PublicAddressContractTest {
     @Test
     fun unavailableAddressAndUnknownFilterRemainFailures() = runBlocking {
         val client = HttpClient(MockEngine { request ->
-            val status = if (request.url.parameters["city"] != null) HttpStatusCode.NotFound else HttpStatusCode.ServiceUnavailable
+            val status = if (request.url.encodedPath == "/api/v1/coffee-shops/search") HttpStatusCode.NotFound else HttpStatusCode.ServiceUnavailable
             respond("""{"isSuccess":false,"message":null,"data":null}""", status, headers)
         }) { install(ContentNegotiation) { json(JsonExt.json) } }
         try {

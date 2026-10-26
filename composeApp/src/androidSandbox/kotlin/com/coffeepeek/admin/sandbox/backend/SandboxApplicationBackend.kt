@@ -163,10 +163,6 @@ internal class SandboxApplicationBackend(private val today: LocalDate, private v
             if (method == HttpMethod.Put) favorites += key else favorites -= key
             return HttpStatusCode.NoContent to envelope(JsonNull)
         }
-        if (path == "/api/coffeeshops" && method == HttpMethod.Get) return ok(buildJsonObject {
-            put("coffeeShops", shops(request.url.parameters["q"])); put("currentPage", 1); put("totalPages", 1)
-            put("totalItems", if (populated) 2 else 0)
-        })
         if (path == "/api/v1/coffee-shops/search" && method == HttpMethod.Post) return ok(buildJsonObject {
             val query = input["q"]?.jsonPrimitive?.contentOrNull
             val filters = input["filters"] as? JsonObject ?: buildJsonObject {}
@@ -176,7 +172,7 @@ internal class SandboxApplicationBackend(private val today: LocalDate, private v
                     (filters["isNew"]?.jsonPrimitive?.booleanOrNull != true || row["isNew"]?.jsonPrimitive?.boolean == true) &&
                     (filters["visitedOnly"]?.jsonPrimitive?.booleanOrNull != true || row["isVisited"]?.jsonPrimitive?.boolean == true) &&
                     (filters["favoritesOnly"]?.jsonPrimitive?.booleanOrNull != true || row["isFavorite"]?.jsonPrimitive?.boolean == true)
-            })
+            }.map { searchCard(it.jsonObject, filters["origin"] as? JsonObject) })
             put("items", items); put("totalItems", items.size); put("totalPages", 1); put("currentPage", 1)
         })
         if (path.startsWith("/api/coffeeshops/") && method == HttpMethod.Get) {
@@ -370,6 +366,12 @@ internal class SandboxApplicationBackend(private val today: LocalDate, private v
         put("addedShopsCount", 0); put("addedRoastersCount", 0); put("followersCount", 0); put("isFollowing", false)
         put("address", address("sandbox", "/users/sandbox")); put("createdAtUtc", "${today}T07:00:00Z")
     }
+    private fun searchCard(row: JsonObject, origin: JsonObject?) = buildJsonObject {
+        val keys = listOf("address", "name", "city", "addressLine", "coverPhoto", "rating", "checkInCount", "isOpen", "isVisited", "isFavorite", "tags")
+        keys.forEach { key -> row[key]?.let { put(key, it) } }
+        if (origin != null) row["distanceMeters"]?.let { put("distanceMeters", it) }
+    }
+
     private fun shops(query: String?) = JsonArray(if (!populated) emptyList() else
         shopNames.keys.map(::shop).filter { query.isNullOrBlank() || it["name"].toString().contains(query, true) })
     private fun shop(slug: String) = buildJsonObject {

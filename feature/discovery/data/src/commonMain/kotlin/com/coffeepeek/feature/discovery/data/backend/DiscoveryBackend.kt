@@ -17,16 +17,9 @@ import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
 import io.ktor.http.isSuccess
 
-private const val SHOPS = "/api/CoffeeShops"
-private const val NEARBY = "/api/v1/coffee-shops/search"
+private const val SEARCH = "/api/v1/coffee-shops/search"
 private const val MAP = "/api/Map"
 private const val CATALOGS = "/api/Catalogs"
-
-/** What the plain search sends; the open/new/visited/favorites switches are not part of it. */
-internal class PlainSearch(
-    val query: String?, val city: String?, val type: String?, val roasters: List<String>, val equipments: List<String>, val beans: List<String>,
-    val brewMethods: List<String>, val tags: List<String>, val priceRange: String?, val minRating: Double?, val page: Int, val pageSize: Int,
-)
 
 /** What the map sends: the filters of the search that the map understands. */
 internal class MapQuery(
@@ -37,28 +30,8 @@ internal class MapQuery(
 
 /** Plain endpoint calls. Every non-2xx answer becomes a typed failure; nothing here knows user-facing texts. */
 internal class DiscoveryBackend(private val client: HttpClient) {
-    suspend fun plain(search: PlainSearch): Result<ShopListDto> = requestResult {
-        val response = client.get(SHOPS) {
-            expectSuccess = false
-            search.query?.let { parameter("q", it) }
-            search.city?.let { parameter("city", it) }
-            search.type?.let { parameter("type", it) }
-            search.roasters.forEach { parameter("roasters", it) }
-            search.equipments.forEach { parameter("equipments", it) }
-            search.beans.forEach { parameter("beans", it) }
-            search.brewMethods.forEach { parameter("brewMethods", it) }
-            search.tags.forEach { parameter("tags", it) }
-            search.priceRange?.let { parameter("priceRange", it) }
-            search.minRating?.let { parameter("minRating", it) }
-            parameter("page", search.page)
-            parameter("pageSize", search.pageSize)
-        }
-        response.requireSuccess()
-        response.envelope()
-    }
-
-    suspend fun nearby(request: NearbyRequestDto): Result<NearbyPageDto> = requestResult {
-        val response = client.post(NEARBY) { expectSuccess = false; contentType(ContentType.Application.Json); setBody(request) }
+    suspend fun search(request: ShopSearchRequestDto): Result<ShopSearchPageDto> = requestResult {
+        val response = client.post(SEARCH) { expectSuccess = false; contentType(ContentType.Application.Json); setBody(request) }
         response.requireSuccess()
         response.envelope()
     }

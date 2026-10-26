@@ -19,7 +19,7 @@ interface DiscoveryFavorites {
     /** The ids of the favorite shops, again each time they change (another screen, another device of the account). */
     val ids: Flow<Set<String>>
 
-    /** The ids right now; the plain search takes the flags from them. */
+    /** The ids right now; search merges them with server favorite flags. */
     suspend fun favoriteIds(): Set<String>
 
     /** Adds or removes the shop; a failure leaves the favorite as it was. */

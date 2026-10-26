@@ -42,56 +42,83 @@ class DiscoveryRepositoryTest {
     private fun params(request: HttpRequestData, name: String) = request.url.parameters.getAll(name).orEmpty()
     private val origin = Coordinates(53.9, 27.56)
 
-    // ---- the plain search ----
+    // ---- ordinary search uses the same POST without geolocation ----
 
-    @Test fun thePlainSearchSendsEveryFilterItUnderstandsAndNeverTheSwitches() = runBlocking {
-        reply = { ok("""{"coffeeShops":[],"currentPage":2,"totalItems":45,"totalPages":3}""") }
+    @Test fun ordinarySearchPostsTextCityFiltersAndPaginationWithoutGeolocation() = runBlocking {
+        reply = { ok("""{"items":[],"currentPage":2,"totalItems":45,"totalPages":3}""") }
         val filters = DiscoveryFilters(
-            cityId = "minsk", kind = ShopKind.Specialty, openOnly = true, newOnly = true, visitedOnly = true, favoritesOnly = true, priceLevel = PriceLevel.Moderate, minRating = 4.5,
+            cityId = "minsk", kind = ShopKind.Specialty, priceLevel = PriceLevel.Moderate, minRating = 4.5,
+            openOnly = true, newOnly = true, visitedOnly = true, favoritesOnly = true,
             roasterIds = setOf("r1"), beanIds = setOf("b1"), equipmentIds = setOf("e1"), brewMethodIds = setOf("m1"), tagIds = setOf("t1", "t2"),
         )
         val page = repository().search(ShopQuery("  cof  ", filters, page = 2, pageSize = 20)).getOrThrow()
         val request = requests.single()
-        assertEquals("/api/CoffeeShops", request.url.encodedPath); assertEquals(HttpMethod.Get, request.method)
-        assertEquals("cof", request.url.parameters["q"]); assertEquals("minsk", request.url.parameters["city"]); assertEquals("Specialty", request.url.parameters["type"])
-        assertEquals("Moderate", request.url.parameters["priceRange"]); assertEquals("4.5", request.url.parameters["minRating"])
-        assertEquals("2", request.url.parameters["page"]); assertEquals("20", request.url.parameters["pageSize"])
-        assertEquals(listOf("t1", "t2"), params(request, "tags")); assertEquals(listOf("r1"), params(request, "roasters")); assertEquals(listOf("b1"), params(request, "beans"))
-        assertEquals(listOf("e1"), params(request, "equipments")); assertEquals(listOf("m1"), params(request, "brewMethods"))
-        for (name in listOf("isOpen", "isNew", "visitedOnly", "favoritesOnly", "open", "new")) assertNull(request.url.parameters[name], name)
-        assertEquals(45, page.totalCount); assertEquals(3, page.totalPages); assertEquals(2, page.currentPage); assertTrue(page.hasMore)
+        assertEquals("/api/v1/coffee-shops/search", request.url.encodedPath)
+        assertEquals(HttpMethod.Post, request.method)
+        assertTrue(request.url.parameters.isEmpty())
+        val sent = body(request)
+        assertEquals("cof", sent["q"]!!.jsonPrimitive.content)
+        assertEquals(2, sent["page"]!!.jsonPrimitive.int)
+        assertEquals(20, sent["pageSize"]!!.jsonPrimitive.int)
+        assertOrdinaryFilters(sent)
+        assertEquals(45, page.totalCount)
+        assertEquals(3, page.totalPages)
+        assertEquals(2, page.currentPage)
+        assertTrue(page.hasMore)
     }
 
-    @Test fun aBlankTextAndAnEmptyFilterSendNothingExtra() = runBlocking {
-        reply = { ok("""{"coffeeShops":[]}""") }
+    private fun assertOrdinaryFilters(sent: JsonObject) {
+        assertFalse("sort" in sent)
+        val filters = sent["filters"]!!.jsonObject
+        assertFalse("origin" in filters)
+        assertFalse("radiusKm" in filters)
+        assertEquals("minsk", filters["city"]!!.jsonPrimitive.content)
+        assertEquals("specialty", filters["type"]!!.jsonPrimitive.content)
+        assertEquals("moderate", filters["priceRange"]!!.jsonPrimitive.content)
+        assertEquals(4.5, filters["minRating"]!!.jsonPrimitive.double)
+        for ((key, ids) in mapOf("roasters" to listOf("r1"), "beans" to listOf("b1"), "equipments" to listOf("e1"), "brewMethods" to listOf("m1"), "tags" to listOf("t1", "t2"))) {
+            assertEquals(ids, filters[key]!!.jsonArray.map { it.jsonPrimitive.content })
+        }
+        for (key in listOf("isOpen", "isNew", "visitedOnly", "favoritesOnly")) {
+            assertTrue(filters[key]!!.jsonPrimitive.boolean, key)
+        }
+    }
+
+    @Test fun blankTextDoesNotSendQueryOriginRadiusOrDistanceSort() = runBlocking {
+        reply = { ok("""{"items":[]}""") }
         repository().search(ShopQuery("   ")).getOrThrow()
-        assertEquals(setOf("page", "pageSize"), requests.single().url.parameters.names())
+        val sent = body(requests.single())
+        assertFalse("q" in sent)
+        assertFalse("sort" in sent)
+        assertFalse("origin" in sent["filters"]!!.jsonObject)
+        assertFalse("radiusKm" in sent["filters"]!!.jsonObject)
     }
 
-    @Test fun aRowIsMappedWithTheAccountsFavoritesAndTheBackendTags() = runBlocking {
+    @Test fun ordinaryCardsReadThePostResponseAndAccountOrServerFavorites() = runBlocking {
         favorites = { setOf("cafe") }
-        reply = { ok("""{"coffeeShops":[
-            {"address":{"slug":"cafe"},"name":"Cafe","rating":4.5,"checkInCount":"12","isOpen":true,"isNew":true,"isVisited":true,"isFavorite":false,
-             "priceRange":"$$","type":"Specialty","location":{"address":"Street 1","latitude":53.9,"longitude":27.56},
-             "photos":[{"fullUrl":"https://img/full","urls":{"card":"https://img/card"}}],
-             "tags":["Wi-Fi",{"name":"Pets"},{"title":" Quiet "}],"shopTags":["Wi-Fi","Garden"],
-             "roasters":[{"photoUrl":"https://logo/1"},{"photoUrl":"https://logo/1"},{"photoUrl":" "}],"brewMethods":[{"name":"V60"}],"beans":[{"name":"Arabica"}]},
-            {"address":{"slug":"bare"},"name":"Bare","rating":0,"isFavorite":true,"coffeeFocus":"3","photos":[{"fullUrl":"https://img/only"}],
-             "brewMethods":[{"name":"AeroPress"},{"name":" "}],"beans":[{"name":"Robusta"},{"name":"Blend"},{"name":"Extra"}]}],"totalItems":2,"totalPages":1}""") }
+        reply = { ok("""{"items":[
+            {"address":{"slug":"cafe"},"name":"Cafe","rating":4.5,"checkInCount":"12","isOpen":true,"isVisited":true,
+             "addressLine":"Street 1","coverPhoto":{"fullUrl":"https://img/full","urls":{"card":"https://img/card"}},
+             "tags":[{"name":"Wi-Fi"},{"name":"Pets"},{"name":"Quiet"},{"name":"Garden"}]},
+            {"address":{"slug":"bare"},"name":"Bare","rating":0,"isFavorite":true}],"totalItems":2,"totalPages":1}""") }
         val (full, bare) = repository().search(ShopQuery()).getOrThrow().items
-        assertEquals("cafe", full.id); assertEquals(4.5, full.rating); assertEquals(12, full.checkInCount); assertEquals("Street 1", full.address)
-        assertEquals(PriceLevel.Moderate, full.priceLevel); assertEquals("https://img/card", full.photoUrl); assertEquals(ShopKind.Specialty, full.kind)
-        assertTrue(full.isOpen && full.isNew && full.isVisited && full.isFavorite)
-        assertEquals(listOf("Wi-Fi", "Pets", "Quiet"), full.tags); assertEquals(listOf("V60"), full.brewMethods); assertEquals(listOf("https://logo/1"), full.roasterLogos)
-        assertEquals(Coordinates(53.9, 27.56), full.coordinates)
-        assertEquals("bare", bare.id); assertNull(bare.rating); assertFalse(bare.isFavorite); assertEquals("https://img/only", bare.photoUrl); assertEquals(ShopKind.Cafe, bare.kind)
-        assertEquals(listOf("AeroPress", "Robusta", "Blend"), bare.tags); assertNull(bare.coordinates); assertNull(bare.priceLevel)
+        assertEquals("cafe", full.id)
+        assertEquals(4.5, full.rating)
+        assertEquals(12, full.checkInCount)
+        assertEquals("Street 1", full.address)
+        assertEquals("https://img/card", full.photoUrl)
+        assertTrue(full.isOpen && full.isVisited && full.isFavorite)
+        assertEquals(listOf("Wi-Fi", "Pets", "Quiet"), full.tags)
+        assertNull(full.coordinates)
+        assertNull(full.priceLevel)
+        assertNull(bare.rating)
+        assertTrue(bare.isFavorite)
     }
 
-    @Test fun aFailingFavoritesSourceCountsAsNoFavorites() = runBlocking {
+    @Test fun failingFavoritesSourceKeepsTheServersFavoriteFlag() = runBlocking {
         favorites = { error("offline") }
-        reply = { ok("""{"coffeeShops":[{"address":{"slug":"a"},"name":"A","isFavorite":true}]}""") }
-        assertFalse(repository().search(ShopQuery()).getOrThrow().items.single().isFavorite)
+        reply = { ok("""{"items":[{"address":{"slug":"a"},"name":"A","isFavorite":true}]}""") }
+        assertTrue(repository().search(ShopQuery()).getOrThrow().items.single().isFavorite)
     }
 
     // ---- the nearby search ----
@@ -108,7 +135,7 @@ class DiscoveryRepositoryTest {
         val sentFilters = sent["filters"]!!.jsonObject
         assertEquals(53.9, sentFilters["origin"]!!.jsonObject["latitude"]!!.jsonPrimitive.double); assertEquals(3, sentFilters["radiusKm"]!!.jsonPrimitive.int)
         assertTrue(sentFilters["isOpen"]!!.jsonPrimitive.boolean); assertTrue(sentFilters["visitedOnly"]!!.jsonPrimitive.boolean); assertFalse(sentFilters["favoritesOnly"]!!.jsonPrimitive.boolean)
-        assertEquals("Cafe", sentFilters["type"]!!.jsonPrimitive.content); assertEquals("Luxury", sentFilters["priceRange"]!!.jsonPrimitive.content)
+        assertEquals("cafe", sentFilters["type"]!!.jsonPrimitive.content); assertEquals("expensive", sentFilters["priceRange"]!!.jsonPrimitive.content)
         assertEquals(listOf("wifi"), sentFilters["tags"]!!.jsonArray.map { it.jsonPrimitive.content }); assertEquals(3.0, sentFilters["minRating"]!!.jsonPrimitive.double)
     }
 

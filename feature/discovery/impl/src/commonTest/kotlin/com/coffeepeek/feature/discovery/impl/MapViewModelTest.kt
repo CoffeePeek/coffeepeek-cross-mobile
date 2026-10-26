@@ -238,7 +238,7 @@ class MapViewModelTest {
 
     // ---- the search ----
 
-    @Test fun theSearchIsDebouncedTrimmedAndReturnsThreeShopsWithCoordinates() = runTest(dispatcher) {
+    @Test fun theSearchIsDebouncedTrimmedAndRetainsCardsWithoutCoordinates() = runTest(dispatcher) {
         repository.search = { q -> page(listOf(shop("a").copy(coordinates = here), shop("b"))) }
         val vm = model()
         vm.send(MapAction.Query("c"), MapAction.Query("  cof "), scope = this)
@@ -246,7 +246,55 @@ class MapViewModelTest {
         advanceTimeBy(351); runCurrent()
         val query = repository.queries.single()
         assertEquals("cof", query.text); assertEquals(3, query.pageSize); assertEquals("minsk", query.filters.cityId)
-        assertEquals(listOf("a"), vm.now.suggestions.map { it.id }); assertFalse(vm.now.isSearchLoading); assertEquals(listOf(2), analytics.mapSearchResults)
+        assertEquals(listOf("a", "b"), vm.now.suggestions.map { it.id }); assertFalse(vm.now.isSearchLoading); assertEquals(listOf(2), analytics.mapSearchResults)
+    }
+
+    @Test fun aCardWithoutCoordinatesResolvesItsDetailsOnSelectionAndReusesTheCache() = runTest(dispatcher) {
+        repository.search = { page(listOf(shop("a"))) }
+        details.answer = { Result.success(sampleDetails(it).copy(coordinates = here)) }
+        val vm = model()
+        vm.send(MapAction.Query("a"), scope = this)
+        advanceTimeBy(351)
+        runCurrent()
+        vm.send(MapAction.SelectSuggestion("a"), scope = this)
+        assertEquals(here, vm.now.camera?.target)
+        assertEquals("a", vm.now.selectedShop?.id)
+        assertEquals(listOf("a"), details.requests)
+        assertFalse(vm.now.showSuggestions)
+        assertFalse(vm.now.isSearchLoading)
+    }
+
+    @Test fun missingCoordinatesOrFailedDetailsKeepSuggestionsAvailableForRetry() = runTest(dispatcher) {
+        repository.search = { page(listOf(shop("a"))) }
+        val vm = model()
+        vm.send(MapAction.Query("a"), scope = this)
+        advanceTimeBy(351)
+        runCurrent()
+        vm.send(MapAction.SelectSuggestion("a"), scope = this)
+        assertTrue(vm.now.searchFailed)
+        assertEquals("a", vm.now.query)
+        assertEquals(listOf("a"), vm.now.suggestions.map { it.id })
+        assertNull(vm.now.camera)
+        details.answer = { Result.failure(IllegalStateException("offline")) }
+        vm.send(MapAction.SelectSuggestion("a"), scope = this)
+        assertTrue(vm.now.searchFailed)
+        assertFalse(vm.now.isSearchLoading)
+    }
+
+    @Test fun changingQueryCancelsAnUnlocatedSuggestionSelection() = runTest(dispatcher) {
+        val gate = CompletableDeferred<Unit>()
+        repository.search = { page(listOf(shop("a"))) }
+        details.answer = { gate.await(); Result.success(sampleDetails(it).copy(coordinates = here)) }
+        val vm = model()
+        vm.send(MapAction.Query("a"), scope = this)
+        advanceTimeBy(351)
+        runCurrent()
+        vm.send(MapAction.SelectSuggestion("a"), MapAction.Query("new"), scope = this)
+        gate.complete(Unit)
+        runCurrent()
+        assertEquals("new", vm.now.query)
+        assertNull(vm.now.selectedShop)
+        assertNull(vm.now.camera)
     }
 
     @Test fun aStaleSearchAnswerIsIgnoredAndAFailureIsShown() = runTest(dispatcher) {

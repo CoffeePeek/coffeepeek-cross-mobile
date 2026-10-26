@@ -139,14 +139,14 @@ class MapViewModelParityTest {
     }
 
     @Test
-    fun searchResultsWithoutCoordinatesAreDroppedAndAFailureIsShown() {
+    fun searchResultsWithoutCoordinatesAreRetainedAndAFailureIsShown() {
         var fail = false
         parity(search = {
             if (fail) Result.failure(IllegalStateException("offline"))
             else Result.success(PagedResult(listOf(searchShop("with"), searchShop("without", located = false)), 2, 1, 1))
         }) {
             vm.onQueryChange("w"); searchCalls.receive()
-            assertEquals(listOf("with"), vm.state.first { !it.isSearchLoading }.searchResults.map { it.id })
+            assertEquals(listOf("with", "without"), vm.state.first { !it.isSearchLoading }.searchResults.map { it.id })
             fail = true
             vm.onQueryChange("wx"); searchCalls.receive()
             val failed = vm.state.first { it.searchFailed }
@@ -154,6 +154,25 @@ class MapViewModelParityTest {
             vm.onQueryChange("")
             assertFalse(vm.state.value.showSearchSuggestions); assertFalse(vm.state.value.searchFailed); assertTrue(vm.state.value.searchResults.isEmpty())
         }
+    }
+
+    @Test
+    fun selectingAnUnlocatedResultResolvesCoordinatesFromDetails() = parity(details = { Result.success(CoffeeShopDetails(shop = searchShop(it))) }) {
+        vm.onSearchResultSelected(searchShop("found", located = false))
+        val state = vm.state.first { it.selectedShop?.id == "found" }
+        assertEquals(53.9 to 27.56, state.cameraTarget)
+        assertEquals(16f, state.cameraZoom)
+        assertFalse(state.isSearchLoading)
+        assertEquals(listOf("found"), detailCalls)
+    }
+
+    @Test
+    fun failedUnlocatedSelectionRetainsTheQueryAndShowsFailure() = parity(details = { Result.failure(IllegalStateException("offline")) }) {
+        vm.onSearchResultSelected(searchShop("found", located = false))
+        val state = vm.state.first { it.searchFailed }
+        assertFalse(state.isSearchLoading)
+        assertNull(state.selectedShop)
+        assertNull(state.cameraTarget)
     }
 
     @Test

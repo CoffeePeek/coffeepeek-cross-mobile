@@ -95,6 +95,11 @@ internal class ShopDiscoveryDetails(private val shops: ShopRepository) : Discove
             reviewCount = details.shop.reviewCount,
             isOpen = details.shop.isOpen,
             hours = formatMapHoursSummary(details.schedules),
+            coordinates = details.location?.let { point ->
+                val lat = point.latitude
+                val lon = point.longitude
+                if (lat != null && lon != null) Coordinates(lat, lon).takeIf { it.isValid } else null
+            },
         )
     }
 }

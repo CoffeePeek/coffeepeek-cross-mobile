@@ -263,7 +263,7 @@ class MapViewModel(
                 search?.results(page.totalCount)
                 _state.update { current ->
                     if (current.query != query) current else current.copy(
-                        searchResults = page.items.filter { it.toMapShopOrNull() != null },
+                        searchResults = page.items,
                         isSearchLoading = false,
                     )
                 }
@@ -282,23 +282,40 @@ class MapViewModel(
     }
 
     fun onSearchResultSelected(shop: CoffeeShop) {
+        queryJob?.cancel()
+        val marker = shop.toMapShopOrNull()
+        if (marker != null) showSearchResult(marker)
+        else queryJob = workScope.launch { resolveSearchResult(shop) }
+    }
+
+    private suspend fun resolveSearchResult(shop: CoffeeShop) {
+        val query = _state.value.query
+        _state.update { it.copy(isSearchLoading = true, searchFailed = false) }
+        val result = detailsCache[shop.id]?.let { Result.success(it) } ?: shopRepository.getShopDetails(shop.id)
+        currentCoroutineContext().ensureActive()
+        if (_state.value.query != query) return
+        val details = result.getOrNull()
+        val marker = details?.shop?.toMapShopOrNull()
+        if (details == null || marker == null) {
+            _state.update { it.copy(isSearchLoading = false, searchFailed = true) }
+            return
+        }
+        detailsCache[shop.id] = details
+        showSearchResult(marker)
+    }
+
+    private fun showSearchResult(marker: MapShop) {
         selectionFromSearch = true
         Analytics.track(AnalyticsEvent.MAP_INTERACTION, "action" to "search_selected")
-        val mapShop = shop.toMapShopOrNull() ?: return
-        queryJob?.cancel()
         _state.update { current ->
             current.copy(
-                query = "",
-                searchResults = emptyList(),
-                isSearchLoading = false,
-                searchFailed = false,
-                showSearchSuggestions = false,
-                shops = (current.shops + mapShop).distinctBy { it.id },
-                cameraTarget = mapShop.latitude to mapShop.longitude,
-                cameraZoom = 16f,
+                query = "", searchResults = emptyList(), isSearchLoading = false,
+                searchFailed = false, showSearchSuggestions = false,
+                shops = (current.shops + marker).distinctBy { it.id },
+                cameraTarget = marker.latitude to marker.longitude, cameraZoom = 16f,
             )
         }
-        selectShop(mapShop)
+        selectShop(marker)
         pauseBoundsUpdates(700)
     }
 

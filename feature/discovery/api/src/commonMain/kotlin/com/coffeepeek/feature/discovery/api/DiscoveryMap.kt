@@ -7,7 +7,7 @@ import com.coffeepeek.feature.discovery.domain.model.MapMarker
 import com.coffeepeek.feature.discovery.domain.model.MapZone
 
 /** What the card of the selected shop shows besides the marker; the Shop owner backs it and the application formats the hours. */
-data class MapShopDetails(val photoUrl: String?, val rating: Double?, val reviewCount: Int, val isOpen: Boolean, val hours: String?)
+data class MapShopDetails(val photoUrl: String?, val rating: Double?, val reviewCount: Int, val isOpen: Boolean, val hours: String?, val coordinates: Coordinates? = null)
 
 interface DiscoveryShopDetails {
     suspend fun details(shopId: String): Result<MapShopDetails>
