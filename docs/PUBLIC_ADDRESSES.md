@@ -37,7 +37,7 @@ Slug уникален внутри вида сущности. Переимено
 
 | GET | Данные ответа |
 | --- | --- |
-| `/api/CoffeeShops` | `ApiResponse<{coffeeShops: ShopSummary[], totalItems, totalPages, currentPage, pageSize}>` |
+| `/api/CoffeeShops` (deprecated) | Только `q`, `city`, `page`, `pageSize`; формат для выбора кофейни в чекине сохранён: `ApiResponse<{coffeeShops: ShopSummary[], totalItems, totalPages, currentPage, pageSize}>` |
 | `/api/CoffeeShops/{slug}` | `ApiResponse<ShopDetails>`; данные лежат непосредственно в `data`, без `shopDto` |
 | `/api/Roasters/{slug}` | `ApiResponse<RoasterDetails>` |
 | `/api/Catalogs/cities/{slug}` | `{address: PublicAddress, name: string}` без `ApiResponse` |
@@ -91,13 +91,19 @@ Slug уникален внутри вида сущности. Переимено
 | `brew-methods` | `{slug, name, category}` |
 | `shop-tags` | `{slug, name, description, sortOrder}`; только активные теги |
 
-`GET /api/CoffeeShops` принимает `city` вместо `cityId`. `roasters`, `equipments`, `beans`, `brewMethods`, `tags` — массивы slug. Передавайте массив повторением параметра:
+### Поиск кофеен: изменение контракта от 26.10.2026
+
+`POST /api/v1/discovery/search` удалён вместе с маршрутом Gateway, DTO и схемами OpenAPI. Клиенты не должны вызывать этот endpoint.
+
+`GET /api/CoffeeShops` оставлен для выбора кофейни в чекине и принимает только `q`, `city` (slug), `page`, `pageSize`:
 
 ```http
-GET /api/CoffeeShops?city=minsk&beans=arabica&equipments=la-marzocco-linea&brewMethods=v60&tags=dog-friendly&tags=laptop-friendly&page=1&pageSize=20
+GET /api/CoffeeShops?q=coffee&city=minsk&page=1&pageSize=20
 ```
 
-Каждый массив — максимум 100 значений. Пустой массив не задаёт фильтр. Неизвестное значение возвращает 404; сервер не игнорирует его и не выдаёт все кофейни. Alias принимается и приводит к той же сущности. Остальные параметры (`q`, `isOpen`, `isNew`, `isVisited`, `priceRange`, `type`, `minRating`) сохраняют смысл. Enum в JSON сериализуются строками.
+Прежние фильтры `roasters`, `equipments`, `beans`, `brewMethods`, `tags`, `isOpen`, `isNew`, `isVisited`, `priceRange`, `type`, `minRating` больше не входят в контракт этого GET. Endpoint помечен deprecated в OpenAPI и HTTP-заголовках; формат ответа для чекина, включая `data.coffeeShops` и поля пагинации, сохранён.
+
+Близлежащий поиск в клиенте использует отдельный `POST /api/v1/coffee-shops/search`. Удаление `/api/v1/discovery/search` не означает удаление этого маршрута. Enum в JSON сериализуются строками.
 
 Пагинация списка кофеен: `page`, `pageSize` (1–100). Для отзывов пользователя: `pageNumber`, `pageSize`. Для `/api/CheckIns`: заголовки `X-Page-Number`, `X-Page-Size`, опциональные `from`/`to` с часовым поясом, интервал `[from, to)`. Ответы также содержат `X-Total-Count`, `X-Total-Pages`, `X-Current-Page`, `X-Page-Size`.
 
