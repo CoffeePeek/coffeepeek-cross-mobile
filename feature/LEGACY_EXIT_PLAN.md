@@ -52,6 +52,30 @@ KoinApp сохраняет Legacy* defaults, dataModule строит стары�
 core/database пока содержит только конфигурацию драйвера, не готовую замену
 DatabaseCore. Старый LEGACY_REMOVAL.md — исторический снимок 2026-10-21.
 
+## Точка остановки — 2026-10-26
+
+Текущая ветка `codex/migration-contributions-ownership`, draft
+[PR #202](https://github.com/CoffeePeek/coffeepeek-cross-mobile/pull/202) → #201.
+Последний проверенный код — `cd1bac2b`: Contributions UI ownership (десятый
+срез) опубликован. Замену Contributions legacy data reader **ещё не начинали**.
+
+Следующий шаг в той же ветке/#202 — убрать ShopContributionCatalogs и его
+getCatalogs/getShopDetails/getMenuDrinks через согласованные feature contracts,
+сохранив editor snapshot, catalog cache и account/cancellation guards. Подробные
+файлы, порядок и ограничения продолжения:
+[Contributions ownership exit — точка остановки](contributions/OWNERSHIP_EXIT_PLAN.md).
+
+CI-фикс #195 `027c2029` уже передан через #201 `89778c23` в текущую ветку.
+Android CI #195 успешен на GitHub; iOS verification на момент записи выполняется.
+Полный локальный Android CI/Sandbox/iOS framework прошли; ручная/native/full
+Xcode приёмка открыта. После Contributions остаются root create/tab UI,
+platform bridges, legacy favorites/session/storage/transport и L4 cleanup
+старых consumers. Полный выход из legacy ещё не завершён.
+
+Не трогать пользовательский локальный project.pbxproj (48+/41−). Продолжать
+стек, не main; перед кодом сверить свежие remotes и при необходимости передать
+изменения сначала в родителя, затем в потомков. Новую бизнес-фичу пока не начинать.
+
 ## Очерёдность срезов
 
 ### L1. Убрать бизнес-UI из активных app slots

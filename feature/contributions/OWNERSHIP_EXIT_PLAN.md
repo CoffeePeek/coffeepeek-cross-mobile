@@ -4,6 +4,52 @@ Branch `codex/migration-contributions-ownership`, child of
 `codex/migration-discovery-ui-ownership` (#201). This is a separate feature
 checkpoint; Discovery/Roaster changes remain in the parent diff.
 
+## Точка остановки и порядок продолжения — 2026-10-26
+
+**Остановились после публикации UI ownership среза, до замены legacy data reader.**
+Код проверен и опубликован коммитом `cd1bac2b` в draft
+[PR #202](https://github.com/CoffeePeek/coffeepeek-cross-mobile/pull/202).
+Продолжать в этой же ветке и PR: это поддерживающая часть Contributions,
+новую фичу/ветку пока не начинать.
+
+Стек: #195 → develop; #201 → feat/ios-build-foundation;
+#202 → codex/migration-discovery-ui-ownership. В ветке уже есть CI fix
+родителя `027c2029`, переданный через #201 (`89778c23`). Android CI #195
+успешен на GitHub; iOS verification при проверке этого checkpoint ещё выполняется.
+
+Что завершено: активные формы/фото/цена/иконки/изображения/выбор точки принадлежат
+feature/DS, семь старых app UI файлов удалены. Полный локальный Android CI,
+Sandbox и iOS framework прошли; точные counts, APK hashes и ограничения ниже.
+
+Что делать следующим, по порядку:
+
+1. Проверить свежие develop/родительские ветки и фактические consumers. При
+   обновлениях проводить синхронизацию от #195 через #201 к #202.
+2. Заменить `ShopContributionCatalogs` в
+   `composeApp/src/commonMain/kotlin/com/coffeepeek/admin/di/contributions/ContributionsAdapters.kt`:
+   сейчас `catalogs()`, `shop(slug)`, `drinks()` обращаются к legacy
+   `ShopRepository.getCatalogs/getShopDetails/getMenuDrinks`. Это ещё **не сделано**.
+3. Сначала сверить существующие публичные Shop/Roaster/catalog API и реальные
+   HTTP/mapper/cache contracts. `PublicShopPreviews` не является полной заменой
+   editor snapshot: нужны также контакты, IDs сохранённых фото/фото меню,
+   выбранные catalog IDs и строки меню. Сохранить preload/overlay существующей
+   заявки, retries, offline cache, cancellation и смену владельца. Не обращаться
+   из feature к чужим domain/data и не создавать второй каталог/кэш в core.
+4. Обновить composition adapters/DI и non-UI contract tests; удалить заменённый
+   legacy bridge после проверки последнего активного consumer. Оставшиеся старые
+   ViewModels/DI разбирать по фактическим ссылкам. `ShopChangeEditorScreen` пока
+   удерживается чужим `ShopMenuEditorTest`; не удалять чужой тест и не создавать
+   ему новую UI test infrastructure. Этот остаток не объявлять закрытым.
+5. Повторить common metadata, затронутые unit/contracts, Android APK/DEX/lint и
+   iOS compile/framework. Ручные Sandbox темы/шрифты/accessibility/modal/back,
+   native picker/map/camera, Native test execution и полный Xcode app build
+   остаются отдельными непроверенными gates. Автоматические UI-тесты не делать.
+
+В основном checkout нет незакоммиченного кода Contributions. Единственный
+локальный diff — пользовательский `iosApp/iosApp.xcodeproj/project.pbxproj`
+(48+/41−); не включать его в коммиты и не сбрасывать. Временный checkout CI
+удалён после проверки опубликованных коммитов; открытые ветки стека сохранены.
+
 ## Scope and ownership
 
 Existing api/domain/data/impl modules remain in place. No new Gradle module,
@@ -69,8 +115,8 @@ separate acceptance gates. No account mutation, production telemetry, app instal
 or device run is authorized merely by an assembly or fake contract result.
 
 The user's local iosApp project.pbxproj diff is excluded from this checkpoint.
-The parent #195 CI repair is isolated from these uncommitted feature changes and
-propagated through #201 before publishing this child.
+The parent #195 CI repair was isolated while these feature changes were still
+uncommitted, then propagated through #201 before publishing this child.
 
 ## Final verification — 2026-10-26
 
