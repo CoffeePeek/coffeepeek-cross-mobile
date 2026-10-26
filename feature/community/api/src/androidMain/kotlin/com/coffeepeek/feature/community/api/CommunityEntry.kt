@@ -26,6 +26,7 @@ class CommunityHost(
     val exposure: (Modifier, ExposureKind) -> Modifier = { modifier, _ -> modifier },
     val feedViewed: @Composable (firstPageCount: Int?, isPublic: Boolean) -> Unit = { _, _ -> },
     val snackbar: @Composable (state: SnackbarHostState, bottomClearance: Dp) -> Unit = { state, _ -> SnackbarHost(state) },
+    val abovePosts: (@Composable (refreshKey: Long) -> Unit)? = null,
 )
 
 /** What the floating action slot needs: whether a user is signed in, when the account or scope changes (close open sheets), and how to reload. */

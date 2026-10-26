@@ -46,6 +46,8 @@ fun <T> CoffeePeekCapsuleSegmentedControl(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     scrollable: Boolean = false,
+    selectedContainerColor: Color = MaterialTheme.colorScheme.surface,
+    selectedContentColor: Color = MaterialTheme.colorScheme.onSurface,
 ) {
     require(options.isNotEmpty()) { "Segmented control requires options" }
     require(options.distinct().size == options.size) { "Options must be unique" }
@@ -59,25 +61,25 @@ fun <T> CoffeePeekCapsuleSegmentedControl(
             contentPadding = PaddingValues(4.dp),
         ) {
             items(options) { option ->
-                Segment(label(option), option == selected, enabled, { onSelected(option) }, Modifier, labelPadding = 16.dp)
+                Segment(label(option), option == selected, enabled, { onSelected(option) }, Modifier, selectedContainerColor, selectedContentColor, labelPadding = 16.dp)
             }
         }
     } else {
         Row(modifier = container.fillMaxWidth().padding(2.dp).selectableGroup()) {
             options.forEach { option ->
-                Segment(label(option), option == selected, enabled, { onSelected(option) }, Modifier.weight(1f))
+                Segment(label(option), option == selected, enabled, { onSelected(option) }, Modifier.weight(1f), selectedContainerColor, selectedContentColor)
             }
         }
     }
 }
 
 @Composable
-private fun Segment(text: String, isSelected: Boolean, enabled: Boolean, onClick: () -> Unit, modifier: Modifier, labelPadding: Dp = 0.dp) {
+private fun Segment(text: String, isSelected: Boolean, enabled: Boolean, onClick: () -> Unit, modifier: Modifier, selectedContainerColor: Color, selectedContentColor: Color, labelPadding: Dp = 0.dp) {
     Box(
         modifier = modifier
             .heightIn(min = 48.dp)
             .clip(RoundedCornerShape(percent = 50))
-            .background(if (isSelected) MaterialTheme.colorScheme.surface else Color.Transparent)
+            .background(if (isSelected) selectedContainerColor else Color.Transparent)
             .then(
                 if (isSelected) Modifier.border(
                     width = 1.dp,
@@ -97,7 +99,7 @@ private fun Segment(text: String, isSelected: Boolean, enabled: Boolean, onClick
         Text(
             text = text,
             style = MaterialTheme.typography.labelMedium,
-            color = if (isSelected) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant,
+            color = if (isSelected) selectedContentColor else MaterialTheme.colorScheme.onSurfaceVariant,
             fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Medium,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,

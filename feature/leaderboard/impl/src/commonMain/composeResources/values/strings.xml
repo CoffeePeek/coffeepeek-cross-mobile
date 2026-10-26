@@ -1,0 +1,25 @@
+<resources>
+    <string name="leaderboard_title">Таблица лидеров</string>
+    <string name="leaderboard_loading">Загружаем таблицу лидеров</string>
+    <string name="leaderboard_all">Все</string>
+    <string name="leaderboard_week">Неделя</string>
+    <string name="leaderboard_month">Месяц</string>
+    <string name="leaderboard_empty">В этом периоде пока нет участников</string>
+    <string name="leaderboard_error">Не удалось загрузить таблицу лидеров</string>
+    <string name="leaderboard_retry">Попробовать снова</string>
+    <string name="leaderboard_more">Загрузить ещё</string>
+    <string name="leaderboard_refresh">Обновить</string>
+    <string name="leaderboard_close">Закрыть</string>
+    <string name="leaderboard_own_rank">Ваше место</string>
+    <string name="leaderboard_rank">Место: %1$d</string>
+    <string name="leaderboard_open_profile">Открыть профиль %1$s</string>
+    <string name="leaderboard_breakdown">Добавления: %1$d · Правки: %2$d · Чекины: %3$d</string>
+    <string name="leaderboard_rules">Добавление кофейни или обжарщика — 3 балла, применённая правка кофейни — 1, зачтённый чекин в кофейне — 2. Чекины учитываются после одобрения, при публикации и подтверждённой геолокации в пределах 50 м.</string>
+    <string name="leaderboard_calendar">Календарные недели и месяцы · Europe/Minsk</string>
+    <plurals name="leaderboard_points">
+        <item quantity="one">%1$d балл</item>
+        <item quantity="few">%1$d балла</item>
+        <item quantity="many">%1$d баллов</item>
+        <item quantity="other">%1$d баллов</item>
+    </plurals>
+</resources>

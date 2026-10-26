@@ -51,6 +51,7 @@ fun CommunityScreen(onCreateCheckIn: () -> Unit, notificationsAction: @Composabl
     var displayedGeneration by rememberSaveable { mutableStateOf(state.sessionGeneration) }
     var homeEditorOpened by rememberSaveable { mutableStateOf(false) }
     var showCreate by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(false) }
+    var leaderboardRefresh by remember { mutableLongStateOf(0L) }
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
         if (homeEditorOpened) { homeEditorOpened = false; vm.refresh() }
     }
@@ -106,7 +107,10 @@ fun CommunityScreen(onCreateCheckIn: () -> Unit, notificationsAction: @Composabl
             snackbarHost = { CpSnackbarHost(snackbar) },
         ) { padding ->
             CoffeePeekPullToRefresh(
-                listState, isRefreshing = state.isLoading && state.items.isNotEmpty(), onRefresh = { vm.refresh("gesture") },
+                listState, isRefreshing = state.isLoading && state.items.isNotEmpty(), onRefresh = {
+                    vm.refresh("gesture")
+                    leaderboardRefresh++
+                },
                 modifier = Modifier.fillMaxSize().statusBarsPadding().padding(top = padding.calculateTopPadding()),
             ) { scrollModifier ->
                 LazyColumn(
@@ -128,6 +132,9 @@ fun CommunityScreen(onCreateCheckIn: () -> Unit, notificationsAction: @Composabl
                             )
                             notificationsAction()
                         }
+                    }
+                    item(key = "leaderboard", contentType = "leaderboard") {
+                        CommunityLeaderboard(leaderboardRefresh)
                     }
                     when {
                         state.isLoggedIn == null || (state.isLoading && state.items.isEmpty()) -> item(key = "loading", contentType = "loading") {

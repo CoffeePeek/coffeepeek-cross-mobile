@@ -82,6 +82,13 @@ object Modules {
 
         val shop = Shop
         val roaster = Roaster
+        val leaderboard = Leaderboard
+        object Leaderboard {
+            const val api = ":feature:leaderboard:api"
+            const val domain = ":feature:leaderboard:domain"
+            const val data = ":feature:leaderboard:data"
+            const val impl = ":feature:leaderboard:impl"
+        }
         object Roaster {
             const val api = ":feature:roaster:api"
             const val domain = ":feature:roaster:domain"
@@ -184,6 +191,10 @@ object Modules {
         feature.roaster.api,
         feature.roaster.data,
         feature.roaster.impl,
+        feature.leaderboard.api,
+        feature.leaderboard.domain,
+        feature.leaderboard.data,
+        feature.leaderboard.impl,
         feature.profile.domain,
         feature.profile.api,
         feature.profile.data,

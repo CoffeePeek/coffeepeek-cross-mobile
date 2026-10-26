@@ -152,6 +152,7 @@ fun initKoin(
             authRendererFactory, communityRendererFactory, contributionsRendererFactory, discoveryRendererFactory, notificationsRendererFactory),
         imageModule(),
         roasterModule(),
+        com.coffeepeek.admin.di.leaderboard.leaderboardModule(),
         updateInstallerModule(),
     )
     val application = startKoin { modules(commonModules + platformModules) }

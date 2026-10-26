@@ -81,6 +81,9 @@ internal class SandboxApplicationBackend(private val today: LocalDate, private v
         val method = request.method
         val input = body as? JsonObject ?: buildJsonObject {}
         notificationStore.handle(path, method, input)?.let { return it }
+        if (path == "/api/v1/leaderboard" && method == HttpMethod.Get) {
+            return sandboxLeaderboard(request, today, populated, username, FRIEND_ID !in blocked)
+        }
         if (path == "/api/v1/me/blocks" && method == HttpMethod.Get) return blockPage(request)
         if (path.startsWith("/api/v1/me/blocks/") && method in listOf(HttpMethod.Put, HttpMethod.Delete)) {
             val id = path.removePrefix("/api/v1/me/blocks/")
