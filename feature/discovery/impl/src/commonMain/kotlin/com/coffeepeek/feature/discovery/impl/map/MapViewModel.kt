@@ -12,6 +12,7 @@ import com.coffeepeek.feature.discovery.api.MapInteraction
 import com.coffeepeek.feature.discovery.api.MapShopDetails
 import com.coffeepeek.feature.discovery.domain.model.Coordinates
 import com.coffeepeek.feature.discovery.domain.model.DiscoveryFilters
+import com.coffeepeek.feature.discovery.domain.model.MapContent
 import com.coffeepeek.feature.discovery.domain.model.MapBounds
 import com.coffeepeek.feature.discovery.domain.model.MapMarker
 import com.coffeepeek.feature.discovery.domain.model.ShopQuery
@@ -158,32 +159,37 @@ internal class MapViewModel(
         boundsJob = viewModelScope.launch {
             delay(BOUNDS_DEBOUNCE_MS)
             updateState { copy(isLoading = true, activeBounds = bounds, pendingBounds = bounds, activeZoom = zoom, pendingZoom = zoom, showSearchArea = false) }
-            val cityId = currentState.cityId
-            // A wider area than the visible one, so panning a few kilometers shows shops that are already loaded.
-            val area = bounds.expandedForPrefetch()
-            val started = TimeSource.Monotonic.markNow()
-            val result = repository.mapContent(area, zoom, DiscoveryFilters(cityId = cityId))
-            currentCoroutineContext().ensureActive()
-            result.onSuccess { content ->
-                analytics.mapInteracted(MapInteraction.Loaded, resultCount = content.markers.size, durationMs = started.elapsedNow().inWholeMilliseconds)
-                loadedArea = area
-                loadedZoomLevel = zoom.toInt()
-                updateState {
-                    val merged = (content.markers + nearby + listOfNotNull(selectedShop)).distinctBy { it.id }
-                    // The server returns the zones of the viewport only; every zone seen in this city is kept, fresh data wins, a city change forgets them.
-                    val known = if (zonesCityId == cityId) zones else emptyList()
-                    zonesCityId = cityId
-                    val allZones = (content.zones + known).distinctBy { it.id }
-                    copy(
-                        markers = merged, zones = allZones, isTruncated = content.isTruncated, isLoading = false,
-                        selectedShop = selectedShop?.let { selected -> merged.firstOrNull { it.id == selected.id } ?: selected },
-                        selectedZone = selectedZone?.takeIf { selected -> allZones.any { it.id == selected.id } },
-                    )
-                }
-            }.onFailure {
-                analytics.mapInteracted(MapInteraction.LoadFailed, durationMs = started.elapsedNow().inWholeMilliseconds)
-                updateState { copy(isLoading = false, showSearchArea = true) }
-            }
+            requestBounds(bounds.expandedForPrefetch(), zoom, currentState.cityId)
+        }
+    }
+
+    private suspend fun requestBounds(area: MapBounds, zoom: Float, cityId: String?) {
+        val started = TimeSource.Monotonic.markNow()
+        val result = repository.mapContent(area, zoom, DiscoveryFilters(cityId = cityId))
+        currentCoroutineContext().ensureActive()
+        result.onSuccess { content ->
+            analytics.mapInteracted(MapInteraction.Loaded, resultCount = content.markers.size + content.clusters.sumOf { it.count } + content.zones.sumOf { it.shopCount }, durationMs = started.elapsedNow().inWholeMilliseconds)
+            loadedArea = area
+            loadedZoomLevel = zoom.toInt()
+            applyContent(content, cityId)
+        }.onFailure {
+            analytics.mapInteracted(MapInteraction.LoadFailed, durationMs = started.elapsedNow().inWholeMilliseconds)
+            updateState { copy(isLoading = false, showSearchArea = true) }
+        }
+    }
+
+    private fun applyContent(content: MapContent, cityId: String?) {
+        updateState {
+            val merged = (content.markers + listOfNotNull(selectedShop)).distinctBy { it.id }
+            val known = if (zonesCityId == cityId) zones else emptyList()
+            zonesCityId = cityId
+            val allZones = (content.zones + known).distinctBy { it.id }
+            copy(
+                markers = merged, clusters = content.clusters, zones = allZones, zoneGroups = content.zones,
+                isTruncated = content.isTruncated, isLoading = false,
+                selectedShop = selectedShop?.let { selected -> merged.firstOrNull { it.id == selected.id } ?: selected },
+                selectedZone = selectedZone?.takeIf { selected -> allZones.any { it.id == selected.id } },
+            )
         }
     }
 
@@ -205,7 +211,7 @@ internal class MapViewModel(
             result.onSuccess { content ->
                 analytics.mapInteracted(MapInteraction.NearbyLoaded, resultCount = content.markers.size)
                 val nearest = nearestMarkers(content.markers, origin)
-                updateState { copy(nearby = nearest, markers = (markers + nearest).distinctBy { it.id }) }
+                updateState { copy(nearby = nearest) }
             }.onFailure { analytics.mapInteracted(MapInteraction.NearbyFailed) }
         }
     }

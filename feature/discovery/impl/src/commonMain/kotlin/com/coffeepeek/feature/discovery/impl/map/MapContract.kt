@@ -5,6 +5,7 @@ import com.coffeepeek.feature.discovery.api.MapFocus
 import com.coffeepeek.feature.discovery.api.MapShopDetails
 import com.coffeepeek.feature.discovery.domain.model.Coordinates
 import com.coffeepeek.feature.discovery.domain.model.MapBounds
+import com.coffeepeek.feature.discovery.domain.model.MapCluster
 import com.coffeepeek.feature.discovery.domain.model.MapMarker
 import com.coffeepeek.feature.discovery.domain.model.MapZone
 import com.coffeepeek.feature.discovery.domain.model.ShopSummary
@@ -15,7 +16,9 @@ internal data class MapState(
     val nearby: List<MapMarker> = emptyList(),
     val nearbyOrigin: Coordinates? = null,
     val markers: List<MapMarker> = emptyList(),
+    val clusters: List<MapCluster> = emptyList(),
     val zones: List<MapZone> = emptyList(),
+    val zoneGroups: List<MapZone> = emptyList(),
     val showZones: Boolean = true,
     val selectedShop: MapMarker? = null,
     val selectedZone: MapZone? = null,

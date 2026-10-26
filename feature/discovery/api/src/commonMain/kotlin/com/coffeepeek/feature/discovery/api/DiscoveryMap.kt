@@ -2,6 +2,7 @@ package com.coffeepeek.feature.discovery.api
 
 import com.coffeepeek.feature.discovery.domain.model.Coordinates
 import com.coffeepeek.feature.discovery.domain.model.MapBounds
+import com.coffeepeek.feature.discovery.domain.model.MapCluster
 import com.coffeepeek.feature.discovery.domain.model.MapMarker
 import com.coffeepeek.feature.discovery.domain.model.MapZone
 
@@ -28,6 +29,7 @@ data class MapCanvasState(
     val myLocationRequest: Int,
     /** The small map of the tab: no attribution, no automatic permission request, no zones, taps open the shop. */
     val isPreview: Boolean = false,
+    val clusters: List<MapCluster> = emptyList(),
 )
 
 class MapCanvasCallbacks(

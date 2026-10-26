@@ -5,7 +5,7 @@ import kotlin.math.hypot
 
 internal const val MIN_CLUSTER_ZOOM = 15f
 internal const val CLUSTER_RADIUS_PX = 46f
-internal const val CLUSTER_TAP_MAX_ZOOM = 17f
+internal const val CLUSTER_TAP_MAX_ZOOM = 22f
 internal const val CLUSTER_TAP_ANIMATION_MS = 350L
 internal const val CLUSTER_MOVE_DEBOUNCE_MS = 300L
 
@@ -29,11 +29,7 @@ internal fun clusterCountLabel(count: Int): String =
 
 internal fun clusterUsesShopPoint(count: Int): Boolean = count == 1
 
-internal fun clusterDiameterDp(count: Int): Float = when {
-    count >= 100 -> 60f
-    count >= 10 -> 55f
-    else -> 49f
-}
+internal fun clusterDiameterDp(count: Int): Float = if (count == 1) 31f else 34.1f
 
 /**
  * Greedy screen-space clustering. [project] maps a shop to screen pixels;
@@ -85,6 +81,6 @@ internal fun clusterMapShops(
 }
 
 internal fun clusterFitZoom(currentZoom: Float, fittedZoom: Float): Float =
-    minOf(fittedZoom, minOf(currentZoom + 2f, CLUSTER_TAP_MAX_ZOOM))
+    minOf(CLUSTER_TAP_MAX_ZOOM, maxOf(currentZoom + 1f, minOf(fittedZoom, currentZoom + 2f)))
 
 internal fun clusterPaddingFraction(): Float = 0.25f
