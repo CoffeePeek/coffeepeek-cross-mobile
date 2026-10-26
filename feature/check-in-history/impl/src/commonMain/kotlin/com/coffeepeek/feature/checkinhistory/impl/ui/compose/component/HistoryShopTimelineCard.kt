@@ -1,49 +1,58 @@
 package com.coffeepeek.feature.checkinhistory.impl.ui.compose.component
 
-import androidx.compose.foundation.BorderStroke
-import org.jetbrains.compose.ui.tooling.preview.Preview
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.*
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
+import com.coffeepeek.core.designsystem.component.CoffeePeekTimelineContent
+import com.coffeepeek.core.designsystem.component.CoffeePeekTimelineHeader
+import com.coffeepeek.core.designsystem.component.CoffeePeekTimelineFooter
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.feature.checkinhistory.domain.model.PersonalCheckIn
 import com.coffeepeek.feature.checkinhistory.impl.resources.*
+import com.coffeepeek.feature.checkinhistory.impl.ui.data.displayName
+import com.coffeepeek.feature.checkinhistory.impl.ui.data.timelinePhotos
+import com.coffeepeek.feature.checkinhistory.impl.ui.data.completeTimelineRating
 import org.jetbrains.compose.resources.stringResource
+import org.jetbrains.compose.ui.tooling.preview.Preview
 
 @Composable
-internal fun HistoryShopTimelineCard(entry: PersonalCheckIn, timeLabel: String, onClick: () -> Unit) {
-    LocalHistoryShopTimelineContent.current?.let { content ->
-        content(entry, onClick)
-        return
-    }
-    Card(onClick, Modifier.fillMaxWidth(), shape = RoundedCornerShape(20.dp),
-        border = BorderStroke(0.5.dp, MaterialTheme.colorScheme.outlineVariant),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)) {
-        Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(7.dp)) {
-                Icon(CoffeePeekIcons.Location, null, Modifier.size(18.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
-                Text(stringResource(Res.string.history_source_time, stringResource(Res.string.history_at_shop), timeLabel),
-                    style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            }
-            Text(entry.shopName.ifBlank { stringResource(Res.string.history_shop) },
-                style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
-            // Match the current timeline's saved-name order, rather than changing it with device locale.
-            val drink = entry.drink?.let { it.nameRu ?: it.customName ?: it.nameEn }
-            if (!drink.isNullOrBlank()) Text(drink, style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.primary)
-            if (entry.note.isNotBlank()) Text(entry.note, style = MaterialTheme.typography.bodyMedium,
-                maxLines = 2, overflow = TextOverflow.Ellipsis)
-        }
+internal fun HistoryShopTimelineCard(entry: PersonalCheckIn, dateLabel: String, onClick: () -> Unit,
+    onPhoto: (Int) -> Unit, image: HistoryImageContent?) {
+    val name = entry.username.ifBlank { stringResource(Res.string.history_you) }
+    val photos = entry.timelinePhotos()
+    CoffeePeekTimelineContent(entry.note, Modifier.clickable(role = Role.Button, onClick = onClick),
+        header = {
+            CoffeePeekTimelineHeader(name, dateLabel, avatar = { modifier ->
+                entry.authorAvatarUrl?.let { HistoryPhoto(it, modifier, imageContent = image) }
+            })
+        }, heading = { HistoryTimelineShopHeading(entry, onClick) },
+        photos = { HistoryTimelinePhotosContent(photos, onPhoto, image) },
+        footer = {
+            CoffeePeekTimelineFooter(entry.helpfulCount.takeIf { it > 0 }, entry.isHelpfulByCurrentUser,
+                stringResource(Res.string.history_helpful_count, entry.helpfulCount), entry.drink.displayName(Locale.current.language))
+        })
+}
+
+@Composable
+private fun HistoryTimelineShopHeading(entry: PersonalCheckIn, onClick: () -> Unit) {
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text(entry.shopName.ifBlank { stringResource(Res.string.history_shop) },
+            Modifier.then(if (!entry.shop?.slug.isNullOrBlank()) Modifier.clickable(role = Role.Button, onClick = onClick) else Modifier),
+            style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold, maxLines = 2, overflow = TextOverflow.Ellipsis)
+        entry.rating.completeTimelineRating()?.let { HistoryCheckInRating(it) }
     }
 }
 
-@Preview @Composable private fun HistoryShopTimelineCardPreview() = CoffeePeekTheme {
-    HistoryShopTimelineCard(previewHistoryCheckIn(), "13:00", {})
+@Composable private fun ShopTimelinePreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
+    HistoryShopTimelineCard(previewHistoryCheckIn(), "14 октября 2026", {}, {}, null)
 }
+@Preview @Composable private fun ShopTimelineLightPreview() = ShopTimelinePreview(false)
+@Preview @Composable private fun ShopTimelineDarkPreview() = ShopTimelinePreview(true)

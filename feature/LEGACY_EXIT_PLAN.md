@@ -54,11 +54,11 @@ DatabaseCore. Старый LEGACY_REMOVAL.md — исторический сни
 
 ### L1. Убрать бизнес-UI из активных app slots
 
-- [ ] Profile: публичное избранное, публичная недельная Activity, карточки
+- [x] Profile UI: публичное избранное, публичная недельная Activity, карточки
   чекинов; на публичном профиле никогда не подключать личный reader.
-  Публичное избранное и неделя перенесены в первом L1-срезе ниже;
-  карточка чекина/её legacy source adapter остаются следующим блокером.
-- [ ] History/Profile: один владелец представления чекина через узкий api или
+  Избранное/неделя — первый срез; карточки — второй. Public data reader пока
+  имеет one-way app compatibility projection; его замена остаётся в L3.
+- [x] History/Profile: один владелец общей геометрии чекина через
   существующие DS primitives; без преобразования обратно в legacy CheckIn.
 - [ ] Discovery/catalog и создание чекина: бизнес-UI/состояние только в impl.
 - [ ] Author blocking: экран/host из composeApp в feature/author-blocking/impl.
@@ -197,3 +197,77 @@ Sandbox `9f0f7e166177ba7843c652fae6076004755433c2ecb0576f8719883294188c7b`.
 Ни приложение, ни Sandbox не устанавливались/не запускались. Данные, аккаунты,
 backend и пользовательские local pbx изменения не затронуты. Цель полного
 legacy exit не объявлена достигнутой: следующие L1–L5 пункты остаются открыты.
+
+## Второй срез L1/L4: карточки чекинов — 2026-10-26
+
+База fb750d83 + этот checkpoint, тот же незавершённый PR #195. Свежие
+origin/develop и origin/main проверены fetch: новых отсутствующих в HEAD
+коммитов нет. Локальный project.pbxproj пользователя не включается в срез.
+
+Что изменено:
+
+- Удалены app-injected shopTimelineContent/homeTimelineContent и их composition
+  locals. History рисует Shop/Home в своём impl прямо из PersonalCheckIn и
+  HomeHistoryEntry. Reverse adapters в старые CheckIn/HomeCheckIn удалены.
+- ProfileSlots больше не принимает checkInCard. Profile impl владеет полным
+  content и block/report menu; никаких Koin вызовов внутри карточки. Формат даты,
+  media и переход на ReportCheckIn остаются узкими app ports до L2/L3.
+- PublicProfileCheckIn получил явные author/createdAt/scores/drink/home/affinity/
+  detail-photo поля. Stateless projection из ещё существующего public feed reader
+  сохраняет их за один проход, без хранения старых записей для повторного UI lookup.
+  RememberedCheckIns и его storage-only тесты удалены; сценарии сохранности
+  представления заменены regressions на self-contained feature rows.
+- В core/design-system общие CoffeePeekTimelineContent/Header/Footer,
+  CoffeePeekPhotoStrip/Sources и CoffeePeekTimelineRail. Они не знают feature
+  моделей/репозиториев/аккаунтов и не выполняют IO. Сохранены header 44 dp,
+  single photo 2:1, коллаж 4:3, +N, footer с названием напитка справа и read-only
+  affinity без ripple. CoffeePeekDrinkLabel получил Compact вариант 14 dp;
+  исходный Regular сохраняет прежние размеры. Paired previews colocated.
+- Photo sources snapshot/alignment общий: отсутствие варианта и явный blank
+  различаются; в list доступен preview → detail, viewer получает aligned
+  originals. Невалидные/неизвестные album indices отбрасываются. Личная история
+  открывает фото отдельным MVI intent, с source-prefixed key, session envelope и
+  существующей app lease проверкой. Нажатие на фото не открывает detail sheet.
+- Сохранены visitedAt/preparedAt timestamps для личной истории и createdAt для
+  публичного card header, custom/localized drink preference, Home recipe,
+  visibility label и отсутствие придуманных нулевых category scores.
+- Гостю и владельцу карточки Profile не предлагается чужой block/report menu.
+  Signed-in state отслеживает смену аккаунта, в том числе logout; существующие
+  write-side guards остаются у владельцев действий.
+- Удалены больше не вызываемые старые ProfileScreen, ProfileCheckInsScreen и
+  HistoryTimelineCheckInCard. Их Kotlin/Swift callers проверены; Studio call
+  hierarchy подтверждал единственный старый caller последней карточки.
+  У существующего стороннего CheckInPresentationTest заменены только import и
+  вызов TimelineRail на перенесённый DS компонент. Новых UI-тестов/hosts нет;
+  существующий UI-suite не запускался. Старый публичный Profile UI ещё нужен
+  другим сторонним tests; его удаление требует отдельного переноса consumers.
+
+Проверки:
+
+- Production compile Android DirectDebug и iOS Arm64 прошёл до финального
+  удаления освободившихся экранов. Первый unit run остановился на отсутствии
+  HomeHistoryPhoto import в новом тесте; import исправлен, повторный набор прошёл.
+- Финальный unit/contract набор: **263 tests / 42 suites**, 0 failures/errors/skips:
+  design-system 50 / 14; Profile impl 66 / 7; History impl 82 / 8;
+  app subset 65 / 13. Неизменённые tasks могут быть UP-TO-DATE; эти counts не
+  суммируются с первым checkpoint. Перенесены полезные adapter regressions:
+  даты, recipe, thumbnail/detail/original alignment; добавлены unit проверки
+  источников фото, их snapshot, двух album с одинаковым id, неверных индексов,
+  session delivery и видимости действий после logout. Unit-only, без сети.
+- Android DirectDebug/Sandbox assembly прошли, включая packaged runtime-class
+  guards и Sandbox isolation. iOS Arm64 production compile, Simulator Debug
+  framework link и app common Native test compile прошли. Дополнительно прошла
+  compileTestKotlinIosSimulatorArm64 для design-system, Profile impl и History
+  impl. Native tests не исполнялись. Gradle последовательно, --max-workers=6.
+- Studio MCP get_file_problems завершился без ошибок для CoffeePeekPhotoStrip,
+  PublicProfileCheckInCard и HistoryHomeTimelineCard. Это не preview rendering.
+- APK SHA-256: Debug `a009257ed3157660784ca79ef1e31394a8de3b1e71fa344c525bde2dbb3bf79d`;
+  Sandbox `1e8c8406c9d110f00395a7ec292e910023047a816ed5f7c14e47c461679ae753`.
+
+Полный Xcode build и ручная визуальная приёмка этого среза пока не выполнены.
+Ничего не устанавливалось/не запускалось, реальные аккаунты и данные не менялись.
+Live backend/OAuth/push/analytics acceptance этим не подтверждены.
+
+Следующий остаток: активный public profile data reader/favorite enrichment и
+прочие app data adapters, затем media infrastructure. Старые экраны/VM/тестовые
+потребители удаляются по последнему consumer; modules/ ещё не готовы к удалению.

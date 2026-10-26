@@ -1,5 +1,7 @@
 package com.coffeepeek.feature.checkinhistory.impl.ui
 
+import com.coffeepeek.feature.checkinhistory.impl.ui.data.timelinePhotos
+
 import androidx.lifecycle.viewModelScope
 import com.coffeepeek.core.presentation.MviViewModel
 import com.coffeepeek.feature.checkinhistory.domain.model.HistoryMonth
@@ -83,6 +85,7 @@ internal class CombinedHistoryViewModel private constructor(
                     updateState { copy(selectedShopKey = null) }
                     emit(CheckInHistoryEvent.OpenShop(slug))
                 }
+            is CombinedHistoryAction.OpenEntryPhoto -> openEntryPhoto(action.key, action.index)
             is CombinedHistoryAction.OpenPhoto -> currentState.selectedShop?.entry?.let { entry ->
                 val originals = entry.photoUrls
                 val details = entry.photoDetailUrls ?: originals
@@ -159,6 +162,16 @@ internal class CombinedHistoryViewModel private constructor(
 
     private suspend fun emit(event: CheckInHistoryEvent) {
         sendEvent(CheckInHistoryEventEnvelope(event, currentState.sessionGeneration))
+    }
+
+    private suspend fun openEntryPhoto(key: String, index: Int) {
+        if (!currentState.isLoggedIn) return
+        val photos = when (val item = currentState.timeline.firstOrNull { it.key == key }) {
+            is HistoryTimelineItem.Shop -> item.entry.timelinePhotos()
+            is HistoryTimelineItem.Home -> item.entry.timelinePhotos()
+            null -> return
+        }
+        if (photos.canOpen(index)) emit(CheckInHistoryEvent.OpenPhoto(photos.previews.toList(), index, photos.originals.toList()))
     }
 
     private fun select(month: HistoryMonth, date: String?) {

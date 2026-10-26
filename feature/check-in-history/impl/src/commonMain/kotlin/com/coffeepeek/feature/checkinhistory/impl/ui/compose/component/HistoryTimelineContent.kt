@@ -13,6 +13,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.core.designsystem.component.coffeePeekScrollContentPadding
 import com.coffeepeek.core.designsystem.component.CoffeePeekLoader
+import com.coffeepeek.core.designsystem.component.CoffeePeekTimelineRail
 import com.coffeepeek.core.designsystem.component.CoffeePeekPullToRefresh
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.feature.checkinhistory.impl.resources.*
@@ -23,7 +24,8 @@ import org.jetbrains.compose.resources.stringResource
 
 @Composable
 internal fun HistoryTimelineContent(state: CombinedHistoryState, onAction: (CombinedHistoryAction) -> Unit,
-    formatTime: (String) -> String, modifier: Modifier = Modifier, imageContent: HistoryImageContent? = null) {
+    formatTime: (String) -> String, modifier: Modifier = Modifier, imageContent: HistoryImageContent? = null,
+    formatDate: (String) -> String = { it }) {
     val listState = rememberLazyListState()
     val entries = state.timeline
     CoffeePeekPullToRefresh(listState, state.isRefreshing, { onAction(CombinedHistoryAction.Refresh) },
@@ -55,14 +57,14 @@ internal fun HistoryTimelineContent(state: CombinedHistoryState, onAction: (Comb
                     if (first) Text(historyDateTitle(item.date, item.date.take(4) != state.today.take(4)),
                         style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold,
                         modifier = Modifier.padding(top = 24.dp, bottom = 12.dp))
-                    HistoryTimelineRail(item is HistoryTimelineItem.Home, first, last) {
+                    CoffeePeekTimelineRail(item is HistoryTimelineItem.Home, first, last) {
                         when (item) {
-                            is HistoryTimelineItem.Shop -> HistoryShopTimelineCard(item.entry, formatTime(item.timestamp)) {
-                                onAction(CombinedHistoryAction.OpenEntry(item.key))
-                            }
-                            is HistoryTimelineItem.Home -> HistoryHomeTimelineCard(item.entry, formatTime(item.timestamp)) {
-                                onAction(CombinedHistoryAction.OpenEntry(item.key))
-                            }
+                            is HistoryTimelineItem.Shop -> HistoryShopTimelineCard(item.entry, formatDate(item.timestamp),
+                                { onAction(CombinedHistoryAction.OpenEntry(item.key)) },
+                                { onAction(CombinedHistoryAction.OpenEntryPhoto(item.key, it)) }, imageContent)
+                            is HistoryTimelineItem.Home -> HistoryHomeTimelineCard(item.entry, formatDate(item.timestamp),
+                                { onAction(CombinedHistoryAction.OpenEntry(item.key)) },
+                                { onAction(CombinedHistoryAction.OpenEntryPhoto(item.key, it)) }, imageContent)
                         }
                     }
                 }

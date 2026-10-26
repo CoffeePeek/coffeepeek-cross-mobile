@@ -79,6 +79,7 @@ import com.coffeepeek.feature.profile.impl.ui.compose.component.PublicProfileAct
 import com.coffeepeek.feature.profile.impl.ui.compose.component.PublicProfileConnectionsSheet
 import com.coffeepeek.feature.profile.impl.ui.compose.component.PublicProfileHeader
 import com.coffeepeek.feature.profile.impl.ui.compose.component.PublicProfileActivityPreview
+import com.coffeepeek.feature.profile.impl.ui.compose.component.PublicProfileCheckInCard
 import com.coffeepeek.feature.profile.impl.ui.compose.component.PublicProfileFavoriteCard
 import com.coffeepeek.feature.profile.impl.ui.compose.component.PublicProfileFavoritesPreview
 import com.coffeepeek.feature.profile.impl.ui.model.PublicProfileAction
@@ -145,7 +146,7 @@ internal fun PublicProfileScreen(
         PublicProfileCheckInsScreenContent(state, slots, onBack ?: {}, onOpenShop,
             onRetry = { vm.onAction(if (profile == null) PublicProfileAction.Refresh else PublicProfileAction.RetryCheckIns) },
             onLoadMore = { vm.onAction(PublicProfileAction.LoadMoreCheckIns) },
-            onPhotoClick = { previews, originals, index -> photos = ProfilePhotos(previews, originals, index) })
+            onPhotoClick = { previews, originals, index -> photos = ProfilePhotos(previews, originals, index) }, authorActions = authorActions)
         photos?.let { slots.photoViewer(it.previews, it.originals, it.index) { photos = null } }
         return
     }
@@ -280,8 +281,12 @@ internal fun PublicProfileScreen(
                                 state.checkInsError != null && state.checkIns.isEmpty() ->
                                     InlineProfileError(stringResource(Res.string.profile_check_ins_failed)) { vm.onAction(PublicProfileAction.RetryCheckIns) }
                                 else -> state.checkIns.take(2).forEach { checkIn ->
-                                    slots.checkInCard(checkIn, author, viewingOwn,
-                                        checkIn.coffeeShopSlug?.takeIf(String::isNotBlank)?.let { shop -> { onOpenShop(shop) } }) { previews, originals, index -> photos = ProfilePhotos(previews, originals, index) }
+                                    val allowActions = state.isSignedIn && !viewingOwn
+                                    PublicProfileCheckInCard(checkIn, author, slots,
+                                        checkIn.coffeeShopSlug?.takeIf(String::isNotBlank)?.let { shop -> { onOpenShop(shop) } },
+                                        { previews, originals, index -> photos = ProfilePhotos(previews, originals, index) },
+                                        onBlock = if (allowActions) ({ authorActions.requestBlock(author) }) else null,
+                                        onReport = if (allowActions) ({ slots.reportCheckIn(checkIn.id) }) else null)
                                 }
                             }
                         }
@@ -326,7 +331,7 @@ internal fun PublicProfileScreen(
                 ProfileSection.CheckIns -> PublicProfileCheckInsList(
                     state, slots, onOpenShop = { section = null; onOpenShop(it) },
                     onRetry = { vm.onAction(PublicProfileAction.RetryCheckIns) },
-                    onLoadMore = { vm.onAction(PublicProfileAction.LoadMoreCheckIns) },
+                    onLoadMore = { vm.onAction(PublicProfileAction.LoadMoreCheckIns) }, authorActions = authorActions,
                     onPhotoClick = { previews, originals, index -> photos = ProfilePhotos(previews, originals, index) },
                     modifier = Modifier.fillMaxWidth().weight(1f, fill = false),
                     isOwnProfile = viewingOwn,

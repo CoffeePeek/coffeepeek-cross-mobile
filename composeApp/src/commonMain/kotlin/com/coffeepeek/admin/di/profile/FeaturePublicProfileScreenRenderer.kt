@@ -5,10 +5,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import com.coffeepeek.admin.feature.profile.domain.PublicProfileCheckIn as LegacyCheckIn
 import com.coffeepeek.admin.feature.profile.domain.PublicProfileRepository
-import com.coffeepeek.admin.feature.profile.ui.PublicProfileCheckInCard
 import com.coffeepeek.admin.ui.Navigator
 import com.coffeepeek.admin.ui.component.FullScreenImageDialog
 import com.coffeepeek.admin.ui.component.PhotoViewerImages
+import com.coffeepeek.admin.ui.component.rememberReviewDisplayDate
 import com.coffeepeek.admin.ui.screen.profile.PublicProfileScreenRenderer
 import com.coffeepeek.admin.utils.CpImage
 import com.coffeepeek.admin.utils.PrefetchListPhotos
@@ -27,7 +27,7 @@ import com.coffeepeek.feature.profile.domain.PublicProfileCheckIn
 import com.coffeepeek.feature.profile.domain.PublicProfileCheckInPage
 import com.coffeepeek.feature.profile.impl.createPublicProfileEntry
 
-/** Both platforms use the feature public profile; navigation, sharing and shared cards stay app-owned. */
+/** Both platforms use the feature public profile; navigation and platform media stay app-owned. */
 internal class FeaturePublicProfileScreenRenderer(private val entry: PublicProfileEntry) : PublicProfileScreenRenderer {
     @Composable
     override fun Content(slug: String, nickname: String?, avatarUrl: String?, checkInsOnly: Boolean) {
@@ -43,29 +43,13 @@ internal class FeaturePublicProfileScreenRenderer(private val entry: PublicProfi
     }
 }
 
-/**
- * Check-ins still render through the shared timeline card, which needs the legacy `CheckIn`. This adapter hands the feature its
- * own model and keeps the legacy rows (bounded, most recent first) for the card slot of the same ids.
- */
+/** A stateless projection; feature rows retain their own presentation after paging or account changes. */
 internal class AppPublicCheckIns(private val repository: PublicProfileRepository) : PublicCheckInsPort {
-    private val sources = RememberedCheckIns()
-
     override suspend fun page(slug: String, cursor: String?): Result<PublicProfileCheckInPage> =
         repository.getCheckIns(slug, cursor).map { page ->
-            sources.remember(slug, restart = cursor == null, page.items)
             PublicProfileCheckInPage(page.items.map(LegacyCheckIn::toFeatureModel), page.nextCursor)
         }
-
-    fun legacy(checkIn: PublicProfileCheckIn): LegacyCheckIn = sources.find(checkIn.id) ?: LegacyCheckIn(
-        checkIn.id, checkIn.coffeeShopSlug, checkIn.venue, checkIn.title, checkIn.details, checkIn.rating, checkIn.note,
-        checkIn.occurredAt, checkIn.photoUrls,
-    )
 }
-
-internal fun LegacyCheckIn.toFeatureModel() = PublicProfileCheckIn(
-    id, coffeeShopSlug, venue, title, details, rating, note, occurredAt, photoUrls,
-    photoPreviewUrls = source?.photoThumbnailUrls ?: photoUrls,
-)
 
 internal class AppProfileAuthorActions(private val blocks: AuthorBlockActions) : ProfileAuthorActions {
     override fun requestBlock(author: ProfileAuthor) = blocks.requestBlock(author.toReference())
@@ -82,7 +66,7 @@ internal fun featurePublicProfileScreenRenderer(
     blocks: AuthorBlockActions,
 ): FeaturePublicProfileScreenRenderer {
     val checkIns = AppPublicCheckIns(repository)
-    val slots = profileSlots(checkIns)
+    val slots = profileSlots()
     return FeaturePublicProfileScreenRenderer(createPublicProfileEntry(
         data = repository,
         checkIns = checkIns,
@@ -94,23 +78,16 @@ internal fun featurePublicProfileScreenRenderer(
 }
 
 
-/** Platform media and the remaining check-in compatibility slot, shared by both profile entries. */
-internal fun profileSlots(checkIns: AppPublicCheckIns): ProfileSlots {
+/** Platform media, formatting and routing; feature-owned card content is never injected here. */
+internal fun profileSlots(): ProfileSlots {
     return ProfileSlots(
         image = { url, description, modifier -> CpImage(data = url, modifier = modifier, contentScale = ContentScale.Crop, contentDescription = description) },
         photoViewer = { previews, originals, index, onDismiss -> FullScreenImageDialog(PhotoViewerImages(previews, originals), index, onDismiss) },
         logoImage = { url, description, modifier -> CpImage(data = url, modifier = modifier, contentScale = ContentScale.Fit, contentDescription = description) },
-        checkInCard = { checkIn, author, isOwnProfile, onShopClick, onPhotoClick ->
-            PublicProfileCheckInCard(
-                checkIn = checkIns.legacy(checkIn),
-                onShopClick = { onShopClick?.invoke() },
-                onPhotoClick = { images, index -> onPhotoClick(images.previews, images.originals, index) },
-                authorName = author.name,
-                authorAvatarUrl = author.avatarUrl,
-                isOwnProfile = isOwnProfile,
-                author = AuthorReference(author.id, author.slug, author.name, author.avatarUrl),
-            )
-        },
+        displayDate = { rememberReviewDisplayDate(it) },
+        progressiveImage = { preview, detail, modifier -> CpImage(data = preview, highQualityData = detail,
+            modifier = modifier, contentScale = ContentScale.Crop) },
+        reportCheckIn = { Navigator.navigate(Navigator.Screen.ReportCheckIn(it)) },
         photoPrefetch = { listState, items -> PrefetchListPhotos(listState, items) },
     )
 }

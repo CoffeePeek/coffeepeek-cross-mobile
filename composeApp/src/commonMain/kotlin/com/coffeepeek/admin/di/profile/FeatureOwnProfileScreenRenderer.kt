@@ -95,12 +95,12 @@ internal fun featureOwnProfileScreenRenderer(
         signOut = AppProfileSignOut(notifications, auth, drafts),
         visibility = AppProfileAuthorVisibility(visibility),
         authorActions = AppProfileAuthorActions(blocks),
-        slots = ownProfileSlots(checkIns, activity),
+        slots = ownProfileSlots(activity),
     ))
 }
 
-private fun ownProfileSlots(checkIns: AppPublicCheckIns, activity: FeatureProfileActivityRenderer) = OwnProfileSlots(
-    shared = profileSlots(checkIns),
+private fun ownProfileSlots(activity: FeatureProfileActivityRenderer) = OwnProfileSlots(
+    shared = profileSlots(),
     favoritesPreview = { openShop, openRoaster, header -> FavoritesProfilePreview(openShop, openRoaster, header) },
     activityCalendar = { openShop, openCheckIns -> activity.Calendar(openShop, openCheckIns) },
     activityPreview = { onClick -> activity.Week(onClick) },

@@ -18,6 +18,7 @@ import androidx.test.core.app.ActivityScenario
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.coffeepeek.admin.MainActivity
+import com.coffeepeek.core.designsystem.component.CoffeePeekTimelineRail
 import com.coffeepeek.admin.feature.homecheckin.ui.HomeDetailContent
 import com.coffeepeek.admin.feature.homecheckin.ui.HomeTimelineCard
 import com.coffeepeek.admin.theme.CoffeePeekTheme
@@ -65,7 +66,7 @@ class CheckInPresentationTest {
                                         if (index == 0) first.set(it.boundsInWindow())
                                         if (index == 1) second.set(it.boundsInWindow())
                                     }) {
-                                        TimelineRail(isHome = index != 1, firstInDay = index == 0, lastInDay = index == 2) {
+                                        CoffeePeekTimelineRail(accent = index != 1, firstInDay = index == 0, lastInDay = index == 2) {
                                             HomeTimelineCard(fixture.copy(id = "$index", text = null)) {}
                                         }
                                     }

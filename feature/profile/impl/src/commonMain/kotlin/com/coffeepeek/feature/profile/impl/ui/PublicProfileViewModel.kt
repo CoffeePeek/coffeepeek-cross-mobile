@@ -35,7 +35,7 @@ internal class PublicProfileViewModel(
     private val checkIns: PublicCheckInsPort,
     private val accounts: ProfileAccountPort,
     private val visibility: ProfileAuthorVisibility = ProfileAuthorVisibility.None,
-) : MviViewModel<PublicProfileState, PublicProfileAction, PublicProfileEvent>(PublicProfileState()) {
+) : MviViewModel<PublicProfileState, PublicProfileAction, PublicProfileEvent>(PublicProfileState(isSignedIn = accounts.activeAccount() != null)) {
     private var initialized = false
     private var profileJob: Job? = null
     private var checkInsJob: Job? = null
@@ -90,7 +90,7 @@ internal class PublicProfileViewModel(
     private fun start() {
         viewModelScope.launch {
             visibility.observe().drop(1).collect {
-                updateState { PublicProfileState(activityMonth = activityMonth) }
+                updateState { PublicProfileState(activityMonth = activityMonth, isSignedIn = accounts.activeAccount() != null) }
                 refresh()
             }
         }
@@ -104,7 +104,7 @@ internal class PublicProfileViewModel(
                     ownProfileAccount = null
                     ownIdentityLoaded = false
                     ownAddress = null
-                    updateState { PublicProfileState(activityMonth = activityMonth) }
+                    updateState { PublicProfileState(activityMonth = activityMonth, isSignedIn = current != null) }
                     refresh()
                     loadOwnProfile(forceRefresh = true)
                 }
@@ -196,7 +196,8 @@ internal class PublicProfileViewModel(
                 currentState.connectionKind?.let(::openConnections)
             }.onFailure { error ->
                 updateState {
-                    if (error is PublicProfileUnavailable) PublicProfileState(isLoading = false, error = "Профиль недоступен", activityMonth = activityMonth)
+                    if (error is PublicProfileUnavailable) PublicProfileState(isLoading = false, error = "Профиль недоступен", activityMonth = activityMonth,
+                        isSignedIn = accounts.activeAccount() != null)
                     else copy(isLoading = false, error = "Не удалось загрузить профиль")
                 }
             }

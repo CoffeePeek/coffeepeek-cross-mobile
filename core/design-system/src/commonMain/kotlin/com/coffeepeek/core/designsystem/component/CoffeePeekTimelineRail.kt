@@ -1,7 +1,6 @@
-package com.coffeepeek.feature.checkinhistory.impl.ui.compose.component
+package com.coffeepeek.core.designsystem.component
 
 import androidx.compose.foundation.Canvas
-import org.jetbrains.compose.ui.tooling.preview.Preview
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -12,19 +11,20 @@ import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
+import org.jetbrains.compose.ui.tooling.preview.Preview
 
+/** Timeline geometry, including the gap between items. The feature chooses the marker's emphasis. */
 @Composable
-internal fun HistoryTimelineRail(isHome: Boolean, firstInDay: Boolean, lastInDay: Boolean, content: @Composable () -> Unit) {
+fun CoffeePeekTimelineRail(accent: Boolean, firstInDay: Boolean, lastInDay: Boolean, content: @Composable () -> Unit) {
     val line = MaterialTheme.colorScheme.outlineVariant
-    val dot = if (isHome) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+    val dot = if (accent) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
     val background = MaterialTheme.colorScheme.background
     val rtl = LocalLayoutDirection.current == LayoutDirection.Rtl
     Box(Modifier.fillMaxWidth()) {
         Canvas(Modifier.matchParentSize()) {
             val x = if (rtl) 8.dp.toPx() else size.width - 8.dp.toPx()
             val dotY = 27.dp.toPx()
-            drawLine(line, Offset(x, if (firstInDay) dotY else 0f),
-                Offset(x, if (lastInDay) dotY else size.height), 2.dp.toPx())
+            drawLine(line, Offset(x, if (firstInDay) dotY else 0f), Offset(x, if (lastInDay) dotY else size.height), 2.dp.toPx())
             drawCircle(background, 7.dp.toPx(), Offset(x, dotY))
             drawCircle(dot, 4.dp.toPx(), Offset(x, dotY))
         }
@@ -32,6 +32,10 @@ internal fun HistoryTimelineRail(isHome: Boolean, firstInDay: Boolean, lastInDay
     }
 }
 
-@Preview @Composable private fun HistoryTimelineRailPreview() = CoffeePeekTheme {
-    HistoryTimelineRail(true, true, false) { Text("Hario V60", Modifier.padding(18.dp)) }
+@Composable private fun TimelineRailPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
+    Column {
+        repeat(3) { index -> CoffeePeekTimelineRail(index != 1, index == 0, index == 2) { Text("CoffeePeek", Modifier.padding(18.dp)) } }
+    }
 }
+@Preview @Composable private fun TimelineRailLightPreview() = TimelineRailPreview(false)
+@Preview @Composable private fun TimelineRailDarkPreview() = TimelineRailPreview(true)

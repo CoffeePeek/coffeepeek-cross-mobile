@@ -32,6 +32,8 @@ import androidx.compose.ui.unit.dp
 import com.coffeepeek.core.designsystem.component.CoffeePeekTopBar
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.feature.profile.api.ProfileAuthor
+import com.coffeepeek.feature.profile.api.ProfileAuthorActions
+import com.coffeepeek.feature.profile.impl.ui.compose.component.PublicProfileCheckInCard
 import com.coffeepeek.feature.profile.api.ProfileSlots
 import com.coffeepeek.feature.profile.impl.ui.compose.component.InlineProfileError
 import com.coffeepeek.feature.profile.impl.ui.compose.component.ProfileSectionLoader
@@ -42,6 +44,7 @@ internal fun PublicProfileCheckInsScreenContent(
     state: PublicProfileState, slots: ProfileSlots, onBack: () -> Unit, onOpenShop: (String) -> Unit,
     onRetry: () -> Unit, onLoadMore: () -> Unit,
     onPhotoClick: (List<String>, List<String>, Int) -> Unit,
+    authorActions: ProfileAuthorActions = ProfileAuthorActions.None,
 ) {
     Scaffold(
         topBar = { CoffeePeekTopBar(stringResource(Res.string.profile_section_check_ins), stringResource(Res.string.profile_back), onBack = onBack) },
@@ -52,7 +55,7 @@ internal fun PublicProfileCheckInsScreenContent(
                 state.profile?.isBlockedByViewer == true -> Text(stringResource(Res.string.profile_blocked_title), Modifier.padding(16.dp))
                 state.profile == null && state.isLoading -> ProfileSectionLoader(160.dp)
                 state.profile == null -> InlineProfileError(stringResource(Res.string.profile_load_failed), onRetry)
-                else -> PublicProfileCheckInsList(state, slots, onOpenShop, onRetry, onLoadMore, onPhotoClick)
+                else -> PublicProfileCheckInsList(state, slots, onOpenShop, onRetry, onLoadMore, onPhotoClick, authorActions = authorActions)
             }
         }
     }
@@ -64,6 +67,7 @@ internal fun PublicProfileCheckInsList(
     onRetry: () -> Unit, onLoadMore: () -> Unit, onPhotoClick: (List<String>, List<String>, Int) -> Unit,
     modifier: Modifier = Modifier.fillMaxSize(),
     isOwnProfile: Boolean = state.isOwnProfile,
+    authorActions: ProfileAuthorActions = ProfileAuthorActions.None,
 ) {
     val profile = state.profile ?: return
     val author = ProfileAuthor(profile.authorId, profile.slug, profile.nickname, profile.avatarUrl)
@@ -72,8 +76,11 @@ internal fun PublicProfileCheckInsList(
     LazyColumn(state = listState, modifier = modifier, contentPadding = coffeePeekScrollContentPadding(PaddingValues(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 32.dp)),
         verticalArrangement = Arrangement.spacedBy(10.dp)) {
         items(state.checkIns, key = { it.id }) { checkIn ->
-            slots.checkInCard(checkIn, author, isOwnProfile,
-                checkIn.coffeeShopSlug?.takeIf(String::isNotBlank)?.let { slug -> { onOpenShop(slug) } }, onPhotoClick)
+            val allowActions = state.isSignedIn && !isOwnProfile
+            PublicProfileCheckInCard(checkIn, author, slots,
+                checkIn.coffeeShopSlug?.takeIf(String::isNotBlank)?.let { slug -> { onOpenShop(slug) } }, onPhotoClick,
+                onBlock = if (allowActions) ({ authorActions.requestBlock(author) }) else null,
+                onReport = if (allowActions) ({ slots.reportCheckIn(checkIn.id) }) else null)
         }
         if (state.isLoadingCheckIns || state.isLoadingMoreCheckIns) item { ProfileSectionLoader(88.dp) }
         else if (state.checkInsError != null) item { InlineProfileError(stringResource(Res.string.profile_check_ins_failed), onRetry) }
@@ -87,7 +94,7 @@ internal fun PublicProfileCheckInsList(
 @Composable
 private fun PublicProfileCheckInsPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
     val slots = ProfileSlots(image = { _, _, _ -> }, photoViewer = { _, _, _, _ -> },
-        checkInCard = { _, _, _, _, _ -> }, photoPrefetch = { _, _ -> })
+        photoPrefetch = { _, _ -> })
     PublicProfileCheckInsScreenContent(PublicProfileState(isLoading = false), slots, {}, {}, {}, {}, { _, _, _ -> })
 }
 
