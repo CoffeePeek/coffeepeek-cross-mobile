@@ -40,6 +40,11 @@ private class RemoteCommunityRepository(private val backend: CommunityBackend, p
         FeedPage(page.items.map { FeedEntry(it.publishedAtUtc, it.checkIn.toDomain(apiBaseUrl)) }, page.nextCursor)
     }
 
+    override suspend fun postById(id: String): Result<CommunityPost> = requestResult {
+        require(id.isNotBlank()) { "Missing check-in id" }
+        backend.post(id).getOrThrow().toDomain(apiBaseUrl)
+    }
+
     override suspend fun myPosts(page: Int, pageSize: Int): Result<MyPostsPage> = requestResult {
         val number = page.coerceAtLeast(1)
         val size = pageSize.coerceIn(1, 100)

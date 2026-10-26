@@ -35,6 +35,8 @@ internal fun entry(post: CommunityPost) = FeedEntry("2026-10-07T10:00:00Z", post
 internal class FakeRepository : CommunityRepository {
     var feed: suspend (Int, String?, FeedFilters) -> Result<FeedPage> = { _, _, _ -> Result.success(FeedPage(emptyList(), null)) }
     var mine: suspend (Int, Int) -> Result<MyPostsPage> = { _, _ -> Result.success(MyPostsPage(emptyList(), false)) }
+    var byId: suspend (String) -> Result<CommunityPost> = { error("Unused") }
+    val postRequests = mutableListOf<String>()
     var helpful: suspend (String, Boolean) -> Result<HelpfulVote> = { _, _ -> error("Unused") }
     var update: suspend (String, PostEdit) -> Result<CommunityPost> = { _, _ -> error("Unused") }
     var visibility: suspend (String, PostVisibility) -> Result<CommunityPost> = { _, _ -> error("Unused") }
@@ -44,6 +46,7 @@ internal class FakeRepository : CommunityRepository {
         feedRequests += Triple(pageSize, cursor, filters)
         return feed.invoke(pageSize, cursor, filters)
     }
+    override suspend fun postById(id: String): Result<CommunityPost> { postRequests += id; return byId(id) }
     override suspend fun myPosts(page: Int, pageSize: Int) = mine(page, pageSize)
     override suspend fun setHelpful(id: String, helpful: Boolean) = this.helpful(id, helpful)
     override suspend fun update(id: String, edit: PostEdit) = update.invoke(id, edit)

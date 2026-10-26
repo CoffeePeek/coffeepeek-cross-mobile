@@ -167,6 +167,33 @@ class CommunityRepositoryTest {
         assertEquals("Nope", assertIs<CommunityFailure>(repository(MockEngine { respond("""{"isSuccess":false,"message":"Nope"}""", headers = json) }).setVisibility("p", PostVisibility.Public).exceptionOrNull()).serverMessage)
     }
 
+    @Test fun postReadsOneCheckInFreshAndEncodesTheIdAsOneSegment() = runBlocking {
+        val paths = mutableListOf<String>()
+        val engine = MockEngine { request ->
+            assertEquals(HttpMethod.Get, request.method)
+            assertEquals("no-store", request.headers[HttpHeaders.CacheControl])
+            paths += request.url.encodedPath
+            respond("""{"isSuccess":true,"data":{"id":"6966d36f","kind":"Home","home":{"preparedOn":"2026-10-25","beanName":"Перу"},
+                "author":{"slug":"maria"},"username":"Maria","text":"Чашка","visibility":"Public","moderationState":"Approved","helpfulCount":4}}""", headers = json)
+        }
+        val repo = repository(engine)
+        val post = repo.postById("6966d36f").getOrThrow()
+        assertEquals("6966d36f", post.id); assertTrue(post.isHome); assertEquals("Перу", post.home?.beanName)
+        assertEquals("Чашка", post.note); assertEquals(4, post.helpfulCount); assertEquals(PostModeration.Approved, post.moderation)
+        repo.postById("../mine").getOrThrow()
+        assertEquals(listOf("/api/v1/check-ins/6966d36f", "/api/v1/check-ins/..%2Fmine"), paths)
+    }
+
+    @Test fun anUnavailablePostIsNotFoundAndABlankIdSendsNothing() = runBlocking {
+        var requests = 0
+        val missing = repository(MockEngine { requests++; respond("""{"isSuccess":false,"message":"Check-in not found."}""", HttpStatusCode.NotFound, json) })
+        assertEquals(FailureKind.NotFound, assertIs<CommunityFailure>(missing.postById("hidden").exceptionOrNull()).kind)
+        assertTrue(missing.postById(" ").isFailure)
+        assertEquals(1, requests)
+        val empty = repository(MockEngine { respond("""{"isSuccess":true,"data":{"id":""}}""", headers = json) })
+        assertTrue(empty.postById("post").isFailure)
+    }
+
     @Test fun cancellationIsRethrownAndAConnectionFailureIsReturned() = runBlocking {
         val cancellation = CancellationException("cancelled")
         assertFailsWith<CancellationException> { repository(MockEngine { throw cancellation }).feed(20) }

@@ -38,6 +38,9 @@ import com.coffeepeek.feature.shop.domain.model.*
 import com.coffeepeek.domain.model.Session
 import com.coffeepeek.domain.repository.SessionRepository
 import com.coffeepeek.feature.authorblocking.api.AuthorReference
+import com.coffeepeek.feature.community.data.repository.createCommunityRepository
+import com.coffeepeek.feature.community.domain.model.CommunityFailure
+import com.coffeepeek.feature.community.domain.model.FailureKind
 import com.coffeepeek.admin.di.authorblocking.SessionAuthorBlockingAccount
 import com.coffeepeek.feature.authorblocking.impl.createAuthorBlockingFeature
 import io.ktor.client.engine.mock.MockEngine
@@ -289,6 +292,20 @@ class SandboxApplicationBackendTest {
         val restored = shops.getDetails("sandbox-cafe").getOrThrow().checkIns.first { it.id == id }
         assertFalse(restored.isHelpfulByCurrentUser)
         assertEquals(2, restored.helpfulCount)
+    } }
+
+    @Test fun sharedPostLinksReadThroughTheRealCommunityRepositoryAndHonourBlocks() = runTest { fixture { _, client ->
+        val posts = createCommunityRepository(client.client, SandboxBackend.BASE_URL)
+        val id = SandboxApplicationBackend.FRIEND_VISIT_ID
+        assertEquals(friend, posts.postById(id).getOrThrow().author.id)
+        assertTrue(posts.postById("sandbox-feed-5").getOrThrow().isHome)
+        val own = CheckInApiService(client.client).getMyCheckIns(1, 20).getOrThrow().items.single().id
+        assertEquals(own, posts.postById(own).getOrThrow().id)
+        client.client.put("/api/v1/me/blocks/$friend")
+        assertEquals(FailureKind.NotFound, assertIs<CommunityFailure>(posts.postById(id).exceptionOrNull()).kind)
+        client.client.delete("/api/v1/me/blocks/$friend")
+        assertEquals(id, posts.postById(id).getOrThrow().id)
+        assertEquals(FailureKind.NotFound, assertIs<CommunityFailure>(posts.postById("missing").exceptionOrNull()).kind)
     } }
 
     @Test fun unimplementedMutationsAreRejectedAndEmptyStateIsSharedAcrossSources() = runTest { fixture { backend, client ->

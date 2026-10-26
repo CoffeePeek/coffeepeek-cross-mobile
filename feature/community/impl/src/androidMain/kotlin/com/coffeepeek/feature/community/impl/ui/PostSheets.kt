@@ -174,30 +174,42 @@ private fun DrinkField(edit: PostEditState, drinks: List<DrinkOption>, failed: B
 }
 
 @Composable
-internal fun ReportSheet(state: CommunityState, onAction: (CommunityAction) -> Unit) {
-    if (state.reportingId == null) return
-    CoffeePeekSwipeDismissModalBottomSheet(onDismissRequest = { onAction(CommunityAction.DismissReport) },
-        dismissDescription = stringResource(R.string.community_close), dismissEnabled = !state.isReporting) {
-        ReportSheetContent(state, onAction)
+internal fun ReportSheet(form: ReportForm, callbacks: ReportCallbacks) {
+    CoffeePeekSwipeDismissModalBottomSheet(onDismissRequest = callbacks.onDismiss,
+        dismissDescription = stringResource(R.string.community_close), dismissEnabled = !form.isSending) {
+        ReportSheetContent(form, callbacks)
     }
 }
 
+/** What the report sheet shows; the feed and a single post keep their own drafts. */
+internal class ReportForm(val text: String, val issue: ReportIssue?, val failed: Boolean, val failure: String?, val isSending: Boolean)
+
+internal class ReportCallbacks(val onText: (String) -> Unit, val onSubmit: () -> Unit, val onDismiss: () -> Unit)
+
+internal fun CommunityState.reportForm() = ReportForm(reportText, reportIssue, reportFailed, reportFailure, isReporting)
+
+internal fun reportCallbacks(onAction: (CommunityAction) -> Unit) = ReportCallbacks(
+    onText = { onAction(CommunityAction.ReportText(it)) },
+    onSubmit = { onAction(CommunityAction.SubmitReport) },
+    onDismiss = { onAction(CommunityAction.DismissReport) },
+)
+
 @Composable
-internal fun ReportSheetContent(state: CommunityState, onAction: (CommunityAction) -> Unit) {
+internal fun ReportSheetContent(form: ReportForm, callbacks: ReportCallbacks) {
     Column(Modifier.fillMaxWidth().padding(CoffeePeekDimens.spacing4), verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing2)) {
         Text(stringResource(R.string.community_report_title), style = MaterialTheme.typography.titleLarge)
-        val error = state.reportIssue != null || state.reportFailed
-        TextArea(state.reportText, { onAction(CommunityAction.ReportText(it)) }, stringResource(R.string.community_report_placeholder), MAX_REPORT_LENGTH, isError = error)
+        val error = form.issue != null || form.failed
+        TextArea(form.text, callbacks.onText, stringResource(R.string.community_report_placeholder), MAX_REPORT_LENGTH, isError = error)
         val message = when {
-            state.reportIssue != null -> stringResource(R.string.community_report_issue)
-            state.reportFailed -> state.reportFailure ?: stringResource(R.string.community_report_failed)
+            form.issue != null -> stringResource(R.string.community_report_issue)
+            form.failed -> form.failure ?: stringResource(R.string.community_report_failed)
             else -> null
         }
         message?.let { Text(it, color = MaterialTheme.colorScheme.error) }
-        TextButton({ onAction(CommunityAction.SubmitReport) }, enabled = !state.isReporting) {
-            Text(stringResource(if (state.isReporting) R.string.community_report_sending else R.string.community_report_send))
+        TextButton(callbacks.onSubmit, enabled = !form.isSending) {
+            Text(stringResource(if (form.isSending) R.string.community_report_sending else R.string.community_report_send))
         }
-        TextButton({ onAction(CommunityAction.DismissReport) }, enabled = !state.isReporting) { Text(stringResource(R.string.community_cancel)) }
+        TextButton(callbacks.onDismiss, enabled = !form.isSending) { Text(stringResource(R.string.community_cancel)) }
     }
 }
 
@@ -234,6 +246,6 @@ private fun TextArea(value: String, onChange: (String) -> Unit, placeholder: Str
 
 @PreviewLightDark @Composable private fun ReportSheetPreview() = CoffeePeekTheme {
     androidx.compose.material3.Surface {
-        ReportSheetContent(CommunityState(reportingId = "preview", reportText = "Нарушение", reportIssue = ReportIssue.Empty), {})
+        ReportSheetContent(ReportForm("Нарушение", ReportIssue.Empty, failed = false, failure = null, isSending = false), ReportCallbacks({}, {}, {}))
     }
 }
