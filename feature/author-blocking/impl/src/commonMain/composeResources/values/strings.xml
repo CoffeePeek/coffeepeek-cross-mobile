@@ -1,0 +1,27 @@
+<resources>
+    <string name="author_blocking_title">Блокировки</string>
+    <string name="author_blocking_back">Назад</string>
+    <string name="author_blocking_heading">Заблокированные авторы</string>
+    <string name="author_blocking_description">Вы не видите публикации этих авторов. Разблокировка не восстанавливает подписки.</string>
+    <string name="author_blocking_list_failed">Не удалось загрузить список</string>
+    <string name="author_blocking_loading">Загрузка</string>
+    <string name="author_blocking_retry">Повторить</string>
+    <string name="author_blocking_empty_title">Нет заблокированных авторов</string>
+    <string name="author_blocking_empty_message">Когда вы заблокируете автора, он появится здесь.</string>
+    <string name="author_blocking_unblock">Разблокировать</string>
+    <string name="author_blocking_block">Заблокировать</string>
+    <string name="author_blocking_cancel">Отмена</string>
+    <string name="author_blocking_login_title">Блокировка авторов</string>
+    <string name="author_blocking_login_message">Войдите в аккаунт, чтобы блокировки сохранялись на всех ваших устройствах.</string>
+    <string name="author_blocking_login">Войти</string>
+    <string name="author_blocking_guest_message">Присоединяйтесь к сообществу, чтобы сохранять любимые места и делиться впечатлениями.</string>
+    <string name="author_blocking_no_account">Нет аккаунта?</string>
+    <string name="author_blocking_register">Зарегистрироваться</string>
+    <string name="author_blocking_block_title">Заблокировать автора «%1$s»?</string>
+    <string name="author_blocking_unblock_title">Разблокировать автора «%1$s»?</string>
+    <string name="author_blocking_block_message">Вы перестанете видеть публикации друг друга. Подписки друг на друга будут удалены. Автор не получит уведомление.</string>
+    <string name="author_blocking_unblock_message">Публикации автора снова смогут появляться в ленте. Прежние подписки не восстановятся.</string>
+    <string name="author_blocking_blocking">Блокируем автора…</string>
+    <string name="author_blocking_unblocking">Разблокируем автора…</string>
+    <string name="author_blocking_save_failed">Не удалось сохранить</string>
+</resources>

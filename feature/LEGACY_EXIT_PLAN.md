@@ -61,7 +61,9 @@ DatabaseCore. Старый LEGACY_REMOVAL.md — исторический сни
 - [x] History/Profile: один владелец общей геометрии чекина через
   существующие DS primitives; без преобразования обратно в legacy CheckIn.
 - [ ] Discovery/catalog и создание чекина: бизнес-UI/состояние только в impl.
-- [ ] Author blocking: экран/host из composeApp в feature/author-blocking/impl.
+- [x] Author blocking: экран/host из composeApp в feature/author-blocking/impl;
+  Android/Sandbox и видимый native iOS controller вызывают feature entry.
+  Ручная приёмка native prompts остаётся открытой в шестом срезе.
 - [ ] Root tabs/check-in creation host: root оставляет routing, содержимое —
   feature entries. Вкладка Coffee не должна зависеть от legacy CheckInTabContent.
 
@@ -556,3 +558,76 @@ UI tests/hosts. Визуальные компоненты, тексты экра
 screen/host; затем shared platform UI/services и L3 transport/session/storage.
 Modules и недостижимые старые screens/VM/test consumers ещё не готовы к полному
 удалению. Media code ownership завершён, полная миграция — нет.
+
+## Шестой срез L1: Author blocking UI — 2026-10-26
+
+База `e067afbd`, тот же незавершённый PR #195 → develop. Нового business feature
+или Gradle module нет: уже существующий Author-blocking impl получил свой общий
+Compose UI и ресурсы, api — минимальный AuthorBlockingEntry. Composition передаёт
+существующий singleton presenter, callbacks back/login/register и clearance;
+нового repository, HTTP client, mutation scope или DI внутри UI нет.
+
+Перенос и поведение:
+
+- BlockedAuthorsScreen/Content и AuthorBlockingHost/Content находятся в
+  impl/ui/compose; строки — в default Russian resources. Других переводов
+  прежнего app UI не было; переводы не заявляются. Список, guest/login/register,
+  loading/error/retry/empty, avatar/name/slug, unblock и working guards сохранены.
+  Превью парные light/dark, colocated, с фиктивными состояниями и без Koin/IO.
+- Общие ActionSheet/TextAction/OperationStatus/EmptyState перенесены в DS с
+  прежними границами, cancel group, pressed opacity без ripple и nonmodal
+  progress. CpActionSheet/CpTextAction/CpOperationStatus/CpEmptyState удалены,
+  последние production callers переключены. Avatar выделен из существующей
+  timeline геометрии и используется также списком и прежним ReviewAvatar;
+  letter fallback/44dp/цвета сохранены. Бизнес-тексты остаются в feature.
+- iOS presenter hooks адаптируют прежние NativeActionSheet/OperationStatus;
+  native platform реализации пока остаются открытым L2, не считаются удалёнными.
+  Сохраняется dismissBeforeAction=false, destructive block, ordinary unblock,
+  отдельная отмена, native error/retry alert и доступный progress. Android
+  использует тот же DS renderer. Дублирующей feature-native реализации нет.
+- Оба root navigation пути и Android Sandbox вызывают api entry. Обнаружено,
+  что прежний Host существовал только в App(), а native controllers используют
+  AppContent без него. NativeScreenController теперь устанавливает entry.Host
+  только когда controller видим; скрытые tab/back-stack controllers не должны
+  одновременно показывать одну и ту же глобальную confirmation. Вложенные
+  native sheets не получают ещё один Host через AppContent.
+- Существующие события/маршрутная аналитика проверены: у блокировок нет отдельных
+  business events, BlockedAuthors по-прежнему имеет page=other (existing unit
+  contract). Root screenShown/visit ownership и consent/session SDK не менялись;
+  feature не получила второй analytics service и не отправляла тестовые events.
+- В presenter исправлены две границы account смены: confirmation проверяет
+  владельца перед запуском и перед фактическим вызовом repository; первый
+  account emission больше не теряет replacement через drop(1). Отмена старой
+  mutation не может закрыть новый prompt. Session/visibility repository guards,
+  endpoints/DTO, reconciliation при timeout и cache invalidation не менялись.
+  Четыре unit regression покрывают до/после confirm, задержанный observer и
+  задержанный cancellation cleanup. Не создаётся автоматическая mutation после login.
+
+Проверки до синхронизации develop:
+
+- Первый compile завершился тремя ошибками переноса: lifecycle-effect argument,
+  nullable smart cast из api и loader accessibility argument. Все исправлены;
+  повтор Android/iOS production compile и unit tests успешен (58s).
+- Объединённый прогон (3m11s): **110 tests / 21 suites**, 0 failures/errors/skips:
+  Author-blocking impl 8 / 1, data 7 / 1, DS 57 / 15, app subset 38 / 4.
+  Неизменённые tasks могут быть UP-TO-DATE; результаты не суммируются.
+- Debug/Sandbox assembly, оба packaged DEX guards с AuthorBlockingEntry и
+  factory class, Sandbox isolation прошли. iOS Arm64 production compile,
+  Debug Simulator framework link и common Native test compile impl/data/app
+  успешны. Native tests не исполнялись; Gradle последовательно, --max-workers=6.
+- Studio inspection api entry пока видит unresolved Compose imports после
+  изменения module graph — требуется IDE Gradle sync. CLI compiler прошёл на
+  обеих платформах; чистые IDE/preview checks не заявляются.
+- Существующие чужие UI sources сохранены, только ссылки направлены на api/DS.
+  UI/instrumentation/screenshot tests не создавались, не компилировались и не
+  запускались. Нового test Activity/APK infrastructure нет. Установок, запусков,
+  реальных account writes, camera/backend mutations и production analytics нет.
+- Полный Xcode app build, ручная native activation/one-host проверка, обе темы,
+  шрифты/окна/accessibility, cancel/retry/foreground и работа с реальной сессией
+  остаются отдельными gates. Перенос UI ownership не объявляется этой приёмкой.
+
+Во время проверки develop обновился до `381c6cc2`: merge #199 с map density и
+обновление discovery search contract. Этот срез сохраняется отдельно перед
+слиянием; прежние APK не являются артефактами объединённой ветки. Результат
+слияния и повторные проверки фиксируются следующим checkpoint ниже.
+Пользовательский project.pbxproj сохранён вне среза (48+/41−).

@@ -366,6 +366,8 @@ androidComponents.onVariants(androidComponents.selector().withBuildType("sandbox
             "com.coffeepeek.core.media.ImageEnvironment",
             "com.coffeepeek.core.designsystem.component.CoffeePeekImageKt",
             "com.coffeepeek.core.designsystem.component.CoffeePeekPhotoViewerKt",
+            "com.coffeepeek.feature.authorblocking.api.AuthorBlockingEntry",
+            "com.coffeepeek.feature.authorblocking.impl.AuthorBlockingApiImplKt",
             "com.coffeepeek.admin.sandbox.backend.SandboxBackend", "com.coffeepeek.admin.sandbox.SandboxApplication",
             "com.coffeepeek.feature.homecheckin.data.repository.HomePreparationRepositoryFactoryKt",
             "com.coffeepeek.admin.ui.Navigator"))
@@ -414,6 +416,8 @@ androidComponents {
                 "com.coffeepeek.core.media.ImageEnvironment",
                 "com.coffeepeek.core.designsystem.component.CoffeePeekImageKt",
                 "com.coffeepeek.core.designsystem.component.CoffeePeekPhotoViewerKt",
+                "com.coffeepeek.feature.authorblocking.api.AuthorBlockingEntry",
+                "com.coffeepeek.feature.authorblocking.impl.AuthorBlockingApiImplKt",
                 "com.coffeepeek.core.session.DefaultSessionStore",
                 "com.coffeepeek.admin.auth.SessionRealtimeManager",
                 "com.coffeepeek.api.service.CheckInApiService",

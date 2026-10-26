@@ -62,6 +62,78 @@ class AuthorBlockingViewModelTest {
         assertFalse(presenter.blocks.value.signedIn)
         assertTrue(presenter.blocks.value.items.isEmpty())
     }
+
+    @Test fun replacementBeforeAccountObserverRunsCannotConfirmTheOldPrompt() = runTest {
+        var calls = 0
+        val sessions = FakeAccount("viewer")
+        val repository = FakeBlockRepository {
+            calls++
+            Result.success(Unit)
+        }
+        val vm = AuthorBlockingViewModel(repository, sessions, backgroundScope)
+        runCurrent()
+        vm.requestBlock(author)
+        sessions.switchTo("other")
+        vm.confirm()
+        runCurrent()
+        assertNull(vm.prompt.value)
+        assertEquals(0, calls)
+    }
+
+    @Test fun firstObservedAccountReplacementClearsAnAlreadyRequestedPrompt() = runTest {
+        val sessions = FakeAccount("viewer")
+        val vm = AuthorBlockingViewModel(FakeBlockRepository { error("No confirmation") }, sessions, backgroundScope)
+        vm.requestBlock(author)
+        sessions.switchTo("other")
+        runCurrent()
+        assertNull(vm.prompt.value)
+        assertFalse(vm.needsLogin.value)
+    }
+
+    @Test fun replacementAfterConfirmBeforeTheMutationStartsCannotWrite() = runTest {
+        var calls = 0
+        val sessions = FakeAccount("viewer")
+        val repository = FakeBlockRepository {
+            calls++
+            Result.success(Unit)
+        }
+        val vm = AuthorBlockingViewModel(repository, sessions, backgroundScope)
+        runCurrent()
+        vm.requestBlock(author)
+        vm.confirm()
+        sessions.switchTo("other")
+        runCurrent()
+        assertEquals(0, calls)
+        assertNull(vm.prompt.value)
+    }
+
+    @Test fun oldMutationCancellationCannotDismissANewAccountsPrompt() = runTest {
+        val finishing = CompletableDeferred<Unit>()
+        val sessions = FakeAccount("viewer")
+        val vm = AuthorBlockingViewModel(FakeBlockRepository {
+            awaitCancelledMutation(finishing)
+        }, sessions, backgroundScope)
+        runCurrent()
+        vm.requestBlock(author)
+        vm.confirm()
+        runCurrent()
+        sessions.switchTo("other")
+        runCurrent()
+        val otherAuthor = AuthorReference("other-author", "other-slug", "Другой автор")
+        vm.requestBlock(otherAuthor)
+        finishing.complete(Unit)
+        runCurrent()
+        assertEquals(otherAuthor, vm.prompt.value?.author)
+        assertFalse(vm.prompt.value!!.working)
+    }
+}
+
+private suspend fun awaitCancelledMutation(finishing: CompletableDeferred<Unit>): Result<Unit> {
+    try {
+        awaitCancellation()
+    } finally {
+        withContext(NonCancellable) { finishing.await() }
+    }
 }
 
 private class FakeBlockRepository(private val mutate: suspend () -> Result<Unit>) : AuthorBlockRepository {

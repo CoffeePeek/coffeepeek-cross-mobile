@@ -26,12 +26,7 @@ fun CoffeePeekTimelineHeader(
     actions: @Composable () -> Unit = {},
 ) {
     Row(modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-        Box(Modifier.size(44.dp).clip(CircleShape).background(CoffeePeekColors.GoldWarmSoft).clearAndSetSemantics {},
-            contentAlignment = Alignment.Center) {
-            Text(name.trim().firstOrNull()?.uppercase() ?: "?", style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold, color = CoffeePeekColors.LightTextPrimary)
-            avatar(Modifier.fillMaxSize())
-        }
+        CoffeePeekAvatar(name, Modifier.clearAndSetSemantics {}, avatar)
         Column(Modifier.weight(1f).padding(start = CoffeePeekDimens.spacing3), verticalArrangement = Arrangement.spacedBy(2.dp)) {
             Text(name, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold,
                 color = MaterialTheme.colorScheme.onSurface, maxLines = 1, overflow = TextOverflow.Ellipsis)

@@ -541,18 +541,8 @@ private fun ReviewHeader(
 
 @Composable
 internal fun ReviewAvatar(username: String, photoUrl: String?) {
-    val avatarModifier = Modifier.size(44.dp).clip(CircleShape)
-    Box(
-        modifier = avatarModifier.background(CpColor.GoldWarmSoft),
-        contentAlignment = Alignment.Center,
-    ) {
-        Text(
-            text = username.trim().firstOrNull()?.uppercase() ?: "?",
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.SemiBold,
-            color = CpColor.LightTextPrimary,
-        )
-        if (photoUrl != null) CoffeePeekImage(data = photoUrl, modifier = avatarModifier)
+    com.coffeepeek.core.designsystem.component.CoffeePeekAvatar(username) { modifier ->
+        if (photoUrl != null) CoffeePeekImage(data = photoUrl, modifier = modifier)
     }
 }
 

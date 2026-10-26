@@ -534,7 +534,7 @@ koinInject<ContributionsScreenRenderer>().Editor(route.shopId, route.section, ro
                     }
                     composable<Screen.CitySettings> { koinInject<SettingsScreenRenderer>().City() }
                     composable<Screen.ThemeSettings> { koinInject<SettingsScreenRenderer>().Theme() }
-                    composable<Screen.BlockedAuthors> { com.coffeepeek.admin.feature.authorblocking.ui.BlockedAuthorsScreen() }
+                    composable<Screen.BlockedAuthors> { com.coffeepeek.admin.di.authorblocking.AuthorBlockingScreenRoute() }
                     composable<Screen.UsagePolicy> { koinInject<SettingsScreenRenderer>().UsagePolicy() }
             }
         }
@@ -573,7 +573,7 @@ koinInject<ContributionsScreenRenderer>().Editor(route.shopId, route.section, ro
             is Screen.EditHomeCheckIn -> CheckInHistoryDestination(initialHomeId = screen.id)
             Screen.CitySettings -> koinInject<SettingsScreenRenderer>().City()
             Screen.ThemeSettings -> koinInject<SettingsScreenRenderer>().Theme()
-            Screen.BlockedAuthors -> com.coffeepeek.admin.feature.authorblocking.ui.BlockedAuthorsScreen()
+            Screen.BlockedAuthors -> com.coffeepeek.admin.di.authorblocking.AuthorBlockingScreenRoute()
             Screen.UsagePolicy -> koinInject<SettingsScreenRenderer>().UsagePolicy()
             else -> error("Tab route must be handled by MainScreen: $screen")
         }

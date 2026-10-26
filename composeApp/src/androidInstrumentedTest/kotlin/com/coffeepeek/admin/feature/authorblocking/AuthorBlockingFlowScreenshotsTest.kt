@@ -10,7 +10,7 @@ import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.test.platform.app.InstrumentationRegistry
 import com.coffeepeek.feature.authorblocking.api.*
-import com.coffeepeek.admin.feature.authorblocking.ui.*
+import com.coffeepeek.feature.authorblocking.impl.createAuthorBlockingEntry
 import com.coffeepeek.admin.feature.community.ui.*
 import com.coffeepeek.admin.feature.profile.domain.*
 import com.coffeepeek.feature.profile.domain.*
@@ -91,7 +91,8 @@ class AuthorBlockingFlowScreenshotsTest {
                             "profile" -> OtherUserProfileScreen("anna-coffee", "Анна", onBack = { screen.value = "feed" },
                                 onCoffeeShopClick = {}, onRoasterClick = {}, onLogin = {}, onUserClick = { _, _, _ -> }, vm = profile)
                             "settings" -> SettingsScreen(settings)
-                            "blocks" -> BlockedAuthorsScreen(blockVm)
+                            "blocks" -> createAuthorBlockingEntry(blockVm).Screen(
+                                onBack = { screen.value = "settings" }, onLogin = {}, onRegister = {})
                             "shop" -> Scaffold(topBar = { CpTopBar("Чекины", onBack = { screen.value = "feed" }) }) { padding ->
                                 Column(Modifier.padding(padding).padding(16.dp)) {
                                     Text("Surf Coffee", style = MaterialTheme.typography.titleMedium)
@@ -105,7 +106,7 @@ class AuthorBlockingFlowScreenshotsTest {
                                 }
                             }
                         }
-                        AuthorBlockingHost(blockVm)
+                        createAuthorBlockingEntry(blockVm).Host(onLogin = {})
                     }
                 }
             }

@@ -200,7 +200,7 @@ internal fun UserProfileScreen(
                     }
                 }
             } else if (profile.isBlockedByViewer) {
-                com.coffeepeek.admin.ui.component.CpEmptyState(
+                com.coffeepeek.core.designsystem.component.CoffeePeekEmptyState(
                     title = "Автор заблокирован",
                     message = "Публикации автора «${profile.nickname}» скрыты. Вы можете снять блокировку в любой момент.",
                     icon = CpIcons.VisibilityOff,

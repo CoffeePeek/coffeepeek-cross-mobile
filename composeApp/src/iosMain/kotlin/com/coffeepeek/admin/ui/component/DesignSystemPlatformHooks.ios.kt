@@ -28,6 +28,11 @@ import com.coffeepeek.core.designsystem.component.CoffeePeekNativeHeaderPresente
 import com.coffeepeek.core.designsystem.component.CoffeePeekNativeSheetPresenter
 import com.coffeepeek.core.designsystem.component.LocalCoffeePeekNativeHeaderPresenter
 import com.coffeepeek.core.designsystem.component.LocalCoffeePeekNativeSheetPresenter
+import com.coffeepeek.core.designsystem.component.CoffeePeekDialogAction
+import com.coffeepeek.core.designsystem.component.CoffeePeekNativeActionSheetPresenter
+import com.coffeepeek.core.designsystem.component.LocalCoffeePeekNativeActionSheetPresenter
+import com.coffeepeek.core.designsystem.component.CoffeePeekNativeOperationStatusPresenter
+import com.coffeepeek.core.designsystem.component.LocalCoffeePeekNativeOperationStatusPresenter
 
 /** The UIKit page sheet of [NativeModalSheet]; iOS before 16 reports false and the design-system sheet is used. */
 private object IosNativeSheetPresenter : CoffeePeekNativeSheetPresenter {
@@ -73,6 +78,17 @@ private object IosNativeAlertPresenter : CoffeePeekNativeAlertPresenter {
         title: String, message: String, confirmLabel: String, onConfirm: () -> Unit,
         onDismiss: () -> Unit, cancelLabel: String?, destructive: Boolean,
     ): Boolean = NativeAlert(title, message, confirmLabel, onConfirm, onDismiss, cancelLabel, destructive)
+}
+
+private object IosNativeActionSheetPresenter : CoffeePeekNativeActionSheetPresenter {
+    @Composable
+    override fun Present(title: String, message: String?, actions: List<CoffeePeekDialogAction>,
+        dismissBeforeAction: Boolean, onDismiss: () -> Unit): Boolean = NativeActionSheet(title,
+        actions.map { PlatformAction(it.label, it.destructive, it.enabled, it.onClick) }, message, dismissBeforeAction, onDismiss)
+}
+
+private object IosNativeOperationStatusPresenter : CoffeePeekNativeOperationStatusPresenter {
+    @Composable override fun Present(message: String): Boolean = NativeOperationStatus(message)
 }
 
 /** The UIAlertController action sheet of [NativePhotoSourceSheet]. */
@@ -151,6 +167,8 @@ internal actual fun ProvideDesignSystemPlatformHooks(content: @Composable () -> 
         LocalCoffeePeekNativeHeaderPresenter provides IosNativeHeaderPresenter,
         LocalCoffeePeekNativeDatePickerPresenter provides IosNativeDatePickerPresenter,
         LocalCoffeePeekNativeAlertPresenter provides IosNativeAlertPresenter,
+        LocalCoffeePeekNativeActionSheetPresenter provides IosNativeActionSheetPresenter,
+        LocalCoffeePeekNativeOperationStatusPresenter provides IosNativeOperationStatusPresenter,
         LocalCoffeePeekNativePhotoSourcePresenter provides IosNativePhotoSourcePresenter,
         LocalCoffeePeekPlatformEffects provides IosPlatformEffects,
         LocalCoffeePeekKeyboardPresenter provides IosKeyboardPresenter,

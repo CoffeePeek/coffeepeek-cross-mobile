@@ -204,6 +204,7 @@ private fun appModule(
     single { com.coffeepeek.feature.authorblocking.impl.createAuthorBlockingFeature(get<CoffeePeekClient>().client, com.coffeepeek.admin.di.authorblocking.SessionAuthorBlockingAccount(get())) }
     single<com.coffeepeek.feature.authorblocking.api.AuthorVisibility> { get<com.coffeepeek.feature.authorblocking.impl.AuthorBlockingFeature>().visibility }
     single<com.coffeepeek.feature.authorblocking.api.AuthorBlockingPresenter> { get<com.coffeepeek.feature.authorblocking.impl.AuthorBlockingFeature>().presenter }
+    single<com.coffeepeek.feature.authorblocking.api.AuthorBlockingEntry> { com.coffeepeek.feature.authorblocking.impl.createAuthorBlockingEntry(get()) }
     single<com.coffeepeek.feature.authorblocking.api.AuthorBlockActions> { get<com.coffeepeek.feature.authorblocking.api.AuthorBlockingPresenter>() }
     single<com.coffeepeek.feature.profile.domain.PublicProfileData> {
         createPublicProfileData(get<CoffeePeekClient>().client,
