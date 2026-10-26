@@ -65,20 +65,20 @@ internal fun initAndroidKoin(extraModules: List<org.koin.core.module.Module> = e
         },
         shopCheckInRendererFactory = { FeatureShopCheckInFormRenderer(get()) },
         shopDetailRendererFactory = {
-            FeatureShopDetailScreenRenderer(sessions = get(), users = get(), details = get(), votes = get(),
+            FeatureShopDetailScreenRenderer(sessions = get(), accounts = get(), details = get(), votes = get(),
                 favorites = get(), favoriteIntent = shopFavoriteIntent(get(), get(), get()), checkInForm = get(),
                 visibility = get(), blockActions = get())
         },
         shopCheckInListRendererFactory = {
-            FeatureShopCheckInListScreenRenderer(sessions = get(), users = get(), details = get(), votes = get(),
+            FeatureShopCheckInListScreenRenderer(sessions = get(), accounts = get(), details = get(), votes = get(),
                 visibility = get(), blockActions = get())
         },
         checkInRenderers = featureCheckInRendererFactories(),
         contentReportRendererFactory = { get<FeatureContentReportRenderer>() },
         coffeeRendererFactory = { featureCoffeeScreenRenderer(get()) },
-        publicProfileRendererFactory = { featurePublicProfileScreenRenderer(get(), get(), get(), get(), get(), get()) },
-        ownProfileRendererFactory = { featureOwnProfileScreenRenderer(get(), get(), get(), get(), get(), get(), get(), get(), get(), get()) },
-        accountRendererFactory = { featureAccountScreenRenderer(get(), get()) },
+        publicProfileRendererFactory = { featurePublicProfileScreenRenderer(get(), get(), get(), get(), get()) },
+        ownProfileRendererFactory = { featureOwnProfileScreenRenderer(get(), get(), get(), get(), get(), get(), get(), get(), get()) },
+        accountRendererFactory = { featureAccountScreenRenderer(get(), get(), get()) },
         settingsRendererFactory = {
             featureSettingsScreenRenderer(get(), get(), get(), get(), notify = { Toast.makeText(Locator.appContext, it, Toast.LENGTH_SHORT).show() })
         },

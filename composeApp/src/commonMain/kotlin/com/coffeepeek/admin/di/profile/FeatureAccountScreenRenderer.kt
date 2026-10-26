@@ -9,19 +9,16 @@ import com.coffeepeek.admin.ui.screen.profile.AccountScreenRenderer
 import com.coffeepeek.admin.utils.CpImage
 import com.coffeepeek.admin.utils.PickedImage
 import com.coffeepeek.admin.utils.rememberPhotoPicker
-import com.coffeepeek.domain.model.PendingPhotoUpload
-import com.coffeepeek.domain.repository.UserRepository
 import com.coffeepeek.feature.profile.api.AccountDeletionEntry
 import com.coffeepeek.feature.profile.api.AccountDeletionPort
 import com.coffeepeek.feature.profile.api.EditProfileEntry
 import com.coffeepeek.feature.profile.api.EditProfileSlots
 import com.coffeepeek.feature.profile.api.ProfileAvatarImage
-import com.coffeepeek.feature.profile.api.ProfileDeletionRequest
 import com.coffeepeek.feature.profile.api.ProfileEditPort
 import com.coffeepeek.feature.profile.impl.createAccountDeletionEntry
 import com.coffeepeek.feature.profile.impl.createEditProfileEntry
 import androidx.compose.ui.layout.ContentScale
-import com.coffeepeek.core.session.SessionReader
+import com.coffeepeek.feature.profile.api.ProfileAccountPort
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -63,27 +60,6 @@ internal class FeatureAccountScreenRenderer(
     }
 }
 
-/** Writes through the shared `UserRepository`, which updates the cached profile the Profile tab observes. */
-internal class AppProfileEditPort(private val users: UserRepository) : ProfileEditPort {
-    override suspend fun updateAvatar(image: ProfileAvatarImage): Result<Unit> =
-        users.updateAvatar(PendingPhotoUpload(fileName = image.fileName, contentType = image.contentType, bytes = image.bytes))
-
-    override suspend fun updateUsername(username: String): Result<Unit> =
-        users.updateUsername(username).fold(
-            onSuccess = { Result.success(Unit) },
-            onFailure = { Result.failure(it.toUsernameChangeFailure()) },
-        )
-    override suspend fun updateAbout(about: String): Result<Unit> = users.updateAbout(about)
-}
-
-internal class AppAccountDeletionPort(private val users: UserRepository) : AccountDeletionPort {
-    override suspend fun existingRequest(): Result<ProfileDeletionRequest?> =
-        users.getAccountDeletionRequest().map { it?.let { request -> ProfileDeletionRequest(request.resendAvailableAtUtc) } }
-
-    override suspend fun request(): Result<ProfileDeletionRequest> =
-        users.requestAccountDeletion().map { ProfileDeletionRequest(it.resendAvailableAtUtc) }
-}
-
 internal fun editProfileSlots() = EditProfileSlots(
     image = { url, description, modifier -> CpImage(data = url, modifier = modifier, contentScale = ContentScale.Crop, contentDescription = description) },
     pickedAvatar = { image, modifier -> CpImage(data = image.bytes, modifier = modifier, contentScale = ContentScale.Crop) },
@@ -102,10 +78,9 @@ internal fun editProfileSlots() = EditProfileSlots(
     },
 )
 
-internal fun featureAccountScreenRenderer(sessions: SessionReader, users: UserRepository): FeatureAccountScreenRenderer {
-    val accounts = AppProfileAccountPort(sessions, users)
+internal fun featureAccountScreenRenderer(accounts: ProfileAccountPort, edit: ProfileEditPort, deletion: AccountDeletionPort): FeatureAccountScreenRenderer {
     return FeatureAccountScreenRenderer(
-        edit = createEditProfileEntry(accounts, AppProfileEditPort(users), editProfileSlots()),
-        deletion = createAccountDeletionEntry(accounts, AppAccountDeletionPort(users)),
+        edit = createEditProfileEntry(accounts, edit, editProfileSlots()),
+        deletion = createAccountDeletionEntry(accounts, deletion),
     )
 }

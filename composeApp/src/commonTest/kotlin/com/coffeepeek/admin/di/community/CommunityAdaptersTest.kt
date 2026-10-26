@@ -4,10 +4,7 @@ package com.coffeepeek.admin.di.community
 import com.coffeepeek.admin.analytics.*
 import com.coffeepeek.admin.feature.community.ui.FeedShops
 import com.coffeepeek.admin.feature.community.ui.FeedSessions
-import com.coffeepeek.admin.feature.community.ui.FeedUsers
 import com.coffeepeek.core.session.Session
-import com.coffeepeek.domain.model.PublicAddress
-import com.coffeepeek.domain.model.UserProfile
 import com.coffeepeek.feature.community.api.EditField
 import com.coffeepeek.feature.community.api.FeedAction
 import com.coffeepeek.feature.community.api.FeedItemAction
@@ -23,7 +20,7 @@ import kotlin.test.*
 class CommunityAdaptersTest {
     @Test fun theAccountKeyIsTheUserIdElseTheTokenAndNullForAGuestOrAnInactiveSession() = runTest {
         val sessions = FeedSessions(null)
-        val account = SessionCommunityAccount(sessions, FeedUsers())
+        val account = SessionCommunityAccount(sessions, CommunityProfileAccounts())
         assertNull(account.accountKey.first()); assertNull(account.currentAccountKey())
         sessions.applySession(Session("token", userId = "user-1"))
         assertEquals("user-1", account.accountKey.first()); assertEquals("user-1", account.currentAccountKey())
@@ -34,12 +31,12 @@ class CommunityAdaptersTest {
     }
 
     @Test fun theOwnSlugComesFromTheRefreshedProfileAndAFailureIsPassedOn() = runTest {
-        val users = FeedUsers()
+        val users = CommunityProfileAccounts()
         val account = SessionCommunityAccount(FeedSessions(Session("token", userId = "one")), users)
         assertEquals("me", account.ownAuthorSlug().getOrThrow())
-        users.load = { Result.success(UserProfile("Me", "", null, null, 0, 0, 0, PublicAddress(" ", "/users/x", 1, false))) }
+        users.load = { Result.success(communityOwnProfile(" ")) }
         assertNull(account.ownAuthorSlug().getOrThrow()) // a blank slug is no slug
-        users.load = { Result.success(UserProfile("Me", "", null, null, 0, 0, 0, null)) }
+        users.load = { Result.success(communityOwnProfile(null)) }
         assertNull(account.ownAuthorSlug().getOrThrow())
         users.load = { Result.failure(IllegalStateException("Offline")) }
         assertTrue(account.ownAuthorSlug().isFailure)

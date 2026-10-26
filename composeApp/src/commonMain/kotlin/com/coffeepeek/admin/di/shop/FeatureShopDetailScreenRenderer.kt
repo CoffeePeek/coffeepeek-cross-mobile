@@ -40,7 +40,7 @@ import com.coffeepeek.admin.utils.currentLocalMinuteOfDay
 import com.coffeepeek.admin.utils.utcIsoToLocalDate
 import com.coffeepeek.domain.model.ShopLocation
 import com.coffeepeek.core.session.SessionReader
-import com.coffeepeek.domain.repository.UserRepository
+import com.coffeepeek.feature.profile.api.ProfileAccountPort
 import com.coffeepeek.feature.favorites.domain.repository.FavoritesRepository
 import com.coffeepeek.feature.shop.api.ShopDetailContext
 import com.coffeepeek.feature.shop.api.ShopDetailEffect
@@ -54,7 +54,7 @@ import org.jetbrains.compose.resources.getString
 /** Feature effects are adapted to the existing application destinations/platform services, never vice versa. */
 internal class FeatureShopDetailScreenRenderer(
     private val sessions: SessionReader,
-    private val users: UserRepository,
+    private val accounts: ProfileAccountPort,
     private val details: ShopDetailsRepository,
     private val votes: ShopCheckInVoteRepository,
     private val favorites: FavoritesRepository,
@@ -75,7 +75,7 @@ internal class FeatureShopDetailScreenRenderer(
 
     private fun createEntry(session: ShopBrowsingHostSession) = createShopDetailEntry(
         session.lease.details(details), session.lease.votes(votes),
-        shopFavorites(session.lease.favorites(favorites)), currentViewer = { session.lease.viewer(users) },
+        shopFavorites(session.lease.favorites(favorites)), currentViewer = { session.lease.viewer(accounts) },
         currentDayOfWeek = ::currentLocalDayOfWeek, currentMinuteOfDay = ::currentLocalMinuteOfDay,
         analytics = AppShopAnalytics,
         authorImage = { url, modifier -> com.coffeepeek.admin.utils.CpImage(data = url, modifier = modifier) },

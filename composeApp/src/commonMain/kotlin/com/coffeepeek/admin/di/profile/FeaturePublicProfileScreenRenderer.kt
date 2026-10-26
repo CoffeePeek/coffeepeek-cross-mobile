@@ -12,8 +12,7 @@ import com.coffeepeek.admin.ui.screen.profile.PublicProfileScreenRenderer
 import com.coffeepeek.admin.utils.CpImage
 import com.coffeepeek.admin.utils.PrefetchListPhotos
 import com.coffeepeek.admin.utils.ShareHelper
-import com.coffeepeek.core.session.SessionReader
-import com.coffeepeek.domain.repository.UserRepository
+import com.coffeepeek.feature.profile.api.ProfileAccountPort
 import com.coffeepeek.feature.authorblocking.api.AuthorBlockActions
 import com.coffeepeek.feature.authorblocking.api.AuthorReference
 import com.coffeepeek.feature.authorblocking.api.AuthorVisibility
@@ -50,8 +49,7 @@ private fun ProfileAuthor.toReference() = AuthorReference(id, slug, name, avatar
 internal fun featurePublicProfileScreenRenderer(
     repository: PublicProfileData,
     checkIns: PublicCheckInsPort,
-    sessions: SessionReader,
-    users: UserRepository,
+    accounts: ProfileAccountPort,
     visibility: AuthorVisibility,
     blocks: AuthorBlockActions,
 ): FeaturePublicProfileScreenRenderer {
@@ -59,7 +57,7 @@ internal fun featurePublicProfileScreenRenderer(
     return FeaturePublicProfileScreenRenderer(createPublicProfileEntry(
         data = repository,
         checkIns = checkIns,
-        accounts = AppProfileAccountPort(sessions, users),
+        accounts = accounts,
         visibility = AppProfileAuthorVisibility(visibility),
         authorActions = AppProfileAuthorActions(blocks),
         slots = slots,

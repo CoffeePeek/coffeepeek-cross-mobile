@@ -88,8 +88,10 @@ DatabaseCore. Старый LEGACY_REMOVAL.md — исторический сни
 
 - [x] Public profile check-ins — profile data через read-only community API,
   без старого PublicProfileRepository/FeedRepository/CheckIn projection.
-- [ ] Public favorites enrichment и own-account ports — feature data,
-  без старых ShopRepository/RoasterRepository/UserRepository.
+- [x] Public favorites enrichment и own-account ports — feature data,
+  без старых ShopRepository/RoasterRepository/UserRepository в активном graph
+  Profile. Четвёртый срез также переключает identity readers Shop/Community;
+  старые UI/VM/test consumers остаются отдельной задачей L4.
 - [ ] Shop/catalog/roaster/favorites readers и caches — соответствующие feature
   repositories; composition соединяет только узкие api-контракты.
 - [ ] Auth cleanup/refresh/realtime — core SessionStore и feature ports;
@@ -349,3 +351,112 @@ UI, analytics ownership, session policy и platform media в этом срезе
 новых автоматизированных UI/инструментальных tests/hosts нет.
 Следующий остаток Profile: legacy favorite enrichment и own-account reader;
 затем media ports и недостижимые legacy UI/test consumers. Modules пока не удаляем.
+
+## Четвёртый срез L3: избранное и собственный аккаунт — 2026-10-26
+
+База `6607ce83` + этот checkpoint, тот же открытый PR #195 → develop.
+Fetch origin/develop и origin/main: отсутствующих в HEAD коммитов нет.
+Локальный пользовательский project.pbxproj остаётся вне checkpoint (48+/41−).
+
+Public favorites:
+
+- Shop/Roaster api публикуют read-only проекции карточек; только их api доступны
+  Profile data, без импортов чужих domain/data/impl. Shop data переиспользует
+  существующий details backend, не запрашивает меню и не отдаёт personal rows
+  или favorite state. Сохранены card → full cover, tags + shopTags, порядок,
+  distinct, fallback brewMethods/beans и ограничение трёх тегов.
+- Roaster data проецирует существующий repository, с тем же memory/persistent
+  catalog cache и ключом; второго каталога/кэша нет. Сохранены фото, описания,
+  теги и все три счётчика. Root соединяет factories, а Profile data переводит
+  public projections в собственные favorite details. Новый Gradle module не нужен.
+- Удалён LegacyPublicProfileFavoriteDetails из composeApp. Неуспешное optional
+  enrichment сохраняет исходный favorite, отмена пробрасывается. Серверное
+  избранное зрителя не читается, не записывается и не очищается этими readers.
+
+Own account:
+
+- `createProfileAccountData` в Profile data возвращает уже существующие
+  ProfileAccountPort/ProfileEditPort/AccountDeletionPort, связанные одним
+  внутренним repository/cache. HttpClient, отдельный credential-free upload
+  client, core SessionReader и app lifetime scope предоставляет composition.
+  Domain не получает platform/network/DI зависимости.
+- Владелец кэша — active user ID, при его отсутствии token (прежний контракт
+  порта). Наблюдаемый logout/replacement увеличивает generation и очищает кэш;
+  обычное обновление токена того же ID сохраняет его. Peek проверяется и перед
+  выдачей cached profile, поэтому задержка observer не выдаёт прежнего владельца.
+  Поздние reads/writes отвергаются; read, начатый до удачного edit, не откатывает
+  изменённый кэш. Profile fields/canonical address и forceRefresh сохранены.
+- Profile, public identity, редактирование и deletion получают новые ports.
+  Shop viewer и Community ownAuthorSlug подключены к тому же кэшу через
+  Profile api: Shop использует обычное чтение, Community сохраняет refresh.
+  Сохраняется fallback определения владельца чекинов при недоступном профиле;
+  guest Shop не читает профиль.
+- Username/about PATCH обновляют этот общий кэш. Сохранены отдельные причины
+  username failures и retry instant; server prose не уходит в username UI.
+  Avatar: `/api/Photos/avatar` → проверка public presigned URL → PUT байтов через
+  отдельный upload client → PATCH `{uploadedPhoto: ...}` → refresh профиля.
+  Владелец проверяется между шагами: смена аккаунта/отмена/ошибка PUT не дают
+  отправить avatar PATCH следующему аккаунту. Нового общего media сервиса нет;
+  перенос загрузчика/viewer остаётся L2, endpoint аватара принадлежит Profile.
+- Deletion по-прежнему лишь создаёт e-mail request и не завершает сессию.
+  Existing 404/not-found — null, server retry instant и его PascalCase alias
+  сохранены. DTO/запросы скрыты в data. UI confirmation/session-end routing и
+  порядок logout не изменены.
+- Общий core/network ApiEnvelope получил decode-only aliases IsSuccess/Message/
+  Data, которые принимал старый API. Нижний регистр остаётся основным; отдельный
+  второй envelope/parser для Profile не создавался. Compatibility и error prose
+  проверяются unit tests, включая реальную цепочку загрузки OwnProfile.
+
+Снятие legacy:
+
+- Удалены AppProfileAccountPort, AppProfileEditPort, AppAccountDeletionPort и
+  app username failure mapper. Убраны UserRepository binding из dataModule и
+  пять недостижимых VM bindings (Profile/Edit/Deletion/ShopDetail/старый Community).
+  Их старые Kotlin/Swift screen callers проверены: активные routes идут через
+  обязательные feature renderers. Удалён DeleteAccountPendingScreen без callers.
+- UserRepositoryImpl ещё нужен прежнему UserRepositorySessionTest; старые
+  интерфейс/модели/VM также используются оставшимися tests/legacy UI. Они не
+  подключены к новой цепочке и не объявляются полностью удалёнными. Их тестовые
+  потребители и useful regressions требуют переноса в L4; modules ещё остаются.
+- Unit regressions старых app ports/username mapper/favorite adapter перенесены
+  к feature data, с дополнениями для реальных HTTP contracts и owner races.
+  Остальные app logout/visibility/analytics и Community regressions сохранены;
+  чужие UI/instrumented suites не удалялись и не запускались.
+
+Проверки:
+
+- Первый Android/iOS production compile прошёл (45s). Первый unit/contract набор
+  — **259 tests / 42 suites**, 0 failures/errors/skips. Первая упаковка Android
+  и iOS compilation/link также прошли (2m). Сверка legacy response contract после
+  этого обнаружила поддержку PascalCase envelope; aliases и regressions добавлены
+  до финального прогона, промежуточная сборка не является окончательным артефактом.
+- Итоговый объединённый прогон прошёл (3m06s): **302 tests / 50 suites**,
+  0 failures/errors/skips: core/network 40 / 8; Profile data 42 / 7; Shop data
+  43 / 14; Roaster data 14 / 1; Profile impl 66 / 7; app subset 97 / 13.
+  Counts не суммируются между прогонами; неизменённые tasks могут быть UP-TO-DATE.
+- Оба Android APK assembled с packaged DEX runtime-class guards и Sandbox
+  isolation. iOS Arm64 production compile и Debug Simulator framework link
+  успешны. Общие tests core/network, Profile/Shop/Roaster data и app для iOS
+  Simulator скомпилированы, Native tests не исполнялись. Полного Xcode app build
+  не было. Gradle последовательно, --max-workers=6.
+- Unit evidence: field/address mapping и один cache, cache/refresh/account keys,
+  смена пользователя/повторный вход/rotation, stale reads/writes, read-before-edit,
+  cancellation, deletion contracts, avatar metadata/байты/URL/header isolation и
+  запрет следующего шага после смены аккаунта, typed username errors, optional
+  enrichment, card cover/tag parity, Shop ownership fallback и guest guard.
+  App contracts вызывают фактические factories через локальный fake backend;
+  это не live backend или ручная UI-приёмка.
+- Studio inspections двух новых Shop/Roaster API-файлов завершились без ошибок.
+  Profile backend inspection пока показывает unresolved UsernameChangeFailure
+  после новых Gradle edges; IDE graph требует sync. Полной чистой IDE-диагностики
+  не заявляем; Android/Native CLI compile успешны. Прежние preview/expect-actual/
+  test opt-in warnings остались.
+- Финальные APK SHA-256: Debug `e356d3fcc557ece73e0dc8c482aad49e9c12884d0e2e95cbbae0d63fa1f92f75`;
+  Sandbox `db62e8fb9fe0825885b921fb921c26a2801cc3077a859bc80f5dc77b390c7917`.
+
+Ничего не устанавливалось и не запускалось на устройствах; production SDK/events,
+аккаунты, локальные данные, камера и backend writes не затронуты. Никаких новых
+UI tests/hosts. Визуальные компоненты, тексты экранов и previews не менялись.
+Ручные UI/OAuth/push/analytics/persistence gates остаются непроверенными.
+Дальше — L2 media и оставшиеся app business slots, затем L4 consumers/старые
+реализации и общий transport/session/storage остаток L3/L5. Полный exit ещё не завершён.

@@ -13,7 +13,6 @@ import com.coffeepeek.admin.feature.coffee.api.CoffeePicker
 import com.coffeepeek.admin.feature.catalog.api.BrewMethodCatalog
 import com.coffeepeek.admin.feature.catalog.data.BrewMethodCatalogAdapter
 import com.coffeepeek.admin.feature.coffee.domain.CoffeeRepository
-import com.coffeepeek.admin.feature.profile.data.LegacyPublicProfileFavoriteDetails
 import com.coffeepeek.feature.profile.data.createPublicProfileData
 import com.coffeepeek.admin.feature.homecheckin.ui.HomeCheckInViewModel
 import com.coffeepeek.legacy.homecheckin.data.HomeCheckInRepositoryImpl
@@ -44,10 +43,7 @@ import com.coffeepeek.admin.ui.screen.shop.ShopDetailScreenRenderer
 import com.coffeepeek.admin.ui.screen.shop.ShopCheckInListScreenRenderer
 import com.coffeepeek.admin.ui.screen.feed.FeedViewModel
 import com.coffeepeek.admin.ui.screen.addshop.AddShopViewModel
-import com.coffeepeek.admin.ui.screen.editprofile.EditProfileViewModel
 import com.coffeepeek.admin.ui.screen.map.MapViewModel
-import com.coffeepeek.admin.ui.screen.profile.ProfileViewModel
-import com.coffeepeek.admin.ui.screen.deleteaccount.DeleteAccountPendingViewModel
 import com.coffeepeek.admin.ui.screen.checkins.VisitedPlacesViewModel
 import com.coffeepeek.admin.ui.screen.checkins.CheckInHistoryScreenRenderer
 import com.coffeepeek.admin.ui.screen.checkins.CheckInCreateFlowRenderer
@@ -58,7 +54,6 @@ import com.coffeepeek.admin.ui.screen.contributions.ContributionKind
 import com.coffeepeek.admin.ui.screen.contributions.MyContributionsViewModel
 import com.coffeepeek.admin.ui.screen.roaster.AddRoasterViewModel
 import com.coffeepeek.admin.ui.screen.roaster.RoasterDetailViewModel
-import com.coffeepeek.admin.ui.screen.shop.ShopDetailViewModel
 import com.coffeepeek.admin.ui.screen.shop.CheckInDraftStore
 import com.coffeepeek.admin.ui.screen.shop.ShopMenuGalleryViewModel
 import com.coffeepeek.admin.ui.screen.shop.ShopReportViewModel
@@ -209,7 +204,21 @@ private fun appModule(
     single<com.coffeepeek.feature.authorblocking.api.AuthorBlockingPresenter> { get<com.coffeepeek.feature.authorblocking.impl.AuthorBlockingFeature>().presenter }
     single<com.coffeepeek.feature.authorblocking.api.AuthorBlockActions> { get<com.coffeepeek.feature.authorblocking.api.AuthorBlockingPresenter>() }
     single<com.coffeepeek.feature.profile.domain.PublicProfileData> {
-        createPublicProfileData(get<CoffeePeekClient>().client, LegacyPublicProfileFavoriteDetails(get(), get()))
+        createPublicProfileData(get<CoffeePeekClient>().client,
+            com.coffeepeek.feature.profile.data.repository.createPublicProfileFavoriteDetails(get(), get()))
+    }
+    single<com.coffeepeek.feature.profile.data.repository.ProfileAccountData> {
+        val client = get<CoffeePeekClient>()
+        com.coffeepeek.feature.profile.data.repository.createProfileAccountData(client.client, client.uploadClient, get(), get())
+    }
+    single<com.coffeepeek.feature.profile.api.ProfileAccountPort> { get<com.coffeepeek.feature.profile.data.repository.ProfileAccountData>().accounts }
+    single<com.coffeepeek.feature.profile.api.ProfileEditPort> { get<com.coffeepeek.feature.profile.data.repository.ProfileAccountData>().edit }
+    single<com.coffeepeek.feature.profile.api.AccountDeletionPort> { get<com.coffeepeek.feature.profile.data.repository.ProfileAccountData>().deletion }
+    single<com.coffeepeek.feature.shop.api.PublicShopDetails> {
+        com.coffeepeek.feature.shop.data.repository.createPublicShopDetails(get<CoffeePeekClient>().client)
+    }
+    single<com.coffeepeek.feature.roaster.api.PublicRoasterDetails> {
+        com.coffeepeek.feature.roaster.data.repository.createPublicRoasterDetails(get())
     }
     single<com.coffeepeek.feature.community.api.PublicAuthorPosts> {
         com.coffeepeek.feature.community.data.repository.createPublicAuthorPosts(get())
@@ -235,22 +244,8 @@ private fun appModule(
     single { ReviewDraftStore(settingRepository) }
     factory { NavigatorViewModel(get()) }
     factory { FeedViewModel(get(), get(), get(), get(), getOrNull<ObserveFavoriteIdsUseCase>()) }
-    factory { com.coffeepeek.admin.feature.community.ui.CommunityViewModel(get(), get(), get(), get(), get(), get()) }
     factory { com.coffeepeek.admin.ui.screen.roaster.RoasterListViewModel(get(), get(), get()) }
     factory { MapViewModel(get(), get()) }
-    factory { (shopId: String) -> ShopDetailViewModel(
-        shopId = shopId,
-        shopRepository = get(),
-        favoriteRepository = get(),
-        checkInRepository = get(),
-        sessionRepository = get(),
-        checkInDraftStore = get(),
-        userRepository = get(),
-        observeFavoriteIds = getOrNull<ObserveFavoriteIdsUseCase>(),
-        roasterFavorites = get(),
-        visibility = get(),
-        onCheckInCreated = get<NotificationFeature>()::onCheckInCreated,
-    ) }
     factory { (shopId: String) -> ShopMenuGalleryViewModel(shopId, get()) }
     factory { (shopId: String) -> ShopReportViewModel(shopId, get()) }
     factory { (shopId: String) -> SuggestShopChangeViewModel(shopId, get()) }
@@ -258,10 +253,7 @@ private fun appModule(
         ShopChangeEditorViewModel(shopId, section, requestId, get(), get())
     }
     factory { (requestId: String) -> ShopChangeRequestDetailViewModel(requestId, get()) }
-    single { ProfileViewModel(get(), get(), get(), get(), get(), get(), get()) }
-    factory { DeleteAccountPendingViewModel(get(), get()) }
     factory { AddShopViewModel(get()) }
-    factory { EditProfileViewModel(get()) }
     single { FavoritesViewModel(get(), get(), get(), get(), sessions = get()) }
     factory { (kind: ContributionKind) -> MyContributionsViewModel(kind, get(), get(), get()) }
     factory { params -> VisitedPlacesViewModel(get(), get(), params.getOrNull()) }

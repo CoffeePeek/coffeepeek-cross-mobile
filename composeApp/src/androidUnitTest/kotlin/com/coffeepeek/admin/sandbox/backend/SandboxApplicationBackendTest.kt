@@ -81,6 +81,33 @@ private class LocalSession : SessionRepository {
 class SandboxApplicationBackendTest {
     @get:Rule val temporary = TemporaryFolder()
 
+    @Test fun migratedOwnProfileReadsAndEditsShareOneCacheInTheLocalBackend() = runTest { fixture { _, client ->
+        val data = com.coffeepeek.feature.profile.data.repository.createProfileAccountData(client.client, client.uploadClient, LocalSession(), backgroundScope)
+        assertEquals("Sandbox", data.accounts.loadOwnProfile(false).getOrThrow().userName)
+        data.edit.updateUsername("Local Tester").getOrThrow()
+        data.edit.updateAbout("Local biography").getOrThrow()
+        assertEquals("Local Tester", data.accounts.cachedOwnProfile()?.userName)
+        assertEquals("Local biography", data.accounts.loadOwnProfile(false).getOrThrow().about)
+        assertEquals("sandbox", data.accounts.cachedOwnProfile()?.address?.slug)
+        assertNull(data.deletion.existingRequest().getOrThrow())
+    } }
+
+    @Test fun migratedPublicFavoriteEnrichmentUsesNewShopAndRoasterReaders() = runTest { fixture { _, client ->
+        val store = object : com.coffeepeek.feature.roaster.data.repository.RoasterCatalogStore {
+            private var saved: String? = null
+            override suspend fun read() = saved
+            override suspend fun write(value: String) { saved = value }
+        }
+        val roasters = com.coffeepeek.feature.roaster.data.repository.createRoasterRepository(client.client, SandboxBackend.BASE_URL, store) { 0L }
+        val details = com.coffeepeek.feature.profile.data.repository.createPublicProfileFavoriteDetails(
+            com.coffeepeek.feature.shop.data.repository.createPublicShopDetails(client.client),
+            com.coffeepeek.feature.roaster.data.repository.createPublicRoasterDetails(roasters))
+        val favorites = createPublicProfileData(client.client, details).getFavorites("sandbox").getOrThrow()
+        assertEquals(3, favorites.size)
+        assertTrue(favorites.first { it.kind == com.coffeepeek.feature.profile.domain.PublicFavoriteKind.CoffeeShop }.description?.isNotBlank() == true)
+        assertTrue(favorites.first { it.kind == com.coffeepeek.feature.profile.domain.PublicFavoriteKind.Roaster }.description?.isNotBlank() == true)
+    } }
+
     @Test fun publicProfileCheckInsUseMigratedReadersAndRemainPublicForOwnAndGuestProfiles() = runTest { fixture { _, client ->
         val community = com.coffeepeek.feature.community.data.repository.createCommunityRepository(client.client, "https://sandbox.coffeepeek.invalid")
         val posts = com.coffeepeek.feature.community.data.repository.createPublicAuthorPosts(community)

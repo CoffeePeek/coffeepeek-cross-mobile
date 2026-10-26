@@ -52,10 +52,10 @@ actual fun initPlatformKoin() {
         authRendererFactory = { iosAuthScreenRenderer(get(), get()) },
         communityRendererFactory = { featureCommunityScreenRenderer(get(), get(), get(), get(), get(), get()) },
         coffeeRendererFactory = { featureCoffeeScreenRenderer(get()) },
-        publicProfileRendererFactory = { featurePublicProfileScreenRenderer(get(), get(), get(), get(), get(), get()) },
-        ownProfileRendererFactory = { featureOwnProfileScreenRenderer(get(), get(), get(), get(), get(), get(), get(), get(), get(), get()) },
+        publicProfileRendererFactory = { featurePublicProfileScreenRenderer(get(), get(), get(), get(), get()) },
+        ownProfileRendererFactory = { featureOwnProfileScreenRenderer(get(), get(), get(), get(), get(), get(), get(), get(), get()) },
         contributionsRendererFactory = { featureContributionsScreenRenderer(get(), get(), get()) },
-        accountRendererFactory = { featureAccountScreenRenderer(get(), get()) },
+        accountRendererFactory = { featureAccountScreenRenderer(get(), get(), get()) },
         discoveryRendererFactory = { featureDiscoveryScreenRenderer(get<CoffeePeekClient>().client, get(), get(), get(), get(), get(), get()) },
     )
 }
@@ -67,12 +67,12 @@ private fun iosShopGalleryRenderer(client: CoffeePeekClient) =
     FeatureShopMenuGalleryScreenRenderer(createShopMenuGalleryEntry(createShopMenuGalleryRepository(client.client)))
 
 private fun Scope.iosShopDetailRenderer() =
-    FeatureShopDetailScreenRenderer(sessions = get(), users = get(), details = get(), votes = get(),
+    FeatureShopDetailScreenRenderer(sessions = get(), accounts = get(), details = get(), votes = get(),
         favorites = get(), favoriteIntent = shopFavoriteIntent(get(), get(), get()), checkInForm = get(),
         visibility = get(), blockActions = get())
 
 private fun Scope.iosShopCheckInListRenderer() =
-    FeatureShopCheckInListScreenRenderer(sessions = get(), users = get(), details = get(), votes = get(),
+    FeatureShopCheckInListScreenRenderer(sessions = get(), accounts = get(), details = get(), votes = get(),
         visibility = get(), blockActions = get())
 
 private fun Scope.iosSettingsRenderer() =

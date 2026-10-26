@@ -2,7 +2,7 @@ package com.coffeepeek.admin.di.shop
 
 import com.coffeepeek.core.session.Session
 import com.coffeepeek.core.session.SessionReader
-import com.coffeepeek.domain.repository.UserRepository
+import com.coffeepeek.feature.profile.api.ProfileAccountPort
 import com.coffeepeek.feature.favorites.domain.model.FavoriteShop
 import com.coffeepeek.feature.favorites.domain.repository.FavoritesRepository
 import com.coffeepeek.feature.shop.domain.model.ShopViewer
@@ -87,9 +87,9 @@ internal class ShopBrowsingSession(
         }
     }
 
-    suspend fun viewer(users: UserRepository): Result<ShopViewer> = withSession {
+    suspend fun viewer(accounts: ProfileAccountPort): Result<ShopViewer> = withSession {
         if (!loggedIn) return@withSession Result.success(ShopViewer(false, null))
-        val profile = users.getMe()
+        val profile = accounts.loadOwnProfile(forceRefresh = false)
         profile.exceptionOrNull()?.let { if (it is CancellationException) throw it }
         // Preserve legacy fallback: personal check-in IDs can establish ownership if profile lookup fails.
         Result.success(ShopViewer(true, profile.getOrNull()?.address?.slug))

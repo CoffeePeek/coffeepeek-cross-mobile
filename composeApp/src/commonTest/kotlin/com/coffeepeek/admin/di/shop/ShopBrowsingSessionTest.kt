@@ -4,6 +4,10 @@ import com.coffeepeek.domain.model.Session
 import com.coffeepeek.feature.shop.domain.model.ShopHelpfulVote
 import com.coffeepeek.feature.shop.domain.repository.ShopCheckInVoteRepository
 import com.coffeepeek.feature.shop.domain.repository.ShopDetailsRepository
+import com.coffeepeek.feature.shop.domain.model.ShopViewer
+import com.coffeepeek.feature.profile.api.OwnProfile
+import com.coffeepeek.feature.profile.api.ProfileAccountPort
+import com.coffeepeek.feature.profile.domain.ProfileAddress
 import com.coffeepeek.feature.favorites.domain.model.FavoriteShop
 import com.coffeepeek.feature.favorites.domain.repository.FavoritesRepository
 import kotlinx.coroutines.CancellationException
@@ -25,6 +29,34 @@ import kotlin.test.assertTrue
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class ShopBrowsingSessionTest {
+    @Test fun guestsDoNotReadProfileAndSignedInViewerUsesTheSharedCachedProfilePort() = runTest {
+        val accounts = viewerAccount { force ->
+            assertFalse(force)
+            Result.success(OwnProfile("Owner", "", null, null, 0, 0, 0, 0, ProfileAddress("owner-slug", "/users/owner", 0, false)))
+        }
+        assertEquals(ShopViewer(false, null), ShopBrowsingSession(CheckInTestSessions(null)).viewer(viewerAccount { error("Guest read") }).getOrThrow())
+        assertEquals(ShopViewer(true, "owner-slug"), ShopBrowsingSession(CheckInTestSessions()).viewer(accounts).getOrThrow())
+    }
+
+    @Test fun profileFailureKeepsLegacyOwnershipFallbackButAccountReplacementRevokesResult() = runTest {
+        val accounts = viewerAccount { Result.failure(IllegalStateException("offline")) }
+        assertEquals(ShopViewer(true, null), ShopBrowsingSession(CheckInTestSessions()).viewer(accounts).getOrThrow())
+        val sessions = CheckInTestSessions()
+        val changed = viewerAccount {
+            sessions.applySession(null)
+            Result.failure(IllegalStateException("changed"))
+        }
+        assertFailsWith<CancellationException> { ShopBrowsingSession(sessions).viewer(changed) }
+    }
+
+    private fun viewerAccount(load: suspend (Boolean) -> Result<OwnProfile>) = object : ProfileAccountPort {
+        override fun activeAccount(): String? = null
+        override fun observeActiveAccount() = flowOf<String?>(null)
+        override fun cachedOwnProfile(): OwnProfile? = null
+        override fun observeOwnProfile() = flowOf<OwnProfile?>(null)
+        override suspend fun loadOwnProfile(forceRefresh: Boolean) = load(forceRefresh)
+    }
+
     @Test fun guestsCanReadButCannotVote() = runTest {
         val sessions = CheckInTestSessions(null)
         val lease = ShopBrowsingSession(sessions)

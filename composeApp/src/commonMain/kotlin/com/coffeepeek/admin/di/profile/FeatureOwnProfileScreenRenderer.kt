@@ -18,8 +18,7 @@ import com.coffeepeek.admin.di.checkinhistory.FeatureProfileActivityRenderer
 import com.coffeepeek.feature.notifications.api.NotificationFeature
 import com.coffeepeek.admin.utils.ErrorHandler
 import com.coffeepeek.domain.repository.AuthRepository
-import com.coffeepeek.core.session.SessionReader
-import com.coffeepeek.domain.repository.UserRepository
+import com.coffeepeek.feature.profile.api.ProfileAccountPort
 import com.coffeepeek.feature.authorblocking.api.AuthorBlockActions
 import com.coffeepeek.feature.authorblocking.api.AuthorVisibility
 import com.coffeepeek.feature.profile.api.OwnProfileEntry
@@ -80,8 +79,7 @@ internal class AppProfileSignOut(
 internal fun featureOwnProfileScreenRenderer(
     repository: PublicProfileData,
     checkIns: PublicCheckInsPort,
-    sessions: SessionReader,
-    users: UserRepository,
+    accounts: ProfileAccountPort,
     notifications: NotificationFeature,
     auth: AuthRepository,
     drafts: ReviewDraftStore,
@@ -92,7 +90,7 @@ internal fun featureOwnProfileScreenRenderer(
     return FeatureOwnProfileScreenRenderer(createOwnProfileEntry(
         data = repository,
         checkIns = checkIns,
-        accounts = AppProfileAccountPort(sessions, users),
+        accounts = accounts,
         signOut = AppProfileSignOut(notifications, auth, drafts),
         visibility = AppProfileAuthorVisibility(visibility),
         authorActions = AppProfileAuthorActions(blocks),

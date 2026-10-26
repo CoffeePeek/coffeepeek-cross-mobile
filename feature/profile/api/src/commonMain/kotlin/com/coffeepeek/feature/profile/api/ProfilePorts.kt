@@ -5,7 +5,7 @@ import com.coffeepeek.feature.profile.domain.PublicProfileCheckInPage
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 
-/** The signed-in user's own account as the profile screens need it. Owned by the app (session and cache guards). */
+/** The signed-in user's own account as profile screens and public identity adapters need it. */
 data class OwnProfile(
     val userName: String,
     val email: String,
@@ -19,7 +19,7 @@ data class OwnProfile(
 )
 
 /**
- * Active account and its cached profile. An account key identifies a signed-in session (user id, else the access token);
+ * Active account and its feature-owned cached profile. An account key identifies a signed-in session (user id, else the access token);
  * `null` means a guest or an inactive session. Results of a request started for one account must be dropped by the caller
  * when [observeActiveAccount] has moved on.
  */

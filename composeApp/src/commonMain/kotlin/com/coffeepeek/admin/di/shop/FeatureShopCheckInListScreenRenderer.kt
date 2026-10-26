@@ -10,14 +10,14 @@ import com.coffeepeek.admin.ui.component.FullScreenImageDialog
 import com.coffeepeek.admin.ui.component.rememberCheckInDateLabel
 import com.coffeepeek.admin.ui.screen.shop.ShopCheckInListScreenRenderer
 import com.coffeepeek.core.session.SessionReader
-import com.coffeepeek.domain.repository.UserRepository
+import com.coffeepeek.feature.profile.api.ProfileAccountPort
 import com.coffeepeek.feature.shop.domain.repository.ShopCheckInVoteRepository
 import com.coffeepeek.feature.shop.domain.repository.ShopDetailsRepository
 import com.coffeepeek.feature.shop.impl.createShopCheckInListEntry
 
 internal class FeatureShopCheckInListScreenRenderer(
     private val sessions: SessionReader,
-    private val users: UserRepository,
+    private val accounts: ProfileAccountPort,
     private val details: ShopDetailsRepository,
     private val votes: ShopCheckInVoteRepository,
     private val visibility: com.coffeepeek.feature.authorblocking.api.AuthorVisibility,
@@ -28,7 +28,7 @@ internal class FeatureShopCheckInListScreenRenderer(
         ShopBrowsingHost("android-shop-list:$shopId", sessions, visibility) { session ->
             val entry = remember(session) {
                 createShopCheckInListEntry(session.lease.details(details), session.lease.votes(votes),
-                    currentViewer = { session.lease.viewer(users) },
+                    currentViewer = { session.lease.viewer(accounts) },
                     authorImage = { url, modifier -> com.coffeepeek.admin.utils.CpImage(data = url, modifier = modifier) },
                     checkInImage = { url, highQualityUrl, modifier, scale ->
                         com.coffeepeek.admin.utils.CpImage(data = url, highQualityData = highQualityUrl, modifier = modifier, contentScale = scale)

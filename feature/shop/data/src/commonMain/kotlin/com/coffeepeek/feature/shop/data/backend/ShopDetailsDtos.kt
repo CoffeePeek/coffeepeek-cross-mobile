@@ -114,6 +114,7 @@ internal data class ShopPhotoDto(
 
 @Serializable
 internal data class ShopPhotoUrlsDto(
+    @SerialName("card") val card: String? = null,
     @SerialName("detail") val detail: String? = null,
     @SerialName("fullscreen") val fullscreen: String? = null,
     @SerialName("thumbnail") val thumbnail: String? = null,
