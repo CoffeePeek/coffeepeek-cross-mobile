@@ -57,7 +57,8 @@ DatabaseCore. Старый LEGACY_REMOVAL.md — исторический сни
 - [x] Profile UI: публичное избранное, публичная недельная Activity, карточки
   чекинов; на публичном профиле никогда не подключать личный reader.
   Избранное/неделя — первый срез; карточки — второй. Public check-in reader
-  заменён в третьем срезе L3; enrichment/own-account ports ещё остаются.
+  заменён в третьем срезе L3, enrichment/own-account ports — в четвёртом.
+  Недостижимые старые UI/VM/test consumers остаются отдельным L4.
 - [x] History/Profile: один владелец общей геометрии чекина через
   существующие DS primitives; без преобразования обратно в legacy CheckIn.
 - [ ] Discovery/catalog и создание чекина: бизнес-UI/состояние только в impl.
@@ -631,3 +632,53 @@ Compose UI и ресурсы, api — минимальный AuthorBlockingEntry
 слиянием; прежние APK не являются артефактами объединённой ветки. Результат
 слияния и повторные проверки фиксируются следующим checkpoint ниже.
 Пользовательский project.pbxproj сохранён вне среза (48+/41−).
+
+## Синхронизация develop после шестого среза — 2026-10-26
+
+Author-blocking checkpoint: `332420b8`; merge: `d791d5e1`, parent develop
+`381c6cc2`. Включены map density/animations/status-bar expansion из PR #199
+и обновление discovery search contract. Main `16724b7e` уже в истории ветки.
+
+Разрешены два содержательных конфликта:
+
+- DiscoveryMap API сохраняет canvasSize для платформенного размера iOS map
+  container и добавляет clusters из develop. Оба поля остаются отдельными.
+- Общий feature MapContent передаёт и canvasSize, и canvasClusters(isPreview),
+  не возвращаясь к Android-only экрану. Composition адаптирует clusters в
+  прежний native canvas; iOS renderer и свойственная ему политика размеров
+  сохранены. Изменения root nav/status-bar expansion объединены автоматически
+  с новым AuthorBlockingScreenRoute; ни один маршрут не восстановлен в legacy.
+
+Новый MapContentMapper в legacy data и его тест пришли из develop для
+сохранявшегося на том родительском checkpoint iOS consumer. В нашей ветке iOS
+по-прежнему использует migrated entries. Это не разрешение добавлять новые
+business implementations в modules; удаление недостижимых readers остаётся L4.
+
+Повторная проверка объединённого дерева `d791d5e1` успешна (3m04s):
+
+- **230 unit/contract tests / 37 suites**, 0 failures/errors/skips:
+  Author-blocking impl 8 / 1 и data 7 / 1; DS 57 / 15; Discovery data 19 / 1
+  и impl 63 / 6; retained MapContentMapper 2 / 1; app subset 74 / 12.
+  App включает session/author bridge, page mapping, native action selection,
+  map clustering/transitions/native payload и локальный Sandbox backend.
+  Неизменённые tasks могут быть UP-TO-DATE; это один набор, не сумма запусков.
+- DirectDebug/DirectSandbox assembly, оба packaged DEX runtime-class guards
+  и Sandbox isolation успешны. iOS Arm64 production compile, Debug Simulator
+  framework link и common Native test compilation Author-blocking/Discovery
+  data/impl и app успешны. Native tests не исполнялись; Gradle последовательно,
+  --max-workers=6. После слияния нет новых ошибок compilation/test retries.
+- APK SHA-256: Debug `49887ebb5acd7aeffb6e195b86f73c7f52aeae0c728fa8405aa8a8a78105189d`;
+  Sandbox `919ba78d8602fd1b6422954a874fc2d1dc8850e9e8fd7613f94fb10d5d23dcfe`.
+- `git diff --check` проходит, unmerged paths нет; fetched develop целиком
+  является предком HEAD. Пользовательский Xcode project diff остаётся 48+/41−
+  и не включён в коммиты. Прежние preview/expect-actual/opt-in/bundle-ID
+  warnings сохранены. UI suites и новые test hosts не запускались/не создавались.
+
+Ручные device/native Swift runtime gates map checkpoint не переисполнялись и
+не объявляются закрытыми чужой исторической проверкой Pixel 9. Полного Xcode
+app build не было: Kotlin framework link не компилирует Swift renderer.
+Установок и действий с реальными данными не было.
+
+Следующий остаток L1: Discovery/catalog/create slots и root tab содержимое.
+Затем — оставшиеся общие platform services, L3 transport/session/storage и
+удаление последних legacy consumers L4. Полный legacy exit ещё не завершён.
