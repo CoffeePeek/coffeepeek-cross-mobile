@@ -1,0 +1,31 @@
+<resources>
+    <string name="notifications_open">Открыть связанный экран</string>
+    <string name="notifications_title">Уведомления</string>
+    <string name="notifications_subtitle">Всё важное о вашем кофе</string>
+    <string name="notifications_close">Закрыть уведомления</string>
+    <string name="notifications_button_unread">Уведомления: %1$d непрочитанных</string>
+    <string name="notifications_badge_max">99+</string>
+    <string name="notifications_push_title">Push-уведомления</string>
+    <string name="notifications_push_unavailable">Push недоступны на этом устройстве</string>
+    <string name="notifications_saving">Сохраняем…</string>
+    <string name="notifications_push_permission">Для включения нужно разрешение системы</string>
+    <string name="notifications_push_description">Решения, новые кофейни и новости</string>
+    <string name="notifications_history_hint">История доступна и с выключенными push</string>
+    <string name="notifications_retry_settings">Повторить загрузку настроек</string>
+    <string name="notifications_unread_count">Непрочитанных: %1$d</string>
+    <string name="notifications_all_read">Всё прочитано</string>
+    <string name="notifications_read_all">Прочитать все</string>
+    <string name="notifications_today">СЕГОДНЯ</string>
+    <string name="notifications_earlier">РАНЕЕ</string>
+    <string name="notifications_loading">Загружаем…</string>
+    <string name="notifications_load_more">Показать ещё</string>
+    <string name="notifications_retry">Повторить</string>
+    <string name="notifications_read">Прочитано</string>
+    <string name="notifications_unread">Не прочитано</string>
+    <string name="notifications_mark_read">Отметить прочитанным</string>
+    <string name="notifications_empty_title">Пока тихо</string>
+    <string name="notifications_empty_description">Новые уведомления появятся здесь. Загляните за чашкой кофе чуть позже.</string>
+    <string name="notifications_sign_in_title">Войдите в CoffeePeek</string>
+    <string name="notifications_sign_in_description">Здесь будут решения модерации, новые кофейни и новости.</string>
+    <string name="notifications_sign_in">Войти</string>
+</resources>

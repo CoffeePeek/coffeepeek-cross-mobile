@@ -1,0 +1,265 @@
+# Auth — legacy-first inventory and plan — 2026-10-21
+
+Method: the rule in [ANDROID_REFACTORING_PLAN.md](../ANDROID_REFACTORING_PLAN.md#legacy-first-parity-gate-mandatory-for-every-owner), format as in
+[../app-update/LEGACY_INVENTORY.md](../app-update/LEGACY_INVENTORY.md). Read-only analysis of the legacy `composeApp`, `modules/data` and `modules/network` code on branch `feature/auth-refactoring`
+(stacked on #125): no code changed, Gradle not run, nothing tried on a device. Every row is **open** until the owner confirms it and ends as **preserved**, **improved (how)** or **intentionally removed
+(why, with approval)**. Files not read line by line are marked "skimmed". Test files are listed by name; their bodies were read only where stated.
+
+Why this owner now: Auth is the main writer of the session (`login`, `googleLogin`, `appleLogin`, `logout`) and the entry every other owner points at (`Navigator.navigate(Screen.Auth)` has about 30 call
+sites, most of them already in migrated adapters). It is the next step of [../SESSION_REPLACEMENT_PLAN.md](../SESSION_REPLACEMENT_PLAN.md) section 4 "Writers".
+
+There is **no `feature/auth` module yet**; this directory holds only this file.
+
+## Scope and sizes (legacy, lines)
+
+| Area | Lines |
+|---|---|
+| `ui/screen/auth`: `AuthScreen` 161, `AuthViewModel` 100, `AuthLayout` 407 (scaffold, mascots, stepper, footer), `AuthFields` 199, `SocialSignInButtons` 169 | 1036 |
+| `ui/screen/auth/registr`: `RegisterScreen` 452, `RegisterViewModel` 211 | 663 |
+| `feature/passwordrecovery`: screen 64, view model 61, repository + impl 34 | 159 |
+| `auth/`: `AppleAuth` (common 37, android 14, ios 53), `GoogleAuth` (common 7, android 95, ios 53), `GoogleSignInButton`, `GoogleSignInResult`, `SocialLoginError`, `SessionRealtimeManager` 206 | ~480 |
+| `utils/ValidationUtils` (email, password, login error; also phone/URL/Instagram for other forms), `analytics/SignInAnalytics`, `ui/component/GuestAuthCard` 91 | ~230 |
+| Legacy layers: `modules/domain` `AuthRepository` 14, `modules/data` `AuthRepositoryImpl` 85, `modules/network` `AuthService` (login, google, apple challenge/login, register, email check, logout, refresh) | ~300 |
+| Tests today: `AppleLoginFlowTest` 8, `AppleLoginPersistenceTest` (data) 5, `RegisterAnalyticsConsentTest` 3, `PasswordRecoveryViewModelTest` 4, `PasswordRecoveryRepositoryTest` 3, `SocialLoginErrorTest`, `PasswordValidationTest`, `AuthServiceTest` (network). **No test** for `AuthViewModel` (login), `RegisterViewModel` steps and validation, `localizedLoginError`, `validateEmailRequired`, `AuthRepositoryImpl.login/googleLogin/logout`, or any screen | ~600 |
+
+## (1) Inventory of behaviour to keep
+
+### A. Email login (`AuthScreen`, `AuthViewModel`)
+
+| # | Behaviour |
+|---|---|
+| A1 | Fields: Email and Password (placeholder `name@example.com`, leading icons, password visibility handling in `AuthFields`); email is trimmed, password is not |
+| A2 | Validation on submit: email required (`Введите email`) and format (`Введите корректный email`); password required (`Введите пароль`) and, for the login screen, at least 6 characters (`Пароль должен содержать как минимум 6 символов`); both field errors are shown at once and nothing is sent while either is set |
+| A3 | Editing clears the login error; a field error is re-validated live only after it has been shown once |
+| A4 | Request errors are mapped by `localizedLoginError`: credentials-like words (`unauthorized`, `invalid credential`, `wrong password`, `user not found`, `неверн`...) → `Неверный email или пароль`; network-like words → `Не удалось подключиться. Проверьте интернет-соединение`; anything else → `Не удалось войти. Проверьте email и пароль`; shown inline above the buttons |
+| A5 | Success: `AuthRepository.login` saves the session; if the user id differs from the stored one, local user data is cleared first (`UserSessionCleaner`); then analytics `sign_in_completed` (method `password`, entry `login`) with identity sync and completion of a pending password sign-up; then `Navigator.navigate(Screen.Main)` |
+| A6 | While the request runs the legacy base class shows the global loading overlay (`LoadingHandler`), clears it in `finally`; a cancelled coroutine shows nothing |
+| A7 | «Забыли пароль?» opens `ForgotPassword(email)` with the typed email; footer «Создать аккаунт» replaces the screen with Register (`popThenNavigate`); the close button pops (`closeAuth`) |
+| A8 | Social buttons and the "or" divider are shown only when Apple is supported or Google is configured |
+
+### B. Social sign-in
+
+| # | Behaviour |
+|---|---|
+| B1 | Google (Android): `GoogleSignIn` activity-result launcher with the web client id from `BuildConfig`; the buttons are hidden when it is blank (`isGoogleSignInConfigured`); `SIGN_IN_CANCELLED` is silent; known status codes get Russian developer-facing messages (DEVELOPER_ERROR, SIGN_IN_FAILED, others with the code) |
+| B2 | Google token → `AuthRepository.googleLogin` → same persistence as A5 (including clearing local data when the user changes) → analytics method `google` (entry `login` or `register`) → Main |
+| B3 | Errors go through `socialLoginError`: account already exists, unverified email, network, generic; provider diagnostic codes (`GSI-…`, `ASI-…` with optional domain / OAuth error) are appended as «(код …)» |
+| B4 | Apple (iOS only; `AppleAuth.android` is unsupported): challenge → native authorization → exchange; failures carry stage markers `[ASI-CH]`, `[ASI-X]`, `[ASI-P]` (persistence); cancellation propagates silently; a double tap is ignored (`appleSigningIn`); unlike password and Google, **Apple login does not clear local user data when the user changes** (legacy asymmetry) |
+| B5 | iOS Google goes through a Swift bridge (`IosGoogleAuthBridge`); the Apple button is an expect/actual composable |
+
+### C. Registration (`RegisterScreen`, `RegisterViewModel`)
+
+| # | Behaviour |
+|---|---|
+| C1 | Three steps with a stepper (Email → Details → Success, mascot laptop then happy); back from Details returns to Email (and clears the password error), from Email/Success pops |
+| C2 | Email step: format validation, then `isEmailTaken`; a taken email shows the error text stored under the string key `email_no_exist` (the key name reads the opposite way); a failed check shows the global error with the default message |
+| C3 | Details step: name (required), password (min **8**, live re-validation after the first error), terms checkbox (required, with Terms and Privacy links from `LegalUrls`), optional analytics checkbox kept separate from the terms (saved with `setConsent` just before `register`; no SDK setup before login) |
+| C4 | Submit validation marks the field errors and reports **one** global message. The checks run in the order terms, password, email, name and each failure overwrites the message, so the **last failing check wins** (name beats email beats password beats terms); valid → consent saved → `register` → the password sign-up is remembered for analytics → Success step |
+| C5 | Success step shows the email and «go to login» |
+| C6 | Social sign-up buttons on the first step use entry `register` (B2, B4) |
+
+### D. Password recovery
+
+| # | Behaviour |
+|---|---|
+| D1 | `POST /api/Users/password/forgot` with `{ "email": trimmed-lowercased }`; non-2xx or `isSuccess=false` is a failure; cancellation is preserved |
+| D2 | Two steps: Email (info text, field, «Отправить письмо» / «Подождите…» while busy) and EmailSent (explains the web flow, «Вернуться ко входу», «Указать другой email»); edits are ignored while busy; invalid email shows the error without a request; failure shows «Не удалось отправить письмо…» and can be retried |
+| D3 | The reset itself happens on the web; `Screen.ResetPassword` (deep link) redirects to the login screen; «Вернуться ко входу» opens Auth clearing the stack to Main |
+
+### E. Sign-out and session end (neighbours, not all owned by Auth)
+
+| # | Behaviour | Proposed owner |
+|---|---|---|
+| E1 | `AuthRepository.logout`: reads the refresh token, **local cleanup first and authoritative**, remote logout best-effort, cleanup failure reported as the result; used by the profile (legacy `ProfileViewModel` and the Android own-profile renderer) | Auth (domain `SignOut`) |
+| E2 | `BaseViewModel.requireAuthSession` clears an inactive session | session/legacy base class |
+| E3 | `SessionRealtimeManager`: SignalR `ForceLogout` revocation, reconnect every 5 s, started by `CoffeePeekApplication` | stays app/session-owned |
+
+### F. Entry points and guests
+
+| # | Behaviour |
+|---|---|
+| F1 | About 30 call sites open Auth/Register through `Navigator.navigate(Screen.Auth/Register)` (Shop, Feed, Profile, Settings, Favorites, Community, author blocking, check-in tab); migrated owners already do it from app adapters. Navigation stays app-owned |
+| F2 | `GuestAuthCard` (login/register prompt) is an app component used by Shop, Profile, Settings (as a slot), blocked authors; analytics `auth_gate_shown` through `Analytics.gate(feature)` |
+| F3 | After a successful login the user always lands on `Main`, not back where the gate was shown |
+| F4 | On iOS the Auth, Register and ForgotPassword controllers extend under the home indicator (native shell) |
+
+### G. Wiring and shared pieces
+
+| # | Behaviour |
+|---|---|
+| G1 | `AuthRepository` comes from `DataModule` (`AuthRepositoryImpl(authService, sessionRepository, userSessionCleaner)`); `AuthViewModel`, `RegisterViewModel` and `PasswordRecoveryViewModel` are Koin ViewModels |
+| G2 | `ValidationUtils` also serves other forms (optional email/phone/URL/Instagram); `LoadingHandler`/`ErrorHandler` are app singletons used by the legacy base class |
+| G3 | Sandbox replaces the repository with `SandboxAuthRepository`: any email/password succeeds locally, Google/Apple fail with "disabled", registration always succeeds, no email is ever "taken"; the fake backend has no auth routes |
+
+## (2) Parity risks and gaps
+
+1. No unit test pins the login view model, the registration step/validation logic, `localizedLoginError`, the email/password validators or `AuthRepositoryImpl` login/Google/logout; only Apple and recovery are covered.
+2. The registration error priority (C4) is order-dependent and surprising; it must be characterized before any rewrite.
+3. B4: Apple login skips local-data clearing while the other two clear it; iOS keeps legacy, so this only matters if Android ever gets Apple.
+4. Login success lands on `Main` regardless of where the user came from (F3); changing it is a product decision, not a refactoring one.
+5. The legacy flow relies on global overlays (A6, C2): a migrated feature cannot use app singletons, so something local has to replace them.
+6. Google and Apple need real accounts and Google Cloud / Apple configuration; nothing here is testable offline, so they stay an authorized live gate.
+7. The Sandbox cannot exercise failures (wrong password, offline, 5xx, taken email, recovery failure) because auth never reaches the fake backend.
+8. `SessionRepository`-typed code in `AuthRepositoryImpl` and `UserSessionCleaner` (clears legacy favorites) means the data layer cannot leave `modules/data` without a cleaner port.
+
+## (3) Target design (proposal, pending the decisions below)
+
+`feature/auth/{api,domain,data,impl}`, package `com.coffeepeek.feature.auth`, resource prefix `auth_`, no dependency on `modules/*` or `composeApp`.
+
+- **domain**: `Credentials` rules (email, password, registration name/terms), `AuthFailure` mapping (the `localizedLoginError` and `socialLoginError` rules as pure functions), `SignInResult`, repositories `AuthRepository` (login, google, register, email taken, sign out, recovery request).
+- **api**: ports `LocalUserDataCleaner` (what `UserSessionCleaner` does today), `AuthAnalytics` (sign-in completed, sign-up remembered/completed, consent), `GoogleSignInConfig`, `AuthExternalActions` (terms/privacy links); Android entries `LoginEntry`, `RegisterEntry`, `PasswordRecoveryEntry` taking navigation callbacks; `SignOut` for the profile.
+- **data**: HTTP on `core/network` (`/api/Tokens`, `/api/Tokens/google/login`, `/api/Users`, email check, `/api/Users/password/forgot`, logout) writing the session through `core/session` `SessionStore`; Apple challenge endpoints stay in `modules/network` for the iOS legacy path.
+- **impl**: typed MVI view models (login, register steps, recovery), screens on `core/design-system`, Google launcher in `androidMain`.
+- **app**: renderers with Legacy defaults for iOS, Koin wiring, adapters for the ports (analytics, cleaner, config, external links), Navigator callbacks.
+
+## (4) Plan and PR slicing (at most 40 files per PR, one layer group per PR)
+
+| Step | Content | Expected files |
+|---|---|---|
+| 0 | Sandbox: serve the auth routes in the fake backend and let the Sandbox use the real repository, with scenario chips (login: success / wrong password / offline / server error; register: email taken / failure; recovery: success / failure); Sandbox tests | ~12 |
+| 1 | Parity tests on the legacy code for the gaps in section (2): login VM, registration steps and the C4 priority, validators and `localizedLoginError`, `AuthRepositoryImpl` login/Google/logout | ~8 |
+| 2 | `api` + `domain` + `data`, ports and app adapters, tests | ~35 |
+| 3a | `impl`: login and password recovery (view models, screens, entries, tests) | ~30 |
+| 3b | `impl`: registration (three steps) | ~25 |
+| 3c | `impl` androidMain: Google sign-in launcher | ~10 |
+| 4 | App connection: renderers, Koin, Navigator callbacks, Legacy default for iOS | ~15 |
+| 5 | Retroactive audit | docs only |
+
+## (5) Owner decisions needed
+
+| # | Question | Recommendation |
+|---|---|---|
+| Q1 | One owner `feature/auth` including registration and password recovery, package `com.coffeepeek.feature.auth`, prefix `auth_` | Yes |
+| Q2 | The data layer writes the session through `core/session` `SessionStore` (no legacy `SessionRepository`) | Yes (step 4 "Writers" of the session plan) |
+| Q3 | `UserSessionCleaner` stays legacy behind a `LocalUserDataCleaner` port until legacy favorites go away | Yes |
+| Q4 | Sandbox runs the real repository against new auth routes of the fake backend, with failure chips; Google/Apple stay blocked | Yes |
+| Q5 | Android Google sign-in lives in `impl/androidMain` (Play services dependency moves with it), configured through `GoogleSignInConfig`; Apple stays iOS/legacy | Yes |
+| Q6 | iOS keeps the legacy auth screens through Legacy renderers until iOS migrates | Yes |
+| Q7 | After login keep landing on `Main` (parity); "return to where the gate was shown" becomes a separate product change | Yes, keep parity |
+| Q8 | Replace the global loading overlay and global error dialog by a loader on the primary button and inline errors (migrated features cannot use app singletons) | Yes, as a deliberate improvement; confirm |
+| Q9 | Keep the registration error priority exactly as is (C4), write it down as a test first | Yes; the priority can be fixed later with approval |
+| Q10 | `SessionRealtimeManager` and `requireAuthSession` stay outside Auth; Auth only provides `SignOut` for the profile | Yes |
+| Q11 | Analytics events (`sign_in_completed`, `sign_up_completed`, `auth_gate_shown`, consent) keep names and properties, behind `AuthAnalytics` | Yes |
+| Q12 | Texts verbatim (incl. both password minimums: 6 for login, 8 for registration) into `auth_` resources; `GuestAuthCard` stays an app component | Yes |
+
+## Step 0 result — Sandbox account fixtures (2026-10-21, branch `feature/auth-sandbox`)
+
+- The fake backend serves `POST /api/Tokens` (login), `DELETE /api/Tokens` (logout), `/api/Tokens/google/*` and `/api/Tokens/apple/*` (blocked, 503), `POST /api/Users` (register), `GET /api/Users/exists` and
+  `POST /api/Users/password/forgot`. `SandboxAuthRepository` is deleted: the Sandbox now runs the real `AuthRepositoryImpl`, `AuthService` and `PasswordRecoveryRepositoryImpl` against the fake backend.
+- New chip row «Вход и регистрация» and launch extra `sandbox_auth`: `Works` (default), `WrongPassword` (401 «Invalid credentials»), `EmailTaken`, `RegistrationFailure` (400), `RecoveryFailure` (500).
+  Offline and Server error from the scenario chips also reach sign-in, so the offline and 5xx login cases need no extra chip. `reset` returns the policy to `Works`.
+- The login answers with a JWT whose subject is the Sandbox account (`11111111-1111-4111-8111-111111111111`), so the local session and the signed-in one share a user id.
+- Test: `SandboxApplicationBackendTest.accountFixturesAnswerTheRealAuthServiceAndRecoveryRepository` (the class has 19 tests, 0 failures) drives the real `AuthService` and recovery repository through every policy and the scenarios,
+  and checks that the wrong-password message maps to «Неверный email или пароль» through the legacy `localizedLoginError`.
+- Verified: `SandboxApplicationBackendTest` 19, `assembleDirectSandbox`, the device run below.
+- Device check, Pixel 7 / Android 17, `com.coffeepeek.sandbox` only, data cleared per run, guest mode, launch extra `sandbox_auth` (screens opened from Settings → «Войти»):
+  - *Works*: empty/invalid fields show «Введите корректный email» and «Пароль должен содержать как минимум 6 символов» together (A2); valid credentials sign in, the app lands on the search tab, the Profile tab appears and the guest card is gone (A5, F3).
+  - *WrongPassword*: inline «Неверный email или пароль» above «Забыли пароль?» (A4).
+  - *Offline* (scenario chip, with the account policy on `Works`): inline «Не удалось войти. Проверьте email и пароль», i.e. the generic text, not the network text of `localizedLoginError` (see finding 2 below).
+  - *EmailTaken*: registration step 1 shows «Этот Email уже занят» under the field (C2).
+  - *RegistrationFailure*: the global dialog «Что-то пошло не так» with the **raw server message** («Registration rejected») and «Понятно».
+  - *Works* registration: reaches «Проверьте почту — Мы отправили ссылку на new@example.com. Перейдите по ссылке чтобы активировать аккаунт. Ссылка действует 10 минут.» with «На страницу входа» (C5).
+  - *RecoveryFailure*: «Не удалось отправить письмо. Проверьте соединение и попробуйте снова.» under the field; *Works*: the EmailSent text with «Вернуться ко входу» and «Указать другой email» (D2).
+  - Social buttons and the "or" divider are hidden because Google is not configured in the Sandbox (A8).
+
+### Findings from the device run (add to the inventory rows above)
+
+1. **C7 — the registration submit is gated.** On the Details step the primary button looks disabled and ignores taps until the name is filled, the password has 8+ characters and the terms are accepted; the "one global message" validation of C4 is therefore not reachable from the UI. It must be characterized with the view model, and the gating kept.
+2. **A4 note — offline mapping.** An offline request (an `IOException` in the Sandbox) reaches the user as «Не удалось войти. Проверьте email и пароль»: the exception text carries none of the words `localizedLoginError` treats as network. A real offline failure may word its message differently; step 1 should pin down what `AuthService` produces for an I/O failure before the mapping is rewritten.
+3. **C8 — password strength meter.** Under the registration password there is a three-segment meter with a label («средний» for `password1`).
+4. **C9 — global error dialog.** The legacy base class shows the raw server message (`ApiException.message`) in a dialog with a mascot titled «Что-то пошло не так» and a «Понятно» button; the migrated owner must decide what to show (see Q8).
+5. **A9 — system password manager.** After a successful sign-in and after a successful registration Android offers to save the password in Google Password Manager. The prompt is a system dialog and was dismissed with ✕ (nothing was saved); it comes from the autofill framework, so the migrated fields should keep the same autofill hints (username/email and password) or consciously change them.
+6. **Layout (owner request, recovery screen).** On «Восстановление пароля» (no mascot) the card starts right under the wordmark and almost touches the close button and the CoffeePeek logo. The card needs a gap below the header; the migrated screen must keep that gap, and the legacy scaffold got the same fix (branch `feature/auth-recovery-spacing`): without the mascot the card now starts 24 dp (`spacing6`) below the header, checked on Pixel 7. Login and registration are unchanged (they have the mascot).
+
+## Step 1 result — parity tests on the legacy code (2026-10-21, branch `feature/auth-parity-tests`)
+
+Test-only change (5 new test classes, 24 tests, no production change). Together with the existing `AppleLoginFlowTest`, `AppleLoginPersistenceTest`, `RegisterAnalyticsConsentTest`, `PasswordRecovery*Test`,
+`SocialLoginErrorTest`, `PasswordValidationTest` and `AuthServiceTest` they pin rows A, B (Google), C, D and E1 of the inventory.
+
+- `AuthViewModelTest` (composeApp commonTest, 6): empty submit shows both required errors and sends nothing; invalid email and a 5-character password are reported together; a valid login sends the trimmed email and the
+  password as typed, opens `Main` and clears the loading state; failures map through `localizedLoginError` (credentials / connection / generic), stay on the screen and clear the loading state; a field error is validated live
+  **only while it is shown** (a valid value clears it and later bad edits stay silent until the next submit) and editing clears the request error; Google login opens `Main`, its failures use the social messages, and
+  `clearFieldErrors` resets everything (A2-A5, B2, B3).
+- `RegisterViewModelTest` (composeApp commonTest, 5): invalid email stays on step 1 without asking the server; a free email is trimmed, checked once and moves to Details; invalid submits mark the field errors
+  («Введите корректный email», «Введите email», «Пароль должен содержать как минимум 8 символов») and send nothing and save no consent; password live re-validation follows the same "only while shown" rule;
+  back clears the password error and pops from step 1; `goToLogin` emits `PopBack` then `NavigateTo(Auth)` (C1-C3).
+- `AuthValidationTest` (commonTest, 5): the email pattern table, login password rules (6 characters, whitespace counts), and `localizedLoginError` word by word. **Characterized quirk:** the Russian network stem is
+  «сеть», so «Нет сети» does not match and gets the generic text.
+- `AuthTransportFailureTest` (androidUnitTest, 1): through the real client stack and `AuthService`, an I/O failure and an unknown host (JVM message is just the host name) reach the user as «Не удалось войти. Проверьте email и пароль»,
+  while connect failures and timeouts reach it as «Не удалось подключиться…». On a phone, `UnknownHostException` carries «Unable to resolve host…» which does match, so a real offline login shows the connection text; the generic text for
+  the Sandbox offline scenario is an artefact of its `IOException` (finding 2 of step 0).
+- `AuthRepositoryImplTest` (modules/data commonTest, 7): password and Google login save the session with the token's user id and keep local data for the same user; a different user or a guest clears local data **before**
+  saving (order: remote call, `save(null)`, favorites for the previous owner, caches, `save(new)`); a rejected login changes nothing; logout cleans local data first, then sends the refresh token, a failing remote logout
+  is ignored, and a cleanup failure is reported while caches are still cleared and the remote call still happens (A5, B2, E1).
+
+**Not pinned by a unit test and why:**
+- C2 «Этот Email уже занят» and C4 (the single submit message and its priority): these texts are compose resources, which a plain JVM unit test cannot load (`Resources.getSystem` is not mocked). They stay
+  characterized by code reading and by the device run; the migrated view model will expose typed error kinds and the texts move to Android string resources, which makes them testable (an improvement, noted for step 3b).
+- C7 (submit gated until name, an 8+ character password and the terms are valid), the strength meter, the dialog and everything visual: device only.
+- Apple login (iOS, legacy path) keeps its existing tests; Google/Apple against real accounts remain the live gate.
+
+Verified: composeApp Direct (auth, utils, recovery suites: 124 tests) and Play (39) and `:modules:data` (58), 0 failures; iOS test compilation for `composeApp` and `modules:data`.
+
+## Step 2 result — `api` + `domain` + `data` modules (2026-10-21, branch `feature/auth-domain-data`)
+
+New modules `:feature:auth:{domain,api,data}` (`module.feature.auth.*`, package `com.coffeepeek.feature.auth`), independent of `modules/*` and `composeApp`. The legacy classes stay until the UI moves (steps 3-4); nothing in the app calls the new repository yet.
+
+- **domain**: `AuthRepository` (sign in with e-mail or Google, register, e-mail check, password reset request, sign out; sign-in returns only `SignedInAccount(userId)`), and the rules as pure functions with typed results instead of texts:
+  `validateEmail`/`validatePassword` (6 for login, 8 for registration), `canContinueWithEmail` (C7 step 1), `canSubmitRegistration` (C7: name of 2+ characters after trimming, 8+ characters, terms), `checkRegistration` with the
+  `reported` message priority (C4, now testable: the last failing check in the order terms, password, email, name wins), `passwordStrength` (C8), `classifyLoginFailure` (the word lists of `localizedLoginError`) and
+  `classifySocialFailure` with the trusted diagnostic pieces (`socialLoginError`). The Russian texts move to `auth_` resources in the impl step.
+- **api**: the port `LocalUserData` (`clear()`), the app's "forget the previous account's local data".
+- **data**: `AuthRepositoryImpl` on the two clients the app already has (`plain` for sign-in, registration, e-mail check and recovery; `authenticated` for sign-out), the same endpoints, request bodies (e-mail trimmed and lower-cased, password as typed),
+  refresh-token cookie handling and server messages as `AuthService` had; the session is written through `core/session` `SessionStore` (user id from the JWT subject) and local data of another account or a guest is cleared first; sign-out cleans locally
+  first, then calls the server best effort, and reports a cleanup failure after still calling it. Entry point `createAuthRepository(plain, authenticated, sessions, localUserData)`. Apple stays in `modules/network` for the iOS legacy path.
+- **app**: `UserSessionLocalUserData` implements the port over `UserSessionCleaner` (adapter test: sign-out of the stored session, owner favorites, caches). The Koin binding of the new repository comes with the UI wiring (step 4).
+- Tests: domain `AuthRulesTest` 6 and `AuthFailuresTest` 6 (the legacy `AuthValidationTest` and `SocialLoginErrorTest` tables plus C4, C7 and C8); data `AuthRepositoryImplTest` 12 (requests, persistence order, cookie, rejected messages,
+  registration, e-mail check, recovery, sign-out rules, ported from the legacy repository tests); app `AuthAdaptersTest` 1.
+- Verified: `:feature:auth:domain` 12 and `:feature:auth:data` 12 tests, composeApp Direct and Play unit runs (`di`), 0 failures; Android unit and instrumented test compilation; iOS simulator and iOS test compilation (`composeApp`, `feature:auth:data`);
+  `assembleDirectSandbox`. No device check: no UI changed.
+
+## Step 3a result — `impl`: sign-in and password recovery (2026-10-21, branch `feature/auth-impl-login`)
+
+New module `:feature:auth:impl` (resource prefix `auth_`) with the two screens, their typed MVI view models and the Android entries. Nothing in the app composes them yet (step 4), so there is **no device check in this step**.
+
+- **View models** (commonMain): `LoginViewModel` ports `AuthViewModel`: both fields are checked at once, the e-mail is trimmed and the password sent as typed, a shown field error is validated live only while it is shown, any edit clears the request error;
+  a success reports `signedIn(userId, Password, Login, email)` through the new api port `AuthAnalytics` and emits `SignedIn`; a failure is classified by the domain rules. `PasswordRecoveryViewModel` ports the legacy recovery view model: edits ignored while busy,
+  invalid or empty e-mail never requests, failure retryable, EmailSent step with «Указать другой email». Errors are typed (`EmailIssue`, `PasswordIssue`, `LoginFailure`, `RecoveryError`), texts live in the UI.
+- **Screens** (androidMain, on `core/design-system`): `AuthScaffold` (ambient background, wordmark, card, glass close button via `CoffeePeekGlassIconButton`), `AuthTextField` (compact outlined field, leading icon, password toggle, inline error), `AuthPrimaryButton`, `LoginScreen`,
+  `PasswordRecoveryScreen`. Texts verbatim in `auth_` resources; the laptop mascot is copied as `auth_mascot_laptop` (the legacy copy stays for iOS).
+- **Improvements (owner decision Q8, accepted):** the global loading overlay is replaced by a spinner on the primary button while the form locks (a second submit is ignored); the global error dialog is not needed on these screens (errors are inline).
+  The recovery card keeps the 24 dp gap below the header (owner request).
+- **Left out on purpose:** the Google button and the "or" divider on the login screen (step 3c); the registration screens (step 3b). Navigation targets (`onSignedIn`, `onForgotPassword(email)`, `onCreateAccount`, `onClose`, `onBackToLogin`) are callbacks of the entries, as for the other owners.
+- Tests: `LoginViewModelTest` 6 and `PasswordRecoveryViewModelTest` 5 (validation, what is sent, analytics and event, failure classes, form lock, live-validation rule, edits ignored while busy, retry).
+- Verified: `:feature:auth:impl` 11 tests, domain 12 and data 12 still pass; impl and api iOS simulator compilation; `composeApp` Android unit-test compilation, iOS compilation and `assembleDirectSandbox`.
+- **Pending for step 4 (device):** the visual parity of the two screens against the legacy ones (card, wordmark, fields, errors, loader on the button, recovery spacing), the system password-manager prompt after sign-in (the new fields keep `Email`/`Password` keyboard types and no special hints), dark theme and large font.
+
+## Step 3b result (registration in `impl`)
+
+- **impl**: `register/{RegisterContract,RegisterViewModel}` (typed MVI: steps Email → Details → Success, e-mail check with the taken mark, submit gated by `canSubmitRegistration`, the legacy message priority `RegistrationIssue` kept for a submit with invalid fields, a second submit while busy ignored), `ui/RegisterScreen` (stepper that bleeds into the card padding, new-profile badge, e-mail chip, strength meter, terms with links, analytics choice, "check your mail" step with the happy mascot), `createRegisterEntry(repository, analytics)`, `auth_` strings copied verbatim.
+- **api**: `RegisterEntry` (`onClose`, `onGoToLogin`), `AuthAnalytics.saveAnalyticsConsent` (stored before the account is created) and `passwordSignUpCompleted(email)` (after it), the order the legacy view model used.
+- **Improvement (Q8)**: request errors are inline under the form (the server's own message, else the generic text of the step) instead of the global dialog; the loader is on the primary button.
+- **Left for step 4 (device check)**: autofill hints for the registration password (legacy `newPassword`) and the Google password manager prompt; the Apple/Google buttons and the "or" divider on the first step (3c); wiring `onGoToLogin` to `popThenNavigate(Auth)`.
+- **Tests**: `RegisterViewModelTest` 12 (steps, taken e-mail, check failure, consent/register/sign-up order, rejected registration, priority, busy guard, live password validation).
+
+## Step 3c result (Google sign-in in `impl`)
+
+- **api**: `GoogleSignInConfig` (`webClientId`; blank hides the button), entries take it as a factory argument; `RegisterEntry.Content` gained `onSignedIn` for a Google sign-up.
+- **impl androidMain**: `ui/GoogleSignIn.kt` — the Play-services chooser (`rememberGoogleSignIn`, legacy messages kept because the classifier and diagnostic codes read them; a cancelled chooser reports nothing), the white "Войти через Google" button, the "ИЛИ" divider, and `SocialFailureText` (kind text plus `(код GSI-… ; домен …; OAuth …)`). Login shows the button above the fields (legacy order), registration below the e-mail field.
+- **view models**: `GoogleToken` / `GoogleFailed` actions; `socialFailure` state cleared by any edit; success reports `signedIn(userId, Google, Login|Register)`. Errors are inline (Q8), not the global dialog.
+- **Not covered**: a real Google account (live gate). Apple stays iOS/legacy.
+- **Tests**: login +3, registration +2.
+
+## Step 4 result (app connection) and step 5 audit
+
+- **Wiring**: `AuthScreenRenderer` (commonMain) with `LegacyAuthScreenRenderer` as the default, so iOS/shared keep the legacy sign-in, registration and recovery; Android binds `AndroidAuthScreenRenderer` over the three entries (`di/auth/AndroidAuthScreenRenderer.kt`). `Navigator` asks the renderer in both the nested graph and the root switch. Koin gained `AuthScreenRenderer`, `LocalUserData` (`UserSessionLocalUserData`), `AuthAnalytics` (`AppAuthAnalytics`, same events and consent handling as the legacy view models) and the new `AuthRepository` (`createAuthRepository` on the plain and authenticated clients and the `SessionStore`). The Google client id comes from `BuildConfig.GOOGLE_WEB_CLIENT_ID` (`AppGoogleSignInConfig`); blank hides the button (Sandbox).
+- **Navigation parity**: sign-in and Google sign-up land on `Main` (Q7); "Создать аккаунт" and "Уже есть аккаунт" use `popThenNavigate`; "Забыли пароль?" passes the typed e-mail; recovery's "Вернуться ко входу" keeps the navigator's reset.
+- **Device check (Pixel 7, Sandbox, dark theme)**: sign-in with the fake backend lands on Main and the system password prompt appears as before (dismissed, nothing saved); registration shows all three steps (stepper fits, strength meter «средний», terms/analytics rows, happy mascot and «Проверьте почту»); recovery keeps the 24 dp gap and validates an empty e-mail; the login screen holds at font scale 1.5. **Found and fixed**: Android resources trim leading/trailing spaces, so «Я принимаю » and « и даю согласие на » lost their spaces — the two strings are now quoted.
+- **Not checked on a device**: wrong-password and registration-failure messages (unit tested), light theme, TalkBack, the autofill hints of the new password field (the legacy field declared `newPassword`; the new field has no explicit hint yet), a real Google account.
+- **Audit**: nothing of the legacy auth is deleted. The legacy `AuthScreen`, `RegisterScreen`, view models, `localizedLoginError`, `socialLoginError`, `GoogleSignInButton` and the legacy `AuthRepositoryImpl` stay for iOS and for `ProfileViewModel`/`AppleAuth`; they go with the iOS migration. Both repositories write the same `SessionStore`, so a session made by one is read by the other.
+- **Left for the session plan (step 5 "writers")**: log-out and Apple stay on the legacy repository until the profile and iOS move.
+
+
+## Main sync of 2026-10-23 (layout of the shared auth screens)
+
+`develop` (Arseny, `cdfbadb6`) reworked the **legacy** auth presentation in `composeApp/commonMain` (`AuthLayout`, `AuthScreen`, `RegisterScreen`, `PasswordRecoveryScreen`, new `AuthStepper`, `AuthHeading`, `AuthFooterRow`; plan in `composeApp/AUTH_LAYOUT_PLAN.md`). Android shows the migrated `feature/auth/impl` screens, so the same rules were applied there: the card spaces its content by 16 dp and the title with its description by 8 dp (the hand-made spacers are gone); the registration progress is three equal columns inside the card's content width with wrapping labels (the bleed into the card padding is gone), the social button is constrained to the same width, and the «ИЛИ» divider shows only with a social button; the recovery screen has the mascot and the same heading, an e-mail icon and label like the login; the footer links are `AuthFooterRow` (48 dp row); the e-mail chip lost its outer margins. The old recovery spacing fix of this branch (`e751e81a`, card clear of the logo) is superseded by the legacy rework: the conflict in `AuthLayout.kt` was resolved to the `develop` version. Not checked: the screens on a device after the port.

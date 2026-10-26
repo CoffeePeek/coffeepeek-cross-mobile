@@ -19,13 +19,13 @@ import com.coffeepeek.admin.feature.checkin.api.CheckInFlowHandoff
 import com.coffeepeek.admin.ui.screen.checkins.CheckInCreateContent
 import com.coffeepeek.admin.ui.screen.checkins.CheckInCreateFlowRenderer
 import com.coffeepeek.core.designsystem.component.CoffeePeekSwipeDismissModalBottomSheet
-import com.coffeepeek.domain.repository.SessionRepository
+import com.coffeepeek.core.session.SessionReader
 import com.coffeepeek.feature.homecheckin.api.HomeCheckInEditorEntry
 import org.jetbrains.compose.resources.stringResource
 
 /** A new flow lifetime per opening. Never constructs legacy Home state or a second writer. */
 internal class AndroidCheckInCreateFlowRenderer(
-    private val sessions: SessionRepository,
+    private val sessions: SessionReader,
     private val createEditor: (AndroidCheckInHistorySession, CheckInTracker?) -> HomeCheckInEditorEntry,
 ) : CheckInCreateFlowRenderer {
     @Composable

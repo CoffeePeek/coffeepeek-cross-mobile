@@ -121,6 +121,17 @@ class AndroidShopCheckInDraftStoreTest {
         assertEquals(null, dates.pickerMillis("invalid"))
     }
 
+    @Test fun todayIsTheLocalDayEvenJustAfterLocalMidnightInAPositiveOffset() {
+        // 00:30 on 16 Oct in Minsk (UTC+3) is still 15 Oct in UTC, yet the 16th must be selectable.
+        val afterMidnight = Instant.parse("2026-10-15T21:30:00Z").toEpochMilli()
+        val minsk = AndroidShopCheckInDateFormatter({ ZoneId.of("Europe/Minsk") }, { afterMidnight })
+        assertEquals(Instant.parse("2026-10-16T00:00:00Z").toEpochMilli(), minsk.nowMillis())
+        // 23:30 on 15 Oct in New York is already 16 Oct in UTC, yet only the 15th is today.
+        val beforeMidnight = Instant.parse("2026-10-16T03:30:00Z").toEpochMilli()
+        val newYork = AndroidShopCheckInDateFormatter({ ZoneId.of("America/New_York") }, { beforeMidnight })
+        assertEquals(Instant.parse("2026-10-15T00:00:00Z").toEpochMilli(), newYork.nowMillis())
+    }
+
     @Test fun cancellationIsNotConvertedIntoStorageFailure() {
         val legacy = CheckInDraftStore { throw CancellationException("cancel") }
         assertFailsWith<CancellationException> { AndroidShopCheckInDraftStore(legacy, dates).open(initial()) }

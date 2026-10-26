@@ -332,45 +332,35 @@ If any answer is unclear, keep a package boundary and revisit later.
 
 ## Author-blocking migration slice
 
-`:features:author-blocking` owns author-block HTTP DTOs and pagination, repository
-state, account/session invalidation, mutation reconciliation, visibility snapshots,
-and presentation coordination. These moved from `composeApp/.../authorblocking`;
-repository/domain/ViewModel implementations are `internal`, so composition and
-other features cannot import them. The Gradle boundary is justified by enforcing
-that ownership; the earlier packages inside `composeApp` could not enforce it.
+`feature/author-blocking/{api,domain,data,impl}` owns author-block HTTP DTOs and pagination,
+repository state, account invalidation, mutation reconciliation, visibility snapshots and
+presentation coordination. It moved from `composeApp/.../authorblocking`, then from the old
+top-level `features/author-blocking`, and now follows the same four-module layout as the other
+owners. The repository implementation and ViewModel are `internal`; consumers use
+`com.coffeepeek.feature.authorblocking.api` only: author identities, visibility/action contracts,
+the presenter/state entry point and the `AuthorBlockingAccount` port.
 
-Allowed consumers are application composition and other features through
-`com.coffeepeek.feature.authorblocking.api` only. The public surface consists of
-author identities, visibility/action contracts, and a small presenter/state entry
-point for renderers. Presentation state is not a serialized wire DTO and contains
-no session token or HTTP object. A composition-only factory accepts the existing
-configured `HttpClient` and legacy `SessionRepository`; these are deliberate
-transitional dependencies, not interfaces for feature UI consumers. The module
-also depends on coroutines and serialization; its tests use
-`core/network` and Ktor MockEngine. It never depends on `composeApp`, another
-feature implementation, Compose, lifecycle, Koin, navigation or platform APIs. The
-presentation coordinator's scope is owned by the feature's explicit `close()`;
-it is not registered with a platform ViewModel store. Domain remains
-independent of HTTP, presentation and platform libraries.
+The account port replaces the old dependency on the legacy `SessionRepository`: the application
+adapts its session (`SessionAuthorBlockingAccount`) into an opaque account key that is null when
+nobody is signed in. `domain` depends on coroutines only, `api` on coroutines, `data` on
+`api`/`domain`, Ktor and serialization, and `impl` composes them behind
+`createAuthorBlockingFeature(client, account)`. Nothing depends on `composeApp`, another feature
+implementation, Compose, lifecycle, Koin, navigation or platform APIs. The presentation
+coordinator's scope is owned by the feature's explicit `close()`.
 
-`AuthorBlockingHost` and `BlockedAuthorsScreen` temporarily remain in `composeApp`
-as pure Cp UI rendering/navigation adapters. They consume the public presenter,
-render state and emit actions; network, account coordination and business rules
-live in the owning module. Moving those renderers now would require a forbidden
-feature-to-application dependency because Cp UI/theming/navigation still live in
-`composeApp`. A later coherent design-system/navigation slice can move the
-renderers without extracting unrelated UI here. New author-blocking business
-logic must be added to `features/author-blocking`, never to these adapters.
+`AuthorBlockingHost` and `BlockedAuthorsScreen` still live in `composeApp` as Cp UI
+rendering/navigation adapters over the public presenter; moving them into `impl` on
+`core/design-system` is the remaining slice. New author-blocking business logic belongs in the
+feature modules, never in these adapters.
 
-Privacy behaviour is retained: session changes clear visibility and pending
-confirmations, stale responses cannot cross account generations, incomplete page
-loads stay closed, and a timed-out mutation reconciles before another write.
-Avatar URL resolution clears the list request's pagination query and fragment
-before preserving the avatar URL's own query/fragment. Common module tests cover
-those cases; application integration tests cover feed visibility and real Compose
-menu/rendering adapters. Verify `:features:author-blocking:testDebugUnitTest`, the
-application flavor tests and Android instrumented compilation; Kotlin/Native
-compilation verifies the shared presentation/dependency boundary for iOS.
+Privacy behaviour is retained: session changes clear visibility and pending confirmations, stale
+responses cannot cross account generations, incomplete page loads stay closed, and a timed-out
+mutation reconciles before another write. Avatar URL resolution clears the list request's
+pagination query and fragment before preserving the avatar URL's own query/fragment. Module tests
+cover those cases; application integration tests cover feed visibility and the Compose
+menu/rendering adapters. Verify `:feature:author-blocking:data:testDebugUnitTest`,
+`:feature:author-blocking:impl:testDebugUnitTest`, the application flavor tests and Android
+instrumented compilation; Kotlin/Native compilation verifies the shared dependency boundary for iOS.
 
 ## Verification checklist
 

@@ -20,7 +20,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.coffeepeek.admin.MainActivity
 import com.coffeepeek.admin.theme.CoffeePeekTheme
-import com.coffeepeek.feature.homecheckin.domain.HomeCheckInInput
+import com.coffeepeek.legacy.homecheckin.domain.HomeCheckInInput
 import java.io.File
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference

@@ -24,5 +24,7 @@ internal class AndroidShopCheckInDateFormatter(
     override fun visitInstant(pickerMillis: Long, referenceIso: String): String =
         Instant.ofEpochMilli(datePickerMillisWithLocalTime(pickerMillis,
             Instant.parse(referenceIso).toEpochMilli(), zone()).coerceAtMost(now())).toString()
-    override fun nowMillis(): Long = now()
+    /** Today's local calendar day as the UTC-midnight value the date picker works in, so "today" stays selectable after local midnight in any offset. */
+    override fun nowMillis(): Long = Instant.ofEpochMilli(now()).atZone(zone()).toLocalDate()
+        .atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli()
 }

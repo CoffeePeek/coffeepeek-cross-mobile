@@ -2,6 +2,7 @@
 
 package com.coffeepeek.admin.ui
 
+import org.koin.compose.koinInject
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.*
 import androidx.compose.material3.MaterialTheme
@@ -15,7 +16,7 @@ import androidx.compose.ui.viewinterop.UIKitViewController
 import com.coffeepeek.admin.feature.coffee.ui.CoffeeListScreen
 import com.coffeepeek.admin.feature.community.ui.CommunityScreen
 import com.coffeepeek.admin.ui.Navigator.isHandledByRootNav
-import com.coffeepeek.admin.ui.screen.main.DiscoveryTabContent
+import com.coffeepeek.admin.ui.screen.main.DiscoveryScreenRenderer
 import com.coffeepeek.admin.ui.screen.main.CheckInTabContent
 import com.coffeepeek.admin.ui.screen.profile.ProfileScreen
 import com.coffeepeek.admin.ui.screen.profile.SettingsScreen
@@ -150,11 +151,11 @@ internal actual fun PlatformRootNavigation(
             val navigation = navigations[index]
             val root = NativeScreenController(labels[index], analyticsPage = listOf("discovery", "coffees", "feed", "profile", "settings")[index], isTabRoot = true) {
                 when (index) {
-                    0 -> DiscoveryTabContent(onMapExpandedChange = {})
+                    0 -> koinInject<DiscoveryScreenRenderer>().Tab(onMapExpandedChange = {})
                     1 -> CheckInTabContent { CoffeeListScreen() }
                     2 -> CommunityScreen(
                         onCreateCheckIn = { Navigator.navigate(Navigator.Screen.CreateCheckIn) },
-                        notificationsAction = { com.coffeepeek.admin.feature.notifications.ui.NotificationsButton() },
+                        notificationsAction = { koinInject<com.coffeepeek.admin.feature.notifications.ui.NotificationsRenderer>().Bell() },
                     )
                     3 -> ProfileScreen()
                     4 -> SettingsScreen()

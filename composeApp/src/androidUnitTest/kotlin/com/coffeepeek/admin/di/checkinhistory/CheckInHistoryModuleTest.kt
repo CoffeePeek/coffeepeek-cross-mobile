@@ -4,6 +4,7 @@ import com.coffeepeek.admin.di.shop.CheckInTestSessions
 import com.coffeepeek.admin.di.homecheckin.homeCheckInModule
 import com.coffeepeek.admin.di.homecheckin.AndroidCheckInCreateFlowRenderer
 import com.coffeepeek.api.CoffeePeekClient
+import com.coffeepeek.core.session.SessionReader
 import com.coffeepeek.domain.repository.SessionRepository
 import com.coffeepeek.admin.feature.catalog.api.BrewMethodCatalog
 import com.coffeepeek.feature.coffee.api.CoffeePicker
@@ -35,7 +36,7 @@ class CheckInHistoryModuleTest {
             }
         }
         val app = koinApplication {
-            modules(module { single { client }; single<SessionRepository> { sessions } },
+            modules(module { single { client }; single<SessionRepository> { sessions }; single<SessionReader> { sessions } },
                 module {
                     single<CoffeePicker> { object : CoffeePicker {
                         override suspend fun search(query: String) = error("Unexpected catalog read")

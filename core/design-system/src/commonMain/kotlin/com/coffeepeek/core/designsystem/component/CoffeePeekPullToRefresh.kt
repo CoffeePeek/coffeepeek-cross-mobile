@@ -34,7 +34,7 @@ import org.jetbrains.compose.ui.tooling.preview.Preview
 
 /**
  * Attach the supplied modifier to the LazyColumn using [listState].
- * The caller owns refresh work, errors and [isRefreshing]; there are no requests here.
+ * [indicatorTopOffset] moves the indicator below content that should look fixed while the list is pulled. The caller owns refresh work, errors and [isRefreshing]; there are no requests here.
  */
 @Composable
 fun CoffeePeekPullToRefresh(
@@ -47,6 +47,7 @@ fun CoffeePeekPullToRefresh(
     enabled: Boolean = true,
     threshold: Dp = 72.dp,
     cooldown: Duration = 1.seconds,
+    indicatorTopOffset: Dp = 0.dp,
     content: @Composable (scrollModifier: Modifier) -> Unit,
 ) {
     val thresholdPx = with(LocalDensity.current) { threshold.toPx() }
@@ -103,7 +104,7 @@ fun CoffeePeekPullToRefresh(
         if (isRefreshing || offset > 0f) {
             val progress = (offset / thresholdPx).coerceIn(0f, 1f)
             Box(
-                modifier = Modifier.fillMaxWidth().padding(top = CoffeePeekDimens.spacing2)
+                modifier = Modifier.fillMaxWidth().padding(top = indicatorTopOffset + CoffeePeekDimens.spacing2)
                     .graphicsLayer { alpha = if (isRefreshing) 1f else progress }
                     .clearAndSetSemantics {
                         contentDescription = if (isRefreshing) loadingDescription else refreshDescription

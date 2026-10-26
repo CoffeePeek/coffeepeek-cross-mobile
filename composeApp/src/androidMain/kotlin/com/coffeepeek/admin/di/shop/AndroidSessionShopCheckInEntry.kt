@@ -7,7 +7,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import com.coffeepeek.domain.repository.SessionRepository
+import com.coffeepeek.core.session.SessionReader
 import com.coffeepeek.feature.shop.api.ShopCheckInCreateEntry
 import com.coffeepeek.feature.shop.domain.repository.ShopCheckInRepository
 import com.coffeepeek.feature.shop.impl.createShopCheckInCreateEntry
@@ -18,7 +18,7 @@ import kotlinx.coroutines.flow.catch
 
 /** Auth/session ownership remains in Android composition, not feature API/domain. */
 internal class AndroidSessionShopCheckInEntry(
-    private val sessions: SessionRepository,
+    private val sessions: SessionReader,
     private val repository: ShopCheckInRepository,
     private val drafts: AndroidShopCheckInDraftStore,
     private val dates: ShopCheckInDateFormatter,

@@ -71,3 +71,9 @@ verification during integration; callers provide descriptions for actionable ico
 
 Colocated commonMain previews provide light/dark samples for every prepared family.
 Modal samples need Interactive/Run Preview; fixtures do not depend on the app.
+
+## Roaster card (2026-10-21)
+
+`CoffeePeekRoasterCard` replaces the roaster catalogue card of `feature/roaster/impl` (`RoasterCard` + `RoasterStat`) and the favorites card of `feature/favorites/impl` (`FavoriteRoasterCard` + `FavoriteRoasterStat`), which had copied the legacy catalogue card (`composeApp/.../catalog/ui/CatalogCards.kt`, kept for iOS and removed with the other legacy). Geometry is the catalogue one, including the exact-height carousel measuring (the footer with the two counters is measured first). The logo and the favorite control are slots, the texts come from the caller, a null `onClick` makes a read-only card, the clickable card now has the button role. Compact rows (`CoffeeRoasterRow`, legacy `RoasterLinkRow`) are a different component and stay as they are.
+Checked on a Pixel 7 Sandbox (dark theme): the discovery carousel card and the favorites card render the logo, name, heart and both counters; the favorites card is now as compact as the catalogue one (its heart no longer adds a row above the title).
+

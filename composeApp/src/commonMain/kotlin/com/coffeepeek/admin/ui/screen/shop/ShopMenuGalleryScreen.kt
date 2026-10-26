@@ -1,5 +1,9 @@
 package com.coffeepeek.admin.ui.screen.shop
 
+import com.coffeepeek.core.designsystem.component.coffeePeekScrollContentPadding
+
+import com.coffeepeek.core.designsystem.component.CoffeePeekScaffold as Scaffold
+
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -16,7 +20,6 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -84,12 +87,12 @@ fun ShopMenuGalleryScreen(shopId: String) {
                 else -> LazyColumn(
                     state = listState,
                     modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(
+                    contentPadding = coffeePeekScrollContentPadding(PaddingValues(
                         start = CpDimens.spacing4,
                         top = CpDimens.spacing2,
                         end = CpDimens.spacing4,
                         bottom = CpDimens.spacing6,
-                    ),
+                    )),
                     verticalArrangement = Arrangement.spacedBy(CpDimens.spacing4),
                 ) {
                     if (state.shopTitle.isNotBlank()) {

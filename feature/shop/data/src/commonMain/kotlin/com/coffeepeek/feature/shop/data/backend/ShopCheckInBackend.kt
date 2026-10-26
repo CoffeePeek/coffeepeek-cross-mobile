@@ -24,7 +24,8 @@ internal class ShopCheckInBackend(private val client: HttpClient) {
         val response = httpResponse.body<DrinkOptionsResponse>()
         val options = response.data
         if (!httpResponse.status.isSuccess() || !response.isSuccess || options == null) throw ShopCheckInRejected()
-        options.map { ShopConsumedDrinkOption(it.slug, it.nameRu, it.nameEn) }
+        // The select field needs unique ids, so a repeated slug in the catalog keeps its first entry.
+        options.distinctBy { it.slug }.map { ShopConsumedDrinkOption(it.slug, it.nameRu, it.nameEn) }
     }
 
     suspend fun create(

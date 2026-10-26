@@ -27,8 +27,8 @@ import com.coffeepeek.admin.ui.component.CpTopBar
 import com.coffeepeek.admin.ui.component.SwipeDismissModalBottomSheet
 import com.coffeepeek.admin.ui.screen.checkins.CheckInCreateSheet
 import com.coffeepeek.admin.ui.screen.checkins.CheckInCreateButton
-import com.coffeepeek.feature.homecheckin.domain.HomeCheckInInput
-import com.coffeepeek.feature.homecheckin.domain.HomeCheckInVisibility
+import com.coffeepeek.legacy.homecheckin.domain.HomeCheckInInput
+import com.coffeepeek.legacy.homecheckin.domain.HomeCheckInVisibility
 import java.io.File
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference

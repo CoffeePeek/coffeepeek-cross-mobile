@@ -50,8 +50,6 @@ import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
 import com.coffeepeek.admin.location.GeoPoint
 import com.coffeepeek.admin.location.PlatformLocation
 import com.coffeepeek.admin.map.CoffeeMap
@@ -60,7 +58,12 @@ import com.coffeepeek.admin.ui.component.AppButton
 import com.coffeepeek.admin.ui.component.CoffeePeekLoader
 import com.coffeepeek.admin.ui.component.GlassControlIcon
 import com.coffeepeek.admin.ui.component.PlatformMapControlButton
+import com.coffeepeek.admin.ui.component.PlatformGlassIconButton
+import com.coffeepeek.admin.ui.component.PlatformFullScreenDialog
 import com.coffeepeek.admin.ui.icons.CpIcons
+import com.coffeepeek.core.designsystem.component.CoffeePeekPlatformCoffeeIcon
+import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
+import org.jetbrains.compose.ui.tooling.preview.Preview
 import kotlinx.coroutines.delay
 import kotlin.math.abs
 
@@ -111,10 +114,7 @@ fun PickShopLocationDialog(
         }
     }
 
-    Dialog(
-        onDismissRequest = onDismiss,
-        properties = DialogProperties(usePlatformDefaultWidth = false),
-    ) {
+    PlatformFullScreenDialog(onDismiss = onDismiss) {
         BoxWithConstraints(
             modifier = Modifier
                 .fillMaxSize()
@@ -150,7 +150,7 @@ fun PickShopLocationDialog(
                             )
                         }
                     }
-                    PlatformMapControlButton(
+                    PlatformGlassIconButton(
                         icon = GlassControlIcon.Close,
                         onClick = onDismiss,
                         contentDescription = "Отменить выбор точки",
@@ -331,11 +331,23 @@ private fun ShopLocationPin(modifier: Modifier = Modifier) {
             .testTag("shop_location_pin"),
         contentAlignment = Alignment.TopCenter,
     ) {
-        Icon(
-            imageVector = CpIcons.Coffee,
+        CoffeePeekPlatformCoffeeIcon(
             contentDescription = null,
             tint = MaterialTheme.colorScheme.onPrimary,
             modifier = Modifier.padding(top = 9.dp).size(24.dp),
         )
     }
 }
+
+@Composable
+private fun ShopLocationPinPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
+    Surface {
+        Box(Modifier.size(120.dp), contentAlignment = Alignment.Center) { ShopLocationPin() }
+    }
+}
+
+@Preview @Composable
+private fun ShopLocationPinLightPreview() = ShopLocationPinPreview(false)
+
+@Preview @Composable
+private fun ShopLocationPinDarkPreview() = ShopLocationPinPreview(true)

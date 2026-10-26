@@ -89,10 +89,10 @@ import com.coffeepeek.admin.utils.currentUtcIsoDateTime
 import com.coffeepeek.admin.utils.datePickerMillisToUtcIsoInstant
 import com.coffeepeek.admin.utils.formatVisitDate
 import com.coffeepeek.admin.utils.utcIsoToLocalDate
-import com.coffeepeek.feature.homecheckin.domain.HomeCheckInInput
-import com.coffeepeek.feature.homecheckin.domain.HomeCheckInField
-import com.coffeepeek.feature.homecheckin.domain.HomeCheckInVisibility
-import com.coffeepeek.feature.homecheckin.domain.HomePhotoUpload
+import com.coffeepeek.legacy.homecheckin.domain.HomeCheckInInput
+import com.coffeepeek.legacy.homecheckin.domain.HomeCheckInField
+import com.coffeepeek.legacy.homecheckin.domain.HomeCheckInVisibility
+import com.coffeepeek.legacy.homecheckin.domain.HomePhotoUpload
 import org.jetbrains.compose.resources.painterResource
 import kotlin.time.Instant
 

@@ -2,6 +2,9 @@
 
 package com.coffeepeek.admin.ui.screen.shop
 
+import com.coffeepeek.core.designsystem.component.coffeePeekScrollContentPadding
+import com.coffeepeek.core.designsystem.component.coffeePeekViewportBottomPadding
+
 import com.coffeepeek.admin.analytics.*
 import com.coffeepeek.admin.feature.checkin.api.CheckInFlowHandoff
 
@@ -80,7 +83,7 @@ internal fun CheckInShopPickerScreen() {
         color = MaterialTheme.colorScheme.background,
         contentColor = MaterialTheme.colorScheme.onBackground,
     ) {
-        Column(Modifier.fillMaxSize().navigationBarsPadding()) {
+        Column(Modifier.fillMaxSize().coffeePeekViewportBottomPadding()) {
             CpTopBar(title = "Выберите кофейню", onBack = null,
                 nativeAction = com.coffeepeek.admin.ui.component.NavigationBarAction("Закрыть", { CheckInFlowHandoff.take()?.cancel("close"); Navigator.popBack() }), actions = {
                 PlatformGlassIconButton(
@@ -121,7 +124,7 @@ internal fun CheckInShopPickerScreen() {
                 )
                 LazyColumn(
                     state = listState, modifier = Modifier.weight(1f),
-                    contentPadding = PaddingValues(CpDimens.spacing4),
+                    contentPadding = coffeePeekScrollContentPadding(PaddingValues(CpDimens.spacing4)),
                     verticalArrangement = Arrangement.spacedBy(CpDimens.spacing3),
                 ) {
                     if (state.isLoading && shops.isEmpty()) item { CoffeePeekLoader() }

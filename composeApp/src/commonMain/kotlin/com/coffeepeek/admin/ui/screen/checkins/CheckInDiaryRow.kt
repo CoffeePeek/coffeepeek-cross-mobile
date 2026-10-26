@@ -37,7 +37,7 @@ internal fun CheckInDiaryRow(checkIn: CheckIn, onClick: () -> Unit) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             CheckInDiaryThumbnail(checkIn, Modifier.size(56.dp))
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
-                Text(checkIn.shopName.ifBlank { "Кофейня" }, style = MaterialTheme.typography.titleSmall,
+                Text(if (checkIn.isHome) "Дома" else checkIn.shopName.ifBlank { "Кофейня" }, style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.SemiBold, maxLines = 2, overflow = TextOverflow.Ellipsis)
                 drink?.let { Text(it, style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 2, overflow = TextOverflow.Ellipsis) }

@@ -2,12 +2,15 @@
 
 package com.coffeepeek.admin.di.settings
 
+import kotlinx.coroutines.async
+import kotlinx.coroutines.CompletableDeferred
 import com.coffeepeek.admin.analytics.AnalyticsConsent
 import com.coffeepeek.admin.analytics.analytics
 import com.coffeepeek.admin.analytics.MemoryConsent
-import com.coffeepeek.admin.feature.appupdate.domain.AppUpdate
-import com.coffeepeek.admin.feature.appupdate.domain.AppUpdateRepository
-import com.coffeepeek.admin.feature.appupdate.ui.AppUpdateState
+import com.coffeepeek.feature.appupdate.domain.AppUpdate
+import com.coffeepeek.feature.appupdate.domain.AppUpdateRepository
+import com.coffeepeek.feature.appupdate.api.AppUpdateEnvironment
+import com.coffeepeek.feature.appupdate.impl.AppUpdateController
 import com.coffeepeek.admin.legal.LegalUrls
 import com.coffeepeek.admin.settings.CityPreference
 import com.coffeepeek.admin.settings.FakeSettingRepository
@@ -31,6 +34,7 @@ import com.coffeepeek.domain.repository.SessionRepository
 import com.coffeepeek.domain.repository.ShopRepository
 import com.coffeepeek.feature.settings.domain.SettingsCity
 import com.coffeepeek.feature.settings.domain.ThemeMode
+import com.coffeepeek.feature.settings.domain.UpdateCheckOutcome
 import com.coffeepeek.feature.settings.domain.UpdateCheckState
 import com.coffeepeek.feature.settings.domain.UsageConsentState
 import kotlinx.coroutines.CoroutineScope
@@ -183,21 +187,40 @@ class AndroidSettingsPortsTest {
         override suspend fun dismiss(version: Long) = Unit
     }
 
-    @Test fun theUpdateRowMapsTheCheckStateAndACheckIsAlwaysManual() = runTest {
+    @Test fun theUpdateRowMapsTheCheckStateAndACheckAnswersWithTheManualResult() = runTest {
         val repository = Updates(AppUpdate(200, 0, "https://example.com/app.apk"))
         val scope = CoroutineScope(UnconfinedTestDispatcher(testScheduler))
-        val state = AppUpdateState(repository, scope, currentVersion = 100)
+        val state = AppUpdateController(repository, object : AppUpdateEnvironment { override val versionCode: Long? = 100; override val platform = "android"; override val channel: String? = "play" }, scope)
         val port = AndroidUpdateCheckPort(state)
         assertEquals(UpdateCheckState(), port.observe().first())
-        port.check()
-        assertEquals(UpdateCheckState(checking = false, message = null, updateAvailable = true), port.observe().first())
+        assertEquals(UpdateCheckOutcome.Available, port.check())
+        assertEquals(UpdateCheckState(checking = false, updateAvailable = true), port.observe().first())
 
         repository.update = AppUpdate(100, 0, "https://example.com/app.apk")
-        port.check()
-        assertEquals(UpdateCheckState(false, "Установлена актуальная версия", false), port.observe().first())
+        assertEquals(UpdateCheckOutcome.UpToDate, port.check())
+        assertEquals(UpdateCheckState(), port.observe().first())
         repository.update = null
-        port.check()
-        assertEquals(UpdateCheckState(false, "Не удалось проверить обновления. Попробуйте позже.", false), port.observe().first())
+        assertEquals(UpdateCheckOutcome.Failed, port.check())
+    }
+
+    @Test fun aCheckThatStartsWhileAnAutomaticOneRunsWaitsForItAndThenAsksAgain() = runTest {
+        val release = CompletableDeferred<Unit>()
+        var fetches = 0
+        val repository = object : AppUpdateRepository {
+            override suspend fun fetch(): AppUpdate? { fetches++; if (fetches == 1) release.await(); return null }
+            override suspend fun dismissedVersion(): Long? = null
+            override suspend fun dismiss(version: Long) = Unit
+        }
+        val scope = CoroutineScope(UnconfinedTestDispatcher(testScheduler))
+        val state = AppUpdateController(repository, object : AppUpdateEnvironment { override val versionCode: Long? = 100; override val platform = "android"; override val channel: String? = "play" }, scope)
+        state.check()                       // the automatic check on resume, still waiting
+        val port = AndroidUpdateCheckPort(state)
+        val result = async { port.check() }
+        runCurrent()
+        assertFalse(result.isCompleted)
+        release.complete(Unit)
+        assertEquals(UpdateCheckOutcome.Failed, result.await())   // the second, manual fetch also returned no policy
+        assertEquals(2, fetches)
     }
 
     // --- external actions --------------------------------------------------------------------------------------------------

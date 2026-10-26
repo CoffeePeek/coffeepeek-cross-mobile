@@ -71,7 +71,7 @@ internal class OwnProfileExtras(
     val topBarActions: @Composable () -> Unit,
     val favoritesPreview: @Composable (header: @Composable () -> Unit) -> Unit,
     val checkInCount: Int,
-    val activityCalendar: @Composable () -> Unit,
+    val activityCalendar: @Composable (onOpenShop: (String) -> Unit, onOpenCheckIns: () -> Unit) -> Unit,
     val activityPreview: @Composable (onClick: () -> Unit) -> Unit,
     val bottomContentPadding: Dp,
 )
@@ -204,7 +204,7 @@ internal fun PublicProfileScreen(
                                 vm.onAction(PublicProfileAction.OpenConnections(PublicProfileConnectionKind.Followers))
                             },
                         ) { profile.avatarUrl?.let { photos = ProfilePhotos(listOf(it)) } }
-                        if (own != null) own.activityPreview(own.onOpenCheckIns)
+                        if (own != null) own.activityPreview { section = ProfileSection.Activity }
                         else slots.activityPreview(slug, profile.activity, state.checkIns,
                             state.isLoadingActivity || state.isLoadingCheckIns,
                             state.activityError != null || state.checkInsError != null,
@@ -212,7 +212,7 @@ internal fun PublicProfileScreen(
                                 vm.onAction(PublicProfileAction.RetryActivity)
                                 vm.onAction(PublicProfileAction.RetryCheckIns)
                             },
-                            onOpenCheckIns)
+                            { section = ProfileSection.Activity })
                         if (state.error != null) InlineProfileError(stringResource(R.string.profile_update_failed)) { vm.onAction(PublicProfileAction.Refresh) }
                         if (!viewingOwn && state.followError != null) {
                             InlineProfileError(stringResource(R.string.profile_follow_failed)) { vm.onAction(PublicProfileAction.ToggleFollow) }
@@ -302,7 +302,7 @@ internal fun PublicProfileScreen(
                 ProfileSection.Activity -> Column(
                     Modifier.fillMaxWidth().weight(1f, fill = false).verticalScroll(rememberScrollState()).padding(16.dp).navigationBarsPadding(),
                 ) {
-                    if (viewingOwn && own != null) own.activityCalendar() else PublicProfileActivityCalendar(
+                    if (viewingOwn && own != null) own.activityCalendar({ section = null; onOpenShop(it) }, { section = null; own.onOpenCheckIns() }) else PublicProfileActivityCalendar(
                         activity = profile.activity,
                         selectedMonth = state.activityMonth,
                         isLoading = state.isLoadingActivity,

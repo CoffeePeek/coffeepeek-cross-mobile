@@ -35,7 +35,7 @@ internal expect fun NativePhotoSourceSheet(title: String, onGallery: () -> Unit,
 @Composable
 internal expect fun NativeAlert(
     title: String, message: String, confirmLabel: String, onConfirm: () -> Unit,
-    onDismiss: () -> Unit, cancelLabel: String? = null,
+    onDismiss: () -> Unit, cancelLabel: String? = null, destructive: Boolean = false,
 ): Boolean
 
 @Composable

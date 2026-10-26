@@ -17,6 +17,7 @@ android {
 dependencies {
     implementation(project(module.feature.checkInHistory.domain))
     implementation(project(module.core.presentation))
+    implementation(project(module.core.datetime))
     implementation(libs.compose.components.resources)
 
     androidApi(project(module.feature.checkInHistory.api))

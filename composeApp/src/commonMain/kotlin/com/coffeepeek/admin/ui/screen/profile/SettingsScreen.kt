@@ -1,5 +1,7 @@
 package com.coffeepeek.admin.ui.screen.profile
 
+import com.coffeepeek.core.designsystem.component.CoffeePeekScaffold as Scaffold
+
 import androidx.compose.runtime.getValue
 import com.coffeepeek.admin.ui.component.PlatformScrollableColumn
 import androidx.compose.foundation.layout.Arrangement
@@ -14,7 +16,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -54,7 +55,7 @@ fun SettingsScreen(vm: ProfileViewModel = koinInject()) {
     val themeMode by vm.themeMode.collectAsState()
     val cities by vm.cities.collectAsState()
     val selectedCityId by vm.selectedCityId.collectAsState()
-    val updates = koinInject<com.coffeepeek.admin.feature.appupdate.ui.AppUpdateState>()
+    val updates = koinInject<com.coffeepeek.feature.appupdate.impl.AppUpdateController>()
     val updateState by updates.state.collectAsState()
 
     Scaffold(

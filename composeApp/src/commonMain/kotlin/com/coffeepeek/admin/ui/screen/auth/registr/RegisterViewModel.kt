@@ -85,14 +85,18 @@ class RegisterViewModel(
     }
 
     fun onTermsCheckedChange(checked: Boolean) {
+        if (registering) return
         _isTermsAccepted.value = checked
     }
 
     fun onAnalyticsCheckedChange(checked: Boolean) {
+        if (registering) return
         _isAnalyticsAccepted.value = checked
     }
 
     fun onBack() {
+        // While the registration is being sent the form is frozen: going back would change the step under the request.
+        if (registering) return
         when (_step.value) {
             RegisterStep.Details -> {
                 _step.value = RegisterStep.Email
@@ -123,12 +127,23 @@ class RegisterViewModel(
         }
     }
 
+    // Set synchronously by the click, so a second tap or a consent/e-mail edit while the request runs is ignored.
+    private var registering = false
+
     fun onRegisterClick() {
+        if (registering) return
+        registering = true
         val analyticsAccepted = _isAnalyticsAccepted.value
         launchRequest(
             onSuccess = { _step.value = RegisterStep.Success },
             errorMessage = Res.string.error_registr,
         ) {
+            try { registerForm(analyticsAccepted) } finally { registering = false }
+        }
+    }
+
+    private suspend fun registerForm(analyticsAccepted: Boolean) {
+        run {
             val currentName = _name.value.trim()
             val currentEmail = _email.value.trim()
             val currentPassword = _password.value
@@ -169,7 +184,7 @@ class RegisterViewModel(
 
             if (!isValid) {
                 ErrorHandler.showError(getString(error))
-                return@launchRequest
+                return@run
             }
 
             // The optional choice is separate from terms. No SDK setup is allowed before login.

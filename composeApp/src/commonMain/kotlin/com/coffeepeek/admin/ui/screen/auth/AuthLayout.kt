@@ -92,14 +92,14 @@ fun AuthScreenScaffold(
 @Composable
 private fun AuthScrollContent(mascot: AuthMascot, content: @Composable ColumnScope.() -> Unit) {
     PlatformScrollableColumn(
-        modifier = Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding()
-            .padding(horizontal = CpDimens.spacing4, vertical = CpDimens.spacing5),
+        modifier = Modifier.fillMaxSize().statusBarsPadding().padding(horizontal = CpDimens.spacing4),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Spacer(Modifier.height(CpDimens.spacing4))
+        Spacer(Modifier.height(CpDimens.spacing4 + CpDimens.spacing5))
         AuthWordmark()
         AuthMascotCard(mascot, content)
-        Spacer(Modifier.height(CpDimens.spacing8))
+        // Keep the home-indicator clearance inside the scroll content, not over the form.
+        Spacer(Modifier.navigationBarsPadding().height(CpDimens.spacing8 + CpDimens.spacing5))
     }
 }
 

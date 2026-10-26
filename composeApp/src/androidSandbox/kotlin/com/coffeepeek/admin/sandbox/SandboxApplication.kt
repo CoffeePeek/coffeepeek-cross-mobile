@@ -33,12 +33,11 @@ internal class SandboxApplication : Application() {
         MapLibre.getInstance(this)
         initAndroidKoin(analyticsEnabled = false, extraModules = listOf(module {
             single<SessionRepository> { sessions }
-            single<com.coffeepeek.domain.repository.AuthRepository> { SandboxAuthRepository(sessions) }
             single { CoffeePeekClient(SandboxBackend.BASE_URL, cacheDir.resolve("sandbox-http").path, false,
                 getToken = { null }, saveToken = {}, apiClientFactory = backend::apiClient,
                 uploadClientFactory = backend::uploadClient) }
             single<io.kamel.core.config.KamelConfig> { sandboxImageConfig(backend.gateway) }
-            single<com.coffeepeek.admin.feature.appupdate.api.AndroidUpdateInstaller> {
+            single<com.coffeepeek.feature.appupdate.api.AndroidUpdateInstaller> {
                 SandboxUpdateInstaller(getString(R.string.sandbox_external_blocked))
             }
         }))

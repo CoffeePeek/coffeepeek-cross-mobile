@@ -190,7 +190,7 @@ internal fun ComposeMainScreen(isLoggedIn: Boolean) {
                     entry.LocalOwnersProvider(feedStateHolder) {
                         RetainedContent(visible = entry in visibleEntries) {
                             Box(Modifier.fillMaxSize().graphicsLayer { translationX = size.width * feedSlide }) {
-                                DiscoveryTabContent(onMapExpandedChange = { isFeedMapExpanded = it })
+                                koinInject<DiscoveryScreenRenderer>().Tab(onMapExpandedChange = { isFeedMapExpanded = it })
                             }
                         }
                     }
@@ -227,9 +227,9 @@ internal fun ComposeMainScreen(isLoggedIn: Boolean) {
 
                     navigation<Navigator.Screen.CommunityGraph>(startDestination = Navigator.Screen.CommunityTab) {
                         composable<Navigator.Screen.CommunityTab> {
-                            com.coffeepeek.admin.feature.community.ui.CommunityScreen(
+                            koinInject<com.coffeepeek.admin.feature.community.ui.CommunityScreenRenderer>().Content(
                                 onCreateCheckIn = { Navigator.navigate(Navigator.Screen.CreateCheckIn) },
-                                notificationsAction = { com.coffeepeek.admin.feature.notifications.ui.NotificationsButton() },
+                                notificationsAction = { koinInject<com.coffeepeek.admin.feature.notifications.ui.NotificationsRenderer>().Bell() },
                             )
                         }
                     }
