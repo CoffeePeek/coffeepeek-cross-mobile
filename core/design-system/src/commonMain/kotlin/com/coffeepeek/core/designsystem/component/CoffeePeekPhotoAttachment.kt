@@ -37,26 +37,27 @@ import org.jetbrains.compose.ui.tooling.preview.Preview
 internal fun CoffeePeekPhotoAttachment(
     index: Int, count: Int, enabled: Boolean, drag: CoffeePeekPhotoDragState,
     onOpen: () -> Unit, onMove: (Int, Int) -> Unit, onRemove: () -> Unit,
+    manage: Boolean = true,
     photo: @Composable (Modifier) -> Unit,
 ) {
     val description = stringResource(Res.string.coffeepeek_photo_description, index + 1, count)
-    val actions = photoMoveActions(index, count, enabled, onMove)
+    val actions = photoMoveActions(index, count, enabled && manage, onMove)
     val shape = RoundedCornerShape(CoffeePeekDimens.radiusMd)
-    Box(Modifier.size(96.dp).coffeePeekPhotoDrag(index, enabled, drag, onMove)) {
+    Box(Modifier.size(96.dp).then(if (manage) Modifier.coffeePeekPhotoDrag(index, enabled, drag, onMove) else Modifier)) {
         Box(Modifier.fillMaxSize().clip(shape)
             .border(if (drag.target == index) 3.dp else 1.dp,
                 if (drag.target == index) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline, shape)
-            .clickable(enabled = enabled, role = Role.Button, onClick = onOpen)
+            .then(if (manage) Modifier.clickable(enabled = enabled, role = Role.Button, onClick = onOpen) else Modifier)
             .semantics {
                 contentDescription = description
                 customActions = actions
             }) {
             photo(Modifier.fillMaxSize())
-            Text("${index + 1}", color = Color.White, style = MaterialTheme.typography.labelSmall,
+            if (manage) Text("${index + 1}", color = Color.White, style = MaterialTheme.typography.labelSmall,
                 modifier = Modifier.align(Alignment.BottomStart).padding(4.dp)
                     .background(Color.Black.copy(alpha = 0.75f), RoundedCornerShape(4.dp)).padding(horizontal = 4.dp))
         }
-        PhotoRemoveButton(index, enabled, onRemove, Modifier.align(Alignment.TopEnd))
+        PhotoRemoveButton(index, enabled, onRemove, Modifier.align(Alignment.TopEnd), simple = !manage)
     }
 }
 
@@ -106,11 +107,12 @@ private fun photoMoveActions(index: Int, count: Int, enabled: Boolean, onMove: (
 }
 
 @Composable
-private fun PhotoRemoveButton(index: Int, enabled: Boolean, onRemove: () -> Unit, modifier: Modifier) {
-    IconButton(onClick = onRemove, enabled = enabled, modifier = modifier.offset(x = 16.dp, y = (-16).dp).size(48.dp)) {
+private fun PhotoRemoveButton(index: Int, enabled: Boolean, onRemove: () -> Unit, modifier: Modifier, simple: Boolean) {
+    val offset = if (simple) 18.dp else 16.dp
+    IconButton(onClick = onRemove, enabled = enabled, modifier = modifier.offset(x = offset, y = -offset).size(48.dp)) {
         Icon(CoffeePeekIcons.Close, stringResource(Res.string.coffeepeek_photo_remove, index + 1),
             Modifier.size(24.dp).background(Color.Black.copy(alpha = 0.75f), RoundedCornerShape(50))
-                .border(1.5.dp, Color.White, RoundedCornerShape(50)).padding(4.dp), tint = Color.White)
+                .border(1.5.dp, Color.White, RoundedCornerShape(50)).padding(if (simple) 5.dp else 4.dp), tint = Color.White)
     }
 }
 

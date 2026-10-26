@@ -216,4 +216,18 @@
     <string name="contributions_editor_status_pending">Спасибо за помощь! После проверки изменения появятся в карточке кофейни.</string>
     <string name="contributions_editor_status_approved">Изменения приняты и появятся в карточке кофейни.</string>
     <string name="contributions_editor_status_rejected">Заявка сохранена. Подробности проверки доступны в заявке.</string>
+    <string name="contributions_price_title">Цена</string>
+    <string name="contributions_price_cappuccino">Цена (капучино за %1$s)</string>
+    <string name="contributions_photo_count">Добавлено: %1$d/%2$d</string>
+    <string name="contributions_map_title">Точка на карте</string>
+    <string name="contributions_map_hint">Переместите карту к кофейне</string>
+    <string name="contributions_map_cancel">Отменить выбор точки</string>
+    <string name="contributions_map_my_location">Моё местоположение</string>
+    <string name="contributions_map_resolving">Определяем адрес…</string>
+    <string name="contributions_map_failed">Не удалось определить адрес. Подвиньте карту.</string>
+    <string name="contributions_map_move">Переместите карту, чтобы выбрать точку</string>
+    <string name="contributions_map_address">Адрес кофейни</string>
+    <string name="contributions_map_choose_compact">Выбрать</string>
+    <string name="contributions_map_choose">Выбрать эту точку</string>
+    <string name="contributions_map_pin">Метка расположения кофейни</string>
 </resources>

@@ -1,5 +1,6 @@
 package com.coffeepeek.feature.contributions.impl.ui
 
+import com.coffeepeek.feature.contributions.impl.ui.component.ContributionPhotos
 import androidx.compose.foundation.Image
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import com.coffeepeek.feature.contributions.impl.resources.Res
@@ -139,10 +140,10 @@ private fun RoasterForm(state: AddRoasterState, host: AddRoasterHost, callbacks:
             RoasterLocationFields(state, onAction)
             RoasterContactFields(state, onAction)
             Spacer(Modifier.height(CoffeePeekDimens.spacing4))
-            host.photos(
+            ContributionPhotos(
                 state.photos, ContributionLimits.ROASTER_PHOTOS, stringResource(Res.string.contributions_roaster_photos_title),
                 stringResource(Res.string.contributions_roaster_photos_hint, ContributionLimits.ROASTER_PHOTOS),
-                { onAction(AddRoasterAction.AddPhotos(it)) }, { onAction(AddRoasterAction.RemovePhoto(it)) },
+                { onAction(AddRoasterAction.AddPhotos(it)) }, { onAction(AddRoasterAction.RemovePhoto(it)) }, picker = host.photoPicker,
             )
             Spacer(Modifier.height(CoffeePeekDimens.spacing6))
             CoffeePeekButton(stringResource(Res.string.contributions_roaster_submit), { onAction(AddRoasterAction.Submit) }, enabled = state.valid)

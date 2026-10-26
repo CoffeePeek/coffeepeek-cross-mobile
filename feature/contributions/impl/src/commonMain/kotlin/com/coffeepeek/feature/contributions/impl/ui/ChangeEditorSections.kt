@@ -1,5 +1,8 @@
 package com.coffeepeek.feature.contributions.impl.ui
 
+import com.coffeepeek.feature.contributions.impl.ui.component.ContributionRoasterLogo
+import com.coffeepeek.feature.contributions.impl.ui.component.ContributionBrewMethodIcon
+import com.coffeepeek.feature.contributions.impl.ui.component.ContributionPhotos
 import androidx.compose.foundation.background
 import com.coffeepeek.feature.contributions.impl.resources.Res
 import com.coffeepeek.feature.contributions.impl.resources.contributions_editor_already_uploaded
@@ -88,14 +91,14 @@ internal fun ChangeEditorBody(state: ChangeEditorState, host: ChangeEditorHost, 
         )
         ChangeSection.Roasters -> CheckmarkSection(
             stringResource(Res.string.contributions_section_roasters), state.catalogs.roasters, state.roasterIds, { onAction(ChangeEditorAction.Toggle(it)) },
-            leading = { item -> host.roasterLogo(item) },
+            leading = { item -> ContributionRoasterLogo(item) },
         )
         ChangeSection.Equipment -> CheckmarkSection(
             stringResource(Res.string.contributions_section_equipment), state.catalogs.equipment, state.equipmentIds, { onAction(ChangeEditorAction.Toggle(it)) },
         )
         ChangeSection.BrewMethods -> CheckmarkSection(
             stringResource(Res.string.contributions_section_brew_methods), state.catalogs.brewMethods, state.brewMethodIds, { onAction(ChangeEditorAction.Toggle(it)) },
-            leading = { item -> Box(Modifier.size(22.dp)) { host.brewMethodIcon(item.name) } },
+            leading = { item -> Box(Modifier.size(22.dp)) { ContributionBrewMethodIcon(item.name) } },
         )
         ChangeSection.Menu -> MenuEditor(state, host, onAction)
     }
@@ -139,14 +142,14 @@ private fun EditorContact(
 @Composable
 private fun PhotosEditor(state: ChangeEditorState, host: ChangeEditorHost, onAction: (ChangeEditorAction) -> Unit) {
     SectionTitle(stringResource(Res.string.contributions_editor_current_photos))
-    SavedPhotos(state.retainedPhotos, host) { onAction(ChangeEditorAction.RemoveRetainedPhoto(it)) }
+    SavedPhotos(state.retainedPhotos) { onAction(ChangeEditorAction.RemoveRetainedPhoto(it)) }
     UploadedNote(state.uploadedPhotos.size) { onAction(ChangeEditorAction.RemoveUploadedPhotos) }
     val room = ContributionLimits.SHOP_PHOTOS - state.retainedPhotos.size - state.uploadedPhotos.size
     if (room > 0) {
         Spacer(Modifier.height(CoffeePeekDimens.spacing4))
-        host.photos(
+        ContributionPhotos(
             state.newPhotos, room, stringResource(Res.string.contributions_editor_new_photos), stringResource(Res.string.contributions_editor_new_photos_hint),
-            { onAction(ChangeEditorAction.AddPhotos(it)) }, { onAction(ChangeEditorAction.RemoveNewPhoto(it)) },
+            { onAction(ChangeEditorAction.AddPhotos(it)) }, { onAction(ChangeEditorAction.RemoveNewPhoto(it)) }, picker = host.photoPicker
         )
     }
 }
@@ -155,15 +158,15 @@ private fun PhotosEditor(state: ChangeEditorState, host: ChangeEditorHost, onAct
 private fun MenuEditor(state: ChangeEditorState, host: ChangeEditorHost, onAction: (ChangeEditorAction) -> Unit) {
     var expanded by rememberSaveable { mutableStateOf(false) }
     SectionTitle(stringResource(Res.string.contributions_shop_menu_photos_title))
-    SavedPhotos(state.retainedMenuPhotos, host) { onAction(ChangeEditorAction.RemoveRetainedMenuPhoto(it)) }
+    SavedPhotos(state.retainedMenuPhotos) { onAction(ChangeEditorAction.RemoveRetainedMenuPhoto(it)) }
     UploadedNote(state.uploadedMenuPhotos.size) { onAction(ChangeEditorAction.RemoveUploadedMenuPhotos) }
     val room = ContributionLimits.MENU_PHOTOS - state.retainedMenuPhotos.size - state.uploadedMenuPhotos.size
     if (room > 0) {
         Spacer(Modifier.height(CoffeePeekDimens.spacing3))
-        host.photos(
+        ContributionPhotos(
             state.newMenuPhotos, room, stringResource(Res.string.contributions_editor_new_menu_photos),
             stringResource(Res.string.contributions_editor_new_menu_photos_hint, ContributionLimits.MENU_PHOTOS),
-            { onAction(ChangeEditorAction.AddMenuPhotos(it)) }, { onAction(ChangeEditorAction.RemoveNewMenuPhoto(it)) },
+            { onAction(ChangeEditorAction.AddMenuPhotos(it)) }, { onAction(ChangeEditorAction.RemoveNewMenuPhoto(it)) }, picker = host.photoPicker
         )
     }
     Spacer(Modifier.height(CoffeePeekDimens.spacing5))
@@ -227,7 +230,7 @@ private fun Row2(content: @Composable androidx.compose.foundation.layout.RowScop
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun SavedPhotos(photos: List<ShopPhotoRef>, host: ChangeEditorHost, onRemove: (String) -> Unit) {
+private fun SavedPhotos(photos: List<ShopPhotoRef>, onRemove: (String) -> Unit) {
     if (photos.isEmpty()) {
         Text(stringResource(Res.string.contributions_editor_no_saved_photos), color = MaterialTheme.colorScheme.onSurfaceVariant)
         return
@@ -236,7 +239,7 @@ private fun SavedPhotos(photos: List<ShopPhotoRef>, host: ChangeEditorHost, onRe
     FlowRow(horizontalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing2), verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing2)) {
         photos.forEach { photo ->
             Box(Modifier.size(96.dp)) {
-                host.remoteImage(photo.url, Modifier.fillMaxSize().clip(shape).border(1.dp, MaterialTheme.colorScheme.outline, shape))
+                com.coffeepeek.core.designsystem.component.CoffeePeekImage(data = photo.url, modifier = Modifier.fillMaxSize().clip(shape).border(1.dp, MaterialTheme.colorScheme.outline, shape), contentScale = androidx.compose.ui.layout.ContentScale.Crop)
                 Box(
                     Modifier.align(Alignment.TopEnd).offset(x = 6.dp, y = (-6).dp).size(24.dp).clip(CircleShape).background(Color.Black.copy(alpha = 0.75f))
                         .clickable { onRemove(photo.id) },

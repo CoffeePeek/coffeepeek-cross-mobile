@@ -1,5 +1,13 @@
 # Contributions: legacy inventory (step 0 of the owner migration)
 
+Ownership exit update — 2026-10-26: active Android/iOS entries now own photo,
+price, icon/image and map-picker UI in Contributions impl/design-system. Root
+hosts supply native launchers/canvas and feedback only. Seven obsolete app UI
+files are deleted; the old ShopChangeEditorScreen remains solely for an existing
+test consumer. Legacy catalog/details/drink reads and old ViewModels are separate
+remaining work. Older activation/fallback statements below are historical, not
+current production selection. See [OWNERSHIP_EXIT_PLAN.md](OWNERSHIP_EXIT_PLAN.md).
+
 Activation update — 2026-10-25: Android and iOS now use the shared feature renderer
 and app-owned photo/map/price slots. UI remains in feature/contributions/impl;
 legacy screens are retained as fallback pending acceptance. The inventory below

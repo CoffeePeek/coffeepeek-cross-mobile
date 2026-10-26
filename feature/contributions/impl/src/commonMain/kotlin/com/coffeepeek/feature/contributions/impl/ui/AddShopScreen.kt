@@ -55,6 +55,9 @@ import com.coffeepeek.core.designsystem.component.CoffeePeekTopBar
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.feature.contributions.api.AddShopHost
+import com.coffeepeek.feature.contributions.api.ContributionLocation
+import com.coffeepeek.feature.contributions.impl.ui.map.ContributionMapPicker
+import com.coffeepeek.feature.contributions.impl.ui.map.ContributionMapPickerSlot
 import com.coffeepeek.feature.contributions.api.GeoPoint
 import com.coffeepeek.feature.contributions.domain.model.CatalogOption
 import com.coffeepeek.feature.contributions.domain.model.Catalogs
@@ -67,13 +70,16 @@ import com.coffeepeek.feature.contributions.impl.shop.SubmitState
 internal class AddShopCallbacks(val onBack: () -> Unit, val onSignIn: () -> Unit, val onAddRoaster: () -> Unit)
 
 @Composable
-internal fun AddShopScreen(viewModel: AddShopViewModel, host: AddShopHost, callbacks: AddShopCallbacks, modifier: Modifier = Modifier) {
+internal fun AddShopScreen(viewModel: AddShopViewModel, host: AddShopHost, callbacks: AddShopCallbacks,
+    location: ContributionLocation, modifier: Modifier = Modifier) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    AddShopContent(state, host, callbacks, viewModel::onAction, modifier)
+    AddShopContent(state, host, callbacks, viewModel::onAction, modifier,
+        mapPicker = { initial, onConfirm, onDismiss -> ContributionMapPicker(initial, location, host.mapCanvas, onConfirm, onDismiss) })
 }
 
 @Composable
-internal fun AddShopContent(state: AddShopState, host: AddShopHost, callbacks: AddShopCallbacks, onAction: (AddShopAction) -> Unit, modifier: Modifier = Modifier) {
+internal fun AddShopContent(state: AddShopState, host: AddShopHost, callbacks: AddShopCallbacks, onAction: (AddShopAction) -> Unit,
+    modifier: Modifier = Modifier, mapPicker: ContributionMapPickerSlot = { _, _, _ -> }) {
     val submit = state.submit
     when {
         state.signedIn == null -> Box(modifier.fillMaxSize(), Alignment.Center) { CoffeePeekLoader(stringResource(Res.string.contributions_loading)) }
@@ -86,7 +92,7 @@ internal fun AddShopContent(state: AddShopState, host: AddShopHost, callbacks: A
             stringResource(Res.string.contributions_shop_sending_description), callbacks.onBack, host.feedback, modifier,
         )
         submit is SubmitState.Failed -> FailedScreen(submit, host, callbacks, onAction, modifier)
-        else -> AddShopForm(state, host, callbacks, onAction, modifier)
+        else -> AddShopForm(state, host, callbacks, onAction, modifier, mapPicker)
     }
 }
 
@@ -105,9 +111,10 @@ private fun FailedScreen(failed: SubmitState.Failed, host: AddShopHost, callback
 }
 
 @Composable
-private fun AddShopForm(state: AddShopState, host: AddShopHost, callbacks: AddShopCallbacks, onAction: (AddShopAction) -> Unit, modifier: Modifier) {
+private fun AddShopForm(state: AddShopState, host: AddShopHost, callbacks: AddShopCallbacks, onAction: (AddShopAction) -> Unit,
+    modifier: Modifier, mapPicker: ContributionMapPickerSlot) {
     host.locationPermission({ onAction(AddShopAction.LocationGranted) }, { onAction(AddShopAction.LocationDenied) })
-    if (state.mapPickerOpen) host.mapPicker(
+    if (state.mapPickerOpen) mapPicker(
         state.gpsPoint?.let { GeoPoint(it.first, it.second) },
         { point, address -> onAction(AddShopAction.MapPicked(point.latitude, point.longitude, address)) },
         { onAction(AddShopAction.DismissMap) },
@@ -154,10 +161,10 @@ private fun StepContent(state: AddShopState, host: AddShopHost, callbacks: AddSh
     ) { step ->
         Column(Modifier.fillMaxSize().imePadding().verticalScroll(rememberScrollState()).padding(coffeePeekScrollContentPadding(PaddingValues(CoffeePeekDimens.spacing4)))) {
             when (step) {
-                AddShopStep.Basic -> StepBasic(state, host, onAction)
+                AddShopStep.Basic -> StepBasic(state, onAction)
                 AddShopStep.Contacts -> StepContacts(state, onAction)
                 AddShopStep.Photos -> StepPhotos(state, host, onAction)
-                AddShopStep.Features -> StepFeatures(state, host, callbacks.onAddRoaster, onAction)
+                AddShopStep.Features -> StepFeatures(state, callbacks.onAddRoaster, onAction)
                 AddShopStep.Schedule -> StepSchedule(state, onAction)
             }
             Spacer(Modifier.height(CoffeePeekDimens.spacing6))

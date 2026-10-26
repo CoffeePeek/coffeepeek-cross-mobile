@@ -67,7 +67,9 @@ DatabaseCore. Старый LEGACY_REMOVAL.md — исторический сни
   catalogue icons/prefetch) больше не приходят из composeApp; седьмой срез.
 - [x] Вложенные Roaster search/empty/error/image/viewer: активный UI принадлежит
   Roaster impl, публичные app visual ports удалены; восьмой срез.
-- [ ] Остальные catalog/create UI, Contributions и root tab содержание:
+- [x] Contributions: активные photo/price/icons/images/map-picker UI и состояние
+  принадлежат impl/DS, root поставляет native canvas/launchers; десятый срез.
+- [ ] Остальные catalog/create UI и root tab содержание:
   оставшиеся бизнес-вставки/состояние из composeApp — в соответствующие impl.
 - [x] Author blocking: экран/host из composeApp в feature/author-blocking/impl;
   Android/Sandbox и видимый native iOS controller вызывают feature entry.
@@ -1000,3 +1002,50 @@ decoder behavior are unchanged; no dependency upgrade or CI bypass is used.
   exact published revision still needs its new GitHub run before CI is called green.
 - Shared Kotlin changes must include common metadata compilation in local
   verification; target assembly/Native compile cannot stand in for it.
+
+## Десятый срез L1: Contributions UI ownership — 2026-10-26
+
+Новая дочерняя ветка codex/migration-contributions-ownership от #201,
+source `89778c23` + этот срез. Подробный scope/остаток и evidence:
+[Contributions ownership exit](contributions/OWNERSHIP_EXIT_PLAN.md).
+
+- Удалены 11 app-owned visual contracts photo/price/brew/logo/cover/remote-image/
+  map-picker из public hosts. Feature собирает UI из DS; root поставляет только
+  permission/native photo launchers/map canvas/haptic и прежние data/session/
+  navigation adapters. Contribution catalogs через legacy reader — следующий
+  supporting slice этой же фичи, не новая продуктовая функциональность.
+- Map modal/address state/350ms debounce/drift/confirmation теперь в feature.
+  Native CoffeeMap/provider сохранён; DS map-control presenter сохраняет iOS
+  clipping/z-order. Stateless content и paired previews находятся рядом.
+- Общий DS photo grid получил Simple mode с прежней геометрией без reorder,
+  индексов и viewer; существующий default режим других consumers сохранён.
+  Source sheet использует прежний native presenter и shared DS sheet. Platform
+  pipeline URI/JPEG/camera не копировался. Late/duplicate/disposed callbacks,
+  current capacity, byte ownership и account check закреплены unit contracts.
+- Удалены семь недостижимых app UI файлов, включая старый выбор точки.
+  ShopChangeEditorScreen сохраняет существующий чужой ShopMenuEditorTest как
+  consumer; этот экран не выбран production routes. Чужой тест не удалялся/
+  не расширялся/не запускался. Legacy ViewModels/readers — отдельный остаток.
+- Analytics page mapping и прежние routes/step state/status/haptics сохранены;
+  legacy forms не имели собственного event tracker. Новых SDK/events/consent
+  policy нет. Price/brew mapping остаётся в feature, не в generic core.
+- Первый compile обнаружил trailing-lambda preview mismatch и обязательную
+  accessibility подпись sheet; исправлено. Повтор compile/старых unit suites
+  успешен (59s). Новые contracts и удаления затем проверены финальным прогоном.
+- Финальный прогон (9m34s): library **1501 tests / 231 suites** по 55 текущим
+  testDebugUnitTest tasks, app Direct/Play **по 825 / 172**, 0 failures/errors/
+  skips. Это варианты одного приложения; их результаты не суммируются как
+  уникальные сценарии. Старые build outputs исключены из подсчёта; неизменённые
+  tasks могут быть cached/up-to-date. Contributions domain/data/impl 16/19/76,
+  DS 57; новые regressions покрывают debounce/cancellation/stale results и фото.
+- Полный Android CI набор прошёл: common metadata, Direct/Play APK + DEX guards,
+  все unit tasks и lint. Дополнительно прошли Contributions api/impl common
+  metadata, Sandbox APK/DEX/isolation, iOS Arm64 compile, Debug Simulator
+  framework link и common Native tests Contrib impl/DS/app compile. Native tests
+  не исполнялись. Gradle последовательно, --max-workers=6.
+- Studio state/photo inspections вернули timeout без найденных ошибок, то есть
+  неполную диагностику. Полного Xcode app build/preview rendering/manual UI/
+  native camera/location acceptance не было. UI/instrumentation/screenshot
+  tests/hosts не создавались и не запускались; приложения не устанавливались,
+  аккаунт/production backend/telemetry не затронуты. Пользовательский pbxproj
+  (48+/41−) исключён. Полный legacy exit и вся фича не объявляются завершёнными.

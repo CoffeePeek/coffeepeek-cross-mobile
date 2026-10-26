@@ -17,4 +17,8 @@
     <string name="coffeepeek_rating_choose">Выбрать %1$d из 5</string>
     <string name="coffeepeek_like_add">Поставить лайк</string>
     <string name="coffeepeek_like_remove">Убрать лайк</string>
+    <string name="coffeepeek_photo_source_title">Добавить фото</string>
+    <string name="coffeepeek_photo_source_gallery">Выбрать из галереи</string>
+    <string name="coffeepeek_photo_source_camera">Сделать фото</string>
+    <string name="coffeepeek_photo_source_cancel">Отмена</string>
 </resources>

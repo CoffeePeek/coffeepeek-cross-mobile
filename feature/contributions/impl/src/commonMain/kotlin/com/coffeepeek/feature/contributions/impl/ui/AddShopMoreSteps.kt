@@ -1,5 +1,8 @@
 package com.coffeepeek.feature.contributions.impl.ui
 
+import com.coffeepeek.feature.contributions.impl.ui.component.ContributionRoasterLogo
+import com.coffeepeek.feature.contributions.impl.ui.component.ContributionBrewMethodIcon
+import com.coffeepeek.feature.contributions.impl.ui.component.ContributionPhotos
 import androidx.compose.foundation.layout.Arrangement
 import com.coffeepeek.feature.contributions.impl.resources.Res
 import com.coffeepeek.feature.contributions.impl.resources.contributions_shop_add_roaster
@@ -67,21 +70,21 @@ import com.coffeepeek.feature.contributions.impl.shop.AddShopState
 @Composable
 internal fun StepPhotos(state: AddShopState, host: AddShopHost, onAction: (AddShopAction) -> Unit) {
     OptionalLegend()
-    host.photos(
+    ContributionPhotos(
         state.photos, ContributionLimits.SHOP_PHOTOS, stringResource(Res.string.contributions_shop_photos_title),
         stringResource(Res.string.contributions_shop_photos_hint, ContributionLimits.SHOP_PHOTOS),
-        { onAction(AddShopAction.AddPhotos(it)) }, { onAction(AddShopAction.RemovePhoto(it)) },
-    )
+        { onAction(AddShopAction.AddPhotos(it)) }, { onAction(AddShopAction.RemovePhoto(it)) }, picker = host.photoPicker
+        )
     Spacer(Modifier.height(CoffeePeekDimens.spacing6))
-    host.photos(
+    ContributionPhotos(
         state.menuPhotos, ContributionLimits.MENU_PHOTOS, stringResource(Res.string.contributions_shop_menu_photos_title),
         stringResource(Res.string.contributions_shop_menu_photos_hint, ContributionLimits.MENU_PHOTOS),
-        { onAction(AddShopAction.AddMenuPhotos(it)) }, { onAction(AddShopAction.RemoveMenuPhoto(it)) },
-    )
+        { onAction(AddShopAction.AddMenuPhotos(it)) }, { onAction(AddShopAction.RemoveMenuPhoto(it)) }, picker = host.photoPicker
+        )
 }
 
 @Composable
-internal fun StepFeatures(state: AddShopState, host: AddShopHost, onAddRoaster: () -> Unit, onAction: (AddShopAction) -> Unit) {
+internal fun StepFeatures(state: AddShopState, onAddRoaster: () -> Unit, onAction: (AddShopAction) -> Unit) {
     OptionalLegend()
     Text(
         stringResource(Res.string.contributions_shop_features_intro), style = MaterialTheme.typography.bodyLarge,
@@ -90,11 +93,11 @@ internal fun StepFeatures(state: AddShopState, host: AddShopHost, onAddRoaster: 
     Column(verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing6)) {
         val catalogs = state.catalogs
         CheckmarkSection(stringResource(Res.string.contributions_shop_brew_methods), catalogs.brewMethods, state.brewMethodIds, { onAction(AddShopAction.ToggleBrewMethod(it)) },
-            leading = { item -> Box(Modifier.size(22.dp)) { host.brewMethodIcon(item.name) } })
+            leading = { item -> Box(Modifier.size(22.dp)) { ContributionBrewMethodIcon(item.name) } })
         CheckmarkSection(stringResource(Res.string.contributions_shop_beans), catalogs.beans, state.beanIds, { onAction(AddShopAction.ToggleBean(it)) })
         CheckmarkSection(
             stringResource(Res.string.contributions_shop_roasters), catalogs.roasters, state.roasterIds, { onAction(AddShopAction.ToggleRoaster(it)) },
-            footer = stringResource(Res.string.contributions_shop_roasters_footer), leading = { item -> host.roasterLogo(item) },
+            footer = stringResource(Res.string.contributions_shop_roasters_footer), leading = { item -> ContributionRoasterLogo(item) },
             extraRows = { CoffeePeekActionRow(stringResource(Res.string.contributions_shop_add_roaster), onAddRoaster, CoffeePeekIcons.Add) },
         )
         CheckmarkSection(stringResource(Res.string.contributions_shop_equipment), catalogs.equipment, state.equipmentIds, { onAction(AddShopAction.ToggleEquipment(it)) })
