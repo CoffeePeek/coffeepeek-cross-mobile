@@ -36,4 +36,9 @@ data class ImageUrl(
     override fun toString(): String = url
 }
 
-expect class ImageUrlFetcher : Fetcher<ImageUrl>
+expect class ImageUrlFetcher : Fetcher<ImageUrl> {
+    override val inputDataKClass: KClass<ImageUrl>
+    override val source: DataSource
+    override val ImageUrl.isSupported: Boolean
+    override fun fetch(data: ImageUrl, resourceConfig: ResourceConfig): Flow<Resource<ByteReadChannel>>
+}
