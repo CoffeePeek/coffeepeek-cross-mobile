@@ -111,5 +111,6 @@ internal class FakeShopDetails : com.coffeepeek.feature.discovery.api.DiscoveryS
     override suspend fun details(shopId: String): Result<com.coffeepeek.feature.discovery.api.MapShopDetails> { requests += shopId; return answer.invoke(shopId) }
 }
 
-internal fun sampleDetails(id: String) = com.coffeepeek.feature.discovery.api.MapShopDetails(photoUrl = "photo-$id", rating = 4.5, reviewCount = 3, isOpen = true, hours = "9:00 – 21:00")
+internal fun sampleDetails(id: String) = com.coffeepeek.feature.discovery.api.MapShopDetails(photoUrl = "photo-$id", rating = 4.5, reviewCount = 3, isOpen = true,
+    hours = com.coffeepeek.feature.discovery.api.MapOpeningHours(false, "9:00", "21:00"))
 internal fun marker(id: String, lat: Double = 53.9, lon: Double = 27.56) = MapMarker(id, "Shop $id", Coordinates(lat, lon))

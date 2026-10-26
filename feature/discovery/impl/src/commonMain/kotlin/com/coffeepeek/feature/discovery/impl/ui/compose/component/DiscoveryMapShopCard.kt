@@ -17,6 +17,7 @@ import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.feature.discovery.api.MapShopDetails
+import com.coffeepeek.feature.discovery.api.MapOpeningHours
 import com.coffeepeek.feature.discovery.domain.model.Coordinates
 import com.coffeepeek.feature.discovery.domain.model.MapMarker
 import com.coffeepeek.feature.discovery.impl.resources.*
@@ -82,19 +83,27 @@ private fun MapShopRating(details: MapShopDetails?) {
 
 @Composable
 private fun MapShopHours(details: MapShopDetails?, isLoading: Boolean) {
-    val hours = details?.hours
+    val summary = details?.hours
+    val hours = if (summary?.isClosed == true) stringResource(Res.string.discovery_map_card_closed) else summary?.intervalLabel()
     when {
         hours != null -> Text(stringResource(Res.string.discovery_map_card_hours,
-            stringResource(if (details.isOpen) Res.string.discovery_map_card_open else Res.string.discovery_map_card_closed), hours),
+            stringResource(if (details?.isOpen == true) Res.string.discovery_map_card_open else Res.string.discovery_map_card_closed), hours),
             Modifier.padding(top = 4.dp), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         isLoading -> Text(stringResource(Res.string.discovery_map_card_loading), Modifier.padding(top = 4.dp),
             style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }
 
+internal fun MapOpeningHours.intervalLabel(): String? {
+    if (isClosed) return null
+    val open = openTime?.split(":")?.take(2)?.joinToString(":") ?: return null
+    val close = closeTime?.split(":")?.take(2)?.joinToString(":") ?: return null
+    return "$open – $close"
+}
+
 @Composable private fun MapShopCardPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
     DiscoveryMapShopCard(MapMarker("shop", "Кофейня", Coordinates(53.9, 27.5)),
-        MapShopDetails(null, 4.7, 3, true, "23:00"), false, 350.0, {})
+        MapShopDetails(null, 4.7, 3, true, MapOpeningHours(false, "09:00", "23:00")), false, 350.0, {})
 }
 @Preview @Composable private fun DiscoveryMapShopCardLightPreview() = MapShopCardPreview(false)
 @Preview @Composable private fun DiscoveryMapShopCardDarkPreview() = MapShopCardPreview(true)

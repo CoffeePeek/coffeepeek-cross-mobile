@@ -1,5 +1,18 @@
 # Roasters — feature migration plan
 
+## Public catalog and Shop read boundary — 2026-10-26
+
+The active shop-photo adapter now reads PublicShopPreviews, not legacy
+ShopRepository. Shop data preserves first usable detail/full photo, then the
+cover fallback; failed reads show no photo and cancellation propagates.
+PublicRoasterCatalog exposes slug/name/photo filter choices from the same
+migrated repository and persistent catalog as the screens. It has no separate
+HTTP client, memory cache or disk format; entries without public slugs are omitted.
+Composition maps only the two features' public API types, and keeps root DI.
+Legacy favorite/settings clients and old screen/test consumers still require
+their own exit checkpoints. Verification is in the ninth slice of
+[LEGACY_EXIT_PLAN.md](../LEGACY_EXIT_PLAN.md).
+
 ## Application UI ownership exit — 2026-10-26
 
 PR #201 (child of #195) removes application-owned header, empty/error, image

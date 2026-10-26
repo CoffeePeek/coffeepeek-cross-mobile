@@ -11,6 +11,8 @@ import com.coffeepeek.domain.feature.favorites.api.FavoritesRepository as Server
 import com.coffeepeek.domain.model.*
 import com.coffeepeek.domain.repository.ShopRepository
 import com.coffeepeek.feature.discovery.domain.model.CatalogEntry
+import com.coffeepeek.feature.roaster.api.PublicRoasterCatalog
+import com.coffeepeek.feature.roaster.api.PublicRoasterCatalogEntry
 import com.coffeepeek.feature.discovery.domain.model.Coordinates
 import com.coffeepeek.feature.discovery.domain.model.PriceLevel
 import com.coffeepeek.feature.discovery.domain.model.ShopSummary
@@ -89,10 +91,10 @@ class DiscoveryAdaptersTest {
         assertEquals(setOf("a"), adapter.favoriteIds())
     }
 
-    @Test fun theRoasterListOfTheFiltersIsTheLegacyCatalog() = runTest {
-        val shops = Shops(Result.success(ShopCatalogs(roasters = listOf(CatalogItem("r", "Roaster", photoUrl = "logo")))))
-        assertEquals(listOf(CatalogEntry("r", "Roaster", "logo")), roasterEntries(shops)().getOrThrow())
-        assertTrue(roasterEntries(Shops(Result.failure(IllegalStateException("offline"))))().isFailure)
+    @Test fun theRoasterFiltersReadPublicCatalogSlugsAndPropagateFailures() = runTest {
+        val catalog = PublicRoasterCatalog { Result.success(listOf(PublicRoasterCatalogEntry("r", "Roaster", "logo"))) }
+        assertEquals(listOf(CatalogEntry("r", "Roaster", "logo")), roasterEntries(catalog)().getOrThrow())
+        assertTrue(roasterEntries(PublicRoasterCatalog { Result.failure(IllegalStateException("offline")) })().isFailure)
     }
 
     private class Server : ServerFavorites {

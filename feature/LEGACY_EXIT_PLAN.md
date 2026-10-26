@@ -105,7 +105,9 @@ DatabaseCore. Старый LEGACY_REMOVAL.md — исторический сни
   без старых ShopRepository/RoasterRepository/UserRepository в активном graph
   Profile. Четвёртый срез также переключает identity readers Shop/Community;
   старые UI/VM/test consumers остаются отдельной задачей L4.
-- [ ] Shop/catalog/roaster/favorites readers и caches — соответствующие feature
+- [x] Discovery map-details/filter catalog/picker и Roaster shop-photo reader —
+  публичные Shop/Roaster API вместо legacy ShopRepository (девятый срез #201).
+- [ ] Остальные Shop/catalog/roaster/favorites readers и caches — соответствующие feature
   repositories; composition соединяет только узкие api-контракты.
 - [ ] Auth cleanup/refresh/realtime — core SessionStore и feature ports;
   ни SessionRepository alias, ни старого UserSessionCleaner в активном graph.
@@ -908,3 +910,67 @@ Develop `063f4c5b` добавил Community post links/share и отложенн
   UI/instrumentation tests/hosts не создавались и не запускались. Никаких
   установок приложений, account writes или production telemetry.
   Пользовательский project.pbxproj (48+/41−) исключён из merge commit.
+
+## Девятый срез L3: Discovery/Roaster public readers — 2026-10-26
+
+PR #201, parent `8843e5af`, child merge `76f2a5c8` + этот срез. Конфликты #195
+с develop разрешены и проверены на parent первым; GitHub сообщает MERGEABLE.
+Текущий срез завершает три активных чтения, а не удаление всего modules.
+
+- Discovery tab/map и check-in picker получают PublicShopPreviews и
+  PublicRoasterCatalog. В di/discovery и di/roaster нет ShopRepository,
+  getShopDetails/getCatalogs или app formatMapHoursSummary. Composition
+  соединяет только публичные контракты двух feature, не их domain/data.
+- Shop data использует тот же /api/CoffeeShops/{slug}, existing authenticated
+  client и DTO/backend. Наружу выходят только публичные cover/detail variants,
+  рейтинг/счётчик, isOpen, координаты и структурированное расписание. Нет
+  menu-catalog/favorites requests, private check-in/menu DTO или второго cache.
+  PublicShopDetails для Profile остаётся прежним, отдельный узкий preview API
+  нужен карте и фото у обжарщика; новые Gradle-модули/зависимости не добавлены.
+- Сохранены порядок фото (map: первый card/full → detail; roaster: первый
+  пригодный detail/full → cover), null/blank fallback, положительный rating и
+  flexible counters. UTC offset берётся при чтении из прежнего device provider;
+  shared schedule mapper сохраняет нормализацию дней и week rollover. Выбор
+  первого доступного интервала сохраняется, без нового today/DST поведения.
+  Discovery impl форматирует HH:mm – HH:mm и локализованное «Закрыто»,
+  а не app/data. Координаты проверяются перед перемещением карты.
+- PublicRoasterCatalog читает тот же RoasterRepository и persisted
+  roaster_catalog_v1:<host>, без второго HTTP/cache/store/JSON формата.
+  Фильтры получают public slug/name/logo, недоступные публично строки пропускаются;
+  memory/disk/offline fallback остаются у Roaster data. Фото адаптер сохраняет
+  мягкую обычную ошибку и не проглатывает CancellationException.
+- Koin связывает новые API на Android/iOS и в общем Sandbox graph. Non-UI
+  RoasterModuleTest больше не регистрирует legacy ShopRepository: он разрешает
+  настоящие feature readers, проверяет public catalog и фото через local fake
+  backend. Остальные favorite/settings/platform adapters не объявляются удалёнными.
+
+Проверки и ограничения:
+
+- Первый compile обнаружил невозможность smart cast nullable API properties
+  из другого модуля; исправлено safe-call форматированием. Повтор выявил старую
+  DI-фикстуру (1 failure из 116 app tests), которая регистрировала legacy reader.
+  Фикстура обновлена на реальные новые ports; исходные failures сохранены.
+- Финальный прогон (26s), source `76f2a5c8` + этот срез: **275 unit/contract
+  tests / 46 suites**, 0 failures/errors/skips: Shop data 50 / 15, Roaster
+  data 17 / 2, Discovery data 19 / 1, impl 73 / 7, app subset 116 / 21.
+  Неизменённые tasks могут быть UP-TO-DATE; результаты повторов не суммируются.
+- DirectDebug/DirectSandbox assembled; DEX guards дополнены новыми public API,
+  factories и MapOpeningHours, оба guards и Sandbox isolation прошли.
+  iOS Arm64 production compile, Debug Simulator framework link и common Native
+  tests Shop/Roaster data, Discovery impl и app скомпилированы. Native tests
+  не исполнялись. Gradle последовательно, --max-workers=6.
+- APK SHA-256: Debug `24c093cc2b0e1692a2a28f2acb2cf1c582f42865db67e13c89369aac9dc37542`;
+  Sandbox `db8e5f39c8d84e0515a264a5a2d30c6a4f2114b0c8f974dffe67e793f761386b`.
+- Studio mapper/adapter inspections завершились timeout без найденных ошибок:
+  это неполная диагностика. Парные previews map card сохранены; rendering и
+  ручные visual/native/location/back/share checks не заявляются. Полный Xcode
+  app build, live backend/OAuth/analytics/persistence остаются открытыми gates.
+  UI/instrumentation/screenshot tests/hosts не создавались и не запускались;
+  чужие suites не удалялись. Приложения не устанавливались, аккаунт/камера/
+  production telemetry не затрагивались. Пользовательский pbxproj (48+/41−)
+  исключён. Открытые parent/child branches сохранены как зависимости стека.
+
+Далее: Contributions/create/root UI slots; platform map/город/settings/media
+bridge relocation; оставшиеся legacy favorites/session/storage/transport readers
+и удаление старых screen/VM consumers по последней зависимости. Старые функции
+карты/репозитории всё ещё нужны оставшимся legacy consumers и не удаляются вслепую.

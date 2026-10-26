@@ -14,7 +14,8 @@ import com.coffeepeek.admin.ui.screen.main.CheckInTabContent
 import com.coffeepeek.admin.ui.screen.main.DiscoveryScreenRenderer
 import com.coffeepeek.admin.ui.screen.roaster.RoasterScreenRenderer
 import com.coffeepeek.core.session.SessionReader
-import com.coffeepeek.domain.repository.ShopRepository
+import com.coffeepeek.feature.shop.api.PublicShopPreviews
+import com.coffeepeek.feature.roaster.api.PublicRoasterCatalog
 import com.coffeepeek.feature.discovery.api.DiscoveryRoasterContext
 import com.coffeepeek.feature.discovery.api.DiscoveryRoasterSlots
 import com.coffeepeek.feature.discovery.api.DiscoveryTabEntry
@@ -50,7 +51,8 @@ internal class FeatureDiscoveryScreenRenderer(private val entry: DiscoveryTabEnt
 
 internal fun featureDiscoveryScreenRenderer(
     client: HttpClient,
-    shops: ShopRepository,
+    shops: PublicShopPreviews,
+    catalog: PublicRoasterCatalog,
     sessions: SessionReader,
     favorites: FavoritesRepository,
     cityPreference: CityPreference,
@@ -58,7 +60,7 @@ internal fun featureDiscoveryScreenRenderer(
     scope: CoroutineScope,
 ): DiscoveryScreenRenderer {
     val favoriteAdapter = AppDiscoveryFavorites(favorites)
-    val repository = createDiscoveryRepository(client, favoriteAdapter::favoriteIds, roasterEntries(shops))
+    val repository = createDiscoveryRepository(client, favoriteAdapter::favoriteIds, roasterEntries(catalog))
     return FeatureDiscoveryScreenRenderer(
         createDiscoveryTabEntry(
             repository = repository,

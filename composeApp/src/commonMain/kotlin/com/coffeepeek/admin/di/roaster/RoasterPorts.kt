@@ -5,11 +5,12 @@ import com.coffeepeek.admin.feature.favorites.api.RoasterFavorites
 import com.coffeepeek.admin.feature.favorites.api.roasterFavoriteId
 import com.coffeepeek.domain.model.CatalogItem
 import com.coffeepeek.domain.model.PublicAddress
-import com.coffeepeek.domain.repository.ShopRepository
+import com.coffeepeek.feature.shop.api.PublicShopPreviews
 import com.coffeepeek.feature.roaster.api.RoasterFavoriteTarget
 import com.coffeepeek.feature.roaster.api.RoasterFavoritesPort
 import com.coffeepeek.feature.roaster.api.RoasterShopPhotos
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
@@ -36,9 +37,10 @@ internal class RoasterFavoritesAdapter(
 }
 
 /** Shop thumbnails for a roaster's shops come from the Shop details, as before; any failure means "no photo". */
-internal class RoasterShopPhotosAdapter(private val shops: ShopRepository) : RoasterShopPhotos {
+internal class RoasterShopPhotosAdapter(private val shops: PublicShopPreviews) : RoasterShopPhotos {
     override suspend fun firstPhoto(shopSlug: String): String? {
-        val details = shops.getShopDetails(shopSlug).getOrNull() ?: return null
-        return details.photos.firstOrNull(String::isNotBlank) ?: details.shop.photoUrl?.takeIf(String::isNotBlank)
+        val result = shops.load(shopSlug)
+        result.exceptionOrNull()?.let { if (it is CancellationException) throw it }
+        return result.getOrNull()?.detailPhotoUrl?.takeIf(String::isNotBlank)
     }
 }
