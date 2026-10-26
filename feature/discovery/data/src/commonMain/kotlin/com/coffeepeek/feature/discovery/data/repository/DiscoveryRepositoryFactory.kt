@@ -3,10 +3,9 @@ package com.coffeepeek.feature.discovery.data.repository
 import com.coffeepeek.core.network.requestResult
 import com.coffeepeek.feature.discovery.data.backend.DiscoveryBackend
 import com.coffeepeek.feature.discovery.data.backend.MapQuery
-import com.coffeepeek.feature.discovery.data.backend.NearbyFiltersDto
-import com.coffeepeek.feature.discovery.data.backend.NearbyRequestDto
+import com.coffeepeek.feature.discovery.data.backend.ShopSearchFiltersDto
+import com.coffeepeek.feature.discovery.data.backend.ShopSearchRequestDto
 import com.coffeepeek.feature.discovery.data.backend.OriginDto
-import com.coffeepeek.feature.discovery.data.backend.PlainSearch
 import com.coffeepeek.feature.discovery.data.mapper.toCatalogEntry
 import com.coffeepeek.feature.discovery.data.mapper.toContent
 import com.coffeepeek.feature.discovery.data.mapper.toDomain
@@ -17,6 +16,8 @@ import com.coffeepeek.feature.discovery.domain.model.DiscoveryFilters
 import com.coffeepeek.feature.discovery.domain.model.FailureKind
 import com.coffeepeek.feature.discovery.domain.model.MapBounds
 import com.coffeepeek.feature.discovery.domain.model.MapContent
+import com.coffeepeek.feature.discovery.domain.model.PriceLevel
+import com.coffeepeek.feature.discovery.domain.model.ShopKind
 import com.coffeepeek.feature.discovery.domain.model.Paged
 import com.coffeepeek.feature.discovery.domain.model.ShopQuery
 import com.coffeepeek.feature.discovery.domain.model.ShopSummary
@@ -37,8 +38,8 @@ private const val SHOP_ZOOM = 22
 private const val MAX_PAGE_SIZE = 100
 
 /**
- * [client] is the authenticated API client. [favoriteIds] are the favorite shops of the account: the plain search takes its favorite flags from them (a failure
- * counts as none). [roasters] are the roasters for the filter list; the application owns that catalog (it is cached on disk), so this module does not read it.
+ * [client] is the authenticated API client. [favoriteIds] are the favorite shops of the account: search merges them with server favorite flags (a failing snapshot
+ * counts as empty). [roasters] are the roasters for the filter list; the application owns that catalog (it is cached on disk), so this module does not read it.
  */
 fun createDiscoveryRepository(
     client: HttpClient,
@@ -61,35 +62,21 @@ private class RemoteDiscoveryRepository(
         if (query.page < 1 || query.pageSize !in 1..MAX_PAGE_SIZE) throw DiscoveryFailure(FailureKind.Other)
         val favorites = favorites()
         val origin = query.origin
-        if (origin == null) plain(query, favorites)
-        else {
-            if (!origin.isValid) throw DiscoveryFailure(FailureKind.Other)
-            nearby(query, OriginDto(origin.latitude, origin.longitude), favorites)
-        }
+        if (origin != null && !origin.isValid) throw DiscoveryFailure(FailureKind.Other)
+        searchPage(query, origin?.let { OriginDto(it.latitude, it.longitude) }, favorites)
     }
 
-    private suspend fun plain(query: ShopQuery, favorites: Set<String>): Paged<ShopSummary> {
+    private suspend fun searchPage(query: ShopQuery, origin: OriginDto?, favorites: Set<String>): Paged<ShopSummary> {
         val filters = query.filters
-        val dto = backend.plain(
-            PlainSearch(
-                query = searchText(query.text.orEmpty()), city = filters.cityId, type = filters.kind?.apiName, roasters = filters.roasterIds.toList(),
-                equipments = filters.equipmentIds.toList(), beans = filters.beanIds.toList(), brewMethods = filters.brewMethodIds.toList(), tags = filters.tagIds.toList(),
-                priceRange = filters.priceLevel?.name, minRating = filters.minRating, page = query.page, pageSize = query.pageSize,
-            ),
-        ).getOrThrow()
-        return Paged(dto.coffeeShops.map { it.toDomain(favorites) }, dto.totalItems, dto.totalPages, dto.currentPage)
-    }
-
-    private suspend fun nearby(query: ShopQuery, origin: OriginDto, favorites: Set<String>): Paged<ShopSummary> {
-        val filters = query.filters
-        val dto = backend.nearby(
-            NearbyRequestDto(
-                filters = NearbyFiltersDto(
-                    origin = origin, city = filters.cityId, tags = filters.tagIds.toList(), roasters = filters.roasterIds.toList(),
+        val dto = backend.search(
+            ShopSearchRequestDto(
+                filters = ShopSearchFiltersDto(
+                    origin = origin, radiusKm = if (origin != null) 3 else null, city = filters.cityId, tags = filters.tagIds.toList(), roasters = filters.roasterIds.toList(),
                     equipments = filters.equipmentIds.toList(), beans = filters.beanIds.toList(), brewMethods = filters.brewMethodIds.toList(),
                     isOpen = true.takeIf { filters.openOnly }, isNew = true.takeIf { filters.newOnly }, visitedOnly = filters.visitedOnly,
-                    favoritesOnly = filters.favoritesOnly, minRating = filters.minRating, priceRange = filters.priceLevel?.name, type = filters.kind?.apiName,
+                    favoritesOnly = filters.favoritesOnly, minRating = filters.minRating, priceRange = filters.priceLevel.searchValue(), type = filters.kind.searchValue(),
                 ),
+                sort = if (origin != null) "distance_asc" else null,
                 page = query.page, pageSize = query.pageSize, q = searchText(query.text.orEmpty()),
             ),
         ).getOrThrow()
@@ -145,4 +132,19 @@ private class RemoteDiscoveryRepository(
     } catch (_: Exception) {
         emptySet()
     }
+}
+
+private fun ShopKind?.searchValue(): String? = when (this) {
+    ShopKind.Specialty -> "specialty"
+    ShopKind.CoffeeBar -> "coffee-bar"
+    ShopKind.Cafe -> "cafe"
+    null -> null
+}
+
+private fun PriceLevel?.searchValue(): String? = when (this) {
+    PriceLevel.Cheap -> "cheap"
+    PriceLevel.Moderate -> "moderate"
+    // shortcut: the API has three price bands; keep legacy Luxury in expensive until the fourth UI band is retired.
+    PriceLevel.Expensive, PriceLevel.Luxury -> "expensive"
+    null -> null
 }

@@ -42,13 +42,6 @@ internal data class PhotoUrlsDto(@SerialName("card") val card: String? = null)
 @Serializable
 internal data class PhotoDto(@SerialName("fullUrl") val fullUrl: String? = null, @SerialName("urls") val urls: PhotoUrlsDto? = null)
 
-@Serializable
-internal data class LocationDto(
-    @SerialName("address") val address: String? = null,
-    @SerialName("latitude") val latitude: Double? = null,
-    @SerialName("longitude") val longitude: Double? = null,
-)
-
 /** A catalog item, as a list of the catalogs, a tag, a roaster or a brew method of a shop row. */
 @Serializable
 internal data class NamedDto(
@@ -64,36 +57,7 @@ internal data class NamedDto(
 internal data class CityDto(@SerialName("address") val address: AddressDto, @SerialName("name") val name: String = "")
 
 @Serializable
-internal data class ShopRowDto(
-    @SerialName("address") val address: AddressDto,
-    @SerialName("name") val name: String = "",
-    @SerialName("photos") val photos: List<PhotoDto> = emptyList(),
-    @SerialName("rating") val rating: Double = 0.0,
-    @SerialName("checkInCount") @Serializable(with = FlexibleIntSerializer::class) val checkInCount: Int = 0,
-    @SerialName("isVisited") val isVisited: Boolean = false,
-    @SerialName("isNew") val isNew: Boolean = false,
-    @SerialName("isOpen") val isOpen: Boolean = false,
-    @SerialName("priceRange") val priceRange: JsonElement? = null,
-    @SerialName("type") val type: JsonElement? = null,
-    @SerialName("coffeeFocus") val coffeeFocus: JsonElement? = null,
-    @SerialName("location") val location: LocationDto? = null,
-    @SerialName("beans") val beans: List<NamedDto> = emptyList(),
-    @SerialName("roasters") val roasters: List<NamedDto> = emptyList(),
-    @SerialName("brewMethods") val brewMethods: List<NamedDto> = emptyList(),
-    @SerialName("tags") val tags: JsonElement? = null,
-    @SerialName("shopTags") val shopTags: JsonElement? = null,
-)
-
-@Serializable
-internal data class ShopListDto(
-    @SerialName("coffeeShops") val coffeeShops: List<ShopRowDto> = emptyList(),
-    @SerialName("currentPage") val currentPage: Int = 1,
-    @SerialName("totalItems") val totalItems: Int = 0,
-    @SerialName("totalPages") val totalPages: Int = 0,
-)
-
-@Serializable
-internal data class NearbyRowDto(
+internal data class ShopSearchRowDto(
     @SerialName("address") val address: AddressDto,
     @SerialName("name") val name: String = "",
     @SerialName("addressLine") val addressLine: String? = null,
@@ -108,17 +72,17 @@ internal data class NearbyRowDto(
 )
 
 @Serializable
-internal data class NearbyPageDto(
-    @SerialName("items") val items: List<NearbyRowDto> = emptyList(),
+internal data class ShopSearchPageDto(
+    @SerialName("items") val items: List<ShopSearchRowDto> = emptyList(),
     @SerialName("totalItems") val totalItems: Int = 0,
     @SerialName("totalPages") val totalPages: Int = 0,
     @SerialName("currentPage") val currentPage: Int = 1,
 )
 
 @Serializable
-internal data class NearbyRequestDto(
-    @SerialName("filters") val filters: NearbyFiltersDto,
-    @SerialName("sort") val sort: String = "distance_asc",
+internal data class ShopSearchRequestDto(
+    @SerialName("filters") val filters: ShopSearchFiltersDto,
+    @EncodeDefault(EncodeDefault.Mode.NEVER) @SerialName("sort") val sort: String? = null,
     @SerialName("page") val page: Int,
     @SerialName("pageSize") val pageSize: Int,
     // The gateway rejects a null or blank q: it is left out without a text.
@@ -126,9 +90,9 @@ internal data class NearbyRequestDto(
 )
 
 @Serializable
-internal data class NearbyFiltersDto(
-    @SerialName("origin") val origin: OriginDto,
-    @SerialName("radiusKm") val radiusKm: Int = 3,
+internal data class ShopSearchFiltersDto(
+    @EncodeDefault(EncodeDefault.Mode.NEVER) @SerialName("origin") val origin: OriginDto? = null,
+    @EncodeDefault(EncodeDefault.Mode.NEVER) @SerialName("radiusKm") val radiusKm: Int? = null,
     @SerialName("city") val city: String? = null,
     @SerialName("tags") val tags: List<String> = emptyList(),
     @SerialName("roasters") val roasters: List<String> = emptyList(),

@@ -781,3 +781,31 @@ project.pbxproj остаётся вне коммитов (48+/41−).
   live backend, Native test execution и полный Xcode app build остаются gates.
   Ничего не устанавливалось/не запускалось, реальные аккаунты/данные/камера
   не затронуты. Полный legacy exit не завершён.
+
+## Синхронизация develop: единый POST поиска — 2026-10-26
+
+Parent checkpoint #195 обновлён первым: merge `5eefd288` включает develop
+`21d9ee9a` (POST migration + quick-filter reload + verification). После проверки
+этот parent передаётся в дочерний #201; новая реализация поиска поверх готового
+исправления не создаётся. Main `16724b7e` уже в истории.
+
+- Обычный и nearby поиск используют POST /api/v1/coffee-shops/search; без origin
+  radius/sort опущены, с origin — distance_asc и 3 км. Обновлены DTO/mapper,
+  строковые type/price значения, quick-filter reload, карта без координат в
+  search row и локальные Sandbox fixtures. Removed GET/старый discovery POST
+  не восстанавливаются. Это код develop, а не новая feature в legacy modules.
+- Автоматическое слияние не оставило конфликтов, но потеряло Coordinates import
+  в ранее перенесённом DiscoveryAdapters: первый прогон упал на compile Debug/
+  Sandbox. Import восстановлен в composition, domain зависимости не расширены.
+  Исходный failure сохранён, не замещён записью успешного повтора.
+- Повтор (1m06s): **178 unit/contract tests / 23 suites**, 0 failures/errors/skips:
+  Discovery data 19 / 1, impl 66 / 6; legacy network contracts 8 / 2, data
+  mapper contracts 4 / 2; app subset 81 / 12. Неизменённые tasks могут быть
+  UP-TO-DATE. Оба Android APK и runtime-class guards/Sandbox isolation прошли;
+  iOS Arm64 production compile прошёл. Simulator link на parent не повторялся.
+- Parent APK SHA-256: Debug `c283eae1b153d2cbb4e7dee2dcfa61904cdf5208db8faf8ff0943037184ad427`;
+  Sandbox `70e1059da81792ac013c680a0d2f12ac7f6049dfbd46ec46a8702a31a4df765d`.
+- Gradle последовательно, --max-workers=6. Никаких app/device запусков, account
+  writes, UI/instrumentation tests или новых test hosts. Полный Xcode/Swift build,
+  Native execution и live backend acceptance этим прогоном не подтверждены.
+  Пользовательский project.pbxproj сохраняется вне коммитов (48+/41−).

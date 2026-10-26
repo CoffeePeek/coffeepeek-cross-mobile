@@ -275,7 +275,7 @@ internal class MapViewModel(
             if (currentState.query != text) return@launch
             result.onSuccess { page ->
                 run.results(page.totalCount)
-                updateState { copy(suggestions = page.items.filter { it.coordinates != null }, isSearchLoading = false) }
+                updateState { copy(suggestions = page.items, isSearchLoading = false) }
             }.onFailure { error ->
                 run.failed(error)
                 updateState { copy(isSearchLoading = false, searchFailed = true) }
@@ -290,10 +290,31 @@ internal class MapViewModel(
 
     private fun selectSuggestion(shopId: String) {
         val shop = currentState.suggestions.firstOrNull { it.id == shopId } ?: return
-        val marker = shop.toMarker() ?: return
+        queryJob?.cancel()
+        val marker = shop.toMarker()
+        if (marker != null) showSuggestion(marker)
+        else queryJob = viewModelScope.launch { resolveSuggestion(shop) }
+    }
+
+    private suspend fun resolveSuggestion(shop: ShopSummary) {
+        val query = currentState.query
+        updateState { copy(isSearchLoading = true, searchFailed = false) }
+        val result = detailsCache[shop.id]?.let { Result.success(it) } ?: shopDetails.details(shop.id)
+        currentCoroutineContext().ensureActive()
+        if (currentState.query != query) return
+        val details = result.getOrNull()
+        val coordinates = details?.coordinates?.takeIf { it.isValid }
+        if (details == null || coordinates == null) {
+            updateState { copy(isSearchLoading = false, searchFailed = true) }
+            return
+        }
+        detailsCache[shop.id] = details
+        showSuggestion(MapMarker(shop.id, shop.title, coordinates, shop.kind))
+    }
+
+    private fun showSuggestion(marker: MapMarker) {
         selectionFromSearch = true
         analytics.mapInteracted(MapInteraction.SearchSelected)
-        queryJob?.cancel()
         updateState { copy(query = "", suggestions = emptyList(), isSearchLoading = false, searchFailed = false, showSuggestions = false, markers = (markers + marker).distinctBy { it.id }) }
         selectShop(marker)
         moveCamera(marker.coordinates, FOCUS_ZOOM, PAUSE_AFTER_MOVE_MS)

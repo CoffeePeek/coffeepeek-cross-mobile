@@ -13,6 +13,7 @@ import com.coffeepeek.feature.discovery.api.DiscoveryFavorites
 import com.coffeepeek.feature.discovery.api.DiscoveryShopDetails
 import com.coffeepeek.feature.discovery.api.MapShopDetails
 import com.coffeepeek.feature.discovery.domain.model.CatalogEntry
+import com.coffeepeek.feature.discovery.domain.model.Coordinates
 import com.coffeepeek.feature.discovery.domain.model.CityEntry
 import com.coffeepeek.feature.discovery.domain.model.ShopSummary
 import com.coffeepeek.feature.favorites.domain.model.FavoriteShop
@@ -70,6 +71,11 @@ internal class ShopDiscoveryDetails(private val shops: ShopRepository) : Discove
             reviewCount = details.shop.reviewCount,
             isOpen = details.shop.isOpen,
             hours = formatMapHoursSummary(details.schedules),
+            coordinates = details.location?.let { point ->
+                val lat = point.latitude
+                val lon = point.longitude
+                if (lat != null && lon != null) Coordinates(lat, lon).takeIf { it.isValid } else null
+            },
         )
     }
 }

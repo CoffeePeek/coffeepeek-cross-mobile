@@ -8,7 +8,8 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class ShopSearchRequestDto(
     val filters: ShopSearchFiltersDto,
-    val sort: String = "distance_asc",
+    @EncodeDefault(EncodeDefault.Mode.NEVER)
+    val sort: String? = null,
     val page: Int,
     val pageSize: Int,
     // Gateway rejects null and blank q; omit it when there is no text query.
@@ -18,8 +19,10 @@ data class ShopSearchRequestDto(
 
 @Serializable
 data class ShopSearchFiltersDto(
-    val origin: ShopSearchOriginDto,
-    val radiusKm: Int = 3,
+    @EncodeDefault(EncodeDefault.Mode.NEVER)
+    val origin: ShopSearchOriginDto? = null,
+    @EncodeDefault(EncodeDefault.Mode.NEVER)
+    val radiusKm: Int? = null,
     val city: String? = null,
     val tags: List<String> = emptyList(),
     val roasters: List<String> = emptyList(),
