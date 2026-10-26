@@ -78,10 +78,10 @@ internal class SearchViewModel(
             SearchAction.CloseFilters -> updateState { copy(showFilters = false) }
             is SearchAction.ApplyFilters -> applyFilters(action.filters)
             is SearchAction.SetKind -> changeFilters { copy(kind = action.kind) }
-            SearchAction.ToggleOpen -> changeFilters(reloadOnlyWithNearby = true) { copy(openOnly = !openOnly) }
-            SearchAction.ToggleNew -> changeFilters(reloadOnlyWithNearby = true) { copy(newOnly = !newOnly) }
-            SearchAction.ToggleVisited -> if (guarded(DiscoveryGate.VisitedFilter)) changeFilters(reloadOnlyWithNearby = true) { copy(visitedOnly = !visitedOnly) }
-            SearchAction.ToggleFavorites -> if (guarded(DiscoveryGate.FavoritesFilter)) changeFilters(reloadOnlyWithNearby = true) { copy(favoritesOnly = !favoritesOnly) }
+            SearchAction.ToggleOpen -> changeFilters { copy(openOnly = !openOnly) }
+            SearchAction.ToggleNew -> changeFilters { copy(newOnly = !newOnly) }
+            SearchAction.ToggleVisited -> if (guarded(DiscoveryGate.VisitedFilter)) changeFilters { copy(visitedOnly = !visitedOnly) }
+            SearchAction.ToggleFavorites -> if (guarded(DiscoveryGate.FavoritesFilter)) changeFilters { copy(favoritesOnly = !favoritesOnly) }
             SearchAction.ToggleNearby -> toggleNearby()
             SearchAction.LocationGranted -> location.refresh()
             SearchAction.LocationDenied -> analytics.geolocation(PLACEMENT, userTriggered = false, outcome = GeolocationOutcome.Unavailable)
@@ -171,11 +171,11 @@ internal class SearchViewModel(
         loadShops(reset = true)
     }
 
-    private fun changeFilters(reloadOnlyWithNearby: Boolean = false, transform: DiscoveryFilters.() -> DiscoveryFilters) {
+    private fun changeFilters(transform: DiscoveryFilters.() -> DiscoveryFilters) {
         val before = currentState.filters
         updateState { copy(filters = filters.transform()) }
         trackChange(before)
-        if (!reloadOnlyWithNearby || currentState.filters.nearbyOnly) loadShops(reset = true)
+        loadShops(reset = true)
     }
 
     private fun toggleNearby() {

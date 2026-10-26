@@ -159,21 +159,19 @@ class FeedViewModelParityTest {
     }
 
     @Test
-    fun quickFiltersFilterTheLoadedPageLocallyAndReloadOnlyWithNearby() = parity(
-        handler = { pageOf(listOf(shop("a", favorite = true, open = true), shop("b", visited = true), shop("c", new = true))) },
-    ) {
-        requests.receive(); awaitShops()
-        vm.toggleFavoritesOnly(); vm.uiState.first { it.filters.favoritesOnly }
-        assertEquals(listOf("a"), vm.uiState.value.visibleShops.map { it.id })
-        vm.toggleFavoritesOnly(); vm.toggleVisitedOnly(); vm.uiState.first { it.filters.visitedOnly && !it.filters.favoritesOnly }
-        assertEquals(listOf("b"), vm.uiState.value.visibleShops.map { it.id })
-        vm.toggleNewOnly(); vm.toggleOpenOnly(); vm.uiState.first { it.filters.newOnly && it.filters.openOnly }
-        assertTrue(vm.uiState.value.visibleShops.isEmpty())
-        assertNull(requests.tryReceive().getOrNull())
-
-        vm.onUserLocationChanged(GeoPoint(53.9, 27.56))
-        vm.toggleNearbyOnly(); assertTrue(requests.receive().origin != null)
-        vm.toggleOpenOnly(); assertFalse(requests.receive().openOnly)
+    fun everyQuickFilterReloadsTheServerSearchWithoutLocation() = parity {
+        requests.receive()
+        awaitShops()
+        vm.toggleOpenOnly()
+        assertTrue(requests.receive().openOnly)
+        vm.toggleNewOnly()
+        assertTrue(requests.receive().newOnly)
+        vm.toggleVisitedOnly()
+        assertTrue(requests.receive().visitedOnly)
+        vm.toggleFavoritesOnly()
+        val filters = requests.receive()
+        assertTrue(filters.favoritesOnly)
+        assertNull(filters.origin)
     }
 
     @Test

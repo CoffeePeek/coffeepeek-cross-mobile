@@ -61,10 +61,7 @@ class DiscoveryRepositoryTest {
         assertEquals(2, sent["page"]!!.jsonPrimitive.int)
         assertEquals(20, sent["pageSize"]!!.jsonPrimitive.int)
         assertOrdinaryFilters(sent)
-        assertEquals(45, page.totalCount)
-        assertEquals(3, page.totalPages)
-        assertEquals(2, page.currentPage)
-        assertTrue(page.hasMore)
+        assertEquals(Paged<ShopSummary>(emptyList(), 45, 3, 2), page)
     }
 
     private fun assertOrdinaryFilters(sent: JsonObject) {
@@ -94,13 +91,15 @@ class DiscoveryRepositoryTest {
         assertFalse("radiusKm" in sent["filters"]!!.jsonObject)
     }
 
-    @Test fun ordinaryCardsReadThePostResponseAndAccountOrServerFavorites() = runBlocking {
-        favorites = { setOf("cafe") }
-        reply = { ok("""{"items":[
+    private val ordinaryCards = """{"items":[
             {"address":{"slug":"cafe"},"name":"Cafe","rating":4.5,"checkInCount":"12","isOpen":true,"isVisited":true,
              "addressLine":"Street 1","coverPhoto":{"fullUrl":"https://img/full","urls":{"card":"https://img/card"}},
              "tags":[{"name":"Wi-Fi"},{"name":"Pets"},{"name":"Quiet"},{"name":"Garden"}]},
-            {"address":{"slug":"bare"},"name":"Bare","rating":0,"isFavorite":true}],"totalItems":2,"totalPages":1}""") }
+            {"address":{"slug":"bare"},"name":"Bare","rating":0,"isFavorite":true}],"totalItems":2,"totalPages":1}"""
+
+    @Test fun ordinaryCardsReadThePostResponseAndAccountOrServerFavorites() = runBlocking {
+        favorites = { setOf("cafe") }
+        reply = { ok(ordinaryCards) }
         val (full, bare) = repository().search(ShopQuery()).getOrThrow().items
         assertEquals("cafe", full.id)
         assertEquals(4.5, full.rating)
