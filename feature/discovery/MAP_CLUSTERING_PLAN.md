@@ -234,3 +234,17 @@ Back/tab return is not certified yet. Sandbox was last reviewed in light theme.
 No automated UI, Compose instrumentation or screenshot test infrastructure was
 created or run; review images/dumps stay local outside tracked sources. Large
 font/window, screen reader execution, native iOS and live backend gates remain.
+
+## Develop publication checks — 2026-10-26
+
+Applied the location-permission change alone onto `origin/develop` at `21d9ee9a`;
+verified code revision `0926a516`. The existing develop map-density and POST
+search changes are retained. The source checkout's unrelated Android packaging
+and run-mode edits are excluded.
+
+All 65 Discovery implementation unit tests executed with zero failures, errors,
+skips or failing test retries. `assembleDirectSandbox`, `assembleDirectDebug`,
+both packaged DEX runtime-class checks and Sandbox isolation passed in 2m 24s.
+Sandbox build identity: `com.coffeepeek.sandbox`, `1.1.1.2464-sandbox` / 2464.
+No APK was installed, no device was used and no real account was accessed;
+the manual permission-dialog and native gesture gates above remain open.
