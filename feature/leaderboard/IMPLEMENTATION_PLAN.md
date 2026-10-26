@@ -1,5 +1,76 @@
 # Activity leaderboard
 
+## Period-switch flicker and repeated reads — 2026-10-26
+
+Follow-up to the review of `7f318348`: the previous geometry fix did not prevent
+the preview from replacing all rows with a loader. Selecting an uncached period
+also cleared the full list; `ON_RESUME` refreshed whenever the lazy item returned
+to composition. Remove that automatic refresh and keep the last rows while the
+first request for a different period runs, with a small header loading indicator.
+Replace results atomically after success. On failure, do not present the previous
+period as the selected period's result; keep same-period refresh failures retryable.
+
+Keep at most one week and one month result in this lifecycle-owned ViewModel.
+Switching back and reopening the sheet reuse them. Explicit feed refresh and every
+privacy-context invalidation clear both, without changing HTTP no-store, public
+profile navigation, cancellation or server scoring. Results are refreshed by the
+feed refresh gesture, not polling/resume; there is no persistent cache or TTL.
+
+The user then requested a roughly 10% lower period control. Use a 44dp minimum
+segment in this feature instead of 48dp: including the existing 2dp container
+padding on each side, the capsule becomes 48dp rather than 52dp (about 8% lower).
+Text size remains unchanged and the minimum still allows larger text to grow.
+Expose that minimum on the existing shared primitive with its 48dp default;
+other segmented-control consumers retain their current size. Add compact paired
+previews beside the shared component and retain the feature's paired previews.
+
+Verification plan: delayed switch retention, repeated switches/sheet reopen,
+duplicate refresh suppression, refresh invalidation of both periods, privacy
+invalidation of both periods, failure/retry and non-cooperative late-response
+regressions. Compile paired updating light/dark previews and shared iOS KLIB;
+assemble Debug/Sandbox with DEX/isolation checks. Manually review the slow local
+Sandbox scenario on the agreed Pixel 9, if connected and unlocked. No automated
+UI/instrumented/screenshot tests or live backend writes.
+
+### Verification results
+
+Verified on 2026-10-26, `7f318348` plus this follow-up's source changes:
+
+- Cache/retention build: **BUILD SUCCESSFUL**, 3m09s, 2025 tasks / 140 executed.
+  Final compact-control build: **BUILD SUCCESSFUL**, 1m29s, 2011 tasks / 150
+  executed. Both used `--max-workers=6`, with no concurrent Gradle runs.
+  Debug/Sandbox assembly, packaged DEX checks, Sandbox isolation and shared iOS
+  Simulator Arm64 KLIB compilation passed; no failed builds/tests or retries.
+- **60 selected unit/contract results**, zero failures/errors/skips: data 7,
+  leaderboard MVI 15, Community 33, app privacy context 2 and Sandbox HTTP 3.
+  Valid up-to-date results were reused. The new regressions cover retention,
+  both-period reuse, sheet reopen, duplicate refresh, both-period refresh/privacy
+  invalidation, failed uncached period/retry and a late non-cooperative response
+  after returning to a cached period. A 60-second virtual idle adds no requests.
+- Updated only `directSandbox` / `com.coffeepeek.sandbox`, version
+  `1.1.1.2461-sandbox` / code 2461, in place on the agreed Pixel 9 / API 37.
+  Verified package/entry/signature/version before installation. Final APK SHA-256:
+  `017c27731f1929a11969daffb3bb942560d78f208d80438c07cfe120456efc67`.
+  No downgrade, data clearing, uninstall, security/settings changes or live writes.
+- Manual final light-theme review: compact periods render in the feed and sheet,
+  retaining text size. With the local Slow scenario (900ms), the first month
+  request shows the previous 100-point rows plus a small header loader; the
+  completed response shows 200 points. No blank-list replacement was observed.
+  Local screenshots were inspected and remain outside tracked sources. Restored
+  the local scenario to Ready afterwards and left the feed showing loaded rows.
+- Captured attempts interrupted by system UI or moved to the explanatory footer
+  were excluded as period-switch evidence. The repeated-cache/request-count
+  assertions above are unit results, not a claim of device network tracing.
+- `git diff --check` and caller/import review pass. Other segmented-control
+  consumers retain their default height. Updated light/dark loading and compact
+  previews compile; they were not rendered. Existing Preview/AGP/Native warnings
+  remain. Studio MCP is unavailable; no IDE inspection is claimed.
+- Final dark theme, large font/narrow-window, TalkBack, native iOS runtime and live
+  API acceptance remain unverified. Data freshness now follows explicit feed
+  refresh/context invalidation; there is no periodic or resume-triggered refresh.
+  No automated UI/instrumented/screenshot tests were added or run. Original local
+  release ABI/run-mode edits remain excluded from this feature's changes.
+
 ## Design corrections — 2026-10-26
 
 Follow-up scope from the user's Pixel 9 review of `e6e220b0` / Sandbox 2459:

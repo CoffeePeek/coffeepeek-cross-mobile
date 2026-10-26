@@ -71,7 +71,7 @@ class LeaderboardViewModelTest {
         assertFalse(vm.state.value.loadFailed)
     }
 
-    @Test fun switchingPeriodClearsOldRowsAndOwnRankWhileTheNewRequestRuns() = runTest(dispatcher) {
+    @Test fun switchingPeriodKeepsRowsAndOwnRankUntilTheNewResultArrives() = runTest(dispatcher) {
         val repository = FakeLeaderboardRepository()
         val vm = model(repository)
         runCurrent()
@@ -79,10 +79,111 @@ class LeaderboardViewModelTest {
         repository.read = { _ -> pending.await() }
         vm.onAction(LeaderboardAction.SelectPeriod(LeaderboardPeriod.Month))
         runCurrent()
-        assertNull(vm.state.value.data)
+        assertEquals(LeaderboardPeriod.Week, vm.state.value.data?.period)
+        assertEquals(21, vm.state.value.data?.me?.points)
+        assertEquals(LeaderboardPeriod.Month, vm.state.value.period)
         assertTrue(vm.state.value.isLoading)
         pending.complete(Result.success(page(LeaderboardPeriod.Month)))
         runCurrent()
+        assertEquals(LeaderboardPeriod.Month, vm.state.value.data?.period)
+        assertFalse(vm.state.value.isLoading)
+    }
+
+    @Test fun loadedPeriodsAndFullListReopeningDoNotRequestAgain() = runTest(dispatcher) {
+        val repository = FakeLeaderboardRepository()
+        val vm = model(repository)
+        runCurrent()
+        vm.onAction(LeaderboardAction.SelectPeriod(LeaderboardPeriod.Month))
+        runCurrent()
+        repeat(3) {
+            vm.onAction(LeaderboardAction.SelectPeriod(LeaderboardPeriod.Week))
+            vm.onAction(LeaderboardAction.SelectPeriod(LeaderboardPeriod.Month))
+            vm.onAction(LeaderboardAction.SetExpanded(true))
+            vm.onAction(LeaderboardAction.SetExpanded(false))
+            runCurrent()
+        }
+        advanceTimeBy(60_000)
+        runCurrent()
+        assertEquals(listOf(LeaderboardPeriod.Week, LeaderboardPeriod.Month), repository.calls)
+        assertEquals(LeaderboardPeriod.Month, vm.state.value.data?.period)
+        assertFalse(vm.state.value.isLoading)
+    }
+
+    @Test fun duplicateRefreshIsIgnoredAndExplicitRefreshInvalidatesBothPeriods() = runTest(dispatcher) {
+        val repository = FakeLeaderboardRepository()
+        val vm = model(repository)
+        runCurrent()
+        vm.onAction(LeaderboardAction.SelectPeriod(LeaderboardPeriod.Month))
+        runCurrent()
+        val pending = CompletableDeferred<Result<LeaderboardPage>>()
+        repository.read = { pending.await() }
+        repeat(2) { vm.onAction(LeaderboardAction.Refresh) }
+        runCurrent()
+        assertEquals(3, repository.calls.size)
+        assertEquals(LeaderboardPeriod.Month, vm.state.value.data?.period)
+        pending.complete(Result.success(page(LeaderboardPeriod.Month)))
+        runCurrent()
+        repository.read = { Result.success(page(it)) }
+        vm.onAction(LeaderboardAction.SelectPeriod(LeaderboardPeriod.Week))
+        runCurrent()
+        assertEquals(listOf(LeaderboardPeriod.Week, LeaderboardPeriod.Month, LeaderboardPeriod.Month,
+            LeaderboardPeriod.Week), repository.calls)
+    }
+
+    @Test fun privacyChangeInvalidatesBothCachedPeriods() = runTest(dispatcher) {
+        val changes = MutableSharedFlow<Boolean>(replay = 1).apply { tryEmit(true) }
+        val repository = FakeLeaderboardRepository()
+        val vm = model(repository, changes)
+        runCurrent()
+        vm.onAction(LeaderboardAction.SelectPeriod(LeaderboardPeriod.Month))
+        runCurrent()
+        changes.emit(false)
+        runCurrent()
+        assertNull(vm.state.value.data)
+        repository.read = { Result.success(page(it).copy(items = listOf(row("new-account")))) }
+        changes.emit(true)
+        runCurrent()
+        vm.onAction(LeaderboardAction.SelectPeriod(LeaderboardPeriod.Week))
+        runCurrent()
+        assertEquals(4, repository.calls.size)
+        assertEquals("new-account", vm.state.value.data?.items?.single()?.authorId)
+    }
+
+    @Test fun failedUncachedPeriodDoesNotPresentPreviousPeriodAsItsResult() = runTest(dispatcher) {
+        val repository = FakeLeaderboardRepository()
+        val vm = model(repository)
+        runCurrent()
+        repository.read = { Result.failure(IllegalStateException("offline")) }
+        vm.onAction(LeaderboardAction.SelectPeriod(LeaderboardPeriod.Month))
+        runCurrent()
+        assertNull(vm.state.value.data)
+        assertTrue(vm.state.value.loadFailed)
+        repository.read = { Result.success(page(it)) }
+        vm.onAction(LeaderboardAction.Retry)
+        runCurrent()
+        assertEquals(LeaderboardPeriod.Month, vm.state.value.data?.period)
+        assertFalse(vm.state.value.loadFailed)
+    }
+
+    @Test fun returningToCachedWeekRejectsLateNonCooperativeMonth() = runTest(dispatcher) {
+        val repository = FakeLeaderboardRepository()
+        val vm = model(repository)
+        runCurrent()
+        val pending = CompletableDeferred<Unit>()
+        repository.read = { period ->
+            withContext(NonCancellable) { pending.await() }
+            Result.success(page(period))
+        }
+        vm.onAction(LeaderboardAction.SelectPeriod(LeaderboardPeriod.Month))
+        runCurrent()
+        vm.onAction(LeaderboardAction.SelectPeriod(LeaderboardPeriod.Week))
+        runCurrent()
+        assertEquals(LeaderboardPeriod.Week, vm.state.value.data?.period)
+        assertFalse(vm.state.value.isLoading)
+        pending.complete(Unit)
+        runCurrent()
+        assertEquals(LeaderboardPeriod.Week, vm.state.value.data?.period)
+        assertEquals(2, repository.calls.size)
     }
 
     @Test fun limitsResultsToThirtyWhileKeepingOwnRankOutsideTheTop() = runTest(dispatcher) {

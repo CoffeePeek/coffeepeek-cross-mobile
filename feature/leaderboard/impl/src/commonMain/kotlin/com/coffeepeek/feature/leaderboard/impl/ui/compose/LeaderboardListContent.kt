@@ -6,8 +6,10 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.core.designsystem.component.CoffeePeekContentCard
+import com.coffeepeek.core.designsystem.component.CoffeePeekLoader
 import com.coffeepeek.core.designsystem.component.CoffeePeekSwipeDismissModalBottomSheet
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
@@ -61,18 +63,27 @@ internal fun LeaderboardListContent(state: LeaderboardState, onAction: (Leaderbo
 @Composable
 private fun LeaderboardListHeader(state: LeaderboardState, onAction: (LeaderboardAction) -> Unit) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Text(stringResource(Res.string.leaderboard_title), style = MaterialTheme.typography.titleLarge)
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(stringResource(Res.string.leaderboard_title), style = MaterialTheme.typography.titleLarge,
+                modifier = Modifier.weight(1f))
+            if (state.isLoading && state.data != null) {
+                CoffeePeekLoader(stringResource(Res.string.leaderboard_loading), size = 16.dp)
+            }
+        }
         LeaderboardPeriods(state.period) { onAction(LeaderboardAction.SelectPeriod(it)) }
     }
 }
 
 @Composable
-private fun LeaderboardListPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
+private fun LeaderboardListPreview(dark: Boolean, refreshing: Boolean = false) = CoffeePeekTheme(darkTheme = dark) {
     val row = LeaderboardEntry(1, "preview", "Maria", null, "maria", 21, 3, 2, 5)
     val data = LeaderboardPage(LeaderboardPeriod.Week, "2026-10-26", "2026-11-02", "Europe/Minsk",
         listOf(row), 1, 1, 30, row)
-    Surface { LeaderboardListContent(LeaderboardState(data = data, isLoading = false), {}, { _, _ -> }) }
+    Surface { LeaderboardListContent(LeaderboardState(period = if (refreshing) LeaderboardPeriod.Month else LeaderboardPeriod.Week,
+        data = data, isLoading = refreshing), {}, { _, _ -> }) }
 }
 
 @Preview @Composable private fun LeaderboardListLightPreview() = LeaderboardListPreview(false)
 @Preview @Composable private fun LeaderboardListDarkPreview() = LeaderboardListPreview(true)
+@Preview @Composable private fun LeaderboardListRefreshingLightPreview() = LeaderboardListPreview(false, true)
+@Preview @Composable private fun LeaderboardListRefreshingDarkPreview() = LeaderboardListPreview(true, true)

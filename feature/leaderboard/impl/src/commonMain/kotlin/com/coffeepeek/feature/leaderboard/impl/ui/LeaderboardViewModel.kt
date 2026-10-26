@@ -24,13 +24,17 @@ internal class LeaderboardViewModel(
     private var ready = false
     private var loadJob: Job? = null
     private var revision = 0L
+    private val pages = mutableMapOf<LeaderboardPeriod, LeaderboardPage>()
 
     init { onAction(LeaderboardAction.ObserveContext) }
 
     override suspend fun handleActionInternal(action: LeaderboardAction) {
         when (action) {
             LeaderboardAction.ObserveContext -> observeContext()
-            LeaderboardAction.Refresh -> if (ready) load()
+            LeaderboardAction.Refresh -> if (ready && loadJob == null) {
+                pages.clear()
+                load()
+            }
             LeaderboardAction.Retry -> if (ready && !currentState.isLoading) load()
             is LeaderboardAction.SelectPeriod -> selectPeriod(action.period)
             is LeaderboardAction.SetExpanded -> updateState { copy(expanded = action.expanded) }
@@ -43,24 +47,33 @@ internal class LeaderboardViewModel(
         observing = true
         contextChanges.collect { available ->
             ready = available
-            reset(currentState.period, closeSheet = true)
+            reset()
             if (ready) onAction(LeaderboardAction.Refresh)
         }
     }
 
-    private fun reset(period: LeaderboardPeriod, closeSheet: Boolean) {
+    private fun cancelLoad() {
         revision++
         loadJob?.cancel()
         loadJob = null
+    }
+
+    private fun reset() {
+        cancelLoad()
+        pages.clear()
         updateState {
-            LeaderboardState(period = period, expanded = expanded && !closeSheet, generation = generation + 1)
+            LeaderboardState(period = period, isLoading = ready, generation = generation + 1)
         }
     }
 
     private suspend fun selectPeriod(period: LeaderboardPeriod) {
         if (period == currentState.period) return
-        reset(period, closeSheet = false)
-        if (ready) load()
+        cancelLoad()
+        val cached = pages[period]
+        updateState {
+            copy(period = period, data = cached ?: data, isLoading = false, loadFailed = false, generation = generation + 1)
+        }
+        if (ready && cached == null) load()
     }
 
     private suspend fun load() {
@@ -79,7 +92,7 @@ internal class LeaderboardViewModel(
             if (request == revision) accept(result)
         } catch (cancelled: CancellationException) { throw cancelled }
         catch (_: Exception) {
-            if (request == revision) updateState { copy(loadFailed = true) }
+            if (request == revision) updateState { copy(data = data?.takeIf { it.period == period }, loadFailed = true) }
         } finally {
             if (request == revision) {
                 loadJob = null
@@ -90,7 +103,9 @@ internal class LeaderboardViewModel(
 
     private fun accept(result: LeaderboardPage) {
         check(result.period == currentState.period && result.page == 1)
-        updateState { copy(data = result.copy(items = result.items.take(LEADERBOARD_LIMIT)), loadFailed = false) }
+        val data = result.copy(items = result.items.take(LEADERBOARD_LIMIT))
+        pages[data.period] = data
+        updateState { copy(data = data, loadFailed = false) }
     }
 
     private suspend fun openProfile(authorId: String) {

@@ -24,7 +24,7 @@ internal fun LeaderboardStatus(state: LeaderboardState, onAction: (LeaderboardAc
     Column(Modifier.fillMaxWidth().padding(vertical = 12.dp).semantics { liveRegion = LiveRegionMode.Polite },
         horizontalAlignment = Alignment.CenterHorizontally) {
         when {
-            state.isLoading -> CoffeePeekLoader(contentDescription = stringResource(Res.string.leaderboard_loading))
+            state.isLoading && state.data == null -> CoffeePeekLoader(contentDescription = stringResource(Res.string.leaderboard_loading))
             state.loadFailed -> {
                 Text(stringResource(Res.string.leaderboard_error), color = MaterialTheme.colorScheme.onSurfaceVariant)
                 TextButton(onClick = { onAction(LeaderboardAction.Retry) }) {

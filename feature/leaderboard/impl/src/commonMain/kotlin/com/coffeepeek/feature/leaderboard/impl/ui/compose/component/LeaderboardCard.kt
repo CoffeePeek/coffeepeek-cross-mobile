@@ -13,6 +13,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.Dp
 import com.coffeepeek.core.designsystem.component.CoffeePeekContentCard
+import com.coffeepeek.core.designsystem.component.CoffeePeekLoader
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
@@ -35,7 +36,9 @@ internal fun LeaderboardCard(state: LeaderboardState, collapsed: Boolean, onActi
                 modifier = Modifier.weight(1f))
             TextButton(onClick = { onAction(LeaderboardAction.SetExpanded(true)) }) {
                 Text(stringResource(Res.string.leaderboard_all))
-                Icon(CoffeePeekIcons.ChevronRight, null, Modifier.size(16.dp))
+                if (state.isLoading && state.data != null) {
+                    CoffeePeekLoader(stringResource(Res.string.leaderboard_loading), size = 16.dp)
+                } else Icon(CoffeePeekIcons.ChevronRight, null, Modifier.size(16.dp))
             }
         }
         AnimatedVisibility(visible = !collapsed, enter = expandVertically(tween(180)), exit = shrinkVertically(tween(180))) {
@@ -51,7 +54,7 @@ internal fun LeaderboardCard(state: LeaderboardState, collapsed: Boolean, onActi
 private fun LeaderboardPreview(state: LeaderboardState, onAction: (LeaderboardAction) -> Unit, image: LeaderboardImage) {
     val rows = state.data?.items.orEmpty()
     Box(Modifier.fillMaxWidth().heightIn(min = leaderboardPreviewHeight()), contentAlignment = Alignment.Center) {
-        if (state.isLoading || state.loadFailed || rows.isEmpty()) {
+        if (state.loadFailed || rows.isEmpty()) {
             LeaderboardStatus(state, onAction)
         } else Column(Modifier.fillMaxWidth().align(Alignment.TopStart)) {
             rows.take(3).forEachIndexed { index, row ->
@@ -73,18 +76,21 @@ private fun leaderboardPreviewHeight(): Dp {
 }
 
 @Composable
-private fun LeaderboardCardPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
+private fun LeaderboardCardPreview(dark: Boolean, refreshing: Boolean = false) = CoffeePeekTheme(darkTheme = dark) {
     val rows = listOf(
         LeaderboardEntry(1, "a", "Maria", null, "maria", 21, 3, 2, 5),
         LeaderboardEntry(1, "b", "Имя участника", null, null, 21, 1, 2, 8),
         LeaderboardEntry(3, "c", "Очень длинное имя участника", null, null, 12, 2, 0, 3),
     )
     val data = LeaderboardPage(LeaderboardPeriod.Week, "2026-10-26", "2026-11-02", "Europe/Minsk", rows, 3, 1, 30, null)
-    LeaderboardCard(LeaderboardState(data = data, isLoading = false), false, {}, { _, _ -> })
+    LeaderboardCard(LeaderboardState(period = if (refreshing) LeaderboardPeriod.Month else LeaderboardPeriod.Week,
+        data = data, isLoading = refreshing), false, {}, { _, _ -> })
 }
 
 @Preview @Composable private fun LeaderboardCardLightPreview() = LeaderboardCardPreview(false)
 @Preview @Composable private fun LeaderboardCardDarkPreview() = LeaderboardCardPreview(true)
+@Preview @Composable private fun LeaderboardRefreshingLightPreview() = LeaderboardCardPreview(false, true)
+@Preview @Composable private fun LeaderboardRefreshingDarkPreview() = LeaderboardCardPreview(true, true)
 
 @Preview @Composable private fun LeaderboardCollapsedLightPreview() = CoffeePeekTheme(darkTheme = false) {
     LeaderboardCard(LeaderboardState(), true, {}, { _, _ -> })

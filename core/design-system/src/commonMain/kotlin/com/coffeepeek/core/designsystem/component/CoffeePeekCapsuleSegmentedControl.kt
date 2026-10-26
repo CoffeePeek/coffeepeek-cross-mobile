@@ -48,6 +48,7 @@ fun <T> CoffeePeekCapsuleSegmentedControl(
     scrollable: Boolean = false,
     selectedContainerColor: Color = MaterialTheme.colorScheme.surface,
     selectedContentColor: Color = MaterialTheme.colorScheme.onSurface,
+    minSegmentHeight: Dp = 48.dp,
 ) {
     require(options.isNotEmpty()) { "Segmented control requires options" }
     require(options.distinct().size == options.size) { "Options must be unique" }
@@ -61,23 +62,23 @@ fun <T> CoffeePeekCapsuleSegmentedControl(
             contentPadding = PaddingValues(4.dp),
         ) {
             items(options) { option ->
-                Segment(label(option), option == selected, enabled, { onSelected(option) }, Modifier, selectedContainerColor, selectedContentColor, labelPadding = 16.dp)
+                Segment(label(option), option == selected, enabled, { onSelected(option) }, Modifier, selectedContainerColor, selectedContentColor, minSegmentHeight, labelPadding = 16.dp)
             }
         }
     } else {
         Row(modifier = container.fillMaxWidth().padding(2.dp).selectableGroup()) {
             options.forEach { option ->
-                Segment(label(option), option == selected, enabled, { onSelected(option) }, Modifier.weight(1f), selectedContainerColor, selectedContentColor)
+                Segment(label(option), option == selected, enabled, { onSelected(option) }, Modifier.weight(1f), selectedContainerColor, selectedContentColor, minSegmentHeight)
             }
         }
     }
 }
 
 @Composable
-private fun Segment(text: String, isSelected: Boolean, enabled: Boolean, onClick: () -> Unit, modifier: Modifier, selectedContainerColor: Color, selectedContentColor: Color, labelPadding: Dp = 0.dp) {
+private fun Segment(text: String, isSelected: Boolean, enabled: Boolean, onClick: () -> Unit, modifier: Modifier, selectedContainerColor: Color, selectedContentColor: Color, minHeight: Dp, labelPadding: Dp = 0.dp) {
     Box(
         modifier = modifier
-            .heightIn(min = 48.dp)
+            .heightIn(min = minHeight)
             .clip(RoundedCornerShape(percent = 50))
             .background(if (isSelected) selectedContainerColor else Color.Transparent)
             .then(
@@ -108,11 +109,11 @@ private fun Segment(text: String, isSelected: Boolean, enabled: Boolean, onClick
 }
 
 @Composable
-private fun CoffeePeekCapsuleSegmentedControlPreviewContent(darkTheme: Boolean) = CoffeePeekTheme(darkTheme = darkTheme) {
+private fun CoffeePeekCapsuleSegmentedControlPreviewContent(darkTheme: Boolean, compact: Boolean = false) = CoffeePeekTheme(darkTheme = darkTheme) {
     var selected by remember { mutableStateOf("First") }
     Surface {
         CoffeePeekCapsuleSegmentedControl(listOf("First", "Second"), selected, { it }, { selected = it },
-            modifier = Modifier.padding(16.dp))
+            modifier = Modifier.padding(16.dp), minSegmentHeight = if (compact) 44.dp else 48.dp)
     }
 }
 
@@ -129,3 +130,5 @@ private fun CoffeePeekScrollableSegmentedControlPreviewContent(darkTheme: Boolea
 @Preview @Composable private fun CoffeePeekScrollableSegmentedControlDarkPreview() = CoffeePeekScrollableSegmentedControlPreviewContent(true)
 @Preview @Composable private fun CoffeePeekCapsuleSegmentedControlLightPreview() = CoffeePeekCapsuleSegmentedControlPreviewContent(false)
 @Preview @Composable private fun CoffeePeekCapsuleSegmentedControlDarkPreview() = CoffeePeekCapsuleSegmentedControlPreviewContent(true)
+@Preview @Composable private fun CoffeePeekCompactSegmentedControlLightPreview() = CoffeePeekCapsuleSegmentedControlPreviewContent(false, true)
+@Preview @Composable private fun CoffeePeekCompactSegmentedControlDarkPreview() = CoffeePeekCapsuleSegmentedControlPreviewContent(true, true)

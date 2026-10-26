@@ -2,8 +2,6 @@ package com.coffeepeek.feature.leaderboard.impl.ui.compose
 
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.coffeepeek.feature.leaderboard.api.LeaderboardImage
 import com.coffeepeek.feature.leaderboard.impl.ui.LeaderboardViewModel
@@ -23,9 +21,6 @@ internal fun LeaderboardScreen(vm: LeaderboardViewModel, refreshKey: Long, colla
     LaunchedEffect(refreshKey) {
         if (previousRefresh != refreshKey) vm.onAction(LeaderboardAction.Refresh)
         previousRefresh = refreshKey
-    }
-    LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
-        if (vm.state.value.data != null) vm.onAction(LeaderboardAction.Refresh)
     }
     LaunchedEffect(vm) {
         vm.events.collect { event ->
