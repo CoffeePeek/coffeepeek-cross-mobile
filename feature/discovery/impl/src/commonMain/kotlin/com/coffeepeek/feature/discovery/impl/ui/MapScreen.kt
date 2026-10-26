@@ -51,6 +51,7 @@ import com.coffeepeek.feature.discovery.api.DiscoveryHost
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import com.coffeepeek.feature.discovery.api.MapCanvasCallbacks
+import com.coffeepeek.feature.discovery.impl.map.canvasClusters
 import com.coffeepeek.feature.discovery.api.MapCanvasState
 import com.coffeepeek.feature.discovery.api.MapFocus
 import com.coffeepeek.feature.discovery.impl.map.MapAction
@@ -118,6 +119,7 @@ internal fun MapContent(
             MapCanvasState(
                 state.markers, if (state.showZones && !isPreview) state.zones else emptyList(), state.selectedShop?.id, state.camera, state.myLocationRequest, isPreview,
                 canvasSize = canvasSize,
+                clusters = state.canvasClusters(isPreview),
             ),
             canvasCallbacks,
             Modifier.align(Alignment.Center),

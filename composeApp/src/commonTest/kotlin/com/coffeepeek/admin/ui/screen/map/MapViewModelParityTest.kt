@@ -77,7 +77,7 @@ class MapViewModelParityTest {
     }
 
     @Test
-    fun theNearbyCarouselKeepsTheTenNearestInsideTheRadiusAndMergesThemIntoTheMap() = parity(
+    fun theNearbyCarouselKeepsTheTenNearestWithoutDuplicatingClusteredPoints() = parity(
         content = { call ->
             if (call.zoom != 22f) MapContent()
             else MapContent(shops = listOf(mapShop("far", 54.5, 27.56), mapShop("b", 53.9, 27.561), mapShop("a", 53.9, 27.561), mapShop("near", 53.9, 27.5601)) + (1..12).map { mapShop("n$it", 53.9 + it * 0.0005, 27.56) })
@@ -91,7 +91,7 @@ class MapViewModelParityTest {
         val state = vm.state.first { it.nearbyShops.isNotEmpty() }
         assertEquals(10, state.nearbyShops.size); assertEquals("near", state.nearbyShops.first().id)
         assertFalse(state.nearbyShops.any { it.id == "far" })
-        assertTrue(state.shops.map { it.id }.containsAll(state.nearbyShops.map { it.id }))
+        assertTrue(state.shops.isEmpty())
         assertEquals(listOf("a", "b"), state.nearbyShops.map { it.id }.filter { it == "a" || it == "b" })
     }
 

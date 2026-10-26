@@ -3,6 +3,7 @@ package com.coffeepeek.feature.discovery.api
 import androidx.compose.ui.unit.DpSize
 import com.coffeepeek.feature.discovery.domain.model.Coordinates
 import com.coffeepeek.feature.discovery.domain.model.MapBounds
+import com.coffeepeek.feature.discovery.domain.model.MapCluster
 import com.coffeepeek.feature.discovery.domain.model.MapMarker
 import com.coffeepeek.feature.discovery.domain.model.MapZone
 
@@ -31,6 +32,7 @@ data class MapCanvasState(
     val isPreview: Boolean = false,
     /** Android keeps the full canvas during expansion; iOS bounds its native UIView to the visible container. The host owns this policy. */
     val canvasSize: DpSize? = null,
+    val clusters: List<MapCluster> = emptyList(),
 )
 
 class MapCanvasCallbacks(

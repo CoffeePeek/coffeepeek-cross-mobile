@@ -177,10 +177,27 @@ internal data class ZoneDto(
     @SerialName("polygon") @JsonNames("Polygon") val polygon: List<ZonePointDto> = emptyList(),
 )
 
-/** The clusters the server also sends are not read: the map never drew them. */
+@Serializable
+internal data class ClusterBoundsDto(
+    @SerialName("minLatitude") @JsonNames("MinLatitude") val minLatitude: Double,
+    @SerialName("minLongitude") @JsonNames("MinLongitude") val minLongitude: Double,
+    @SerialName("maxLatitude") @JsonNames("MaxLatitude") val maxLatitude: Double,
+    @SerialName("maxLongitude") @JsonNames("MaxLongitude") val maxLongitude: Double,
+)
+
+@Serializable
+internal data class ClusterDto(
+    @SerialName("id") @JsonNames("Id") val id: String? = null,
+    @SerialName("latitude") @JsonNames("Latitude") val latitude: Double,
+    @SerialName("longitude") @JsonNames("Longitude") val longitude: Double,
+    @SerialName("count") @JsonNames("Count") val count: Int,
+    @SerialName("bounds") @JsonNames("Bounds") val bounds: ClusterBoundsDto,
+)
+
 @Serializable
 internal data class MapDto(
     @SerialName("shops") @JsonNames("Shops") val shops: List<MapShopDto> = emptyList(),
+    @SerialName("clusters") @JsonNames("Clusters") val clusters: List<ClusterDto> = emptyList(),
     @SerialName("zones") @JsonNames("Zones") val zones: List<ZoneDto> = emptyList(),
     @SerialName("isTruncated") @JsonNames("IsTruncated") val isTruncated: Boolean = false,
 )

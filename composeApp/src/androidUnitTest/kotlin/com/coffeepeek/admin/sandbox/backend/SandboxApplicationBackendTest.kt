@@ -727,6 +727,17 @@ class SandboxApplicationBackendTest {
         assertEquals(2, shops.getMyModerationShops(ModerationStatusDto.Approved, 1, 20).getOrThrow().totalItems)
     } }
 
+    @Test fun discoveryClustersUnfoldIntoTheSameShopsAtTheDetailZoom() = runTest { fixture { backend, client ->
+        backend.discovery = SandboxDiscovery.Paged
+        val shops = ShopApiService(client.client)
+        val grouped = shops.getShopsInBounds(53.8, 27.4, 54.0, 27.7, zoom = 10, cityId = "minsk").getOrThrow()
+        val detailed = shops.getShopsInBounds(53.8, 27.4, 54.0, 27.7, zoom = 22, cityId = "minsk").getOrThrow()
+        assertTrue(grouped.clusters.isNotEmpty() || grouped.zones.isNotEmpty())
+        assertEquals(detailed.shops.size, grouped.shops.size + grouped.clusters.sumOf { it.count } + grouped.zones.sumOf { it.shopCount })
+        assertTrue(detailed.clusters.isEmpty())
+        assertTrue(grouped.clusters.all { it.bounds.minLatitude <= it.latitude && it.latitude <= it.bounds.maxLatitude })
+    } }
+
     @Test fun discoveryFixturesPageFilterSortAndFailThroughTheRealSearchAndMapServices() = runTest { fixture { backend, client ->
         val shops = ShopApiService(client.client)
         val minsk = listOf(53.8, 27.4, 54.0, 27.7)
@@ -763,7 +774,7 @@ class SandboxApplicationBackendTest {
 
         // The map: shops by bounds and filters, zones inside the bounds, no clusters, nothing truncated.
         val inMinsk = map(minsk)
-        assertEquals(38, inMinsk.shops.size); assertEquals(2, inMinsk.zones.size); assertTrue(inMinsk.clusters.isEmpty()); assertFalse(inMinsk.isTruncated)
+        assertEquals(38, inMinsk.shops.size); assertTrue(inMinsk.zones.isEmpty()); assertTrue(inMinsk.clusters.isEmpty()); assertFalse(inMinsk.isTruncated)
         assertEquals(9, map(brest).shops.size); assertTrue(map(brest).zones.isEmpty())
         assertTrue(map(minsk, city = "brest").shops.isEmpty())
 

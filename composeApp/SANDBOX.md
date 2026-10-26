@@ -114,10 +114,12 @@ Not covered: moderation decisions (a submission stays pending), uploaded photo k
 
 ## Discovery fixtures
 
+API update (2026-10-26): `POST /api/v1/discovery/search` has been removed with its Gateway route, DTOs and OpenAPI schemas. `GET /api/CoffeeShops` accepts only `q`, `city`, `page`, `pageSize`, preserves the check-in picker response and is deprecated in OpenAPI and HTTP headers. The current clients and this fixture still support the older GET filter set; Sandbox results do not verify compatibility with the reduced contract. The separate nearby route `POST /api/v1/coffee-shops/search` is still used by the client.
+
 `SandboxDiscoveryBackend` serves the shop search (`GET /api/CoffeeShops`), the nearby search (`POST /api/v1/coffee-shops/search`) and the map (`GET /api/Map`). Choose the fixture with the controls row «Поиск и карта» or at launch with
 `--es sandbox_discovery <mode>`:
-`Seeded` (default: the two core shops and the one-marker map, as before), `Paged` (47 shops in Минск and Брест with types, price levels, ratings, open/new/visited flags, tags, roasters, brew methods, equipment and beans; every filter of the real
-requests, paging, the nearby search sorted by distance and limited to the radius, map content by bounds and filters, two zones with polygons, no clusters), `Truncated` (`Paged` whose map keeps 25 shops and sets `isTruncated`), `Empty`, `SearchFailure` (both
+`Seeded` (default: the two core shops and the one-marker map, as before), `Paged` (47 shops in Минск and Брест with types, price levels, ratings, open/new/visited flags, tags, roasters, brew methods, equipment and beans; the previous client
+filters, paging, the nearby search sorted by distance and limited to the radius, map content by bounds and filters, two zones with polygons, no clusters), `Truncated` (`Paged` whose map keeps 25 shops and sets `isTruncated`), `Empty`, `SearchFailure` (both
 searches answer 500, the map works) and `MapFailure` (the map answers 500, the searches work). Favorite flags follow the favorites of the application backend (the core cafe starts as a favorite); Reset returns the default.
 Not covered: shop details for the generated shops (only the two core shops have details, opening another one shows the not found state), server-side clusters, the real map tiles, location (the device decides), and the query semantics of the real server for lists of ids (here: any of a group, all groups together).
 

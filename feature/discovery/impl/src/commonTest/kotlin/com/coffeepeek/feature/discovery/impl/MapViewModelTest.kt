@@ -103,9 +103,27 @@ class MapViewModelTest {
         assertTrue(vm.now.isTruncated); assertTrue(MapInteraction.Loaded in analytics.interactions)
     }
 
+    @Test fun serverClustersReachTheCanvasAndDisappearWhenTheViewportUnfolds() = runTest(dispatcher) {
+        val cluster = MapCluster("group", here, 12, view)
+        repository.map = { _, zoom, _ ->
+            Result.success(if (zoom == 22f) MapContent(listOf(marker("near"))) else MapContent(clusters = listOf(cluster)))
+        }
+        val vm = model()
+        vm.send(MapAction.BoundsChanged(view, 12f), scope = this)
+        settle()
+        assertEquals(listOf(cluster), vm.now.clusters)
+        assertEquals(listOf("near"), vm.now.nearby.map { it.id })
+        assertTrue(vm.now.markers.isEmpty())
+        repository.map = { _, _, _ -> Result.success(MapContent(listOf(marker("unfolded")))) }
+        vm.send(MapAction.BoundsChanged(view, 18f), scope = this)
+        settle()
+        assertTrue(vm.now.clusters.isEmpty())
+        assertEquals(listOf("unfolded"), vm.now.markers.map { it.id })
+    }
+
     // ---- nearby ----
 
-    @Test fun theNearbyCarouselKeepsTheTenNearestInsideTheRadiusAndMergesThemIntoTheMap() = runTest(dispatcher) {
+    @Test fun theNearbyCarouselKeepsTheTenNearestWithoutDuplicatingClusteredPoints() = runTest(dispatcher) {
         repository.map = { bounds, zoom, _ ->
             if (zoom == 22f) Result.success(MapContent((1..12).map { marker("n$it", 53.9 + it * 0.001) } + marker("far", 54.5)))
             else Result.success(MapContent())
@@ -113,7 +131,7 @@ class MapViewModelTest {
         val vm = model()
         location.flow.value = here; runCurrent()
         assertEquals(nearbyBounds(here), repository.mapRequests.last().first)
-        assertEquals((1..10).map { "n$it" }, vm.now.nearby.map { it.id }); assertTrue(vm.now.markers.containsAll(vm.now.nearby)); assertTrue(vm.now.hasCarousel)
+        assertEquals((1..10).map { "n$it" }, vm.now.nearby.map { it.id }); assertTrue(vm.now.markers.isEmpty()); assertTrue(vm.now.hasCarousel)
     }
 
     @Test fun anInvalidPositionIsIgnoredAndTheFirstViewBecomesTheOrigin() = runTest(dispatcher) {

@@ -26,11 +26,11 @@ class MapClustererTest {
 
     @Test
     fun clusterDiameterByCount() {
-        assertEquals(49f, clusterDiameterDp(1))
-        assertEquals(49f, clusterDiameterDp(9))
-        assertEquals(55f, clusterDiameterDp(10))
-        assertEquals(55f, clusterDiameterDp(99))
-        assertEquals(60f, clusterDiameterDp(100))
+        assertEquals(31f, clusterDiameterDp(1))
+        assertEquals(34.1f, clusterDiameterDp(9))
+        assertEquals(34.1f, clusterDiameterDp(10))
+        assertEquals(34.1f, clusterDiameterDp(99))
+        assertEquals(34.1f, clusterDiameterDp(100))
     }
 
     @Test
@@ -76,8 +76,10 @@ class MapClustererTest {
     @Test
     fun clusterFitZoomDoesNotExceedCap() {
         assertEquals(14f, clusterFitZoom(currentZoom = 12f, fittedZoom = 16f))
-        assertEquals(17f, clusterFitZoom(currentZoom = 16f, fittedZoom = 20f))
+        assertEquals(18f, clusterFitZoom(currentZoom = 16f, fittedZoom = 20f))
         assertEquals(13f, clusterFitZoom(currentZoom = 12f, fittedZoom = 13f))
+        assertEquals(13f, clusterFitZoom(currentZoom = 12f, fittedZoom = 9f))
+        assertEquals(22f, clusterFitZoom(currentZoom = 21.5f, fittedZoom = 25f))
     }
 
     private fun shop(id: String, lat: Double, lon: Double) = MapShop(
