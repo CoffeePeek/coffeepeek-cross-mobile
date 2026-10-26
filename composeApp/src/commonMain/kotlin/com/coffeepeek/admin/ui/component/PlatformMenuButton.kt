@@ -3,7 +3,7 @@ package com.coffeepeek.admin.ui.component
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 
-internal enum class PlatformMenuIcon { Edit, Hide, Report, NoteEdit, Add, CoffeeBean, Logout, Block }
+internal enum class PlatformMenuIcon { Edit, Hide, Report, NoteEdit, Add, CoffeeBean, Logout, Block, Share }
 
 /** Presentation state only. A nullable selection distinguishes commands from single-choice lists. */
 internal data class PlatformMenuItem(

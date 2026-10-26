@@ -71,6 +71,7 @@ internal actual fun PlatformMenuButton(
                             PlatformMenuIcon.CoffeeBean -> "leaf"
                             PlatformMenuIcon.Logout -> "rectangle.portrait.and.arrow.right"
                             PlatformMenuIcon.Block -> "person.crop.circle.badge.xmark"
+                            PlatformMenuIcon.Share -> "square.and.arrow.up"
                             null -> null
                         }
                         UIAction.actionWithTitle(item.title, symbol?.let { UIImage.systemImageNamed(it) }, item.id) {

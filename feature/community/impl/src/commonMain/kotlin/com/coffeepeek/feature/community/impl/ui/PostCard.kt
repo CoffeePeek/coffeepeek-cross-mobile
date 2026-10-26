@@ -3,6 +3,10 @@ package com.coffeepeek.feature.community.impl.ui
 import androidx.compose.foundation.background
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import com.coffeepeek.feature.community.impl.resources.Res
+import com.coffeepeek.feature.community.impl.resources.community_share_shop
+import com.coffeepeek.feature.community.impl.resources.community_share_home
+import com.coffeepeek.feature.community.impl.resources.community_share
+import com.coffeepeek.feature.community.impl.resources.community_open_post
 import com.coffeepeek.feature.community.impl.resources.community_actions
 import com.coffeepeek.feature.community.impl.resources.community_block_author
 import com.coffeepeek.feature.community.impl.resources.community_details_separator
@@ -87,6 +91,7 @@ import com.coffeepeek.feature.community.domain.model.PostRating
 import com.coffeepeek.feature.community.domain.model.PostVisibility
 import com.coffeepeek.feature.community.domain.rules.PublicationLabel
 import com.coffeepeek.feature.community.domain.rules.publicationLabel
+import com.coffeepeek.feature.community.domain.rules.shareLink
 import kotlin.math.roundToInt
 
 /** What a card needs to know about the viewer; the actions are null when the viewer cannot use them. */
@@ -101,6 +106,10 @@ internal class PostCardActions(
     val onReport: (() -> Unit)? = null,
     /** The owner publishes a private post. */
     val onPublish: (() -> Unit)? = null,
+    /** Only a published post has a link to share. */
+    val onShare: (() -> Unit)? = null,
+    /** The whole card opens the post on its own screen; the author, shop, photos, like and menu keep their own taps. */
+    val onOpen: (() -> Unit)? = null,
 )
 
 @Composable
@@ -115,7 +124,12 @@ internal fun PostCard(
     modifier: Modifier = Modifier,
     changingVisibility: Boolean = false,
 ) {
-    Column(modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing2)) {
+    val openLabel = stringResource(Res.string.community_open_post)
+    Column(
+        modifier.fillMaxWidth().clip(RoundedCornerShape(CoffeePeekDimens.radiusMd))
+            .then(actions.onOpen?.let { Modifier.clickable(role = Role.Button, onClickLabel = openLabel, onClick = it) } ?: Modifier),
+        verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing2),
+    ) {
         PostHeader(post, isOwn, actions, enabled, changingVisibility, host)
         if (post.isHome) {
             post.home?.let { recipe ->
@@ -179,19 +193,20 @@ private fun Avatar(name: String, photoUrl: String?, host: CommunityHost) {
     }
 }
 
-/** The overflow menu: block, edit, hide, report — only what this viewer may do with this post. */
+/** The overflow menu: share, edit, hide, report, block (last, in red) — only what this viewer may do with this post. */
 @Composable
 private fun PostMenu(actions: PostCardActions, enabled: Boolean, hiding: Boolean) {
-    if (actions.onBlock == null && actions.onEdit == null && actions.onHide == null && actions.onReport == null) return
+    if (actions.onShare == null && actions.onBlock == null && actions.onEdit == null && actions.onHide == null && actions.onReport == null) return
     val label = stringResource(Res.string.community_actions)
     val items = buildList {
-        actions.onBlock?.let { add(CoffeePeekMenuAction(stringResource(Res.string.community_block_author), CoffeePeekIcons.VisibilityOff, destructive = true, nativeIcon = CoffeePeekMenuIcon.Block, onClick = it)) }
+        actions.onShare?.let { add(CoffeePeekMenuAction(stringResource(Res.string.community_share), CoffeePeekIcons.Share, nativeIcon = CoffeePeekMenuIcon.Share, onClick = it)) }
         actions.onEdit?.let { add(CoffeePeekMenuAction(stringResource(Res.string.community_edit), CoffeePeekIcons.Edit, nativeIcon = CoffeePeekMenuIcon.Edit, onClick = it)) }
         actions.onHide?.let {
             // The menu has no disabled rows: while the hide request is running the row only says so and does nothing.
             add(CoffeePeekMenuAction(stringResource(if (hiding) Res.string.community_saving else Res.string.community_hide), CoffeePeekIcons.VisibilityOff, nativeIcon = CoffeePeekMenuIcon.Hide, onClick = if (hiding) ({}) else it))
         }
         actions.onReport?.let { add(CoffeePeekMenuAction(stringResource(Res.string.community_report), CoffeePeekIcons.Error, nativeIcon = CoffeePeekMenuIcon.Report, onClick = it)) }
+        actions.onBlock?.let { add(CoffeePeekMenuAction(stringResource(Res.string.community_block_author), CoffeePeekIcons.VisibilityOff, destructive = true, nativeIcon = CoffeePeekMenuIcon.Block, onClick = it)) }
     }
     CoffeePeekActionMenu(items, menuDescription = label, enabled = enabled) { open ->
         IconButton(onClick = open, enabled = enabled) { Icon(CoffeePeekIcons.MoreHorizontal, label, tint = MaterialTheme.colorScheme.onSurfaceVariant) }
@@ -208,6 +223,34 @@ private fun publicationText(label: PublicationLabel): String = stringResource(
         PublicationLabel.Public -> Res.string.community_label_public
         PublicationLabel.Unknown -> Res.string.community_label_unknown
     },
+)
+
+/** Sends a post's link to the system share sheet with the title the website gives its page: «{author} в «{shop}»» or «Кофе дома — {author}». */
+internal class PostSharer(
+    private val shopFormat: String,
+    private val homeFormat: String,
+    private val userFallback: String,
+    private val shopFallback: String,
+    private val share: (String) -> Unit,
+) {
+    /** Null for a post that has no public link; [before] runs first, for analytics. */
+    fun action(post: CommunityPost, before: () -> Unit = {}): (() -> Unit)? {
+        val link = post.shareLink() ?: return null
+        return { before(); share(text(post, link)) }
+    }
+
+    private fun text(post: CommunityPost, link: String): String {
+        val author = post.author.name.ifBlank { userFallback }
+        val arguments = if (post.isHome) listOf(author, link) else listOf(author, post.shopName.ifBlank { shopFallback }, link)
+        val format = if (post.isHome) homeFormat else shopFormat
+        return Regex("%([1-3])\\\u0024s").replace(format) { arguments[it.groupValues[1].toInt() - 1] }
+    }
+}
+
+@Composable
+internal fun postSharer(host: CommunityHost) = PostSharer(
+    stringResource(Res.string.community_share_shop), stringResource(Res.string.community_share_home),
+    stringResource(Res.string.community_user), stringResource(Res.string.community_shop_default), host.share,
 )
 
 @Composable

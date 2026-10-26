@@ -94,6 +94,7 @@ internal class CommunityCallbacks(
     val onOpenAuthor: (slug: String, name: String, avatarUrl: String?) -> Unit,
     val onOpenShop: (slug: String) -> Unit,
     val onEditHome: (id: String) -> Unit,
+    val onOpenPost: (id: String) -> Unit,
 )
 
 @Composable
@@ -111,11 +112,7 @@ internal fun CommunityScreen(
     val snackbar = remember { SnackbarHostState() }
     val lifecycle = LocalLifecycleOwner.current.lifecycle
     val currentCallbacks by rememberUpdatedState(callbacks)
-    val messages = MessageTexts(
-        stringResource(Res.string.community_vote_failed), stringResource(Res.string.community_visibility_failed), stringResource(Res.string.community_report_sent),
-        stringResource(Res.string.community_edit_saved), stringResource(Res.string.community_edit_sent_for_review),
-    )
-    val currentMessages by rememberUpdatedState(messages)
+    val currentMessages by rememberUpdatedState(messageTexts())
     LaunchedEffect(vm, lifecycle) {
         lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
             vm.events.collect { event ->
@@ -129,7 +126,16 @@ internal fun CommunityScreen(
     CommunityContent(state, vm::onAction, host, blockActions, callbacks, snackbar, modifier, bottomClearance, headerAction, floatingAction)
 }
 
-private class MessageTexts(val vote: String, val visibility: String, val reported: String, val saved: String, val review: String) {
+@Composable
+internal fun messageTexts() = MessageTexts(
+    vote = stringResource(Res.string.community_vote_failed),
+    visibility = stringResource(Res.string.community_visibility_failed),
+    reported = stringResource(Res.string.community_report_sent),
+    saved = stringResource(Res.string.community_edit_saved),
+    review = stringResource(Res.string.community_edit_sent_for_review),
+)
+
+internal class MessageTexts(val vote: String, val visibility: String, val reported: String, val saved: String, val review: String) {
     fun text(message: ActionMessage): String = when (message.kind) {
         MessageKind.VoteFailed -> message.serverMessage ?: vote
         MessageKind.VisibilityFailed -> message.serverMessage ?: visibility
@@ -180,7 +186,8 @@ internal fun CommunityContent(
         host.photoViewer(it.thumbnails, it.originals, it.index) { preview = null }
     }
     if (state.editing != null) key(state.sessionGeneration, state.editing.source.id) { EditSheet(state, onAction) }
-    if (state.reportingId != null) ReportSheet(state, onAction)
+    if (state.reportingId != null) ReportSheet(state.reportForm(), reportCallbacks(onAction))
+    val sharer = postSharer(host)
     Box(modifier.fillMaxSize()) {
         Scaffold(
             containerColor = MaterialTheme.colorScheme.background,
@@ -225,7 +232,7 @@ internal fun CommunityContent(
                                     changingVisibility = state.changingVisibilityId == post.id,
                                     showHelpfulCount = state.timeline == CommunityTimeline.Public || post.helpfulCount > 0,
                                     enabled = !state.isMutating,
-                                    actions = postActions(post, state, onAction, callbacks, blockActions, { homeEditorOpened = true }) { thumbs, originals, photoIndex ->
+                                    actions = postActions(post, state, onAction, callbacks, blockActions, sharer, { homeEditorOpened = true }) { thumbs, originals, photoIndex ->
                                         preview = PhotoPreview(state.sessionGeneration, thumbs, originals, photoIndex)
                                     },
                                     host = host,
@@ -258,6 +265,7 @@ private fun postActions(
     onAction: (CommunityAction) -> Unit,
     callbacks: CommunityCallbacks,
     blockActions: AuthorBlockActions,
+    sharer: PostSharer,
     onHomeEditorOpened: () -> Unit,
     onPhoto: (List<String>, List<String>, Int) -> Unit,
 ): PostCardActions {
@@ -282,17 +290,19 @@ private fun postActions(
         onHide = { onAction(CommunityAction.ToggleVisibility(post.id)) }.takeIf { isOwn && post.visibility == PostVisibility.Public },
         onReport = { onAction(CommunityAction.OpenReport(post.id)) }.takeIf { public && !isOwn },
         onPublish = { onAction(CommunityAction.ToggleVisibility(post.id)) }.takeIf { isOwn && post.visibility == PostVisibility.Private },
+        onShare = sharer.action(post) { onAction(CommunityAction.ItemInteracted(FeedItemAction.Share, post.id)) },
+        onOpen = { onAction(CommunityAction.ItemInteracted(FeedItemAction.Open, post.id)); callbacks.onOpenPost(post.id) }.takeIf { post.id.isNotBlank() },
     )
 }
 
 @Composable
-private fun CenteredLoader() {
+internal fun CenteredLoader() {
     Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.TopCenter) { CoffeePeekLoader(stringResource(Res.string.community_loading)) }
 }
 
 /** The shared "something went wrong" block: the same look and words the legacy list used for every load failure. */
 @Composable
-private fun ErrorBlock(onRetry: () -> Unit, retryLabel: String, modifier: Modifier = Modifier) {
+internal fun ErrorBlock(onRetry: () -> Unit, retryLabel: String, modifier: Modifier = Modifier) {
     Column(modifier.fillMaxWidth().padding(16.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
         Image(painterResource(Res.drawable.community_mascot_error), null, contentScale = ContentScale.Fit, modifier = Modifier.size(120.dp))
         Spacer(Modifier.height(16.dp))
@@ -310,7 +320,7 @@ private fun ErrorBlock(onRetry: () -> Unit, retryLabel: String, modifier: Modifi
     CommunityContent(
         CommunityState(isLoggedIn = true, items = listOf(previewPost(), previewPost().copy(id = "second", note = "Вторая запись", photos = com.coffeepeek.feature.community.domain.model.PostPhotos.None))),
         {}, CommunityHost(), object : AuthorBlockActions { override fun requestBlock(author: AuthorReference) {}; override fun requestUnblock(author: AuthorReference) {} },
-        CommunityCallbacks({}, { _, _, _ -> }, {}, {}), SnackbarHostState(),
+        CommunityCallbacks({}, { _, _, _ -> }, {}, {}, {}), SnackbarHostState(),
     )
 }
 
@@ -318,7 +328,7 @@ private fun ErrorBlock(onRetry: () -> Unit, retryLabel: String, modifier: Modifi
     CommunityContent(
         CommunityState(isLoggedIn = true, error = com.coffeepeek.feature.community.impl.timeline.TimelineError.LoadFailed),
         {}, CommunityHost(), object : AuthorBlockActions { override fun requestBlock(author: AuthorReference) {}; override fun requestUnblock(author: AuthorReference) {} },
-        CommunityCallbacks({}, { _, _, _ -> }, {}, {}), SnackbarHostState(),
+        CommunityCallbacks({}, { _, _, _ -> }, {}, {}, {}), SnackbarHostState(),
     )
 }
 

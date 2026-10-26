@@ -875,3 +875,36 @@ PR #201, parent `a648e200`; merge в child — `7e0ff262`. POST contract уже
 roaster-shop readers через legacy repositories; Contributions/create/root UI
 slots и platform infrastructure. Старые недостижимые screens/VM/test consumers
 удаляются по последнему потребителю в L4. Modules и полный legacy exit ещё не завершены.
+
+## Parent #195: конфликты с develop — 2026-10-26
+
+Develop `063f4c5b` добавил Community post links/share и отложенное разрешение
+геопозиции Discovery. Сначала обновляется parent #195, затем child #201.
+Конфликтующие перемещения Android → commonMain разрешены с сохранением новых
+возможностей develop и общих migrated entries; старые renderer defaults не возвращены.
+
+- Post entry/screen/resources находятся в Community commonMain; обе платформы
+  явно поставляют feature renderer. Внешние ссылки iOS по-прежнему оставлены
+  сайту, как в develop; внутриприкладной маршрут не использует unsupported fallback.
+  Native меню сохраняет enabled/session gate, добавлены Share glyphs на обеих
+  платформах; анимация общего popup из develop сохранена.
+- JVM-only форматирование share-текста заменено общим Kotlin с одноразовой
+  подстановкой: пользовательские `%2$s`/`%3$s` не интерпретируются как шаблон.
+  Два unit-теста проверяют текст, порядок analytics callback и private gating.
+- Discovery permission request key сохранён; picker адаптирован к новому
+  контракту с прежним запросом геопозиции при открытии выбора кофейни.
+- Первый compile выявил пропущенный request key picker, второй — отсутствующий
+  Share branch Android menu. Оба исправлены. Следующий прогон был прерван при
+  framework link; он не записан успешным. Финальный повтор (2m19s) успешен.
+- **312 unit/contract tests / 44 suites**, 0 failures/errors/skips: Community
+  data/domain/impl 22/12/42, Discovery impl 71, DS 57, app subset 108.
+  Неизменённые tasks могут быть UP-TO-DATE; результаты прогонов не суммируются.
+  DirectDebug/DirectSandbox APK, DEX guards и Sandbox isolation прошли;
+  iOS Arm64 production compile, Simulator framework link и common Native
+  Community impl test compilation прошли. Native tests не исполнялись.
+- Studio PostCard inspection вернула timeout без найденных ошибок — неполная
+  проверка. Manual links/share/native menus/location acceptance, темы и полный
+  Xcode app build остаются gates. Gradle последовательно, --max-workers=6;
+  UI/instrumentation tests/hosts не создавались и не запускались. Никаких
+  установок приложений, account writes или production telemetry.
+  Пользовательский project.pbxproj (48+/41−) исключён из merge commit.

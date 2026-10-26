@@ -93,7 +93,7 @@ fun CoffeePeekNativeAlert(
 enum class CoffeePeekGlassIcon { Back, Add, Edit, Favorite, FavoriteFilled, Share, Close, Zones, Location }
 
 /** The native glyph of a menu row. */
-enum class CoffeePeekMenuIcon { Edit, Hide, Report, NoteEdit, Add, CoffeeBean, Logout, Block }
+enum class CoffeePeekMenuIcon { Edit, Hide, Report, NoteEdit, Add, CoffeeBean, Logout, Block, Share }
 
 data class CoffeePeekNativeMenuItem(
     val id: String,

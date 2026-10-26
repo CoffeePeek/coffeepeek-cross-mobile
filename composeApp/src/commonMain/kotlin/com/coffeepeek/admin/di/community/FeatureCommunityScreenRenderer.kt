@@ -28,6 +28,7 @@ import com.coffeepeek.admin.ui.screen.checkins.CheckInCreateButton
 import com.coffeepeek.admin.ui.screen.checkins.CheckInCreateFlow
 import com.coffeepeek.core.designsystem.component.CoffeePeekImage
 import com.coffeepeek.core.media.PrefetchListPhotos
+import com.coffeepeek.admin.utils.ShareHelper
 import com.coffeepeek.feature.community.api.CommunityEntry
 import com.coffeepeek.feature.community.api.CommunityFloating
 import com.coffeepeek.feature.community.api.CommunityHost
@@ -50,6 +51,7 @@ internal class FeatureCommunityScreenRenderer(private val entry: CommunityEntry)
             onOpenShop = { Navigator.navigate(Navigator.Screen.ShopDetail(it)) },
             onEditHome = { Navigator.navigate(Navigator.Screen.EditHomeCheckIn(it)) },
             modifier = Modifier,
+            onOpenPost = { Navigator.navigate(Navigator.Screen.CheckInDetail(it)) },
             headerAction = notificationsAction,
             bottomClearance = LocalFloatingNavClearance.current,
             floatingAction = { floating -> CreateAction(floating, onCreateCheckIn) },
@@ -89,6 +91,7 @@ internal fun communityHost() = CommunityHost(
     },
     feedViewed = { count, isPublic -> TrackFeedViewed(count, isPublic) },
     snackbar = { state, clearance -> CpSnackbarHost(state, Modifier.padding(bottom = clearance)) },
+    share = ShareHelper::shareText,
 )
 
 internal fun featureCommunityScreenRenderer(

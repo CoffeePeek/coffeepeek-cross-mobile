@@ -12,6 +12,7 @@ import com.coffeepeek.admin.di.coffee.coffeeModule
 import com.coffeepeek.admin.di.appupdate.androidAppUpdateRenderer
 import com.coffeepeek.admin.di.auth.androidAuthScreenRenderer
 import com.coffeepeek.admin.di.community.featureCommunityScreenRenderer
+import com.coffeepeek.admin.di.community.featureCheckInDetailScreenRenderer
 import com.coffeepeek.api.CoffeePeekClient
 import com.coffeepeek.admin.di.contributions.contributionsModule
 import com.coffeepeek.admin.di.contributions.featureContributionsScreenRenderer
@@ -85,6 +86,7 @@ internal fun initAndroidKoin(extraModules: List<org.koin.core.module.Module> = e
         appUpdateRendererFactory = { androidAppUpdateRenderer(get(), get()) },
         notificationsRendererFactory = { featureNotificationsRenderer(get(), get(), get()) },
         authRendererFactory = { androidAuthScreenRenderer(get(), get()) },
+        checkInDetailRendererFactory = { featureCheckInDetailScreenRenderer(get(), get(), get(), get()) },
         communityRendererFactory = { featureCommunityScreenRenderer(get(), get(), get(), get(), get(), get()) },
         contributionsRendererFactory = { featureContributionsScreenRenderer(get(), get(), get()) },
         discoveryRendererFactory = { featureDiscoveryScreenRenderer(get<CoffeePeekClient>().client, get(), get(), get(), get(), get(), get()) },

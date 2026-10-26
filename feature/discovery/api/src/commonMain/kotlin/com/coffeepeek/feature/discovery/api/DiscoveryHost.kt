@@ -17,8 +17,8 @@ class DiscoveryHost(
     /** The application's map: it draws [MapCanvasState] and reports through [MapCanvasCallbacks]. */
     /** Keeps native content (the map) mounted but paused and not placed while hidden. */
     val retained: @Composable (visible: Boolean, content: @Composable () -> Unit) -> Unit = { visible, content -> if (visible) content() },
-    /** Asks for the location permission once, with the result; the effect has no UI of its own. */
-    val locationPermission: @Composable (onGranted: () -> Unit, onDenied: () -> Unit) -> Unit = { _, _ -> },
+    /** A positive key requests location after a map interaction; zero never prompts. Refusals are remembered by the host. */
+    val locationPermission: @Composable (requestKey: Int, onGranted: () -> Unit, onDenied: () -> Unit) -> Unit = { _, _, _ -> },
     val reduceMotion: @Composable () -> Boolean = { false },
     val mapCanvas: @Composable (state: MapCanvasState, callbacks: MapCanvasCallbacks, modifier: Modifier) -> Unit = { _, _, _ -> },
 )
