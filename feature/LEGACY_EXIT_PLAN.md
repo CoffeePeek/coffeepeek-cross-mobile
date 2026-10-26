@@ -56,8 +56,8 @@ DatabaseCore. Старый LEGACY_REMOVAL.md — исторический сни
 
 - [x] Profile UI: публичное избранное, публичная недельная Activity, карточки
   чекинов; на публичном профиле никогда не подключать личный reader.
-  Избранное/неделя — первый срез; карточки — второй. Public data reader пока
-  имеет one-way app compatibility projection; его замена остаётся в L3.
+  Избранное/неделя — первый срез; карточки — второй. Public check-in reader
+  заменён в третьем срезе L3; enrichment/own-account ports ещё остаются.
 - [x] History/Profile: один владелец общей геометрии чекина через
   существующие DS primitives; без преобразования обратно в legacy CheckIn.
 - [ ] Discovery/catalog и создание чекина: бизнес-UI/состояние только в impl.
@@ -86,8 +86,10 @@ DatabaseCore. Старый LEGACY_REMOVAL.md — исторический сни
 
 ### L3. Заменить активные legacy data adapters
 
-- [ ] Public profile check-ins/enrichment и own-account ports — feature data,
-  без старого PublicProfileRepository/UserRepository.
+- [x] Public profile check-ins — profile data через read-only community API,
+  без старого PublicProfileRepository/FeedRepository/CheckIn projection.
+- [ ] Public favorites enrichment и own-account ports — feature data,
+  без старых ShopRepository/RoasterRepository/UserRepository.
 - [ ] Shop/catalog/roaster/favorites readers и caches — соответствующие feature
   repositories; composition соединяет только узкие api-контракты.
 - [ ] Auth cleanup/refresh/realtime — core SessionStore и feature ports;
@@ -271,3 +273,79 @@ Live backend/OAuth/push/analytics acceptance этим не подтвержде�
 Следующий остаток: активный public profile data reader/favorite enrichment и
 прочие app data adapters, затем media infrastructure. Старые экраны/VM/тестовые
 потребители удаляются по последнему consumer; modules/ ещё не готовы к удалению.
+
+## Третий срез L3: публичные чекины профиля — 2026-10-26
+
+База `790834bc` + этот checkpoint, тот же незавершённый PR #195 → develop.
+Fetch origin/develop и origin/main не обнаружил отсутствующих в HEAD коммитов.
+Пользовательский local project.pbxproj сохранён отдельно и не входит в срез.
+
+Владелец и границы:
+
+- `community/api` публикует узкий read-only `PublicAuthorPosts` с отдельной
+  проекцией данных; чужие domain models, DTO, transport и mutation API через
+  неё не передаются. `community/data` адаптирует уже существующий repository,
+  повторно используя feed backend, URL/variant mapper и ошибки пагинации.
+  Новый endpoint, HTTP client, cache или Gradle module не создаётся.
+- `profile/data` реализует существующий `PublicCheckInsPort` и владеет
+  фильтрацией/преобразованием в self-contained `PublicProfileCheckIn`.
+  Зависимости добавлены на собственный api и `community/api`; импортов чужих
+  domain/data/impl нет. Community не зависит от Profile, граф ацикличен.
+- Android/iOS composition получает готовые `PublicProfileData` и
+  `PublicCheckInsPort`, соединяет factories и передаёт их feature entry.
+  Удалены `AppPublicProfileRepository`, `AppPublicCheckIns`,
+  `PublicCheckInProjection` и root binding старого PublicProfileViewModel.
+  Прежняя UI/model/repository-interface поверхность, ещё используемая чужими
+  тестами, не удалялась; она не подключается к активным feature entries.
+- Единственный оставшийся класс бывшего app repository-файла выделен в
+  `LegacyPublicProfileFavoriteDetails.kt`: это прежнее enrichment через старые
+  каталоги, без новой логики или алиаса на новый reader. Его regression сохранён.
+
+Сохраняемое поведение и unit evidence:
+
+- Чтение только `/api/v1/feed`, authorSlug, pageSize=20, opaque cursor и no-store;
+  private/mine endpoints для публичного профиля не вызываются, включая свой.
+  Профиль дополнительно отбрасывает чужого/неизвестного автора и всё, кроме
+  Public + Approved. Неизвестные значения состояния остаются закрытыми.
+  Полностью отфильтрованная страница сохраняет nextCursor.
+- Сохранены порядок публикации, visited/prepared/created даты, Home kind/recipe,
+  имена напитков, category scores, likes, author/avatar и original/thumb/detail
+  alignment. Явный blank thumbnail не заменяется оригиналом; отсутствие variants
+  и detail fallback по-прежнему обрабатывает существующий community mapper.
+- Ошибка reader передаётся без подмены, cursor restart flag сохраняется,
+  CancellationException пробрасывается. Existing profile/session/visibility
+  guards не менялись; feature rows не нуждаются в обратном legacy lookup.
+- Старые projection/reader assertions перенесены к реальным новым владельцам.
+  Добавлен non-UI app contract через фактические community/profile factories и
+  локальный Sandbox backend: свой профиль, другой автор и пустой результат.
+  Сервер/аккаунт/аналитика не используются. Это не ручной запуск Sandbox.
+
+Проверки:
+
+- Первый запуск Gradle в ограниченном окружении остановился до задач на доступе
+  к wrapper lock в ~/.gradle. Повтор с доступом к локальному Gradle cache дошёл
+  до новых unit tests и выявил пропущенный начальный cursor; default `null`
+  добавлен в существующий PublicCheckInsPort. Исходные логи сохранены локально.
+- Финальный объединённый прогон успешен: **188 tests / 23 suites**,
+  0 failures/errors/skips: Community data 20 / 3; Profile data 18 / 2;
+  Profile impl 66 / 7; app subset 84 / 11. Неизменённые tasks могут быть
+  UP-TO-DATE; результаты не суммируются с прошлым checkpoint.
+- Android DirectDebug и DirectSandbox assembly успешны, включая оба packaged
+  DEX runtime-class guards и Sandbox isolation. Ничего не устанавливалось.
+- iOS Arm64 production compile и Simulator Debug framework link прошли.
+  Community data, Profile data и app common tests для iOS Simulator
+  скомпилированы; Native tests не исполнялись. Gradle последовательно,
+  --max-workers=6. Полный Xcode app build не запускался.
+- Studio inspection нового PublicAuthorPosts API завершился без ошибок.
+  Диагностика Profile data пока сообщает unresolved community import после
+  добавления Gradle dependencies: IDE graph требует синхронизации; это не
+  объявляется чистой IDE-проверкой. CLI Gradle компилирует этот код на обеих
+  платформах. Прежние preview/expect-actual/test opt-in warnings сохранены.
+- APK SHA-256: Debug `8955ea0e7e5ca77d149e6f7529bfd98dcfcde035e739191c7fd6a5261110fb1c`;
+  Sandbox `ed594cb7d5cfeb5a90f546cb91f5befbc2b0e4a802fc49bceb0c4d6879e93265`.
+
+UI, analytics ownership, session policy и platform media в этом срезе не
+менялись. Ручная visual/live-backend/OAuth/push/analytics приёмка не проводилась;
+новых автоматизированных UI/инструментальных tests/hosts нет.
+Следующий остаток Profile: legacy favorite enrichment и own-account reader;
+затем media ports и недостижимые legacy UI/test consumers. Modules пока не удаляем.

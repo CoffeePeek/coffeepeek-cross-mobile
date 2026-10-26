@@ -6,7 +6,8 @@ import coffeepeek.composeapp.generated.resources.Res
 import coffeepeek.composeapp.generated.resources.local_data_cleanup_error
 import com.coffeepeek.admin.auth.GoogleAuth
 import com.coffeepeek.admin.ui.favorites.FavoritesProfilePreview
-import com.coffeepeek.admin.feature.profile.domain.PublicProfileRepository
+import com.coffeepeek.feature.profile.domain.PublicProfileData
+import com.coffeepeek.feature.profile.api.PublicCheckInsPort
 import com.coffeepeek.admin.settings.ReviewDraftStore
 import com.coffeepeek.admin.ui.Navigator
 import com.coffeepeek.admin.ui.component.LoadErrorContent
@@ -77,7 +78,8 @@ internal class AppProfileSignOut(
 }
 
 internal fun featureOwnProfileScreenRenderer(
-    repository: PublicProfileRepository,
+    repository: PublicProfileData,
+    checkIns: PublicCheckInsPort,
     sessions: SessionReader,
     users: UserRepository,
     notifications: NotificationFeature,
@@ -87,7 +89,6 @@ internal fun featureOwnProfileScreenRenderer(
     blocks: AuthorBlockActions,
     activity: FeatureProfileActivityRenderer,
 ): FeatureOwnProfileScreenRenderer {
-    val checkIns = AppPublicCheckIns(repository)
     return FeatureOwnProfileScreenRenderer(createOwnProfileEntry(
         data = repository,
         checkIns = checkIns,

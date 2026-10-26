@@ -75,11 +75,11 @@ interface ProfileAnalyticsPort {
 }
 
 /**
- * The author's public check-ins, filtered to public and approved ones for exactly this author. Supplied by the app until the timeline
- * owner exposes its own API; the app keeps whatever rendering data it needs for these ids.
+ * The author's public check-ins, filtered to public and approved ones for exactly this author.
+ * Profile data projects the community's read-only feed into complete, self-contained profile rows.
  */
 interface PublicCheckInsPort {
-    suspend fun page(slug: String, cursor: String?): Result<PublicProfileCheckInPage>
+    suspend fun page(slug: String, cursor: String? = null): Result<PublicProfileCheckInPage>
 }
 
 /** Opaque public identity of an author. The slug is only a fallback for older content. */

@@ -13,11 +13,8 @@ import com.coffeepeek.admin.feature.coffee.api.CoffeePicker
 import com.coffeepeek.admin.feature.catalog.api.BrewMethodCatalog
 import com.coffeepeek.admin.feature.catalog.data.BrewMethodCatalogAdapter
 import com.coffeepeek.admin.feature.coffee.domain.CoffeeRepository
-import com.coffeepeek.admin.feature.profile.data.AppPublicProfileRepository
 import com.coffeepeek.admin.feature.profile.data.LegacyPublicProfileFavoriteDetails
 import com.coffeepeek.feature.profile.data.createPublicProfileData
-import com.coffeepeek.admin.feature.profile.domain.PublicProfileRepository
-import com.coffeepeek.admin.feature.profile.ui.PublicProfileViewModel
 import com.coffeepeek.admin.feature.homecheckin.ui.HomeCheckInViewModel
 import com.coffeepeek.legacy.homecheckin.data.HomeCheckInRepositoryImpl
 import com.coffeepeek.legacy.homecheckin.domain.HomeCheckInRepository
@@ -211,13 +208,15 @@ private fun appModule(
     single<com.coffeepeek.feature.authorblocking.api.AuthorVisibility> { get<com.coffeepeek.feature.authorblocking.impl.AuthorBlockingFeature>().visibility }
     single<com.coffeepeek.feature.authorblocking.api.AuthorBlockingPresenter> { get<com.coffeepeek.feature.authorblocking.impl.AuthorBlockingFeature>().presenter }
     single<com.coffeepeek.feature.authorblocking.api.AuthorBlockActions> { get<com.coffeepeek.feature.authorblocking.api.AuthorBlockingPresenter>() }
-    single<PublicProfileRepository> {
-        AppPublicProfileRepository(
-            createPublicProfileData(get<CoffeePeekClient>().client, LegacyPublicProfileFavoriteDetails(get(), get())),
-            get(),
-        )
+    single<com.coffeepeek.feature.profile.domain.PublicProfileData> {
+        createPublicProfileData(get<CoffeePeekClient>().client, LegacyPublicProfileFavoriteDetails(get(), get()))
     }
-    factory { (slug: String) -> PublicProfileViewModel(slug, get(), get(), users = get(), visibility = get()) }
+    single<com.coffeepeek.feature.community.api.PublicAuthorPosts> {
+        com.coffeepeek.feature.community.data.repository.createPublicAuthorPosts(get())
+    }
+    single<com.coffeepeek.feature.profile.api.PublicCheckInsPort> {
+        com.coffeepeek.feature.profile.data.repository.createPublicProfileCheckIns(get())
+    }
     single<RoasterFavorites> { ServerRoasterFavorites(get(), get(), get()) }
     single<com.coffeepeek.feature.appupdate.domain.AppUpdateRepository> {
         com.coffeepeek.feature.appupdate.data.AppUpdateRepositoryImpl(

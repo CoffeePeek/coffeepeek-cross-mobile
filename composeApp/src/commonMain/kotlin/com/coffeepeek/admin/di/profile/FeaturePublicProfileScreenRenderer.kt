@@ -3,8 +3,7 @@ package com.coffeepeek.admin.di.profile
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
-import com.coffeepeek.admin.feature.profile.domain.PublicProfileCheckIn as LegacyCheckIn
-import com.coffeepeek.admin.feature.profile.domain.PublicProfileRepository
+import com.coffeepeek.feature.profile.domain.PublicProfileData
 import com.coffeepeek.admin.ui.Navigator
 import com.coffeepeek.admin.ui.component.FullScreenImageDialog
 import com.coffeepeek.admin.ui.component.PhotoViewerImages
@@ -23,8 +22,6 @@ import com.coffeepeek.feature.profile.api.ProfileAuthorActions
 import com.coffeepeek.feature.profile.api.ProfileSlots
 import com.coffeepeek.feature.profile.api.PublicCheckInsPort
 import com.coffeepeek.feature.profile.api.PublicProfileEntry
-import com.coffeepeek.feature.profile.domain.PublicProfileCheckIn
-import com.coffeepeek.feature.profile.domain.PublicProfileCheckInPage
 import com.coffeepeek.feature.profile.impl.createPublicProfileEntry
 
 /** Both platforms use the feature public profile; navigation and platform media stay app-owned. */
@@ -43,14 +40,6 @@ internal class FeaturePublicProfileScreenRenderer(private val entry: PublicProfi
     }
 }
 
-/** A stateless projection; feature rows retain their own presentation after paging or account changes. */
-internal class AppPublicCheckIns(private val repository: PublicProfileRepository) : PublicCheckInsPort {
-    override suspend fun page(slug: String, cursor: String?): Result<PublicProfileCheckInPage> =
-        repository.getCheckIns(slug, cursor).map { page ->
-            PublicProfileCheckInPage(page.items.map(LegacyCheckIn::toFeatureModel), page.nextCursor)
-        }
-}
-
 internal class AppProfileAuthorActions(private val blocks: AuthorBlockActions) : ProfileAuthorActions {
     override fun requestBlock(author: ProfileAuthor) = blocks.requestBlock(author.toReference())
     override fun requestUnblock(author: ProfileAuthor) = blocks.requestUnblock(author.toReference())
@@ -59,13 +48,13 @@ internal class AppProfileAuthorActions(private val blocks: AuthorBlockActions) :
 private fun ProfileAuthor.toReference() = AuthorReference(id, slug, name, avatarUrl)
 
 internal fun featurePublicProfileScreenRenderer(
-    repository: PublicProfileRepository,
+    repository: PublicProfileData,
+    checkIns: PublicCheckInsPort,
     sessions: SessionReader,
     users: UserRepository,
     visibility: AuthorVisibility,
     blocks: AuthorBlockActions,
 ): FeaturePublicProfileScreenRenderer {
-    val checkIns = AppPublicCheckIns(repository)
     val slots = profileSlots()
     return FeaturePublicProfileScreenRenderer(createPublicProfileEntry(
         data = repository,

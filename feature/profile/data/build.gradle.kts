@@ -12,6 +12,8 @@ android.namespace = "com.coffeepeek.feature.profile.data"
 
 dependencies {
     api(project(module.feature.profile.domain))
+    implementation(project(module.feature.profile.api))
+    implementation(project(module.feature.community.api))
     implementation(project(module.core.network))
     implementation(libs.ktor.client.core)
     implementation(libs.kotlinx.serialization.json)

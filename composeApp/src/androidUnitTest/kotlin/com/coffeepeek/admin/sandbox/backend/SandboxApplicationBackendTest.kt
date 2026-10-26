@@ -81,6 +81,18 @@ private class LocalSession : SessionRepository {
 class SandboxApplicationBackendTest {
     @get:Rule val temporary = TemporaryFolder()
 
+    @Test fun publicProfileCheckInsUseMigratedReadersAndRemainPublicForOwnAndGuestProfiles() = runTest { fixture { _, client ->
+        val community = com.coffeepeek.feature.community.data.repository.createCommunityRepository(client.client, "https://sandbox.coffeepeek.invalid")
+        val posts = com.coffeepeek.feature.community.data.repository.createPublicAuthorPosts(community)
+        val reader = com.coffeepeek.feature.profile.data.repository.createPublicProfileCheckIns(posts)
+        val own = reader.page("sandbox").getOrThrow()
+        assertEquals(1, own.items.size)
+        assertEquals("Sandbox", own.items.single().authorName)
+        val friend = reader.page("sandbox-friend").getOrThrow()
+        assertEquals(1, friend.items.size)
+        assertTrue(reader.page("not-found").getOrThrow().items.isEmpty())
+    } }
+
     @Test fun migratedContentReportUsesOnlyTheLocalSandboxContract() = runTest { fixture { backend, client ->
         val repository = com.coffeepeek.feature.contentreport.data.repository.createContentReportRepository(client.client)
         val target = com.coffeepeek.feature.contentreport.domain.model.ContentReportTarget(
