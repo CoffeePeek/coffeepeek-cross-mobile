@@ -5,7 +5,7 @@ import com.coffeepeek.domain.repository.CheckInHelpfulVote
 import com.coffeepeek.domain.repository.UserRepository
 import com.coffeepeek.domain.feature.feed.*
 import com.coffeepeek.domain.repository.CheckInRepository
-import com.coffeepeek.domain.repository.SessionRepository
+import com.coffeepeek.core.session.SessionStore
 import com.coffeepeek.domain.repository.ShopRepository
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.NonCancellable
@@ -190,7 +190,7 @@ internal class FeedCheckIns : CheckInRepository {
     override suspend fun getMyCheckIns(from: String, to: String, pageSize: Int): Result<List<CheckIn>> = error("Unused")
 }
 
-internal class FeedSessions(initial: Session?) : SessionRepository {
+internal class FeedSessions(initial: Session?) : SessionStore {
     private val session = MutableStateFlow(initial)
     override fun peekSession() = session.value
     override fun applySession(session: Session?) { this.session.value = session }

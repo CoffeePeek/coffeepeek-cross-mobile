@@ -3,7 +3,7 @@ package com.coffeepeek.admin.di.checkinhistory
 import com.coffeepeek.admin.di.homecheckin.HomePreparationTestReader
 import com.coffeepeek.admin.di.shop.CheckInTestSessions
 import com.coffeepeek.domain.model.Session
-import com.coffeepeek.domain.repository.SessionRepository
+import com.coffeepeek.core.session.SessionStore
 import com.coffeepeek.feature.checkinhistory.domain.model.HomeHistoryDateRange
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
@@ -100,7 +100,7 @@ class HomeHistorySessionTest {
     }
 
     @Test fun observerFailureRevokesBeforeTransportAndResultFailuresRemainExplicit() = runTest {
-        val broken = object : SessionRepository by CheckInTestSessions() {
+        val broken = object : SessionStore by CheckInTestSessions() {
             override fun observeSession() = flow<Session?> { error("Session store unavailable") }
         }
         val source = HomePreparationTestReader()

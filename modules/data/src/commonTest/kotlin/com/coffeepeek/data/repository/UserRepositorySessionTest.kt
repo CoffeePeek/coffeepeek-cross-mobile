@@ -3,7 +3,7 @@ package com.coffeepeek.data.repository
 import com.coffeepeek.api.service.PhotoApiService
 import com.coffeepeek.api.service.UserApiService
 import com.coffeepeek.domain.model.Session
-import com.coffeepeek.domain.repository.SessionRepository
+import com.coffeepeek.core.session.SessionStore
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.respond
@@ -148,7 +148,7 @@ class UserRepositorySessionTest {
     }
 }
 
-private class TestSessionRepository(initial: Session?) : SessionRepository {
+private class TestSessionRepository(initial: Session?) : SessionStore {
     private val session = MutableStateFlow(initial)
     override fun peekSession() = session.value
     override fun applySession(session: Session?) { this.session.value = session }

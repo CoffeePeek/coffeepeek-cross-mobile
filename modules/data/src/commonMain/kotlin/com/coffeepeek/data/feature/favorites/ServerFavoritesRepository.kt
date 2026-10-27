@@ -7,7 +7,7 @@ import com.coffeepeek.domain.feature.favorites.api.FavoriteEntry
 import com.coffeepeek.domain.feature.favorites.api.FavoriteKind
 import com.coffeepeek.domain.feature.favorites.api.FavoritesRepository
 import com.coffeepeek.domain.model.PublicAddress
-import com.coffeepeek.domain.repository.SessionRepository
+import com.coffeepeek.core.session.SessionStore
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.currentCoroutineContext
@@ -26,7 +26,7 @@ import kotlinx.coroutines.sync.withLock
 
 class ServerFavoritesRepository(
     private val api: FavoritesApiService,
-    private val sessions: SessionRepository,
+    private val sessions: SessionStore,
 ) : FavoritesRepository {
     private data class Cache(val account: String?, val result: Result<List<FavoriteEntry>>? = null)
     private val cache = MutableStateFlow(Cache(null))

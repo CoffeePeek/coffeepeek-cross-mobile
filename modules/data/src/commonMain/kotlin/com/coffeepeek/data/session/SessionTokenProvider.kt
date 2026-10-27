@@ -2,12 +2,12 @@ package com.coffeepeek.data.session
 
 import com.coffeepeek.api.model.response.AuthResp
 import com.coffeepeek.domain.model.Session
-import com.coffeepeek.domain.repository.SessionRepository
+import com.coffeepeek.core.session.SessionStore
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
 class SessionTokenProvider(
-    private val sessionRepository: SessionRepository,
+    private val sessionRepository: SessionStore,
     scope: CoroutineScope,
 ) {
     init {

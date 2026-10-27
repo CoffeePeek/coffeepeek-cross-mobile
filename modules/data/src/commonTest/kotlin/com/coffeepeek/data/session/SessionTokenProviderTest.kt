@@ -1,7 +1,7 @@
 package com.coffeepeek.data.session
 
 import com.coffeepeek.domain.model.Session
-import com.coffeepeek.domain.repository.SessionRepository
+import com.coffeepeek.core.session.SessionStore
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.flowOf
 import kotlin.test.*
@@ -11,7 +11,7 @@ class SessionTokenProviderTest {
     fun restoresSavedSessionAndUsesImmediateMemoryUpdatesWithoutWaitingForPersistenceFlow() = runBlocking {
         val restored = CompletableDeferred<Unit>()
         val saved = Session("saved-token", "refresh", "one")
-        val sessions = object : SessionRepository {
+        val sessions = object : SessionStore {
             var current: Session? = null
             override fun peekSession() = current
             override fun applySession(session: Session?) { current = session }

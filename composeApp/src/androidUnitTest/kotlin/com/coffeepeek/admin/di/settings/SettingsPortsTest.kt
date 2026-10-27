@@ -17,7 +17,7 @@ import com.coffeepeek.admin.settings.FakeSettingRepository
 import com.coffeepeek.admin.theme.ThemeManager
 import com.coffeepeek.admin.utils.COFFEEPEEK_SHARE_TEXT
 import com.coffeepeek.domain.model.Session
-import com.coffeepeek.domain.repository.SessionRepository
+import com.coffeepeek.core.session.SessionStore
 import com.coffeepeek.feature.discovery.api.PublicCatalogOption
 import com.coffeepeek.feature.discovery.api.PublicDiscoveryCatalogs
 import com.coffeepeek.feature.settings.domain.SettingsCity
@@ -100,7 +100,7 @@ class SettingsPortsTest {
 
     // --- account -----------------------------------------------------------------------------------------------------------
 
-    private class Sessions(initial: Session?, private val active: (Session?) -> Boolean = { it != null }) : SessionRepository {
+    private class Sessions(initial: Session?, private val active: (Session?) -> Boolean = { it != null }) : SessionStore {
         val state = MutableStateFlow(initial)
         override fun peekSession() = state.value
         override fun applySession(session: Session?) { state.value = session }

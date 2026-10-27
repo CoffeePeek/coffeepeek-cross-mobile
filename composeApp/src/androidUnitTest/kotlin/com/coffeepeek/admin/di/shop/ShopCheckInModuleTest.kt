@@ -3,7 +3,7 @@ package com.coffeepeek.admin.di.shop
 import com.coffeepeek.admin.ui.screen.shop.CheckInDraftStore
 import com.coffeepeek.api.CoffeePeekClient
 import com.coffeepeek.core.session.SessionReader
-import com.coffeepeek.domain.repository.SessionRepository
+import com.coffeepeek.core.session.SessionStore
 import com.coffeepeek.feature.shop.api.ShopCheckInCreateEntry
 import com.coffeepeek.feature.shop.domain.repository.ShopCheckInRepository
 import com.coffeepeek.feature.shop.domain.repository.ShopDetailsRepository
@@ -33,8 +33,8 @@ class ShopCheckInModuleTest {
             modules(module {
                 single { client }
                 single { drafts }
-                single<SessionRepository> { CheckInTestSessions() }
-                single<SessionReader> { get<SessionRepository>() }
+                single<SessionStore> { CheckInTestSessions() }
+                single<SessionReader> { get<SessionStore>() }
             }, shopCheckInModule(AndroidShopCheckInDateFormatter()), shopBrowsingModule(fileBaseUrl = "https://fixture.invalid"))
         }
         try {

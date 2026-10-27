@@ -53,7 +53,7 @@ import com.coffeepeek.feature.profile.domain.PublicProfileConnectionsPage
 import com.coffeepeek.domain.model.*
 import com.coffeepeek.domain.repository.FavoriteRepository
 import com.coffeepeek.domain.repository.RoasterRepository
-import com.coffeepeek.domain.repository.SessionRepository
+import com.coffeepeek.core.session.SessionStore
 import kotlinx.coroutines.flow.MutableStateFlow
 import com.coffeepeek.admin.theme.CoffeePeekTheme
 import com.coffeepeek.admin.theme.PlatformSystemBars
@@ -929,7 +929,7 @@ private class ProfileFixtureRepository : PublicProfileRepository {
     }
 }
 
-private class ProfileFixtureSessions : SessionRepository {
+private class ProfileFixtureSessions : SessionStore {
     private val current = MutableStateFlow<Session?>(Session("fixture-token", userId = "viewer"))
     override fun peekSession() = current.value
     override fun applySession(session: Session?) { current.value = session }

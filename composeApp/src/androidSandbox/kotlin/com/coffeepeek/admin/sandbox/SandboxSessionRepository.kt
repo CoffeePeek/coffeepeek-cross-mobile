@@ -1,12 +1,12 @@
 package com.coffeepeek.admin.sandbox
 
 import com.coffeepeek.domain.model.Session
-import com.coffeepeek.domain.repository.SessionRepository
+import com.coffeepeek.core.session.SessionStore
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
 /** No credential store, JWT, account lookup or production identity. */
-internal class SandboxSessionRepository : SessionRepository {
+internal class SandboxSessionRepository : SessionStore {
     private val current = MutableStateFlow<Session?>(localSession())
     fun login() = applySession(localSession())
     override fun peekSession() = current.value

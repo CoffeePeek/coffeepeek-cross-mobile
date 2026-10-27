@@ -1382,3 +1382,22 @@ source `89778c23` + этот срез. Подробный scope/остаток �
   не выполнялась (gate перед релизом).
 - Осталось в C: C5 (`SessionRepository` → `SessionStore`/`SessionReader`), C6 (refresh токена,
   `CoffeePeekClient`/`AuthService`), C7 (серверное избранное `ServerFavoritesRepository`).
+
+## L3, срез C5 — алиас `SessionRepository` удалён — 2026-10-27
+
+- Удалены `modules/domain` `SessionRepository` (пустой `: SessionStore`) и `modules/data`
+  `SessionRepositoryImpl` (делегат). `dataModule` привязывает `SessionStore` напрямую к
+  `DefaultSessionStore`, `SessionReader` — к тому же экземпляру. Ссылки в 38 файлах заменены
+  механически на `SessionStore` (импорт `core.session.SessionStore`): `BaseViewModel`, легаси
+  ViewModels, Sandbox (`SandboxApplication`, `SandboxSessionRepository`), fixtures и тесты, в том
+  числе чужие (замена одного имени типа, поведение тестов не менялось). Имена вроде
+  `SandboxSessionRepository` оставлены.
+- Bridge `domain.model.Session` (typealias на `core.session.Session`) остаётся до отдельного
+  среза; комментарий обновлён.
+- Проверено (код выхода Gradle из файла = 0, 0 ошибок): Direct/Play unit, modules/data unit,
+  lintDirectDebug, assemble Direct/Sandbox, DEX и isolation, iOS Arm64 compile, simulator
+  test-compile, framework link, modules/data iOS compile. Инструментальные тесты не
+  собирались (их компиляция падает на прежних `CpImageLoadingTest`/
+  `DisplayPhotoTransparencyTest`).
+- Осталось в C: C6 (refresh токена, `CoffeePeekClient`/`AuthService` → порт в `core/network`),
+  C7 (серверное избранное `ServerFavoritesRepository`).

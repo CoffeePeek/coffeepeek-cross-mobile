@@ -36,7 +36,7 @@ import com.coffeepeek.feature.shop.data.repository.createShopCheckInVoteReposito
 import com.coffeepeek.feature.shop.data.repository.createShopDetailsRepository
 import com.coffeepeek.feature.shop.domain.model.*
 import com.coffeepeek.domain.model.Session
-import com.coffeepeek.domain.repository.SessionRepository
+import com.coffeepeek.core.session.SessionStore
 import com.coffeepeek.feature.authorblocking.api.AuthorReference
 import com.coffeepeek.feature.community.data.repository.createCommunityRepository
 import com.coffeepeek.feature.community.domain.model.CommunityFailure
@@ -67,7 +67,7 @@ import java.time.LocalDate
 import kotlin.test.*
 
 /** Same shape as the Sandbox app's no-credential session, without its Android-only source set. */
-private class LocalSession : SessionRepository {
+private class LocalSession : SessionStore {
     private val current = MutableStateFlow<Session?>(Session("local", "local", "11111111-1111-4111-8111-111111111111"))
     override fun peekSession() = current.value
     override fun applySession(session: Session?) { current.value = session }

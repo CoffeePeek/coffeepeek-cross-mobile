@@ -12,7 +12,7 @@ import com.coffeepeek.domain.model.City
 import com.coffeepeek.domain.model.PublicAddress
 import com.coffeepeek.domain.model.UserProfile
 import com.coffeepeek.domain.repository.AuthRepository
-import com.coffeepeek.domain.repository.SessionRepository
+import com.coffeepeek.core.session.SessionStore
 import com.coffeepeek.domain.repository.ShopRepository
 import com.coffeepeek.domain.repository.UserRepository
 import kotlinx.coroutines.CoroutineScope
@@ -54,7 +54,7 @@ data class ProfileUiState(
 class ProfileViewModel(
     private val authRepository: AuthRepository,
     private val userRepository: UserRepository,
-    private val sessionRepository: SessionRepository,
+    private val sessionRepository: SessionStore,
     private val shopRepository: ShopRepository,
     private val cityPreference: CityPreference,
     private val reviewDrafts: ReviewDraftStore,

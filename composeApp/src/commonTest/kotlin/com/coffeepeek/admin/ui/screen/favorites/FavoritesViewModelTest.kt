@@ -4,7 +4,7 @@ import com.coffeepeek.admin.feature.favorites.api.RoasterFavorites
 import com.coffeepeek.domain.model.*
 import com.coffeepeek.domain.repository.FavoriteRepository
 import com.coffeepeek.domain.repository.RoasterRepository
-import com.coffeepeek.domain.repository.SessionRepository
+import com.coffeepeek.core.session.SessionStore
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.channels.Channel
@@ -138,7 +138,7 @@ class FavoritesViewModelTest {
     }
 }
 
-private class FavoriteSessions(user: String) : SessionRepository {
+private class FavoriteSessions(user: String) : SessionStore {
     private val current = MutableStateFlow<Session?>(Session("$user-token", userId = user))
     override fun peekSession() = current.value
     override fun applySession(session: Session?) { current.value = session }

@@ -13,7 +13,7 @@ import com.coffeepeek.domain.feature.favorites.api.FavoriteKind
 import com.coffeepeek.domain.feature.favorites.api.FavoritesRepository
 import com.coffeepeek.domain.repository.FavoriteRepository
 import com.coffeepeek.domain.repository.RoasterRepository
-import com.coffeepeek.domain.repository.SessionRepository
+import com.coffeepeek.core.session.SessionStore
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
@@ -53,7 +53,7 @@ class FavoritesViewModel(
     private val roasterFavorites: RoasterFavorites,
     private val roasterRepository: RoasterRepository,
     private val serverFavorites: FavoritesRepository? = null,
-    private val sessions: SessionRepository? = null,
+    private val sessions: SessionStore? = null,
 ) : BaseViewModel() {
 
     private val _state = MutableStateFlow(FavoritesUiState())

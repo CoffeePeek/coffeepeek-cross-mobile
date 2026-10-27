@@ -5,7 +5,7 @@ import com.coffeepeek.feature.profile.domain.*
 import com.coffeepeek.admin.feature.profile.domain.PublicProfileCheckInPage
 import com.coffeepeek.admin.feature.profile.domain.PublicProfileCheckIn
 import com.coffeepeek.domain.model.*
-import com.coffeepeek.domain.repository.SessionRepository
+import com.coffeepeek.core.session.SessionStore
 import com.coffeepeek.domain.repository.UserRepository
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -360,7 +360,7 @@ private class ProfileRepositoryFake : PublicProfileRepository {
     override suspend fun getConnections(slug: String, kind: PublicProfileConnectionKind, page: Int, pageSize: Int) = connections(kind, page)
 }
 
-private class ProfileSessions(user: String? = null) : SessionRepository {
+private class ProfileSessions(user: String? = null) : SessionStore {
     private val state = MutableStateFlow(user?.let { Session("$it-token", userId = it) })
     fun signIn(user: String?) { state.value = user?.let { Session("$it-token", userId = it) } }
     override fun peekSession() = state.value

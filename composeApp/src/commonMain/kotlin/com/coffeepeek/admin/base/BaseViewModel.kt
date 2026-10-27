@@ -7,7 +7,7 @@ import com.coffeepeek.api.utils.ApiException
 import com.coffeepeek.admin.utils.ErrorHandler
 import com.coffeepeek.admin.utils.LoadingHandler
 import com.coffeepeek.domain.model.Session
-import com.coffeepeek.domain.repository.SessionRepository
+import com.coffeepeek.core.session.SessionStore
 import io.ktor.utils.io.core.Closeable
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
@@ -27,7 +27,7 @@ abstract class BaseViewModel : ViewModel(), Closeable {
     }
 
     /** Возвращает сессию или сбрасывает её и закрывает доступ к защищённым экранам. */
-    protected suspend fun requireAuthSession(sessionRepository: SessionRepository): Session? {
+    protected suspend fun requireAuthSession(sessionRepository: SessionStore): Session? {
         val session = sessionRepository.getSession()
         if (!sessionRepository.isActiveSession(session)) {
             sessionRepository.saveSession(null)

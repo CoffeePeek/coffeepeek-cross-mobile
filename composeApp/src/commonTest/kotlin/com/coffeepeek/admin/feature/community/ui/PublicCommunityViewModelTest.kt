@@ -3,7 +3,7 @@ package com.coffeepeek.admin.feature.community.ui
 import com.coffeepeek.domain.feature.feed.*
 import com.coffeepeek.domain.model.*
 import com.coffeepeek.domain.repository.CheckInHelpfulVote
-import com.coffeepeek.domain.repository.SessionRepository
+import com.coffeepeek.core.session.SessionStore
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.currentCoroutineContext
@@ -126,7 +126,7 @@ class PublicCommunityViewModelTest {
         val initialized = CompletableDeferred<Unit>()
         val validations = MutableStateFlow(0)
         val sessionStore = FeedSessions(Session("token", userId = "one"))
-        val sessions = object : SessionRepository by sessionStore {
+        val sessions = object : SessionStore by sessionStore {
             override fun observeSession() = flow {
                 emit(sessionStore.peekSession())
                 initialized.complete(Unit)

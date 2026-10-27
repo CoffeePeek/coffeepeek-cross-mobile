@@ -13,7 +13,7 @@ import com.coffeepeek.data.util.FileUrlResolver
 import com.coffeepeek.domain.feature.favorites.api.FavoriteKind
 import com.coffeepeek.domain.model.PublicAddress
 import com.coffeepeek.domain.model.Session
-import com.coffeepeek.domain.repository.SessionRepository
+import com.coffeepeek.core.session.SessionStore
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.respond
@@ -238,7 +238,7 @@ private class FavoriteServer {
     fun repository() = ServerFavoritesRepository(FavoritesApiService(client), sessions)
 }
 
-private class FavoriteSessions : SessionRepository {
+private class FavoriteSessions : SessionStore {
     private val state = MutableStateFlow<Session?>(Session("alice-token", userId = "alice"))
     fun signIn(userId: String?) { state.value = userId?.let { Session("$it-token", userId = it) } }
     override fun peekSession() = state.value

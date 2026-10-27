@@ -7,7 +7,7 @@ import com.coffeepeek.admin.analytics.*
 import com.coffeepeek.admin.di.checkinhistory.CheckInHistorySession
 import com.coffeepeek.admin.di.shop.CheckInTestSessions
 import com.coffeepeek.domain.model.Session
-import com.coffeepeek.domain.repository.SessionRepository
+import com.coffeepeek.core.session.SessionStore
 import com.coffeepeek.feature.homecheckin.api.HomeCheckInEditorEntry
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.flow
@@ -36,7 +36,7 @@ class GlobalCheckInFlowTest {
     private class Fixture(val model: GlobalCheckInFlow, val store: ViewModelStore,
         val sdk: RecordingTransport, val service: AnalyticsService, val handoffs: MutableList<CheckInTracker?>)
 
-    private suspend fun TestScope.fixture(sessions: SessionRepository = CheckInTestSessions(), accepted: Boolean = false): Fixture {
+    private suspend fun TestScope.fixture(sessions: SessionStore = CheckInTestSessions(), accepted: Boolean = false): Fixture {
         val sdk = RecordingTransport()
         val service = analytics(MemoryConsent(if (accepted) AnalyticsConsent.Accepted else AnalyticsConsent.Declined), sdk)
             .also(services::add)
@@ -191,7 +191,7 @@ class GlobalCheckInFlowTest {
     }
 
     @Test fun sessionObserverFailureClosesAndPermanentlyRevokesThePrivateFlow() = runTest(dispatcher) {
-        val sessions = object : SessionRepository by CheckInTestSessions() {
+        val sessions = object : SessionStore by CheckInTestSessions() {
             override fun observeSession() = flow<Session?> { throw IllegalStateException("Private transport details") }
         }
         val f = fixture(sessions)

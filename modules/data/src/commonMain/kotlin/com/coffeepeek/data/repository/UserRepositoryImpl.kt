@@ -10,7 +10,7 @@ import com.coffeepeek.domain.model.AccountDeletionRequest
 import com.coffeepeek.domain.model.PendingPhotoUpload
 import com.coffeepeek.domain.model.UserProfile
 import com.coffeepeek.domain.repository.PhotoRepository
-import com.coffeepeek.domain.repository.SessionRepository
+import com.coffeepeek.core.session.SessionStore
 import com.coffeepeek.domain.repository.UserRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -24,7 +24,7 @@ import kotlinx.coroutines.launch
 class UserRepositoryImpl(
     private val userApiService: UserApiService,
     private val photoRepository: PhotoRepository,
-    private val sessionRepository: SessionRepository,
+    private val sessionRepository: SessionStore,
     private val scope: CoroutineScope,
 ) : UserRepository {
 

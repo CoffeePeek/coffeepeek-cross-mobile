@@ -10,7 +10,7 @@ import com.coffeepeek.admin.CoffeePeekApplication
 import com.coffeepeek.admin.di.initAndroidKoin
 import com.coffeepeek.admin.sandbox.backend.SandboxBackend
 import com.coffeepeek.api.CoffeePeekClient
-import com.coffeepeek.domain.repository.SessionRepository
+import com.coffeepeek.core.session.SessionStore
 import org.koin.dsl.module
 import org.maplibre.android.MapLibre
 
@@ -32,7 +32,7 @@ internal class SandboxApplication : Application() {
         })
         MapLibre.getInstance(this)
         initAndroidKoin(analyticsEnabled = false, extraModules = listOf(module {
-            single<SessionRepository> { sessions }
+            single<SessionStore> { sessions }
             single { CoffeePeekClient(SandboxBackend.BASE_URL, cacheDir.resolve("sandbox-http").path, false,
                 getToken = { null }, saveToken = {}, apiClientFactory = backend::apiClient,
                 uploadClientFactory = backend::uploadClient) }

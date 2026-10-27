@@ -7,12 +7,12 @@ import com.coffeepeek.core.session.JwtUtils
 import com.coffeepeek.domain.model.Session
 import com.coffeepeek.domain.model.AppleLoginChallenge
 import com.coffeepeek.domain.repository.AuthRepository
-import com.coffeepeek.domain.repository.SessionRepository
+import com.coffeepeek.core.session.SessionStore
 import kotlinx.coroutines.CancellationException
 
 class AuthRepositoryImpl(
     private val authService: AuthService,
-    private val sessionRepository: SessionRepository,
+    private val sessionRepository: SessionStore,
     private val localUserData: LocalUserDataCleanup,
 ) : AuthRepository {
 

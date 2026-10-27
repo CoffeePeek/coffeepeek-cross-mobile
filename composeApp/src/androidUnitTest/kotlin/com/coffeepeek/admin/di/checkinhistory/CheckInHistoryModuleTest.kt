@@ -5,7 +5,7 @@ import com.coffeepeek.admin.di.homecheckin.homeCheckInModule
 import com.coffeepeek.admin.di.homecheckin.FeatureCheckInCreateFlowRenderer
 import com.coffeepeek.api.CoffeePeekClient
 import com.coffeepeek.core.session.SessionReader
-import com.coffeepeek.domain.repository.SessionRepository
+import com.coffeepeek.core.session.SessionStore
 import com.coffeepeek.admin.feature.catalog.api.BrewMethodCatalog
 import com.coffeepeek.feature.coffee.api.CoffeePicker
 import com.coffeepeek.feature.checkinhistory.domain.repository.CheckInHistoryRepository
@@ -29,14 +29,14 @@ class CheckInHistoryModuleTest {
         val client = CoffeePeekClient("https://fixture.invalid", temporary.newFolder("cache").path, false,
             getToken = { credentials++; error("Unexpected credentials read") },
             saveToken = { error("Unexpected credentials write") })
-        val sessions = object : SessionRepository by CheckInTestSessions() {
+        val sessions = object : SessionStore by CheckInTestSessions() {
             override fun peekSession(): com.coffeepeek.domain.model.Session? {
                 sessionReads++
                 error("Resolving a graph must not open an account lease")
             }
         }
         val app = koinApplication {
-            modules(module { single { client }; single<SessionRepository> { sessions }; single<SessionReader> { sessions } },
+            modules(module { single { client }; single<SessionStore> { sessions }; single<SessionReader> { sessions } },
                 module {
                     single<CoffeePicker> { object : CoffeePicker {
                         override suspend fun search(query: String) = error("Unexpected catalog read")

@@ -23,7 +23,7 @@ import com.coffeepeek.domain.model.ShopFilters
 import com.coffeepeek.domain.model.ShopSubmission
 import com.coffeepeek.domain.model.UserProfile
 import com.coffeepeek.domain.repository.AuthRepository
-import com.coffeepeek.domain.repository.SessionRepository
+import com.coffeepeek.core.session.SessionStore
 import com.coffeepeek.domain.repository.ShopRepository
 import com.coffeepeek.domain.repository.UserRepository
 import com.coffeepeek.feature.notifications.api.NotificationFeature
@@ -229,7 +229,7 @@ class ProfileViewModelTest {
         }
     }
 
-    private class Sessions(initial: Session?) : SessionRepository {
+    private class Sessions(initial: Session?) : SessionStore {
         private val state = MutableStateFlow(initial)
         fun set(session: Session?) { state.value = session }
         override fun peekSession() = state.value

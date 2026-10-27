@@ -22,7 +22,7 @@ internal class ScreenshotCheckIns : CheckInRepository {
     override suspend fun getMyCheckIns(from: String, to: String, pageSize: Int): Result<List<CheckIn>> = error("Unused")
 }
 
-internal class ScreenshotSessions(initial: Session?) : SessionRepository {
+internal class ScreenshotSessions(initial: Session?) : SessionStore {
     private val session = MutableStateFlow(initial)
     override fun peekSession() = session.value
     override fun applySession(session: Session?) { this.session.value = session }

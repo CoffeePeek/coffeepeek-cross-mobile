@@ -2,7 +2,7 @@ package com.coffeepeek.admin.di.auth
 
 import com.coffeepeek.admin.session.UserSessionCleaner
 import com.coffeepeek.domain.model.Session
-import com.coffeepeek.domain.repository.SessionRepository
+import com.coffeepeek.core.session.SessionStore
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.runBlocking
 import kotlin.test.Test
@@ -12,7 +12,7 @@ import kotlin.test.assertNull
 class AuthAdaptersTest {
     @Test fun clearingLocalUserDataSignsTheSessionOutClearsTheOwnersFavoritesAndTheCaches() = runBlocking<Unit> {
         val log = mutableListOf<String>()
-        val sessions = object : SessionRepository {
+        val sessions = object : SessionStore {
             private val state = MutableStateFlow<Session?>(Session("token", "refresh", "owner"))
             override fun peekSession() = state.value
             override fun applySession(session: Session?) { state.value = session }

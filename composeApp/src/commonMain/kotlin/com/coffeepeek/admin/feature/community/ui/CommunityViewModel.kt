@@ -11,7 +11,7 @@ import com.coffeepeek.domain.model.Session
 import com.coffeepeek.domain.model.UpdateCheckInInput
 import com.coffeepeek.domain.model.validateCheckInContent
 import com.coffeepeek.domain.repository.CheckInRepository
-import com.coffeepeek.domain.repository.SessionRepository
+import com.coffeepeek.core.session.SessionStore
 import com.coffeepeek.domain.repository.ShopRepository
 import com.coffeepeek.domain.repository.UserRepository
 import com.coffeepeek.domain.model.CheckInModerationState
@@ -92,7 +92,7 @@ internal enum class CommunityTimeline { Public, Mine }
 
 internal class CommunityViewModel(
     private val checkIns: CheckInRepository,
-    private val sessions: SessionRepository,
+    private val sessions: SessionStore,
     private val shops: ShopRepository,
     private val feed: FeedRepository,
     private val users: UserRepository,

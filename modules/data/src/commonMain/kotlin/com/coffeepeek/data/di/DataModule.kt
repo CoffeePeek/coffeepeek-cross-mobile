@@ -14,7 +14,6 @@ import com.coffeepeek.data.repository.FavoriteRepositoryImpl
 import com.coffeepeek.data.repository.PhotoRepositoryImpl
 import com.coffeepeek.data.repository.ReviewRepositoryImpl
 import com.coffeepeek.data.repository.RoasterRepositoryImpl
-import com.coffeepeek.data.repository.SessionRepositoryImpl
 import com.coffeepeek.data.session.LocalUserDataCleanup
 import com.coffeepeek.data.repository.ShopChangeRequestRepositoryImpl
 import com.coffeepeek.data.repository.ShopIssueReportRepositoryImpl
@@ -27,7 +26,6 @@ import com.coffeepeek.domain.repository.FavoriteRepository
 import com.coffeepeek.domain.repository.PhotoRepository
 import com.coffeepeek.domain.repository.ReviewRepository
 import com.coffeepeek.domain.repository.RoasterRepository
-import com.coffeepeek.domain.repository.SessionRepository
 import com.coffeepeek.domain.repository.ShopChangeRequestRepository
 import com.coffeepeek.domain.repository.ShopIssueReportRepository
 import com.coffeepeek.domain.repository.ShopRepository
@@ -50,9 +48,8 @@ fun dataModule(
 
     single<com.coffeepeek.core.session.LegacyCredentialRows> { RoomLegacyCredentialRows(database.settingRepository) }
     single { createPlatformSessionSecureStore(platformContext, get()) }
-    single<SessionRepository> { SessionRepositoryImpl(DefaultSessionStore(get(), get())) }
-    single<SessionStore> { get<SessionRepository>() }
-    single<SessionReader> { get<SessionRepository>() }
+    single<SessionStore> { DefaultSessionStore(get(), get()) }
+    single<SessionReader> { get<SessionStore>() }
     single { SessionTokenProvider(get(), get()) }
     single { FileUrlResolver(baseUrl) }
     single {
@@ -63,7 +60,7 @@ fun dataModule(
             debug = debug,
             getToken = { tokenProvider.current() },
             saveToken = { authResp ->
-                val sessionRepository = get<SessionRepository>()
+                val sessionRepository = get<SessionStore>()
                 val current = sessionRepository.peekSession()
                 val session = authResp?.let {
                     com.coffeepeek.domain.model.Session(
@@ -76,7 +73,7 @@ fun dataModule(
                 sessionRepository.saveSession(session)
             },
             replaceToken = { expected, updated ->
-                val sessions = get<SessionRepository>()
+                val sessions = get<SessionStore>()
                 val old = sessions.peekSession()
                 if (old?.accessToken != expected.accessToken || old.refreshToken.orEmpty() != expected.refreshToken) false
                 else sessions.replaceSession(old, updated?.let {

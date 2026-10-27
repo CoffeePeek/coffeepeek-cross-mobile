@@ -9,7 +9,7 @@ import com.coffeepeek.domain.feature.favorites.api.FavoritesRepository
 import com.coffeepeek.domain.model.CoffeeShop
 import com.coffeepeek.domain.model.CoffeeShopDetails
 import com.coffeepeek.domain.repository.FavoriteRepository
-import com.coffeepeek.domain.repository.SessionRepository
+import com.coffeepeek.core.session.SessionStore
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -24,7 +24,7 @@ class FavoriteRepositoryImpl(
     private val favorites: FavoritesRepository,
     private val shops: ShopApiService,
     private val fileUrls: FileUrlResolver,
-    private val sessions: SessionRepository,
+    private val sessions: SessionStore,
 ) : FavoriteRepository {
     override suspend fun getFavoriteIds(): Set<String> = favorites.getFavorites().getOrDefault(emptyList())
         .filter { it.kind == FavoriteKind.CoffeeShop }.mapNotNull { it.address?.slug }.toSet()
