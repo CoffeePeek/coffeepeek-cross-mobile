@@ -93,3 +93,15 @@ diff/resource/diagnostic-reference checks. Paired light/dark fake-state previews
 cover read/unread cards and enabled push. No UI tests or app installation/run.
 Manual rendering, larger fonts and native iPhone layout remain unverified; the
 earlier successful TestFlight 2474 delivery predates these presentation changes.
+
+Verified source `f84bd566` (PR merge tree `96871895`, develop `d8864318`),
+2026-10-27: [Android CI 40490394868](https://github.com/CoffeePeek/coffeepeek-cross-mobile/actions/runs/40490394868)
+passed Direct/Play Debug APK assembly, both packaged DEX guards, unit tasks and lint.
+Notifications impl and both application unit tasks executed; unchanged notifications
+data tests were restored from cache. Android CI does not export suite-count totals.
+[iOS CI 40490394944](https://github.com/CoffeePeek/coffeepeek-cross-mobile/actions/runs/40490394944)
+passed the unsigned Kotlin/Swift simulator build, 11 iOS tooling tests, 2 signing
+profile tests and 2 Native Koin ViewModel tests in one XML suite: zero failures,
+errors or skips. Both CI runs passed on their first attempt. XML/resource and
+removed-diagnostic-reference checks and git diff --check passed. No physical device,
+UI run, new TestFlight release or production write was part of this change.
