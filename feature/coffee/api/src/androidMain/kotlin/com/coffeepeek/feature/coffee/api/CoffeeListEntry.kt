@@ -5,8 +5,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
-/** App-owned tab/navigation and floating-navigation clearance; no root router in the feature. */
+/** App-owned tab/navigation, floating-navigation clearance and [header] content above the search; no root router in the feature. */
 interface CoffeeListEntry {
     @Composable
-    fun Content(onOpenCoffee: (slug: String) -> Unit, modifier: Modifier = Modifier, bottomClearance: Dp = 0.dp)
+    fun Content(
+        onOpenCoffee: (slug: String) -> Unit,
+        modifier: Modifier = Modifier,
+        bottomClearance: Dp = 0.dp,
+        header: @Composable () -> Unit = {},
+    )
 }

@@ -39,6 +39,8 @@ import com.coffeepeek.admin.ui.screen.shop.ShopCheckInFormRenderer
 import com.coffeepeek.admin.ui.screen.shop.LegacyShopCheckInFormRenderer
 import com.coffeepeek.admin.ui.screen.coffee.CoffeeScreenRenderer
 import com.coffeepeek.admin.ui.screen.coffee.LegacyCoffeeScreenRenderer
+import com.coffeepeek.admin.ui.screen.shelf.ShelfScreenRenderer
+import com.coffeepeek.admin.ui.screen.shelf.UnsupportedShelfScreenRenderer
 import com.coffeepeek.admin.feature.appupdate.ui.AppUpdateRenderer
 import com.coffeepeek.admin.feature.appupdate.ui.LegacyAppUpdateRenderer
 import com.coffeepeek.admin.feature.notifications.ui.LegacyNotificationsRenderer
@@ -130,6 +132,7 @@ fun initKoin(
     contributionsRendererFactory: Scope.() -> ContributionsScreenRenderer = { LegacyContributionsScreenRenderer },
     discoveryRendererFactory: Scope.() -> DiscoveryScreenRenderer = { LegacyDiscoveryScreenRenderer },
     notificationsRendererFactory: Scope.() -> NotificationsRenderer = { LegacyNotificationsRenderer },
+    shelfRendererFactory: Scope.() -> ShelfScreenRenderer = { UnsupportedShelfScreenRenderer },
     analyticsEnabled: Boolean = true,
 ) {
     check(AppConfig.baseUrl.isNotBlank()) {
@@ -152,7 +155,8 @@ fun initKoin(
             shopCheckInRendererFactory, shopDetailRendererFactory, shopCheckInListRendererFactory,
             checkInHistoryRendererFactory, checkInCreateFlowRendererFactory, coffeeRendererFactory, roasterRendererFactory,
             publicProfileRendererFactory, ownProfileRendererFactory, accountRendererFactory, settingsRendererFactory, appUpdateRendererFactory,
-            authRendererFactory, communityRendererFactory, checkInDetailRendererFactory, contributionsRendererFactory, discoveryRendererFactory, notificationsRendererFactory),
+            authRendererFactory, communityRendererFactory, checkInDetailRendererFactory, contributionsRendererFactory, discoveryRendererFactory, notificationsRendererFactory,
+            shelfRendererFactory),
         imageModule(),
         roasterModule(),
         updateInstallerModule(),
@@ -188,7 +192,9 @@ private fun appModule(
     contributionsRendererFactory: Scope.() -> ContributionsScreenRenderer,
     discoveryRendererFactory: Scope.() -> DiscoveryScreenRenderer,
     notificationsRendererFactory: Scope.() -> NotificationsRenderer,
+    shelfRendererFactory: Scope.() -> ShelfScreenRenderer,
 ) = module {
+    single<ShelfScreenRenderer> { shelfRendererFactory() }
     single<CoffeeScreenRenderer> { coffeeRendererFactory() }
     single<RoasterScreenRenderer> { roasterRendererFactory() }
     single<PublicProfileScreenRenderer> { publicProfileRendererFactory() }

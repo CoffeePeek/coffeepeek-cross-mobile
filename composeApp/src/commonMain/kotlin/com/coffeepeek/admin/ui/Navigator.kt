@@ -3,6 +3,7 @@ package com.coffeepeek.admin.ui
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.getValue
 import com.coffeepeek.admin.ui.screen.checkins.CheckInHistoryDestination
+import com.coffeepeek.admin.ui.screen.shelf.ShelfScreenRenderer
 import com.coffeepeek.admin.ui.screen.shop.ShopDetailScreen
 import com.coffeepeek.admin.ui.screen.shop.ShopMenuGalleryScreen
 import com.coffeepeek.admin.ui.screen.shop.ShopReportScreen
@@ -163,6 +164,7 @@ object Navigator {
         @Serializable data object Favorites : Screen
         @Serializable data object VisitedPlaces : Screen
         @Serializable data object HomeCheckIns : Screen
+        @Serializable data object ShelfArchive : Screen
         @Serializable data class EditHomeCheckIn(val id: String) : Screen
         @Serializable data object CitySettings : Screen
         @Serializable data object ThemeSettings : Screen
@@ -245,6 +247,7 @@ object Navigator {
         is Screen.Favorites,
         is Screen.VisitedPlaces,
         is Screen.HomeCheckIns,
+        is Screen.ShelfArchive,
         is Screen.EditHomeCheckIn,
         is Screen.CitySettings,
         is Screen.ThemeSettings,
@@ -537,6 +540,7 @@ koinInject<ContributionsScreenRenderer>().Editor(route.shopId, route.section, ro
                     composable<Screen.Favorites> { FavoritesDestination() }
                     composable<Screen.VisitedPlaces> { CheckInHistoryDestination() }
                     composable<Screen.HomeCheckIns> { CheckInHistoryDestination() }
+                    composable<Screen.ShelfArchive> { koinInject<ShelfScreenRenderer>().Archive() }
                     composable<Screen.EditHomeCheckIn> { entry ->
                         CheckInHistoryDestination(initialHomeId = entry.toRoute<Screen.EditHomeCheckIn>().id)
                     }
@@ -579,6 +583,7 @@ koinInject<ContributionsScreenRenderer>().Editor(route.shopId, route.section, ro
             Screen.Favorites -> FavoritesDestination()
             Screen.VisitedPlaces -> CheckInHistoryDestination()
             Screen.HomeCheckIns -> CheckInHistoryDestination()
+            Screen.ShelfArchive -> koinInject<ShelfScreenRenderer>().Archive()
             is Screen.EditHomeCheckIn -> CheckInHistoryDestination(initialHomeId = screen.id)
             Screen.CitySettings -> koinInject<SettingsScreenRenderer>().City()
             Screen.ThemeSettings -> koinInject<SettingsScreenRenderer>().Theme()

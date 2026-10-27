@@ -32,20 +32,21 @@ import com.coffeepeek.feature.coffee.impl.ui.compose.model.*
 @Composable
 internal fun CoffeeListScreen(viewModel: CoffeeListViewModel, imageContent: @Composable (String, String, Modifier, ContentScale) -> Unit,
     bottomClearance: Dp, modifier: Modifier, screen: CoffeeScreenAnalytics, loadError: (@Composable (onRetry: () -> Unit) -> Unit)?,
-    onEvent: (CoffeeListEvent) -> Unit) {
+    header: @Composable () -> Unit, onEvent: (CoffeeListEvent) -> Unit) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val currentEvent by rememberUpdatedState(onEvent)
     val lifecycle = LocalLifecycleOwner.current.lifecycle
     LaunchedEffect(viewModel, lifecycle) {
         lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) { viewModel.events.collect { currentEvent(it) } }
     }
-    CoffeeListScreenContent(state, viewModel::onAction, imageContent, modifier, bottomClearance, screen, loadError)
+    CoffeeListScreenContent(state, viewModel::onAction, imageContent, modifier, bottomClearance, screen, loadError, header)
 }
 
 @Composable
 internal fun CoffeeListScreenContent(state: CoffeeListState, onAction: (CoffeeListAction) -> Unit,
     imageContent: @Composable (String, String, Modifier, ContentScale) -> Unit, modifier: Modifier = Modifier, bottomClearance: Dp = 0.dp,
-    screen: CoffeeScreenAnalytics = CoffeeScreenAnalytics.None, loadError: (@Composable (onRetry: () -> Unit) -> Unit)? = null) {
+    screen: CoffeeScreenAnalytics = CoffeeScreenAnalytics.None, loadError: (@Composable (onRetry: () -> Unit) -> Unit)? = null,
+    header: @Composable () -> Unit = {}) {
     val listState = rememberLazyListState()
     val currentAction by rememberUpdatedState(onAction)
     val tasteNames = remember(state.filterGroups) {
@@ -63,6 +64,7 @@ internal fun CoffeeListScreenContent(state: CoffeeListState, onAction: (CoffeeLi
     Scaffold(modifier, contentWindowInsets = WindowInsets(0, 0, 0, 0), containerColor = MaterialTheme.colorScheme.background,
         topBar = {
             Column(Modifier.fillMaxWidth().statusBarsPadding().padding(horizontal = CoffeePeekDimens.spacing4, vertical = CoffeePeekDimens.spacing3)) {
+                header()
                 CoffeeSearchHeader(state.query, state.filters.activeCount, { onAction(CoffeeListAction.QueryChanged(it)) },
                     { onAction(CoffeeListAction.OpenFilters) }, screen)
             }

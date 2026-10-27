@@ -63,8 +63,10 @@ kotlin {
             implementation(project(module.feature.homePreparation.api))
             implementation(project(module.feature.homePreparation.data))
             implementation(project(module.feature.homePreparation.impl))
+            implementation(project(module.feature.shelf.api))
             implementation(project(module.feature.shelf.domain))
             implementation(project(module.feature.shelf.data))
+            implementation(project(module.feature.shelf.impl))
             implementation(project(module.core.coroutines))
             implementation(libs.androidx.activity.compose)
             implementation(libs.androidx.concurrent.futures)
@@ -269,6 +271,7 @@ android {
         buildConfigField("String", "API_BASE_URL", "\"$apiBaseUrl\"")
         buildConfigField("boolean", "POSTHOG_ENABLE_DEV", providers.gradleProperty("posthogEnableDev").map { (it == "true").toString() }.getOrElse("false"))
         buildConfigField("String", "POSTHOG_PROJECT_TOKEN", "\"${postHogProjectToken.get()}\"")
+        buildConfigField("boolean", "SHELF_ENABLED", "false")
     }
     packaging {
         resources {
@@ -311,6 +314,7 @@ android {
             buildConfigField("String", "GOOGLE_WEB_CLIENT_ID", "\"\"")
             buildConfigField("String", "POSTHOG_PROJECT_TOKEN", "\"\"")
             buildConfigField("boolean", "POSTHOG_ENABLE_DEV", "false")
+            buildConfigField("boolean", "SHELF_ENABLED", "true")
         }
         getByName("release") {
             isMinifyEnabled = true

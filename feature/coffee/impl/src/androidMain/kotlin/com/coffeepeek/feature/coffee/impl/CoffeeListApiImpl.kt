@@ -31,10 +31,10 @@ private class CoffeeListApiImpl(private val repository: CoffeeRepository,
     private val instanceKey = UUID.randomUUID().toString()
 
     @Composable
-    override fun Content(onOpenCoffee: (String) -> Unit, modifier: Modifier, bottomClearance: Dp) {
+    override fun Content(onOpenCoffee: (String) -> Unit, modifier: Modifier, bottomClearance: Dp, header: @Composable () -> Unit) {
         key(this) {
             val model = viewModel(key = "coffee-list:$instanceKey") { CoffeeListViewModel(repository, analytics.list()) }
-            CoffeeListScreen(model, imageContent, bottomClearance, modifier, screenAnalytics, loadError) { event ->
+            CoffeeListScreen(model, imageContent, bottomClearance, modifier, screenAnalytics, loadError, header) { event ->
                 when (event) { is CoffeeListEvent.OpenCoffee -> onOpenCoffee(event.slug) }
             }
         }

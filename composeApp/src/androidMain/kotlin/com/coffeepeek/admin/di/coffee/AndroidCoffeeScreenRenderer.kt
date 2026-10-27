@@ -18,15 +18,24 @@ import com.coffeepeek.feature.coffee.impl.createCoffeeDetailEntry
 import com.coffeepeek.admin.ui.component.LoadErrorContent
 import com.coffeepeek.feature.coffee.impl.createCoffeeListEntry
 
-/** Android routes to the migrated catalogue; root navigation, browser, share and photo viewer stay app-owned. */
+/**
+ * Android routes to the migrated catalogue; root navigation, browser, share and photo viewer stay app-owned.
+ * With [shelf] (builds where the shelf is enabled) the tab switches between the shelf and the catalogue.
+ */
 internal class AndroidCoffeeScreenRenderer(
     private val list: CoffeeListEntry,
     private val detail: CoffeeDetailEntry,
+    private val shelf: CoffeeShelfTab? = null,
 ) : CoffeeScreenRenderer {
     @Composable
     override fun List() {
+        if (shelf == null) Catalogue {} else shelf.Content { header -> Catalogue(header) }
+    }
+
+    @Composable
+    private fun Catalogue(header: @Composable () -> Unit) {
         list.Content(onOpenCoffee = { Navigator.navigate(Navigator.Screen.CoffeeDetail(it)) },
-            modifier = Modifier, bottomClearance = LocalFloatingNavClearance.current)
+            modifier = Modifier, bottomClearance = LocalFloatingNavClearance.current, header = header)
     }
 
     @Composable
@@ -39,7 +48,7 @@ internal class AndroidCoffeeScreenRenderer(
     }
 }
 
-internal fun androidCoffeeScreenRenderer(repository: CoffeeRepository): AndroidCoffeeScreenRenderer {
+internal fun androidCoffeeScreenRenderer(repository: CoffeeRepository, shelf: CoffeeShelfTab? = null): AndroidCoffeeScreenRenderer {
     val image: @Composable (String, String, Modifier, androidx.compose.ui.layout.ContentScale) -> Unit =
         { url, description, modifier, scale ->
             CoffeeShopImage(imageUrl = url, modifier = modifier, contentDescription = description, contentScale = scale)
@@ -49,5 +58,6 @@ internal fun androidCoffeeScreenRenderer(repository: CoffeeRepository): AndroidC
         createCoffeeDetailEntry(repository, image,
             { urls, index, onDismiss -> FullScreenImageDialog(urls, index, onDismiss = onDismiss) },
             ::utcIsoToLocalDateTime, AndroidCoffeeAnalytics, AndroidCoffeeScreenAnalytics),
+        shelf,
     )
 }

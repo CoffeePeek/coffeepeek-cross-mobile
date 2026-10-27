@@ -3,6 +3,7 @@ package com.coffeepeek.admin.di.shelf
 import com.coffeepeek.api.CoffeePeekClient
 import com.coffeepeek.core.session.Session
 import com.coffeepeek.core.session.SessionReader
+import com.coffeepeek.feature.shelf.api.ShelfEntry
 import com.coffeepeek.feature.shelf.domain.repository.BagScanner
 import com.coffeepeek.feature.shelf.domain.repository.ShelfRepository
 import kotlinx.coroutines.flow.Flow
@@ -33,6 +34,7 @@ class ShelfModuleTest {
         try {
             assertSame(app.koin.get<ShelfRepository>(), app.koin.get<ShelfRepository>())
             assertSame(app.koin.get<BagScanner>(), app.koin.get<BagScanner>())
+            assertSame(app.koin.get<ShelfEntry>(), app.koin.get<ShelfEntry>())
             assertEquals(1, app.koin.getAll<ShelfRepository>().size)
         } finally {
             app.close()

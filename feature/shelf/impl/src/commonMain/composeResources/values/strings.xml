@@ -1,0 +1,122 @@
+<resources>
+    <!-- The shelf UI currently has Russian text only. -->
+    <string name="shelf_loading">Загружаем полку</string>
+    <string name="shelf_load_failed">Не удалось загрузить полку</string>
+    <string name="shelf_retry">Повторить</string>
+    <string name="shelf_archive">Архив</string>
+    <string name="shelf_drag_hint">Перетащите на место или вниз</string>
+    <string name="shelf_weight_kg">≈ %1$s кг</string>
+    <string name="shelf_weight_g">≈ %1$d г</string>
+    <plurals name="shelf_bags">
+        <item quantity="one">%1$d пачка</item>
+        <item quantity="few">%1$d пачки</item>
+        <item quantity="many">%1$d пачек</item>
+        <item quantity="other">%1$d пачки</item>
+    </plurals>
+    <plurals name="shelf_roasters">
+        <item quantity="one">%1$d обжарщик</item>
+        <item quantity="few">%1$d обжарщика</item>
+        <item quantity="many">%1$d обжарщиков</item>
+        <item quantity="other">%1$d обжарщика</item>
+    </plurals>
+    <plurals name="shelf_days">
+        <item quantity="one">%1$d день</item>
+        <item quantity="few">%1$d дня</item>
+        <item quantity="many">%1$d дней</item>
+        <item quantity="other">%1$d дня</item>
+    </plurals>
+    <plurals name="shelf_weeks">
+        <item quantity="one">%1$d неделю</item>
+        <item quantity="few">%1$d недели</item>
+        <item quantity="many">%1$d недель</item>
+        <item quantity="other">%1$d недели</item>
+    </plurals>
+
+    <string name="shelf_empty_title">Здесь будет ваш кофе</string>
+    <string name="shelf_empty_body">Пачки встанут на полку, а когда кофе закончится, уйдут в архив</string>
+    <string name="shelf_browse_catalog">Посмотреть каталог</string>
+    <string name="shelf_guest_title">Соберите свою полку</string>
+    <string name="shelf_guest_body">Войдите, чтобы хранить пачки кофе и историю покупок</string>
+    <string name="shelf_sign_in">Войти</string>
+
+    <string name="shelf_finish_zone">Закончилась</string>
+    <string name="shelf_finish_zone_hint">Отпустите, чтобы убрать в архив</string>
+    <string name="shelf_bag_untitled">Пачка без названия</string>
+    <string name="shelf_bag_open">Открыть пачку</string>
+    <string name="shelf_move_up">Переместить выше</string>
+    <string name="shelf_move_down">Переместить ниже</string>
+    <string name="shelf_finish_action">Закончилась</string>
+
+    <string name="shelf_finish_title">Пачка закончилась</string>
+    <string name="shelf_finish_question">Как вам этот кофе?</string>
+    <string name="shelf_finish_rating">Оценка кофе</string>
+    <string name="shelf_buy_again">Куплю ещё</string>
+    <string name="shelf_not_again">Больше не возьму</string>
+    <string name="shelf_finish_confirm">Убрать в архив</string>
+    <string name="shelf_finish_skip">Пропустить</string>
+    <string name="shelf_sheet_close">Закрыть</string>
+
+    <string name="shelf_on_shelf_for">На полке %1$s</string>
+    <string name="shelf_added_today">Добавлена сегодня</string>
+    <string name="shelf_roasted_ago">Обжарка %1$s назад</string>
+    <string name="shelf_roasted_today">Обжарка сегодня</string>
+    <string name="shelf_finished_on">Закончилась %1$s</string>
+    <string name="shelf_weight">%1$d г</string>
+    <string name="shelf_grind_beans">Зерно</string>
+    <string name="shelf_grind_ground">Молотый</string>
+    <string name="shelf_from_catalog">Из каталога</string>
+    <string name="shelf_bag_more">Действия с пачкой</string>
+    <string name="shelf_bag_delete">Удалить</string>
+    <string name="shelf_bag_restore">Вернуть на полку</string>
+    <string name="shelf_cancel">Отмена</string>
+
+    <string name="shelf_delete_title">Удалить пачку?</string>
+    <string name="shelf_delete_message">Пачка исчезнет с полки и из архива. Если кофе закончился, лучше уберите её в архив.</string>
+
+    <string name="shelf_finished_message">Убрали в архив</string>
+    <string name="shelf_undo">Отменить</string>
+    <string name="shelf_deleted">Пачка удалена</string>
+    <string name="shelf_restored">Пачка снова на полке</string>
+    <string name="shelf_error_offline">Нет сети. Попробуйте ещё раз</string>
+    <string name="shelf_error_stale">Полка изменилась на другом устройстве, показываем актуальную</string>
+    <string name="shelf_error_not_found">Этой пачки уже нет</string>
+    <string name="shelf_error_signed_out">Войдите, чтобы изменить полку</string>
+    <string name="shelf_error_generic">Не получилось. Попробуйте ещё раз</string>
+
+    <string name="shelf_archive_back">Назад</string>
+    <string name="shelf_archive_search">Название или обжарщик</string>
+    <string name="shelf_archive_clear">Очистить поиск</string>
+    <string name="shelf_archive_empty">В архиве пока пусто</string>
+    <string name="shelf_archive_empty_hint">Закончившиеся пачки попадут сюда с датой и оценкой</string>
+    <string name="shelf_archive_not_found">Ничего не нашлось</string>
+    <string name="shelf_archive_failed">Не удалось загрузить архив</string>
+    <string name="shelf_archive_more_failed">Не удалось загрузить ещё</string>
+
+    <string name="shelf_date">%1$d %2$s</string>
+    <string name="shelf_date_year">%1$d %2$s %3$d</string>
+    <string name="shelf_month_year">%1$s %2$d</string>
+    <string name="shelf_month_1">Январь</string>
+    <string name="shelf_month_2">Февраль</string>
+    <string name="shelf_month_3">Март</string>
+    <string name="shelf_month_4">Апрель</string>
+    <string name="shelf_month_5">Май</string>
+    <string name="shelf_month_6">Июнь</string>
+    <string name="shelf_month_7">Июль</string>
+    <string name="shelf_month_8">Август</string>
+    <string name="shelf_month_9">Сентябрь</string>
+    <string name="shelf_month_10">Октябрь</string>
+    <string name="shelf_month_11">Ноябрь</string>
+    <string name="shelf_month_12">Декабрь</string>
+    <string name="shelf_month_of_1">января</string>
+    <string name="shelf_month_of_2">февраля</string>
+    <string name="shelf_month_of_3">марта</string>
+    <string name="shelf_month_of_4">апреля</string>
+    <string name="shelf_month_of_5">мая</string>
+    <string name="shelf_month_of_6">июня</string>
+    <string name="shelf_month_of_7">июля</string>
+    <string name="shelf_month_of_8">августа</string>
+    <string name="shelf_month_of_9">сентября</string>
+    <string name="shelf_month_of_10">октября</string>
+    <string name="shelf_month_of_11">ноября</string>
+    <string name="shelf_month_of_12">декабря</string>
+</resources>

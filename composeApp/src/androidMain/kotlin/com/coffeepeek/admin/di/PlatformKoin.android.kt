@@ -6,6 +6,10 @@ import com.coffeepeek.admin.di.shop.shopCheckInModule
 import com.coffeepeek.admin.di.shop.AndroidShopCheckInFormRenderer
 import com.coffeepeek.admin.di.coffee.androidCoffeeScreenRenderer
 import com.coffeepeek.admin.di.coffee.coffeeModule
+import com.coffeepeek.admin.di.coffee.CoffeeShelfTab
+import com.coffeepeek.admin.di.shelf.AndroidShelfScreenRenderer
+import com.coffeepeek.admin.di.shelf.shelfModule
+import com.coffeepeek.BuildConfig
 import com.coffeepeek.admin.di.appupdate.androidAppUpdateRenderer
 import com.coffeepeek.admin.di.auth.androidAuthScreenRenderer
 import com.coffeepeek.admin.di.community.androidCheckInDetailScreenRenderer
@@ -47,6 +51,7 @@ internal fun initAndroidKoin(extraModules: List<org.koin.core.module.Module> = e
             checkInHistoryModule(),
             coffeeModule(),
             contributionsModule(),
+            shelfModule(),
         ) + extraModules,
         shopReportRendererFactory = { client ->
             AndroidShopReportScreenRenderer(
@@ -70,7 +75,11 @@ internal fun initAndroidKoin(extraModules: List<org.koin.core.module.Module> = e
         },
         checkInHistoryRendererFactory = { get<AndroidCheckInHistoryScreenRenderer>() },
         checkInCreateFlowRendererFactory = { get<AndroidCheckInCreateFlowRenderer>() },
-        coffeeRendererFactory = { androidCoffeeScreenRenderer(get()) },
+        // The shelf stays behind SHELF_ENABLED (Sandbox only) until adding a bag by scan is ready.
+        coffeeRendererFactory = {
+            androidCoffeeScreenRenderer(get(), CoffeeShelfTab(get(), get(), Locator.database.settingRepository).takeIf { BuildConfig.SHELF_ENABLED })
+        },
+        shelfRendererFactory = { AndroidShelfScreenRenderer(get()) },
         publicProfileRendererFactory = { androidPublicProfileScreenRenderer(get(), get(), get(), get(), get()) },
         ownProfileRendererFactory = { androidOwnProfileScreenRenderer(get(), get(), get(), get(), get(), get(), get(), get()) },
         accountRendererFactory = { androidAccountScreenRenderer(get(), get()) },
