@@ -78,6 +78,9 @@ internal fun DiscoveryTabContent(onMapExpandedChange: (Boolean) -> Unit) {
                             favoritesOnly = feedState.filters.favoritesOnly,
                         )
                     },
+                    hasRoasterResults = if (feedState.query.isNotBlank()) roasters.hasDiscoveryResults(
+                        feedState.query, feedState.filters.roasterIds, feedState.filters.favoritesOnly,
+                    ) else null,
                     onMapExpandedChange = {
                         isMapExpanded = it
                         onMapExpandedChange(it)

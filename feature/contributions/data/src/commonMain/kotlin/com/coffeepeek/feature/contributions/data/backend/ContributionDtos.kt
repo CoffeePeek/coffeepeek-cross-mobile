@@ -74,6 +74,7 @@ internal data class MenuDto(
     @SerialName("items") val items: List<MenuItemDto> = emptyList(),
     @SerialName("retainedPhotoIds") val retainedPhotoIds: List<String> = emptyList(),
     @SerialName("newPhotos") val newPhotos: List<UploadedPhotoDto> = emptyList(),
+    @SerialName("expectedInputRevision") val expectedInputRevision: Long? = null,
 )
 
 @Serializable

@@ -31,6 +31,10 @@ internal class FeatureRoasterScreenRenderer(
     private val detail: RoasterDetailEntry,
 ) : RoasterScreenRenderer {
     @Composable
+    override fun hasDiscoveryResults(query: String, selectedRoasterIds: Set<String>, favoritesOnly: Boolean): Boolean? =
+        discovery.hasResults(query, selectedRoasterIds, favoritesOnly)
+
+    @Composable
     override fun DiscoverySection(query: String, selectedRoasterIds: Set<String>, favoritesOnly: Boolean) {
         discovery.Section(query, selectedRoasterIds, favoritesOnly, onOpenRoaster = ::openRoaster, modifier = Modifier)
     }

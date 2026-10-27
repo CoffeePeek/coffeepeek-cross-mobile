@@ -40,6 +40,9 @@ internal data class SearchState(
     /** Where the user is, for the distance on a card when the server sends none. */
     val userLocation: Coordinates? = null,
 ) {
+    fun showsShopsFirst(hasRoasterResults: Boolean?): Boolean =
+        query.isNotBlank() && hasRoasterResults == false && visibleShops.isNotEmpty()
+
     val activeFilterCount: Int get() = filters.activeCount
     val showsDiscovery: Boolean get() = showsDiscovery(query, searchActive, filters)
     val visibleShops: List<ShopSummary> get() = visibleShops(shops, filters)

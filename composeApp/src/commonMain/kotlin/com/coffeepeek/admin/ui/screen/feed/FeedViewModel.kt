@@ -94,6 +94,9 @@ data class FeedUiState(
     val totalPages: Int = 1,
     val hasMore: Boolean = false,
 ) {
+    fun showsShopsFirst(hasRoasterResults: Boolean?): Boolean =
+        query.isNotBlank() && hasRoasterResults == false && visibleShops.isNotEmpty()
+
     val showDiscovery: Boolean
         get() = !isSearchActive && query.isBlank() && filters.copy(nearbyOnly = false).activeFilterCount == 0
 

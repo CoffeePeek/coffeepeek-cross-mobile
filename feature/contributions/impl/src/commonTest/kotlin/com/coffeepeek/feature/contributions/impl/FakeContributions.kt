@@ -49,7 +49,7 @@ internal fun request(id: String, section: ChangeSection = ChangeSection.Descript
 internal class FakeCatalogs : ContributionCatalogs {
     var catalogs: suspend () -> Result<Catalogs> = { Result.success(Catalogs()) }
     override suspend fun catalogs() = catalogs.invoke()
-    var shop: suspend (String) -> Result<ShopSnapshot> = { Result.success(ShopSnapshot(it, "Shop $it")) }
+    var shop: suspend (String) -> Result<ShopSnapshot> = { Result.success(ShopSnapshot(it, "Shop $it", menuInputRevision = 0)) }
     var drinks: suspend () -> Result<List<DrinkOption>> = { Result.success(emptyList()) }
     override suspend fun shop(slug: String) = shop.invoke(slug)
     override suspend fun drinks() = drinks.invoke()
