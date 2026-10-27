@@ -122,7 +122,14 @@ internal class ChangeEditorViewModel(
         // A failed drinks read must not look like an empty catalog: the editor would show no rows and send a menu without the saved items.
         val drinks = if (section == ChangeSection.Menu) catalogs.drinks().getOrThrow() else emptyList()
         val request = requestId?.let { repository.change(it).getOrThrow() }
-        return { state -> state.fromShop(shop, all, drinks).let { if (request != null) it.fromRequest(request, shop, drinks) else it } }
+        // A saved request keeps its observed revision; rebasing it silently could overwrite newer menu edits.
+        val savedMenu = request?.payload?.menu
+        val revision = if (savedMenu == null) shop.menuInputRevision else savedMenu.expectedInputRevision
+        if (section == ChangeSection.Menu && (revision == null || revision < 0)) throw ContributionFailure(FailureKind.Other)
+        return { state ->
+            state.fromShop(shop, all, drinks).let { if (request != null) it.fromRequest(request, shop, drinks) else it }
+                .copy(menuInputRevision = revision)
+        }
     }
 
     private fun submit() {

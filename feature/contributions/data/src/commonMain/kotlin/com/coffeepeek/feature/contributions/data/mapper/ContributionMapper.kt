@@ -58,7 +58,10 @@ internal fun PayloadDto.toDomain() = ChangePayload(
     equipmentIds = equipments,
     brewMethodIds = brewMethods,
     menu = menu?.let { menu ->
-        ChangeMenu(menu.items.map { MenuEntry(it.slug, it.availability.toAvailability(), it.price) }, menu.retainedPhotoIds, menu.newPhotos.map(UploadedPhotoDto::toDomain))
+        ChangeMenu(
+            menu.items.map { MenuEntry(it.slug, it.availability.toAvailability(), it.price) },
+            menu.retainedPhotoIds, menu.newPhotos.map(UploadedPhotoDto::toDomain), menu.expectedInputRevision,
+        )
     },
 )
 
@@ -72,7 +75,7 @@ internal fun Contacts.isEmpty() = phone.clean() == null && email.clean() == null
 
 internal fun galleryDto(retained: List<String>, uploaded: List<UploadedPhoto>) = GalleryDto(retained, uploaded.map(UploadedPhoto::toDto))
 
-internal fun menuDto(items: List<MenuEntry>, retained: List<String>, uploaded: List<UploadedPhoto>) =
-    MenuDto(items.map { MenuItemDto(it.slug, it.availability.name, it.price) }, retained, uploaded.map(UploadedPhoto::toDto))
+internal fun menuDto(items: List<MenuEntry>, retained: List<String>, uploaded: List<UploadedPhoto>, expectedInputRevision: Long?) =
+    MenuDto(items.map { MenuItemDto(it.slug, it.availability.name, it.price) }, retained, uploaded.map(UploadedPhoto::toDto), expectedInputRevision)
 
 private fun String?.clean(): String? = this?.trim()?.takeIf(String::isNotEmpty)

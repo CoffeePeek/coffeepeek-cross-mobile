@@ -187,6 +187,7 @@ internal object ShopMapper {
         capturedAtUtc = capturedAtUtc,
         updatedAtUtc = updatedAtUtc,
         currency = currency.ifBlank { "BYN" },
+        inputRevision = inputRevision,
         items = items.map { it.toDomain() },
         photos = photos
             .mapNotNull { photo ->
