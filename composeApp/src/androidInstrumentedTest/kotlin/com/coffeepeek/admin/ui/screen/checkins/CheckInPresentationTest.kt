@@ -23,7 +23,6 @@ import com.coffeepeek.admin.theme.PlatformSystemBars
 import com.coffeepeek.admin.ui.component.CpTopBar
 import com.coffeepeek.admin.ui.component.SwipeDismissModalBottomSheet
 import java.io.File
-import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.math.roundToInt
 import org.junit.Assert.assertEquals
@@ -67,42 +66,6 @@ class CheckInPresentationTest {
             click(node { it.contentDescription?.startsWith("Сегодня,") == true }!!)
             waitUntil { selection.get() == "2026-10-14" }
         }
-    }
-
-    @Test
-    fun createChoiceRemainsScrollableWithLargeTextAndShortViewport() {
-        val homes = AtomicInteger()
-        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
-            scenario.onActivity { activity -> activity.setContent {
-                val density = LocalDensity.current
-                CompositionLocalProvider(LocalDensity provides Density(density.density, 1.6f)) {
-                    CoffeePeekTheme(darkTheme = true) {
-                        Surface(Modifier.fillMaxSize()) {
-                            Box(Modifier.fillMaxWidth().statusBarsPadding().height(260.dp)) {
-                                CheckInCreateContent(onShop = {}, onHome = { homes.incrementAndGet() })
-                            }
-                        }
-                    }
-                }
-            } }
-            waitUntil { node { it.text?.toString() == "Новый чекин" } != null }
-            scrollToText("Дома")
-            click(node { it.text?.toString() == "Дома" }!!)
-            scrollToText("Продолжить")
-            click(node { it.text?.toString() == "Продолжить" }!!)
-            waitUntil { homes.get() == 1 }
-            screenshot("checkins-create-short-large-text.png").recycle()
-        }
-    }
-
-    private fun scrollToText(text: String) {
-        repeat(8) {
-            if (node { it.text?.toString() == text && it.isVisibleToUser } != null) return
-            node { it.isScrollable }?.performAction(AccessibilityNodeInfo.ACTION_SCROLL_FORWARD)
-            InstrumentationRegistry.getInstrumentation().waitForIdleSync()
-            Thread.sleep(200)
-        }
-        assertTrue("Missing action: $text", node { it.text?.toString() == text } != null)
     }
 
     private fun screenshot(name: String): Bitmap {

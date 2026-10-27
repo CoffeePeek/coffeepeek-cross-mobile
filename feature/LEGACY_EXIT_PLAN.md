@@ -97,8 +97,8 @@ remotes и при необходимости передать изменения
 - [x] Author blocking: экран/host из composeApp в feature/author-blocking/impl;
   Android/Sandbox и видимый native iOS controller вызывают feature entry.
   Ручная приёмка native prompts остаётся открытой в шестом срезе.
-- [ ] Root tabs/check-in creation host: root оставляет routing, содержимое —
-  feature entries. Вкладка Coffee не должна зависеть от legacy CheckInTabContent.
+- [x] Root tabs/check-in creation host: root оставляет routing, содержимое —
+  feature entries (срез 2026-10-27, ниже). Вкладка Coffee не должна зависеть от legacy CheckInTabContent.
 
 Не переносим весь composeApp/ui в feature одним каталогом. Каждая вставка
 переходит к владельцу, её ресурсы и paired previews — вместе с ней. Общая
@@ -1199,3 +1199,20 @@ source `89778c23` + этот срез. Подробный scope/остаток �
   `AuthorBlockingFlowScreenshotsTest`; эквивалента в feature нет — нужно решение);
   `PasswordRecoveryRepositoryImpl` (его и легаси `AuthService` проверяет
   `SandboxApplicationBackendTest`; уходит вместе с L3 auth cleanup).
+
+## Срез Root tabs / check-in creation host — 2026-10-27
+
+- `CheckInTabContent` оставлен как app-хост: routing, гостевой гейт, аналитика
+  попытки и открытие feature-флоу `CheckInCreateFlow`; содержимого фичи в нём нет.
+  Вкладка Coffee от легаси больше не зависит (оба root host — Android
+  `MainScreen` и iOS `PlatformRootNavigation` — зовут тот же хост).
+- Удалены `CheckInCreateSheet`, `CheckInCreateContent`, `CreateChoice` (легаси
+  выбор Дома/Кофейни; выбор делает `CheckInCreatePickerEntry` из
+  feature/home-check-in) и инструментальный тест
+  `createChoiceRemainsScrollableWithLargeTextAndShortViewport`. Файл с кнопкой
+  переименован в `CheckInCreateButton.kt` (кнопка и превью сохранены).
+- Прошли: Direct/Play unit, lintDirectDebug, assemble Direct/Sandbox, DEX и
+  isolation, iOS Arm64 compile, simulator test-compile, framework link.
+  Native tests/manual UI не выполнялись.
+- Остаётся: три копии «кнопка + флоу» (CheckInTabContent, CommunityScreen,
+  FeatureCommunityScreenRenderer) — свести в один хост отдельным шагом.
