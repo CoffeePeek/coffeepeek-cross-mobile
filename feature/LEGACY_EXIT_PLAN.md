@@ -1172,3 +1172,30 @@ source `89778c23` + этот срез. Подробный scope/остаток �
   OtherUserProfileScreen` и `ProfileActions` (чужие инструментальные
   `PublicProfilePresentationTest`/`AuthorBlockingFlowScreenshotsTest`),
   `PasswordRecoveryRepositoryImpl` (Sandbox-тест).
+
+## Срез сверки оставшихся кандидатов — 2026-10-27
+
+- Coffee: удалены легаси `CoffeeListViewModel`, `CoffeeFilterAnalyticsTest`,
+  `CoffeeAnalyticsParityTest`. Ключи фильтров/сброс/позиции/устаревшие ответы
+  покрыты `CoffeeAnalyticsPortsTest` + `CoffeeAnalyticsAdapterTest`; parity-тест
+  сравнивал с удалённым baseline.
+- Delete account: удалён `DeleteAccountPendingViewModel` + тест; 6 сценариев
+  покрыты `AccountDeletionViewModelTest` (feature/profile), он шире (тикер,
+  конец сессии). Осознанное отличие feature: открытие без заявки только просит
+  подтверждение, письмо не шлёт.
+- Notifications: удалены `NotificationsSheet`, `NotificationRow`,
+  `NotificationEmptyState`, `NotificationPushSettings` и инструментальный
+  `NotificationsPresentationTest` (проверял только удалённый композабл).
+- Feed/Discovery: удалены `FeedScreen`, `ShopFiltersScreen`,
+  `CatalogSuggestionCard`, `ShopTagGroups`; три геометрических теста из
+  `FeedFiltersUiTest` сняты (дубль `ChoreographyTest` в feature/discovery), тесты
+  живого `FeedViewModel` оставлены.
+- Прошли: Direct/Play unit, lintDirectDebug, assemble Direct/Sandbox, DEX и
+  isolation, iOS Arm64 compile, simulator test-compile, framework link.
+  Native tests/manual UI не выполнялись.
+- Намеренно НЕ удалено: `feature/profile/ui/OtherUserProfileScreen` и
+  `ui/screen/profile/ProfileActions` (держат чужие инструментальные скриншот-
+  тесты `PublicProfilePresentationTest` 943 строки,
+  `AuthorBlockingFlowScreenshotsTest`; эквивалента в feature нет — нужно решение);
+  `PasswordRecoveryRepositoryImpl` (его и легаси `AuthService` проверяет
+  `SandboxApplicationBackendTest`; уходит вместе с L3 auth cleanup).
