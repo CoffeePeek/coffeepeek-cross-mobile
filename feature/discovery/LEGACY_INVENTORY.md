@@ -327,3 +327,9 @@ previews compile; IDE rendering was unavailable. No device/install/manual
 light-dark/font/window/accessibility/expand-back review, iOS runtime or live
 backend checks were performed; no automated UI/instrumentation/screenshot tests
 were created or run, and no account or production analytics writes occurred.
+
+Develop integration: rebased onto dea72680, verified code 3b445cf0. Both APK
+assemblies, DEX guards and Sandbox isolation passed again in 1m24s; Sandbox
+1.1.2.2482-sandbox/2482. The unchanged Discovery unit task was UP-TO-DATE,
+retaining all 70 passing results (no failed-test retry). Device/iOS gates above
+remain open.
