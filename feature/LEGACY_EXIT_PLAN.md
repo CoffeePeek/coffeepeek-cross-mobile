@@ -1338,3 +1338,23 @@ source `89778c23` + этот срез. Подробный scope/остаток �
   на него, а не к новой функции.
 - Проверено (код выхода Gradle из файла = 0, 0 ошибок): Direct/Play unit, lintDirectDebug,
   assemble Direct/Sandbox, DEX и isolation, iOS Arm64 compile, simulator test-compile, framework link.
+
+## L3, срез C3 — выход профиля через feature/auth — 2026-10-27
+
+- `AppProfileSignOut` вызывает `AuthRepository.signOut()` из `feature/auth` вместо легаси
+  `AuthRepository.logout()`; `featureOwnProfileScreenRenderer` принимает feature-тип (Koin
+  разрешает его по типу, привязка уже была). Порядок прежний: push → выход аккаунта →
+  платформенный выход → черновики.
+- Сверка легаси `AuthRepositoryImpl.logout` и feature `signOut`: локальная очистка первой и
+  обязательной, затем `DELETE /api/Tokens` с cookie `refreshToken` (пустой токен — без cookie),
+  ошибка сервера игнорируется, ошибка очистки возвращается; отмена пробрасывается. Покрыто
+  `AuthRepositoryImplTest` (feature/auth/data: порядок, cookie, игнор серверной ошибки, отчёт об
+  ошибке очистки, выход без сессии) и `ProfileSignOutAdapterTest` (порядок адаптера, показ
+  ошибки, отмена).
+- Теперь легаси `AuthRepository.logout` не вызывает никто в production; остаются
+  `AuthRepositoryImpl`/`AuthService` для `ProfileViewModel` (держат скриншот-тесты) и refresh в
+  `CoffeePeekClient` (шаг C6).
+- Проверено (код выхода Gradle из файла = 0, 0 ошибок): Direct/Play unit, feature/auth data,
+  lintDirectDebug, assemble Direct/Sandbox, DEX и isolation, iOS Arm64 compile, simulator
+  test-compile, framework link. **Ручная проверка выхода на Android и iOS не выполнялась** (по
+  решению владельца): остаётся gate перед релизом.

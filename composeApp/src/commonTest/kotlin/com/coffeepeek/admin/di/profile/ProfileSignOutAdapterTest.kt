@@ -2,9 +2,9 @@ package com.coffeepeek.admin.di.profile
 
 import com.coffeepeek.admin.settings.ReviewDraftStore
 import com.coffeepeek.admin.utils.ErrorHandler
-import com.coffeepeek.domain.model.AppleLoginChallenge
-import com.coffeepeek.domain.model.Session
-import com.coffeepeek.domain.repository.AuthRepository
+import com.coffeepeek.feature.auth.domain.AppleSignInChallenge
+import com.coffeepeek.feature.auth.domain.AuthRepository
+import com.coffeepeek.feature.auth.domain.SignedInAccount
 import com.coffeepeek.feature.notifications.api.NotificationFeature
 import com.coffeepeek.feature.notifications.api.NotificationInboxState
 import com.coffeepeek.room.model.Setting
@@ -42,13 +42,14 @@ class ProfileSignOutAdapterTest {
     }
 
     private fun auth(logout: Result<Unit>) = object : AuthRepository {
-        override suspend fun login(email: String, password: String): Result<Session> = error("unused")
-        override suspend fun googleLogin(idToken: String): Result<Session> = error("unused")
-        override suspend fun beginAppleLogin(): Result<AppleLoginChallenge> = error("unused")
-        override suspend fun appleLogin(challengeId: String, idToken: String): Result<Session> = error("unused")
+        override suspend fun signIn(email: String, password: String): Result<SignedInAccount> = error("unused")
+        override suspend fun signInWithGoogle(idToken: String): Result<SignedInAccount> = error("unused")
+        override suspend fun beginAppleSignIn(): Result<AppleSignInChallenge> = error("unused")
+        override suspend fun signInWithApple(challengeId: String, idToken: String): Result<SignedInAccount> = error("unused")
         override suspend fun register(userName: String, email: String, password: String): Result<Unit> = error("unused")
         override suspend fun isEmailTaken(email: String): Result<Boolean> = error("unused")
-        override suspend fun logout(): Result<Unit> {
+        override suspend fun requestPasswordReset(email: String): Result<Unit> = error("unused")
+        override suspend fun signOut(): Result<Unit> {
             events += "server"
             return logout
         }
