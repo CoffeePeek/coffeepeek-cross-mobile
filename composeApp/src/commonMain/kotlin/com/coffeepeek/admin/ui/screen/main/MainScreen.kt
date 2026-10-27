@@ -67,10 +67,10 @@ data class BottomNavItem(
 )
 
 @Composable
-expect fun MainScreen(isLoggedIn: Boolean)
+expect fun MainScreen(isLoggedIn: Boolean, onMapExpandedChange: (Boolean) -> Unit = {})
 
 @Composable
-internal fun ComposeMainScreen(isLoggedIn: Boolean) {
+internal fun ComposeMainScreen(isLoggedIn: Boolean, onMapExpandedChange: (Boolean) -> Unit) {
     val reduceMotion = com.coffeepeek.admin.ui.component.platformReduceMotion()
     val bottomNavController = rememberNavController()
     val analyticsEntry by bottomNavController.currentBackStackEntryAsState()
@@ -175,6 +175,7 @@ internal fun ComposeMainScreen(isLoggedIn: Boolean) {
     }
     val isExpandedMapVisible = isFeedMapExpanded &&
         currentDestination?.hasRoute<Navigator.Screen.FeedTab>() == true
+    LaunchedEffect(isExpandedMapVisible) { onMapExpandedChange(isExpandedMapVisible) }
     val systemBottomInset = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
     val floatingClearance = systemBottomInset +
         if (isExpandedMapVisible) 0.dp else floatingNavBarHeight() + FloatingNavBottomMargin
@@ -190,7 +191,7 @@ internal fun ComposeMainScreen(isLoggedIn: Boolean) {
                     entry.LocalOwnersProvider(feedStateHolder) {
                         RetainedContent(visible = entry in visibleEntries) {
                             Box(Modifier.fillMaxSize().graphicsLayer { translationX = size.width * feedSlide }) {
-                                DiscoveryTabContent(onMapExpandedChange = { isFeedMapExpanded = it })
+                                koinInject<DiscoveryScreenRenderer>().Tab(onMapExpandedChange = { isFeedMapExpanded = it })
                             }
                         }
                     }
@@ -227,9 +228,9 @@ internal fun ComposeMainScreen(isLoggedIn: Boolean) {
 
                     navigation<Navigator.Screen.CommunityGraph>(startDestination = Navigator.Screen.CommunityTab) {
                         composable<Navigator.Screen.CommunityTab> {
-                            com.coffeepeek.admin.feature.community.ui.CommunityScreen(
+                            koinInject<com.coffeepeek.admin.feature.community.ui.CommunityScreenRenderer>().Content(
                                 onCreateCheckIn = { Navigator.navigate(Navigator.Screen.CreateCheckIn) },
-                                notificationsAction = { com.coffeepeek.admin.feature.notifications.ui.NotificationsButton() },
+                                notificationsAction = { koinInject<com.coffeepeek.admin.feature.notifications.ui.NotificationsRenderer>().Bell() },
                             )
                         }
                     }

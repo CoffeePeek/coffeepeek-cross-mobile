@@ -2,6 +2,7 @@ package com.coffeepeek.admin.di.shop
 
 import com.coffeepeek.admin.ui.screen.shop.CheckInDraftStore
 import com.coffeepeek.api.CoffeePeekClient
+import com.coffeepeek.core.session.SessionReader
 import com.coffeepeek.domain.repository.SessionRepository
 import com.coffeepeek.feature.shop.api.ShopCheckInCreateEntry
 import com.coffeepeek.feature.shop.domain.repository.ShopCheckInRepository
@@ -33,6 +34,7 @@ class ShopCheckInModuleTest {
                 single { client }
                 single { drafts }
                 single<SessionRepository> { CheckInTestSessions() }
+                single<SessionReader> { get<SessionRepository>() }
             }, shopCheckInModule(), shopBrowsingModule(fileBaseUrl = "https://fixture.invalid"))
         }
         try {

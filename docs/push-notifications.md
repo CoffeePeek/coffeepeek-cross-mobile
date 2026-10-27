@@ -21,8 +21,8 @@ The notification panel also has one push switch. Explicit enabling requests perm
 on first use or opens Android notification settings after a previous denial. Disabling
 is saved in the account and unregisters this device; later check-ins do not undo it.
 Foreground messages are shown by CoffeePeekMessagingService; background messages
-use FCM's system display. The channel is “Уведомления CoffeePeek”. Tapping opens
-the app's normal entry screen.
+use FCM's system display. The channel is “Уведомления CoffeePeek”. Android taps resolve
+the owned notification and open its destination after the current session is ready.
 
 The channel explicitly uses the default notification sound with notification audio
 attributes; foreground notifications also specify DEFAULT_SOUND. Android keeps the
@@ -79,7 +79,7 @@ in the APNs payload. See [FCM Apple message handling](https://firebase.google.co
 
 ## Sessions, preferences and activity
 
-`features/notifications` owns shared coordination. The app supplies authenticated Ktor,
+`feature/notifications` (api, domain, data, impl) owns shared coordination. The app supplies authenticated Ktor,
 SessionRepository and NativePushBridge. A random installation UUID is kept in platform
 storage. Tokens are registered only for the current signed-in account with OS permission.
 Registration renews on token changes and foreground entry; activity reports on entry and
@@ -108,8 +108,20 @@ the old access token is usable. Native FCM auto-init stays disabled. Token revoc
 also runs for session invalidation/account switching and cold starts; failed revocation
 is retried before another token is registered. Offline logout cannot recall an already
 accepted system notification. Foreground handling ignores another account's userId.
-Tokens are never logged. There is no per-submission deep link; tapping an unread row
-marks it read. The backend Account inbox migration must be deployed before this client.
+Tokens are never logged. On Android, inbox rows with supported entities open their
+destination even when already read. NewShop opens the current published shop slug;
+correction moderation reads the owned change and opens its shop card. Approved shop
+submissions open their published shop when available; unpublished submissions open
+own contributions. Roaster decisions open own roaster submissions, check-in decisions
+open check-in history, and general messages retain read-only inbox behavior.
+
+GET /api/v1/me/notifications/{id}/destination returns {kind,value}, 204 for no destination,
+and 404 for a foreign/missing notification or unavailable published shop. The additive
+Account endpoint must be deployed before this Android client. It preserves existing
+rows without a migration. Resolution does not mark read; the client marks successful
+opens separately. Foreground notifications have distinct PendingIntent identities;
+background/terminated FCM clicks use the same notificationId/userId handoff. A failed
+lookup shows an error and allows retry. iOS navigation remains unchanged.
 
 ## Backend credential
 

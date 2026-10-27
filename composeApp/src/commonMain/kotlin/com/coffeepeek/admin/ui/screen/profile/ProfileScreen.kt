@@ -1,5 +1,7 @@
 package com.coffeepeek.admin.ui.screen.profile
 
+import com.coffeepeek.core.designsystem.component.CoffeePeekScaffold as Scaffold
+
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -110,31 +112,33 @@ fun ProfileScreen(vm: ProfileViewModel = koinInject()) {
                     Modifier.fillMaxSize().padding(16.dp), contentAlignment = Alignment.Center,
                 ) { LoadErrorContent(onRetry = vm::refreshProfile) }
                 else -> Column(
-                    Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(horizontal = 16.dp),
+                    Modifier.fillMaxWidth().verticalScroll(rememberScrollState()),
                     verticalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
-                    if (state.isLoggedIn) {
-                        PublicProfileHeader(
-                            nickname = state.displayName,
-                            avatarUrl = state.avatarUrl,
-                            about = state.about,
-                            stats = PublicProfileStats(state.checkInCount, state.addedShopsCount,
-                                state.addedRoastersCount, state.followersCount),
-                            onEditProfile = onEdit,
-                            onAvatarClick = onEdit,
+                    Column(Modifier.padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        if (state.isLoggedIn) {
+                            PublicProfileHeader(
+                                nickname = state.displayName,
+                                avatarUrl = state.avatarUrl,
+                                about = state.about,
+                                stats = PublicProfileStats(state.checkInCount, state.addedShopsCount,
+                                    state.addedRoastersCount, state.followersCount),
+                                onEditProfile = onEdit,
+                                onAvatarClick = onEdit,
+                            )
+                            PersonalProfileActivityPreview { Navigator.navigate(Navigator.Screen.VisitedPlaces) }
+                            if (state.error != null || state.refreshError != null) LoadErrorContent(onRetry = vm::refreshProfile)
+                        } else GuestAuthCard(
+                            onLogin = { Navigator.navigate(Navigator.Screen.Auth) },
+                            onRegister = { Navigator.navigate(Navigator.Screen.Register) },
                         )
-                        PersonalProfileActivityPreview { Navigator.navigate(Navigator.Screen.VisitedPlaces) }
-                        if (state.error != null || state.refreshError != null) LoadErrorContent(onRetry = vm::refreshProfile)
-                    } else GuestAuthCard(
-                        onLogin = { Navigator.navigate(Navigator.Screen.Auth) },
-                        onRegister = { Navigator.navigate(Navigator.Screen.Register) },
-                    )
+                    }
                     if (state.isLoggedIn) FavoritesProfilePreview(openShop, openRoaster) {
                         TextButton(onClick = openFavorites) { Text("Избранное") }
                     }
                     if (state.checkInCount > 0) TextButton(onClick = {
                         Navigator.navigate(if (state.isLoggedIn) Navigator.Screen.VisitedPlaces else Navigator.Screen.Auth)
-                    }) { Text("Чекины") }
+                    }, modifier = Modifier.padding(horizontal = 16.dp)) { Text("Чекины") }
                     Spacer(Modifier.height(bottomPadding))
                 }
             }

@@ -1174,3 +1174,74 @@ replacement and wholesale removal of legacy code.
 Open gaps from the legacy-first audit: H1–H9 (high: H1 form state lost on Activity recreation; H8 already fixed). Full table and verification status: [LEGACY_PARITY_AUDIT.md](../LEGACY_PARITY_AUDIT.md).
 
 Fixes applied 2026-10-20 and owner decisions on intentional differences: see the "Fixes applied" and "Intentional differences" sections of [LEGACY_PARITY_AUDIT.md](../LEGACY_PARITY_AUDIT.md). Device verification is still open.
+
+
+## Check-in photo order and local preview — 2026-10-25
+
+Scope/verification plan: retain gallery/camera selection, removal, the five-photo
+limit, draft/submission guards and consent-aware analytics. Add long-press drag
+between photo slots (including wrapped rows), tap-to-view paging/zoom, and
+accessible earlier/later actions. Presentation owns the order; domain/data
+contracts and server photos on existing Home records remain unchanged. Shared
+rendering/gestures live in core/design-system, with feature-owned image adapters;
+no new dependencies or Gradle modules. Validate order/bytes through form requests,
+shop draft restoration, stale indices, save guards and cancelled/outside drops.
+
+Source: `codex/migration-check-in-photo-order`, base `61aad2ec` plus working changes.
+Android build verification uses `directDebug` only for APK assembly; no app was
+installed/launched and no Studio Build Variant was changed.
+
+Verification: design-system 44, shop impl 108 and Home impl 73 executed unit tests
+(225 total; zero failures/errors/skips), including 7 new regressions. Shop data
+42 and Home data 35 contract results were UP-TO-DATE, not re-executed. All three
+changed libraries pass Android lint with no findings. Direct Debug APK assembly
+and packaged DEX runtime-class verification pass. The first assembly/test pass
+and expanded verification both passed; the final pass after the current Compose
+API cleanup also passed (17s). There were no failing-test retries.
+
+Colocated light/dark previews cover the shared grid/tile/add/viewer and both
+feature attachment adapters. Preview rendering and manual device checks have
+not run. Remaining gates: light/dark Sandbox review of real local images,
+drag/tap/zoom, modal back/close, keyboard, font/window sizes and TalkBack. No
+backend/camera/account writes, automated UI tests, or iOS acceptance is claimed.
+
+
+## Requested screenshots and limited manual Sandbox check — 2026-10-25
+
+Source remains `61aad2ec` plus this checkpoint's working changes. Built and ran
+`directSandbox` 1.1.1.2450-sandbox (2450), package com.coffeepeek.sandbox, on the
+local read-only Pixel 5 AVD / Android 37.0, 1080x2340, unlocked. There was no
+connected physical phone. The APK/launcher/isolation were checked before install;
+no existing Sandbox was present initially. The subsequent update used the same
+version/signature, without uninstall, downgrade, data clearing or Studio changes.
+Final Sandbox APK SHA-256:
+`81387f9239bd1cb6d14d2c0ff3c5498a778f606e18b9d9b558988f4ad781500b`.
+
+The first captured form exposed English new labels beside the Russian form on an
+English-system emulator. New attachment labels now use the feature's Russian
+fallback as well as the explicit ru locale. The old fake picker returned the
+same bytes/name every time, so shop duplicate protection retained only one
+image. The existing Sandbox picker now generates individually named, differently
+coloured synthetic cups. Default backend fixture artwork is unchanged; no real
+picker, private image, camera, HTTP or account-write path was used.
+
+Both forms were captured with four photos in light/dark. Manually verified on
+the running Sandbox: long-press drag from the first slot to the second row,
+resulting order after release, photo opening from both forms, paging from 2/4 to
+3/4, close/Back returning to the draft, and double-tap enlargement. Two sequential
+ADB tap attempts did not zoom; their original capture is retained locally. A
+short-interval double tap did zoom, confirming the input-timing distinction.
+No check-in was submitted. Screenshots, UI dumps and diagnostics remain outside
+tracked sources; no automated UI/screenshot tests or test-only Activity was added.
+
+Both APK assemblies and their DEX guards pass; Sandbox isolation passes. The
+first additional command requested nonexistent testDirectSandboxUnitTest and
+ran no tests. The supported testDirectDebugUnitTest then executed 808 app
+unit/contract tests with zero failures/errors/skips (23s including assembly).
+The earlier 225 feature/design-system unit results remain recorded above.
+
+This is a limited visual check at the AVD's normal font/window size. Remaining:
+physical-device media, pinch/multitouch, TalkBack, larger fonts, other window
+sizes, real backend/persistence/analytics, release and iOS acceptance. Colocated
+IDE previews were not rendered. The task-owned read-only AVD is closed after
+saving the requested screenshots; its changes are not persisted.

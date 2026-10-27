@@ -1,7 +1,13 @@
 package com.coffeepeek.admin.ui.screen.profile
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -9,13 +15,25 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
 import com.coffeepeek.admin.di.platformViewModel
 import com.coffeepeek.admin.feature.homecheckin.ui.HomeCheckInUiState
 import com.coffeepeek.admin.feature.homecheckin.ui.HomeCheckInViewModel
+import com.coffeepeek.admin.ui.Navigator
 import com.coffeepeek.admin.ui.screen.checkins.CalendarCard
+import com.coffeepeek.admin.ui.screen.checkins.CheckInDiaryRow
+import com.coffeepeek.admin.ui.screen.checkins.calendarMonthFromIsoDate
+import com.coffeepeek.admin.ui.screen.checkins.calendarWeekday
+import com.coffeepeek.admin.ui.screen.checkins.selectedDateTitle
+import com.coffeepeek.admin.ui.screen.checkins.toTimelineCheckIn
+import com.coffeepeek.admin.ui.screen.checkins.visitCount
+import com.coffeepeek.domain.model.CheckIn
+import com.coffeepeek.legacy.homecheckin.domain.HomeCheckIn
 import com.coffeepeek.admin.ui.screen.checkins.VisitedPlacesUiState
 import com.coffeepeek.admin.ui.screen.checkins.VisitedPlacesViewModel
 import com.coffeepeek.admin.ui.screen.checkins.homeCalendarPhotos
@@ -27,6 +45,8 @@ import com.coffeepeek.admin.utils.utcIsoToLocalDate
 internal fun PersonalProfileActivityCalendar(
     shopVm: VisitedPlacesViewModel = platformViewModel(),
     homeVm: HomeCheckInViewModel = platformViewModel(),
+    onOpenShop: (String) -> Unit = { Navigator.navigate(Navigator.Screen.ShopDetail(it)) },
+    onOpenCheckIns: () -> Unit = { Navigator.navigate(Navigator.Screen.VisitedPlaces) },
 ) {
     val shop by shopVm.state.collectAsState()
     val home by homeVm.state.collectAsState()
@@ -58,6 +78,8 @@ internal fun PersonalProfileActivityCalendar(
             shopVm.refreshCalendar()
             homeVm.loadCalendar()
         },
+        onOpenShop = onOpenShop,
+        onOpenCheckIns = onOpenCheckIns,
     )
 }
 
@@ -71,6 +93,8 @@ internal fun PersonalProfileActivityCalendarContent(
     onSelectDate: (String) -> Unit,
     onToday: () -> Unit,
     onRetry: () -> Unit,
+    onOpenShop: (String) -> Unit = {},
+    onOpenCheckIns: () -> Unit = {},
 ) {
     val month = shop.calendarMonth
     val homeMonthMatches = home.month.year == month.year && home.month.month == month.month
@@ -91,5 +115,54 @@ internal fun PersonalProfileActivityCalendarContent(
         if (error != null && !loading) {
             TextButton(onClick = onRetry) { Text("Повторить") }
         }
+        if (!loading && error == null && shop.selectedDate != null) {
+            SelectedDayCheckIns(
+                date = shop.selectedDate,
+                includeYear = month.year != calendarMonthFromIsoDate(today)?.year,
+                shopCheckIns = shop.calendarCheckIns[shop.selectedDate].orEmpty(),
+                homeCheckIns = if (homeMonthMatches) home.calendarItems.filter { it.preparedOn == shop.selectedDate } else emptyList(),
+                onOpenShop = onOpenShop,
+                onOpenCheckIns = onOpenCheckIns,
+            )
+        }
     }
 }
+
+/** What the tapped day holds: the coffee shop visits first, then the home brews, each opening its own place. */
+@Composable
+private fun SelectedDayCheckIns(
+    date: String,
+    includeYear: Boolean,
+    shopCheckIns: List<CheckIn>,
+    homeCheckIns: List<HomeCheckIn>,
+    onOpenShop: (String) -> Unit,
+    onOpenCheckIns: () -> Unit,
+) {
+    val entries = remember(shopCheckIns, homeCheckIns) { selectedDayEntries(shopCheckIns, homeCheckIns) }
+    Column(Modifier.fillMaxWidth().padding(top = 20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Text(selectedDateTitle(date, includeYear), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+            Text("${calendarWeekday(date)} · ${visitCount(entries.size)}", style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+        if (entries.isEmpty()) {
+            Text("В этот день чекинов не было", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        } else {
+            Surface(shape = RoundedCornerShape(20.dp), color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f)) {
+                Column {
+                    entries.forEachIndexed { index, (checkIn, isHome) ->
+                        CheckInDiaryRow(checkIn, onClick = { if (isHome || checkIn.shopId.isBlank()) onOpenCheckIns() else onOpenShop(checkIn.shopId) })
+                        if (index < entries.lastIndex) HorizontalDivider(
+                            modifier = Modifier.padding(start = 88.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+/** The coffee shop visits of the day by time, then the home brews by time; the flag marks a home brew (it opens the history, not a shop). */
+internal fun selectedDayEntries(shopCheckIns: List<CheckIn>, homeCheckIns: List<HomeCheckIn>): List<Pair<CheckIn, Boolean>> =
+    shopCheckIns.sortedBy { it.visitedAt.ifBlank { it.createdAt } }.map { it to false } +
+        homeCheckIns.sortedBy { it.preparedAtUtc }.map { it.toTimelineCheckIn() to true }

@@ -1,5 +1,9 @@
 package com.coffeepeek.admin.ui.screen.roaster
 
+import com.coffeepeek.core.designsystem.component.coffeePeekScrollContentPadding
+
+import com.coffeepeek.core.designsystem.component.CoffeePeekScaffold as Scaffold
+
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
@@ -78,7 +82,7 @@ internal fun RoasterListScreen(
         ) { scrollModifier ->
             LazyColumn(
                 state = listState, modifier = scrollModifier.fillMaxSize().analyticsExposure("roaster_catalog", "catalog", "roasters"),
-                contentPadding = PaddingValues(start = CpDimens.spacing4, top = CpDimens.spacing2, end = CpDimens.spacing4, bottom = clearance + 88.dp),
+                contentPadding = coffeePeekScrollContentPadding(PaddingValues(start = CpDimens.spacing4, top = CpDimens.spacing2, end = CpDimens.spacing4, bottom = clearance + 88.dp)),
                 verticalArrangement = Arrangement.spacedBy(CpDimens.spacing3),
             ) {
                 itemsIndexed(visible, key = { index, item -> item.catalog.id.ifBlank { "unaddressed-roaster:$index" } }) { index, item ->

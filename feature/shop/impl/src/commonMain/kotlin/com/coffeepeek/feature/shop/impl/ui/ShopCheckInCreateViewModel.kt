@@ -58,6 +58,7 @@ internal class ShopCheckInCreateViewModel(
             is ShopCheckInFormAction.RemovePhoto -> edit {
                 copy(photos = photos.filterIndexed { index, _ -> index != action.index })
             }
+            is ShopCheckInFormAction.MovePhoto -> movePhoto(action.from, action.to)
             ShopCheckInFormAction.Submit -> submit()
             ShopCheckInFormAction.Dismiss -> if (!currentState.isSubmitting) {
                 analytics.cancelled()
@@ -97,6 +98,16 @@ internal class ShopCheckInCreateViewModel(
         } catch (_: Exception) {
             updateState { copy(drinksFailed = true) }
         } finally { updateState { copy(drinksLoading = false) } }
+    }
+
+    private fun movePhoto(from: Int, to: Int) {
+        val photos = currentState.input.photos
+        if (from !in photos.indices || to !in photos.indices || from == to) return
+        edit {
+            val reordered = photos.toMutableList()
+            reordered.add(to, reordered.removeAt(from))
+            copy(photos = reordered)
+        }
     }
 
     private fun edit(transform: ShopCheckInCreateInput.() -> ShopCheckInCreateInput) {

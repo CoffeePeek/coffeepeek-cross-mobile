@@ -1,14 +1,32 @@
 package com.coffeepeek.admin.sandbox.backend
 
+import kotlin.test.assertNotNull
+import com.coffeepeek.api.service.AuthService
+import com.coffeepeek.admin.feature.passwordrecovery.data.PasswordRecoveryRepositoryImpl
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.CoroutineScope
+import com.coffeepeek.room.repository.SettingRepository
+import com.coffeepeek.room.model.Setting
+import com.coffeepeek.feature.appupdate.impl.UpdateUiState
+import com.coffeepeek.feature.appupdate.api.AppUpdateEnvironment
+import com.coffeepeek.feature.appupdate.impl.AppUpdateController
+import com.coffeepeek.admin.di.appupdate.AppConfigUpdateEnvironment
+import com.coffeepeek.admin.di.appupdate.SettingsDismissedUpdateStore
+import com.coffeepeek.feature.appupdate.data.AppUpdateRepositoryImpl
 import com.coffeepeek.api.CoffeePeekClient
 import com.coffeepeek.api.feature.favorites.FavoritesApiService
 import com.coffeepeek.api.feature.feed.FeedApiService
 import com.coffeepeek.api.service.*
+import com.coffeepeek.api.model.request.*
 import com.coffeepeek.api.model.request.ShopSearchRequestDto
 import com.coffeepeek.api.model.request.ShopSearchFiltersDto
 import com.coffeepeek.api.model.request.ShopSearchOriginDto
-import com.coffeepeek.admin.feature.appupdate.data.AppVersionResponse
-import com.coffeepeek.admin.feature.appupdate.data.toUpdate
+import com.coffeepeek.feature.appupdate.data.AppVersionResponse
+import com.coffeepeek.feature.appupdate.data.toUpdate
 import com.coffeepeek.admin.feature.coffee.data.CoffeeRepositoryImpl
 import com.coffeepeek.admin.feature.coffee.domain.CoffeeFilters
 import com.coffeepeek.feature.profile.data.createPublicProfileData
@@ -20,7 +38,11 @@ import com.coffeepeek.feature.shop.domain.model.*
 import com.coffeepeek.domain.model.Session
 import com.coffeepeek.domain.repository.SessionRepository
 import com.coffeepeek.feature.authorblocking.api.AuthorReference
-import com.coffeepeek.feature.authorblocking.api.createAuthorBlockingFeature
+import com.coffeepeek.feature.community.data.repository.createCommunityRepository
+import com.coffeepeek.feature.community.domain.model.CommunityFailure
+import com.coffeepeek.feature.community.domain.model.FailureKind
+import com.coffeepeek.admin.di.authorblocking.SessionAuthorBlockingAccount
+import com.coffeepeek.feature.authorblocking.impl.createAuthorBlockingFeature
 import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.plugins.expectSuccess
 import io.ktor.client.statement.bodyAsText
@@ -76,7 +98,7 @@ class SandboxApplicationBackendTest {
         assertNotSame(client.client, client.plainClient)
         assertNotSame(client.client, client.imageClient)
         val shops = ShopApiService(client.client)
-        assertEquals(2, shops.searchShops().getOrThrow().coffeeShops.size)
+        assertEquals(2, shops.searchShops().getOrThrow().items.size)
         assertEquals("Sandbox Cafe", shops.getShopDetails("sandbox-cafe").getOrThrow().name)
         assertEquals("Минск", shops.getCities().getOrThrow().single().name)
         assertEquals("cappuccino", shops.getConsumedDrinks().getOrThrow().single().slug)
@@ -176,10 +198,10 @@ class SandboxApplicationBackendTest {
         val api = ShopApiService(client.client)
         val filters = ShopSearchFiltersDto(ShopSearchOriginDto(53.9, 27.56), favoritesOnly = true)
         val request = ShopSearchRequestDto(filters, page = 1, pageSize = 20)
-        assertEquals("Sandbox Cafe", api.searchNearbyShops(request).getOrThrow().items.single().name)
+        assertEquals("Sandbox Cafe", api.searchShops(request).getOrThrow().items.single().name)
         FavoritesApiService(client.client).setFavorite("coffee_shop", "sandbox-cafe", false).getOrThrow()
-        assertTrue(api.searchNearbyShops(request).getOrThrow().items.isEmpty())
-        assertEquals("Sandbox Lab", api.searchNearbyShops(request.copy(filters = filters.copy(favoritesOnly = false, isNew = true))).getOrThrow().items.single().name)
+        assertTrue(api.searchShops(request).getOrThrow().items.isEmpty())
+        assertEquals("Sandbox Lab", api.searchShops(request.copy(filters = filters.copy(favoritesOnly = false, isNew = true))).getOrThrow().items.single().name)
     } }
 
     @Test fun actualMigratedShopWriteUpdatesHistoryButNeverPublishesPrivateOrPendingRows() = runTest { fixture { _, client ->
@@ -272,6 +294,20 @@ class SandboxApplicationBackendTest {
         assertEquals(2, restored.helpfulCount)
     } }
 
+    @Test fun sharedPostLinksReadThroughTheRealCommunityRepositoryAndHonourBlocks() = runTest { fixture { _, client ->
+        val posts = createCommunityRepository(client.client, SandboxBackend.BASE_URL)
+        val id = SandboxApplicationBackend.FRIEND_VISIT_ID
+        assertEquals(friend, posts.postById(id).getOrThrow().author.id)
+        assertTrue(posts.postById("sandbox-feed-5").getOrThrow().isHome)
+        val own = CheckInApiService(client.client).getMyCheckIns(1, 20).getOrThrow().items.single().id
+        assertEquals(own, posts.postById(own).getOrThrow().id)
+        client.client.put("/api/v1/me/blocks/$friend")
+        assertEquals(FailureKind.NotFound, assertIs<CommunityFailure>(posts.postById(id).exceptionOrNull()).kind)
+        client.client.delete("/api/v1/me/blocks/$friend")
+        assertEquals(id, posts.postById(id).getOrThrow().id)
+        assertEquals(FailureKind.NotFound, assertIs<CommunityFailure>(posts.postById("missing").exceptionOrNull()).kind)
+    } }
+
     @Test fun unimplementedMutationsAreRejectedAndEmptyStateIsSharedAcrossSources() = runTest { fixture { backend, client ->
         assertFalse(client.client.post("/api/ModerationShops").status.isSuccess())
         val api = CheckInApiService(client.client)
@@ -281,7 +317,7 @@ class SandboxApplicationBackendTest {
         assertEquals(1, api.getMyCheckIns(1, 20).getOrThrow().items.size)
         assertTrue(ShopApiService(client.client).getShopDetails("unknown-shop").isFailure)
         backend.reset(false)
-        assertTrue(ShopApiService(client.client).searchShops().getOrThrow().coffeeShops.isEmpty())
+        assertTrue(ShopApiService(client.client).searchShops().getOrThrow().items.isEmpty())
         assertTrue(FeedApiService(client.client).getFeed(20).getOrThrow().items.isEmpty())
         assertTrue(FavoritesApiService(client.client).getFavorites().getOrThrow().isEmpty())
     } }
@@ -347,7 +383,7 @@ class SandboxApplicationBackendTest {
     @OptIn(ExperimentalCoroutinesApi::class)
     @Test fun actualAuthorBlockingFeatureBlocksThroughFakeTransportAndFailureLeavesVisibilityUnchanged() = runTest { fixture { backend, client ->
         Dispatchers.setMain(UnconfinedTestDispatcher())
-        val feature = createAuthorBlockingFeature(client.client, LocalSession())
+        val feature = createAuthorBlockingFeature(client.client, SessionAuthorBlockingAccount(LocalSession()))
         try {
             val author = AuthorReference(friend, SandboxApplicationBackend.FRIEND_SLUG, SandboxApplicationBackend.FRIEND_NAME)
             withContext(Dispatchers.Default) { withTimeout(10_000) {
@@ -405,6 +441,136 @@ class SandboxApplicationBackendTest {
         assertEquals(false, profiles.getProfile(friend).getOrThrow().isFollowing)
         assertNull(users.getAccountDeletionRequest().getOrThrow())
     } }
+    @Test fun updatePromptStateFollowsTheFixturePoliciesThroughTheRealRepository() = runBlocking { fixture { backend, client ->
+        class Settings : SettingRepository {
+            val rows = mutableMapOf<String, String>()
+            override suspend fun save(model: Setting) { rows[model.key] = model.value }
+            override suspend fun read(key: String) = rows[key]?.let { Setting(key, it) }
+            override fun readFlow(key: String): Flow<Setting?> = emptyFlow()
+            override suspend fun readAll() = rows.map { Setting(it.key, it.value) }
+            override fun readAllFlow(): Flow<List<Setting>> = emptyFlow()
+            override suspend fun delete(key: String) { rows.remove(key) }
+        }
+        val settings = Settings()
+        val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+        // A new state per call stands for a fresh process: only the dismissed version survives.
+        suspend fun check(manual: Boolean = false, state: AppUpdateController = AppUpdateController(AppUpdateRepositoryImpl(client.client, AppConfigUpdateEnvironment, SettingsDismissedUpdateStore(settings)), object : AppUpdateEnvironment { override val versionCode: Long? = 5; override val platform = "android"; override val channel: String? = "play" }, scope)): Pair<AppUpdateController, UpdateUiState> {
+            state.check(manual); return state to state.state.first { !it.checking }
+        }
+        try {
+            assertFalse(check().second.showPrompt)
+
+            backend.updatePolicy = SandboxUpdatePolicy.Available
+            val (optional, shown) = check()
+            assertTrue(shown.showPrompt); assertFalse(shown.update!!.isRequired(5))
+            optional.dismiss()
+            assertFalse(check(state = optional).second.showPrompt)
+            assertFalse(check().second.showPrompt)
+            assertTrue(check(manual = true).second.showPrompt)
+
+            backend.updatePolicy = SandboxUpdatePolicy.Required
+            val (required, mandatory) = check()
+            assertTrue(mandatory.showPrompt); assertTrue(mandatory.update!!.isRequired(5))
+            required.dismiss()
+            assertTrue(check().second.showPrompt)
+
+            backend.updatePolicy = SandboxUpdatePolicy.Failure
+            val automatic = check().second
+            assertFalse(automatic.showPrompt); assertNull(automatic.message)
+            val manual = check(manual = true).second
+            assertTrue(manual.checkFailed); assertEquals("Не удалось проверить обновления. Попробуйте позже.", manual.message)
+
+            backend.updatePolicy = SandboxUpdatePolicy.UpToDate
+            assertEquals("Установлена актуальная версия", check(manual = true).second.message)
+        } finally { scope.cancel() }
+    } }
+    @Test fun accountFixturesAnswerTheRealAuthServiceAndRecoveryRepository() = runTest { fixture { backend, client ->
+        val auth = AuthService(client.client, client.plainClient)
+        val recovery = PasswordRecoveryRepositoryImpl(client.plainClient)
+
+        // Default: sign-in succeeds with a token whose subject is the Sandbox account; nothing is taken; OAuth stays blocked.
+        val login = auth.login(" Tester@Example.com ", "any-password").getOrThrow()
+        assertEquals("11111111-1111-4111-8111-111111111111", com.coffeepeek.core.session.JwtUtils.extractUserId(login.accessToken))
+        assertEquals("sandbox-refresh-token", login.refreshToken)
+        assertEquals(false, auth.isEmailTaken("new@example.com").getOrThrow())
+        assertTrue(auth.register("Tester", "new@example.com", "password1").isSuccess)
+        assertTrue(recovery.requestReset("tester@example.com").isSuccess)
+        assertTrue(auth.logout("sandbox-refresh-token").isSuccess)
+        assertTrue(auth.googleLogin("token").isFailure)
+        assertTrue(auth.beginAppleLogin().isFailure)
+
+        backend.authPolicy = SandboxAuthPolicy.WrongPassword
+        val rejected = auth.login("tester@example.com", "wrong").exceptionOrNull()
+        assertNotNull(rejected)
+        assertEquals("Неверный email или пароль", com.coffeepeek.admin.utils.localizedLoginError(rejected.message))
+        assertTrue(auth.register("Tester", "new@example.com", "password1").isSuccess)
+
+        backend.authPolicy = SandboxAuthPolicy.EmailTaken
+        assertEquals(true, auth.isEmailTaken("taken@example.com").getOrThrow())
+        assertTrue(auth.login("tester@example.com", "password1").isSuccess)
+
+        backend.authPolicy = SandboxAuthPolicy.RegistrationFailure
+        assertTrue(auth.register("Tester", "new@example.com", "password1").isFailure)
+        assertEquals(false, auth.isEmailTaken("new@example.com").getOrThrow())
+
+        backend.authPolicy = SandboxAuthPolicy.RecoveryFailure
+        assertTrue(recovery.requestReset("tester@example.com").isFailure)
+        assertTrue(auth.register("Tester", "new@example.com", "password1").isSuccess)
+
+        // The scenario chips still win over the account policy, so offline and 5xx also reach sign-in.
+        backend.authPolicy = SandboxAuthPolicy.Works
+        backend.scenario = SandboxScenario.Offline
+        assertTrue(auth.login("tester@example.com", "password1").isFailure)
+        backend.scenario = SandboxScenario.ServerError
+        assertTrue(auth.login("tester@example.com", "password1").isFailure)
+        backend.scenario = SandboxScenario.Ready
+        backend.reset(true)
+        assertEquals(SandboxAuthPolicy.Works, backend.authPolicy)
+    } }
+    @Test fun feedFixturesPageThroughTheRealFeedServiceAndHonourBlocksAndFailures() = runTest { fixture { backend, client ->
+        val feed = FeedApiService(client.client)
+        // Default: the visible fixtures in one page.
+        assertEquals(2, feed.getFeed(20).getOrThrow().items.size)
+        assertNull(feed.getFeed(20).getOrThrow().nextCursor)
+
+        backend.feed = SandboxFeed.Paged
+        val first = feed.getFeed(20).getOrThrow()
+        assertEquals(20, first.items.size); assertEquals("20", first.nextCursor)
+        val second = feed.getFeed(20, first.nextCursor).getOrThrow()
+        val third = feed.getFeed(20, second.nextCursor).getOrThrow()
+        val ids = (first.items + second.items + third.items).map { it.checkIn.id }
+        assertEquals(47, ids.size); assertEquals(ids.size, ids.toSet().size); assertNull(third.nextCursor)
+        assertTrue((first.items + second.items + third.items).any { it.checkIn.kind == "Home" && it.checkIn.home?.beanName != null })
+        // A blocked author disappears from every page and returns on unblock.
+        client.client.put("/api/v1/me/blocks/$friend")
+        val visible = feed.getFeed(100).getOrThrow().items
+        assertEquals(47 - 1 - 15, visible.size); assertTrue(visible.none { it.checkIn.authorId == friend })
+        client.client.delete("/api/v1/me/blocks/$friend")
+        assertEquals(47, feed.getFeed(100).getOrThrow().items.size)
+        // Votes work for generated posts too and keep their state; reports stay unimplemented in the Sandbox.
+        val vote = json(client.client.put("/api/v1/check-ins/sandbox-feed-1/helpful"))
+        assertTrue(vote["isHelpful"]!!.jsonPrimitive.boolean); assertEquals(2, vote["helpfulCount"]!!.jsonPrimitive.int)
+        assertEquals(1, json(client.client.delete("/api/v1/check-ins/sandbox-feed-1/helpful"))["helpfulCount"]!!.jsonPrimitive.int)
+
+        backend.feed = SandboxFeed.PageFailsOnce
+        val firstPage = feed.getFeed(20).getOrThrow()
+        assertTrue(feed.getFeed(20, firstPage.nextCursor).isFailure)
+        assertEquals(20, feed.getFeed(20, firstPage.nextCursor).getOrThrow().items.size)
+
+        backend.feed = SandboxFeed.InvalidCursor
+        assertEquals(20, feed.getFeed(20).getOrThrow().items.size)
+        val restart = feed.getFeed(20, "20").exceptionOrNull()
+        assertTrue((restart as com.coffeepeek.api.feature.feed.FeedApiException).restartPagination)
+
+        backend.feed = SandboxFeed.Empty
+        assertTrue(feed.getFeed(20).getOrThrow().items.isEmpty())
+        backend.feed = SandboxFeed.Failure
+        assertTrue(feed.getFeed(20).isFailure)
+
+        backend.feed = SandboxFeed.Paged
+        backend.reset(true)
+        assertEquals(SandboxFeed.Single, backend.feed)
+    } }
     @Test fun settingsFixturesServeTheUpdatePolicyAndTheCityCatalogThroughTheRealParsers() = runTest { fixture { backend, client ->
         // The shared client throws on a non-2xx answer; the app's update state treats that exactly like "no policy".
         suspend fun update() = runCatching {
@@ -438,4 +604,166 @@ class SandboxApplicationBackendTest {
         assertNull(update()); assertTrue(shops.getCities().isFailure)
     } }
 
+    @Test fun contributionFixturesServeTheModerationListsAndAcceptSubmissionsThroughTheRealServices() = runTest { fixture { backend, client ->
+        val shops = ShopApiService(client.client)
+        val roasters = RoasterApiService(client.client)
+        val changes = ShopChangeRequestApiService(client.client)
+
+        // Seeded: a few submissions per status; an approved shop opens the catalog only when it is published.
+        val approved = shops.getMyModerationShops(ModerationStatusDto.Approved, 1, 20).getOrThrow()
+        assertEquals(listOf("shop-approved-published", "shop-approved-waiting"), approved.moderationShops.map { it.id })
+        assertEquals(listOf("sandbox-cafe", null), approved.moderationShops.map { it.publishedShop?.slug })
+        assertEquals(1, shops.getMyModerationShops(ModerationStatusDto.Pending, 1, 20).getOrThrow().totalItems)
+        val rejected = shops.getMyModerationShops(ModerationStatusDto.Rejected, 1, 20).getOrThrow()
+        assertEquals(SandboxContributionsBackend.REJECTED_REASON, rejected.moderationShops.single().rejectedReason)
+        assertEquals(1, roasters.getMyModerationRoasters(ModerationStatusDto.Approved, 1, 20).getOrThrow().items.size)
+        assertEquals("Недостаточно данных", roasters.getMyModerationRoasters(ModerationStatusDto.Rejected, 1, 20).getOrThrow().items.single().rejectedReason)
+        assertEquals(listOf("change-approved"), changes.getMine(1, 20, ModerationStatusDto.Approved).getOrThrow().items.map { it.id })
+        assertEquals(listOf("change-rejected"), changes.getMine(1, 20, ModerationStatusDto.Rejected).getOrThrow().items.map { it.id })
+        assertEquals(listOf("change-pending"), changes.getMine(1, 20, ModerationStatusDto.Pending, "sandbox-cafe", ShopChangeSectionDto.Contacts).getOrThrow().items.map { it.id })
+        assertTrue(changes.getMine(1, 20, ModerationStatusDto.Pending, "sandbox-lab").getOrThrow().items.isEmpty())
+
+        // A submitted shop appears as pending; invalid input is rejected with the server message and stores nothing.
+        shops.createShop(CreateShopReq(name = "Новая кофейня", address = "Улица, 5", cityId = "minsk")).getOrThrow()
+        assertEquals(2, shops.getMyModerationShops(ModerationStatusDto.Pending, 1, 20).getOrThrow().totalItems)
+        val invalid = shops.createShop(CreateShopReq(name = " ", address = "Улица, 5", cityId = "minsk"))
+        assertEquals("Укажите название, адрес и город", invalid.exceptionOrNull()?.message)
+        assertEquals(2, shops.getMyModerationShops(ModerationStatusDto.Pending, 1, 20).getOrThrow().totalItems)
+
+        // Roaster: the server message and the address check come back; a city without an address is refused.
+        val submitted = roasters.submitRoaster(CreateRoasterSubmissionReq(name = "Новый обжарщик", cityId = "minsk", address = "Улица, 1")).getOrThrow()
+        assertEquals("Pending", submitted.data.status); assertTrue(submitted.data.isAddressValidated)
+        assertEquals("Обжарщик отправлен на модерацию", submitted.message)
+        assertTrue(roasters.submitRoaster(CreateRoasterSubmissionReq(name = "Без адреса", cityId = "minsk")).isFailure)
+        assertEquals(2, roasters.getMyModerationRoasters(ModerationStatusDto.Pending, 1, 20).getOrThrow().totalItems)
+
+        // Changes: create, read, edit (stays pending), unknown shop, approved request cannot be edited.
+        val created = changes.create(CreateShopChangeRequestBody("sandbox-lab", ShopChangeSectionDto.Description, ShopChangePayloadDto(description = "Новое"))).getOrThrow()
+        assertEquals(ModerationStatusDto.Pending, created.status)
+        assertEquals("Новое", changes.getById(created.id).getOrThrow().payload.description)
+        val edited = changes.update(created.id, UpdateShopChangeRequestBody(ShopChangeSectionDto.Tags, ShopChangePayloadDto(tagIds = listOf("wifi")))).getOrThrow()
+        assertEquals(ShopChangeSectionDto.Tags, edited.section); assertEquals(created.createdAtUtc, edited.createdAtUtc)
+        assertTrue(changes.create(CreateShopChangeRequestBody("unknown", ShopChangeSectionDto.Tags, ShopChangePayloadDto())).isFailure)
+        assertTrue(changes.update("change-approved", UpdateShopChangeRequestBody(ShopChangeSectionDto.Tags, ShopChangePayloadDto())).isFailure)
+        assertTrue(changes.getById("missing").isFailure)
+
+        // The wizard and the editor read the equipment, bean and tag catalogs.
+        assertEquals(2, shops.getEquipment().getOrThrow().size)
+        assertEquals(2, shops.getBeans().getOrThrow().size)
+        assertEquals(2, shops.getShopTags().getOrThrow().size)
+
+        // Paging: 45 extra approved shops are three pages of 20 with the remainder last.
+        backend.contributions = SandboxContributions.Paged
+        val first = shops.getMyModerationShops(ModerationStatusDto.Approved, 1, 20).getOrThrow()
+        assertEquals(47, first.totalItems); assertEquals(3, first.totalPages)
+        assertEquals(7, shops.getMyModerationShops(ModerationStatusDto.Approved, 3, 20).getOrThrow().moderationShops.size)
+
+        backend.contributions = SandboxContributions.Empty
+        assertTrue(shops.getMyModerationShops(ModerationStatusDto.Approved, 1, 20).getOrThrow().moderationShops.isEmpty())
+        assertTrue(changes.getMine(1, 20, ModerationStatusDto.Approved).getOrThrow().items.isEmpty())
+
+        backend.contributions = SandboxContributions.ListFailure
+        assertTrue(shops.getMyModerationShops(ModerationStatusDto.Approved, 1, 20).isFailure)
+        assertTrue(roasters.getMyModerationRoasters(ModerationStatusDto.Approved, 1, 20).isFailure)
+        assertTrue(changes.getMine(1, 20).isFailure)
+
+        backend.contributions = SandboxContributions.SubmitFailure
+        assertEquals(SandboxContributionsBackend.SUBMIT_FAILURE, shops.createShop(CreateShopReq(name = "A", address = "B", cityId = "minsk")).exceptionOrNull()?.message)
+        assertTrue(roasters.submitRoaster(CreateRoasterSubmissionReq(name = "A")).isFailure)
+        assertTrue(changes.create(CreateShopChangeRequestBody("sandbox-cafe", ShopChangeSectionDto.Tags, ShopChangePayloadDto())).isFailure)
+        assertTrue(shops.getMyModerationShops(ModerationStatusDto.Approved, 1, 20).isSuccess)
+
+        backend.contributions = SandboxContributions.Paged
+        backend.reset(true)
+        assertEquals(SandboxContributions.Seeded, backend.contributions)
+        assertEquals(2, shops.getMyModerationShops(ModerationStatusDto.Approved, 1, 20).getOrThrow().totalItems)
+    } }
+
+    @Test fun discoveryClustersUnfoldIntoTheSameShopsAtTheDetailZoom() = runTest { fixture { backend, client ->
+        backend.discovery = SandboxDiscovery.Paged
+        val shops = ShopApiService(client.client)
+        val grouped = shops.getShopsInBounds(53.8, 27.4, 54.0, 27.7, zoom = 10, cityId = "minsk").getOrThrow()
+        val detailed = shops.getShopsInBounds(53.8, 27.4, 54.0, 27.7, zoom = 22, cityId = "minsk").getOrThrow()
+        assertTrue(grouped.clusters.isNotEmpty() || grouped.zones.isNotEmpty())
+        assertEquals(detailed.shops.size, grouped.shops.size + grouped.clusters.sumOf { it.count } + grouped.zones.sumOf { it.shopCount })
+        assertTrue(detailed.clusters.isEmpty())
+        assertTrue(grouped.clusters.all { it.bounds.minLatitude <= it.latitude && it.latitude <= it.bounds.maxLatitude })
+    } }
+
+    @Test fun shopSearchUsesOnlyPostAndDoesNotRequireLocation() = runTest { fixture { backend, client ->
+        assertEquals(HttpStatusCode.NotFound, client.client.get("/api/CoffeeShops").status)
+        val shops = ShopApiService(client.client)
+        assertTrue(shops.searchShops().getOrThrow().items.all { it.distanceMeters == null })
+        backend.discovery = SandboxDiscovery.Paged
+        val ordinary = shops.searchShops(cityId = "brest").getOrThrow()
+        assertEquals(9, ordinary.totalItems)
+        assertTrue(ordinary.items.all { it.distanceMeters == null })
+        val request = ShopSearchRequestDto(ShopSearchFiltersDto(isNew = true, favoritesOnly = true), page = 1, pageSize = 20)
+        assertTrue(shops.searchShops(request).getOrThrow().items.isEmpty())
+        assertEquals(HttpStatusCode.NotFound, client.client.get("/api/CoffeeShops").status)
+    } }
+
+    @Test fun discoveryFixturesPageFilterSortAndFailThroughTheRealSearchAndMapServices() = runTest { fixture { backend, client ->
+        val shops = ShopApiService(client.client)
+        val minsk = listOf(53.8, 27.4, 54.0, 27.7)
+        val brest = listOf(51.9, 23.5, 52.3, 24.0)
+        suspend fun map(box: List<Double>, city: String? = null) = shops.getShopsInBounds(box[0], box[1], box[2], box[3], zoom = 22, cityId = city).getOrThrow()
+        fun nearby(radiusKm: Int, pageSize: Int = 100, page: Int = 1, favoritesOnly: Boolean = false) = ShopSearchRequestDto(
+            ShopSearchFiltersDto(ShopSearchOriginDto(53.9006, 27.5590), radiusKm = radiusKm, favoritesOnly = favoritesOnly), page = page, pageSize = pageSize,
+        )
+
+        // The default fixture is the two core shops and the one-marker map.
+        assertEquals(2, shops.searchShops().getOrThrow().items.size)
+
+        backend.discovery = SandboxDiscovery.Paged
+        val first = shops.searchShops(page = 1, pageSize = 20).getOrThrow()
+        assertEquals(47, first.totalItems); assertEquals(3, first.totalPages); assertEquals(20, first.items.size)
+        assertEquals(7, shops.searchShops(page = 3, pageSize = 20).getOrThrow().items.size)
+        assertEquals(9, shops.searchShops(cityId = "brest").getOrThrow().totalItems)
+        assertEquals(11, shops.searchShops(query = "Discovery Shop 1").getOrThrow().totalItems)
+        assertEquals(15, shops.searchShops(roasterIds = listOf("sandbox-decaf")).getOrThrow().totalItems)
+        assertEquals(4, shops.searchShops(minRating = 4.9).getOrThrow().totalItems)
+        assertEquals(16, shops.searchShops(type = "specialty").getOrThrow().totalItems)
+        assertEquals(0, shops.searchShops(cityId = "brest", roasterIds = listOf("sandbox-decaf"), tagIds = listOf("none")).getOrThrow().totalItems)
+
+        // The nearby search is sorted by distance, limited to the radius, paged, and follows the shared favorites.
+        val near = shops.searchShops(nearby(radiusKm = 3)).getOrThrow()
+        val distances = near.items.mapNotNull { it.distanceMeters }
+        assertEquals(near.items.size, distances.size); assertEquals(distances.sorted(), distances); assertTrue(distances.all { it <= 3_000.0 })
+        assertTrue(shops.searchShops(nearby(radiusKm = 1)).getOrThrow().totalItems < near.totalItems)
+        val tenPerPage = shops.searchShops(nearby(radiusKm = 3, pageSize = 10)).getOrThrow()
+        assertEquals((near.totalItems + 9) / 10, tenPerPage.totalPages); assertEquals(minOf(10, near.totalItems), tenPerPage.items.size)
+        assertEquals("Sandbox Cafe", shops.searchShops(nearby(radiusKm = 3, favoritesOnly = true)).getOrThrow().items.single().name)
+        FavoritesApiService(client.client).setFavorite("coffee_shop", "discovery-3", true).getOrThrow()
+        assertEquals(2, shops.searchShops(nearby(radiusKm = 3, favoritesOnly = true)).getOrThrow().items.size)
+
+        // The map: shops by bounds and filters, zones inside the bounds, no clusters, nothing truncated.
+        val inMinsk = map(minsk)
+        assertEquals(38, inMinsk.shops.size); assertTrue(inMinsk.zones.isEmpty()); assertTrue(inMinsk.clusters.isEmpty()); assertFalse(inMinsk.isTruncated)
+        assertEquals(9, map(brest).shops.size); assertTrue(map(brest).zones.isEmpty())
+        assertTrue(map(minsk, city = "brest").shops.isEmpty())
+
+        backend.discovery = SandboxDiscovery.Truncated
+        assertEquals(SandboxDiscoveryBackend.MAP_LIMIT, map(minsk).shops.size); assertTrue(map(minsk).isTruncated)
+        assertFalse(map(brest).isTruncated)
+
+        backend.discovery = SandboxDiscovery.Empty
+        assertEquals(0, shops.searchShops().getOrThrow().totalItems)
+        assertTrue(shops.searchShops(nearby(radiusKm = 3)).getOrThrow().items.isEmpty())
+        assertTrue(map(minsk).shops.isEmpty()); assertTrue(map(minsk).zones.isEmpty())
+
+        backend.discovery = SandboxDiscovery.SearchFailure
+        assertTrue(shops.searchShops().isFailure); assertTrue(shops.searchShops(nearby(radiusKm = 3)).isFailure)
+        assertTrue(shops.getShopsInBounds(minsk[0], minsk[1], minsk[2], minsk[3], zoom = 22).isSuccess)
+
+        backend.discovery = SandboxDiscovery.MapFailure
+        assertTrue(shops.getShopsInBounds(minsk[0], minsk[1], minsk[2], minsk[3], zoom = 22).isFailure)
+        assertEquals(47, shops.searchShops().getOrThrow().totalItems)
+
+        backend.discovery = SandboxDiscovery.Paged
+        backend.reset(true)
+        assertEquals(SandboxDiscovery.Seeded, backend.discovery)
+        assertEquals(2, shops.searchShops().getOrThrow().items.size)
+    } }
 }
+

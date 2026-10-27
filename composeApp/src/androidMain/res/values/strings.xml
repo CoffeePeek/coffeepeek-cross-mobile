@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">CoffeePeek</string>
+    <string name="map_cluster_description">Кофеен в группе: %1$d. Приблизить карту</string>
 </resources>

@@ -20,6 +20,10 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
+import coffeepeek.composeapp.generated.resources.Res
+import coffeepeek.composeapp.generated.resources.photo_pick_failed
+import org.jetbrains.compose.resources.getString
+import kotlinx.coroutines.CancellationException
 
 /** Composition-owned media port; live callers keep the existing OS pipeline by default. */
 internal val LocalPhotoPickerOverride = androidx.compose.runtime.staticCompositionLocalOf<
@@ -46,23 +50,19 @@ actual fun rememberPhotoPicker(
         scope.launch(Dispatchers.IO) {
             isLoadingState.value(true)
             val limit = maxSelectionState.value
-            val images = uris.take(limit).mapNotNull { uri ->
-                runCatching {
-                    val raw = resolver.openInputStream(uri)?.use { it.readBytes() }
-                        ?: return@mapNotNull null
-                    val prepared = BitmapUtil.prepareForUpload(raw)
-                    val originalName = resolver.queryFileName(uri)
-                    val fileName = originalName
-                        ?.substringBeforeLast('.')
-                        ?.takeIf { it.isNotBlank() }
-                        ?.let { "$it.jpg" }
-                        ?: "photo_${System.currentTimeMillis()}.jpg"
-                    PickedImage(
-                        bytes = prepared,
-                        fileName = fileName,
-                        contentType = "image/jpeg",
-                    )
-                }.getOrNull()
+            val outcome = pickOutcome(uris, limit) { uri ->
+                val raw = resolver.openInputStream(uri)?.use { it.readBytes() } ?: return@pickOutcome null
+                val prepared = BitmapUtil.prepareForUpload(raw)
+                val fileName = resolver.queryFileName(uri)
+                    ?.substringBeforeLast('.')
+                    ?.takeIf { it.isNotBlank() }
+                    ?.let { "$it.jpg" }
+                    ?: "photo_${System.currentTimeMillis()}.jpg"
+                PickedImage(bytes = prepared, fileName = fileName, contentType = "image/jpeg")
+            }
+            val images = outcome.images
+            if (outcome.failed > 0) {
+                withContext(Dispatchers.Main) { ErrorHandler.showError(getString(Res.string.photo_pick_failed, outcome.failed)) }
             }
             if (images.isNotEmpty()) {
                 withContext(Dispatchers.Main) { onPhotosPickedState.value(images) }
@@ -123,6 +123,19 @@ actual fun rememberPhotoPicker(
         },
         takePhoto = ::launchCamera,
     )
+}
+
+internal class PickOutcome(val images: List<PickedImage>, val failed: Int)
+
+/** Prepares up to [limit] picked items; one that cannot be read or prepared is counted, not silently dropped. */
+internal fun <T> pickOutcome(items: List<T>, limit: Int, prepare: (T) -> PickedImage?): PickOutcome {
+    val chosen = items.take(limit)
+    val images = chosen.mapNotNull { item ->
+        try { prepare(item) }
+        catch (cancelled: CancellationException) { throw cancelled }
+        catch (_: Exception) { null }
+    }
+    return PickOutcome(images, chosen.size - images.size)
 }
 
 private fun android.content.Context.createCameraImageUri(): Uri? = runCatching {

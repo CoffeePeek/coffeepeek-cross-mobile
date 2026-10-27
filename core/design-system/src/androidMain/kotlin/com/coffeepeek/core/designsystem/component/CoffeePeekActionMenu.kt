@@ -1,5 +1,10 @@
 package com.coffeepeek.core.designsystem.component
 
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.MutableTransitionState
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.rememberTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -23,14 +28,13 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalDensity
@@ -61,21 +65,43 @@ fun CoffeePeekActionMenu(
     modifier: Modifier = Modifier,
     content: @Composable (open: () -> Unit) -> Unit,
 ) {
-    var expanded by remember { mutableStateOf(false) }
+    val expanded = remember { MutableTransitionState(false) }
     val margin = with(LocalDensity.current) { CoffeePeekDimens.spacing2.roundToPx() }
+    val origin = remember { MenuOrigin() }
     val position = remember(margin) { object : PopupPositionProvider {
         override fun calculatePosition(anchorBounds: IntRect, windowSize: IntSize,
             layoutDirection: LayoutDirection, popupContentSize: IntSize): IntOffset =
-            coffeePeekActionMenuPosition(anchorBounds, windowSize, layoutDirection, popupContentSize, margin)
+            coffeePeekActionMenuPosition(anchorBounds, windowSize, layoutDirection, popupContentSize, margin).also {
+                origin.value = TransformOrigin(if (layoutDirection == LayoutDirection.Ltr) 1f else 0f, if (it.y < anchorBounds.top) 1f else 0f)
+            }
     } }
     Box(modifier) {
-        content { expanded = true }
-        if (expanded) Popup(position, onDismissRequest = { expanded = false }, properties = PopupProperties(focusable = true)) {
-            CoffeePeekActionMenuContent(actions) {
-                expanded = false
-                it.onClick()
+        content { expanded.targetState = true }
+        if (expanded.currentState || expanded.targetState) Popup(position, onDismissRequest = { expanded.targetState = false }, properties = PopupProperties(focusable = true)) {
+            CoffeePeekActionMenuContent(actions, Modifier.menuAppearance(expanded, origin)) {
+                if (expanded.targetState) {
+                    expanded.targetState = false
+                    it.onClick()
+                }
             }
         }
+    }
+}
+
+/** The menu grows from the corner of its anchor; the position provider sets the corner, which is only known once the menu is measured. */
+private class MenuOrigin(var value: TransformOrigin = TransformOrigin(1f, 0f))
+
+@Composable
+private fun Modifier.menuAppearance(expanded: MutableTransitionState<Boolean>, origin: MenuOrigin): Modifier {
+    val transition = rememberTransition(expanded, label = "action-menu")
+    val progress by transition.animateFloat(
+        transitionSpec = { tween(if (targetState) 160 else 110, easing = FastOutSlowInEasing) }, label = "action-menu-progress",
+    ) { if (it) 1f else 0f }
+    return graphicsLayer {
+        transformOrigin = origin.value
+        alpha = progress
+        scaleX = 0.9f + 0.1f * progress
+        scaleY = scaleX
     }
 }
 
@@ -92,10 +118,14 @@ internal fun coffeePeekActionMenuPosition(
 }
 
 @Composable
-private fun CoffeePeekActionMenuContent(actions: List<CoffeePeekMenuAction>, onAction: (CoffeePeekMenuAction) -> Unit) {
+private fun CoffeePeekActionMenuContent(
+    actions: List<CoffeePeekMenuAction>,
+    modifier: Modifier = Modifier,
+    onAction: (CoffeePeekMenuAction) -> Unit,
+) {
     val colors = MaterialTheme.colorScheme
     val shape = RoundedCornerShape(CoffeePeekDimens.cardRadius)
-    Column(Modifier.widthIn(min = 224.dp, max = 304.dp).heightIn(max = 360.dp)
+    Column(modifier.widthIn(min = 224.dp, max = 304.dp).heightIn(max = 360.dp)
         .shadow(8.dp, shape).clip(shape).background(colors.surface).border(1.dp, colors.outlineVariant, shape)
         .verticalScroll(rememberScrollState())) {
         actions.forEachIndexed { index, action ->

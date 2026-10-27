@@ -6,7 +6,7 @@ import com.coffeepeek.api.model.response.shop.CoffeeShopDetailsDto
 import com.coffeepeek.api.model.response.shop.ReviewDto
 import com.coffeepeek.api.model.response.shop.ShopMenuDto
 import com.coffeepeek.api.model.response.shop.ShopMenuItemDto
-import com.coffeepeek.api.model.response.shop.ShortShopDto
+import com.coffeepeek.api.model.response.shop.ShopSearchItemDto
 import com.coffeepeek.api.model.response.shop.variantOr
 import com.coffeepeek.data.util.FileUrlResolver
 import com.coffeepeek.domain.model.CatalogItem
@@ -16,6 +16,7 @@ import com.coffeepeek.domain.model.CoffeeShopType
 import com.coffeepeek.domain.model.CheckIn
 import com.coffeepeek.domain.model.Review
 import com.coffeepeek.domain.model.ReviewRating
+import com.coffeepeek.domain.model.ShopFilters
 import com.coffeepeek.domain.model.ShopMenu
 import com.coffeepeek.domain.model.ShopMenuItem
 import com.coffeepeek.domain.model.ShopMenuPhoto
@@ -45,27 +46,23 @@ internal object ShopMapper {
         sortOrder = sortOrder,
     )
 
-    fun ShortShopDto.toDomain() = CoffeeShop(
+    fun ShopSearchItemDto.toDomain(favorites: Set<String>, filters: ShopFilters) = CoffeeShop(
         id = address.slug,
         publicAddress = address.toDomain(),
         title = name,
-        rating = rating.takeIf { it > 0 },
+        rating = rating?.takeIf { it > 0 },
         cityName = null,
-        priceRange = priceRangeLabel(priceRange),
-        photoUrl = photos.firstOrNull()?.let { it.urls.variantOr(it.fullUrl) { u -> u.card } },
-        isFavorite = isFavorite,
-        address = location?.address,
+        priceRange = null,
+        photoUrl = coverPhoto?.let { it.urls.variantOr(it.fullUrl) { urls -> urls.card } },
+        address = addressLine,
         isOpen = isOpen,
-        isNew = isNew,
-        isVisited = isVisited,
+        isFavorite = address.slug in favorites || isFavorite == true,
+        isVisited = isVisited == true || filters.visitedOnly,
+        isNew = filters.newOnly,
         reviewCount = checkInCount,
-        tags = extractBackendTags(tags, shopTags)
-            .ifEmpty { (brewMethods + beans).mapNotNull { it.name?.takeIf(String::isNotBlank) } }
-            .take(3),
-        brewMethods = brewMethods.mapNotNull { it.name?.takeIf(String::isNotBlank) },
-        roasterPhotoUrls = roasters.mapNotNull { it.photoUrl?.takeIf(String::isNotBlank) }.distinct(),
-        type = parseShopType(type, coffeeFocus),
-        location = location?.toDomain(),
+        tags = tags.mapNotNull { it.name?.takeIf(String::isNotBlank) }.take(3),
+        type = filters.coffeeFocus ?: CoffeeShopType.COFFEE_BAR,
+        distanceMeters = distanceMeters,
     )
 
     fun CoffeeShopDetailsDto.toDomain(fileUrls: FileUrlResolver) = CoffeeShopDetails(

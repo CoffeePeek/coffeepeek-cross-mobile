@@ -9,14 +9,14 @@ import com.coffeepeek.admin.ui.Navigator
 import com.coffeepeek.admin.ui.component.FullScreenImageDialog
 import com.coffeepeek.admin.ui.component.rememberCheckInDateLabel
 import com.coffeepeek.admin.ui.screen.shop.ShopCheckInListScreenRenderer
-import com.coffeepeek.domain.repository.SessionRepository
+import com.coffeepeek.core.session.SessionReader
 import com.coffeepeek.domain.repository.UserRepository
 import com.coffeepeek.feature.shop.domain.repository.ShopCheckInVoteRepository
 import com.coffeepeek.feature.shop.domain.repository.ShopDetailsRepository
 import com.coffeepeek.feature.shop.impl.createShopCheckInListEntry
 
 internal class AndroidShopCheckInListScreenRenderer(
-    private val sessions: SessionRepository,
+    private val sessions: SessionReader,
     private val users: UserRepository,
     private val details: ShopDetailsRepository,
     private val votes: ShopCheckInVoteRepository,
@@ -30,7 +30,9 @@ internal class AndroidShopCheckInListScreenRenderer(
                 createShopCheckInListEntry(session.lease.details(details), session.lease.votes(votes),
                     currentViewer = { session.lease.viewer(users) },
                     authorImage = { url, modifier -> com.coffeepeek.admin.utils.CpImage(data = url, modifier = modifier) },
-                    checkInImage = { url, modifier, scale -> com.coffeepeek.admin.utils.CpImage(data = url, modifier = modifier, contentScale = scale) },
+                    checkInImage = { url, highQualityUrl, modifier, scale ->
+                        com.coffeepeek.admin.utils.CpImage(data = url, highQualityData = highQualityUrl, modifier = modifier, contentScale = scale)
+                    },
                     photoPrefetch = { listState, photos -> com.coffeepeek.admin.utils.PrefetchListPhotos(listState, photos) })
             }
             var preview by remember { mutableStateOf<com.coffeepeek.feature.shop.api.ShopDetailEffect.OpenPhoto?>(null) }

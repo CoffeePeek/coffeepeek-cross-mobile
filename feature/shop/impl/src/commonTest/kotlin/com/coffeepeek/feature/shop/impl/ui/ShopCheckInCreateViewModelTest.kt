@@ -119,6 +119,46 @@ class ShopCheckInCreateViewModelTest {
         assertEquals(listOf("opened", "submit", "failure", "Date", "submit", "validation"), metrics.events)
     }
 
+    @Test fun movedPhotosKeepTheirBytesAndOrderInRestoredDraftAndSubmission() = runTest(dispatcher) {
+        val repository = Repository()
+        val drafts = Drafts()
+        val model = viewModel(repository, drafts)
+        val photos = (1..3).map { ShopCheckInPhoto(byteArrayOf(it.toByte()), "$it.jpg") }
+        runCurrent()
+        model.onAction(ShopCheckInFormAction.PhotosAdded(photos))
+        model.onAction(ShopCheckInFormAction.MovePhoto(0, 2))
+        model.onAction(ShopCheckInFormAction.MovePhoto(1, 0))
+        runCurrent()
+        val expected = listOf(photos[2], photos[1], photos[0])
+        assertEquals(expected, drafts.snapshot!!.input.photos)
+        val restored = viewModel(repository, drafts)
+        runCurrent()
+        assertEquals(expected, restored.state.value.input.photos)
+        restored.onAction(ShopCheckInFormAction.Submit)
+        runCurrent()
+        assertEquals(expected, repository.writes.single().photos)
+    }
+
+    @Test fun stalePhotoMovesAndMovesDuringSubmissionCannotChangeTheRequest() = runTest(dispatcher) {
+        val repository = Repository().apply { gate = CompletableDeferred() }
+        val metrics = Metrics()
+        val model = viewModel(repository, analytics = metrics)
+        val photos = (1..2).map { ShopCheckInPhoto(byteArrayOf(it.toByte()), "$it.jpg") }
+        runCurrent()
+        model.onAction(ShopCheckInFormAction.PhotosAdded(photos))
+        model.onAction(ShopCheckInFormAction.MovePhoto(-1, 1))
+        model.onAction(ShopCheckInFormAction.MovePhoto(0, 2))
+        model.onAction(ShopCheckInFormAction.MovePhoto(1, 1))
+        model.onAction(ShopCheckInFormAction.Submit)
+        model.onAction(ShopCheckInFormAction.MovePhoto(0, 1))
+        runCurrent()
+        assertEquals(photos, model.state.value.input.photos)
+        assertEquals(photos, repository.writes.single().photos)
+        assertEquals(1, metrics.events.count { it == "Photos" })
+        repository.gate!!.complete(Unit)
+        runCurrent()
+    }
+
     @Test fun galleryPhotoAndDrinkChoiceSubmitWithoutAnExtractionStep() = runTest(dispatcher) {
         val repository = Repository()
         val viewModel = viewModel(repository)

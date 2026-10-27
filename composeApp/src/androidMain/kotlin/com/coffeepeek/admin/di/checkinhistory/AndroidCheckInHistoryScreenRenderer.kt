@@ -19,16 +19,16 @@ import com.coffeepeek.admin.ui.component.FullScreenImageDialog
 import com.coffeepeek.admin.ui.component.PhotoViewerImages
 import com.coffeepeek.admin.ui.component.rememberCheckInDateLabel
 import com.coffeepeek.admin.ui.screen.checkins.CheckInHistoryScreenRenderer
+import com.coffeepeek.core.session.SessionReader
 import com.coffeepeek.admin.ui.screen.checkins.HistoryTimelineCheckInCard
 import com.coffeepeek.admin.ui.screen.checkins.toTimelineCheckIn
-import com.coffeepeek.domain.repository.SessionRepository
 import com.coffeepeek.feature.checkinhistory.domain.repository.CheckInHistoryRepository
 import com.coffeepeek.feature.checkinhistory.domain.repository.HomeHistoryReader
 import com.coffeepeek.feature.checkinhistory.impl.createCheckInHistoryEntry
 
 /** Android history, Home detail/editor entries and photo viewer share a revocable account. */
 internal class AndroidCheckInHistoryScreenRenderer(
-    private val sessions: SessionRepository,
+    private val sessions: SessionReader,
     private val repository: CheckInHistoryRepository,
     private val homeReader: HomeHistoryReader,
     private val calendar: AndroidCheckInHistoryCalendar,

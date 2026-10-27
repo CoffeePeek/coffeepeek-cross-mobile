@@ -28,11 +28,14 @@ internal expect fun PlatformAlert(
 @Composable
 internal expect fun NativeActionSheet(title: String, actions: List<PlatformAction>, message: String? = null, dismissBeforeAction: Boolean = true, onDismiss: () -> Unit): Boolean
 
+@Composable
+internal expect fun NativePhotoSourceSheet(title: String, onGallery: () -> Unit, onCamera: () -> Unit, onDismiss: () -> Unit): Boolean
+
 /** Returns false on platforms that render CoffeePeek's own confirmation/error surface. */
 @Composable
 internal expect fun NativeAlert(
     title: String, message: String, confirmLabel: String, onConfirm: () -> Unit,
-    onDismiss: () -> Unit, cancelLabel: String? = null,
+    onDismiss: () -> Unit, cancelLabel: String? = null, destructive: Boolean = false,
 ): Boolean
 
 @Composable

@@ -1,5 +1,6 @@
 package com.coffeepeek.admin.ui.screen.deleteaccount
 
+import com.coffeepeek.core.datetime.parseServerInstant
 import com.coffeepeek.admin.auth.GoogleAuth
 import com.coffeepeek.admin.base.BaseViewModel
 import com.coffeepeek.admin.ui.Navigator
@@ -17,7 +18,6 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
-import kotlin.time.Instant
 
 data class DeleteAccountPendingUiState(
     val email: String = "",
@@ -153,21 +153,7 @@ class DeleteAccountPendingViewModel(
     @OptIn(ExperimentalTime::class)
     private fun isResendAvailable(resendAvailableAtUtc: String): Boolean {
         if (resendAvailableAtUtc.isBlank()) return true
-        val availableAt = parseInstant(resendAvailableAtUtc) ?: return true
+        val availableAt = parseServerInstant(resendAvailableAtUtc) ?: return true
         return Clock.System.now() >= availableAt
-    }
-
-    @OptIn(ExperimentalTime::class)
-    private fun parseInstant(value: String): Instant? {
-        val trimmed = value.trim()
-        if (trimmed.isEmpty()) return null
-        runCatching { Instant.parse(trimmed) }.getOrNull()?.let { return it }
-        if (!trimmed.endsWith("Z", ignoreCase = true) &&
-            !trimmed.contains('+') &&
-            trimmed.indexOf('-', startIndex = 10) < 0
-        ) {
-            runCatching { Instant.parse("${trimmed}Z") }.getOrNull()?.let { return it }
-        }
-        return null
     }
 }

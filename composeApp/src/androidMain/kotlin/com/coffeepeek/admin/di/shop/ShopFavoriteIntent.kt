@@ -2,7 +2,7 @@ package com.coffeepeek.admin.di.shop
 
 import com.coffeepeek.admin.utils.FavoriteSync
 import com.coffeepeek.admin.di.favorites.ResumedAfterAuth
-import com.coffeepeek.domain.repository.SessionRepository
+import com.coffeepeek.core.session.SessionReader
 import com.coffeepeek.feature.favorites.domain.repository.FavoritesRepository
 import com.coffeepeek.feature.shop.domain.repository.ShopDetailsRepository
 import kotlinx.coroutines.CancellationException
@@ -21,7 +21,7 @@ import kotlin.time.TimeSource
  * intent lives here: one short-lived entry, in memory only, applied once for the next signed-in session.
  */
 internal class ShopFavoriteIntent(
-    private val sessions: SessionRepository,
+    private val sessions: SessionReader,
     private val details: ShopDetailsRepository,
     private val favorites: FavoritesRepository,
     scope: CoroutineScope,
@@ -66,7 +66,7 @@ internal class ShopFavoriteIntent(
 }
 
 internal fun shopFavoriteIntent(
-    sessions: SessionRepository, details: ShopDetailsRepository, favorites: FavoritesRepository,
+    sessions: SessionReader, details: ShopDetailsRepository, favorites: FavoritesRepository,
 ): ShopFavoriteIntent = ShopFavoriteIntent(sessions, details, favorites,
     CoroutineScope(SupervisorJob() + Dispatchers.Default),
     onApplied = { shopId, favorite -> FavoriteSync.notifyChanged(shopId, favorite) })

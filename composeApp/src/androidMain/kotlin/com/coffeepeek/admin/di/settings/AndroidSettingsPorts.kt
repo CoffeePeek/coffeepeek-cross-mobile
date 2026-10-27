@@ -3,16 +3,16 @@ package com.coffeepeek.admin.di.settings
 import com.coffeepeek.admin.analytics.Analytics
 import com.coffeepeek.admin.analytics.AnalyticsConsent
 import com.coffeepeek.admin.analytics.AnalyticsService
-import com.coffeepeek.admin.feature.appupdate.ui.AppUpdateState
+import com.coffeepeek.feature.appupdate.impl.AppUpdateController
 import com.coffeepeek.admin.legal.LegalUrls
 import com.coffeepeek.admin.settings.CityPreference
 import com.coffeepeek.admin.theme.ThemeManager
 import com.coffeepeek.admin.utils.COFFEEPEEK_SHARE_TEXT
 import com.coffeepeek.admin.utils.OpenInBrowser
 import com.coffeepeek.admin.utils.ShareHelper
+import com.coffeepeek.core.session.SessionReader
 import com.coffeepeek.admin.utils.appReviewUrl
 import com.coffeepeek.admin.config.AppConfig
-import com.coffeepeek.domain.repository.SessionRepository
 import com.coffeepeek.domain.repository.ShopRepository
 import com.coffeepeek.feature.settings.api.CityPort
 import com.coffeepeek.feature.settings.api.SettingsAccountPort
@@ -21,11 +21,13 @@ import com.coffeepeek.feature.settings.api.ThemePort
 import com.coffeepeek.feature.settings.api.UpdateCheckPort
 import com.coffeepeek.feature.settings.api.UsageConsentPort
 import com.coffeepeek.feature.settings.domain.SettingsCity
+import com.coffeepeek.feature.settings.domain.UpdateCheckOutcome
 import com.coffeepeek.feature.settings.domain.UpdateCheckState
 import com.coffeepeek.feature.settings.domain.UsageConsentState
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import com.coffeepeek.admin.theme.ThemeMode as LegacyThemeMode
 import com.coffeepeek.feature.settings.domain.ThemeMode as SettingsThemeMode
@@ -65,7 +67,7 @@ internal class AndroidCityPort(
 }
 
 /** Signed in = an active session that has a user id, exactly what the legacy settings state used. */
-internal class AndroidSettingsAccountPort(private val sessions: SessionRepository) : SettingsAccountPort {
+internal class AndroidSettingsAccountPort(private val sessions: SessionReader) : SettingsAccountPort {
     override fun isSignedIn(): Boolean = signedIn(sessions.peekSession())
     override fun observeSignedIn(): Flow<Boolean> = sessions.observeSession().map(::signedIn).distinctUntilChanged()
     private fun signedIn(session: com.coffeepeek.domain.model.Session?) = sessions.isActiveSession(session) && session?.userId != null
@@ -83,12 +85,24 @@ internal class AndroidUsageConsentPort(private val service: () -> AnalyticsServi
     }
 }
 
-internal class AndroidUpdateCheckPort(private val updates: AppUpdateState) : UpdateCheckPort {
+internal class AndroidUpdateCheckPort(private val updates: AppUpdateController) : UpdateCheckPort {
     override fun observe(): Flow<UpdateCheckState> = updates.state
-        .map { UpdateCheckState(checking = it.checking, message = it.message, updateAvailable = it.update != null) }
+        .map { UpdateCheckState(checking = it.checking, updateAvailable = it.update != null) }
         .distinctUntilChanged()
 
-    override fun check() = updates.check(manual = true)
+    override suspend fun check(): UpdateCheckOutcome {
+        // An automatic check may already be running: the call below is then ignored, so wait for it and ask again.
+        repeat(3) {
+            updates.check(manual = true)
+            val result = updates.state.first { !it.checking }
+            if (result.manual) return when {
+                result.update != null -> UpdateCheckOutcome.Available
+                result.checkFailed -> UpdateCheckOutcome.Failed
+                else -> UpdateCheckOutcome.UpToDate
+            }
+        }
+        return UpdateCheckOutcome.Failed
+    }
 }
 
 internal class AndroidSettingsExternalActions(

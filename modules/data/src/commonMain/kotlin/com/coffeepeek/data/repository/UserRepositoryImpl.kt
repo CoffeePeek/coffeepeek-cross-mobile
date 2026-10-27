@@ -83,16 +83,35 @@ class UserRepositoryImpl(
         userApiService.getAccountDeletionRequest().map { it?.toDomain() }
 
     override suspend fun updateUsername(username: String): Result<Unit> =
-        userApiService.updateUsername(username).map { updated ->
+        forOwnerOfTheRequest({ userApiService.updateUsername(username) }) { updated ->
             _profile.update { profile -> profile?.copy(userName = updated.username, address = updated.address?.toDomain()) }
             publicAvatarCache.clear()
-            Unit
         }
 
     override suspend fun updateAbout(about: String): Result<Unit> =
-        userApiService.updateAbout(about).onSuccess {
+        forOwnerOfTheRequest({ userApiService.updateAbout(about) }) {
             _profile.update { profile -> profile?.copy(about = about) }
         }
+
+    /**
+     * Runs a write for the account that is signed in now and applies its answer to the cached profile only if that account is still the signed-in one:
+     * a late answer must not change the profile that was loaded for another account. The write itself already happened on the server for its own account.
+     */
+    private suspend fun <T> forOwnerOfTheRequest(request: suspend () -> Result<T>, apply: (T) -> Unit): Result<Unit> {
+        val owner = sessionRepository.peekSession()
+        return request().fold(
+            onSuccess = { value ->
+                val current = sessionRepository.peekSession()
+                if (!sessionRepository.isActiveSession(current) || current?.userId != owner?.userId) {
+                    Result.failure(IllegalStateException("Сессия изменилась"))
+                } else {
+                    apply(value)
+                    Result.success(Unit)
+                }
+            },
+            onFailure = { Result.failure(it) },
+        )
+    }
 
     override suspend fun updateAvatar(photo: PendingPhotoUpload): Result<Unit> = requestResult {
         val meta = photoRepository.uploadAvatar(photo)

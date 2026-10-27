@@ -4,7 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelStore
 import androidx.lifecycle.ViewModelStoreOwner
 import androidx.lifecycle.viewModelScope
-import com.coffeepeek.domain.repository.SessionRepository
+import com.coffeepeek.core.session.SessionReader
 import com.coffeepeek.feature.authorblocking.api.AuthorVisibility
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineStart
@@ -17,7 +17,7 @@ import kotlinx.coroutines.launch
 
 /** Navigation-owned lifetime. Session changes clear feature VMs even while a child route covers them. */
 internal class AndroidShopBrowsingHostViewModel(
-    private val sessions: SessionRepository,
+    private val sessions: SessionReader,
     private val visibility: AuthorVisibility = AuthorVisibility.None,
 ) : ViewModel() {
     private val mutableSession = MutableStateFlow(ShopBrowsingHostSession(0, AndroidShopBrowsingSession(sessions, visibility = visibility)))

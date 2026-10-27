@@ -105,23 +105,6 @@ private const val OSM_COPYRIGHT_URL = "https://www.openstreetmap.org/copyright"
 private const val OPEN_FREE_MAP_LIGHT_STYLE = "https://tiles.openfreemap.org/styles/positron"
 private const val OPEN_FREE_MAP_DARK_STYLE = "https://tiles.openfreemap.org/styles/dark"
 
-private data class ShopMark(
-    var marker: Marker,
-    var isSelected: Boolean,
-    var latitude: Double,
-    var longitude: Double,
-    var shop: MapShop,
-    var type: String,
-)
-
-private data class ClusterMark(
-    var marker: Marker,
-    var latitude: Double,
-    var longitude: Double,
-    var count: Int,
-    var bounds: MapBounds,
-)
-
 private const val ZONE_SOURCE = "cp-zones"
 private const val ZONE_LABEL_SOURCE = "cp-zone-labels"
 private const val PULSE_SOURCE = "cp-selected-pulse"
@@ -201,8 +184,7 @@ actual fun CoffeeMap(
         MapLibre.getInstance(appContext)
         MapView(appContext).apply { onCreate(null) }
     }
-    val shopMarks = remember { mutableMapOf<String, ShopMark>() }
-    val clusterMarks = remember { mutableMapOf<String, ClusterMark>() }
+    val markerViews = remember(mapView) { MapMarkerViews(appContext, mapView) }
     val zonesState = rememberUpdatedState(zones)
     val animations = remember { SelectionPulse() }
     var map by remember { mutableStateOf<MapLibreMap?>(null) }
@@ -269,7 +251,10 @@ actual fun CoffeeMap(
     }
 
     DisposableEffect(mapView) {
-        onDispose { mapView.onDestroy() }
+        onDispose {
+            markerViews.dispose()
+            mapView.onDestroy()
+        }
     }
 
     DisposableEffect(map) {
@@ -285,24 +270,10 @@ actual fun CoffeeMap(
         }
 
         activeMap.addOnCameraIdleListener(idleListener)
-        activeMap.setOnMarkerClickListener { marker ->
-            val shop = shopMarks.values.firstOrNull { it.marker.id == marker.id }
-            if (shop != null) {
-                onShopClickState.value(shop.shop)
-                true
-            } else {
-                val cluster = clusterMarks.values.firstOrNull { it.marker.id == marker.id }
-                if (cluster != null) {
-                    zoomToBounds(activeMap, mapView.width, mapView.height, cluster.bounds)
-                    true
-                } else {
-                    false
-                }
-            }
-        }
         // Zones are style layers under the markers; marker taps are consumed first, so shops win.
         val zoneClickListener = MapLibreMap.OnMapClickListener { point ->
             val screen = activeMap.projection.toScreenLocation(point)
+            if (markerViews.covers(screen)) return@OnMapClickListener true
             val zoneId = activeMap.queryRenderedFeatures(screen, ZONE_LABEL_LAYER, ZONE_FILL_LAYER)
                 .firstNotNullOfOrNull { it.getStringProperty(PROP_ZONE_ID) }
             val zone = zoneId?.let { id -> zonesState.value.firstOrNull { it.id == id } }
@@ -314,7 +285,6 @@ actual fun CoffeeMap(
         onDispose {
             activeMap.removeOnCameraIdleListener(idleListener)
             activeMap.removeOnMapClickListener(zoneClickListener)
-            activeMap.setOnMarkerClickListener(null)
         }
     }
 
@@ -322,8 +292,7 @@ actual fun CoffeeMap(
         val activeMap = map ?: return@LaunchedEffect
         animations.cancel()
         activeMap.removeAnnotations()
-        shopMarks.clear()
-        clusterMarks.clear()
+        markerViews.clear()
         currentLocationMarker = null
         val styleBuilder = styleOverride?.let { Style.Builder().fromJson(it) }
             ?: Style.Builder().fromUri(coffeeMapStyleUri(isDarkTheme))
@@ -419,19 +388,13 @@ actual fun CoffeeMap(
     LaunchedEffect(shops, clusters, zones, selectedShopId, isDarkTheme, styleGeneration, map) {
         val activeMap = map ?: return@LaunchedEffect
         if (styleGeneration == 0) return@LaunchedEffect
-        syncMapMarkers(
-            context = appContext,
-            map = activeMap,
-            shops = shops,
-            clusters = clusters,
-            zones = zones,
-            selectedShopId = selectedShopId,
-            isDarkTheme = isDarkTheme,
-            shopMarks = shopMarks,
-            clusterMarks = clusterMarks,
-            animations = animations,
-            reduceMotion = appContext.prefersReducedMotion(),
-        )
+        val reduceMotion = appContext.prefersReducedMotion()
+        markerViews.update(activeMap, mapMarkerSpecs(appContext, shops, clusters, selectedShopId, isDarkTheme,
+            onShopClick = { onShopClickState.value(it) },
+            onClusterClick = { zoomToBounds(activeMap, mapView.width, mapView.height, it.bounds, reduceMotion) },
+        ), reduceMotion)
+        activeMap.style?.let { syncZoneLayers(appContext, it, zones, isDarkTheme) }
+        syncSelectionPulse(activeMap, shops.firstOrNull { it.id == selectedShopId }, animations, reduceMotion)
     }
 
     Box(modifier = modifier) {
@@ -493,105 +456,6 @@ private fun Context.prefersReducedMotion(): Boolean {
     val duration = Settings.Global.getFloat(contentResolver, Settings.Global.ANIMATOR_DURATION_SCALE, 1f)
     val transition = Settings.Global.getFloat(contentResolver, Settings.Global.TRANSITION_ANIMATION_SCALE, 1f)
     return duration == 0f || transition == 0f
-}
-
-private fun syncMapMarkers(
-    context: Context,
-    map: MapLibreMap,
-    shops: List<MapShop>,
-    clusters: List<MapCluster>,
-    zones: List<MapCoffeeZone>,
-    selectedShopId: String?,
-    isDarkTheme: Boolean,
-    shopMarks: MutableMap<String, ShopMark>,
-    clusterMarks: MutableMap<String, ClusterMark>,
-    animations: SelectionPulse,
-    reduceMotion: Boolean,
-) {
-    val selected = shops.firstOrNull { it.id == selectedShopId }
-    val shopIds = shops.map { it.id }.toSet()
-    shopMarks.keys.filter { it !in shopIds }.toList().forEach { id ->
-        shopMarks.remove(id)?.let { map.removeMarker(it.marker) }
-    }
-    val clusterKeys = clusters.map { it.id }.toSet()
-    clusterMarks.keys.filter { it !in clusterKeys }.toList().forEach { key ->
-        clusterMarks.remove(key)?.let { map.removeMarker(it.marker) }
-    }
-
-    clusters.forEach { cluster ->
-        val position = LatLng(cluster.latitude, cluster.longitude)
-        val existing = clusterMarks[cluster.id]
-        if (existing == null) {
-            val marker = map.addMarker(
-                MarkerOptions()
-                    .position(position)
-                    .icon(IconFactory.getInstance(context).fromBitmap(MapMarkerIcons.clusterBitmap(context, cluster.count, isDarkTheme))),
-            )
-            clusterMarks[cluster.id] = ClusterMark(
-                marker = marker,
-                latitude = cluster.latitude,
-                longitude = cluster.longitude,
-                count = cluster.count,
-                bounds = cluster.bounds,
-            )
-        } else {
-            existing.bounds = cluster.bounds
-            if (existing.latitude != cluster.latitude || existing.longitude != cluster.longitude) {
-                existing.marker.position = position
-                existing.latitude = cluster.latitude
-                existing.longitude = cluster.longitude
-            }
-            if (existing.count != cluster.count) {
-                existing.marker.setIcon(
-                    IconFactory.getInstance(context).fromBitmap(MapMarkerIcons.clusterBitmap(context, cluster.count, isDarkTheme)),
-                )
-                existing.count = cluster.count
-            }
-            map.updateMarker(existing.marker)
-        }
-    }
-
-    map.style?.let { style -> syncZoneLayers(context, style, zones, isDarkTheme) }
-
-    shops.forEach { shop ->
-        val position = LatLng(shop.latitude, shop.longitude)
-        val isSelected = shop.id == selectedShopId
-        val visual = if (isSelected) MapPinVisual.Selected else MapPinVisual.Default
-        val existing = shopMarks[shop.id]
-        if (existing == null) {
-            val marker = map.addMarker(
-                MarkerOptions()
-                    .position(position)
-                    .icon(IconFactory.getInstance(context).fromBitmap(MapMarkerIcons.pinBitmap(context, shop.type, visual, isDarkTheme))),
-            )
-            val entry = ShopMark(
-                marker = marker,
-                isSelected = isSelected,
-                latitude = shop.latitude,
-                longitude = shop.longitude,
-                shop = shop,
-                type = shop.type,
-            )
-            shopMarks[shop.id] = entry
-        } else {
-            existing.shop = shop
-            if (existing.latitude != shop.latitude || existing.longitude != shop.longitude) {
-                existing.marker.position = position
-                existing.latitude = shop.latitude
-                existing.longitude = shop.longitude
-            }
-            if (existing.isSelected != isSelected || existing.type != shop.type) {
-                existing.marker.setIcon(
-                    IconFactory.getInstance(context).fromBitmap(MapMarkerIcons.pinBitmap(context, shop.type, visual, isDarkTheme)),
-                )
-                existing.isSelected = isSelected
-                existing.type = shop.type
-            }
-            map.updateMarker(existing.marker)
-        }
-    }
-
-    syncSelectionPulse(map, selected, animations, reduceMotion)
 }
 
 private fun syncSelectionPulse(
@@ -729,33 +593,25 @@ private fun zoomToBounds(
     viewWidth: Int,
     viewHeight: Int,
     bounds: MapBounds,
+    reduceMotion: Boolean,
 ) {
     val currentZoom = map.cameraPosition.zoom.toFloat()
-
-    if (bounds.minLat == bounds.maxLat && bounds.minLon == bounds.maxLon) {
-        map.animateCamera(
-            CameraUpdateFactory.newLatLngZoom(
-                LatLng(bounds.minLat, bounds.minLon),
-                clusterFitZoom(currentZoom, currentZoom + 2f).toDouble(),
-            ),
-            CLUSTER_TAP_ANIMATION_MS.toInt(),
-        )
-        return
-    }
-
-    val latLngBounds = LatLngBounds.from(bounds.maxLat, bounds.maxLon, bounds.minLat, bounds.minLon)
-    val insetX = (viewWidth.coerceAtLeast(1) * clusterPaddingFraction() / 2f).toInt()
-    val insetY = (viewHeight.coerceAtLeast(1) * clusterPaddingFraction() / 2f).toInt()
-    val fitted = map.getCameraForLatLngBounds(
-        latLngBounds,
-        intArrayOf(insetX, insetY, insetX, insetY),
-    ) ?: return
-    val target = CameraPosition.Builder(fitted)
-        .zoom(clusterFitZoom(currentZoom, fitted.zoom.toFloat()).toDouble())
+    val center = LatLng((bounds.minLat + bounds.maxLat) / 2, (bounds.minLon + bounds.maxLon) / 2)
+    val fitted = clusterCamera(map, viewWidth, viewHeight, bounds)
+    val target = CameraPosition.Builder(fitted ?: map.cameraPosition)
+        .target(fitted?.target ?: center)
+        .zoom(clusterFitZoom(currentZoom, fitted?.zoom?.toFloat() ?: currentZoom + 1).toDouble())
         .build()
-    map.animateCamera(
-        CameraUpdateFactory.newCameraPosition(target),
-        CLUSTER_TAP_ANIMATION_MS.toInt(),
+    val update = CameraUpdateFactory.newCameraPosition(target)
+    if (reduceMotion) map.moveCamera(update) else map.animateCamera(update, CLUSTER_TAP_ANIMATION_MS.toInt())
+}
+
+private fun clusterCamera(map: MapLibreMap, width: Int, height: Int, bounds: MapBounds): CameraPosition? {
+    if (bounds.minLat == bounds.maxLat && bounds.minLon == bounds.maxLon) return null
+    val inset = (minOf(width, height).coerceAtLeast(1) * clusterPaddingFraction()).toInt()
+    return map.getCameraForLatLngBounds(
+        LatLngBounds.from(bounds.maxLat, bounds.maxLon, bounds.minLat, bounds.minLon),
+        intArrayOf(inset, inset, inset, inset),
     )
 }
 

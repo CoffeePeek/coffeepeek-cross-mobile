@@ -56,6 +56,7 @@
                 <data android:pathPrefix="/coffee-shops/" />
                 <data android:pathPrefix="/roasters/" />
                 <data android:pathPrefix="/users/" />
+                <data android:pathPrefix="/check-ins/" />
             </intent-filter>
         </activity>
 

@@ -5,8 +5,11 @@ import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 
-/** App-owned loader retains protected-photo permissions and session-bound byte-cache policy. */
-internal typealias ShopCheckInImage = @Composable (url: String, modifier: Modifier, scale: ContentScale) -> Unit
+/**
+ * App-owned loader retains protected-photo permissions and session-bound byte-cache policy.
+ * [url] is the small variant shown first; [highQualityUrl] is the compressed detail variant (the one the full-screen viewer opens, never the original) the loader may switch to, and the one it falls back to when the small variant fails.
+ */
+internal typealias ShopCheckInImage = @Composable (url: String, highQualityUrl: String?, modifier: Modifier, scale: ContentScale) -> Unit
 internal val LocalShopCheckInImage = staticCompositionLocalOf<ShopCheckInImage?> { null }
 
 /**

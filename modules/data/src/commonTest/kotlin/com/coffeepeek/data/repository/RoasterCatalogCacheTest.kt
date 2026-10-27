@@ -19,6 +19,9 @@ import io.ktor.http.headersOf
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.async
+import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.runBlocking
@@ -115,6 +118,62 @@ class RoasterCatalogCacheTest {
             offline = false
             assertEquals(expected, uncached.getRoasters().getOrThrow())
         } finally { client.close() }
+    }
+
+    @Test
+    fun aCallerThatStopsWaitingDoesNotCancelTheSharedCatalogLoadForTheNextOne() = runBlocking {
+        withTimeout(5_000) {
+            val started = CompletableDeferred<Unit>()
+            val release = CompletableDeferred<Unit>()
+            var requests = 0
+            val client = client(MockEngine { request ->
+                requests++
+                started.complete(Unit)
+                release.await()
+                respond(if (request.url.encodedPath == "/api/roasters") response else """{"isSuccess":true,"data":[]}""", headers = headers)
+            })
+            try {
+                val shops = ShopRepositoryImpl(ShopApiService(client), photos(client), unusedFavorites(), FileUrlResolver("https://api.example"), repository(client, CacheSettings()))
+                val first = launch { shops.getCatalogs() }
+                started.await()
+                first.cancelAndJoin()
+                val second = async { shops.getCatalogs() }
+                val third = async { shops.getCatalogs() }
+                release.complete(Unit)
+                assertEquals("roast", second.await().getOrThrow().roasters.single().id)
+                assertEquals("roast", third.await().getOrThrow().roasters.single().id)
+                val afterFirstLoad = requests
+                assertEquals("roast", shops.getCatalogs().getOrThrow().roasters.single().id)
+                assertEquals(afterFirstLoad, requests)
+            } finally { client.close() }
+        }
+    }
+
+    @Test
+    fun aFailedCatalogLoadIsRetriedByTheNextCallerEvenWhenNobodyWasWaiting() = runBlocking {
+        withTimeout(5_000) {
+            var offline = true
+            val started = CompletableDeferred<Unit>()
+            val release = CompletableDeferred<Unit>()
+            val client = client(MockEngine { request ->
+                if (offline) {
+                    started.complete(Unit)
+                    release.await()
+                    respond("""{"isSuccess":false,"message":"Offline","data":null}""", HttpStatusCode.ServiceUnavailable, headers)
+                } else respond(if (request.url.encodedPath == "/api/roasters") response else """{"isSuccess":true,"data":[]}""", headers = headers)
+            })
+            try {
+                val shops = ShopRepositoryImpl(ShopApiService(client), photos(client), unusedFavorites(), FileUrlResolver("https://api.example"), repository(client, CacheSettings()))
+                val first = launch { shops.getCatalogs() }
+                started.await()
+                first.cancelAndJoin()
+                release.complete(Unit)
+                // The load fails with nobody waiting; give it time to finish before the next call.
+                delay(200)
+                offline = false
+                assertEquals("roast", shops.getCatalogs().getOrThrow().roasters.single().id)
+            } finally { client.close() }
+        }
     }
 
     @Test

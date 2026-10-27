@@ -1,9 +1,27 @@
 package com.coffeepeek.admin.utils.image
 
-import kotlinx.coroutines.sync.Semaphore
+import io.ktor.client.network.sockets.ConnectTimeoutException
+import io.ktor.client.network.sockets.SocketTimeoutException
+import io.ktor.client.plugins.HttpRequestTimeoutException
 import io.ktor.http.Url
+import kotlinx.coroutines.sync.Semaphore
 
 internal val protectedPhotoRequests = Semaphore(4)
+
+/**
+ * A photo request that hangs on a dead or stalled connection is cut by the client's short timeouts, and the same request is made once more at once
+ * on a fresh connection. The permit of the failed attempt is released between the attempts, so a hung request never holds a slot of the queue.
+ * Anything but a timeout (access denied, a bad status, cancellation) is not retried here.
+ */
+internal suspend fun <T> retryOnPhotoTimeout(attempt: suspend () -> T): T {
+    try {
+        return attempt()
+    } catch (_: ConnectTimeoutException) {
+    } catch (_: SocketTimeoutException) {
+    } catch (_: HttpRequestTimeoutException) {
+    }
+    return attempt()
+}
 
 internal class PhotoAccessDenied : IllegalStateException("Фото недоступно")
 

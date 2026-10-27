@@ -1,5 +1,9 @@
 package com.coffeepeek.admin.ui.screen.shopchange
 
+import com.coffeepeek.core.designsystem.component.coffeePeekScrollContentPadding
+
+import com.coffeepeek.core.designsystem.component.CoffeePeekScaffold as Scaffold
+
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
@@ -8,7 +12,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -44,7 +47,7 @@ fun SuggestShopChangeScreen(shopId: String) {
         }
         LazyColumn(
             modifier = Modifier.fillMaxSize().padding(padding),
-            contentPadding = PaddingValues(CpDimens.spacing4),
+            contentPadding = coffeePeekScrollContentPadding(PaddingValues(CpDimens.spacing4)),
         ) {
             item {
                 Text(

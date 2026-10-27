@@ -37,7 +37,7 @@ internal class OwnProfileViewModel(
                 if (profile != null) applyProfile(profile)
                 else {
                     val signedIn = accounts.activeAccount() != null && loadedForAccount != null
-                    updateState { OwnProfileState(isLoggedIn = signedIn, isLoading = signedIn) }
+                    updateState { OwnProfileState(isLoggedIn = signedIn, isLoading = signedIn && error == null, error = error) }
                 }
             }
         }

@@ -20,7 +20,7 @@ Protected transfers use a dedicated authenticated Ktor client without `HttpCache
 Validation commands:
 
 ```sh
-./gradlew :modules:network:testDebugUnitTest :modules:data:testDebugUnitTest :features:home-checkin:testDebugUnitTest :composeApp:testDirectDebugUnitTest :composeApp:testPlayDebugUnitTest :composeApp:compileDirectDebugKotlinAndroid :composeApp:compilePlayDebugKotlinAndroid
+./gradlew :modules:network:testDebugUnitTest :modules:data:testDebugUnitTest :modules:home-checkin:testDebugUnitTest :composeApp:testDirectDebugUnitTest :composeApp:testPlayDebugUnitTest :composeApp:compileDirectDebugKotlinAndroid :composeApp:compilePlayDebugKotlinAndroid
 ./gradlew :composeApp:compileKotlinIosArm64
 ```
 

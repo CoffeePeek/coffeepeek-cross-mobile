@@ -285,3 +285,20 @@ by design — add-shop/roaster rows for guests, App Store wording, duplicate ver
 only when iOS consumes `feature/settings`. `ThemeManager`, `CityPreference`, the update machinery and `LegalUrls` stay app-owned by decision.
 
 **Open, not verified**: Map city resolution test, consent switch on a device, required-update prompt, spinner state, external links, TalkBack, rotation of the leaf screens. Next owners: App update (own owner), Discovery, Auth, Community, Contributions.
+
+## Follow-up — update check UX (2026-10-21, branch `feature/settings-update-check-ux`)
+
+Deliberate improvement requested by the owner (replaces the "result text under the row" behaviour of the legacy screen):
+
+- «Проверить обновления» locks the row and shows the loader while a check runs; the loader is held for at least 700 ms (the check itself can take a few ms), and for as long as the
+  check takes when it is slower. A second tap while busy is ignored; an automatic check on resume that is already running also locks the row.
+- Result: a newer version is offered by the app's update prompt as before and shows no toast; nothing newer shows the toast «У вас установлена актуальная версия»
+  (legacy wording was «Установлена актуальная версия» under the row); a failed check shows «Не удалось проверить обновления. Попробуйте позже.» (same text as before, now a toast).
+  The row subtitle shows only «Доступна новая версия CoffeePeek» or the version.
+- Contract change: `UpdateCheckPort.check()` is `suspend` and returns `UpdateCheckOutcome` (UpToDate/Available/Failed); `UpdateCheckState` lost `message`. The app adapter waits for a running
+  automatic check and asks again with `manual = true`, so the result is always the manual one.
+- Tests: `SettingsViewModelTest` 12 (lock, minimum loader time, slow check, ignored second tap, automatic check in flight, available shows no toast, failure/throwing port),
+  `AndroidSettingsPortsTest` 11 (outcomes, check during an automatic one). Compile of Android tests, iOS simulator and `assembleDirectSandbox` pass.
+- Device check, Pixel 7 / Android 17, `com.coffeepeek.sandbox` only, launch extras `sandbox_update`: *UpToDate*: the row turns grey with «Проверяем обновления…» and a spinner (locked), then the toast
+  «У вас установлена актуальная версия» and the row is active again; *Failure*: toast «Не удалось проверить обновления. Попробуйте позже.»; *Available*: no toast, the app's update
+  snackbar with the blocked-installer error and «Повторить» appears (the Sandbox installer never installs). Not exercised: dark theme, large font, TalkBack, rotation during a check.

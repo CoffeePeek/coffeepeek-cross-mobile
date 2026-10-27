@@ -23,7 +23,7 @@ package, so install only the preferred one. Normal debug/release IDs are unchang
 - The actual `AppContent`/`Navigator`, session-aware tabs and Android feature
   bindings, not a calendar-only host or a copy of the app screens.
 - Local fixtures for discovery/search, shop detail/menu/check-ins, coffee list/
-  detail, roasters, Community feed, profile/public activity and favorites.
+  detail, roasters, Community feed, profile/public activity, favorites and the moderation lists/submissions of Contributions.
 - Home CRUD/uploads and Shop creation, favorites add/remove and profile name/
   biography edits use actual repositories and local HTTP state. Private or
   pending visits are not fabricated as public feed entries.
@@ -50,7 +50,8 @@ package, so install only the preferred one. Normal debug/release IDs are unchang
 - Variant-only `SandboxApplication`/`SandboxActivity`, not production
   `CoffeePeekApplication.onCreate`. Reuse the existing Koin definitions with
   explicitly replaced HTTP, session, auth and image ports. No real
-  credential store, realtime, analytics installation or automatic update prompt.
+  credential store, realtime or analytics installation. The root hosts the update prompt
+  (`AppUpdatePrompt`) like `App.kt`, but its installer never downloads or installs.
 - Manifest removes INTERNET, CAMERA, location, storage, phone and APK-install permissions; production app links
   and MainActivity are absent. Provider authorities use the Sandbox package.
 - API URL is `.invalid`; OAuth/analytics configuration is blank/disabled.
@@ -101,3 +102,24 @@ acceptance, not a run against the live API. Each Android unit variant passes
 441 cases, including nine Sandbox transport cases (also cancellation); build
 logic passes four DEX-scanner cases. IDE source inspection requires Gradle Sync
 to import the new variant/source set; no clean IDE inspection is claimed yet.
+
+## Contributions fixtures
+
+`SandboxContributionsBackend` serves `ModerationShops`, `ModerationRoasters` and `ShopChangeRequests` (list `/mine` with status, paging and, for changes,
+shop and section filters; create/submit; read and edit of a change request) plus the equipment, bean and shop-tag catalogs the forms read. Submissions live in RAM
+and are cleared by Reset. Choose the fixture with the controls row «Мои вклады» or at launch with `--es sandbox_contributions <mode>`:
+`Seeded` (default: shops, roasters and changes in every status, a rejected reason, an approved shop that is not published yet), `Paged` (45 more approved items),
+`Empty`, `ListFailure` (every list answers 500), `SubmitFailure` (every create, submit and edit is refused with a server message).
+Not covered: moderation decisions (a submission stays pending), uploaded photo keys are not checked against the reservation, no real map or location.
+
+## Discovery fixtures
+
+API update (2026-10-26): `POST /api/v1/discovery/search` has been removed with its Gateway route, DTOs and OpenAPI schemas. `GET /api/CoffeeShops` has also been removed entirely, including its check-in picker use. All clients and fixtures now use only `POST /api/v1/coffee-shops/search`: ordinary search omits origin/radius/distance sort, nearby search sends them. GET list requests return 404. Search cards omit coordinates; map selection resolves them from the existing details endpoint.
+
+`SandboxDiscoveryBackend` serves ordinary and nearby shop search (`POST /api/v1/coffee-shops/search`) and the map (`GET /api/Map`). Choose the fixture with the controls row «Поиск и карта» or at launch with
+`--es sandbox_discovery <mode>`:
+`Seeded` (default: the two core shops and the one-marker map, as before), `Paged` (47 shops in Минск and Брест with types, price levels, ratings, open/new/visited flags, tags, roasters, brew methods, equipment and beans; JSON search
+filters, paging, the nearby search sorted by distance and limited to the radius, map content by bounds and filters, two zones with polygons, no clusters), `Truncated` (`Paged` whose map keeps 25 shops and sets `isTruncated`), `Empty`, `SearchFailure` (both
+searches answer 500, the map works) and `MapFailure` (the map answers 500, the searches work). Favorite flags follow the favorites of the application backend (the core cafe starts as a favorite); Reset returns the default.
+Not covered: shop details for the generated shops (only the two core shops have details, opening another one shows the not found state), server-side clusters, the real map tiles, location (the device decides), and the query semantics of the real server for lists of ids (here: any of a group, all groups together).
+

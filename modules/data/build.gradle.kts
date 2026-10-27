@@ -18,10 +18,8 @@ kotlin {
     iosSimulatorArm64()
 
     sourceSets {
-        androidMain.dependencies {
-            implementation("androidx.security:security-crypto:1.0.0")
-        }
         commonMain.dependencies {
+            implementation(project(module.core.session))
             implementation(project(module.legacy.domain))
             implementation(project(module.legacy.network))
             implementation(project(module.legacy.room))

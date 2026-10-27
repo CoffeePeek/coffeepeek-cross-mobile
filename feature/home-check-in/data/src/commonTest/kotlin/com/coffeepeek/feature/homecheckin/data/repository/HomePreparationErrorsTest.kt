@@ -30,6 +30,14 @@ class HomePreparationErrorsTest {
         assertFalse(error.message.orEmpty().contains("Validation failed"))
     }
 
+    @Test fun theHttpStatusStaysOnTheTypedFailureForDiagnostics() = runBlocking {
+        assertEquals(401, failure(HttpStatusCode.Unauthorized, "{}").statusCode)
+        assertEquals(429, failure(HttpStatusCode.TooManyRequests, "").statusCode)
+        assertEquals(503, failure(HttpStatusCode.ServiceUnavailable, "oops").statusCode)
+        assertEquals(404, failure(HttpStatusCode.NotFound, "{}").statusCode)
+        assertEquals(400, failure(HttpStatusCode.BadRequest, """{"errors":{"DoseGrams":["x"]}}""").statusCode)
+    }
+
     @Test fun modelBindingPathsMapToFieldsWithoutRawServerMessages() = runBlocking {
         val error = failure(HttpStatusCode.BadRequest, """{"errors":{
             "$.doseGrams":["The JSON value could not be converted to Decimal."],

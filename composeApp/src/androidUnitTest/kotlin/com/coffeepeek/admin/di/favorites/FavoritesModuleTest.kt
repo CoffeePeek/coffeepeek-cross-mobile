@@ -6,6 +6,7 @@ import com.coffeepeek.feature.favorites.domain.repository.FavoritesRepository
 import com.coffeepeek.feature.favorites.domain.repository.FavoriteRoastersRepository
 import com.coffeepeek.admin.di.shop.CheckInTestSessions
 import com.coffeepeek.admin.feature.favorites.api.RoasterFavorites
+import com.coffeepeek.core.session.SessionReader
 import com.coffeepeek.domain.repository.SessionRepository
 import com.coffeepeek.domain.repository.RoasterRepository
 import com.coffeepeek.domain.model.CatalogItem
@@ -59,6 +60,7 @@ class FavoritesModuleTest {
         val app = koinApplication {
             modules(module {
                 single<SessionRepository> { sessions }
+                single<SessionReader> { sessions }
                 single<RoasterFavorites> { saved }
                 single<RoasterRepository> { catalog }
             }, favoritesRoomModule(settings, sessionScoped = true))

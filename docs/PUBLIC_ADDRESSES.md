@@ -37,7 +37,6 @@ Slug уникален внутри вида сущности. Переимено
 
 | GET | Данные ответа |
 | --- | --- |
-| `/api/CoffeeShops` | `ApiResponse<{coffeeShops: ShopSummary[], totalItems, totalPages, currentPage, pageSize}>` |
 | `/api/CoffeeShops/{slug}` | `ApiResponse<ShopDetails>`; данные лежат непосредственно в `data`, без `shopDto` |
 | `/api/Roasters/{slug}` | `ApiResponse<RoasterDetails>` |
 | `/api/Catalogs/cities/{slug}` | `{address: PublicAddress, name: string}` без `ApiResponse` |
@@ -50,33 +49,11 @@ Slug уникален внутри вида сущности. Переимено
 
 Для деталей также доступны `/api/CoffeeShops/by-slug/{slug}`, `/api/Roasters/by-slug/{slug}`, `/api/Catalogs/cities/by-slug/{slug}`, `/api/Catalogs/coffee-zones/by-slug/{slug}`. Формат ответа совпадает с коротким маршрутом. У пользователей краткий `/api/Users/{slug}` тоже доступен, но `me` и `exists` — специальные маршруты; для профиля используйте `by-slug`.
 
-У `ShopSummary` есть `address`, `city: PublicAddress | null`, `name`, `photos`, `rating`, `checkInCount`, `isVisited`, `isNew`, `isOpen`, `dataCompletenessScore`, `priceRange`, `type`, `location`, `beans`, `roasters`, `equipments`, `brewMethods`, `shopContact`. `ShopDetails` добавляет `description`, `checkIns` (публичные одобренные посещения), `userCheckIns` (посещения текущего пользователя), `schedules`, `tags`, `menu`. В деталях зёрна также называются `beans`. `checkIns` содержит карточки с `text`, `createdAtUtc`, `rating`, `photos[].url`, `helpfulCount`; поля прежних отзывов `comment` и `photos[].fullUrl` к ним не применяются. Счётчик `checkInCount` — общее количество, а не длина вложенного списка.
+У `ShopDetails` есть `address`, `city: PublicAddress | null`, `name`, `photos`, `rating`, `checkInCount`, `isVisited`, `isNew`, `isOpen`, `dataCompletenessScore`, `priceRange`, `type`, `location`, `beans`, `roasters`, `equipments`, `brewMethods`, `shopContact`, `description`, `checkIns` (публичные одобренные посещения), `userCheckIns` (посещения текущего пользователя), `schedules`, `tags`, `menu`. В деталях зёрна называются `beans`. `checkIns` содержит карточки с `text`, `createdAtUtc`, `rating`, `photos[].url`, `helpfulCount`; поля прежних отзывов `comment` и `photos[].fullUrl` к ним не применяются. Счётчик `checkInCount` — общее количество, а не длина вложенного списка.
 
 У вложенного обжарщика: `{address, name, photoUrl, coverPhoto}`. У отзывов `author` и `shop` — адреса вместо `userId` и `coffeeShopId`. У check-in `shop` — адрес вместо `shopId`. У маркера карты `address` вместо `id`, `primaryZone` вместо `primaryZoneId`; у зоны карты `address` вместо `id`. В деталях обжарщика `shops[]` содержит `{address, name, coverPhoto}`.
 
 Недоступная историческая связь с удалённой/скрытой сущностью возвращается как `null` или исключается из массива связей. GUID fallback отсутствует. Фото и содержимое отзывов используют прежние поля.
-
-Пример части ответа списка:
-
-```json
-{
-  "isSuccess": true,
-  "data": {
-    "coffeeShops": [
-      {
-        "address": {"slug": "26-october-16", "canonicalPath": "/coffee-shops/26-october-16", "revision": 1, "isAlias": false},
-        "city": {"slug": "minsk", "canonicalPath": "/cities/minsk", "revision": 1, "isAlias": false},
-        "name": "26",
-        "beans": [{"slug": "arabica", "name": "Arabica"}]
-      }
-    ],
-    "totalItems": 1,
-    "totalPages": 1,
-    "currentPage": 1,
-    "pageSize": 10
-  }
-}
-```
 
 ## Справочники и фильтры
 
@@ -91,15 +68,28 @@ Slug уникален внутри вида сущности. Переимено
 | `brew-methods` | `{slug, name, category}` |
 | `shop-tags` | `{slug, name, description, sortOrder}`; только активные теги |
 
-`GET /api/CoffeeShops` принимает `city` вместо `cityId`. `roasters`, `equipments`, `beans`, `brewMethods`, `tags` — массивы slug. Передавайте массив повторением параметра:
+### Поиск кофеен: изменение контракта от 26.10.2026
+
+`POST /api/v1/discovery/search` удалён вместе с маршрутом Gateway, DTO и схемами OpenAPI. Клиенты не должны вызывать этот endpoint.
+
+`GET /api/CoffeeShops` полностью удалён, в том числе для выбора кофейни в чекине. Прежние параметры, формат списка `data.coffeeShops` и пагинация этого endpoint больше не являются действующим контрактом. Для обычного поиска и выбора кофейни в чекине используется `POST /api/v1/coffee-shops/search`.
+
+Единственный endpoint поиска кофеен — `POST /api/v1/coffee-shops/search`. Обычный поиск не требует геолокации:
 
 ```http
-GET /api/CoffeeShops?city=minsk&beans=arabica&equipments=la-marzocco-linea&brewMethods=v60&tags=dog-friendly&tags=laptop-friendly&page=1&pageSize=20
+POST /api/v1/coffee-shops/search
+Content-Type: application/json
+
+{"q":"coffee","filters":{"city":"minsk"},"page":1,"pageSize":20}
 ```
 
-Каждый массив — максимум 100 значений. Пустой массив не задаёт фильтр. Неизвестное значение возвращает 404; сервер не игнорирует его и не выдаёт все кофейни. Alias принимается и приводит к той же сущности. Остальные параметры (`q`, `isOpen`, `isNew`, `isVisited`, `priceRange`, `type`, `minRating`) сохраняют смысл. Enum в JSON сериализуются строками.
+Пустой `q` клиент опускает. Фильтры `city`, `tags`, `roasters`, `equipments`, `beans`, `brewMethods`, `isOpen`, `isNew`, `visitedOnly`, `favoritesOnly`, `minRating`, `priceRange`, `type` передаются в JSON `filters`. Значения `type`: `specialty`, `coffee-bar`, `cafe`; `priceRange`: `cheap`, `moderate`, `expensive`. Пагинация — `page`, `pageSize` (1–100). Ответ — `ApiResponse<{items: ShopCard[], totalItems, totalPages, currentPage, pageSize}>`.
 
-Пагинация списка кофеен: `page`, `pageSize` (1–100). Для отзывов пользователя: `pageNumber`, `pageSize`. Для `/api/CheckIns`: заголовки `X-Page-Number`, `X-Page-Size`, опциональные `from`/`to` с часовым поясом, интервал `[from, to)`. Ответы также содержат `X-Total-Count`, `X-Total-Pages`, `X-Current-Page`, `X-Page-Size`.
+Для поиска рядом добавляются `filters.origin: {latitude, longitude}`, `filters.radiusKm` (в клиенте 3 км) и `sort: "distance_asc"`. Без `origin` клиент опускает радиус и сортировку, сервер выбирает `relevance` при запросе и `name_asc` без текста.
+
+Карточка поиска содержит публичный адрес, название, адрес строкой, обложку, рейтинг, счётчик чекинов, признаки открытия/посещения/избранного, расстояние при наличии origin и теги. Координат в ней нет: при выборе подсказки карты клиент получает их через существующий запрос деталей. Тип, цена и признак новизны также не возвращаются в карточке; тип и новизна учитывают применённый фильтр.
+
+Пагинация отзывов пользователя: `pageNumber`, `pageSize`. Для `/api/CheckIns`: заголовки `X-Page-Number`, `X-Page-Size`, опциональные `from`/`to` с часовым поясом, интервал `[from, to)`. Ответы также содержат `X-Total-Count`, `X-Total-Pages`, `X-Current-Page`, `X-Page-Size`.
 
 ## Запись
 

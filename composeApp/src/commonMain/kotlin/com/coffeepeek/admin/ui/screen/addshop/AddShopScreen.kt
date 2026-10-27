@@ -1,5 +1,7 @@
 package com.coffeepeek.admin.ui.screen.addshop
 
+import com.coffeepeek.core.designsystem.component.CoffeePeekScaffold as Scaffold
+
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import androidx.compose.material3.Surface
@@ -45,7 +47,6 @@ import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.LocalMinimumInteractiveComponentSize
 import androidx.compose.material3.OutlinedTextFieldDefaults
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -183,6 +184,7 @@ fun AddShopScreen(vm: AddShopViewModel = platformViewModel()) {
             label = "step",
         ) { step ->
             PlatformScrollableColumn(
+                reserveBottomClearance = true,
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(padding)

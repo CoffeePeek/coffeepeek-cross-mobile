@@ -9,9 +9,61 @@ object Modules {
     val feature = Feature
 
     object Feature {
-        const val homeCheckIn = ":features:home-checkin"
-        const val authorBlocking = ":features:author-blocking"
-        const val notifications = ":features:notifications"
+        val appUpdate = AppUpdate
+        object AppUpdate {
+            const val api = ":feature:app-update:api"
+            const val domain = ":feature:app-update:domain"
+            const val data = ":feature:app-update:data"
+            const val impl = ":feature:app-update:impl"
+        }
+
+        val auth = Auth
+        object Auth {
+            const val api = ":feature:auth:api"
+            const val domain = ":feature:auth:domain"
+            const val data = ":feature:auth:data"
+            const val impl = ":feature:auth:impl"
+        }
+
+        val community = Community
+        object Community {
+            const val api = ":feature:community:api"
+            const val domain = ":feature:community:domain"
+            const val data = ":feature:community:data"
+            const val impl = ":feature:community:impl"
+        }
+
+        val contributions = Contributions
+        object Contributions {
+            const val api = ":feature:contributions:api"
+            const val domain = ":feature:contributions:domain"
+            const val data = ":feature:contributions:data"
+            const val impl = ":feature:contributions:impl"
+        }
+
+        val discovery = Discovery
+        object Discovery {
+            const val api = ":feature:discovery:api"
+            const val domain = ":feature:discovery:domain"
+            const val data = ":feature:discovery:data"
+            const val impl = ":feature:discovery:impl"
+        }
+
+        val notifications = Notifications
+        object Notifications {
+            const val api = ":feature:notifications:api"
+            const val domain = ":feature:notifications:domain"
+            const val data = ":feature:notifications:data"
+            const val impl = ":feature:notifications:impl"
+        }
+
+        val authorBlocking = AuthorBlocking
+        object AuthorBlocking {
+            const val api = ":feature:author-blocking:api"
+            const val domain = ":feature:author-blocking:domain"
+            const val data = ":feature:author-blocking:data"
+            const val impl = ":feature:author-blocking:impl"
+        }
 
         val favorites = Favorites
         val shopReport = ShopReport
@@ -89,6 +141,7 @@ object Modules {
         const val data = ":modules:data"
         const val network = ":modules:network"
         const val room = ":modules:room"
+        const val homeCheckIn = ":modules:home-checkin"
     }
 
     object Core {
@@ -97,6 +150,8 @@ object Modules {
         const val database = ":core:database"
         const val designSystem = ":core:design-system"
         const val presentation = ":core:presentation"
+        const val datetime = ":core:datetime"
+        const val session = ":core:session"
     }
 
     val all: List<String> = listOf(
@@ -105,11 +160,14 @@ object Modules {
         legacy.data,
         legacy.network,
         legacy.room,
+        legacy.homeCheckIn,
         core.coroutines,
         core.network,
         core.database,
         core.designSystem,
         core.presentation,
+        core.datetime,
+        core.session,
         feature.favorites.api,
         feature.favorites.domain,
         feature.favorites.data,
@@ -145,9 +203,34 @@ object Modules {
         feature.homePreparation.api,
         feature.homePreparation.data,
         feature.homePreparation.impl,
-        feature.homeCheckIn,
-        feature.authorBlocking,
-        feature.notifications,
+        feature.appUpdate.domain,
+        feature.appUpdate.api,
+        feature.appUpdate.data,
+        feature.appUpdate.impl,
+        feature.auth.domain,
+        feature.auth.api,
+        feature.auth.data,
+        feature.auth.impl,
+        feature.community.domain,
+        feature.community.api,
+        feature.community.data,
+        feature.community.impl,
+        feature.contributions.domain,
+        feature.contributions.api,
+        feature.contributions.data,
+        feature.contributions.impl,
+        feature.discovery.domain,
+        feature.discovery.api,
+        feature.discovery.data,
+        feature.discovery.impl,
+        feature.authorBlocking.domain,
+        feature.authorBlocking.api,
+        feature.authorBlocking.data,
+        feature.authorBlocking.impl,
+        feature.notifications.domain,
+        feature.notifications.api,
+        feature.notifications.data,
+        feature.notifications.impl,
     )
 }
 
