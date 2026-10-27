@@ -5,7 +5,8 @@ import com.coffeepeek.admin.analytics.Entity
 import com.coffeepeek.domain.feature.favorites.api.FavoriteEntry
 import com.coffeepeek.domain.feature.favorites.api.FavoriteKind
 import com.coffeepeek.domain.feature.favorites.api.FavoritesRepository as ServerFavorites
-import com.coffeepeek.domain.model.CoffeeShopDetails
+import com.coffeepeek.domain.model.PublicAddress
+import com.coffeepeek.feature.shop.api.PublicShopSummary
 import com.coffeepeek.core.session.SessionReader
 import com.coffeepeek.feature.favorites.domain.model.FavoriteShop
 import com.coffeepeek.feature.favorites.domain.repository.FavoritesRepository
@@ -19,7 +20,7 @@ import kotlinx.coroutines.sync.withPermit
 internal class ServerFavoriteShopsRepository(
     private val server: ServerFavorites,
     private val sessions: SessionReader,
-    private val detail: suspend (String) -> Result<CoffeeShopDetails>,
+    private val detail: suspend (String) -> Result<PublicShopSummary>,
 ) : FavoritesRepository {
     override fun observeIds(): Flow<Result<Set<String>>> = server.observeFavorites().map { result ->
         result.exceptionOrNull()?.let { if (it is CancellationException) throw it }
@@ -56,9 +57,10 @@ internal class ServerFavoriteShopsRepository(
 
     private suspend fun saveUntracked(shop: FavoriteShop): Result<Unit> = resultOf {
         val account = requireNotNull(owner()) { "Sign in to save favorites" }
-        val resolved = detail(shop.id).getOrThrow().shop
+        val resolved = detail(shop.id).getOrThrow()
         requireOwner(account)
-        val address = requireNotNull(resolved.publicAddress) { "Shop has no public address" }
+        require(resolved.slug.isNotBlank()) { "Shop has no public address" }
+        val address = PublicAddress(resolved.slug, resolved.canonicalPath.orEmpty(), resolved.revision, resolved.isAlias)
         server.setFavorite(FavoriteEntry(FavoriteKind.CoffeeShop, address,
             name = resolved.title, coverPhotoUrl = resolved.photoUrl), true).getOrThrow()
         requireOwner(account)
@@ -88,13 +90,11 @@ internal class ServerFavoriteShopsRepository(
             resolved?.exceptionOrNull()?.let { if (it is CancellationException) throw it }
             ensureActive()
             requireOwner(account)
-            val details = resolved?.getOrNull()
-            val shop = details?.shop
+            val shop = resolved?.getOrNull()
             FavoriteShop(id = entry.address?.slug ?: entry.id, title = entry.name.ifBlank { shop?.title.orEmpty() },
-                rating = shop?.rating, reviewCount = shop?.reviewCount ?: 0, cityName = shop?.cityName,
+                rating = shop?.rating, reviewCount = shop?.reviewCount ?: 0, cityName = null,
                 priceRange = shop?.priceRange, photoUrl = entry.coverPhotoUrl ?: shop?.photoUrl,
-                address = details?.location?.address ?: shop?.address,
-                latitude = details?.location?.latitude, longitude = details?.location?.longitude,
+                address = shop?.address, latitude = shop?.latitude, longitude = shop?.longitude,
                 isOpen = shop?.isOpen ?: false, tags = shop?.tags.orEmpty(),
                 brewMethods = shop?.brewMethods.orEmpty(), roasterPhotoUrls = shop?.roasterPhotoUrls.orEmpty(),
                 publicSlug = entry.address?.slug)

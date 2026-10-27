@@ -52,6 +52,8 @@ internal data class ShopCatalogItemDto(
 internal data class ShopAddressDto(
     @SerialName("slug") val slug: String = "",
     @SerialName("canonicalPath") val canonicalPath: String? = null,
+    @SerialName("revision") val revision: Int = 1,
+    @SerialName("isAlias") val isAlias: Boolean = false,
 )
 
 @Serializable

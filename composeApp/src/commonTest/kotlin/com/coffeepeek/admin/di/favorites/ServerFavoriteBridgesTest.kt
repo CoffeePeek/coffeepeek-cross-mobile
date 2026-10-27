@@ -5,6 +5,7 @@ import com.coffeepeek.admin.feature.favorites.api.RoasterFavorites
 import com.coffeepeek.domain.feature.favorites.api.*
 import com.coffeepeek.domain.model.*
 import com.coffeepeek.feature.favorites.domain.model.FavoriteShop
+import com.coffeepeek.feature.shop.api.PublicShopSummary
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.test.*
@@ -79,6 +80,9 @@ class ServerFavoriteBridgesTest {
         assertEquals(0, server.reads)
     }
 
+    private fun summary(title: String) = PublicShopSummary(null, null, null, null, 0, false, emptyList(),
+        slug = address.slug, canonicalPath = address.canonicalPath, revision = address.revision, isAlias = address.isAlias, title = title)
+
     @Test fun accountReplacementClearsImmediatelyAndRejectsNonCooperativeDetail() = runTest {
         val sessions = CheckInTestSessions()
         val server = Server().apply { state.value = Result.success(listOf(entry())) }
@@ -86,8 +90,7 @@ class ServerFavoriteBridgesTest {
         val gate = CompletableDeferred<Unit>()
         val repo = ServerFavoriteShopsRepository(server, sessions) {
             withContext(NonCancellable) { started.complete(Unit); gate.await() }
-            Result.success(CoffeeShopDetails(CoffeeShop("canonical", "Private old row", null,
-                cityName = null, priceRange = null, photoUrl = null, publicAddress = address)))
+            Result.success(summary("Private old row"))
         }
         val results = mutableListOf<Result<List<FavoriteShop>>>()
         backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { repo.observe().collect { results += it } }
@@ -125,8 +128,7 @@ class ServerFavoriteBridgesTest {
         val server = Server()
         val repo = ServerFavoriteShopsRepository(server, CheckInTestSessions()) {
             assertEquals("old-alias", it)
-            Result.success(CoffeeShopDetails(CoffeeShop("guid", "Canonical title", null,
-                cityName = null, priceRange = null, photoUrl = null, publicAddress = address)))
+            Result.success(summary("Canonical title"))
         }
         repo.save(FavoriteShop("old-alias", "Old title")).getOrThrow()
         assertEquals(address, server.writes.single().first.address)

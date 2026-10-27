@@ -1295,3 +1295,21 @@ source `89778c23` + этот срез. Подробный scope/остаток �
   lintDirectDebug, assemble Direct/Sandbox, DEX и isolation, iOS Arm64 compile,
   simulator test-compile, framework link. Мелкий сбой по пути: фикстура
   `ServerFavoritesGraphFixture` требовала новый `PublicRoasterDetails` — исправлена.
+
+## L3, срез B (вторая часть) — избранные кофейни через публичный контракт — 2026-10-27
+
+- `PublicShopSummary` (feature/shop/api) расширен полями с дефолтами: публичный адрес
+  (`slug`, `canonicalPath`, `revision`, `isAlias`), `title`, `priceRange`, координаты,
+  `brewMethods`, `roasterPhotoUrls`; `ShopAddressDto` читает `revision`/`isAlias`.
+  Профильные потребители не менялись. `PublicShopDetailsTest` проверяет новые поля.
+- `ServerFavoriteShopsRepository` берёт карточку из `PublicShopDetails.load`, а не из
+  легаси `ShopRepository.getShopDetails`; Koin-модуль, фикстуры графа и
+  `DiscoveryAdaptersTest`/`ServerFavoriteBridgesTest` обновлены. Поведение прежнее:
+  `cityName` и раньше всегда был null; сохранение требует публичный адрес.
+- Прошли (код выхода Gradle из файла = 0, 0 ошибок): Direct/Play unit, shop и profile data,
+  lintDirectDebug, assemble Direct/Sandbox, DEX и isolation, iOS Arm64 compile,
+  simulator test-compile, framework link. По пути два красных прогона из-за фикстур
+  графа избранного (искали `PublicRoasterDetails`/`PublicShopDetails`) — исправлены.
+- Остаётся в B: ядро избранного (`domain.feature.favorites.api`, `FavoriteRepositoryImpl`,
+  `AccountFavoritesRepository`, `LegacyFavoritesRepositoryBridge`, `ServerRoasterFavorites`,
+  Android `FavoritesModule`) и `AuthRepository`/`SessionRepository` — вместе со срезом C.

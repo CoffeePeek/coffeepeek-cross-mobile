@@ -9,7 +9,8 @@ import com.coffeepeek.domain.feature.favorites.api.FavoriteEntry
 import com.coffeepeek.domain.feature.favorites.api.FavoriteKind
 import com.coffeepeek.domain.feature.favorites.api.FavoritesRepository as ServerFavorites
 import com.coffeepeek.domain.model.*
-import com.coffeepeek.domain.repository.ShopRepository
+import com.coffeepeek.feature.shop.api.PublicShopDetails
+import com.coffeepeek.feature.shop.api.PublicShopSummary
 import com.coffeepeek.feature.discovery.domain.model.CatalogEntry
 import com.coffeepeek.feature.roaster.api.PublicRoasterCatalog
 import com.coffeepeek.feature.roaster.api.PublicRoasterCatalogEntry
@@ -37,7 +38,7 @@ class DiscoveryAdaptersTest {
             modules(module {
                 single<SessionReader> { FeedSessions(Session("token", userId = "user")) }
                 single<ServerFavorites> { Server() }
-                single<ShopRepository> { Shops(Result.failure(IllegalStateException("unused"))) }
+                single<PublicShopDetails> { PublicShops() }
             }, serverFavoriteShopsModule())
         }
         try {
@@ -117,14 +118,7 @@ class DiscoveryAdaptersTest {
         override suspend fun clear(): Result<Unit> = Result.success(Unit)
     }
 
-    private class Shops(private val catalogs: Result<ShopCatalogs>) : ShopRepository {
-        override suspend fun searchShops(filters: ShopFilters): Result<PagedResult<CoffeeShop>> = error("unused")
-        override suspend fun getShopDetails(id: String): Result<CoffeeShopDetails> = error("unused")
-        override suspend fun getMapContent(bounds: MapBounds, zoom: Float, filters: ShopFilters): Result<MapContent> = error("unused")
-        override suspend fun getCatalogs() = catalogs
-        override suspend fun getConsumedDrinks(): Result<List<ConsumedDrinkOption>> = error("unused")
-        override suspend fun getMenuDrinks(): Result<List<CoffeeDrinkDefinition>> = error("unused")
-        override suspend fun createShop(input: CreateShopInput): Result<Unit> = error("unused")
-        override suspend fun getMyShopSubmissions(status: ModerationStatus, page: Int, pageSize: Int): Result<PagedResult<ShopSubmission>> = error("unused")
+    private class PublicShops : PublicShopDetails {
+        override suspend fun load(slug: String): Result<PublicShopSummary> = error("unused")
     }
 }
