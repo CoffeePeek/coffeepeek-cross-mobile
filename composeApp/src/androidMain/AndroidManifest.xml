@@ -54,7 +54,9 @@
                 <data android:host="coffeepeek.by" />
                 <data android:path="/" />
                 <data android:pathPrefix="/coffee-shops/" />
+                <data android:pathPrefix="/shops/" />
                 <data android:pathPrefix="/roasters/" />
+                <data android:pathPrefix="/coffees/" />
                 <data android:pathPrefix="/users/" />
                 <data android:pathPrefix="/check-ins/" />
             </intent-filter>

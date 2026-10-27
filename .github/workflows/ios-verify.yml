@@ -83,6 +83,8 @@ jobs:
           set -euo pipefail
           ./gradlew --max-workers=6 :composeApp:iosSimulatorArm64Test \
             --tests 'com.coffeepeek.admin.di.KoinViewModelCompatibilityTest' \
+            --tests 'com.coffeepeek.admin.AppLinkHandlingTest' \
+            --tests 'com.coffeepeek.admin.ui.AppLinksTest' \
             > "$RUNNER_TEMP/ios-native-tests.log" 2>&1 || {
               tail -n 150 "$RUNNER_TEMP/ios-native-tests.log"
               exit 1
