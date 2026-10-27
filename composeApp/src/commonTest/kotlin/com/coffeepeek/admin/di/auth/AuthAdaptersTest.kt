@@ -1,10 +1,7 @@
 package com.coffeepeek.admin.di.auth
 
-import com.coffeepeek.data.session.UserSessionCleaner
-import com.coffeepeek.domain.model.CoffeeShop
-import com.coffeepeek.domain.model.CoffeeShopDetails
+import com.coffeepeek.admin.session.UserSessionCleaner
 import com.coffeepeek.domain.model.Session
-import com.coffeepeek.domain.repository.FavoriteRepository
 import com.coffeepeek.domain.repository.SessionRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.runBlocking
@@ -27,18 +24,9 @@ class AuthAdaptersTest {
             override fun observeSession() = state
             override suspend fun isLoggedIn() = state.value != null
         }
-        val favorites = object : FavoriteRepository {
-            override suspend fun getFavoriteIds(): Set<String> = error("Unused")
-            override suspend fun isFavorite(shopId: String): Boolean = error("Unused")
-            override suspend fun getFavorites(): Result<List<CoffeeShopDetails>> = error("Unused")
-            override suspend fun addFavorite(shop: CoffeeShop, address: String?): Result<Unit> = error("Unused")
-            override suspend fun removeFavorite(shopId: String): Result<Unit> = error("Unused")
-            override suspend fun clearAll(): Unit = error("Unused")
-            override suspend fun clearForUser(userId: String?) { log += "favorites:$userId" }
-        }
-        val local = UserSessionLocalUserData(UserSessionCleaner(sessions, favorites, "", "", clearCaches = { log += "caches" }))
+        val local = UserSessionLocalUserData(UserSessionCleaner(sessions, clearFavoritesCache = { log += "favorites" }, clearCaches = { log += "caches" }))
         local.clear()
-        assertEquals(listOf("save:null", "favorites:owner", "caches"), log)
+        assertEquals(listOf("save:null", "favorites", "caches"), log)
         assertNull(sessions.peekSession())
     }
 }

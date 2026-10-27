@@ -1,7 +1,7 @@
 package com.coffeepeek.data.repository
 
 import com.coffeepeek.api.service.AuthService
-import com.coffeepeek.data.session.UserSessionCleaner
+import com.coffeepeek.data.session.LocalUserDataCleanup
 import com.coffeepeek.domain.model.CoffeeShop
 import com.coffeepeek.domain.model.CoffeeShopDetails
 import com.coffeepeek.domain.model.Session
@@ -53,7 +53,14 @@ class AuthRepositoryImplTest {
         }) { install(ContentNegotiation) { json(Json { ignoreUnknownKeys = true }) } }
         val repository = AuthRepositoryImpl(
             AuthService(client, client), sessions,
-            UserSessionCleaner(sessions, favorites, "", "", clearCaches = { events.log += "caches" }),
+            // The application's cleanup order: session, favorites of the previous owner, caches.
+            LocalUserDataCleanup {
+                val owner = sessions.getSession()?.userId
+                try {
+                    sessions.saveSession(null)
+                    favorites.clearForUser(owner)
+                } finally { events.log += "caches" }
+            },
         )
     }
 

@@ -1,7 +1,7 @@
 package com.coffeepeek.data.repository
 
 import com.coffeepeek.api.service.AuthService
-import com.coffeepeek.data.session.UserSessionCleaner
+import com.coffeepeek.data.session.LocalUserDataCleanup
 import com.coffeepeek.domain.model.CoffeeShop
 import com.coffeepeek.domain.model.CoffeeShopDetails
 import com.coffeepeek.domain.model.Session
@@ -118,7 +118,7 @@ class AppleLoginPersistenceTest {
     private fun repository(client: HttpClient, sessions: SessionRepository) = AuthRepositoryImpl(
         AuthService(client, client),
         sessions,
-        UserSessionCleaner(sessions, UnusedAppleTestFavorites, "", ""),
+        LocalUserDataCleanup { sessions.saveSession(null); UnusedAppleTestFavorites.clearAll() },
     )
 }
 

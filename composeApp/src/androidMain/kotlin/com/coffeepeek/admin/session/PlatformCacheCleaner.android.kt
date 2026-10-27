@@ -1,4 +1,4 @@
-package com.coffeepeek.data.session
+package com.coffeepeek.admin.session
 
 import java.io.File
 

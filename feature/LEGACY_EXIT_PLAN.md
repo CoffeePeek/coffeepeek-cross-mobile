@@ -1358,3 +1358,27 @@ source `89778c23` + этот срез. Подробный scope/остаток �
   lintDirectDebug, assemble Direct/Sandbox, DEX и isolation, iOS Arm64 compile, simulator
   test-compile, framework link. **Ручная проверка выхода на Android и iOS не выполнялась** (по
   решению владельца): остаётся gate перед релизом.
+
+## L3, срез C4 — `UserSessionCleaner` вынесен из `modules/data` — 2026-10-27
+
+- `UserSessionCleaner` и платформенная очистка кэшей (`clearPlatformCaches`, android/ios actual)
+  переехали в `composeApp` (`admin.session`); у класса больше нет легаси `FavoriteRepository` и
+  `SessionRepository`: порты — `SessionStore`, `clearFavoritesCache` (серверный кэш избранного,
+  `FavoritesRepository.clearCache()`), `clearCaches` (HTTP- и image-кэши). Порядок прежний:
+  сессия → избранное → кэши (кэши очищаются всегда, первая ошибка возвращается, отмена не
+  прерывает очистку). Раньше избранному передавался id владельца, но `clearForUser` его
+  игнорировал и очищал весь кэш — поведение то же.
+- Новый порт `LocalUserDataCleanup` (`modules/data`) для легаси `AuthRepositoryImpl`;
+  `sessionCleanupModule` в `initKoin` привязывает cleaner к нему и к `LocalUserData`
+  (`UserSessionLocalUserData`) и `SessionRealtimeManager`. Из `dataModule` убраны биндинг cleaner и
+  параметр `appCacheRootPath`.
+- Тесты: `UserSessionCleanerTest` перенесён в composeApp (2 прежних сценария + «ошибка сессии
+  всё равно очищает кэши и пропускает избранное»); `AuthAdaptersTest`, легаси
+  `AuthRepositoryImplTest` и `AppleLoginPersistenceTest` (modules/data) переведены на лямбду
+  очистки с тем же порядком.
+- Проверено (код выхода Gradle из файла = 0, 0 ошибок): Direct/Play unit, modules/data unit,
+  lintDirectDebug, assemble Direct/Sandbox, DEX и isolation, iOS Arm64 compile, simulator
+  test-compile, framework link, modules/data iOS compile. Ручная проверка «выход чистит кэши»
+  не выполнялась (gate перед релизом).
+- Осталось в C: C5 (`SessionRepository` → `SessionStore`/`SessionReader`), C6 (refresh токена,
+  `CoffeePeekClient`/`AuthService`), C7 (серверное избранное `ServerFavoritesRepository`).

@@ -15,10 +15,10 @@ import com.coffeepeek.data.repository.PhotoRepositoryImpl
 import com.coffeepeek.data.repository.ReviewRepositoryImpl
 import com.coffeepeek.data.repository.RoasterRepositoryImpl
 import com.coffeepeek.data.repository.SessionRepositoryImpl
+import com.coffeepeek.data.session.LocalUserDataCleanup
 import com.coffeepeek.data.repository.ShopChangeRequestRepositoryImpl
 import com.coffeepeek.data.repository.ShopIssueReportRepositoryImpl
 import com.coffeepeek.data.repository.ShopRepositoryImpl
-import com.coffeepeek.data.session.UserSessionCleaner
 import com.coffeepeek.data.util.FileUrlResolver
 import com.coffeepeek.core.session.JwtUtils
 import com.coffeepeek.domain.repository.AuthRepository
@@ -41,7 +41,6 @@ import org.koin.dsl.module
 fun dataModule(
     baseUrl: String,
     cacheFolderPath: String,
-    appCacheRootPath: String,
     database: DatabaseCore,
     platformContext: Any? = null,
     debug: Boolean = false,
@@ -56,15 +55,6 @@ fun dataModule(
     single<SessionReader> { get<SessionRepository>() }
     single { SessionTokenProvider(get(), get()) }
     single { FileUrlResolver(baseUrl) }
-    single {
-        UserSessionCleaner(
-            sessionRepository = get(),
-            favoriteRepository = get(),
-            httpCacheFolderPath = cacheFolderPath,
-            appCacheRootPath = appCacheRootPath,
-        )
-    }
-
     single {
         val tokenProvider = get<SessionTokenProvider>()
         CoffeePeekClient(
@@ -110,7 +100,7 @@ fun dataModule(
     single { get<CoffeePeekRepo>().roasterApiService }
     single { get<CoffeePeekRepo>().shopChangeRequestApiService }
     single<PhotoRepository> { PhotoRepositoryImpl(get()) }
-    single<AuthRepository> { AuthRepositoryImpl(get(), get(), get()) }
+    single<AuthRepository> { AuthRepositoryImpl(get(), get(), get<LocalUserDataCleanup>()) }
     single<com.coffeepeek.domain.feature.favorites.api.FavoritesRepository> {
         com.coffeepeek.data.feature.favorites.ServerFavoritesRepository(get(), get())
     }

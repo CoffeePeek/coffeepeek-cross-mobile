@@ -28,7 +28,7 @@ class DataModuleFavoritesTest {
 
     @Test fun oldBindingRemainsDefaultForIosAndExistingCallers() {
         val app = koinApplication {
-            modules(dataModule("url", "cache", "root", database), module {
+            modules(dataModule("url", "cache", database), module {
                 // The legacy favorite writer now resolves session identity as production does.
                 // This isolated JVM graph supplies a test store rather than an Android Context.
                 single<SessionSecureStore> { InMemorySessionSecureStore() }
@@ -41,7 +41,7 @@ class DataModuleFavoritesTest {
 
     @Test fun androidCanOmitOldBindingBeforeLoadingFeatureBridge() {
         val app = koinApplication {
-            modules(dataModule("url", "cache", "root", database, registerLegacyFavorites = false))
+            modules(dataModule("url", "cache", database, registerLegacyFavorites = false))
         }
         try {
             assertNull(app.koin.getOrNull<FavoriteRepository>())

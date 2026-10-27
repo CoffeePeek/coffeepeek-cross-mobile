@@ -1,6 +1,6 @@
 @file:OptIn(kotlinx.cinterop.ExperimentalForeignApi::class)
 
-package com.coffeepeek.data.session
+package com.coffeepeek.admin.session
 
 import platform.Foundation.NSFileManager
 

@@ -92,7 +92,6 @@ fun initKoin(
         dataModule(
             baseUrl = Constants.BASE_URL,
             cacheFolderPath = Locator.cacheFolderPath,
-            appCacheRootPath = Locator.appCacheRootPath,
             database = database,
             platformContext = Locator.platformContext,
             debug = AppConfig.isDebug,
@@ -103,6 +102,7 @@ fun initKoin(
             checkInRenderers, contentReportRendererFactory, coffeeRendererFactory, roasterRendererFactory,
             publicProfileRendererFactory, ownProfileRendererFactory, accountRendererFactory, settingsRendererFactory, appUpdateRendererFactory,
             authRendererFactory, communityRendererFactory, checkInDetailRendererFactory, contributionsRendererFactory, discoveryRendererFactory, notificationsRendererFactory),
+        com.coffeepeek.admin.session.sessionCleanupModule(Locator.cacheFolderPath, Locator.appCacheRootPath),
         imageModule(),
         roasterModule(),
         updateInstallerModule(),

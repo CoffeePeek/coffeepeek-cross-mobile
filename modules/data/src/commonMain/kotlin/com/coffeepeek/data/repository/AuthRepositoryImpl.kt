@@ -2,7 +2,7 @@ package com.coffeepeek.data.repository
 
 import com.coffeepeek.api.model.response.AuthResp
 import com.coffeepeek.api.service.AuthService
-import com.coffeepeek.data.session.UserSessionCleaner
+import com.coffeepeek.data.session.LocalUserDataCleanup
 import com.coffeepeek.core.session.JwtUtils
 import com.coffeepeek.domain.model.Session
 import com.coffeepeek.domain.model.AppleLoginChallenge
@@ -13,7 +13,7 @@ import kotlinx.coroutines.CancellationException
 class AuthRepositoryImpl(
     private val authService: AuthService,
     private val sessionRepository: SessionRepository,
-    private val userSessionCleaner: UserSessionCleaner,
+    private val localUserData: LocalUserDataCleanup,
 ) : AuthRepository {
 
     private fun AuthResp.toSession(): Session = Session(
@@ -25,7 +25,7 @@ class AuthRepositoryImpl(
     private suspend fun Result<Session>.persistSession(): Result<Session> =
         also { result -> result.onSuccess { next ->
             if (sessionRepository.getSession()?.userId != next.userId) {
-                userSessionCleaner.clearLocalUserData()
+                localUserData.clear()
             }
             sessionRepository.saveSession(next)
         } }
@@ -64,7 +64,7 @@ class AuthRepositoryImpl(
     override suspend fun logout(): Result<Unit> {
         val refreshToken = sessionRepository.getSession()?.refreshToken
         val cleanupFailure = try {
-            userSessionCleaner.clearLocalUserData()
+            localUserData.clear()
             null
         } catch (cancellation: CancellationException) {
             throw cancellation
