@@ -1220,3 +1220,33 @@ source `89778c23` + этот срез. Подробный scope/остаток �
   `resetKey` закрывает флоу при смене аккаунта; фокус/клавиатура скрываются
   одинаково во всех местах (раньше только на вкладке). Проверки те же, зелёные;
   поведение на устройстве/Xcode вручную не проверялось.
+
+## L3, срез A — недостижимые легаси-экраны и ViewModels — 2026-10-27
+
+- Перед срезом develop (16 коммитов) влит в стек #195 → #201 → #202; конфликты в
+  `SearchScreen`, `FeatureDiscoveryScreenRenderer`, `NotificationPushSettings`,
+  удалённых мёртвых файлах; фикс Арсения про ревизию меню (30f1911b) перенесён в
+  новый `CatalogMapper` Contributions (`inputRevision`) с двумя тестами в feature.
+- Удалены: `VisitedPlaces{Screen,ViewModel}`, `EditProfile{Screen,ViewModel}`,
+  `Map{Screen,ViewModel}`, `FeedViewModel`, `ReviewReportViewModel`,
+  `ShopDetail{Screen,ViewModel}`, `ShopMenuGallery{Screen,ViewModel}`,
+  `ShopReport{Screen,ViewModel}`, их Koin-фабрики и тесты старого кода
+  (`EditProfileViewModelTest`, `MapViewModelParityTest`, `FeedViewModelParityTest`,
+  `FeedNearbySelectionTest`, `FavoriteMembershipObservationTest`, `ShopCheckInsTest`,
+  `ShopReportViewModelTest`, `ReviewReportPreviewTest`, `MapPrefetchTest`,
+  `FeedFiltersUiTest`). Нужные куски вынесены: `VisitedPlacesUiState`,
+  `CheckInCalendarLabels` (держит инструментальные тесты календаря).
+- Сверка (форк, чтение каждого теста) нашла три реальных пробела; закрыты тестами в
+  feature: позиция раньше каталогов не включает «рядом» и не снимает город
+  (`SearchViewModelTest`); бросающая/безымянная ошибка создания чекина оставляет
+  редактируемый черновик (`ShopCheckInCreateViewModelTest`); избранное по
+  каноническому slug при входе через алиас (`ShopDetailViewModelTest`).
+  Мелкие нетронутые: голосование за неизвестный чекин; гонка избранного с первым
+  поиском проверена в одном порядке; `onSubmitted` с lease не покрыт.
+- Не удалено: `Favorites{Screen,ViewModel}`, `SettingsScreen`/`ProfileViewModel`,
+  `CommunityScreen`/`CommunityViewModel`, `ShopChangeEditor*`, `OtherUserProfileScreen`
+  — держат чужие скриншот-тесты и `ShopMenuEditorTest`; `CheckInCalendarCard` и
+  `CheckInDiaryRow` — только инструментальные тесты календаря.
+- Прошли: Direct/Play unit, feature shop/discovery, lintDirectDebug, assemble
+  Direct/Sandbox, DEX и isolation, iOS Arm64 compile, simulator test-compile,
+  framework link. Native tests/manual UI не выполнялись.

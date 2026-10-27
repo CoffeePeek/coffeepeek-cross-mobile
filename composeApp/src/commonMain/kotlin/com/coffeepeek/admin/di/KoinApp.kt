@@ -43,18 +43,12 @@ import com.coffeepeek.admin.di.roaster.roasterScreenRenderer
 import com.coffeepeek.admin.ui.screen.roaster.RoasterScreenRenderer
 import com.coffeepeek.admin.ui.screen.shop.ShopDetailScreenRenderer
 import com.coffeepeek.admin.ui.screen.shop.ShopCheckInListScreenRenderer
-import com.coffeepeek.admin.ui.screen.feed.FeedViewModel
-import com.coffeepeek.admin.ui.screen.map.MapViewModel
-import com.coffeepeek.admin.ui.screen.checkins.VisitedPlacesViewModel
 import com.coffeepeek.admin.ui.screen.checkins.CheckInHistoryScreenRenderer
 import com.coffeepeek.admin.ui.screen.checkins.CheckInCreateFlowRenderer
 import com.coffeepeek.admin.ui.screen.favorites.FavoritesViewModel
-import com.coffeepeek.admin.ui.screen.review.ReviewReportViewModel
 import com.coffeepeek.admin.ui.screen.review.ContentReportScreenRenderer
 import com.coffeepeek.admin.ui.screen.contributions.ContributionKind
 import com.coffeepeek.admin.ui.screen.shop.CheckInDraftStore
-import com.coffeepeek.admin.ui.screen.shop.ShopMenuGalleryViewModel
-import com.coffeepeek.admin.ui.screen.shop.ShopReportViewModel
 import com.coffeepeek.admin.ui.screen.shopchange.ShopChangeEditorViewModel
 import com.coffeepeek.domain.model.ShopChangeSection
 import com.coffeepeek.admin.di.imageModule
@@ -239,14 +233,8 @@ private fun appModule(
     single { CityPreference(settingRepository) }
     single { ReviewDraftStore(settingRepository) }
     factory { NavigatorViewModel(get()) }
-    factory { FeedViewModel(get(), get(), get(), get(), getOrNull<ObserveFavoriteIdsUseCase>()) }
-    factory { MapViewModel(get(), get()) }
-    factory { (shopId: String) -> ShopMenuGalleryViewModel(shopId, get()) }
-    factory { (shopId: String) -> ShopReportViewModel(shopId, get()) }
     factory { (shopId: String, section: ShopChangeSection, requestId: String) ->
         ShopChangeEditorViewModel(shopId, section, requestId, get(), get())
     }
     single { FavoritesViewModel(get(), get(), get(), get(), sessions = get()) }
-    factory { params -> VisitedPlacesViewModel(get(), get(), params.getOrNull()) }
-    factory { (reviewId: String, isPreview: Boolean, isCheckIn: Boolean) -> ReviewReportViewModel(reviewId, get(), get(), isPreview, get(), isCheckIn) }
 }

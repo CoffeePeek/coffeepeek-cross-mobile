@@ -3,9 +3,6 @@ package com.coffeepeek.admin.ui
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.getValue
 import com.coffeepeek.admin.ui.screen.checkins.CheckInHistoryDestination
-import com.coffeepeek.admin.ui.screen.shop.ShopDetailScreen
-import com.coffeepeek.admin.ui.screen.shop.ShopMenuGalleryScreen
-import com.coffeepeek.admin.ui.screen.shop.ShopReportScreen
 import com.coffeepeek.admin.ui.screen.favorites.FavoritesScreen
 import com.coffeepeek.admin.ui.favorites.FavoritesDestination
 import com.coffeepeek.admin.ui.screen.contributions.ContributionKind
