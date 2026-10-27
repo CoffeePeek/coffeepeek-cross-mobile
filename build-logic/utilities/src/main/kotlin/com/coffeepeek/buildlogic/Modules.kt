@@ -119,6 +119,12 @@ object Modules {
             const val impl = ":feature:shop:impl"
         }
 
+        val shelf = Shelf
+        object Shelf {
+            const val domain = ":feature:shelf:domain"
+            const val data = ":feature:shelf:data"
+        }
+
         val checkInHistory = CheckInHistory
         val homePreparation = HomePreparation
         object HomePreparation {
@@ -231,6 +237,8 @@ object Modules {
         feature.notifications.api,
         feature.notifications.data,
         feature.notifications.impl,
+        feature.shelf.domain,
+        feature.shelf.data,
     )
 }
 

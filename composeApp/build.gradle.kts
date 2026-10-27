@@ -63,6 +63,8 @@ kotlin {
             implementation(project(module.feature.homePreparation.api))
             implementation(project(module.feature.homePreparation.data))
             implementation(project(module.feature.homePreparation.impl))
+            implementation(project(module.feature.shelf.domain))
+            implementation(project(module.feature.shelf.data))
             implementation(project(module.core.coroutines))
             implementation(libs.androidx.activity.compose)
             implementation(libs.androidx.concurrent.futures)
