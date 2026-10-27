@@ -39,11 +39,11 @@ internal fun NotificationRow(item: NotificationItem, enabled: Boolean, onClick: 
             .clickable(enabled = enabled && !item.read, role = Role.Button, onClickLabel = readAction, onClick = onClick)
             .padding(CoffeePeekDimens.spacing4), horizontalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing3)) {
             CoffeePeekIconBadge(icon, palette)
-            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing2)) {
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing1)) {
                 Text(item.title, style = MaterialTheme.typography.titleSmall,
                     fontWeight = if (item.read) FontWeight.Medium else FontWeight.SemiBold)
-                Text(item.body, style = MaterialTheme.typography.bodyMedium, color = colors.onSurfaceVariant)
                 Text(utcIsoToLocalDateTime(item.createdAtUtc), style = MaterialTheme.typography.labelSmall, color = colors.onSurfaceVariant)
+                Text(item.body, style = MaterialTheme.typography.bodyMedium, color = colors.onSurfaceVariant)
             }
             if (!item.read) Box(Modifier.padding(top = CoffeePeekDimens.spacing2).size(6.dp).background(colors.primary, CircleShape))
         }
@@ -66,8 +66,8 @@ private fun notificationAppearance(item: NotificationItem) = when {
 private fun NotificationRowPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
     Column(verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing3)) {
         listOf(false, true).forEach { read ->
-            NotificationRow(NotificationItem("preview", NotificationKind.ShopApproved, "Кофейня добавлена",
-                "Спасибо! Новая кофейня уже появилась на карте.", "2026-10-21T08:00:00Z", read), true, {})
+            NotificationRow(NotificationItem("preview", NotificationKind.NewShop, "Новая кофейня на карте",
+                "На карте появилась новая кофейня. Загляните за чашкой кофе!", "2026-10-21T08:00:00Z", read), true, {})
         }
     }
 }

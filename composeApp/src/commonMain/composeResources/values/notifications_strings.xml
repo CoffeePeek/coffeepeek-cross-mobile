@@ -10,9 +10,7 @@
     <string name="notifications_saving">Сохраняем…</string>
     <string name="notifications_push_permission">Для включения нужно разрешение системы</string>
     <string name="notifications_push_description">Решения, новые кофейни и новости</string>
-    <string name="notifications_history_hint">История доступна и с выключенными push</string>
     <string name="notifications_retry_settings">Повторить загрузку настроек</string>
-    <string name="notifications_push_diagnostic">Push пока не подключены. Код для поддержки: %1$s</string>
     <string name="notifications_unread_count">Непрочитанных: %1$d</string>
     <string name="notifications_all_read">Всё прочитано</string>
     <string name="notifications_read_all">Прочитать все</string>
