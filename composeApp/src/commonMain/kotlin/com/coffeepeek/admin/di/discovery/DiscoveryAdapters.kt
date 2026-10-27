@@ -60,7 +60,7 @@ internal fun ShopSummary.toFavoriteShop() = FavoriteShop(
 /** The city is shared with the settings through the legacy preference; its ids are the cities' public slugs, as in Discovery's own catalog. */
 internal class PreferenceDiscoveryCity(private val preference: CityPreference) : DiscoveryCity {
     override val selected: StateFlow<String?> = preference.selectedCityId
-    override suspend fun resolve(cities: List<CityEntry>): String? = preference.resolve(cities.map { City(it.id, it.name) })
+    override suspend fun resolve(cities: List<CityEntry>): String? = preference.resolve(cities.map { it.id })
 }
 
 /** Adapts only public Shop API data; no legacy repository or presentation formatter. */

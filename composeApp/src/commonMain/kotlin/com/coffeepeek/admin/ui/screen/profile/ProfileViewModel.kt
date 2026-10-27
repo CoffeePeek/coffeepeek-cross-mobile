@@ -167,7 +167,7 @@ class ProfileViewModel(
             shopRepository.getCatalogs()
                 .onSuccess { catalogs ->
                     _cities.value = catalogs.cities
-                    cityPreference.resolve(catalogs.cities)
+                    cityPreference.resolve(catalogs.cities.map { it.id })
                 }
         }
     }

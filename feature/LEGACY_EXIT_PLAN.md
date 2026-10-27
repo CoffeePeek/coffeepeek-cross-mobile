@@ -1272,3 +1272,26 @@ source `89778c23` + этот срез. Подробный scope/остаток �
 - Проверено по-настоящему (код выхода Gradle 0, 0 ошибок): Direct/Play unit,
   home-check-in data, lintDirectDebug, assemble Direct/Sandbox, DEX и isolation,
   iOS Arm64 compile, simulator test-compile, framework link.
+
+## L3, срез B (первая часть) — читатели каталогов и фото — 2026-10-27
+
+- Новый публичный контракт `PublicDiscoveryCatalogs` (`feature/discovery/api`,
+  фабрика `createPublicDiscoveryCatalogs` в `feature/discovery/data`): города и
+  методы заваривания из тех же эндпоинтов `/api/Catalogs/*`, успех кэшируется,
+  ошибка перечитывается; `PublicDiscoveryCatalogsTest` (3).
+- Переведено с легаси `ShopRepository`/`RoasterRepository`: напитки Community
+  (`ShopCommunityDrinks` → `ShopCheckInRepository.getDrinkOptions`), города Settings
+  (`AppCityPort`), методы заваривания Home (`BrewMethodCatalogAdapter`), фото
+  обжарщика в избранном (`PublicRoasterDetails.load`). `CityPreference` теперь
+  принимает id городов, а не легаси `City`; тесты обновлены.
+- Остаётся для B: избранное кофеен (`ServerFavoriteShopsRepository` читает
+  `ShopRepository.getShopDetails`, нужен `title`, координаты и публичный адрес —
+  расширить `PublicShopDetails`), ядро избранного (`domain.feature.favorites.api`,
+  `FavoriteRepositoryImpl`, `AccountFavoritesRepository`, `LegacyFavoritesRepositoryBridge`,
+  `ServerRoasterFavorites` и Android `FavoritesModule`), `AuthRepository`
+  (`ProfileRenderer`, Apple/Android/iOS auth) — это связано со срезом C.
+  `SessionRepository` в `BaseViewModel`/Sandbox — тоже C.
+- Прошли (код выхода Gradle из файла = 0, 0 ошибок): Direct/Play unit, discovery data,
+  lintDirectDebug, assemble Direct/Sandbox, DEX и isolation, iOS Arm64 compile,
+  simulator test-compile, framework link. Мелкий сбой по пути: фикстура
+  `ServerFavoritesGraphFixture` требовала новый `PublicRoasterDetails` — исправлена.

@@ -10,6 +10,9 @@ import com.coffeepeek.domain.model.*
 import com.coffeepeek.domain.repository.RoasterRepository
 import com.coffeepeek.domain.repository.ShopRepository
 import com.coffeepeek.feature.favorites.api.FavoritesEntry
+import com.coffeepeek.feature.roaster.api.PublicRoasterDescription
+import com.coffeepeek.feature.roaster.api.PublicRoasterDetails
+import com.coffeepeek.feature.roaster.api.PublicRoasterSummary
 import com.coffeepeek.feature.favorites.domain.repository.FavoritesRepository as ShopsPort
 import com.coffeepeek.feature.favorites.domain.repository.FavoriteRoastersRepository
 import com.coffeepeek.feature.favorites.domain.repository.FavoriteDrinksRepository
@@ -31,6 +34,7 @@ internal class ServerFavoritesGraphFixture {
         single<SessionReader> { sessions }
         single<FavoritesRepository> { server }
         single<RoasterRepository> { catalogs }
+        single<PublicRoasterDetails> { FavoriteGraphPublicRoasters(catalogs) }
         single<ShopRepository> { FavoriteGraphShops(catalogs) }
         single<RoasterFavorites> { ServerRoasterFavorites(server, catalogs, sessions) }
     }
@@ -80,6 +84,14 @@ internal class FavoriteGraphCatalogs : RoasterRepository {
     override suspend fun submitRoaster(input: CreateRoasterInput): Result<RoasterSubmissionResult> = error("No submission")
     override suspend fun getMyRoasterSubmissions(status: ModerationStatus, page: Int, pageSize: Int): Result<PagedResult<RoasterSubmission>> =
         error("No submission reads")
+}
+
+private class FavoriteGraphPublicRoasters(private val catalogs: FavoriteGraphCatalogs) : PublicRoasterDetails {
+    override suspend fun summaries(): Result<List<PublicRoasterSummary>> = error("No catalog")
+    override suspend fun load(slug: String): Result<PublicRoasterDescription> {
+        catalogs.reads++
+        return Result.failure(IllegalStateException("No catalog metadata"))
+    }
 }
 
 private class FavoriteGraphShops(private val catalogs: FavoriteGraphCatalogs) : ShopRepository {

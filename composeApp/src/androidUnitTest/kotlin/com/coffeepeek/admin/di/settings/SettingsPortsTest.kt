@@ -16,22 +16,10 @@ import com.coffeepeek.admin.settings.CityPreference
 import com.coffeepeek.admin.settings.FakeSettingRepository
 import com.coffeepeek.admin.theme.ThemeManager
 import com.coffeepeek.admin.utils.COFFEEPEEK_SHARE_TEXT
-import com.coffeepeek.domain.model.City
-import com.coffeepeek.domain.model.CoffeeDrinkDefinition
-import com.coffeepeek.domain.model.CoffeeShop
-import com.coffeepeek.domain.model.CoffeeShopDetails
-import com.coffeepeek.domain.model.ConsumedDrinkOption
-import com.coffeepeek.domain.model.CreateShopInput
-import com.coffeepeek.domain.model.MapBounds
-import com.coffeepeek.domain.model.MapContent
-import com.coffeepeek.domain.model.ModerationStatus
-import com.coffeepeek.domain.model.PagedResult
 import com.coffeepeek.domain.model.Session
-import com.coffeepeek.domain.model.ShopCatalogs
-import com.coffeepeek.domain.model.ShopFilters
-import com.coffeepeek.domain.model.ShopSubmission
 import com.coffeepeek.domain.repository.SessionRepository
-import com.coffeepeek.domain.repository.ShopRepository
+import com.coffeepeek.feature.discovery.api.PublicCatalogOption
+import com.coffeepeek.feature.discovery.api.PublicDiscoveryCatalogs
 import com.coffeepeek.feature.settings.domain.SettingsCity
 import com.coffeepeek.feature.settings.domain.ThemeMode
 import com.coffeepeek.feature.settings.domain.UpdateCheckOutcome
@@ -76,24 +64,17 @@ class SettingsPortsTest {
 
     // --- city --------------------------------------------------------------------------------------------------------------
 
-    private class Shops(private val catalogs: Result<ShopCatalogs>) : ShopRepository {
-        override suspend fun searchShops(filters: ShopFilters): Result<PagedResult<CoffeeShop>> = error("unused")
-        override suspend fun getShopDetails(id: String): Result<CoffeeShopDetails> = error("unused")
-        override suspend fun getMapContent(bounds: MapBounds, zoom: Float, filters: ShopFilters): Result<MapContent> = error("unused")
-        override suspend fun getCatalogs() = catalogs
-        override suspend fun getConsumedDrinks(): Result<List<ConsumedDrinkOption>> = error("unused")
-        override suspend fun getMenuDrinks(): Result<List<CoffeeDrinkDefinition>> = error("unused")
-        override suspend fun createShop(input: CreateShopInput): Result<Unit> = error("unused")
-        override suspend fun getMyShopSubmissions(status: ModerationStatus, page: Int, pageSize: Int):
-            Result<PagedResult<ShopSubmission>> = error("unused")
+    private class Catalogs(private val cities: Result<List<PublicCatalogOption>>) : PublicDiscoveryCatalogs {
+        override suspend fun cities() = cities
+        override suspend fun brewMethods(): Result<List<PublicCatalogOption>> = error("unused")
     }
 
-    private val cities = listOf(City("minsk", "Минск"), City("grodno", "Гродно"))
+    private val cities = listOf(PublicCatalogOption("minsk", "Минск"), PublicCatalogOption("grodno", "Гродно"))
 
     @Test fun loadingTheCatalogResolvesTheSavedCityAndReturnsTheCities() = runTest {
         val settings = FakeSettingRepository(mapOf("selected_city_id" to "removed"))
         val preference = CityPreference(settings)
-        val port = AppCityPort(Shops(Result.success(ShopCatalogs(cities = cities))), preference)
+        val port = AppCityPort(Catalogs(Result.success(cities)), preference)
         assertNull(port.observeSelectedCityId().first())
         assertEquals(listOf(SettingsCity("minsk", "Минск"), SettingsCity("grodno", "Гродно")), port.loadCities().getOrThrow())
         assertEquals("minsk", port.observeSelectedCityId().first())
@@ -102,7 +83,7 @@ class SettingsPortsTest {
 
     @Test fun aCatalogFailureChangesNothing() = runTest {
         val settings = FakeSettingRepository(mapOf("selected_city_id" to "grodno"))
-        val port = AppCityPort(Shops(Result.failure(IllegalStateException("offline"))), CityPreference(settings))
+        val port = AppCityPort(Catalogs(Result.failure(IllegalStateException("offline"))), CityPreference(settings))
         assertTrue(port.loadCities().isFailure)
         assertNull(port.observeSelectedCityId().first())
         assertEquals(emptyList(), settings.saves)
@@ -110,7 +91,7 @@ class SettingsPortsTest {
 
     @Test fun selectingPersistsAndIgnoresBlankIds() = runTest {
         val settings = FakeSettingRepository()
-        val port = AppCityPort(Shops(Result.success(ShopCatalogs(cities = cities))), CityPreference(settings))
+        val port = AppCityPort(Catalogs(Result.success(cities)), CityPreference(settings))
         port.loadCities()
         port.select("grodno"); port.select("")
         assertEquals("grodno", port.observeSelectedCityId().first())

@@ -198,6 +198,9 @@ private fun appModule(
     single<com.coffeepeek.feature.profile.api.ProfileAccountPort> { get<com.coffeepeek.feature.profile.data.repository.ProfileAccountData>().accounts }
     single<com.coffeepeek.feature.profile.api.ProfileEditPort> { get<com.coffeepeek.feature.profile.data.repository.ProfileAccountData>().edit }
     single<com.coffeepeek.feature.profile.api.AccountDeletionPort> { get<com.coffeepeek.feature.profile.data.repository.ProfileAccountData>().deletion }
+    single<com.coffeepeek.feature.discovery.api.PublicDiscoveryCatalogs> {
+        com.coffeepeek.feature.discovery.data.repository.createPublicDiscoveryCatalogs(get<CoffeePeekClient>().client)
+    }
     single<com.coffeepeek.feature.shop.api.PublicShopDetails> {
         com.coffeepeek.feature.shop.data.repository.createPublicShopDetails(get<CoffeePeekClient>().client)
     }

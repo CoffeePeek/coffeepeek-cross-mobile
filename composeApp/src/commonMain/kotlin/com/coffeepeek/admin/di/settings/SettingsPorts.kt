@@ -13,7 +13,7 @@ import com.coffeepeek.admin.utils.ShareHelper
 import com.coffeepeek.core.session.SessionReader
 import com.coffeepeek.admin.utils.appReviewUrl
 import com.coffeepeek.admin.config.AppConfig
-import com.coffeepeek.domain.repository.ShopRepository
+import com.coffeepeek.feature.discovery.api.PublicDiscoveryCatalogs
 import com.coffeepeek.feature.settings.api.CityPort
 import com.coffeepeek.feature.settings.api.SettingsAccountPort
 import com.coffeepeek.feature.settings.api.SettingsExternalActions
@@ -53,14 +53,14 @@ internal fun SettingsThemeMode.toLegacy() = when (this) {
 
 /** The legacy order: load the catalog, then resolve the saved city against it (only on success). */
 internal class AppCityPort(
-    private val shops: ShopRepository,
+    private val catalogs: PublicDiscoveryCatalogs,
     private val preference: CityPreference,
 ) : CityPort {
     override fun observeSelectedCityId(): Flow<String?> = preference.selectedCityId
 
-    override suspend fun loadCities(): Result<List<SettingsCity>> = shops.getCatalogs().map { catalogs ->
-        preference.resolve(catalogs.cities)
-        catalogs.cities.map { SettingsCity(it.id, it.name) }
+    override suspend fun loadCities(): Result<List<SettingsCity>> = catalogs.cities().map { cities ->
+        preference.resolve(cities.map { it.id })
+        cities.map { SettingsCity(it.id, it.name) }
     }
 
     override fun select(cityId: String) = preference.select(cityId)
