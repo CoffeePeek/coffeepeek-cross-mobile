@@ -1313,3 +1313,28 @@ source `89778c23` + этот срез. Подробный scope/остаток �
 - Остаётся в B: ядро избранного (`domain.feature.favorites.api`, `FavoriteRepositoryImpl`,
   `AccountFavoritesRepository`, `LegacyFavoritesRepositoryBridge`, `ServerRoasterFavorites`,
   Android `FavoritesModule`) и `AuthRepository`/`SessionRepository` — вместе со срезом C.
+
+## L3, срез C1–C2 — мёртвое Android-избранное и Apple-расширение — 2026-10-27
+
+- C1. Удалены Android-обвязка локального избранного: `FavoritesModule`
+  (`favoritesRoomModule`, `legacyFavoritesConsumersModule`, `RoomFavoritesStorage`),
+  `AccountFavoritesRepository`, `LegacyFavoritesRepositoryBridge` (ни один production-модуль не
+  подключал их; живой путь — `serverFavoritesModule`), и их тесты: `AccountFavoritesRepositoryTest`,
+  `FavoritesModuleTest`, `LegacyFavoritesRepositoryBridgeTest`, `FavoritesWiringTest` (unit),
+  `FavoritesRoomMigrationTest`, `PersistedFavoritesTest` (инструментальные, оба Арсения).
+  Покрытие: JSON-строки/логотип/повреждённое хранилище/параллельные записи — `FavoritesRepositoryTest`
+  (feature/favorites/data); смена аккаунта и выход — `ServerFavoriteBridgesTest`.
+  **Потеря покрытия (записана для среза Room):** миграции Room v1→v2 с переносом строк избранного
+  больше нигде не проверяются; тест нужно восстановить для `core/database`.
+  Локальное хранилище feature/favorites/data (`createFavoritesRepository`, `FavoritesStorage`) теперь
+  не подключено в production, оставлено вместе со своими тестами.
+- C2. Удалено расширение `AuthRepository.signInWithApple` и `AppleLoginFlowTest` (8): все сценарии
+  (challenge → нативный токен → обмен, стадии `[ASI-CH]`/`[ASI-X]`, отмена, повтор) покрыты
+  `AppleSignInViewModelTest` и `AuthRepositoryImplTest` (feature/auth). `AppleAuth`/`AppleSignInButton`
+  (expect) остаются.
+- Поправка к плану C: в `feature/auth` выход уже есть и называется `signOut`
+  (`AuthRepositoryImplTest`: локальная очистка первой, серверный выход best-effort, ошибка очистки
+  возвращается). Шаг C3 сводится к переключению `AppProfileSignOut` с легаси `AuthRepository.logout()`
+  на него, а не к новой функции.
+- Проверено (код выхода Gradle из файла = 0, 0 ошибок): Direct/Play unit, lintDirectDebug,
+  assemble Direct/Sandbox, DEX и isolation, iOS Arm64 compile, simulator test-compile, framework link.
