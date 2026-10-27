@@ -2,7 +2,10 @@ package com.coffeepeek.admin.di.favorites
 
 import com.coffeepeek.admin.di.shop.CheckInTestSessions
 import com.coffeepeek.admin.feature.favorites.api.RoasterFavorites
-import com.coffeepeek.domain.feature.favorites.api.*
+import com.coffeepeek.feature.favorites.domain.model.FavoriteAddress
+import com.coffeepeek.feature.favorites.domain.model.FavoriteEntry
+import com.coffeepeek.feature.favorites.domain.model.FavoriteKind
+import com.coffeepeek.feature.favorites.domain.repository.AccountFavorites
 import com.coffeepeek.domain.model.*
 import com.coffeepeek.feature.favorites.domain.model.FavoriteShop
 import com.coffeepeek.feature.shop.api.PublicShopSummary
@@ -13,10 +16,10 @@ import kotlin.test.*
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class ServerFavoriteBridgesTest {
-    private val address = PublicAddress("canonical", "/coffee-shop/canonical", 1, false)
+    private val address = FavoriteAddress("canonical", "/coffee-shop/canonical", 1, false)
     private fun entry(kind: FavoriteKind = FavoriteKind.CoffeeShop) =
         FavoriteEntry(kind, address, name = "Server name", coverPhotoUrl = "https://fixture.invalid/cover")
-    private class Server : FavoritesRepository {
+    private class Server : AccountFavorites {
         val state = MutableStateFlow(Result.success(emptyList<FavoriteEntry>()))
         val writes = mutableListOf<Pair<FavoriteEntry, Boolean>>()
         var reads = 0
@@ -29,8 +32,6 @@ class ServerFavoriteBridgesTest {
         override suspend fun getFavorites(refresh: Boolean): Result<List<FavoriteEntry>> {
             reads++; return state.value.also { afterRead() }
         }
-        override suspend fun setFavorite(kind: FavoriteKind, address: PublicAddress, favorite: Boolean) =
-            setFavorite(FavoriteEntry(kind, address), favorite)
         override suspend fun setFavorite(entry: FavoriteEntry, favorite: Boolean): Result<Unit> {
             writes += entry to favorite
             return Result.success(Unit)

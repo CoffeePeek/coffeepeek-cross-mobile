@@ -1,6 +1,11 @@
 package com.coffeepeek.admin.di.favorites
 
+
+import com.coffeepeek.api.CoffeePeekClient
+import com.coffeepeek.domain.feature.favorites.api.FavoritesRepository as LegacyFavorites
 import com.coffeepeek.feature.favorites.api.FavoritesEntry
+import com.coffeepeek.feature.favorites.data.repository.createAccountFavorites
+import com.coffeepeek.feature.favorites.domain.repository.AccountFavorites
 import com.coffeepeek.feature.favorites.domain.repository.FavoriteDrinksRepository
 import com.coffeepeek.feature.favorites.domain.repository.FavoriteRoastersRepository
 import com.coffeepeek.feature.favorites.domain.usecase.ObserveFavoriteIdsUseCase
@@ -10,6 +15,8 @@ import org.koin.dsl.module
 
 /** Both platforms adapt the existing server source; local storage is never registered here. */
 internal fun serverFavoritesModule() = module {
+    single<AccountFavorites> { createAccountFavorites(get<CoffeePeekClient>().client, get()) }
+    single<LegacyFavorites> { LegacyAccountFavorites(get()) }
     includes(serverFavoriteShopsModule())
     factory { ObserveFavoriteIdsUseCase(get()) }
     single<FavoriteRoastersRepository> {

@@ -2,7 +2,7 @@ package com.coffeepeek.admin.session
 
 import com.coffeepeek.core.session.SessionStore
 import com.coffeepeek.data.session.LocalUserDataCleanup
-import com.coffeepeek.domain.feature.favorites.api.FavoritesRepository
+import com.coffeepeek.feature.favorites.domain.repository.AccountFavorites
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.withContext
 import org.koin.dsl.module
@@ -35,7 +35,7 @@ internal fun sessionCleanupModule(httpCacheFolderPath: String, appCacheRootPath:
     single {
         UserSessionCleaner(
             sessions = get<SessionStore>(),
-            clearFavoritesCache = { get<FavoritesRepository>().clearCache() },
+            clearFavoritesCache = { get<AccountFavorites>().clearCache() },
             clearCaches = platformCacheClearing(httpCacheFolderPath, appCacheRootPath),
         )
     }

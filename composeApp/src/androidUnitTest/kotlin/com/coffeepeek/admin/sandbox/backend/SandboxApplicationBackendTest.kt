@@ -18,7 +18,10 @@ import com.coffeepeek.admin.di.appupdate.AppConfigUpdateEnvironment
 import com.coffeepeek.admin.di.appupdate.SettingsDismissedUpdateStore
 import com.coffeepeek.feature.appupdate.data.AppUpdateRepositoryImpl
 import com.coffeepeek.api.CoffeePeekClient
-import com.coffeepeek.api.feature.favorites.FavoritesApiService
+import com.coffeepeek.feature.favorites.data.repository.createAccountFavorites
+import com.coffeepeek.feature.favorites.domain.model.FavoriteAddress
+import com.coffeepeek.feature.favorites.domain.model.FavoriteEntry
+import com.coffeepeek.feature.favorites.domain.model.FavoriteKind
 import com.coffeepeek.api.feature.feed.FeedApiService
 import com.coffeepeek.api.service.*
 import com.coffeepeek.api.model.request.*
@@ -80,6 +83,10 @@ private class LocalSession : SessionStore {
     override fun observeSession() = current.asStateFlow()
     override suspend fun isLoggedIn() = current.value != null
 }
+
+private fun accountFavorites(client: CoffeePeekClient) = createAccountFavorites(client.client, LocalSession())
+private fun shopEntry(slug: String) =
+    FavoriteEntry(FavoriteKind.CoffeeShop, FavoriteAddress(slug, "/coffee-shops/$slug", 1, false))
 
 class SandboxApplicationBackendTest {
     @get:Rule val temporary = TemporaryFolder()
@@ -206,13 +213,15 @@ class SandboxApplicationBackendTest {
     } }
 
     @Test fun favoritesMutationsRoundTripThroughActualApiAndRemainLocal() = runTest { fixture { _, client ->
-        val favorites = FavoritesApiService(client.client)
-        assertEquals(3, favorites.getFavorites().getOrThrow().size)
-        favorites.setFavorite("coffee_shop", "sandbox-cafe", false).getOrThrow()
-        assertEquals(2, favorites.getFavorites().getOrThrow().size)
+        val favorites = createAccountFavorites(client.client, LocalSession())
+        val saved = favorites.getFavorites(refresh = true).getOrThrow()
+        assertEquals(3, saved.size)
+        val cafe = saved.first { it.slug == "sandbox-cafe" }
+        favorites.setFavorite(cafe, false).getOrThrow()
+        assertEquals(2, favorites.getFavorites(refresh = true).getOrThrow().size)
         assertFalse(ShopApiService(client.client).getShopDetails("sandbox-cafe").getOrThrow().isFavorite)
-        favorites.setFavorite("coffee_shop", "sandbox-cafe", true).getOrThrow()
-        assertEquals(3, favorites.getFavorites().getOrThrow().size)
+        favorites.setFavorite(cafe, true).getOrThrow()
+        assertEquals(3, favorites.getFavorites(refresh = true).getOrThrow().size)
     } }
 
     @Test fun profileChangesPersistInFakeBackendAndResetRestoresFixtures() = runTest { fixture { backend, client ->
@@ -264,7 +273,7 @@ class SandboxApplicationBackendTest {
         val filters = ShopSearchFiltersDto(ShopSearchOriginDto(53.9, 27.56), favoritesOnly = true)
         val request = ShopSearchRequestDto(filters, page = 1, pageSize = 20)
         assertEquals("Sandbox Cafe", api.searchShops(request).getOrThrow().items.single().name)
-        FavoritesApiService(client.client).setFavorite("coffee_shop", "sandbox-cafe", false).getOrThrow()
+        accountFavorites(client).setFavorite(shopEntry("sandbox-cafe"), false).getOrThrow()
         assertTrue(api.searchShops(request).getOrThrow().items.isEmpty())
         assertEquals("Sandbox Lab", api.searchShops(request.copy(filters = filters.copy(favoritesOnly = false, isNew = true))).getOrThrow().items.single().name)
     } }
@@ -287,10 +296,10 @@ class SandboxApplicationBackendTest {
     @Test fun writeErrorScenarioDoesNotChangeProfileFavoritesOrVisits() = runTest { fixture { backend, client ->
         backend.scenario = SandboxScenario.SaveError
         assertTrue(UserApiService(client.client).updateAbout("Rejected").isFailure)
-        assertTrue(FavoritesApiService(client.client).setFavorite("coffee_shop", "sandbox-cafe", false).isFailure)
+        assertTrue(accountFavorites(client).setFavorite(shopEntry("sandbox-cafe"), false).isFailure)
         backend.scenario = SandboxScenario.Ready
         assertNotEquals("Rejected", UserApiService(client.client).getMe().getOrThrow().about)
-        assertEquals(3, FavoritesApiService(client.client).getFavorites().getOrThrow().size)
+        assertEquals(3, accountFavorites(client).getFavorites(refresh = true).getOrThrow().size)
     } }
 
     @Test fun helpfulVotesDecodeRemainIdempotentAndPersistAcrossReads() = runTest { fixture { _, client ->
@@ -384,7 +393,7 @@ class SandboxApplicationBackendTest {
         backend.reset(false)
         assertTrue(ShopApiService(client.client).searchShops().getOrThrow().items.isEmpty())
         assertTrue(FeedApiService(client.client).getFeed(20).getOrThrow().items.isEmpty())
-        assertTrue(FavoritesApiService(client.client).getFavorites().getOrThrow().isEmpty())
+        assertTrue(accountFavorites(client).getFavorites(refresh = true).getOrThrow().isEmpty())
     } }
 
     private val friend = SandboxApplicationBackend.FRIEND_ID
@@ -799,7 +808,7 @@ class SandboxApplicationBackendTest {
         val tenPerPage = shops.searchShops(nearby(radiusKm = 3, pageSize = 10)).getOrThrow()
         assertEquals((near.totalItems + 9) / 10, tenPerPage.totalPages); assertEquals(minOf(10, near.totalItems), tenPerPage.items.size)
         assertEquals("Sandbox Cafe", shops.searchShops(nearby(radiusKm = 3, favoritesOnly = true)).getOrThrow().items.single().name)
-        FavoritesApiService(client.client).setFavorite("coffee_shop", "discovery-3", true).getOrThrow()
+        accountFavorites(client).setFavorite(shopEntry("discovery-3"), true).getOrThrow()
         assertEquals(2, shops.searchShops(nearby(radiusKm = 3, favoritesOnly = true)).getOrThrow().items.size)
 
         // The map: shops by bounds and filters, zones inside the bounds, no clusters, nothing truncated.

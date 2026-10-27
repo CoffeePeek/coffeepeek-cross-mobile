@@ -1401,3 +1401,33 @@ source `89778c23` + этот срез. Подробный scope/остаток �
   `DisplayPhotoTransparencyTest`).
 - Осталось в C: C6 (refresh токена, `CoffeePeekClient`/`AuthService` → порт в `core/network`),
   C7 (серверное избранное `ServerFavoritesRepository`).
+
+## L3, срез C7 — серверное избранное принадлежит `feature/favorites` — 2026-10-27
+
+- `feature/favorites/domain`: `FavoriteKind`, `FavoriteAddress`, `FavoriteEntry`, порт `AccountFavorites`.
+  `feature/favorites/data`: бэкенд `/api/v1/favorites` (свои DTO, GET список, PUT/DELETE по виду и
+  экранированному slug, 204 без тела) и `RemoteAccountFavorites` (логика перенесена без изменений:
+  кэш по аккаунту, мьютекс, отмена при смене аккаунта, неудачное обновление не стирает
+  подтверждённое), фабрика `createAccountFavorites(client, sessions)`; `feature/favorites/data` теперь
+  зависит от `core/network` и `core/session`.
+- Тесты: `FavoritesBackendContractTest` (4, перенесены из `modules/network`) и
+  `AccountFavoritesTest` (перенесены из `modules/data`: смена аккаунта, наблюдатели, сбой/повтор
+  записи, параллельные правки, гость, поздний ответ старого аккаунта, напитки и записи без адреса;
+  плюс два новых: запасной путь обложки на `fullUrl`, неизвестные виды и запись без адреса).
+- composeApp: адаптеры (`ServerFavoriteShopsRepository`, `ServerFavoriteDrinksRepository`,
+  `ServerRoasterFavorites`), `UserSessionCleaner` и граф используют `AccountFavorites`; Sandbox-тест
+  читает избранное через `createAccountFavorites`. `serverFavoritesModule` привязывает
+  `AccountFavorites` для обеих платформ; зависимость `feature.favorites.data` перенесена из
+  `androidMain` в `commonMain` (иначе iOS не собирался).
+- Для оставшейся легаси-цепочки (`FavoriteRepositoryImpl` → `ShopRepositoryImpl`, `FavoritesViewModel`)
+  добавлен мост `LegacyAccountFavorites` (легаси контракт поверх `AccountFavorites`); убрать вместе с
+  этими классами. Теперь `FavoriteRepositoryImplTest` в `modules/data` проверяет адаптер на фейке.
+- Удалено: `ServerFavoritesRepository` + тест (`modules/data`), `FavoritesApiService` + DTO + контрактный
+  тест (`modules/network`), `favoritesApiService` в `CoffeePeekRepo`, биндинг в `dataModule`;
+  охранный список DEX-классов обновлён (`RemoteAccountFavorites`, `LegacyAccountFavorites`).
+- Проверено (код выхода Gradle из файла = 0, 0 ошибок): Direct/Play unit, modules/data и network unit,
+  feature/favorites/data unit, lintDirectDebug, assemble Direct/Sandbox, DEX и isolation, iOS Arm64
+  compile, simulator test-compile, framework link, favorites/data iOS compile. По пути два красных
+  прогона (iOS-зависимость и фейк в `DiscoveryAdaptersTest`) исправлены. Ручная проверка избранного не
+  выполнялась.
+- Осталось в C: C6 (refresh токена: `CoffeePeekClient`/`AuthService` → порт в `core/network`).

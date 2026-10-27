@@ -4,7 +4,12 @@ import com.coffeepeek.data.repository.FavoriteRepositoryImpl
 import com.coffeepeek.core.session.InMemorySessionSecureStore
 import com.coffeepeek.core.session.SessionSecureStore
 import org.koin.dsl.module
+import com.coffeepeek.domain.feature.favorites.api.FavoriteEntry
+import com.coffeepeek.domain.feature.favorites.api.FavoriteKind
+import com.coffeepeek.domain.feature.favorites.api.FavoritesRepository
+import com.coffeepeek.domain.model.PublicAddress
 import com.coffeepeek.domain.repository.FavoriteRepository
+import kotlinx.coroutines.flow.Flow
 import com.coffeepeek.room.DatabaseCore
 import com.coffeepeek.room.model.Setting
 import com.coffeepeek.room.repository.SettingRepository
@@ -32,6 +37,8 @@ class DataModuleFavoritesTest {
                 // The legacy favorite writer now resolves session identity as production does.
                 // This isolated JVM graph supplies a test store rather than an Android Context.
                 single<SessionSecureStore> { InMemorySessionSecureStore() }
+                // The account favorites are provided by the application, not by this module.
+                single<FavoritesRepository> { UnusedAccountFavorites }
             })
         }
         try {
@@ -47,4 +54,11 @@ class DataModuleFavoritesTest {
             assertNull(app.koin.getOrNull<FavoriteRepository>())
         } finally { app.close() }
     }
+}
+
+private object UnusedAccountFavorites : FavoritesRepository {
+    override fun observeFavorites(): Flow<Result<List<FavoriteEntry>>> = error("unused")
+    override suspend fun getFavorites(refresh: Boolean): Result<List<FavoriteEntry>> = error("unused")
+    override suspend fun setFavorite(kind: FavoriteKind, address: PublicAddress, favorite: Boolean): Result<Unit> = error("unused")
+    override fun clearCache() = Unit
 }

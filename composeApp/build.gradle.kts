@@ -49,7 +49,6 @@ kotlin {
 
     sourceSets {
         androidMain.dependencies {
-            implementation(project(module.feature.favorites.data))
             implementation(project(module.core.coroutines))
             implementation(libs.androidx.activity.compose)
             implementation(libs.androidx.concurrent.futures)
@@ -122,6 +121,7 @@ kotlin {
             implementation(project(module.feature.discovery.api))
             implementation(project(module.feature.discovery.domain))
             implementation(project(module.feature.discovery.data))
+            implementation(project(module.feature.favorites.data))
             implementation(project(module.feature.discovery.impl))
             implementation(project(module.feature.coffee.api))
             implementation(project(module.feature.coffee.domain))
@@ -492,7 +492,8 @@ androidComponents {
                 "com.coffeepeek.feature.profile.impl.EditProfileEntryImplKt",
                 "com.coffeepeek.feature.roaster.impl.RoasterEntryImplsKt",
                 "com.coffeepeek.feature.roaster.data.repository.RoasterRepositoryFactoryKt",
-                "com.coffeepeek.data.feature.favorites.ServerFavoritesRepository",
+                "com.coffeepeek.feature.favorites.data.repository.RemoteAccountFavorites",
+                "com.coffeepeek.admin.di.favorites.LegacyAccountFavorites",
                 "com.coffeepeek.admin.di.favorites.ServerFavoriteShopsRepository",
                 "com.coffeepeek.admin.di.favorites.ServerFavoriteDrinksRepository",
                 "com.coffeepeek.admin.di.shop.ShopCheckInModuleKt",

@@ -5,7 +5,10 @@ import com.coffeepeek.admin.feature.favorites.data.ServerRoasterFavorites
 import com.coffeepeek.admin.session.ReadOnlySessions
 import com.coffeepeek.core.session.SessionReader
 import com.coffeepeek.core.session.Session
-import com.coffeepeek.domain.feature.favorites.api.*
+import com.coffeepeek.feature.favorites.domain.model.FavoriteAddress
+import com.coffeepeek.feature.favorites.domain.model.FavoriteEntry
+import com.coffeepeek.feature.favorites.domain.model.FavoriteKind
+import com.coffeepeek.feature.favorites.domain.repository.AccountFavorites
 import com.coffeepeek.domain.model.*
 import com.coffeepeek.domain.repository.RoasterRepository
 import com.coffeepeek.feature.shop.api.PublicShopDetails
@@ -33,7 +36,7 @@ internal class ServerFavoritesGraphFixture {
 
     private fun dependencies() = module {
         single<SessionReader> { sessions }
-        single<FavoritesRepository> { server }
+        single<AccountFavorites> { server }
         single<RoasterRepository> { catalogs }
         single<PublicRoasterDetails> { FavoriteGraphPublicRoasters(catalogs) }
         single<PublicShopDetails> { FavoriteGraphPublicShops(catalogs) }
@@ -43,8 +46,8 @@ internal class ServerFavoritesGraphFixture {
     fun close() = graph.close()
 }
 
-internal class FavoriteGraphServer : FavoritesRepository {
-    private val address = PublicAddress("canonical", "/coffee-shop/canonical", 1, false)
+internal class FavoriteGraphServer : AccountFavorites {
+    private val address = FavoriteAddress("canonical", "/coffee-shop/canonical", 1, false)
     val state = MutableStateFlow(Result.success(listOf(
         FavoriteEntry(FavoriteKind.CoffeeShop, address, name = "Shop"),
         FavoriteEntry(FavoriteKind.Roaster, address.copy(slug = "roast", canonicalPath = "/roasters/roast"),
@@ -62,9 +65,6 @@ internal class FavoriteGraphServer : FavoritesRepository {
         reads++
         afterRead()
     }
-
-    override suspend fun setFavorite(kind: FavoriteKind, address: PublicAddress, favorite: Boolean) =
-        setFavorite(FavoriteEntry(kind, address), favorite)
 
     override suspend fun setFavorite(entry: FavoriteEntry, favorite: Boolean): Result<Unit> {
         writes += Triple(entry.kind, entry.address?.slug ?: entry.drinkSlug, favorite)

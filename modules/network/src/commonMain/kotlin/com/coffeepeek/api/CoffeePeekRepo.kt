@@ -8,7 +8,6 @@ class CoffeePeekRepo(httpClient: CoffeePeekClient) {
     private val client = httpClient.client
 
     val shopApiService = com.coffeepeek.api.service.ShopApiService(client)
-    val favoritesApiService = com.coffeepeek.api.feature.favorites.FavoritesApiService(client)
     val userApiService = UserApiService(client)
     val photoApiService = com.coffeepeek.api.service.PhotoApiService(client, httpClient.uploadClient)
     val reviewApiService = com.coffeepeek.api.service.ReviewApiService(client)

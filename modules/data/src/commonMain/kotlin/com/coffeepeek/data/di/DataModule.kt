@@ -87,7 +87,6 @@ fun dataModule(
     single { CoffeePeekRepo(get()) }
     single { get<CoffeePeekRepo>().authService }
     single { get<CoffeePeekRepo>().shopApiService }
-    single { get<CoffeePeekRepo>().favoritesApiService }
     single { get<CoffeePeekRepo>().userApiService }
     single { get<CoffeePeekRepo>().photoApiService }
     single { get<CoffeePeekRepo>().reviewApiService }
@@ -98,9 +97,6 @@ fun dataModule(
     single { get<CoffeePeekRepo>().shopChangeRequestApiService }
     single<PhotoRepository> { PhotoRepositoryImpl(get()) }
     single<AuthRepository> { AuthRepositoryImpl(get(), get(), get<LocalUserDataCleanup>()) }
-    single<com.coffeepeek.domain.feature.favorites.api.FavoritesRepository> {
-        com.coffeepeek.data.feature.favorites.ServerFavoritesRepository(get(), get())
-    }
     if (registerLegacyFavorites) {
         single<FavoriteRepository> { FavoriteRepositoryImpl(get(), get(), get(), get()) }
     }

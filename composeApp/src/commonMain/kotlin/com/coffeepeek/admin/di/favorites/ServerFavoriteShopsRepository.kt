@@ -2,10 +2,10 @@ package com.coffeepeek.admin.di.favorites
 
 import com.coffeepeek.admin.analytics.Entity
 
-import com.coffeepeek.domain.feature.favorites.api.FavoriteEntry
-import com.coffeepeek.domain.feature.favorites.api.FavoriteKind
-import com.coffeepeek.domain.feature.favorites.api.FavoritesRepository as ServerFavorites
-import com.coffeepeek.domain.model.PublicAddress
+import com.coffeepeek.feature.favorites.domain.model.FavoriteAddress
+import com.coffeepeek.feature.favorites.domain.model.FavoriteEntry
+import com.coffeepeek.feature.favorites.domain.model.FavoriteKind
+import com.coffeepeek.feature.favorites.domain.repository.AccountFavorites
 import com.coffeepeek.feature.shop.api.PublicShopSummary
 import com.coffeepeek.core.session.SessionReader
 import com.coffeepeek.feature.favorites.domain.model.FavoriteShop
@@ -18,7 +18,7 @@ import kotlinx.coroutines.sync.withPermit
 
 /** Shared application adapter; server membership is authoritative, never the old Room snapshots. */
 internal class ServerFavoriteShopsRepository(
-    private val server: ServerFavorites,
+    private val server: AccountFavorites,
     private val sessions: SessionReader,
     private val detail: suspend (String) -> Result<PublicShopSummary>,
 ) : FavoritesRepository {
@@ -60,7 +60,7 @@ internal class ServerFavoriteShopsRepository(
         val resolved = detail(shop.id).getOrThrow()
         requireOwner(account)
         require(resolved.slug.isNotBlank()) { "Shop has no public address" }
-        val address = PublicAddress(resolved.slug, resolved.canonicalPath.orEmpty(), resolved.revision, resolved.isAlias)
+        val address = FavoriteAddress(resolved.slug, resolved.canonicalPath.orEmpty(), resolved.revision, resolved.isAlias)
         server.setFavorite(FavoriteEntry(FavoriteKind.CoffeeShop, address,
             name = resolved.title, coverPhotoUrl = resolved.photoUrl), true).getOrThrow()
         requireOwner(account)

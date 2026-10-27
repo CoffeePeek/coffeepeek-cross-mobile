@@ -1,9 +1,11 @@
 package com.coffeepeek.admin.feature.favorites
 
 import com.coffeepeek.admin.feature.favorites.data.ServerRoasterFavorites
-import com.coffeepeek.domain.feature.favorites.api.FavoriteEntry
-import com.coffeepeek.domain.feature.favorites.api.FavoriteKind
-import com.coffeepeek.domain.feature.favorites.api.FavoritesRepository
+import com.coffeepeek.admin.di.favorites.toFavoriteAddress
+import com.coffeepeek.admin.di.favorites.toPublicAddress
+import com.coffeepeek.feature.favorites.domain.model.FavoriteEntry
+import com.coffeepeek.feature.favorites.domain.model.FavoriteKind
+import com.coffeepeek.feature.favorites.domain.repository.AccountFavorites
 import com.coffeepeek.domain.model.*
 import com.coffeepeek.domain.repository.RoasterRepository
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -31,7 +33,7 @@ class ServerRoasterFavoritesTest {
         try {
             assertTrue(withTimeout(2_000) { updates.receive() }.isEmpty())
             assertEquals("Не удалось загрузить избранных обжарщиков", favorites.observeErrors().first())
-            state.value.value = Result.success(listOf(FavoriteEntry(FavoriteKind.Roaster, address)))
+            state.value.value = Result.success(listOf(FavoriteEntry(FavoriteKind.Roaster, address.toFavoriteAddress())))
             assertEquals("Roast", withTimeout(2_000) { updates.receive() }.single().name)
             assertEquals(null, favorites.observeErrors().first())
         } finally {
@@ -43,7 +45,7 @@ class ServerRoasterFavoritesTest {
     @Test fun hydratesOnlyServerSavedRoastersAndMutatesByTheirPublicAddress() = runBlocking {
         val state = FavoriteEntries()
         val address = PublicAddress("public-roast", "/roasters/public-roast", 1, false)
-        state.value.value = Result.success(listOf(FavoriteEntry(FavoriteKind.Roaster, address), FavoriteEntry(FavoriteKind.CoffeeShop, address)))
+        state.value.value = Result.success(listOf(FavoriteEntry(FavoriteKind.Roaster, address.toFavoriteAddress()), FavoriteEntry(FavoriteKind.CoffeeShop, address.toFavoriteAddress())))
         val roasters = roasters(listOf(RoasterSummary(address, "Roast", photoUrl = "photo.png", coffeeShopsCount = 7)))
         val favorites = ServerRoasterFavorites(state, roasters)
         val saved = favorites.observeFavorites().first().single()
@@ -59,7 +61,7 @@ class ServerRoasterFavoritesTest {
     @Test fun preservesRemovablePublicAddressWhenCatalogMetadataIsUnavailable() = runBlocking {
         val state = FavoriteEntries()
         val address = PublicAddress("retired-roast", "/roasters/retired-roast", 1, false)
-        state.value.value = Result.success(listOf(FavoriteEntry(FavoriteKind.Roaster, address)))
+        state.value.value = Result.success(listOf(FavoriteEntry(FavoriteKind.Roaster, address.toFavoriteAddress())))
         val saved = ServerRoasterFavorites(state, roasters(emptyList())).observeFavorites().first().single()
         assertEquals("retired-roast", saved.name)
         assertEquals(address, saved.address)
@@ -84,13 +86,13 @@ class ServerRoasterFavoritesTest {
     }
 }
 
-private class FavoriteEntries : FavoritesRepository {
+private class FavoriteEntries : AccountFavorites {
     val value = MutableStateFlow<Result<List<FavoriteEntry>>>(Result.success(emptyList()))
     var lastMutation: Triple<FavoriteKind, PublicAddress, Boolean>? = null
     override fun observeFavorites() = value
     override suspend fun getFavorites(refresh: Boolean) = value.value
-    override suspend fun setFavorite(kind: FavoriteKind, address: PublicAddress, favorite: Boolean): Result<Unit> {
-        lastMutation = Triple(kind, address, favorite)
+    override suspend fun setFavorite(entry: FavoriteEntry, favorite: Boolean): Result<Unit> {
+        lastMutation = Triple(entry.kind, entry.address!!.toPublicAddress(), favorite)
         return Result.success(Unit)
     }
     override fun clearCache() = Unit

@@ -1,13 +1,13 @@
-package com.coffeepeek.data.feature.favorites
+package com.coffeepeek.feature.favorites.data.repository
 
-import com.coffeepeek.api.feature.favorites.FavoritesApiService
-import com.coffeepeek.api.model.response.shop.variantOr
-import com.coffeepeek.data.mapper.toDomain
-import com.coffeepeek.domain.feature.favorites.api.FavoriteEntry
-import com.coffeepeek.domain.feature.favorites.api.FavoriteKind
-import com.coffeepeek.domain.feature.favorites.api.FavoritesRepository
-import com.coffeepeek.domain.model.PublicAddress
 import com.coffeepeek.core.session.SessionStore
+import com.coffeepeek.feature.favorites.data.backend.FavoriteEntryDto
+import com.coffeepeek.feature.favorites.data.backend.FavoritesBackend
+import com.coffeepeek.feature.favorites.domain.model.FavoriteAddress
+import com.coffeepeek.feature.favorites.domain.model.FavoriteEntry
+import com.coffeepeek.feature.favorites.domain.model.FavoriteKind
+import com.coffeepeek.feature.favorites.domain.repository.AccountFavorites
+import io.ktor.client.HttpClient
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.currentCoroutineContext
@@ -24,10 +24,14 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
-class ServerFavoritesRepository(
-    private val api: FavoritesApiService,
+/** [client] is the authenticated API client; the account is the active session's user id, else its token. */
+fun createAccountFavorites(client: HttpClient, sessions: SessionStore): AccountFavorites =
+    RemoteAccountFavorites(FavoritesBackend(client), sessions)
+
+internal class RemoteAccountFavorites(
+    private val api: FavoritesBackend,
     private val sessions: SessionStore,
-) : FavoritesRepository {
+) : AccountFavorites {
     private data class Cache(val account: String?, val result: Result<List<FavoriteEntry>>? = null)
     private val cache = MutableStateFlow(Cache(null))
     private val mutex = Mutex()
@@ -49,9 +53,6 @@ class ServerFavoritesRepository(
         val account = activeAccount() ?: return@result emptyList()
         mutex.withLock { load(account, refresh) }
     }
-
-    override suspend fun setFavorite(kind: FavoriteKind, address: PublicAddress, favorite: Boolean): Result<Unit> =
-        setFavorite(FavoriteEntry(kind, address), favorite)
 
     override suspend fun setFavorite(entry: FavoriteEntry, favorite: Boolean): Result<Unit> = result {
         val account = checkNotNull(activeAccount()) { "Войдите в аккаунт, чтобы сохранять избранное" }
@@ -75,20 +76,7 @@ class ServerFavoritesRepository(
         val saved = cache.value.takeIf { it.account == account }?.result?.getOrNull()
         if (!refresh && saved != null) return saved
         try {
-            val items = api.getFavorites().getOrThrow().mapIndexedNotNull { index, dto ->
-                val kind = when (dto.kind) {
-                    "coffee_shop" -> FavoriteKind.CoffeeShop
-                    "roaster" -> FavoriteKind.Roaster
-                    "drink" -> FavoriteKind.Drink
-                    else -> return@mapIndexedNotNull null
-                }
-                FavoriteEntry(
-                    kind = kind, address = dto.address?.toDomain(), drinkSlug = dto.drink?.slug,
-                    name = dto.name, createdAtUtc = dto.createdAtUtc,
-                    coverPhotoUrl = dto.coverPhoto?.let { it.urls.variantOr(it.fullUrl) { urls -> urls.card } },
-                    occurrence = index,
-                )
-            }.distinctBy { it.id }
+            val items = api.getFavorites().getOrThrow().mapIndexedNotNull { index, dto -> dto.toEntry(index) }.distinctBy { it.id }
             currentCoroutineContext().ensureActive()
             requireAccount(account)
             cache.value = Cache(account, Result.success(items))
@@ -114,6 +102,22 @@ class ServerFavoritesRepository(
     private fun requireAccount(expected: String) {
         if (account() != expected) throw CancellationException("Favorites account changed")
     }
+}
+
+private fun FavoriteEntryDto.toEntry(index: Int): FavoriteEntry? {
+    val kind = when (kind) {
+        "coffee_shop" -> FavoriteKind.CoffeeShop
+        "roaster" -> FavoriteKind.Roaster
+        "drink" -> FavoriteKind.Drink
+        else -> return null
+    }
+    return FavoriteEntry(
+        kind = kind,
+        address = address?.let { FavoriteAddress(it.slug, it.canonicalPath, it.revision, it.isAlias) },
+        drinkSlug = drink?.slug, name = name, createdAtUtc = createdAtUtc,
+        coverPhotoUrl = coverPhoto?.let { photo -> photo.urls?.card?.takeIf(String::isNotBlank) ?: photo.fullUrl?.takeIf(String::isNotBlank) },
+        occurrence = index,
+    )
 }
 
 private val FavoriteKind.apiValue: String get() = when (this) {

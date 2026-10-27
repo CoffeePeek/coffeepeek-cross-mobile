@@ -1,28 +1,23 @@
-package com.coffeepeek.data.feature.favorites
+package com.coffeepeek.feature.favorites.data.repository
 
-import com.coffeepeek.api.feature.favorites.FavoriteEntryDto
-import com.coffeepeek.api.feature.favorites.FavoriteDrinkDto
-import com.coffeepeek.api.feature.favorites.FavoritesApiService
-import com.coffeepeek.api.model.ApiResponse
-import com.coffeepeek.api.model.PublicAddressDto
-import com.coffeepeek.api.model.response.shop.ShortPhotoMetadataDto
-import com.coffeepeek.api.model.response.shop.PhotoUrlsDto
-import com.coffeepeek.api.service.ShopApiService
-import com.coffeepeek.data.repository.FavoriteRepositoryImpl
-import com.coffeepeek.data.util.FileUrlResolver
-import com.coffeepeek.domain.feature.favorites.api.FavoriteKind
-import com.coffeepeek.domain.model.PublicAddress
-import com.coffeepeek.domain.model.Session
+import com.coffeepeek.core.network.ApiEnvelope
+import com.coffeepeek.core.network.HttpClientFactory
+import com.coffeepeek.core.session.Session
 import com.coffeepeek.core.session.SessionStore
-import io.ktor.client.HttpClient
+import com.coffeepeek.feature.favorites.data.backend.FavoriteAddressDto
+import com.coffeepeek.feature.favorites.data.backend.FavoriteDrinkDto
+import com.coffeepeek.feature.favorites.data.backend.FavoriteEntryDto
+import com.coffeepeek.feature.favorites.data.backend.FavoritePhotoDto
+import com.coffeepeek.feature.favorites.data.backend.FavoritePhotoUrlsDto
+import com.coffeepeek.feature.favorites.domain.model.FavoriteAddress
+import com.coffeepeek.feature.favorites.domain.model.FavoriteEntry
+import com.coffeepeek.feature.favorites.domain.model.FavoriteKind
 import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.respond
-import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpMethod
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.headersOf
-import io.ktor.serialization.kotlinx.json.json
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineStart
@@ -39,16 +34,16 @@ import kotlinx.serialization.json.Json
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
-import kotlin.test.assertTrue
 import kotlin.test.assertNull
+import kotlin.test.assertTrue
 
-class ServerFavoritesRepositoryTest {
+class AccountFavoritesTest {
     @Test fun observersClearPreviousAccountsListBeforeLoadingTheNextAccountsFavorites() = runBlocking {
         val server = FavoriteServer()
         val updates = Channel<List<String>>(Channel.UNLIMITED)
         try {
             val repository = server.repository()
-            repository.setFavorite(FavoriteKind.Roaster, address("alice-roast"), true).getOrThrow()
+            repository.setFavorite(roaster("alice-roast"), true).getOrThrow()
             val observer = launch(start = CoroutineStart.UNDISPATCHED) {
                 repository.observeFavorites().collect { result -> updates.send(result.getOrThrow().mapNotNull { it.slug }) }
             }
@@ -57,7 +52,7 @@ class ServerFavoritesRepositoryTest {
                 assertEquals(listOf("alice-roast"), withTimeout(2_000) { updates.receive() })
                 server.sessions.signIn("bob")
                 assertTrue(withTimeout(2_000) { updates.receive() }.isEmpty())
-                repository.setFavorite(FavoriteKind.Roaster, address("bob-roast"), true).getOrThrow()
+                repository.setFavorite(roaster("bob-roast"), true).getOrThrow()
                 assertEquals(listOf("bob-roast"), withTimeout(2_000) { updates.receive() })
                 server.sessions.signIn(null)
                 assertTrue(withTimeout(2_000) { updates.receive() }.isEmpty())
@@ -72,13 +67,13 @@ class ServerFavoritesRepositoryTest {
         val server = FavoriteServer()
         try {
             val repository = server.repository()
-            repository.setFavorite(FavoriteKind.CoffeeShop, address("shop"), true).getOrThrow()
-            repository.setFavorite(FavoriteKind.Roaster, address("roast"), true).getOrThrow()
+            repository.setFavorite(shop("shop"), true).getOrThrow()
+            repository.setFavorite(roaster("roast"), true).getOrThrow()
             assertEquals(setOf("shop", "roast"), server.repository().getFavorites().getOrThrow().map { it.slug }.toSet())
             repository.clearCache()
             assertEquals(2, repository.getFavorites().getOrThrow().size)
             assertTrue(server.methods.none { it == HttpMethod.Delete })
-            repository.setFavorite(FavoriteKind.Roaster, address("roast"), false).getOrThrow()
+            repository.setFavorite(roaster("roast"), false).getOrThrow()
             assertEquals(listOf("shop"), server.repository().getFavorites().getOrThrow().map { it.slug })
         } finally { server.client.close() }
     }
@@ -87,12 +82,12 @@ class ServerFavoritesRepositoryTest {
         val server = FavoriteServer()
         try {
             val repository = server.repository()
-            repository.setFavorite(FavoriteKind.Roaster, address("roast"), true).getOrThrow()
+            repository.setFavorite(roaster("roast"), true).getOrThrow()
             server.failMutations = true
-            assertTrue(repository.setFavorite(FavoriteKind.Roaster, address("roast"), false).isFailure)
+            assertTrue(repository.setFavorite(roaster("roast"), false).isFailure)
             assertEquals(listOf("roast"), repository.getFavorites().getOrThrow().map { it.slug })
             server.failMutations = false
-            repository.setFavorite(FavoriteKind.Roaster, address("roast"), false).getOrThrow()
+            repository.setFavorite(roaster("roast"), false).getOrThrow()
             assertTrue(repository.getFavorites().getOrThrow().isEmpty())
         } finally { server.client.close() }
     }
@@ -102,10 +97,10 @@ class ServerFavoritesRepositoryTest {
         try {
             val repository = server.repository()
             (0 until 12).map { index -> async {
-                repository.setFavorite(FavoriteKind.Roaster, address("roast-$index"), true).getOrThrow()
+                repository.setFavorite(roaster("roast-$index"), true).getOrThrow()
             } }.awaitAll()
-            repository.setFavorite(FavoriteKind.CoffeeShop, address("roast-0"), true).getOrThrow()
-            repository.setFavorite(FavoriteKind.Roaster, address("roast-0"), false).getOrThrow()
+            repository.setFavorite(shop("roast-0"), true).getOrThrow()
+            repository.setFavorite(roaster("roast-0"), false).getOrThrow()
             val saved = server.repository().getFavorites().getOrThrow()
             assertEquals(12, saved.size)
             assertEquals(FavoriteKind.CoffeeShop, saved.single { it.slug == "roast-0" }.kind)
@@ -116,14 +111,14 @@ class ServerFavoritesRepositoryTest {
         val server = FavoriteServer()
         try {
             val repository = server.repository()
-            repository.setFavorite(FavoriteKind.Roaster, address("alice-roast"), true).getOrThrow()
+            repository.setFavorite(roaster("alice-roast"), true).getOrThrow()
             server.sessions.signIn("bob")
             assertTrue(repository.getFavorites().getOrThrow().isEmpty())
-            repository.setFavorite(FavoriteKind.Roaster, address("bob-roast"), true).getOrThrow()
+            repository.setFavorite(roaster("bob-roast"), true).getOrThrow()
             server.sessions.signIn(null)
             val count = server.methods.size
             assertTrue(repository.getFavorites().getOrThrow().isEmpty())
-            assertTrue(repository.setFavorite(FavoriteKind.Roaster, address("guest"), true).isFailure)
+            assertTrue(repository.setFavorite(roaster("guest"), true).isFailure)
             assertEquals(count, server.methods.size)
             server.sessions.signIn("alice")
             assertEquals(listOf("alice-roast"), repository.getFavorites().getOrThrow().map { it.slug })
@@ -138,7 +133,7 @@ class ServerFavoritesRepositoryTest {
             val started = CompletableDeferred<Unit>()
             val release = CompletableDeferred<Unit>()
             server.beforeMutation = { started.complete(Unit); release.await() }
-            val mutation = async { repository.setFavorite(FavoriteKind.Roaster, address("alice-roast"), true) }
+            val mutation = async { repository.setFavorite(roaster("alice-roast"), true) }
             started.await()
             server.sessions.signIn("bob")
             release.complete(Unit)
@@ -149,15 +144,13 @@ class ServerFavoritesRepositoryTest {
         } finally { server.client.close() }
     }
 
-    private fun address(slug: String) = PublicAddress(slug, "/roasters/$slug", 1, false)
-
     @Test fun restoresDrinksAndUnaddressedObjectsWithoutKindCollisionsOrFakeAddresses() = runBlocking {
         val server = FavoriteServer()
         try {
-            val photo = ShortPhotoMetadataDto(fullUrl = "https://media.example/original.jpg", urls = PhotoUrlsDto(card = "https://media.example/card.jpg"))
+            val photo = FavoritePhotoDto(fullUrl = "https://media.example/original.jpg", urls = FavoritePhotoUrlsDto(card = "https://media.example/card.jpg"))
             server.seed(listOf(
-                FavoriteEntryDto("coffee_shop", PublicAddressDto("matcha_latte", "/coffee-shops/matcha_latte", 1, false), "2026-10-15T10:00:00Z", "Кофейня"),
-                FavoriteEntryDto("roaster", PublicAddressDto("matcha_latte", "/roasters/matcha_latte", 1, false), "2026-10-15T10:00:00Z", "Обжарщик"),
+                FavoriteEntryDto("coffee_shop", FavoriteAddressDto("matcha_latte", "/coffee-shops/matcha_latte", 1, false), "2026-10-15T10:00:00Z", "Кофейня"),
+                FavoriteEntryDto("roaster", FavoriteAddressDto("matcha_latte", "/roasters/matcha_latte", 1, false), "2026-10-15T10:00:00Z", "Обжарщик"),
                 FavoriteEntryDto("drink", null, "2026-10-15T10:00:00Z", "Матча латте", photo, FavoriteDrinkDto("matcha_latte")),
                 FavoriteEntryDto("coffee_shop", null, "2026-10-14T10:00:00Z", "Архивная кофейня"),
                 FavoriteEntryDto("coffee_shop", null, "2026-10-14T10:00:00Z", "Архивная кофейня"),
@@ -187,21 +180,38 @@ class ServerFavoritesRepositoryTest {
         } finally { server.client.close() }
     }
 
-    @Test fun shopAdapterRetainsServerNamesAndPhotosWhenDetailsOrPublicAddressAreUnavailable() = runBlocking {
+    @Test fun theCoverFallsBackToTheFullUrlWhenTheCardVariantIsBlank() = runBlocking {
         val server = FavoriteServer()
         try {
             server.seed(listOf(
-                FavoriteEntryDto("coffee_shop", PublicAddressDto("coffee", "/coffee-shops/coffee", 1, false), "2026-10-15T10:00:00Z", "Кофейня", ShortPhotoMetadataDto(fullUrl = "https://media.example/coffee.jpg")),
-                FavoriteEntryDto("coffee_shop", null, "2026-10-14T10:00:00Z", "Архивная кофейня"),
+                FavoriteEntryDto("coffee_shop", FavoriteAddressDto("a", "/a", 1, false), "2026-10-15T10:00:00Z", "A",
+                    FavoritePhotoDto(fullUrl = "https://media.example/a.jpg", urls = FavoritePhotoUrlsDto(card = " "))),
+                FavoriteEntryDto("coffee_shop", FavoriteAddressDto("b", "/b", 1, false), "2026-10-15T10:00:00Z", "B", FavoritePhotoDto()),
             ))
-            val adapter = FavoriteRepositoryImpl(server.repository(), ShopApiService(server.client), FileUrlResolver("https://api.example"), server.sessions)
-            val shops = adapter.getFavorites().getOrThrow()
-            assertEquals(listOf("Кофейня", "Архивная кофейня"), shops.map { it.shop.title })
-            assertEquals("https://media.example/coffee.jpg", shops.first().shop.photoUrl)
-            assertEquals("coffee", shops.first().shop.publicAddress?.slug)
-            assertNull(shops.last().shop.publicAddress)
+            val saved = server.repository().getFavorites().getOrThrow()
+            assertEquals("https://media.example/a.jpg", saved.single { it.slug == "a" }.coverPhotoUrl)
+            assertNull(saved.single { it.slug == "b" }.coverPhotoUrl)
         } finally { server.client.close() }
     }
+
+    @Test fun unknownKindsAreSkippedAndAnAddresslessMutationIsRejected() = runBlocking {
+        val server = FavoriteServer()
+        try {
+            server.seed(listOf(
+                FavoriteEntryDto("planet", null, "2026-10-15T10:00:00Z", "Unknown"),
+                FavoriteEntryDto("roaster", FavoriteAddressDto("r", "/r", 1, false), "2026-10-15T10:00:00Z", "R"),
+            ))
+            val repository = server.repository()
+            assertEquals(listOf("r"), repository.getFavorites().getOrThrow().map { it.slug })
+            val before = server.methods.size
+            assertTrue(repository.setFavorite(FavoriteEntry(FavoriteKind.Roaster, name = "No address"), true).isFailure)
+            assertEquals(before, server.methods.size)
+        } finally { server.client.close() }
+    }
+
+    private fun address(slug: String, kind: String) = FavoriteAddress(slug, "/$kind/$slug", 1, false)
+    private fun roaster(slug: String) = FavoriteEntry(FavoriteKind.Roaster, address(slug, "roasters"))
+    private fun shop(slug: String) = FavoriteEntry(FavoriteKind.CoffeeShop, address(slug, "coffee-shops"))
 }
 
 private class FavoriteServer {
@@ -211,14 +221,12 @@ private class FavoriteServer {
     var beforeMutation: (suspend () -> Unit)? = null
     private val accounts = mutableMapOf<String, List<FavoriteEntryDto>>()
     fun seed(items: List<FavoriteEntryDto>) { accounts[requireNotNull(sessions.peekSession()?.userId)] = items }
-    val client = HttpClient(MockEngine { request ->
+    val client = HttpClientFactory(MockEngine { request ->
         methods += request.method
         val account = requireNotNull(sessions.peekSession()?.userId)
         val current = accounts[account].orEmpty()
-        if (request.url.encodedPath.startsWith("/api/CoffeeShops/")) {
-            respond("""{"isSuccess":false,"data":null}""", HttpStatusCode.NotFound, headersOf(HttpHeaders.ContentType, "application/json"))
-        } else if (request.method == HttpMethod.Get) {
-            respond(Json.encodeToString(ApiResponse(isSuccess = true, data = current)), headers = headersOf(HttpHeaders.ContentType, "application/json"))
+        if (request.method == HttpMethod.Get) {
+            respond(Json.encodeToString(ApiEnvelope(isSuccess = true, data = current)), headers = headersOf(HttpHeaders.ContentType, "application/json"))
         } else if (failMutations) {
             respond("", HttpStatusCode.ServiceUnavailable)
         } else {
@@ -228,14 +236,14 @@ private class FavoriteServer {
             val remaining = current.filterNot { it.kind == kind && (it.address?.slug ?: it.drink?.slug) == slug }
             accounts[account] = if (request.method == HttpMethod.Put) {
                 remaining + FavoriteEntryDto(kind,
-                    if (kind == "drink") null else PublicAddressDto(slug, "/$kind/$slug", 1, false),
+                    if (kind == "drink") null else FavoriteAddressDto(slug, "/$kind/$slug", 1, false),
                     "2026-10-15T10:00:00Z", name = slug,
                     drink = if (kind == "drink") FavoriteDrinkDto(slug) else null)
             } else remaining
             respond("", HttpStatusCode.NoContent)
         }
-    }) { install(ContentNegotiation) { json() } }
-    fun repository() = ServerFavoritesRepository(FavoritesApiService(client), sessions)
+    }).api("https://api.example")
+    fun repository() = createAccountFavorites(client, sessions)
 }
 
 private class FavoriteSessions : SessionStore {
