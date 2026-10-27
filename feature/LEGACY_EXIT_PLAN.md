@@ -1431,3 +1431,33 @@ source `89778c23` + этот срез. Подробный scope/остаток �
   прогона (iOS-зависимость и фейк в `DiscoveryAdaptersTest`) исправлены. Ручная проверка избранного не
   выполнялась.
 - Осталось в C: C6 (refresh токена: `CoffeePeekClient`/`AuthService` → порт в `core/network`).
+
+## L3, срез C6.1–C6.2 — refresh токена в `core/network` и `feature/auth` (живой путь НЕ переключён) — 2026-10-27
+
+- C6.1. `core/network`: `SessionRefreshCoordinator(session: BearerSession)` — общий для клиентов одной сессии обмен
+  (single-flight; повтор по уже сохранённой ротации только для того же отклонённого токена; смена аккаунта
+  во время ротации отменяет и не сохраняет; отказ атомарной замены не возвращает чужие данные).
+  `configureBearerAuthentication` получила необязательные `coordinator`, `requireHttps` (по умолчанию true) и
+  `onAuthRetry` (хук для будущей аналитики запросов); с координатором работает та же логика, что у
+  легаси `SessionAuthentication` (отвечает только на отказ ещё актуального токена, без refresh-токена
+  очищает только отклонённую сессию, «отказ обмена» очищает совпавшую сессию, временный сбой сессию не трогает).
+  `SessionTokens` получил значение-равенство (хранилище отдаёт копии). `HttpClient.readCurrentSessionForRequests()`
+  перечитывает сессию на каждый запрос (иначе Ktor держит первый токен после входа/выхода/смены аккаунта).
+  `HttpClientFactory.authenticatedApi(...)` принимает эти параметры; без них поведение прежнее (12 тестов
+  `BearerAuthenticationTest` без изменений).
+- Тесты в core: перенесены 4 теста `SessionRefreshCoordinatorTest` (один обмен для API и картинок, смена
+  аккаунта, запоздалый 401, отказ атомарной замены) и 2 теста отказа refresh; новые: отказ без refresh-токена,
+  перечитывание сессии на каждый запрос, хук повтора, HTTPS только по запросу. Отличие от легаси:
+  транспорт core ожидает успех, поэтому финальный 401 приходит как `ClientRequestException`.
+- C6.2. `feature/auth/data`: `TokenRefresh` / `createTokenRefresh(plain)` — `PUT /api/Tokens` с cookie
+  `refreshToken`, 400/401/403 → `RefreshRejectedException`, иное — временный сбой; новый refresh-токен: тело →
+  cookie (с декодированием) → прежний (как в `AuthService.refresh`; при входе, наоборот, cookie главнее тела —
+  не менялось). 6 тестов.
+- НЕ перенесено (нужно в C6.3): наблюдатель запросов для аналитики (`RequestObserver`/`RequestObservation`,
+  3 теста `RequestObservationTest` остаются в `modules/network`), сборка четырёх клиентов (`CoffeePeekClient`:
+  plain/upload/image/api, UserAgent, HTTP-кэш, таймауты), адаптер `BearerSession` поверх `SessionStore`,
+  `SessionDeviceMetadataTest` (инструментальный).
+- Проверено (код выхода Gradle из файла = 0, 0 ошибок): core/network и feature/auth/data unit, modules/network и
+  modules/data unit, Direct/Play unit, lintDirectDebug, assemble Direct/Sandbox, DEX и isolation, iOS compile
+  core/network и feature/auth/data, composeApp iOS compile, simulator test-compile, framework link.
+  Живой путь не менялся, ручная проверка refresh не выполнялась.

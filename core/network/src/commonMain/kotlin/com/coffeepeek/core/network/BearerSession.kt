@@ -2,6 +2,9 @@ package com.coffeepeek.core.network
 
 /** Transport credentials only; feature DTOs and storage implementations stay outside core. */
 class SessionTokens(val accessToken: String, val refreshToken: String?) {
+    override fun equals(other: Any?): Boolean = this === other ||
+        other is SessionTokens && accessToken == other.accessToken && refreshToken == other.refreshToken
+    override fun hashCode(): Int = 31 * accessToken.hashCode() + (refreshToken?.hashCode() ?: 0)
     override fun toString(): String = "SessionTokens(redacted)"
 }
 
