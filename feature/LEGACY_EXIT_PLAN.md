@@ -1133,3 +1133,19 @@ source `89778c23` + этот срез. Подробный scope/остаток �
 - Прошли: Direct/Play unit, `:feature:auth:impl:allTests`, lintDirectDebug,
   assemble Direct/Sandbox, DEX и isolation, iOS Arm64 compile, simulator
   test-compile, framework link. Native tests/manual UI не выполнялись.
+
+## Срез Shop/Review legacy — 2026-10-27
+
+- Удалены недостижимые `ui/screen/review/ReviewReportScreen`,
+  `ui/screen/shop/{ShopReviewsScreen,CheckInShopPickerScreen,
+  CheckInSubmissionContent}`. Prod-потребителей не было; активные экраны —
+  `feature/shop/impl` и `feature/home-check-in/impl`.
+- Инструментальный тест `checkInResultFitsItsContentAndKeepsBothActionsVisible`
+  в `SubmissionStatusTest` (чужой, зависел от удалённого композабла) снят; два
+  других теста файла сохранены. Unit-тестов на удалённые экраны не было.
+- Прошли: Direct/Play unit, lintDirectDebug, assemble Direct/Sandbox, DEX и
+  isolation, iOS Arm64 compile, simulator test-compile, framework link.
+  Native tests/manual UI не выполнялись.
+- Остаются кандидаты: `DiscoveryTabContent`, `ProfileActions`,
+  `ProfileLogoutConfirmation`, `OtherUserProfileScreen`, `CoffeeFiltersSheet`,
+  `CoffeeRoasterLogo`, `NotificationsButton`, `PasswordRecoveryRepositoryImpl`.
