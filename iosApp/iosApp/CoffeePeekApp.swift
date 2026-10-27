@@ -138,8 +138,10 @@ final class PushAppDelegate: NSObject, UIApplicationDelegate, UNUserNotification
         resetting = true
         Messaging.messaging().isAutoInitEnabled = false
         UNUserNotificationCenter.current().removeAllDeliveredNotifications()
-        Messaging.messaging().deleteToken { error in
+        // Token-only deletion requires check-in data that a fresh installation does not have.
+        Messaging.messaging().deleteData { error in
             DispatchQueue.main.async {
+                assert(!Messaging.messaging().isAutoInitEnabled, "FCM reset must keep automatic token registration disabled")
                 self.resetting = false
                 if let user = self.account, let error {
                     NativePushBridge.shared.updateRegistrationStatus(userId: user, status: "RESET_\((error as NSError).code)")

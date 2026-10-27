@@ -132,6 +132,17 @@ opens separately. Foreground notifications have distinct PendingIntent identitie
 background/terminated FCM clicks use the same notificationId/userId handoff. A failed
 lookup shows an error and allows retry. iOS navigation remains unchanged.
 
+iOS uses the public `Messaging.deleteData(completion:)` reset to revoke Messaging
+registrations and check-in data. With auto-init disabled, Firebase does not request
+a replacement token during this reset. It also handles an installation without
+check-in credentials; token-only deletion in Firebase 12.19.2 returns Messaging
+error 6 in that state and would block first registration (RESET_6).
+The existing reset gate still retries real failures before APNs/FCM registration
+can continue. Firebase installation IDs and CoffeePeek sessions/history are retained.
+The Debug callback asserts that the SDK kept automatic registration disabled.
+See the pinned [public reset contract](https://github.com/firebase/firebase-ios-sdk/blob/12.19.2/FirebaseMessaging/Sources/Public/FirebaseMessaging/FIRMessaging.h)
+and [fresh-install reset implementation](https://github.com/firebase/firebase-ios-sdk/blob/12.19.2/FirebaseMessaging/Sources/Token/FIRMessagingTokenManager.m).
+
 ## Backend credential
 
 Firebase CLI login and the app configuration files do not authenticate the backend.
