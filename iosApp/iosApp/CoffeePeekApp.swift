@@ -133,9 +133,9 @@ final class PushAppDelegate: NSObject, UIApplicationDelegate, UNUserNotification
     }
 
     private func revokeToken() {
+        if let user = account { NativePushBridge.shared.updateRegistrationStatus(userId: user, status: "RESET_PENDING") }
         guard !resetting else { return }
         resetting = true
-        if let user = account { NativePushBridge.shared.updateRegistrationStatus(userId: user, status: "RESET_PENDING") }
         Messaging.messaging().isAutoInitEnabled = false
         UNUserNotificationCenter.current().removeAllDeliveredNotifications()
         Messaging.messaging().deleteToken { error in
