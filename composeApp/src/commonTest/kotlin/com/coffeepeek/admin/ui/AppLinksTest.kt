@@ -30,10 +30,19 @@ class AppLinksTest {
     }
 
     @Test
+    fun routesCoffeeAndLegacyShopLinks() {
+        assertEquals(Navigator.Screen.CoffeeDetail("ethiopia"), appLinkScreen("https://coffeepeek.by/coffees/ethiopia"))
+        assertEquals(Navigator.Screen.CoffeeDetail("ethiopia"), appLinkScreen("https://coffeepeek.by/coffees/ethiopia/?from=share#photos"))
+        assertEquals(Navigator.Screen.ShopDetail("1801"), appLinkScreen("https://coffeepeek.by/shops/1801"))
+    }
+
+    @Test
     fun routesSharedPostsByTheirServerId() {
         val id = "6966d36f-f903-ccf8-8009-1a651d0c58ad"
         assertEquals(Navigator.Screen.CheckInDetail(id), appLinkScreen("https://coffeepeek.by/check-ins/$id"))
         assertEquals(Navigator.Screen.CheckInDetail(id), appLinkScreen("https://coffeepeek.by/check-ins/$id/?from=share#photos"))
+        val sharedId = "d672cae3-610f-199d-c7ef-b671d3dab7f7"
+        assertEquals(Navigator.Screen.CheckInDetail(sharedId), appLinkScreen("https://coffeepeek.by/check-ins/$sharedId"))
     }
 
     @Test
@@ -46,7 +55,7 @@ class AppLinksTest {
 
     @Test
     fun rejectsInvalidSlugsAndExtraPathSegments() {
-        for (path in listOf("coffee-shops", "roasters", "users")) {
+        for (path in listOf("coffee-shops", "shops", "roasters", "coffees", "users")) {
             for (slug in listOf("", ".", "..", "%2e%2e", "%20", "a%2Fb", "a%5Cb", "a%00b", "a%0Ab", "slug/extra")) {
                 val link = "https://coffeepeek.by/$path/$slug"
                 assertEquals(Navigator.Screen.Main, appLinkScreen(link), link)

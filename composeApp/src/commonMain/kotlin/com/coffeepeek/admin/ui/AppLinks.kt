@@ -10,7 +10,10 @@ internal fun appLinkScreen(link: String): Navigator.Screen? {
 
     if (url.encodedPath.trimEnd('/') == "/reset-password") return null
 
-    val path = url.segments
+    return appLinkDetail(url.segments)
+}
+
+private fun appLinkDetail(path: List<String>): Navigator.Screen {
     if (path.size != 2) return Navigator.Screen.Main
     val slug = path[1]
     if (slug.isBlank() || slug.any { it == '/' || it == '\\' || it.isISOControl() } || slug in listOf(".", "..")) {
@@ -18,8 +21,9 @@ internal fun appLinkScreen(link: String): Navigator.Screen? {
     }
 
     return when (path[0]) {
-        "coffee-shops" -> Navigator.Screen.ShopDetail(slug)
+        "coffee-shops", "shops" -> Navigator.Screen.ShopDetail(slug)
         "roasters" -> Navigator.Screen.RoasterDetail(slug)
+        "coffees" -> Navigator.Screen.CoffeeDetail(slug)
         "users" -> Navigator.Screen.UserProfile(slug)
         "check-ins" -> if (CHECK_IN_ID.matches(slug)) Navigator.Screen.CheckInDetail(slug) else Navigator.Screen.Main
         else -> Navigator.Screen.Main
