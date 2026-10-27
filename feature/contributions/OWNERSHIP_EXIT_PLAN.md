@@ -4,7 +4,71 @@ Branch `codex/migration-contributions-ownership`, child of
 `codex/migration-discovery-ui-ownership` (#201). This is a separate feature
 checkpoint; Discovery/Roaster changes remain in the parent diff.
 
-## Точка остановки и порядок продолжения — 2026-10-26
+## Точка остановки и порядок продолжения — 2026-10-27
+
+**Остановились после замены legacy data reader Contributions, до разбора старых ViewModels.**
+Работа в той же ветке `codex/migration-contributions-ownership` и draft
+[PR #202](https://github.com/CoffeePeek/coffeepeek-cross-mobile/pull/202); база — `9f5291b8`.
+Стек не менялся: #195 → develop; #201 → feat/ios-build-foundation; #202 → codex/migration-discovery-ui-ownership.
+Свежий `origin/develop` содержит один коммит поверх стека (`d8864318`, bump версии 1.1.2); он не затрагивает эти файлы
+и не передавался в родителей этим срезом.
+
+Что сделано:
+
+- `ShopContributionCatalogs` и его чтения `ShopRepository.getCatalogs/getShopDetails/getMenuDrinks` удалены. Формы читают
+  `ContributionCatalogs` (api port) через `SourceContributionCatalogs` поверх нового domain-интерфейса
+  `ContributionCatalogSource`; data-реализация — `createContributionCatalogSource(client, roasters)` в `feature/contributions/data`.
+  Из composeApp больше нет зависимости Contributions от legacy `ShopRepository`.
+- Тот же HTTP, что у legacy: `/api/Catalogs/{cities,beans,equipments,brew-methods,shop-tags}`, `/api/menu/drinks`,
+  `/api/CoffeeShops/{slug}` (slug — закодированный сегмент пути). DTO узкие и приватные: читаются только поля форм,
+  остальное сервер может менять. Ничего из legacy DTO не проходит через core, чужие feature domain/data не импортируются.
+- Roasters берутся из публичного `PublicRoasterCatalog` (Koin `single`, тот же список и кэш, что у экранов Roaster и Discovery):
+  `CatalogOption(slug публичного адреса, имя, логотип)`. По смыслу тот же отбор, что у legacy (roaster с публичным адресом); побайтное равенство id с прежним `toCatalogItem` отдельно не сверялось.
+- Кэш: каталоги и список напитков хранятся на время жизни источника после успешного чтения; сбой не кэшируется и повторяется
+  следующим вызовом; одновременные вызовы делят одну загрузку, она выполняется в собственном scope и сама записывает успех,
+  поэтому ушедший вызывающий её не отменяет и сразу следующий не запускает второе чтение. Снимок кофейни читается каждый раз заново.
+- Снимок кофейни сохраняет прежнюю форму: название, описание, контакты, фото (маленький вариант, без фото без id/url, по sortIndex),
+  id тегов (сначала `shopTags`, иначе `tags`, без повторов), id roasters/equipment/brew methods по public slug, строки меню
+  (доступность `Present/1`, `Absent/2`, иначе Unknown; цена числом или строкой с запятой) и фото меню. Строки меню идут в порядке
+  каталога напитков, неизвестные — после; сбой каталога напитков не ломает снимок.
+- Различие с legacy, намеренное: снимок больше не читает признаки избранного, чекины и отзывы кофейни (в форме они не нужны);
+  неправильные посторонние части ответа не могут его сломать.
+
+Что делать следующим, по порядку:
+
+1. Старые ViewModels и DI: `AddShopViewModel`, `MyContributionsViewModel`, `AddRoasterViewModel`, `SuggestShopChangeViewModel`,
+   `ShopChangeRequestDetailViewModel`, `ShopChangeEditorViewModel` и фабрики в `KoinApp.kt` не достижимы из production-маршрутов.
+   Остальные ссылки — тесты: `ContributionsParityGapsTest` (commonTest, проверяет именно старые VM) и чужой
+   `ShopMenuEditorTest` (androidInstrumentedTest, удерживает `ShopChangeEditorScreen`/`ShopChangeEditorViewModel`).
+   Перед удалением сверить, какие сценарии `ContributionsParityGapsTest` покрыты тестами feature impl/data; не удалять и не
+   переписывать чужой тест. Этот остаток **не закрыт**.
+2. Ручные и платформенные gates без изменений: Sandbox темы/шрифты/accessibility/modal/back, native picker/map/camera,
+   выполнение Native tests, полный Xcode app build. Реальный ответ API этими тестами не проверен: данные — фикстуры MockEngine;
+   Sandbox отдаёт те же маршруты, но экраны форм на устройстве не запускались.
+3. После Contributions по LEGACY_EXIT_PLAN: root create/tab UI, platform bridges, legacy favorites/session/storage/transport, L4.
+
+Не трогать пользовательский локальный `iosApp/iosApp.xcodeproj/project.pbxproj` (48+/41−): в коммиты он не входит.
+
+### Проверка среза — 2026-10-27
+
+Последовательные запуски Gradle, `--max-workers=6`, без автоматических UI/instrumentation/screenshot тестов:
+
+- Contributions: domain **16**, data **29** (из них **10** новых на `ContributionCatalogSource`), impl **76** тестов, 0 failures/errors/skips.
+  Новые сценарии: маппинг всех списков и логотипа roaster, public-slug над plain slug, кэш и повтор после сбоя, одна загрузка для одновременных
+  вызовов (трижды подряд), сбой roasters, имена и порядок напитков, форма снимка, порядок меню по каталогу и без него, свежесть снимка,
+  кодирование slug, отклонённый ответ и HTTP-ошибка.
+- Первый запуск теста одновременных вызовов упал: быстрый ответ успевал завершить загрузку раньше, чем первый вызывающий записывал успех,
+  и второй вызывающий запускал повторное чтение (то же поведение было в legacy). Запись успеха перенесена в саму загрузку; повторные прогоны зелёные.
+- composeApp: Direct **823** и Play **823** теста (172 набора каждый), 0 failures/errors/skips; варианты не складываются в уникальные сценарии.
+  Число на 2 меньше прежних 825: четыре теста удалённого legacy-моста заменены двумя тестами адаптера и roaster-опций.
+- `lintDebug`, `:composeApp:lintDirectDebug`, `:composeApp:lintPlayDebug` успешны.
+- `assembleDirectDebug`, `assembleDirectSandbox`, `verifyDirectDebugRuntimeClasses`, `verifyDirectSandboxRuntimeClasses`, `verifyDirectSandboxIsolation` успешны.
+  SHA-256: DirectDebug `954176dd29806876f36122a5a4a6e96c4ea8b427df7e88c166c8f42f34768945`;
+  DirectSandbox `62baa28942984c65068171135fd8bd5acd3f7a9f52562dcd274e148234d8b337`. APK не устанавливались.
+- Common metadata Contributions domain/data/impl, `compileKotlinIosArm64` и `linkDebugFrameworkIosSimulatorArm64` успешны.
+  Native tests не выполнялись; framework link не заменяет полный Xcode app build.
+
+## Предыдущая точка остановки (история) — 2026-10-26
 
 **Остановились после публикации UI ownership среза, до замены legacy data reader.**
 Код проверен и опубликован коммитом `cd1bac2b` в draft
@@ -79,10 +143,10 @@ Android and iOS already call the feature entries through root renderers.
 - [x] Delete seven obsolete app UI files with no remaining external consumers:
   AddShop, AddShopSuccess, PickShopLocationDialog, AddRoaster, MyContributions,
   SuggestShopChange and ShopChangeRequestDetail.
-- [ ] Replace ShopContributionCatalogs legacy details/catalog/drink reads in a
-  following supporting slice of this checkpoint, using public owner APIs or
-  Contributions-owned data contracts as appropriate. Do not pass legacy DTOs
-  through core or import another feature's data/domain from feature code.
+- [x] Replace ShopContributionCatalogs legacy details/catalog/drink reads with
+  Contributions-owned data contracts and the public Roaster catalog (2026-10-27,
+  see the stop point above). No legacy DTO passes through core and no feature
+  imports another feature's data/domain.
 - [ ] Retire remaining old ViewModels and their DI after their last test/data
   consumers migrate. Preserve other contributors' tests: ShopChangeEditorScreen
   still has an existing ShopMenuEditorTest consumer; it is retained for that

@@ -6,11 +6,11 @@ import com.coffeepeek.feature.contributions.domain.repository.ContributionsRepos
 import com.coffeepeek.admin.ui.Navigator
 import com.coffeepeek.admin.ui.screen.contributions.ContributionsScreenRenderer
 import com.coffeepeek.core.session.SessionReader
-import com.coffeepeek.domain.repository.ShopRepository
 import com.coffeepeek.feature.contributions.api.AddRoasterEntry
 import com.coffeepeek.feature.contributions.api.AddShopEntry
 import com.coffeepeek.feature.contributions.api.ChangeEditorEntry
 import com.coffeepeek.feature.contributions.api.ChangeRequestEntry
+import com.coffeepeek.feature.contributions.api.ContributionCatalogs
 import com.coffeepeek.feature.contributions.api.ContributionsListEntry
 import com.coffeepeek.feature.contributions.api.SuggestChangeEntry
 import com.coffeepeek.feature.contributions.domain.model.ChangeSection
@@ -65,10 +65,9 @@ internal class FeatureContributionsScreenRenderer(
 }
 
 internal fun featureContributionsScreenRenderer(
-    repository: ContributionsRepository, sessions: SessionReader, shops: ShopRepository,
+    repository: ContributionsRepository, sessions: SessionReader, catalogs: ContributionCatalogs,
 ): ContributionsScreenRenderer {
     val account = SessionContributionsAccount(sessions)
-    val catalogs = ShopContributionCatalogs(shops)
     return FeatureContributionsScreenRenderer(
         list = createContributionsListEntry(repository, account),
         addShop = createAddShopEntry(repository, catalogs, AppContributionLocation(), account, addShopHost()),
