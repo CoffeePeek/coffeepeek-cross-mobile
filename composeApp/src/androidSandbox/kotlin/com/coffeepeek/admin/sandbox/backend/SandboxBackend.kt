@@ -27,6 +27,7 @@ internal class SandboxBackend(private val samplePhoto: ByteArray,
     private val reservations = mutableSetOf<String>()
     private val uploaded = mutableSetOf<String>()
     private val application = SandboxApplicationBackend(today, shopRows)
+    private val shelf = SandboxShelfBackend(today) { it in uploaded }
     /** Settings fixtures (see [SandboxApplicationBackend]); [reset] returns both to their defaults. */
     var updatePolicy: SandboxUpdatePolicy
         get() = application.updatePolicy
@@ -55,6 +56,11 @@ internal class SandboxBackend(private val samplePhoto: ByteArray,
             return@MockEngine respond(bytes ?: byteArrayOf(), if (bytes == null) HttpStatusCode.NotFound else HttpStatusCode.OK,
                 headersOf(HttpHeaders.ContentType, "image/png"))
         }
+        shelfCardPath.matchEntire(request.url.encodedPath)?.takeIf { request.method == HttpMethod.Get }?.let { match ->
+            val bytes = synchronized(lock) { shelfCard(mode, match.groupValues[1], match.groupValues[2]) }
+            return@MockEngine respond(bytes ?: byteArrayOf(), if (bytes == null) HttpStatusCode.NotFound else HttpStatusCode.OK,
+                headersOf(HttpHeaders.ContentType to listOf("image/jpeg"), HttpHeaders.CacheControl to listOf("private, no-store")))
+        }
         protectedPhotoPath.matchEntire(request.url.encodedPath)?.takeIf { request.method == HttpMethod.Get }?.let { match ->
             val (status, headers, bytes) = synchronized(lock) { protectedPhoto(request, mode, match.groupValues[1]) }
             return@MockEngine respond(bytes, status, headers)
@@ -76,6 +82,10 @@ internal class SandboxBackend(private val samplePhoto: ByteArray,
                 HttpHeaders.CacheControl to listOf("private, no-cache")), images["/media/sample"] ?: byteArrayOf())
         }
     }
+    private val shelfCardPath = Regex("${SandboxShelfBackend.ROOT}/bags/([^/]+)/photos/([^/]+)")
+    // Owner-only shelf card: gone with its bag or after a "Переснять" replacement.
+    private fun shelfCard(mode: SandboxScenario, bagId: String, photoId: String): ByteArray? =
+        if (mode == SandboxScenario.ServerError) null else shelf.cardKey(bagId, photoId)?.let { images["/media/$it"]?.copyOf() }
     private fun uploadEngine() = MockEngine { request ->
         val accepted = synchronized(lock) {
             val key = request.url.encodedPath.removePrefix("/upload/")
@@ -122,6 +132,7 @@ internal class SandboxBackend(private val samplePhoto: ByteArray,
             putJsonArray("photos") { add(buildJsonObject { put("url", "/media/sample"); put("sortIndex", 0) }) }
         }
         application.reset(populated)
+        shelf.reset(populated)
     }
 
     fun photo(url: String): ByteArray? = synchronized(lock) {
@@ -192,6 +203,7 @@ internal class SandboxBackend(private val samplePhoto: ByteArray,
                 else -> fail(HttpStatusCode.MethodNotAllowed)
             }
         }
+        shelf.handle(path, request.method, request.url.parameters, body(request) as? JsonObject ?: buildJsonObject {})?.let { return it }
         return application.handle(request, body(request)) ?: fail(HttpStatusCode.NotFound) // Never fall back to a live transport.
     }
 

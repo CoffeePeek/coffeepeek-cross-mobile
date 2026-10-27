@@ -79,19 +79,22 @@ Core ML или ONNX Runtime для iOS. Ядро `imaging/` не трогает 
 roastedOn?, addedAt, finishedAt?, position, status, rating?, buyAgain?)`, где
 `status` — `OnShelf` или `Finished`.
 
-### Серверный контракт (предложение для бэкенда)
+### Серверный контракт
+
+Полное описание — `coffeepeek-backend/docs/api/shelf-client.md` (ветка `feat/shelf`).
 
 | Метод | Назначение |
 |---|---|
 | `GET /api/v1/shelf` | Пачки на полке по порядку |
-| `GET /api/v1/shelf/archive?cursor=` | Архив, новые сверху, постранично |
-| `POST /api/v1/shelf/photos` | Presigned-ссылка для карточки пачки (purpose `shelf-bag`) |
-| `POST /api/v1/shelf/bags` | Создать пачку: ключ фото + поля |
-| `PATCH /api/v1/shelf/bags/{id}` | Изменить поля или фото |
-| `PUT /api/v1/shelf/order` | Новый порядок: список id |
+| `GET /api/v1/shelf/archive?pageNumber=&pageSize=&query=` | Архив, новые сверху, постранично, поиск по названию и обжарщику |
+| `POST /api/Photos/shelf-bag` | Presigned-ссылка для карточки пачки (Media, префикс `shelf-bags/`), как фото чекинов |
+| `POST /api/v1/shelf/bags` | Создать пачку: ключ фото + поля, встаёт первой |
+| `PUT /api/v1/shelf/bags/{id}` | Заменить поля; `photo` — заменить карточку, без него — оставить |
+| `PUT /api/v1/shelf/order` | Новый порядок: все id полки; устаревший список — `409` |
 | `POST /api/v1/shelf/bags/{id}/finish` | Закончилась: `rating?`, `buyAgain?` |
-| `POST /api/v1/shelf/bags/{id}/restore` | Вернуть из архива на полку |
+| `POST /api/v1/shelf/bags/{id}/restore` | Вернуть на полку, `position?` — для «Отменить» |
 | `DELETE /api/v1/shelf/bags/{id}` | Удалить ошибочную пачку |
+| `GET /api/v1/shelf/bags/{id}/photos/{photoId}` | Карточка, только владельцу |
 
 - Загружается только готовая карточка (720 px, JPEG около 100 КБ). Исходное фото с
   руками и интерьером остаётся на телефоне и удаляется после сохранения.
