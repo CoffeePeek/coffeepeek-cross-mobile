@@ -289,3 +289,23 @@ IDE tools/preview rendering were unavailable. Paired Android previews compile.
 TalkBack, alternate font/window sizes, real map/permission/backend acceptance and
 iOS runtime UI checks remain untested. No automated UI/Compose/screenshot test
 was introduced or run, and no camera, production analytics or account write occurred.
+
+## Search result priority — develop publication, 2026-10-27
+
+At the user's request, applied the search fix independently to develop
+`be7577b8`; verified code commit `7cb60f56`. Matching shops precede a confirmed
+empty roaster section, and both headings use titleLarge. Adapted the Android
+feature entry and the active retained iOS FeedScreen without importing the
+pending migration stack or map changes. The roaster owner supplies the filtered
+result status and keeps query analytics current below the lazy viewport.
+
+Windows verification: Discovery impl 69 tests/6 suites, Roaster impl 23/3,
+selected application Feed unit tests 32/4; all 124 passed with zero failures,
+errors or skips, including nine new regressions. No failing-test retries.
+DirectSandbox and DirectDebug assemblies, both packaged DEX runtime-class
+checks and Sandbox isolation passed in 2m48s, Gradle --max-workers=6.
+Builds: com.coffeepeek.sandbox 1.1.2.2478-sandbox/2478 and com.coffeepeek
+1.1.2.2478/2478. Android paired previews compile; IDE rendering was unavailable.
+No installation, device, automated UI, instrumentation or screenshot run took
+place. Manual themes/font/window/accessibility/back/cancel, native iOS runtime
+and live backend gates remain open; no production account or analytics writes.
