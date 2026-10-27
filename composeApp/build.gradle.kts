@@ -158,6 +158,8 @@ kotlin {
         // Test the exact sandbox transport without adding it to the live APK or requiring a new test variant.
         androidUnitTest {
             kotlin.srcDir("src/androidSandbox/kotlin/com/coffeepeek/admin/sandbox/backend")
+            kotlin.srcDir("src/androidSandbox/kotlin/com/coffeepeek/admin/sandbox/packscan/geometry")
+            kotlin.srcDir("src/androidSandbox/kotlin/com/coffeepeek/admin/sandbox/packscan/imaging")
         }
         androidInstrumentedTest.dependencies {
             implementation(libs.kotlin.test)
@@ -328,7 +330,11 @@ kotlin.applyDefaultHierarchyTemplate()
 kotlin.sourceSets {
     val androidSandbox = create("androidSandbox") {
         dependsOn(getByName("androidMain"))
-        dependencies { implementation("io.ktor:ktor-client-mock:${libs.versions.ktor.get()}") }
+        dependencies {
+            implementation("io.ktor:ktor-client-mock:${libs.versions.ktor.get()}")
+            // Coffee-pack scan probe: U2-Net-p and MI-GAN run on ONNX Runtime; the models are pushed to the device, not bundled.
+            implementation(libs.onnxruntime.android)
+        }
     }
     matching { it.name in setOf("androidDirectSandbox", "androidPlaySandbox") }.all {
         dependsOn(androidSandbox)
