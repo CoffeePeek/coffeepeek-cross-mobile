@@ -61,6 +61,7 @@ import com.coffeepeek.admin.ui.component.SearchHeader
 import com.coffeepeek.admin.ui.component.LocalFloatingNavClearance
 import com.coffeepeek.core.designsystem.component.CoffeePeekLoadErrorContent
 import com.coffeepeek.admin.ui.model.COFFEE_FOCUS_OPTIONS
+import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.animation.AnimatedContent
@@ -109,6 +110,7 @@ fun FeedScreen(
     mapPreview: (@Composable (Boolean, () -> Unit, DpSize, Modifier) -> Unit)? = null,
     roasterPreview: (@Composable () -> Unit)? = null,
     onMapExpandedChange: (Boolean) -> Unit = {},
+    hasRoasterResults: Boolean? = null,
 ) {
     val state by vm.uiState.collectAsState()
     val listState = rememberLazyListState()
@@ -118,6 +120,8 @@ fun FeedScreen(
     val keyboard = LocalSoftwareKeyboardController.current
     val showDiscovery = mapPreview != null && state.showDiscovery
     val showRoasterSearch = roasterPreview != null && state.query.isNotBlank()
+    val shopsFirst = showRoasterSearch && state.showsShopsFirst(hasRoasterResults)
+    LaunchedEffect(showRoasterSearch, shopsFirst) { listState.scrollToItem(0) }
     val discoveryTransition = updateTransition(showDiscovery, label = "discovery-shop-list")
     val discoveryProgress = discoveryTransition.animateFloat(
         transitionSpec = { tween(360) },
@@ -403,13 +407,10 @@ fun FeedScreen(
                                 contentPadding = coffeePeekScrollContentPadding(listContentPadding),
                                 verticalArrangement = Arrangement.spacedBy(CpDimens.spacing3),
                             ) {
+                                if (showRoasterSearch && !shopsFirst) roasterSearchResults(roasterPreview)
                                 if (showRoasterSearch) {
-                                    item(key = "roaster-search-heading") {
-                                        DiscoverySectionTitle("Обжарщики", onShowAll = null)
-                                    }
-                                    item(key = "roaster-search-results") { roasterPreview() }
                                     item(key = "shop-search-heading") {
-                                        Text("Кофейни", style = MaterialTheme.typography.titleMedium)
+                                        Text("Кофейни", style = MaterialTheme.typography.titleLarge)
                                     }
                                     when {
                                         state.isLoading && state.shops.isEmpty() -> item(key = "shop-search-loading") {
@@ -435,6 +436,7 @@ fun FeedScreen(
                                         onToggleFavorite = { vm.toggleFavorite(shop) },
                                     )
                                 }
+                                if (shopsFirst) roasterSearchResults(roasterPreview)
                                 if (!state.isLoading && state.error == null) item(key = "add-missing-shop") {
                                     CatalogSuggestionCard(CatalogSuggestionKind.Shop,
                                         onAdd = {
@@ -506,6 +508,12 @@ internal fun discoveryMapOffsetY(viewportHeight: Float, progress: Float): Float 
 internal fun discoveryMapPreviewBounds(anchor: Rect, viewportTop: Float, itemOffset: Int?): Rect =
     if (itemOffset != null) anchor
     else Rect(Offset(anchor.left, viewportTop - anchor.height), anchor.size)
+
+private fun LazyListScope.roasterSearchResults(content: (@Composable () -> Unit)?) {
+    if (content == null) return
+    item(key = "roaster-search-heading") { DiscoverySectionTitle("Обжарщики", onShowAll = null) }
+    item(key = "roaster-search-results") { content() }
+}
 
 @Composable
 private fun DiscoverySectionTitle(title: String, onShowAll: (() -> Unit)?, modifier: Modifier = Modifier) {

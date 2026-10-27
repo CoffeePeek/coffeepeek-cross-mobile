@@ -58,6 +58,7 @@ internal fun CoffeeShopDetails.toSnapshot(slug: String) = ShopSnapshot(
     brewMethodIds = brewMethodItems.map { it.id },
     menu = menu?.items.orEmpty().map { MenuRow(it.slug, it.availability.toAvailability(), it.price) },
     menuPhotos = menu?.photos.orEmpty().map { ShopPhotoRef(it.id, it.previewUrl) },
+    menuInputRevision = menu.let { if (it == null) 0L else it.inputRevision },
 )
 
 private fun String.toAvailability() = when (lowercase()) {

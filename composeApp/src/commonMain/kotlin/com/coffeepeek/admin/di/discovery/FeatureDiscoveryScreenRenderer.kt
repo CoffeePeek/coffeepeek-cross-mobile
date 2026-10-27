@@ -81,4 +81,5 @@ private fun discoveryRoasterSlots(roasters: RoasterScreenRenderer) = DiscoveryRo
     search = { context: DiscoveryRoasterContext, onQueryChange, onCancel ->
         roasters.DiscoverySearch(onCancel, context.query, onQueryChange, context.selectedRoasterIds, context.favoritesOnly)
     },
+    hasResults = { context -> roasters.hasDiscoveryResults(context.query, context.selectedRoasterIds, context.favoritesOnly) },
 )

@@ -115,7 +115,10 @@ final class PushAppDelegate: NSObject, UIApplicationDelegate, UNUserNotification
             DispatchQueue.main.async {
                 NativePushBridge.shared.updatePermission(granted: permitted)
                 if self.revokePending { self.revokeToken(); return }
-                if permitted && self.account != nil { UIApplication.shared.registerForRemoteNotifications(); self.fetchToken() }
+                if permitted && self.account != nil {
+                    UIApplication.shared.registerForRemoteNotifications()
+                    self.fetchToken()
+                }
             }
         }
     }
@@ -131,7 +134,8 @@ final class PushAppDelegate: NSObject, UIApplicationDelegate, UNUserNotification
         resetting = true
         Messaging.messaging().isAutoInitEnabled = false
         UNUserNotificationCenter.current().removeAllDeliveredNotifications()
-        Messaging.messaging().deleteToken { error in
+        // Token-only deletion requires check-in data that a fresh installation does not have.
+        Messaging.messaging().deleteData { error in
             DispatchQueue.main.async {
                 self.resetting = false
                 if error == nil { self.revokePending = false; self.foreground() }
@@ -143,7 +147,8 @@ final class PushAppDelegate: NSObject, UIApplicationDelegate, UNUserNotification
         guard !resetting, !revokePending, let user = account, Messaging.messaging().apnsToken != nil else { return }
         Messaging.messaging().token { token, _ in
             DispatchQueue.main.async {
-                if self.account == user, let token { NativePushBridge.shared.updateToken(userId: user, token: token) }
+                guard self.account == user else { return }
+                if let token, !token.isEmpty { NativePushBridge.shared.updateToken(userId: user, token: token) }
             }
         }
     }
