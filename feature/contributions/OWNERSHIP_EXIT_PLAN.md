@@ -36,12 +36,7 @@ checkpoint; Discovery/Roaster changes remain in the parent diff.
 
 Что делать следующим, по порядку:
 
-1. Старые ViewModels и DI: `AddShopViewModel`, `MyContributionsViewModel`, `AddRoasterViewModel`, `SuggestShopChangeViewModel`,
-   `ShopChangeRequestDetailViewModel`, `ShopChangeEditorViewModel` и фабрики в `KoinApp.kt` не достижимы из production-маршрутов.
-   Остальные ссылки — тесты: `ContributionsParityGapsTest` (commonTest, проверяет именно старые VM) и чужой
-   `ShopMenuEditorTest` (androidInstrumentedTest, удерживает `ShopChangeEditorScreen`/`ShopChangeEditorViewModel`).
-   Перед удалением сверить, какие сценарии `ContributionsParityGapsTest` покрыты тестами feature impl/data; не удалять и не
-   переписывать чужой тест. Этот остаток **не закрыт**.
+1. Старые ViewModels и DI — **выполнено в следующем срезе (2026-10-27), см. раздел ниже**; остался только `ShopChangeEditor*`.
 2. Ручные и платформенные gates без изменений: Sandbox темы/шрифты/accessibility/modal/back, native picker/map/camera,
    выполнение Native tests, полный Xcode app build. Реальный ответ API этими тестами не проверен: данные — фикстуры MockEngine;
    Sandbox отдаёт те же маршруты, но экраны форм на устройстве не запускались.
@@ -67,6 +62,44 @@ checkpoint; Discovery/Roaster changes remain in the parent diff.
   DirectSandbox `62baa28942984c65068171135fd8bd5acd3f7a9f52562dcd274e148234d8b337`. APK не устанавливались.
 - Common metadata Contributions domain/data/impl, `compileKotlinIosArm64` и `linkDebugFrameworkIosSimulatorArm64` успешны.
   Native tests не выполнялись; framework link не заменяет полный Xcode app build.
+
+### Старые ViewModels Contributions — 2026-10-27
+
+Сверено покрытие и удалено недостижимое; всё в той же ветке и #202.
+
+- Удалены: `AddShopViewModel`, `MyContributionsViewModel`, `AddRoasterViewModel`, `SuggestShopChangeViewModel`,
+  `ShopChangeRequestDetailViewModel` и пять их фабрик в `KoinApp.kt`. Ни один production-маршрут их не использовал:
+  экраны идут через feature entries. Тесты старого кода удалены вместе с ним: `ContributionsParityGapsTest` (21),
+  `MyContributionsUiStateTest` (2) и два теста форм кофейни и обжарщика из `SubmissionViewModelTest`; в последнем его тесте убраны проверки этих двух форм.
+- Из файла `MyContributionsViewModel.kt` сохранён только enum `ContributionKind` (в новом файле, без неиспользуемых
+  `title`/`emptyText`): на него опираются маршруты, renderer и навигация уведомлений.
+- Оставлены, потому что их держит чужой `ShopMenuEditorTest`: `ShopChangeEditorScreen`, `ShopChangeEditorViewModel`,
+  `ShopChangeLabels` и фабрика редактора в Koin; в `SubmissionViewModelTest` остались три теста редактора (последний сужен до редактора). Остаток **не закрыт**.
+  Чужой тест не менялся и не запускался.
+- Соответствие сценариев (все 21 теста parity и пять submission-тестов сверены по коду, не по названиям):
+  список заявок — `ContributionsListViewModelTest` (маппинг статусов, подзаголовок обжарщика, строка изменений, сбой статуса,
+  подгрузка, последняя страница, выбор вкладки); мастер кофейни — `AddShopViewModelTest` и `ScheduleRulesTest`
+  (обрезка названия, шаги, единственный город, выбранная точка, фото, шаги часов, расписание, отправка, повтор после сбоя);
+  редактор правок — `ChangeEditorViewModelTest`; форма обжарщика — `AddRoasterViewModelTest`. Намеренные отличия: feature принимает
+  ссылку Instagram в контактах правки (legacy её отвергал); сбой каталога городов в feature даёт типизированное состояние,
+  а не текст; бросок исключения из репозитория не покрыт, потому что контракт feature-репозитория возвращает `Result`.
+- **Найден и закрыт пробел:** legacy-форма обжарщика не давала отправлять, пока грузится каталог городов, а feature-форма давала
+  (кнопка активна при валидной форме). Теперь отправка ждёт ответа списка городов, сбой списка не блокирует; добавлен
+  `AddRoasterState.ready`, защита во ViewModel и в кнопке. Тест на блокировку проверен: без защиты во ViewModel он падает.
+  Второй новый тест — после успеха форму нельзя отправить повторно, после сбоя можно (legacy проверял это в submission-тесте).
+
+Проверка (Mac, последовательно, `--max-workers=6`, без автоматических UI/instrumentation/screenshot тестов):
+
+- Contributions: domain **16**, data **29**, impl **78** тестов (76 прежних и 2 новых), 0 failures/errors/skips.
+- composeApp: Direct **798** и Play **798** тестов (170 наборов каждый), 0 failures/errors/skips. Было 823; разница 25 = 21 + 2 + 2
+  удалённых теста старого кода (варианты не складываются в уникальные сценарии).
+- `lintDebug`, `:composeApp:lintDirectDebug`, `:composeApp:lintPlayDebug`; `verifyDirectDebugRuntimeClasses`,
+  `verifyDirectSandboxRuntimeClasses`, `verifyDirectSandboxIsolation`; `compileKotlinIosArm64`, `compileTestKotlinIosSimulatorArm64`,
+  `linkDebugFrameworkIosSimulatorArm64` — успешны. SHA-256 DirectDebug `916c3d26cb6659d520383326fb497e4dec410e9a96048ae79d6892bb5fa02ac7`,
+  DirectSandbox `37ef7bd6663b89cd705fafc13e540ba9140bd8e79be7a88af7b525fa86e2afec`. APK не устанавливались.
+- `:composeApp:compileDirectDebugAndroidTestKotlinAndroid` **падает** на двух файлах, не связанных с этим срезом:
+  `CpImageLoadingTest` и `DisplayPhotoTransparencyTest` ссылаются на `PrefetchPhotos` и `AndroidImageCodec`, которых нет в main.
+  `ShopMenuEditorTest` компилируется. Эти instrumented-тесты устарели ещё до среза и не запускались; починка — отдельная задача.
 
 ## Предыдущая точка остановки (история) — 2026-10-26
 

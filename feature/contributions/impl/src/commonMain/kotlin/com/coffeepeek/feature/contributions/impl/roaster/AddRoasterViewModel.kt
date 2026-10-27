@@ -66,7 +66,7 @@ internal class AddRoasterViewModel(
 
     private fun submit() {
         val state = currentState
-        if (!state.valid || state.busy) return
+        if (!state.ready || state.busy) return
         updateState { copy(submit = RoasterSubmitState.Sending) }
         val mine = generation
         work = viewModelScope.launch {
