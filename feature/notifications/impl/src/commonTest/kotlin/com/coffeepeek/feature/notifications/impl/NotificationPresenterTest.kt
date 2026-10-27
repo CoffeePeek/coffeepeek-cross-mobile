@@ -9,6 +9,23 @@ import kotlin.test.*
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class NotificationPresenterTest {
+    @Test fun nativeRegistrationStatusIsVisibleOnlyForTheCurrentAccount() = runTest {
+        val account = Account()
+        val platform = Platform()
+        val feature = NotificationPresenter(Repository(), account, platform, backgroundScope)
+        account.user.value = "alice"
+        runCurrent()
+        platform.mutable.update { it.copy(registrationDiagnostic = "APNS_3000") }
+        runCurrent()
+        assertEquals("APNS_3000", feature.state.value.registrationDiagnostic)
+        platform.mutable.update { it.copy(userId = "bob", registrationDiagnostic = "FCM_7") }
+        runCurrent()
+        assertNull(feature.state.value.registrationDiagnostic)
+        account.user.value = "bob"
+        runCurrent()
+        assertNull(feature.state.value.registrationDiagnostic)
+    }
+
     @Test fun lateDestinationCannotCrossAnAccountChange() = runTest {
         val account = Account()
         val repository = Repository()
@@ -250,7 +267,9 @@ private class Platform : PushDevicePlatform {
     var explicitPermissionRequests = 0
     val mutable = MutableStateFlow(PushDeviceState("installation", true, true))
     override val state = mutable.asStateFlow()
-    override fun setAccount(userId: String?) { mutable.update { it.copy(userId = userId, token = null) } }
+    override fun setAccount(userId: String?) {
+        mutable.update { it.copy(userId = userId, token = null, registrationDiagnostic = null) }
+    }
     override fun requestPermission() { permissionRequests++ }
     override fun requestPermissionFromSettings() { explicitPermissionRequests++ }
 }

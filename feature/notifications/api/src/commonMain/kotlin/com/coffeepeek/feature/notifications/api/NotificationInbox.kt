@@ -32,4 +32,5 @@ data class NotificationInboxState(
     val permissionGranted: Boolean = false,
     val error: String? = null,
     val settingsError: String? = null,
+    val registrationDiagnostic: String? = null,
 )

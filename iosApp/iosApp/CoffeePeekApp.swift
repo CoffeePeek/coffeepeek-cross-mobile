@@ -115,7 +115,13 @@ final class PushAppDelegate: NSObject, UIApplicationDelegate, UNUserNotification
             DispatchQueue.main.async {
                 NativePushBridge.shared.updatePermission(granted: permitted)
                 if self.revokePending { self.revokeToken(); return }
-                if permitted && self.account != nil { UIApplication.shared.registerForRemoteNotifications(); self.fetchToken() }
+                if permitted, let user = self.account {
+                    if Messaging.messaging().apnsToken == nil {
+                        NativePushBridge.shared.updateRegistrationStatus(userId: user, status: "APNS_PENDING")
+                    }
+                    UIApplication.shared.registerForRemoteNotifications()
+                    self.fetchToken()
+                }
             }
         }
     }
@@ -127,6 +133,7 @@ final class PushAppDelegate: NSObject, UIApplicationDelegate, UNUserNotification
     }
 
     private func revokeToken() {
+        if let user = account { NativePushBridge.shared.updateRegistrationStatus(userId: user, status: "RESET_PENDING") }
         guard !resetting else { return }
         resetting = true
         Messaging.messaging().isAutoInitEnabled = false
@@ -134,6 +141,9 @@ final class PushAppDelegate: NSObject, UIApplicationDelegate, UNUserNotification
         Messaging.messaging().deleteToken { error in
             DispatchQueue.main.async {
                 self.resetting = false
+                if let user = self.account, let error {
+                    NativePushBridge.shared.updateRegistrationStatus(userId: user, status: "RESET_\((error as NSError).code)")
+                }
                 if error == nil { self.revokePending = false; self.foreground() }
             }
         }
@@ -141,9 +151,15 @@ final class PushAppDelegate: NSObject, UIApplicationDelegate, UNUserNotification
 
     private func fetchToken() {
         guard !resetting, !revokePending, let user = account, Messaging.messaging().apnsToken != nil else { return }
-        Messaging.messaging().token { token, _ in
+        NativePushBridge.shared.updateRegistrationStatus(userId: user, status: "FCM_PENDING")
+        Messaging.messaging().token { token, error in
             DispatchQueue.main.async {
-                if self.account == user, let token { NativePushBridge.shared.updateToken(userId: user, token: token) }
+                guard self.account == user else { return }
+                if let token, !token.isEmpty { NativePushBridge.shared.updateToken(userId: user, token: token) }
+                else {
+                    let status = error.map { "FCM_\(($0 as NSError).code)" } ?? "FCM_EMPTY"
+                    NativePushBridge.shared.updateRegistrationStatus(userId: user, status: status)
+                }
             }
         }
     }
@@ -151,6 +167,10 @@ final class PushAppDelegate: NSObject, UIApplicationDelegate, UNUserNotification
     func application(_ application: UIApplication, didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data) {
         Messaging.messaging().apnsToken = deviceToken
         fetchToken()
+    }
+    func application(_ application: UIApplication, didFailToRegisterForRemoteNotificationsWithError error: Error) {
+        guard let user = account else { return }
+        NativePushBridge.shared.updateRegistrationStatus(userId: user, status: "APNS_\((error as NSError).code)")
     }
     func messaging(_ messaging: Messaging, didReceiveRegistrationToken fcmToken: String?) { DispatchQueue.main.async { self.fetchToken() } }
     func userNotificationCenter(_ center: UNUserNotificationCenter, willPresent notification: UNNotification, withCompletionHandler completion: @escaping (UNNotificationPresentationOptions) -> Void) {

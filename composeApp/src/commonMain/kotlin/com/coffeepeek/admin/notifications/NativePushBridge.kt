@@ -22,14 +22,19 @@ object NativePushBridge : PushDevicePlatform {
         accountChanged(mutable.value.userId)
     }
     override fun setAccount(userId: String?) {
-        mutable.update { it.copy(userId = userId, token = null) }
+        mutable.update { it.copy(userId = userId, token = null, registrationDiagnostic = null) }
         accountChanged(userId)
     }
     override fun requestPermission() = permission()
     override fun requestPermissionFromSettings() = settingsPermission()
     fun updatePermission(granted: Boolean) { mutable.update { it.copy(permissionGranted = granted) } }
     fun updateToken(userId: String, token: String) {
-        mutable.update { if (it.userId == userId) it.copy(token = token) else it }
+        mutable.update { if (it.userId == userId) it.copy(token = token, registrationDiagnostic = null) else it }
+    }
+    fun updateRegistrationStatus(userId: String, status: String) {
+        mutable.update {
+            if (it.userId == userId && it.token == null) it.copy(registrationDiagnostic = status) else it
+        }
     }
     fun accepts(userId: String?): Boolean = userId != null && mutable.value.userId == userId
     fun notificationReceived(userId: String?) {

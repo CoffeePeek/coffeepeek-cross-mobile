@@ -41,20 +41,30 @@ internal fun NotificationPushSettings(state: NotificationInboxState, onPushChang
             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
             Text(stringResource(Res.string.notifications_history_hint), style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant)
-            state.settingsError?.let {
-                Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
-                if (!state.settingsLoaded) TextButton(onClick = onRefresh,
-                    colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.onSurface)) {
-                    Text(stringResource(Res.string.notifications_retry_settings))
-                }
-            }
+            NotificationPushSettingsFeedback(state, onRefresh)
+        }
+    }
+}
+
+@Composable
+private fun NotificationPushSettingsFeedback(state: NotificationInboxState, onRefresh: () -> Unit) {
+    if (state.pushEnabled && state.permissionGranted) state.registrationDiagnostic?.let {
+        Text(stringResource(Res.string.notifications_push_diagnostic, it),
+            color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall)
+    }
+    state.settingsError?.let {
+        Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+        if (!state.settingsLoaded) TextButton(onClick = onRefresh,
+            colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.onSurface)) {
+            Text(stringResource(Res.string.notifications_retry_settings))
         }
     }
 }
 
 @Composable
 private fun NotificationPushSettingsPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
-    NotificationPushSettings(NotificationInboxState(settingsLoaded = true, deviceAvailable = true), {}, {})
+    NotificationPushSettings(NotificationInboxState(settingsLoaded = true, deviceAvailable = true,
+        permissionGranted = true, registrationDiagnostic = "FCM_7"), {}, {})
 }
 
 @Preview(widthDp = 360) @Composable private fun NotificationPushSettingsLightPreview() = NotificationPushSettingsPreview(false)
