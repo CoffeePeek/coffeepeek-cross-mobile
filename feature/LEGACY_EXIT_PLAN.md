@@ -1115,3 +1115,21 @@ source `89778c23` + этот срез. Подробный scope/остаток �
   `DiscoveryTabContent`, `ProfileActions/LogoutConfirmation`,
   `OtherUserProfileScreen`, `Coffee{FiltersSheet,RoasterLogo}`,
   `NotificationsButton` — каждый требует проверки тестов-потребителей.
+
+## Срез Auth legacy — 2026-10-27
+
+- Удалены недостижимые `ui/screen/auth/{AuthViewModel,registr/RegisterViewModel,
+  AuthStepper,AuthFooterRow,AuthLayout,AuthFields,AuthHeading}` и
+  `feature/passwordrecovery/ui/PasswordRecoveryViewModel` с тестами старого кода
+  (`AuthViewModelTest`, `RegisterViewModelTest`, `RegisterAnalyticsConsentTest`,
+  `PasswordRecoveryViewModelTest`). Активный Auth — `feature/auth/impl`.
+- Покрытие: `LoginViewModelTest`, `RegisterViewModelTest`,
+  `PasswordRecoveryViewModelTest` в feature/auth/impl. Найденный пробел —
+  социальная регистрация не должна применять согласие на аналитику — закрыт
+  утверждением в `aGoogleSignUpSignsInWithTheRegisterEntryAndEmitsSignedIn`.
+- Остаётся: `PasswordRecoveryRepositoryImpl` (+тест) — его использует чужой
+  `SandboxApplicationBackendTest`; убрать вместе с переводом Sandbox-теста на
+  feature-репозиторий (L3).
+- Прошли: Direct/Play unit, `:feature:auth:impl:allTests`, lintDirectDebug,
+  assemble Direct/Sandbox, DEX и isolation, iOS Arm64 compile, simulator
+  test-compile, framework link. Native tests/manual UI не выполнялись.
