@@ -1149,3 +1149,26 @@ source `89778c23` + этот срез. Подробный scope/остаток �
 - Остаются кандидаты: `DiscoveryTabContent`, `ProfileActions`,
   `ProfileLogoutConfirmation`, `OtherUserProfileScreen`, `CoffeeFiltersSheet`,
   `CoffeeRoasterLogo`, `NotificationsButton`, `PasswordRecoveryRepositoryImpl`.
+
+## Срез остатков Profile/Discovery/Coffee/Notifications — 2026-10-27
+
+- Удалены недостижимые `ui/screen/main/DiscoveryTabContent`,
+  `ui/screen/profile/ProfileLogoutConfirmation`,
+  `feature/coffee/ui/{CoffeeFiltersSheet,CoffeeRoasterLogo}`,
+  `feature/notifications/ui/NotificationsButton`,
+  `ui/screen/checkins/HomeTimelinePresentation` (+ `HomeTimelinePresentationTest`:
+  конверсия легаси HomeCheckIn → CheckIn, потребители удалены в срезе Home).
+- Прошли: Direct/Play unit, lintDirectDebug, assemble Direct/Sandbox, DEX и
+  isolation, iOS Arm64 compile, simulator test-compile, framework link.
+  Native tests/manual UI не выполнялись.
+- Теперь недостижимы из main, но удалены НЕ были (нужна сверка тестов):
+  `feature/coffee/ui/CoffeeListViewModel` (держат `CoffeeFilterAnalyticsTest`,
+  `CoffeeAnalyticsParityTest` — сверить ключи фильтров с feature/coffee impl и
+  `CoffeeAnalyticsAdapterTest`), `feature/notifications/ui/NotificationsSheet`
+  (инструментальный `NotificationsPresentationTest`), `ui/screen/feed/FeedScreen`
+  (`discoveryMapOffsetY` проверяет `FeedFiltersUiTest`),
+  `DeleteAccountPendingViewModel` (+`DeleteAccountPendingViewModelTest`, 6
+  сценариев; в feature покрытия не найдено), `feature/profile/ui/
+  OtherUserProfileScreen` и `ProfileActions` (чужие инструментальные
+  `PublicProfilePresentationTest`/`AuthorBlockingFlowScreenshotsTest`),
+  `PasswordRecoveryRepositoryImpl` (Sandbox-тест).
