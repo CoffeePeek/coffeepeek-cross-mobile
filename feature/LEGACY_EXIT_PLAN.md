@@ -1093,3 +1093,25 @@ source `89778c23` + этот срез. Подробный scope/остаток �
 - Прошли: Direct/Play unit, lintDirectDebug, assemble Direct/Sandbox, DEX и
   Sandbox isolation guards, iOS Arm64 compile, simulator test-compile, framework
   link. Native tests не исполнялись; UI/manual не проверялись.
+
+## Срез Roaster legacy UI — 2026-10-27
+
+- Удалены недостижимые `ui/screen/roaster/Roaster{Detail,List}{Screen,ViewModel}`,
+  их Koin-фабрики и тесты старого кода (`RoasterDescriptionTest`,
+  `RoasterListTest`, `RoasterAnalyticsParityTest`). Активный UI/состояние —
+  `feature/roaster/impl`; `RoasterScreenRenderer` остаётся как слот.
+- Покрытие: ленивая загрузка описаний/лимит 4 запроса, фильтры/теги,
+  избранное, stale-результаты — `RoasterListViewModelTest`/
+  `RoasterDetailViewModelTest`; аналитика — `RoasterAnalyticsAdapterTest`.
+  Parity-тест сравнивал с удалённым baseline и снят вместе с ним. Подпись
+  счётчика «—» теперь только часть рендера карточки feature (без unit-теста).
+- Прошли: Direct/Play unit, lintDirectDebug, assemble Direct/Sandbox, DEX и
+  isolation, iOS Arm64 compile, simulator test-compile, framework link.
+  Native tests/manual UI не выполнялись.
+- Кандидаты следующих срезов (по скрипту «имена не используются в main»):
+  auth Stepper/Footer/Layout и `AuthViewModel`/`RegisterViewModel`,
+  `PasswordRecovery*`, `DeleteAccountPendingViewModel`, `ReviewReportScreen`,
+  `ShopReviewsScreen`, `CheckInShopPickerScreen`, `CheckInSubmissionContent`,
+  `DiscoveryTabContent`, `ProfileActions/LogoutConfirmation`,
+  `OtherUserProfileScreen`, `Coffee{FiltersSheet,RoasterLogo}`,
+  `NotificationsButton` — каждый требует проверки тестов-потребителей.

@@ -52,7 +52,6 @@ import com.coffeepeek.admin.ui.screen.favorites.FavoritesViewModel
 import com.coffeepeek.admin.ui.screen.review.ReviewReportViewModel
 import com.coffeepeek.admin.ui.screen.review.ContentReportScreenRenderer
 import com.coffeepeek.admin.ui.screen.contributions.ContributionKind
-import com.coffeepeek.admin.ui.screen.roaster.RoasterDetailViewModel
 import com.coffeepeek.admin.ui.screen.shop.CheckInDraftStore
 import com.coffeepeek.admin.ui.screen.shop.ShopMenuGalleryViewModel
 import com.coffeepeek.admin.ui.screen.shop.ShopReportViewModel
@@ -241,7 +240,6 @@ private fun appModule(
     single { ReviewDraftStore(settingRepository) }
     factory { NavigatorViewModel(get()) }
     factory { FeedViewModel(get(), get(), get(), get(), getOrNull<ObserveFavoriteIdsUseCase>()) }
-    factory { com.coffeepeek.admin.ui.screen.roaster.RoasterListViewModel(get(), get(), get()) }
     factory { MapViewModel(get(), get()) }
     factory { (shopId: String) -> ShopMenuGalleryViewModel(shopId, get()) }
     factory { (shopId: String) -> ShopReportViewModel(shopId, get()) }
@@ -250,6 +248,5 @@ private fun appModule(
     }
     single { FavoritesViewModel(get(), get(), get(), get(), sessions = get()) }
     factory { params -> VisitedPlacesViewModel(get(), get(), params.getOrNull()) }
-    factory { (roasterId: String) -> RoasterDetailViewModel(roasterId, get(), get(), get(), get()) }
     factory { (reviewId: String, isPreview: Boolean, isCheckIn: Boolean) -> ReviewReportViewModel(reviewId, get(), get(), isPreview, get(), isCheckIn) }
 }
