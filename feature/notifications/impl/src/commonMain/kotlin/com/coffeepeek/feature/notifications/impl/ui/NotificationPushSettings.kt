@@ -2,7 +2,6 @@ package com.coffeepeek.feature.notifications.impl.ui
 
 import androidx.compose.foundation.layout.*
 import com.coffeepeek.feature.notifications.impl.resources.Res
-import com.coffeepeek.feature.notifications.impl.resources.notifications_history_hint
 import com.coffeepeek.feature.notifications.impl.resources.notifications_push_description
 import com.coffeepeek.feature.notifications.impl.resources.notifications_push_permission
 import com.coffeepeek.feature.notifications.impl.resources.notifications_push_title
@@ -45,9 +44,6 @@ internal fun NotificationPushSettings(state: NotificationInboxState, onPushChang
                 }
                 CoffeePeekSwitch(checked, onPushChanged, enabled = canToggle, modifier = Modifier.semantics { contentDescription = title })
             }
-            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-            Text(stringResource(Res.string.notifications_history_hint), style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant)
             state.settingsError?.let {
                 Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
                 if (!state.settingsLoaded) TextButton(onClick = onRefresh,
@@ -61,7 +57,7 @@ internal fun NotificationPushSettings(state: NotificationInboxState, onPushChang
 
 @Composable
 private fun NotificationPushSettingsPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
-    NotificationPushSettings(NotificationInboxState(settingsLoaded = true, deviceAvailable = true), {}, {})
+    NotificationPushSettings(NotificationInboxState(settingsLoaded = true, deviceAvailable = true, permissionGranted = true), {}, {})
 }
 
 @Preview(widthDp = 360) @Composable private fun NotificationPushSettingsLightPreview() = NotificationPushSettingsPreview(false)

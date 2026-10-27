@@ -67,6 +67,7 @@ internal data class RefMenuItemDto(
 internal data class RefMenuDto(
     @SerialName("items") val items: List<RefMenuItemDto> = emptyList(),
     @SerialName("photos") val photos: List<RefPhotoDto> = emptyList(),
+    @SerialName("inputRevision") val inputRevision: Long? = null,
 )
 
 @Serializable

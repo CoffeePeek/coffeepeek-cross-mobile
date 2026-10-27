@@ -327,3 +327,47 @@ IDE tools/preview rendering were unavailable. Paired Android previews compile.
 TalkBack, alternate font/window sizes, real map/permission/backend acceptance and
 iOS runtime UI checks remain untested. No automated UI/Compose/screenshot test
 was introduced or run, and no camera, production analytics or account write occurred.
+
+## Search result priority — develop publication, 2026-10-27
+
+At the user's request, applied the search fix independently to develop
+`be7577b8`; verified code commit `7cb60f56`. Matching shops precede a confirmed
+empty roaster section, and both headings use titleLarge. Adapted the Android
+feature entry and the active retained iOS FeedScreen without importing the
+pending migration stack or map changes. The roaster owner supplies the filtered
+result status and keeps query analytics current below the lazy viewport.
+
+Windows verification: Discovery impl 69 tests/6 suites, Roaster impl 23/3,
+selected application Feed unit tests 32/4; all 124 passed with zero failures,
+errors or skips, including nine new regressions. No failing-test retries.
+DirectSandbox and DirectDebug assemblies, both packaged DEX runtime-class
+checks and Sandbox isolation passed in 2m48s, Gradle --max-workers=6.
+Builds: com.coffeepeek.sandbox 1.1.2.2478-sandbox/2478 and com.coffeepeek
+1.1.2.2478/2478. Android paired previews compile; IDE rendering was unavailable.
+No installation, device, automated UI, instrumentation or screenshot run took
+place. Manual themes/font/window/accessibility/back/cancel, native iOS runtime
+and live backend gates remain open; no production account or analytics writes.
+
+## Home header/map gap — 2026-10-27
+
+The Android overlay now adds LazyListLayoutInfo.beforeContentPadding to the
+mini-map item offset, preserving the existing 16dp list gap below the header.
+Scrolling, pinned pull-to-refresh behaviour and parking recycled map items stay
+covered by ChoreographyTest; the retained iOS path already uses the measured
+anchor including padding. No screen, resource, dependency or navigation redesign.
+
+Verified on Windows: e385cc3e + this working diff on
+codex/migration-home-map-header-spacing. Discovery impl 70 tests/6 suites,
+zero failures/errors/skips/retries. DirectSandbox/DirectDebug assemblies, both
+packaged DEX guards and Sandbox isolation passed in 2m04s, --max-workers=6;
+Sandbox com.coffeepeek.sandbox 1.1.2.2479-sandbox/2479. Existing paired tab
+previews compile; IDE rendering was unavailable. No device/install/manual
+light-dark/font/window/accessibility/expand-back review, iOS runtime or live
+backend checks were performed; no automated UI/instrumentation/screenshot tests
+were created or run, and no account or production analytics writes occurred.
+
+Develop integration: rebased onto dea72680, verified code 3b445cf0. Both APK
+assemblies, DEX guards and Sandbox isolation passed again in 1m24s; Sandbox
+1.1.2.2482-sandbox/2482. The unchanged Discovery unit task was UP-TO-DATE,
+retaining all 70 passing results (no failed-test retry). Device/iOS gates above
+remain open.

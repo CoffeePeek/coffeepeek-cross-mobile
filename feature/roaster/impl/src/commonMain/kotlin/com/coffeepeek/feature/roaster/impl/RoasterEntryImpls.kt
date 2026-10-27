@@ -24,6 +24,7 @@ import com.coffeepeek.feature.roaster.impl.ui.RoasterDetailViewModel
 import com.coffeepeek.feature.roaster.impl.ui.RoasterListViewModel
 import com.coffeepeek.feature.roaster.impl.ui.compose.RoasterDetailScreen
 import com.coffeepeek.feature.roaster.impl.ui.compose.RoasterDiscoverySection
+import com.coffeepeek.feature.roaster.impl.ui.compose.roasterDiscoveryState
 import com.coffeepeek.feature.roaster.impl.ui.compose.RoasterListScreen
 import com.coffeepeek.feature.roaster.impl.ui.model.RoasterDetailEvent
 import com.coffeepeek.feature.roaster.impl.ui.model.RoasterListEvent
@@ -65,6 +66,12 @@ private class RoasterDiscoveryApiImpl(
     @Composable
     private fun model(): RoasterListViewModel =
         viewModel(key = "roaster-discovery:$instanceKey") { RoasterListViewModel(repository, favorites, analytics.list()) }
+
+    @Composable
+    override fun hasResults(query: String, selectedRoasters: Set<String>, favoritesOnly: Boolean): Boolean? = key(this) {
+        val state = roasterDiscoveryState(model(), query, selectedRoasters, favoritesOnly)
+        state.hasResults(query, selectedRoasters, favoritesOnly)
+    }
 
     @Composable
     override fun Section(query: String, selectedRoasters: Set<String>, favoritesOnly: Boolean,

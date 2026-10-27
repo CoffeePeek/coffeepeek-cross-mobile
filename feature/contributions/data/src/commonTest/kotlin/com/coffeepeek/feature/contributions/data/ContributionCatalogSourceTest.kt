@@ -26,6 +26,21 @@ class ContributionCatalogSourceTest {
     private val replies = mutableMapOf<String, () -> Pair<HttpStatusCode, String>>()
     private var roasters: Result<List<CatalogOption>> = Result.success(listOf(CatalogOption("r1", "Roaster", "https://logo")))
 
+    @Test fun theSnapshotKeepsThePublishedMenuRevisionWithoutInventingOne() = runBlocking {
+        defaults()
+        for (revision in listOf<Long?>(null, 0L, 17L, -1L)) {
+            val field = revision?.let { ",\"inputRevision\":$it" }.orEmpty()
+            replies["/api/CoffeeShops/cafe"] = { ok("""{"name":"Cafe","menu":{"items":[]$field}}""") }
+            assertEquals(revision, source().shop("cafe").getOrThrow().menuInputRevision)
+        }
+    }
+
+    @Test fun aShopWithoutAMenuHasRevisionZero() = runBlocking {
+        defaults()
+        replies["/api/CoffeeShops/cafe"] = { ok("""{"name":"Cafe"}""") }
+        assertEquals(0L, source().shop("cafe").getOrThrow().menuInputRevision)
+    }
+
     private fun ok(data: String) = HttpStatusCode.OK to """{"isSuccess":true,"data":$data}"""
 
     private fun defaults() {

@@ -77,5 +77,7 @@ internal fun RefShopDto.toSnapshot(slug: String, catalogOrder: List<String>?): S
         brewMethodIds = brewMethods.map { it.key },
         menu = if (order == null) rows else rows.sortedBy { order[it.slug] ?: Int.MAX_VALUE },
         menuPhotos = menu?.photos.orEmpty().menuPhotos(),
+        // A shop without a published menu starts at revision 0; an unreported revision stays unknown rather than invented.
+        menuInputRevision = menu.let { if (it == null) 0L else it.inputRevision },
     )
 }
