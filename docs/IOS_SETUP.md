@@ -319,12 +319,15 @@ CoffeePeek → TestFlight. Чтобы новые сборки автоматич
 эту проверку. Требования Apple:
 [Supporting Associated Domains](https://developer.apple.com/documentation/xcode/supporting-associated-domains).
 
-Проверка 2026-10-27: `codex/migration-ios-all-public-links` от `8ba59ab1`,
+Проверка 2026-10-27: `codex/migration-ios-all-public-links`, приложение `732210b2`
+(родитель синхронизирован до `0041e728`),
 сайт `16d2916` ([PR #32](https://github.com/CoffeePeek/coffeepeek-cross-web/pull/32)).
 План: проверить маршруты всех публичных карточек, iOS-приём ссылки на пост,
 сохранение веб-восстановления пароля, сборку приложения и HTTP-контракт AASA.
 Выполнены 21 unit/contract-проверка приложения (9 маршрутов, 5 native tab routes,
-7 community adapters) и 9 проверок поста/шеринга; ошибок и повторов нет.
+7 community adapters) и 9 проверок поста/шеринга; ошибок нет. После обновления
+родителя 21 проверка приложения повторена успешно; это повтор из-за изменения
+исходников, не retry падения.
 `assembleDirectDebug` и `verifyDirectDebugRuntimeClasses` прошли; APK не
 устанавливался. Последний manifest пересобран после добавления новых путей.
 Kotlin для iOS Arm64 и iOS Simulator tests скомпилирован на Windows;
