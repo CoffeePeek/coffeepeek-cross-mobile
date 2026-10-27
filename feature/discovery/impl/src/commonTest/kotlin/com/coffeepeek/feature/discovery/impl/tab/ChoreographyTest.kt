@@ -7,12 +7,21 @@ import kotlin.test.assertTrue
 class ChoreographyTest {
     @Test fun thePreviewFollowsTheItemOffsetAndStaysAboveTheViewportWhenItsItemIsRecycled() {
         val anchor = Frame(16f, 180f, 384f, 420f)
-        assertEquals(anchor, previewFrame(anchor, 164f, 16))
+        assertEquals(anchor, previewFrame(anchor, 164f, 16, 0))
         // The offset follows the scroll; a pull to refresh moves the list but not the item offset, so the map is pinned (the measured anchor top is ignored).
-        assertEquals(Frame(16f, 64f, 384f, 304f), previewFrame(anchor, 164f, -100))
-        assertEquals(anchor, previewFrame(Frame(16f, 252f, 384f, 492f), 164f, 16))
-        assertEquals(164f, previewFrame(anchor, 164f, null).bottom)
-        assertEquals(anchor.width, previewFrame(anchor, 164f, null).width)
+        assertEquals(Frame(16f, 64f, 384f, 304f), previewFrame(anchor, 164f, -100, 0))
+        assertEquals(anchor, previewFrame(Frame(16f, 252f, 384f, 492f), 164f, 16, 0))
+        assertEquals(164f, previewFrame(anchor, 164f, null, 0).bottom)
+        assertEquals(anchor.width, previewFrame(anchor, 164f, null, 0).width)
+    }
+
+    @Test fun thePreviewKeepsTheHeaderGapWhileScrollingAndPulling() {
+        val anchor = Frame(16f, 180f, 384f, 420f)
+        assertEquals(anchor, previewFrame(anchor, 164f, 0, 16))
+        assertEquals(Frame(16f, 204f, 384f, 444f), previewFrame(anchor, 164f, 0, 40))
+        assertEquals(Frame(16f, 168f, 384f, 408f), previewFrame(anchor, 164f, -12, 16))
+        assertEquals(anchor, previewFrame(Frame(16f, 252f, 384f, 492f), 164f, 0, 16))
+        assertEquals(164f, previewFrame(anchor, 164f, null, 16).bottom)
     }
 
     @Test fun theShopListPushesTheMapWithoutOverlappingItAndCancelReversesTheMotion() {

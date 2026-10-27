@@ -16,12 +16,14 @@ internal data class Frame(val left: Float, val top: Float, val right: Float, val
 private fun lerp(from: Float, to: Float, fraction: Float) = from + (to - from) * fraction
 
 /**
- * Where the small map is drawn: [viewportTop] (the top of the scrolling area) plus the offset of the mini-map item in the list, as prod does. The offset
- * follows the scroll but not the pull-to-refresh displacement of the list, so the map stays pinned while the shops below are pulled. Once the item is
- * recycled ([itemOffset] null) the map is parked above the viewport, keeping the anchor's size and left edge.
+ * Lazy item offsets exclude [beforeContentPadding]; include it to preserve the gap below the header.
+ * Follow scrolling without pull-to-refresh displacement, and park recycled items above the viewport.
  */
-internal fun previewFrame(anchor: Frame, viewportTop: Float, itemOffset: Int?): Frame =
-    Frame.of(anchor.left, viewportTop + (itemOffset?.toFloat() ?: -anchor.height), anchor.width, anchor.height)
+internal fun previewFrame(anchor: Frame, viewportTop: Float, itemOffset: Int?, beforeContentPadding: Int): Frame {
+    val top = if (itemOffset == null) viewportTop - anchor.height
+        else viewportTop + beforeContentPadding + itemOffset
+    return Frame.of(anchor.left, top, anchor.width, anchor.height)
+}
 
 /** The map between its small place ([expansion] 0) and the whole screen (1). */
 internal fun expandedFrame(preview: Frame, screenWidth: Float, screenHeight: Float, expansion: Float): Frame {
