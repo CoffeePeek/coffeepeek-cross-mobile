@@ -79,15 +79,6 @@ in the APNs payload. See [FCM Apple message handling](https://firebase.google.co
 
 ## Sessions, preferences and activity
 
-The shared notification panel shows a support code while native iOS registration is
-pending or failed: RESET_PENDING, APNS_PENDING, FCM_PENDING, or RESET_/APNS_/FCM_
-followed by the NSError numeric code. FCM_EMPTY means the provider returned neither
-a token nor an error. These codes contain no tokens, provider response bodies or
-credentials. A successful token clears the code; account switching clears it and
-ignores late callbacks belonging to the previous account. Registration and token
-revocation rules are unchanged. This diagnostic requires a new iOS build; it does
-not diagnose an already-installed older TestFlight build remotely.
-
 `feature/notifications` (api, domain, data, impl) owns shared coordination. The app supplies authenticated Ktor,
 SessionRepository and NativePushBridge. A random installation UUID is kept in platform
 storage. Tokens are registered only for the current signed-in account with OS permission.
@@ -136,10 +127,9 @@ iOS uses the public `Messaging.deleteData(completion:)` reset to revoke Messagin
 registrations and check-in data. With auto-init disabled, Firebase does not request
 a replacement token during this reset. It also handles an installation without
 check-in credentials; token-only deletion in Firebase 12.19.2 returns Messaging
-error 6 in that state and would block first registration (RESET_6).
+error 6 in that state and would block first registration.
 The existing reset gate still retries real failures before APNs/FCM registration
 can continue. Firebase installation IDs and CoffeePeek sessions/history are retained.
-The Debug callback asserts that the SDK kept automatic registration disabled.
 See the pinned [public reset contract](https://github.com/firebase/firebase-ios-sdk/blob/12.19.2/FirebaseMessaging/Sources/Public/FirebaseMessaging/FIRMessaging.h)
 and [fresh-install reset implementation](https://github.com/firebase/firebase-ios-sdk/blob/12.19.2/FirebaseMessaging/Sources/Token/FIRMessagingTokenManager.m).
 

@@ -46,8 +46,7 @@ internal class NotificationPresenter(
         scope.launch {
             var receivedRevision = platform.state.value.notificationRevision
             platform.state.collectLatest { device ->
-                mutable.update { it.copy(deviceAvailable = device.available, permissionGranted = device.permissionGranted,
-                    registrationDiagnostic = device.registrationDiagnostic.takeIf { device.userId != null && device.userId == account() }) }
+                mutable.update { it.copy(deviceAvailable = device.available, permissionGranted = device.permissionGranted) }
                 if (receivedRevision != device.notificationRevision) {
                     receivedRevision = device.notificationRevision
                     refresh()
