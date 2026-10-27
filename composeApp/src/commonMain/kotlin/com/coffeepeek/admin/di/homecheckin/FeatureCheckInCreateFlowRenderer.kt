@@ -28,14 +28,14 @@ import org.jetbrains.compose.resources.stringResource
 internal class FeatureCheckInCreateFlowRenderer(
     private val sessions: SessionReader,
     private val picker: CheckInCreatePickerEntry = createCheckInCreatePickerEntry(),
+    private val onCreated: () -> Unit = {},
     private val createEditor: (CheckInHistorySession, CheckInTracker?) -> HomeCheckInEditorEntry,
 ) : CheckInCreateFlowRenderer {
     @Composable
-    override fun Content(onDismiss: () -> Unit, onShop: () -> Unit, onHomeSaved: () -> Unit,
-        legacyContent: @Composable () -> Unit) {
+    override fun Content(onDismiss: () -> Unit, onShop: () -> Unit, onHomeSaved: () -> Unit) {
         val owner = viewModel(key = "global-check-in-flow-store") { GlobalCheckInFlowStore() }
         GlobalCheckInFlowLifetimeEffect(owner)
-        val model = viewModel(viewModelStoreOwner = owner) { GlobalCheckInFlow(sessions, createEditor) }
+        val model = viewModel(viewModelStoreOwner = owner) { GlobalCheckInFlow(sessions, onCreated, createEditor) }
         val state by model.state.collectAsState()
         Completion(model, onDismiss, onShop, onHomeSaved)
         Destination(owner, model, state)

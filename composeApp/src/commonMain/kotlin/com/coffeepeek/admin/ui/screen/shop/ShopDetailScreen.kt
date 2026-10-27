@@ -212,31 +212,7 @@ fun ShopDetailScreen(shopId: String, forCheckIn: Boolean = false) {
                 vm.dismissCheckInSheet()
                 Navigator.popThenNavigate(Navigator.Screen.VisitedPlaces)
             },
-        ) {
-            state.checkInDraft?.let { draft ->
-                CheckInBottomSheet(
-                    drinks = state.drinks,
-                    drinksError = state.drinksError,
-                    onRetryDrinks = vm::loadDrinks,
-                    draft = draft,
-                    isLoading = state.isCheckInLoading,
-                    onDismiss = vm::dismissCheckInSheet,
-                    onDraftChange = vm::updateCheckInDraft,
-                    onSubmit = vm::checkIn,
-                    placeName = state.details?.shop?.title,
-                    submittedVisibility = state.submittedCheckInVisibility,
-                    submissionError = state.checkInError,
-                    onGoToFeed = {
-                        vm.dismissCheckInSheet()
-                        Navigator.popThenSelectTab(Navigator.Screen.CommunityTab)
-                    },
-                    onViewCheckIns = {
-                        vm.dismissCheckInSheet()
-                        Navigator.popThenNavigate(Navigator.Screen.VisitedPlaces)
-                    },
-                )
-            }
-        }
+        )
     }
 
     val details = state.details

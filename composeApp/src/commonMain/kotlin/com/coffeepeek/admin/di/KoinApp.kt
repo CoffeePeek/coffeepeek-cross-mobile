@@ -16,7 +16,6 @@ import com.coffeepeek.admin.feature.catalog.api.BrewMethodCatalog
 import com.coffeepeek.admin.feature.catalog.data.BrewMethodCatalogAdapter
 import com.coffeepeek.admin.feature.coffee.domain.CoffeeRepository
 import com.coffeepeek.feature.profile.data.createPublicProfileData
-import com.coffeepeek.admin.feature.homecheckin.ui.HomeCheckInViewModel
 import com.coffeepeek.legacy.homecheckin.data.HomeCheckInRepositoryImpl
 import com.coffeepeek.legacy.homecheckin.domain.HomeCheckInRepository
 import com.coffeepeek.feature.notifications.api.NotificationFeature
@@ -195,10 +194,6 @@ private fun appModule(
     single<HomeCheckInRepository> {
         val gateway = get<CoffeePeekClient>()
         HomeCheckInRepositoryImpl(gateway.client, gateway.uploadClient, Constants.BASE_URL)
-    }
-    factory { params ->
-        HomeCheckInViewModel(get(), get(), get(), onCheckInCreated = get<NotificationFeature>()::onCheckInCreated,
-            calendarWeek = params.getOrNull<com.coffeepeek.admin.ui.screen.checkins.CalendarWeek>())
     }
     single { com.coffeepeek.feature.authorblocking.impl.createAuthorBlockingFeature(get<CoffeePeekClient>().client, com.coffeepeek.admin.di.authorblocking.SessionAuthorBlockingAccount(get())) }
     single<com.coffeepeek.feature.authorblocking.api.AuthorVisibility> { get<com.coffeepeek.feature.authorblocking.impl.AuthorBlockingFeature>().visibility }

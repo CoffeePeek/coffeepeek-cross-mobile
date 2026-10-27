@@ -1072,3 +1072,24 @@ source `89778c23` + этот срез. Подробный scope/остаток �
   tests/hosts не создавались и не запускались; приложения не устанавливались,
   аккаунт/production backend/telemetry не затронуты. Пользовательский pbxproj
   (48+/41−) исключён. Полный legacy exit и вся фича не объявляются завершёнными.
+
+## Срез Home check-in legacy UI — 2026-10-27
+
+- Удалены недостижимые: fallback `LegacyCheckInCreateFlow` и параметры
+  `legacyContent` (create flow, shop check-in form), 6 файлов
+  `feature/homecheckin/ui`, `PersonalProfileActivityCalendar/Preview`, легаси
+  `CheckInBottomSheet`, Koin-фабрика `HomeCheckInViewModel`.
+- Найден и закрыт пробел: новый глобальный create flow не вызывал
+  `NotificationFeature.onCheckInCreated()` (запрос уведомлений после создания
+  Home). Теперь вызывается один раз при принятом создании; тест
+  `GlobalCheckInFlowStoreTest`.
+- Удалены тесты мёртвого кода (commonTest Calendar/Editor/PhotoViewer/
+  Visibility/SelectedDayEntries, 4 инструментальных Home/Calendar, 2 теста в
+  `CheckInPresentationTest`). Сценарии покрыты в feature/check-in-history и
+  feature/home-check-in; отдельных unit-тестов нет у конвертации минут/секунд и
+  русских plural сводки ошибок (теперь UI/ресурсы feature).
+- Остаётся: `CheckInCreateSheet/Content` (используется инструментальным
+  `CheckInPresentationTest`), легаси-репозиторий `modules/home-checkin` (L3).
+- Прошли: Direct/Play unit, lintDirectDebug, assemble Direct/Sandbox, DEX и
+  Sandbox isolation guards, iOS Arm64 compile, simulator test-compile, framework
+  link. Native tests не исполнялись; UI/manual не проверялись.
