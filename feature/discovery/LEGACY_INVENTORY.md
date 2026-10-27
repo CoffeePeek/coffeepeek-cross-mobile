@@ -309,3 +309,21 @@ Builds: com.coffeepeek.sandbox 1.1.2.2478-sandbox/2478 and com.coffeepeek
 No installation, device, automated UI, instrumentation or screenshot run took
 place. Manual themes/font/window/accessibility/back/cancel, native iOS runtime
 and live backend gates remain open; no production account or analytics writes.
+
+## Home header/map gap — 2026-10-27
+
+The Android overlay now adds LazyListLayoutInfo.beforeContentPadding to the
+mini-map item offset, preserving the existing 16dp list gap below the header.
+Scrolling, pinned pull-to-refresh behaviour and parking recycled map items stay
+covered by ChoreographyTest; the retained iOS path already uses the measured
+anchor including padding. No screen, resource, dependency or navigation redesign.
+
+Verified on Windows: e385cc3e + this working diff on
+codex/migration-home-map-header-spacing. Discovery impl 70 tests/6 suites,
+zero failures/errors/skips/retries. DirectSandbox/DirectDebug assemblies, both
+packaged DEX guards and Sandbox isolation passed in 2m04s, --max-workers=6;
+Sandbox com.coffeepeek.sandbox 1.1.2.2479-sandbox/2479. Existing paired tab
+previews compile; IDE rendering was unavailable. No device/install/manual
+light-dark/font/window/accessibility/expand-back review, iOS runtime or live
+backend checks were performed; no automated UI/instrumentation/screenshot tests
+were created or run, and no account or production analytics writes occurred.

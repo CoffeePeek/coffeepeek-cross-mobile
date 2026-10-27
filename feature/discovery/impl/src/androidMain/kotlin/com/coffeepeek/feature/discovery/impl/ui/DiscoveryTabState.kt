@@ -29,7 +29,9 @@ internal class DiscoveryTabState(
     var viewportTop by mutableFloatStateOf(0f)
     var viewportHeight by mutableFloatStateOf(0f)
     val previewBounds by derivedStateOf {
-        previewFrame(mapAnchor, viewportTop, list.layoutInfo.visibleItemsInfo.firstOrNull { it.key == MAP_ITEM_KEY }?.offset)
+        val layout = list.layoutInfo
+        previewFrame(mapAnchor, viewportTop, layout.visibleItemsInfo.firstOrNull { it.key == MAP_ITEM_KEY }?.offset,
+            layout.beforeContentPadding)
     }
 
     fun recordMapSlot(slot: Frame, ready: Boolean, discoveryProgress: Float, expansion: Float) {
