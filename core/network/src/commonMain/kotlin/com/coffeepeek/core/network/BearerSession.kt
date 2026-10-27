@@ -8,11 +8,15 @@ class SessionTokens(val accessToken: String, val refreshToken: String?) {
     override fun toString(): String = "SessionTokens(redacted)"
 }
 
-/** Callbacks must not use the authenticated client; refresh uses a separate plain client. */
-interface BearerSession {
+/** The account's stored credentials; the callbacks must not use an authenticated client. */
+interface SessionCredentials {
     suspend fun load(): SessionTokens?
     suspend fun save(tokens: SessionTokens?)
     /** Atomically compare and replace the current credential snapshot. */
     suspend fun replace(expected: SessionTokens, tokens: SessionTokens?): Boolean
+}
+
+/** Credentials plus the exchange of a refresh token, which uses a separate plain client. */
+interface BearerSession : SessionCredentials {
     suspend fun refresh(refreshToken: String): Result<SessionTokens>
 }

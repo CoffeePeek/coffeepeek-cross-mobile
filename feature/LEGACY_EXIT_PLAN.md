@@ -1461,3 +1461,32 @@ source `89778c23` + этот срез. Подробный scope/остаток �
   modules/data unit, Direct/Play unit, lintDirectDebug, assemble Direct/Sandbox, DEX и isolation, iOS compile
   core/network и feature/auth/data, composeApp iOS compile, simulator test-compile, framework link.
   Живой путь не менялся, ручная проверка refresh не выполнялась.
+
+## L3, срез C6.3a–b — сборщик четырёх клиентов в `core/network` (живой путь НЕ переключён) — 2026-10-27
+
+- `core/network` получил: платформенные фабрики движков (Android OkHttp + файловый HTTP-кэш, iOS Darwin с обходом
+  кэша NSURLSession для `no-store`), `deviceUserAgent` (+ таблица моделей Apple), валидацию 5xx
+  (`ServiceUnavailableException : HttpStatusFailure`, текст прежний; 4xx остаются обычными ответами), cURL-лог с
+  редактированием секретов, наблюдатель запросов (`RequestObserver`/`RequestObservation`, категории API,
+  статус из `ResponseException` или `HttpStatusFailure`), `SessionCredentials` (load/save/replace; `BearerSession`
+  теперь расширяет его) и `ApiClients` — четыре клиента с теми же плагинами и таймаутами, что у `CoffeePeekClient`:
+  `plainClient` (UserAgent, без токена), `client` (токен, общий координатор, HTTP-кэш), `imageClient` (токен, тот же
+  координатор, без кэша, таймауты 5/10/60 с), `uploadClient` (таймауты 120/30/120 с). Один `SessionRefreshCoordinator`
+  на сессию; обмен refresh строится поверх `plainClient` (`refreshWith`); сессия читается на каждый запрос;
+  `onAuthRetry` помечает логический запрос для аналитики; фабрики движков подменяются (Sandbox/тесты).
+- Важное отличие от `HttpClientFactory.api`: легаси-клиенты не используют `expectSuccess` (4xx приходят ответом,
+  потребители проверяют статус сами), поэтому `ApiClients` строится на `HttpClient(engine)`, а не на `api()`.
+- Тесты: перенесены `DeviceUserAgentTest`, `CurlInterceptorTest`, `ServerErrorValidationTest` (под новый тип
+  исключения), `RequestObservationTest` (3 + новый для 5xx), `normalizeBaseUrl`; новый `ApiClientsTest` (9): адрес и
+  агент plain-клиента, 5xx/4xx на всех четырёх, общий обмен API+картинки, чтение сессии на запрос, upload без адреса
+  и токена, наблюдатель с повтором авторизации, отказ refresh очищает сессию. `RequestCancellationTest` относится
+  к легаси `ShopApiService` и остаётся в `modules/network`.
+- Живой путь не менялся: `CoffeePeekClient`, `SessionAuthentication` и прочее легаси остаются рабочими до C6.3d.
+- Проверено (код выхода Gradle из файла = 0, 0 ошибок): core/network и feature/auth/data unit, modules/network и
+  modules/data unit, Direct/Play unit, lintDirectDebug, assemble Direct/Sandbox, DEX и isolation, iOS compile
+  core/network (Arm64 и simulator), composeApp iOS compile, simulator test-compile, framework link. Ручная
+  проверка не выполнялась.
+- Осталось: C6.3c (`BearerSession` над `SessionStore` в composeApp + `createTokenRefresh`), C6.3d (переключение 15
+  потребителей, Sandbox и тестов с `CoffeePeekClient` на `ApiClients`, замена `ApiException` на
+  `ServiceUnavailableException` в местах, где ловят 5xx, затем удаление `CoffeePeekClient`, `SessionAuthentication`,
+  `SessionRefreshCoordinator`, `SessionTokenProvider`, `AuthResp`).
