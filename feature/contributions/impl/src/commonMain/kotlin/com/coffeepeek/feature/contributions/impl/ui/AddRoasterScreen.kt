@@ -146,7 +146,7 @@ private fun RoasterForm(state: AddRoasterState, host: AddRoasterHost, callbacks:
                 { onAction(AddRoasterAction.AddPhotos(it)) }, { onAction(AddRoasterAction.RemovePhoto(it)) }, picker = host.photoPicker,
             )
             Spacer(Modifier.height(CoffeePeekDimens.spacing6))
-            CoffeePeekButton(stringResource(Res.string.contributions_roaster_submit), { onAction(AddRoasterAction.Submit) }, enabled = state.valid)
+            CoffeePeekButton(stringResource(Res.string.contributions_roaster_submit), { onAction(AddRoasterAction.Submit) }, enabled = state.ready)
             Spacer(Modifier.height(CoffeePeekDimens.spacing8))
         }
     }

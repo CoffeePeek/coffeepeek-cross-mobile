@@ -56,14 +56,16 @@ DatabaseCore. Старый LEGACY_REMOVAL.md — исторический сни
 
 Текущая ветка `codex/migration-contributions-ownership`, draft
 [PR #202](https://github.com/CoffeePeek/coffeepeek-cross-mobile/pull/202) → #201.
-Последний проверенный код — следующий коммит поверх `9f5291b8`: Contributions больше не читает каталоги, снимок кофейни и
+Последний проверенный код — коммиты поверх `9f5291b8` (`8ba59ab1` и следующий): Contributions больше не читает каталоги, снимок кофейни и
 напитки через legacy `ShopRepository` (`ShopContributionCatalogs` удалён); данные читает собственный источник в
 `feature/contributions/data`, roasters — из общего `PublicRoasterCatalog`. Подробности, сравнение с legacy и проверки:
 [Contributions ownership exit — точка остановки](contributions/OWNERSHIP_EXIT_PLAN.md).
 
-Следующий шаг в той же ветке/#202 — старые Contributions ViewModels и их фабрики в `KoinApp.kt`: из production-маршрутов они
-недостижимы, но на них ссылаются `ContributionsParityGapsTest` и чужой `ShopMenuEditorTest`. Сначала сверить покрытие сценариев
-feature-тестами, чужой тест не удалять и не переписывать. Остаток не закрыт.
+Следующий срез в той же ветке/#202 выполнен: пять недостижимых Contributions ViewModels, их Koin-фабрики и тесты старого
+кода удалены после сверки покрытия с feature-тестами; найденный пробел (отправка формы обжарщика во время загрузки городов)
+закрыт. Остаются `ShopChangeEditorScreen`/`ShopChangeEditorViewModel`/`ShopChangeLabels`: их держит чужой `ShopMenuEditorTest`.
+Instrumented-компиляция `compileDirectDebugAndroidTestKotlinAndroid` падает на двух не связанных файлах (`CpImageLoadingTest`,
+`DisplayPhotoTransparencyTest`) — отдельная задача. Подробности: [Contributions ownership exit](contributions/OWNERSHIP_EXIT_PLAN.md).
 
 CI-фикс #195 `027c2029` уже в стеке (#201 `89778c23`). Свежий `origin/develop` (`d8864318`, bump 1.1.2) в стек пока не передан.
 Полный локальный Android lint/unit/APK/DEX/Sandbox и iOS compile/framework для этого среза прошли; ручная/native/full Xcode
