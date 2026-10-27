@@ -1214,5 +1214,9 @@ source `89778c23` + этот срез. Подробный scope/остаток �
 - Прошли: Direct/Play unit, lintDirectDebug, assemble Direct/Sandbox, DEX и
   isolation, iOS Arm64 compile, simulator test-compile, framework link.
   Native tests/manual UI не выполнялись.
-- Остаётся: три копии «кнопка + флоу» (CheckInTabContent, CommunityScreen,
-  FeatureCommunityScreenRenderer) — свести в один хост отдельным шагом.
+- Три копии «кнопка + флоу» (CheckInTabContent, legacy CommunityScreen,
+  FeatureCommunityScreenRenderer) сведены в один `CheckInCreateHost`
+  (`ui/screen/checkins`): гость → Auth, вошедший → флоу создания;
+  `resetKey` закрывает флоу при смене аккаунта; фокус/клавиатура скрываются
+  одинаково во всех местах (раньше только на вкладке). Проверки те же, зелёные;
+  поведение на устройстве/Xcode вручную не проверялось.

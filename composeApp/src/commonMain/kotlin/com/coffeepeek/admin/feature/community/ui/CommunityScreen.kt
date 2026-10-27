@@ -31,8 +31,7 @@ import com.coffeepeek.core.designsystem.component.CoffeePeekPhotoViewerImages
 import com.coffeepeek.admin.ui.component.LocalFloatingNavClearance
 import com.coffeepeek.core.designsystem.component.CoffeePeekLoadErrorContent
 import com.coffeepeek.admin.ui.component.ReviewTextInput
-import com.coffeepeek.admin.ui.screen.checkins.CheckInCreateButton
-import com.coffeepeek.admin.ui.screen.checkins.CheckInCreateFlow
+import com.coffeepeek.admin.ui.screen.checkins.CheckInCreateHost
 import com.coffeepeek.core.media.PrefetchListPhotos
 import com.coffeepeek.domain.model.CheckIn
 import com.coffeepeek.domain.model.CheckInModerationState
@@ -50,7 +49,6 @@ fun CommunityScreen(onCreateCheckIn: () -> Unit, notificationsAction: @Composabl
     var preview by remember { mutableStateOf<CheckInPhotoPreview?>(null) }
     var displayedGeneration by rememberSaveable { mutableStateOf(state.sessionGeneration) }
     var homeEditorOpened by rememberSaveable { mutableStateOf(false) }
-    var showCreate by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(false) }
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
         if (homeEditorOpened) { homeEditorOpened = false; vm.refresh() }
     }
@@ -58,7 +56,6 @@ fun CommunityScreen(onCreateCheckIn: () -> Unit, notificationsAction: @Composabl
     LaunchedEffect(state.sessionGeneration) {
         if (displayedGeneration != state.sessionGeneration) {
             preview = null
-            showCreate = false
             listState.scrollToItem(0)
             displayedGeneration = state.sessionGeneration
         }
@@ -92,12 +89,6 @@ fun CommunityScreen(onCreateCheckIn: () -> Unit, notificationsAction: @Composabl
             TextButton(onClick = vm::dismissReport, enabled = !state.isReporting) { Text("Отмена") }
         }
     }
-
-    if (showCreate) CheckInCreateFlow(
-        onDismiss = { showCreate = false },
-        onShop = { showCreate = false; onCreateCheckIn() },
-        onHomeSaved = vm::refresh,
-    )
 
     Box(Modifier.fillMaxSize()) {
         Scaffold(
@@ -193,13 +184,10 @@ fun CommunityScreen(onCreateCheckIn: () -> Unit, notificationsAction: @Composabl
                 }
             }
         }
-        // Android supplies the panel's full clearance; UIKit already bounds this screen above its tab bar.
-        // Position explicitly: Scaffold's built-in FAB inset would add another 16 dp.
-        CheckInCreateButton(Modifier.align(Alignment.BottomEnd).padding(end = CpDimens.spacing4, bottom = clearance + 12.dp)) {
-            Analytics.track(AnalyticsEvent.CHECK_IN_START_ATTEMPTED, "source" to "global_create")
-            if (state.isLoggedIn == true) showCreate = true
-            else { Analytics.gate("check_in"); Navigator.navigate(Navigator.Screen.Auth) }
-        }
+        CheckInCreateHost(
+            canCreate = { state.isLoggedIn == true }, resetKey = state.sessionGeneration,
+            onShop = onCreateCheckIn, onHomeSaved = vm::refresh,
+        )
     }
 }
 

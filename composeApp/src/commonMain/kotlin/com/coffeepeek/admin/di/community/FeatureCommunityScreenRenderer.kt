@@ -1,36 +1,23 @@
 package com.coffeepeek.admin.di.community
 
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.BoxScope
-import com.coffeepeek.admin.analytics.Analytics
-import com.coffeepeek.admin.analytics.AnalyticsEvent
 import com.coffeepeek.admin.analytics.TrackFeedViewed
 import com.coffeepeek.admin.analytics.analyticsExposure
 import com.coffeepeek.admin.feature.catalog.api.methodLabel
 import com.coffeepeek.admin.feature.community.ui.CommunityScreenRenderer
-import com.coffeepeek.admin.theme.CpDimens
 import com.coffeepeek.admin.ui.Navigator
 import com.coffeepeek.admin.ui.component.CpSnackbarHost
 import com.coffeepeek.core.designsystem.component.CoffeePeekPhotoViewer
 import com.coffeepeek.admin.ui.component.LocalFloatingNavClearance
 import com.coffeepeek.core.designsystem.component.CoffeePeekPhotoViewerImages
 import com.coffeepeek.admin.ui.component.rememberReviewDisplayDate
-import com.coffeepeek.admin.ui.screen.checkins.CheckInCreateButton
-import com.coffeepeek.admin.ui.screen.checkins.CheckInCreateFlow
+import com.coffeepeek.admin.ui.screen.checkins.CheckInCreateHost
 import com.coffeepeek.core.designsystem.component.CoffeePeekImage
 import com.coffeepeek.core.media.PrefetchListPhotos
 import com.coffeepeek.admin.utils.ShareHelper
 import com.coffeepeek.feature.community.api.CommunityEntry
-import com.coffeepeek.feature.community.api.CommunityFloating
 import com.coffeepeek.feature.community.api.CommunityHost
 import com.coffeepeek.feature.community.api.ExposureKind
 import com.coffeepeek.feature.community.impl.createCommunityEntry
@@ -54,25 +41,13 @@ internal class FeatureCommunityScreenRenderer(private val entry: CommunityEntry)
             onOpenPost = { Navigator.navigate(Navigator.Screen.CheckInDetail(it)) },
             headerAction = notificationsAction,
             bottomClearance = LocalFloatingNavClearance.current,
-            floatingAction = { floating -> CreateAction(floating, onCreateCheckIn) },
+            floatingAction = { floating ->
+                CheckInCreateHost(
+                    canCreate = { floating.isLoggedIn == true }, resetKey = floating.sessionGeneration,
+                    onShop = onCreateCheckIn, onHomeSaved = floating.refresh,
+                )
+            },
         )
-    }
-}
-
-/** The legacy create button: a guest is sent to sign in, a signed-in user gets the global creation flow, which closes with the account scope. */
-@Composable
-private fun BoxScope.CreateAction(floating: CommunityFloating, onCreateCheckIn: () -> Unit) {
-    var showCreate by rememberSaveable { mutableStateOf(false) }
-    LaunchedEffect(floating.sessionGeneration) { showCreate = false }
-    if (showCreate) CheckInCreateFlow(
-        onDismiss = { showCreate = false },
-        onShop = { showCreate = false; onCreateCheckIn() },
-        onHomeSaved = floating.refresh,
-    )
-    CheckInCreateButton(Modifier.align(Alignment.BottomEnd).padding(end = CpDimens.spacing4, bottom = LocalFloatingNavClearance.current + 12.dp)) {
-        Analytics.track(AnalyticsEvent.CHECK_IN_START_ATTEMPTED, "source" to "global_create")
-        if (floating.isLoggedIn == true) showCreate = true
-        else { Analytics.gate("check_in"); Navigator.navigate(Navigator.Screen.Auth) }
     }
 }
 
