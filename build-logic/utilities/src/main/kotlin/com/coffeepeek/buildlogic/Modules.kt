@@ -148,7 +148,6 @@ object Modules {
         const val data = ":modules:data"
         const val network = ":modules:network"
         const val room = ":modules:room"
-        const val homeCheckIn = ":modules:home-checkin"
     }
 
     object Core {
@@ -168,7 +167,6 @@ object Modules {
         legacy.data,
         legacy.network,
         legacy.room,
-        legacy.homeCheckIn,
         core.coroutines,
         core.network,
         core.database,

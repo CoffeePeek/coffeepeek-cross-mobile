@@ -1,8 +1,6 @@
 package com.coffeepeek.admin.ui.screen.checkins
 
 import com.coffeepeek.domain.model.CheckIn
-import com.coffeepeek.legacy.homecheckin.domain.HomeCheckIn
-import com.coffeepeek.legacy.homecheckin.domain.HomeCheckInPhoto
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
@@ -22,22 +20,6 @@ class CheckInCalendarTest {
         ), photos)
         assertEquals(listOf(CalendarPhoto("cafe.jpg")),
             calendarPhotos(visits.takeLast(1), listOf(CalendarPhoto("cafe.jpg"))))
-    }
-
-    @Test
-    fun homeCalendarKeepsPhotosGroupedByPreparedDayAndIgnoresBlankUrls() {
-        fun entry(id: String, day: String, photos: List<HomeCheckInPhoto>) = HomeCheckIn(
-            id, "${day}T09:00:00Z", day, "${day}T09:00:00Z", null, null, null, null,
-            null, null, null, null, null, null, photos,
-        )
-        assertEquals(mapOf(
-            "2026-10-12" to listOf(CalendarPhoto("first.jpg"), CalendarPhoto("home.jpg")),
-            "2026-10-13" to emptyList(),
-        ), homeCalendarPhotos(listOf(
-            entry("first", "2026-10-12", listOf(HomeCheckInPhoto("original", "first.jpg"))),
-            entry("original", "2026-10-12", listOf(HomeCheckInPhoto("blank", ""), HomeCheckInPhoto("photo", "home.jpg"))),
-            entry("empty", "2026-10-13", emptyList()),
-        )))
     }
 
     @Test

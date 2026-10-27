@@ -1250,3 +1250,25 @@ source `89778c23` + этот срез. Подробный scope/остаток �
 - Прошли: Direct/Play unit, feature shop/discovery, lintDirectDebug, assemble
   Direct/Sandbox, DEX и isolation, iOS Arm64 compile, simulator test-compile,
   framework link. Native tests/manual UI не выполнялись.
+
+## L3, срез F — `modules/home-checkin` удалён — 2026-10-27
+
+- Потребителей не осталось: `HomeCheckInRepository` в `KoinApp` никто не получал,
+  `homeCalendarPhotos(HomeCheckIn)` не вызывалась (календарь читает
+  `feature/check-in-history`). Удалены модуль, зависимость composeApp, записи
+  `Modules.kt`, функция и два её теста в `CheckInCalendarTest`.
+- Тесты модуля (`HomeCheckInContractTest` 11, `HomeCheckInErrorsTest` 8) покрыты
+  `HomePreparation{Contract,Errors,Photos,Safety}Test` и `HomePreparationValidationTest`
+  в feature/home-check-in; статистика Home из старого репозитория нигде не
+  использовалась и в feature не переносилась.
+- **Поправка к срезу A.** Его коммит (`refactor(composeapp): remove unreachable
+  legacy feed, map…`) был красным: тесты `FeedSearchResultOrderTest` и `MapSearchTest`
+  (пришли из develop и ссылались на удалённые `FeedUiState`/`toMapShopOrNull`) не
+  компилировались. Причина — я принял код выхода уведомления фонового запуска
+  (последняя команда `grep|head`), а не Gradle. Удалены оба теста как дубли
+  (`SearchResultOrderTest`, `MapViewModelTest` в feature/discovery). Прежние
+  прогоны (срезы Home…Root host, слияния) перепроверены по логам: 0 ошибок.
+  Дальше код выхода Gradle пишется в файл и проверяется отдельно.
+- Проверено по-настоящему (код выхода Gradle 0, 0 ошибок): Direct/Play unit,
+  home-check-in data, lintDirectDebug, assemble Direct/Sandbox, DEX и isolation,
+  iOS Arm64 compile, simulator test-compile, framework link.

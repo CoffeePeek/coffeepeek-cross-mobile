@@ -105,7 +105,6 @@ kotlin {
             implementation(project(module.legacy.network))
             implementation(project(module.legacy.room))
             implementation(project(module.core.network))
-            implementation(project(module.legacy.homeCheckIn))
             implementation(project(module.feature.appUpdate.api))
             implementation(project(module.feature.auth.api))
             implementation(project(module.feature.community.api))
