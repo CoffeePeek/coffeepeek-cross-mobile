@@ -15,7 +15,7 @@ class ReleaseVersioningTest(unittest.TestCase):
         self.assertGreaterEqual(offset, 1000)
         gradle = (ROOT / 'composeApp/build.gradle.kts').read_text(encoding='utf-8')
         self.assertIn('file("iosApp/Configuration/Shared.xcconfig")', gradle)
-        self.assertIn('val appVersionName: Provider<String> = appVersionCode.map { "1.1.1.$it" }', gradle)
+        self.assertIn('val appVersionName: Provider<String> = appVersionCode.map { "1.1.2.$it" }', gradle)
         self.assertIn('gitCommitCount.zip(appBuildNumberOffset) { count, offset -> count + offset }', gradle)
         self.assertNotIn('"--all"', gradle)
         self.assertIn('commandLine("git", "rev-list", "--count", "HEAD")', gradle)
