@@ -153,7 +153,7 @@ internal class SandboxShelfBackend(private val today: LocalDate, private val upl
     }
 
     private fun detailFields(input: JsonObject, bean: Map<String, JsonElement>): Map<String, JsonElement> {
-        val roaster = input.text("roasterName")?.trim()?.takeIf { it.isNotEmpty() } ?: "Sandbox Roaster".takeIf { "coffeeProductId" in bean }
+        val roaster = input.text("roasterName")?.trim()?.takeIf { it.isNotEmpty() } ?: "Sandbox Roaster".takeIf { input.text("coffeeProductSlug") != null }
         val weight = input["weightGrams"]?.jsonPrimitive?.intOrNull
         val grind = input.text("grind")
         val roastedOn = input.text("roastedOn")?.let { runCatching { LocalDate.parse(it) }.getOrNull() ?: throw Rejected(HttpStatusCode.BadRequest) }

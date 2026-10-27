@@ -67,6 +67,7 @@ class SandboxShelfBackendTest {
             assertEquals("Sandbox Ethiopia", kept.text("name"))
             assertEquals(500, kept.int("weightGrams"))
             assertTrue(kept["grind"] is JsonNull)
+            assertTrue(kept["roasterName"] is JsonNull, "PUT by product ID does not refill the catalog roaster")
             assertEquals(first["photo"], kept["photo"])
             assertEquals(HttpStatusCode.BadRequest, api.call("PUT", "$base/bags/$id", """{"coffeeProductId":"another"}""").status)
             assertTrue(api.data("PUT", "$base/bags/$id", "{}").jsonObject["name"] is JsonNull)
