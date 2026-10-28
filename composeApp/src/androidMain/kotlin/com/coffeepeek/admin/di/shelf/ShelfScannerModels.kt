@@ -1,6 +1,7 @@
 package com.coffeepeek.admin.di.shelf
 
 import android.content.Context
+import com.coffeepeek.BuildConfig
 import com.coffeepeek.feature.shelf.data.scan.BagScannerModel
 import com.coffeepeek.feature.shelf.data.scan.BagScannerModelSource
 
@@ -13,11 +14,11 @@ private const val SEGMENTER_BYTES = 4_574_861L
 private const val SEGMENTER_SHA256 = "309c8469258dda742793dce0ebea8e6dd393174f89934733ecc8b14c76f4ddd8"
 private const val INPAINTER_BYTES = 28_079_181L
 private const val INPAINTER_SHA256 = "6f1f3530a1a2324b19752018ce756088b07973cda8d7d890034ace5c8a48c40b"
-private const val INPAINTER_URL = "https://huggingface.co/andraniksargsyan/migan/resolve/main/$INPAINTER_FILE"
 
-/** U2-Net-p ships in the APK; MI-GAN (28 MB) is downloaded on the first scan. */
-internal fun productionShelfModels(context: () -> Context) =
-    shelfModels(BagScannerModelSource.asset(context, "shelf-scanner/$SEGMENTER_FILE"), BagScannerModelSource.https(INPAINTER_URL))
+/** U2-Net-p ships in the APK; MI-GAN (28 MB) is downloaded on the first scan from the build's SHELF_INPAINTER_URL. */
+internal fun productionShelfModels(context: () -> Context) = shelfModels(
+    BagScannerModelSource.asset(context, "shelf-scanner/$SEGMENTER_FILE"), BagScannerModelSource.https(BuildConfig.SHELF_INPAINTER_URL),
+)
 
 /** The pinned files, from wherever [segmenter] and [inpainter] fetch them. */
 internal fun shelfModels(segmenter: BagScannerModelSource, inpainter: BagScannerModelSource) = ShelfScannerModels(

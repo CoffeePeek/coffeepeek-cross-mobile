@@ -276,6 +276,9 @@ android {
         buildConfigField("boolean", "POSTHOG_ENABLE_DEV", providers.gradleProperty("posthogEnableDev").map { (it == "true").toString() }.getOrElse("false"))
         buildConfigField("String", "POSTHOG_PROJECT_TOKEN", "\"${postHogProjectToken.get()}\"")
         buildConfigField("boolean", "SHELF_ENABLED", "false")
+        // MI-GAN for the shelf scanner, downloaded on the first scan. The file must match the size and SHA-256 pinned in
+        // ShelfScannerModels.kt; a build type may override this to download from its own server.
+        buildConfigField("String", "SHELF_INPAINTER_URL", "\"https://huggingface.co/andraniksargsyan/migan/resolve/main/migan_pipeline_v2.onnx\"")
     }
     packaging {
         resources {
