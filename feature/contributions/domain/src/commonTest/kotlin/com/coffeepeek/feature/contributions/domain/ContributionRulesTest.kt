@@ -58,9 +58,17 @@ class ContributionRulesTest {
         val earlier = UploadedPhoto("e.jpg", "image/jpeg", "key", 1)
         assertNull(ChangeDraft.Photos("shop", List(8) { "r$it" }, listOf(photo(1)), listOf(earlier)).issue())
         assertEquals(DraftIssue.TooManyPhotos, ChangeDraft.Photos("shop", List(8) { "r$it" }, listOf(photo(1), photo(2)), listOf(earlier)).issue())
-        assertNull(ChangeDraft.Menu("shop", emptyList(), listOf("m"), listOf(photo(1), photo(2)), listOf(earlier)).issue())
-        assertEquals(DraftIssue.TooManyPhotos, ChangeDraft.Menu("shop", emptyList(), listOf("m", "n"), listOf(photo(1), photo(2)), listOf(earlier)).issue())
+        assertNull(ChangeDraft.Menu("shop", emptyList(), listOf("m"), listOf(photo(1), photo(2)), listOf(earlier), expectedInputRevision = 0).issue())
+        assertEquals(DraftIssue.TooManyPhotos, ChangeDraft.Menu("shop", emptyList(), listOf("m", "n"), listOf(photo(1), photo(2)), listOf(earlier), expectedInputRevision = 0).issue())
         assertNull(ChangeDraft.Selection("shop", ChangeSection.Tags, listOf("a")).issue())
+    }
+
+    @Test fun menuDraftsRequireANonnegativeObservedRevision() {
+        val draft = ChangeDraft.Menu("shop", emptyList(), emptyList(), emptyList())
+        assertEquals(DraftIssue.InvalidMenuRevision, draft.issue())
+        assertEquals(DraftIssue.InvalidMenuRevision, draft.copy(expectedInputRevision = -1).issue())
+        assertNull(draft.copy(expectedInputRevision = 0).issue())
+        assertNull(draft.copy(expectedInputRevision = 17).issue())
     }
 
     @Test fun aSelectionDraftOnlyExistsForCatalogSections() {

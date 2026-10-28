@@ -28,6 +28,10 @@ internal data class RoasterListState(
     val favoriteKeys: Set<String> = emptySet(),
     val message: RoasterMessage? = null,
 ) {
+    fun hasResults(query: String, selectedRoasters: Set<String>, favoritesOnly: Boolean): Boolean? =
+        if (isLoading || loadFailed) null
+        else copy(query = query, selectedRoasters = selectedRoasters, favoritesOnly = favoritesOnly).visibleItems.isNotEmpty()
+
     val availableTags: List<RoasterTag>
         get() = items.flatMap { it.summary.tags }.distinctBy { it.slug }.sortedBy { it.sortOrder }
 

@@ -19,6 +19,7 @@ data class ChangeMenu(
     val items: List<MenuEntry> = emptyList(),
     val retainedPhotoIds: List<String> = emptyList(),
     val uploaded: List<UploadedPhoto> = emptyList(),
+    val expectedInputRevision: Long? = null,
 )
 
 /** What a request changes. Only the part of its section is set. */
@@ -78,6 +79,7 @@ sealed interface ChangeDraft {
         val retainedPhotoIds: List<String>,
         val newPhotos: List<PendingPhoto>,
         val uploaded: List<UploadedPhoto> = emptyList(),
+        val expectedInputRevision: Long? = null,
     ) : ChangeDraft {
         override val section get() = ChangeSection.Menu
     }

@@ -69,14 +69,18 @@ fun validateRoaster(name: String, cityId: String?, address: String, instagram: S
     if (!isValidWebsite(website)) add(RoasterIssue.Website)
 }
 
-enum class DraftIssue { DescriptionTooLong, InvalidContacts, TooManyPhotos }
+enum class DraftIssue { DescriptionTooLong, InvalidContacts, TooManyPhotos, InvalidMenuRevision }
 
 /** The reason a request must not be sent, or null. The repository refuses such drafts before any request. */
 fun ChangeDraft.issue(): DraftIssue? = when (this) {
     is ChangeDraft.Description -> DraftIssue.DescriptionTooLong.takeIf { text.length > ContributionLimits.DESCRIPTION }
     is ChangeDraft.ContactsChange -> DraftIssue.InvalidContacts.takeIf { validateContacts(contacts).isNotEmpty() }
     is ChangeDraft.Photos -> DraftIssue.TooManyPhotos.takeIf { retainedIds.size + newPhotos.size + uploaded.size > ContributionLimits.SHOP_PHOTOS }
-    is ChangeDraft.Menu -> DraftIssue.TooManyPhotos.takeIf { retainedPhotoIds.size + newPhotos.size + uploaded.size > ContributionLimits.MENU_PHOTOS }
+    is ChangeDraft.Menu -> when {
+        expectedInputRevision == null || expectedInputRevision < 0 -> DraftIssue.InvalidMenuRevision
+        retainedPhotoIds.size + newPhotos.size + uploaded.size > ContributionLimits.MENU_PHOTOS -> DraftIssue.TooManyPhotos
+        else -> null
+    }
     is ChangeDraft.Selection -> null
 }
 

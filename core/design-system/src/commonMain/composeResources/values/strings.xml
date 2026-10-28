@@ -1,4 +1,5 @@
 <resources>
+    <string name="coffeepeek_map_expand">Expand map to full screen</string>
     <string name="coffeepeek_photos_manage_hint">Нажмите, чтобы посмотреть. Удерживайте и перетаскивайте, чтобы менять порядок.</string>
     <string name="coffeepeek_photo_description">Фото %1$d из %2$d</string>
     <string name="coffeepeek_photo_position">%1$d / %2$d</string>

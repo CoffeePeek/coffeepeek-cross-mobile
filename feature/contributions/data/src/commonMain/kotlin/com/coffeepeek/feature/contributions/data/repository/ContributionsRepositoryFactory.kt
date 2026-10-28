@@ -144,6 +144,7 @@ private class RemoteContributionsRepository(
                     draft.items,
                     draft.retainedPhotoIds,
                     draft.uploaded + uploads.upload(draft.newPhotos, UploadPurpose.Menu).getOrThrow(),
+                    draft.expectedInputRevision,
                 ),
             )
         }

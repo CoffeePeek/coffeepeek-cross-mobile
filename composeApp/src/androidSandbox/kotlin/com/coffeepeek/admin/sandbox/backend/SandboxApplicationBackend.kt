@@ -398,7 +398,7 @@ internal class SandboxApplicationBackend(private val today: LocalDate, private v
         put("roasters", JsonArray(listOf(catalog("sandbox-roaster", "Sandbox Roaster"))))
         // Counters above stay server aggregates; only the visible cards are filtered.
         put("checkIns", JsonArray(publicVisits.filter(::visible))); put("userCheckIns", JsonArray(shopVisits))
-        putJsonObject("menu") { put("currency", "BYN"); put("photos", JsonArray(listOf(photo()))); put("items", drinks()) }
+        putJsonObject("menu") { put("inputRevision", 0); put("currency", "BYN"); put("photos", JsonArray(listOf(photo()))); put("items", drinks()) }
         putJsonArray("schedules") { (1..7).forEach { day -> add(buildJsonObject { put("dayOfWeek", day); putJsonArray("intervals") { add(buildJsonObject { put("openTime", "08:00:00"); put("closeTime", "23:00:00") }) } }) } }
     }
     // Three synthetic roasters: full data (tags, contacts, shops with and without photos), partial data, and bare.
