@@ -11,7 +11,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
-import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.*
 import androidx.compose.ui.text.font.FontWeight
@@ -26,6 +25,7 @@ import com.coffeepeek.core.designsystem.component.CoffeePeekButton
 import com.coffeepeek.core.designsystem.component.CoffeePeekFormStep
 import com.coffeepeek.core.designsystem.component.CoffeePeekLoader
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
+import com.coffeepeek.core.designsystem.text.coffeePeekPluralForm
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.feature.homecheckin.domain.model.*
 import com.coffeepeek.feature.homecheckin.impl.R
@@ -143,8 +143,9 @@ internal fun HomeCheckInEditorScreenContent(
             }
             val saveText = state.saveIssue?.editorText()
             val photoUploadText = stringResource(R.string.home_check_in_photo_upload_failed)
-            val summary = if (state.fieldErrors.isNotEmpty()) pluralStringResource(R.plurals.home_check_in_validation_summary,
-                    state.fieldErrors.size, state.fieldErrors.size)
+            val summary = if (state.fieldErrors.isNotEmpty()) stringResource(coffeePeekPluralForm(state.fieldErrors.size,
+                    R.string.home_check_in_validation_summary_one, R.string.home_check_in_validation_summary_few,
+                    R.string.home_check_in_validation_summary_many), state.fieldErrors.size)
                 // Production reported any failed photo upload with one clear message, whatever the transport reason.
                 else if (state.saveIssue != null && state.failedOperation == HomePreparationOperation.PhotoUpload) photoUploadText
                 else saveText

@@ -21,7 +21,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
@@ -30,13 +29,15 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
+import com.coffeepeek.core.designsystem.text.coffeePeekPluralForm
 import com.coffeepeek.feature.profile.domain.PublicProfileActivity
 import com.coffeepeek.feature.profile.impl.R
 import com.coffeepeek.feature.profile.impl.ui.data.profileMonth
 import com.coffeepeek.feature.profile.impl.ui.data.shiftProfileMonth
 
 @Composable
-private fun daysLabel(count: Int): String = pluralStringResource(R.plurals.profile_days_with_check_ins, count, count)
+private fun daysLabel(count: Int): String = stringResource(coffeePeekPluralForm(count, R.string.profile_days_with_check_ins_one,
+    R.string.profile_days_with_check_ins_few, R.string.profile_days_with_check_ins_many), count)
 
 @Composable
 private fun monthTitle(value: String): String {
