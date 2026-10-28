@@ -8,7 +8,7 @@ import kotlinx.coroutines.flow.first
 internal class ShelfHomeCheckInBags(private val shelf: ShelfRepository) {
     suspend fun load(): Result<List<HomeCheckInShelfBag>> {
         val bags = shelf.shelf.first()?.let { Result.success(it) } ?: shelf.refresh()
-        return bags.map { list -> list.map { HomeCheckInShelfBag(it.id, it.name.text(), it.roasterName.text()) } }
+        return bags.map { list -> list.map { HomeCheckInShelfBag(it.id, it.name.text(), it.roasterName.text(), it.photo?.url) } }
     }
 }
 

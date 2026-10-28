@@ -1,5 +1,6 @@
 package com.coffeepeek.feature.homecheckin.impl.ui.compose.component
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -30,7 +31,8 @@ import com.coffeepeek.feature.homecheckin.impl.ui.data.HomeCheckInShelfBag
 @Composable
 internal fun HomeCheckInBeanPicker(
     state: HomeCheckInEditorState, onAction: (HomeCheckInEditorAction) -> Unit,
-    emptyArtwork: @Composable (Modifier) -> Unit, modifier: Modifier = Modifier,
+    emptyArtwork: @Composable (Modifier) -> Unit, bagImage: @Composable (url: String, Modifier) -> Unit = { _, _ -> },
+    modifier: Modifier = Modifier,
 ) {
     var customName by rememberSaveable { mutableStateOf(state.draft.customBeanName.orEmpty()) }
     val bags = state.shelfBags.matching(state.beanQuery)
@@ -46,7 +48,7 @@ internal fun HomeCheckInBeanPicker(
             modifier = Modifier.fillMaxWidth(), onSearch = { onAction(HomeCheckInEditorAction.SearchBeans) })
         Box(Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
             when {
-                bags.isNotEmpty() || state.beans.isNotEmpty() -> HomeCheckInBeanResults(bags, state, onAction)
+                bags.isNotEmpty() || state.beans.isNotEmpty() -> HomeCheckInBeanResults(bags, state, bagImage, onAction)
                 state.beansLoading -> CoffeePeekLoader(stringResource(R.string.home_check_in_beans_loading))
                 state.beansIssue != null -> HomeCheckInBeansFailed(onAction)
                 else -> HomeCheckInBeansEmpty(emptyArtwork)
@@ -59,7 +61,8 @@ internal fun HomeCheckInBeanPicker(
 /** The owner's bags first, then the catalogue; a catalogue search still loading or failing keeps the bags usable. */
 @Composable
 private fun HomeCheckInBeanResults(
-    bags: List<HomeCheckInShelfBag>, state: HomeCheckInEditorState, onAction: (HomeCheckInEditorAction) -> Unit,
+    bags: List<HomeCheckInShelfBag>, state: HomeCheckInEditorState, bagImage: @Composable (url: String, Modifier) -> Unit,
+    onAction: (HomeCheckInEditorAction) -> Unit,
 ) {
     val unnamed = stringResource(R.string.home_check_in_shelf_bag_unnamed)
     val shelfTitle = stringResource(R.string.home_check_in_from_shelf)
@@ -68,7 +71,7 @@ private fun HomeCheckInBeanResults(
         if (bags.isNotEmpty()) {
             section(shelfTitle)
             items(bags, key = { "bag-${it.id}" }) { bag ->
-                HomeCheckInBeanRow(bag.name ?: unnamed, bag.roasterName) { onAction(HomeCheckInEditorAction.ShelfBagSelected(bag.id)) }
+                HomeCheckInShelfBagRow(bag, unnamed, bagImage) { onAction(HomeCheckInEditorAction.ShelfBagSelected(bag.id)) }
             }
             if (state.beans.isNotEmpty() || state.beansLoading || state.beansIssue != null) section(catalogTitle)
         }
@@ -93,6 +96,27 @@ private fun HomeCheckInBeanRow(title: String, subtitle: String?, onClick: () -> 
         .padding(horizontal = 8.dp, vertical = 12.dp)) {
         Text(title, style = MaterialTheme.typography.bodyLarge)
         subtitle?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
+    }
+    HorizontalDivider(color = MaterialTheme.colorScheme.outline)
+}
+
+/** A bag with its card on the left, as it stands on the shelf; a bag without a card shows a bean mark instead. */
+@Composable
+private fun HomeCheckInShelfBagRow(
+    bag: HomeCheckInShelfBag, unnamed: String, image: @Composable (url: String, Modifier) -> Unit, onClick: () -> Unit,
+) {
+    Row(Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).clickable(role = Role.Button, onClick = onClick)
+        .padding(horizontal = 8.dp, vertical = 8.dp), horizontalArrangement = Arrangement.spacedBy(12.dp),
+        verticalAlignment = Alignment.CenterVertically) {
+        Box(Modifier.size(width = 44.dp, height = 56.dp).clip(RoundedCornerShape(8.dp))
+            .background(MaterialTheme.colorScheme.surfaceVariant), contentAlignment = Alignment.Center) {
+            bag.imageUrl?.let { image(it, Modifier.fillMaxSize()) }
+                ?: Icon(CoffeePeekIcons.CoffeeBean, null, Modifier.size(20.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+        Column(Modifier.weight(1f)) {
+            Text(bag.name ?: unnamed, style = MaterialTheme.typography.bodyLarge)
+            bag.roasterName?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
+        }
     }
     HorizontalDivider(color = MaterialTheme.colorScheme.outline)
 }
@@ -140,7 +164,7 @@ private fun List<HomeCheckInShelfBag>.matching(query: String): List<HomeCheckInS
 
 @PreviewLightDark @Composable private fun HomeCheckInBeanPickerShelfPreview() = CoffeePeekTheme {
     Surface { HomeCheckInBeanPicker(HomeCheckInEditorState(isBeanPickerOpen = true,
-        shelfBags = listOf(HomeCheckInShelfBag("1", "Эфиопия Иргачеффе", "Sibaristica"), HomeCheckInShelfBag("2", null, null)),
+        shelfBags = listOf(HomeCheckInShelfBag("1", "Эфиопия Иргачеффе", "Sibaristica", "https://preview.invalid/card"), HomeCheckInShelfBag("2", null, null)),
         beans = listOf(HomeCheckInBeanOption("honey-bloom", "Honey Bloom", "Tasty Coffee"))), {},
-        { Icon(CoffeePeekIcons.Search, null, it) }) }
+        { Icon(CoffeePeekIcons.Search, null, it) }, { _, modifier -> Box(modifier.background(MaterialTheme.colorScheme.tertiary)) }) }
 }

@@ -10,5 +10,5 @@ interface HomeCheckInEditorCatalog {
 
 data class HomeCheckInBrewMethod(val code: String, val name: String, val legacyCodes: Set<String> = emptySet())
 data class HomeCheckInBeanOption(val slug: String, val name: String, val roasterName: String)
-/** A bag to brew from; [name] is null for a bag added by its photo alone. */
-data class HomeCheckInShelfBag(val id: String, val name: String?, val roasterName: String?)
+/** A bag to brew from; [name] is null for a bag added by its photo alone, [imageUrl] null for a bag without a card. */
+data class HomeCheckInShelfBag(val id: String, val name: String?, val roasterName: String?, val imageUrl: String? = null)

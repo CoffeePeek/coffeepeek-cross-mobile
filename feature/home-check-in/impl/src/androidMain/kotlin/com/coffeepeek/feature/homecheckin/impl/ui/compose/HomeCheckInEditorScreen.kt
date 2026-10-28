@@ -114,7 +114,7 @@ internal fun HomeCheckInEditorScreenContent(
                     is HomeCheckInEditorAction.BeanQueryChanged, HomeCheckInEditorAction.SearchBeans -> onAction(action)
                     else -> dispatch(action)
                 }
-            }, media.emptyBeanArtwork)
+            }, media.emptyBeanArtwork, media.shelfBagImage)
             return@Box
         }
         Column(Modifier.fillMaxSize()) {

@@ -51,7 +51,9 @@ internal fun androidHomeCheckInEditor(
             { name, modifier -> Icon(painterResource(brewMethodIcon(name)), null, modifier, tint = MaterialTheme.colorScheme.onSurfaceVariant) },
             { photo, modifier, fullSize ->
                 CpImage(photo.bytes, modifier = modifier, contentScale = if (fullSize) ContentScale.Fit else ContentScale.Crop)
-            }),
+            },
+            // Shelf cards are owner-only: the protected loader adds this session.
+            { url, modifier -> CpImage(url, modifier = modifier, contentScale = ContentScale.Fit) }),
         AndroidHomeCheckInPhotoPicker(),
         analytics = { editing ->
             val inherited = if (!editing) handoff.also { handoff = null } else null
