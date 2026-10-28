@@ -50,6 +50,13 @@ internal class AndroidGlobalCheckInFlow(
         mutableState.value = GlobalCheckInDestination.Closed(GlobalCheckInOutcome.Shop)
     }
 
+    /** Adding a bag is not a check-in: the picker closes and the application opens the scan. */
+    fun shelfBag() {
+        if (!canAccess() || mutableState.value !== GlobalCheckInDestination.Picker) return
+        tracker = null
+        mutableState.value = GlobalCheckInDestination.Closed(GlobalCheckInOutcome.ShelfBag)
+    }
+
     fun cancel(expected: GlobalCheckInDestination) {
         if (!owns(expected) || expected is GlobalCheckInDestination.Closed ||
             expected is GlobalCheckInDestination.Home && !expected.dismissAllowed.value) return
@@ -109,5 +116,5 @@ internal sealed interface GlobalCheckInDestination {
     class Closed(val outcome: GlobalCheckInOutcome) : GlobalCheckInDestination
 }
 
-internal enum class GlobalCheckInOutcome { Close, Saved, Shop }
+internal enum class GlobalCheckInOutcome { Close, Saved, Shop, ShelfBag }
 internal class GlobalCheckInCompletion(val outcome: GlobalCheckInOutcome, val shopTracker: CheckInTracker?)

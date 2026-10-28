@@ -1,18 +1,23 @@
 package com.coffeepeek.feature.shelf.impl.ui.compose.component
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -24,6 +29,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.core.designsystem.component.CoffeePeekActionDialog
 import com.coffeepeek.core.designsystem.component.CoffeePeekButton
@@ -69,32 +75,50 @@ internal fun ShelfBagContent(
     item: ShelfBagItem, today: ShelfDay, image: ShelfImage, mode: ShelfBagSheetMode,
     onPrimary: () -> Unit, onMenu: () -> Unit, modifier: Modifier = Modifier,
 ) {
+    val muted = MaterialTheme.colorScheme.onSurfaceVariant
     Column(modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(CoffeePeekDimens.spacing4),
-        verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing2)) {
-        Box(Modifier.fillMaxWidth().height(300.dp)) {
-            ShelfBagTile(item, image, Modifier.fillMaxSize(), Alignment.Center)
+        horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing2)) {
+        Box(Modifier.fillMaxWidth().height(320.dp)) {
+            ShelfBagTile(item, image, Modifier.fillMaxSize().padding(vertical = CoffeePeekDimens.spacing3), Alignment.Center, elevation = 14.dp)
             IconButton(onMenu, Modifier.align(Alignment.TopEnd)) {
                 Icon(CoffeePeekIcons.MoreHorizontal, stringResource(Res.string.shelf_bag_more), tint = MaterialTheme.colorScheme.onSurface)
             }
         }
-        Text(item.title(), Modifier.semantics { heading() }, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold)
-        item.bag.roasterName?.let { Text(it, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant) }
-        item.traits().takeIf { it.isNotEmpty() }?.let { Text(it.joinToString(" · "), style = MaterialTheme.typography.bodyMedium) }
+        Text(item.title(), Modifier.semantics { heading() }, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold,
+            textAlign = TextAlign.Center)
+        item.bag.roasterName?.let { Text(it, style = MaterialTheme.typography.bodyLarge, color = muted, textAlign = TextAlign.Center) }
+        item.traits().takeIf { it.isNotEmpty() }?.let { ShelfFactChips(it) }
         ShelfBagFacts(item, today)
         CoffeePeekButton(mode.primaryLabel(), onPrimary, Modifier.padding(top = CoffeePeekDimens.spacing2))
     }
 }
 
+/** Weight, grind, "Из каталога": quiet pills, not controls. */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun ShelfFactChips(facts: List<String>) {
+    FlowRow(horizontalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing1, Alignment.CenterHorizontally),
+        verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing1)) {
+        facts.forEach { fact ->
+            Surface(shape = CircleShape, color = MaterialTheme.colorScheme.surface, border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)) {
+                Text(fact, Modifier.padding(horizontal = CoffeePeekDimens.spacing3, vertical = CoffeePeekDimens.spacing1),
+                    style = MaterialTheme.typography.labelLarge)
+            }
+        }
+    }
+}
+
+/** Dates in one muted line, then how the bag was rated when it was finished. */
 @Composable
 private fun ShelfBagFacts(item: ShelfBagItem, today: ShelfDay) {
-    val muted = MaterialTheme.colorScheme.onSurfaceVariant
     val facts = listOfNotNull(
         item.shelfAgeText(today),
         item.roastText(today),
         item.finishedOn?.let { stringResource(Res.string.shelf_finished_on, it.text(today)) },
         item.bag.buyAgain?.let { stringResource(if (it) Res.string.shelf_buy_again else Res.string.shelf_not_again) },
     )
-    facts.forEach { Text(it, style = MaterialTheme.typography.bodyMedium, color = muted) }
+    if (facts.isNotEmpty()) Text(facts.joinToString(" · "), style = MaterialTheme.typography.bodyMedium,
+        color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center)
     item.bag.rating?.let { CoffeePeekRating(it.toDouble(), size = CoffeePeekRatingSize.Medium) }
 }
 

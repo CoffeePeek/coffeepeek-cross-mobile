@@ -6,9 +6,11 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -16,6 +18,7 @@ import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
 import com.coffeepeek.core.designsystem.component.CoffeePeekButton
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
@@ -23,7 +26,10 @@ import org.jetbrains.compose.ui.tooling.preview.Preview
 
 /** Bare shelves with an invitation: the empty shelf and the guest's view share it. */
 @Composable
-internal fun ShelfInvitation(title: String, body: String, buttonLabel: String, onButton: () -> Unit, modifier: Modifier = Modifier) {
+internal fun ShelfInvitation(
+    title: String, body: String, buttonLabel: String, onButton: () -> Unit, modifier: Modifier = Modifier,
+    secondaryLabel: String? = null, onSecondary: () -> Unit = {},
+) {
     Column(modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing2)) {
         ShelfEmptyShelves()
@@ -34,13 +40,15 @@ internal fun ShelfInvitation(title: String, body: String, buttonLabel: String, o
             textAlign = TextAlign.Center)
         Spacer(Modifier.height(CoffeePeekDimens.spacing3))
         CoffeePeekButton(buttonLabel, onButton)
+        if (secondaryLabel != null) TextButton(onSecondary, Modifier.fillMaxWidth().heightIn(min = 48.dp)) { Text(secondaryLabel) }
     }
 }
 
 @Composable
 private fun ShelfInvitationPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
-    ShelfInvitation("Здесь будет ваш кофе", "Пачки встанут на полку, а когда кофе закончится, уйдут в архив",
-        "Посмотреть каталог", {}, Modifier.background(MaterialTheme.colorScheme.background).padding(CoffeePeekDimens.spacing4))
+    ShelfInvitation("Здесь будет ваш кофе", "Сфотографируйте пачку — она встанет на полку, а когда закончится, уйдёт в архив",
+        "Сканировать пачку", {}, Modifier.background(MaterialTheme.colorScheme.background).padding(CoffeePeekDimens.spacing4),
+        "Посмотреть каталог")
 }
 
 @Preview @Composable private fun ShelfInvitationLightPreview() = ShelfInvitationPreview(false)

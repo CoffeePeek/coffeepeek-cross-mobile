@@ -40,7 +40,7 @@ internal fun ShelfArchiveRow(item: ShelfBagItem, today: ShelfDay, image: ShelfIm
         .clickable(onClickLabel = stringResource(Res.string.shelf_bag_open), onClick = onClick)
         .padding(vertical = CoffeePeekDimens.spacing2),
         horizontalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing3), verticalAlignment = Alignment.CenterVertically) {
-        ShelfBagTile(item, image, Modifier.size(56.dp, 72.dp), Alignment.Center)
+        ShelfBagTile(item, image, Modifier.size(56.dp, 72.dp), Alignment.Center, elevation = 2.dp)
         Column(Modifier.weight(1f)) {
             Text(item.title(), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold,
                 maxLines = 2, overflow = TextOverflow.Ellipsis)

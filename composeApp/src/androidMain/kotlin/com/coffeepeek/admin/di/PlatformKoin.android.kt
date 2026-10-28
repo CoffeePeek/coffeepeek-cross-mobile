@@ -79,7 +79,7 @@ internal fun initAndroidKoin(extraModules: List<org.koin.core.module.Module> = e
         coffeeRendererFactory = {
             androidCoffeeScreenRenderer(get(), CoffeeShelfTab(get(), get(), Locator.database.settingRepository).takeIf { BuildConfig.SHELF_ENABLED })
         },
-        shelfRendererFactory = { AndroidShelfScreenRenderer(get()) },
+        shelfRendererFactory = { AndroidShelfScreenRenderer(get(), Locator.database.settingRepository) },
         publicProfileRendererFactory = { androidPublicProfileScreenRenderer(get(), get(), get(), get(), get()) },
         ownProfileRendererFactory = { androidOwnProfileScreenRenderer(get(), get(), get(), get(), get(), get(), get(), get()) },
         accountRendererFactory = { androidAccountScreenRenderer(get(), get()) },

@@ -10,7 +10,7 @@ import androidx.compose.ui.unit.dp
 interface ShelfEntry {
     /**
      * The shelf inside the Coffee tab. [header] is the app's content above the shelf (the "Моя полка / Каталог" switch);
-     * a guest ([signedIn] false) sees empty shelves and an invitation to sign in.
+     * a guest ([signedIn] false) sees empty shelves and an invitation to sign in. [onAddBag] opens the scan from the empty shelf.
      */
     @Composable
     fun Shelf(
@@ -18,6 +18,7 @@ interface ShelfEntry {
         onOpenArchive: () -> Unit,
         onBrowseCatalog: () -> Unit,
         onSignIn: () -> Unit,
+        onAddBag: () -> Unit,
         modifier: Modifier = Modifier,
         bottomClearance: Dp = 0.dp,
         header: @Composable ColumnScope.() -> Unit = {},
@@ -26,4 +27,8 @@ interface ShelfEntry {
     /** Finished bags as a full-screen destination. */
     @Composable
     fun Archive(onBack: () -> Unit, modifier: Modifier = Modifier)
+
+    /** Scan a bag and put it on the shelf, as a full-screen destination; [onSaved] after the new bag is on the shelf. */
+    @Composable
+    fun AddBag(onSaved: () -> Unit, onClose: () -> Unit, modifier: Modifier = Modifier)
 }

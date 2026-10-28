@@ -16,7 +16,11 @@ private const val INPAINTER_SHA256 = "6f1f3530a1a2324b19752018ce756088b07973cda8
 private const val INPAINTER_URL = "https://huggingface.co/andraniksargsyan/migan/resolve/main/$INPAINTER_FILE"
 
 /** U2-Net-p ships in the APK; MI-GAN (28 MB) is downloaded on the first scan. */
-internal fun productionShelfModels(context: () -> Context) = ShelfScannerModels(
-    BagScannerModel(SEGMENTER_FILE, SEGMENTER_BYTES, SEGMENTER_SHA256, BagScannerModelSource.asset(context, "shelf-scanner/$SEGMENTER_FILE")),
-    BagScannerModel(INPAINTER_FILE, INPAINTER_BYTES, INPAINTER_SHA256, BagScannerModelSource.https(INPAINTER_URL)),
+internal fun productionShelfModels(context: () -> Context) =
+    shelfModels(BagScannerModelSource.asset(context, "shelf-scanner/$SEGMENTER_FILE"), BagScannerModelSource.https(INPAINTER_URL))
+
+/** The pinned files, from wherever [segmenter] and [inpainter] fetch them. */
+internal fun shelfModels(segmenter: BagScannerModelSource, inpainter: BagScannerModelSource) = ShelfScannerModels(
+    BagScannerModel(SEGMENTER_FILE, SEGMENTER_BYTES, SEGMENTER_SHA256, segmenter),
+    BagScannerModel(INPAINTER_FILE, INPAINTER_BYTES, INPAINTER_SHA256, inpainter),
 )

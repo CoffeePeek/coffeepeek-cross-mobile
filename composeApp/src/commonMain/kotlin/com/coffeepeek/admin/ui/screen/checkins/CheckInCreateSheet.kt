@@ -30,6 +30,9 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import coffeepeek.composeapp.generated.resources.Res
 import coffeepeek.composeapp.generated.resources.check_in_add
+import coffeepeek.composeapp.generated.resources.check_in_create_shelf_body
+import coffeepeek.composeapp.generated.resources.check_in_create_shelf_title
+import coffeepeek.composeapp.generated.resources.check_in_create_what
 import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -63,28 +66,43 @@ internal fun CheckInCreateSheet(onDismiss: () -> Unit, onShop: () -> Unit, onHom
     }
 }
 
+/** [onShelfBag] adds the third choice, "Пачку на полку", where the shelf is available. */
 @Composable
-internal fun CheckInCreateContent(onShop: () -> Unit, onHome: () -> Unit) {
+internal fun CheckInCreateContent(onShop: () -> Unit, onHome: () -> Unit, onShelfBag: (() -> Unit)? = null) {
     val analyticsPage = Analytics.service?.state?.collectAsState()?.value?.page ?: "other"
-    var homeSelected by rememberSaveable { mutableStateOf(false) }
+    var choice by rememberSaveable { mutableStateOf(CreateChoice.Shop) }
     PlatformScrollableColumn(
         Modifier.fillMaxWidth().analyticsExposure("home_check_in", "check_in_type_picker", analyticsPage).padding(horizontal = CpDimens.spacing4).padding(bottom = CpDimens.spacing6),
         verticalArrangement = Arrangement.spacedBy(CpDimens.spacing3),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(CpDimens.spacing1)) {
-                Text("Новый чекин", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
-                Text("Где вы пили кофе?", style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant)
+                if (onShelfBag != null) Text(stringResource(Res.string.check_in_create_what), style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold)
+                else {
+                    Text("Новый чекин", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+                    Text("Где вы пили кофе?", style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
             }
         }
         Column(Modifier.selectableGroup(), verticalArrangement = Arrangement.spacedBy(CpDimens.spacing2)) {
-            CreateChoice("В кофейне", "Выбрать место и напиток", CpIcons.Location, !homeSelected) { homeSelected = false }
-            CreateChoice("Дома", "Записать приготовление", CpIcons.Coffee, homeSelected) { homeSelected = true }
+            CreateChoice("В кофейне", "Выбрать место и напиток", CpIcons.Location, choice == CreateChoice.Shop) { choice = CreateChoice.Shop }
+            CreateChoice("Дома", "Записать приготовление", CpIcons.Coffee, choice == CreateChoice.Home) { choice = CreateChoice.Home }
+            if (onShelfBag != null) CreateChoice(stringResource(Res.string.check_in_create_shelf_title),
+                stringResource(Res.string.check_in_create_shelf_body), CpIcons.Camera, choice == CreateChoice.ShelfBag) { choice = CreateChoice.ShelfBag }
         }
-        AppButton("Продолжить", onClick = { if (homeSelected) onHome() else onShop() })
+        AppButton("Продолжить", onClick = {
+            when (choice) {
+                CreateChoice.Shop -> onShop()
+                CreateChoice.Home -> onHome()
+                CreateChoice.ShelfBag -> onShelfBag?.invoke() ?: onShop()
+            }
+        })
     }
 }
+
+private enum class CreateChoice { Shop, Home, ShelfBag }
 
 @Composable
 private fun CreateChoice(title: String, description: String, icon: ImageVector, selected: Boolean, onClick: () -> Unit) {
@@ -115,6 +133,14 @@ private fun CreateChoice(title: String, description: String, icon: ImageVector, 
 
 @Preview @Composable private fun CheckInCreatePickerDarkPreview() = CoffeePeekTheme(darkTheme = true) {
     CheckInCreateContent({}, {})
+}
+
+@Preview @Composable private fun CheckInCreateShelfLightPreview() = CoffeePeekTheme(darkTheme = false) {
+    CheckInCreateContent({}, {}, onShelfBag = {})
+}
+
+@Preview @Composable private fun CheckInCreateShelfDarkPreview() = CoffeePeekTheme(darkTheme = true) {
+    CheckInCreateContent({}, {}, onShelfBag = {})
 }
 
 @Preview @Composable private fun CheckInCreateButtonLightPreview() = CoffeePeekTheme(darkTheme = false) {

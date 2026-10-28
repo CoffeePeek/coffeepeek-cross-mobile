@@ -165,6 +165,7 @@ object Navigator {
         @Serializable data object VisitedPlaces : Screen
         @Serializable data object HomeCheckIns : Screen
         @Serializable data object ShelfArchive : Screen
+        @Serializable data object ShelfAddBag : Screen
         @Serializable data class EditHomeCheckIn(val id: String) : Screen
         @Serializable data object CitySettings : Screen
         @Serializable data object ThemeSettings : Screen
@@ -248,6 +249,7 @@ object Navigator {
         is Screen.VisitedPlaces,
         is Screen.HomeCheckIns,
         is Screen.ShelfArchive,
+        is Screen.ShelfAddBag,
         is Screen.EditHomeCheckIn,
         is Screen.CitySettings,
         is Screen.ThemeSettings,
@@ -541,6 +543,7 @@ koinInject<ContributionsScreenRenderer>().Editor(route.shopId, route.section, ro
                     composable<Screen.VisitedPlaces> { CheckInHistoryDestination() }
                     composable<Screen.HomeCheckIns> { CheckInHistoryDestination() }
                     composable<Screen.ShelfArchive> { koinInject<ShelfScreenRenderer>().Archive() }
+                    composable<Screen.ShelfAddBag> { koinInject<ShelfScreenRenderer>().AddBag() }
                     composable<Screen.EditHomeCheckIn> { entry ->
                         CheckInHistoryDestination(initialHomeId = entry.toRoute<Screen.EditHomeCheckIn>().id)
                     }
@@ -584,6 +587,7 @@ koinInject<ContributionsScreenRenderer>().Editor(route.shopId, route.section, ro
             Screen.VisitedPlaces -> CheckInHistoryDestination()
             Screen.HomeCheckIns -> CheckInHistoryDestination()
             Screen.ShelfArchive -> koinInject<ShelfScreenRenderer>().Archive()
+            Screen.ShelfAddBag -> koinInject<ShelfScreenRenderer>().AddBag()
             is Screen.EditHomeCheckIn -> CheckInHistoryDestination(initialHomeId = screen.id)
             Screen.CitySettings -> koinInject<SettingsScreenRenderer>().City()
             Screen.ThemeSettings -> koinInject<SettingsScreenRenderer>().Theme()

@@ -2,6 +2,7 @@ package com.coffeepeek.feature.shelf.impl.ui
 
 import com.coffeepeek.feature.shelf.api.ShelfTimeZone
 import com.coffeepeek.feature.shelf.domain.model.*
+import com.coffeepeek.feature.shelf.domain.repository.BagScanner
 import com.coffeepeek.feature.shelf.domain.repository.ShelfRepository
 import com.coffeepeek.feature.shelf.impl.ui.data.ShelfCalendar
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -37,7 +38,12 @@ internal class FakeShelfRepository(bags: List<ShelfBag>? = null) : ShelfReposito
         return archivePages(page, query)
     }
 
-    override suspend fun add(details: ShelfBagDetails, card: ShelfBagCard?): Result<ShelfBag> = error("Not used by these screens")
+    val added = mutableListOf<ShelfBagDetails>()
+
+    override suspend fun add(details: ShelfBagDetails, card: ShelfBagCard?): Result<ShelfBag> = write("add") {
+        added += details
+        bag("new").copy(coffeeProductSlug = (details.bean as? ShelfBean.Catalog)?.slug).also { shelfState.value = listOf(it) + shelfState.value.orEmpty() }
+    }
     override suspend fun update(id: String, details: ShelfBagDetails, card: ShelfBagCard?): Result<ShelfBag> = error("Not used by these screens")
 
     override suspend fun move(id: String, toIndex: Int): Result<Unit> = write("move:$id:$toIndex") {
@@ -68,3 +74,32 @@ internal class FakeShelfRepository(bags: List<ShelfBag>? = null) : ShelfReposito
         return Result.success(change())
     }
 }
+
+/** Finishes the stages it is told to and returns [result]; [gate] holds the scan open. */
+internal class FakeBagScanner(var readiness: BagScannerReadiness = BagScannerReadiness.Ready) : BagScanner {
+    var result: Result<BagScanResult> = Result.success(scanResult(PackModerationStatus.Accepted))
+    var prepareResult: Result<Unit> = Result.success(Unit)
+    var gate: (suspend () -> Unit)? = null
+    var scans = 0
+
+    override suspend fun readiness() = readiness
+
+    override suspend fun prepare(onProgress: (downloaded: Long, total: Long) -> Unit): Result<Unit> {
+        onProgress(50, 100)
+        onProgress(100, 100)
+        return prepareResult.onSuccess { readiness = BagScannerReadiness.Ready }
+    }
+
+    override suspend fun scan(photo: ByteArray, onStage: (BagScanStage) -> Unit): Result<BagScanResult> {
+        scans++
+        onStage(BagScanStage.Segmentation)
+        gate?.invoke()
+        BagScanStage.entries.drop(1).forEach(onStage)
+        return result
+    }
+}
+
+internal fun scanResult(status: PackModerationStatus, reasons: List<PackModerationReason> = emptyList(), card: Boolean = true) = BagScanResult(
+    card = ShelfBagCard(byteArrayOf(1), "image/jpeg", "bag.jpg").takeIf { card }, cardWidth = 720, cardHeight = 960, frame = null,
+    quality = null, moderation = PackModeration(status, reasons), timings = BagScanTimings(0, 0, 0, 0, 0),
+)

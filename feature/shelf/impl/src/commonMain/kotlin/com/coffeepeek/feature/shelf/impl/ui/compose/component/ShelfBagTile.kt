@@ -15,8 +15,11 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
@@ -26,12 +29,20 @@ import com.coffeepeek.feature.shelf.impl.ui.compose.previewShelfItems
 import com.coffeepeek.feature.shelf.impl.ui.compose.model.ShelfBagItem
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
-/** A bag standing on the shelf: its card, or a paper bag with its name when there is no card. */
+internal val ShelfCardShape = RoundedCornerShape(4.dp)
+
+/**
+ * A bag: its card at the card's own proportions, as large as fits and placed at [alignment], with rounded corners and a
+ * shadow; a paper bag with its name when there is no card.
+ */
 @Composable
-internal fun ShelfBagTile(item: ShelfBagItem, image: ShelfImage, modifier: Modifier = Modifier, alignment: Alignment = Alignment.BottomCenter) {
+internal fun ShelfBagTile(
+    item: ShelfBagItem, image: ShelfImage, modifier: Modifier = Modifier,
+    alignment: Alignment = Alignment.BottomCenter, elevation: Dp = 4.dp,
+) {
     Box(modifier, contentAlignment = alignment) {
         val photo = item.bag.photo
-        if (photo != null) image(photo.url, item.title(), alignment, Modifier.fillMaxSize())
+        if (photo != null) image(photo.url, item.title(), alignment, Modifier.shadow(elevation, ShelfCardShape).clip(ShelfCardShape))
         else ShelfBagPlaceholder(item.title(), Modifier.fillMaxWidth(0.86f).fillMaxHeight(0.82f))
     }
 }

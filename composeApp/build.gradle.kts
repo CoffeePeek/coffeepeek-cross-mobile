@@ -67,6 +67,10 @@ kotlin {
             implementation(project(module.feature.shelf.domain))
             implementation(project(module.feature.shelf.data))
             implementation(project(module.feature.shelf.impl))
+            // The shelf's own camera: viewfinder and capture behind the ShelfCamera port.
+            implementation(libs.androidx.camera.camera2)
+            implementation(libs.androidx.camera.lifecycle)
+            implementation(libs.androidx.camera.view)
             implementation(project(module.core.coroutines))
             implementation(libs.androidx.activity.compose)
             implementation(libs.androidx.concurrent.futures)

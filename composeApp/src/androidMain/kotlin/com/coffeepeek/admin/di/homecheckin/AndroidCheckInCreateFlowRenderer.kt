@@ -18,14 +18,19 @@ import com.coffeepeek.admin.di.checkinhistory.AndroidCheckInHistorySession
 import com.coffeepeek.admin.feature.checkin.api.CheckInFlowHandoff
 import com.coffeepeek.admin.ui.screen.checkins.CheckInCreateContent
 import com.coffeepeek.admin.ui.screen.checkins.CheckInCreateFlowRenderer
+import com.coffeepeek.admin.ui.Navigator
 import com.coffeepeek.core.designsystem.component.CoffeePeekSwipeDismissModalBottomSheet
 import com.coffeepeek.core.session.SessionReader
 import com.coffeepeek.feature.homecheckin.api.HomeCheckInEditorEntry
 import org.jetbrains.compose.resources.stringResource
 
-/** A new flow lifetime per opening. Never constructs legacy Home state or a second writer. */
+/**
+ * A new flow lifetime per opening. Never constructs legacy Home state or a second writer. With [shelfEnabled] the picker also
+ * offers "Пачку на полку", which hands over to the shelf's scan.
+ */
 internal class AndroidCheckInCreateFlowRenderer(
     private val sessions: SessionReader,
+    private val shelfEnabled: Boolean,
     private val createEditor: (AndroidCheckInHistorySession, CheckInTracker?) -> HomeCheckInEditorEntry,
 ) : CheckInCreateFlowRenderer {
     @Composable
@@ -57,6 +62,7 @@ internal class AndroidCheckInCreateFlowRenderer(
                                 CheckInFlowHandoff.tracker = completion.shopTracker
                                 currentShop()
                             }
+                            GlobalCheckInOutcome.ShelfBag -> try { Navigator.navigate(Navigator.Screen.ShelfAddBag) } finally { currentDismiss() }
                         }
                     }
                 }
@@ -73,7 +79,7 @@ internal class AndroidCheckInCreateFlowRenderer(
         AnalyticsOverlay {
             CoffeePeekSwipeDismissModalBottomSheet({ model.cancel(destination) }, stringResource(Res.string.check_in_create_close),
                 dismissEnabled = dismissAllowed, maxSheetHeightFraction = if (home != null) 0.9f else null) {
-                if (home == null) CheckInCreateContent(model::shop, model::home)
+                if (home == null) CheckInCreateContent(model::shop, model::home, (model::shelfBag).takeIf { shelfEnabled })
                 else home.entry.Content(null, 0, model.canAccess(), { model.cancel(home) },
                     { id, _ -> model.saved(home, id) }, { model.setDismissAllowed(home, it) },
                     Modifier.weight(1f).fillMaxWidth())

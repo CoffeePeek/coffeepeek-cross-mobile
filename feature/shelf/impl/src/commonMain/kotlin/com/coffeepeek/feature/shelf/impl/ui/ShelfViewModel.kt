@@ -47,6 +47,7 @@ internal class ShelfViewModel(
             ShelfAction.OpenArchive -> sendEvent(ShelfEvent.OpenArchive)
             ShelfAction.BrowseCatalog -> sendEvent(ShelfEvent.BrowseCatalog)
             ShelfAction.SignIn -> sendEvent(ShelfEvent.SignIn)
+            ShelfAction.AddBag -> sendEvent(ShelfEvent.AddBag)
         }
     }
 

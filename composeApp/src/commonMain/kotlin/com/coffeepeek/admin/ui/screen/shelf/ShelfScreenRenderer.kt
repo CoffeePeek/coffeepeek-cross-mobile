@@ -8,10 +8,16 @@ import com.coffeepeek.admin.ui.Navigator
 interface ShelfScreenRenderer {
     @Composable
     fun Archive()
+
+    @Composable
+    fun AddBag()
 }
 
-/** Nothing on iOS opens the archive yet; if the route is reached anyway, it leaves at once. */
+/** Nothing on iOS opens these routes yet; if one is reached anyway, it leaves at once. */
 internal object UnsupportedShelfScreenRenderer : ShelfScreenRenderer {
     @Composable
     override fun Archive() = LaunchedEffect(Unit) { Navigator.popBack() }
+
+    @Composable
+    override fun AddBag() = LaunchedEffect(Unit) { Navigator.popBack() }
 }

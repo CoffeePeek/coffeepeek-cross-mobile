@@ -93,6 +93,9 @@ private fun issueText(issue: ShelfIssue): StringResource = when (issue) {
     ShelfIssue.Offline, ShelfIssue.Timeout -> Res.string.shelf_error_offline
     ShelfIssue.Stale -> Res.string.shelf_error_stale
     ShelfIssue.NotFound -> Res.string.shelf_error_not_found
+    ShelfIssue.PhotoUpload -> Res.string.shelf_error_photo_upload
+    ShelfIssue.ShelfFull -> Res.string.shelf_error_shelf_full
+    ShelfIssue.BeanUnavailable -> Res.string.shelf_error_bean_unavailable
     ShelfIssue.SignedOut, ShelfIssue.AccountChanged, ShelfIssue.Unauthorized -> Res.string.shelf_error_signed_out
     else -> Res.string.shelf_error_generic
 }

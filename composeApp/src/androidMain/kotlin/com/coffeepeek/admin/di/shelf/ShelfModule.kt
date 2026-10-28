@@ -10,6 +10,7 @@ import com.coffeepeek.feature.shelf.data.repository.createShelfRepository
 import com.coffeepeek.feature.shelf.data.scan.createAndroidBagScanner
 import com.coffeepeek.feature.shelf.domain.repository.BagScanner
 import com.coffeepeek.feature.shelf.domain.repository.ShelfRepository
+import com.coffeepeek.feature.shelf.impl.ShelfPorts
 import com.coffeepeek.feature.shelf.impl.createShelfEntry
 import org.koin.dsl.module
 
@@ -27,5 +28,7 @@ internal fun shelfModule(
         val chosen = models(context)
         createAndroidBagScanner(context, chosen.segmenter, chosen.inpainter)
     }
-    single<ShelfEntry> { createShelfEntry(get(), AndroidShelfImage, AndroidShelfTimeZone) }
+    single<ShelfEntry> {
+        createShelfEntry(get(), ShelfPorts(get(), ShelfCatalogSearch(get()), AndroidShelfImage, AndroidShelfGallery, AndroidShelfCamera, AndroidShelfTimeZone))
+    }
 }

@@ -3,6 +3,7 @@ package com.coffeepeek.admin.di.shelf
 import com.coffeepeek.api.CoffeePeekClient
 import com.coffeepeek.core.session.Session
 import com.coffeepeek.core.session.SessionReader
+import com.coffeepeek.feature.coffee.api.CoffeePicker
 import com.coffeepeek.feature.shelf.api.ShelfEntry
 import com.coffeepeek.feature.shelf.domain.repository.BagScanner
 import com.coffeepeek.feature.shelf.domain.repository.ShelfRepository
@@ -28,7 +29,12 @@ class ShelfModuleTest {
             override suspend fun getSession(): Session? = error("Unexpected session load")
         }
         val app = koinApplication {
-            modules(module { single { client }; single<SessionReader> { sessions } },
+            modules(module {
+                single { client }; single<SessionReader> { sessions }
+                single<CoffeePicker> {
+                    object : CoffeePicker { override suspend fun search(query: String) = error("Resolving the graph must not search the catalogue") }
+                }
+            },
                 shelfModule("https://fixture.invalid", context = { error("Resolving the graph must not touch the Context") }))
         }
         try {

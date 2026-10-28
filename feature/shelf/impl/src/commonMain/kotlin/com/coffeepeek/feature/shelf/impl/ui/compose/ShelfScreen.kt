@@ -116,7 +116,8 @@ private fun ShelfBody(
             CoffeePeekLoader(stringResource(Res.string.shelf_loading))
         }
         state.bags.isEmpty() -> ShelfInvitation(stringResource(Res.string.shelf_empty_title), stringResource(Res.string.shelf_empty_body),
-            stringResource(Res.string.shelf_browse_catalog), { onAction(ShelfAction.BrowseCatalog) }, modifier.then(scrolling))
+            stringResource(Res.string.shelf_scan_bag), { onAction(ShelfAction.AddBag) }, modifier.then(scrolling),
+            stringResource(Res.string.shelf_browse_catalog)) { onAction(ShelfAction.BrowseCatalog) }
         else -> ShelfShelves(state.bags, drag, image, onAction, bottomClearance, modifier)
     }
 }
@@ -187,7 +188,7 @@ private fun ShelfSheets(state: ShelfState, image: ShelfImage, onAction: (ShelfAc
             onDelete = { onAction(ShelfAction.RequestDelete(item.id)) }, onDismiss = { onAction(ShelfAction.CloseBag) })
     }
     state.finishing?.let { item ->
-        ShelfFinishSheet(item, state.today, { rating, buyAgain -> onAction(ShelfAction.Finish(item.id, rating, buyAgain)) },
+        ShelfFinishSheet(item, state.today, image, { rating, buyAgain -> onAction(ShelfAction.Finish(item.id, rating, buyAgain)) },
             onDismiss = { onAction(ShelfAction.CancelFinish) })
     }
     state.deletingId?.let { id -> ShelfDeleteConfirmation({ onAction(ShelfAction.Delete(id)) }, { onAction(ShelfAction.CancelDelete) }) }

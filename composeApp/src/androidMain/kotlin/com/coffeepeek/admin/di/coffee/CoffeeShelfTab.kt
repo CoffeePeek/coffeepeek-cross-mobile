@@ -43,7 +43,8 @@ internal class CoffeeShelfTab(private val entry: ShelfEntry, private val session
     fun Content(catalog: @Composable (header: @Composable () -> Unit) -> Unit) {
         val scope = rememberCoroutineScope()
         val stored by remember { settings.readFlow(MODE_KEY).map { it?.value } }.collectAsState(NOT_READ)
-        var chosen by rememberSaveable { mutableStateOf<CoffeeTabMode?>(null) }
+        // A choice made here wins until the stored one changes, e.g. after a bag was added elsewhere.
+        var chosen by rememberSaveable(stored) { mutableStateOf<CoffeeTabMode?>(null) }
         if (chosen == null && stored == NOT_READ) return
         val mode = chosen ?: CoffeeTabMode.entries.firstOrNull { it.name == stored } ?: CoffeeTabMode.Shelf
         val select = { next: CoffeeTabMode ->
@@ -65,10 +66,14 @@ internal class CoffeeShelfTab(private val entry: ShelfEntry, private val session
             onOpenArchive = { Navigator.navigate(Navigator.Screen.ShelfArchive) },
             onBrowseCatalog = onBrowseCatalog,
             onSignIn = { Navigator.navigate(Navigator.Screen.Auth) },
+            onAddBag = { Navigator.navigate(Navigator.Screen.ShelfAddBag) },
             bottomClearance = LocalFloatingNavClearance.current,
             header = { header() })
     }
 }
+
+/** Makes the Coffee tab open on the shelf. */
+internal suspend fun SettingRepository.showShelfInCoffeeTab() = save(Setting(MODE_KEY, CoffeeTabMode.Shelf.name))
 
 @Composable
 private fun CoffeeTabSwitch(mode: CoffeeTabMode, onSelected: (CoffeeTabMode) -> Unit) {

@@ -65,6 +65,16 @@ class AndroidGlobalCheckInFlowTest {
         assertIs<GlobalCheckInDestination.Home>(f.model.state.value)
     }
 
+    @Test fun shelfBagLeavesThePickerWithoutAHomeEditorOrShopTracker() = runTest(dispatcher) {
+        val f = fixture(accepted = true)
+        f.model.shelfBag(); f.model.home(); f.model.shop()
+        val completion = assertNotNull(f.model.claim(f.model.closed()))
+        assertEquals(GlobalCheckInOutcome.ShelfBag, completion.outcome)
+        assertNull(completion.shopTracker)
+        assertTrue(f.handoffs.isEmpty())
+        assertNull(f.model.claim(f.model.closed()))
+    }
+
     @Test fun shopHandoffSkipsHomeAndCanBeDeliveredOnlyOnce() = runTest(dispatcher) {
         val f = fixture(accepted = true)
         f.model.shop(); f.model.shop(); f.model.home()
