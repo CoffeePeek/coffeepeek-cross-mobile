@@ -21,7 +21,7 @@ import kotlin.math.roundToInt
  * gentle shading/glare softening -> JPEG card, plus pre-moderation. Each model is opened only for its stage, which keeps the peak low.
  */
 internal class AndroidPackPipeline(private val models: () -> ScanModelFiles) {
-    fun scan(photo: ByteArray): BagScanResult {
+    fun scan(photo: ByteArray, onStage: (BagScanStage) -> Unit): BagScanResult {
         val clock = Clock()
         val full = decode(photo)
         val working = full.scaledToMaxSide(WORKING_SIDE)
@@ -29,22 +29,29 @@ internal class AndroidPackPipeline(private val models: () -> ScanModelFiles) {
         val probability = OnnxPackSegmenter(models().segmenter).use { it.probability(rgb) }
         val subject = largestRegion(BooleanArray(probability.data.size) { probability.data[it] > 0.5f }, working.width)
         val segmentation = clock.lap()
+        onStage(BagScanStage.Segmentation)
         val front = fitFront(subject, working.width, working.height, rgb.gray())
         val fit = clock.lap()
+        onStage(BagScanStage.Front)
         if (front == null) return BagScanResult(null, 0, 0, null, null, PackNotFound, BagScanTimings(segmentation, fit, 0, 0, clock.total()))
-        return finish(full, working, subject, front, clock, segmentation, fit)
+        return finish(full, working, subject, front, clock, segmentation, fit, onStage)
     }
 
-    private fun finish(full: Bitmap, working: Bitmap, subject: BooleanArray, front: FrontFit, clock: Clock, segmentation: Long, fit: Long): BagScanResult {
+    private fun finish(
+        full: Bitmap, working: Bitmap, subject: BooleanArray, front: FrontFit, clock: Clock, segmentation: Long, fit: Long,
+        onStage: (BagScanStage) -> Unit,
+    ): BagScanResult {
         val quad = front.quad.inset(INSET)
         val (width, height) = quad.outputSize(OUTPUT_SIDE)
         val rectified = full.rectified(quad.scaled(full.width.toDouble() / working.width), width, height)
         val repaint = repaintMask(missingAfterRectify(subject, working.width, working.height, quad, width, height), rectified.pixels(), width, height)
         val repaired = repair(rectified, repaint)
         val repairMillis = clock.lap()
+        onStage(BagScanStage.Repair)
         val softened = soften(repaired.pixels(), width, height)
         val card = Bitmap.createBitmap(softened.pixels, width, height, Bitmap.Config.ARGB_8888).jpeg()
         val softenMillis = clock.lap()
+        onStage(BagScanStage.Soften)
         val quality = frontQuality(front, subject, working.width, working.height)
             .copy(repaintShare = repaint.count { it }.toDouble() / repaint.size, strongGlare = softened.strongGlareShare.toDouble())
         val frame = BagScanFrame((0 until 4).map { (quad.x(it) / working.width).toFloat() to (quad.y(it) / working.height).toFloat() })

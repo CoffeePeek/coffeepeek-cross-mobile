@@ -1,5 +1,8 @@
 package com.coffeepeek.feature.shelf.domain.model
 
+/** Pipeline stages in order; a scan that finds no front stops after [Front]. */
+enum class BagScanStage { Segmentation, Front, Repair, Soften }
+
 /** Milliseconds per pipeline stage. */
 data class BagScanTimings(val segmentation: Long, val fit: Long, val repair: Long, val soften: Long, val total: Long)
 

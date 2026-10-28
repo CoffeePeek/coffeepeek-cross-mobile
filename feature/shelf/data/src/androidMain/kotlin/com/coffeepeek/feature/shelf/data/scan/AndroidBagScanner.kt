@@ -30,8 +30,8 @@ private class AndroidBagScanner(store: () -> BagScannerModels) : BagScanner {
         lock.withLock { withContext(Dispatchers.IO) { models.prepare(onProgress) } }
     }
 
-    override suspend fun scan(photo: ByteArray): Result<BagScanResult> = scanResult {
-        lock.withLock { withContext(Dispatchers.Default) { pipeline.scan(photo) } }
+    override suspend fun scan(photo: ByteArray, onStage: (BagScanStage) -> Unit): Result<BagScanResult> = scanResult {
+        lock.withLock { withContext(Dispatchers.Default) { pipeline.scan(photo, onStage) } }
     }
 }
 
