@@ -15,9 +15,12 @@ import java.util.UUID
 
 internal enum class SandboxScenario { Ready, Slow, Offline, ServerError, SaveError, UploadError }
 
-/** Stateful HTTP fixture only. Both engines have no network delegate, even for unknown URLs. */
+/**
+ * Stateful HTTP fixture only. Both engines have no network delegate, even for unknown URLs.
+ * [bagCard] draws a fixture bag's front; without it (tests) every front is the sample image.
+ */
 internal class SandboxBackend(private val samplePhoto: ByteArray,
-    private val today: LocalDate = LocalDate.now()) {
+    private val today: LocalDate = LocalDate.now(), private val bagCard: (SandboxBagCard) -> ByteArray = { samplePhoto }) {
     companion object { const val BASE_URL = "https://sandbox.coffeepeek.invalid" }
     @Volatile var scenario = SandboxScenario.Ready
     private val lock = Any()
@@ -133,6 +136,7 @@ internal class SandboxBackend(private val samplePhoto: ByteArray,
         }
         application.reset(populated)
         shelf.reset(populated)
+        shelf.fixtureCards.forEach { (key, front) -> images["/media/$key"] = bagCard(front) }
     }
 
     fun photo(url: String): ByteArray? = synchronized(lock) {

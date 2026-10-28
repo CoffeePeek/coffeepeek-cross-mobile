@@ -18,7 +18,7 @@ class SandboxShelfBackendTest {
     @Test fun populatedShelfIsOrderedAndArchiveIsNewestFirstWithSearch() = runTest {
         withShelf { api, _ ->
             val shelf = api.data("GET", base).jsonArray
-            assertEquals(listOf(0, 1, 2, 3), shelf.map { it.int("position") })
+            assertEquals((0..6).toList(), shelf.map { it.int("position") })
             assertEquals("Sandbox Ethiopia", shelf[0].text("name"))
             assertEquals("Sandbox Roaster", shelf[0].text("roasterName"))
             val archive = api.data("GET", "$base/archive").jsonObject
@@ -85,13 +85,28 @@ class SandboxShelfBackendTest {
         }
     }
 
+    @Test fun fixtureBagsRangeFromFullyFilledToAPhotoAloneEachWithItsOwnCard() = runTest {
+        withShelf { api, _ ->
+            val shelf = api.data("GET", base).jsonArray.map { it.jsonObject }
+            val full = shelf.first { it.text("name") == "Кения Гичати АА" }
+            assertEquals(listOf("Зерно и Пламя", "200", "Beans", "Filter"), listOf("roasterName", "weightGrams", "grind", "roastPurpose").map { full.text(it) })
+            assertNotNull(full.text("roastedOn"))
+            val sparse = shelf.first { it.text("name") == "Руанда Нгома" }
+            assertTrue(listOf("weightGrams", "grind", "roastPurpose", "roastedOn").all { sparse[it] is JsonNull })
+            assertTrue(shelf.last()["name"] is JsonNull)
+            val cards = shelf.map { it.getValue("photo").jsonObject.text("url") }
+            assertEquals(cards.size, cards.toSet().size)
+            cards.forEach { assertEquals(HttpStatusCode.OK, api.call("GET", "${SandboxBackend.BASE_URL}$it").status) }
+        }
+    }
+
     @Test fun finishThenRestoreReturnsTheBagToItsPosition() = runTest {
         withShelf { api, _ ->
             val id = api.data("GET", base).jsonArray[2].text("id")
             val finished = api.data("POST", "$base/bags/$id/finish", """{"rating":4,"buyAgain":true}""").jsonObject
             assertEquals("Finished", finished.text("status"))
             assertTrue(finished["position"] is JsonNull)
-            assertEquals(3, api.data("GET", base).jsonArray.size)
+            assertEquals(6, api.data("GET", base).jsonArray.size)
             assertEquals(HttpStatusCode.Conflict, api.call("POST", "$base/bags/$id/finish", "{}").status)
             val restored = api.data("POST", "$base/bags/$id/restore", """{"position":2}""").jsonObject
             assertEquals(2, restored.int("position"))

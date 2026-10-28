@@ -29,7 +29,7 @@ internal class SandboxApplication : Application() {
     override fun onCreate() {
         super.onCreate()
         photoBytes = sandboxImageBytes()
-        backend = SandboxBackend(photoBytes)
+        backend = SandboxBackend(photoBytes, bagCard = ::sandboxBagCardBytes)
         CoffeePeekApplication.bindContext(object : ContextWrapper(this) {
             override fun startActivity(intent: Intent) = blockedExternalAction()
             override fun startActivity(intent: Intent, options: Bundle?) = blockedExternalAction()

@@ -7,9 +7,12 @@ import kotlinx.serialization.json.*
 import java.time.LocalDate
 import java.util.UUID
 
+/** What a fixture bag's front shows; the backend's owner draws it into the card image. */
+internal data class SandboxBagCard(val title: String, val roaster: String?, val weight: String?, val tone: Int)
+
 /**
  * In-memory shelf contract (`coffeepeek-backend/docs/api/shelf-client.md`). Cards are keys from the shared `/api/Photos/` upload fixture;
- * fixture bags use the `sample` image. The shelf list keeps its order, so `position` is always the row's index.
+ * fixture bags have their own drawn fronts ([fixtureCards]). The shelf list keeps its order, so `position` is always the row's index.
  */
 internal class SandboxShelfBackend(private val today: LocalDate, private val uploaded: (String) -> Boolean) {
     companion object {
@@ -31,13 +34,21 @@ internal class SandboxShelfBackend(private val today: LocalDate, private val upl
     private val archive = mutableListOf<JsonObject>()
     private val usedKeys = mutableSetOf<String>()
 
+    /** The fronts of the fixture bags by card key, for the backend to draw after [reset]. */
+    val fixtureCards = linkedMapOf<String, SandboxBagCard>()
+
+    /** Fixture bags from fully filled to a photo alone, each with its own front. */
     fun reset(populated: Boolean) {
-        shelf.clear(); archive.clear(); usedKeys.clear()
+        shelf.clear(); archive.clear(); usedKeys.clear(); fixtureCards.clear()
         if (!populated) return
-        shelf += fixture("sandbox-ethiopia", null, 250, "Beans", daysAgo = 3)
-        shelf += fixture(null, "Колумбия P!X", 250, "Ground", daysAgo = 9, roaster = "River Roasters")
-        shelf += fixture("sandbox-brazil", null, 1000, "Beans", daysAgo = 14)
-        shelf += fixture(null, null, null, null, daysAgo = 1)
+        shelf += fixture("sandbox-ethiopia", null, 250, "Beans", daysAgo = 3, purpose = "Filter")
+        shelf += fixture(null, "Кения Гичати АА", 200, "Beans", daysAgo = 5, roaster = "Зерно и Пламя", purpose = "Filter")
+        shelf += fixture(null, "Колумбия P!X", 250, "Ground", daysAgo = 9, roaster = "River Roasters", purpose = "Espresso")
+        shelf += fixture("sandbox-brazil", null, 1000, "Beans", daysAgo = 14, purpose = "Espresso", roastedDaysAgo = null)
+        shelf += fixture(null, "Руанда Нгома", null, null, daysAgo = 6, roaster = "Зерно и Пламя", roastedDaysAgo = null)
+        shelf += fixture(null, "Эфиопия Гуджи", 250, null, daysAgo = 2, roastedDaysAgo = null)
+        shelf += fixture(null, null, null, null, daysAgo = 1, roastedDaysAgo = null,
+            front = SandboxBagCard("Гватемала Уэуэтенанго", "Mountain Roasters", "340 г", 6))
         archive += finished(fixture("sandbox-kenya", null, 250, "Beans", daysAgo = 40), daysAgo = 17, rating = 4, buyAgain = true)
         archive += finished(fixture(null, "Гондурас Мойзес", 200, "Beans", daysAgo = 70, roaster = "Welder Catherine"), daysAgo = 39, rating = 5, buyAgain = null)
         archive += finished(fixture(null, "Перу Санта Роса", 250, null, daysAgo = 95, roaster = "River Roasters"), daysAgo = 75, rating = null, buyAgain = false)
@@ -184,15 +195,22 @@ internal class SandboxShelfBackend(private val today: LocalDate, private val upl
         return key
     }
 
-    private fun fixture(slug: String?, custom: String?, weight: Int?, grind: String?, daysAgo: Long, roaster: String? = null): JsonObject {
+    /** A bag added [daysAgo]; its [front] defaults to what the filled fields would print on the pack. */
+    private fun fixture(
+        slug: String?, custom: String?, weight: Int?, grind: String?, daysAgo: Long, roaster: String? = null,
+        purpose: String? = null, roastedDaysAgo: Long? = daysAgo + 5, front: SandboxBagCard? = null,
+    ): JsonObject {
         val id = UUID.randomUUID().toString()
         val input = buildJsonObject {
             slug?.let { put("coffeeProductSlug", it) }; custom?.let { put("customName", it) }; roaster?.let { put("roasterName", it) }
-            weight?.let { put("weightGrams", it) }; grind?.let { put("grind", it) }
-            put("roastedOn", today.minusDays(daysAgo + 5).toString())
+            weight?.let { put("weightGrams", it) }; grind?.let { put("grind", it) }; purpose?.let { put("roastPurpose", it) }
+            roastedDaysAgo?.let { put("roastedOn", today.minusDays(it).toString()) }
         }
+        val key = "bag-card-${fixtureCards.size}"
+        fixtureCards[key] = front ?: SandboxBagCard(custom ?: products[slug]?.second ?: "Coffee",
+            roaster ?: "Sandbox Roaster".takeIf { slug != null }, weight?.let { "$it г" }, fixtureCards.size)
         return buildJsonObject {
-            put("id", id); put("status", "OnShelf"); put("photo", card(id, "sample"))
+            put("id", id); put("status", "OnShelf"); put("photo", card(id, key))
             detailFields(input, beanFields(input, null)).forEach { (key, value) -> put(key, value) }
             put("addedAtUtc", "${today.minusDays(daysAgo)}T09:00:00Z"); put("finishedAtUtc", JsonNull); put("rating", JsonNull); put("buyAgain", JsonNull)
         }
