@@ -7,7 +7,8 @@ import com.coffeepeek.feature.homecheckin.domain.model.HomePreparationUpload
 /**
  * Composition supplies artwork/image decoding; this UI never opens a camera or HTTP client.
  * The photo renderer's Boolean selects a full-size preview (fit) instead of a cropped thumbnail. [shelfBagImage] draws a
- * protected shelf-bag card by its URL, whole and centred in the given bounds.
+ * protected shelf-bag card by its URL, whole: it sizes itself to the card within the incoming bounds, so the modifier's
+ * clip follows the card.
  */
 class HomeCheckInEditorMedia(
     val ratingArtwork: @Composable (Modifier) -> Unit,

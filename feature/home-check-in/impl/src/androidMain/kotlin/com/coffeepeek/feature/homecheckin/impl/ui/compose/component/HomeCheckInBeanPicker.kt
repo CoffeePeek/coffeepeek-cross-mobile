@@ -100,6 +100,9 @@ private fun HomeCheckInBeanRow(title: String, subtitle: String?, onClick: () -> 
     HorizontalDivider(color = MaterialTheme.colorScheme.outline)
 }
 
+/** Matches the card corners on the shelf. */
+private val BagCardShape = RoundedCornerShape(4.dp)
+
 /** A bag with its card on the left, as it stands on the shelf; a bag without a card shows a bean mark instead. */
 @Composable
 private fun HomeCheckInShelfBagRow(
@@ -108,10 +111,13 @@ private fun HomeCheckInShelfBagRow(
     Row(Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).clickable(role = Role.Button, onClick = onClick)
         .padding(horizontal = 8.dp, vertical = 8.dp), horizontalArrangement = Arrangement.spacedBy(12.dp),
         verticalAlignment = Alignment.CenterVertically) {
-        Box(Modifier.size(width = 44.dp, height = 56.dp).clip(RoundedCornerShape(8.dp))
-            .background(MaterialTheme.colorScheme.surfaceVariant), contentAlignment = Alignment.Center) {
-            bag.imageUrl?.let { image(it, Modifier.fillMaxSize()) }
-                ?: Icon(CoffeePeekIcons.CoffeeBean, null, Modifier.size(20.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
+        // The slot only bounds the card: the card keeps its own proportions, so the clip follows the card, not the slot.
+        Box(Modifier.size(width = 44.dp, height = 56.dp), contentAlignment = Alignment.Center) {
+            bag.imageUrl?.let { image(it, Modifier.clip(BagCardShape)) }
+                ?: Box(Modifier.fillMaxSize().clip(BagCardShape).background(MaterialTheme.colorScheme.surfaceVariant),
+                    contentAlignment = Alignment.Center) {
+                    Icon(CoffeePeekIcons.CoffeeBean, null, Modifier.size(20.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
         }
         Column(Modifier.weight(1f)) {
             Text(bag.name ?: unnamed, style = MaterialTheme.typography.bodyLarge)
@@ -166,5 +172,5 @@ private fun List<HomeCheckInShelfBag>.matching(query: String): List<HomeCheckInS
     Surface { HomeCheckInBeanPicker(HomeCheckInEditorState(isBeanPickerOpen = true,
         shelfBags = listOf(HomeCheckInShelfBag("1", "Эфиопия Иргачеффе", "Sibaristica", "https://preview.invalid/card"), HomeCheckInShelfBag("2", null, null)),
         beans = listOf(HomeCheckInBeanOption("honey-bloom", "Honey Bloom", "Tasty Coffee"))), {},
-        { Icon(CoffeePeekIcons.Search, null, it) }, { _, modifier -> Box(modifier.background(MaterialTheme.colorScheme.tertiary)) }) }
+        { Icon(CoffeePeekIcons.Search, null, it) }, { _, modifier -> Box(modifier.size(40.dp, 48.dp).background(MaterialTheme.colorScheme.tertiary)) }) }
 }
