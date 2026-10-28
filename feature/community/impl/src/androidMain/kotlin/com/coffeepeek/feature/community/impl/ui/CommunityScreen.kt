@@ -80,6 +80,7 @@ internal class CommunityCallbacks(
     val onOpenShop: (slug: String) -> Unit,
     val onEditHome: (id: String) -> Unit,
     val onOpenPost: (id: String) -> Unit,
+    val onOpenCoffee: (slug: String) -> Unit,
 )
 
 @Composable
@@ -277,6 +278,9 @@ private fun postActions(
         onPublish = { onAction(CommunityAction.ToggleVisibility(post.id)) }.takeIf { isOwn && post.visibility == PostVisibility.Private },
         onShare = sharer.action(post) { onAction(CommunityAction.ItemInteracted(FeedItemAction.Share, post.id)) },
         onOpen = { onAction(CommunityAction.ItemInteracted(FeedItemAction.Open, post.id)); callbacks.onOpenPost(post.id) }.takeIf { post.id.isNotBlank() },
+        onCoffee = post.home?.coffeeProductSlug?.let { slug ->
+            { onAction(CommunityAction.ItemInteracted(FeedItemAction.Coffee, post.id)); callbacks.onOpenCoffee(slug) }
+        },
     )
 }
 
@@ -305,7 +309,7 @@ internal fun ErrorBlock(onRetry: () -> Unit, retryLabel: String, modifier: Modif
     CommunityContent(
         CommunityState(isLoggedIn = true, items = listOf(previewPost(), previewPost().copy(id = "second", note = "Вторая запись", photos = com.coffeepeek.feature.community.domain.model.PostPhotos.None))),
         {}, CommunityHost(), object : AuthorBlockActions { override fun requestBlock(author: AuthorReference) {}; override fun requestUnblock(author: AuthorReference) {} },
-        CommunityCallbacks({}, { _, _, _ -> }, {}, {}, {}), SnackbarHostState(),
+        CommunityCallbacks({}, { _, _, _ -> }, {}, {}, {}, {}), SnackbarHostState(),
     )
 }
 
@@ -313,6 +317,6 @@ internal fun ErrorBlock(onRetry: () -> Unit, retryLabel: String, modifier: Modif
     CommunityContent(
         CommunityState(isLoggedIn = true, error = com.coffeepeek.feature.community.impl.timeline.TimelineError.LoadFailed),
         {}, CommunityHost(), object : AuthorBlockActions { override fun requestBlock(author: AuthorReference) {}; override fun requestUnblock(author: AuthorReference) {} },
-        CommunityCallbacks({}, { _, _, _ -> }, {}, {}, {}), SnackbarHostState(),
+        CommunityCallbacks({}, { _, _, _ -> }, {}, {}, {}, {}), SnackbarHostState(),
     )
 }

@@ -50,6 +50,7 @@ internal class AndroidCommunityScreenRenderer(private val entry: CommunityEntry)
             onSignIn = { Navigator.navigate(Navigator.Screen.Auth) },
             onOpenAuthor = { slug, name, avatar -> Navigator.navigate(Navigator.Screen.UserProfile(slug, name, avatar)) },
             onOpenShop = { Navigator.navigate(Navigator.Screen.ShopDetail(it)) },
+            onOpenCoffee = { Navigator.navigate(Navigator.Screen.CoffeeDetail(it)) },
             onEditHome = { Navigator.navigate(Navigator.Screen.EditHomeCheckIn(it)) },
             onOpenPost = { Navigator.navigate(Navigator.Screen.CheckInDetail(it)) },
             headerAction = notificationsAction,

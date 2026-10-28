@@ -53,6 +53,7 @@ internal class PostCallbacks(
     val onSignIn: () -> Unit,
     val onOpenAuthor: (slug: String, name: String, avatarUrl: String?) -> Unit,
     val onOpenShop: (slug: String) -> Unit,
+    val onOpenCoffee: (slug: String) -> Unit,
 )
 
 private class PostPhotoPreview(val thumbnails: List<String>, val originals: List<String>, val index: Int)
@@ -150,6 +151,7 @@ private fun postActions(
         onPhoto = { index -> onPhoto(PostPhotoPreview(post.photos.thumbnails, post.photos.originals, index)) },
         onReport = { onAction(PostAction.OpenReport) }.takeIf { interactive },
         onShare = sharer.action(post),
+        onCoffee = post.home?.coffeeProductSlug?.let { slug -> { callbacks.onOpenCoffee(slug) } },
     )
 }
 
@@ -181,7 +183,7 @@ private val previewBlockActions = object : AuthorBlockActions {
     override fun requestUnblock(author: AuthorReference) {}
 }
 
-private val previewCallbacks = PostCallbacks({}, {}, { _, _, _ -> }, {})
+private val previewCallbacks = PostCallbacks({}, {}, { _, _, _ -> }, {}, {})
 
 @PreviewLightDark @Composable private fun PostPreview() = CoffeePeekTheme {
     PostScreenContent(PostState(isLoggedIn = true, post = previewPost()), {}, CommunityHost(), previewBlockActions, previewCallbacks, SnackbarHostState())

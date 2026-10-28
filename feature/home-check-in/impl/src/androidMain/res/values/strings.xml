@@ -79,6 +79,8 @@
     <string name="home_check_in_from_shelf">С моей полки</string>
     <string name="home_check_in_from_catalog">Из каталога</string>
     <string name="home_check_in_shelf_bag_unnamed">Пачка с полки</string>
+    <string name="home_check_in_show_bag_title">Показать пачку</string>
+    <string name="home_check_in_show_bag_hint">Карточка пачки будет видна вместе с чекином.</string>
     <string name="home_check_in_custom_bean_name">Название своего зерна</string>
     <string name="home_check_in_custom_bean_hint">Например, Эфиопия Иргачеффе</string>
     <string name="home_check_in_use_custom_bean">Использовать своё зерно</string>

@@ -279,7 +279,7 @@ internal class SandboxApplicationBackend(private val today: LocalDate, private v
         return page(all.drop(offset).take(size), if (offset + size < all.size) (offset + size).toString() else null)
     }
 
-    /** 45 public posts by the blockable friend (every third) and two other authors; every fifth is a home preparation. */
+    /** 45 public posts by the blockable friend (every third) and two other authors; every fifth is a home preparation, every tenth with its shelf bag. */
     private var generated: MutableList<JsonObject>? = null
     private val generatedFeed: MutableList<JsonObject> get() = generated ?: buildGeneratedFeed().also { generated = it }
     private fun buildGeneratedFeed(): MutableList<JsonObject> =
@@ -298,7 +298,12 @@ internal class SandboxApplicationBackend(private val today: LocalDate, private v
                 putJsonObject("rating") { put("coffee", 4); put("service", 4); put("place", 5) }
                 if (home) {
                     put("kind", "Home")
-                    putJsonObject("home") { put("preparedOn", today.toString()); put("brewMethodCode", "hario-v60"); put("beanName", "Sandbox Bean $index"); put("doseGrams", 15.0); put("brewDurationSeconds", 150); put("tasteScore", 4) }
+                    putJsonObject("home") {
+                        put("preparedOn", today.toString()); put("brewMethodCode", "hario-v60"); put("beanName", "Sandbox Bean $index"); put("doseGrams", 15.0); put("brewDurationSeconds", 150); put("tasteScore", 4)
+                        // Every tenth shows its shelf bag; half of those are a catalogue coffee the card opens.
+                        if (index % 10 == 0) { put("roasterName", "Sandbox Roaster"); put("coffeeProductSlug", if (index % 20 == 0) null else "sandbox-ethiopia") }
+                    }
+                    if (index % 10 == 0) put("shelfBagPhotoUrl", "/media/sample")
                 }
             }
         }.toMutableList()

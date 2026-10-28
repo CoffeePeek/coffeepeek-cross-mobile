@@ -190,6 +190,11 @@ internal fun HomeCheckInEditorScreenContent(
                             CoffeePeekIcons.CoffeeBean, stringResource(R.string.home_check_in_choose_bean), enabled, error) {
                             dispatch(HomeCheckInEditorAction.OpenBeanPicker)
                         }
+                        state.shelfBagCardUrl?.takeIf { draft.shelfBagId != null }?.let { card ->
+                            HomeCheckInEditorShelfBag(card, draft.showShelfBag, enabled, media.shelfBagImage) {
+                                onAction(HomeCheckInEditorAction.ShowShelfBagChanged(it))
+                            }
+                        }
                     }
                     Step(HomePreparationField.Dose, stringResource(R.string.home_check_in_dose_label)) { error ->
                         HomeCheckInEditorInput(draft.doseGrams.orEmpty(), { onAction(HomeCheckInEditorAction.DoseChanged(it)) },

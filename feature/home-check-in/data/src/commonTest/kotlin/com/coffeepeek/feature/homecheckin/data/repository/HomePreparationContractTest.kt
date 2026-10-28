@@ -295,6 +295,30 @@ class HomePreparationContractTest {
         } finally { gateway.close(); uploader.close() }
     }
 
+    @Test
+    fun theBagCardChoiceIsSentAndTheEntrysCopyAndCatalogueSlugAreRead() = runBlocking {
+        val bag = "33333333-3333-4333-8333-333333333333"
+        val copy = """{"id":"copy-1","url":"/api/v1/check-ins/$id/photos/copy-1","variants":[{"purpose":"thumb","contentType":"image/jpeg","url":"/api/v1/check-ins/$id/photos/copy-1/variants/thumb/1/t.jpg","width":96,"height":128,"sizeBytes":900}]}"""
+        val shown = entry.dropLast(1) + """, "shelfBagId":"$bag", "coffeeProductSlug":"honey-bloom", "shelfBagPhoto":$copy}"""
+        val sent = mutableListOf<JsonPrimitive?>()
+        val gateway = gateway(MockEngine { request ->
+            sent += Json.parseToJsonElement((request.body as TextContent).text).jsonObject["showShelfBag"] as? JsonPrimitive
+            respond("""{"isSuccess":true,"data":${if (sent.size == 1) shown else entry}}""", headers = jsonHeaders)
+        })
+        val uploader = HttpClient(MockEngine { error("No photo upload expected") })
+        try {
+            val repository = createHomePreparationRepository(gateway, uploader, "https://gateway.example.com")
+            val input = HomePreparationInput("2026-09-21T01:15:00+03:00", shelfBagId = bag)
+            val created = repository.create(input).getOrThrow()
+            assertEquals("https://gateway.example.com/api/v1/check-ins/$id/photos/copy-1", created.shelfBagPhoto?.url)
+            assertEquals("https://gateway.example.com/api/v1/check-ins/$id/photos/copy-1/variants/thumb/1/t.jpg", created.shelfBagPhoto?.calendarUrl)
+            assertEquals("honey-bloom", created.coffeeProductSlug)
+            assertTrue(created.photos.none { it.id == "copy-1" }, "The copy is not one of the entry's photos")
+            assertNull(repository.update(id, input.copy(showShelfBag = false)).getOrThrow().shelfBagPhoto)
+            assertEquals(listOf<Boolean?>(true, false), sent.map { it?.content?.toBooleanStrictOrNull() })
+        } finally { gateway.close(); uploader.close() }
+    }
+
     private fun validation(input: HomePreparationInput) = homePreparationFieldErrors(input).values.firstOrNull()
 
     private fun gateway(engine: MockEngine) = HttpClient(engine) {

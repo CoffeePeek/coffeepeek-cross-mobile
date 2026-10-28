@@ -112,7 +112,7 @@ internal class AndroidCheckInHistoryScreenRenderer(
                 },
                 homeTimelineContent = { checkIn, onOpen ->
                     val home = checkIn.toTimelineHome()
-                    HistoryTimelineCheckInCard(home.toTimelineCheckIn(), onClick = onOpen,
+                    HistoryTimelineCheckInCard(home.toTimelineCheckIn().withShelfBag(checkIn), onClick = onOpen,
                         onPhotoClick = { images, index -> session.openPhoto(images.previews, images.originals, index) },
                         supportingLabel = home.visibilityLabel())
                 },

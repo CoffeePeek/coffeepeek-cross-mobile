@@ -20,6 +20,7 @@ internal class AndroidCheckInDetailScreenRenderer(private val entry: CommunityPo
             onSignIn = { Navigator.navigate(Navigator.Screen.Auth) },
             onOpenAuthor = { slug, name, avatar -> Navigator.navigate(Navigator.Screen.UserProfile(slug, name, avatar)) },
             onOpenShop = { Navigator.navigate(Navigator.Screen.ShopDetail(it)) },
+            onOpenCoffee = { Navigator.navigate(Navigator.Screen.CoffeeDetail(it)) },
         )
     }
 }

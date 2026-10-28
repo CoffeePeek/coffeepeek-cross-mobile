@@ -25,6 +25,8 @@ internal data class HomeCheckInEditorState(
     val beansLoading: Boolean = false,
     val beansIssue: HomePreparationIssue? = null,
     val shelfBags: List<HomeCheckInShelfBag> = emptyList(),
+    /** The chosen bag's card for the "show the bag" switch; null hides the switch (no bag, or a bag without a card). */
+    val shelfBagCardUrl: String? = null,
     val isClosed: Boolean = false,
     val isAccessRevoked: Boolean = false,
 )

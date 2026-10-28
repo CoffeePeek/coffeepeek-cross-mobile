@@ -122,6 +122,22 @@ class SandboxShelfBackendTest {
         }
     }
 
+    @Test fun aHomeCheckInShowsACopyOfTheBagCardUntilItIsHidden() = runTest {
+        withShelf { api, backend ->
+            val bag = api.data("GET", base).jsonArray[0].text("id")
+            val home = "${SandboxBackend.BASE_URL}/api/v1/check-ins/home"
+            val body = { show: Boolean -> """{"preparedAt":"2026-10-27T08:00:00Z","shelfBagId":"$bag","showShelfBag":$show}""" }
+            val entry = api.data("POST", home, body(true))
+            val copy = entry.jsonObject.getValue("shelfBagPhoto").jsonObject
+            assertNotNull(backend.photo("${SandboxBackend.BASE_URL}${copy.text("url")}"))
+            assertEquals("sandbox-ethiopia", api.data("GET", "$home/${entry.text("id")}").text("coffeeProductSlug"))
+            val kept = api.data("PUT", "$home/${entry.text("id")}", body(true)).jsonObject.getValue("shelfBagPhoto").jsonObject
+            assertEquals(copy.text("id"), kept.text("id"))
+            assertEquals(JsonNull, api.data("PUT", "$home/${entry.text("id")}", body(false)).jsonObject["shelfBagPhoto"])
+            assertNull(backend.photo("${SandboxBackend.BASE_URL}${copy.text("url")}"))
+        }
+    }
+
     private suspend fun withShelf(populated: Boolean = true, block: suspend (HttpClient, SandboxBackend) -> Unit) {
         val backend = backend()
         val api = backend.apiClient {}

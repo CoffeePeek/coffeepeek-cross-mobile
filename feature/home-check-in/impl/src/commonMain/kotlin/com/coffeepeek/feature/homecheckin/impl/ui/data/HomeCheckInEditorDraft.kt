@@ -15,6 +15,8 @@ internal fun HomePreparation.editorInput() = HomePreparationInput(
     doseGrams = doseGrams, brewDurationSeconds = brewDurationSeconds, tasteScore = tasteScore, text = text,
     drinkSlug = drinkSlug ?: "other".takeIf { !customDrinkName.isNullOrBlank() || !drinkName.isNullOrBlank() },
     customDrinkName = customDrinkName ?: drinkName.takeIf { drinkSlug == null }, visibility = visibility,
+    // The entry keeps its copy of the card only while it is asked to show the same bag again.
+    showShelfBag = shelfBagPhoto != null,
 )
 
 /** Only changed fields lose/revalidate their previous errors; keep unrelated server failures. */
@@ -30,7 +32,8 @@ internal fun HomeCheckInEditorState.withDraft(next: HomePreparationInput, now: I
     return copy(draft = next, fieldErrors = remaining,
         beanSelectionName = beanSelectionName.takeIf {
             next.coffeeProductSlug != null || next.coffeeProductId != null || next.shelfBagId != null
-        })
+        },
+        shelfBagCardUrl = shelfBagCardUrl.takeIf { next.shelfBagId != null && next.shelfBagId == draft.shelfBagId })
 }
 
 internal fun HomePreparationInput.changedFields(next: HomePreparationInput): Set<HomePreparationField> =

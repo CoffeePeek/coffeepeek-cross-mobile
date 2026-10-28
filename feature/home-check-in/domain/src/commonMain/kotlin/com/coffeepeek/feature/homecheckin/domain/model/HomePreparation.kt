@@ -24,6 +24,10 @@ data class HomePreparation(
     val shelfBagId: String? = null,
     /** Roaster snapshot from the catalogue or the bag. */
     val roasterName: String? = null,
+    /** The catalogue coffee's current public slug while it is published; the link key stays [coffeeProductId]. */
+    val coffeeProductSlug: String? = null,
+    /** This entry's own copy of its bag's card, present while the author shows the bag with it. */
+    val shelfBagPhoto: HomePreparationPhoto? = null,
 )
 
 data class HomePreparationPhoto(val id: String, val url: String,

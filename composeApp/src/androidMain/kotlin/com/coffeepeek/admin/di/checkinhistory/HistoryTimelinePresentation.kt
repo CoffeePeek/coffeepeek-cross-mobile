@@ -44,3 +44,9 @@ internal fun HomeHistoryEntry.toTimelineHome(): HomeCheckIn = HomeCheckIn(
     visibility = visibility?.let { HomeCheckInVisibility.valueOf(it.name) },
     moderation = HomeCheckInModeration.valueOf(moderation.name),
 )
+
+/** The legacy home model has no bag: the timeline card takes it, with the roaster and catalogue link, from the history entry. */
+internal fun CheckIn.withShelfBag(entry: HomeHistoryEntry): CheckIn = copy(homePreparation = homePreparation?.copy(
+    roasterName = entry.recipe.roasterName, coffeeProductSlug = entry.recipe.coffeeProductSlug,
+    shelfBagCardUrl = entry.shelfBagCard?.let { card -> card.calendarUrl?.takeIf(String::isNotBlank) ?: card.url },
+))

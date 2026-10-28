@@ -33,6 +33,7 @@ fun createCommunityEntry(
         onSignIn: () -> Unit,
         onOpenAuthor: (String, String, String?) -> Unit,
         onOpenShop: (String) -> Unit,
+        onOpenCoffee: (String) -> Unit,
         onEditHome: (String) -> Unit,
         onOpenPost: (String) -> Unit,
         modifier: Modifier,
@@ -42,7 +43,7 @@ fun createCommunityEntry(
     ) {
         CommunityScreen(
             viewModel(key = "community-feed") { CommunityViewModel(repository, account, analytics, drinks, visibility) },
-            host, blockActions, CommunityCallbacks(onSignIn, onOpenAuthor, onOpenShop, onEditHome, onOpenPost), modifier, bottomClearance, headerAction, floatingAction,
+            host, blockActions, CommunityCallbacks(onSignIn, onOpenAuthor, onOpenShop, onEditHome, onOpenPost, onOpenCoffee), modifier, bottomClearance, headerAction, floatingAction,
         )
     }
 }

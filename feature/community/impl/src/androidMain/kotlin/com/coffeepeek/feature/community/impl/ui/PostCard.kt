@@ -77,6 +77,8 @@ internal class PostCardActions(
     val onShare: (() -> Unit)? = null,
     /** The whole card opens the post on its own screen; the author, shop, photos, like and menu keep their own taps. */
     val onOpen: (() -> Unit)? = null,
+    /** A home post's bag opens its coffee in the catalogue; null without a published catalogue coffee. */
+    val onCoffee: (() -> Unit)? = null,
 )
 
 @Composable
@@ -100,7 +102,8 @@ internal fun PostCard(
         PostHeader(post, isOwn, actions, enabled, changingVisibility, host)
         if (post.isHome) {
             post.home?.let { recipe ->
-                recipe.beanName?.takeIf(String::isNotBlank)?.let { Text(it, style = MaterialTheme.typography.titleMedium) }
+                recipe.shelfBagCardUrl?.let { PostShelfBag(it, recipe.beanName, recipe.roasterName, actions.onCoffee, host) }
+                    ?: recipe.beanName?.takeIf(String::isNotBlank)?.let { Text(it, style = MaterialTheme.typography.titleMedium) }
                 val details = recipe.details(host.brewMethodLabel)
                 if (details.isNotBlank()) Text(details, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
@@ -331,4 +334,11 @@ internal fun previewPost() = CommunityPost(
 @PreviewLightDark @Composable private fun HomePostCardPreview() = CoffeePeekTheme {
     PostCard(previewPost().copy(isHome = true, home = HomePreparation("2026-10-07", "hario-v60", "Эфиопия", 18.0, 150, 4), photos = PostPhotos.None, rating = null),
         isOwn = true, publicTimeline = false, showHelpfulCount = false, enabled = true, PostCardActions(null, null, null, null, {}), CommunityHost())
+}
+
+@PreviewLightDark @Composable private fun HomeBagPostCardPreview() = CoffeePeekTheme {
+    PostCard(previewPost().copy(isHome = true, rating = null, photos = PostPhotos.None,
+        home = HomePreparation("2026-10-07", "hario-v60", "Эфиопия Иргачеффе", 18.0, 150, 4, "Sibaristica", "ethiopia", "card")),
+        isOwn = false, publicTimeline = true, showHelpfulCount = true, enabled = true, PostCardActions(null, null, null, null, {}, onCoffee = {}),
+        CommunityHost(image = { _, _, modifier, _ -> Box(modifier.size(38.dp, 52.dp).background(MaterialTheme.colorScheme.tertiary)) }))
 }

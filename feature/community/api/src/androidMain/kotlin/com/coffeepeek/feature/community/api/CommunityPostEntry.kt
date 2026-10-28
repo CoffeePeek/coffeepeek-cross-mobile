@@ -15,6 +15,7 @@ interface CommunityPostEntry {
         onSignIn: () -> Unit,
         onOpenAuthor: (slug: String, name: String, avatarUrl: String?) -> Unit,
         onOpenShop: (slug: String) -> Unit,
+        onOpenCoffee: (slug: String) -> Unit,
         modifier: Modifier = Modifier,
     )
 }

@@ -10,20 +10,22 @@ internal fun HomeDto.toDomain(apiBaseUrl: String): HomePreparation {
     return HomePreparation(
         id = id, preparedAtUtc = preparedAtUtc, preparedOn = preparedOn, createdAtUtc = createdAtUtc,
         text = text, brewMethodCode = brewMethodCode, coffeeProductId = coffeeProductId, beanName = beanName,
-        shelfBagId = shelfBagId, roasterName = roasterName,
+        shelfBagId = shelfBagId, roasterName = roasterName, coffeeProductSlug = coffeeProductSlug,
         doseGrams = doseGrams?.toString(), brewDurationSeconds = brewDurationSeconds, tasteScore = tasteScore,
         drinkName = drink.string("nameRu", "name", "customName", "customDrinkName"),
         drinkSlug = drink.string("slug"), customDrinkName = drink.string("customName", "customDrinkName"),
-        photos = orderedPhotos.map { (photo, original) -> HomePreparationPhoto(photo.id, original,
-            photo.variants.variantUrl("feed", original, apiBaseUrl),
-            photo.variants.variantUrl("detail", original, apiBaseUrl),
-            photo.variants.variantUrl("thumb", original, apiBaseUrl)) },
+        photos = orderedPhotos.map { (photo, original) -> photo.toDomain(original, apiBaseUrl) },
+        shelfBagPhoto = shelfBagPhoto?.let { photo -> photo.url.resolvePhotoUrl(apiBaseUrl)?.let { photo.toDomain(it, apiBaseUrl) } },
         visibility = HomePreparationVisibility.entries.firstOrNull { it.name.equals(visibility, ignoreCase = true) },
         moderation = HomePreparationModeration.entries.firstOrNull { it.name.equals(moderationState, ignoreCase = true) }
             ?: HomePreparationModeration.Unknown,
     )
 }
 
+private fun HomePhotoDto.toDomain(original: String, apiBaseUrl: String) = HomePreparationPhoto(id, original,
+    variants.variantUrl("feed", original, apiBaseUrl),
+    variants.variantUrl("detail", original, apiBaseUrl),
+    variants.variantUrl("thumb", original, apiBaseUrl))
 
 private fun List<HomePhotoVariantDto>?.variantUrl(purpose: String, original: String, base: String): String {
     if (this == null) return original
@@ -36,13 +38,13 @@ private fun List<HomePhotoVariantDto>?.variantUrl(purpose: String, original: Str
 
 internal fun HomePreparationInput.toEditRequest() = HomeEditDto(
     preparedAt, preparedOn, brewMethodCode, coffeeProductSlug, coffeeProductId,
-    customBeanName?.trim(), shelfBagId, doseGrams?.toDouble(), brewDurationSeconds, tasteScore, text?.trim(),
+    customBeanName?.trim(), shelfBagId, showShelfBag, doseGrams?.toDouble(), brewDurationSeconds, tasteScore, text?.trim(),
     drinkSlug, customDrinkName?.trim(), visibility?.name,
 )
 
 internal fun HomePreparationInput.toCreateRequest(photos: List<UploadedPhotoDto>) = HomeCreateDto(
     preparedAt, preparedOn, brewMethodCode, coffeeProductSlug, coffeeProductId,
-    customBeanName?.trim(), shelfBagId, doseGrams?.toDouble(), brewDurationSeconds, tasteScore, text?.trim(),
+    customBeanName?.trim(), shelfBagId, showShelfBag, doseGrams?.toDouble(), brewDurationSeconds, tasteScore, text?.trim(),
     drinkSlug, customDrinkName?.trim(), photos, (visibility ?: HomePreparationVisibility.Private).name,
 )
 

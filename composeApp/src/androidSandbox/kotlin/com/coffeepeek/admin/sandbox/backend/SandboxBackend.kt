@@ -181,7 +181,7 @@ internal class SandboxBackend(private val samplePhoto: ByteArray,
             val page = request.url.parameters["pageNumber"]?.toIntOrNull() ?: 1
             val size = request.url.parameters["pageSize"]?.toIntOrNull() ?: 20
             if (page !in 1..10000 || size !in 1..100) return fail(HttpStatusCode.BadRequest)
-            return ok(buildJsonObject { put("totalCount", matching.size); put("items", JsonArray(matching.drop((page - 1) * size).take(size))) })
+            return ok(buildJsonObject { put("totalCount", matching.size); put("items", JsonArray(matching.drop((page - 1) * size).take(size).map(::read))) })
         }
         if (request.method == HttpMethod.Post && path == home) {
             val input = body(request) as? JsonObject ?: return fail(HttpStatusCode.BadRequest)
@@ -195,7 +195,7 @@ internal class SandboxBackend(private val samplePhoto: ByteArray,
             val id = path.removePrefix("$home/")
             val existing = rows[id] ?: return fail(HttpStatusCode.NotFound)
             return when (request.method) {
-                HttpMethod.Get -> ok(existing)
+                HttpMethod.Get -> ok(read(existing))
                 HttpMethod.Delete -> { rows.remove(id); ok(JsonNull) }
                 HttpMethod.Put -> {
                     val input = body(request) as? JsonObject ?: return fail(HttpStatusCode.BadRequest)
@@ -222,6 +222,7 @@ internal class SandboxBackend(private val samplePhoto: ByteArray,
             put("createdAtUtc", existing?.get("createdAtUtc") ?: JsonPrimitive(instant))
             put("beanName", bag?.get("beanName") ?: beanName(input, existing))
             put("shelfBagId", input["shelfBagId"] ?: JsonNull)
+            put("shelfBagPhoto", bagCard(id, input, existing))
             put("roasterName", bag?.get("roasterName") ?: JsonNull)
             bag?.let { put("coffeeProductId", it.getValue("coffeeProductId")) }
             if (input["coffeeProductSlug"]?.jsonPrimitive?.contentOrNull == "sandbox-ethiopia")
@@ -240,6 +241,26 @@ internal class SandboxBackend(private val samplePhoto: ByteArray,
             ?: return shelf.bean(bagId)
         return listOf("coffeeProductId", "beanName", "roasterName").associateWith { kept[it] ?: JsonNull }
     }
+
+    /**
+     * Like the server: showing the same bag keeps the entry's copy of its card, otherwise a fresh copy of the bag's current
+     * card is made; hiding it, another bag or no bag drops the old copy's bytes.
+     */
+    private fun bagCard(id: String, input: JsonObject, existing: JsonObject?): JsonElement {
+        val bagId = input["shelfBagId"]?.jsonPrimitive?.contentOrNull
+        val show = bagId != null && input["showShelfBag"]?.jsonPrimitive?.booleanOrNull != false
+        val current = existing?.get("shelfBagPhoto")?.takeUnless { it is JsonNull }?.jsonObject
+        if (show && current != null && existing["shelfBagId"]?.jsonPrimitive?.contentOrNull == bagId) return current
+        current?.get("id")?.jsonPrimitive?.content?.let { images.remove("/media/$it") }
+        val bytes = bagId?.takeIf { show }?.let(shelf::cardKey)?.let { images["/media/$it"] } ?: return JsonNull
+        val copy = "bag-copy-$id-${UUID.randomUUID()}"
+        images["/media/$copy"] = bytes.copyOf()
+        return buildJsonObject { put("id", copy); put("url", "/media/$copy") }
+    }
+
+    /** The catalogue slug is resolved on every read, never stored. */
+    private fun read(row: JsonObject) = JsonObject(row + ("coffeeProductSlug" to
+        JsonPrimitive(SandboxShelfBackend.productSlug(row["coffeeProductId"]?.jsonPrimitive?.contentOrNull))))
 
     private fun bagMissing(input: JsonObject, existing: JsonObject?): Boolean =
         input["shelfBagId"]?.jsonPrimitive?.contentOrNull != null && bagBean(input, existing) == null

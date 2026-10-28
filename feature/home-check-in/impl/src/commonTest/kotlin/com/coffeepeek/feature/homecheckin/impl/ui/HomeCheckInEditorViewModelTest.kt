@@ -162,6 +162,42 @@ class HomeCheckInEditorViewModelTest {
         assertNull(edit.state.value.draft.customBeanName)
     }
 
+    @Test fun aBagWithACardIsShownByDefaultAndCanBeHidden() = runTest(dispatcher) {
+        val catalog = Catalog().apply { bags = Result.success(listOf(HomeCheckInShelfBag("bag-1", "Кения", null, "card-1"))) }
+        val repo = Repository()
+        val vm = model(repo, catalog = catalog); runCurrent()
+        vm.act(HomeCheckInEditorAction.ShowShelfBagChanged(false)); runCurrent()
+        assertTrue(vm.state.value.draft.showShelfBag, "No bag, no switch")
+        vm.act(HomeCheckInEditorAction.OpenBeanPicker); runCurrent()
+        vm.act(HomeCheckInEditorAction.ShelfBagSelected("bag-1")); runCurrent()
+        assertEquals("card-1", vm.state.value.shelfBagCardUrl)
+        vm.act(HomeCheckInEditorAction.ShowShelfBagChanged(false), HomeCheckInEditorAction.Save); runCurrent()
+        assertFalse(repo.creates.single().showShelfBag)
+
+        val fromBag = model(catalog = catalog, bean = HomeCheckInStartBean(null, "Кения", shelfBagId = "bag-1")); runCurrent()
+        assertEquals("card-1", fromBag.state.value.shelfBagCardUrl)
+        assertTrue(fromBag.state.value.draft.showShelfBag)
+        fromBag.act(HomeCheckInEditorAction.OpenBeanPicker); runCurrent()
+        fromBag.act(HomeCheckInEditorAction.CustomBeanChosen("Своя")); runCurrent()
+        assertNull(fromBag.state.value.shelfBagCardUrl, "Another bean drops the switch")
+    }
+
+    @Test fun anEditShowsItsCopyAndAHiddenCardCanBeShownAgain() = runTest(dispatcher) {
+        val copy = HomePreparationPhoto("copy", "copy-original", thumbnailUrl = "copy-feed")
+        val shown = Repository().apply { detailResult = Result.success(entry().copy(shelfBagId = "gone-bag", shelfBagPhoto = copy)) }
+        val vm = model(shown, id = "home"); runCurrent()
+        assertEquals("copy-feed", vm.state.value.shelfBagCardUrl)
+        assertTrue(vm.state.value.draft.showShelfBag)
+
+        val catalog = Catalog().apply { bags = Result.success(listOf(HomeCheckInShelfBag("bag-1", "Кения", null, "card-1"))) }
+        val hidden = Repository().apply { detailResult = Result.success(entry().copy(shelfBagId = "bag-1")) }
+        val edit = model(hidden, catalog = catalog, id = "home"); runCurrent()
+        assertFalse(edit.state.value.draft.showShelfBag)
+        assertEquals("card-1", edit.state.value.shelfBagCardUrl)
+        edit.act(HomeCheckInEditorAction.ShowShelfBagChanged(true), HomeCheckInEditorAction.Save); runCurrent()
+        assertTrue(hidden.updates.single().second.showShelfBag)
+    }
+
     @Test fun aBagThatFailsToLoadOnlyHidesTheShelfAndBrewingFromABagStartsWithIt() = runTest(dispatcher) {
         val catalog = Catalog().apply { bags = Result.failure(IllegalStateException("offline")) }
         val vm = model(catalog = catalog); runCurrent()

@@ -9,6 +9,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.intl.Locale
 import com.coffeepeek.admin.feature.catalog.api.methodLabel
 import com.coffeepeek.admin.theme.CpDimens
+import com.coffeepeek.admin.ui.Navigator
 import com.coffeepeek.admin.ui.component.CheckInHeader
 import com.coffeepeek.admin.ui.component.CheckInHeading
 import com.coffeepeek.admin.ui.component.HelpfulButton
@@ -43,7 +44,10 @@ internal fun CheckInTimelineContentImpl(
         CheckInHeader(checkIn, isOwn, onAuthorClick = onAuthorClick, displayTimestamp = displayTimestamp, actions = actions)
         if (checkIn.isHome) {
             checkIn.homePreparation?.let { recipe ->
-                recipe.beanName?.takeIf(String::isNotBlank)?.let { Text(it, style = MaterialTheme.typography.titleMedium) }
+                recipe.shelfBagCardUrl?.let { card ->
+                    CheckInShelfBag(card, recipe.beanName, recipe.roasterName,
+                        recipe.coffeeProductSlug?.let { slug -> { Navigator.navigate(Navigator.Screen.CoffeeDetail(slug)) } })
+                } ?: recipe.beanName?.takeIf(String::isNotBlank)?.let { Text(it, style = MaterialTheme.typography.titleMedium) }
                 val details = recipe.checkInDetails()
                 if (details.isNotBlank()) Text(details, style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant)

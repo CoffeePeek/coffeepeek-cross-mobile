@@ -21,6 +21,8 @@ internal class SandboxShelfBackend(private val today: LocalDate, private val upl
             "sandbox-kenya" to ("22222222-2222-4222-8222-222222222223" to "Sandbox Kenya"),
             "sandbox-brazil" to ("22222222-2222-4222-8222-222222222224" to "Sandbox Brazil"),
         )
+        /** A catalogue product's current slug, as the server resolves it on every read. */
+        fun productSlug(productId: String?): String? = products.entries.firstOrNull { it.value.first == productId }?.key
         private val details = listOf("coffeeProductId", "coffeeProductSlug", "name", "roasterName", "weightGrams", "grind", "roastPurpose", "roastedOn")
     }
     private class Rejected(val status: HttpStatusCode) : Exception()
@@ -41,13 +43,16 @@ internal class SandboxShelfBackend(private val today: LocalDate, private val upl
         archive += finished(fixture(null, "Перу Санта Роса", 250, null, daysAgo = 95, roaster = "River Roasters"), daysAgo = 75, rating = null, buyAgain = false)
     }
 
-    /** Owner-only card read: the upload key behind `photos/{photoId}`, or null when the bag or that card no longer exists. */
     /** A bag's bean for a home check-in brewed from it, as the server snapshots it; null for a missing bag. */
     fun bean(bagId: String): Map<String, JsonElement>? = find(bagId)?.let { row ->
         mapOf("coffeeProductId" to (row["coffeeProductId"] ?: JsonNull), "beanName" to (row["name"] ?: JsonNull),
             "roasterName" to (row["roasterName"] ?: JsonNull))
     }
 
+    /** The upload key of a bag's current card, for a home check-in that shows the bag; null for a missing bag or one without a card. */
+    fun cardKey(bagId: String): String? = find(bagId)?.get("photo")?.takeUnless { it is JsonNull }?.jsonObject?.text("id")
+
+    /** Owner-only card read: the upload key behind `photos/{photoId}`, or null when the bag or that card no longer exists. */
     fun cardKey(bagId: String, photoId: String): String? =
         find(bagId)?.get("photo")?.jsonObject?.get("id")?.jsonPrimitive?.content?.takeIf { it == photoId }
 
