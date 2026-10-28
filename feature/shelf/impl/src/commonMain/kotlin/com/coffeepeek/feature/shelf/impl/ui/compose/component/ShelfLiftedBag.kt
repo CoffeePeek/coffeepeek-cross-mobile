@@ -88,7 +88,8 @@ private class ShelfBagMotion {
     val lift = Animatable(0f)
     val flight = Animatable(0f)
     val presence = Animatable(1f)
-    var start by mutableStateOf(Offset.Zero)
+    /** Where the landing started; null until [land] runs, which is a frame after the finger is lifted. */
+    var start by mutableStateOf<Offset?>(null)
         private set
 
     suspend fun pickUp() {
@@ -116,6 +117,7 @@ private class ShelfBagMotion {
     fun position(drag: ShelfDragState, id: String, slot: () -> Offset, half: Offset): Offset = when (id) {
         drag.bagId -> drag.finger - drag.grab
         drag.archiving -> lerp(drag.gridOrigin + drag.sinkFrom, drag.sinkTo - half, flight.value)
-        else -> drag.gridOrigin + lerp(start, slot(), flight.value)
+        // Until the landing starts, stay where the finger let go: an unset start would draw the bag at the grid's corner.
+        else -> drag.gridOrigin + lerp(start ?: drag.releasedAt(id) ?: slot(), slot(), flight.value)
     }
 }
