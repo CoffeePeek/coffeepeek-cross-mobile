@@ -145,6 +145,7 @@ object Navigator {
         @Serializable data class ShopChangeRequestDetail(
             val requestId: String,
         ) : Screen
+        @Serializable data class MyBusiness(val kind: String? = null, val slug: String? = null) : Screen
         @Serializable data object AddShop : Screen
         @Serializable data object AddRoaster : Screen
         @Serializable data class RoasterDetail(val roasterId: String) : Screen
@@ -230,6 +231,7 @@ object Navigator {
         is Screen.SuggestShopChange,
         is Screen.ShopChangeEditor,
         is Screen.MyContributions,
+        is Screen.MyBusiness,
         is Screen.ShopChangeRequestDetail,
         is Screen.AddShop,
         is Screen.AddRoaster,
@@ -520,6 +522,9 @@ koinInject<ContributionsScreenRenderer>().Editor(route.shopId, route.section, ro
                         val route = backStack.toRoute<Screen.ShopChangeRequestDetail>()
                         koinInject<ContributionsScreenRenderer>().RequestDetail(route.requestId)
                     }
+                    composable<Screen.MyBusiness> { entry ->
+                        BusinessOwnershipRoute(entry.toRoute<Screen.MyBusiness>())
+                    }
                     composable<Screen.AddShop> { koinInject<ContributionsScreenRenderer>().AddShop() }
                     composable<Screen.AddRoaster> { koinInject<ContributionsScreenRenderer>().AddRoaster() }
                     composable<Screen.RoasterDetail> { backStack ->
@@ -569,6 +574,7 @@ koinInject<ContributionsScreenRenderer>().Editor(route.shopId, route.section, ro
             is Screen.ShopChangeEditor -> koinInject<ContributionsScreenRenderer>().Editor(screen.shopId, screen.section, screen.requestId)
             is Screen.MyContributions -> koinInject<ContributionsScreenRenderer>().List(ContributionKind.valueOf(screen.kind))
             is Screen.ShopChangeRequestDetail -> koinInject<ContributionsScreenRenderer>().RequestDetail(screen.requestId)
+            is Screen.MyBusiness -> BusinessOwnershipRoute(screen)
             Screen.AddShop -> koinInject<ContributionsScreenRenderer>().AddShop()
             Screen.AddRoaster -> koinInject<ContributionsScreenRenderer>().AddRoaster()
             is Screen.RoasterDetail -> koinInject<RoasterScreenRenderer>().Detail(screen.roasterId)
@@ -605,4 +611,14 @@ koinInject<ContributionsScreenRenderer>().Editor(route.shopId, route.section, ro
     private fun PublicProfileRoute(screen: Screen.UserProfile) {
         koinInject<PublicProfileScreenRenderer>().Content(screen.slug, screen.nickname, screen.avatarUrl)
     }
+}
+
+
+@Composable
+private fun BusinessOwnershipRoute(screen: Navigator.Screen.MyBusiness) {
+    koinInject<com.coffeepeek.feature.ownership.api.BusinessOwnershipEntry>().Content(
+        onBack = Navigator::popBack,
+        onLogin = { Navigator.navigate(Navigator.Screen.Auth) },
+        initialKind = screen.kind, initialSlug = screen.slug,
+    )
 }

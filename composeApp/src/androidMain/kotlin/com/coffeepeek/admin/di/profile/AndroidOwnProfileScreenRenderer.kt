@@ -45,6 +45,7 @@ internal class AndroidOwnProfileScreenRenderer(private val entry: OwnProfileEntr
             onOpenCheckIns = { Navigator.navigate(Navigator.Screen.VisitedPlaces) },
             onOpenContributions = { kind -> Navigator.navigate(Navigator.Screen.MyContributions(kind.toContributionKind().name)) },
             onOpenBlockedAuthors = { Navigator.navigate(Navigator.Screen.BlockedAuthors) },
+            onOpenBusiness = { Navigator.navigate(Navigator.Screen.MyBusiness()) },
             bottomClearance = LocalFloatingNavClearance.current,
         )
     }
