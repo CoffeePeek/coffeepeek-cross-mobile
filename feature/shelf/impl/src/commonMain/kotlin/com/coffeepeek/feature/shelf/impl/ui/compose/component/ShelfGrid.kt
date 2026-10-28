@@ -103,12 +103,12 @@ private fun ShelfGridTile(
     val position = remember { Animatable(slot, IntOffset.VectorConverter) }
     LaunchedEffect(slot, held) {
         if (held) return@LaunchedEffect
-        drag.takeRelease(item.id)?.let { position.snapTo(it.round()) }
+        drag.releasedAt(item.id)?.let { position.snapTo(it.round()); drag.clearRelease(item.id) }
         position.animateTo(slot)
     }
     val size = with(LocalDensity.current) { geometry.columnWidth.toDp() to geometry.slotHeight.toDp() }
     ShelfBagTile(item, image, Modifier
-        .offset { if (held) (drag.pointer - drag.grab).round() else position.value }
+        .offset { if (held) (drag.pointer - drag.grab).round() else drag.releasedAt(item.id)?.round() ?: position.value }
         .size(size.first, size.second)
         .zIndex(if (held) 1f else 0f)
         .scale(if (held) 1.06f else 1f)

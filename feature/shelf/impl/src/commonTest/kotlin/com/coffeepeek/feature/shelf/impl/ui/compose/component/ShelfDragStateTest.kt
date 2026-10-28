@@ -35,8 +35,10 @@ class ShelfDragStateTest {
         assertEquals(ShelfDrop.Move("a", 3), drag.release())
         assertFalse(drag.active)
         assertEquals(listOf("b", "c", "d", "a"), drag.order(listOf("a", "b", "c", "d")))
-        assertEquals(Offset(110f, 200f), drag.takeRelease("a"))
-        assertNull(drag.takeRelease("a"))
+        assertEquals(Offset(110f, 200f), drag.releasedAt("a"))
+        assertNull(drag.releasedAt("b"))
+        drag.clearRelease("a")
+        assertNull(drag.releasedAt("a"))
         drag.settled()
         assertEquals(listOf("a", "b", "c", "d"), drag.order(listOf("a", "b", "c", "d")))
     }

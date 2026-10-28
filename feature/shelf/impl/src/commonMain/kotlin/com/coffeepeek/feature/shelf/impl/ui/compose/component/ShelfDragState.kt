@@ -66,7 +66,7 @@ internal class ShelfDragState {
     private var from = -1
     private var count = 0
     private var geometry: ShelfGridGeometry? = null
-    private var released: Pair<String, Offset>? = null
+    private var released by mutableStateOf<Pair<String, Offset>?>(null)
 
     val active: Boolean get() = bagId != null
     val rootPointer: Offset get() = gridOrigin + pointer
@@ -118,8 +118,15 @@ internal class ShelfDragState {
         settling = null
     }
 
-    /** Where the bag [id] was let go, once, so it can glide from the finger to its slot. */
-    fun takeRelease(id: String): Offset? = released?.takeIf { it.first == id }?.second?.also { released = null }
+    /**
+     * Where the bag [id] was let go. It is state, so the first frame after release already draws the bag there; the tile
+     * then moves its own animation to this point and calls [clearRelease], and glides on to its slot.
+     */
+    fun releasedAt(id: String): Offset? = released?.takeIf { it.first == id }?.second
+
+    fun clearRelease(id: String) {
+        if (released?.first == id) released = null
+    }
 
     /** [ids] as drawn: the lifted or just-dropped bag at its new index. */
     fun order(ids: List<String>): List<String> {
