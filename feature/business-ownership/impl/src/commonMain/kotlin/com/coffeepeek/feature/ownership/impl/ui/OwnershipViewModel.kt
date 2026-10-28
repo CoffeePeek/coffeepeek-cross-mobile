@@ -150,7 +150,7 @@ internal class OwnershipViewModel(
         operations.toList().forEach { it.cancel() }
         updateState { copy(loading = false) }
         if (currentState.destination == OwnershipDestination.Overview) sendEvent(OwnershipEvent.Close)
-        else if (currentState.dirty || currentState.destination == OwnershipDestination.Submit && currentState.submission.evidence.isNotBlank()) {
+        else if (currentState.dirty || currentState.destination == OwnershipDestination.Submit && currentState.submission.hasContent()) {
             updateState { copy(confirmDiscard = true, reloadAfterDiscard = false) }
         } else overview()
     }
@@ -180,3 +180,5 @@ private fun <T> List<T>.move(from: Int, to: Int): List<T> {
     if (from !in indices || to !in indices) return this
     return toMutableList().apply { add(to, removeAt(from)) }
 }
+
+private fun ClaimSubmission.hasContent(): Boolean = slug.isNotBlank() || contact.isNotBlank() || evidence.isNotBlank()

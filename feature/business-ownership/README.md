@@ -34,7 +34,7 @@ explicitly edited; unknown/public slugs are never sent in UUID fields.
 ## Verification record — 2026-10-28
 
 Local checks on this feature tree:
-- 25 ownership unit/contract tests (domain 5, data 9, presentation 11), no failures/errors/skips.
+- 26 ownership unit/contract tests (domain 5, data 9, presentation 12), no failures/errors/skips.
 - 60 affected Profile tests and 4 new application navigation/Sandbox HTTP tests, no failures/errors/skips.
 - Shared ownership Compose/KMP metadata compilation, Direct Sandbox and Direct Debug APKs,
   packaged DEX guards and Sandbox isolation passed.

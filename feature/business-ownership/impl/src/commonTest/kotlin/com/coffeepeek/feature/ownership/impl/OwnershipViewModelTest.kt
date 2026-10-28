@@ -149,6 +149,20 @@ class OwnershipViewModelTest {
         runCurrent()
         assertEquals("Unsaved draft", model.state.value.draft?.name)
     }
+    @Test fun partiallyEnteredClaimRequiresDiscardConfirmation() = runTest(dispatcher) {
+        val model = model()
+        runCurrent()
+        model.onAction(OwnershipAction.NewClaim)
+        model.onAction(OwnershipAction.ClaimText(ClaimField.Contact, "contact"))
+        runCurrent()
+        model.onAction(OwnershipAction.Back)
+        runCurrent()
+        assertTrue(model.state.value.confirmDiscard)
+        assertEquals(OwnershipDestination.Submit, model.state.value.destination)
+        model.onAction(OwnershipAction.CancelConfirmation)
+        runCurrent()
+        assertEquals("contact", model.state.value.submission.contact)
+    }
     @Test fun anOldPhotoPickerResultCannotCrossAccountGenerations() = runTest(dispatcher) {
         val account = Account()
         val model = model(account = account)
