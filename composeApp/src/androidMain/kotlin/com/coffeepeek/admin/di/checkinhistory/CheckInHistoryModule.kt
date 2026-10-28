@@ -1,5 +1,7 @@
 package com.coffeepeek.admin.di.checkinhistory
 
+import com.coffeepeek.BuildConfig
+import com.coffeepeek.admin.di.shelf.ShelfHomeCheckInBags
 import com.coffeepeek.admin.locator.Constants
 import com.coffeepeek.api.CoffeePeekClient
 import com.coffeepeek.feature.checkinhistory.data.repository.createCheckInHistoryRepository
@@ -12,6 +14,8 @@ internal fun checkInHistoryModule(apiBaseUrl: String = Constants.BASE_URL) = mod
     single<CheckInHistoryRepository> { createCheckInHistoryRepository(get<CoffeePeekClient>().client, apiBaseUrl) }
     single<HomeHistoryReader> { HomeHistoryReaderAdapter(get()) }
     single { AndroidCheckInHistoryCalendar() }
-    single<HistoryHomeEditorFactory> { historyHomeEditorFactory(get(), get(), get()) }
+    single<HistoryHomeEditorFactory> {
+        historyHomeEditorFactory(get(), get(), get(), if (BuildConfig.SHELF_ENABLED) ShelfHomeCheckInBags(get()) else null)
+    }
     single { AndroidCheckInHistoryScreenRenderer(get(), get(), get(), get(), get()) }
 }

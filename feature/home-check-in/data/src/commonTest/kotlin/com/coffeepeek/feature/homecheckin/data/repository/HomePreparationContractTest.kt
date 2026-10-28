@@ -269,6 +269,32 @@ class HomePreparationContractTest {
         } finally { gateway.close(); uploader.close() }
     }
 
+    @Test
+    fun aBagLinkIsSentAloneAndABagsEntriesAreReadByItsId() = runBlocking {
+        val bag = "33333333-3333-4333-8333-333333333333"
+        val linked = entry.dropLast(1) + """, "shelfBagId":"$bag", "roasterName":"Sibaristica"}"""
+        val gateway = gateway(MockEngine { request ->
+            if (request.method == HttpMethod.Get) {
+                assertEquals(bag, request.url.parameters["shelfBagId"])
+                assertNull(request.url.parameters["from"])
+                respond("""{"isSuccess":true,"data":{"items":[$linked],"totalCount":1}}""", headers = jsonHeaders)
+            } else {
+                val body = Json.parseToJsonElement((request.body as TextContent).text).jsonObject
+                assertEquals(JsonPrimitive(bag), body["shelfBagId"])
+                respond("""{"isSuccess":true,"data":$linked}""", headers = jsonHeaders)
+            }
+        })
+        val uploader = HttpClient(MockEngine { error("No photo upload expected") })
+        try {
+            val created = createHomePreparationRepository(gateway, uploader, "https://gateway.example.com")
+                .create(HomePreparationInput("2026-09-21T01:15:00+03:00", shelfBagId = bag)).getOrThrow()
+            assertEquals(bag, created.shelfBagId)
+            assertEquals("Sibaristica", created.roasterName)
+            val page = createHomePreparationShelfBagReader(gateway, "https://gateway.example.com").forShelfBag(bag, 1, 100).getOrThrow()
+            assertEquals(listOf(id), page.items.map { it.id })
+        } finally { gateway.close(); uploader.close() }
+    }
+
     private fun validation(input: HomePreparationInput) = homePreparationFieldErrors(input).values.firstOrNull()
 
     private fun gateway(engine: MockEngine) = HttpClient(engine) {

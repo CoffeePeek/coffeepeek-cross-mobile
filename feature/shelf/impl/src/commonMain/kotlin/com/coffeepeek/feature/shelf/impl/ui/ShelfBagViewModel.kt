@@ -27,7 +27,7 @@ internal class ShelfBagViewModel(
 ) : MviViewModel<ShelfBagState, ShelfBagAction, ShelfBagEvent>(
     ShelfBagState(today = calendar.today(), bag = handoff.opened(bagId)?.let(calendar::item)),
 ) {
-    private val brewLoader = ShelfBrewLoader(brews, calendar)
+    private val brewLoader = ShelfBrewLoader(brews)
     private var shelfIds = emptyList<String>()
 
     init {
@@ -44,7 +44,7 @@ internal class ShelfBagViewModel(
             ShelfBagAction.RetryBrews -> loadBrews()
             ShelfBagAction.OpenCoffee -> currentState.bag?.bag?.coffeeProductSlug?.let { sendEvent(ShelfBagEvent.OpenCoffee(it)) }
             ShelfBagAction.Brew -> currentState.bag?.bag?.let { bag ->
-                updateState { copy(brewing = ShelfBrewCoffee(bag.coffeeProductSlug, bag.name?.trim()?.takeIf(String::isNotEmpty))) }
+                updateState { copy(brewing = ShelfBrewCoffee(bag.coffeeProductSlug, bag.name?.trim()?.takeIf(String::isNotEmpty), bag.id)) }
             }
             is ShelfBagAction.BrewClosed -> brewClosed(action.saved)
             ShelfBagAction.StartFinish -> updateState { copy(finishing = !archived && bag != null) }

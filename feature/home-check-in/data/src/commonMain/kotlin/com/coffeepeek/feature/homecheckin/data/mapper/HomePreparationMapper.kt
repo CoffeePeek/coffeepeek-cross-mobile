@@ -10,6 +10,7 @@ internal fun HomeDto.toDomain(apiBaseUrl: String): HomePreparation {
     return HomePreparation(
         id = id, preparedAtUtc = preparedAtUtc, preparedOn = preparedOn, createdAtUtc = createdAtUtc,
         text = text, brewMethodCode = brewMethodCode, coffeeProductId = coffeeProductId, beanName = beanName,
+        shelfBagId = shelfBagId, roasterName = roasterName,
         doseGrams = doseGrams?.toString(), brewDurationSeconds = brewDurationSeconds, tasteScore = tasteScore,
         drinkName = drink.string("nameRu", "name", "customName", "customDrinkName"),
         drinkSlug = drink.string("slug"), customDrinkName = drink.string("customName", "customDrinkName"),
@@ -35,13 +36,13 @@ private fun List<HomePhotoVariantDto>?.variantUrl(purpose: String, original: Str
 
 internal fun HomePreparationInput.toEditRequest() = HomeEditDto(
     preparedAt, preparedOn, brewMethodCode, coffeeProductSlug, coffeeProductId,
-    customBeanName?.trim(), doseGrams?.toDouble(), brewDurationSeconds, tasteScore, text?.trim(),
+    customBeanName?.trim(), shelfBagId, doseGrams?.toDouble(), brewDurationSeconds, tasteScore, text?.trim(),
     drinkSlug, customDrinkName?.trim(), visibility?.name,
 )
 
 internal fun HomePreparationInput.toCreateRequest(photos: List<UploadedPhotoDto>) = HomeCreateDto(
     preparedAt, preparedOn, brewMethodCode, coffeeProductSlug, coffeeProductId,
-    customBeanName?.trim(), doseGrams?.toDouble(), brewDurationSeconds, tasteScore, text?.trim(),
+    customBeanName?.trim(), shelfBagId, doseGrams?.toDouble(), brewDurationSeconds, tasteScore, text?.trim(),
     drinkSlug, customDrinkName?.trim(), photos, (visibility ?: HomePreparationVisibility.Private).name,
 )
 

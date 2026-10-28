@@ -76,7 +76,16 @@ internal class HomeCheckInEditorViewModel(
             HomeCheckInEditorAction.OpenBeanPicker -> if (canEdit()) {
                 track(HomeCheckInEditorMetric.BeanPickerOpened)
                 updateState { copy(isBeanPickerOpen = true) }
+                onAction(HomeCheckInEditorAction.LoadShelfBags)
                 searchBeans(debounce = false)
+            }
+            HomeCheckInEditorAction.LoadShelfBags -> if (canEdit() && currentState.isBeanPickerOpen) loadShelfBags()
+            is HomeCheckInEditorAction.ShelfBagSelected -> if (canEdit() && currentState.isBeanPickerOpen) {
+                currentState.shelfBags.firstOrNull { it.id == action.id }?.let { bag ->
+                    edit { copy(shelfBagId = bag.id, coffeeProductSlug = null, coffeeProductId = null, customBeanName = null) }
+                    updateState { copy(beanSelectionName = bag.name) }
+                    closeBeanPicker()
+                }
             }
             HomeCheckInEditorAction.CloseBeanPicker -> if (canEdit()) closeBeanPicker()
             is HomeCheckInEditorAction.BeanQueryChanged -> if (canEdit() && currentState.isBeanPickerOpen) {
@@ -91,14 +100,14 @@ internal class HomeCheckInEditorViewModel(
             }
             is HomeCheckInEditorAction.BeanSelected -> if (canEdit() && currentState.isBeanPickerOpen) {
                 currentState.beans.firstOrNull { it.slug == action.slug }?.let { bean ->
-                    edit { copy(coffeeProductSlug = bean.slug, coffeeProductId = null, customBeanName = null) }
+                    edit { copy(coffeeProductSlug = bean.slug, coffeeProductId = null, customBeanName = null, shelfBagId = null) }
                     updateState { copy(beanSelectionName = bean.name) }
                     closeBeanPicker()
                 }
             }
             is HomeCheckInEditorAction.CustomBeanChosen -> if (canEdit() && currentState.isBeanPickerOpen) {
                 if (action.name.isBlank()) return
-                edit { copy(coffeeProductSlug = null, coffeeProductId = null,
+                edit { copy(coffeeProductSlug = null, coffeeProductId = null, shelfBagId = null,
                     customBeanName = action.name.trim().take(250).ifBlank { null }) }
                 closeBeanPicker()
             }
@@ -216,9 +225,19 @@ internal class HomeCheckInEditorViewModel(
         }
     }
 
+    /** Bags are an optional shortcut: a failure only hides them, the catalogue search still works. */
+    private suspend fun loadShelfBags() {
+        val bags = catalog.shelfBags().getOrElse { error ->
+            if (error is CancellationException) throw error
+            emptyList()
+        }
+        if (!canAccess()) { revokeAccess(); return }
+        if (currentState.isBeanPickerOpen) updateState { copy(shelfBags = bags.distinctBy { it.id }) }
+    }
+
     private fun closeBeanPicker() {
         cancelSearch()
-        updateState { copy(isBeanPickerOpen = false, beansLoading = false, beansIssue = null, beans = emptyList()) }
+        updateState { copy(isBeanPickerOpen = false, beansLoading = false, beansIssue = null, beans = emptyList(), shelfBags = emptyList()) }
     }
 
     private fun cancelSearch() {

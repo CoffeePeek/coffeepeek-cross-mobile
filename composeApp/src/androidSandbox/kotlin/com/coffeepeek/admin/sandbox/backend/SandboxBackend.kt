@@ -170,7 +170,8 @@ internal class SandboxBackend(private val samplePhoto: ByteArray,
         val matching = rows.values.filter { row ->
             val date = row.getValue("preparedOn").jsonPrimitive.content
             (request.url.parameters["from"]?.let { date >= it } != false) &&
-                (request.url.parameters["to"]?.let { date <= it } != false)
+                (request.url.parameters["to"]?.let { date <= it } != false) &&
+                (request.url.parameters["shelfBagId"]?.let { row["shelfBagId"]?.jsonPrimitive?.contentOrNull == it } != false)
         }.sortedByDescending { it.getValue("preparedAtUtc").jsonPrimitive.content }
         if (request.method == HttpMethod.Get && path == "$home/calendar") return ok(JsonArray(
             matching.groupBy { it.getValue("preparedOn").jsonPrimitive.content }.map { (date, entries) ->
@@ -184,6 +185,7 @@ internal class SandboxBackend(private val samplePhoto: ByteArray,
         }
         if (request.method == HttpMethod.Post && path == home) {
             val input = body(request) as? JsonObject ?: return fail(HttpStatusCode.BadRequest)
+            if (bagMissing(input, null)) return fail(HttpStatusCode.NotFound)
             val id = UUID.randomUUID().toString()
             val row = update(id, input, null) ?: return fail(HttpStatusCode.BadRequest)
             rows[id] = row
@@ -197,6 +199,7 @@ internal class SandboxBackend(private val samplePhoto: ByteArray,
                 HttpMethod.Delete -> { rows.remove(id); ok(JsonNull) }
                 HttpMethod.Put -> {
                     val input = body(request) as? JsonObject ?: return fail(HttpStatusCode.BadRequest)
+                    if (bagMissing(input, existing)) return fail(HttpStatusCode.NotFound)
                     val row = update(id, input, existing) ?: return fail(HttpStatusCode.BadRequest)
                     rows[id] = row; ok(row)
                 }
@@ -211,12 +214,16 @@ internal class SandboxBackend(private val samplePhoto: ByteArray,
         val instant = input["preparedAt"]?.jsonPrimitive?.content ?: return null
         val date = input["preparedOn"]?.jsonPrimitive?.contentOrNull ?: instant.take(10)
         val photos = (input["photos"] as? JsonArray).orEmpty().map { uploadedPhoto(it) ?: return null }
+        val bag = bagBean(input, existing)
         return buildJsonObject {
             existing?.forEach { (key, value) -> put(key, value) }
-            input.forEach { (key, value) -> if (key !in setOf("photos", "drinkPhoto", "preparedAt")) put(key, value) }
+            input.forEach { (key, value) -> if (key !in setOf("photos", "drinkPhoto", "preparedAt", "showShelfBag")) put(key, value) }
             put("id", id); put("preparedOn", date); put("preparedAtUtc", instant)
             put("createdAtUtc", existing?.get("createdAtUtc") ?: JsonPrimitive(instant))
-            put("beanName", beanName(input, existing))
+            put("beanName", bag?.get("beanName") ?: beanName(input, existing))
+            put("shelfBagId", input["shelfBagId"] ?: JsonNull)
+            put("roasterName", bag?.get("roasterName") ?: JsonNull)
+            bag?.let { put("coffeeProductId", it.getValue("coffeeProductId")) }
             if (input["coffeeProductSlug"]?.jsonPrimitive?.contentOrNull == "sandbox-ethiopia")
                 put("coffeeProductId", "22222222-2222-4222-8222-222222222222")
             put("drink", drink(input))
@@ -225,6 +232,17 @@ internal class SandboxBackend(private val samplePhoto: ByteArray,
             put("visibility", visibility); put("moderationState", if (visibility == "Public") "Pending" else "NotSubmitted")
         }
     }
+
+    /** Like the server: the same bag keeps the entry's snapshots, another bag supplies its current bean. */
+    private fun bagBean(input: JsonObject, existing: JsonObject?): Map<String, JsonElement>? {
+        val bagId = input["shelfBagId"]?.jsonPrimitive?.contentOrNull ?: return null
+        val kept = existing?.takeIf { it["shelfBagId"]?.jsonPrimitive?.contentOrNull == bagId }
+            ?: return shelf.bean(bagId)
+        return listOf("coffeeProductId", "beanName", "roasterName").associateWith { kept[it] ?: JsonNull }
+    }
+
+    private fun bagMissing(input: JsonObject, existing: JsonObject?): Boolean =
+        input["shelfBagId"]?.jsonPrimitive?.contentOrNull != null && bagBean(input, existing) == null
 
     private fun beanName(input: JsonObject, existing: JsonObject?): JsonElement = when {
         input["coffeeProductSlug"]?.jsonPrimitive?.contentOrNull == "sandbox-ethiopia" -> JsonPrimitive("Sandbox Ethiopia")

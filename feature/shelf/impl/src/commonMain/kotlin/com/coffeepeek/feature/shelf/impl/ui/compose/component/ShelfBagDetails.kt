@@ -69,7 +69,7 @@ internal fun ShelfBagDetails(
                 Icon(CoffeePeekIcons.ChevronRight, null, Modifier.padding(start = CoffeePeekDimens.spacing1).size(18.dp))
             }
         }
-        if (brews != null && brews != ShelfBagBrews.Unmatched) {
+        if (brews != null) {
             ShelfBagBrewList(brews, today, onRetryBrews, Modifier.padding(top = CoffeePeekDimens.spacing2))
         }
     }

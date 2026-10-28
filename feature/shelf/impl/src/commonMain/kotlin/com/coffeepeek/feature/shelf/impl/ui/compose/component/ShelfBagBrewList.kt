@@ -67,7 +67,6 @@ internal fun ShelfBagBrewList(brews: ShelfBagBrews, today: ShelfDay, onRetry: ()
             }
             is ShelfBagBrews.Loaded -> if (brews.brews.isEmpty()) Text(stringResource(Res.string.shelf_brews_empty),
                 style = MaterialTheme.typography.bodyMedium, color = muted) else ShelfBrewRows(brews.brews, today)
-            ShelfBagBrews.Unmatched -> Unit
         }
     }
 }

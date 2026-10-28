@@ -42,6 +42,12 @@ internal class SandboxShelfBackend(private val today: LocalDate, private val upl
     }
 
     /** Owner-only card read: the upload key behind `photos/{photoId}`, or null when the bag or that card no longer exists. */
+    /** A bag's bean for a home check-in brewed from it, as the server snapshots it; null for a missing bag. */
+    fun bean(bagId: String): Map<String, JsonElement>? = find(bagId)?.let { row ->
+        mapOf("coffeeProductId" to (row["coffeeProductId"] ?: JsonNull), "beanName" to (row["name"] ?: JsonNull),
+            "roasterName" to (row["roasterName"] ?: JsonNull))
+    }
+
     fun cardKey(bagId: String, photoId: String): String? =
         find(bagId)?.get("photo")?.jsonObject?.get("id")?.jsonPrimitive?.content?.takeIf { it == photoId }
 

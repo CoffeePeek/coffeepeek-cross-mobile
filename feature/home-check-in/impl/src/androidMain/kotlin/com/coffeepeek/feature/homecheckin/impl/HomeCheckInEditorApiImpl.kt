@@ -46,7 +46,7 @@ private class HomeCheckInEditorApiImpl(
                 val instant = dates.currentInstant()
                 HomeCheckInEditorViewModel(repository, catalog, instant, dates.localDate(instant),
                     preparationId, sessionGeneration, canAccess, analytics = analytics(preparationId != null),
-                    startBean = bean?.let { HomeCheckInStartBean(it.slug, it.name) })
+                    startBean = bean?.let { HomeCheckInStartBean(it.slug, it.name, it.shelfBagId) })
             }
             Editor(model, preparationId, accessAllowed, onClose, onSaved, onDismissAllowedChange, modifier)
         }

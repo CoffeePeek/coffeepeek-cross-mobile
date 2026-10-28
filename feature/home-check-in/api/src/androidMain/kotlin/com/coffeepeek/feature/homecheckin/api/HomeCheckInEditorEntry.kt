@@ -26,5 +26,8 @@ interface HomeCheckInEditorEntry {
     )
 }
 
-/** A coffee to start a new preparation with: a catalogue coffee by [slug] (shown as [name]), or else one of the user's own named [name]. */
-data class HomeCheckInBean(val slug: String?, val name: String?)
+/**
+ * A coffee to start a new preparation with: the owner's shelf bag [shelfBagId] (shown as [name]), else a catalogue coffee by
+ * [slug] (shown as [name]), or else one of the user's own named [name].
+ */
+data class HomeCheckInBean(val slug: String?, val name: String?, val shelfBagId: String? = null)

@@ -3,6 +3,7 @@ package com.coffeepeek.admin.di.checkinhistory
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.admin.analytics.CheckInSource
+import com.coffeepeek.admin.di.shelf.ShelfHomeCheckInBags
 import com.coffeepeek.admin.analytics.CheckInTracker
 import com.coffeepeek.admin.di.homecheckin.AndroidHomeCheckInRepository
 import com.coffeepeek.admin.di.homecheckin.androidHomeCheckInEditor
@@ -22,13 +23,13 @@ internal fun interface HistoryHomeEditorFactory {
 internal class HistoryHomeEntries(val detail: HomeCheckInDetailEntry, val editor: HomeCheckInEditorEntry)
 
 internal fun historyHomeEditorFactory(repository: HomePreparationRepository, picker: CoffeePicker,
-    methods: BrewMethodCatalog,
+    methods: BrewMethodCatalog, shelfBags: ShelfHomeCheckInBags? = null,
 ) = HistoryHomeEditorFactory { lease, tracker ->
     HistoryHomeEntries(
         createHomeCheckInDetailEntry(AndroidHomeCheckInRepository(lease, repository),
             { lease.isLoggedIn && lease.isCurrent() }) { url, description, modifier, _ ->
             CpImage(url, contentDescription = description, modifier = modifier, contentScale = ContentScale.Crop)
         },
-        androidHomeCheckInEditor(lease, repository, picker, methods, CheckInSource.Diary, tracker),
+        androidHomeCheckInEditor(lease, repository, picker, methods, CheckInSource.Diary, tracker, shelfBags),
     )
 }

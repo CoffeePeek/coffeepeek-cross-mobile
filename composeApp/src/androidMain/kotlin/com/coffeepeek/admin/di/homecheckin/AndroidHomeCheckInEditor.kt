@@ -11,6 +11,7 @@ import coffeepeek.composeapp.generated.resources.maskot_with_magnifying_glass
 import com.coffeepeek.admin.analytics.CheckInSource
 import com.coffeepeek.admin.analytics.CheckInTracker
 import com.coffeepeek.admin.di.checkinhistory.AndroidCheckInHistorySession
+import com.coffeepeek.admin.di.shelf.ShelfHomeCheckInBags
 import com.coffeepeek.admin.feature.catalog.api.BrewMethodCatalog
 import com.coffeepeek.admin.feature.catalog.api.methodLabel
 import com.coffeepeek.feature.coffee.api.CoffeePicker
@@ -38,10 +39,11 @@ internal fun androidHomeCheckInEditor(
     methods: BrewMethodCatalog,
     source: CheckInSource,
     inheritedTracker: CheckInTracker? = null,
+    shelfBags: ShelfHomeCheckInBags? = null,
 ): HomeCheckInEditorEntry {
     var handoff = inheritedTracker
     return createHomeCheckInEditorEntry(AndroidHomeCheckInRepository(lease, repository),
-        AndroidHomeCheckInCatalog(lease, picker, methods),
+        AndroidHomeCheckInCatalog(lease, picker, methods, shelfBags),
         { lease.isLoggedIn && lease.isCurrent() }, androidHomeCheckInDates(),
         HomeCheckInEditorMedia(
             { Image(painterResource(Res.drawable.checkin_rating_coffee), null, it, contentScale = ContentScale.Crop) },

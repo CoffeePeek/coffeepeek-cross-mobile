@@ -107,17 +107,17 @@ internal fun scanResult(status: PackModerationStatus, reasons: List<PackModerati
     quality = null, moderation = PackModeration(status, reasons), timings = BagScanTimings(0, 0, 0, 0, 0),
 )
 
-/** Answers [result], records each date range asked for and, with a [gate], holds the answer until it completes. */
+/** Answers [result], records each bag asked for and, with a [gate], holds the answer until it completes. */
 internal class FakeShelfBrewLog(var result: Result<List<ShelfBrew>> = Result.success(emptyList())) : ShelfBrewLog {
-    val ranges = mutableListOf<Pair<String, String>>()
+    val bags = mutableListOf<String>()
     var gate: CompletableDeferred<Unit>? = null
 
-    override suspend fun brews(from: String, to: String): Result<List<ShelfBrew>> {
-        ranges += from to to
+    override suspend fun brews(bagId: String): Result<List<ShelfBrew>> {
+        bags += bagId
         gate?.await()
         return result
     }
 }
 
-internal fun brew(id: String, preparedOn: String, product: String? = null, bean: String? = null, dose: Double? = null, score: Int? = null) =
-    ShelfBrew(id, preparedOn, product, bean, method = "Hario V60", doseGrams = dose, score = score)
+internal fun brew(id: String, preparedOn: String, dose: Double? = null, score: Int? = null) =
+    ShelfBrew(id, preparedOn, method = "Hario V60", doseGrams = dose, score = score)

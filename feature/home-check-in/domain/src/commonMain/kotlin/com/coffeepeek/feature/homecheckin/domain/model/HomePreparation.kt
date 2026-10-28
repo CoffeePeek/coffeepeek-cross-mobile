@@ -20,6 +20,10 @@ data class HomePreparation(
     /** Null means unknown, not Private or confirmed Public. */
     val visibility: HomePreparationVisibility?,
     val moderation: HomePreparationModeration,
+    /** The owner's shelf bag the bean came from; the bag may since have been deleted. */
+    val shelfBagId: String? = null,
+    /** Roaster snapshot from the catalogue or the bag. */
+    val roasterName: String? = null,
 )
 
 data class HomePreparationPhoto(val id: String, val url: String,

@@ -7,8 +7,11 @@ import com.coffeepeek.feature.coffee.api.CoffeePicker
 import com.coffeepeek.admin.locator.Constants
 import com.coffeepeek.api.CoffeePeekClient
 import com.coffeepeek.feature.homecheckin.data.repository.createHomePreparationRepository
+import com.coffeepeek.feature.homecheckin.data.repository.createHomePreparationShelfBagReader
 import com.coffeepeek.feature.homecheckin.domain.repository.HomePreparationReader
 import com.coffeepeek.feature.homecheckin.domain.repository.HomePreparationRepository
+import com.coffeepeek.feature.homecheckin.domain.repository.HomePreparationShelfBagReader
+import com.coffeepeek.admin.di.shelf.ShelfHomeCheckInBags
 import org.koin.dsl.module
 
 /** Home data is shared by history and global creation; resolving definitions performs no work. */
@@ -18,12 +21,14 @@ internal fun homeCheckInModule(apiBaseUrl: String = Constants.BASE_URL) = module
         createHomePreparationRepository(client.client, client.uploadClient, apiBaseUrl)
     }
     single<HomePreparationReader> { get<HomePreparationRepository>() }
+    single<HomePreparationShelfBagReader> { createHomePreparationShelfBagReader(get<CoffeePeekClient>().client, apiBaseUrl) }
     single {
         val repository = get<HomePreparationRepository>()
         val picker = get<CoffeePicker>()
         val methods = get<BrewMethodCatalog>()
+        val shelfBags = if (BuildConfig.SHELF_ENABLED) ShelfHomeCheckInBags(get()) else null
         AndroidCheckInCreateFlowRenderer(get(), BuildConfig.SHELF_ENABLED) { lease, tracker ->
-            androidHomeCheckInEditor(lease, repository, picker, methods, CheckInSource.Global, tracker)
+            androidHomeCheckInEditor(lease, repository, picker, methods, CheckInSource.Global, tracker, shelfBags)
         }
     }
 }

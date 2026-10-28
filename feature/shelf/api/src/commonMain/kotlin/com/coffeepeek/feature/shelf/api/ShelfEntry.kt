@@ -49,5 +49,8 @@ interface ShelfEntry {
     fun AddBag(onSaved: () -> Unit, onClose: () -> Unit, modifier: Modifier = Modifier)
 }
 
-/** The coffee a home check-in starts with: a catalogue [slug], or else the bag's own [name]; both null when the bag has neither. */
-data class ShelfBrewCoffee(val slug: String?, val name: String?)
+/**
+ * The coffee a home check-in starts with: bag [shelfBagId], shown as its [name]. [slug] is the bag's catalogue coffee; the
+ * check-in takes its bean from the bag either way.
+ */
+data class ShelfBrewCoffee(val slug: String?, val name: String?, val shelfBagId: String? = null)

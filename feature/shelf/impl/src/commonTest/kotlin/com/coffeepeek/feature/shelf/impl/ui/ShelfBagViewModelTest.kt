@@ -37,17 +37,16 @@ class ShelfBagViewModelTest {
         ShelfBagViewModel(id, repository, testCalendar(), handoff.apply { opened?.let(::open) }, brews)
             .also { store.put("bag-${nextKey++}", it) }
 
-    @Test fun theHandedOverBagShowsAtOnceWithTheCheckInsOfItsDaysOnTheShelf() = runTest(dispatcher) {
+    @Test fun theHandedOverBagShowsAtOnceWithItsOwnCheckIns() = runTest(dispatcher) {
         val brews = FakeShelfBrewLog(Result.success(listOf(
-            brew("1", "2026-10-21", product = "p1", dose = 15.0, score = 4),
-            brew("2", "2026-10-26", product = "p1", dose = 17.5),
-            brew("3", "2026-10-25", product = "p2", dose = 18.0),
+            brew("1", "2026-10-21", dose = 15.0, score = 4),
+            brew("2", "2026-10-26", dose = 17.5),
         )))
         val bag = bag("a").copy(coffeeProductId = "p1")
         val model = model("a", FakeShelfRepository(listOf(bag)), brews, opened = bag)
         assertEquals("a", model.state.value.bag?.id)
         runCurrent()
-        assertEquals(listOf("2026-10-20" to "2026-10-27"), brews.ranges)
+        assertEquals(listOf("a"), brews.bags)
         val loaded = model.state.value.brews as ShelfBagBrews.Loaded
         assertEquals(listOf("2", "1"), loaded.brews.map { it.id })
         assertEquals(218, loaded.leftGrams)
@@ -64,12 +63,11 @@ class ShelfBagViewModelTest {
         assertTrue(gone.state.value.missing)
     }
 
-    @Test fun aBagWithoutACoffeeAsksForNoCheckIns() = runTest(dispatcher) {
-        val brews = FakeShelfBrewLog()
+    @Test fun aBagWithoutACoffeeStillListsTheCheckInsThatNameIt() = runTest(dispatcher) {
+        val brews = FakeShelfBrewLog(Result.success(listOf(brew("1", "2026-10-22"))))
         val model = model("a", FakeShelfRepository(listOf(bag("a").copy(name = " "))), brews)
         runCurrent()
-        assertEquals(ShelfBagBrews.Unmatched, model.state.value.brews)
-        assertTrue(brews.ranges.isEmpty())
+        assertEquals(listOf("1"), (model.state.value.brews as ShelfBagBrews.Loaded).brews.map { it.id })
     }
 
     @Test fun failedCheckInsCanBeRetried() = runTest(dispatcher) {
@@ -78,7 +76,7 @@ class ShelfBagViewModelTest {
         runCurrent()
         assertEquals(ShelfBagBrews.Failed, model.state.value.brews)
 
-        brews.result = Result.success(listOf(brew("1", "2026-10-22", bean = "bag a")))
+        brews.result = Result.success(listOf(brew("1", "2026-10-22")))
         model.onAction(ShelfBagAction.RetryBrews)
         runCurrent()
         assertEquals(listOf("1"), (model.state.value.brews as ShelfBagBrews.Loaded).brews.map { it.id })
@@ -90,9 +88,9 @@ class ShelfBagViewModelTest {
         runCurrent()
         model.onAction(ShelfBagAction.Brew)
         runCurrent()
-        assertEquals(ShelfBrewCoffee("kenya", "Bag a"), model.state.value.brewing)
+        assertEquals(ShelfBrewCoffee("kenya", "Bag a", "a"), model.state.value.brewing)
 
-        brews.result = Result.success(listOf(brew("1", "2026-10-27", product = "p1")))
+        brews.result = Result.success(listOf(brew("1", "2026-10-27")))
         model.onAction(ShelfBagAction.BrewClosed(saved = true))
         runCurrent()
         assertNull(model.state.value.brewing)

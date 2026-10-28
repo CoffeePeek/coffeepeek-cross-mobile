@@ -80,14 +80,12 @@ fun interface ShelfCoffeeSearch {
 data class ShelfBrew(
     val id: String,
     val preparedOn: String,
-    val coffeeProductId: String?,
-    val beanName: String?,
     val method: String?,
     val doseGrams: Double?,
     val score: Int?,
 )
 
-/** The user's home check-ins prepared from [from] to [to] (ISO dates, both included); the application adapts home check-ins. */
+/** The owner's home check-ins brewed from bag [bagId], linked by the check-in itself; the application adapts home check-ins. */
 fun interface ShelfBrewLog {
-    suspend fun brews(from: String, to: String): Result<List<ShelfBrew>>
+    suspend fun brews(bagId: String): Result<List<ShelfBrew>>
 }

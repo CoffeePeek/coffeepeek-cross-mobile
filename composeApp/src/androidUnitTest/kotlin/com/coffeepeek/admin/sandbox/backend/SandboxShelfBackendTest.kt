@@ -109,6 +109,19 @@ class SandboxShelfBackendTest {
         }
     }
 
+    @Test fun aHomeCheckInFromABagTakesItsBeanAndIsListedUnderIt() = runTest {
+        withShelf { api, _ ->
+            val bag = api.data("GET", base).jsonArray[0]
+            val home = "${SandboxBackend.BASE_URL}/api/v1/check-ins/home"
+            val entry = api.data("POST", home, """{"preparedAt":"2026-10-27T08:00:00Z","shelfBagId":"${bag.text("id")}"}""")
+            assertEquals("Sandbox Ethiopia", entry.text("beanName"))
+            assertEquals("Sandbox Roaster", entry.text("roasterName"))
+            val linked = api.data("GET", "$home?shelfBagId=${bag.text("id")}").jsonObject
+            assertEquals(listOf(entry.text("id")), linked.getValue("items").jsonArray.map { it.text("id") })
+            assertEquals(HttpStatusCode.NotFound, api.call("POST", home, """{"preparedAt":"2026-10-27T08:00:00Z","shelfBagId":"missing"}""").status)
+        }
+    }
+
     private suspend fun withShelf(populated: Boolean = true, block: suspend (HttpClient, SandboxBackend) -> Unit) {
         val backend = backend()
         val api = backend.apiClient {}

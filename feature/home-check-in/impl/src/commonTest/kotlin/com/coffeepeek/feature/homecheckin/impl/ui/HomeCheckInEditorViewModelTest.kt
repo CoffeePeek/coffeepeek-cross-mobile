@@ -76,6 +76,8 @@ class HomeCheckInEditorViewModelTest {
             queries += query
             return search(query)
         }
+        var bags = Result.success(listOf(HomeCheckInShelfBag("bag-1", "Кения с полки", "Sibaristica")))
+        override suspend fun shelfBags(): Result<List<HomeCheckInShelfBag>> = bags
     }
 
 
@@ -139,6 +141,38 @@ class HomeCheckInEditorViewModelTest {
         assertNull(own.state.value.draft.coffeeProductSlug)
         assertEquals("Бразилия с рынка", own.state.value.draft.customBeanName)
         assertNull(own.state.value.beanSelectionName)
+    }
+
+    @Test fun aShelfBagIsChosenFromThePickerAndAnEditKeepsItAlone() = runTest(dispatcher) {
+        val repo = Repository()
+        val vm = model(repo); runCurrent()
+        vm.act(HomeCheckInEditorAction.OpenBeanPicker); runCurrent()
+        assertEquals(listOf("bag-1"), vm.state.value.shelfBags.map { it.id })
+        vm.act(HomeCheckInEditorAction.ShelfBagSelected("bag-1")); runCurrent()
+        assertEquals("bag-1", vm.state.value.draft.shelfBagId)
+        assertNull(vm.state.value.draft.coffeeProductSlug)
+        assertEquals("Кения с полки", vm.state.value.beanSelectionName)
+        vm.onAction(HomeCheckInEditorAction.Save); runCurrent()
+        assertEquals("bag-1", repo.creates.single().shelfBagId)
+
+        val editRepo = Repository().apply { detailResult = Result.success(entry().copy(coffeeProductId = "p1", shelfBagId = "bag-1")) }
+        val edit = model(editRepo, id = "home"); runCurrent()
+        assertEquals("bag-1", edit.state.value.draft.shelfBagId)
+        assertNull(edit.state.value.draft.coffeeProductId)
+        assertNull(edit.state.value.draft.customBeanName)
+    }
+
+    @Test fun aBagThatFailsToLoadOnlyHidesTheShelfAndBrewingFromABagStartsWithIt() = runTest(dispatcher) {
+        val catalog = Catalog().apply { bags = Result.failure(IllegalStateException("offline")) }
+        val vm = model(catalog = catalog); runCurrent()
+        vm.act(HomeCheckInEditorAction.OpenBeanPicker); runCurrent()
+        assertTrue(vm.state.value.shelfBags.isEmpty())
+        assertEquals(1, vm.state.value.beans.size)
+
+        val fromBag = model(bean = HomeCheckInStartBean("kenya", "Кения", shelfBagId = "bag-1")); runCurrent()
+        assertEquals("bag-1", fromBag.state.value.draft.shelfBagId)
+        assertNull(fromBag.state.value.draft.coffeeProductSlug)
+        assertEquals("Кения", fromBag.state.value.beanSelectionName)
     }
 
     @Test fun allRecipeFieldsRemainOptionalAndTappingSelectedRatingClearsIt() = runTest(dispatcher) {

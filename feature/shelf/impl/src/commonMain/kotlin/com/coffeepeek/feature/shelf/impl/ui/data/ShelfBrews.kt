@@ -8,25 +8,13 @@ import com.coffeepeek.feature.shelf.impl.ui.compose.model.ShelfBrewItem
 import kotlinx.coroutines.CancellationException
 import kotlin.math.roundToInt
 
-/**
- * Home check-ins are not linked to bags, so a bag's own are those made while it stood on the shelf: with its catalogue
- * coffee, or, for a coffee of its own, under the same name. A bag without either matches nothing.
- */
-internal suspend fun ShelfBrewLog.forBag(item: ShelfBagItem, today: ShelfDay): ShelfBagBrews {
-    val matches = item.brewMatch() ?: return ShelfBagBrews.Unmatched
-    val from = item.addedOn ?: return ShelfBagBrews.Unmatched
-    val to = (item.finishedOn ?: today).takeIf { it.epochDay >= from.epochDay } ?: from
-    val brews = brews(from.iso, to.iso).getOrElse { error ->
+/** A bag's own home check-ins are those that name it; each check-in links its bag when it is brewed. */
+internal suspend fun ShelfBrewLog.forBag(item: ShelfBagItem): ShelfBagBrews {
+    val brews = brews(item.bag.id).getOrElse { error ->
         if (error is CancellationException) throw error
         return ShelfBagBrews.Failed
     }
-    return shelfBagBrews(item.bag.weightGrams, brews.filter(matches))
-}
-
-private fun ShelfBagItem.brewMatch(): ((ShelfBrew) -> Boolean)? {
-    bag.coffeeProductId?.let { id -> return { it.coffeeProductId == id } }
-    val name = bag.name?.trim()?.takeIf(String::isNotEmpty) ?: return null
-    return { it.coffeeProductId == null && it.beanName?.trim().equals(name, ignoreCase = true) }
+    return shelfBagBrews(item.bag.weightGrams, brews)
 }
 
 /** Newest first; what is left is the weight less every known dose, never below zero. */

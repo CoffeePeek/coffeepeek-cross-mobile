@@ -29,7 +29,7 @@ internal class AndroidShelfScreenRenderer(
     @Composable
     override fun Bag(bagId: String) = entry.Bag(bagId, onBack = Navigator::popBack,
         onOpenCoffee = { Navigator.navigate(Navigator.Screen.CoffeeDetail(it)) }) { coffee, onClose ->
-        checkIns.Home(HomeCheckInBean(coffee.slug, coffee.name), onDismiss = { onClose(false) }, onSaved = { onClose(true) })
+        checkIns.Home(HomeCheckInBean(coffee.slug, coffee.name, coffee.shelfBagId), onDismiss = { onClose(false) }, onSaved = { onClose(true) })
     }
 
     @Composable

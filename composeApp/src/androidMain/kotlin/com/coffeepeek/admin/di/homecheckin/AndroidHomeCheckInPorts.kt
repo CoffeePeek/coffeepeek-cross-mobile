@@ -1,6 +1,7 @@
 package com.coffeepeek.admin.di.homecheckin
 
 import com.coffeepeek.admin.di.checkinhistory.AndroidCheckInHistorySession
+import com.coffeepeek.admin.di.shelf.ShelfHomeCheckInBags
 import com.coffeepeek.admin.analytics.safeAnalyticsError
 import com.coffeepeek.admin.feature.catalog.api.BrewMethodCatalog
 import com.coffeepeek.admin.feature.catalog.api.catalogBrewMethodSlug
@@ -15,6 +16,7 @@ internal class AndroidHomeCheckInCatalog(
     private val lease: AndroidCheckInHistorySession,
     private val picker: CoffeePicker,
     private val methods: BrewMethodCatalog,
+    private val shelfBags: ShelfHomeCheckInBags? = null,
 ) : HomeCheckInEditorCatalog {
     override suspend fun brewMethods() = lease.withCurrentAccount {
         methods.load().map { rows -> rows.map { method ->
@@ -25,6 +27,8 @@ internal class AndroidHomeCheckInCatalog(
     override suspend fun searchBeans(query: String) = lease.withCurrentAccount {
         picker.search(query).map { rows -> rows.map { HomeCheckInBeanOption(it.slug, it.name, it.roasterName) } }.homeCatalogResult()
     }
+    override suspend fun shelfBags() = shelfBags?.let { bags -> lease.withCurrentAccount { bags.load().homeCatalogResult() } }
+        ?: Result.success(emptyList())
 }
 
 /** Hide legacy transport failures/messages at this composition boundary. */

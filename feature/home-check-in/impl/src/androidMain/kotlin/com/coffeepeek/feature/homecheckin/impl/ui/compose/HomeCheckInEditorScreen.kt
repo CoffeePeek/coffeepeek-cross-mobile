@@ -185,7 +185,8 @@ internal fun HomeCheckInEditorScreenContent(
                         }
                     }
                     Step(HomePreparationField.Bean, stringResource(R.string.home_check_in_bean)) { error ->
-                        HomeCheckInEditorSelect(draft.customBeanName ?: state.beanSelectionName ?: stringResource(R.string.home_check_in_choose_bean),
+                        HomeCheckInEditorSelect(draft.customBeanName ?: state.beanSelectionName
+                            ?: stringResource(if (draft.shelfBagId != null) R.string.home_check_in_shelf_bag_unnamed else R.string.home_check_in_choose_bean),
                             CoffeePeekIcons.CoffeeBean, stringResource(R.string.home_check_in_choose_bean), enabled, error) {
                             dispatch(HomeCheckInEditorAction.OpenBeanPicker)
                         }

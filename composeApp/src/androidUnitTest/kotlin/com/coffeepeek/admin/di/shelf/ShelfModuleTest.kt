@@ -4,8 +4,7 @@ import com.coffeepeek.api.CoffeePeekClient
 import com.coffeepeek.core.session.Session
 import com.coffeepeek.core.session.SessionReader
 import com.coffeepeek.feature.coffee.api.CoffeePicker
-import com.coffeepeek.feature.homecheckin.domain.model.HomePreparationDateRange
-import com.coffeepeek.feature.homecheckin.domain.repository.HomePreparationReader
+import com.coffeepeek.feature.homecheckin.domain.repository.HomePreparationShelfBagReader
 import com.coffeepeek.feature.shelf.api.ShelfEntry
 import com.coffeepeek.feature.shelf.domain.repository.BagScanner
 import com.coffeepeek.feature.shelf.domain.repository.ShelfRepository
@@ -36,13 +35,8 @@ class ShelfModuleTest {
                 single<CoffeePicker> {
                     object : CoffeePicker { override suspend fun search(query: String) = error("Resolving the graph must not search the catalogue") }
                 }
-                single<HomePreparationReader> {
-                    object : HomePreparationReader {
-                        override suspend fun page(page: Int, pageSize: Int, range: HomePreparationDateRange?) =
-                            error("Resolving the graph must not read check-ins")
-                        override suspend fun calendar(range: HomePreparationDateRange) =
-                            error("Resolving the graph must not read check-ins")
-                    }
+                single<HomePreparationShelfBagReader> {
+                    HomePreparationShelfBagReader { _, _, _ -> error("Resolving the graph must not read check-ins") }
                 }
             },
                 shelfModule("https://fixture.invalid", context = { error("Resolving the graph must not touch the Context") }))
