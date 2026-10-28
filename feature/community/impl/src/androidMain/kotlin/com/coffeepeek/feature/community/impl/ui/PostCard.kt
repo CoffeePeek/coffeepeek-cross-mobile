@@ -102,10 +102,12 @@ internal fun PostCard(
         PostHeader(post, isOwn, actions, enabled, changingVisibility, host)
         if (post.isHome) {
             post.home?.let { recipe ->
-                recipe.shelfBagCardUrl?.let { PostShelfBag(it, recipe.beanName, recipe.roasterName, actions.onCoffee, host) }
-                    ?: recipe.beanName?.takeIf(String::isNotBlank)?.let { Text(it, style = MaterialTheme.typography.titleMedium) }
                 val details = recipe.details(host.brewMethodLabel)
-                if (details.isNotBlank()) Text(details, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                // A shown bag is the title and carries the recipe line itself.
+                recipe.shelfBagCardUrl?.let { PostShelfBag(it, recipe.beanName, recipe.roasterName, details, actions.onCoffee, host) } ?: run {
+                    recipe.beanName?.takeIf(String::isNotBlank)?.let { Text(it, style = MaterialTheme.typography.titleMedium) }
+                    if (details.isNotBlank()) Text(details, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
             }
         } else PostHeading(post.shopName.ifBlank { stringResource(R.string.community_shop_default) }, post.rating, actions.onShop)
         if (post.note.isNotBlank()) Text(post.note, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurface)

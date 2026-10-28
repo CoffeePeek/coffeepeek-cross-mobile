@@ -44,13 +44,16 @@ internal fun CheckInTimelineContentImpl(
         CheckInHeader(checkIn, isOwn, onAuthorClick = onAuthorClick, displayTimestamp = displayTimestamp, actions = actions)
         if (checkIn.isHome) {
             checkIn.homePreparation?.let { recipe ->
-                recipe.shelfBagCardUrl?.let { card ->
-                    CheckInShelfBag(card, recipe.beanName, recipe.roasterName,
-                        recipe.coffeeProductSlug?.let { slug -> { Navigator.navigate(Navigator.Screen.CoffeeDetail(slug)) } })
-                } ?: recipe.beanName?.takeIf(String::isNotBlank)?.let { Text(it, style = MaterialTheme.typography.titleMedium) }
                 val details = recipe.checkInDetails()
-                if (details.isNotBlank()) Text(details, style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant)
+                // A shown bag is the title and carries the recipe line itself.
+                recipe.shelfBagCardUrl?.let { card ->
+                    CheckInShelfBag(card, recipe.beanName, recipe.roasterName, details,
+                        recipe.coffeeProductSlug?.let { slug -> { Navigator.navigate(Navigator.Screen.CoffeeDetail(slug)) } })
+                } ?: run {
+                    recipe.beanName?.takeIf(String::isNotBlank)?.let { Text(it, style = MaterialTheme.typography.titleMedium) }
+                    if (details.isNotBlank()) Text(details, style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
             }
         } else CheckInHeading(
             shopName = checkIn.shopName.ifBlank { "Кофейня" },

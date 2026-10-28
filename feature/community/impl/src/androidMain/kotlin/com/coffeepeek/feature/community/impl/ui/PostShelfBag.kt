@@ -22,8 +22,11 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
@@ -33,43 +36,54 @@ import com.coffeepeek.feature.community.api.CommunityHost
 import com.coffeepeek.feature.community.impl.R
 
 /**
- * The bag a home post was brewed from, in place of the bean title: its card, name and roaster. [onCoffee] opens the coffee
- * in the catalogue and is null when the bag is not a published catalogue coffee.
+ * The bag a home post was brewed from, as the post's title: its card beside «name · roaster» and the recipe [details].
+ * [onCoffee] opens the coffee in the catalogue and is null when the bag is not a published catalogue coffee.
  */
 @Composable
-internal fun PostShelfBag(cardUrl: String, name: String?, roaster: String?, onCoffee: (() -> Unit)?, host: CommunityHost) {
+internal fun PostShelfBag(
+    cardUrl: String, name: String?, roaster: String?, details: String, onCoffee: (() -> Unit)?, host: CommunityHost,
+) {
     val openLabel = stringResource(R.string.community_open_coffee)
     Row(
         Modifier.fillMaxWidth().heightIn(min = 48.dp).clip(RoundedCornerShape(CoffeePeekDimens.radiusMd))
-            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.55f))
             .then(onCoffee?.let { Modifier.clickable(role = Role.Button, onClickLabel = openLabel, onClick = it) } ?: Modifier)
             .semantics(mergeDescendants = true) {}
-            .padding(CoffeePeekDimens.spacing2),
+            .padding(vertical = CoffeePeekDimens.spacing1),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing3),
     ) {
         // The slot only bounds the card: the card keeps its own proportions, as on the shelf.
-        Box(Modifier.size(width = 40.dp, height = 52.dp), contentAlignment = Alignment.Center) {
+        Box(Modifier.size(width = 40.dp, height = 54.dp), contentAlignment = Alignment.Center) {
             host.image(cardUrl, null, Modifier.clip(RoundedCornerShape(4.dp)), ContentScale.Fit)
         }
-        Column(Modifier.weight(1f)) {
-            Text(name?.takeIf(String::isNotBlank) ?: stringResource(R.string.community_shelf_bag), style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold, maxLines = 2, overflow = TextOverflow.Ellipsis)
-            roaster?.takeIf(String::isNotBlank)?.let {
-                Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 1, overflow = TextOverflow.Ellipsis)
-            }
+        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            PostShelfBagTitle(name?.takeIf(String::isNotBlank) ?: stringResource(R.string.community_shelf_bag), roaster)
+            if (details.isNotBlank()) Text(details, style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 2, overflow = TextOverflow.Ellipsis)
         }
         if (onCoffee != null) Icon(CoffeePeekIcons.ChevronRight, null, Modifier.size(18.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }
 
-private val previewHost = CommunityHost(image = { _, _, modifier, _ -> Box(modifier.size(38.dp, 52.dp).background(MaterialTheme.colorScheme.tertiary)) })
+/** «Name · roaster» on one line: the roaster reads as a quieter part of the same title. */
+@Composable
+private fun PostShelfBagTitle(name: String, roaster: String?) {
+    val separator = stringResource(R.string.community_details_separator)
+    val quiet = SpanStyle(fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+    val title = buildAnnotatedString {
+        append(name)
+        roaster?.takeIf(String::isNotBlank)?.let { withStyle(quiet) { append(separator); append(it) } }
+    }
+    Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold,
+        color = MaterialTheme.colorScheme.onSurface, maxLines = 2, overflow = TextOverflow.Ellipsis)
+}
+
+private val previewHost = CommunityHost(image = { _, _, modifier, _ -> Box(modifier.size(40.dp, 54.dp).background(MaterialTheme.colorScheme.tertiary)) })
 
 @PreviewLightDark @Composable private fun PostShelfBagPreview() = CoffeePeekTheme {
-    PostShelfBag("card", "Эфиопия Иргачеффе", "Sibaristica", onCoffee = {}, previewHost)
+    PostShelfBag("card", "Эфиопия Иргачеффе", "Sibaristica", "Пуровер · 18 г · 150 с · 4/5", onCoffee = {}, previewHost)
 }
 
 @PreviewLightDark @Composable private fun PostShelfBagUnnamedPreview() = CoffeePeekTheme {
-    PostShelfBag("card", null, null, onCoffee = null, previewHost)
+    PostShelfBag("card", null, null, "", onCoffee = null, previewHost)
 }
