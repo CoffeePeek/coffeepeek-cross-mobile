@@ -15,6 +15,7 @@ import com.coffeepeek.feature.shelf.api.ShelfTimeZone
 import com.coffeepeek.feature.shelf.domain.repository.BagScanner
 import com.coffeepeek.feature.shelf.domain.repository.ShelfRepository
 import com.coffeepeek.feature.shelf.impl.ui.ShelfAddViewModel
+import com.coffeepeek.feature.shelf.impl.ui.ShelfArrivals
 import com.coffeepeek.feature.shelf.impl.ui.ShelfArchiveViewModel
 import com.coffeepeek.feature.shelf.impl.ui.ShelfViewModel
 import com.coffeepeek.feature.shelf.impl.ui.compose.ShelfAddScreen
@@ -52,6 +53,7 @@ private class ShelfApiImpl(
     private val calendar: ShelfCalendar,
 ) : ShelfEntry {
     private val instanceKey = Uuid.random().toString()
+    private val arrivals = ShelfArrivals()
 
     @Composable
     override fun Shelf(
@@ -59,7 +61,7 @@ private class ShelfApiImpl(
         modifier: Modifier, bottomClearance: Dp, header: @Composable ColumnScope.() -> Unit,
     ) {
         key(this) {
-            val model = viewModel(key = "shelf:$instanceKey") { ShelfViewModel(repository, calendar) }
+            val model = viewModel(key = "shelf:$instanceKey") { ShelfViewModel(repository, calendar, arrivals) }
             ShelfScreen(model, signedIn, ports.image, bottomClearance, modifier, header) { event ->
                 when (event) {
                     ShelfEvent.OpenArchive -> onOpenArchive()
@@ -82,7 +84,7 @@ private class ShelfApiImpl(
     @Composable
     override fun AddBag(onSaved: () -> Unit, onClose: () -> Unit, modifier: Modifier) {
         key(this) {
-            val model = viewModel(key = "shelf-add:$instanceKey") { ShelfAddViewModel(repository, ports.scanner, ports.coffees, calendar) }
+            val model = viewModel(key = "shelf-add:$instanceKey") { ShelfAddViewModel(repository, ports.scanner, ports.coffees, arrivals, calendar) }
             ShelfAddScreen(model, ports.gallery, ports.camera, modifier) { event ->
                 when (event) {
                     ShelfAddEvent.Saved -> onSaved()

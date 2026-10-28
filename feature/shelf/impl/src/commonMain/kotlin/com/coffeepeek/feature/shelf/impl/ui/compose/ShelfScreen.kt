@@ -118,13 +118,13 @@ private fun ShelfBody(
         state.bags.isEmpty() -> ShelfInvitation(stringResource(Res.string.shelf_empty_title), stringResource(Res.string.shelf_empty_body),
             stringResource(Res.string.shelf_scan_bag), { onAction(ShelfAction.AddBag) }, modifier.then(scrolling),
             stringResource(Res.string.shelf_browse_catalog)) { onAction(ShelfAction.BrowseCatalog) }
-        else -> ShelfShelves(state.bags, drag, image, onAction, bottomClearance, modifier)
+        else -> ShelfShelves(state.bags, state.arrivingId, drag, image, onAction, bottomClearance, modifier)
     }
 }
 
 @Composable
 private fun ShelfShelves(
-    bags: List<ShelfBagItem>, drag: ShelfDragState, image: ShelfImage,
+    bags: List<ShelfBagItem>, arrivingId: String?, drag: ShelfDragState, image: ShelfImage,
     onAction: (ShelfAction) -> Unit, bottomClearance: Dp, modifier: Modifier,
 ) {
     val scroll = rememberScrollState()
@@ -132,9 +132,16 @@ private fun ShelfShelves(
     ShelfAutoScroll(drag, scroll) { viewport[0] }
     LaunchedEffect(bags) { drag.settled() }
     LaunchedEffect(drag.settling) { if (drag.settling != null) { delay(1_000); drag.settled() } }
+    // The new bag stays marked for a moment after it lands; the top of the shelf is where it stands.
+    LaunchedEffect(arrivingId) {
+        if (arrivingId == null) return@LaunchedEffect
+        scroll.animateScrollTo(0)
+        delay(ARRIVAL_SHOWN_MILLIS)
+        onAction(ShelfAction.ArrivalShown(arrivingId))
+    }
     Box(modifier.fillMaxSize().onGloballyPositioned { viewport[0] = it.boundsInRoot() }.verticalScroll(scroll)
         .padding(horizontal = CoffeePeekDimens.spacing4).padding(top = CoffeePeekDimens.spacing4, bottom = bottomClearance + 96.dp)) {
-        ShelfGrid(bags, drag, image, onAction)
+        ShelfGrid(bags, drag, image, onAction, arrivingId = arrivingId)
     }
 }
 
@@ -165,6 +172,7 @@ private fun ShelfMessageEffect(message: ShelfMessage?, snackbar: SnackbarHostSta
     val text = when (message) {
         null -> null
         is ShelfMessage.Finished -> stringResource(Res.string.shelf_finished_message)
+        ShelfMessage.Added -> stringResource(Res.string.shelf_added_message)
         ShelfMessage.Restored -> stringResource(Res.string.shelf_restored)
         ShelfMessage.Deleted -> stringResource(Res.string.shelf_deleted)
         is ShelfMessage.Failed -> message.issue.text()
@@ -193,6 +201,8 @@ private fun ShelfSheets(state: ShelfState, image: ShelfImage, onAction: (ShelfAc
     }
     state.deletingId?.let { id -> ShelfDeleteConfirmation({ onAction(ShelfAction.Delete(id)) }, { onAction(ShelfAction.CancelDelete) }) }
 }
+
+private const val ARRIVAL_SHOWN_MILLIS = 4_000L
 
 internal val previewToday = ShelfDay(2026, 10, 27)
 

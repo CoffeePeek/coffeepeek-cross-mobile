@@ -92,7 +92,8 @@ internal fun ShelfAddScreenContent(state: ShelfAddState, onAction: (ShelfAddActi
         when {
             state.step == ShelfAddStep.Intro || photo == null ->
                 ShelfScanIntro(state.scanner, openCamera, onGallery, { onAction(ShelfAddAction.DownloadScanner) }, content)
-            state.step == ShelfAddStep.Scanning -> ShelfScanProgress(photo.bytes, state.stagesDone, content)
+            state.step == ShelfAddStep.Scanning || state.step == ShelfAddStep.Revealing -> ShelfScanProgress(photo.bytes, state.stagesDone,
+                state.liveFrame ?: state.result?.frame, state.reveal(), { onAction(ShelfAddAction.RevealFinished) }, content)
             state.step == ShelfAddStep.Retake -> ShelfScanRetake(photo.bytes, state.result?.frame, state.stageOutcomes(), state.failure,
                 openCamera, onGallery, content)
             else -> ShelfBagFormContent(state, onAction, openCamera, content)
@@ -102,6 +103,13 @@ internal fun ShelfAddScreenContent(state: ShelfAddState, onAction: (ShelfAddActi
         stringResource(Res.string.shelf_duplicate_message),
         listOf(CoffeePeekDialogAction(stringResource(Res.string.shelf_duplicate_confirm), { onAction(ShelfAddAction.ConfirmDuplicate) })),
         stringResource(Res.string.shelf_cancel)) { onAction(ShelfAddAction.CancelDuplicate) }
+}
+
+/** The card to peel off once the scan was accepted. */
+private fun ShelfAddState.reveal(): ShelfReveal? {
+    val result = result?.takeIf { step == ShelfAddStep.Revealing } ?: return null
+    val card = result.card ?: return null
+    return ShelfReveal(card.bytes, result.cardWidth.toFloat() / result.cardHeight.coerceAtLeast(1))
 }
 
 @Composable

@@ -74,6 +74,8 @@
     <string name="shelf_delete_message">Пачка исчезнет с полки и из архива. Если кофе закончился, лучше уберите её в архив.</string>
 
     <string name="shelf_finished_message">Убрали в архив</string>
+    <string name="shelf_added_message">Пачка на полке</string>
+    <string name="shelf_new_badge">НОВАЯ</string>
     <string name="shelf_undo">Отменить</string>
     <string name="shelf_deleted">Пачка удалена</string>
     <string name="shelf_restored">Пачка снова на полке</string>

@@ -16,6 +16,8 @@ internal data class ShelfState(
     val openBagId: String? = null,
     val finishingId: String? = null,
     val deletingId: String? = null,
+    /** A bag just added by a scan: it flies in and is marked as new until [ShelfAction.ArrivalShown]. */
+    val arrivingId: String? = null,
     val message: ShelfMessage? = null,
 ) {
     val openBag: ShelfBagItem? get() = bags.firstOrNull { it.id == openBagId }
@@ -26,6 +28,7 @@ internal data class ShelfState(
 /** One snackbar at a time; [Finished] offers to put the bag back at [position]. */
 internal sealed interface ShelfMessage {
     data class Finished(val bagId: String, val position: Int) : ShelfMessage
+    data object Added : ShelfMessage
     data object Restored : ShelfMessage
     data object Deleted : ShelfMessage
     data class Failed(val issue: ShelfIssue) : ShelfMessage

@@ -10,6 +10,8 @@ internal sealed interface ShelfAddAction {
     data object OpenCamera : ShelfAddAction
     /** Back from the camera: to the scan it was opened from, or out of the flow. */
     data object CloseCamera : ShelfAddAction
+    /** The card has finished peeling off the photo. */
+    data object RevealFinished : ShelfAddAction
     data class PhotoPicked(val photo: ShelfPhoto) : ShelfAddAction
     data object PhotoFailed : ShelfAddAction
     data class QueryChanged(val query: String) : ShelfAddAction

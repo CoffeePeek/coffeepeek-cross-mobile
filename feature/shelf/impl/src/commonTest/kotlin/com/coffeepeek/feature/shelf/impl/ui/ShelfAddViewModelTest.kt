@@ -5,6 +5,7 @@ import com.coffeepeek.feature.shelf.api.ShelfCoffeeOption
 import com.coffeepeek.feature.shelf.api.ShelfCoffeeSearch
 import com.coffeepeek.feature.shelf.api.ShelfPhoto
 import com.coffeepeek.feature.shelf.domain.model.*
+import com.coffeepeek.feature.shelf.domain.repository.BagScanner
 import com.coffeepeek.feature.shelf.impl.ui.compose.model.*
 import com.coffeepeek.feature.shelf.impl.ui.data.ShelfDay
 import kotlinx.coroutines.CompletableDeferred
@@ -37,11 +38,16 @@ class ShelfAddViewModelTest {
     @BeforeTest fun setUp() { Dispatchers.setMain(dispatcher) }
     @AfterTest fun tearDown() { store.clear(); Dispatchers.resetMain() }
 
-    private fun model(repository: FakeShelfRepository = FakeShelfRepository(emptyList()), scanner: FakeBagScanner = FakeBagScanner()) =
-        ShelfAddViewModel(repository, scanner, coffees, testCalendar()).also { store.put("add-${nextKey++}", it) }
+    private fun model(
+        repository: FakeShelfRepository = FakeShelfRepository(emptyList()), scanner: FakeBagScanner = FakeBagScanner(),
+        arrivals: ShelfArrivals = ShelfArrivals(),
+    ) = ShelfAddViewModel(repository, scanner, coffees, arrivals, testCalendar()).also { store.put("add-${nextKey++}", it) }
 
+    /** Picks a photo and lets an accepted card finish peeling off. */
     private fun TestScope.photo(model: ShelfAddViewModel) {
         model.onAction(ShelfAddAction.PhotoPicked(ShelfPhoto(byteArrayOf(1), fromCamera = true)))
+        runCurrent()
+        model.onAction(ShelfAddAction.RevealFinished)
         runCurrent()
     }
 
@@ -105,8 +111,33 @@ class ShelfAddViewModelTest {
         assertEquals(setOf(BagScanStage.Segmentation), model.state.value.stagesDone)
         gate.complete(Unit)
         runCurrent()
-        assertEquals(ShelfAddStep.Form, model.state.value.step)
+        assertEquals(ShelfAddStep.Revealing, model.state.value.step)
         assertEquals(BagScanStage.entries.toSet(), model.state.value.stagesDone)
+        model.onAction(ShelfAddAction.RevealFinished)
+        runCurrent()
+        assertEquals(ShelfAddStep.Form, model.state.value.step)
+    }
+
+    @Test fun theFoundFrontShowsBeforeTheCardAndARevealThatNeverEndsStillOpensTheForm() = runTest(dispatcher) {
+        val frame = BagScanFrame(listOf(0.1f to 0.1f, 0.9f to 0.1f, 0.9f to 0.9f, 0.1f to 0.9f))
+        val gate = CompletableDeferred<Unit>()
+        val scanner = object : BagScanner by FakeBagScanner() {
+            override suspend fun scan(photo: ByteArray, onStage: (BagScanStage) -> Unit, onFront: (BagScanFrame) -> Unit): Result<BagScanResult> {
+                onFront(frame)
+                gate.await()
+                return Result.success(scanResult(PackModerationStatus.Accepted))
+            }
+        }
+        val model = ShelfAddViewModel(FakeShelfRepository(emptyList()), scanner, coffees, ShelfArrivals(), testCalendar()).also { store.put("frame", it) }
+        runCurrent()
+        model.onAction(ShelfAddAction.PhotoPicked(ShelfPhoto(byteArrayOf(1), fromCamera = false)))
+        runCurrent()
+        assertEquals(frame, model.state.value.liveFrame)
+        gate.complete(Unit)
+        runCurrent()
+        assertEquals(ShelfAddStep.Revealing, model.state.value.step)
+        advanceTimeBy(2_600); runCurrent()
+        assertEquals(ShelfAddStep.Form, model.state.value.step)
     }
 
     @Test fun verdictsDecideBetweenFormWithHintsAndRetake() = runTest(dispatcher) {
@@ -146,6 +177,16 @@ class ShelfAddViewModelTest {
         model.onAction(ShelfAddAction.QueryChanged("Кения Ньери АА"))
         runCurrent()
         assertNull(model.state.value.form.coffee)
+    }
+
+    @Test fun aSavedBagIsHandedToTheShelf() = runTest(dispatcher) {
+        val arrivals = ShelfArrivals()
+        val model = model(arrivals = arrivals)
+        runCurrent()
+        photo(model)
+        model.onAction(ShelfAddAction.Save(later = true))
+        runCurrent()
+        assertEquals("new", arrivals.arriving.value)
     }
 
     @Test fun savingSendsTheFormAndLaterSendsOnlyTheCard() = runTest(dispatcher) {

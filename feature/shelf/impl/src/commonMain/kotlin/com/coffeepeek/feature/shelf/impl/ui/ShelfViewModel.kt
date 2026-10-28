@@ -19,6 +19,7 @@ import kotlinx.coroutines.launch
 internal class ShelfViewModel(
     private val repository: ShelfRepository,
     private val calendar: ShelfCalendar,
+    private val arrivals: ShelfArrivals,
 ) : MviViewModel<ShelfState, ShelfAction, ShelfEvent>(ShelfState(today = calendar.today())) {
     private val busyBags = mutableSetOf<String>()
 
@@ -27,6 +28,9 @@ internal class ShelfViewModel(
             repository.shelf.collect { bags ->
                 updateState { copy(bags = bags.orEmpty().map(calendar::item), loaded = bags != null, today = calendar.today()) }
             }
+        }
+        viewModelScope.launch {
+            arrivals.arriving.collect { id -> if (id != null) updateState { copy(arrivingId = id, message = ShelfMessage.Added) } }
         }
     }
 
@@ -44,6 +48,7 @@ internal class ShelfViewModel(
             ShelfAction.CancelDelete -> updateState { copy(deletingId = null) }
             is ShelfAction.Delete -> delete(action.id)
             ShelfAction.DismissMessage -> updateState { copy(message = null) }
+            is ShelfAction.ArrivalShown -> arrivalShown(action.id)
             ShelfAction.OpenArchive -> sendEvent(ShelfEvent.OpenArchive)
             ShelfAction.BrowseCatalog -> sendEvent(ShelfEvent.BrowseCatalog)
             ShelfAction.SignIn -> sendEvent(ShelfEvent.SignIn)
@@ -80,6 +85,11 @@ internal class ShelfViewModel(
                 .onSuccess { updateState { copy(message = ShelfMessage.Finished(action.id, position)) } }
                 .onFailure(::fail)
         }
+    }
+
+    private fun arrivalShown(id: String) {
+        arrivals.shown(id)
+        updateState { copy(arrivingId = arrivingId.takeUnless { it == id }) }
     }
 
     private suspend fun undoFinish(id: String, position: Int) {

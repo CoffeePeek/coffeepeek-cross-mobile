@@ -29,11 +29,12 @@ class ShelfViewModelTest {
     private val dispatcher = StandardTestDispatcher()
     private val store = ViewModelStore()
     private var nextKey = 0
+    private val arrivals = ShelfArrivals()
     @BeforeTest fun setUp() { Dispatchers.setMain(dispatcher) }
     @AfterTest fun tearDown() { store.clear(); Dispatchers.resetMain() }
 
     private fun model(repository: FakeShelfRepository) =
-        ShelfViewModel(repository, testCalendar()).also { store.put("shelf-${nextKey++}", it) }
+        ShelfViewModel(repository, testCalendar(), arrivals).also { store.put("shelf-${nextKey++}", it) }
 
     @Test fun showsTheRepositorySnapshotWithItsSummary() = runTest(dispatcher) {
         val repository = FakeShelfRepository()
@@ -141,6 +142,19 @@ class ShelfViewModelTest {
         assertNull(model.state.value.openBagId)
         assertEquals(ShelfMessage.Deleted, model.state.value.message)
         assertEquals(listOf("b"), model.state.value.bags.map { it.id })
+    }
+
+    @Test fun anArrivalIsMarkedAnnouncedAndThenCleared() = runTest(dispatcher) {
+        val model = model(FakeShelfRepository(listOf(bag("new"), bag("a"))))
+        runCurrent()
+        arrivals.arrived("new")
+        runCurrent()
+        assertEquals("new", model.state.value.arrivingId)
+        assertEquals(ShelfMessage.Added, model.state.value.message)
+        model.onAction(ShelfAction.ArrivalShown("new"))
+        runCurrent()
+        assertNull(model.state.value.arrivingId)
+        assertNull(arrivals.arriving.value)
     }
 
     @Test fun destinationsAreEvents() = runTest(dispatcher) {

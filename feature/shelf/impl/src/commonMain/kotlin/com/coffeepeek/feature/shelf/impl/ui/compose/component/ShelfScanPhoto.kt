@@ -4,6 +4,7 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
@@ -19,7 +20,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.Shape
@@ -41,20 +43,35 @@ import org.jetbrains.compose.ui.tooling.preview.Preview
 
 internal val ShelfPhotoShape = RoundedCornerShape(18.dp)
 
+/** Decodes [bytes] off the main thread; null until done or when they are not an image. */
+@Composable
+internal fun rememberShelfBitmap(bytes: ByteArray): ImageBitmap? {
+    val bitmap by produceState<ImageBitmap?>(null, bytes) {
+        value = withContext(Dispatchers.Default) { runCatching { bytes.decodeToImageBitmap() }.getOrNull() }
+    }
+    return bitmap
+}
+
 /**
  * An encoded image (the picked photo or the cut card), as large as fits in [modifier] at its own proportions and centred,
- * so [shape] and [elevation] follow the picture itself. A [frame] outlines the front the scanner found.
+ * so [shape] and [elevation] follow the picture itself. A [frame] outlines the front the scanner found in [frameColor].
  */
 @Composable
 internal fun ShelfScanPhoto(
     bytes: ByteArray, frame: BagScanFrame?, modifier: Modifier = Modifier,
-    shape: Shape = ShelfPhotoShape, elevation: Dp = 0.dp,
+    shape: Shape = ShelfPhotoShape, elevation: Dp = 0.dp, frameColor: Color = MaterialTheme.colorScheme.primary,
 ) {
-    val bitmap by produceState<ImageBitmap?>(null, bytes) {
-        value = withContext(Dispatchers.Default) { runCatching { bytes.decodeToImageBitmap() }.getOrNull() }
-    }
+    ShelfPhotoBox(bytes, modifier, shape, elevation) { if (frame != null) ShelfFrameOutline(frame, frameColor) }
+}
+
+/** The picture at its own proportions, with [overlay] drawn in exactly its bounds. */
+@Composable
+internal fun ShelfPhotoBox(
+    bytes: ByteArray, modifier: Modifier = Modifier, shape: Shape = ShelfPhotoShape, elevation: Dp = 0.dp,
+    overlay: @Composable BoxScope.() -> Unit = {},
+) {
+    val image = rememberShelfBitmap(bytes)
     BoxWithConstraints(modifier, contentAlignment = Alignment.Center) {
-        val image = bitmap
         if (image == null) {
             val room = if (constraints.hasBoundedHeight) Modifier.fillMaxSize() else Modifier.fillMaxWidth().aspectRatio(0.75f)
             Box(room.clip(shape).background(MaterialTheme.colorScheme.surfaceVariant))
@@ -64,23 +81,20 @@ internal fun ShelfScanPhoto(
         val tallerThanRoom = constraints.hasBoundedHeight && maxWidth / maxHeight > aspect
         Box(Modifier.aspectRatio(aspect, matchHeightConstraintsFirst = tallerThanRoom).shadow(elevation, shape).clip(shape)) {
             Image(image, stringResource(Res.string.shelf_scan_photo), Modifier.fillMaxSize(), contentScale = ContentScale.FillBounds)
-            if (frame != null) ShelfFrameOutline(frame)
+            overlay()
         }
     }
 }
 
 @Composable
-private fun ShelfFrameOutline(frame: BagScanFrame) {
-    val outline = MaterialTheme.colorScheme.primary
-    Canvas(Modifier.fillMaxSize()) {
-        val path = Path()
-        frame.points.forEachIndexed { index, (x, y) ->
-            val point = Offset(x * size.width, y * size.height)
-            if (index == 0) path.moveTo(point.x, point.y) else path.lineTo(point.x, point.y)
-        }
-        path.close()
-        drawPath(path, outline, style = Stroke(3.dp.toPx(), join = StrokeJoin.Round))
-    }
+private fun ShelfFrameOutline(frame: BagScanFrame, color: Color) {
+    Canvas(Modifier.fillMaxSize()) { drawPath(frame.path(size), color, style = Stroke(3.dp.toPx(), join = StrokeJoin.Round)) }
+}
+
+/** The frame's quad in a drawing of [size]. */
+internal fun BagScanFrame.path(size: Size): Path = Path().apply {
+    points.forEachIndexed { index, (x, y) -> if (index == 0) moveTo(x * size.width, y * size.height) else lineTo(x * size.width, y * size.height) }
+    close()
 }
 
 @Composable

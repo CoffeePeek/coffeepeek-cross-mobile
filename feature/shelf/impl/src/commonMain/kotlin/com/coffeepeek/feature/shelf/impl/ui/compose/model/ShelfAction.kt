@@ -13,6 +13,7 @@ internal sealed interface ShelfAction {
     data object CancelDelete : ShelfAction
     data class Delete(val id: String) : ShelfAction
     data object DismissMessage : ShelfAction
+    data class ArrivalShown(val id: String) : ShelfAction
     data object OpenArchive : ShelfAction
     data object BrowseCatalog : ShelfAction
     data object SignIn : ShelfAction

@@ -17,6 +17,8 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
+private const val REVEAL_LIMIT_MILLIS = 2_500L
+
 /**
  * One bag from photo to shelf. A new photo replaces the scan in progress; the form keeps what was typed across retakes.
  * The original photo stays in memory only; the processed card is what gets uploaded.
@@ -25,6 +27,7 @@ internal class ShelfAddViewModel(
     private val repository: ShelfRepository,
     private val scanner: BagScanner,
     private val coffees: ShelfCoffeeSearch,
+    private val arrivals: ShelfArrivals,
     calendar: ShelfCalendar,
     private val searchDelayMillis: Long = 300,
 ) : MviViewModel<ShelfAddState, ShelfAddAction, ShelfAddEvent>(ShelfAddState(today = calendar.today())) {
@@ -46,6 +49,7 @@ internal class ShelfAddViewModel(
             ShelfAddAction.DownloadScanner -> download()
             ShelfAddAction.OpenCamera -> openCamera()
             ShelfAddAction.CloseCamera -> closeCamera()
+            ShelfAddAction.RevealFinished -> updateState { if (step == ShelfAddStep.Revealing) copy(step = ShelfAddStep.Form) else this }
             is ShelfAddAction.PhotoPicked -> scan(action.photo)
             ShelfAddAction.PhotoFailed -> updateState { copy(message = ShelfAddMessage.PhotoUnreadable) }
             is ShelfAddAction.QueryChanged -> queryChanged(action.query)
@@ -83,7 +87,7 @@ internal class ShelfAddViewModel(
     private fun openCamera() {
         val state = currentState
         if (state.scanner != Ready || state.saving || state.step == ShelfAddStep.Camera) return
-        beforeCamera = state.step.takeIf { state.photo != null && it != ShelfAddStep.Scanning }
+        beforeCamera = state.step.takeIf { state.photo != null && it != ShelfAddStep.Scanning && it != ShelfAddStep.Revealing }
         updateState { copy(step = ShelfAddStep.Camera) }
     }
 
@@ -96,18 +100,22 @@ internal class ShelfAddViewModel(
     private fun scan(photo: ShelfPhoto) {
         if (currentState.scanner != Ready || currentState.saving) return
         scan?.cancel()
-        updateState { copy(step = ShelfAddStep.Scanning, photo = photo, stagesDone = emptySet(), result = null, failure = null) }
+        updateState { copy(step = ShelfAddStep.Scanning, photo = photo, stagesDone = emptySet(), liveFrame = null, result = null, failure = null) }
         scan = viewModelScope.launch {
-            val outcome = scanner.scan(photo.bytes) { stage -> updateState { if (this.photo === photo) copy(stagesDone = stagesDone + stage) else this } }
-            updateState {
-                if (this.photo !== photo) return@updateState this
-                outcome.fold(
-                    { copy(result = it, step = if (it.card == null || it.moderation.status == PackModerationStatus.Retake) ShelfAddStep.Retake else ShelfAddStep.Form) },
-                    { copy(failure = (it as? BagScanFailure)?.issue ?: BagScanIssue.Failed, step = ShelfAddStep.Retake) },
-                )
-            }
+            val outcome = scanner.scan(photo.bytes,
+                onStage = { stage -> updateState { if (this.photo === photo) copy(stagesDone = stagesDone + stage) else this } },
+                onFront = { frame -> updateState { if (this.photo === photo) copy(liveFrame = frame) else this } })
+            updateState { if (this.photo === photo) withOutcome(outcome) else this }
+            // The peel animation ends the reveal; should it never finish (an undecodable card), the form opens anyway.
+            delay(REVEAL_LIMIT_MILLIS)
+            updateState { if (this.photo === photo && step == ShelfAddStep.Revealing) copy(step = ShelfAddStep.Form) else this }
         }
     }
+
+    private fun ShelfAddState.withOutcome(outcome: Result<BagScanResult>): ShelfAddState = outcome.fold(
+        { copy(result = it, step = if (it.card == null || it.moderation.status == PackModerationStatus.Retake) ShelfAddStep.Retake else ShelfAddStep.Revealing) },
+        { copy(failure = (it as? BagScanFailure)?.issue ?: BagScanIssue.Failed, step = ShelfAddStep.Retake) },
+    )
 
     private fun queryChanged(query: String) {
         val limited = query.take(SHELF_TEXT_LIMIT)
@@ -140,7 +148,11 @@ internal class ShelfAddViewModel(
             return
         }
         repository.add(details, card)
-            .onSuccess { updateState { copy(saving = false) }; sendEvent(ShelfAddEvent.Saved) }
+            .onSuccess { bag ->
+                arrivals.arrived(bag.id)
+                updateState { copy(saving = false) }
+                sendEvent(ShelfAddEvent.Saved)
+            }
             .onFailure { error -> updateState { copy(saving = false, message = ShelfAddMessage.Failed(issueOf(error))) } }
     }
 

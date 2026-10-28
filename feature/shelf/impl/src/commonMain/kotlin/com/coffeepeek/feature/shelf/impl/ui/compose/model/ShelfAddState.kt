@@ -5,8 +5,11 @@ import com.coffeepeek.feature.shelf.api.ShelfPhoto
 import com.coffeepeek.feature.shelf.domain.model.*
 import com.coffeepeek.feature.shelf.impl.ui.data.ShelfDay
 
-/** Get the scanner ready, take or pick a photo, watch it being scanned, then either retake it or fill in the bag. */
-internal enum class ShelfAddStep { Intro, Camera, Scanning, Retake, Form }
+/**
+ * Get the scanner ready, take or pick a photo, watch it being scanned, then either retake it or see the card peel off the
+ * photo ([Revealing]) and fill in the bag.
+ */
+internal enum class ShelfAddStep { Intro, Camera, Scanning, Revealing, Retake, Form }
 
 /** The scanner's models: U2-Net-p is bundled, MI-GAN is downloaded once before the first scan. */
 internal sealed interface ShelfScannerStatus {
@@ -45,6 +48,8 @@ internal data class ShelfAddState(
     val scanner: ShelfScannerStatus = ShelfScannerStatus.Checking,
     val photo: ShelfPhoto? = null,
     val stagesDone: Set<BagScanStage> = emptySet(),
+    /** The found front, outlined on the photo while the rest of the scan runs. */
+    val liveFrame: BagScanFrame? = null,
     val result: BagScanResult? = null,
     val failure: BagScanIssue? = null,
     val form: ShelfBagForm = ShelfBagForm(),

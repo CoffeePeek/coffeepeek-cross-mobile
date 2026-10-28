@@ -90,7 +90,7 @@ internal class FakeBagScanner(var readiness: BagScannerReadiness = BagScannerRea
         return prepareResult.onSuccess { readiness = BagScannerReadiness.Ready }
     }
 
-    override suspend fun scan(photo: ByteArray, onStage: (BagScanStage) -> Unit): Result<BagScanResult> {
+    override suspend fun scan(photo: ByteArray, onStage: (BagScanStage) -> Unit, onFront: (BagScanFrame) -> Unit): Result<BagScanResult> {
         scans++
         onStage(BagScanStage.Segmentation)
         gate?.invoke()

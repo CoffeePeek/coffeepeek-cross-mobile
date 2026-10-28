@@ -1,11 +1,13 @@
 package com.coffeepeek.feature.shelf.impl.ui.compose.component
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -17,16 +19,21 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.feature.shelf.api.ShelfImage
+import com.coffeepeek.feature.shelf.impl.resources.Res
+import com.coffeepeek.feature.shelf.impl.resources.shelf_new_badge
 import com.coffeepeek.feature.shelf.impl.ui.compose.PreviewShelfImage
 import com.coffeepeek.feature.shelf.impl.ui.compose.previewShelfItems
 import com.coffeepeek.feature.shelf.impl.ui.compose.model.ShelfBagItem
+import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
 internal val ShelfCardShape = RoundedCornerShape(4.dp)
@@ -38,13 +45,24 @@ internal val ShelfCardShape = RoundedCornerShape(4.dp)
 @Composable
 internal fun ShelfBagTile(
     item: ShelfBagItem, image: ShelfImage, modifier: Modifier = Modifier,
-    alignment: Alignment = Alignment.BottomCenter, elevation: Dp = 4.dp,
+    alignment: Alignment = Alignment.BottomCenter, elevation: Dp = 4.dp, highlighted: Boolean = false,
 ) {
     Box(modifier, contentAlignment = alignment) {
-        val photo = item.bag.photo
-        if (photo != null) image(photo.url, item.title(), alignment, Modifier.shadow(elevation, ShelfCardShape).clip(ShelfCardShape))
-        else ShelfBagPlaceholder(item.title(), Modifier.fillMaxWidth(0.86f).fillMaxHeight(0.82f))
+        // Wraps the card itself, so the outline and the "НОВАЯ" mark sit on the card, not on the empty slot around it.
+        Box {
+            val photo = item.bag.photo
+            val outline = if (highlighted) Modifier.border(2.dp, MaterialTheme.colorScheme.primary, ShelfCardShape) else Modifier
+            if (photo != null) image(photo.url, item.title(), alignment, Modifier.shadow(elevation, ShelfCardShape).clip(ShelfCardShape).then(outline))
+            else ShelfBagPlaceholder(item.title(), Modifier.fillMaxWidth(0.86f).fillMaxHeight(0.82f).then(outline))
+            if (highlighted) ShelfNewMark(Modifier.align(Alignment.TopEnd).offset(x = 6.dp, y = (-8).dp))
+        }
     }
+}
+
+@Composable
+private fun ShelfNewMark(modifier: Modifier) {
+    Text(stringResource(Res.string.shelf_new_badge), modifier.clip(RoundedCornerShape(6.dp)).background(MaterialTheme.colorScheme.primary)
+        .padding(horizontal = 5.dp, vertical = 1.dp), color = MaterialTheme.colorScheme.onPrimary, fontSize = 9.sp, fontWeight = FontWeight.ExtraBold)
 }
 
 @Composable
@@ -61,7 +79,7 @@ internal fun ShelfBagPlaceholder(title: String, modifier: Modifier = Modifier) {
 @Composable
 private fun ShelfBagTilePreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
     Row(Modifier.background(MaterialTheme.colorScheme.background).padding(CoffeePeekDimens.spacing4)) {
-        ShelfBagTile(previewShelfItems()[0], PreviewShelfImage, Modifier.size(100.dp, 140.dp))
+        ShelfBagTile(previewShelfItems()[0], PreviewShelfImage, Modifier.size(100.dp, 140.dp), highlighted = true)
         ShelfBagTile(previewShelfItems()[3], PreviewShelfImage, Modifier.size(100.dp, 140.dp))
     }
 }

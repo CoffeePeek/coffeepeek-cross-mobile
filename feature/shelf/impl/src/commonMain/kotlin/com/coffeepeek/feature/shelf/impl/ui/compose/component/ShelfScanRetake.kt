@@ -41,7 +41,7 @@ internal fun ShelfScanRetake(
     onCamera: () -> Unit, onGallery: () -> Unit, modifier: Modifier = Modifier,
 ) {
     Column(modifier.fillMaxSize().padding(CoffeePeekDimens.spacing4), verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing2)) {
-        ShelfScanPhoto(photo, frame, Modifier.fillMaxWidth().weight(1f))
+        ShelfScanPhoto(photo, frame, Modifier.fillMaxWidth().weight(1f), frameColor = MaterialTheme.colorScheme.error)
         Text(stringResource(Res.string.shelf_retake_title), Modifier.semantics { heading() }.padding(top = CoffeePeekDimens.spacing2),
             style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.error)
         if (failure != null) Text(failure.text(), style = MaterialTheme.typography.bodyLarge)

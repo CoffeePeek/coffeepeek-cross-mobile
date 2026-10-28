@@ -1,6 +1,11 @@
 package com.coffeepeek.feature.shelf.impl.ui.compose.component
 
 import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.AnimationVector1D
+import androidx.compose.animation.core.Easing
+import androidx.compose.animation.core.LinearOutSlowInEasing
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.core.VectorConverter
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -26,6 +31,8 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.graphics.TransformOrigin
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.hapticfeedback.HapticFeedback
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.changedToUp
@@ -72,7 +79,10 @@ internal fun shelfGeometry(width: Float, density: Density, rtl: Boolean): ShelfG
  * finish zone. TalkBack gets the same moves and finish as custom actions.
  */
 @Composable
-internal fun ShelfGrid(bags: List<ShelfBagItem>, drag: ShelfDragState, image: ShelfImage, onAction: (ShelfAction) -> Unit, modifier: Modifier = Modifier) {
+internal fun ShelfGrid(
+    bags: List<ShelfBagItem>, drag: ShelfDragState, image: ShelfImage, onAction: (ShelfAction) -> Unit, modifier: Modifier = Modifier,
+    arrivingId: String? = null,
+) {
     BoxWithConstraints(modifier.fillMaxWidth()) {
         val density = LocalDensity.current
         val rtl = LocalLayoutDirection.current == LayoutDirection.Rtl
@@ -87,7 +97,7 @@ internal fun ShelfGrid(bags: List<ShelfBagItem>, drag: ShelfDragState, image: Sh
             repeat(geometry.rows(bags.size)) { row -> ShelfLedge(Modifier.offset { IntOffset(0, (row * geometry.rowHeight + geometry.slotHeight).toInt()) }) }
             if (drag.active) ShelfGhost(geometry.slot(drag.target), density)
             shown.forEachIndexed { index, item ->
-                key(item.id) { ShelfGridTile(item, index, shown.size, geometry, drag, image, onAction) }
+                key(item.id) { ShelfGridTile(item, index, shown.size, geometry, drag, image, onAction, arriving = item.id == arrivingId) }
             }
         }
     }
@@ -96,9 +106,11 @@ internal fun ShelfGrid(bags: List<ShelfBagItem>, drag: ShelfDragState, image: Sh
 @Composable
 private fun ShelfGridTile(
     item: ShelfBagItem, index: Int, count: Int, geometry: ShelfGridGeometry, drag: ShelfDragState,
-    image: ShelfImage, onAction: (ShelfAction) -> Unit,
+    image: ShelfImage, onAction: (ShelfAction) -> Unit, arriving: Boolean,
 ) {
     val held = drag.bagId == item.id
+    val arrival = rememberShelfArrival(item.id, arriving)
+    val fall = with(LocalDensity.current) { 420.dp.toPx() }
     val slot = geometry.slot(index).topLeft.round()
     val position = remember { Animatable(slot, IntOffset.VectorConverter) }
     LaunchedEffect(slot, held) {
@@ -109,10 +121,38 @@ private fun ShelfGridTile(
     val size = with(LocalDensity.current) { geometry.columnWidth.toDp() to geometry.slotHeight.toDp() }
     ShelfBagTile(item, image, Modifier
         .offset { if (held) (drag.pointer - drag.grab).round() else drag.releasedAt(item.id)?.round() ?: position.value }
+        .shelfArrival(arrival, fall)
         .size(size.first, size.second)
         .zIndex(if (held) 1f else 0f)
         .scale(if (held) 1.06f else 1f)
-        .shelfTileSemantics(item.id, index, count, onAction))
+        .shelfTileSemantics(item.id, index, count, onAction), highlighted = arriving)
+}
+
+/** A newly added bag: [fall] drops it onto the ledge, [squash] then springs it like a cushion on its bottom edge. */
+private class ShelfArrival(val fall: Animatable<Float, AnimationVector1D>, val squash: Animatable<Float, AnimationVector1D>)
+
+@Composable
+private fun rememberShelfArrival(id: String, arriving: Boolean): ShelfArrival {
+    val arrival = remember(id) { ShelfArrival(Animatable(if (arriving) 0f else 1f), Animatable(0f)) }
+    LaunchedEffect(arriving) {
+        if (!arriving || arrival.fall.value >= 1f) return@LaunchedEffect
+        // Falls like a dropped thing (speeding up) and stops dead with its bottom on the ledge.
+        arrival.fall.animateTo(1f, tween(480, easing = Easing { it * it }))
+        // The top keeps going a little: squashed by 10 % of the height and wider in the middle, then springs back.
+        arrival.squash.animateTo(1f, tween(70, easing = LinearOutSlowInEasing))
+        arrival.squash.animateTo(0f, spring(dampingRatio = 0.35f, stiffness = 450f))
+    }
+    return arrival
+}
+
+private fun Modifier.shelfArrival(arrival: ShelfArrival, fallHeight: Float): Modifier = graphicsLayer {
+    val fall = arrival.fall.value
+    val squash = arrival.squash.value
+    translationY = -(1 - fall) * fallHeight
+    alpha = (fall * 3).coerceIn(0f, 1f)
+    transformOrigin = TransformOrigin(0.5f, 1f)
+    scaleY = 1f - 0.1f * squash
+    scaleX = 1f + 0.06f * squash
 }
 
 @Composable
