@@ -77,12 +77,13 @@ jobs:
               tail -n 150 "$RUNNER_TEMP/ios-verify.log"
               exit 1
             }
-      - name: Run Kotlin Native ViewModel contract tests
+      - name: Run Kotlin Native contract tests
         shell: bash
         run: |
           set -euo pipefail
           ./gradlew --max-workers=6 :composeApp:iosSimulatorArm64Test \
             --tests 'com.coffeepeek.admin.di.KoinViewModelCompatibilityTest' \
+            --tests 'com.coffeepeek.admin.ui.NavigationDelegateTest' \
             > "$RUNNER_TEMP/ios-native-tests.log" 2>&1 || {
               tail -n 150 "$RUNNER_TEMP/ios-native-tests.log"
               exit 1
