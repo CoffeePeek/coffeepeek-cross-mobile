@@ -21,7 +21,7 @@ import kotlin.math.roundToInt
  * gentle shading/glare softening -> JPEG card, plus pre-moderation. Each model is opened only for its stage, which keeps the peak low.
  */
 internal class AndroidPackPipeline(private val models: () -> ScanModelFiles) {
-    fun scan(photo: ByteArray, onStage: (BagScanStage) -> Unit): BagScanResult {
+    fun scan(photo: ByteArray, onStage: (BagScanStage) -> Unit, onFront: (BagScanFrame) -> Unit): BagScanResult {
         val clock = Clock()
         val full = decode(photo)
         val working = full.scaledToMaxSide(WORKING_SIDE)
@@ -34,6 +34,7 @@ internal class AndroidPackPipeline(private val models: () -> ScanModelFiles) {
         val fit = clock.lap()
         onStage(BagScanStage.Front)
         if (front == null) return BagScanResult(null, 0, 0, null, null, PackNotFound, BagScanTimings(segmentation, fit, 0, 0, clock.total()))
+        onFront(front.quad.inset(INSET).frame(working))
         return finish(full, working, subject, front, clock, segmentation, fit, onStage)
     }
 
@@ -54,8 +55,7 @@ internal class AndroidPackPipeline(private val models: () -> ScanModelFiles) {
         onStage(BagScanStage.Soften)
         val quality = frontQuality(front, subject, working.width, working.height)
             .copy(repaintShare = repaint.count { it }.toDouble() / repaint.size, strongGlare = softened.strongGlareShare.toDouble())
-        val frame = BagScanFrame((0 until 4).map { (quad.x(it) / working.width).toFloat() to (quad.y(it) / working.height).toFloat() })
-        return BagScanResult(ShelfBagCard(card, "image/jpeg", "bag.jpg"), width, height, frame, quality, moderate(quality),
+        return BagScanResult(ShelfBagCard(card, "image/jpeg", "bag.jpg"), width, height, quad.frame(working), quality, moderate(quality),
             BagScanTimings(segmentation, fit, repairMillis, softenMillis, clock.total()))
     }
 
@@ -86,6 +86,10 @@ internal class AndroidPackPipeline(private val models: () -> ScanModelFiles) {
 
     private fun Bitmap.jpeg(): ByteArray = ByteArrayOutputStream().also { compress(Bitmap.CompressFormat.JPEG, JPEG_QUALITY, it) }.toByteArray()
 }
+
+/** Corners as shares of the working image, which has the photo's proportions. */
+private fun Quad.frame(working: Bitmap) =
+    BagScanFrame((0 until 4).map { (x(it) / working.width).toFloat() to (y(it) / working.height).toFloat() })
 
 /** Model files for one scan; [inpainter] is null while MI-GAN is not downloaded yet. */
 internal class ScanModelFiles(val segmenter: java.io.File, val inpainter: java.io.File?)

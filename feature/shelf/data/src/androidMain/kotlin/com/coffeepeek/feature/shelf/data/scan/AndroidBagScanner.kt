@@ -30,9 +30,8 @@ private class AndroidBagScanner(store: () -> BagScannerModels) : BagScanner {
         lock.withLock { withContext(Dispatchers.IO) { models.prepare(onProgress) } }
     }
 
-    override suspend fun scan(photo: ByteArray, onStage: (BagScanStage) -> Unit): Result<BagScanResult> = scanResult {
-        lock.withLock { withContext(Dispatchers.Default) { pipeline.scan(photo, onStage) } }
-    }
+    override suspend fun scan(photo: ByteArray, onStage: (BagScanStage) -> Unit, onFront: (BagScanFrame) -> Unit): Result<BagScanResult> =
+        scanResult { lock.withLock { withContext(Dispatchers.Default) { pipeline.scan(photo, onStage, onFront) } } }
 }
 
 /** Running out of memory is a retake, never a crash; ONNX errors are reported without their native messages. */
