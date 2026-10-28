@@ -53,6 +53,7 @@ import androidx.compose.ui.zIndex
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.semantics.CollectionInfo
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.collectionInfo
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
@@ -84,6 +85,7 @@ import com.coffeepeek.admin.location.rememberPermittedUserLocation
 import com.coffeepeek.admin.location.distanceToShopMeters
 import com.coffeepeek.admin.location.formatDistance
 import com.coffeepeek.domain.model.ShopLocation
+import com.coffeepeek.core.designsystem.component.CoffeePeekMapPreviewOverlay
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.drop
 
@@ -145,11 +147,11 @@ fun MapScreen(
             onBoundsChanged = vm::onBoundsChanged,
             onShopClick = { shop ->
                 dismissSearchInput()
-                if (isPreview) { vm.openedShop(); onOpenShop(shop.id) }
-                else vm.onShopSelected(shop)
+                vm.onShopSelected(shop)
             },
             onZoneClick = vm::onZoneSelected,
-            modifier = Modifier.align(Alignment.Center).mapCanvasSize(canvasSize),
+            modifier = Modifier.align(Alignment.Center).mapCanvasSize(canvasSize)
+                .then(if (isPreview) Modifier.clearAndSetSemantics {} else Modifier),
             cameraTarget = cameraTarget,
             cameraZoom = cameraZoom,
             onCameraTargetApplied = vm::onCameraTargetApplied,
@@ -162,14 +164,11 @@ fun MapScreen(
         )
 
         if (isPreview) {
-            GlassIconButton(
-                onClick = { Analytics.track(AnalyticsEvent.MAP_INTERACTION, "action" to "expanded"); onToggleExpand?.invoke() },
-                contentDescription = "Развернуть карту на весь экран",
-                modifier = Modifier.align(Alignment.TopEnd).padding(CpDimens.spacing2),
-                hazeState = null,
-            ) {
-                Icon(CpIcons.Expand, contentDescription = null, modifier = Modifier.size(22.dp))
-            }
+            CoffeePeekMapPreviewOverlay(
+                onExpand = { Analytics.track(AnalyticsEvent.MAP_INTERACTION, "action" to "expanded"); onToggleExpand?.invoke() },
+                modifier = Modifier.matchParentSize(),
+            )
+            return@Box
         } else {
             Column(
                 modifier = Modifier

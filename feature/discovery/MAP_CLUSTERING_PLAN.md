@@ -248,3 +248,37 @@ both packaged DEX runtime-class checks and Sandbox isolation passed in 2m 24s.
 Sandbox build identity: `com.coffeepeek.sandbox`, `1.1.1.2464-sandbox` / 2464.
 No APK was installed, no device was used and no real account was accessed;
 the manual permission-dialog and native gesture gates above remain open.
+
+## Tap-to-expand map preview — 2026-10-28
+
+The compact Discovery map now has one shared design-system click layer above
+the native canvas. Tapping anywhere, including a marker or the expand glyph,
+uses the existing expansion callback; panning/pinch gestures stay away from the
+native preview. Zoom and location controls appear in the expanded map. Native
+canvas identity, camera state, animation and full-map interaction are preserved.
+Both the Android feature entry and the current shared iOS entry use the layer.
+Preview canvas semantics are hidden behind one labelled button; its expand
+glyph is decorative. Labels are supplied in the design-system's two resource
+locales, default and ru. Paired shared light/dark previews use fake backgrounds.
+
+Analytics keeps Android's existing MapInteraction.Expanded/Collapsed callbacks
+and the shared entry's MAP_INTERACTION expanded/collapsed payloads. Preview
+scroll/drag no longer submits MapAction.Interact; the expand intent still does.
+No new analytics service, data/domain dependency or map-provider API is added.
+
+Verification: Windows, source `3e331f4f` plus the local change in
+`codex/migration-map-preview-expand`. Discovery impl **70 tests / 6 suites**,
+design-system **44 / 12**, app DirectDebug **830 / 166** executed with zero
+failures/errors/skips/retries. DirectSandbox APK, isolation and packaged DEX
+guard, app iOS Arm64 compile and design-system Simulator Native test compile
+passed in 3m57s. DirectDebug APK/DEX passed separately in 42s. Gradle runs were
+sequential with --max-workers=6. Built Sandbox identity: com.coffeepeek.sandbox,
+1.1.2.2485-sandbox / 2485; no APK was installed and no device/account was used.
+
+The new previews follow the existing deprecated Preview annotation; compiler
+warnings remain, along with existing preview/expect-actual/test opt-in warnings.
+Native tests were compiled, not executed; IDE/preview rendering, full Xcode
+build and manual UI were not checked. Remaining device gates: tap on canvas/
+marker/glyph, drag/pinch suppression, list scrolling across the preview,
+expanded-map pan/zoom/selection and collapse/back, light/dark, large fonts,
+VoiceOver/TalkBack and iOS native hit testing. No automated UI tests were added.
