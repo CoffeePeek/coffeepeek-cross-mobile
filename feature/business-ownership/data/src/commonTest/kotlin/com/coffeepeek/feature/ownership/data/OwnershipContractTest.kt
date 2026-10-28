@@ -87,10 +87,11 @@ class OwnershipContractTest {
     }
     @Test fun roasterGalleryRetainsPreviousMediaIdProtectedUrlAndStorageKey() = runTest {
         var write: JsonObject? = null
+        val existing = """{"id":"old-media-id","storageKey":"old-owner-key","fileName":"old.PNG","fullUrl":"https://media.example/protected/old-media-id?signature=keep"}"""
         val engine = MockEngine { request ->
             if (request.method == HttpMethod.Put) { write = request.jsonBody()
             respond(envelope("{}"), headers = headers) }
-            else respond(envelope(profile(photos = "[${photo("old-media-id", "old-owner-key")}]")), headers = headers)
+            else respond(envelope(profile(photos = "[$existing]")), headers = headers)
         }
         val account = Account()
         withRepository(engine, account) { repo ->
@@ -98,6 +99,7 @@ class OwnershipContractTest {
             val pending = BusinessPhoto("new", fileName = "new.jpg", bytes = byteArrayOf(1))
             val saved = repo.save(original, ProfileDraft.from(original).copy(photos = original.photos + pending)).getOrThrow()
             assertEquals("old-media-id", saved.photos.first().id)
+            assertEquals("image/png", write!!["photos"]!!.jsonArray.first().jsonObject["contentType"]!!.jsonPrimitive.content)
             assertEquals("https://media.example/protected/old-media-id?signature=keep", saved.photos.first().url)
             assertEquals(listOf("old-owner-key", "new-key"), write!!["photos"]!!.jsonArray.map { it.jsonObject["storageKey"]!!.jsonPrimitive.content })
         }

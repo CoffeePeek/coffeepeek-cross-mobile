@@ -22,7 +22,7 @@ import kotlinx.serialization.json.JsonObject
 @Serializable internal data class LocationDto(val cityId: String? = null, val address: String? = null, val latitude: Double? = null, val longitude: Double? = null)
 @Serializable internal data class ContactsDto(val phoneNumber: String? = null, val email: String? = null, val siteLink: String? = null, val instagramLink: String? = null)
 @Serializable internal data class PhotoDto(val id: String? = null, val storageKey: String, val fileName: String = "photo.jpg",
-    val fullUrl: String? = null, val contentType: String = "image/jpeg", val sizeBytes: Long = 0)
+    val fullUrl: String? = null, val contentType: String? = null, val sizeBytes: Long = 0)
 @Serializable internal data class PhotoMetadataDto(val fileName: String, val contentType: String, val storageKey: String, val size: Long)
 @Serializable internal data class ShopWriteDto(val name: String, val description: String?, val phoneNumber: String?,
     val email: String?, val siteLink: String?, val instagramLink: String?, val location: LocationDto,
