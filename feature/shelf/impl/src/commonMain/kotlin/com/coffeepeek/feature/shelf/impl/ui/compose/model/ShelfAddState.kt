@@ -27,6 +27,7 @@ internal data class ShelfBagForm(
     val roaster: String = "",
     val weightGrams: Int? = null,
     val grind: ShelfGrind? = null,
+    val roastPurpose: ShelfRoastPurpose? = null,
     val roastedOn: ShelfDay? = null,
 ) {
     fun details() = ShelfBagDetails(
@@ -34,6 +35,7 @@ internal data class ShelfBagForm(
         roasterName = roaster.trim().ifEmpty { null },
         weightGrams = weightGrams,
         grind = grind,
+        roastPurpose = roastPurpose,
         roastedOn = roastedOn?.iso(),
     )
 }
@@ -56,6 +58,8 @@ internal data class ShelfAddState(
     val options: List<ShelfCoffeeOption> = emptyList(),
     val saving: Boolean = false,
     val confirmDuplicate: Boolean = false,
+    /** The card has just flown off the scan and still has to drop into its place in the form. */
+    val cardLanding: Boolean = false,
     val message: ShelfAddMessage? = null,
 ) {
     /** Advice that does not block saving ("Принято с подсказкой"). */

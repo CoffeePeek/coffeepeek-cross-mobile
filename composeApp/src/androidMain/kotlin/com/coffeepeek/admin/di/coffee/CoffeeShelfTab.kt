@@ -67,6 +67,7 @@ internal class CoffeeShelfTab(private val entry: ShelfEntry, private val session
             onBrowseCatalog = onBrowseCatalog,
             onSignIn = { Navigator.navigate(Navigator.Screen.Auth) },
             onAddBag = { Navigator.navigate(Navigator.Screen.ShelfAddBag) },
+            onOpenBag = { Navigator.navigate(Navigator.Screen.ShelfBag(it)) },
             bottomClearance = LocalFloatingNavClearance.current,
             header = { header() })
     }

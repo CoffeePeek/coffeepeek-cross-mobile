@@ -51,6 +51,31 @@ class ShelfDragStateTest {
         assertEquals(1, drag.target)
         assertEquals(ShelfDrop.Finish("b"), drag.release())
         assertNull(drag.zone)
+        assertEquals("b", drag.archiving)
+        assertNull(drag.releasedId)
+        assertEquals(Offset(160f, 740f), drag.sinkTo)
+        assertEquals(listOf("a", "b", "c"), drag.order(listOf("a", "b", "c")))
+    }
+
+    @Test fun aDismissedSummaryPutsTheBagBackInPlaceAndAFinishedOneLeavesIt() {
+        val drag = ShelfDragState().apply { gridOrigin = Offset(0f, 100f); zone = Rect(0f, 700f, 320f, 780f) }
+        drag.start("b", 1, Offset(150f, 50f), geometry, count = 3)
+        drag.drag(Offset(0f, 600f))
+        drag.release()
+        drag.archiveCancelled("a")
+        assertEquals("b", drag.archiving)
+        drag.archiveCancelled("b")
+        assertNull(drag.archiving)
+        // Back in its slot at once, with no flight from the zone.
+        assertNull(drag.releasedId)
+
+        drag.zone = Rect(0f, 700f, 320f, 780f)
+        drag.start("c", 2, Offset(250f, 50f), geometry, count = 3)
+        drag.drag(Offset(-100f, 600f))
+        drag.release()
+        drag.archived("c")
+        assertNull(drag.archiving)
+        assertNull(drag.releasedId)
     }
 
     @Test fun releasingOnTheSameSlotOrCancellingDoesNothing() {
@@ -64,5 +89,28 @@ class ShelfDragStateTest {
         drag.cancel()
         assertFalse(drag.active)
         assertNull(drag.settling)
+    }
+
+    @Test fun theFingerOnScreenFollowsDragsButNotTheShelfScrollingUnderIt() {
+        val drag = ShelfDragState().apply { gridOrigin = Offset(16f, 300f) }
+        drag.start("a", 0, Offset(50f, 70f), geometry, count = 4)
+        assertEquals(Offset(66f, 370f), drag.finger)
+        drag.drag(Offset(10f, -20f))
+        drag.scrolled(40f)
+        assertEquals(Offset(76f, 350f), drag.finger)
+        assertEquals(Offset(60f, 90f), drag.pointer)
+    }
+
+    @Test fun afterTheDropTheBagFliesBackUntilItLandsOrIsLiftedAgain() {
+        val drag = ShelfDragState()
+        drag.start("a", 0, Offset(50f, 70f), geometry, count = 4)
+        drag.release()
+        assertEquals("a", drag.releasedId)
+        assertEquals(geometry, drag.geometry)
+        drag.start("a", 0, Offset(50f, 70f), geometry, count = 4)
+        assertNull(drag.releasedId)
+        drag.cancel()
+        drag.clearRelease("a")
+        assertNull(drag.releasedId)
     }
 }

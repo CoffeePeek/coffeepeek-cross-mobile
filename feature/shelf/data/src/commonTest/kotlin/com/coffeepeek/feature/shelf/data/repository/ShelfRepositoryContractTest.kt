@@ -38,6 +38,7 @@ class ShelfRepositoryContractTest {
         val bag = repository.refresh().getOrThrow().single()
         assertEquals(ShelfBagStatus.OnShelf, bag.status)
         assertEquals(ShelfGrind.Beans, bag.grind)
+        assertEquals(ShelfRoastPurpose.Espresso, bag.roastPurpose)
         assertEquals("$base/api/v1/shelf/bags/${ids[0]}/photos/33333333-3333-4333-8333-333333333333", bag.photo?.url)
         assertEquals("Sibaristica", bag.roasterName)
         assertEquals(listOf(bag), repository.shelf.first())
@@ -48,6 +49,11 @@ class ShelfRepositoryContractTest {
         assertEquals(ShelfIssue.InvalidResponse, repository.refresh().issue())
         val positionless = repository { ok("""[${documented().replace("\"position\": 0", "\"position\": null")}]""") }
         assertEquals(ShelfIssue.InvalidResponse, positionless.refresh().issue())
+    }
+
+    @Test fun aRoastPurposeTheAppDoesNotKnowReadsAsUnknown() = runTest {
+        val repository = repository { ok("""[${documented().replace("\"Espresso\"", "\"Omni\"")}]""") }
+        assertNull(repository.refresh().getOrThrow().single().roastPurpose)
     }
 
     @Test fun addUploadsTheCardThenCreatesWithItsKeyAndPutsTheBagFirst() = runTest {
@@ -63,13 +69,15 @@ class ShelfRepositoryContractTest {
             }
         }
         repository.refresh().getOrThrow()
-        val details = ShelfBagDetails(ShelfBean.Catalog("nut-n-berry"), weightGrams = 250, grind = ShelfGrind.Beans)
+        val details = ShelfBagDetails(ShelfBean.Catalog("nut-n-berry"), weightGrams = 250, grind = ShelfGrind.Beans,
+            roastPurpose = ShelfRoastPurpose.Filter)
         repository.add(details, ShelfBagCard(byteArrayOf(1, 2), "image/jpeg", "bag.jpg")).getOrThrow()
         val upload = uploaded.single()
         assertNull(upload.headers[HttpHeaders.Authorization])
         assertEquals("is_permanent=False", upload.headers["x-amz-tagging"])
         assertEquals(JsonPrimitive("shelf-bags/k.jpg"), created!!.getValue("photo").jsonObject["storageKey"])
         assertEquals(JsonPrimitive("nut-n-berry"), created!!["coffeeProductSlug"])
+        assertEquals(JsonPrimitive("Filter"), created!!["roastPurpose"])
         assertEquals(listOf(ids[1], ids[0]), repository.shelf.first()!!.map { it.id })
         assertEquals(listOf(0, 1), repository.shelf.first()!!.map { it.position })
     }
@@ -217,7 +225,8 @@ class ShelfRepositoryContractTest {
       "id": "${ids[0]}", "status": "OnShelf", "position": 0,
       "photo": { "id": "33333333-3333-4333-8333-333333333333", "url": "/api/v1/shelf/bags/${ids[0]}/photos/33333333-3333-4333-8333-333333333333" },
       "coffeeProductId": "22222222-2222-4222-8222-222222222222", "coffeeProductSlug": "nut-n-berry", "name": "Nut'n'Berry",
-      "roasterName": "Sibaristica", "weightGrams": 250, "grind": "Beans", "roastedOn": "2026-10-12",
+      "roasterName": "Sibaristica", "weightGrams": 250, "grind": "Beans", "roastPurpose": "Espresso",
+      "roastedOn": "2026-10-12",
       "addedAtUtc": "2026-10-20T08:00:00Z", "finishedAtUtc": null, "rating": null, "buyAgain": null
     }"""
 

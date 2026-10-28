@@ -3,6 +3,7 @@ package com.coffeepeek.feature.shelf.api
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.ImageBitmap
 
 /**
  * Application image port for a protected bag card: loads it with the owner's session and owns the loading and failure look.
@@ -54,6 +55,9 @@ interface ShelfCameraSession {
     @Composable
     fun Viewfinder(modifier: Modifier)
 
+    /** The picture the viewfinder shows right now, to hold on screen while the shot is taken; null if there is none. */
+    fun snapshot(): ImageBitmap?
+
     /** Focuses once more at the last tapped point or the centre, then shoots: an upright photo, or null when the shot failed. */
     suspend fun capture(): ShelfPhoto?
 }
@@ -70,4 +74,20 @@ data class ShelfCoffeeOption(val slug: String, val name: String, val roasterName
 /** Catalogue search for the bag form; the application adapts the coffee feature's picker. */
 fun interface ShelfCoffeeSearch {
     suspend fun search(query: String): Result<List<ShelfCoffeeOption>>
+}
+
+/** A home check-in, as a bag's card lists it: [preparedOn] is an ISO date, [method] a display name, [score] 1–5. */
+data class ShelfBrew(
+    val id: String,
+    val preparedOn: String,
+    val coffeeProductId: String?,
+    val beanName: String?,
+    val method: String?,
+    val doseGrams: Double?,
+    val score: Int?,
+)
+
+/** The user's home check-ins prepared from [from] to [to] (ISO dates, both included); the application adapts home check-ins. */
+fun interface ShelfBrewLog {
+    suspend fun brews(from: String, to: String): Result<List<ShelfBrew>>
 }

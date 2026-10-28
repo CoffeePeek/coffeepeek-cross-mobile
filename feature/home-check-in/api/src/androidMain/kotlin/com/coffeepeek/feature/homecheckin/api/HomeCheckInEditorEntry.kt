@@ -10,6 +10,7 @@ import androidx.compose.ui.Modifier
  * and cleared on final close/replacement. Reopening must use a fresh store.
  * Caller supplies its lifecycle, reactive lease snapshot and generation, blocks outer dismissal
  * while requested, and refreshes once on Saved. Token renewal is not a generation change.
+ * A new preparation may start with [bean] already chosen; editing ignores it.
  */
 interface HomeCheckInEditorEntry {
     @Composable
@@ -21,5 +22,9 @@ interface HomeCheckInEditorEntry {
         onSaved: (preparationId: String, visibilityUnconfirmed: Boolean) -> Unit,
         onDismissAllowedChange: (Boolean) -> Unit,
         modifier: Modifier = Modifier,
+        bean: HomeCheckInBean? = null,
     )
 }
+
+/** A coffee to start a new preparation with: a catalogue coffee by [slug] (shown as [name]), or else one of the user's own named [name]. */
+data class HomeCheckInBean(val slug: String?, val name: String?)

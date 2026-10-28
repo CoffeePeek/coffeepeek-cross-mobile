@@ -5,10 +5,12 @@ import com.coffeepeek.feature.shelf.domain.model.ShelfArchivePage
 import com.coffeepeek.feature.shelf.domain.model.ShelfFailure
 import com.coffeepeek.feature.shelf.domain.model.ShelfIssue
 import com.coffeepeek.feature.shelf.impl.ui.compose.model.ShelfArchiveAction
+import com.coffeepeek.feature.shelf.impl.ui.compose.model.ShelfArchiveEvent
 import com.coffeepeek.feature.shelf.impl.ui.compose.model.ShelfArchiveMessage
 import com.coffeepeek.feature.shelf.impl.ui.compose.model.ShelfArchiveSection
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceTimeBy
@@ -21,6 +23,7 @@ import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -31,8 +34,8 @@ class ShelfArchiveViewModelTest {
     @BeforeTest fun setUp() { Dispatchers.setMain(dispatcher) }
     @AfterTest fun tearDown() { store.clear(); Dispatchers.resetMain() }
 
-    private fun model(repository: FakeShelfRepository) =
-        ShelfArchiveViewModel(repository, testCalendar()).also { store.put("archive-${nextKey++}", it) }
+    private fun model(repository: FakeShelfRepository, handoff: ShelfBagHandoff = ShelfBagHandoff()) =
+        ShelfArchiveViewModel(repository, testCalendar(), handoff).also { store.put("archive-${nextKey++}", it) }
 
     private fun TestScope.settle() { advanceTimeBy(350); runCurrent() }
 
@@ -88,21 +91,24 @@ class ShelfArchiveViewModelTest {
         assertEquals(20, model.state.value.items.size)
     }
 
-    @Test fun restoreAndDeleteRemoveTheBagFromTheArchive() = runTest(dispatcher) {
+    @Test fun aBagRestoredOrDeletedOnItsScreenLeavesTheArchive() = runTest(dispatcher) {
+        val handoff = ShelfBagHandoff()
         val repository = FakeShelfRepository(emptyList()).apply { archivePages = pages() }
-        val model = model(repository)
+        val model = model(repository, handoff)
         runCurrent()
         model.onAction(ShelfArchiveAction.OpenBag("f1"))
-        model.onAction(ShelfArchiveAction.Restore("f1"))
+        runCurrent()
+        assertEquals(ShelfArchiveEvent.OpenBag("f1"), model.events.first())
+        assertEquals("f1", handoff.opened("f1")?.id)
+
+        handoff.report(ShelfBagOutcome.Restored("f1"))
         runCurrent()
         assertEquals(ShelfArchiveMessage.Restored, model.state.value.message)
-        assertEquals(null, model.state.value.openBagId)
-
-        model.onAction(ShelfArchiveAction.Delete("f2"))
+        handoff.report(ShelfBagOutcome.Deleted("f2", archived = true))
         runCurrent()
         assertEquals(ShelfArchiveMessage.Deleted, model.state.value.message)
         assertFalse(model.state.value.items.any { it.id == "f1" || it.id == "f2" })
-        assertEquals(listOf("restore:f1:null", "delete:f2"), repository.calls.filterNot { it.startsWith("archive") })
+        assertNull(handoff.outcome.value)
     }
 
     @Test fun sectionsGroupByMonthNewestFirst() = runTest(dispatcher) {

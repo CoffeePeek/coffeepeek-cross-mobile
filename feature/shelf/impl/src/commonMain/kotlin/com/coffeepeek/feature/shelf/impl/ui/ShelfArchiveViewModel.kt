@@ -15,18 +15,22 @@ import kotlinx.coroutines.launch
 internal const val SHELF_ARCHIVE_PAGE_SIZE = 20
 internal const val SHELF_ARCHIVE_QUERY_LIMIT = 100
 
-/** Pages of the archive for the current query; a new query starts over and drops answers to the old one. */
+/**
+ * Pages of the archive for the current query; a new query starts over and drops answers to the old one. A bag opens on its own
+ * screen; one put back on the shelf or deleted there comes back through [handoff] and leaves the list.
+ */
 internal class ShelfArchiveViewModel(
     private val repository: ShelfRepository,
     private val calendar: ShelfCalendar,
+    private val handoff: ShelfBagHandoff,
     private val debounceMillis: Long = 300,
 ) : MviViewModel<ShelfArchiveState, ShelfArchiveAction, ShelfArchiveEvent>(ShelfArchiveState(today = calendar.today())) {
     private var search: Job? = null
     private var generation = 0
-    private val busyBags = mutableSetOf<String>()
 
     init {
         reload(debounce = false)
+        viewModelScope.launch { handoff.outcome.collect { it?.let(::bagOutcome) } }
     }
 
     override suspend fun handleActionInternal(action: ShelfArchiveAction) {
@@ -34,12 +38,7 @@ internal class ShelfArchiveViewModel(
             is ShelfArchiveAction.QueryChanged -> queryChanged(action.query)
             ShelfArchiveAction.Retry -> if (currentState.loadMoreFailed) loadMore() else reload(debounce = false)
             ShelfArchiveAction.LoadMore -> loadMore()
-            is ShelfArchiveAction.OpenBag -> updateState { copy(openBagId = action.id) }
-            ShelfArchiveAction.CloseBag -> updateState { copy(openBagId = null) }
-            is ShelfArchiveAction.Restore -> restore(action.id)
-            is ShelfArchiveAction.RequestDelete -> updateState { copy(deletingId = action.id) }
-            ShelfArchiveAction.CancelDelete -> updateState { copy(deletingId = null) }
-            is ShelfArchiveAction.Delete -> delete(action.id)
+            is ShelfArchiveAction.OpenBag -> openBag(action.id)
             ShelfArchiveAction.DismissMessage -> updateState { copy(message = null) }
             ShelfArchiveAction.Back -> sendEvent(ShelfArchiveEvent.Back)
         }
@@ -82,24 +81,20 @@ internal class ShelfArchiveViewModel(
         }.onFailure { updateState { copy(loadingMore = false, loadMoreFailed = true) } }
     }
 
-    private suspend fun restore(id: String) {
-        updateState { copy(openBagId = null) }
-        write(id) { repository.restore(id).onSuccess { removed(id, ShelfArchiveMessage.Restored) }.onFailure(::fail) }
+    /** The bag's screen starts from the bag as shown here, since an archived bag cannot be read on its own. */
+    private suspend fun openBag(id: String) {
+        val item = currentState.items.firstOrNull { it.id == id } ?: return
+        handoff.open(item.bag)
+        sendEvent(ShelfArchiveEvent.OpenBag(id))
     }
 
-    private suspend fun delete(id: String) {
-        updateState { copy(deletingId = null) }
-        write(id) { repository.delete(id).onSuccess { removed(id, ShelfArchiveMessage.Deleted) }.onFailure(::fail) }
+    private fun bagOutcome(outcome: ShelfBagOutcome) {
+        val message = when (outcome) {
+            is ShelfBagOutcome.Restored -> ShelfArchiveMessage.Restored
+            is ShelfBagOutcome.Deleted -> ShelfArchiveMessage.Deleted.takeIf { outcome.archived }
+            is ShelfBagOutcome.Finished -> null
+        } ?: return
+        handoff.consumed(outcome)
+        updateState { copy(items = items.filterNot { it.id == outcome.bagId }, message = message) }
     }
-
-    private fun removed(id: String, message: ShelfArchiveMessage) = updateState {
-        copy(items = items.filterNot { it.id == id }, openBagId = openBagId.takeUnless { it == id }, message = message)
-    }
-
-    private suspend fun write(id: String, block: suspend () -> Unit) {
-        if (!busyBags.add(id)) return
-        try { block() } finally { busyBags.remove(id) }
-    }
-
-    private fun fail(error: Throwable) = updateState { copy(message = ShelfArchiveMessage.Failed(issueOf(error))) }
 }

@@ -20,6 +20,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
@@ -28,6 +29,8 @@ import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.boundsInRoot
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
@@ -64,11 +67,11 @@ internal fun ShelfScanPhoto(
     ShelfPhotoBox(bytes, modifier, shape, elevation) { if (frame != null) ShelfFrameOutline(frame, frameColor) }
 }
 
-/** The picture at its own proportions, with [overlay] drawn in exactly its bounds. */
+/** The picture at its own proportions, with [overlay] drawn in exactly its bounds; [onBounds] gets them in root coordinates. */
 @Composable
 internal fun ShelfPhotoBox(
     bytes: ByteArray, modifier: Modifier = Modifier, shape: Shape = ShelfPhotoShape, elevation: Dp = 0.dp,
-    overlay: @Composable BoxScope.() -> Unit = {},
+    onBounds: (Rect) -> Unit = {}, overlay: @Composable BoxScope.() -> Unit = {},
 ) {
     val image = rememberShelfBitmap(bytes)
     BoxWithConstraints(modifier, contentAlignment = Alignment.Center) {
@@ -79,7 +82,8 @@ internal fun ShelfPhotoBox(
         }
         val aspect = image.width.toFloat() / image.height
         val tallerThanRoom = constraints.hasBoundedHeight && maxWidth / maxHeight > aspect
-        Box(Modifier.aspectRatio(aspect, matchHeightConstraintsFirst = tallerThanRoom).shadow(elevation, shape).clip(shape)) {
+        Box(Modifier.aspectRatio(aspect, matchHeightConstraintsFirst = tallerThanRoom).onGloballyPositioned { onBounds(it.boundsInRoot()) }
+            .shadow(elevation, shape).clip(shape)) {
             Image(image, stringResource(Res.string.shelf_scan_photo), Modifier.fillMaxSize(), contentScale = ContentScale.FillBounds)
             overlay()
         }

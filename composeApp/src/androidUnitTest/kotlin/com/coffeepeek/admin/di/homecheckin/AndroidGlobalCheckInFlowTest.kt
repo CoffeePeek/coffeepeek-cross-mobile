@@ -8,6 +8,7 @@ import com.coffeepeek.admin.di.checkinhistory.AndroidCheckInHistorySession
 import com.coffeepeek.admin.di.shop.CheckInTestSessions
 import com.coffeepeek.domain.model.Session
 import com.coffeepeek.domain.repository.SessionRepository
+import com.coffeepeek.feature.homecheckin.api.HomeCheckInBean
 import com.coffeepeek.feature.homecheckin.api.HomeCheckInEditorEntry
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.flow
@@ -31,19 +32,20 @@ class AndroidGlobalCheckInFlowTest {
     private class Entry : HomeCheckInEditorEntry {
         @Composable override fun Content(preparationId: String?, sessionGeneration: Int, accessAllowed: Boolean,
             onClose: () -> Unit, onSaved: (String, Boolean) -> Unit, onDismissAllowedChange: (Boolean) -> Unit,
-            modifier: Modifier) = error("Unit navigation tests must not render a form")
+            modifier: Modifier, bean: HomeCheckInBean?) = error("Unit navigation tests must not render a form")
     }
     private class Fixture(val model: AndroidGlobalCheckInFlow, val store: ViewModelStore,
         val sdk: RecordingTransport, val service: AnalyticsService, val handoffs: MutableList<CheckInTracker?>)
 
-    private suspend fun TestScope.fixture(sessions: SessionRepository = CheckInTestSessions(), accepted: Boolean = false): Fixture {
+    private suspend fun TestScope.fixture(sessions: SessionRepository = CheckInTestSessions(), accepted: Boolean = false,
+        homeBean: HomeCheckInBean? = null): Fixture {
         val sdk = RecordingTransport()
         val service = analytics(MemoryConsent(if (accepted) AnalyticsConsent.Accepted else AnalyticsConsent.Declined), sdk)
             .also(services::add)
         service.setForeground(true); service.restoreConsent(); service.syncIdentity("fixture-owner")
         Analytics.install(service)
         val handoffs = mutableListOf<CheckInTracker?>()
-        val model = AndroidGlobalCheckInFlow(sessions) { lease, tracker ->
+        val model = AndroidGlobalCheckInFlow(sessions, homeBean) { lease, tracker ->
             assertTrue(lease.isCurrent() && lease.isLoggedIn)
             handoffs += tracker
             Entry()
@@ -63,6 +65,17 @@ class AndroidGlobalCheckInFlowTest {
         assertEquals(1, f.handoffs.size)
         assertNotNull(f.handoffs.single())
         assertIs<GlobalCheckInDestination.Home>(f.model.state.value)
+    }
+
+    @Test fun aShelfBrewSkipsThePickerAndClosesInsteadOfGoingBack() = runTest(dispatcher) {
+        val f = fixture(homeBean = HomeCheckInBean("kenya", "Кения"))
+        val home = f.model.homeDestination()
+        assertEquals(1, f.handoffs.size)
+        assertEquals(HomeCheckInBean("kenya", "Кения"), f.model.homeBean)
+        f.model.shop(); f.model.shelfBag()
+        assertSame(home, f.model.state.value)
+        f.model.cancel(home)
+        assertEquals(GlobalCheckInOutcome.Close, assertNotNull(f.model.claim(f.model.closed())).outcome)
     }
 
     @Test fun shelfBagLeavesThePickerWithoutAHomeEditorOrShopTracker() = runTest(dispatcher) {

@@ -35,7 +35,7 @@ internal fun ShelfSummaryRow(summary: ShelfSummary?, dragging: Boolean, onArchiv
         Text(text, Modifier.weight(1f).semantics { liveRegion = LiveRegionMode.Polite },
             style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
         if (onArchive != null) IconButton(onArchive) {
-            Icon(CoffeePeekIcons.Time, stringResource(Res.string.shelf_archive), tint = MaterialTheme.colorScheme.onSurface)
+            Icon(CoffeePeekIcons.Archive, stringResource(Res.string.shelf_archive), tint = MaterialTheme.colorScheme.onSurface)
         }
     }
 }

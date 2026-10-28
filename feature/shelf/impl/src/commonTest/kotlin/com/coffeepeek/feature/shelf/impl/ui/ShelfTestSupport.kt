@@ -1,10 +1,13 @@
 package com.coffeepeek.feature.shelf.impl.ui
 
+import com.coffeepeek.feature.shelf.api.ShelfBrew
+import com.coffeepeek.feature.shelf.api.ShelfBrewLog
 import com.coffeepeek.feature.shelf.api.ShelfTimeZone
 import com.coffeepeek.feature.shelf.domain.model.*
 import com.coffeepeek.feature.shelf.domain.repository.BagScanner
 import com.coffeepeek.feature.shelf.domain.repository.ShelfRepository
 import com.coffeepeek.feature.shelf.impl.ui.data.ShelfCalendar
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
@@ -103,3 +106,18 @@ internal fun scanResult(status: PackModerationStatus, reasons: List<PackModerati
     card = ShelfBagCard(byteArrayOf(1), "image/jpeg", "bag.jpg").takeIf { card }, cardWidth = 720, cardHeight = 960, frame = null,
     quality = null, moderation = PackModeration(status, reasons), timings = BagScanTimings(0, 0, 0, 0, 0),
 )
+
+/** Answers [result], records each date range asked for and, with a [gate], holds the answer until it completes. */
+internal class FakeShelfBrewLog(var result: Result<List<ShelfBrew>> = Result.success(emptyList())) : ShelfBrewLog {
+    val ranges = mutableListOf<Pair<String, String>>()
+    var gate: CompletableDeferred<Unit>? = null
+
+    override suspend fun brews(from: String, to: String): Result<List<ShelfBrew>> {
+        ranges += from to to
+        gate?.await()
+        return result
+    }
+}
+
+internal fun brew(id: String, preparedOn: String, product: String? = null, bean: String? = null, dose: Double? = null, score: Int? = null) =
+    ShelfBrew(id, preparedOn, product, bean, method = "Hario V60", doseGrams = dose, score = score)

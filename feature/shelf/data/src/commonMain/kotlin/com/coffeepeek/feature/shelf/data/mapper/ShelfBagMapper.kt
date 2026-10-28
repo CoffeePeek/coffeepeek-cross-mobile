@@ -5,7 +5,10 @@ import com.coffeepeek.feature.shelf.data.backend.ShelfBagWriteDto
 import com.coffeepeek.feature.shelf.data.backend.UploadedCardDto
 import com.coffeepeek.feature.shelf.domain.model.*
 
-/** Unknown status or grind values, or a shelf bag without a position, make the whole response invalid. */
+/**
+ * Unknown status or grind values, or a shelf bag without a position, make the whole response invalid. An unknown roast purpose
+ * reads as unknown, so a purpose the server adds later does not break the shelf.
+ */
 internal fun ShelfBagDto.toDomain(apiBaseUrl: String): ShelfBag {
     val status = ShelfBagStatus.entries.firstOrNull { it.name == status } ?: invalid()
     if ((status == ShelfBagStatus.OnShelf) != (position != null) || id.isBlank()) invalid()
@@ -14,6 +17,7 @@ internal fun ShelfBagDto.toDomain(apiBaseUrl: String): ShelfBag {
         photo = photo?.let { ShelfBagPhoto(it.id, absolute(apiBaseUrl, it.url)) },
         coffeeProductId = coffeeProductId, coffeeProductSlug = coffeeProductSlug, name = name, roasterName = roasterName,
         weightGrams = weightGrams, grind = grind?.let { value -> ShelfGrind.entries.firstOrNull { it.name == value } ?: invalid() },
+        roastPurpose = roastPurpose?.let { value -> ShelfRoastPurpose.entries.firstOrNull { it.name == value } },
         roastedOn = roastedOn, addedAtUtc = addedAtUtc, finishedAtUtc = finishedAtUtc, rating = rating, buyAgain = buyAgain,
     )
 }
@@ -24,7 +28,7 @@ internal fun ShelfBagDetails.toWrite(photo: UploadedCardDto?) = ShelfBagWriteDto
     coffeeProductId = (bean as? ShelfBean.Kept)?.coffeeProductId,
     customName = (bean as? ShelfBean.Custom)?.name?.trim(),
     roasterName = roasterName?.trim()?.ifEmpty { null },
-    weightGrams = weightGrams, grind = grind?.name, roastedOn = roastedOn,
+    weightGrams = weightGrams, grind = grind?.name, roastPurpose = roastPurpose?.name, roastedOn = roastedOn,
 )
 
 /** Protected card routes are relative to the gateway; never build storage URLs on the client. */

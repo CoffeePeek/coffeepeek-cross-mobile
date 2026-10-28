@@ -32,6 +32,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
@@ -112,7 +114,7 @@ private class AndroidShelfCameraSession(private val context: Context) : ShelfCam
 
     private fun bind(owner: LifecycleOwner, provider: ProcessCameraProvider) {
         val preview = Preview.Builder().build().also { it.surfaceProvider = viewfinder.surfaceProvider }
-        val shot = ImageCapture.Builder().setCaptureMode(ImageCapture.CAPTURE_MODE_MAXIMIZE_QUALITY).setResolutionSelector(photoSize).build()
+        val shot = ImageCapture.Builder().setCaptureMode(ImageCapture.CAPTURE_MODE_MINIMIZE_LATENCY).setResolutionSelector(photoSize).build()
         try {
             camera = provider.bindToLifecycle(owner, CameraSelector.DEFAULT_BACK_CAMERA, preview, shot)
         } catch (_: Exception) {
@@ -173,6 +175,8 @@ private class AndroidShelfCameraSession(private val context: Context) : ShelfCam
 
     @Composable
     override fun Viewfinder(modifier: Modifier) = AndroidView({ viewfinder }, modifier)
+
+    override fun snapshot(): ImageBitmap? = viewfinder.bitmap?.asImageBitmap()
 
     override suspend fun capture(): ShelfPhoto? {
         val shot = capture ?: return null

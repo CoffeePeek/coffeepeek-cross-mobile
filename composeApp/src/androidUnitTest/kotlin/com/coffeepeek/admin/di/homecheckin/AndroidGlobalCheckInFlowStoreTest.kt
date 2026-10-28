@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModelStore
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import com.coffeepeek.admin.di.shop.CheckInTestSessions
+import com.coffeepeek.feature.homecheckin.api.HomeCheckInBean
 import com.coffeepeek.feature.homecheckin.api.HomeCheckInEditorEntry
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -83,6 +84,6 @@ class AndroidGlobalCheckInFlowStoreTest {
     private class Entry : HomeCheckInEditorEntry {
         @Composable override fun Content(preparationId: String?, sessionGeneration: Int, accessAllowed: Boolean,
             onClose: () -> Unit, onSaved: (String, Boolean) -> Unit, onDismissAllowedChange: (Boolean) -> Unit,
-            modifier: Modifier) = error("Lifetime contract must not render UI")
+            modifier: Modifier, bean: HomeCheckInBean?) = error("Lifetime contract must not render UI")
     }
 }

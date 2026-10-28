@@ -81,8 +81,8 @@ class HomeCheckInEditorViewModelTest {
 
     private fun model(repo: Repository = Repository(), catalog: Catalog = Catalog(),
         id: String? = null, access: () -> Boolean = { true },
-        analytics: HomeCheckInEditorAnalytics = HomeCheckInEditorAnalytics.None): HomeCheckInEditorViewModel = HomeCheckInEditorViewModel(
-        repo, catalog, "2026-10-17T09:30:00Z", "2026-10-17", id, 7, access, { now }, analytics,
+        analytics: HomeCheckInEditorAnalytics = HomeCheckInEditorAnalytics.None, bean: HomeCheckInStartBean? = null): HomeCheckInEditorViewModel =
+        HomeCheckInEditorViewModel(repo, catalog, "2026-10-17T09:30:00Z", "2026-10-17", id, 7, access, { now }, analytics, bean,
     ).also { store.put("editor-${key++}", it) }
 
     private fun HomeCheckInEditorViewModel.act(vararg actions: HomeCheckInEditorAction) { actions.forEach(::onAction) }
@@ -124,6 +124,21 @@ class HomeCheckInEditorViewModelTest {
         assertEquals(1, catalog.methodsCalls)
         assertTrue(repo.detailIds.isEmpty())
         assertTrue(repo.creates.isEmpty())
+    }
+
+    @Test fun aNewPreparationCanStartWithACatalogueOrOwnCoffeeChosen() = runTest(dispatcher) {
+        val repo = Repository()
+        val catalogue = model(repo, bean = HomeCheckInStartBean("kenya-nyeri", " Кения Ньери ")); runCurrent()
+        assertEquals("kenya-nyeri", catalogue.state.value.draft.coffeeProductSlug)
+        assertNull(catalogue.state.value.draft.customBeanName)
+        assertEquals("Кения Ньери", catalogue.state.value.beanSelectionName)
+        catalogue.onAction(HomeCheckInEditorAction.Save); runCurrent()
+        assertEquals("kenya-nyeri", repo.creates.single().coffeeProductSlug)
+
+        val own = model(bean = HomeCheckInStartBean(null, "Бразилия с рынка")); runCurrent()
+        assertNull(own.state.value.draft.coffeeProductSlug)
+        assertEquals("Бразилия с рынка", own.state.value.draft.customBeanName)
+        assertNull(own.state.value.beanSelectionName)
     }
 
     @Test fun allRecipeFieldsRemainOptionalAndTappingSelectedRatingClearsIt() = runTest(dispatcher) {

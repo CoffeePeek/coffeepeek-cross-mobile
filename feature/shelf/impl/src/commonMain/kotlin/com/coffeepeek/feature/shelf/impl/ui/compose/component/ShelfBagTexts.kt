@@ -1,14 +1,15 @@
 package com.coffeepeek.feature.shelf.impl.ui.compose.component
 
 import androidx.compose.runtime.Composable
+import com.coffeepeek.core.designsystem.text.coffeePeekPluralForm
 import com.coffeepeek.feature.shelf.domain.model.ShelfGrind
 import com.coffeepeek.feature.shelf.domain.model.ShelfIssue
+import com.coffeepeek.feature.shelf.domain.model.ShelfRoastPurpose
 import com.coffeepeek.feature.shelf.impl.resources.*
 import com.coffeepeek.feature.shelf.impl.ui.compose.model.ShelfBagItem
 import com.coffeepeek.feature.shelf.impl.ui.compose.model.ShelfSummary
 import com.coffeepeek.feature.shelf.impl.ui.data.ShelfDay
 import org.jetbrains.compose.resources.StringResource
-import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
 
 private val months = listOf(
@@ -26,12 +27,17 @@ private val monthsOf = listOf(
 internal fun ShelfBagItem.title(): String = bag.name?.takeIf(String::isNotBlank) ?: stringResource(Res.string.shelf_bag_untitled)
 
 @Composable
-internal fun shelfDaysText(days: Int): String = pluralStringResource(Res.plurals.shelf_days, days, days)
+internal fun shelfDaysText(days: Int): String =
+    stringResource(coffeePeekPluralForm(days, Res.string.shelf_days_one, Res.string.shelf_days_few, Res.string.shelf_days_many), days)
 
 /** Days for the first two weeks, then whole weeks. */
 @Composable
 internal fun shelfAgeText(days: Int): String =
-    if (days < 14) shelfDaysText(days) else pluralStringResource(Res.plurals.shelf_weeks, days / 7, days / 7)
+    if (days < 14) shelfDaysText(days) else shelfWeeksText(days / 7)
+
+@Composable
+private fun shelfWeeksText(weeks: Int): String =
+    stringResource(coffeePeekPluralForm(weeks, Res.string.shelf_weeks_one, Res.string.shelf_weeks_few, Res.string.shelf_weeks_many), weeks)
 
 @Composable
 internal fun shelfMonthText(year: Int, month: Int, today: ShelfDay): String {
@@ -57,12 +63,14 @@ internal fun shelfWeightText(grams: Int): String {
 
 @Composable
 internal fun ShelfSummary.text(): String = listOfNotNull(
-    pluralStringResource(Res.plurals.shelf_bags, bags, bags),
+    stringResource(coffeePeekPluralForm(bags, Res.string.shelf_bags_one, Res.string.shelf_bags_few, Res.string.shelf_bags_many), bags),
     grams?.let { shelfWeightText(it) },
-    roasters.takeIf { it > 0 }?.let { pluralStringResource(Res.plurals.shelf_roasters, it, it) },
+    roasters.takeIf { it > 0 }?.let {
+        stringResource(coffeePeekPluralForm(it, Res.string.shelf_roasters_one, Res.string.shelf_roasters_few, Res.string.shelf_roasters_many), it)
+    },
 ).joinToString(" · ")
 
-/** Weight, grind and whether the bag is a catalog coffee, for the bag sheet. */
+/** Weight, grind, what it was roasted for and whether the bag is a catalog coffee, for the bag's screen. */
 @Composable
 internal fun ShelfBagItem.traits(): List<String> = listOfNotNull(
     bag.weightGrams?.let { stringResource(Res.string.shelf_weight, it) },
@@ -71,7 +79,16 @@ internal fun ShelfBagItem.traits(): List<String> = listOfNotNull(
         ShelfGrind.Ground -> stringResource(Res.string.shelf_grind_ground)
         null -> null
     },
+    bag.roastPurpose?.label(),
     bag.coffeeProductSlug?.let { stringResource(Res.string.shelf_from_catalog) },
+)
+
+@Composable
+internal fun ShelfRoastPurpose.label(): String = stringResource(
+    when (this) {
+        ShelfRoastPurpose.Espresso -> Res.string.shelf_roast_espresso
+        ShelfRoastPurpose.Filter -> Res.string.shelf_roast_filter
+    },
 )
 
 /** "На полке 9 дней" or "Добавлена сегодня"; null without an added date. */

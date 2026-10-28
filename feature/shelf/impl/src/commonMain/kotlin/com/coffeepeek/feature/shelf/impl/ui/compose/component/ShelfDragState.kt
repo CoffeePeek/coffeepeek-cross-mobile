@@ -42,9 +42,10 @@ internal sealed interface ShelfDrop {
 }
 
 /**
- * A bag lifted by a long press. [pointer] is the finger in grid coordinates; [gridOrigin] and [zone] (the "Закончилась"
- * drop zone) are root coordinates that layout keeps current. After a move the new order is kept in [settling] until the
- * shelf list catches up, so the bags do not jump back for a frame.
+ * A bag lifted by a long press. [pointer] is the finger in grid coordinates; [gridOrigin], [overlayOrigin] (the layer that draws
+ * the lifted bag above the screen) and [zone] (the "Закончилась" drop zone) are root coordinates that layout keeps current.
+ * After a move the new order is kept in [settling] until the shelf list catches up, so the bags do not jump back for a frame.
+ * A drop on the zone puts the bag in the box: it is [archiving] until it leaves the shelf or the summary is dismissed.
  */
 @Stable
 internal class ShelfDragState {
@@ -54,6 +55,9 @@ internal class ShelfDragState {
         private set
     var pointer by mutableStateOf(Offset.Zero)
         private set
+    /** The finger in root coordinates; unlike [pointer] it stays put when the shelf scrolls under it. */
+    var finger by mutableStateOf(Offset.Zero)
+        private set
     var overZone by mutableStateOf(false)
         private set
     var settling by mutableStateOf<ShelfDrop.Move?>(null)
@@ -62,14 +66,29 @@ internal class ShelfDragState {
     var grab = Offset.Zero
         private set
     var gridOrigin = Offset.Zero
+    var overlayOrigin = Offset.Zero
+    /** The grid of the last lift; it stays after the drop, so the bag can fly back to its slot. */
+    var geometry: ShelfGridGeometry? = null
+        private set
     var zone: Rect? = null
     private var from = -1
     private var count = 0
-    private var geometry: ShelfGridGeometry? = null
     private var released by mutableStateOf<Pair<String, Offset>?>(null)
+    /** Where a bag dropped on the zone was let go (grid) and where it sank (root, the zone's centre). */
+    var sinkFrom = Offset.Zero
+        private set
+    var sinkTo = Offset.Zero
+        private set
+
+    /** The bag dropped on the zone, waiting in the box while its summary is open; its slot stays reserved. */
+    var archiving by mutableStateOf<String?>(null)
+        private set
 
     val active: Boolean get() = bagId != null
     val rootPointer: Offset get() = gridOrigin + pointer
+
+    /** The bag on its way back to the shelf after a drop, until [clearRelease]. */
+    val releasedId: String? get() = released?.first
 
     fun start(id: String, index: Int, at: Offset, geometry: ShelfGridGeometry, count: Int) {
         this.geometry = geometry
@@ -77,15 +96,18 @@ internal class ShelfDragState {
         from = index
         target = index
         pointer = at
+        finger = gridOrigin + at
         grab = at - geometry.slot(index).topLeft
         overZone = false
         settling = null
+        released = null
         bagId = id
     }
 
     fun drag(delta: Offset) {
         if (!active) return
         pointer += delta
+        finger += delta
         retarget()
     }
 
@@ -103,7 +125,11 @@ internal class ShelfDragState {
             target != from -> ShelfDrop.Move(id, target)
             else -> null
         }
-        released = id to pointer - grab
+        if (drop is ShelfDrop.Finish) {
+            sinkFrom = pointer - grab
+            sinkTo = zone?.center ?: rootPointer
+            archiving = id
+        } else released = id to pointer - grab
         settling = drop as? ShelfDrop.Move
         reset()
         return drop
@@ -118,9 +144,19 @@ internal class ShelfDragState {
         settling = null
     }
 
+    /** The dropped bag left the shelf. */
+    fun archived(id: String) {
+        if (archiving == id) archiving = null
+    }
+
+    /** The summary was dismissed and the bag stays: it is simply back in its slot, where its outline kept the place. */
+    fun archiveCancelled(id: String) {
+        if (archiving == id) archiving = null
+    }
+
     /**
-     * Where the bag [id] was let go. It is state, so the first frame after release already draws the bag there; the tile
-     * then moves its own animation to this point and calls [clearRelease], and glides on to its slot.
+     * Where the bag [id] was let go. It is state, so the first frame after release already draws the bag there; the lifted
+     * layer then flies it to its slot and calls [clearRelease], and the shelf shows it there again.
      */
     fun releasedAt(id: String): Offset? = released?.takeIf { it.first == id }?.second
 
@@ -146,7 +182,6 @@ internal class ShelfDragState {
         from = -1
         target = -1
         overZone = false
-        geometry = null
         zone = null
     }
 }

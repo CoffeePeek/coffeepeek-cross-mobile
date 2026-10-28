@@ -11,6 +11,9 @@ interface ShelfScreenRenderer {
 
     @Composable
     fun AddBag()
+
+    @Composable
+    fun Bag(bagId: String)
 }
 
 /** Nothing on iOS opens these routes yet; if one is reached anyway, it leaves at once. */
@@ -20,4 +23,7 @@ internal object UnsupportedShelfScreenRenderer : ShelfScreenRenderer {
 
     @Composable
     override fun AddBag() = LaunchedEffect(Unit) { Navigator.popBack() }
+
+    @Composable
+    override fun Bag(bagId: String) = LaunchedEffect(Unit) { Navigator.popBack() }
 }

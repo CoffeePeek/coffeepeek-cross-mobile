@@ -42,3 +42,15 @@ internal fun HomePreparationInput.changedFields(next: HomePreparationInput): Set
         Photos -> photos != next.photos
         Visibility -> visibility != next.visibility
     } }.toSet()
+
+/** A coffee a new preparation starts with: a catalogue coffee by [slug] (shown as [name]), or else one of the user's own named [name]. */
+internal data class HomeCheckInStartBean(val slug: String?, val name: String?)
+
+/** A new form; with [bean] its coffee is already chosen, exactly as the bean picker would have set it. */
+internal fun homeCheckInStartState(preparedAt: String, preparedOn: String, bean: HomeCheckInStartBean?): HomeCheckInEditorState {
+    val slug = bean?.slug?.trim()?.ifBlank { null }
+    val name = bean?.name?.trim()?.take(250)?.ifBlank { null }
+    val draft = HomePreparationInput(preparedAt = preparedAt, preparedOn = preparedOn, tasteScore = 5, coffeeProductSlug = slug,
+        customBeanName = name.takeIf { slug == null })
+    return HomeCheckInEditorState(draft = draft, beanSelectionName = name.takeIf { slug != null })
+}

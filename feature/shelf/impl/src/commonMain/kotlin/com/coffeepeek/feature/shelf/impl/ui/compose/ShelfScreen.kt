@@ -1,5 +1,10 @@
 package com.coffeepeek.feature.shelf.impl.ui.compose
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.scrollBy
@@ -49,7 +54,9 @@ import com.coffeepeek.feature.shelf.impl.resources.*
 import com.coffeepeek.feature.shelf.impl.ui.ShelfViewModel
 import com.coffeepeek.feature.shelf.impl.ui.compose.component.*
 import com.coffeepeek.feature.shelf.impl.ui.compose.model.ShelfAction
+import com.coffeepeek.feature.shelf.impl.ui.compose.model.ShelfBagBrews
 import com.coffeepeek.feature.shelf.impl.ui.compose.model.ShelfBagItem
+import com.coffeepeek.feature.shelf.impl.ui.compose.model.ShelfBrewItem
 import com.coffeepeek.feature.shelf.impl.ui.compose.model.ShelfEvent
 import com.coffeepeek.feature.shelf.impl.ui.compose.model.ShelfMessage
 import com.coffeepeek.feature.shelf.impl.ui.compose.model.ShelfState
@@ -81,8 +88,11 @@ internal fun ShelfScreenContent(
     modifier: Modifier = Modifier, bottomClearance: Dp = 0.dp, header: @Composable ColumnScope.() -> Unit = {},
 ) {
     val drag = remember { ShelfDragState() }
+    val tiles = rememberShelfTiles(image)
+    LaunchedEffect(state.bags) { tiles.retain(state.bags.mapTo(HashSet()) { it.id }) }
     val snackbar = remember { SnackbarHostState() }
     ShelfMessageEffect(state.message, snackbar, onAction)
+    ShelfArchiveDropEffect(drag, state)
     Box(modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
         Column(Modifier.fillMaxSize()) {
             Column(Modifier.fillMaxWidth().statusBarsPadding().padding(horizontal = CoffeePeekDimens.spacing4).padding(top = CoffeePeekDimens.spacing3)) {
@@ -90,19 +100,22 @@ internal fun ShelfScreenContent(
                 ShelfSummaryRow(state.summary.takeIf { signedIn && state.loaded }, drag.active,
                     { onAction(ShelfAction.OpenArchive) }.takeIf { signedIn })
             }
-            ShelfBody(state, signedIn, drag, image, onAction, bottomClearance, Modifier.weight(1f))
+            ShelfBody(state, signedIn, drag, tiles, image, onAction, bottomClearance, Modifier.weight(1f))
         }
-        if (drag.active) ShelfFinishZone(drag.overZone, Modifier.align(Alignment.BottomCenter)
-            .padding(horizontal = CoffeePeekDimens.spacing4).padding(bottom = bottomClearance + CoffeePeekDimens.spacing3)
-            .onGloballyPositioned { drag.zone = it.boundsInRoot() })
+        AnimatedVisibility(drag.active, Modifier.align(Alignment.BottomCenter), enter = slideInVertically { it / 2 } + fadeIn(),
+            exit = slideOutVertically { it / 2 } + fadeOut()) {
+            ShelfFinishZone(drag.overZone, Modifier.padding(horizontal = CoffeePeekDimens.spacing4).padding(bottom = bottomClearance + CoffeePeekDimens.spacing3)
+                .onGloballyPositioned { if (drag.active) drag.zone = it.boundsInRoot() })
+        }
         SnackbarHost(snackbar, Modifier.align(Alignment.BottomCenter).padding(bottom = bottomClearance))
+        ShelfLiftedBag(state.bags, drag, tiles, Modifier.matchParentSize())
     }
-    ShelfSheets(state, image, onAction)
+    ShelfFinishSummary(state, image, onAction, onDismissed = drag::archiveCancelled)
 }
 
 @Composable
 private fun ShelfBody(
-    state: ShelfState, signedIn: Boolean, drag: ShelfDragState, image: ShelfImage,
+    state: ShelfState, signedIn: Boolean, drag: ShelfDragState, tiles: ShelfTiles, image: ShelfImage,
     onAction: (ShelfAction) -> Unit, bottomClearance: Dp, modifier: Modifier,
 ) {
     val scrolling = Modifier.fillMaxSize().verticalScroll(rememberScrollState())
@@ -118,13 +131,13 @@ private fun ShelfBody(
         state.bags.isEmpty() -> ShelfInvitation(stringResource(Res.string.shelf_empty_title), stringResource(Res.string.shelf_empty_body),
             stringResource(Res.string.shelf_scan_bag), { onAction(ShelfAction.AddBag) }, modifier.then(scrolling),
             stringResource(Res.string.shelf_browse_catalog)) { onAction(ShelfAction.BrowseCatalog) }
-        else -> ShelfShelves(state.bags, state.arrivingId, drag, image, onAction, bottomClearance, modifier)
+        else -> ShelfShelves(state.bags, state.arrivingId, drag, tiles, image, onAction, bottomClearance, modifier)
     }
 }
 
 @Composable
 private fun ShelfShelves(
-    bags: List<ShelfBagItem>, arrivingId: String?, drag: ShelfDragState, image: ShelfImage,
+    bags: List<ShelfBagItem>, arrivingId: String?, drag: ShelfDragState, tiles: ShelfTiles, image: ShelfImage,
     onAction: (ShelfAction) -> Unit, bottomClearance: Dp, modifier: Modifier,
 ) {
     val scroll = rememberScrollState()
@@ -141,7 +154,7 @@ private fun ShelfShelves(
     }
     Box(modifier.fillMaxSize().onGloballyPositioned { viewport[0] = it.boundsInRoot() }.verticalScroll(scroll)
         .padding(horizontal = CoffeePeekDimens.spacing4).padding(top = CoffeePeekDimens.spacing4, bottom = bottomClearance + 96.dp)) {
-        ShelfGrid(bags, drag, image, onAction, arrivingId = arrivingId)
+        ShelfGrid(bags, drag, tiles, image, onAction, arrivingId = arrivingId)
     }
 }
 
@@ -162,6 +175,27 @@ private fun ShelfAutoScroll(drag: ShelfDragState, scroll: ScrollState, viewport:
                 else -> 0f
             }
             if (delta != 0f) drag.scrolled(scroll.scrollBy(delta))
+        }
+    }
+}
+
+/**
+ * A bag dropped on the zone waits in the box while its summary is open; a dismissed summary puts it straight back in its
+ * slot ([ShelfFinishSummary]). Once it leaves the shelf the box is empty; if the summary was answered but the bag is still here a
+ * moment later (the finish was not applied), it is put back too.
+ */
+@Composable
+private fun ShelfArchiveDropEffect(drag: ShelfDragState, state: ShelfState) {
+    val id = drag.archiving ?: return
+    val onShelf = state.bags.any { it.id == id }
+    LaunchedEffect(id, onShelf, state.finishingId) {
+        when {
+            !onShelf -> drag.archived(id)
+            state.finishingId == id -> Unit
+            else -> {
+                delay(ARCHIVE_RETURN_DELAY_MILLIS)
+                drag.archiveCancelled(id)
+            }
         }
     }
 }
@@ -189,20 +223,20 @@ private fun ShelfMessageEffect(message: ShelfMessage?, snackbar: SnackbarHostSta
     }
 }
 
+/**
+ * The "Закончилась" summary of a bag dropped on the zone or finished with TalkBack; [onDismissed] puts a dropped bag back in its
+ * slot the moment the summary is dismissed.
+ */
 @Composable
-private fun ShelfSheets(state: ShelfState, image: ShelfImage, onAction: (ShelfAction) -> Unit) {
-    state.openBag?.let { item ->
-        ShelfBagSheet(item, state.today, image, ShelfBagSheetMode.Shelf, onPrimary = { onAction(ShelfAction.StartFinish(item.id)) },
-            onDelete = { onAction(ShelfAction.RequestDelete(item.id)) }, onDismiss = { onAction(ShelfAction.CloseBag) })
-    }
-    state.finishing?.let { item ->
-        ShelfFinishSheet(item, state.today, image, { rating, buyAgain -> onAction(ShelfAction.Finish(item.id, rating, buyAgain)) },
-            onDismiss = { onAction(ShelfAction.CancelFinish) })
-    }
-    state.deletingId?.let { id -> ShelfDeleteConfirmation({ onAction(ShelfAction.Delete(id)) }, { onAction(ShelfAction.CancelDelete) }) }
+private fun ShelfFinishSummary(state: ShelfState, image: ShelfImage, onAction: (ShelfAction) -> Unit, onDismissed: (String) -> Unit) {
+    val item = state.finishing ?: return
+    ShelfFinishSheet(item, state.today, image, { rating, buyAgain -> onAction(ShelfAction.Finish(item.id, rating, buyAgain)) },
+        onDismiss = { onDismissed(item.id); onAction(ShelfAction.CancelFinish) })
 }
 
 private const val ARRIVAL_SHOWN_MILLIS = 4_000L
+// Only a fallback: a confirmed finish removes the bag from the shelf at once, before the server answers.
+private const val ARCHIVE_RETURN_DELAY_MILLIS = 400L
 
 internal val previewToday = ShelfDay(2026, 10, 27)
 
@@ -223,6 +257,13 @@ internal fun previewShelfItems(): List<ShelfBagItem> = listOf(
     previewBag("c", "Бразилия", "Sibaristica", 1000),
     previewBag("d", "Кения Ньери", null, null, photo = false),
 ).map { ShelfBagItem(it, ShelfDay(2026, 10, 18), null, ShelfDay(2026, 10, 6)) }
+
+/** Three home check-ins with the open bag's coffee; 250 g less 47 g brewed. */
+internal fun previewBrews(): ShelfBagBrews = ShelfBagBrews.Loaded(listOf(
+    ShelfBrewItem("1", ShelfDay(2026, 10, 26), "Hario V60", 15.0, 4),
+    ShelfBrewItem("2", ShelfDay(2026, 10, 24), "Аэропресс", 17.0, 3),
+    ShelfBrewItem("3", ShelfDay(2026, 10, 19), null, 15.0, null),
+), leftGrams = 203)
 
 @Composable
 private fun ShelfScreenPreview(dark: Boolean, state: ShelfState, signedIn: Boolean = true) = CoffeePeekTheme(darkTheme = dark) {

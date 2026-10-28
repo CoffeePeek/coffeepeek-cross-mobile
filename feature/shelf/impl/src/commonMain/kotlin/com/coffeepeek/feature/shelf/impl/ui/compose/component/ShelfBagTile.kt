@@ -18,7 +18,15 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -40,23 +48,36 @@ internal val ShelfCardShape = RoundedCornerShape(4.dp)
 
 /**
  * A bag: its card at the card's own proportions, as large as fits and placed at [alignment], with rounded corners and a
- * shadow; a paper bag with its name when there is no card.
+ * shadow; a paper bag with its name when there is no card. A [ghost] is the faded, dashed-outlined copy that marks where a
+ * lifted bag will land.
  */
 @Composable
 internal fun ShelfBagTile(
     item: ShelfBagItem, image: ShelfImage, modifier: Modifier = Modifier,
-    alignment: Alignment = Alignment.BottomCenter, elevation: Dp = 4.dp, highlighted: Boolean = false,
+    alignment: Alignment = Alignment.BottomCenter, elevation: Dp = 4.dp, highlighted: Boolean = false, ghost: Boolean = false,
 ) {
     Box(modifier, contentAlignment = alignment) {
         // Wraps the card itself, so the outline and the "НОВАЯ" mark sit on the card, not on the empty slot around it.
-        Box {
+        Box(if (ghost) Modifier.shelfGhostOutline(MaterialTheme.colorScheme.outline) else Modifier) {
             val photo = item.bag.photo
             val outline = if (highlighted) Modifier.border(2.dp, MaterialTheme.colorScheme.primary, ShelfCardShape) else Modifier
-            if (photo != null) image(photo.url, item.title(), alignment, Modifier.shadow(elevation, ShelfCardShape).clip(ShelfCardShape).then(outline))
-            else ShelfBagPlaceholder(item.title(), Modifier.fillMaxWidth(0.86f).fillMaxHeight(0.82f).then(outline))
+            val faded = if (ghost) Modifier.graphicsLayer { alpha = GHOST_ALPHA } else Modifier
+            if (photo != null) image(photo.url, item.title(), alignment,
+                faded.shadow(if (ghost) 0.dp else elevation, ShelfCardShape).clip(ShelfCardShape).then(outline))
+            else ShelfBagPlaceholder(item.title(), Modifier.fillMaxWidth(0.86f).fillMaxHeight(0.82f).then(faded).then(outline))
             if (highlighted) ShelfNewMark(Modifier.align(Alignment.TopEnd).offset(x = 6.dp, y = (-8).dp))
         }
     }
+}
+
+private const val GHOST_ALPHA = 0.3f
+
+/** A dashed line a little outside the card. */
+private fun Modifier.shelfGhostOutline(color: Color): Modifier = drawWithContent {
+    drawContent()
+    val inset = 3.dp.toPx()
+    drawRoundRect(color, Offset(-inset, -inset), Size(size.width + inset * 2, size.height + inset * 2), CornerRadius(7.dp.toPx()),
+        Stroke(1.5.dp.toPx(), pathEffect = PathEffect.dashPathEffect(floatArrayOf(5.dp.toPx(), 4.dp.toPx()))))
 }
 
 @Composable
@@ -81,6 +102,7 @@ private fun ShelfBagTilePreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dar
     Row(Modifier.background(MaterialTheme.colorScheme.background).padding(CoffeePeekDimens.spacing4)) {
         ShelfBagTile(previewShelfItems()[0], PreviewShelfImage, Modifier.size(100.dp, 140.dp), highlighted = true)
         ShelfBagTile(previewShelfItems()[3], PreviewShelfImage, Modifier.size(100.dp, 140.dp))
+        ShelfBagTile(previewShelfItems()[1], PreviewShelfImage, Modifier.size(100.dp, 140.dp), ghost = true)
     }
 }
 

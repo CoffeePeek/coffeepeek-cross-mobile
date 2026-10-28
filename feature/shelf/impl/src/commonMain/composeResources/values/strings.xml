@@ -7,30 +7,18 @@
     <string name="shelf_drag_hint">Перетащите на место или вниз</string>
     <string name="shelf_weight_kg">≈ %1$s кг</string>
     <string name="shelf_weight_g">≈ %1$d г</string>
-    <plurals name="shelf_bags">
-        <item quantity="one">%1$d пачка</item>
-        <item quantity="few">%1$d пачки</item>
-        <item quantity="many">%1$d пачек</item>
-        <item quantity="other">%1$d пачки</item>
-    </plurals>
-    <plurals name="shelf_roasters">
-        <item quantity="one">%1$d обжарщик</item>
-        <item quantity="few">%1$d обжарщика</item>
-        <item quantity="many">%1$d обжарщиков</item>
-        <item quantity="other">%1$d обжарщика</item>
-    </plurals>
-    <plurals name="shelf_days">
-        <item quantity="one">%1$d день</item>
-        <item quantity="few">%1$d дня</item>
-        <item quantity="many">%1$d дней</item>
-        <item quantity="other">%1$d дня</item>
-    </plurals>
-    <plurals name="shelf_weeks">
-        <item quantity="one">%1$d неделю</item>
-        <item quantity="few">%1$d недели</item>
-        <item quantity="many">%1$d недель</item>
-        <item quantity="other">%1$d недели</item>
-    </plurals>
+    <string name="shelf_bags_one">%1$d пачка</string>
+    <string name="shelf_bags_few">%1$d пачки</string>
+    <string name="shelf_bags_many">%1$d пачек</string>
+    <string name="shelf_roasters_one">%1$d обжарщик</string>
+    <string name="shelf_roasters_few">%1$d обжарщика</string>
+    <string name="shelf_roasters_many">%1$d обжарщиков</string>
+    <string name="shelf_days_one">%1$d день</string>
+    <string name="shelf_days_few">%1$d дня</string>
+    <string name="shelf_days_many">%1$d дней</string>
+    <string name="shelf_weeks_one">%1$d неделю</string>
+    <string name="shelf_weeks_few">%1$d недели</string>
+    <string name="shelf_weeks_many">%1$d недель</string>
 
     <string name="shelf_empty_title">Здесь будет ваш кофе</string>
     <string name="shelf_empty_body">Сфотографируйте пачку — она встанет на полку, а когда закончится, уйдёт в архив</string>
@@ -64,11 +52,30 @@
     <string name="shelf_weight">%1$d г</string>
     <string name="shelf_grind_beans">Зерно</string>
     <string name="shelf_grind_ground">Молотый</string>
+    <string name="shelf_roast_espresso">Эспрессо</string>
+    <string name="shelf_roast_filter">Фильтр</string>
     <string name="shelf_from_catalog">Из каталога</string>
     <string name="shelf_bag_more">Действия с пачкой</string>
     <string name="shelf_bag_delete">Удалить</string>
     <string name="shelf_bag_restore">Вернуть на полку</string>
     <string name="shelf_cancel">Отмена</string>
+    <string name="shelf_bag_left">осталось %1$s</string>
+    <string name="shelf_bag_back">Назад</string>
+    <string name="shelf_bag_missing_title">Этой пачки уже нет</string>
+    <string name="shelf_bag_missing_body">Она закончилась или удалена. Найдите её в архиве или на полке</string>
+    <string name="shelf_brew_action">Заварить чашку</string>
+    <string name="shelf_open_catalog">Открыть в каталоге</string>
+    <string name="shelf_brews_title">Дома с этой пачкой</string>
+    <string name="shelf_brews_count_one">%1$d чекин</string>
+    <string name="shelf_brews_count_few">%1$d чекина</string>
+    <string name="shelf_brews_count_many">%1$d чекинов</string>
+    <string name="shelf_brews_loading">Ищем домашние чекины</string>
+    <string name="shelf_brews_failed">Не удалось загрузить чекины</string>
+    <string name="shelf_brews_empty">Заварите кофе из этой пачки дома — чекины появятся здесь</string>
+    <string name="shelf_brew_untitled">Домашний чекин</string>
+    <string name="shelf_brew_dose">%1$s г</string>
+    <string name="shelf_brew_today">Сегодня</string>
+    <string name="shelf_brew_yesterday">Вчера</string>
 
     <string name="shelf_delete_title">Удалить пачку?</string>
     <string name="shelf_delete_message">Пачка исчезнет с полки и из архива. Если кофе закончился, лучше уберите её в архив.</string>
@@ -151,10 +158,11 @@
     <string name="shelf_camera_close">Закрыть камеру</string>
     <string name="shelf_camera_how">Как снимать?</string>
     <string name="shelf_camera_hint">Пачка целиком в рамке, лицевой стороной</string>
+    <string name="shelf_camera_hold">Не двигайте телефон</string>
     <string name="shelf_camera_gallery">Выбрать из галереи</string>
     <string name="shelf_camera_shutter">Сфотографировать</string>
-    <string name="shelf_camera_flash_on">Вспышка\nвкл</string>
-    <string name="shelf_camera_flash_off">Вспышка\nвыкл</string>
+    <string name="shelf_camera_flash_on">Включена</string>
+    <string name="shelf_camera_flash_off">Выключена</string>
     <string name="shelf_camera_flash">Вспышка</string>
     <string name="shelf_camera_denied">Нет доступа к камере</string>
     <string name="shelf_camera_denied_body">Разрешите доступ, чтобы снимать пачки, или выберите фото из галереи</string>
@@ -193,8 +201,6 @@
     <string name="shelf_form_coffee_clear">Очистить название</string>
     <string name="shelf_form_catalog_match">Из каталога CoffeePeek</string>
     <string name="shelf_form_roaster">Обжарщик</string>
-    <string name="shelf_form_weight">Вес</string>
-    <string name="shelf_form_grind">Помол</string>
     <string name="shelf_form_roasted">Дата обжарки · необязательно</string>
     <string name="shelf_form_roasted_pick">Указать</string>
     <string name="shelf_form_roasted_clear">Убрать дату</string>

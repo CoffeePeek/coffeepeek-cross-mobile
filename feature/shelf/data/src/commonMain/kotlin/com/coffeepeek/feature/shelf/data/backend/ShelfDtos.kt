@@ -17,6 +17,7 @@ import kotlinx.serialization.Serializable
     val roasterName: String? = null,
     val weightGrams: Int? = null,
     val grind: String? = null,
+    val roastPurpose: String? = null,
     val roastedOn: String? = null,
     val addedAtUtc: String,
     val finishedAtUtc: String? = null,
@@ -35,6 +36,7 @@ import kotlinx.serialization.Serializable
     val roasterName: String? = null,
     val weightGrams: Int? = null,
     val grind: String? = null,
+    val roastPurpose: String? = null,
     val roastedOn: String? = null,
 )
 

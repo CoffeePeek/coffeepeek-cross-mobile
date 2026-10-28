@@ -76,13 +76,6 @@ internal fun ShelfArchiveScreenContent(state: ShelfArchiveState, onAction: (Shel
                 modifier = Modifier.fillMaxWidth().padding(horizontal = CoffeePeekDimens.spacing4, vertical = CoffeePeekDimens.spacing2))
         }
     }) { padding -> ShelfArchiveList(state, onAction, image, Modifier.padding(padding)) }
-    state.openBag?.let { item ->
-        ShelfBagSheet(item, state.today, image, ShelfBagSheetMode.Archive, onPrimary = { onAction(ShelfArchiveAction.Restore(item.id)) },
-            onDelete = { onAction(ShelfArchiveAction.RequestDelete(item.id)) }, onDismiss = { onAction(ShelfArchiveAction.CloseBag) })
-    }
-    state.deletingId?.let { id ->
-        ShelfDeleteConfirmation({ onAction(ShelfArchiveAction.Delete(id)) }, { onAction(ShelfArchiveAction.CancelDelete) })
-    }
 }
 
 @Composable
@@ -152,7 +145,6 @@ private fun ShelfArchiveMessageEffect(message: ShelfArchiveMessage?, snackbar: S
         null -> null
         ShelfArchiveMessage.Restored -> stringResource(Res.string.shelf_restored)
         ShelfArchiveMessage.Deleted -> stringResource(Res.string.shelf_deleted)
-        is ShelfArchiveMessage.Failed -> message.issue.text()
     }
     val currentAction by rememberUpdatedState(onAction)
     LaunchedEffect(message) {

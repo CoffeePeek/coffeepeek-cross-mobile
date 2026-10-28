@@ -29,6 +29,8 @@ internal fun shelfModule(
         createAndroidBagScanner(context, chosen.segmenter, chosen.inpainter)
     }
     single<ShelfEntry> {
-        createShelfEntry(get(), ShelfPorts(get(), ShelfCatalogSearch(get()), AndroidShelfImage, AndroidShelfGallery, AndroidShelfCamera, AndroidShelfTimeZone))
+        val brews = ShelfHomeBrews(get(), SessionShelfAccount(get()))
+        createShelfEntry(get(), ShelfPorts(get(), ShelfCatalogSearch(get()), AndroidShelfImage, AndroidShelfGallery, AndroidShelfCamera,
+            AndroidShelfTimeZone, brews))
     }
 }

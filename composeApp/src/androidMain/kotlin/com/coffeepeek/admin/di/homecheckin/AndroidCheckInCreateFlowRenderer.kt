@@ -21,6 +21,7 @@ import com.coffeepeek.admin.ui.screen.checkins.CheckInCreateFlowRenderer
 import com.coffeepeek.admin.ui.Navigator
 import com.coffeepeek.core.designsystem.component.CoffeePeekSwipeDismissModalBottomSheet
 import com.coffeepeek.core.session.SessionReader
+import com.coffeepeek.feature.homecheckin.api.HomeCheckInBean
 import com.coffeepeek.feature.homecheckin.api.HomeCheckInEditorEntry
 import org.jetbrains.compose.resources.stringResource
 
@@ -35,11 +36,19 @@ internal class AndroidCheckInCreateFlowRenderer(
 ) : CheckInCreateFlowRenderer {
     @Composable
     override fun Content(onDismiss: () -> Unit, onShop: () -> Unit, onHomeSaved: () -> Unit,
-        legacyContent: @Composable () -> Unit) {
-        val owner = viewModel(key = "global-check-in-flow-store") { AndroidGlobalCheckInFlowStore() }
+        legacyContent: @Composable () -> Unit) = Flow("global-check-in-flow-store", null, onDismiss, onShop, onHomeSaved)
+
+    /** The Home form straight away with [bean] already chosen: "Заварить чашку" from a shelf bag. */
+    @Composable
+    fun Home(bean: HomeCheckInBean, onDismiss: () -> Unit, onSaved: () -> Unit) =
+        Flow("shelf-brew-flow-store", bean, onDismiss, onShop = {}, onSaved)
+
+    @Composable
+    private fun Flow(storeKey: String, homeBean: HomeCheckInBean?, onDismiss: () -> Unit, onShop: () -> Unit, onHomeSaved: () -> Unit) {
+        val owner = viewModel(key = storeKey) { AndroidGlobalCheckInFlowStore() }
         val activity = LocalActivity.current
         DisposableEffect(owner, activity) { onDispose { owner.dispose(activity?.isChangingConfigurations == true) } }
-        val model = viewModel(viewModelStoreOwner = owner) { AndroidGlobalCheckInFlow(sessions, createEditor) }
+        val model = viewModel(viewModelStoreOwner = owner) { AndroidGlobalCheckInFlow(sessions, homeBean, createEditor) }
         val state by model.state.collectAsStateWithLifecycle()
         Completion(model, onDismiss, onShop, onHomeSaved)
         CompositionLocalProvider(LocalViewModelStoreOwner provides owner) { Destination(model, state) }
@@ -82,7 +91,7 @@ internal class AndroidCheckInCreateFlowRenderer(
                 if (home == null) CheckInCreateContent(model::shop, model::home, (model::shelfBag).takeIf { shelfEnabled })
                 else home.entry.Content(null, 0, model.canAccess(), { model.cancel(home) },
                     { id, _ -> model.saved(home, id) }, { model.setDismissAllowed(home, it) },
-                    Modifier.weight(1f).fillMaxWidth())
+                    Modifier.weight(1f).fillMaxWidth(), bean = model.homeBean)
             }
         }
     }

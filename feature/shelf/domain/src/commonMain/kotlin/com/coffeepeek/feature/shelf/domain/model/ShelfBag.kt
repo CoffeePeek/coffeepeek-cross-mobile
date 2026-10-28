@@ -4,6 +4,9 @@ enum class ShelfBagStatus { OnShelf, Finished }
 
 enum class ShelfGrind { Beans, Ground }
 
+/** What the beans were roasted for. */
+enum class ShelfRoastPurpose { Espresso, Filter }
+
 /** A protected card image; [url] is absolute and needs the owner's session to load. */
 data class ShelfBagPhoto(val id: String, val url: String)
 
@@ -22,6 +25,7 @@ data class ShelfBag(
     val roasterName: String?,
     val weightGrams: Int?,
     val grind: ShelfGrind?,
+    val roastPurpose: ShelfRoastPurpose? = null,
     val roastedOn: String?,
     val addedAtUtc: String,
     val finishedAtUtc: String?,

@@ -21,7 +21,7 @@ internal class SandboxShelfBackend(private val today: LocalDate, private val upl
             "sandbox-kenya" to ("22222222-2222-4222-8222-222222222223" to "Sandbox Kenya"),
             "sandbox-brazil" to ("22222222-2222-4222-8222-222222222224" to "Sandbox Brazil"),
         )
-        private val details = listOf("coffeeProductId", "coffeeProductSlug", "name", "roasterName", "weightGrams", "grind", "roastedOn")
+        private val details = listOf("coffeeProductId", "coffeeProductSlug", "name", "roasterName", "weightGrams", "grind", "roastPurpose", "roastedOn")
     }
     private class Rejected(val status: HttpStatusCode) : Exception()
 
@@ -156,11 +156,14 @@ internal class SandboxShelfBackend(private val today: LocalDate, private val upl
         val roaster = input.text("roasterName")?.trim()?.takeIf { it.isNotEmpty() } ?: "Sandbox Roaster".takeIf { input.text("coffeeProductSlug") != null }
         val weight = input["weightGrams"]?.jsonPrimitive?.intOrNull
         val grind = input.text("grind")
+        val roastPurpose = input.text("roastPurpose")
         val roastedOn = input.text("roastedOn")?.let { runCatching { LocalDate.parse(it) }.getOrNull() ?: throw Rejected(HttpStatusCode.BadRequest) }
         if ((roaster?.length ?: 0) > TEXT_LIMIT || (weight != null && weight !in 1..10000) || (grind != null && grind !in setOf("Beans", "Ground")) ||
+            (roastPurpose != null && roastPurpose !in setOf("Espresso", "Filter")) ||
             (roastedOn != null && roastedOn > today.plusDays(1))) throw Rejected(HttpStatusCode.BadRequest)
         return details.associateWith { JsonNull as JsonElement } + bean + mapOf("roasterName" to JsonPrimitive(roaster),
-            "weightGrams" to JsonPrimitive(weight), "grind" to JsonPrimitive(grind), "roastedOn" to JsonPrimitive(roastedOn?.toString()))
+            "weightGrams" to JsonPrimitive(weight), "grind" to JsonPrimitive(grind), "roastPurpose" to JsonPrimitive(roastPurpose),
+            "roastedOn" to JsonPrimitive(roastedOn?.toString()))
     }
 
     private fun claim(photo: JsonElement): String {

@@ -49,13 +49,14 @@ internal class ShelfAddViewModel(
             ShelfAddAction.DownloadScanner -> download()
             ShelfAddAction.OpenCamera -> openCamera()
             ShelfAddAction.CloseCamera -> closeCamera()
-            ShelfAddAction.RevealFinished -> updateState { if (step == ShelfAddStep.Revealing) copy(step = ShelfAddStep.Form) else this }
+            ShelfAddAction.RevealFinished -> updateState { revealed() }
+            ShelfAddAction.CardLanded -> updateState { copy(cardLanding = false) }
             is ShelfAddAction.PhotoPicked -> scan(action.photo)
             ShelfAddAction.PhotoFailed -> updateState { copy(message = ShelfAddMessage.PhotoUnreadable) }
             is ShelfAddAction.QueryChanged -> queryChanged(action.query)
             is ShelfAddAction.CoffeeChosen -> coffeeChosen(action.option)
             is ShelfAddAction.RoasterChanged, is ShelfAddAction.WeightChosen, is ShelfAddAction.GrindChosen,
-            is ShelfAddAction.RoastDateChosen -> editForm(action)
+            is ShelfAddAction.RoastPurposeChosen, is ShelfAddAction.RoastDateChosen -> editForm(action)
             is ShelfAddAction.Save -> save(action.later, confirmed = false)
             ShelfAddAction.ConfirmDuplicate -> save(laterAfterConfirm, confirmed = true)
             ShelfAddAction.CancelDuplicate -> updateState { copy(confirmDuplicate = false) }
@@ -108,9 +109,11 @@ internal class ShelfAddViewModel(
             updateState { if (this.photo === photo) withOutcome(outcome) else this }
             // The peel animation ends the reveal; should it never finish (an undecodable card), the form opens anyway.
             delay(REVEAL_LIMIT_MILLIS)
-            updateState { if (this.photo === photo && step == ShelfAddStep.Revealing) copy(step = ShelfAddStep.Form) else this }
+            updateState { if (this.photo === photo) revealed() else this }
         }
     }
+
+    private fun ShelfAddState.revealed() = if (step == ShelfAddStep.Revealing) copy(step = ShelfAddStep.Form, cardLanding = true) else this
 
     private fun ShelfAddState.withOutcome(outcome: Result<BagScanResult>): ShelfAddState = outcome.fold(
         { copy(result = it, step = if (it.card == null || it.moderation.status == PackModerationStatus.Retake) ShelfAddStep.Retake else ShelfAddStep.Revealing) },
@@ -163,6 +166,7 @@ internal class ShelfAddViewModel(
             is ShelfAddAction.RoasterChanged -> updateForm { copy(roaster = action.roaster.take(SHELF_TEXT_LIMIT)) }
             is ShelfAddAction.WeightChosen -> updateForm { copy(weightGrams = action.grams) }
             is ShelfAddAction.GrindChosen -> updateForm { copy(grind = action.grind) }
+            is ShelfAddAction.RoastPurposeChosen -> updateForm { copy(roastPurpose = action.purpose) }
             is ShelfAddAction.RoastDateChosen -> updateForm { copy(roastedOn = action.day?.takeIf { it.epochDay <= today.epochDay }) }
             else -> Unit
         }

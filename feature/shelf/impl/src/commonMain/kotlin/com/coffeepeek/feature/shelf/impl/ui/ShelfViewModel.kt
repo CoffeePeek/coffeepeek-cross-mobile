@@ -14,12 +14,14 @@ import kotlinx.coroutines.launch
 
 /**
  * Renders the repository's shelf snapshot, which already shows moves and finishes optimistically and rolls them back
- * on failure; this model only reports the outcome. One write per bag at a time.
+ * on failure; this model only reports the outcome. One write per bag at a time. A bag opens on its own screen; what became of
+ * it there comes back through [handoff] to be reported here.
  */
 internal class ShelfViewModel(
     private val repository: ShelfRepository,
     private val calendar: ShelfCalendar,
     private val arrivals: ShelfArrivals,
+    private val handoff: ShelfBagHandoff,
 ) : MviViewModel<ShelfState, ShelfAction, ShelfEvent>(ShelfState(today = calendar.today())) {
     private val busyBags = mutableSetOf<String>()
 
@@ -32,21 +34,18 @@ internal class ShelfViewModel(
         viewModelScope.launch {
             arrivals.arriving.collect { id -> if (id != null) updateState { copy(arrivingId = id, message = ShelfMessage.Added) } }
         }
+        viewModelScope.launch { handoff.outcome.collect { it?.let(::bagOutcome) } }
     }
 
     override suspend fun handleActionInternal(action: ShelfAction) {
         when (action) {
             ShelfAction.Refresh -> refresh()
-            is ShelfAction.OpenBag -> updateState { copy(openBagId = action.id) }
-            ShelfAction.CloseBag -> updateState { copy(openBagId = null) }
+            is ShelfAction.OpenBag -> openBag(action.id)
             is ShelfAction.Move -> move(action.id, action.toIndex)
-            is ShelfAction.StartFinish -> updateState { copy(openBagId = null, finishingId = action.id) }
+            is ShelfAction.StartFinish -> updateState { copy(finishingId = action.id) }
             ShelfAction.CancelFinish -> updateState { copy(finishingId = null) }
             is ShelfAction.Finish -> finish(action)
             is ShelfAction.UndoFinish -> undoFinish(action.id, action.position)
-            is ShelfAction.RequestDelete -> updateState { copy(deletingId = action.id) }
-            ShelfAction.CancelDelete -> updateState { copy(deletingId = null) }
-            is ShelfAction.Delete -> delete(action.id)
             ShelfAction.DismissMessage -> updateState { copy(message = null) }
             is ShelfAction.ArrivalShown -> arrivalShown(action.id)
             ShelfAction.OpenArchive -> sendEvent(ShelfEvent.OpenArchive)
@@ -54,6 +53,24 @@ internal class ShelfViewModel(
             ShelfAction.SignIn -> sendEvent(ShelfEvent.SignIn)
             ShelfAction.AddBag -> sendEvent(ShelfEvent.AddBag)
         }
+    }
+
+    /** The bag's screen starts from the bag as shown here. */
+    private suspend fun openBag(id: String) {
+        val item = currentState.bags.firstOrNull { it.id == id } ?: return
+        handoff.open(item.bag)
+        sendEvent(ShelfEvent.OpenBag(id))
+    }
+
+    /** A bag finished or deleted on its own screen is reported here, a finish with its undo. */
+    private fun bagOutcome(outcome: ShelfBagOutcome) {
+        val message = when (outcome) {
+            is ShelfBagOutcome.Finished -> ShelfMessage.Finished(outcome.bagId, outcome.position)
+            is ShelfBagOutcome.Deleted -> ShelfMessage.Deleted.takeUnless { outcome.archived }
+            is ShelfBagOutcome.Restored -> null
+        } ?: return
+        handoff.consumed(outcome)
+        updateState { copy(message = message) }
     }
 
     private suspend fun refresh() {
@@ -95,15 +112,6 @@ internal class ShelfViewModel(
     private suspend fun undoFinish(id: String, position: Int) {
         updateState { copy(message = null) }
         write(id) { repository.restore(id, position).onFailure(::fail) }
-    }
-
-    private suspend fun delete(id: String) {
-        updateState { copy(deletingId = null) }
-        write(id) {
-            repository.delete(id)
-                .onSuccess { updateState { copy(openBagId = openBagId.takeUnless { it == id }, message = ShelfMessage.Deleted) } }
-                .onFailure(::fail)
-        }
     }
 
     /** Ignores a second write to the same bag while the first is still running. */

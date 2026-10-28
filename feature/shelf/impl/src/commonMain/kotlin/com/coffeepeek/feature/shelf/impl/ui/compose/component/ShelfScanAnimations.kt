@@ -1,6 +1,7 @@
 package com.coffeepeek.feature.shelf.impl.ui.compose.component
 
 import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.Easing
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
@@ -10,7 +11,6 @@ import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
@@ -21,6 +21,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
@@ -85,49 +88,64 @@ internal fun ShelfFrameReveal(frame: BagScanFrame, modifier: Modifier = Modifier
 }
 
 /**
- * The cut card lifts off the front where the bag lies in the photo, straightens and comes to the middle; [onDone] once it
- * has settled. [aspect] is the card's width over height.
+ * The cut card lifts off the front where the bag lies in the [photo] (its bounds in this overlay), straightens, comes to
+ * the middle and then flies up off the screen; [onDone] once it is gone. [aspect] is the card's width over height.
  */
 @Composable
-internal fun ShelfCardPeel(card: ByteArray, aspect: Float, frame: BagScanFrame?, onDone: () -> Unit, modifier: Modifier = Modifier) {
+internal fun ShelfCardPeel(card: ByteArray, aspect: Float, frame: BagScanFrame?, photo: Rect, onDone: () -> Unit, modifier: Modifier = Modifier) {
     val bitmap = rememberShelfBitmap(card)
     val done by rememberUpdatedState(onDone)
     val progress = remember(card) { Animatable(0f) }
+    val flight = remember(card) { Animatable(0f) }
     LaunchedEffect(card, bitmap != null) {
         if (bitmap == null) return@LaunchedEffect
         progress.animateTo(1f, tween(900, easing = FastOutSlowInEasing))
-        delay(350)
+        delay(250)
+        flight.animateTo(1f, tween(380, easing = Easing { it * it }))
         done()
     }
     val image = bitmap ?: return
-    BoxWithConstraints(modifier.fillMaxSize()) {
-        val area = Size(constraints.maxWidth.toFloat(), constraints.maxHeight.toFloat())
-        val start = frame?.bounds(area) ?: centred(area, aspect, 0.4f)
-        val rect = lerp(start, centred(area, aspect, 0.78f), progress.value)
-        val t = progress.value
-        Canvas(Modifier.fillMaxSize()) { drawRect(Color.Black.copy(alpha = 0.35f * t)) }
-        with(LocalDensity.current) {
-            Image(image, null, Modifier.offset { IntOffset(rect.left.roundToInt(), rect.top.roundToInt()) }
-                .size(rect.width.toDp(), rect.height.toDp())
-                .graphicsLayer {
-                    rotationZ = -4f * sin(PI * t).toFloat()
-                    shadowElevation = 18.dp.toPx() * minOf(1f, t * 3)
-                    shape = ShelfCardShape
-                    clip = true
-                }, contentScale = ContentScale.FillBounds)
-        }
+    val t = progress.value
+    val rect = lerp(frame?.bounds(photo) ?: centred(photo, aspect, 0.4f), centred(photo, aspect, 0.78f), t)
+    val corner = with(LocalDensity.current) { 18.dp.toPx() }
+    Canvas(modifier.fillMaxSize()) {
+        drawRoundRect(Color.Black.copy(alpha = 0.35f * t), photo.topLeft, photo.size, CornerRadius(corner))
+    }
+    with(LocalDensity.current) {
+        val away = rect.bottom + 120.dp.toPx()
+        Image(image, null, Modifier.offset { IntOffset(rect.left.roundToInt(), (rect.top - flight.value * away).roundToInt()) }
+            .size(rect.width.toDp(), rect.height.toDp())
+            .graphicsLayer {
+                rotationZ = -4f * sin(PI * t).toFloat() + 6f * flight.value
+                shadowElevation = 18.dp.toPx() * minOf(1f, t * 3)
+                shape = ShelfCardShape
+                clip = true
+            }, contentScale = ContentScale.FillBounds)
     }
 }
 
-private fun BagScanFrame.bounds(area: Size): Rect {
-    val xs = points.map { it.first * area.width }
-    val ys = points.map { it.second * area.height }
+private fun BagScanFrame.bounds(photo: Rect): Rect {
+    val xs = points.map { photo.left + it.first * photo.width }
+    val ys = points.map { photo.top + it.second * photo.height }
     return Rect(xs.min(), ys.min(), xs.max(), ys.max())
 }
 
 /** A rect of [aspect] as large as [share] of [area] allows, in its middle. */
-private fun centred(area: Size, aspect: Float, share: Float): Rect {
+private fun centred(area: Rect, aspect: Float, share: Float): Rect {
     val width = minOf(area.width * share, area.height * share * aspect)
     val height = width / aspect
-    return Rect(Offset((area.width - width) / 2, (area.height - height) / 2), Size(width, height))
+    return Rect(Offset(area.center.x - width / 2, area.center.y - height / 2), Size(width, height))
+}
+
+/** The card dropping from above the screen into [slot] (overlay coordinates) and springing there; [onLanded] after. */
+@Composable
+internal fun ShelfCardLanding(card: ByteArray, slot: Rect, onLanded: () -> Unit, modifier: Modifier = Modifier) {
+    val landing = rememberShelfLanding(card, landing = true, onLanded)
+    val image = rememberShelfBitmap(card) ?: return
+    with(LocalDensity.current) {
+        Image(image, null, modifier.offset { IntOffset(slot.left.roundToInt(), slot.top.roundToInt()) }
+            .size(slot.width.toDp(), slot.height.toDp())
+            .shelfLanding(landing, fallHeight = slot.bottom + 40.dp.toPx())
+            .shadow(10.dp, ShelfCardShape).clip(ShelfCardShape), contentScale = ContentScale.FillBounds)
+    }
 }

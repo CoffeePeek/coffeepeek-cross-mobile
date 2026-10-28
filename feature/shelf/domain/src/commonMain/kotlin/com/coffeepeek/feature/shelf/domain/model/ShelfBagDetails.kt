@@ -16,6 +16,7 @@ data class ShelfBagDetails(
     val roasterName: String? = null,
     val weightGrams: Int? = null,
     val grind: ShelfGrind? = null,
+    val roastPurpose: ShelfRoastPurpose? = null,
     /** ISO calendar date. */
     val roastedOn: String? = null,
 )

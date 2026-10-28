@@ -20,6 +20,9 @@ internal data class ShelfDay(val year: Int, val month: Int, val day: Int) {
             return era * 146097 + dayOfEra - 719468
         }
 
+    /** As an ISO calendar date, "2026-10-27". */
+    val iso: String get() = "${year.toString().padStart(4, '0')}-${month.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}"
+
     companion object {
         /** The inverse of [epochDay] (civil_from_days). */
         fun ofEpochDay(epochDay: Long): ShelfDay {

@@ -33,8 +33,8 @@ class ShelfViewModelTest {
     @BeforeTest fun setUp() { Dispatchers.setMain(dispatcher) }
     @AfterTest fun tearDown() { store.clear(); Dispatchers.resetMain() }
 
-    private fun model(repository: FakeShelfRepository) =
-        ShelfViewModel(repository, testCalendar(), arrivals).also { store.put("shelf-${nextKey++}", it) }
+    private fun model(repository: FakeShelfRepository, handoff: ShelfBagHandoff = ShelfBagHandoff()) =
+        ShelfViewModel(repository, testCalendar(), arrivals, handoff).also { store.put("shelf-${nextKey++}", it) }
 
     @Test fun showsTheRepositorySnapshotWithItsSummary() = runTest(dispatcher) {
         val repository = FakeShelfRepository()
@@ -76,10 +76,8 @@ class ShelfViewModelTest {
         val repository = FakeShelfRepository(listOf(bag("a"), bag("b"), bag("c")))
         val model = model(repository)
         runCurrent()
-        model.onAction(ShelfAction.OpenBag("b"))
         model.onAction(ShelfAction.StartFinish("b"))
         runCurrent()
-        assertNull(model.state.value.openBagId)
         assertEquals("b", model.state.value.finishing?.id)
 
         model.onAction(ShelfAction.Finish("b", rating = 4, buyAgain = true))
@@ -121,27 +119,11 @@ class ShelfViewModelTest {
         val model = model(repository)
         runCurrent()
         model.onAction(ShelfAction.Finish("a", null, null))
-        model.onAction(ShelfAction.Delete("a"))
+        model.onAction(ShelfAction.UndoFinish("a", 0))
         runCurrent()
         gate.complete(Unit)
         runCurrent()
         assertEquals(listOf("finish:a:null:null"), repository.calls)
-    }
-
-    @Test fun deleteClosesTheSheetsAndConfirms() = runTest(dispatcher) {
-        val repository = FakeShelfRepository(listOf(bag("a"), bag("b")))
-        val model = model(repository)
-        runCurrent()
-        model.onAction(ShelfAction.OpenBag("a"))
-        model.onAction(ShelfAction.RequestDelete("a"))
-        runCurrent()
-        assertEquals("a", model.state.value.deletingId)
-        model.onAction(ShelfAction.Delete("a"))
-        runCurrent()
-        assertNull(model.state.value.deletingId)
-        assertNull(model.state.value.openBagId)
-        assertEquals(ShelfMessage.Deleted, model.state.value.message)
-        assertEquals(listOf("b"), model.state.value.bags.map { it.id })
     }
 
     @Test fun anArrivalIsMarkedAnnouncedAndThenCleared() = runTest(dispatcher) {
@@ -162,5 +144,30 @@ class ShelfViewModelTest {
         model.onAction(ShelfAction.OpenArchive)
         runCurrent()
         assertEquals(ShelfEvent.OpenArchive, model.events.first())
+    }
+
+    @Test fun aTappedBagOpensOnItsScreenAndWhatBecameOfItThereIsReported() = runTest(dispatcher) {
+        val handoff = ShelfBagHandoff()
+        val model = model(FakeShelfRepository(listOf(bag("a"), bag("b"))), handoff)
+        runCurrent()
+        model.onAction(ShelfAction.OpenBag("a"))
+        runCurrent()
+        assertEquals(ShelfEvent.OpenBag("a"), model.events.first())
+        assertEquals(bag("a"), handoff.opened("a"))
+
+        handoff.report(ShelfBagOutcome.Finished("a", 0))
+        runCurrent()
+        assertEquals(ShelfMessage.Finished("a", 0), model.state.value.message)
+        assertNull(handoff.outcome.value)
+
+        handoff.report(ShelfBagOutcome.Deleted("b", archived = false))
+        runCurrent()
+        assertEquals(ShelfMessage.Deleted, model.state.value.message)
+
+        // Restoring and deleting archived bags are the archive's to report.
+        val restored = ShelfBagOutcome.Restored("x")
+        handoff.report(restored)
+        runCurrent()
+        assertEquals(restored, handoff.outcome.value)
     }
 }

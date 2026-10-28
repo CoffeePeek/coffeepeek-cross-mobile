@@ -1,14 +1,11 @@
 package com.coffeepeek.feature.shelf.impl.ui.compose.component
 
 import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.core.AnimationVector1D
-import androidx.compose.animation.core.Easing
-import androidx.compose.animation.core.LinearOutSlowInEasing
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.VectorConverter
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.core.VectorConverter
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.awaitLongPressOrCancellation
@@ -20,7 +17,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -29,10 +25,8 @@ import androidx.compose.runtime.key
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.scale
-import androidx.compose.ui.geometry.Rect
-import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.hapticfeedback.HapticFeedback
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.changedToUp
@@ -45,6 +39,7 @@ import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.semantics.CustomAccessibilityAction
 import androidx.compose.ui.semantics.customActions
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.onClick
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.Density
@@ -52,7 +47,6 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.round
-import androidx.compose.ui.zIndex
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.feature.shelf.api.ShelfImage
@@ -67,6 +61,7 @@ import org.jetbrains.compose.ui.tooling.preview.Preview
 private val ShelfGap = 16.dp
 private val ShelfRowGap = 28.dp
 private const val SLOT_ASPECT = 1.35f
+private const val GHOST_FADE_MILLIS = 180
 
 internal fun shelfGeometry(width: Float, density: Density, rtl: Boolean): ShelfGridGeometry = with(density) {
     val gap = ShelfGap.toPx()
@@ -80,8 +75,8 @@ internal fun shelfGeometry(width: Float, density: Density, rtl: Boolean): ShelfG
  */
 @Composable
 internal fun ShelfGrid(
-    bags: List<ShelfBagItem>, drag: ShelfDragState, image: ShelfImage, onAction: (ShelfAction) -> Unit, modifier: Modifier = Modifier,
-    arrivingId: String? = null,
+    bags: List<ShelfBagItem>, drag: ShelfDragState, tiles: ShelfTiles, image: ShelfImage, onAction: (ShelfAction) -> Unit,
+    modifier: Modifier = Modifier, arrivingId: String? = null,
 ) {
     BoxWithConstraints(modifier.fillMaxWidth()) {
         val density = LocalDensity.current
@@ -95,9 +90,11 @@ internal fun ShelfGrid(
             .onGloballyPositioned { drag.gridOrigin = it.positionInRoot() }
             .shelfGestures(drag, geometry, { currentShown }, haptics, onAction)) {
             repeat(geometry.rows(bags.size)) { row -> ShelfLedge(Modifier.offset { IntOffset(0, (row * geometry.rowHeight + geometry.slotHeight).toInt()) }) }
-            if (drag.active) ShelfGhost(geometry.slot(drag.target), density)
+            // Where the lifted bag will land, or the slot a bag in the archive box keeps until its summary is answered.
+            val ghost = drag.bagId?.let { it to drag.target } ?: drag.archiving?.let { id -> id to shown.indexOfFirst { it.id == id } }
+            ghost?.takeIf { it.second >= 0 }?.let { (id, index) -> byId[id]?.let { ShelfGhost(it, image, geometry.slot(index)) } }
             shown.forEachIndexed { index, item ->
-                key(item.id) { ShelfGridTile(item, index, shown.size, geometry, drag, image, onAction, arriving = item.id == arrivingId) }
+                key(item.id) { ShelfGridTile(item, index, shown.size, geometry, drag, tiles, onAction, arriving = item.id == arrivingId) }
             }
         }
     }
@@ -106,53 +103,23 @@ internal fun ShelfGrid(
 @Composable
 private fun ShelfGridTile(
     item: ShelfBagItem, index: Int, count: Int, geometry: ShelfGridGeometry, drag: ShelfDragState,
-    image: ShelfImage, onAction: (ShelfAction) -> Unit, arriving: Boolean,
+    tiles: ShelfTiles, onAction: (ShelfAction) -> Unit, arriving: Boolean,
 ) {
-    val held = drag.bagId == item.id
-    val arrival = rememberShelfArrival(item.id, arriving)
+    // While lifted, in the archive box or flying back, the bag's own tile is in ShelfLiftedBag above the screen; its slot waits.
+    val away = drag.bagId == item.id || drag.releasedId == item.id || drag.archiving == item.id
+    // A bag just added drops onto the top shelf and springs on the ledge.
+    val arrival = rememberShelfLanding(item.id, arriving)
     val fall = with(LocalDensity.current) { 420.dp.toPx() }
     val slot = geometry.slot(index).topLeft.round()
     val position = remember { Animatable(slot, IntOffset.VectorConverter) }
-    LaunchedEffect(slot, held) {
-        if (held) return@LaunchedEffect
-        drag.releasedAt(item.id)?.let { position.snapTo(it.round()); drag.clearRelease(item.id) }
-        position.animateTo(slot)
-    }
+    LaunchedEffect(slot, away) { if (away) position.snapTo(slot) else position.animateTo(slot) }
+    if (away) return
     val size = with(LocalDensity.current) { geometry.columnWidth.toDp() to geometry.slotHeight.toDp() }
-    ShelfBagTile(item, image, Modifier
-        .offset { if (held) (drag.pointer - drag.grab).round() else drag.releasedAt(item.id)?.round() ?: position.value }
-        .shelfArrival(arrival, fall)
+    tiles.Tile(item, Modifier
+        .offset { position.value }
+        .shelfLanding(arrival, fall)
         .size(size.first, size.second)
-        .zIndex(if (held) 1f else 0f)
-        .scale(if (held) 1.06f else 1f)
         .shelfTileSemantics(item.id, index, count, onAction), highlighted = arriving)
-}
-
-/** A newly added bag: [fall] drops it onto the ledge, [squash] then springs it like a cushion on its bottom edge. */
-private class ShelfArrival(val fall: Animatable<Float, AnimationVector1D>, val squash: Animatable<Float, AnimationVector1D>)
-
-@Composable
-private fun rememberShelfArrival(id: String, arriving: Boolean): ShelfArrival {
-    val arrival = remember(id) { ShelfArrival(Animatable(if (arriving) 0f else 1f), Animatable(0f)) }
-    LaunchedEffect(arriving) {
-        if (!arriving || arrival.fall.value >= 1f) return@LaunchedEffect
-        // Falls like a dropped thing (speeding up) and stops dead with its bottom on the ledge.
-        arrival.fall.animateTo(1f, tween(480, easing = Easing { it * it }))
-        // The top keeps going a little: squashed by 10 % of the height and wider in the middle, then springs back.
-        arrival.squash.animateTo(1f, tween(70, easing = LinearOutSlowInEasing))
-        arrival.squash.animateTo(0f, spring(dampingRatio = 0.35f, stiffness = 450f))
-    }
-    return arrival
-}
-
-private fun Modifier.shelfArrival(arrival: ShelfArrival, fallHeight: Float): Modifier = graphicsLayer {
-    val fall = arrival.fall.value
-    val squash = arrival.squash.value
-    translationY = -(1 - fall) * fallHeight
-    alpha = (fall * 3).coerceIn(0f, 1f)
-    transformOrigin = TransformOrigin(0.5f, 1f)
-    scaleY = 1f - 0.1f * squash
-    scaleX = 1f + 0.06f * squash
 }
 
 @Composable
@@ -171,16 +138,18 @@ private fun Modifier.shelfTileSemantics(id: String, index: Int, count: Int, onAc
     }
 }
 
-/** Where the lifted bag will land. */
+/** The lifted bag's faded, outlined copy in the slot it will land in; it slides along as the target changes. */
 @Composable
-private fun ShelfGhost(slot: Rect, density: Density) {
-    val shape = RoundedCornerShape(CoffeePeekDimens.radiusMd)
-    val colors = MaterialTheme.colorScheme
-    with(density) {
-        Box(Modifier.offset { IntOffset(slot.left.toInt(), (slot.top + slot.height * 0.18f).toInt()) }
-            .size(slot.width.toDp(), (slot.height * 0.82f).toDp())
-            .background(colors.onSurface.copy(alpha = 0.06f), shape).border(1.5.dp, colors.outline, shape))
-    }
+private fun ShelfGhost(item: ShelfBagItem, image: ShelfImage, slot: Rect) {
+    val target = slot.topLeft.round()
+    val position = remember { Animatable(target, IntOffset.VectorConverter) }
+    LaunchedEffect(target) { position.animateTo(target, spring(stiffness = Spring.StiffnessMediumLow)) }
+    // A copy of its own, so it fades in instead of popping up while its card loads.
+    val appear = remember { Animatable(0f) }
+    LaunchedEffect(Unit) { appear.animateTo(1f, tween(GHOST_FADE_MILLIS)) }
+    val size = with(LocalDensity.current) { slot.width.toDp() to slot.height.toDp() }
+    ShelfBagTile(item, image, Modifier.offset { position.value }.size(size.first, size.second)
+        .graphicsLayer { alpha = appear.value }.clearAndSetSemantics {}, ghost = true)
 }
 
 /**
@@ -216,7 +185,7 @@ private fun Modifier.shelfGestures(
 @Composable
 private fun ShelfGridPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
     Box(Modifier.background(MaterialTheme.colorScheme.background).padding(CoffeePeekDimens.spacing4)) {
-        ShelfGrid(previewShelfItems(), remember { ShelfDragState() }, PreviewShelfImage, {})
+        ShelfGrid(previewShelfItems(), remember { ShelfDragState() }, rememberShelfTiles(PreviewShelfImage), PreviewShelfImage, {})
     }
 }
 

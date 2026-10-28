@@ -1,6 +1,5 @@
 package com.coffeepeek.feature.shelf.impl.ui.compose.model
 
-import com.coffeepeek.feature.shelf.domain.model.ShelfIssue
 import com.coffeepeek.feature.shelf.impl.ui.data.ShelfDay
 
 /** Finished bags newest first; [page] is the last loaded page (0 before the first answer). */
@@ -14,12 +13,8 @@ internal data class ShelfArchiveState(
     val loadingMore: Boolean = false,
     val loadFailed: Boolean = false,
     val loadMoreFailed: Boolean = false,
-    val openBagId: String? = null,
-    val deletingId: String? = null,
     val message: ShelfArchiveMessage? = null,
 ) {
-    val openBag: ShelfBagItem? get() = items.firstOrNull { it.id == openBagId }
-
     /** Month groups in loading order; a bag without a finish date joins the group before it. */
     val sections: List<ShelfArchiveSection>
         get() = items.fold(mutableListOf<ShelfArchiveSection>()) { sections, item ->
@@ -36,5 +31,4 @@ internal data class ShelfArchiveSection(val year: Int, val month: Int, val items
 internal sealed interface ShelfArchiveMessage {
     data object Restored : ShelfArchiveMessage
     data object Deleted : ShelfArchiveMessage
-    data class Failed(val issue: ShelfIssue) : ShelfArchiveMessage
 }

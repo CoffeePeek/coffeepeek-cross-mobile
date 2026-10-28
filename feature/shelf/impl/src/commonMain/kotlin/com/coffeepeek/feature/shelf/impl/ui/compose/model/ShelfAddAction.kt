@@ -3,6 +3,7 @@ package com.coffeepeek.feature.shelf.impl.ui.compose.model
 import com.coffeepeek.feature.shelf.api.ShelfCoffeeOption
 import com.coffeepeek.feature.shelf.api.ShelfPhoto
 import com.coffeepeek.feature.shelf.domain.model.ShelfGrind
+import com.coffeepeek.feature.shelf.domain.model.ShelfRoastPurpose
 import com.coffeepeek.feature.shelf.impl.ui.data.ShelfDay
 
 internal sealed interface ShelfAddAction {
@@ -12,6 +13,7 @@ internal sealed interface ShelfAddAction {
     data object CloseCamera : ShelfAddAction
     /** The card has finished peeling off the photo. */
     data object RevealFinished : ShelfAddAction
+    data object CardLanded : ShelfAddAction
     data class PhotoPicked(val photo: ShelfPhoto) : ShelfAddAction
     data object PhotoFailed : ShelfAddAction
     data class QueryChanged(val query: String) : ShelfAddAction
@@ -19,6 +21,7 @@ internal sealed interface ShelfAddAction {
     data class RoasterChanged(val roaster: String) : ShelfAddAction
     data class WeightChosen(val grams: Int?) : ShelfAddAction
     data class GrindChosen(val grind: ShelfGrind?) : ShelfAddAction
+    data class RoastPurposeChosen(val purpose: ShelfRoastPurpose?) : ShelfAddAction
     data class RoastDateChosen(val day: ShelfDay?) : ShelfAddAction
     /** [later] is "Заполню позже": the bag goes on the shelf with its card only. */
     data class Save(val later: Boolean) : ShelfAddAction

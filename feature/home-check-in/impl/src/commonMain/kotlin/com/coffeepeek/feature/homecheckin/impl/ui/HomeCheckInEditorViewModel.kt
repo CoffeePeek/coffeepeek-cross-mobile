@@ -26,9 +26,9 @@ internal class HomeCheckInEditorViewModel(
     private val canAccess: () -> Boolean,
     private val now: () -> Instant = { Clock.System.now() },
     private val analytics: HomeCheckInEditorAnalytics = HomeCheckInEditorAnalytics.None,
+    startBean: HomeCheckInStartBean? = null,
 ) : MviViewModel<HomeCheckInEditorState, HomeCheckInEditorAction, HomeCheckInEditorEventEnvelope>(
-    HomeCheckInEditorState(draft = HomePreparationInput(preparedAt = initialPreparedAt,
-        preparedOn = initialPreparedOn, tasteScore = 5)),
+    homeCheckInStartState(initialPreparedAt, initialPreparedOn, startBean.takeIf { preparationId == null }),
 ) {
     private var initialized = false
     private var loadJob: Job? = null

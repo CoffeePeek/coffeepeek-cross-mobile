@@ -116,6 +116,10 @@ class ShelfAddViewModelTest {
         model.onAction(ShelfAddAction.RevealFinished)
         runCurrent()
         assertEquals(ShelfAddStep.Form, model.state.value.step)
+        assertTrue(model.state.value.cardLanding)
+        model.onAction(ShelfAddAction.CardLanded)
+        runCurrent()
+        assertFalse(model.state.value.cardLanding)
     }
 
     @Test fun theFoundFrontShowsBeforeTheCardAndARevealThatNeverEndsStillOpensTheForm() = runTest(dispatcher) {
@@ -197,6 +201,7 @@ class ShelfAddViewModelTest {
         model.onAction(ShelfAddAction.QueryChanged("Свой кофе"))
         model.onAction(ShelfAddAction.WeightChosen(250))
         model.onAction(ShelfAddAction.GrindChosen(ShelfGrind.Beans))
+        model.onAction(ShelfAddAction.RoastPurposeChosen(ShelfRoastPurpose.Filter))
         model.onAction(ShelfAddAction.RoastDateChosen(ShelfDay(2026, 10, 20)))
         model.onAction(ShelfAddAction.RoastDateChosen(ShelfDay(2026, 10, 30)))
         runCurrent()
@@ -205,7 +210,8 @@ class ShelfAddViewModelTest {
         model.onAction(ShelfAddAction.Save(later = false))
         runCurrent()
         assertEquals(ShelfAddEvent.Saved, model.events.first())
-        assertEquals(ShelfBagDetails(ShelfBean.Custom("Свой кофе"), null, 250, ShelfGrind.Beans, "2026-10-20"), repository.added.single())
+        assertEquals(ShelfBagDetails(ShelfBean.Custom("Свой кофе"), null, 250, ShelfGrind.Beans, ShelfRoastPurpose.Filter, "2026-10-20"),
+            repository.added.single())
 
         model.onAction(ShelfAddAction.Save(later = true))
         runCurrent()

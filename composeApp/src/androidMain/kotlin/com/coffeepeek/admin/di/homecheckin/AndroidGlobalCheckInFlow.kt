@@ -6,6 +6,7 @@ import com.coffeepeek.admin.analytics.CheckInTracker
 import com.coffeepeek.admin.di.checkinhistory.AndroidCheckInHistorySession
 import com.coffeepeek.admin.di.checkinhistory.HistoryCreationAnalytics
 import com.coffeepeek.core.session.SessionReader
+import com.coffeepeek.feature.homecheckin.api.HomeCheckInBean
 import com.coffeepeek.feature.homecheckin.api.HomeCheckInEditorEntry
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineStart
@@ -14,9 +15,13 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.launch
 
-/** App navigation/lease only; the feature owns form state, validation, photos and writes. */
+/**
+ * App navigation/lease only; the feature owns form state, validation, photos and writes. With [homeBean] the flow skips the
+ * picker and opens the Home form with that coffee already chosen ("Заварить чашку" from a shelf bag).
+ */
 internal class AndroidGlobalCheckInFlow(
     sessions: SessionReader,
+    val homeBean: HomeCheckInBean? = null,
     private val createEditor: (AndroidCheckInHistorySession, CheckInTracker?) -> HomeCheckInEditorEntry,
 ) : ViewModel() {
     val lease = AndroidCheckInHistorySession(sessions)
@@ -34,6 +39,7 @@ internal class AndroidGlobalCheckInFlow(
                 revoke()
             }.collect { if (!lease.isCurrent(it)) revoke() }
         }
+        if (homeBean != null) home()
     }
 
     fun canAccess() = lease.isLoggedIn && lease.isCurrent()
