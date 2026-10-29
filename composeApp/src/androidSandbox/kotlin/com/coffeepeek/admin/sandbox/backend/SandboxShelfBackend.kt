@@ -1,0 +1,236 @@
+package com.coffeepeek.admin.sandbox.backend
+
+import io.ktor.http.HttpMethod
+import io.ktor.http.HttpStatusCode
+import io.ktor.http.Parameters
+import kotlinx.serialization.json.*
+import java.time.LocalDate
+import java.util.UUID
+
+/** What a fixture bag's front shows; the backend's owner draws it into the card image. */
+internal data class SandboxBagCard(val title: String, val roaster: String?, val weight: String?, val tone: Int)
+
+/**
+ * In-memory shelf contract (`coffeepeek-backend/docs/api/shelf-client.md`). Cards are keys from the shared `/api/Photos/` upload fixture;
+ * fixture bags have their own drawn fronts ([fixtureCards]). The shelf list keeps its order, so `position` is always the row's index.
+ */
+internal class SandboxShelfBackend(private val today: LocalDate, private val uploaded: (String) -> Boolean) {
+    companion object {
+        const val ROOT = "/api/v1/shelf"
+        const val SHELF_LIMIT = 200
+        private const val TEXT_LIMIT = 250
+        private val products = mapOf(
+            "sandbox-ethiopia" to ("22222222-2222-4222-8222-222222222222" to "Sandbox Ethiopia"),
+            "sandbox-kenya" to ("22222222-2222-4222-8222-222222222223" to "Sandbox Kenya"),
+            "sandbox-brazil" to ("22222222-2222-4222-8222-222222222224" to "Sandbox Brazil"),
+        )
+        /** A catalogue product's current slug, as the server resolves it on every read. */
+        fun productSlug(productId: String?): String? = products.entries.firstOrNull { it.value.first == productId }?.key
+        private val details = listOf("coffeeProductId", "coffeeProductSlug", "name", "roasterName", "weightGrams", "grind", "roastPurpose", "roastedOn")
+    }
+    private class Rejected(val status: HttpStatusCode) : Exception()
+
+    private val shelf = mutableListOf<JsonObject>()
+    private val archive = mutableListOf<JsonObject>()
+    private val usedKeys = mutableSetOf<String>()
+
+    /** The fronts of the fixture bags by card key, for the backend to draw after [reset]. */
+    val fixtureCards = linkedMapOf<String, SandboxBagCard>()
+
+    /** Fixture bags from fully filled to a photo alone, each with its own front. */
+    fun reset(populated: Boolean) {
+        shelf.clear(); archive.clear(); usedKeys.clear(); fixtureCards.clear()
+        if (!populated) return
+        shelf += fixture("sandbox-ethiopia", null, 250, "Beans", daysAgo = 3, purpose = "Filter")
+        shelf += fixture(null, "Кения Гичати АА", 200, "Beans", daysAgo = 5, roaster = "Зерно и Пламя", purpose = "Filter")
+        shelf += fixture(null, "Колумбия P!X", 250, "Ground", daysAgo = 9, roaster = "River Roasters", purpose = "Espresso")
+        shelf += fixture("sandbox-brazil", null, 1000, "Beans", daysAgo = 14, purpose = "Espresso", roastedDaysAgo = null)
+        shelf += fixture(null, "Руанда Нгома", null, null, daysAgo = 6, roaster = "Зерно и Пламя", roastedDaysAgo = null)
+        shelf += fixture(null, "Эфиопия Гуджи", 250, null, daysAgo = 2, roastedDaysAgo = null)
+        shelf += fixture(null, null, null, null, daysAgo = 1, roastedDaysAgo = null,
+            front = SandboxBagCard("Гватемала Уэуэтенанго", "Mountain Roasters", "340 г", 6))
+        archive += finished(fixture("sandbox-kenya", null, 250, "Beans", daysAgo = 40), daysAgo = 17, rating = 4, buyAgain = true)
+        archive += finished(fixture(null, "Гондурас Мойзес", 200, "Beans", daysAgo = 70, roaster = "Welder Catherine"), daysAgo = 39, rating = 5, buyAgain = null)
+        archive += finished(fixture(null, "Перу Санта Роса", 250, null, daysAgo = 95, roaster = "River Roasters"), daysAgo = 75, rating = null, buyAgain = false)
+    }
+
+    /** A bag's bean for a home check-in brewed from it, as the server snapshots it; null for a missing bag. */
+    fun bean(bagId: String): Map<String, JsonElement>? = find(bagId)?.let { row ->
+        mapOf("coffeeProductId" to (row["coffeeProductId"] ?: JsonNull), "beanName" to (row["name"] ?: JsonNull),
+            "roasterName" to (row["roasterName"] ?: JsonNull))
+    }
+
+    /** The upload key of a bag's current card, for a home check-in that shows the bag; null for a missing bag or one without a card. */
+    fun cardKey(bagId: String): String? = find(bagId)?.get("photo")?.takeUnless { it is JsonNull }?.jsonObject?.text("id")
+
+    /** Owner-only card read: the upload key behind `photos/{photoId}`, or null when the bag or that card no longer exists. */
+    fun cardKey(bagId: String, photoId: String): String? =
+        find(bagId)?.get("photo")?.jsonObject?.get("id")?.jsonPrimitive?.content?.takeIf { it == photoId }
+
+    fun handle(path: String, method: HttpMethod, parameters: Parameters, input: JsonObject): Pair<HttpStatusCode, JsonObject>? {
+        if (path != ROOT && !path.startsWith("$ROOT/")) return null
+        return try {
+            when {
+                path == ROOT && method == HttpMethod.Get -> ok(JsonArray(shelfRows()))
+                path == "$ROOT/archive" && method == HttpMethod.Get -> archivePage(parameters)
+                path == "$ROOT/order" && method == HttpMethod.Put -> reorder(input)
+                path == "$ROOT/bags" && method == HttpMethod.Post -> create(input)
+                path.startsWith("$ROOT/bags/") -> bag(path.removePrefix("$ROOT/bags/"), method, input)
+                else -> fail(HttpStatusCode.NotFound)
+            }
+        } catch (rejected: Rejected) {
+            fail(rejected.status)
+        }
+    }
+
+    private fun bag(route: String, method: HttpMethod, input: JsonObject): Pair<HttpStatusCode, JsonObject> {
+        val id = route.substringBefore('/')
+        val existing = find(id) ?: return fail(HttpStatusCode.NotFound)
+        return when (route.removePrefix(id) to method) {
+            "" to HttpMethod.Put -> ok(replace(existing, edited(existing, input)))
+            "" to HttpMethod.Delete -> { shelf.remove(existing); archive.remove(existing); ok(JsonNull) }
+            "/finish" to HttpMethod.Post -> finish(existing, input)
+            "/restore" to HttpMethod.Post -> restore(existing, input)
+            else -> fail(HttpStatusCode.NotFound)
+        }
+    }
+
+    private fun create(input: JsonObject): Pair<HttpStatusCode, JsonObject> {
+        if (shelf.size >= SHELF_LIMIT) throw Rejected(HttpStatusCode.Conflict)
+        val photo = input["photo"].takeUnless { it is JsonNull }?.let(::claim)
+        val bean = beanFields(input, null)
+        if (photo == null && bean.isEmpty()) throw Rejected(HttpStatusCode.BadRequest)
+        val id = UUID.randomUUID().toString()
+        val row = buildJsonObject {
+            put("id", id); put("status", "OnShelf"); put("photo", photo?.let { card(id, it) } ?: JsonNull)
+            detailFields(input, bean).forEach { (key, value) -> put(key, value) }
+            put("addedAtUtc", "${today}T12:00:00Z"); put("finishedAtUtc", JsonNull); put("rating", JsonNull); put("buyAgain", JsonNull)
+        }
+        shelf.add(0, row)
+        return ok(output(row))
+    }
+
+    private fun edited(existing: JsonObject, input: JsonObject): JsonObject {
+        val photo = input["photo"].takeUnless { it == null || it is JsonNull }?.let { card(id(existing), claim(it)) }
+        val fields = detailFields(input, beanFields(input, existing))
+        return JsonObject(existing - details.toSet() + fields + listOfNotNull(photo?.let { "photo" to it }))
+    }
+
+    private fun finish(existing: JsonObject, input: JsonObject): Pair<HttpStatusCode, JsonObject> {
+        if (existing !in shelf) throw Rejected(HttpStatusCode.Conflict)
+        val rating = input["rating"]?.jsonPrimitive?.intOrNull
+        if (rating != null && rating !in 1..5) throw Rejected(HttpStatusCode.BadRequest)
+        val row = JsonObject(existing + mapOf("status" to JsonPrimitive("Finished"), "finishedAtUtc" to JsonPrimitive("${today}T12:00:00Z"),
+            "rating" to JsonPrimitive(rating), "buyAgain" to JsonPrimitive(input["buyAgain"]?.jsonPrimitive?.booleanOrNull)))
+        shelf.remove(existing); archive += row
+        return ok(output(row))
+    }
+
+    private fun restore(existing: JsonObject, input: JsonObject): Pair<HttpStatusCode, JsonObject> {
+        if (existing !in archive || shelf.size >= SHELF_LIMIT) throw Rejected(HttpStatusCode.Conflict)
+        val position = (input["position"]?.jsonPrimitive?.intOrNull ?: 0).coerceIn(0, shelf.size)
+        val row = JsonObject(existing + mapOf("status" to JsonPrimitive("OnShelf"), "finishedAtUtc" to JsonNull,
+            "rating" to JsonNull, "buyAgain" to JsonNull))
+        archive.remove(existing); shelf.add(position, row)
+        return ok(output(row))
+    }
+
+    private fun reorder(input: JsonObject): Pair<HttpStatusCode, JsonObject> {
+        val ids = (input["bagIds"] as? JsonArray ?: throw Rejected(HttpStatusCode.BadRequest)).map { it.jsonPrimitive.content }
+        val byId = shelf.associateBy(::id)
+        if (ids.size != shelf.size || ids.toSet() != byId.keys) throw Rejected(HttpStatusCode.Conflict)
+        val ordered = ids.map(byId::getValue)
+        shelf.clear(); shelf += ordered
+        return ok(JsonArray(shelfRows()))
+    }
+
+    private fun archivePage(parameters: Parameters): Pair<HttpStatusCode, JsonObject> {
+        val page = parameters["pageNumber"]?.toIntOrNull()?.coerceIn(1, 10000) ?: 1
+        val size = parameters["pageSize"]?.toIntOrNull()?.coerceIn(1, 100) ?: 20
+        val query = parameters["query"]?.trim().orEmpty()
+        if (query.length > 100) throw Rejected(HttpStatusCode.BadRequest)
+        val matching = archive.sortedByDescending { it.getValue("finishedAtUtc").jsonPrimitive.content }.filter { row ->
+            query.isEmpty() || listOf("name", "roasterName").any { row[it]?.jsonPrimitive?.contentOrNull?.contains(query, ignoreCase = true) == true }
+        }
+        return ok(buildJsonObject {
+            put("items", JsonArray(matching.drop((page - 1) * size).take(size).map(::output))); put("totalCount", matching.size)
+        })
+    }
+
+    /** Bean selector rules shared with home check-ins: a published slug, a custom name, or (on PUT) the bag's own product ID. */
+    private fun beanFields(input: JsonObject, existing: JsonObject?): Map<String, JsonElement> {
+        val slug = input.text("coffeeProductSlug")
+        val custom = input.text("customName")?.trim()
+        val keptId = input.text("coffeeProductId")
+        if (listOfNotNull(slug, custom, keptId).size > 1) throw Rejected(HttpStatusCode.BadRequest)
+        return when {
+            slug != null -> products[slug]?.let { (id, name) ->
+                mapOf("coffeeProductId" to JsonPrimitive(id), "coffeeProductSlug" to JsonPrimitive(slug), "name" to JsonPrimitive(name))
+            } ?: throw Rejected(HttpStatusCode.NotFound)
+            custom != null -> if (custom.length !in 1..TEXT_LIMIT) throw Rejected(HttpStatusCode.BadRequest) else mapOf("name" to JsonPrimitive(custom))
+            keptId != null -> if (existing?.text("coffeeProductId") != keptId) throw Rejected(HttpStatusCode.BadRequest)
+                else listOf("coffeeProductId", "coffeeProductSlug", "name").associateWith { existing.getValue(it) }
+            else -> emptyMap()
+        }
+    }
+
+    private fun detailFields(input: JsonObject, bean: Map<String, JsonElement>): Map<String, JsonElement> {
+        val roaster = input.text("roasterName")?.trim()?.takeIf { it.isNotEmpty() } ?: "Sandbox Roaster".takeIf { input.text("coffeeProductSlug") != null }
+        val weight = input["weightGrams"]?.jsonPrimitive?.intOrNull
+        val grind = input.text("grind")
+        val roastPurpose = input.text("roastPurpose")
+        val roastedOn = input.text("roastedOn")?.let { runCatching { LocalDate.parse(it) }.getOrNull() ?: throw Rejected(HttpStatusCode.BadRequest) }
+        if ((roaster?.length ?: 0) > TEXT_LIMIT || (weight != null && weight !in 1..10000) || (grind != null && grind !in setOf("Beans", "Ground")) ||
+            (roastPurpose != null && roastPurpose !in setOf("Espresso", "Filter")) ||
+            (roastedOn != null && roastedOn > today.plusDays(1))) throw Rejected(HttpStatusCode.BadRequest)
+        return details.associateWith { JsonNull as JsonElement } + bean + mapOf("roasterName" to JsonPrimitive(roaster),
+            "weightGrams" to JsonPrimitive(weight), "grind" to JsonPrimitive(grind), "roastPurpose" to JsonPrimitive(roastPurpose),
+            "roastedOn" to JsonPrimitive(roastedOn?.toString()))
+    }
+
+    private fun claim(photo: JsonElement): String {
+        val key = (photo as? JsonObject)?.text("storageKey") ?: throw Rejected(HttpStatusCode.BadRequest)
+        if (!uploaded(key)) throw Rejected(HttpStatusCode.BadRequest)
+        if (!usedKeys.add(key)) throw Rejected(HttpStatusCode.Conflict)
+        return key
+    }
+
+    /** A bag added [daysAgo]; its [front] defaults to what the filled fields would print on the pack. */
+    private fun fixture(
+        slug: String?, custom: String?, weight: Int?, grind: String?, daysAgo: Long, roaster: String? = null,
+        purpose: String? = null, roastedDaysAgo: Long? = daysAgo + 5, front: SandboxBagCard? = null,
+    ): JsonObject {
+        val id = UUID.randomUUID().toString()
+        val input = buildJsonObject {
+            slug?.let { put("coffeeProductSlug", it) }; custom?.let { put("customName", it) }; roaster?.let { put("roasterName", it) }
+            weight?.let { put("weightGrams", it) }; grind?.let { put("grind", it) }; purpose?.let { put("roastPurpose", it) }
+            roastedDaysAgo?.let { put("roastedOn", today.minusDays(it).toString()) }
+        }
+        val key = "bag-card-${fixtureCards.size}"
+        fixtureCards[key] = front ?: SandboxBagCard(custom ?: products[slug]?.second ?: "Coffee",
+            roaster ?: "Sandbox Roaster".takeIf { slug != null }, weight?.let { "$it г" }, fixtureCards.size)
+        return buildJsonObject {
+            put("id", id); put("status", "OnShelf"); put("photo", card(id, key))
+            detailFields(input, beanFields(input, null)).forEach { (key, value) -> put(key, value) }
+            put("addedAtUtc", "${today.minusDays(daysAgo)}T09:00:00Z"); put("finishedAtUtc", JsonNull); put("rating", JsonNull); put("buyAgain", JsonNull)
+        }
+    }
+
+    private fun finished(row: JsonObject, daysAgo: Long, rating: Int?, buyAgain: Boolean?) = JsonObject(row + mapOf(
+        "status" to JsonPrimitive("Finished"), "finishedAtUtc" to JsonPrimitive("${today.minusDays(daysAgo)}T18:00:00Z"),
+        "rating" to JsonPrimitive(rating), "buyAgain" to JsonPrimitive(buyAgain)))
+
+    private fun card(bagId: String, key: String) = buildJsonObject { put("id", key); put("url", "$ROOT/bags/$bagId/photos/$key") }
+    private fun replace(existing: JsonObject, row: JsonObject): JsonObject {
+        val list = if (existing in shelf) shelf else archive
+        list[list.indexOf(existing)] = row
+        return output(row)
+    }
+    private fun find(id: String) = (shelf + archive).firstOrNull { id(it) == id }
+    private fun id(row: JsonObject) = row.getValue("id").jsonPrimitive.content
+    private fun shelfRows() = shelf.map(::output)
+    private fun output(row: JsonObject) = JsonObject(row + ("position" to JsonPrimitive(shelf.indexOf(row).takeIf { it >= 0 })))
+    private fun JsonObject.text(key: String) = get(key)?.jsonPrimitive?.contentOrNull
+    private fun ok(data: JsonElement) = HttpStatusCode.OK to buildJsonObject { put("isSuccess", true); put("data", data) }
+    private fun fail(status: HttpStatusCode) = status to buildJsonObject { put("isSuccess", false); put("data", JsonNull) }
+}

@@ -54,6 +54,8 @@ private fun HistoryPhotoTile(urls: List<String>, originals: List<String>, detail
     }
 }
 
-@Preview @Composable private fun HistoryCheckInPhotosPreview() = CoffeePeekTheme {
+@Composable private fun HistoryCheckInPhotosPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
     HistoryCheckInPhotos(List(4) { "" }, {}, originalUrls = List(4) { "fixture-original-$it" })
 }
+@Preview @Composable private fun HistoryCheckInPhotosLightPreview() = HistoryCheckInPhotosPreview(false)
+@Preview @Composable private fun HistoryCheckInPhotosDarkPreview() = HistoryCheckInPhotosPreview(true)

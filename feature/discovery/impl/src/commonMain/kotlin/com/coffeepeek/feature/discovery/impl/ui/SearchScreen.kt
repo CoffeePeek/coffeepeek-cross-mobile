@@ -42,9 +42,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.ui.draw.clip
-import androidx.compose.material3.OutlinedIconButton
 import androidx.compose.material3.BadgedBox
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.background
@@ -55,7 +53,6 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -85,7 +82,6 @@ import com.coffeepeek.core.designsystem.component.CoffeePeekLoader
 import com.coffeepeek.core.designsystem.component.CoffeePeekPullToRefresh
 import com.coffeepeek.core.designsystem.component.CoffeePeekCircularBackButton
 import com.coffeepeek.core.designsystem.component.CoffeePeekSearchField
-import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.feature.discovery.api.DiscoveryExposure
 import com.coffeepeek.feature.discovery.api.DiscoveryHost
@@ -121,7 +117,7 @@ internal fun SearchContent(
             Column(Modifier.padding(top = CoffeePeekDimens.spacing3, bottom = CoffeePeekDimens.spacing2)) {
                 SearchHeader(state, host, onAction)
                 Spacer(Modifier.height(CoffeePeekDimens.spacing2))
-                QuickFilters(state, onAction)
+                DiscoveryQuickFilters(state.filters, state.canUseNearby, onAction)
             }
             HorizontalDivider(thickness = 1.dp, color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.7f))
         }
@@ -174,53 +170,11 @@ private fun SearchHeader(state: SearchState, host: DiscoveryHost, onAction: (Sea
             onSearch = { focus.clearFocus() },
         )
         Spacer(Modifier.width(CoffeePeekDimens.spacing2))
-        val description = if (state.activeFilterCount > 0) stringResource(Res.string.discovery_filters_active, state.activeFilterCount) else stringResource(Res.string.discovery_filters)
-        BadgedBox(
-            badge = {
-                if (state.activeFilterCount > 0) Box(
-                    Modifier.size(22.dp).clip(CircleShape).background(MaterialTheme.colorScheme.primary),
-                    contentAlignment = Alignment.Center,
-                ) { Text(state.activeFilterCount.toString(), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onPrimary) }
-            },
-            modifier = host.exposure(Modifier, DiscoveryExposure.Filters),
-        ) {
-            OutlinedIconButton(
-                onClick = { onAction(SearchAction.ToggleFilters) },
-                modifier = Modifier.size(CoffeePeekDimens.buttonHeight).semantics { contentDescription = description },
-                shape = CircleShape,
-                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
-            ) {
-                Icon(CoffeePeekIcons.Filter, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(22.dp))
-            }
-        }
+        DiscoveryFilterButton(state.activeFilterCount, { onAction(SearchAction.ToggleFilters) }, host.exposure(Modifier, DiscoveryExposure.Filters))
     }
 }
 
-@Composable
-private fun QuickFilters(state: SearchState, onAction: (SearchAction) -> Unit) {
-    val filters = state.filters
-    LazyRow(
-        contentPadding = PaddingValues(horizontal = CoffeePeekDimens.spacing4, vertical = 4.dp),
-        horizontalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing1),
-        modifier = Modifier.fillMaxWidth(),
-    ) {
-        if (state.canUseNearby) item { CoffeePeekFilterChip(stringResource(Res.string.discovery_quick_nearby), filters.nearbyOnly, { onAction(SearchAction.ToggleNearby) }, leadingIcon = CoffeePeekIcons.Distance) }
-        item { CoffeePeekFilterChip(stringResource(Res.string.discovery_quick_open), filters.openOnly, { onAction(SearchAction.ToggleOpen) }, leadingIcon = CoffeePeekIcons.Time) }
-        item { CoffeePeekFilterChip(stringResource(Res.string.discovery_quick_new), filters.newOnly, { onAction(SearchAction.ToggleNew) }, leadingIcon = CoffeePeekIcons.Sparkle) }
-        item { CoffeePeekFilterChip(stringResource(Res.string.discovery_quick_visited), filters.visitedOnly, { onAction(SearchAction.ToggleVisited) }, leadingIcon = CoffeePeekIcons.CheckCircle) }
-        item { CoffeePeekFilterChip(stringResource(Res.string.discovery_quick_favorites), filters.favoritesOnly, { onAction(SearchAction.ToggleFavorites) }, leadingIcon = CoffeePeekIcons.Favorite) }
-        items(ShopKind.entries) { kind ->
-            // One kind at a time; tapping it again clears it.
-            CoffeePeekFilterChip(stringResource(kind.label()), filters.kind == kind, { onAction(SearchAction.SetKind(kind.takeUnless { filters.kind == it })) })
-        }
-    }
-}
 
-private fun ShopKind.label() = when (this) {
-    ShopKind.Specialty -> Res.string.discovery_kind_specialty
-    ShopKind.CoffeeBar -> Res.string.discovery_kind_coffee_bar
-    ShopKind.Cafe -> Res.string.discovery_kind_cafe
-}
 
 @Composable
 private fun ResultsList(

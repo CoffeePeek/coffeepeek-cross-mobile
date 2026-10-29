@@ -58,6 +58,8 @@ private fun SourceRow(icon: ImageVector, label: String, onClick: () -> Unit) {
     }
 }
 
-@Preview @Composable private fun HomeCheckInPhotoSourcePreview() = CoffeePeekTheme {
+@Composable private fun HomeCheckInPhotoSourcePreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
     Surface { Column { HomeCheckInPhotoSourceContent({}, {}, {}) } }
 }
+@Preview @Composable private fun HomeCheckInPhotoSourceLightPreview() = HomeCheckInPhotoSourcePreview(false)
+@Preview @Composable private fun HomeCheckInPhotoSourceDarkPreview() = HomeCheckInPhotoSourcePreview(true)

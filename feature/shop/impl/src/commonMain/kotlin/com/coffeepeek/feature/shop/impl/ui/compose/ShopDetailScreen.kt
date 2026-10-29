@@ -97,6 +97,8 @@ internal fun ShopDetailScreen(
     refreshGeneration: Long = 0,
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val changed = com.coffeepeek.feature.ownership.api.LocalBusinessOwnership.current?.ProfileChanges() ?: 0L
+    LaunchedEffect(changed) { if (changed > 0) viewModel.onAction(ShopDetailAction.Retry) }
     val currentOnEvent by rememberUpdatedState(onEvent)
     val currentGeneration by rememberUpdatedState(sessionGeneration)
     val favoriteError by rememberUpdatedState(stringResource(Res.string.shop_detail_favorite_error))
@@ -281,7 +283,28 @@ private fun ShopDetailHeader(
     val overview = state.details?.overview ?: return
     // The screen source includes these controls, so the hero uses a separate blur source.
     val heroHaze = rememberHazeState()
+    androidx.compose.runtime.CompositionLocalProvider(
+        com.coffeepeek.feature.shop.impl.ui.compose.component.LocalShopBusinessIdentity provides
+            com.coffeepeek.feature.shop.impl.ui.compose.component.ShopBusinessIdentity(overview.id,
+                overview.canonicalPath?.substringAfterLast('/') ?: overview.id)) {
     Column {
+        ShopDetailHero(state, onAction, overview, heroHaze)
+        Column(Modifier.padding(horizontal = CoffeePeekDimens.spacing4,
+            vertical = CoffeePeekDimens.spacing3),
+            verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing2)) {
+            ShopOverviewHeader(overview, onOpenMap = { onAction(ShopDetailAction.OpenMap) })
+            ShopOverviewStats(overview,
+                onOpenCheckIns = { onAction(ShopDetailAction.OpenCheckIns) },
+                onOpenPriceInfo = { onAction(ShopDetailAction.OpenPriceInfo) },
+                distanceLabel = distanceLabel)
+        }
+    }
+}
+}
+
+@Composable
+private fun ShopDetailHero(state: ShopDetailState, onAction: (ShopDetailAction) -> Unit,
+    overview: ShopOverview, heroHaze: dev.chrisbanes.haze.HazeState) {
         Box {
             ShopOverviewHero(overview,
                 onOpenPhoto = { urls, originals, index -> onAction(ShopDetailAction.OpenPhoto(urls, index, originals)) },
@@ -298,16 +321,6 @@ private fun ShopDetailHeader(
                 hazeState = heroHaze,
             )
         }
-        Column(Modifier.padding(horizontal = CoffeePeekDimens.spacing4,
-            vertical = CoffeePeekDimens.spacing3),
-            verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing2)) {
-            ShopOverviewHeader(overview, onOpenMap = { onAction(ShopDetailAction.OpenMap) })
-            ShopOverviewStats(overview,
-                onOpenCheckIns = { onAction(ShopDetailAction.OpenCheckIns) },
-                onOpenPriceInfo = { onAction(ShopDetailAction.OpenPriceInfo) },
-                distanceLabel = distanceLabel)
-        }
-    }
 }
 
 @Preview @Composable private fun ShopDetailScreenLightPreview() = CoffeePeekTheme(darkTheme = false) {

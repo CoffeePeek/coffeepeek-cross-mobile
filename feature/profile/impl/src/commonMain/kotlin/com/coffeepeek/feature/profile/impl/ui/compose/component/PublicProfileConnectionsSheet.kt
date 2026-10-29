@@ -48,6 +48,7 @@ import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.feature.profile.api.ProfileImage
 import com.coffeepeek.feature.profile.domain.PublicProfileConnection
 import com.coffeepeek.feature.profile.domain.PublicProfileConnectionKind
+import com.coffeepeek.feature.profile.impl.resources.*
 import com.coffeepeek.feature.profile.impl.ui.model.PublicProfileState
 
 @Composable

@@ -48,6 +48,7 @@ import com.coffeepeek.feature.authorblocking.api.AuthorBlockActions
 import com.coffeepeek.feature.authorblocking.api.AuthorReference
 import com.coffeepeek.feature.community.api.CommunityHost
 import com.coffeepeek.feature.community.domain.model.CommunityPost
+import com.coffeepeek.feature.community.impl.resources.*
 import com.coffeepeek.feature.community.impl.post.PostAction
 import com.coffeepeek.feature.community.impl.post.PostError
 import com.coffeepeek.feature.community.impl.post.PostEvent
@@ -60,6 +61,7 @@ internal class PostCallbacks(
     val onSignIn: () -> Unit,
     val onOpenAuthor: (slug: String, name: String, avatarUrl: String?) -> Unit,
     val onOpenShop: (slug: String) -> Unit,
+    val onOpenCoffee: (slug: String) -> Unit,
 )
 
 private class PostPhotoPreview(val thumbnails: List<String>, val originals: List<String>, val index: Int)
@@ -157,6 +159,7 @@ private fun postActions(
         onPhoto = { index -> onPhoto(PostPhotoPreview(post.photos.thumbnails, post.photos.originals, index)) },
         onReport = { onAction(PostAction.OpenReport) }.takeIf { interactive },
         onShare = sharer.action(post),
+        onCoffee = post.home?.coffeeProductSlug?.let { slug -> { callbacks.onOpenCoffee(slug) } },
     )
 }
 
@@ -188,17 +191,17 @@ private val previewBlockActions = object : AuthorBlockActions {
     override fun requestUnblock(author: AuthorReference) {}
 }
 
-private val previewCallbacks = PostCallbacks({}, {}, { _, _, _ -> }, {})
+private val previewCallbacks = PostCallbacks({}, {}, { _, _, _ -> }, {}, {})
 
 @Composable private fun PostPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
     PostScreenContent(PostState(isLoggedIn = true, post = previewPost()), {}, CommunityHost(), previewBlockActions, previewCallbacks, SnackbarHostState())
 }
+@Preview @Composable private fun PostLightPreview() = PostPreview(false)
+@Preview @Composable private fun PostDarkPreview() = PostPreview(true)
 
 @Composable private fun PostUnavailablePreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
     PostScreenContent(PostState(isLoggedIn = false, error = PostError.Unavailable), {}, CommunityHost(), previewBlockActions, previewCallbacks, SnackbarHostState())
 }
 
-@Preview @Composable private fun PostLightPreview() = PostPreview(false)
-@Preview @Composable private fun PostDarkPreview() = PostPreview(true)
 @Preview @Composable private fun PostUnavailableLightPreview() = PostUnavailablePreview(false)
 @Preview @Composable private fun PostUnavailableDarkPreview() = PostUnavailablePreview(true)

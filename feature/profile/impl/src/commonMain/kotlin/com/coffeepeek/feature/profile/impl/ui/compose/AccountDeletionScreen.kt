@@ -45,6 +45,7 @@ import com.coffeepeek.core.designsystem.component.CoffeePeekButton
 import com.coffeepeek.core.designsystem.component.CoffeePeekLoader
 import com.coffeepeek.core.designsystem.component.CoffeePeekTopBar
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
+import com.coffeepeek.feature.profile.impl.resources.*
 import com.coffeepeek.feature.profile.impl.ui.AccountDeletionViewModel
 import com.coffeepeek.feature.profile.impl.ui.model.AccountDeletionAction
 import com.coffeepeek.feature.profile.impl.ui.model.AccountDeletionEvent

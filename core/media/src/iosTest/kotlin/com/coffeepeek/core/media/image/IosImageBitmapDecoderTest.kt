@@ -125,7 +125,7 @@ class IosImageBitmapDecoderTest {
         assertIs<ImageBitmapMemoryCache>(config.imageBitmapCache)
         val images = mutableListOf<ImageBitmap>()
         try {
-            // The viewer supplies a String, which Kamel maps to Url; CpImage supplies ImageUrl.
+            // The viewer supplies a String, which Kamel maps to Url; CoffeePeekImage supplies ImageUrl.
             for (source in listOf("https://example.invalid/viewer.jpg", ImageUrl("https://example.invalid/feed.jpg"))) {
                 val result = config.loadImageBitmapResource(
                     source, ResourceConfigBuilder(EmptyCoroutineContext).build(),

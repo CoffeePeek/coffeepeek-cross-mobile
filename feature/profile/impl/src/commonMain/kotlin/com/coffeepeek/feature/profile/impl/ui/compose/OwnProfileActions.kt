@@ -18,6 +18,7 @@ import com.coffeepeek.core.designsystem.component.CoffeePeekMenuIcon
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.feature.profile.api.ProfileContribution
+import com.coffeepeek.feature.profile.impl.resources.*
 
 @Composable
 internal fun OwnProfileActions(

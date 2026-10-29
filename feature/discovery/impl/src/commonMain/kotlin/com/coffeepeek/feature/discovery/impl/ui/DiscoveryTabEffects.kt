@@ -19,21 +19,18 @@ internal fun DiscoveryTabEffects(
     LaunchedEffect(focus, ui.mapAnchor.width > 0f) {
         if (focus != null) {
             ui.showRoasters = false
-            onAction(SearchAction.CancelSearch)
-            if (ui.mapAnchor.width > 0f) ui.mapExpanded = true
+            ui.mapExpanded = true
         }
     }
     LaunchedEffect(ui.mapExpanded) { callbacks.onMapExpandedChange(ui.mapExpanded) }
     DisposableEffect(Unit) { onDispose { callbacks.onMapExpandedChange(false) } }
-    LaunchedEffect(showDiscovery) { if (!showDiscovery) ui.mapExpanded = false }
     val focusManager = LocalFocusManager.current
     val keyboard = LocalSoftwareKeyboardController.current
     val lifecycle by LocalLifecycleOwner.current.lifecycle.currentStateFlow.collectAsStateWithLifecycle()
     CoffeePeekBackHandler(enabled = lifecycle.isAtLeast(Lifecycle.State.STARTED) && (ui.mapExpanded || !showDiscovery)) {
         focusManager.clearFocus(force = true)
         keyboard?.hide()
-        onAction(SearchAction.CancelSearch)
-        ui.mapExpanded = false
+        if (ui.mapExpanded) ui.mapExpanded = false else onAction(SearchAction.CancelSearch)
     }
 }
 

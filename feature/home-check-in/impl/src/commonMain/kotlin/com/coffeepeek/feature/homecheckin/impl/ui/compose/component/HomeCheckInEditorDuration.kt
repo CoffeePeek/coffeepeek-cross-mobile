@@ -52,6 +52,8 @@ internal fun HomeCheckInEditorDuration(seconds: Int?, enabled: Boolean, error: S
     }
 }
 
-@Preview @Composable private fun HomeCheckInEditorDurationPreview() = CoffeePeekTheme {
+@Composable private fun HomeCheckInEditorDurationPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
     Surface { HomeCheckInEditorDuration(180, true, null, {}) }
 }
+@Preview @Composable private fun HomeCheckInEditorDurationLightPreview() = HomeCheckInEditorDurationPreview(false)
+@Preview @Composable private fun HomeCheckInEditorDurationDarkPreview() = HomeCheckInEditorDurationPreview(true)

@@ -2,7 +2,8 @@ package com.coffeepeek.feature.discovery.data.repository
 
 import com.coffeepeek.core.network.requestResult
 import com.coffeepeek.feature.discovery.data.backend.DiscoveryBackend
-import com.coffeepeek.feature.discovery.data.backend.MapQuery
+import com.coffeepeek.feature.discovery.data.backend.MapBoundsDto
+import com.coffeepeek.feature.discovery.data.backend.ShopMapRequestDto
 import com.coffeepeek.feature.discovery.data.backend.ShopSearchFiltersDto
 import com.coffeepeek.feature.discovery.data.backend.ShopSearchRequestDto
 import com.coffeepeek.feature.discovery.data.backend.OriginDto
@@ -13,6 +14,7 @@ import com.coffeepeek.feature.discovery.domain.model.CatalogEntry
 import com.coffeepeek.feature.discovery.domain.model.DiscoveryCatalogs
 import com.coffeepeek.feature.discovery.domain.model.DiscoveryFailure
 import com.coffeepeek.feature.discovery.domain.model.DiscoveryFilters
+import com.coffeepeek.feature.discovery.domain.model.DiscoveryCriteria
 import com.coffeepeek.feature.discovery.domain.model.FailureKind
 import com.coffeepeek.feature.discovery.domain.model.MapBounds
 import com.coffeepeek.feature.discovery.domain.model.MapContent
@@ -70,12 +72,7 @@ private class RemoteDiscoveryRepository(
         val filters = query.filters
         val dto = backend.search(
             ShopSearchRequestDto(
-                filters = ShopSearchFiltersDto(
-                    origin = origin, radiusKm = if (origin != null) 3 else null, city = filters.cityId, tags = filters.tagIds.toList(), roasters = filters.roasterIds.toList(),
-                    equipments = filters.equipmentIds.toList(), beans = filters.beanIds.toList(), brewMethods = filters.brewMethodIds.toList(),
-                    isOpen = true.takeIf { filters.openOnly }, isNew = true.takeIf { filters.newOnly }, visitedOnly = filters.visitedOnly,
-                    favoritesOnly = filters.favoritesOnly, minRating = filters.minRating, priceRange = filters.priceLevel.searchValue(), type = filters.kind.searchValue(),
-                ),
+                filters = filters.toRequest(origin),
                 sort = if (origin != null) "distance_asc" else null,
                 page = query.page, pageSize = query.pageSize, q = searchText(query.text.orEmpty()),
             ),
@@ -86,15 +83,14 @@ private class RemoteDiscoveryRepository(
         )
     }
 
-    override suspend fun mapContent(bounds: MapBounds, zoom: Float, filters: DiscoveryFilters): Result<MapContent> = requestResult {
+    override suspend fun mapContent(bounds: MapBounds, zoom: Float, criteria: DiscoveryCriteria): Result<MapContent> = requestResult {
+        val query = criteria.searchQuery()
+        val origin = query.origin?.let { OriginDto(it.latitude, it.longitude) }
         // One finer server level halves cluster cells and unfolds dense areas sooner.
-        backend.map(mapQuery(bounds, (zoom + 1f).toInt().coerceIn(0, SHOP_ZOOM), filters)).getOrThrow().toContent(filters.kind)
+        val request = ShopMapRequestDto(searchText(query.text.orEmpty()).orEmpty(), query.filters.toRequest(origin),
+            MapBoundsDto(bounds.minLat, bounds.minLon, bounds.maxLat, bounds.maxLon), (zoom + 1f).toInt().coerceIn(0, SHOP_ZOOM))
+        backend.map(request).getOrThrow().toContent(query.filters.kind)
     }
-
-    private fun mapQuery(bounds: MapBounds, zoom: Int, filters: DiscoveryFilters) = MapQuery(
-        bounds.minLat, bounds.minLon, bounds.maxLat, bounds.maxLon, zoom, filters.cityId, filters.kind?.apiName, filters.roasterIds.toList(),
-        filters.equipmentIds.toList(), filters.beanIds.toList(), filters.brewMethodIds.toList(), filters.tagIds.toList(), filters.priceLevel?.name, filters.minRating,
-    )
 
     override suspend fun catalogs(): Result<DiscoveryCatalogs> {
         cachedCatalogs?.let { return Result.success(it) }
@@ -133,6 +129,14 @@ private class RemoteDiscoveryRepository(
         emptySet()
     }
 }
+
+private fun DiscoveryFilters.toRequest(origin: OriginDto?) = ShopSearchFiltersDto(
+    origin = origin, radiusKm = if (origin != null) 3 else null, city = cityId,
+    tags = tagIds.toList(), roasters = roasterIds.toList(), equipments = equipmentIds.toList(),
+    beans = beanIds.toList(), brewMethods = brewMethodIds.toList(), isOpen = true.takeIf { openOnly },
+    isNew = true.takeIf { newOnly }, visitedOnly = visitedOnly, favoritesOnly = favoritesOnly,
+    minRating = minRating, priceRange = priceLevel.searchValue(), type = kind.searchValue(),
+)
 
 private fun ShopKind?.searchValue(): String? = when (this) {
     ShopKind.Specialty -> "specialty"

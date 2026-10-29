@@ -57,6 +57,8 @@ internal fun CoffeeCard(
 internal fun previewCoffee() = Coffee("fixture-coffee", "Эфиопия", null, "CoffeePeek", null,
     listOf("Эфиопия"), listOf("berries"), listOf(CoffeeOffer(24.5, "BYN", 250), CoffeeOffer(48.0, "BYN", 500)))
 
-@Preview @Composable private fun CoffeeCardPreview() = CoffeePeekTheme {
+@Composable private fun CoffeeCardPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
     CoffeeCard(previewCoffee(), mapOf("berries" to "Ягоды"), {}, { _, _, modifier, _ -> CoffeePeekImagePlaceholder(modifier) })
 }
+@Preview @Composable private fun CoffeeCardLightPreview() = CoffeeCardPreview(false)
+@Preview @Composable private fun CoffeeCardDarkPreview() = CoffeeCardPreview(true)

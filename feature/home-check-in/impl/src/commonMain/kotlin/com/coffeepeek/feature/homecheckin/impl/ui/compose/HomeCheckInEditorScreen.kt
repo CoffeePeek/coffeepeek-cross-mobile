@@ -1,3 +1,5 @@
+@file:OptIn(androidx.compose.ui.ExperimentalComposeUiApi::class)
+
 package com.coffeepeek.feature.homecheckin.impl.ui.compose
 
 import com.coffeepeek.core.designsystem.component.CoffeePeekBackHandler
@@ -53,8 +55,10 @@ import com.coffeepeek.core.designsystem.component.CoffeePeekButton
 import com.coffeepeek.core.designsystem.component.CoffeePeekFormStep
 import com.coffeepeek.core.designsystem.component.CoffeePeekLoader
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
+import com.coffeepeek.core.designsystem.text.coffeePeekPluralForm
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.feature.homecheckin.domain.model.*
+import com.coffeepeek.feature.homecheckin.impl.resources.*
 import com.coffeepeek.feature.homecheckin.impl.ui.HomeCheckInEditorViewModel
 import com.coffeepeek.feature.homecheckin.impl.ui.compose.component.*
 import com.coffeepeek.feature.homecheckin.impl.ui.compose.model.*
@@ -140,7 +144,7 @@ internal fun HomeCheckInEditorScreenContent(
                     is HomeCheckInEditorAction.BeanQueryChanged, HomeCheckInEditorAction.SearchBeans -> onAction(action)
                     else -> dispatch(action)
                 }
-            }, media.emptyBeanArtwork)
+            }, media.emptyBeanArtwork, media.shelfBagImage)
             return@Box
         }
         Column(Modifier.fillMaxSize()) {
@@ -214,6 +218,11 @@ internal fun HomeCheckInEditorScreenContent(
                             CoffeePeekIcons.CoffeeBean, stringResource(Res.string.home_check_in_choose_bean), enabled, error) {
                             dispatch(HomeCheckInEditorAction.OpenBeanPicker)
                         }
+                        state.shelfBagCardUrl?.takeIf { draft.shelfBagId != null }?.let { card ->
+                            HomeCheckInEditorShelfBag(card, draft.showShelfBag, enabled, media.shelfBagImage) {
+                                onAction(HomeCheckInEditorAction.ShowShelfBagChanged(it))
+                            }
+                        }
                     }
                     Step(HomePreparationField.Dose, stringResource(Res.string.home_check_in_dose_label)) { error ->
                         HomeCheckInEditorInput(draft.doseGrams.orEmpty(), { onAction(HomeCheckInEditorAction.DoseChanged(it)) },
@@ -272,3 +281,5 @@ internal fun previewHomeEditorState() = HomeCheckInEditorState(isReady = true,
     Surface { HomeCheckInEditorScreenContent(previewHomeEditorState(), {}, "2026-10-17", { "17 октября 2026" },
         { it + "T00:00:00Z" }, { it }, previewHomeEditorMedia(), false, {}) }
 }
+@Preview @Composable private fun HomeCheckInEditorLightPreview() = HomeCheckInEditorPreview(false)
+@Preview @Composable private fun HomeCheckInEditorDarkPreview() = HomeCheckInEditorPreview(true)

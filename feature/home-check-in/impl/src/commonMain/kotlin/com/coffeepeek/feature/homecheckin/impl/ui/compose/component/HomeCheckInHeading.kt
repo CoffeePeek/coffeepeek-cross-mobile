@@ -21,6 +21,7 @@ import androidx.compose.ui.unit.dp
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.feature.homecheckin.domain.model.*
+import com.coffeepeek.feature.homecheckin.impl.resources.*
 import com.coffeepeek.feature.homecheckin.impl.ui.compose.previewHomePreparation
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
@@ -65,6 +66,8 @@ private fun HomePreparation.visibilityLabelResource(): StringResource? = when (v
     null -> null
 }
 
-@Preview @Composable private fun HomeCheckInHeadingPreview() = CoffeePeekTheme {
+@Composable private fun HomeCheckInHeadingPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
     Surface { HomeCheckInHeading(previewHomePreparation(), "17.10.2026 · 10:30") }
 }
+@Preview @Composable private fun HomeCheckInHeadingLightPreview() = HomeCheckInHeadingPreview(false)
+@Preview @Composable private fun HomeCheckInHeadingDarkPreview() = HomeCheckInHeadingPreview(true)

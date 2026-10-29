@@ -34,6 +34,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.core.designsystem.component.CoffeePeekLoader
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
+import com.coffeepeek.feature.profile.impl.resources.*
 
 @Composable
 internal fun ProfileCard(modifier: Modifier = Modifier.fillMaxWidth(), content: @Composable () -> Unit) {

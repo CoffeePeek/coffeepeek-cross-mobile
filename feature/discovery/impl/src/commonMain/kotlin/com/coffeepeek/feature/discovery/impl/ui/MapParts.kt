@@ -210,7 +210,7 @@ private fun MapShopPager(state: MapState, shops: List<MapMarker>, host: Discover
         val shop = shops[page % shops.size]
         val isSelected = shop.id == selected?.id
         MapShopCard(
-            shop, host, state.details.takeIf { isSelected }, isSelected && state.isLoadingDetails, state.nearbyOrigin?.let { distanceMeters(it, shop.coordinates) },
+            shop, host, state.cardDetails[shop.id] ?: state.details.takeIf { isSelected }, isSelected && state.isLoadingDetails, state.nearbyOrigin?.let { distanceMeters(it, shop.coordinates) },
             onOpen = { if (isSelected) onAction(MapAction.OpenShop(shop.id)) else onAction(MapAction.SelectMarker(shop.id)) },
         )
     }
@@ -222,59 +222,10 @@ internal fun carouselStartPage(count: Int, selectedIndex: Int): Int {
     return middle - middle % count + selectedIndex.coerceIn(0, count - 1)
 }
 
+@org.jetbrains.compose.ui.tooling.preview.Preview
 @Composable
-private fun MapShopCard(
-    shop: MapMarker,
-    host: DiscoveryHost,
-    details: com.coffeepeek.feature.discovery.api.MapShopDetails?,
-    isLoading: Boolean,
-    distance: Double?,
-    onOpen: () -> Unit,
-) {
-    Card(
-        Modifier.fillMaxWidth(), shape = RoundedCornerShape(CoffeePeekDimens.cardRadius),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface), elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
-    ) {
-        Row(Modifier.fillMaxWidth().clickable(onClick = onOpen).padding(CoffeePeekDimens.spacing3), verticalAlignment = Alignment.CenterVertically) {
-            Box(Modifier.size(72.dp).clip(RoundedCornerShape(CoffeePeekDimens.radiusMd)).background(MaterialTheme.colorScheme.surfaceVariant), contentAlignment = Alignment.Center) {
-                val photo = details?.photoUrl
-                when {
-                    !photo.isNullOrBlank() -> host.compactImage(photo, shop.title, Modifier.fillMaxSize(), ContentScale.Crop)
-                    isLoading -> CoffeePeekLoader(stringResource(Res.string.discovery_loading), size = 20.dp, strokeWidth = 2.dp)
-                    else -> host.compactCoverPlaceholder(stringResource(Res.string.discovery_map_photo_missing, shop.title), Modifier.fillMaxSize())
-                }
-            }
-            Spacer(Modifier.width(CoffeePeekDimens.spacing3))
-            Column(Modifier.weight(1f)) {
-                val rating = details?.rating
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    if (rating != null && rating > 0) {
-                        Icon(CoffeePeekIcons.StarFilled, null, Modifier.size(14.dp), tint = MaterialTheme.colorScheme.primary)
-                        Spacer(Modifier.width(4.dp))
-                        Text(oneDecimal(rating), style = MaterialTheme.typography.labelMedium)
-                        if (details.reviewCount > 0) Text(" (${details.reviewCount})", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    } else {
-                        Text(
-                            when {
-                                details == null -> stringResource(Res.string.discovery_map_card_nearby)
-                                details.reviewCount > 0 -> stringResource(Res.string.discovery_map_card_checkins, details.reviewCount)
-                                else -> stringResource(Res.string.discovery_map_card_no_checkins)
-                            },
-                            style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    }
-                }
-                Text(shop.title, Modifier.padding(top = 2.dp), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold, maxLines = 2, overflow = TextOverflow.Ellipsis)
-                distance?.let { Text(distanceLabel(it), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
-                val hours = details?.hours
-                when {
-                    hours != null -> Text(
-                        stringResource(Res.string.discovery_map_card_hours, if (details.isOpen) stringResource(Res.string.discovery_map_card_open) else stringResource(Res.string.discovery_map_card_closed), hours),
-                        Modifier.padding(top = 4.dp), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                    isLoading -> Text(stringResource(Res.string.discovery_map_card_loading), Modifier.padding(top = 4.dp), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                }
-            }
-        }
-    }
+private fun MapShopCarouselPreview() = com.coffeepeek.core.designsystem.theme.CoffeePeekTheme {
+    val marker = MapMarker("preview", "CoffeePeek", com.coffeepeek.feature.discovery.domain.model.Coordinates(53.9, 27.56))
+    val details = com.coffeepeek.feature.discovery.api.MapShopDetails(null, 4.5, 12, true, "09:00 – 21:00")
+    MapShopCarousel(MapState(nearby = listOf(marker), cardDetails = mapOf(marker.id to details)), DiscoveryHost(), {}, {})
 }

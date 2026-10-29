@@ -69,12 +69,9 @@
     <string name="shop_coffee_open_roaster">Открыть обжарщика «%1$s»</string>
     <string name="shop_features_title">Особенности</string>
     <string name="shop_features_show_all">Показать все: %1$d</string>
-    <plurals name="shop_features_show_all_count">
-        <item quantity="one">Показать все %1$d особенность</item>
-        <item quantity="few">Показать все %1$d особенности</item>
-        <item quantity="many">Показать все %1$d особенностей</item>
-        <item quantity="other">Показать все %1$d особенностей</item>
-    </plurals>
+    <string name="shop_features_show_all_count_one">Показать все %1$d особенность</string>
+    <string name="shop_features_show_all_count_few">Показать все %1$d особенности</string>
+    <string name="shop_features_show_all_count_many">Показать все %1$d особенностей</string>
     <string name="shop_features_collapse">Свернуть</string>
     <string name="shop_description_title">Описание</string>
     <string name="shop_reviews_title">Отзывы</string>
@@ -233,4 +230,10 @@
     <string name="shop_schedule_today_closed">Сегодня выходной</string>
     <string name="shop_schedule_expanded_state">Развёрнуто</string>
     <string name="shop_schedule_collapsed_state">Свёрнуто</string>
+    <plurals name="shop_features_show_all_count">
+        <item quantity="one">Показать все %1$d особенность</item>
+        <item quantity="few">Показать все %1$d особенности</item>
+        <item quantity="many">Показать все %1$d особенностей</item>
+        <item quantity="other">Показать все %1$d особенностей</item>
+    </plurals>
 </resources>

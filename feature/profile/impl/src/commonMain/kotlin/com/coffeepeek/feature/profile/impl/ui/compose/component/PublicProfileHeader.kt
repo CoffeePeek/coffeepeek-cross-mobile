@@ -1,7 +1,7 @@
 package com.coffeepeek.feature.profile.impl.ui.compose.component
 
-import androidx.compose.foundation.BorderStroke
 import org.jetbrains.compose.ui.tooling.preview.Preview
+import androidx.compose.foundation.BorderStroke
 import com.coffeepeek.feature.profile.impl.resources.Res
 import com.coffeepeek.feature.profile.impl.resources.profile_avatar_of
 import com.coffeepeek.feature.profile.impl.resources.profile_edit
@@ -52,6 +52,7 @@ import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.theme.CoffeePeekColors
 import com.coffeepeek.feature.profile.api.ProfileImage
 import com.coffeepeek.feature.profile.domain.PublicProfileStats
+import com.coffeepeek.feature.profile.impl.resources.*
 
 @Composable
 internal fun PublicProfileHeader(
@@ -145,7 +146,7 @@ private fun ProfileStats(stats: PublicProfileStats, onFollowersClick: () -> Unit
 
 @Preview
 @Composable
-private fun ProfileHeaderPreview() = com.coffeepeek.core.designsystem.theme.CoffeePeekTheme {
+private fun ProfileHeaderPreview(dark: Boolean) = com.coffeepeek.core.designsystem.theme.CoffeePeekTheme(darkTheme = dark) {
     Surface(color = MaterialTheme.colorScheme.background) {
         Column(Modifier.padding(16.dp)) {
             PublicProfileHeader("goloologo", null, "Варю, пью, фоткаю…", { _, _, _ -> },
@@ -153,3 +154,6 @@ private fun ProfileHeaderPreview() = com.coffeepeek.core.designsystem.theme.Coff
         }
     }
 }
+
+@Preview @Composable private fun ProfileHeaderLightPreview() = ProfileHeaderPreview(false)
+@Preview @Composable private fun ProfileHeaderDarkPreview() = ProfileHeaderPreview(true)

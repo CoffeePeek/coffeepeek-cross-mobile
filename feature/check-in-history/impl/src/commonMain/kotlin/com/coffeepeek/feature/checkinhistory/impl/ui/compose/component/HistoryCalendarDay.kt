@@ -70,18 +70,24 @@ internal fun HistoryCalendarDay(day: Int, date: String, total: Long, homeCount: 
     }
 }
 
-@Preview @Composable private fun HistoryCalendarDayPreview() = CoffeePeekTheme {
+@Composable private fun HistoryCalendarDayPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
     HistoryCalendarDay(14, "2026-10-14", 2, 1, isSelected = true, isToday = true, isFuture = false,
         onSelect = {}, modifier = Modifier.width(56.dp))
 }
+@Preview @Composable private fun HistoryCalendarDayLightPreview() = HistoryCalendarDayPreview(false)
+@Preview @Composable private fun HistoryCalendarDayDarkPreview() = HistoryCalendarDayPreview(true)
 
-@Preview @Composable private fun HistoryCalendarDayTodayPreview() = CoffeePeekTheme {
+@Composable private fun HistoryCalendarDayTodayPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
     HistoryCalendarDay(14, "2026-10-14", 0, 0, isSelected = false, isToday = true, isFuture = false,
         onSelect = {}, modifier = Modifier.width(56.dp))
 }
+@Preview @Composable private fun HistoryCalendarDayTodayLightPreview() = HistoryCalendarDayTodayPreview(false)
+@Preview @Composable private fun HistoryCalendarDayTodayDarkPreview() = HistoryCalendarDayTodayPreview(true)
 
-@Preview @Composable private fun HistoryCalendarDayPhotoPreview() = CoffeePeekTheme {
+@Composable private fun HistoryCalendarDayPhotoPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
     HistoryCalendarDay(14, "2026-10-14", 2, 1, isSelected = true, isToday = true, isFuture = false,
         onSelect = {}, modifier = Modifier.width(56.dp),
         photos = listOf(HistoryCalendarPhoto("fixture", true), HistoryCalendarPhoto("fixture-2", false)))
 }
+@Preview @Composable private fun HistoryCalendarDayPhotoLightPreview() = HistoryCalendarDayPhotoPreview(false)
+@Preview @Composable private fun HistoryCalendarDayPhotoDarkPreview() = HistoryCalendarDayPhotoPreview(true)

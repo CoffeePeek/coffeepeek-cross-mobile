@@ -46,6 +46,7 @@ import com.coffeepeek.feature.profile.api.OwnProfileSlots
 import com.coffeepeek.feature.profile.api.ProfileAuthorActions
 import com.coffeepeek.feature.profile.api.ProfileContribution
 import com.coffeepeek.feature.profile.domain.PublicProfileStats
+import com.coffeepeek.feature.profile.impl.resources.*
 import com.coffeepeek.feature.profile.impl.ui.OwnProfileViewModel
 import com.coffeepeek.feature.profile.impl.ui.PublicProfileViewModel
 import com.coffeepeek.feature.profile.impl.ui.compose.component.ProfileSectionLoader
@@ -71,11 +72,12 @@ internal fun OwnProfileScreen(
     onOpenCheckIns: () -> Unit,
     onOpenContributions: (ProfileContribution) -> Unit,
     onOpenBlockedAuthors: () -> Unit,
+
 ) {
     val state by vm.state.collectAsStateWithLifecycle()
     var showLogout by remember { mutableStateOf(false) }
     val actions: @Composable () -> Unit = {
-        OwnProfileActions(onOpenContributions, onOpenBlockedAuthors) { showLogout = true }
+        OwnProfileActions(onOpenContributions, onOpenBlockedAuthors, { showLogout = true })
     }
     val bottomPadding = 20.dp + bottomClearance
 

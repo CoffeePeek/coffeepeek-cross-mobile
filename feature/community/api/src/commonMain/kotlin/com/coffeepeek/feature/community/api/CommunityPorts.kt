@@ -25,7 +25,7 @@ enum class FeedAction { Refresh, LoadMore, Retry }
 
 enum class FeedTrigger { Gesture, Scroll, Button }
 
-enum class FeedItemAction { Open, Shop, Photo, Like, Unlike, Share }
+enum class FeedItemAction { Open, Shop, Photo, Like, Unlike, Share, Coffee }
 
 enum class EditField { Note, Rating, Drink }
 

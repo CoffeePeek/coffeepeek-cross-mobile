@@ -41,7 +41,9 @@ internal fun HomeCheckInEditorSelect(
     }
 }
 
-@Preview @Composable private fun HomeCheckInEditorSelectPreview() = CoffeePeekTheme {
+@Composable private fun HomeCheckInEditorSelectPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
     Surface { HomeCheckInEditorSelect(stringResource(Res.string.home_check_in_choose_bean), CoffeePeekIcons.CoffeeBean,
         stringResource(Res.string.home_check_in_choose_bean), true, onClick = {}) }
 }
+@Preview @Composable private fun HomeCheckInEditorSelectLightPreview() = HomeCheckInEditorSelectPreview(false)
+@Preview @Composable private fun HomeCheckInEditorSelectDarkPreview() = HomeCheckInEditorSelectPreview(true)

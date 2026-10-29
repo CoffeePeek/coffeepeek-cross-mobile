@@ -58,8 +58,10 @@ internal fun HomeCheckInPhotos(
     }
 }
 
-@Preview @Composable private fun HomeCheckInPhotosPreview() = CoffeePeekTheme {
+@Composable private fun HomeCheckInPhotosPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
     HomeCheckInPhotos(listOf("fixture-1", "", "fixture-3", "fixture-4"), true,
         originalUrls = List(4) { "fixture-original-$it" },
         imageContent = { _, _, modifier, _ -> Surface(modifier, color = MaterialTheme.colorScheme.surfaceVariant) {} }, onOpen = {})
 }
+@Preview @Composable private fun HomeCheckInPhotosLightPreview() = HomeCheckInPhotosPreview(false)
+@Preview @Composable private fun HomeCheckInPhotosDarkPreview() = HomeCheckInPhotosPreview(true)

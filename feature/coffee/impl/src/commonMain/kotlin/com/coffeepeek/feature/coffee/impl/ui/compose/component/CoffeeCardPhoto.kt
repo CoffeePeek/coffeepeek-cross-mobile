@@ -24,6 +24,7 @@ import com.coffeepeek.core.designsystem.component.CoffeePeekImagePlaceholder
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.feature.coffee.domain.model.Coffee
+import com.coffeepeek.feature.coffee.impl.resources.*
 
 @Composable
 internal fun CoffeeCardPhoto(coffee: Coffee, imageContent: @Composable (String, String, Modifier, ContentScale) -> Unit) {
@@ -54,8 +55,10 @@ internal fun CoffeeCardPhoto(coffee: Coffee, imageContent: @Composable (String, 
     }
 }
 
-@Preview @Composable private fun CoffeeCardPhotoPreview() = CoffeePeekTheme {
+@Composable private fun CoffeeCardPhotoPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
     CoffeeCardPhoto(previewCoffee().copy(roasterPhotoUrl = "preview-logo")) { _, _, modifier, _ ->
         CoffeePeekImagePlaceholder(modifier)
     }
 }
+@Preview @Composable private fun CoffeeCardPhotoLightPreview() = CoffeeCardPhotoPreview(false)
+@Preview @Composable private fun CoffeeCardPhotoDarkPreview() = CoffeeCardPhotoPreview(true)

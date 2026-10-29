@@ -43,6 +43,8 @@ internal fun CoffeeCardSummary(coffee: Coffee, tasteNames: Map<String, String>) 
     }
 }
 
-@Preview @Composable private fun CoffeeCardSummaryPreview() = CoffeePeekTheme {
+@Composable private fun CoffeeCardSummaryPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
     Surface { CoffeeCardSummary(previewCoffee(), mapOf("berries" to "Ягоды")) }
 }
+@Preview @Composable private fun CoffeeCardSummaryLightPreview() = CoffeeCardSummaryPreview(false)
+@Preview @Composable private fun CoffeeCardSummaryDarkPreview() = CoffeeCardSummaryPreview(true)

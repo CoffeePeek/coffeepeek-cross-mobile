@@ -67,6 +67,7 @@ internal fun featureSettingsScreenRenderer(
             slots = SettingsSlots(
                 guestCard = { onLogin, onRegister, modifier -> GuestAuthCard(onLogin, onRegister, modifier) },
                 notify = notify,
+                accountSwitch = { org.koin.compose.koinInject<com.coffeepeek.feature.ownership.api.BusinessOwnershipEntry>().AccountSwitch() },
             ),
         ),
         theme = createThemeEntry(theme),

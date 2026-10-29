@@ -86,37 +86,73 @@ internal class SandboxDiscoveryBackend(
 
     fun reset() { mode = SandboxDiscovery.Seeded }
 
-    private fun spots(): List<Spot> = if (!populated() || mode == SandboxDiscovery.Empty) emptyList() else core + extras
+    private fun spots(): List<Spot> = when {
+        !populated() || mode == SandboxDiscovery.Empty -> emptyList()
+        mode == SandboxDiscovery.Seeded -> core
+        else -> core + extras
+    }
 
     fun handle(path: String, method: HttpMethod, request: HttpRequestData, input: JsonObject): Pair<HttpStatusCode, JsonObject>? {
-        if (mode == SandboxDiscovery.Seeded) return null
         return when {
             path == "/api/v1/coffee-shops/search" && method == HttpMethod.Post ->
                 if (mode == SandboxDiscovery.SearchFailure) HttpStatusCode.InternalServerError to failure(SEARCH_FAILURE) else search(input)
-            path == "/api/map" && method == HttpMethod.Get ->
+            path == "/api/v1/coffee-shops/map" && method == HttpMethod.Post ->
+                if (mode == SandboxDiscovery.MapFailure) HttpStatusCode.InternalServerError to failure(MAP_FAILURE) else filteredMap(input)
+            path == "/api/map" && method == HttpMethod.Get && mode != SandboxDiscovery.Seeded ->
                 if (mode == SandboxDiscovery.MapFailure) HttpStatusCode.InternalServerError to failure(MAP_FAILURE) else map(request.url.parameters)
             else -> null
         }
     }
 
     private fun search(input: JsonObject): Pair<HttpStatusCode, JsonObject> {
+        invalidSelection(input)?.let { return HttpStatusCode.BadRequest to failure(it) }
+        val (items, total, pages, current) = paged(selected(input), input["page"]?.jsonPrimitive?.contentOrNull, input["pageSize"]?.jsonPrimitive?.contentOrNull)
+        return ok(buildJsonObject {
+            put("items", JsonArray(items.map { (spot, meters) -> searchItem(spot, meters) }))
+            put("totalItems", total); put("totalPages", pages); put("currentPage", current)
+        })
+    }
+
+    private fun invalidSelection(input: JsonObject): String? {
         val filters = input["filters"] as? JsonObject ?: buildJsonObject {}
         val origin = filters["origin"] as? JsonObject
         val lat = origin?.get("latitude")?.jsonPrimitive?.doubleOrNull
         val lon = origin?.get("longitude")?.jsonPrimitive?.doubleOrNull
         val radius = filters["radiusKm"]?.jsonPrimitive?.doubleOrNull
         if (origin != null && (lat == null || lon == null || !lat.isFinite() || !lon.isFinite() || lat !in -90.0..90.0 || lon !in -180.0..180.0)) {
-            return HttpStatusCode.BadRequest to failure("Укажите точку поиска")
+            return "Укажите точку поиска"
         }
         if (radius != null && (origin == null || radius <= 0 || radius > 100) || input["sort"]?.jsonPrimitive?.contentOrNull == "distance_asc" && origin == null) {
-            return HttpStatusCode.BadRequest to failure("Укажите точку поиска и радиус")
+            return "Укажите точку поиска и радиус"
         }
-        val hits = searchHits(searchQuery(input, filters), lat, lon, radius, input["sort"]?.jsonPrimitive?.contentOrNull)
-        val (items, total, pages, current) = paged(hits, input["page"]?.jsonPrimitive?.contentOrNull, input["pageSize"]?.jsonPrimitive?.contentOrNull)
-        return ok(buildJsonObject {
-            put("items", JsonArray(items.map { (spot, meters) -> searchItem(spot, meters) }))
-            put("totalItems", total); put("totalPages", pages); put("currentPage", current)
-        })
+        return null
+    }
+
+    private fun selected(input: JsonObject): List<Pair<Spot, Double?>> {
+        val filters = input["filters"] as? JsonObject ?: buildJsonObject {}
+        val origin = filters["origin"] as? JsonObject
+        return searchHits(searchQuery(input, filters), origin?.get("latitude")?.jsonPrimitive?.doubleOrNull,
+            origin?.get("longitude")?.jsonPrimitive?.doubleOrNull, filters["radiusKm"]?.jsonPrimitive?.doubleOrNull,
+            input["sort"]?.jsonPrimitive?.contentOrNull)
+    }
+
+    private fun filteredMap(input: JsonObject): Pair<HttpStatusCode, JsonObject> {
+        invalidSelection(input)?.let { return HttpStatusCode.BadRequest to failure(it) }
+        val bounds = input["bounds"] as? JsonObject
+        val minLat = bounds?.get("minLat")?.jsonPrimitive?.doubleOrNull
+        val maxLat = bounds?.get("maxLat")?.jsonPrimitive?.doubleOrNull
+        val minLon = bounds?.get("minLon")?.jsonPrimitive?.doubleOrNull
+        val maxLon = bounds?.get("maxLon")?.jsonPrimitive?.doubleOrNull
+        val zoom = input["zoom"]?.jsonPrimitive?.intOrNull
+        if (minLat == null || maxLat == null || minLon == null || maxLon == null || zoom == null || zoom !in 0..22 ||
+            !minLat.isFinite() || !maxLat.isFinite() || !minLon.isFinite() || !maxLon.isFinite() ||
+            minLat !in -90.0..90.0 || maxLat !in minLat..90.0 || minLon !in -180.0..180.0 || maxLon !in minLon..180.0)
+            return HttpStatusCode.BadRequest to failure("Укажите границы карты и масштаб")
+        val inside = selected(input).map { it.first }.filter { it.lat in minLat..maxLat && it.lon in minLon..maxLon }
+        val truncated = mode == SandboxDiscovery.Truncated && inside.size > MAP_LIMIT
+        val shown = if (truncated) inside.take(MAP_LIMIT) else inside
+        val visibleZones = zones.filter { zone -> inside.any { distance(zone.lat, zone.lon, it.lat, it.lon) <= zone.radius } }
+        return ok(mapRows(shown, zoom, visibleZones, truncated))
     }
 
     private fun searchQuery(input: JsonObject, filters: JsonObject): Query {

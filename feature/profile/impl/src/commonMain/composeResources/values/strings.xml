@@ -1,4 +1,5 @@
 <resources>
+    <string name="profile_menu_business">Мой бизнес</string>
     <!-- Russian only, copied verbatim from the production profile. -->
     <string name="profile_title">Профиль</string>
     <string name="profile_loading">Загрузка</string>
@@ -102,12 +103,9 @@
     <string name="profile_day_inactive">%1$d, нет чекинов</string>
     <string name="profile_weekday_description">%1$s: %2$s</string>
     <string name="profile_month_title">%1$s %2$d</string>
-    <plurals name="profile_days_with_check_ins">
-        <item quantity="one">%1$d день с чекинами</item>
-        <item quantity="few">%1$d дня с чекинами</item>
-        <item quantity="many">%1$d дней с чекинами</item>
-        <item quantity="other">%1$d дней с чекинами</item>
-    </plurals>
+    <string name="profile_days_with_check_ins_one">%1$d день с чекинами</string>
+    <string name="profile_days_with_check_ins_few">%1$d дня с чекинами</string>
+    <string name="profile_days_with_check_ins_many">%1$d дней с чекинами</string>
     <string-array name="profile_weekdays">
         <item>Пн</item><item>Вт</item><item>Ср</item><item>Чт</item><item>Пт</item><item>Сб</item><item>Вс</item>
     </string-array>
@@ -181,4 +179,10 @@
     <string name="profile_deletion_wait_hint">После подтверждения вы автоматически выйдете из приложения.</string>
     <string name="profile_deletion_resend">Отправить письмо ещё раз</string>
     <string name="profile_deletion_resend_wait">Повторная отправка пока недоступна</string>
+    <plurals name="profile_days_with_check_ins">
+        <item quantity="one">%1$d день с чекинами</item>
+        <item quantity="few">%1$d дня с чекинами</item>
+        <item quantity="many">%1$d дней с чекинами</item>
+        <item quantity="other">%1$d дней с чекинами</item>
+    </plurals>
 </resources>

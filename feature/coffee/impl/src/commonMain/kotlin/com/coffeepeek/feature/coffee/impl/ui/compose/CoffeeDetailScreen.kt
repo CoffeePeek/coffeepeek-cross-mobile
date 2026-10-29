@@ -1,3 +1,5 @@
+@file:OptIn(androidx.compose.ui.ExperimentalComposeUiApi::class)
+
 package com.coffeepeek.feature.coffee.impl.ui.compose
 
 import com.coffeepeek.core.designsystem.component.CoffeePeekScaffold as Scaffold
@@ -53,6 +55,7 @@ import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.modifier.CoffeePeekGlassIconButton
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
+import com.coffeepeek.feature.coffee.impl.resources.*
 import com.coffeepeek.feature.coffee.impl.ui.CoffeeDetailViewModel
 import com.coffeepeek.feature.coffee.impl.ui.compose.component.*
 import com.coffeepeek.feature.coffee.impl.ui.compose.model.*

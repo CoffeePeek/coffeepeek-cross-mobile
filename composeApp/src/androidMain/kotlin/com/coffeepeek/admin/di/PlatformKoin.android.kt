@@ -9,6 +9,11 @@ import com.coffeepeek.admin.di.shop.shopCheckInModule
 import com.coffeepeek.admin.di.shop.FeatureShopCheckInFormRenderer
 import com.coffeepeek.admin.di.coffee.featureCoffeeScreenRenderer
 import com.coffeepeek.admin.di.coffee.coffeeModule
+import com.coffeepeek.admin.di.coffee.CoffeeShelfTab
+import com.coffeepeek.admin.di.shelf.ShelfFeatureScreenRenderer
+import com.coffeepeek.admin.di.shelf.shelfBrewForm
+import com.coffeepeek.admin.di.shelf.shelfModule
+import com.coffeepeek.BuildConfig
 import com.coffeepeek.admin.di.appupdate.androidAppUpdateRenderer
 import com.coffeepeek.admin.di.auth.androidAuthScreenRenderer
 import com.coffeepeek.admin.di.community.featureCommunityScreenRenderer
@@ -47,11 +52,12 @@ internal fun initAndroidKoin(extraModules: List<org.koin.core.module.Module> = e
             serverFavoritesModule(),
             shopCheckInModule(AndroidShopCheckInDateFormatter()),
             shopBrowsingModule(),
-            homeCheckInModule(),
-            checkInHistoryModule(),
+            homeCheckInModule(BuildConfig.SHELF_ENABLED),
+            checkInHistoryModule(BuildConfig.SHELF_ENABLED),
             contentReportModule(),
             coffeeModule(),
             contributionsModule(),
+            shelfModule(),
         ) + extraModules,
         shopReportRendererFactory = { client ->
             FeatureShopReportScreenRenderer(
@@ -76,7 +82,11 @@ internal fun initAndroidKoin(extraModules: List<org.koin.core.module.Module> = e
         },
         checkInRenderers = featureCheckInRendererFactories(),
         contentReportRendererFactory = { get<FeatureContentReportRenderer>() },
-        coffeeRendererFactory = { featureCoffeeScreenRenderer(get()) },
+        // Shelf: Coffee tab switcher, «+» scan flow, and shelf screens (live API on debug/release; Sandbox uses fake backend).
+        coffeeRendererFactory = {
+            featureCoffeeScreenRenderer(get(), CoffeeShelfTab(get(), get(), Locator.database.settingRepository).takeIf { BuildConfig.SHELF_ENABLED })
+        },
+        shelfRendererFactory = { ShelfFeatureScreenRenderer(get(), Locator.database.settingRepository, shelfBrewForm(get())) },
         publicProfileRendererFactory = { featurePublicProfileScreenRenderer(get(), get(), get(), get(), get()) },
         ownProfileRendererFactory = { featureOwnProfileScreenRenderer(get(), get(), get(), get(), get(), get(), get(), get(), get()) },
         accountRendererFactory = { featureAccountScreenRenderer(get(), get(), get()) },

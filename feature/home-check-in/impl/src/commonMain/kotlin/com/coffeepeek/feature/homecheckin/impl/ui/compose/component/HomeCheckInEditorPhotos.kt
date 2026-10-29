@@ -20,6 +20,7 @@ import androidx.compose.ui.unit.dp
 import com.coffeepeek.core.designsystem.component.CoffeePeekPhotoAttachments
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.feature.homecheckin.domain.model.HomePreparationUpload
+import com.coffeepeek.feature.homecheckin.impl.resources.*
 
 @Composable
 internal fun HomeCheckInEditorPhotos(

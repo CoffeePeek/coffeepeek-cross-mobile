@@ -165,6 +165,8 @@ fun ShopDetailScreen(shopId: String, forCheckIn: Boolean = false) {
     val menuGalleryRenderer = koinInject<ShopMenuGalleryScreenRenderer>()
     val checkInRenderer = koinInject<ShopCheckInFormRenderer>()
     val state by vm.uiState.collectAsState()
+    val businessChanged = com.coffeepeek.feature.ownership.api.LocalBusinessOwnership.current?.ProfileChanges() ?: 0L
+    LaunchedEffect(businessChanged) { if (businessChanged > 0) vm.refreshAfterCheckIn() }
     com.coffeepeek.admin.analytics.TrackEntityDetail(com.coffeepeek.admin.analytics.Entity.Shop, state.details != null)
     val userLocation = rememberPermittedUserLocation()
     val snackbarHostState = remember { SnackbarHostState() }
@@ -309,7 +311,7 @@ fun ShopDetailScreen(shopId: String, forCheckIn: Boolean = false) {
                         headerActions = { heroHaze ->
                             HeroTopActions(heroHaze, Navigator::popBack, details.shop.isFavorite,
                                 state.isFavoriteLoading, vm::toggleFavorite, vm::shareShop, vm::openSuggestChange,
-                                modifier = Modifier.statusBarsPadding())
+                                modifier = Modifier.statusBarsPadding(), businessId = details.shop.id, businessSlug = details.shop.publicAddress?.slug.orEmpty())
                         },
                     )
                 }
@@ -580,6 +582,7 @@ private fun HeroTopActions(
     onShare: () -> Unit,
     onSuggestChange: () -> Unit,
     modifier: Modifier = Modifier,
+    businessId: String = "", businessSlug: String = "",
 ) {
     Row(
         modifier = modifier
@@ -604,6 +607,7 @@ private fun HeroTopActions(
             )
         }
         HeaderActionButtons(
+            businessId = businessId, businessSlug = businessSlug,
             hazeState = hazeState,
             isFavorite = isFavorite,
             isFavoriteLoading = isFavoriteLoading,
@@ -931,57 +935,38 @@ private fun PhotoCounter(current: Int, total: Int, modifier: Modifier = Modifier
 
 @Composable
 private fun HeaderActionButtons(
-    hazeState: HazeState,
-    isFavorite: Boolean,
-    isFavoriteLoading: Boolean,
-    onToggleFavorite: () -> Unit,
-    onShare: () -> Unit,
-    onSuggestChange: () -> Unit,
+    hazeState: HazeState, isFavorite: Boolean, isFavoriteLoading: Boolean,
+    onToggleFavorite: () -> Unit, onShare: () -> Unit, onSuggestChange: () -> Unit,
+    businessId: String = "", businessSlug: String = "",
 ) {
-    Row(
-        horizontalArrangement = Arrangement.spacedBy(CpDimens.spacing2),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        HeroIconButton(
-            icon = GlassControlIcon.Edit,
-            hazeState = hazeState,
-            onClick = onSuggestChange,
-            enabled = true,
-            isLoading = false,
-            contentDescription = "Предложить правку",
-        ) {
-            Icon(
-                imageVector = CpIcons.NoteEdit,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSurface,
-            )
-        }
-        HeroIconButton(
-            icon = if (isFavorite) GlassControlIcon.FavoriteFilled else GlassControlIcon.Favorite,
-            hazeState = hazeState,
-            onClick = onToggleFavorite,
-            modifier = Modifier.analyticsExposure("favorites", "shop_detail", "shop_detail"),
-            enabled = !isFavoriteLoading,
-            isLoading = isFavoriteLoading,
-            contentDescription = if (isFavorite) "Убрать из избранного" else "Добавить в избранное",
-        ) {
-            CoffeePeekLikeIcon(isFavorite, contentDescription = null)
-        }
-        HeroIconButton(
-            icon = GlassControlIcon.Share,
-            hazeState = hazeState,
-            onClick = onShare,
-            modifier = Modifier.analyticsExposure("share", "shop_detail", "shop_detail"),
-            enabled = true,
-            isLoading = false,
-            contentDescription = "Поделиться",
-        ) {
-            Icon(
-                imageVector = CpIcons.Share,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSurface,
-            )
-        }
+    val ownership = com.coffeepeek.feature.ownership.api.LocalBusinessOwnership.current
+    if (ownership != null && businessId.isNotBlank()) {
+        ownership.ProfileActions("CoffeeShop", businessId, businessSlug, onSuggestChange, onOwnerEdit = { Analytics.shopAction("edit") },
+            favorite = { ShopFavoriteHeroButton(hazeState, isFavorite, isFavoriteLoading, onToggleFavorite) },
+            share = { ShopShareHeroButton(hazeState, onShare) })
+    } else Row(horizontalArrangement = Arrangement.spacedBy(CpDimens.spacing2)) {
+        ShopFavoriteHeroButton(hazeState, isFavorite, isFavoriteLoading, onToggleFavorite)
+        ShopShareHeroButton(hazeState, onShare)
+    }
+}
+
+@Composable
+private fun ShopFavoriteHeroButton(hazeState: HazeState, favorite: Boolean, loading: Boolean, toggle: () -> Unit) {
+    HeroIconButton(icon = if (favorite) GlassControlIcon.FavoriteFilled else GlassControlIcon.Favorite,
+        hazeState = hazeState, onClick = toggle,
+        modifier = Modifier.analyticsExposure("favorites", "shop_detail", "shop_detail"),
+        enabled = !loading, isLoading = loading,
+        contentDescription = if (favorite) "Убрать из избранного" else "Добавить в избранное") {
+        CoffeePeekLikeIcon(favorite, contentDescription = null)
+    }
+}
+
+@Composable
+private fun ShopShareHeroButton(hazeState: HazeState, share: () -> Unit) {
+    HeroIconButton(icon = GlassControlIcon.Share, hazeState = hazeState, onClick = share,
+        modifier = Modifier.analyticsExposure("share", "shop_detail", "shop_detail"),
+        enabled = true, isLoading = false, contentDescription = "Поделиться") {
+        Icon(CpIcons.Share, null, tint = MaterialTheme.colorScheme.onSurface)
     }
 }
 

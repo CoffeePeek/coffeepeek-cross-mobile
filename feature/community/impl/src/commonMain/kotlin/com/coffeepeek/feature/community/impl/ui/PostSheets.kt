@@ -88,6 +88,7 @@ import com.coffeepeek.feature.community.domain.rules.MAX_NOTE_LENGTH
 import com.coffeepeek.feature.community.domain.rules.MAX_REPORT_LENGTH
 import com.coffeepeek.feature.community.domain.rules.OTHER_DRINK
 import com.coffeepeek.feature.community.domain.rules.ReportIssue
+import com.coffeepeek.feature.community.impl.resources.*
 import com.coffeepeek.feature.community.impl.timeline.CommunityAction
 import com.coffeepeek.feature.community.impl.timeline.CommunityState
 import com.coffeepeek.feature.community.impl.timeline.EditError
@@ -272,14 +273,18 @@ private fun TextArea(value: String, onChange: (String) -> Unit, placeholder: Str
     )
 }
 
-@Preview @Composable private fun EditSheetPreview() = CoffeePeekTheme {
+@Composable private fun EditSheetPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
     androidx.compose.material3.Surface {
         EditSheetContent(PostEditState(previewPost()), listOf(DrinkOption("cappuccino", "Капучино", "Cappuccino")), false, false, true, {})
     }
 }
+@Preview @Composable private fun EditSheetLightPreview() = EditSheetPreview(false)
+@Preview @Composable private fun EditSheetDarkPreview() = EditSheetPreview(true)
 
-@Preview @Composable private fun ReportSheetPreview() = CoffeePeekTheme {
+@Composable private fun ReportSheetPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
     androidx.compose.material3.Surface {
         ReportSheetContent(ReportForm("Нарушение", ReportIssue.Empty, failed = false, failure = null, isSending = false), ReportCallbacks({}, {}, {}))
     }
 }
+@Preview @Composable private fun ReportSheetLightPreview() = ReportSheetPreview(false)
+@Preview @Composable private fun ReportSheetDarkPreview() = ReportSheetPreview(true)
