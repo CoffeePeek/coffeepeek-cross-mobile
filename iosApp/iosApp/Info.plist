@@ -52,11 +52,15 @@
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>NSCameraUsageDescription</key>
-	<string>Камера нужна, чтобы добавлять фотографии кофеен и отзывов.</string>
+	<string>Камера нужна, чтобы добавлять фотографии кофеен и отзывов и снимать пачки кофе для вашей полки.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>Геопозиция нужна, чтобы находить кофейни рядом с вами.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
-	<string>Доступ к фото нужен, чтобы прикреплять изображения кофеен и отзывов.</string>
+	<string>Доступ к фото нужен, чтобы прикреплять изображения кофеен и отзывов и добавлять пачки кофе на полку.</string>
+	<key>ShelfInpainterURL</key>
+	<string>$(SHELF_INPAINTER_URL)</string>
+	<key>ShelfSegmenterURL</key>
+	<string>$(SHELF_SEGMENTER_URL)</string>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
 	<key>UILaunchScreen</key>

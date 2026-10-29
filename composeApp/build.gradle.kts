@@ -51,22 +51,12 @@ kotlin {
             implementation(project(module.feature.shop.impl))
             implementation(project(module.feature.profile.impl))
             implementation(project(module.feature.settings.impl))
-            implementation(project(module.feature.coffee.api))
-            implementation(project(module.feature.coffee.domain))
-            implementation(project(module.feature.coffee.data))
-            implementation(project(module.feature.coffee.impl))
             implementation(project(module.feature.checkInHistory.api))
             implementation(project(module.feature.checkInHistory.domain))
             implementation(project(module.feature.checkInHistory.data))
             implementation(project(module.feature.checkInHistory.impl))
-            implementation(project(module.feature.homePreparation.domain))
             implementation(project(module.feature.homePreparation.api))
-            implementation(project(module.feature.homePreparation.data))
             implementation(project(module.feature.homePreparation.impl))
-            implementation(project(module.feature.shelf.api))
-            implementation(project(module.feature.shelf.domain))
-            implementation(project(module.feature.shelf.data))
-            implementation(project(module.feature.shelf.impl))
             // The shelf's own camera: viewfinder and capture behind the ShelfCamera port.
             implementation(libs.androidx.camera.camera2)
             implementation(libs.androidx.camera.lifecycle)
@@ -87,6 +77,17 @@ kotlin {
             implementation("org.slf4j:slf4j-nop:2.0.16")
         }
         commonMain.dependencies {
+            // Shelf with the catalogue search and home brews it adapts; the iOS scanner runs ONNX Runtime through shelf data.
+            implementation(project(module.feature.shelf.api))
+            implementation(project(module.feature.shelf.domain))
+            implementation(project(module.feature.shelf.data))
+            implementation(project(module.feature.shelf.impl))
+            implementation(project(module.feature.coffee.api))
+            implementation(project(module.feature.coffee.domain))
+            implementation(project(module.feature.coffee.data))
+            implementation(project(module.feature.coffee.impl))
+            implementation(project(module.feature.homePreparation.domain))
+            implementation(project(module.feature.homePreparation.data))
             implementation(project(module.feature.profile.api))
             implementation(project(module.feature.profile.domain))
             implementation(project(module.feature.profile.data))
@@ -277,7 +278,7 @@ android {
         buildConfigField("String", "POSTHOG_PROJECT_TOKEN", "\"${postHogProjectToken.get()}\"")
         buildConfigField("boolean", "SHELF_ENABLED", "false")
         // MI-GAN for the shelf scanner, downloaded on the first scan. The file must match the size and SHA-256 pinned in
-        // ShelfScannerModels.kt; a build type may override this to download from its own server.
+        // ShelfScannerFiles.kt; a build type may override this to download from its own server.
         buildConfigField("String", "SHELF_INPAINTER_URL", "\"https://huggingface.co/andraniksargsyan/migan/resolve/main/migan_pipeline_v2.onnx\"")
     }
     packaging {

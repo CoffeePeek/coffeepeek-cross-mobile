@@ -40,6 +40,13 @@ class IosPackImagingTest {
         assertSame(wide, IosPackImaging.scaledDown(wide, 100))
     }
 
+    @Test fun aSidewaysPhotoIsHandedToTheShelfUprightAsJpeg() {
+        val photo = assertNotNull(shelfPhotoJpeg(jpegWithOrientation(wide, orientation = 6)))
+        val upright = IosPackImaging.decode(photo, maxSide = 2400)
+        assertEquals(20 to 40, upright.width to upright.height)
+        assertNull(shelfPhotoJpeg("not a photo".encodeToByteArray()))
+    }
+
     @Test fun bytesThatAreNoImageAreAnUnreadablePhoto() {
         for (photo in listOf(ByteArray(0), "not a photo".encodeToByteArray())) {
             assertEquals(BagScanIssue.UnreadablePhoto, assertFailsWith<BagScanFailure> { IosPackImaging.decode(photo, 2400) }.issue)

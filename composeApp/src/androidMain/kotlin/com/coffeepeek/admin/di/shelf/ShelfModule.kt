@@ -30,7 +30,7 @@ internal fun shelfModule(
     }
     single<ShelfEntry> {
         val brews = ShelfHomeBrews(get(), SessionShelfAccount(get()))
-        createShelfEntry(get(), ShelfPorts(get(), ShelfCatalogSearch(get()), AndroidShelfImage, AndroidShelfGallery, AndroidShelfCamera,
+        createShelfEntry(get(), ShelfPorts(get(), ShelfCatalogSearch(get()), ShelfCardImage, AndroidShelfGallery, AndroidShelfCamera,
             AndroidShelfTimeZone, brews))
     }
 }

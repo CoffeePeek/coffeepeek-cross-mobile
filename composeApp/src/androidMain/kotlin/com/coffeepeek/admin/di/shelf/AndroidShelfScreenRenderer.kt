@@ -2,6 +2,7 @@ package com.coffeepeek.admin.di.shelf
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.Modifier
 import com.coffeepeek.admin.di.coffee.showShelfInCoffeeTab
 import com.coffeepeek.admin.di.homecheckin.AndroidCheckInCreateFlowRenderer
 import com.coffeepeek.admin.ui.Navigator
@@ -24,11 +25,12 @@ internal class AndroidShelfScreenRenderer(
     private val checkIns: AndroidCheckInCreateFlowRenderer,
 ) : ShelfScreenRenderer {
     @Composable
-    override fun Archive() = entry.Archive(onBack = Navigator::popBack, onOpenBag = { Navigator.navigate(Navigator.Screen.ShelfBag(it)) })
+    override fun Archive() =
+        entry.Archive(onBack = Navigator::popBack, onOpenBag = { Navigator.navigate(Navigator.Screen.ShelfBag(it)) }, modifier = Modifier)
 
     @Composable
     override fun Bag(bagId: String) = entry.Bag(bagId, onBack = Navigator::popBack,
-        onOpenCoffee = { Navigator.navigate(Navigator.Screen.CoffeeDetail(it)) }) { coffee, onClose ->
+        onOpenCoffee = { Navigator.navigate(Navigator.Screen.CoffeeDetail(it)) }, modifier = Modifier) { coffee, onClose ->
         checkIns.Home(HomeCheckInBean(coffee.slug, coffee.name, coffee.shelfBagId), onDismiss = { onClose(false) }, onSaved = { onClose(true) })
     }
 
@@ -39,6 +41,6 @@ internal class AndroidShelfScreenRenderer(
             // The destination leaves composition right away; the small write must still land.
             scope.launch(start = CoroutineStart.UNDISPATCHED) { withContext(NonCancellable) { settings.showShelfInCoffeeTab() } }
             Navigator.popThenSelectTab(Navigator.Screen.CoffeeTab)
-        }, onClose = Navigator::popBack)
+        }, onClose = Navigator::popBack, modifier = Modifier)
     }
 }
