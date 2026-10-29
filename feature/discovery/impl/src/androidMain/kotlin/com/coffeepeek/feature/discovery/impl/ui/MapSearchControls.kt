@@ -31,27 +31,23 @@ internal fun MapSearchControls(
     onSearchAction: (SearchAction) -> Unit,
 ) {
     Column(modifier, verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing2)) {
-        Surface(shape = MaterialTheme.shapes.extraLarge, color = MaterialTheme.colorScheme.surface.copy(alpha = .96f)) {
-            Row(Modifier.padding(4.dp), verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing2)) {
-                if (onToggleExpand != null) {
-                    CoffeePeekGlassIconButton({ dismissInput(); onToggleExpand() }, stringResource(R.string.discovery_map_collapse), hazeState = null) {
-                        Icon(CoffeePeekIcons.Close, null, Modifier.size(22.dp))
-                    }
+        Row(verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing2)) {
+            if (onToggleExpand != null) {
+                CoffeePeekGlassIconButton({ dismissInput(); onToggleExpand() }, stringResource(R.string.discovery_map_collapse), hazeState = null) {
+                    Icon(CoffeePeekIcons.Close, null, Modifier.size(22.dp))
                 }
-                CoffeePeekSearchField(
-                    value = state.query, onValueChange = { onSearchAction(SearchAction.Query(it)) },
-                    placeholder = stringResource(R.string.discovery_map_search_placeholder),
-                    clearDescription = stringResource(R.string.discovery_search_clear),
-                    fieldHeight = CoffeePeekDimens.buttonHeight, onSearch = dismissInput, modifier = Modifier.weight(1f),
-                )
-                if (onOpenFilters != null) DiscoveryFilterButton(state.filters.activeCount, { dismissInput(); onOpenFilters() })
             }
+            CoffeePeekSearchField(
+                value = state.query, onValueChange = { onSearchAction(SearchAction.Query(it)) },
+                placeholder = stringResource(R.string.discovery_map_search_placeholder),
+                clearDescription = stringResource(R.string.discovery_search_clear),
+                fieldHeight = CoffeePeekDimens.buttonHeight, onSearch = dismissInput, modifier = Modifier.weight(1f),
+            )
+            if (onOpenFilters != null) DiscoveryFilterButton(state.filters.activeCount, { dismissInput(); onOpenFilters() })
         }
         if (onOpenFilters != null) {
-            Surface(shape = MaterialTheme.shapes.large, color = MaterialTheme.colorScheme.surface.copy(alpha = .96f)) {
-                DiscoveryQuickFilters(state.filters, state.userLocation != null, onSearchAction)
-            }
+            DiscoveryQuickFilters(state.filters, state.userLocation != null, onSearchAction)
         }
         if (state.isTruncated) MapTruncationNotice()
         if (state.showSuggestions) MapSuggestions(state, onSelect = { dismissInput(); onAction(MapAction.SelectSuggestion(it)) })

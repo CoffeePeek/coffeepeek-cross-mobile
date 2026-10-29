@@ -44,7 +44,7 @@ internal fun DiscoveryTabContent(
     DiscoveryTabEffects(ui, state.showsDiscovery, analytics, callbacks, focus, onAction)
     BoxWithConstraints(modifier.fillMaxSize().onGloballyPositioned { ui.rootOrigin = it.positionInRoot() }) {
         val canvasSize = DpSize(maxWidth, maxHeight)
-        DiscoverySearchLayer(state, ui, motion, host, roasters, context, bottomClearance, callbacks.onAddShop, onAction, onOpenMap = toggleMap)
+        DiscoverySearchLayer(state, ui, motion, host, roasters, context, bottomClearance, callbacks.onAddShop, onAction)
         DiscoveryRoasterOverlay(ui, roasters, context, reduceMotion, onAction)
         if (state.showFilters) FilterSheet(state, host, onAction)
         if (ui.mapAnchor.width > 0f || ui.mapExpanded) DiscoveryMapLayer(ui, motion, host, canvasSize, toggleMap, map)

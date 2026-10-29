@@ -39,10 +39,6 @@ internal fun BoxScope.MapPositionControls(
     }
     MapLocationControls(state.showZones, actions, Modifier.align(Alignment.BottomEnd)
         .padding(end = CpDimens.spacing4, bottom = bottom))
-    if (state.showSearchArea) {
-        MapSearchAreaButton(actions.onSearchArea, Modifier.align(Alignment.BottomCenter)
-            .padding(bottom = clearance + if (hasCarousel) carouselHeight + 48.dp else 32.dp))
-    }
 }
 
 @Composable
@@ -76,16 +72,6 @@ private fun MapControlButton(
 }
 
 @Composable
-private fun MapSearchAreaButton(onClick: () -> Unit, modifier: Modifier) {
-    Button(onClick, modifier.height(CpDimens.buttonHeight), shape = RoundedCornerShape(percent = 50),
-        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.onSurface,
-            contentColor = MaterialTheme.colorScheme.surface),
-        contentPadding = PaddingValues(horizontal = CpDimens.spacing5)) {
-        Text("Искать в этой области", style = MaterialTheme.typography.labelLarge)
-    }
-}
-
-@Composable
 private fun MapZoomControl(onZoomIn: () -> Unit, onZoomOut: () -> Unit, modifier: Modifier = Modifier) {
     val shape = RoundedCornerShape(CpDimens.radiusLg)
     Column(modifier.width(CpDimens.buttonHeight).clip(shape)
@@ -110,7 +96,7 @@ private fun MapZoomButton(icon: ImageVector, label: String, onClick: () -> Unit,
 @Composable
 private fun MapPositionControlsPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
     Box(Modifier.size(390.dp, 600.dp)) {
-        MapPositionControls(MapUiState(showSearchArea = true), MapScreenActions(), true, 140.dp, 24.dp)
+        MapPositionControls(MapUiState(), MapScreenActions(), true, 140.dp, 24.dp)
     }
 }
 

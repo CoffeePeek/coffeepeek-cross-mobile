@@ -35,8 +35,6 @@ internal data class MapState(
     val isSearchLoading: Boolean = false,
     val searchFailed: Boolean = false,
     val showSuggestions: Boolean = false,
-    /** The area could not be loaded: «Искать в этой области» offers a retry. */
-    val showSearchArea: Boolean = false,
     val activeBounds: MapBounds? = null,
     val pendingBounds: MapBounds? = null,
     val activeZoom: Float? = null,
@@ -52,7 +50,6 @@ internal data class MapState(
 
 internal sealed interface MapAction {
     data class BoundsChanged(val bounds: MapBounds, val zoom: Float) : MapAction
-    data object SearchArea : MapAction
     data class SelectMarker(val shopId: String) : MapAction
     data class SelectFromCarousel(val shopId: String) : MapAction
     data class SelectZone(val zoneId: String) : MapAction

@@ -24,7 +24,7 @@ internal fun FeedHeader(state: FeedUiState, layout: FeedLayoutState, actions: Fe
         }) {
         Column(Modifier.fillMaxWidth().statusBarsPadding()) {
             Column(Modifier.fillMaxWidth().padding(top = CpDimens.spacing3, bottom = CpDimens.spacing2)) {
-                FeedSearchHeader(state, actions, hasMap) { layout.mapExpanded = true }
+                FeedSearchHeader(state, actions, hasMap)
                 Spacer(Modifier.height(CpDimens.spacing2))
                 FeedHeaderFilters(state.filters, actions, showNearby)
             }
@@ -34,17 +34,13 @@ internal fun FeedHeader(state: FeedUiState, layout: FeedLayoutState, actions: Fe
 }
 
 @Composable
-private fun FeedSearchHeader(state: FeedUiState, actions: FeedScreenActions, hasMap: Boolean, expandMap: () -> Unit) {
+private fun FeedSearchHeader(state: FeedUiState, actions: FeedScreenActions, hasMap: Boolean) {
     Row(Modifier.padding(horizontal = CpDimens.spacing4), verticalAlignment = Alignment.CenterVertically) {
         SearchHeader(modifier = Modifier.weight(1f), query = state.query, onQueryChange = actions.onQueryChange,
             roastersSelected = false, onSelectRoasters = { if (it) actions.onSelectRoasters() },
             filterCount = state.activeFilterCount, onFilters = actions.onFilters, showCategories = !hasMap,
             onSearchFocus = { if (hasMap) actions.onActivateSearch() },
             onCancelSearch = actions.onCancelSearch.takeIf { hasMap && !state.showDiscovery })
-        if (hasMap && !state.showDiscovery) DiscoveryOpenMapButton {
-            actions.onOpenMap()
-            expandMap()
-        }
     }
 }
 

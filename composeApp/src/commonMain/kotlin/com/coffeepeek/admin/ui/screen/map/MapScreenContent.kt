@@ -58,7 +58,7 @@ private fun MapScreenContentPreview(dark: Boolean) = CoffeePeekTheme(darkTheme =
     val shop = MapShop("preview", "CoffeePeek", 53.9, 27.56)
     val details = CoffeeShopDetails(CoffeeShop("preview", "CoffeePeek", 4.5, cityName = null, priceRange = null, photoUrl = null))
     MapScreenContent(MapUiState(nearbyShops = listOf(shop), selectedShop = shop,
-        cardDetails = mapOf(shop.id to details), showSearchArea = true),
+        cardDetails = mapOf(shop.id to details)),
         MapScreenActions(onCollapse = {}), false, { DiscoveryMapFiltersButton(2, {}) }, null,
         Modifier.size(390.dp, 780.dp)) { Surface(it.fillMaxSize(), color = MaterialTheme.colorScheme.surfaceVariant) {} }
 }

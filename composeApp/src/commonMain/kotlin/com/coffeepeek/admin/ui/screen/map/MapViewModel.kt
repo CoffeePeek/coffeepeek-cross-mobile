@@ -72,7 +72,6 @@ data class MapUiState(
     val brewMethods: List<CatalogItem> = emptyList(),
     val shopTags: List<CatalogItem> = emptyList(),
     val showFilters: Boolean = false,
-    val showSearchArea: Boolean = false,
     val activeBounds: MapBounds? = null,
     val pendingBounds: MapBounds? = null,
     val activeZoom: Float? = null,
@@ -178,7 +177,6 @@ class MapViewModel(
             it.copy(
                 pendingBounds = bounds,
                 pendingZoom = zoom,
-                showSearchArea = false,
             )
         }
         if (suppressBoundsUpdates) return
@@ -409,7 +407,6 @@ class MapViewModel(
                     (bounds.minLon + bounds.maxLon) / 2.0,
                 cameraZoom = nextZoom,
                 pendingZoom = nextZoom,
-                showSearchArea = false,
             )
         }
         pauseBoundsUpdates(500)
@@ -499,7 +496,6 @@ class MapViewModel(
                     pendingBounds = bounds,
                     activeZoom = zoom,
                     pendingZoom = zoom,
-                    showSearchArea = false,
                 )
             }
             requestBounds(bounds.expandedForPrefetch(), zoom)
@@ -523,7 +519,7 @@ class MapViewModel(
             applyContent(content, filters.cityId, owner)
         }.onFailure {
             if (operation != null) Analytics.service?.track(AnalyticsEvent.MAP_INTERACTION, mapOf("action" to "load_failed", "duration_ms" to started.elapsedNow().inWholeMilliseconds), operation)
-            _state.update { if (isCurrent(owner)) it.copy(isLoading = false, showSearchArea = true) else it }
+            _state.update { if (isCurrent(owner)) it.copy(isLoading = false) else it }
         }
     }
 

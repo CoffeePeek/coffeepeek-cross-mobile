@@ -22,7 +22,6 @@ internal data class MapScreenActions(
     val onZoomOut: () -> Unit = {},
     val onToggleZones: () -> Unit = {},
     val onMyLocation: () -> Unit = {},
-    val onSearchArea: () -> Unit = {},
     val onShowZoneShops: () -> Unit = {},
     val onDismissZone: () -> Unit = {},
     val onOpenShop: (String) -> Unit = {},

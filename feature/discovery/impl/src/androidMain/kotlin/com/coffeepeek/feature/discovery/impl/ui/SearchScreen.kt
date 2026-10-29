@@ -20,9 +20,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.ui.draw.clip
-import androidx.compose.material3.OutlinedIconButton
 import androidx.compose.material3.BadgedBox
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.background
@@ -33,7 +31,6 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -65,7 +62,6 @@ import com.coffeepeek.core.designsystem.component.CoffeePeekLoader
 import com.coffeepeek.core.designsystem.component.CoffeePeekPullToRefresh
 import com.coffeepeek.core.designsystem.component.CoffeePeekCircularBackButton
 import com.coffeepeek.core.designsystem.component.CoffeePeekSearchField
-import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.feature.discovery.api.DiscoveryExposure
 import com.coffeepeek.feature.discovery.api.DiscoveryHost
@@ -93,13 +89,12 @@ internal fun SearchContent(
     /** No photo prefetch while the map covers the lists. */
     prefetch: Boolean = true,
     hasRoasterResults: Boolean? = null,
-    onOpenMap: (() -> Unit)? = null,
 ) {
     val reduceMotion = host.reduceMotion()
     Column(modifier.fillMaxSize()) {
         Column(headerModifier) {
             Column(Modifier.padding(top = CoffeePeekDimens.spacing3, bottom = CoffeePeekDimens.spacing2)) {
-                SearchHeader(state, host, onAction, onOpenMap)
+                SearchHeader(state, host, onAction)
                 Spacer(Modifier.height(CoffeePeekDimens.spacing2))
                 DiscoveryQuickFilters(state.filters, state.canUseNearby, onAction)
             }
@@ -121,7 +116,7 @@ internal fun SearchContent(
 }
 
 @Composable
-private fun SearchHeader(state: SearchState, host: DiscoveryHost, onAction: (SearchAction) -> Unit, onOpenMap: (() -> Unit)?) {
+private fun SearchHeader(state: SearchState, host: DiscoveryHost, onAction: (SearchAction) -> Unit) {
     val focus = LocalFocusManager.current
     // The back button shows whenever the results list replaces the home tab, also when only a filter is on.
     val searching = !state.showsDiscovery
@@ -154,12 +149,6 @@ private fun SearchHeader(state: SearchState, host: DiscoveryHost, onAction: (Sea
             onSearch = { focus.clearFocus() },
         )
         Spacer(Modifier.width(CoffeePeekDimens.spacing2))
-        if (onOpenMap != null) {
-            OutlinedIconButton(onClick = { focus.clearFocus(); onOpenMap() }, modifier = Modifier.size(CoffeePeekDimens.buttonHeight)) {
-                Icon(CoffeePeekIcons.Map, stringResource(R.string.discovery_map_open))
-            }
-            Spacer(Modifier.width(CoffeePeekDimens.spacing2))
-        }
         DiscoveryFilterButton(state.activeFilterCount, { onAction(SearchAction.ToggleFilters) }, host.exposure(Modifier, DiscoveryExposure.Filters))
     }
 }

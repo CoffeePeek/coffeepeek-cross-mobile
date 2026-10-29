@@ -88,7 +88,6 @@ internal class MapViewModel(
             is MapAction.SyncCriteria -> acceptSharedCriteria(action.criteria)
             is MapAction.PresentationChanged -> setSearchPresentation(action.active)
             is MapAction.BoundsChanged -> onBoundsChanged(action.bounds, action.zoom)
-            MapAction.SearchArea -> searchCurrentArea()
             is MapAction.SelectSuggestion -> selectSuggestion(action.shopId)
             MapAction.Interact -> requestLocationPermission()
             MapAction.RequestMyLocation -> requestLocationPermission(locate = true)
@@ -233,7 +232,7 @@ internal class MapViewModel(
     private fun onBoundsChanged(bounds: MapBounds, zoom: Float) {
         if (currentState.nearbyOrigin == null) changeNearbyOrigin(bounds.center)
         // The latest viewport is remembered even while the updates are paused, so it can be loaded afterwards.
-        updateState { copy(pendingBounds = bounds, pendingZoom = zoom, showSearchArea = false) }
+        updateState { copy(pendingBounds = bounds, pendingZoom = zoom) }
         if (suppressBounds) return
         // A small pan inside the prefetched area at the same zoom level needs no new request.
         if (loadedArea?.contains(bounds) == true && loadedZoomLevel == zoom.toInt()) return
@@ -254,7 +253,7 @@ internal class MapViewModel(
         loadedArea = null
         boundsJob = viewModelScope.launch {
             delay(BOUNDS_DEBOUNCE_MS)
-            updateState { copy(isLoading = true, activeBounds = bounds, activeZoom = zoom, showSearchArea = false) }
+            updateState { copy(isLoading = true, activeBounds = bounds, activeZoom = zoom) }
             requestBounds(bounds.expandedForPrefetch(), zoom, currentState.criteria)
         }
     }
@@ -273,7 +272,7 @@ internal class MapViewModel(
             applyContent(content, criteria.filters.cityId)
         }.onFailure {
             analytics.mapInteracted(MapInteraction.LoadFailed, durationMs = started.elapsedNow().inWholeMilliseconds)
-            updateState { copy(isLoading = false, showSearchArea = true) }
+            updateState { copy(isLoading = false) }
         }
     }
 
@@ -456,7 +455,7 @@ internal class MapViewModel(
         val next = clampZoom(zoom + delta)
         if (next == zoom) return
         analytics.mapInteracted(MapInteraction.Zoomed)
-        updateState { copy(camera = MapCamera(bounds.center, next), pendingZoom = next, showSearchArea = false) }
+        updateState { copy(camera = MapCamera(bounds.center, next), pendingZoom = next) }
         pauseBounds(PAUSE_AFTER_ZOOM_MS)
     }
 

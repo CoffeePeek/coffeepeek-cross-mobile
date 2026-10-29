@@ -15,7 +15,6 @@ internal data class FeedScreenActions(
     val onOpenShop: (CoffeeShop) -> Unit = {},
     val onToggleFavorite: (CoffeeShop) -> Unit = {},
     val onAddShop: () -> Unit = {},
-    val onOpenMap: () -> Unit = {},
     val onToggleOpen: () -> Unit = {},
     val onToggleNew: () -> Unit = {},
     val onToggleVisited: () -> Unit = {},

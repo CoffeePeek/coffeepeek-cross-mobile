@@ -9,13 +9,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -47,7 +43,6 @@ internal fun androidx.compose.foundation.layout.BoxScope.MapOverlayControls(
     var carouselHeightPx by remember { mutableIntStateOf(0) }
     val carouselHeight = with(LocalDensity.current) { carouselHeightPx.toDp() }
     MapPositionControls(state, bottomClearance, carouselHeight, onAction)
-    MapSearchAreaControl(state, bottomClearance, carouselHeight, onAction)
     MapSelection(state, host, bottomClearance, dismissInput, onAction) { carouselHeightPx = it }
 }
 
@@ -56,7 +51,7 @@ internal fun androidx.compose.foundation.layout.BoxScope.MapOverlayControls(
 private fun MapOverlayControlsPreview() = CoffeePeekTheme {
     val shop = MapMarker("preview", "CoffeePeek Specialty Coffee", Coordinates(53.9, 27.56))
     val details = MapShopDetails(null, 4.5, 12, true, "09:00 – 21:00")
-    val state = MapState(nearby = listOf(shop), cardDetails = mapOf(shop.id to details), showSearchArea = true)
+    val state = MapState(nearby = listOf(shop), cardDetails = mapOf(shop.id to details))
     Surface(color = MaterialTheme.colorScheme.surfaceVariant) {
         Box(Modifier.fillMaxWidth().height(480.dp)) {
             MapOverlayControls(state, DiscoveryHost(), 0.dp, {}, {})
@@ -84,19 +79,6 @@ private fun androidx.compose.foundation.layout.BoxScope.MapPositionControls(stat
         CoffeePeekGlassIconButton({ onAction(MapAction.RequestMyLocation) }, stringResource(R.string.discovery_map_my_location), Modifier.size(CoffeePeekDimens.buttonHeight + 4.dp)) {
             Icon(CoffeePeekIcons.Navigation, null, Modifier.size(32.dp))
         }
-    }
-}
-
-@Composable
-private fun androidx.compose.foundation.layout.BoxScope.MapSearchAreaControl(state: MapState, bottomClearance: Dp, carouselHeight: Dp, onAction: (MapAction) -> Unit) {
-    if (state.showSearchArea) {
-        Button(
-            onClick = { onAction(MapAction.SearchArea) },
-            modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = bottomClearance + if (state.hasCarousel) carouselHeight + 48.dp else 32.dp).height(CoffeePeekDimens.buttonHeight),
-            shape = RoundedCornerShape(percent = 50),
-            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.onSurface, contentColor = MaterialTheme.colorScheme.surface),
-            contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = CoffeePeekDimens.spacing5),
-        ) { Text(stringResource(R.string.discovery_map_search_area), style = MaterialTheme.typography.labelLarge) }
     }
 }
 

@@ -266,15 +266,16 @@ class MapViewModelParityTest {
     }
 
     @Test
-    fun aFailedLoadOffersToSearchTheAreaAndARetrySucceeds() {
+    fun aFilterChangeAutomaticallyReloadsAfterAFailedRequest() {
         var fail = true
         parity(content = { call -> if (call.zoom == 22f) MapContent() else if (fail) null else MapContent(shops = listOf(mapShop("s1")), isTruncated = true) }) {
             vm.onBoundsChanged(minsk, 14f); mapCalls.next(14f)
-            val failed = vm.state.first { it.showSearchArea }
+            val failed = vm.state.first { !it.isLoading }
             assertFalse(failed.isLoading)
             fail = false
-            vm.searchCurrentArea(); mapCalls.next(14f)
-            val loaded = vm.state.first { it.shops.any { shop -> shop.id == "s1" } && !it.showSearchArea }
+            vm.syncSearch("", com.coffeepeek.admin.ui.screen.feed.FeedFiltersUi(cityId = "minsk", openOnly = true), null)
+            assertTrue(mapCalls.next(14f).filters.openOnly)
+            val loaded = vm.state.first { it.shops.any { shop -> shop.id == "s1" } }
             assertTrue(loaded.isTruncated)
         }
     }
