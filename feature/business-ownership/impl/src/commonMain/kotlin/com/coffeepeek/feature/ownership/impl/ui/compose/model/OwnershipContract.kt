@@ -10,6 +10,7 @@ internal data class OwnershipState(
     val loading: Boolean = false, val busy: Boolean = false, val problem: OwnershipProblem? = null,
     val claims: BusinessPage<OwnershipClaim>? = null, val shops: List<OwnedBusiness> = emptyList(),
     val roasters: BusinessPage<OwnedBusiness>? = null, val claimsPage: Int = 1, val roastersPage: Int = 1,
+    val cardProfiles: Map<Pair<BusinessKind, String>, BusinessProfile> = emptyMap(),
     val submission: ClaimSubmission = ClaimSubmission(BusinessKind.CoffeeShop, "", "", ""),
     val selectedClaim: OwnershipClaim? = null, val selectedClaimId: String? = null,
     val editingBusiness: OwnedBusiness? = null, val reloadAfterDiscard: Boolean = false, val profile: BusinessProfile? = null,

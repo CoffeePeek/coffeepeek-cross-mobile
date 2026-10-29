@@ -49,8 +49,8 @@ class OwnershipViewModelTest {
         store.clear()
         Dispatchers.resetMain()
     }
-    private fun model(repository: Repository = Repository(), account: Account = Account()) =
-        OwnershipViewModel(repository, account).also { store.put("model", it) }
+    private fun model(repository: Repository = Repository(), account: Account = Account(), businessTab: Boolean = false) =
+        OwnershipViewModel(repository, account, businessTab = businessTab).also { store.put("model", it) }
     private fun TestScope.edit(model: OwnershipViewModel) {
         model.onAction(OwnershipAction.OpenBusiness(BusinessKind.Roaster, "business"))
         runCurrent()
@@ -77,6 +77,27 @@ class OwnershipViewModelTest {
         assertNull(model.state.value.profile)
         assertNull(model.state.value.draft)
         assertNull(model.state.value.claims)
+        assertNull(model.state.value.account)
+    }
+    @Test fun businessTabLoadsProfileDetailsForItsCards() = runTest(dispatcher) {
+        val model = model(businessTab = true)
+        runCurrent()
+        assertEquals(2, model.state.value.cardProfiles.size)
+        assertEquals("Name", model.state.value.cardProfiles[BusinessKind.CoffeeShop to "business"]?.name)
+        assertEquals("Name", model.state.value.cardProfiles[BusinessKind.Roaster to "business"]?.name)
+    }
+    @Test fun oldCardProfilesCannotReturnAfterAnAccountChange() = runTest(dispatcher) {
+        val response = CompletableDeferred<Result<BusinessProfile>>()
+        val account = Account()
+        val repository = Repository().apply { profileResult = { withContext(NonCancellable) { response.await() } } }
+        val model = model(repository, account, businessTab = true)
+        runCurrent()
+        assertTrue(model.state.value.shops.isNotEmpty())
+        account.value.value = null
+        runCurrent()
+        response.complete(Result.success(original))
+        runCurrent()
+        assertTrue(model.state.value.cardProfiles.isEmpty())
         assertNull(model.state.value.account)
     }
     @Test fun invalidSubmissionDoesNotCallTheRepository() = runTest(dispatcher) {

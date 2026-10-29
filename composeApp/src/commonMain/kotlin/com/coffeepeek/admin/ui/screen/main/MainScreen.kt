@@ -257,8 +257,7 @@ internal fun ComposeMainScreen(isLoggedIn: Boolean, onMapExpandedChange: (Boolea
 
                     navigation<Navigator.Screen.BusinessGraph>(startDestination = Navigator.Screen.BusinessTab) {
                         composable<Navigator.Screen.BusinessTab> {
-                            koinInject<com.coffeepeek.feature.ownership.api.BusinessOwnershipEntry>().Tab(onCheckIns = { Navigator.navigate(Navigator.Screen.VisitedPlaces) },
-                                checkIns = { com.coffeepeek.admin.ui.screen.profile.PersonalProfileActivityPreview { Navigator.navigate(Navigator.Screen.VisitedPlaces) } })
+                            koinInject<com.coffeepeek.feature.ownership.api.BusinessOwnershipEntry>().Tab()
                         }
                     }
                     navigation<Navigator.Screen.SettingsGraph>(startDestination = Navigator.Screen.SettingsTab) {

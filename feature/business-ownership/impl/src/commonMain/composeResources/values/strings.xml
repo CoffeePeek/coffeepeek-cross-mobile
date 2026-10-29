@@ -16,6 +16,7 @@
     <string name="ownership_submit">Отправить заявку</string>
     <string name="ownership_claims">Мои заявки</string>
     <string name="ownership_shops">Мои кофейни</string>
+    <string name="ownership_shop_kind">Кофейня</string>
     <string name="ownership_roasters">Мои обжарщики</string>
     <string name="ownership_empty">Пока ничего нет</string>
     <string name="ownership_pending">Ожидает решения</string>
@@ -65,6 +66,5 @@
     <string name="ownership_account">Аккаунт</string>
     <string name="ownership_switch_business">Перейти на бизнес аккаунт</string>
     <string name="ownership_switch_personal">Перейти на личный аккаунт</string>
-    <string name="ownership_checkins">Мои чекины</string>
     <string name="ownership_evidence_photos">Фото подтверждения полномочий</string>
 </resources>

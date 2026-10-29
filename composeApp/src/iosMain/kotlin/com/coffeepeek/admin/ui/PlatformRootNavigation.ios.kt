@@ -175,8 +175,7 @@ internal actual fun PlatformRootNavigation(
                     )
                     3 -> ProfileScreen()
                     4 -> SettingsScreen()
-                    5 -> koinInject<com.coffeepeek.feature.ownership.api.BusinessOwnershipEntry>().Tab(onCheckIns = { Navigator.navigate(Navigator.Screen.VisitedPlaces) },
-                                checkIns = { com.coffeepeek.admin.ui.screen.profile.PersonalProfileActivityPreview { Navigator.navigate(Navigator.Screen.VisitedPlaces) } })
+                    5 -> koinInject<com.coffeepeek.feature.ownership.api.BusinessOwnershipEntry>().Tab()
                 }
             }
             navigation.setNavigationBarHidden(true, false)

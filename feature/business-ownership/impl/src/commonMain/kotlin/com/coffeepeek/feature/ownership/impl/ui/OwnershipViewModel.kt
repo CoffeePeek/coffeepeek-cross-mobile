@@ -7,6 +7,8 @@ import com.coffeepeek.feature.ownership.domain.repository.BusinessOwnershipRepos
 import com.coffeepeek.feature.ownership.impl.ui.compose.model.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.sync.Semaphore
+import kotlinx.coroutines.sync.withPermit
 import kotlin.coroutines.coroutineContext
 
 internal class OwnershipViewModel(
@@ -18,10 +20,12 @@ internal class OwnershipViewModel(
     private val businessTab: Boolean = false,
 ) : MviViewModel<OwnershipState, OwnershipAction, OwnershipEvent>(OwnershipState()) {
     private val operations = mutableSetOf<Job>()
+    private var cardsJob: Job? = null
     private var initialized = false
     init {
         viewModelScope.launch {
             account.observe().distinctUntilChanged().collect { identity ->
+                cardsJob?.cancel()
                 operations.toList().forEach { it.cancel() }
                 operations.clear()
                 val generation = currentState.generation + 1
@@ -87,15 +91,34 @@ internal class OwnershipViewModel(
         }
     }
     private suspend fun overview() {
+        cardsJob?.cancel()
         updateState { copy(destination = OwnershipDestination.Overview, selectedClaim = null, profile = null, draft = null, loading = true, problem = null, confirmDiscard = false) }
         val snapshot = currentState
         try {
             val data = fetchOverview(snapshot)
             currentCoroutineContext().ensureActive()
             if (snapshot.generation != currentState.generation) return
-            updateState { copy(claims = data.first, shops = data.second, roasters = data.third, loading = false) }
+            val businesses = data.second + data.third.items
+            val identities = businesses.map { it.kind to it.id }.toSet()
+            updateState { copy(claims = data.first, shops = data.second, roasters = data.third,
+                cardProfiles = cardProfiles.filterKeys { it in identities }, loading = false) }
+            if (businessTab) loadCardProfiles(snapshot.generation, businesses)
         } catch (cancelled: CancellationException) { throw cancelled }
         catch (failure: Exception) { failed(failure) }
+    }
+    private fun loadCardProfiles(generation: Int, businesses: List<OwnedBusiness>) {
+        cardsJob = viewModelScope.launch {
+            val permits = Semaphore(4)
+            businesses.forEach { business ->
+                launch {
+                    val result = permits.withPermit { repository.profile(business.kind, business.id) }
+                    currentCoroutineContext().ensureActive()
+                    result.onSuccess { profile ->
+                        updateState { if (this.generation == generation) copy(cardProfiles = cardProfiles + ((business.kind to business.id) to profile)) else this }
+                    }.onFailure { if (it is CancellationException) throw it }
+                }
+            }
+        }
     }
     private suspend fun fetchOverview(snapshot: OwnershipState) = coroutineScope {
         val claims = async { if (businessTab) Result.success(BusinessPage<OwnershipClaim>(emptyList(), 0, 1, 20)) else repository.claims(snapshot.claimsPage) }
