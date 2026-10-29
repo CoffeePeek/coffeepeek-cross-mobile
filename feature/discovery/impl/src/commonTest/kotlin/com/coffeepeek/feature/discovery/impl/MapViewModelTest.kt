@@ -81,20 +81,21 @@ class MapViewModelTest {
         val vm = model()
         vm.send(MapAction.BoundsChanged(view, 12f), scope = this); settle()
         answer = listOf(zone("z2"))
-        vm.send(MapAction.SearchArea, scope = this); settle()
+        vm.send(MapAction.BoundsChanged(view, 15f), scope = this); settle()
         assertEquals(setOf("z1", "z2"), vm.now.zones.map { it.id }.toSet())
         city.flow.value = "brest"; runCurrent(); settle()
         assertEquals(listOf("z2"), vm.now.zones.map { it.id })
     }
 
-    @Test fun aFailedLoadOffersSearchingTheAreaAndARetryWorks() = runTest(dispatcher) {
+    @Test fun aFilterChangeAutomaticallyReloadsAfterAFailedRequest() = runTest(dispatcher) {
         repository.map = { _, _, _ -> Result.failure(DiscoveryFailure(FailureKind.Other)) }
         val vm = model()
         vm.send(MapAction.BoundsChanged(view, 14f), scope = this); settle()
-        assertTrue(vm.now.showSearchArea); assertFalse(vm.now.isLoading); assertEquals(MapInteraction.LoadFailed, analytics.interactions.last())
+        assertFalse(vm.now.isLoading); assertEquals(MapInteraction.LoadFailed, analytics.interactions.last())
         repository.map = { _, _, _ -> Result.success(MapContent(listOf(marker("a")))) }
-        vm.send(MapAction.SearchArea, scope = this); settle()
-        assertFalse(vm.now.showSearchArea); assertEquals(listOf("a"), vm.now.markers.map { it.id })
+        vm.send(MapAction.SyncCriteria(DiscoveryCriteria("", DiscoveryFilters(cityId = "minsk", openOnly = true))), scope = this); settle()
+        assertTrue(cityRequests().last().third.openOnly)
+        assertEquals(listOf("a"), vm.now.markers.map { it.id })
     }
 
     @Test fun aMovedViewReportsTheLoadAndTruncation() = runTest(dispatcher) {

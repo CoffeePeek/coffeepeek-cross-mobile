@@ -114,7 +114,6 @@ private fun mapCameraActions(vm: MapViewModel) = MapScreenActions(
     onZoomOut = vm::zoomOut,
     onToggleZones = vm::toggleZones,
     onMyLocation = vm::requestMyLocation,
-    onSearchArea = vm::searchCurrentArea,
     onShowZoneShops = vm::showSelectedZoneShops,
     onDismissZone = vm::clearZoneSelection,
 )

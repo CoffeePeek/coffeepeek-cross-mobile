@@ -100,3 +100,26 @@ production and simulator test compilation passed. An initial extraction error
 inferred nullable callback return types; explicit `() -> Unit` fixed both runtime
 adapters. The initial failed log remains local. PR CI verifies the published
 follow-up commit; device/UI acceptance remains unexecuted.
+
+## Map overlay correction
+
+The follow-up screenshot requires separate close/search/filter controls with a
+readable active-filter count, quick chips directly over the map, and automatic
+map updates instead of the «Искать в этой области» button. Existing viewport
+and criteria changes already schedule the map request after a 250 ms debounce;
+the obsolete retry button and its state/action were removed from both the
+legacy shared map and migrated Android map. The Android header no longer draws
+background panels behind the controls or chips. Both filter buttons now use the
+same glass control size as the close button, with the count in a reserved
+overlay area. Failed requests can be retried by changing filters or viewport;
+tests pin the automatic filter refresh after a failure.
+
+On 2026-10-29 the Discovery presentation suite (98 tests) and application
+unit/contract suite (856 tests) passed with zero failures, errors or skips.
+Direct Debug and Direct Sandbox APK assembly passed their packaged runtime
+checks; Sandbox isolation passed. Kotlin iOS Arm64/simulator production and
+simulator test sources compiled. The first run caught a test-only property
+access error; it was corrected before the passing rerun. Native Swift/Xcode
+validation remains in PR CI, and manual light/dark, badge, chip and map
+interaction review still requires a selected device and build variant. No app
+was installed or run, and no real backend/account state was changed.
